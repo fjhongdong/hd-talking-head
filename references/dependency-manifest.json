@@ -1,0 +1,862 @@
+{
+  "schema_version": 3,
+  "dependencies": [
+    {
+      "id": "reference-asr",
+      "kind": "project_path",
+      "required": false,
+      "stage": "job-start",
+      "target": "edit/hd/tools/reference_asr.py",
+      "api": ["probe_configured_runtime"],
+      "required_level": "callable",
+      "config_selection": "reference_asr",
+      "capabilities": ["reference-transcription"]
+    },
+    {
+      "id": "startup-gate",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "edit/hd/tools/startup.py",
+      "api": ["runtime_identity", "confirm_setup", "require_startup"],
+      "required_level": "callable"
+    },
+    {
+      "id": "python-runtime",
+      "kind": "command",
+      "required": true,
+      "stage": "job-start",
+      "target": "python3",
+      "version_args": ["--version"],
+      "min_version": "3.9",
+      "install": {
+        "group": "python-runtime",
+        "method": "system-package",
+        "package": "python@3.11",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "ffmpeg",
+      "kind": "command",
+      "required": true,
+      "stage": "inspect",
+      "target": "ffmpeg",
+      "version_args": ["-version"],
+      "install": {
+        "group": "ffmpeg-suite",
+        "method": "system-package",
+        "package": "ffmpeg",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "ffprobe",
+      "kind": "command",
+      "required": true,
+      "stage": "inspect",
+      "target": "ffprobe",
+      "version_args": ["-version"],
+      "install": {
+        "group": "ffmpeg-suite",
+        "method": "system-package",
+        "package": "ffmpeg",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "node-runtime",
+      "kind": "command",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "node",
+      "version_args": ["--version"],
+      "min_version": "18.0",
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "*",
+        "required_level": "callable"
+      },
+      "install": {
+        "group": "node-runtime",
+        "method": "system-package",
+        "package": "node",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "npm",
+      "kind": "command",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "npm",
+      "version_args": ["--version"],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "*",
+        "required_level": "callable"
+      },
+      "install": {
+        "group": "node-runtime",
+        "method": "system-package",
+        "package": "node",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "git",
+      "kind": "command",
+      "required": true,
+      "stage": "job-start",
+      "target": "git",
+      "version_args": ["--version"],
+      "install": {
+        "group": "git",
+        "method": "system-package",
+        "package": "git",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "full-v2-state-engine",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "edit/hd/tools/state.py",
+      "api": ["create_job","load_job","require_runnable"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "inspect-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "inspect",
+      "target": "edit/hd/tools/inspect_inputs.py",
+      "api": ["inspect_job"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "content-analysis-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "content-analysis",
+      "target": "edit/hd/tools/content_analysis.py",
+      "api": ["prepare_content_analysis"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "cover-direction-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "cover-direction",
+      "target": "edit/hd/tools/cover_direction.py",
+      "api": ["prepare_cover_direction"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "cover-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "cover",
+      "target": "edit/hd/tools/cover.py",
+      "api": ["prepare_cover"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "speech-edit-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "speech-cleanup",
+      "target": "edit/hd/tools/speech_edit_v2.py",
+      "api": ["prepare_transcription","prepare_cleanup_proposal","render_edit"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "visual-plan-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "visual-direction",
+      "target": "edit/hd/tools/visual_plan.py",
+      "api": ["prepare_visual_direction"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "visual-canary-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "visual-canary",
+      "target": "edit/hd/tools/visual_canary.py",
+      "api": ["prepare_visual_canary"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "segment-renderer",
+      "kind": "project_path",
+      "required": true,
+      "stage": "visual-canary",
+      "target": "edit/hd/tools/segment_render.py",
+      "api": ["render_segment_video"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "visual-assets-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "visual-assets",
+      "target": "edit/hd/tools/visual_assets_v2.py",
+      "api": ["prepare_visual_assets_v2"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "subtitles-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "subtitles",
+      "target": "edit/hd/tools/subtitles_v2.py",
+      "api": ["prepare_subtitles_v2"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "preview-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "preview",
+      "target": "edit/hd/tools/preview_v2.py",
+      "api": ["prepare_preview_v2", "validate_preview_opening", "validate_preview_music"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "delivery-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "delivery",
+      "target": "edit/hd/tools/qa_delivery_v2.py",
+      "api": ["prepare_delivery_v2"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "final-approval-runner",
+      "kind": "project_path",
+      "required": true,
+      "stage": "delivery",
+      "target": "edit/hd/tools/delivery_approval.py",
+      "api": ["approve_delivery"],
+      "required_level": "callable",
+      "path_type": "file"
+    },
+    {
+      "id": "gbro-cover-design-skill",
+      "kind": "skill",
+      "required": true,
+      "stage": "cover-direction",
+      "target": "gbro-cover-design",
+      "install": {
+        "group": "gbro-cover-design-skill",
+        "method": "skill-installer",
+        "source": "https://github.com/pyang5166/gbro-cover-design.git",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "video-use-skill",
+      "kind": "skill",
+      "required": true,
+      "stages": ["speech-cleanup", "edit-structure"],
+      "target": "video-use",
+      "capabilities": [
+        "speech.dead-air-edl",
+        "speech.false-start-cut",
+        "qa.cut-boundary"
+      ],
+      "install": {
+        "group": "video-use-skill",
+        "method": "skill-installer",
+        "source": "https://github.com/browser-use/video-use.git",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "video-shotcraft-skill",
+      "kind": "skill",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "video-shotcraft",
+      "capabilities": [
+        "visual.video-shotcraft.skill-invocation",
+        "render.video-shotcraft.remotion"
+      ],
+      "entrypoints": ["SKILL.md"],
+      "binding_probes": [
+        {
+          "entrypoint": "SKILL.md",
+          "producer_version": "c30d78438ef2e8c9cb2b620f19fecff13d982bd3",
+          "adapter_identity": {
+            "adapter_type": "SkillInvocationAdapter",
+            "approved_executor": "skill_invocation",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}"
+          ]
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "video-shotcraft",
+        "required_level": "bound"
+      },
+      "install": {
+        "group": "video-shotcraft-skill",
+        "method": "skill-installer",
+        "source": "https://github.com/Vincentwei1021/video-shotcraft.git",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "html-video-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "html-video",
+      "path_type": "directory",
+      "capabilities": ["visual.content-graph", "render.html-frame"],
+      "entrypoints": [
+        "packages/core/src/registry.ts",
+        "packages/adapter-hyperframes/src/render.ts",
+        "packages/adapter-remotion/src"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "packages/adapter-hyperframes/src/render.ts",
+          "producer_version": "c414ecc07f795add03807d5d9ce4baefd807cea2",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}"
+          ]
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "html-video",
+        "required_level": "bound"
+      },
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/nexu-io/html-video.git",
+        "destination": "html-video",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "video-shotcraft-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-direction",
+      "target": "video-shotcraft",
+      "path_type": "directory",
+      "capabilities": ["visual.shot-recipe", "visual.2_5d-camera"],
+      "entrypoints": ["references/shots", "demos", "assets/lib"],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/Vincentwei1021/video-shotcraft.git",
+        "destination": "video-shotcraft",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "official-video-acquisition",
+      "kind": "availability_any",
+      "required": false,
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": [
+        {
+          "id": "yt-dlp-python-module",
+          "kind": "python_module",
+          "target": "yt_dlp"
+        },
+        {
+          "id": "browser-capture-capability",
+          "kind": "environment_any",
+          "target": [
+            "HD_BROWSER_CAPTURE_AVAILABLE"
+          ]
+        }
+      ],
+      "capabilities": [
+        "official.video-acquisition"
+      ],
+      "selection": {
+        "component_kind": "official_material",
+        "binding_field": "media_type",
+        "equals": "video",
+        "required_level": "callable"
+      },
+      "install": {
+        "method": "python-package",
+        "package": "yt-dlp",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "pexels-provider",
+      "kind": "environment_any",
+      "required": false,
+      "stage": "visual-direction",
+      "target": ["PEXELS_API_KEY"],
+      "capabilities": [
+        "provider.pexels.stock-search",
+        "provider.pexels.stock-download"
+      ],
+      "selection": {
+        "component_kind": "external_stock",
+        "binding_field": "provider",
+        "equals": "pexels",
+        "required_level": "connected"
+      }
+    },
+    {
+      "id": "pixabay-provider",
+      "kind": "environment_any",
+      "required": false,
+      "stage": "visual-direction",
+      "target": ["PIXABAY_API_KEY"],
+      "capabilities": [
+        "provider.pixabay.stock-search",
+        "provider.pixabay.stock-download"
+      ],
+      "selection": {
+        "component_kind": "external_stock",
+        "binding_field": "provider",
+        "equals": "pixabay",
+        "required_level": "connected"
+      }
+    },
+    {
+      "id": "broll-loop-engineering-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-direction",
+      "target": "erduo-broll-loop-engineering",
+      "path_type": "directory",
+      "capabilities": ["qa.visual-canary", "qa.contact-sheet"],
+      "entrypoints": [
+        "erduo-broll-loop-engineering/scripts/create-production-profile.mjs",
+        "erduo-broll-loop-engineering/SKILL.md"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/erduo1998-cell/erduo-broll-loop-engineering.git",
+        "destination": "erduo-broll-loop-engineering",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "video-use-runtime",
+      "kind": "reference_path",
+      "required": true,
+      "stages": ["speech-cleanup", "edit-structure"],
+      "target": "video-use",
+      "path_type": "directory",
+      "capabilities": [
+        "speech.dead-air-edl",
+        "speech.false-start-cut",
+        "render.segment-fades",
+        "render.audio-master-clock",
+        "qa.cut-boundary"
+      ],
+      "entrypoints": [
+        {
+          "path": "helpers/render.py",
+          "smoke": ["{python}", "{entrypoint}", "--help"]
+        },
+        {
+          "path": "helpers/timeline_view.py",
+          "smoke": ["{python}", "{entrypoint}", "--help"]
+        },
+        {
+          "path": "helpers/pack_transcripts.py",
+          "smoke": ["{python}", "{entrypoint}", "--help"]
+        }
+      ],
+      "bindings": [
+        {
+          "stage": "speech-cleanup",
+          "target": "edit/hd/tools/speech_edit_v2.py",
+          "contains_all": ["VIDEO_USE_PACING_PROFILE", "_apply_video_use_pacing"],
+          "api": ["_apply_video_use_pacing"]
+        },
+        {
+          "stage": "edit-structure",
+          "target": "edit/hd/tools/speech_edit_v2.py",
+          "contains_all": ["VIDEO_USE_EDL_NAME", "_render_with_video_use"],
+          "api": ["_render_with_video_use"]
+        }
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/browser-use/video-use.git",
+        "destination": "video-use",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "video-autopilot-kit-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-direction",
+      "target": "video-autopilot-kit",
+      "path_type": "directory",
+      "capabilities": ["asset.semantic-score", "qa.fatigue-penalty"],
+      "entrypoints": [
+        "src/asset_selection.py",
+        "src/review_loop.py",
+        "src/media_delivery_qa.py",
+        "src/camera_transition_director.py"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/Hao0321/video-autopilot-kit.git",
+        "destination": "video-autopilot-kit",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "hyperframes-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "hyperframes",
+      "path_type": "directory",
+      "capabilities": ["render.html-motion", "render.svg-d3-three"],
+      "entrypoints": [
+        "README.md",
+        "packages/cli/package.json",
+        "packages/cli/src/cli.ts",
+        "node_modules/tsx/dist/cli.mjs"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/heygen-com/hyperframes.git",
+        "destination": "hyperframes",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "hyperframes-adapter",
+      "kind": "skill",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "hd-talking-head",
+      "capabilities": [
+        "render.notification-cascade",
+        "render.chatgpt-exchange"
+      ],
+      "entrypoints": [
+        "scripts/render_hyperframes_notification.cjs",
+        "scripts/render_hyperframes_chatgpt_exchange.cjs"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_hyperframes_notification.cjs",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}",
+            "--producer-version",
+            "{producer_version}",
+            "--runtime-root",
+            "{reference_root}/hyperframes",
+            "--runtime-revision",
+            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "--renderer-version",
+            "0.8.19"
+          ]
+        },
+        {
+          "entrypoint": "scripts/render_hyperframes_chatgpt_exchange.cjs",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}",
+            "--producer-version",
+            "{producer_version}",
+            "--runtime-root",
+            "{reference_root}/hyperframes",
+            "--runtime-revision",
+            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "--renderer-version",
+            "0.8.19"
+          ]
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "hyperframes",
+        "required_level": "bound"
+      },
+      "install": {
+        "group": "hyperframes-runtime",
+        "method": "git-clone",
+        "source": "https://github.com/heygen-com/hyperframes.git",
+        "destination": "hyperframes",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "local-canonical-adapter",
+      "kind": "skill",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "hd-talking-head",
+      "capabilities": [
+        "render.process-relations",
+        "render.viewpoint-comparison",
+        "render.evidence-source",
+        "render.timeline-progression",
+        "render.quote-thesis-artword"
+      ],
+      "entrypoints": [
+        "scripts/local_canonical_renderer.cjs",
+        "scripts/local_canonical_adapter.py",
+        "package.json"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/local_canonical_renderer.cjs",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}",
+            "--producer-version",
+            "{producer_version}",
+            "--runtime-root",
+            "{reference_root}/hyperframes",
+            "--runtime-revision",
+            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "--renderer-version",
+            "0.8.19"
+          ]
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "hd-talking-head-local-canonical",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "remotion-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-canary",
+      "target": "remotion",
+      "path_type": "directory",
+      "capabilities": ["render.react-frame", "render.2_5d-ui"],
+      "entrypoints": ["packages/renderer", "packages/bundler", "packages/cli"],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/remotion-dev/remotion.git",
+        "destination": "remotion",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "openmontage-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-assets",
+      "target": "OpenMontage",
+      "path_type": "directory",
+      "capabilities": ["provider.capability-registry", "provider.grok-imagine-video"],
+      "entrypoints": [
+        "tools/tool_registry.py",
+        "tools/video/grok_video.py",
+        "skills/creative/prompting/grok-prompting.md"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/calesthio/OpenMontage.git",
+        "destination": "OpenMontage",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "generative-media-skills-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-assets",
+      "target": "Generative-Media-Skills",
+      "path_type": "directory",
+      "capabilities": ["provider.prompt-schema", "provider.generation-lifecycle"],
+      "entrypoints": [
+        "core/media/generate-video.sh",
+        "core/media/image-to-video.sh",
+        "schema_data.json"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/SamurAIGPT/Generative-Media-Skills.git",
+        "destination": "Generative-Media-Skills",
+        "approval_required": true
+      }
+    },
+    {
+      "id": "open-generative-ai-reference",
+      "kind": "reference_path",
+      "required": false,
+      "stage": "visual-assets",
+      "target": "Open-Generative-AI",
+      "path_type": "directory",
+      "capabilities": ["provider.model-catalog", "provider.async-generation-dag"],
+      "entrypoints": [
+        "packages/studio/src/models.js",
+        "packages/studio/src/videoToolCapabilities.js",
+        "packages/studio/src/videoWorkflows.js",
+        "packages/studio/src/modelCapabilities.js",
+        "packages/studio/src/imageInputContracts.js",
+        "packages/studio/src/utils/generationLifecycle.js"
+      ],
+      "install": {
+        "method": "git-clone",
+        "source": "https://github.com/Anil-matcha/Open-Generative-AI.git",
+        "destination": "Open-Generative-AI",
+        "approval_required": true
+      }
+    }
+  ],
+  "dynamic_checks": [
+    {
+      "id": "image-generation-capability",
+      "required": true,
+      "stage": "job-start",
+      "confirmation": "every-new-job",
+      "fields": [
+        "provider",
+        "exact_model_id",
+        "endpoint_label",
+        "account_connection_available",
+        "reference_image_support",
+        "native_9_16",
+        "quota_and_concurrency"
+      ]
+    },
+    {
+      "id": "video-generation-capability",
+      "required": false,
+      "stage": "visual-direction",
+      "required_when": "approved ShotRecipe v2 contains ai_generated video or animation",
+      "confirmation": "every-new-job",
+      "fields": [
+        "provider",
+        "exact_model_id",
+        "endpoint_label",
+        "account_connection_available",
+        "reference_image_support",
+        "native_9_16",
+        "silent_output",
+        "quota_and_concurrency"
+      ]
+    },
+    {
+      "id": "official-source-access",
+      "required": false,
+      "stage": "visual-direction",
+      "required_when": "approved ShotRecipe v2 contains official_material",
+      "confirmation": "every-new-job",
+      "fields": [
+        "browser_or_source_connector_available",
+        "download_capability",
+        "source_capture_capability"
+      ]
+    }
+  ]
+}

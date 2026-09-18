@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "tokens_only",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 14,
+        "duration_min_sec": 14,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "render_contract": {
+        "composition_id": "notification-cascade",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/hyperframes/notification-cascade/sample/notification-cascade-9x16.mp4",
+      "sample_sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6",
+      "semantic_families": [
+        "milestone_notifications",
+        "progress_sequence",
+        "delivery_checkpoints"
+      ],
+      "source_entrypoint": "assets/verified-templates/hyperframes/notification-cascade/source/notification-cascade.html",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/notification-cascade.html",
+          "sha256": "5a08229506f32f257b60710c69695175b1ccbc56f30df289a0cc0009fa233258"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/TEMPLATE.md",
+          "sha256": "cd191d1a16bcc9fe6e6992880892231a5dcd37453b5bee0c7464c0e9d9003ebe"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/registry-item.json",
+          "sha256": "11476a86286f88a1c7b71c026007c4d2bfe8d17b2ddc48dfb4891de39dfd85a5"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/assets/desk-backdrop.jpg",
+          "sha256": "b84738ef758732c7169b621d812884f22a8ec402fbc1a8a5b4dc4cad081b0c35"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/assets/hyperframes-logo-white.svg",
+          "sha256": "f9f942c43b465616c3af2fb8b07daf1cc05a4776903bbb27beb2bb608060e6c7"
+        }
+      ],
+      "source_sha256": "5a08229506f32f257b60710c69695175b1ccbc56f30df289a0cc0009fa233258",
+      "template_id": "hyperframes/notification-cascade",
+      "template_origin": "verified_third_party",
+      "template_version": "0.8.19",
+      "upstream": {
+        "commit": "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+        "project": "hyperframes",
+        "repository": "https://github.com/heygen-com/hyperframes.git"
+      },
+      "verification_id": "0949b1ff8464b0fa7b70e56cfb8e09018aad0c41f432ca9fd6611cbd21928bf1",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "e383b5811e13806768d021c0dc0a26fa588d5463f1523e7f5c3cdb02af3c38ed",
+            "timestamp_sec": 2.5416666666666665
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "fd2da239233ec4502b1f79451dd2808f093e2a63723fcf62937e45388566eb69",
+            "timestamp_sec": 8.75
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "fd51fd55f691a6b5cfc4f6488a8b36e7e492e15da092238a0b6604a3fd87e325",
+            "timestamp_sec": 12.791666666666666
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored-sample visual inspection candidate",
+        "status": "approved"
+      }
+    }
+  ]
+}

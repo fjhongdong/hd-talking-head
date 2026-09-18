@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 1129757,
+    "component_id": "viewpoint-comparison",
+    "error_code": null,
+    "input_sha256": "d5211a9600ea84333f164b97242b1da977afd4c6726e231afaa2ddfd74609aea",
+    "invocation_evidence": {
+      "adapter_id": "local-canonical-viewpoint-comparison-v1",
+      "approved_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/local_canonical_renderer.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/local-viewpoint-comparison-qualification-2/.staging/viewpoint-comparison-r1.7b78c0077a97549b4e0c0cf49a053718/output.mp4",
+        "--runtime-root",
+        "$PATH[7]",
+        "--browser",
+        "$PATH[9]",
+        "--skill-root",
+        "$PATH[11]",
+        "--registry-path",
+        "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/source-registry.json",
+        "--registry-sha256",
+        "6f797dd04abe79dc57c9a295cd9124ef06c96403f3e80ae780e68198881240ec",
+        "--renderer-version",
+        "0.8.19"
+      ],
+      "brief_sha256": "68716fda1efe00e1269b468c4a632bd6a401e20062a699f9ae2b1f012bb2dee2",
+      "dependency_id": "hd-talking-head-local-canonical",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "exit_code": 0,
+      "invocation_id": "process-fbefb341d05400b99d21eb7d5b8c0147",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+      "output_job_path": "08-visual-assets/components/local-viewpoint-comparison-qualification-2/viewpoint-comparison-r1.mp4",
+      "output_sha256": "1250f003738f66e7ac32810ed8ccf5111b37215888da03782cae84ce81bf7ad3",
+      "pid": 31900,
+      "primary_renderer": "HyperFrames",
+      "probe_id": "native-hyperframes-chatgpt-exchange-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/source-registry.json",
+        "sha256": "6f797dd04abe79dc57c9a295cd9124ef06c96403f3e80ae780e68198881240ec"
+      },
+      "renderer_version": "0.8.19",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 233,
+      "stdout_sha256": "d7c329c143906245a7aed59b39bdf822f467aad2b563e7adc4792360f5a8c74c",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "local-viewpoint-comparison-fixture-2",
+    "job_path": "08-visual-assets/components/local-viewpoint-comparison-qualification-2/viewpoint-comparison-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 3.0,
+      "fps": 24.0,
+      "frame_count": 72,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "1250f003738f66e7ac32810ed8ccf5111b37215888da03782cae84ce81bf7ad3",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 72,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 210,
+        "left": 64,
+        "right": 64,
+        "top": 96
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 210,
+      "left": 64,
+      "right": 64,
+      "top": 96
+    },
+    "schema_version": 1,
+    "segment_id": "local-viewpoint-comparison-qualification-2",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

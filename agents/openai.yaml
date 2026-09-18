@@ -1,0 +1,10 @@
+interface:
+  display_name: "HD 口播工作流"
+  short_description: "仅需原始口播视频和文案，逐阶段确认完成剪辑、视觉、字幕、封面与交付"
+  icon_small: "./assets/icon-small.svg"
+  icon_large: "./assets/icon-large.png"
+  brand_color: "#174B6D"
+  default_prompt: "使用 $hd-talking-head 处理这个口播视频和文案，每个阶段等我确认。"
+
+policy:
+  allow_implicit_invocation: true

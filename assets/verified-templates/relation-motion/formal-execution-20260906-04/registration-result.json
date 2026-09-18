@@ -1,0 +1,17 @@
+{
+  "status": "registered_technical_qualification",
+  "human_approved": false,
+  "release_published": false,
+  "template_id": "hd-talking-head/relation-motion",
+  "verification_id": "ed95e3d53d3bb92d4febd91ca5ccdaa96531fb5c62f2c4f87334c31b118ab8db",
+  "registry": "references/verified-template-registry.json",
+  "registry_verification": {"verified_count": 9, "failures": []},
+  "visual_review": {
+    "cases": [1, 2],
+    "component_frames": [10, 19, 30, 60, 72, 119],
+    "composition_frames": [72, 114, 119],
+    "composition_files": ["composition-single-exit-1.mp4", "composition-single-exit-2.mp4"],
+    "observations": ["Sources visible before connections; hub absent during partial connection stage", "Distinct titles and all source/hub labels match each brief", "No observed text clipping or disconnected completed edges", "Avatar shows head and shoulders outside graph content", "Component holds final state; external compositor performs single fade to same-time A-roll"]
+  },
+  "limits": ["Two to four short source labels with one hub; not arbitrary graph layout", "Five-second qualification samples; use declared duration and text limits", "Not a human-approved canary for any production Job", "Whole Skill release integrity and other semantic families remain unfinished"]
+}

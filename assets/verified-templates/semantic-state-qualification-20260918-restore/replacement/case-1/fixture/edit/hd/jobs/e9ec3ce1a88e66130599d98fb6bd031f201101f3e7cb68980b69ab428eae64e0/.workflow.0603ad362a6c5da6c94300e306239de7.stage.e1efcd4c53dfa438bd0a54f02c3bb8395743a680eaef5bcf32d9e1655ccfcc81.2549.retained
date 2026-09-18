@@ -1,0 +1,115 @@
+{
+  "inputs": {
+    "script": {
+      "bytes": 69,
+      "path": "synthetic-script.md",
+      "sha256": "b130a43d77b400e5f0e99e1935b9523db498b8b7f7d8b747b1d9acbd88eaa803"
+    },
+    "video": {
+      "bytes": 100367,
+      "path": "synthetic-source.mp4",
+      "sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29"
+    }
+  },
+  "job_id": "e9ec3ce1a88e66130599d98fb6bd031f201101f3e7cb68980b69ab428eae64e0",
+  "revision": 0,
+  "stages": {
+    "content_analysis": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "cover": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "cover_direction": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "delivery": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "edit_structure": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "inspect": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "preview": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "speech_cleanup": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "subtitles": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_assets": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_canary": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_direction": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    }
+  },
+  "version": 2
+}

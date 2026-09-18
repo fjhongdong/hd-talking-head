@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 14084553,
+    "component_id": "notification-cascade",
+    "error_code": null,
+    "input_sha256": "09f687698991be4b37c536bb5910f0760dedcdace6ea5f7236e1daa2d6caff60",
+    "invocation_evidence": {
+      "adapter_id": "native-hyperframes-notification-v1",
+      "approved_entrypoint": "scripts/render_hyperframes_notification.cjs",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/render_hyperframes_notification.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/hyperframes-notification-qualification-1/.staging/notification-cascade-r1.ddd77337e3271876f9fb9704161e4cbb/output.mp4",
+        "--skill-root",
+        "$PATH[7]",
+        "--runtime-root",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--registry-path",
+        "assets/verified-templates/hyperframes/notification-cascade/qualification/source-registry.json",
+        "--registry-sha256",
+        "55d57dbd72c2d2b2dec68cee3dac8641b0513923e28729a033ee4d7eeb9b56e3",
+        "--renderer-version",
+        "0.8.19"
+      ],
+      "brief_sha256": "b9c6ce3e3f5dfeb46253a701efd2b4aa62b289d447ae37200a321f59eb9bd3a7",
+      "dependency_id": "hyperframes",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "4d3c19afc3b320481cd5bdd1610854b249f755f5c0568190c84bdac05602211f",
+      "exit_code": 0,
+      "invocation_id": "process-34badd7175164bb6c5246b8b545ae558",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+      "output_job_path": "08-visual-assets/components/hyperframes-notification-qualification-1/notification-cascade-r1.mp4",
+      "output_sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6",
+      "pid": 33139,
+      "primary_renderer": "HyperFrames",
+      "probe_id": "native-hyperframes-notification-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/source-registry.json",
+        "sha256": "55d57dbd72c2d2b2dec68cee3dac8641b0513923e28729a033ee4d7eeb9b56e3"
+      },
+      "renderer_version": "0.8.19",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 265,
+      "stdout_sha256": "aea9cd3ada6fbe5d6e0bf854e9bfc4a8e07b6856400da62666f7baa263505236",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "hyperframes-notification-fixture-1",
+    "job_path": "08-visual-assets/components/hyperframes-notification-qualification-1/notification-cascade-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 14.0,
+      "fps": 24.0,
+      "frame_count": 336,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 336,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "hyperframes-notification-qualification-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

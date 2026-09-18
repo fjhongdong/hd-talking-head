@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-07T00:04:02+08:00",
+  "approval_reference": "thread-019feb3b-4b30-7672-8468-c679ff81e598-user-confirmed-rendered-design",
+  "family": "delay",
+  "template_id": "hd-talking-head/semantic-state-delay",
+  "seed_manifest_sha256": "93a613a9214a29d7a6b5361e5f5c7310495a9ead7bc97364dc54184f555588a1",
+  "brief_sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab",
+  "sample_sha256": "5699b7d64c7a54d4a80be81cd8c3a86beb96c85aa71ef6dea0bd5a0245ac1934",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

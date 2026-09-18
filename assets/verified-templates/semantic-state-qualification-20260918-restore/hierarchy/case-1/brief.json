@@ -1,0 +1,86 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "layer-1"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "reveal_layers",
+        "start_frame": 20,
+        "subject_ids": [
+          "layer-2"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "resolve",
+        "start_frame": 40,
+        "subject_ids": [
+          "layer-1",
+          "layer-2"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-hierarchy-1",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "hierarchy",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "AI 应用依次展开为工具层和流程层两层能力",
+    "subjects": [
+      {
+        "final_state": "会使用工具",
+        "id": "layer-1",
+        "initial_state": "未展开",
+        "label": "工具层",
+        "preserve": false
+      },
+      {
+        "final_state": "会重构流程",
+        "id": "layer-2",
+        "initial_state": "未展开",
+        "label": "流程层",
+        "preserve": false
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "layer_ids": [
+      "layer-1",
+      "layer-2"
+    ]
+  },
+  "schema_version": 1,
+  "title": "能力分层"
+}

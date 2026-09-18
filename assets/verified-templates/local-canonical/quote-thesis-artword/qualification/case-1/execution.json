@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 1137394,
+    "component_id": "quote-thesis-artword",
+    "error_code": null,
+    "input_sha256": "1311facfbed1ddf887d9cbf0bd5937243eed42c135c52f71e79d2057b5719b78",
+    "invocation_evidence": {
+      "adapter_id": "local-canonical-quote-thesis-artword-v1",
+      "approved_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/local_canonical_renderer.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/local-quote-thesis-artword-qualification-1/.staging/quote-thesis-artword-r1.5eff130ded3b1782478f9efd62edabd8/output.mp4",
+        "--runtime-root",
+        "$PATH[7]",
+        "--browser",
+        "$PATH[9]",
+        "--skill-root",
+        "$PATH[11]",
+        "--registry-path",
+        "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/source-registry.json",
+        "--registry-sha256",
+        "ea2ada5176be0f0cc29c7aff501623ad5bf70a0276959467bb584a36a97dbc7e",
+        "--renderer-version",
+        "0.8.19"
+      ],
+      "brief_sha256": "a06318849950e1f4c8336d3b466553f6237183e757e137da6d44d3ded39198a1",
+      "dependency_id": "hd-talking-head-local-canonical",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "exit_code": 0,
+      "invocation_id": "process-867294014fabc69ba0fb008bd286a161",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+      "output_job_path": "08-visual-assets/components/local-quote-thesis-artword-qualification-1/quote-thesis-artword-r1.mp4",
+      "output_sha256": "8078de22a1ebd006b22a0f749b1f3dd5f7d38e2407fea9eccf108e3feb6adefe",
+      "pid": 32625,
+      "primary_renderer": "HyperFrames",
+      "probe_id": "native-hyperframes-chatgpt-exchange-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/source-registry.json",
+        "sha256": "ea2ada5176be0f0cc29c7aff501623ad5bf70a0276959467bb584a36a97dbc7e"
+      },
+      "renderer_version": "0.8.19",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 233,
+      "stdout_sha256": "0fcdb7922c59c0f330c639c162adaa345faf7a470b5905410ace644b95f8f6b1",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "local-quote-thesis-artword-fixture-1",
+    "job_path": "08-visual-assets/components/local-quote-thesis-artword-qualification-1/quote-thesis-artword-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 3.0,
+      "fps": 24.0,
+      "frame_count": 72,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "8078de22a1ebd006b22a0f749b1f3dd5f7d38e2407fea9eccf108e3feb6adefe",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 72,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 210,
+        "left": 64,
+        "right": 64,
+        "top": 96
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 210,
+      "left": 64,
+      "right": 64,
+      "top": 96
+    },
+    "schema_version": 1,
+    "segment_id": "local-quote-thesis-artword-qualification-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

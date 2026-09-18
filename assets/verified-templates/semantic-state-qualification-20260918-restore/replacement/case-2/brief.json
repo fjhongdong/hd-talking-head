@@ -1,0 +1,107 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "change",
+          "context-layout",
+          "context-rules",
+          "context-handoff"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "replace",
+        "start_frame": 20,
+        "subject_ids": [
+          "change"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "compare",
+        "start_frame": 40,
+        "subject_ids": [
+          "change",
+          "context-layout",
+          "context-rules",
+          "context-handoff"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-replacement-2",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "replacement",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "录入工具从人工录入更替为 AI 助手，厂房布局、业务规则和协作交接保持不变",
+    "subjects": [
+      {
+        "final_state": "AI 助手",
+        "id": "change",
+        "initial_state": "人工录入",
+        "label": "录入工具",
+        "preserve": false
+      },
+      {
+        "final_state": "保持不变",
+        "id": "context-layout",
+        "initial_state": "保持不变",
+        "label": "厂房布局",
+        "preserve": true
+      },
+      {
+        "final_state": "保持不变",
+        "id": "context-rules",
+        "initial_state": "保持不变",
+        "label": "业务规则",
+        "preserve": true
+      },
+      {
+        "final_state": "保持不变",
+        "id": "context-handoff",
+        "initial_state": "保持不变",
+        "label": "协作交接",
+        "preserve": true
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "change_id": "change",
+    "context_ids": [
+      "context-layout",
+      "context-rules",
+      "context-handoff"
+    ]
+  },
+  "schema_version": 1,
+  "title": "工具更替"
+}

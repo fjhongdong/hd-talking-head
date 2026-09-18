@@ -1,0 +1,170 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "fcc8a1c51f2e02e1722a662a1892551414a93e0b2a56c26f6869bef1b5a74065",
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "component_id": "semantic-state-feedback",
+      "dependency_id": "hd-talking-head-semantic-state",
+      "entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+          "scripts/semantic_state_renderer_bundle.py"
+        ],
+        "exit_code": null,
+        "semantic_motion": {
+          "check_frames": {
+            "action_completed": {
+              "phase-1": 20,
+              "phase-2": 40,
+              "phase-3": 60
+            },
+            "before_exit": 107,
+            "initial": 0,
+            "last_visible": 119,
+            "next_boundary": 120,
+            "read_start": 60
+          },
+          "content_analysis_sha256": "8e976b29a228262c0ddef852ca2a6fcbecfb63df562eb3c7cc1b9c28a1f138dc",
+          "execution_status": "planning_only",
+          "plan": {
+            "actions": [
+              {
+                "depends_on": [],
+                "end_frame": 20,
+                "id": "phase-1",
+                "operation": "establish",
+                "start_frame": 0,
+                "subject_ids": [
+                  "source"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-1"
+                ],
+                "end_frame": 40,
+                "id": "phase-2",
+                "operation": "produce",
+                "start_frame": 20,
+                "subject_ids": [
+                  "result"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-2"
+                ],
+                "end_frame": 60,
+                "id": "phase-3",
+                "operation": "feedback_return",
+                "start_frame": 40,
+                "subject_ids": [
+                  "source"
+                ]
+              }
+            ],
+            "content_item_id": "qualification-feedback-2",
+            "duration_frames": 120,
+            "exit_window": {
+              "end_frame": 120,
+              "start_frame": 108
+            },
+            "family": "feedback",
+            "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+            "read_window": {
+              "end_frame": 108,
+              "minimum_frames": 24,
+              "start_frame": 60
+            },
+            "source_text": "方案交给用户，真实反馈返回并改进方案",
+            "subjects": [
+              {
+                "final_state": "改进版",
+                "id": "source",
+                "initial_state": "第一版",
+                "label": "方案",
+                "preserve": false
+              },
+              {
+                "final_state": "反馈结果",
+                "id": "result",
+                "initial_state": "尚未验证",
+                "label": "用户",
+                "preserve": false
+              }
+            ],
+            "version": 1
+          }
+        },
+        "status": "planned",
+        "template_request": {
+          "information_units": 2,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "feedback"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "SemanticState",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 120,
+        "layout_slot": "full_frame",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "1.0.0",
+      "sample_sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67",
+      "semantic_families": [
+        "feedback"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-feedback",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "verification_id": "ec2f8b5e763682ef147e0f4acf8de0a4d5fe58e67aea21acecccdd09f8f613a4"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "semantic-state-feedback"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "synthetic-semantic-feedback-2",
+  "strategy_revision": 1
+}

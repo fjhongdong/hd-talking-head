@@ -1,0 +1,91 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "553241ffad0415787e901634a76026265caddac4f4688fcc32fde9add793b9c3",
+      "capacity": {
+        "max_units": 8,
+        "min_units": 3
+      },
+      "component_id": "chart",
+      "dependency_id": "html-video",
+      "entrypoint": "scripts/render_data_rollup.cjs",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "node",
+          "scripts/render_data_rollup.cjs"
+        ],
+        "exit_code": null,
+        "status": "planned",
+        "template_request": {
+          "information_units": 3,
+          "numeric_scale": "linear",
+          "numeric_values": [
+            2,
+            5,
+            9
+          ],
+          "semantic_family": "bar_chart"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "Remotion",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 96,
+        "layout_slot": "main",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "4.0.520",
+      "sample_sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f",
+      "semantic_families": [
+        "bar_chart",
+        "numeric_comparison",
+        "data_summary"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx",
+      "source_sha256": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15",
+      "template_id": "html-video/frame-data-rollup",
+      "template_origin": "verified_third_party",
+      "template_version": "0.1.0",
+      "verification_id": "6fcb4e69d4ddf53502282ddaad9f4e4d069a735f528ffa0495f9e27b207bfd0f"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "chart"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "data-rollup-qualification-1",
+  "strategy_revision": 1
+}

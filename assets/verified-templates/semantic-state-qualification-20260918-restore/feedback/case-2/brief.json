@@ -1,0 +1,83 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "source"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "produce",
+        "start_frame": 20,
+        "subject_ids": [
+          "result"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "feedback_return",
+        "start_frame": 40,
+        "subject_ids": [
+          "source"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-feedback-2",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "feedback",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "方案交给用户，真实反馈返回并改进方案",
+    "subjects": [
+      {
+        "final_state": "改进版",
+        "id": "source",
+        "initial_state": "第一版",
+        "label": "方案",
+        "preserve": false
+      },
+      {
+        "final_state": "反馈结果",
+        "id": "result",
+        "initial_state": "尚未验证",
+        "label": "用户",
+        "preserve": false
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "result_id": "result",
+    "source_id": "source"
+  },
+  "schema_version": 1,
+  "title": "用户反馈"
+}

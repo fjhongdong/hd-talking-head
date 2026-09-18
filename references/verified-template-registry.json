@@ -1,0 +1,2793 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 4.1,
+        "duration_min_sec": 4,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 8,
+        "min_units": 3
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/brief.json",
+              "sha256": "553241ffad0415787e901634a76026265caddac4f4688fcc32fde9add793b9c3"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "1a308634b1b3534a2a543fd4ee9902fa4992a3341b6a944ed43b377969050a2f",
+                "timestamp_sec": 0.5
+              },
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "295591b82a9cccd34c4e1bc98895928e8420a79432f568806985e441b6a95882",
+                "timestamp_sec": 2.5
+              },
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "a6fd5b951e890c5c313f08812eeba88af4e5a916bed8f6bb605c9e3fbf7d620f",
+                "timestamp_sec": 3.9583333333333335
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/execution.json",
+              "sha256": "57b5e32baa18eec566b2b881d687194e6f0dc26017eddaefdb567466408b914b"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/recipe.json",
+              "sha256": "69cb37c0519e5aa3418e15e9085258fbc3c04e792fb311c67b91f7c1fa1f1abb"
+            },
+            "sample": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/sample.mp4",
+              "sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/brief.json",
+              "sha256": "c7fb6ca2ef32d79d2eecf8b06c20b8686f058109e61fe71c25496c5e69476874"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "3b8835aa61980e62dedc43723d70d648931982325fa7c28b4cd4f66210351c3e",
+                "timestamp_sec": 0.5
+              },
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "4ed8d0f8f69be4ba435848330e06d4d94fa442508776619e4cbe451c211b6847",
+                "timestamp_sec": 2.5
+              },
+              {
+                "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "a5de78ee00ba9d6e575aadb94913bd25f85fc1c1d59452ca5d0b8003dbdb3c08",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/execution.json",
+              "sha256": "f3950a644c3ac81d9f0600a57b2aa1ec2be2e1b7f3e66c5e25fc5b11840d0ca7"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/recipe.json",
+              "sha256": "94298029596d29c51cbf1d1fb2dd709380c182b850baeae1ac6b417f0841d1c9"
+            },
+            "sample": {
+              "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/case-2/sample.mp4",
+              "sha256": "f4a3ced6a12acc351dc20f3049a81ac3804ba6a72b0f952c703147bc7ce9dcb3"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/items",
+          "/props/data/unit"
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/source-registry.json",
+          "sha256": "742dc1f2ef09992a1f5e1b0c0229a919a11c12136aa445263c4e1efd909e9ee7"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "DataRollup",
+        "engine": "remotion",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/html-video/frame-data-rollup/sample/data-rollup-9x16.mp4",
+      "sample_sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f",
+      "semantic_families": [
+        "bar_chart",
+        "numeric_comparison",
+        "data_summary"
+      ],
+      "source_entrypoint": "assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx",
+          "sha256": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15"
+        },
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/Root.tsx",
+          "sha256": "613d7be4f5fe24f2f15280791af69fe871ac9a365ff68ff5d4a46b6e9a0d5b15"
+        },
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/entry.ts",
+          "sha256": "a70203d7cd74c6bf063461f10a968e4ceb796dd8f181f27416c8469687c92268"
+        }
+      ],
+      "source_sha256": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15",
+      "template_id": "html-video/frame-data-rollup",
+      "template_origin": "verified_third_party",
+      "template_version": "0.1.0",
+      "upstream": {
+        "commit": "c414ecc07f795add03807d5d9ce4baefd807cea2",
+        "project": "html-video",
+        "repository": "https://github.com/nexu-io/html-video.git"
+      },
+      "verification_id": "55fd5842ee150d407fc7b0b434a4fd75071285e455d2fa7b4e30aa8d0199cd4c",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "1a308634b1b3534a2a543fd4ee9902fa4992a3341b6a944ed43b377969050a2f",
+            "timestamp_sec": 0.5
+          },
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "295591b82a9cccd34c4e1bc98895928e8420a79432f568806985e441b6a95882",
+            "timestamp_sec": 2.5
+          },
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "af9a187e3640d1592522dcdc7adacc269f0af5fc97ed7d697df2c7bd0c019e9f",
+            "timestamp_sec": 3.8333333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex automated technical requalification; visual inspection required before promotion",
+        "status": "approved"
+      }
+    },
+    {
+      "adaptation_level": "tokens_only",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 14,
+        "duration_min_sec": 14,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/brief.json",
+              "sha256": "b9c6ce3e3f5dfeb46253a701efd2b4aa62b289d447ae37200a321f59eb9bd3a7"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "e383b5811e13806768d021c0dc0a26fa588d5463f1523e7f5c3cdb02af3c38ed",
+                "timestamp_sec": 2.5416666666666665
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "fd2da239233ec4502b1f79451dd2808f093e2a63723fcf62937e45388566eb69",
+                "timestamp_sec": 8.75
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "fd51fd55f691a6b5cfc4f6488a8b36e7e492e15da092238a0b6604a3fd87e325",
+                "timestamp_sec": 12.791666666666666
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/execution.json",
+              "sha256": "30d01d2c810a67561b06cff929550ba74c08ee34783d2b843008629daab14fdd"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/recipe.json",
+              "sha256": "47332de3160355d6d9bbc5c20e44fe53a0bd3bc92e2981406843d5a339b67ca9"
+            },
+            "sample": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-1/sample.mp4",
+              "sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/brief.json",
+              "sha256": "a61187a9752d20e96687c9661b02939d9168a427c87000f948ee95abcce91ad0"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "e9a5c636aed5f179ecdb881cc362334dc55e93e7b56dea679d5e754a6f8b9979",
+                "timestamp_sec": 2.5416666666666665
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "446a2aa05cfaeeacd0aecbffe891a00fd885dd8adf888594d07823b08d9a1ed0",
+                "timestamp_sec": 8.75
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "3f70af090c17ff311d2e4967f85c35d22a2ec99b38439fea2983b77e3867ecc2",
+                "timestamp_sec": 12.791666666666666
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/execution.json",
+              "sha256": "f4b7889a70267f9d6f9ce5bd7a0e1790bd1994e3d9afc83286c277e6ebd14090"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/recipe.json",
+              "sha256": "18c0cca2621dde3d62d5d332c5c74d1779918ed07d4ddd2ec93b0d970fb137a0"
+            },
+            "sample": {
+              "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/case-2/sample.mp4",
+              "sha256": "9dabe016b70642a66684a3a44d3619e7e968fe925caa096fa86dfa5c0dcd3ff4"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/notifTitle",
+          "/props/data/messages",
+          "/props/data/appName",
+          "/props/data/headlineTop",
+          "/props/data/headlineAccent",
+          "/props/data/footerText",
+          "/props/data/brandLogo"
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored real-render technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/qualification/source-registry.json",
+          "sha256": "55d57dbd72c2d2b2dec68cee3dac8641b0513923e28729a033ee4d7eeb9b56e3"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "notification-cascade",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/hyperframes/notification-cascade/sample/notification-cascade-9x16.mp4",
+      "sample_sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6",
+      "semantic_families": [
+        "milestone_notifications",
+        "progress_sequence",
+        "delivery_checkpoints"
+      ],
+      "source_entrypoint": "assets/verified-templates/hyperframes/notification-cascade/source/notification-cascade.html",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/notification-cascade.html",
+          "sha256": "5a08229506f32f257b60710c69695175b1ccbc56f30df289a0cc0009fa233258"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/TEMPLATE.md",
+          "sha256": "cd191d1a16bcc9fe6e6992880892231a5dcd37453b5bee0c7464c0e9d9003ebe"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/registry-item.json",
+          "sha256": "11476a86286f88a1c7b71c026007c4d2bfe8d17b2ddc48dfb4891de39dfd85a5"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/assets/desk-backdrop.jpg",
+          "sha256": "b84738ef758732c7169b621d812884f22a8ec402fbc1a8a5b4dc4cad081b0c35"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/notification-cascade/source/assets/hyperframes-logo-white.svg",
+          "sha256": "f9f942c43b465616c3af2fb8b07daf1cc05a4776903bbb27beb2bb608060e6c7"
+        }
+      ],
+      "source_sha256": "5a08229506f32f257b60710c69695175b1ccbc56f30df289a0cc0009fa233258",
+      "template_id": "hyperframes/notification-cascade",
+      "template_origin": "verified_third_party",
+      "template_version": "0.8.19",
+      "upstream": {
+        "commit": "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+        "project": "hyperframes",
+        "repository": "https://github.com/heygen-com/hyperframes.git"
+      },
+      "verification_id": "f9cfa980d0c6fdd4f6c53908fb9c7f0594dbff6ce340463ed774a12c996ee9d1",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "e383b5811e13806768d021c0dc0a26fa588d5463f1523e7f5c3cdb02af3c38ed",
+            "timestamp_sec": 2.5416666666666665
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "fd2da239233ec4502b1f79451dd2808f093e2a63723fcf62937e45388566eb69",
+            "timestamp_sec": 8.75
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/notification-cascade/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "fd51fd55f691a6b5cfc4f6488a8b36e7e492e15da092238a0b6604a3fd87e325",
+            "timestamp_sec": 12.791666666666666
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored-sample visual inspection candidate",
+        "status": "approved"
+      }
+    },
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 14.92,
+        "duration_min_sec": 14.9,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/brief.json",
+              "sha256": "7585975318168c981c754f359cf513ca8782e2cfe22462ca818e06e90d4db85d"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "6897fd471abcc51517d8e64d051017781424fa7b233df2776c47291f81be5547",
+                "timestamp_sec": 1.7916666666666667
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "8327e69200ff5b9af148a89b9004b5efa7aadfef0400bcd40255960dff72df6e",
+                "timestamp_sec": 12.208333333333334
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "0973c338d9716b6310bd4ebd80145ed20c584099c7e59b57f0936e6731c358a8",
+                "timestamp_sec": 14.416666666666666
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/execution.json",
+              "sha256": "8a5dab8fd5dc5c289bee21751c0488b108c611d27b348e0de6013e0520867953"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/recipe.json",
+              "sha256": "79e8f71c943a27cff1a2d03f77f8cc0facf8bbaf79f092c397f83276097bce45"
+            },
+            "sample": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/sample.mp4",
+              "sha256": "a2eb9d757b067f94d3cee179ee185888c9dd4498b5d2628dabf397a544b25bf7"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/brief.json",
+              "sha256": "38f8760ea6e5f0b0806a67b9695b2d7082d476d0ddad9060b4a5d6c909cc384c"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "7d2d0393011951301ac4bfa0474748ca6c3476445f262b95a04ef54ac3b3fa9d",
+                "timestamp_sec": 1.7916666666666667
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "a9d9bcaea1f751d24e11b6d85cbf9555cd0e0a746ba64b99393867628399b877",
+                "timestamp_sec": 12.208333333333334
+              },
+              {
+                "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "17e2b64cdf0cab9bcfc4ac1f453f3c119a12bd2b756b903a8cd308ba714a1cee",
+                "timestamp_sec": 14.416666666666666
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/execution.json",
+              "sha256": "6530047d7cebdd374a36756c2c4f999f8e0d9981dd642d18969474cda96afa8e"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/recipe.json",
+              "sha256": "ebdfe6c1ec3fbe594113a298cb8cbb5e685b4cdf890ad3dab709dd8ca60775e2"
+            },
+            "sample": {
+              "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-2/sample.mp4",
+              "sha256": "e8e13551597ddac4e4d870f6820f6eede9cfd5732334badd1c29a7efe00851c5"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/prompt",
+          "/props/data/intro1",
+          "/props/data/intro2",
+          "/props/data/tableHeadUse",
+          "/props/data/tableHeadTool",
+          "/props/data/tableHeadWhy",
+          "/props/data/row1Use",
+          "/props/data/row1Tool",
+          "/props/data/row1Why",
+          "/props/data/row1Chip",
+          "/props/data/row2Use",
+          "/props/data/row2Tool",
+          "/props/data/row2Why",
+          "/props/data/row2Chip",
+          "/props/data/row3Use",
+          "/props/data/row3Tool",
+          "/props/data/row3Why",
+          "/props/data/row3Chip",
+          "/props/data/row4Use",
+          "/props/data/row4Tool",
+          "/props/data/row4Why",
+          "/props/data/row4Chip"
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored real-render technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/source-registry.json",
+          "sha256": "81e4aec744f2a12b399793bcda63176a1576bddeb507e46eaeb8d5c3c182fbd8"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "chatgpt-exchange",
+        "engine": "HyperFrames",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/chatgpt-exchange-9x16.mp4",
+      "sample_sha256": "a29fbb49329d457e92adac94f1140a32620dfb03e7dd2ccaf154f83393dcf445",
+      "semantic_families": [
+        "ai_dialogue_comparison",
+        "four_factor_comparison",
+        "prompt_to_table"
+      ],
+      "source_entrypoint": "assets/verified-templates/hyperframes/chatgpt-exchange/source/chatgpt-exchange.html",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/chatgpt-exchange.html",
+          "sha256": "a6689feb01735e942dfc632372def74822f7dacc63711f190b448f2590ea1cc2"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/TEMPLATE.md",
+          "sha256": "f7d579c1b0d26bb81d0a830bea1d489e6605f40fa9ffb482237aa3bf5c05fbd4"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/registry-item.json",
+          "sha256": "d7226c907619492bda2235a20d3b2f7531426e92c3089998650056a0619a35a1"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-LICENSE.txt",
+          "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-400-normal.woff2",
+          "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-500-normal.woff2",
+          "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-600-normal.woff2",
+          "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+        }
+      ],
+      "source_sha256": "a6689feb01735e942dfc632372def74822f7dacc63711f190b448f2590ea1cc2",
+      "template_id": "hyperframes/chatgpt-exchange",
+      "template_origin": "verified_third_party",
+      "template_version": "0.8.19",
+      "upstream": {
+        "commit": "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+        "project": "hyperframes",
+        "repository": "https://github.com/heygen-com/hyperframes.git"
+      },
+      "verification_id": "ef07c293eb26fb3b872ae3eb1440bb2ddf8bc8a0c3654f542ee6bd23b4a38d63",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "6897fd471abcc51517d8e64d051017781424fa7b233df2776c47291f81be5547",
+            "timestamp_sec": 1.7916666666666667
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "8327e69200ff5b9af148a89b9004b5efa7aadfef0400bcd40255960dff72df6e",
+            "timestamp_sec": 12.208333333333334
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "0973c338d9716b6310bd4ebd80145ed20c584099c7e59b57f0936e6731c358a8",
+            "timestamp_sec": 14.416666666666666
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored-sample visual inspection candidate",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "source_nodes_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/01-source_nodes_visible.png",
+            "sha256": "529df467495782660b1c7966081aae7da523354194e53e0d249d8cb4046c8d91",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "connections_drawing",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/02-connections_drawing.png",
+            "sha256": "f7c10931ca61baeeab9c3092763d6f7289cd9d55ffddad8caef42bcd4055661f",
+            "timestamp_sec": 1.4583333333333333
+          },
+          {
+            "event": "connections_complete",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/03-connections_complete.png",
+            "sha256": "4ec244c756f4e2cdbcf6009aa81f67c81ea54d8b0b52551694c03543c447f6f4",
+            "timestamp_sec": 2.0
+          },
+          {
+            "event": "center_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/04-center_visible.png",
+            "sha256": "6cd4afb56325c6e59ac6f2d8caefd090cef0129da0e87dda03ff873afb104bf8",
+            "timestamp_sec": 2.2916666666666665
+          },
+          {
+            "event": "result_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/05-result_visible.png",
+            "sha256": "8534e0cb1b1e8db659fcaf922d433d48f0240d845dd8c67981072cbe8fadada9",
+            "timestamp_sec": 2.5833333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/brief.json",
+              "sha256": "0dfdf771cac1698a36ee46187f4dfcd590aa16e119803722227a6d518e7fa573"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "cd2c503338d9997ead501b8bf840e02bc64df076634f71203df513641812a6e4",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "b67b4d3c5b82bdbd753a08109d6944e0675e1a2f7b429e548848d6c9562a2523",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "8e7b872f2d8fe74f00df620591f3074295d30052fb64aadd174bea651e14e5d4",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/execution.json",
+              "sha256": "18f27d163b85dd0a30fbfbe6eff75a58ade0e9565798b0789e515bb95639b5ee"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/recipe.json",
+              "sha256": "5a5126105dcf3d62e9c0b369c2c527db5024ab862407ec90f387c69798e19dfd"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-1/sample.mp4",
+              "sha256": "8cb3cf65b5568cb3f436546fa639a36b758e88a85beb138262a9fe49c4653cad"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/brief.json",
+              "sha256": "9a793a599818dd8302dcb56e8ec9fa3b2c4ba3739802bf830205908c27e07f81"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "aa4ad6fbd89a94600a9a9391b2ff3cafe0ff8d46bd4b8d5e9e5e5c7c477c9a4f",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "4282e8bec2f9bbac3d7fbcd94b18c399957872c0dcdabcb93df15ebbdf5d22e5",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "da634986784b01d6a04f66dd4e135d57544da989a6e92145303c68afce5e34f0",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/execution.json",
+              "sha256": "669ac95c874bae90d39093d948a04bc9b2e178b6fe6cb7c00f6f72b6efe6f88a"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/recipe.json",
+              "sha256": "320a26367c295c459351b347aa32c8e8c8078f321c60506eaf29ccba9656b768"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/process-relations/qualification/case-2/sample.mp4",
+              "sha256": "5ed7ee9009be872cd0b8a56068764d2de32e7b427e84c59d6e4673c088b73f9b"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/footer",
+          "/props/data/sources"
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex execution QA",
+        "source_registry": {
+          "path": "assets/verified-templates/local-canonical/process-relations/qualification/source-registry.json",
+          "sha256": "111f6bb9196d18d7146eb74598ec1d6057abd3aaccb122cae1903c96a16b0f16"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "process-relations",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/process-relations/sample/process-relations-9x16.mp4",
+      "sample_sha256": "8cb3cf65b5568cb3f436546fa639a36b758e88a85beb138262a9fe49c4653cad",
+      "semantic_families": [
+        "cause_effect",
+        "process",
+        "hierarchy"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/process-relations",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "1cb7256dc5c1f5f2db4df51168233e46d261d2669228b40707d3c2b160b924f3",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "cd2c503338d9997ead501b8bf840e02bc64df076634f71203df513641812a6e4",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "b67b4d3c5b82bdbd753a08109d6944e0675e1a2f7b429e548848d6c9562a2523",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "8e7b872f2d8fe74f00df620591f3074295d30052fb64aadd174bea651e14e5d4",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "left_view_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/01-left_view_visible.png",
+            "sha256": "79301ed5a7f51d538d95c0f500a1a34b4d5aed275a29ca16db08d98cc69d5440",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "right_view_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/02-right_view_visible.png",
+            "sha256": "22f2ac2be1780aa05eadd92956cca7caf992eb84e7f3c0150af694cb888b64e5",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "dimension_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/03-dimension_visible.png",
+            "sha256": "2a1f46567dd3cb81a625ef6a113e100e451826a7e9b5b6b2b6a3ec2c3024f760",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "conclusion_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/04-conclusion_visible.png",
+            "sha256": "c608f22bed0ec60c4bee02afc14edcabe4a2dca8e94561a284d34a2a991f5aea",
+            "timestamp_sec": 2.0416666666666665
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 8,
+        "min_units": 4
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/brief.json",
+              "sha256": "544baad38a86fdbd629b6d49f7ad0412feb8362fed85e61c93bbce1d41a38fff"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "6a74519b8ec37bae16c8e59b28cf2af53375f637dd54e7dfcd8d082267cef168",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "417f0ca6f4ce329a8703ca94c6e8a5b91b877fe28575da7836470701f22e7610",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "052970c3ea67d38fa8bfb2e4f475890f3d84a99af82608a317f042de9ced0162",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/execution.json",
+              "sha256": "0ec227d0058cdae7409849c5de1d5b4d0d72f8ed2764809f44029a4f53e2557d"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/recipe.json",
+              "sha256": "e6951d0bd2fd366b1d563ce6035a0c8897203bd2ff2ca855d1a9476b618351c5"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-1/sample.mp4",
+              "sha256": "18a6f38399fa275475635cb48a16ae07a6f2e712655f53d2ab8966c32a915440"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/brief.json",
+              "sha256": "68716fda1efe00e1269b468c4a632bd6a401e20062a699f9ae2b1f012bb2dee2"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "996cb835e89b9818c7708815fe3570d76310919529d152a2990ffe963f130bf4",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "6eb076b434c1d6fac804d0198af24f94200b805710629f12c243e94165df8d37",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "650ed8f780dd571903d1493d3fb32ed4eca1be5da52c3c047c06d6cca3e4b3c5",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/execution.json",
+              "sha256": "10b3bc06e1660daff6eacaab0fe990d95ec3ace68acc579647fe234f07f2f2b3"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/recipe.json",
+              "sha256": "9f0f777edb8436b533618e99ce45ce1038f40410a1b0d1f6228cd39dae72ce76"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/case-2/sample.mp4",
+              "sha256": "1250f003738f66e7ac32810ed8ccf5111b37215888da03782cae84ce81bf7ad3"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/footer",
+          "/props/data/left"
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex execution QA",
+        "source_registry": {
+          "path": "assets/verified-templates/local-canonical/viewpoint-comparison/qualification/source-registry.json",
+          "sha256": "6f797dd04abe79dc57c9a295cd9124ef06c96403f3e80ae780e68198881240ec"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "viewpoint-comparison",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/viewpoint-comparison-9x16.mp4",
+      "sample_sha256": "18a6f38399fa275475635cb48a16ae07a6f2e712655f53d2ab8966c32a915440",
+      "semantic_families": [
+        "comparison",
+        "viewpoint_comparison",
+        "decision_contrast"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/viewpoint-comparison",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "459d7d0bff3f453269ab2271221a2a3a51ec8f43fc657c20208ec3c3fb1d64f7",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "6a74519b8ec37bae16c8e59b28cf2af53375f637dd54e7dfcd8d082267cef168",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "417f0ca6f4ce329a8703ca94c6e8a5b91b877fe28575da7836470701f22e7610",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "052970c3ea67d38fa8bfb2e4f475890f3d84a99af82608a317f042de9ced0162",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "source_label_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/01-source_label_visible.png",
+            "sha256": "77c34a94fca0267746633fe37da91419fadad7ef1053903c4d6076b8f5580eeb",
+            "timestamp_sec": 0.5833333333333334
+          },
+          {
+            "event": "main_media_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/02-main_media_visible.png",
+            "sha256": "16ff348f542aa36e2b5470f613961baadc244e3f0a48afe9ac165c4381b1d4d7",
+            "timestamp_sec": 1.0833333333333333
+          },
+          {
+            "event": "observations_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/03-observations_visible.png",
+            "sha256": "bc8fe17beeea55164f7a4ae74495af5189aad419af5931b8c41a38115c5446a7",
+            "timestamp_sec": 1.9583333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 3,
+        "min_units": 1
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/brief.json",
+              "sha256": "e055a74c3823ff0f69d88faedf6e07d9c61577679099fb1d4227593360af10a5"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "a98b5bac28eea82e1e3f7c3b0a5a62596308e7c4a3acbd4361931242072ef23b",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "0eb4cf2081653e40e7dcc9797ba4252b991bcb96d3a9345fe7b5f1b47fc22432",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "3464856cd761153cceb66d8ef00e0b6db69a44d6b7ea54d263651caca40b4dec",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/execution.json",
+              "sha256": "d198f5e004e8ef42a4717b7e9c03f54da57800d2fef8d7fb06c518fdafb81ba3"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/recipe.json",
+              "sha256": "d16293e63025679b37ac9fcad97b244025e2d5d6cc12db2e7d743ea51ae8ee17"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-1/sample.mp4",
+              "sha256": "8d0cbeae361726e607a66bfa7b48a25975ef2b5a35733e6d21c9d5d561c08935"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/brief.json",
+              "sha256": "409826352eb26616aa41a2cb3915b824b88effc2815d2338a4f7a440b9d33cae"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "effab844561b9f35825d28494a7263034bb24dee94d80305eaec3ffc296f6672",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "2be0d96601317ad84115fb4a7c76699edaea8415bc6fb4085f32abd79e2fb9aa",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "cfb22db49d05817221502dc342dbf0cdc8fbb314291ea898f47bca106cd3879d",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/execution.json",
+              "sha256": "10894605713036f3df3bf0a99b5ecf111c1a367af6e85569346ee36801b62f2f"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/recipe.json",
+              "sha256": "84d78a5c576608a5708d11a0d657a746925ebba002b69f77891c8ffa5ba4c0eb"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/evidence-source/qualification/case-2/sample.mp4",
+              "sha256": "54d33cb3265099f3217fd5f43e3ef65f2bc40e3ba7d24b8b2dbdc1c883c561fe"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/footer",
+          "/props/data/observations"
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex execution QA",
+        "source_registry": {
+          "path": "assets/verified-templates/local-canonical/evidence-source/qualification/source-registry.json",
+          "sha256": "f6f25e024c244de25310a904581941db7e01491b85a13c17dbd39bceb368ed62"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "evidence-source",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/evidence-source/sample/evidence-source-9x16.mp4",
+      "sample_sha256": "8d0cbeae361726e607a66bfa7b48a25975ef2b5a35733e6d21c9d5d561c08935",
+      "semantic_families": [
+        "evidence",
+        "official_source",
+        "source_observation"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/evidence-source",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "022bfe8535abff8fb665d46eea374fd92a3d793b886bdeee578d0d8e2dd96de1",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "a98b5bac28eea82e1e3f7c3b0a5a62596308e7c4a3acbd4361931242072ef23b",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "0eb4cf2081653e40e7dcc9797ba4252b991bcb96d3a9345fe7b5f1b47fc22432",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "3464856cd761153cceb66d8ef00e0b6db69a44d6b7ea54d263651caca40b4dec",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "first_stage_visible",
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/01-first_stage_visible.png",
+            "sha256": "def2b73a222836afef1e63a7e8c012721903683bd4a680b4b432fb7e8338da5f",
+            "timestamp_sec": 0.8333333333333334
+          },
+          {
+            "event": "all_stages_visible",
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/02-all_stages_visible.png",
+            "sha256": "1b0d2c92a6cd41803139a40a8b7caef4fb4cd3ec0e2f350382f4986eb2edc299",
+            "timestamp_sec": 1.7916666666666667
+          },
+          {
+            "event": "connection_complete",
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/03-connection_complete.png",
+            "sha256": "f31110016d2243395064f0e09909249202ca33b1aeec4ff88b63dfa622f228e9",
+            "timestamp_sec": 2.0
+          },
+          {
+            "event": "conclusion_visible",
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/04-conclusion_visible.png",
+            "sha256": "c54ff81b2d5b51cb16b0f69d716826ee15d979b74f9c37134fab6d16076f014e",
+            "timestamp_sec": 2.125
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 6,
+        "min_units": 3
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/brief.json",
+              "sha256": "ada49cec0bad2506f5c10d4c906cc397e92d2856527df4df96cbc0749002c5c2"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "f30fd3bcf90e86ac9f11cde7ee71890b28f27b800908ee066bf1dea986da604e",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "e76c37261a2f474236c39e024dfd525a6413ce6e018e2b518cd3ed4671812f50",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "9785d4f2f8932994960babf4b80faa2f4d8d26c9385bfa5c98e8ea234c4f3f77",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/execution.json",
+              "sha256": "7a16e13718f76f383e579c40adf49c0aca212155a9f7899b47cac69c9cd8d671"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/recipe.json",
+              "sha256": "37d3da20e90914ddeae4b3866894b2eb3e239cd346a0a4d1a027810dff364722"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/sample.mp4",
+              "sha256": "6e691d51ce5547ec050a940728db854c28518d30f3e103522acf57e04cb632a6"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/brief.json",
+              "sha256": "1f0f0fa2e8c6e3cc74749141fd9425144010167d495b725b8849461eadf3b465"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "996cb835e89b9818c7708815fe3570d76310919529d152a2990ffe963f130bf4",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "7bda68bc7f5fbe5bcbc981f907d3d65d2aa258201aeb5de2b3ebeaf7c8813893",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "11844c1c5b8ceb8aee7447bea125015404b0f1f91b258a8404fbc686b43cf0c5",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/execution.json",
+              "sha256": "83c8bde38248cb2e42cc7e00d0fbfbba32fc4087708ee26624c411cc3d0eebfb"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/recipe.json",
+              "sha256": "ca2a1a9aba37d1f2d0c9a9cfad8a6e81865a1bd76c24f0ef841cbb6b3b3349a6"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/sample.mp4",
+              "sha256": "481df686e88a8b1c3c746711f046b5024e6691995f029eb078c82729543d8516"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/footer",
+          "/props/data/stages"
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex execution QA",
+        "source_registry": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/source-registry.json",
+          "sha256": "2f0944f7184a0051b1fb3d36c47a4926117e0881e491bd10262800ac9b589b71"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "timeline-progression",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/timeline-progression/sample/timeline-progression-9x16.mp4",
+      "sample_sha256": "6e691d51ce5547ec050a940728db854c28518d30f3e103522acf57e04cb632a6",
+      "semantic_families": [
+        "progression",
+        "timeline",
+        "milestone_sequence"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/timeline-progression",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "350d77e8b6989d9846288f67aaedb3e97b39e6f6b62e1cfe3e83d1460854eec3",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "f30fd3bcf90e86ac9f11cde7ee71890b28f27b800908ee066bf1dea986da604e",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "e76c37261a2f474236c39e024dfd525a6413ce6e018e2b518cd3ed4671812f50",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "9785d4f2f8932994960babf4b80faa2f4d8d26c9385bfa5c98e8ea234c4f3f77",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "thesis_visible",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/01-thesis_visible.png",
+            "sha256": "dff7ae40eb5252a3cb31216a3d06727fd593f3cdf6726b3f9202935a7a06de49",
+            "timestamp_sec": 1.125
+          },
+          {
+            "event": "supports_visible",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/02-supports_visible.png",
+            "sha256": "aeedaa902fa696adc22b1428cf2f2789dd45950beb44a12aed05f054bca84737",
+            "timestamp_sec": 1.875
+          },
+          {
+            "event": "takeaway_stable",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/03-takeaway_stable.png",
+            "sha256": "798a3dd25d53b9b7e728835c3b3e543828023b886d202d83cce5a239f1116ee0",
+            "timestamp_sec": 2.1666666666666665
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 2,
+        "min_units": 1
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/brief.json",
+              "sha256": "a06318849950e1f4c8336d3b466553f6237183e757e137da6d44d3ded39198a1"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "f989053a24570ba861c2eeccafca625a50a9d8bc373ddba302bf6c3ea1c7adff",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "b066e98a608f2dd907a4f1cb5efc6c08abf23b7ca32ffd6e33fdb66a18ba7c62",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "cc6a6c130a7d949ff961407dfe380a2400956029ce19d7d9a71a491950406061",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/execution.json",
+              "sha256": "0c33ecd82165033a8d7ac309cc0ae0ecc38bdf07eeb4cc472d6e7e8738233946"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/recipe.json",
+              "sha256": "c40b691d76df17c7eb3668a4fd009351485e34536b1b1e100d4653d6b37cc73e"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-1/sample.mp4",
+              "sha256": "8078de22a1ebd006b22a0f749b1f3dd5f7d38e2407fea9eccf108e3feb6adefe"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/brief.json",
+              "sha256": "6ea66e5ebb0653d2cda901108e463d32487c48d6cf67ada01d6ca8f50233c860"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "b2325310bdc2be44122e7c1d18f0c4981fd6faa80f92455960e5abeaf55c0e87",
+                "timestamp_sec": 0.125
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "3e9156b502711b8b5c4e6db9a242432388920dac3fdeebd725865c115e8db66d",
+                "timestamp_sec": 2.625
+              },
+              {
+                "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "229d166be9eb32dee4116c07045681c865c3b642b6984924be18e10643dbfce9",
+                "timestamp_sec": 2.875
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/execution.json",
+              "sha256": "6595dd7850ae70a8214285a277aefbb934b6a5b057876b31df499358efbb106e"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/recipe.json",
+              "sha256": "83bdd86b3c2995b0e22766d9c7b7019021558de68ecc73401c7b438070f6b12b"
+            },
+            "sample": {
+              "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/case-2/sample.mp4",
+              "sha256": "593039fa43f007e8491d0ea127a8d30b65885a8ae7040a8959c572ee06fafe2e"
+            }
+          }
+        ],
+        "content_paths": [
+          "/props/data/title",
+          "/props/data/footer",
+          "/props/data/thesis"
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex execution QA",
+        "source_registry": {
+          "path": "assets/verified-templates/local-canonical/quote-thesis-artword/qualification/source-registry.json",
+          "sha256": "ea2ada5176be0f0cc29c7aff501623ad5bf70a0276959467bb584a36a97dbc7e"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "quote-thesis-artword",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/quote-thesis-artword-9x16.mp4",
+      "sample_sha256": "8078de22a1ebd006b22a0f749b1f3dd5f7d38e2407fea9eccf108e3feb6adefe",
+      "semantic_families": [
+        "quote",
+        "thesis",
+        "key_takeaway"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/quote-thesis-artword",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "71348d74c440fb6386283166291ad162ca5b02004ed0da7b888e9ccc3a5497ba",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "f989053a24570ba861c2eeccafca625a50a9d8bc373ddba302bf6c3ea1c7adff",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "b066e98a608f2dd907a4f1cb5efc6c08abf23b7ca32ffd6e33fdb66a18ba7c62",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "cc6a6c130a7d949ff961407dfe380a2400956029ce19d7d9a71a491950406061",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "sources",
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/sources.png",
+            "sha256": "72cf9bc0319ea997bebdfe1a7cfd84425b463440cefbdf962af9cf9d80501eac",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "connections",
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/connections.png",
+            "sha256": "28269c33c6b451c60e51dbe513e4f68b70baa10a5abde36c24314634fb2b551a",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "hub",
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/hub.png",
+            "sha256": "dc163646bc0cd11c4637f7413359f2725382ab07e460e2dd83ec157d3f9f499e",
+            "timestamp_sec": 2.5
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored source-connection-hub inspection",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/brief.json",
+              "sha256": "d22b1e8690bed68a6db54ba7b27fb029943796ff64ee6fc247ff41096c584519"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "64d22ffd927f5e3fa4169a874938233d215e78119deddc32f225fd64021887d6",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "c10ff73a837071b694dca12b91fc0ee32f2e24a83db6e4ebf58e654b47ecb81d",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "1c3254945ede3b78bded3b0bf5773cc4955ff84ed96ddde533a7186818f7f019",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/execution.json",
+              "sha256": "6d34b11f0c7a57a9ae4634a7b74eb22c71e6078730806aabf700938356939cea"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/recipe.json",
+              "sha256": "7080fc3507b3e4d8b227740223001537b2fa9e0a53ee0f31310c414f4b43c2c7"
+            },
+            "sample": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/sample.mp4",
+              "sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/brief.json",
+              "sha256": "d3e301fedcdd3749f8115125f99c14022cf2050d419fed9fb5f8ac4bad3b1ccb"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "24d34aa4534dc89c16eab783eb4e0414a3792ebd3ec4650609e0bdf9e86b647f",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "5fb8190d0b3f8129f3ea567efa6328556f72cc0ca3b8ebfbf1773890dc027e4b",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "8d06c6fc065933c7220c4bb3665bb8e0fb8912c4e75c21c4bffcc2ee07ec281b",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/execution.json",
+              "sha256": "ea94a34903f193b7cacb332e9ab57978a263066959946b5857452cddf024a3f9"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/recipe.json",
+              "sha256": "548829a93e4b84bd71557d0ffaee9ba4c868465a701a7394c90d7c81e76a5792"
+            },
+            "sample": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/sample.mp4",
+              "sha256": "362ccabf21b42af7ad0514a142eaa217701406961804a500a62c995c2bf1dd17"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored real-render technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/qualification/source-registry.json",
+          "sha256": "73a7991ada043a3bf83b1f3ca552b86d844d9906b60301573086f8b2d018228e"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "relation-motion",
+        "engine": "RelationMotion",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/seed-sample.mp4",
+      "sample_sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77",
+      "semantic_families": [
+        "relation"
+      ],
+      "source_entrypoint": "scripts/relation_motion_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/relation_motion_renderer_bundle.py",
+          "sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01"
+        },
+        {
+          "path": "scripts/relation_motion_adapter.py",
+          "sha256": "c6c26a6d0c49143b3aaebfe4bfc0c6e55dd1da14b5145733022d65257420cb3f"
+        }
+      ],
+      "source_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+      "template_id": "hd-talking-head/relation-motion",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-relation-motion",
+        "repository": "."
+      },
+      "verification_id": "26005c9d68792e780a0640c163a8765745e9694be40316c8f9650add80a5b81a",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/entry.png",
+            "role": "entry",
+            "sha256": "64d22ffd927f5e3fa4169a874938233d215e78119deddc32f225fd64021887d6",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/stable.png",
+            "role": "stable",
+            "sha256": "c10ff73a837071b694dca12b91fc0ee32f2e24a83db6e4ebf58e654b47ecb81d",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/exit.png",
+            "role": "exit",
+            "sha256": "1c3254945ede3b78bded3b0bf5773cc4955ff84ed96ddde533a7186818f7f019",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored seed visual inspection",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/establish.png",
+            "sha256": "72aabfa65b42e25385272f1fa772068cdf6fad5c2afc86efed31a7b7b59422e8",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "replace",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/replace.png",
+            "sha256": "d7798486ba6c3c94a5dfb94fb967f8a957d559b7ac4f570feb589943151f5638",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "compare",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/compare.png",
+            "sha256": "2b920a78f2bc271033d642ebd3cbf03913607ef87bc76d5b8f271316959cd766",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/brief.json",
+              "sha256": "008d35acf1807853210ddeca2fa03612a464f2cc30895915f167aba9eeb74375"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "03bc15011dd2809373c8df02eeae585c4690097c0a7f82198b0ed431fa6f15bb",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "8979a7e810d1aa61f6e625c33ec671f884ee53fb5bc74bb84334e9d89707c1ae",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "814d0be4a53c44c66c85d28bc93df3cb66b5b9be10905ce295deb7708bd68ed6",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/execution.json",
+              "sha256": "7b885b659c6a29860edf48c336a0ab07e3ce8a2af0411fd9f4a8c4b3b808da00"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/recipe.json",
+              "sha256": "32099bd83488fcd563a4a1dba5cc85a63e683babfef69294b1da15d422b4c059"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/sample.mp4",
+              "sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/brief.json",
+              "sha256": "4ea6608a384a1e8539844655841f1c6fcf4c195b8be63716e992f36c6204af1f"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "9f7568d4c19ff1c6b9499802ebc442d950d1bdb9b993da6c3a2b8d2a38b7e3f5",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "1316c23c7718d0e34576184be2dc3ffa6072afca0c41ebc9d23c882daec5c65c",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "4041063336ef7324d8ee2e7fd0c9c363b6638fe02d5af0aad0f6dde619da3018",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/execution.json",
+              "sha256": "5ed0ae6aef0b083cb9ad331c396243c81172073e18fc890682ecac6774691e9d"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/recipe.json",
+              "sha256": "80457d3bc4e73ae6371b344da6335cf5da7bff14a921f6e216959c4bb6baa0fd"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/sample.mp4",
+              "sha256": "5ca945cd95c285982b8617fc587811ca180877373c42ff65f12819c5b9124445"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/qualification/source-registry.json",
+          "sha256": "0e5382ef99c15fa08fac22d9f071085f4f5bcd00104549655189530bb9bfae7b"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-replacement",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/seed-sample.mp4",
+      "sample_sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29",
+      "semantic_families": [
+        "replacement"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-replacement",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "9758b76747bb6c8a599e90d459fdf3131bf97b3d3033e9b33fc9338979413823",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/entry.png",
+            "role": "entry",
+            "sha256": "03bc15011dd2809373c8df02eeae585c4690097c0a7f82198b0ed431fa6f15bb",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/stable.png",
+            "role": "stable",
+            "sha256": "8979a7e810d1aa61f6e625c33ec671f884ee53fb5bc74bb84334e9d89707c1ae",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/exit.png",
+            "role": "exit",
+            "sha256": "814d0be4a53c44c66c85d28bc93df3cb66b5b9be10905ce295deb7708bd68ed6",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/establish.png",
+            "sha256": "d10179fda85a116eb7c873d70768a1f1a70d92afed93286683e80e325c39f687",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "cross_threshold",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/cross_threshold.png",
+            "sha256": "aa3e0889f868d084d6544c59a73a460a4823dbb384cd8b751df71b320876ac96",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "raise_threshold",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/raise_threshold.png",
+            "sha256": "534361f17a4f30e0e2067f50ed2eaae1f1340da09baa29d7b55f9da192b210ea",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/brief.json",
+              "sha256": "85114feb5ea8a80fa82a222f90ce9248df5465e60fc5a4f0cfa3e2bfcd2f127c"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/execution.json",
+              "sha256": "dbc3c9916f3834661883c57d8d4657eb6f6bf11d58dd1faacbfeefc925c5cc78"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/recipe.json",
+              "sha256": "17f5ab697f1d0db4d0023b3b4d70cf25adafc34df136d5d469e54743aca3a4e0"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/sample.mp4",
+              "sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/brief.json",
+              "sha256": "cae4a14b546e310272a950b1349a739365c9f0d7ae080c1182974e76eca37daf"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "a487b0b46ef2bbcf2e12a83f4d9ea6e2382e6fd26b7ca8f8b08eb9bfec659600",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "332f32d9d5daf34d6eb4d10d34d7f8c552176074b11dd600f876848c3069134e",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "2fa206d53dd43d742c73f8acc3f6ea51644061bcafe8f4055ecf65b3fc543302",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/execution.json",
+              "sha256": "01368c33076ae5cb4bd259ce548fd5fbdf5821bd7f23b24000143bac7eb53b3f"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/recipe.json",
+              "sha256": "129334bcfbc17d1f2514dd57e5186f9d43ea94afad8501224a3b7789f9b27ba4"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/sample.mp4",
+              "sha256": "089654813111a524f054a45210bdc338275cee391cdcda5ae25dd09528067710"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/qualification/source-registry.json",
+          "sha256": "156890480ffc3efc832f217b780c97126fb551cd1270b20a7ebb1920e4712788"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-threshold",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/seed-sample.mp4",
+      "sample_sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446",
+      "semantic_families": [
+        "threshold"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-threshold",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "284133a92b9c987dd99b062e68ee322b255c2176f0f64025fbc70e4be6053a9a",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/entry.png",
+            "role": "entry",
+            "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/stable.png",
+            "role": "stable",
+            "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/exit.png",
+            "role": "exit",
+            "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/establish.png",
+            "sha256": "9d3dde593491842c06babe53954d785e7b19dcd8aa0c999781fe6a401f71033d",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "wait",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/wait.png",
+            "sha256": "b7a4f259955d42d74d81dcfe03aa7f5f94d4f5283cf2cc08bf3c8a2aab856eb4",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "realize",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/realize.png",
+            "sha256": "0e093cdc5f5e75d15b03a8926862b2d4191c73dcc31f9d9b927d8f7f5e62a92f",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/brief.json",
+              "sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "7baf4a28eb6980baed6b36e9207e39a733cd5ccc253a702ac798a0191f802c31",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "78f04cb39ff479a80fbb68fee562fc9e882eb76ccb46042ab96b10c583421424",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "0c367ef1f4a75be52fb40469c379c06f7733cd703ac365c636f5a8095af1531d",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/execution.json",
+              "sha256": "d081be1528e410a982930058fee0a78243ee2f64ba33d46748fd306839073824"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/recipe.json",
+              "sha256": "02d57d20c72e805aea7b0b99ef75ca4f322104aa4c03a81e23e2c8d2af5cde06"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/sample.mp4",
+              "sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/brief.json",
+              "sha256": "53480add618cca21ba42f0234ae5e1aab377559d190c69a37b9f03771410e4dc"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "8b15883012056f3011cc0882f9ac948c8f9e2e5ea33c105c10f6aefdd90560d5",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "96b39047b94a74c192a02ec8ce93c3f8b45783dcc7bd784c138083ecbc3e5e34",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "3f4f5744a36e8f9204e71624d6a82862e7f59a44a1d7c7d91feb249966820737",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/execution.json",
+              "sha256": "d4b8078040859a403769e8ef558b020299dfbe88be34ff6db46713df96267b88"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/recipe.json",
+              "sha256": "24998ecd5e81e2098aa54d0af2f2ffcf62aa8ba153c5526b252b11336f24399b"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/sample.mp4",
+              "sha256": "4f17d9e7e1ba54010718974f0bf566f6b63279f91815a2716e86bcc96a3da190"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/qualification/source-registry.json",
+          "sha256": "1dcf5cb63ec056cbd16441708a9c41ff57dd3ed0fbabd728d9a7bcdc29deea3a"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-delay",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/seed-sample.mp4",
+      "sample_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+      "semantic_families": [
+        "delay"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-delay",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "daa6d13f5057c4d47f517021925bb1e504957519e240dd021190e7dff1d32276",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/entry.png",
+            "role": "entry",
+            "sha256": "7baf4a28eb6980baed6b36e9207e39a733cd5ccc253a702ac798a0191f802c31",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/stable.png",
+            "role": "stable",
+            "sha256": "78f04cb39ff479a80fbb68fee562fc9e882eb76ccb46042ab96b10c583421424",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/exit.png",
+            "role": "exit",
+            "sha256": "0c367ef1f4a75be52fb40469c379c06f7733cd703ac365c636f5a8095af1531d",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/establish.png",
+            "sha256": "8243cbe324e11234977223f6672b236e6cba8cca43b96bb35418dbf6cb64beeb",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "reveal_layers",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/reveal_layers.png",
+            "sha256": "494fcbc718c1c443f14c8146575957b8a83e91ae2646f0f63c30c541747b0935",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "resolve",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/resolve.png",
+            "sha256": "15b44bc02bf2ba7a991315d275815ccea46a08fbc943b997ee3bf9d1d53e0cd1",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/brief.json",
+              "sha256": "9946f5a01019d09d808ebbdd06547363a11bf5c5f152d57c850f7c07c7df9e5f"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "e5eb259daa55ec55365f5a371cfa1bbbf326445521754603a06fa6c8e54ec921",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "5fccf331d2a60304b216edb73da308960840d8a0b9bfb3fff0d59447bdc99363",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "eb07c4e6c4bf56d9ae7910063fa00cc7ebad411ee63238dd0dad0b0cc7855232",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/execution.json",
+              "sha256": "20b3e12e8ece81320f6b577e798f4e543f0ce869aa625fb5965e9b3a3948d136"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/recipe.json",
+              "sha256": "99d5ed0cdf92f5c56542e6679d64e4909bd02c83190301d76ea8026ebb424383"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/sample.mp4",
+              "sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/brief.json",
+              "sha256": "ee610ddedd97986df4147d651ee320cc4da4d41641336f4c625823ca0bf665e3"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "292b22726f3c24f2292cfcdcfac24be8f24d8c82db0566d92ffa8adc7145d7c9",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "55a3a225d3eae3d0bb2d2d029b1cb8a292634b47f59643f29f7e377d68e365d1",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "64dc6ee75ceede21924b4d09080707433fe2dadbe7edb8b7757cbee5ba0b0b1f",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/execution.json",
+              "sha256": "e915a065f9ef4411374ebcbc7a32a280fdc6180249b04f14b590bde1e7f89fcd"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/recipe.json",
+              "sha256": "72794a04174e35b4987e43d85c98d93b73c5d96dc228014be84004f79c709397"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/sample.mp4",
+              "sha256": "2ce238fe47b94cbb96e7c6f7faa9c543b95b988bd5649700c5a6689b2122b44d"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/qualification/source-registry.json",
+          "sha256": "94d1c7a20dd3df69ec618c5ae7b9f2af1e63fa826ad0cadd2929efa87bd3c480"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-hierarchy",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/seed-sample.mp4",
+      "sample_sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e",
+      "semantic_families": [
+        "hierarchy"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-hierarchy",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "5202e43a24c4c4f157fc5ff68c059610a21d231dee743c5dddcd1f6c278d5973",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/entry.png",
+            "role": "entry",
+            "sha256": "e5eb259daa55ec55365f5a371cfa1bbbf326445521754603a06fa6c8e54ec921",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/stable.png",
+            "role": "stable",
+            "sha256": "5fccf331d2a60304b216edb73da308960840d8a0b9bfb3fff0d59447bdc99363",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/exit.png",
+            "role": "exit",
+            "sha256": "eb07c4e6c4bf56d9ae7910063fa00cc7ebad411ee63238dd0dad0b0cc7855232",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    },
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/establish.png",
+            "sha256": "64e7cca94431eb44a7660831697427b5b54ee96f5d6152dfdbe297a07f654013",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "produce",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/produce.png",
+            "sha256": "0d793aac9361fb8bfc7497227634191305ff5593e13851546efaa743c656d4c0",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "feedback_return",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/feedback_return.png",
+            "sha256": "795b9085450f02bbc93241a16a93a8828e0c7e9536236d8a40ebaeb0805bbb43",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/brief.json",
+              "sha256": "1e33347a340116ba0ef3b29646e507b55620bc8f99df6c03d7968975e994ce12"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "4caa47a1d7c71f2f3481a2c54ecb5b54f5955754013ef5b4c5056c1ecc2be3d1",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "b1e68a3a3135e0a2d39098d984974a99ff44b18cb6ad962e8c7588e899144d50",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "63a2d9e07d85606c7f2a923473655500b536132f444fef9949d18428aff3cf8c",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/execution.json",
+              "sha256": "b2d8456883c751b723bfd6f7c71e86b92c6dd9e950e4a8ed416b2cc3fe16513d"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/recipe.json",
+              "sha256": "b50d03b94702dee60534601740699175dbc8f97feb87ff0d8fb8bf60e903f83f"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/sample.mp4",
+              "sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/brief.json",
+              "sha256": "fcc8a1c51f2e02e1722a662a1892551414a93e0b2a56c26f6869bef1b5a74065"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "48b379024cbbb25b1ba2639c8b1ff774b7e27e52fc5a7f16d1085a69ed0de508",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "50816a0037e60f87338aea7d21e4e9475ea25527203e2b48f74c576db2aaf602",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "641d8a98013d3db16fb4dd4231a7c768b61185bb688796b789c84272970ab401",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/execution.json",
+              "sha256": "744550e70f11197df79aa0f01875f5089cb2b2e79230c8c8c0e4db47f429c927"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/recipe.json",
+              "sha256": "32191b69185ea3fa570a149fb9d503ed3499e5b14ea01b3e68fb4dedb321a63d"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/sample.mp4",
+              "sha256": "64f0718296ffa4dd875e525f60295c9d9dc07712499c213eb04c34ea06bd2955"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/qualification/source-registry.json",
+          "sha256": "660ef4b53fd424ad5babe8fcd97b7317e0e17e9a3648d8388333e68a6c8f0901"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-feedback",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/seed-sample.mp4",
+      "sample_sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67",
+      "semantic_families": [
+        "feedback"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-feedback",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "6bdd0d8cfb6eed375203055e849b9e38de48eb0592659805a0f79d4c49a74c12",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/entry.png",
+            "role": "entry",
+            "sha256": "4caa47a1d7c71f2f3481a2c54ecb5b54f5955754013ef5b4c5056c1ecc2be3d1",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/stable.png",
+            "role": "stable",
+            "sha256": "b1e68a3a3135e0a2d39098d984974a99ff44b18cb6ad962e8c7588e899144d50",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/exit.png",
+            "role": "exit",
+            "sha256": "63a2d9e07d85606c7f2a923473655500b536132f444fef9949d18428aff3cf8c",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    }
+  ]
+}

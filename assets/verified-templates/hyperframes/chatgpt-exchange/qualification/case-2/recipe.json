@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "segment_id": "hyperframes-chatgpt-exchange-qualification-2",
+  "strategy_revision": 1,
+  "mode": "single",
+  "composition": {
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "chatgpt-exchange"
+    ],
+    "component_dependencies": []
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24
+  },
+  "components": [
+    {
+      "component_id": "chatgpt-exchange",
+      "kind": "code_generated",
+      "semantic_role": "explanation",
+      "layer_role": "base",
+      "executor": "reference_adapter",
+      "media_type": "animation",
+      "render_window": {
+        "start_frame": 0,
+        "end_frame": 358,
+        "z_index": 0,
+        "layout_slot": "main",
+        "opacity": 1.0,
+        "safe_zone": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      },
+      "artifact_contract": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "alpha": false
+      },
+      "template_origin": "verified_third_party",
+      "template_id": "hyperframes/chatgpt-exchange",
+      "template_version": "0.8.19",
+      "verification_id": "19f0fa75b06635b2302c2504c45f16e892af07cd6fa3b1046713270ad31e23b4",
+      "adaptation_level": "content_reflow",
+      "source_entrypoint": "assets/verified-templates/hyperframes/chatgpt-exchange/source/chatgpt-exchange.html",
+      "source_sha256": "a6689feb01735e942dfc632372def74822f7dacc63711f190b448f2590ea1cc2",
+      "sample_sha256": "a29fbb49329d457e92adac94f1140a32620dfb03e7dd2ccaf154f83393dcf445",
+      "semantic_families": [
+        "ai_dialogue_comparison",
+        "four_factor_comparison",
+        "prompt_to_table"
+      ],
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "producer_type": "dependency",
+      "dependency_id": "hyperframes",
+      "entrypoint": "scripts/render_hyperframes_chatgpt_exchange.cjs",
+      "producer_version": "1.0.0",
+      "primary_renderer": "HyperFrames",
+      "renderer_version": "0.8.19",
+      "brief_sha256": "38f8760ea6e5f0b0806a67b9695b2d7082d476d0ddad9060b4a5d6c909cc384c",
+      "invocation_record": {
+        "argv": [
+          "node",
+          "scripts/render_hyperframes_chatgpt_exchange.cjs"
+        ],
+        "status": "planned",
+        "exit_code": null,
+        "template_request": {
+          "information_units": 4,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "four_factor_comparison"
+        }
+      }
+    }
+  ],
+  "final_compositor": "ffmpeg"
+}

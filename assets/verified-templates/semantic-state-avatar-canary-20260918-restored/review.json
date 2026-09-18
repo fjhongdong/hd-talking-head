@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "human_approval_claimed": true,
+  "scope": "five-family SemanticState avatar-composite canary",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-18T08:18:00+08:00",
+  "approval_reference": "thread-019feb3b-4b30-7672-8468-c679ff81e598-user-confirmed-restored-avatar-canary",
+  "families": [
+    "replacement",
+    "threshold",
+    "delay",
+    "hierarchy",
+    "feedback"
+  ],
+  "template_ids": [
+    "hd-talking-head/semantic-state-replacement",
+    "hd-talking-head/semantic-state-threshold",
+    "hd-talking-head/semantic-state-delay",
+    "hd-talking-head/semantic-state-hierarchy",
+    "hd-talking-head/semantic-state-feedback"
+  ],
+  "canary_receipt": {
+    "path": "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/canary-receipt.json",
+    "sha256": "ebdef1a7319f214c04c84af6cdf592527938220202df9f993403ee13335fde3f"
+  },
+  "montage": {
+    "path": "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/semantic-state-5family-avatar-canary.mp4",
+    "sha256": "eb22f4a0d03fa7801710f1f1882a4a4eaa3c546d5c37e5ceda71b0c9e3772405"
+  },
+  "contact_sheet": {
+    "path": "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/contact-sheet.png",
+    "sha256": "b351c944fd7097bee4ff17837d6bd61fec6d97781e4fb5827bdf41a5c45ec02d"
+  }
+}

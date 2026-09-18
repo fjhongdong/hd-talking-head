@@ -1,0 +1,137 @@
+{
+  "inputs": {
+    "script": {
+      "bytes": 57,
+      "path": "synthetic-script.md",
+      "sha256": "f02f747b65db9d84374796a7cd5b0aad081309cc851eb9cdf38359a65de902ab"
+    },
+    "video": {
+      "bytes": 100165,
+      "path": "synthetic-source.mp4",
+      "sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67"
+    }
+  },
+  "job_id": "4118016cb62f47302f234c944bee65bee73963db7f8f19ee7c7a61f43235db47",
+  "revision": 4,
+  "stages": {
+    "content_analysis": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [
+        {
+          "bytes": 647,
+          "path": "02-content-analysis/content-analysis.json",
+          "sha256": "6abb3835d23207e17a4e20da82fe15e0b6f4a2b2e7d764fb8592c2736624dad4"
+        },
+        {
+          "bytes": 470,
+          "path": "02-content-analysis/review.md",
+          "sha256": "e386a3d7ed3466718450812a223fb963a2fd987e37080756363af8f36cc3aa10"
+        },
+        {
+          "bytes": 392,
+          "path": "02-content-analysis/material-usage.json",
+          "sha256": "d5b8cd32160566cbb17df49f6807170334171fc753cad4d602d3e706c55069fe"
+        }
+      ],
+      "lineage": [],
+      "reason": null,
+      "status": "approved"
+    },
+    "cover": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "cover_direction": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "delivery": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "edit_structure": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "inspect": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [
+        {
+          "bytes": 67,
+          "path": "01-inspect/report.json",
+          "sha256": "c09c5c9a1258efef7668702be4ccc3c4610417bc193d06b250a805ae9d0333d8"
+        }
+      ],
+      "lineage": [],
+      "reason": null,
+      "status": "approved"
+    },
+    "preview": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "speech_cleanup": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "subtitles": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_assets": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_canary": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    },
+    "visual_direction": {
+      "ai_attempts": 0,
+      "artifact_scope": [],
+      "artifacts": [],
+      "lineage": [],
+      "reason": null,
+      "status": "pending"
+    }
+  },
+  "version": 2
+}

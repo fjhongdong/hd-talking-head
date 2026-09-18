@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "segment_id": "hyperframes-notification-qualification-2",
+  "strategy_revision": 1,
+  "mode": "single",
+  "composition": {
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "notification-cascade"
+    ],
+    "component_dependencies": []
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24
+  },
+  "components": [
+    {
+      "component_id": "notification-cascade",
+      "kind": "code_generated",
+      "semantic_role": "explanation",
+      "layer_role": "base",
+      "executor": "reference_adapter",
+      "media_type": "animation",
+      "render_window": {
+        "start_frame": 0,
+        "end_frame": 336,
+        "z_index": 0,
+        "layout_slot": "main",
+        "opacity": 1.0,
+        "safe_zone": {
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0
+        }
+      },
+      "artifact_contract": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "alpha": false
+      },
+      "template_origin": "verified_third_party",
+      "template_id": "hyperframes/notification-cascade",
+      "template_version": "0.8.19",
+      "verification_id": "0949b1ff8464b0fa7b70e56cfb8e09018aad0c41f432ca9fd6611cbd21928bf1",
+      "adaptation_level": "tokens_only",
+      "source_entrypoint": "assets/verified-templates/hyperframes/notification-cascade/source/notification-cascade.html",
+      "source_sha256": "5a08229506f32f257b60710c69695175b1ccbc56f30df289a0cc0009fa233258",
+      "sample_sha256": "5a87e8242c5e0d81b21409b03cedf4e43830339b8bc647cad29b3f31a26d70b6",
+      "semantic_families": [
+        "milestone_notifications",
+        "progress_sequence",
+        "delivery_checkpoints"
+      ],
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "producer_type": "dependency",
+      "dependency_id": "hyperframes",
+      "entrypoint": "scripts/render_hyperframes_notification.cjs",
+      "producer_version": "1.0.0",
+      "primary_renderer": "HyperFrames",
+      "renderer_version": "0.8.19",
+      "brief_sha256": "a61187a9752d20e96687c9661b02939d9168a427c87000f948ee95abcce91ad0",
+      "invocation_record": {
+        "argv": [
+          "node",
+          "scripts/render_hyperframes_notification.cjs"
+        ],
+        "status": "planned",
+        "exit_code": null,
+        "template_request": {
+          "information_units": 4,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "delivery_checkpoints"
+        }
+      }
+    }
+  ],
+  "final_compositor": "ffmpeg"
+}

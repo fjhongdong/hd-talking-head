@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 4.1,
+        "duration_min_sec": 4,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 8,
+        "min_units": 3
+      },
+      "render_contract": {
+        "composition_id": "DataRollup",
+        "engine": "remotion",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/html-video/frame-data-rollup/sample/data-rollup-9x16.mp4",
+      "sample_sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f",
+      "semantic_families": [
+        "bar_chart",
+        "numeric_comparison",
+        "data_summary"
+      ],
+      "source_entrypoint": "assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx",
+          "sha256": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15"
+        },
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/Root.tsx",
+          "sha256": "613d7be4f5fe24f2f15280791af69fe871ac9a365ff68ff5d4a46b6e9a0d5b15"
+        },
+        {
+          "path": "assets/verified-templates/html-video/frame-data-rollup/source/entry.ts",
+          "sha256": "a70203d7cd74c6bf063461f10a968e4ceb796dd8f181f27416c8469687c92268"
+        }
+      ],
+      "source_sha256": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15",
+      "template_id": "html-video/frame-data-rollup",
+      "template_origin": "verified_third_party",
+      "template_version": "0.1.0",
+      "upstream": {
+        "commit": "c414ecc07f795add03807d5d9ce4baefd807cea2",
+        "project": "html-video",
+        "repository": "https://github.com/nexu-io/html-video.git"
+      },
+      "verification_id": "6fcb4e69d4ddf53502282ddaad9f4e4d069a735f528ffa0495f9e27b207bfd0f",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "1a308634b1b3534a2a543fd4ee9902fa4992a3341b6a944ed43b377969050a2f",
+            "timestamp_sec": 0.5
+          },
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "295591b82a9cccd34c4e1bc98895928e8420a79432f568806985e441b6a95882",
+            "timestamp_sec": 2.5
+          },
+          {
+            "path": "assets/verified-templates/html-video/frame-data-rollup/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "af9a187e3640d1592522dcdc7adacc269f0af5fc97ed7d697df2c7bd0c019e9f",
+            "timestamp_sec": 3.8333333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex automated technical requalification; visual inspection required before promotion",
+        "status": "approved"
+      }
+    }
+  ]
+}

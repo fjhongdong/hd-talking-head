@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-18T08:08:01+08:00",
+  "approval_reference": "current-thread-user-confirmed-restored-semantic-state-seeds",
+  "family": "threshold",
+  "template_id": "hd-talking-head/semantic-state-threshold",
+  "seed_manifest_sha256": "6931e6b2fe3ad4d516186b84d3c95bc2d717e382fbb0b6d337362e258a3ae73a",
+  "brief_sha256": "85114feb5ea8a80fa82a222f90ce9248df5465e60fc5a4f0cfa3e2bfcd2f127c",
+  "sample_sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

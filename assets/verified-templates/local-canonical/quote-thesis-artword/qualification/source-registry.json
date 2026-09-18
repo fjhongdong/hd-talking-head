@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "thesis_visible",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/01-thesis_visible.png",
+            "sha256": "dff7ae40eb5252a3cb31216a3d06727fd593f3cdf6726b3f9202935a7a06de49",
+            "timestamp_sec": 1.125
+          },
+          {
+            "event": "supports_visible",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/02-supports_visible.png",
+            "sha256": "aeedaa902fa696adc22b1428cf2f2789dd45950beb44a12aed05f054bca84737",
+            "timestamp_sec": 1.875
+          },
+          {
+            "event": "takeaway_stable",
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/action-frames/03-takeaway_stable.png",
+            "sha256": "798a3dd25d53b9b7e728835c3b3e543828023b886d202d83cce5a239f1116ee0",
+            "timestamp_sec": 2.1666666666666665
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 2,
+        "min_units": 1
+      },
+      "render_contract": {
+        "composition_id": "quote-thesis-artword",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/quote-thesis-artword-9x16.mp4",
+      "sample_sha256": "8078de22a1ebd006b22a0f749b1f3dd5f7d38e2407fea9eccf108e3feb6adefe",
+      "semantic_families": [
+        "quote",
+        "thesis",
+        "key_takeaway"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/quote-thesis-artword",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "7fbf2ba2978b49412fd745b8d8a8c4e51385281ce2b77ac777e3738db0ebd189",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "f989053a24570ba861c2eeccafca625a50a9d8bc373ddba302bf6c3ea1c7adff",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "b066e98a608f2dd907a4f1cb5efc6c08abf23b7ca32ffd6e33fdb66a18ba7c62",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/quote-thesis-artword/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "cc6a6c130a7d949ff961407dfe380a2400956029ce19d7d9a71a491950406061",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    }
+  ]
+}

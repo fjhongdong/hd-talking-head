@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/establish.png",
+            "sha256": "d10179fda85a116eb7c873d70768a1f1a70d92afed93286683e80e325c39f687",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "cross_threshold",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/cross_threshold.png",
+            "sha256": "aa3e0889f868d084d6544c59a73a460a4823dbb384cd8b751df71b320876ac96",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "raise_threshold",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/raise_threshold.png",
+            "sha256": "534361f17a4f30e0e2067f50ed2eaae1f1340da09baa29d7b55f9da192b210ea",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "execution_qa": {
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/brief.json",
+              "sha256": "85114feb5ea8a80fa82a222f90ce9248df5465e60fc5a4f0cfa3e2bfcd2f127c"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/execution.json",
+              "sha256": "dbc3c9916f3834661883c57d8d4657eb6f6bf11d58dd1faacbfeefc925c5cc78"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/recipe.json",
+              "sha256": "17f5ab697f1d0db4d0023b3b4d70cf25adafc34df136d5d469e54743aca3a4e0"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/sample.mp4",
+              "sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/brief.json",
+              "sha256": "cae4a14b546e310272a950b1349a739365c9f0d7ae080c1182974e76eca37daf"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "a487b0b46ef2bbcf2e12a83f4d9ea6e2382e6fd26b7ca8f8b08eb9bfec659600",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "332f32d9d5daf34d6eb4d10d34d7f8c552176074b11dd600f876848c3069134e",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "2fa206d53dd43d742c73f8acc3f6ea51644061bcafe8f4055ecf65b3fc543302",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/execution.json",
+              "sha256": "01368c33076ae5cb4bd259ce548fd5fbdf5821bd7f23b24000143bac7eb53b3f"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/recipe.json",
+              "sha256": "129334bcfbc17d1f2514dd57e5186f9d43ea94afad8501224a3b7789f9b27ba4"
+            },
+            "sample": {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/sample.mp4",
+              "sha256": "089654813111a524f054a45210bdc338275cee391cdcda5ae25dd09528067710"
+            }
+          }
+        ],
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "Codex automated technical qualification; not human approval",
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/qualification/source-registry.json",
+          "sha256": "156890480ffc3efc832f217b780c97126fb551cd1270b20a7ebb1920e4712788"
+        },
+        "status": "reviewed"
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-threshold",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/seed-sample.mp4",
+      "sample_sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446",
+      "semantic_families": [
+        "threshold"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-threshold",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "284133a92b9c987dd99b062e68ee322b255c2176f0f64025fbc70e4be6053a9a",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/entry.png",
+            "role": "entry",
+            "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/stable.png",
+            "role": "stable",
+            "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/exit.png",
+            "role": "exit",
+            "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    }
+  ]
+}

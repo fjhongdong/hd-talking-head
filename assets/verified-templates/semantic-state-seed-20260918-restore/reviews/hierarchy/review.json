@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-18T08:08:01+08:00",
+  "approval_reference": "current-thread-user-confirmed-restored-semantic-state-seeds",
+  "family": "hierarchy",
+  "template_id": "hd-talking-head/semantic-state-hierarchy",
+  "seed_manifest_sha256": "6931e6b2fe3ad4d516186b84d3c95bc2d717e382fbb0b6d337362e258a3ae73a",
+  "brief_sha256": "9946f5a01019d09d808ebbdd06547363a11bf5c5f152d57c850f7c07c7df9e5f",
+  "sample_sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

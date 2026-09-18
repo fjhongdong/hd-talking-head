@@ -1,0 +1,270 @@
+{
+  "families": [
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/establish.png",
+          "role": "establish",
+          "sha256": "72aabfa65b42e25385272f1fa772068cdf6fad5c2afc86efed31a7b7b59422e8",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/replace.png",
+          "role": "replace",
+          "sha256": "d7798486ba6c3c94a5dfb94fb967f8a957d559b7ac4f570feb589943151f5638",
+          "timestamp_sec": 1.625
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/action-frames/compare.png",
+          "role": "compare",
+          "sha256": "2b920a78f2bc271033d642ebd3cbf03913607ef87bc76d5b8f271316959cd766",
+          "timestamp_sec": 2.4583333333333335
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/brief.json",
+        "sha256": "008d35acf1807853210ddeca2fa03612a464f2cc30895915f167aba9eeb74375"
+      },
+      "family": "replacement",
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/entry.png",
+          "role": "entry",
+          "sha256": "03bc15011dd2809373c8df02eeae585c4690097c0a7f82198b0ed431fa6f15bb",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/stable.png",
+          "role": "stable",
+          "sha256": "8979a7e810d1aa61f6e625c33ec671f884ee53fb5bc74bb84334e9d89707c1ae",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/frames/exit.png",
+          "role": "exit",
+          "sha256": "814d0be4a53c44c66c85d28bc93df3cb66b5b9be10905ce295deb7708bd68ed6",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "sample": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/replacement/sample.mp4",
+        "sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29"
+      },
+      "template_id": "hd-talking-head/semantic-state-replacement"
+    },
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/establish.png",
+          "role": "establish",
+          "sha256": "d10179fda85a116eb7c873d70768a1f1a70d92afed93286683e80e325c39f687",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/cross_threshold.png",
+          "role": "cross_threshold",
+          "sha256": "aa3e0889f868d084d6544c59a73a460a4823dbb384cd8b751df71b320876ac96",
+          "timestamp_sec": 1.625
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/action-frames/raise_threshold.png",
+          "role": "raise_threshold",
+          "sha256": "534361f17a4f30e0e2067f50ed2eaae1f1340da09baa29d7b55f9da192b210ea",
+          "timestamp_sec": 2.4583333333333335
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/brief.json",
+        "sha256": "85114feb5ea8a80fa82a222f90ce9248df5465e60fc5a4f0cfa3e2bfcd2f127c"
+      },
+      "family": "threshold",
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/entry.png",
+          "role": "entry",
+          "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/stable.png",
+          "role": "stable",
+          "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/frames/exit.png",
+          "role": "exit",
+          "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "sample": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/threshold/sample.mp4",
+        "sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446"
+      },
+      "template_id": "hd-talking-head/semantic-state-threshold"
+    },
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/establish.png",
+          "role": "establish",
+          "sha256": "9d3dde593491842c06babe53954d785e7b19dcd8aa0c999781fe6a401f71033d",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/wait.png",
+          "role": "wait",
+          "sha256": "b7a4f259955d42d74d81dcfe03aa7f5f94d4f5283cf2cc08bf3c8a2aab856eb4",
+          "timestamp_sec": 1.625
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/realize.png",
+          "role": "realize",
+          "sha256": "0e093cdc5f5e75d15b03a8926862b2d4191c73dcc31f9d9b927d8f7f5e62a92f",
+          "timestamp_sec": 2.4583333333333335
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/brief.json",
+        "sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab"
+      },
+      "family": "delay",
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/entry.png",
+          "role": "entry",
+          "sha256": "7baf4a28eb6980baed6b36e9207e39a733cd5ccc253a702ac798a0191f802c31",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/stable.png",
+          "role": "stable",
+          "sha256": "78f04cb39ff479a80fbb68fee562fc9e882eb76ccb46042ab96b10c583421424",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/exit.png",
+          "role": "exit",
+          "sha256": "0c367ef1f4a75be52fb40469c379c06f7733cd703ac365c636f5a8095af1531d",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "sample": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/sample.mp4",
+        "sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615"
+      },
+      "template_id": "hd-talking-head/semantic-state-delay"
+    },
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/establish.png",
+          "role": "establish",
+          "sha256": "8243cbe324e11234977223f6672b236e6cba8cca43b96bb35418dbf6cb64beeb",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/reveal_layers.png",
+          "role": "reveal_layers",
+          "sha256": "494fcbc718c1c443f14c8146575957b8a83e91ae2646f0f63c30c541747b0935",
+          "timestamp_sec": 1.625
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/action-frames/resolve.png",
+          "role": "resolve",
+          "sha256": "15b44bc02bf2ba7a991315d275815ccea46a08fbc943b997ee3bf9d1d53e0cd1",
+          "timestamp_sec": 2.4583333333333335
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/brief.json",
+        "sha256": "9946f5a01019d09d808ebbdd06547363a11bf5c5f152d57c850f7c07c7df9e5f"
+      },
+      "family": "hierarchy",
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/entry.png",
+          "role": "entry",
+          "sha256": "e5eb259daa55ec55365f5a371cfa1bbbf326445521754603a06fa6c8e54ec921",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/stable.png",
+          "role": "stable",
+          "sha256": "5fccf331d2a60304b216edb73da308960840d8a0b9bfb3fff0d59447bdc99363",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/frames/exit.png",
+          "role": "exit",
+          "sha256": "eb07c4e6c4bf56d9ae7910063fa00cc7ebad411ee63238dd0dad0b0cc7855232",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "sample": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/hierarchy/sample.mp4",
+        "sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e"
+      },
+      "template_id": "hd-talking-head/semantic-state-hierarchy"
+    },
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/establish.png",
+          "role": "establish",
+          "sha256": "64e7cca94431eb44a7660831697427b5b54ee96f5d6152dfdbe297a07f654013",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/produce.png",
+          "role": "produce",
+          "sha256": "0d793aac9361fb8bfc7497227634191305ff5593e13851546efaa743c656d4c0",
+          "timestamp_sec": 1.625
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/feedback_return.png",
+          "role": "feedback_return",
+          "sha256": "795b9085450f02bbc93241a16a93a8828e0c7e9536236d8a40ebaeb0805bbb43",
+          "timestamp_sec": 2.4583333333333335
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/brief.json",
+        "sha256": "1e33347a340116ba0ef3b29646e507b55620bc8f99df6c03d7968975e994ce12"
+      },
+      "family": "feedback",
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/entry.png",
+          "role": "entry",
+          "sha256": "4caa47a1d7c71f2f3481a2c54ecb5b54f5955754013ef5b4c5056c1ecc2be3d1",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/stable.png",
+          "role": "stable",
+          "sha256": "b1e68a3a3135e0a2d39098d984974a99ff44b18cb6ad962e8c7588e899144d50",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/frames/exit.png",
+          "role": "exit",
+          "sha256": "63a2d9e07d85606c7f2a923473655500b536132f444fef9949d18428aff3cf8c",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "sample": {
+        "path": "assets/verified-templates/semantic-state-seed-20260918-restore/feedback/sample.mp4",
+        "sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67"
+      },
+      "template_id": "hd-talking-head/semantic-state-feedback"
+    }
+  ],
+  "human_approval_claimed": false,
+  "source": {
+    "path": "scripts/semantic_state_renderer_bundle.py",
+    "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+  },
+  "status": "pending_visual_review"
+}
