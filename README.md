@@ -4,40 +4,33 @@
 
 它不是一个独立的视频剪辑软件，而是一套带人工确认门、文件哈希和 Job 状态管理的生产流程。实际渲染仍需要兼容的项目运行时、FFmpeg/FFprobe，以及当前 Job 已确认的外部服务。
 
-## 先看效果：新版 TalkCraft 动效
+## 先看效果：新版 TalkCraft 竖屏成片
 
-README 主展示区使用后续新增的 TalkCraft 动效，不再用早期的 Semantic State 卡片作为主视觉。下面这些卡更接近最终口播片的质感：人物、标题、素材和界面会互相让位，而不是把文字简单贴在画面上。
+README 主展示区现在只使用已渲染的 `1080 × 1920 @ 24fps` 竖屏样片，不再使用上游 gallery 的横屏缩略图。下面的抽帧来自实际视频，能看到人物、标题、素材和界面在竖屏画布中的真实布局。
 
 <table>
   <tr>
-    <td><img src="assets/talkcraft-gallery/behind-text-title.png" alt="立体标题：Behind Text Title" width="280"></td>
-    <td><img src="assets/talkcraft-gallery/impact-open-title.png" alt="冲击式标题：Impact Open Title" width="280"></td>
-    <td><img src="assets/talkcraft-gallery/motion-blur-slam-in.png" alt="人物与信息卡：Motion Blur Slam In" width="280"></td>
+    <td><img src="assets/talkcraft-portrait-samples/frames/behind-text-title.png" alt="Behind Text Title 竖屏成片抽帧" width="190"></td>
+    <td><img src="assets/talkcraft-portrait-samples/frames/grid-to-hero.png" alt="Grid to Hero 竖屏成片抽帧" width="190"></td>
+    <td><img src="assets/talkcraft-portrait-samples/frames/logo-enter.png" alt="Logo Enter 竖屏成片抽帧" width="190"></td>
+    <td><img src="assets/talkcraft-portrait-samples/frames/scanline-annotate.png" alt="Scanline Annotate 竖屏成片抽帧" width="190"></td>
   </tr>
   <tr>
     <td align="center">立体标题与人物让位</td>
-    <td align="center">重点标题开场</td>
-    <td align="center">人物 + 信息卡入场</td>
-  </tr>
-  <tr>
-    <td><img src="assets/talkcraft-gallery/parallel-items-with-host.png" alt="人物主持多项内容" width="280"></td>
-    <td><img src="assets/talkcraft-gallery/grid-to-hero.png" alt="素材网格聚焦主体" width="280"></td>
-    <td><img src="assets/talkcraft-gallery/stack-fan-out.png" alt="卡片扇形展开" width="280"></td>
-  </tr>
-  <tr>
-    <td align="center">人物主持多项内容</td>
-    <td align="center">素材墙聚焦主视觉</td>
-    <td align="center">卡片扇形展开</td>
+    <td align="center">素材墙聚焦主体</td>
+    <td align="center">品牌标识入场</td>
+    <td align="center">人物 + 标注信息</td>
   </tr>
 </table>
 
-另外两类常用场景：
+可直接播放的竖屏视频：
 
-![界面流动：UI Flow Theater](assets/talkcraft-gallery/ui-flow-theater.png)
+- [Behind Text Title｜竖屏视频](assets/talkcraft-portrait-samples/behind-text-title-portrait.mp4)
+- [Grid to Hero｜竖屏视频](assets/talkcraft-portrait-samples/grid-to-hero-portrait.mp4)
+- [Logo Enter｜竖屏视频](assets/talkcraft-portrait-samples/logo-enter-portrait.mp4)
+- [Scanline Annotate｜竖屏视频](assets/talkcraft-portrait-samples/scanline-annotate-portrait.mp4)
 
-![来源汇聚：Source Converge](assets/talkcraft-gallery/source-converge.png)
-
-这些图片是新版动效的展示帧；正式视频会按口播字级时间轴、人物位置、字幕安全区和当前 Job 的内容重新绑定。素材来源和授权说明见 [`assets/talkcraft-gallery/SOURCE.md`](assets/talkcraft-gallery/SOURCE.md)。
+这些视频是真正的竖屏渲染结果，不是把横屏素材裁切后伪装成竖屏。样片说明见 [`assets/talkcraft-portrait-samples/SOURCE.md`](assets/talkcraft-portrait-samples/SOURCE.md)。
 
 ## 它能完成什么
 

@@ -1,6 +1,6 @@
 {
   "files": {
-    "README.md": "00af1e4fe9e37ad0643144acd320e7784b533e0a5444c47dc14b61d37e1813db",
+    "README.md": "24a31f2c3613d99c0958727564838e979390280360d5ae81fe7bbf6c8ef90d5e",
     "SKILL.md": "a7b2b1712f2389ca88f471742e9b23b59e0bd2c97cfc123ac01ba811ee4f729b",
     "agents/openai.yaml": "8d774369371c248cf0932886449b9878c8ccfe25bb9c7fa394069663d3a4d512",
     "assets/icon-large.png": "5272aaeae914b78e5dee74f6f87e3cebf3abfd64b3411db363b80976f9713190",
@@ -15,6 +15,15 @@
     "assets/talkcraft-gallery/split-text-stagger.png": "89d4cf3eea60f17b86fcee889f3e0affef23c25b9888d955442fcd5afd9dd6c7",
     "assets/talkcraft-gallery/stack-fan-out.png": "6c9b4f5e2d69648ca61e62283ccb8f9a6f2f8a759676734ffc2d2dc292e757a6",
     "assets/talkcraft-gallery/ui-flow-theater.png": "d0bd8165724ca5818dbe54d4b9da9be6ee17694ec6aab674c2fb21c79ff15286",
+    "assets/talkcraft-portrait-samples/SOURCE.md": "1e4c4cb70d68f6737bcd03aed38ee5bee9ff42acc94f139f7e7f1560b0b91ebe",
+    "assets/talkcraft-portrait-samples/behind-text-title-portrait.mp4": "76ee7630303e35e8fc192e6cc17d4ed88c9476cca9ea93ea2d39aa294ee3f847",
+    "assets/talkcraft-portrait-samples/frames/behind-text-title.png": "9bc5dfb7385c9f25331423a14964a0bbf02ff200592ce20db3a311eb6af4e1e0",
+    "assets/talkcraft-portrait-samples/frames/grid-to-hero.png": "0e4e80d0d405c1648bdb503a4f277bbded169edf157c09db3cb48dfdbf19fb3b",
+    "assets/talkcraft-portrait-samples/frames/logo-enter.png": "79d16e5326cc9e913959891c23a073a3f0e955340c405c1fc259a3e64dfa541e",
+    "assets/talkcraft-portrait-samples/frames/scanline-annotate.png": "802306966e0c0ec9da0accb38ad619cd52ef1301cff45a79144e8a1735939521",
+    "assets/talkcraft-portrait-samples/grid-to-hero-portrait.mp4": "6c619f9b1c85f2827803c0d61e017acf2ebd824c13daadec3381ae8cc7bf8223",
+    "assets/talkcraft-portrait-samples/logo-enter-portrait.mp4": "e91e6691c8c25f847771724dfda95461a459e5ea8fe49d4ad79f309132990321",
+    "assets/talkcraft-portrait-samples/scanline-annotate-portrait.mp4": "6756545549a8d05612e64d87f238ba51791b253a329c770a8d0505b3da14be13",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/brief.json": "553241ffad0415787e901634a76026265caddac4f4688fcc32fde9add793b9c3",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/execution.json": "57b5e32baa18eec566b2b881d687194e6f0dc26017eddaefdb567466408b914b",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/frames/entry.png": "1a308634b1b3534a2a543fd4ee9902fa4992a3341b6a944ed43b377969050a2f",
@@ -889,6 +898,6 @@
     "tests/test_template_execution_evidence.py": "55d61afffcacd5c6aab13e573f767943787366d5fb860df1a4c05162abb49f7a",
     "tests/test_verified_template_registry.py": "af9f81a210aad4ff7019b8fa1836274c118893381839703299af67ca4fb0a9e5"
   },
-  "release_id": "2026-09-18-talkcraft-upstream-integration-readme-4",
+  "release_id": "2026-09-18-talkcraft-upstream-integration-readme-5",
   "schema_version": 1
 }
