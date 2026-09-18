@@ -1,10 +1,20 @@
 {
   "files": {
-    "README.md": "2bf4429852886cef8fd980a859740de8d8cffd08731c5ed96d2d3bea28502120",
+    "README.md": "00af1e4fe9e37ad0643144acd320e7784b533e0a5444c47dc14b61d37e1813db",
     "SKILL.md": "a7b2b1712f2389ca88f471742e9b23b59e0bd2c97cfc123ac01ba811ee4f729b",
     "agents/openai.yaml": "8d774369371c248cf0932886449b9878c8ccfe25bb9c7fa394069663d3a4d512",
     "assets/icon-large.png": "5272aaeae914b78e5dee74f6f87e3cebf3abfd64b3411db363b80976f9713190",
     "assets/icon-small.svg": "5ce3c5d0836e13b61d6389e7d997d73f1c02900c58bd0bc6b34960e5db639f14",
+    "assets/talkcraft-gallery/SOURCE.md": "4bc54a4feee7227b0307625ecba705bbd965a33f667a51bd58231c930a739142",
+    "assets/talkcraft-gallery/behind-text-title.png": "42da2d26b6439041c2aab7818ba52ef80b63b5730b68759f27386819c4b2e4ed",
+    "assets/talkcraft-gallery/grid-to-hero.png": "2bfdd5d9c2ea5c1af63798443019dfe31e6546cfce395c484d4f69031a20f5f4",
+    "assets/talkcraft-gallery/impact-open-title.png": "8de3d9815449fb162b2699b7827429907af9c5e20b54679b726a99a71fa08da5",
+    "assets/talkcraft-gallery/motion-blur-slam-in.png": "f8616834d1fcf1ad343f46348dd4124018d54666d1ba8bac6eab073759b9fd57",
+    "assets/talkcraft-gallery/parallel-items-with-host.png": "cc81c038a77aaa3adb13378a5018d6846e34d41060e4f00a80a2106b1bae2755",
+    "assets/talkcraft-gallery/source-converge.png": "046bb6334e664770044fbb69d46a29c4d1e47b6ba28ef83b52b3a48a1a7264e4",
+    "assets/talkcraft-gallery/split-text-stagger.png": "89d4cf3eea60f17b86fcee889f3e0affef23c25b9888d955442fcd5afd9dd6c7",
+    "assets/talkcraft-gallery/stack-fan-out.png": "6c9b4f5e2d69648ca61e62283ccb8f9a6f2f8a759676734ffc2d2dc292e757a6",
+    "assets/talkcraft-gallery/ui-flow-theater.png": "d0bd8165724ca5818dbe54d4b9da9be6ee17694ec6aab674c2fb21c79ff15286",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/brief.json": "553241ffad0415787e901634a76026265caddac4f4688fcc32fde9add793b9c3",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/execution.json": "57b5e32baa18eec566b2b881d687194e6f0dc26017eddaefdb567466408b914b",
     "assets/verified-templates/html-video/frame-data-rollup/qualification/case-1/frames/entry.png": "1a308634b1b3534a2a543fd4ee9902fa4992a3341b6a944ed43b377969050a2f",
@@ -879,6 +889,6 @@
     "tests/test_template_execution_evidence.py": "55d61afffcacd5c6aab13e573f767943787366d5fb860df1a4c05162abb49f7a",
     "tests/test_verified_template_registry.py": "af9f81a210aad4ff7019b8fa1836274c118893381839703299af67ca4fb0a9e5"
   },
-  "release_id": "2026-09-18-talkcraft-upstream-integration-readme-3",
+  "release_id": "2026-09-18-talkcraft-upstream-integration-readme-4",
   "schema_version": 1
 }

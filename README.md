@@ -4,44 +4,40 @@
 
 它不是一个独立的视频剪辑软件，而是一套带人工确认门、文件哈希和 Job 状态管理的生产流程。实际渲染仍需要兼容的项目运行时、FFmpeg/FFprobe，以及当前 Job 已确认的外部服务。
 
-## 先看效果
+## 先看效果：新版 TalkCraft 动效
 
-下面是仓库内已经通过验证的竖屏效果图。它们不是静态 PPT 模板，而是对应动效卡的入口帧、稳定帧、退出帧和动作帧。
-
-### 语义动效：从一句口播变成一段可读的视觉叙事
-
-![Semantic State 动效卡验证总览](assets/verified-templates/semantic-state-seed-20260918-restore/semantic-state-contact-sheet.png)
-
-这组卡覆盖“技术更替、标准迁移、释放延迟、能力分层、实践反馈”等常见表达，适合把抽象观点变成可读的卡片、时间线、层级和反馈回路。
-
-### 资格验证：同一逻辑支持不同内容和不同强度
-
-![Semantic State 资格验证总览](assets/verified-templates/semantic-state-qualification-20260918-restore/qualification-contact-sheet.png)
-
-### 人物与动效合成
-
-![人物安全区与五类语义动效 Canary](assets/verified-templates/semantic-state-avatar-canary-20260918-restored/contact-sheet.png)
-
-这里能看到人物不是被贴在画面边缘，而是被放进每张卡的安全区；标题、卡片、连线和人物之间保持层级关系。
-
-### 单帧效果示例
+README 主展示区使用后续新增的 TalkCraft 动效，不再用早期的 Semantic State 卡片作为主视觉。下面这些卡更接近最终口播片的质感：人物、标题、素材和界面会互相让位，而不是把文字简单贴在画面上。
 
 <table>
   <tr>
-    <td><img src="assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/04-conclusion_visible.png" alt="时间线推进：结论出现" width="240"></td>
-    <td><img src="assets/verified-templates/semantic-state-seed-20260918-restore/feedback/action-frames/feedback_return.png" alt="实践反馈：反馈回路" width="240"></td>
-    <td><img src="assets/verified-templates/hyperframes/chatgpt-exchange/qualification/case-1/frames/entry.png" alt="Hyperframes：界面进入" width="240"></td>
+    <td><img src="assets/talkcraft-gallery/behind-text-title.png" alt="立体标题：Behind Text Title" width="280"></td>
+    <td><img src="assets/talkcraft-gallery/impact-open-title.png" alt="冲击式标题：Impact Open Title" width="280"></td>
+    <td><img src="assets/talkcraft-gallery/motion-blur-slam-in.png" alt="人物与信息卡：Motion Blur Slam In" width="280"></td>
   </tr>
   <tr>
-    <td align="center">时间线推进</td>
-    <td align="center">反馈回路</td>
-    <td align="center">界面交互</td>
+    <td align="center">立体标题与人物让位</td>
+    <td align="center">重点标题开场</td>
+    <td align="center">人物 + 信息卡入场</td>
+  </tr>
+  <tr>
+    <td><img src="assets/talkcraft-gallery/parallel-items-with-host.png" alt="人物主持多项内容" width="280"></td>
+    <td><img src="assets/talkcraft-gallery/grid-to-hero.png" alt="素材网格聚焦主体" width="280"></td>
+    <td><img src="assets/talkcraft-gallery/stack-fan-out.png" alt="卡片扇形展开" width="280"></td>
+  </tr>
+  <tr>
+    <td align="center">人物主持多项内容</td>
+    <td align="center">素材墙聚焦主视觉</td>
+    <td align="center">卡片扇形展开</td>
   </tr>
 </table>
 
-完整验证样片：[25 秒竖屏 Avatar Canary 样片](assets/verified-templates/semantic-state-avatar-canary-20260918-restored/semantic-state-5family-avatar-canary.mp4)
+另外两类常用场景：
 
-> 样片用于验证动效、人物安全区、9:16 布局和渲染链路；真正交付的视频仍以当前 Job 的素材、文案和人工确认结果为准。
+![界面流动：UI Flow Theater](assets/talkcraft-gallery/ui-flow-theater.png)
+
+![来源汇聚：Source Converge](assets/talkcraft-gallery/source-converge.png)
+
+这些图片是新版动效的展示帧；正式视频会按口播字级时间轴、人物位置、字幕安全区和当前 Job 的内容重新绑定。素材来源和授权说明见 [`assets/talkcraft-gallery/SOURCE.md`](assets/talkcraft-gallery/SOURCE.md)。
 
 ## 它能完成什么
 
