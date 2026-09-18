@@ -28,7 +28,7 @@ def package_files(root: Path) -> dict[str, Path]:
         for path in root.rglob("*")
         if (path.is_file() or path.is_symlink())
         and path.name != ".DS_Store" and path.suffix != ".pyc"
-        and "__pycache__" not in path.parts
+        and ".git" not in path.parts and "__pycache__" not in path.parts
         and path.relative_to(root).as_posix() != MANIFEST
     }
 
