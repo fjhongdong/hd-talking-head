@@ -803,7 +803,10 @@ def _compile_shot_recipe(
                 "width": 1080,
                 "height": 1920,
                 "fps": 24,
-                "alpha": kind == "code_generated",
+                # TalkCraft cards are qualified as opaque portrait video;
+                # their presenter is an input, not an alpha overlay.
+                "alpha": kind == "code_generated"
+                and binding.get("dependency_id") != "hd-talking-head-talkcraft",
             },
         }
         for field in sorted(binding):

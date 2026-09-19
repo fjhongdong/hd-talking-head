@@ -12,6 +12,9 @@ from pathlib import Path
 
 MANIFEST = "release-manifest.json"
 REQUIRED = {"SKILL.md", "scripts/verify_broll_template.py", "references/verified-template-registry.json"}
+# Reference runtimes are installed next to the Skill and are validated by the
+# dependency preflight, not vendored into the portable Skill release.
+IGNORED_REFERENCE_RUNTIME_ROOTS = {"references/video-use"}
 
 
 def file_hash(path: Path) -> str:
@@ -26,6 +29,11 @@ def package_files(root: Path) -> dict[str, Path]:
     return {
         path.relative_to(root).as_posix(): path
         for path in root.rglob("*")
+        if not any(
+            path.relative_to(root).as_posix() == prefix
+            or path.relative_to(root).as_posix().startswith(prefix + "/")
+            for prefix in IGNORED_REFERENCE_RUNTIME_ROOTS
+        )
         if (path.is_file() or path.is_symlink())
         and path.name != ".DS_Store" and path.suffix != ".pyc"
         and ".git" not in path.parts and "__pycache__" not in path.parts

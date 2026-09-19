@@ -25,7 +25,7 @@ python3 <skill>/scripts/verify_broll_template.py
 
 可向其他 Agent 这样交接：
 
-> 阅读 `<skill>/SKILL.md`，执行 `hd-talking-head`。项目运行时在 `<project>`；原视频为 `<video>`，文案为 `<script>`。先校验完整包及依赖，确认本任务模型配置。按唯一 Job 和人工门推进，使用已有批准记录，不重复确认，不静默替换模板、字体、文案或模型。
+> 阅读 `<skill>/SKILL.md`，执行 `hd-talking-head`。项目运行时在 `<project>`；原视频为 `<video>`，文案为 `<script>`。先校验完整包及依赖，确认本任务模型配置。按唯一 Job 和结果确认策略推进：中间阶段通过内部 QA 后自动串行推进，只在关键外部动作和最终成片处请求用户确认；不静默替换模板、字体、文案或模型。
 
 尖括号均替换为当前机器的真实绝对路径，不能照抄为参数。密钥交给宿主的安全配置渠道，不写入 Skill、发布清单或交接消息。
 

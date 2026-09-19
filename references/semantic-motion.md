@@ -8,6 +8,18 @@ semantic_state: registered
 production_policy: registered_templates_only
 ```
 
+## 语义事件与 TalkCraft 绑定
+
+当 `visual_direction` 发布了 `07-visual-direction/semantic-events.json` 时，
+它就是当前 VisualPlan 的事件身份真源。`visual_span_contract` 会校验该文件的
+批准记录、字节哈希、VisualPlan hash、事件帧窗和 span/segment 归属，并将事件计划
+传给 TalkCraft approved binding；canary 与全量 chunk assets 都必须通过这条绑定。
+brief 中引用的 `event_id` 还必须落在对应事件的局部帧窗和 brief `frame_scope` 内。
+
+没有该 artifact 的历史 Job 继续使用兼容的 v1 binding，不会被迁移或重签。事件计划
+尚未发布时，不能把“matcher 命中”或“卡片说明支持”当作事件已接入；正式生成器发布
+事件计划后，字幕、音效和视觉 brief 才能共同消费同一个 `event_id`。
+
 ## 调用
 
 使用当前项目的兼容运行时，显式指定项目根并使用本次确认的 Python。Agent 在现有规划调用中执行：

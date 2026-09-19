@@ -61,13 +61,15 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 初始化发布 workspace 时已写入 `initialization.json`。若后续初始化中断，使用同一 Python 执行 `scripts/initialize_video_job.py --resume-workspace <workspace>`，不再次使用新建参数。它只复用导入字节和同一 workflow，原件移走也不重新复制；运行时/发布身份变化、损坏文件或非空事务残留会停止并保留现场。已完成 Job 不自动补造丢失 workflow；没有恢复记录的历史 Job 不适用这个入口。具体边界见工作区合同。`workflow.json` 是唯一状态事实，不得手工修改。
 
-## 2. 十二阶段与人工门
+## 2. 十二阶段与确认策略
 
 产品顺序固定为：
 
 `inspect` → `content_analysis` → `cover_direction` → `cover` → `speech_cleanup` → `edit_structure` → `visual_direction` → `visual_canary` → `visual_assets` → `subtitles` → `preview` → `delivery`
 
-一次只运行一个 runner。每次动作前重新 `load_job`，按产品顺序找到最早未完成阶段；它必须是唯一候选，且依赖全部 `approved`。候选缺失、不唯一或状态不一致时记录当前状态并明确停止。运行后再次加载，验证它是唯一 `ready_for_review`，报审后停止。机器 QA PASS、“整体继续”或进度要求都不能代替当前人工门。
+一次只运行一个 runner。每次动作前重新 `load_job`，按产品顺序找到最早未完成阶段；它必须是唯一候选，且依赖全部 `approved`。候选缺失、不唯一或状态不一致时记录当前状态并明确停止。每个 runner 仍必须先发布到 `ready_for_review`，再由确认策略完成内部校验和推进。
+
+默认采用“结果确认”模式：用户确认 Job 配置、付费/外部账号动作、不可逆素材变更，以及最终预览/成片结果；中间阶段（转写、清理提案、A-roll、视觉计划、canary、资产、字幕）只要确定性校验、绑定校验和本地 QA 全部通过，就由宿主自动批准并继续，不逐阶段打断用户。若用户明确要求查看某一阶段，或 QA 出现歧义、视觉明显偏离、素材/模型/费用选择发生变化，才暂停等待确认。自动推进不等于跳过 runner、哈希、回执、事务恢复或最终交付审批。
 
 封面有两个不可合并的人工门：`cover_direction` 批准内容与设计方向，`cover` 批准实际图片。文案理解、重点和关键词只在 `content_analysis` 决策一次；下游不得重新提炼或询问同一问题。
 
@@ -75,7 +77,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 ## 3. 批准、修改和 blocked
 
-每个 runner 只能推进到 `ready_for_review`。报审只展示当前阶段，并使用以下稳定格式：
+每个 runner 只能推进到 `ready_for_review`；结果确认模式下，宿主在同一串行任务中完成内部审查后自动批准，不向用户重复发送阶段确认。发生暂停时，报审只展示当前阶段，并使用以下稳定格式：
 
 ```text
 阶段：<stage>
@@ -85,7 +87,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 下一步：<等待确认 | 修改意见 | blocked 选择>
 ```
 
-只有用户对当前产物无歧义地单独回复“确认”，才执行：重新加载 → 验证唯一 `ready_for_review` → 只 `approve` 该阶段 → 再加载并验证提交 → 有下游时只运行一个下一阶段。
+暂停阶段需要用户确认时，才执行：重新加载 → 验证唯一 `ready_for_review` → 只 `approve` 该阶段 → 再加载并验证提交 → 有下游时只运行一个下一阶段。结果确认模式的自动批准必须记录本地 QA、产物哈希和自动批准原因，不得把自动批准写成用户确认。最终 `delivery` 仍必须使用用户对完整成片的确认回执。
 
 最终 `delivery` 使用 `edit.hd.tools.delivery_approval.approve_delivery` 或正式 CLI 的 `approve --stage delivery` 分支：传入报审时保存的 revision、最终 MP4 SHA-256 和本次用户确认原文，具体参数及中断恢复见十二阶段合同的“最终确认入口”。不能用裸 `state.approve` 代替这条最终确认链路，也不能自行编写 `approval-receipt.json`。
 
