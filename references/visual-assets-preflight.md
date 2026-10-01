@@ -13,6 +13,7 @@
 - 进入 `visual_canary` 或 `visual_assets` 前重新 `load_job`，确认 `visual_direction` 已 approved，并且当前阶段与工作流一致。
 - 绑定 `visual-plan.json`、director brief、A-roll、avatar track、官方资料记录、许可记录和批准基线 ID；记录路径、字节数与 SHA-256。
 - 验证画布为 1080×1920/24fps，片段时间轴覆盖完整且不互相重叠。
+- 上游已交付且预览认可的 1080×1920 整屏 B-roll，底层组件在 ShotRecipe 中必须用 `layout_slot=full_frame` 且 `safe_zone` 四边为 0；否则正式合成会将整屏画面缩进内容框并补模糊背景。`visual_canary` 与 `visual_assets` 均检查实际合成视频的进入、稳定、退出原尺寸画面和圆形人物小窗，不能只验收子 Skill 的无声视频。配方不符时返回 `visual_direction` 修订，不在执行阶段暗改。
 - 字体、可见文案、composition、头像规则、`safe_zone` 或来源绑定改变时，返回 `visual_direction` 形成 revision，不在执行阶段临时改写。
 - 只接受 VisualPlan schema v3 和 ShotRecipe v2；不兼容旧 visual Job。
 
@@ -39,6 +40,10 @@
 
 ## 4. 官方资料、外部素材和生成媒体
 
+已批准新视觉计划后，重新生成绑定该计划文件身份的依赖预检；不能沿用旧计划的报告。正式渲染前逐项核对所选 kind 的实际适配器是否接通，素材下载成功不等于执行入口接通。官方视频使用 `scripts/official_video_adapter.py:create_adapter(ffmpeg_executable)` 接到 `official_material`，保留上游下载来源与原 snapshot 身份，先以视频流复制去掉原资料音轨，再交给严格无声视频探针；最终只保留原口播声音。
+
+原生全画幅 B-roll 的 `base / full_frame` 外层边距为零；子 Skill 已处理内部排版，父级不再次缩成带背景的资料卡。人物圆窗与统一字幕在父级合成，仍按各自避让规则验收。模板登记在同一进程、同一 Skill 发布身份下检查一次；重新加载路由不能导致每个镜头重复解码全部历史资格样片。新发布身份仍重新检查，不缓存失败结果，也不跳过本次素材和正式成片的检查。
+
 命名人物、职务、组织、官方事实和精确数字都保留可核对的发布者、URL、访问时间、本地 snapshot 和 SHA-256。命名人物不使用生成脸、无来源截图或泛化人物图代替。
 
 `external_stock` 在首次搜索前确认供应商连接状态。选中后保留 provider 素材 ID、作者、素材页和许可记录；不只保存下载文件。
@@ -58,7 +63,8 @@
 `asset-manifest.json` 的资产类型字段是 `type`。每条记录绑定路径、字节数、SHA-256、segment ID、媒体规格、来源和执行记录。渲染完成后复核：
 
 - manifest 中五类 component 的实际数量、mode 和 plan 一致。
-- 所有文件存在，路径在 Job 允许目录内，字节数与 SHA-256 匹配；视频可完整解码且为 1080×1920/24fps。
+- `code_generated` 的预览来源记录必须把已批准配方与实际调用证据逐项对齐：依赖 Skill、入口、版本、brief、渲染器、调用编号及成功状态；保存调用证据摘要。仅有计划中的 `invocation_record` 或最终 MP4 不算已调用验收通过。
+- 所有文件存在，路径在 Job 允许目录内，字节数与 SHA-256 匹配；正式片段和成片视频可完整解码且为 1080×1920/24fps。仅无透明通道的 AI 动态 B-roll 源视频可按已冻结的素材合同为 720×1280/24fps，并须在合成后检查清晰度。
 - 官方视频和外部素材视频抽取进入、稳定、退出三帧，确认媒体运动与 ShotRecipe 一致。
 - 每个 B-roll 检查头像、`safe_zone`、文字溢出、元素重叠和最后 8–12 帧连续性。
 

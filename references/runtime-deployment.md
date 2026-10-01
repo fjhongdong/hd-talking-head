@@ -10,9 +10,11 @@ python3 <skill>/scripts/runtime_bundle.py install --bundle <new-runtime.zip> --p
 
 `<new-project>` 必须不存在，父目录必须存在。已有项目不可覆盖安装；部署后显式选择新根路径。输出 ZIP 也必须不存在。安装前完整验证清单 SHA-256、文件集合、重复项、路径与文件类型；拒绝 symlink、路径穿越、额外文件和覆盖。SHA-256 证明字节完整性，不证明来源可信；只安装可信维护者提供的包。不要导入未知来源的 Python。
 
-代码包仅含可选的 `edit/__init__.py`（允许 namespace package）、`edit/hd/__init__.py`、`edit/hd/tools/` 直接下的 Python 模块，以及 `edit/v5/tools/{openlux_images,bold_subtitles,build_visual_plan,bold_layouts,style_tokens}.py` 五个必需辅助模块。当前运行时不需要其他项目固定资产；模板证据和适配器属于另行完整传输的唯一 Skill 包。不携带媒体、Job、`.env`、密钥、缓存、参考仓库、项目测试或历史成片。若以后增加运行时固定资产依赖，应先更新明确白名单和测试，不扩大为复制项目目录。
+代码包仅含可选的 `edit/__init__.py`（允许 namespace package）、`edit/hd/__init__.py`、`edit/hd/tools/` 直接下的 Python 模块，以及 `edit/v5/tools/{openlux_images,bold_subtitles,build_visual_plan,bold_layouts,style_tokens}.py` 五个必需辅助模块。它不是可独立生产视频的完整包：TalkCraft 集成（包括 `edit/hd/integrations/talkcraft/subtitles/`、锁定上游主题及 Remotion 运行时）不在此导出白名单，也不随 Skill Markdown 安装，须另行准备并通过 `check_runtime.py`。模板证据属于另行完整传输的唯一 Skill 包。不携带媒体、Job、`.env`、密钥、缓存、参考仓库、项目测试或历史成片。要扩展代码导出范围，须单独更新明确白名单和测试，不扩大为复制项目目录。
 
 在源项目之外的目录，以新进程设置 `PYTHONPATH=<new-project>`，导入 `edit.hd.tools.startup` 并调用 `runtime_identity(Path(<new-project>))`；同时导入本次阶段所需 runner，检查模块 `__file__` 均来自新根。此验证只是干净导入，不运行 FFmpeg、不生成媒体、不证明新机器具备生产环境。
+
+A-roll 贴片同样依赖另行准备的 `edit/hd/integrations/talkcraft/aroll-overlay/`、锁定上游 schematic/icons 和原生产运行时；其独立 `package-lock.json` 必须随代码交接，按 [贴片合同](aroll-overlay-contract.md) 补齐 `@remotion/paths`。纯 Python 代码包可导入 `talkcraft_overlay` 不代表这些媒体依赖已安装。
 
 新机器需要 Pillow 才能导入封面/字幕模块；导入测试应使用已选定并完成预检的解释器。不复制整个 V5 项目。
 

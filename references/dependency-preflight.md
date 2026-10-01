@@ -1,6 +1,6 @@
 # 依赖预检、确认与安装合同
 
-每个新视频 Job 都要运行本合同，检查运行时、项目 runner、必需 Skill、参考项目，以及由 `visual_direction` 草案或已冻结配方触发的能力。预检只读取当前状态；安装、插件变更、账号连接和 provider 调用仍按既有人工确认门执行。
+每个新视频 Job 都要运行本合同，检查运行时、项目 runner、必需 Skill、参考项目，以及由 `visual_direction` 草案或已冻结配方触发的能力。预检本身只读取当前状态；唯一前置例外是用户已授权的项目内 Punk 封面依赖：在新建 Job 和预检前运行 `scripts/ensure_punk_cover.py --project-root <project>`，缺失时自动安装已测试版本。它不触碰全局 Skill，也不代表其它依赖、账号连接或 provider 调用获得自动授权。
 
 **目录存在不等于能力可执行。** 报告统一记录以下字段：
 
@@ -15,7 +15,7 @@
 
 ## 1. 唯一清单与两次检查
 
-在新建 Job 前先运行 `scripts/verify_skill_release.py`；包身份与附件缺失是发布问题，不得误报为用户的第三方插件缺失。初始化入口已强制执行此检查，恢复旧 Job 时也要核对 `job-context.json` 中的 release 身份。详见 [发布与调用合同](release-contract.md)。
+在新建 Job 前先运行 `scripts/ensure_punk_cover.py --project-root <project>`，然后运行 `scripts/verify_skill_release.py`；包身份与附件缺失是发布问题，不得误报为用户的第三方插件缺失。初始化入口已强制执行后者，恢复旧 Job 时也要核对 `job-context.json` 中的 release 身份。详见 [发布与调用合同](release-contract.md)。
 
 静态事实源是 `references/dependency-manifest.json`，不得在聊天中维护第二份列表。初始化后先写 `manifests/provider-config.json` 草稿，再用选定的同一个 Python 预检。下文 `<python>`、`<workspace>`、`<job>` 分别是解释器绝对路径、初始化返回的 workspace 和 job_dir：
 
@@ -106,7 +106,7 @@
 4. 每个安装动作的准确方法、包名、来源和目标目录。
 5. 需要人工完成的账号连接、订阅或付费步骤。
 
-路径存在但入口缺失、入口或版本未登记、probe 无法执行、probe identity 不一致、smoke 失败或非代码阶段未绑定时，要显示准确状态，不能计为满足。已有目录不自动覆盖、删除或重新 clone；先报告修正动作并等待授权。
+路径存在但入口缺失、入口或版本未登记、probe 无法执行、probe identity 不一致、smoke 失败或非代码阶段未绑定时，要显示准确状态，不能计为满足。Punk 前置安装只处理目录完全不存在的情况；已有异常目录不覆盖、删除或重新 clone，直接报告修正动作。其它依赖继续遵守原有确认门。
 
 没有缺失项时展示并确认当前配置草稿。存在缺失项时，只问一次是否执行安装计划；批准后按组安装并重新预检。用户拒绝必需项时在对应阶段前标记 `blocked`；拒绝未选可选项则记录并继续。
 
@@ -124,12 +124,14 @@
 
 ## 5. 条件依赖
 
+- 选中 `whiteboard-video` 时，`whiteboard-video-adapter` 探针核对项目 vendor 的纯 Skill wrapper、engine 源码/资源指纹、Python 3.12 虚拟环境的实际模块导入与锁定依赖版本，以及 FFmpeg/FFprobe。此探针不生成媒体。缺失或版本不符时停在准备阶段，按[生成型 B-roll 编排](generated-broll-skills.md)的项目内依赖边界处理，不换解释器或调用其他生成服务来绕过。
+- 选中 `paper-collage-ad` 时，项目内 Paper Skill、固定 `layer-animate.mjs`、Python/Node/FFmpeg/FFprobe 及本包 wrapper 必须同时可用；`paper-collage-adapter` 的真实绑定探针创建适配器并核对入口身份、工具可执行性，不生成图像或视频。详细调用及图片来源见[生成型 B-roll 编排](generated-broll-skills.md)。缺上游时停在准备阶段，按该页项目内安装边界处理，不能换回自画动画。
 - `code_generated` 调用现有依赖 Skill。绑定 `html-video`、`hyperframes`、`hd-talking-head-local-canonical` 或 `video-shotcraft` 时，对应 adapter 必须 `selected + callable + bound`；manifest 精确登记 entrypoint、producer version、adapter identity 和可执行 probe。`hyperframes` 分别登记 Notification Cascade 与 ChatGPT Exchange 两个包装器；`hd-talking-head-local-canonical` 登记本 Skill 的共享 renderer 入口。预检按已冻结 entrypoint 只匹配对应 probe，并同时检查固定 HyperFrames 提交、`@hyperframes/cli` 版本、渲染入口与包装器，不能只凭目录存在通过。
 - `code_generated` 绑定 `video-shotcraft` 时，Skill 必须可发现；manifest 精确登记 entrypoint、producer version、`SkillInvocationAdapter` identity 和可执行 probe。执行后 ShotRecipe v2 的 `invocation_record` 保留 Skill 调用证据。
 - `external_stock` 草案选中 `pexels` 或 `pixabay`：对应 provider 必须在首次搜索前 `selected + connected`。该状态可来自 Job 启动时的连接摘要，但请求前必须重新复核。
 - `ai_generated` 草案选中具体 provider 后：在首次生成前，按精确模型 ID、参考图支持、9:16、无声输出、并发与额度状态做当前 Job 确认。素材冻结后再用完整 ShotRecipe v2 复核 binding。
 - `official_material`：需要浏览器或来源连接器时，在首次获取前确认可用状态。
-- `official-video-acquisition` 只在仍需获取时成为必需项。带 Job 上下文的预检核对已冻结视频的 Job 内普通文件路径、publisher/URL、SHA-256 与 FFprobe 视频流/有限正时长；有效时记录 `local_official_media`，不要求下载器。文件缺失恢复获取依赖，字节变化或探测失败明确停止，不能偷偷换素材。探测不是全片解码或事实核验，正式使用仍需来源核实及当前区间 QA。
+- `official-video-acquisition` 只在仍需获取时成为必需项。预检中 `yt_dlp` 可导入或浏览器能力存在仅证明下载通道可能可用；实际获取必须按 [官方视频下载 Skill 调用与验收](official-video-acquisition.md) 读取并调用上游 Skill。带 Job 上下文的预检核对已冻结视频的 Job 内普通文件路径、publisher/URL、SHA-256 与 FFprobe 视频流/有限正时长；有效时记录 `local_official_media`，不要求下载器。文件缺失恢复获取依赖，字节变化或探测失败明确停止，不能偷偷换素材。探测不是全片解码或事实核验，正式使用仍需来源核实及当前区间 QA。
 
 条件依赖不触发跨类改写。某个已选来源暂时不能执行时，保持原配方并给出 `retry_same_strategy` 或返回 `visual_direction` 重新批准；不静默换成另一类来源。
 

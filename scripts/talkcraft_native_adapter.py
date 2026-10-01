@@ -1,0 +1,160 @@
+"""Bind reviewed TalkCraft native adaptation scene code to the existing component executor."""
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import subprocess
+
+SKILL = Path(__file__).resolve().parents[1]
+ENTRY = "scripts/render_talkcraft_native.mjs"
+DEPENDENCY_ID = "talkcraft-native-adaptation"
+VERSION = "1.0.0"
+COMMIT = "ccb8a571f4bd620b5588bef4b264b5120f5042fc"
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def validate_brief(payload):
+    b = json.loads(payload)
+    if (type(b) is not dict or set(b) != {"schema_version", "source_binding", "template_request", "entry", "composition"}
+            or b["schema_version"] != 1):
+        raise ValueError("Invalid TalkCraft native adaptation brief")
+    source = b["source_binding"]
+    if (set(source) != {"aroll_sha256", "segment_id", "start", "end"}
+            or not re.fullmatch(r"[a-f0-9]{64}", source["aroll_sha256"])
+            or not re.fullmatch(r"seg-[a-zA-Z0-9_-]+", source["segment_id"])
+            or any(type(source[k]) not in (int, float) or not math.isfinite(source[k]) for k in ("start", "end"))
+            or not 0 <= source["start"] < source["end"]):
+        raise ValueError("Invalid TalkCraft native adaptation source window")
+    c = b["composition"]
+    if (set(c) != {"id", "width", "height", "fps", "frames"}
+            or not re.fullmatch(r"[a-zA-Z0-9_-]+", c["id"])
+            or (c["width"], c["height"], c["fps"]) != (1080, 1920, 24)
+            or type(c["frames"]) is not int or not 1 <= c["frames"] <= 1440
+            or abs((source["end"] - source["start"]) * 24 - c["frames"]) > 1e-6):
+        raise ValueError("Invalid TalkCraft native adaptation composition clock")
+    entry = b["entry"]
+    p = Path(entry["job_path"])
+    if (set(entry) != {"job_path", "sha256"} or p.is_absolute() or ".." in p.parts
+            or p.as_posix() != entry["job_path"] or p.suffix != ".tsx"
+            or not re.fullmatch(r"[a-f0-9]{64}", entry["sha256"])):
+        raise ValueError("TalkCraft native adaptation entry must be a frozen Job-relative adapted TSX")
+    request = b["template_request"]
+    if (set(request) != {"semantic_family", "information_units", "numeric_values", "numeric_scale"}
+            or type(request["semantic_family"]) is not str or not request["semantic_family"]
+            or type(request["information_units"]) is not int or request["information_units"] < 1
+            or type(request["numeric_values"]) is not list
+            or any(type(v) not in (int, float) or not math.isfinite(v) for v in request["numeric_values"])
+            or request["numeric_scale"] != ("linear" if request["numeric_values"] else "not_applicable")):
+        raise ValueError("TalkCraft native adaptation requires finite values and an explicit linear numeric scale")
+    return b
+
+
+def check_runtime(project):
+    sources = project / "edit/hd/integrations/talkcraft/upstream/template/cards"
+    expected = {
+        "source-converge.tsx": "a00163db942ec12861a243ad46e6b980804e8dd245cdcf5359b9bf06c5260673",
+        "numbered-step-stack.tsx": "cb16806443f00085f3b2b3334c4fa97f1fe87494ce6c7906c1be1caea5ca2dfe",
+        "info-term-card.tsx": "40bb632b621afca9b27ee2ee653bc1f92cd0006c10a7f9e2452f743e94b391b6",
+        "number-counter.tsx": "34a00653402a52d6925c5ef06da3988cf82f200f6ea9bb9f2d1ea5e5a93609a3",
+    }
+    if any(sha(sources / name) != digest for name, digest in expected.items()):
+        raise ValueError("TalkCraft original component source changed")
+    commit = COMMIT
+    runtime = project / "edit/hd/integrations/talkcraft/runtime"
+    package = runtime / "node_modules/@remotion/renderer/package.json"
+    if json.loads(package.read_bytes())["version"] != "4.0.520":
+        raise ValueError("TalkCraft native adaptation Remotion runtime changed")
+    browser = project / ".remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell"
+    if not browser.is_file() or not os.access(browser, os.X_OK):
+        raise ValueError("TalkCraft native adaptation project render browser is unavailable")
+    return {"commit": commit, "renderer_package_sha256": sha(package), "browser_sha256": sha(browser)}
+
+
+def create_adapter(project_root, node_executable, brief_loader):
+    from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter, ReferenceProcessMedia
+    project = Path(project_root).resolve(strict=True)
+    node = Path(node_executable).resolve(strict=True)
+    if not node.is_file() or not os.access(node, os.X_OK):
+        raise ValueError("TalkCraft native adaptation Node executable is unavailable")
+    runtime = check_runtime(project)
+    entry_sha, node_sha = sha(SKILL / ENTRY), sha(node)
+
+    def check():
+        if sha(SKILL / ENTRY) != entry_sha or sha(node) != node_sha or check_runtime(project) != runtime:
+            raise ValueError("TalkCraft native adaptation bound runtime identity changed")
+
+    def guarded_loader(job, recipe, component):
+        from edit.hd.tools import visual_canary
+        check()
+        payload = brief_loader(job, recipe, component)
+        brief = validate_brief(payload)
+        plan = visual_canary.load_approved_visual_plan(job)
+        segment = next(s for s in plan["segments"] if s["segment_id"] == recipe["segment_id"])
+        arroll = visual_canary.approved_aroll_record(job, plan)
+        expected = {"aroll_sha256": arroll["sha256"], "segment_id": segment["segment_id"],
+                    "start": segment["start"], "end": segment["end"]}
+        window = component["render_window"]
+        if (json.loads(json.dumps(recipe)) != segment["shot_recipe"] or brief["source_binding"] != expected
+                or brief["template_request"] != json.loads(json.dumps(component["invocation_record"]["template_request"]))
+                or component["source_sha256"] != entry_sha or component["template_origin"] != "custom_fallback"
+                or component["artifact_contract"] != {"width": 1080, "height": 1920, "fps": 24, "alpha": False}
+                or window["start_frame"] != 0 or window["end_frame"] != brief["composition"]["frames"]):
+            raise ValueError("TalkCraft native adaptation approved recipe, request or source clock changed")
+        return payload
+
+    def media_loader(job, recipe, component, payload):
+        check()
+        asset = validate_brief(payload)["entry"]
+        return (ReferenceProcessMedia(media_ref="entry", job_path=asset["job_path"], sha256=asset["sha256"]),)
+
+    return ReferenceProcessAdapter(adapter_id="talkcraft-native-adaptation-v1", dependency_id=DEPENDENCY_ID,
+        approved_executor="reference_adapter", dependency_root=SKILL, entrypoint=ENTRY,
+        entrypoint_sha256=entry_sha, producer_version=VERSION, primary_renderer="Remotion",
+        renderer_version="4.0.520", artifact_media_type="video", launcher=node, launcher_sha256=node_sha,
+        brief_loader=guarded_loader, media_loader=media_loader, self_contained_wrapper=True,
+        timeout_seconds=300, argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}",
+            "--media-manifest", "{media_manifest_fd}", "--project-root", str(project), "--output", "{output_path}"))
+
+
+def create_binding(adapter, brief_bytes, reference_sample):
+    brief = validate_brief(brief_bytes)
+    if adapter.dependency_id != DEPENDENCY_ID or adapter.entrypoint_sha256 != sha(SKILL / ENTRY):
+        raise ValueError("TalkCraft native adaptation adapter identity mismatch")
+    request = brief["template_request"]
+    return {"producer_type": "dependency", "dependency_id": DEPENDENCY_ID, "entrypoint": ENTRY,
+        "producer_version": VERSION, "primary_renderer": "Remotion", "renderer_version": "4.0.520",
+        "template_origin": "custom_fallback", "template_id": "talkcraft-native-reviewed-scene", "template_version": VERSION,
+        "verification_id": hashlib.sha256((adapter.entrypoint_sha256 + COMMIT + brief["entry"]["sha256"]).encode()).hexdigest(),
+        "adaptation_level": "structural", "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
+        "sample_sha256": sha(reference_sample), "semantic_families": [request["semantic_family"]],
+        "capacity": {"min_units": request["information_units"], "max_units": request["information_units"]},
+        "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
+        "invocation_record": {"argv": [str(adapter.launcher), ENTRY], "status": "planned", "exit_code": None,
+                              "template_request": request}}
+
+
+def create_artifact_probe(ffprobe_executable):
+    # The existing opaque portrait probe checks actual media, not engine identity.
+    from whiteboard_adapter import create_artifact_probe as silent_portrait_probe
+    return silent_portrait_probe(ffprobe_executable)
+
+
+if __name__ == "__main__":
+    import argparse
+    import shutil
+    import sys
+    parser = argparse.ArgumentParser(description="Read-only TalkCraft native adaptation binding probe; no render or external requests")
+    parser.add_argument("--project-root", type=Path, required=True)
+    args = parser.parse_args()
+    sys.path.insert(0, str(args.project_root))
+    adapter = create_adapter(args.project_root, shutil.which("node"), lambda *_: b"")
+    print(json.dumps({"schema_version": 1, "dependency_id": DEPENDENCY_ID, "entrypoint": ENTRY,
+        "producer_version": VERSION, "adapter_identity": {"adapter_type": "ReferenceProcessAdapter",
+        "approved_executor": adapter.approved_executor, "primary_renderer": adapter.primary_renderer}}))

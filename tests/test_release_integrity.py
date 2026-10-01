@@ -33,6 +33,15 @@ class ReleaseIntegrityTests(unittest.TestCase):
             result = self.run_check(root)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(json.loads(result.stdout)["status"], "pass")
+            spec = importlib.util.spec_from_file_location(
+                "copied_avatar_canary", root / "tests/render_semantic_state_avatar_canary.py"
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.validate_human_approval(
+                root,
+                root / "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/review.json",
+            )
 
     def test_missing_template_verifier_is_reported(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -119,6 +128,11 @@ class ReleaseIntegrityTests(unittest.TestCase):
             SKILL / "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/review.json",
         )
         self.assertEqual(set(approval["template_ids"]), semantic_ids)
+        receipt_path = SKILL / "assets/verified-templates/semantic-state-avatar-canary-20260918-restored/canary-receipt.json"
+        receipt = json.loads(receipt_path.read_text())
+        receipt["qualification_root"] = "/outside/semantic-state-qualification-20260918-restore"
+        with self.assertRaisesRegex(ValueError, "escapes the Skill"):
+            module.validate_canary_receipt(SKILL, receipt_path, receipt)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import importlib.util
 import json
 import math
@@ -25,6 +26,7 @@ from edit.hd.tools.visual_strategy import (
 
 
 HEAVY_CONCURRENCY = 1
+_registered_report: Optional[Dict[str, Any]] = None
 _TEMPLATE_PROVENANCE_FIELDS = frozenset(
     {
         "template_origin",
@@ -71,6 +73,12 @@ _PRIMARY_RENDERER = {
     "hd-talking-head-relation-motion": "RelationMotion",
     "hd-talking-head-semantic-state": "SemanticState",
     "hd-talking-head-talkcraft": "Remotion",
+    "hd-talking-head-talkcraft-overlay": "Remotion",
+    "paper-collage-ad": "PaperCollage",
+    "whiteboard-video": "Whiteboard",
+    "doudou-remotion-whiteboard": "Remotion",
+    "talkcraft-native-adaptation": "Remotion",
+    "hyperframes-native-adaptation": "HyperFrames",
 }
 TEMPLATE_ORIGIN_PRIORITY = {
     "verified_third_party": 0,
@@ -446,13 +454,24 @@ def _registered_template(
     binding: Mapping[str, Any],
     qualification_registry: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
+    global _registered_report
     # Resolve the sibling from the single package, never a caller-supplied registry.
     path = Path(__file__).resolve().with_name("verify_broll_template.py")
-    spec = importlib.util.spec_from_file_location("hd_registered_template", path)
-    if spec is None or spec.loader is None:
-        raise RouterError("registered template verifier is unavailable")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # The runtime reloads the router for each component. Keep the existing
+    # process-local registry check across those reloads, bound to this release.
+    root = path.parents[1]
+    registry_path = root / "references/verified-template-registry.json"
+    identity = hashlib.sha256(b"\0".join((str(path).encode(), path.read_bytes(),
+        (root / "release-manifest.json").read_bytes(), registry_path.read_bytes()))).hexdigest()
+    module_name = "hd_registered_template_" + identity
+    module = sys.modules.get(module_name)
+    if module is None:
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            raise RouterError("registered template verifier is unavailable")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        sys.modules[module_name] = module
     try:
         if qualification_registry is not None:
             candidate = _as_dict(qualification_registry, "qualification_registry")
@@ -463,7 +482,24 @@ def _registered_template(
                 _text(candidate["path"], "qualification_registry.path"),
                 _text(candidate["sha256"], "qualification_registry.sha256"),
             )
-        return module.verify_registered_binding(binding)
+        _registered_report = getattr(module, "_router_registered_report", None)
+        if _registered_report is None:
+            report = module.verify_registry(registry_path)
+            if report["failures"]:
+                raise module.RegistryError(
+                    "registered template verification failed: " + "; ".join(report["failures"])
+                )
+            _registered_report = report
+            module._router_registered_report = report
+        matches = [item for item in _registered_report["verified"] if all(
+            key in binding and binding[key] == item[key]
+            for key in module.PROVENANCE_FIELDS
+        )]
+        if len(matches) != 1:
+            raise module.RegistryError(
+                "binding does not match a registered template; do not self-certify provenance"
+            )
+        return matches[0]
     except module.RegistryError as exc:
         raise RouterError(str(exc)) from exc
 
@@ -572,6 +608,17 @@ def validate_invocation_evidence(evidence: Mapping[str, Any]) -> Dict[str, Any]:
     }
     for field in sorted(checked):
         component[field] = _copy(checked[field], f"invocation evidence.{field}")
+    invocation = checked.get("invocation_record")
+    if isinstance(invocation, dict) and "semantic_motion" in invocation:
+        # The native motion validator needs the real adapter identity and its
+        # local frame window even for this structure-only probe.
+        component["executor"] = _executor("code_generated", checked)
+        component["artifact_contract"]["alpha"] = False
+        report = invocation["semantic_motion"]
+        plan = report.get("plan") if isinstance(report, dict) else None
+        duration = plan.get("duration_frames") if isinstance(plan, dict) else None
+        if type(duration) is int and duration > 0:
+            component["render_window"]["end_frame"] = duration
     # This probe checks invocation structure, not template authenticity. Do not
     # replace provenance already frozen by visual_direction with probe values.
     if not (set(checked) & _TEMPLATE_PROVENANCE_FIELDS):
@@ -637,11 +684,18 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
         dependency_id = binding.get("dependency_id")
         executors = {
             "html-video": "reference_adapter",
+            "hyperframes": "reference_adapter",
             "video-shotcraft": "skill_invocation",
             "hd-talking-head-local-canonical": "reference_adapter",
             "hd-talking-head-relation-motion": "reference_adapter",
             "hd-talking-head-semantic-state": "reference_adapter",
             "hd-talking-head-talkcraft": "reference_adapter",
+            "hd-talking-head-talkcraft-overlay": "reference_adapter",
+            "paper-collage-ad": "reference_adapter",
+            "whiteboard-video": "reference_adapter",
+            "doudou-remotion-whiteboard": "reference_adapter",
+            "talkcraft-native-adaptation": "reference_adapter",
+            "hyperframes-native-adaptation": "reference_adapter",
         }
         if not isinstance(dependency_id, str):
             return "invalid-binding"
@@ -792,8 +846,11 @@ def _compile_shot_recipe(
                 "z_index": index * 10,
                 "layout_slot": approved_component["layout_slot"],
                 "opacity": 1.0,
-                "safe_zone": {
-                    "top": 120,
+                "safe_zone": {side: 0 for side in ("top", "bottom", "left", "right")}
+                if approved_component["layer_role"] == "base"
+                and approved_component["layout_slot"] == "full_frame"
+                else {
+                    "top": 64 if approved["composition"]["family"] == "aroll_with_overlay" else 120,
                     "bottom": 320,
                     "left": 40,
                     "right": 40,
@@ -803,10 +860,19 @@ def _compile_shot_recipe(
                 "width": 1080,
                 "height": 1920,
                 "fps": 24,
-                # TalkCraft cards are qualified as opaque portrait video;
-                # their presenter is an input, not an alpha overlay.
+                # These adapters produce opaque portrait video; their
+                # presenter is composited by the segment renderer.
                 "alpha": kind == "code_generated"
-                and binding.get("dependency_id") != "hd-talking-head-talkcraft",
+                and binding.get("dependency_id") not in {
+                    "hd-talking-head-talkcraft",
+                    "hd-talking-head-relation-motion",
+                    "hd-talking-head-semantic-state",
+                    "paper-collage-ad",
+                    "doudou-remotion-whiteboard",
+                    "talkcraft-native-adaptation",
+                    "hyperframes-native-adaptation",
+                    "whiteboard-video",
+                },
             },
         }
         for field in sorted(binding):

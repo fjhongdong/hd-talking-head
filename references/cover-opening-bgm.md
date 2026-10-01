@@ -41,7 +41,7 @@ result = preview_v2.prepare_preview_v2(job, opening={
 
 - `hold_frames` 是正整数，`transition_frames` 是非负整数且小于正文总帧数；固定 24 fps。零过渡表示直接切入正文。纯封面区不播放口播原声，未启用 BGM 时静音；正文画面、原声和已烧录字幕同时从第 `hold_frames` 帧开始，重叠淡出不再次增加时长。
 - 仅复用当前 `cover` 已登记且哈希一致的 `cover-delivery-raster.png`（1080×1920）及封面报告，未批准、尺寸不符或被替换时停止。运行时不重做封面，也不自动改变已批准的 A-roll / B-roll 顺序。
-- `11-preview/opening-manifest.json` 固定封面、原 SRT、入场参数、正文偏移、总帧数、最终预览和偏移 SRT 身份。四个开场边界帧与常规抽帧一起进入 contact sheet 和 QA；通过编码后解码、帧数、SAR/DAR、原声轨数量和音画时长检查后，仅推进到 `ready_for_review`。
+- `11-preview/opening-manifest.json` 固定封面、原 SRT、入场参数、正文偏移、总帧数、最终预览和偏移 SRT 身份。四个开场边界帧与常规抽帧均保留视频原尺寸用于内部 QA，不生成缩略拼图；通过编码后解码、帧数、SAR/DAR、原声轨数量和音画时长检查后，仅推进到 `ready_for_review`。
 - `12-delivery/subtitles/subtitles.srt` 使用预览生成的最终时间轴，不能再次加偏移；原透明字幕轨放在 `plans/body-subtitles.webm`，与原视觉和字幕计划一起保留正文时钟。消费者通过 `opening-manifest.json.artifact_clocks` 识别，不把正文 WebM 当成与最终 MP4 零点对齐的字幕轨。当前不生成章节附件；未来新增此类附件也须明确时钟并适配偏移。
 - 同一已发布预览再次调用时复用原字节，不重渲染；可以省略 `opening` 或传入完全相同的选项。修改入场参数或移除已启用的开场，先 `revise` 当前 `preview`，再调用；新预览和交付重新报审，上游已批准资产不重做。未发布预览省略 `opening` 时是正文直接开场，不隐式沿用其他 Job 的配置。
 - 初始化时绑定真实运行时源码身份。旧环境缺少该接口或关键字参数时停止并报告兼容差异，不手改旧 Job 身份。发布回放、交付及最终确认继续走原有锁、产物登记与批准链；清单或偏移字幕缺失时不降级为正文版本。

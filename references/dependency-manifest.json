@@ -2,6 +2,86 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "hyperframes-native-adaptation",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/hyperframes_native_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/hyperframes_native_adapter.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HyperFrames"},
+        "command": ["{python}", "{dependency_root}/scripts/hyperframes_native_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "hyperframes-native-adaptation", "required_level": "bound"}
+    },
+    {
+      "id": "talkcraft-native-adaptation",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_talkcraft_native.mjs", "scripts/talkcraft_native_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_talkcraft_native.mjs",
+        "producer_version": "1.0.0",
+        "adapter_identity": {
+          "adapter_type": "ReferenceProcessAdapter",
+          "approved_executor": "reference_adapter",
+          "primary_renderer": "Remotion"
+        },
+        "command": ["{python}", "{dependency_root}/scripts/talkcraft_native_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "talkcraft-native-adaptation",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "doudou-remotion-adapter",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_doudou.mjs", "scripts/doudou_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_doudou.mjs",
+        "producer_version": "1.0.0",
+        "adapter_identity": {
+          "adapter_type": "ReferenceProcessAdapter",
+          "approved_executor": "reference_adapter",
+          "primary_renderer": "Remotion"
+        },
+        "command": ["{python}", "{dependency_root}/scripts/doudou_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "doudou-remotion-whiteboard",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "doudou-whiteboard-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/doudou-remotion-whiteboard",
+      "path_type": "directory",
+      "entrypoints": ["SKILL.md", "components/HandDrawnShapes.tsx", "components/PencilFollower.tsx", "recipes/index.ts"],
+      "required_level": "installed",
+      "capabilities": ["visual.handdrawn-components", "visual.whiteboard-recipes"]
+    },
+    {
       "id": "reference-asr",
       "kind": "project_path",
       "required": false,
@@ -20,6 +100,21 @@
       "target": "edit/hd/tools/startup.py",
       "api": ["runtime_identity", "confirm_setup", "require_startup"],
       "required_level": "callable"
+    },
+    {
+      "id": "talkcraft-runtime-health",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "edit/hd/integrations/talkcraft",
+      "path_type": "directory",
+      "entrypoints": [{
+        "path": "check_runtime.py",
+        "smoke": ["{python}", "{entrypoint}"],
+        "timeout_seconds": 30
+      }],
+      "required_level": "callable",
+      "capabilities": ["render.talkcraft.qualified-runtime"]
     },
     {
       "id": "python-runtime",
@@ -260,6 +355,21 @@
       "path_type": "file"
     },
     {
+      "id": "punk-cover-project-skill",
+      "kind": "project_path",
+      "required": true,
+      "stage": "cover-direction",
+      "target": "skill-development/vendor/Punk-Skill/skills/punk-cover/SKILL.md",
+      "path_type": "file",
+      "install": {
+        "group": "punk-cover-project-skill",
+        "method": "project-local-clone",
+        "source": "https://github.com/adrianpunk/Punk-Skill.git",
+        "destination": "skill-development/vendor/Punk-Skill",
+        "approval_required": false
+      }
+    },
+    {
       "id": "gbro-cover-design-skill",
       "kind": "skill",
       "required": true,
@@ -279,6 +389,8 @@
       "stages": ["speech-cleanup", "edit-structure"],
       "target": "video-use",
       "capabilities": [
+        "speech.word-timestamps",
+        "speech.verbatim-transcription",
         "speech.dead-air-edl",
         "speech.false-start-cut",
         "qa.cut-boundary"
@@ -438,7 +550,7 @@
       },
       "install": {
         "method": "python-package",
-        "package": "yt-dlp",
+        "package": "yt-dlp[default]",
         "approval_required": true
       }
     },
@@ -483,7 +595,7 @@
       "stage": "visual-direction",
       "target": "erduo-broll-loop-engineering",
       "path_type": "directory",
-      "capabilities": ["qa.visual-canary", "qa.contact-sheet"],
+      "capabilities": ["qa.visual-canary"],
       "entrypoints": [
         "erduo-broll-loop-engineering/scripts/create-production-profile.mjs",
         "erduo-broll-loop-engineering/SKILL.md"
@@ -503,6 +615,8 @@
       "target": "video-use",
       "path_type": "directory",
       "capabilities": [
+        "speech.word-timestamps",
+        "speech.verbatim-transcription",
         "speech.dead-air-edl",
         "speech.false-start-cut",
         "render.segment-fades",
@@ -510,6 +624,10 @@
         "qa.cut-boundary"
       ],
       "entrypoints": [
+        {
+          "path": "helpers/transcribe.py",
+          "smoke": ["{python}", "{entrypoint}", "--help"]
+        },
         {
           "path": "helpers/render.py",
           "smoke": ["{python}", "{entrypoint}", "--help"]
@@ -527,8 +645,8 @@
         {
           "stage": "speech-cleanup",
           "target": "edit/hd/tools/speech_edit_v2.py",
-          "contains_all": ["VIDEO_USE_PACING_PROFILE", "_apply_video_use_pacing"],
-          "api": ["_apply_video_use_pacing"]
+          "contains_all": ["VIDEO_USE_PACING_PROFILE", "_apply_video_use_pacing", "VIDEO_USE_TRANSCRIBER", "_transcribe_with_video_use"],
+          "api": ["_apply_video_use_pacing", "_transcribe_with_video_use"]
         },
         {
           "stage": "edit-structure",
@@ -588,17 +706,20 @@
     },
     {
       "id": "hyperframes-adapter",
-      "kind": "skill",
+      "kind": "project_path",
       "required": false,
       "stages": ["visual-canary", "visual-assets"],
-      "target": "hd-talking-head",
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
       "capabilities": [
         "render.notification-cascade",
-        "render.chatgpt-exchange"
+        "render.chatgpt-exchange",
+        "render.aroll-three-step-flow"
       ],
       "entrypoints": [
         "scripts/render_hyperframes_notification.cjs",
-        "scripts/render_hyperframes_chatgpt_exchange.cjs"
+        "scripts/render_hyperframes_chatgpt_exchange.cjs",
+        "scripts/render_hyperframes_hw_pipeline.cjs"
       ],
       "binding_probes": [
         {
@@ -660,6 +781,36 @@
             "--renderer-version",
             "0.8.19"
           ]
+        },
+        {
+          "entrypoint": "scripts/render_hyperframes_hw_pipeline.cjs",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{preflight}",
+            "probe-code-binding",
+            "--project-root",
+            "{project_root}",
+            "--dependency-root",
+            "{dependency_root}",
+            "--dependency-id",
+            "{dependency_id}",
+            "--entrypoint",
+            "{entrypoint}",
+            "--producer-version",
+            "{producer_version}",
+            "--runtime-root",
+            "{reference_root}/hyperframes",
+            "--runtime-revision",
+            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "--renderer-version",
+            "0.8.19"
+          ]
         }
       ],
       "selection": {
@@ -667,21 +818,15 @@
         "binding_field": "dependency_id",
         "equals": "hyperframes",
         "required_level": "bound"
-      },
-      "install": {
-        "group": "hyperframes-runtime",
-        "method": "git-clone",
-        "source": "https://github.com/heygen-com/hyperframes.git",
-        "destination": "hyperframes",
-        "approval_required": true
       }
     },
     {
       "id": "local-canonical-adapter",
-      "kind": "skill",
+      "kind": "project_path",
       "required": false,
       "stages": ["visual-canary", "visual-assets"],
-      "target": "hd-talking-head",
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
       "capabilities": [
         "render.process-relations",
         "render.viewpoint-comparison",
@@ -730,6 +875,58 @@
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
         "equals": "hd-talking-head-local-canonical",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "paper-collage-adapter",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_paper_collage.py", "scripts/paper_collage_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_paper_collage.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {
+          "adapter_type": "ReferenceProcessAdapter",
+          "approved_executor": "reference_adapter",
+          "primary_renderer": "PaperCollage"
+        },
+        "command": ["{python}", "{dependency_root}/scripts/paper_collage_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "paper-collage-ad",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "whiteboard-video-adapter",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_whiteboard.py", "scripts/whiteboard_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_whiteboard.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {
+          "adapter_type": "ReferenceProcessAdapter",
+          "approved_executor": "reference_adapter",
+          "primary_renderer": "Whiteboard"
+        },
+        "command": ["{python}", "{dependency_root}/scripts/whiteboard_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "whiteboard-video",
         "required_level": "bound"
       }
     },

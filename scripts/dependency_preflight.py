@@ -1289,7 +1289,16 @@ def build_report(
         elif kind == "skill":
             checked = _check_skill(item, roots)
         elif kind == "availability_any":
-            checked = _check_availability_any(item, roots)
+            download_tool = project_root / "edit/hd/integrations/video-download-runtime/bin/yt-dlp"
+            if item["id"] == "official-video-acquisition" and download_tool.exists():
+                # This optional project-local environment may use a newer Python
+                # than the pinned editing runtime. Do not fall back if it breaks.
+                checked = _check_command({"id": item["id"], "target": str(download_tool),
+                                          "version_args": ["--version"]})
+                if checked["status"] == "available":
+                    checked.update(status="callable", selected_alternative="project-local-yt-dlp")
+            else:
+                checked = _check_availability_any(item, roots)
         else:
             checked = _check_environment_any(item)
         if config_selected:

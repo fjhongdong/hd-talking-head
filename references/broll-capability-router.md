@@ -4,6 +4,8 @@
 
 ## 1. 五类同级来源
 
+本项目新计划默认排除自研 local-canonical、RelationMotion 和 SemanticState 候选，先充分匹配现成 Skill 的配方及真实组件；具体顺序与缺口处理见[生成型 B-roll 编排](generated-broll-skills.md)。下文登记优先级是资格比较，不要求把未选中的自研记录全部加入候选池，也不改变已批准镜头的来源。仅在现成能力的真实缺口被记录后才允许最小新增实现。
+
 ```broll-source-policy
 - `local_material`
 - `official_material`
@@ -23,7 +25,7 @@ cross_kind_replacement: forbidden
 
 ## 2. 运行边界
 
-- 画布从设计阶段就是 1080×1920/24fps，不先做横屏再裁切。
+- 画布从设计阶段就是 1080×1920，当前 full-v2 的批准计划固定为 24fps；不先做横屏再裁切。
 - 浏览器、Remotion、FFmpeg、生成服务和页面渲染串行，重型并发为 1。
 - 参考项目按已批准 ShotRecipe 延迟加载；每个组件只有一个 executor，每个镜头只有一个最终 compositor。
 - 所有素材先写入当前 Job 记录，再由 plan 引用；不把 Job 外会变化的路径当成正式资产。
@@ -42,7 +44,7 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 - `layer_role`：使用 `base / overlay / inset / annotation`，不写 `primary`。
 - 代码组件的 `media_type` 为 `animation`；`overlay` 是层级或布局，不是媒体类型。
 - `executor` 由编译器根据实际绑定产生，不能写笼统的 `dependency-skill`。
-- renderer 名称严格使用 `Remotion` 或 `HyperFrames`，并与登记模板的实际引擎一致。
+- renderer 名称须与实际已登记依赖一致；除 `Remotion` / `HyperFrames` 外，已有 `RelationMotion`、`SemanticState`，Paper 分层引擎使用 `PaperCollage`，Whiteboard 原生 SVG 分组入口使用 `Whiteboard`。后两者的调用边界见[生成型 B-roll 编排](generated-broll-skills.md)，不自动取得已验证模板身份，不能为通过校验借用别的引擎名称。
 
 每个 component 的 `kind`、`semantic_role`、`layer_role`、`render_window`、`safe_zone`、执行程序和来源绑定都是显式字段。`mode=none` 没有 component，`mode=single` 恰好一个，`mode=hybrid` 至少两个，且组件通过 composition 明确空间、层级和时间关系。
 
@@ -116,7 +118,7 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
   --production-video <当前渲染文件绝对路径> --expected-frames <本段批准帧数> --json
 ```
 
-当前输出必须为 24fps，真实帧数与批准 render window 一致。此命令只证明媒体参数，不证明文案、美观、动效顺序或当前三态 QA 已通过，也不能代替正式 executor 的执行证据。
+当前输出必须为 24fps，真实帧数与批准 render window 一致；其他输出帧率不进入当前 full-v2 计划。此命令只证明媒体参数，不证明文案、美观、动效顺序或当前三态 QA 已通过，也不能代替正式 executor 的执行证据。
 
 ## 7. 能力注册表
 
@@ -138,6 +140,12 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 需要显式规划动作依赖时读取 [语义动效规划接口](semantic-motion.md)。已登记的 `hd-talking-head/relation-motion` 和五类 SemanticState 会消费已冻结的 `semantic_motion`，并以独立 adapter、正式 executor、真实双输入执行证据、逐态像素、动作顺序记录与人工批准样片证明登记资格。普通 Job 仍必须 fail closed：模板身份、family、容量、当前批准内容、当前实际填充三态 QA 或 canary 任一不通过，就不得选用或声称已执行。
 
 多样性来自语义关系、构图家族、进入方式和节奏，不是随机换模板。相邻镜头避免机械复用同一构图家族；来源组合始终由当前语义决定，不设窗口数量或类型占比要求。只有信息结构匹配时才选 poster family，不为轮换牺牲语义准确性。
+
+冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、上游 Skill/具体入口候选、画面家族、主体动作，以及可执行/待适配/待费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表是制作草案，不是已执行的 ShotRecipe。
+
+充分利用是按适用场景展开候选池，而不是每个 Skill 强制用一次：数值变化匹配数字/图表卡，时间跨度匹配时间线，对照匹配分屏或状态切换，真实操作匹配资料或界面演示，具体对象的组装/替换匹配 Paper 或拼贴，分类/层级才匹配导图，人物行为匹配真实视频或获批 Lovart 动态。Flat、GBRO、Story 的静帧方案与实际动画生成分别记账；不能用显现动效代替人物动作。
+
+复核相邻 B-roll 的主体、构图和动作，而不是只看 dependency_id：换颜色、换字或换 Skill 但仍是一排方框连线，按同一种画面处理。连续重复时先在语义合格的候选中调整；确实需要同一结构时记录理由，不为了轮换编造数字或改变论点。Doudou 不作全部抽象句的默认入口。质量相近时优先尚未使用或间隔较长的合格能力；没有本句所需容量/动作/时长的入口标出具体缺口，不假装全部接通。
 
 关系图类 B-roll 的进入顺序由语义方向决定：来源节点先出现，全部来源节点稳定后输入关系随后建立；汇聚节点只在输入完成后出现，并且最多做一次轻微回弹；独立输出关系完成后才展示结论，底部总结最后出现。ShotRecipe 必须分别绑定 `sources`、`hub`、`target` 和 `payoff`，结论或底部总结不得回填成来源节点；字段已声明但为空表示该角色不渲染，不得再从旧文案回填，连线仅在起点和终点都存在时创建。不足预设节点数时只画真实节点和连线，不生成空占位。SVG 路径的显隐、进度和输出阶段必须由渲染主时钟显式驱动，不只依赖 CSS `animation-delay`；代表样片至少抽查“节点全显但尚无线”、“输入线绘制中”、“汇聚出现”、“输出线绘制中”和“结论已显示”五个时态。
 

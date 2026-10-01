@@ -16,7 +16,7 @@
 - 当前镜头的标题、数字、结论和来源必须与本期已批准的配方逐字一致；最终上屏字符串写入 plan 和 manifest，再以哈希绑定。不把历史样片文案复制到新任务。
 - 内部语义字段不得上屏，包括“主题”“结论”“关键值”“提问”“反馈”“对照”等生成器角色名，除非它本身就是用户批准的文案。
 - 每个模板必须绑定字体族、字体文件或系统字体身份、字重、字号、行距、字距和回退顺序。canonical 基线使用 PingFang SC、Songti SC、SF Mono；正式模板允许已登记的 Hiragino Sans GB 与 STSong 回退。
-- 缺少已绑定字体时必须 blocked，不得静默替换字体。更换字体、字重、字号或行距属于视觉 revision，必须重新生成 contact sheet 报审。
+- 缺少已绑定字体时必须 blocked，不得静默替换字体。更换字体、字重、字号或行距属于视觉 revision，必须检查新版实际视频与原尺寸关键帧后报审，不生成缩略拼图。
 - 文本测量发生在渲染前和渲染后；任何溢出、被裁半、强制缩成不可读字号或与头像/其他文案重叠都判失败。
 
 ## 官方资料与命名人物绑定
@@ -29,6 +29,8 @@
 
 ## 条件 B-roll 依赖绑定
 
+A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式组件调用、源片/时钟绑定和验收见 [A-roll 透明贴片合同](aroll-overlay-contract.md)。它保留全屏真人和普通字幕，不进入 B-roll 的资料底图规则；不透明 TalkCraft 整屏卡的资格边界保持不变。
+
 - 代码组件只能使用正式 VisualPlan v3 内 ShotRecipe v2 冻结的 `dependency_id / entrypoint / producer_version`。预检先调用正式计划与配方 validator；不完整字段、identity 不一致或非法 component 不进入依赖绑定。
 - `code_generated` 调用现有依赖：`html-video`、`hyperframes` 与 `hd-talking-head-local-canonical` 通过 `ReferenceProcessAdapter` 使用登记模板的实际引擎，`video-shotcraft` 通过 `SkillInvocationAdapter` 调用 Remotion。模板引擎不能仅由仓库名推断。执行层把组件交给 `broll_component_executor.execute_component`，产物必须保留真实调用证据。通过绑定检查不等于 adapter 已完成两组真实渲染验证。
 - `hd-talking-head-talkcraft` 通过 `ReferenceProcessAdapter` 执行项目内锁定的 Remotion 运行时。自动选卡在 `visual_direction` 上游调用 `edit.hd.tools.talkcraft_matcher.match_cards`：108 张 qualified 卡全部进入语义检索池，先按 `production_role`、必需媒体和人物要求做硬过滤，再根据口播、语义家族、目标和关键词稳定排序。`build_binding` 把选中的 `hd-talking-head/talkcraft/<card_id>` 和当前 brief 身份冻结进 ShotRecipe；adapter 与 executor 不得二次选卡。语义索引只是检索数据，真实准入仍以项目 `runtime/card-registry.json` 为准。每个新 Job 先运行项目的 `edit/hd/integrations/talkcraft/check_runtime.py`；上游共享 runtime 与正式资格 runtime 隔离，不自动升级正式版本。Workbench 只通过 `build_v4_edit_contract` / `apply_v4_overrides` 产生未批准 draft bundle，修改后重新走 canary 与人工门。
@@ -36,6 +38,7 @@
 - `html-video/frame-data-rollup` 的原生接口见 [DataRollup 执行合同](data-rollup-execution.md)。`scripts/data_rollup_adapter.py` 创建正式 ReferenceProcessAdapter 与真实媒体探测器；`scripts/render_data_rollup.cjs` 消费当前 brief，保留原始第三方动画。其他 family 不因该接口存在就被认定已经执行验证。
 - `hyperframes/notification-cascade` 的原生接口见 [Notification Cascade 执行合同](hyperframes-notification-execution.md)。`scripts/hyperframes_notification_adapter.py` 创建正式 ReferenceProcessAdapter 与真实媒体探测器；`scripts/render_hyperframes_notification.cjs` 使用固定四节点原生时间轴并调用真实 HyperFrames CLI。
 - `hyperframes/chatgpt-exchange` 的原生接口见 [ChatGPT Exchange 执行合同](hyperframes-chatgpt-exchange-execution.md)。`scripts/hyperframes_chatgpt_exchange_adapter.py` 创建正式 ReferenceProcessAdapter 与真实媒体探测器；`scripts/render_hyperframes_chatgpt_exchange.cjs` 消费 22 个显式内容字段，使用固定四行问答对照时间轴并调用真实 HyperFrames CLI。
+- A-roll 三节点流程调用 HyperFrames Registry 的 `hw-pipeline`，接口与限制见 [A-roll 透明贴片合同](aroll-overlay-contract.md)。`scripts/hyperframes_hw_pipeline_adapter.py` 绑定批准段落和真人源片，`scripts/render_hyperframes_hw_pipeline.cjs` 调用真实 HyperFrames CLI 并输出透明 MOV；不是 TalkCraft 自制样式，也不等于该样片已完成正式 Job 的全片验收。
 - `hd-talking-head-local-canonical` 的入口为 `scripts/local_canonical_adapter.py`，执行 `scripts/local_canonical_renderer.cjs`。它提供 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword` 五个原生 9:16 构图；每个入口都必须匹配 registry 的源码哈希、版本、双输入回执和当前运行时固定。
 - 每个代码组件必须冻结 `template_origin / template_id / template_version / verification_id / adaptation_level / source_entrypoint / source_sha256 / sample_sha256 / semantic_families / capacity`。`structural` 改造不得沿用第三方验证身份；实际填充后必须重新做当前文案三态 QA，不能拿历史样片直接交付。
 - 只发现 Skill 名称或参考项目目录不代表已经绑定。当前配方选中 `html-video`、`hyperframes`、`hd-talking-head-local-canonical` 或 `video-shotcraft` 后，manifest 中必须存在精确匹配 entrypoint 与 producer version 的可执行 binding probe；probe 返回的 `dependency_id / entrypoint / producer_version / adapter_identity` 必须与批准配方及登记逐字一致，才能返回 `selected + callable + bound`。HyperFrames 及其支撑的本地 canonical probe 还复核固定运行时提交、CLI 版本、渲染入口与模板包装器。
@@ -53,10 +56,10 @@
 
 ## 封面合同
 
-- `gbro-cover-design 只负责构图提示词`、风格和标题决策；`cover runner 负责实际生成`、A-roll 人物合成、本地中文排版与 QA。不能因为子 Skill 只输出提示词就停止交付。
+- 项目内 `punk-cover` 优先负责 9:16 图文穿插候选的内容转译、标题/人物关系和完整成图；保存其实际提示词与输出，不能仅口头声称调用。现有 `gbro-cover-design` 保留为正式 runner 的 brief/无字底图接口；`cover runner` 仍负责正式发布、哈希和 QA，Punk 候选不自动等于已批准封面。
 - 参考图必须存在并绑定 SHA-256。图1固定为当前讲师清晰人脸/人物参考；涉及产品、UI 或道具时，图2起绑定批准素材。缺参考图必须 blocked，不得仅凭文字猜脸。
-- 人脸不得被文字、道具或裁切遮挡；五官身份要与参考图一致。人物动作、道具和环境必须符合当前主题，而不是套用固定惊讶姿势或无关科技背景。
-- 标题使用本地中文排版，逐字检查；图片模型生成的中文不作为最终文字层。关键元素距四边至少10%安全边距，同时服从脸部避让。
+- 五官和脸部轮廓不得被文字、道具或裁切遮挡；五官身份要与参考图一致。经本 Job 认可的少量发丝与字穿插允许保留，叙事手部仍须清楚。人物动作、道具和环境必须符合当前主题，而不是套用固定惊讶姿势或无关科技背景。
+- 完整成图路线逐字检查图片模型生成的中文，批准后原样复用该图，不再本地叠字；无字底图路线才使用本地中文排版。关键元素仍服从本 Job 已批准的边距与脸部避让。
 - 封面只输出当前 Job 在 `cover_direction` 已批准的比例；子 Skill 的 3:4 默认值不改写该选择。
 
 ## AI B-roll provider 合同

@@ -236,11 +236,16 @@ def validate_canary_receipt(
         or not Path(qualification_root_value).is_absolute()
     ):
         raise ValueError("canary receipt identity is invalid")
-    qualification_root = Path(qualification_root_value).resolve(strict=True)
-    try:
-        qualification_root.relative_to(root)
-    except ValueError:
-        raise ValueError("canary receipt qualification root escapes the Skill") from None
+    # The receipt preserves its original absolute provenance. Resolve its
+    # package-relative tail in this copy instead of requiring the old install.
+    relative_qualification = Path(
+        "assets/verified-templates/semantic-state-qualification-20260918-restore"
+    )
+    archived_parts = Path(qualification_root_value).parts
+    expected_tail = ("hd-talking-head", *relative_qualification.parts)
+    if archived_parts[-len(expected_tail):] != expected_tail:
+        raise ValueError("canary receipt qualification root escapes the Skill")
+    qualification_root = (root / relative_qualification).resolve(strict=True)
 
     qualification = require_fields(
         receipt.get("qualification_evidence"),

@@ -9,7 +9,7 @@
 5. 视觉生产必须项
 6. 完成边界
 
-本文件只描述 `full-v2` 正式流程。视觉阶段只接受 VisualPlan schema v3 和 ShotRecipe v2，不兼容旧 visual Job；旧 visual Job 重新执行 `visual_direction`。每个 runner 只能把当前阶段推进到 `ready_for_review`；机器 PASS 不等于人工批准。
+本文件只描述 `full-v2` 正式流程。视觉阶段只接受 VisualPlan schema v3 和 ShotRecipe v2，不兼容旧 visual Job；旧 visual Job 重新执行 `visual_direction`。每个 runner 只能把当前阶段推进到 `ready_for_review`；机器 PASS 不等于批准；中间阶段按本 Skill 的“结果确认”策略完成本地 QA 后由宿主内部批准，只有配置、付费/外部动作、封面方向、实际封面与最终成片保留用户确认。
 
 十二阶段不是依赖安装器。进入 `inspect` 前，当前 Job 必须已有通过的 `manifests/dependency-preflight.json`，并完成本 Job 的动态 provider/插件配置确认。缺少必需运行时、runner 或 Skill 时停在阶段外的依赖门；不得先运行部分阶段再补依赖。
 
@@ -23,19 +23,19 @@
 
 ## 阶段表
 
-| 阶段 | 公共入口 | 固定产物 | 人工审核重点 |
+| 阶段 | 公共入口 | 固定产物 | 验收重点 |
 | --- | --- | --- | --- |
 | `inspect` | `edit.hd.tools.inspect_inputs.inspect_job(job)` | `01-inspect/report.json` | 视频/音频流、时长、编码宽高、SAR 与 DAR、文案身份 |
 | `content_analysis` | `edit.hd.tools.content_analysis.prepare_content_analysis(job, analysis)` | `02-content-analysis/content-analysis.json`, `review.md` | 唯一内容理解、核心观点、重点、精确关键词、事实/人物/数字、B-roll 语义角色 |
 | `cover_direction` | `edit.hd.tools.cover_direction.prepare_cover_direction(job, direction)` | `03-cover-direction/person-reference.png`, `cover-direction.json`, `review.html` | 封面大体内容、唯一输出比例、标题、人物动作、环境、构图和字体方向 |
-| `cover` | 显式加载 `gbro-cover-design`，再调用 `edit.hd.tools.cover.prepare_cover(job, ...)` | `04-cover/cover-<approved-ratio>.png`, `cover-delivery-raster.png`, `cover-report.json` | 只交付批准比例；实际封面图、脸部不遮挡、隐喻可辨、动作/环境贴题、中文无误 |
-| `speech_cleanup` | `edit.hd.tools.speech_edit_v2.prepare_transcription(job)` 后同一阶段调用 `speech_edit_v2.prepare_cleanup_proposal(job, plan)`；内部必须应用已绑定 `video-use` pacing profile | `05-speech-cleanup/` 内 7 件完整产物 | 转写覆盖、删改差异、0.40 秒长停顿切分、预估时长；中间 3 件不单独报审 |
+| `cover` | 优先加载项目内 `punk-cover` 生成完整候选；正式发布仍调用 `edit.hd.tools.cover.prepare_cover(job, ...)` | `04-cover/cover-<approved-ratio>.png`, `cover-delivery-raster.png`, `cover-report.json` | 只交付批准比例；实际封面图、五官清楚、隐喻可辨、动作/环境贴题、中文无误 |
+| `speech_cleanup` | `video-use/helpers/transcribe.py` 负责字级转写；项目适配器以 `transcribe.transcribe_job(job, video_use_result=..., invocation=...)` 验收原始结果，再调用 `speech_edit_v2.prepare_cleanup_proposal(job, plan)`，并应用已绑定的 pacing profile | `05-speech-cleanup/` 内完整产物及原始调用证据 | 源视频身份、真实调用、字级时码与覆盖率、删改差异、0.40 秒长停顿切分、预估时长；中间产物不单独报审 |
 | `edit_structure` | `edit.hd.tools.speech_edit_v2.render_edit(job)`；有剪点时必须调用预检报告绑定的 `video-use/helpers/render.py` | `06-edit-structure/edit-plan.json`, `edited-aroll.mp4`, `timeline-map.json` | EDL 真实剪辑、原口播音频主时钟、30ms 音频边缘、原生 9:16 A-roll |
 | `visual_direction` | `edit.hd.tools.visual_plan.prepare_visual_direction(job, director_brief, official_registry)` | `07-visual-direction/visual-plan.json`, `visual-routing.md` | 五类同级语义选择；冻结 `source_bindings`、编译 ShotRecipe v2 |
 | `visual_canary` | `edit.hd.tools.visual_canary.prepare_visual_canary(job, ...)` | `08-visual-canary/visual-canary.mp4`, `canary-manifest.json`, `segments/` | 不超 30 秒的真实长片段落；只执行已批准配方 |
 | `visual_assets` | `edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2(job, ...)` | `09-visual-assets/asset-manifest.json`, `visual-track.mp4`, `segments/` | 已批准 canary 字节哈希完全一致；严格执行剩余已冻结配方 |
-| `subtitles` | `edit.hd.tools.subtitles_v2.prepare_subtitles_v2(job)` | `10-subtitles/subtitle-plan.json`, `subtitles.webm`, `subtitles.srt`, `contact-sheet.png` | 只有 A-roll 常规字幕；艺术字只能是精确已批准关键词 |
-| `preview` | `edit.hd.tools.preview_v2.prepare_preview_v2(job)` | `11-preview/review.mp4`, `qa-report.json`, `contact-sheet.png`, `keyframes/` | 1080×1920/24fps、一视频一主音轨、默认无背景音乐、来源/字幕/安全区/转场 QA |
+| `subtitles` | `edit.hd.tools.subtitles_v2.prepare_subtitles_v2(job)` | `10-subtitles/subtitle-plan.json`, `subtitles.webm`, `subtitles.srt` | A-roll 与有口播的 B-roll 共用唯一常规字幕轨；艺术字只能是精确已批准关键词 |
+| `preview` | `edit.hd.tools.preview_v2.prepare_preview_v2(job)` | `11-preview/review.mp4`, `qa-report.json`, `keyframes/` | 1080×1920/24fps、一视频一主音轨、默认无背景音乐、来源/字幕/安全区/转场 QA |
 | `delivery` | `edit.hd.tools.qa_delivery_v2.prepare_delivery_v2(job)` | `12-delivery/final.mp4`, 封面、字幕、plans、qa、用户资料索引、`delivery-manifest.json` | 交付与已批准 preview 同哈希；确认后才完成 |
 
 上表每个阶段进入 `ready_for_review` 时都额外发布同目录 `material-usage.json`，并将它加入该阶段正式 artifact 集。回执必须是 `complete_reference_declaration=true`；没有使用用户资料的阶段发布空 `references`，不得省略声明。完整字段、校验和变更规则见 [权威素材使用回执与变更事务](material-usage-contract.md)。
@@ -66,7 +66,7 @@ cross_kind_replacement: forbidden
 ## 状态操作
 
 - runner 返回后重新 `load_job`，验证当前阶段为唯一 `ready_for_review`。
-- 用户确认后只批准当前阶段，再重新加载状态；最终 `delivery` 使用下文的最终确认入口，不直接调用裸 `state.approve`。
+- 中间阶段本地 QA 和绑定校验通过后内部批准当前阶段，再重新加载状态；需要用户决定的阶段等待真实确认。最终 `delivery` 使用下文的最终确认入口，不直接调用裸 `state.approve`。
 - 修改意见调用 `revise`。只改单个正式视觉段时使用 `artifact_scope=("seg-xxx",)`。
 - 已选来源暂时无法执行时 `block`，当前 generation 不自动重试；只给出 `retry_same_strategy` 或 `replan_visual_direction`。
 - `delivery ready_for_review` 仍不是完成；`delivery approved` 加上正式回执及只读审计通过，才可宣称正式完成。
@@ -75,7 +75,7 @@ cross_kind_replacement: forbidden
 
 `visual_direction` 使用 `scripts/broll_capability_router.py` 为每个段落编译稳定 ShotRecipe v2。五类候选都按语义匹配、内容真实性、原生竖屏、画质可读性和来源记录评估，然后冻结 mode、components、`source_bindings` 和 composition。`code_generated` 调用现有依赖 Skill 并保留 Skill 调用证据；`external_stock` 保留许可记录；`ai_generated` 是主动语义选择，不是其他来源无法执行后的替代项。
 
-只生产 1080×1920/24fps 视频。A-roll 保留实拍背景且不抠像；B-roll 无常规字幕；头像为统一 head-shoulders 裁切。渲染串行，重型并发固定为 1。
+只生产 1080×1920/24fps 视频。A-roll 保留实拍背景且不抠像；B-roll 与 A-roll 共用唯一原声字幕轨，避开统一 head-shoulders 圆形头像。渲染串行，重型并发固定为 1。
 
 ## 十二阶段逐项合同
 
@@ -87,7 +87,7 @@ cross_kind_replacement: forbidden
 
 **产物**：`01-inspect/report.json`。
 
-**人工审核**：输入是否正确，时长/尺寸/声音是否符合预期。通过后只解锁 `content_analysis`。
+**验收**：输入是否正确，时长/尺寸/声音是否符合预期。通过后只解锁 `content_analysis`。
 
 ### 2. `content_analysis`
 
@@ -97,39 +97,39 @@ cross_kind_replacement: forbidden
 
 **产物**：`02-content-analysis/content-analysis.json` 与 `review.md`。
 
-**人工审核**：核心观点、重点句、关键词、事实、人物、数字和 B-roll 语义角色。批准后封面、视觉、贴片和字幕只读这份内容地图，不重做理解。
+**验收**：核心观点、重点句、关键词、事实、人物、数字和 B-roll 语义角色。批准后封面、视觉、贴片和字幕只读这份内容地图，不重做理解。
 
 ### 3. `cover_direction`
 
 **输入**：已批准内容地图与当前 A-roll 人物参考帧。
 
-**执行**：`cover_direction.prepare_cover_direction` 绑定当前 A-roll 或用户提供的人物参考，确定唯一输出比例、封面标题、人物动作/表情、环境、道具、构图、色板、字体和禁止项。显式加载 `gbro-cover-design` 作为构图提示词工具，但不继承它的固定比例默认值。
+**执行**：`cover_direction.prepare_cover_direction` 绑定当前 A-roll 或用户提供的人物参考，确定唯一输出比例、封面标题、人物动作/表情、环境、道具、构图、色板、字体和禁止项。9:16 图文穿插方向优先加载项目内 `punk-cover` 及唯一选中的风格，形成构图和完整候选；现有 `gbro-cover-design` 仅用于旧 runner 的 brief/无字底图路径。子 Skill 的默认比例都不改写本 Job 的批准比例。
 
 **产物**：`03-cover-direction/person-reference.png`、与批准比例一致的 `direction-preview.png`、`cover-direction.json`、`review.html`。人物参考图只绑定身份；审核页必须以方向样板为主图。
 
-**人工审核**：先确认“要表达什么、人在做什么、环境是什么、标题是什么”。方向样板不是最终生成图，但必须用实际比例直接画出构图和核心语义；不能拿人物参考图或纯文字说明代替。
+**验收**：先确认“要表达什么、人在做什么、环境是什么、标题是什么”。方向样板不是最终生成图，但必须用实际比例直接画出构图和核心语义；不能拿人物参考图或纯文字说明代替。
 
 ### 4. `cover`
 
 **输入**：已批准封面方向、人物参考图和本 Job 已确认生图环境。
 
-**执行**：`cover.prepare_cover(job, ...)` 只消费已批准 direction。生成器以批准比例制作无最终中文字层的场景/人物底图，cover runner 负责人物合成、本地中文排版、头脸保护区、外层/内层隐喻可辨性、边界和质量 QA。
+**执行**：`cover.prepare_cover(job, ...)` 只消费已批准 direction。若用户已认可带字的完整封面预览，先核对其文字与方向一致，再传 `approved_preview`、原图 SHA-256 和实际生成提示词原样发布；不生成或要求无字底图，不重新生图或叠字。若只批准了方向、尚未批准成图，才可选择无字底图加本地中文排版的候选路线。两种路径都检查比例、中文、人物和主题表达；完整图的五官、手部与字形由人工在正式尺寸下检查，不伪造本地排字的像素框，具体见封面合同。
 
 **产物**：`04-cover/cover-<approved-ratio>.png`、`cover-delivery-raster.png`、`cover-report.json`；不得生成未批准比例的替代版。
 
-**人工审核**：实际生成图，不是再确认一次方向。检查比例正确、脸部和头发不被挡、人物动作/环境符合主题、外层与内层叙事一眼可辨、中文准确和视觉吸引力。机器 QA 明显失败时不得报审。
+**验收**：实际生成图，不是再确认一次方向。检查比例正确、五官和叙事手部清楚、人物动作/环境符合主题、外层与内层叙事一眼可辨、中文准确和视觉吸引力；用户认可的少量发丝与标题穿插允许保留。机器 QA 明显失败时不得报审。
 
 ### 5. `speech_cleanup`
 
 **输入**：已批准 inspect、原口播视频和文案。
 
-**执行**：`speech_edit_v2.prepare_transcription` 生成字级时码，`speech_edit_v2.prepare_cleanup_proposal` 只提议删除口误、明显重复和非语义停顿。不修改观点，不生成 B-roll。
+**执行**：先核对本次原声上传/额度许可和凭据，从本 Job 预检绑定的 `video-use-runtime.resolved_path` 解析并实际调用 `helpers/transcribe.py <源视频> --edit-dir <本Job工作区/edit>`。进程工作目录使用同一预检报告中的 `video-use-skill.resolved_path`，以便 helper 读取已安装 Skill 的私有 `.env`；若凭据由进程环境安全注入则无需改工作目录，不把密钥复制到项目或回执。确认输出路径不会命中其他源素材的同名缓存；保留原始 JSON，记录 `invocation={"entrypoint":入口绝对路径,"exit_code":0,"source_sha256":本Job视频哈希,"result_sha256":原始JSON哈希}`。调用 `transcribe.transcribe_job(job, video_use_result=原始JSON路径, invocation=invocation)`；适配器核对入口绑定、原片身份、响应、字级时码顺序/范围和文案覆盖率，原始 JSON 发布为 `scribe.json`。Scribe 返回零时长词时只把其原文合并到相邻有时码的词，不伪造独立时码；原始响应不改写。验收通过后，`speech_edit_v2.prepare_cleanup_proposal` 只提议删除口误、明显重复和非语义停顿。不修改观点，不生成 B-roll。单纯运行 `timeline_view.py` 或 `pack_transcripts.py` 不能代替转写调用；本地 Whisper 不能让此阶段通过。
 
-不得只信单次 ASR。在报审前必须对全片做第二次独立转写，优先使用已绑定本地大模型的 Whisper DTW 词级对齐，并与首次转写、原稿及用户反馈交叉对照。要覆盖三类漏项：词内口吃（如“分—分享”）、相邻重复词、未完成后整句重说。ASR 合并了口吃或整句时，使用 v2 提案的 `reviewed_cut_ranges` 记录精确源时间、原因和证据，不伪造转写词边界。这些切点必须生成局部核听样片，人工审核确认后才能渲染正式 A-roll。
+不得只信单次 ASR。在报审前必须对全片做第二次独立转写，优先使用已绑定本地大模型的 Whisper DTW 词级对齐，并与首次转写、原稿及用户反馈交叉对照。要覆盖三类漏项：词内口吃（如“分—分享”）、相邻重复词、未完成后整句重说。ASR 合并了口吃或整句时，使用 v2 提案的 `reviewed_cut_ranges` 记录精确源时间、原因和证据，不伪造转写词边界。这些切点必须生成局部核听样片，宿主核听确认切点后才能渲染正式 A-roll；存在歧义或用户要求核听时才报审。
 
-二次 ASR 的时间戳不得直接当作原片绝对时间；它只用于发现可疑文本。对每个候选切点，都要从原片音轨单独抽取局部片段，用唯一左右文重新定位绝对时间。同词多次出现时，禁止按第一个命中项猜测；必须证明选中的是用户指出的那次。`prepare_cleanup_proposal` 还必须验证 `reviewed_cut_ranges` 命中有效语音，不能基本是静音；核听片必须使用同一正式 renderer 和原片绝对 EDL 生成。输出 ASR 可以辅助核对上下文，但它会归一化口吃，不能单独证明重字已被删除。
+二次 ASR 的时间戳不得直接当作原片绝对时间；它只用于发现可疑文本。对每个候选切点，都要从原片音轨单独抽取局部片段，用唯一左右文重新定位绝对时间。同词多次出现时，禁止按第一个命中项猜测；必须证明选中的是用户指出的那次。`prepare_cleanup_proposal` 还必须验证 `reviewed_cut_ranges` 命中有效语音，不能基本是静音；核听片必须使用同一正式 renderer 和原片绝对 EDL 生成。审核样片应取一段连续口播并保留剪点前后语境，若展示给用户则在画面标明剪点；不得把相隔很远的剪点短片串成一条“卡顿合集”要求用户找问题。输出 ASR 可以辅助核对上下文，但它会归一化口吃，不能单独证明重字已被删除。
 
-**产物**：`05-speech-cleanup/word-transcript.json`、清理建议、差异和审核文档；该阶段的中间文件一次报审，不拆成重复人工门。
+**产物**：`05-speech-cleanup/word-transcript.json`、清理建议、差异和审核文档；该阶段的中间文件由宿主一并验收，不拆成重复人工门。
 
 差异报告 `diff-summary.json` 的 `risk_assessment` 是只读规则提示（`version=1`、`method=conservative_rules_v1`），不是语义分类器或自动批准：
 
@@ -140,9 +140,9 @@ cross_kind_replacement: forbidden
 
 审核时优先核听 `high`，再检查 `review` 与 `low`；`advisory_only` 和 `requires_audio_review` 始终为 true。完整观点、否定范围、反问及语气强调仍须人工判断，不能宣称规则已自动发现全部误删。
 
-预检中的 `video-use-runtime` 和 `video-use-skill` 必须已满足。`prepare_cleanup_proposal` 在不删除正确字词的前提下，将同一 keep 段中大于等于 0.40 秒的无声间隙切成多个 EDL keep range，每侧保留 0.08 秒呼吸边缘；口误/重说仍以人工可审的 delete segment 表达。目录存在但入口或阶段绑定失败时不得生成提案。
+预检中的 `video-use-runtime` 和 `video-use-skill` 必须已满足。`prepare_cleanup_proposal` 只在同一 keep 段的转写间隙大于等于 0.40 秒、且原音轨待删区间确实安静时切成多个 EDL keep range，每侧保留 0.08 秒呼吸边缘；转写漏词造成的有声间隙必须保留。口误/重说仍以人工可审的 delete segment 表达。目录存在但入口或阶段绑定失败时不得生成提案。
 
-**人工审核**：转写准确性、删改边界、第二次转写发现的重字/重说、局部核听样片和预计剪后时长。
+**验收**：转写准确性、删改边界、第二次转写发现的重字/重说、局部核听样片和预计剪后时长。
 
 #### 已确认的转写文字更正
 
@@ -181,9 +181,10 @@ cross_kind_replacement: forbidden
 **产物**：`06-edit-structure/edit-plan.json`、`edited-aroll.mp4`、`timeline-map.json`。
 
 存在剪点时，`render_edit` 只能从本 Job `manifests/dependency-preflight.json` 解析状态为 `bound` 的 `video-use-runtime`，生成临时 `video-use-edl.json` 并调用其正式 renderer；不得从聊天路径猜测，也不得回退到另一套无边缘淡化拼接。无剪点时可复制原音频元素流。临时 EDL 和中间分段在发布前清理，最终 `edit-plan.json` 与 `timeline-map.json` 必须记录 `render_adapter`。
+生成 EDL 时须剔除删词或标点切分后留下的无台词短碎片；不能把补留的呼吸边缘单独渲成一帧或数帧。确有语音的短词不能按时长一概删除，须保留并在成片剪点核查。
 `video-use` 的中间输出可能继承源素材的编码宽高和非方形像素，因此不能直接发布。必须在不重新处理已淡化音轨的前提下，先按 DAR 将非方形像素转换为方形像素，再规格化为 1080×1920/24fps。最终输出必须是 SAR=1:1、DAR=9:16；然后实际探测输出的视频宽高、SAR、DAR、帧率、视频时长、音频时长和二者差值。
 
-**人工审核**：实际剪后视频、口播连续性、音画对齐和原生 9:16。
+**验收**：实际剪后视频、口播连续性、音画对齐和原生 9:16。
 
 ### 7. `visual_direction`
 
@@ -193,7 +194,7 @@ cross_kind_replacement: forbidden
 
 **产物**：`07-visual-direction/visual-plan.json` 与 `visual-routing.md`。
 
-**人工审核**：只确认视觉路由和镜头设计，不重问重点关键词。命名 CEO/研究者必须绑定第一方人物图片或官方视频及职务。
+**验收**：只确认视觉路由和镜头设计，不重问重点关键词。命名 CEO/研究者必须绑定第一方人物图片或官方视频及职务。
 
 开场按 [封面入场、A-roll 开场与可选配乐](cover-opening-bgm.md) 安排：默认先由实拍 A-roll 引入话题，再出现相应证据 B-roll；启用封面时在它之后接 A-roll。时长按已批准语义区间决定，不固定秒数，不重新设计已批准封面。用户明确批准其他顺序时记录例外。
 
@@ -205,7 +206,7 @@ cross_kind_replacement: forbidden
 
 **产物**：`08-visual-canary/visual-canary.mp4`、`canary-manifest.json`、`segments/`、进/稳/出关键帧。
 
-**人工审核**：不审“大概风格”，而审正式字节：文案、字体、布局、媒体、动性、头肩裁切、自然转场与信息密度。
+**验收**：不审“大概风格”，而审正式字节：文案、字体、布局、媒体、动性、头肩裁切、自然转场与信息密度。
 
 ### 9. `visual_assets`
 
@@ -215,17 +216,17 @@ cross_kind_replacement: forbidden
 
 **产物**：`09-visual-assets/asset-manifest.json`、`visual-track.mp4`、`segments/`、每镜头 manifest 与关键帧。
 
-**人工审核**：正片是否精确复用样片，其余镜头是否符合同一批准系统。单镜头重试可通过 `artifact_scope` 强制重做指定段；已生成计划的修订按 [视觉修订合同](visual-revision-reuse.md) 比较输入并复用未变媒体。现有 DAG 仍会重置字幕、preview 和 delivery；媒体复用不代表这些阶段的批准自动保留。
+**验收**：正片是否精确复用样片，其余镜头是否符合同一批准系统。单镜头重试可通过 `artifact_scope` 强制重做指定段；已生成计划的修订按 [视觉修订合同](visual-revision-reuse.md) 比较输入并复用未变媒体。现有 DAG 仍会重置字幕、preview 和 delivery；媒体复用不代表这些阶段的批准自动保留。
 
 ### 10. `subtitles`
 
 **输入**：已批准 content analysis、timeline map 和 visual track。
 
-**执行**：`subtitles_v2.prepare_subtitles_v2(job)` 生成唯一 A-roll 字幕轨。B-roll 不叠常规口播字幕。每个 cue 保持简短；重点字只能是已批准精确关键词，无背景底色，可整体旋转和基线错位。
+**执行**：`subtitles_v2.prepare_subtitles_v2(job)` 生成覆盖 A-roll 与有口播 B-roll 的唯一字幕计划与透明轨，实际视觉组件和时间轴适配按 [字幕样式合同](subtitle-style-contract.md) 调用 TalkCraft。B-roll 字幕位于圆窗上方，不能与画面内标题重叠或由子 Skill 重复烧录。每个 cue 保持简短；重点字只能是已批准精确关键词，不另加色块。若运行时仍调用旧 PIL 黄竖条样式，则当前字幕阶段未达到已确认标准，不可自动批准或进入正式预览。
 
-**产物**：`10-subtitles/subtitle-plan.json`、`subtitles.webm`、`subtitles.srt`、`contact-sheet.png`。
+**产物**：`10-subtitles/subtitle-plan.json`、`subtitles.webm`、`subtitles.srt`。不生成缩略图或联系表；字幕仍验真实透明轨、几何与时码。
 
-**人工审核**：读速、分句、位置、艺术字与已批准关键词一致，不再做内容提炼。
+**验收**：读速、分句、位置、艺术字与已批准关键词一致，不再做内容提炼。
 
 报审前，在实际项目运行时执行只读入口（不重新生成字幕）：
 
@@ -240,7 +241,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli review-subtitles --job "<jo
 - `legacy_report_unavailable`：明确说明“旧字幕产物没有术语报告，未证明已检查”；不当作无疑点，不补写旧产物或重签批准。
 - 命令失败或报告身份变化：停止报审，报告错误并重新核对当前 Job；不直接读取未经验证的 JSON 绕过检查，也不重新生成已批准资产来掩盖失败。
 
-该检查并入当前字幕人工门，不增加独立确认。用户指出源转写错误时，沿已有 `speech_cleanup` 修订链处理；运行时更正入口为 `apply-cleanup-corrections --job <job-dir> --corrections <manifest>`，必须按当前运行时合同准备绑定源转写身份的更正 manifest，不把疑点 JSON 直接作为 manifest。源音视频中真实口吃或念错不能靠改文字修复，仍需清理阶段的精确剪点和核听。返回上游后按既有依赖重审，不沿用已失效的字幕批准。
+该检查并入当前字幕本地 QA，不增加独立确认。用户指出源转写错误时，沿已有 `speech_cleanup` 修订链处理；运行时更正入口为 `apply-cleanup-corrections --job <job-dir> --corrections <manifest>`，必须按当前运行时合同准备绑定源转写身份的更正 manifest，不把疑点 JSON 直接作为 manifest。源音视频中真实口吃或念错不能靠改文字修复，仍需清理阶段的精确剪点和核听。返回上游后按既有依赖重审，不沿用已失效的字幕批准。
 
 ### 11. `preview`
 
@@ -250,9 +251,9 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli review-subtitles --job "<jo
 
 用户明确要求开场封面或配乐时，另读 [封面入场与可选配乐](cover-opening-bgm.md)，使用 `prepare_preview_v2(job, opening=..., music=...)`，仅传本次已选选项。正文与原声仅平移 `hold_frames`，导出最终时钟 SRT；不修改已批准正文结构。参数变化先修订 `preview`，重复调用不重渲染。音乐由正式预览混成单音轨，不单独修改最终 MP4。
 
-**产物**：`11-preview/review.mp4`、`qa-report.json`、`contact-sheet.png`、`keyframes/`。启用封面时还登记 `opening-manifest.json` 和偏移后的 `subtitles.srt`，缺任一项停止复用或交付。
+**产物**：`11-preview/review.mp4`、`qa-report.json`、`keyframes/`。关键帧保留视频原尺寸作为内部 QA，不缩小或拼成联系表，交付不复制缩略图。启用封面时还登记 `opening-manifest.json` 和偏移后的 `subtitles.srt`，缺任一项停止复用或交付。
 
-**人工审核**：完整观看全片，机器 PASS 不是批准。任何修改返回最小影响上游，不从头重做。
+**验收**：宿主审阅完整成片，结合原声、字幕和实际画面完成本地 QA；机器 PASS 不能代替这项审阅。通过后内部批准 `preview`，仅用于导出同字节的待确认交付包；不记录为用户确认，不宣称正式完成。只在 `delivery` 对当前成片请求一次最终用户确认，不再单独索取相同预览的批准。任何修改返回最小影响上游，不从头重做。
 
 ### 12. `delivery`
 
@@ -266,7 +267,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli review-subtitles --job "<jo
 
 启用音乐时原样交付预览登记的音乐清单、音乐审计音频、许可原件和署名文本；成片与批准预览字节完全一致。自动响度检查不能代替 preview 人工试听，不能自动替用户批准。
 
-**人工审核**：交付库与已批准 preview 身份一致。用户对当前 `delivery` 回复确认后，使用最终确认入口；不得把进度要求、机器 PASS 或历史确认当成本次批准。
+**验收**：交付库与已批准 preview 身份一致。用户对当前 `delivery` 回复确认后，使用最终确认入口；不得把进度要求、机器 PASS 或历史确认当成本次批准。
 
 ### 最终确认入口
 

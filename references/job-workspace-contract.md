@@ -7,6 +7,7 @@
 正式流程优先运行 Skill 自带的 `scripts/initialize_video_job.py`。它先调用 `create_job_workspace.py` 创建独立 workspace 和 `00-user-provided`，再创建 `full-v2` workflow，最后只在 `job-context.json` 指向的权威 `job_dir` 中创建十二阶段目录、`manifests`、`qa`、`cache` 和 `tmp`。不得在 workspace 顶层再创建一套重复输出树。
 
 初始化前核验发布包及真实运行时，冲突时不复制用户输入。workspace 的 `job-context.json` 固定绑定实际 Python、项目路径、模块哈希、合成器版本与 `skill_release`，不能手工改写来迁移。环境草稿、预检和批准只写到权威 job_dir 的 `manifests/provider-config.json`、`dependency-preflight.json`、`setup-approval.json`。相同输入在另一个 workspace 中也属于另一个 Job，不能沿用批准。
+开发中只改动了已明确退回的阶段且需恢复同一 Job 时，按[发布与调用合同](release-contract.md)使用受控上下文迁移入口；不把迁移记录当作新的用户配置批准。
 
 `scripts/create_job_workspace.py` 是通用资料导入底层；只有不使用本项目状态引擎的适配器才直接调用它的顶层输出目录模式。当前适配层可以改变父目录，但不能合并不同 Job 或省略职责目录。
 

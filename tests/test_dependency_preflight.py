@@ -370,9 +370,10 @@ class DependencyPreflightTests(unittest.TestCase):
                     target = project_root / source.relative_to(REPO_ROOT)
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, target)
-                router = project_root / ".agents/skills/hd-talking-head/scripts/broll_capability_router.py"
-                router.parent.mkdir(parents=True)
-                shutil.copy2(SKILL_ROOT / "scripts/broll_capability_router.py", router)
+                scripts = project_root / "skill-development/hd-talking-head/scripts"
+                scripts.mkdir(parents=True)
+                for name in ("broll_capability_router.py", "avatar_profile.py"):
+                    shutil.copy2(SKILL_ROOT / "scripts" / name, scripts / name)
             for relative in project_files:
                 path = project_root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -1574,6 +1575,42 @@ _run_reference_process = "def _run_reference_process"
         ):
             self.assertIn(field, dependency)
 
+    def test_required_talkcraft_health_runs_its_real_checker(self) -> None:
+        manifest = json.loads(
+            (SKILL_ROOT / "references/dependency-manifest.json").read_text(encoding="utf-8")
+        )
+        matches = [item for item in manifest["dependencies"] if item["id"] == "talkcraft-runtime-health"]
+        self.assertEqual(len(matches), 1)
+        dependency = matches[0]
+        self.assertTrue(dependency["required"])
+        self.assertEqual(dependency["required_level"], "callable")
+        focused = {"schema_version": 3, "dependencies": [dependency]}
+
+        missing, missing_report = self.run_preflight(focused)
+        self.assertEqual(missing.returncode, 2)
+        self.assertEqual(missing_report["dependencies"][0]["status"], "missing")
+
+        failed, failed_report = self.run_preflight(
+            focused,
+            project_contents={
+                "edit/hd/integrations/talkcraft/check_runtime.py": "raise SystemExit(7)\n",
+            },
+        )
+        self.assertEqual(failed.returncode, 2)
+        self.assertEqual(failed_report["dependencies"][0]["status"], "smoke_failed")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            mini_manifest = Path(temporary) / "dependency-manifest.json"
+            mini_manifest.write_text(json.dumps(focused), encoding="utf-8")
+            checked = subprocess.run(
+                [sys.executable, str(SCRIPT), "--manifest", str(mini_manifest),
+                 "--project-root", str(REPO_ROOT), "--reference-root", temporary],
+                check=False, capture_output=True, text=True, timeout=45,
+            )
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+        result = json.loads(checked.stdout)
+        self.assertEqual(result["dependencies"][0]["status"], "callable")
+
     def test_manifest_keeps_stock_providers_static_optional(self) -> None:
         manifest = json.loads(
             (SKILL_ROOT / "references" / "dependency-manifest.json").read_text(
@@ -1634,6 +1671,10 @@ _run_reference_process = "def _run_reference_process"
         }
         for dependency_id, expected in expected_probes.items():
             dependency = by_id[dependency_id]
+            if dependency_id in {"hyperframes-adapter", "local-canonical-adapter"}:
+                self.assertEqual(dependency["kind"], "project_path")
+                self.assertEqual(dependency["target"], "skill-development/hd-talking-head")
+                self.assertEqual(dependency["path_type"], "directory")
             self.assertNotIn("adapter", dependency)
             self.assertNotIn("bindings", dependency)
             self.assertEqual(len(dependency["binding_probes"]), len(expected))
