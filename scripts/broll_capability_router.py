@@ -79,6 +79,8 @@ _PRIMARY_RENDERER = {
     "doudou-remotion-whiteboard": "Remotion",
     "talkcraft-native-adaptation": "Remotion",
     "hyperframes-native-adaptation": "HyperFrames",
+    "lemo-opuscar": "HTMLCanvas",
+    "onetake": "HTMLCanvas",
 }
 TEMPLATE_ORIGIN_PRIORITY = {
     "verified_third_party": 0,
@@ -369,9 +371,9 @@ def rank_code_templates(
 
     eligible.sort(
         key=lambda item: (
-            TEMPLATE_ORIGIN_PRIORITY[item["template_origin"]],
             -float(item["semantic_match_score"]),
             -float(item["quality_score"]),
+            TEMPLATE_ORIGIN_PRIORITY[item["template_origin"]],
             -item["reuse_gap"],
             item["template_id"],
         )
@@ -696,6 +698,8 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "doudou-remotion-whiteboard": "reference_adapter",
             "talkcraft-native-adaptation": "reference_adapter",
             "hyperframes-native-adaptation": "reference_adapter",
+            "lemo-opuscar": "reference_adapter",
+            "onetake": "reference_adapter",
         }
         if not isinstance(dependency_id, str):
             return "invalid-binding"
@@ -871,6 +875,8 @@ def _compile_shot_recipe(
                     "doudou-remotion-whiteboard",
                     "talkcraft-native-adaptation",
                     "hyperframes-native-adaptation",
+                    "lemo-opuscar",
+                    "onetake",
                     "whiteboard-video",
                 },
             },

@@ -8,10 +8,25 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
+import sys
 import tempfile
 
 
 SOURCES = {
+    "lemo-opuscar": {
+        "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
+        "commit": "f3c590dffab39419e2f3018416706e046986fe11",
+        "files": ("plugin/skills/lemo-opuscar/SKILL.md", "AGENTS.md",
+                  "DIRECTOR.md", "TECHNIQUE.md", "styles/README.md",
+                  "core/render/video.mjs", "core/lib.js", "package-lock.json"),
+    },
+    "onetake": {
+        "url": "https://github.com/feitangyuan/onetake.git",
+        "commit": "cf09bde3e392c9aa32c4157f80cdbe1fa556685e",
+        "files": ("SKILL.md", "lib/motion.js", "templates/comp.html",
+                  "scripts/render.py", "scripts/probe.py"),
+    },
     "doudou-remotion-whiteboard": {
         "url": "https://github.com/undsky/doudou-remotion-whiteboard-skill.git",
         "commit": "d41f61c889c315b2a590fee61db3a62cf003adc9",
@@ -102,10 +117,45 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = ensure(args.project_root, args.skill)
+        if args.skill in {"lemo-opuscar", "onetake"}:
+            prepare_scene_runtime(args.project_root.resolve(), args.skill)
+            result["runtime_status"] = "callable"
     except (OSError, VisualBrollDependencyError) as error:
         parser.exit(2, f"visual B-roll Skill unavailable: {error}\n")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
+
+
+def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
+    """Prepare only missing local render dependencies; never run upstream auto-update setup."""
+    from upstream_scene_adapter import check_runtime, ONETAKE_PACKAGES
+    root = project_root / "skill-development/vendor" / skill_id
+    if _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
+        raise VisualBrollDependencyError("upstream source has local changes; runtime preparation stopped")
+    try:
+        if skill_id == "lemo-opuscar":
+            if not (root / "node_modules/playwright-core/package.json").is_file():
+                subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
+        else:
+            python = root / ".venv/bin/python"
+            if not python.exists():
+                base = shutil.which("python3.12")
+                if not base:
+                    raise VisualBrollDependencyError("Python 3.12 is required for the project render venv")
+                subprocess.run([base, "-m", "venv", str(root / ".venv")], check=True, timeout=60)
+            modules = "import playwright,numpy,scipy,PIL,matplotlib,fontTools,brotli"
+            if subprocess.run([str(python), "-c", modules], capture_output=True).returncode:
+                subprocess.run([str(python), "-m", "pip", "install",
+                    *[f"{name}=={version}" for name, version in ONETAKE_PACKAGES.items()]], check=True, timeout=240)
+            browser = subprocess.run([str(python), "-c",
+                "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); "
+                "b=p.chromium.launch(); b.close(); p.stop()"], capture_output=True)
+            if browser.returncode:
+                # Install the upstream browser, not an alternative renderer or cloud provider.
+                subprocess.run([str(python), "-m", "playwright", "install", "chromium"], check=True, timeout=240)
+        check_runtime(project_root, skill_id)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise VisualBrollDependencyError(f"project-only scene runtime is unavailable: {error}") from error
 
 
 if __name__ == "__main__":

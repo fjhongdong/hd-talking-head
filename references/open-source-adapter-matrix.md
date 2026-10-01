@@ -34,11 +34,11 @@
   → 相同字节复用到正片
 ```
 
-`broll_capability_router.py` 编译 ShotRecipe v2，并只解析已冻结的依赖入口，不 import 或启动整个仓库。`code_generated` 通过现有依赖 Skill 和登记 adapter 执行，并保留 `invocation_record`。一个 component 不能同时让 HyperFrames 和 Remotion 做最终缩放/转场。
+`broll_capability_router.py` 编译 ShotRecipe v2，并只解析已冻结的依赖入口，不 import 或启动整个仓库。`code_generated` 必须先读取并实际调用所选依赖 Skill，再由登记 adapter 执行并保留 `invocation_record`；父 Skill 只编排和验收。一个 component 不能同时让 HyperFrames 和 Remotion 做最终缩放/转场。
 
 ### 已验证模板入口
 
-五类来源同级；模板优先级仅限已经批准的 `code_generated` 内部。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，再把验证输出交给 `candidate_from_verified_template_record`。固定优先顺序为 `verified_third_party` → `verified_local_canonical` → `custom_fallback`，但必须先通过当前语义、信息容量和 `adaptation_level` 硬门。
+五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
 
 当前登记的 `html-video/frame-data-rollup` 来自 `html-video/templates/frame-data-rollup/source/DataRollup.tsx`，已用原始第三方源码真实渲染 1080×1920 样片；只用于 `bar_chart`、`numeric_comparison`、`data_summary`。HyperFrames Vignelli 虽能产出竖屏 MP4，但真实代表帧出现右侧裁切，因此不得写成 `verified_third_party`。这条失败经验说明“第三方模板”不等于“已验证模板”。
 
@@ -48,7 +48,7 @@
 
 ### 已验证第三方模板入口
 
-五类来源同级；模板优先级仅限已经批准的 `code_generated` 内部。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，再把验证输出交给 `candidate_from_verified_template_record`。固定优先顺序为 `verified_third_party` → `verified_local_canonical` → `custom_fallback`，但必须先通过当前语义、信息容量和 `adaptation_level` 硬门。
+五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
 
 当前登记有 8 条记录：3 条原生第三方入口，以及 5 条由本 Skill 自有适配器执行的 `verified_local_canonical` 入口。`html-video/frame-data-rollup` 来自 `html-video/templates/frame-data-rollup/source/DataRollup.tsx`，只用于 `bar_chart`、`numeric_comparison`、`data_summary`；`hyperframes/notification-cascade` 只用于恰好四个顺序节点后收束为结论的内容；`hyperframes/chatgpt-exchange` 只用于提问、回答、四项对照表与回读结论。两套 HyperFrames 入口分别由 `scripts/hyperframes_notification_adapter.py` / `scripts/render_hyperframes_notification.cjs` 和 `scripts/hyperframes_chatgpt_exchange_adapter.py` / `scripts/render_hyperframes_chatgpt_exchange.cjs` 接入真实 CLI，不是按截图重画。HyperFrames Vignelli 虽能产出竖屏 MP4，但真实代表帧出现右侧裁切，因此不得写成 `verified_third_party`。这条失败经验说明“第三方模板”不等于“已验证模板”。
 

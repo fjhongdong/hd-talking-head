@@ -24,6 +24,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [B-roll 语义能力路由](references/broll-capability-router.md)
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
+- [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
 - [生成型 B-roll 的子 Skill 编排](references/generated-broll-skills.md)（白板、拼贴、手绘动画进入候选时；区分真实调用测试与正式准入）
 - [官方视频下载 Skill 调用与验收](references/official-video-acquisition.md)（`official_material` 选中在线视频时）
 - [第三方模板双输入实测资格](references/template-qualification.md)（新增、更新或审查模板登记时）
@@ -45,6 +46,8 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 每个新视频都必须重新执行一次：
 
 依赖预检前，先运行 `python3 <skill>/scripts/ensure_visual_broll_skills.py --project-root <project> --skill doudou-remotion-whiteboard`，准备本项目新增的手绘白板依赖；只安装项目 vendor 固定提交，不改变全局 Skill。
+
+同样先执行 `ensure_visual_broll_skills.py --project-root <project> --skill lemo-opuscar` 和 `--skill onetake`，补齐项目内固定源码及缺失的本地渲染运行时。实际选中后仍须通过绑定探针；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)；不得全局安装、自动更新或运行自动 reset/setup。
 
 1. 取得视频绝对路径、文案文件绝对路径或聊天中的完整文案，以及用户提供的图片、视频、音频和文档。
 2. 确认 `python3`、预检脚本和 `edit/hd/tools/state.py` 可用；先运行 `python3 <skill>/scripts/ensure_punk_cover.py --project-root <project>`，检查项目内 Punk 封面 Skill，缺失时自动安装已测试版本到 `skill-development/vendor/Punk-Skill`，已有且完整时不重复安装；异常目录或安装失败时保留现场并停止，不改全局 Skill。同时检查项目内 `skill-development/vendor/OpenMontage-video-download/.agents/skills/video-download/SKILL.md` 及固定提交，缺失时按[官方视频下载合同](references/official-video-acquisition.md)安装到项目内，不改全局 Skill。随后运行 `python3 <skill>/scripts/verify_skill_release.py` 校验完整包，并运行 `python3 <project>/edit/hd/integrations/talkcraft/check_runtime.py`：它必须确认生产运行时依赖精确就位、运行时闭包与渲染器匹配、兼容记录和卡片索引绑定当前注册表、上游基线可读、工作台调参和可选 Fish Audio 入口存在。生产运行时属于 108 张资格身份，不得用上游共享 runtime 自动覆盖或自动升级。其它缺文件、哈希变化或版本不一致时停止，列出准确的安装或路径修正动作，等待一次用户确认；不得现场重写发布清单掩盖缺失。
@@ -131,7 +134,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 选择 Doudou 后使用 `scripts/doudou_adapter.py` 绑定当前片段，交给统一组件执行器；不要只运行独立渲染命令后把文件当作正式资产。节点出现时机来自当前口播词级时间，父级仍统一合成圆形人物小窗与唯一字幕轨。批准过的视觉方向不重复报审；改变语义、来源或配方时才进入相应修订流程。
 
-新计划充分使用现成 B-roll 能力：逐段从 TalkCraft、HyperFrames、html-video、Paper、两套白板 Skill、Flat/GBRO 与已选视频服务中匹配具体对象和动作，不因本地模板接得方便就优先选它。默认不选择本包自研的 local-canonical、RelationMotion 和 SemanticState；保留其源码与既有批准资产，不继续扩展自有视觉模板。只有记录了适合当前语义的上游入口及其真实缺口，且现成组件组合也不能完成任务时，才做最小新增实现。调用上游组件后的镜头编排、中文排版和父级合成是适配，不等于重写动画引擎，也不能冒充上游原生整屏配方。具体能力边界见[生成型 B-roll 编排](references/generated-broll-skills.md)。
+新计划充分使用现成 B-roll 能力：父 Skill 只做语义导演、镜头编排、批准门和最终合成验收；制作前完整读取并实际调用所选上游 Skill。候选先按语义匹配分，再按美观质量分排序，两分相同才比较来源资格，最后比较重复间隔。优先组合现成能力；只有记录真实能力缺口后才允许最小新增实现。使用依赖时如实写 `producer_type=dependency` 与 `dependency_id`，另记复用能力与新增实现；`custom_fallback / structural` 是适配资格，不等于自研，也不冒充第三方整屏模板。Lemo-Opuscar、OneTake 使用项目内固定提交。HyperFrames 透明贴片/轻组件、TalkCraft 精确数据、Doudou 白板/思维导图、Paper 分层拼贴、Lovart Kling O1 场景动作保留各自边界；prompt 库不是制作依赖。入口与验收见[上游场景 Skill 合同](references/upstream-scene-skills.md)与[生成型 B-roll 编排](references/generated-broll-skills.md)。
 
 B-roll 有且仅有五类同级来源：
 
@@ -168,7 +171,7 @@ cross_kind_replacement: forbidden
 
 需要生成型画面时，按[生成型 B-roll 编排](references/generated-broll-skills.md)在 Whiteboard、Paper Collage、Flat Animation、GBRO Collage、Story to Handdrawn 等现成 Skill 中按语义选型，再检查实际可执行入口与适配缺口；不因单次样片失败排除整个 Skill，也不因已接通某条路线就统一选它。优先调用上游已有配置与能力，缺口才做最小适配，并实际出片验收。Paper 分层入口与 Whiteboard 原生 SVG 分组入口已分别通过该页的 `paper_collage_adapter`、`whiteboard_adapter` 接入公共组件执行器。Story 的显现样片不能独自满足动态要求；Flat/GBRO 仅负责其视觉方案和静帧阶段，视频统一由 Lovart 生成并由现有 Lovart 适配器验收，不能把 Lovart 视频记作这两套上游的原生视频调用，也不再要求 Gemini 密钥。原生 720p AI 视频不因分辨率被排除，但 Lovart 本次出片及当前片段语义/画质仍须真实验收。已接入入口也不是通用已验证模板，每段仍须检查语义与美观。图片生成与动画来源分别绑定，子 Skill 只产出无声整屏镜头，圆窗、原声和全片唯一字幕轨仍由父级统一处理；不跨已批准来源类型替换，不绕过执行与确认门。
 
-`code_generated` 内部先运行 `scripts/verify_broll_template.py` 读取 `references/verified-template-registry.json`，再按当前语义与容量执行 `verified_third_party` → `verified_local_canonical` → `custom_fallback`。`structural` 改造不得沿用第三方验证身份；本地 canonical 仅能使用已登记的自有结构合同。实际文案填充后仍做当前文案三态 QA，并把 `template_origin` 与 `verification_id` 冻结进 ShotRecipe。编译和正式执行还会复核第三方真实登记与 `invocation_record.template_request` 的当前语义、容量、数字；未知来源或缺少当前请求时直接停止，不补默认值。登记检查强制核验两组历史真实执行附件及对应像素，不等于当前 Job 已渲染或已验收；维护登记时完整阅读双输入实测资格合同。
+`code_generated` 的排序是 `semantic_match_score` → `quality_score` → `template_origin` → `reuse_gap`。语义和质量同分时，资格才按 `verified_third_party` → `verified_local_canonical` → `custom_fallback` 比较。引用验证模板前仍须运行 `verify_broll_template.py` 核对真实登记；`structural` 或自由新场景不能继承第三方身份。填充本期内容后做三态 QA，冻结真实 `producer_type`、`dependency_id`、入口、当前请求、制作与调用证据；历史样片不能代替当前验收。
 
 TalkCraft 108 张卡使用独立生产注册表，不冒充旧 `verified-template-registry`。当段落已选 `code_generated` 且适合 TalkCraft 时，必须先调用 `edit.hd.tools.talkcraft_matcher.match_cards`，把当前口播原文、语义目标、关键词、信息单元、组件角色、已有媒体和人物需求作为输入；再用 `build_binding` 冻结首选卡片。匹配器只读锁定的 `runtime/card-semantic-index.json`，运行时仍以 `runtime/card-registry.json` 的 qualified 身份为唯一准入依据；缺必需图像/视频/人物、角色不符或索引身份变化时显式停止，不在 adapter 或执行阶段重新选卡。这个自动选卡结果仍需要当前 Job 的 brief 参数化、三态 QA 和 canary 本地 QA 与内部批准。
 

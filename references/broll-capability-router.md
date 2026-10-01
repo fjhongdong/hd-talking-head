@@ -70,7 +70,7 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 五类来源同级不变：下面的顺序只在 `visual_direction` 已经批准 `kind=code_generated` 后生效，不能据此让代码海报替代本地资料、官方资料、外部素材或 AI 画面。
 
-进入模板候选池前，先运行 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`。只有源码、样片、1080×1920 媒体参数、哈希和进入/稳定/退出三帧视觉记录全部通过的项目，才具有 `template_origin=verified_third_party` 或 `verified_local_canonical`。路由器使用 `candidate_from_verified_template_record` 把已验证记录与当前文案的 `semantic_match_score`、`quality_score`、`reuse_gap` 结合；不得直接相信来源仓库自己的“支持 9:16”声明。
+进入模板候选池前，先运行 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`。只有源码、样片、1080×1920 媒体参数、哈希和进入/稳定/退出三帧视觉记录全部通过的项目，才具有 `template_origin=verified_third_party` 或 `verified_local_canonical`。路由器先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`；不得直接相信来源仓库自己的“支持 9:16”声明。
 
 登记还强制包含 `execution_qa`：两组不同内容的原始 brief、冻结配方、真实执行回执、MP4 和三态 PNG。验证器核对完整输入/来源身份、真实媒体参数、PNG 与 MP4 对应帧的 RGB 像素，以及两组稳定画面的差异。新增或维护模板时必须阅读 [双输入实测资格](template-qualification.md)，不得只靠一份旧样片或自填成功字段。资格实验可复用未变化的真实证据，不要求新 Job 重复测试；当前文案的 canary 仍保留。
 
@@ -80,13 +80,13 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 声明输入 schema 不等于实际参数绑定：源码或登记 adapter 必须真实消费当前文案、数据、颜色和时长变量，并由两组不同测试输入证明输出随输入变化。只有能在 1080×1920 中独立完成整屏构图、信息层级和三态动效的入口才具有整屏模板资格；单个横向 UI 卡片、图表或动效 primitive 即使响应式可渲染，也只是可组合组件。组件可复用不等于 `verified_third_party`；把它重新排成竖屏海报属于 `structural` 组合，必须记为 `custom_fallback`。
 
-通过当前语义家族、信息容量及相应来源的已登记结构合同后，固定顺序为：
+通过语义家族、容量及结构合同硬门后，先比较 `semantic_match_score`，再比较 `quality_score`；两分相同时，资格顺序才是：
 
 1. `verified_third_party`
 2. `verified_local_canonical`
 3. `custom_fallback`
 
-存在合格 `verified_third_party` 时不得选择后两级。`verified_third_party` 的 `adaptation_level=structural` 修改立即失去验证身份，只能作为 `custom_fallback` 重新走样片和人工批准；`verified_local_canonical` 可按已登记的自有结构合同使用 `structural`。固定结构内替换已批准文案/数据可使用 `tokens_only` 或 `content_reflow`。ShotRecipe 必须冻结 `template_origin`、`template_id`、`template_version`、`verification_id`、`adaptation_level`、`source_entrypoint`、源码/样片 SHA-256、`semantic_families` 和 `capacity`。
+资格不能覆盖语义或美观质量，资格相同才比较 `reuse_gap`。`verified_third_party` 的 `adaptation_level=structural` 修改立即失去验证身份，只能作为 `custom_fallback` 重新走样片和批准门；`verified_local_canonical` 可按已登记的自有结构合同使用 `structural`。固定结构内替换已批准文案/数据可使用 `tokens_only` 或 `content_reflow`。ShotRecipe 必须冻结 `template_origin`、`template_id`、`template_version`、`verification_id`、`adaptation_level`、`source_entrypoint`、源码/样片 SHA-256、`semantic_families` 和 `capacity`。
 
 容量是已验证模板的硬门：不得为当前文案临时降低 `capacity`，也不得用无意义数字、空卡片或重复文案凑数。在 ShotRecipe 批准前的候选验证中，容量不匹配或当前文案三态 QA 失败时，排除该模板并在 `code_generated` 候选池内继续排名；不跨来源类别。
 

@@ -2,6 +2,62 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "lemo-opuscar-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/lemo-opuscar",
+      "path_type": "directory",
+      "entrypoints": ["plugin/skills/lemo-opuscar/SKILL.md", "DIRECTOR.md", "TECHNIQUE.md", "core/render/video.mjs"],
+      "required_level": "installed",
+      "capabilities": ["visual.upstream-style-scenes"]
+    },
+    {
+      "id": "onetake-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/onetake",
+      "path_type": "directory",
+      "entrypoints": ["SKILL.md", "lib/motion.js", "scripts/render.py", "scripts/probe.py"],
+      "required_level": "installed",
+      "capabilities": ["visual.upstream-continuous-motion"]
+    },
+    {
+      "id": "lemo-opuscar",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/upstream_scene_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/upstream_scene_adapter.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
+        "command": ["{python}", "{dependency_root}/scripts/upstream_scene_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "lemo-opuscar"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "lemo-opuscar", "required_level": "bound"}
+    },
+    {
+      "id": "onetake",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/upstream_scene_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/upstream_scene_adapter.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
+        "command": ["{python}", "{dependency_root}/scripts/upstream_scene_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "onetake"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "onetake", "required_level": "bound"}
+    },
+    {
       "id": "hyperframes-native-adaptation",
       "kind": "project_path",
       "required": false,

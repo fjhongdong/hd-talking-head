@@ -2,7 +2,7 @@
 
 Paper 的原生 HyperFrames 路线与 HyperFrames Registry 的竖屏结构适配通过 `scripts/hyperframes_native_adapter.py` 执行。冻结 Job HTML 及实际图片资产，调用上游 CLI 0.8.19，不在预览末尾临时覆盖旧视频；每段来源分别标为 Paper 的文档路线或 Registry 原组件。图片和时间轴均进入正式配方，结构重排仍是 `custom_fallback`，不是已验证整屏模板。TalkCraft 原生计数器允许真实有限数值，必须绑定 `numeric_values` 与 `linear`，不得把含数字内容伪装为无数字图解。
 
-主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。
+主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。Lemo-Opuscar 与 OneTake 负责本期 HTMLCanvas source 的真实制作与原生 runner；选择后先读取完整上游 Skill 及 composition/motion/look 指引。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。固定提交、brief、workflow、探针和无 smoke 不宣称完成的边界见[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)。
 
 TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚改变时序时，使用独立的 `talkcraft-native-adaptation` 适配器和 Job 内冻结源码；保留上游真实动画实现，只调整当前镜头内容、布局与时间。绑定标为 `custom_fallback / structural`，不能借用 `hd-talking-head-talkcraft` 的已合格整屏配方身份。每段经实际渲染与当前口播验收后才能作为正式资产；单独草稿不是正式接入通过。
 
