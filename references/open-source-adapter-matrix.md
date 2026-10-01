@@ -56,7 +56,7 @@
 
 声明输入 schema 不等于实际参数绑定；源码或登记 adapter 必须真实消费输入并留下差分样片。OpenMontage `ComparisonCard` 已验证能参数化并原生渲染 1080×1920，但实际竖屏只形成狭窄的中部横向 UI 卡片，留下大面积无目的空白，因此不具备整屏模板资格。组件可复用不等于 `verified_third_party`；若把该组件与标题、背景、头像或其他区域重新编排成海报，登记为 `custom_fallback`，不能继承组件来源的第三方模板优先级。
 
-任何 `structural` 改造都失去原验证身份；只有 `tokens_only` / `content_reflow` 可继承证明。ShotRecipe 和最终 manifest 必须保存 `template_origin`、`verification_id`、版本、入口和源码/样片哈希。历史样片不代替当前文案三态 QA。
+`verified_third_party` 的 `structural` 改造会失去原验证身份；只有 `tokens_only` / `content_reflow` 可继承第三方证明。`verified_local_canonical` 可在已登记的自有结构合同内使用 `structural`。ShotRecipe 和最终 manifest 必须保存 `template_origin`、`verification_id`、版本、入口和源码/样片哈希。历史样片不代替当前文案三态 QA。
 
 ## 素材与渲染决策
 

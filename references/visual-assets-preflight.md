@@ -38,6 +38,8 @@
 
 实际执行前，binding probe 返回的 dependency ID、entrypoint、producer version 和 adapter identity 必须与已批准配方一致。执行后 `invocation_record` 保留 argv、退出码和产物记录，作为 Skill 调用证据。
 
+编排脚本仅为当前已批准计划实际选中的入口创建适配器并执行 binding probe；不得因旧脚本仍登记未使用入口而构造、检查或运行其依赖。启动阶段的基础必需依赖检查仍保留，所选组件的真实调用与产物验收不省略。
+
 ## 4. 官方资料、外部素材和生成媒体
 
 已批准新视觉计划后，重新生成绑定该计划文件身份的依赖预检；不能沿用旧计划的报告。正式渲染前逐项核对所选 kind 的实际适配器是否接通，素材下载成功不等于执行入口接通。官方视频使用 `scripts/official_video_adapter.py:create_adapter(ffmpeg_executable)` 接到 `official_material`，保留上游下载来源与原 snapshot 身份，先以视频流复制去掉原资料音轨，再交给严格无声视频探针；最终只保留原口播声音。

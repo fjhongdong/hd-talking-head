@@ -52,7 +52,7 @@
 
 ## 代码海报系统
 
-- 五类来源同级；只有在当前段落已经批准 `code_generated` 后，才执行模板内部顺序 `verified_third_party` → `verified_local_canonical` → `custom_fallback`。先过语义家族、容量、1080×1920 与对应来源的结构合同：第三方不接受 `structural`，本地 canonical 可使用已登记的自有结构，不能为了优先级牺牲文案贴合度。
+- 五类来源同级；只有在当前段落已经批准 `code_generated` 后，才在模板候选内先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。先过语义家族、容量、1080×1920 与对应来源的结构合同：第三方不接受 `structural`，本地 canonical 可使用已登记的自有结构，资格不能覆盖语义。
 - `verified_third_party` 必须带 `template_origin`、`verification_id`、源码/样片哈希和真实三帧证据。结构改造后立即降为 `custom_fallback` 并重新验收；第三方仓库声明、海报截图或横屏预览都不能代替验证器。
 - 声明输入 schema 不等于实际参数绑定；源码或登记 adapter 必须真实消费输入。只有能独立完成竖屏整屏构图的入口才有整屏模板资格；组件可复用不等于 `verified_third_party`，组合多个组件补齐版式属于 `structural`。
 - 不得为当前文案临时降低 `capacity`。候选模板容量不匹配或当前文案三态 QA 失败时，只在 `code_generated` 候选池内继续排名；不用虚构信息凑容量，不跨来源类别。
