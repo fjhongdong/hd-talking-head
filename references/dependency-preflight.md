@@ -19,6 +19,8 @@
 
 静态事实源是 `references/dependency-manifest.json`，不得在聊天中维护第二份列表。初始化后先写 `manifests/provider-config.json` 草稿，再用选定的同一个 Python 预检。下文 `<python>`、`<workspace>`、`<job>` 分别是解释器绝对路径、初始化返回的 workspace 和 job_dir：
 
+GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_visual_broll_skills.py --project-root <project> --skill gbro-collage-broll` 检查固定提交，缺失时仅在项目 vendor 准备，再由清单核对原始说明和入口文件。这里的 `installed` 只证明来源已准备，不证明静帧或动态成片通过。当前路线使用内置生图与 Lovart Kling O1，不执行上游 `check_setup.sh` 的 Gemini 密钥/SDK 检查，也不将它登记成 smoke；实际图片和视频能力仍由本 Job 的 provider 预检及请求前检查确认。
+
 ```bash
 <python> <skill>/scripts/dependency_preflight.py \
   --manifest <skill>/references/dependency-manifest.json \

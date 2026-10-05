@@ -25,6 +25,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
+- [Stickman 受约束导演调用](references/stickman-director.md)（人物尝试、提问、回应或具体因果动作进入候选时；视频仍由 Lovart 制作）
 - [生成型 B-roll 的子 Skill 编排](references/generated-broll-skills.md)（白板、拼贴、手绘动画进入候选时；区分真实调用测试与正式准入）
 - [官方视频下载 Skill 调用与验收](references/official-video-acquisition.md)（`official_material` 选中在线视频时）
 - [第三方模板双输入实测资格](references/template-qualification.md)（新增、更新或审查模板登记时）
@@ -47,7 +48,11 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 依赖预检前，先运行 `python3 <skill>/scripts/ensure_visual_broll_skills.py --project-root <project> --skill doudou-remotion-whiteboard`，准备本项目新增的手绘白板依赖；只安装项目 vendor 固定提交，不改变全局 Skill。
 
+同样执行 `ensure_visual_broll_skills.py --project-root <project> --skill gbro-collage-broll`，补齐用户指定的半调纸拼贴 Skill；启动清单只检查原始说明及文件完整性，不执行其 Gemini 自检或视频脚本。选中后实际执行隐喻与静帧设计，内置生图和 Lovart Kling O1 分别负责图片与视频，调用约束及拼贴质量检查见[GBRO 编排](references/generated-broll-skills.md#gbro-调用约束与拼贴验收)。不因新增路线自动替换已批准 B-roll。
+
 同样先执行 `ensure_visual_broll_skills.py --project-root <project> --skill lemo-opuscar` 和 `--skill onetake`，补齐项目内固定源码及缺失的本地渲染运行时。实际选中后仍须通过绑定探针；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)；不得全局安装、自动更新或运行自动 reset/setup。
+
+另执行同一脚本的 `--skill stickman-video-director` 与 `--skill adu-motion-video`，检查项目内固定导演说明和 Adu 最小本地运行时，缺失时仅在项目 vendor 准备。Stickman 不要求 Gemini SDK 或密钥；Adu 只准备渲染所需环境，不调用人物提取、配音或 mix。选中 Adu 后必须通过其独立 binding probe；导演说明已就位不代表 Lovart 动态样片已通过。
 
 1. 取得视频绝对路径、文案文件绝对路径或聊天中的完整文案，以及用户提供的图片、视频、音频和文档。
 2. 确认 `python3`、预检脚本和 `edit/hd/tools/state.py` 可用；先运行 `python3 <skill>/scripts/ensure_punk_cover.py --project-root <project>`，检查项目内 Punk 封面 Skill，缺失时自动安装已测试版本到 `skill-development/vendor/Punk-Skill`，已有且完整时不重复安装；异常目录或安装失败时保留现场并停止，不改全局 Skill。同时检查项目内 `skill-development/vendor/OpenMontage-video-download/.agents/skills/video-download/SKILL.md` 及固定提交，缺失时按[官方视频下载合同](references/official-video-acquisition.md)安装到项目内，不改全局 Skill。随后运行 `python3 <skill>/scripts/verify_skill_release.py` 校验完整包，并运行 `python3 <project>/edit/hd/integrations/talkcraft/check_runtime.py`：它必须确认生产运行时依赖精确就位、运行时闭包与渲染器匹配、兼容记录和卡片索引绑定当前注册表、上游基线可读、工作台调参和可选 Fish Audio 入口存在。生产运行时属于 108 张资格身份，不得用上游共享 runtime 自动覆盖或自动升级。其它缺文件、哈希变化或版本不一致时停止，列出准确的安装或路径修正动作，等待一次用户确认；不得现场重写发布清单掩盖缺失。
@@ -165,7 +170,7 @@ cross_kind_replacement: forbidden
 - `official_material` 绑定第一方图片、视频或页面记录，保留来源、人物职务和内容真实性检查。选中在线视频时先读官方视频下载合同，实际调用项目内 `video-download` Skill；只取得页面、字幕或下载命令不算已获取视频，必须核对本地视频的画面、声音、时码、哈希及适用清晰度。
 - `code_generated` 调用现有依赖 Skill，按 ShotRecipe 执行，并保留 Skill 调用证据、`dependency_id`、`entrypoint` 和 `producer_version`。
 - `external_stock` 根据语义检索经批准 provider，保留许可记录、作者、来源 URL 和下载身份。
-- `ai_generated` 是主动语义选择；它绑定 provider、精确模型、参考图和 generation identity。复用 Lovart 已完成视频时，走[生成型 B-roll 编排](references/generated-broll-skills.md)中的单组件原字节复用入口；不重新生成、不改标为本地资料。竖屏无声 AI 动态 B-roll 源视频可为原生 720×1280/24fps，合成后仍须达到 1080×1920/24fps；不把放大后的结果称为原生 1080p。其他尺寸的单条补边例外须绑定原视频、派生视频和已确认预览的摘要，不扩展到其他素材。
+- `ai_generated` 是主动语义选择；它绑定 provider、精确模型、参考图和 generation identity。复用 Lovart 已完成视频时，按[生成型 B-roll 编排](references/generated-broll-skills.md)先调用 `prepare_existing_binding` 核验并准备绑定，再编译、正常批准和执行；不手改配方、不重新生成、不改标为本地资料。竖屏无声 AI 动态 B-roll 源视频可为原生 720×1280/24fps，配方按实测源尺寸编译，合成后仍须达到 1080×1920/24fps；不把放大后的结果称为原生 1080p。其他尺寸的单条补边例外须绑定原视频、派生视频和已确认预览的摘要，不扩展到其他素材。
 
 当前已选的 AI 动态 B-roll 视频生成服务是 Lovart；具体模型仍按本 Job 的能力、费用和批准配置确认。Flat/GBRO 的原生 Gemini 视频入口不作为备用路线，服务不可用时停止，不自动切换。
 

@@ -17,8 +17,10 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import lovart_existing_video_adapter as reuse
+import broll_capability_router as router
 from edit.hd.tools import broll_component_executor as executor, visual_canary
 from edit.hd.tests.test_broll_component_executor import _Job, _common, _recipe, _artifact_probe
+from edit.hd.tests.test_broll_capability_router import _strategy_component, _visual_strategy, _compile_context
 
 
 def file_ref(job, name):
@@ -64,6 +66,15 @@ def execute(job, record, recipe, adapter=None, probe=None):
          patch.object(visual_canary, "approved_aroll_record", return_value={"sha256": record["source_binding"]["aroll_sha256"]}):
         return executor.execute_component(job, executor.ComponentExecutionRequest(recipe, "ai"),
             adapters={"ai_generated": adapter or reuse.create_adapter(job, record), "artifact_probe": probe or _artifact_probe()})
+
+
+def compilation_inputs(record, binding):
+    component = _strategy_component("ai", "ai_generated", layout_slot="full_frame")
+    component["media_type"] = "video"
+    strategy = _visual_strategy([component], segment_id=record["segment_id"])
+    context = _compile_context([component], segment_frames=48, binding_overrides={"ai": binding})
+    context["intent"]["segment_id"] = record["segment_id"]
+    return strategy, context
 
 
 def padded_fixture(root):
@@ -165,6 +176,8 @@ class ExistingLovartTests(unittest.TestCase):
                 record["qa"] = file_ref(job, "qa.json")
                 with self.assertRaises(ValueError):
                     reuse.create_adapter(job, record)
+                with self.assertRaises(ValueError):
+                    reuse.prepare_existing_binding(job, record, shutil.which("ffprobe"))
 
     def test_symlink_media_is_rejected_by_safe_snapshot(self):
         native = self.job.job_dir / "native.mp4"
@@ -192,41 +205,88 @@ class ExistingLovartTests(unittest.TestCase):
         self.assertNotEqual(first.probe_version, second.probe_version)
 
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "ffmpeg required")
-    def test_real_silent_720p_source_reuses_exact_bytes_and_rejects_audio(self):
-        video = self.job.job_dir / "native.mp4"
-        subprocess.run(
-            ["ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-f", "lavfi",
-             "-i", "color=c=blue:s=720x1280:r=24:d=2", "-frames:v", "48",
-             "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-y", str(video)],
-            check=True, capture_output=True,
+    def test_completed_video_preparation_compile_and_execution(self):
+        for width, height in ((720, 1280), (1080, 1920)):
+            with self.subTest(size=(width, height)), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory).resolve()
+                video = root / "encoded.mp4"
+                subprocess.run(
+                    ["ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-f", "lavfi",
+                     "-i", f"color=c=blue:s={width}x{height}:r=24:d=2", "-frames:v", "48",
+                     "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-y", str(video)],
+                    check=True, capture_output=True,
+                )
+                job, record, _manual_recipe = fixture(root, video.read_bytes(), width, height)
+                prepared = reuse.prepare_existing_binding(job, record, shutil.which("ffprobe"))
+                strategy, context = compilation_inputs(record, prepared)
+                original_context = copy.deepcopy(context)
+                recipe = router.compile_strategy(strategy, context)
+                component = recipe["components"][0]
+                contract = {"width": width, "height": height, "fps": 24, "alpha": False}
+                self.assertEqual(component["executor"], reuse.EXECUTOR)
+                self.assertEqual(component["artifact_contract"], contract)
+                self.assertNotIn("execution_mode", component)
+                self.assertNotIn("source_dimensions", component)
+                self.assertEqual(context, original_context)
+                for field in ("provider", "model", "endpoint_id", "prompt_sha256", "generation_id", "sha256"):
+                    self.assertEqual(component[field], prepared[field])
+                adapter = reuse.create_adapter(job, record)
+                invoke = Mock(wraps=adapter.invoke)
+                adapter = replace(adapter, invoke=invoke)
+                probe = reuse.create_artifact_probe(shutil.which("ffprobe"))
+                artifact = execute(job, record, recipe, adapter, probe)
+                self.assertEqual(execute(job, record, recipe, adapter, probe), artifact)
+                self.assertEqual(invoke.call_count, 1)
+                self.assertEqual(artifact.output_sha256, record["media"]["sha256"])
+                self.assertEqual(artifact.media_probe["width"], width)
+                self.assertEqual(artifact.media_probe["height"], height)
+                self.assertEqual(artifact.invocation_evidence["adapter_record"]["external_requests"], 0)
+                self.assertEqual(file_ref(job, "native.mp4"), record["media"])
+                if width == 720:
+                    with self.assertRaisesRegex(ValueError, "approved contract"):
+                        probe.probe(video, "video", {**contract, "width": 1080, "height": 1920})
+                    with_audio = root / "with-audio.mp4"
+                    subprocess.run(
+                        ["ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-i", str(video),
+                         "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-map", "0:v:0",
+                         "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", "-y", str(with_audio)],
+                        check=True, capture_output=True,
+                    )
+                    with self.assertRaisesRegex(ValueError, "one silent video stream"):
+                        probe.probe(with_audio, "video", contract)
+
+    def test_compiler_reuse_mode_is_explicit_and_control_fields_are_restricted(self):
+        binding = {key: self.recipe["components"][0][key] for key in
+                   ("provider", "model", "endpoint_id", "prompt_sha256", "generation_id", "sha256")}
+        binding.update(execution_mode="reuse_completed_lovart_video",
+                       source_dimensions={"width": 720, "height": 1280})
+        changes = (
+            {"execution_mode": "generate_new"}, {"provider": "other"}, {"endpoint_id": "other"},
+            {"source_dimensions": {"width": 1080, "height": 1916}},
+            {"source_dimensions": {"width": 720.0, "height": 1280}},
+            {"source_dimensions": {"width": 720, "height": 1280, "fps": 24}},
+            {"executor": reuse.EXECUTOR}, {"artifact_contract": {"width": 720, "height": 1280}},
         )
-        self.record["media"] = file_ref(self.job, "native.mp4")
-        generation_path = self.job.job_dir / "generation.json"
-        generation = json.loads(generation_path.read_text())
-        generation["completion_response"]["artifacts"][0].update(width=720, height=1280)
-        generation_path.write_text(json.dumps(generation))
-        self.record["generation"] = file_ref(self.job, "generation.json")
-        qa_path = self.job.job_dir / "qa.json"
-        qa = json.loads(qa_path.read_text())
-        qa["native_video"].update(sha256=self.record["media"]["sha256"], width=720, height=1280)
-        qa_path.write_text(json.dumps(qa))
-        self.record["qa"] = file_ref(self.job, "qa.json")
-        self.recipe["components"][0]["sha256"] = self.record["media"]["sha256"]
-        contract = {"width": 720, "height": 1280, "fps": 24, "alpha": False}
-        self.recipe["components"][0]["artifact_contract"] = contract
-        probe = reuse.create_artifact_probe(shutil.which("ffprobe"))
-        artifact = execute(self.job, self.record, self.recipe, probe=probe)
-        self.assertEqual(artifact.output_sha256, self.record["media"]["sha256"])
-        self.assertEqual(artifact.media_probe["width"], 720)
-        with_audio = self.job.job_dir / "with-audio.mp4"
-        subprocess.run(
-            ["ffmpeg", "-hide_banner", "-nostdin", "-v", "error", "-i", str(video),
-             "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-map", "0:v:0",
-             "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-shortest", "-y", str(with_audio)],
-            check=True, capture_output=True,
-        )
-        with self.assertRaisesRegex(ValueError, "one silent video stream"):
-            probe.probe(with_audio, "video", contract)
+        for change in changes:
+            with self.subTest(change=change):
+                strategy, context = compilation_inputs(self.record, {**binding, **change})
+                with self.assertRaises(router.RouterError):
+                    router.compile_strategy(strategy, context)
+        for field in ("execution_mode", "source_dimensions"):
+            incomplete = copy.deepcopy(binding)
+            incomplete.pop(field)
+            strategy, context = compilation_inputs(self.record, incomplete)
+            with self.subTest(missing=field), self.assertRaises(router.RouterError):
+                router.compile_strategy(strategy, context)
+        strategy, context = compilation_inputs(self.record, binding)
+        strategy["components"][0]["media_type"] = "image"
+        with self.assertRaises(router.RouterError):
+            router.compile_strategy(strategy, context)
+        ordinary = {key: value for key, value in binding.items() if key not in {"execution_mode", "source_dimensions"}}
+        strategy, context = compilation_inputs(self.record, ordinary)
+        component = router.compile_strategy(strategy, context)["components"][0]
+        self.assertEqual(component["executor"], "ai-provider:Lovart:kling/kling-video-o1")
+        self.assertEqual(component["artifact_contract"]["width"], 1080)
 
     def test_changed_evidence_changes_cache_identity(self):
         first = reuse.create_adapter(self.job, self.record)

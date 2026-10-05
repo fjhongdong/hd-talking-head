@@ -14,6 +14,21 @@ import tempfile
 
 
 SOURCES = {
+    "stickman-video-director": {
+        "url": "https://github.com/kaomei/stickman-video-director.git",
+        "commit": "bdfcbdb8fa97a09bd4a9f1c20b857a48eb4f68fe",
+        "files": ("skills/directing-stickman-videos/SKILL.md",
+                  "skills/directing-stickman-videos/references/style-catalog.md",
+                  "skills/directing-stickman-videos/references/storyboard-template.md",
+                  "skills/directing-stickman-videos/references/omni-flash-prompt-contract.md"),
+    },
+    "adu-motion-video": {
+        "url": "https://github.com/adunext/adu-motion-video.git",
+        "commit": "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7",
+        "files": ("SKILL.md", "scripts/render_project.mjs", "scripts/adapt_project.py",
+                  "scripts/chrome.mjs", "package.json", "package-lock.json",
+                  "packs/classic-performance/1.0.0/manifest.json"),
+    },
     "lemo-opuscar": {
         "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
         "commit": "f3c590dffab39419e2f3018416706e046986fe11",
@@ -37,7 +52,8 @@ SOURCES = {
     "gbro-collage-broll": {
         "url": "https://github.com/pyang5166/gbro-collage-broll.git",
         "commit": "a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91",
-        "files": ("SKILL.md",),
+        "files": ("SKILL.md", "scripts/check_setup.sh",
+                  "scripts/generate_video.py", "scripts/upload_file.py"),
     },
     "muyang-flat-animation": {
         "url": "https://github.com/yokel1121/muyang-flat-animation.git",
@@ -117,7 +133,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = ensure(args.project_root, args.skill)
-        if args.skill in {"lemo-opuscar", "onetake"}:
+        if args.skill in {"lemo-opuscar", "onetake", "adu-motion-video"}:
             prepare_scene_runtime(args.project_root.resolve(), args.skill)
             result["runtime_status"] = "callable"
     except (OSError, VisualBrollDependencyError) as error:
@@ -133,7 +149,7 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
     if _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
         raise VisualBrollDependencyError("upstream source has local changes; runtime preparation stopped")
     try:
-        if skill_id == "lemo-opuscar":
+        if skill_id in {"lemo-opuscar", "adu-motion-video"}:
             if not (root / "node_modules/playwright-core/package.json").is_file():
                 subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
         else:
@@ -153,7 +169,11 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
             if browser.returncode:
                 # Install the upstream browser, not an alternative renderer or cloud provider.
                 subprocess.run([str(python), "-m", "playwright", "install", "chromium"], check=True, timeout=240)
-        check_runtime(project_root, skill_id)
+        if skill_id == "adu-motion-video":
+            from adu_motion_adapter import check_runtime as check_adu_runtime
+            check_adu_runtime(project_root, skill_id)
+        else:
+            check_runtime(project_root, skill_id)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         raise VisualBrollDependencyError(f"project-only scene runtime is unavailable: {error}") from error
 

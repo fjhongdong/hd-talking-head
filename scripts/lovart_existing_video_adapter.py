@@ -1,7 +1,8 @@
 """Replay one completed Lovart video through the existing component executor.
 
-No networking or video processing. Safe snapshots intentionally depend on the
-current project runtime's private helpers; incompatible runtimes fail closed.
+No networking or media modification; preparation and probing only inspect bytes.
+Safe snapshots intentionally depend on the current project runtime's private
+helpers; incompatible runtimes fail closed.
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ from edit.hd.tools.broll_component_executor import AdapterResult, ArtifactProbe,
 PROVIDER = "Lovart"
 ENDPOINT_ID = "mcp__lovart__generate_video"
 EXECUTOR = "lovart_existing_video"
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 
 
 def _sha(path):
@@ -197,6 +198,70 @@ def _evidence(pinned, bound, temporary):
         raise ValueError("Lovart generation/QA evidence is incomplete or malformed") from error
 
 
+def _probe_actual_media(ffprobe, pinned, path, contract):
+    """Read and validate the bytes that will actually be handed to the executor."""
+    if (_sha(ffprobe) != pinned or (contract.get("width"), contract.get("height")) not in {(720, 1280), (1080, 1920)}
+            or contract.get("fps") != 24 or contract.get("alpha") is not False):
+        raise ValueError("Lovart video probe contract failed")
+    inherited = (int(path.name),) if path.parent == Path("/dev/fd") else ()
+    result = subprocess.run([str(ffprobe), "-v", "error", "-count_frames", "-show_streams", "-show_format",
+                             "-of", "json", str(path)], pass_fds=inherited, capture_output=True,
+                            text=True, timeout=20)
+    if result.returncode:
+        raise ValueError("Lovart video ffprobe failed")
+    info = json.loads(result.stdout)
+    streams = info.get("streams", [])
+    if len(streams) != 1 or streams[0].get("codec_type") != "video":
+        raise ValueError("Lovart source must contain one silent video stream")
+    stream = streams[0]
+    fps = Fraction(stream.get("r_frame_rate", "0/1"))
+    rotation = [float(item["rotation"]) for item in stream.get("side_data_list", []) if "rotation" in item]
+    rotation.append(float(stream.get("tags", {}).get("rotate", 0)))
+    if ((stream.get("width"), stream.get("height"), stream.get("sample_aspect_ratio"), stream.get("codec_name"),
+         stream.get("pix_fmt"), fps, Fraction(stream.get("avg_frame_rate", "0/1")))
+            != (contract["width"], contract["height"], "1:1", "h264", "yuv420p", 24, 24)
+            or any(rotation) or "mp4" not in info.get("format", {}).get("format_name", "").split(",")):
+        raise ValueError("Lovart source media does not match the approved contract")
+    frames = int(stream.get("nb_read_frames", stream.get("nb_frames", 0)))
+    duration = float(stream.get("duration", 0))
+    if frames <= 0 or duration <= 0:
+        raise ValueError("Lovart source has no decodable duration")
+    return {"media_type": "video", "container": "mp4", "codec": "h264", "pixel_format": "yuv420p",
+            "alpha": False, "width": stream["width"], "height": stream["height"], "fps": float(fps),
+            "frame_count": frames, "duration": duration}
+
+
+def prepare_existing_binding(job, record, ffprobe_executable):
+    """Validate a completed result and return compiler-only reuse bindings."""
+    bound = _record_copy(record)
+    if bound["job_id"] != job.job_id:
+        raise ValueError("Lovart record belongs to another Job")
+    ffprobe = Path(ffprobe_executable).resolve(strict=True)
+    pinned_ffprobe = _sha(ffprobe)
+    pinned = broll_media._PinnedJob.open(job)
+    try:
+        with tempfile.TemporaryDirectory(prefix="lovart-prepare-") as directory:
+            temporary = Path(directory)
+            expected, metadata, _qa = _evidence(pinned, bound, temporary)
+            ref = bound.get("derived_media", bound["media"])
+            snapshot = temporary / "prepared.mp4"
+            _snapshot(pinned, ref, snapshot)
+            dimensions = tuple(metadata.get("native_dimensions", ()))
+            if "derived_media" in bound:
+                dimensions = (1080, 1920)
+            if dimensions not in {(720, 1280), (1080, 1920)}:
+                raise ValueError("Lovart source dimensions are not reusable")
+            media_probe = _probe_actual_media(ffprobe, pinned_ffprobe, snapshot,
+                                               {"width": dimensions[0], "height": dimensions[1], "fps": 24, "alpha": False})
+            if _sha(snapshot) != expected["sha256"]:
+                raise ValueError("Lovart prepared media identity mismatch")
+            pinned.verify_visible()
+    finally:
+        pinned.close()
+    return {**expected, "execution_mode": "reuse_completed_lovart_video",
+            "source_dimensions": {"width": media_probe["width"], "height": media_probe["height"]}}
+
+
 def create_adapter(job, record):
     """Bind one component to native evidence and an optional approved derivative."""
     bound = _record_copy(record)
@@ -274,42 +339,9 @@ def create_artifact_probe(ffprobe_executable):
     pinned = _sha(ffprobe)
 
     def probe(path, media_type, contract):
-        if (_sha(ffprobe) != pinned or media_type != "video"
-                or contract.get("alpha") is not False
-                or (contract.get("width"), contract.get("height")) not in {(720, 1280), (1080, 1920)}
-                or contract.get("fps") != 24):
+        if media_type != "video":
             raise ValueError("Lovart video probe contract failed")
-        inherited = (int(path.name),) if path.parent == Path("/dev/fd") else ()
-        result = subprocess.run(
-            [str(ffprobe), "-v", "error", "-count_frames", "-show_streams", "-show_format",
-             "-of", "json", str(path)],
-            pass_fds=inherited, capture_output=True, text=True, timeout=20,
-        )
-        if result.returncode:
-            raise ValueError("Lovart video ffprobe failed")
-        info = json.loads(result.stdout)
-        streams = info.get("streams", [])
-        if len(streams) != 1 or streams[0].get("codec_type") != "video":
-            raise ValueError("Lovart source must contain one silent video stream")
-        stream = streams[0]
-        fps = Fraction(stream.get("r_frame_rate", "0/1"))
-        rotation = [float(item["rotation"]) for item in stream.get("side_data_list", []) if "rotation" in item]
-        rotation.append(float(stream.get("tags", {}).get("rotate", 0)))
-        if ((stream.get("width"), stream.get("height"), stream.get("sample_aspect_ratio"),
-             stream.get("codec_name"), stream.get("pix_fmt"), fps,
-             Fraction(stream.get("avg_frame_rate", "0/1")))
-                != (contract["width"], contract["height"], "1:1", "h264", "yuv420p", 24, 24)
-                or any(rotation)
-                or "mp4" not in info.get("format", {}).get("format_name", "").split(",")):
-            raise ValueError("Lovart source media does not match the approved contract")
-        frames = int(stream.get("nb_read_frames", stream.get("nb_frames", 0)))
-        duration = float(stream.get("duration", 0))
-        if frames <= 0 or duration <= 0:
-            raise ValueError("Lovart source has no decodable duration")
-        return {"media_type": "video", "container": "mp4", "codec": "h264",
-                "pixel_format": "yuv420p", "alpha": False,
-                "width": stream["width"], "height": stream["height"],
-                "fps": float(fps), "frame_count": frames, "duration": duration}
+        return _probe_actual_media(ffprobe, pinned, path, contract)
 
     identity = hashlib.sha256(_canonical({"implementation": _sha(Path(__file__)),
                                          "ffprobe": pinned})).hexdigest()

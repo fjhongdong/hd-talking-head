@@ -2,6 +2,56 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "gbro-collage-broll-source",
+      "kind": "project_path",
+      "required": true,
+      "stages": ["visual-direction", "visual-canary", "visual-assets"],
+      "target": "skill-development/vendor/gbro-collage-broll",
+      "path_type": "directory",
+      "entrypoints": ["SKILL.md", "scripts/check_setup.sh", "scripts/generate_video.py", "scripts/upload_file.py"],
+      "required_level": "installed",
+      "capabilities": ["visual.gbro-collage-metaphor", "visual.gbro-collage-static"]
+    },
+    {
+      "id": "stickman-video-director-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/stickman-video-director",
+      "path_type": "directory",
+      "entrypoints": ["skills/directing-stickman-videos/SKILL.md", "skills/directing-stickman-videos/references/style-catalog.md", "skills/directing-stickman-videos/references/storyboard-template.md", "skills/directing-stickman-videos/references/omni-flash-prompt-contract.md"],
+      "required_level": "installed",
+      "capabilities": ["visual.constrained-stickman-director"]
+    },
+    {
+      "id": "adu-motion-video-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/adu-motion-video",
+      "path_type": "directory",
+      "entrypoints": ["SKILL.md", "scripts/render_project.mjs", "scripts/adapt_project.py", "packs/classic-performance/1.0.0/manifest.json"],
+      "required_level": "installed",
+      "capabilities": ["visual.upstream-object-choreography"]
+    },
+    {
+      "id": "adu-motion-video",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/adu_motion_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/adu_motion_adapter.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
+        "command": ["{python}", "{dependency_root}/scripts/adu_motion_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "adu-motion-video"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "adu-motion-video", "required_level": "bound"}
+    },
+    {
       "id": "lemo-opuscar-source",
       "kind": "project_path",
       "required": true,

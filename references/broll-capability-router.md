@@ -60,6 +60,8 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 `code_generated` 调用现有依赖 Skill。执行层按冻结的 `dependency_id / entrypoint / producer_version` 调用，并在 `invocation_record` 保留 Skill 调用证据。`external_stock` 必须保留许可记录；`ai_generated` 是主动语义选择，不是其他来源无法执行后的替代项。
 
+复用已完成 Lovart 视频时，先由 `lovart_existing_video_adapter.prepare_existing_binding` 核验真实记录和媒体，再将返回值放入该组件的 `bindings`。编译器消费 `execution_mode=reuse_completed_lovart_video` 与实测 `source_dimensions`，产生固定复用入口和实际 720p/1080p 源尺寸，两项控制字段不进入 ShotRecipe；其他来源和无此模式的 AI 绑定不变。编译器不读 Job、不生成视频，也不接受手填 `executor / artifact_contract`。正常批准及执行时仍重新检查文件身份与媒体，完整顺序见[生成型 B-roll 编排](generated-broll-skills.md#lovart-已完成结果的原字节复用)。
+
 ## 5. 候选评估与记录
 
 五类候选可并行准备，但最终只由语义决策。每个候选记录 `asset_id`、`kind`、`semantic_match_score`、`quality_score` 和内容真实性、原生竖屏、画质可读性、来源记录等检查结果。缺少必需字段时返回明确停止状态，不由脚本补猜。

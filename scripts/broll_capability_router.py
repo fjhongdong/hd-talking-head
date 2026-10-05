@@ -81,6 +81,7 @@ _PRIMARY_RENDERER = {
     "hyperframes-native-adaptation": "HyperFrames",
     "lemo-opuscar": "HTMLCanvas",
     "onetake": "HTMLCanvas",
+    "adu-motion-video": "HTMLCanvas",
 }
 TEMPLATE_ORIGIN_PRIORITY = {
     "verified_third_party": 0,
@@ -519,6 +520,12 @@ def _validate_code_cross_fields(
         raise RouterError("invocation_record.argv must be an array")
     if argv.count(entrypoint) != 1:
         raise RouterError("invocation_record.argv must bind entrypoint exactly once")
+    if dependency_id == "adu-motion-video":
+        if component.get("semantic_role") == "evidence":
+            raise RouterError("Adu explanatory animation is not factual evidence")
+        if (component.get("template_origin") != "custom_fallback"
+                or component.get("adaptation_level") != "structural"):
+            raise RouterError("Adu portrait adaptation requires custom_fallback / structural")
     if dependency_id == "hd-talking-head-semantic-state" and component.get("template_origin") != "verified_local_canonical":
         raise RouterError("SemanticState requires a qualified local canonical template")
     if component.get("template_origin") in {
@@ -700,6 +707,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "hyperframes-native-adaptation": "reference_adapter",
             "lemo-opuscar": "reference_adapter",
             "onetake": "reference_adapter",
+            "adu-motion-video": "reference_adapter",
         }
         if not isinstance(dependency_id, str):
             return "invalid-binding"
@@ -739,6 +747,36 @@ def _canonical_binding(binding: Mapping[str, Any], component_id: str) -> Dict[st
             + ", ".join(sorted(reserved))
         )
     return _copy(checked, f"binding for {component_id}")
+
+
+def _consume_completed_lovart_binding(
+    kind: str, media_type: str, binding: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """Consume preparation facts; runtime still verifies the actual media bytes."""
+
+    fields = {"execution_mode", "source_dimensions"}
+    if not fields.intersection(binding):
+        return None
+    if (
+        not fields.issubset(binding)
+        or binding.get("execution_mode") != "reuse_completed_lovart_video"
+        or kind != "ai_generated"
+        or media_type != "video"
+        or binding.get("provider") != "Lovart"
+        or binding.get("endpoint_id") != "mcp__lovart__generate_video"
+    ):
+        raise RouterError("completed-video binding requires the explicit Lovart reuse mode")
+    dimensions = _as_dict(binding["source_dimensions"], "source_dimensions")
+    if (
+        set(dimensions) != {"width", "height"}
+        or any(type(dimensions.get(key)) is not int for key in ("width", "height"))
+        or (dimensions["width"], dimensions["height"])
+        not in {(720, 1280), (1080, 1920)}
+    ):
+        raise RouterError("Lovart source_dimensions must be 720x1280 or 1080x1920")
+    for field in fields:
+        binding.pop(field)
+    return {**dimensions, "fps": 24, "alpha": False}
 
 
 def _compile_shot_recipe(
@@ -807,6 +845,9 @@ def _compile_shot_recipe(
         component_id = approved_component["component_id"]
         kind = approved_component["kind"]
         binding = _canonical_binding(bindings[component_id], component_id)
+        completed_contract = _consume_completed_lovart_binding(
+            kind, approved_component["media_type"], binding
+        )
         if kind == "code_generated":
             if component_id in template_candidates:
                 request = _as_dict(template_candidates[component_id], "template candidates")
@@ -877,10 +918,14 @@ def _compile_shot_recipe(
                     "hyperframes-native-adaptation",
                     "lemo-opuscar",
                     "onetake",
+                    "adu-motion-video",
                     "whiteboard-video",
                 },
             },
         }
+        if completed_contract is not None:
+            component["executor"] = "lovart_existing_video"
+            component["artifact_contract"] = completed_contract
         for field in sorted(binding):
             component[field] = binding[field]
         recipe_components.append(component)

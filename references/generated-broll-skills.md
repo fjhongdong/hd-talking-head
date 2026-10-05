@@ -16,11 +16,13 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 
 | 候选 | 适合 | 已验证能力与待适配项 |
 | --- | --- | --- |
+| Stickman Video Director | 人物尝试、提问、回应及可直接看懂的因果动作 | 项目内固定导演 Skill 已准备；必须真实执行 Phase A/B，再由 Lovart Kling O1 制作视频。不是独立视频执行器，接入与样片状态见[受约束调用合同](stickman-director.md)。 |
+| Adu Motion Video | 三项真实支点分解后归纳为方法 | 固定原生编舞与 renderer 已准备；首批仅 `classic-performance@1.0.0/decompose-and-consolidate` 的纯视觉竖屏结构适配，不照搬人物和字幕，不自动开放十七组。实际执行及时间约束见[上游场景合同](upstream-scene-skills.md)。 |
 | Doudou Remotion Whiteboard | 手绘箭头、流程展开、划圈强调、铅笔跟随与纸质动效 | 已获取锁定源码；有真实 React 组件及 3 套原生配方，使用项目渲染桥直接调用。新增独立组件适配器与绑定探针；不是所有说明里的能力都有独立组件，原生配方中有固定英文标签。每段仍须正式编译、执行和当前语义验收，不能借用旧 Whiteboard 的依赖身份。 |
 | Codex Whiteboard Video | 逐步讲解、结构、流程与关系展开 | 原生 SVG 分组入口已接入公共组件执行器，实测提问与回应展开及配准粗线；“移动门槛”样片仍未通过语义验收。照片神经线稿路径未测试，当前能力样片不等于精美样式批准。 |
 | Paper Collage Ad | 可用纸片动作讲清的隐喻、组装、汇聚、门槛变化 | 单镜头分层动画已接入公共组件执行器并实测；不用完整广告改稿、配音、音乐或 CTA。真纸感图层及每段动作、构图仍须验收，不是通用已验证模板。 |
 | Flat Animation | 知识图解、分类、对比、连接与状态变化 | 当前核对的是 `muyang-flat-animation`，使用前确认它是否为用户所指仓库。只编排其动画方案、画风和完成静帧；动态视频交给 Lovart，不能说 Flat 原生视频入口已执行。当前片段仍须真实验收。 |
-| GBRO Collage B-roll | 口播概念的视觉隐喻、编辑感拼贴动画 | 只编排其隐喻方案和拼贴静帧；动态视频交给 Lovart，不能说 GBRO 原生视频入口已执行。当前片段仍须真实验收。 |
+| GBRO Collage B-roll | 口播概念的视觉隐喻、半调纸片逐件组装 | 用户指定的 `pyang5166/gbro-collage-broll` 已纳入启动源码检查；实际编排其隐喻方案和拼贴静帧，内置生图后交 Lovart Kling O1 制作动态视频。不是本地分层动画器，也不宣称 GBRO 原生 Gemini 视频入口已执行；当前片段仍须真实验收。 |
 | Story to Handdrawn Video | 手绘关键帧与显现效果；本入口不能单独交付主体动态 | 项目内实测的上传图片入口只做原生黑白/彩色显现，没有人物动作；两版样片均不满足当前动态 B-roll 要求。手绘素材可交给获批的真实图生视频能力继续制作；不能宣称 Story 已生成角色动画。正式来源绑定仍未完成。 |
 
 以上不自动登记成 `verified_third_party`。Paper 分层引擎与 Whiteboard SVG 分组入口已有下述组件接口，但每段自定义画面仍是 `custom_fallback`，不是已验证模板。其他候选没有兼容的正式来源绑定时停在候选测试，不伪造 renderer 名称，也不把生成物改叫 `local_material` 绕过原来源门。
@@ -103,11 +105,25 @@ Job 内 brief 为 `schema_version=1`，包含：`source_binding={aroll_sha256,se
 
 输出后分别记录“Flat/GBRO 静帧设计”和“Lovart 动画生成”，不把 Lovart 产物冒充上游原生视频。观察动画前、中、后主体动作、角色稳定性、文字和圆窗避让；纯推拉、擦除或显色不算通过。保留 Lovart 原始视频和真实请求/完成记录，调用下面的原字节复用适配器；若实际文件不是无声 H.264/yuv420p、SAR 1:1、24fps 的 720×1280 或 1080×1920 竖屏 MP4，先停在媒体处理与来源绑定，不靠修改记录或重命名绕过。父级合成后仍验收 1080×1920 的手机播放画质。
 
-在已批准 ShotRecipe v2 中保持 `kind=ai_generated`、`provider=Lovart`，精确绑定实际模型、`endpoint_id=mcp__lovart__generate_video`、任务 ID、提示词摘要和原视频哈希。使用下文的 `lovart_existing_video_adapter.create_adapter(job, record)` 与 `create_artifact_probe(ffprobe路径)` 接入公共执行器；它只复用已生成的原字节，重试执行器不会再向 Lovart 付费提交。720×1280 源片的 `artifact_contract` 写实际尺寸；此前 1080×1916 的单条补边许可仍只适用于那一个已确认资产，不扩展到新片。离线适配测试不是 Lovart 本次出片、语义或最终成片验收。
+视觉配方编译前先调用下文的 `lovart_existing_video_adapter.prepare_existing_binding(job, record, ffprobe路径)`，把返回值放入该组件的 `compile_context.bindings`；不要手写 executor 或把 720p 源片声明成 1080p。编译器保持 `kind=ai_generated`、`provider=Lovart` 及真实任务身份，选择 `lovart_existing_video` 并写入实测源尺寸；正常批准后由 `create_adapter(job, record)` 与 `create_artifact_probe(ffprobe路径)` 接入公共执行器，再次核验实际文件。它只复用原字节，重复执行不会向 Lovart 再次付费提交。此前 1080×1916 的单条补边许可仍只适用于那一个已确认资产，不扩展到新片。离线适配测试不是 Lovart 本次出片、语义或最终成片验收。
 
 2026-09-27 的 GBRO→Lovart Seedance 2.0 开发测试实际生成了 720×1280、24fps、无声的动态视频，红色胶带确实被揭开；但三张流程卡仍挂在旧轨道上，只表达“解除束缚”，没有完整表达当前句“从底层重构工作模式”。用户看后明确反馈“看不懂”；即使补一个卡片脱轨的终点画面，这套道具也无法直接让人理解“重构工作模式”，因此撤回同隐喻重试方案，不再次付费。实际 MP4 的像素比例字段为 `N/A`，也未满足现有探针要求的显式 `1:1`。该样片停在 `not_accepted`，不进入真人合成，不为通过门禁修改记录。当前抽象句保留 A-roll，后文具体动作再重新选 B-roll；证据保存在本项目 `skill-development/speech-test-output/full-source-20260924/video-use-test/edit/verify/broll-upstream-skills-20260926/gbro-workflow-rebuild-lovart-20260927/`。这只约束本句、本静帧与本次模型输出，不排除 GBRO 用于其他适合的隐喻。
 
 当前已完成的媒体测试覆盖 SVG 绘制、本地纸片动画和手绘逐层显现，不代表后续只允许这三条路线。选用其他能力时按真实需要检查依赖和费用；不自动下载未选中的照片线稿模型、配音模型或启用付费视频服务。
+
+### GBRO 调用约束与拼贴验收
+
+实际读取 `<project>/skill-development/vendor/gbro-collage-broll/SKILL.md`，执行其中的视觉隐喻、visual spec、静帧提示词和动作规划，不只摘取“拼贴”风格词。当前固定提交为 `a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91`；准备脚本检查原始说明与入口文件，已有同提交且完整时复用，缺失时项目内安装。
+
+这是一条明确的父级约束调用：用户已选择内置图片生成和 Lovart Kling O1，故不运行上游 `scripts/check_setup.sh` 的 Gemini 环境分支、不安装 `google-genai` 或创建共享 venv，也不执行 `generate_video.py` 或旧 Veo 脚本。隐喻及静帧仍分两步验收，遵循父级结果确认策略：已批准方向不重复询问，宿主记录实际内部 QA；语义或审美方向有实质变化时才请用户裁决。付费生成仍须本次具体授权，静帧通过不自动授权视频费用。
+
+保留上游的精致编辑风：强烈而平坦的纸面底色、黑白半调照片剪贴、少量彩色卡纸、清楚的奶油白切边、轻柔一致的投影和细纸纹。每条约 3–6 个可分离的大物件形成清晰焦点，按本句选择底色与点色，不把全部镜头统一成蓝底或散乱小纸片。不生成可读文字、数字、UI、logo 或口播字幕；标签确有必要时由父级可靠文字层负责。构图提前避开实际圆窗和统一字幕区。
+
+GBRO 优先用于能由少量具体纸面对象直观表达的组装、替换或关系连接；精确人物行为优先真实视频或对应动态能力，官方界面及必须准确读取的数据优先资料或可靠图形组件。GBRO 是隐喻、visual spec、静帧和动作设计的 Agent 工作流，不是本地渲染器；不另造 GBRO 动效模板，也不登记为已验证代码模板。沿用现有 brief/spec/QA 记录设计来源及提交版本、内置图片工具和 Lovart 产物，三者不混称。
+
+动画采用上游的“空色场 → 结构 → 主体/卡片 → 连接或动作 → 完成态”组装设计；逐件滑入、卡位和连接要表达当前口播的具体关系，不能只是整张图淡入或慢推拉。内置图片服务准备两张同底色、同纸纹、同 9:16 画布的图：首帧只有空纸面，尾帧是已验收的完整拼贴，不能拿完成图当首帧。按组装顺序交给已获准的 `kling/kling-video-o1`：当前模型说明支持首尾帧模式，Lovart 工具分别传 `first_frame` 和 `last_frame`（模型字段为 `image` / `image_tail`），不同时传 `aspect_ratio`、`ref_images` 或 `ref_video`；使用实际上传所得 URL。优先一次 `duration=5`、`params={"mode":"pro"}` 的完整短镜头，主体动作在实际使用区间内完成并留出可读的完成态；确需 10 秒时按本次具体授权执行。提交前重读模型说明，所需方式不支持就停止并重新规划，不静默换模型或自行补造动画。
+
+实际验收空场/起始状态、逐件组装过程和最终落位，核对隐喻能直接看懂、纸片边缘与质感清楚、动作发生在所用原速区间、无多余声音和第二份字幕。完成静帧不等于动态视频完成；接入现有 Lovart 原字节适配器后，由父级合成同源圆形人物小窗、原声和唯一字幕轨，展示可播放视频及必要原尺寸帧，不制作缩略图或联系表。某条素材未通过只淘汰该条，不永久排除 GBRO，也不强行替换效果更好的原 B-roll。
 
 Story 锁定依赖安装时存在 npm 安全告警（1中危、4高危，涉及构建链输入/资源耗尽等路径）。本轮只用本地可信图片与代码做一次性渲染，不开放服务或接收任意项目配置；未做依赖安全清零认证。正式接入不可信输入或部署前须单独处理，不能执行 `npm audit fix` 后仍声称版本未变。
 
@@ -247,7 +263,19 @@ python3 skill-package/story-to-handdrawn-video/scripts/run_story_video.py \
 
 `generation.json` 保留真实 `request / submission_response / completion_response` 和 `status=completed`。`qa.json` 保留 `generation={provider,model,project_id,task_id,artifact_id,request_prompt_sha256}`、`native_video={sha256,width,height}` 和 `source_clock={cut_sha256,broll_frames_half_open}`；可保留其他原始检查结果。`request_prompt_sha256` 是实际 `request.prompt` 的 UTF-8 摘要，不是提示词文件摘要；后者可能多一个换行，应另记为 `prompt_file_sha256`。缺证据就停止，不手填成功或替换 generation 身份。
 
-在批准配方中仍绑定 `kind=ai_generated`、`executor=lovart_existing_video`、`provider=Lovart`、实际模型、`endpoint_id=mcp__lovart__generate_video`（真实工具入口标识，非 HTTP 地址）、原 task ID 为 `generation_id`，以及实际请求提示词和本次输出视频摘要；原生合格的 720×1280 或 1080×1920 源片按实测尺寸填写 `artifact_contract`。有批准的派生版本时，原视频摘要仍由 `media` 和调用证据保留。使用：
+编译前先准备已完成视频的绑定，随后走正常 `visual_direction` 批准流程：
+
+```python
+binding = lovart_existing_video_adapter.prepare_existing_binding(
+    job, record, ffprobe_executable,
+)
+compile_context["bindings"][component_id] = binding
+recipe = broll_capability_router.compile_strategy(strategy, compile_context)
+```
+
+准备入口核对完成记录、任务/文件身份和实际媒体流，返回原有六项 AI 来源字段，加 `execution_mode=reuse_completed_lovart_video` 与 `source_dimensions={width,height}`。这两项仅供编译器消费，不进入最终配方；编译器仍是纯 JSON 编译，不读 Job 或执行媒体命令。不允许在 binding 中传 `executor` 或 `artifact_contract`；两项控制字段不齐、模式/provider/入口/媒体类型不符或尺寸不是 720×1280 / 1080×1920 时直接拒绝，不回退新生成。未选择该模式的其他 AI 绑定保持原有行为。
+
+准备成功只说明交接事实成立，不等于语义、审美或 Job 批准；不要手填这些事实或跳过准备入口。批准配方由编译器产生 `kind=ai_generated`、`executor=lovart_existing_video`、`provider=Lovart`、实际模型、`endpoint_id=mcp__lovart__generate_video`（真实工具入口标识，非 HTTP 地址）、原 task ID 为 `generation_id`，以及实际请求提示词和输出视频摘要；`artifact_contract` 使用实测源尺寸，最终画布仍为 1080×1920。有批准的派生版本时，原视频摘要仍由 `media` 和调用证据保留。正常批准得到 `approved_recipe` 后使用：
 
 ```python
 adapter = lovart_existing_video_adapter.create_adapter(job, record)
@@ -262,7 +290,7 @@ artifact = execute_component(
 
 适配器复用当前绑定 runtime 的安全快照，并探测实际无声竖屏 MP4；不执行补边、裁切或转码：直接交出原生 720×1280 或 1080×1920 视频，或单独许可中已审阅的派生视频原字节。身份、来源时钟、文件或实际输出尺寸不符即拒绝；合成画布仍须为1080×1920。实现、记录、许可和探针身份参与执行器缓存，未变产物由现有执行器复用。它不发起上传、生成或轮询，本次调用记录 `external_requests=0`，原 task ID 仍属于之前那次真实生成；不把这次本地复用伪称再次调用了 Lovart 或 Story。
 
-该入口的离线回归用真实编码的无声720×1280视频验证原字节发布，并拒绝带音轨文件；此前本地合成的1080×1920测试视频也通过复用检查，原 Lovart1080×1916视频确实在媒体检查处被拒绝且未发布成功组件。测试回执明确标为 synthetic，只证明交接能力，不证明 Lovart 已产出本次原生720p或1080p视频。用户批准单条补边后，还须以该真实派生文件完成执行器正例、原1916视频无许可的拒绝例，以及重复调用不再次执行的检查；记录在 `padding-reuse-check.json`。这些检查不代替正式 Job 审批或整条视频交付，也不产生新的付费调用。
+该入口的离线回归使用真实编码的无声 720×1280 和 1080×1920 测试视频，走准备绑定→公开编译入口→公共执行器→实际媒体探测，检查原字节发布和未变产物复用，并拒绝带音轨、伪尺寸、错误来源及保留字段输入。生成记录明确标为 synthetic，只证明交接能力，不证明 Lovart 已产出本次原生 720p/1080p 视频或 GBRO 动画通过审美与语义验收。此前原 Lovart 1080×1916 视频确实在媒体检查处被拒绝且未发布成功组件；单条补边许可及对应 `padding-reuse-check.json` 不扩展为其他资产授权。这些检查不代替正式 Job 审批或整条视频交付，也不产生新的付费调用。
 
 ## 验收和父级合成
 
