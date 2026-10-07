@@ -124,7 +124,7 @@ Punk 实际方向候选须存入本 Job 独立的 `punk-assets` 目录，并调�
 
 修改意见只作用于当前待审或已批准阶段，将用户原意的忠实简洁摘要传入 `revise`。单个正式视觉段使用 `artifact_scope=("seg-xxx",)`；不手工改 `workflow.json`。
 
-修订已有视觉计划时读取视觉修订合同。用户要求保留或认可的开头、贴片及 B-roll，须当场写入本 Job 的 `manifests/confirmed-content.json`，并接入正式计划；不得只保存在局部样片。正式视觉发布和预览入口检查这份保留记录，缺项即停止，不输出缩水成片。支持 `segment-inputs` 的运行时会在新计划及 canary 获批后，按完整输入指纹与原批准证据复用未变正式片段，不因其他镜头变化重复生成。此能力不改变下游状态 DAG，也不自动迁移历史成片。
+修订已有视觉计划时读取视觉修订合同。用户要求保留或认可的开头、贴片及 B-roll，须当场写入本 Job 的 `manifests/confirmed-content.json`，并接入正式计划；不得只保存在局部样片。正式视觉发布和预览入口检查这份保留记录，缺项即停止，不输出缩水成片。支持 `segment-inputs` 的运行时会在新计划及 canary 获批后，按完整输入指纹与原批准证据复用未变正式片段，不因其他镜头变化重复生成。局部修改 B-roll 时，正式字幕入口按[字幕轨复用判据](references/visual-revision-reuse.md#未变字幕轨复用)复用完全未变的透明轨，不重渲全片相同字幕；新计划、回执和下游校验仍重新建立，不继承旧批准。此能力不改变下游状态 DAG，也不自动迁移历史成片。
 
 用户资料变化必须先读工作区与素材回执合同，使用 `scripts/manage_user_materials.py` 的 `plan` → 人工确认 `plan_hash` → `apply --confirmed-plan-hash` 唯一入口。新 Job 的每个已发布阶段都必须包含完整 `material-usage.json`；无引用也发布空声明。已使用资料的替换/撤回依据当前回执计算 `earliest_stage` 和 `artifact_scope`，经 `prepared` → `material_committed` → `workflow_revised` 三阶段事务后恰好调用一次 `state.revise`。原字节和旧 material ID 保留，未变片段按输入指纹复用，受影响及下游阶段仍须逐门重审。回执缺失或身份不一致时 fail closed；旧 Job 不补造回执。资料变更期间暂停当前 Job runner，同一 `operation_id` 仅用于原事务恢复。
 

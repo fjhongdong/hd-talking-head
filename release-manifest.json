@@ -1,7 +1,7 @@
 {
   "files": {
     "README.md": "779fc774836d30a82f30670d83c9e4a066ac02465624d22d0657f64756529fbb",
-    "SKILL.md": "99cba8dd5b2816e91a51881d9d15bebe81b7f6205418c99f85d85b8e434b52e7",
+    "SKILL.md": "5b21a657c949157545dd3582da3d4d9933dcaca4be8a0970838ab759b8816c5e",
     "agents/openai.yaml": "8d774369371c248cf0932886449b9878c8ccfe25bb9c7fa394069663d3a4d512",
     "assets/adu-motion-video/scene.js": "775b451d01bc4149ed3212d1abe318c714ebbb4c1fde40c399f402bb38bcd93c",
     "assets/adu-motion-video/style.css": "76b69d26f38d95724170cc0a73ba53f52932c3bcc05fda8ae3c6a82c83a86a76",
@@ -835,7 +835,7 @@
     "references/avatar-profile.md": "4332772e70840b1a409442f4359d2694a52d7d8c59da370b5318b8aec042a505",
     "references/broll-capability-router.md": "82abb7dfcf91388f67fb3526be95789564c57658def86abfe7a1ae1ad5fd227e",
     "references/cover-contract.md": "c3e4be943bf86f466ed60bcf8d80bfe6a9aee7ba85f555b2830de1b4f8114366",
-    "references/cover-opening-bgm.md": "f805a42da9dbbda1f1c5d25c62a20b3206e218b90a717e5681ac35ddddec4fdf",
+    "references/cover-opening-bgm.md": "42cd160592b64240201010cf75f3966f2cdcd043e010109ff321f7952efa4a2f",
     "references/cover-title-style.md": "40611fa22aafaa396e3cb602c3feb9df7c0dfb31a303aa5a269fe40c10793f4c",
     "references/data-rollup-execution.md": "1c152216cca7f5ae867ba594e1fab279cca349b4ab306c21c9b571da6dfc3c36",
     "references/dependency-manifest.json": "8d22b6c14b5c414dd75ab6659f7fb0a324c8f4780d0fc6700059c9abb2dfa90b",
@@ -853,15 +853,15 @@
     "references/release-contract.md": "5743123e1cbe014bd64f397971e32d3e1d036224fa09924022020c4ff698fc32",
     "references/runtime-deployment.md": "0942b461677074d58a2c9f1d3b97003638fd718b440c81042014fb05d71832ec",
     "references/semantic-motion.md": "422acf6cd05b0af1a5ff3de8c3ecdb7714c3db1646b5129da90ad1b375f80f3d",
-    "references/stage-contracts.md": "61b670082e040f9037d790f46cdaad4de793f770f73d866f9a33755b1c7aeaa1",
+    "references/stage-contracts.md": "38a6b5a74a280d5a2bcf3e4baeaefcdaf80ba436fe72137d598965eb5718db33",
     "references/stickman-director.md": "cd8c27183a5fbbffcb8d322d11d41c5c08c20da698bfccfd6b928a5201169155",
-    "references/subtitle-style-contract.md": "d4f9ba2dd5016a675bee75d535cf2407a97d582f61e9d98744b5185ee49be6b2",
+    "references/subtitle-style-contract.md": "b5b19a3ea3c61a5d4796001783409ee3490b91aa84f177f549568b32458be3b1",
     "references/template-qualification.md": "79aa55dba9b5d176aa73826d418f4553b8d732f4ffcb5f89caf7af5bd91df51a",
     "references/upstream-scene-skills.md": "64303d1a138e46e8006cd6a23e2a063b78121cd12bbb015ef614e847d1dd3e17",
     "references/verified-template-registry.json": "50f4a88118e20d33ede1b0c63ce15a04994878c8eecd2ef0206ac9922291c1b6",
     "references/visual-assets-preflight.md": "12cd5b67dcc4e6b37f3b5cd5d1a633234fc5462335e3b6ba44c933ce14dd201f",
     "references/visual-quality-contract.md": "27b4ff4739f1fc21a6bf9e381a21547b7ea626e76ccf09ca72305c6833d497ae",
-    "references/visual-revision-reuse.md": "e122d6cc34b0dd51b886c64069532c332a1ca0546816df5722585ba7781326e4",
+    "references/visual-revision-reuse.md": "7b3dbdacf015da6805a22ea151aaa4e28f7d82dd12606632f001daa980a34672",
     "scripts/adu_motion_adapter.py": "d3f14becf515a66de4f8879f58a99eb82209f5aa93e011b8aac3896082db6cda",
     "scripts/audit_job_completion.py": "0ab6ed2597e69da4add97e042a696f32ee64cf6de07bb51fa262217b36922c87",
     "scripts/audit_visual_coverage.py": "b5e3cb044c1346470b7daa09dba2b4308c75cff9ab2ebeacfb8bedb271987442",
@@ -939,6 +939,6 @@
     "tests/test_upstream_scene_adapter.py": "64a99e15b4c3a4e006094e18032b371ddfb71ea576553d41f39f05f5f8a4d912",
     "tests/test_verified_template_registry.py": "af9f81a210aad4ff7019b8fa1836274c118893381839703299af67ca4fb0a9e5"
   },
-  "release_id": "2026-10-07-doudou-short-clock-v73",
+  "release_id": "2026-10-07-render-speed-v74",
   "schema_version": 1
 }
