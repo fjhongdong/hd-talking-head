@@ -42,9 +42,11 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
   --output <job>/manifests/dependency-preflight.json
 ```
 
-缺字段、identity 不一致、非法 component、旧视觉 Job 或旧配方都会返回明确停止状态。只支持 VisualPlan schema v3 与 ShotRecipe v2，不兼容旧 visual Job。未选 `code_generated` 时，Node.js、npm、html-video、hyperframes、`hd-talking-head-local-canonical` 与 video-shotcraft 保持可选；未选 `external_stock` 时，Pexels 与 Pixabay 连接保持可选。选中后，条件项立即按 manifest 的 `required_level` 计入必需项。
+缺字段、identity 不一致、非法 component、旧视觉 Job 或旧配方都会返回明确停止状态。只支持 VisualPlan schema v3 与 ShotRecipe v2，不兼容旧 visual Job。未选 `code_generated` 时，Node.js、npm、html-video、hyperframes 与 `hd-talking-head-local-canonical` 保持可选；未选 `external_stock` 时，Pexels 与 Pixabay 连接保持可选。选中后，条件项立即按 manifest 的 `required_level` 计入必需项。
 
 报告还保存 `job_id + workspace`、配置哈希、实际 `sys.executable`、运行时模块哈希及合成器版本。未带 `--job-context` 的报告只用于环境诊断，不能解锁生产。项目 API 用同一解释器的新进程实际导入，保留该解释器可见的依赖；不使用另一个 PATH Python 或跨项目模块缓存。
+
+`generation-coordinator` 必须实际导入项目内 `edit.hd.tools.generation_queue` 的八个登记接口（含 `prepare_retry` 与 `retry`）。只复制 Skill、缺少该项目入口时不能提交媒体生成；调用方法见 [有界生成编排](production-bindings.md#有界生成编排)。它只控制实际宿主工具的领取和回执，不内置另一套生成服务。
 
 `preview-runner` 同时要求 `prepare_preview_v2`、`validate_preview_opening` 与 `validate_preview_music` 可调用，以拒绝缺少正式封面或音乐校验的旧实现。配乐输入在预览前另验双声道、解码长度、音乐与许可索引身份；可调用不等于已混音或已试听，不允许为旧 Job 自动重签运行时身份。缺少运行时代码时按 [运行时部署](runtime-deployment.md) 处理；导入通过后仍执行本合同，不将导出包当成已安装的媒体工具。
 
@@ -68,7 +70,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 {"schema_version":1,"providers":[],"max_concurrency":1,"generation_enabled":false}
 ```
 
-启用生成时 `generation_enabled=true`，`providers` 中每项只能包含如下字段（示例标识必须替换为实际值）：
+启用生成时 `generation_enabled=true`，新 Job 默认 `max_concurrency=2`，含义是本 Job 所有图片和视频生成共用的总名额；不是每个 provider 或子 Skill 各 2 个。运行时只接受 1 或 2，实际提交还须遵守账号当前能力和已批准次数；先用 Lovart `get_credits` 核对当前 `concurrency_limit`，不能把上次账户上限当成当前空闲名额。旧 Job 不自动改配置或重签，修改配置须按原入口重新预检与确认。`providers` 中每项只能包含如下字段（示例标识必须替换为实际值）：
 
 ```json
 {"purpose":"image","provider":"<provider-id>","model":"<exact-model-id>","endpoint_id":"<non-secret-connection-id>","connection_status":"verified","reference_images":true,"native_9_16":true,"silent_output":true,"quota_status":"unknown"}
@@ -128,8 +130,8 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 
 - 选中 `whiteboard-video` 时，`whiteboard-video-adapter` 探针核对项目 vendor 的纯 Skill wrapper、engine 源码/资源指纹、Python 3.12 虚拟环境的实际模块导入与锁定依赖版本，以及 FFmpeg/FFprobe。此探针不生成媒体。缺失或版本不符时停在准备阶段，按[生成型 B-roll 编排](generated-broll-skills.md)的项目内依赖边界处理，不换解释器或调用其他生成服务来绕过。
 - 选中 `paper-collage-ad` 时，项目内 Paper Skill、固定 `layer-animate.mjs`、Python/Node/FFmpeg/FFprobe 及本包 wrapper 必须同时可用；`paper-collage-adapter` 的真实绑定探针创建适配器并核对入口身份、工具可执行性，不生成图像或视频。详细调用及图片来源见[生成型 B-roll 编排](generated-broll-skills.md)。缺上游时停在准备阶段，按该页项目内安装边界处理，不能换回自画动画。
-- `code_generated` 调用现有依赖 Skill。绑定 `html-video`、`hyperframes`、`hd-talking-head-local-canonical` 或 `video-shotcraft` 时，对应 adapter 必须 `selected + callable + bound`；manifest 精确登记 entrypoint、producer version、adapter identity 和可执行 probe。`hyperframes` 分别登记 Notification Cascade 与 ChatGPT Exchange 两个包装器；`hd-talking-head-local-canonical` 登记本 Skill 的共享 renderer 入口。预检按已冻结 entrypoint 只匹配对应 probe，并同时检查固定 HyperFrames 提交、`@hyperframes/cli` 版本、渲染入口与包装器，不能只凭目录存在通过。
-- `code_generated` 绑定 `video-shotcraft` 时，Skill 必须可发现；manifest 精确登记 entrypoint、producer version、`SkillInvocationAdapter` identity 和可执行 probe。执行后 ShotRecipe v2 的 `invocation_record` 保留 Skill 调用证据。
+- `code_generated` 调用现有依赖 Skill。绑定 `html-video`、`hyperframes` 或 `hd-talking-head-local-canonical` 时，对应 adapter 必须 `selected + callable + bound`；manifest 精确登记 entrypoint、producer version、adapter identity 和可执行 probe。`hyperframes` 登记 Notification Cascade、ChatGPT Exchange 两个 B-roll 包装器，以及 A-roll 的 `hw-pipeline` 包装器；`hd-talking-head-local-canonical` 登记本 Skill 的共享 renderer 入口。预检按已冻结 entrypoint 只匹配对应 probe，并同时检查固定 HyperFrames 提交、`@hyperframes/cli` 版本、渲染入口与包装器，不能只凭目录存在通过。
+- 所有代码组件的冻结绑定须包含 `invocation_record`，关联上游 Skill 调用证据与当前内容参数；正式执行的实际入口、退出状态及输出身份另由产物的 `invocation_evidence` 保存。记录只反映已经执行的事实，不能预填成功或用候选登记代替真实调用；字段及绑定校验以当前组件合同为准。
 - `external_stock` 草案选中 `pexels` 或 `pixabay`：对应 provider 必须在首次搜索前 `selected + connected`。该状态可来自 Job 启动时的连接摘要，但请求前必须重新复核。
 - `ai_generated` 草案选中具体 provider 后：在首次生成前，按精确模型 ID、参考图支持、9:16、无声输出、并发与额度状态做当前 Job 确认。素材冻结后再用完整 ShotRecipe v2 复核 binding。
 - `official_material`：需要浏览器或来源连接器时，在首次获取前确认可用状态。

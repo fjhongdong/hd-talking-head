@@ -34,7 +34,6 @@
 `code_generated` 不由视觉 runner 重新实现。它调用 ShotRecipe v2 已冻结的现有依赖 Skill：
 
 - `html-video` 按具体登记入口选择 HyperFrames 或 Remotion；当前合格的 `frame-data-rollup` 使用 Remotion。独立 `hyperframes/notification-cascade` 与 `hyperframes/chatgpt-exchange` 使用 HyperFrames 原生 CLI；三者都按登记入口判定，不按仓库名猜引擎。
-- `video-shotcraft` 使用 `SkillInvocationAdapter` 和 Remotion 执行镜头配方。
 
 实际执行前，binding probe 返回的 dependency ID、entrypoint、producer version 和 adapter identity 必须与已批准配方一致。执行后 `invocation_record` 保留 argv、退出码和产物记录，作为 Skill 调用证据。
 

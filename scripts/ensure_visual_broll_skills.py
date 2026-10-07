@@ -14,14 +14,6 @@ import tempfile
 
 
 SOURCES = {
-    "stickman-video-director": {
-        "url": "https://github.com/kaomei/stickman-video-director.git",
-        "commit": "bdfcbdb8fa97a09bd4a9f1c20b857a48eb4f68fe",
-        "files": ("skills/directing-stickman-videos/SKILL.md",
-                  "skills/directing-stickman-videos/references/style-catalog.md",
-                  "skills/directing-stickman-videos/references/storyboard-template.md",
-                  "skills/directing-stickman-videos/references/omni-flash-prompt-contract.md"),
-    },
     "adu-motion-video": {
         "url": "https://github.com/adunext/adu-motion-video.git",
         "commit": "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7",

@@ -25,7 +25,6 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
-- [Stickman 受约束导演调用](references/stickman-director.md)（人物尝试、提问、回应或具体因果动作进入候选时；视频仍由 Lovart 制作）
 - [生成型 B-roll 的子 Skill 编排](references/generated-broll-skills.md)（白板、拼贴、手绘动画进入候选时；区分真实调用测试与正式准入）
 - [官方视频下载 Skill 调用与验收](references/official-video-acquisition.md)（`official_material` 选中在线视频时）
 - [第三方模板双输入实测资格](references/template-qualification.md)（新增、更新或审查模板登记时）
@@ -52,7 +51,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 同样先执行 `ensure_visual_broll_skills.py --project-root <project> --skill lemo-opuscar` 和 `--skill onetake`，补齐项目内固定源码及缺失的本地渲染运行时。实际选中后仍须通过绑定探针；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)；不得全局安装、自动更新或运行自动 reset/setup。
 
-另执行同一脚本的 `--skill stickman-video-director` 与 `--skill adu-motion-video`，检查项目内固定导演说明和 Adu 最小本地运行时，缺失时仅在项目 vendor 准备。Stickman 不要求 Gemini SDK 或密钥；Adu 只准备渲染所需环境，不调用人物提取、配音或 mix。选中 Adu 后必须通过其独立 binding probe；导演说明已就位不代表 Lovart 动态样片已通过。
+另执行同一脚本的 `--skill adu-motion-video`，检查 Adu 最小本地运行时，缺失时仅在项目 vendor 准备。Adu 只准备渲染所需环境，不调用人物提取、配音或 mix。选中 Adu 后必须通过其独立 binding probe。
 
 1. 取得视频绝对路径、文案文件绝对路径或聊天中的完整文案，以及用户提供的图片、视频、音频和文档。
 2. 确认 `python3`、预检脚本和 `edit/hd/tools/state.py` 可用；先运行 `python3 <skill>/scripts/ensure_punk_cover.py --project-root <project>`，检查项目内 Punk 封面 Skill，缺失时自动安装已测试版本到 `skill-development/vendor/Punk-Skill`，已有且完整时不重复安装；异常目录或安装失败时保留现场并停止，不改全局 Skill。同时检查项目内 `skill-development/vendor/OpenMontage-video-download/.agents/skills/video-download/SKILL.md` 及固定提交，缺失时按[官方视频下载合同](references/official-video-acquisition.md)安装到项目内，不改全局 Skill。随后运行 `python3 <skill>/scripts/verify_skill_release.py` 校验完整包，并运行 `python3 <project>/edit/hd/integrations/talkcraft/check_runtime.py`：它必须确认生产运行时依赖精确就位、运行时闭包与渲染器匹配、兼容记录和卡片索引绑定当前注册表、上游基线可读、工作台调参和可选 Fish Audio 入口存在。生产运行时属于 108 张资格身份，不得用上游共享 runtime 自动覆盖或自动升级。其它缺文件、哈希变化或版本不一致时停止，列出准确的安装或路径修正动作，等待一次用户确认；不得现场重写发布清单掩盖缺失。
@@ -85,7 +84,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 `inspect` → `content_analysis` → `cover_direction` → `cover` → `speech_cleanup` → `edit_structure` → `visual_direction` → `visual_canary` → `visual_assets` → `subtitles` → `preview` → `delivery`
 
-一次只运行一个 runner。每次动作前重新 `load_job`，按产品顺序找到最早未完成阶段；它必须是唯一候选，且依赖全部 `approved`。候选缺失、不唯一或状态不一致时记录当前状态并明确停止。每个 runner 仍必须先发布到 `ready_for_review`，再由确认策略完成内部校验和推进。
+一次只运行一个正式 runner。主控先统一文案、时码和镜头风格分配，再允许最多 3 个子任务并行准备不同镜头的方案、素材与只读检查；子任务不得修改 workflow、正式清单或批准记录。图片和视频生成共用当前 Job 的 2 个名额，具体领取、响应保存和恢复见[有界生成编排](references/production-bindings.md#有界生成编排)。每次正式动作前重新 `load_job`，按产品顺序找到最早未完成阶段；它必须是唯一候选，且依赖全部 `approved`。候选缺失、不唯一或状态不一致时记录当前状态并明确停止。每个 runner 仍必须先发布到 `ready_for_review`，再由确认策略完成内部校验和推进。
 
 默认采用“结果确认”模式：用户确认 Job 配置、付费/外部账号动作、不可逆素材变更，以及最终预览/成片结果；中间阶段（转写、清理提案、A-roll、视觉计划、canary、资产、字幕）只要确定性校验、绑定校验和本地 QA 全部通过，就由宿主自动批准并继续，不逐阶段打断用户。若用户明确要求查看某一阶段，或 QA 出现歧义、视觉明显偏离、素材/模型/费用选择发生变化，才暂停等待确认。自动推进不等于跳过 runner、哈希、回执、事务恢复或最终交付审批。
 
@@ -132,6 +131,13 @@ Punk 实际方向候选须存入本 Job 独立的 `punk-assets` 目录，并调�
 
 - `retry_same_strategy`：保持已批准语义、来源类型和配方，在连接或运行条件恢复后重试。
 - `replan_visual_direction`：返回 `visual_direction`，由用户重新批准语义选择与来源绑定。
+
+仅对已由精确提交回执或精确单任务查询证明为 `failed` 的请求提供受控重试：先用
+`prepare_retry(job, request_id)` 冻结父项、失败回执摘要、原请求指纹、当前配置摘要、输入身份和
+`count=1`，再取得针对这份计划的一次真实用户授权，并调用
+`retry(job, plan, user_confirmation, expected_plan_sha256)`。它在锁内创建唯一的 `ready` 子项，保留
+`retry_of` 和原始分镜 `plan_request_id`；重复同一计划只返回同一子项，不再次发起工具调用。不得自动挑选“最新失败项”、重置或覆盖旧项，也不得把队列 ID 当作供应商 task ID。
+`submitting`、`pending`、`unknown`、`not_found`、`moderated` 以及“已完成但视觉不合格”均不走这条重试；后两类分别进入重新规划或既有视觉修订。聚合失败、同一请求多个 task ID 的总状态不能证明全部失败，必须逐项核实。`not_found` 保留原始回执、本地保持 `unknown` 并占用名额，停止自动轮询，改为回查已保存的实际任务或项目记录。`resume` 只解除暂停并允许后续 `ready` 项领取，不能复活失败或未知项；创建重试也不会自动恢复暂停。重试不改变原参数、模型、项目或素材，任何变更都必须重新规划。
 
 其他阶段保持当前阶段的修订边界：报告准确状态后停止，不跳到尚未解锁的 `visual_direction`。`cover` 返回当前封面 revision，仍可由用户明确选择 code-generated alternative `aroll-code-cover`；它只适用于 `cover`，必须形成 revision 并重新报审，不能改写 B-roll 的来源选择。
 
@@ -180,7 +186,7 @@ cross_kind_replacement: forbidden
 
 当前已选的 AI 动态 B-roll 视频生成服务是 Lovart；具体模型仍按本 Job 的能力、费用和批准配置确认。Flat/GBRO 的原生 Gemini 视频入口不作为备用路线，服务不可用时停止，不自动切换。
 
-需要生成型画面时，按[生成型 B-roll 编排](references/generated-broll-skills.md)在 Whiteboard、Paper Collage、Flat Animation、GBRO Collage、Story to Handdrawn 等现成 Skill 中按语义选型，再检查实际可执行入口与适配缺口；不因单次样片失败排除整个 Skill，也不因已接通某条路线就统一选它。优先调用上游已有配置与能力，缺口才做最小适配，并实际出片验收。Paper 分层入口与 Whiteboard 原生 SVG 分组入口已分别通过该页的 `paper_collage_adapter`、`whiteboard_adapter` 接入公共组件执行器。Story 的显现样片不能独自满足动态要求；Flat/GBRO 仅负责其视觉方案和静帧阶段，视频统一由 Lovart 生成并由现有 Lovart 适配器验收，不能把 Lovart 视频记作这两套上游的原生视频调用，也不再要求 Gemini 密钥。原生 720p AI 视频不因分辨率被排除，但 Lovart 本次出片及当前片段语义/画质仍须真实验收。已接入入口也不是通用已验证模板，每段仍须检查语义与美观。图片生成与动画来源分别绑定，子 Skill 只产出无声整屏镜头，圆窗、原声和全片唯一字幕轨仍由父级统一处理；不跨已批准来源类型替换，不绕过执行与确认门。
+需要生成型画面时，按[生成型 B-roll 编排](references/generated-broll-skills.md)在 Whiteboard、Paper Collage、Flat Animation、GBRO Collage 等现成 Skill 中按语义选型，再检查实际可执行入口与适配缺口；不因单次样片失败排除整个 Skill，也不因已接通某条路线就统一选它。优先调用上游已有配置与能力，缺口才做最小适配，并实际出片验收。Paper 分层入口与 Whiteboard 原生 SVG 分组入口已分别通过该页的 `paper_collage_adapter`、`whiteboard_adapter` 接入公共组件执行器。Flat/GBRO 仅负责其视觉方案和静帧阶段，视频统一由 Lovart 生成并由现有 Lovart 适配器验收，不能把 Lovart 视频记作这两套上游的原生视频调用，也不再要求 Gemini 密钥。原生 720p AI 视频不因分辨率被排除，但 Lovart 本次出片及当前片段语义/画质仍须真实验收。已接入入口也不是通用已验证模板，每段仍须检查语义与美观。图片生成与动画来源分别绑定，子 Skill 只产出无声整屏镜头，圆窗、原声和全片唯一字幕轨仍由父级统一处理；不跨已批准来源类型替换，不绕过执行与确认门。
 
 `code_generated` 的排序是 `semantic_match_score` → `quality_score` → `template_origin` → `reuse_gap`。语义和质量同分时，资格才按 `verified_third_party` → `verified_local_canonical` → `custom_fallback` 比较。引用验证模板前仍须运行 `verify_broll_template.py` 核对真实登记；`structural` 或自由新场景不能继承第三方身份。填充本期内容后做三态 QA，冻结真实 `producer_type`、`dependency_id`、入口、当前请求、制作与调用证据；历史样片不能代替当前验收。
 
@@ -206,7 +212,7 @@ A-roll 贴片先判断能否增加理解：有对应资料 B-roll 的人物/机�
 
 选中 `html-video/frame-data-rollup` 时，加载 [原生 DataRollup 执行接口](references/data-rollup-execution.md)；选中 `hyperframes/notification-cascade` 时，加载 [原生 Notification Cascade 执行接口](references/hyperframes-notification-execution.md)；选中 `hyperframes/chatgpt-exchange` 时，加载 [原生 ChatGPT Exchange 执行接口](references/hyperframes-chatgpt-exchange-execution.md)。第三套只用于“提问→回答→四项对照表→回读结论”的已验证语义，不代替普通对比海报。三者都通过包内 adapter 工厂接入正式执行器，不手工重画或停留在文字登记。新调用计划使用 `status=planned / exit_code=null`；实际成功以执行器输出证据为准，不能为了通过校验提前填写成功。其他模板没有这一执行验证时不得套用其结论。
 
-正式片段、成片和 B-roll 合成画布保持 1080×1920；仅无透明通道的竖屏 AI 动态 B-roll 源视频允许原生 720×1280/24fps，合成时放大，须按[生成型 B-roll 编排](references/generated-broll-skills.md)检查实播画质。其他素材仍按原有规格或单条已批准补边许可绑定验收，不能伪称原生达标。当前 full-v2 计划与成片固定为 24fps；输入素材可有其他原始帧率，但正式阶段先按运行时合同规格化，不接受其他输出帧率的计划，也不做横屏后裁切。B-roll 必须让资料/主题视觉占据整个竖屏版式，口播人物只作为同时间轴的小窗或头肩头像；禁止在全屏 A-roll 上贴一块资料小窗来冒充 B-roll。B-roll 保留与原声逐词对应的唯一普通字幕，放在圆形小窗上方并与画面内标题、关键标签错开；小头像使用 head-shoulders 裁切。实际媒体由已冻结记录和 SHA-256 解析；不用空海报代替。切入切出用 8–12 帧 alpha 回到同时间轴 A-roll。渲染与外部生成串行，重型并发为 1。
+正式片段、成片和 B-roll 合成画布保持 1080×1920；仅无透明通道的竖屏 AI 动态 B-roll 源视频允许原生 720×1280/24fps，合成时放大，须按[生成型 B-roll 编排](references/generated-broll-skills.md)检查实播画质。其他素材仍按原有规格或单条已批准补边许可绑定验收，不能伪称原生达标。当前 full-v2 计划与成片固定为 24fps；输入素材可有其他原始帧率，但正式阶段先按运行时合同规格化，不接受其他输出帧率的计划，也不做横屏后裁切。B-roll 必须让资料/主题视觉占据整个竖屏版式，口播人物只作为同时间轴的小窗或头肩头像；禁止在全屏 A-roll 上贴一块资料小窗来冒充 B-roll。B-roll 保留与原声逐词对应的唯一普通字幕，放在圆形小窗上方并与画面内标题、关键标签错开；小头像使用 head-shoulders 裁切。实际媒体由已冻结记录和 SHA-256 解析；不用空海报代替。切入切出用 8–12 帧 alpha 回到同时间轴 A-roll。本地重渲染一次只运行一个；云端生成在材料准备阶段使用统一名额，不提前执行尚未解锁的正式 canary、字幕或交付。
 
 开发期可用估计时窗制作纯视觉草稿；但带原声、供用户判断声画对应的 B-roll 样片必须先用同源 `video-use`/Scribe 词级时码锁定目标句，在 24fps 整帧边界保留 30–200ms 起止余量。校正时窗后重渲子 Skill 镜头及父级原声、小窗合成，核对首尾未夹入相邻句且最终音轨来自同一原片。缺少真实转写时只标为视觉草稿，旧草稿的视觉认可不等于新时窗的声画验收。
 
@@ -222,4 +228,4 @@ Preview 使用剪辑后 A-roll 的口播音频主时钟，默认不加背景音�
 
 正文默认从实拍 A-roll 引入话题，再切入语义对应的 B-roll；如启用封面，顺序为“封面 → A-roll 引入 → B-roll”，不能封面后立即被官方片头或海报接管。具体时长依据已批准口播动态决定，用户明确批准其他开场结构时记录例外。设计或修订开场时读取对应合同，只审核新增合成方式并复用现有资产；正式首帧、时间偏移与音乐实际可听性必须验证。
 
-未明确要求时不上传 ChatCut 或其他外部编辑器，不自动发布或发消息。默认只允许 1 个主 Agent 内联执行；渲染与外部生成始终保持串行。
+未明确要求时不上传 ChatCut 或其他外部编辑器，不自动发布或发消息。保持 1 个主控，最多 3 路独立准备；生成名额不能由子 Skill 各自领取一套。本地重渲染、正式组装、回执和批准仍串行；并发不增加获准的生成次数，不重做已验收成片。

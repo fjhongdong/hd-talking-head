@@ -1,6 +1,6 @@
 # B-roll 开源能力适配矩阵
 
-本矩阵是 10 个长期本地参考项目的执行边界。它们不是 10 套并行启动的完整应用，而是按单个 `ShotRecipe` 延迟加载的能力源。每个镜头只有一个主渲染器，重型并发永远为 1。
+本矩阵是 9 个长期本地参考项目的执行边界。它们不是 9 套并行启动的完整应用，而是按单个 `ShotRecipe` 延迟加载的能力源。每个镜头只有一个主渲染器，重型并发永远为 1。
 
 默认根目录：`<project>/参考项目/B-roll开源方案`。目录可由环境适配层改写，但仓库名、入口身份和导入规则不得静默改变。
 
@@ -9,7 +9,6 @@
 | 能力 | 已验证入口 | 本 Skill 采用 | 禁止做法 |
 | --- | --- | --- | --- |
 | `html-video` | `packages/core/src/registry.ts`;<br>`packages/adapter-hyperframes/src/render.ts`;<br>`packages/adapter-remotion/src/` | 采用 content graph、模板 metadata/搜索和 engine adapter 合同；将已批准内容变为逐帧 HTML，再路由到 HyperFrames 或 Remotion。 | 不启动 Studio；不直接复制示例文案；不使用 16:9 默认。 |
-| `video-shotcraft` | `references/shots/`; `demos/`; `assets/lib/` | 采用 152 张镜头配方和 2.5D/分层运动语法，用于补全 `entry/hold/exit` 和复杂 UI 走位。 | 不引入其 BGM 或横屏 composition；不将动效词当作内容。 |
 | `erduo-broll-loop-engineering` | `erduo-broll-loop-engineering/scripts/create-production-profile.mjs`; `erduo-broll-loop-engineering/SKILL.md` | 采用 `truth`/可修订 `creativeProposal`、代表样片→五镜头 canary、哈希/联系表/六帧 QA；显式 profile 使用 1080×1920/24fps/silent。 | 不启用其多 Agent 调度；不把装饰循环当主动画。 |
 | `video-use` | `helpers/transcribe.py`; `helpers/render.py`; `helpers/timeline_view.py`; `helpers/pack_transcripts.py`; `SKILL.md` | 字级转写由宿主实际调用 `transcribe.py`，项目 `transcribe.transcribe_job` 只验收原始 Scribe JSON 与调用证据；`speech_cleanup` 采用 0.40 秒长停顿阈值与 0.08 秒呼吸边缘；`edit_structure` 有剪点时直接调用 EDL renderer，使用音频主时钟、分段提取、30ms 音频边缘和剪点自检。启动预检 smoke 四个入口。20 秒真实片段已验证原始输出与零时长词适配；完整原片仍须独立授权和实测。 | 上传原声和消耗额度前取得本次许可并确认凭据；不把目录存在、读取说明或 helper 冒烟当作真实转写；不并发子智能体；不生成或混入背景音乐。 |
 | `video-autopilot-kit` | `src/asset_selection.py`; `src/review_loop.py`; `src/media_delivery_qa.py`; `src/camera_transition_director.py` | 采用语义重合、近义度、疲劳/重复惩罚和人工评审类别，用来排序过了硬门的素材。 | 不引入整个 Editkin runtime；不让软分数越过硬门。 |

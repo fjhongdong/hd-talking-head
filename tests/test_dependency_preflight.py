@@ -1395,30 +1395,30 @@ _run_reference_process = "def _run_reference_process"
         manifest = {
             "schema_version": 3,
             "dependencies": [{
-                "id": "video-shotcraft-skill",
+                "id": "doudou-skill-fixture",
                 "kind": "skill",
                 "required": False,
-                "target": "video-shotcraft",
+                "target": "doudou-remotion-whiteboard",
                 "entrypoints": ["SKILL.md"],
                 "selection": {
                     "component_kind": "code_generated",
                     "binding_field": "dependency_id",
-                    "equals": "video-shotcraft",
+                    "equals": "doudou-remotion-whiteboard",
                     "required_level": "bound",
                 },
             }],
         }
         visual_plan = _complete_visual_plan((_code_binding(
-            "video-shotcraft",
+            "doudou-remotion-whiteboard",
             "SKILL.md",
-            "video-shotcraft@2.0.0",
-            executor="skill_invocation",
+            "synthetic-doudou@2.0.0",
+            executor="reference_adapter",
             primary_renderer="Remotion",
         ),))
 
         completed, report = self.run_preflight(
             manifest,
-            skill_names=("video-shotcraft",),
+            skill_names=("doudou-remotion-whiteboard",),
             visual_plan=visual_plan,
         )
 
@@ -1429,19 +1429,19 @@ _run_reference_process = "def _run_reference_process"
         self.assertFalse(dependency["bound"])
         self.assertEqual(dependency["status"], "binding_probe_unregistered")
 
-    def test_selected_video_shotcraft_reports_bound_adapter_identity(self) -> None:
+    def test_selected_doudou_reports_bound_adapter_identity(self) -> None:
         entrypoint = "SKILL.md"
-        version = "video-shotcraft@2.0.0"
+        version = "synthetic-doudou@2.0.0"
         identity = _probe_identity(
-            "SkillInvocationAdapter", "skill_invocation", "Remotion"
+            "ReferenceProcessAdapter", "reference_adapter", "Remotion"
         )
         manifest = {
             "schema_version": 3,
             "dependencies": [{
-                "id": "video-shotcraft-skill",
+                "id": "doudou-skill-fixture",
                 "kind": "skill",
                 "required": False,
-                "target": "video-shotcraft",
+                "target": "doudou-remotion-whiteboard",
                 "stages": ["visual-canary", "visual-assets"],
                 "entrypoints": [entrypoint],
                 "binding_probes": [
@@ -1450,23 +1450,23 @@ _run_reference_process = "def _run_reference_process"
                 "selection": {
                     "component_kind": "code_generated",
                     "binding_field": "dependency_id",
-                    "equals": "video-shotcraft",
+                    "equals": "doudou-remotion-whiteboard",
                     "required_level": "bound",
                 },
             }],
         }
         probe_payload = {
             "schema_version": 1,
-            "dependency_id": "video-shotcraft",
+            "dependency_id": "doudou-remotion-whiteboard",
             "entrypoint": entrypoint,
             "producer_version": version,
             "adapter_identity": identity,
         }
         visual_plan = _complete_visual_plan((_code_binding(
-            "video-shotcraft",
+            "doudou-remotion-whiteboard",
             entrypoint,
             version,
-            executor="skill_invocation",
+            executor="reference_adapter",
             primary_renderer="Remotion",
         ),))
 
@@ -1475,7 +1475,7 @@ _run_reference_process = "def _run_reference_process"
             project_contents={
                 "binding_probe.py": _probe_program(probe_payload),
             },
-            skill_names=("video-shotcraft",),
+            skill_names=("doudou-remotion-whiteboard",),
             visual_plan=visual_plan,
         )
 
@@ -1635,7 +1635,6 @@ _run_reference_process = "def _run_reference_process"
             "html-video-reference",
             "hyperframes-adapter",
             "local-canonical-adapter",
-            "video-shotcraft-skill",
         ):
             self.assertFalse(by_id[dependency_id]["required"])
             self.assertIn("selection", by_id[dependency_id])
@@ -1646,11 +1645,6 @@ _run_reference_process = "def _run_reference_process"
                 "c414ecc07f795add03807d5d9ce4baefd807cea2",
                 "ReferenceProcessAdapter",
             )],
-            "video-shotcraft-skill": [(
-                "SKILL.md",
-                "c30d78438ef2e8c9cb2b620f19fecff13d982bd3",
-                "SkillInvocationAdapter",
-            )],
             "hyperframes-adapter": [
                 (
                     "scripts/render_hyperframes_notification.cjs",
@@ -1659,6 +1653,11 @@ _run_reference_process = "def _run_reference_process"
                 ),
                 (
                     "scripts/render_hyperframes_chatgpt_exchange.cjs",
+                    "1.0.0",
+                    "ReferenceProcessAdapter",
+                ),
+                (
+                    "scripts/render_hyperframes_hw_pipeline.cjs",
                     "1.0.0",
                     "ReferenceProcessAdapter",
                 ),

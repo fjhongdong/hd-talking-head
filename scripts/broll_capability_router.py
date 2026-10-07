@@ -69,7 +69,6 @@ _RESERVED_BINDING_FIELDS = frozenset(
 _PRIMARY_RENDERER = {
     "html-video": "HyperFrames",
     "hyperframes": "HyperFrames",
-    "video-shotcraft": "Remotion",
     "hd-talking-head-relation-motion": "RelationMotion",
     "hd-talking-head-semantic-state": "SemanticState",
     "hd-talking-head-talkcraft": "Remotion",
@@ -105,12 +104,6 @@ CAPABILITY_REGISTRY: Dict[str, Dict[str, Any]] = {
             "packages/adapter-hyperframes/src/render.ts",
             "packages/adapter-remotion/src/",
         ),
-    },
-    "video-shotcraft": {
-        "directory": "video-shotcraft",
-        "role": "shot-recipe-2.5d-motion",
-        "load": "lazy",
-        "entrypoints": ("references/shots", "demos", "assets/lib"),
     },
     "erduo-broll-loop-engineering": {
         "directory": "erduo-broll-loop-engineering",
@@ -695,7 +688,6 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
         executors = {
             "html-video": "reference_adapter",
             "hyperframes": "reference_adapter",
-            "video-shotcraft": "skill_invocation",
             "hd-talking-head-local-canonical": "reference_adapter",
             "hd-talking-head-relation-motion": "reference_adapter",
             "hd-talking-head-semantic-state": "reference_adapter",
@@ -711,9 +703,9 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "onetake": "reference_adapter",
             "adu-motion-video": "reference_adapter",
         }
-        if not isinstance(dependency_id, str):
-            return "invalid-binding"
-        return executors.get(dependency_id, "invalid-binding")
+        if not isinstance(dependency_id, str) or dependency_id not in executors:
+            raise RouterError("code generation requires a registered dependency")
+        return executors[dependency_id]
     model = binding.get("model")
     if not isinstance(model, str) or not model:
         model = "invalid-binding"
@@ -850,6 +842,7 @@ def _compile_shot_recipe(
         completed_contract = _consume_completed_lovart_binding(
             kind, approved_component["media_type"], binding
         )
+        executor = _executor(kind, binding)
         if kind == "code_generated":
             if component_id in template_candidates:
                 request = _as_dict(template_candidates[component_id], "template candidates")
@@ -885,7 +878,7 @@ def _compile_shot_recipe(
             "kind": kind,
             "semantic_role": approved_component["semantic_role"],
             "layer_role": approved_component["layer_role"],
-            "executor": _executor(kind, binding),
+            "executor": executor,
             "media_type": approved_component["media_type"],
             "render_window": {
                 "start_frame": 0,

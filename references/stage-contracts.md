@@ -75,7 +75,7 @@ cross_kind_replacement: forbidden
 
 `visual_direction` 使用 `scripts/broll_capability_router.py` 为每个段落编译稳定 ShotRecipe v2。五类候选都按语义匹配、内容真实性、原生竖屏、画质可读性和来源记录评估，然后冻结 mode、components、`source_bindings` 和 composition。`code_generated` 调用现有依赖 Skill 并保留 Skill 调用证据；`external_stock` 保留许可记录；`ai_generated` 是主动语义选择，不是其他来源无法执行后的替代项。
 
-只生产 1080×1920/24fps 视频。A-roll 保留实拍背景且不抠像；B-roll 与 A-roll 共用唯一原声字幕轨，避开统一 head-shoulders 圆形头像。渲染串行，重型并发固定为 1。
+只生产 1080×1920/24fps 视频。A-roll 保留实拍背景且不抠像；B-roll 与 A-roll 共用唯一原声字幕轨，避开统一 head-shoulders 圆形头像。本地重渲染和正式 runner 串行；最多 3 路独立材料准备，图片和视频通过[有界生成编排](production-bindings.md#有界生成编排)共用 2 个名额。正式状态转换、组装、材料回执和最终交付仍由主控顺序完成。
 
 ## 十二阶段逐项合同
 

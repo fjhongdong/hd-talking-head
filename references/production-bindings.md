@@ -32,7 +32,7 @@
 A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式组件调用、源片/时钟绑定和验收见 [A-roll 透明贴片合同](aroll-overlay-contract.md)。它保留全屏真人和普通字幕，不进入 B-roll 的资料底图规则；不透明 TalkCraft 整屏卡的资格边界保持不变。
 
 - 代码组件只能使用正式 VisualPlan v3 内 ShotRecipe v2 冻结的 `dependency_id / entrypoint / producer_version`。预检先调用正式计划与配方 validator；不完整字段、identity 不一致或非法 component 不进入依赖绑定。
-- `code_generated` 调用现有依赖：`html-video`、`hyperframes` 与 `hd-talking-head-local-canonical` 通过 `ReferenceProcessAdapter` 使用登记模板的实际引擎，`video-shotcraft` 通过 `SkillInvocationAdapter` 调用 Remotion。模板引擎不能仅由仓库名推断。执行层把组件交给 `broll_component_executor.execute_component`，产物必须保留真实调用证据。通过绑定检查不等于 adapter 已完成两组真实渲染验证。
+- `code_generated` 调用现有依赖：`html-video`、`hyperframes` 与 `hd-talking-head-local-canonical` 通过 `ReferenceProcessAdapter` 使用登记模板的实际引擎。模板引擎不能仅由仓库名推断。执行层把组件交给 `broll_component_executor.execute_component`，产物必须保留真实调用证据。通过绑定检查不等于 adapter 已完成两组真实渲染验证。
 - `hd-talking-head-talkcraft` 通过 `ReferenceProcessAdapter` 执行项目内锁定的 Remotion 运行时。自动选卡在 `visual_direction` 上游调用 `edit.hd.tools.talkcraft_matcher.match_cards`：108 张 qualified 卡全部进入语义检索池，先按 `production_role`、必需媒体和人物要求做硬过滤，再根据口播、语义家族、目标和关键词稳定排序。`build_binding` 把选中的 `hd-talking-head/talkcraft/<card_id>` 和当前 brief 身份冻结进 ShotRecipe；adapter 与 executor 不得二次选卡。语义索引只是检索数据，真实准入仍以项目 `runtime/card-registry.json` 为准。每个新 Job 先运行项目的 `edit/hd/integrations/talkcraft/check_runtime.py`；上游共享 runtime 与正式资格 runtime 隔离，不自动升级正式版本。Workbench 只通过 `build_v4_edit_contract` / `apply_v4_overrides` 产生未批准 draft bundle，修改后重新走 canary 与人工门。
 - 五类来源同级；仅在已经批准 `code_generated` 的组件内，候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。正式记录以 `references/verified-template-registry.json` 为准，执行前必须通过 `scripts/verify_broll_template.py`，再由 `candidate_from_verified_template_record` 添加当前文案分数。
 - `html-video/frame-data-rollup` 的原生接口见 [DataRollup 执行合同](data-rollup-execution.md)。`scripts/data_rollup_adapter.py` 创建正式 ReferenceProcessAdapter 与真实媒体探测器；`scripts/render_data_rollup.cjs` 消费当前 brief，保留原始第三方动画。其他 family 不因该接口存在就被认定已经执行验证。
@@ -41,7 +41,7 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 - A-roll 三节点流程调用 HyperFrames Registry 的 `hw-pipeline`，接口与限制见 [A-roll 透明贴片合同](aroll-overlay-contract.md)。`scripts/hyperframes_hw_pipeline_adapter.py` 绑定批准段落和真人源片，`scripts/render_hyperframes_hw_pipeline.cjs` 调用真实 HyperFrames CLI 并输出透明 MOV；不是 TalkCraft 自制样式，也不等于该样片已完成正式 Job 的全片验收。
 - `hd-talking-head-local-canonical` 的入口为 `scripts/local_canonical_adapter.py`，执行 `scripts/local_canonical_renderer.cjs`。它提供 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword` 五个原生 9:16 构图；每个入口都必须匹配 registry 的源码哈希、版本、双输入回执和当前运行时固定。
 - 每个代码组件必须冻结 `template_origin / template_id / template_version / verification_id / adaptation_level / source_entrypoint / source_sha256 / sample_sha256 / semantic_families / capacity`。`structural` 改造不得沿用第三方验证身份；实际填充后必须重新做当前文案三态 QA，不能拿历史样片直接交付。
-- 只发现 Skill 名称或参考项目目录不代表已经绑定。当前配方选中 `html-video`、`hyperframes`、`hd-talking-head-local-canonical` 或 `video-shotcraft` 后，manifest 中必须存在精确匹配 entrypoint 与 producer version 的可执行 binding probe；probe 返回的 `dependency_id / entrypoint / producer_version / adapter_identity` 必须与批准配方及登记逐字一致，才能返回 `selected + callable + bound`。HyperFrames 及其支撑的本地 canonical probe 还复核固定运行时提交、CLI 版本、渲染入口与模板包装器。
+- 只发现 Skill 名称或参考项目目录不代表已经绑定。当前配方选中 `html-video`、`hyperframes` 或 `hd-talking-head-local-canonical` 后，manifest 中必须存在精确匹配 entrypoint 与 producer version 的可执行 binding probe；probe 返回的 `dependency_id / entrypoint / producer_version / adapter_identity` 必须与批准配方及登记逐字一致，才能返回 `selected + callable + bound`。HyperFrames 及其支撑的本地 canonical probe 还复核固定运行时提交、CLI 版本、渲染入口与模板包装器。
 - Node.js 与 npm 静态 `required: false`，只要当前批准配方包含任一 `code_generated` 组件，就提升为 `selected + callable`。
 - Pexels 与 Pixabay 静态 `required: false`。`visual_direction` 草案按语义选中对应 `external_stock.provider` 后，必须在首次搜索前复核当前 Job 的 `selected + connected`；实际素材冻结后，再用完整 ShotRecipe v2 复核 binding。
 - `external_stock` 还必须保留 provider 素材 ID、作者、素材页与许可记录。这些状态只说明已选配方能否执行，不改变五类来源的语义选择，也不触发跨类替换。完整字段和命令见 [依赖预检、确认与安装合同](dependency-preflight.md)。
@@ -72,16 +72,55 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 
 ## 低内存与 Agent 运行
 
-- 默认只允许 1 个主 Agent 内联执行，不得为了提速新增子智能体。用户明确要求多 Agent 才能改变这一点，且仍需避免多个 Agent 同时渲染。
-- 浏览器、Remotion、FFmpeg 和外部生成均串行；重型并发为1。每个镜头完成后关闭页面、释放帧缓存，再处理下一个。
+- 保持 1 个主控，可委派最多 3 个互不依赖的轻量准备任务；先分配语义、时码、风格与各自输入目录，子任务不写正式清单、workflow 或批准记录。
+- 浏览器、Remotion 和 FFmpeg 重任务一次只运行一个。单 renderer 内部帧并行须先以同输入真实对照验证，再仅对已验证入口启用；不得将其当作同时开多个 renderer 的许可。每个镜头完成后关闭页面、释放帧缓存，再处理下一个。
+- 图片和视频生成共用当前 Job 的上限 2，云端等待期间继续准备其他镜头。正式计划仍要求已完成媒体与完整绑定，不能在云端 pending 时跳过批准阶段提前制作正式 canary 或字幕。
 - provider 连接只用于当前已批准 generation；运行报告仅保存连接状态与标识字段。
+
+## 有界生成编排
+
+所有新 Job 的内置图片和 Lovart 视频生成必须先经过项目内 `edit.hd.tools.generation_queue`，不能由各子 Skill 绕过它各自提交。它是宿主现有工具的本地准入入口，不生成媒体、不替代子 Skill 的设计、不增加付费次数；正式阶段、资产验收和最终合成仍由原 runner 串行处理。
+
+1. 主控先冻结各项具体内容、模型、次数、输入与真实上传范围，取得对这批内容的真实授权。配置确认和本次“实施并发”的同意不能代替付费生成授权。已授权的同一具体请求不重复询问；新增或实质变更请求重新确认。视频先用实际 Lovart `describe_model` 检查参数；使用同一个真实 `project_id`，上传、生成、查询与展示全部传该 ID。
+2. 仅把输入已准备好的真实请求加入 plan。顶层只有 `requests` 数组；每项只有 `id / purpose / tool / arguments / input_files`。`purpose=image` 对应 `image_gen.imagegen`，`purpose=video` 对应 `mcp__lovart__generate_video`，且须与已确认 provider 的 `endpoint_id` 逐字一致。`arguments` 是完整实际工具参数，不放待补素材或占位 URL。每份本地输入登记 Job 相对 `path / sha256 / bytes`，参考图先存为该 Job 的固定文件，再通过绝对 `referenced_image_paths` 传入；并发任务不使用会变化的“最近几张图”。图生视频的首尾帧或参考图尚未准备时，先在已授权次数内完成图片及检查，再用真实 `upload_asset` 取得同项目引用，之后才登记视频；封面生成次数不自动包含额外 B-roll 参考图。
+3. 主控用 `contract_artifacts.sha256_json(plan)` 计算已审阅 plan 身份，调用 `add(job, plan, user_confirmation, expected_plan_sha256)` 保存具体授权。领取前 `claim(job, id, account_limit)` 重新核对启动批准、配置和输入；视频 `account_limit` 必须来自当前 `get_credits.concurrency_limit`，不是剩余空闲名额。图片和视频总数以本 Job 已确认的 1 或 2 为限，`submitting / pending / unknown` 都占位。
+4. 只有 `claim` 返回 `action=generate` 才调用其实际宿主工具：`image_gen.imagegen` 对应 `tools.image_gen__imagegen(arguments)`，Lovart 对应 `tools.mcp__lovart__generate_video(arguments)`。入口在返回动作前已保存 `submitting` 和 `claim_token`；随后独立发起最多两项，并在每项返回时立即 `record(job, id, claim_token, response)`，不要等整批返回才保存任务 ID。其余准备工作可继续，但不要并行开本地重渲染或写正式批准记录。
+5. Lovart 保存实际结构化返回，队列分别保留首次 `submission_response` 和最终 `completion_response`，不会被轮询状态覆盖；内置图片只提取工具真实返回的媒体引用，保存为 `{"status":"completed","artifacts":[{"type":"image","path":"<实际输出路径>"}]}`，也可使用真实 `url`，不得杜撰文件、任务 ID 或保存 base64、密钥。完成仅释放生成名额，不代表资产验收通过；原有动态、语义、字幕、安全区等检查仍执行。
+6. `poll(job)` 仅在工具指定的等待时间到达后返回同项目的一组真实 task IDs，再调用现有 `get_task_status`。回执按实际 task ID 归属拆分，对每项 `record` 传其精确 `queried_task_ids`；不能按返回顺序、文件名或总数量猜归属。若批量返回无法逐项对应，就查询该请求的准确 IDs，不将聚合结果当作单项成功。实际结果完成后才可补下一项；最终 `get_task` 展示一次，不反复向用户确认同一视频。
+7. 重启先用 `status(job)` 恢复已有记录。已领取、结果不明或失败的 ID 一律不会自动重提；有 task IDs 时只查询已有任务，没有 IDs 时保留占位并查实际项目记录，不能为腾名额把它标成失败。`CONCURRENCY_LIMIT` 暂停后续领取，其他任务完成也不解除暂停；仅真实获准继续时调用 `resume(job, user_confirmation)`，它只恢复尚未领取项，不重试旧失败或未知任务。`record / poll / status` 不依赖新配置批准，因此配置变更后仍可收回已发出任务的结果。
+
+### 受控失败重试
+
+受控重试不是普通 `add`，也不是自动恢复。只有明确 `failed` 且证据来自该请求的精确提交回执或单任务查询时，才可先调用只读的 `prepare_retry(job, request_id)`。它返回冻结计划、`plan_sha256`、原请求和确定性的 `plan_request_id`；计划至少包含 `job_id`、`from_id`、`failure_response_sha256`、`request_fingerprint`、`config_sha256`、完整 `input_files` 与 `count=1`。`from_id` 必须是指定失败项，不能自动改成最新子项；`submitting`、`pending`、`unknown`、`not_found`、`moderated`、已完成但 QA 不通过或未逐项核实的聚合失败均拒绝。
+
+用户针对这份冻结计划作出一次实际授权后，调用 `retry(job, plan, user_confirmation, expected_plan_sha256)`。它在同一文件锁内验证父项仍不可变、配置和输入身份未变，且父项至多一个后继，然后原子追加唯一 `ready` 子项并消费本次授权。重复相同计划、哈希和父项只返回原子创建的同一子项；不能借此为子项再次失败自动续试。新项带 `retry_of` 与 `plan_request_id`，领取时仍返回队列项 ID 和原始分镜 ID；只有实际 `claim` 返回 `action=generate` 后才能调用供应商，供应商 task ID 仍以真实回执为准。旧 nonce、旧 task ID 或迟到回执不能覆盖新项。供应商没有 client idempotency 参数，因此这里只保证本地唯一领用，不声称供应商端严格仅一次。
+
+`not_found` 必须保存原始响应，本地状态为占位的 `unknown` 并继续占用并发名额；停止对该最终 not-found 查询自动轮询，须回查已保存的任务或项目记录，不能据此推断未扣费。聚合接口只返回总 `failed`，或同一请求有多个 task ID 但不能逐项证明全部失败时，禁止创建重试，改为逐项查询或停在 blocked。`resume` 只清除暂停状态并放行 `ready` 项；一次用户回复可以同时覆盖恢复和一项具体重试，但不重复追问，也不复活失败或未知项。
+
+完成后的唯一交接不新建 runner：封面核对实际带字图后用 `cover.prepare_cover(job, approved_preview=实际PNG, approved_preview_sha256=实际摘要, approved_preview_prompt=实际prompt)` 原样发布，见[封面标题合同](cover-title-style.md)。每个 Lovart 视频分别按[已完成结果的原字节复用](generated-broll-skills.md#lovart-已完成结果的原字节复用)保存原视频、实际请求和两次回执组成的 `generation.json`、当前实测 `qa.json`；队列 JSON 本身不是该 generation 格式。然后依次 `prepare_existing_binding(job, record, ffprobe_executable)` → 将返回值放入当前组件 `compile_context.bindings` 并正常编译批准配方 → `create_adapter(job, record)` 与 `create_artifact_probe(ffprobe_executable)` → 既有公共组件执行器。每份 record 绑定当前 segment/component 和原声时窗，最终仍由原 `visual_canary / visual_assets_v2` runner 验收、组装；不把两项队列回执直接当作一份全片 adapter，也不补造事实或绕过正式批准。
+
+现有 CLI 与上述接口等价，使用预检的同一个解释器和明确项目根目录，不从别的工作区导入。示例中的占位符必须先替换；不要把示例确认文字当作真实批准：
+
+```bash
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" add \
+  --plan "<已冻结 plan.json>" --user-confirmation "<用户原文>" --expected-plan-sha256 "<实际 plan hash>"
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" claim --id "<实际请求 id>" --account-limit <当前 Lovart 上限>
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" record \
+  --id "<实际请求 id>" --claim-token "<领取返回 token>" --response "<实际小型回执.json>"
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" poll
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" prepare-retry --id "<明确失败的请求 id>"
+PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" retry \
+  --plan "<冻结的 retry plan.json>" --user-confirmation "<针对该计划的一次用户授权>" \
+  --expected-plan-sha256 "<实际 plan hash>"
+```
+
+领取记录位于同一 Job 的 `manifests/generation-queue.json`，短文件锁只保护读取、领取与原子保存，不覆盖云端等待。不要为旧 Job 改配置、重签批准或重做已验收成片来启用本入口。本地字幕 Remotion 入口的已验证帧并发见 [字幕合同](subtitle-style-contract.md)；其收益不代表其他动画入口或整片制作已完成并发实测。
 
 ## 参考项目登记
 
 以下本地克隆仅作为设计与工程来源；实际产物仍须符合本 Skill 的9:16、批准、来源和 QA 合同：
 
 - `参考项目/B-roll开源方案/html-video`
-- `参考项目/B-roll开源方案/video-shotcraft`
 - `参考项目/B-roll开源方案/erduo-broll-loop-engineering`
 - `参考项目/B-roll开源方案/video-use`
 - `参考项目/B-roll开源方案/video-autopilot-kit`
