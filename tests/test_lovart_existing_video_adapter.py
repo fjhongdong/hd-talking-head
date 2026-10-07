@@ -107,6 +107,75 @@ def padded_fixture(root):
 
 
 class ExistingLovartTests(unittest.TestCase):
+    def test_framemd5_window_normalizes_source_clock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.mp4"
+            source.write_bytes(b"source")
+            completed = Mock(stdout="# header\n0,          0,          0,        1, hash\n", returncode=0)
+            with patch.object(reuse.subprocess, "run", return_value=completed) as run:
+                rows = reuse._framemd5("ffmpeg", source, 42, 238)
+            self.assertEqual(rows, ["0,          0,          0,        1, hash"])
+            args = run.call_args.args[0]
+            self.assertIn("trim=start_frame=42:end_frame=238,setpts=PTS-STARTPTS", args)
+
+    def _metadata_record(self, root, source_sar=None, frame_hash=None):
+        job, record, recipe = fixture(root)
+        (job.job_dir / "derived.mp4").write_bytes(b"derived metadata-only video")
+        record["derived_media"] = file_ref(job, "derived.mp4")
+        qa_path = job.job_dir / "qa.json"
+        qa = json.loads(qa_path.read_text())
+        qa["native_video"].update(frames=48, fps=24)
+        qa_path.write_text(json.dumps(qa))
+        record["qa"] = file_ref(job, "qa.json")
+        frame_hash = frame_hash or hashlib.sha256(b"0,0,0,0,1,hash").hexdigest()
+        approval = {"schema_version": 1, "status": "approved", "approval_type": "metadata_only_sar_normalization",
+                    "host_qa": "internal metadata QA", "generation_id": "fixture-task",
+                    "source_sha256": record["media"]["sha256"], "output_sha256": record["derived_media"]["sha256"],
+                    "source_dimensions": [1080, 1920], "output_dimensions": [1080, 1920],
+                    "source_frame_count": 48, "output_frame_count": 48, "fps": 24,
+                    "source_frames_half_open": [0, 48],
+                    "transform": {"codec": "copy", "filter": None, "sar": "1:1"},
+                    "source_sar": source_sar, "output_sar": "1:1", "frame_md5_sha256": frame_hash,
+                    "applies_to_other_assets": False}
+        (job.job_dir / "padding-approval.json").write_text(json.dumps(approval))
+        record["normalization_approval"] = file_ref(job, "padding-approval.json")
+        return job, record, recipe
+
+    def test_metadata_branch_accepts_missing_sar_and_rejects_na_or_pixel_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            job, record, _ = self._metadata_record(Path(directory).resolve(), None)
+            shutil.copy(job.job_dir / "padding-approval.json", Path(directory) / "padding-approval.json")
+            with patch.object(reuse, "_snapshot"), patch.object(reuse, "_metadata_probe", side_effect=[
+                    {"width": 1080, "height": 1920, "fps": 24, "frames": 48, "duration": 2.0, "sar": None, "color": (None,) * 5},
+                    {"width": 1080, "height": 1920, "fps": 24, "frames": 48, "duration": 2.0, "sar": "1:1", "color": (None,) * 5}]), \
+                 patch.object(reuse, "_framemd5", return_value=["0,0,0,0,1,hash"]):
+                output, provenance = reuse._approved_output(Mock(), record, {"native_video": {"sha256": record["media"]["sha256"], "width": 1080, "height": 1920}}, "fixture-task", Path(directory), "ffprobe", "ffmpeg")
+            self.assertEqual(output, record["derived_media"]["sha256"])
+            self.assertTrue(provenance["metadata_only_sar_normalization"])
+            with patch.object(reuse, "_snapshot"), patch.object(reuse, "_metadata_probe", side_effect=[
+                    {"width": 1080, "height": 1920, "fps": 24, "frames": 48, "duration": 2.0, "sar": None, "color": (None,) * 5},
+                    {"width": 1080, "height": 1920, "fps": 24, "frames": 48, "duration": 2.0, "sar": "1:1", "color": (None,) * 5}]), \
+                 patch.object(reuse, "_framemd5", side_effect=[["0,0,0,0,1,hash"], ["0,0,0,0,1,other"]]), self.assertRaisesRegex(ValueError, "pixels"):
+                reuse._approved_output(Mock(), record, {"native_video": {"sha256": record["media"]["sha256"], "width": 1080, "height": 1920}}, "fixture-task", Path(directory), "ffprobe", "ffmpeg")
+            for bad_sar in ("N/A", "9:16"):
+                bad_root = Path(directory) / bad_sar.replace(":", "-")
+                bad_root.mkdir(parents=True)
+                bad_job, bad_record, _ = self._metadata_record(bad_root, bad_sar)
+                shutil.copy(bad_job.job_dir / "padding-approval.json", Path(directory) / "padding-approval.json")
+                with patch.object(reuse, "_snapshot", side_effect=lambda *_args: None), self.assertRaises(ValueError):
+                    reuse._approved_output(Mock(), bad_record, {"native_video": {"sha256": bad_record["media"]["sha256"], "width": 1080, "height": 1920}}, "fixture-task", Path(directory), None, None)
+    def test_metadata_normalization_is_bitstream_copy_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, output = Path(directory) / "source.mp4", Path(directory) / "derived.mp4"
+            source.write_bytes(b"source")
+            with patch.object(reuse.subprocess, "run") as run:
+                reuse.normalize_metadata_only_sar(source, output, "ffmpeg")
+            args = run.call_args.args[0]
+            self.assertIn("-c:v", args)
+            self.assertEqual(args[args.index("-c:v") + 1], "copy")
+            self.assertIn("h264_metadata=sample_aspect_ratio=1/1", args)
+            self.assertNotIn("-vf", args)
+
     def test_reviewed_margin_cleanup_reuses_derivative_and_rejects_scaling(self):
         with tempfile.TemporaryDirectory() as directory:
             job, record, recipe = padded_fixture(Path(directory).resolve())

@@ -87,7 +87,14 @@ async function main(args) {
       html = replaceOnce(html, 'if (i < n - 1) {', 'if (false) {');
     }
     html = replaceOnce(html, 'y: 455, // top of the row; x centers automatically', 'y: 260, // portrait safe area');
-    html = replaceOnce(html, 'fontSize: 56,', 'fontSize: 70,');
+    // Use the native editable box/font parameters; Chinese labels need glyph width,
+    // not the upstream short Latin demo's fixed 320px box.
+    const glyphs = Math.max(...b.labels.map(label => [...label].length));
+    const maxBoxWidth = Math.floor((1680 - (b.labels.length - 1) * 190) / b.labels.length);
+    const fontSize = Math.min(70, Math.floor((maxBoxWidth - 64) / glyphs));
+    const boxWidth = Math.max(320, glyphs * fontSize + 64);
+    html = replaceOnce(html, 'boxW: 320,', `boxW: ${boxWidth},`);
+    html = replaceOnce(html, 'fontSize: 56,', `fontSize: ${fontSize},`);
     html = replaceOnce(html, 'var DUR = 7;', `var DUR = ${duration};`);
     html = replaceOnce(html, 'var t = 0.3;', `var starts = ${JSON.stringify(b.label_frames.map(frame => frame / 24))};`);
     html = replaceOnce(html, 'CONFIG.nodes.forEach(function (_, i) {\n          var p = boxes[i];',

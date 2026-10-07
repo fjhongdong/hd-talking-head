@@ -1,6 +1,6 @@
 # 生成型 B-roll：选型、调用、验收
 
-Paper 的原生 HyperFrames 路线与 HyperFrames Registry 的竖屏结构适配通过 `scripts/hyperframes_native_adapter.py` 执行。冻结 Job HTML 及实际图片资产，调用上游 CLI 0.8.19，不在预览末尾临时覆盖旧视频；每段来源分别标为 Paper 的文档路线或 Registry 原组件。图片和时间轴均进入正式配方，结构重排仍是 `custom_fallback`，不是已验证整屏模板。TalkCraft 原生计数器允许真实有限数值，必须绑定 `numeric_values` 与 `linear`，不得把含数字内容伪装为无数字图解。
+Paper 的原生 HyperFrames 路线通过 `scripts/paper_hyperframes_adapter.py`（`dependency_id=paper-collage-hyperframes`）执行；HyperFrames Registry 的竖屏结构适配继续使用 `scripts/hyperframes_native_adapter.py`。两者冻结 Job HTML 及实际图片资产，调用同一上游 CLI 0.8.19，不在预览末尾临时覆盖旧视频；每段来源分别标为 Paper 的文档路线或 Registry 原组件。Paper 专用入口只增加实际运动检查，不改变其他已确认组件的入口身份。图片和时间轴均进入正式配方，结构重排仍是 `custom_fallback`，不是已验证整屏模板。TalkCraft 原生计数器允许真实有限数值，必须绑定 `numeric_values` 与 `linear`，不得把含数字内容伪装为无数字图解。
 
 主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。Lemo-Opuscar 与 OneTake 负责本期 HTMLCanvas source 的真实制作与原生 runner；选择后先读取完整上游 Skill 及 composition/motion/look 指引。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。固定提交、brief、workflow、探针和无 smoke 不宣称完成的边界见[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)。
 
@@ -34,7 +34,7 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 当前新增显式候选路由，而不是另造本地导图模板。用于本句明确讲述的概念拆解、分类、经验组成或多层关系；时间先后、因果流程和并列清单不能仅为使用导图而改写成树。先从口播提取真实根节点、分支和层级，节点显现与关系建立对齐该句词时码，不补空节点，也不提前显示后文结果。
 
 - **现代图形路线：HyperFrames。** 完整读取项目内 `参考项目/B-roll开源方案/hyperframes/skills/hyperframes-registry/SKILL.md` 与 `hyperframes-animation/SKILL.md`。先执行英文语义查询 `hyperframes catalog --query "mind map branching hierarchy nodes growing connectors" --json`，再核对命中的真实源码。现成 `flowchart-vertical` 是竖屏三层决策树，具有 SVG 连线绘制和便签节点动画，但固定为 1 根、2 分支、4 叶子及英文纠错剧情；它不是任意导图的参数化入口。当前内容不满足该结构时排除，不填无意义节点。`constellation-hub` 蓝图适合中心与卫星关系，不冒充多层树；只有真实关系匹配才使用。用原生代码/配方做最小中文、时码及安全区适配，并如实记录结构调整，不沿用未经验证的通用模板身份。
-- **手绘路线：Doudou。** 实际调用 `HandDrawnArrow`、`HandwrittenText`，必要时 `CircleHighlight`；节点布局是本段编排，连线/字显现使用上游组件，不重写绘制算法。使用上述项目渲染桥。开发出片与正式组件执行器绑定分开记录，缺绑定不能进入正式资产。
+- **手绘路线：Doudou。** 按下节原生制作交接组织主体笔画和绘制顺序，使用上游现有画布、路径、笔刷与必要的排线能力；箭头和圈注是关系表达的组成部分，不把普通框图加几个组件当作手绘场景。使用上述项目渲染桥，不重写绘制算法。开发出片与正式组件执行器绑定分开记录，缺绑定不能进入正式资产。
 - **不采用为视频入口：** 本轮检索的 `markdown-viewer/skills@mindmap` 是 PlantUML 静态导图；`galiacheng/mindmap-skills` 是交互 Markmap HTML。它们可整理结构，但不直接产出本项目要求的动态视频，不因安装量或“交互”字样标成已接通 B-roll。
 
 美观验收看实际竖屏成片：根节点形成焦点、分支有稳定的颜色编码与充足间距；中文至少在手机播放时可读，连线不穿文字、箭头不遮节点，展开过程不乱跳。主关系在正常播放速度下能读懂，并避开父级统一字幕与圆形小窗。来源热度不代替美观；新路线先做一条真实口播样段，不重复全片或另建资格框架。
@@ -47,7 +47,19 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 
 新 Job 依赖检查前执行 `python3 <skill>/scripts/ensure_visual_broll_skills.py --project-root <project> --skill doudou-remotion-whiteboard`，缺失时仅安装到项目 vendor，已有版本不覆盖。固定仓库 `https://github.com/undsky/doudou-remotion-whiteboard-skill.git`，提交 `d41f61c889c315b2a590fee61db3a62cf003adc9`；启动清单检查真实组件与配方文件存在，不将文件检查标成出片通过。
 
-完整读取该目录的 `SKILL.md`，再读选中的组件或配方源码。项目内 `scripts/render_doudou.mjs` 直接加载上游源码，复用现有锁定 Remotion runtime；它只提供 bundling 与串行无声渲染，不另造视觉模板。每段入口在 Job 内建立 Composition，明确 1080×1920/24fps 和精确帧数，直接 import `doudou-remotion-whiteboard/components` 或具体上游配方并传入当前参数。运行：
+完整读取该目录的 `SKILL.md`，再读选中的组件或配方源码。先执行上游场景制作，再调用渲染桥；Doudou 是制作指导及绘制能力，不是自动接收关键词的成片 API。主 Skill 交付当前口播、语义关系、对象与状态变化、绘制顺序、画布安全区及源词锚；制作阶段据此生成本期场景，不从历史配方或旧 notes 复制布局和帧数。
+
+制作交接沿用 Job 的场景记录，明确以下实际输入与使用方式，不另建模板系统：
+
+- **主图与笔迹：**根据本句选择对象、留白、线宽、笔型和底色。使用真实导出的 `HandDrawnCanvas`、`HandDrawnArrow`、`CircleHighlight`，以及 `doudou-remotion-whiteboard/math` 中的路径切线、笔迹扰动和排线算法；只组合本镜需要的能力。需要画布时，`onDraw` 用当前帧逐步绘制，复用上游现有方法。主体轮廓、关系和必要状态要在绘制过程中成立，不以普通 CSS 边框、胶囊卡片或逐字显现替代手绘主图；CSS 可用于标签和排版。
+- **真实手部与笔刷：**本项目的手绘白板默认调用原生 `RealHandFollower`，明确要求有手时不能用孤立 `PencilFollower` 代替。先将包内 `assets/doudou/hand-pencil-01.png` 和对应 JSON 的真实尺寸、笔尖标定复制并绑定到当前 Job；用户另给握笔图或本句需要不同笔型时，再按上游说明用内置生图准备透明素材并重新标定。`RealHandFollower` 没有内置图片，缺 `handImageUrl` 会显示空容器；不得把导入组件当作手已出现。
+- **手笔同步：**笔尖消费正在显现的同一路径及同一进度，使用上游 `getSampledTangent` 或 `getCircleTangent`。`imageWidth/Height` 和 `tipOriginalX/Y` 均为原图像素，整体仅等比缩放一次；由 Remotion `Img` 等待同一张冻结手图加载，再让原生手部组件显示。先核对素材的自然握笔姿态：本包手图中性角为 0°，手腕朝右下；不能为避让文字把整只手转 90°、翻面或镜像。手腕只在自然姿态附近作少量微迎角，使用一小段路径的平均方向平滑转弯，不随每个扰动点或完整切线旋转；换笔画时抬笔、隐藏并移动到下一起点，不能横扫、拉伸或高频抖动。同一平面内手部尺寸保持一致，标签改到手腕不会经过的位置，连线同时保持依附主体；不靠转错手或挪迟口播词锚避让。主要描线都要能看见手，读字与结果停留时隐藏。按整张手图相对笔尖的实际范围避让标签、字幕和圆窗，不只检查笔尖；当前圆窗从 y=1360 开始时，手部下沿宜留在 y=1320 以上。只有用户明确要求无手或所选风格确实只需笔刷时才采用无手方式，并如实记录。
+- **真实接口边界：**当前 `HandwrittenText` 是字符显现，不提供中文笔画路径，也未触发声明的 `onPositionUpdate`；标签保持清晰，不伪称逐笔书写。没有名为 `WhiteboardCanvas` 或 `CrossHatchFill` 的独立导出，不调用不存在的接口。现有排线来自 math；原生三套配方中的花瓣、齿轮、桥和固定英文内容仅在语义确实匹配时使用，不硬套当前内容。
+- **口播驱动：**在场景制作记录中保存当前 A-roll 身份、区间、有效词索引及映射后的局部帧；制作阶段将这些参数真实写入冻结 TSX。开始绘制、对象变化、关系建立、提醒和收束分别跟随本句，不能只在报告中附词锚而仍执行旧时序。关系图须正确表达任一条件、共同观察或先后关系；需要状态变化时不能只画完一张静态图。
+- **短镜头时序：**场景拆短后重新从本段词锚计算局部帧，不能只缩短 Composition 而沿用长场景的动作表。逐项核对本句必需图形与关系的开始、完成和可读停留均落在实际 `[0, frames)`；删除属于下一段、当前永远不会执行的笔画和标签，不把它们整体加速塞入本句。手在画线不是信息完整的证明：追踪对象和连线须相互依附，实际短视频不能只剩孤立曲线。来源节点可以作中性上下文预置，焦点按词锚切换，后文事件或结果不得提前。
+- **制作责任：**整屏构图及本期场景装配属于执行上游 Skill 的制作阶段；原生动画算法仍来自上游。父级只做语义交接、来源绑定、调用和合成，不开发可复用的本地白板模板，不修改 vendor 或复制另一套绘制算法。必要的本期几何、标签和时序组合如实记为 `custom_fallback / structural`，不冒充完整原生配方。
+
+项目内 `scripts/render_doudou.mjs` 直接加载上游源码，复用现有锁定 Remotion runtime；它只提供 bundling 与串行无声渲染，不另造视觉模板。每段入口在 Job 内建立 Composition，明确 1080×1920/24fps 和精确帧数，直接 import 上述上游能力或确实匹配的配方并传入当前参数。运行：
 
 ```bash
 node <skill>/scripts/render_doudou.mjs --project-root <project> --entry <Job内entry.tsx绝对路径> --composition <CompositionID> --output <本段MP4绝对路径>
@@ -59,9 +71,9 @@ node <skill>/scripts/render_doudou.mjs --project-root <project> --entry <Job内e
 
 `scripts/doudou_adapter.py` 提供 `create_adapter(project_root, node_executable, brief_loader)`、`create_binding(adapter, brief_bytes, reference_sample)` 与现有无声竖屏媒体探针。绑定为 `dependency_id=doudou-remotion-whiteboard / primary_renderer=Remotion / template_origin=custom_fallback / adaptation_level=structural`；节点编排不是上游原生整屏模板。预检清单按这项真实绑定调用只读探针，不能仅凭源码目录存在放行。
 
-Job 内 brief 为 `schema_version=1`，包含：`source_binding={aroll_sha256,segment_id,start,end}`、原配方 `template_request`、`entry={job_path,sha256}` 和 `composition={id,width:1080,height:1920,fps:24,frames}`。TSX 使用已审阅的自包含镜头代码，直接引用上游组件；当前入口不支持旁路本地素材、远程 URL、额外音轨或 `staticFile`。需要图片资产的镜头仍选择已具备冻结素材能力的现成入口，不能传入会变化的 Job 外文件。
+正式手绘入口的 Job brief 使用 `schema_version=2`：保留 `source_binding={aroll_sha256,segment_id,start,end}`、`template_request`、`entry={job_path,sha256}`、`composition={id,width:1080,height:1920,fps:24,frames}`，并绑定必填 `hand={job_path,sha256,width,height,tip_x,tip_y}`。手图是当前 Job 内已看过、可解码且有透明通道的 PNG，尺寸与笔尖均按原图核对。新执行不隐式兼容旧 brief；旧产物保留原发布身份，需要新制作时正常修订和迁移。
 
-适配器放入 `component_adapters["code_generated"]["doudou-remotion-whiteboard"]`，交给现有 canary / visual-assets 组件执行器。执行器冻结 TSX 字节；渲染桥从继承描述符读取并校验身份，在项目内临时入口实际加载上游组件，校验选中 Composition 的尺寸、24fps 与精确帧数，串行生成无声 MP4。不存在外部生成请求；父级继续统一叠加同源圆窗、原声及唯一字幕轨。读取批准计划与时钟的 guard、失败停止和正常 revision 门不变。
+适配器放入 `component_adapters["code_generated"]["doudou-remotion-whiteboard"]`，交给现有 canary / visual-assets 组件执行器。执行器冻结 TSX 和手图两项字节；渲染桥从继承描述符校验长度与 SHA，再将手图写入本次临时 `public/hand.png`，显式传入 bundler 的 `publicDir`。TSX 只可引用字面量 `staticFile('hand.png')`，传给原生 `RealHandFollower` 并由同源 Remotion `Img` 等待加载；仍禁止其他静态文件、远程 URL、base64、额外音轨或 Job 外素材旁路。渲染桥核对真实 PNG 与选中 Composition 的尺寸、24fps 和帧数，串行生成无声 MP4；正常运行不发出外部请求。父级继续统一叠加同源圆窗、原声及唯一字幕轨。读取批准计划与时钟的 guard、失败停止和正常 revision 门不变。
 
 2026-09-30 已通过该桥真实调用上游未修改的 `PencilSketchRecipe`，输出 180 帧、7.5 秒、1080×1920/24fps 无声视频，开发产物位于 `<project>/edit/verify/doudou-upstream-smoke/`。这只证明源码与现有运行时可直接出片，不证明本期任意口播语义、中文排版或正式 Job 组件绑定已通过。
 
@@ -183,6 +195,12 @@ Story 锁定依赖安装时存在 npm 安全告警（1中危、4高危，涉及�
 
 ## Paper Collage 原生入口
 
+先核对所选入口的具体动作能力。`layer-animate.mjs` 只提供各纸片的分步入场及末态停留；不能把所有主体合并为一层、完成整图入场后停住，称为动态 B-roll。需要对象展开、移动、翻折或候选关系变化时，按上游 `references/hyperframes-route.md` 的真实纸艺 PNG＋GSAP 路线制作，再调用 `paper_hyperframes_adapter.create_adapter(project_root, python_executable, brief_loader)` 与 `create_binding(adapter, brief_bytes, reference_sample)`。它沿用 native HTML schema 2 和实际来源固定值，强制 `upstream_route=paper-collage-ad/hyperframes / alpha=false`，不另建纸艺模板或动画引擎。
+
+将动作的局部起止帧真实写进原生时间轴，对齐当前口播，而不只在报告中列词锚。入场若早于镜头开始，检查本镜仍可见的实际动作时长；手机或道具的一次短入场不能承担后续整段。提问中的候选可以提前作为中性上下文出现，但不提前演出选中、通知、监看成功或后文成果。多个纸片独立运动的姿态及相互关系必须清楚，禁止用整张成图摇摆、缩放或装饰循环冒充主体动作。
+
+两个 Paper 本地入口都在发布成功制品前检查未合入人物、字幕的真实子视频：`paper_motion_guard.py` 用 FFmpeg 检测连续至少 3 秒的近静止，检测失败或无法运行即停止，不发布成功制品。Paper HyperFrames 入口先在私有路径渲染、检查后才交出视频；实际结果保留在调用记录的 `motion_guard` 中。该检查仅阻止明显长静止，不能证明动作语义、美观或词锚正确；宿主仍须正常速度看动作前、中、后及父级合成区间。`process_completed`、媒体参数合格、静帧好看或人物小窗在动，都不能作为主体动态通过的理由。
+
 完整读上游 `SKILL.md` 和它的纸质风格、提示词及本地分层动画参考。先验收一个完整画面，再准备固定背景、真正透明的动作图层和最终锁定帧。使用当前可用图片 Skill 制作纸质图像；失败不换成自写几何风格。检查 alpha，而不只相信生成请求参数；图层坐标必须配准，末尾锁定帧不能偷偷改变物体的位置、形状或语义。
 
 完整画面的验收还要检查设计完成度，不能因语义正确就通过：主体形成集中焦点，工具、手和参照物有清楚的大小主次；留白服务动作和圆窗，不把素材孤立地散在空底上。纸纹、半调网点、切边和投影使用一致的细度与光向，避免粗重压纹、过大的手和生硬厚阴影。短标签须字形清楚、对比足、内边距舒适，抓握位置与物体接触关系自然。随后检查动作的起始状态、可读运动与终点停留，以及叠加圆窗后的整体平衡。具体配色和构图随文案选择，不把某次标尺案例固化为所有 B-roll 的模板。
@@ -256,6 +274,10 @@ python3 skill-package/story-to-handdrawn-video/scripts/run_story_video.py \
 - `source_binding={aroll_sha256,start,end}`，对应当前批准的 A-roll 和段落时间窗。
 - `media / generation / qa` 各为 `{job_path,sha256,byte_count}`，路径必须是当前 Job 内相对路径，不能是 URL、符号链接或其他 Job 的路径。
 - 复用明确获批的补边或页边清理版本时，成对增加 `derived_media / normalization_approval`，结构同上。`media` 仍指向原始服务视频，绝不替换原始来源身份；配方组件的 `sha256` 改绑定实际交出的派生视频。
+
+原生竖屏视频仅缺少 SAR 字段时，可调用 `normalize_metadata_only_sar(source,output,ffmpeg路径)` 在当前 Job 生成不重编码的 `1:1` 派生文件；原件不覆盖。使用独立的 `metadata_only_sar_normalization` 记录宿主内部 QA，不填写用户预览批准或复制历史用户确认。准备入口实际核对完整逐帧像素、时间、帧数、尺寸、颜色和无音轨一致，且拒绝显式非方形或字符串 `N/A` 的源 SAR；校验失败不发布，不重新付费生成。这里只补缺失标记，不授权裁切、缩放、补边或改变颜色。
+
+该元数据类型保留完整原视频。配方的 `render_window` 是片段内的合成时窗，不是源视频选段；不能把源帧偏移写进去。确需去掉空底开头时，调用 `normalize_lossless_source_window` 生成当前 Job 的原速无损选段，保留原件及 `lossless_source_window_normalization` 内部 QA，逐帧对账选中的 YUV 像素与归零后的时钟；派生组件使用局部 `[0, output_frames)`。此路径只允许选帧、时间归零及缺失 SAR 补为 1:1，不缩放、补边、插帧或改变颜色，不再次付费。旧补边、页边清理仍使用原先的用户确认和完整输出帧窗合同。转换及交接通过不代表动态语义、圆窗、字幕或成片已通过。
 
 已确认预览中的页边清理可使用 `approval_type=single_asset_reviewed_margin_cleanup`，仍逐条绑定真实任务、原件、派生文件、预览摘要、帧窗和用户确认，不扩展到其他资产。仅接受原生1080×1920/24fps，输出同尺寸：不缩放、从第0帧截取当前镜头，并将像素比例标记为1:1；或只裁去底部120像素空白页边，再以 `0xf7f9f8` 补回同样120像素。`transform` 精确为 `{crop:[0,0,1080,1800],pad_bottom:120,color:"0xf7f9f8",scale:false,sar:"1:1"}`；仅规格化时改为 `crop:[0,0,1080,1920],pad_bottom:0`。原生来源身份不变，且必须复核主体未被裁切、动作与已确认预览一致。这不是通用裁切授权。
 

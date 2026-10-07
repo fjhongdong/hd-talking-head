@@ -79,6 +79,7 @@ _PRIMARY_RENDERER = {
     "doudou-remotion-whiteboard": "Remotion",
     "talkcraft-native-adaptation": "Remotion",
     "hyperframes-native-adaptation": "HyperFrames",
+    "paper-collage-hyperframes": "HyperFrames",
     "lemo-opuscar": "HTMLCanvas",
     "onetake": "HTMLCanvas",
     "adu-motion-video": "HTMLCanvas",
@@ -705,6 +706,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "doudou-remotion-whiteboard": "reference_adapter",
             "talkcraft-native-adaptation": "reference_adapter",
             "hyperframes-native-adaptation": "reference_adapter",
+            "paper-collage-hyperframes": "reference_adapter",
             "lemo-opuscar": "reference_adapter",
             "onetake": "reference_adapter",
             "adu-motion-video": "reference_adapter",
@@ -905,22 +907,22 @@ def _compile_shot_recipe(
                 "width": 1080,
                 "height": 1920,
                 "fps": 24,
-                # These adapters produce opaque portrait video; their
-                # presenter is composited by the segment renderer.
                 "alpha": kind == "code_generated"
                 and binding.get("dependency_id") not in {
                     "hd-talking-head-talkcraft",
                     "hd-talking-head-relation-motion",
                     "hd-talking-head-semantic-state",
                     "paper-collage-ad",
+                    "paper-collage-hyperframes",
                     "doudou-remotion-whiteboard",
                     "talkcraft-native-adaptation",
-                    "hyperframes-native-adaptation",
                     "lemo-opuscar",
                     "onetake",
                     "adu-motion-video",
                     "whiteboard-video",
-                },
+                }
+                and (binding.get("dependency_id") != "hyperframes-native-adaptation"
+                     or approved["composition"]["family"] == "aroll_with_overlay"),
             },
         }
         if completed_contract is not None:

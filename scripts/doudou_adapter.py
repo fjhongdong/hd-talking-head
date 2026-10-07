@@ -12,7 +12,7 @@ import subprocess
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_doudou.mjs"
 DEPENDENCY_ID = "doudou-remotion-whiteboard"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 COMMIT = "d41f61c889c315b2a590fee61db3a62cf003adc9"
 
 
@@ -22,8 +22,8 @@ def sha(path):
 
 def validate_brief(payload):
     b = json.loads(payload)
-    if (type(b) is not dict or set(b) != {"schema_version", "source_binding", "template_request", "entry", "composition"}
-            or b["schema_version"] != 1):
+    if (type(b) is not dict or set(b) != {"schema_version", "source_binding", "template_request", "entry", "hand", "composition"}
+            or b["schema_version"] != 2):
         raise ValueError("Invalid Doudou brief")
     source = b["source_binding"]
     if (set(source) != {"aroll_sha256", "segment_id", "start", "end"}
@@ -45,6 +45,19 @@ def validate_brief(payload):
             or p.as_posix() != entry["job_path"] or p.suffix != ".tsx"
             or not re.fullmatch(r"[a-f0-9]{64}", entry["sha256"])):
         raise ValueError("Doudou entry must be a frozen Job-relative TSX")
+    hand = b["hand"]
+    hp = Path(hand.get("job_path", "")) if type(hand) is dict else Path("")
+    if (type(hand) is not dict or set(hand) != {"job_path", "sha256", "width", "height", "tip_x", "tip_y"}
+            or hp.is_absolute() or ".." in hp.parts
+            or hp.as_posix() != hand["job_path"] or hp.suffix != ".png"
+            or not re.fullmatch(r"[a-f0-9]{64}", hand["sha256"])
+            or type(hand["width"]) is not int or type(hand["height"]) is not int
+            or not 1 <= hand["width"] <= 4096 or not 1 <= hand["height"] <= 4096
+            or type(hand["tip_x"]) is bool or type(hand["tip_y"]) is bool
+            or not isinstance(hand["tip_x"], (int, float)) or not isinstance(hand["tip_y"], (int, float))
+            or not math.isfinite(hand["tip_x"]) or not math.isfinite(hand["tip_y"])
+            or not 0 <= hand["tip_x"] < hand["width"] or not 0 <= hand["tip_y"] < hand["height"]):
+        raise ValueError("Doudou hand must be a frozen Job-relative RGBA PNG")
     request = b["template_request"]
     if (set(request) != {"semantic_family", "information_units", "numeric_values", "numeric_scale"}
             or type(request["semantic_family"]) is not str or not request["semantic_family"]
@@ -104,10 +117,11 @@ def create_adapter(project_root, node_executable, brief_loader):
 
     def media_loader(job, recipe, component, payload):
         check()
-        asset = validate_brief(payload)["entry"]
-        return (ReferenceProcessMedia(media_ref="entry", job_path=asset["job_path"], sha256=asset["sha256"]),)
+        brief = validate_brief(payload)
+        return tuple(ReferenceProcessMedia(media_ref=key, job_path=brief[key]["job_path"], sha256=brief[key]["sha256"])
+                     for key in ("entry", "hand"))
 
-    return ReferenceProcessAdapter(adapter_id="doudou-remotion-v1", dependency_id=DEPENDENCY_ID,
+    return ReferenceProcessAdapter(adapter_id="doudou-remotion-v2", dependency_id=DEPENDENCY_ID,
         approved_executor="reference_adapter", dependency_root=SKILL, entrypoint=ENTRY,
         entrypoint_sha256=entry_sha, producer_version=VERSION, primary_renderer="Remotion",
         renderer_version="4.0.520", artifact_media_type="video", launcher=node, launcher_sha256=node_sha,
@@ -124,7 +138,8 @@ def create_binding(adapter, brief_bytes, reference_sample):
     return {"producer_type": "dependency", "dependency_id": DEPENDENCY_ID, "entrypoint": ENTRY,
         "producer_version": VERSION, "primary_renderer": "Remotion", "renderer_version": "4.0.520",
         "template_origin": "custom_fallback", "template_id": "doudou-reviewed-scene", "template_version": VERSION,
-        "verification_id": hashlib.sha256((adapter.entrypoint_sha256 + COMMIT + brief["entry"]["sha256"]).encode()).hexdigest(),
+        "verification_id": hashlib.sha256((adapter.entrypoint_sha256 + COMMIT + brief["entry"]["sha256"] +
+                                            json.dumps(brief["hand"], sort_keys=True, separators=(",", ":"))).encode()).hexdigest(),
         "adaptation_level": "structural", "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
         "sample_sha256": sha(reference_sample), "semantic_families": [request["semantic_family"]],
         "capacity": {"min_units": request["information_units"], "max_units": request["information_units"]},

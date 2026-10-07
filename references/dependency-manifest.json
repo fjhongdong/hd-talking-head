@@ -117,7 +117,7 @@
       "entrypoints": ["scripts/hyperframes_native_adapter.py"],
       "binding_probes": [{
         "entrypoint": "scripts/hyperframes_native_adapter.py",
-        "producer_version": "1.0.0",
+        "producer_version": "1.1.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HyperFrames"},
         "command": ["{python}", "{dependency_root}/scripts/hyperframes_native_adapter.py", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -160,7 +160,7 @@
       "entrypoints": ["scripts/render_doudou.mjs", "scripts/doudou_adapter.py"],
       "binding_probes": [{
         "entrypoint": "scripts/render_doudou.mjs",
-        "producer_version": "1.0.0",
+        "producer_version": "2.0.0",
         "adapter_identity": {
           "adapter_type": "ReferenceProcessAdapter",
           "approved_executor": "reference_adapter",
@@ -183,7 +183,7 @@
       "stage": "job-start",
       "target": "skill-development/vendor/doudou-remotion-whiteboard",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "components/HandDrawnShapes.tsx", "components/PencilFollower.tsx", "recipes/index.ts"],
+      "entrypoints": ["SKILL.md", "components/HandDrawnShapes.tsx", "components/PencilFollower.tsx", "components/RealHandFollower.tsx", "recipes/index.ts"],
       "required_level": "installed",
       "capabilities": ["visual.handdrawn-components", "visual.whiteboard-recipes"]
     },
@@ -981,6 +981,32 @@
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
         "equals": "hd-talking-head-local-canonical",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "paper-collage-hyperframes-adapter",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/paper_hyperframes_adapter.py", "scripts/paper_motion_guard.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/paper_hyperframes_adapter.py",
+        "producer_version": "1.0.0",
+        "adapter_identity": {
+          "adapter_type": "ReferenceProcessAdapter",
+          "approved_executor": "reference_adapter",
+          "primary_renderer": "HyperFrames"
+        },
+        "command": ["{python}", "{dependency_root}/scripts/paper_hyperframes_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "paper-collage-hyperframes",
         "required_level": "bound"
       }
     },

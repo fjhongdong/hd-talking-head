@@ -95,12 +95,14 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 封面有两个不可合并的人工门：`cover_direction` 批准内容与设计方向，`cover` 批准实际图片。文案理解、重点和关键词只在 `content_analysis` 决策一次；下游不得重新提炼或询问同一问题。
 用户反馈“关键词、A-roll 贴片或 B-roll 太少”时，先从正式预览按内容章节量出高亮分布、贴片/B-roll 位置与累计时长，再逐句找未被可视化的语义机会。关键词源头漏项修订 `content_analysis`；镜头稀疏修订 `visual_direction`，并遵循状态级联，不能只在最终预览上叠几个临时元素或以固定数量代替语义判断。执行与验收分别遵守[字幕样式合同](references/subtitle-style-contract.md)和[9:16 视觉质量合同](references/visual-quality-contract.md)。
+用户同时指出样式同质化时，扩展的是本期可实际调用的原生组件候选，不是把已接通的两张图重复插入。按[画面多样性](references/visual-quality-contract.md#画面多样性)比较全片及最近两个增强窗口的主体、构图和动作；充分表达台词、实际质量相当的候选优先选不同家族。已明确否决的本期效果不自动复用，但不因此禁用整个上游 Skill。现成组件只缺竖屏、透明输出或文本槽交接时先做薄适配，不能把“还没有 adapter”误判为上游没有能力。
 用 `scripts/audit_visual_coverage.py --visual-plan <当前visual-plan.json> --subtitle-plan <当前subtitle-plan.json>` 输出每 20 秒的实际口播、高亮、贴片和 B-roll 分布及贴片时窗里的真实台词；逐项核对后才决定修订范围。该报告只定位缺口，不用数字代替语义审片。贴片时机、美观度或字幕碰撞被用户指出时，旧预览直接判未通过；先用带原声的代表样段验证词锚、真人避让和入／中／出画面，再重渲全片，不重复报审未发生观感变化的旧视频。
 本项目默认采用较密、均匀分布的 B-roll 节奏，具体安排遵守[视觉质量合同的密度规划](references/visual-quality-contract.md#b-roll-密度规划)。盘点时同时检查首个 B-roll 时间、累计占比和最长无 B-roll 区间；A-roll 贴片不能截断这项空白统计。用户要求重新安排时先保存本 Job 的逐镜时间、对应原声、画面动作及上游调用方案；未完成来源绑定的安排明确标为待制作，不冒充已编译或已渲染的 VisualPlan。
 新一期封面须从本 Job 已批准的内容重点生成新的画面创意：重新设计人物动作、主题隐喻、道具和场景，只继承已通过样例的标题层级、对比度与视觉完成度。样例是风格参考，不是可替换标题和人物的底图模板；生成候选前按[封面标题视觉样式合同](references/cover-title-style.md)绑定本期人物来源、逐字标题与主题动作，并用实际新图验证，不能把复制旧图或本地套版当成自动生成通过。
 用户认可的是完整带字封面时，锁定那张 PNG 的 SHA-256，正式 `cover` 直接原样复用，不生成或要求无字底图，也不让模型重画、本地叠字；封面不制作或展示缩略图，只展示正式尺寸成图。已认可成图的文案与旧方向记录不一致时，先把方向修订为成图中的逐字文案，再发布同一张图，不生成“相似版”。只有用户认可的仅是构图方向、尚未认可实际成图时，才可选择无字底图加本地排字的候选流程。
 
 到达 `cover_direction` 和 `cover` 时完整阅读封面输出与质量合同。9:16 真人知识封面优先读取项目内 `skill-development/vendor/Punk-Skill/skills/punk-cover/SKILL.md`，按其单一 `interleaved-title-editorial-poster` 风格编排本期文案、人物参考、主题动作和完整候选图；保存实际提示词、候选图及来源，不把手写提示词冒充子 Skill 调用。已批准的比例和文案优先于子 Skill 默认值，人物可与标题发生不影响识别的发丝穿插，五官和叙事手部必须清楚。原 `gbro-cover-design` 仅用于无字底图加本地排字的候选链路；Punk 完整带字成图经正式 runner 原样发布、像素核对和 `cover` 人工门通过后才称为正式封面，不为发布补造无字底图。
+Punk 实际方向候选须存入本 Job 独立的 `punk-assets` 目录，并调用 `prepare_cover_direction(..., direction_preview=...)` 原样发布；不得用旧主题固定示意图代替本期语义。
 
 `speech_cleanup` 的字级转写能力归属 `video-use`：先读其 `SKILL.md`，经本次音频上传与额度许可、凭据就绪后，从本 Job 预检绑定的 `video-use-runtime.resolved_path` 实际调用 `helpers/transcribe.py <源视频> --edit-dir <本Job工作区/edit>`。以预检发现的 `video-use-skill.resolved_path` 为进程工作目录，使上游 helper 读取该已安装 Skill 的私有 `.env`；若凭据来自安全注入的进程环境，也可直接使用，不复制密钥到项目。调用前确认输出路径未被其他源素材的缓存占用；记录入口绝对路径、退出码、源视频 SHA-256 和原始 JSON SHA-256。再将原始 JSON 路径与这四项调用证据传给 `transcribe.transcribe_job(job, video_use_result=..., invocation=...)`，由项目适配器校验时码、保留原始响应、对照文案并制作清理提案。没有许可、凭据、真实调用或可验证输出时停在此阶段；本地 Whisper 不能替代 `video-use` 的正式转写。
 
@@ -122,7 +124,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 修改意见只作用于当前待审或已批准阶段，将用户原意的忠实简洁摘要传入 `revise`。单个正式视觉段使用 `artifact_scope=("seg-xxx",)`；不手工改 `workflow.json`。
 
-修订已有视觉计划时读取视觉修订合同。支持 `segment-inputs` 的运行时会在新计划及 canary 获批后，按完整输入指纹与原批准证据复用未变正式片段，不因其他镜头变化重复生成。此能力不改变下游状态 DAG，也不自动迁移历史成片。
+修订已有视觉计划时读取视觉修订合同。用户要求保留或认可的开头、贴片及 B-roll，须当场写入本 Job 的 `manifests/confirmed-content.json`，并接入正式计划；不得只保存在局部样片。正式视觉发布和预览入口检查这份保留记录，缺项即停止，不输出缩水成片。支持 `segment-inputs` 的运行时会在新计划及 canary 获批后，按完整输入指纹与原批准证据复用未变正式片段，不因其他镜头变化重复生成。此能力不改变下游状态 DAG，也不自动迁移历史成片。
 
 用户资料变化必须先读工作区与素材回执合同，使用 `scripts/manage_user_materials.py` 的 `plan` → 人工确认 `plan_hash` → `apply --confirmed-plan-hash` 唯一入口。新 Job 的每个已发布阶段都必须包含完整 `material-usage.json`；无引用也发布空声明。已使用资料的替换/撤回依据当前回执计算 `earliest_stage` 和 `artifact_scope`，经 `prepared` → `material_committed` → `workflow_revised` 三阶段事务后恰好调用一次 `state.revise`。原字节和旧 material ID 保留，未变片段按输入指纹复用，受影响及下游阶段仍须逐门重审。回执缺失或身份不一致时 fail closed；旧 Job 不补造回执。资料变更期间暂停当前 Job runner，同一 `operation_id` 仅用于原事务恢复。
 
@@ -135,11 +137,15 @@ python3 <skill>/scripts/initialize_video_job.py \
 
 ## 4. B-roll 语义合同
 
+B-roll 默认追求高有效信息密度，区别于全片的插入频率和时长占比。调用上游制作前，把本句的关键对象、核心动作、关系变化及必要上下文拆成可见语义拍，随真实词锚交给子 Skill；不能只给关键词和画风。按[单镜信息密度](references/visual-quality-contract.md#单镜信息密度)规划和检查，既不漏掉关键动作，也不靠堆文字、装饰或重复字幕凑信息。已认可的交接表达可作为动作设计参考，不把其道具和构图固定成所有 B-roll 的模板。
+
 遇到概念拆解、分类和层级关系时，也匹配[思维导图与分支关系动效](references/generated-broll-skills.md#思维导图与分支关系动效)：优先核对 HyperFrames 现成决策树/中心关系入口，手绘方向调用 Doudou 真实组件。静态导图和交互网页不是动态 B-roll；候选登记不等于已出片或正式接通。
 
-选择 Doudou 后使用 `scripts/doudou_adapter.py` 绑定当前片段，交给统一组件执行器；不要只运行独立渲染命令后把文件当作正式资产。节点出现时机来自当前口播词级时间，父级仍统一合成圆形人物小窗与唯一字幕轨。批准过的视觉方向不重复报审；改变语义、来源或配方时才进入相应修订流程。
+选择 Doudou 后，先按[原生手绘制作交接](references/generated-broll-skills.md#doudou-项目内调用)执行上游场景制作：把主体对象、构图、绘制动作与当前词锚交给制作阶段，实际使用其画布、笔刷或绘图算法，而不是先拼普通 CSS 框图再加箭头。本项目手绘默认使用原生 `RealHandFollower` 与已冻结的透明握笔图，不能把孤立铅笔当作真实手部。随后使用 `scripts/doudou_adapter.py` 冻结本期场景和手图并交给统一组件执行器；不另造白板模板或动画引擎。父级仍统一合成圆形人物小窗与唯一字幕轨。批准过的视觉方向不重复报审；改变语义、来源或配方时才进入相应修订流程。
 
 新计划充分使用现成 B-roll 能力：父 Skill 只做语义导演、镜头编排、批准门和最终合成验收；制作前完整读取并实际调用所选上游 Skill。候选先按语义匹配分，再按美观质量分排序，两分相同才比较来源资格，最后比较重复间隔。优先组合现成能力；只有记录真实能力缺口后才允许最小新增实现。使用依赖时如实写 `producer_type=dependency` 与 `dependency_id`，另记复用能力与新增实现；`custom_fallback / structural` 是适配资格，不等于自研，也不冒充第三方整屏模板。Lemo-Opuscar、OneTake 使用项目内固定提交。HyperFrames 透明贴片/轻组件、TalkCraft 精确数据、Doudou 白板/思维导图、Paper 分层拼贴、Lovart Kling O1 场景动作保留各自边界；prompt 库不是制作依赖。入口与验收见[上游场景 Skill 合同](references/upstream-scene-skills.md)与[生成型 B-roll 编排](references/generated-broll-skills.md)。
+
+调用前区分现成模板、创作工具包与生成服务。Lemo 是原生风格创作工具包，不是填词导出模板：父级交付语义、真实词锚、时长、圆窗/字幕避让和相邻镜头外观，不先锁定“三卡片＋箭头＋圆点”。按其 DIRECTOR → 本期 treatment → STYLE/DEMO 技术学习 → 原生制作流程，让上游设计主要视觉动作；本期场景代码如实记为结构改编。美术质量看真实原尺寸画面与全速动作，多样性看实际构图和运动，不能用不同 Skill 名、函数引用或渲染成功代替。具体交接与审阅见[上游场景 Skill 合同](references/upstream-scene-skills.md)。
 
 B-roll 有且仅有五类同级来源：
 
@@ -194,7 +200,7 @@ A-roll 贴片先判断能否增加理解：有对应资料 B-roll 的人物/机�
 
 同一条 A-roll 样片的画面、主音轨、Scribe 词级时码、字幕和贴片必须绑定同一个源文件哈希及明确的源时间区间；不得根据文件名、旧笔记或推测的秒数拼接不同区间。合成前核对音频指纹/时码与源片一致，合成后同时检查最终画面的进入/中段/退出帧、实际字幕和最终音轨；透明 WebM/MOV 还要在真人合成后的画面中确认 alpha 生效，不能只凭透明元数据或播放器可播放判定通过。任一绑定或复核失败，样片标记为失败并停在当前阶段，不得进入人工确认或正式 Job。
 
-全片 A-roll 与 B-roll 统一使用已确认的 TalkCraft 卡片式口播字幕；先读上游 `video-talkcraft` Skill，再由正式 `subtitles_v2` 实际调用项目内 `talkcraft/subtitles/render.mjs` 的版本化组件适配，绑定本 Job 的 Scribe 时码、批准文案及唯一透明字幕轨。B-roll 字幕避让同步圆形小窗，由父级在视觉轨完成后统一叠加，子 Skill 不自行烧录。具体样式、调用证据和验收边界见 [全片字幕样式与上游调用](references/subtitle-style-contract.md)。启动时的 TalkCraft 依赖检查必须包含字幕适配入口；缺组件、词时码或身份不符时停止，不得回退旧 PIL 字幕，也不得把开发样片当作正式 Job 批准。
+全片 A-roll 与 B-roll 统一使用已确认的 TalkCraft 卡片式口播字幕；先读上游 `video-talkcraft` Skill，再由正式 `subtitles_v2` 实际调用项目内 `talkcraft/subtitles/render.mjs` 的版本化组件适配，绑定本 Job 的 Scribe 时码、批准文案及唯一透明字幕轨。字幕适配器从兼容运行时所在项目根调用上游，复用项目已准备的浏览器缓存，不因宿主位于 Job 或临时目录而重复下载。B-roll 字幕避让同步圆形小窗，由父级在视觉轨完成后统一叠加，子 Skill 不自行烧录。具体样式、调用证据和验收边界见 [全片字幕样式与上游调用](references/subtitle-style-contract.md)。启动时的 TalkCraft 依赖检查必须包含字幕适配入口；缺组件、词时码或身份不符时停止，不得回退旧 PIL 字幕，也不得把开发样片当作正式 Job 批准。
 
 扩展第三方模板时，先按资格合同筛查完整文案可编辑范围、长度与中文字体、分词及语义动效；原生竖屏或换标题成功不等于可以直接用于本期内容。保留版本化的排除记录，不重复测试未变化的同一缺陷。
 

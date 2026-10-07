@@ -4,16 +4,29 @@ from pathlib import Path
 SKILL=Path(__file__).resolve().parent.parent
 ENTRY='scripts/hyperframes_native_adapter.py'
 DEPENDENCY_ID='hyperframes-native-adaptation'
-VERSION='1.0.0'
+VERSION='1.1.0'
+ROUTES={
+    'paper-collage-ad/hyperframes':'../vendor/paper-collage-ad-codex/references/hyperframes-route.md',
+    'hyperframes/hw-pipeline':'registry/blocks/hw-pipeline/hw-pipeline.html',
+    'hyperframes/macos-notification':'registry/blocks/macos-notification/macos-notification.html',
+    'hyperframes/mk-specs-list':'registry/blocks/mk-specs-list/mk-specs-list.html',
+    'hyperframes/strikethrough-replace':'registry/components/strikethrough-replace/strikethrough-replace.html',
+    'hyperframes/before-after-wipe':'registry/components/before-after-wipe/before-after-wipe.html',
+    'hyperframes/toggle-flip':'registry/components/toggle-flip/toggle-flip.html',
+    'hyperframes/notification-stack':'registry/components/notification-stack/notification-stack.html',
+    'hyperframes/grid-card-assemble':'registry/components/grid-card-assemble/grid-card-assemble.html',
+}
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def validate_brief(payload):
     b=json.loads(payload)
-    if set(b)!={'schema_version','source_binding','template_request','entry','assets','composition','upstream_route'} or b['schema_version']!=1:raise ValueError('Invalid native HTML brief')
+    if set(b)!={'schema_version','source_binding','template_request','entry','assets','composition','upstream_route','source_pins'} or b['schema_version']!=2:raise ValueError('Invalid native HTML brief')
     s=b['source_binding'];c=b['composition'];r=b['template_request']
     if set(s)!={'aroll_sha256','segment_id','start','end'} or not re.fullmatch('[a-f0-9]{64}',s['aroll_sha256']) or not 0<=s['start']<s['end']:raise ValueError('Invalid source clock')
-    if c!={'width':1080,'height':1920,'fps':24,'frames':round((s['end']-s['start'])*24)} or c['frames']<1 or abs((s['end']-s['start'])*24-c['frames'])>1e-6:raise ValueError('Invalid portrait clock')
+    if set(c)!={'width','height','fps','frames','alpha'} or c['width']!=1080 or c['height']!=1920 or c['fps']!=24 or type(c['alpha']) is not bool or c['frames']!=round((s['end']-s['start'])*24) or c['frames']<1 or abs((s['end']-s['start'])*24-c['frames'])>1e-6:raise ValueError('Invalid portrait clock')
     if set(r)!={'semantic_family','information_units','numeric_values','numeric_scale'} or not r['semantic_family'] or r['information_units']<1 or r['numeric_values']!=[] or r['numeric_scale']!='not_applicable':raise ValueError('Native HTML request must be an explanatory nonnumeric scene')
-    if b['upstream_route'] not in ('paper-collage-ad/hyperframes','hyperframes/hw-pipeline'):raise ValueError('Unknown upstream route')
+    if b['upstream_route'] not in ROUTES:raise ValueError('Unknown upstream route')
+    pins=b['source_pins']
+    if set(pins)!={'route','sha256'} or pins['route']!=b['upstream_route'] or not re.fullmatch('[a-f0-9]{64}',pins['sha256']):raise ValueError('Invalid native source pin')
     if len(b['assets'])>4:raise ValueError('Too many scene assets')
     records=[b['entry'],*b['assets']]
     if len({r['media_ref'] for r in records})!=len(records):raise ValueError('Repeated media')
@@ -29,7 +42,12 @@ def check_runtime(project,executables=None):
     paths={k:Path(executables[k] if executables else shutil.which(k)).resolve() for k in ('node','ffmpeg','ffprobe')}
     paths['browser']=project/'.remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell'
     paths['cli']=runtime/'packages/cli/src/cli.ts';paths['tsx']=runtime/'node_modules/tsx/dist/cli.mjs';paths['gsap']=runtime/'skills/talking-head-recut/assets/vendor/gsap.min.js'
-    return paths,{k:sha(p) for k,p in paths.items()}
+    for route, relative in ROUTES.items():
+        source=(project/'skill-development/vendor/paper-collage-ad-codex/references/hyperframes-route.md'
+                if route == 'paper-collage-ad/hyperframes' else runtime/relative)
+        paths.setdefault('route_sources', {})[route]=source
+        if not source.is_file(): raise ValueError('Native source missing: '+route)
+    return paths,{k:sha(p) for k,p in paths.items() if k != 'route_sources'}
 def create_adapter(project_root,python_executable,brief_loader):
     from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter,ReferenceProcessMedia
     project=Path(project_root).resolve();python=Path(python_executable).resolve();entry_sha=sha(SKILL/ENTRY)
@@ -40,7 +58,7 @@ def create_adapter(project_root,python_executable,brief_loader):
         payload=brief_loader(job,recipe,component);b=validate_brief(payload)
         plan=visual_canary.load_approved_visual_plan(job);s=next(s for s in plan['segments'] if s['segment_id']==recipe['segment_id'])
         expected=dict(aroll_sha256=plan['edited_aroll_sha256'],segment_id=s['segment_id'],start=s['start'],end=s['end'])
-        if s['shot_recipe']!=json.loads(json.dumps(recipe)) or b['source_binding']!=expected or b['template_request']!=json.loads(json.dumps(component['invocation_record']['template_request'])) or component['source_sha256']!=entry_sha or component['artifact_contract']!={'width':1080,'height':1920,'fps':24,'alpha':False} or component['render_window']['end_frame']!=b['composition']['frames']:raise ValueError('Native HTML no longer matches the approved shot')
+        if s['shot_recipe']!=json.loads(json.dumps(recipe)) or b['source_binding']!=expected or b['template_request']!=json.loads(json.dumps(component['invocation_record']['template_request'])) or component['source_sha256']!=entry_sha or component['artifact_contract']!={'width':1080,'height':1920,'fps':24,'alpha':b['composition']['alpha']} or component['render_window']['end_frame']!=b['composition']['frames']:raise ValueError('Native HTML no longer matches the approved shot')
         return payload
     def media(job,recipe,component,payload):
         b=validate_brief(payload)
@@ -52,6 +70,7 @@ def create_binding(adapter,payload,sample):
 def render(args):
     payload=Path(args.brief).read_bytes();b=validate_brief(payload);paths,pins=check_runtime(Path(args.project_root),dict(node=args.node,ffmpeg=args.ffmpeg,ffprobe=args.ffprobe))
     if any(pins[k]!=getattr(args,k+'_sha256') for k in ('node','ffmpeg','ffprobe')):raise ValueError('Bound renderer executables changed')
+    if sha(paths['route_sources'][b['upstream_route']])!=b['source_pins']['sha256']:raise ValueError('Native source pin changed')
     frozen=json.loads(Path(args.media_manifest).read_bytes())
     if frozen['schema_version']!='reference-process-media/v1' or frozen['brief_sha256']!=hashlib.sha256(payload).hexdigest():raise ValueError('Wrong frozen request')
     records={r['media_ref']:r for r in frozen['media']};expected=[b['entry'],*b['assets']]
@@ -66,16 +85,20 @@ def render(args):
                 allowed={'vendor/gsap.min.js',*[x['scene_path'] for x in b['assets']]}
                 if any(u not in allowed for u in urls) or re.search(r'fetch\s*\(|https?://|<audio|<video|@import',text.replace('http://www.w3.org/2000/svg','')):raise ValueError('Native entry must use only frozen local assets and no audio/network')
             p=d/r['scene_path'];p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
-        native=d/'native.mp4';target=d/'target.mp4'
-        argv=[str(paths['node']),str(paths['tsx']),str(paths['cli']),'render',str(d),'--composition','index.html','--output',str(native),'--format','mp4','--fps','24','--quality','high','--workers','1','--low-memory-mode','--no-browser-gpu','--no-best-effort','--quiet']
+        native=d/('native.mov' if b['composition']['alpha'] else 'native.mp4');target=d/('target.mov' if b['composition']['alpha'] else 'target.mp4')
+        output_format='mov' if b['composition']['alpha'] else 'mp4'
+        argv=[str(paths['node']),str(paths['tsx']),str(paths['cli']),'render',str(d),'--composition','index.html','--output',str(native),'--format',output_format,'--fps','24','--quality','high','--workers','1','--low-memory-mode','--no-browser-gpu','--no-best-effort','--quiet']
         env={**os.environ,'PATH':str(paths['ffmpeg'].parent)+os.pathsep+str(paths['node'].parent)+os.pathsep+'/usr/bin:/bin','HYPERFRAMES_BROWSER_PATH':str(paths['browser']),'HYPERFRAMES_NO_TELEMETRY':'1','DO_NOT_TRACK':'1'}
         r=subprocess.run(argv,capture_output=True,timeout=240,env=env)
         if r.returncode:raise RuntimeError(r.stderr.decode()[-2000:])
-        subprocess.run([str(paths['ffmpeg']),'-v','error','-i',str(native),'-map','0:v:0','-an','-c:v','copy','-bsf:v','h264_metadata=sample_aspect_ratio=1/1',str(target)],check=True,capture_output=True)
+        ffmpeg_args=[str(paths['ffmpeg']),'-v','error','-i',str(native),'-map','0:v:0','-an']
+        ffmpeg_args += ['-vf','setsar=1','-c:v','qtrle','-pix_fmt','argb'] if b['composition']['alpha'] else ['-c:v','copy','-bsf:v','h264_metadata=sample_aspect_ratio=1/1']
+        ffmpeg_args += [str(target)]
+        subprocess.run(ffmpeg_args,check=True,capture_output=True)
         s=json.loads(subprocess.check_output([str(paths['ffprobe']),'-v','error','-show_streams','-of','json',str(target)]))['streams']
-        if len(s)!=1 or (s[0]['width'],s[0]['height'],s[0]['avg_frame_rate'],s[0]['sample_aspect_ratio'],int(s[0]['nb_frames']))!=(1080,1920,'24/1','1:1',b['composition']['frames']):raise ValueError('Native output clock changed')
+        if len(s)!=1 or (s[0]['width'],s[0]['height'],s[0]['avg_frame_rate'],s[0]['sample_aspect_ratio'],int(s[0]['nb_frames']))!=(1080,1920,'24/1','1:1',b['composition']['frames']) or (b['composition']['alpha'] and (s[0].get('codec_name')!='qtrle' or s[0].get('pix_fmt')!='argb')):raise ValueError('Native output clock or alpha changed')
         data=target.read_bytes();Path(args.output).write_bytes(data)
-        return dict(upstream_route=b['upstream_route'],upstream_argv=argv,exit_code=r.returncode,runtime_sha256=pins,output_sha256=hashlib.sha256(data).hexdigest(),frames=b['composition']['frames'],external_requests=0,normalization='SAR metadata only')
+        return dict(upstream_route=b['upstream_route'],upstream_argv=argv,exit_code=r.returncode,runtime_sha256=pins,output_sha256=hashlib.sha256(data).hexdigest(),frames=b['composition']['frames'],external_requests=0,normalization='alpha=qtrle/argb, audio=removed, sar=1:1' if b['composition']['alpha'] else 'SAR metadata only')
 if __name__=='__main__':
     import argparse
     p=argparse.ArgumentParser();p.add_argument('--project-root',required=True);p.add_argument('--brief');p.add_argument('--media-manifest');[p.add_argument('--'+k) for k in ('node','ffmpeg','ffprobe','node-sha256','ffmpeg-sha256','ffprobe-sha256')];p.add_argument('--output');a=p.parse_args()

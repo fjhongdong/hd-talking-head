@@ -18,6 +18,7 @@ import struct
 import subprocess
 import tempfile
 from fractions import Fraction
+check_motion = None
 
 UPSTREAM_SHA256 = "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
 HASH = re.compile(r"[0-9a-f]{64}")
@@ -127,6 +128,12 @@ def _run(argv, **kwargs):
 
 
 def render(args) -> dict:
+    global check_motion
+    if check_motion is None:
+        import sys
+        scripts = Path(args.upstream).resolve().parents[3] / "hd-talking-head" / "scripts"
+        sys.path.insert(0, str(scripts))
+        from paper_motion_guard import check as check_motion
     payload = Path(args.brief).read_bytes()
     brief = validate_brief(payload)
     source = Path(args.upstream).read_bytes()
@@ -221,6 +228,7 @@ def render(args) -> dict:
                 or int(video["nb_frames"]) != frames
                 or abs(float(video["duration"]) - manifest["duration"]) > .00001):
             raise ValueError("upstream output differs from the exact silent portrait frame window")
+        motion_evidence = check_motion(output, args.ffmpeg, args.ffprobe)
         output_bytes = output.read_bytes()
         destination = Path(args.output)
         if destination.parent == Path("/dev/fd"):
@@ -232,6 +240,7 @@ def render(args) -> dict:
         return {"upstream_sha256": sha(source), "brief_sha256": sha(payload),
                 "exit_code": result.returncode, "output_sha256": sha(output_bytes),
                 "frames": frames, "original_images": original_sizes,
+                "motion_guard": motion_evidence,
                 "normalization": "full-canvas images scale to 1080x1920 when needed; cropped cutouts keep native pixels and coordinates; H.264 SAR marked 1:1 without re-encoding; not native image generation"}
 
 

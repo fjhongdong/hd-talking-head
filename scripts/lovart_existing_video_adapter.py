@@ -22,7 +22,7 @@ from edit.hd.tools.broll_component_executor import AdapterResult, ArtifactProbe,
 PROVIDER = "Lovart"
 ENDPOINT_ID = "mcp__lovart__generate_video"
 EXECUTOR = "lovart_existing_video"
-VERSION = "1.4.0"
+VERSION = "1.6.0"
 
 
 def _sha(path):
@@ -72,7 +72,72 @@ def _snapshot(pinned, ref, destination):
                                       label="Lovart existing result")
 
 
-def _approved_output(pinned, bound, qa, task, temporary):
+def _framemd5(ffmpeg, path, start_frame=0, end_frame=None):
+    args = [str(ffmpeg), "-v", "error", "-i", str(path), "-map", "0:v:0"]
+    if start_frame or end_frame is not None:
+        if end_frame is None or not (0 <= start_frame < end_frame):
+            raise ValueError("invalid framemd5 frame window")
+        args += ["-vf", f"trim=start_frame={start_frame}:end_frame={end_frame},setpts=PTS-STARTPTS"]
+    args += ["-f", "framemd5", "-"]
+    result = subprocess.run(args,
+                            capture_output=True, text=True, check=True, timeout=60)
+    rows = [line.strip() for line in result.stdout.splitlines() if line.strip() and not line.startswith("#")]
+    if not rows:
+        raise ValueError("metadata normalization has no decoded frames")
+    return rows
+
+
+def normalize_metadata_only_sar(source, output, ffmpeg_executable):
+    """Create the approved no-reencode SAR derivative; never scales or filters."""
+    source, output = Path(source), Path(output)
+    if source.resolve() == output.resolve() or output.exists():
+        raise ValueError("metadata normalization requires a new output path")
+    subprocess.run([str(ffmpeg_executable), "-hide_banner", "-nostdin", "-v", "error", "-i", str(source),
+                    "-map", "0:v:0", "-an", "-c:v", "copy",
+                    "-bsf:v", "h264_metadata=sample_aspect_ratio=1/1", "-n", str(output)],
+                   check=True, timeout=60)
+
+
+def normalize_lossless_source_window(source, output, start_frame, end_frame, ffmpeg_executable):
+    """Derive a local lossless source window without scaling, interpolation or audio."""
+    source, output = Path(source), Path(output)
+    if source.resolve() == output.resolve() or output.exists() or not (0 <= start_frame < end_frame):
+        raise ValueError("lossless source-window normalization requires a new valid output path")
+    subprocess.run([str(ffmpeg_executable), "-hide_banner", "-nostdin", "-v", "error", "-i", str(source),
+                    "-map", "0:v:0", "-an", "-vf", f"trim=start_frame={start_frame}:end_frame={end_frame},setpts=PTS-STARTPTS,setsar=1",
+                    "-c:v", "libx264", "-qp", "0", "-pix_fmt", "yuv420p", "-fps_mode", "passthrough", "-n", str(output)],
+                   check=True, timeout=120)
+
+
+def _metadata_probe(ffprobe, path, expected):
+    result = subprocess.run([str(ffprobe), "-v", "error", "-count_frames", "-show_streams", "-show_format",
+                             "-of", "json", str(path)], capture_output=True, text=True, check=True, timeout=20)
+    info = json.loads(result.stdout)
+    streams = info.get("streams", [])
+    if len(streams) != 1 or streams[0].get("codec_type") != "video":
+        raise ValueError("metadata normalization requires one silent video stream")
+    stream = streams[0]
+    fps = Fraction(stream.get("r_frame_rate", "0/1"))
+    rotation = [float(item["rotation"]) for item in stream.get("side_data_list", []) if "rotation" in item]
+    rotation.append(float(stream.get("tags", {}).get("rotate", 0)))
+    if ((stream.get("width"), stream.get("height"), stream.get("codec_name"), stream.get("pix_fmt"), fps,
+         Fraction(stream.get("avg_frame_rate", "0/1"))) !=
+            (expected["width"], expected["height"], "h264", "yuv420p", 24, 24)
+            or any(rotation) or "mp4" not in info.get("format", {}).get("format_name", "").split(",")):
+        raise ValueError("metadata normalization media contract failed")
+    frames = int(stream.get("nb_read_frames", stream.get("nb_frames", 0)))
+    duration = float(stream.get("duration", 0))
+    if frames <= 0 or duration <= 0:
+        raise ValueError("metadata normalization has no decodable duration")
+    sar = stream.get("sample_aspect_ratio")
+    if sar != expected["sar"]:
+        raise ValueError("metadata normalization SAR mismatch")
+    return {"width": stream["width"], "height": stream["height"], "fps": 24,
+            "frames": frames, "duration": duration, "sar": sar,
+            "color": tuple(stream.get(key) for key in ("color_range", "color_space", "color_transfer", "color_primaries", "chroma_location"))}
+
+
+def _approved_output(pinned, bound, qa, task, temporary, ffprobe=None, ffmpeg=None):
     """Accept only the exact derivative in a separately approved padding record."""
     native = qa["native_video"]
     provenance = {"native_sha256": native["sha256"],
@@ -83,6 +148,97 @@ def _approved_output(pinned, bound, qa, task, temporary):
     path = temporary / "padding-approval.json"
     _snapshot(pinned, bound["normalization_approval"], path)
     approval = json.loads(path.read_bytes())
+    if approval.get("approval_type") == "lossless_source_window_normalization":
+        source_window = approval.get("source_frames_half_open")
+        output_window = approval.get("output_frames_half_open")
+        if (type(source_window) is not list or len(source_window) != 2
+                or type(output_window) is not list or len(output_window) != 2
+                or any(type(frame) is not int for frame in source_window + output_window)
+                or type(approval.get("source_frame_count")) is not int
+                or not 0 <= source_window[0] < source_window[1] <= approval["source_frame_count"]
+                or source_window != qa["source_clock"]["provider_frames_half_open"]):
+            raise ValueError("lossless source-window selection changed")
+        required = ("schema_version", "status", "approval_type", "host_qa", "generation_id",
+                    "source_sha256", "output_sha256", "source_dimensions", "output_dimensions",
+                    "source_frame_count", "output_frame_count", "fps", "source_frames_half_open",
+                    "output_frames_half_open", "transform", "source_sar", "output_sar",
+                    "frame_md5_sha256", "applies_to_other_assets")
+        if (set(approval) != set(required) or approval["schema_version"] != 1 or approval["status"] != "approved"
+                or not isinstance(approval["host_qa"], str) or not approval["host_qa"].strip()
+                or approval["generation_id"] != task or approval["source_sha256"] != native["sha256"]
+                or approval["output_sha256"] != bound["derived_media"]["sha256"] or approval["source_sar"] is not None
+                or approval["output_sar"] != "1:1" or approval["fps"] != 24
+                or approval["source_dimensions"] != approval["output_dimensions"]
+                or approval["source_dimensions"] != [native["width"], native["height"]]
+                or approval["source_dimensions"] not in ([720, 1280], [1080, 1920])
+                or type(approval["source_frame_count"]) is not int or type(approval["output_frame_count"]) is not int
+                or approval["output_frame_count"] != approval["output_frames_half_open"][1] - approval["output_frames_half_open"][0]
+                or approval["output_frames_half_open"] != [0, approval["output_frame_count"]]
+                or not re.fullmatch(r"[0-9a-f]{64}", approval["frame_md5_sha256"])
+                or approval["transform"].get("codec") != "libx264" or approval["transform"].get("qp") != 0
+                or approval["transform"].get("source_frames_half_open") != approval["source_frames_half_open"]
+                or approval["transform"].get("sar") != "1:1" or approval["applies_to_other_assets"] is not False):
+            raise ValueError("lossless source-window approval mismatch")
+        if ffprobe is not None and ffmpeg is not None:
+            source_path, output_path = temporary / "native.mp4", temporary / "derived.mp4"
+            _snapshot(pinned, bound["media"], source_path)
+            _snapshot(pinned, bound["derived_media"], output_path)
+            source = _metadata_probe(ffprobe, source_path, {"width": approval["source_dimensions"][0], "height": approval["source_dimensions"][1], "sar": None})
+            derived = _metadata_probe(ffprobe, output_path, {"width": approval["output_dimensions"][0], "height": approval["output_dimensions"][1], "sar": "1:1"})
+            start, end = approval["source_frames_half_open"]
+            if end - start != derived["frames"] or source["frames"] != approval["source_frame_count"] or source["fps"] != derived["fps"] or source["color"] != derived["color"]:
+                raise ValueError("lossless source-window geometry or timing mismatch")
+            source_rows = _framemd5(ffmpeg, source_path, start, end)
+            rows = _framemd5(ffmpeg, output_path)
+            if source_rows != rows or hashlib.sha256("\n".join(rows).encode()).hexdigest() != approval["frame_md5_sha256"]:
+                raise ValueError("lossless source-window pixel evidence mismatch")
+        provenance.update(lossless_source_window_normalization=True, accepted_with_lossless_window=True,
+                          approval_sha256=bound["normalization_approval"]["sha256"], output_frames=approval["output_frame_count"],
+                          full_actual_frames=approval["output_frame_count"], transform=approval["transform"])
+        return bound["derived_media"]["sha256"], provenance
+    if approval.get("approval_type") == "metadata_only_sar_normalization":
+        required = ("schema_version", "status", "approval_type", "host_qa", "generation_id",
+                    "source_sha256", "output_sha256", "source_dimensions", "output_dimensions",
+                    "source_frame_count", "output_frame_count", "fps", "source_frames_half_open",
+                    "transform", "source_sar", "output_sar", "frame_md5_sha256", "applies_to_other_assets")
+        if (set(approval) != set(required) or approval["schema_version"] != 1 or approval["status"] != "approved"
+                or not isinstance(approval["host_qa"], str) or not approval["host_qa"].strip()
+                or approval["generation_id"] != task or approval["source_sha256"] != native["sha256"]
+                or approval["output_sha256"] != bound["derived_media"]["sha256"]
+                or approval["source_sar"] is not None or approval["output_sar"] != "1:1"
+                or approval["fps"] != 24
+                or approval["source_dimensions"] != approval["output_dimensions"]
+                or approval["source_dimensions"] != [native["width"], native["height"]]
+                or approval["source_dimensions"] not in ([720, 1280], [1080, 1920])
+                or type(approval["source_frame_count"]) is not int or approval["source_frame_count"] <= 0
+                or approval["output_frame_count"] != approval["source_frame_count"]
+                or approval["source_frames_half_open"] != [0, approval["source_frame_count"]]
+                or not re.fullmatch(r"[0-9a-f]{64}", approval["frame_md5_sha256"])
+                or approval["transform"] != {"codec": "copy", "filter": None, "sar": "1:1"}
+                or approval["applies_to_other_assets"] is not False):
+            raise ValueError("metadata normalization approval mismatch")
+        full_frames = approval["output_frame_count"]
+        derived_frames = full_frames
+        if ffprobe is not None and ffmpeg is not None:
+            source_path, output_path = temporary / "native.mp4", temporary / "derived.mp4"
+            _snapshot(pinned, bound["media"], source_path)
+            _snapshot(pinned, bound["derived_media"], output_path)
+            source = _metadata_probe(ffprobe, source_path, {"width": approval["source_dimensions"][0], "height": approval["source_dimensions"][1], "sar": None})
+            derived = _metadata_probe(ffprobe, output_path, {"width": approval["output_dimensions"][0], "height": approval["output_dimensions"][1], "sar": "1:1"})
+            if (source["sar"] is not None or source["width"] != derived["width"] or source["height"] != derived["height"]
+                    or source["fps"] != derived["fps"] or source["frames"] != derived["frames"]
+                    or abs(source["duration"] - derived["duration"]) > 1e-6 or source["color"] != derived["color"]):
+                raise ValueError("metadata normalization changed media timing or geometry")
+            source_rows, derived_rows = _framemd5(ffmpeg, source_path), _framemd5(ffmpeg, output_path)
+            if source_rows != derived_rows or hashlib.sha256("\n".join(source_rows).encode()).hexdigest() != approval["frame_md5_sha256"]:
+                raise ValueError("metadata normalization changed decoded pixels or timestamps")
+            if approval["source_frame_count"] != source["frames"] or approval["output_frame_count"] != derived["frames"] or approval["source_frames_half_open"] != [0, source["frames"]]:
+                raise ValueError("metadata normalization frame evidence mismatch")
+            derived_frames = derived["frames"]
+        provenance.update(metadata_only_sar_normalization=True, accepted_with_metadata_only=True,
+                          approval_sha256=bound["normalization_approval"]["sha256"], output_frames=derived_frames,
+                          transform=approval["transform"], full_actual_frames=derived_frames)
+        return bound["derived_media"]["sha256"], provenance
     scene = qa["scene"]
     if approval.get("approval_type") == "single_asset_reviewed_margin_cleanup":
         transform = approval.get("transform")
@@ -151,7 +307,7 @@ def _approved_output(pinned, bound, qa, task, temporary):
     return scene["sha256"], provenance
 
 
-def _read_evidence(pinned, bound, temporary):
+def _read_evidence(pinned, bound, temporary, ffprobe=None, ffmpeg=None):
     values = []
     for key in ("generation", "qa"):
         path = temporary / f"{key}.json"
@@ -185,15 +341,15 @@ def _read_evidence(pinned, bound, temporary):
     prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     if observed.get("request_prompt_sha256") != prompt_hash:
         raise ValueError("actual request prompt identity mismatch")
-    output_sha, provenance = _approved_output(pinned, bound, qa, task, temporary)
+    output_sha, provenance = _approved_output(pinned, bound, qa, task, temporary, ffprobe, ffmpeg)
     return {"provider": PROVIDER, "model": model, "endpoint_id": ENDPOINT_ID,
             "prompt_sha256": prompt_hash, "generation_id": task,
             "sha256": output_sha}, {"project_id": project, "artifact_id": artifact_id, **provenance}, qa
 
 
-def _evidence(pinned, bound, temporary):
+def _evidence(pinned, bound, temporary, ffprobe=None, ffmpeg=None):
     try:
-        return _read_evidence(pinned, bound, temporary)
+        return _read_evidence(pinned, bound, temporary, ffprobe, ffmpeg)
     except (KeyError, TypeError, AttributeError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError("Lovart generation/QA evidence is incomplete or malformed") from error
 
@@ -242,12 +398,15 @@ def prepare_existing_binding(job, record, ffprobe_executable):
     try:
         with tempfile.TemporaryDirectory(prefix="lovart-prepare-") as directory:
             temporary = Path(directory)
-            expected, metadata, _qa = _evidence(pinned, bound, temporary)
+            ffmpeg_path = shutil.which("ffmpeg") if "derived_media" in bound else None
+            expected, metadata, _qa = _evidence(pinned, bound, temporary, ffprobe, Path(ffmpeg_path) if ffmpeg_path else None)
             ref = bound.get("derived_media", bound["media"])
             snapshot = temporary / "prepared.mp4"
             _snapshot(pinned, ref, snapshot)
             dimensions = tuple(metadata.get("native_dimensions", ()))
-            if "derived_media" in bound:
+            if "derived_media" in bound and (metadata.get("metadata_only_sar_normalization") or metadata.get("lossless_source_window_normalization")):
+                dimensions = tuple(metadata.get("native_dimensions", ()))
+            elif "derived_media" in bound:
                 dimensions = (1080, 1920)
             if dimensions not in {(720, 1280), (1080, 1920)}:
                 raise ValueError("Lovart source dimensions are not reusable")
@@ -310,7 +469,10 @@ def create_adapter(job, record):
                 _snapshot(pinned, bound["media"], snapshot)
                 if "derived_media" in bound:
                     window = component["render_window"]
-                    if window["start_frame"] != 0 or window["end_frame"] != metadata["output_frames"]:
+                    if metadata.get("metadata_only_sar_normalization"):
+                        if not (0 <= window["start_frame"] < window["end_frame"] <= metadata["full_actual_frames"]):
+                            raise ValueError("metadata-normalized derivative frame window is out of bounds")
+                    elif window["start_frame"] != 0 or window["end_frame"] != metadata["output_frames"]:
                         raise ValueError("approved derivative frame window changed")
                     snapshot = temporary / "approved-scene.mp4"
                     _snapshot(pinned, bound["derived_media"], snapshot)
