@@ -14,6 +14,15 @@ import tempfile
 
 
 SOURCES = {
+    "huashu-art-motion": {
+        "url": "https://github.com/alchaincyf/huashu-art-motion.git",
+        "commit": "26dba25b2b495c2138848c29a2c90df356a20325",
+        "files": ("SKILL.md", "scripts/engine/render.py", "scripts/engine/clip.html",
+                  "scripts/engine/clip.js", "scripts/engine/clips/y2_vox.js",
+                  "scripts/engine/clips/y1_kurzgesagt.js",
+                  "scripts/engine/clips/t2_keynote_ui.js", "scripts/engine/lib/fonts.js",
+                  "scripts/qa.py"),
+    },
     "adu-motion-video": {
         "url": "https://github.com/adunext/adu-motion-video.git",
         "commit": "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7",
@@ -127,6 +136,10 @@ def main() -> int:
         result = ensure(args.project_root, args.skill)
         if args.skill in {"lemo-opuscar", "onetake", "adu-motion-video"}:
             prepare_scene_runtime(args.project_root.resolve(), args.skill)
+            result["runtime_status"] = "callable"
+        elif args.skill == "huashu-art-motion":
+            from huashu_motion_adapter import prepare_runtime
+            prepare_runtime(args.project_root.resolve())
             result["runtime_status"] = "callable"
     except (OSError, VisualBrollDependencyError) as error:
         parser.exit(2, f"visual B-roll Skill unavailable: {error}\n")

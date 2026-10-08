@@ -1,6 +1,6 @@
 # B-roll 语义能力路由
 
-本合同把 B-roll 定义为逐段语义决策：先判断这段口播需要什么视觉作用，再选择一种或多种来源完成该作用。它不把来源当成优先级或备用链。10 个参考项目的精确入口见 [B-roll 开源能力适配矩阵](open-source-adapter-matrix.md)。
+本合同把 B-roll 定义为逐段语义决策：先判断这段口播需要什么视觉作用，再选择一种或多种来源完成该作用。它不把来源当成优先级或备用链。9 个参考项目的精确入口见 [B-roll 开源能力适配矩阵](open-source-adapter-matrix.md)。
 
 ## 1. 五类同级来源
 
@@ -76,7 +76,7 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 登记还强制包含 `execution_qa`：两组不同内容的原始 brief、冻结配方、真实执行回执、MP4 和三态 PNG。验证器核对完整输入/来源身份、真实媒体参数、PNG 与 MP4 对应帧的 RGB 像素，以及两组稳定画面的差异。新增或维护模板时必须阅读 [双输入实测资格](template-qualification.md)，不得只靠一份旧样片或自填成功字段。资格实验可复用未变化的真实证据，不要求新 Job 重复测试；当前文案的 canary 仍保留。
 
-当前已验证整屏记录共 14 条：`html-video/frame-data-rollup`、`hyperframes/notification-cascade`、`hyperframes/chatgpt-exchange`，本地 canonical 的 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`，`hd-talking-head/relation-motion`，以及五套 SemanticState：`semantic-state-replacement`、`semantic-state-threshold`、`semantic-state-delay`、`semantic-state-hierarchy`、`semantic-state-feedback`。`evidence-source` 支持真实图片或真实视频；关系图、时间线和六类原生语义动效记录携带对应 `action_sequence_qa`。RelationMotion 与 SemanticState 还必须绑定当前批准内容和完整 `semantic_motion`。Notification Cascade 只匹配恰好四个顺序节点并收束为结论的通知语义；ChatGPT Exchange 只匹配 `ai_dialogue_comparison`、`four_factor_comparison`、`prompt_to_table`，要求恰好四项、无数值序列，并保留固定聊天界面。不能因 renderer 名称相同而扩大到任意流程图、对比海报或官方资料卡。
+当前已验证整屏记录共 17 条：`html-video/frame-data-rollup`、`hyperframes/notification-cascade`、`hyperframes/chatgpt-exchange`、`huashu-art-motion/y1_kurzgesagt`、`huashu-art-motion/y2_vox`、`huashu-art-motion/t2_keynote_ui`，本地 canonical 的 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`，`hd-talking-head/relation-motion`，以及五套 SemanticState：`semantic-state-replacement`、`semantic-state-threshold`、`semantic-state-delay`、`semantic-state-hierarchy`、`semantic-state-feedback`。Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截图、数字或教学步骤。`evidence-source` 支持真实图片或真实视频；关系图、时间线和六类原生语义动效记录携带对应 `action_sequence_qa`。RelationMotion 与 SemanticState 还必须绑定当前批准内容和完整 `semantic_motion`。Notification Cascade 只匹配恰好四个顺序节点并收束为结论的通知语义；ChatGPT Exchange 只匹配 `ai_dialogue_comparison`、`four_factor_comparison`、`prompt_to_table`，要求恰好四项、无数值序列，并保留固定聊天界面。不能因 renderer 名称相同而扩大到任意流程图、对比海报或官方资料卡。
 
 五类 SemanticState 的语义边界固定：`replacement` 表达对象替换且保留上下文，`threshold` 表达阈值被跨越或标准上移，`delay` 表达触发到显现之间的时滞，`hierarchy` 表达两到四层层级展开，`feedback` 表达输出返回并改变后续状态。只能按已批准内容的真实关系选择，不得为了使用新模板把普通并列、泛化观点或无因果文案改写成这些结构。
 

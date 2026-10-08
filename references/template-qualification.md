@@ -6,7 +6,7 @@
 
 `verify_broll_template.py` 同时检查历史设计样片和 `execution_qa`。只有入口真实消费输入，且原生 1080×1920 中能独立完成构图、信息层级和三态动效，才可登记为整屏模板。库里的单张横向卡片、动效 primitive、固定横屏网页不能因“可渲染”获得这一身份。结构改造仍记为 `custom_fallback`，不得改标签冒认。
 
-当前 registry 共 14 条：3 条 `verified_third_party` 和 11 条 `verified_local_canonical`。本地登记包含通用的 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`，原生 `relation-motion`，以及 `semantic-state-replacement`、`semantic-state-threshold`、`semantic-state-delay`、`semantic-state-hierarchy`、`semantic-state-feedback`。每条均有两组内容、真实 MP4 和三态帧附件；关系图、时间线与六类原生语义动效还必须通过动作顺序帧。`evidence-source` 同时实测图片和视频证据；五类 SemanticState 另绑定用户批准的 25 秒头像合成 canary。模板数量读取验证器结果，不读取参考仓库数量。
+当前 registry 共 17 条：6 条 `verified_third_party` 和 11 条 `verified_local_canonical`。第三方新增范围为 Huashu 三节点机制流程、单张来源整行高亮及三张功能卡；三条均绑定统一启动器的新双输入执行证据，不沿用旧回执。本地登记包含通用的 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`，原生 `relation-motion`，以及 `semantic-state-replacement`、`semantic-state-threshold`、`semantic-state-delay`、`semantic-state-hierarchy`、`semantic-state-feedback`。每条均有两组内容、真实 MP4 和三态帧附件；关系图、时间线与六类原生语义动效还必须通过动作顺序帧。`evidence-source` 同时实测图片和视频证据；五类 SemanticState 另绑定用户批准的 25 秒头像合成 canary。模板数量读取验证器结果，不读取参考仓库数量。
 
 ## 先筛查，再进行昂贵渲染
 

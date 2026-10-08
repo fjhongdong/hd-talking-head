@@ -41,6 +41,34 @@
       "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "adu-motion-video", "required_level": "bound"}
     },
     {
+      "id": "huashu-art-motion-source",
+      "kind": "project_path",
+      "required": true,
+      "stage": "job-start",
+      "target": "skill-development/vendor/huashu-art-motion",
+      "path_type": "directory",
+      "entrypoints": ["SKILL.md", "scripts/engine/render.py", "scripts/engine/clip.html", "scripts/engine/clip.js", "scripts/engine/clips/y2_vox.js", "scripts/engine/clips/y1_kurzgesagt.js", "scripts/engine/clips/t2_keynote_ui.js", "scripts/engine/lib/fonts.js"],
+      "required_level": "installed",
+      "capabilities": ["visual.huashu-htmlcanvas-motion"]
+    },
+    {
+      "id": "huashu-art-motion",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/huashu_motion_adapter.py"],
+      "binding_probes": [{
+        "entrypoint": "scripts/huashu_motion_adapter.py",
+        "producer_version": "1.1.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
+        "command": ["{python}", "{dependency_root}/scripts/huashu_motion_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "huashu-art-motion"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "huashu-art-motion", "required_level": "bound"}
+    },
+    {
       "id": "lemo-opuscar-source",
       "kind": "project_path",
       "required": true,

@@ -22,8 +22,11 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 | Paper Collage Ad | 可用纸片动作讲清的隐喻、组装、汇聚、门槛变化 | 单镜头分层动画已接入公共组件执行器并实测；不用完整广告改稿、配音、音乐或 CTA。真纸感图层及每段动作、构图仍须验收，不是通用已验证模板。 |
 | Flat Animation | 知识图解、分类、对比、连接与状态变化 | 当前核对的是 `muyang-flat-animation`，使用前确认它是否为用户所指仓库。只编排其动画方案、画风和完成静帧；动态视频交给 Lovart，不能说 Flat 原生视频入口已执行。当前片段仍须真实验收。 |
 | GBRO Collage B-roll | 口播概念的视觉隐喻、半调纸片逐件组装 | 用户指定的 `pyang5166/gbro-collage-broll` 已纳入启动源码检查；实际编排其隐喻方案和拼贴静帧，内置生图后交 Lovart Kling O1 制作动态视频。不是本地分层动画器，也不宣称 GBRO 原生 Gemini 视频入口已执行；当前片段仍须真实验收。 |
+| Huashu 原生动效 | 三节点机制流程、单张横向来源图整行高亮、三张原生功能卡 | 固定 vendor 不改源码；`y1_kurzgesagt`、`y2_vox` 与 `t2_keynote_ui` 已完成统一启动器的双输入真实执行及对应父级检查并登记；Vox 须按实际高亮过程检查正文和来源避让。功能卡仅限 `product_features` 与恰好三张卡，不扩写成未测变体；子进程统一设置连接等待容量 64，原生动效保持不变。 |
 
-以上不自动登记成 `verified_third_party`。Paper 分层引擎与 Whiteboard SVG 分组入口已有下述组件接口，但每段自定义画面仍是 `custom_fallback`，不是已验证模板。其他候选没有兼容的正式来源绑定时停在候选测试，不伪造 renderer 名称，也不把生成物改叫 `local_material` 绕过原来源门。
+除 Huashu 已登记的精确范围外，以上其他候选不自动登记成 `verified_third_party`。Paper 分层引擎与 Whiteboard SVG 分组入口已有下述组件接口，但每段自定义画面仍是 `custom_fallback`，不是已验证模板。其他候选没有兼容的正式来源绑定时停在候选测试，不伪造 renderer 名称，也不把生成物改叫 `local_material` 绕过原来源门。
+
+Huashu 的 brief、能力边界与实际调用见[Huashu 原生动效接入](huashu-native-motion.md)。当前仅三节点机制流程、单张横向来源图整行高亮和三张功能卡取得资格，三条路线共用未改第三方文件的原生启动器。35 个场景不是模板数量，启动准备、候选快照和源码存在不能写成 `verified`。
 
 ## 选型与适配顺序
 

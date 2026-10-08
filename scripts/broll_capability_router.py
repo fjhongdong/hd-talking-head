@@ -82,6 +82,14 @@ _PRIMARY_RENDERER = {
     "lemo-opuscar": "HTMLCanvas",
     "onetake": "HTMLCanvas",
     "adu-motion-video": "HTMLCanvas",
+    "huashu-art-motion": "HTMLCanvas",
+}
+_REGISTERED_ENGINE = {
+    "remotion": "Remotion",
+    "hyperframes": "HyperFrames",
+    "htmlcanvas": "HTMLCanvas",
+    "relationmotion": "RelationMotion",
+    "semanticstate": "SemanticState",
 }
 TEMPLATE_ORIGIN_PRIORITY = {
     "verified_third_party": 0,
@@ -526,10 +534,9 @@ def _validate_code_cross_fields(
         "verified_third_party", "verified_local_canonical",
     }:
         registered = _registered_template(component, qualification_registry)
-        expected = {"remotion": "Remotion", "hyperframes": "HyperFrames",
-                    "relationmotion": "RelationMotion", "semanticstate": "SemanticState"}.get(
-            registered["render_contract"]["engine"].lower()
-        )
+        expected = _REGISTERED_ENGINE.get(registered["render_contract"]["engine"].lower())
+        if expected is None:
+            raise RouterError("registered template uses an unsupported render engine")
         if dependency_id != registered["upstream"]["project"] or primary_renderer != expected:
             raise RouterError("binding renderer/dependency differs from the registered template")
     else:
@@ -577,7 +584,11 @@ def validate_template_binding(
             raise RouterError("DataRollup would silently change to log scale; choose a compatible template")
 
 
-def validate_invocation_evidence(evidence: Mapping[str, Any]) -> Dict[str, Any]:
+def validate_invocation_evidence(
+    evidence: Mapping[str, Any],
+    *,
+    qualification_registry: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
     """Validate code-binding schema consistency without executing the component."""
 
     checked = _as_dict(evidence, "invocation evidence")
@@ -653,7 +664,7 @@ def validate_invocation_evidence(evidence: Mapping[str, Any]) -> Dict[str, Any]:
         "final_compositor": "ffmpeg",
     }
     validated = _authority(validate_shot_recipe_v2, recipe)
-    _validate_code_cross_fields(validated["components"][0])
+    _validate_code_cross_fields(validated["components"][0], qualification_registry)
     return _copy(checked, "invocation evidence")
 
 
@@ -702,6 +713,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "lemo-opuscar": "reference_adapter",
             "onetake": "reference_adapter",
             "adu-motion-video": "reference_adapter",
+            "huashu-art-motion": "reference_adapter",
         }
         if not isinstance(dependency_id, str) or dependency_id not in executors:
             raise RouterError("code generation requires a registered dependency")
@@ -912,6 +924,7 @@ def _compile_shot_recipe(
                     "lemo-opuscar",
                     "onetake",
                     "adu-motion-video",
+                    "huashu-art-motion",
                     "whiteboard-video",
                 }
                 and (binding.get("dependency_id") != "hyperframes-native-adaptation"

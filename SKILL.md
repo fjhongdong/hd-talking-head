@@ -29,6 +29,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [官方视频下载 Skill 调用与验收](references/official-video-acquisition.md)（`official_material` 选中在线视频时）
 - [第三方模板双输入实测资格](references/template-qualification.md)（新增、更新或审查模板登记时）
 - [正式生产绑定](references/production-bindings.md)
+- [Huashu 原生动效接入](references/huashu-native-motion.md)（选择 Huashu 原生动效或检查其 brief、时间轴与调用边界时）
 - [视觉资产前置检查](references/visual-assets-preflight.md)
 - [视觉修订与未变镜头复用](references/visual-revision-reuse.md)（修改已生成视觉计划或重试正式镜头时）
 - [封面输出与质量合同](references/cover-contract.md)
@@ -50,6 +51,8 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 同样执行 `ensure_visual_broll_skills.py --project-root <project> --skill gbro-collage-broll`，补齐用户指定的半调纸拼贴 Skill；启动清单只检查原始说明及文件完整性，不执行其 Gemini 自检或视频脚本。选中后实际执行隐喻与静帧设计，内置生图和 Lovart Kling O1 分别负责图片与视频，调用约束及拼贴质量检查见[GBRO 编排](references/generated-broll-skills.md#gbro-调用约束与拼贴验收)。不因新增路线自动替换已批准 B-roll。
 
 同样先执行 `ensure_visual_broll_skills.py --project-root <project> --skill lemo-opuscar` 和 `--skill onetake`，补齐项目内固定源码及缺失的本地渲染运行时。实际选中后仍须通过绑定探针；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)；不得全局安装、自动更新或运行自动 reset/setup。
+
+选择 Huashu 原生动效时，先读[Huashu 原生动效接入](references/huashu-native-motion.md)，由我们的 adapter 实际调用固定 vendor 的 `render.py --spec`，不修改第三方源码、模板、字体或动效。当前已登记 `y1_kurzgesagt` 三节点机制流程（`title` / `point` / `flow`，不含 hierarchy、`highlight` 或 `enter`）、`y2_vox` 单张横向来源图的整行高亮，以及 `t2_keynote_ui` 的三张原生功能卡（仅 `product_features`）。Vox 调用先按该页的输入版式与实测避让规则准备真实材料，不用窄框强推近，也不裁掉来源信息；当前镜头仍须检查高亮过程中的正文、脚注、标签和圆窗/字幕避让。三条路线共用进程内原生启动器，独立子进程的连接等待容量统一为 64，不改变上游文件或原生动效。普通 Job 只消费已登记能力，不重复资格实验；未接通或验收失败时暂停对应路线，不自动修改第三方、重试、切换或加入自写 fallback。
 
 另执行同一脚本的 `--skill adu-motion-video`，检查 Adu 最小本地运行时，缺失时仅在项目 vendor 准备。Adu 只准备渲染所需环境，不调用人物提取、配音或 mix。选中 Adu 后必须通过其独立 binding probe。
 
@@ -196,7 +199,7 @@ TalkCraft 108 张卡使用独立生产注册表，不冒充旧 `verified-templat
 
 Fish Audio 仅是无成品配音时的可选输入方式，不改变默认“使用用户成品口播”的原则。只有用户明确选择合成配音、当前 Job 已确认精确模型/声音/费用且存在 `FISH_AUDIO_API_KEY` 时，才调用 `edit/hd/integrations/talkcraft/upstream/scripts/tts_fishaudio.py`；不得把密钥写入 Job 或 Skill，不得自动发起试音或付费请求。其输出音频和时间戳仍按用户提供音频同样进入 Job、校验并报审。
 
-当前注册表有十四套可验证整屏模板：三套 `verified_third_party`、五套本地 canonical（`process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`）、`hd-talking-head/relation-motion`，以及五套已登记 SemanticState（`replacement`、`threshold`、`delay`、`hierarchy`、`feedback`）。五套通用本地 canonical 共用 `scripts/local_canonical_renderer.cjs` 和 `scripts/local_canonical_adapter.py`；`evidence-source` 的主媒体可为图片或视频。RelationMotion 与 SemanticState 直接消费各自已冻结的语义动效计划。五套 SemanticState 的登记绑定双输入真实执行、逐态像素、动作顺序和用户批准的 25 秒头像合成样片；这些历史资格仍不取代当前 Job 的语义选择、实际填充三态 QA 与 canary 本地 QA 与内部批准门。
+当前注册表有十五套可验证整屏模板：四套 `verified_third_party`、五套本地 canonical（`process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword`）、`hd-talking-head/relation-motion`，以及五套已登记 SemanticState（`replacement`、`threshold`、`delay`、`hierarchy`、`feedback`）。五套通用本地 canonical 共用 `scripts/local_canonical_renderer.cjs` 和 `scripts/local_canonical_adapter.py`；`evidence-source` 的主媒体可为图片或视频。RelationMotion 与 SemanticState 直接消费各自已冻结的语义动效计划。五套 SemanticState 的登记绑定双输入真实执行、逐态像素、动作顺序和用户批准的 25 秒头像合成样片；这些历史资格仍不取代当前 Job 的语义选择、实际填充三态 QA 与 canary 本地 QA 与内部批准门。
 
 `visual_direction` 冻结 `source_bindings`，并编译 `ShotRecipe v2`。`visual_canary` 只执行已批准配方，不做语义重选。`visual_assets` 严格复用 canary 字节和剩余已冻结配方，不重新做来源判断。
 
