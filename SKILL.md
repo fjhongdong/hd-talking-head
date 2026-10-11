@@ -56,6 +56,8 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 另执行同一脚本的 `--skill adu-motion-video`，检查 Adu 最小本地运行时，缺失时仅在项目 vendor 准备。Adu 只准备渲染所需环境，不调用人物提取、配音或 mix。选中 Adu 后必须通过其独立 binding probe。
 
+新的 Adu 仅调用公开 `TPL.compare` 对比组件，人物、普通字幕与品牌通过原生配置关闭；Playwright 放在我们的项目 runtime，不改第三方锁文件。它的固定横版画板只可整板等比放置，不当作原生竖屏整屏模板。选中“对话改变计划”语义时，执行同一脚本的 `--skill hypit-native-chat`，读取其原生 Skill 和 chat-scene 指引，以原生消息入场/滚动场景出片；仅静态竖屏排版由父级完成，不另写动作。两条入口、容量、精确帧写法和使用限制见[上游场景合同](references/upstream-scene-skills.md)。TalkCraft 资格卡以当前真实资格库匹配，不因 `.tsx` 入口而误拦，也不放行未知卡或旧自由场景。
+
 1. 取得视频绝对路径、文案文件绝对路径或聊天中的完整文案，以及用户提供的图片、视频、音频和文档。
 2. 确认 `python3`、预检脚本和 `edit/hd/tools/state.py` 可用；先运行 `python3 <skill>/scripts/ensure_punk_cover.py --project-root <project>`，检查项目内 Punk 封面 Skill，缺失时自动安装已测试版本到 `skill-development/vendor/Punk-Skill`，已有且完整时不重复安装；异常目录或安装失败时保留现场并停止，不改全局 Skill。同时检查项目内 `skill-development/vendor/OpenMontage-video-download/.agents/skills/video-download/SKILL.md` 及固定提交，缺失时按[官方视频下载合同](references/official-video-acquisition.md)安装到项目内，不改全局 Skill。随后运行 `python3 <skill>/scripts/verify_skill_release.py` 校验完整包，并运行 `python3 <project>/edit/hd/integrations/talkcraft/check_runtime.py`：它必须确认生产运行时依赖精确就位、运行时闭包与渲染器匹配、兼容记录和卡片索引绑定当前注册表、上游基线可读、工作台调参和可选 Fish Audio 入口存在。生产运行时属于 108 张资格身份，不得用上游共享 runtime 自动覆盖或自动升级。其它缺文件、哈希变化或版本不一致时停止，列出准确的安装或路径修正动作，等待一次用户确认；不得现场重写发布清单掩盖缺失。
 3. 运行 `scripts/initialize_video_job.py`，创建 Job isolation 所需的独立 workspace、去重后用户资料、`full-v2` workflow 和唯一输出树：

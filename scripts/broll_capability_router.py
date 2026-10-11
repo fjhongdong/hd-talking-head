@@ -82,6 +82,7 @@ _PRIMARY_RENDERER = {
     "lemo-opuscar": "HTMLCanvas",
     "onetake": "HTMLCanvas",
     "adu-motion-video": "HTMLCanvas",
+    "hypit-native-chat": "HTMLCanvas",
     "huashu-art-motion": "HTMLCanvas",
     "wise-motion": "Remotion",
 }
@@ -113,21 +114,65 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/render_whiteboard.py",
     "scripts/render_paper_collage.py",
     "scripts/render_wise_motion.mjs",
+    "scripts/render_adu_native.mjs",
+    "scripts/render_hypit_native.mjs",
 })
 _NON_NATIVE_PRODUCERS = frozenset({
     "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
     "hd-talking-head-semantic-state", "hd-talking-head-talkcraft-overlay",
-    "lemo-opuscar", "onetake", "adu-motion-video",
+    "lemo-opuscar", "onetake",
 })
 
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
+    template_id = candidate.get("template_id")
+    if isinstance(template_id, str) and template_id.startswith("hd-talking-head/talkcraft/"):
+        return _is_qualified_talkcraft(candidate)
     origin = candidate.get("template_origin")
     if origin == "verified_third_party":
         return candidate.get("adaptation_level") != "structural"
     return (origin == "custom_fallback"
             and candidate.get("source_entrypoint") in _NATIVE_COMPONENT_ENTRIES
             and candidate.get("template_id") != "hyperframes/hw-box-contrast-portrait")
+
+
+def _is_qualified_talkcraft(candidate: Mapping[str, Any]) -> bool:
+    """Accept only identities read back from the configured TalkCraft catalog."""
+    template_id = candidate.get("template_id")
+    if not (isinstance(template_id, str) and template_id.startswith("hd-talking-head/talkcraft/")):
+        return False
+    card_id = template_id.removeprefix("hd-talking-head/talkcraft/")
+    if not card_id or "/" in card_id:
+        return False
+    try:
+        from edit.hd.tools import talkcraft_contract, talkcraft_matcher
+        tools_root = Path(talkcraft_matcher.__file__).resolve().parent
+        if Path(talkcraft_contract.__file__).resolve().parent != tools_root:
+            raise RouterError("TalkCraft modules are not from one tools root")
+        expected_root = tools_root.parent / "integrations" / "talkcraft"
+        registry = Path(talkcraft_matcher.DEFAULT_CARD_REGISTRY).resolve()
+        if registry != (expected_root / "runtime" / "card-registry.json").resolve():
+            raise RouterError("TalkCraft registry is outside the configured edit/hd project")
+        load_card_catalog = talkcraft_matcher.load_card_catalog
+        catalog = load_card_catalog()
+    except Exception as error:
+        raise RouterError(f"TalkCraft qualification catalog unavailable: {error}") from error
+    card = next((item for item in catalog if item.get("card_id") == card_id), None)
+    if not isinstance(card, dict):
+        return False
+    production = card.get("production")
+    if not isinstance(production, dict) or production.get("status") != "qualified":
+        return False
+    expected = {
+        "template_origin": "custom_fallback",
+        "adaptation_level": "structural",
+        "template_version": production.get("adapter_version"),
+        "verification_id": production.get("qualification_id"),
+        "source_entrypoint": production.get("derived_entrypoint"),
+        "source_sha256": production.get("implementation_sha256"),
+        "sample_sha256": card.get("sample_sha256"),
+    }
+    return all(candidate.get(field) == value for field, value in expected.items())
 
 CAPABILITY_REGISTRY: Dict[str, Dict[str, Any]] = {
     "html-video": {
@@ -737,6 +782,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "lemo-opuscar": "reference_adapter",
             "onetake": "reference_adapter",
             "adu-motion-video": "reference_adapter",
+            "hypit-native-chat": "reference_adapter",
             "huashu-art-motion": "reference_adapter",
             "wise-motion": "reference_adapter",
         }
@@ -898,6 +944,9 @@ def _compile_shot_recipe(
             elif not _TEMPLATE_PROVENANCE_FIELDS.issubset(binding):
                 raise RouterError("code component requires template candidates or frozen provenance")
             if (not _native_selection(binding)
+                    or (isinstance(binding.get("template_id"), str)
+                        and binding["template_id"].startswith("hd-talking-head/talkcraft/")
+                        and binding.get("dependency_id") != "hd-talking-head-talkcraft")
                     or binding.get("dependency_id") in _NON_NATIVE_PRODUCERS):
                 raise RouterError("new production requires a native scene or native-component binding; keep historical recipes unchanged")
             validate_template_binding(binding)
@@ -952,6 +1001,7 @@ def _compile_shot_recipe(
                     "lemo-opuscar",
                     "onetake",
                     "adu-motion-video",
+                    "hypit-native-chat",
                     "huashu-art-motion",
                     "wise-motion",
                     "whiteboard-video",

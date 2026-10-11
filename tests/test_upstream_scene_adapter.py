@@ -37,7 +37,7 @@ class UpstreamSceneTests(unittest.TestCase):
     def test_higher_semantic_match_precedes_template_qualification(self):
         fixed = {"template_origin": "verified_third_party", "template_id": "fixed",
             "template_version": "1", "verification_id": "a" * 64, "adaptation_level": "content_reflow",
-            "source_entrypoint": "fixed.html", "source_sha256": "b" * 64, "sample_sha256": "c" * 64,
+            "source_entrypoint": "scripts/render_doudou.mjs", "source_sha256": "b" * 64, "sample_sha256": "c" * 64,
             "semantic_families": ["process"], "capacity": {"min_units": 1, "max_units": 3},
             "semantic_match_score": .6, "quality_score": .95, "reuse_gap": 12}
         upstream = copy.deepcopy(fixed)
@@ -55,6 +55,36 @@ class UpstreamSceneTests(unittest.TestCase):
         for dependency_id in scene.SOURCES:
             self.assertEqual(router._PRIMARY_RENDERER[dependency_id], "HTMLCanvas")
             self.assertEqual(router._executor("code_generated", {"dependency_id": dependency_id}), "reference_adapter")
+
+    def test_qualified_talkcraft_identity_is_catalog_bound(self):
+        from edit.hd.tools.talkcraft_matcher import load_card_catalog
+
+        card = load_card_catalog()[0]
+        production = card["production"]
+        candidate = {
+            "template_origin": "custom_fallback",
+            "template_id": f"hd-talking-head/talkcraft/{card['card_id']}",
+            "template_version": production["adapter_version"],
+            "verification_id": production["qualification_id"],
+            "adaptation_level": "structural",
+            "source_entrypoint": production["derived_entrypoint"],
+            "source_sha256": production["implementation_sha256"],
+            "sample_sha256": card["sample_sha256"],
+            "semantic_families": ["process"],
+            "capacity": {"min_units": 1, "max_units": 8},
+            "semantic_match_score": .9, "quality_score": .9, "reuse_gap": 1,
+        }
+        self.assertEqual(router.rank_code_templates([candidate], semantic_family="process", information_units=1)[0]["template_id"], candidate["template_id"])
+        for field in ("template_id", "source_sha256", "sample_sha256"):
+            tampered = copy.deepcopy(candidate)
+            tampered[field] = "0" * 64 if field.endswith("sha256") else "hd-talking-head/talkcraft/not-registered"
+            with self.assertRaises(router.RouterError):
+                router.rank_code_templates([tampered], semantic_family="process", information_units=1)
+        bypass = copy.deepcopy(candidate)
+        bypass["template_id"] = "hd-talking-head/talkcraft/not-registered"
+        bypass["source_entrypoint"] = "scripts/render_doudou.mjs"
+        with self.assertRaises(router.RouterError):
+            router.rank_code_templates([bypass], semantic_family="process", information_units=1)
 
 
 if __name__ == "__main__":

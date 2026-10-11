@@ -32,9 +32,17 @@ SOURCES = {
     "adu-motion-video": {
         "url": "https://github.com/adunext/adu-motion-video.git",
         "commit": "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7",
-        "files": ("SKILL.md", "scripts/render_project.mjs", "scripts/adapt_project.py",
+        "files": ("SKILL.md", "scripts/render_project.mjs", "template/index.html", "template/templates.js",
                   "scripts/chrome.mjs", "package.json", "package-lock.json",
-                  "packs/classic-performance/1.0.0/manifest.json"),
+                  "template/lib.js", "template/main.js"),
+    },
+    "hypit-native-chat": {
+        "url": "https://github.com/hypit-ai/hypit.git",
+        "commit": "85e01c76716498e6ec5b8bdfb6b374ca67f0195a",
+        "project_path": "skill-development/research/hypit-source",
+        "files": ("skills/hypit/SKILL.md", "bin/hypit.mjs", "package.json", "pnpm-lock.yaml",
+                  "examples/semantic-composition/packages/chat-scene/src/render.ts",
+                  "examples/semantic-composition/packages/chat-scene/src/activation.ts"),
     },
     "lemo-opuscar": {
         "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
@@ -115,7 +123,10 @@ def ensure(project_root: Path, skill_id: str) -> dict[str, str]:
     lock_fd = os.open(vendor / ".visual-broll-install.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     with os.fdopen(lock_fd, "r+") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        destination = vendor / skill_id
+        destination = root / source.get("project_path", f"skill-development/vendor/{skill_id}")
+        if destination.is_symlink() or not destination.resolve().is_relative_to(root):
+            raise VisualBrollDependencyError(f"unsafe visual Skill directory: {destination}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
         if destination.exists() or destination.is_symlink():
             _validate_repo(destination, source)
             status = "already_available"
@@ -140,8 +151,16 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = ensure(args.project_root, args.skill)
-        if args.skill in {"lemo-opuscar", "onetake", "adu-motion-video"}:
+        if args.skill in {"lemo-opuscar", "onetake"}:
             prepare_scene_runtime(args.project_root.resolve(), args.skill)
+            result["runtime_status"] = "callable"
+        elif args.skill == "adu-motion-video":
+            from adu_native_adapter import prepare_runtime
+            prepare_runtime(args.project_root.resolve())
+            result["runtime_status"] = "callable"
+        elif args.skill == "hypit-native-chat":
+            from hypit_native_adapter import prepare_runtime
+            prepare_runtime(args.project_root.resolve())
             result["runtime_status"] = "callable"
         elif args.skill == "huashu-art-motion":
             from huashu_motion_adapter import prepare_runtime
@@ -151,7 +170,7 @@ def main() -> int:
             from wise_motion_adapter import prepare_runtime
             prepare_runtime(args.project_root.resolve())
             result["runtime_status"] = "callable"
-    except (OSError, VisualBrollDependencyError) as error:
+    except (OSError, ValueError, subprocess.SubprocessError, VisualBrollDependencyError) as error:
         parser.exit(2, f"visual B-roll Skill unavailable: {error}\n")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
@@ -164,7 +183,7 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
     if _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
         raise VisualBrollDependencyError("upstream source has local changes; runtime preparation stopped")
     try:
-        if skill_id in {"lemo-opuscar", "adu-motion-video"}:
+        if skill_id == "lemo-opuscar":
             if not (root / "node_modules/playwright-core/package.json").is_file():
                 subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
         else:
@@ -184,11 +203,7 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
             if browser.returncode:
                 # Install the upstream browser, not an alternative renderer or cloud provider.
                 subprocess.run([str(python), "-m", "playwright", "install", "chromium"], check=True, timeout=240)
-        if skill_id == "adu-motion-video":
-            from adu_motion_adapter import check_runtime as check_adu_runtime
-            check_adu_runtime(project_root, skill_id)
-        else:
-            check_runtime(project_root, skill_id)
+        check_runtime(project_root, skill_id)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         raise VisualBrollDependencyError(f"project-only scene runtime is unavailable: {error}") from error
 

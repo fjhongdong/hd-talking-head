@@ -2,6 +2,33 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "hypit-native-chat-source",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-direction", "visual-canary", "visual-assets"],
+      "target": "skill-development/research/hypit-source",
+      "path_type": "directory",
+      "entrypoints": ["skills/hypit/SKILL.md", "bin/hypit.mjs", "examples/semantic-composition/packages/chat-scene/dist/activation.js"],
+      "required_level": "installed"
+    },
+    {
+      "id": "hypit-native-chat",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_hypit_native.mjs", "scripts/hypit_native_adapter.py", "assets/hypit-native-layout/src/activation.js"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_hypit_native.mjs",
+        "producer_version": "1.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
+        "command": ["{python}", "{dependency_root}/scripts/hypit_native_adapter.py", "--probe", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "hypit-native-chat", "required_level": "bound"}
+    },
+    {
       "id": "wise-motion",
       "kind": "project_path",
       "required": false,
@@ -36,9 +63,9 @@
       "stage": "job-start",
       "target": "skill-development/vendor/adu-motion-video",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "scripts/render_project.mjs", "scripts/adapt_project.py", "packs/classic-performance/1.0.0/manifest.json"],
+      "entrypoints": ["SKILL.md", "scripts/render_project.mjs", "template/index.html", "template/templates.js"],
       "required_level": "installed",
-      "capabilities": ["visual.upstream-object-choreography"]
+      "capabilities": ["visual.adu-native-comparison"]
     },
     {
       "id": "adu-motion-video",
@@ -47,12 +74,12 @@
       "stages": ["visual-canary", "visual-assets"],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/adu_motion_adapter.py"],
+      "entrypoints": ["scripts/render_adu_native.mjs", "scripts/adu_native_adapter.py", "assets/adu-native-runtime/package-lock.json"],
       "binding_probes": [{
-        "entrypoint": "scripts/adu_motion_adapter.py",
-        "producer_version": "1.0.0",
+        "entrypoint": "scripts/render_adu_native.mjs",
+        "producer_version": "2.0.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/adu_motion_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "adu-motion-video"],
+        "command": ["{python}", "{dependency_root}/scripts/adu_native_adapter.py", "--probe", "--project-root", "{project_root}"],
         "timeout_seconds": 30
       }],
       "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "adu-motion-video", "required_level": "bound"}

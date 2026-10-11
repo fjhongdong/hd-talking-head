@@ -50,7 +50,41 @@
 
 ## 本地依赖与固定来源
 
-Lemo/OneTake 共用适配器支持以下固定来源；Adu 使用后述独立适配器：
+### TalkCraft 资格卡误拦修复
+
+新选型读取实际 `edit/hd/tools/talkcraft_matcher` 绑定的当前资格库。108 张资格卡的 `.tsx` 入口并非自由场景：只有卡片 ID、版本、资格 ID、源码入口、源码哈希与参考样片哈希全部匹配时放行，执行依赖必须是 `hd-talking-head-talkcraft`。未知卡、错哈希和借用其他依赖身份仍拒绝；旧自由场景与贴片路线没有恢复。当前真实资格卡已通过排名与 ShotRecipe 编译检查，不重渲已确认样片。
+
+### Adu 原生对比组件
+
+新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.0.0`；旧 `adu_motion_adapter.py` 不进入新选型。桥接层复制固定提交 `4d9777d799c73e4ed212b2ecb6ec6cece33f98a7` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线，不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。
+
+此入口只表达 `old_new_comparison`：两侧各 1–3 项，总计 2–6 项，5–10 秒。brief 包含 `source_binding / template_request / composition`、短 `title`、`left/right={title,items}`、整数 `left_frame/right_frame/strike_frame` 及短 `stamp`。公开入口的盖章固定发生于 `strikeAt + .35s`，不得另造盖章时钟。没有真实前后对比、内容过长、动作与词锚不相容时换候选，不改原生过程。
+
+原生画板固定 1920×1080；父层仅将整板等比放进竖屏，不裁切、不伸展、不修改内部字号。因此它是局部对比组件，不是原生竖屏整屏模板；不得仅因输出 1080×1920 而自动用于需要饱满主体演出的整屏 B-roll。它仍为 `custom_fallback / structural`，不是已验收的通用第三方模板。
+
+用户要求升级依赖后，Playwright `1.64.0` 放在我们自己的 `<project>/skill-development/runtime/adu-native`，使用本包 `assets/adu-native-runtime` 的精确锁文件；原仓库的 `1.58.2` 和锁文件保持不动。准备入口仍为 `ensure_visual_broll_skills.py --skill adu-motion-video`，只准备项目内环境。真实原生调用已输出 144 帧、6 秒、1080×1920/24fps、无声、SAR 1:1，fullrange→limited 转换保持时长不变。开发样片位于 `<project>/edit/verify/native-scene-connect-ke6PEQ/Adu-原生对比调用样片.mp4`，只是调用和布局检查，不代表用户已认可效果，也不替换正式成片。
+
+### Hypit 原生计划对话
+
+唯一来源为 `<project>/skill-development/research/hypit-source` 的固定提交 `85e01c76716498e6ec5b8bdfb6b374ca67f0195a`，发行版 `0.3.1`。选中后完整读取 `skills/hypit/SKILL.md`、其发行/本地 runtime/渲染/字体/Build 指引，以及 `examples/semantic-composition/packages/chat-scene` 的原生说明。准备使用 `ensure_visual_broll_skills.py --skill hypit-native-chat`：缺失时仅在项目本地准备固定源码、pnpm 10.33.0 冻结依赖及原生 compiled chat 包，不下载浏览器，不开生成服务。
+
+`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.0.0`、`HTMLCanvas`、`custom_fallback / structural`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
+
+输入为 `source_binding / template_request / composition`、短 `title`、2–4 项 `messages={sender,text,side,frame}`，仅适用于 `plan_change_dialogue`。每条消息最多 28 字，5–10 秒；到达帧升序，最终消息须保留原生入场及阅读时间。原生固定副标题 `A small change of plan` 保持原样，不能用于不涉及改变计划的普通通知、流程或数据图。消息出现、缩放、滚动和状态点的动作均为原生 chat-scene；独立父级 layout 只把完整 540×480 画板静态 scale(2)，放于 1080×1920 的 y=80，给圆窗与唯一字幕留空间。不改原生 HTML、CSS、setup、data 或动作。
+
+私有项目复制原生 chat 的 `package.json/dist` 原字节，并通过私有 `node_modules` 连接已安装依赖，不能往第三方目录补文件。时间全部使用原生精确帧写法，例如 `104f`，不转为近似小数秒。Build 只提交一次；结果协议为 `hypit.cli-build@1`，编号读取 `build.id`，检查 `build.work.outcome=complete` 与 `build.result.state=complete` 后才 `get`。观察超时或结果不明时保存原编号与日志，不重复提交。
+
+原生 HTML-video 即使没有 AudioTrack，也会封装一条静音 AAC；我们的交接层只复制视频流、去掉该音轨，并以 H.264 元信息写明 SAR 1:1，不重编码、不 retime、不改变动作。只关闭本次私有 runtime 与它的程序，不影响共享进程。异常目录和日志保留，停止当前路线；已完成的原生 Build 直接取回，不重做动效。
+
+当前唯一真实 Build 为 `bld_20261011T050711371Z_04E73B25A5`，原生已完成 144 帧；修正我们自己的结果接法后直接取回同一结果，没有第二次生成。开发产物为 `<project>/edit/verify/native-scene-connect-ke6PEQ/Hypit-原生计划对话样片-无声.mp4`，6 秒、1080×1920/24fps，样片对话是调用测试，不作为本期口播或用户已认可效果。未修改正式 Job、开头、贴片、封面或已验收成片。
+
+### 未采用的制作流程项目
+
+`motion-video-skill` 固定核对提交 `dd11881e22b36523243444c49c5c29cfecc200e3`。它提供制作流程与检查脚本，不自带可直接填内容的 Remotion composition；要产出本期 B-roll 仍需重新编写动效，因此不登记为制作依赖。
+
+`ai-promo-video-maker` 固定核对提交 `279ba5178c3c80d472b84ac2efa36c6fca33bba2`。它是宣传片制作流程，模板的 `Example.tsx` 只有三段示例文字，`anim.ts` 是底层动作工具而非口播场景库；用于本期同样要另写场景。故不登记 B-roll 入口，不借其 renderer 冒充调用，也不扩展为配音或音乐任务。
+
+Lemo/OneTake 的历史共用适配器保留以下固定来源；新的 Adu 只使用上述原生对比组件接口：
 
 | dependency_id | upstream_commit | 原生入口 |
 | --- | --- | --- |
