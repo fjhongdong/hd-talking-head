@@ -1,5 +1,6 @@
 // Native chat + public static layout. Never author or replace native animation.
 import {readFile, writeFile, mkdtemp, cp, copyFile, mkdir, symlink} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import {pathToFileURL} from 'node:url';
@@ -11,7 +12,55 @@ function arg(name) {
   if (i < 0 || !args[i + 1]) throw new Error('Missing ' + name);
   return args[i + 1];
 }
-const b = JSON.parse(await readFile(arg('--brief'), 'utf8'));
+const rawBrief = await readFile(arg('--brief'));
+const b = JSON.parse(rawBrief);
+function stable(value) {
+  if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';
+  if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(k => JSON.stringify(k) + ':' + stable(value[k])).join(',') + '}';
+  return JSON.stringify(value);
+}
+function comparableBrief(value) {
+  const copy = JSON.parse(JSON.stringify(value));
+  delete copy.source_binding;
+  return copy;
+}
+async function reuseMedia() {
+  const manifestFd = arg('--reuse-media-manifest');
+  if (!/^\/dev\/fd\/\d+$/.test(manifestFd)) throw new Error('Invalid Hypit reuse manifest FD');
+  const manifest = JSON.parse(await readFile(manifestFd, 'utf8'));
+  if (manifest.schema_version !== 'reference-process-media/v1'
+      || manifest.brief_sha256 !== createHash('sha256').update(rawBrief).digest('hex')
+      || !Array.isArray(manifest.media)
+      || manifest.media.length !== 3
+      || stable(manifest.media.map(x => x.media_ref).sort()) !== stable(['completed-native-video', 'original-native-brief', 'native-generation-evidence'].sort())) {
+    throw new Error('Invalid Hypit reuse media manifest');
+  }
+  const refs = Object.fromEntries(manifest.media.map(x => [x.media_ref, x]));
+  async function snapshot(ref) {
+    if (!ref || !Number.isInteger(ref.fd) || ref.fd < 0 || !Number.isInteger(ref.byte_length) || ref.byte_length < 0
+        || typeof ref.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(ref.sha256)) throw new Error('Invalid Hypit media reference');
+    const data = await readFile(`/dev/fd/${ref.fd}`);
+    if (data.byteLength !== ref.byte_length || createHash('sha256').update(data).digest('hex') !== ref.sha256) throw new Error('Hypit media reference changed');
+    return data;
+  }
+  const originalBrief = JSON.parse(await snapshot(refs['original-native-brief']));
+  if (stable(comparableBrief(originalBrief)) !== stable(comparableBrief(b))) throw new Error('Hypit brief changed outside source binding');
+  const evidence = JSON.parse(await snapshot(refs['native-generation-evidence']));
+  if (!Array.isArray(evidence.commands) || !evidence.commands.some(c => c.exit_code === 0 && c.argv?.[1] === 'build'
+      && c.stdout && JSON.parse(c.stdout).format === 'hypit.cli-build@1'
+      && typeof JSON.parse(c.stdout).build?.id === 'string'
+      && JSON.parse(c.stdout).build?.work?.outcome === 'complete'
+      && JSON.parse(c.stdout).build?.result?.state === 'complete')) throw new Error('Invalid Hypit generation evidence');
+  const media = await snapshot(refs['completed-native-video']);
+  await writeFile(arg('--output'), media);
+  const build = evidence.commands.find(c => c.exit_code === 0 && c.argv?.[1] === 'build');
+  const buildResult = JSON.parse(build.stdout);
+  console.log(JSON.stringify({status: 'reused', native_generation_count: 0, media_sha256: refs['completed-native-video'].sha256, build_id: buildResult.build.id}));
+}
+if (args.includes('--reuse-media-manifest')) {
+  await reuseMedia();
+  process.exit(0);
+}
 const source = path.resolve(arg('--source'));
 const layout = path.resolve(arg('--layout-root'));
 const output = path.resolve(arg('--output'));

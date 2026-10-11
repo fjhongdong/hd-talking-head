@@ -18,10 +18,10 @@
       "stages": ["visual-canary", "visual-assets"],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_hypit_native.mjs", "scripts/hypit_native_adapter.py", "assets/hypit-native-layout/src/activation.js"],
+      "entrypoints": ["scripts/render_hypit_native.mjs", "scripts/hypit_native_adapter.py", "scripts/native_completed_artifact.py", "assets/hypit-native-layout/src/activation.js"],
       "binding_probes": [{
         "entrypoint": "scripts/render_hypit_native.mjs",
-        "producer_version": "1.0.0",
+        "producer_version": "1.1.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
         "command": ["{python}", "{dependency_root}/scripts/hypit_native_adapter.py", "--probe", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -74,10 +74,10 @@
       "stages": ["visual-canary", "visual-assets"],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_adu_native.mjs", "scripts/adu_native_adapter.py", "assets/adu-native-runtime/package-lock.json"],
+      "entrypoints": ["scripts/render_adu_native.mjs", "scripts/adu_native_adapter.py", "scripts/native_completed_artifact.py", "assets/adu-native-runtime/package-lock.json"],
       "binding_probes": [{
         "entrypoint": "scripts/render_adu_native.mjs",
-        "producer_version": "2.0.0",
+        "producer_version": "2.1.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
         "command": ["{python}", "{dependency_root}/scripts/adu_native_adapter.py", "--probe", "--project-root", "{project_root}"],
         "timeout_seconds": 30

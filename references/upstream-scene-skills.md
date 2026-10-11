@@ -56,7 +56,7 @@
 
 ### Adu 原生对比组件
 
-新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.0.0`；旧 `adu_motion_adapter.py` 不进入新选型。桥接层复制固定提交 `4d9777d799c73e4ed212b2ecb6ec6cece33f98a7` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线，不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。
+新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.1.0`；旧 `adu_motion_adapter.py` 不进入新选型。新生成时桥接层复制固定提交 `4d9777d799c73e4ed212b2ecb6ec6cece33f98a7` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线，不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。
 
 此入口只表达 `old_new_comparison`：两侧各 1–3 项，总计 2–6 项，5–10 秒。brief 包含 `source_binding / template_request / composition`、短 `title`、`left/right={title,items}`、整数 `left_frame/right_frame/strike_frame` 及短 `stamp`。公开入口的盖章固定发生于 `strikeAt + .35s`，不得另造盖章时钟。没有真实前后对比、内容过长、动作与词锚不相容时换候选，不改原生过程。
 
@@ -68,7 +68,7 @@
 
 唯一来源为 `<project>/skill-development/research/hypit-source` 的固定提交 `85e01c76716498e6ec5b8bdfb6b374ca67f0195a`，发行版 `0.3.1`。选中后完整读取 `skills/hypit/SKILL.md`、其发行/本地 runtime/渲染/字体/Build 指引，以及 `examples/semantic-composition/packages/chat-scene` 的原生说明。准备使用 `ensure_visual_broll_skills.py --skill hypit-native-chat`：缺失时仅在项目本地准备固定源码、pnpm 10.33.0 冻结依赖及原生 compiled chat 包，不下载浏览器，不开生成服务。
 
-`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.0.0`、`HTMLCanvas`、`custom_fallback / structural`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
+`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.1.0`、`HTMLCanvas`、`custom_fallback / structural`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，新生成只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
 
 输入为 `source_binding / template_request / composition`、短 `title`、2–4 项 `messages={sender,text,side,frame}`，仅适用于 `plan_change_dialogue`。每条消息最多 28 字，5–10 秒；到达帧升序，最终消息须保留原生入场及阅读时间。原生固定副标题 `A small change of plan` 保持原样，不能用于不涉及改变计划的普通通知、流程或数据图。消息出现、缩放、滚动和状态点的动作均为原生 chat-scene；独立父级 layout 只把完整 540×480 画板静态 scale(2)，放于 1080×1920 的 y=80，给圆窗与唯一字幕留空间。不改原生 HTML、CSS、setup、data 或动作。
 
@@ -77,6 +77,27 @@
 原生 HTML-video 即使没有 AudioTrack，也会封装一条静音 AAC；我们的交接层只复制视频流、去掉该音轨，并以 H.264 元信息写明 SAR 1:1，不重编码、不 retime、不改变动作。只关闭本次私有 runtime 与它的程序，不影响共享进程。异常目录和日志保留，停止当前路线；已完成的原生 Build 直接取回，不重做动效。
 
 当前唯一真实 Build 为 `bld_20261011T050711371Z_04E73B25A5`，原生已完成 144 帧；修正我们自己的结果接法后直接取回同一结果，没有第二次生成。开发产物为 `<project>/edit/verify/native-scene-connect-ke6PEQ/Hypit-原生计划对话样片-无声.mp4`，6 秒、1080×1920/24fps，样片对话是调用测试，不作为本期口播或用户已认可效果。未修改正式 Job、开头、贴片、封面或已验收成片。
+
+### 已完成原生制品复用
+
+Adu/Hypit 均提供 `create_existing_adapter(project_root, node_executable, brief_loader, *, completed_record)`；后续仍用同模块的 `create_binding`、`create_artifact_probe` 和公共 `execute_component`，不借用 Lovart 或本地素材身份。`completed_record` 为：
+
+```json
+{
+  "schema_version": 1,
+  "media": {"job_path": "native-reuse-input/native.mp4", "sha256": "<实际视频哈希>"},
+  "original_brief": {"job_path": "native-reuse-input/original-brief.json", "sha256": "<原brief哈希>"},
+  "generation_evidence": {"job_path": "native-reuse-input/native-generation.json", "sha256": "<原调用记录哈希>"}
+}
+```
+
+三份文件先普通复制进当前 Job，路径须互异。仅复用宿主已核对来源的本地制品；日志不是第三方资格或可信签名，不把未知上传日志当证明。Adu 原日志没有记录原输出哈希，只说明原调用完成；本次绑定的实际 MP4 哈希和逐字节复用结果由当前执行器验证。Hypit 使用原 Build 命令的完整 `hypit.cli-build@1` 响应核对完成状态，不能用旧 `source_valid` 日志代替；外层包装器因旧编号读取失败，不代表该 Build 未完成。
+
+`scripts/native_completed_artifact.py` 保留原生 adapter 的计划、配方、原声、窗口和运行时守卫。当前 brief 只允许重新绑定 `source_binding`；标题、内容、构图 ID、帧数和动作时点须与原 brief 相同。执行器把三份原件冻结为 FD 快照，wrapper 的显式 `--reuse-media-manifest` 分支只复制视频字节，在任何原生生成前退出；缺项或错配直接失败，不回落生成。复用记录保留原 brief、视频与调用证据的路径和哈希、当前绑定及 `native_generation_count=0`；真实调用证据中的复用参数和 adapter ID 区分本次复制与原生生成。
+
+2026-10-11 两条均已通过一次公共 `execute_component`，组件输出与原视频 SHA-256 一致，再经现有 `segment_render` 和 `preview_v2` 完成人物圆窗、同源原声及既有唯一口播字幕合成。结果各 144 帧、6 秒、1080×1920/24fps、SAR 1:1；未重做动效、字幕或正式成片，旧测试编号失败日志保留。记录位于 `<project>/edit/verify/native-reuse-closeout-hzwths/closeout-results.json`，两条 `*-seg-001` 子目录各有执行记录和合成视频。
+
+效果检查结论是“技术闭环已接通、用途受限”，不升格通用模板资格。Adu 的双卡片、划线和盖章清楚，但横版整板缩小后文字较小、竖屏留白较多，只适合简短局部对比。Hypit 的消息到达和滚动清楚，只适合改变计划的聊天；固定英文副标题仍保留，它是场景标题，不是第二条口播字幕。首、中、尾合成帧已核对圆窗比例、中文显示及图文避让；本轮借用同源口播和字幕只验证合成，不声明这两条内容与本期词锚完全匹配，也不替换已验收成片。新语段仍须核对实际语义、阅读速度和全速动作。
 
 ### 未采用的制作流程项目
 

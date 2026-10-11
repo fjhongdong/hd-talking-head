@@ -14,7 +14,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_hypit_native.mjs"
 DEPENDENCY_ID = "hypit-native-chat"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 TEMPLATE_ID = "hypit/native-plan-change-chat"
 FAMILY = "plan_change_dialogue"
 SOURCE_PIN = "85e01c76716498e6ec5b8bdfb6b374ca67f0195a"
@@ -151,6 +151,12 @@ def create_adapter(project_root, node_executable, brief_loader):
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--source", runtime["source"],
                        "--layout-root", str(SKILL / "assets/hypit-native-layout"), "--browser", runtime["browser"],
                        "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--output", "{output_path}"))
+
+
+def create_existing_adapter(project_root, node_executable, brief_loader, *, completed_record):
+    from native_completed_artifact import attach_completed
+    return attach_completed(create_adapter(project_root, node_executable, brief_loader), validate_brief,
+                            completed_record=completed_record)
 
 
 def create_binding(adapter, brief_bytes, reference_sample):

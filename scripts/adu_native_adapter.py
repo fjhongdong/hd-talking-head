@@ -14,7 +14,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_adu_native.mjs"
 DEPENDENCY_ID = "adu-motion-video"
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 TEMPLATE_ID = "adu-motion-video/native-compare"
 FAMILY = "old_new_comparison"
 SOURCE_PIN = "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7"
@@ -152,6 +152,12 @@ def create_adapter(project_root, node_executable, brief_loader):
         brief_loader=guard, media_loader=None, self_contained_wrapper=True, timeout_seconds=300,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--source", runtime["source"],
                        "--browser", runtime["browser"], "--playwright-module", runtime["playwright"], "--output", "{output_path}"))
+
+
+def create_existing_adapter(project_root, node_executable, brief_loader, *, completed_record):
+    from native_completed_artifact import attach_completed
+    return attach_completed(create_adapter(project_root, node_executable, brief_loader), validate_brief,
+                            completed_record=completed_record)
 
 
 def create_binding(adapter, brief_bytes, reference_sample):

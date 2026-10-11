@@ -1,5 +1,6 @@
 // Static host and public TPL.compare parameters; all motion remains in Adu.
 import {readFile, writeFile, mkdtemp, cp, rm, copyFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import {spawn} from 'node:child_process';
@@ -10,7 +11,45 @@ function arg(name) {
   if (i < 0 || !args[i + 1]) throw new Error('Missing ' + name);
   return args[i + 1];
 }
-const b = JSON.parse(await readFile(arg('--brief'), 'utf8'));
+const briefBytes = await readFile(arg('--brief'));
+const b = JSON.parse(briefBytes);
+
+const stable = value => {
+  if (Array.isArray(value)) return value.map(stable);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])]));
+  return value;
+};
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+async function reuseExisting() {
+  const manifestArg = arg('--reuse-media-manifest');
+  if (!/^\/dev\/fd\/\d+$/.test(manifestArg)) throw new Error('Invalid completed Adu media manifest FD');
+  const manifestBytes = await readFile(manifestArg);
+  const manifest = JSON.parse(manifestBytes);
+  if (manifest.schema_version !== 'reference-process-media/v1' || manifest.brief_sha256 !== digest(briefBytes)) {
+    throw new Error('Frozen Adu completed media manifest mismatch');
+  }
+  const records = Object.fromEntries((manifest.media || []).map(item => [item.media_ref, item]));
+  const refs = ['completed-native-video', 'original-native-brief', 'native-generation-evidence'];
+  if ((manifest.media || []).length !== refs.length || Object.keys(records).length !== refs.length || refs.some(ref => !records[ref])) throw new Error('Completed Adu media references are incomplete');
+  const blobs = {};
+  for (const ref of refs) {
+    const record = records[ref];
+    if (!Number.isInteger(record.fd) || record.fd < 0 || !Number.isInteger(record.byte_length) || typeof record.sha256 !== 'string') throw new Error('Invalid completed Adu media descriptor');
+    const blob = await readFile(`/dev/fd/${record.fd}`);
+    if (blob.length !== record.byte_length || digest(blob) !== record.sha256) throw new Error('Completed Adu media hash mismatch');
+    blobs[ref] = blob;
+  }
+  const original = JSON.parse(blobs['original-native-brief']);
+  const currentComparable = {...b}; const originalComparable = {...original};
+  delete currentComparable.source_binding; delete originalComparable.source_binding;
+  if (JSON.stringify(stable(currentComparable)) !== JSON.stringify(stable(originalComparable))) throw new Error('Completed Adu brief differs from current brief');
+  const evidence = JSON.parse(blobs['native-generation-evidence']);
+  if (evidence.status !== 'completed' || evidence.template !== 'TPL.compare' || !Array.isArray(evidence.commands) || !evidence.commands.length || evidence.commands.some(command => command.exit_code !== 0)) throw new Error('Native Adu generation evidence is incomplete');
+  await writeFile(arg('--output'), blobs['completed-native-video']);
+  console.log(JSON.stringify({status: 'reused', native_generation_count: 0, media_sha256: digest(blobs['completed-native-video'])}));
+}
+if (args.includes('--reuse-media-manifest')) await reuseExisting();
+if (args.includes('--reuse-media-manifest')) process.exit(0);
 const output = path.resolve(arg('--output'));
 const source = path.resolve(arg('--source'));
 const temp = await mkdtemp(path.join(os.tmpdir(), 'adu-native-compare-'));
