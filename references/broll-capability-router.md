@@ -4,7 +4,7 @@
 
 ## 1. 五类同级来源
 
-本项目新计划默认排除自研 local-canonical、RelationMotion 和 SemanticState 候选，先充分匹配现成 Skill 的配方及真实组件；具体顺序与缺口处理见[生成型 B-roll 编排](generated-broll-skills.md)。下文登记优先级是资格比较，不要求把未选中的自研记录全部加入候选池，也不改变已批准镜头的来源。仅在现成能力的真实缺口被记录后才允许最小新增实现。
+本项目新计划默认排除自研 local-canonical、RelationMotion 和 SemanticState 候选，先充分匹配现成 Skill 的配方及真实组件；具体顺序与缺口处理见[生成型 B-roll 编排](generated-broll-skills.md)。下文登记优先级是资格比较，不要求把未选中的历史记录全部加入候选池，也不改变已批准镜头的来源。新制作不因缺口新增动效实现；批准前换语义合适的原生候选或保留 A-roll，批准后失败停当前 route 进入 revision。历史来源不追认、不迁移。
 
 ```broll-source-policy
 - `local_material`

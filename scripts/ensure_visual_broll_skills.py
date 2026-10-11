@@ -14,6 +14,12 @@ import tempfile
 
 
 SOURCES = {
+    "wise-motion": {
+        "url": "https://github.com/WiseWong6/wise-motion.git",
+        "commit": "096b220cbe021cbba2d38e8a48fa3651ab8edbb7",
+        "files": ("SKILL.md", "REMOTION.md", "references/runtime-interface.md",
+                  "references/quickstart.md", "references/validation-matrix.md"),
+    },
     "huashu-art-motion": {
         "url": "https://github.com/alchaincyf/huashu-art-motion.git",
         "commit": "26dba25b2b495c2138848c29a2c90df356a20325",
@@ -139,6 +145,10 @@ def main() -> int:
             result["runtime_status"] = "callable"
         elif args.skill == "huashu-art-motion":
             from huashu_motion_adapter import prepare_runtime
+            prepare_runtime(args.project_root.resolve())
+            result["runtime_status"] = "callable"
+        elif args.skill == "wise-motion":
+            from wise_motion_adapter import prepare_runtime
             prepare_runtime(args.project_root.resolve())
             result["runtime_status"] = "callable"
     except (OSError, VisualBrollDependencyError) as error:

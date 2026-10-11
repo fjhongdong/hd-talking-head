@@ -2,6 +2,23 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "wise-motion",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": ["scripts/render_wise_motion.mjs", "scripts/wise_motion_adapter.py", "assets/wise-motion-runtime/index.jsx"],
+      "binding_probes": [{
+        "entrypoint": "scripts/render_wise_motion.mjs",
+        "producer_version": "3.0.0",
+        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "Remotion"},
+        "command": ["{python}", "{dependency_root}/scripts/wise_motion_adapter.py", "--project-root", "{project_root}"],
+        "timeout_seconds": 30
+      }],
+      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "wise-motion", "required_level": "bound"}
+    },
+    {
       "id": "gbro-collage-broll-source",
       "kind": "project_path",
       "required": true,

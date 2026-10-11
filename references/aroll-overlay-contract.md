@@ -1,6 +1,6 @@
 # A-roll 透明贴片：编排、调用、验收
 
-先读取实际使用的上游 Skill。现成组件能表达本句关系时直接调用；仅有原语而需要组合新关系时，明确记录上游复用部分与本项目新增部分。不要把普通字幕放大重复一次，也不要为所有新口播硬套同一张示意图。
+先读取实际使用的上游 Skill。现成组件能表达本句关系时直接调用；允许 import 原生组件、使用公开 props、静态放置和 Sequence start/end 时钟，不新增主要动作、关键帧、曲线或替代时间线。不要把普通字幕放大重复一次，也不要为所有新口播硬套同一张示意图。
 
 三节点流程先检索 HyperFrames Registry 的原生 `hw-pipeline`。它自带逐节点手绘框和曲线连线动效；正式入口是 `scripts/hyperframes_hw_pipeline_adapter.py` 的 `create_adapter`、`create_binding`、`create_artifact_probe`，调用 `scripts/render_hyperframes_hw_pipeline.cjs` 读取锁定的上游块，替换三节点文案、时长、位置及中文字体／背景可读性参数，再由 HyperFrames 真正渲染。1920×1080 原生画布等比缩到竖屏上方，转成 1080×1920 透明 QTRLE/ARGB MOV，交给既有 `ReferenceProcessAdapter` 和正式合成器；不重写动效。此组件仅用于真实三步流程，不硬套比较、门槛或抽象结论。`brief` 必须包含当前批准的三节点标签、帧数、各节点入场帧 `label_frames`、对应源转写词的 `word_anchors` 与 `source_binding`；adapter 将标签实际显现时刻对照批准的 Scribe 词和剪后时间轴，不能等间隔套用旧样片。它还复核批准的 VisualPlan、A-roll 哈希、段落时钟、上游源码及依赖版本。样片通过不等于新 Job 已批准；实际真人画面仍需检查框、箭头、文字不越界、不压头发、脸和字幕。
 
@@ -16,9 +16,9 @@
 
 补充贴片的样片通过后，必须立即更新当前正式 director 的对应组件、原生 brief/source binding 和 `manifests/confirmed-content.json`；详见[视觉修订的保留检查](visual-revision-reuse.md#已确认内容的保留检查)。后续只修改开头、剪切或 B-roll 时，贴片默认保留并按词锚重绑定，不再从早期无贴片计划覆盖。保留记录有而正式计划没有的贴片，正式入口直接报错。
 
-同风格三节点流程直接调用上述 HyperFrames 入口；双项对比可用同一上游原生节点绘制能力，`template_request.semantic_family=dual_contrast`、两组标签/词锚，并去掉连接箭头，避免将对比误画为因果。这是结构适配，不冒充原生双项模板。真实口播窗口允许 3–15 秒，不为凑时长延长镜头。门槛移动等不能由该组件表达的关系仍用下列 TalkCraft 原语适配，按已确认的紧凑上方版式重新验收；不回退旧大面板或越界节点。
+同风格三节点流程直接调用上述 HyperFrames 入口。双项对比改选真正支持对比的现成组件；不通过删除箭头或另写原语状态转场改造成新动效。真实口播窗口允许 3–15 秒，不为凑时长延长镜头。下列 TalkCraft 原语关系是历史结构适配记录，不进入新选型；已有确认内容保留，不回退旧大面板或越界节点。
 
-不适合 `hw-pipeline` 的关系可用 `edit.hd.tools.talkcraft_overlay` 的 `create_adapter`、`create_binding`、`create_artifact_probe`。原生组件入口为项目内 `edit/hd/integrations/talkcraft/aroll-overlay/render.mjs`，通过既有 `ReferenceProcessAdapter` 执行；不是另建合成器。
+历史 `edit.hd.tools.talkcraft_overlay` 提供 `create_adapter`、`create_binding`、`create_artifact_probe`，项目入口为 `edit/hd/integrations/talkcraft/aroll-overlay/render.mjs`，通过既有 `ReferenceProcessAdapter` 执行。它不取得新制作原生场景资格；不能只因导入了原语，就继续自行编写主体动作。
 
 - 依赖身份：`hd-talking-head-talkcraft-overlay`，Remotion 4.0.520；与 108 张 qualified 整屏卡的 `hd-talking-head-talkcraft` 分开。
 - 当前可表达“固定能力点＋移动评判标准”、三步流程和双项对比。直接调用锁定上游 `Sketch / Panel / Plate / Label / Node / Connector / DrawPath`；布局是项目适配，分类必须为 `custom_fallback / structural`。三种关系都须按本片真人实拍底图重新验收。

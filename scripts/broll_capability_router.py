@@ -83,6 +83,7 @@ _PRIMARY_RENDERER = {
     "onetake": "HTMLCanvas",
     "adu-motion-video": "HTMLCanvas",
     "huashu-art-motion": "HTMLCanvas",
+    "wise-motion": "Remotion",
 }
 _REGISTERED_ENGINE = {
     "remotion": "Remotion",
@@ -101,6 +102,32 @@ TEMPLATE_ADAPTATION_LEVELS = frozenset(
 )
 _TEMPLATE_CANDIDATE_KEYS = _TEMPLATE_PROVENANCE_FIELDS | _TEMPLATE_RANKING_FIELDS
 _TEMPLATE_CAPACITY_KEYS = frozenset({"min_units", "max_units"})
+
+# New selections use native scenes or native-component glue only. This is not
+# applied to validation/execution of already-approved historical recipes.
+_NATIVE_COMPONENT_ENTRIES = frozenset({
+    "scripts/hyperframes_native_adapter.py",
+    "scripts/hyperframes_hw_pipeline_adapter.py",
+    "scripts/render_doudou.mjs",
+    "scripts/render_talkcraft_native.mjs",
+    "scripts/render_whiteboard.py",
+    "scripts/render_paper_collage.py",
+    "scripts/render_wise_motion.mjs",
+})
+_NON_NATIVE_PRODUCERS = frozenset({
+    "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
+    "hd-talking-head-semantic-state", "hd-talking-head-talkcraft-overlay",
+    "lemo-opuscar", "onetake", "adu-motion-video",
+})
+
+
+def _native_selection(candidate: Mapping[str, Any]) -> bool:
+    origin = candidate.get("template_origin")
+    if origin == "verified_third_party":
+        return candidate.get("adaptation_level") != "structural"
+    return (origin == "custom_fallback"
+            and candidate.get("source_entrypoint") in _NATIVE_COMPONENT_ENTRIES
+            and candidate.get("template_id") != "hyperframes/hw-box-contrast-portrait")
 
 CAPABILITY_REGISTRY: Dict[str, Dict[str, Any]] = {
     "html-video": {
@@ -358,10 +385,7 @@ def rank_code_templates(
     for candidate in candidates:
         value = _validate_template_candidate(candidate)
         capacity = value["capacity"]
-        if (
-            value["adaptation_level"] == "structural"
-            and value["template_origin"] == "verified_third_party"
-        ):
+        if not _native_selection(value):
             continue
         if family not in value["semantic_families"]:
             continue
@@ -714,6 +738,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "onetake": "reference_adapter",
             "adu-motion-video": "reference_adapter",
             "huashu-art-motion": "reference_adapter",
+            "wise-motion": "reference_adapter",
         }
         if not isinstance(dependency_id, str) or dependency_id not in executors:
             raise RouterError("code generation requires a registered dependency")
@@ -872,6 +897,9 @@ def _compile_shot_recipe(
                     binding[field] = _copy(selected_template[field], f"template binding.{field}")
             elif not _TEMPLATE_PROVENANCE_FIELDS.issubset(binding):
                 raise RouterError("code component requires template candidates or frozen provenance")
+            if (not _native_selection(binding)
+                    or binding.get("dependency_id") in _NON_NATIVE_PRODUCERS):
+                raise RouterError("new production requires a native scene or native-component binding; keep historical recipes unchanged")
             validate_template_binding(binding)
             validate_invocation_evidence(binding)
             if component_id in template_candidates:
@@ -925,6 +953,7 @@ def _compile_shot_recipe(
                     "onetake",
                     "adu-motion-video",
                     "huashu-art-motion",
+                    "wise-motion",
                     "whiteboard-video",
                 }
                 and (binding.get("dependency_id") != "hyperframes-native-adaptation"

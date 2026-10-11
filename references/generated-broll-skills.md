@@ -155,6 +155,8 @@ GBRO 优先用于能由少量具体纸面对象直观表达的组装、替换或
 
 ## Whiteboard 原生入口
 
+本节仅允许调用 Whiteboard 原生入口；历史 `custom_fallback` / `structural` 身份不改名、不迁移。新制作不得在 wrapper 或适配器中新增动作、关键帧、曲线或替代时间线。
+
 完整读项目内 Whiteboard `SKILL.md`，已有原生矢量关系图时直接执行：
 
 ```bash
@@ -192,6 +194,8 @@ GBRO 优先用于能由少量具体纸面对象直观表达的组装、替换或
 文字 QA 必须检查实际绘制中与完成态：关键标签须落在原生分组的 reveal bounds 内，否则源 PNG 中有字也可能永远不显示。通过调整同一语义对象的线条边界与标签排版解决，不把缺字转嫁给统一字幕；结论出现时机与停留须符合当前口播，不能只检查文件参数或源图。初始 `context` 只显示已说到的主题，不提前展示后续结论。
 
 ## Paper Collage 原生入口
+
+本节仅允许调用 Paper 原生入口；历史 `custom_fallback` / `structural` 身份不改名、不迁移。新制作不得在 wrapper 或适配器中新增动作、关键帧、曲线或替代时间线。
 
 先核对所选入口的具体动作能力。`layer-animate.mjs` 只提供各纸片的分步入场及末态停留；不能把所有主体合并为一层、完成整图入场后停住，称为动态 B-roll。需要对象展开、移动、翻折或候选关系变化时，按上游 `references/hyperframes-route.md` 的真实纸艺 PNG＋GSAP 路线制作，再调用 `paper_hyperframes_adapter.create_adapter(project_root, python_executable, brief_loader)` 与 `create_binding(adapter, brief_bytes, reference_sample)`。它沿用 native HTML schema 2 和实际来源固定值，强制 `upstream_route=paper-collage-ad/hyperframes / alpha=false`，不另建纸艺模板或动画引擎。
 
