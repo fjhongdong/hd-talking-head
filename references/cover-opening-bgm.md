@@ -1,10 +1,10 @@
 # 封面入场、A-roll 开场与可选配乐
 
-设计开场、修改开头、用户要求封面进入视频或添加/调整 BGM 时加载。复用已批准内容地图、封面和视觉设计，不重新理解文案或重做已有人工确认。
+每个新 Job 都加载本合同，默认使用 [默认制作配置](production-defaults.json) 的封面入场参数；修改开头或添加/调整 BGM 时也加载。复用已批准内容地图、封面和视觉设计，不重新理解文案或重做已有人工确认。
 
 ## 正文先由 A-roll 引入
 
-- 默认正文第一镜是实拍 A-roll：先让讲师引入话题，再在相应证据、人物或概念出现时切 B-roll。若本 Job 启用封面，顺序为“封面 → A-roll 引入 → B-roll”；未启用封面则直接 A-roll。只有用户明确批准其他开场结构才可例外。
+- 默认先展示 6 帧完整带字封面，零过渡切入实拍 A-roll：先让讲师引入话题，再在相应证据、人物或概念出现时切 B-roll。只有用户本次明确取消封面入场或批准其他开场结构才可例外；不能因没有另外提到封面，就直接从正文开场。
 - 不固定 A-roll 必须持续几秒。根据实际说话、内容地图的 hook 和证据区间确定第一处 B-roll 的入点，完整保留首句与口播动作，不用官方片头覆盖引入。
 - 官方演讲视频的真实现场是证明“分享/演讲”的主阶段，不能以静态人物卡代替。持续时间和比例按该句语义确定；与 A-roll 开场规则共同记录在视觉计划，不重复确认已批准的关键词。
 - 预览必须检查实际解码首帧、A-roll 引入区间以及第一处 B-roll 开始/稳定帧。播放器 poster、HTML 预览或孤立截图不能证明正式 MP4 的开场顺序。
@@ -14,9 +14,9 @@
 - 用户指定的固定口播开头必须在正式 `speech_cleanup` 保留计划和 `edit_structure` 时间线中保留，不得当作正文外闲话删除。独立开头样片通过不等于正式底片已修复；先核对指定词的源区间都进入实际保留区间，再运行后续视觉、字幕、预览和交付。
 - 恢复开头后，以实际新增整帧数更新下游时钟和 A-roll 来源绑定，保留已认可素材及段内动效。每次重新导出都检查正式 MP4 的“封面 → 固定口播开头 → 正文”及对应原声、字幕，不以封面首帧存在代替开头内容检查。
 
-- 每个新 Job 记录封面是否入场、BGM 是否开启；默认不加 BGM。用户本次明确要求优先于历史“不要配乐”的选择。
+- 每个新 Job 在常规配置说明中列出默认封面入场和无 BGM，由该 Job 的实际配置确认一并覆盖，不再单独询问是否沿用 6 帧封面。用户本次明确要求不同入场或音乐时覆盖对应选项；不复制历史批准原文，也不因此发起收费调用。
 - 已批准封面绑定绝对路径、批准记录和 SHA-256。不能只按 `cover.png`、`final.mp4` 等文件名猜最新版本；多个 Job 同名资产尤其要核对。
-- 只让用户审核新增的入场时长、转场与真实混音。清楚的组合选择就是该设计的批准，不要求再重复确认同一选择；它不等于完整成片最终批准。
+- 默认入场不另设设计确认门；用户要求不同入场、转场或真实混音时，只审核实际新增选择。清楚的组合选择就是该设计的批准，不要求再重复确认同一选择；它不等于完整成片最终批准。
 - 配乐记录文件哈希、曲名、作者、来源 URL、可用许可记录、起播点及循环方式。先检查可用本地素材；外部生成或付费调用仍需当前 Job 授权。不得把 API 能调用等同于音乐已生成或已混入成片。
 
 ## 封面时间轴
@@ -29,16 +29,24 @@
 
 ## 正式封面入场接口
 
-当前兼容运行时通过 `edit.hd.tools.preview_v2.prepare_preview_v2(job, opening=...)` 执行，不额外创建媒体阶段。只有本 Job 的入场选择明确后才传入以下三项；帧数从用户批准的设计取得，不能复制示例作为批准：
+当前兼容运行时通过 `edit.hd.tools.preview_v2.prepare_preview_v2(job, opening=...)` 执行，不额外创建媒体阶段。首次预览时，主控读取当前包默认值并显式传入；这是宿主编排责任，不宣称初始化器或底层 `opening=None` 已自动继承。仅本次明确覆盖默认时使用实际新值。本 Job 常规配置说明已包含该入场设计后，使用其真实批准原文，不使用示例或历史确认冒充授权：
+
+`setup-approval.json` 必须已经由本 Job 的正式配置确认产生；缺少时继续既有启动确认步骤，不在预览阶段编造同意或另设口令格式。用户对本次配置的真实自然语言回复即可，不要求固定确认文本。
 
 ```python
+import json
+from pathlib import Path
 from edit.hd.tools import preview_v2, state
 
-job = state.load_job(job_dir)
+# workspace 是本次真实工作区，Skill 路径来自其已核对的上下文。
+context = json.loads((Path(workspace) / "job-context.json").read_text(encoding="utf-8"))
+defaults = json.loads((Path(context["skill_release"]["root"]) /
+                      "references/production-defaults.json").read_text(encoding="utf-8"))
+job = state.load_job(context["job_dir"])
+setup = json.loads((job.job_dir / "manifests/setup-approval.json").read_text(encoding="utf-8"))
 result = preview_v2.prepare_preview_v2(job, opening={
-    "hold_frames": approved_hold_frames,
-    "transition_frames": approved_transition_frames,
-    "user_confirmation": current_user_confirmation,
+    **defaults["opening"],
+    "user_confirmation": setup["user_confirmation"],
 })
 ```
 
@@ -46,7 +54,7 @@ result = preview_v2.prepare_preview_v2(job, opening={
 - 仅复用当前 `cover` 已登记且哈希一致的 `cover-delivery-raster.png`（1080×1920）及封面报告，未批准、尺寸不符或被替换时停止。运行时不重做封面，也不自动改变已批准的 A-roll / B-roll 顺序。
 - `11-preview/opening-manifest.json` 固定封面、原 SRT、入场参数、正文偏移、总帧数、最终预览和偏移 SRT 身份。四个开场边界帧与常规抽帧均保留视频原尺寸用于内部 QA，不生成缩略拼图；通过编码后解码、帧数、SAR/DAR、原声轨数量和音画时长检查后，仅推进到 `ready_for_review`。
 - `12-delivery/subtitles/subtitles.srt` 使用预览生成的最终时间轴，不能再次加偏移；原透明字幕轨放在 `plans/body-subtitles.webm`，与原视觉和字幕计划一起保留正文时钟。消费者通过 `opening-manifest.json.artifact_clocks` 识别，不把正文 WebM 当成与最终 MP4 零点对齐的字幕轨。当前不生成章节附件；未来新增此类附件也须明确时钟并适配偏移。
-- 同一已发布预览再次调用时复用原字节，不重渲染；可以省略 `opening` 或传入完全相同的选项。修改入场参数或移除已启用的开场，先 `revise` 当前 `preview`，再调用；新预览完成内部 QA 和内部批准后生成交付，只向用户报审一次最终成片，上游已批准资产不重做。未发布预览省略 `opening` 时是正文直接开场，不隐式沿用其他 Job 的配置。
+- 同一已发布预览再次调用时复用原字节，不重渲染；可以省略 `opening` 或传入完全相同的已发布选项，不因当前默认值变化重做旧视频。修改入场参数或移除已启用的开场，先 `revise` 当前 `preview`，再调用；新预览完成内部 QA 和内部批准后生成交付，只向用户报审一次最终成片，上游已批准资产不重做。底层未发布预览省略 `opening` 仍表示正文直接开场；本 Skill 的首次编排只有在用户本次明确取消封面时才这样调用，否则视为缺项并在渲染前纠正。
 - 初始化时绑定真实运行时源码身份。旧环境缺少该接口或关键字参数时停止并报告兼容差异，不手改旧 Job 身份。发布回放、交付及最终确认继续走原有锁、产物登记与批准链；清单或偏移字幕缺失时不降级为正文版本。
 
 ## 正式 BGM 接口

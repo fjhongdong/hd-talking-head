@@ -11,6 +11,14 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`已安装`、`预检可调用`、`实际调用成功`、`产物验收通过`是四种不同状态；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。能力未接通时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
+## 已验收默认规格
+
+每个新 Job 先读取 [默认制作配置](references/production-defaults.json)，将其作为本项目后续口播的默认起点：1080×1920／24fps、完整带字封面在头 6 帧展示后直接进入原口播、无背景音乐，以及已验收的浅暖底／深墨字／较大主字 A-roll 贴片。配置里的贴片字体、配色、内边距和并发值是唯一默认值来源，不从旧 Job 的 HTML、文案或人物坐标反推。用户本次明确提出不同要求时才覆盖相应选项；新任务的授权、封面和最终验收仍须绑定本次实际记录。
+
+这是宿主编排输入，不是新的动效模板或第三方 props。主控读取配置后，按现成组件公开槽位和自有静态版式传入贴片样式；按[封面入场合同](references/cover-opening-bgm.md#正式封面入场接口)显式传入 `opening`。不将整个配置塞进 provider、ShotRecipe 或上游 brief 的未知字段，不修改第三方，不新增渲染器。首次预览漏传默认 `opening` 是编排缺项，不能将运行时的 `None` 当作本 Skill 的默认开场。
+
+字幕继续使用[唯一字幕样式](references/subtitle-style-contract.md)，B-roll 保持圆形人物小窗、语义优先的动态画面与多样性，按[视觉质量合同](references/visual-quality-contract.md)安排密度；首次清理即处理自然停顿。默认值一并放入本 Job 的常规配置说明，不逐项新增确认门；不复制历史批准或为采用默认值重做已验收视频。
+
 启动 Job 时只完整阅读：
 
 - [依赖预检、确认与安装合同](references/dependency-preflight.md)
@@ -40,7 +48,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [A-roll 透明贴片调用与验收](references/aroll-overlay-contract.md)（纯 A-roll 需要语义图形时）
 - [权威素材使用回执与变更事务](references/material-usage-contract.md)（新增、替换或撤回用户资料时）
 
-封面与可选 BGM 使用正式 `preview_v2.prepare_preview_v2(job, opening=..., music=...)`，参数、统一时间偏移、许可和审计附件以封面入场合同为准。默认无 BGM；启用时仍需本次选择和真实试听批准。其他机器缺少运行时时读取 [运行时部署](references/runtime-deployment.md)，先导出、校验、安装兼容代码，再执行依赖预检；不复制多个活动 Skill，不迁移旧 Job。
+默认封面入场与可选 BGM 使用正式 `preview_v2.prepare_preview_v2(job, opening=..., music=...)`，参数、统一时间偏移、许可和审计附件以封面入场合同为准。每个新 Job 均加载该合同；只有用户本次明确取消封面入场，才省略 `opening`。默认无 BGM；启用时仍需本次选择和真实试听批准。其他机器缺少运行时时读取 [运行时部署](references/runtime-deployment.md)，先导出、校验、安装兼容代码，再执行依赖预检；不复制多个活动 Skill，不迁移旧 Job。
 
 ## 1. 新 Job 的连接检查与唯一目录
 
@@ -81,7 +89,7 @@ Adu 准备只涉及本地渲染环境，不调用人物提取、配音或 mix。
   --user-file <optional-material>
 ```
 
-4. 将上次配置作为待确认草稿写入本 Job 的 `manifests/provider-config.json`，格式见依赖预检合同。不复制上次批准记录，不保存密钥。没有历史配置时根据本次实际能力填写，不虚构内置视频模型。
+4. 将上次 provider 配置作为待确认草稿写入本 Job 的 `manifests/provider-config.json`，格式见依赖预检合同；同时在本次常规配置说明中列出已读取的默认制作规格，不给 provider 文件添加未知字段。不复制上次批准记录，不保存密钥。没有历史 provider 配置时根据本次实际能力填写，不虚构内置视频模型；制作规格仍从本包默认配置取得。
 5. 经 `project_python.py` 用同一个已选 Python 直接运行 `scripts/dependency_preflight.py --manifest <skill>/references/dependency-manifest.json --project-root <project> --job-context <workspace>/job-context.json --output <job>/manifests/dependency-preflight.json --summary-only`。检查全流程全部必需依赖，不等到对应阶段再发现缺包；本地缺失环境按预检合同安装，随后只复检一次。失败报告由正式入口保存，不用临时包装或手工覆盖。TalkCraft 运行时健康检查是必需项，须在这里重新执行并通过，不能仅凭步骤 2 的人工运行记录放行。区分发现/安装、`configured`、`connected`、`callable`、`bound`；安装失败、目录冲突或账号缺授权时停止。预检不执行媒体生成。
 6. 一次展示本 Job 的 provider、精确模型、endpoint 标识、参考图能力、原生 9:16、无声输出、连接证据、额度、并发，以及实际 Python、项目路径和合成器版本，询问是否修改。用户确认后调用 `scripts/confirm_job_setup.py --job-context <workspace>/job-context.json --user-confirmation "<本次确认原文>"`，记录 `manifests/setup-approval.json`；成功才进入 `inspect`。不得用测试文本或过去的“确认”代替本次批准。
 7. 用户选择 `grok-imagine-video` 时，模型 ID 必须精确一致；不自动切换模型。后续 provider 请求前仍复核真实连接与额度，预检成功不等于付费生成授权。
@@ -251,6 +259,6 @@ Preview 使用剪辑后 A-roll 的口播音频主时钟，默认不加背景音�
 
 交付后用 `scripts/audit_job_completion.py --workspace <workspace> --json` 做只读审计。它只能返回 `formal_complete`、`legacy_external_approval`、`incomplete` 或 `inconsistent` 四态，并展示已验证/未证明边界；不修改 workflow、回执或文件。新 Job 只有当前 revision 十二阶段全批准、交付媒体与 manifest 一致，且最终人工 approval receipt 精确绑定实际文件 SHA-256 时，才能返回 `formal_complete`。
 
-正文默认从实拍 A-roll 引入话题，再切入语义对应的 B-roll；如启用封面，顺序为“封面 → A-roll 引入 → B-roll”，不能封面后立即被官方片头或海报接管。具体时长依据已批准口播动态决定，用户明确批准其他开场结构时记录例外。设计或修订开场时读取对应合同，只审核新增合成方式并复用现有资产；正式首帧、时间偏移与音乐实际可听性必须验证。
+默认开场顺序为“头 6 帧完整带字封面 → 实拍 A-roll 引入 → 语义对应的 B-roll”，不能封面后立即被官方片头或海报接管。A-roll 引入时长依据已批准口播动态决定；用户本次明确取消封面或批准其他开场结构时记录例外。设计或修订开场时读取对应合同，只审核新增合成方式并复用现有资产；正式首帧、时间偏移与音乐实际可听性必须验证。
 
 未明确要求时不上传 ChatCut 或其他外部编辑器，不自动发布或发消息。保持 1 个主控，最多 3 路独立准备；生成名额不能由子 Skill 各自领取一套。本地重渲染、正式组装、回执和批准仍串行；并发不增加获准的生成次数，不重做已验收成片。

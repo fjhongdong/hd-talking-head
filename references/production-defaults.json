@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24
+  },
+  "opening": {
+    "hold_frames": 6,
+    "transition_frames": 0
+  },
+  "background_music": false,
+  "aroll_overlay": {
+    "font_family": "PingFang SC, sans-serif",
+    "foreground": "#242a2d",
+    "surface": "#fff8e8",
+    "accent": "#c79a36",
+    "border_color": "#bdb59d",
+    "border_radius": 22,
+    "title": {
+      "font_size": 64,
+      "font_weight": 800,
+      "line_height": 1.25,
+      "letter_spacing": 0
+    },
+    "body": {
+      "font_size": 38
+    },
+    "card": {
+      "padding_x": 22,
+      "padding_y": 12,
+      "min_height": 108,
+      "gap": 14
+    },
+    "layout": {
+      "left": 80,
+      "top": 70,
+      "available_width": 920,
+      "content_width": 860
+    }
+  },
+  "concurrency": {
+    "independent_preparations": 3,
+    "shared_media_generations": 2,
+    "local_heavy_renders": 1
+  }
+}
