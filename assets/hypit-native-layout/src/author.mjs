@@ -46,7 +46,7 @@ ${children}
 </svrun>
 `;
   const profile = JSON.stringify({ format: "hypit.runtime-local@1", dataRoot: ".hypit/private-data", endpoints: {
-    "media.local": { use: "@hypit/media-local", config: { defaultConcurrency: 1 } },
+    "media.local": { use: "@hypit/media-local", config: { defaultConcurrency: 1, ffmpegPath, ffprobePath } },
     "html.local": { use: "@hypit/provider-html-local", config: { workers: 1, defaultConcurrency: 1, chromePath, ffmpegPath, ffprobePath } },
   } }, null, 2) + "\n";
   const svs = '<?svml using="@hypit/recipe@1"?>\n<sheet version="1">\n  film.main { background: #142b32; }\n</sheet>\n';

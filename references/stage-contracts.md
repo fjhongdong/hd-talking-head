@@ -31,7 +31,7 @@
 | `cover` | 优先加载项目内 `punk-cover` 生成完整候选；正式发布仍调用 `edit.hd.tools.cover.prepare_cover(job, ...)` | `04-cover/cover-<approved-ratio>.png`, `cover-delivery-raster.png`, `cover-report.json` | 只交付批准比例；实际封面图、五官清楚、隐喻可辨、动作/环境贴题、中文无误 |
 | `speech_cleanup` | `video-use/helpers/transcribe.py` 负责字级转写；项目适配器以 `transcribe.transcribe_job(job, video_use_result=..., invocation=...)` 验收原始结果，再调用 `speech_edit_v2.prepare_cleanup_proposal(job, plan)`，并应用已绑定的 pacing profile | `05-speech-cleanup/` 内完整产物及原始调用证据 | 源视频身份、真实调用、字级时码与覆盖率、删改差异、0.40 秒长停顿切分、预估时长；中间产物不单独报审 |
 | `edit_structure` | `edit.hd.tools.speech_edit_v2.render_edit(job)`；有剪点时必须调用预检报告绑定的 `video-use/helpers/render.py` | `06-edit-structure/edit-plan.json`, `edited-aroll.mp4`, `timeline-map.json` | EDL 真实剪辑、原口播音频主时钟、30ms 音频边缘、原生 9:16 A-roll |
-| `visual_direction` | `edit.hd.tools.visual_plan.prepare_visual_direction(job, director_brief, official_registry)` | `07-visual-direction/visual-plan.json`, `visual-routing.md` | 五类同级语义选择；冻结 `source_bindings`、编译 ShotRecipe v2 |
+| `visual_direction` | `edit.hd.tools.visual_plan.prepare_visual_direction(job, director_brief, official_registry, treatment_path=...)` | `07-visual-direction/visual-plan.json`, `visual-routing.md` | 五类同级语义选择；两轮 Skill 分配检查后冻结 `source_bindings`、编译 ShotRecipe v2 |
 | `visual_canary` | `edit.hd.tools.visual_canary.prepare_visual_canary(job, ...)` | `08-visual-canary/visual-canary.mp4`, `canary-manifest.json`, `segments/` | 不超 30 秒的真实长片段落；只执行已批准配方 |
 | `visual_assets` | `edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2(job, ...)` | `09-visual-assets/asset-manifest.json`, `visual-track.mp4`, `segments/` | 已批准 canary 字节哈希完全一致；严格执行剩余已冻结配方 |
 | `subtitles` | `edit.hd.tools.subtitles_v2.prepare_subtitles_v2(job)` | `10-subtitles/subtitle-plan.json`, `subtitles.webm`, `subtitles.srt` | A-roll 与有口播的 B-roll 共用唯一常规字幕轨；艺术字只能是精确已批准关键词 |
@@ -43,6 +43,8 @@
 ## 内容唯一性与不重复
 
 `02-content-analysis/content-analysis.json` 是唯一语义事实源。封面标题、视觉路由、A-roll 贴片、B-roll 上屏文案和字幕艺术字只能引用已批准 item/source_text/keywords。下游不重新调用 LLM 提炼，不再向用户询问“哪些是重点”。
+
+字幕和高亮关键词仍须精确绑定原稿与实际口播。图形标签可按本句语义改写，但不得隐藏实际屏显文案或把释义塞进关键词：向 `prepare_visual_direction(..., reviewed_visual_text=...)` 传入 `{content_analysis_sha256, entries}`，每条 entry 精确记录 `segment_id/text/source_ref/source_quote/reason`。`source_ref` 只允许当前段已选的 `item:<id>` 或批准的 `thesis`，quote 必须逐字匹配其事实源；记录须覆盖所有非逐字屏显标签。身份、文字或来源变化时重新审阅，不沿用旧记录，不增加人名、金额或能力事实。宿主审阅否定范围、条件和未来设想，机器校验身份不能代替语义判断。审阅记录随正式 `visual-routing.md` 发布并绑定，不增加新审批阶段，也不改变原字幕。
 
 `cover_direction` 是设计方向批准，`cover` 是实际图片批准，二者不可合并。`visual_canary` 是正式段落，`visual_assets` 必须复用其 generation identity 和媒体 SHA-256，不得“照样再做一次”。
 
@@ -142,11 +144,26 @@ cross_kind_replacement: forbidden
 
 预检中的 `video-use-runtime` 和 `video-use-skill` 必须已满足。`prepare_cleanup_proposal` 只在同一 keep 段的转写间隙大于等于 0.40 秒、且原音轨待删区间确实安静时切成多个 EDL keep range，每侧保留 0.08 秒呼吸边缘；转写漏词造成的有声间隙必须保留。口误/重说仍以人工可审的 delete segment 表达。目录存在但入口或阶段绑定失败时不得生成提案。
 
+#### 句间停顿与自然衔接
+
+首次清理就检查句间节奏，完成后再冻结视觉计划；用户要求原样保留停顿时遵从本次要求。自动静音切分只是第一遍处理，不代表带呼吸声、低底噪的长空白已清理完。宿主结合已校对词、完整句意和原声复核明显拖长的等待，不调低静音阈值来替代判断，不仅凭标点或 ASR 词间距删声音。
+
+- 普通知识口播可优先复核约 0.8 秒以上的句间间隔，特别是 1～2 秒的空白；它是找候选的参考，不是自动删除线。反问、强调、情绪转折、必要吸气及尚未讲完的语气要保留。长空白收紧后可先以约 0.3～0.5 秒作为核听起点，再按前句收尾与下句起声调整；不统一压成固定值，不以剪掉最多秒数为目标。
+- 只剪已核对的空白中段，保留句尾、句首与呼吸边缘，不改变原语速。普通停顿只通过切分 `keep` 段和 `breathing_padding` 表达，不放入要求命中有效语音的 `reviewed_cut_ranges`，也不新增删词段。
+- 在词索引 `k` 的间隔内删除源时间 `[a,b)` 时，将原 keep 拆为连续的两段：左段止于 `k`，右段始于 `k`；两段的 `source_start/source_end` 仍精确取各自首末词时码。左段 `after=a-words[k-1].end`，右段 `before=words[k].start-b`，外侧 padding 沿用原段。两个余量须非负；两段文字分别取各自词原文，词序、词数和原有删改不变。不要用扩大词时码或改成空字符串表示剪切。
+- 使用现有 `edit_timeline.validate_edit_plan` 校验提案，再交给 `speech_edit_v2.prepare_cleanup_proposal` 和正式 `render_edit` 调用已绑定的 `video-use` renderer。沿用其 30ms 音频边缘淡化与声画共同剪辑，不自写拼接器，不只裁音轨或最终 MP4。末段遵从声明的 `breathing_padding.after`，不自动延至原片结尾。
+
+已有成片返修时，先从当前成片定位间隔，再通过旧 `timeline-map.json` 映回原片词锚；由正式 `revise(speech_cleanup)` 返回清理阶段。重新发布时消费 lineage 绑定的当前校对词及校对历史，不退回原始 Scribe 错字。保存本轮剪点与已有维护输入即可，不复制上一 Job 的具体词索引、秒数或独立制作脚本。主时钟变化后的视觉复用及字幕对齐见[停顿返修后的时钟对齐](visual-revision-reuse.md#停顿返修后的时钟对齐)。
+
+内部核对每个新剪口前后保留词的源音频范围没有缩短，再以连续上下文核听衔接；不能仅凭总时长变短判定自然。已有转写与原声足够时不再转写；核对无歧义的常规停顿不逐处询问用户，也不新增收费调用。未实际核听时如实说明，不把波形或机器检查称为听感验收。
+
 **验收**：转写准确性、删改边界、第二次转写发现的重字/重说、局部核听样片和预计剪后时长。
 
-#### 已确认的转写文字更正
+#### 转写文字校对
 
-只用于“原声正确、转写文字错误”，不删除音节、不改变词数量或时码。用户明确提出更正后，先读取当前登记的 `word-transcript.json`，保存其 `path`、`sha256`、`bytes` 和待改词的原始 `text/start/end`。使用 `revise(job, "speech_cleanup", <用户修改意见>)` 返回该阶段，重新加载并确认 `needs_revision`；更正源身份必须与此时 `lineage` 中的转写记录一致。不要直接编辑源 JSON 或手写 workflow。
+只用于“原声正确、转写文字错误”，不删除音节、不改变词数量或时码。默认以本期原稿校对同音错字、术语、大小写及误识别标点；宿主结合原声上下文和二次 ASR 自动判断并执行，不向用户列字词选项，不要求每处更正批准。用户主动更正也使用同一入口。原稿是文字校对依据，不是替换实际口播的时间线：保留真实的口语补充、语气词和表达顺序；未念出的内容不能补入字幕。实际念错、漏念或改变含义时交回清理剪辑处理，不能用正确字幕掩盖错误声音；无法判明且影响含义时报告具体问题，不提供无依据的字词选择。
+
+先读取当前登记的 `word-transcript.json`，保存其 `path`、`sha256`、`bytes` 和待改词的原始 `text/start/end`。使用 `revise(job, "speech_cleanup", <本次校对依据或用户修改意见>)` 返回该阶段，重新加载并确认 `needs_revision`；更正源身份必须与此时 `lineage` 中的转写记录一致。不要直接编辑源 JSON 或手写 workflow。自动校对原因如实标为宿主按原稿处理，不伪造用户逐字确认。
 
 在当前 Job 的独立维护输入位置保存 UTF-8 JSON manifest（不放进受控的七件产物目录）。精确字段如下；尖括号及示例时码必须替换为实际值：
 
@@ -163,7 +180,7 @@ cross_kind_replacement: forbidden
     "word_end": 1,
     "expected_words": [{"text": "openai", "start": 0.2, "end": 0.8}],
     "replacement_texts": ["OpenAI"],
-    "reason": "<本次核听和用户确认的更正依据>"
+    "reason": "<本期原稿对应文本与本次校对证据；用户主动更正时附原意>"
   }]
 }
 ```
@@ -189,6 +206,8 @@ cross_kind_replacement: forbidden
 ### 7. `visual_direction`
 
 **输入**：已批准 content analysis、edit plan、timeline map，以及五类候选的 Job 内记录。
+
+代码/AI B-roll 先执行[两轮跨 Skill 选型](broll-capability-router.md#唯一选型入口与记录)，把本期新增、复用和资料镜头放入同一整片协调。正式入口显式传入当前 Job 的 treatment；缺记录或绑定偏离时先停止，不先生成、冻结或发布再补选型理由。原生版式和动作保留，不把不同 Skill 统一压成同一套卡片布局。
 
 **执行**：先完成语义角色，再对 `local_material`、`official_material`、`code_generated`、`external_stock`、`ai_generated` 同级候选做语义判断。每段选择 `none` / `single` / `hybrid`；草案选中外部素材或 AI provider 时，先复核当前 Job 连接，再搜索、下载或生成并写入 Job。实际素材与记录齐全后冻结 `source_bindings`，编译 ShotRecipe v2，然后才报审。`code_generated` 组件冻结依赖 Skill 入口和调用记录；`external_stock` 冻结许可记录；不设来源优先级或配额，不做跨类替换。
 
@@ -237,11 +256,11 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli review-subtitles --job "<jo
 将返回的 `revision`、`artifact` 与当前字幕产物一起报审，在原有“注意”栏展示 `terminology_review.doubts`：每项列出 `observed`、候选 `expected`、原因及 `source_range`。该范围是原口播源时间（秒），`word_indices` 是源转写词索引，不是剪后视频或带封面成片时码；核听原片对应范围，不能直接跳到成片同一秒数。
 
 - `available` 且疑点为空：只表述“本轮规则未发现术语疑点”，不能宣称全文准确。规则只覆盖明确历史更正可能重现和批准术语的大小写变体，不是完整语义校对。
-- 有疑点：结合原声、上下文和历史更正来源核听；`expected` 是待确认候选，不自动替换字幕或原声。同一旧词在不同上下文有不同更正目标时，保留各项，不合并为全局替换。
+- 有疑点：结合本期原稿、原声上下文和历史更正来源核对；`expected` 只是检测候选，检测器不直接改字。确定为转写错误后，宿主按上面的文字校对接口自动处理，不再索取字词选择。原稿和实际口播含义不同不能只改字幕。同一旧词在不同上下文有不同更正目标时，保留各项，不合并为全局替换。
 - `legacy_report_unavailable`：明确说明“旧字幕产物没有术语报告，未证明已检查”；不当作无疑点，不补写旧产物或重签批准。
 - 命令失败或报告身份变化：停止报审，报告错误并重新核对当前 Job；不直接读取未经验证的 JSON 绕过检查，也不重新生成已批准资产来掩盖失败。
 
-该检查并入当前字幕本地 QA，不增加独立确认。用户指出源转写错误时，沿已有 `speech_cleanup` 修订链处理；运行时更正入口为 `apply-cleanup-corrections --job <job-dir> --corrections <manifest>`，必须按当前运行时合同准备绑定源转写身份的更正 manifest，不把疑点 JSON 直接作为 manifest。源音视频中真实口吃或念错不能靠改文字修复，仍需清理阶段的精确剪点和核听。返回上游后按既有依赖重审，不沿用已失效的字幕批准。
+该检查并入当前字幕本地 QA，不增加独立确认。宿主发现或用户指出源转写错误时，沿已有 `speech_cleanup` 修订链处理；运行时更正入口为 `apply-cleanup-corrections --job <job-dir> --corrections <manifest>`，必须按当前运行时合同准备绑定源转写身份的更正 manifest，不把疑点 JSON 直接作为 manifest。源音视频中真实口吃或念错不能靠改文字修复，仍需清理阶段的精确剪点和核听。返回上游后按既有依赖重审，不沿用已失效的字幕批准。
 
 ### 11. `preview`
 

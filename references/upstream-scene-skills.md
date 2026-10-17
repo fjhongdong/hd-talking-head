@@ -8,10 +8,12 @@
 
 保留既有边界：HyperFrames 负责透明 A-roll/轻组件，TalkCraft 负责精确数据，Doudou 负责白板与思维导图，Paper 负责拼贴分层，Lovart Kling O1 负责已批准的场景动作。它们都是实际调用入口，不互相借用 producer 身份。父级仍统一处理圆窗、原口播和全片唯一字幕；场景输出无声、整屏、1080×1920。
 
+手绘圈注的静态说明须避开整只手、手腕和投影的运动覆盖区，不只避笔尖或检查结束帧。被圈标题保持在圈注目标内，辅助说明另找可读位置；不能为避让把标题移出圈外。当前 Job 的文字位置可做薄排版，原生手部、圈注和动作时钟不变，渲染后核对实际运笔过程。
+
 ### 先识别能力类型，再交给上游制作
 
 - **现成模板/组件**：使用真实可编辑槽及原生参数，不重画已存在的动作。
-- **风格创作工具包**（Lemo）：依照其完整导演和制作流程调用原生引擎、风格语法和动作工具；父级只提供内容参数、静态放置、公开 props 与 start/end 时钟，不在项目内重写场景动作。
+- **已核对的风格创作工具包**：只有具体原生场景或公开组件已经接通时，才依照其完整导演和制作流程调用；父级只提供内容参数、静态放置、公开 props 与 start/end 时钟，不在项目内重写场景动作。历史 Lemo/OneTake 记录不自动构成当前候选。
 - **生成服务**：使用所选 Skill 的提示词与生成工作流，沿用具体上传、模型和费用授权。
 
 不得只借一个 renderer 再自写场景、动作或时序；没有可调用的原生动作时，批准前换候选或保留 A-roll，批准后失败停当前 route 进入 revision。
@@ -56,7 +58,7 @@
 
 ### Adu 原生对比组件
 
-新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.1.0`；旧 `adu_motion_adapter.py` 不进入新选型。新生成时桥接层复制固定提交 `4d9777d799c73e4ed212b2ecb6ec6cece33f98a7` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线，不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。
+新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.2.0`；旧 `adu_motion_adapter.py` 不进入新选型。新生成时桥接层复制固定提交 `31a03c36b5f510303305f9e931c448b75baa52d5` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线，不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。新版原生色彩检查要求 FFmpeg 9；只绑定项目 `skill-development/runtime/ffmpeg-9.0.2/bin/`，不替换系统 FFmpeg。由当前所选 Python 运行原生 `color_management.py --export-plan` 并检查通过后才允许生成；未准备时停止，不绕过门禁。
 
 此入口只表达 `old_new_comparison`：两侧各 1–3 项，总计 2–6 项，5–10 秒。brief 包含 `source_binding / template_request / composition`、短 `title`、`left/right={title,items}`、整数 `left_frame/right_frame/strike_frame` 及短 `stamp`。公开入口的盖章固定发生于 `strikeAt + .35s`，不得另造盖章时钟。没有真实前后对比、内容过长、动作与词锚不相容时换候选，不改原生过程。
 
@@ -64,11 +66,15 @@
 
 用户要求升级依赖后，Playwright `1.64.0` 放在我们自己的 `<project>/skill-development/runtime/adu-native`，使用本包 `assets/adu-native-runtime` 的精确锁文件；原仓库的 `1.58.2` 和锁文件保持不动。准备入口仍为 `ensure_visual_broll_skills.py --skill adu-motion-video`，只准备项目内环境。真实原生调用已输出 144 帧、6 秒、1080×1920/24fps、无声、SAR 1:1，fullrange→limited 转换保持时长不变。开发样片位于 `<project>/edit/verify/native-scene-connect-ke6PEQ/Adu-原生对比调用样片.mp4`，只是调用和布局检查，不代表用户已认可效果，也不替换正式成片。
 
+正式执行器的 `--output` 是受控文件描述符，不是可派生旁路文件的普通路径。Adu 的完成日志输出到 stdout，失败日志仍保留在独立工作目录；不得在 `/dev/fd/N` 后追加日志后缀。原生渲染已完成、但包装器日志收尾失败时，先核对保留的原生视频、当次冻结输入和子命令退出记录，再新增一份明确区分“原生生成完成／包装器收尾失败”的恢复记录，通过现有 `create_existing_adapter` 导入；不改旧失败日志或 transaction，不重新渲染。
+
+新版原生输出可能未写 SAR。我们的交接层仅在缺失时，用项目 FFmpeg 的视频流复制与 `h264_metadata=sample_aspect_ratio=1/1` 补齐方形像素及 9:16 显示标记，不重新编码画面；明确的非 1:1 比例仍由严格媒体检查拒绝。恢复已有制品时保留原片，在独立新副本执行同一元信息处理，记录原件与派生件及实际命令，核对解码画面、帧数、时长与颜色未变，再绑定新副本；不放宽通用探针或重做原生动效。
+
 ### Hypit 原生计划对话
 
-唯一来源为 `<project>/skill-development/research/hypit-source` 的固定提交 `85e01c76716498e6ec5b8bdfb6b374ca67f0195a`，发行版 `0.3.1`。选中后完整读取 `skills/hypit/SKILL.md`、其发行/本地 runtime/渲染/字体/Build 指引，以及 `examples/semantic-composition/packages/chat-scene` 的原生说明。准备使用 `ensure_visual_broll_skills.py --skill hypit-native-chat`：缺失时仅在项目本地准备固定源码、pnpm 10.33.0 冻结依赖及原生 compiled chat 包，不下载浏览器，不开生成服务。
+唯一来源为 `<project>/skill-development/research/hypit-source` 的固定提交 `dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0`，发行版 `0.3.1`。选中后完整读取 `skills/hypit/SKILL.md`、其发行/本地 runtime/渲染/字体/Build 指引，以及 `examples/semantic-composition/packages/chat-scene` 的原生说明。准备使用 `ensure_visual_broll_skills.py --skill hypit-native-chat`：缺失时仅在项目本地准备固定源码、pnpm 10.33.0 冻结依赖及原生 compiled chat 包，不下载浏览器，不开生成服务。
 
-`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.1.0`、`HTMLCanvas`、`custom_fallback / structural`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，新生成只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
+`scripts/hypit_native_adapter.py` 的 `create_adapter/create_binding/create_artifact_probe` 登记为 `hypit-native-chat`，版本 `1.2.0`、`HTMLCanvas`、`custom_fallback / structural`，源码固定为 `dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0`。本项目 executor 另需该依赖的同名注册；Skill 包不包含父级运行时，不借 Adu 或其他身份执行。固定入口为 `scripts/render_hypit_native.mjs`，新生成只调用 Hypit 原生 `build` 与 `get`，不借浏览器 renderer 自写聊天动效。
 
 输入为 `source_binding / template_request / composition`、短 `title`、2–4 项 `messages={sender,text,side,frame}`，仅适用于 `plan_change_dialogue`。每条消息最多 28 字，5–10 秒；到达帧升序，最终消息须保留原生入场及阅读时间。原生固定副标题 `A small change of plan` 保持原样，不能用于不涉及改变计划的普通通知、流程或数据图。消息出现、缩放、滚动和状态点的动作均为原生 chat-scene；独立父级 layout 只把完整 540×480 画板静态 scale(2)，放于 1080×1920 的 y=80，给圆窗与唯一字幕留空间。不改原生 HTML、CSS、setup、data 或动作。
 
@@ -77,6 +83,18 @@
 原生 HTML-video 即使没有 AudioTrack，也会封装一条静音 AAC；我们的交接层只复制视频流、去掉该音轨，并以 H.264 元信息写明 SAR 1:1，不重编码、不 retime、不改变动作。只关闭本次私有 runtime 与它的程序，不影响共享进程。异常目录和日志保留，停止当前路线；已完成的原生 Build 直接取回，不重做动效。
 
 当前唯一真实 Build 为 `bld_20261011T050711371Z_04E73B25A5`，原生已完成 144 帧；修正我们自己的结果接法后直接取回同一结果，没有第二次生成。开发产物为 `<project>/edit/verify/native-scene-connect-ke6PEQ/Hypit-原生计划对话样片-无声.mp4`，6 秒、1080×1920/24fps，样片对话是调用测试，不作为本期口播或用户已认可效果。未修改正式 Job、开头、贴片、封面或已验收成片。
+
+### HyperFrames 原生聊天与屏幕流程
+
+Python 原生入口同样经冻结 stdin 在项目目录之外执行，须由 adapter 显式传入 `--skill-root`，再从该目录导入自有 `hyperframes_runtime`；不能依赖当前目录、环境里的模块路径或 stdin 的 `__file__`。启动检查使用同一 stdin/工作目录/精简环境，不能以普通目录中的 import 代替。原生 CLI、格式交接和探针的真实命令及完整输出在失败时保存在 `/tmp/hd-native-hf-*/failure-log.json`，绑定本次 brief 与原声时窗；失败目录及已产出的视频保留，不自动重试。成功后才清理这次专用临时目录。
+
+普通申请与补充资料的聊天不走 Hypit 的固定“改变计划”场景。可调用 `hyperframes_native_adapter` 的 `hyperframes/chat-message` 原生组件；按原生 `type/text/tail/delivered` 内容槽、独立实例起点和静态宿主布局编排，不修改其 GSAP 入场。组件本地约 0.4 秒才显示消息，词锚须计入该延迟并查看实际首个可见帧，不能把宿主 start 当作显示时刻。宿主根使用唯一 ID，明确每个实例的尺寸，避免通用 `#root` 样式污染右对齐气泡。
+
+`hyperframes/screen-flow-carousel` 接受 2–5 个静态屏幕内容槽，以及公开 `screens/captions/cues/accent/exit` 参数。轨道推进、缩放和焦点变化均由原生组件执行；宿主只提供真实内容、静态外观和公开切换时间，不重排内部动画。原生有 0.9 秒入场和最长 0.84 秒切换，cues 会按可用时窗夹取；实际画面需核对词锚与末屏阅读时间。不能用默认英文或无意义骨架替代本句语义，也不能虚构办理完成。
+
+这两条入口冻结本次实例输入，静态配色、字号和版式属于父级宿主；编排身份仍为 `custom_fallback / structural`，不冒充通用整屏模板。完整竖屏场景合成使用 `full_frame`，保留父级圆窗、原声和唯一字幕。
+
+HyperFrames 优先读取子根自己的公开 `data-duration`，外层挂载时长不能覆盖它。时窗不同于默认值时，仅在 Job 自有实例中设置公开的根及 clip 时长元数据；上游仓库、原生脚本、动作、曲线和阶段算法保持不变，禁止全局替换脚本中的默认数字。分别记录上游来源与适配后实例身份，不能再宣称实例逐字节等于原版。实际检查早、中、晚词锚和退出前画面；输出帧数正确但子组件提前退场仍不合格。若必须改逻辑、变速、循环或冻结末态才能适配，则换候选。
 
 ### 已完成原生制品复用
 
@@ -112,7 +130,7 @@ Lemo/OneTake 的历史共用适配器保留以下固定来源；新的 Adu 只�
 | `lemo-opuscar` | `f3c590dffab39419e2f3018416706e046986fe11` | `node core/render/video.mjs <scene>` |
 | `onetake` | `cf09bde3e392c9aa32c4157f80cdbe1fa556685e` | `.venv/bin/python scripts/render.py index.html` |
 
-依赖由 `ensure_visual_broll_skills.py` 在项目本地自动准备，脚本内固定 render 包版本；禁止全局安装、worktree 共享、自动更新或运行时联网拉取。Lemo 复用项目 Chrome，不运行自动 reset/setup；OneTake 使用项目 Python 3.12。两套依赖必须同时登记到正式 executor 与 `visual_plan`，运行时不支持即停止，不能只带 Skill 文件声称跨机器可执行。
+依赖由 `ensure_visual_broll_skills.py` 在项目本地自动准备，脚本内固定 render 包版本；Skill 新版在环境检查前按[更新规则](dependency-preflight.md#依赖-skill-更新)处理，不在渲染中联网拉取或切换。禁止全局安装和 worktree 共享。Lemo 复用项目 Chrome，不运行自动 reset/setup；OneTake 使用项目 Python 3.12。两套依赖必须同时登记到正式 executor 与 `visual_plan`，运行时不支持即停止，不能只带 Skill 文件声称跨机器可执行。
 
 本地适配合同由 `scripts/upstream_scene_adapter.py` 实现，原生 runner 由适配器调用（API 优先，CLI 仅用于探测和真实执行）：
 
@@ -145,13 +163,13 @@ skill-development/hd-talking-head/assets/adu-motion-video/style.css
 
 ## Wise Motion 参数组件（接入候选）
 
-先读 `<project>/skill-development/vendor/wise-motion/SKILL.md`、`REMOTION.md` 和公开内容槽说明。依赖检查／准备走 `ensure_visual_broll_skills.py --project-root <project> --skill wise-motion`；只在项目的 `skill-development/runtime/wise-motion` 安装固定 npm 包 `wise-motion@0.1.12`、Remotion `4.0.532`、React `19.3.0`。使用随包锁文件与原生素材安装脚本，不调用自动降级安装器、不升级父级 4.0.520。Git 文档来源固定为 `096b220cbe021cbba2d38e8a48fa3651ab8edbb7`，运行包身份单独记录；不假定 npm 包与该提交等价。
+先读 `<project>/skill-development/vendor/wise-motion/SKILL.md`、`REMOTION.md` 和公开内容槽说明。依赖检查／准备走 `ensure_visual_broll_skills.py --project-root <project> --skill wise-motion`；只在项目的 `skill-development/runtime/wise-motion-0.1.19` 安装固定 npm 包 `wise-motion@0.1.19`、Remotion `4.0.532`、React `19.3.0`。使用随包锁文件与原生素材安装脚本，不调用自动降级安装器、不升级父级 4.0.520。Git 文档来源固定为 `2f43143965a923c97a0a945d8588a5f46b59ea53`，运行包身份单独记录；不假定 npm 包与该提交等价。连续五卡环行明确选公开 `variantId='original'`；新版默认 `aboutlove-28` 是不同的词球场景，不能因为同名 `orbit` 就替换已批准画面。
 
 当前接入候选是 `orbit` 原生主体组件：五张带图形符号的卡片连续环行，位置、侧转、深度、大小和明暗由 `catalog/effects/continuous.js` 原样提供。原生画板为 640×360，周期 6000ms、`loop=true`，公开速度为 0.5–2。循环组件按真实口播时窗持续运行，不要求台词凑足整数周期，也不冻结末态补时；非循环候选仍须保留完整原生过程。原生卡片编号只是图形编号，不代表真实任务或竞品数量。
 
 按原 Skill 的 `scripts/match.mjs` 查候选，再用 `scripts/show.mjs <id> --details` 核对真实主体动作和内容限制，并对照实际 npm 包。`orbit` 没有内容槽；只能传公开 props，文案和静态 AI 标识由父级编排。它可用于“持续关注多项信息”的示意，不是自动导演，也不能单独表达任务接管、发现变化或推送通知。文字逐字显现、划线和静态图标不能替代主体动作。固定 Siri 音乐指令、地中海雷达捕获等场景不因看起来会动就用于本期监看语义；静止飞机和微弱折翼也不能当作清晰主体动作。
 
-调用 `wise_motion_adapter.create_adapter(project_root, node_executable, brief_loader)`、`create_binding(adapter, brief_bytes, reference_sample)` 和 `create_artifact_probe(ffprobe)`，登记到现有 `component_adapters['code_generated']['wise-motion']`。当前 adapter 版本为 `3.0.0`、模板标识为 `wise-motion/orbit-tracking-component`。brief 沿用 `source_binding / template_request / composition`，增加 `theme='light'`、短 `title`、三项 `context_labels` 和唯一 `layers` 项：`id='orbit' / content={} / from=0 / transparent=false / speed / layout`；请求家族为 `continuous_tracking`，不提供虚构业务数值。`layout` 保持 640×360 等比画板，位于竖屏安全区域。真正运动的卡片只由公开 `WiseMotionEffect` 生成，父级只做静态位置与文案；输出无声、不透明 1080×1920/24fps，父级统一接圆窗、原声与唯一字幕。
+调用 `wise_motion_adapter.create_adapter(project_root, node_executable, brief_loader)`、`create_binding(adapter, brief_bytes, reference_sample)` 和 `create_artifact_probe(ffprobe)`，登记到现有 `component_adapters['code_generated']['wise-motion']`。当前 adapter 版本为 `3.1.0`、模板标识为 `wise-motion/orbit-tracking-component`。brief 沿用 `source_binding / template_request / composition`，增加 `theme='light'`、短 `title`、三项 `context_labels` 和唯一 `layers` 项：`id='orbit' / content={} / from=0 / transparent=false / speed / layout`；请求家族为 `continuous_tracking`，不提供虚构业务数值。`layout` 保持 640×360 等比画板，位于竖屏安全区域。真正运动的卡片只由公开 `WiseMotionEffect` 生成，父级只做静态位置与文案；输出无声、不透明 1080×1920/24fps，父级统一接圆窗、原声与唯一字幕。
 
 正式执行器通过标准输入运行冻结入口，工作目录不是 Skill 目录。适配器必须显式传递 `--skill-root`；桥接脚本不能从 `import.meta.url` 推导资源目录。此纯参数组件使用 `media_loader=None`，不登记不存在的 Job 媒体。
 

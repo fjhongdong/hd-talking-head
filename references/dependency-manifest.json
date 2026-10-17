@@ -2,6 +2,42 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "pillow-runtime",
+      "kind": "python_module",
+      "required": true,
+      "stages": ["job-start", "cover-direction", "cover", "subtitles", "preview", "delivery"],
+      "target": "PIL",
+      "required_level": "callable",
+      "install": {"method": "python-package", "package": "Pillow", "version": "12.3.0", "approval_required": false}
+    },
+    {
+      "id": "requests-runtime",
+      "kind": "python_module",
+      "required": true,
+      "stages": ["job-start", "speech-cleanup", "edit-structure"],
+      "target": "requests",
+      "required_level": "callable",
+      "install": {"method": "python-package", "package": "requests", "version": "2.34.2", "approval_required": false}
+    },
+    {
+      "id": "numpy-runtime",
+      "kind": "python_module",
+      "required": true,
+      "stages": ["job-start", "cover-direction", "cover", "edit-structure"],
+      "target": "numpy",
+      "required_level": "callable",
+      "install": {"method": "python-package", "package": "numpy", "version": "2.2.6", "approval_required": false}
+    },
+    {
+      "id": "opencv-runtime",
+      "kind": "python_module",
+      "required": true,
+      "stages": ["job-start", "cover-direction", "cover"],
+      "target": "cv2",
+      "required_level": "callable",
+      "install": {"method": "python-package", "package": "opencv-python-headless", "version": "4.12.0.88", "approval_required": false}
+    },
+    {
       "id": "hypit-native-chat-source",
       "kind": "project_path",
       "required": false,
@@ -21,7 +57,7 @@
       "entrypoints": ["scripts/render_hypit_native.mjs", "scripts/hypit_native_adapter.py", "scripts/native_completed_artifact.py", "assets/hypit-native-layout/src/activation.js"],
       "binding_probes": [{
         "entrypoint": "scripts/render_hypit_native.mjs",
-        "producer_version": "1.1.0",
+        "producer_version": "1.2.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
         "command": ["{python}", "{dependency_root}/scripts/hypit_native_adapter.py", "--probe", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -38,7 +74,7 @@
       "entrypoints": ["scripts/render_wise_motion.mjs", "scripts/wise_motion_adapter.py", "assets/wise-motion-runtime/index.jsx"],
       "binding_probes": [{
         "entrypoint": "scripts/render_wise_motion.mjs",
-        "producer_version": "3.0.0",
+        "producer_version": "3.1.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "Remotion"},
         "command": ["{python}", "{dependency_root}/scripts/wise_motion_adapter.py", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -77,7 +113,7 @@
       "entrypoints": ["scripts/render_adu_native.mjs", "scripts/adu_native_adapter.py", "scripts/native_completed_artifact.py", "assets/adu-native-runtime/package-lock.json"],
       "binding_probes": [{
         "entrypoint": "scripts/render_adu_native.mjs",
-        "producer_version": "2.1.0",
+        "producer_version": "2.2.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
         "command": ["{python}", "{dependency_root}/scripts/adu_native_adapter.py", "--probe", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -105,7 +141,7 @@
       "entrypoints": ["scripts/huashu_motion_adapter.py"],
       "binding_probes": [{
         "entrypoint": "scripts/huashu_motion_adapter.py",
-        "producer_version": "1.1.0",
+        "producer_version": "1.2.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
         "command": ["{python}", "{dependency_root}/scripts/huashu_motion_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "huashu-art-motion"],
         "timeout_seconds": 30
@@ -178,7 +214,7 @@
       "entrypoints": ["scripts/hyperframes_native_adapter.py"],
       "binding_probes": [{
         "entrypoint": "scripts/hyperframes_native_adapter.py",
-        "producer_version": "1.1.0",
+        "producer_version": "1.3.0",
         "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HyperFrames"},
         "command": ["{python}", "{dependency_root}/scripts/hyperframes_native_adapter.py", "--project-root", "{project_root}"],
         "timeout_seconds": 30
@@ -836,7 +872,7 @@
       "binding_probes": [
         {
           "entrypoint": "scripts/render_hyperframes_notification.cjs",
-          "producer_version": "1.0.0",
+          "producer_version": "1.1.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
@@ -857,16 +893,16 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{reference_root}/hyperframes",
+            "{project_root}/skill-development/runtime/hyperframes-0.8.167",
             "--runtime-revision",
-            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
             "--renderer-version",
-            "0.8.19"
+            "0.8.167"
           ]
         },
         {
           "entrypoint": "scripts/render_hyperframes_chatgpt_exchange.cjs",
-          "producer_version": "1.0.0",
+          "producer_version": "1.1.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
@@ -887,16 +923,16 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{reference_root}/hyperframes",
+            "{project_root}/skill-development/runtime/hyperframes-0.8.167",
             "--runtime-revision",
-            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
             "--renderer-version",
-            "0.8.19"
+            "0.8.167"
           ]
         },
         {
           "entrypoint": "scripts/render_hyperframes_hw_pipeline.cjs",
-          "producer_version": "1.0.0",
+          "producer_version": "1.1.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
@@ -917,11 +953,11 @@
             "--producer-version",
             "{producer_version}",
             "--runtime-root",
-            "{reference_root}/hyperframes",
+            "{project_root}/skill-development/runtime/hyperframes-0.8.167",
             "--runtime-revision",
-            "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+            "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
             "--renderer-version",
-            "0.8.19"
+            "0.8.167"
           ]
         }
       ],
@@ -1000,7 +1036,7 @@
       "entrypoints": ["scripts/paper_hyperframes_adapter.py", "scripts/paper_motion_guard.py"],
       "binding_probes": [{
         "entrypoint": "scripts/paper_hyperframes_adapter.py",
-        "producer_version": "1.0.0",
+        "producer_version": "1.1.0",
         "adapter_identity": {
           "adapter_type": "ReferenceProcessAdapter",
           "approved_executor": "reference_adapter",
@@ -1147,6 +1183,24 @@
         "approval_required": true
       }
     }
+  ],
+  "preparation": [
+    {"id": "punk-cover-project-skill", "script": "scripts/ensure_punk_cover.py", "arguments": []},
+    {"id": "doudou-whiteboard-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "doudou-remotion-whiteboard"]},
+    {"id": "gbro-collage-broll-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "gbro-collage-broll"]},
+    {"id": "hyperframes-native-adaptation", "script": "scripts/hyperframes_runtime.py", "arguments": ["--prepare"]},
+    {"id": "wise-motion", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "wise-motion"]},
+    {"id": "huashu-art-motion-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "huashu-art-motion"]},
+    {"id": "adu-motion-video-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "adu-motion-video"]},
+    {"id": "hypit-native-chat-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "hypit-native-chat"], "node_tool": {"package": "pnpm", "version": "10.33.0"}},
+    {"id": "lemo-opuscar-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "lemo-opuscar"]},
+    {"id": "onetake-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "onetake"]}
+  ],
+  "runtime_checks": [
+    "hypit-native-chat", "wise-motion", "adu-motion-video", "huashu-art-motion",
+    "lemo-opuscar", "onetake", "hyperframes-native-adaptation", "talkcraft-native-adaptation",
+    "doudou-remotion-adapter", "html-video-reference", "hyperframes-adapter",
+    "paper-collage-hyperframes-adapter", "paper-collage-adapter", "whiteboard-video-adapter"
   ],
   "dynamic_checks": [
     {

@@ -3,7 +3,7 @@ import hashlib,json,sys,tempfile
 from pathlib import Path
 from types import SimpleNamespace
 hf=None; check_motion=None; ENTRY_PATH=None; SKILL=None
-ENTRY='scripts/paper_hyperframes_adapter.py'; DEPENDENCY_ID='paper-collage-hyperframes'; VERSION='1.0.0'; ROUTE='paper-collage-ad/hyperframes'; SHARED_SHA='9a659897e0608b2a108c1e0fa365e4c18f1d79e5dba7ced18aabd7e923bb2edb'
+ENTRY='scripts/paper_hyperframes_adapter.py'; DEPENDENCY_ID='paper-collage-hyperframes'; VERSION='1.1.0'; ROUTE='paper-collage-ad/hyperframes'; SHARED_SHA='f9ec0387f2f1a97285698c0b816b8e168acb37d47787dfe3f7f9b4baaeda74d4'
 def _ensure(project):
  global hf,check_motion,ENTRY_PATH,SKILL
  scripts=Path(project).resolve()/'skill-development/hd-talking-head/scripts'
@@ -25,7 +25,7 @@ def create_adapter(project_root,python_executable,brief_loader):
   return payload
  def media(job,recipe,component,payload):
   b=hf.validate_brief(payload); return tuple(ReferenceProcessMedia(media_ref=r['media_ref'],job_path=r['job_path'],sha256=r['sha256']) for r in [b['entry'],*b['assets']])
- return ReferenceProcessAdapter(adapter_id='paper-hyperframes-frozen-v1',dependency_id=DEPENDENCY_ID,approved_executor='reference_adapter',dependency_root=SKILL,entrypoint=ENTRY,entrypoint_sha256=entry_sha,producer_version=VERSION,primary_renderer='HyperFrames',renderer_version='0.8.19',artifact_media_type='video',launcher=launcher,launcher_sha256=hf.sha(launcher),brief_loader=guard,media_loader=media,self_contained_wrapper=True,timeout_seconds=300,argv_template=('{launcher}','{entrypoint}','--brief','{brief_path}','--media-manifest','{media_manifest_fd}','--project-root',str(project),'--node',str(paths['node']),'--ffmpeg',str(paths['ffmpeg']),'--ffprobe',str(paths['ffprobe']),'--node-sha256',runtime['node'],'--ffmpeg-sha256',runtime['ffmpeg'],'--ffprobe-sha256',runtime['ffprobe'],'--output','{output_path}'))
+ return ReferenceProcessAdapter(adapter_id='paper-hyperframes-frozen-v1',dependency_id=DEPENDENCY_ID,approved_executor='reference_adapter',dependency_root=SKILL,entrypoint=ENTRY,entrypoint_sha256=entry_sha,producer_version=VERSION,primary_renderer='HyperFrames',renderer_version=hf.RUNTIME_VERSION,artifact_media_type='video',launcher=launcher,launcher_sha256=hf.sha(launcher),brief_loader=guard,media_loader=media,self_contained_wrapper=True,timeout_seconds=300,argv_template=('{launcher}','{entrypoint}','--brief','{brief_path}','--media-manifest','{media_manifest_fd}','--project-root',str(project),'--node',str(paths['node']),'--ffmpeg',str(paths['ffmpeg']),'--ffprobe',str(paths['ffprobe']),'--node-sha256',runtime['node'],'--ffmpeg-sha256',runtime['ffmpeg'],'--ffprobe-sha256',runtime['ffprobe'],'--output','{output_path}'))
 def create_binding(adapter,payload,sample):
  b=hf.validate_brief(payload)
  if b['upstream_route']!=ROUTE or b['composition']['alpha']: raise ValueError('Paper HyperFrames requires the non-alpha paper route')

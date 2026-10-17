@@ -143,6 +143,58 @@ def require_active_material(workspace, material_id, expected_sha256=None):
     return item
 
 
+def _verify_release_migrations(job, context, initial_release):
+    """Keep initialization immutable; accept only proven release-only migrations."""
+    from edit.hd.tools.contract_artifacts import sha256_json
+
+    def valid_release(release):
+        return (isinstance(release, dict)
+                and set(release) == {"root", "release_id", "manifest_sha256"}
+                and release["root"] == context["skill_release"]["root"]
+                and isinstance(release["release_id"], str) and bool(release["release_id"])
+                and isinstance(release["manifest_sha256"], str)
+                and bool(_SHA.fullmatch(release["manifest_sha256"])))
+
+    if not valid_release(initial_release):
+        raise MaterialChangeError("invalid initialization release identity")
+    previous = copy.deepcopy(context)
+    seen = set()
+    revision_limit = job.revision
+    while previous["skill_release"] != initial_release:
+        digest = sha256_json(previous)
+        if digest in seen:
+            raise MaterialChangeError("release migration chain cycles")
+        seen.add(digest)
+        paths = list((job.job_dir / "manifests").glob(f"context-migration-r*-{digest[:12]}.json"))
+        if len(paths) != 1:
+            raise MaterialChangeError("release migration audit missing or ambiguous")
+        audit = _json(paths[0])
+        required = {"reason", "workflow_revision", "current_stage", "context_before_sha256",
+                    "context_after_sha256", "skill_release_before", "skill_release_after",
+                    "runtime_module_changes", "provider_config_changed", "workflow_changed"}
+        if (set(audit) != required or not isinstance(audit["reason"], str) or not audit["reason"].strip()
+                or type(audit["workflow_revision"]) is not int
+                or not 0 <= audit["workflow_revision"] <= revision_limit
+                or audit["current_stage"] not in job.stages
+                or audit["context_after_sha256"] != digest
+                or audit["skill_release_after"] != previous["skill_release"]
+                or not valid_release(audit["skill_release_before"])
+                or audit["skill_release_before"] == audit["skill_release_after"]
+                or audit["runtime_module_changes"] != {}
+                or audit["provider_config_changed"] is not False or audit["workflow_changed"] is not False
+                or paths[0].name != f"context-migration-r{audit['workflow_revision']}-{digest[:12]}.json"):
+            raise MaterialChangeError("invalid release-only migration audit")
+        previous["skill_release"] = audit["skill_release_before"]
+        # The first context was written by the initializer's exact pretty codec;
+        # every migrated context uses contract_artifacts' canonical codec.
+        previous_digest = (hashlib.sha256((json.dumps(previous, ensure_ascii=False, sort_keys=True,
+                                                     indent=2) + "\n").encode("utf-8")).hexdigest()
+                           if previous["skill_release"] == initial_release else sha256_json(previous))
+        if previous_digest != audit["context_before_sha256"]:
+            raise MaterialChangeError("release migration chain does not match this Job")
+        revision_limit = audit["workflow_revision"]
+
+
 def _load(workspace):
     workspace = Path(workspace).expanduser().absolute()
     if workspace.resolve() != workspace or not workspace.is_dir():
@@ -152,8 +204,8 @@ def _load(workspace):
     state, identity = initializer._current_runtime(context.get("project_root"))
     if (marker.get("phase") != "ready" or marker.get("workspace") != str(workspace)
             or context.get("workspace") != str(workspace)
-            or any(context.get(key) != value or marker.get(key) != value
-                   for key, value in identity.items())):
+            or any(context.get(key) != value for key, value in identity.items())
+            or any(marker.get(key) != identity[key] for key in ("runtime", "project_root"))):
         raise MaterialChangeError("workspace initialization or runtime/release identity changed")
     job_dir = workspace / "edit/hd/jobs" / state._job_id(marker["inputs"])
     if (context.get("job_dir") != str(job_dir)
@@ -163,6 +215,7 @@ def _load(workspace):
     job = state.load_job(job_dir)
     if job.version != 2 or job.inputs != marker["inputs"]:
         raise MaterialChangeError("primary inputs or workflow identity changed")
+    _verify_release_migrations(job, context, marker.get("skill_release"))
     return job, read_material_index(workspace)
 
 

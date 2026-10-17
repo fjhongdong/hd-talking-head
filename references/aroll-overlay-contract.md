@@ -2,13 +2,17 @@
 
 先读取实际使用的上游 Skill。现成组件能表达本句关系时直接调用；允许 import 原生组件、使用公开 props、静态放置和 Sequence start/end 时钟，不新增主要动作、关键帧、曲线或替代时间线。不要把普通字幕放大重复一次，也不要为所有新口播硬套同一张示意图。
 
+同一正式流程混用 HyperFrames 不透明 B-roll 与透明贴片时，使用 `hyperframes_native_adapter.create_artifact_probe`：按冻结的 alpha 合同分发到既有严格 MP4 或 QTRLE/ARGB MOV 检查。不把只接受不透明视频的 Doudou probe 用于透明贴片；组合检查器使用独立身份，不改写失败事务或沿用旧 probe 名称掩盖变化。
+
 三节点流程先检索 HyperFrames Registry 的原生 `hw-pipeline`。它自带逐节点手绘框和曲线连线动效；正式入口是 `scripts/hyperframes_hw_pipeline_adapter.py` 的 `create_adapter`、`create_binding`、`create_artifact_probe`，调用 `scripts/render_hyperframes_hw_pipeline.cjs` 读取锁定的上游块，替换三节点文案、时长、位置及中文字体／背景可读性参数，再由 HyperFrames 真正渲染。1920×1080 原生画布等比缩到竖屏上方，转成 1080×1920 透明 QTRLE/ARGB MOV，交给既有 `ReferenceProcessAdapter` 和正式合成器；不重写动效。此组件仅用于真实三步流程，不硬套比较、门槛或抽象结论。`brief` 必须包含当前批准的三节点标签、帧数、各节点入场帧 `label_frames`、对应源转写词的 `word_anchors` 与 `source_binding`；adapter 将标签实际显现时刻对照批准的 Scribe 词和剪后时间轴，不能等间隔套用旧样片。它还复核批准的 VisualPlan、A-roll 哈希、段落时钟、上游源码及依赖版本。样片通过不等于新 Job 已批准；实际真人画面仍需检查框、箭头、文字不越界、不压头发、脸和字幕。
 
 ## 当前可执行接口
 
-先按语义检索具体原生组件，不把 `hw-pipeline` 和紧凑线稿作为全片默认样式。真实产品/特征配对可用 `mk-specs-list` 原生文本槽和扫线，提醒可用 `macos-notification` 的原生通知进入，否定旧做法并提出新做法可用 `strikethrough-replace` 原生划线及替换；备选对象可用 `grid-card-assemble`，状态切换可用 `toggle-flip`，真正的前后对照可用 `before-after-wipe`。这些是具体能力候选，不是每条片必用的清单，也不因能渲染就取得美观资格。
+先按语义检索具体原生组件，不把 `hw-pipeline` 和紧凑线稿作为全片默认样式。提醒可用原生通知进入，只有台词确实否定旧做法并提出新做法时才用 `strikethrough-replace`；备选对象可用 `grid-card-assemble`，状态切换可用 `toggle-flip`，真正的前后对照可用 `before-after-wipe`。先核对源码公开参数；当前 `mk-specs-list` 的内容是源码常量，没有公开文本槽，不得用无效 `data-variable-values` 冒充已接入。组件候选不是每条片必用的清单，也不因能渲染就取得美观资格。
 
 上述原生来源的薄适配使用 `scripts/hyperframes_native_adapter.py`，统一新 brief schema 2：`source_binding`、`template_request`、`entry`、`assets`、`upstream_route`、`source_pins={route,sha256}`，以及 `composition={width:1080,height:1920,fps:24,frames,alpha}`。透明 A-roll 的 `alpha=true`；整屏 B-roll 为 false。保留所选源文件的 HTML/CSS/GSAP 实现，Job 只绑定原生内容槽、字体、词时钟和必要版式；不得用只带相同类名的自写图形冒充调用。原生 CLI 输出透明 ProRes 后转换 QTRLE/ARGB，真实检查 alpha、精确帧数、尺寸与像素比例。每个候选仍需在当前真人画面检查，不复用上游演示人像。
+
+时间推进或拖延可选同一适配器的 `hyperframes/beat-timeline` 原生有序节拍：只绑定公开的 `beatCount`、`interval`、`labels` 和父级时窗，保留其逐拍进入与退场。它不是通用日历，也不自动证明某个产品已执行任务；按本句使用真实时间标签和明确未完成状态，不伪造日期或改写原生时间线。
 
 薄适配不包括重写主要布局或时间线。若一张组件需要改写核心动作才能表达本句，换一个现成入口；不能因为组件名字成熟，继续把所有含义改成三框、双框或标题。标题/关键词与普通字幕重述相同内容时不算新增贴片。已有词锚、避脸、单字幕轨和已确认内容保留检查均继续生效。
 
@@ -52,6 +56,16 @@ brief 包含 `schema_version=1`、`source_binding` 与 `renderer_input`：
 - 贴片按完整画布原坐标合成，不缩放到 B-roll 容器。安全区外不承载有效信息；当前适配图形位于画面上方，字幕位置不变。更换位置、关系、样式或文案容量须重新验收。
 
 ## 必须验收
+
+正式 `prepare_visual_direction` 在冻结配方前调用 `overlay_alignment.validate_treatment`。使用 HyperFrames 透明贴片的 treatment 必须有 `overlay_alignment`：每项记录 `segment_id / component_id / brief_path / events`；每个事件记录原生 `slot / kind / text / anchor={index,text} / basis`。普通入场为 `reveal`，toggle 的实际切换另记 `toggle_flip`。路径属于当前 Job，brief 必须匹配 binding 哈希；不向原生 brief 增添非公开 props。
+
+校验读取已批准的逐词转写、剪后映射和原生 HTML 的真实公开参数，核算 `notification-stack / grid-card-assemble / toggle-flip` 实际触发时刻及退场。原生引擎将 cue 提前超过一帧时直接阻断，不把作者填写的秒数当作真实结果。`current_clause` 词锚必须在当前镜头中，入场最多提前一帧、最多滞后 0.8 秒；`recap` 只能总结已经说过的内容，不能提前展示未来结论。结果写入本次正式 `visual-routing.md`，不另设无人消费的验收文件。该检查只证明词锚与时钟一致，完整否定关系、因果和文案含义仍需实际审阅。
+
+这三个原生组件的内部脚本读取自己的 `root.dataset.duration`，但 HyperFrames 外部子组件装配会删除此属性，不能只改源 HTML 或父级时长。制作 Job 输入时用 `overlay_alignment.bind_native_clock(source_bytes, route, mount_duration)`：绑定公开时长属性，并在原生同步脚本前后添加独立参数交接片段。前段通过框架的 scoped document 定位原生 root、临时传入时长，后段确认原生时间线已建立并移除临时属性。原生 JS/CSS 字节不变，不新增动作、seek、计时器或时间线；共享 adapter 和第三方源码不改。带延后 mount 的贴片使用 mount 自身时长，不使用父镜头总长。保留旧输入，生成新的独立 Job 副本。
+
+`source_pins.sha256` 核对未改的上游源文件，`assets.sha256` 核对实际渲染副本，两者用途不同，不要求数值相同。正式门禁以原始字节执行相同的精确属性绑定及两个确定的参数片段，要求产物逐字节等于 Job 副本；其他差异直接拒绝。随后实际调用已安装的 HyperFrames 装配器和本地浏览器执行完整装配结果，不导出媒体、不访问外网，读取原生时间线的真实入场与退场时间，核对临时时长已移除、clip 零起点及 host 延时。只读取输入属性、复算公式或检查总帧数不能代替实际消费检查；结果随原有 visual-routing 发布，样片实际首、中、尾仍须验收。
+
+贴片须用短句或短标签表达补充关系，不整句重复字幕。不制造台词没有说过的错误主张再划掉；否定句从第一帧可读文字起就保留“不”等限定。字号按最终 1080 画布检查，本片主标签从 56–68px 选择，并同步调整原生容器高度、内边距与宽度，不能只放大字体。配色沿用本期已确认的画面语言，静态排版可适配，原生动作不改写。只做一条含代表关系的样片；整片导出前仍需核对其余贴片实际可读、无裁切、无遮挡、无时间漂移。
 
 真实输出为单视频轨的 QTRLE/ARGB MOV。必须解码检查透明通道和入场/中段/退场，不接受只看流信息；VP9 中间文件不可直接交给默认解码器造成黑底。正式合成对全范围原片做明确色彩转换后输出标准 yuv420p，不放宽规格检查。
 

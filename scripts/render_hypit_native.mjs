@@ -125,7 +125,10 @@ try {
     await run([cli, 'runtime', 'down', '--project', project, '--runtime', profile]);
     await run([cli, 'programs', 'down', '--project', project, '--runtime', profile]);
   }
-  await writeFile(output + '.native-log.json', JSON.stringify(report, null, 2));
+  // The formal executor may pass an output path backed by /dev/fd/N.  Keep
+  // the invocation log inside the private Hypit project so diagnostics are
+  // durable without trying to create a sibling of a file descriptor.
+  await writeFile(path.join(project, 'invocation-log.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({status: report.status, project, build_id: report.build_id}));
 } catch (error) {
   report.status = 'failed';

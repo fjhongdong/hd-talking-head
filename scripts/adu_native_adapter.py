@@ -9,15 +9,17 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_adu_native.mjs"
 DEPENDENCY_ID = "adu-motion-video"
-VERSION = "2.1.0"
+VERSION = "2.2.0"
 TEMPLATE_ID = "adu-motion-video/native-compare"
 FAMILY = "old_new_comparison"
-SOURCE_PIN = "4d9777d799c73e4ed212b2ecb6ec6cece33f98a7"
+SOURCE_PIN = "31a03c36b5f510303305f9e931c448b75baa52d5"
+FFMPEG_DIR = "skill-development/runtime/ffmpeg-9.0.2/bin"
 
 
 def sha(path):
@@ -81,11 +83,21 @@ def check_runtime(project_root):
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
     if head != SOURCE_PIN:
         raise ValueError("Adu source revision changed")
-    subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "template", "scripts/render_project.mjs", "scripts/chrome.mjs"],
+    subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "template", "scripts/render_project.mjs", "scripts/chrome.mjs", "scripts/color_management.py"],
                    cwd=source, check=True, stdout=subprocess.DEVNULL)
     browser = project / ".remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell"
     if not browser.is_file() or not os.access(browser, os.X_OK):
         raise ValueError("Project render browser unavailable")
+    ffmpeg_dir = project / FFMPEG_DIR
+    ffmpeg, ffprobe = ffmpeg_dir / "ffmpeg", ffmpeg_dir / "ffprobe"
+    if not ffmpeg.is_file() or not os.access(ffmpeg, os.X_OK):
+        raise ValueError(f"Adu requires project-local FFmpeg 9.0.2: {ffmpeg}")
+    if not ffprobe.is_file() or not os.access(ffprobe, os.X_OK):
+        raise ValueError(f"Adu requires project-local ffprobe paired with FFmpeg 9.0.2: {ffprobe}")
+    python = Path(sys.executable).resolve(strict=True)
+    color_env = {**os.environ, "PATH": f"{ffmpeg_dir}:{os.environ.get('PATH', '')}"}
+    subprocess.run([str(python), str(source / "scripts/color_management.py"), "--export-plan"],
+                   cwd=source, env=color_env, check=True, stdout=subprocess.DEVNULL)
     runtime = project / "skill-development/runtime/adu-native"
     module = runtime / "node_modules/playwright-core"
     if json.loads((module / "package.json").read_bytes())["version"] != "1.64.0":
@@ -94,9 +106,9 @@ def check_runtime(project_root):
         if (runtime / name).read_bytes() != (SKILL / "assets/adu-native-runtime" / name).read_bytes():
             raise ValueError("Adu dependency configuration changed")
     files = [f for f in sorted((source / "template").rglob("*")) if f.is_file()]
-    files += [source / "scripts/render_project.mjs", source / "scripts/chrome.mjs", runtime / "package-lock.json", module / "package.json", browser]
+    files += [source / "scripts/render_project.mjs", source / "scripts/chrome.mjs", source / "scripts/color_management.py", runtime / "package-lock.json", module / "package.json", browser, ffmpeg, ffprobe, python]
     identity = hashlib.sha256(b"\0".join(f.read_bytes() for f in files)).hexdigest()
-    return {"source": str(source), "browser": str(browser), "playwright": str(module), "identity": identity}
+    return {"source": str(source), "browser": str(browser), "playwright": str(module), "ffmpeg": str(ffmpeg), "ffprobe": str(ffprobe), "python": str(python), "identity": identity}
 
 
 def prepare_runtime(project_root):
@@ -151,7 +163,7 @@ def create_adapter(project_root, node_executable, brief_loader):
         renderer_version=VERSION, artifact_media_type="video", launcher=node, launcher_sha256=node_sha,
         brief_loader=guard, media_loader=None, self_contained_wrapper=True, timeout_seconds=300,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--source", runtime["source"],
-                       "--browser", runtime["browser"], "--playwright-module", runtime["playwright"], "--output", "{output_path}"))
+                       "--browser", runtime["browser"], "--playwright-module", runtime["playwright"], "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--python", runtime["python"], "--output", "{output_path}"))
 
 
 def create_existing_adapter(project_root, node_executable, brief_loader, *, completed_record):

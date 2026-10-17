@@ -1,6 +1,6 @@
 # 依赖预检、确认与安装合同
 
-每个新视频 Job 都要运行本合同，检查运行时、项目 runner、必需 Skill、参考项目，以及由 `visual_direction` 草案或已冻结配方触发的能力。预检本身只读取当前状态；唯一前置例外是用户已授权的项目内 Punk 封面依赖：在新建 Job 和预检前运行 `scripts/ensure_punk_cover.py --project-root <project>`，缺失时自动安装已测试版本。它不触碰全局 Skill，也不代表其它依赖、账号连接或 provider 调用获得自动授权。
+每个新视频 Job 都要运行本合同，提前检查全流程运行时、项目 runner、必需 Skill、参考项目，以及由 `visual_direction` 草案或已冻结配方触发的能力。预检本身只读取当前状态。按用户要求，本地缺失环境在正式阶段前安装，不反复请求同一普通安装许可；不改第三方源码、全局 Skill 或 shell 配置。账号连接、密钥、订阅、付费媒体请求和冲突目录覆盖仍不在自动安装范围内。
 
 **目录存在不等于能力可执行。** 报告统一记录以下字段：
 
@@ -15,31 +15,59 @@
 
 ## 1. 唯一清单与两次检查
 
-在新建 Job 前先运行 `scripts/ensure_punk_cover.py --project-root <project>`，然后运行 `scripts/verify_skill_release.py`；包身份与附件缺失是发布问题，不得误报为用户的第三方插件缺失。初始化入口已强制执行后者，恢复旧 Job 时也要核对 `job-context.json` 中的 release 身份。详见 [发布与调用合同](release-contract.md)。
+新建 Job 前只调用下述唯一准备入口；它先校验发布包，再调用项目内已有准备与检查。包身份与附件缺失是发布问题，不得通过安装或重签清单掩盖。初始化入口仍独立校验发布身份；恢复旧 Job 时也要核对 `job-context.json` 中的 release 身份。详见 [发布与调用合同](release-contract.md)。
 
 静态事实源是 `references/dependency-manifest.json`，不得在聊天中维护第二份列表。初始化后先写 `manifests/provider-config.json` 草稿，再用选定的同一个 Python 预检。下文 `<python>`、`<workspace>`、`<job>` 分别是解释器绝对路径、初始化返回的 workspace 和 job_dir：
+
+### 依赖 Skill 更新
+
+每次环境检查前，宿主先核对清单中实际依赖 Skill 的来源、当前版本及上游最新版本，发现新版直接更新，不反复征求普通更新许可。已由 Skills Manager 管理的依赖使用其 `check` / `update`；项目 vendor 使用登记的准确仓库及分支。核对仓库根，不能在没有独立 Git 元数据的源码副本中误更新主项目。只检查本项目依赖，不执行全库 `update --all`，不改全局部署、第三方代码、锁文件或用户文件。网络检查失败不能写成“已是最新版”。
+
+更新顺序为：查询上游 → 更新项目内来源 → 重新读取改动后的 Skill 说明 → 检查受影响的自有接法及已有必要探针 → 更新本包对应的固定提交和有效资格 → 发布本包 → 执行原有准备和预检。更新动作本身不是运行成功；不能只刷新哈希沿用旧样片资格，也不能让 `ensure_*` 在后面偷偷装回旧版。没有相关行为变化时不重做样片；存在真实兼容问题、目录内用户修改、更新会删除用户文件或需要新收费调用时停止该路线，说明具体问题，不修改第三方或新增动效来绕过。
+
+新 Job 在冻结来源前完成更新。同一 Job 已冻结的来源、媒体和批准记录不得在渲染中途覆盖；采用新版时先结束当前 runner，再按正式 revision 与上下文迁移处理受影响部分，未变媒体仍复用。无法安全切换时向用户说明当前版本及阻碍，不把“查到更新”或仅拉取引用称为“已采用新版”。
+
+这是宿主启动编排步骤，不是 `dependency_preflight.py` 或 `project_python.py --prepare` 已实现的自动更新器；两者继续按登记版本检查和准备。普通 Python/Node/系统包不属于 Skill 更新范围，不因此改全局环境或升级已可用依赖。
+
+### 正式 Python 环境入口
+
+新建 Job 前执行，不依赖尚未创建的 Job：
+
+```bash
+<python> <skill>/scripts/project_python.py --project-root <project> --prepare
+```
+
+它从唯一清单实际导入全部必需 `python_module` 项：Pillow（`PIL`）、requests、NumPy、OpenCV（`cv2`）。缺包才用同一 Python 的 pip 按清单版本安装到项目内 `skill-development/runtime/talking-head-python<major><minor>`；已可用分发版本作为约束保留，不主动升级。OpenCV 只缺失时安装 headless 分发，不与已有可用 GUI 分发混装。已安装但导入失败时停止，不用重装掩盖问题；安装后实际导入一次，不自动重试。准备按项目本地锁串行执行，有超时和失败记录。
+
+随后读取清单 `preparation`，实际调用已有 Punk/source/native 准备入口；读取 `runtime_checks`，用现有登记探针核对已接通 B-roll 本地运行时。探针结果在准备报告里只记 `callable`，不伪造当前镜头 `bound`。账号、收费生成、未接入研究库不进入准备列表。没有自动准备入口的缺失环境停止并列出准确缺口，不临时创建安装器。
+
+`preparation.node_tool` 登记原生入口指定的项目内工具版本。Hypit 使用源码声明的 `pnpm 10.33.0`，缺失时从 npm 官方 registry 安装到项目 `skill-development/runtime/pnpm-10.33.0`，不执行安装脚本、不改第三方锁文件或全局工具。统一入口仅给子进程传递该工具路径；已存在版本异常或不完整目录时停止，不覆盖。准备报告保存命令、退出码、超时或可安全提取的错误类型/版本要求，不保存任意原始输出或密钥；旧失败报告保留。
+
+所有主流程 Python 入口，包括初始化、预检、配置确认、迁移和项目 runner，统一在上述入口后用 `-- <脚本及参数>` 执行。它沿用调用者的解释器和工作目录，传递项目、Skill scripts 和本地包路径；不从 PATH 换 Python、不改用户 shell。第三方专用准备进程清除 `PYTHONPATH/PYTHONHOME`。统一 `_check_binding_probe` 对 Huashu、OneTake 的注册路线重建仅含项目和 Skill scripts 的导入路径，移除 `PYTHONHOME`；准备检查和正式预检共用此边界，不改已验收适配器、原生版本锁或注册命令。公共组件执行器继续使用原有离线环境。完整预检仍检查系统命令、原生组件与第三方入口，准备通过不能替代 Job 绑定预检。
 
 GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_visual_broll_skills.py --project-root <project> --skill gbro-collage-broll` 检查固定提交，缺失时仅在项目 vendor 准备，再由清单核对原始说明和入口文件。这里的 `installed` 只证明来源已准备，不证明静帧或动态成片通过。当前路线使用内置生图与 Lovart Kling O1，不执行上游 `check_setup.sh` 的 Gemini 密钥/SDK 检查，也不将它登记成 smoke；实际图片和视频能力仍由本 Job 的 provider 预检及请求前检查确认。
 
 ```bash
-<python> <skill>/scripts/dependency_preflight.py \
+<python> <skill>/scripts/project_python.py --project-root <project> -- \
+  <skill>/scripts/dependency_preflight.py \
   --manifest <skill>/references/dependency-manifest.json \
   --project-root <full-v2-project-root> \
   --reference-root <project>/参考项目/B-roll开源方案 \
   --job-context <workspace>/job-context.json \
-  --output <job>/manifests/dependency-preflight.json
+  --output <job>/manifests/dependency-preflight.json --summary-only
 ```
 
 `visual_direction` 批准后，直接读取正式 schema-v3 `visual-plan.json`。预检先调用项目正式 `validate_visual_plan`，再逐段调用 `validate_shot_recipe_v2`；完整合同通过后才从 `segments[*].shot_recipe` 提取绑定：
 
 ```bash
-<python> <skill>/scripts/dependency_preflight.py \
+<python> <skill>/scripts/project_python.py --project-root <project> -- \
+  <skill>/scripts/dependency_preflight.py \
   --manifest <skill>/references/dependency-manifest.json \
   --project-root <full-v2-project-root> \
   --reference-root <project>/参考项目/B-roll开源方案 \
   --visual-plan <job>/07-visual-direction/visual-plan.json \
   --job-context <workspace>/job-context.json \
-  --output <job>/manifests/dependency-preflight.json
+  --output <job>/manifests/dependency-preflight.json --summary-only
 ```
 
 缺字段、identity 不一致、非法 component、旧视觉 Job 或旧配方都会返回明确停止状态。只支持 VisualPlan schema v3 与 ShotRecipe v2，不兼容旧 visual Job。未选 `code_generated` 时，Node.js、npm、html-video、hyperframes 与 `hd-talking-head-local-canonical` 保持可选；未选 `external_stock` 时，Pexels 与 Pixabay 连接保持可选。选中后，条件项立即按 manifest 的 `required_level` 计入必需项。
@@ -52,6 +80,8 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 
 退出码 `0` 表示全部当前必需项满足；`2` 表示当前必需项缺失；`3` 表示清单、ShotRecipe 或检查输入无效。未被配方选中的可选项可以形成 `ready_with_optional_gaps`，但不阻塞 Job。
 
+`--summary-only` 只缩短终端输出，正式报告仍完整。报告给出缺失模块名与失败退出码，不保存任意原始 stderr 或密钥。刷新前，已有必需项失败报告原字节保存在输出目录的 `preflight-failures/`；不得为了覆盖报告另写临时 Python 包装、导入未登记 helper 或丢掉失败现场。
+
 ## 2. Job 内复用
 
 每个新 Job 都重新运行预检，因为项目根目录、工具版本、Skill、插件连接和 provider 配置可能变化。当前 Job 内满足以下条件时可复用报告：
@@ -60,7 +90,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 - 已解析命令、路径、入口、probe identity 和实际依赖版本仍一致。
 - provider、模型及账号连接选择未变化。
 
-当前脚本刷新整个轻量报告，串行执行，不重复下载或生成，不手工拼接新旧报告。已知安装/路径/连接变化时立即刷新，不等 24 小时；这个上限不是持续监控账号的保证。配置不变不重复确认；配置改变需重新预检并确认。运行时或 Skill 版本变化属于显式迁移，不能只改哈希解除阻断。同 Job 同缺失集合只询问一次安装授权，写入 `manifests/dependency-install-approval.json`；新 Job 不继承旧授权。
+当前脚本刷新整个轻量报告，串行执行，不重复下载或生成，不手工拼接新旧报告。已知安装/路径/连接变化时立即刷新，不等 24 小时；这个上限不是持续监控账号的保证。配置不变不重复确认；配置改变需重新预检并确认。运行时或 Skill 版本变化属于显式迁移，不能只改哈希解除阻断。普通项目内环境沿用本合同的提前安装要求；需要特殊授权的动作仍写入本 Job 的 `manifests/dependency-install-approval.json`，新 Job 不继承旧账号或付费授权。
 
 ### 配置文件与批准入口
 
@@ -93,7 +123,8 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 展示一次配置摘要并得到真实用户回复后：
 
 ```bash
-<python> <skill>/scripts/confirm_job_setup.py \
+<python> <skill>/scripts/project_python.py --project-root <project> -- \
+  <skill>/scripts/confirm_job_setup.py \
   --job-context <workspace>/job-context.json \
   --user-confirmation "<本次用户确认原文>"
 ```
@@ -110,16 +141,16 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 4. 每个安装动作的准确方法、包名、来源和目标目录。
 5. 需要人工完成的账号连接、订阅或付费步骤。
 
-路径存在但入口缺失、入口或版本未登记、probe 无法执行、probe identity 不一致、smoke 失败或非代码阶段未绑定时，要显示准确状态，不能计为满足。Punk 前置安装只处理目录完全不存在的情况；已有异常目录不覆盖、删除或重新 clone，直接报告修正动作。其它依赖继续遵守原有确认门。
+路径存在但入口缺失、入口或版本未登记、probe 无法执行、probe identity 不一致、smoke 失败或非代码阶段未绑定时，要显示准确状态，不能计为满足。Punk 前置安装只处理目录完全不存在的情况；已有异常目录不覆盖、删除或重新 clone。普通准备沿用现有授权；账号、费用、管理员权限和冲突目录仍单独确认。
 
-没有缺失项时展示并确认当前配置草稿。存在缺失项时，只问一次是否执行安装计划；批准后按组安装并重新预检。用户拒绝必需项时在对应阶段前标记 `blocked`；拒绝未选可选项则记录并继续。
+没有缺失项时展示并确认当前配置草稿。缺失普通本地环境时按清单计划和项目内安装入口补齐后复检，不重复询问；账号、费用、管理员权限或处理冲突才需要用户决定。用户拒绝必需项时在对应阶段前标记 `blocked`；拒绝未选可选项则记录并继续。
 
 ## 4. 安装方式与边界
 
 | `method` | 执行方式 | 约束 |
 | --- | --- | --- |
-| `system-package` | 使用当前系统包管理器安装准确 package；同一 `group` 只安装一次 | 先展示准确命令；批准后运行；不自行使用 `sudo`、改 shell 配置或换包 |
-| `python-package` | 使用本 Job 已选 Python 环境的 `python -m pip` 安装登记 package | 本 Job 授权后执行；不改全局解释器或自动更换 Python 环境 |
+| `system-package` | 使用当前系统包管理器安装准确 package；同一 `group` 只安装一次 | 普通安装按本合同执行；需要管理员权限时停止，不自行使用 `sudo`、改 shell 配置或换包 |
+| `python-package` | 使用 `project_python.py --prepare` 为已选 Python 安装登记的必需包 | 自动补齐缺包到项目 runtime；不改全局解释器或自动更换 Python 环境 |
 | `skill-installer` | 使用当前 Agent 环境的 Skill 安装能力，从登记 source 安装 | 只安装报告中的 Skill；安装后验证 `SKILL.md` 可发现 |
 | `git-clone` | 将登记 source 克隆到准确 destination | 只处理缺失目录；目标已存在但不合格时报告冲突，不覆盖、删除或 reset |
 | `plugin` | 使用当前平台插件管理器安装用户已选插件 | 先取得本 Job 明确批准；账号与连接步骤由用户完成 |

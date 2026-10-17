@@ -1,0 +1,20 @@
+[
+  {
+    "path": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/case-2/frames/entry.png",
+    "role": "entry",
+    "sha256": "a3973e577cbc5503c2bfdf51ce7d9caa19a75c325687b8e2c9e5fe33b0a46404",
+    "timestamp_sec": 0.5
+  },
+  {
+    "path": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/case-2/frames/stable.png",
+    "role": "stable",
+    "sha256": "31398ad046e5e7c5c316f4d6fe700355a6559da360da3ddcf03dd5a3b3dbbddf",
+    "timestamp_sec": 3.5833333333333335
+  },
+  {
+    "path": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/case-2/frames/exit.png",
+    "role": "exit",
+    "sha256": "3e805dc5174df27a06ca60305cedca3c1758a9c266c26130f9675807997346ea",
+    "timestamp_sec": 7.125
+  }
+]

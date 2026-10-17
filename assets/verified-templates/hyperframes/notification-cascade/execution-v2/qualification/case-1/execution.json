@@ -1,0 +1,129 @@
+{
+  "synthetic_fixture": true,
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "artifact": {
+    "schema_version": 1,
+    "status": "success",
+    "job_id": "hyperframes-notification-fixture-1",
+    "segment_id": "hyperframes-notification-qualification-1",
+    "component_id": "notification-cascade",
+    "kind": "code_generated",
+    "strategy_revision": 1,
+    "media_type": "video",
+    "render_window": {
+      "start_frame": 0,
+      "end_frame": 336,
+      "z_index": 0,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    "z_index": 0,
+    "layout_slot": "main",
+    "opacity": 1.0,
+    "safe_zone": {
+      "top": 0,
+      "bottom": 0,
+      "left": 0,
+      "right": 0
+    },
+    "artifact_contract": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 24,
+      "alpha": false
+    },
+    "source_media_type": "animation",
+    "artifact_media_type": "video",
+    "media_probe": {
+      "media_type": "video",
+      "container": "mp4",
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "alpha": false,
+      "width": 1080,
+      "height": 1920,
+      "fps": 24.0,
+      "frame_count": 336,
+      "duration": 14.0
+    },
+    "input_sha256": "bcfd23414d6c1b2424bcd424a7ca7557bbd536bc03c99f155cdc898005da18b0",
+    "job_path": "08-visual-assets/components/hyperframes-notification-qualification-1/notification-cascade-r1.mp4",
+    "byte_count": 7793578,
+    "output_sha256": "e33af28ae142556b7068942c88684ea229bc08bf7078da1b08e5c5bf5686e5d8",
+    "invocation_evidence": {
+      "kind": "code_generated",
+      "approved_executor": "reference_adapter",
+      "adapter_id": "native-hyperframes-notification-v1",
+      "dependency_id": "hyperframes",
+      "invocation_type": "reference_process",
+      "invocation_id": "process-1ae00892d553d2e0744eaa363b44fae3",
+      "approved_entrypoint": "scripts/render_hyperframes_notification.cjs",
+      "entrypoint_sha256": "85467b880392cac08734a1a7e0337b0c58a34c2b273b3f614d500f4342d83884",
+      "launcher_sha256": "02dc8fa00d7f857c2412a5d55a85a1b7a341e94c3df430bd8733c732e31dca46",
+      "producer_version": "1.1.0",
+      "brief_sha256": "b9c6ce3e3f5dfeb46253a701efd2b4aa62b289d447ae37200a321f59eb9bd3a7",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/render_hyperframes_notification.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/hyperframes-notification-qualification-1/.staging/notification-cascade-r1.12e76af7f6b69373b12f1b772bcb6fa1/output.mp4",
+        "--skill-root",
+        "$PATH[7]",
+        "--runtime-root",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--ffmpeg",
+        "$PATH[13]",
+        "--ffprobe",
+        "$PATH[15]",
+        "--ffmpeg-sha256",
+        "dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c",
+        "--ffprobe-sha256",
+        "cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00",
+        "--registry-path",
+        "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source-registry.json",
+        "--registry-sha256",
+        "e78237b42f7f0fce8678e48307c7459bce04351881a569618767f5bb943e44e6",
+        "--renderer-version",
+        "0.8.167"
+      ],
+      "pid": 74526,
+      "exit_code": 0,
+      "timed_out": false,
+      "primary_renderer": "HyperFrames",
+      "renderer_version": "0.8.167",
+      "stdout_sha256": "aea9cd3ada6fbe5d6e0bf854e9bfc4a8e07b6856400da62666f7baa263505236",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 265,
+      "stderr_bytes": 0,
+      "unresolved_process_group": false,
+      "output_job_path": "08-visual-assets/components/hyperframes-notification-qualification-1/notification-cascade-r1.mp4",
+      "output_sha256": "e33af28ae142556b7068942c88684ea229bc08bf7078da1b08e5c5bf5686e5d8",
+      "qualification_registry": {
+        "path": "assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source-registry.json",
+        "sha256": "e78237b42f7f0fce8678e48307c7459bce04351881a569618767f5bb943e44e6"
+      },
+      "descendants_terminated": false,
+      "probe_id": "native-hyperframes-notification-ffprobe",
+      "probe_version": "1.1.0"
+    },
+    "qa": {
+      "passed": true,
+      "checks": [
+        "process_completed"
+      ]
+    },
+    "error_code": null
+  },
+  "absolute_output": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/verify/hyperframes-v6-maintenance/final-v4/notification-cascade/case-1/executor-output/08-visual-assets/components/hyperframes-notification-qualification-1/notification-cascade-r1.mp4"
+}

@@ -18,9 +18,9 @@ from fractions import Fraction
 
 SKILL = Path(__file__).resolve().parents[1] if __file__ != "<stdin>" else None
 ENTRY = "scripts/huashu_motion_adapter.py"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 DEPENDENCY_ID = "huashu-art-motion"
-UPSTREAM_COMMIT = "26dba25b2b495c2138848c29a2c90df356a20325"
+UPSTREAM_COMMIT = "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c"
 DEFAULT_REGISTRY = "references/verified-template-registry.json"
 PACKAGES = {"playwright": "1.61.0", "numpy": "2.5.3", "Pillow": "12.3.0",
             "fonttools": "4.66.1", "brotli": "1.2.0"}
@@ -226,6 +226,7 @@ def source_snapshot(project_root):
     if head != UPSTREAM_COMMIT:
         raise ValueError("Huashu vendor commit changed")
     paths = subprocess.check_output(["git", "-C", str(root), "ls-files", "scripts/engine/lib",
+        "scripts/engine/spec_assets.py",
         "scripts/engine/render.py", "scripts/engine/clip.html", "scripts/engine/clip.js",
         *["scripts/engine/clips/" + g + ".js" for g in KINDS]], text=True).splitlines()
     if not paths or subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--", *paths], text=True).strip():

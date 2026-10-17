@@ -7,6 +7,7 @@ import os
 import subprocess
 from fractions import Fraction
 from pathlib import Path
+from hyperframes_runtime import VERSION as RUNTIME_VERSION, resolve_runtime
 
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -14,7 +15,7 @@ PROJECT = SKILL.parents[1]
 ENTRY = "scripts/render_hyperframes_hw_pipeline.cjs"
 SOURCE = PROJECT / "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html"
 GSAP = PROJECT / "参考项目/B-roll开源方案/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 def _sha(path: Path) -> str:
@@ -104,9 +105,7 @@ def create_adapter(*, runtime_root, node_executable, browser_executable, ffmpeg_
             raise ValueError(f"Missing executable: {executable}")
     if _sha(SOURCE) != "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb":
         raise ValueError("hw-pipeline upstream source changed")
-    package = json.loads((runtime / "packages/cli/package.json").read_text())
-    if package.get("name") != "@hyperframes/cli" or package.get("version") != "0.8.19":
-        raise ValueError("HyperFrames runtime version changed")
+    runtime = resolve_runtime(runtime)["root"]
     hashes = {_path: _sha(_path) for _path in (node, browser, ffmpeg, SOURCE, GSAP)}
 
     def guarded_loader(job, recipe, component):
@@ -120,7 +119,7 @@ def create_adapter(*, runtime_root, node_executable, browser_executable, ffmpeg_
         adapter_id="native-hyperframes-hw-pipeline-v1", dependency_id="hyperframes",
         approved_executor="reference_adapter", dependency_root=SKILL, entrypoint=ENTRY,
         entrypoint_sha256=_sha(SKILL / ENTRY), producer_version=VERSION,
-        primary_renderer="HyperFrames", renderer_version="0.8.19", artifact_media_type="video",
+        primary_renderer="HyperFrames", renderer_version=RUNTIME_VERSION, artifact_media_type="video",
         launcher=node, launcher_sha256=hashes[node], brief_loader=guarded_loader,
         self_contained_wrapper=True, timeout_seconds=300,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}",
@@ -136,7 +135,7 @@ def create_binding(adapter, brief_bytes: bytes, *, reference_sample: Path) -> di
     request = brief["template_request"]
     return {
         "producer_type": "dependency", "dependency_id": "hyperframes", "entrypoint": ENTRY,
-        "producer_version": VERSION, "primary_renderer": "HyperFrames", "renderer_version": "0.8.19",
+        "producer_version": VERSION, "primary_renderer": "HyperFrames", "renderer_version": RUNTIME_VERSION,
         "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
         "template_origin": "custom_fallback", "template_id": "hyperframes/hw-pipeline-portrait" if len(brief["labels"]) == 3 else "hyperframes/hw-box-contrast-portrait",
         "template_version": VERSION, "verification_id": source_hash,

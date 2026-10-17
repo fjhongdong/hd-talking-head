@@ -6,6 +6,14 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const {spawnSync} = require('node:child_process');
 const {pipeline} = require('node:stream/promises');
+function resolveRuntime(root) {
+  const runtime = fs.realpathSync(root);
+  const pkg = JSON.parse(fs.readFileSync(path.join(runtime, 'node_modules/hyperframes/package.json'), 'utf8'));
+  if (pkg.name !== 'hyperframes' || pkg.version !== '0.8.167') throw new Error('HyperFrames runtime version drift');
+  const cli = path.join(runtime, 'node_modules/hyperframes/bin/hyperframes.mjs');
+  fs.accessSync(cli, fs.constants.R_OK);
+  return {root: runtime, cli, version: pkg.version};
+}
 
 const TEMPLATE_ID = 'hyperframes/notification-cascade';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -82,12 +90,13 @@ async function main(args) {
     process.stdout.write(JSON.stringify(validateBrief(JSON.parse(fs.readFileSync(0, 'utf8')))));
     return;
   }
-  const names = ['--brief', '--output', '--skill-root', '--runtime-root', '--browser',
+  const names = ['--brief', '--output', '--skill-root', '--runtime-root', '--browser', '--ffmpeg', '--ffprobe', '--ffmpeg-sha256', '--ffprobe-sha256',
     '--registry-path', '--registry-sha256', '--renderer-version'];
   if (args.length !== names.length * 2 || names.some((name, index) => args[index * 2] !== name)) {
     throw new Error('Use the approved hyperframes_notification_adapter factory');
   }
   const opt = Object.fromEntries(names.map((name, index) => [name.slice(2), args[index * 2 + 1]]));
+  for (const key of ['ffmpeg', 'ffprobe']) { const bytes = fs.readFileSync(opt[key]); if (sha(bytes) !== opt[`${key}-sha256`]) throw new Error(`${key} changed; rebind`); }
   const briefBytes = fs.readFileSync(opt.brief);
   const b = validateBrief(JSON.parse(briefBytes));
   const registryPath = safeRegistry(opt['skill-root'], opt['registry-path']);
@@ -97,8 +106,8 @@ async function main(args) {
   if (!template || String(template.render_contract.engine).toLowerCase() !== 'hyperframes') {
     throw new Error('Template is not registered for HyperFrames');
   }
-  const packageJson = JSON.parse(fs.readFileSync(path.join(opt['runtime-root'], 'packages/cli/package.json')));
-  if (packageJson.version !== opt['renderer-version']) throw new Error('HyperFrames version drift');
+  const runtime = resolveRuntime(opt['runtime-root']);
+  if (runtime.version !== opt['renderer-version']) throw new Error('HyperFrames version drift');
   fs.accessSync(opt.browser, fs.constants.X_OK);
 
   const sourceDir = path.posix.dirname(template.source_entrypoint);
@@ -133,17 +142,13 @@ async function main(args) {
     const variablesPath = path.join(temp, 'variables.json');
     fs.writeFileSync(variablesPath, JSON.stringify(variables), {flag: 'wx'});
     const rendered = path.join(temp, 'render.mp4');
-    const tsxCli = path.join(opt['runtime-root'], 'node_modules/tsx/dist/cli.mjs');
-    const hyperframesCli = path.join(opt['runtime-root'], 'packages/cli/src/cli.ts');
-    fs.accessSync(tsxCli, fs.constants.R_OK);
-    fs.accessSync(hyperframesCli, fs.constants.R_OK);
-    const cliArgs = [tsxCli, hyperframesCli, 'render', temp,
+    const cliArgs = [runtime.cli, 'render', temp,
       '--composition', path.posix.basename(template.source_entrypoint), '--output', rendered,
-      '--fps', '24', '--quality', 'high', '--workers', '1', '--variables-file', variablesPath,
+      '--fps', '24', '--quality', 'delivery', '--workers', '1', '--variables-file', variablesPath,
       '--strict-variables', '--strict', '--low-memory-mode', '--no-browser-gpu', '--no-best-effort', '--quiet'];
     const result = spawnSync(process.execPath, cliArgs, {
       cwd: '/', encoding: 'utf8', maxBuffer: 1024 * 1024,
-      env: {...process.env, HYPERFRAMES_BROWSER_PATH: opt.browser,
+      env: {PATH: `${path.dirname(opt.ffmpeg)}:${path.dirname(process.execPath)}:/usr/bin:/bin`, HYPERFRAMES_BROWSER_PATH: opt.browser,
         HYPERFRAMES_NO_TELEMETRY: '1', DO_NOT_TRACK: '1'},
     });
     if (result.error) throw result.error;

@@ -150,6 +150,38 @@ class MaterialLifecycleTests(unittest.TestCase):
         self.assertEqual(len(self.index()["materials"]), 4)
         self.assertEqual(before, {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in before})
 
+    def test_append_after_release_migrations_preserves_initialization_and_rejects_broken_audit(self):
+        migration = importlib.import_module("migrate_job_context")
+        context_path = self.job.root / "job-context.json"
+        marker_path = self.job.root / "initialization.json"
+        before = {p: p.read_bytes() for p in (marker_path, self.index_path, self.workflow)}
+        initial = json.loads(context_path.read_bytes())["skill_release"]
+        audits = []
+        for name, digest in (("test-release-b", "b" * 64), ("test-release-c", "c" * 64)):
+            release = {"status": "pass", "failures": [], "root": initial["root"],
+                       "release_id": name, "manifest_sha256": digest}
+            with mock.patch.object(migration, "verify_release", return_value=release):
+                result = migration.migrate(context_path,
+                    expected_context_sha256=hashlib.sha256(context_path.read_bytes()).hexdigest(),
+                    expected_revision=self.job.revision, allowed_module=None,
+                    reason="Test explicit release-only migration", dry_run=False)
+            audits.append(Path(result["audit"]))
+        with mock.patch.object(initializer, "verify_release", return_value=release):
+            plan = self.plan(source=self.image)
+            self.assertEqual(plan["blockers"], [])
+            self.assertEqual(plan["workflow_action"], "preserve")
+            audit_before = audits[0].read_bytes()
+            audit = json.loads(audit_before)
+            audit["context_before_sha256"] = "0" * 64
+            audits[0].write_text(json.dumps(audit))
+            with self.assertRaisesRegex(self.api().MaterialChangeError, "chain does not match"):
+                self.plan(source=self.image)
+            audits[0].write_bytes(audit_before)
+            audits[-1].unlink()
+            with self.assertRaisesRegex(self.api().MaterialChangeError, "audit missing"):
+                self.plan(source=self.image)
+        self.assertEqual(before, {p: p.read_bytes() for p in before})
+
     def test_replace_keeps_old_bytes_and_allocates_new_id(self):
         replacement = self.root / "新图.png"
         replacement.write_bytes(b"new-image")

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse, hashlib, json, math, os, re, shutil
 from pathlib import Path
 
-SKILL=Path(__file__).resolve().parents[1]; ENTRY="scripts/render_wise_motion.mjs"; DEPENDENCY_ID="wise-motion"; VERSION="3.0.0"; PACKAGE_VERSION="0.1.12"; FPS=24
+SKILL=Path(__file__).resolve().parents[1]; ENTRY="scripts/render_wise_motion.mjs"; DEPENDENCY_ID="wise-motion"; VERSION="3.1.0"; PACKAGE_VERSION="0.1.19"; RUNTIME_DIR="wise-motion-0.1.19"; FPS=24
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def validate_brief(payload):
  b=json.loads(payload); req={"schema_version","source_binding","template_request","composition","theme","title","context_labels","layers"}
@@ -25,7 +25,7 @@ def validate_brief(payload):
  if c["frames"]<=0 or abs((s["end"]-s["start"])*FPS-c["frames"])>1e-6: raise ValueError("Composition clock mismatch")
  return b
 def check_runtime(project_root):
- project=Path(project_root).resolve(strict=True); runtime=project/"skill-development/runtime/wise-motion"
+ project=Path(project_root).resolve(strict=True); runtime=project/"skill-development/runtime"/RUNTIME_DIR
  for name,version in {"wise-motion":PACKAGE_VERSION,"remotion":"4.0.532","@remotion/bundler":"4.0.532","@remotion/renderer":"4.0.532","react":"19.3.0","react-dom":"19.3.0"}.items():
   if json.loads((runtime/"node_modules"/name/"package.json").read_bytes())["version"]!=version: raise ValueError(f"Wise runtime requires exactly {name}@{version}")
  browser=project/".remotion/chrome-headless-shell/mac-arm64/chrome-headless-shell-mac-arm64/chrome-headless-shell"
@@ -33,7 +33,7 @@ def check_runtime(project_root):
  files=[runtime/"package-lock.json",runtime/"node_modules/wise-motion/dist/index.mjs",runtime/"node_modules/wise-motion/ASSET-MANIFEST.json",runtime/"public/wise-motion/.wise-motion-assets.json",SKILL/"assets/wise-motion-runtime/index.jsx",browser]
  return {"path":str(runtime),"browser":str(browser),"identity":hashlib.sha256(b"\0".join(p.read_bytes() for p in files)).hexdigest()}
 def prepare_runtime(project_root):
- project=Path(project_root).resolve(strict=True); runtime=project/"skill-development/runtime/wise-motion"
+ project=Path(project_root).resolve(strict=True); runtime=project/"skill-development/runtime"/RUNTIME_DIR
  if runtime.is_symlink() or not runtime.resolve().is_relative_to(project): raise ValueError("Wise runtime must stay inside the project")
  runtime.mkdir(parents=True,exist_ok=True)
  for name in ("package.json","package-lock.json"):

@@ -1,5 +1,6 @@
 // Static host and public TPL.compare parameters; all motion remains in Adu.
 import {readFile, writeFile, mkdtemp, cp, rm, copyFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
@@ -52,17 +53,23 @@ if (args.includes('--reuse-media-manifest')) await reuseExisting();
 if (args.includes('--reuse-media-manifest')) process.exit(0);
 const output = path.resolve(arg('--output'));
 const source = path.resolve(arg('--source'));
+const ffmpeg = path.resolve(arg('--ffmpeg'));
+const ffprobe = path.resolve(arg('--ffprobe'));
+const python = path.resolve(arg('--python'));
+for (const file of [ffmpeg, ffprobe, python]) {
+  if (!existsSync(file)) throw new Error('Project-local Adu tool unavailable: ' + file);
+}
 const temp = await mkdtemp(path.join(os.tmpdir(), 'adu-native-compare-'));
 const board = path.join(temp, 'board');
 const report = {source, template: 'TPL.compare', directory: temp, commands: [], status: 'prepared'};
 const json = value => JSON.stringify(value).replace(/</g, '\\u003c');
 const html = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-async function run(executable, argv) {
+async function run(executable, argv, env = process.env) {
   const record = {executable, argv, stdout: '', stderr: '', exit_code: null};
   report.commands.push(record);
   await new Promise((resolve, reject) => {
-    const p = spawn(executable, argv, {stdio: ['ignore', 'pipe', 'pipe']});
+    const p = spawn(executable, argv, {stdio: ['ignore', 'pipe', 'pipe'], env});
     p.stdout.on('data', chunk => {record.stdout += chunk; process.stdout.write(chunk);});
     p.stderr.on('data', chunk => {record.stderr += chunk; process.stderr.write(chunk);});
     p.once('error', reject);
@@ -103,21 +110,28 @@ try {
     'window.READY=new Promise((resolve,reject)=>{board.addEventListener("load",async()=>{try{await board.contentWindow.READY;document.title="done";resolve()}catch(e){reject(e)}},{once:true})});' +
     'window.renderAt=t=>board.contentWindow.renderAt(t);</script>');
   const native = path.join(temp, 'native.mp4');
+  const childEnv = {...process.env, PATH: `${path.dirname(ffmpeg)}:${process.env.PATH || ''}`, ADU_PYTHON: python};
   await run(process.execPath, [path.join(source, 'scripts/render_project.mjs'), entry,
     '--output', native, '--fps', '24', '--width', '1080', '--height', '1920', '--end', String(duration),
-    '--playwright-module', arg('--playwright-module'), '--browser', arg('--browser')]);
-  const probe = JSON.parse(await run('ffprobe', ['-v', 'error', '-show_streams', '-of', 'json', native]));
+    '--playwright-module', arg('--playwright-module'), '--browser', arg('--browser')], childEnv);
+  const probe = JSON.parse(await run(ffprobe, ['-v', 'error', '-show_streams', '-of', 'json', native], childEnv));
   const video = probe.streams.find(s => s.codec_type === 'video');
   if (probe.streams.some(s => s.codec_type === 'audio')) throw new Error('Adu B-roll must be silent');
   let delivered = native;
   if (video.color_range === 'pc' || video.pix_fmt.startsWith('yuvj')) {
     delivered = path.join(temp, 'normalized.mp4');
-    await run('ffmpeg', ['-n', '-v', 'error', '-i', native, '-vf', 'scale=in_range=full:out_range=limited,setsar=1',
+    await run(ffmpeg, ['-n', '-v', 'error', '-i', native, '-vf', 'scale=in_range=full:out_range=limited,setsar=1',
       '-an', '-c:v', 'libx264', '-crf', '15', '-pix_fmt', 'yuv420p', '-frames:v', String(b.composition.frames), delivered]);
+  }
+  if (!video.sample_aspect_ratio || video.sample_aspect_ratio === 'N/A') {
+    const squarePixels = path.join(temp, 'square-pixels.mp4');
+    await run(ffmpeg, ['-n', '-v', 'error', '-i', delivered, '-map', '0:v:0', '-an',
+      '-c:v', 'copy', '-bsf:v', 'h264_metadata=sample_aspect_ratio=1/1', '-aspect', '9:16', squarePixels]);
+    delivered = squarePixels;
   }
   await copyFile(delivered, output);
   report.status = 'completed';
-  await writeFile(output + '.native-log.json', json(report));
+  console.log(json(report));
   await rm(temp, {recursive: true});
 } catch (error) {
   report.status = 'failed';

@@ -275,6 +275,185 @@ def _binding_probe(
 
 
 class DependencyPreflightTests(unittest.TestCase):
+    def test_native_probe_environment_does_not_mutate_main_environment(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import dependency_preflight
+        supplied = {"PATH": "/example/bin", "PYTHONHOME": "/example/python",
+                    "PYTHONPATH": "/example/main-packages"}
+        for route in ("huashu-art-motion", "onetake"):
+            with self.subTest(route=route):
+                result = dependency_preflight._binding_probe_environment(route, REPO_ROOT, supplied)
+                self.assertNotIn("PYTHONHOME", result)
+                self.assertNotIn("/example/main-packages", result["PYTHONPATH"])
+                self.assertIn(str(REPO_ROOT), result["PYTHONPATH"].split(os.pathsep))
+                self.assertEqual(result["PATH"], supplied["PATH"])
+        self.assertEqual(supplied["PYTHONPATH"], "/example/main-packages")
+        self.assertEqual(dependency_preflight._binding_probe_environment("wise-motion", REPO_ROOT, supplied), supplied)
+
+    def test_native_probe_keeps_registered_command_and_uses_clean_environment(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import dependency_preflight
+        identity = {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter",
+                    "primary_renderer": "HTMLCanvas"}
+        probe = {"entrypoint": "scripts/native.py", "producer_version": "1", "adapter_identity": identity,
+                 "command": ["{python}", "{dependency_root}/scripts/native.py", "--project-root", "{project_root}"]}
+        selected = {"entrypoint": probe["entrypoint"], "producer_version": "1", "dependency_id": "huashu-art-motion",
+                    "executor": "reference_adapter", "primary_renderer": "HTMLCanvas"}
+        response = {"schema_version": 1, "dependency_id": selected["dependency_id"], "entrypoint": probe["entrypoint"],
+                    "producer_version": "1", "adapter_identity": identity}
+        with mock.patch.object(dependency_preflight.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, json.dumps(response), "")) as run:
+            checked = dependency_preflight._check_binding_probe(
+                {"id": "huashu-art-motion", "binding_probes": [probe]}, selected,
+                project_root=REPO_ROOT, reference_root=REPO_ROOT, dependency_root=SKILL_ROOT,
+                env={"PYTHONPATH": "/example/main-packages", "PYTHONHOME": "/example/python"},
+            )
+        self.assertEqual(checked["status"], "bound")
+        self.assertEqual(run.call_args.args[0], [sys.executable, str(SKILL_ROOT / probe["entrypoint"]), "--project-root", str(REPO_ROOT)])
+        self.assertNotIn("PYTHONHOME", run.call_args.kwargs["env"])
+        self.assertNotIn("/example/main-packages", run.call_args.kwargs["env"]["PYTHONPATH"])
+
+    def test_package_preparation_installs_only_missing_packages(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import project_python
+        manifest = {"dependencies": [
+            {"id": "pillow", "kind": "python_module", "required": True, "target": "PIL",
+             "install": {"package": "Pillow", "version": "12.3.0"}},
+            {"id": "numpy", "kind": "python_module", "required": True, "target": "numpy",
+             "install": {"package": "numpy", "version": "2.2.6"}},
+        ]}
+        ready = {"status": "callable", "distribution": "Pillow", "distribution_version": "12.3.0"}
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "packages"
+            with mock.patch.object(project_python, "_check_python_module", side_effect=[ready, {"status": "missing"}, ready, {"status": "callable"}]), mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as install:
+                result = project_python.prepare_packages(manifest, {}, target)
+            self.assertEqual(result["installed"], ["numpy==2.2.6"])
+            install.assert_called_once()
+            command = install.call_args.args[0]
+            self.assertEqual(command[command.index("--target") + 1], str(target))
+            self.assertNotIn("Pillow==12.3.0", command)
+            self.assertNotIn("--upgrade", command)
+
+    def test_package_installation_failure_stops_without_retry(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import project_python
+        manifest = {"dependencies": [{"id": "numpy", "kind": "python_module", "required": True,
+                                       "target": "numpy", "install": {"package": "numpy", "version": "2.2.6"}}]}
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.object(project_python, "_check_python_module", return_value={"status": "missing"}), mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, "", "")) as install:
+                with self.assertRaisesRegex(RuntimeError, "no automatic retry"):
+                    project_python.prepare_packages(manifest, {}, Path(temporary) / "packages")
+                install.assert_called_once()
+
+    def test_node_tool_preparation_installs_locally_and_keeps_caller_environment(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import project_python
+        tool = {"package": "pnpm", "version": "10.33.0"}
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary).resolve()
+            environment = {"PATH": "/example/global-tools"}
+            before = dict(environment)
+            record = {}
+
+            def run(command, **kwargs):
+                if "install" in command:
+                    target = Path(command[command.index("--prefix") + 1])
+                    metadata = target / "node_modules/pnpm/package.json"
+                    metadata.parent.mkdir(parents=True)
+                    metadata.write_text(json.dumps({"name": "pnpm", "version": "10.33.0"}))
+                    return subprocess.CompletedProcess(command, 0, "", "")
+                return subprocess.CompletedProcess(command, 0, "10.33.0\n", "")
+
+            with mock.patch.object(project_python.shutil, "which", return_value="/example/npm"), \
+                    mock.patch.object(project_python.subprocess, "run", side_effect=run) as calls:
+                project_python.prepare_node_tool(project, tool, environment, record)
+            self.assertEqual(environment, before)
+            self.assertEqual(record["status"], "ready")
+            command = calls.call_args_list[0].args[0]
+            self.assertEqual(Path(command[command.index("--prefix") + 1]),
+                             project / "skill-development/runtime/pnpm-10.33.0")
+            self.assertIn("--global=false", command)
+            self.assertIn("pnpm@10.33.0", command)
+            self.assertIn("--ignore-scripts", command)
+            self.assertEqual(calls.call_count, 2)
+
+    def test_native_preparation_failure_logs_safe_cause_without_retry(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import project_python
+        record = {}
+        failed = subprocess.CompletedProcess([], 2, "", "visual B-roll Skill unavailable: Hypit requires pnpm 10.33.0\nAPI_KEY=do-not-save\n")
+        with mock.patch.object(project_python.subprocess, "run", return_value=failed) as calls:
+            with self.assertRaisesRegex(RuntimeError, "no automatic retry"):
+                project_python._run_preparation(["native-check"], environment={}, record=record, timeout=20)
+        calls.assert_called_once()
+        self.assertEqual(record["returncode"], 2)
+        self.assertEqual(record["detail"], "Hypit requires pnpm 10.33.0")
+        self.assertNotIn("API_KEY", json.dumps(record))
+
+    def test_importable_path_with_broken_dependency_is_not_callable(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import dependency_preflight
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / "hd_broken_runtime.py").write_text("import hd_missing_transitive_dependency\n", encoding="utf-8")
+            report = dependency_preflight._check_python_module(
+                {"id": "broken", "target": "hd_broken_runtime"},
+                env={**os.environ, "PYTHONPATH": temporary},
+            )
+            self.assertEqual(report["status"], "smoke_failed")
+            self.assertEqual(report["missing_module"], "hd_missing_transitive_dependency")
+
+    def test_required_python_package_is_checked_and_named_in_install_plan(self) -> None:
+        completed, report = self.run_preflight({
+            "schema_version": 3,
+            "dependencies": [{
+                "id": "missing-python-package", "kind": "python_module", "required": True,
+                "target": "hd_preflight_missing_package", "required_level": "callable",
+                "install": {"method": "python-package", "package": "fixture-package"},
+            }],
+        })
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        dependency = report["dependencies"][0]
+        self.assertEqual(dependency["missing_module"], "hd_preflight_missing_package")
+        self.assertEqual(report["install_plan"][0]["package"], "fixture-package")
+
+    def test_runner_failure_identifies_missing_import(self) -> None:
+        completed, report = self.run_preflight({
+            "schema_version": 3,
+            "dependencies": [{
+                "id": "runner", "kind": "project_path", "required": True,
+                "target": "edit/hd/tools/fixture.py", "api": ["run"],
+                "required_level": "callable",
+            }],
+        }, project_contents={"edit/hd/tools/fixture.py": "import hd_missing_runner_dependency\n"})
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        self.assertEqual(report["dependencies"][0]["missing_module"], "hd_missing_runner_dependency")
+
+    def test_project_python_loads_local_packages_and_keeps_same_interpreter(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            tools = project / "edit/hd/tools"
+            tools.mkdir(parents=True)
+            for name in ("state.py", "startup.py", "segment_render.py"):
+                (tools / name).write_text("", encoding="utf-8")
+            packages = project / "skill-development/runtime" / (
+                f"talking-head-python{sys.version_info.major}{sys.version_info.minor}"
+            )
+            packages.mkdir(parents=True)
+            (packages / "hd_local_package.py").write_text("VALUE = 'local-ready'\n", encoding="utf-8")
+            source = (
+                "import hd_local_package,subprocess,sys\n"
+                "assert hd_local_package.VALUE == 'local-ready'\n"
+                "subprocess.run([sys.executable,'-c','import hd_local_package'],check=True)\n"
+                "print(sys.executable)\n"
+            )
+            program = project / "check.py"
+            program.write_text(source, encoding="utf-8")
+            completed = subprocess.run([
+                sys.executable, str(SKILL_ROOT / "scripts/project_python.py"),
+                "--project-root", str(project), "--", str(program),
+            ], capture_output=True, text=True, cwd=temporary, check=False)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(completed.stdout.strip(), sys.executable)
+
     def test_clean_cli_can_probe_a_python_module_without_a_visual_plan(self) -> None:
         result, report = self.run_preflight({
             "schema_version": 1,
@@ -615,25 +794,27 @@ def _run_reference_process():
             entrypoint.write_text("'use strict';\n", encoding="utf-8")
 
             runtime = root / "hyperframes"
-            (runtime / "packages/cli/src").mkdir(parents=True)
-            (runtime / "node_modules/tsx/dist").mkdir(parents=True)
-            (runtime / "packages/cli/package.json").write_text(
-                json.dumps({"name": "@hyperframes/cli", "version": "0.8.19"}),
+            (runtime / "node_modules/hyperframes/bin").mkdir(parents=True)
+            (runtime / "node_modules/hyperframes/package.json").write_text(
+                json.dumps({"name": "hyperframes", "version": "0.8.167"}),
                 encoding="utf-8",
             )
-            (runtime / "packages/cli/src/cli.ts").write_text("// cli\n", encoding="utf-8")
-            (runtime / "node_modules/tsx/dist/cli.mjs").write_text("// tsx\n", encoding="utf-8")
+            cli = runtime / "node_modules/hyperframes/bin/hyperframes.mjs"
+            cli.write_text("// published cli\n", encoding="utf-8")
+            source = project_root / "参考项目/B-roll开源方案/hyperframes"
+            source.mkdir(parents=True)
+            (source / "package.json").write_text('{}\n', encoding="utf-8")
             git = shutil.which("git")
             self.assertIsNotNone(git)
-            subprocess.run([str(git), "-C", str(runtime), "init", "--quiet"], check=True)
-            subprocess.run([str(git), "-C", str(runtime), "add", "."], check=True)
+            subprocess.run([str(git), "-C", str(source), "init", "--quiet"], check=True)
+            subprocess.run([str(git), "-C", str(source), "add", "."], check=True)
             subprocess.run([
-                str(git), "-C", str(runtime), "-c", "user.name=Fixture",
+                str(git), "-C", str(source), "-c", "user.name=Fixture",
                 "-c", "user.email=fixture@example.invalid", "commit", "--quiet",
                 "-m", "fixture",
             ], check=True)
             revision = subprocess.run(
-                [str(git), "-C", str(runtime), "rev-parse", "HEAD"],
+                [str(git), "-C", str(source), "rev-parse", "HEAD"],
                 check=True, capture_output=True, text=True,
             ).stdout.strip()
             command = [
@@ -645,17 +826,17 @@ def _run_reference_process():
                 "--producer-version", "1.0.0",
                 "--runtime-root", str(runtime),
                 "--runtime-revision", revision,
-                "--renderer-version", "0.8.19",
+                "--renderer-version", "0.8.167",
             ]
 
             completed = subprocess.run(command, check=False, capture_output=True, text=True)
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertEqual(json.loads(completed.stdout)["producer_version"], "1.0.0")
 
-            (runtime / "node_modules/tsx/dist/cli.mjs").unlink()
+            cli.unlink()
             missing = subprocess.run(command, check=False, capture_output=True, text=True)
             self.assertEqual(missing.returncode, 3)
-            self.assertIn("incomplete or has drifted", missing.stderr)
+            self.assertIn("unavailable or has drifted", missing.stderr)
 
     def test_builtin_binding_probe_rejects_an_empty_adapter_class(self) -> None:
         runner_source = """\

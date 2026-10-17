@@ -6,6 +6,14 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const {spawnSync} = require('node:child_process');
 const {pipeline} = require('node:stream/promises');
+function resolveRuntime(root) {
+  const runtime = fs.realpathSync(root);
+  const pkg = JSON.parse(fs.readFileSync(path.join(runtime, 'node_modules/hyperframes/package.json'), 'utf8'));
+  if (pkg.name !== 'hyperframes' || pkg.version !== '0.8.167') throw new Error('HyperFrames runtime version drift');
+  const cli = path.join(runtime, 'node_modules/hyperframes/bin/hyperframes.mjs');
+  fs.accessSync(cli, fs.constants.R_OK);
+  return {root: runtime, cli, version: pkg.version};
+}
 
 const SOURCE_SHA256 = '5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -61,8 +69,7 @@ async function main(args) {
   const b = validateBrief(JSON.parse(briefBytes));
   const sourceBytes = fs.readFileSync(opt.source);
   check(sha(sourceBytes) === SOURCE_SHA256, 'upstream Registry block changed; re-review required');
-  const packageJson = JSON.parse(fs.readFileSync(path.join(opt['runtime-root'], 'packages/cli/package.json')));
-  check(packageJson.name === '@hyperframes/cli' && packageJson.version === '0.8.19', 'HyperFrames runtime changed');
+  const runtime = resolveRuntime(opt['runtime-root']);
   fs.accessSync(opt.browser, fs.constants.X_OK);
   fs.accessSync(opt.ffmpeg, fs.constants.X_OK);
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'hd-hw-pipeline-'));
@@ -105,10 +112,9 @@ async function main(args) {
     html = replaceOnce(html, '            t += 0.5;\n', '');
     fs.writeFileSync(path.join(compositions, 'hw-pipeline.html'), html, {flag: 'wx'});
     const rendered = path.join(temp, 'native.mov');
-    const cliArgs = [path.join(opt['runtime-root'], 'node_modules/tsx/dist/cli.mjs'),
-      path.join(opt['runtime-root'], 'packages/cli/src/cli.ts'), 'render', temp,
+    const cliArgs = [runtime.cli, 'render', temp,
       '--composition', 'compositions/hw-pipeline.html', '--output', rendered, '--format', 'mov',
-      '--fps', '24', '--quality', 'high', '--workers', '1', '--low-memory-mode',
+      '--fps', '24', '--quality', 'delivery', '--workers', '1', '--low-memory-mode',
       '--no-browser-gpu', '--no-best-effort', '--quiet'];
     run(process.execPath, cliArgs, {...process.env, HYPERFRAMES_BROWSER_PATH: opt.browser,
       HYPERFRAMES_NO_TELEMETRY: '1', DO_NOT_TRACK: '1'});

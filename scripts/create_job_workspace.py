@@ -80,6 +80,21 @@ def _media_type(path: Path) -> str:
     return "documents"
 
 
+def copy_independent_file(source: str | Path, destination: str | Path) -> Path:
+    """Copy media without sharing an inode or overwriting an existing file."""
+    source, destination = Path(source), Path(destination)
+    before = source.stat()
+    with source.open("rb") as incoming, destination.open("xb") as outgoing:
+        shutil.copyfileobj(incoming, outgoing)
+    shutil.copystat(source, destination)
+    after, copied = source.stat(), destination.stat()
+    if ((before.st_dev, before.st_ino, before.st_nlink)
+            != (after.st_dev, after.st_ino, after.st_nlink)
+            or copied.st_nlink != 1 or source.samefile(destination)):
+        raise WorkspaceError("media copy is not independent")
+    return destination
+
+
 def _write_json_atomic(path: Path, payload: object) -> None:
     temporary = path.with_name(f".{path.name}.{secrets.token_hex(6)}.tmp")
     data = (
@@ -155,7 +170,7 @@ def create_workspace(
                 imported_relative = Path("00-user-provided") / media_type / imported_name
                 imported_path = temporary_dir / imported_relative
                 if inline_bytes is None:
-                    shutil.copy2(source, imported_path)
+                    copy_independent_file(source, imported_path)
                 else:
                     with imported_path.open("xb") as handle:
                         handle.write(inline_bytes)

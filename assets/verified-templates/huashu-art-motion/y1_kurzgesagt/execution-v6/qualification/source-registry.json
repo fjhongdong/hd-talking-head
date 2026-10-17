@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 20,
+        "duration_min_sec": 2,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 3,
+        "min_units": 3
+      },
+      "render_contract": {
+        "composition_id": "y1_kurzgesagt",
+        "engine": "HTMLCanvas",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/sample/native.mp4",
+      "sample_sha256": "f01bb02d06bd55675183addc0907b355bc493add62e79af9053083ccc139084a",
+      "semantic_families": [
+        "mechanism_system",
+        "process_flow"
+      ],
+      "source_entrypoint": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/clips/y1_kurzgesagt.js",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/huashu_motion_adapter.py",
+          "sha256": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/clip.html",
+          "sha256": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/clip.js",
+          "sha256": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/clips/y1_kurzgesagt.js",
+          "sha256": "5f507ef90222f335048cb167535f910fda789d7cd2fba1fc8695c0c4a1f4c6b6"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/spec_assets.py",
+          "sha256": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v6/qualification/native-source/scripts/engine/render.py",
+          "sha256": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6"
+        }
+      ],
+      "source_sha256": "5f507ef90222f335048cb167535f910fda789d7cd2fba1fc8695c0c4a1f4c6b6",
+      "template_id": "huashu-art-motion/y1_kurzgesagt",
+      "template_origin": "verified_third_party",
+      "template_version": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+      "upstream": {
+        "commit": "26dba25b2b495c2138848c29a2c90df356a20325",
+        "project": "huashu-art-motion",
+        "repository": "https://github.com/alchaincyf/huashu-art-motion.git"
+      },
+      "verification_id": "1189ff8626bfae449977aa12db2cd1e1c41b7eadc4e51aed39e903c3e0b4efba",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "5af4106c9c47124b88972b0559d4b9446bed006f2130dbaf7c68dcae1defafa6",
+            "timestamp_sec": 0.5
+          },
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "370e167f53cb9512d12c60c2cdc7fe1f5fb66f372f829e86a6d7442f24f395ac",
+            "timestamp_sec": 6.666666666666667
+          },
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "8de039b11e1e40bd49a87d84027223ed50d70375e37b8c283e0a39e9be743e87",
+            "timestamp_sec": 7.0
+          }
+        ],
+        "reviewed_at": "2026-10-08T01:09:55.329949+00:00",
+        "reviewer": "Codex native sample visual inspection",
+        "status": "approved"
+      }
+    }
+  ]
+}

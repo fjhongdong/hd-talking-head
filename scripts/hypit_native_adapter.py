@@ -14,10 +14,10 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_hypit_native.mjs"
 DEPENDENCY_ID = "hypit-native-chat"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 TEMPLATE_ID = "hypit/native-plan-change-chat"
 FAMILY = "plan_change_dialogue"
-SOURCE_PIN = "85e01c76716498e6ec5b8bdfb6b374ca67f0195a"
+SOURCE_PIN = "dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0"
 
 
 def sha(path):

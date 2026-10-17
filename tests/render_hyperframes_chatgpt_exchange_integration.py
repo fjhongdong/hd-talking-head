@@ -104,7 +104,7 @@ def _recipe(adapter, payload: bytes, fixture: dict[str, object], index: int,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("project-root", "runtime-root", "node", "browser", "ffprobe", "output"):
+    for name in ("project-root", "runtime-root", "node", "browser", "ffmpeg", "ffprobe", "output"):
         parser.add_argument(f"--{name}", type=Path, required=True)
     parser.add_argument(
         "--registry-path",
@@ -134,6 +134,8 @@ def main() -> None:
             runtime_root=args.runtime_root,
             node_executable=args.node,
             browser_executable=args.browser,
+            ffmpeg_executable=args.ffmpeg,
+            ffprobe_executable=args.ffprobe,
             brief_loader=lambda job, recipe, component, content=payload: content,
             registry_path=args.registry_path,
         )

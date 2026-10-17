@@ -7,12 +7,13 @@ import os
 import subprocess
 from fractions import Fraction
 from pathlib import Path
+from hyperframes_runtime import VERSION as RUNTIME_VERSION, resolve_runtime, resolve_tools
 
 
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_hyperframes_notification.cjs"
 TEMPLATE_ID = "hyperframes/notification-cascade"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 DEFAULT_REGISTRY = "references/verified-template-registry.json"
 PROVENANCE = (
     "template_origin", "template_id", "template_version", "verification_id",
@@ -52,10 +53,11 @@ def _validate(node: Path, payload: bytes) -> dict:
 
 
 def create_adapter(*, runtime_root, node_executable, browser_executable,
+                   ffmpeg_executable=None, ffprobe_executable=None,
                    brief_loader, registry_path=DEFAULT_REGISTRY):
     from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter
 
-    runtime = Path(runtime_root).resolve(strict=True)
+    runtime = resolve_runtime(runtime_root)["root"]
     node = Path(node_executable).resolve(strict=True)
     browser = Path(browser_executable).resolve(strict=True)
     registry = _registry_path(registry_path)
@@ -63,10 +65,8 @@ def create_adapter(*, runtime_root, node_executable, browser_executable,
     for executable in (node, browser):
         if not executable.is_file() or not os.access(executable, os.X_OK):
             raise ValueError(f"Missing executable dependency: {executable}")
-    package = json.loads((runtime / "packages/cli/package.json").read_text())
-    renderer_version = package["version"]
-    if package.get("name") != "@hyperframes/cli" or not renderer_version:
-        raise ValueError("runtime_root is not a HyperFrames checkout")
+    renderer_version = RUNTIME_VERSION
+    tools, tool_hashes = resolve_tools(node_executable, ffmpeg_executable, ffprobe_executable)
 
     def guarded_loader(job, recipe, component):
         payload = brief_loader(job, recipe, component)
@@ -92,6 +92,8 @@ def create_adapter(*, runtime_root, node_executable, browser_executable,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}",
             "--output", "{output_path}", "--skill-root", str(SKILL),
             "--runtime-root", str(runtime), "--browser", str(browser),
+            "--ffmpeg", str(tools["ffmpeg"]), "--ffprobe", str(tools["ffprobe"]),
+            "--ffmpeg-sha256", tool_hashes["ffmpeg"], "--ffprobe-sha256", tool_hashes["ffprobe"],
             "--registry-path", registry_path, "--registry-sha256", registry_sha256,
             "--renderer-version", renderer_version),
         qualification_registry_path=(

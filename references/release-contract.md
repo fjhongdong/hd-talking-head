@@ -25,6 +25,8 @@ python3 <skill>/scripts/verify_broll_template.py
 
 运行时绑定合成器 contract、实际 Python 及 `edit/hd/tools` 下 Python 源码哈希。不同工作树即使都叫 full-v2，也不能视为同一实现。长驻进程已导入另一项目时改用新进程，不删除 `sys.modules` 后混用旧对象。记录版本不等于证明全部视觉要求已满足，正式 canary 仍须验收。缺 `runtime`/启动批准的旧 Job 没有自动迁移器，先保留旧包与批准资产，明确处理差异，不重签上下文假装无变化。
 
+`initialization.json` 保留创建时的身份，不随上下文迁移改写。资料入口在项目和 runtime 均未改变时，按正式迁移审计的上下文摘要链证明 release-only 变化；连续迁移也逐步核验，不按时间或版本名称猜测。首个上下文的摘要使用初始化器的精确写入格式，其余使用迁移器的统一格式。断链、歧义、非本 Job 或未经证明的 runtime 变化仍停止。
+
 可向其他 Agent 这样交接：
 
 > 阅读 `<skill>/SKILL.md`，执行 `hd-talking-head`。项目运行时在 `<project>`；原视频为 `<video>`，文案为 `<script>`。先校验完整包及依赖，确认本任务模型配置。按唯一 Job 和结果确认策略推进：中间阶段通过内部 QA 后自动串行推进，只在关键外部动作和最终成片处请求用户确认；不静默替换模板、字体、文案或模型。
@@ -34,6 +36,8 @@ python3 <skill>/scripts/verify_broll_template.py
 初始化入口使用 `--project-root`；直接运行依赖 `edit.hd` 的路由编译器时，应显式设置本次命令的 `PYTHONPATH="<project>"` 并使用已确认的 Python 解释器。不要依赖前一次 Python 进程里的 `sys.path`，也不要通过修改全局 shell 配置解决路径问题。例如 `PYTHONPATH="<project>" <python> <skill>/scripts/broll_capability_router.py --help` 可检查跨目录入口；实际编译还需已批准的 intent、strategy、bindings 和帧数参数。
 
 ## 生产接口的模板身份
+
+新计划先经 `scripts/select_broll_skills.py` 发现真实入口、处理语义评审并协调整片。正式 `prepare_visual_direction` 增加明确的 `treatment_path`，Skill 管理的 Job 缺少当前 `skill_selection` 即停止；编译后的模板和完整绑定也须符合选型。该门只约束新发布，不倒改旧产物或补写历史记录。格式和命令以 [B-roll 唯一选型入口](broll-capability-router.md#唯一选型入口与记录) 为准；不把 `candidate_snapshots` 改为跨 Skill 决策库。
 
 - 代码组件必须将模板的 10 个来源字段同时冻结在 `source_bindings` 与 ShotRecipe 中，见正式生产绑定。标准 `visual_plan` 编译器可以直接消费已冻结字段，不依赖聊天外另传候选集合。
 - 候选集合只在首次选择模板时使用。候选结果与绑定中已有字段冲突立即失败；不允许以“重新路由”为由覆盖用户已批准模板。

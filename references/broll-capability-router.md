@@ -140,9 +140,27 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 需要显式规划动作依赖时读取 [语义动效规划接口](semantic-motion.md)。已登记的 `hd-talking-head/relation-motion` 和五类 SemanticState 会消费已冻结的 `semantic_motion`，并以独立 adapter、正式 executor、真实双输入执行证据、逐态像素、动作顺序记录与人工批准样片证明登记资格。普通 Job 仍必须 fail closed：模板身份、family、容量、当前批准内容、当前实际填充三态 QA 或 canary 任一不通过，就不得选用或声称已执行。
 
-多样性来自语义关系、构图家族、进入方式和节奏，不是随机换模板。相邻镜头避免机械复用同一构图家族；来源组合始终由当前语义决定，不设窗口数量或类型占比要求。只有信息结构匹配时才选 poster family，不为轮换牺牲语义准确性。实际制作先按[画面多样性](visual-quality-contract.md#画面多样性)形成质量相当的合格候选；最近两个增强窗口的构图/动作重复应影响这一步选择，不能因数值分数没完全相等就永远轮不到其他入口。已冻结配方仍按既有硬门和确定性排序编译，执行器不临时换类或换样式。
+多样性来自语义关系、构图家族、进入方式和节奏，不是随机换模板。选型分两轮：第一轮逐段从完整语义出发，列出所有合格 Skill 和具体原生入口候选，并记录对象、动作、关系、变化、容量、画幅、时长及“可执行/待适配/待费用授权”状态；第二轮把新增镜头与复用镜头放回整片时间线，比较相邻镜头和近期成片的主体、构图、动作与节奏，在语义和质量充分相近时优先减少重复。相邻镜头避免机械复用同一构图家族；来源组合始终由当前语义决定，不设窗口数量或类型占比要求。只有信息结构匹配时才选 poster family，不为轮换牺牲语义准确性，不要求分数完全相等，不设 Skill 配额，也不随机轮换。整片分工冻结后才生成 ShotRecipe；执行器不临时换类或换样式。
 
-冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、上游 Skill/具体入口候选、画面家族、主体动作，以及可执行/待适配/待费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表是制作草案，不是已执行的 ShotRecipe。
+冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、第一轮列出的上游 Skill/具体入口候选、第二轮确定的整片分工、画面家族、主体动作，以及可执行/待适配/待费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表在整片协调完成前是制作草案；协调结果冻结后才生成已执行的 ShotRecipe。
+
+### 唯一选型入口与记录
+
+通过项目已准备的 `project_python.py` 调用 `<skill>/scripts/select_broll_skills.py`：`discover --project-root <project>` 读取现有 adapter 的原生入口及 qualified 卡片；`assign --project-root <project> --treatment <Job内treatment.json>` 完成两轮分配；`check --project-root <project> --treatment <同一文件> --director-brief <草案>` 检查实际接法。发现不安装、不渲染、不调用生成服务；实际执行仍服从原预检、配方及费用门。
+
+在现有 treatment JSON 中维护 `skill_selection`，不另建审批文件或扩展最终计划 schema：
+
+- `schema_version: 1`；`history_note` 如实说明最近两条成片可查到什么，缺历史时不得填成“没有重复”。
+- `beats` 每条对应一个代码/AI B-roll 的 `segment_id/component_id/start/end`，包含 `transcript`、`semantic_goal`、`required_change`。新增与复用镜头均在同一表。
+- 每条 `skill_reviews` 按 `discover` 的全部 `skill_id` 记录 `fit/reason`。`fit` 为 `preferred/equivalent/unsuitable/needs_adapter`。先看完整能力池，不逐个复制所有卡片，也不拿“没有适配器”冒充语义不合适。
+- 每条 `candidates` 只列相关的具体 `candidate_id/fit/reason/visual_pattern`。主控先审阅语义、中文容量、原生动作、画幅、时长与美观；只有确实相当的方案才放入同档组。`visual_pattern` 使用主控统一的主体组织、构图和动作标签；换道具、换色或换 Skill 而动作相同，仍用同一标签，不能靠不同字符串假装不同画面。
+- `preferred` 是明确更优方案；没有明确胜者时保留多个 `equivalent`。`assign` 先锁定唯一或明确更优的候选，再协调弹性位置。协调考虑相邻模式、全片及近期各模式/来源的实际时长；不增加语义或美观分数，也不强求每个来源都出现。
+- `recent_context` 保存最近两条成片的 `video_id/source_ref/skill_id/visual_pattern/start/end`；依据实际制作记录和画面填写，不凭旧 Job 名称猜测。`fixed_context` 用同样的模式信息记录本期已选资料类 B-roll，另含 `segment_id/component_id`，让这些画面也参与整片协调。资料来源的 `skill_id` 可记实际资料类型，不伪称动画 Skill。
+- `assignments` 是命令输出，不手填。按结果实际调用所选 factory 构造原有 binding，随后将每条最终的 `intent_statement`、`component_brief` 与完整 `binding_snapshot` 写回对应 beat。后续生成才产生的结果仍按既有资产机制绑定；选型记录不能冒充已经实际调用。
+
+正式 `prepare_visual_direction(..., treatment_path=...)` 在任何冻结器和发布动作之前重新发现、复算、核对当前草案；编译后继续检查冻结绑定和实际配方没有偏离。记录与结果一起写入已有 `visual-routing.md`，下游仍只执行冻结配方。A-roll 贴片仍走自身合同，不混算为 B-roll；已完成产物不读取新选型记录、不迁移旧 Job。
+
+Flat/GBRO 的选择身份是设计来源；真正的视频绑定仍为 Lovart，不改成这两套 Skill 的“原生出片”。Paper 的通用 HyperFrames 文档路线没有可直接调用的完整原生场景时，标为待适配，不能借 renderer 自写动效后声称原生接通。
 
 充分利用是按适用场景展开候选池，而不是每个 Skill 强制用一次：数值变化匹配数字/图表卡，时间跨度匹配时间线，对照匹配分屏或状态切换，真实操作匹配资料或界面演示，具体对象的组装/替换匹配 Paper 或拼贴，分类/层级才匹配导图，人物行为匹配真实视频或获批 Lovart 动态。Flat、GBRO 的静帧方案与实际动画生成分别记账；不能用显现动效代替人物动作。
 

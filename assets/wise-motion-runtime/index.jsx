@@ -32,6 +32,7 @@ const Scene = ({title, context_labels, layers, theme, composition}) => {
       return <Sequence key={i} from={layer.from} durationInFrames={composition.frames} layout="none">
         <div style={{position: 'absolute', left: layer.layout.x, top: layer.layout.y}}>
           <WiseMotionEffect effectId={layer.id} content={layer.content} speed={layer.speed}
+            variantId="original"
             theme={theme} transparent={layer.transparent} includeAudio={false}
             width={layer.layout.width} height={layer.layout.height}/>
         </div>

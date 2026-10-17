@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 20,
+        "duration_min_sec": 2,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 1,
+        "min_units": 1
+      },
+      "render_contract": {
+        "composition_id": "y2_vox",
+        "engine": "HTMLCanvas",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v3/qualification/design/native.mp4",
+      "sample_sha256": "80d4a2895a478852a86f5fd13b2bb3d3e35e704ad32989c1d1e2a1781a97065b",
+      "semantic_families": [
+        "evidence_source"
+      ],
+      "source_entrypoint": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/clips/y2_vox.js",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/huashu_motion_adapter.py",
+          "sha256": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/clip.html",
+          "sha256": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/clip.js",
+          "sha256": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/clips/y2_vox.js",
+          "sha256": "6c00ac3e587595b94732750a191827674a818c5f143d2ecfd328c9e4059bc589"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/spec_assets.py",
+          "sha256": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41"
+        },
+        {
+          "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v6/qualification/native-source/scripts/engine/render.py",
+          "sha256": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6"
+        }
+      ],
+      "source_sha256": "6c00ac3e587595b94732750a191827674a818c5f143d2ecfd328c9e4059bc589",
+      "template_id": "huashu-art-motion/y2_vox",
+      "template_origin": "verified_third_party",
+      "template_version": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+      "upstream": {
+        "commit": "26dba25b2b495c2138848c29a2c90df356a20325",
+        "project": "huashu-art-motion",
+        "repository": "https://github.com/alchaincyf/huashu-art-motion.git"
+      },
+      "verification_id": "ae869220d5b35c9a3197222e5f1ccbaf36d9ce6bdd04c4c957d118c726a48c57",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v3/qualification/design/frames/entry.png",
+            "role": "entry",
+            "sha256": "a1314c730c50bebb7a208075fc2b4d6234ee730817b96b128c8e08a6db560d69",
+            "timestamp_sec": 0.5
+          },
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v3/qualification/design/frames/stable.png",
+            "role": "stable",
+            "sha256": "90facc0a315b7dd32f483f1aa60ed4c3c53be4f789f0ea37988a97eec1d53fc8",
+            "timestamp_sec": 6.666666666666667
+          },
+          {
+            "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v3/qualification/design/frames/exit.png",
+            "role": "exit",
+            "sha256": "421def1ebf84f2d9af35cd2436cc9a22b3231c74d8b52e6cfaddc03059c7e5af",
+            "timestamp_sec": 7.0
+          }
+        ],
+        "reviewed_at": "2026-10-08T05:10:39.705369+00:00",
+        "reviewer": "Codex native sample visual inspection",
+        "status": "approved"
+      }
+    }
+  ]
+}

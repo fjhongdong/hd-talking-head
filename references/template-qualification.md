@@ -2,6 +2,8 @@
 
 仅在新增、更新或审查 `verified_third_party` / `verified_local_canonical` 登记时加载。普通视频任务只消费已验证记录，不重复运行模板资格实验，也不重做用户已批准资产。
 
+测试使用正式媒体时，按[独立媒体复制规则](job-workspace-contract.md#创建与目录)调用 `create_job_workspace.copy_independent_file`，不创建硬链接或软链接。完成副本后先核对来源与副本的内容一致、文件独立，再启动 renderer；不能先链接正式文件，等渲染后才检查。
+
 ## 资格不等于目录里有模板
 
 `verify_broll_template.py` 同时检查历史设计样片和 `execution_qa`。只有入口真实消费输入，且原生 1080×1920 中能独立完成构图、信息层级和三态动效，才可登记为整屏模板。库里的单张横向卡片、动效 primitive、固定横屏网页不能因“可渲染”获得这一身份。结构改造仍记为 `custom_fallback`，不得改标签冒认。

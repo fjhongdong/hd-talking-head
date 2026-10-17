@@ -7,7 +7,6 @@ import argparse
 import dataclasses
 import hashlib
 import importlib
-import importlib.util
 import json
 import math
 import os
@@ -110,6 +109,7 @@ def _load_manifest(path: Path) -> dict[str, Any]:
             "skill",
             "environment_any",
             "availability_any",
+            "python_module",
         }:
             raise PreflightError(f"unsupported dependency kind: {item.get('kind')}")
         if "target" not in item:
@@ -213,30 +213,29 @@ def _load_manifest(path: Path) -> dict[str, Any]:
                 valid_selection = False
             if not valid_selection:
                 raise PreflightError(f"selection values are invalid: {dependency_id}")
+    preparation_ids: set[str] = set()
+    for entry in payload.get("preparation", []):
+        if (not isinstance(entry, dict) or not {"id", "script", "arguments"}.issubset(entry)
+                or set(entry) - {"id", "script", "arguments", "node_tool"}
+                or entry["id"] not in seen or entry["id"] in preparation_ids
+                or not isinstance(entry["script"], str)
+                or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py"}
+                or not isinstance(entry["arguments"], list)
+                or any(not isinstance(value, str) for value in entry["arguments"])):
+            raise PreflightError("invalid project preparation entry")
+        if "node_tool" in entry:
+            tool = entry["node_tool"]
+            if (not isinstance(tool, dict) or set(tool) != {"package", "version"}
+                    or tool["package"] != "pnpm" or not isinstance(tool["version"], str)
+                    or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", tool["version"])):
+                raise PreflightError("invalid project-local Node tool")
+        preparation_ids.add(entry["id"])
+    runtime_checks = payload.get("runtime_checks", [])
+    if (not isinstance(runtime_checks, list) or any(not isinstance(value, str) or value not in seen for value in runtime_checks)
+            or len(set(runtime_checks)) != len(runtime_checks)
+            or any(not item.get("binding_probes") for item in dependencies if item["id"] in runtime_checks)):
+        raise PreflightError("invalid project runtime checks")
     return payload
-
-
-def _availability_alternatives(item: dict[str, Any]) -> list[dict[str, Any]]:
-    alternatives = item.get("target")
-    if not isinstance(alternatives, list) or not alternatives:
-        raise PreflightError(f"availability_any target must be a non-empty list: {item['id']}")
-    checked: list[dict[str, Any]] = []
-    identifiers: set[str] = set()
-    for alternative in alternatives:
-        if not isinstance(alternative, dict) or set(alternative) != {"id", "kind", "target"}:
-            raise PreflightError(f"availability alternative fields are invalid: {item['id']}")
-        alternative_id = alternative.get("id")
-        kind = alternative.get("kind")
-        if (
-            not isinstance(alternative_id, str)
-            or not alternative_id
-            or alternative_id in identifiers
-            or kind not in {"command", "python_module", "environment_any", "skill"}
-        ):
-            raise PreflightError(f"availability alternative values are invalid: {item['id']}")
-        identifiers.add(alternative_id)
-        checked.append(dict(alternative))
-    return checked
 
 
 def _availability_alternatives(item: dict[str, Any]) -> list[dict[str, Any]]:
@@ -558,8 +557,23 @@ def _check_project_api(item: dict[str, Any], root: Path) -> dict[str, Any]:
         )
     except (OSError, subprocess.TimeoutExpired):
         return {"status": "smoke_failed", "api": item["api"]}
-    return {"status": "callable" if result.returncode == 0 and result.stdout.strip() == "api-ready" else "smoke_failed",
-            "api": item["api"], "python_executable": sys.executable}
+    ready = result.returncode == 0 and result.stdout.strip() == "api-ready"
+    return {"status": "callable" if ready else "smoke_failed",
+            "api": item["api"], "python_executable": sys.executable,
+            **({} if ready else _probe_failure(result))}
+
+
+def _probe_failure(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
+    """Keep actionable import failures without persisting arbitrary stderr or secrets."""
+    detail: dict[str, Any] = {"returncode": result.returncode, "detail": "probe exited unsuccessfully"}
+    match = re.search(r"ModuleNotFoundError: No module named '([A-Za-z_][A-Za-z_0-9.]*)'", result.stderr or "")
+    if match:
+        detail.update(error_type="ModuleNotFoundError", missing_module=match.group(1))
+    else:
+        errors = re.findall(r"^([A-Za-z_][A-Za-z_0-9]*(?:Error|Exception)):", result.stderr or "", re.MULTILINE)
+        if errors:
+            detail["error_type"] = errors[-1]
+    return detail
 
 
 def _check_skill(item: dict[str, Any], roots: Iterable[Path]) -> dict[str, Any]:
@@ -595,66 +609,34 @@ def _check_environment_any(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _check_python_module(item: dict[str, Any]) -> dict[str, Any]:
+def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = None) -> dict[str, Any]:
     target = item["target"]
     if not isinstance(target, str) or not target:
         raise PreflightError(f"python_module target must be a string: {item['id']}")
     try:
         result = subprocess.run(
-            [sys.executable, "-c", "import importlib,sys; importlib.import_module(sys.argv[1])", target],
-            capture_output=True, text=True, timeout=20, check=False,
+            [sys.executable, "-c",
+             "import importlib,importlib.metadata,json,sys\n"
+             "m=importlib.import_module(sys.argv[1])\n"
+             "distribution=sys.argv[2] or None\n"
+             "try:\n"
+             " version=importlib.metadata.version(distribution) if distribution else None\n"
+             "except importlib.metadata.PackageNotFoundError:\n"
+             " distribution=next(iter(importlib.metadata.packages_distributions().get(sys.argv[1].split('.')[0],[])),None)\n"
+             " version=importlib.metadata.version(distribution) if distribution else None\n"
+             "print(json.dumps({'version':getattr(m,'__version__',None), 'resolved_path':getattr(m,'__file__',None), "
+             "'distribution':distribution, 'distribution_version':version}))",
+             target, item.get("install", {}).get("package", "")],
+            capture_output=True, text=True, timeout=20, check=False, env=env,
         )
     except (OSError, subprocess.TimeoutExpired):
         return {"status": "smoke_failed", "module": target}
-    return {"status": "callable" if result.returncode == 0 else "missing",
-            "module": target, "python_executable": sys.executable}
-
-
-def _check_availability_any(
-    item: dict[str, Any],
-    skill_roots: Iterable[Path],
-) -> dict[str, Any]:
-    records: list[dict[str, Any]] = []
-    for alternative in _availability_alternatives(item):
-        probe = {"id": alternative["id"], "target": alternative["target"]}
-        if alternative["kind"] == "command":
-            checked = _check_command(probe)
-        elif alternative["kind"] == "python_module":
-            checked = _check_python_module(probe)
-        elif alternative["kind"] == "environment_any":
-            checked = _check_environment_any(probe)
-        else:
-            checked = _check_skill(probe, skill_roots)
-        record = {
-            "id": alternative["id"],
-            "kind": alternative["kind"],
-            **checked,
-        }
-        records.append(record)
-        if checked["status"] in SUCCESS_STATUSES:
-            return {
-                "status": "callable",
-                "selected_alternative": alternative["id"],
-                "alternatives": records,
-            }
-    return {"status": "missing", "alternatives": records}
-
-
-def _check_python_module(item: dict[str, Any]) -> dict[str, Any]:
-    target = item["target"]
-    if not isinstance(target, str) or not target:
-        raise PreflightError(f"python_module target must be a string: {item['id']}")
-    try:
-        spec = importlib.util.find_spec(target)
-    except (ImportError, ModuleNotFoundError, ValueError):
-        spec = None
-    if spec is None:
-        return {"status": "missing"}
-    return {
-        "status": "available",
-        "module": target,
-        "resolved_path": spec.origin,
-    }
+    if result.returncode:
+        failure = _probe_failure(result)
+        return {"status": "missing" if failure.get("missing_module") == target else "smoke_failed",
+                "module": target, "python_executable": sys.executable, **failure}
+    return {"status": "callable", "module": target, "python_executable": sys.executable,
+            **json.loads(result.stdout)}
 
 
 def _check_availability_any(
@@ -755,6 +737,7 @@ def _check_entrypoints(
             record["returncode"] = completed.returncode
             if completed.returncode != 0:
                 record["status"] = "failed"
+                record.update(_probe_failure(completed))
                 checked.append(record)
                 return {"status": "smoke_failed", "entrypoints": checked}
         record["status"] = "callable" if smoke else "discovered"
@@ -868,6 +851,20 @@ def _probe_command(
     return command
 
 
+def _binding_probe_environment(
+    dependency_id: str,
+    project_root: Path,
+    environment: dict[str, str] | None = None,
+) -> dict[str, str]:
+    result = dict(os.environ if environment is None else environment)
+    if dependency_id in {"huashu-art-motion", "onetake"}:
+        result.pop("PYTHONHOME", None)
+        result["PYTHONPATH"] = os.pathsep.join((
+            str(project_root), str(Path(__file__).resolve().parent),
+        ))
+    return result
+
+
 def _check_binding_probe(
     item: dict[str, Any],
     selected_binding: dict[str, str],
@@ -875,6 +872,7 @@ def _check_binding_probe(
     project_root: Path,
     reference_root: Path,
     dependency_root: Path,
+    env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     entrypoint = selected_binding["entrypoint"]
     producer_version = selected_binding["producer_version"]
@@ -910,11 +908,12 @@ def _check_binding_probe(
             text=True,
             timeout=spec.get("timeout_seconds", 15),
             cwd=str(project_root),
+            env=_binding_probe_environment(selected_binding["dependency_id"], project_root, env),
         )
     except (OSError, subprocess.TimeoutExpired):
         return {"status": "binding_probe_failed"}
     if completed.returncode != 0 or len(completed.stdout.encode("utf-8")) > 65536:
-        return {"status": "binding_probe_failed"}
+        return {"status": "binding_probe_failed", **_probe_failure(completed)}
     try:
         payload = json.loads(completed.stdout)
     except (TypeError, json.JSONDecodeError):
@@ -1032,7 +1031,20 @@ def _emit_project_binding_probe(args: argparse.Namespace) -> int:
         args.runtime_revision,
         args.renderer_version,
     )
-    if args.dependency_id in {"hyperframes", "hd-talking-head-local-canonical"}:
+    if args.dependency_id == "hyperframes":
+        from hyperframes_runtime import resolve_runtime
+        if any(value is None for value in runtime_values):
+            raise PreflightError("HyperFrames binding probe requires its pinned runtime")
+        source = project_root / "参考项目/B-roll开源方案/hyperframes"
+        if _git_head(source) != args.runtime_revision:
+            raise PreflightError("HyperFrames source revision differs from the approved binding")
+        try:
+            runtime = resolve_runtime(args.runtime_root)
+        except (OSError, ValueError) as exc:
+            raise PreflightError("HyperFrames published runtime is unavailable or has drifted") from exc
+        if runtime["version"] != args.renderer_version:
+            raise PreflightError("HyperFrames renderer version differs from the approved binding")
+    elif args.dependency_id == "hd-talking-head-local-canonical":
         if any(value is None for value in runtime_values):
             raise PreflightError("HyperFrames binding probe requires its pinned runtime")
         try:
@@ -1120,6 +1132,7 @@ def _install_plan(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "dependency_ids": [],
                 "method": install.get("method"),
                 "package": install.get("package"),
+                "version": install.get("version"),
                 "source": install.get("source"),
                 "destination": install.get("destination"),
                 "approval_required": bool(install.get("approval_required", True)),
@@ -1282,6 +1295,8 @@ def build_report(
         kind = item["kind"]
         if kind == "command":
             checked = _check_command(item)
+        elif kind == "python_module":
+            checked = _check_python_module(item)
         elif kind == "project_path":
             checked = _check_path(item, project_root)
         elif kind == "reference_path":
@@ -1494,6 +1509,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--visual-plan", type=Path)
     parser.add_argument("--job-context", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--summary-only", action="store_true")
     return parser
 
 
@@ -1542,8 +1558,22 @@ def main() -> int:
         print(f"dependency preflight error: {exc}", file=sys.stderr)
         return 3
     if args.output:
-        _atomic_write_json(args.output.expanduser().resolve(), report)
-    print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+        output = args.output.expanduser().resolve()
+        if output.is_file():
+            previous = json.loads(output.read_text(encoding="utf-8"))
+            if previous.get("summary", {}).get("required_missing"):
+                history = output.parent / "preflight-failures" / f"{output.stem}-{_sha256(output)[:16]}.json"
+                if not history.exists():
+                    history.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(output, history)
+        _atomic_write_json(output, report)
+    display = report
+    if args.summary_only:
+        display = {"summary": report["summary"], "required_failures": [
+            {key: item[key] for key in ("id", "status", "missing_module", "error_type", "detail", "entrypoints") if key in item}
+            for item in report["dependencies"] if item["required"] and item["status"] in MISSING_STATUSES
+        ], "install_plan": report["install_plan"]}
+    print(json.dumps(display, ensure_ascii=False, sort_keys=True))
     return 2 if report["summary"]["required_missing"] else 0
 
 
