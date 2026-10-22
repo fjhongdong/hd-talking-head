@@ -7686,6 +7686,168 @@
         "skill-development/vendor/eian-riso-broll/templates/versus.html": "cd684cf04cffe924ef962536bf6bb57f01b5637aeba47e236d4fe1d362615507",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
       }
+    },
+    {
+      "candidate_id": "motion-graphics-native:lower-third",
+      "uses": [
+        "aroll_overlay"
+      ],
+      "capability_type": "native_component",
+      "reviewed_version": "1.0.0",
+      "title": "下横栏:命名人物与来源出处",
+      "summary": "说话人开口后弹出姓名+职务+机构的下横栏贴片,或标注来源出处与地点;随词锚落板,统一淡出退场。",
+      "tags": {
+        "subjects": [
+          "人物",
+          "来源",
+          "机构",
+          "地点"
+        ],
+        "actions": [
+          "弹出",
+          "标注"
+        ],
+        "relations": [
+          "归属",
+          "出处"
+        ],
+        "feelings": [],
+        "styles": [
+          "信息条",
+          "下横栏"
+        ],
+        "patterns": [
+          "person_title",
+          "source_attribution"
+        ]
+      },
+      "editable_content": [
+        "name(≤8字)",
+        "role(≤12字)",
+        "org(≤12字,可空)"
+      ],
+      "limitations": [
+        "每期现写 HTML,不是现成模板。",
+        "仅 A-roll 透明贴片。"
+      ],
+      "evidence": [
+        "skill-development/hd-talking-head/references/motion-graphics-native.md",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs"
+      ],
+      "reviewed_sources": {
+        "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+      }
+    },
+    {
+      "candidate_id": "motion-graphics-native:callout-pin",
+      "uses": [
+        "aroll_overlay"
+      ],
+      "capability_type": "native_component",
+      "reviewed_version": "1.0.0",
+      "title": "标注引导:指认画面局部",
+      "summary": "对画面某个区域画圈、拉线或描边,配合简短标签指认正在讲解的局部;引导方向可指定。",
+      "tags": {
+        "subjects": [
+          "画面区域",
+          "界面",
+          "图表"
+        ],
+        "actions": [
+          "指认",
+          "画圈",
+          "描边"
+        ],
+        "relations": [
+          "指认"
+        ],
+        "feelings": [],
+        "styles": [
+          "标注",
+          "引导"
+        ],
+        "patterns": [
+          "callout",
+          "annotation"
+        ]
+      },
+      "editable_content": [
+        "target_desc(≤24字)",
+        "label(≤10字)",
+        "direction(up/down/left/right)"
+      ],
+      "limitations": [
+        "每期现写 HTML。",
+        "仅 A-roll 透明贴片。",
+        "引导线不横穿字幕带。"
+      ],
+      "evidence": [
+        "skill-development/hd-talking-head/references/motion-graphics-native.md",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs"
+      ],
+      "reviewed_sources": {
+        "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+      }
+    },
+    {
+      "candidate_id": "motion-graphics-native:logo-sting",
+      "uses": [
+        "aroll_overlay"
+      ],
+      "capability_type": "native_component",
+      "reviewed_version": "1.0.0",
+      "title": "品牌贴片:片头汇聚与片尾收束",
+      "summary": "频道标识汇聚到位并锁定,配主标语或行动号召;片头版全画幅主标在位,片尾版统一淡出收束。",
+      "tags": {
+        "subjects": [
+          "品牌",
+          "标识"
+        ],
+        "actions": [
+          "汇聚",
+          "锁定",
+          "收束"
+        ],
+        "relations": [
+          "品牌"
+        ],
+        "feelings": [
+          "专业"
+        ],
+        "styles": [
+          "品牌",
+          "标识"
+        ],
+        "patterns": [
+          "logo_sting",
+          "brand_lock"
+        ]
+      },
+      "editable_content": [
+        "mark_text(≤6字)",
+        "headline(≤14字,可空)",
+        "cta(≤10字,可空)"
+      ],
+      "limitations": [
+        "每期现写 HTML。",
+        "片头帧标题 0 秒在位,不错峰。"
+      ],
+      "evidence": [
+        "skill-development/hd-talking-head/references/motion-graphics-native.md",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs"
+      ],
+      "reviewed_sources": {
+        "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
+        "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+      }
     }
   ]
 }

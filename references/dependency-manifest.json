@@ -8,133 +8,294 @@
       "stage": "job-start",
       "target": "skill-development/vendor/eian-riso-broll",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "scripts/check_setup.mjs", "scripts/render.mjs", "scripts/qa.mjs", "assets/riso.js", "templates/number.html"],
+      "entrypoints": [
+        "SKILL.md",
+        "scripts/check_setup.mjs",
+        "scripts/render.mjs",
+        "scripts/qa.mjs",
+        "assets/riso.js",
+        "templates/number.html"
+      ],
       "required_level": "installed"
     },
     {
       "id": "eian-riso-broll",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/riso_native_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/riso_native_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/riso_native_adapter.py", "--probe", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "eian-riso-broll", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/riso_native_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/riso_native_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/riso_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "eian-riso-broll",
+        "required_level": "bound"
+      }
     },
     {
       "id": "pillow-runtime",
       "kind": "python_module",
       "required": true,
-      "stages": ["job-start", "cover-direction", "cover", "subtitles", "preview", "delivery"],
+      "stages": [
+        "job-start",
+        "cover-direction",
+        "cover",
+        "subtitles",
+        "preview",
+        "delivery"
+      ],
       "target": "PIL",
       "required_level": "callable",
-      "install": {"method": "python-package", "package": "Pillow", "version": "12.3.0", "approval_required": false}
+      "install": {
+        "method": "python-package",
+        "package": "Pillow",
+        "version": "12.3.0",
+        "approval_required": false
+      }
     },
     {
       "id": "requests-runtime",
       "kind": "python_module",
       "required": true,
-      "stages": ["job-start", "speech-cleanup", "edit-structure"],
+      "stages": [
+        "job-start",
+        "speech-cleanup",
+        "edit-structure"
+      ],
       "target": "requests",
       "required_level": "callable",
-      "install": {"method": "python-package", "package": "requests", "version": "2.34.2", "approval_required": false}
+      "install": {
+        "method": "python-package",
+        "package": "requests",
+        "version": "2.34.2",
+        "approval_required": false
+      }
     },
     {
       "id": "numpy-runtime",
       "kind": "python_module",
       "required": true,
-      "stages": ["job-start", "cover-direction", "cover", "edit-structure"],
+      "stages": [
+        "job-start",
+        "cover-direction",
+        "cover",
+        "edit-structure"
+      ],
       "target": "numpy",
       "required_level": "callable",
-      "install": {"method": "python-package", "package": "numpy", "version": "2.2.6", "approval_required": false}
+      "install": {
+        "method": "python-package",
+        "package": "numpy",
+        "version": "2.2.6",
+        "approval_required": false
+      }
     },
     {
       "id": "opencv-runtime",
       "kind": "python_module",
       "required": true,
-      "stages": ["job-start", "cover-direction", "cover"],
+      "stages": [
+        "job-start",
+        "cover-direction",
+        "cover"
+      ],
       "target": "cv2",
       "required_level": "callable",
-      "install": {"method": "python-package", "package": "opencv-python-headless", "version": "4.12.0.88", "approval_required": false}
+      "install": {
+        "method": "python-package",
+        "package": "opencv-python-headless",
+        "version": "4.12.0.88",
+        "approval_required": false
+      }
     },
     {
       "id": "hypit-native-chat-source",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-direction", "visual-canary", "visual-assets"],
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/research/hypit-source",
       "path_type": "directory",
-      "entrypoints": ["skills/hypit/SKILL.md", "bin/hypit.mjs", "examples/semantic-composition/packages/chat-scene/dist/activation.js"],
+      "entrypoints": [
+        "skills/hypit/SKILL.md",
+        "bin/hypit.mjs",
+        "examples/semantic-composition/packages/chat-scene/dist/activation.js"
+      ],
       "required_level": "installed"
     },
     {
       "id": "hypit-native-chat",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_hypit_native.mjs", "scripts/hypit_native_adapter.py", "scripts/native_completed_artifact.py", "assets/hypit-native-layout/src/activation.js"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_hypit_native.mjs",
-        "producer_version": "1.2.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/hypit_native_adapter.py", "--probe", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "hypit-native-chat", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/render_hypit_native.mjs",
+        "scripts/hypit_native_adapter.py",
+        "scripts/native_completed_artifact.py",
+        "assets/hypit-native-layout/src/activation.js"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_hypit_native.mjs",
+          "producer_version": "1.2.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/hypit_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "hypit-native-chat",
+        "required_level": "bound"
+      }
     },
     {
       "id": "wise-motion",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_wise_motion.mjs", "scripts/wise_motion_adapter.py", "assets/wise-motion-runtime/index.jsx"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_wise_motion.mjs",
-        "producer_version": "3.1.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "Remotion"},
-        "command": ["{python}", "{dependency_root}/scripts/wise_motion_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "wise-motion", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/render_wise_motion.mjs",
+        "scripts/wise_motion_adapter.py",
+        "assets/wise-motion-runtime/index.jsx"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_wise_motion.mjs",
+          "producer_version": "3.1.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/wise_motion_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "wise-motion",
+        "required_level": "bound"
+      }
     },
     {
       "id": "openfilm-motion-graphics",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-direction", "visual-canary", "visual-assets"],
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/openfilm_runtime.py", "scripts/openfilm_motion_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/openfilm_motion_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "OpenFilm"},
-        "command": ["{python}", "{dependency_root}/scripts/openfilm_motion_adapter.py", "--probe", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "openfilm-motion-graphics", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/openfilm_runtime.py",
+        "scripts/openfilm_motion_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/openfilm_motion_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "OpenFilm"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/openfilm_motion_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "openfilm-motion-graphics",
+        "required_level": "bound"
+      }
     },
     {
       "id": "gbro-collage-broll-source",
       "kind": "project_path",
       "required": true,
-      "stages": ["visual-direction", "visual-canary", "visual-assets"],
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/vendor/gbro-collage-broll",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "scripts/check_setup.sh", "scripts/generate_video.py", "scripts/upload_file.py"],
+      "entrypoints": [
+        "SKILL.md",
+        "scripts/check_setup.sh",
+        "scripts/generate_video.py",
+        "scripts/upload_file.py"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.gbro-collage-metaphor", "visual.gbro-collage-static"]
+      "capabilities": [
+        "visual.gbro-collage-metaphor",
+        "visual.gbro-collage-static"
+      ]
     },
     {
       "id": "adu-motion-video-source",
@@ -143,26 +304,58 @@
       "stage": "job-start",
       "target": "skill-development/vendor/adu-motion-video",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "scripts/render_project.mjs", "template/index.html", "template/templates.js"],
+      "entrypoints": [
+        "SKILL.md",
+        "scripts/render_project.mjs",
+        "template/index.html",
+        "template/templates.js"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.adu-native-comparison"]
+      "capabilities": [
+        "visual.adu-native-comparison"
+      ]
     },
     {
       "id": "adu-motion-video",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_adu_native.mjs", "scripts/adu_native_adapter.py", "scripts/native_completed_artifact.py", "assets/adu-native-runtime/package-lock.json"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_adu_native.mjs",
-        "producer_version": "2.3.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/adu_native_adapter.py", "--probe", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "adu-motion-video", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/render_adu_native.mjs",
+        "scripts/adu_native_adapter.py",
+        "scripts/native_completed_artifact.py",
+        "assets/adu-native-runtime/package-lock.json"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_adu_native.mjs",
+          "producer_version": "2.3.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/adu_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "adu-motion-video",
+        "required_level": "bound"
+      }
     },
     {
       "id": "huashu-art-motion-source",
@@ -171,26 +364,61 @@
       "stage": "job-start",
       "target": "skill-development/vendor/huashu-art-motion",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "scripts/engine/render.py", "scripts/engine/clip.html", "scripts/engine/clip.js", "scripts/engine/clips/y2_vox.js", "scripts/engine/clips/y1_kurzgesagt.js", "scripts/engine/clips/t2_keynote_ui.js", "scripts/engine/lib/fonts.js"],
+      "entrypoints": [
+        "SKILL.md",
+        "scripts/engine/render.py",
+        "scripts/engine/clip.html",
+        "scripts/engine/clip.js",
+        "scripts/engine/clips/y2_vox.js",
+        "scripts/engine/clips/y1_kurzgesagt.js",
+        "scripts/engine/clips/t2_keynote_ui.js",
+        "scripts/engine/lib/fonts.js"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.huashu-htmlcanvas-motion"]
+      "capabilities": [
+        "visual.huashu-htmlcanvas-motion"
+      ]
     },
     {
       "id": "huashu-art-motion",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/huashu_motion_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/huashu_motion_adapter.py",
-        "producer_version": "1.2.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/huashu_motion_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "huashu-art-motion"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "huashu-art-motion", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/huashu_motion_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/huashu_motion_adapter.py",
+          "producer_version": "1.2.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/huashu_motion_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "huashu-art-motion"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "huashu-art-motion",
+        "required_level": "bound"
+      }
     },
     {
       "id": "lemo-opuscar-source",
@@ -199,9 +427,16 @@
       "stage": "job-start",
       "target": "skill-development/vendor/lemo-opuscar",
       "path_type": "directory",
-      "entrypoints": ["plugin/skills/lemo-opuscar/SKILL.md", "DIRECTOR.md", "TECHNIQUE.md", "core/render/video.mjs"],
+      "entrypoints": [
+        "plugin/skills/lemo-opuscar/SKILL.md",
+        "DIRECTOR.md",
+        "TECHNIQUE.md",
+        "core/render/video.mjs"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.upstream-style-scenes"]
+      "capabilities": [
+        "visual.upstream-style-scenes"
+      ]
     },
     {
       "id": "onetake-source",
@@ -210,80 +445,169 @@
       "stage": "job-start",
       "target": "skill-development/vendor/onetake",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "lib/motion.js", "scripts/render.py", "scripts/probe.py"],
+      "entrypoints": [
+        "SKILL.md",
+        "lib/motion.js",
+        "scripts/render.py",
+        "scripts/probe.py"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.upstream-continuous-motion"]
+      "capabilities": [
+        "visual.upstream-continuous-motion"
+      ]
     },
     {
       "id": "lemo-opuscar",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/upstream_scene_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/upstream_scene_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/upstream_scene_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "lemo-opuscar"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "lemo-opuscar", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/upstream_scene_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/upstream_scene_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/upstream_scene_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "lemo-opuscar"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "lemo-opuscar",
+        "required_level": "bound"
+      }
     },
     {
       "id": "onetake",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/upstream_scene_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/upstream_scene_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"},
-        "command": ["{python}", "{dependency_root}/scripts/upstream_scene_adapter.py", "--probe", "--project-root", "{project_root}", "--dependency-id", "onetake"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "onetake", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/upstream_scene_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/upstream_scene_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/upstream_scene_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "onetake"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "onetake",
+        "required_level": "bound"
+      }
     },
     {
       "id": "hyperframes-native-adaptation",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/hyperframes_native_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/hyperframes_native_adapter.py",
-        "producer_version": "1.3.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HyperFrames"},
-        "command": ["{python}", "{dependency_root}/scripts/hyperframes_native_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "hyperframes-native-adaptation", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/hyperframes_native_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/hyperframes_native_adapter.py",
+          "producer_version": "1.3.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/hyperframes_native_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "hyperframes-native-adaptation",
+        "required_level": "bound"
+      }
     },
     {
       "id": "talkcraft-native-adaptation",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_talkcraft_native.mjs", "scripts/talkcraft_native_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_talkcraft_native.mjs",
-        "producer_version": "1.0.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "Remotion"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/talkcraft_native_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        "scripts/render_talkcraft_native.mjs",
+        "scripts/talkcraft_native_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_talkcraft_native.mjs",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/talkcraft_native_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -298,25 +622,54 @@
       "stage": "job-start",
       "target": "skill-development/vendor/huashu-motion",
       "path_type": "directory",
-      "entrypoints": ["skills/huashu-motion/SKILL.md", "cli/om.js", "templates/talking-head/index.html"],
+      "entrypoints": [
+        "skills/huashu-motion/SKILL.md",
+        "cli/om.js",
+        "templates/talking-head/index.html"
+      ],
       "required_level": "installed"
     },
     {
       "id": "huashu-motion-native",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/huashu_stat_adapter.py", "scripts/huashu_stat_runtime.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/huashu_stat_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HuashuMotion"},
-        "command": ["{python}", "{dependency_root}/scripts/huashu_stat_adapter.py", "--probe", "--project-root", "{project_root}", "--mode", "reuse_mov"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "huashu-motion-native", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/huashu_stat_adapter.py",
+        "scripts/huashu_stat_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/huashu_stat_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HuashuMotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/huashu_stat_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--mode",
+            "reuse_mov"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "huashu-motion-native",
+        "required_level": "bound"
+      }
     },
     {
       "id": "overlay-studio-source",
@@ -325,49 +678,85 @@
       "stage": "job-start",
       "target": "skill-development/vendor/overlay-studio",
       "path_type": "directory",
-      "entrypoints": [".agents/skills/overlay-fx-generator/SKILL.md", "motion-playground/scripts/export-frames.mjs", "motion-playground/src/effects/hud/PinBoardPlate.tsx"],
+      "entrypoints": [
+        ".agents/skills/overlay-fx-generator/SKILL.md",
+        "motion-playground/scripts/export-frames.mjs",
+        "motion-playground/src/effects/hud/PinBoardPlate.tsx"
+      ],
       "required_level": "installed"
     },
     {
       "id": "overlay-studio-native",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/overlay_studio_adapter.py", "scripts/overlay_studio_runtime.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/overlay_studio_adapter.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "OverlayStudio"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/overlay_studio_adapter.py", "--probe", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
-      "selection": {"component_kind": "code_generated", "binding_field": "dependency_id", "equals": "overlay-studio-native", "required_level": "bound"}
+      "entrypoints": [
+        "scripts/overlay_studio_adapter.py",
+        "scripts/overlay_studio_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/overlay_studio_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "OverlayStudio"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/overlay_studio_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "overlay-studio-native",
+        "required_level": "bound"
+      }
     },
     {
       "id": "doudou-remotion-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_doudou.mjs", "scripts/doudou_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_doudou.mjs",
-        "producer_version": "2.0.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "Remotion"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/doudou_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        "scripts/render_doudou.mjs",
+        "scripts/doudou_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_doudou.mjs",
+          "producer_version": "2.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/doudou_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -382,9 +771,18 @@
       "stage": "job-start",
       "target": "skill-development/vendor/doudou-remotion-whiteboard",
       "path_type": "directory",
-      "entrypoints": ["SKILL.md", "components/HandDrawnShapes.tsx", "components/PencilFollower.tsx", "components/RealHandFollower.tsx", "recipes/index.ts"],
+      "entrypoints": [
+        "SKILL.md",
+        "components/HandDrawnShapes.tsx",
+        "components/PencilFollower.tsx",
+        "components/RealHandFollower.tsx",
+        "recipes/index.ts"
+      ],
       "required_level": "installed",
-      "capabilities": ["visual.handdrawn-components", "visual.whiteboard-recipes"]
+      "capabilities": [
+        "visual.handdrawn-components",
+        "visual.whiteboard-recipes"
+      ]
     },
     {
       "id": "reference-asr",
@@ -392,10 +790,14 @@
       "required": false,
       "stage": "job-start",
       "target": "edit/hd/tools/reference_asr.py",
-      "api": ["probe_configured_runtime"],
+      "api": [
+        "probe_configured_runtime"
+      ],
       "required_level": "callable",
       "config_selection": "reference_asr",
-      "capabilities": ["reference-transcription"]
+      "capabilities": [
+        "reference-transcription"
+      ]
     },
     {
       "id": "startup-gate",
@@ -403,7 +805,11 @@
       "required": true,
       "stage": "job-start",
       "target": "edit/hd/tools/startup.py",
-      "api": ["runtime_identity", "confirm_setup", "require_startup"],
+      "api": [
+        "runtime_identity",
+        "confirm_setup",
+        "require_startup"
+      ],
       "required_level": "callable"
     },
     {
@@ -412,7 +818,16 @@
       "required": true,
       "stage": "job-start",
       "target": "edit/hd/tools/generation_queue.py",
-      "api": ["add", "claim", "record", "poll", "status", "resume", "prepare_retry", "retry"],
+      "api": [
+        "add",
+        "claim",
+        "record",
+        "poll",
+        "status",
+        "resume",
+        "prepare_retry",
+        "retry"
+      ],
       "required_level": "callable"
     },
     {
@@ -422,13 +837,20 @@
       "stage": "job-start",
       "target": "edit/hd/integrations/talkcraft",
       "path_type": "directory",
-      "entrypoints": [{
-        "path": "check_runtime.py",
-        "smoke": ["{python}", "{entrypoint}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        {
+          "path": "check_runtime.py",
+          "smoke": [
+            "{python}",
+            "{entrypoint}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "required_level": "callable",
-      "capabilities": ["render.talkcraft.qualified-runtime"]
+      "capabilities": [
+        "render.talkcraft.qualified-runtime"
+      ]
     },
     {
       "id": "python-runtime",
@@ -436,7 +858,9 @@
       "required": true,
       "stage": "job-start",
       "target": "python3",
-      "version_args": ["--version"],
+      "version_args": [
+        "--version"
+      ],
       "min_version": "3.9",
       "install": {
         "group": "python-runtime",
@@ -451,7 +875,9 @@
       "required": true,
       "stage": "inspect",
       "target": "ffmpeg",
-      "version_args": ["-version"],
+      "version_args": [
+        "-version"
+      ],
       "install": {
         "group": "ffmpeg-suite",
         "method": "system-package",
@@ -465,7 +891,9 @@
       "required": true,
       "stage": "inspect",
       "target": "ffprobe",
-      "version_args": ["-version"],
+      "version_args": [
+        "-version"
+      ],
       "install": {
         "group": "ffmpeg-suite",
         "method": "system-package",
@@ -477,9 +905,14 @@
       "id": "node-runtime",
       "kind": "command",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "node",
-      "version_args": ["--version"],
+      "version_args": [
+        "--version"
+      ],
       "min_version": "18.0",
       "selection": {
         "component_kind": "code_generated",
@@ -498,9 +931,14 @@
       "id": "npm",
       "kind": "command",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "npm",
-      "version_args": ["--version"],
+      "version_args": [
+        "--version"
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -520,7 +958,9 @@
       "required": true,
       "stage": "job-start",
       "target": "git",
-      "version_args": ["--version"],
+      "version_args": [
+        "--version"
+      ],
       "install": {
         "group": "git",
         "method": "system-package",
@@ -534,7 +974,11 @@
       "required": true,
       "stage": "job-start",
       "target": "edit/hd/tools/state.py",
-      "api": ["create_job","load_job","require_runnable"],
+      "api": [
+        "create_job",
+        "load_job",
+        "require_runnable"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -544,7 +988,9 @@
       "required": true,
       "stage": "inspect",
       "target": "edit/hd/tools/inspect_inputs.py",
-      "api": ["inspect_job"],
+      "api": [
+        "inspect_job"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -554,7 +1000,9 @@
       "required": true,
       "stage": "content-analysis",
       "target": "edit/hd/tools/content_analysis.py",
-      "api": ["prepare_content_analysis"],
+      "api": [
+        "prepare_content_analysis"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -564,7 +1012,9 @@
       "required": true,
       "stage": "cover-direction",
       "target": "edit/hd/tools/cover_direction.py",
-      "api": ["prepare_cover_direction"],
+      "api": [
+        "prepare_cover_direction"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -574,7 +1024,9 @@
       "required": true,
       "stage": "cover",
       "target": "edit/hd/tools/cover.py",
-      "api": ["prepare_cover"],
+      "api": [
+        "prepare_cover"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -584,7 +1036,11 @@
       "required": true,
       "stage": "speech-cleanup",
       "target": "edit/hd/tools/speech_edit_v2.py",
-      "api": ["prepare_transcription","prepare_cleanup_proposal","render_edit"],
+      "api": [
+        "prepare_transcription",
+        "prepare_cleanup_proposal",
+        "render_edit"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -594,7 +1050,9 @@
       "required": true,
       "stage": "visual-direction",
       "target": "edit/hd/tools/visual_plan.py",
-      "api": ["prepare_visual_direction"],
+      "api": [
+        "prepare_visual_direction"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -604,7 +1062,9 @@
       "required": true,
       "stage": "visual-canary",
       "target": "edit/hd/tools/visual_canary.py",
-      "api": ["prepare_visual_canary"],
+      "api": [
+        "prepare_visual_canary"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -614,7 +1074,9 @@
       "required": true,
       "stage": "visual-canary",
       "target": "edit/hd/tools/segment_render.py",
-      "api": ["render_segment_video"],
+      "api": [
+        "render_segment_video"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -624,7 +1086,9 @@
       "required": true,
       "stage": "visual-assets",
       "target": "edit/hd/tools/visual_assets_v2.py",
-      "api": ["prepare_visual_assets_v2"],
+      "api": [
+        "prepare_visual_assets_v2"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -634,7 +1098,9 @@
       "required": true,
       "stage": "subtitles",
       "target": "edit/hd/tools/subtitles_v2.py",
-      "api": ["prepare_subtitles_v2"],
+      "api": [
+        "prepare_subtitles_v2"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -644,7 +1110,11 @@
       "required": true,
       "stage": "preview",
       "target": "edit/hd/tools/preview_v2.py",
-      "api": ["prepare_preview_v2", "validate_preview_opening", "validate_preview_music"],
+      "api": [
+        "prepare_preview_v2",
+        "validate_preview_opening",
+        "validate_preview_music"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -654,7 +1124,9 @@
       "required": true,
       "stage": "delivery",
       "target": "edit/hd/tools/qa_delivery_v2.py",
-      "api": ["prepare_delivery_v2"],
+      "api": [
+        "prepare_delivery_v2"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -664,7 +1136,9 @@
       "required": true,
       "stage": "delivery",
       "target": "edit/hd/tools/delivery_approval.py",
-      "api": ["approve_delivery"],
+      "api": [
+        "approve_delivery"
+      ],
       "required_level": "callable",
       "path_type": "file"
     },
@@ -700,7 +1174,10 @@
       "id": "video-use-skill",
       "kind": "skill",
       "required": true,
-      "stages": ["speech-cleanup", "edit-structure"],
+      "stages": [
+        "speech-cleanup",
+        "edit-structure"
+      ],
       "target": "video-use",
       "capabilities": [
         "speech.word-timestamps",
@@ -720,10 +1197,16 @@
       "id": "html-video-reference",
       "kind": "reference_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "html-video",
       "path_type": "directory",
-      "capabilities": ["visual.content-graph", "render.html-frame"],
+      "capabilities": [
+        "visual.content-graph",
+        "render.html-frame"
+      ],
       "entrypoints": [
         "packages/core/src/registry.ts",
         "packages/adapter-hyperframes/src/render.ts",
@@ -809,7 +1292,9 @@
       "kind": "environment_any",
       "required": false,
       "stage": "visual-direction",
-      "target": ["PEXELS_API_KEY"],
+      "target": [
+        "PEXELS_API_KEY"
+      ],
       "capabilities": [
         "provider.pexels.stock-search",
         "provider.pexels.stock-download"
@@ -826,7 +1311,9 @@
       "kind": "environment_any",
       "required": false,
       "stage": "visual-direction",
-      "target": ["PIXABAY_API_KEY"],
+      "target": [
+        "PIXABAY_API_KEY"
+      ],
       "capabilities": [
         "provider.pixabay.stock-search",
         "provider.pixabay.stock-download"
@@ -845,7 +1332,9 @@
       "stage": "visual-direction",
       "target": "erduo-broll-loop-engineering",
       "path_type": "directory",
-      "capabilities": ["qa.visual-canary"],
+      "capabilities": [
+        "qa.visual-canary"
+      ],
       "entrypoints": [
         "erduo-broll-loop-engineering/scripts/create-production-profile.mjs",
         "erduo-broll-loop-engineering/SKILL.md"
@@ -861,7 +1350,10 @@
       "id": "video-use-runtime",
       "kind": "reference_path",
       "required": true,
-      "stages": ["speech-cleanup", "edit-structure"],
+      "stages": [
+        "speech-cleanup",
+        "edit-structure"
+      ],
       "target": "video-use",
       "path_type": "directory",
       "capabilities": [
@@ -876,33 +1368,62 @@
       "entrypoints": [
         {
           "path": "helpers/transcribe.py",
-          "smoke": ["{python}", "{entrypoint}", "--help"]
+          "smoke": [
+            "{python}",
+            "{entrypoint}",
+            "--help"
+          ]
         },
         {
           "path": "helpers/render.py",
-          "smoke": ["{python}", "{entrypoint}", "--help"]
+          "smoke": [
+            "{python}",
+            "{entrypoint}",
+            "--help"
+          ]
         },
         {
           "path": "helpers/timeline_view.py",
-          "smoke": ["{python}", "{entrypoint}", "--help"]
+          "smoke": [
+            "{python}",
+            "{entrypoint}",
+            "--help"
+          ]
         },
         {
           "path": "helpers/pack_transcripts.py",
-          "smoke": ["{python}", "{entrypoint}", "--help"]
+          "smoke": [
+            "{python}",
+            "{entrypoint}",
+            "--help"
+          ]
         }
       ],
       "bindings": [
         {
           "stage": "speech-cleanup",
           "target": "edit/hd/tools/speech_edit_v2.py",
-          "contains_all": ["VIDEO_USE_PACING_PROFILE", "_apply_video_use_pacing", "VIDEO_USE_TRANSCRIBER", "_transcribe_with_video_use"],
-          "api": ["_apply_video_use_pacing", "_transcribe_with_video_use"]
+          "contains_all": [
+            "VIDEO_USE_PACING_PROFILE",
+            "_apply_video_use_pacing",
+            "VIDEO_USE_TRANSCRIBER",
+            "_transcribe_with_video_use"
+          ],
+          "api": [
+            "_apply_video_use_pacing",
+            "_transcribe_with_video_use"
+          ]
         },
         {
           "stage": "edit-structure",
           "target": "edit/hd/tools/speech_edit_v2.py",
-          "contains_all": ["VIDEO_USE_EDL_NAME", "_render_with_video_use"],
-          "api": ["_render_with_video_use"]
+          "contains_all": [
+            "VIDEO_USE_EDL_NAME",
+            "_render_with_video_use"
+          ],
+          "api": [
+            "_render_with_video_use"
+          ]
         }
       ],
       "install": {
@@ -919,7 +1440,10 @@
       "stage": "visual-direction",
       "target": "video-autopilot-kit",
       "path_type": "directory",
-      "capabilities": ["asset.semantic-score", "qa.fatigue-penalty"],
+      "capabilities": [
+        "asset.semantic-score",
+        "qa.fatigue-penalty"
+      ],
       "entrypoints": [
         "src/asset_selection.py",
         "src/review_loop.py",
@@ -937,10 +1461,16 @@
       "id": "hyperframes-reference",
       "kind": "reference_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "hyperframes",
       "path_type": "directory",
-      "capabilities": ["render.html-motion", "render.svg-d3-three"],
+      "capabilities": [
+        "render.html-motion",
+        "render.svg-d3-three"
+      ],
       "entrypoints": [
         "README.md",
         "packages/cli/package.json",
@@ -958,7 +1488,10 @@
       "id": "hyperframes-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
       "capabilities": [
@@ -1074,7 +1607,10 @@
       "id": "local-canonical-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
       "capabilities": [
@@ -1132,21 +1668,34 @@
       "id": "paper-collage-hyperframes-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/paper_hyperframes_adapter.py", "scripts/paper_motion_guard.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/paper_hyperframes_adapter.py",
-        "producer_version": "1.1.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "HyperFrames"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/paper_hyperframes_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        "scripts/paper_hyperframes_adapter.py",
+        "scripts/paper_motion_guard.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/paper_hyperframes_adapter.py",
+          "producer_version": "1.1.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/paper_hyperframes_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -1158,21 +1707,34 @@
       "id": "paper-collage-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_paper_collage.py", "scripts/paper_collage_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_paper_collage.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "PaperCollage"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/paper_collage_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        "scripts/render_paper_collage.py",
+        "scripts/paper_collage_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_paper_collage.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "PaperCollage"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/paper_collage_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -1184,21 +1746,34 @@
       "id": "whiteboard-video-adapter",
       "kind": "project_path",
       "required": false,
-      "stages": ["visual-canary", "visual-assets"],
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
       "target": "skill-development/hd-talking-head",
       "path_type": "directory",
-      "entrypoints": ["scripts/render_whiteboard.py", "scripts/whiteboard_adapter.py"],
-      "binding_probes": [{
-        "entrypoint": "scripts/render_whiteboard.py",
-        "producer_version": "1.0.0",
-        "adapter_identity": {
-          "adapter_type": "ReferenceProcessAdapter",
-          "approved_executor": "reference_adapter",
-          "primary_renderer": "Whiteboard"
-        },
-        "command": ["{python}", "{dependency_root}/scripts/whiteboard_adapter.py", "--project-root", "{project_root}"],
-        "timeout_seconds": 30
-      }],
+      "entrypoints": [
+        "scripts/render_whiteboard.py",
+        "scripts/whiteboard_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/render_whiteboard.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Whiteboard"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/whiteboard_adapter.py",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
       "selection": {
         "component_kind": "code_generated",
         "binding_field": "dependency_id",
@@ -1213,8 +1788,15 @@
       "stage": "visual-canary",
       "target": "remotion",
       "path_type": "directory",
-      "capabilities": ["render.react-frame", "render.2_5d-ui"],
-      "entrypoints": ["packages/renderer", "packages/bundler", "packages/cli"],
+      "capabilities": [
+        "render.react-frame",
+        "render.2_5d-ui"
+      ],
+      "entrypoints": [
+        "packages/renderer",
+        "packages/bundler",
+        "packages/cli"
+      ],
       "install": {
         "method": "git-clone",
         "source": "https://github.com/remotion-dev/remotion.git",
@@ -1229,7 +1811,10 @@
       "stage": "visual-assets",
       "target": "OpenMontage",
       "path_type": "directory",
-      "capabilities": ["provider.capability-registry", "provider.grok-imagine-video"],
+      "capabilities": [
+        "provider.capability-registry",
+        "provider.grok-imagine-video"
+      ],
       "entrypoints": [
         "tools/tool_registry.py",
         "tools/video/grok_video.py",
@@ -1249,7 +1834,10 @@
       "stage": "visual-assets",
       "target": "Generative-Media-Skills",
       "path_type": "directory",
-      "capabilities": ["provider.prompt-schema", "provider.generation-lifecycle"],
+      "capabilities": [
+        "provider.prompt-schema",
+        "provider.generation-lifecycle"
+      ],
       "entrypoints": [
         "core/media/generate-video.sh",
         "core/media/image-to-video.sh",
@@ -1269,7 +1857,10 @@
       "stage": "visual-assets",
       "target": "Open-Generative-AI",
       "path_type": "directory",
-      "capabilities": ["provider.model-catalog", "provider.async-generation-dag"],
+      "capabilities": [
+        "provider.model-catalog",
+        "provider.async-generation-dag"
+      ],
       "entrypoints": [
         "packages/studio/src/models.js",
         "packages/studio/src/videoToolCapabilities.js",
@@ -1284,29 +1875,174 @@
         "destination": "Open-Generative-AI",
         "approval_required": true
       }
+    },
+    {
+      "id": "motion-graphics-native",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_graphics_adapter.py",
+        "scripts/render_motion_graphics.cjs"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_graphics_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HyperFrames"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_graphics_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "motion-graphics-native",
+        "required_level": "callable"
+      }
     }
   ],
   "preparation": [
-    {"id": "eian-riso-broll-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "eian-riso-broll"]},
-    {"id": "punk-cover-project-skill", "script": "scripts/ensure_punk_cover.py", "arguments": []},
-    {"id": "doudou-whiteboard-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "doudou-remotion-whiteboard"]},
-    {"id": "gbro-collage-broll-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "gbro-collage-broll"]},
-    {"id": "hyperframes-native-adaptation", "script": "scripts/hyperframes_runtime.py", "arguments": ["--prepare"]},
-    {"id": "wise-motion", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "wise-motion"]},
-    {"id": "openfilm-motion-graphics", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "openfilm-motion-graphics"]},
-    {"id": "huashu-art-motion-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "huashu-art-motion"]},
-    {"id": "huashu-motion-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "huashu-motion"]},
-    {"id": "adu-motion-video-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "adu-motion-video"]},
-    {"id": "hypit-native-chat-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "hypit-native-chat"], "node_tool": {"package": "pnpm", "version": "10.33.0"}},
-    {"id": "lemo-opuscar-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "lemo-opuscar"]},
-    {"id": "onetake-source", "script": "scripts/ensure_visual_broll_skills.py", "arguments": ["--skill", "onetake"]}
+    {
+      "id": "eian-riso-broll-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "eian-riso-broll"
+      ]
+    },
+    {
+      "id": "punk-cover-project-skill",
+      "script": "scripts/ensure_punk_cover.py",
+      "arguments": []
+    },
+    {
+      "id": "doudou-whiteboard-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "doudou-remotion-whiteboard"
+      ]
+    },
+    {
+      "id": "gbro-collage-broll-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "gbro-collage-broll"
+      ]
+    },
+    {
+      "id": "hyperframes-native-adaptation",
+      "script": "scripts/hyperframes_runtime.py",
+      "arguments": [
+        "--prepare"
+      ]
+    },
+    {
+      "id": "wise-motion",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "wise-motion"
+      ]
+    },
+    {
+      "id": "openfilm-motion-graphics",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "openfilm-motion-graphics"
+      ]
+    },
+    {
+      "id": "huashu-art-motion-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "huashu-art-motion"
+      ]
+    },
+    {
+      "id": "huashu-motion-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "huashu-motion"
+      ]
+    },
+    {
+      "id": "adu-motion-video-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "adu-motion-video"
+      ]
+    },
+    {
+      "id": "hypit-native-chat-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "hypit-native-chat"
+      ],
+      "node_tool": {
+        "package": "pnpm",
+        "version": "10.33.0"
+      }
+    },
+    {
+      "id": "lemo-opuscar-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "lemo-opuscar"
+      ]
+    },
+    {
+      "id": "onetake-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "onetake"
+      ]
+    }
   ],
   "runtime_checks": [
     "eian-riso-broll",
-    "hypit-native-chat", "wise-motion", "openfilm-motion-graphics", "adu-motion-video", "huashu-art-motion",
-    "lemo-opuscar", "onetake", "hyperframes-native-adaptation", "overlay-studio-native", "huashu-motion-native", "talkcraft-native-adaptation",
-    "doudou-remotion-adapter", "html-video-reference", "hyperframes-adapter",
-    "paper-collage-hyperframes-adapter", "paper-collage-adapter", "whiteboard-video-adapter"
+    "hypit-native-chat",
+    "wise-motion",
+    "openfilm-motion-graphics",
+    "adu-motion-video",
+    "huashu-art-motion",
+    "lemo-opuscar",
+    "onetake",
+    "hyperframes-native-adaptation",
+    "overlay-studio-native",
+    "huashu-motion-native",
+    "talkcraft-native-adaptation",
+    "doudou-remotion-adapter",
+    "html-video-reference",
+    "hyperframes-adapter",
+    "paper-collage-hyperframes-adapter",
+    "paper-collage-adapter",
+    "whiteboard-video-adapter"
   ],
   "dynamic_checks": [
     {
