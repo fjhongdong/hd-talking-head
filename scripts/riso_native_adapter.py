@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from adapter_kit import sha256_file as sha
 
 if __file__ == "<stdin>":
     _bootstrap = argparse.ArgumentParser(add_help=False)
@@ -20,6 +19,8 @@ if __file__ == "<stdin>":
     SKILL = _bootstrap.parse_known_args()[0].skill_root.resolve(strict=True)
 else:
     SKILL = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SKILL / "scripts"))
+from adapter_kit import sha256_file as sha
 ENTRY = "scripts/riso_native_adapter.py"
 VERSION = "1.0.0"
 DEPENDENCY_ID = "eian-riso-broll"
