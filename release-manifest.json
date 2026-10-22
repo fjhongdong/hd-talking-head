@@ -2,7 +2,7 @@
  "files": {
   ".gitignore": "60c9bdd905fcf45ac485c680d32e9773962cf061b6f041dcddd033911558a672",
   "README.md": "779fc774836d30a82f30670d83c9e4a066ac02465624d22d0657f64756529fbb",
-  "SKILL.md": "945c79422abcbfb6dc33e8672a8d4806b9d9d0d8b382091398aa05b7e880be5e",
+  "SKILL.md": "8bccf866065a49704eef13a34541bebec598295b0db74ccce52b1d6a8a1c8342",
   "agents/openai.yaml": "894d5869f025a36e10b13153671c95f44fc7ee7ee7b93fc875d794bb32d75e84",
   "assets/adu-native-runtime/package-lock.json": "ac6e4ade7cfd5727b1dc67eb4191a2a1fa89c2265c1797fbdcd4b45523ab12e6",
   "assets/adu-native-runtime/package.json": "a8c1ef10621c652fadd996e9d2b858480d88ef68f24aa3f1e21a5b89ae156954",
@@ -2042,7 +2042,7 @@
   "references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
   "references/avatar-profile.md": "4332772e70840b1a409442f4359d2694a52d7d8c59da370b5318b8aec042a505",
   "references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
-  "references/cover-contract.md": "2bb4a762d9eef0cc7364c6af12244e5ab42191941e5c295ea104fdc1caba1300",
+  "references/cover-contract.md": "0246e08fcbf2cf7bc87b371380303b74400c2333a033a41287bf4f84d6c660ea",
   "references/cover-opening-bgm.md": "36b9abc51bbb400def5b90d8c657eddd40dc287bc302bce4c2f5bd878f18e7ba",
   "references/cover-title-style.md": "a8fe745fef6b4f6746dc704ed3bc8d35d36925e9d547193995b0a56211c52846",
   "references/cutcod-riso.md": "f8f275343db4be057acc228f971e1ad2a9e2381a518299cc3196f37957800c92",
@@ -2201,6 +2201,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-mg-audit-fixes-v162",
+ "release_id": "2026-10-22-cover-gates-v163",
  "schema_version": 1
 }
