@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "source_nodes_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/01-source_nodes_visible.png",
+            "sha256": "529df467495782660b1c7966081aae7da523354194e53e0d249d8cb4046c8d91",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "connections_drawing",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/02-connections_drawing.png",
+            "sha256": "f7c10931ca61baeeab9c3092763d6f7289cd9d55ffddad8caef42bcd4055661f",
+            "timestamp_sec": 1.4583333333333333
+          },
+          {
+            "event": "connections_complete",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/03-connections_complete.png",
+            "sha256": "4ec244c756f4e2cdbcf6009aa81f67c81ea54d8b0b52551694c03543c447f6f4",
+            "timestamp_sec": 2.0
+          },
+          {
+            "event": "center_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/04-center_visible.png",
+            "sha256": "6cd4afb56325c6e59ac6f2d8caefd090cef0129da0e87dda03ff873afb104bf8",
+            "timestamp_sec": 2.2916666666666665
+          },
+          {
+            "event": "result_visible",
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/action-frames/05-result_visible.png",
+            "sha256": "8534e0cb1b1e8db659fcaf922d433d48f0240d845dd8c67981072cbe8fadada9",
+            "timestamp_sec": 2.5833333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "render_contract": {
+        "composition_id": "process-relations",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/process-relations/sample/process-relations-9x16.mp4",
+      "sample_sha256": "8cb3cf65b5568cb3f436546fa639a36b758e88a85beb138262a9fe49c4653cad",
+      "semantic_families": [
+        "cause_effect",
+        "process",
+        "hierarchy"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/process-relations",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "52d158e8b634d44b325b3be8bc4c18673e99f4ed4dbd2ccc9e3ac61d446ede3d",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "cd2c503338d9997ead501b8bf840e02bc64df076634f71203df513641812a6e4",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "b67b4d3c5b82bdbd753a08109d6944e0675e1a2f7b429e548848d6c9562a2523",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/process-relations/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "8e7b872f2d8fe74f00df620591f3074295d30052fb64aadd174bea651e14e5d4",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    }
+  ]
+}

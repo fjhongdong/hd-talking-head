@@ -1,0 +1,27 @@
+{
+  "status": "maintenance_partial_review",
+  "human_approved": false,
+  "template_registered": false,
+  "renderer_contract": "hd-segment-component-compositor-v5-native-full-canvas",
+  "method": "Actual component samples composed with composition-input.mp4 via build_filter_graph and _ffmpeg_command. Original formal recipes and receipts unchanged. This is not a formal Job composition receipt.",
+  "source_sha256": "fd1e05ec905a8ccc265bb252651a20383023f34dced2505364647af5d385d049",
+  "avatar_measurement": "Approximate visual measurements of portrait-0.png, portrait-60.png, portrait-119.png; not detector output or human approval.",
+  "avatar": {
+    "profile": {"schema_version": 1, "framing": "head-shoulders", "source_sha256": "fd1e05ec905a8ccc265bb252651a20383023f34dced2505364647af5d385d049", "diameter": 224, "border_width": 5, "border_color": "#FFFFFF"},
+    "position": {"x": 796, "y": 1450},
+    "crop": {"size": 1080, "anchors": [
+      {"frame": 0, "x": 0, "y": 554, "landmarks": {"head_top": [520, 640], "face_box": [280, 720, 480, 560], "chin": [520, 1290], "neck": [520, 1320], "shoulders": [[110, 1380], [900, 1350]]}},
+      {"frame": 60, "x": 0, "y": 534, "landmarks": {"head_top": [520, 620], "face_box": [280, 700, 480, 560], "chin": [520, 1280], "neck": [520, 1300], "shoulders": [[110, 1340], [900, 1310]]}},
+      {"frame": 119, "x": 0, "y": 554, "landmarks": {"head_top": [520, 640], "face_box": [280, 720, 480, 590], "chin": [520, 1330], "neck": [520, 1360], "shoulders": [[110, 1390], [900, 1360]]}}
+    ]}
+  },
+  "media_checks": {"width": 1080, "height": 1920, "fps": 24, "frames": 120, "streams": 1},
+  "pixel_method": "Decoded RGB mean absolute error, threshold <3 per channel. Stable frame72 compares original component to composite crop1080x1400 at0,0, excluding avatar. Last frame119 compares composite to same source frame scaled270x480.",
+  "cases": [
+    {"file": "composition-case-1.mp4", "sha256": "ec382f79ccac4efdf864432dd1913f77d8713b9dc7daf67baf9bb620dae586aa", "stable_error": 1.963793430335097, "last_frame_error": 1.3048045267489712},
+    {"file": "composition-case-2.mp4", "sha256": "b68a6006f5fc6caf5ed56a52897d867acd14b580bfe03ab1d19ab96960cc474c", "stable_error": 1.9453461199294533, "last_frame_error": 1.3070910493827161}
+  ],
+  "viewed_composite_frames": {"case": 2, "frames": [72, 114, 119], "files": ["composite-two-01.png", "composite-two-02.png", "composite-two-03.png"]},
+  "observed": ["Stable four-node layout has legible labels and unbroken connections", "Avatar includes head and shoulders without covering nodes", "Final frame returns to A-roll"],
+  "pending": ["Review case1 composite visually and action phases for both cases", "Inspect avatar internal fade combined with whole-composite fade: intermediate avatar opacity differs from poster", "Complete qualification verification and registration only after review"]
+}

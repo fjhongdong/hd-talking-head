@@ -1,0 +1,9 @@
+{
+  "name": "@hd-talking-head/hypit-native-layout",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "hypit": { "activation": "./src/activation.js" },
+  "exports": { ".": "./src/layout.js", "./author": "./src/author.mjs", "./activation": "./src/activation.js" },
+  "dependencies": { "@hypit/composition": "workspace:^0.1.0" }
+}

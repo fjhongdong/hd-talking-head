@@ -1,0 +1,180 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "d22b1e8690bed68a6db54ba7b27fb029943796ff64ee6fc247ff41096c584519",
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "component_id": "relation",
+      "dependency_id": "hd-talking-head-relation-motion",
+      "entrypoint": "scripts/relation_motion_renderer_bundle.py",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+          "scripts/relation_motion_renderer_bundle.py"
+        ],
+        "exit_code": null,
+        "semantic_motion": {
+          "check_frames": {
+            "action_completed": {
+              "hub": 60,
+              "links": 40,
+              "sources": 20
+            },
+            "before_exit": 107,
+            "initial": 0,
+            "last_visible": 119,
+            "next_boundary": 120,
+            "read_start": 60
+          },
+          "content_analysis_sha256": "9ff7c2b3f915b067f2cac77f391bc7b846be3c951092bcaf6b0d3b4dc9191854",
+          "execution_status": "planning_only",
+          "plan": {
+            "actions": [
+              {
+                "depends_on": [],
+                "end_frame": 20,
+                "id": "sources",
+                "operation": "reveal_sources",
+                "start_frame": 0,
+                "subject_ids": [
+                  "source-0",
+                  "source-1"
+                ]
+              },
+              {
+                "depends_on": [
+                  "sources"
+                ],
+                "end_frame": 40,
+                "id": "links",
+                "operation": "draw_connections",
+                "start_frame": 20,
+                "subject_ids": [
+                  "source-0",
+                  "source-1",
+                  "hub"
+                ]
+              },
+              {
+                "depends_on": [
+                  "links"
+                ],
+                "end_frame": 60,
+                "id": "hub",
+                "operation": "reveal_hub",
+                "start_frame": 40,
+                "subject_ids": [
+                  "hub"
+                ]
+              }
+            ],
+            "content_item_id": "fixture-relation",
+            "duration_frames": 120,
+            "exit_window": {
+              "end_frame": 120,
+              "start_frame": 108
+            },
+            "family": "relation",
+            "meaningful_change": "来源先出现，再连线，最后形成汇聚结果",
+            "read_window": {
+              "end_frame": 108,
+              "minimum_frames": 24,
+              "start_frame": 60
+            },
+            "source_text": "实践经验、复盘观察共同形成综合判断。",
+            "subjects": [
+              {
+                "final_state": "已显示",
+                "id": "source-0",
+                "initial_state": "隐藏",
+                "label": "实践经验",
+                "preserve": false
+              },
+              {
+                "final_state": "已显示",
+                "id": "source-1",
+                "initial_state": "隐藏",
+                "label": "复盘观察",
+                "preserve": false
+              },
+              {
+                "final_state": "已显示",
+                "id": "hub",
+                "initial_state": "隐藏",
+                "label": "综合判断",
+                "preserve": false
+              }
+            ],
+            "version": 1
+          }
+        },
+        "status": "planned",
+        "template_request": {
+          "information_units": 2,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "relation"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "RelationMotion",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 120,
+        "layout_slot": "full_frame",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "1.0.0",
+      "sample_sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77",
+      "semantic_families": [
+        "relation"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "scripts/relation_motion_renderer_bundle.py",
+      "source_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+      "template_id": "hd-talking-head/relation-motion",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "verification_id": "67325b574e2231ec8d8c8e8bc03706867c264f1f5d5eaed07bd7d0d79306cb79"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "relation"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "synthetic-relation-1",
+  "strategy_revision": 1
+}

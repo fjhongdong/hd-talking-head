@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 909054,
+    "component_id": "chatgpt-exchange",
+    "error_code": null,
+    "input_sha256": "e814cee01aa58a35f354cfe350c2fab38fe673c70df29bee15d4213a0c1fe14d",
+    "invocation_evidence": {
+      "adapter_id": "native-hyperframes-chatgpt-exchange-v1",
+      "approved_entrypoint": "scripts/render_hyperframes_chatgpt_exchange.cjs",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/render_hyperframes_chatgpt_exchange.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-1/.staging/chatgpt-exchange-r1.f47fa2b7447c946b689df2fbcd05f65c/output.mp4",
+        "--skill-root",
+        "$PATH[7]",
+        "--runtime-root",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--registry-path",
+        "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/source-registry.json",
+        "--registry-sha256",
+        "81e4aec744f2a12b399793bcda63176a1576bddeb507e46eaeb8d5c3c182fbd8",
+        "--renderer-version",
+        "0.8.19"
+      ],
+      "brief_sha256": "7585975318168c981c754f359cf513ca8782e2cfe22462ca818e06e90d4db85d",
+      "dependency_id": "hyperframes",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "6b4706775e4855cfdb8c72b9e6cf52082d54dccab914e98ae4c66ce9b230b23b",
+      "exit_code": 0,
+      "invocation_id": "process-a7d449b7ec4da8fad42ff6b1ff7f945a",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+      "output_job_path": "08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-1/chatgpt-exchange-r1.mp4",
+      "output_sha256": "a2eb9d757b067f94d3cee179ee185888c9dd4498b5d2628dabf397a544b25bf7",
+      "pid": 33292,
+      "primary_renderer": "HyperFrames",
+      "probe_id": "native-hyperframes-chatgpt-exchange-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/hyperframes/chatgpt-exchange/qualification/source-registry.json",
+        "sha256": "81e4aec744f2a12b399793bcda63176a1576bddeb507e46eaeb8d5c3c182fbd8"
+      },
+      "renderer_version": "0.8.19",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 261,
+      "stdout_sha256": "f57b02872aab02e2cdccb49c432e75ddf9e3b4dfb1996f30fefe9cd86798565a",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "hyperframes-chatgpt-exchange-fixture-1",
+    "job_path": "08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-1/chatgpt-exchange-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 14.916667,
+      "fps": 24.0,
+      "frame_count": 358,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "a2eb9d757b067f94d3cee179ee185888c9dd4498b5d2628dabf397a544b25bf7",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 358,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "hyperframes-chatgpt-exchange-qualification-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

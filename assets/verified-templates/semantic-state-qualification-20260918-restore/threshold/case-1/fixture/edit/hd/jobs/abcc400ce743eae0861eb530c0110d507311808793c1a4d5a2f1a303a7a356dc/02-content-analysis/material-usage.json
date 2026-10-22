@@ -1,0 +1,11 @@
+{
+  "complete_reference_declaration": true,
+  "job_id": "abcc400ce743eae0861eb530c0110d507311808793c1a4d5a2f1a303a7a356dc",
+  "producer": "edit.hd.tools.content_analysis",
+  "producer_version": "1",
+  "references": [],
+  "schema_version": 1,
+  "stage_id": "content_analysis",
+  "stage_input_sha256": "b3f99a976412c110498731a9e7a0a4b998ea167a56cad2b31f93acea387a52a0",
+  "stage_revision": 3
+}

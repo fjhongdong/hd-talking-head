@@ -1,0 +1,84 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "ability",
+          "standard"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "cross_threshold",
+        "start_frame": 20,
+        "subject_ids": [
+          "ability"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "raise_threshold",
+        "start_frame": 40,
+        "subject_ids": [
+          "standard"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-threshold-2",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "threshold",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "团队效率跨过当前行业门槛，行业门槛随即提高",
+    "subjects": [
+      {
+        "final_state": "越过门槛",
+        "id": "ability",
+        "initial_state": "低于门槛",
+        "label": "团队效率",
+        "preserve": false
+      },
+      {
+        "final_state": "更高要求",
+        "id": "standard",
+        "initial_state": "当前要求",
+        "label": "行业门槛",
+        "preserve": false
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "capability_id": "ability",
+    "threshold_id": "standard"
+  },
+  "schema_version": 1,
+  "title": "竞争门槛"
+}

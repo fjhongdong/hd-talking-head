@@ -1,0 +1,14 @@
+{
+  "status": "maintenance_partial_review",
+  "human_approved": false,
+  "renderer_contract": "hd-segment-component-compositor-v6-single-exit",
+  "avatar_profile_reference": "composition-review.json#/avatar",
+  "fix": "Disable avatar-local fade only when validated RelationMotion composition owns the whole-scene exit; legacy default unchanged.",
+  "regression": {"tests": 49, "result": "passed", "seconds": 17.007, "independent_code_review": "Approve"},
+  "cases": [
+    {"file": "composition-single-exit-1.mp4", "sha256": "b07e0a97c29b4d25add67bdacc52c28344dcb074cfafc57542754e7f80e2ed8c"},
+    {"file": "composition-single-exit-2.mp4", "sha256": "5cb6396cc4a2f52868aa689e87cc97a01e88e2eb033baeb632b211f466e2be83"}
+  ],
+  "pixel_diagnostic": "Frame114 avatar top-border RGB compared with 5/11 frame108 border + 6/11 frame114 A-roll. Three pixels at x912..914,y1453 only; this is not whole-avatar visual proof. New case1 error2.707 versus old7.0. An initial expectation of >10 improvement was not met and is not claimed. Case1 final119 mean RGB error1.291 against same source frame at270x480.",
+  "pending": ["Complete visual action and composition review for both cases", "Template qualification and registration", "Release integrity update"]
+}

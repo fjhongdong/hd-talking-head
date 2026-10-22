@@ -1,0 +1,892 @@
+{
+  "absolute_output": "/Users/Abner/.agents/skills/hd-talking-head/assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/fixture/edit/hd/jobs/fe2772068ea7ba349ef596ce4d469e03a6074ad6131e4c14c2e79f581e4205e4/08-visual-assets/components/synthetic-semantic-delay-1/semantic-state-delay-r1.mp4",
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 156041,
+    "component_id": "semantic-state-delay",
+    "error_code": null,
+    "input_sha256": "27e7982bc638039fcc073ba320a28c6052c64f9982c8a14edbb316cf83f02929",
+    "invocation_evidence": {
+      "adapter_id": "native-semantic-state-v1",
+      "approved_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/semantic_state_renderer_bundle.py",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/synthetic-semantic-delay-1/.staging/semantic-state-delay-r1.392210f87c12fdbd2e959973c18fcb7e/output.mp4",
+        "--node",
+        "$PATH[7]",
+        "--playwright",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--ffmpeg",
+        "$PATH[13]",
+        "--ffprobe",
+        "$PATH[15]",
+        "--runtime-contracts",
+        "{\"browser\":{\"kind\":\"directory_tree\",\"path\":\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\",\"roots\":[{\"path\":\"/Applications/Google Chrome.app\",\"sha256\":\"c638338c92107181704980ccce951c5041d56e66ab428c862fed1f36a5dd3038\"}],\"version\":\"Google Chrome 153.0.8010.50\"},\"ffmpeg\":{\"kind\":\"file_snapshot\",\"libraries\":[{\"load_paths\":[\"/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib\"],\"path\":\"/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib\",\"sha256\":\"60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib\",\"sha256\":\"ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib\",\"sha256\":\"638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib\",\"sha256\":\"c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib\",\"sha256\":\"be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib\",\"sha256\":\"367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib\",\"sha256\":\"ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib\",\"sha256\":\"585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3\"},{\"load_paths\":[\"/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib\",\"sha256\":\"5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c\"},{\"load_paths\":[\"/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib\",\"sha256\":\"c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa\"},{\"load_paths\":[\"/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib\",\"sha256\":\"e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1\"},{\"load_paths\":[\"/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib\",\"sha256\":\"435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a\"},{\"load_paths\":[\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"sha256\":\"a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71\"},{\"load_paths\":[\"/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib\",\"sha256\":\"ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca\"},{\"load_paths\":[\"/opt/homebrew/opt/opus/lib/libopus.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib\",\"sha256\":\"435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609\"},{\"load_paths\":[\"/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib\"],\"path\":\"/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib\",\"sha256\":\"bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608\"},{\"load_paths\":[\"/opt/homebrew/opt/x264/lib/libx264.165.dylib\"],\"path\":\"/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib\",\"sha256\":\"e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d\"},{\"load_paths\":[\"/opt/homebrew/opt/x265/lib/libx265.216.dylib\"],\"path\":\"/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib\",\"sha256\":\"8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719\"}],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffmpeg\",\"sha256\":\"dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c\",\"version\":\"ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers\"},\"ffprobe\":{\"kind\":\"file_snapshot\",\"libraries\":[{\"load_paths\":[\"/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib\"],\"path\":\"/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib\",\"sha256\":\"60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib\",\"sha256\":\"ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib\",\"sha256\":\"638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib\",\"sha256\":\"c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib\",\"sha256\":\"be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib\",\"sha256\":\"367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib\",\"sha256\":\"ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib\",\"sha256\":\"585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3\"},{\"load_paths\":[\"/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib\",\"sha256\":\"5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c\"},{\"load_paths\":[\"/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib\",\"sha256\":\"c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa\"},{\"load_paths\":[\"/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib\",\"sha256\":\"e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1\"},{\"load_paths\":[\"/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib\",\"sha256\":\"435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a\"},{\"load_paths\":[\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"sha256\":\"a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71\"},{\"load_paths\":[\"/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib\",\"sha256\":\"ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca\"},{\"load_paths\":[\"/opt/homebrew/opt/opus/lib/libopus.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib\",\"sha256\":\"435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609\"},{\"load_paths\":[\"/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib\"],\"path\":\"/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib\",\"sha256\":\"bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608\"},{\"load_paths\":[\"/opt/homebrew/opt/x264/lib/libx264.165.dylib\"],\"path\":\"/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib\",\"sha256\":\"e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d\"},{\"load_paths\":[\"/opt/homebrew/opt/x265/lib/libx265.216.dylib\"],\"path\":\"/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib\",\"sha256\":\"8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719\"}],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffprobe\",\"sha256\":\"cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00\",\"version\":\"ffprobe version 8.1.2 Copyright (c) 2007-2026 the FFmpeg developers\"},\"node\":{\"kind\":\"file_snapshot\",\"libraries\":[],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/usr/local/bin/node\",\"sha256\":\"97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b\",\"version\":\"v25.6.0\"},\"playwright\":{\"kind\":\"directory_tree\",\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright/index.js\",\"roots\":[{\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright\",\"sha256\":\"eb1a94e691c5b9e6395c874b9c00955dbe37cb553251a4c4f72fb122455d73fb\"},{\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright-core\",\"sha256\":\"e91e1d28cd9401d0e6066990bdb05db8ddb465e12b12c623172fe0572c5ea9e6\"}],\"version\":\"playwright 1.62.1\"}}"
+      ],
+      "brief_sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab",
+      "dependency_id": "hd-talking-head-semantic-state",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "exit_code": 0,
+      "invocation_id": "process-bd638b8a9d70777943922a487e699682",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "6e7ae61f68a3838094fc56590f84c52069a97d7816f6bb79e0e85995b340e464",
+      "output_job_path": "08-visual-assets/components/synthetic-semantic-delay-1/semantic-state-delay-r1.mp4",
+      "output_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+      "pid": 39116,
+      "primary_renderer": "SemanticState",
+      "probe_id": "native-semantic-state-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/qualification/source-registry.json",
+        "sha256": "1dcf5cb63ec056cbd16441708a9c41ff57dd3ed0fbabd728d9a7bcdc29deea3a"
+      },
+      "renderer_version": "1.0.0",
+      "runtime_contracts": {
+        "browser": {
+          "kind": "directory_tree",
+          "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "roots": [
+            {
+              "path": "/Applications/Google Chrome.app",
+              "sha256": "c638338c92107181704980ccce951c5041d56e66ab428c862fed1f36a5dd3038"
+            }
+          ],
+          "version": "Google Chrome 153.0.8010.50"
+        },
+        "ffmpeg": {
+          "kind": "file_snapshot",
+          "libraries": [
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib",
+              "sha256": "60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib",
+              "sha256": "ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib",
+              "sha256": "638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib",
+              "sha256": "c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib",
+              "sha256": "be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib",
+              "sha256": "367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib",
+              "sha256": "ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib",
+              "sha256": "585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib",
+              "sha256": "5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib",
+              "sha256": "c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib",
+              "sha256": "e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib",
+              "sha256": "435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+                "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+              "sha256": "a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib",
+              "sha256": "ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/opus/lib/libopus.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib",
+              "sha256": "435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib",
+              "sha256": "bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x264/lib/libx264.165.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib",
+              "sha256": "e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x265/lib/libx265.216.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib",
+              "sha256": "8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719"
+            }
+          ],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffmpeg",
+          "sha256": "dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c",
+          "version": "ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers"
+        },
+        "ffprobe": {
+          "kind": "file_snapshot",
+          "libraries": [
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib",
+              "sha256": "60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib",
+              "sha256": "ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib",
+              "sha256": "638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib",
+              "sha256": "c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib",
+              "sha256": "be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib",
+              "sha256": "367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib",
+              "sha256": "ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib",
+              "sha256": "585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib",
+              "sha256": "5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib",
+              "sha256": "c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib",
+              "sha256": "e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib",
+              "sha256": "435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+                "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+              "sha256": "a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib",
+              "sha256": "ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/opus/lib/libopus.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib",
+              "sha256": "435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib",
+              "sha256": "bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x264/lib/libx264.165.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib",
+              "sha256": "e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x265/lib/libx265.216.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib",
+              "sha256": "8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719"
+            }
+          ],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffprobe",
+          "sha256": "cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00",
+          "version": "ffprobe version 8.1.2 Copyright (c) 2007-2026 the FFmpeg developers"
+        },
+        "node": {
+          "kind": "file_snapshot",
+          "libraries": [],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/usr/local/bin/node",
+          "sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+          "version": "v25.6.0"
+        },
+        "playwright": {
+          "kind": "directory_tree",
+          "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright/index.js",
+          "roots": [
+            {
+              "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright",
+              "sha256": "eb1a94e691c5b9e6395c874b9c00955dbe37cb553251a4c4f72fb122455d73fb"
+            },
+            {
+              "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright-core",
+              "sha256": "e91e1d28cd9401d0e6066990bdb05db8ddb465e12b12c623172fe0572c5ea9e6"
+            }
+          ],
+          "version": "playwright 1.62.1"
+        }
+      },
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "fe2772068ea7ba349ef596ce4d469e03a6074ad6131e4c14c2e79f581e4205e4",
+    "job_path": "08-visual-assets/components/synthetic-semantic-delay-1/semantic-state-delay-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "full_frame",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 5.0,
+      "fps": 24.0,
+      "frame_count": 120,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 120,
+      "layout_slot": "full_frame",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "synthetic-semantic-delay-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "published_execution": {
+    "adapter_binding": {
+      "adapter_id": "native-semantic-state-v1",
+      "adapter_type": "reference_process",
+      "approved_executor": "reference_adapter",
+      "argv_template": [
+        {
+          "index": 0,
+          "role": "launcher",
+          "value": null
+        },
+        {
+          "index": 1,
+          "role": "entrypoint",
+          "value": null
+        },
+        {
+          "index": 2,
+          "role": "literal",
+          "value": "--brief"
+        },
+        {
+          "index": 3,
+          "role": "brief",
+          "value": null
+        },
+        {
+          "index": 4,
+          "role": "literal",
+          "value": "--output"
+        },
+        {
+          "index": 5,
+          "role": "output",
+          "value": null
+        },
+        {
+          "index": 6,
+          "role": "literal",
+          "value": "--node"
+        },
+        {
+          "index": 7,
+          "role": "literal",
+          "value": "$PATH[7]"
+        },
+        {
+          "index": 8,
+          "role": "literal",
+          "value": "--playwright"
+        },
+        {
+          "index": 9,
+          "role": "literal",
+          "value": "$PATH[9]"
+        },
+        {
+          "index": 10,
+          "role": "literal",
+          "value": "--browser"
+        },
+        {
+          "index": 11,
+          "role": "literal",
+          "value": "$PATH[11]"
+        },
+        {
+          "index": 12,
+          "role": "literal",
+          "value": "--ffmpeg"
+        },
+        {
+          "index": 13,
+          "role": "literal",
+          "value": "$PATH[13]"
+        },
+        {
+          "index": 14,
+          "role": "literal",
+          "value": "--ffprobe"
+        },
+        {
+          "index": 15,
+          "role": "literal",
+          "value": "$PATH[15]"
+        },
+        {
+          "index": 16,
+          "role": "literal",
+          "value": "--runtime-contracts"
+        },
+        {
+          "index": 17,
+          "role": "literal",
+          "value": "{\"browser\":{\"kind\":\"directory_tree\",\"path\":\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\",\"roots\":[{\"path\":\"/Applications/Google Chrome.app\",\"sha256\":\"c638338c92107181704980ccce951c5041d56e66ab428c862fed1f36a5dd3038\"}],\"version\":\"Google Chrome 153.0.8010.50\"},\"ffmpeg\":{\"kind\":\"file_snapshot\",\"libraries\":[{\"load_paths\":[\"/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib\"],\"path\":\"/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib\",\"sha256\":\"60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib\",\"sha256\":\"ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib\",\"sha256\":\"638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib\",\"sha256\":\"c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib\",\"sha256\":\"be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib\",\"sha256\":\"367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib\",\"sha256\":\"ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib\",\"sha256\":\"585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3\"},{\"load_paths\":[\"/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib\",\"sha256\":\"5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c\"},{\"load_paths\":[\"/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib\",\"sha256\":\"c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa\"},{\"load_paths\":[\"/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib\",\"sha256\":\"e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1\"},{\"load_paths\":[\"/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib\",\"sha256\":\"435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a\"},{\"load_paths\":[\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"sha256\":\"a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71\"},{\"load_paths\":[\"/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib\",\"sha256\":\"ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca\"},{\"load_paths\":[\"/opt/homebrew/opt/opus/lib/libopus.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib\",\"sha256\":\"435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609\"},{\"load_paths\":[\"/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib\"],\"path\":\"/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib\",\"sha256\":\"bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608\"},{\"load_paths\":[\"/opt/homebrew/opt/x264/lib/libx264.165.dylib\"],\"path\":\"/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib\",\"sha256\":\"e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d\"},{\"load_paths\":[\"/opt/homebrew/opt/x265/lib/libx265.216.dylib\"],\"path\":\"/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib\",\"sha256\":\"8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719\"}],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffmpeg\",\"sha256\":\"dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c\",\"version\":\"ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers\"},\"ffprobe\":{\"kind\":\"file_snapshot\",\"libraries\":[{\"load_paths\":[\"/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib\"],\"path\":\"/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib\",\"sha256\":\"60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib\",\"sha256\":\"ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib\",\"sha256\":\"638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib\",\"sha256\":\"c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib\",\"sha256\":\"be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib\",\"sha256\":\"367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib\",\"sha256\":\"ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96\"},{\"load_paths\":[\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib\",\"/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib\"],\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib\",\"sha256\":\"585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3\"},{\"load_paths\":[\"/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib\",\"sha256\":\"5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c\"},{\"load_paths\":[\"/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib\",\"sha256\":\"c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa\"},{\"load_paths\":[\"/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib\"],\"path\":\"/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib\",\"sha256\":\"e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1\"},{\"load_paths\":[\"/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib\",\"sha256\":\"435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a\"},{\"load_paths\":[\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib\",\"sha256\":\"a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71\"},{\"load_paths\":[\"/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib\"],\"path\":\"/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib\",\"sha256\":\"ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca\"},{\"load_paths\":[\"/opt/homebrew/opt/opus/lib/libopus.0.dylib\"],\"path\":\"/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib\",\"sha256\":\"435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609\"},{\"load_paths\":[\"/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib\"],\"path\":\"/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib\",\"sha256\":\"bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608\"},{\"load_paths\":[\"/opt/homebrew/opt/x264/lib/libx264.165.dylib\"],\"path\":\"/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib\",\"sha256\":\"e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d\"},{\"load_paths\":[\"/opt/homebrew/opt/x265/lib/libx265.216.dylib\"],\"path\":\"/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib\",\"sha256\":\"8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719\"}],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffprobe\",\"sha256\":\"cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00\",\"version\":\"ffprobe version 8.1.2 Copyright (c) 2007-2026 the FFmpeg developers\"},\"node\":{\"kind\":\"file_snapshot\",\"libraries\":[],\"library_discovery\":\"mach_o_static_v1\",\"path\":\"/usr/local/bin/node\",\"sha256\":\"97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b\",\"version\":\"v25.6.0\"},\"playwright\":{\"kind\":\"directory_tree\",\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright/index.js\",\"roots\":[{\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright\",\"sha256\":\"eb1a94e691c5b9e6395c874b9c00955dbe37cb553251a4c4f72fb122455d73fb\"},{\"path\":\"/Users/Abner/\\u5de5\\u4f5c\\u7a7a\\u95f4/\\u3010AI\\u8bb2\\u5e08IP\\u5185\\u5bb9\\u3011/edit/hd/integrations/talkcraft/upstream/node_modules/playwright-core\",\"sha256\":\"e91e1d28cd9401d0e6066990bdb05db8ddb465e12b12c623172fe0572c5ea9e6\"}],\"version\":\"playwright 1.62.1\"}}"
+        }
+      ],
+      "argv_template_sha256": "1be81ccd2619fe7dda64109ed06535d4f4cce50a0ce8af9ff345280c6b046ab9",
+      "artifact_media_type": "video",
+      "dependency_id": "hd-talking-head-semantic-state",
+      "entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "entrypoint_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "launcher_sha256": "6e7ae61f68a3838094fc56590f84c52069a97d7816f6bb79e0e85995b340e464",
+      "primary_renderer": "SemanticState",
+      "probe_id": "native-semantic-state-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/qualification/source-registry.json",
+        "sha256": "1dcf5cb63ec056cbd16441708a9c41ff57dd3ed0fbabd728d9a7bcdc29deea3a"
+      },
+      "renderer_version": "1.0.0",
+      "runtime_contracts": {
+        "browser": {
+          "kind": "directory_tree",
+          "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "roots": [
+            {
+              "path": "/Applications/Google Chrome.app",
+              "sha256": "c638338c92107181704980ccce951c5041d56e66ab428c862fed1f36a5dd3038"
+            }
+          ],
+          "version": "Google Chrome 153.0.8010.50"
+        },
+        "ffmpeg": {
+          "kind": "file_snapshot",
+          "libraries": [
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib",
+              "sha256": "60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib",
+              "sha256": "ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib",
+              "sha256": "638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib",
+              "sha256": "c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib",
+              "sha256": "be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib",
+              "sha256": "367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib",
+              "sha256": "ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib",
+              "sha256": "585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib",
+              "sha256": "5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib",
+              "sha256": "c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib",
+              "sha256": "e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib",
+              "sha256": "435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+                "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+              "sha256": "a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib",
+              "sha256": "ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/opus/lib/libopus.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib",
+              "sha256": "435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib",
+              "sha256": "bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x264/lib/libx264.165.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib",
+              "sha256": "e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x265/lib/libx265.216.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib",
+              "sha256": "8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719"
+            }
+          ],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffmpeg",
+          "sha256": "dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c",
+          "version": "ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers"
+        },
+        "ffprobe": {
+          "kind": "file_snapshot",
+          "libraries": [
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/dav1d/lib/libdav1d.7.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/dav1d/1.5.4/lib/libdav1d.7.dylib",
+              "sha256": "60c3a42a79582241ac77bbbba4c0137c2209204aecbc59e5d6392c2dc0a5b439"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavcodec.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavcodec.62.28.102.dylib",
+              "sha256": "ebd3bf33b2a77e20956afb20746bc6ac072a38d335c9569f064df187df622c6c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavdevice.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavdevice.62.3.102.dylib",
+              "sha256": "638723866e3aaf80908fc713bbe2d6cd52f5fa82954b5b699e4dea8c260c128b"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavfilter.11.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavfilter.11.14.102.dylib",
+              "sha256": "c1ed8d2fa94ece36293ae27808bb62d126bad85ae455ce839af5cca46f65f413"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavformat.62.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavformat.62.12.102.dylib",
+              "sha256": "be544c848c089a48f911df13f139e3a5bb6c669bd140e7bda37c049a313a00e1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libavutil.60.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libavutil.60.26.102.dylib",
+              "sha256": "367d15a2453235a7a42c7ac40fab116fdc0fce8514b17f9244749ed814cbb945"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswresample.6.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswresample.6.3.102.dylib",
+              "sha256": "ecf2dddd8b1f8fc4555a148ab3e67a7081b09bbd9d5f40a158395a10fb08ae96"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.dylib",
+                "/opt/homebrew/opt/ffmpeg/lib/libswscale.9.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/lib/libswscale.9.5.102.dylib",
+              "sha256": "585ecd19451f258cba1acddef53b71ebcfa01797d7811b74e6461e4b717e37b3"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/lame/lib/libmp3lame.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/lame/4.0/lib/libmp3lame.0.dylib",
+              "sha256": "5150d16a2b09a8f6f3475dcc837fdf5435d4f97e817ca12306fec8da5614647c"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvmaf/lib/libvmaf.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvmaf/3.2.0/lib/libvmaf.3.dylib",
+              "sha256": "c2d788b0cce9486c0002ea66d802ab50d797afc48f69597df0954de24d069eaa"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/libvpx/lib/libvpx.12.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/libvpx/1.16.0/lib/libvpx.12.dylib",
+              "sha256": "e7376dca3d10474e7f603c7a8cf86d5c3c7030265c5f7be3d0137755cbf997f1"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/mpg123/lib/libmpg123.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/mpg123/1.33.7/lib/libmpg123.0.dylib",
+              "sha256": "435f7bc76659569772b1a90b049a28fe17bc0d605525f1061f830c119807718a"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+                "/opt/homebrew/opt/openssl@3/lib/libcrypto.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+              "sha256": "a12805a18cd5e4f733fa8727b91afa08b587f9da5a760517cd79cb508a3a3f71"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/openssl@3/lib/libssl.3.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib",
+              "sha256": "ffd8ac6981000def0928367924b6cb1e7a98712efbc06e2a2f3f750138bd89ca"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/opus/lib/libopus.0.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/opus/1.6.1/lib/libopus.0.dylib",
+              "sha256": "435581a316f3dd41982f3101caa6be6ec974572e31765cd0e29c7cbe30198609"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/svt-av1/lib/libSvtAv1Enc.4.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/svt-av1/4.2.0/lib/libSvtAv1Enc.4.2.0.dylib",
+              "sha256": "bac7066bcd47c31971f61e57cdd0eccabb2ec2ef3ca5aa1e08bd5ca51cd54608"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x264/lib/libx264.165.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x264/r3222/lib/libx264.165.dylib",
+              "sha256": "e0d737b88c67ac30e8561d9267d10495529cfede1af45838914c0b522c37a26d"
+            },
+            {
+              "load_paths": [
+                "/opt/homebrew/opt/x265/lib/libx265.216.dylib"
+              ],
+              "path": "/opt/homebrew/Cellar/x265/4.2/lib/libx265.216.dylib",
+              "sha256": "8a60e5b0fd09bf40e18f3bf0260072bf016289bd857fe4bd96e4495394b74719"
+            }
+          ],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/opt/homebrew/Cellar/ffmpeg/8.1.2_1/bin/ffprobe",
+          "sha256": "cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00",
+          "version": "ffprobe version 8.1.2 Copyright (c) 2007-2026 the FFmpeg developers"
+        },
+        "node": {
+          "kind": "file_snapshot",
+          "libraries": [],
+          "library_discovery": "mach_o_static_v1",
+          "path": "/usr/local/bin/node",
+          "sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+          "version": "v25.6.0"
+        },
+        "playwright": {
+          "kind": "directory_tree",
+          "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright/index.js",
+          "roots": [
+            {
+              "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright",
+              "sha256": "eb1a94e691c5b9e6395c874b9c00955dbe37cb553251a4c4f72fb122455d73fb"
+            },
+            {
+              "path": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/hd/integrations/talkcraft/upstream/node_modules/playwright-core",
+              "sha256": "e91e1d28cd9401d0e6066990bdb05db8ddb465e12b12c623172fe0572c5ea9e6"
+            }
+          ],
+          "version": "playwright 1.62.1"
+        }
+      },
+      "self_contained_wrapper": true
+    },
+    "artifact_sha256": "a0e7ec6b85f2aadef55e099387cef8e40786a74696f35830be8d28146220f0ea",
+    "byte_count": 156041,
+    "component_id": "semantic-state-delay",
+    "input_sha256": "27e7982bc638039fcc073ba320a28c6052c64f9982c8a14edbb316cf83f02929",
+    "kind": "code_generated",
+    "output_job_path": "08-visual-assets/components/synthetic-semantic-delay-1/semantic-state-delay-r1.mp4",
+    "output_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+    "recipe_sha256": "e6dbc81d3fa2867adc485088e7309db904714f0ac92e385bdb64cf95d8899c8e",
+    "schema_version": 1,
+    "segment_id": "synthetic-semantic-delay-1",
+    "state": "published",
+    "strategy_revision": 1
+  },
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

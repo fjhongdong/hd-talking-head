@@ -1,0 +1,85 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "trigger",
+          "outcome"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "wait",
+        "start_frame": 20,
+        "subject_ids": [
+          "trigger",
+          "outcome"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "realize",
+        "start_frame": 40,
+        "subject_ids": [
+          "outcome"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-delay-2",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "delay",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "AI 工具上线后，团队能力经过流程重构才提升",
+    "subjects": [
+      {
+        "final_state": "已经上线",
+        "id": "trigger",
+        "initial_state": "已经上线",
+        "label": "AI 工具",
+        "preserve": true
+      },
+      {
+        "final_state": "开始提升",
+        "id": "outcome",
+        "initial_state": "尚未提升",
+        "label": "团队能力",
+        "preserve": false
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "outcome_id": "outcome",
+    "trigger_id": "trigger"
+  },
+  "schema_version": 1,
+  "title": "组织滞后"
+}

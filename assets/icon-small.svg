@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">HD 竖版口播逐阶段确认</title>
+  <desc id="desc">竖屏画面、HD 字样和九个确认节点</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B2436"/>
+      <stop offset="1" stop-color="#174B6D"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="13" y="7" width="32" height="50" rx="7" fill="#F5F0E8"/>
+  <rect x="17" y="11" width="24" height="34" rx="4" fill="#D6EBF3"/>
+  <circle cx="29" cy="24" r="7" fill="#E08B5B"/>
+  <path d="M20 42c1-7 5-11 9-11s8 4 9 11" fill="#174B6D"/>
+  <text x="21" y="53" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#174B6D">HD</text>
+  <path d="M49 11v42" stroke="#77C5B5" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#77C5B5" stroke="#0B2436" stroke-width="1">
+    <circle cx="49" cy="12" r="2.6"/><circle cx="49" cy="17" r="2.6"/>
+    <circle cx="49" cy="22" r="2.6"/><circle cx="49" cy="27" r="2.6"/>
+    <circle cx="49" cy="32" r="2.6"/><circle cx="49" cy="37" r="2.6"/>
+    <circle cx="49" cy="42" r="2.6"/><circle cx="49" cy="47" r="2.6"/>
+    <circle cx="49" cy="52" r="2.6"/>
+  </g>
+  <path d="m47.5 51.7 1.2 1.2 2.2-2.5" fill="none" stroke="#F5F0E8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

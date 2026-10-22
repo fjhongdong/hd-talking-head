@@ -1,0 +1,87 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "e055a74c3823ff0f69d88faedf6e07d9c61577679099fb1d4227593360af10a5",
+      "capacity": {
+        "max_units": 3,
+        "min_units": 1
+      },
+      "component_id": "evidence-source",
+      "dependency_id": "hd-talking-head-local-canonical",
+      "entrypoint": "scripts/local_canonical_renderer.cjs",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "node",
+          "scripts/local_canonical_renderer.cjs"
+        ],
+        "exit_code": null,
+        "status": "planned",
+        "template_request": {
+          "information_units": 2,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "evidence"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "HyperFrames",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 72,
+        "layout_slot": "main",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 210,
+          "left": 64,
+          "right": 64,
+          "top": 96
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "0.8.19",
+      "sample_sha256": "8d0cbeae361726e607a66bfa7b48a25975ef2b5a35733e6d21c9d5d561c08935",
+      "semantic_families": [
+        "evidence",
+        "official_source",
+        "source_observation"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/evidence-source",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "verification_id": "27788aa9c48772dbaf5e3b1a8962b4836bb29575267133b3cbf79d061485dfad"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "evidence-source"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "local-evidence-source-qualification-1",
+  "strategy_revision": 1
+}

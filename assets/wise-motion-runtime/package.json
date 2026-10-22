@@ -1,0 +1,12 @@
+{
+  "name": "hd-wise-motion-runtime",
+  "private": true,
+  "dependencies": {
+    "@remotion/bundler": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.532",
+    "wise-motion": "0.1.21"
+  }
+}

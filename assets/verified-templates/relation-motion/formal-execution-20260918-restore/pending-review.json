@@ -1,0 +1,126 @@
+{
+  "cases": [
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/action-frames/sources.png",
+          "role": "sources",
+          "sha256": "72cf9bc0319ea997bebdfe1a7cfd84425b463440cefbdf962af9cf9d80501eac",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/action-frames/connections.png",
+          "role": "connections",
+          "sha256": "28269c33c6b451c60e51dbe513e4f68b70baa10a5abde36c24314634fb2b551a",
+          "timestamp_sec": 1.25
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/action-frames/hub.png",
+          "role": "hub",
+          "sha256": "dc163646bc0cd11c4637f7413359f2725382ab07e460e2dd83ec157d3f9f499e",
+          "timestamp_sec": 2.5
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/brief.json",
+        "sha256": "d22b1e8690bed68a6db54ba7b27fb029943796ff64ee6fc247ff41096c584519"
+      },
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/entry.png",
+          "role": "entry",
+          "sha256": "64d22ffd927f5e3fa4169a874938233d215e78119deddc32f225fd64021887d6",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/stable.png",
+          "role": "stable",
+          "sha256": "c10ff73a837071b694dca12b91fc0ee32f2e24a83db6e4ebf58e654b47ecb81d",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/frames/exit.png",
+          "role": "exit",
+          "sha256": "1c3254945ede3b78bded3b0bf5773cc4955ff84ed96ddde533a7186818f7f019",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "receipt": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/execution.json",
+        "sha256": "43470b84ffa655be96d23bde50a2d60388308ec777fb5798662e5fd84e918834"
+      },
+      "recipe": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/recipe.json",
+        "sha256": "7080fc3507b3e4d8b227740223001537b2fa9e0a53ee0f31310c414f4b43c2c7"
+      },
+      "sample": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-1/sample.mp4",
+        "sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77"
+      }
+    },
+    {
+      "action_frames": [
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/action-frames/sources.png",
+          "role": "sources",
+          "sha256": "30d4335d8658d0c281f173dd6633eaec8f963a567f59e8726d59fb54e5364648",
+          "timestamp_sec": 0.7916666666666666
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/action-frames/connections.png",
+          "role": "connections",
+          "sha256": "0b96a474339f4511c29a7bd39048ea064d3363f75d0d3d91c0a2661f4ba32c0b",
+          "timestamp_sec": 1.25
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/action-frames/hub.png",
+          "role": "hub",
+          "sha256": "542ade0741fbff091d8404f6f8c7bd012bf9db36c3583a3b8f281d4a1ed02153",
+          "timestamp_sec": 2.5
+        }
+      ],
+      "brief": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/brief.json",
+        "sha256": "d3e301fedcdd3749f8115125f99c14022cf2050d419fed9fb5f8ac4bad3b1ccb"
+      },
+      "frame_evidence": [
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/entry.png",
+          "role": "entry",
+          "sha256": "24d34aa4534dc89c16eab783eb4e0414a3792ebd3ec4650609e0bdf9e86b647f",
+          "timestamp_sec": 0.4166666666666667
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/stable.png",
+          "role": "stable",
+          "sha256": "5fb8190d0b3f8129f3ea567efa6328556f72cc0ca3b8ebfbf1773890dc027e4b",
+          "timestamp_sec": 3.0
+        },
+        {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/frames/exit.png",
+          "role": "exit",
+          "sha256": "8d06c6fc065933c7220c4bb3665bb8e0fb8912c4e75c21c4bffcc2ee07ec281b",
+          "timestamp_sec": 4.958333333333333
+        }
+      ],
+      "receipt": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/execution.json",
+        "sha256": "77ff48b2a57deecd4f18069fcdbc5db72ced399c6f305ab90ca299d18a4e80f2"
+      },
+      "recipe": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/recipe.json",
+        "sha256": "548829a93e4b84bd71557d0ffaee9ba4c868465a701a7394c90d7c81e76a5792"
+      },
+      "sample": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/case-2/sample.mp4",
+        "sha256": "362ccabf21b42af7ad0514a142eaa217701406961804a500a62c995c2bf1dd17"
+      }
+    }
+  ],
+  "human_approval_claimed": false,
+  "source_registry": {
+    "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/qualification/source-registry.json",
+    "sha256": "73a7991ada043a3bf83b1f3ca552b86d844d9906b60301573086f8b2d018228e"
+  },
+  "status": "pending_visual_review"
+}

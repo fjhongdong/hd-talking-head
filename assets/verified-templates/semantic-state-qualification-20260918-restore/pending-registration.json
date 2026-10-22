@@ -1,0 +1,636 @@
+{
+  "families": [
+    {
+      "cases": [
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "72aabfa65b42e25385272f1fa772068cdf6fad5c2afc86efed31a7b7b59422e8",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/action-frames/replace.png",
+              "role": "replace",
+              "sha256": "d7798486ba6c3c94a5dfb94fb967f8a957d559b7ac4f570feb589943151f5638",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/action-frames/compare.png",
+              "role": "compare",
+              "sha256": "2b920a78f2bc271033d642ebd3cbf03913607ef87bc76d5b8f271316959cd766",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/brief.json",
+            "sha256": "008d35acf1807853210ddeca2fa03612a464f2cc30895915f167aba9eeb74375"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/entry.png",
+              "role": "entry",
+              "sha256": "03bc15011dd2809373c8df02eeae585c4690097c0a7f82198b0ed431fa6f15bb",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/stable.png",
+              "role": "stable",
+              "sha256": "8979a7e810d1aa61f6e625c33ec671f884ee53fb5bc74bb84334e9d89707c1ae",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/frames/exit.png",
+              "role": "exit",
+              "sha256": "814d0be4a53c44c66c85d28bc93df3cb66b5b9be10905ce295deb7708bd68ed6",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/execution.json",
+            "sha256": "7b885b659c6a29860edf48c336a0ab07e3ce8a2af0411fd9f4a8c4b3b808da00"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/recipe.json",
+            "sha256": "32099bd83488fcd563a4a1dba5cc85a63e683babfef69294b1da15d422b4c059"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-1/sample.mp4",
+            "sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29"
+          }
+        },
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "bb93418b1ffc41e824583977d529bf37bbe58ba8b0d1ca5aadae1750f536f142",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/action-frames/replace.png",
+              "role": "replace",
+              "sha256": "9edc2319d4e016f01385c7e8af34febcb565d08fb99b3d4cc77ef85d753ac1d9",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/action-frames/compare.png",
+              "role": "compare",
+              "sha256": "3e667be8883ea60f0d82402780a85211e3ee0442def1f331f480ca015d9ae5e8",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/brief.json",
+            "sha256": "4ea6608a384a1e8539844655841f1c6fcf4c195b8be63716e992f36c6204af1f"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/entry.png",
+              "role": "entry",
+              "sha256": "9f7568d4c19ff1c6b9499802ebc442d950d1bdb9b993da6c3a2b8d2a38b7e3f5",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/stable.png",
+              "role": "stable",
+              "sha256": "1316c23c7718d0e34576184be2dc3ffa6072afca0c41ebc9d23c882daec5c65c",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/frames/exit.png",
+              "role": "exit",
+              "sha256": "4041063336ef7324d8ee2e7fd0c9c363b6638fe02d5af0aad0f6dde619da3018",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/execution.json",
+            "sha256": "5ed0ae6aef0b083cb9ad331c396243c81172073e18fc890682ecac6774691e9d"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/recipe.json",
+            "sha256": "80457d3bc4e73ae6371b344da6335cf5da7bff14a921f6e216959c4bb6baa0fd"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/sample.mp4",
+            "sha256": "5ca945cd95c285982b8617fc587811ca180877373c42ff65f12819c5b9124445"
+          }
+        }
+      ],
+      "family": "replacement",
+      "source_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/qualification/source-registry.json",
+        "sha256": "0e5382ef99c15fa08fac22d9f071085f4f5bcd00104549655189530bb9bfae7b"
+      },
+      "template_id": "hd-talking-head/semantic-state-replacement"
+    },
+    {
+      "cases": [
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "d10179fda85a116eb7c873d70768a1f1a70d92afed93286683e80e325c39f687",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/action-frames/cross_threshold.png",
+              "role": "cross_threshold",
+              "sha256": "aa3e0889f868d084d6544c59a73a460a4823dbb384cd8b751df71b320876ac96",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/action-frames/raise_threshold.png",
+              "role": "raise_threshold",
+              "sha256": "534361f17a4f30e0e2067f50ed2eaae1f1340da09baa29d7b55f9da192b210ea",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/brief.json",
+            "sha256": "85114feb5ea8a80fa82a222f90ce9248df5465e60fc5a4f0cfa3e2bfcd2f127c"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/entry.png",
+              "role": "entry",
+              "sha256": "c865cc739085df4eac5c47422a97f586e3a04301b8d556eded3c407cdff632c0",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/stable.png",
+              "role": "stable",
+              "sha256": "84c723e65371dae7f24cfc5b31d19c6b59e290016a89c322c6f345edb6f42cb1",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/frames/exit.png",
+              "role": "exit",
+              "sha256": "534aa43753af35baaa007493ceb1434107a0c872d1f642ac7726c0e63be28a9b",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/execution.json",
+            "sha256": "dbc3c9916f3834661883c57d8d4657eb6f6bf11d58dd1faacbfeefc925c5cc78"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/recipe.json",
+            "sha256": "17f5ab697f1d0db4d0023b3b4d70cf25adafc34df136d5d469e54743aca3a4e0"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-1/sample.mp4",
+            "sha256": "8ef886ec765e1b7fcddd9106b377b90b700d3a4f9ef9ec6362546902258d1446"
+          }
+        },
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "dad6e769ee4d903621d957eaca9a56530c9a495fc41beef5078c9d61e5b474af",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/action-frames/cross_threshold.png",
+              "role": "cross_threshold",
+              "sha256": "690a9b2863a8c6066d7966c9aecd0d1528eec44e4b300c26b8949c80ba2adc8c",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/action-frames/raise_threshold.png",
+              "role": "raise_threshold",
+              "sha256": "ad337bb69fc6b47acaa398a04006a8044732f0c9e6f5b2a208cad031b32dc989",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/brief.json",
+            "sha256": "cae4a14b546e310272a950b1349a739365c9f0d7ae080c1182974e76eca37daf"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/entry.png",
+              "role": "entry",
+              "sha256": "a487b0b46ef2bbcf2e12a83f4d9ea6e2382e6fd26b7ca8f8b08eb9bfec659600",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/stable.png",
+              "role": "stable",
+              "sha256": "332f32d9d5daf34d6eb4d10d34d7f8c552176074b11dd600f876848c3069134e",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/frames/exit.png",
+              "role": "exit",
+              "sha256": "2fa206d53dd43d742c73f8acc3f6ea51644061bcafe8f4055ecf65b3fc543302",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/execution.json",
+            "sha256": "01368c33076ae5cb4bd259ce548fd5fbdf5821bd7f23b24000143bac7eb53b3f"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/recipe.json",
+            "sha256": "129334bcfbc17d1f2514dd57e5186f9d43ea94afad8501224a3b7789f9b27ba4"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/sample.mp4",
+            "sha256": "089654813111a524f054a45210bdc338275cee391cdcda5ae25dd09528067710"
+          }
+        }
+      ],
+      "family": "threshold",
+      "source_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/qualification/source-registry.json",
+        "sha256": "156890480ffc3efc832f217b780c97126fb551cd1270b20a7ebb1920e4712788"
+      },
+      "template_id": "hd-talking-head/semantic-state-threshold"
+    },
+    {
+      "cases": [
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "9d3dde593491842c06babe53954d785e7b19dcd8aa0c999781fe6a401f71033d",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/action-frames/wait.png",
+              "role": "wait",
+              "sha256": "b7a4f259955d42d74d81dcfe03aa7f5f94d4f5283cf2cc08bf3c8a2aab856eb4",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/action-frames/realize.png",
+              "role": "realize",
+              "sha256": "0e093cdc5f5e75d15b03a8926862b2d4191c73dcc31f9d9b927d8f7f5e62a92f",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/brief.json",
+            "sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/entry.png",
+              "role": "entry",
+              "sha256": "7baf4a28eb6980baed6b36e9207e39a733cd5ccc253a702ac798a0191f802c31",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/stable.png",
+              "role": "stable",
+              "sha256": "78f04cb39ff479a80fbb68fee562fc9e882eb76ccb46042ab96b10c583421424",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/frames/exit.png",
+              "role": "exit",
+              "sha256": "0c367ef1f4a75be52fb40469c379c06f7733cd703ac365c636f5a8095af1531d",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/execution.json",
+            "sha256": "d081be1528e410a982930058fee0a78243ee2f64ba33d46748fd306839073824"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/recipe.json",
+            "sha256": "02d57d20c72e805aea7b0b99ef75ca4f322104aa4c03a81e23e2c8d2af5cde06"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-1/sample.mp4",
+            "sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615"
+          }
+        },
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "a7b3c4fd3e44bf3a1a6cc2436a5e62630a194a0a971bd757b2d483acfaa12f84",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/action-frames/wait.png",
+              "role": "wait",
+              "sha256": "3863488a6e7dfd6ddef3f5607ab99e35376319fea5dfc834666dc3c350f0a5a9",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/action-frames/realize.png",
+              "role": "realize",
+              "sha256": "28368db12e09ac2c08936b50d2cc977afda84a936f79c18123decf22b8669f4d",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/brief.json",
+            "sha256": "53480add618cca21ba42f0234ae5e1aab377559d190c69a37b9f03771410e4dc"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/entry.png",
+              "role": "entry",
+              "sha256": "8b15883012056f3011cc0882f9ac948c8f9e2e5ea33c105c10f6aefdd90560d5",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/stable.png",
+              "role": "stable",
+              "sha256": "96b39047b94a74c192a02ec8ce93c3f8b45783dcc7bd784c138083ecbc3e5e34",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/frames/exit.png",
+              "role": "exit",
+              "sha256": "3f4f5744a36e8f9204e71624d6a82862e7f59a44a1d7c7d91feb249966820737",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/execution.json",
+            "sha256": "d4b8078040859a403769e8ef558b020299dfbe88be34ff6db46713df96267b88"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/recipe.json",
+            "sha256": "24998ecd5e81e2098aa54d0af2f2ffcf62aa8ba153c5526b252b11336f24399b"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/sample.mp4",
+            "sha256": "4f17d9e7e1ba54010718974f0bf566f6b63279f91815a2716e86bcc96a3da190"
+          }
+        }
+      ],
+      "family": "delay",
+      "source_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/qualification/source-registry.json",
+        "sha256": "1dcf5cb63ec056cbd16441708a9c41ff57dd3ed0fbabd728d9a7bcdc29deea3a"
+      },
+      "template_id": "hd-talking-head/semantic-state-delay"
+    },
+    {
+      "cases": [
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "8243cbe324e11234977223f6672b236e6cba8cca43b96bb35418dbf6cb64beeb",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/action-frames/reveal_layers.png",
+              "role": "reveal_layers",
+              "sha256": "494fcbc718c1c443f14c8146575957b8a83e91ae2646f0f63c30c541747b0935",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/action-frames/resolve.png",
+              "role": "resolve",
+              "sha256": "15b44bc02bf2ba7a991315d275815ccea46a08fbc943b997ee3bf9d1d53e0cd1",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/brief.json",
+            "sha256": "9946f5a01019d09d808ebbdd06547363a11bf5c5f152d57c850f7c07c7df9e5f"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/entry.png",
+              "role": "entry",
+              "sha256": "e5eb259daa55ec55365f5a371cfa1bbbf326445521754603a06fa6c8e54ec921",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/stable.png",
+              "role": "stable",
+              "sha256": "5fccf331d2a60304b216edb73da308960840d8a0b9bfb3fff0d59447bdc99363",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/frames/exit.png",
+              "role": "exit",
+              "sha256": "eb07c4e6c4bf56d9ae7910063fa00cc7ebad411ee63238dd0dad0b0cc7855232",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/execution.json",
+            "sha256": "20b3e12e8ece81320f6b577e798f4e543f0ce869aa625fb5965e9b3a3948d136"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/recipe.json",
+            "sha256": "99d5ed0cdf92f5c56542e6679d64e4909bd02c83190301d76ea8026ebb424383"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-1/sample.mp4",
+            "sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e"
+          }
+        },
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "2fd4a0521cbba4a79581e4e76b554857d94fbca00ba980d0c59ee1bcf80b85f4",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/action-frames/reveal_layers.png",
+              "role": "reveal_layers",
+              "sha256": "f1f988813d1a34c4828635493ff70a2e5f9791544100282049320ac191c36f89",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/action-frames/resolve.png",
+              "role": "resolve",
+              "sha256": "e48e3e90110c375d60b2fa4b9a7b9a602a4915386cb8d78b65aed1d2357899b8",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/brief.json",
+            "sha256": "ee610ddedd97986df4147d651ee320cc4da4d41641336f4c625823ca0bf665e3"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/entry.png",
+              "role": "entry",
+              "sha256": "292b22726f3c24f2292cfcdcfac24be8f24d8c82db0566d92ffa8adc7145d7c9",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/stable.png",
+              "role": "stable",
+              "sha256": "55a3a225d3eae3d0bb2d2d029b1cb8a292634b47f59643f29f7e377d68e365d1",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/frames/exit.png",
+              "role": "exit",
+              "sha256": "64dc6ee75ceede21924b4d09080707433fe2dadbe7edb8b7757cbee5ba0b0b1f",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/execution.json",
+            "sha256": "e915a065f9ef4411374ebcbc7a32a280fdc6180249b04f14b590bde1e7f89fcd"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/recipe.json",
+            "sha256": "72794a04174e35b4987e43d85c98d93b73c5d96dc228014be84004f79c709397"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/sample.mp4",
+            "sha256": "2ce238fe47b94cbb96e7c6f7faa9c543b95b988bd5649700c5a6689b2122b44d"
+          }
+        }
+      ],
+      "family": "hierarchy",
+      "source_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/qualification/source-registry.json",
+        "sha256": "94d1c7a20dd3df69ec618c5ae7b9f2af1e63fa826ad0cadd2929efa87bd3c480"
+      },
+      "template_id": "hd-talking-head/semantic-state-hierarchy"
+    },
+    {
+      "cases": [
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "64e7cca94431eb44a7660831697427b5b54ee96f5d6152dfdbe297a07f654013",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/action-frames/produce.png",
+              "role": "produce",
+              "sha256": "0d793aac9361fb8bfc7497227634191305ff5593e13851546efaa743c656d4c0",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/action-frames/feedback_return.png",
+              "role": "feedback_return",
+              "sha256": "795b9085450f02bbc93241a16a93a8828e0c7e9536236d8a40ebaeb0805bbb43",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/brief.json",
+            "sha256": "1e33347a340116ba0ef3b29646e507b55620bc8f99df6c03d7968975e994ce12"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/entry.png",
+              "role": "entry",
+              "sha256": "4caa47a1d7c71f2f3481a2c54ecb5b54f5955754013ef5b4c5056c1ecc2be3d1",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/stable.png",
+              "role": "stable",
+              "sha256": "b1e68a3a3135e0a2d39098d984974a99ff44b18cb6ad962e8c7588e899144d50",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/frames/exit.png",
+              "role": "exit",
+              "sha256": "63a2d9e07d85606c7f2a923473655500b536132f444fef9949d18428aff3cf8c",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/execution.json",
+            "sha256": "b2d8456883c751b723bfd6f7c71e86b92c6dd9e950e4a8ed416b2cc3fe16513d"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/recipe.json",
+            "sha256": "b50d03b94702dee60534601740699175dbc8f97feb87ff0d8fb8bf60e903f83f"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-1/sample.mp4",
+            "sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67"
+          }
+        },
+        {
+          "action_frames": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/action-frames/establish.png",
+              "role": "establish",
+              "sha256": "c08d77b61c30d3e8b34f0f7d6c74f68f6ead908a659571a9a9e348a3bcd64d5c",
+              "timestamp_sec": 0.7916666666666666
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/action-frames/produce.png",
+              "role": "produce",
+              "sha256": "19193a6fed6c3da02e6c14b9f06ac7354f4215426d645c648626063d128e64c4",
+              "timestamp_sec": 1.625
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/action-frames/feedback_return.png",
+              "role": "feedback_return",
+              "sha256": "7f76a2d719abf38790157bb4c5138b4c7e2abf3c5d832b47680f5453a36dfede",
+              "timestamp_sec": 2.4583333333333335
+            }
+          ],
+          "brief": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/brief.json",
+            "sha256": "fcc8a1c51f2e02e1722a662a1892551414a93e0b2a56c26f6869bef1b5a74065"
+          },
+          "frame_evidence": [
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/entry.png",
+              "role": "entry",
+              "sha256": "48b379024cbbb25b1ba2639c8b1ff774b7e27e52fc5a7f16d1085a69ed0de508",
+              "timestamp_sec": 0.4166666666666667
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/stable.png",
+              "role": "stable",
+              "sha256": "50816a0037e60f87338aea7d21e4e9475ea25527203e2b48f74c576db2aaf602",
+              "timestamp_sec": 3.0
+            },
+            {
+              "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/frames/exit.png",
+              "role": "exit",
+              "sha256": "641d8a98013d3db16fb4dd4231a7c768b61185bb688796b789c84272970ab401",
+              "timestamp_sec": 4.958333333333333
+            }
+          ],
+          "receipt": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/execution.json",
+            "sha256": "744550e70f11197df79aa0f01875f5089cb2b2e79230c8c8c0e4db47f429c927"
+          },
+          "recipe": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/recipe.json",
+            "sha256": "32191b69185ea3fa570a149fb9d503ed3499e5b14ea01b3e68fb4dedb321a63d"
+          },
+          "sample": {
+            "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/sample.mp4",
+            "sha256": "64f0718296ffa4dd875e525f60295c9d9dc07712499c213eb04c34ea06bd2955"
+          }
+        }
+      ],
+      "family": "feedback",
+      "source_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/qualification/source-registry.json",
+        "sha256": "660ef4b53fd424ad5babe8fcd97b7317e0e17e9a3648d8388333e68a6c8f0901"
+      },
+      "template_id": "hd-talking-head/semantic-state-feedback"
+    }
+  ],
+  "human_approval_claimed": false,
+  "status": "pending_visual_review"
+}

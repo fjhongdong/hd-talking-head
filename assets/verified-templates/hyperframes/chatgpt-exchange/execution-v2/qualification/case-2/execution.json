@@ -1,0 +1,129 @@
+{
+  "synthetic_fixture": true,
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "artifact": {
+    "schema_version": 1,
+    "status": "success",
+    "job_id": "hyperframes-chatgpt-exchange-fixture-2",
+    "segment_id": "hyperframes-chatgpt-exchange-qualification-2",
+    "component_id": "chatgpt-exchange",
+    "kind": "code_generated",
+    "strategy_revision": 1,
+    "media_type": "video",
+    "render_window": {
+      "start_frame": 0,
+      "end_frame": 358,
+      "z_index": 0,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    "z_index": 0,
+    "layout_slot": "main",
+    "opacity": 1.0,
+    "safe_zone": {
+      "top": 0,
+      "bottom": 0,
+      "left": 0,
+      "right": 0
+    },
+    "artifact_contract": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 24,
+      "alpha": false
+    },
+    "source_media_type": "animation",
+    "artifact_media_type": "video",
+    "media_probe": {
+      "media_type": "video",
+      "container": "mp4",
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "alpha": false,
+      "width": 1080,
+      "height": 1920,
+      "fps": 24.0,
+      "frame_count": 358,
+      "duration": 14.916667
+    },
+    "input_sha256": "1a1a49afa15e271d11b22420754e471766846d0f7ff9a1d0ddeb5cf6218541da",
+    "job_path": "08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-2/chatgpt-exchange-r1.mp4",
+    "byte_count": 610775,
+    "output_sha256": "a58aa5e40238b1e2c3b52f08d4baed89b11b19f6edfc99aa39f790fe5e888b2e",
+    "invocation_evidence": {
+      "kind": "code_generated",
+      "approved_executor": "reference_adapter",
+      "adapter_id": "native-hyperframes-chatgpt-exchange-v1",
+      "dependency_id": "hyperframes",
+      "invocation_type": "reference_process",
+      "invocation_id": "process-395c758cdc58dd846015c32de6f1bc72",
+      "approved_entrypoint": "scripts/render_hyperframes_chatgpt_exchange.cjs",
+      "entrypoint_sha256": "046c3dbfef096a762a139456aa241299eed5fbfbd7d43ca89ad482d21fb68f34",
+      "launcher_sha256": "02dc8fa00d7f857c2412a5d55a85a1b7a341e94c3df430bd8733c732e31dca46",
+      "producer_version": "1.1.0",
+      "brief_sha256": "38f8760ea6e5f0b0806a67b9695b2d7082d476d0ddad9060b4a5d6c909cc384c",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/render_hyperframes_chatgpt_exchange.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-2/.staging/chatgpt-exchange-r1.1c0181e449df42769c245c70ae321b47/output.mp4",
+        "--skill-root",
+        "$PATH[7]",
+        "--runtime-root",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--ffmpeg",
+        "$PATH[13]",
+        "--ffprobe",
+        "$PATH[15]",
+        "--ffmpeg-sha256",
+        "dad4b30b36a1a999bfa4b6ffbde138bd17ee496c69e12eef638227dff2c6415c",
+        "--ffprobe-sha256",
+        "cfeefcc9207eb3fa424679228fe3848db2921b15537d26c1ccc4a7a61de95d00",
+        "--registry-path",
+        "assets/verified-templates/hyperframes/chatgpt-exchange/execution-v2/qualification/source-registry.json",
+        "--registry-sha256",
+        "50c3eefd4e460e568a7b36d0bbe83fcec1da49958ab08b05ebcfc49e9d4c80bd",
+        "--renderer-version",
+        "0.8.167"
+      ],
+      "pid": 74984,
+      "exit_code": 0,
+      "timed_out": false,
+      "primary_renderer": "HyperFrames",
+      "renderer_version": "0.8.167",
+      "stdout_sha256": "33b209b0cbf5cc4437b9e57bf5ffb86f9a2f0f3c21e03712f0f57c643f59b7e1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 261,
+      "stderr_bytes": 0,
+      "unresolved_process_group": false,
+      "output_job_path": "08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-2/chatgpt-exchange-r1.mp4",
+      "output_sha256": "a58aa5e40238b1e2c3b52f08d4baed89b11b19f6edfc99aa39f790fe5e888b2e",
+      "qualification_registry": {
+        "path": "assets/verified-templates/hyperframes/chatgpt-exchange/execution-v2/qualification/source-registry.json",
+        "sha256": "50c3eefd4e460e568a7b36d0bbe83fcec1da49958ab08b05ebcfc49e9d4c80bd"
+      },
+      "descendants_terminated": false,
+      "probe_id": "native-hyperframes-chatgpt-exchange-ffprobe",
+      "probe_version": "1.1.0"
+    },
+    "qa": {
+      "passed": true,
+      "checks": [
+        "process_completed"
+      ]
+    },
+    "error_code": null
+  },
+  "absolute_output": "/Users/Abner/工作空间/【AI讲师IP内容】/edit/verify/hyperframes-v6-maintenance/final-v4/chatgpt-exchange/case-2/executor-output/08-visual-assets/components/hyperframes-chatgpt-exchange-qualification-2/chatgpt-exchange-r1.mp4"
+}

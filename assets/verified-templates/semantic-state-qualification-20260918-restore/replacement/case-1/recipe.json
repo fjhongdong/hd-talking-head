@@ -1,0 +1,172 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "008d35acf1807853210ddeca2fa03612a464f2cc30895915f167aba9eeb74375",
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "component_id": "semantic-state-replacement",
+      "dependency_id": "hd-talking-head-semantic-state",
+      "entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+          "scripts/semantic_state_renderer_bundle.py"
+        ],
+        "exit_code": null,
+        "semantic_motion": {
+          "check_frames": {
+            "action_completed": {
+              "phase-1": 20,
+              "phase-2": 40,
+              "phase-3": 60
+            },
+            "before_exit": 107,
+            "initial": 0,
+            "last_visible": 119,
+            "next_boundary": 120,
+            "read_start": 60
+          },
+          "content_analysis_sha256": "26caf9f12bae1b64110668a2498a824d32223f93aa7c6ab3377b48a33ab152b0",
+          "execution_status": "planning_only",
+          "plan": {
+            "actions": [
+              {
+                "depends_on": [],
+                "end_frame": 20,
+                "id": "phase-1",
+                "operation": "establish",
+                "start_frame": 0,
+                "subject_ids": [
+                  "change",
+                  "context"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-1"
+                ],
+                "end_frame": 40,
+                "id": "phase-2",
+                "operation": "replace",
+                "start_frame": 20,
+                "subject_ids": [
+                  "change"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-2"
+                ],
+                "end_frame": 60,
+                "id": "phase-3",
+                "operation": "compare",
+                "start_frame": 40,
+                "subject_ids": [
+                  "change",
+                  "context"
+                ]
+              }
+            ],
+            "content_item_id": "qualification-replacement-1",
+            "duration_frames": 120,
+            "exit_window": {
+              "end_frame": 120,
+              "start_frame": 108
+            },
+            "family": "replacement",
+            "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+            "read_window": {
+              "end_frame": 108,
+              "minimum_frames": 24,
+              "start_frame": 60
+            },
+            "source_text": "动力设备从蒸汽机更替为电动机，工厂布局保持原样",
+            "subjects": [
+              {
+                "final_state": "电动机",
+                "id": "change",
+                "initial_state": "蒸汽机",
+                "label": "动力设备",
+                "preserve": false
+              },
+              {
+                "final_state": "保持原样",
+                "id": "context",
+                "initial_state": "保持原样",
+                "label": "工厂布局",
+                "preserve": true
+              }
+            ],
+            "version": 1
+          }
+        },
+        "status": "planned",
+        "template_request": {
+          "information_units": 2,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "replacement"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "SemanticState",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 120,
+        "layout_slot": "full_frame",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "1.0.0",
+      "sample_sha256": "635104aaa3d7b0b12b13f833724b42a7a63a004e6644f231db96a7379ddb2f29",
+      "semantic_families": [
+        "replacement"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-replacement",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "verification_id": "f97ab383e71e4220edcbd7002e523fb0bda710a7ce97f88385cf2779c14534d1"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "semantic-state-replacement"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "synthetic-semantic-replacement-1",
+  "strategy_revision": 1
+}

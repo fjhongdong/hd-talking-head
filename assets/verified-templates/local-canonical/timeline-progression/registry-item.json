@@ -1,0 +1,208 @@
+{
+  "action_sequence_qa": {
+    "events": [
+      {
+        "event": "first_stage_visible",
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/01-first_stage_visible.png",
+        "sha256": "def2b73a222836afef1e63a7e8c012721903683bd4a680b4b432fb7e8338da5f",
+        "timestamp_sec": 0.8333333333333334
+      },
+      {
+        "event": "all_stages_visible",
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/02-all_stages_visible.png",
+        "sha256": "1b0d2c92a6cd41803139a40a8b7caef4fb4cd3ec0e2f350382f4986eb2edc299",
+        "timestamp_sec": 1.7916666666666667
+      },
+      {
+        "event": "connection_complete",
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/03-connection_complete.png",
+        "sha256": "f31110016d2243395064f0e09909249202ca33b1aeec4ff88b63dfa622f228e9",
+        "timestamp_sec": 2.0
+      },
+      {
+        "event": "conclusion_visible",
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/action-frames/04-conclusion_visible.png",
+        "sha256": "c54ff81b2d5b51cb16b0f69d716826ee15d979b74f9c37134fab6d16076f014e",
+        "timestamp_sec": 2.125
+      }
+    ],
+    "reviewed_at": "2026-09-05T12:00:00+08:00",
+    "reviewer": "Codex motion QA",
+    "status": "approved"
+  },
+  "adaptation_level": "structural",
+  "artifact_contract": {
+    "codec": "h264",
+    "duration_max_sec": 3.01,
+    "duration_min_sec": 2.99,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "capacity": {
+    "max_units": 6,
+    "min_units": 3
+  },
+  "execution_qa": {
+    "cases": [
+      {
+        "brief": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/brief.json",
+          "sha256": "ada49cec0bad2506f5c10d4c906cc397e92d2856527df4df96cbc0749002c5c2"
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/entry.png",
+            "role": "entry",
+            "sha256": "f30fd3bcf90e86ac9f11cde7ee71890b28f27b800908ee066bf1dea986da604e",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/stable.png",
+            "role": "stable",
+            "sha256": "e76c37261a2f474236c39e024dfd525a6413ce6e018e2b518cd3ed4671812f50",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/frames/exit.png",
+            "role": "exit",
+            "sha256": "9785d4f2f8932994960babf4b80faa2f4d8d26c9385bfa5c98e8ea234c4f3f77",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "receipt": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/execution.json",
+          "sha256": "7a16e13718f76f383e579c40adf49c0aca212155a9f7899b47cac69c9cd8d671"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/recipe.json",
+          "sha256": "37d3da20e90914ddeae4b3866894b2eb3e239cd346a0a4d1a027810dff364722"
+        },
+        "sample": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-1/sample.mp4",
+          "sha256": "6e691d51ce5547ec050a940728db854c28518d30f3e103522acf57e04cb632a6"
+        }
+      },
+      {
+        "brief": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/brief.json",
+          "sha256": "1f0f0fa2e8c6e3cc74749141fd9425144010167d495b725b8849461eadf3b465"
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/entry.png",
+            "role": "entry",
+            "sha256": "996cb835e89b9818c7708815fe3570d76310919529d152a2990ffe963f130bf4",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/stable.png",
+            "role": "stable",
+            "sha256": "7bda68bc7f5fbe5bcbc981f907d3d65d2aa258201aeb5de2b3ebeaf7c8813893",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/frames/exit.png",
+            "role": "exit",
+            "sha256": "11844c1c5b8ceb8aee7447bea125015404b0f1f91b258a8404fbc686b43cf0c5",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "receipt": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/execution.json",
+          "sha256": "83c8bde38248cb2e42cc7e00d0fbfbba32fc4087708ee26624c411cc3d0eebfb"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/recipe.json",
+          "sha256": "ca2a1a9aba37d1f2d0c9a9cfad8a6e81865a1bd76c24f0ef841cbb6b3b3349a6"
+        },
+        "sample": {
+          "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/case-2/sample.mp4",
+          "sha256": "481df686e88a8b1c3c746711f046b5024e6691995f029eb078c82729543d8516"
+        }
+      }
+    ],
+    "content_paths": [
+      "/props/data/title",
+      "/props/data/footer",
+      "/props/data/stages"
+    ],
+    "reviewed_at": "2026-09-05T12:00:00+08:00",
+    "reviewer": "Codex execution QA",
+    "source_registry": {
+      "path": "assets/verified-templates/local-canonical/timeline-progression/qualification/source-registry.json",
+      "sha256": "2f0944f7184a0051b1fb3d36c47a4926117e0881e491bd10262800ac9b589b71"
+    },
+    "status": "reviewed"
+  },
+  "render_contract": {
+    "composition_id": "timeline-progression",
+    "engine": "HyperFrames",
+    "exit_policy": "template"
+  },
+  "sample_path": "assets/verified-templates/local-canonical/timeline-progression/sample/timeline-progression-9x16.mp4",
+  "sample_sha256": "6e691d51ce5547ec050a940728db854c28518d30f3e103522acf57e04cb632a6",
+  "semantic_families": [
+    "progression",
+    "timeline",
+    "milestone_sequence"
+  ],
+  "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+  "source_files": [
+    {
+      "path": "package.json",
+      "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+    },
+    {
+      "path": "scripts/local_canonical_renderer.cjs",
+      "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+    },
+    {
+      "path": "scripts/local_canonical_adapter.py",
+      "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+    }
+  ],
+  "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+  "template_id": "local-canonical/timeline-progression",
+  "template_origin": "verified_local_canonical",
+  "template_version": "1.0.0",
+  "upstream": {
+    "commit": "local-canonical-v1",
+    "project": "hd-talking-head-local-canonical",
+    "repository": "."
+  },
+  "verification_id": "350d77e8b6989d9846288f67aaedb3e97b39e6f6b62e1cfe3e83d1460854eec3",
+  "visual_qa": {
+    "checks": {
+      "balanced_layout": true,
+      "decorations_anchored": true,
+      "no_clipping": true,
+      "no_exit_jump": true,
+      "no_overlap": true,
+      "no_placeholder_copy": true
+    },
+    "frame_evidence": [
+      {
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/entry.png",
+        "role": "entry",
+        "sha256": "f30fd3bcf90e86ac9f11cde7ee71890b28f27b800908ee066bf1dea986da604e",
+        "timestamp_sec": 0.125
+      },
+      {
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/stable.png",
+        "role": "stable",
+        "sha256": "e76c37261a2f474236c39e024dfd525a6413ce6e018e2b518cd3ed4671812f50",
+        "timestamp_sec": 2.625
+      },
+      {
+        "path": "assets/verified-templates/local-canonical/timeline-progression/sample/frames/exit.png",
+        "role": "exit",
+        "sha256": "9785d4f2f8932994960babf4b80faa2f4d8d26c9385bfa5c98e8ea234c4f3f77",
+        "timestamp_sec": 2.875
+      }
+    ],
+    "reviewed_at": "2026-09-05T12:00:00+08:00",
+    "reviewer": "Codex visual QA",
+    "status": "approved"
+  }
+}

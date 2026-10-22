@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "sources",
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/action-frames/sources.png",
+            "sha256": "28e92489a6c026136244cefa57d04d6a4202ad3784c6d3622a7efd2d1028f4af",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "connections",
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/action-frames/connections.png",
+            "sha256": "fc3a3aed46e9d531a225aa8a42c8ec0c95719123a1ca42ef4a785b5bfd39ad42",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "hub",
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/action-frames/hub.png",
+            "sha256": "5d736754e23adb83dc90d1d6349d7827b14628654984afbc52e9f0b9d94eabd7",
+            "timestamp_sec": 2.5
+          }
+        ],
+        "reviewed_at": "2026-09-06",
+        "reviewer": "Codex two-input source-connection-hub frame review; not user approval",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "render_contract": {
+        "composition_id": "relation-motion",
+        "engine": "RelationMotion",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/seed-sample.mp4",
+      "sample_sha256": "1cc3e9f3b6c5f617fd3c77f84c9c35b0e28abc7f0ebcd74ac65acba8ec3e2a6f",
+      "semantic_families": [
+        "relation"
+      ],
+      "source_entrypoint": "scripts/relation_motion_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/relation_motion_renderer_bundle.py",
+          "sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01"
+        },
+        {
+          "path": "scripts/relation_motion_adapter.py",
+          "sha256": "c6c26a6d0c49143b3aaebfe4bfc0c6e55dd1da14b5145733022d65257420cb3f"
+        }
+      ],
+      "source_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+      "template_id": "hd-talking-head/relation-motion",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-relation-motion",
+        "repository": "."
+      },
+      "verification_id": "ed95e3d53d3bb92d4febd91ca5ccdaa96531fb5c62f2c4f87334c31b118ab8db",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/entry.png",
+            "role": "entry",
+            "sha256": "48823a993a918a247d22e11ba85ca8c62d88e347c2aea4a1928aa2171c6d628e",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/stable.png",
+            "role": "stable",
+            "sha256": "f9acb7e9632a07370a20b1f761ec33e0e485a617d5841c4b4b62dceb09ca073b",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/exit.png",
+            "role": "exit",
+            "sha256": "512b950b91879fa8864ef8fa9e8e66ff0ff6c96bc5899ab232662e48374d7b72",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-06",
+        "reviewer": "Codex two-input component frame review; composed avatar and single-exit diagnostic reviewed separately; not user approval",
+        "status": "approved"
+      },
+      "execution_qa": {
+        "status": "reviewed",
+        "reviewed_at": "2026-09-06",
+        "reviewer": "Codex maintenance technical visual review; not user approval",
+        "content_paths": [
+          "/title",
+          "/motion/source_text",
+          "/motion/subjects"
+        ],
+        "source_registry": {
+          "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/qualification/source-registry.json",
+          "sha256": "37ac697c2b0c0fc89e3ff826be2dcc8675a45377c61b9caa8171b7c252e53f79"
+        },
+        "cases": [
+          {
+            "brief": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/brief.json",
+              "sha256": "d22b1e8690bed68a6db54ba7b27fb029943796ff64ee6fc247ff41096c584519"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/frames/entry.png",
+                "role": "entry",
+                "sha256": "b063455030bf77c3671b87c3a8dec4299a1b921b96d71e648def847f76787e20",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/frames/stable.png",
+                "role": "stable",
+                "sha256": "7a17e458e9711e63947f2a53558ec96cbe507acf12f8216a91a5e53c277fde51",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/frames/exit.png",
+                "role": "exit",
+                "sha256": "cf6010b1404a5fff260c1178d0aa63aaf3005540e2229ac258021eec4dfec855",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/execution.json",
+              "sha256": "c2feb79be3f7dc1760ae165058e3d9f8e61dac6ad37cd6444246c9b638be752f"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/recipe.json",
+              "sha256": "8911d1b87710b25751a4f3dcde82d807c11a68a6526270baba63a6f3e218a628"
+            },
+            "sample": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-1/sample.mp4",
+              "sha256": "910f726c4edc9326cd32725a83504a8f196b4e6fec124b87796a9c9091880bed"
+            }
+          },
+          {
+            "brief": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/brief.json",
+              "sha256": "d3e301fedcdd3749f8115125f99c14022cf2050d419fed9fb5f8ac4bad3b1ccb"
+            },
+            "frame_evidence": [
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/entry.png",
+                "role": "entry",
+                "sha256": "48823a993a918a247d22e11ba85ca8c62d88e347c2aea4a1928aa2171c6d628e",
+                "timestamp_sec": 0.4166666666666667
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/stable.png",
+                "role": "stable",
+                "sha256": "f9acb7e9632a07370a20b1f761ec33e0e485a617d5841c4b4b62dceb09ca073b",
+                "timestamp_sec": 3.0
+              },
+              {
+                "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/frames/exit.png",
+                "role": "exit",
+                "sha256": "512b950b91879fa8864ef8fa9e8e66ff0ff6c96bc5899ab232662e48374d7b72",
+                "timestamp_sec": 4.958333333333333
+              }
+            ],
+            "receipt": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/execution.json",
+              "sha256": "0d3ba4013dcc549e9bbcfe8e991b9a0ec7693d3433ec309c0dfac079178df883"
+            },
+            "recipe": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/recipe.json",
+              "sha256": "be1a870c359647fb31ec490f1dbe5e67820332e224f0f567de3b17cd6af49c7f"
+            },
+            "sample": {
+              "path": "assets/verified-templates/relation-motion/formal-execution-20260906-04/case-2/sample.mp4",
+              "sha256": "1cc3e9f3b6c5f617fd3c77f84c9c35b0e28abc7f0ebcd74ac65acba8ec3e2a6f"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

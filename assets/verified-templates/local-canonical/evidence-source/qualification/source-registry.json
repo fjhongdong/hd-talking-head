@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "source_label_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/01-source_label_visible.png",
+            "sha256": "77c34a94fca0267746633fe37da91419fadad7ef1053903c4d6076b8f5580eeb",
+            "timestamp_sec": 0.5833333333333334
+          },
+          {
+            "event": "main_media_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/02-main_media_visible.png",
+            "sha256": "16ff348f542aa36e2b5470f613961baadc244e3f0a48afe9ac165c4381b1d4d7",
+            "timestamp_sec": 1.0833333333333333
+          },
+          {
+            "event": "observations_visible",
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/action-frames/03-observations_visible.png",
+            "sha256": "bc8fe17beeea55164f7a4ae74495af5189aad419af5931b8c41a38115c5446a7",
+            "timestamp_sec": 1.9583333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 3,
+        "min_units": 1
+      },
+      "render_contract": {
+        "composition_id": "evidence-source",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/evidence-source/sample/evidence-source-9x16.mp4",
+      "sample_sha256": "8d0cbeae361726e607a66bfa7b48a25975ef2b5a35733e6d21c9d5d561c08935",
+      "semantic_families": [
+        "evidence",
+        "official_source",
+        "source_observation"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/evidence-source",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "27788aa9c48772dbaf5e3b1a8962b4836bb29575267133b3cbf79d061485dfad",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "a98b5bac28eea82e1e3f7c3b0a5a62596308e7c4a3acbd4361931242072ef23b",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "0eb4cf2081653e40e7dcc9797ba4252b991bcb96d3a9345fe7b5f1b47fc22432",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/evidence-source/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "3464856cd761153cceb66d8ef00e0b6db69a44d6b7ea54d263651caca40b4dec",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    }
+  ]
+}

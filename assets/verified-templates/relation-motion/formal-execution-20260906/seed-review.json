@@ -1,0 +1,62 @@
+{
+  "sample_sha256": "1cc3e9f3b6c5f617fd3c77f84c9c35b0e28abc7f0ebcd74ac65acba8ec3e2a6f",
+  "source_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+  "visual_qa": {
+    "status": "approved",
+    "reviewed_at": "2026-09-06",
+    "reviewer": "Codex seed-only visual review; no user approval or final composition claim",
+    "frame_evidence": [
+      {
+        "role": "entry",
+        "timestamp_sec": 0.4166666666666667,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/entry.png",
+        "sha256": "48823a993a918a247d22e11ba85ca8c62d88e347c2aea4a1928aa2171c6d628e"
+      },
+      {
+        "role": "stable",
+        "timestamp_sec": 3,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/stable.png",
+        "sha256": "f9acb7e9632a07370a20b1f761ec33e0e485a617d5841c4b4b62dceb09ca073b"
+      },
+      {
+        "role": "exit",
+        "timestamp_sec": 4.958333333333333,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/exit.png",
+        "sha256": "512b950b91879fa8864ef8fa9e8e66ff0ff6c96bc5899ab232662e48374d7b72"
+      }
+    ],
+    "checks": {
+      "no_clipping": true,
+      "no_overlap": true,
+      "no_placeholder_copy": true,
+      "balanced_layout": true,
+      "decorations_anchored": true,
+      "no_exit_jump": true
+    }
+  },
+  "action_sequence_qa": {
+    "status": "approved",
+    "reviewed_at": "2026-09-06",
+    "reviewer": "Codex source-connection-hub seed frame review",
+    "events": [
+      {
+        "event": "sources",
+        "timestamp_sec": 0.7916666666666666,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/sources.png",
+        "sha256": "28e92489a6c026136244cefa57d04d6a4202ad3784c6d3622a7efd2d1028f4af"
+      },
+      {
+        "event": "connections",
+        "timestamp_sec": 1.25,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/connections.png",
+        "sha256": "fc3a3aed46e9d531a225aa8a42c8ec0c95719123a1ca42ef4a785b5bfd39ad42"
+      },
+      {
+        "event": "hub",
+        "timestamp_sec": 2.5,
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260906/seed-frames/hub.png",
+        "sha256": "5d736754e23adb83dc90d1d6349d7827b14628654984afbc52e9f0b9d94eabd7"
+      }
+    ]
+  }
+}

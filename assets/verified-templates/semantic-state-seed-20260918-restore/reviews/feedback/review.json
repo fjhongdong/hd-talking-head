@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-18T08:08:01+08:00",
+  "approval_reference": "current-thread-user-confirmed-restored-semantic-state-seeds",
+  "family": "feedback",
+  "template_id": "hd-talking-head/semantic-state-feedback",
+  "seed_manifest_sha256": "6931e6b2fe3ad4d516186b84d3c95bc2d717e382fbb0b6d337362e258a3ae73a",
+  "brief_sha256": "1e33347a340116ba0ef3b29646e507b55620bc8f99df6c03d7968975e994ce12",
+  "sample_sha256": "d72046809706f1e737abbbbd42d5c3f2b7800d6c21c03a4c68d20036e276dd67",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

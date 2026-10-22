@@ -1,0 +1,62 @@
+{
+  "action_sequence_qa": {
+    "events": [
+      {
+        "event": "sources",
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/sources.png",
+        "sha256": "72cf9bc0319ea997bebdfe1a7cfd84425b463440cefbdf962af9cf9d80501eac",
+        "timestamp_sec": 0.7916666666666666
+      },
+      {
+        "event": "connections",
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/connections.png",
+        "sha256": "28269c33c6b451c60e51dbe513e4f68b70baa10a5abde36c24314634fb2b551a",
+        "timestamp_sec": 1.25
+      },
+      {
+        "event": "hub",
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/hub.png",
+        "sha256": "dc163646bc0cd11c4637f7413359f2725382ab07e460e2dd83ec157d3f9f499e",
+        "timestamp_sec": 2.5
+      }
+    ],
+    "reviewed_at": "2026-09-18T00:00:00+08:00",
+    "reviewer": "Codex restored source-connection-hub inspection",
+    "status": "approved"
+  },
+  "sample_sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77",
+  "source_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+  "visual_qa": {
+    "checks": {
+      "balanced_layout": true,
+      "decorations_anchored": true,
+      "no_clipping": true,
+      "no_exit_jump": true,
+      "no_overlap": true,
+      "no_placeholder_copy": true
+    },
+    "frame_evidence": [
+      {
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/entry.png",
+        "role": "entry",
+        "sha256": "64d22ffd927f5e3fa4169a874938233d215e78119deddc32f225fd64021887d6",
+        "timestamp_sec": 0.4166666666666667
+      },
+      {
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/stable.png",
+        "role": "stable",
+        "sha256": "c10ff73a837071b694dca12b91fc0ee32f2e24a83db6e4ebf58e654b47ecb81d",
+        "timestamp_sec": 3.0
+      },
+      {
+        "path": "assets/verified-templates/relation-motion/seed-20260918-restore/seed-frames/exit.png",
+        "role": "exit",
+        "sha256": "1c3254945ede3b78bded3b0bf5773cc4955ff84ed96ddde533a7186818f7f019",
+        "timestamp_sec": 4.958333333333333
+      }
+    ],
+    "reviewed_at": "2026-09-18T00:00:00+08:00",
+    "reviewer": "Codex restored seed visual inspection",
+    "status": "approved"
+  }
+}

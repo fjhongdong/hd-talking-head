@@ -1,0 +1,354 @@
+{
+  "intent": {
+    "segment_id": "seg-example",
+    "statement": "用已核实的官方分享支持当前论点。",
+    "semantic_goals": [
+      "evidence"
+    ],
+    "claims": [
+      {
+        "type": "concept",
+        "value": "官方分享作为当前论点的证据",
+        "verification_required": true
+      }
+    ],
+    "entities": [],
+    "relations": [],
+    "requirements": {
+      "verifiability": "high",
+      "realism": "high",
+      "abstraction": "low",
+      "product_specificity": "low",
+      "emotional_intensity": "low"
+    },
+    "presenter_presence": "allowed"
+  },
+  "strategy": {
+    "schema_version": 1,
+    "segment_id": "seg-example",
+    "mode": "single",
+    "rationale": "选择与原文匹配且已核实的官方视频。",
+    "components": [
+      {
+        "component_id": "official-1",
+        "kind": "official_material",
+        "semantic_role": "evidence",
+        "layer_role": "base",
+        "media_type": "video",
+        "layout_slot": "main",
+        "brief": "使用审核过的官方视频区间，不添加普通口播字幕。"
+      }
+    ],
+    "composition": {
+      "family": "single_full_frame",
+      "presenter_mode": "bottom_window",
+      "reading_order": [
+        "official-1"
+      ],
+      "component_dependencies": [],
+      "avatar": {
+        "profile": {
+          "schema_version": 1,
+          "framing": "head-shoulders",
+          "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "diameter": 256,
+          "border_width": 8,
+          "border_color": "#FFFFFF"
+        },
+        "position": {
+          "x": 768,
+          "y": 1400
+        },
+        "crop": {
+          "size": 720,
+          "anchors": [
+            {
+              "frame": 0,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            },
+            {
+              "frame": 60,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            },
+            {
+              "frame": 119,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "recipe": {
+    "schema_version": 2,
+    "segment_id": "seg-example",
+    "strategy_revision": 1,
+    "mode": "single",
+    "composition": {
+      "family": "single_full_frame",
+      "presenter_mode": "bottom_window",
+      "reading_order": [
+        "official-1"
+      ],
+      "component_dependencies": [],
+      "avatar": {
+        "profile": {
+          "schema_version": 1,
+          "framing": "head-shoulders",
+          "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "diameter": 256,
+          "border_width": 8,
+          "border_color": "#FFFFFF"
+        },
+        "position": {
+          "x": 768,
+          "y": 1400
+        },
+        "crop": {
+          "size": 720,
+          "anchors": [
+            {
+              "frame": 0,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            },
+            {
+              "frame": 60,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            },
+            {
+              "frame": 119,
+              "x": 180,
+              "y": 400,
+              "landmarks": {
+                "head_top": [
+                  540.0,
+                  457.6
+                ],
+                "face_box": [
+                  381.6,
+                  529.6,
+                  316.8,
+                  244.8
+                ],
+                "chin": [
+                  540.0,
+                  788.8
+                ],
+                "neck": [
+                  540.0,
+                  853.6
+                ],
+                "shoulders": [
+                  [
+                    266.4,
+                    947.2
+                  ],
+                  [
+                    813.6,
+                    947.2
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "canvas": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 24
+    },
+    "components": [
+      {
+        "component_id": "official-1",
+        "kind": "official_material",
+        "semantic_role": "evidence",
+        "layer_role": "base",
+        "executor": "official-media",
+        "media_type": "video",
+        "render_window": {
+          "start_frame": 0,
+          "end_frame": 120,
+          "z_index": 0,
+          "layout_slot": "main",
+          "opacity": 1,
+          "safe_zone": {
+            "top": 120,
+            "bottom": 320,
+            "left": 40,
+            "right": 40
+          }
+        },
+        "artifact_contract": {
+          "width": 1080,
+          "height": 1920,
+          "fps": 24,
+          "alpha": false
+        },
+        "source_id": "example-only",
+        "publisher": "Example Institute",
+        "source_url": "https://example.org/example-only",
+        "snapshot_path": "sources/example-only.mp4",
+        "fetched_at": "2026-09-03T00:00:00Z",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "final_compositor": "ffmpeg"
+  }
+}

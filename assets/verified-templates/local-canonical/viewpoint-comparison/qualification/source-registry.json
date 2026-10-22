@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "left_view_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/01-left_view_visible.png",
+            "sha256": "79301ed5a7f51d538d95c0f500a1a34b4d5aed275a29ca16db08d98cc69d5440",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "right_view_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/02-right_view_visible.png",
+            "sha256": "22f2ac2be1780aa05eadd92956cca7caf992eb84e7f3c0150af694cb888b64e5",
+            "timestamp_sec": 1.25
+          },
+          {
+            "event": "dimension_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/03-dimension_visible.png",
+            "sha256": "2a1f46567dd3cb81a625ef6a113e100e451826a7e9b5b6b2b6a3ec2c3024f760",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "conclusion_visible",
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/action-frames/04-conclusion_visible.png",
+            "sha256": "c608f22bed0ec60c4bee02afc14edcabe4a2dca8e94561a284d34a2a991f5aea",
+            "timestamp_sec": 2.0416666666666665
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex motion QA",
+        "status": "approved"
+      },
+      "adaptation_level": "structural",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 3.01,
+        "duration_min_sec": 2.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 8,
+        "min_units": 4
+      },
+      "render_contract": {
+        "composition_id": "viewpoint-comparison",
+        "engine": "HyperFrames",
+        "exit_policy": "template"
+      },
+      "sample_path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/viewpoint-comparison-9x16.mp4",
+      "sample_sha256": "18a6f38399fa275475635cb48a16ae07a6f2e712655f53d2ab8966c32a915440",
+      "semantic_families": [
+        "comparison",
+        "viewpoint_comparison",
+        "decision_contrast"
+      ],
+      "source_entrypoint": "scripts/local_canonical_renderer.cjs",
+      "source_files": [
+        {
+          "path": "package.json",
+          "sha256": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91"
+        },
+        {
+          "path": "scripts/local_canonical_renderer.cjs",
+          "sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8"
+        },
+        {
+          "path": "scripts/local_canonical_adapter.py",
+          "sha256": "c5a2d8d61e0ace9bb3cb9630f10774e09c0a851e6c816d66dc3e57e81c1c3631"
+        }
+      ],
+      "source_sha256": "e81091c13ed640d88647c9659c7ed663cfecab48f495b76704442ce57dc8e1f8",
+      "template_id": "local-canonical/viewpoint-comparison",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "local-canonical-v1",
+        "project": "hd-talking-head-local-canonical",
+        "repository": "."
+      },
+      "verification_id": "f10b9abbf37d1f65dd91bcfa7456e559ea23366a847fe418eb1a37e13ab8adf5",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "6a74519b8ec37bae16c8e59b28cf2af53375f637dd54e7dfcd8d082267cef168",
+            "timestamp_sec": 0.125
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "417f0ca6f4ce329a8703ca94c6e8a5b91b877fe28575da7836470701f22e7610",
+            "timestamp_sec": 2.625
+          },
+          {
+            "path": "assets/verified-templates/local-canonical/viewpoint-comparison/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "052970c3ea67d38fa8bfb2e4f475890f3d84a99af82608a317f042de9ced0162",
+            "timestamp_sec": 2.875
+          }
+        ],
+        "reviewed_at": "2026-09-05T12:00:00+08:00",
+        "reviewer": "Codex visual QA",
+        "status": "approved"
+      }
+    }
+  ]
+}

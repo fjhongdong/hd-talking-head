@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "action_sequence_qa": {
+        "events": [
+          {
+            "event": "establish",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/establish.png",
+            "sha256": "9d3dde593491842c06babe53954d785e7b19dcd8aa0c999781fe6a401f71033d",
+            "timestamp_sec": 0.7916666666666666
+          },
+          {
+            "event": "wait",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/wait.png",
+            "sha256": "b7a4f259955d42d74d81dcfe03aa7f5f94d4f5283cf2cc08bf3c8a2aab856eb4",
+            "timestamp_sec": 1.625
+          },
+          {
+            "event": "realize",
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/action-frames/realize.png",
+            "sha256": "0e093cdc5f5e75d15b03a8926862b2d4191c73dcc31f9d9b927d8f7f5e62a92f",
+            "timestamp_sec": 2.4583333333333335
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      },
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 5.01,
+        "duration_min_sec": 4.99,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "render_contract": {
+        "composition_id": "semantic-state-delay",
+        "engine": "SemanticState",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/seed-sample.mp4",
+      "sample_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+      "semantic_families": [
+        "delay"
+      ],
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_files": [
+        {
+          "path": "scripts/semantic_state_renderer_bundle.py",
+          "sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8"
+        },
+        {
+          "path": "scripts/semantic_state_adapter.py",
+          "sha256": "a6ad7db17557f02ba33fe09b8fe9fc4ecf6b995e27ad31d1ebea03532e83061d"
+        }
+      ],
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-delay",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "upstream": {
+        "commit": "native-v1",
+        "project": "hd-talking-head-semantic-state",
+        "repository": "."
+      },
+      "verification_id": "a99f4dec4197bfcb483ab6b3b308f8f380c5283842dfdc50f33785785e17f245",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/entry.png",
+            "role": "entry",
+            "sha256": "7baf4a28eb6980baed6b36e9207e39a733cd5ccc253a702ac798a0191f802c31",
+            "timestamp_sec": 0.4166666666666667
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/stable.png",
+            "role": "stable",
+            "sha256": "78f04cb39ff479a80fbb68fee562fc9e882eb76ccb46042ab96b10c583421424",
+            "timestamp_sec": 3.0
+          },
+          {
+            "path": "assets/verified-templates/semantic-state-seed-20260918-restore/delay/frames/exit.png",
+            "role": "exit",
+            "sha256": "0c367ef1f4a75be52fb40469c379c06f7733cd703ac365c636f5a8095af1531d",
+            "timestamp_sec": 4.958333333333333
+          }
+        ],
+        "reviewed_at": "2026-09-18T08:08:01+08:00",
+        "reviewer": "User",
+        "status": "approved"
+      }
+    }
+  ]
+}

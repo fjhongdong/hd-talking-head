@@ -1,0 +1,118 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 114870,
+    "component_id": "relation",
+    "error_code": null,
+    "input_sha256": "16b4a4272e975b93e88b5f6c2f7935541d9770db3cce1dfbeca323921504710a",
+    "invocation_evidence": {
+      "adapter_id": "native-relation-motion-v1",
+      "approved_entrypoint": "scripts/relation_motion_renderer_bundle.py",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/relation_motion_renderer_bundle.py",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/synthetic-relation-1/.staging/relation-r1.c0ebbb55fcf8e92d2b198529e2f8c972/output.mp4",
+        "--node",
+        "$PATH[7]",
+        "--playwright",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--ffmpeg",
+        "$PATH[13]",
+        "--ffprobe",
+        "$PATH[15]"
+      ],
+      "brief_sha256": "d22b1e8690bed68a6db54ba7b27fb029943796ff64ee6fc247ff41096c584519",
+      "dependency_id": "hd-talking-head-relation-motion",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
+      "exit_code": 0,
+      "invocation_id": "process-c432529c39c8dd9e20b1d5066849116e",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "6e7ae61f68a3838094fc56590f84c52069a97d7816f6bb79e0e85995b340e464",
+      "output_job_path": "08-visual-assets/components/synthetic-relation-1/relation-r1.mp4",
+      "output_sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77",
+      "pid": 35660,
+      "primary_renderer": "RelationMotion",
+      "probe_id": "native-relation-motion-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/relation-motion/formal-execution-20260918-restore/qualification/source-registry.json",
+        "sha256": "73a7991ada043a3bf83b1f3ca552b86d844d9906b60301573086f8b2d018228e"
+      },
+      "renderer_version": "1.0.0",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "98b6935e08f4c5f756d030bf18687a5d3bb32b5ec7359abdfe0a4abf2eb2ebfe",
+    "job_path": "08-visual-assets/components/synthetic-relation-1/relation-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "full_frame",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 5.0,
+      "fps": 24.0,
+      "frame_count": 120,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "78b01c0e4684f82a4dd7cb0088e6e6346333818adf770085cbe69b9fdc5b8f77",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 120,
+      "layout_slot": "full_frame",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "synthetic-relation-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

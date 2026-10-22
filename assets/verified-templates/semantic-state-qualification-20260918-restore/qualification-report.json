@@ -1,0 +1,57 @@
+{
+  "families": [
+    {
+      "action_frames_verified": 6,
+      "case_count": 2,
+      "family": "replacement",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/reviewed-registry.json",
+        "sha256": "5072fc8e7d7de6090a598f70183947bf64b24817b7d366d8cc1d818a410927b3"
+      },
+      "template_id": "hd-talking-head/semantic-state-replacement"
+    },
+    {
+      "action_frames_verified": 6,
+      "case_count": 2,
+      "family": "threshold",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/reviewed-registry.json",
+        "sha256": "ca7ebdeca7914b2781a247e4434b74e2a9b3e9c27a74755bf0e2915ce1c20883"
+      },
+      "template_id": "hd-talking-head/semantic-state-threshold"
+    },
+    {
+      "action_frames_verified": 6,
+      "case_count": 2,
+      "family": "delay",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/reviewed-registry.json",
+        "sha256": "7a0a5f77ee12f536945319e55629eb16367464372bae275621c9384b18f8ed65"
+      },
+      "template_id": "hd-talking-head/semantic-state-delay"
+    },
+    {
+      "action_frames_verified": 6,
+      "case_count": 2,
+      "family": "hierarchy",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/reviewed-registry.json",
+        "sha256": "9b2d0d105fd2cb4476268a2ee46eeeb1b1b8cfed46855564c9c71b0623377fa5"
+      },
+      "template_id": "hd-talking-head/semantic-state-hierarchy"
+    },
+    {
+      "action_frames_verified": 6,
+      "case_count": 2,
+      "family": "feedback",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/reviewed-registry.json",
+        "sha256": "76cd74e3db58e9e3340c41afa96c983fb84a39631a26fe4cf23ff366b4fc94df"
+      },
+      "template_id": "hd-talking-head/semantic-state-feedback"
+    }
+  ],
+  "human_approval_claimed": false,
+  "reviewed_at": "2026-09-18T08:08:01+08:00",
+  "status": "reviewed"
+}

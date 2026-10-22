@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "codec": "h264",
+        "duration_max_sec": 14.92,
+        "duration_min_sec": 14.9,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "capacity": {
+        "max_units": 4,
+        "min_units": 4
+      },
+      "render_contract": {
+        "composition_id": "chatgpt-exchange",
+        "engine": "HyperFrames",
+        "exit_policy": "external_compositor"
+      },
+      "sample_path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/chatgpt-exchange-9x16.mp4",
+      "sample_sha256": "a29fbb49329d457e92adac94f1140a32620dfb03e7dd2ccaf154f83393dcf445",
+      "semantic_families": [
+        "ai_dialogue_comparison",
+        "four_factor_comparison",
+        "prompt_to_table"
+      ],
+      "source_entrypoint": "assets/verified-templates/hyperframes/chatgpt-exchange/source/chatgpt-exchange.html",
+      "source_files": [
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/chatgpt-exchange.html",
+          "sha256": "a6689feb01735e942dfc632372def74822f7dacc63711f190b448f2590ea1cc2"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/TEMPLATE.md",
+          "sha256": "f7d579c1b0d26bb81d0a830bea1d489e6605f40fa9ffb482237aa3bf5c05fbd4"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/registry-item.json",
+          "sha256": "d7226c907619492bda2235a20d3b2f7531426e92c3089998650056a0619a35a1"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-LICENSE.txt",
+          "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-400-normal.woff2",
+          "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-500-normal.woff2",
+          "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+        },
+        {
+          "path": "assets/verified-templates/hyperframes/chatgpt-exchange/source/assets/fonts/inter-latin-600-normal.woff2",
+          "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+        }
+      ],
+      "source_sha256": "a6689feb01735e942dfc632372def74822f7dacc63711f190b448f2590ea1cc2",
+      "template_id": "hyperframes/chatgpt-exchange",
+      "template_origin": "verified_third_party",
+      "template_version": "0.8.19",
+      "upstream": {
+        "commit": "0fd70b1d2165d6ac9f4199bfafa9f22c711bfc8f",
+        "project": "hyperframes",
+        "repository": "https://github.com/heygen-com/hyperframes.git"
+      },
+      "verification_id": "19f0fa75b06635b2302c2504c45f16e892af07cd6fa3b1046713270ad31e23b4",
+      "visual_qa": {
+        "checks": {
+          "balanced_layout": true,
+          "decorations_anchored": true,
+          "no_clipping": true,
+          "no_exit_jump": true,
+          "no_overlap": true,
+          "no_placeholder_copy": true
+        },
+        "frame_evidence": [
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/entry.png",
+            "role": "entry",
+            "sha256": "6897fd471abcc51517d8e64d051017781424fa7b233df2776c47291f81be5547",
+            "timestamp_sec": 1.7916666666666667
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/stable.png",
+            "role": "stable",
+            "sha256": "8327e69200ff5b9af148a89b9004b5efa7aadfef0400bcd40255960dff72df6e",
+            "timestamp_sec": 12.208333333333334
+          },
+          {
+            "path": "assets/verified-templates/hyperframes/chatgpt-exchange/sample/frames/exit.png",
+            "role": "exit",
+            "sha256": "0973c338d9716b6310bd4ebd80145ed20c584099c7e59b57f0936e6731c358a8",
+            "timestamp_sec": 14.416666666666666
+          }
+        ],
+        "reviewed_at": "2026-09-18T00:00:00+08:00",
+        "reviewer": "Codex restored-sample visual inspection candidate",
+        "status": "approved"
+      }
+    }
+  ]
+}

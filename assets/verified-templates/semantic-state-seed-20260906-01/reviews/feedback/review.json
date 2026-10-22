@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-07T00:04:02+08:00",
+  "approval_reference": "thread-019feb3b-4b30-7672-8468-c679ff81e598-user-confirmed-rendered-design",
+  "family": "feedback",
+  "template_id": "hd-talking-head/semantic-state-feedback",
+  "seed_manifest_sha256": "93a613a9214a29d7a6b5361e5f5c7310495a9ead7bc97364dc54184f555588a1",
+  "brief_sha256": "1e33347a340116ba0ef3b29646e507b55620bc8f99df6c03d7968975e994ce12",
+  "sample_sha256": "aaa9189954387ce3ac3e72ac3b0febd7113929fcde12e14faa91c8c85187639a",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

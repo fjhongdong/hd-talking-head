@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "image_path": "hand-pencil-01.png",
+  "sha256": "bb5d78b4910561979c1827b8bc45dd9f6388bcd1169c35d594398602b86513ef",
+  "width": 1254,
+  "height": 1254,
+  "tip_x": 253,
+  "tip_y": 203,
+  "natural_pose_angle_deg": 0,
+  "wrist_entry": "lower-right",
+  "source": "built-in-imagegen",
+  "prompt": "Use case: photorealistic-natural. Asset type: transparent cutout sprite for a top-down whiteboard hand-drawing animation using a real-hand follower. Primary request: one anatomically natural adult right hand holding one sharpened matte dark graphite pencil in a relaxed precise tripod grip, viewed straight down from above, with a short wrist/forearm, isolated on a genuinely transparent background. Composition: square image; graphite pencil tip points toward the upper-left and is clearly exposed and separated from the fingers, approximately at 25% width and 25% height; hand and wrist extend toward the lower-right. Keep the entire thumb, index finger, middle finger and the graphite tip visible; natural curled ring/little fingers, realistic joints and skin. The pencil should be angled about 45 degrees in the image, and the pencil tip must be an unambiguous sharp contact point. Soft diffuse lighting compatible with a warm ivory sketchbook, subtle realistic skin detail, no baked floor/background, no heavy cast shadow. No paper, drawing, ink marks, text, typography, logo, jewelry, extra hands, extra pencils, tools or scene. Clean alpha edge with no white matte/checkerboard painted into image; single reusable photo sprite, not an illustration. Natural proportions; enough transparent padding around hand except the cropped wrist may end at lower-right edge.",
+  "tip_calibration": "Native 1254px image inspected; alpha>16 starts at (253,203), sharp exposed graphite tip verified visually. No resize/crop performed."
+}

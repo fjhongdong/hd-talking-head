@@ -1,0 +1,87 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "phase-1",
+        "operation": "establish",
+        "start_frame": 0,
+        "subject_ids": [
+          "change",
+          "context"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-1"
+        ],
+        "end_frame": 40,
+        "id": "phase-2",
+        "operation": "replace",
+        "start_frame": 20,
+        "subject_ids": [
+          "change"
+        ]
+      },
+      {
+        "depends_on": [
+          "phase-2"
+        ],
+        "end_frame": 60,
+        "id": "phase-3",
+        "operation": "compare",
+        "start_frame": 40,
+        "subject_ids": [
+          "change",
+          "context"
+        ]
+      }
+    ],
+    "content_item_id": "qualification-replacement-1",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "replacement",
+    "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "动力设备从蒸汽机更替为电动机，工厂布局保持原样",
+    "subjects": [
+      {
+        "final_state": "电动机",
+        "id": "change",
+        "initial_state": "蒸汽机",
+        "label": "动力设备",
+        "preserve": false
+      },
+      {
+        "final_state": "保持原样",
+        "id": "context",
+        "initial_state": "保持原样",
+        "label": "工厂布局",
+        "preserve": true
+      }
+    ],
+    "version": 1
+  },
+  "roles": {
+    "change_id": "change",
+    "context_ids": [
+      "context"
+    ]
+  },
+  "schema_version": 1,
+  "title": "技术更替"
+}

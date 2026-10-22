@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-07T00:04:02+08:00",
+  "approval_reference": "thread-019feb3b-4b30-7672-8468-c679ff81e598-user-confirmed-rendered-design",
+  "family": "replacement",
+  "template_id": "hd-talking-head/semantic-state-replacement",
+  "seed_manifest_sha256": "93a613a9214a29d7a6b5361e5f5c7310495a9ead7bc97364dc54184f555588a1",
+  "brief_sha256": "925fa674139fff1f2e8d26163ec8671eff8254665160023e063358090fcc8563",
+  "sample_sha256": "c4879acebb773b7da035287749b1421c94df40dd7d13c5b4a77920927bb7af07",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}

@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 94433,
+    "component_id": "chart",
+    "error_code": null,
+    "input_sha256": "dcbaa15dc906c03dcea1a0f0ab8614b65166a2a5c16b99599ac6fe8592fb65f3",
+    "invocation_evidence": {
+      "adapter_id": "native-data-rollup-v1",
+      "approved_entrypoint": "scripts/render_data_rollup.cjs",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/render_data_rollup.cjs",
+        "--brief",
+        "$JOB/brief.json",
+        "--output",
+        "$JOB/08-visual-assets/components/data-rollup-qualification-1/.staging/chart-r1.533a5559aba01f2b8028cc8eea286b10/output.mp4",
+        "--skill-root",
+        "$PATH[7]",
+        "--runtime-root",
+        "$PATH[9]",
+        "--browser",
+        "$PATH[11]",
+        "--registry-path",
+        "assets/verified-templates/html-video/frame-data-rollup/qualification/source-registry.json",
+        "--registry-sha256",
+        "742dc1f2ef09992a1f5e1b0c0229a919a11c12136aa445263c4e1efd909e9ee7",
+        "--renderer-version",
+        "4.0.520"
+      ],
+      "brief_sha256": "553241ffad0415787e901634a76026265caddac4f4688fcc32fde9add793b9c3",
+      "dependency_id": "html-video",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "f29bcface7b956728086714d9977867de93664fa29a870f8fc1f114f6071800a",
+      "exit_code": 0,
+      "invocation_id": "process-d53eddad6a2a8373b548fd8e2a7e4d75",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "97e1dc2ed1899ebc65c91a07765ab232717b0a414f5d6bb3d4b1ab5176f2125b",
+      "output_job_path": "08-visual-assets/components/data-rollup-qualification-1/chart-r1.mp4",
+      "output_sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f",
+      "pid": 14929,
+      "primary_renderer": "Remotion",
+      "probe_id": "native-data-rollup-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "1.0.0",
+      "qualification_registry": {
+        "path": "assets/verified-templates/html-video/frame-data-rollup/qualification/source-registry.json",
+        "sha256": "742dc1f2ef09992a1f5e1b0c0229a919a11c12136aa445263c4e1efd909e9ee7"
+      },
+      "renderer_version": "4.0.520",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 266,
+      "stdout_sha256": "881f10680e70d4173a039789dd83f36ffd134bc46e992169730bac98490bb6d2",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "data-rollup-qualification-1",
+    "job_path": "08-visual-assets/components/data-rollup-qualification-1/chart-r1.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 4.0,
+      "fps": 24.0,
+      "frame_count": 96,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "35736b8f373e4bd7d443cfce0f327fa6cd42344a6af7a8f2347f4ae59821f55f",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 96,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "data-rollup-qualification-1",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 1,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "same_recipe_reuses_identical_invocation": true,
+  "synthetic_fixture": true
+}

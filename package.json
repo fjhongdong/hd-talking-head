@@ -1,0 +1,9 @@
+{
+  "name": "hd-talking-head-local-canonical",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Validated native 9:16 local canonical B-roll compositions",
+  "scripts": {
+    "validate": "node scripts/local_canonical_renderer.cjs --validate"
+  }
+}

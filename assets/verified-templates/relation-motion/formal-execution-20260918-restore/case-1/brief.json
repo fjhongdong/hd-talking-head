@@ -1,0 +1,94 @@
+{
+  "canvas": {
+    "duration_in_frames": 120,
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "hub_id": "hub",
+  "motion": {
+    "actions": [
+      {
+        "depends_on": [],
+        "end_frame": 20,
+        "id": "sources",
+        "operation": "reveal_sources",
+        "start_frame": 0,
+        "subject_ids": [
+          "source-0",
+          "source-1"
+        ]
+      },
+      {
+        "depends_on": [
+          "sources"
+        ],
+        "end_frame": 40,
+        "id": "links",
+        "operation": "draw_connections",
+        "start_frame": 20,
+        "subject_ids": [
+          "source-0",
+          "source-1",
+          "hub"
+        ]
+      },
+      {
+        "depends_on": [
+          "links"
+        ],
+        "end_frame": 60,
+        "id": "hub",
+        "operation": "reveal_hub",
+        "start_frame": 40,
+        "subject_ids": [
+          "hub"
+        ]
+      }
+    ],
+    "content_item_id": "fixture-relation",
+    "duration_frames": 120,
+    "exit_window": {
+      "end_frame": 120,
+      "start_frame": 108
+    },
+    "family": "relation",
+    "meaningful_change": "来源先出现，再连线，最后形成汇聚结果",
+    "read_window": {
+      "end_frame": 108,
+      "minimum_frames": 24,
+      "start_frame": 60
+    },
+    "source_text": "实践经验、复盘观察共同形成综合判断。",
+    "subjects": [
+      {
+        "final_state": "已显示",
+        "id": "source-0",
+        "initial_state": "隐藏",
+        "label": "实践经验",
+        "preserve": false
+      },
+      {
+        "final_state": "已显示",
+        "id": "source-1",
+        "initial_state": "隐藏",
+        "label": "复盘观察",
+        "preserve": false
+      },
+      {
+        "final_state": "已显示",
+        "id": "hub",
+        "initial_state": "隐藏",
+        "label": "综合判断",
+        "preserve": false
+      }
+    ],
+    "version": 1
+  },
+  "schema_version": 1,
+  "source_ids": [
+    "source-0",
+    "source-1"
+  ],
+  "title": "判断来自哪里"
+}

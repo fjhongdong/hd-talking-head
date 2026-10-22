@@ -1,0 +1,189 @@
+{
+  "canvas": {
+    "fps": 24,
+    "height": 1920,
+    "width": 1080
+  },
+  "components": [
+    {
+      "adaptation_level": "content_reflow",
+      "artifact_contract": {
+        "alpha": false,
+        "fps": 24,
+        "height": 1920,
+        "width": 1080
+      },
+      "brief_sha256": "ee610ddedd97986df4147d651ee320cc4da4d41641336f4c625823ca0bf665e3",
+      "capacity": {
+        "max_units": 4,
+        "min_units": 2
+      },
+      "component_id": "semantic-state-hierarchy",
+      "dependency_id": "hd-talking-head-semantic-state",
+      "entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "executor": "reference_adapter",
+      "invocation_record": {
+        "argv": [
+          "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+          "scripts/semantic_state_renderer_bundle.py"
+        ],
+        "exit_code": null,
+        "semantic_motion": {
+          "check_frames": {
+            "action_completed": {
+              "phase-1": 20,
+              "phase-2": 40,
+              "phase-3": 60
+            },
+            "before_exit": 107,
+            "initial": 0,
+            "last_visible": 119,
+            "next_boundary": 120,
+            "read_start": 60
+          },
+          "content_analysis_sha256": "2a8a7db4109820716bea5c335e8a0e4ac619802f130622a677c032b887fae3d6",
+          "execution_status": "planning_only",
+          "plan": {
+            "actions": [
+              {
+                "depends_on": [],
+                "end_frame": 20,
+                "id": "phase-1",
+                "operation": "establish",
+                "start_frame": 0,
+                "subject_ids": [
+                  "layer-1"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-1"
+                ],
+                "end_frame": 40,
+                "id": "phase-2",
+                "operation": "reveal_layers",
+                "start_frame": 20,
+                "subject_ids": [
+                  "layer-2",
+                  "layer-3",
+                  "layer-4"
+                ]
+              },
+              {
+                "depends_on": [
+                  "phase-2"
+                ],
+                "end_frame": 60,
+                "id": "phase-3",
+                "operation": "resolve",
+                "start_frame": 40,
+                "subject_ids": [
+                  "layer-1",
+                  "layer-2",
+                  "layer-3",
+                  "layer-4"
+                ]
+              }
+            ],
+            "content_item_id": "qualification-hierarchy-2",
+            "duration_frames": 120,
+            "exit_window": {
+              "end_frame": 120,
+              "start_frame": 108
+            },
+            "family": "hierarchy",
+            "meaningful_change": "画面按语义关系逐步改变，并在阅读窗口保持稳定",
+            "read_window": {
+              "end_frame": 108,
+              "minimum_frames": 24,
+              "start_frame": 60
+            },
+            "source_text": "企业价值依次展开为效率层、质量层、创新层和组织层",
+            "subjects": [
+              {
+                "final_state": "节省时间",
+                "id": "layer-1",
+                "initial_state": "未展开",
+                "label": "效率层",
+                "preserve": false
+              },
+              {
+                "final_state": "稳定产出",
+                "id": "layer-2",
+                "initial_state": "未展开",
+                "label": "质量层",
+                "preserve": false
+              },
+              {
+                "final_state": "创造新价值",
+                "id": "layer-3",
+                "initial_state": "未展开",
+                "label": "创新层",
+                "preserve": false
+              },
+              {
+                "final_state": "形成新协作",
+                "id": "layer-4",
+                "initial_state": "未展开",
+                "label": "组织层",
+                "preserve": false
+              }
+            ],
+            "version": 1
+          }
+        },
+        "status": "planned",
+        "template_request": {
+          "information_units": 4,
+          "numeric_scale": "not_applicable",
+          "numeric_values": [],
+          "semantic_family": "hierarchy"
+        }
+      },
+      "kind": "code_generated",
+      "layer_role": "base",
+      "media_type": "animation",
+      "primary_renderer": "SemanticState",
+      "producer_type": "dependency",
+      "producer_version": "1.0.0",
+      "render_window": {
+        "end_frame": 120,
+        "layout_slot": "full_frame",
+        "opacity": 1.0,
+        "safe_zone": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "top": 0
+        },
+        "start_frame": 0,
+        "z_index": 0
+      },
+      "renderer_version": "1.0.0",
+      "sample_sha256": "3c3a8e68a7c7d85639466649e94288c90ec7ba40acc8db535d6b311e9541f10e",
+      "semantic_families": [
+        "hierarchy"
+      ],
+      "semantic_role": "explanation",
+      "source_entrypoint": "scripts/semantic_state_renderer_bundle.py",
+      "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+      "template_id": "hd-talking-head/semantic-state-hierarchy",
+      "template_origin": "verified_local_canonical",
+      "template_version": "1.0.0",
+      "verification_id": "87bbd7cd01f93aec7ef150412c85c480ceee7e5213374399adaba5559ea428d2"
+    }
+  ],
+  "composition": {
+    "component_dependencies": [],
+    "family": "single_full_frame",
+    "presenter_mode": "bottom_window",
+    "reading_order": [
+      "semantic-state-hierarchy"
+    ]
+  },
+  "final_compositor": "ffmpeg",
+  "mode": "single",
+  "schema_version": 2,
+  "segment_id": "synthetic-semantic-hierarchy-2",
+  "strategy_revision": 1
+}

@@ -1,0 +1,1927 @@
+{
+  "schema_version": 1,
+  "status": "machine_verified_pending_human_review",
+  "human_approval_claimed": false,
+  "scope": "five reviewed-but-unregistered SemanticState case-2 clips composed with one measured head-and-shoulders avatar",
+  "project_root": "/Users/Abner/工作空间/【AI讲师IP内容】",
+  "qualification_root": "/Users/Abner/.agents/skills/hd-talking-head/assets/verified-templates/semantic-state-qualification-20260918-restore",
+  "qualification_evidence": {
+    "status": "reviewed",
+    "report": {
+      "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/qualification-report.json",
+      "sha256": "12e4da8e8c920aefb72c15dffd345e57b466aa9dccc068deecb85d1a620c44d9"
+    },
+    "families": [
+      {
+        "family": "replacement",
+        "template_id": "hd-talking-head/semantic-state-replacement",
+        "reviewed_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/reviewed-registry.json",
+          "sha256": "5072fc8e7d7de6090a598f70183947bf64b24817b7d366d8cc1d818a410927b3"
+        },
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/qualification/source-registry.json",
+          "sha256": "0e5382ef99c15fa08fac22d9f071085f4f5bcd00104549655189530bb9bfae7b"
+        }
+      },
+      {
+        "family": "threshold",
+        "template_id": "hd-talking-head/semantic-state-threshold",
+        "reviewed_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/reviewed-registry.json",
+          "sha256": "ca7ebdeca7914b2781a247e4434b74e2a9b3e9c27a74755bf0e2915ce1c20883"
+        },
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/qualification/source-registry.json",
+          "sha256": "156890480ffc3efc832f217b780c97126fb551cd1270b20a7ebb1920e4712788"
+        }
+      },
+      {
+        "family": "delay",
+        "template_id": "hd-talking-head/semantic-state-delay",
+        "reviewed_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/reviewed-registry.json",
+          "sha256": "7a0a5f77ee12f536945319e55629eb16367464372bae275621c9384b18f8ed65"
+        },
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/qualification/source-registry.json",
+          "sha256": "1dcf5cb63ec056cbd16441708a9c41ff57dd3ed0fbabd728d9a7bcdc29deea3a"
+        }
+      },
+      {
+        "family": "hierarchy",
+        "template_id": "hd-talking-head/semantic-state-hierarchy",
+        "reviewed_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/reviewed-registry.json",
+          "sha256": "9b2d0d105fd2cb4476268a2ee46eeeb1b1b8cfed46855564c9c71b0623377fa5"
+        },
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/qualification/source-registry.json",
+          "sha256": "94d1c7a20dd3df69ec618c5ae7b9f2af1e63fa826ad0cadd2929efa87bd3c480"
+        }
+      },
+      {
+        "family": "feedback",
+        "template_id": "hd-talking-head/semantic-state-feedback",
+        "reviewed_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/reviewed-registry.json",
+          "sha256": "76cd74e3db58e9e3340c41afa96c983fb84a39631a26fe4cf23ff366b4fc94df"
+        },
+        "source_registry": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/qualification/source-registry.json",
+          "sha256": "660ef4b53fd424ad5babe8fcd97b7317e0e17e9a3648d8388333e68a6c8f0901"
+        }
+      }
+    ]
+  },
+  "source_aroll": {
+    "declared_absolute_path": "/Users/Abner/工作空间/【AI讲师IP内容】/docs/superpowers/evidence/2026-09-03-hd-avatar-profile/final/render-root/controlled-source.mp4",
+    "declared_snapshot_sha256": "adfbe3ff786f4751afbffc84b966d5993120767050a29fa29571dc15b30d8e7c",
+    "consumed_snapshot": {
+      "path": "frozen-external-inputs/source-aroll.mp4",
+      "sha256": "adfbe3ff786f4751afbffc84b966d5993120767050a29fa29571dc15b30d8e7c",
+      "bytes": 664569
+    }
+  },
+  "avatar_review": {
+    "declared_absolute_path": "/Users/Abner/.agents/skills/hd-talking-head/assets/verified-templates/semantic-state-avatar-canary-20260918-restore/avatar-review-input.json",
+    "declared_snapshot_sha256": "7d8c710d0fc63717172dd303c85523a217466b03fd0d3c92fe84b77177c70e7c",
+    "consumed_snapshot": {
+      "path": "frozen-external-inputs/avatar-review.json",
+      "sha256": "7d8c710d0fc63717172dd303c85523a217466b03fd0d3c92fe84b77177c70e7c",
+      "bytes": 1655
+    }
+  },
+  "avatar": {
+    "profile": {
+      "schema_version": 1,
+      "framing": "head-shoulders",
+      "source_sha256": "adfbe3ff786f4751afbffc84b966d5993120767050a29fa29571dc15b30d8e7c",
+      "diameter": 256,
+      "border_width": 8,
+      "border_color": "#FFFFFF"
+    },
+    "position": {
+      "x": 768,
+      "y": 1400
+    },
+    "crop": {
+      "size": 720,
+      "anchors": [
+        {
+          "frame": 0,
+          "x": 180,
+          "y": 400,
+          "landmarks": {
+            "head_top": [
+              520.0,
+              460.0
+            ],
+            "chin": [
+              520.0,
+              886.6666666666667
+            ],
+            "neck": [
+              520.0,
+              926.6666666666666
+            ],
+            "shoulders": [
+              [
+                260.0,
+                940.0
+              ],
+              [
+                766.6666666666666,
+                900.0
+              ]
+            ],
+            "face_box": [
+              373.33333333333337,
+              526.6666666666666,
+              286.6666666666667,
+              330.0
+            ]
+          }
+        },
+        {
+          "frame": 60,
+          "x": 180,
+          "y": 400,
+          "landmarks": {
+            "head_top": [
+              520.0,
+              460.0
+            ],
+            "chin": [
+              520.0,
+              886.6666666666667
+            ],
+            "neck": [
+              520.0,
+              926.6666666666666
+            ],
+            "shoulders": [
+              [
+                260.0,
+                940.0
+              ],
+              [
+                766.6666666666666,
+                900.0
+              ]
+            ],
+            "face_box": [
+              373.33333333333337,
+              526.6666666666666,
+              286.6666666666667,
+              330.0
+            ]
+          }
+        },
+        {
+          "frame": 119,
+          "x": 180,
+          "y": 400,
+          "landmarks": {
+            "head_top": [
+              520.0,
+              460.0
+            ],
+            "chin": [
+              520.0,
+              886.6666666666667
+            ],
+            "neck": [
+              520.0,
+              926.6666666666666
+            ],
+            "shoulders": [
+              [
+                260.0,
+                940.0
+              ],
+              [
+                766.6666666666666,
+                900.0
+              ]
+            ],
+            "face_box": [
+              373.33333333333337,
+              526.6666666666666,
+              286.6666666666667,
+              330.0
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "family": "replacement",
+      "case_id": "case-2",
+      "template_id": "hd-talking-head/semantic-state-replacement",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/reviewed-registry.json",
+        "sha256": "5072fc8e7d7de6090a598f70183947bf64b24817b7d366d8cc1d818a410927b3"
+      },
+      "reviewed_input": {
+        "brief": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/brief.json",
+          "sha256": "4ea6608a384a1e8539844655841f1c6fcf4c195b8be63716e992f36c6204af1f"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/recipe.json",
+          "sha256": "80457d3bc4e73ae6371b344da6335cf5da7bff14a921f6e216959c4bb6baa0fd"
+        },
+        "receipt": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/execution.json",
+          "sha256": "5ed0ae6aef0b083cb9ad331c396243c81172073e18fc890682ecac6774691e9d"
+        },
+        "sample": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/replacement/case-2/sample.mp4",
+          "sha256": "5ca945cd95c285982b8617fc587811ca180877373c42ff65f12819c5b9124445"
+        }
+      },
+      "consumed_snapshot": {
+        "brief": {
+          "path": "replacement/reviewed-input/brief.json",
+          "sha256": "4ea6608a384a1e8539844655841f1c6fcf4c195b8be63716e992f36c6204af1f",
+          "bytes": 2478
+        },
+        "recipe": {
+          "path": "replacement/reviewed-input/recipe.json",
+          "sha256": "80457d3bc4e73ae6371b344da6335cf5da7bff14a921f6e216959c4bb6baa0fd",
+          "bytes": 6032
+        },
+        "execution": {
+          "path": "replacement/reviewed-input/execution.json",
+          "sha256": "5ed0ae6aef0b083cb9ad331c396243c81172073e18fc890682ecac6774691e9d",
+          "bytes": 60350
+        },
+        "sample": {
+          "path": "replacement/reviewed-input/sample.mp4",
+          "sha256": "5ca945cd95c285982b8617fc587811ca180877373c42ff65f12819c5b9124445",
+          "bytes": 124603
+        }
+      },
+      "composite": {
+        "path": "replacement/composite.mp4",
+        "sha256": "446de623ebf2ad35427ab8a1abbbc674ea44bc2089c007e95622c3387d9c37c1",
+        "bytes": 349406
+      },
+      "media": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "frames": 120,
+        "video_streams": 1,
+        "audio_streams": 0,
+        "codec": "h264",
+        "pixel_format": "yuv420p"
+      },
+      "avatar_safe_area": {
+        "x": 768,
+        "y": 1400,
+        "outer_size": 272,
+        "soft_safe_bottom": 1700,
+        "status": "verified"
+      },
+      "pixel_qa": {
+        "stable_outside_avatar_mae": 2.841777839139614,
+        "stable_payoff_mae": 2.7578426986912583,
+        "avatar_presence_mae": 94.92317708333333,
+        "final_full_frame_mae": 2.013600662294239,
+        "final_avatar_roi_mae": 2.0,
+        "stable_threshold": 4,
+        "presence_threshold": 8,
+        "exit_threshold": 4,
+        "status": "verified"
+      },
+      "frames": {
+        "entry": {
+          "frame": 10,
+          "path": "replacement/frames/entry-010.png",
+          "sha256": "d0094c884c2c2f7e3d0db39c19f35e56a2cafda738f1e11b1190c908623f8ddf",
+          "bytes": 264386
+        },
+        "stable": {
+          "frame": 72,
+          "path": "replacement/frames/stable-072.png",
+          "sha256": "1f81b1b77ca47ff2ff961c4e1618ac1942b6faa98d549f349319f6d292116bb7",
+          "bytes": 288896
+        },
+        "exit_start": {
+          "frame": 108,
+          "path": "replacement/frames/exit_start-108.png",
+          "sha256": "53961aed81a294c154224379c4dd39cea210b31dbbcf1d79dfa0c5c2905d9e5f",
+          "bytes": 300827
+        },
+        "exit_mid": {
+          "frame": 114,
+          "path": "replacement/frames/exit_mid-114.png",
+          "sha256": "7fe681dfec27574a86d74b0b318b1a3d7320bbba8bdbfe0a05bc173444ae5c28",
+          "bytes": 475981
+        },
+        "last": {
+          "frame": 119,
+          "path": "replacement/frames/last-119.png",
+          "sha256": "79ce77f00e16e83554e150c24b9dccb38fb37d4f8fbf7098a0621a2e1273ab2f",
+          "bytes": 365714
+        }
+      }
+    },
+    {
+      "family": "threshold",
+      "case_id": "case-2",
+      "template_id": "hd-talking-head/semantic-state-threshold",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/reviewed-registry.json",
+        "sha256": "ca7ebdeca7914b2781a247e4434b74e2a9b3e9c27a74755bf0e2915ce1c20883"
+      },
+      "reviewed_input": {
+        "brief": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/brief.json",
+          "sha256": "cae4a14b546e310272a950b1349a739365c9f0d7ae080c1182974e76eca37daf"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/recipe.json",
+          "sha256": "129334bcfbc17d1f2514dd57e5186f9d43ea94afad8501224a3b7789f9b27ba4"
+        },
+        "receipt": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/execution.json",
+          "sha256": "01368c33076ae5cb4bd259ce548fd5fbdf5821bd7f23b24000143bac7eb53b3f"
+        },
+        "sample": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/threshold/case-2/sample.mp4",
+          "sha256": "089654813111a524f054a45210bdc338275cee391cdcda5ae25dd09528067710"
+        }
+      },
+      "consumed_snapshot": {
+        "brief": {
+          "path": "threshold/reviewed-input/brief.json",
+          "sha256": "cae4a14b546e310272a950b1349a739365c9f0d7ae080c1182974e76eca37daf",
+          "bytes": 1871
+        },
+        "recipe": {
+          "path": "threshold/reviewed-input/recipe.json",
+          "sha256": "129334bcfbc17d1f2514dd57e5186f9d43ea94afad8501224a3b7789f9b27ba4",
+          "bytes": 5323
+        },
+        "execution": {
+          "path": "threshold/reviewed-input/execution.json",
+          "sha256": "01368c33076ae5cb4bd259ce548fd5fbdf5821bd7f23b24000143bac7eb53b3f",
+          "bytes": 60316
+        },
+        "sample": {
+          "path": "threshold/reviewed-input/sample.mp4",
+          "sha256": "089654813111a524f054a45210bdc338275cee391cdcda5ae25dd09528067710",
+          "bytes": 103848
+        }
+      },
+      "composite": {
+        "path": "threshold/composite.mp4",
+        "sha256": "183ab884bcdbbcbade71a79c2b16aa82654de65efe5b8baa9023fab733668fca",
+        "bytes": 301215
+      },
+      "media": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "frames": 120,
+        "video_streams": 1,
+        "audio_streams": 0,
+        "codec": "h264",
+        "pixel_format": "yuv420p"
+      },
+      "avatar_safe_area": {
+        "x": 768,
+        "y": 1400,
+        "outer_size": 272,
+        "soft_safe_bottom": 1700,
+        "status": "verified"
+      },
+      "pixel_qa": {
+        "stable_outside_avatar_mae": 2.801786930028998,
+        "stable_payoff_mae": 2.7434403913189915,
+        "avatar_presence_mae": 94.86087532439446,
+        "final_full_frame_mae": 1.993307773919753,
+        "final_avatar_roi_mae": 2.0,
+        "stable_threshold": 4,
+        "presence_threshold": 8,
+        "exit_threshold": 4,
+        "status": "verified"
+      },
+      "frames": {
+        "entry": {
+          "frame": 10,
+          "path": "threshold/frames/entry-010.png",
+          "sha256": "f9cf13269cc793e7b6d8a7fcffb9fe69dabb8a0b9421232cf4b0cbae7e8bef8c",
+          "bytes": 215318
+        },
+        "stable": {
+          "frame": 72,
+          "path": "threshold/frames/stable-072.png",
+          "sha256": "7cea6b8eaf2aa6edc563fdf535f334f2a9923a949c0f7d026cb2247032fbd38f",
+          "bytes": 255551
+        },
+        "exit_start": {
+          "frame": 108,
+          "path": "threshold/frames/exit_start-108.png",
+          "sha256": "2320377e95593453964a4a9851083bd278b0d1dc722d5e706be5e262dca51b95",
+          "bytes": 265093
+        },
+        "exit_mid": {
+          "frame": 114,
+          "path": "threshold/frames/exit_mid-114.png",
+          "sha256": "ca04c965299fb556710e250d0093a83da6aa9109539e223edfb70b5cf29cb6b5",
+          "bytes": 464823
+        },
+        "last": {
+          "frame": 119,
+          "path": "threshold/frames/last-119.png",
+          "sha256": "9c0ea0ea43af9b1927e246f748e2d92dda646cb3e4c0746876cea326f06ae69f",
+          "bytes": 370522
+        }
+      }
+    },
+    {
+      "family": "delay",
+      "case_id": "case-2",
+      "template_id": "hd-talking-head/semantic-state-delay",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/reviewed-registry.json",
+        "sha256": "7a0a5f77ee12f536945319e55629eb16367464372bae275621c9384b18f8ed65"
+      },
+      "reviewed_input": {
+        "brief": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/brief.json",
+          "sha256": "53480add618cca21ba42f0234ae5e1aab377559d190c69a37b9f03771410e4dc"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/recipe.json",
+          "sha256": "24998ecd5e81e2098aa54d0af2f2ffcf62aa8ba153c5526b252b11336f24399b"
+        },
+        "receipt": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/execution.json",
+          "sha256": "d4b8078040859a403769e8ef558b020299dfbe88be34ff6db46713df96267b88"
+        },
+        "sample": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/delay/case-2/sample.mp4",
+          "sha256": "4f17d9e7e1ba54010718974f0bf566f6b63279f91815a2716e86bcc96a3da190"
+        }
+      },
+      "consumed_snapshot": {
+        "brief": {
+          "path": "delay/reviewed-input/brief.json",
+          "sha256": "53480add618cca21ba42f0234ae5e1aab377559d190c69a37b9f03771410e4dc",
+          "bytes": 1849
+        },
+        "recipe": {
+          "path": "delay/reviewed-input/recipe.json",
+          "sha256": "24998ecd5e81e2098aa54d0af2f2ffcf62aa8ba153c5526b252b11336f24399b",
+          "bytes": 5291
+        },
+        "execution": {
+          "path": "delay/reviewed-input/execution.json",
+          "sha256": "d4b8078040859a403769e8ef558b020299dfbe88be34ff6db46713df96267b88",
+          "bytes": 60248
+        },
+        "sample": {
+          "path": "delay/reviewed-input/sample.mp4",
+          "sha256": "4f17d9e7e1ba54010718974f0bf566f6b63279f91815a2716e86bcc96a3da190",
+          "bytes": 152087
+        }
+      },
+      "composite": {
+        "path": "delay/composite.mp4",
+        "sha256": "c1f585ff091bb561236543fadb984df790ecccc05498e0f33df8fc67558ec9b6",
+        "bytes": 396941
+      },
+      "media": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "frames": 120,
+        "video_streams": 1,
+        "audio_streams": 0,
+        "codec": "h264",
+        "pixel_format": "yuv420p"
+      },
+      "avatar_safe_area": {
+        "x": 768,
+        "y": 1400,
+        "outer_size": 272,
+        "soft_safe_bottom": 1700,
+        "status": "verified"
+      },
+      "pixel_qa": {
+        "stable_outside_avatar_mae": 2.8673755626155013,
+        "stable_payoff_mae": 2.7801166407546094,
+        "avatar_presence_mae": 94.91742358708188,
+        "final_full_frame_mae": 2.0121363811728394,
+        "final_avatar_roi_mae": 2.0,
+        "stable_threshold": 4,
+        "presence_threshold": 8,
+        "exit_threshold": 4,
+        "status": "verified"
+      },
+      "frames": {
+        "entry": {
+          "frame": 10,
+          "path": "delay/frames/entry-010.png",
+          "sha256": "8614a6849ad1cf44b5a9542e377bedf9d294a51623fc870cc0d081777312ebc3",
+          "bytes": 256093
+        },
+        "stable": {
+          "frame": 72,
+          "path": "delay/frames/stable-072.png",
+          "sha256": "4fa468bed21f376e7d3a61b858f4aa98453d0fc6ed3b25a32c1f7d49f16b335c",
+          "bytes": 340134
+        },
+        "exit_start": {
+          "frame": 108,
+          "path": "delay/frames/exit_start-108.png",
+          "sha256": "a3616907bc935fa8f51527757e55a405d620ac61d371c2e45a36abaecaea7dc1",
+          "bytes": 350163
+        },
+        "exit_mid": {
+          "frame": 114,
+          "path": "delay/frames/exit_mid-114.png",
+          "sha256": "1b7a1c2067928eec5b95991713d90c21bfc90e4f37e74604fcc197d8000563f0",
+          "bytes": 523779
+        },
+        "last": {
+          "frame": 119,
+          "path": "delay/frames/last-119.png",
+          "sha256": "7f125af2b38244bd75cccd8c135a1f202f05aee676b4114341e2f42690611ab2",
+          "bytes": 374429
+        }
+      }
+    },
+    {
+      "family": "hierarchy",
+      "case_id": "case-2",
+      "template_id": "hd-talking-head/semantic-state-hierarchy",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/reviewed-registry.json",
+        "sha256": "9b2d0d105fd2cb4476268a2ee46eeeb1b1b8cfed46855564c9c71b0623377fa5"
+      },
+      "reviewed_input": {
+        "brief": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/brief.json",
+          "sha256": "ee610ddedd97986df4147d651ee320cc4da4d41641336f4c625823ca0bf665e3"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/recipe.json",
+          "sha256": "72794a04174e35b4987e43d85c98d93b73c5d96dc228014be84004f79c709397"
+        },
+        "receipt": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/execution.json",
+          "sha256": "e915a065f9ef4411374ebcbc7a32a280fdc6180249b04f14b590bde1e7f89fcd"
+        },
+        "sample": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/hierarchy/case-2/sample.mp4",
+          "sha256": "2ce238fe47b94cbb96e7c6f7faa9c543b95b988bd5649700c5a6689b2122b44d"
+        }
+      },
+      "consumed_snapshot": {
+        "brief": {
+          "path": "hierarchy/reviewed-input/brief.json",
+          "sha256": "ee610ddedd97986df4147d651ee320cc4da4d41641336f4c625823ca0bf665e3",
+          "bytes": 2324
+        },
+        "recipe": {
+          "path": "hierarchy/reviewed-input/recipe.json",
+          "sha256": "72794a04174e35b4987e43d85c98d93b73c5d96dc228014be84004f79c709397",
+          "bytes": 5891
+        },
+        "execution": {
+          "path": "hierarchy/reviewed-input/execution.json",
+          "sha256": "e915a065f9ef4411374ebcbc7a32a280fdc6180249b04f14b590bde1e7f89fcd",
+          "bytes": 60316
+        },
+        "sample": {
+          "path": "hierarchy/reviewed-input/sample.mp4",
+          "sha256": "2ce238fe47b94cbb96e7c6f7faa9c543b95b988bd5649700c5a6689b2122b44d",
+          "bytes": 123754
+        }
+      },
+      "composite": {
+        "path": "hierarchy/composite.mp4",
+        "sha256": "fff788e87b9d5da4a5c9877e5656c1757846381304d14738f575a1288c5323ac",
+        "bytes": 330318
+      },
+      "media": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "frames": 120,
+        "video_streams": 1,
+        "audio_streams": 0,
+        "codec": "h264",
+        "pixel_format": "yuv420p"
+      },
+      "avatar_safe_area": {
+        "x": 768,
+        "y": 1400,
+        "outer_size": 272,
+        "soft_safe_bottom": 1700,
+        "status": "verified"
+      },
+      "pixel_qa": {
+        "stable_outside_avatar_mae": 2.691672448519004,
+        "stable_payoff_mae": 2.7448522595626965,
+        "avatar_presence_mae": 94.86746233419838,
+        "final_full_frame_mae": 2.0079899691358025,
+        "final_avatar_roi_mae": 2.0,
+        "stable_threshold": 4,
+        "presence_threshold": 8,
+        "exit_threshold": 4,
+        "status": "verified"
+      },
+      "frames": {
+        "entry": {
+          "frame": 10,
+          "path": "hierarchy/frames/entry-010.png",
+          "sha256": "ac4256e9fee98e1d508831fcc8da91bc7f9a2a23d9f02b0dc17284a735f497aa",
+          "bytes": 195819
+        },
+        "stable": {
+          "frame": 72,
+          "path": "hierarchy/frames/stable-072.png",
+          "sha256": "a1a3dc818b4d83560a083e381d6402f9395caed8c0e5601831b55f605413609e",
+          "bytes": 360636
+        },
+        "exit_start": {
+          "frame": 108,
+          "path": "hierarchy/frames/exit_start-108.png",
+          "sha256": "7e85db1a24f1a19f6a256ec28feeabe6f392d73cc729012e01e0787e81eacf5f",
+          "bytes": 370641
+        },
+        "exit_mid": {
+          "frame": 114,
+          "path": "hierarchy/frames/exit_mid-114.png",
+          "sha256": "b94e700656681c99aa15f729081075cd8a10091ab37856ff65b783578564f822",
+          "bytes": 529324
+        },
+        "last": {
+          "frame": 119,
+          "path": "hierarchy/frames/last-119.png",
+          "sha256": "10a9b69f630a987294eb976ac67e61f37ed49a4485ad461987f5f5b0ba54b36d",
+          "bytes": 365024
+        }
+      }
+    },
+    {
+      "family": "feedback",
+      "case_id": "case-2",
+      "template_id": "hd-talking-head/semantic-state-feedback",
+      "reviewed_registry": {
+        "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/reviewed-registry.json",
+        "sha256": "76cd74e3db58e9e3340c41afa96c983fb84a39631a26fe4cf23ff366b4fc94df"
+      },
+      "reviewed_input": {
+        "brief": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/brief.json",
+          "sha256": "fcc8a1c51f2e02e1722a662a1892551414a93e0b2a56c26f6869bef1b5a74065"
+        },
+        "recipe": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/recipe.json",
+          "sha256": "32191b69185ea3fa570a149fb9d503ed3499e5b14ea01b3e68fb4dedb321a63d"
+        },
+        "receipt": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/execution.json",
+          "sha256": "744550e70f11197df79aa0f01875f5089cb2b2e79230c8c8c0e4db47f429c927"
+        },
+        "sample": {
+          "path": "assets/verified-templates/semantic-state-qualification-20260918-restore/feedback/case-2/sample.mp4",
+          "sha256": "64f0718296ffa4dd875e525f60295c9d9dc07712499c213eb04c34ea06bd2955"
+        }
+      },
+      "consumed_snapshot": {
+        "brief": {
+          "path": "feedback/reviewed-input/brief.json",
+          "sha256": "fcc8a1c51f2e02e1722a662a1892551414a93e0b2a56c26f6869bef1b5a74065",
+          "bytes": 1795
+        },
+        "recipe": {
+          "path": "feedback/reviewed-input/recipe.json",
+          "sha256": "32191b69185ea3fa570a149fb9d503ed3499e5b14ea01b3e68fb4dedb321a63d",
+          "bytes": 5243
+        },
+        "execution": {
+          "path": "feedback/reviewed-input/execution.json",
+          "sha256": "744550e70f11197df79aa0f01875f5089cb2b2e79230c8c8c0e4db47f429c927",
+          "bytes": 60297
+        },
+        "sample": {
+          "path": "feedback/reviewed-input/sample.mp4",
+          "sha256": "64f0718296ffa4dd875e525f60295c9d9dc07712499c213eb04c34ea06bd2955",
+          "bytes": 91911
+        }
+      },
+      "composite": {
+        "path": "feedback/composite.mp4",
+        "sha256": "3cf02e2e035dd9682dcddbdd0a32001a354a6bf67c9d84cacde7914c72603feb",
+        "bytes": 289741
+      },
+      "media": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 24,
+        "frames": 120,
+        "video_streams": 1,
+        "audio_streams": 0,
+        "codec": "h264",
+        "pixel_format": "yuv420p"
+      },
+      "avatar_safe_area": {
+        "x": 768,
+        "y": 1400,
+        "outer_size": 272,
+        "soft_safe_bottom": 1700,
+        "status": "verified"
+      },
+      "pixel_qa": {
+        "stable_outside_avatar_mae": 2.8336445612320253,
+        "stable_payoff_mae": 2.7804336333292667,
+        "avatar_presence_mae": 94.90853878316032,
+        "final_full_frame_mae": 2.0065520511831276,
+        "final_avatar_roi_mae": 2.0,
+        "stable_threshold": 4,
+        "presence_threshold": 8,
+        "exit_threshold": 4,
+        "status": "verified"
+      },
+      "frames": {
+        "entry": {
+          "frame": 10,
+          "path": "feedback/frames/entry-010.png",
+          "sha256": "6520b6ab03bbd8992bc4bab47f5251a88bec222885c2ead666f0691271d9321f",
+          "bytes": 220801
+        },
+        "stable": {
+          "frame": 72,
+          "path": "feedback/frames/stable-072.png",
+          "sha256": "17a84c5e97033deb1640acba4d5e90ac6b6b0efde64330b31b1ceb94a37be135",
+          "bytes": 295942
+        },
+        "exit_start": {
+          "frame": 108,
+          "path": "feedback/frames/exit_start-108.png",
+          "sha256": "3589db28895c8deb8367bfa4742fe6e61a0f4c0edf3a7436d7645654af9ef164",
+          "bytes": 306314
+        },
+        "exit_mid": {
+          "frame": 114,
+          "path": "feedback/frames/exit_mid-114.png",
+          "sha256": "87526b95cff8ff3a161ee5683bfd7556702071f90fda6521a4ef96b1285949d7",
+          "bytes": 497457
+        },
+        "last": {
+          "frame": 119,
+          "path": "feedback/frames/last-119.png",
+          "sha256": "9ca0bd934ff714310842a812d81ac13ca50b0641160b41dc792278c8a2be6fca",
+          "bytes": 365289
+        }
+      }
+    }
+  ],
+  "montage": {
+    "path": "semantic-state-5family-avatar-canary.mp4",
+    "sha256": "eb22f4a0d03fa7801710f1f1882a4a4eaa3c546d5c37e5ceda71b0c9e3772405",
+    "bytes": 1632707,
+    "frames": 600,
+    "duration_sec": 25
+  },
+  "contact_sheet": {
+    "path": "contact-sheet.png",
+    "sha256": "b351c944fd7097bee4ff17837d6bd61fec6d97781e4fb5827bdf41a5c45ec02d",
+    "bytes": 194632
+  },
+  "invocations": [
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-i",
+        "$CANARY/replacement/reviewed-input/sample.mp4",
+        "-filter_complex",
+        "color=c=black:s=1080x1920:r=24:d=5.000000,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[canvas_0];[1:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS+0/24/TB,format=rgba[component_0_input];[component_0_input]split=2[component_0_source][component_0_background_source];[component_0_source]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,format=rgba[component_0_foreground];[component_0_background_source]scale=1080:1920:flags=lanczos,gblur=sigma=24,format=rgba[component_0_background];[component_0_background][component_0_foreground]overlay=x='0+(1080-w)/2':y='0+(1920-h)/2':eof_action=pass:shortest=0,colorchannelmixer=aa=1.000000[component_0];[canvas_0][component_0]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,0,119)'[canvas_1];[0:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba,crop=w='if(eq(iw,1080)*eq(ih,1920),720,-1)':h=720:x='if(lte(n,60),180.000000000+(0.000000000)*(n-0)/60,180.000000000+(0.000000000)*(n-60)/59)':y='if(lte(n,60),400.000000000+(0.000000000)*(n-0)/60,400.000000000+(0.000000000)*(n-60)/59)':exact=1,scale=256:256:flags=lanczos,setsar=1,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)'[presenter_face];color=c=#FFFFFF:s=272x272:r=24:d=5.000000000,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)',trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[presenter_ring];[presenter_ring][presenter_face]overlay=8:8:eof_action=pass:shortest=0[presenter_raw];[presenter_raw]format=rgba[presenter];[canvas_1][presenter]overlay=768:1400:eof_action=pass:shortest=0[canvas_2];[0:v]fps=24,scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba[relation_aroll];[canvas_2]null[relation_composite];[relation_composite][relation_aroll]blend=all_expr='if(lt(N-1\\,108)\\,A\\,if(gte(N-1\\,119)\\,B\\,A*(119-(N-1))/11+B*((N-1)-108)/11))'[relation_exit];[relation_exit]format=yuv420p[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "120",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/replacement/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/replacement/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-vf",
+        "select=eq(n\\,10)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/entry-010.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-vf",
+        "select=eq(n\\,108)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/exit_start-108.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-vf",
+        "select=eq(n\\,114)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/exit_mid-114.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/reviewed-input/sample.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/original-stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/replacement/frames/source-last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-i",
+        "$CANARY/threshold/reviewed-input/sample.mp4",
+        "-filter_complex",
+        "color=c=black:s=1080x1920:r=24:d=5.000000,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[canvas_0];[1:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS+0/24/TB,format=rgba[component_0_input];[component_0_input]split=2[component_0_source][component_0_background_source];[component_0_source]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,format=rgba[component_0_foreground];[component_0_background_source]scale=1080:1920:flags=lanczos,gblur=sigma=24,format=rgba[component_0_background];[component_0_background][component_0_foreground]overlay=x='0+(1080-w)/2':y='0+(1920-h)/2':eof_action=pass:shortest=0,colorchannelmixer=aa=1.000000[component_0];[canvas_0][component_0]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,0,119)'[canvas_1];[0:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba,crop=w='if(eq(iw,1080)*eq(ih,1920),720,-1)':h=720:x='if(lte(n,60),180.000000000+(0.000000000)*(n-0)/60,180.000000000+(0.000000000)*(n-60)/59)':y='if(lte(n,60),400.000000000+(0.000000000)*(n-0)/60,400.000000000+(0.000000000)*(n-60)/59)':exact=1,scale=256:256:flags=lanczos,setsar=1,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)'[presenter_face];color=c=#FFFFFF:s=272x272:r=24:d=5.000000000,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)',trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[presenter_ring];[presenter_ring][presenter_face]overlay=8:8:eof_action=pass:shortest=0[presenter_raw];[presenter_raw]format=rgba[presenter];[canvas_1][presenter]overlay=768:1400:eof_action=pass:shortest=0[canvas_2];[0:v]fps=24,scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba[relation_aroll];[canvas_2]null[relation_composite];[relation_composite][relation_aroll]blend=all_expr='if(lt(N-1\\,108)\\,A\\,if(gte(N-1\\,119)\\,B\\,A*(119-(N-1))/11+B*((N-1)-108)/11))'[relation_exit];[relation_exit]format=yuv420p[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "120",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/threshold/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/threshold/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-vf",
+        "select=eq(n\\,10)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/entry-010.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-vf",
+        "select=eq(n\\,108)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/exit_start-108.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-vf",
+        "select=eq(n\\,114)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/exit_mid-114.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/threshold/reviewed-input/sample.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/original-stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/threshold/frames/source-last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-i",
+        "$CANARY/delay/reviewed-input/sample.mp4",
+        "-filter_complex",
+        "color=c=black:s=1080x1920:r=24:d=5.000000,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[canvas_0];[1:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS+0/24/TB,format=rgba[component_0_input];[component_0_input]split=2[component_0_source][component_0_background_source];[component_0_source]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,format=rgba[component_0_foreground];[component_0_background_source]scale=1080:1920:flags=lanczos,gblur=sigma=24,format=rgba[component_0_background];[component_0_background][component_0_foreground]overlay=x='0+(1080-w)/2':y='0+(1920-h)/2':eof_action=pass:shortest=0,colorchannelmixer=aa=1.000000[component_0];[canvas_0][component_0]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,0,119)'[canvas_1];[0:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba,crop=w='if(eq(iw,1080)*eq(ih,1920),720,-1)':h=720:x='if(lte(n,60),180.000000000+(0.000000000)*(n-0)/60,180.000000000+(0.000000000)*(n-60)/59)':y='if(lte(n,60),400.000000000+(0.000000000)*(n-0)/60,400.000000000+(0.000000000)*(n-60)/59)':exact=1,scale=256:256:flags=lanczos,setsar=1,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)'[presenter_face];color=c=#FFFFFF:s=272x272:r=24:d=5.000000000,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)',trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[presenter_ring];[presenter_ring][presenter_face]overlay=8:8:eof_action=pass:shortest=0[presenter_raw];[presenter_raw]format=rgba[presenter];[canvas_1][presenter]overlay=768:1400:eof_action=pass:shortest=0[canvas_2];[0:v]fps=24,scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba[relation_aroll];[canvas_2]null[relation_composite];[relation_composite][relation_aroll]blend=all_expr='if(lt(N-1\\,108)\\,A\\,if(gte(N-1\\,119)\\,B\\,A*(119-(N-1))/11+B*((N-1)-108)/11))'[relation_exit];[relation_exit]format=yuv420p[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "120",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/delay/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/delay/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-vf",
+        "select=eq(n\\,10)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/entry-010.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-vf",
+        "select=eq(n\\,108)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/exit_start-108.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-vf",
+        "select=eq(n\\,114)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/exit_mid-114.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/delay/reviewed-input/sample.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/original-stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/delay/frames/source-last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-i",
+        "$CANARY/hierarchy/reviewed-input/sample.mp4",
+        "-filter_complex",
+        "color=c=black:s=1080x1920:r=24:d=5.000000,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[canvas_0];[1:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS+0/24/TB,format=rgba[component_0_input];[component_0_input]split=2[component_0_source][component_0_background_source];[component_0_source]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,format=rgba[component_0_foreground];[component_0_background_source]scale=1080:1920:flags=lanczos,gblur=sigma=24,format=rgba[component_0_background];[component_0_background][component_0_foreground]overlay=x='0+(1080-w)/2':y='0+(1920-h)/2':eof_action=pass:shortest=0,colorchannelmixer=aa=1.000000[component_0];[canvas_0][component_0]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,0,119)'[canvas_1];[0:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba,crop=w='if(eq(iw,1080)*eq(ih,1920),720,-1)':h=720:x='if(lte(n,60),180.000000000+(0.000000000)*(n-0)/60,180.000000000+(0.000000000)*(n-60)/59)':y='if(lte(n,60),400.000000000+(0.000000000)*(n-0)/60,400.000000000+(0.000000000)*(n-60)/59)':exact=1,scale=256:256:flags=lanczos,setsar=1,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)'[presenter_face];color=c=#FFFFFF:s=272x272:r=24:d=5.000000000,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)',trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[presenter_ring];[presenter_ring][presenter_face]overlay=8:8:eof_action=pass:shortest=0[presenter_raw];[presenter_raw]format=rgba[presenter];[canvas_1][presenter]overlay=768:1400:eof_action=pass:shortest=0[canvas_2];[0:v]fps=24,scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba[relation_aroll];[canvas_2]null[relation_composite];[relation_composite][relation_aroll]blend=all_expr='if(lt(N-1\\,108)\\,A\\,if(gte(N-1\\,119)\\,B\\,A*(119-(N-1))/11+B*((N-1)-108)/11))'[relation_exit];[relation_exit]format=yuv420p[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "120",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/hierarchy/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/hierarchy/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-vf",
+        "select=eq(n\\,10)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/entry-010.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-vf",
+        "select=eq(n\\,108)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/exit_start-108.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-vf",
+        "select=eq(n\\,114)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/exit_mid-114.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/hierarchy/reviewed-input/sample.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/original-stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/hierarchy/frames/source-last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-i",
+        "$CANARY/feedback/reviewed-input/sample.mp4",
+        "-filter_complex",
+        "color=c=black:s=1080x1920:r=24:d=5.000000,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[canvas_0];[1:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS+0/24/TB,format=rgba[component_0_input];[component_0_input]split=2[component_0_source][component_0_background_source];[component_0_source]scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,format=rgba[component_0_foreground];[component_0_background_source]scale=1080:1920:flags=lanczos,gblur=sigma=24,format=rgba[component_0_background];[component_0_background][component_0_foreground]overlay=x='0+(1080-w)/2':y='0+(1920-h)/2':eof_action=pass:shortest=0,colorchannelmixer=aa=1.000000[component_0];[canvas_0][component_0]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,0,119)'[canvas_1];[0:v]fps=24,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba,crop=w='if(eq(iw,1080)*eq(ih,1920),720,-1)':h=720:x='if(lte(n,60),180.000000000+(0.000000000)*(n-0)/60,180.000000000+(0.000000000)*(n-60)/59)':y='if(lte(n,60),400.000000000+(0.000000000)*(n-0)/60,400.000000000+(0.000000000)*(n-60)/59)':exact=1,scale=256:256:flags=lanczos,setsar=1,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)'[presenter_face];color=c=#FFFFFF:s=272x272:r=24:d=5.000000000,format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-2),255,0)',trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS[presenter_ring];[presenter_ring][presenter_face]overlay=8:8:eof_action=pass:shortest=0[presenter_raw];[presenter_raw]format=rgba[presenter];[canvas_1][presenter]overlay=768:1400:eof_action=pass:shortest=0[canvas_2];[0:v]fps=24,scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,format=rgba[relation_aroll];[canvas_2]null[relation_composite];[relation_composite][relation_aroll]blend=all_expr='if(lt(N-1\\,108)\\,A\\,if(gte(N-1\\,119)\\,B\\,A*(119-(N-1))/11+B*((N-1)-108)/11))'[relation_exit];[relation_exit]format=yuv420p[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "120",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/feedback/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-count_frames",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/feedback/composite.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-vf",
+        "select=eq(n\\,10)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/entry-010.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-vf",
+        "select=eq(n\\,108)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/exit_start-108.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-vf",
+        "select=eq(n\\,114)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/exit_mid-114.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/feedback/reviewed-input/sample.mp4",
+        "-vf",
+        "select=eq(n\\,72)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/original-stable-072.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/frozen-external-inputs/source-aroll.mp4",
+        "-vf",
+        "select=eq(n\\,119)",
+        "-frames:v",
+        "1",
+        "-threads",
+        "1",
+        "$CANARY/feedback/frames/source-last-119.png"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-n",
+        "-filter_complex_threads",
+        "1",
+        "-threads",
+        "1",
+        "-i",
+        "$CANARY/replacement/composite.mp4",
+        "-i",
+        "$CANARY/threshold/composite.mp4",
+        "-i",
+        "$CANARY/delay/composite.mp4",
+        "-i",
+        "$CANARY/hierarchy/composite.mp4",
+        "-i",
+        "$CANARY/feedback/composite.mp4",
+        "-filter_complex",
+        "[0:v][1:v][2:v][3:v][4:v]concat=n=5:v=1:a=0[out]",
+        "-map",
+        "[out]",
+        "-an",
+        "-frames:v",
+        "600",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "$CANARY/semantic-state-5family-avatar-canary.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    },
+    {
+      "argv": [
+        "/opt/homebrew/bin/ffprobe",
+        "-v",
+        "error",
+        "-show_streams",
+        "-of",
+        "json",
+        "$CANARY/semantic-state-5family-avatar-canary.mp4"
+      ],
+      "exit_code": 0,
+      "stderr_tail": ""
+    }
+  ]
+}

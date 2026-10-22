@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "approved",
+  "reviewer_type": "human",
+  "reviewer": "User",
+  "reviewed_at": "2026-09-18T08:08:01+08:00",
+  "approval_reference": "current-thread-user-confirmed-restored-semantic-state-seeds",
+  "family": "delay",
+  "template_id": "hd-talking-head/semantic-state-delay",
+  "seed_manifest_sha256": "6931e6b2fe3ad4d516186b84d3c95bc2d717e382fbb0b6d337362e258a3ae73a",
+  "brief_sha256": "bf369495c6ab8980a6078e7dbebb35a335b9a2016eef22bd56e6047a4bf2a3ab",
+  "sample_sha256": "688922f50b9ac8c8f5c43214a0c8a07a31dd2a947f8fc57748ceb45b07e5b615",
+  "source_sha256": "f9915eb3655c25056513b7546fdea91c642f516a33b088c3c4e0ab116972b9d8",
+  "visual_qa": {"status": "approved"},
+  "action_sequence_qa": {"status": "approved"}
+}
