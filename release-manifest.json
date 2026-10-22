@@ -2059,7 +2059,7 @@
   "references/job-workspace-contract.md": "365ee98fd86ff1f958193072f6d5979fe5744e334d636e30bd56403f3c07bc1b",
   "references/material-usage-contract.md": "9b2363b5dc0fa237e07fb62037bce6ad071f20809a22b674545f1d905a7927ae",
   "references/motion-capability-index.json": "44f4113c5358e9b3d96fdd3d59dd578899e0ec24f2196a13457dd7a3e33f168a",
-  "references/motion-capability-library.md": "8086242112296f942abca493385a422c786eb47c30bcc1005e4d74e90fdff04a",
+  "references/motion-capability-library.md": "3b5c7da95ed60795c14a79629111fd57becc1a55dd7e9254e05be4a26cde22c6",
   "references/official-video-acquisition.md": "c4f2101df8c1c9a08637905cce0ced817ed7956bef58e20d8552e9807a8ed488",
   "references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed",
   "references/openfilm-motion-graphics.md": "c925a0b7539dbdbccdf15cf1114a4166d381d267c3f3bb538926394a86fd2158",
@@ -2174,7 +2174,7 @@
   "tests/test_local_canonical_execution.py": "ffedf5184b40e23d944f7e003ee49aded5c8e34584f1929d5559060ec2317561",
   "tests/test_lovart_existing_video_adapter.py": "2edad6e3de2ef87084e0af0303060ff6e13ab3e54e06a725046a91af7e3eea99",
   "tests/test_material_lifecycle.py": "bef374654dd8c6f25719680f1613df7e66e1ca0b8f4b8e6a0441267ff4baf0c4",
-  "tests/test_motion_capability_pins.py": "b4646c303f7cd43d9841f4196cd9410509206355cbb7dbf22e987095dd7e0eb4",
+  "tests/test_motion_capability_pins.py": "dc5d79eff293071c284c93672c873b3b0660700ec23e1d140a1820077c93aed8",
   "tests/test_music_completion_audit.py": "d3c2bebd5a0127018e2d9669174749005e7b68b824e8ac2368790573720a6abc",
   "tests/test_music_release_contract.py": "8e1a9c6aeb25fbcd804ccb3eef01fc160f160bb8dd3633e5830ca1247a542cec",
   "tests/test_openfilm_motion_adapter.py": "4ab296961c9e93bfd9b34bf39fc56e578fefae5a8e7f1636c39f477f05f2c943",
@@ -2194,6 +2194,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-paired-deps-v155",
+ "release_id": "2026-10-22-capability-audit-v156",
  "schema_version": 1
 }

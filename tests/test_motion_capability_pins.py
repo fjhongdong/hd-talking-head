@@ -30,6 +30,17 @@ class MotionCapabilityPinTests(unittest.TestCase):
         ):
             self.assertIn(candidate_id, profiles)
 
+    def test_unconnected_and_historical_candidates_are_refused(self):
+        profiles = motion_capabilities.load_profiles(PROJECT)
+        unconnected = next(cid for cid in profiles if cid.startswith("unconnected:"))
+        historical = next(cid for cid in profiles if cid.startswith("history:"))
+        for cid in (unconnected, historical):
+            profile = profiles[cid]
+            candidate = {"candidate_id": cid, "role": "broll",
+                         "producer_version": profile["reviewed_version"]}
+            with self.assertRaisesRegex(ValueError, "not reviewed"):
+                motion_capabilities.describe_candidates(PROJECT, [candidate], use="broll")
+
 
 if __name__ == "__main__":
     unittest.main()

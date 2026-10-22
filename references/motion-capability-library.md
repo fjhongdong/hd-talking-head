@@ -18,7 +18,7 @@ TalkCraft 的 108 张卡按当前 `src/cards/*.tsx`、contract 与资格案例�
 
 Riso 的草稿预检与正式组装共用 `riso_output_contract`：`layer_role=base`、`layout_slot=full_frame`，`composition.family` 只允许 `single_full_frame` 与 `evidence_with_data_overlay`，且 `alpha=false`。适配器在执行前复核这些用途要求，不将全屏画面当作 A-roll 贴片。输出步骤按时间戳采样到 24 帧，并真正转换为有限范围 `yuv420p`，不通过改标签或放宽检查掩盖格式差异。已有 `number` 的一条 5 秒代表样片；其他 9 个模板只完成源码、内容槽和接法建档，不声称已逐一渲染验收。真实口播仍按当前内容检查语义、版式和实际动作。
 
-这 10 个 profile 已计入当前能力档案：总条目由 156 增至 166，已登记可选入口由 101 增至 111，其中 B-roll 由 92 增至 102；`needs_adapter`、`excluded` 和历史条目保持不变。这些是入口登记数，不是逐模板画面验收数；`shot` 仍要求真实本地截图，所有模板均为信息图，不承担人物动作、情绪或软件操作的表达。
+这 10 个 profile 已计入当前能力档案；总条目、可选入口与各用途数量以 `motion-capability-index.json` 当前条目为准，档案增删时在对应登记记录中核对，不在本页写死计数。`needs_adapter`、`excluded` 和历史条目保持不变。这些是入口登记数，不是逐模板画面验收数；`shot` 仍要求真实本地截图，所有模板均为信息图，不承担人物动作、情绪或软件操作的表达。
 
 ## 每条视频怎么用
 
