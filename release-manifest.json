@@ -2082,6 +2082,7 @@
   "scripts/adu_native_adapter.py": "5e9ea378cef54083ac06fa99a76aef74b93a1e68d59d416230af7c5ea5aeec28",
   "scripts/audit_job_completion.py": "0ab6ed2597e69da4add97e042a696f32ee64cf6de07bb51fa262217b36922c87",
   "scripts/audit_visual_coverage.py": "af573510a8f92cd71c3a3b9531628e0bb526448ac9d633c8203310e11a7c9448",
+  "scripts/auto_advance.py": "64a101e979788bafb13a42b597df0c737318872e8a59839b24c8bcc44bdba958",
   "scripts/avatar_profile.py": "761ce28db67147a7a45ba0fa4ff5a34688a39b0e87f848f88b7297d2b522fa5a",
   "scripts/broll_capability_router.py": "ca52e163e0fdd7a8e5801c93d61ad4bad0148fcc3125582d93993cb758003535",
   "scripts/check_native_overlay_clock.mjs": "8346935e9d7230c95d419b2b7b4bae9afa8a4f1c12715de16a1031c29f66be58",
@@ -2119,6 +2120,7 @@
   "scripts/paper_hyperframes_adapter.py": "af903772f52fdfce4c2c6294c29d3bd5a8fcde440edcb29d8f0ff94bb4a9a3bc",
   "scripts/paper_motion_guard.py": "020b220ef35ade39bf09f87776da57c882f3f603e98208503d482348fd15c918",
   "scripts/project_python.py": "65b0ff1e699b42a1245df16437a279066204beb879e2f46d243937e7d00b0364",
+  "scripts/quick_cover.py": "d4714a8a8672e54563126e3a8478c147b372d4181b4bde7f04400c839d80a25b",
   "scripts/refresh_capability_pins.py": "52c0f79c18ef202ed3f81653c08a1e194bdc4f7cc8d26fe413e33e4842aed56f",
   "scripts/refresh_job_binding.py": "5b1ee03af0074e2a113ba841b9243e474a0a527e871fc01e92400761edadba65",
   "scripts/relation_motion_adapter.py": "c6c26a6d0c49143b3aaebfe4bfc0c6e55dd1da14b5145733022d65257420cb3f",
@@ -2136,6 +2138,8 @@
   "scripts/render_whiteboard.py": "1742ba0274000396953e61fc3ad89a83a3034ef174da5c1a944a510935c9d121",
   "scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
   "scripts/riso_native_adapter.py": "b6a7d8d0bb4cf6f6e49476e25ce68524d61a60ce970e63fe13543c6b13a23a22",
+  "scripts/run_stage.py": "0424e192621f6482006cafc32efbdfc286408e7bb4f81231bab72080cbbc2cf2",
+  "scripts/run_video.py": "339161541b235fda4b07d38ed27ef7bc62508e53edbd1a457594195f6efc51b8",
   "scripts/runtime_bundle.py": "e43792f10fa5f9206d04a2b7c916bf4bbac5ae3da2f8826f871f93500c957d34",
   "scripts/select_broll_skills.py": "a1565042ed620d6e1da5e2271c0cefc8d3ab9ad64c61479cb473a5e1f297e30d",
   "scripts/select_motion_capabilities.py": "ffe7eaec13ef077b114f618c906aca07c7a48d7b6a9d6ab6d26c6ab2b5059a4a",
@@ -2201,6 +2205,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-cover-gates-v163",
+ "release_id": "2026-10-22-cover-gates-v166",
  "schema_version": 1
 }
