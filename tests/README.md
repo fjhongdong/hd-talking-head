@@ -27,6 +27,13 @@ PYTHONPATH=<项目根> python3 tests/test_job_initialization.py
   node_modules(gitignored)。该仓库由 bun 管理:缺时任仓库根目录
   `bun install`(装依赖)再 `bun run build`(生成 node 运行条件
   所需的各包 dist)。
+- 本地参考转写(whisper.cpp):模型在 `runtime/whisper-models/`;
+  `HD_WHISPER_CLI` 必须指向**真身文件**(如 Homebrew Cellar 路径)——
+  `/opt/homebrew/bin` 下是符号链接,会被防篡改检查拒绝。带 Job 预检的
+  命令需同时导出 `HD_WHISPER_CLI` 与 `HD_WHISPER_MODEL`。
+- Skill 更新后恢复暂停的 Job:一条命令完成"迁移→预检→配置批准"
+  三步——`scripts/refresh_job_binding.py --job-context <ctx>
+  --reason <变更原因> --user-confirmation <本次真实指令>`。
 
 ## 依赖与跳过
 

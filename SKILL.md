@@ -225,7 +225,7 @@ B-roll 默认追求高有效信息密度，区别于全片的插入频率和时�
 
 OpenFilm 在同一候选池中表示“按本句语义创作”的一种能力，不默认优先，也不将获认可的手机、放大镜、信封、色板或构图固定为模板。先确定主体和实际变化，再选择适合本句的视觉语言；与相邻镜头风格协调不等于全片同形。当前只接整屏无声 B-roll，不接 A-roll 透明贴片、配音、音乐或收费素材生成。
 
-选型记录保存在当前 Job 已有 treatment JSON 的 `skill_selection`，不放进仅供资料候选使用的 `candidate_snapshots`。主控先提供语义与质量评审，再调用 `select_broll_skills.py assign --project-root <project> --treatment <当前treatment>` 形成整片分配；不要手填最终选择。按此分配构造现有 brief/bindings，完成 `check --project-root <project> --treatment <当前treatment> --director-brief <当前director brief>`。以上命令均通过已准备的 `project_python.py` 运行，不触发渲染或外部调用。正式 `prepare_visual_direction(..., treatment_path=...)` 必须显式接收同一 treatment，复算分配并检查完整输入绑定；缺记录、入口或参数漂移时，在发布前停止。理由随同一次发布写入现有 `visual-routing.md`，不增加用户确认阶段。旧产物保持原样，不迁移或补造历史选型。
+选型记录保存在当前 Job 已有 treatment JSON 的 `skill_selection`，不放进仅供资料候选使用的 `candidate_snapshots`。主控先提供语义与质量评审，再调用 `select_broll_skills.py assign --project-root <project> --treatment <当前treatment>` 形成整片分配；不要手填最终选择。按此分配构造现有 brief/bindings，完成 `check --project-root <project> --treatment <当前treatment> --director-brief <当前director brief>`。以上命令均通过已准备的 `project_python.py` 运行，不触发渲染或外部调用。正式 `prepare_visual_direction(..., treatment_path=<绝对路径>)` 必须显式接收同一 treatment(以 Job 内绝对路径传入;项目根相对串会在对齐校验处拼错根)，复算分配并检查完整输入绑定；缺记录、入口或参数漂移时，在发布前停止。理由随同一次发布写入现有 `visual-routing.md`，不增加用户确认阶段。旧产物保持原样，不迁移或补造历史选型。
 
 既有 `code_generated` 编译器的模板内部排序仍为 `semantic_match_score` → `quality_score` → `template_origin` → `reuse_gap`；这不是跨 Skill 选型入口，也不能覆盖已确定的整片分工。引用验证模板前仍须运行 `verify_broll_template.py` 核对真实登记；`structural` 或自由新场景不能继承第三方身份。填充本期内容后做三态 QA，冻结真实 `producer_type`、`dependency_id`、入口、当前请求、制作与调用证据；历史样片不能代替当前验收。
 

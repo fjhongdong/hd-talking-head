@@ -2,7 +2,7 @@
  "files": {
   ".gitignore": "60c9bdd905fcf45ac485c680d32e9773962cf061b6f041dcddd033911558a672",
   "README.md": "779fc774836d30a82f30670d83c9e4a066ac02465624d22d0657f64756529fbb",
-  "SKILL.md": "1e9509a42115c4f27bcf66abd0347c531565a5861213d4aa06d2f042633df8c8",
+  "SKILL.md": "98f038f71d8844d79369a24520307d8addac6fedee7267ea74b1c217ae667c27",
   "agents/openai.yaml": "894d5869f025a36e10b13153671c95f44fc7ee7ee7b93fc875d794bb32d75e84",
   "assets/adu-native-runtime/package-lock.json": "ac6e4ade7cfd5727b1dc67eb4191a2a1fa89c2265c1797fbdcd4b45523ab12e6",
   "assets/adu-native-runtime/package.json": "a8c1ef10621c652fadd996e9d2b858480d88ef68f24aa3f1e21a5b89ae156954",
@@ -2118,6 +2118,7 @@
   "scripts/paper_motion_guard.py": "020b220ef35ade39bf09f87776da57c882f3f603e98208503d482348fd15c918",
   "scripts/project_python.py": "65b0ff1e699b42a1245df16437a279066204beb879e2f46d243937e7d00b0364",
   "scripts/refresh_capability_pins.py": "52c0f79c18ef202ed3f81653c08a1e194bdc4f7cc8d26fe413e33e4842aed56f",
+  "scripts/refresh_job_binding.py": "5b1ee03af0074e2a113ba841b9243e474a0a527e871fc01e92400761edadba65",
   "scripts/relation_motion_adapter.py": "c6c26a6d0c49143b3aaebfe4bfc0c6e55dd1da14b5145733022d65257420cb3f",
   "scripts/relation_motion_renderer_bundle.py": "a14fe796de0bdccbe9f5a705092d5ae3b421e2020b97061f20f19f7e06140a01",
   "scripts/render_adu_native.mjs": "004ce4ec55781e2db4876870a41787c11396146ffe7b522c5b828a9c969f71b1",
@@ -2143,7 +2144,7 @@
   "scripts/verify_skill_release.py": "45d6ba8bd5165e9665fbcce057fbb77e3c1a8c3791007533a6d14b9467d81aac",
   "scripts/whiteboard_adapter.py": "99270e3748d7fcc617b6e834c6f41f37878f1e6ef5779983930a63d999de5add",
   "scripts/wise_motion_adapter.py": "11b9027ca0046dfacf99295b52a74fdca169b78a2a603548b996b70a9d8177a8",
-  "tests/README.md": "18b709698b6c9f85782894088d00ce67ee579cf3cdf1a4b65927f8043939c9a6",
+  "tests/README.md": "48d0190ad34d4010f1d8d30812a7a70a4eb10087d08a00d20d1b3c941b706c0a",
   "tests/_env.py": "caa221c120e7fb1e597acdc6333519b729817d7f0cfb259933a5e7c9608b68b0",
   "tests/render_avatar_integration.py": "863b18bf9662150b43d7e665fd1656934f2a72693253ef3240238be85a867473",
   "tests/render_data_rollup_integration.py": "8b6707e4fcf0b928e8e2e0b4d07f5908d8f4662e353c037e4e55adabc3c379ca",
@@ -2160,6 +2161,7 @@
   "tests/test_avatar_profile.py": "4188a00b07b9de4f9041247e4bd731335bedf5a3193b5cf0314c9d91621a7141",
   "tests/test_completion_contract.py": "d1d6aa01f5c9f6e2281a537b7428d842810f3fce60b2787dde98cf93fe7fe340",
   "tests/test_confirm_job_setup.py": "635242816e88b52846359dc5bb13bc50dafae1b96541a1a45a5677f6352e345f",
+  "tests/test_cross_package_surface.py": "2f609a9ad731b7562c859cc5ae4fe3625b19e5eb3740e5283b877de4d508d5ce",
   "tests/test_data_rollup_adapter.py": "bdb0aa2181dd19a1788daa5ceec20b82e9b9d71bc5e3cfa8cf2b018e516f36dc",
   "tests/test_dependency_preflight.py": "e11f45d3eb99e239d513cf2236234c54234f291c1b04128197196fd99e7943af",
   "tests/test_doudou_adapter.py": "0792060680982c9907eb74584d52e508e4148ccbd43b801c574aca4b9e4948c0",
@@ -2195,6 +2197,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-restore-clock-checker-v157",
+ "release_id": "2026-10-22-backfeed-v158",
  "schema_version": 1
 }
