@@ -2138,7 +2138,7 @@
   "scripts/render_whiteboard.py": "1742ba0274000396953e61fc3ad89a83a3034ef174da5c1a944a510935c9d121",
   "scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
   "scripts/riso_native_adapter.py": "b6a7d8d0bb4cf6f6e49476e25ce68524d61a60ce970e63fe13543c6b13a23a22",
-  "scripts/run_stage.py": "0424e192621f6482006cafc32efbdfc286408e7bb4f81231bab72080cbbc2cf2",
+  "scripts/run_stage.py": "384fc126905f03f7284c3b300855853745b00b1bfd848dcef474844e17f339a3",
   "scripts/run_video.py": "339161541b235fda4b07d38ed27ef7bc62508e53edbd1a457594195f6efc51b8",
   "scripts/runtime_bundle.py": "e43792f10fa5f9206d04a2b7c916bf4bbac5ae3da2f8826f871f93500c957d34",
   "scripts/select_broll_skills.py": "a1565042ed620d6e1da5e2271c0cefc8d3ab9ad64c61479cb473a5e1f297e30d",
@@ -2205,6 +2205,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-cover-gates-v166",
+ "release_id": "2026-10-22-no-broll-canary-v168",
  "schema_version": 1
 }

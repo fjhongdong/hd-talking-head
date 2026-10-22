@@ -8,6 +8,11 @@ Encapsulates the correct calling sequence for each stage so the host
 never needs to know internal function order, schema shapes, or state
 management details. Each stage generates a sensible default plan if
 the host doesn't provide one.
+
+Supported stages: speech_cleanup (incl. edit_structure), visual_direction,
+visual_canary, visual_assets, subtitles, preview, delivery (stops at the
+human approval gate). Auto-handles runtime migration, manifest re-signing,
+and startup preflight refresh on every invocation.
 """
 
 from __future__ import annotations
@@ -43,6 +48,43 @@ def auto_resign() -> None:
         capture_output=True, check=True)
 
 
+def auto_migrate_runtime(job_context: Path, project: Path, reason: str) -> None:
+    """When edit/hd runtime files changed, revise the current stage and migrate.
+
+    The migration gate only accepts runtime module changes for a stage in
+    needs_revision. This helper detects the changed modules, puts the current
+    stage into revision, and migrates with those modules allowed.
+    """
+    import os
+    job_dir = Path(json.loads(job_context.read_text())["job_dir"])
+    sys.path.insert(0, str(project))
+    from edit.hd.tools import state, startup
+
+    context = json.loads(job_context.read_text())
+    current = startup.runtime_identity(project)
+    old_modules = context.get("runtime", {}).get("modules", {})
+    changed = sorted(k for k in set(old_modules) | set(current.get("modules", {}))
+                     if old_modules.get(k) != current.get("modules", {}).get(k))
+    if not changed:
+        return
+
+    job = state.load_job(job_dir)
+    stage = state.current_stage(job)
+    if stage and job.stages[stage]["status"] == "pending":
+        state.revise(job, stage, f"runtime 更新: {', '.join(changed)}")
+        job = state.load_job(job_dir)
+
+    import subprocess
+    subprocess.run(
+        [sys.executable, str(SKILL / "scripts/migrate_job_context.py"),
+         "--job-context", str(job_context),
+         "--expected-context-sha256", hashlib.sha256(job_context.read_bytes()).hexdigest(),
+         "--expected-revision", str(job.revision),
+         *[arg for module in changed for arg in ("--allowed-module", module)],
+         "--reason", reason],
+        capture_output=True, env={**os.environ, "PYTHONPATH": str(project)}, check=False)
+
+
 def auto_refresh_binding(job_context: Path, project: Path) -> None:
     """Migrate + preflight + confirm if the job binding is stale."""
     import subprocess, os
@@ -50,6 +92,8 @@ def auto_refresh_binding(job_context: Path, project: Path) -> None:
     job_dir = json.loads(job_context.read_text())["job_dir"]
     wf = json.loads((Path(job_dir) / "workflow.json").read_text())
     env = {**os.environ, "PYTHONPATH": str(project)}
+    # Runtime migration first (fails silently when there is nothing to migrate)
+    auto_migrate_runtime(job_context, project, "auto_refresh: skill updated")
     # Migration (fails silently if no change to migrate)
     subprocess.run(
         [sys.executable, str(SKILL / "scripts/migrate_job_context.py"),
@@ -58,17 +102,20 @@ def auto_refresh_binding(job_context: Path, project: Path) -> None:
          "--expected-revision", str(wf["revision"]),
          "--reason", "auto_refresh: skill updated"],
         capture_output=True, env=env, check=False)
-    # Preflight
-    subprocess.run(
-        [sys.executable, str(SKILL / "scripts/project_python.py"),
-         "--project-root", str(project), "--",
-         str(SKILL / "scripts/dependency_preflight.py"),
-         "--manifest", str(SKILL / "references/dependency-manifest.json"),
-         "--project-root", str(project),
-         "--job-context", str(job_context),
-         "--output", str(Path(job_dir) / "manifests/dependency-preflight.json"),
-         "--summary-only"],
-        capture_output=True, env=env, check=False)
+    # Preflight (pin the approved visual plan when one exists)
+    plan = Path(job_dir) / "07-visual-direction/visual-plan.json"
+    preflight_cmd = [
+        sys.executable, str(SKILL / "scripts/project_python.py"),
+        "--project-root", str(project), "--",
+        str(SKILL / "scripts/dependency_preflight.py"),
+        "--manifest", str(SKILL / "references/dependency-manifest.json"),
+        "--project-root", str(project),
+        "--job-context", str(job_context),
+        "--output", str(Path(job_dir) / "manifests/dependency-preflight.json"),
+        "--summary-only"]
+    if plan.is_file():
+        preflight_cmd += ["--visual-plan", str(plan)]
+    subprocess.run(preflight_cmd, capture_output=True, env=env, check=False)
     # Confirm
     subprocess.run(
         [sys.executable, str(SKILL / "scripts/project_python.py"),
@@ -185,6 +232,166 @@ def run_speech_cleanup(job_dir: Path, project: Path) -> dict:
     }
 
 
+def _reset_stage(job_dir: Path, stage: str, job):
+    """Reset a stage to pending and clear its output directory."""
+    from edit.hd.tools import state
+    if job.stages[stage]["status"] not in ("pending",):
+        state.revise(job, stage, "run_stage: 重跑")
+        target = job_dir / {
+            "speech_cleanup": "05-speech-cleanup",
+            "edit_structure": "06-edit-structure",
+            "visual_direction": "07-visual-direction",
+            "visual_canary": "08-visual-canary",
+        }.get(stage)
+        if target and target.exists():
+            shutil.rmtree(target)
+        job = state.load_job(job_dir)
+    return job
+
+
+def run_visual_direction(job_dir: Path, project: Path) -> dict:
+    """visual_direction: pure A-roll plan from the approved edit, all schemas internal."""
+    from edit.hd.tools import state, visual_plan
+
+    job = _reset_stage(job_dir, "visual_direction", state.load_job(job_dir))
+
+    tm = json.loads((job_dir / "06-edit-structure/timeline-map.json").read_text())
+    cp = json.loads((job_dir / "06-edit-structure/edit-plan.json").read_text())["cleanup_proposal"]
+    ca = json.loads((job_dir / "02-content-analysis/content-analysis.json").read_text())
+    item_ids = [i["id"] for i in ca.get("items", [])] or ["item-1"]
+
+    # One segment per keep cut, contiguous over the edited timeline.
+    segments = []
+    for tm_seg, cp_seg in zip(tm["segments"], cp["segments"]):
+        if cp_seg["action"] != "keep":
+            continue
+        sid = f"seg-{len(segments)+1:03d}"
+        statement = (cp_seg.get("original_sentence") or "")[:60]
+        segments.append({
+            "segment_id": sid,
+            "start": tm_seg["timeline_start"],
+            "end": tm_seg["timeline_end"],
+            "content_item_ids": item_ids[:1],
+            "visible_text": [],
+            "visual_intent": {
+                "segment_id": sid, "statement": statement or "口播讲解",
+                "semantic_goals": ["explain"],
+                "claims": [], "entities": [], "relations": [],
+                "requirements": {"verifiability": "low", "realism": "medium",
+                                  "abstraction": "medium", "product_specificity": "low",
+                                  "emotional_intensity": "low"},
+                "presenter_presence": "allowed",
+            },
+            "visual_strategy": {
+                "schema_version": 1, "segment_id": sid, "mode": "none",
+                "rationale": "纯 A-roll 真人讲解",
+                "components": [],
+                "composition": {"family": "no_broll", "presenter_mode": "full_frame",
+                                 "reading_order": [], "component_dependencies": []},
+            },
+            "candidate_snapshots": {}, "bindings": {}, "strategy_revision": 1,
+        })
+
+    ni = job_dir / "native-inputs"
+    ni.mkdir(exist_ok=True)
+    (ni / "director-brief.json").write_text(
+        json.dumps({"schema_version": 3, "segments": segments}, ensure_ascii=False, indent=2) + "\n")
+    (ni / "treatment.json").write_text(json.dumps({
+        "schema_version": 2,
+        "overlay_alignment": [], "overlay_selection": [], "repeat_review": [],
+        "scenes": [], "semantic_assessments": [],
+        "skill_selection": {
+            "schema_version": 1, "beats": [], "assignments": [], "fixed_context": [],
+            "recent_context": [], "history_note": "纯 A-roll 无 B-roll，无历史视频可参考",
+        },
+        "title": json.loads((job_dir / "workflow.json").read_text()).get("title", ""),
+    }, ensure_ascii=False, indent=2) + "\n")
+
+    (job_dir / "manifests").mkdir(exist_ok=True)
+    (job_dir / "manifests/confirmed-content.json").write_text(json.dumps({
+        "schema_version": 1, "job_id": job.job_id,
+        "source_words": [], "visuals": [],
+    }, ensure_ascii=False, indent=2) + "\n")
+
+    plan_path = visual_plan.prepare_visual_direction(
+        job, ni / "director-brief.json",
+        job_dir / "official-previews",
+        treatment_path=ni / "treatment.json",
+    )
+    state.approve(state.load_job(job_dir), "visual_direction")
+
+    # The startup preflight pins the approved plan's sha; refresh the binding.
+    ctx = job_dir.parents[3] / "job-context.json"  # …/edit/hd/jobs/<id> → workspace
+    if ctx.exists():
+        auto_refresh_binding(ctx, project)
+
+    w = state.load_job(job_dir)
+    plan = json.loads(plan_path.read_text())
+    return {"visual_direction": w.stages["visual_direction"]["status"],
+            "segments": len(plan["segments"]), "duration_s": round(plan["duration"], 2)}
+
+
+def run_visual_canary(job_dir: Path, project: Path) -> dict:
+    """visual_canary: render representative segments (A-roll passthrough for no_broll)."""
+    from edit.hd.tools import state, visual_canary
+
+    job = state.load_job(job_dir)
+    result = visual_canary.prepare_visual_canary(job, component_adapters={})
+    state.approve(state.load_job(job_dir), "visual_canary")
+    w = state.load_job(job_dir)
+    video = job_dir / "08-visual-canary/visual-canary.mp4"
+    return {"visual_canary": w.stages["visual_canary"]["status"],
+            "segments": len(result.get("segments", [])),
+            "video_mb": round(video.stat().st_size / 1024 / 1024, 1) if video.exists() else 0}
+
+
+def run_visual_assets(job_dir: Path, project: Path) -> dict:
+    """visual_assets: reuse canary bytes, render the rest, assemble the visual track."""
+    from edit.hd.tools import state, visual_assets_v2
+
+    result = visual_assets_v2.prepare_visual_assets_v2(
+        state.load_job(job_dir), component_adapters={})
+    state.approve(state.load_job(job_dir), "visual_assets")
+    w = state.load_job(job_dir)
+    return {"visual_assets": w.stages["visual_assets"]["status"],
+            "track_mb": round(result.stat().st_size / 1024 / 1024, 1)}
+
+
+def run_subtitles(job_dir: Path, project: Path) -> dict:
+    """subtitles: generate the subtitle track from the approved speech cleanup."""
+    from edit.hd.tools import state, subtitles
+
+    result = subtitles.prepare_subtitles(state.load_job(job_dir))
+    state.approve(state.load_job(job_dir), "subtitles")
+    w = state.load_job(job_dir)
+    return {"subtitles": w.stages["subtitles"]["status"],
+            "track": result.name}
+
+
+def run_preview(job_dir: Path, project: Path) -> dict:
+    """preview: composite the review video (visual track + subtitles)."""
+    from edit.hd.tools import state, preview
+
+    preview.prepare_preview(state.load_job(job_dir))
+    state.approve(state.load_job(job_dir), "preview")
+    w = state.load_job(job_dir)
+    review = job_dir / "11-preview/review.mp4"
+    return {"preview": w.stages["preview"]["status"],
+            "review_mb": round(review.stat().st_size / 1024 / 1024, 1)}
+
+
+def run_delivery(job_dir: Path, project: Path) -> dict:
+    """delivery: build final.mp4 and stop at the human approval gate."""
+    from edit.hd.tools import state, qa_delivery_v2
+
+    qa_delivery_v2.prepare_delivery_v2(state.load_job(job_dir))
+    w = state.load_job(job_dir)
+    final = job_dir / "12-delivery/final.mp4"
+    return {"delivery": w.stages["delivery"]["status"],
+            "final_mb": round(final.stat().st_size / 1024 / 1024, 1),
+            "next": "用户确认成片后正式交付"}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--job-context", type=Path, required=True)
@@ -199,6 +406,18 @@ def main() -> int:
 
     if args.stage == "speech_cleanup":
         result = run_speech_cleanup(job_dir, project)
+    elif args.stage == "visual_direction":
+        result = run_visual_direction(job_dir, project)
+    elif args.stage == "visual_canary":
+        result = run_visual_canary(job_dir, project)
+    elif args.stage == "visual_assets":
+        result = run_visual_assets(job_dir, project)
+    elif args.stage == "subtitles":
+        result = run_subtitles(job_dir, project)
+    elif args.stage == "preview":
+        result = run_preview(job_dir, project)
+    elif args.stage == "delivery":
+        result = run_delivery(job_dir, project)
     else:
         result = {"error": f"Stage '{args.stage}' not yet supported by run_stage"}
 
