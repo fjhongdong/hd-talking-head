@@ -132,6 +132,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" 
 - `参考项目/B-roll开源方案/OpenMontage`
 - `参考项目/B-roll开源方案/Generative-Media-Skills`
 - `参考项目/B-roll开源方案/Open-Generative-AI`
+- `参考项目/B-roll开源方案/baocut`(方法论参考,不参与运行时;钉定提交 `754737d2`)
 
 `参考项目/B-roll开源方案/OpenChatCut` 是用户明确要求外部编辑时才启用的额外适配，不属于核心 B-roll 能力路由。
 

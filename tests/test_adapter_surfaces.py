@@ -11,6 +11,7 @@ import official_video_adapter
 import paper_collage_adapter
 import paper_hyperframes_adapter
 import whiteboard_adapter
+import motion_graphics_adapter
 
 
 SURFACES = {
@@ -18,6 +19,7 @@ SURFACES = {
     "paper_collage_adapter": {"create_adapter", "create_binding", "create_artifact_probe"},
     "paper_hyperframes_adapter": {"create_adapter", "create_binding"},
     "whiteboard_adapter": {"create_adapter", "create_binding", "create_artifact_probe"},
+    "motion_graphics_adapter": {"create_adapter", "create_binding", "create_artifact_probe"},
 }
 
 

@@ -12,6 +12,7 @@ RENDERERS = {
     "render_hypit_native.mjs": ("Missing --", ()),
     "render_talkcraft_native.mjs": ("Usage:", ("--project-root", "--entry", "--composition", "--output")),
     "render_doudou.mjs": ("Usage:", ("--project-root", "--entry", "--composition", "--output")),
+    "render_motion_graphics.cjs": ("Missing --", ()),
 }
 
 

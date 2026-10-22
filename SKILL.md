@@ -54,6 +54,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [全片字幕样式与上游调用](references/subtitle-style-contract.md)（进入 `subtitles` 或检查字幕预览时）
 - [A-roll 透明贴片调用与验收](references/aroll-overlay-contract.md)（纯 A-roll 需要语义图形时）
 - [Overlay Studio 原生要点钉板](references/overlay-studio-pinboard.md)（语义适合逐项落板的短要点时）
+- [Motion Graphics Native 自写纪律动效贴片](references/motion-graphics-native.md)（下横栏、标注引导或品牌贴片进入候选时；每期现写 HTML，非现成模板）
 - [Huashu 原生数值贴片](references/huashu-stat-overlay.md)（口播包含一个确切数值、适合计数强调时；不是同名 Huashu Art B-roll）
 - [权威素材使用回执与变更事务](references/material-usage-contract.md)（新增、替换或撤回用户资料时）
 

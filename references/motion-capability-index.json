@@ -7738,7 +7738,7 @@
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
         "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
-        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "f428c959c2e114bf636a643b8285264c193fe54ee002628522f2fb9de9a97091"
       }
     },
     {
@@ -7792,7 +7792,7 @@
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
         "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
-        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "f428c959c2e114bf636a643b8285264c193fe54ee002628522f2fb9de9a97091"
       }
     },
     {
@@ -7846,7 +7846,7 @@
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/motion-graphics-native.md": "ad04b48fba2cf26599cc9220ee6c19c9dbc93758a1c8d1603f19bb330b5ed769",
         "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25ad57a996b37c0fe823c4920fdbdee93c15d09cd0f40fbe7dd0f46348c37ffb",
-        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "58730718d12273991b80a41c9472560f4713c6cd4ecd81573c64fc61bdbbadcf"
+        "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "f428c959c2e114bf636a643b8285264c193fe54ee002628522f2fb9de9a97091"
       }
     }
   ]

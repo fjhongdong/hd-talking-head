@@ -18,7 +18,13 @@ const briefPath = arg('--brief');
 const outputPath = arg('--output');
 
 const brief = JSON.parse(fs.readFileSync(briefPath, 'utf8'));
-const entryPath = path.resolve(path.dirname(briefPath), '..', brief.entry.job_path);
+// brief 位于 <job>/native-inputs/… 下;从 brief 路径反推 Job 根
+const briefDir = path.dirname(path.resolve(briefPath));
+const niIdx = briefDir.split(path.sep).lastIndexOf('native-inputs');
+const jobDir = niIdx > 0
+  ? briefDir.split(path.sep).slice(0, niIdx).join(path.sep)
+  : path.resolve(briefDir, '..');
+const entryPath = path.resolve(jobDir, brief.entry.job_path);
 
 // Stage: copy the entry HTML into a temporary composition directory
 const compositionDir = path.join(path.dirname(outputPath), '.mg-composition');
