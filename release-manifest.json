@@ -2083,6 +2083,7 @@
   "scripts/audit_visual_coverage.py": "af573510a8f92cd71c3a3b9531628e0bb526448ac9d633c8203310e11a7c9448",
   "scripts/avatar_profile.py": "761ce28db67147a7a45ba0fa4ff5a34688a39b0e87f848f88b7297d2b522fa5a",
   "scripts/broll_capability_router.py": "ca52e163e0fdd7a8e5801c93d61ad4bad0148fcc3125582d93993cb758003535",
+  "scripts/check_native_overlay_clock.mjs": "8346935e9d7230c95d419b2b7b4bae9afa8a4f1c12715de16a1031c29f66be58",
   "scripts/confirm_job_setup.py": "69c8d0a1f9f65532c3ee2dd46f0b8b2e972ab4bacb9aaf833f770c4598498647",
   "scripts/create_job_workspace.py": "8cb234f060bb480e82f199097cc35d6474d75cd82a854ff97617a698e4175723",
   "scripts/data_rollup_adapter.py": "c38600d04247c223da78de450d891155e8b7860d4ca2c35010f2b69fbd0a41fe",
@@ -2194,6 +2195,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-capability-audit-v156",
+ "release_id": "2026-10-22-restore-clock-checker-v157",
  "schema_version": 1
 }
