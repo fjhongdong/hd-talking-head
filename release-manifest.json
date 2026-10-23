@@ -2088,7 +2088,7 @@
   "scripts/build_native_visual.py": "a6785e841c8eee4e90e801386166b2e25b8345089c0134ddbf9dbe69b99b5e2b",
   "scripts/calibrate_avatars.py": "c1c4ae43e7eea2061e806b955e4ddd213cf9eed76f4b4eda1c589a6b1e93a801",
   "scripts/check_native_overlay_clock.mjs": "8346935e9d7230c95d419b2b7b4bae9afa8a4f1c12715de16a1031c29f66be58",
-  "scripts/compose_visual_plan.py": "639ca19d9deb6e19edb0e5252f42e9bb6fe56116532abab2840cb02338c42414",
+  "scripts/compose_visual_plan.py": "5e46bb0e63ed9708e88c03a577d912050dccd860d859db58b1531b64fba0a6c9",
   "scripts/confirm_job_setup.py": "69c8d0a1f9f65532c3ee2dd46f0b8b2e972ab4bacb9aaf833f770c4598498647",
   "scripts/create_job_workspace.py": "8cb234f060bb480e82f199097cc35d6474d75cd82a854ff97617a698e4175723",
   "scripts/data_rollup_adapter.py": "c38600d04247c223da78de450d891155e8b7860d4ca2c35010f2b69fbd0a41fe",
@@ -2208,6 +2208,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-23-multi-route-v176",
+ "release_id": "2026-10-23-light-palette-v177",
  "schema_version": 1
 }

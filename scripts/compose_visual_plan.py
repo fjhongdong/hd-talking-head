@@ -35,7 +35,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 OVERLAY_LAYOUTS = {
     "grid-card-assemble": {"scale": 0.72, "dx": 151, "dy": -434},
     "notification-stack": {"scale": 0.85, "dx": 81, "dy": -365},
-    "before-after-wipe": {"scale": 0.42, "dx": 0, "dy": 40},
+    "before-after-wipe": {"scale": 0.29, "dx": 383, "dy": 40},
 }
 
 GRID = {"notification-stack": 3.0, "grid-card-assemble": 2.5, "before-after-wipe": 8.0}
@@ -403,6 +403,8 @@ def main() -> int:
                     values = {key: ",".join(labels), "cues": cues, "exit": "fade"}
                 (folder / "native.html").write_bytes(native_bytes)
                 lay = OVERLAY_LAYOUTS.get(route, {"scale": 1.0, "dx": 0, "dy": 0})
+                palette = ("--bg:#f7f2e8;--fg:#242a2d;--surface:#fff8e8;--border:#e5dcc8;"
+                           "--muted:#8a8273;--brand:#c79a36;--accent:#c79a36;--accent-2:#c79a36;")
                 entry_html = (
                     '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
                     f'<div class="stage" data-duration="{duration_beat}">'
@@ -412,7 +414,7 @@ def main() -> int:
                     f'data-width="1080" data-height="1920" '
                     f'style="position:absolute;top:0;left:0;width:1080px;height:1920px;'
                     f'transform:translate({lay["dx"]}px,{lay["dy"]}px) scale({lay["scale"]});'
-                    f'transform-origin:top left"></div></div>')
+                    f'transform-origin:top left;{palette}"></div></div>')
                 (folder / "index.html").write_text(entry_html, encoding="utf-8")
                 brief = {
                     "schema_version": 2,
