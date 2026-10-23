@@ -32,6 +32,12 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
+OVERLAY_LAYOUTS = {
+    "grid-card-assemble": {"scale": 0.72, "dx": 151, "dy": -434},
+    "notification-stack": {"scale": 0.85, "dx": 81, "dy": -365},
+    "before-after-wipe": {"scale": 0.42, "dx": 0, "dy": 40},
+}
+
 GRID = {"notification-stack": 3.0, "grid-card-assemble": 2.5, "before-after-wipe": 8.0}
 OVERLAY_ROUTES = {
     "notification-stack": ("reminder", "notification_stack", "notification-stack"),
@@ -74,8 +80,9 @@ def _resolve_windows(beats: list[dict], words: list[dict], duration: float) -> l
             anchors = [int(x) for x in beat["anchors"]]
             if any(words[i]["cut"] is None for i in anchors):
                 raise SystemExit(f"beat {index}: anchor word deleted from cut")
-            wa = words[anchors[0]]["cut"]
-            wb = words[anchors[-1]]["cut_end"]
+            window_words = beat.get("window_words") or [anchors[0], anchors[-1]]
+            wa = words[window_words[0]]["cut"]
+            wb = words[window_words[-1]]["cut_end"]
             minimum = max(GRID.get(beat["route"], 0.0), beat.get("min_seconds") or 0.0)
         else:
             first, last = int(beat["first_word"]), int(beat["last_word"])
@@ -280,102 +287,235 @@ def main() -> int:
 
         if beat["kind"] == "overlay":
             route = beat["route"]
-            labels = beat["labels"]
+            labels = beat.get("labels") or []
             anchors = [int(x) for x in beat["anchors"]]
-            family, action, structure = OVERLAY_ROUTES[route]
             component_id = "native-visual"
-            upstream_route = "hyperframes/" + route
-            source_path = project / REGISTRY / "components" / route / (route + ".html")
-            source_bytes = source_path.read_bytes()
-            native_bytes = bind_native_clock(source_bytes, upstream_route, duration_beat)
-            if route == "before-after-wipe":
-                art = ('<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" '
-                       'width="120" height="120"><circle cx="60" cy="60" r="44" fill="none" '
-                       'stroke="#bdb59d" stroke-width="8"/></svg>')
-                native_bytes = bind_native_slots(native_bytes, {"before": art, "after": art})
-                wipe_at = max(0.0, words[anchors[1]]["cut"] - start)
-                values = {"label_a": labels[0], "label_b": labels[1],
-                          "wipe_at": f"{wipe_at:.6f}", "rest_split": "50", "exit": "fade"}
-            else:
-                key = "titles" if route == "notification-stack" else "items"
-                cues = ",".join(f"{max(0.0, words[i]['cut'] - start):.6f}"
-                                 for i in anchors[:len(labels)])
-                values = {key: ",".join(labels), "cues": cues, "exit": "fade"}
-            (folder / "native.html").write_bytes(native_bytes)
-            entry_html = (
-                '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
-                f'<div class="stage" data-duration="{duration_beat}">'
-                f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
-                f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
-                f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
-                f'data-width="1080" data-height="1920"></div></div>')
-            (folder / "index.html").write_text(entry_html, encoding="utf-8")
-            brief = {
-                "schema_version": 2,
-                "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
-                                    "start": start, "end": end},
-                "template_request": {"semantic_family": family, "information_units": 2,
-                                      "numeric_values": [], "numeric_scale": "not_applicable"},
-                "entry": {"media_ref": "native-entry",
-                           "job_path": str((folder / "index.html").relative_to(job_dir)),
-                           "scene_path": "index.html",
-                           "sha256": hashlib.sha256((folder / "index.html").read_bytes()).hexdigest()},
-                "assets": [{"media_ref": "native-source",
-                             "job_path": str((folder / "native.html").relative_to(job_dir)),
-                             "scene_path": "native.html",
-                             "sha256": hashlib.sha256(native_bytes).hexdigest()}],
-                "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": frames,
-                                 "alpha": True},
-                "upstream_route": upstream_route,
-                "source_pins": {"route": upstream_route,
-                                 "sha256": hashlib.sha256(source_bytes).hexdigest()},
-            }
-            payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
-            (folder / "brief.json").write_bytes(payload)
-            binding = hyper.create_binding(hyper_adapter, payload, source_path)
-            events = []
-            if route == "before-after-wipe":
-                events = [
-                    {"slot": 0, "kind": "reveal", "text": labels[0],
-                     "anchor": {"index": first_word, "text": words[first_word]["text"]},
-                     "basis": "current_clause"},
-                    {"slot": 1, "kind": "wipe_start", "text": labels[1],
-                     "anchor": {"index": anchors[1], "text": words[anchors[1]]["text"]},
-                     "basis": "current_clause"},
-                ]
-                scale = min(1.0, duration_beat / (float(values["wipe_at"]) + 1.05 + 0.5))
-                land = start + (float(values["wipe_at"]) + 1.05) * scale
-                land_word = min(
-                    (i for i, w in enumerate(words)
-                     if w["cut"] is not None and start <= w["cut"] < end
-                     and w["cut"] >= land - 0.75 and w["cut"] <= land + 1 / 24),
-                    default=None)
-                if land_word is None:
-                    raise SystemExit(f"{sid}: no word aligns with the wipe landing")
-                events.append({"slot": 1, "kind": "wipe_land", "text": labels[1],
-                                "anchor": {"index": land_word, "text": words[land_word]["text"]},
-                                "basis": "current_clause"})
-            else:
-                events = [{"slot": i, "kind": "reveal", "text": labels[i],
+            overlay_pointer, overlay_value = "/upstream_route", "hyperframes/" + route
+            if route == "pin-board":
+                pin_items = beat["items"]
+                beat = {**beat, "labels": pin_items}
+                pin_times = [max(0.0, words[a]["cut"] - start) for a in anchors]
+                studio_rt = _module("overlay_studio_runtime").check_runtime(project)
+                brief = {
+                    "schema_version": 1,
+                    "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
+                                        "start": start, "end": end},
+                    "composition": {"width": 1080, "height": 1920, "fps": 24,
+                                     "frames": frames, "alpha": True},
+                    "doc": {"version": 1, "theme": "light",
+                             "cards": [{"id": "pin-1", "kind": "pin-board", "start": 0,
+                                         "end": duration_beat,
+                                         "params": {"theme": "light", "position": "top-left",
+                                                     "title": "", "subtitle": "",
+                                                     "items": "|".join(pin_items),
+                                                     "times": "|".join(f"{t:.3f}" for t in pin_times),
+                                                     "stepMs": 4000, "accent": "orange",
+                                                     "sfx": "none", "speed": 1}}]},
+                    "layout": {"crop": {"x": 0, "y": 0, "width": 940, "height": 640},
+                                "placement": {"x": 70, "y": 50, "width": 940, "height": 640}},
+                    "parent_safe_zone": {"top": 64, "bottom": 320, "left": 40, "right": 40},
+                    "template_request": {"semantic_family": "cumulative_points",
+                                          "information_units": len(pin_items),
+                                          "numeric_values": [], "numeric_scale": "not_applicable"},
+                    "assets": [],
+                    "upstream": {"source_revision": studio_rt["source_revision"],
+                                  "runtime_identity": studio_rt["identity"]},
+                    "execution_mode": "native_export",
+                }
+                payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+                (folder / "brief.json").write_bytes(payload)
+                overlay_studio = _module("overlay_studio_adapter")
+                os_adapter = overlay_studio.create_adapter(project, sys.executable, brief_loader)
+                pin_sample = (SKILL.parents[1] / "skill-development/vendor/overlay-studio/"
+                               ".agents/skills/overlay-fx-generator/SKILL.md")
+                binding = overlay_studio.create_binding(os_adapter, payload, pin_sample)
+                events = [{"slot": i, "kind": "pin_drop", "text": pin_items[i],
                             "anchor": {"index": anchors[i], "text": words[anchors[i]]["text"]},
-                            "basis": "current_clause"} for i in range(len(labels))]
-            treatment["overlay_selection"].append({
-                "segment_id": sid, "component_id": component_id,
-                "intent_relation": family, "native_route": route,
-                "visible_action": action, "visual_structure": structure,
-                "selection_reason": beat["reason"]})
-            treatment["overlay_alignment"].append({
-                "segment_id": sid, "component_id": component_id,
-                "brief_path": str((folder / "brief.json").relative_to(job_dir)),
-                "events": events})
-            candidate_id = "overlay:" + route
+                            "basis": "current_clause"} for i in range(len(pin_items))]
+                treatment["overlay_selection"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "intent_relation": "parallel", "native_route": "pin-board",
+                    "visible_action": "cumulative_pin_drop", "visual_structure": "pin-board",
+                    "selection_reason": beat["reason"]})
+                treatment["overlay_alignment"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "brief_path": str((folder / "brief.json").relative_to(job_dir)),
+                    "events": events})
+                candidate_id = "overlay:pin-board"
+                overlay_pointer, overlay_value = "/execution_mode", "native_export"
+            elif route == "hw-pipeline":
+                label_frames = [max(0, round((words[a]["cut"] - start - 0.45) * 24))
+                                 for a in anchors]
+                brief = {
+                    "schema_version": 1,
+                    "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
+                                        "start": start, "end": end},
+                    "canvas": {"width": 1080, "height": 1920, "fps": 24, "frames": frames},
+                    "labels": labels, "label_frames": label_frames,
+                    "word_anchors": [{"index": a, "text": words[a]["text"]} for a in anchors],
+                    "template_request": {"semantic_family": "three_step_flow", "information_units": 3,
+                                          "numeric_values": [], "numeric_scale": "not_applicable"},
+                }
+                payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+                (folder / "brief.json").write_bytes(payload)
+                hw = _module("hyperframes_hw_pipeline_adapter")
+                from hyperframes_runtime import resolve_runtime
+                hw_runtime = resolve_runtime(
+                    project / "skill-development/runtime/hyperframes-0.8.167")["root"]
+                hw_adapter = hw.create_adapter(
+                    runtime_root=hw_runtime, node_executable=shutil.which("node"),
+                    browser_executable="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                    ffmpeg_executable=shutil.which("ffmpeg"), brief_loader=brief_loader)
+                binding = hw.create_binding(
+                    hw_adapter, payload,
+                    reference_sample=project / REGISTRY / "blocks/hw-pipeline/hw-pipeline.html")
+                treatment["overlay_selection"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "intent_relation": "process", "native_route": "hw-pipeline",
+                    "visible_action": "three_node_process", "visual_structure": "process-chain",
+                    "selection_reason": beat["reason"]})
+                treatment["scenes"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "brief_path": str((folder / "brief.json").relative_to(job_dir))})
+                candidate_id = "overlay:hw-pipeline"
+                overlay_pointer, overlay_value = "/labels", labels
+            else:
+                family, action, structure = OVERLAY_ROUTES[route]
+            upstream_route = "hyperframes/" + route
+            if route in ("pin-board", "hw-pipeline"):
+                pass  # dedicated briefs already built above
+            else:
+                source_path = project / REGISTRY / "components" / route / (route + ".html")
+                source_bytes = source_path.read_bytes()
+                native_bytes = bind_native_clock(source_bytes, upstream_route, duration_beat)
+                if route == "before-after-wipe":
+                    art = ('<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" '
+                           'width="120" height="120"><circle cx="60" cy="60" r="44" fill="none" '
+                           'stroke="#bdb59d" stroke-width="8"/></svg>')
+                    native_bytes = bind_native_slots(native_bytes, {"before": art, "after": art})
+                    wipe_at = max(0.0, words[anchors[1]]["cut"] - start)
+                    values = {"label_a": labels[0], "label_b": labels[1],
+                              "wipe_at": f"{wipe_at:.6f}", "rest_split": "50", "exit": "fade"}
+                else:
+                    key = "titles" if route == "notification-stack" else "items"
+                    cues = ",".join(f"{max(0.0, words[i]['cut'] - start):.6f}"
+                                     for i in anchors[:len(labels)])
+                    values = {key: ",".join(labels), "cues": cues, "exit": "fade"}
+                (folder / "native.html").write_bytes(native_bytes)
+                lay = OVERLAY_LAYOUTS.get(route, {"scale": 1.0, "dx": 0, "dy": 0})
+                entry_html = (
+                    '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
+                    f'<div class="stage" data-duration="{duration_beat}">'
+                    f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
+                    f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
+                    f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
+                    f'data-width="1080" data-height="1920" '
+                    f'style="position:absolute;top:0;left:0;width:1080px;height:1920px;'
+                    f'transform:translate({lay["dx"]}px,{lay["dy"]}px) scale({lay["scale"]});'
+                    f'transform-origin:top left"></div></div>')
+                (folder / "index.html").write_text(entry_html, encoding="utf-8")
+                brief = {
+                    "schema_version": 2,
+                    "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
+                                        "start": start, "end": end},
+                    "template_request": {"semantic_family": family, "information_units": 2,
+                                          "numeric_values": [], "numeric_scale": "not_applicable"},
+                    "entry": {"media_ref": "native-entry",
+                               "job_path": str((folder / "index.html").relative_to(job_dir)),
+                               "scene_path": "index.html",
+                               "sha256": hashlib.sha256((folder / "index.html").read_bytes()).hexdigest()},
+                    "assets": [{"media_ref": "native-source",
+                                 "job_path": str((folder / "native.html").relative_to(job_dir)),
+                                 "scene_path": "native.html",
+                                 "sha256": hashlib.sha256(native_bytes).hexdigest()}],
+                    "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": frames,
+                                     "alpha": True},
+                    "upstream_route": upstream_route,
+                    "source_pins": {"route": upstream_route,
+                                     "sha256": hashlib.sha256(source_bytes).hexdigest()},
+                }
+                payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+                (folder / "brief.json").write_bytes(payload)
+                binding = hyper.create_binding(hyper_adapter, payload, source_path)
+                events = []
+                if route == "before-after-wipe":
+                    events = [
+                        {"slot": 0, "kind": "reveal", "text": labels[0],
+                         "anchor": {"index": first_word, "text": words[first_word]["text"]},
+                         "basis": "current_clause"},
+                        {"slot": 1, "kind": "wipe_start", "text": labels[1],
+                         "anchor": {"index": anchors[1], "text": words[anchors[1]]["text"]},
+                         "basis": "current_clause"},
+                    ]
+                    scale = min(1.0, duration_beat / (float(values["wipe_at"]) + 1.05 + 0.5))
+                    land = start + (float(values["wipe_at"]) + 1.05) * scale
+                    land_word = min(
+                        (i for i, w in enumerate(words)
+                         if w["cut"] is not None and start <= w["cut"] < end
+                         and w["cut"] >= land - 0.75 and w["cut"] <= land + 1 / 24),
+                        default=None)
+                    if land_word is None:
+                        raise SystemExit(f"{sid}: no word aligns with the wipe landing")
+                    events.append({"slot": 1, "kind": "wipe_land", "text": labels[1],
+                                    "anchor": {"index": land_word, "text": words[land_word]["text"]},
+                                    "basis": "current_clause"})
+                else:
+                    events = [{"slot": i, "kind": "reveal", "text": labels[i],
+                                "anchor": {"index": anchors[i], "text": words[anchors[i]]["text"]},
+                                "basis": "current_clause"} for i in range(len(labels))]
+                treatment["overlay_selection"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "intent_relation": family, "native_route": route,
+                    "visible_action": action, "visual_structure": structure,
+                    "selection_reason": beat["reason"]})
+                treatment["overlay_alignment"].append({
+                    "segment_id": sid, "component_id": component_id,
+                    "brief_path": str((folder / "brief.json").relative_to(job_dir)),
+                    "events": events})
+                candidate_id = "overlay:" + route
             layer, layout, media = "annotation", "annotation", "animation"
             composition_family, presenter = "aroll_with_overlay", "full_frame"
             mode = "none"
             semantic_role = "explanation"
         else:
             component_id = "native-broll"
-            if beat.get("riso_template"):
+            if beat.get("huashu_grammar"):
+                grammar = beat["huashu_grammar"]
+                family_h = {"t2_keynote_ui": "product_features",
+                             "y1_kurzgesagt": "mechanism_system"}[grammar]
+                spec_data = dict(beat["data"])
+                cues = []
+                gap = max(0.4, (duration_beat - 1.4) / 3)
+                if grammar == "t2_keynote_ui":
+                    cues.append({"at": 0.0, "kind": "title"})
+                    for i, text_item in enumerate(beat["cards"]):
+                        cues.append({"at": round((0.5 + i * gap) * 24) / 24, "kind": "card",
+                                     "text": text_item, "data": {"icon": beat["icons"][i]}})
+                else:
+                    cues.append({"at": 0.0, "kind": "title", "text": spec_data.get("center", "")})
+                    for i, text_item in enumerate(beat["cards"]):
+                        cues.append({"at": round((0.5 + i * gap) * 24) / 24, "kind": "point",
+                                     "text": text_item, "data": {"color": beat["colors"][i]}})
+                brief = {
+                    "schema_version": 1, "dependency_id": "huashu-art-motion",
+                    "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
+                                        "start": start, "end": end},
+                    "canvas": {"width": 1080, "height": 1920, "fps": 24,
+                                "duration_in_frames": frames},
+                    "template_request": {"semantic_family": family_h, "information_units": 3,
+                                          "numeric_values": [], "numeric_scale": "not_applicable"},
+                    "props": {"data": {"grammar": grammar, "data": spec_data, "cues": cues,
+                                        "safe": {"top": 48, "bottom": 48}}},
+                    "assets": [],
+                }
+                payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
+                (folder / "brief.json").write_bytes(payload)
+                huashu_mod = _module("huashu_motion_adapter")
+                huashu_adapter = huashu_mod.create_adapter(project, sys.executable, brief_loader)
+                binding = huashu_mod.create_binding(huashu_adapter, payload)
+                candidate_id = f"huashu-art-motion:huashu-art-motion/{grammar}"
+                content_pointer, content_value = "/props/data/grammar", grammar
+            elif beat.get("riso_template"):
                 template = beat["riso_template"]
                 data = dict(beat["data"])
                 data["duration"] = duration_beat
@@ -508,8 +648,10 @@ def main() -> int:
                                   "basis": "current_clause"}],
             "content_refs": [{"path": str((folder / "brief.json").relative_to(job_dir)),
                                "sha256": hashlib.sha256(payload).hexdigest(),
-                               "pointer": content_pointer if beat["kind"] == "broll" else "/upstream_route",
-                               "value": content_value if beat["kind"] == "broll" else "hyperframes/" + beat["route"]}]})
+                               "pointer": (content_pointer if beat["kind"] == "broll"
+                                            else overlay_pointer),
+                               "value": (content_value if beat["kind"] == "broll"
+                                          else overlay_value)}]})
         for text in beat.get("labels") or []:
             import re as _re2
             alnums = set(_re2.findall(r"[A-Za-z0-9]+", text))

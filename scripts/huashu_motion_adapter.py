@@ -246,7 +246,8 @@ def check_runtime(project_root, *, browser_probe=False, executable_paths=None):
     if not python.is_file():
         raise ValueError("Huashu project venv is missing; run project ensure")
     code = "import importlib.metadata as m,json; from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(json.dumps(dict(versions={k:m.version(k) for k in " + repr(list(PACKAGES)) + "},browser=p.chromium.executable_path))); p.stop()"
-    result = subprocess.run([str(python), "-B", "-c", code], check=True, capture_output=True, text=True, timeout=30)
+    isolated_env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    result = subprocess.run([str(python), "-B", "-c", code], check=True, capture_output=True, text=True, timeout=30, env=isolated_env)
     info = json.loads(result.stdout)
     if info["versions"] != PACKAGES or not Path(info["browser"]).is_file():
         raise ValueError("Huashu render dependencies/browser mismatch")

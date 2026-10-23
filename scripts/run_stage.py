@@ -396,22 +396,38 @@ def native_component_adapters(project: Path) -> dict:
     import shutil
     code: dict[str, object] = {}
     probes = []
-    for module_name in ("hyperframes_native_adapter", "riso_native_adapter"):
+    def brief_loader(job, recipe, component):
+        wanted = component["brief_sha256"]
+        for candidate in (Path(job.job_dir) / "native-inputs").glob("**/brief.json"):
+            data = candidate.read_bytes()
+            if hashlib.sha256(data).hexdigest() == wanted:
+                return data
+        raise ValueError("frozen native brief not found: " + str(wanted))
+
+    simple = ("hyperframes_native_adapter", "riso_native_adapter", "huashu_motion_adapter",
+              "overlay_studio_adapter")
+    for module_name in simple:
         spec = importlib.util.spec_from_file_location(
             "hd_" + module_name, SKILL / "scripts" / (module_name + ".py"))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-
-        def brief_loader(job, recipe, component, _module=module):
-            wanted = component["brief_sha256"]
-            for candidate in (Path(job.job_dir) / "native-inputs").glob("**/brief.json"):
-                data = candidate.read_bytes()
-                if hashlib.sha256(data).hexdigest() == wanted:
-                    return data
-            raise ValueError("frozen native brief not found: " + str(wanted))
-
         code[module.DEPENDENCY_ID] = module.create_adapter(project, sys.executable, brief_loader)
         probes.append(module.create_artifact_probe(shutil.which("ffprobe")))
+
+    hw = importlib.util.spec_from_file_location(
+        "hd_hw", SKILL / "scripts/hyperframes_hw_pipeline_adapter.py")
+    hw_module = importlib.util.module_from_spec(hw)
+    hw.loader.exec_module(hw_module)
+    from_hyperframes = importlib.util.spec_from_file_location(
+        "hd_hfrt", SKILL / "scripts/hyperframes_runtime.py")
+    hfrt = importlib.util.module_from_spec(from_hyperframes)
+    from_hyperframes.loader.exec_module(hfrt)
+    hw_runtime = hfrt.resolve_runtime(project / "skill-development/runtime/hyperframes-0.8.167")["root"]
+    code["hyperframes"] = hw_module.create_adapter(
+        runtime_root=hw_runtime, node_executable=shutil.which("node"),
+        browser_executable="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        ffmpeg_executable=shutil.which("ffmpeg"), brief_loader=brief_loader)
+    probes.append(hw_module.create_artifact_probe(ffprobe_executable=shutil.which("ffprobe")))
     probe = probes[0]
     for extra in probes[1:]:
         probe = extra if probe is None else probe

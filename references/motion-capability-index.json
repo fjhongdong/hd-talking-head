@@ -336,7 +336,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
         "skill-development/hd-talking-head/references/huashu-native-motion.md": "3d28b79f229301b7451e3c1cec519459eaad080ba8f80251745df37d08283f10",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -421,7 +421,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
         "skill-development/hd-talking-head/references/huashu-native-motion.md": "3d28b79f229301b7451e3c1cec519459eaad080ba8f80251745df37d08283f10",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -503,7 +503,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
         "skill-development/hd-talking-head/references/huashu-native-motion.md": "3d28b79f229301b7451e3c1cec519459eaad080ba8f80251745df37d08283f10",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -1739,7 +1739,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
-        "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "3316ee42a79969c37c1b12b913be686b6691eda29936c8712d09f601c6f12e9b",
+        "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "b7638e5cdde76562347eda785da4295fe0060313c0fc4d377f7ab21a62400200",
         "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "71f912851deb15eb0cc5fded4954f6abd1bd6dba32261d91345eab210733958c",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
       }
