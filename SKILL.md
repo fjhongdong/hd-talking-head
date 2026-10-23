@@ -13,6 +13,20 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 明确例外仅为用户已批准接入的 [OpenFilm motion-graphics 原生创作](references/openfilm-motion-graphics.md)：选中后实际读取并执行它的创作 Skill，在本 Job 编写主题专属 `window.film` 场景，再调用原生公开导出入口。它不是现成模板库，身份记为原生 Skill 创作／`custom_fallback + structural`，不能冒称复用了第三方模板。此例外不恢复其他自由场景入口，也不允许借 OpenFilm 重写已有组件、动效引擎或失败后的替代路线。
 
+## 语义编排唯一路径（2026-10-23 起强制）
+
+视觉阶段不再逐段手工拼 schema。唯一路径：
+
+1. **语义列表先行**：通读词级转写，逐拍列出 主体/动作/关系，标明贴片还是 B-roll、词锚、窗口词区间。先定列表，再匹配动效，不先写代码。
+2. **逐拍检索能力库**：`select_motion_capabilities.py search --use broll|aroll_overlay --query "<动作/关系短语>"`；命中后由主控按语义裁决，无命中时核对目录再判断，不硬凑。
+3. **一次成型计划**：把拍列表写成 beats 规格交 `scripts/compose_visual_plan.py --job-context ctx --beats beats.json`——窗口邻居钳制、整帧量化、词锚、原生 brief、冻结 binding、treatment、屏显回执全部由编排器生成；B-roll 底部圆窗需先跑 `scripts/calibrate_avatars.py --windows <起,止>…` 做真实帧人脸标定。
+4. **run_stage 推进链**：`run_stage.py --stage visual_direction|visual_canary|visual_assets|subtitles|preview|delivery` 逐段执行；preview 自动带封面入场并先过覆盖率审计，密度预检会拦下裸计划（B-roll <55%、首条 >15s、贴片不足、缺口无说明均失败）。
+5. **数量比例规定**：B-roll 目标约 60%、硬门槛 55%；首个 B-roll ≤15 秒；贴片约每 12–17 秒一处；超 15 秒无 B-roll 的缺口必须在 treatment 写明原因；贴片不算 B-roll 密度。这些数字同时是 `run_stage` 密度预检与 `audit_visual_coverage --require-density` 的机器门禁。
+
+**不可手删阶段目录**：`05-` 至 `12-` 目录与 `08-visual-assets` 组件链都是工作流 CAS 引用的产物，`rm -rf` 会导致 `invalid workflow state`。重做用 `state.revise` + 重跑；误删后只能从 `.workflow.*.retained` 历史里找回产物齐全的修订版恢复 `workflow.json`。
+
+**失败渲染可重试**：执行器对 crashed/failed 状态的事务直接重渲，不再被旧日志阻塞。
+
 ## 已验收默认规格
 
 每个新 Job 先读取 [默认制作配置](references/production-defaults.json)，将其作为本项目后续口播的默认起点：1080×1920／24fps、完整带字封面在头 6 帧展示后直接进入原口播、无背景音乐，以及浅暖色／深墨字／清晰大主字的 A-roll 贴片。统一的是配色、字体层级与可读性，不是卡片形状。`card_family` 只供实际卡片组件参考，不覆盖所有原生组件的尺寸、圆角、背景或构图；主字 64px 是阅读起点，不把说明文字和图形全部改成同一字号与字重。默认值不从旧 Job 的 HTML、文案或人物坐标反推。用户本次明确提出不同要求时才覆盖相应选项；新任务的授权、封面和最终验收仍须绑定本次实际记录。

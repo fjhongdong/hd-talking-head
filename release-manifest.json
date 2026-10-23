@@ -2,7 +2,7 @@
  "files": {
   ".gitignore": "60c9bdd905fcf45ac485c680d32e9773962cf061b6f041dcddd033911558a672",
   "README.md": "779fc774836d30a82f30670d83c9e4a066ac02465624d22d0657f64756529fbb",
-  "SKILL.md": "8bccf866065a49704eef13a34541bebec598295b0db74ccce52b1d6a8a1c8342",
+  "SKILL.md": "9e26a06983cf9854e5394ecd6354e96a416cf913d87ca9613eba8698a0511b67",
   "agents/openai.yaml": "894d5869f025a36e10b13153671c95f44fc7ee7ee7b93fc875d794bb32d75e84",
   "assets/adu-native-runtime/package-lock.json": "ac6e4ade7cfd5727b1dc67eb4191a2a1fa89c2265c1797fbdcd4b45523ab12e6",
   "assets/adu-native-runtime/package.json": "a8c1ef10621c652fadd996e9d2b858480d88ef68f24aa3f1e21a5b89ae156954",
@@ -2208,6 +2208,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-23-semantic-composer-v169",
+ "release_id": "2026-10-23-orchestration-doc-v170",
  "schema_version": 1
 }
