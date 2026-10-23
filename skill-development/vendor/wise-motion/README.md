@@ -1,0 +1,205 @@
+# Wise Motion
+
+理解动作需求，拆解并匹配参考，交付现有源码与接入说明。字幕、分镜、配色和整片组合由调用方的 AI 自行设计；文字动效、转场、插画和组合均可按需取用。
+
+<!-- catalog-counts:start -->
+目录有 315 个单个动作、99 个插画单图、48 个组合片段，共 462 项；数量由目录定义自动生成，详见 [目录统计](CATALOG-STATS.md)。
+<!-- catalog-counts:end -->
+
+## 精选动效
+
+从单个动作、组合片段和插画单图中分别精选代表作品。以下关键帧直接取自现有源码的渲染结果；点击图片查看条目说明与源码入口，完整播放请在本地打开 [动效目录](catalog/index.html)。
+
+### 单个动作
+
+聚焦一个可复用的运动关系，按需接入自己的画面。
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/thread-weave.md"><img src="docs/previews/thread-weave.webp" alt="双路牵丝织形：两枚银梭沿针点穿行，连续羽丝逐束织成形体" width="640"></a>
+      <br><strong>双路牵丝织形</strong>
+      <br>双梭牵线穿行，羽丝逐束织出，完成的形体持续保留。
+      <br><sub>关键帧 15.15 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/generative-point-morph.md"><img src="docs/previews/generative-point-morph.webp" alt="点阵连续换形：同一批点在旋转中从球体变为环面" width="640"></a>
+      <br><strong>点阵连续换形</strong>
+      <br>同一批点连续变为球体、环面与波场，旋转和透视同步变化。
+      <br><sub>关键帧 3.65 秒</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/card-conveyor.md"><img src="docs/previews/card-conveyor.webp" alt="斜向双向滚动：多条斜向卡片带铺满画面，上下分组反向运动" width="640"></a>
+      <br><strong>斜向双向滚动</strong>
+      <br>八条卡片带斜向铺展，上下分组反向连续滚动。
+      <br><sub>关键帧 1.90 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/capsule-impact-scatter.md"><img src="docs/previews/capsule-impact-scatter.webp" alt="碰撞掀起胶囊：银球撞入彩色胶囊地面，周围胶囊翻转飞散" width="640"></a>
+      <br><strong>碰撞掀起胶囊</strong>
+      <br>银球碰撞带动胶囊翻飞、回落，提亮波向外扩散。
+      <br><sub>关键帧 0.90 秒</sub>
+    </td>
+  </tr>
+</table>
+
+### 组合片段
+
+多个动作在同一时间线中接续、配合，形成完整片段。
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/motion-oasis-sequence.md"><img src="docs/previews/motion-oasis-sequence.webp" alt="地块铺展与动效绿洲：退台建筑、植被、水面和目录数据卡" width="640"></a>
+      <br><strong>地块铺展与动效绿洲</strong>
+      <br>地砖逐圈翻开 → 楼群与植被长出 → 水面换图、数据卡展开。
+      <br><sub>关键帧 3.20 秒 · 全长 4.95 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/metal-impact-type-sequence.md"><img src="docs/previews/metal-impact-type-sequence.webp" alt="金属弹开汇聚成字：六色镀彩金属字面完成聚合与扫光" width="640"></a>
+      <br><strong>金属弹开汇聚成字</strong>
+      <br>单球落地分裂 → 六色粒子爆散回收 → 汇成金属字面并扫光。
+      <br><sub>关键帧 3.70 秒 · 全长 5.30 秒</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/glass-interface-sequence.md"><img src="docs/previews/glass-interface-sequence.webp" alt="玻璃卡片显现折射：控制中心向前，音乐、天气与消息卡片围绕展开" width="640"></a>
+      <br><strong>玻璃卡片显现折射</strong>
+      <br>六张空间卡片侧转展开 → 音乐、天气与控制中心接续 → 凸泡折射文字。
+      <br><sub>关键帧 3.40 秒 · 全长 7.20 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/point-domain-flow-sequence.md"><img src="docs/previews/point-domain-flow-sequence.webp" alt="黄金矩形递归生长：金色网格、弧线与递归图案铺满画幅" width="640"></a>
+      <br><strong>黄金矩形递归生长</strong>
+      <br>网格建立并推近 → 字符雨幕与铁花交接 → 黄金矩形递归长满画面。
+      <br><sub>关键帧 20.40 秒 · 全长约 21.13 秒</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/seed-bloom-brand-sequence.md"><img src="docs/previews/seed-bloom-brand-sequence.webp" alt="生长化蝶与光形字标：蒲公英炸开后化成旋转的蝶群" width="640"></a>
+      <br><strong>生长化蝶与光形字标</strong>
+      <br>种子长成蒲公英 → 炸开旋转化蝶、汇成太阳 → 光束回弹接字标。
+      <br><sub>关键帧 2.80 秒 · 全长 8.20 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/civilization-growth-sequence.md"><img src="docs/previews/civilization-growth-sequence.webp" alt="薪火生长与文明聚字：植物、织机、水车与天文仪器组成文明群像" width="640"></a>
+      <br><strong>薪火生长与文明聚字</strong>
+      <br>草楷火字变换 → 种子、植物与花依次生长 → 文明群像散成粒子聚字。
+      <br><sub>关键帧 14.20 秒 · 全长 18.60 秒</sub>
+    </td>
+  </tr>
+</table>
+
+### 插画单图
+
+独立取用完整主体，保留它自带的局部动作、材质和光效。
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/butterfly-illustration.md"><img src="docs/previews/butterfly-illustration.webp" alt="版画蝴蝶：蓝色版画纹理的四翼蝴蝶围绕翼根开合" width="640"></a>
+      <br><strong>版画蝴蝶</strong>
+      <br>四翼错拍开合，触角随振翅弯曲，身体轻浮。
+      <br><sub>关键帧 1.10 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/drive-car-illustration.md"><img src="docs/previews/drive-car-illustration.webp" alt="小葵敞篷车：小猫驾驶蓝色敞篷车，保留车身与车轮完整造型" width="640"></a>
+      <br><strong>小葵敞篷车</strong>
+      <br>车轮随行程转动，方向盘轻摆，车身微微起伏。
+      <br><sub>关键帧 1.65 秒</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="references/effects/moon-card-illustration.md"><img src="docs/previews/moon-card-illustration.webp" alt="月相照片卡：米白卡片包围深蓝背景上的月面与环形山" width="640"></a>
+      <br><strong>月相照片卡</strong>
+      <br>纸卡落位，保留月面、环形山与月相暗部。
+      <br><sub>关键帧 2.90 秒</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="references/effects/rasengan-illustration.md"><img src="docs/previews/rasengan-illustration.webp" alt="蓝色能量球：细蓝流线与亮芯围绕球体缠绕" width="640"></a>
+      <br><strong>蓝色能量球</strong>
+      <br>细蓝流线沿球涡轨迹缠绕，亮芯与线身共同形成球形。
+      <br><sub>关键帧 2.60 秒</sub>
+    </td>
+  </tr>
+</table>
+
+## 浏览与使用
+
+直接打开 [动效目录](catalog/index.html)，无需安装依赖或启动服务器。搜索或按分类选择条目，预览、调整参数，再复制提示词或源码。
+
+
+在工具中明确选择 **Wise Motion**，例如：
+
+```text
+$wise-motion 找两排卡片反向持续滚动的参考，不要停顿，导出源码到我的工程。
+$wise-motion 找“标题先出现、卡片依次展开、最后转场”的参考，分别说明覆盖与缺口。
+```
+
+全局入口直接链接到技能实际源码：共享入口 `~/.agents/skills/wise-motion`，Codex 入口 `~/.codex/skills/wise-motion`，ZCode 入口 `~/.zcode/skills/wise-motion`。保持仅手动调用；已有入口先核对指向。
+
+## 检索与源码导出
+
+以下用 `<技能目录>` 表示安装入口解析后的实际目录，可从任意工作目录运行。检索、查看、导出只需 Node.js；版本要求见 [package.json](package.json)。
+
+```sh
+node "<技能目录>/scripts/match.mjs" "卡片依次上移显现，落位后保留，不要弹跳"
+node "<技能目录>/scripts/show.mjs" stagger-in
+node "<技能目录>/scripts/export.mjs" stagger-in --out-dir "/目标工程/卡片动作"
+```
+
+`show` 默认提供简短接入信息，加 `--details` 查看动作阶段与内容限制。`export` 支持 `--variant <样式编号>`，与目录“复制源码”共用生成逻辑；可写入现有目录，任一目标文件已存在时整批停止，不覆盖文件。
+
+已有独立工程的条目导出全部工程文件；普通条目导出组件接入示例、安装程序和说明，在目标工程运行 `node install-wise-motion.cjs` 安装共享组件包，再按说明准备素材。安装程序优先使用当前交付版本；尚未上架时自动降级为同系列最近的已发布稳定版，显示并固定实际版本，配套依赖随所选包安装。导出本身不会安装依赖，源码写入文件后返回绝对路径。见 [快速上手](references/quickstart.md) 和 [组件说明](REMOTION.md)。
+
+## 播放与渲染
+
+现有播放器、声音、渲染能力继续保留。需要导出单个动效视频时，在技能目录准备依赖后执行：
+
+```sh
+npm ci
+npm run build
+WISE_MOTION_RENDER_DIR="/目标工程/renders" npm run render -- stagger-in stagger-in.mp4
+```
+
+视频渲染使用 Remotion 临时服务；本地目录可直接打开。文件名或绝对输出路径必须位于指定产物目录内。
+
+维护时按 [验证范围与命令](references/validation-matrix.md) 选择检查；局部测试统一使用 `npm run test:files -- tests/具体文件.test.mjs`。全量 `npm test` 另需本地私有历史档案。人工播放见 [验收步骤](tests/manual.md)，目录维护见 [维护说明](references/catalog-maintenance.md)。
+
+维护者可通过 GitHub 可信发布自动构建并上传 npm，无需长期发包密钥；支持版本标签触发和手动试运行，见 [自动发布说明](references/publishing.md)。
+
+## 获取完整三维工程
+
+最新横屏 TIME, IN MOTION 收录 10 个独立动作与 44 秒完整组合。文字、刻度、剪辑及三维制作源码随独立工程导出；npm 只提供轻量运行素材。原剪辑媒体与 Blender 场景按摘要单独准备，见 [动作、源码与制作素材](catalog/assets/time-in-motion/README.md)。旧怀表条目与运行素材已替换，旧书签对应到新条目。
+
+## 持续窗口与机械细节
+
+MECHANICAL WINDOWS 第二版收录4个新动作、圆孔展开与闪切的2个新示例，以及32秒完整组合。窗口独立于镜头持续运行；原创几何与剪辑源码可编辑。轻量缓存静音，原媒体与配乐按需准备，见 [动作与源码说明](catalog/assets/mechanical-windows/README.md)。
+
+## 发布组件包
+
+维护者先构建、检查并用 `npm pack --pack-destination /发布目录` 生成包，再执行：
+
+```sh
+npm run publish:package -- /发布目录/wise-motion-版本.tgz --dry-run
+npm run publish:package -- /发布目录/wise-motion-版本.tgz
+```
+
+发布脚本使用当前 npm 11 客户端向官方仓库发布，保留正常登录与网页身份验证，并压缩上传请求；仅压缩请求仍可能被仓库拒绝，必须控制实际发布包体积。三维制作原件与剪辑原媒体按清单单独准备，运行素材继续随 npm 提供。脚本要求包名称和版本与当前项目一致，并在联网前拒绝超过项目 200 MB 预算的包；这是项目控制体积的约定，不是 npm 官方限制。升级 npm 大版本后需先适配接口并运行 `npm run test:publish`，验证真实请求的压缩和包内容。试运行不会上架，正式发布仍需核对官方仓库的版本与包摘要。
+
+## 许可
+
+自有技能与源码使用 **Apache-2.0**，允许商业使用、修改、分发和闭源集成；第三方代码、字体和素材保留各自许可与署名。使用及分发前查阅 [版权与来源说明](NOTICE.md) 和 [完整许可](LICENSE)。
+
+## 君子约定
+
+欢迎使用 Wise Motion 制作个人或商业作品，也欢迎修改和集成到自己的项目中。
+
+请尊重原创，不要将本项目的源码或动效库原样或稍作包装后，作为付费源码、素材包或收费下载内容出售。
+
+这是一项基于信任的社区倡议，不构成额外的许可证限制，也不改变 Apache-2.0 授予的权利。

@@ -1,0 +1,9 @@
+{
+  "schema_version":"talkcraft-card-contract/v1","card_id":"line-by-line-slide","scene":"full-frame","scene_input_slots":["presenter"],
+  "geometry":{"presenter_rect":{"x":180,"y":900,"width":720,"height":800},"text_rect":{"x":90,"y":240,"width":900,"height":580},"bottom_caption_safe_px":220},
+  "sfx_cues":[
+    {"cueId":"line-one-in","frame":7,"anchor":"line-one-in","name":"wind-swoosh-short","assetKey":"talkcraft-wind-swoosh-short","volume":0.36,"playbackRate":1.0},
+    {"cueId":"line-two-in","frame":10,"anchor":"line-two-in","name":"wind-swoosh-short","assetKey":"talkcraft-wind-swoosh-short","volume":0.36,"playbackRate":1.08},
+    {"cueId":"line-three-in","frame":14,"anchor":"line-three-in","name":"wind-swoosh-short","assetKey":"talkcraft-wind-swoosh-short","volume":0.36,"playbackRate":1.16}
+  ]
+}

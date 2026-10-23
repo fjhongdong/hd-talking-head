@@ -1,0 +1,39 @@
+{
+  "schema_version": "talkcraft-time-domain/v1",
+  "timeline_fps": 24,
+  "frame_intervals": "half-open",
+  "approved_timing_input": "resolved-integer-frames",
+  "seconds_input": "finite-non-negative-timestamp",
+  "seconds_to_frame_quantization": "round-half-even",
+  "domains": ["output_chunk", "global_timeline", "span_local", "scene_local", "anchor_scene", "media_source"],
+  "anchor_policy": {"unknown": "reject", "duplicate": "reject", "fallback_frame": null},
+  "media_policy": {
+    "timeline_range_required": true,
+    "source_range_required": true,
+    "media_fps_required": true,
+    "playback_rate_required": true,
+    "supported_source_timebase": "cfr",
+    "outside_timeline": "reject",
+    "clock_source": "global_timeline_frame"
+  },
+  "playback_bridge": {
+    "renderer": "remotion-offthread-video",
+    "supported_playback_rates": [1],
+    "supported_source_fps": "positive-integer-cfr",
+    "source_start_alignment": "exact-composition-frame",
+    "verified_fixture": {
+      "path": "public/time-domain-cfr-20fps.mp4",
+      "sha256": "d0789219eae5aafa2bc178da7f79c317473a79a09780d6089fd8c1dde005ec26",
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "width": 180,
+      "height": 320,
+      "fps": 20,
+      "frames": 90,
+      "duration_seconds": 4.5,
+      "audio_streams": 0
+    }
+  },
+  "production_brief_connected": false,
+  "reason": "current brief has no explicit media timeline range or playback rate"
+}

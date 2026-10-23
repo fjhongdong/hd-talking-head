@@ -1,0 +1,77 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "info-card-assemble",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "d9ee98f833ebc0e049cca4daeb8bc4e5b5d1bf23d0acfc79cfd06dfbb3a254e1",
+  "contract_sha256": "061b6a1c62a52b34f208fe1b1963c0bdcc6a1d88cbc8187196b1776382039a67",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 173,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "信息组装",
+        "subtitle": "完整成卡",
+        "accent": "#007AFF"
+      }
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 173,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "信息组装对照",
+        "subtitle": "完整成卡升级",
+        "accent": "#FF375F"
+      }
+    }
+  ]
+}

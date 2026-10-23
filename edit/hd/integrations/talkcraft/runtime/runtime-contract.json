@@ -1,0 +1,79 @@
+{
+  "schema_version": "talkcraft-remotion-runtime/v1",
+  "runtime_version": "0.9.0",
+  "node": "25.6.0",
+  "react": "18.3.1",
+  "react_dom": "18.3.1",
+  "react_types": "18.3.24",
+  "react_dom_types": "18.3.7",
+  "remotion": "4.0.520",
+  "remotion_bundler": "4.0.520",
+  "remotion_renderer": "4.0.520",
+  "typescript": "5.9.2",
+  "canvas": {"width": 1080, "height": 1920, "fps": 24},
+  "profiles": {
+    "opaque": {"container": "mp4", "codec": "h264", "pixel_format": "yuv420p"},
+    "alpha": {"container": "mov", "codec": "prores", "profile": "4444"}
+  },
+  "mechanism_probes": ["text", "data", "annotation", "transition"],
+  "visual_foundations": {
+    "contract": "foundation-contract.json",
+    "backdrops": 12,
+    "frames": 8,
+    "sample_source_frames": [0, 24, 48]
+  },
+  "scene_foundations": {
+    "contract": "scene-foundation-contract.json",
+    "themes": ["light", "dark", "custom-nine-token"],
+    "planes": ["background.screen", "background.world", "subject.world", "text.screen"],
+    "camera_owner": "SceneFoundation",
+    "sample_source_frames": [0, 36, 71]
+  },
+  "text_layout": {
+    "contract": "text-layout-contract.json",
+    "measurement": "rendered-node-dom-range-and-scroll",
+    "allowed_plane": "text.screen",
+    "overflow_policy": "reject",
+    "scope": "public-static-dom-text-only"
+  },
+  "time_domain": {
+    "contract": "time-domain-contract.json",
+    "seconds_input": "finite-non-negative-timestamp",
+    "quantization": "round-half-even",
+    "domains": ["output_chunk", "global_timeline", "span_local", "scene_local", "anchor_scene", "media_source"],
+    "media_mapping": "explicit-cfr-only",
+    "media_playback": "offthread-video-integer-cfr-rate-1-aligned-source-start",
+    "production_brief_connected": false
+  },
+  "determinism": {
+    "contract": "determinism-contract.json",
+    "animejs": "4.5.0-external-animation-local-frame-seek",
+    "three": "0.186.0-angle-manual-render",
+    "namespace": "stable-live-instance-unique",
+    "seed": "stateless-stream-index",
+    "scope": "runtime-owned-sources-and-locked-darwin-arm64-render-environment",
+    "production_brief_connected": false
+  },
+  "execution_input": "verified_copy_on_write_snapshot",
+  "closure_manifest": "closure-manifest.json",
+  "business_registry_snapshot": "card-registry.json",
+  "card_dispatch": {
+    "brief_schema": "talkcraft-production-brief/v1",
+    "implementation_directory": "src/cards",
+    "production_composition_connected": true
+  },
+  "qualification_candidate": {
+    "module_api_version": 1,
+    "case_schema": "talkcraft-qualification-cases/v2",
+    "card_contract_schema": "talkcraft-card-contract/v1",
+    "entry_mode": "generated-static-single-card",
+    "cases_directory": "qualification-cases",
+    "grants_production_status": false,
+    "scene_fixture": "explicit-validated-assets-no-placeholder",
+    "portrait_layout": "per-case-content-and-presenter-rects",
+    "audio_fixture": "per-card-contract-cues-resolved-through-fixture-manifest",
+    "production_media_binding_connected": true
+  },
+  "production_cards_enabled": true,
+  "span_chunk_enabled": false
+}

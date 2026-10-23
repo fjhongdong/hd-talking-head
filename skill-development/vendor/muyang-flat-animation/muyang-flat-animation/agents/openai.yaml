@@ -1,0 +1,4 @@
+interface:
+  display_name: "沐阳扁平动画"
+  short_description: "用纸上墨线与彩铅编辑插画制作可配置动画素材"
+  default_prompt: "Use $muyang-flat-animation to turn this idea into a configurable ink-and-colored-pencil editorial animation with synchronized sound effects."

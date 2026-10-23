@@ -1,0 +1,37 @@
+{
+  "schema_version": "talkcraft-determinism/v1",
+  "timeline_fps": 24,
+  "animation_time_domain": "resolved-animation-local-frame",
+  "lead_compensation": "bridge-only-once",
+  "animejs": {
+    "version": "4.5.0",
+    "clock": "external-frame-seek",
+    "autoplay": false,
+    "default_main_loop": false,
+    "pause_on_document_hidden": false,
+    "initial_dom_target_visibility": "hidden-until-first-seek"
+  },
+  "three": {
+    "version": "0.186.0",
+    "chromium_gl": "angle",
+    "pixel_ratio": 1,
+    "animation_loop": false,
+    "projection_camera": "static-setup-owned",
+    "scene_camera_owner": "scene-foundation-only"
+  },
+  "isolation": {
+    "namespace_source": "stable-instance-identity",
+    "duplicate_live_namespace": "reject",
+    "selector_scope": "instance-root",
+    "svg_references": "namespace-prefixed",
+    "randomness": "stateless-seeded-stream",
+    "application_math_random": "forbidden",
+    "realtime_css_animation": "forbidden"
+  },
+  "probe": {
+    "animation_local_frames": [0, 24, 47],
+    "scene_global_start": 48,
+    "sample_orders": ["sequential", "shuffled"]
+  },
+  "production_brief_connected": false
+}

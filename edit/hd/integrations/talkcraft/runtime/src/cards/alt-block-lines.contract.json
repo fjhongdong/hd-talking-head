@@ -1,0 +1,10 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "alt-block-lines",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "sfx_cues": [
+    {"cueId": "block-0-complete", "frame": 16, "anchor": "block-0-complete", "name": "click", "assetKey": "talkcraft-click", "volume": 0.4, "playbackRate": 1.0},
+    {"cueId": "block-1-complete", "frame": 19, "anchor": "block-1-complete", "name": "click", "assetKey": "talkcraft-click", "volume": 0.36, "playbackRate": 1.1}
+  ]
+}

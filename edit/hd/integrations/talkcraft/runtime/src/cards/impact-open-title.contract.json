@@ -1,0 +1,16 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "impact-open-title",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "geometry": {
+    "presenter_rect": {"x": 180, "y": 850, "width": 720, "height": 800},
+    "title_rect": {"x": 90, "y": 350, "width": 900, "height": 410},
+    "subtitle_rect": {"x": 90, "y": 790, "width": 900, "height": 52},
+    "bottom_caption_safe_px": 270
+  },
+  "sfx_cues": [
+    {"cueId": "title-slam", "frame": 10, "anchor": "title-slam", "name": "impact-deep-whoosh", "assetKey": "talkcraft-impact-deep-whoosh", "volume": 0.3, "playbackRate": 1.0},
+    {"cueId": "impact-word-lock", "frame": 17, "anchor": "impact-word-lock", "name": "impact-hit-fast-exciting", "assetKey": "talkcraft-impact-hit-fast-exciting", "volume": 0.26, "playbackRate": 1.1}
+  ]
+}

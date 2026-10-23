@@ -1,0 +1,77 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "host-shrink-to-chip",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "241e0042efda6459db5dd68cb0a9242537f0be56fee8a468fac5c90437b22851",
+  "contract_sha256": "c4b14b5241e44162594d6058227fc23d39046c42f5e3a27ec9f0e166915fa5b2",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 91,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "人物让位",
+        "subtitle": "信息登场",
+        "accent": "#007AFF"
+      }
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 91,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "人物让位对照",
+        "subtitle": "信息登场升级",
+        "accent": "#FF375F"
+      }
+    }
+  ]
+}

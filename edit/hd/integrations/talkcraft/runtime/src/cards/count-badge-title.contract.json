@@ -1,0 +1,9 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "count-badge-title",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "sfx_cues": [
+    {"cueId": "number-color-lock", "frame": 15, "anchor": "number-color-lock", "name": "ui-pop", "assetKey": "talkcraft-ui-pop", "volume": 0.32, "playbackRate": 1.0}
+  ]
+}

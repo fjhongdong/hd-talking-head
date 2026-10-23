@@ -1,0 +1,1 @@
+{"schema_version":"talkcraft-card-contract/v1","card_id":"motion-blur-slam-in","scene":"full-frame","scene_input_slots":["presenter","subject-image"],"sfx_cues":[{"cueId":"enter","frame":10,"anchor":"enter","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.28,"playbackRate":1}]}

@@ -1,0 +1,1005 @@
+/* 【这个文件每次更新都会被替换】你在这里改的东西,更新后不会自动保留,需要手工搬运。 */
+/* ============================================================
+   HUD 特效族 · 共享地基
+   配色:钴蓝为主(数据/信任),红作否定、橙作转变;其余令牌只作个别卡的点缀
+   两套主题:dark 暗底 / light 亮底  ·  通透玻璃 · 无渐变无光晕
+   ============================================================ */
+
+.stage {
+  --stage-w: 1920px;
+  --stage-h: 1080px;
+}
+
+/* ---- 主题令牌(挂在 .stage 上,由 Canvas 写 data-theme;
+        卡片包装层写 data-card-theme 可逐卡覆盖亮/暗) ---- */
+.stage[data-theme="dark"],
+[data-card-theme="dark"] {
+  --hud-canvas:
+    radial-gradient(80% 70% at 50% 8%, rgba(60, 70, 110, 0.26), transparent 60%),
+    linear-gradient(160deg, #15151d 0%, #0e0e14 60%, #0b0b10 100%);
+  --hud-ink: var(--hud-ink-doc, #ffffff);
+  --hud-muted: var(--hud-muted-doc, rgba(255, 255, 255, 0.70));
+  --hud-faint: var(--hud-faint-doc, rgba(255, 255, 255, 0.44));
+  --hud-blue: #5fa0fa;
+  --hud-teal: #45c6cf;
+  --hud-violet: #8f86ea;
+  --hud-pink: #f87bac;
+  --hud-lav: #b9b2ee;
+  --hud-alert: #e88686;
+  --hud-green: #6fd08c;
+  --hud-orange: #f0a24f;
+  --hud-glass: linear-gradient(160deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+  --hud-glass-brd: rgba(255, 255, 255, 0.22);
+  --hud-track: rgba(255, 255, 255, 0.16);
+  --hud-person: rgba(210, 214, 230, 0.10);
+  --hud-node: #12121a;
+  --hud-sh: 0 2px 12px rgba(0, 0, 0, 0.4);
+  --hud-card-sh: 0 30px 70px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.stage[data-theme="light"],
+[data-card-theme="light"] {
+  /* 摄影棚白 + 三团品牌氛围光(粉/紫/蓝):给毛玻璃"可透的内容" */
+  --hud-canvas:
+    radial-gradient(52% 44% at 18% 10%, rgba(224, 50, 111, 0.11), transparent 62%),
+    radial-gradient(56% 48% at 86% 16%, rgba(99, 83, 214, 0.11), transparent 58%),
+    radial-gradient(64% 56% at 72% 92%, rgba(30, 99, 216, 0.09), transparent 60%),
+    linear-gradient(168deg, #faf8f6 0%, #f1ece7 55%, #e9e2dc 100%);
+  --hud-ink: var(--hud-ink-doc, #1a2540);
+  --hud-muted: var(--hud-muted-doc, rgba(26, 37, 64, 0.66));
+  --hud-faint: var(--hud-faint-doc, rgba(26, 37, 64, 0.42));
+  --hud-blue: #1e63d8;
+  --hud-teal: #0a95a6;
+  --hud-violet: #6353d6;
+  --hud-pink: #e0326f;
+  --hud-lav: #837bc4;
+  --hud-alert: #cf5555;
+  --hud-green: #1f9d55;
+  --hud-orange: #d97a1c;
+  /* 真毛玻璃:半透明白渐变,透出背景氛围光,科技感 */
+  --hud-glass: linear-gradient(160deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.20));
+  --hud-glass-brd: rgba(255, 255, 255, 0.85);
+  --hud-track: rgba(26, 37, 64, 0.13);
+  --hud-person: rgba(70, 58, 66, 0.20);
+  --hud-node: #ece6e0;
+  --hud-sh: 0 2px 10px rgba(0, 0, 0, 0.08);
+  /* 柔和大投影:亮底立体感的关键 */
+  --hud-card-sh: 0 22px 54px rgba(88, 70, 104, 0.16), 0 3px 10px rgba(88, 70, 104, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* 预览用的暗色垫底:亮画面上给玻璃卡压出对比。
+   导出模式也保留它,不清成透明:MOV 是叠在原片上的,合成后背景会回来,
+   垫层不在的话,带垫层的格子在成片里会比编辑台浅一大截。 */
+.stage { --fx-scrim: rgba(12, 14, 22, 0.52); }
+
+/* ---- 导出模式:玻璃跟随背景 ----
+   曾经在这里把玻璃换成 94% 实底,理由是"透明导出时背后没画面可模糊"。
+   但前提只对了一半:渲染那一刻背后确实空的,但 MOV 是
+   **叠在原片上**用的,合成后背景就回来了——玻璃保持半透明,明暗自然跟着画面走。
+   对比过两种做法,跟随背景与编辑台的色差明显更小,
+   所以导出不再覆盖 --hud-glass,直接沿用预览值。
+   仍有差异的只剩 backdrop-filter 的模糊(渲染时无背景可糊,导出丢失):
+   明暗一致,但卡片背后是清晰画面而非磨砂。 */
+
+/* 光晕总开关(默认关):开了字会发虚——左栏「文字光晕」开了才有上面的光晕。
+   关掉时连各卡自己写的彩色字光一起清(全量兜底,各卡自己的 text-shadow 一键归零) */
+.stage.no-glow .hud,
+.stage.no-glow .hud *,
+.stage.no-glow [data-card-theme] .hud,
+.stage.no-glow [data-card-theme].hud {
+  text-shadow: none !important;
+}
+
+/* 导出模式:半透明药丸底转实底。当初加它的理由是「视频叠字可读性」——
+   药丸压在花背景上时,半透明底会让字糊掉。
+   代价是「编辑台白、导出黑」:预览是半透明,成片是同一个深棕实底,
+   这是刻意保留的长期行为。要不要改成跟预览一致是产品决定,别当 bug 顺手删。 */
+.export-mode .pp-pill {
+  background: color-mix(in srgb, var(--hud-acc) 16%, var(--hud-node));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* HUD 主题下换画布底色与人物占位 */
+.stage.is-hud { background: var(--hud-canvas) !important; }
+/* 科技点阵网格:给底色一层精密感(在所有内容之下) */
+.stage.is-hud::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--hud-grid) 1.6px, transparent 1.6px);
+  background-size: 44px 44px;
+}
+.stage[data-theme="dark"] { --hud-grid: rgba(255, 255, 255, 0.045); }
+.stage[data-theme="light"] { --hud-grid: rgba(26, 37, 64, 0.075); }
+.stage.is-hud .person-body,
+.stage.is-hud .person-body::before { background: var(--hud-person); border-color: transparent; }
+.stage.is-hud .person-tag { color: var(--hud-faint); }
+
+/* ---- 通透玻璃 ---- */
+.hud-glass {
+  background: var(--hud-glass);
+  border: 1px solid var(--hud-glass-brd);
+  backdrop-filter: blur(28px) saturate(1.3);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  border-radius: 20px;
+  box-shadow: var(--hud-card-sh);
+}
+
+/* ---- 落位锚点(避开中间人物安全区) ---- */
+/* 锚点做粗定位,--hud-ox/oy 做参数面板里的精细微调,两者叠加 */
+.hud-anchor {
+  position: absolute; display: flex; color: var(--hud-ink);
+  transform: translate(var(--hud-ox, 0px), var(--hud-oy, 0px)) var(--anchor-tf, translate(0, 0))
+    scale(var(--hud-scale, 1));
+}
+/* 左列脊柱:左锚点卡从左边缩放,放大不外凸——所有左列卡自动共享同一条左边线 */
+.hud-anchor--left, .hud-anchor--top-left { transform-origin: left center; }
+.hud-anchor--top-left { transform-origin: left top; }
+.hud-anchor--top-left  { left: 120px;  top: 96px; }
+.hud-anchor--top-right { right: 120px; top: 96px; flex-direction: row-reverse; }
+.hud-anchor--left  { left: 120px;  top: 50%; --anchor-tf: translateY(-50%); }
+/* 整卡靠右,但卡内文字保持左对齐(更规整) */
+.hud-anchor--right { right: 120px; top: 50%; --anchor-tf: translateY(-50%); }
+.hud-anchor--top    { left: 50%; top: 110px; --anchor-tf: translateX(-50%); }
+.hud-anchor--bottom { left: 50%; bottom: 120px; --anchor-tf: translateX(-50%); }
+.hud-anchor--center { left: 50%; top: 50%; --anchor-tf: translate(-50%, -50%); }
+
+/* ---- 共享进场动画 ---- */
+.hud { --ease: cubic-bezier(0.22, 1, 0.36, 1); }
+/* 全局字体(Studio 左栏选,存进编排):等宽/衬线元素各自显式声明不受影响 */
+.hud { font-family: var(--hud-font, inherit); }
+.hud-fade {
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 640ms var(--ease), transform 640ms var(--ease);
+}
+.hud.is-in .hud-fade { opacity: 1; transform: none; }
+/* ============ StepTimeline 步骤时间线卡 ============ */
+.st { flex-direction: column; }
+.st-title {
+  display: flex; align-items: center; gap: 18px;
+  font-size: 52px; font-weight: 800; letter-spacing: -0.01em;
+  line-height: 1.1; margin-bottom: 34px; color: var(--hud-ink);
+}
+.st-title .st-bar {
+  width: 6px; height: 1.05em; border-radius: 3px; background: var(--st-hl); flex: none;
+  transform: scaleY(0); transform-origin: top;
+  transition: transform 560ms var(--ease);
+}
+.hud.is-in .st-title .st-bar { transform: scaleY(1); }
+.st-title .st-key { color: var(--st-hl); }
+
+.st-list { position: relative; display: flex; flex-direction: column; gap: 22px; }
+/* 竖向虚线导轨(在节点列背后) */
+.st-list::before {
+  content: ""; position: absolute; left: 11px; top: 18px; bottom: 18px;
+  border-left: 2px dotted var(--hud-track);
+}
+.st-step {
+  display: grid; grid-template-columns: 24px 1fr; gap: 24px; align-items: center;
+  opacity: 0; transform: translateX(var(--st-dx, 48px));
+  transition: opacity 560ms var(--ease), transform 560ms var(--ease);
+}
+.hud.is-in .st-step { opacity: 1; transform: none; }
+
+.st-node {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--st-c); background: var(--hud-node);
+  display: flex; align-items: center; justify-content: center;
+  transform: scale(0); transition: transform 460ms var(--ease);
+}
+.st-node::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--st-c); }
+.hud.is-in .st-node { transform: scale(1); }
+
+.st-chip {
+  border: 2px solid var(--st-c); border-radius: 15px;
+  padding: 16px 30px; min-width: 320px; min-height: 74px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 800; letter-spacing: 0.02em; color: var(--hud-ink);
+  background: var(--hud-glass);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--hud-card-sh);
+}
+/* 还没讲到的章节:留空的淡色轮廓 */
+.st-chip.is-empty { border-color: var(--hud-glass-brd); opacity: 0.5; }
+
+/* ---- HUD 通用小标题(带彩点的 mono kicker) ---- */
+.hud-kicker {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 20px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--hud-muted); font-weight: 600; margin-bottom: 28px;
+}
+.hud-kicker::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--hud-acc); }
+
+/* ============ RankBars 数据条 ============ */
+.rb { flex-direction: column; min-width: 560px; }
+.rb-row {
+  margin-bottom: 24px;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 560ms var(--ease), transform 560ms var(--ease);
+}
+.rb-row:last-child { margin-bottom: 0; }
+.hud.is-in .rb-row { opacity: 1; transform: none; }
+.rb-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 11px; }
+.rb-name { font-size: 27px; font-weight: 500; color: var(--hud-ink); }
+.rb-val { font-family: "SF Mono", ui-monospace, monospace; font-size: 32px; font-weight: 600; color: var(--hud-ink); }
+.rb-track { height: 6px; width: 100%; border-radius: 6px; background: var(--hud-track); overflow: hidden; }
+.rb-fill {
+  height: 100%; border-radius: 6px; background: var(--hud-lav);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 900ms var(--ease);
+}
+.hud.is-in .rb-fill { transform: scaleX(var(--rb-frac, 0)); }
+/* 第一名:强调色;其余:降调 */
+.rb-row.is-top .rb-val { color: var(--hud-acc); }
+.rb-row.is-top .rb-fill { background: var(--hud-acc); }
+.rb-row.is-dim .rb-name, .rb-row.is-dim .rb-val { color: var(--hud-muted); }
+
+/* ============ PunchPill 金句药丸 ============ */
+.pp { }
+.pp-pill {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 15px 32px; border-radius: 100px;
+  border: 2px solid var(--hud-acc);
+  background: color-mix(in srgb, var(--hud-acc) 14%, transparent);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  font-size: 30px; font-weight: 700; color: var(--hud-ink);
+  opacity: 0; transform: scale(0.9);
+  transition: opacity 420ms var(--ease), transform 460ms var(--ease);
+}
+.hud.is-in .pp-pill { opacity: 1; transform: none; }
+.pp-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--hud-acc); flex: none; }
+
+/* ============ TermCard 术语解释卡 ============ */
+.tc { }
+.tc-card {
+  max-width: 620px; padding: 34px 38px; border-radius: 22px;
+  border-left: 5px solid var(--hud-acc);
+  opacity: 0; transform: translateY(16px) scale(0.98);
+  transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+}
+.hud.is-in .tc-card { opacity: 1; transform: none; }
+.tc-en {
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 20px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--hud-muted); margin-bottom: 10px;
+}
+.tc-term { font-size: 52px; font-weight: 800; color: var(--hud-acc); letter-spacing: -0.01em; }
+.tc-def { font-size: 30px; line-height: 1.45; color: var(--hud-ink); margin-top: 18px; }
+
+/* ============ Checklist 步骤打勾 ============ */
+.ck { flex-direction: column; }
+.ck-item {
+  display: flex; align-items: center; gap: 18px; margin-bottom: 22px;
+  font-size: 32px; font-weight: 500; color: var(--hud-ink);
+  opacity: 0; transform: translateX(var(--ck-dx, -20px));
+  transition: opacity 480ms var(--ease), transform 480ms var(--ease);
+}
+.hud.is-in .ck-item { opacity: 1; transform: none; }
+.ck-box {
+  width: 38px; height: 38px; border-radius: 10px; flex: none;
+  border: 2px solid var(--hud-glass-brd); color: transparent;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800;
+  transition: background 300ms var(--ease), border-color 300ms var(--ease), color 300ms var(--ease);
+}
+.ck-item.is-done .ck-box { background: var(--hud-acc); border-color: var(--hud-acc); color: #fff; }
+.ck-item.is-todo { color: var(--hud-muted); }
+
+/* ============ Terminal3D 3D 终端打字机 ============ */
+/* 终端本体始终是暗色玻璃(真实感),语法色用固定亮版,配色仍是你的家族 */
+.t3 { perspective: 1700px; }
+.t3-card {
+  width: 760px; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(158deg, rgba(24, 27, 38, 0.82), rgba(13, 16, 24, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 46px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  transform: rotateY(-9deg) rotateX(4.5deg) scale(0.94);
+  opacity: 0;
+  transition: transform 720ms var(--ease), opacity 560ms var(--ease);
+}
+.hud.is-in .t3-card { transform: rotateY(-9deg) rotateX(4.5deg) scale(1); opacity: 1; }
+.t3-bar {
+  height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 22px;
+  background: rgba(255, 255, 255, 0.045); border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.t3-dot { width: 12px; height: 12px; border-radius: 50%; }
+.t3-dot.r { background: #d98b8b; } .t3-dot.y { background: #d9c07f; } .t3-dot.g { background: #8fc79f; }
+.t3-file {
+  margin-left: 16px; font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 19px; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.44);
+}
+.t3-body {
+  padding: 34px 34px 42px; height: 520px;
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  /* 顶部渐隐:被滚上去的旧行柔和淡出,不会生硬切断 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 44px);
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 26px; line-height: 1.9;
+  color: #e9ecf3;
+}
+/* 内容短时贴顶;超出固定高度后底部对齐,旧行自动往上滚出 */
+/* flex-shrink: 0 关键:不加的话超高内容会被压缩回容器高度,在底部被裁切而不是往上滚 */
+.t3-scroll { width: 100%; min-height: 100%; flex-shrink: 0; }
+.t3-line { white-space: pre-wrap; word-break: break-word; }
+.tk-prompt { color: #45c6cf; } /* 提示符 = 青 */
+.tk-flag { color: #6ea8ff; }   /* 参数/flag = 蓝 */
+.tk-str { color: #f489b0; }    /* 字符串 = 粉 */
+.tk-cmt { color: rgba(255, 255, 255, 0.42); } /* 注释 */
+.tk-ok { color: #8fd6a8; }     /* ✓ 结果 = 绿(克制) */
+.tk-bad { color: #ef8f8f; }    /* ✗ 失败 = 红(拉扯对话:"还是不对") */
+.t3-caret {
+  display: inline-block; width: 13px; height: 1.05em; vertical-align: -0.16em;
+  background: #45c6cf; margin-left: 2px;
+  animation: t3blink 1.06s steps(1) infinite;
+}
+@keyframes t3blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* ============ RingMetric 指标环 ============ */
+.rm { flex-direction: column; align-items: center; gap: 26px; }
+.rm-kicker {
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 20px;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--hud-muted); font-weight: 600;
+}
+.rm-ring { position: relative; width: 320px; height: 320px; }
+.rm-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.rm-track { fill: none; stroke: var(--hud-track); }
+.rm-prog {
+  fill: none; stroke: var(--hud-acc); stroke-linecap: round;
+  transition: stroke-dashoffset 1100ms var(--ease);
+}
+.rm-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+}
+.rm-num {
+  font-family: "SF Mono", ui-monospace, monospace; font-weight: 300;
+  font-size: 92px; line-height: 1; letter-spacing: -0.02em; color: var(--hud-ink);
+  display: flex; align-items: baseline;
+}
+.rm-unit { font-size: 40px; color: var(--hud-muted); margin-left: 4px; }
+.rm-label { font-size: 26px; color: var(--hud-muted); }
+
+/* ============ VersusCard VS 对比卡 ============ */
+.vs { align-items: center; gap: 0; }
+.vs-side {
+  width: 520px; border-radius: 24px; padding: 44px 40px;
+  background: var(--hud-glass); border: 2px solid var(--vs-c);
+  backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: var(--hud-card-sh);
+  display: flex; flex-direction: column; gap: 18px;
+  opacity: 0; transition: opacity 560ms var(--ease), transform 560ms var(--ease);
+}
+.vs-side.a { transform: translateX(-48px); }
+.vs-side.b { transform: translateX(48px); }
+.hud.is-in .vs-side { opacity: 1; transform: none; }
+.vs-side.is-dim { border-color: var(--hud-glass-brd); }
+.vs-side.is-dim .vs-title { color: var(--hud-muted); }
+.vs-kicker {
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 19px;
+  letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: var(--vs-c);
+}
+.vs-side.is-dim .vs-kicker { color: var(--hud-muted); }
+.vs-title { font-size: 48px; font-weight: 800; color: var(--hud-ink); letter-spacing: -0.01em; }
+.vs-sub { font-size: 24px; line-height: 1.5; color: var(--hud-muted); }
+.vs-badge {
+  width: 84px; height: 84px; border-radius: 50%; flex: none; z-index: 2; margin: 0 -42px;
+  background: var(--hud-acc); color: #fff; align-self: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800; letter-spacing: 0.04em;
+  border: 5px solid var(--hud-node);
+  opacity: 0; transform: scale(0.5);
+  transition: opacity 420ms var(--ease) 500ms, transform 460ms var(--ease) 500ms;
+}
+.hud.is-in .vs-badge { opacity: 1; transform: scale(1); }
+
+/* ============ UICallout 界面标注 ============ */
+.uc-box { position: relative; }
+.uc-line {
+  fill: none; stroke: var(--hud-acc); stroke-width: 2.5;
+  stroke-dasharray: var(--len); stroke-dashoffset: var(--len);
+  transition: stroke-dashoffset 620ms var(--ease) 220ms;
+}
+.hud.is-in .uc-line { stroke-dashoffset: 0; }
+.uc-ring {
+  position: absolute; border: 2.5px solid var(--hud-acc); border-radius: 14px;
+  opacity: 0; transform: scale(1.12);
+  transition: opacity 460ms var(--ease), transform 460ms var(--ease);
+}
+.hud.is-in .uc-ring { opacity: 1; transform: scale(1); }
+.uc-tag {
+  position: absolute; padding: 14px 26px; border-radius: 14px;
+  background: var(--hud-glass); border: 1px solid var(--hud-glass-brd);
+  border-left: 4px solid var(--hud-acc);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--hud-card-sh);
+  font-size: 27px; font-weight: 600; color: var(--hud-ink); white-space: nowrap;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 460ms var(--ease) 620ms, transform 460ms var(--ease) 620ms;
+}
+.hud.is-in .uc-tag { opacity: 1; transform: none; }
+
+/* ============ 亮底主题适配:参考线 / 运镜框 ============ */
+/* 亮底下白色参考线不可见 → 换成深色系 */
+.stage[data-theme="light"].is-hud .guide-safe {
+  border-color: rgba(26, 37, 64, 0.24);
+}
+.stage[data-theme="light"].is-hud .guide-safe::after {
+  color: rgba(26, 37, 64, 0.35);
+}
+.stage[data-theme="light"].is-hud .guide-slot {
+  border-color: rgba(26, 37, 64, 0.14);
+}
+
+/* ============ TypeShift 排版流 ============ */
+.ts { flex-direction: column; align-items: center; }
+.ts-line {
+  color: var(--hud-ink); text-shadow: var(--hud-sh); white-space: nowrap;
+  font-size: 40px; font-weight: 500; line-height: 1.6;
+  opacity: 0;
+  transition:
+    opacity 420ms var(--ease),
+    transform 620ms cubic-bezier(0.25, 0.9, 0.3, 1),
+    font-size 620ms cubic-bezier(0.25, 0.9, 0.3, 1),
+    color 500ms ease, letter-spacing 620ms var(--ease);
+}
+.ts-line.is-in { opacity: 1; }
+/* 阶段A:像草稿一样左错落 */
+.ts.pA .ts-line { transform: translateX(var(--ts-rag)); }
+/* 阶段B:"啪"地重排成杂志层级 */
+.ts.pB .ts-line { transform: translateX(0); }
+.ts.pB .ts-line[data-role="hero"] {
+  font-size: 84px; font-weight: 800; color: var(--hud-acc); letter-spacing: -0.01em; line-height: 1.3;
+}
+.ts.pB .ts-line[data-role="mid"] { font-size: 44px; font-weight: 600; }
+.ts.pB .ts-line[data-role="small"] { font-size: 28px; color: var(--hud-muted); letter-spacing: 0.16em; }
+
+/* ============ BlurText 模糊浮现(React Bits 风格 · 情绪款) ============ */
+.bt { }
+.bt-line {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.30em;
+  font-size: 64px; font-weight: 800; line-height: 1.5; max-width: 1240px;
+  color: var(--hud-ink); text-shadow: var(--hud-sh); text-align: center;
+}
+.bt-w {
+  filter: blur(11px); opacity: 0; transform: translateY(18px);
+  transition: filter 640ms var(--ease), opacity 640ms var(--ease), transform 640ms var(--ease);
+}
+.bt-w.is-on { filter: blur(0); opacity: 1; transform: none; }
+.bt-w i { font-style: normal; }
+.bt-w .bt-key,
+.bt-w.bt-key { color: var(--hud-acc); }
+
+/* ============ Odometer 翻牌计数器(React Bits Counter 风格) ============ */
+.od { flex-direction: column; align-items: center; gap: 16px; }
+.od-kicker {
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 20px;
+  letter-spacing: 0.22em; text-transform: uppercase; color: var(--hud-muted); font-weight: 600;
+}
+.od-row { display: flex; align-items: baseline; gap: 6px; }
+.od-slot {
+  height: 1.15em; overflow: hidden; display: inline-block;
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 150px; font-weight: 300; line-height: 1.15; color: var(--hud-ink);
+  text-shadow: var(--hud-sh);
+}
+.od-reel { display: flex; flex-direction: column; transition: transform 900ms cubic-bezier(0.2, 0.85, 0.25, 1); }
+.od-d { height: 1.15em; }
+.od-unit { font-size: 56px; color: var(--hud-acc); font-weight: 600; margin-left: 8px; }
+.od-label { font-size: 26px; color: var(--hud-muted); }
+
+/* ============ QuoteLockup 金句定格(升级为 HUD 风格) ============ */
+.ql { }
+.ql-card {
+  padding: 42px 52px 44px; max-width: 640px;
+  display: flex; flex-direction: column; align-items: flex-start;
+}
+.ql-mark {
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 110px; line-height: 0.6; height: 52px;
+  color: var(--hud-acc); font-weight: 400;
+}
+.ql-body { font-size: 48px; line-height: 1.32; font-weight: 700; letter-spacing: -0.01em; color: var(--hud-ink); }
+.ql-line { display: block; overflow: hidden; }
+.ql-line > span {
+  display: block; transform: translateY(112%);
+  transition: transform 760ms var(--ease);
+}
+.hud.is-in .ql-line > span { transform: none; }
+.ql-rule {
+  height: 4px; width: 92px; border-radius: 3px; background: var(--hud-acc);
+  margin: 30px 0 0;
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 700ms var(--ease) 260ms;
+}
+.hud.is-in .ql-rule { transform: scaleX(1); }
+.ql-author {
+  margin-top: 18px; font-size: 23px; letter-spacing: 0.14em;
+  color: var(--hud-muted); text-transform: uppercase;
+}
+
+/* ============ FocusCard 人物聚焦运镜 ============ */
+/* 满屏布局卡:纯色底 + 左侧口播落位框 + 右侧要点胶囊,不吃 --hud-scale */
+.fcd {
+  position: absolute; inset: 0; color: var(--hud-ink);
+  transform: translate(var(--hud-ox, 0px), var(--hud-oy, 0px)) scale(var(--hud-scale, 1));
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+.ctrack-cue { pointer-events: auto; } /* 字幕块可拖可滚轮缩放 */
+.fcd-bg {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity 520ms var(--ease);
+}
+.fcd.is-in .fcd-bg { opacity: 1; }
+.fcd[data-bg="cream"] .fcd-bg {
+  background: linear-gradient(168deg, #f7eddd 0%, #f2e6d2 60%, #ecdec6 100%);
+}
+.fcd[data-bg="mist"] .fcd-bg {
+  background: linear-gradient(168deg, #f7f7f9 0%, #efeff2 60%, #e8e8ec 100%);
+}
+.fcd[data-bg="dark"] .fcd-bg {
+  background: linear-gradient(168deg, #1a1a22 0%, #131318 60%, #0e0e13 100%);
+}
+/* 口播落位框:圆角方框,成片时口播画面对齐这里(几何走 --fcd-* 变量,可在参数面板调) */
+.fcd-ring {
+  position: absolute;
+  left: var(--fcd-x, 110px); top: var(--fcd-y, 190px);
+  width: var(--fcd-w, 700px); height: var(--fcd-h, 700px);
+  border-radius: 36px; border: 3px solid var(--hud-acc);
+  pointer-events: auto;
+  opacity: 0; transition: opacity 560ms var(--ease) 380ms;
+}
+.fcd.is-in .fcd-ring { opacity: 1; }
+/* 口播烤入导出:满屏起步 → 缩进圆角方框 */
+.fcd-cam {
+  position: absolute; left: 0; top: 0; width: var(--stage-w); height: var(--stage-h);
+  object-fit: cover; z-index: 6; border-radius: 0; pointer-events: none;
+  animation: fcd-cam 1050ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes fcd-cam {
+  to {
+    left: var(--fcd-x, 110px); top: var(--fcd-y, 190px);
+    width: var(--fcd-w, 700px); height: var(--fcd-h, 700px);
+    border-radius: 36px;
+  }
+}
+/* 右侧要点:深色胶囊逐条右滑弹入(米/白底上都压得住) */
+.fcd-list {
+  position: absolute; left: 940px; right: 110px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: stretch; gap: 34px;
+  pointer-events: auto;
+}
+.fcd-chip {
+  display: flex; align-items: center; gap: 22px;
+  padding: 30px 38px; border-radius: 16px;
+  background: linear-gradient(160deg, rgba(44, 42, 46, 0.94), rgba(30, 29, 33, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 14px 34px rgba(70, 55, 30, 0.18);
+  color: #fff; font-size: 36px; font-weight: 700; letter-spacing: 0.01em;
+  opacity: 0; transform: translateX(52px);
+  transition: opacity 620ms var(--ease), transform 620ms var(--ease);
+}
+.fcd[data-bg="dark"] .fcd-chip {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+}
+.fcd.is-in .fcd-chip { opacity: 1; transform: none; }
+.fcd-ic { color: var(--hud-acc); font-size: 30px; flex: none; }
+
+/* ============================================================
+   常驻层 · 章节导航条 ChapterBar (.cbar)
+   整期视频的地图:贴顶全宽,当前章高亮 + 章内进度线
+   ============================================================ */
+.cbar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--stage-w);
+  height: 48px;
+  display: flex;
+  align-items: stretch;
+  z-index: 70;
+  background: color-mix(in srgb, var(--hud-node) 88%, transparent);
+  border-bottom: 1px solid var(--hud-glass-brd);
+  transform: translateY(-110%);
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cbar.is-in { transform: translateY(0); }
+.cbar-item {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--hud-faint);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+/* 章节之间的分隔竖线 */
+.cbar-item + .cbar-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--hud-glass-brd);
+}
+.cbar-item.is-done { color: var(--hud-muted); }
+.cbar-item.is-on { color: var(--hud-ink); }
+.cbar-item.is-on .cbar-lb { font-weight: 800; }
+/* 整条进度:整根 bar 从左往右上色(已讲完的章整格、当前章半格),
+   半透明只为和底色分开,文字仍在它上层(item 是定位元素,DOM 在后=画在上) */
+.cbar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--cbar-prog, var(--hud-acc)) var(--cbar-alpha, 25%), transparent);
+  transition: width 300ms linear;
+}
+/* 进度前沿一道亮边:让"往前走"看得出方向 */
+.cbar-fill::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--cbar-prog, var(--hud-acc));
+  opacity: 0.9;
+}
+/* 章内进度线:当前章底部随时间填满 */
+.cbar-prog {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--hud-acc);
+  transition: width 300ms linear;
+}
+/* 导出:实底,保证叠进剪映清晰 */
+.export-mode .cbar {
+  background: color-mix(in srgb, var(--hud-node) 96%, transparent);
+}
+
+/* ============================================================
+   常驻层 · 双语字幕 CaptionTrack (.ctrack)
+   中文主行(*关键词*点亮) + 英文小字,底部居中
+   ============================================================ */
+.ctrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  z-index: 65;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  transform: translate(var(--hud-ox, 0px), var(--hud-oy, 0px));
+  pointer-events: none;
+}
+.ctrack-cue {
+  max-width: 1500px;
+  /* 字幕不做淡入:上一条消失、下一条从透明淡起,中间必然有个透明度低谷,
+     成片里就是"底部闪一下"。字幕直接切换才干脆。 */
+}
+.ctrack-zh {
+  /* 「卡片大小」滑杆(和画布滚轮)吃在字号上,不吃 transform ——
+     字幕要在 .ctrack-cue 的 max-width 里正常换行,整块缩放会把长句顶出画面 */
+  font-size: calc(44px * var(--hud-scale, 1));
+  font-weight: 800;
+  line-height: 1.35;
+  /* 字幕永远压在画面上:固定白字 + 三层柔和黑晕,黑底白底都清楚 */
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-shadow: var(--cap-shadow,
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 14px rgba(0, 0, 0, 0.55),
+    0 6px 28px rgba(0, 0, 0, 0.45));
+}
+/* 中文行的每段文字都包在 span/i 里(关键词点亮用),会被上面
+   「.no-glow .hud *」的清零规则直接命中 —— 必须连子元素一起救回来,
+   否则只有纯文本的英文行有描边、中文行没有 */
+.stage.no-glow .ctrack[data-stroke="on"] .ctrack-zh,
+.stage.no-glow .ctrack[data-stroke="on"] .ctrack-zh * {
+  text-shadow: var(--cap-shadow) !important;
+}
+.ctrack-kw { font-style: normal; color: var(--hud-acc); }
+/* 底部暗纱已移除:字幕切换时两条之间有空档,整个字幕层(含暗纱)会消失一帧,
+   在成片里就是"画面底部闪一下"。
+   字幕本身有描边+黑晕,不需要暗纱兜底。 */
+.ctrack-en {
+  margin-top: calc(8px * var(--hud-scale, 1));
+  font-size: calc(17px * var(--hud-scale, 1));
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: var(--cap-shadow-en, 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 10px rgba(0, 0, 0, 0.5));
+}
+.stage.no-glow .ctrack[data-stroke="on"] .ctrack-en,
+.stage.no-glow .ctrack[data-stroke="on"] .ctrack-en * {
+  text-shadow: var(--cap-shadow-en) !important;
+}
+
+/* ---- StatProof 数字实证 (.spf):裸排版滚动计数 ---- */
+.spf-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hud.is-in .spf-box { opacity: 1; transform: none; }
+.spf-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--hud-acc);
+}
+.spf-bar { width: 5px; height: 20px; background: var(--hud-acc); flex: none; }
+.spf-kicker-zh { font-size: 20px; color: var(--hud-muted); letter-spacing: 0.06em; }
+.spf-num {
+  font-size: 150px;
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
+}
+.spf-fix { color: var(--hud-acc); }
+.spf-suffix { font-size: 0.62em; vertical-align: 0.28em; }
+.spf-foot-en {
+  margin-top: 4px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--hud-acc);
+}
+.spf-foot-zh { font-size: 20px; color: var(--hud-muted); letter-spacing: 0.05em; }
+
+/* ---- Checklist:打过勾的条目变暗(注意力永远在当前条) ---- */
+.ck-item.is-done { opacity: 0.55; }
+
+/* 口播缩右侧:左侧留白(自己叠动效)/放要点。几何统一走 --fcd-* 变量(组件按侧别算好基准) */
+.fcd[data-side="right"] .fcd-ring { left: var(--fcd-x, 1110px); }
+.fcd[data-side="right"] .fcd-list { left: 110px; right: 980px; }
+.fcd[data-side="right"] .fcd-chip { transform: translateX(-52px); }
+.fcd[data-side="right"].is-in .fcd-chip { transform: none; }
+
+/* ============ EntityChips 实体名牌(人物/公司锚定,滑入后常驻) ============ */
+.etc { align-items: flex-start; }
+.etc.hud, .etc.hud * { text-shadow: none !important; }
+.etc-row { display: flex; align-items: stretch; gap: 20px; }
+.etc-chip {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 16px 28px; border-radius: 12px;
+  opacity: 0; transform: translateX(-30px);
+  transition: opacity 0.5s var(--ease), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+}
+.etc.is-in .etc-chip { opacity: 1; transform: none; }
+.etc-chip--light { background: rgba(255, 255, 255, 0.94); }
+.etc-chip--light .etc-name { color: #16181d; }
+.etc-chip--light .etc-sub { color: rgba(22, 24, 29, 0.62); }
+.etc-chip--dark {
+  background: rgba(20, 19, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.export-mode .etc-chip--dark { background: rgba(14, 13, 20, 0.92); }
+.etc-chip--dark .etc-name { color: #f4f2ec; }
+.etc-chip--dark .etc-sub { color: var(--hud-acc); }
+.etc-name { font-size: 30px; font-weight: 900; letter-spacing: 0.04em; }
+.etc-sub {
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.2em; margin-top: 5px;
+}
+.etc-note {
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  opacity: 0; transform: translateX(-20px);
+  transition: opacity 0.5s var(--ease), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.etc.is-in .etc-note { opacity: 1; transform: none; }
+.etc-note-a { font-size: 22px; font-weight: 800; color: rgba(255, 255, 255, 0.85); }
+.etc-note-b { font-size: 17px; font-weight: 600; color: rgba(255, 255, 255, 0.5); }
+
+/* ============ GrowthCurve 增长曲线(平滑曲线画出+渐变面积+峰值计数) ============ */
+.gcv-box {
+  display: flex; flex-direction: column; gap: 4px; width: 640px;
+  padding: 26px 30px 20px; border-radius: 22px;
+  background: var(--hud-glass);
+  backdrop-filter: blur(28px) saturate(1.3);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  box-shadow: var(--hud-card-sh);
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 550ms ease, transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hud.is-in .gcv-box { opacity: 1; transform: none; }
+.gcv-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.gcv-kicker {
+  display: flex; align-items: center; gap: 10px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 18px; font-weight: 600; letter-spacing: 0.14em;
+  color: var(--hud-acc); text-transform: uppercase;
+}
+.gcv-kicker i { width: 22px; height: 4px; border-radius: 2px; background: var(--hud-acc); }
+.gcv-kicker-zh { margin-top: 6px; font-size: 27px; font-weight: 800; color: var(--hud-ink); }
+.gcv-peak {
+  font-size: 62px; font-weight: 900; line-height: 1; color: var(--hud-acc);
+  font-variant-numeric: tabular-nums;
+}
+.gcv-peak em { font-style: normal; font-size: 26px; font-weight: 700; margin-left: 4px; color: var(--hud-muted); }
+.gcv-svg { display: block; margin-top: 4px; }
+.gcv-line { fill: none; stroke: var(--hud-acc); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.gcv-dot { fill: var(--hud-acc); stroke: var(--hud-ink); stroke-width: 2; }
+.gcv-val { font-size: 25px; font-weight: 800; fill: var(--hud-ink); }
+.gcv-lb { font-size: 21px; font-weight: 600; fill: var(--hud-muted); }
+.gcv-cap { font-size: 21px; color: var(--hud-muted); text-align: right; }
+
+/* ---- 讲过变浅:dimAt 秒后整卡压暗让位,在场但不抢戏 ----
+   用 filter 而不是 opacity:不跟卡片自己的进场透明度动画打架 */
+[data-past="1"]:not([data-dim-mode="shrink"]) .hud,
+[data-past="1"]:not([data-dim-mode="shrink"]) .slot > * {
+  filter: opacity(0.45) saturate(0.7);
+  transition: filter 0.9s ease;
+}
+
+/* 退场淡出:卡片在 end 前的最后一小段整卡溶解。
+   可见区间左闭右开,走到 end 直接卸载 —— 不淡的话时间轴末尾好几张卡会在同一帧
+   一起消失,成片看着就是闪一下。不透明度由 outroFade() 逐帧算好写进 --fx-outro,
+   刻意不加 transition:导出走虚拟时间,过渡不可信。 */
+[data-outro] .hud,
+[data-outro] .slot > * {
+  opacity: var(--fx-outro, 1);
+}
+
+/* ---- 语义微动:只有"正在讲"的焦点呼吸,讲过的不动 ----
+   统一用 filter 呼吸(亮度+点缀色微光),不依赖 text-shadow */
+@keyframes hud-focus-breathe {
+  from { filter: brightness(1) drop-shadow(0 0 0px var(--hud-acc)); }
+  to { filter: brightness(1.12) drop-shadow(0 0 9px var(--hud-acc)); }
+}
+/* 光晕总开关关闭时:呼吸只留亮度微动,去掉 drop-shadow 光环(文字不再发亮) */
+@keyframes hud-focus-breathe-noglow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.12); }
+}
+.stage.no-glow .spf-num,
+.stage.no-glow .gcv-peak {
+  animation-name: hud-focus-breathe-noglow;
+}
+/* 数字焦点:实证卡/增长曲线的峰值大数字,计数落定后轻微呼吸 */
+.spf-num,
+.gcv-peak {
+  animation: hud-focus-breathe 2.8s ease-in-out 1.4s infinite alternate;
+}
+/* 整卡进入"讲过变浅"后,内部焦点也停止呼吸 */
+[data-past="1"] .spf-num,
+[data-past="1"] .gcv-peak {
+  animation: none;
+}
+
+/* ============================================================
+   seg-stack 段落自动顺排容器:同 seg 的卡竖排在左列,
+   左边线天然共线、卡高变化自动让位——"顺着排下来"的结构解
+   容器位置 = 段头(首成员)的 offsetX/offsetY → 拖段头即拖整段
+   ============================================================ */
+.seg-stack {
+  position: absolute;
+  left: 120px;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 28px;
+  max-height: calc(100% - 140px);
+}
+/* 组内成员回到文档流:锚点定位/垂直居中全部失效,由容器排 */
+.seg-stack .hud-anchor {
+  position: static !important;
+  left: auto;
+  top: auto;
+  right: auto;
+  /* 缩放用 zoom(参与布局,不会叠到下一张);成员自己的 offset 变成组内微调 */
+  transform: translate(var(--hud-ox, 0px), var(--hud-oy, 0px));
+  zoom: var(--hud-scale, 1);
+  transition: zoom 0.9s ease;
+}
+/* 段头(首成员)是整段拖拽把手:它的 offset 已由容器消费,不再自己位移 */
+.seg-stack > :first-child .hud-anchor { transform: none; }
+/* 讲过让位缩小:zoom 参与布局,下方内容自动上移,不再被挤出屏幕
+   dimMode 可组合:both(默认)变浅+缩小 / fade 只变浅 / shrink 只缩小 */
+.seg-stack [data-past="1"]:not([data-dim-mode="fade"]) .hud-anchor {
+  zoom: calc(var(--hud-scale, 1) * 0.6);
+}
+/* 卡片层级:锚点卡/段容器统一 z2,比根元素没挂 .hud-anchor 的自锚定卡(层级 auto)高一层 */
+.hud-anchor, .seg-stack { z-index: 2; }
+
+/* ============ PinBoard 要点钉板(角落累积) ============ */
+/* 章节标题+副题钉住,黑牌要点逐条落钉常驻:观众扫一眼就知道讲到哪 */
+.pbd-col { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.hud-anchor--top-left .pbd-col { align-items: flex-start; }
+.pbd-title {
+  font-size: 36px; font-weight: 900; letter-spacing: 2px;
+  color: var(--hud-ink); text-shadow: var(--hud-sh);
+  opacity: 0; transform: translateY(-18px);
+  transition: opacity 420ms var(--ease), transform 460ms var(--ease);
+}
+.pbd-sub {
+  font-size: 28px; font-weight: 800; letter-spacing: 1px;
+  color: var(--hud-acc);
+  opacity: 0; transform: translateY(-14px);
+  transition: opacity 420ms var(--ease) 140ms, transform 460ms var(--ease) 140ms;
+}
+.hud.is-in .pbd-title, .hud.is-in .pbd-sub { opacity: 1; transform: none; }
+.pbd-chip {
+  padding: 8px 22px; border-radius: 10px;
+  background: rgba(15, 13, 21, 0.9); color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 26px; font-weight: 700; letter-spacing: 1px;
+  opacity: 0; transform: translateY(-16px) scale(0.68);
+  transition: opacity 340ms var(--ease), transform 430ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.hud.is-in .pbd-chip { opacity: 1; transform: none; }
+
+/* ============================================================
+   通用文字卡玻璃底:黑/白/无 + 透明度(--hud-glass-alpha)
+   加在文字卡根节点上;none 时不加 class,布局与旧行为一致
+   ============================================================ */
+.hud-glass { border-radius: 18px; padding: 26px 36px; }
+.hud-glass--dark {
+  background: rgba(18, 16, 26, var(--hud-glass-alpha, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+.export-mode .hud-glass--dark {
+  background: rgba(14, 13, 20, var(--hud-glass-alpha, 0.82));
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.hud-glass--light {
+  background: rgba(255, 255, 255, var(--hud-glass-alpha, 0.68));
+  border: 1px solid rgba(26, 37, 64, 0.16);
+  box-shadow: 0 18px 48px rgba(16, 20, 34, 0.18);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+.export-mode .hud-glass--light {
+  background: rgba(255, 255, 255, var(--hud-glass-alpha, 0.93));
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+
+/* ---- 毛玻璃模糊总关 ----
+   导出是透明背景,backdrop-filter 没有画面可糊,必然丢失。
+   预览这边也一起关掉,预览看到的就等于成片(所见即所得)。
+   想恢复磨砂质感就删除这一段(但预览会又和导出不一样)。 */
+.hud,
+.hud *,
+.stage [data-card-theme] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ============ 呼吸层(effects/breath.tsx) ============
+   放在 hud.css 而不是组件里 import:卡片代码也会被 Node 脚本加载,那边读不了 .css。
+   JS 每帧写 --br-* 变量,这里落到独立的 translate / rotate 属性上,不碰各卡自己的 transform。 */
+.fx-breath :is([data-fx-role="group"],[data-fx-role="item"],[data-fx-role="icon"],[data-fx-role="frame"],[data-fx-role="label"],[data-fx-role="excerpt"],[data-fx-role="warning"]) {
+  translate: var(--br-x, 0px) var(--br-y, 0px);
+}
+.fx-breath [data-br-root] {
+  translate: calc(var(--br-hx, 0px) + var(--br-x, 0px)) calc(var(--br-hy, 0px) + var(--br-y, 0px));
+  rotate: var(--br-hr, 0deg);
+}

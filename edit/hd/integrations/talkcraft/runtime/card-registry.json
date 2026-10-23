@@ -1,0 +1,2451 @@
+{
+  "schema_version": "talkcraft-card-registry/v1",
+  "registry_version": "2026.09.27.1",
+  "upstream_manifest": {
+    "path": "edit/hd/integrations/talkcraft/upstream-manifest.json",
+    "sha256": "5014dc67ab0927a1b131b81cee0bc891d188f704f89fab93a9170407f99686cd",
+    "repository": "https://github.com/Vincentwei1021/video-talkcraft.git",
+    "commit": "ccb8a571f4bd620b5588bef4b264b5120f5042fc"
+  },
+  "runtime_compatibility": {
+    "path": "qualification-evidence/runtime-closure-compatibility-8056-to-3914/compatibility-record.json",
+    "sha256": "ff8814f604ba1852feac4a2c2a95c3b33ef9425f508c327939bb214b6c546cb5",
+    "source_closure_sha256": "8056db92141f0167a8e7dbd3a7b30eaad2977423e5eb5673810991475eb9837e",
+    "target_closure_sha256": "3914bb75ece129a1c0cdbe20352580de7ec8f73cfc2028bbb3c586d2565315bd",
+    "covered_qualifications": 108
+  },
+  "qualification_policy": {
+    "state": "qualified",
+    "production_enabled": true,
+    "legacy_registry_inherited": false
+  },
+  "cards": [
+    {
+      "card_id": "alt-block-lines",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "fc2880336d1d0c8a9e56bf09f7dc6cd0a3ecadb0ddcbd12e9e201d326120242f",
+        "source_sha256": "9676728d2d7176abf7b3e214adec83a30ddb31ec78e962ee665355d291933265",
+        "demo_sha256": "981aba5b43e91282f43c9a50804c6b5a2977317c8e7d87a0448101329df31ed8",
+        "workbench_sha256": "c2cc576bfe043ca80fa425c99f8b887159161d4de7aabf94120142762353c79e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/alt-block-lines.tsx",
+        "implementation_sha256": "f82e575737d80284c306e66a344b8242bb6e9e99bd70d465e7ae02c821fbd51a",
+        "input_adapter_sha256": "d4017b1fd650444115e2ede17471d99f6f1df1c8dad8cae41aed234ebf1bb4a8",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6e4e81a1b4210099b282ae5d5cdcb5bf4b7083006b7d049e1fc2a1e9fd5cf781"
+      }
+    },
+    {
+      "card_id": "bar-chart-growth",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "21b9fc3943e0783061a2fb9c97e9a62442182b7f214b681a0a0de0a507e5137e",
+        "source_sha256": "3c9ca039d3f7eea3327028e633c5c80c4d2c919b1f062c584707a073b132df4f",
+        "demo_sha256": "824302fe5f2a07f3cc860d386802a4541539589740057757c5f6f1b2c801cc8b",
+        "workbench_sha256": "17d1650e894db1b65f660cd0caa4b3f5f5f2d284d1a5a77dc5a8a359745469ff"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/bar-chart-growth.tsx",
+        "implementation_sha256": "a5e0cd263d10d31b3e7b4e92c94967f22ce28a589eb560cd7f0bd19d04ccef4c",
+        "input_adapter_sha256": "5949a55c0f38ad77c0943c71169ad034cf4a17df0a847c151fb0490536a0edb2",
+        "adapter_version": "1.1.0",
+        "qualification_id": "0e47539aaa5fd70e75443c2adec003a2a1cd66ea64cedbc655b6444e2ae56651"
+      }
+    },
+    {
+      "card_id": "bed-echo-blur",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "58bf3a7d8b090262a7bebcaae118722b2b9fb457aa3985c4e3257a3393ace7f7",
+        "source_sha256": "bdae9cbb330d3870ce39cb34db429eac7db85d7e3abdb0731df99260a137aa5a",
+        "demo_sha256": "bab7e6d5d4337314ebec28a50f6b96a7867ba77ba5c66de90a0b736e3aa11558",
+        "workbench_sha256": "62377e113b4bc3c6eac362f5cae1205fbeb1f4541dc8b5d40c9cc52509252701"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/bed-echo-blur.tsx",
+        "implementation_sha256": "84df16f82f152fdabd8d19570da00bce1126e53304e224c9e667875bb8c567a4",
+        "input_adapter_sha256": "5f040ed217565f573f4255120ab238b097cb24b27590ea6e0fa2298eeafef11d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "e03578ae8db0970c9a6394ff18cf96184663553ecfdfd9310786b382e1f9dbe7"
+      }
+    },
+    {
+      "card_id": "behind-text-title",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "c10ba921a8d5426bf40d273cbc08591526b00be3f4fc8b5e53123a68fd011f27",
+        "source_sha256": "dedbcae9399eda679507e3f5451bb32df702bad44a92aa2b3ded66dc84e44d87",
+        "demo_sha256": "48f313f9f6f1d4b01cebbf4a30ff8a09a67ae9fec564da0f84d29fb20da79333",
+        "workbench_sha256": "5096e0efbca6005a60dce974e519641d43572da1cd84ec895c06549d8770e6ef"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/behind-text-title.tsx",
+        "implementation_sha256": "6170c9abeb39039fd93a78ad3ed36d5c7f18b91578be5e3ff386886da6afcbf7",
+        "input_adapter_sha256": "f7f38aaef7e40cb95c432ad1c18199b8a2193c8a6499cb9548ce7439e017841d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "aaa7784d87ad1d05287157535548a50b897aad25eb2c9f3891079c50e86e5f1a"
+      }
+    },
+    {
+      "card_id": "black-slam-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "20561b474a493055994c7130f283522b938958aa244ddb9f667b15f8dcc49219",
+        "source_sha256": "35e06a31af863fe9edbfa4f002660dca2289cbd13419758f04a4f2549e90d6b3",
+        "demo_sha256": "bf3420fc53dd224b9ab8298b739a2291623e9921d6fda971af9e25dcb72c8806",
+        "workbench_sha256": "7e18f43d7d8a432abe7e2fe163b0948935485adf490d7df1d349514f95514353"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/black-slam-transition.tsx",
+        "implementation_sha256": "f4c3b0437b7798a40c11dc9c2fc25e60ef8a17d7874e3955ca5fe10ff4474aec",
+        "input_adapter_sha256": "ad7ef330fc8825b2e44af0785cc640959af0a4d23ce90811a485f824edbf704d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "e67906bd5c39707fd47fb207e452d101592835dfa6b9407736b88330971c31c0"
+      }
+    },
+    {
+      "card_id": "callout-line-label",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "e1bcd21edf0b10a24112c97eff58d8f6c4d2cb6a6eee0024970d8faaa2ca6712",
+        "source_sha256": "58d29fcd73a8f41ae13e9cad9a281b50d817c57b2fe0b82d788e8f0e6175a314",
+        "demo_sha256": "0220b86393054ceb4e902b8235a8f5136a96ab01b5952009add051375b823894",
+        "workbench_sha256": "251cdecd789a8397d70fba08171c6f4f35b60e05559c62c906d49cfd98347a3f"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/callout-line-label.tsx",
+        "implementation_sha256": "39add478dddfd669ef6afbb8ce7feba6a15d040402ed13f4c9e5c144ee6d0670",
+        "input_adapter_sha256": "8cd347dc87ac4a3d48456403cde878880e23a69f38ec0bebb9297e047e491155",
+        "adapter_version": "1.1.0",
+        "qualification_id": "00b2d8c7754c5ac304656fcec94ecfbeb4df1dc8ec0debdbeae06226886e0cf4"
+      }
+    },
+    {
+      "card_id": "caret-wipe-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "90ad88469c787f4b370da0bde7c86a20a3fbc8532cf4dde8eecf62aa2be2b355",
+        "source_sha256": "40be04725ff8381fed5b952345a45873ae617ff274c0adfdc589fc5ea69dad3f",
+        "demo_sha256": "bf5bd1d5fd013de85c0a91687b1f3bc14e7a15f947bc38a620a1f2affb59dd22",
+        "workbench_sha256": "d09dc0db204344bf115bc3c5d2854d407b54a45ebb3ac4b029ad6843865ffe92"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/caret-wipe-transition.tsx",
+        "implementation_sha256": "d93ec1f9408d36bf46c2d9d81b6fea4d32489c7305e5b61bc4b9ecdac1527a91",
+        "input_adapter_sha256": "d9c42bfda262be93d4e537a98b43666c68a8a66322dfec2ccf313b5a1afea65a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "9d3d02ab216e6917b4b37a3eaa8dab88a60e677753015909517eb59ee5b78c89"
+      }
+    },
+    {
+      "card_id": "chapter-progress-list",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "5a6af927697b679cea95906d34e6f13c8c7f8fa4bd08dbe3cc74035f57be462b",
+        "source_sha256": "16c5457e98671023f0a0dfc361caff0f8a9619118665fb30aef93b3b974a4560",
+        "demo_sha256": "4fd7b2c0f9c6f790f0b83bb5408849b251f57a885fa197730169845e7be3f6ce",
+        "workbench_sha256": "16d3c737d809f31ca6deb31da2e142fe034bccff745682be70cee8c19937fd70"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chapter-progress-list.tsx",
+        "implementation_sha256": "c1f348cf61ac3683417209d1d6ad3f0fc126f991102cbfaf9620b12abc8e1133",
+        "input_adapter_sha256": "4ddfa6cefb5cee2c7817fa5c8d3f419eca3bb6fed96801d740b24e19b5e04711",
+        "adapter_version": "1.1.0",
+        "qualification_id": "4e6638998449ee758892e2821d9931932a80ab22009e8de153117b2ea577a983"
+      }
+    },
+    {
+      "card_id": "chapter-title-card",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "d9c42ac1a732776f17011b3c4194c3e69a180962a116e7435d228a2b55d87aa9",
+        "source_sha256": "f30ac52ebb7095b61aa9515de4eac911edd658e5244a0e6209f45c9246662c50",
+        "demo_sha256": "6b71ec053012e0652dc9ba01c461e2f4d23ea35fe8debd4cfe7f99ca0770e535",
+        "workbench_sha256": "bd8025a3aa507a4fed9c586fe22ce09f6d4dcf6232d7ed4e0fdbab400cf37c25"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chapter-title-card.tsx",
+        "implementation_sha256": "38b40d1e41273b6d4df2755cdac9ef07b3740c47886ad8be23164869f2dfe242",
+        "input_adapter_sha256": "1d34fe86bdf3eb6befd73c0b8688b1a3871c7e46f6b9c23b2588935e04baf516",
+        "adapter_version": "1.1.0",
+        "qualification_id": "494f60aaf9092e40c93545f7c60076676ae772a4bcf5d2ae3273ea38dca53c76"
+      }
+    },
+    {
+      "card_id": "chart-grow",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "1381ae8cd0d2cdd658ac0a7ea68786ba30f07b0f0a390d3f13705ed0c205e7ee",
+        "source_sha256": "3026616f4d18dfd4dfe35e972fb357f49f1d04f7ed4121591fb7e276c6c9c7f8",
+        "demo_sha256": "a00656002908ffc2ee02509148cd2336529d8ab61f10658951972af1f66d608a",
+        "workbench_sha256": "8e174f6f973424ddbf68efd13d864378b34496713a113dfcd5815a71794c269c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chart-grow.tsx",
+        "implementation_sha256": "ca5f5183c81c6b0465d9d48e917f19966fe70176265b9f531fe5fc2d9d3b90c8",
+        "input_adapter_sha256": "3ee5eb33f689f2a1d3694693f53a7d465b5555acfc6a79802741eba3476a4233",
+        "adapter_version": "1.1.0",
+        "qualification_id": "8e569d0e3e67698290c040aa6676fdb57e21caaedece2bae9be3524672c34d22"
+      }
+    },
+    {
+      "card_id": "chat-gpt",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "5a5d7786c5bdfbb678db480ab877abf8d2e9d12846fc46f35537be9f7591a27c",
+        "source_sha256": "019843122d6b61447c72e635d90e8fa0138eab17c7596341d45caab4917ee862",
+        "demo_sha256": "d1bbc41f059ddcd3e4a64d5386238d8d17533eaeae253a9b660ef7dd0336cc1f",
+        "workbench_sha256": "b2955770fcb94c9a70b0442d42174dd6c112a634a7fea314b203d962ca5c7caf"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chat-gpt.tsx",
+        "implementation_sha256": "b823f3a9e741960a677136db9a5943ee83e09cc23c6018644f9863fd1af3e3cf",
+        "input_adapter_sha256": "06ad48ea67302e73d7e2e1ef4c8497f4e38a5f455a552e7424347b09d17a2da4",
+        "adapter_version": "1.1.0",
+        "qualification_id": "f12865825fe23a9030731de1ea8ecacf0d96b8822b91e86e6337f142ab0aea1c"
+      }
+    },
+    {
+      "card_id": "chat-message-flow",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "78618bdd0b46bba92b669650ea50a037eded9ca1948b0799004f82b508158280",
+        "source_sha256": "c841669eefc46253286cc37a3545db7e5eed45dbfb22f9e82c411fda18c6a0df",
+        "demo_sha256": "8e29957385faa99647430ac3784102b02c46c1e0df5e79c6479859e0e66a3935",
+        "workbench_sha256": "0a97021984ea675264fa6e1ccc1b05a4716c2e9a3a8b17b721fd16941fb67315"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chat-message-flow.tsx",
+        "implementation_sha256": "735830a8092a1d73d8b68ccfbb98a1cac718493e4b2ec0eab16e0ddc8e57347a",
+        "input_adapter_sha256": "2e6d2b7cf3dc80ec83d73dde6e6116024a03c219514cdba5bc9a31b6758351fa",
+        "adapter_version": "1.1.0",
+        "qualification_id": "973d7416e95388f5033e421693be9e2ab5eae60fcdedb1eac65e908e9b5caba8"
+      }
+    },
+    {
+      "card_id": "chevron-lower-third",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "c4fc680fc9085a8b47f0b597051d0e00df5646e9aeed0e2a3f251ccb990b4829",
+        "source_sha256": "6eb05135628410f79495d9134f50a5a6e5600ba5b6ebd6a8b6d9c9dece8a9535",
+        "demo_sha256": "9c20922af63e88a53939aa610f6f02fa95aaf539785b49fbdda3e190a0a372dd",
+        "workbench_sha256": "2d7b5463bbcda9846a4a3aed3114ff396b84d449051f9e8e10a8b0ec767e1e10"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chevron-lower-third.tsx",
+        "implementation_sha256": "ad5ebaa717fc8a2eaf96e31df6b02830c860f54abad567dc2455e1a37377a8f6",
+        "input_adapter_sha256": "53d580e300ca920c20211f63b272ddfe6f4d72dd322f044d6825eb0629b017f4",
+        "adapter_version": "1.1.0",
+        "qualification_id": "20aaa416f31033f5a09fd30967292ed0571f9fc4139551e74f0e018ca6605246"
+      }
+    },
+    {
+      "card_id": "chip-grid-single-select",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "fda01d4aac90710f7208629fcb460b1a56c52cef66369db4c394d3c210c13649",
+        "source_sha256": "432460135c0ac2d1007a7824f0f24f675aac7f6c3e17aeac557cc3aa6e403586",
+        "demo_sha256": "8e15099c8ab5567310f39dd9df175bcd1d25bb985e6165df2a6404c0d8f8481b",
+        "workbench_sha256": "cfa2fbdabdb4fcf3c0f2546e53b7f1a9493beec00842447b4337b3fd6827e08e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/chip-grid-single-select.tsx",
+        "implementation_sha256": "b35201387304861b405f3ea1cdf7c4349af8ba43e12fd57229fabf4ae999f8d4",
+        "input_adapter_sha256": "d10bd2f544b4707b9dc0e02d996cef975303568cffce541cb3bf7f88f30f06e5",
+        "adapter_version": "1.1.0",
+        "qualification_id": "542d302be20ce195eedf80214b735022875e4dd2bf943f2b80143293cdd4ca43"
+      }
+    },
+    {
+      "card_id": "claude-code",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "41df83e793c74e3fa78438cc128cac19c8bfd3ac1f008e0d58a5e206440fc6da",
+        "source_sha256": "b2cfc9ddb2c110164839e3f99ab5843fac0dcece628838c9c77ce0070fd16707",
+        "demo_sha256": "8c94955720b495fb350fce2aa6af95209e8fe0d33b5db52e0bf738030babe041",
+        "workbench_sha256": "746ba33e86be41b90f5135326a6256c40d1d07d88ffb2374024df9b2a7cfbb32"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/claude-code.tsx",
+        "implementation_sha256": "4aada714e8c6e7b6d245ee504cf207b09ace2f26ed7cdffe327e7e2608b1381c",
+        "input_adapter_sha256": "0189ba5aedd9818e640e13fe8ce055f3f41f9ccc1d6e4b0aa51756704bc41c63",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c0a5d5c91b777ac4ef880de51a034bb69a6ac433264ca477350571ce5917cf9e"
+      }
+    },
+    {
+      "card_id": "color-slam-beat-card",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "e7f4284a4238f6a53787a9dacad566825138ebc56ebcf1fc66b3594eb786ed1e",
+        "source_sha256": "9e61532bb89bcf3ad1e0f02833d805d7da75ccc1de9057fd4af07e9e76971323",
+        "demo_sha256": "50662efd5f742e331916e78ad90e67d57b9f730a20f66ea3aadf5a658a94a32f",
+        "workbench_sha256": "71157008af3ee27d67047d2062771a819b9e3cd0bccdd94008febeb53ffe0a99"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/color-slam-beat-card.tsx",
+        "implementation_sha256": "7b34a96a135cf65f815fa60d3d4832f5114709593e847b7758189447a01b544b",
+        "input_adapter_sha256": "d46ae70c346fb0fc245013d41f50a2ca8b33c1e093a9a0fb8a16c14c923cda0a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "1ec71c54df0c47344d56f3a9ff8821daec66a24d9d931c928441c17dfabd470a"
+      }
+    },
+    {
+      "card_id": "converging-arrows",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "0b1fbd517c9aa5abcd2d669680ffe21514ad3f114bd4926b3c40dcbe67094978",
+        "source_sha256": "429f963d636c31e9ce9a9aa2ae9cfe2ea11f8cc4999c358a2ef8bd57097aa4ce",
+        "demo_sha256": "51008cba18e85293ce136c7329b90f03056cb4887e9125f8e8ea6aeccd7a3c67",
+        "workbench_sha256": "488f74a0e6123ed3477b29ed48dff68ce3ab76fb4f2c4148577206e798c5ab13"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/converging-arrows.tsx",
+        "implementation_sha256": "20198e59fc960b2f38efecfdc4ac7728b7bcec60eb3cb52a87fb71ac13291ddb",
+        "input_adapter_sha256": "e53190ba62294905fd97c22965a82c1d4adc7654cf2952310168daba2983b68e",
+        "adapter_version": "1.1.0",
+        "qualification_id": "1bb86ac8704352098a4ab2022c74de47c49def71c542ca4c4a6c1657354a356c"
+      }
+    },
+    {
+      "card_id": "corner-bracket-frame",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "ca5df750c7cb127ff1abe826a077a37e6691b228b76aace861b7b2d7db49c380",
+        "source_sha256": "4c39c67354ce057edb7050891367d0300ab9b4e407e2c107ef67701bb3c6deb0",
+        "demo_sha256": "2af73f7dd9a9aa0e37760268902d4c51428ab14331067775988d74f972e3308c",
+        "workbench_sha256": "1256826e297921dae3e2d436189e2203e95290b28b70910207869107bf0e480d"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/corner-bracket-frame.tsx",
+        "implementation_sha256": "fb6c58dc178f0cffc642fb4da2a15be3ff0aa8a5dac941e2a227bf6929156ebe",
+        "input_adapter_sha256": "2cc4ff50698ee017fe518f3a5373e70cf022b7860858abfb8c906db5764c77d5",
+        "adapter_version": "1.1.0",
+        "qualification_id": "86918b9e51313b719783b7f386f327a36ba12e439006181e7eb3187815dcba4f"
+      }
+    },
+    {
+      "card_id": "count-badge-title",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "a8d0884ea67f78cb479fdc0191df5426eb64dd858475b0522f51b135311c9e36",
+        "source_sha256": "ba43d69ea8f2378cccd3aaa9587311928f9faf75a5a4a192294a6b82ccbf0836",
+        "demo_sha256": "fcce634a8133a3671dab1d5bd421f2b9e085eb284775217b250daaba94613064",
+        "workbench_sha256": "fa95c4940b0710d03052c93817fd8a1da29c588c8a343f406f121ee4410bf46b"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/count-badge-title.tsx",
+        "implementation_sha256": "3c3816cedd9b0f0f569a7f5b529274fd0c4905727c258908260187951efecfcd",
+        "input_adapter_sha256": "f87ebdcb016f9fa04616686881e3243faffd6f455d4585cbae0d57240dedf606",
+        "adapter_version": "1.1.0",
+        "qualification_id": "08a9af12f8bd71afde83e7262a3dacdf64e33bc31815ec4f14e4f7d5e63b7198"
+      }
+    },
+    {
+      "card_id": "countdown-arc-scatter",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "598173bebfc7e5e224ccc8cf0fc8b9eed58c17b0b248741facc70d3d250938d3",
+        "source_sha256": "33650e5dcf308e0badf6832a2c02a5c3a738e86908ef240e9baf20c74eb85fac",
+        "demo_sha256": "c8e4ef5fe62112e62c9a845bd86776a542a4b401d1905b9894e9d1e8d6d5cfe0",
+        "workbench_sha256": "2d0adc840e53682c0cbafdb0c2a6c3e157d97180f91b73c4c90a0783f532390c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/countdown-arc-scatter.tsx",
+        "implementation_sha256": "9f979d69b4d6162da72166d4f48ba1bdc85704b7407988eb00574a7bffc416a2",
+        "input_adapter_sha256": "e172a839b84ccacd8f9b02fa84e6f7d4935a332ac4433fc362b564f78a13e2d8",
+        "adapter_version": "1.1.0",
+        "qualification_id": "ab59701c2082424c6d2f2eed211d69b99d85150e7481a5eec07eadf512a7428b"
+      }
+    },
+    {
+      "card_id": "crash-zoom-punch",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "0708f0993404f79eb08700459e3d4d4015e8d2c932275918df3ad94ddbef0a1b",
+        "source_sha256": "3e4bc7d7ad3eb4fcfe52de07a9e2976d90b69dc01de460eab82dae389ff05a69",
+        "demo_sha256": "cc00043f9dedcfcb38b946bb48d3440cdae938222ff353fb17185883b81dbb7d",
+        "workbench_sha256": "0f5ea40d200227766013446d8ad91da76729ff128fafd7da0e1c9ec252769def"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/crash-zoom-punch.tsx",
+        "implementation_sha256": "8a0becddbd2f3d470d81ca2c7d1e2e390b5568ea043b8c30d8c61702ba690153",
+        "input_adapter_sha256": "6c7723123f1ad3ae715b348b5948f4778c11f51c607cb743b1d87fb8158b8ce3",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c7e732e1965b4eed77205930713d68cc6c78f39d3c3c49df0a81a31d6577433d"
+      }
+    },
+    {
+      "card_id": "cursor-actor-demo",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "a948564b9672a81cb7ef3449c5f8f6416620a1d708bcd51097ce4d1864b7596d",
+        "source_sha256": "411baf57cd319fe5b72a089fe876501f4b5bef3592ce273a23aaa18587340f2d",
+        "demo_sha256": "ad5549eeba04ed4a541bbd1f39732517c49e4ff95e20421e7ae62b623d171044",
+        "workbench_sha256": "50868a9fb3d026ae3229156cdb6d0aba9e0ececd388c6aae16ff4f4456db6f07"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/cursor-actor-demo.tsx",
+        "implementation_sha256": "a2b0d1311e138e37febaababdcb042e48c2596d22d67201be956281d131ff522",
+        "input_adapter_sha256": "5793390aac0319a84f28f2aaf788b139dde8e44a7db865b967761a862a47541d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "8aadb63e290d04d424f88cc141d48387ca5098cb037bc90136b4550bd8a20b2e"
+      }
+    },
+    {
+      "card_id": "cursor-locked-zoom",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "d85902daeab2b240948d991d8835fc7aaf83b0990d7176ec083b065cc2bf4af8",
+        "source_sha256": "0e4a042428cd14457c3de5475b82da27208e24a46cbf4eef4fe73fd74cf7a57d",
+        "demo_sha256": "c998cd16513b6172c0dc6559bcbc5dc866c96fd8aff0b83508a7d2bef0eaefb2",
+        "workbench_sha256": "75ef1d23fe3cd3c8ae228cd778acbf1f6fee9088b982a6d21042531bd699ed23"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/cursor-locked-zoom.tsx",
+        "implementation_sha256": "04faba769fa3dc4ca03f706d7c9af36294df58043f398675f7a075dad408fa87",
+        "input_adapter_sha256": "9a6e40bc2a331e09fe8b302cd495654226899f04cf610f356f9467789c4802d6",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c8147aa0d6eaf93a2d2da1890fe7fb84843aa22e4fcd7a26ac675429f52ebc12"
+      }
+    },
+    {
+      "card_id": "danmu-bubble-praise",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "4b316e1f3f291e4ae0bdfe4def01dce1156962669b0fa912a8dad81546909970",
+        "source_sha256": "b87a28ce6b1d16b8b4a8591ad7448aff565d7028c52f9af287f1cff0174cd37a",
+        "demo_sha256": "38ce975e100511bb24d362f465f7a9a259685352041ddade0474f74a579e2121",
+        "workbench_sha256": "803cf68cc2d7d296915a7227ae2d9e142c450356bb2b2d8d021aeab7e4185dbf"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/danmu-bubble-praise.tsx",
+        "implementation_sha256": "32aaca5584368d1fc0c327e6a627565ad3ce7e6dfa0af3504d2720ef99bd45f8",
+        "input_adapter_sha256": "8e941fb7ad12b25b42df2eb39dc6ae07b9c23644b0a1694280637c386bc6a4b7",
+        "adapter_version": "1.1.0",
+        "qualification_id": "ee981da98b7b022468be097787ba1d331756a05b507d751ca657fdda534fe124"
+      }
+    },
+    {
+      "card_id": "doc-park-left-pill-deal",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "ee2b016dd8552f5aa5cd1580fd96b3a25065dd8f3f5aeae1529fcbb26e3282e1",
+        "source_sha256": "874d90c93efd1a9334970629d0a29f67fdb2f8900135174b2c6a882ec0d7a74b",
+        "demo_sha256": "5a0a5b67382dc395411e6f6a6a1fc49042ed6f658b15290326246e7bbc784e21",
+        "workbench_sha256": "ff191b5f904b289d0f2e336b062d47b91b95d0d8002ebd9647a8c603e1ff8d92"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/doc-park-left-pill-deal.tsx",
+        "implementation_sha256": "b4a54a908eab83ed2b5e789921ac6ef8652e24a4997e52b808ebeb17030de477",
+        "input_adapter_sha256": "3cb9ce63a539fc641f177df3154d8208767d2e96d205df5fa361acab3ea89642",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6e60b91c14b9e1dc27e3c24e9b4d1acc5597e66f234c48dff3930d0dcd7fcadb"
+      }
+    },
+    {
+      "card_id": "douyin-follow-card",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "7307143c2fb98924afd1ecbe0dda7a384166388448edc20b687502dc5178eac4",
+        "source_sha256": "f94ef9efca1ab2db43d49ac56c016c5db5a93a3a14fcf48b034283aa038461cb",
+        "demo_sha256": "abffe78a49568a9696c0c7bc85d9073e83e7f77ba60f0131bd851ad0d6d3253b",
+        "workbench_sha256": "4dd39f9331f677d3b8e4c39a3e68fa291ce7e1610f286d5c6fae94deefe78fc3"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/douyin-follow-card.tsx",
+        "implementation_sha256": "93f664377dbe30c1d3d1c0da477b304280b0ba1988ddf8d2248cb59abb3a3761",
+        "input_adapter_sha256": "65a121a267ed2f43793cbe4147f27ed23855c235ac38993ff7488d294c85de48",
+        "adapter_version": "1.1.0",
+        "qualification_id": "67dcfd3c2f66dd9b313ecf63e0ab5716a45ca8c9ba434be03f51031710087cc8"
+      }
+    },
+    {
+      "card_id": "error-retype",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "4dacb7057d7adea2db0bedf267dff3110b5e8b1805370baeed3f96acfdfb6886",
+        "source_sha256": "a1d8f1898808bb37c1978c834b186d0be231370318be99b22ac1b7c6d074bcfc",
+        "demo_sha256": "ea329a0fcf64fc7198b569e74ada7e86bf25ce99fe50eb201e2fd18658c8b311",
+        "workbench_sha256": "be2e5b69801475b26f0dae59687d0b908e407bee13a5a7763278584bafcac087"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/error-retype.tsx",
+        "implementation_sha256": "688749bd9bf654dfdf59402a99643eed4950b55bc50df3c8582f6588ba63b70f",
+        "input_adapter_sha256": "25facf2defe2e6c20772d9cc8584166d6adc08d0880cf4d7b24b4a929bcc7885",
+        "adapter_version": "1.1.0",
+        "qualification_id": "3f89a360118e847da607dee35f2e41171324178ee66c5b2f5644433f6086a0fa"
+      }
+    },
+    {
+      "card_id": "evidence-scroll-tour",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "5b8e15b0ca90ba7d5b4a4446a89aac541e62996f0f34d9154971dd957cf04dbf",
+        "source_sha256": "b29eac867833599bad85f43798f52cc98f9d1682f167ca8b7c2636d52fda34b2",
+        "demo_sha256": "9a21fc183c0d911207b17145023e4c783e050ef7162668f915b2745a6c7a6d53",
+        "workbench_sha256": "fad073bb02b45b05cbaeed078a90c611d3e53a55b651e8c25173230d5a8bbff9"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/evidence-scroll-tour.tsx",
+        "implementation_sha256": "4ea68a9cf32c2333b66b587927a47e71f0803d899c65568e29d786278279ba38",
+        "input_adapter_sha256": "48463a1b8e0429b142b750c3e82bdd8440eb997fac6da80b3cf3f092c3957cdc",
+        "adapter_version": "1.1.0",
+        "qualification_id": "84c009bcdb2a78eea87752888d4b69df914c9f05a62929b01878e04fd7d188e8"
+      }
+    },
+    {
+      "card_id": "filmstrip-conveyor",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "5435477c415a33294346e1756164fb5947a9283ed44c5b1e9163b92f774805ff",
+        "source_sha256": "ffc4ff9ae7fe18120f081b32b69268528e245b0b2386a2aa2aa38f9cac2e479d",
+        "demo_sha256": "360f604f99dd214df855be741623a00c9fbb829560513e2c05c7018cc13a69c8",
+        "workbench_sha256": "5c7f6472adaa8b34c664811571ccbf51b78e1175bd46290c1dc7783f03f24ae8"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/filmstrip-conveyor.tsx",
+        "implementation_sha256": "dc9ef2ab576ab51fbd54b0f2d0065f1c0c210d6c7a910c1c2ad4a49fca475ec6",
+        "input_adapter_sha256": "4c29f943d389a121c10fbed3bcd6083c2f7a86a81e973e111589ef3dba1a61f2",
+        "adapter_version": "1.1.0",
+        "qualification_id": "b1c847c420a50038de6bcba45eff6e0bf8f616e27c50991856d54dba7a895230"
+      }
+    },
+    {
+      "card_id": "flying-words",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "209a033f862bfd49c295d7f93f14b82699c3f113acc47ae83a879d48dd4db661",
+        "source_sha256": "9b4c7e727b18b78931cc053757132fd4be734a9f5206cc853288182c0de31166",
+        "demo_sha256": "a313d3a09df860e7209c5c369ed677306efa50b2ba5140a069af4753cac0816d",
+        "workbench_sha256": "39eb6ee454f1eea894e3aeb386b7a147f437f7c5dc566b88993287a75609cae1"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/flying-words.tsx",
+        "implementation_sha256": "9d5c924741d40b99cec3e7597d7b2f62a3d9a2ff9c7da4c8900ea5f593a05520",
+        "input_adapter_sha256": "137560f704452e3d73717ed7a3d1e31064c9373b8925df5a3e7078e0affe1fda",
+        "adapter_version": "1.1.0",
+        "qualification_id": "2ee6043a911f90563c1df2cdcffa470401b042b3a14b6c800199968c88c11239"
+      }
+    },
+    {
+      "card_id": "focus-dim-spotlight",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "101aeb30dc8ede2a295fff7a2f9f40972a22ddb1c2adf1c41392e5b90c66c810",
+        "source_sha256": "d1d5e488a783639ccbd9078119b4ccba8a809603cdb1f8c63a331da527fd0d09",
+        "demo_sha256": "dd03eab991956e4ca7ceccfdf3b5505b8f47d5d73b2721efe374620eced38b3d",
+        "workbench_sha256": "24feffc91c645bee412c47d33aa696e198d1de5e4f153b3b4db18f6e04652ee3"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/focus-dim-spotlight.tsx",
+        "implementation_sha256": "388110d0d911deeac6ac025a9d3b6b264752753c25c7392eafe0b30bbc880c59",
+        "input_adapter_sha256": "2e6d1e214fa1d28032600a3fb4026d62501f471d5fa4aedc61e4e11c084389cd",
+        "adapter_version": "1.1.0",
+        "qualification_id": "42c29633d150fb1157755a087f9bf6992869b389f3a1a28ac849827640425745"
+      }
+    },
+    {
+      "card_id": "gallery-wall-dolly",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "a8ee392b81cd06a85eac937aa4589a45c0ccb8a73d66911b3f76324e680c6e2a",
+        "source_sha256": "2b4d214d058d26c10655763e826336e376edd200e03a70b2e427d94f99a7410f",
+        "demo_sha256": "18ffb6b8107f1679e73fd5bfb59cfb3981448ad049d780cafa7c5d7bba3a1f1b",
+        "workbench_sha256": "3b789aa291d07c1b05528076113608859f149d4155e673673e01ea854042dc17"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/gallery-wall-dolly.tsx",
+        "implementation_sha256": "3e55bb732c63815361a0c0362a4a5427beb13aefb446a5bf67e6cb7bd61e26a5",
+        "input_adapter_sha256": "5a53be547b488b653761c2d3e849792eb50f71071193e9f16ddf90d07eaedb41",
+        "adapter_version": "1.1.0",
+        "qualification_id": "4aa21df46c80f5e4259e6d59622106fd39ba8c931ad85ce611c882e0dde90d09"
+      }
+    },
+    {
+      "card_id": "glass-code-walk",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "cefe3391bda76b702008db99379bd44588f98d1d00541927884705fd20f1b855",
+        "source_sha256": "af01ece4a25974caf914475ac5e6b513ea805a9a53f8a91cb929ae827ec5c232",
+        "demo_sha256": "318e788730bb0eafca23c71e65443640d1b95e5e31f7839fd23b3795814d6e07",
+        "workbench_sha256": "489100e1a0d9414d214faef193b9d0ac748fcb42d581ac2b3dbb23a37e0a53a2"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/glass-code-walk.tsx",
+        "implementation_sha256": "03689d1ee025b0f323749b14a1a2cc7a3819c357c4acd873acb60cbd1ea4a6a6",
+        "input_adapter_sha256": "a2372fd78f95f0ab0e628ecdcbe550b8270a5f31af3b7ed180c2334a8291973a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "eb2cc8c7584aaa5284da75a0ccf6d696a4ce61aa0dfffd05a4168b6b8f141e78"
+      }
+    },
+    {
+      "card_id": "gooey-morph",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "a005ba6d88b6cdb39b5332fced4c101dd98f807a1676d041cca39575821ecc71",
+        "source_sha256": "3a573f5da6643f46629a18e2615d64be570cb42360db788a8818f82d42684889",
+        "demo_sha256": "9e233ec7f54b18726c500fb9c7fd8c20f06547dd004c0b854a2cb8d8c3692556",
+        "workbench_sha256": "db777f32eb5ebebe12f9428beb252370d5d41ad6fd70d9c3bed17048a4a448c4"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/gooey-morph.tsx",
+        "implementation_sha256": "0e6c4c9cbf9120a270604791cf2a1a71d11e1574689892f5dc6db600023099d6",
+        "input_adapter_sha256": "d40f25e5547bf27601f4f6d9b2d8efa870bf32d701ace91d108a65abc4fe0e84",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a1c383f96c224d1de4a0b0b2910f6d01a7c1abae1b775baf6483405952e93b2f"
+      }
+    },
+    {
+      "card_id": "grid-to-hero",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "c88ec167f7f04877f8ea70752999b1a6eba7cef5db5e3a66139b14d923489195",
+        "source_sha256": "e9e550223301f791e46e0afc60c5d1ab171fc777c81ca130b56ef2951cf389f4",
+        "demo_sha256": "237724574ebec0677480672566c3e1529f1558d6f3e9758b42171ca7c97ab99a",
+        "workbench_sha256": "f9dc47e9b17d273e763f6107c09cc62e0ee7030ac5b70c51693f0d24788ec9b8"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/grid-to-hero.tsx",
+        "implementation_sha256": "4c765eda89acf42ecf08ee454ff727db1962747d829e75d2da68a4314d597682",
+        "input_adapter_sha256": "95ce56dfc6d12d156d6a9dd1e53b41bc594ab437fd5418a15c0799f0c1b5931d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "5ab8d627d3b77bf07ecc366ba47faf4d0562b0183152e86d4e40f1ca43a3dec1"
+      }
+    },
+    {
+      "card_id": "hand-drawn-ellipse",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "6f6e0b10f41b35fd0268541116b8e96bd028364976f594c607f61f2320faf57b",
+        "source_sha256": "31b3c51a9a2201795e0192ce7d8b5219cf59dbcf3d9134b006106c636721c961",
+        "demo_sha256": "04bafe31141c43d3768717a5488f2783cb811dbb200a7d3a2008f1a7c229317b",
+        "workbench_sha256": "9277960e6557711f0c05a5799864c1e3defffe741e25dc74a004de76740ea48b"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/hand-drawn-ellipse.tsx",
+        "implementation_sha256": "ed3933bf0d2ca4dd781b129380b08e1bdd4928d32c911c590b36575c4d84520a",
+        "input_adapter_sha256": "89ef72da2ebe206980adf403f44fbf9bc2b414318177fa96a0f6cb981ab6f97b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "5a0dba373b347fa3292492996ccc403204171137f64bb1d4cffa0c1fa19490a4"
+      }
+    },
+    {
+      "card_id": "highlighter-sweep",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "d3a73939540580da44548689ad3d6b924bf4912b89d167765f905f265a85874a",
+        "source_sha256": "f04a519c5c0167b1da4b54b5a7082893e89f10ccf526ea080732cadc769893b6",
+        "demo_sha256": "ad730bf4a697f120e44e62a71a779a1925868374bba4dd10c345fce2420f3cb3",
+        "workbench_sha256": "00be7c434bae68b0168b2dac075ffc62c8baefa7b948a1aa5c36f14d451399f3"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/highlighter-sweep.tsx",
+        "implementation_sha256": "1543f9b4f8dd08bf38d65e45b5db8da95d59bd80b61afe2da0a46fb11720ee96",
+        "input_adapter_sha256": "f93b75c4f89ad3516ce8ad346817ccd9acce81f003eeaa8c75babb4b44e3b399",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a5d01fff53ac9e0c66b92f8dc9cf84cee9b9f80f3044b258c0b6c643e8c40e8b"
+      }
+    },
+    {
+      "card_id": "host-card-glass-board",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "64efe72429af200f91878fbd95d338b14d1eb1ab39ec1ab4c4cc291b22bff5be",
+        "source_sha256": "23389c67e5daa18ace4caac08fcaf5645f2ef44fc70a0873bea055655491a22e",
+        "demo_sha256": "eb9fc3c9ba8310eceb100deb061ff242c024ec7c07e7638951952955dc537b71",
+        "workbench_sha256": "463ef84459e309503ff888db3cb42ef2d934837ea554a3751b36d822c0e6d86c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/host-card-glass-board.tsx",
+        "implementation_sha256": "67f94296fa6cc24fc2a391c4acca0308f1adedad856e829b91fa813aef2a7b56",
+        "input_adapter_sha256": "c2e2e024fc3365e01fe6f98eaaf0830ca9b1353155689b4f02b561fe671c8002",
+        "adapter_version": "1.1.0",
+        "qualification_id": "5f98a0a4512ddcae637d66690920f3652feccf1a382e4214e0c937bcfc9274a7"
+      }
+    },
+    {
+      "card_id": "host-shrink-to-chip",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "a8285de51ff13de15360ff8e62983d6727c172aa1dccc79bbb2a6cf1841bf2e7",
+        "source_sha256": "84ca07795d6f7a228a478e7e2345f2d5fecf153fdfa666889cd02b05532a8a49",
+        "demo_sha256": "f955584338221fb0232572413229bd9b9b7ef13340b431cb590c69f10c4fcd36",
+        "workbench_sha256": "32a53f21546cd911b529fbafad606f92be03b46848a7d60f9f5808bbbe80d28b"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/host-shrink-to-chip.tsx",
+        "implementation_sha256": "241e0042efda6459db5dd68cb0a9242537f0be56fee8a468fac5c90437b22851",
+        "input_adapter_sha256": "d09f2a26c5f7ba8670c3ea30b1ccd26de89fbc0568606fa808c55707279ac297",
+        "adapter_version": "1.1.0",
+        "qualification_id": "fc056ebbf15816dcb4d9a9882f71418d5a026d58199ed62f7b7220c72ce315e2"
+      }
+    },
+    {
+      "card_id": "impact-open-title",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "0d74e5ae3753ddc743b83822c65e338abdd024b85ec89553f09a801aeb41832f",
+        "source_sha256": "127581f5a1cdccfbe9e332d271beb2ccb8168c29196c7a8533b0b968929e0084",
+        "demo_sha256": "2299dbf2e38c5d4139c9730be7d1bbbcd2a0e772958d0ee0205a1714b25c4663",
+        "workbench_sha256": "f846a9a3b0717a002ab3ee0f7c794eba0ccea96886327798933c0d5bc189664d"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/impact-open-title.tsx",
+        "implementation_sha256": "822c7dc3847bc5e4b39bf8b0cb9b50bdef6458715d890c3e25e4adadc8467497",
+        "input_adapter_sha256": "23c831bb0288b44f33e1dc78f11a153fffc8e129965bbcbdfbb7cda40e5a2c35",
+        "adapter_version": "1.1.0",
+        "qualification_id": "cd1badf9f42db71703e798cb0aeda40bec60235675d73825ab47dd701ef3722e"
+      }
+    },
+    {
+      "card_id": "info-card-assemble",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "e5e0e2d16c322cc30f03b3f8b3da2928eb7ee5dde1094e6dfcfee1979c785dd6",
+        "source_sha256": "c6fe0ace4d61c6ed9c53a66334230aa0a1ef8ef19d45904f9f03d5f28befeb65",
+        "demo_sha256": "a1e5dc13d7d3a3c61dd6a533336b66c3434b990d3eb5db764dfcd59248451c32",
+        "workbench_sha256": "ac3895930547bf25928fd01d53d9c1f5e5df2d7b662361616db61cdd8a57657b"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/info-card-assemble.tsx",
+        "implementation_sha256": "d9ee98f833ebc0e049cca4daeb8bc4e5b5d1bf23d0acfc79cfd06dfbb3a254e1",
+        "input_adapter_sha256": "54976eba554a7ba3c41ef318a13c9eb2aff839b3c0efe0cabcd05dc5df9d3096",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c49f5b72957bee8d979489ec3173337de79bf1c8709de43f25145d78c7cffd26"
+      }
+    },
+    {
+      "card_id": "info-term-card",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "d7da2bbec3d62ead55f4bae43953adf0db4faa0d83c37248288d271ef73ce354",
+        "source_sha256": "40bb632b621afca9b27ee2ee653bc1f92cd0006c10a7f9e2452f743e94b391b6",
+        "demo_sha256": "e924e7779eacf20a008e1a95ac79cf62fcc3a6e5bf5a2a98e345df368c41519b",
+        "workbench_sha256": "4dcf0c1a9af1f47d13df63e6594ee1e514805ed50ea281c292483278853b260e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/info-term-card.tsx",
+        "implementation_sha256": "079bf5b0c6270f004d414eb55f992faa49267bb3a9dd43986463d4f53041a00d",
+        "input_adapter_sha256": "f3e3f5a0092e1228bd62344e20aec29a9186f1352197215e216e92fe5d95c5d9",
+        "adapter_version": "1.1.0",
+        "qualification_id": "9c93fb895c4a2289af5bc107ef2763724777070086f21cc28394716ef0c9fb71"
+      }
+    },
+    {
+      "card_id": "ink-underline",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "d253fd4a4abff2ed1678a88a55bd3c7175a770ae008823b4a0fd2b36ae096007",
+        "source_sha256": "e1d692b1fb5560ed64d97f31559650bc10c3f6daacca0e313fdb0769276e19a0",
+        "demo_sha256": "64595143fb4e0b5b7b2e5c3c89647ada494c7bc0451d66fbec2c12720b95e163",
+        "workbench_sha256": "257abef01ae1fe35aab4d3f8ba1f3bdee05bf3e05ad385b8b5cca331a3898640"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/ink-underline.tsx",
+        "implementation_sha256": "3755dc3e9f31572ddcaf4b469d321e76d82b2a108dc6022b87121e4bb2c58799",
+        "input_adapter_sha256": "5a89dc0a3162744aa653f080c15d414b9d9c137091d7c68c9036f59944a16c6f",
+        "adapter_version": "1.1.0",
+        "qualification_id": "8435c1f02bf8e2554c20ad0627454b228cd9d0c37256106203ebc8d427b246ea"
+      }
+    },
+    {
+      "card_id": "keyword-pop-highlight",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "b348394e96910e1c35faa15b46643de093165cb4af54b3a6dae8418b06a86c55",
+        "source_sha256": "0ff812e4fef3dc1e9b91575063737ac61848eb47e818c4f969a611e3758b9306",
+        "demo_sha256": "d47b23e0dcfe28cc5f2b69ddd17646a07b5af48cd4f30d50b1438de3a419c827",
+        "workbench_sha256": "fb30322ebdcb2efbb7930c595cd5c34970597c638efcb22ac4a881a3b62fb0cc"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/keyword-pop-highlight.tsx",
+        "implementation_sha256": "1604ab73975575475aec8c6ccf918284f5c7add960e845f5d7fdd0a0c907b11f",
+        "input_adapter_sha256": "83ae6868896913f9eb9908e6f2344d40485cb0b88a68ffdb2ab8b64c5769d665",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6d56e980c0955131740e13097064da45ae862ba92e7aef9292c77d26668f64cd"
+      }
+    },
+    {
+      "card_id": "lead-word-zoom-assemble",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "80978584ba59ecf73dec2f4cf2887226bea9d40b82575f817daafb4d641ad940",
+        "source_sha256": "fc3c59b8a4834f436da9143b7677d1223e5ee85cd1d3dfa752594170b120f84e",
+        "demo_sha256": "1701e3a148b707a549da35b3e2c723da6f1cb5cb3eb7fc124f6df6678afddf7d",
+        "workbench_sha256": "f8cc1776724dd96eaca78023b545aeb2ffa3431e4d37402c448851e2a7fe143f"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/lead-word-zoom-assemble.tsx",
+        "implementation_sha256": "46e8ea772a77af89e9c14d4c4546786866e830ff2948bd7fb0d9f910d7f32a42",
+        "input_adapter_sha256": "cc1421a5f63915a30775beb88df0cf982dee9d9c4df64266867c97a4f78f852a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6cd23b8507599ea3091c1603fc839467fb41e6ac03ff2b1fea1977d6d8f0b1a7"
+      }
+    },
+    {
+      "card_id": "line-by-line-slide",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "5e7124f285f0dc3d3a09c9a25176acb97503a736e3cb1f10b1280d6f54c27c6b",
+        "source_sha256": "41cf138ce7ba628dc5d83f00b891898dfb2726041e127b6f679d0ffec65c2aa3",
+        "demo_sha256": "b77c79a6fffbeba903df4760b8c055107163742e86704a20d079586c207cc79d",
+        "workbench_sha256": "4329c74d34f6f48089001b41991e8d3f0561e0833bcb965ae6508a97d553c3e6"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/line-by-line-slide.tsx",
+        "implementation_sha256": "8fbceb67ecf3984961a302d7f891942bc7a9c61a410d2b9c80b11d195630fb7b",
+        "input_adapter_sha256": "509e54aa1625aa8db1b2475ec179138318f83a5bc6d335734399078c76fdab90",
+        "adapter_version": "1.1.0",
+        "qualification_id": "1aacbe29159202012d0cff3aa562e60aa33dd878d081ac8af14e909c57def1e8"
+      }
+    },
+    {
+      "card_id": "line-carry-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "125be907205eda5b8b73d5d79cb5c7ea917ccf86603c181d6f9be2ae35e18666",
+        "source_sha256": "9e380f85c1f72d220c1b02bf8a88d9c6795921e3c4115c2b6c52fbb806523b22",
+        "demo_sha256": "ae3016aa68c618e7c01e75f324b38fc4ce098a11f1552a2abb157445a4c3d2af",
+        "workbench_sha256": "2f4a01dc5a083d95b14444a32a2339708da714b6fc3619144318a2a1746555e1"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/line-carry-transition.tsx",
+        "implementation_sha256": "5d74110404df569bfddd3a47f788fa9d080b4c13540b0e6d365f7a827e6255a1",
+        "input_adapter_sha256": "423ba952ef0c9347d0cb0e5d7b63a8ef589df90c6529cc35409ee1e810794d9d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a09e3fd9b31f8680e5ec40a6cc3355a3e1eef4f2cf28ebd17c43e31e56afdc71"
+      }
+    },
+    {
+      "card_id": "line-chart-story-draw",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "ad7b836750a22e98be726fedfb4c008766e1f1bb9536bac7838b4c67acbe328a",
+        "source_sha256": "937320d2bf1ed2e3f09b5c7abf8085eb42b086b386d0dd58fb1fb05807edebb3",
+        "demo_sha256": "25864be4eade9201308f388907cc3e0111d7a0d2ada16dcf31c10f505c2da482",
+        "workbench_sha256": "1db588bb6661b6542e67ea1b13bfd871c87aa5ee363165a0e7b5ddd967974295"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/line-chart-story-draw.tsx",
+        "implementation_sha256": "27f7333457f9af0f12404707d87ebac7e59e8ec126b6077d8a9b041e28a2cc81",
+        "input_adapter_sha256": "32e3c48bf70521ef8fce654b0dd224ca441fba146dd72ade26d071fd00cdcb35",
+        "adapter_version": "1.1.0",
+        "qualification_id": "45ccb5b2d60911ab8bb65037f30b7677b9d7242065927d3b7b5cb8e8f78e3301"
+      }
+    },
+    {
+      "card_id": "logo-enter",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "e7dfb8a68a32e0567a7785ed082ef4c93576aedb011af21a1a3578ce70b7c8b2",
+        "source_sha256": "4489e6dda20b6e1eb444e6f3efe53a275e594c1a64039ece515d5697db8628da",
+        "demo_sha256": "b872b4f86255555eacec9742871543d1ae5d90e87482ab17701924c2c93bdf7b",
+        "workbench_sha256": "d2de5f722d4edba394c4877ef66f15337d8fb713406a4e2cbb653fbc4a0b7d0c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/logo-enter.tsx",
+        "implementation_sha256": "b48b808349fae4c46538d8d4abcab7d2dc348a97429df495e5ba828e05682505",
+        "input_adapter_sha256": "1d1cf7499958831f25b66a48d6f10a269961ff607aff0ce1ff9f61ef7eed14e5",
+        "adapter_version": "1.1.0",
+        "qualification_id": "57b9349245893bf3ed167f6544a9a6e916c3b5c3883f2b4095f4f8f99ab5a48c"
+      }
+    },
+    {
+      "card_id": "long-take-world",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "81ba577f4b58bc7098b99677d21540d23151631a1ea3bae06a4db3b1dabbb468",
+        "source_sha256": "70e059a6ec67097d2d097d0ea52acb61ed6066f7e8f44f97ca7e23afc8ea1a32",
+        "demo_sha256": "a0aa031ebf854f8e1db8cb44ec15c1b53cdf9c8aecb50a1b15964493a45e929e",
+        "workbench_sha256": "9e839c38c8bbcd1e8691effef867cddc8e7092bc61f2d3ff11cb82ada5857afa"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/long-take-world.tsx",
+        "implementation_sha256": "2dcd234b44f629dba53d28ac29e35ad57bdd4745556815b9dfed765e049136d0",
+        "input_adapter_sha256": "9d9ca51c19014638da66059ff568212a9e83a1fddb193e487236033c81f7288d",
+        "adapter_version": "1.1.0",
+        "qualification_id": "008278155cff78bc3ceb552ec9ad419482d37cbe46f1f8a4f4d0292f5e219db1"
+      }
+    },
+    {
+      "card_id": "lower-third-nameplate",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "bacf7d259106085cee44d6de04da628fb26eeda72fde540c54af4ad48246ede6",
+        "source_sha256": "a22273f51010dd153b089341e80deba9097965f3b702e04e4956bbb33af7d91c",
+        "demo_sha256": "e88f6e715af3322b65bc1a47fc967b309c95298bb424508da21e66b1cafdc46c",
+        "workbench_sha256": "18bb97f89157ae5d3869fea53c9b668ebc7ddf6b3cc5b770a5048c4dc364966e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/lower-third-nameplate.tsx",
+        "implementation_sha256": "3fc5404fe49e6b0fd892e10aed82e53a9ad451926054808ef4b33ac189e8fa88",
+        "input_adapter_sha256": "50293a5f2d23f5e68ad1ac4fb16c735c056ce26960d6cc7e6ad649dd5a646aeb",
+        "adapter_version": "1.1.0",
+        "qualification_id": "5302bee57c8b52bc808d5a0cd4395d829d80208a089a1d1297ce827182cb8a83"
+      }
+    },
+    {
+      "card_id": "magnifier-detail",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "9dcd553c886ecfd4cc738b796dd79cd87967e74b915cc16069650b6028e8a8a0",
+        "source_sha256": "59ca146586bf0f56826dd80e33edfb29c10a7da8cb31aa23a72bc28e49f1544b",
+        "demo_sha256": "9241bab7228732e675dac677d4a30f285c309c20475208e7fb9fcc004374672b",
+        "workbench_sha256": "b6bd10175309db592d7ad33a9bf7a0ab7fb3dfcd2e22c1e96a89777b9fe53ed9"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/magnifier-detail.tsx",
+        "implementation_sha256": "cce5de98d1b67b7ff599835c8120857b6a8e8ee75b8f9037e336b7303ac6615c",
+        "input_adapter_sha256": "d530d52136e6fd6c837fe664cacd74d2c000397f61d1c42594d9fcf3259b9550",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a62735849114c5f96c4d92c4c6151452a42c15ae319ea5431f84910f98171da9"
+      }
+    },
+    {
+      "card_id": "map-route-pin",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "e23adc91e1568d40d433b76eed1a9f6408eee8c3a6dbdbcca61f5daf73cdb6b5",
+        "source_sha256": "fec5d18b99286f1306eb9378db59b756085a4083700c147a971926b397858ef3",
+        "demo_sha256": "d6731f1f507b2f4018a901770ccbed85c5619cc19d0a8537a33a3b0761a0453c",
+        "workbench_sha256": "492f74832902b64d101875253f0a52cb73da4d789de08ba214a7fb9e6f3a89ff"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/map-route-pin.tsx",
+        "implementation_sha256": "5fa23c73abad005e9822c2855ebfb11d22171756b3682b0318006e00849c4f3a",
+        "input_adapter_sha256": "010c803bb73e4bd8556ec8d020ea278f203747b0a13f6f61ac2b739cbb23d892",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a0b6775a3a4f6fdbaa07513758a02badb9d0f65764dd13b1b9be4da1ddfd8eb1"
+      }
+    },
+    {
+      "card_id": "media-pop-in",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "00f3b159ecc57bd1feb50e03aedf98e6249342833eb9c0f81798fd7a27b3b509",
+        "source_sha256": "7156764244dd7ac4840e19b12c15ccbe72f4c38e4d5d9b168882a9f577494552",
+        "demo_sha256": "c6c15e4ba58678a1a9df35ec0738a186e95b08e7a8bfecc53d60cfe73f836796",
+        "workbench_sha256": "303e7aab2a179e61a0a28967f23d0b7bad848820625932866eda61531c729a40"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/media-pop-in.tsx",
+        "implementation_sha256": "4f366bc3e2e57c52e6c84c3b7647f7e87a48420cce288927332fe02373d86d02",
+        "input_adapter_sha256": "e0f5b83f6549fdb93fca696abb55227ce95b004a28ca35ebfdbf718c7c979b54",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6222439b1e812071e4e2323ccde4d9a15e2c6f26163a9857f9c3503d9f41eb0d"
+      }
+    },
+    {
+      "card_id": "metric-with-sparkline",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "4909616a4872e75480c3610edb16b1ad80ec5e07331944a6b08d6bb40b49e816",
+        "source_sha256": "8568f46f620ccec15e4f1fe7258d2f0be8c500f01f05ccfa4dd2cb1c607d69e8",
+        "demo_sha256": "96debbde30abf8d295fe576f9a51a4134b1b47d7a13c98ba7a0111e19188532f",
+        "workbench_sha256": "74a9ef18ab5c445a8f45ef55677ad5b15326d0a09de2cc07d01d509b4751afff"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/metric-with-sparkline.tsx",
+        "implementation_sha256": "202a3460a5d7e1d23bd984575ebcc8650eb67acc6e237626f352b7544f0e4d9d",
+        "input_adapter_sha256": "b45f233ae7b08de93479686f051c1a126f1568a5c49810890a9650785f1f75f1",
+        "adapter_version": "1.1.0",
+        "qualification_id": "08fefcd9747f9849cbfd702b659ab598f385b5d3795b6edb06b94e6a59539e44"
+      }
+    },
+    {
+      "card_id": "motion-blur-slam-in",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "6ccb03c623fde4767889f11b82cb86395bcd0e591b74cebd7db62df6e0d8696a",
+        "source_sha256": "52b833847f1da7e7cd47b3cbf03cc6de27e868c14510ae772c0ff9ce85f3812b",
+        "demo_sha256": "3cf4f531fbea0fb7afbde0767b59366405af0031387b3d3c7d56d89655bcb84e",
+        "workbench_sha256": "e943e489688ba2b3bfa53b2c74347b636fdb601048c741114350076d526e62db"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/motion-blur-slam-in.tsx",
+        "implementation_sha256": "19aa961a535397c563e01c803f052a7c3f4c06a68ebf2eb2e32088d5f6f6abe0",
+        "input_adapter_sha256": "90c363edccd0b9c99d53a2d7d638dfba44768a376d00882c96474571b42c3db2",
+        "adapter_version": "1.1.0",
+        "qualification_id": "8046ea9736ef764caad0fda7dc4dbb227cf325478bc7762c9c96498d4f0ed886"
+      }
+    },
+    {
+      "card_id": "news-card-desk",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "bb76c74782f0c61bd523b43a69c9e2bc03e0adc4f4b2ac90f83417320a942100",
+        "source_sha256": "76adedbbeb839241fee88d56f1eac188527fef918aa04837ede799644586a2b3",
+        "demo_sha256": "828a795233aceea9a68d66315927acd749abf1aa91b3733ace40e3e0b492bdab",
+        "workbench_sha256": "c86c8cdb1ce59ec8db413b668bf561129b594a4e888d113d84096ada73affaac"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/news-card-desk.tsx",
+        "implementation_sha256": "6a3ac10a6c67bfb517a283f3163585c3be5642d76a594d49114ed27c59f70b1d",
+        "input_adapter_sha256": "d2c60d4d71b4a33602e034de710c4b6ca86ea3b5645df57afd2de36eb4ed6b70",
+        "adapter_version": "1.1.0",
+        "qualification_id": "504d8b46cb01249d947e0aad3b6e6325142ea830f92cd4061492f4f77a4aff38"
+      }
+    },
+    {
+      "card_id": "number-counter",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "79d217fe9c6814ef7c37e991b785489ab84dfa7ebba06dd070b662ba206ff14d",
+        "source_sha256": "34a00653402a52d6925c5ef06da3988cf82f200f6ea9bb9f2d1ea5e5a93609a3",
+        "demo_sha256": "65ac05cf87fb674bb8fbe530e8b80fcacac144f4f6dc2c300075d998e4cf5544",
+        "workbench_sha256": "e46dbb3614fd7ac54f5c606222285c7bde9bac06a9f047d654ebc9c1323249f9"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/number-counter.tsx",
+        "implementation_sha256": "5100034fb89d8399ef2c062988ab2a7e5feaa3fc07ed48975af7557297121153",
+        "input_adapter_sha256": "e358b0d80452e2b74effc96024cedccf0d967535a3436187dcfadbeafd22ca1a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "fd1c351110fba02115054f76d9edf3bf1ba3646e0d03dbe2001c50926f3624a9"
+      }
+    },
+    {
+      "card_id": "number-slab-pop",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "a1c5910ddc70bbb519b9a486908cf444f7fa55ba4948fc5848baec5b9ff8c390",
+        "source_sha256": "26facbd762315fb5f5d196d7b1d439470c29f0e2ad7265d34185dbe4fb6df806",
+        "demo_sha256": "a7dc71ab1f5c473a7d18dc586964da9a8783cc081a9afa7cc65f36935582141d",
+        "workbench_sha256": "cec7ea5ddf4c50ee1ec222ee2774bdf5bd8975946c7b2884a3e8c6c12fa074e2"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/number-slab-pop.tsx",
+        "implementation_sha256": "895ea8f0f96b3f7f43faeb10d3d1ac952b5828f109beb49fb0e043f274cb737d",
+        "input_adapter_sha256": "03146e684c18973f5842429809487546407514424a1fc794b11f1072b272c5f4",
+        "adapter_version": "1.1.0",
+        "qualification_id": "085fa7fa721f7ca0c497f9f0b45a94c511b3911f5783021a3eda0f511d9ec4d6"
+      }
+    },
+    {
+      "card_id": "numbered-step-stack",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "5a6d71321266f1dc00353dce22e9329ff8302d494f599ee7e37564b87a49e331",
+        "source_sha256": "cb16806443f00085f3b2b3334c4fa97f1fe87494ce6c7906c1be1caea5ca2dfe",
+        "demo_sha256": "7f4cb686e7ad00d64f30c94f2551416f2cd8909a79a40557aeb406d6d7f4b06f",
+        "workbench_sha256": "3c75aa95bf61193f0efb89bad033bc9ced37c27e2f19bcfe0d7af578ce240cc8"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/numbered-step-stack.tsx",
+        "implementation_sha256": "41af55bef4299520f7d416e66d45f0d2f28cb9ccb994378c682b5676ca51d1bf",
+        "input_adapter_sha256": "997c27bd06b19c5fc6daac1f6d641ce44e339a514adc84ed661a8fb1ef6462ed",
+        "adapter_version": "1.1.0",
+        "qualification_id": "07fe6764d8d61e37651f1b77e020e8a7463e8b29367834410b09aa1f5f7d3763"
+      }
+    },
+    {
+      "card_id": "orbit-drift",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "875c7d9aadcfc773fd122337b6b0675c1bcdb2902142d6d18b524a2ca713f4e9",
+        "source_sha256": "1039d20ad1d033d195be51cac7ae8e1c7dc07870d938da22e5ea7bedf2d89c7d",
+        "demo_sha256": "121ac118a50176e08b7270a5e8138644c396c54bc81d12abf9b2a18950e13119",
+        "workbench_sha256": "eae56ee11cb21dd0d3beb3bee06e5e4e8000f2500d6880d6ab842be3b744b4c5"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/orbit-drift.tsx",
+        "implementation_sha256": "38160d0d29466397766ce2f41bd6b946baf1b2e468d7d5fe7821476196f71340",
+        "input_adapter_sha256": "cdfd816dd3ddf1220704fffbeba96c21f6075f9a0d96bfa99e97c027340e86e7",
+        "adapter_version": "1.1.0",
+        "qualification_id": "32f809dcc63fae5e717ca738466adfeae0480c458e68ecf954359ab9bdadf3a0"
+      }
+    },
+    {
+      "card_id": "outline-box-title",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "3d8b8e0bb4600ed89db049737a058ca4de3842c4d0d26f7c659863fc95a16b1f",
+        "source_sha256": "4984e614edd2e10c58140f91f0771f2ab9cd08437e5f3db502ae9c35115a003c",
+        "demo_sha256": "9feb0441a84707d811d91e1da14dc3ca5b4e38f1ece88528d3e55ecefc5a8604",
+        "workbench_sha256": "a40b09569e703a0f4ba5794d38b16ce7d342bd2bd73a8d20e0011038668ad0a6"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/outline-box-title.tsx",
+        "implementation_sha256": "334fb99b5f4a4c9f7d0e84f0caa87b4ca957c13beffdaede943f4e2359d6870d",
+        "input_adapter_sha256": "49a4a491d9283af523a6d128d94aa868db94864748fb0896e4b0f5f176341ae5",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c165ae3e64f91a15d1b6e7f5e1516c13df5210fa0d1c23ca14a7cb31b2e36b9b"
+      }
+    },
+    {
+      "card_id": "overexpose-flip-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "0e40368df25a4237c38e55015d0324410c04f25cabfa31cbeebbb396f02dc79f",
+        "source_sha256": "b032936e3e9615460ef3329abc5b15b0de0a05750f70329e472edca7658af575",
+        "demo_sha256": "e3e641d559dcc70015fb4d61f0bb95a32e2f37ccbe7962fbbd8fd4f47c307706",
+        "workbench_sha256": "3d247e3c89368ae453edbd55f4e76426f18b1e57d5f4cf67027f4a70fc65f054"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/overexpose-flip-transition.tsx",
+        "implementation_sha256": "57c205aaa303a938ed44db19a773e204a91189a40117c9dada987bf8563ccfef",
+        "input_adapter_sha256": "65e0ef0c69165bc8d6dc1e7e76e792d491a7b338b409a49e2e4a1c854a2dca5c",
+        "adapter_version": "1.1.0",
+        "qualification_id": "470a0111a7c045d6afb34af4a048b83e6393d4102e3627dbb70272487650f7a9"
+      }
+    },
+    {
+      "card_id": "parallel-items-with-host",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "f5d095d83a2a14f393819bc0397d0e201efead18e1743a8121f7d6553fb52d4f",
+        "source_sha256": "162290efbb146397a49d39efa13cd529236d7baf4a8088c3af9b05d725fcb27e",
+        "demo_sha256": "1b6073e41e39815b89e565038f9ae92e7369c6ef26dc089e09f5b8f45b87f348",
+        "workbench_sha256": "895bd70dec65072e0669d9c2e59c389bf210ed6e04475ac3f5b979fd566f3eec"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/parallel-items-with-host.tsx",
+        "implementation_sha256": "4c7ae869a707599e370c505f8e58087389b6f4c816cd928ab1da563a7147e81d",
+        "input_adapter_sha256": "ef5a75ff773778dfce0fbefa89f0086309dbe4ce220b9b1b3c2dc5692dbf1126",
+        "adapter_version": "1.1.0",
+        "qualification_id": "720a86845f5667d8b3cef9a59ca99db89a3cd4585f0fc182074a57d3ca947473"
+      }
+    },
+    {
+      "card_id": "particle-weld-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "0a830e3b5fc2519a6a8afea913e35ac5365fb2724760f6977a0b0552102c88c5",
+        "source_sha256": "99190675adbd6bf30f120c69d2b1e494a897f2de597d298a9d77a0ba24043739",
+        "demo_sha256": "a08b317fae725efa076b320232ed291672cb72fabd9e362b4eb45259a029188b",
+        "workbench_sha256": "b84c7046b880e23cdbdbeb583495eae111c6649e4b90f6556d6c5b85731b628e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/particle-weld-transition.tsx",
+        "implementation_sha256": "dfe4b936cbc1e9c691e8cf0a7a679acaf4eb0bb32004d07c79c4224a32821d56",
+        "input_adapter_sha256": "124faa19935916ae30225a84047e78342d037383522953ce60188cae8dc14112",
+        "adapter_version": "1.1.0",
+        "qualification_id": "1969779e5c1c01c3763d66328225735b840f738c3092c302a7812286092480e8"
+      }
+    },
+    {
+      "card_id": "pencil-sketch-draw",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "bda7c8a4f91ca8931971d4a944440812db4bc26172e908cf65c4fbcf1137ba27",
+        "source_sha256": "4e648e11ec75364b8111cdff92dbdd3fa8998cadc4b93b18e5e2766a849b41e3",
+        "demo_sha256": "b083f83ff700bf8fbb4ecd024f0497912cd14732816be52b400c53f4d8ddacf4",
+        "workbench_sha256": "5c7b018added8c45839c125af2368a6e8362d99b071bf507cf94cae821d395fe"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/pencil-sketch-draw.tsx",
+        "implementation_sha256": "d4665c2c6b941ce28786198ae5403b16d3360bc4b93f84b5869391f2c6f3d139",
+        "input_adapter_sha256": "8147f219ff5c9acc544be5ecaf6929ebdbc25857fe959c830f4dfd341d73f8f2",
+        "adapter_version": "1.1.0",
+        "qualification_id": "9a2838c9c8f8148929a4d19176d5f0927428dea45c36a22e718f8f70c6d432b8"
+      }
+    },
+    {
+      "card_id": "per-character-rise",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "03ea4b56f3fee5b5671f5acfea39a68197485cc3f4efcec5740b7da9509f14cb",
+        "source_sha256": "ddcdfd303810b22051f754295ff11034980a08219db88620279877a2ec19a027",
+        "demo_sha256": "8655034f5cee0993bf451be4923ea24c3bf42b82bf542afb472dd3c9cead493f",
+        "workbench_sha256": "f363932ea7bb16fbfaf7a7d097cb924d6f8cd87831e00899f6bf9c75ed5d1b23"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/per-character-rise.tsx",
+        "implementation_sha256": "12b8abf53d696106905885cc2be80cffbcbfd3ef4a6365a1268fffd6b7223516",
+        "input_adapter_sha256": "3e35225c6cb43cd1d98a05a7c3a13e7cc069f32a824ca7b40a772bda635bc9c7",
+        "adapter_version": "1.1.0",
+        "qualification_id": "3682b103234501cbcaba3d457d396b1e2c785eabc0d00fae22ed72ed73b8aac4"
+      }
+    },
+    {
+      "card_id": "pip-zoom-box",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "119fbc7509a34d696a3251ca650746dbaa0cac964bd947add1b5fa2f90e2cf84",
+        "source_sha256": "3162d14b5c15e60fbf7cb2f13cd38151c089c1569c4adf59f433aa23c5ca1df2",
+        "demo_sha256": "75bd0d598a96bde9a9932b427cbf73cbcfe4c7c82e5e18480c9cb8b2422b5578",
+        "workbench_sha256": "ae84875b65ccd1cd9da3d9b4a50d8299250e79cb70582f42699df9127faa6c05"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/pip-zoom-box.tsx",
+        "implementation_sha256": "70def91b333783980e570982818e4053ee962390f5c64690b531fca1417aa4ee",
+        "input_adapter_sha256": "6001b501dfc61c44b2f66c97e0f6efea4dfd1c55a423d9040181531165c981c6",
+        "adapter_version": "1.1.0",
+        "qualification_id": "f1684896f9dfb0951da15bba43c4a847f8c1125432716c875856db7e1455eda1"
+      }
+    },
+    {
+      "card_id": "pullback-cool-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "d173ce8faf16bb8db42fe651f4bc1bffd8e29524a9b4f581b69f74c61c0f9066",
+        "source_sha256": "766065471f36cd8a6087bf5c07f1df642f29a22f71b49bcc291eb9b9ca76d232",
+        "demo_sha256": "f31ccaba043c56f2c4e1e31372c6dd4b24f827a62ea8433053c10fd4f413fe79",
+        "workbench_sha256": "b922dc5c30fac9ff2fecf892afa8cf6743c8c3b8c6f2fe6b52d17d5a1fbbbd04"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/pullback-cool-transition.tsx",
+        "implementation_sha256": "32462c01ba07465b955f44776068916bd36e3d3961f1bdbe537c58f0cd0e8ab0",
+        "input_adapter_sha256": "c0a9df4c1f16802fde2a0e4737dda28325ca81c7b85772bf2051e0c7bc3d6b6b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "ce3a38ea1b5a561ade7adda8a8c964106371ec080c609684b47050386ef71110"
+      }
+    },
+    {
+      "card_id": "push-through-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "c5c091fafdeeec86e330105ff0dfae88b939b7079b2371c6bdb1d33bbb5530f5",
+        "source_sha256": "1edc6f745d4c8ed6f674735f5d9bac1ce8883e66a588fd7e172f618bd110411f",
+        "demo_sha256": "965100eff4557be6dd3bb2ffb94a59a3897f829a3d9cbeff96a9b0cfae72c260",
+        "workbench_sha256": "5b0593f1ffbe00977499b9c939c267aa02013397cdec6ef3e4f150ebfcb96e7e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/push-through-transition.tsx",
+        "implementation_sha256": "a623efb1c1155baf0622026b3854c35d40174bcc66da608dfdcf6a78328f3cf7",
+        "input_adapter_sha256": "0ff47e544bedfe0cfed02570dcbb63394662bc63f738a72314e99c8c9c7a32f8",
+        "adapter_version": "1.1.0",
+        "qualification_id": "faef3577aa5a8439856cb59d86fa71afffe9d85d9a46938674c07438e0e25f94"
+      }
+    },
+    {
+      "card_id": "quote-bracket-pull",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "c0798b53612c8cad46be24104edd5fa4d4b29d93fce3ce8590df1f11139064fa",
+        "source_sha256": "5235dfe8b864fdb197fc6624ed5731084329c80b753b9e22170e96f672649e9c",
+        "demo_sha256": "1624a8700cc98665f32a9648150b5e6db38f5abd0981ebd327d250ef0919d636",
+        "workbench_sha256": "ad14f7e7730095dbca61ea201d0c9e80281ea2642d7907f17fb4bed0e5d757f1"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/quote-bracket-pull.tsx",
+        "implementation_sha256": "4daf81484c720391decd8f472b7e68f88f5ad3fdd7f1a62c3e79513c85a1302e",
+        "input_adapter_sha256": "b386d5686cbc54ad836b74a87861f9de9a4703d3a8219b60ffd9597a59be7505",
+        "adapter_version": "1.1.0",
+        "qualification_id": "b92a02c0abb51aa72d95fe07233044c3a5a5c6d2cd76f00e3f81f583d85c9327"
+      }
+    },
+    {
+      "card_id": "quote-card",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "95f65e3f6b11f61a16abaf8d456fe84dca6007fb3ae11c193b45ff6f202b0467",
+        "source_sha256": "3e8f1233c31453f4492eb4076fed680fc029be0056dd8c6eeb6914bdbcc0e18e",
+        "demo_sha256": "eb50970c13db140e34795f40b9ebc61209ca01ecee9f7beec4e6d36101ce42e0",
+        "workbench_sha256": "e6fdf57dc5c52402643e1d1737b29e77926ae527bce6f7015a8c4e83a4106d08"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/quote-card.tsx",
+        "implementation_sha256": "6f33ea96f20d9ba6069c37f0eb9c86469e0643fc6f7c468998cf7ef8f4843675",
+        "input_adapter_sha256": "131c66ba43583027adafb0f0776b0ca7a619b8a767b330141ec664f8875f7955",
+        "adapter_version": "1.1.0",
+        "qualification_id": "4bef6d5440cff8316e43f3725dca36c87d3718cf34b491c7bf326880a7078935"
+      }
+    },
+    {
+      "card_id": "quote-hold-arrow",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "72a976cfb24d5f01967fefa54563102f2bd05a73851a37c272509e5d0ce2c7e6",
+        "source_sha256": "9b3cbd6a29ec4580ac0d53b54d8ef82bfa5d7c00100562e370dee2f57b30daef",
+        "demo_sha256": "8e99b67aa02e316ad4045df3e8cb575b6feb2bde7e2637b6eb6ade6dde4650c8",
+        "workbench_sha256": "dff518750b8b60df12f8fee3aa87dccae95308356e1d388a11f71ed3ab1e6493"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/quote-hold-arrow.tsx",
+        "implementation_sha256": "a6063e6945a2b220fe2d5b478fd39b77d0a436746bb517b3db20fdd520be7b6d",
+        "input_adapter_sha256": "334aab370082ef75158b3b0f782e31fec0df80d2881f9d2d11acc652a5a9cd7b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "2830941507638dbc274b186f4a9f319c4754d40a531abd5faa3dfaf86d1cb013"
+      }
+    },
+    {
+      "card_id": "rack-focus-pair",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "76068c58c154410f2a6951d41ed5dc45bf89b64f7ede4a2339abd20c19c9e57b",
+        "source_sha256": "79e8f4009f111c7cb698f0e59543e02a73e8afb1ffa747b81a31c8093351f123",
+        "demo_sha256": "4fd3ddc3db55bf4b41de26aad7dfc3429bd508f597c53281095f64875e03b2ab",
+        "workbench_sha256": "0bb7d102478ada73831b12adf05cd692abbe075b4353bda5b2b38fc929aa1c44"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/rack-focus-pair.tsx",
+        "implementation_sha256": "c442ea8c27f91e03413817f245d1a388fb1a651568ef7c518647fb1946ae52b7",
+        "input_adapter_sha256": "89cccdf5b5440e44cae11922b33019f2d1559cba602680a382c809b290fa1cd0",
+        "adapter_version": "1.1.0",
+        "qualification_id": "b70fbe468abe8088d788de6c3da5e5db636a68cc9a935ce425e4e04d10793ad0"
+      }
+    },
+    {
+      "card_id": "reticle-lock-on",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "f5243de04944061d8e7e6264a782b7132f32bfcb390891a4252c94dac2f20cb2",
+        "source_sha256": "267372d5e16401608fa30557ace5b078121e5a4ba347ac7f1d9a4ecfcc7209e6",
+        "demo_sha256": "4d24862ffd6ae1cb5fb659fda8f12fc592bca6ea96d2bca96b340456fb7c5de8",
+        "workbench_sha256": "53acdd385a851da97922fccfc614e257c220d5d8d8d821955e098c75e18dcd77"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/reticle-lock-on.tsx",
+        "implementation_sha256": "05ca9bd319e4a80bd9297de77f5f21b7a18c9ab8b82cd1cfc37c756769663e99",
+        "input_adapter_sha256": "837edc33ee29ea8851b935a5ae683955e7acbaa8576bb039f61e0c58d370c31e",
+        "adapter_version": "1.1.0",
+        "qualification_id": "07dc076ab632358429f121e01e2ecf2a7df94af280700403d81ad11cd86b7e16"
+      }
+    },
+    {
+      "card_id": "scanline-annotate",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "bc59304f668d73fa36ade547bd459aff7125b779546173ccae21e6c5871f1638",
+        "source_sha256": "d51fb08a3cb1ef8648e57cbcbac31a4e94a3518fa72736088c840915cbe6de94",
+        "demo_sha256": "dc55c1c2044e9fdbf713b1cd133e4bdbdde30000395db56ae24d1a709b2aa0a2",
+        "workbench_sha256": "f69627f6b25754421a3bc8fd1aa8367fa33475e7885917385815eb69579cb01c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/scanline-annotate.tsx",
+        "implementation_sha256": "17cdfb5d934a32ee156431d2d7c64b27d2e96e499a472e5565912db2db07fc90",
+        "input_adapter_sha256": "5e87566913b969a04c292703edccb0284310de721a52e8698cce64cdfd85fe77",
+        "adapter_version": "1.1.0",
+        "qualification_id": "134b238992b7617fa960ce675abc953e6b62d2b25726839571350b7cc46f1ac1"
+      }
+    },
+    {
+      "card_id": "scribble-annotation",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "978307af4567d45ad34cc87fcd3d909a8872685f69e0fc9065456d5f189792eb",
+        "source_sha256": "373f659948a7c7997590afa935a26a635fdbf195195633ed628992f536305786",
+        "demo_sha256": "8f358074b45ac85383dc3f43de5a5014f47bf1f8e422261f18202825fcf1e05b",
+        "workbench_sha256": "924ff49a73530fe6a77cb1e34f48fd2fc98ae1922cc44cdd62e8f21d4bd4d53b"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/scribble-annotation.tsx",
+        "implementation_sha256": "593c4227c57c80ad869126f95307ee59eec4fdd230c062929a25a32cec91b62f",
+        "input_adapter_sha256": "c88cf420a57387ad8dc861984ac2b21749263b2ca8720e6c4ccd2e90207d2251",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c8c6265a6ff65b87d38cf42fd1b00f7318a43ae7c6b2c4c164463f925c7bf335"
+      }
+    },
+    {
+      "card_id": "shape-wipe-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "85567a591f45f1f55e73ffe3ac0efe444585f2fac2b5ec745cff964fb11f8443",
+        "source_sha256": "7df7c971a89d47e9054e17483b2367f78538c66060a45bf0217a5883faa033ea",
+        "demo_sha256": "384bb80b88823af30a5d2631d250286f1aa425b138ba842907ab83849423d5d0",
+        "workbench_sha256": "73e8f10f48fb7529367003092e95f042f4a683cc8dc020f19fd9f4e148961654"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/shape-wipe-transition.tsx",
+        "implementation_sha256": "7ea31de1dfb86d80a98ae4acd1b7728658dc145002b7fc55a25da4cbec065fd0",
+        "input_adapter_sha256": "ddd2a7961ce6951546f316c349a050b7c1c4d059587d72befadb370d3e3ea035",
+        "adapter_version": "1.1.0",
+        "qualification_id": "0aa32c722dd646623fc37a039acabac6723415e54bd4a942ef13e875f9fe8bac"
+      }
+    },
+    {
+      "card_id": "slab-punch-title",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "c10718d8867f3a9647f70a43e39fb17f41961bab882a757ecd44a96f232cf818",
+        "source_sha256": "4c527c14b83de154076bc3a7d8a0fe84679754f572fe6b039df132456c9fee4d",
+        "demo_sha256": "9976118c8e928463f7786277eeb12f3a12febd88d99ff9fe94da6c0b62742514",
+        "workbench_sha256": "00ecb90cb9dbc9231f4083f6e219860b1615befc4995691429d391ed19a6984d"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/slab-punch-title.tsx",
+        "implementation_sha256": "4f7e7b0e34603a7bb58341b98e3e742e7b4ed75e77750b38ad16b84f5d338fad",
+        "input_adapter_sha256": "e60865fa00fd071e8e4f00a44dee31bf808887345eac902a7fc56b4eab310b7b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "d52245b5b9e2ef1331896a5fdcfd78bdd4319c74a756722d5fef226a03b0d3de"
+      }
+    },
+    {
+      "card_id": "slow-pull-reveal",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "ac5727636bc4ea98f5d0a9cc8c24a73bb8179c9d44681c605d55ee56ecf8c545",
+        "source_sha256": "79438baa13340fb21800720cedd387ea4ec228620d0c87e4da2388c30c8fe263",
+        "demo_sha256": "180f845cf984355329fb398d97beae5186f2e129333adab4c56efd34a16f3aa9",
+        "workbench_sha256": "e9d7cacd69e553e1591ab3df4bfbe1973d3a794b2b1ce3dae5f4663b4b4f0946"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/slow-pull-reveal.tsx",
+        "implementation_sha256": "25c2ca72b0c0bee72ca7d41a7530b69cf93f2c726a7c13296573d02485555bf4",
+        "input_adapter_sha256": "c335d3bc6ea9eba6cc0436eb63f67201c8fa7a9092934ae3264f6bdea4ddd912",
+        "adapter_version": "1.1.0",
+        "qualification_id": "2f11bd4258a81ced6f0c761d139f511f65da199c7e75b540c9a74b3f5c0caf7e"
+      }
+    },
+    {
+      "card_id": "slow-push-in",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "ea8d4d58f55bcced7625e4558e82fff4f1a630557925cfad195026c6e80dd9b8",
+        "source_sha256": "ec3a24f96e52320e3036c8584d591d63c927e64b067e8843a80f0ba49579534e",
+        "demo_sha256": "8ed72e4251a734ff4b09d93ef293f0f3752ca1da9e3ba1440c13fefb8f5ff94b",
+        "workbench_sha256": "67cee6ed1ba8ede6139b0707da249b161c497b1cb1d1eb2b990aa2cc8b67cecb"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/slow-push-in.tsx",
+        "implementation_sha256": "ae503f339dd189366f67694844558c7adbaa3029a271f0de7684249156f8dfa9",
+        "input_adapter_sha256": "56179d17a3ea11273f20b64ad28693512e3e81b5781fd27ca8cd06203905de92",
+        "adapter_version": "1.1.0",
+        "qualification_id": "e4e215a2be1f9bbe73ffa822e2779c062e38f957058e254d448e4256ffc0a857"
+      }
+    },
+    {
+      "card_id": "soft-blur-in",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "436817f0599eebc19b2c0503cc2479486d985f59034b1e3b523e998549ddd87f",
+        "source_sha256": "72cfd018a6d1ce18226ae9b77a7fe5c0b08887d740bfdad4a9239332784ed307",
+        "demo_sha256": "812e2d71e233b5abbc0eb97276e9394230d6389cf78157b7fc54326fd30824b7",
+        "workbench_sha256": "df23084c0bb8be891c4ecb40c2dc411460bbd1a1c65fcf53625865519ed0c0ea"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/soft-blur-in.tsx",
+        "implementation_sha256": "0e8d4ea6624c256ad1d91f325d423d17e6f0d33038287fe343e0012a22758d70",
+        "input_adapter_sha256": "c4ba94b158f0dc7bedff01b4de88327bb095763b0d6744d54ce5103fdce901d1",
+        "adapter_version": "1.1.0",
+        "qualification_id": "53875d51742f87803990e0a0108cb73f9a7ea37fdde4c4dcbefc81e7684a8985"
+      }
+    },
+    {
+      "card_id": "source-converge",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "51564e78d627b8a47aea1291c182b267eae2293ba51a28282a5d0a61433111c7",
+        "source_sha256": "a00163db942ec12861a243ad46e6b980804e8dd245cdcf5359b9bf06c5260673",
+        "demo_sha256": "b20ad260bd8b4eca9ea4fb2d1db8db3d0caa0aace6da43de6c60f414f9dc7138",
+        "workbench_sha256": "a9690c4d561b31cfb00c9ffad50b476288140504cdf525c56124398f6d7225eb"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/source-converge.tsx",
+        "implementation_sha256": "2aa3f65c76dbfc052f238daaab1bd80b3fddf97661e7f6e4546fe775e339c81f",
+        "input_adapter_sha256": "2a7a6ed9f51e7e2d4219ffdd78ddb50d09da191b56162c3949302685825defbb",
+        "adapter_version": "1.1.0",
+        "qualification_id": "33aed131714907958fc522e7405cebe6e7062390b9110db1cde36eff6dc217ec"
+      }
+    },
+    {
+      "card_id": "speed-slab-title",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "e079329f6b0161da829894df864438a6b0e8186dfdb7b7d6ea953e5430115b5e",
+        "source_sha256": "58c74373a2662539447665192ed45e695da4b85cac29639f43d8e4191f839290",
+        "demo_sha256": "1c26c9588676f332160b5bbff3979e17efe4727c606efd2f1916b7cfbad96259",
+        "workbench_sha256": "3f42476e52e1d1835d6d69ec5db686a08c1c2a965bb41c334ef241761aca560f"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/speed-slab-title.tsx",
+        "implementation_sha256": "ea19dc19e40ceea0f8cefbcefcbfc1af4402057f5384d44fc579b39e51009468",
+        "input_adapter_sha256": "258c8de2442617dde30cfb8362cd3e4f6ff02f9dc054b43ae2b548926f01fb3f",
+        "adapter_version": "1.1.0",
+        "qualification_id": "3cf64c3670eca562369a29d92adf8af87871a36562f2ec7877ef7083d5404411"
+      }
+    },
+    {
+      "card_id": "split-60-40-story",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "b70f08da992c82d66740f26f74caa4cfa9a85d23a348830b55b55c68a1e980c5",
+        "source_sha256": "1ce1395ea3fb54df8a83e98252d45e85866c1cbf7dcfd7ed4379ebf765edb1dc",
+        "demo_sha256": "017574c876c3196a2384bd8a709d38d5c2adba1571405367459ad8326a30d6f4",
+        "workbench_sha256": "89a2e65387df757378d17caba0136030f940917305ffc8c24e91e793133600cb"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/split-60-40-story.tsx",
+        "implementation_sha256": "7a9bd0ed22013a5670cffffc46da2462ab47ae299374152e8458bc876483012c",
+        "input_adapter_sha256": "60a6e1950ed80e65686ec06daa16a8356be6321ffab2687c855e682f161eecfb",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6c63f8a7bedbbd652170b380d64d3506e7fefa2809d431cae62964668efe4d85"
+      }
+    },
+    {
+      "card_id": "split-compare-slider",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "90e0fde2e1f1ff886ffb602570d32b2cba021a74add83554a6d48f81b7bbe227",
+        "source_sha256": "0fe6c944cc9b8144229a35576ff49c7482bc39a1de2e67001b82019e8992f475",
+        "demo_sha256": "7bc49db14ffce7c8ea7d666f2926115f61384aae5cdcf08b65d783f2fefa5cf8",
+        "workbench_sha256": "f6c90cef6c2b3295bb8e176e0792ef622dd520ac16f2b4593530bb488cef4d7c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/split-compare-slider.tsx",
+        "implementation_sha256": "8dfb14f22b6fb529c10b143ca5cc4515d1fb83e3c29e990893a16c0810bd0754",
+        "input_adapter_sha256": "d8a93b636703a55146ebbb1df7a5fb3dfb695739c5c33276a523abb9452f048b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "46000de3827513f8cb579cff3ef26b125e5359b53a5bd6a3bdefdc6e09929bb9"
+      }
+    },
+    {
+      "card_id": "split-text-stagger",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "c095b87cf35e46fa5f377b8626fe2dc22675b7faf71248b6cb641f111fbc2f83",
+        "source_sha256": "9c9c4d9aaa1c001a0d69bd013cedd864431f9be175cbb70242e072f6b329072e",
+        "demo_sha256": "cd27f09815cdaa1ffd6f9a81257fa698727895667ce52a60f51a9a6ee2094402",
+        "workbench_sha256": "d074c10c5317aae033786e53ab1669d8f8426f26a4f531d2fc637e7d9f031146"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/split-text-stagger.tsx",
+        "implementation_sha256": "0751f0621a005731305dd23e78270f9ba3e46d2e716d2816ccd308cdddf61c84",
+        "input_adapter_sha256": "0fda5e310f2d8da4619fea40e43690d47040f8a6d2ad5b38ea492323f6bfba59",
+        "adapter_version": "1.1.0",
+        "qualification_id": "ba1833c6f22ef950019f03697e804866d05ef7b0b20d9c117b6b5daa26e25bb3"
+      }
+    },
+    {
+      "card_id": "stack-fan-out",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "7ae775fcbac09e53ca4e10455e3999b1afcbb9b7fa79e48f2bbe287b2ed6a492",
+        "source_sha256": "f4eafd9935f0ad3c14713d3036967927a389c3820a8a4467063b0048d1370146",
+        "demo_sha256": "4f5a230f02b77ff02d33a12aa1baf854fc38fe3abd93bf60839df864a0856d0d",
+        "workbench_sha256": "637bace9ad4dfb88117201b1630398d96199556a0e7dec5b3202968a2c6b633c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/stack-fan-out.tsx",
+        "implementation_sha256": "27e306e35ffa664e9d7ac32057855cd2dc0cee16ed5b5fdef46454ae3b04caad",
+        "input_adapter_sha256": "e55ce2276f8d57831734b1a058fc4aaa33b61cba54285c38cc32c4bb02c0fa81",
+        "adapter_version": "1.1.0",
+        "qualification_id": "9e92d39cee9581329751904941953cea4366d54ee3dd607f974f01ee88bcc011"
+      }
+    },
+    {
+      "card_id": "stage-keyframe-tour",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "852e4a51bd1ca48aedf36eb0ada8043e2c3d5b48c5a882ef9cf7cd1f3ff05999",
+        "source_sha256": "155ac1ffc5a442d85307a128495f878fe4a33f5cb6a1ed3a753e1b28967be9d7",
+        "demo_sha256": "313c7411d29a8595e5a584c77a2cd89d25018c217a3c993d2eaf9ae8e23411e5",
+        "workbench_sha256": "d138255f08e4fb705a122494c94b090176389d36f32f667db2e621ee644fb408"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/stage-keyframe-tour.tsx",
+        "implementation_sha256": "bb8c5a2693c89c7072294124c35662239d5c24cbd60ca87d140fd5e3d33cd06f",
+        "input_adapter_sha256": "5baa256d6111e9b32ca5e0b7ab7c94e72464fd7618031c5863b370372a0d42fa",
+        "adapter_version": "1.1.0",
+        "qualification_id": "24aaaa1b451291491f73ea2e073fd76a5726da18539aefb903b8c46c403b2263"
+      }
+    },
+    {
+      "card_id": "step-timeline-vertical",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "0fbe1d7141f8f2f3d92f9bd2ecf789646815c5a7c048892c8dedf6c4ab5b95d1",
+        "source_sha256": "023f0cba47caaede7b1de3e194010d7d8294ce2a7319b8b737b09e6efaa2eebf",
+        "demo_sha256": "429d3379235fb9e894d2cedf4e60962f47fbe5c7a251f1153b5525706d5fc1d7",
+        "workbench_sha256": "82d5a5c4b3378df7a77928dca8bb64fb65244889832b3347367c2db4d827a41a"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/step-timeline-vertical.tsx",
+        "implementation_sha256": "e4d3ae330ebe3da3f180124a85bc916dbda75a3c478d81c8fb20f1686eb4b789",
+        "input_adapter_sha256": "46adc1ffa6d3267aa432be68f5cb70daaaf6909f56cff5827aa18f883f0d87e5",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a1eedd45821be7cef3d363b6d04feb89907108680e4796da70eda5083df887c7"
+      }
+    },
+    {
+      "card_id": "still-layout-relay",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "cec156bdfec69d90dd470ad9f408e921c26a0c8c13cd0a8b33585cc5c544a66c",
+        "source_sha256": "acf431e96eefbe478be5b82ae8cfeb11cccc734580367667a8f3fd3210c602dc",
+        "demo_sha256": "47ff54f588d7f6a049be7d0d54039e4b84132fae4743c6eab9bf43248e4712cd",
+        "workbench_sha256": "e74d031718f966ac63c2f53fb3e8c3f9b8fbcf494a5607a05927abd96cc9ef8e"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/still-layout-relay.tsx",
+        "implementation_sha256": "bf7d032784252921578f552f66b9607ed63b425d4b9d41fc9ddaebc13f4f1dcc",
+        "input_adapter_sha256": "965b05d31b2e3be79d4088f7a30ed1fe6cf7cc4db696295cbe1df1cda1ba1d3b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "796a3576cb2e85d5a97135d658f2503ba881c66cf6eff17cde8f6623d50e77a0"
+      }
+    },
+    {
+      "card_id": "strike-and-replace",
+      "category": "强调标注",
+      "upstream": {
+        "reference_sha256": "0e51a681e4224cf9dd8def35e3a465ad58f269b40c2c6807b1ab1c11bd61a6fa",
+        "source_sha256": "75e994e167cd94f6d118f4cd1ff2b1e794be443b4e705fbf01031a605013269d",
+        "demo_sha256": "1491b61b010f8de9cc7bf0ce1df2b47167990638da7cf5df7d0c9bb3fb57fdd9",
+        "workbench_sha256": "6dae852c625fe7e03b4683597defbc05248f212934af0ade27f56565dc7266dc"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "annotation",
+        "layer_roles": [
+          "annotation"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/strike-and-replace.tsx",
+        "implementation_sha256": "72b39063736f9b44f01fc6eabfd84c5f683843b7941c1086a6cc30e7e4da5611",
+        "input_adapter_sha256": "0b689c91bd6f1daf795c7e659404e57a9874f05f0e9c7bc18c7098b34798d2d0",
+        "adapter_version": "1.1.0",
+        "qualification_id": "c881a0c4f232f42332bc14caedf3777e00cc00b6dc2d25d19694db1b5cc4e320"
+      }
+    },
+    {
+      "card_id": "subscribe-cta",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "3d417222995223157cf33eb919c3ea779396dfc43ad06ff3f43e10e84431aec5",
+        "source_sha256": "87c3b952819317432f25e1ec40b9b6561c00cdaf8819c404a146d092cc0dda32",
+        "demo_sha256": "e1b76b321338f58b186cc2d749fc993be954bdba0849ea4bfc0c8f4e114e75d8",
+        "workbench_sha256": "dd4b789955bc9f3d6d53c936f58a9959f7a5d68d2dbfb7a5c5009631ed78c0c7"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/subscribe-cta.tsx",
+        "implementation_sha256": "56c132e29edf012c8050cf26916584bfac9177994258b2dcdc354106c498bc89",
+        "input_adapter_sha256": "b69ad4e55416686fbc15e119739f994f5d7eb9e26a00f38a3f70d0250268a235",
+        "adapter_version": "1.1.0",
+        "qualification_id": "5a367ce3934a7300958e4f051537ada183a78dea510b0583fed22ad46844e740"
+      }
+    },
+    {
+      "card_id": "sway-parallax",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "2bc30b8db042fb36d21583a47e98b100e009da617ca3fcb1299f551bad28f368",
+        "source_sha256": "4fa9cca75dd02ab13b7163b8a33bd7e0a7e5cb1ab2f703f501de2631d0c07231",
+        "demo_sha256": "1a814c23f6364d2cc32eef069aa6f4be106c715eda092261baef32227bba4d63",
+        "workbench_sha256": "a22341fc63e032d56caebb83870775f251531f0ab1e6527bd8277265f1644b60"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/sway-parallax.tsx",
+        "implementation_sha256": "433124fcf4e100960c6eee8094595dc1768e61a3d3dc17d42284e6c56894fd40",
+        "input_adapter_sha256": "c4578ff49875db908c2a7f1688037c735b1e6a82e0698f2ba7957fc19842bc76",
+        "adapter_version": "1.1.0",
+        "qualification_id": "3c3833bf53fbfe4a404e3c0a346f4c7c2a0b502a64d4190cb84243db54bd58ba"
+      }
+    },
+    {
+      "card_id": "terminal-typing-log",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "31bc4ee80e6692feb41d0d9936f87ced1dcccef33b39555ce8339aa91d074ca0",
+        "source_sha256": "337090493417804c462f5905ddea89d30dbf90d9badc243b4e808113953ecfaa",
+        "demo_sha256": "77003ed6442ae073f9f385eb253a4a531e6652463877fb40f49023bd2d56169b",
+        "workbench_sha256": "a44caa706004ce5ea8b4eda890c27754c21da5700dfe5e0e92fdfd270ec739de"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/terminal-typing-log.tsx",
+        "implementation_sha256": "f0cbe39a0e1e5af38cb330c269154bf9a6e495a75fe5d302c1bb9aaada4a6a32",
+        "input_adapter_sha256": "303ed6114819f93fc957f7993e6f93afbb314b4359b9517c77a48f161bf3a190",
+        "adapter_version": "1.1.0",
+        "qualification_id": "de00de48bd9df479016e2aef75b6821665f7699345d8be8e61d1fe11b669e690"
+      }
+    },
+    {
+      "card_id": "tilt-3d-page",
+      "category": "运镜",
+      "upstream": {
+        "reference_sha256": "4116a9197e53524b5aa8126701db76547c7d5f0e25685e5cbdf826f7a540a7ae",
+        "source_sha256": "6abd2141e995365190923694201154d01adf0610482c20b1b868ef57f8343a6c",
+        "demo_sha256": "ef100b1883cff84dcce7525ef2e956bfa49e269ec006f965282c663c0ce3283c",
+        "workbench_sha256": "ef53aa8553a7ac08cd445bdc61ab378bbd914a8963ef535640824cc5010aa424"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "camera",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/tilt-3d-page.tsx",
+        "implementation_sha256": "eac6fec016cacdb859cb5aa29dcf18345395e5224e20f7758473be5ae97465e2",
+        "input_adapter_sha256": "ac8b7de7f02c88a801cff67a8369a497e492ead0e42d45f0ad7406f121457914",
+        "adapter_version": "1.1.0",
+        "qualification_id": "f563016e9a6eb643160706799cd79735f6a823e5e9a4b5b8450a939ca90514d0"
+      }
+    },
+    {
+      "card_id": "timeline-photo-strip",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "c7aa7b859a4b1ec9642ef8e686f285e45591e5badfcc44785b818e316fa6dd1f",
+        "source_sha256": "ddcaa579f3210fd751cc350776f6561d0f4a7156cb3cb8a5896ab7b76c484f05",
+        "demo_sha256": "bae3026a5857c39f2e0cc80b9577834cd75c39fa50095cedf57b2013b6eee1c9",
+        "workbench_sha256": "c82cc96427cd110c3282bc734da497253a05f6ea85de5317e46825b841a8727c"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/timeline-photo-strip.tsx",
+        "implementation_sha256": "a2561465b1f625dbf192702e22d30d539edfe770e56513537765dfb25de8dd06",
+        "input_adapter_sha256": "2c459bfe45ff1151c752c9dbb9b0e9228c01c1790d802744a8bc40a7340edb35",
+        "adapter_version": "1.1.0",
+        "qualification_id": "70513b8d7099b2f9b0c133ace90fba1c1b31221b7b174c86380d02ea568508d2"
+      }
+    },
+    {
+      "card_id": "title-demote-to-label",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "a7f54fb9e77e64980a510eff3eebbf71ebdbe435cfa55a958970915fda0d4ad0",
+        "source_sha256": "9bdb8c8f826a274cb76bf6959302ee9eddf1bb7a9b466cefc7dbbb1a3f865d91",
+        "demo_sha256": "bb7ac79fd27a0c67b20be46aa974e1259c61a1bded406fa3a66c0c617e24718c",
+        "workbench_sha256": "e92ae21e4b0e153d7ae80c45390c659699eb6cb81e277c75b6451ff344ba3ab2"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/title-demote-to-label.tsx",
+        "implementation_sha256": "9b8905111f1288a091f752d494ce954ea49cc978ee9c99ea1fd67aaad88f9eee",
+        "input_adapter_sha256": "0df41f032a72bf1467938d75285188973b62d8e4a14e38dc66443a30a3db03a9",
+        "adapter_version": "1.1.0",
+        "qualification_id": "85f1924d823fd9f19bee7692d919f2e4e2c6fbeef55cf066f6b9d73e0e42b693"
+      }
+    },
+    {
+      "card_id": "tracking-in",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "e9712df5e3a55d5aa2931a87a4e3f674cc49ba19d2b55151dea0eefb6e2c81a4",
+        "source_sha256": "b45ee0b45164a5286c31d9b75b1673a798cbc1f9fe75397eb2873094f073b21a",
+        "demo_sha256": "1a2d2bebe8d3aee86a2e866316c1de6517d1f261c08a86d3b3bc1f619452ca75",
+        "workbench_sha256": "a711c0d000360ebe15ddfd7c0db3cfabea12e0c553ae59356494a4105fb08957"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/tracking-in.tsx",
+        "implementation_sha256": "90f307c84bb6dd5bc48585721254f9b6def8b6819ce59a81fc4e7606806f47c8",
+        "input_adapter_sha256": "cda0a25424342aa20aeb58af378613b72cd50537b1c8ae959e91d9a127b01d8a",
+        "adapter_version": "1.1.0",
+        "qualification_id": "ae513dc9441c5f61ad97a36d22e841ce6efb8ca657c90a12a1b08ff4fe908307"
+      }
+    },
+    {
+      "card_id": "type-contrast-emphasis",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "052964706ad767120d459072c8698e3144555c7e94bf7f8883215bf23cfa4cf1",
+        "source_sha256": "a32939c7f34212449ede31eab9e49a7e096b3f48231723b80043f65cc3bdcad6",
+        "demo_sha256": "88481f7c32b6de1683b76fbc3b8f0f140cd3a1170db5f7e601cbe9ae62f3f423",
+        "workbench_sha256": "679a27efb563f11b4be2a1545da3a3872a73732775019c7c7cf1d2212ed3e565"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/type-contrast-emphasis.tsx",
+        "implementation_sha256": "864d0022a24487cf2a6d00eecf58f0fa6b9dff619ceba9d9486f1129e8ad4e0e",
+        "input_adapter_sha256": "1e91f8ed170d72b452e328a8842cad79a7348013e52ba9ae00958445e2ad0adb",
+        "adapter_version": "1.1.0",
+        "qualification_id": "0c66fc733e4e9a62a08c4a208788028f518c6a011b2175f50483e18959e601f1"
+      }
+    },
+    {
+      "card_id": "typewriter-reveal",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "867e9398e4c9e74dc6126ce22dd3dd6d0520cc1751cadec05e8817d2bc3aebe3",
+        "source_sha256": "778a4cbc833c2d52e852a3afffd535d9f94bd49f049b3fe7042fc56ce12c9dba",
+        "demo_sha256": "ceda10a953dc6ecaca42f8716b96d725ccdb6d6191817da6578f07bdde039136",
+        "workbench_sha256": "439a244b395a478d322a83e35a4e789cc66bb03cb3e8947709f9d7492bdb709f"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/typewriter-reveal.tsx",
+        "implementation_sha256": "2a881fdabafd9a64f7663c30b7f0cbc6ec1b116173738d2bba6757397d858911",
+        "input_adapter_sha256": "a9e3a814bf507a97936faeb0697d0964b24f5b47d149af63378d190c1a8aa6e9",
+        "adapter_version": "1.1.0",
+        "qualification_id": "65044bcb890cf0a2223c3b7bf1c5bad739bc18aa574eb35596ed52c910dd91a7"
+      }
+    },
+    {
+      "card_id": "ui-flow-theater",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "8dffe27464976086171dbec7f99c1dc559e155f40f8194f2c31b602dab0ac729",
+        "source_sha256": "05d1aa1e495221f067ab5b8c9bb186275fe4450c59b2fb84f12276ab30c135de",
+        "demo_sha256": "7456428c020b026d3cbc83eb3804500af9486c2e7b5f8218828861d8567c70fd",
+        "workbench_sha256": "5504ea774e04dff833f28f97a5ab440e8540e4bc1f5e04c926e7c634e18b41c1"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/ui-flow-theater.tsx",
+        "implementation_sha256": "0aaefbb9e276779b9a716d3af8bb5c25510a405813ae5eac0f0bb9823a612b2a",
+        "input_adapter_sha256": "5e918400ee4bae2818474a7815a32cb848f6ff712f4ccb1af112d61fe54aca07",
+        "adapter_version": "1.1.0",
+        "qualification_id": "4b3f1e98bb9f9d3244b6b23a49eda4929181d105e462dbf3031788ca66a2ee22"
+      }
+    },
+    {
+      "card_id": "ui-prop-theater",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "f52db65c0f09e26806fb4fd6e10d75420558fc76a860649dbb550a0aff2a566f",
+        "source_sha256": "f85f9c49ecbc1cf170ce977bed5536eacdf7aacddfc9f3051c4f7d7c627bd08b",
+        "demo_sha256": "086712d0f3cafdef35b9705bd2a76110091e085e93347b1e5c5ed243039430f9",
+        "workbench_sha256": "ccf882224b1f5ddf309ec9b0f604d7e693043a9bd43dfdfab58e2a7def4ebf67"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/ui-prop-theater.tsx",
+        "implementation_sha256": "f9f241a0ef368a081ec25250ee9aec18630b83bed42e94a4e8c49953b05c341b",
+        "input_adapter_sha256": "911c25e02c4049e1457f44412a65ef2a3d2a2f2758ba35051d82e5760c4013b2",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6297ce4f7c7103eab349f8a3e93e07bac186d03bafe3139b47d6ffc45d6ffb79"
+      }
+    },
+    {
+      "card_id": "unit-grid-proportion",
+      "category": "数据信息图",
+      "upstream": {
+        "reference_sha256": "e3e3fc153d5db37ce6910bd30f825d644b16122cdb05d4acc13bf8896c1ddd18",
+        "source_sha256": "b06dc875caf9745ad1f48ae72b3b760cfca9c586badde5b212a05796eb12d465",
+        "demo_sha256": "3d8469605494da8503025ded96d15cfbf7035e3cb8a72aeb94d97d68527c35fe",
+        "workbench_sha256": "6e9d1d6fb6169cd6c2c35665b7073a0d1cd2e3270bbb810d0d9552294999a762"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/unit-grid-proportion.tsx",
+        "implementation_sha256": "411d6c15f86e8494c1e819c0b9c6dde18df26d7e367969be52bb4ffb14d8df7a",
+        "input_adapter_sha256": "766c9a4db62732dd12a6f6fdfd3b6803736268b45b7dddab8e256135e464713e",
+        "adapter_version": "1.1.0",
+        "qualification_id": "e515f513798521096cc756d55923765062ef5a07050abebaa155090d01dbf86e"
+      }
+    },
+    {
+      "card_id": "whip-pan-transition",
+      "category": "转场结构",
+      "upstream": {
+        "reference_sha256": "1f825921d7d575cbff3287a04660f994577a18d59e5a0ecc62bb44b0ed2180a9",
+        "source_sha256": "735e00f3e7173b0a63a0bde557ffdf9bbdd10f542eff8e908d1783dbc2a46551",
+        "demo_sha256": "36ca1df52f5b8527ecc074296646113edd042fe0a662530d446800ba16dc2c94",
+        "workbench_sha256": "3a71346702cd88e5a2dc9bb4d7965c95078822349714bdf9500efb07fa7b9e71"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "transition",
+        "layer_roles": [
+          "base"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/whip-pan-transition.tsx",
+        "implementation_sha256": "2ac68a97feb4bd674f8e9b599c65ea0b87cc682dda35e14c0c722748bd3f9e9a",
+        "input_adapter_sha256": "bd333d5ef5928d4c48b9fc26c99b0ada67616b1104c0367c5a63d7936df6f81c",
+        "adapter_version": "1.1.0",
+        "qualification_id": "a2bf32bced44eecfbccdbcf819b33fdf6b22b94c0e00af438ceccb8537ab7d46"
+      }
+    },
+    {
+      "card_id": "word-relay-filmstrip",
+      "category": "素材呈现",
+      "upstream": {
+        "reference_sha256": "45cc851fef5064f4b1c85918dd32cafcbd6c96df09dd9684b411f21476ce17ef",
+        "source_sha256": "07ce275988732be32ddddc9e9d6f38221201b2a369b469553bf112874f462635",
+        "demo_sha256": "d8459277a6f5a17e9c48dfe058f3d63759498b3f78234ebfe2b572834ef1a523",
+        "workbench_sha256": "192411f0a4ddf43fa4d885be7aaa9971115a34e36e54472072521a77ca20a360"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "inset"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/word-relay-filmstrip.tsx",
+        "implementation_sha256": "ec271d9fd4521d9f52c23b9a0f330bf3c2e60321078bc3def6821edaa6ac2ce6",
+        "input_adapter_sha256": "e23c5fd603b888d1fb37af94ebd3b9ad0394a4b8f43a212bd2d2484cd056aeed",
+        "adapter_version": "1.1.0",
+        "qualification_id": "6060946addff750720f5871f638b35ddad22be37b2cfec95c9d152d893cea1c3"
+      }
+    },
+    {
+      "card_id": "word-slot-cycle",
+      "category": "字幕花字",
+      "upstream": {
+        "reference_sha256": "83e81e34670c11b36f50488244fede732f8bbe198e3ea921d7d13ac3dea15183",
+        "source_sha256": "71be5941fff1635cdbe14ab62bdd318b46fa8203dc21e60daa0f0b923ad389a7",
+        "demo_sha256": "5dfe21219265b847ddee1b528182579270cd412cde348f24805b4704cc3a0edb",
+        "workbench_sha256": "44d772d681d0ddd46458c98e83584dbdf8fa6d2028db39c27e8507cdeef44be5"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "overlay",
+        "layer_roles": [
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/word-slot-cycle.tsx",
+        "implementation_sha256": "a0fffea1914d79c9e402a074f7dee66c0519212971a7d595a8fa354f5794560c",
+        "input_adapter_sha256": "f3672af3528488248ff77c2c5efd5cdef03fbc581c3916dd294036a62189898b",
+        "adapter_version": "1.1.0",
+        "qualification_id": "0d04c286fde2721273730fdd302d4687f962ec7b2af4515e9759a9df3c240ef6"
+      }
+    },
+    {
+      "card_id": "x-follow-card",
+      "category": "人物互动",
+      "upstream": {
+        "reference_sha256": "b314f9988ebd03d5815e26f3f33a05ff1f64ad4bd05839c56d4400651926994f",
+        "source_sha256": "a555ec01a8330af0e13447173673f9a5f3d09f491ca52d9cee5e79f92ca9d2ac",
+        "demo_sha256": "09c534bb486732766e01af91012387bd7e95a701d7589905a0cfcb3fd0f74483",
+        "workbench_sha256": "704e87c3c059a05be0f7aad6b54e8253c315bb37e585da5dffc7a9a221b943db"
+      },
+      "production": {
+        "status": "qualified",
+        "production_role": "scene",
+        "layer_roles": [
+          "base",
+          "overlay"
+        ],
+        "derived_entrypoint": "edit/hd/integrations/talkcraft/runtime/src/cards/x-follow-card.tsx",
+        "implementation_sha256": "54d8a610bfbbfc34a8d943dc01eb6144b6a7b6e3c45709ebecd069ac72e87be5",
+        "input_adapter_sha256": "ccd9f30464d3b27b4d2ac1cd4811e800ad996b4a0db949c32facef45cd835792",
+        "adapter_version": "1.1.0",
+        "qualification_id": "2d5d3c0564c284fb04ced406ccbb1e5eee7721e7744a5ec8316117d465698044"
+      }
+    }
+  ]
+}

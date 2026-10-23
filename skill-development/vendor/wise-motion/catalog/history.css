@@ -1,0 +1,15 @@
+/* Copyright (c) 2026 Wise Wong. SPDX-License-Identifier: Apache-2.0 */
+.kind-tabs { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.kind-tabs button { padding-inline:5px; }
+.history-media { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.history-notice { position:absolute; inset:auto 24px 20px; margin:0; padding:12px; color:var(--ink); background:var(--panel); font-size:13px; line-height:1.7; }
+.history-notice[hidden] { display:none; }
+.history-poster { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.history-placeholder { display:grid; place-items:center; height:100%; color:var(--muted); font-size:12px; }
+#history-details { font-size:12px; line-height:1.75; color:var(--muted); overflow-wrap:anywhere; }
+#history-details p { margin:10px 0; }
+#history-details strong { color:var(--ink); font-weight:300; }
+#history-details a { color:inherit; text-underline-offset:3px; }
+.history-case { display:block; width:100%; margin-top:7px; padding:7px; border:1px solid var(--line); border-radius:5px; background:var(--soft); color:var(--ink); font:inherit; }
+.related-chips .btn { white-space:normal; text-align:left; }
+.pattern-svg { display:block; }

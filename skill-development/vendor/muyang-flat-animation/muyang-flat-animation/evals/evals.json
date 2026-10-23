@@ -1,0 +1,57 @@
+{
+  "skill": "muyang-flat-animation",
+  "cases": [
+    {
+      "prompt": "沐阳扁平动画：学会把抽象的概念具体化。",
+      "expected": "Stops at Gate 1 with a concrete visual proposition and does not generate media."
+    },
+    {
+      "prompt": "沐阳扁平动画：用AI解决近在眼前的小事情。",
+      "expected": "Uses nearby task cards or daily objects and avoids a giant robot or futuristic city."
+    },
+    {
+      "prompt": "方案通过。",
+      "expected": "Generates only the final still and waits at Gate 2 before video generation."
+    },
+    {
+      "prompt": "静帧通过。",
+      "expected": "Generates video with synchronized lightweight sound effects by default, preserves the audio track during finalization, creates a contact sheet, and verifies both visual and audio requirements."
+    },
+    {
+      "prompt": "无人物模式，芥末黄配色，1080×1350：信息不是越多越好，而是越清楚越好。",
+      "expected": "Gate 1 explicitly records content-only mode, mustard-editorial palette, 1080x1350 canvas, caption-safe negative space, and no people or hands."
+    },
+    {
+      "prompt": "做成方形，鼠尾草绿，不要人物，让一张空白城市地图用生长动画逐步形成道路、街区和关键节点。",
+      "expected": "Uses the square preset, sage-green palette and content-only mode; interprets growth as map lines and structures extending from fixed origins, not as plants or whole-object scaling."
+    },
+    {
+      "prompt": "生长动画表现数据趋势从零逐渐形成，不要植物。",
+      "expected": "Builds axes, data lines or bars and key nodes in structural order; does not introduce plants and does not scale or fade in a completed chart."
+    },
+    {
+      "prompt": "做成无声版本。",
+      "expected": "Sets sound_mode to silent, requests no generated sound, finalizes with --audio strip, and verifies that no audio stream remains."
+    },
+    {
+      "prompt": "默认做一个卡片筛选动画。",
+      "expected": "Uses semantic-auto colors and knowledge-explainer filtering motion with subtle paper slides and soft card-placement clicks; excludes all pencil, pen, marker, chalk, drawing, scribbling and scraping sounds as well as speech, vocals and background music."
+    },
+    {
+      "prompt": "无人物，不限制配色，用图形化方式表现一个观点。",
+      "expected": "Uses recognizable pictorial objects or mini-scenes in the paper, fineliner and selective colored-pencil editorial style; does not force people or copy the reference blue-orange palette, and avoids rigid corporate vector modules."
+    },
+    {
+      "prompt": "让四个内容方向依次出现，动画要克制平滑，不要胡乱的线。",
+      "expected": "Uses one clear primary action with staggered responses from the four approved content directions. Every animated line connects named objects and follows an approved path; no orphan branches, circuit traces, radial rays, random curves or free-floating decoration appear. Motion uses soft action-specific easing and ends in a readable result state."
+    },
+    {
+      "prompt": "做成适合知识讲解的动画，默认音效，但不要笔在纸上摩擦的声音。",
+      "expected": "Chooses one explanatory motion pattern such as classification, ordering, comparison, filtering, progression or cause-to-result; uses sparse paper slides, object placement, light whooshes or tonal cues, and explicitly forbids pencil writing, pen scratching, marker rubbing, chalk writing, drawing-on-paper, scribbling and scraping sounds."
+    },
+    {
+      "prompt": "参考素材那样让画面自然动起来，不要约束得太死：人物持续做小动作，周围图标依次响应，箭头和提示线可以出现，但不要乱。",
+      "expected": "Uses a stable locked composition with layered motion: one readable primary action, 1–2 causally related responses, staggered icon relays, low-amplitude anchored life motion, and brief object-attached accents. It does not impose a fixed 1–3 group or one-line cap; every path has named endpoints and no orphan lines appear in negative space. Motion uses soft action-specific easing and may use one subtle 2–4% settle, while prohibiting repeated bounce, rubbery deformation, camera drift and random decorative motion."
+    }
+  ]
+}

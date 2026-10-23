@@ -1,0 +1,15 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "bar-chart-growth",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "sfx_cues": [
+    {"cueId":"baseline-draw","frame":10,"anchor":"baseline-draw","name":"text-marker-pen-line","assetKey":"talkcraft-text-marker-pen-line","volume":0.25,"playbackRate":1.0},
+    {"cueId":"bar-0-rise","frame":15,"anchor":"bar-0-rise","name":"mech-lock-quick","assetKey":"talkcraft-mech-lock-quick","volume":0.22,"playbackRate":0.92},
+    {"cueId":"bar-1-rise","frame":16,"anchor":"bar-1-rise","name":"mech-lock-quick","assetKey":"talkcraft-mech-lock-quick","volume":0.24,"playbackRate":1.0},
+    {"cueId":"bar-2-rise","frame":18,"anchor":"bar-2-rise","name":"mech-lock-quick","assetKey":"talkcraft-mech-lock-quick","volume":0.26,"playbackRate":1.08},
+    {"cueId":"bar-3-rise","frame":19,"anchor":"bar-3-rise","name":"mech-lock-quick","assetKey":"talkcraft-mech-lock-quick","volume":0.28,"playbackRate":1.16},
+    {"cueId":"bar-4-rise","frame":21,"anchor":"bar-4-rise","name":"mech-lock-quick","assetKey":"talkcraft-mech-lock-quick","volume":0.3,"playbackRate":1.24},
+    {"cueId":"conclusion-pop","frame":28,"anchor":"conclusion-pop","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.32,"playbackRate":1.0}
+  ]
+}

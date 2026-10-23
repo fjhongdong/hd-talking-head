@@ -1,0 +1,107 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "parallel-items-with-host",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "4c7ae869a707599e370c505f8e58087389b6f4c816cd928ab1da563a7147e81d",
+  "contract_sha256": "0f69b15c3ba123ad620e7c82fad9000d9d7af9b41c66af9a16a4c01c405990be",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 530,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        },
+        {
+          "slot": "item-1",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-2",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-3",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "三个重点",
+        "subtitle": "并列展开",
+        "accent": "#007AFF"
+      }
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 530,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        },
+        {
+          "slot": "item-1",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-2",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-3",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "三个重点对照",
+        "subtitle": "并列展开升级",
+        "accent": "#FF375F"
+      }
+    }
+  ]
+}

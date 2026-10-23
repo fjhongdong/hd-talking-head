@@ -1,0 +1,15 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "slab-punch-title",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "geometry": {
+    "presenter_rect": {"x": 180, "y": 850, "width": 720, "height": 800},
+    "title_rect": {"x": 90, "y": 250, "width": 900, "height": 570},
+    "bottom_caption_safe_px": 270
+  },
+  "sfx_cues": [
+    {"cueId": "slab-expand", "frame": 16, "anchor": "slab-expand", "name": "paper-slice-quick", "assetKey": "talkcraft-paper-slice-quick", "volume": 0.4, "playbackRate": 1.0},
+    {"cueId": "word-punch", "frame": 21, "anchor": "word-punch", "name": "camera-lens-shutter", "assetKey": "talkcraft-camera-lens-shutter", "volume": 0.5, "playbackRate": 1.0}
+  ]
+}

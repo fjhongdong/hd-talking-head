@@ -1,0 +1,96 @@
+{
+  "hero": "showcase",
+  "order": [
+    "showcase",
+    "voice-demo"
+  ],
+  "works": {
+    "showcase": {
+      "title": {
+        "en": "Tea Across the Ages",
+        "zh": "艺术史速通"
+      },
+      "description": {
+        "en": "15 art-history styles, one cat — every frame drawn by code on a canvas.",
+        "zh": "15 种艺术史风格，一只猫，每一帧都是代码在画布上画出来的。"
+      },
+      "tags": [
+        "Canvas",
+        "15 styles"
+      ],
+      "poster": 0.42
+    },
+    "voice-demo": {
+      "title": {
+        "en": "One sentence, one film",
+        "zh": "一句话出片"
+      },
+      "description": {
+        "en": "Narrated, with motion landing on the words: every cue is anchored to a word in the voice track.",
+        "zh": "带配音的解说片，动作踩在词上：每个节点都锚定在配音里的某个词。"
+      },
+      "tags": [
+        "Voice",
+        "Word cues"
+      ],
+      "poster": 0.7
+    }
+  },
+  "templates": {
+    "blank": {
+      "title": {
+        "en": "Blank template",
+        "zh": "空白模板"
+      },
+      "description": {
+        "en": "Title, a big number and an end card. The smallest project that follows the whole contract.",
+        "zh": "标题、一个大数字、一张片尾卡。遵守全部约定的最小工程，从这里开始做任何东西。"
+      },
+      "poster": 0.6
+    },
+    "finance-chart": {
+      "title": {
+        "en": "Finance chart",
+        "zh": "财务图表"
+      },
+      "description": {
+        "en": "Economist-style data chart: layout, axes, the data grows, then one annotation. Bars, line or K-line from a JSON series.",
+        "zh": "经济学人风格的数据图：先版式，再坐标轴，数据长出来，最后一处标注。柱状、折线或 K 线，数据就是一段 JSON。"
+      },
+      "poster": 0.85
+    },
+    "math-3b1b": {
+      "title": {
+        "en": "3Blue1Brown-style explainer",
+        "zh": "3Blue1Brown 式讲解"
+      },
+      "description": {
+        "en": "Black board, one idea at a time: a title is written, an equation turns into the next, a curve morphs, one point gets boxed.",
+        "zh": "黑板，一次只讲一个概念：写出标题，公式变成下一个公式，曲线变形，最后圈出一个点。"
+      },
+      "poster": 0.55
+    },
+    "talking-head": {
+      "title": {
+        "en": "Talking-head package",
+        "zh": "口播包装"
+      },
+      "description": {
+        "en": "Name plate, count-up numbers, keyword captions and a chapter card over your own talking-head video, each landing on a spoken word.",
+        "zh": "给你自己的口播视频加名牌、数字卡、关键词花字和章节卡，每一样都踩在说出的那个词上。"
+      },
+      "poster": 0.5
+    },
+    "keynote-ui": {
+      "title": {
+        "en": "Keynote launch UI",
+        "zh": "发布会风格界面"
+      },
+      "description": {
+        "en": "Dark glowing backdrop, one thing per screen: a title floats out of blur, glass cards spring in, a screenshot gets a highlight box, a big number counts up.",
+        "zh": "深色发光背景，一屏只讲一件事：标题从模糊里浮出，玻璃卡片弹入，截图上出现高亮框，大数字滚动上涨。"
+      },
+      "poster": 0.45
+    }
+  }
+}

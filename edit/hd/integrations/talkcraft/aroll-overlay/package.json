@@ -1,0 +1,9 @@
+{
+  "name": "hd-talkcraft-aroll-overlay",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@remotion/paths": "4.0.520"
+  }
+}

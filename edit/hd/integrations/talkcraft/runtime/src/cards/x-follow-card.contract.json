@@ -1,0 +1,40 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "x-follow-card",
+  "scene": "full-frame",
+  "scene_input_slots": [
+    "presenter"
+  ],
+  "geometry": {
+    "demo_rect": {
+      "x": -156,
+      "y": 35,
+      "width": 1392,
+      "height": 785
+    },
+    "title_rect": {
+      "x": 70,
+      "y": 815,
+      "width": 940,
+      "height": 170
+    },
+    "presenter_rect": {
+      "x": 130,
+      "y": 990,
+      "width": 820,
+      "height": 860
+    },
+    "bottom_caption_safe_px": 100
+  },
+  "sfx_cues": [
+    {
+      "cueId": "card-in",
+      "frame": 10,
+      "anchor": "card-in",
+      "name": "ui-pop",
+      "assetKey": "talkcraft-ui-pop",
+      "volume": 0.28,
+      "playbackRate": 1
+    }
+  ]
+}

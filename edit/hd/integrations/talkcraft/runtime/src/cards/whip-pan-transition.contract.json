@@ -1,0 +1,35 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "whip-pan-transition",
+  "scene": "full-frame",
+  "scene_input_slots": [
+    "a",
+    "b"
+  ],
+  "geometry": {
+    "demo_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1215
+    },
+    "title_rect": {
+      "x": 70,
+      "y": 1320,
+      "width": 940,
+      "height": 230
+    },
+    "bottom_caption_safe_px": 100
+  },
+  "sfx_cues": [
+    {
+      "cueId": "whip-cut",
+      "frame": 28,
+      "anchor": "whip-cut",
+      "name": "wind-swoosh-short",
+      "assetKey": "talkcraft-wind-swoosh-short",
+      "volume": 0.38,
+      "playbackRate": 1
+    }
+  ]
+}

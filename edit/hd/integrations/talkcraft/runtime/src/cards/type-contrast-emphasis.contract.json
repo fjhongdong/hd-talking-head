@@ -1,0 +1,15 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "type-contrast-emphasis",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "geometry": {
+    "presenter_rect": {"x": 180, "y": 850, "width": 720, "height": 800},
+    "caption_rect": {"x": 60, "y": 260, "width": 960, "height": 520},
+    "bottom_caption_safe_px": 270
+  },
+  "sfx_cues": [
+    {"cueId": "serif-emphasis", "frame": 28, "anchor": "serif-emphasis", "name": "ui-pop", "assetKey": "talkcraft-ui-pop", "volume": 0.45, "playbackRate": 0.92},
+    {"cueId": "color-emphasis", "frame": 40, "anchor": "color-emphasis", "name": "ui-pop", "assetKey": "talkcraft-ui-pop", "volume": 0.5, "playbackRate": 1.0}
+  ]
+}

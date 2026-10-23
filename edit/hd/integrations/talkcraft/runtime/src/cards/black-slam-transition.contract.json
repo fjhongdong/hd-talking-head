@@ -1,0 +1,11 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "black-slam-transition",
+  "scene": "full-frame",
+  "scene_input_slots": ["from", "to", "presenter"],
+  "geometry": {"transition_rect": {"x": 0, "y": 270, "width": 1080, "height": 608}, "presenter_rect": {"x": 180, "y": 1000, "width": 720, "height": 800}, "bottom_caption_safe_px": 120},
+  "sfx_cues": [
+    {"cueId": "slam-rise", "frame": 19, "anchor": "slam-rise", "name": "deep-whoosh", "assetKey": "talkcraft-impact-deep-whoosh", "volume": 0.32, "playbackRate": 1.1},
+    {"cueId": "hard-cut", "frame": 22, "anchor": "hard-cut", "name": "impact-hit", "assetKey": "talkcraft-impact-hit-fast-exciting", "volume": 0.34, "playbackRate": 1.05}
+  ]
+}

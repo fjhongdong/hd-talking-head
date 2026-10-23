@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"title","type":"string","label":"片头标题（拉丁字母）","default":"TEA ACROSS THE AGES","group":"文字"},
+  {"id":"signature","type":"string","label":"结尾署名（拉丁字母）","default":"Opus 5.5","group":"文字"},
+  {"id":"finaleYear","type":"number","label":"结尾年份牌","default":2026,"min":1994,"max":2999,"step":1,"group":"结尾"},
+  {"id":"showCredit","type":"boolean","label":"片尾显示 made with huashu-motion","default":true,"group":"结尾"}
+]'>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>huashu-motion · Tea Across the Ages</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<style>
+  @font-face { font-family: "OM Credit"; src: url("assets/fonts/Poppins-600.woff") format("woff"); }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #111; }
+  #film { position: relative; width: 100%; height: 100%; overflow: hidden; background: #111; }
+  #c { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+  /* The engine's own scrubber UI: kept as hidden stubs so the vendored engine runs unmodified. */
+  #ui { display: none; }
+  .credit { position: absolute; left: 64px; bottom: 34px; margin: 0; font-family: "OM Credit", sans-serif; font-size: 24px; letter-spacing: 1px; color: #262a5c; opacity: 0; }
+  .credit b { font-weight: 600; color: #e2554e; }
+</style>
+</head>
+<body>
+<!--
+  Tea Across the Ages — a 15-era art-history speedrun drawn entirely in code (Canvas 2D).
+  Ported from huashu-art-motion (MIT); see vendor/art-motion/NOTICE.md.
+  The engine is a pure function renderFrame(t); OM.clock drives it from the film's timeline.
+  Things on the canvas (cat, girl, year card, title, signature) are pickable through OM.region below.
+-->
+<div id="film" data-composition-id="showcase" data-start="0" data-width="1920" data-height="1080" data-fps="60" data-duration="14.358125">
+  <canvas id="c" width="1920" height="1080" data-om-id="painting" data-layout-allow-overflow></canvas>
+  <p class="credit" id="credit" data-om-id="credit">made with <b>huashu-motion</b></p>
+</div>
+<div id="ui"><input id="scrub" type="range" min="0" max="60" step="0.0166667" value="0"><span id="tt"></span><button id="play" type="button">play</button></div>
+
+<script>
+  // ---- 1. Variables → the globals the engine and scenes read --------------------------------
+  const V = Object.assign({ title: 'TEA ACROSS THE AGES', signature: 'Opus 5.5', finaleYear: 2026, showCredit: true }, OM.vars());
+  window.FILM_TITLE = String(V.title || '').trim() || 'TEA ACROSS THE AGES';  // scenes/01_cave.js, fades out at 1.13s
+  window.SIGNATURE = String(V.signature || '').trim() || 'Opus 5.5';          // scenes/16_2026.js, hand-written at the end
+  window.SCENES = {};
+
+  // Only the faces this film draws with (engine registers each file as its own family).
+  window.FONT_FACES = ['GochiHand-400', 'Kalam-700', 'IMFellEnglish-400', 'EBGaramond-400', 'EBGaramond-600', 'Cinzel-400', 'Cinzel-700',
+    'LibreBaskerville-700', 'CormorantGaramond-500', 'PlayfairDisplay-400i', 'LilitaOne-400', 'AlfaSlabOne-400', 'ArchivoBlack-400',
+    'Poppins-600', 'Poppins-800', 'Anton-400', 'PressStart2P-400', 'Exo2-800i', 'UnifrakturMaguntia-400', 'Marcellus-400', 'Bangers-400',
+    'Caveat-600'].map((family) => ({ family, url: `assets/fonts/${family}.woff` }));
+
+  // ---- 2. Hold the film's "ready" until the engine's async boot (fonts, glyph tables) is done ----
+  // The timeline itself is built synchronously below (its timing never depends on what boot loads),
+  // but nothing is drawn until engine.js ends boot() with `window.__ready = true`. The buildReady
+  // promise makes the renderer wait for that, so no frame is captured with missing fonts.
+  let engineReady = false, booted, lastT = 0;
+  window.__hf = window.__hf || {};
+  window.__hf.buildReady = window.__hf.buildReady || {};
+  window.__hf.buildReady['art-motion'] = new Promise((resolve) => { booted = resolve; });
+  Object.defineProperty(window, '__ready', {
+    configurable: true,
+    get: () => engineReady,
+    // A microtask, because boot() calls renderFrame(0) right after setting the flag: redraw wherever
+    // the timeline already is, then release the hold.
+    set: (v) => { engineReady = v; if (v) queueMicrotask(() => { renderFrame(lastT); booted(); }); },
+  });
+</script>
+
+<script src="vendor/art-motion/lib/util.js"></script>
+<script src="vendor/art-motion/lib/paint.js"></script>
+<script src="vendor/art-motion/lib/brush.js"></script>
+<script src="vendor/art-motion/lib/render.js"></script>
+<script src="vendor/art-motion/lib/post.js"></script>
+<script src="vendor/art-motion/lib/rig.js"></script>
+<script src="vendor/art-motion/lib/kit.js"></script>
+<script src="vendor/art-motion/eras.js"></script>
+<script>
+  // The year card of the last era rolls up from 1993 to this year.
+  ERAS[ERAS.length - 1].counter.year = Math.round(Number(V.finaleYear)) || 2026;
+</script>
+<script src="vendor/art-motion/transitions.js"></script>
+<script src="vendor/art-motion/scenes/01_cave.js"></script>
+<script src="vendor/art-motion/scenes/02_egypt.js"></script>
+<script src="vendor/art-motion/scenes/03_greek.js"></script>
+<script src="vendor/art-motion/scenes/04_roman.js"></script>
+<script src="vendor/art-motion/scenes/05_gothic.js"></script>
+<script src="vendor/art-motion/scenes/06_renaissance.js"></script>
+<script src="vendor/art-motion/scenes/08_impressionism.js"></script>
+<script src="vendor/art-motion/scenes/09_postimp.js"></script>
+<script src="vendor/art-motion/scenes/10_nouveau.js"></script>
+<script src="vendor/art-motion/scenes/11_cubism.js"></script>
+<script src="vendor/art-motion/scenes/12_bauhaus.js"></script>
+<script src="vendor/art-motion/scenes/13_pop.js"></script>
+<script src="vendor/art-motion/scenes/14_8bit.js"></script>
+<script src="vendor/art-motion/scenes/15_raytrace.js"></script>
+<script src="vendor/art-motion/scenes/16_2026.js"></script>
+<script src="vendor/art-motion/scenes/index.js"></script>
+<script src="vendor/art-motion/engine.js"></script>
+
+<script>
+  const ERA = Object.fromEntries(ERAS.map((e) => [e.id, e]));
+  const at = (id) => ERA[id].t0;
+  const DURATION = window.__total; // 43 eighths at 128 BPM + the 4.28 s finale = 14.358125 s (root data-duration)
+
+  // The finale's performance (cat swats the cup, signature writes itself) is keyed to absolute frame
+  // numbers authored for a cut whose finale starts on eighth 46. This cut starts it on eighth 43, so
+  // the finale is drawn 3 eighths ahead; otherwise the gag runs late and the signature is cut off.
+  const finale = ERA['16_2026'], finaleShift = 46 * 0.234375 - finale.t0, drawFinale = finale.draw;
+  finale.draw = (c, lt, t, ...rest) => drawFinale(c, lt, t + finaleShift, ...rest);
+
+  // ---- 3. Pickable things on the canvas --------------------------------------------------------
+  // Boxes are [x, y, w, h] in composition pixels, measured per era from the rendered frames.
+  const eraAt = (t) => { let k = 0; for (let i = 0; i < ERAS.length; i++) if (t >= ERAS[i].t0) k = i; return ERAS[k].id; };
+  const CAT = {
+    '01_cave': [360, 578, 335, 335], '02_egypt': [365, 585, 325, 318], '03_greek': [360, 578, 318, 325], '04_roman': [365, 590, 295, 320],
+    '05_gothic': [338, 532, 362, 378], '06_renaissance': [338, 532, 382, 378], '08_impressionism': [342, 540, 334, 370],
+    '09_postimp': [338, 540, 334, 370], '10_nouveau': [338, 532, 370, 378], '11_cubism': [338, 532, 370, 385], '12_bauhaus': [390, 568, 370, 348],
+    '13_pop': [292, 628, 445, 282], '14_8bit': [330, 532, 370, 378], '15_raytrace': [338, 532, 378, 378],
+  };
+  const GIRL = {
+    '01_cave': [1040, 275, 425, 640], '02_egypt': [1122, 252, 380, 650], '03_greek': [1098, 268, 384, 648], '04_roman': [1138, 275, 350, 655],
+    '05_gothic': [1092, 222, 360, 710], '06_renaissance': [1092, 282, 372, 660], '08_impressionism': [1092, 238, 364, 755],
+    '09_postimp': [1092, 238, 364, 705], '10_nouveau': [1138, 268, 455, 672], '11_cubism': [1078, 275, 395, 672], '12_bauhaus': [1122, 260, 384, 645],
+    '13_pop': [1122, 238, 444, 672], '14_8bit': [1108, 275, 350, 635], '15_raytrace': [1115, 275, 335, 635], '16_2026': [1108, 198, 385, 705],
+  };
+  // Finale: the cat sits on the floor, leaps onto the table (authored frames 661–690), then sits there.
+  // The leap follows the centre-of-mass track from scenes/16_2026.js.
+  const LEAP = [[657, 555, 795], [662, 560, 752], [666, 606, 639], [670, 719, 563], [674, 849, 518], [678, 979, 505], [682, 1088, 518], [686, 1160, 548], [690, 1150, 560]];
+  function finaleCat(t) {
+    const f = (t + finaleShift) * 60;
+    if (f < 661) return [370, 618, 322, 332];
+    if (f >= 690) return [1000, 300, 300, 345];
+    const i = LEAP.findIndex((p) => p[0] > f), a = LEAP[i - 1], b = LEAP[i], q = (f - a[0]) / (b[0] - a[0]);
+    const x = a[1] + (b[1] - a[1]) * q, y = a[2] + (b[2] - a[2]) * q;
+    return [x - 220, y - 125, 440, 250];
+  }
+  OM.region('cat', (t) => (eraAt(t) === '16_2026' ? finaleCat(t) : CAT[eraAt(t)]) || null, '猫');
+  OM.region('girl', (t) => GIRL[eraAt(t)] || null, '女孩');
+  OM.region('year', () => [1490, 25, 410, 195], '年份牌');
+  OM.region('title', (t) => (t < 1.13 ? [480, 945, 960, 100] : null), '片头标题');
+  OM.region('signature', (t) => (t + finaleShift >= 842 / 60 ? [1590, 960, 300, 110] : null), '结尾署名');
+
+  // ---- 4. The timeline: the engine clock, one label per era, the credit -----------------------
+  const tl = gsap.timeline({ paused: true });
+  OM.clock(tl, (t) => { lastT = t; if (engineReady) renderFrame(t); }, DURATION);
+
+  tl.addLabel('scene:01_cave', at('01_cave'))
+    .addLabel('scene:02_egypt', at('02_egypt'))
+    .addLabel('scene:03_greek', at('03_greek'))
+    .addLabel('scene:04_roman', at('04_roman'))
+    .addLabel('scene:05_gothic', at('05_gothic'))
+    .addLabel('scene:06_renaissance', at('06_renaissance'))
+    .addLabel('scene:08_impressionism', at('08_impressionism'))
+    .addLabel('scene:09_postimp', at('09_postimp'))
+    .addLabel('scene:10_nouveau', at('10_nouveau'))
+    .addLabel('scene:11_cubism', at('11_cubism'))
+    .addLabel('scene:12_bauhaus', at('12_bauhaus'))
+    .addLabel('scene:13_pop', at('13_pop'))
+    .addLabel('scene:14_8bit', at('14_8bit'))
+    .addLabel('scene:15_raytrace', at('15_raytrace'))
+    .addLabel('scene:16_2026', at('16_2026'));
+
+  // A quiet credit once the signature has finished writing (870 authored frames).
+  const credit = document.getElementById('credit');
+  if (!V.showCredit) credit.style.display = 'none';
+  tl.fromTo(credit, { opacity: 0, y: 8 }, { opacity: 0.72, y: 0, duration: 0.45, ease: 'power2.out' }, 870 / 60 - finaleShift + 0.05);
+
+  window.__timelines['showcase'] = tl;
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "hd-talkcraft-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@remotion/bundler": "4.0.520",
+    "@remotion/renderer": "4.0.520",
+    "animejs": "4.5.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.520",
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.24",
+    "@types/react-dom": "18.3.7",
+    "@types/three": "0.186.0",
+    "typescript": "5.9.2"
+  }
+}

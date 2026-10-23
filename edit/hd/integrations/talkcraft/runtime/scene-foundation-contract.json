@@ -1,0 +1,39 @@
+{
+  "schema_version": "talkcraft-scene-foundation/v1",
+  "canvas": {"width": 1080, "height": 1920, "fps": 24},
+  "themes": {
+    "light": {
+      "canvas": "#ffffff",
+      "canvas_alt": "#f5f5f7",
+      "ink": "#1d1d1f",
+      "ink_muted": "#7a7a7a",
+      "hairline": "#e0e0e0",
+      "accent": "#0066cc",
+      "positive": "#248a3d",
+      "negative": "#d70015",
+      "marker": "rgba(255,233,73,0.60)"
+    },
+    "dark": {
+      "canvas": "#1d1d1f",
+      "canvas_alt": "#272729",
+      "ink": "#f5f5f7",
+      "ink_muted": "#a1a1a6",
+      "hairline": "rgba(255,255,255,0.14)",
+      "accent": "#2997ff",
+      "positive": "#30d158",
+      "negative": "#ff453a",
+      "marker": "rgba(255,233,73,0.60)"
+    }
+  },
+  "plane_order": ["background.screen", "background.world", "subject.world", "text.screen"],
+  "safe_lines": {"critical_text_max_y": 1700, "decoration_max_y": 1800},
+  "budgets": {"active_subject_groups_max": 3, "hero_groups_max": 1, "demoted_groups_max": 1},
+  "camera": {
+    "directions": ["push", "pull"],
+    "peak_scale_min": 1.04,
+    "peak_scale_max": 1.06,
+    "end_overshoot_frames": 24,
+    "center": [540, 960]
+  },
+  "probe": {"variants": ["light-push", "dark-pull"], "source_frames": [0, 36, 71], "duration_frames": 72}
+}

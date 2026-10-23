@@ -1,0 +1,15 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "callout-line-label",
+  "scene": "full-frame",
+  "scene_input_slots": ["subject-image", "presenter"],
+  "trusted_geometry": "case-measured-targets-v1",
+  "sfx_cues": [
+    {"cueId":"callout-0-dot","frame":14,"anchor":"callout-0-dot","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.28,"playbackRate":1.0},
+    {"cueId":"callout-0-line","frame":19,"anchor":"callout-0-line","name":"text-marker-pen-line","assetKey":"talkcraft-text-marker-pen-line","volume":0.26,"playbackRate":1.0},
+    {"cueId":"callout-0-label","frame":29,"anchor":"callout-0-label","name":"impact-hit-fast-exciting","assetKey":"talkcraft-impact-hit-fast-exciting","volume":0.22,"playbackRate":1.0},
+    {"cueId":"callout-1-dot","frame":34,"anchor":"callout-1-dot","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.26,"playbackRate":1.12},
+    {"cueId":"callout-1-line","frame":38,"anchor":"callout-1-line","name":"text-marker-pen-line","assetKey":"talkcraft-text-marker-pen-line","volume":0.24,"playbackRate":1.1},
+    {"cueId":"callout-1-label","frame":48,"anchor":"callout-1-label","name":"impact-hit-fast-exciting","assetKey":"talkcraft-impact-hit-fast-exciting","volume":0.2,"playbackRate":1.08}
+  ]
+}

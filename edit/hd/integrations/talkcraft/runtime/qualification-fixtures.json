@@ -1,0 +1,127 @@
+{
+  "schema_version": "talkcraft-qualification-fixtures/v2",
+  "assets": [
+    {
+      "asset_id": "alt-block-lines-presenter",
+      "kind": "video-alpha",
+      "source": "qualification-fixtures/alt-block-lines-host.webm",
+      "public_path": "qualification/alt-block-lines-host.webm",
+      "sha256": "02fd74fcaf4bd5e945b64a8d7d9dd67549351fbe00d3f30f54fcc09d2505b0af",
+      "width": 540,
+      "height": 600
+    },
+    {
+      "asset_id": "talkcraft-click",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-click.mp3",
+      "public_path": "qualification/talkcraft-click.mp3",
+      "sha256": "dcb764a9be9ac69e64c8a4736513d019ce270dd9e62ffea311a8abfa0efb8e60"
+    },
+    {
+      "asset_id": "talkcraft-ui-pop",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-ui-pop.mp3",
+      "public_path": "qualification/talkcraft-ui-pop.mp3",
+      "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4"
+    },
+    {
+      "asset_id": "talkcraft-text-marker-pen-line",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-text-marker-pen-line.mp3",
+      "public_path": "qualification/talkcraft-text-marker-pen-line.mp3",
+      "sha256": "3bb80d474f1b1ca2a03bb63f43f36338f164a1201e1f6bf95e0a1c00a74cc744"
+    },
+    {
+      "asset_id": "talkcraft-mech-lock-quick",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-mech-lock-quick.mp3",
+      "public_path": "qualification/talkcraft-mech-lock-quick.mp3",
+      "sha256": "2ec67a68f9c13bdb75f5fdfb6aacac4d76eba048d16795754c473b08bb5a9182"
+    },
+    {
+      "asset_id": "callout-laptop",
+      "kind": "image",
+      "source": "qualification-fixtures/callout-laptop.jpg",
+      "public_path": "qualification/callout-laptop.jpg",
+      "sha256": "d91b8db3ded913eac99572c2752aaec64b9aef1b37cdbb9be0ae58c0e0336af7",
+      "width": 1200,
+      "height": 750
+    },
+    {
+      "asset_id": "callout-desk",
+      "kind": "image",
+      "source": "qualification-fixtures/callout-desk.jpg",
+      "public_path": "qualification/callout-desk.jpg",
+      "sha256": "ddb49dc09886c023888ff53bcb2608fcb8f270645c0c09811016ad9ccec80e65",
+      "width": 1200,
+      "height": 750
+    },
+    {
+      "asset_id": "logo-hyperframes",
+      "kind": "image",
+      "source": "qualification-fixtures/logo-hyperframes.png",
+      "public_path": "qualification/logo-hyperframes.png",
+      "sha256": "0328eb84e11871561739d8541bc30d4bdca81ceae09730be779e5c38ee8b7c60",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "asset_id": "logo-openmontage",
+      "kind": "image",
+      "source": "qualification-fixtures/logo-openmontage.png",
+      "public_path": "qualification/logo-openmontage.png",
+      "sha256": "b4ed8de2be8de4f80d3e781532c9305946e8a2abdb981c815ceb26c074c01e27",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "asset_id": "talkcraft-impact-hit-fast-exciting",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-impact-hit-fast-exciting.mp3",
+      "public_path": "qualification/talkcraft-impact-hit-fast-exciting.mp3",
+      "sha256": "a4853ac0fec244fc92934f129953252c885007249e79db02171cb41a9c018f00"
+    },
+    {
+      "asset_id": "talkcraft-impact-deep-whoosh",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-impact-deep-whoosh.mp3",
+      "public_path": "qualification/talkcraft-impact-deep-whoosh.mp3",
+      "sha256": "9aa95b3ad01c1f3ebb7b260c6d6cd346bf4a8f2f7b03298b046e108e8f5c93d4"
+    },
+    {
+      "asset_id": "shape-wipe-ocean",
+      "kind": "video",
+      "source": "qualification-fixtures/shape-wipe-ocean.webm",
+      "public_path": "qualification/shape-wipe-ocean.webm",
+      "sha256": "27a5027a92f74e8de594e3fe9653857fd705e9fc05cea38fd8e96341c2d5cd45"
+    },
+    {
+      "asset_id": "shape-wipe-typing",
+      "kind": "video",
+      "source": "qualification-fixtures/shape-wipe-typing.webm",
+      "public_path": "qualification/shape-wipe-typing.webm",
+      "sha256": "b314d507fbe21e9f9588ea216722861cc9423e66722a46396f6529f0d6816c5f"
+    },
+    {
+      "asset_id": "talkcraft-wind-swoosh-short",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-wind-swoosh-short.mp3",
+      "public_path": "qualification/talkcraft-wind-swoosh-short.mp3",
+      "sha256": "61918d34661288c794664885f97674e22694f5ef01be815ee6ad33c8c14a7d89"
+    },
+    {
+      "asset_id": "talkcraft-paper-slice-quick",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-paper-slice-quick.mp3",
+      "public_path": "qualification/talkcraft-paper-slice-quick.mp3",
+      "sha256": "7a61a836c43462f091e798c1e63a7b05ea6a82465d107d4ab79841faf58eb66d"
+    },
+    {
+      "asset_id": "talkcraft-camera-lens-shutter",
+      "kind": "audio",
+      "source": "qualification-fixtures/talkcraft-camera-lens-shutter.mp3",
+      "public_path": "qualification/talkcraft-camera-lens-shutter.mp3",
+      "sha256": "decf461f41e0044f60aad5124c107a6becfa7003dbc653097e26b6df25685560"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "sway-parallax",
+  "scene": "full-frame",
+  "scene_input_slots": [
+    "presenter"
+  ],
+  "geometry": {
+    "demo_rect": {
+      "x": 0,
+      "y": 90,
+      "width": 1080,
+      "height": 675
+    },
+    "title_rect": {
+      "x": 70,
+      "y": 790,
+      "width": 940,
+      "height": 170
+    },
+    "presenter_rect": {
+      "x": 180,
+      "y": 1040,
+      "width": 720,
+      "height": 780
+    },
+    "bottom_caption_safe_px": 100
+  },
+  "sfx_cues": [
+    {
+      "cueId": "card-in",
+      "frame": 10,
+      "anchor": "card-in",
+      "name": "ui-pop",
+      "assetKey": "talkcraft-ui-pop",
+      "volume": 0.28,
+      "playbackRate": 1
+    }
+  ]
+}

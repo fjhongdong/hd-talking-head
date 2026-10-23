@@ -1,0 +1,38 @@
+{
+  "name": "玻璃卡片显现折射及直接拆分动作、六张插画",
+  "code_license": "Apache-2.0",
+  "visual_reference": {
+    "name": "Apple Vision Pro 空间界面",
+    "public_url": "https://www.apple.com/newsroom/2023/06/introducing-apple-vision-pro/",
+    "scope": "完整组合、六张卡片及直接拆分动作统一采用苹果空间界面；语音为 Siri、对话为短信、其余为系统设置、音乐、天气与控制中心。"
+  },
+  "implementation": "六张苹果空间卡片、空间投影、几何、光照与像素采样采用本项目独立绘制代码；短信、音乐和天气信息为固定演示数据，不携带官方媒体。目录玻璃播放条的第三方程序单独记录。",
+  "separate_player_dependency": {
+    "name": "Liquid Glass",
+    "author": "Deepika Rao",
+    "repository": "https://github.com/deepika-builds/liquid-glass",
+    "license": "MIT",
+    "source_record": "vendor/liquid-glass/SOURCE.json",
+    "scope": "目录页面底部播放条；不参与玻璃卡片动画的绘制。"
+  },
+  "wordmark": {
+    "family": "Oswald Bold",
+    "source": "由随包 Oswald-Bold.woff2 生成固定 WISE MOTION 字标；与 MOTION 开场及 CLAUDE 片尾字标采用同一字体。",
+    "font_file": "catalog/fonts/Oswald-Bold.woff2",
+    "font_sha256": "e794c1589fdd38232b647a6e86dfe4e19068774ec18591e6c42bdddac140c302",
+    "license": "SIL OFL 1.1",
+    "license_file": "catalog/fonts/OFL-Oswald.txt",
+    "generator": "scripts/build-brand-outlines.py",
+    "status": "已替换原 Helvetica Neue Bold 轮廓，采用随包开放字体；原大写高度、基线与动画节奏保留，位置按新字宽计算。"
+  },
+  "additional_visual_reference": {
+    "name": "Apple 液态玻璃设计",
+    "url": "https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/",
+    "scope": "六张卡片共用的玻璃材质、柔和高光与透光层次。"
+  },
+  "interface_typography": {
+    "english": "Oswald Bold",
+    "chinese": "思源黑体 / Source Han Sans SC",
+    "licenses": "catalog/fonts/OFL-Oswald.txt 与 catalog/fonts/OFL.txt"
+  }
+}

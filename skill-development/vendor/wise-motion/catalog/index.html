@@ -1,0 +1,247 @@
+<!doctype html>
+<!-- Copyright (c) 2026 Wise Wong. SPDX-License-Identifier: Apache-2.0 -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Wise Motion · 动效工作台</title>
+  <link rel="icon" type="image/webp" href="wise-avatar.webp">
+  <script>
+    (function () {
+      try {
+        var mode = localStorage.getItem('wise-motion-theme');
+        document.documentElement.dataset.theme = mode === 'light' ? 'light' : 'dark';
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="scenes.css"><link rel="stylesheet" href="frame.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="history.css">
+  <link rel="stylesheet" href="book-controls.css">
+</head>
+<body>
+  <a class="skip-link" href="#preview-title">跳到当前动效</a>
+
+  <button id="directory-backdrop" class="directory-backdrop" type="button" aria-label="关闭动效目录" tabindex="-1" hidden></button>
+
+  <main class="workbench">
+    <aside class="sidebar-shell" aria-label="动效侧边栏">
+      <header class="sidebar-header">
+        <a class="brand" href="https://wisewong.com" target="_blank" rel="noopener noreferrer" aria-label="打开 Wise Wong 个人网站（新窗口）"><img class="brand-mark" src="wise-avatar.webp" alt="" width="22" height="22"><span class="brand-name">WISE MOTION</span></a>
+        <div class="sidebar-actions">
+          <a id="follow-link" class="icon-btn follow-link morph-toggle" href="https://www.xiaohongshu.com/user/profile/61f3ea4f000000001000db73" target="_blank" rel="noopener noreferrer" aria-label="关注我：打开小红书个人主页（新窗口）" title="关注我">
+            <span class="icon-morph" aria-hidden="true"><span class="icon-morph-glyph" data-icon="user-plus"></span><span class="icon-morph-glyph" data-icon="user-check"></span></span>
+          </a>
+          <a id="github-link" class="icon-btn morph-toggle github-link" href="https://github.com/WiseWong6/wise-motion" target="_blank" rel="noopener noreferrer" aria-label="到 GitHub 收藏项目（新窗口）" title="到 GitHub 收藏项目">
+            <span class="icon-morph" aria-hidden="true"><span class="icon-morph-glyph" data-icon="github"></span><span class="icon-morph-glyph" data-icon="star"></span><span class="github-sparkle" data-icon="star"></span></span>
+          </a>
+          <button id="theme-toggle" class="icon-btn morph-toggle" type="button" aria-label="外观：深色" title="深色"><span class="icon-morph" aria-hidden="true"><span class="icon-morph-glyph" data-icon="theme-moon"></span><span class="icon-morph-glyph" data-icon="theme-sun"></span></span></button>
+          <button id="toggle-directory" class="icon-btn morph-toggle" type="button" aria-controls="directory-panel" aria-expanded="true" aria-label="收起动效目录" title="收起动效目录"><span class="icon-morph" aria-hidden="true"><span class="icon-morph-glyph" data-icon="panel-collapse"></span><span class="icon-morph-glyph" data-icon="panel-expand"></span></span></button>
+        </div>
+      </header>
+      <div id="directory-panel" class="directory" aria-label="动效目录">
+        <div class="directory-caption">
+          <span>动效目录</span>
+          <button id="close-directory" class="icon-btn" type="button" aria-label="关闭动效目录"><span data-icon="close"></span></button>
+        </div>
+        <div class="directory-top">
+          <div class="kind-tabs" role="group" aria-label="动效类型">
+            <button data-kind="action" aria-pressed="false">单个动作 <span class="pill-count">315</span></button>
+            <button data-kind="composition" aria-pressed="true">组合片段 <span class="pill-count">48</span></button>
+            <button data-kind="illustration" aria-pressed="false">插画素材 <span class="pill-count">99</span></button>
+          </div>
+          <div class="search-control select-control">
+            <div class="search">
+              <span data-icon="magnifying-glass" aria-hidden="true"></span>
+              <input id="search" type="search" placeholder="搜索名称或描述需求" aria-label="搜索动效名称或需求">
+              <button id="search-clear" type="button" class="search-clear" aria-label="清空搜索" title="清空搜索（Esc）" hidden><span data-icon="close"></span></button>
+              <button id="category-filter" type="button" class="search-filter" aria-label="按动效分类筛选" aria-haspopup="listbox" aria-expanded="false" aria-controls="category-options" title="按动效分类筛选">
+                <span data-icon="chevron-down"></span>
+              </button>
+            </div>
+            <div id="category-options" class="select-menu scroll-area" role="listbox" aria-label="动效分类" hidden></div>
+          </div>
+        </div>
+        <nav id="effects-list" class="effects-list scroll-area" aria-label="选择动效参考" aria-busy="true">
+          <div class="catalog-loading" role="status"><span class="apple-pulse-dots" aria-hidden="true"><span class="apple-pulse-dot" style="--dot-index:0"></span><span class="apple-pulse-dot" style="--dot-index:1"></span><span class="apple-pulse-dot" style="--dot-index:2"></span></span><span class="sr-only">正在加载动效目录…</span></div>
+        </nav>
+        <div id="empty" class="empty" hidden>
+          <strong>还没有合适的参考</strong>
+          <button class="btn btn-outline" id="clear-search">清空筛选</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="stage" aria-label="动效预览">
+      <div class="stage-canvas">
+        <button id="previous-effect" class="icon-btn stage-nav" type="button" aria-label="上一个动效" aria-controls="preview" aria-keyshortcuts="ArrowLeft" title="上一个动效（←）" disabled><span data-icon="chevron-right"></span></button>
+        <div class="preview-shell">
+          <div id="preview" class="motion-viewport" aria-hidden="true"></div>
+          <div class="playbar" role="group" aria-label="动效播放控制">
+            <span class="playbar-glass" aria-hidden="true"></span>
+            <div class="playback-timeline">
+              <span id="time-current" aria-hidden="true">0.0</span>
+              <button class="icon-btn" id="toggle-sound" aria-label="开启组合声音" aria-pressed="false" title="开启组合声音" hidden><span data-icon="speaker-muted"></span></button>
+              <label class="scrub"><span class="sr-only">定位时间</span><input id="scrub" aria-describedby="time" type="range" min="0" max="1000" value="0" step="1"></label>
+              <span id="time-total" aria-hidden="true">3.0</span>
+            </div>
+            <div class="playback-controls">
+              <div class="playback-leading">
+                <button id="restart" class="icon-btn" aria-label="重播当前动效" title="重播"><span data-icon="arrow-path"></span></button>
+              </div>
+              <button id="toggle-play" class="icon-btn playback-main" aria-label="播放当前动效" title="播放"><span data-icon="play"></span></button>
+              <div class="playback-trailing">
+                <button class="icon-btn" id="fullscreen" aria-label="全屏预览" title="全屏预览"><span data-icon="expand"></span></button>
+              </div>
+            </div>
+            <output id="time" class="sr-only">已播放 0.0 秒，剩余 3.0 秒</output>
+          </div>
+        </div>
+        <button id="next-effect" class="icon-btn stage-nav" type="button" aria-label="下一个动效" aria-controls="preview" aria-keyshortcuts="ArrowRight" title="下一个动效（→）" disabled><span data-icon="chevron-right"></span></button>
+      </div>
+      <p id="selection-status" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
+
+    <aside class="inspector" aria-label="动效说明、节奏与输出">
+      <div class="ins-intro">
+        <div class="ins-intro-head">
+          <h1 id="preview-title" tabindex="-1">玻璃卡片显现折射</h1>
+          <button id="copy-title" type="button" class="copy-btn" data-copy="title" aria-label="复制动效名称" title="复制动效名称"><span class="copy-morph" aria-hidden="true"><span class="copy-morph-icon" data-icon="clipboard-document"></span><span class="copy-morph-icon" data-icon="check"></span></span></button>
+        </div>
+        <p id="copy-status-title" class="copy-status" role="status" aria-live="polite"></p>
+        <p id="preview-summary"></p>
+        <p id="preview-mode" class="hint" role="status" hidden></p>
+        <dl class="preview-source" hidden>
+          <dt>来源：</dt>
+          <dd id="preview-source"></dd>
+        </dl>
+      </div>
+
+      <section class="ins-section" id="composition-panel" hidden>
+        <button class="ins-head" data-section="composition" aria-expanded="true" aria-controls="ins-composition"><span data-icon="chevron-right"></span><span class="ins-label">组合拆解</span></button>
+        <div id="ins-composition" class="ins-body">
+          <div class="composition-modes" role="group" aria-label="查看组成方式">
+            <button class="btn" type="button" data-composition-mode="stack" aria-pressed="true">逐层叠加</button>
+            <button class="btn" type="button" data-composition-mode="solo" aria-pressed="false">单独查看</button>
+          </div>
+          <p class="hint composition-hint">点选一层，在同一时刻对照画面；点击重播可看它怎样进入。</p>
+          <div id="composition-layers" role="group" aria-label="组成图层"></div>
+          <p id="composition-status" class="composition-status" role="status" aria-live="polite"></p>
+          <p id="composition-detail" class="hint"></p>
+          <div class="composition-actions">
+            <button id="composition-full" class="btn" type="button" aria-pressed="true">完整组合</button>
+            <button id="composition-replay" class="btn" type="button">从头播放</button>
+          </div>
+          <p class="hint composition-hint">拆解用于对照；下方提示词与代码保留完整组合。</p>
+        </div>
+      </section>
+
+      <section class="ins-section" id="book-panel" hidden>
+        <button class="ins-head" data-section="book" aria-expanded="true" aria-controls="ins-book"><span data-icon="chevron-right"></span><span class="ins-label">翻页与纸张</span></button>
+        <div id="ins-book" class="ins-body">
+          <div class="book-modes" role="group" aria-label="翻页书体验方式">
+            <button id="book-timeline" class="btn btn-outline" type="button" aria-pressed="true">时间演示</button>
+            <button id="book-interactive" class="btn btn-outline" type="button" aria-pressed="false">交互翻页</button>
+          </div>
+          <div class="book-navigation" id="book-navigation" hidden>
+            <button id="book-prev" class="btn" type="button">上一页</button><output id="book-page" class="field-value" aria-live="polite">图稿 01 / 06</output><button id="book-next" class="btn" type="button">下一页</button>
+          </div>
+          <p id="book-hint" class="hint"></p>
+          <div class="field"><div class="field-head"><label class="field-label" for="book-padding">图片留白</label><output id="book-padding-value" class="field-value">10 像素</output></div><input id="book-padding" type="range" min="0" max="30" value="10"></div>
+          <div class="field"><div class="field-head"><label class="field-label" for="book-radius">图片圆角</label><output id="book-radius-value" class="field-value">20 像素</output></div><input id="book-radius" type="range" min="0" max="40" value="20"></div>
+          <div class="field"><div class="field-head"><label class="field-label" for="book-crease">书脊阴影</label><output id="book-crease-value" class="field-value">11%</output></div><input id="book-crease" type="range" min="0" max="40" value="11"></div>
+          <button id="book-reset" class="btn" type="button">重置纸页</button><button id="book-replay" class="btn" type="button" hidden>重播入场</button>
+        </div>
+      </section>
+
+      <section class="ins-section">
+        <button class="ins-head" data-section="about" aria-expanded="true" aria-controls="ins-about"><span data-icon="chevron-right"></span><span class="ins-label">动效说明</span></button>
+        <div id="ins-about" class="ins-body">
+          <label id="effect-variant-field" class="field" hidden>示例样式<select id="effect-variant" class="history-case"></select></label>
+          <dl class="ins-facts" id="ins-facts"></dl>
+          <div id="history-details" hidden></div>
+        </div>
+      </section>
+
+      <section class="ins-section">
+        <button class="ins-head" data-section="tempo" aria-expanded="true" aria-controls="ins-tempo"><span data-icon="chevron-right"></span><span class="ins-label">节奏设置</span></button>
+        <div id="ins-tempo" class="ins-body">
+          <div class="field">
+            <div class="field-head">
+              <label class="field-label" for="speed">播放速度</label>
+              <div class="speed-control">
+                <div class="stepper">
+                  <button type="button" class="step-btn" id="speed-down" data-icon="minus" aria-label="降低播放速度" title="降低播放速度"></button>
+                  <input id="speed-value" class="step-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="播放速度数值">
+                  <button type="button" class="step-btn" id="speed-up" data-icon="plus" aria-label="提高播放速度" title="提高播放速度"></button>
+                </div>
+              </div>
+            </div>
+            <input id="speed" type="range" min="0.5" max="2" value="1" step="0.25">
+          </div>
+          <div class="field" id="ease-label">
+            <div class="field-head"><span class="field-label" id="ease-text">速度变化</span></div>
+            <div class="select-control">
+              <button id="ease" type="button" class="select-trigger" aria-labelledby="ease-text" aria-haspopup="listbox" aria-expanded="false" aria-controls="ease-options"></button>
+              <div id="ease-options" class="select-menu scroll-area" role="listbox" aria-label="速度变化" hidden></div>
+            </div>
+          </div>
+          <div id="related"></div>
+        </div>
+      </section>
+
+      <section class="ins-section inspector-content">
+        <button class="ins-head" data-section="output" aria-expanded="true" aria-controls="ins-output"><span data-icon="chevron-right"></span><span class="ins-label">输出</span></button>
+        <div id="ins-output" class="ins-body">
+          <div class="output-tabs" role="tablist" aria-label="动效输出">
+            <button id="tab-prompt" role="tab" aria-selected="true" aria-controls="panel-prompt" data-tab="prompt" tabindex="0">提示词</button>
+            <button id="tab-code" role="tab" aria-selected="false" aria-controls="panel-code" data-tab="code" tabindex="-1">代码</button>
+          </div>
+          <section id="panel-prompt" role="tabpanel" aria-labelledby="tab-prompt">
+            <div class="output-box">
+              <div class="output-head">
+                <span class="output-label">代码块</span>
+                <button id="copy-prompt" class="copy-btn" data-copy="prompt" aria-label="复制提示词" title="复制提示词"><span class="copy-morph" aria-hidden="true"><span class="copy-morph-icon" data-icon="clipboard-document"></span><span class="copy-morph-icon" data-icon="check"></span></span></button>
+              </div>
+              <pre id="prompt" class="prompt-output" tabindex="0"></pre>
+            </div>
+            <p id="copy-status-prompt" class="copy-status" role="status" aria-live="polite"></p>
+          </section>
+          <section id="panel-code" role="tabpanel" aria-labelledby="tab-code" hidden>
+            <div class="output-box">
+              <div class="output-head">
+                <span class="output-label">代码块</span>
+                <button id="copy-code" class="copy-btn" data-copy="code" aria-label="复制代码" title="复制代码"><span class="copy-morph" aria-hidden="true"><span class="copy-morph-icon" data-icon="clipboard-document"></span><span class="copy-morph-icon" data-icon="check"></span></span></button>
+              </div>
+              <pre id="code" class="code-output" tabindex="0"></pre>
+            </div>
+            <p id="copy-status-code" class="copy-status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <dialog id="related-dialog" class="related-dialog" aria-labelledby="related-title" aria-describedby="related-summary">
+    <div class="related-dialog-head">
+      <div><p id="related-origin" class="field-label"></p><h2 id="related-title"></h2></div>
+      <button type="button" class="icon-btn" id="related-close" aria-label="关闭相关动作预览" autofocus><span data-icon="close"></span></button>
+    </div>
+    <p id="related-summary" class="hint"></p>
+    <label id="related-variant-field" class="field" hidden>示例样式<select id="related-variant" class="history-case"></select></label>
+    <div id="related-preview" class="related-preview" role="img"></div>
+    <div class="related-playbar" role="group" aria-label="相关动作播放控制">
+      <button type="button" class="icon-btn" id="related-restart" aria-label="重播相关动作"><span data-icon="arrow-path"></span></button>
+      <button type="button" class="icon-btn" id="related-play" aria-label="播放相关动作"><span data-icon="play"></span></button>
+      <input type="range" id="related-scrub" min="0" max="1000" step="1" value="0" aria-label="相关动作播放进度">
+      <output id="related-time"></output>
+    </div>
+  </dialog>
+
+  <script src="../vendor/liquid-glass/liquid-glass.js"></script><script src="player-glass.js"></script>
+  <script src="../vendor/animejs/anime.umd.min.js"></script>
+  <script src="registry-data.js"></script><script src="matching.js"></script><script src="content.js"></script><script src="runtime.js"></script><script src="lazy.js"></script>
+  <script src="history-runtime.js"></script>
+  <script src="effects/entrance.js"></script>
+  <script src="effects/dither-book.js"></script><script src="book-controls.js"></script>
+  <script src="preview-size.js"></script><script src="remotion-player.js"></script>
+  <script src="../vendor/heroicons/icons.js"></script><script src="thumbnails.js"></script><script src="dropdown.js"></script><script src="export.js"></script><script src="composition-controls.js"></script><script src="related-preview.js"></script><script src="app.js"></script>
+</body></html>

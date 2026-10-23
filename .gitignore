@@ -1,3 +1,15 @@
 __pycache__/
 *.pyc
 .DS_Store
+.python-prepare-*/
+.talkcraft-native-render-*/
+.remotion/
+runtime/*/node_modules/
+edit/**/node_modules/
+node_modules/
+.venv/
+.cache/
+skill-development/runtime/
+*.tsbuildinfo
+.visual-broll-install.lock
+.punk-cover-install.lock

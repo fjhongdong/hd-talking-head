@@ -1,0 +1,43 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "filmstrip-conveyor",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "dc9ef2ab576ab51fbd54b0f2d0065f1c0c210d6c7a910c1c2ad4a49fca475ec6",
+  "contract_sha256": "9d541c2a1ae24d785a0234829c49c505050c87ef6af73250e199b74be8bfd056",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 192,
+      "scene": {"layout": "full-frame", "presenterRect": null},
+      "presenter": null,
+      "scene_inputs": [
+        {"slot": "presenter", "kind": "presenter-alpha", "fixture_id": "alt-block-lines-presenter"},
+        {"slot": "item-1", "kind": "image-contain", "fixture_id": "callout-laptop"},
+        {"slot": "item-2", "kind": "image-contain", "fixture_id": "callout-laptop"},
+        {"slot": "item-3", "kind": "image-contain", "fixture_id": "callout-desk"},
+        {"slot": "item-4", "kind": "image-contain", "fixture_id": "callout-laptop"},
+        {"slot": "item-5", "kind": "image-contain", "fixture_id": "callout-desk"},
+        {"slot": "item-6", "kind": "image-contain", "fixture_id": "callout-desk"}
+      ],
+      "sfx": [{"cueId": "enter", "frame": 10, "anchor": "enter", "name": "ui-pop", "assetKey": "talkcraft-ui-pop", "src": "qualification/talkcraft-ui-pop.mp3", "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4", "volume": 0.28, "playbackRate": 1}],
+      "raw": {"title": "六种构图", "subtitle": "逐格停靠", "accent": "#007AFF"}
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 192,
+      "scene": {"layout": "full-frame", "presenterRect": null},
+      "presenter": null,
+      "scene_inputs": [
+        {"slot": "presenter", "kind": "presenter-alpha", "fixture_id": "alt-block-lines-presenter"},
+        {"slot": "item-1", "kind": "image-contain", "fixture_id": "callout-desk"},
+        {"slot": "item-2", "kind": "image-contain", "fixture_id": "callout-desk"},
+        {"slot": "item-3", "kind": "image-contain", "fixture_id": "callout-laptop"},
+        {"slot": "item-4", "kind": "image-contain", "fixture_id": "callout-desk"},
+        {"slot": "item-5", "kind": "image-contain", "fixture_id": "callout-laptop"},
+        {"slot": "item-6", "kind": "image-contain", "fixture_id": "callout-laptop"}
+      ],
+      "sfx": [{"cueId": "enter", "frame": 10, "anchor": "enter", "name": "ui-pop", "assetKey": "talkcraft-ui-pop", "src": "qualification/talkcraft-ui-pop.mp3", "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4", "volume": 0.28, "playbackRate": 1}],
+      "raw": {"title": "六种构图对照", "subtitle": "顺序反转验证", "accent": "#FF375F"}
+    }
+  ]
+}

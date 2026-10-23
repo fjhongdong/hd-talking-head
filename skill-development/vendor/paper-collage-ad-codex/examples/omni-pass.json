@@ -1,0 +1,43 @@
+{
+  "provider": "ChatCut",
+  "displayName": "Gemini Omni",
+  "backendModel": "gemini-omni-flash-preview",
+  "toolModel": "omni",
+  "purpose": "Optional motion drafting and localized clip repair before final animation",
+  "draftFromFirstFrame": {
+    "model": "omni",
+    "prompt": "[0-3s] Locked-off static camera. The cut-paper file cards slide into place one by one with restrained stop-motion bounce and soft paper taps. [3-5s] Hold the final composition. Preserve the fibrous paper texture, halftone dots, cut edges and lower-right shadows.",
+    "firstFrame": "<image-asset-id>",
+    "durationSeconds": 5,
+    "ratio": "16:9",
+    "name": "Scene 01 - Omni motion draft"
+  },
+  "localizedEdit": {
+    "model": "omni",
+    "prompt": "Make only the top paper card forest green. Keep everything else exactly the same.",
+    "continueFrom": "<video-asset-id>",
+    "name": "Scene 01 - green card repair"
+  },
+  "referenceDraft": {
+    "model": "omni",
+    "prompt": "Create a new locked-off cut-paper scene using Image 1 as the character and Image 2 as the material and color reference. The character pushes one file card into a paper machine, then pauses proudly.",
+    "refImages": [
+      "<character-image-id>",
+      "<style-image-id>"
+    ],
+    "durationSeconds": 6,
+    "ratio": "16:9",
+    "name": "Scene 02 - Omni reference draft"
+  },
+  "constraints": {
+    "resolution": "Always 720p; omit the resolution parameter",
+    "fps": 24,
+    "durationSeconds": "3-10; edits inherit source duration",
+    "ratios": [
+      "16:9",
+      "9:16"
+    ],
+    "inputRule": "Use exactly one of firstFrame, refImages, or continueFrom",
+    "textRule": "Add exact Chinese, UI, URLs, and wordmarks later as deterministic overlays"
+  }
+}

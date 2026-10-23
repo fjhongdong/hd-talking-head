@@ -1,0 +1,36 @@
+# Punk Skill License
+
+Copyright (c) 2026 Adrian Punk. All rights reserved.
+
+## Current releases
+
+Punk Skill version `v2.0.0` and later is source-available under the
+[Punk Skill Personal Use License 1.0](./LICENSE-PERSONAL.md).
+
+Personal, non-commercial use by an individual is free. Any commercial use
+requires both:
+
+1. prior written authorization from the Licensor; and
+2. full payment of the applicable commercial license fee.
+
+See [COMMERCIAL-LICENSE.md](./COMMERCIAL-LICENSE.md) for the commercial
+licensing process. That document is an invitation to request a license and
+does not itself grant commercial rights.
+
+## Legacy MIT releases
+
+Versions and copies of Punk Skill that were released under the MIT License
+remain available under the MIT License that accompanied those versions. The
+license change does not revoke or restrict rights already granted for those
+legacy copies.
+
+The last legacy MIT release must be identified in the release history as
+`v1.0.0-mit`. Its license text is preserved in
+[LICENSE-MIT-LEGACY](./LICENSE-MIT-LEGACY).
+
+## Third-party material
+
+Third-party material is not relicensed by this file. See
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). Where a file-specific
+notice conflicts with this file, the file-specific notice controls for that
+material.

@@ -1,0 +1,25 @@
+默认音效 · 来源与授权
+
+这 15 个音效全部可以随仓库分发、商用,不需要署名。
+
+来自 Kenney(www.kenney.nl),授权 CC0(Creative Commons Zero,作者放弃全部权利):
+  pop-light    Interface Sounds · select_001
+  pop          Interface Sounds · drop_002
+  pop-cluster  Interface Sounds · drop_001 / drop_002 / drop_003 错开叠在一起
+  click        Interface Sounds · click_001
+  chime        Interface Sounds · bong_001
+  ding         Interface Sounds · confirmation_001
+  glitch       Interface Sounds · glitch_001
+  sparkle      Interface Sounds · glass_001
+  type         Interface Sounds · tick_001 / tick_002 / click_002 连敲
+  shutter      Interface Sounds · click_004 + switch_002
+  impact       Impact Sounds · impactPunch_heavy_000
+  hit-soft     Impact Sounds · impactSoft_medium_000
+  rise         Digital Audio · phaserUp3
+  CC0 说明:http://creativecommons.org/publicdomain/zero/1.0/
+
+自己用代码合成(粉噪声扫过),没有任何第三方来源:
+  whoosh、whoosh-soft
+
+想换成自己的音效:把同名 mp3 放进 public/sfx/,那边有就优先用那边的,
+这个文件夹不用动(更新时也不会和你放的文件冲突)。

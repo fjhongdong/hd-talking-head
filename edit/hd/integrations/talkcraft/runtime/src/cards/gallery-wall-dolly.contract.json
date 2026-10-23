@@ -1,0 +1,13 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "gallery-wall-dolly",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter", "item-1", "item-2", "item-3"],
+  "geometry": {
+    "demo_rect": {"x": 60, "y": 90, "width": 960, "height": 540},
+    "title_rect": {"x": 70, "y": 790, "width": 940, "height": 170},
+    "presenter_rect": {"x": 180, "y": 1040, "width": 720, "height": 780},
+    "bottom_caption_safe_px": 100
+  },
+  "sfx_cues": [{"cueId":"enter","frame":10,"anchor":"enter","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.28,"playbackRate":1}]
+}

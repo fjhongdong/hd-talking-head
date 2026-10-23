@@ -1,0 +1,280 @@
+# Punk Skill
+
+[English](./README.en.md)
+
+Punk Skill 是一组给 AI Agent 使用的视觉生成 Skills。安装后，可以用它把文章生成封面图，或把人物、宠物、物品照片生成头像图。
+
+> [!IMPORTANT]
+> Punk Skill `v2.0.0` 及后续版本源码公开，个人非商用使用免费。任何企业、机构、工作室、团队、雇员、承包商或客户项目使用，以及用于收费服务、商业内容、营销、广告、品牌传播、产品集成、商业工作流或其他商业目的，均须事先取得书面商业授权并支付许可费用。详见 [使用许可](#license)。
+
+## 安装
+
+把下面这段话发给支持 Skills 的 AI Agent：
+
+```text
+请安装这个仓库里的全部 Skills：https://github.com/adrianpunk/Punk-Skill
+```
+
+安装后可以这样调用：
+
+```text
+Use $punk-cover ...
+Use $punk-avatar ...
+Use $punk-ip-video-cover ...
+```
+
+## 可用 Skills
+
+| Skill | 用途 |
+| --- | --- |
+| `punk-cover` | 生成小红书、微信公众号、X / Twitter 等平台的封面图 |
+| `punk-avatar` | 生成人物头像、宠物头像、物品头像、宠物纪念卡和超现实人物纸艺图 |
+| `punk-ip-video-cover` | 从人物照片提取四色、抠出真人并自由构图，生成个人 IP 视频封面 |
+
+## punk-cover
+
+`punk-cover` 用来把文章、笔记、推文、主题草稿生成一张封面图。适合小红书、微信公众号、X / Twitter，以及其他需要封面视觉的内容。
+
+### 多语言与全球平台
+
+`punk-cover` 会根据宿主系统语言自动进入中文或 English 模式：中文系统显示中文的平台和风格选项，其他系统显示英文选项。也可以在请求中明确指定 `中文`、`English` 或 `中英双语`。语言模式会影响交互文案、提示词、标题/副标题和辅助文字；用户原始标题与专有名词默认保持不变。
+
+可选平台包括小红书、微信公众号、X、Instagram、Facebook、LinkedIn、YouTube、TikTok、Pinterest、Snapchat、Reddit、Threads、Bluesky 和 Medium。完整映射见 [`platform-catalog.md`](./skills/punk-cover/references/platform-catalog.md)。
+
+当前生图工具只支持 `1:1`、`2:3`、`3:2`、`4:3`、`3:4`、`9:16`、`16:9`、`21:9`。当平台或自定义请求比例不受支持时，Skill 会明确说明“只能生成最接近的比例”，自动使用最近的支持比例：X 的 `5:2` 和微信公众号的 `2.35:1` 都使用 `21:9`。这只是生图工具的比例限制，不宣称符合任何平台的封面尺寸标准。
+
+`punk-cover` supports the same global platform set in English mode. If a requested ratio is not supported by the image tool, it states that only the closest supported ratio can be generated and uses it automatically. For example, X `5:2` and WeChat public account `2.35:1` both resolve to `21:9`.
+
+### 使用示例
+
+只给文章内容：
+
+```text
+Use $punk-cover to create a cover image for this article:
+
+这里粘贴文章、笔记或主题草稿
+```
+
+指定平台和风格：
+
+```text
+Use $punk-cover to create a WeChat public account cover in 商业杂志头版 style:
+
+这里粘贴文章内容
+```
+
+英文系统或明确指定 English 模式：
+
+```text
+Use $punk-cover in English mode to create an Instagram Reels cover in Minimal Light Tech style:
+
+How AI agents are changing creative work
+```
+
+指定自定义比例：
+
+```text
+Use $punk-cover to create a cover image, aspect ratio 16:9, style 黑白极简概念:
+
+AI Agent 正在改变内容生产方式
+```
+
+只生成提示词，不生成图片：
+
+```text
+Use $punk-cover to create prompt-only output for this X cover, style 黑白灰先锋几何:
+
+这里粘贴推文或文章摘要
+```
+
+### 可用风格
+
+风格 ID 在两种语言模式下保持一致；中文/英文显示名与用途说明见 [`style-catalog.md`](./skills/punk-cover/references/style-catalog.md)。
+
+| 风格 | Style ID | 适合内容 |
+| --- | --- | --- |
+| 黑白极简概念 | `black-white-minimal-concept` | 抽象观点、战略、哲学、批判性主题 |
+| 黑白复古蚀刻版画封面 | `black-white-etching-editorial-cover` | 黑白蚀刻、铜版画、木刻、古典科学插图、超现实编辑和哲学主题 |
+| 语义转译极简 | `semantic-minimal-translation` | 单词、短句、口号、概念转译 |
+| 复古手撕拼贴 | `retro-torn-collage` | 社交传播、文化议题、街头感、复古杂志感 |
+| 方块世界 | `block-world` | 教程、工具、系统搭建、升级、游戏化表达 |
+| 巨型透视中文标题 | `giant-perspective-chinese-title` | 中文标题主导、强冲击、活动和社媒封面 |
+| 超大标题图文穿插 | `interleaved-title-editorial-poster` | 单一中景主体、超大短标题、前后景图文穿插和强编辑海报感 |
+| 立体纸雕概念海报 | `layered-paper-cut-concept-poster` | 真实立体纸层、单一准确隐喻、极简留白、柔和光影和多比例独立重构 |
+| 纸面击凸压凹封面 | `paper-emboss-deboss-cover` | 真实纸张质感、击凸压凹工艺、灵活文字构图、单一克制隐喻和艺术书封气质 |
+| Godot 2D 像素隐喻海报 | `godot-2d-pixel-metaphor-poster` | 把抽象主题转成单一游戏机制、角色动作、目标或阻碍与完整像素关卡世界 |
+| OSB 工业蓝线条隐喻 | `osb-industrial-blue-line-metaphor` | 满版真实 OSB 木板、左上工业蓝标识字、右下单线隐喻和严格留白控制 |
+| 积木世界 | `brick-world` | 搭建、团队、计划、教育、亲子和系统隐喻 |
+| 咨询报告视觉 | `consulting-report-visual` | 商业策略、方法论、产品分析、结构化观点 |
+| 科研期刊概念 | `research-journal-concept` | 科研、医学、材料、生物、机制类主题 |
+| 复古弥散渐变 | `retro-diffuse-gradient` | 艺术、设计、品牌、情绪化文章和杂志封面 |
+| 复古时代错位编辑封面 | `midcentury-surreal-editorial-cover` | AI、Coding、数字工作、未来工具和需要复古时代错位隐喻的当代主题 |
+| 复古未来主义 | `retro-futurism` | 中世纪想象的未来基础设施、模拟系统、物质化信息流、小人物动作和复古印刷质感的编辑封面 |
+| 极简公共空间摄影 | `minimal-public-space-photography` | 观点长文、文化观察、空间秩序和个体隐喻 |
+| 商业杂志头版 | `business-magazine-front-page` | AI、创业、投资、趋势、商业科技封面 |
+| 黑白灰先锋几何 | `black-white-gray-avant-geometry` | 实验性、现代主义、几何构成、强对比视觉 |
+| 黑红剪影 | `black-red-silhouette` | 工具教程、AI 工作流、金融、速度、电影和直接隐喻封面 |
+| 先锋复古建筑海报 | `avant-retro-architecture-poster` | 建筑地标、城市海报、旅行封面、展览活动和空间文化内容 |
+| 复古油墨点阵隐喻 | `retro-ink-dot-matrix-metaphor` | AI、科技、系统、研究和抽象观点的复古点阵隐喻封面 |
+| 黑色复古现代主义封面 | `black-midcentury-modernist-cover` | 复古高级、服务场景、产品人物、建筑和概念封面 |
+| 银色锡纸蓝字 | `silver-foil-blue-minimal` | 成长路径、方法论、商业系统、AI 工具和抽象观点的高级极简封面 |
+| 彩色新构成主义巨构海报 | `color-neo-constructivist-megastructure-poster` | 热点事件、体育赛事、产品发布、城市建筑和强冲击社媒封面 |
+| 复古日本科幻动画 | `retro-japanese-sci-fi-anime-cover` | AI、系统、代码、心理、社会冲突和方法论的复古科幻动画封面 |
+| 法式极简墨线海报 | `french-minimal-ink-poster` | AI、关系、制度、选择和抽象观点的手绘墨线隐喻封面 |
+| 品牌协同连接 | `brand-collaboration-connection` | 品牌联动、工具集成、自动化工作流、产品教程和企业级连接封面 |
+| Anthropic Research 风格 | `anthropic-research-style` | AI、研究、知识、系统和设计主题的极简编辑封面 |
+| kimi风格 | `kimi-stlye` | AI、研究、产品、材料和创意项目的俯视档案桌封面 |
+| 极简轻科技 | `minimal-light-tech` | 科技产品、工具教程、品牌概念和轻科技主题的纯白留白封面 |
+| 极简视觉隐喻风 | `minimal-visual-metaphor` | AI、商业科技、产品、组织和系统变化的极简实体隐喻封面 |
+
+### 风格样例
+
+| | | |
+|:---:|:---:|:---:|
+| ![黑白极简概念](./screenshots/punk-cover-styles/black-white-minimal-concept.png) | ![语义转译极简](./screenshots/punk-cover-styles/semantic-minimal-translation.png) | ![复古手撕拼贴](./screenshots/punk-cover-styles/retro-torn-collage.png) |
+| 黑白极简概念 | 语义转译极简 | 复古手撕拼贴 |
+| ![黑白复古蚀刻版画封面](./screenshots/punk-cover-styles/black-white-etching-editorial-cover.png) | | |
+| 黑白复古蚀刻版画封面 | | |
+| ![方块世界](./screenshots/punk-cover-styles/block-world.jpg) | ![巨型透视中文标题](./screenshots/punk-cover-styles/giant-perspective-chinese-title.png) | ![积木世界](./screenshots/punk-cover-styles/brick-world.png) |
+| 方块世界 | 巨型透视中文标题 | 积木世界 |
+| ![超大标题图文穿插](./screenshots/punk-cover-styles/interleaved-title-editorial-poster.png) | ![立体纸雕概念海报](./screenshots/punk-cover-styles/layered-paper-cut-concept-poster.png) | ![复古时代错位编辑封面](./screenshots/punk-cover-styles/midcentury-surreal-editorial-cover.png) |
+| 超大标题图文穿插 | 立体纸雕概念海报 | 复古时代错位编辑封面 |
+| ![复古未来主义](./screenshots/punk-cover-styles/retro-futurism.png) | | |
+| 复古未来主义 | | |
+| ![纸面击凸压凹封面](./screenshots/punk-cover-styles/paper-emboss-deboss-cover.png) | ![Godot 2D 像素隐喻海报](./screenshots/punk-cover-styles/godot-2d-pixel-metaphor-poster.png) | ![OSB 工业蓝线条隐喻](./screenshots/punk-cover-styles/osb-industrial-blue-line-metaphor.png) |
+| 纸面击凸压凹封面 | Godot 2D 像素隐喻海报 | OSB 工业蓝线条隐喻 |
+| ![咨询报告视觉](./screenshots/punk-cover-styles/consulting-report-visual.jpg) | ![科研期刊概念](./screenshots/punk-cover-styles/research-journal-concept.jpg) | ![复古弥散渐变](./screenshots/punk-cover-styles/retro-diffuse-gradient.jpg) |
+| 咨询报告视觉 | 科研期刊概念 | 复古弥散渐变 |
+| ![极简公共空间摄影](./screenshots/punk-cover-styles/minimal-public-space-photography.jpg) | ![商业杂志头版](./screenshots/punk-cover-styles/business-magazine-front-page.jpg) | ![黑白灰先锋几何](./screenshots/punk-cover-styles/black-white-gray-avant-geometry.jpg) |
+| 极简公共空间摄影 | 商业杂志头版 | 黑白灰先锋几何 |
+| ![黑红剪影](./screenshots/punk-cover-styles/black-red-silhouette.png) | ![先锋复古建筑海报](./screenshots/punk-cover-styles/avant-retro-architecture-poster.png) | ![复古油墨点阵隐喻](./screenshots/punk-cover-styles/retro-ink-dot-matrix-metaphor.png) |
+| 黑红剪影 | 先锋复古建筑海报 | 复古油墨点阵隐喻 |
+| ![黑色复古现代主义封面](./screenshots/punk-cover-styles/black-midcentury-modernist-cover.png) | ![银色锡纸蓝字](./screenshots/punk-cover-styles/silver-foil-blue-minimal.png) | ![彩色新构成主义巨构海报](./screenshots/punk-cover-styles/color-neo-constructivist-megastructure-poster.png) |
+| 黑色复古现代主义封面 | 银色锡纸蓝字 | 彩色新构成主义巨构海报 |
+| ![复古日本科幻动画](./screenshots/punk-cover-styles/retro-japanese-sci-fi-anime-cover.png) | ![法式极简墨线海报](./screenshots/punk-cover-styles/french-minimal-ink-poster.png) | ![品牌协同连接](./screenshots/punk-cover-styles/brand-collaboration-connection.png) |
+| 复古日本科幻动画 | 法式极简墨线海报 | 品牌协同连接 |
+| ![Anthropic Research 风格](./screenshots/punk-cover-styles/anthropic-research-style.png) | ![kimi风格](./screenshots/punk-cover-styles/kimi-stlye.png) | ![极简视觉隐喻风](./screenshots/punk-cover-styles/minimal-visual-metaphor.png) |
+| Anthropic Research 风格 | kimi风格 | 极简视觉隐喻风 |
+| ![极简轻科技](./screenshots/punk-cover-styles/minimal-light-tech.png) | | |
+| 极简轻科技 | | |
+
+## punk-ip-video-cover
+
+`punk-ip-video-cover` 用上传的人物照片和主题制作小红书人物 IP 视频封面。核心流程是：**提取四个代表色并合理搭配 → 真人抠图 → 按本期标题和画幅自由构图 → 应用字体、材质与装饰风格**。保留可辨认身份，动作与表情可按主题修改。
+
+支持 `3:4`、`16:9`、`4:3`、`9:16`，默认 `3:4`。人物位置、景别、标题路径及配色角色每次重新决定；构图库只作参考，风格不绑定固定布局。仅需本期身份照片，独立风格库以文字规则执行，不携带研究参考封面或测试人物照片。
+
+附上照片后自动选风格：
+
+```text
+使用 $punk-ip-video-cover，用这张人物照片制作 3:4 封面。
+标题：普通人如何用 AI 做内容。动作和表情可以按主题修改。
+```
+
+指定风格并制作多个排版版本：
+
+```text
+使用 $punk-ip-video-cover，采用「服装取色·真人撕纸拼贴」，
+标题：把生活过成假期。用附上的真人照片出三个 3:4 版本，
+从照片提取同一组四个颜色，每版采用不同构图。
+```
+
+目前接入 25 种风格，包含涂鸦、笔刷、衬线、漫画、拼贴、Y2K 等字形和材料方向。完整名称及规则见 [风格目录](./skills/punk-ip-video-cover/references/style-catalog.md)，配色流程见 [照片四色](./skills/punk-ip-video-cover/references/photo-palette.md)。接入数量不代表所有风格、比例和输入都已通过出图验证；实际生成需检查身份、中文、比例和布局。
+
+安装时选择 `skills/punk-ip-video-cover/` 即可；其 `styles/` 与 `references/` 均包含在自身目录内。独立目录同时附带[使用协议](./skills/punk-ip-video-cover/LICENSE)、完整个人使用条款、商业授权申请流程与第三方材料声明。个人非商用免费，商业使用须事先获得书面授权并支付许可费；金额与范围在商业协议中约定。
+
+## punk-avatar
+
+`punk-avatar` 用来把人物、宠物、物品照片或文字描述生成头像图，也可以生成宠物纪念卡，以及让真实人物从扁平景色中跃出的超现实纸艺作品。
+
+### 使用示例
+
+用照片生成头像：
+
+```text
+Use $punk-avatar to create an avatar from this photo.
+```
+
+指定头像风格：
+
+```text
+Use $punk-avatar to create a 像素头像 from this photo.
+```
+
+给宠物生成拍立得纪念卡：
+
+```text
+Use $punk-avatar to create a 拍立得纪念卡 for this pet. 宠物名：可乐。
+```
+
+指定自定义比例：
+
+```text
+Use $punk-avatar to create a 凌乱蜡笔宠物肖像, aspect ratio 4:5. 宠物名：奶茶。
+```
+
+纯文字描述头像：
+
+```text
+Use $punk-avatar to create a text-only 像素头像: a calm robot barista with a blue cap and square glasses.
+```
+
+纸感丙烯色块插画：
+
+```text
+Use $punk-avatar to create a 极简纸感丙烯色块插画 from this photo or theme:
+一个人走向一架通往天空的楼梯
+```
+
+立体人物扁平景色纸艺（前后对比图）：
+
+```text
+Use $punk-avatar to create a 立体人物扁平景色纸艺 前后对比图 from this photo.
+```
+
+立体人物扁平景色纸艺（单张效果图）：
+
+```text
+Use $punk-avatar to create a 立体人物扁平景色纸艺 单张效果图 from this photo.
+```
+
+### 可用风格
+
+| 风格 | Style ID | 对象 | 适合内容 |
+| --- | --- | --- | --- |
+| 像素头像 | `pixel-avatar` | 人、宠物、物品 | 标准头像、像素 IP、符号化头像 |
+| 怪诞灵魂手绘 | `grotesque-soul-sketch` | 人、宠物 | 趣味头像、情绪化手绘肖像 |
+| 凌乱蜡笔宠物肖像 | `messy-crayon-pet-portrait` | 宠物 | 宠物头像、宠物手绘肖像 |
+| 时尚速写观察页 | `fashion-sketch-observation` | 人 | 人像头像、街拍和旅行观察页感肖像 |
+| 拍立得纪念卡 | `polaroid-keepsake` | 宠物 | 宠物头像衍生卡片、宠物纪念图 |
+| 极简纸感丙烯色块插画 | `minimal-paper-acrylic-block-illustration` | 人、宠物、物品、场景、主题 | 小主体、粗糙白纸、鲜明丙烯色块和大面积留白的纸感手绘插画 |
+| 立体人物扁平景色纸艺 | `surreal-pop-up-paper-landscape` | 人、场景 | 真人保持立体，原照片环境向后翻倒并压扁为纸面景色；支持前后对比图与单张效果图 |
+
+### 风格样例
+
+| | | |
+|:---:|:---:|:---:|
+| ![像素头像](./screenshots/punk-avatar-styles/pixel-avatar.png) | ![怪诞灵魂手绘](./screenshots/punk-avatar-styles/grotesque-soul-sketch.jpg) | ![凌乱蜡笔宠物肖像](./screenshots/punk-avatar-styles/messy-crayon-pet-portrait.jpg) |
+| 像素头像 | 怪诞灵魂手绘 | 凌乱蜡笔宠物肖像 |
+| ![时尚速写观察页](./screenshots/punk-avatar-styles/fashion-sketch-observation.jpg) | ![拍立得纪念卡](./screenshots/punk-avatar-styles/polaroid-keepsake.jpg) | |
+| 时尚速写观察页 | 拍立得纪念卡 | |
+| ![极简纸感丙烯色块插画](./screenshots/punk-avatar-styles/minimal-paper-acrylic-block-illustration.png) | ![立体人物扁平景色纸艺](./screenshots/punk-avatar-styles/surreal-pop-up-paper-landscape.png) | |
+| 极简纸感丙烯色块插画 | 立体人物扁平景色纸艺 | |
+
+## License
+
+Punk Skill `v2.0.0` 及后续版本采用双轨授权：
+
+- 个人非商用：可按照 [Punk Skill Personal Use License 1.0](./LICENSE-PERSONAL.md) 免费使用；
+- 商业使用：必须事先取得权利人的书面商业授权，并支付适用的许可费用。申请流程见 [Commercial Licensing](./COMMERCIAL-LICENSE.md)，联系邮箱为 `adrian.pduck@gmail.com`。
+
+企业、机构、工作室、团队、雇员、承包商或客户项目使用，以及收费服务、商业内容、营销、广告、品牌传播、产品或工作流集成，均属于商业使用。内部使用、试用、尚未盈利或没有单独向客户收费，不因此变成个人非商用使用。
+
+此前已经按照 MIT License 发布的版本继续适用其原有 MIT License；本次变更不追溯撤销既有授权。历史协议见 [LICENSE-MIT-LEGACY](./LICENSE-MIT-LEGACY)。
+
+第三方素材不因本仓库的许可声明而获得重新授权，详见 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。
+
+## 致谢
+
+- 提示词设计与风格方向：[@adrianpunk](https://github.com/adrianpunk) · [X](https://x.com/AdrianPunk115)
+- 仓库维护：[@jinchenma94](https://github.com/jinchenma94) · [X](https://x.com/jinchenma_ai)

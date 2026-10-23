@@ -1,0 +1,27 @@
+_private/
+.cache/
+outputs/
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+.env*
+!.env.example
+那张纸.md
+要求与反馈台账.md
+_archive/
+.hyperframes/
+.thumbnails/
+out/
+.om/
+snapshots/
+node_modules/
+site/dist/
+
+# process materials, kept locally, not published
+legacy/
+docs/internal/
+docs/research/
+docs/engine-plan-202610.md
+docs/10X_PLAN.md
+.last-update-check

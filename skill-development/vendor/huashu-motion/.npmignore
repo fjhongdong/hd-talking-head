@@ -1,0 +1,8 @@
+out/
+.om/
+snapshots/
+_private/
+_archive/
+legacy/
+.cache/
+docs/internal/

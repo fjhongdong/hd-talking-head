@@ -1,0 +1,17 @@
+{
+  "schema_version":"talkcraft-qualification-cases/v2",
+  "card_id":"split-60-40-story",
+  "adapter_version":"1.1.0",
+  "implementation_sha256":"7a9bd0ed22013a5670cffffc46da2462ab47ae299374152e8458bc876483012c",
+  "contract_sha256":"4f7fefaf1c73ae12516252e05d760a9a30f41df6344541678633d8f6f0406304",
+  "cases":[
+    {"case_id":"contrast-a","duration_frames":173,"scene":{"layout":"full-frame","presenterRect":null},"presenter":null,"scene_inputs":[
+      {"slot":"presenter","kind":"presenter-alpha","fixture_id":"alt-block-lines-presenter"},
+      {"slot":"subject-video","kind":"video-cover","fixture_id":"shape-wipe-ocean"}
+    ],"sfx":[{"cueId":"card-in","frame":10,"anchor":"card-in","name":"ui-pop","assetKey":"talkcraft-ui-pop","src":"qualification/talkcraft-ui-pop.mp3","sha256":"e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4","volume":0.28,"playbackRate":1}],"raw":{"title":"核心故事","subtitle":"三项结果","accent":"#007AFF"}},
+    {"case_id":"contrast-b","duration_frames":173,"scene":{"layout":"full-frame","presenterRect":null},"presenter":null,"scene_inputs":[
+      {"slot":"presenter","kind":"presenter-alpha","fixture_id":"alt-block-lines-presenter"},
+      {"slot":"subject-video","kind":"video-cover","fixture_id":"shape-wipe-typing"}
+    ],"sfx":[{"cueId":"card-in","frame":10,"anchor":"card-in","name":"ui-pop","assetKey":"talkcraft-ui-pop","src":"qualification/talkcraft-ui-pop.mp3","sha256":"e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4","volume":0.28,"playbackRate":1}],"raw":{"title":"核心故事对照","subtitle":"三项结果升级","accent":"#FF375F"}}
+  ]
+}

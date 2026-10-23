@@ -1,0 +1,107 @@
+// Copyright (c) 2026 Wise Wong. SPDX-License-Identifier: Apache-2.0
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {data, environment,legacyDefinition,frameMarkup as originalFrameMarkup} from './helpers.mjs';
+const frameMarkup=root=>originalFrameMarkup(root,{canonicalAttributes:true});
+test('全部标准样例在任意定位后均可回到相同画面，资源可全部释放', async () => {
+  const env = await environment();
+  try {
+    const {w,listeners} = env, root = w.document.getElementById('root');
+    for (const e of data.effects) {
+      const player = w.MotionRuntime.create(root, e);
+      await player.ready;assert.equal(player.error,null,e.id);
+      assert.equal(w.MotionRuntime.instanceCount, 1, e.id);
+      assert.equal(w.MotionRuntime.runningCount, 0, e.id);
+      for (const p of [0,.2,.48,.8,1]) {
+        const time = e.duration_ms * p;
+        player.seek(time); const snapshot = frameMarkup(root);
+        // 内嵌图片的编码字节可恰好出现 NaN 等字母，只检查实际图形参数和文字。
+        assert.ok(!/NaN|Infinity|undefined/.test(snapshot.replace(/data:[^"]*/g,'data:asset')), e.id + ' 有无效画面参数');
+        player.seek(e.duration_ms * (1 - p)); player.seek(time);
+        assert.equal(frameMarkup(root), snapshot, e.id + ' 反复定位改变了结果');
+      }
+      for (const easing of e.parameters.ease?.options || ['linear']) {
+        player.setEase(easing); player.seek(e.preview_ms); const snapshot = frameMarkup(root);
+        player.seek(0); player.seek(e.preview_ms); assert.equal(frameMarkup(root), snapshot, e.id + ' 调节节奏后不可重复');
+      }
+      player.setSpeed(.5); assert.equal(player.speed, .5);
+      player.setSpeed(2); assert.equal(player.speed, 2);
+      player.play(); assert.equal(w.MotionRuntime.runningCount, 1);
+      player.pause(); assert.equal(w.MotionRuntime.runningCount, 0);
+      player.restart(false); assert.equal(player.currentTime, 0); assert.ok(player.paused);
+      player.destroy(); player.destroy();
+      assert.equal(w.MotionRuntime.instanceCount, 0);
+      assert.equal(listeners.size, 0);
+      assert.equal(root.innerHTML, '');
+    }
+  } finally { env.close(); }
+});
+test('持续滚动周期接缝和逐项顺序按定义执行', async () => {
+  const env = await environment();
+  try {
+    const {w} = env, root = w.document.getElementById('root'), M = w.MotionKit;
+    const e = data.effects.find(x => x.id === 'dual-scroll');
+    const render = w.MotionFactories[e.id](root, M, e);
+    render(0,{ease:'linear',duration:e.duration_ms,elapsed:0}); const initial = root.innerHTML;
+    assert.match(root.querySelectorAll('.strip-row')[0].style.transform, /-640px/);
+    assert.match(root.querySelectorAll('.strip-row')[1].style.transform, /640px/);
+    render(0,{ease:'linear',duration:e.duration_ms,elapsed:e.duration_ms}); const loop = root.innerHTML;
+    render(e.duration_ms,{ease:'linear',duration:e.duration_ms,elapsed:e.duration_ms});
+    assert.equal(root.innerHTML, loop); assert.notEqual(initial, loop);
+    const tracks = root.querySelectorAll('.scroll-track');
+    assert.match(tracks[0].style.transform, /-672px/); assert.match(tracks[1].style.transform, /0px/);
+    const player = w.MotionRuntime.create(root, data.effects.find(x => x.id === 'stagger-in'));
+    player.seek(700); const cards = [...root.querySelectorAll('.mini-card')];
+    assert.ok(Number(cards[0].style.opacity) > Number(cards[1].style.opacity));
+    assert.ok(Number(cards[1].style.opacity) > Number(cards[2].style.opacity)); player.destroy();
+  } finally { env.close(); }
+});
+test('逐字显现的允许节奏不会反向退回', async () => {
+  const env = await environment();
+  try {
+    const {w} = env, root = w.document.getElementById('root');
+    for (const id of ['type-reveal']) {
+      const e = legacyDefinition(data.effects.find(x => x.id === id));
+      const player = w.MotionRuntime.create(root,e);
+      for (const easing of e.parameters.ease?.options || [e.default_ease]) {
+        player.setEase(easing); let previous = 0;
+        for (let t = 0; t <= e.duration_ms; t += 50) {
+          player.seek(t);
+          const value = root.querySelector('.typed-text').textContent.length;
+          assert.ok(value >= previous, id + ' 的已显示内容退回了'); previous = value;
+        }
+      }
+      player.destroy();
+    }
+  } finally {env.close();}
+});
+test('真实 Anime.js 计时器可前进和暂停，销毁后不再回调', async () => {
+  const env = await environment();
+  try {
+    const {w} = env; let callbacks = 0;
+    const player = w.MotionRuntime.create(w.document.getElementById('root'), data.effects[0], {onUpdate() {callbacks++;}});
+    player.play(); await new Promise(resolve => setTimeout(resolve, 100));
+    assert.ok(player.currentTime > 0); player.pause(); const time = player.currentTime;
+    await new Promise(resolve => setTimeout(resolve, 40)); assert.equal(player.currentTime, time);
+    player.destroy(); const count = callbacks;
+    await new Promise(resolve => setTimeout(resolve, 40)); assert.equal(callbacks, count);
+    assert.throws(() => {const p = w.MotionRuntime.create(w.document.getElementById('root'),data.effects[0]); try {p.seek(NaN);} finally {p.destroy();}}, /有限数字/);
+  } finally { env.close(); }
+});
+
+test('累计定位保持循环轮次，普通定位和重播归零，单次效果仍限制在有效区间',async()=>{
+  const env=await environment();
+  try{
+    const {w}=env,root=w.document.getElementById('root');
+    const loop=w.MotionRuntime.create(root,data.effects.find(e=>e.id==='dual-scroll'));
+    loop.seekElapsed(8300);assert.equal(loop.currentTime,300);assert.equal(loop.elapsedTime,8300);
+    assert.match(root.querySelector('.strip-row').style.transform,/translate3d\(0px/);
+    assert.throws(()=>loop.seekElapsed(Infinity),/有限数字/);
+    loop.seek(300);assert.equal(loop.elapsedTime,300);assert.doesNotMatch(root.querySelector('.strip-row').style.transform,/translate3d\(0px/);
+    loop.seekElapsed(16300);loop.restart(false);assert.equal(loop.currentTime,0);assert.equal(loop.elapsedTime,0);
+    loop.seekElapsed(-200);assert.equal(loop.currentTime,0);assert.equal(loop.elapsedTime,0);loop.destroy();
+    const effect=data.effects.find(e=>e.id==='title-content'),once=w.MotionRuntime.create(root,effect);
+    once.seekElapsed(effect.duration_ms*2);assert.equal(once.currentTime,effect.duration_ms);assert.equal(once.elapsedTime,effect.duration_ms);
+    once.seekElapsed(0);assert.equal(once.currentTime,0);once.destroy();
+  }finally{env.close();}
+});

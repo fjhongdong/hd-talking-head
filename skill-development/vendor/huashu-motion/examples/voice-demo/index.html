@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN" data-composition-variables='[
+  {"id":"title","type":"string","label":"标题","default":"一句话出片"},
+  {"id":"prompt","type":"string","label":"示例指令","default":"做一个会动的产品标题"},
+  {"id":"pin","type":"string","label":"画面评论","default":"改成橙色"},
+  {"id":"accent","type":"color","label":"强调色","default":"#d9480f"},
+  {"id":"paper","type":"color","label":"底色","default":"#f3eee4"},
+  {"id":"ink","type":"color","label":"文字色","default":"#1d1b18"},
+  {"id":"endHold","type":"number","label":"结尾停留（秒）","default":0.8,"min":0,"max":10,"step":0.1,"group":"节奏"}
+]'>
+<head>
+<meta charset="utf-8">
+<title>huashu-motion · voice demo</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/om.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-500.woff") format("woff"); font-weight: 500; font-style: normal; }
+@font-face { font-family: "Noto Sans SC"; src: url("assets/fonts/NotoSansSC-900.woff") format("woff"); font-weight: 900; font-style: normal; }
+</style>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+  #film { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); font-family: "Noto Sans SC", sans-serif; font-weight: 500; }
+  .grain { position: absolute; inset: 0; opacity: .5; background:
+      radial-gradient(1200px 700px at 20% 10%, #ffffff80, transparent 60%),
+      radial-gradient(900px 600px at 90% 100%, #00000010, transparent 60%); }
+  section { position: absolute; inset: 0; }
+
+  .kicker { position: absolute; left: 160px; top: 300px; font-size: 26px; letter-spacing: 10px; color: var(--accent); }
+  .title { position: absolute; margin: 0; left: 150px; top: 350px; font-size: 200px; line-height: 1.1; letter-spacing: -6px; font-weight: 900; }
+  .title .ch { display: inline-block; }
+  .title .mask { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 12px; }
+  .rule { position: absolute; left: 160px; top: 610px; width: 980px; height: 12px; background: var(--accent); transform-origin: 0 50%; }
+
+  .prompt { position: absolute; left: 160px; top: 430px; width: 700px; padding: 34px 40px; border-radius: 28px; background: #fffdf8; box-shadow: 0 18px 50px #3a2a1020; font-size: 44px; }
+  .prompt .who { display: block; font-size: 22px; letter-spacing: 6px; color: #b13a0b; margin-bottom: 14px; }
+  .prompt .caret { display: inline-block; width: 4px; height: 46px; margin-left: 4px; vertical-align: -8px; background: var(--ink); }
+
+  .frame { position: absolute; left: 980px; top: 300px; width: 760px; height: 428px; border-radius: 22px; background: #fff; box-shadow: 0 24px 70px #3a2a1030; transform-origin: 50% 50%; }
+  .frame .bar { position: absolute; left: 48px; border-radius: 8px; transform-origin: 0 50%; }
+  .frame .b1 { top: 56px; width: 430px; height: 46px; background: var(--ink); }
+  .frame .b2 { top: 124px; width: 290px; height: 22px; background: #c9c2b4; }
+  .frame .block { position: absolute; left: 48px; top: 190px; width: 320px; height: 190px; border-radius: 14px; background: #d8d1c3; transform-origin: 50% 100%; }
+  .frame .cursor { position: absolute; left: 0; top: 0; width: 46px; height: 58px; }
+  .frame .ripple { position: absolute; left: 208px; top: 285px; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 5px solid var(--accent); }
+  .frame .pin { position: absolute; left: 400px; top: 210px; padding: 16px 26px; border-radius: 18px 18px 18px 4px; background: var(--ink); color: #fff; font-size: 34px; white-space: nowrap; }
+
+  .panel { position: absolute; left: 410px; top: 330px; width: 1100px; }
+  .panel .label { font-size: 30px; letter-spacing: 10px; color: var(--accent); }
+  .panel .track { margin-top: 26px; height: 22px; border-radius: 11px; background: #ded6c7; overflow: hidden; }
+  .panel .fill { height: 100%; background: var(--accent); transform-origin: 0 50%; }
+  .panel .chips { display: flex; gap: 22px; margin-top: 40px; }
+  .panel .chips span { padding: 16px 34px; border-radius: 40px; background: #fffdf8; box-shadow: 0 10px 30px #3a2a1018; font-size: 44px; }
+  .panel .check { margin-top: 46px; font-size: 64px; font-weight: 900; color: var(--accent); }
+
+  .captions { position: absolute; left: 0; right: 0; top: 930px; text-align: center; font-size: 46px; letter-spacing: 1px; }
+  .captions .line { position: absolute; left: 0; right: 0; }
+  .captions .w { color: var(--ink); opacity: .32; }
+</style>
+<script type="application/json" id="om-cues">{"source":"tts:say:Tingting","precision":"tts","offset":0,"duration":14.66,"words":[
+{"word":"huashu-motion","start":0,"end":0.94},
+{"word":"一句话","start":1.159,"end":1.859},
+{"word":"出片","start":1.859,"end":2.325},
+{"word":"你","start":2.575,"end":2.804},
+{"word":"只要","start":2.804,"end":3.262},
+{"word":"说出","start":3.262,"end":3.721},
+{"word":"想法","start":3.721,"end":4.18},
+{"word":"Agent","start":4.486,"end":4.968},
+{"word":"就把","start":4.968,"end":5.45},
+{"word":"画面","start":5.45,"end":5.932},
+{"word":"做","start":5.932,"end":6.173},
+{"word":"出来","start":6.173,"end":6.656},
+{"word":"哪里","start":6.905,"end":7.299},
+{"word":"不","start":7.299,"end":7.496},
+{"word":"满意","start":7.496,"end":7.89},
+{"word":"指着","start":8.201,"end":8.677},
+{"word":"画面","start":8.677,"end":9.153},
+{"word":"改","start":9.153,"end":9.391},
+{"word":"它","start":9.694,"end":9.934},
+{"word":"当场","start":9.934,"end":10.414},
+{"word":"重做","start":10.414,"end":10.893},
+{"word":"改完","start":11.143,"end":11.608},
+{"word":"一","start":11.608,"end":11.84},
+{"word":"键","start":11.84,"end":12.073},
+{"word":"导出","start":12.073,"end":12.537},
+{"word":"配音","start":12.853,"end":13.305},
+{"word":"和","start":13.305,"end":13.531},
+{"word":"字幕","start":13.531,"end":13.983},
+{"word":"都","start":13.983,"end":14.209},
+{"word":"对齐","start":14.209,"end":14.66}
+]}</script>
+</head>
+<body>
+<!--
+  Narration demo. `om voice examples/voice-demo --text examples/voice-demo/script.txt` writes
+  <audio id="om-voice"> and <script id="om-cues">; every timing below hangs off OM.cue('词'),
+  so a new take (or `--audio my-recording.m4a`) moves the motion with the words.
+  The root has no data-duration: the film ends a beat after the last spoken word.
+-->
+<div id="film" data-composition-id="film" data-width="1920" data-height="1080">
+  <audio id="om-voice" src="assets/voice.wav" data-start="0" data-duration="14.66" data-track-index="9" data-volume="1"></audio>
+  <div class="grain"></div>
+
+  <section id="s-title">
+    <div class="kicker" data-om-id="kicker">HUASHU-MOTION</div>
+    <h1 class="title" data-om-id="title" data-layout-allow-overflow></h1>
+    <div class="rule" data-om-id="rule"></div>
+  </section>
+
+  <section id="s-make">
+    <div class="prompt" data-om-id="prompt"><span class="who">你说</span><span id="typed"></span><i class="caret"></i></div>
+    <div class="frame" data-om-id="frame">
+      <div class="bar b1"></div><div class="bar b2"></div>
+      <div class="block" data-om-id="block"></div>
+      <div class="ripple"></div>
+      <div class="pin" data-om-id="pin" data-var-text="pin">改成橙色</div>
+      <svg class="cursor" data-om-id="cursor" viewBox="0 0 46 58"><path d="M3 3 L3 47 L15 36 L23 55 L31 51 L23 33 L40 33 Z" fill="#1d1b18" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>
+    </div>
+  </section>
+
+  <section id="s-export">
+    <div class="panel" data-om-id="export">
+      <div class="label">导出</div>
+      <div class="track"><div class="fill"></div></div>
+      <div class="chips"><span id="c-mp4">MP4</span><span id="c-voice">配音</span><span id="c-subs">字幕</span></div>
+      <div class="check">✓ 已对齐</div>
+    </div>
+  </section>
+
+  <div class="captions" data-om-id="captions"></div>
+</div>
+
+<script>
+  const V = OM.vars();
+  const cue = OM.cue;
+  const esc = (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c] || c;
+  document.querySelector('.title').innerHTML = [...V.title].map((c) => `<span class="mask"><span class="ch">${esc(c)}</span></span>`).join('');
+
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+  gsap.set(['#s-make', '#s-export', '.frame', '.ripple', '.pin', '.cursor'], { opacity: 0 });
+
+  // 1 · title — the characters start rising on 「一句话」
+  tl.addLabel('scene:title', 0)
+    .fromTo('.kicker', { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: .6 }, .1)
+    .fromTo('.title .ch', { yPercent: 110 }, { yPercent: 0, duration: .7, stagger: .06, ease: 'expo.out' }, cue('一句话'))
+    .fromTo('.rule', { scaleX: 0 }, { scaleX: 1, duration: .8, ease: 'expo.inOut' }, cue('出片'))
+    .to('#s-title', { autoAlpha: 0, y: -40, duration: .4, ease: 'power2.in' }, cue('只要') - .45);
+
+  // 2 · say it, the frame appears
+  const typed = { n: 0 };
+  tl.addLabel('scene:make', cue('只要') - .3)
+    .to('#s-make', { opacity: 1, duration: .3 }, cue('只要') - .3)
+    .fromTo('.prompt', { y: 30 }, { y: 0, duration: .5 }, cue('只要') - .3)
+    .fromTo(typed, { n: 0 }, { n: [...V.prompt].length, duration: cue('想法', 1, 'end') - cue('说出'), ease: 'none',
+        onUpdate: () => { document.getElementById('typed').textContent = [...V.prompt].slice(0, Math.round(typed.n)).join(''); } }, cue('说出'))
+    .fromTo('.frame', { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: .5 }, cue('画面'))
+    .fromTo('.frame .bar, .frame .block', { scaleX: 0 }, { scaleX: 1, duration: .6, stagger: .12, ease: 'expo.out' }, cue('画面') + .1);
+
+  // 3 · point at it — the cursor lands and clicks on 「指着」, the block is redone on 「重做」
+  const point = cue('指着');
+  tl.addLabel('scene:point', cue('哪里') - .3)
+    .to('.prompt', { opacity: 0, x: -40, duration: .4, ease: 'power2.in' }, cue('哪里') - .3)
+    .to('.frame', { x: -400, y: -10, scale: 1.3, duration: .8, ease: 'expo.inOut' }, cue('哪里') - .3)
+    .fromTo('.cursor', { opacity: 0, x: 640, y: 400 }, { opacity: 1, duration: .2 }, point - .8)
+    .to('.cursor', { x: 205, y: 280, duration: .6, ease: 'power2.out' }, point - .6)
+    .to('.cursor', { scale: .82, duration: .08, yoyo: true, repeat: 1, ease: 'power1.inOut', transformOrigin: '0 0' }, point)
+    .set('.ripple', { opacity: 1, scale: .2 }, point) // a set, not fromTo: fromTo would show the ring before the click
+    .to('.ripple', { opacity: 0, scale: 1.6, duration: .6, ease: 'power2.out' }, point)
+    .fromTo('.pin', { opacity: 0, y: 14, scale: .9 }, { opacity: 1, y: 0, scale: 1, duration: .35 }, cue('改'))
+    .to('.block', { backgroundColor: V.accent, duration: .3 }, cue('重做'))
+    .fromTo('.block', { scaleY: .6 }, { scaleY: 1, duration: .6, ease: 'elastic.out(1, .5)' }, cue('重做'));
+
+  // 4 · export — the bar starts on 「导出」 and finishes on 「对齐」
+  const done = cue('对齐', 1, 'end');
+  tl.addLabel('scene:export', cue('改完') - .3)
+    .to('#s-make', { autoAlpha: 0, duration: .3 }, cue('改完') - .3)
+    .to('#s-export', { opacity: 1, duration: .3 }, cue('改完') - .3)
+    .fromTo('.panel', { y: 30 }, { y: 0, duration: .5 }, cue('改完') - .3)
+    .fromTo('.fill', { scaleX: 0 }, { scaleX: 1, duration: done - cue('导出'), ease: 'none' }, cue('导出'))
+    .fromTo('#c-mp4', { opacity: 0, scale: .6 }, { opacity: 1, scale: 1, duration: .35, ease: 'back.out(2)' }, cue('导出'))
+    .fromTo('#c-voice', { opacity: 0, scale: .6 }, { opacity: 1, scale: 1, duration: .35, ease: 'back.out(2)' }, cue('配音'))
+    .fromTo('#c-subs', { opacity: 0, scale: .6 }, { opacity: 1, scale: 1, duration: .35, ease: 'back.out(2)' }, cue('字幕'))
+    .fromTo('.panel .check', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .4 }, cue('对齐'));
+
+  // Captions straight from the cues: a line per breath (a pause ≥ 0.2 s), the spoken word lights up.
+  const words = OM.words(), host = document.querySelector('.captions'), lines = [];
+  words.forEach((w, i) => { if (!i || w.start - words[i - 1].end >= .2) lines.push([]); lines.at(-1).push(w); });
+  lines.forEach((line) => {
+    const el = document.createElement('div');
+    el.className = 'line';
+    el.innerHTML = line.map((w) => `<span class="w">${[...w.word].map(esc).join('')}</span>`).join('');
+    host.appendChild(el);
+    // never a negative position: GSAP would shift the whole timeline later to make room
+    tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: .12 }, Math.max(0, line[0].start - .12))
+      .to(el, { opacity: 0, duration: .12 }, line.at(-1).end + .05);
+    [...el.children].forEach((s, i) => tl.to(s, { opacity: 1, color: V.accent, duration: .06, ease: 'none' }, line[i].start)
+      .to(s, { color: V.ink, duration: .2, ease: 'none' }, line[i].end));
+  });
+
+  tl.to({}, { duration: V.endHold }, words.at(-1).end); // end a beat after the last word
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

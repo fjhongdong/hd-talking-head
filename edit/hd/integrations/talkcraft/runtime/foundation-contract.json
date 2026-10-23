@@ -1,0 +1,28 @@
+{
+  "schema_version": "talkcraft-visual-foundations/v1",
+  "backdrops": [
+    "mesh-flow-dark",
+    "aurora-veil",
+    "beams-grid",
+    "spotlight-stage",
+    "dot-field-wave",
+    "orbs-dark",
+    "pastel-mesh-flow",
+    "paper-grain",
+    "grid-spot-light",
+    "iridescent-sheen",
+    "glass-blobs",
+    "ink-wash"
+  ],
+  "frames": [
+    "browser-retro",
+    "magazine",
+    "film",
+    "polaroid",
+    "blueprint",
+    "laptop",
+    "stamp",
+    "hairline"
+  ],
+  "source_frames": [0, 24, 48]
+}

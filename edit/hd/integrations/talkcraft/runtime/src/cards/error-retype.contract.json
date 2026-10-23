@@ -1,0 +1,1 @@
+{"schema_version":"talkcraft-card-contract/v1","card_id":"error-retype","scene":"full-frame","scene_input_slots":["presenter"],"sfx_cues":[{"cueId":"retype-lock","frame":50,"anchor":"retype-lock","name":"ui-click","assetKey":"talkcraft-click","volume":0.26,"playbackRate":1.2}]}

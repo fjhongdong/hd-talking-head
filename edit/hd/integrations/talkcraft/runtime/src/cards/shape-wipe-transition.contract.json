@@ -1,0 +1,9 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "shape-wipe-transition",
+  "scene": "full-frame",
+  "scene_input_slots": ["a", "b"],
+  "sfx_cues": [
+    {"cueId": "wipe-start", "frame": 22, "anchor": "wipe-start", "name": "wind-swoosh-short", "assetKey": "talkcraft-wind-swoosh-short", "volume": 0.35, "playbackRate": 1.0}
+  ]
+}

@@ -1,0 +1,130 @@
+# 阶段执行与续做
+
+正式制作只使用 `scripts/run_stage.py`。它调用现有十二阶段函数，不负责新建模型、生成语义判断或改变 Job 配置。通过已准备的 `project_python.py` 运行；不再使用旧 `run_video`、`auto_advance`、`quick_cover` 或逐段改写计划的 `build_native_visual`。
+
+## 执行当前阶段
+
+```bash
+<python> <skill>/scripts/project_python.py --project-root <project> -- \
+  <skill>/scripts/run_stage.py --job-context <workspace>/job-context.json
+```
+
+省略 `--stage` 时读取最早未完成阶段；显式指定时仍须满足现有依赖。已批准阶段无新输入时核验并复用；要改变输入，先用现有 `state.revise` 明确修订，再执行。`needs_revision` 可以继续调用原 runner；`blocked` 保留当前原因，按原恢复入口处理。`ready_for_review` 返回已有候选和当前 revision，不重新生成。
+
+配置和运行时身份沿用当前 Job。只有预检过期或尚未绑定新批准视觉计划时自动复检，不重写配置批准；模型、费用、项目或源码身份变化仍走原确认或迁移入口。所有阶段只处理本期 Job，不迁移其他视频。
+
+## 显式输入
+
+`--input-json` 用于以下阶段的已完成创作输入；相对媒体路径均相对当前 `job_dir`，命令行 JSON 文件本身应传绝对路径。
+
+| 阶段 | JSON 字段 |
+| --- | --- |
+| `content_analysis` | `analysis`，按内容分析合同的完整对象 |
+| `cover_direction` | `direction`；本期完整预览另用 `direction_preview` |
+| `cover` | `image`、`prompt`，直接绑定已确认的完整带字图片，不重画或缩放 |
+| `preview` | 仅本期明确覆盖默认开场或配乐时传 `opening`、`music` |
+
+`inspect`、`edit_structure`、`subtitles`、`delivery` 直接消费此前批准的正式产物。
+
+口播清理先绑定真实转写：
+
+```bash
+<python> <skill>/scripts/run_stage.py --job-context <ctx> --stage speech_cleanup \
+  --video-use-result <workspace>/edit/transcripts/<source>.json \
+  --invocation-json <真实调用记录.json> --cleanup-plan <清理方案.json>
+```
+
+调用记录沿用真实进程的 `entrypoint`、`exit_code`、源视频和结果摘要。没有记录就说明缺口，不拼造成功、不重新收费识别。只完成转写时可先不传 `--cleanup-plan`；随后在同一阶段传入清理方案，继续复用转写。已完成清理提案要修改时先明确修订。`edit_structure` 单独执行，不在转写入口里顺带剪辑。
+
+视觉计划先接收已完成内部语义检查的草稿，发布待用户确认的完整视觉路由表。若包含生图或生视频，入口先在独立 `07-visual-confirmation/rN-id/` 冻结 proposal 和 `generation_plan.steps`，再发布整表；不得先生成媒体再补报审：
+
+```bash
+<python> <skill>/scripts/run_stage.py --job-context <ctx> --stage visual_direction \
+  --director-brief <director-brief.json> --treatment <treatment.json> \
+  --reviewed-visual-text <reviewed-visual-text.json>
+```
+
+原生代码组件可用 `compose_visual_plan.py` 准备；它输出 `native-inputs/draft-<id>/` 内的 Job 相对路径。`visual-routing.md` 必须覆盖剪后时间线上的全部贴片和 B-roll，每行包含开始/结束、类型、剪后原话与语义、tags、具体模板及实际来源。先由语义生成 tags，再由能力库检索模板；不得用屏显 labels 代替 tags。`visual_text_draft` 指向 `visual-text-draft.json`，状态为 `pending_review`，只列出待审屏显和候选原文依据。它不能作为 `--reviewed-visual-text` 输入。宿主对照当前 director 草稿和已批准内容逐条检查；删除越义文字或完成合理转述的语义复核后，另存正式记录：
+
+```json
+{
+  "content_analysis_sha256": "<当前已批准内容分析的摘要>",
+  "entries": [{
+    "segment_id": "<当前镜头ID>",
+    "text": "<已实际审阅的屏显文字>",
+    "source_ref": "item:<该镜头选中的内容项ID>",
+    "source_quote": "<该内容项的完整原文>",
+    "reason": "<本次改写为何没有新增或改变事实>"
+  }]
+}
+```
+
+正式记录只使用上述字段，不复制草稿的待审状态或候选来源列表，不由脚本预填“已审通过”。已有原文及关键词的直接引用可由现有内容检查确认。视觉方向阶段向用户展示并确认整张 `visual-routing.md`；这一次确认覆盖整片贴片、B-roll、tags、具体模板、图片/视频渠道和生成步骤，不再增加逐条确认或后续成片确认。确认后的同一次 `visual_direction` 续做只返回具体宿主 tool actions，输入可包含：
+
+```json
+{
+  "generation_results": [
+    {"action": "<原 action>", "response": "<真实规范响应>", "queried_task_ids": ["<真实任务ID>"]}
+  ],
+  "realization": {
+    "director_brief": "<native-inputs/realized-.../director-brief.json>",
+    "treatment": "<native-inputs/realized-.../treatment.json>",
+    "reviewed_visual_text": "<可选路径>",
+    "host_qa_note": "<实际检查结果>"
+  }
+}
+```
+
+原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。
+
+未来图输入使用 `{"$step":"image-step","output":0}`，不得填写不存在的未来文件摘要。宿主实际完成生成后才写入真实媒体和哈希，再构造后续视频请求；模板内部生图、生视频与直接 B-roll 共用启动时确认的渠道。没有生成步骤的已确认素材直接沿原编译入口执行。
+
+自动 `treatment.json` 同样是候选资料：`semantic_assessments` 初始为 `needs_review`，Skill 比较和 assignments 只是待审选型。宿主检查引用原声、实际场景和候选比较理由，修正不实或通用填充理由后，才将实际通过的组件记为 `pass`。未审语义由现有正式发布检查阻断；不把离线输出 `needs_review` 当作审阅完成。
+
+每个原生 beat 显式提供 `tags` 和 `content_item_ids`；`tags` 是从剪后语义得出的检索短语，`labels` 才是屏显文字。其他准备入口在现有 treatment 的 `motion_queries` 为每个代码/生成型组件记录一条 `{ "segment_id": "seg-001", "component_id": "native-visual", "tags": ["并列要点", "层叠出现"] }`。查询必须完整、唯一，选中模板须由这些 tags 按实际用途召回；开始/结束、语义、原话和模板身份从当前计划及批准的剪后词表派生，不再另填一套。
+
+B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数起止时间精确匹配；相邻窗口不互相替代。
+
+其他来源继续使用各自已接通的准备入口，最终提交相同的视觉草稿合同。没有可执行绑定时停在资料准备，不把来源改标成代码动效。
+
+正式编译在发布前统一检查密度、词锚、来源和保留内容。`preview`、`delivery` 可继续传同一 `--treatment`，以复核已说明的无 B-roll 区间；比例说明不豁免默认下限。
+
+`visual_canary`、`visual_assets` 只为实际选中的依赖准备适配器。原生常用代码组件、官方视频及 execution mapping 中显式登记的 AI 图片/视频使用包内工厂；官方图片等其他媒体类型、其他来源或专用初始化的既有适配器由宿主传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。未提供时提前说明缺口，不把图片交给视频适配器。返回值就是现有运行时要求的适配器字典，不另定义媒体协议。工厂只组装已接通的适配器，不自行生成媒体、选择替代来源或批准阶段。
+
+## 宿主审阅后推进
+
+每次执行返回 `job_id`、`job_dir`、`stage`、`status`、`revision` 和实际 `artifacts`（包含路径、文件摘要和字节数）。机器校验后，宿主仍检查这些实际产物的画面、原声、字幕及语义。通过后，将刚审阅候选返回的 `job_id`、`job_dir`、`stage`、`revision`、完整 `artifacts` 原样放入本次 QA JSON，再补充检查结果：
+
+```json
+{
+  "job_id": "<本次任务ID>",
+  "job_dir": "<入口返回的实际任务绝对路径>",
+  "stage": "visual_canary",
+  "revision": 17,
+  "artifacts": [{"path": "<实际产物相对路径>", "sha256": "<实际文件摘要>", "bytes": 123}],
+  "passed": true,
+  "note": "填写本次实际检查结果，不复制示例作为验收"
+}
+```
+
+```bash
+<python> <skill>/scripts/run_stage.py --job-context <ctx> --stage visual_canary \
+  --review-json <本次实际QA.json>
+```
+
+示例中的占位符、revision 和字节数都不能照抄。入口先核对被审任务、revision 和完整产物身份，再保存本地 QA 并调用原阶段批准；不为旧记录补上当前任务身份。`cover_direction`、`cover`、`visual_direction` 在同一 JSON 提供本次真实 `user_confirmation`。整表确认时使用 `--stage visual_direction --review-json <整表确认.json>`；入口自动记录 `approval_scope=visual_plan_and_delivery`，保存在 `manifests/local-qa-visual_direction-r<revision>.json`。随后宿主继续内部制作，不向用户逐阶段重复提问。
+
+`review_required=user` 表示需展示当前封面或完整视觉表；`review_required=host` 表示宿主自己核对后继续。后续 canary、visual_assets、subtitles、preview、delivery 均为后者。交付 QA JSON 沿用同一组真实任务/产物字段及 `note`，无需 `user_confirmation` 或重复填写最终视频摘要；入口从已核对的 artifacts 取得成片身份，调用 `approve_plan_delivery` 写入 `plan_authorized` 完成记录，引用真实整表批准来源。该记录表示已制作交付，不表示用户看过并验收成片。
+
+已批准阶段再次调用不会重做。十二阶段均批准后，仍由 `audit_job_completion.py` 核实正式完成，不以阶段列表代替最终交付回执。
+完成检查返回 `inconsistent` 时，阶段入口也返回非零退出码；JSON 保留具体检查结果。其他完成状态的退出规则沿用独立检查入口，退出码为零本身不代表 `formal_complete`。
+
+### 封面及独立素材的渠道入口
+
+`run_generation.py --project-root <project> --job <job-dir>` 提供 `prepare / add / next / record`。`prepare` 用 `--purpose image|video --request-id <id> --arguments-json <参数文件> [--input-files-json <输入身份文件>]` 返回本 Job 选定渠道的请求；按当前 `manifests/generation-channels.json`，每个 purpose 必须声明 `model_binding`：`mode=argument` 时将已选模型写入参数并在不匹配时拒绝，`mode=fixed` 时不注入 `model`，服务管理的模型标识必须来自真实工具。最终生成记录以实际提交身份为准。参考输入声明 `reference_mode=local_path|upload`；`upload` 由宿主先执行声明的真实上传 action，将原始响应和上传回执回传，再用上传结果替换逻辑请求中的冻结本地路径提交生成，不新增确认门，并保留后续复用的上传结果。
+
+`add --plan-json <requests文件> --plan-sha256 <摘要> --user-confirmation <本次真实确认>` 登记封面等已确认批次。`next --request-id <id> [--account-limit <当前账号并发上限>]` 返回 submit/query/wait 或 upload action；宿主执行真实工具，将原 action 与规范结果分别保存，再用 `record --action-json <原action> --response-json <真实结果>` 回传。规范结果包含 `status`，异步结果包含真实 `task_ids`，完成结果包含 `artifacts: [{"type":"image|video","path":"<真实文件>"}]` 或真实媒体 URL。源文件保留，结果复制到 Job。视觉表内的步骤直接由 `run_stage.py` 登记和续做，不走再次确认的 `add`。
+
+视频宿主先保存供应商原始文件和原始响应。需要格式处理时另存同宽高比的规范文件；不覆盖原件、不变速、不随意裁切。规范文件路径、来源和处理链见下方统一示例。
+
+规范响应的处理后视频示例：`{"type":"video","path":"artifacts/normalized.mp4","source":{"path":"artifacts/provider-original.mp4"},"processing":"24fps silent H.264 yuv420p; aspect ratio preserved"}`。`record` 入口分别复制并保存原片与规范片，`source` 落盘为含 `path`、`sha256`、`bytes` 的身份；completed record 保留 `generation.source_media` 与 `generation.processing` 的关系。原片已合格时只写其 `path`，不添加虚假的处理来源。可选顶层 `provider_response` 仅保存真实供应商返回，provider 原始响应仍单独保存，规范 response 不得冒称 raw response。`upload` action 发出后，下一次 `next` 返回 `blocked` 与 `input_upload_pending`，等待宿主用原 upload action 和原上传 response 走现有 `record/generation_results` 回传，避免重复上传。

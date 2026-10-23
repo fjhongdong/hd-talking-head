@@ -1,0 +1,127 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "stack-fan-out",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "27e306e35ffa664e9d7ac32057855cd2dc0cee16ed5b5fdef46454ae3b04caad",
+  "contract_sha256": "92b7fed00f2a696fe434c9b12a9b47882ced6c9733989f6983ccc745f117983b",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 163,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        },
+        {
+          "slot": "item-1",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-2",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-3",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-4",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-5",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "五个方案",
+        "subtitle": "依次展开",
+        "accent": "#007AFF"
+      }
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 163,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        },
+        {
+          "slot": "item-1",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-2",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-3",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        },
+        {
+          "slot": "item-4",
+          "kind": "image-contain",
+          "fixture_id": "callout-laptop"
+        },
+        {
+          "slot": "item-5",
+          "kind": "image-contain",
+          "fixture_id": "callout-desk"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "五个方案对照",
+        "subtitle": "依次展开升级",
+        "accent": "#FF375F"
+      }
+    }
+  ]
+}

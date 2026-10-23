@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.venv/
+outputs/
+work/
+media/
+*.normalized.json
+muyang-flat-animation/assets/references/*
+!muyang-flat-animation/assets/references/.gitkeep

@@ -1,0 +1,18 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "behind-text-title",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "trusted_geometry": "case-measured-alpha-overlap-v1",
+  "geometry": {
+    "method": "libvpx-vp9-alpha-bbox-v1",
+    "source_alpha_bbox": {"x":66,"y":25,"width":414,"height":575},
+    "presenter_rect": {"x":180,"y":850,"width":720,"height":800},
+    "title_rect": {"x":40,"y":300,"width":1000,"height":830},
+    "min_overlap_ratio": 0.1,
+    "max_overlap_ratio": 0.22
+  },
+  "sfx_cues": [
+    {"cueId":"title-rise","frame":10,"anchor":"title-rise","name":"impact-deep-whoosh","assetKey":"talkcraft-impact-deep-whoosh","volume":0.3,"playbackRate":1.0}
+  ]
+}

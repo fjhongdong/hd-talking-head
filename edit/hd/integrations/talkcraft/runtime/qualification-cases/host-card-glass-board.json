@@ -1,0 +1,77 @@
+{
+  "schema_version": "talkcraft-qualification-cases/v2",
+  "card_id": "host-card-glass-board",
+  "adapter_version": "1.1.0",
+  "implementation_sha256": "67f94296fa6cc24fc2a391c4acca0308f1adedad856e829b91fa813aef2a7b56",
+  "contract_sha256": "254453b068be13b72591a036a846f9214a05f3b8ed24052ce4f20e3703157de7",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 168,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "工作流程",
+        "subtitle": "清晰呈现",
+        "accent": "#007AFF"
+      }
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 168,
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "presenter": null,
+      "scene_inputs": [
+        {
+          "slot": "presenter",
+          "kind": "presenter-alpha",
+          "fixture_id": "alt-block-lines-presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "card-in",
+          "frame": 10,
+          "anchor": "card-in",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4",
+          "volume": 0.28,
+          "playbackRate": 1
+        }
+      ],
+      "raw": {
+        "title": "工作流程对照",
+        "subtitle": "清晰呈现升级",
+        "accent": "#FF375F"
+      }
+    }
+  ]
+}

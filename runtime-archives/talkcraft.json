@@ -1,0 +1,24 @@
+{
+  "platform": "darwin",
+  "machine": "arm64",
+  "tested_node": "v26.10.0",
+  "archives": [
+    {
+      "target": "edit/hd/integrations/talkcraft/runtime/node_modules",
+      "parts": [
+        "runtime-archives/talkcraft-runtime.part-000",
+        "runtime-archives/talkcraft-runtime.part-001",
+        "runtime-archives/talkcraft-runtime.part-002",
+        "runtime-archives/talkcraft-runtime.part-003"
+      ],
+      "sha256": "ce5ec9a47e4c99182ca72559bbe87d62739b1881d7780e9e072ffcb0635bdc3f"
+    },
+    {
+      "target": "edit/hd/integrations/talkcraft/aroll-overlay/node_modules",
+      "parts": [
+        "runtime-archives/talkcraft-aroll-overlay.part-000"
+      ],
+      "sha256": "7eaa4d2f2a7712d71365e5ca376f2490e007db08c658472a58e8053286baa457"
+    }
+  ]
+}

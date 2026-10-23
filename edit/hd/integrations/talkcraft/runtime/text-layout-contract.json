@@ -1,0 +1,10 @@
+{
+  "schema_version": "talkcraft-text-layout/v1",
+  "allowed_plane": "text.screen",
+  "measurement": "rendered-node-dom-range-and-scroll",
+  "font_readiness": "document.fonts.load-and-check",
+  "overflow_policy": "reject",
+  "forbidden_clipping": ["hidden", "clip", "ellipsis", "line-clamp"],
+  "safe_line_max_y": 1700,
+  "measurement_scope": "public-static-dom-text-only"
+}

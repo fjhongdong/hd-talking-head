@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "repositories": [
+    {
+      "path": "skill-development/vendor/eian-riso-broll",
+      "repository": "https://github.com/YIAN6557/eian-riso-broll.git",
+      "commit": "e782ad7051f5fce1ca371523c144f4cb78ab5c40",
+      "archives": [
+        "source-repositories/eian-riso-broll.source.part-000"
+      ],
+      "sha256": "ce962ba6f82535ce5a1194695b614eee917440f5698fe07c8f4b35716f717620"
+    },
+    {
+      "path": "skill-development/vendor/gbro-collage-broll",
+      "repository": "https://github.com/pyang5166/gbro-collage-broll.git",
+      "commit": "a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91",
+      "archives": [
+        "source-repositories/gbro-collage-broll.source.part-000"
+      ],
+      "sha256": "46285d571d92975f41521e55a7d5d96dc37abdd614a0e16a85001ce6623e8188"
+    },
+    {
+      "path": "skill-development/vendor/adu-motion-video",
+      "repository": "https://github.com/adunext/adu-motion-video.git",
+      "commit": "4a52ae2cff542cfb0bfcf6e93e5120c55d0110cf",
+      "archives": [
+        "source-repositories/adu-motion-video.source.part-000"
+      ],
+      "sha256": "3bce5d15e79962afb713f0c3b215f0db20777e24df9536260e40439136cf0e4c"
+    },
+    {
+      "path": "skill-development/vendor/huashu-art-motion",
+      "repository": "https://github.com/alchaincyf/huashu-art-motion.git",
+      "commit": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+      "archives": [
+        "source-repositories/huashu-art-motion.source.part-000",
+        "source-repositories/huashu-art-motion.source.part-001"
+      ],
+      "sha256": "275586344544ca87faefe5329607fff459fa8e71c7d4c084ff601e362d2bfd12"
+    },
+    {
+      "path": "skill-development/vendor/lemo-opuscar",
+      "repository": "https://github.com/lemomo-ai/lemo-opuscar.git",
+      "commit": "b5e8ef93930b6d828f352055a689320f138237b1",
+      "archives": [
+        "source-repositories/lemo-opuscar.source.part-000",
+        "source-repositories/lemo-opuscar.source.part-001"
+      ],
+      "sha256": "6f1f0849458c5b24b4b52c96202b585d75fa24d91776b257dc8a95773df1039f"
+    },
+    {
+      "path": "skill-development/vendor/onetake",
+      "repository": "https://github.com/feitangyuan/onetake.git",
+      "commit": "415758128aa45cc54340df40d8109363447f582e",
+      "archives": [
+        "source-repositories/onetake.source.part-000",
+        "source-repositories/onetake.source.part-001"
+      ],
+      "sha256": "883738f9247aee1a2ae233cc5b2e03997f97a4d5c8aac1cfd64798c8658067cb"
+    },
+    {
+      "path": "skill-development/vendor/huashu-motion",
+      "repository": "https://github.com/alchaincyf/huashu-motion.git",
+      "commit": "5f2608c2e12abcf518f74dde86093b19f7f88603",
+      "archives": [
+        "source-repositories/huashu-motion.source.part-000"
+      ],
+      "sha256": "338890a25b00592692c5dbaa141c8cbb8d064982a67a4685877032fc9dbb4e01"
+    },
+    {
+      "path": "skill-development/vendor/overlay-studio",
+      "repository": "https://github.com/jeszhou/overlay-studio.git",
+      "commit": "e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8",
+      "archives": [
+        "source-repositories/overlay-studio.source.part-000"
+      ],
+      "sha256": "272ee43d73870cccd78b81e8adb2f256cee3005bca515196e17fb219585ee21a"
+    },
+    {
+      "path": "skill-development/vendor/doudou-remotion-whiteboard",
+      "repository": "https://github.com/undsky/doudou-remotion-whiteboard-skill.git",
+      "commit": "d41f61c889c315b2a590fee61db3a62cf003adc9",
+      "archives": [
+        "source-repositories/doudou-remotion-whiteboard.source.part-000"
+      ],
+      "sha256": "4a24339d9a7f17d197a09f9f478ae0b9cf4baa1e63a5d9273ae03f37d3aa1678"
+    },
+    {
+      "path": "skill-development/vendor/paper-collage-ad-codex",
+      "repository": "https://github.com/Jane-xiaoer/paper-collage-ad-codex.git",
+      "commit": "a69c9f56eec57ca19d1c02f6bdcffe573b4324a8",
+      "archives": [
+        "source-repositories/paper-collage-ad-codex.source.part-000"
+      ],
+      "sha256": "3af2bd9a771668ff6278afd5888c81496cc6a648880a56d2b24e27b6f24c4480"
+    },
+    {
+      "path": "skill-development/vendor/Punk-Skill",
+      "repository": "https://github.com/adrianpunk/Punk-Skill.git",
+      "commit": "c9ad7a3745e07060c50270141efed418a0cd04d6",
+      "archives": [
+        "source-repositories/Punk-Skill.source.part-000"
+      ],
+      "sha256": "fbaa509df9d0080e68f53badf7ba0c8cf0e1f555f2d0fd42e9d1e1467723c226"
+    },
+    {
+      "path": "skill-development/vendor/wise-motion",
+      "repository": "https://github.com/WiseWong6/wise-motion.git",
+      "commit": "ee0e33b9ee3fe6c3bf8c9c6de0711851e423a989",
+      "archives": [
+        "source-repositories/wise-motion.source.part-000",
+        "source-repositories/wise-motion.source.part-001",
+        "source-repositories/wise-motion.source.part-002",
+        "source-repositories/wise-motion.source.part-003",
+        "source-repositories/wise-motion.source.part-004",
+        "source-repositories/wise-motion.source.part-005"
+      ],
+      "sha256": "778c67a60772e3864da3db0446c1b9a1c515f47e139588058cb61762f57ed7d0"
+    },
+    {
+      "path": "skill-development/vendor/muyang-flat-animation",
+      "repository": "https://github.com/yokel1121/muyang-flat-animation.git",
+      "commit": "d864f1472866b3f724973385f40c0ddb6159dc38",
+      "archives": [
+        "source-repositories/muyang-flat-animation.source.part-000"
+      ],
+      "sha256": "3b0d29be6cc1b53015e5a255e610c262c8f62eb0a2caba0cbe9fab0a2db6e0b9"
+    },
+    {
+      "path": "skill-development/vendor/codex-whiteboard-video-skill",
+      "repository": "https://github.com/gnipbao/codex-whiteboard-video-skill.git",
+      "commit": "e0a1d184cfea07ae99958a1b4c0922054d1e46ce",
+      "archives": [
+        "source-repositories/codex-whiteboard-video-skill.source.part-000"
+      ],
+      "sha256": "adbdea4e8468d537c3d0fe2b01a773350d0a096f28bef6dc58febf47892dadd9"
+    },
+    {
+      "path": "skill-development/vendor/whiteboard-video-engine",
+      "repository": "https://github.com/gnipbao/whiteboard-video-engine.git",
+      "commit": "86848ea27077c1902950bf4e7e37e02d4bfbd1a3",
+      "archives": [
+        "source-repositories/whiteboard-video-engine.source.part-000",
+        "source-repositories/whiteboard-video-engine.source.part-001"
+      ],
+      "sha256": "d5354f3b3c8c3c4a6010b68021683105f192501f2506c21e4828756ac4d8fee6"
+    },
+    {
+      "path": "skill-development/vendor/OpenMontage-video-download",
+      "repository": "https://github.com/calesthio/openmontage.git",
+      "commit": "08e2151fa02de28a5d6a312b3d575692bf147ad7",
+      "archives": [
+        "source-repositories/OpenMontage-video-download.source.part-000",
+        "source-repositories/OpenMontage-video-download.source.part-001"
+      ],
+      "sha256": "4a1c9dda29c152ed7dc1ea8b0c8d79a939710ca6d8b5baa89adb0e0394351027"
+    },
+    {
+      "path": "skill-development/research/hypit-source",
+      "repository": "https://github.com/hypit-ai/hypit.git",
+      "commit": "0d36de9a9d17562fca0e478969b80eb1c16a7693",
+      "archives": [
+        "source-repositories/hypit-source.source.part-000"
+      ],
+      "sha256": "52e8a66ecf850c2ff9d581a161f8ffccc5681fd85762a9cdf74068d1ecb7bf18"
+    }
+  ]
+}

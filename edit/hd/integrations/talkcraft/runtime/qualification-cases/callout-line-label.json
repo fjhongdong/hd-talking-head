@@ -1,0 +1,339 @@
+{
+  "adapter_version": "1.1.0",
+  "card_id": "callout-line-label",
+  "cases": [
+    {
+      "case_id": "contrast-a",
+      "duration_frames": 118,
+      "measurement": {
+        "fixture_id": "callout-laptop",
+        "label_rects": [
+          {
+            "height": 104,
+            "width": 260,
+            "x": 760,
+            "y": 260
+          },
+          {
+            "height": 104,
+            "width": 260,
+            "x": 520,
+            "y": 480
+          }
+        ],
+        "method": "opencv-canny-contour-v1",
+        "source_size": {
+          "width": 1200,
+          "height": 750
+        },
+        "target_boxes": [
+          {
+            "height": 386,
+            "width": 385,
+            "x": 273,
+            "y": 109
+          },
+          {
+            "height": 82,
+            "width": 266,
+            "x": 91,
+            "y": 588
+          }
+        ]
+      },
+      "presenter": null,
+      "raw": {
+        "annotations": [
+          {
+            "labelRect": {
+              "height": 104,
+              "width": 260,
+              "x": 760,
+              "y": 260
+            },
+            "side": "right",
+            "subtitle": "画面主体位于这里",
+            "targetBox": {
+              "height": 386,
+              "width": 385,
+              "x": 273,
+              "y": 109
+            },
+            "title": "显示区域"
+          },
+          {
+            "labelRect": {
+              "height": 104,
+              "width": 260,
+              "x": 520,
+              "y": 480
+            },
+            "side": "right",
+            "subtitle": "位于桌面左下方",
+            "targetBox": {
+              "height": 82,
+              "width": 266,
+              "x": 91,
+              "y": 588
+            },
+            "title": "随身设备"
+          }
+        ],
+        "color": "#ff453a",
+        "ink": "#1d1d1f"
+      },
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "scene_inputs": [
+        {
+          "fixture_id": "callout-laptop",
+          "kind": "image-contain",
+          "slot": "subject-image"
+        },
+        {
+          "fixture_id": "alt-block-lines-presenter",
+          "kind": "presenter-alpha",
+          "slot": "presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "callout-0-dot",
+          "frame": 14,
+          "anchor": "callout-0-dot",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "volume": 0.28,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4"
+        },
+        {
+          "cueId": "callout-0-line",
+          "frame": 19,
+          "anchor": "callout-0-line",
+          "name": "text-marker-pen-line",
+          "assetKey": "talkcraft-text-marker-pen-line",
+          "volume": 0.26,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-text-marker-pen-line.mp3",
+          "sha256": "3bb80d474f1b1ca2a03bb63f43f36338f164a1201e1f6bf95e0a1c00a74cc744"
+        },
+        {
+          "cueId": "callout-0-label",
+          "frame": 29,
+          "anchor": "callout-0-label",
+          "name": "impact-hit-fast-exciting",
+          "assetKey": "talkcraft-impact-hit-fast-exciting",
+          "volume": 0.22,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-impact-hit-fast-exciting.mp3",
+          "sha256": "a4853ac0fec244fc92934f129953252c885007249e79db02171cb41a9c018f00"
+        },
+        {
+          "cueId": "callout-1-dot",
+          "frame": 34,
+          "anchor": "callout-1-dot",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "volume": 0.26,
+          "playbackRate": 1.12,
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4"
+        },
+        {
+          "cueId": "callout-1-line",
+          "frame": 38,
+          "anchor": "callout-1-line",
+          "name": "text-marker-pen-line",
+          "assetKey": "talkcraft-text-marker-pen-line",
+          "volume": 0.24,
+          "playbackRate": 1.1,
+          "src": "qualification/talkcraft-text-marker-pen-line.mp3",
+          "sha256": "3bb80d474f1b1ca2a03bb63f43f36338f164a1201e1f6bf95e0a1c00a74cc744"
+        },
+        {
+          "cueId": "callout-1-label",
+          "frame": 48,
+          "anchor": "callout-1-label",
+          "name": "impact-hit-fast-exciting",
+          "assetKey": "talkcraft-impact-hit-fast-exciting",
+          "volume": 0.2,
+          "playbackRate": 1.08,
+          "src": "qualification/talkcraft-impact-hit-fast-exciting.mp3",
+          "sha256": "a4853ac0fec244fc92934f129953252c885007249e79db02171cb41a9c018f00"
+        }
+      ]
+    },
+    {
+      "case_id": "contrast-b",
+      "duration_frames": 118,
+      "measurement": {
+        "fixture_id": "callout-desk",
+        "label_rects": [
+          {
+            "height": 104,
+            "width": 260,
+            "x": 720,
+            "y": 260
+          },
+          {
+            "height": 104,
+            "width": 260,
+            "x": 730,
+            "y": 480
+          }
+        ],
+        "method": "opencv-canny-contour-v1",
+        "source_size": {
+          "width": 1200,
+          "height": 750
+        },
+        "target_boxes": [
+          {
+            "height": 218,
+            "width": 250,
+            "x": 92,
+            "y": 285
+          },
+          {
+            "height": 159,
+            "width": 581,
+            "x": 96,
+            "y": 568
+          }
+        ]
+      },
+      "presenter": null,
+      "raw": {
+        "annotations": [
+          {
+            "labelRect": {
+              "height": 104,
+              "width": 260,
+              "x": 720,
+              "y": 260
+            },
+            "side": "right",
+            "subtitle": "独立输入区域",
+            "targetBox": {
+              "height": 218,
+              "width": 250,
+              "x": 92,
+              "y": 285
+            },
+            "title": "触控设备"
+          },
+          {
+            "labelRect": {
+              "height": 104,
+              "width": 260,
+              "x": 730,
+              "y": 480
+            },
+            "side": "right",
+            "subtitle": "主要文字输入区",
+            "targetBox": {
+              "height": 159,
+              "width": 581,
+              "x": 96,
+              "y": 568
+            },
+            "title": "键盘区域"
+          }
+        ],
+        "color": "#007aff",
+        "ink": "#17171a"
+      },
+      "scene": {
+        "layout": "full-frame",
+        "presenterRect": null
+      },
+      "scene_inputs": [
+        {
+          "fixture_id": "callout-desk",
+          "kind": "image-contain",
+          "slot": "subject-image"
+        },
+        {
+          "fixture_id": "alt-block-lines-presenter",
+          "kind": "presenter-alpha",
+          "slot": "presenter"
+        }
+      ],
+      "sfx": [
+        {
+          "cueId": "callout-0-dot",
+          "frame": 14,
+          "anchor": "callout-0-dot",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "volume": 0.28,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4"
+        },
+        {
+          "cueId": "callout-0-line",
+          "frame": 19,
+          "anchor": "callout-0-line",
+          "name": "text-marker-pen-line",
+          "assetKey": "talkcraft-text-marker-pen-line",
+          "volume": 0.26,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-text-marker-pen-line.mp3",
+          "sha256": "3bb80d474f1b1ca2a03bb63f43f36338f164a1201e1f6bf95e0a1c00a74cc744"
+        },
+        {
+          "cueId": "callout-0-label",
+          "frame": 29,
+          "anchor": "callout-0-label",
+          "name": "impact-hit-fast-exciting",
+          "assetKey": "talkcraft-impact-hit-fast-exciting",
+          "volume": 0.22,
+          "playbackRate": 1.0,
+          "src": "qualification/talkcraft-impact-hit-fast-exciting.mp3",
+          "sha256": "a4853ac0fec244fc92934f129953252c885007249e79db02171cb41a9c018f00"
+        },
+        {
+          "cueId": "callout-1-dot",
+          "frame": 34,
+          "anchor": "callout-1-dot",
+          "name": "ui-pop",
+          "assetKey": "talkcraft-ui-pop",
+          "volume": 0.26,
+          "playbackRate": 1.12,
+          "src": "qualification/talkcraft-ui-pop.mp3",
+          "sha256": "e19e3e04563c470068ee8fd179fb4d0ac2a6e51724cb60fd2e92237c456eacd4"
+        },
+        {
+          "cueId": "callout-1-line",
+          "frame": 38,
+          "anchor": "callout-1-line",
+          "name": "text-marker-pen-line",
+          "assetKey": "talkcraft-text-marker-pen-line",
+          "volume": 0.24,
+          "playbackRate": 1.1,
+          "src": "qualification/talkcraft-text-marker-pen-line.mp3",
+          "sha256": "3bb80d474f1b1ca2a03bb63f43f36338f164a1201e1f6bf95e0a1c00a74cc744"
+        },
+        {
+          "cueId": "callout-1-label",
+          "frame": 48,
+          "anchor": "callout-1-label",
+          "name": "impact-hit-fast-exciting",
+          "assetKey": "talkcraft-impact-hit-fast-exciting",
+          "volume": 0.2,
+          "playbackRate": 1.08,
+          "src": "qualification/talkcraft-impact-hit-fast-exciting.mp3",
+          "sha256": "a4853ac0fec244fc92934f129953252c885007249e79db02171cb41a9c018f00"
+        }
+      ]
+    }
+  ],
+  "contract_sha256": "61dc88bc387b5b4591c05901916ec29471a83d640d02d8c8dc8abe5244e4eb10",
+  "implementation_sha256": "39add478dddfd669ef6afbb8ce7feba6a15d040402ed13f4c9e5c144ee6d0670",
+  "schema_version": "talkcraft-qualification-cases/v2"
+}

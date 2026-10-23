@@ -1,0 +1,1 @@
+{"schema_version":"talkcraft-card-contract/v1","card_id":"title-demote-to-label","scene":"full-frame","scene_input_slots":["presenter"],"sfx_cues":[{"cueId":"demote-lock","frame":31,"anchor":"demote-lock","name":"ui-pop","assetKey":"talkcraft-ui-pop","volume":0.3,"playbackRate":1}]}

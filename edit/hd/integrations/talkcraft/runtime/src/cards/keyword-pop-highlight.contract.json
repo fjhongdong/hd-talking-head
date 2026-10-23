@@ -1,0 +1,14 @@
+{
+  "schema_version": "talkcraft-card-contract/v1",
+  "card_id": "keyword-pop-highlight",
+  "scene": "full-frame",
+  "scene_input_slots": ["presenter"],
+  "geometry": {
+    "presenter_rect": {"x": 90, "y": 360, "width": 900, "height": 1000},
+    "caption_rect": {"x": 60, "y": 1370, "width": 960, "height": 180},
+    "bottom_caption_safe_px": 270
+  },
+  "sfx_cues": [
+    {"cueId": "keyword-impact", "frame": 13, "anchor": "keyword-impact", "name": "wind-swoosh-short", "assetKey": "talkcraft-wind-swoosh-short", "volume": 0.5, "playbackRate": 1.0}
+  ]
+}
