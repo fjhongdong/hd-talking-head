@@ -403,7 +403,10 @@ def main() -> int:
                     values = {key: ",".join(labels), "cues": cues, "exit": "fade"}
                 (folder / "native.html").write_bytes(native_bytes)
                 lay = OVERLAY_LAYOUTS.get(route, {"scale": 1.0, "dx": 0, "dy": 0})
-                palette = ("--bg:#f7f2e8;--fg:#242a2d;--surface:#fff8e8;--border:#e5dcc8;"
+                # --bg is the component ROOT canvas: it must stay transparent for
+                # an A-roll overlay (a light value here paints a full-frame card
+                # over the face). Only card/text tokens get the warm palette.
+                palette = ("--bg:transparent;--fg:#242a2d;--surface:#fff8e8;--border:#e5dcc8;"
                            "--muted:#8a8273;--brand:#c79a36;--accent:#c79a36;--accent-2:#c79a36;")
                 entry_html = (
                     '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
