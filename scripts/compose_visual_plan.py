@@ -32,7 +32,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
 
-GRID = {"notification-stack": 5.5, "grid-card-assemble": 2.5, "before-after-wipe": 8.0}
+GRID = {"notification-stack": 3.0, "grid-card-assemble": 2.5, "before-after-wipe": 8.0}
 OVERLAY_ROUTES = {
     "notification-stack": ("reminder", "notification_stack", "notification-stack"),
     "grid-card-assemble": ("parallel", "staggered_card_reveal", "grid-list"),
@@ -84,7 +84,7 @@ def _resolve_windows(beats: list[dict], words: list[dict], duration: float) -> l
                 raise SystemExit(f"beat {index}: window word deleted from cut")
             wa = span_words[0]["cut"]
             wb = span_words[-1]["cut_end"]
-            minimum = beat.get("min_seconds") or 0.0
+            minimum = max(beat.get("min_seconds") or 0.0, beat.get("_floor") or 0.0)
         raw.append({"beat": beat, "index": index, "wa": wa, "wb": wb, "minimum": minimum})
 
     for position, entry in enumerate(raw):
@@ -118,6 +118,9 @@ def _resolve_windows(beats: list[dict], words: list[dict], duration: float) -> l
         # an unowned pause before the next beat may close the shortfall
         if wb - wa < minimum and next_start - wa >= minimum:
             wb = next_start
+        # symmetric: borrow the pause after the previous beat
+        if wb - wa < minimum and prev_end < wa and wb - prev_end >= minimum:
+            wa = prev_end
         if wb - wa < minimum - 1e-6:
             raise SystemExit(
                 f"beat {entry['index']} window {wa:.2f}-{wb:.2f} cannot reach "
@@ -163,6 +166,10 @@ def main() -> int:
         except (OSError, ValueError, TypeError):
             revision_base = 1
 
+    riso = _module("riso_native_adapter")
+    for beat in beats:
+        if beat.get("riso_template"):
+            beat["_floor"] = riso.MIN_SECONDS[beat["riso_template"]]
     resolved = _resolve_windows(beats, words, duration)
     # quantize every edge to whole frames, clamped to the resolved neighbours
     limit = round(duration * 24) / 24
@@ -243,7 +250,7 @@ def main() -> int:
         if kind == "base":
             plan_segments.append({
                 "segment_id": sid, "start": start, "end": end,
-                "content_item_ids": [items[0]["id"]], "visible_text": [],
+                "content_item_ids": [it["id"] for it in items], "visible_text": [],
                 "visual_intent": {"segment_id": sid, "statement": "口播讲解",
                                    "semantic_goals": ["explain"], "claims": [], "entities": [],
                                    "relations": [], "requirements": {
@@ -257,7 +264,7 @@ def main() -> int:
                                                       "presenter_mode": "full_frame",
                                                       "reading_order": [],
                                                       "component_dependencies": []}},
-                "candidate_snapshots": {}, "bindings": {}, "strategy_revision": 1,
+                "candidate_snapshots": {}, "bindings": {}, "strategy_revision": revision_base,
             })
             continue
         entry = rest[0]
@@ -300,7 +307,8 @@ def main() -> int:
                 f'<div class="stage" data-duration="{duration_beat}">'
                 f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
                 f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
-                f'data-start="0" data-duration="{duration_beat}"></div></div>')
+                f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
+                f'data-width="1080" data-height="1920"></div></div>')
             (folder / "index.html").write_text(entry_html, encoding="utf-8")
             brief = {
                 "schema_version": 2,
@@ -375,7 +383,8 @@ def main() -> int:
                          "focus": len(data.get("items", [])), "converge": 2,
                          "compare": 2, "steps": len(data.get("steps", [])),
                          "network": 1, "shot": 1}[template]
-                numbers = [data["number"]] if template == "number" else []
+                numbers = ([data["number"]] if template == "number"
+                           else [len(data["steps"])] if template == "steps" else [])
                 brief = {
                     "schema_version": 1,
                     "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
@@ -411,7 +420,8 @@ def main() -> int:
                     f'<div class="stage" data-duration="{duration_beat}">'
                     f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
                     f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
-                    f'data-start="0" data-duration="{duration_beat}"></div></div>')
+                    f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
+                    f'data-width="1080" data-height="1920"></div></div>')
                 (folder / "index.html").write_text(entry_html, encoding="utf-8")
                 brief = {
                     "schema_version": 2,
@@ -480,7 +490,8 @@ def main() -> int:
                                      "reading_order": [component_id],
                                      "component_dependencies": []},
                                      **({"avatar": json.loads(json.dumps(calibration[match_key]))}
-                                        if (match_key := next(
+                                        if presenter == "bottom_window"
+                                        and (match_key := next(
                                             (k for k in calibration
                                              if abs(k[0] - round(start, 2)) < 0.15
                                              and abs(k[1] - round(end, 2)) < 0.15),

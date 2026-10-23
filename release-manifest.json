@@ -2088,7 +2088,7 @@
   "scripts/build_native_visual.py": "a6785e841c8eee4e90e801386166b2e25b8345089c0134ddbf9dbe69b99b5e2b",
   "scripts/calibrate_avatars.py": "c1c4ae43e7eea2061e806b955e4ddd213cf9eed76f4b4eda1c589a6b1e93a801",
   "scripts/check_native_overlay_clock.mjs": "8346935e9d7230c95d419b2b7b4bae9afa8a4f1c12715de16a1031c29f66be58",
-  "scripts/compose_visual_plan.py": "97d699fb3dafea62302dc1f458673ccc4448724d793f71c566afdba84b4d94c9",
+  "scripts/compose_visual_plan.py": "6c0998bda6b2c23ed3736f8d56c1e293d9f68d397eeec50de585afcbbdad6402",
   "scripts/confirm_job_setup.py": "69c8d0a1f9f65532c3ee2dd46f0b8b2e972ab4bacb9aaf833f770c4598498647",
   "scripts/create_job_workspace.py": "8cb234f060bb480e82f199097cc35d6474d75cd82a854ff97617a698e4175723",
   "scripts/data_rollup_adapter.py": "c38600d04247c223da78de450d891155e8b7860d4ca2c35010f2b69fbd0a41fe",
@@ -2123,7 +2123,7 @@
   "scripts/paper_hyperframes_adapter.py": "af903772f52fdfce4c2c6294c29d3bd5a8fcde440edcb29d8f0ff94bb4a9a3bc",
   "scripts/paper_motion_guard.py": "020b220ef35ade39bf09f87776da57c882f3f603e98208503d482348fd15c918",
   "scripts/project_python.py": "65b0ff1e699b42a1245df16437a279066204beb879e2f46d243937e7d00b0364",
-  "scripts/quick_cover.py": "d4714a8a8672e54563126e3a8478c147b372d4181b4bde7f04400c839d80a25b",
+  "scripts/quick_cover.py": "7df48712b79cdaca3354afb2d92871996908fe9bed4aca3b3bf691b14b6dd62d",
   "scripts/refresh_capability_pins.py": "52c0f79c18ef202ed3f81653c08a1e194bdc4f7cc8d26fe413e33e4842aed56f",
   "scripts/refresh_job_binding.py": "5b1ee03af0074e2a113ba841b9243e474a0a527e871fc01e92400761edadba65",
   "scripts/relation_motion_adapter.py": "c6c26a6d0c49143b3aaebfe4bfc0c6e55dd1da14b5145733022d65257420cb3f",
@@ -2208,6 +2208,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-23-orchestration-doc-v170",
+ "release_id": "2026-10-23-light-templates-v175",
  "schema_version": 1
 }

@@ -45,7 +45,10 @@ def main() -> int:
     from edit.hd.tools import state, cover_direction, cover as cover_mod
     from PIL import Image
 
-    job = state.load_job(args.job_context)
+    job_dir = args.job_context
+    if job_dir.suffix == ".json":
+        job_dir = Path(json.loads(job_dir.read_text())["job_dir"])
+    job = state.load_job(job_dir)
 
     # ── 1. cover_direction(自动构造合法 schema)──
     direction = {
