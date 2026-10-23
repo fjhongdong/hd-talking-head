@@ -5,9 +5,9 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 # HD 口播全流程
 
-本 Skill 是现有口播后期工作流的执行合同。每条视频建立一个独立 Job，以批准状态、文件哈希和人工审核推进。它只支持 `full-v2` 十二阶段流程和 VisualPlan schema v3 / ShotRecipe v2，不兼容旧 visual Job；正式冻结的主计划为 schema v3，TalkCraft 工作台另消费派生的 span-aware v4 计划（同一 validator 校验，不改主计划格式）。旧 visual Job 重新执行 `visual_direction`，不读取或转换旧视觉计划。
+本 Skill 是现有口播后期工作流的执行合同。每条视频建立一个独立 Job，以批准状态、文件哈希和宿主内部检查推进。它只支持 `full-v2` 十二阶段流程和 VisualPlan schema v3 / ShotRecipe v2，不兼容旧 visual Job；正式冻结的主计划为 schema v3，TalkCraft 工作台另消费派生的 span-aware v4 计划（同一 validator 校验，不改主计划格式）。旧 visual Job 重新执行 `visual_direction`，不读取或转换旧视觉计划。
 
-本包不限定 Agent 品牌；需要能读取文件、运行脚本及尊重用户确认的宿主。整个 Skill 文件夹包含剪辑引擎、字幕与贴片运行代码、模板、原始资源及子 Skill。本文命令中的 `<project>` 指最外层 `hd-talking-head/` 包根，`<skill>` 指其内部 `skill-development/hd-talking-head/` 实现目录；用户素材和 Job 输出另放独立工作目录。优先使用最外层 `run.py`，无需原开发项目或全局 Skill。首次运行准备本地依赖，并由用户选择图片、视频生成渠道。完整包发布见 [发布与调用合同](references/release-contract.md)。
+本包不限定 Agent 品牌；需要能读取文件、运行脚本及尊重用户确认的宿主。整个 Skill 文件夹包含剪辑引擎、字幕与贴片运行代码、模板、原始资源及子 Skill。本文命令中的 `<project>` 指最外层 `hd-talking-head/` 包根，`<skill>` 指其内部 `skill-development/hd-talking-head/` 实现目录；用户素材和 Job 输出另放独立工作目录。优先使用最外层 `run.py`，无需原开发项目或全局 Skill。首次运行准备全流程基础依赖，并由用户选择图片、视频生成渠道；选中模板的环境在整表确认前按需准备。完整包发布见 [发布与调用合同](references/release-contract.md)。
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`发现/安装`、`configured`、`connected`、`callable`、`bound` 是[依赖预检合同](references/dependency-preflight.md)定义的五个递进状态，产物另经阶段质量门验收，不得混用；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。能力未接通时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
@@ -18,8 +18,8 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 正式阶段统一通过 `scripts/run_stage.py` 调用现有十二阶段运行时。入口从当前未完成阶段继续；已批准产物核验后复用，待审产物先审查，明确修订才重做。参数、宿主内部批准和恢复方式见[阶段执行入口](references/stage-runner.md)。
 
 1. **剪后语义理解**：完成 `speech_cleanup` 与 `edit_structure` 后，以实际剪后词级转写、时间轴和已批准内容项为唯一输入，逐段列出主体、动作、关系、变化、真实词锚和语义。原 `content_analysis` 仍服务封面与事实原文，不代替剪后语义分析。
-2. **先列完整视觉清单，再匹配能力**：清单覆盖本视频所有贴片与 B-roll，逐行记录开始/结束时间、剪后原话与语义、检索标签和视觉类型。先由语义得到 tags，再用 `select_motion_capabilities.py search --use broll|aroll_overlay --query "<tags>"` 匹配具体动效模板；不能先挑模板再硬套语义。用户素材、官方资料、素材库、AI 视频、代码动效及混合构图继续走各自已接通的准备入口。
-3. **一次整表确认**：`visual_direction` 先输出完整 `visual-routing.md` 与确认前方案清单，列全每个视觉组件及其匹配模板。用户只在这里确认整张表；确认前保持待审，不能自动批准或生成正式视觉资产。确认后由宿主生成并绑定视觉资产，再编译正式计划，随后内部完成 canary、字幕、预览 QA 和交付，不再请求用户确认样片、字幕、预览或成片。
+2. **先列完整视觉清单，再匹配能力**：清单覆盖本视频所有贴片与 B-roll，逐行记录开始/结束时间、剪后原话与语义、检索标签和视觉类型。先由语义得到 tags，再用 `select_motion_capabilities.py search --use broll|aroll_overlay --query "<tags>"` 匹配具体动效模板；不能先挑模板再硬套语义。用户素材、官方资料、素材库、AI 视频、代码动效及混合构图继续走各自已接通的准备入口。每项都在 treatment.motion_queries 填写实际语义标签；直接素材显示“素材直用（无动效模板）”，来源单列。
+3. **一次整表确认**：`visual_direction` 先根据草稿实际 bindings 准备并检查所选模板的执行入口，成功后才输出完整 `visual-routing.md` 与确认前方案清单，列全每个视觉组件及其匹配模板。用户只在这里确认整张表；确认前保持待审，不能自动批准或生成正式视觉资产。确认后由宿主生成并绑定视觉资产，再编译正式计划，随后内部完成 canary、字幕、预览 QA 和交付，不再请求用户确认样片、字幕、预览或成片。
 4. **先检查再发布**：新草稿写入独立目录，保留旧资料和 `confirmed-content.json`。正式发布前检查词锚、整帧时窗、绑定、重点、保留内容和密度；通过后由现有发布事务提交。失败不覆盖原计划，不清空用户确认。
 5. **统一密度标准**：机器规则只读取[默认制作配置](references/production-defaults.json)的 `visual_coverage`。B-roll 目标约 60%、默认下限 55%，首条不晚于 15 秒；超过 15 秒的空档须说明具体语义原因。贴片按当前台词和已承诺画面安排，不设全片固定数量，也不计入 B-roll 时长。比例达标仍须检查实际语义、动作、字幕和画质；题材不能满足时报告缺口，不自动降低下限。
 
@@ -78,25 +78,25 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 每个新视频都必须重新执行一次：
 
-每次环境检查前，先由宿主按[依赖 Skill 更新](references/dependency-preflight.md#依赖-skill-更新)核对本项目实际使用的上游版本；发现新版直接更新，无须重复询问普通更新许可。更新后重新读取上游说明并检查现有接法，不能只改版本号放行。这个步骤由宿主执行，`project_python.py --prepare` 和只读预检本身不拉取新版。
+完整包使用随附固定版本的来源，首次准备恢复包内来源身份。上游升级属于维护和重新发布，按[包内来源与更新](references/dependency-preflight.md#包内来源与更新)执行；普通 Job 不自动更换已冻结来源。
 
-先选定一个 Python，用唯一准备入口 `<python> <skill>/scripts/project_python.py --project-root <project> --prepare`：先校验完整 Skill 包，再按依赖清单准备缺失环境，最后运行已登记本地组件的真实探针。主环境必需 Pillow、requests、NumPy、OpenCV；缺包按清单兼容版本装入本项目 `skill-development/runtime/talking-head-python<major><minor>`，已有可用包不重装或升级。第三方专用环境调用已有准备入口，并清除主包路径的注入。安装或复检失败即停止，不循环修复。随后项目主流程统一使用 `<python> <skill>/scripts/project_python.py --project-root <project> -- <正式脚本及参数>`，保持同一解释器及调用者工作目录。不另写临时复检脚本，不改全局 Python 或 shell。
+先选定一个 Python，用唯一准备入口 `<python> <skill>/scripts/project_python.py --project-root <project> --prepare`：先校验完整 Skill 包，再按依赖清单准备缺失的基础环境；本次选型后只准备并检查所选组件。主环境必需 Pillow、requests、NumPy、OpenCV；缺包按清单兼容版本装入本项目 `skill-development/runtime/talking-head-python<major><minor>`，已有可用包不重装或升级。第三方专用环境调用已有准备入口，并清除主包路径的注入。安装或复检失败即停止，不循环修复。随后项目主流程统一使用 `<python> <skill>/scripts/project_python.py --project-root <project> -- <正式脚本及参数>`，保持同一解释器及调用者工作目录。不另写临时复检脚本，不改全局 Python 或 shell。
 
-准备入口直接编排 `ensure_punk_cover.py`、`ensure_visual_broll_skills.py` 和已有原生运行时准备函数。唯一清单的 `preparation` 登记可执行准备，`runtime_checks` 登记预先检查的已接通组件；不遍历研究目录，不把账号或生成服务当作安装项。没有准备入口的缺失环境明确停止，不现场另造安装器。运行时探针通过只证明可调用；具体镜头仍在选型后检查实际配方绑定。
+准备入口直接编排 `ensure_punk_cover.py`、`ensure_visual_broll_skills.py` 和已有原生运行时准备函数。唯一清单的 `preparation` 登记可执行准备，条目的 `dependency_ids` 关联实际所选组件；没有该字段的必需条目用于基础准备。`runtime_checks` 只检查本次所选组件；不遍历研究目录，不把账号或生成服务当作安装项。没有准备入口的缺失环境明确停止，不现场另造安装器。运行时探针通过只证明可调用；具体镜头仍在选型后检查实际配方绑定。
 
 原生入口需要固定工具版本时，由清单 `preparation.node_tool` 在项目 runtime 准备，并通过统一入口传给子进程，不降级全局工具。Hypit 的 pnpm 与源码声明保持一致；失败记录包含命令和安全错误原因，保留旧记录后停止，不自动重跑。
 
 GBRO 启动检查只核对固定源码和说明；本 Job 的图片与视频渠道由用户在启动配置中分别确定，选中后按该配置执行静帧与动态生成。不得把内置生图、Lovart 或任一 provider 写成全 Skill 默认；约束见[GBRO 编排](references/generated-broll-skills.md#gbro-调用约束与拼贴验收)。不因环境准备自动替换已批准 B-roll。
 
-Lemo、OneTake、Wise、Huashu、Adu、Hypit 的基础环境在准备入口统一检查，缺失时只调用已登记的原生准备能力。实际选中后仍须检查配方绑定；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)。Skill 源码更新按上述更新规则执行；不得全局安装、顺带升级 Python/Node 等环境，或运行自动 reset/setup。
+Lemo、OneTake、Wise、Huashu、Adu、Hypit 等可选能力只在本次选中后准备；缺失时调用已登记的原生准备能力，并检查实际配方绑定；准备成功不是出片验收。详见[上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)。Skill 源码更新按上述更新规则执行；不得全局安装、顺带升级 Python/Node 等环境，或运行自动 reset/setup。
 
-OpenFilm 同样纳入唯一准备入口和运行检查：补齐项目内缺失包及其原生浏览器，不改系统环境；检查真实 `motion-graphics/SKILL.md`、手册及运行时身份。准备和预检不打开生成服务、不读取服务密钥、不调用 `get` 或生成素材。现有版本不符时停止，由宿主按更新规则检查接法，不能在渲染中下载或切换版本。
+OpenFilm 同样在选中后纳入唯一准备入口和运行检查：补齐项目内缺失包及其原生浏览器，不改系统环境；检查真实 `motion-graphics/SKILL.md`、手册及运行时身份。准备和预检不打开生成服务、不读取服务密钥、不调用 `get` 或生成素材。现有版本不符时停止，由宿主按更新规则检查接法，不能在渲染中下载或切换版本。
 
 选择 Huashu 原生动效时，先读[Huashu 原生动效接入](references/huashu-native-motion.md)：由我们的 adapter 实际调用固定 vendor 的 `render.py --spec`，不修改第三方源码、模板、字体或动效。三条已登记路线、容量、输入版式与避让、启动器与子进程环境边界以该页和[正式生产绑定](references/production-bindings.md)为准；普通 Job 只消费已登记能力，不重复资格实验，未接通或验收失败时暂停对应路线，不自动修改第三方、重试、切换或加入自写 fallback。
 
 Adu 准备只涉及本地渲染环境，不调用人物提取、配音或 mix。选中后必须通过其独立 binding probe。
 
-新的 Adu 仅调用公开 `TPL.compare` 对比组件，人物、普通字幕与品牌通过原生配置关闭；Playwright 放在我们的项目 runtime，不改第三方锁文件。它的固定横版画板只可整板等比放置，不当作原生竖屏整屏模板。选中“对话改变计划”语义时，执行同一脚本的 `--skill hypit-native-chat`，读取其原生 Skill 和 chat-scene 指引，以原生消息入场/滚动场景出片；仅静态竖屏排版由父级完成，不另写动作。两条入口、容量、精确帧写法和使用限制见[上游场景合同](references/upstream-scene-skills.md)。TalkCraft 资格卡以当前真实资格库匹配，不因 `.tsx` 入口而误拦，也不放行未知卡或旧自由场景。
+新的 Adu 仅调用公开 `TPL.compare` 对比组件，人物、普通字幕与品牌通过原生配置关闭；Playwright 放在我们的项目 runtime，不改第三方锁文件。它的固定横版画板只可整板等比放置，不当作原生竖屏整屏模板。选中“对话改变计划”语义时，执行同一脚本的 `--skill hypit-native-chat`，读取其原生 Skill 和 chat-scene 指引，以原生消息入场/滚动场景出片；仅静态竖屏排版由父级完成，不另写动作。两条入口、容量、精确帧写法和使用限制见[上游场景合同](references/upstream-scene-skills.md)。TalkCraft 原生适配入口继续可选；108 张生产资格卡保留原始资格和素材，但当前包缺少对应生产适配器，统一标为 `needs_adapter`，不进入新计划确认。
 
 已有 Adu/Hypit 制品需复用时，按[原生制品复用接口](references/upstream-scene-skills.md#已完成原生制品复用)调用 `create_existing_adapter`，不调用普通生成入口；复用失败直接停止，不自动重做动效。两条已通过公共执行与圆窗、原声、唯一口播字幕的合成检查，但仍是受限组件，不代表本期语义或用户效果批准。
 
@@ -116,7 +116,7 @@ Adu 准备只涉及本地渲染环境，不调用人物提取、配音或 mix。
 ```
 
 4. 将上次 provider 配置作为待确认草稿写入本 Job 的 `manifests/provider-config.json`，格式见依赖预检合同；同时在本次常规配置说明中列出已读取的默认制作规格，不给 provider 文件添加未知字段。不复制上次批准记录，不保存密钥。没有历史 provider 配置时根据本次实际能力填写，不虚构内置视频模型；制作规格仍从本包默认配置取得。
-5. 经 `project_python.py` 用同一个已选 Python 直接运行 `scripts/dependency_preflight.py --manifest <skill>/references/dependency-manifest.json --project-root <project> --job-context <workspace>/job-context.json --output <job>/manifests/dependency-preflight.json --summary-only`。检查全流程全部必需依赖，不等到对应阶段再发现缺包；本地缺失环境按预检合同安装，随后只复检一次。失败报告由正式入口保存，不用临时包装或手工覆盖。TalkCraft 运行时健康检查是必需项，须在这里重新执行并通过，不能仅凭步骤 2 的人工运行记录放行。区分发现/安装、`configured`、`connected`、`callable`、`bound`；安装失败、目录冲突或账号缺授权时停止。预检不执行媒体生成。
+5. 经 `project_python.py` 用同一个已选 Python 直接运行 `scripts/dependency_preflight.py --manifest <skill>/references/dependency-manifest.json --project-root <project> --job-context <workspace>/job-context.json --output <job>/manifests/dependency-preflight.json --summary-only`。检查全流程基础必需依赖；可选模板在本次选型后、整表确认前准备检查；本地缺失环境按预检合同安装，随后只复检一次。失败报告由正式入口保存，不用临时包装或手工覆盖。TalkCraft 运行时健康检查是必需项，须在这里重新执行并通过，不能仅凭步骤 2 的人工运行记录放行。区分发现/安装、`configured`、`connected`、`callable`、`bound`；安装失败、目录冲突或账号缺授权时停止。预检不执行媒体生成。
 6. 一次展示本 Job 的图片生成渠道和视频生成渠道（可相同或不同）、精确模型、endpoint 标识、参考图能力、原生 9:16、无声输出、连接证据、额度、并发，以及实际 Python、项目路径和合成器版本，询问是否修改。图片渠道用于封面、生成图片和模板内部图片步骤；视频渠道用于直接生成 B-roll 和模板内部视频步骤。用户确认后调用 `scripts/confirm_job_setup.py --job-context <workspace>/job-context.json --user-confirmation "<本次确认原文>"`，记录 `manifests/setup-approval.json`；成功才进入 `inspect`。不得用测试文本或过去的“确认”代替本次批准。
 7. 渠道不绑定固定品牌或工具；用户选择的精确模型 ID 必须逐字保存并在每次请求前复核。后续 provider 请求前仍复核真实连接与额度，预检成功不等于付费生成授权。
 
@@ -242,7 +242,7 @@ OpenFilm 在同一候选池中表示“按本句语义创作”的一种能力�
 
 既有 `code_generated` 编译器的模板内部排序仍为 `semantic_match_score` → `quality_score` → `template_origin` → `reuse_gap`；这不是跨 Skill 选型入口，也不能覆盖已确定的整片分工。引用验证模板前仍须运行 `verify_broll_template.py` 核对真实登记；`structural` 或自由新场景不能继承第三方身份。填充本期内容后做三态 QA，冻结真实 `producer_type`、`dependency_id`、入口、当前请求、制作与调用证据；历史样片不能代替当前验收。
 
-TalkCraft 108 张卡使用独立生产注册表，不冒充旧 `verified-template-registry`。当段落已选 `code_generated` 且适合 TalkCraft 时，必须先调用 `edit.hd.tools.talkcraft_matcher.match_cards`，把当前口播原文、语义目标、关键词、信息单元、组件角色、已有媒体和人物需求作为输入；再用 `build_binding` 冻结首选卡片。匹配器只读锁定的 `runtime/card-semantic-index.json`，运行时仍以 `runtime/card-registry.json` 的 qualified 身份为唯一准入依据；缺必需图像/视频/人物、角色不符或索引身份变化时显式停止，不在 adapter 或执行阶段重新选卡。这个自动选卡结果仍需要当前 Job 的 brief 参数化、三态 QA 和 canary 本地 QA 与内部批准。
+TalkCraft 108 张卡使用独立生产注册表，当前仅保留资格检索，不能由资格状态推断实际入口已接通。以下匹配与冻结合同留供接通后使用，不进入当前新计划：当段落已选 `code_generated` 且适合 TalkCraft 时，必须先调用 `edit.hd.tools.talkcraft_matcher.match_cards`，把当前口播原文、语义目标、关键词、信息单元、组件角色、已有媒体和人物需求作为输入；再用 `build_binding` 冻结首选卡片。匹配器只读锁定的 `runtime/card-semantic-index.json`，运行时仍以 `runtime/card-registry.json` 的 qualified 身份为唯一准入依据；缺必需图像/视频/人物、角色不符或索引身份变化时显式停止，不在 adapter 或执行阶段重新选卡。这个自动选卡结果仍需要当前 Job 的 brief 参数化、三态 QA 和 canary 本地 QA 与内部批准。
 
 需要工作台微调时，先用 `edit.hd.tools.talkcraft_workbench.build_v4_edit_contract` 从当前 VisualPlan v4 和 draft brief bundles 生成稳定目标及可编辑字段，再用 `apply_v4_overrides` 生成新的 draft bundles。工作台只允许改合同公开的语境参数，当前只开放显示文案与深浅主题；未知目标、未知字段、非法值或计划身份变化都停止。回写结果保持 `editable_draft_only`，不得覆盖已批准 bundle，也不得跳过 canary 与本地 QA/内部批准。上游 Workbench 的 `overrides.json`、共享 React 19 / Remotion 4.0.519 只服务上游编辑与冒烟；正式渲染继续使用项目已资格的 React 18 / Remotion 4.0.520 运行时。
 

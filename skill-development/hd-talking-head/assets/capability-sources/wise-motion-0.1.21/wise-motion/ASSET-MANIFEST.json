@@ -1,0 +1,3813 @@
+{
+  "purpose": "实际绘制依赖、字体和素材；标记 github 的大素材从对应版本按需准备，其余随包提供，安装后均位于目标工程 public/wise-motion",
+  "files": [
+    {
+      "path": "catalog/app.css",
+      "bytes": 47311,
+      "sha256": "ff48428b34113121b8445d9d8ed768a9a33f93dda47509a76f722b9803e510fd"
+    },
+    {
+      "path": "catalog/app.js",
+      "bytes": 61832,
+      "sha256": "954fef3c18839d15f452951982d3530e01c59e1f6c749cec5998b5e30f69049f"
+    },
+    {
+      "path": "catalog/assets/WEBP-SOURCES.json",
+      "bytes": 53449,
+      "sha256": "e5ffc08f2955a0cd8d737d24ff338d0e562fa78c6a7ff6e861963bffadc1b85f"
+    },
+    {
+      "path": "catalog/assets/aboutlove/README.md",
+      "bytes": 4020,
+      "sha256": "9fbbfa9249df3a75fb94919c8d262ed0763baea75aa731d2f78f222b88809152"
+    },
+    {
+      "path": "catalog/assets/aboutlove/SOURCE.json",
+      "bytes": 22420,
+      "sha256": "c516aef672275ad22bbcbfe4275935a7bffb3acf2eb796ed45fc74a52e481edc"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/10272f7791336451d71c80668eaa9532f5fe173685887ded8efe73d8d4e36e2a.woff2",
+      "bytes": 270632,
+      "sha256": "10272f7791336451d71c80668eaa9532f5fe173685887ded8efe73d8d4e36e2a"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/16bf0d654469baa008f00b01a527b6142f841f2e0ea01b847d39a9f39db62053.woff2",
+      "bytes": 92296,
+      "sha256": "16bf0d654469baa008f00b01a527b6142f841f2e0ea01b847d39a9f39db62053"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/1c0f989ae61bc39d17a2acd5e0b05ccfe893bbf07390edef9564e7ac9d89955d.woff2",
+      "bytes": 93460,
+      "sha256": "1c0f989ae61bc39d17a2acd5e0b05ccfe893bbf07390edef9564e7ac9d89955d"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/31198dbb34f1f86a5e47e50c3e49026a6ef2bcd4753534b4d207422fa4a4f7e0.woff2",
+      "bytes": 2665324,
+      "sha256": "31198dbb34f1f86a5e47e50c3e49026a6ef2bcd4753534b4d207422fa4a4f7e0"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/3c89803d9192d106772b77415c0e415b25242de6f4dd2094a64ef77674ed0338.woff2",
+      "bytes": 42880,
+      "sha256": "3c89803d9192d106772b77415c0e415b25242de6f4dd2094a64ef77674ed0338"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/595133e30417c7686d412146869c4a6bb0697e88bce764beef048c88814213bb.woff2",
+      "bytes": 267392,
+      "sha256": "595133e30417c7686d412146869c4a6bb0697e88bce764beef048c88814213bb"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/66e6e9081841836973e2ecd0c2b3620c7aababcf0149d8b40e9ce230168eaf05.woff2",
+      "bytes": 43644,
+      "sha256": "66e6e9081841836973e2ecd0c2b3620c7aababcf0149d8b40e9ce230168eaf05"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/75d6ca7d9636209cb1bc0799c16486b8228ba9a7831282c89a2515a0252eb3d6.woff2",
+      "bytes": 199088,
+      "sha256": "75d6ca7d9636209cb1bc0799c16486b8228ba9a7831282c89a2515a0252eb3d6"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/796668611f80b64d5adf182fde3b6f29ed83b4e7cbec7b96937e84ac01364792.ttf",
+      "bytes": 495684,
+      "sha256": "796668611f80b64d5adf182fde3b6f29ed83b4e7cbec7b96937e84ac01364792"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1.ttf",
+      "bytes": 451664,
+      "sha256": "8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/8b00b49db07909673e2bd56201a6b344a01d0c6de9c63c8d5fb68be0dd524701.woff2",
+      "bytes": 269028,
+      "sha256": "8b00b49db07909673e2bd56201a6b344a01d0c6de9c63c8d5fb68be0dd524701"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/9f2165c2b6f9b417fbc76d82e34022aaabf7852de267c086bd8e6b6dba424a00.woff2",
+      "bytes": 267680,
+      "sha256": "9f2165c2b6f9b417fbc76d82e34022aaabf7852de267c086bd8e6b6dba424a00"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Alimama.txt",
+      "bytes": 1985,
+      "sha256": "d5c5a2e3deb6e800bdd902441904d6e3f7cf247e0f755a92124b7517aa38831a"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Mono.txt",
+      "bytes": 4463,
+      "sha256": "0983abed9371adc8958c321bf8d8036324b4a2e8cc324682b0fe0c699e63a009"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Newsreader.txt",
+      "bytes": 4394,
+      "sha256": "fdfad38143ec470553cae82a1e45320bdd1b9ec70415d37bd0171051d8a4ded8"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Oswald.txt",
+      "bytes": 4390,
+      "sha256": "0687c51a3126ae6963389181135a2eaea02f2e88f31230d27409952f28e84da5"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Sans.txt",
+      "bytes": 4463,
+      "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/Serif.txt",
+      "bytes": 4463,
+      "sha256": "9ff5bb567e1b92c801fc1069e5fbf992ff8efccacb9db94e5959a5b3ba9bb903"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/WenKai.txt",
+      "bytes": 5171,
+      "sha256": "1a25e35da1031c6c3436fde545bb9cb5aca954e9873afe510c834b8b79bd21a0"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/b92f559319c423939e2dfd43d7cc7b717ecce1f2a13145feec564281a31a0fb9.woff2",
+      "bytes": 129388,
+      "sha256": "b92f559319c423939e2dfd43d7cc7b717ecce1f2a13145feec564281a31a0fb9"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/c2e658b9d93b459667ca51c1f0e1e8d598c4dcb8e3cf9b0dd7ddb423f7d50a6b.woff2",
+      "bytes": 67432,
+      "sha256": "c2e658b9d93b459667ca51c1f0e1e8d598c4dcb8e3cf9b0dd7ddb423f7d50a6b"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/d1cca405edf21f74321ee89f9e8302098c1022e31e838bb3ea3254924db3e2b6.woff2",
+      "bytes": 270580,
+      "sha256": "d1cca405edf21f74321ee89f9e8302098c1022e31e838bb3ea3254924db3e2b6"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/dc0fa3ad4444a285026a591d1e8d6c5b51b553959517d01c09c6dc2b2a6e178a.woff2",
+      "bytes": 200324,
+      "sha256": "dc0fa3ad4444a285026a591d1e8d6c5b51b553959517d01c09c6dc2b2a6e178a"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/dd7acc4088790d295b086b833c501aa9d57997328da456de26e26bc4223e2bb5.woff2",
+      "bytes": 129512,
+      "sha256": "dd7acc4088790d295b086b833c501aa9d57997328da456de26e26bc4223e2bb5"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/e794c1589fdd38232b647a6e86dfe4e19068774ec18591e6c42bdddac140c302.woff2",
+      "bytes": 12112,
+      "sha256": "e794c1589fdd38232b647a6e86dfe4e19068774ec18591e6c42bdddac140c302"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/ec9a16a5ffff79c4158276409c591bde4b5cbe12c82508e7dbddc31d0786b324.woff2",
+      "bytes": 199340,
+      "sha256": "ec9a16a5ffff79c4158276409c591bde4b5cbe12c82508e7dbddc31d0786b324"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/f0cef07852bf621bd673137ca9131658e947223f74d6c67ada560ac9c31083f9.woff2",
+      "bytes": 268636,
+      "sha256": "f0cef07852bf621bd673137ca9131658e947223f74d6c67ada560ac9c31083f9"
+    },
+    {
+      "path": "catalog/assets/aboutlove/fonts/f5daa3e8e78c7c0d02a1c859f6de493a88829a2787d6e950dcefd2a59adbdcf9.woff2",
+      "bytes": 200404,
+      "sha256": "f5daa3e8e78c7c0d02a1c859f6de493a88829a2787d6e950dcefd2a59adbdcf9"
+    },
+    {
+      "path": "catalog/assets/aboutlove/verify-source.mjs",
+      "bytes": 1198,
+      "sha256": "f1a48b3452406639e617043b390b17c8d83b2ea0845c15a85cd51d4e46c2e38e"
+    },
+    {
+      "path": "catalog/assets/butterfly/SOURCE.json",
+      "bytes": 1866,
+      "sha256": "40cf4b9b1a32b49cff1565f1a991f5ee793d719025f9f229b60cad33574d2205"
+    },
+    {
+      "path": "catalog/assets/butterfly/ai-wing-atlas.webp",
+      "bytes": 1703300,
+      "sha256": "764fd30d6815a94628041af43b2a79a24364403995028248c89512811f7cb154"
+    },
+    {
+      "path": "catalog/assets/butterfly/sage-watercolor-wing-atlas.webp",
+      "bytes": 1561400,
+      "sha256": "2fd703caaf2eebe5bfb83b1da7c24347eab085f0bc32b840ad2f8aa495e8a558"
+    },
+    {
+      "path": "catalog/assets/butterfly/wing-atlas.webp",
+      "bytes": 1504866,
+      "sha256": "78cf863cdbbd0b9f070b6c4d3224c9754e39cd06677c18d5e5243b4f4d9e8326"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/CIVILIZATION-PROMPT.txt",
+      "bytes": 3703,
+      "sha256": "ced6cd0107d17d403e854a1820b7485449429bfa9e79298a2321bfa01e934e3f"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/GPL-Calligraphy.txt",
+      "bytes": 17984,
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/GROWTH-PROMPT.txt",
+      "bytes": 2940,
+      "sha256": "161b233948937661cff7036a1977aa0e9f218a884fb418267cd5495aa7551ea4"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/OFL-Cursive.txt",
+      "bytes": 4406,
+      "sha256": "ff56684b0212481e7c3886c26d5a655de9b211c8119e5ccc756138a97b066acc"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/OFL-Oswald.txt",
+      "bytes": 4390,
+      "sha256": "0687c51a3126ae6963389181135a2eaea02f2e88f31230d27409952f28e84da5"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/OFL-Serif.txt",
+      "bytes": 4463,
+      "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/SOURCE.json",
+      "bytes": 9472,
+      "sha256": "a385d85cc496f6a27c195264ffb700245f941dbeaeaa134d16a5e0f69fdbb531"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/assets.mjs",
+      "bytes": 1117,
+      "sha256": "5f5e7f3dc9f5018ae428343af2bb561dee79356d34289571fffe7e9773f635be"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/botanical-texture.mjs",
+      "bytes": 2098,
+      "sha256": "4b6ffa53186409356d7647ffd370dbe57594542eb7b1194200445d34cd9dbe2e"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/brand-final.mjs",
+      "bytes": 2649,
+      "sha256": "c0ec39242e17178832a7e7b4e0b75b89d886cd4f09efe5487c1a9c414440e534"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/calligraphy-data.mjs",
+      "bytes": 1023381,
+      "sha256": "9d2e8e80d9bce49f8ce80ff325e29d7daf1e196e101a27af1933be1779973389"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/calligraphy.mjs",
+      "bytes": 1399,
+      "sha256": "13960301a6cc1d35636abdc6765dedf4fca72f3e0ab870091ac4ce660faea607"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/catalog-entry.mjs",
+      "bytes": 2299,
+      "sha256": "bf74907869c38993e233492447f4fc11bf0fd0fff859ebc20345521e2cfbc6b5"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/exploration.mjs",
+      "bytes": 729,
+      "sha256": "a5ba9e2acd855d07de0d42a4f623b6e2bfa85a3cf3cf2d4b50ccb774e94f07de"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/fire.mjs",
+      "bytes": 1289,
+      "sha256": "924e9e4f47e7ca6c4c02ab4f9ce5cd6fe42868a12e538aed4e085deb483f47b0"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/handoff.mjs",
+      "bytes": 1902,
+      "sha256": "163da1236067ec0e0b4438acab2f90101d45aa1cb1e7c770d8120885ecd2b2d1"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/ink-parts.mjs",
+      "bytes": 2209,
+      "sha256": "2ce9ff198cb3bab76bcdc407f366474d4a5ae362770d4ac54271162b98559967"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/loom.mjs",
+      "bytes": 1671,
+      "sha256": "4a5ec9058d246703d1942cd807775bb8a521d901cc861659f12e3fa12516ca62"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/observatory.mjs",
+      "bytes": 1137,
+      "sha256": "349a4db1cbad02ef64956d8e2c34b1ae5ef749bafd5b84e81b475804da859667"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/pendulum.mjs",
+      "bytes": 1159,
+      "sha256": "c4df703651e4d74916237c0d5512fbdbf5b2440882d4a4907ce3ee19778fd8b0"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/piston.mjs",
+      "bytes": 1017,
+      "sha256": "ac8d458c1be7a0c3abfece47d8db671d18ecb4bba1a4d7ccbacada0d2033cdd0"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/reveal.mjs",
+      "bytes": 2744,
+      "sha256": "a4b4d0b9d10c35ee56d8c3807b0db05d0e899c00e5c4547abbd6f29e02484f6f"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization/wheels.mjs",
+      "bytes": 1413,
+      "sha256": "f3fd9ed8dcfb422ff6cc85f6ee4475286b6753825840d74ed17ce502debce563"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/civilization-atlas.mjs",
+      "bytes": 1394,
+      "sha256": "eb6f74878fa0b695d718c52c0964bcd53c36baeceddc3b4e50cc80a51bbe1106"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/cursive-data.mjs",
+      "bytes": 92849,
+      "sha256": "e1818aaeedcb719088b2d3b853ffd285e43336de3d0df7c02d9918913443e03e"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/engine.mjs",
+      "bytes": 2729,
+      "sha256": "fd711eb185c353dae33b66023ff25c2961bcf337fb3447aa8b73f158a199d9de"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-01.mjs",
+      "bytes": 2441,
+      "sha256": "c1154757d3a3ed036da4b88a9f2b509923fab4179db160658b8cb946cb0f2a3c"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-05.mjs",
+      "bytes": 2614,
+      "sha256": "0fe2c5be01dc0334d60a2b7e56288b29c5c9b8ecdc95b428ac45391976655023"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-material-bridge.mjs",
+      "bytes": 2330,
+      "sha256": "1824f518b3379acd306b6d1ace27e5bdd8b5e612206cfd9122b8192bd251f02f"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-material-field.mjs",
+      "bytes": 4169,
+      "sha256": "b75a322bd19bdf52715eadb944feb0cbf67b84b41736f530ee5d27e74a3e1bf4"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-particle-relay.mjs",
+      "bytes": 2974,
+      "sha256": "deb0120b588393958759ef84ceb560ec3d0ade50227dd0a222f6c18a26b25041"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/fire-wire-relay.mjs",
+      "bytes": 2367,
+      "sha256": "0624919ca8aedacf61845980eb51a2b4423949da0cfb5704855b0dc0162b9d86"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/font-data.mjs",
+      "bytes": 14794,
+      "sha256": "2dcd41d6abf8ebbab3704af9eb94083fc53984905f3dd2cb2f27b1e27feffea5"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/four-flowers.mjs",
+      "bytes": 2992,
+      "sha256": "d1aceb1b51f4b38e8b5489ab477d08025e463d785cadb49ea1fcf3d772de80f8"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/four-sprouts.mjs",
+      "bytes": 3731,
+      "sha256": "1d1e1bc5c95f826846264964f390a8317814f46c14fac267fac8dd9554227bf4"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/growth-regions.mjs",
+      "bytes": 1040,
+      "sha256": "291be440f684c6557c04424206bceb47aaed38188c505055f78585dbcf47c57a"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/math.mjs",
+      "bytes": 1265,
+      "sha256": "efae1c69e988ed57b155617f34b232c67198cd63bf884f6ee0cdc49e9b1c9184"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/paper.mjs",
+      "bytes": 2613,
+      "sha256": "8ba9eedb1ad55231ec3897b12e8b16b74552084d00583bdfc321a077466ea20b"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/particle-word-library.mjs",
+      "bytes": 28178,
+      "sha256": "fd292209ffa6a99ab1853625dc762b2c6129ff37f142cb861aff812b76ce6269"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/plant-flashes.mjs",
+      "bytes": 679,
+      "sha256": "9d204e17ef7c4fa317c74b089d4afbfb58f578faf70093cefcefb40767a3f811"
+    },
+    {
+      "path": "catalog/assets/civilization-growth/render.mjs",
+      "bytes": 1112,
+      "sha256": "88744cc15f730d7a54deac185d0b84a181f1a70f5149d953c9eeb5e393427bcc"
+    },
+    {
+      "path": "catalog/assets/collage-film/SOURCE.json",
+      "bytes": 12115,
+      "sha256": "4c3bb61e2359fa4bf4b699ba1793565496b2a9158e2a3bf8857ae8897786cc6d"
+    },
+    {
+      "path": "catalog/assets/collage-film/flywheel.webp",
+      "bytes": 1457596,
+      "sha256": "7f179e7f0c6aa5b032c9e0faf2bdaceb0c9514b371e6eca3713553790d692aec"
+    },
+    {
+      "path": "catalog/assets/collage-film/hand.webp",
+      "bytes": 1361054,
+      "sha256": "8710ed7829001764930c370439dfbdf5e3ab87ea261ea40e14611e931f549d75"
+    },
+    {
+      "path": "catalog/assets/collage-film/runner-poses.webp",
+      "bytes": 857788,
+      "sha256": "f77232e2a016a33e3f21f3a42d98f93f79b5b709d7c3053aec1ca558340fa04b"
+    },
+    {
+      "path": "catalog/assets/collage-film/runner-rebound.webp",
+      "bytes": 1249864,
+      "sha256": "d215e531c7b195c07a9147b33b2ce7a05d72effbbdc623b4f77828ee9d90c67a"
+    },
+    {
+      "path": "catalog/assets/collage-film/runner-run-cycle.webp",
+      "bytes": 979522,
+      "sha256": "3f99d1d0cfd6e1aa421b3a1c4aaa476470a328d8615adfa4c3d4097dd8cabd07"
+    },
+    {
+      "path": "catalog/assets/composition-audio/SOURCE.json",
+      "bytes": 8762,
+      "sha256": "af53b9cea9b6e44e0fa51322154098fa00f86ba6e428d7e138cdd4e6385fb31e"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/SOURCE.json",
+      "bytes": 7616,
+      "sha256": "4e613ff7c7e3997c3857298f367f28b7c5a850f08012402659f8c4988c7cadc1"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/monologue/monologue-bgm.flac",
+      "bytes": 5276570,
+      "sha256": "83eba55b1ef3a7fd16beb55994f5c405ae6e4dedf2225a0378b807de6b130367"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/monologue/original/media-index.md",
+      "bytes": 494,
+      "sha256": "18d29c58b91bb5933838e4f3b4b7797c10301f4a986e0b1901acd7dac70bdf1d"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/monologue/recipe.json",
+      "bytes": 593,
+      "sha256": "974357deedf77a8e7bfc981275899f4807421571421d581c3849a37b602b4596"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/original/media-index.md",
+      "bytes": 756,
+      "sha256": "19339503539f75e5be9e3f1ec89942bafe892e59bb8999f996c2324a6f700c8c"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/recipe.json",
+      "bytes": 1439,
+      "sha256": "7c55684a5a90195a4c745c1cfcfc7772d36146b9d58cfa3523e4265a6e731f98"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/reel-bgm.flac",
+      "bytes": 6442387,
+      "sha256": "5827745ee55115c8a6243f94ed810698984f3d6b2a9f39077a31bd2887735bfa"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/sfx_001.mp3",
+      "bytes": 82944,
+      "sha256": "fb832995477784f44ba8533359d20caf706195b52117ecc2a33b3e63e3c1307b"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/sfx_002.mp3",
+      "bytes": 84427,
+      "sha256": "760b72bdaad71f83350e2ef3a9d037daf58f44855a05a6cce25d990f1ffb888a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/motion/sfx_003.mp3",
+      "bytes": 11702,
+      "sha256": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/original/media-index.md",
+      "bytes": 1555,
+      "sha256": "0a8736fa0f9c1a6c9437be56f5b1d723a7396678cdb6e6d45e866fdd369b3fc7"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/original/tools-make_audio.py",
+      "bytes": 21057,
+      "sha256": "c4661283c78c42b991607ef8d9fc300c74b14005740e0429913a7bd88d01b5e2"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/original/tools-make_chorus_voices.py",
+      "bytes": 1957,
+      "sha256": "dd53e4600596a973fb52449889b55b5d26a0ad9b7140b58c3630341eb1d5a127"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/recipe.json",
+      "bytes": 1111,
+      "sha256": "9307882df614a87a87a26c6e98f2f91bdeb7e83cd318ebc849cab86260a45540"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/world-bgm.flac",
+      "bytes": 3818361,
+      "sha256": "5e19395f6fbe495783e751afc130604184fa011cb237681a8d86fc5a64bb2dd7"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/world-chorus.flac",
+      "bytes": 536972,
+      "sha256": "c522d9df004ff1f5bf6f3de017564c0edf2920de41da34420b06413f277ec9d5"
+    },
+    {
+      "path": "catalog/assets/composition-audio/aboutlove/world/world-sfx.flac",
+      "bytes": 3811172,
+      "sha256": "350d00c5fdbc263060cd5b988827c7b5b5a1692b04868f5bc32b774629a18cb5"
+    },
+    {
+      "path": "catalog/assets/composition-audio/dandelion/README.md",
+      "bytes": 748,
+      "sha256": "2640916e20fcce4a1dccf6ca3292b09669618b450fadff36b6aac9448ef0bf48"
+    },
+    {
+      "path": "catalog/assets/composition-audio/dandelion/SOURCE.json",
+      "bytes": 1110,
+      "sha256": "0f6d6bad2d8d485c49d69cf22ca6bc32b8602d93c01b9e6b068ee6240ce8d77a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/dandelion/journey-sound.js",
+      "bytes": 4081,
+      "sha256": "3504c239334504c569db41e1127b87473a50f49b9326571278f9a9c9fa900a6b"
+    },
+    {
+      "path": "catalog/assets/composition-audio/dandelion/windborne-score.mp3",
+      "bytes": 889625,
+      "sha256": "f56cfc03ab1912aa5d926984cc3aa97fe2f41816096c0434c0bcdc4292da09a9"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/README.md",
+      "bytes": 1179,
+      "sha256": "a9a89c7a99e55a5ddffcf8014602f69601a324172e0555451858710878ba6b1e"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/SOURCE.json",
+      "bytes": 1335,
+      "sha256": "00d5f617b1739042e43a2bbbfcf3d6863d959887694b2729fb8f364322696d2d"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/meow.js",
+      "bytes": 36873,
+      "sha256": "36ded5c3f735e1aab7a9893ade3d83431cdd226d16d004d0b767b0f717161cdc"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/meow.wav",
+      "bytes": 27500,
+      "sha256": "829f8865889098408a3485b712ca7aa0ad98c22ddd9e8f6ba9ccdaa08774b06a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/mix.mp3",
+      "bytes": 337580,
+      "sha256": "6548f133bba8741fda46f7d4708183ae58f69c097631b327d9296fb63b8d8348"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/mix.mp3.json",
+      "bytes": 144,
+      "sha256": "f166ee8b3098c7098ba0b1d8484cef1a8a812dfa3602637260a3f1370c991fea"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/recipe.json",
+      "bytes": 144780,
+      "sha256": "5cda6b6a7b4285faf593ce305236fc88ef0043448bd7a0f044f8b6fb7f1ce3bc"
+    },
+    {
+      "path": "catalog/assets/composition-audio/drive/sound.js",
+      "bytes": 11555,
+      "sha256": "bc25683714db2f61986f1228047ae9542c6b2ca495e253418cdf166b8fb9ec60"
+    },
+    {
+      "path": "catalog/assets/composition-audio/encore/README.md",
+      "bytes": 856,
+      "sha256": "ce27318f3f18fa09865268d283b236f2a813db4116023f3f96e5914cd4303c2b"
+    },
+    {
+      "path": "catalog/assets/composition-audio/encore/SOURCE.json",
+      "bytes": 1603,
+      "sha256": "35e09d4b59c9cd4ffefc5778bf6a6ac5a5060d4de6ff513fc834e97bef37a931"
+    },
+    {
+      "path": "catalog/assets/composition-audio/encore/choreography.js",
+      "bytes": 5723,
+      "sha256": "e370a695d82b2d70ab3b8cadd764aeae6a0cfda84d46ef55072ebc1406ced65c"
+    },
+    {
+      "path": "catalog/assets/composition-audio/encore/climax.mp3",
+      "bytes": 686060,
+      "sha256": "f1fc21da53d4449ac8661e4cffdb60a6867a7de3d425f5e7fded455a85818bb5"
+    },
+    {
+      "path": "catalog/assets/composition-audio/encore/player.js",
+      "bytes": 7993,
+      "sha256": "5d15938190f25e1fea0f7de3553f4b2f953b320b648f07cd33de7a79eb0aa390"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/SOURCE.json",
+      "bytes": 4594,
+      "sha256": "941d88063de55e2e3c5c97ad6441f67fa225ef4f77d14fcae607248ea8773d91"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/angry.wav",
+      "bytes": 57644,
+      "sha256": "d39652f1164f8f6dfa0737db44073a06912c2f70adbecb71e8ce27b0dbe3079a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/beans.wav",
+      "bytes": 20204,
+      "sha256": "8aa7162e892c2ed1cd69597fc5d47e51e9ec5890c9c637a354376ff9fabac054"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/brew.wav",
+      "bytes": 57644,
+      "sha256": "1a886b32ee009566c7d05f08a3eb732a2b437e58eed495293ba14677fd0da186"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/grind.wav",
+      "bytes": 68204,
+      "sha256": "5529a1d85a9d5168138b63b2451954fce173168a88bcc3303bcecd436dadc0a4"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/land.wav",
+      "bytes": 8684,
+      "sha256": "3fec91a9b59ee0fa9f5283a6464a4211cc3e9c117ca0843e158a052ff2749149"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/latch.wav",
+      "bytes": 13004,
+      "sha256": "a20d4495d2bd27d46fa307d33664a8910140eb34a00b18c5142e6a333371c0cf"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/meow-bright.wav",
+      "bytes": 27500,
+      "sha256": "e860db91d8dbc1059cf8d14374cec911bd4e292c78c3a5766556ddf422ee5e06"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/meow-low.wav",
+      "bytes": 27500,
+      "sha256": "046dbd7b2b0574aaecb24c71880d286bd9b49df7a0661b75b10909f74947c2cb"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/meow-soft.wav",
+      "bytes": 27500,
+      "sha256": "7e5f83fd8c0dd34c6073bdeb8eaa90000c873881ea241172a8c83378d087b0b2"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/meow-white.wav",
+      "bytes": 27500,
+      "sha256": "34c28258bc95583d2fd53258e4e68daf519e048536b6adc4ccd51515675b9265"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/meow.wav",
+      "bytes": 27500,
+      "sha256": "829f8865889098408a3485b712ca7aa0ad98c22ddd9e8f6ba9ccdaa08774b06a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-0.mp3",
+      "bytes": 193580,
+      "sha256": "38575cf15078f1a4fa8dc6d8eb756a2784e17cb7d83ae31c4187e29b6656ce14"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-0.mp3.json",
+      "bytes": 141,
+      "sha256": "cb099ee14aa391bfb17298afd186ad5806abe4fa0236527d163bb0e1bee9b1d6"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-1.mp3",
+      "bytes": 193580,
+      "sha256": "147a6f3b2572ebdcf1d2b5524a24e4cb1b96ef085fbf98dfe529c4ce89cc8161"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-1.mp3.json",
+      "bytes": 143,
+      "sha256": "f443ba8ba96d827f944fae7c9160d31c193ca1a7859ddb75027a341cf88f44ba"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-10.mp3",
+      "bytes": 193580,
+      "sha256": "911a258b781e421aeebf3074e192085cdc141080f746f5da592010c94b587605"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-10.mp3.json",
+      "bytes": 143,
+      "sha256": "97499d4a10de19c87a8b6437cf457e76ac57118333b8ba6b0168233a996f5d3a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-11.mp3",
+      "bytes": 193580,
+      "sha256": "1890f0c7c573064b43c3778954bbe140fc55a5ea733bd86fa9c8c13625257108"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-11.mp3.json",
+      "bytes": 142,
+      "sha256": "1412191192b3f996115530bf0a3f35334f729ad3941fe85abc890f1954789157"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-12.mp3",
+      "bytes": 193580,
+      "sha256": "32b117d54973de1d4cecfd8508a88056a9cf13fae25e0763f698989ac13925d2"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-12.mp3.json",
+      "bytes": 142,
+      "sha256": "71e17ce00c0123cdb3e98a2fd13c2d2ba5142593792b173b7543cd36c1a696b7"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-13.mp3",
+      "bytes": 193580,
+      "sha256": "4fa27c5867e514b543e7f9752e38b8bd8c31e94e8522e1fa921575d3d2f0e0ee"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-13.mp3.json",
+      "bytes": 143,
+      "sha256": "e29bd43a38478e3515b6b69948c65bd065bed32cc235a6c5ee38ad8f15c85e38"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-14.mp3",
+      "bytes": 193580,
+      "sha256": "cac854333f4da92c0a9cc3b23ea3752f71ba38d059033f11675a4a371e5c8ebd"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-14.mp3.json",
+      "bytes": 141,
+      "sha256": "88ba5ac8379ff772c914331fd4a4e290d8f75d72ca1b1baa391ef8889eb60fa2"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-2.mp3",
+      "bytes": 193580,
+      "sha256": "0a12616f8b9f43a32edfe69fae6eacd29ada46500833ce8b55b97b0f76838396"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-2.mp3.json",
+      "bytes": 143,
+      "sha256": "32de1dcb44d1ed85a42c49f5e4ca475133c957d9f152a70b960c0e92d0cadf06"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-3.mp3",
+      "bytes": 193580,
+      "sha256": "13a40b5877c09c16635e0b9ca2c8eee70301e8870e7f53ef96a81c99dace3dec"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-3.mp3.json",
+      "bytes": 141,
+      "sha256": "6146d94a401b2fe7f128860ff3148c29fa6abc80795f88847bec27f7ddc7f51c"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-4.mp3",
+      "bytes": 193580,
+      "sha256": "90663174620041f86236dff48137d06ced1c2723c55c282922aa35b1929195a6"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-4.mp3.json",
+      "bytes": 142,
+      "sha256": "65eae2b20d29bb5a749a1c28120a9590c0d4e67ab812e4c05fc42bfb1a869506"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-5.mp3",
+      "bytes": 193580,
+      "sha256": "e62f5df33006106d2ebc47dbc78675ff0abed6b13abc9dd7db5ffc58d2280ac0"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-5.mp3.json",
+      "bytes": 142,
+      "sha256": "28d52cd9fd8b59433634a456e1bffba4267428179bd0348e874b50e79e4be018"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-6.mp3",
+      "bytes": 193580,
+      "sha256": "b07c78765bafb2636c6bde03abfc24d464feca2784ea6de2a6c7d21a0157b9a3"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-6.mp3.json",
+      "bytes": 142,
+      "sha256": "a94cf711502b9b22ba249a2c1d1ac7f1c508519a656436c34f55627e2157780b"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-7.mp3",
+      "bytes": 193580,
+      "sha256": "6238d7ec99e9a07c48f719c0a6190a59e2e44e1bb09c0b23c924ea97c3ffbdd0"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-7.mp3.json",
+      "bytes": 141,
+      "sha256": "44103d7c09c020e7bc0d2f57f4f06a21ec636eb10134944f9e2b15022efba593"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-8.mp3",
+      "bytes": 193580,
+      "sha256": "c74128d69fbb8976d2946cf01680274e7421aab265a436c57d36612ea85935df"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-8.mp3.json",
+      "bytes": 143,
+      "sha256": "8ae494795a97d7a947e15efa934f47f9ec75f5248346141d9a4db7308ac15cbf"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-9.mp3",
+      "bytes": 193580,
+      "sha256": "52145e439ac447707d041235776719b9e4733b41ff493e8d8b254273837a8e8f"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/mix-9.mp3.json",
+      "bytes": 141,
+      "sha256": "acbedba8cfdc14d7f3505047b16e338df1f8d3635e7d570647be19a7d8d654ac"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/recipe.json",
+      "bytes": 26367,
+      "sha256": "964b70274eb5bf8b2ccfba364e170ea6dfa3884809fa120bab97289ee3737846"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/sound.js",
+      "bytes": 6762,
+      "sha256": "1162c0068d28ba6858ddff354e8d4620c4e1df1253922909044bc3bf88b157ac"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/steam.wav",
+      "bytes": 48044,
+      "sha256": "b46e346400aef3169c959473f79d8de65c19ac47be841e0b87ccb767a2458101"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/timeline.js",
+      "bytes": 15544,
+      "sha256": "108df91a31e9998d3b986548c183db0b683457d4d181d4a0be8857d5ad80c4ce"
+    },
+    {
+      "path": "catalog/assets/composition-audio/factory/素材来源.md",
+      "bytes": 6712,
+      "sha256": "17e81dddae536754ccb88254e0e765cf2ac4a75dd6f3446128da2b07f233a04a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ink/Root.tsx",
+      "bytes": 4756,
+      "sha256": "0bb497485f1bd6a03135e151c6d9ea99d5d128ec02ba390ddaee47c94e49dbf6"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ink/SOURCE.json",
+      "bytes": 1137,
+      "sha256": "8292751c88dad635f5994bd86e0681ebde7f4d98b35d1fbdce15fb016a2b14ea"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ink/make_music.py",
+      "bytes": 12509,
+      "sha256": "5fcf175e1bfe057e4d7ae43df5bba7473e4cc4165c6149f1a3de448618c646fd"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ink/水墨微光.m4a",
+      "bytes": 4521704,
+      "sha256": "474b802f67663e8094d6b5e607351f20723deb71b0e64701f024e1fa902c3620"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/SOURCE.json",
+      "bytes": 1585,
+      "sha256": "6bb93e532490f54265583946ba04d682916883c8c548cb943e229e71ec0cc7c8"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/SOURCES.md",
+      "bytes": 2948,
+      "sha256": "87a9d4040d3e6793645d2d22eab61892b13b3aaf2d85cb902f3d4b756f1b2424"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/build-audio.cjs",
+      "bytes": 10520,
+      "sha256": "6f201d9c43b92d58ee66e8b0a3cca4f86a15920c90e341261d80911488d72eba"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/chime-score.js",
+      "bytes": 5728,
+      "sha256": "86b4246ae2215c82948a0b33dfe590e4133d203b016e56bcf3dfc04ac8368f31"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/mix.mp3",
+      "bytes": 2281580,
+      "sha256": "f9ae382fec6e7554cb0f844d987ed3f820e3ab3b0508d0d76033b6e10e0460a0"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/mix.mp3.json",
+      "bytes": 143,
+      "sha256": "6f4da6c2fffa6a73d95050b55377d69e584057b6425a13cb497c7c795c7280d1"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/recipe.json",
+      "bytes": 46323,
+      "sha256": "cfb42cdd93dd33e5d98631e22f5a97f82fbfb10d0ba03ab1ff73f2d07da3296d"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/sound-bank.js",
+      "bytes": 7574932,
+      "sha256": "2f10f8e6700b3e12348272cb700ae60bb713e6361da31e5307f6dadd1eaaa9d8"
+    },
+    {
+      "path": "catalog/assets/composition-audio/letter/sound.js",
+      "bytes": 11595,
+      "sha256": "0493a6aeb2ca0256ee2021df48948a538a3e7d35852764e332c8b64a61076022"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/README.md",
+      "bytes": 885,
+      "sha256": "bdabf4965219dcd0e90f10cdbe7eed6adfa972d77659b3b5d0c7372996a68bc5"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/SOURCE.json",
+      "bytes": 1048,
+      "sha256": "13e67a073460794b59f202cfb8821bd7ebe6bcacd5922bd802408068d73f3ca8"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/mix.mp3",
+      "bytes": 1561580,
+      "sha256": "af4de352e92a8b1daf7853628c79e58941649174ad8a72d0af142f6ba19817d4"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/mix.mp3.json",
+      "bytes": 144,
+      "sha256": "1dca62cadfb52a37e4a9c96b40864e845ef2cb846f8cf9933dcfde4ebb18b48a"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/ocean-waves.mp3",
+      "bytes": 1321317,
+      "sha256": "75cd2ff397a3e0f90eaaebff27d2585541b3357dc950c949a24b669fdb04da5f"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/recipe.json",
+      "bytes": 5245420,
+      "sha256": "9e1f7d2e465c800b978423342430ada845d39211bdf712a8a25cb561f0070d02"
+    },
+    {
+      "path": "catalog/assets/composition-audio/ocean/sound.js",
+      "bytes": 13531,
+      "sha256": "5702f24ee48fee4ea84719cdaa68d574a17fee1292bb6052ec526f69c11888fb"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/README.md",
+      "bytes": 5164,
+      "sha256": "308424dd4ab7af3028b69e6434227d1a94453c736d82060cb3ac91122249e943"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/SOURCE.json",
+      "bytes": 809,
+      "sha256": "1ea6c8a6996c98b46c5247d0408b35ae70be2213257bdea3ec2782d7c6b0e43e"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-flowers.mp3",
+      "bytes": 577196,
+      "sha256": "2a14464bc76ed0a8c4869df47400ed3decff258af3902da1d3d2058e6d64a666"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-flowers.mp3.json",
+      "bytes": 142,
+      "sha256": "eb66868da60f1ea0b3f042d3003fa9914ffaeedcebfb736557cd959f8b4c5e30"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-gold-leaves.mp3",
+      "bytes": 577196,
+      "sha256": "ee6cf88c8f209ad51e08339c21dfa2d895d420ad842e1782f3c25931301d7571"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-gold-leaves.mp3.json",
+      "bytes": 142,
+      "sha256": "7c7c9b72be0e89ec043708f4a023b18e2d7bce03643858a85976de0b629aa5c9"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-maple-blend.mp3",
+      "bytes": 577196,
+      "sha256": "ee6cf88c8f209ad51e08339c21dfa2d895d420ad842e1782f3c25931301d7571"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/mix-maple-blend.mp3.json",
+      "bytes": 142,
+      "sha256": "7c7c9b72be0e89ec043708f4a023b18e2d7bce03643858a85976de0b629aa5c9"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/recipe.json",
+      "bytes": 21556,
+      "sha256": "c401fdbad352804a9ff3c55da55e42de4ca944033268200b384842d01b58f723"
+    },
+    {
+      "path": "catalog/assets/composition-audio/osmanthus/sound.js",
+      "bytes": 11852,
+      "sha256": "e1ff2de35bfa65604cbb6cf285d2a389ae78f50f7e361554eeb3b582f02828f4"
+    },
+    {
+      "path": "catalog/assets/composition-audio/selfie/README.md",
+      "bytes": 654,
+      "sha256": "f75a8e1cb0fda34aa0615463904e431fed8bce7f15e3ed6e714f4195eb6aa7b7"
+    },
+    {
+      "path": "catalog/assets/composition-audio/selfie/SOURCE.json",
+      "bytes": 1066,
+      "sha256": "096ca9f11a15f24ac8dbe5510cf9fa3d94c74242abe45eb64452d1077f1049a4"
+    },
+    {
+      "path": "catalog/assets/composition-audio/selfie/continuous-audio.m4a",
+      "bytes": 193607,
+      "sha256": "8aaa831c6e3894c558c57320917700f64c52cf933cb0209a3627f675f8889df3"
+    },
+    {
+      "path": "catalog/assets/composition-audio/showreel/SOURCE.json",
+      "bytes": 1174,
+      "sha256": "d251936fb4102e8a05e21881d7501d417d5fc9bc7c75f00306139220bfad9555"
+    },
+    {
+      "path": "catalog/assets/composition-audio/showreel/audio.cjs",
+      "bytes": 9836,
+      "sha256": "f9ab30d6503379199bc1babca4684542d43bdc58b6924b3d73bf9944199c6d0d"
+    },
+    {
+      "path": "catalog/assets/composition-audio/showreel/shared.js",
+      "bytes": 1118,
+      "sha256": "46702926fdbe991cf26c6bc0901bfde134b747ca3176e1ac1d6cebf51cfe6c5b"
+    },
+    {
+      "path": "catalog/assets/composition-audio/showreel/soundtrack.mp3",
+      "bytes": 1441375,
+      "sha256": "9d1afc1b2d9da4a224e9f52282d1305004b773bacfc351f395bffacd46291926"
+    },
+    {
+      "path": "catalog/assets/composition-audio/snow/JRPG-PIANO-LICENSE.md",
+      "bytes": 1253,
+      "sha256": "091f3f60d8ae05da20d73ab6e2d462ec063d0b72df44dd8428ab6cc2c21897de"
+    },
+    {
+      "path": "catalog/assets/composition-audio/snow/README.md",
+      "bytes": 1089,
+      "sha256": "dfa67c60a899f57a1b70bbceb0d9001ff2a8c1335749865e19d05f46f767b00c"
+    },
+    {
+      "path": "catalog/assets/composition-audio/snow/SOURCE.json",
+      "bytes": 1351,
+      "sha256": "b9a8e2edbedff227d178f07cb6fcc1e944d5611562c504d96fce6dffea4027ef"
+    },
+    {
+      "path": "catalog/assets/composition-audio/snow/jrpg-piano.mp3",
+      "bytes": 501990,
+      "sha256": "87a99f62e901b8365f1b868cd53bc015d2bf9f887e4c8a89a4fad11a36a62c16"
+    },
+    {
+      "path": "catalog/assets/composition-audio/snow/sound.js",
+      "bytes": 6281,
+      "sha256": "56952c5661ac4ce7419484e436c02064bc2dfcc238951a5ddaa58bd03e48cfd1"
+    },
+    {
+      "path": "catalog/assets/composition-audio/time-in-motion/SOURCE.json",
+      "bytes": 600,
+      "sha256": "e3cc119d142e433432f351a87a8cf0a86ebe170a28f7770af1c541055213130e"
+    },
+    {
+      "path": "catalog/assets/composition-audio/time-in-motion/sound.py",
+      "bytes": 15089,
+      "sha256": "66a34be9ce7c6abf493844312b66c51b26493285c668ae83ea181d78c92733e1"
+    },
+    {
+      "path": "catalog/assets/composition-audio/time-in-motion/soundtrack.m4a",
+      "bytes": 1404381,
+      "sha256": "a4d43700abc273bbea5acc49c5ff270b0ad73d867e106e9758fede79793d8890"
+    },
+    {
+      "path": "catalog/assets/composition-audio/time-in-motion/来源与测量.json",
+      "bytes": 10796,
+      "sha256": "d2ee94ca66565e44e3fd6d02a53fa992d9e712fae94e49f6fcd810cc51e825a8"
+    },
+    {
+      "path": "catalog/assets/composition-audio/time-in-motion/节拍锚点.json",
+      "bytes": 15644,
+      "sha256": "48eb7ebdb5017a099f837b1f8dc6936bb919758c1129ec9cc825dd0972f3d448"
+    },
+    {
+      "path": "catalog/assets/cyanotype/SOURCE.json",
+      "bytes": 2874,
+      "sha256": "be9798274ece2140699aa0a664e92025c0333cfd416d672afddbd8ec87bf23ef"
+    },
+    {
+      "path": "catalog/assets/cyanotype/botanical-atlas.webp",
+      "bytes": 2186746,
+      "sha256": "f30c40e763c2c66d6bb96ab09201b97d7b8fb17b2f38bcba3347f6c94f548351"
+    },
+    {
+      "path": "catalog/assets/glass-light/SOURCE.json",
+      "bytes": 2144,
+      "sha256": "bc788f375269ff48e469d92861efde048ad4c8305efa3fee0252cc823f0772ed"
+    },
+    {
+      "path": "catalog/assets/history-nature/SOURCE.json",
+      "bytes": 1772,
+      "sha256": "7df05ca50c5b2314bcd6ac49e15b6b2af4350c79074c1edfd75cd8ccd37788cf"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/README.md",
+      "bytes": 3122,
+      "sha256": "ab079d6b08155481c7459d7df6b1baa1b90a8d344847c44f0d7093016b92ccbb"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/SOURCE.json",
+      "bytes": 43702,
+      "sha256": "55c794becfe5defacbca8414587c01c4ba0af5ed1cdb07377bb94c241cfa6581"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/IBMPlexMono-Light.ttf",
+      "bytes": 172560,
+      "sha256": "feca3787130b6e71a0edb1cfc17c2ae7780443888554207a8981de43ef755d36"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/IBMPlexMono-OFL.txt",
+      "bytes": 4115,
+      "sha256": "24c744924f067a74c4b2bae17c7e31fdcfc168276936a641c9b2aa281350941a"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/IBMPlexMono-Regular.ttf",
+      "bytes": 173052,
+      "sha256": "7c6fbddca4b700be918f5f6183d9bd4464fa427fe435f0b480d77fe2bb8c5a43"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-Bold.ttf",
+      "bytes": 108496,
+      "sha256": "eb7d46f856dd57f18a8c03d033c57802692bf127f01dbd95ba8984338e6b5135"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-Light.ttf",
+      "bytes": 104268,
+      "sha256": "1b0d955818288665aab59bfa1c9a7d89b22862864e4b1acabb3f7c7e4282b174"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-Medium.ttf",
+      "bytes": 107948,
+      "sha256": "d8b3ac8668c6ddbcecd299567e2130e2b933ad8b6c98b5b8ac6ff2bee9c0848a"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-OFL.txt",
+      "bytes": 4155,
+      "sha256": "17da6159e729c8d6cdc5d6be97032b1252262bcf6e40e671124b6191f5ceafcb"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-Regular.ttf",
+      "bytes": 105572,
+      "sha256": "0d9980da817ee71ad9c34bb46950fcf15dd53e928031f39d2e11ae19178ab826"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/fonts/Oswald-SemiBold.ttf",
+      "bytes": 109120,
+      "sha256": "8c5e61737c100d0a1ca87a9a1608afc53246b8a77f8d73c56b03406adc2d9282"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-000.webp",
+      "bytes": 630650,
+      "sha256": "3da2859dce4f9fcbebdc9c5348b56286af8306839b3193b44584516bf5ceb91e",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-001.webp",
+      "bytes": 630092,
+      "sha256": "cbd55725bc2bacbfb48a59c13554e2315739b1824930b0ed8bff43faf3edd8d5",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-002.webp",
+      "bytes": 628160,
+      "sha256": "95a7b8052f1717768a7c5c2e92dca225251cda1c1cb6ec8663edd9124f7f2ee9",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-003.webp",
+      "bytes": 627294,
+      "sha256": "a6af849cf8f636bfd0a78713c7367869f848f183b6ca1462b9d8b8f5fa8fb7e0",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-004.webp",
+      "bytes": 633444,
+      "sha256": "d9cd7deab9714bbbad10f20de4c332f4241602f4a90e7ed87d18247f798e3f82",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-005.webp",
+      "bytes": 627406,
+      "sha256": "6e68c806cae03bc2c93b772c28685f0f54d87f5de8a509dbfeddbfbdd496e606",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-006.webp",
+      "bytes": 629080,
+      "sha256": "cde0cd5a77094a0e9fe6d3f318be98215efe3d1c5169156dcc99774c97799590",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-007.webp",
+      "bytes": 627932,
+      "sha256": "a900fce3c9257a3165e1854e5534463529347c4ff0fe9d08f8cb88e7ee64be75",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-008.webp",
+      "bytes": 636944,
+      "sha256": "7feb26c5586c7814493da1bae4c3af05b738ee95f524bf4f31367975a6e6ec69",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-009.webp",
+      "bytes": 630204,
+      "sha256": "f38a24ef7fa1df3dac701a8d3080958a22af89076095895ddfb57b08cf5a0faa",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-010.webp",
+      "bytes": 634192,
+      "sha256": "fa973d10bc513d62ee036adfcd83325c3459501824c0e8dc1bba0593fd01e4b9",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-011.webp",
+      "bytes": 633586,
+      "sha256": "096bbbf79e2d37449da780f967b26246dd9277554b0345e308321b655ee094e3",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-012.webp",
+      "bytes": 642876,
+      "sha256": "dcc68460223f413fbabc67bb79b89d18806347d565acbb2ab9428c9a4f9949ed",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-013.webp",
+      "bytes": 636592,
+      "sha256": "3f2788d79242c63eedecf3b53d3db1121f1d56ccf4d8d8001e06625dfc463912",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-014.webp",
+      "bytes": 640892,
+      "sha256": "2cef36ae7d9749e3689ea2f94d1b4b96556530bfaff3cd358642e67b7eb8ad0a",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-015.webp",
+      "bytes": 640316,
+      "sha256": "a59f55cfeae693390026741fa5c8079c2276cc6bc8b88f078c25b36c45add62e",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-016.webp",
+      "bytes": 650322,
+      "sha256": "beb54097a8b5aa9389b43575bb5670bca808c30319962fff627e7e99c956a7e5",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-017.webp",
+      "bytes": 643014,
+      "sha256": "a86af3b0be53bfad7a1104a87ed2063962c108843232c64be7081083d810e637",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-018.webp",
+      "bytes": 648494,
+      "sha256": "5eccc1b6a28044f9b24f623521b6e7187a3106408ba1aa97710678251738a18f",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-019.webp",
+      "bytes": 648238,
+      "sha256": "b0c1405c3e7cc7be89cdfa434dc36400c867744c66bbc31acc706628d61b834d",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-020.webp",
+      "bytes": 659270,
+      "sha256": "c4ce3eb33f06ecef7ed267baeddfe5bb054e410a0d75080db525a4ff64f223c4",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-021.webp",
+      "bytes": 652158,
+      "sha256": "9c8d35bcbf07b43418f8894dfa0f664c0541548672e7400cb25cd8b8a9b3fd23",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-022.webp",
+      "bytes": 657322,
+      "sha256": "f9e6a99958ba7fc03322fa04f3a715666a49641f11c560c5952b289007a4c7d7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-023.webp",
+      "bytes": 657980,
+      "sha256": "007f094695863628f6bae6835c69291810db6e12abaaffb10f5c64947d5765c4",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-024.webp",
+      "bytes": 669918,
+      "sha256": "93e36deea6438fa2683b7dd0154712b1f85097758a5d5c104c92f2aa4b1e0d41",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-025.webp",
+      "bytes": 663050,
+      "sha256": "845e9e18912772fa5bf49d6e8acfe77b1036f29e2f74f9684aca6a69a5a96a87",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-026.webp",
+      "bytes": 667808,
+      "sha256": "24f2d91be5f3ca646bbc505e983130e56d7c41f9f5a4b3558661eb6923d4f080",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-027.webp",
+      "bytes": 669066,
+      "sha256": "19b497536d8087cc7a870e63af9a2e6561847da4700205bedc256c7f7fd68184",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-028.webp",
+      "bytes": 680984,
+      "sha256": "113e6d397d2deb9c8455e398d0a3b008d66312edf9e87734331047ae7eb7ebde",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-029.webp",
+      "bytes": 674272,
+      "sha256": "aca54d98dd2475b41e6c3f0156a582b9b91745d01094052c2526cb3822469328",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-030.webp",
+      "bytes": 680068,
+      "sha256": "f68497ac393c7ccd88847fe24b171b70119cda04461d33d82748fc8e65a88859",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-031.webp",
+      "bytes": 679644,
+      "sha256": "bcbcd40b554f72deab36a496cab2131e60a2b54b751b0df29f8d4f1956e91bdb",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-032.webp",
+      "bytes": 692548,
+      "sha256": "951fee3797e0d8f7372effda1a942cc744a276edb7a700e1398f679092ab61c3",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-033.webp",
+      "bytes": 685080,
+      "sha256": "ede557b3f991b446320b0624833c697eccafa5473fe131cd73ba5a1e3f5c8f10",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-034.webp",
+      "bytes": 689592,
+      "sha256": "0160e6c47894a29d991864d6ab52ddaa73d56d2d87afc945558755909de19bb7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-035.webp",
+      "bytes": 690352,
+      "sha256": "2eece4fd7ccb034baf150454a1f2f8be82a7e015781e980b8f73978b008b6eca",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-036.webp",
+      "bytes": 702582,
+      "sha256": "346f13b2e9acc1e76a0fd043e4a8006798d85bf05f31fe50f35146b319090d2c",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-037.webp",
+      "bytes": 694756,
+      "sha256": "96aae75da586e8d5daf20f6ebdfb4d421ae660c8d7fecc0d9ee69f8a302cb770",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-038.webp",
+      "bytes": 699408,
+      "sha256": "8026ac8b6063dd97f0e557b4552eeb0538ca180f7b00bc34322cc025edede38e",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-039.webp",
+      "bytes": 699010,
+      "sha256": "7bfe1cbef078410ea4b798821495903d6f11b9228e2063b20d7797a0b7ab3eea",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-040.webp",
+      "bytes": 712272,
+      "sha256": "8a809b6a3ed3ebfaba9522130f0875227593d15abfb36f0f5c11947587370af9",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-041.webp",
+      "bytes": 703618,
+      "sha256": "cdd8c69cbc54c4f3ff3c510b0e38cf51fc2e3651368386836ac68923ae9e6ee7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-042.webp",
+      "bytes": 707320,
+      "sha256": "73d9109bdde0dc36af9596704e86b0e7de8b89535b68e127736456f3a9a1554f",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-043.webp",
+      "bytes": 706898,
+      "sha256": "4c5ec933b4a4930899b01e46e4905e21b420ba620f302f2969da74aa33979e00",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-044.webp",
+      "bytes": 718934,
+      "sha256": "8ccf308b91530358523e286b85ec20587517b103a8c5644b917045d08a8b3a17",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-045.webp",
+      "bytes": 708946,
+      "sha256": "4f6d5163e13aaf0726ee5ad535a8dd2e976b17d61949507a98732a99ffb0f7e7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-046.webp",
+      "bytes": 1092274,
+      "sha256": "ddcbb2591a31bd2557ccf92f440c06abf81a232b7fc82c67a178ff3826b9cb06",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-047.webp",
+      "bytes": 1085328,
+      "sha256": "8ea67187b37d1557f7757f708f9b32849db8bc8698c21aee41d21470c58b63f7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-048.webp",
+      "bytes": 1092182,
+      "sha256": "88ae7c5994e6d4d392dcdc3b7a52f16e560f59660fc1dab23809f98aec0f76b5",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-049.webp",
+      "bytes": 1088922,
+      "sha256": "2ea048b7fe859a71e1e6d5ef0ef9b87df24b0876b3a2418e53e31c27c56ba7b6",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-050.webp",
+      "bytes": 1103268,
+      "sha256": "b7aebb440f9bae8a3d25542d8a7d708c4c90735b8b1fe2b813c64cddd772652d",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-051.webp",
+      "bytes": 1092488,
+      "sha256": "c150f84287d924e6faf315a79c1d4e8a096b10a4612136969c65130158875050",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-052.webp",
+      "bytes": 1097300,
+      "sha256": "778b23fbdeba4fa064e2195c6e7d0ad33576940b2f2f36524432866ca2cef061",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-053.webp",
+      "bytes": 1095738,
+      "sha256": "c8729737797505fa8e02bd23399c2cfcb4c2ee56f2c906961308710e316a32bb",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-054.webp",
+      "bytes": 1108562,
+      "sha256": "436898949b4b8da992c1dff4b6dabd435a9a7671737325ec902d9fad0a83d998",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-055.webp",
+      "bytes": 1097552,
+      "sha256": "305721a5eb2bdf345f2aeb9b89d006c695f46c93bd2779a40764aead4e4b1aab",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-056.webp",
+      "bytes": 1103242,
+      "sha256": "a1f4031b55aa2e720f797b8bb9a21e70dd7d9f8171361ffdc3b613355d2c6251",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-057.webp",
+      "bytes": 1100496,
+      "sha256": "7e44891a8b8902ded385544a1d57939f0db66ee8dc566f77890fba0d519b8e72",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-058.webp",
+      "bytes": 1113912,
+      "sha256": "b49a6657a414189dc0de8ec5dde4908acc65f25bbd2aa25ea8a21a32cdc332e2",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-059.webp",
+      "bytes": 1102448,
+      "sha256": "c1da3746afcd16e10603c74d742f25e695ccfa737a84ac96dc940a7814a96c92",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-060.webp",
+      "bytes": 1108066,
+      "sha256": "f943d5c6c5d7a526e9e4e4a49101a106793ef82f909ea008b8908551ecd4f56e",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-061.webp",
+      "bytes": 1105048,
+      "sha256": "e73bc54b050a8702a5cef6e989c41e2b4890220c57fb567be155ff56983e73d1",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-062.webp",
+      "bytes": 1118352,
+      "sha256": "790dac360d188bcc1691641d7983ce89cf15f2f990bfe493bc3547883193536e",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-063.webp",
+      "bytes": 1106832,
+      "sha256": "94612990ef4104cb518c2c53d5986dc2da6cd4f5cd77f7f2bd04f900f2436dab",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-064.webp",
+      "bytes": 1113708,
+      "sha256": "d501e4c6e80dda24d44d081792f202a2b6abf6674cb80442c3276c35d8ae7355",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-065.webp",
+      "bytes": 1109088,
+      "sha256": "1ebcc32e3d7ad3e9af914e9e6c68d4461d369a22234fe81eeac7a818fce3613b",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-066.webp",
+      "bytes": 1123814,
+      "sha256": "790227fbf1f50d587b6534133545a368784dc2f06d06b34bb0597751c31cb1a9",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-067.webp",
+      "bytes": 1111138,
+      "sha256": "455e6ef24780cb558ef68871debff7f5c84e8b0b4efb04aabb0ed56ea8478f37",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-068.webp",
+      "bytes": 1117704,
+      "sha256": "4c8491847fe0c7270edd9779e954d57c65e0745ba5c5bfdc1193efb44437ccf5",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-069.webp",
+      "bytes": 1113764,
+      "sha256": "4b817fb4140d0489e7fd04ae07eb96f24fd94d8398a2cbf9229f5344a49a693a",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-070.webp",
+      "bytes": 1127668,
+      "sha256": "ac0703909f6f4d005e2122d27c58a5a1b4d386e2914bb0da68f4d093b1317112",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-071.webp",
+      "bytes": 1115360,
+      "sha256": "0cc0e2bd5f607729c11ba1490b07d1353c6c2627ffa0efcad981c855d8b7185d",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-072.webp",
+      "bytes": 1122366,
+      "sha256": "dbc607af04698831187cc399aa32143103c340a9dd0058f63b82a3e68017ecfc",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-073.webp",
+      "bytes": 1118706,
+      "sha256": "05eda39c97e8920f1c5c935cf800518c26ec1f06774d2ca5ae65b30f9a40b2b1",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-074.webp",
+      "bytes": 1133462,
+      "sha256": "09f8e757453716d7cbdd5d1d5de787c2e5e3ea738b93f171ad0db1961ef0a1ed",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-075.webp",
+      "bytes": 1121192,
+      "sha256": "31339c4bd1141eb83a5e5e68710d31272291a9589776fcb66821aedf8f2baa29",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-076.webp",
+      "bytes": 1127526,
+      "sha256": "696f1f314eb37e8dc822b82481301ae9faf9da01fa3fd5566fe2ddeff7b817b4",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-077.webp",
+      "bytes": 1123482,
+      "sha256": "3cb78e84908b173ae4b0f717cdeae3c8eb81e74503e5966b374125c4608a80f2",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-078.webp",
+      "bytes": 1137678,
+      "sha256": "020889fd1383ccdc73385152ee6b0a8bb9218a952c7a8ee810d18a0242700458",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-079.webp",
+      "bytes": 1125156,
+      "sha256": "e3b8bcf5e774acb7086b8adcc1881f4edbd09c76aa5d99ff919e036699336f8c",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-080.webp",
+      "bytes": 1132302,
+      "sha256": "14ad44f71015c23b3d0e73ea12582aff15f0c697ce900048f5089f0721627b92",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-081.webp",
+      "bytes": 1127794,
+      "sha256": "a71120aa3bd0f52d34152b2836f39a2a2368e0df7b5aa7ec7acf584736537243",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-082.webp",
+      "bytes": 1140666,
+      "sha256": "a0ee2f43963bd7578a908d9e286f6ee0444273c53853f5e4273321c065b30fc7",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-083.webp",
+      "bytes": 1130944,
+      "sha256": "25cf9117368a868b787f3e48ab89e84a858772e2ccf815a0efa59d0b35b956d6",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-084.webp",
+      "bytes": 1137056,
+      "sha256": "4bee35c433665cbf1762b557d103f0897c02219af7bde1725d111b25f599a542",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-085.webp",
+      "bytes": 1132396,
+      "sha256": "a7bbe07c52b6a782a477eaef5fa1c747c3d000c6bf0e1f6a57035e27feb4b21b",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-086.webp",
+      "bytes": 1145626,
+      "sha256": "cec7c1446e1aa0e9b5499db02fd947ce5a6906e4f398155eca48cbb993e382e8",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-087.webp",
+      "bytes": 1134388,
+      "sha256": "83a28d9a157c1299d4d3fae489d965b408aab868232a942800b2b54d85a5e564",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-088.webp",
+      "bytes": 1141464,
+      "sha256": "a7e8623a775d1a7a9ce608d308339632a9df0f0fe603babe476be9048d54b315",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-089.webp",
+      "bytes": 1136856,
+      "sha256": "a681aa2d353e3164fe79c610f81b2e0b19bc4eff75f1d52f973f0521522b6dc9",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-090.webp",
+      "bytes": 1146486,
+      "sha256": "73abd0d67ad922b3642aee0e590b3244274dd46e571cd89a037250da71f910f5",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-091.webp",
+      "bytes": 1136412,
+      "sha256": "a7cf27429ee0794b6326041fcef2ab944c811a5f705a1a64cac79cc04440bcfd",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/layout/frame-092.webp",
+      "bytes": 1139910,
+      "sha256": "9df32d1b07621ab300f412f8a09db08c87dd59f4737fe78bde072852b907ca86",
+      "delivery": "github"
+    },
+    {
+      "path": "catalog/assets/lego-kingdom/verify-source.mjs",
+      "bytes": 576,
+      "sha256": "68e2e7c1f7be94cb05c0637e822e5b3f69327ad23ee3f60a5b6e5ed98672bd36"
+    },
+    {
+      "path": "catalog/assets/material-evolution/SOURCE.json",
+      "bytes": 6216,
+      "sha256": "17f9ebe15c036409edd8f79e7bc4dc1209cb6974422993aaa09bee5c783c1c7e"
+    },
+    {
+      "path": "catalog/assets/material-evolution/atlas-engraving.webp",
+      "bytes": 1593640,
+      "sha256": "24ae24b1fdc30bd858cd981e503e8e5f6e8b58daa6bf1093c11df7499145dfbc"
+    },
+    {
+      "path": "catalog/assets/material-evolution/fiber.webp",
+      "bytes": 1347840,
+      "sha256": "731c6c6614cc911e18d35a1f472f8eda60384c2e89bf284eccf2bf1aadc09c64"
+    },
+    {
+      "path": "catalog/assets/material-evolution/key-shapes.js",
+      "bytes": 3939641,
+      "sha256": "002c14c83cfceb2cc8f2b741a4e73b686ee9977186f5d49b83c886eb25f1712e"
+    },
+    {
+      "path": "catalog/assets/material-evolution/moon.webp",
+      "bytes": 972736,
+      "sha256": "3693f3d6df25fbc17c169259c2e3467052c943b22de40637358afddba617db0b"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/README.md",
+      "bytes": 5833,
+      "sha256": "ec97ea13d4a392519bf4f1b688dff57e115f7ad2af145b2c483db078246ccf31"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/SOURCE.json",
+      "bytes": 4600,
+      "sha256": "01edc63d0e3d8b03e7077a06d7a9c43cf1a390e4a1e0fe82a501c908e4ba1484"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/FilmV3.jsx",
+      "bytes": 11052,
+      "sha256": "8a82d86e051602696a2633a4637a88f398081f7a77f0b33099da8316b775db07"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/FilmV4.jsx",
+      "bytes": 4447,
+      "sha256": "f5244ac819f402822f25583abc46d3602f430c1f44caeb21d47ed1b9875e0218"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/Root.jsx",
+      "bytes": 342,
+      "sha256": "182349c5a1b0eb5a4bcff65607776945758164eb7d2f197d3fa6b6702135a185"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/SpatialScenes.jsx",
+      "bytes": 8963,
+      "sha256": "563c5d0f2b9c1b3b623abe9ceaa0f4b122db0d0a9c909a14027bf1cfc68e3fff"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/form-layout.mjs",
+      "bytes": 161,
+      "sha256": "0847be9b5436db4ffd3161f75acfbfcaa2dad4769dd40c125fc4ecb14e8341a2"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/import-originals.mjs",
+      "bytes": 2682,
+      "sha256": "2a660d77cae3eeafd116dcc7116387ca93561c2620e3c8a2bd71703e59e85d92"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/original-assets.json",
+      "bytes": 3221,
+      "sha256": "41b986fa095464b8eeb013b5e3e5152996284276adf8419e38e96294b2ca5714"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/timing-v42.mjs",
+      "bytes": 501,
+      "sha256": "87602469827105ab1ab7d112f4bf9a3224026e4fe0e175c4c44183f58edd2c1a"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/windows-v3.mjs",
+      "bytes": 138,
+      "sha256": "d8c3f21824ec0c570d0b5ff25478d5c967134117cf68826c4536676860ff1182"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/editable/windows-v4.mjs",
+      "bytes": 138,
+      "sha256": "d8c3f21824ec0c570d0b5ff25478d5c967134117cf68826c4536676860ff1182"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/movie.mp4",
+      "bytes": 3317754,
+      "sha256": "fc1f6ab8aac84716d94fd99a942d5a4d8e791b388c777f637d5d604650d54968"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0010.jpg",
+      "bytes": 22434,
+      "sha256": "99152631930bb0fce146c78609245089314eaec0acc2a4efd35d500e179bd2df"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0050.jpg",
+      "bytes": 18641,
+      "sha256": "a110b0fb4f8a97db46b1b39a448f7ec05d65d62097bb18b54911d405528c14c3"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0179.jpg",
+      "bytes": 65865,
+      "sha256": "6138c06ad0506ce9e17d0da7a8791f6e0306976d86ff8611c673e11438aa95a7"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0220.jpg",
+      "bytes": 22387,
+      "sha256": "c40a8c9a517270fe77e41b4c055f8a233cdf2feb0c84fc02d888a75d51fe684f"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0300.jpg",
+      "bytes": 49035,
+      "sha256": "0edb0b50ef928071e756f22b7b7bddc6bc693a0a45cd2f05f40c34a7778c36df"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0310.jpg",
+      "bytes": 20915,
+      "sha256": "0aa3f59e43bc7a7b9c1e5f00b300131343acccd470d69e5fca25fa156b2ea1e4"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0379.jpg",
+      "bytes": 43415,
+      "sha256": "76189c9e2366cf91ca744cfce753baff1f079bfd0ed215f598a305cecfdf1d6e"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0432.jpg",
+      "bytes": 133157,
+      "sha256": "1c6093b9f73c94e1f123f77eaaa8593e0bef1f9dd17f2d33f38ffd4b52c16076"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0470.jpg",
+      "bytes": 26216,
+      "sha256": "550ff40c91117d4e4531b022b09917434c794568df262f0021f621150ea234b8"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/posters/F0480.jpg",
+      "bytes": 86389,
+      "sha256": "d905f26e6649f6ad8e526048b0b43fb8673d97fe6ca506b7860b34a8cd642a08"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/FilmV3.jsx",
+      "bytes": 11044,
+      "sha256": "0946e4b210acbce0a5f5a2572149caff9aded4d68bca67694494a5976de9cb50"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/FilmV4.jsx",
+      "bytes": 4363,
+      "sha256": "f54e30124c0951f33f3c7bb9b8404a0120eabb2ee565931691a92a15eb5abe2b"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/SpatialScenes.jsx",
+      "bytes": 8946,
+      "sha256": "7afbbdebdf7e11c2d8ff776d9b1d9d33cf7dbf98292ef84826e3a2a4450c692d"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/form-layout.mjs",
+      "bytes": 2479,
+      "sha256": "f71a91cc47abcdd46259f447d1f5cbb42b224aa7079e591ad869f9115d550c8c"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/timing-v42.mjs",
+      "bytes": 501,
+      "sha256": "87602469827105ab1ab7d112f4bf9a3224026e4fe0e175c4c44183f58edd2c1a"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/windows-v3.mjs",
+      "bytes": 4264,
+      "sha256": "bc6f33d379645521f2968b7edaa382639f467fc093838d8708ebb985399f803a"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/windows-v31.mjs",
+      "bytes": 1282,
+      "sha256": "46344c8b073b53067f1d082b4e693d240fff8f07396c13fda7ed05d8bff120ea"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/windows-v32.mjs",
+      "bytes": 1521,
+      "sha256": "8291b471bccfc513540bb0b611853ce96d4b0abb4d64800347a0ec69bac7de8e"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/production/windows-v4.mjs",
+      "bytes": 1935,
+      "sha256": "a138c3d39ae293114e6c29c3b0b79b6b0cf171a851467a30e90bfa9ce7a807c8"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/watch-angle.webp",
+      "bytes": 178668,
+      "sha256": "8bb67f973f2cba191d736bb568aad24ef9f2ca31bd338df14a7b1e8900511dbb"
+    },
+    {
+      "path": "catalog/assets/mechanical-pulse/watch-front.webp",
+      "bytes": 209108,
+      "sha256": "c207abcde5917eb41da04211675208375d9eec34c99838c979162be9a1b21dfb"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/README.md",
+      "bytes": 4459,
+      "sha256": "fea070cf64d2ecb2ec955176596a066909e1354a4a41dfd6abffa0dfe547ac10"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/SOURCE.json",
+      "bytes": 2526,
+      "sha256": "fcd474aed5ccc5b65502f68fad46127191e045c10d8d71c62f92ef509786feb7"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/Film.jsx",
+      "bytes": 8789,
+      "sha256": "07ba4fa69ff1ae8b210812b7e8c8510afedff48a8728d7647ecec0cc4fa9d521"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/Root.jsx",
+      "bytes": 271,
+      "sha256": "b209d042294b506d8f5005dfc65917428144708f4a50381510e1186fa57c2621"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/import-originals.mjs",
+      "bytes": 2684,
+      "sha256": "2540dbf5035bd02682f0ea2e6c0e278b095c3618aecb09b930aaa609974ef3a3"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/original-assets.json",
+      "bytes": 39594,
+      "sha256": "2472a4b2c689c6f002c8cdce44376a41afd4e7eaa1bb059cb5f29ab6c5eb3314"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/timing-v2.mjs",
+      "bytes": 1034,
+      "sha256": "793d72b17999e852d48dc62028b4e321460ca4f823646e430a728a90501e0066"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/editable/windows-v2.mjs",
+      "bytes": 125,
+      "sha256": "4f1a86bb0decaefa3ffd4604dcff06316e594e3ce18dba952b62b6de6e1de7ec"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/movie.mp4",
+      "bytes": 4861146,
+      "sha256": "643bcd13679a0da2d172fb1e7e368e2262598c01782d08c37edacee3fe26a596"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0040.jpg",
+      "bytes": 25540,
+      "sha256": "8e0bc26d769a5c3908fb31b4a2d7047459244db7f5d507fbf97bc97de1563e7d"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0092.jpg",
+      "bytes": 19181,
+      "sha256": "b93d799faf2d895018160d55c47624adb67eb372bd92d1d063a26cb4a11e49a5"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0399.jpg",
+      "bytes": 25165,
+      "sha256": "1da9356dc14f8732cfa735f72580e60e1ce39e440e9c7631d8128e69a0a305ca"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0400.jpg",
+      "bytes": 21214,
+      "sha256": "273e415086366c3185ab3c573b4221bfe39627d5209b0209dbd159b4dd5a841b"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0600.jpg",
+      "bytes": 15190,
+      "sha256": "775323921c6ce7696ed716446e88eedb2694a851dd93ac87f4b33bebd20cc8dd"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0632.jpg",
+      "bytes": 14914,
+      "sha256": "aeb7fbed8dc22ec4924f62f9401409a17c4e5820d5ae1aeaeded5209094d04a2"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0794.jpg",
+      "bytes": 35319,
+      "sha256": "0e57793a5969a2b099ed78ab38d73d12a79313fea174416afbdc02caff62b5c1"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/posters/F0830.jpg",
+      "bytes": 26219,
+      "sha256": "06ace73d3d168d54aa035863f79eddb779d6239ec77b783b011a86d123918fe6"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/production/FilmV2.jsx",
+      "bytes": 8701,
+      "sha256": "7ab54a8b35037cd78f617868100c4cd4ec96e87d179e31cacb4dbd0f7bd8a7af"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/production/timing-v2.mjs",
+      "bytes": 1034,
+      "sha256": "793d72b17999e852d48dc62028b4e321460ca4f823646e430a728a90501e0066"
+    },
+    {
+      "path": "catalog/assets/mechanical-windows/production/windows-v2.mjs",
+      "bytes": 2921,
+      "sha256": "f54bd51cca65bbb69ac26f8003167ae56ddbeb675ef7329078334ca63261b22c"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/SOURCE.json",
+      "bytes": 1621,
+      "sha256": "a66a0d41f2ae7a185625580f005e8deeffc3f6e2b563f2043663551823912eed"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/THREE-LICENSE.txt",
+      "bytes": 1081,
+      "sha256": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/coffee-bean.webp",
+      "bytes": 947274,
+      "sha256": "185ecf1270a19a2f212b5b2c7784ba6fdbcac52d6fc0458a15419bd5683a5814"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/assets/score-clean.svg",
+      "bytes": 109340,
+      "sha256": "a574ab0522122fb5a9123b726b7ca80d97de47e0b785a4a58823ddf531f1c368"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/assets/score-data.json",
+      "bytes": 17006,
+      "sha256": "129c46c57ecb4c87acec90f82cf4946675270b1fbb8efb4c39974b8f7b4da08a"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/assets/来源.md",
+      "bytes": 1995,
+      "sha256": "1501bc26f01b16bea581f233cb3ded3a2109adeecc5b8c582791905bf95c5eae"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/butterfly.js",
+      "bytes": 3249,
+      "sha256": "485ce153bce38d27192141f97a1463ba78fc8e8af797d47d0b14ec75a05e1321"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/isolated-scene.js",
+      "bytes": 11242,
+      "sha256": "e72071206d5a23c982770f4f22aa162e624a3110df65c4f33048660d955e2a26"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/motion.js",
+      "bytes": 5803,
+      "sha256": "60b3461b9ca5109a1358dbb072e070ef26ddee869712f407120fc52d27325a78"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/note-glow.js",
+      "bytes": 1018,
+      "sha256": "fedebb23a17de63454c1ae52602296a575ba878a5fcca4691ef3afadba931c52"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/orb.js",
+      "bytes": 1673,
+      "sha256": "dde1dbe1b95b9a9cfafb92e5c256512581d3ebf154b263a8adf178c46ab24614"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/src/trail.js",
+      "bytes": 7959,
+      "sha256": "b477e793511e4eec897fc226e8c1c0a4f777e3ccc301d1b376a90ed7393148bb"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes/vendor/lunar-butterfly-geometry.js",
+      "bytes": 8463,
+      "sha256": "481ca6d4537060fb92544231f0efaf328ad69a9ae9820c0944a8be0acd645608"
+    },
+    {
+      "path": "catalog/assets/particle-scenes/notes-source.js",
+      "bytes": 849389,
+      "sha256": "23be8c01fab32bd128750e24337ac732d44784eacbeec523bb7b7043e92ac39a"
+    },
+    {
+      "path": "catalog/assets/pixel-motion/SOURCE.json",
+      "bytes": 807,
+      "sha256": "bc069aae9b2c650f42ff80716563986b5a9affcd615ae2cefac9aad4c9fe2931"
+    },
+    {
+      "path": "catalog/assets/pixel-motion/drawing.py",
+      "bytes": 7651,
+      "sha256": "275c4f8512601461454f4afd6bdc8efa4a3272935ea5880338f4caeeffc62a1f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/React-LICENSE.txt",
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    },
+    {
+      "path": "catalog/assets/reel-extract/ReactDOM-LICENSE.txt",
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    },
+    {
+      "path": "catalog/assets/reel-extract/Remotion-LICENSE.txt",
+      "bytes": 2823,
+      "sha256": "bd65083b940f61904f6ef298aade918a7cad72a3e35bc406e36fab365844b673"
+    },
+    {
+      "path": "catalog/assets/reel-extract/SOURCE.json",
+      "bytes": 22232,
+      "sha256": "2db1697ef1aff7ece3cfde7723b3a7bfbcdb1f5def9967ec0169d93740e719d3"
+    },
+    {
+      "path": "catalog/assets/reel-extract/ai-bots/confused-clean-base.webp",
+      "bytes": 1340174,
+      "sha256": "86d08b28b2841768d7a91c026135280c2dae75cae21fa12748166dc921b5c4d6"
+    },
+    {
+      "path": "catalog/assets/reel-extract/ai-bots/open-source-clean-base.webp",
+      "bytes": 1327372,
+      "sha256": "8930a1abf1c0f995b9b3f4956988a2a9c7190f7487dc35860ebf47e9bd79a9ab"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/animal-illustration.webp",
+      "bytes": 9970,
+      "sha256": "974ea170ebe7d8f01dbb768a9a5b3749c691598df7a3592f25b5c9054e718c4f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/archive-box-illustration.webp",
+      "bytes": 28074,
+      "sha256": "6d1af7d97effef7af52b6ff1f5cf625e9b997ff0fad293f40df5b0ab69df5739"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/benchmark-columns.webp",
+      "bytes": 99236,
+      "sha256": "b737fb847cb17dbedee1cab878992ffc3bf9f15fb15fc8252dfcfe93acacadf1"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/capsule-type-sequence.webp",
+      "bytes": 287254,
+      "sha256": "2541edee1a32a5e884ab143a932529093481c4ea733064e12a1dfbb4d3eb5504"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/card-conveyor.webp",
+      "bytes": 125840,
+      "sha256": "c346e4c9a952335dd7318b1539fb8e9bd87be750d2fc6bb199c8f31080faea55"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/chrome-outline-echo.webp",
+      "bytes": 150248,
+      "sha256": "ec7387f9ab438621a453c9d82d9bc8c4afac5ea1ff97e4f582f52722b2a58054"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/circle-expand-wordmark.webp",
+      "bytes": 94806,
+      "sha256": "c3aea92fa5b90ce992c202ce4d1a0c1c3f75b4b8bef62165c5a74a382e956481"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/civilization-growth-sequence.webp",
+      "bytes": 362294,
+      "sha256": "e91700edf20c78f2edbfe8d3d82933894b722c16d95cd0fbe1344e937d51e793"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/claude-hex-pulse-illustration.webp",
+      "bytes": 14634,
+      "sha256": "4f0736bdd2303d6097ff3ebf8d812b3b6f2d26e405f349ee5b18181e84591f90"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/claude-orbits-illustration.webp",
+      "bytes": 3686,
+      "sha256": "c4e0db8f9a765d77bfa220fcb69ebe52b5d2d1fdf6c1b3d6f15fcb522ca769ec"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/claude-phyllotaxis-illustration.webp",
+      "bytes": 7308,
+      "sha256": "995be90a6eb1f0536096d54919e7f66991823556fb0a69a5f99cf71a396e74c0"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/claude-plexus-illustration.webp",
+      "bytes": 19678,
+      "sha256": "cd1f1c9c32dc99932e76fca00ecb8708cbbc5b2e083759b76599a23c8b500036"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/collage-film-sequence.webp",
+      "bytes": 135812,
+      "sha256": "4d51e365b72fa84a27fa987581ffe047beca6d26032c252fecb0d1112a8a5cc2"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/contour-draw-fill.webp",
+      "bytes": 9970,
+      "sha256": "974ea170ebe7d8f01dbb768a9a5b3749c691598df7a3592f25b5c9054e718c4f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/cyanotype.webp",
+      "bytes": 93918,
+      "sha256": "ddbf6ac86f992ea8687c5ddc1dd4e85ed5dd3413addb01181d6fd5b8e23b3db0"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/dandelion-subject-illustration.webp",
+      "bytes": 892,
+      "sha256": "a5fc1944067da47fbbbfebfbcb940dc0eb973e9aa43ca4cdf71a02e1bc30b513"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/drafting-tools-illustration.webp",
+      "bytes": 14392,
+      "sha256": "f3b6f66c300908d2a8efe75f9c1db2071302fb136913ba3fe592109f001c4074"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/drive-car-illustration.webp",
+      "bytes": 4954,
+      "sha256": "22ba688d957e4d88fe70305ffde811e266a3953c22329338d6c83470ba6c9600"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/encore-umbrella-illustration.webp",
+      "bytes": 1120,
+      "sha256": "7b17fc1e576132908f5c9db75fe04017551a00f24106f6c209b0279e4f659cfb"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/generative-point-morph.webp",
+      "bytes": 69386,
+      "sha256": "d40030931867225859748eb0ef5701a9d4fbdeb8575e6ecd085c71606db06215"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/generative-point-sequence.webp",
+      "bytes": 107934,
+      "sha256": "b0d68d756c167c060c7ef43082208ecf160373b5ba681f31229311a58f95d6d1"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/geometric-poster-sequence.webp",
+      "bytes": 231008,
+      "sha256": "6b41dc6a3cb06d2c9dbe481367690a7ad6d3c089fb3593c3545ed6805dc470bb"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/glass-interface-sequence.webp",
+      "bytes": 174232,
+      "sha256": "048026a0577c799961a7cf5e884839135cfc833f57d42dcb53f4c171e7ac4aef"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/glass-music-card-illustration.webp",
+      "bytes": 6006,
+      "sha256": "99237e36d731cd7925d53cae79b72c3c01a303a4345852e2bb3d559ff1df577a"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/glyph-code-fill.webp",
+      "bytes": 72584,
+      "sha256": "86648b1fd239f0ca302e7035edcf9b733d034ac5efe09cd4a0a9d0a5bafb2e76"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/grid-flow-unfold.webp",
+      "bytes": 311042,
+      "sha256": "b5df4567f4a1716e1c40d46b73a199aff0ab91fd98f822e8e75a791adc60cddf"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/hud-acquisition-sequence.webp",
+      "bytes": 197482,
+      "sha256": "24773a04a62cc181e03b8ffda961e054526ce146dfefeedf7ef32fbc4ba24035"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/image-particles-wordmark.webp",
+      "bytes": 127212,
+      "sha256": "a0442e6f95561462025eb6f870efd923e2cc9e042c2e401b1a0e9f0aeb362f58"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/interface-feedback.webp",
+      "bytes": 59286,
+      "sha256": "d22485fdf2f8e01a2b0d98b5f0c7d323fcb6617e3ecf8c4afec67901a0861390"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/keyframe-workbench.webp",
+      "bytes": 143014,
+      "sha256": "01ad7d577e23f25818dca1ccf029ea2119f16f4bef5cf9f15efc81f72086696d"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/letter-settle.webp",
+      "bytes": 84826,
+      "sha256": "854a66906b8427dc6506b28e5f5ea6e995acae6a316054afad2d2e78e6278c98"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/material-evolution-sequence.webp",
+      "bytes": 8374,
+      "sha256": "499e9efed915599b80028a049fbcc7914dee28138cd0cb232bfc0c830fb090d7"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/material-phone-sequence.webp",
+      "bytes": 147752,
+      "sha256": "71da1b35862b5cb1d56f69e948f458fffd794db866f4ddaf9d31ab923b2357b1"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/metal-impact-type-sequence.webp",
+      "bytes": 36624,
+      "sha256": "d79e6c10bfc38affa30b273a95727f77358c6d1b287e12b9084907883cda1aae"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/motion-oasis-sequence.webp",
+      "bytes": 217544,
+      "sha256": "bce91a35ea7a46c1bc4050e90e199252beedc12bf8555fa50195d42361817bf5"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/neon-horizon.webp",
+      "bytes": 196878,
+      "sha256": "3230ec94740d4e4863bbf4ea4ec43a0787819ac464dd0e876c534ca21d08a06d"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/neon-title-sequence.webp",
+      "bytes": 217958,
+      "sha256": "72382393a9b1172cc0bab833e71679e8eb2ea2e5380a3714a7b726575cf087e0"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/osmanthus-moon-illustration.webp",
+      "bytes": 22756,
+      "sha256": "da9aa95480d0fa0fa268f043f3adf0593f03f4a5e3f7ec2b5bb78c6dacefc5e6"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/outro-recap-sequence.webp",
+      "bytes": 58720,
+      "sha256": "7a512d1e01e36b3ec94365455cda0aa15950e0166d884d51157de61c2716414a"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/paper-scroll-illustration.webp",
+      "bytes": 44720,
+      "sha256": "d5a60782d48995847e000e04dba022ddb48d5096d807c50ecdc597da28ef94e7"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/paper-spiral-sequence.webp",
+      "bytes": 153498,
+      "sha256": "996683d261811e5685517b4e29e1ed7fc099f4c290b43d5874a527fffac84618"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/particle-word.webp",
+      "bytes": 185088,
+      "sha256": "b836f9f38efb3edfb60f6e7160767b0fe098a3f74fe67d47b2b197ac09246ab7"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/point-domain-flow-sequence.webp",
+      "bytes": 348250,
+      "sha256": "8533ecf9e513dbf63ea10673a19e0f47b037cdf1cebacbb412625e93ca3cf7d5"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/prompt-to-core-sequence.webp",
+      "bytes": 140754,
+      "sha256": "588ab296e96801b1daf957593f3692e644e86e3a986ee5198652169a707fa3d5"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/radial-branch-flow.webp",
+      "bytes": 84634,
+      "sha256": "220ca775c85ff5f9235561399208285c7e0c9e9241ee4e4693830d1ceafd42bd"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/rasengan-illustration.webp",
+      "bytes": 100562,
+      "sha256": "5239b07f35f710b4043fa09454af3e985c4a7a4f7a53259ed55ab0c4340641aa"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/result-anchors.webp",
+      "bytes": 120728,
+      "sha256": "6cc2356c89d18f829d07c56853193dc97f5a4b7e620a15d6c99ce2cad71556fd"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/seed-bloom-brand-sequence.webp",
+      "bytes": 121468,
+      "sha256": "59f29707da40bc970f06e2e14e71062df4b20d31e2cc726a0897bc650af8c7a8"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/spiral-galaxy-illustration.webp",
+      "bytes": 336,
+      "sha256": "59bfd3ab11421ba3b35138a1a463ae5efab5138d3b57cc738a87b44944f9a938"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/stack-flick.webp",
+      "bytes": 189630,
+      "sha256": "6901fb39586f66f2a84423443fab50c19473fe0ded2dfe625701df7cb9f0c630"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/striped-sun-rise.webp",
+      "bytes": 155198,
+      "sha256": "ef5e3cad279ad55b9d8bce44859dbdd465a45e431606816085ece649f6ffb99e"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/subtitle-focus.webp",
+      "bytes": 54632,
+      "sha256": "e73d66152dbde898eff2329276e47d351b598a7c9cfbc6120ea66199c29c9664"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/sunset-water-reflection.webp",
+      "bytes": 167278,
+      "sha256": "76f5931acbf2e2d3265da6a00b06746c5c15531ff2e1aff7bddcc3c669846e7f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/terminal-code.webp",
+      "bytes": 71312,
+      "sha256": "cde78eff8360ad240ae2cc57211f95ed6b1ea4e24efcba64e3e1f1c09af88a9d"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/tile-round-wave.webp",
+      "bytes": 152808,
+      "sha256": "6ec8546a9b8aed72652c39fcdb2385465dd87510fe148e1b6fd2ab074ad61b7f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/title-content.webp",
+      "bytes": 79188,
+      "sha256": "2302d1176ff6145d18e19ab558ea90fe34acdf45e0b6168147dbb8526b6c346e"
+    },
+    {
+      "path": "catalog/assets/reel-extract/thumbs/word-slam.webp",
+      "bytes": 68992,
+      "sha256": "bcc42b6eef175badd844f068563caaff6053fb86af392937cf14cc3259264c0a"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/bag.webp",
+      "bytes": 867128,
+      "sha256": "9b27f093657c0941d5eeeeb196c6ead8655da0aadbcfd63fcbfda69124bafd93"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/banana.webp",
+      "bytes": 687308,
+      "sha256": "b187ba5b4001bd9fd12778e6bb63cde3d33c049f0800d7af1e237440086825fe"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/bottle.webp",
+      "bytes": 969240,
+      "sha256": "7b4523363aeab7ec5a938481589de4fc4b8bf2e5705d380d01e0995f10eba6af"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/can.webp",
+      "bytes": 974328,
+      "sha256": "9aa86347ca899f4f60fd6bfd859377a509c20f372b3c21746e2bd5ef8a1d0b05"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/carton.webp",
+      "bytes": 1152636,
+      "sha256": "50fbc37775976a2d409446e85ca5588a1b445299f984752329dfabed4cb4172f"
+    },
+    {
+      "path": "catalog/assets/reel-extract/trash-collage/paper.webp",
+      "bytes": 886698,
+      "sha256": "618c08fb2e3614ae0e57b39f44f1bb34cdb610a9bed5acdd7497d00eab396a74"
+    },
+    {
+      "path": "catalog/assets/scene-sources/factory/coffee-bean.webp",
+      "bytes": 947274,
+      "sha256": "185ecf1270a19a2f212b5b2c7784ba6fdbcac52d6fc0458a15419bd5683a5814"
+    },
+    {
+      "path": "catalog/assets/scene-sources/letter/fonts/MaShanZheng-Regular.ttf",
+      "bytes": 5857936,
+      "sha256": "6d2546bb189c732a8ca29af9e22457b152387d158aa459e4ac2ce1e51788b7fb"
+    },
+    {
+      "path": "catalog/assets/scene-sources/letter/fonts/OFL-LXGWWenKai.txt",
+      "bytes": 5171,
+      "sha256": "1a25e35da1031c6c3436fde545bb9cb5aca954e9873afe510c834b8b79bd21a0"
+    },
+    {
+      "path": "catalog/assets/scene-sources/letter/fonts/OFL-MaShanZheng.txt",
+      "bytes": 4397,
+      "sha256": "d7bdb1cee215b689e23c2f95672a6084c790542170648267a55114103d756a08"
+    },
+    {
+      "path": "catalog/assets/scene-sources/letter/galaxy-sky.webp",
+      "bytes": 1654142,
+      "sha256": "d74d6fa282b199c3740b184d3ec58d7737016c0bc65784b86f34046257111903"
+    },
+    {
+      "path": "catalog/assets/scene-sources/letter/素材来源.md",
+      "bytes": 984,
+      "sha256": "2058739e5bbe406394ae11155448f23957f13c9c6ab0ab5de60301d367d1bca1"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/小葵原设定补充视角.webp",
+      "bytes": 388740,
+      "sha256": "dd5c8d12c23fb532fdc80e77c8380619f6fea562a6fa29f94f767a55c0d6c893"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/小葵朝右下.webp",
+      "bytes": 365288,
+      "sha256": "66be5126a4089f1036464eb9a332aa38a0234f249bf457691e623c837c873c63"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/小葵朝左上.webp",
+      "bytes": 278962,
+      "sha256": "4e5f73e9772f795077d3a2c11efc6e9efcc2d062daede1693c744e980c494973"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/小葵转身与低头.webp",
+      "bytes": 350936,
+      "sha256": "4825714cb9ec40100fcad43feb7d1187ae9fd560c54c7012099fd33614d7bd8c"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/我的自拍.webp",
+      "bytes": 864714,
+      "sha256": "6b0db97232f4de1210b1e3e795c1751220851a61f1bf3c3552d4a15125cf5b17"
+    },
+    {
+      "path": "catalog/assets/scene-sources/selfie/手机与人物.webp",
+      "bytes": 854208,
+      "sha256": "cb54550006744aec348c6d8508ea5f9af7954a5870e7adafb83283639bc8a052"
+    },
+    {
+      "path": "catalog/assets/scene-sources/snow/THIRD-PARTY.json",
+      "bytes": 25549,
+      "sha256": "2cfd42cd0fde2b4643fcc6cac6d1543899f0513bbc776163372bd7e212352ef3"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/SOURCE.json",
+      "bytes": 4839,
+      "sha256": "be3f97db4facd9f3050c37a2d5f290dd76b5201515203af0dc7b4793ef3cd513"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/gold-flower/bloom-sheet.webp",
+      "bytes": 670566,
+      "sha256": "a68ba77fcc29c957c7926dd59b506883b86c98b1c014fa93076b003496b4c80d"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/seasonal-flowers/blue-hydrangea.webp",
+      "bytes": 894838,
+      "sha256": "9b05288026daf9a9573f1054ba7ce39b33ebd0f6487cb98816be6e9569a14d2a"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/seasonal-flowers/green-chrysanthemum.webp",
+      "bytes": 1177220,
+      "sha256": "8ba7768cf2d4b35ee160cecdf6ccb710c05ba03febe689b7f46e84437e3eb82c"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/seasonal-flowers/green-hydrangea.webp",
+      "bytes": 853000,
+      "sha256": "a2f53ec26f3745e860bf45e4297ea4bb3b301a9e73f8a4e073506022de3db98e"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/seasonal-flowers/orange-tulip-angles.webp",
+      "bytes": 1148124,
+      "sha256": "2f0b880db3bf04557d9fc9769c95b8e71b8f6c663eca317107c33d6386d335b4"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/seasonal-flowers/red-rose.webp",
+      "bytes": 1077008,
+      "sha256": "c71b699232b478cace9bc3d8867008eda42bfaeaa475010d28cbc4b0cff58c9d"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/wood/bare-bark.webp",
+      "bytes": 1113544,
+      "sha256": "1d1610130c49010b19eb708dbb42906fa32faf7de82859ec571f1a80535fe97e"
+    },
+    {
+      "path": "catalog/assets/scene-sources/window/assets/wood/walnut-window.webp",
+      "bytes": 676538,
+      "sha256": "5315b800f3280956097eb1577a304c78806b37706c0efbd0be425abfee98b62c"
+    },
+    {
+      "path": "catalog/assets/scene-sources/原作与迁入记录.json",
+      "bytes": 23838,
+      "sha256": "f508ead8bd2b84f3b9ca53448a6afb32d833549777d4750b035e169f0343e5e2"
+    },
+    {
+      "path": "catalog/assets/selfie-phone.webp",
+      "bytes": 698886,
+      "sha256": "d0cd0465e6534e5079e6a43952f48e2de0fd5b2f711dc02390c2f85ed8e90a93"
+    },
+    {
+      "path": "catalog/assets/speech-caption/KLine-source.txt",
+      "bytes": 5254,
+      "sha256": "617637f92e6b82c7b3632e45d72e79a7777901785bb4d42b15433f0b5c4a6640"
+    },
+    {
+      "path": "catalog/assets/speech-caption/SOURCE.json",
+      "bytes": 2250,
+      "sha256": "480b547503adc46ee9d6f9b796d067f0a95eb33c15411ffa79a27582954300d6"
+    },
+    {
+      "path": "catalog/assets/stack-flick/background-generation.json",
+      "bytes": 4990,
+      "sha256": "380684ca231e4c25b838e97298f63fe6b23118ca8852dde063ed9eb54c7e1475"
+    },
+    {
+      "path": "catalog/assets/stack-flick/desk-background.webp",
+      "bytes": 987780,
+      "sha256": "77d16e58a6565722d15a64ee6860361c74b8c2d64f111f6b359178f48021fdb7"
+    },
+    {
+      "path": "catalog/assets/stack-flick/generation.json",
+      "bytes": 2537,
+      "sha256": "857b0b7b90d5455920f6a1bfabcee4518c1afc325c858617a0b54f01ad4f6fb5"
+    },
+    {
+      "path": "catalog/assets/stack-flick/map-paper.webp",
+      "bytes": 1603098,
+      "sha256": "b9b4383b04db81c2ada6db2073a6ae09219ae0a50cb474491d91e67a48165059"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/README.md",
+      "bytes": 3405,
+      "sha256": "11f2e9ca332bbf351d4305b618fcfeb8daeca39d4482da9cf24f4c7fb1b90afa"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/SOURCE.json",
+      "bytes": 9033,
+      "sha256": "91fad8e40cfaf1732b4336ceeb44be2a61c84c96d619cd29e1793df1893e1aad"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/Film.jsx",
+      "bytes": 13956,
+      "sha256": "930890a5e654a04d64c09a57915fd22c5d2269a3bff25eebbe1f74ec0fc57fa9"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/Root.jsx",
+      "bytes": 299,
+      "sha256": "b1f9ade6927fecbe80601ed221f3185267f829c5ce8e2e522512a44ca3054f40"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/graphics/DialRings.jsx",
+      "bytes": 4357,
+      "sha256": "5dcf0cab8b76734c1a807527719d72d8d4e627549cae1cc0e3df418470685340"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/graphics/KineticWord.jsx",
+      "bytes": 2977,
+      "sha256": "de1c5c58269cd252156614a6a28a6339c8abc43720b7198ff1df977c3cdad801"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/graphics/index.jsx",
+      "bytes": 90,
+      "sha256": "5143839fc7d7e450ca8da20b3f3ea08bee2120bef2f30b613b0cbaacec9fb110"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/graphics/motion.mjs",
+      "bytes": 2074,
+      "sha256": "091363492a1e36a0291d3f50caf2f2a2f5b8a0839874155fe25d692ab3306384"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/import-originals.mjs",
+      "bytes": 2715,
+      "sha256": "697d2aa172ae6651426071146fc38e62fe192f6523291fca08862a74c73e05f6"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/movie.config.json",
+      "bytes": 1945,
+      "sha256": "ca110b61faed20b23cd99f14a15f30cbf5e153345107c2e85a9db76f18e50ce5"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/editable/original-assets.json",
+      "bytes": 47644,
+      "sha256": "b00f7c7669a0cc69773498d52daa23801374f7b2b5913655b8ce071bf7b0d6e0"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/movie.mp4",
+      "bytes": 7604138,
+      "sha256": "edbe4c0b3d53144ae73985eeb9d73d379ba1e733fd0fbf87e788e8a86bf4a406"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/axial-layer-reseat.jpg",
+      "bytes": 30066,
+      "sha256": "8bf485414a80627a67388777ebff6bb0110e81797c46e2c02fd66389a2929397"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/balance-reciprocate.jpg",
+      "bytes": 54768,
+      "sha256": "3cf7f720d0b6eb0c6723abf59beafa446704220d8089e21c97657c9c2f06f60c"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/barrel-stored-energy.jpg",
+      "bytes": 42781,
+      "sha256": "815ddabd41a02856217d22d01ea6ba34ea9516b9b62fa4aee3c380bca06b5ef5"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/fan-object-rise.jpg",
+      "bytes": 47621,
+      "sha256": "40216ac795935c1ea54b3348691869835b74027e61102b3deb4293ee391c5c3f"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/framed-product-slide.jpg",
+      "bytes": 42292,
+      "sha256": "0b076e8c3fed34e069b72897a60aae107d0a16e0db02e1a36a5e770a38101a2f"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/helical-screw-seat.jpg",
+      "bytes": 21665,
+      "sha256": "58de006c0cd9491eba7e804e08e71a50bd443b6585613b87e93de3975da00eee"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/inventory-contour-fit.jpg",
+      "bytes": 15486,
+      "sha256": "4598fc8b0935ed8f658c97c9b79b55e1b3197e6240913c9fd857f79dc90bec1a"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/posters/meshed-gears-drive.jpg",
+      "bytes": 19772,
+      "sha256": "b3318656867858f50d42b0d257e7ee5bc5047e2572f8be1d85a340f96c7e8d4a"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/Film-original.jsx",
+      "bytes": 14094,
+      "sha256": "f3e2cee256918c1526a47252e13477108ad20e5a13ccaa99aeeb57e10827365e"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/extract-textures.py",
+      "bytes": 1417,
+      "sha256": "b416e9819cadc4e79cc2c93bb1474f2337fae3dbd307b39b7b8489f367b38672"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/3比4产品展示版/三维/源码/build_film.py",
+      "bytes": 8220,
+      "sha256": "2aa1e6cc461f04328dcc1e0255df3d1089daa20a88bf4ec9ae7d9db16f4e237f"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/3比4产品展示版/三维/源码/product_photography.py",
+      "bytes": 7624,
+      "sha256": "3dd531fa975b4513f2d0546a11385ecca16d651efb103b7b60a3c9962235077c"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/3比4产品展示版/三维/源码/render_film.py",
+      "bytes": 3045,
+      "sha256": "bcc5044fdb5ff9a0a73a5a450668a4e94d50a429375d2695f06d6b61de0f71ea"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/性能研究/profiles.py",
+      "bytes": 1750,
+      "sha256": "21f9f3a5754de0b2298a7b73de1e2c67e28ccaecfd3c5b28195878bc680da641"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/源码/build_revision.py",
+      "bytes": 12122,
+      "sha256": "68e125a2809d3e8fd5b46b2a7804c0d40c2a20f4bebced12703ced2ca270205a"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/源码/cinematography.py",
+      "bytes": 13468,
+      "sha256": "f1985ad73e62add64b454e472956139dae2221ea35e43d2d3c442da4542bc56c"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/源码/geometry.py",
+      "bytes": 10768,
+      "sha256": "fdc7bd89bc79799c62f06db975b863840279cc12680b243d88602568528ece77"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/源码/mechanics.py",
+      "bytes": 4575,
+      "sha256": "0485cfc846fbecb3ceeb97a4b5ad23cd270099c5cbd55ef00457cab6f388c6b5"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/修订版/源码/screw_geometry.py",
+      "bytes": 9796,
+      "sha256": "c4fe9ba36370510d83c6862842f787e62159461471cb7ca7bbd750858b30d00f"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/原始建模/源码/build.py",
+      "bytes": 13615,
+      "sha256": "90dc96cb07dec1f98582c982018d54f1876f5432ac9e364b3d66f8bdedf64780"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/原始建模/源码/casework.py",
+      "bytes": 13831,
+      "sha256": "60643018c5162d89ab4c4cc20553adbfc120a6eca93385ace49fb45c7fbfd5d6"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/原始建模/源码/movement.py",
+      "bytes": 24017,
+      "sha256": "b68615a92a6fd70570ec315600396da09ac7065175b55cee8554185384d5fd10"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/横屏陈列归位/源码/build_and_preview.py",
+      "bytes": 12490,
+      "sha256": "bd6b09c8f0374a5ee186bd341dcea0b5ea5f67a993cc767add8477331cebbce9"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/横屏陈列归位/源码/compose_lines.py",
+      "bytes": 2743,
+      "sha256": "a066b2984edc2801c25d3e45a9381d40ec815e7387f2d12adcf42aa4c662ca0f"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/横屏陈列归位/源码/encode.py",
+      "bytes": 4904,
+      "sha256": "82e3688c4bde852b4198e84594893389a30b935f68c2101228ed76c7d1acfb0d"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/横屏陈列归位/源码/project_lines.py",
+      "bytes": 6193,
+      "sha256": "f561f3aeab3021b11840fcbcb1177c032efc3fbac6f1181554087d0f2476c7ff"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/横屏陈列归位/源码/verify_geometry.py",
+      "bytes": 2867,
+      "sha256": "f3598243d75423888344858e2a2be212b647a447a2cca0e4074691bb55e81747"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/源码/return_mask.py",
+      "bytes": 4500,
+      "sha256": "f4bebf2dfaf7a084b01c0e985350c1b522acf26888fdce76c3116f05f82f389e"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/横屏-MOTION-STUDY/三维素材/源码/透明整表.py",
+      "bytes": 5504,
+      "sha256": "415f48c692dbabeb8b594078a4895f78b530f9bed33201fc88072d8f66f5f427"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏图纸实体开场/素材/零件映射.json",
+      "bytes": 394124,
+      "sha256": "a60b4456eddf471745999dabf09b8e8b511964ef725aae2f70a83a8530bb2048"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏金属闪回版/三维/源码/build_lock.py",
+      "bytes": 6600,
+      "sha256": "df2011174bd9232fe42397077aafd0fdaa44e19a2a419a98dd95c41803365d43"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏金属闪回版/三维/源码/build_opening.py",
+      "bytes": 12178,
+      "sha256": "7ffb95a0ec5eb5f5886677de41d4f59f2f2d25dbae1e32f4486e9211d2c213d6"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏金属闪回版/三维/源码/build_structure_entry.py",
+      "bytes": 8503,
+      "sha256": "7a21ab923b203831357db5d6c7a5c3347986dd580fb731201b122f35f9756eae"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏金属闪回版/三维/源码/common.py",
+      "bytes": 5979,
+      "sha256": "f3e59cb496a2b06ab348de946c4449efe19563573fe51504ba09431e77e9331b"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/production/project/竖屏金属闪回版/三维/源码/render_worker.py",
+      "bytes": 10681,
+      "sha256": "d08bf0017d599e4fc12a42e7843aaf02da44b25843c72dca5c17417332defc92"
+    },
+    {
+      "path": "catalog/assets/time-in-motion/verify-source.mjs",
+      "bytes": 838,
+      "sha256": "4850f85f9fc09714bbcf7395be2493b29f24b261929f99c1f9e50a6233d98f08"
+    },
+    {
+      "path": "catalog/book-controls.css",
+      "bytes": 477,
+      "sha256": "81d7fa94c25d23d1417406d8f478be06d54e40bc257ef06b9cbdaf78576578e3"
+    },
+    {
+      "path": "catalog/book-controls.js",
+      "bytes": 7105,
+      "sha256": "fc3dedc59be675f21c17ff20693933186dbb0d4c3f3af87efa58054412a0c3b9"
+    },
+    {
+      "path": "catalog/composition-controls.js",
+      "bytes": 6615,
+      "sha256": "7ccddc5d362cf06189b6da4ebb99dbd576bf9f41596727b3a785ac10b5815212"
+    },
+    {
+      "path": "catalog/content.js",
+      "bytes": 5381,
+      "sha256": "484adfa42138096c33f604f832349b6e9bb9a4d1af75b374ddf43b6b41092763"
+    },
+    {
+      "path": "catalog/dropdown.js",
+      "bytes": 10536,
+      "sha256": "27b8ba394bca2a9cab57c1aeff6c8599b5ca666d76637afcb8fd6d96713fb12b"
+    },
+    {
+      "path": "catalog/effects/aboutlove-clock.js",
+      "bytes": 7682,
+      "sha256": "bb1c4b8b2b854360fdad840428a81a2f17f14089ad7f40011f2cfd755cd87a5b"
+    },
+    {
+      "path": "catalog/effects/aboutlove-data.js",
+      "bytes": 331226,
+      "sha256": "17dca0935c2b64d2a9ec5266c0548c20d9825e29260ec35a58bc3c6fe7819433"
+    },
+    {
+      "path": "catalog/effects/aboutlove-entries.js",
+      "bytes": 32921,
+      "sha256": "8873bcfd659ca76fef5f0cdf7ecb73ce084ec767ee6fbad289824c70be76e559"
+    },
+    {
+      "path": "catalog/effects/aboutlove-fonts.js",
+      "bytes": 8064,
+      "sha256": "1db3168bcc004925b5b78c1cb6c884dd1d533f09f95041c6e0c1e084dde91c9a"
+    },
+    {
+      "path": "catalog/effects/aboutlove.js",
+      "bytes": 8896,
+      "sha256": "5de7f9cac97ce5cc5cc3aff238082def686e3d8c069994b57ccc9221d8be95ed"
+    },
+    {
+      "path": "catalog/effects/attention.js",
+      "bytes": 9624,
+      "sha256": "b33859355ec0937b3b82068f7ee02bbe2d0db9f4c8e2c26dbe0eb7e1bb7e1729"
+    },
+    {
+      "path": "catalog/effects/butterfly-mask.js",
+      "bytes": 2006622,
+      "sha256": "3114dbc99c2da6c5fd0aa03ebf885d035cc1d2b1aafe200a441f1c679deb984f"
+    },
+    {
+      "path": "catalog/effects/butterfly-motion.js",
+      "bytes": 4806,
+      "sha256": "05f0752346df5caa1c01b656b8946f485de9d1ba70b5dff2f2ef770899c32c0c"
+    },
+    {
+      "path": "catalog/effects/butterfly.js",
+      "bytes": 8279,
+      "sha256": "6096008b47ea93c734d5f19c8cd1de673feb4a4ff17d63bb90dce6c036e2c61b"
+    },
+    {
+      "path": "catalog/effects/capsule-type.js",
+      "bytes": 39035,
+      "sha256": "86f518ad584763e677a0c2e567b0294d8d91384b5f3bf425f1228061b2888cf0"
+    },
+    {
+      "path": "catalog/effects/cat-mouth.js",
+      "bytes": 45449,
+      "sha256": "31e9e090b28367964ad434b7ea71cd0e47aa7185f588a64301a6ad5739b42721"
+    },
+    {
+      "path": "catalog/effects/circular-reveal.js",
+      "bytes": 2339,
+      "sha256": "bb55434968af1268c900d708297c21fb512b4e1ba28af5ee18cbaa3e3b271166"
+    },
+    {
+      "path": "catalog/effects/civilization-growth.js",
+      "bytes": 1434442,
+      "sha256": "25bce0de391305d2cda60f074827d51a651e3a8ecc8b1adaae1ba359e64faebe"
+    },
+    {
+      "path": "catalog/effects/civilization-images.js",
+      "bytes": 7193457,
+      "sha256": "f577e772239a786f9611a7626cf8b0a3b1e4f10867315f60d3e1c5d83859e3b4"
+    },
+    {
+      "path": "catalog/effects/claude-tile-illustrations.js",
+      "bytes": 78815,
+      "sha256": "12e9e449b3771be2602edfefa8b8b6079a8e3c768ed64e6b53dfb842038fbdf8"
+    },
+    {
+      "path": "catalog/effects/collage-film.js",
+      "bytes": 33605,
+      "sha256": "c26c3f115bba60a67881513e9485d7aa48a27707aa6ae60d223285ac47c7520f"
+    },
+    {
+      "path": "catalog/effects/compositions.js",
+      "bytes": 9763,
+      "sha256": "1182312b35409d14c6539ccb0d314ae94b724d979613486b53ebd60fe94c5f42"
+    },
+    {
+      "path": "catalog/effects/concept-diagram.js",
+      "bytes": 8069,
+      "sha256": "5bcae81c8c4f56597d05423a9d935099bcba5886f79f755ea4ff5510751d1fc7"
+    },
+    {
+      "path": "catalog/effects/continuous.js",
+      "bytes": 6134,
+      "sha256": "455c5560e88626561349a160f7908a7f5b574803f30c9d0325c4dd746d46208d"
+    },
+    {
+      "path": "catalog/effects/crt-collapse.js",
+      "bytes": 4058,
+      "sha256": "d3618857ba7f6f8ab6ee8a66033ff2e1a170d908e8c6f01a6dac5a81f3d012a7"
+    },
+    {
+      "path": "catalog/effects/cyanotype.js",
+      "bytes": 5082,
+      "sha256": "811db1f2fa9c1a3ba894a7f0c0cb23db8893ac33c5e7ea91f612672327fffd27"
+    },
+    {
+      "path": "catalog/effects/data-comparisons.js",
+      "bytes": 14810,
+      "sha256": "2073b0f45efad1c3f4d25ba95a085dee64803d18be7242185507feca36a5b8b2"
+    },
+    {
+      "path": "catalog/effects/data-motion.js",
+      "bytes": 536103,
+      "sha256": "4cd968aad702395cc4893db1a48a40314f8146b59ebe4ddf59ed261393f84465"
+    },
+    {
+      "path": "catalog/effects/dither-book.js",
+      "bytes": 21965,
+      "sha256": "fe38f274bafeec9f75649ee8edbf17777d3c6d323da06447bcde473201458f2b"
+    },
+    {
+      "path": "catalog/effects/door-halftone.js",
+      "bytes": 9437,
+      "sha256": "e6abf36f1be653598522610c85e973f7f3589e81a0b2050b09d1783aa7f4fe04"
+    },
+    {
+      "path": "catalog/effects/emission-trails.js",
+      "bytes": 23741,
+      "sha256": "bbb20a63eb0ba2e55277ba1b37fa974790c4f5f534a78e6042aad9432d62ec27"
+    },
+    {
+      "path": "catalog/effects/encore-dance.js",
+      "bytes": 24274,
+      "sha256": "5c18dfca1053448aea4c1569f56ccbda930f2d42ea14208cc22aed0f9f2b1db0"
+    },
+    {
+      "path": "catalog/effects/entrance.js",
+      "bytes": 5077,
+      "sha256": "9e9e948f3b151be4ca363ca595876d2d0d6b5d8ea6f20c503c9ced80be10448f"
+    },
+    {
+      "path": "catalog/effects/environment.js",
+      "bytes": 1167,
+      "sha256": "61cf2f1aa67465b7ce1a125b6f18ce10f9a7c5ebeb227b982c05003af9354ede"
+    },
+    {
+      "path": "catalog/effects/flow-bands.js",
+      "bytes": 1106,
+      "sha256": "ca492239692a256b14ab3d3cb230034d8670e1bce5b6ea4be284b84d33c185fb"
+    },
+    {
+      "path": "catalog/effects/geometric-poster.js",
+      "bytes": 25899,
+      "sha256": "fd5c810012ef36af583176005a580ff44482b44e22ce7fa27871bbaf4f2dd8de"
+    },
+    {
+      "path": "catalog/effects/glass-light.js",
+      "bytes": 45873,
+      "sha256": "fc343ba2302cf4fb0fe027b1145512e809ff52ff7ce66ebc8d0355bbf765de5f"
+    },
+    {
+      "path": "catalog/effects/glyph-code-fill.js",
+      "bytes": 3167,
+      "sha256": "35a80b8c747ceb9474f63a4c3824bffa628337a93ce599684f2752dd60b17369"
+    },
+    {
+      "path": "catalog/effects/history-nature.js",
+      "bytes": 152529,
+      "sha256": "6f3c66fdefa5094b86d089fdc3a5f7ad09616729423bc4b9305ccf07da48238d"
+    },
+    {
+      "path": "catalog/effects/history-patterns.js",
+      "bytes": 59914,
+      "sha256": "6c2b2a1bfbc816b12ce04447b8bbfe3ee35d7f7eeaae471d3fca85ba0d685a42"
+    },
+    {
+      "path": "catalog/effects/hud-targeting.js",
+      "bytes": 188731,
+      "sha256": "7a0413240c5e036109f2dd9c788c98bbf0cd90819c5800577f4bf286cced9a42"
+    },
+    {
+      "path": "catalog/effects/illustrations.js",
+      "bytes": 22429,
+      "sha256": "1fd05ae02f9be4a77534d9112804e417d63552a2fb6ead511436de81680196f0"
+    },
+    {
+      "path": "catalog/effects/kimi-illustrations.js",
+      "bytes": 21764,
+      "sha256": "3ee80e447baab9b3d4b35c51448a686cf6fae906feb66873bc1d2872f0e8ff87"
+    },
+    {
+      "path": "catalog/effects/lego-kingdom.js",
+      "bytes": 308989,
+      "sha256": "e9959eaf7a0a7030afcc617288ccdec1208c6e1c65a4093c3b50fb678972d2f5"
+    },
+    {
+      "path": "catalog/effects/letter-ripple.js",
+      "bytes": 39494,
+      "sha256": "3d8ba4aabd6e9eceeb995f9845b441efce1c4387beebff2fb0a08be19026f52f"
+    },
+    {
+      "path": "catalog/effects/letter-settle.js",
+      "bytes": 115330,
+      "sha256": "a4c05956d3c2c95dd9d95b4986df82e2f37090e27dd04eaf0e79d8bbee8a9901"
+    },
+    {
+      "path": "catalog/effects/live-code-readout.js",
+      "bytes": 2600,
+      "sha256": "ec252e3b6d1d82ccd4b817ad3ffbbaa68c524c10335abde886b1e86688f92c72"
+    },
+    {
+      "path": "catalog/effects/material-evolution.js",
+      "bytes": 88695,
+      "sha256": "59990bd30a7a332f606d3fb4e409d8e17b6421447b0e4e2e4e7e4aa6a0654d68"
+    },
+    {
+      "path": "catalog/effects/math-formula-drift.js",
+      "bytes": 2053,
+      "sha256": "a887c75acdb4fd568e0bc54c47c81e11bc3f16614b063d24d431b11fd93c2ec9"
+    },
+    {
+      "path": "catalog/effects/mechanical-windows-data.js",
+      "bytes": 8051,
+      "sha256": "ad5063f61d958ebe5101d8c07706ed372df2fe00ca34442e831010a336f7016b"
+    },
+    {
+      "path": "catalog/effects/mechanical-windows.js",
+      "bytes": 2137,
+      "sha256": "feca70bd536a23500c8c0f5d2a833b25983988c2262fe837b8a3ac6d00efc9f5"
+    },
+    {
+      "path": "catalog/effects/metal-impact.js",
+      "bytes": 32766,
+      "sha256": "44e30f657ac4853d1b2343528e0d2eae2248c06c9d0a8e76547d0e3dab442fd2"
+    },
+    {
+      "path": "catalog/effects/motion-oasis.js",
+      "bytes": 70334,
+      "sha256": "8578b53f67137d02c5820e3abd35f4847b19c5cb3d31498480da948e067e7f89"
+    },
+    {
+      "path": "catalog/effects/osmanthus-motion.js",
+      "bytes": 213805,
+      "sha256": "8e96dbdf38f16d0354df3e8ec0666b37cfb4e571529d02313947ae4f4f08504a"
+    },
+    {
+      "path": "catalog/effects/paper-showcase.js",
+      "bytes": 22236,
+      "sha256": "6ec6494e0937a219631d3281ed5374de80c798b78c8537da5ef82ef7914739c5"
+    },
+    {
+      "path": "catalog/effects/particle-scenes.js",
+      "bytes": 9181,
+      "sha256": "c56c929de45173aa74645e8b2b539c2843900a5dfa080ad54b32cba498a8dbc4"
+    },
+    {
+      "path": "catalog/effects/pixel-motion-data.js",
+      "bytes": 293212,
+      "sha256": "a3dbea74e33964a9c3ccc9a3c5b8045ed303f76f8b45038a9d6976cc1a0c6abb"
+    },
+    {
+      "path": "catalog/effects/pixel-motion.js",
+      "bytes": 12266,
+      "sha256": "373847f06eb90c5177bc0bbe42bb655e9239d6ad9b24e482d2e2ba9b4daaa5e3"
+    },
+    {
+      "path": "catalog/effects/point-domain-flow.js",
+      "bytes": 63476,
+      "sha256": "a578504f4c2561c6b78d682345538d35d870848660570a28d1d6b573d80b70cd"
+    },
+    {
+      "path": "catalog/effects/promo-particles.js",
+      "bytes": 30624,
+      "sha256": "59e5b6f0ddf22c6b5c68b1705a22da807cbee6b0683f5da150319b311e41e851"
+    },
+    {
+      "path": "catalog/effects/radial-branch-flow.js",
+      "bytes": 8226,
+      "sha256": "ec659982d4a299c763c7e5de19c341895f056ab01132a982c8d05a8b6d11b3ae"
+    },
+    {
+      "path": "catalog/effects/rasengan-illustrations.js",
+      "bytes": 3412257,
+      "sha256": "1cf5eeb38653992e223998431aee82b29190a3c66c0eae55e5a24e6d3c08c27a"
+    },
+    {
+      "path": "catalog/effects/rect-wave-field.js",
+      "bytes": 1797,
+      "sha256": "d241aab3af55aec7f5efbb9cf322bf19a9f7c67311c1258baed3c67f11b9f428"
+    },
+    {
+      "path": "catalog/effects/reel-extract.js",
+      "bytes": 352543,
+      "sha256": "4705d549e80202998cdff7e6e3c9e5b3089f9c7c03f55df483b54013a70573d6"
+    },
+    {
+      "path": "catalog/effects/reel-flat-gen.js",
+      "bytes": 26596,
+      "sha256": "e1738fe3e36a48211fc5f55efe915e33f49c96e4854c65c944e38954842d7407"
+    },
+    {
+      "path": "catalog/effects/reel-grit-key.js",
+      "bytes": 19863,
+      "sha256": "3a910db3fadc3b36fa90e38ca862051af568c9c1225346ab45e816a92d3943c9"
+    },
+    {
+      "path": "catalog/effects/reel-neon.js",
+      "bytes": 22084,
+      "sha256": "9f757945491daea719c5bcadf6b3fae856c90f3e9e4c2f30d2eaff253bc916cf"
+    },
+    {
+      "path": "catalog/effects/reel-opening.js",
+      "bytes": 11719,
+      "sha256": "b04ccc8c75c71ab722897626965bde73e3060a2597d90e1821d964fddb90af04"
+    },
+    {
+      "path": "catalog/effects/reel-paper.js",
+      "bytes": 19940,
+      "sha256": "f6fb6d6df102ecf82c79bef5513acc501296b1db8404c21a511968805b1ec8c9"
+    },
+    {
+      "path": "catalog/effects/reel-prompt-outro.js",
+      "bytes": 45795,
+      "sha256": "2572dfcafcdbe3999ce9fb0a68e47e33b3b769b99f4248459296bfa5494cb768"
+    },
+    {
+      "path": "catalog/effects/reel-transitions.js",
+      "bytes": 6824,
+      "sha256": "7b58d6c023000d36236c947bb305fcf0285b00fbba8ee5a481b0a4611bffd908"
+    },
+    {
+      "path": "catalog/effects/sage-butterfly-mask.js",
+      "bytes": 2082022,
+      "sha256": "64685a40e6c44aebb82cef9386f2fd378a006e3529ac21a4bb5821436c5d9a0b"
+    },
+    {
+      "path": "catalog/effects/scene-dandelion.js",
+      "bytes": 93076,
+      "sha256": "9021daa72eccc1fed5ef7a94ac80350ab89b2331ff7a72d6e7ff361ebedb053c"
+    },
+    {
+      "path": "catalog/effects/scene-drive.js",
+      "bytes": 25155,
+      "sha256": "9932c4db4d2171cd0a55632ca25e57c54dea2179d970f0dc6688e4d639b9ce01"
+    },
+    {
+      "path": "catalog/effects/scene-factory.js",
+      "bytes": 108821,
+      "sha256": "5283eceea2abcaba50b19f8b7c728221c86d4a7a17859f617acbd237701f1c0f"
+    },
+    {
+      "path": "catalog/effects/scene-ink-data.js",
+      "bytes": 11567525,
+      "sha256": "d544b9c52a5fd37ee903b4ca4869f5116ffb780cee76d01df1e5f5cbd452c71a"
+    },
+    {
+      "path": "catalog/effects/scene-ink.js",
+      "bytes": 11807,
+      "sha256": "ac79a22c8883db6999db9c7f5500c20c931ce2de9993f4b543263b1bc7baec2f"
+    },
+    {
+      "path": "catalog/effects/scene-letter-images.js",
+      "bytes": 2205771,
+      "sha256": "79c61466ce75f6ac37728bd30e277436eb5b6ea2823637eb1e4407e504a1c440"
+    },
+    {
+      "path": "catalog/effects/scene-letter.js",
+      "bytes": 74768,
+      "sha256": "e13717018d81b92ab829eed9478e2ebc9ae1c93637029e1b41a5df5aed35dc6b"
+    },
+    {
+      "path": "catalog/effects/scene-ocean.js",
+      "bytes": 62652,
+      "sha256": "2d5c5ceb950ad2a94c4249e8a207a1863a8cf7a7fac800b675b2bb4edbbc821d"
+    },
+    {
+      "path": "catalog/effects/scene-osmanthus-data.js",
+      "bytes": 5263448,
+      "sha256": "04e0cf5bfa78ebe1c60ef4770916f8acd93608db2823393ca0e8334fac6b695b"
+    },
+    {
+      "path": "catalog/effects/scene-osmanthus.js",
+      "bytes": 83162,
+      "sha256": "2d932c267b626a741748ae8e7cabbab74d7cc8a7b546a1789be46a1211734ea1"
+    },
+    {
+      "path": "catalog/effects/scene-selfie-images.js",
+      "bytes": 4137788,
+      "sha256": "22b19fcdc706930e0a4be0d9e525d6f8de22d003fe132f742561b4dd7afa70eb"
+    },
+    {
+      "path": "catalog/effects/scene-selfie.js",
+      "bytes": 118936,
+      "sha256": "ea694a49daaf3f6702589103807365758f3f99bbeeaf2db09ef416af686501e6"
+    },
+    {
+      "path": "catalog/effects/scene-snow.js",
+      "bytes": 53750,
+      "sha256": "a7f913f3416e318af338c059e4a0d92964d038fae982ed321813e0f7bbdea653"
+    },
+    {
+      "path": "catalog/effects/scene-source-runtime.js",
+      "bytes": 8172,
+      "sha256": "435a31ebc50e4ed9716ca32fba8bb2ac777a799d7dcfd4c4802ea2df669b44bb"
+    },
+    {
+      "path": "catalog/effects/scene-window-data.js",
+      "bytes": 5192461,
+      "sha256": "e4481ee4af7ddb02dc7fd48d5c152d840410c13a21a71fdba98c09ebdc3a688b"
+    },
+    {
+      "path": "catalog/effects/scene-window-media.js",
+      "bytes": 12295,
+      "sha256": "06bd6e0cc130e416ef808f22676efccd2f9c4879326b07ae91aa2466174bb92b"
+    },
+    {
+      "path": "catalog/effects/scene-window.js",
+      "bytes": 60242,
+      "sha256": "e454c8d9295e72e8c686d7e7969fac028f79271ca36a83f2ea4b6595be13f5c9"
+    },
+    {
+      "path": "catalog/effects/seed-bloom-brand.js",
+      "bytes": 61179,
+      "sha256": "6a76fcea4bf87852d0daea8c51bbe3aedc9cdd9b681ac27e9d6077473bb10ed8"
+    },
+    {
+      "path": "catalog/effects/selfie-phone.js",
+      "bytes": 1161,
+      "sha256": "88e269d30b25cc107b33b2f65e2f962a539846e3c39deee10fbbea033508c189"
+    },
+    {
+      "path": "catalog/effects/settle-grow-spread.js",
+      "bytes": 253227,
+      "sha256": "14a74e2e6033a3a05591b690c4f70f47453bc6d31df9669aeeb66aa07236e251"
+    },
+    {
+      "path": "catalog/effects/space.js",
+      "bytes": 12189,
+      "sha256": "1881fc5892af1539fa5ba854edec6b05e55e7769ecf228f27897ec746e5494ed"
+    },
+    {
+      "path": "catalog/effects/spatial-apertures-data.js",
+      "bytes": 11345,
+      "sha256": "b4b51501ea2319274c48ea721b98556abdbd3f4dcee6c3d896c6d3628eed517a"
+    },
+    {
+      "path": "catalog/effects/spatial-apertures.js",
+      "bytes": 3702,
+      "sha256": "8dfbfbb2d44dfc47302ef3a0092e7eb445ec62c211dac64dfa7d7ed28e660699"
+    },
+    {
+      "path": "catalog/effects/speech-caption.js",
+      "bytes": 6289,
+      "sha256": "cdbe9927ec4ed201dbbbff5e21c01d9cb9baef1ae132d240741e01646954d462"
+    },
+    {
+      "path": "catalog/effects/step-hop.js",
+      "bytes": 3228,
+      "sha256": "8c64fc6b71662c611b93789377f3b97471cf70759a2cb127c385b9408be9677f"
+    },
+    {
+      "path": "catalog/effects/theme-color-cycle.js",
+      "bytes": 2620,
+      "sha256": "644f8f8134efc8138a00ecb671e0daadf22b93b2291fa09c5ba428be27a7ec90"
+    },
+    {
+      "path": "catalog/effects/thread-weave.js",
+      "bytes": 24179,
+      "sha256": "a4a69877cbf15a83ad51800ea23554759805ca573dba0179b18246475fbcb5aa"
+    },
+    {
+      "path": "catalog/effects/time-in-motion-data.js",
+      "bytes": 3140,
+      "sha256": "1e81fcd3f918a17b1dc7a9843c922f1e650565242ab0e722ac4d8827a0b4cfc7"
+    },
+    {
+      "path": "catalog/effects/time-in-motion-graphics.js",
+      "bytes": 3963,
+      "sha256": "d12bcbc4687e0ba68dcade872c295287a6d1edce97e80e612e9e1feff2627c02"
+    },
+    {
+      "path": "catalog/effects/time-in-motion.js",
+      "bytes": 4403,
+      "sha256": "9c22a8377c42c45c887944e2a372747f1954b30656998f9d53f9ef92f2de5d90"
+    },
+    {
+      "path": "catalog/effects/transition.js",
+      "bytes": 5931,
+      "sha256": "ce25945f0008937565402d3ad409944a18534d68772b808effd70074df62b022"
+    },
+    {
+      "path": "catalog/effects/word-slam.js",
+      "bytes": 4142,
+      "sha256": "aa9b72c07b34ca80d8eb16f56f5a71b20407750627a6a911a8f178537373bf9e"
+    },
+    {
+      "path": "catalog/export.js",
+      "bytes": 47892,
+      "sha256": "c6bc43f9564f671cc6b43eb483a05b5f03dc86e8e9f24cf27fc38fc69bdb0e41"
+    },
+    {
+      "path": "catalog/fonts/LXGWWenKai-Regular.woff2",
+      "bytes": 9795056,
+      "sha256": "b970f649a614a496b5c72adeb92a5ced30901747f07aa18f2438f2a6536a1b1f"
+    },
+    {
+      "path": "catalog/fonts/OFL-Letter.txt",
+      "bytes": 5171,
+      "sha256": "1a25e35da1031c6c3436fde545bb9cb5aca954e9873afe510c834b8b79bd21a0"
+    },
+    {
+      "path": "catalog/fonts/OFL-Oswald.txt",
+      "bytes": 4390,
+      "sha256": "0687c51a3126ae6963389181135a2eaea02f2e88f31230d27409952f28e84da5"
+    },
+    {
+      "path": "catalog/fonts/OFL-Outfit.txt",
+      "bytes": 4389,
+      "sha256": "c676351bf8576b9aba743cd5eaa8c0e7ee0d51f805d720447b4df4ddb6a2e416"
+    },
+    {
+      "path": "catalog/fonts/OFL.txt",
+      "bytes": 4463,
+      "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "path": "catalog/fonts/Oswald-Bold.woff2",
+      "bytes": 12112,
+      "sha256": "e794c1589fdd38232b647a6e86dfe4e19068774ec18591e6c42bdddac140c302"
+    },
+    {
+      "path": "catalog/fonts/Outfit-latin-500.woff2",
+      "bytes": 13400,
+      "sha256": "6ffbc6f6b80e5dfdedc1a1756ea89eb2ab722bc37ba280c3fb247c899881ae62"
+    },
+    {
+      "path": "catalog/fonts/SourceHanSansSC-Bold.woff2",
+      "bytes": 12816312,
+      "sha256": "892bb1effd51c2227de7857eae337a00feed596a1c95430bb0d3925d6089d08b"
+    },
+    {
+      "path": "catalog/fonts/SourceHanSansSC-Light.woff2",
+      "bytes": 11128356,
+      "sha256": "1dca2cebb6d402694e345e1e52aed9eeded6af7988400274175374ff5485bca0"
+    },
+    {
+      "path": "catalog/fonts/SourceHanSansSC-Regular.woff2",
+      "bytes": 12118576,
+      "sha256": "61bdd20c0f526fc8ef9e63333720effe8c81a7f41bcd7f9c0780a47bcfa22721"
+    },
+    {
+      "path": "catalog/frame.css",
+      "bytes": 14009,
+      "sha256": "39f0d1f51923a3c71c1e64356aa127b255c73132f00accfe78cdab45e1f405e0"
+    },
+    {
+      "path": "catalog/history-data.js",
+      "bytes": 54645,
+      "sha256": "da7f3319620acbc9db0c2f727a288f5d6b1d821d27deea00efede47ee430a127"
+    },
+    {
+      "path": "catalog/history-runtime.js",
+      "bytes": 6841,
+      "sha256": "6749581d29dc755067ba0358c4362f31767894ac13666132128bab25b433388e"
+    },
+    {
+      "path": "catalog/history.css",
+      "bytes": 1239,
+      "sha256": "32d3d99162b814749e3d7f7d58c00a88b48ba671de66e41bb25d96703473a64d"
+    },
+    {
+      "path": "catalog/layer-audit.json",
+      "bytes": 17436,
+      "sha256": "a66a1214fb6ddd8e87808015213712fbe1468bfd7d5e117c6bc5119c12da00e4"
+    },
+    {
+      "path": "catalog/layer-fingerprints.json",
+      "bytes": 130,
+      "sha256": "dd5faac3556c8b88b34c5f7e2aef9583a38405b8f5a35578a063f8895a68ec66"
+    },
+    {
+      "path": "catalog/lazy.js",
+      "bytes": 5361,
+      "sha256": "c02d11c7bc34ce5de074928dfa80bb574901e632fdde18dc6c2e4f4281605a55"
+    },
+    {
+      "path": "catalog/matching.js",
+      "bytes": 11066,
+      "sha256": "dbaf70352be4e68db67feaa87b5ee6e2907ef976ac2f1207a3035993c9015a84"
+    },
+    {
+      "path": "catalog/player-glass.js",
+      "bytes": 1492,
+      "sha256": "9ea583025995f081466d4508e739fd3625468a704c55788e65a87011d17fabb2"
+    },
+    {
+      "path": "catalog/preview-size.js",
+      "bytes": 984,
+      "sha256": "65e03c70583e42b3f1d591888f44c6983770fdb431ea3f85d72ce1e484d0b74c"
+    },
+    {
+      "path": "catalog/registry-data.js",
+      "bytes": 1785007,
+      "sha256": "c13da9aac0d731e834062a6f27c4e4b806e2768b52a97c01b4e679cbcc0c358d"
+    },
+    {
+      "path": "catalog/registry.json",
+      "bytes": 4053306,
+      "sha256": "827007f728eff3ef07a7dac977300b2c4f3747da62bebdcdca8e500712a1d21d"
+    },
+    {
+      "path": "catalog/related-preview.js",
+      "bytes": 6637,
+      "sha256": "76c7db2eec542931a261b5f21036d5bd551df54297896e12035ab8126ca78be5"
+    },
+    {
+      "path": "catalog/remotion/aboutlove.jsx",
+      "bytes": 3068,
+      "sha256": "3a5ba7e5299752fab7f10f1f7862760e17d417e0bd28f84586b7a6059970c278"
+    },
+    {
+      "path": "catalog/remotion/binary-assets-installer.mjs",
+      "bytes": 2415,
+      "sha256": "1a9a674bf479e4edc62979550fd1dc7304bc3feaf6475b16249375b9b2a7b4f4"
+    },
+    {
+      "path": "catalog/remotion/butterfly.jsx",
+      "bytes": 2018,
+      "sha256": "3a148ca2c7498fce33d380c50ce65e8a5b848006c296fa47fdd61241f4f8b2b1"
+    },
+    {
+      "path": "catalog/remotion/circular-reveal.jsx",
+      "bytes": 835,
+      "sha256": "c0b0ccb677d072c30b9f616b045939342fe28e11f225f42734e9c4463df53759"
+    },
+    {
+      "path": "catalog/remotion/civilization-growth.jsx",
+      "bytes": 1826,
+      "sha256": "f0a82e1eeaa6ca5874755d793fc41f2aab77836cba3de073c896161bbd08be55"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/AmbientActions.jsx",
+      "bytes": 5462,
+      "sha256": "15dda549e91e40585d3874e35292e93adb64dc4c42bb2f9b1102c6a50c05699d"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/BuildActions.jsx",
+      "bytes": 23492,
+      "sha256": "a4af4f5fe7265f4079849b22e5938aa03e1801fe1e0cdc0ff67daf1a205a262c"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/FinaleActions.jsx",
+      "bytes": 18164,
+      "sha256": "b6bafb300e70a8ffb352aa28cd8b3ba2790ad499e68eec6e304cf526fc7bb0b4"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/Scene.jsx",
+      "bytes": 3246,
+      "sha256": "94cfc2c416f8818fc7e2e7ceda1986adfca71669561b3d4a226e3f25c14a85cc"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/build-data.js",
+      "bytes": 15155,
+      "sha256": "b0b88e5305ac69e29c03bc47a0dac1d690981b3e748fb65fd80ac3e32025e04c"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/catalog.jsx",
+      "bytes": 2581,
+      "sha256": "08995bb1fe978f6f0a7134fc3a274ae0f7642ff08d84dc0b8ca47b7bcbd6bafa"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/fonts.js",
+      "bytes": 1071,
+      "sha256": "f488a3ae8f58ac2b0b27354b11170053f430583727572bff620d3ff0d4929dc4"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/index.jsx",
+      "bytes": 1917,
+      "sha256": "2e7a982f9f85b01dc777b14710fbc95ed2ff20ca923eb1cb99d75595ae19ed56"
+    },
+    {
+      "path": "catalog/remotion/lego-kingdom/theme.js",
+      "bytes": 1494,
+      "sha256": "908f3e1e38a89027d1e7f3b2756be8097a88b7d1f04042baec824ed3e0f3419b"
+    },
+    {
+      "path": "catalog/remotion/mechanical-windows.jsx",
+      "bytes": 2077,
+      "sha256": "dcb4cdb62218f42dcecf04e30fca63c10fd0a24632136ca25097e5693da54cb5"
+    },
+    {
+      "path": "catalog/remotion/native-video.jsx",
+      "bytes": 4058,
+      "sha256": "b3a84e8b0feddb0dcc536871d684c206fbc166360a9c64c1a1706f4a6fa7c584"
+    },
+    {
+      "path": "catalog/remotion/pixel-motion.jsx",
+      "bytes": 1209,
+      "sha256": "3b87803169646f8c87106cde8107760e637a11a276eddb9710807c5b64203b39"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/AIBotExpressions.jsx",
+      "bytes": 6028,
+      "sha256": "ddb82b05162aa4a1da515b454c344dc2ffdee6500302c321249315cbd59de084"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/AIBots.jsx",
+      "bytes": 2567,
+      "sha256": "71173d0e7ef154af37c8d2dee565b162d3d8cde785add0e43a311d64d1112dad"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/ActualEffect.jsx",
+      "bytes": 1358,
+      "sha256": "cb23d2bd1d31152cb78b5f2d8ee71f315bca6b82b2aa841ba282a65b112ba443"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/GlassFrame.jsx",
+      "bytes": 3216,
+      "sha256": "33f4abfc3972e774efcd3fb37bcf22a247068c758a3c81e5f4433997749c7dcc"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/KLine.jsx",
+      "bytes": 4120,
+      "sha256": "5f1382ee2f8d16e9f22468651d2deea2438808c7cdb543a91fe5b8c91a5612ac"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/MatchPreview.jsx",
+      "bytes": 701,
+      "sha256": "417c2400b08e2a19edc153c883f69aa201f3108f2229199b0cf08c1c05925f8b"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/QuestionMark.jsx",
+      "bytes": 625,
+      "sha256": "f25e1ca0d019bee6a3d06cda8559e724b070187d2c780d56c34c4316d5cef495"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/Scenes.jsx",
+      "bytes": 15846,
+      "sha256": "790ff2a507dc3efe34c093266cc2c82b8ee186e9fc300c877388bbc09f9af130"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/aiBotExpressions.mjs",
+      "bytes": 5592,
+      "sha256": "53575ef53c201937a2ffb7ad7aeaa29aea2790d8f239a8a81b700574099f264d"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/aiBotMotion.mjs",
+      "bytes": 9706,
+      "sha256": "3cdc364931740a3063258ffcf9b01fda38f26e372ff93b260b10dd8d18882821"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/butterfly-cues.json",
+      "bytes": 211,
+      "sha256": "eec9ca2fda59613f6325713189b8ed2bbdda3b489ee2a2826b611a2122e8d5eb"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/catalog-fill.json",
+      "bytes": 512,
+      "sha256": "f15042559cbbe02a614a36019b7c9830e75b7c7dde4e4392745c89a68eabefe0"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/catalog.jsx",
+      "bytes": 7545,
+      "sha256": "506a7b8eb1b0c6078f335f6b465ea71649b4682aea5220484cb5d5c2ead46c96"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/colors.js",
+      "bytes": 383,
+      "sha256": "e33c806a82bd66b9d5c23a858b5c283e28a2a90735309a9509c3a91ac37c8af8"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/garbage-words.json",
+      "bytes": 192,
+      "sha256": "efc02c6fb8cea04cbe78a1c5ff98d520a3ff2ce6c243723aad1482e997a6e5ba"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/garbageMotion.mjs",
+      "bytes": 5146,
+      "sha256": "27d4b94eae52d360cccb4e2d6e70ffa1bda1f370f14d063abc0f1037546f369f"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/math.mjs",
+      "bytes": 1796,
+      "sha256": "3e6e8fce45608db256115aaf392eae537c50d01db00679973bbe10c1b8dc5d39"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/nested-data.json",
+      "bytes": 59435,
+      "sha256": "94b6a4f8d1f30b1f49e4a9298316a6d425329b85516b9e90ef5d8abd221c2517"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/surfaces.js",
+      "bytes": 2322,
+      "sha256": "4b2a5dcb639b09e277e104f131a1b1288744c62437882aa6a4095251895bf134"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/tasteMotion.mjs",
+      "bytes": 2485,
+      "sha256": "2403d80dc2c8d2964a7834a8ceff314b82e0bf72800ae35cc50b421ae58bc333"
+    },
+    {
+      "path": "catalog/remotion/reel-extract/thumbs.json",
+      "bytes": 1003,
+      "sha256": "6e9a97d851c635fe237c6a71584e7cf9ed0cf40a444addc8709160aac636fc2e"
+    },
+    {
+      "path": "catalog/remotion/seed-bloom-brand-source.json",
+      "bytes": 854,
+      "sha256": "067bfafa5db6bb6fa6790f9d1f39e125c5327eaa2abefed516012fea0895e75d"
+    },
+    {
+      "path": "catalog/remotion/seed-bloom-brand.jsx",
+      "bytes": 1388,
+      "sha256": "81c6e8b5c5e82ec7bb2ffec928def489d54c087e70c32039d4abc5f232a701e8"
+    },
+    {
+      "path": "catalog/remotion/spatial-apertures.jsx",
+      "bytes": 3555,
+      "sha256": "02f6ecca781958a48fffd7c9dd059896afe3c04a0f68dad29f4f4bf26181ee78"
+    },
+    {
+      "path": "catalog/remotion/speech-caption.jsx",
+      "bytes": 2035,
+      "sha256": "0b477dd723900ded415796ac3dcb7e8fc2e6853b9edf539253d50dcca102508c"
+    },
+    {
+      "path": "catalog/remotion/time-in-motion-graphics.jsx",
+      "bytes": 1226,
+      "sha256": "7b805bcacf316915e364c41dbdb8ddcf3da84d0560220161a94fc09fb932b7cd"
+    },
+    {
+      "path": "catalog/remotion/time-in-motion.jsx",
+      "bytes": 502,
+      "sha256": "a2f6ae16b16cfd4154f3a8c6078e0421346e3c4014af689aac242727c7be98a1"
+    },
+    {
+      "path": "catalog/remotion-sources.js",
+      "bytes": 3532838,
+      "sha256": "38d39b6c5eaa9dae6e19de41e8147b3a33a85124e99fe6d600926fb7b0f70597"
+    },
+    {
+      "path": "catalog/runtime.js",
+      "bytes": 14260,
+      "sha256": "0f4552085266cf5e0275c064db6609d812f2f37b17e9f9e9a57341cb530e3114"
+    },
+    {
+      "path": "catalog/scenes.css",
+      "bytes": 15419,
+      "sha256": "e9115060ce1fe0283001383b70a4a93cbad47f5acc3acea49a8d4e54deba228c"
+    },
+    {
+      "path": "catalog/thumbnails.js",
+      "bytes": 14215,
+      "sha256": "a78d5fa6d8709eb6fa87842a739b010ca53902c42d12c032105bab9ca10a21af"
+    },
+    {
+      "path": "catalog/wise-avatar.webp",
+      "bytes": 151938,
+      "sha256": "d92ea825be49d5a1d452b74dd735954804dde709e8f19c36dc5fb58c9d6c33cf"
+    },
+    {
+      "path": "vendor/animejs/LICENSE.md",
+      "bytes": 1075,
+      "sha256": "3f3e835a9952cfc2a6ca836fb95b3257c981f24fa3ef51249055acb09931897b"
+    },
+    {
+      "path": "vendor/animejs/SOURCE.json",
+      "bytes": 856,
+      "sha256": "cc62c9bd4cf6a5d1a6edcc7e250854b103eb7653b15a8f9e0789eefeff93af99"
+    },
+    {
+      "path": "vendor/animejs/anime.umd.js",
+      "bytes": 429444,
+      "sha256": "141b818417c67df8467fdc6bd5a32e77ddb1b520e86d2fee496b1e43ba8b8ec9"
+    },
+    {
+      "path": "vendor/animejs/anime.umd.min.js",
+      "bytes": 118043,
+      "sha256": "8d5b3a58a1f64023a04a4cedeef135a2263b18da04b35177ac13438a0bad033b"
+    },
+    {
+      "path": "vendor/calligraphy/GPL-2.0.txt",
+      "bytes": 17984,
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "path": "vendor/calligraphy/README.md",
+      "bytes": 1590,
+      "sha256": "977d2d8eba90e198a5b9ef80d918b55a6f0aee12c6098c9c32e74c772721327c"
+    },
+    {
+      "path": "vendor/calligraphy/SOURCE.json",
+      "bytes": 1477,
+      "sha256": "0c257b67d91b4a9e15a6c753ee611f9aeafb8033304c10c60b170547d605e015"
+    },
+    {
+      "path": "vendor/calligraphy/prepare-calligraphy.py",
+      "bytes": 3591,
+      "sha256": "dcc1811d2be3bece373fcbfa553740764145bc1391dae0be78f104d8f4d579c8"
+    },
+    {
+      "path": "vendor/duobaota/README.md",
+      "bytes": 1838,
+      "sha256": "ad95e2987d36d56ac8b77ff07bb031f6845227ca525ed44ddb841e2e69907f38"
+    },
+    {
+      "path": "vendor/duobaota/SOURCE.json",
+      "bytes": 3129,
+      "sha256": "4758af0a8e4d7232dfbfd17d7dab64700c122f4431c218e1d4edd6a70acdca8c"
+    },
+    {
+      "path": "vendor/guangdong-map/ODbL-1.0.txt",
+      "bytes": 25289,
+      "sha256": "77d2692c3d64efdd4db18dce2407699baf62930e2b50d6e5ed90b48acf16b7c1"
+    },
+    {
+      "path": "vendor/guangdong-map/SOURCE.json",
+      "bytes": 1662,
+      "sha256": "ffcee8ccacc744d4ed4b58be1a0a5aaca03af49c92f386ce4e7650d05ba2c854"
+    },
+    {
+      "path": "vendor/guangdong-map/guangdong-cities.geojson",
+      "bytes": 749429,
+      "sha256": "080ef806aa299c7155e4dbfef808254ca70f6054cd723c8e17600456f8a12b07"
+    },
+    {
+      "path": "vendor/heroicons/LICENSE",
+      "bytes": 1071,
+      "sha256": "60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985"
+    },
+    {
+      "path": "vendor/heroicons/SOURCE.json",
+      "bytes": 3674,
+      "sha256": "64c610cb6c563e24987926e62f66a69ab5f833cd06e20dc2af407c219fd6898f"
+    },
+    {
+      "path": "vendor/heroicons/icons.js",
+      "bytes": 18164,
+      "sha256": "ca66d1deb894ee9313999fee293b538bb4c0bd3aa3c1d04278425ca8865e1495"
+    },
+    {
+      "path": "vendor/liquid-glass/LICENSE",
+      "bytes": 1068,
+      "sha256": "b79a118386f46c7ef7469df5abcc0d3b49b19e6497d6788642247d9a109d4341"
+    },
+    {
+      "path": "vendor/liquid-glass/SOURCE.json",
+      "bytes": 862,
+      "sha256": "dddda1266c95c6d6d9ae541c822a75d7f3c8a8508e89b4c1e1c81193999f3ed9"
+    },
+    {
+      "path": "vendor/liquid-glass/liquid-glass.js",
+      "bytes": 9241,
+      "sha256": "4c721f284ec2ca09236cd9a1daa487837eb0df8207899c629807d718d4197c5e"
+    },
+    {
+      "path": "vendor/lucide/LICENSE",
+      "bytes": 3208,
+      "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+    },
+    {
+      "path": "vendor/lucide/SOURCE.json",
+      "bytes": 635,
+      "sha256": "dc71e9a635db8e71e4a938ac5ec7372eab1c2f4bbd9779bb5d7d54923550eda1"
+    }
+  ]
+}

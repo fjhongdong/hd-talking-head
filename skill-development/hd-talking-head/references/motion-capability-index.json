@@ -263,7 +263,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/Root.tsx": "613d7be4f5fe24f2f15280791af69fe871ac9a365ff68ff5d4a46b6e9a0d5b15",
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/entry.ts": "a70203d7cd74c6bf063461f10a968e4ceb796dd8f181f27416c8469687c92268",
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed",
-        "skill-development/hd-talking-head/scripts/data_rollup_adapter.py": "c38600d04247c223da78de450d891155e8b7860d4ca2c35010f2b69fbd0a41fe",
+        "skill-development/hd-talking-head/scripts/data_rollup_adapter.py": "7cdfa3835d956bce2a3b469c870792fc9faa8047bb555d569058af37a88f2850",
         "skill-development/hd-talking-head/scripts/render_data_rollup.cjs": "f29bcface7b956728086714d9977867de93664fa29a870f8fc1f114f6071800a"
       }
     },
@@ -960,22 +960,22 @@
       "evidence": [
         "skill-development/hd-talking-head/references/openfilm-motion-graphics.md",
         "skill-development/hd-talking-head/scripts/openfilm_motion_adapter.py",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/MANUAL.md",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/bin/openfilm.mjs",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/package.json",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/skills/motion-graphics/SKILL.md",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/src/film-doc.mjs",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/src/render.mjs"
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/MANUAL.md",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/bin/openfilm.mjs",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/package.json",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/skills/motion-graphics/SKILL.md",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/film-doc.mjs",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/render.mjs"
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/openfilm-motion-graphics.md": "c925a0b7539dbdbccdf15cf1114a4166d381d267c3f3bb538926394a86fd2158",
         "skill-development/hd-talking-head/scripts/openfilm_motion_adapter.py": "015303bef79b5dd79e822890c50c552aede51feec334f0483149ecf7696e2244",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/MANUAL.md": "f92be3da02f1724bbbef3bd70fa01c42b4c24e85aa6987fb8401e501bb61d7b9",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/bin/openfilm.mjs": "de783c7f8982d3fa6232da955dd62f63b523ebac0c89a6da415a35bfa0eb1e68",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/package.json": "6324c41d4c5b5568085f55fe471e7afcef42e4970644878c7bc3f4796bd32c19",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/skills/motion-graphics/SKILL.md": "64ec633fc49c0e8f1e572d3dfae1b7d0854c4fb89e86706ce915bc818da406aa",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/src/film-doc.mjs": "d58b7acfc85951449a81997f47cf9d2331513ec73b2930741c69a3c2e68a644d",
-        "skill-development/runtime/openfilm-0.2.4/node_modules/openfilm/src/render.mjs": "d849d09c9ae05037f95c2ecad75a4436f15bf1636a2640b078bc02c6ee6cad90"
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/MANUAL.md": "f92be3da02f1724bbbef3bd70fa01c42b4c24e85aa6987fb8401e501bb61d7b9",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/bin/openfilm.mjs": "de783c7f8982d3fa6232da955dd62f63b523ebac0c89a6da415a35bfa0eb1e68",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/package.json": "6324c41d4c5b5568085f55fe471e7afcef42e4970644878c7bc3f4796bd32c19",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/skills/motion-graphics/SKILL.md": "64ec633fc49c0e8f1e572d3dfae1b7d0854c4fb89e86706ce915bc818da406aa",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/film-doc.mjs": "d58b7acfc85951449a81997f47cf9d2331513ec73b2930741c69a3c2e68a644d",
+        "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/render.mjs": "d849d09c9ae05037f95c2ecad75a4436f15bf1636a2640b078bc02c6ee6cad90"
       }
     },
     {
@@ -1448,9 +1448,9 @@
         "skill-development/hd-talking-head/references/upstream-scene-skills.md",
         "skill-development/hd-talking-head/scripts/render_wise_motion.mjs",
         "skill-development/hd-talking-head/scripts/wise_motion_adapter.py",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/ASSET-MANIFEST.json",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/dist/index.mjs",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/package.json",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/ASSET-MANIFEST.json",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/dist/index.mjs",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/package.json",
         "skill-development/vendor/wise-motion/REMOTION.md",
         "skill-development/vendor/wise-motion/SKILL.md",
         "skill-development/vendor/wise-motion/references/quickstart.md",
@@ -1462,14 +1462,14 @@
         "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3",
         "skill-development/hd-talking-head/scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
         "skill-development/hd-talking-head/scripts/wise_motion_adapter.py": "11b9027ca0046dfacf99295b52a74fdca169b78a2a603548b996b70a9d8177a8",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/ASSET-MANIFEST.json": "d9b8b7dba2fbd338e470d7508ee262f28226d73f8e42fe1594c22c33e7d85f02",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/dist/index.mjs": "acf43a614b53cc4dfe5ccbdc0cb901cc83c6552927a907d16d11cb77baf7df68",
-        "skill-development/runtime/wise-motion-0.1.21/node_modules/wise-motion/package.json": "54636eed46d7917b4e22e6ddd2f1f5ad1362931ce9e7afd1451dc9320231adab",
         "skill-development/vendor/wise-motion/REMOTION.md": "3a55aa7ccaee1fd380a8823e7bf3c2c7b250317c01367563245b0a34a0358dee",
         "skill-development/vendor/wise-motion/SKILL.md": "57c3c13dbc6c035d9c78c3d2f1f123547e586e9f3af5d962499b8a51e271de1a",
         "skill-development/vendor/wise-motion/references/quickstart.md": "2edba2b1cfb1086ce484f287ff4b02dbb8b117cfba59a0ae5c0354d963444307",
         "skill-development/vendor/wise-motion/references/runtime-interface.md": "7b4e9e65aa51352b26ca31a0570a94822d76ef52d586142a664192053c49c545",
-        "skill-development/vendor/wise-motion/references/validation-matrix.md": "63af2f6a101a4d8039d5f3ef9582ef20e4b00285a005ecfb2c949e7013943433"
+        "skill-development/vendor/wise-motion/references/validation-matrix.md": "63af2f6a101a4d8039d5f3ef9582ef20e4b00285a005ecfb2c949e7013943433",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/ASSET-MANIFEST.json": "d9b8b7dba2fbd338e470d7508ee262f28226d73f8e42fe1594c22c33e7d85f02",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/dist/index.mjs": "acf43a614b53cc4dfe5ccbdc0cb901cc83c6552927a907d16d11cb77baf7df68",
+        "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/package.json": "54636eed46d7917b4e22e6ddd2f1f5ad1362931ce9e7afd1451dc9320231adab"
       }
     },
     {

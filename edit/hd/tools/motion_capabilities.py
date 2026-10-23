@@ -597,11 +597,17 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                 "checks": [], "not_verified": [], "source_plans_modified": False}
     query_keys = [(q.get("segment_id"), q.get("component_id")) for q in motion_queries if isinstance(q, dict)]
     expected_query_keys = [(s["segment_id"], c["component_id"])
-                           for s in draft["segments"] for c in s["visual_strategy"]["components"]
-                           if c["kind"] in {"code_generated", "ai_generated"}]
+                           for s in draft["segments"] for c in s["visual_strategy"]["components"]]
     if len(query_keys) != len(motion_queries) or len(query_keys) != len(set(query_keys)) or set(query_keys) != set(expected_query_keys):
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "motion_queries", "reason": "visual table must cover every visual component exactly once"}],
+                "checks": [], "not_verified": [], "source_plans_modified": False}
+    invalid_queries = [q for q in motion_queries
+                       if not isinstance(q.get("tags"), list) or not q["tags"]
+                       or any(not isinstance(tag, str) or not tag.strip() for tag in q["tags"])]
+    if invalid_queries:
+        return {"status": "fail", "scope": "offline_orchestration_only",
+                "failures": [{"check": "motion_queries", "reason": "every visual row needs explicit semantic retrieval tags"}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}
     broll = broll_skill_selection.validate_selection(project_root, draft, treatment)
     speech = _approved_speech(job_dir)

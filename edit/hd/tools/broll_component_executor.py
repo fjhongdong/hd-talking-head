@@ -4829,9 +4829,10 @@ def _execute_pinned(
         registry = adapters.get(kind)
         if type(registry) is not dict:
             _raise("BROLL_DEPENDENCY_UNBOUND")
-        adapter = _validate_code_adapter(
-            registry.get(selected["dependency_id"]), selected
-        )
+        candidate = registry.get(selected["dependency_id"])
+        if isinstance(candidate, dict):
+            candidate = candidate.get((recipe["segment_id"], selected["component_id"]))
+        adapter = _validate_code_adapter(candidate, selected)
     else:
         candidate_adapter = adapters.get(kind)
         if isinstance(candidate_adapter, dict):
@@ -5158,7 +5159,10 @@ def export_published_execution_binding(
         registry = adapters.get("code_generated")
         if type(registry) is not dict:
             _raise("BROLL_DEPENDENCY_UNBOUND")
-        adapter = _validate_code_adapter(registry.get(component["dependency_id"]), component)
+        candidate = registry.get(component["dependency_id"])
+        if isinstance(candidate, dict):
+            candidate = candidate.get((recipe["segment_id"], component["component_id"]))
+        adapter = _validate_code_adapter(candidate, component)
     else:
         candidate_adapter = adapters.get(component["kind"])
         if isinstance(candidate_adapter, dict):

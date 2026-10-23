@@ -216,13 +216,19 @@ def _load_manifest(path: Path) -> dict[str, Any]:
     preparation_ids: set[str] = set()
     for entry in payload.get("preparation", []):
         if (not isinstance(entry, dict) or not {"id", "script", "arguments"}.issubset(entry)
-                or set(entry) - {"id", "script", "arguments", "node_tool"}
+                or set(entry) - {"id", "script", "arguments", "node_tool", "dependency_ids"}
                 or entry["id"] not in seen or entry["id"] in preparation_ids
                 or not isinstance(entry["script"], str)
                 or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py", "scripts/prepare_talkcraft.py"}
                 or not isinstance(entry["arguments"], list)
                 or any(not isinstance(value, str) for value in entry["arguments"])):
             raise PreflightError("invalid project preparation entry")
+        if "dependency_ids" in entry:
+            known = {item.get("selection", {}).get("equals") for item in dependencies
+                     if item.get("selection", {}).get("component_kind") == "code_generated"} - {"*"}
+            if (not isinstance(entry["dependency_ids"], list) or not entry["dependency_ids"]
+                    or any(not isinstance(value, str) or value not in known for value in entry["dependency_ids"])):
+                raise PreflightError("invalid preparation dependency_ids")
         if "node_tool" in entry:
             tool = entry["node_tool"]
             if (not isinstance(tool, dict) or set(tool) != {"package", "version"}

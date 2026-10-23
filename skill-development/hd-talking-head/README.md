@@ -30,21 +30,19 @@
 
 ```mermaid
 flowchart LR
-    A[原始口播视频<br/>文案与素材] --> B[创建独立 Job]
-    B --> C[内容理解与结构拆解]
-    C --> D[按语义选择资料或上游视觉能力]
-    D --> E[Canary 样片<br/>语义、动作与人物安全区检查]
-    E --> F{阶段验收}
-    F -- 需要修改 --> C
-    F -- 通过 --> G[正式渲染]
-    G --> H[字幕、音画、封面检查]
-    H --> I[Preview]
-    I --> J[Delivery]
+    A[基础环境与图片、视频渠道确认] --> B[独立 Job、封面与口播清理剪辑]
+    B --> C[理解剪后语义]
+    C --> D[列全贴片与 B-roll<br/>按标签匹配模板]
+    D --> E[内部准备并检查本次所选能力]
+    E --> F[用户一次确认完整列表]
+    F --> G[生成素材与制作成片]
+    G --> H[内部样片、字幕、音画和预览检查]
+    H --> I[直接交付]
 ```
 
 ## 当前项目内使用
 
-开发与测试位置固定为 `<project>/skill-development/hd-talking-head/`；当前不安装到全局 Agent 目录，也不创建隔离 worktree。项目须同时提供兼容的 `edit/hd` 运行时；单独复制本包不能执行完整后期流程。启动时运行 `<skill>/scripts/verify_skill_release.py`，再按 [SKILL.md](SKILL.md) 检查项目内依赖、创建 Job、预检并取得本次配置确认。验证失败时不要手工刷新清单掩盖差异。
+复制最外层完整 `hd-talking-head/` 文件夹即可使用。下文 `<package>` 是包含 `run.py`、`edit/hd` 和子 Skill 的包根；本文所在目录是包内实现，不需要外部开发项目或全局 Skill。启动时先校验完整包、准备基础环境，再按 [SKILL.md](SKILL.md) 创建独立 Job、预检并取得本次配置确认。验证失败时不要手工刷新清单掩盖差异。
 
 ## 用法：从素材到成片
 
@@ -58,18 +56,18 @@ flowchart LR
 
 ### 2. 检查运行时
 
-当前 `full-v2` 必须在建 Job 前运行 TalkCraft 健康检查；检查失败不能进入制作：
+建 Job 前通过统一入口校验并准备基础环境，包含全流程必需的 TalkCraft 运行时；可选模板等到本次选中后再准备：
 
 ```bash
-python3 /path/to/project/edit/hd/integrations/talkcraft/check_runtime.py
+python3.12 <package>/run.py verify
+python3.12 <package>/run.py prepare
 ```
 
 ### 3. 创建 Job
 
 ```bash
-python3 /path/to/project/skill-development/hd-talking-head/scripts/initialize_video_job.py \
-  --project-root /path/to/project \
-  --jobs-root /path/to/project/video-jobs \
+python3.12 <package>/run.py initialize_video_job \
+  --jobs-root /absolute/path/video-jobs \
   --title "本期标题" \
   --video /absolute/path/input.mp4 \
   --script /absolute/path/script.md
@@ -77,9 +75,15 @@ python3 /path/to/project/skill-development/hd-talking-head/scripts/initialize_vi
 
 ### 4. 运行依赖预检
 
-建 Job 后按[依赖预检合同](references/dependency-preflight.md)检查项目运行时、FFmpeg/FFprobe、字体和人物素材，并确认本次配置。预检会再次执行 TalkCraft 健康检查；前一步的结果不能代替绑定当前 Job 的预检。
+建 Job 后按[依赖预检合同](references/dependency-preflight.md)检查包内运行时、FFmpeg/FFprobe、字体和人物素材，并由用户确认本次图片、视频渠道及模型配置。模板内部生成与直接 AI B-roll 使用同一渠道。绑定当前 Job 的预检通过后继续制作。
 
-### 5. 生成并审核样片
+### 5. 梳理并确认完整视觉列表
+
+口播清理和剪辑后，理解实际剪后语义，列全本视频贴片与 B-roll。每行包含时间、语义、标签、匹配模板和素材来源；直接素材写“素材直用（无动效模板）”。按标签匹配后，统一入口先准备和检查所选能力，再展示整张表供用户一次确认。
+
+确认后直接继续生成、绑定和渲染。所有已接通的来源与代码模板由默认执行入口组装，不要求用户另写工厂。
+
+### 6. 内部检查与交付
 
 按十二阶段顺序执行，到 `visual_canary` 验收以下内容后再正式渲染：
 
@@ -88,9 +92,7 @@ python3 /path/to/project/skill-development/hd-talking-head/scripts/initialize_vi
 - 字体、行距、描边、渐变和动效符合当前品牌视觉。
 - 语义匹配正确，画面确实表达了这段口播，而不是套一个通用外壳。
 
-### 6. 预览与交付
-
-正式渲染后进入 `subtitles → preview → delivery`。封面方向、正式封面和最终成片由用户确认；无歧义的中间阶段可按本次 Job 的质量门自动推进。最终交付前检查视频、字幕、音频、封面和 Job 审计记录是否齐全；不生成缩略图或联系表。
+正式渲染后进入 `subtitles → preview → delivery`。封面方向、正式封面保留各自确认；口播剪辑后只确认一次完整视觉列表。样片、字幕、预览和交付由宿主内部检查，不增加用户成片确认。交付前检查视频、字幕、音频、封面和 Job 记录是否齐全；不生成缩略图或联系表。
 
 ## 最终会得到什么
 
@@ -118,9 +120,9 @@ TalkCraft 不使用旧的通用模板注册表，而使用项目内独立注册�
 - `edit/hd/integrations/talkcraft/check_runtime.py`：检查生产运行时、上游基线、工作台和可选配音入口。
 - `edit/hd/tools/talkcraft_workbench.py`：生成工作台编辑合同，并把文字/主题调参写成新的待审核 draft bundle。
 
-生产运行时和上游 Workbench 的依赖必须隔离。工作台修改不会覆盖已批准产物，必须重新经过 canary 和人工审核。
+生产运行时和上游 Workbench 的依赖必须隔离。工作台修改另存草稿，不覆盖已批准产物；不改变已确认方案的实现调整由宿主内部检查，改变视觉方案才回到整表修订确认。
 
-## 目录结构
+## 包内实现目录结构
 
 ```text
 SKILL.md                 主执行合同

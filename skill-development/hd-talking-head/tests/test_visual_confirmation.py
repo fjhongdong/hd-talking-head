@@ -27,7 +27,8 @@ class VisualConfirmationTests(unittest.TestCase):
             "max_concurrency": 1, "generation_enabled": False})
         self.treatment = self.fixture.root / "treatment.json"
         artifacts.write_json_artifact(self.treatment, {
-            "motion_queries": [], "overlay_selection": [],
+            "motion_queries": [{"segment_id": "seg-001", "component_id": "component-1",
+                                "tags": ["approved visual explanation"]}], "overlay_selection": [],
             "skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
                 "fixed_context": [{"segment_id": "seg-001", "component_id": "component-1",
                                    "visual_pattern": "existing material", "source_ref": "asset-1", "skill_id": "stock",
@@ -208,6 +209,20 @@ class VisualConfirmationTests(unittest.TestCase):
         self.prepare()
         with self.assertRaisesRegex(vc.VisualConfirmationError, "not been confirmed"):
             vc.generation_actions(self.job)
+
+    def test_confirmation_requires_explicit_motion_query_tags(self):
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["motion_queries"] = []
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "explicit semantic retrieval tags"):
+            vc._rows(director, treatment, [])
+
+    def test_direct_material_keeps_source_separate_from_template(self):
+        rows = vc._rows(artifacts.read_json_artifact(self.fixture.brief),
+                        artifacts.read_json_artifact(self.treatment), [])
+        self.assertEqual(rows[0]["tags"], ["approved visual explanation"])
+        self.assertEqual(rows[0]["source"], "asset-1")
+        self.assertEqual(rows[0]["template"], "素材直用（无动效模板）")
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,6 +19,8 @@
 
 静态事实源是 `references/dependency-manifest.json`，不得在聊天中维护第二份列表。初始化后先写 `manifests/provider-config.json` 草稿，再用选定的同一个 Python 预检。下文 `<python>`、`<workspace>`、`<job>` 分别是解释器绝对路径、初始化返回的 workspace 和 job_dir：
 
+需要单独准备已选能力时，使用 `python3.12 <project>/run.py prepare --dependency-id <实际依赖ID>`，可重复参数。未知 ID 会报错；该命令不调用生成服务。正常制作由 `run_stage visual_direction` 自动完成这一步，不需要用户操作或再次确认。
+
 ### 包内来源与更新
 
 当前完整包随附固定版本的子 Skill、模板源码和来源归档。首次准备只恢复包内原 Git 身份并安装环境依赖，不依赖原项目、全局 Skill 或再次克隆源码。源码缺失属于发布不完整，停止并报告缺失文件。
@@ -35,9 +37,9 @@
 
 它从唯一清单实际导入全部必需 `python_module` 项：Pillow（`PIL`）、requests、NumPy、OpenCV（`cv2`）。缺包才用同一 Python 的 pip 按清单版本安装到项目内 `skill-development/runtime/talking-head-python<major><minor>`；已可用分发版本作为约束保留，不主动升级。OpenCV 只缺失时安装 headless 分发，不与已有可用 GUI 分发混装。已安装但导入失败时停止，不用重装掩盖问题；安装后实际导入一次，不自动重试。准备按项目本地锁串行执行，有超时和失败记录。
 
-随后读取清单 `preparation`，实际调用已有 Punk/source/native 准备入口；读取 `runtime_checks`，用现有登记探针核对已接通 B-roll 本地运行时。探针结果在准备报告里只记 `callable`，不伪造当前镜头 `bound`。账号、收费生成、未接入研究库不进入准备列表。没有自动准备入口的缺失环境停止并列出准确缺口，不临时创建安装器。
+基础准备只执行清单 `preparation` 中未声明 `dependency_ids` 的必需项。模板选定后，`run_stage.py` 从实际组件 bindings 提取 dependency_id，在发布确认列表前调用同一准备入口；`preparation.dependency_ids` 选择相应准备动作，`runtime_checks` 仅检查本次所选能力和实际入口版本。未选模板不安装、不探测。探针结果在准备报告里只记 `callable`，不伪造当前镜头 `bound`。账号、收费生成、未接入研究库不进入准备列表。没有自动准备入口的缺失环境停止并列出准确缺口，不临时创建安装器。
 
-OpenFilm 也在这两份清单内：按 [原生创作合同](openfilm-motion-graphics.md)检查项目本地包、真实 motion-graphics 说明、手册、原生浏览器和工具版本；缺失时仅补项目内环境，不改全局。启动检查不打开 Studio 或素材生成服务；正式包装器使用公开 `openfilm/render` 导出，避免 CLI 的自动更新／下载／重试。它只是一种语义候选，准备成功不代表本句动作、美观或信息密度通过。
+OpenFilm 只在本次选中后执行这两份清单的对应项：按 [原生创作合同](openfilm-motion-graphics.md)检查项目本地包、真实 motion-graphics 说明、手册、原生浏览器和工具版本；缺失时仅补项目内环境，不改全局。启动检查不打开 Studio 或素材生成服务；正式包装器使用公开 `openfilm/render` 导出，避免 CLI 的自动更新／下载／重试。它只是一种语义候选，准备成功不代表本句动作、美观或信息密度通过。
 
 其登记探针实际加载公共渲染模块并启动、关闭一次原生浏览器，失败区分模块加载与浏览器启动，不以文件存在冒充运行成功。该探针不渲染素材，不在每段导出或每帧重复执行；独立合成检查仍通过统一 Python 入口加载现有项目依赖，不直接换解释器、重装包或重试渲染。
 
@@ -78,7 +80,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 
 `preview-runner` 同时要求 `prepare_preview_v2`、`validate_preview_opening` 与 `validate_preview_music` 可调用，以拒绝缺少正式封面或音乐校验的旧实现。配乐输入在预览前另验双声道、解码长度、音乐与许可索引身份；可调用不等于已混音或已试听，不允许为旧 Job 自动重签运行时身份。缺少运行时代码时按 [运行时部署](runtime-deployment.md) 处理；导入通过后仍执行本合同，不将导出包当成已安装的媒体工具。
 
-退出码 `0` 表示全部当前必需项满足；`2` 表示当前必需项缺失；`3` 表示清单、ShotRecipe 或检查输入无效。未被配方选中的可选项可以形成 `ready_with_optional_gaps`，但不阻塞 Job。
+退出码 `0` 表示全部当前必需项满足；`2` 表示当前必需项缺失；`3` 表示清单、ShotRecipe 或检查输入无效。能力库检索读取包内已审核来源快照，不依赖可选运行环境先安装；实际选中后仍检查当前运行环境。未被配方选中的可选项可以形成 `ready_with_optional_gaps`，但不阻塞 Job。
 
 `--summary-only` 只缩短终端输出，正式报告仍完整。报告给出缺失模块名与失败退出码，不保存任意原始 stderr 或密钥。刷新前，已有必需项失败报告原字节保存在输出目录的 `preflight-failures/`；不得为了覆盖报告另写临时 Python 包装、导入未登记 helper 或丢掉失败现场。
 

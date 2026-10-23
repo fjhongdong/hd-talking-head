@@ -36,7 +36,7 @@
 
 调用记录沿用真实进程的 `entrypoint`、`exit_code`、源视频和结果摘要。没有记录就说明缺口，不拼造成功、不重新收费识别。只完成转写时可先不传 `--cleanup-plan`；随后在同一阶段传入清理方案，继续复用转写。已完成清理提案要修改时先明确修订。`edit_structure` 单独执行，不在转写入口里顺带剪辑。
 
-视觉计划先接收已完成内部语义检查的草稿，发布待用户确认的完整视觉路由表。若包含生图或生视频，入口先在独立 `07-visual-confirmation/rN-id/` 冻结 proposal 和 `generation_plan.steps`，再发布整表；不得先生成媒体再补报审：
+视觉计划先接收已完成内部语义检查的草稿，从启用组件的 bindings 读取本次依赖，完成所选能力准备及实际入口绑定检查后，才发布待用户确认的完整视觉路由表。准备失败保留原资料，当前新列表不会进入待确认状态。若包含生图或生视频，入口先在独立 `07-visual-confirmation/rN-id/` 冻结 proposal 和 `generation_plan.steps`，再发布整表；不得先生成媒体再补报审：
 
 ```bash
 <python> <skill>/scripts/run_stage.py --job-context <ctx> --stage visual_direction \
@@ -81,7 +81,7 @@
 
 自动 `treatment.json` 同样是候选资料：`semantic_assessments` 初始为 `needs_review`，Skill 比较和 assignments 只是待审选型。宿主检查引用原声、实际场景和候选比较理由，修正不实或通用填充理由后，才将实际通过的组件记为 `pass`。未审语义由现有正式发布检查阻断；不把离线输出 `needs_review` 当作审阅完成。
 
-每个原生 beat 显式提供 `tags` 和 `content_item_ids`；`tags` 是从剪后语义得出的检索短语，`labels` 才是屏显文字。其他准备入口在现有 treatment 的 `motion_queries` 为每个代码/生成型组件记录一条 `{ "segment_id": "seg-001", "component_id": "native-visual", "tags": ["并列要点", "层叠出现"] }`。查询必须完整、唯一，选中模板须由这些 tags 按实际用途召回；开始/结束、语义、原话和模板身份从当前计划及批准的剪后词表派生，不再另填一套。
+每个原生 beat 显式提供 `tags` 和 `content_item_ids`；`tags` 是从剪后语义得出的检索短语，`labels` 才是屏显文字。其他准备入口在现有 treatment 的 `motion_queries` 为每个视觉组件（包括直用素材）记录一条 `{ "segment_id": "seg-001", "component_id": "native-visual", "tags": ["并列要点", "层叠出现"] }`。查询必须完整、唯一，包含非空的实际语义标签；直用素材只校验标签完整性，模板栏写“素材直用（无动效模板）”，素材编号放在来源栏。选中动效模板须由这些 tags 按实际用途召回；开始/结束、语义、原话和模板身份从当前计划及批准的剪后词表派生，不再另填一套。
 
 B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数起止时间精确匹配；相邻窗口不互相替代。
 
@@ -89,7 +89,9 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 
 正式编译在发布前统一检查密度、词锚、来源和保留内容。`preview`、`delivery` 可继续传同一 `--treatment`，以复核已说明的无 B-roll 区间；比例说明不豁免默认下限。
 
-`visual_canary`、`visual_assets` 只为实际选中的依赖准备适配器。原生常用代码组件、官方视频及 execution mapping 中显式登记的 AI 图片/视频使用包内工厂；官方图片等其他媒体类型、其他来源或专用初始化的既有适配器由宿主传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。未提供时提前说明缺口，不把图片交给视频适配器。返回值就是现有运行时要求的适配器字典，不另定义媒体协议。工厂只组装已接通的适配器，不自行生成媒体、选择替代来源或批准阶段。
+`visual_canary`、`visual_assets` 只为实际选中的依赖组装适配器。原生代码组件、用户素材、官方资料、素材库及完成记录中的 AI 图片/视频使用包内默认工厂；图片与视频按各自组件绑定，混用时不会共用错误的媒体类型。直用素材保留原件和原尺寸，另存 PNG 或无声规范视频；按已确认时窗合成，不重复获取或生成素材。未知执行绑定在整表发布前报告缺口。
+
+宿主已有专用适配器仍可显式传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。正常支持的来源无需另写工厂；工厂只组装已接通入口，不替换来源、不批准阶段。
 
 ## 宿主审阅后推进
 

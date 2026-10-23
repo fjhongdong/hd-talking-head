@@ -54,6 +54,21 @@ def _steps(treatment):
         seen.add(step["id"])
     return steps
 
+def _semantic_tags(query):
+    """Return the explicit semantic retrieval labels authored for this row."""
+    tags = query.get("tags", []) if isinstance(query, dict) else []
+    if (not isinstance(tags, list) or not tags
+            or any(not isinstance(tag, str) or not tag.strip() for tag in tags)):
+        raise VisualConfirmationError("each visual row needs explicit semantic retrieval tags")
+    return list(dict.fromkeys(tag.strip() for tag in tags))
+
+def _source_id(binding):
+    for key in ("material_id", "source_id", "asset_id", "provider_asset_id", "job_path", "generation_id"):
+        value = binding.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
 def _rows(director, treatment, speech):
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
     assignments = {(q["segment_id"], q["component_id"]): q["candidate_id"]
@@ -66,26 +81,25 @@ def _rows(director, treatment, speech):
         for component in segment["visual_strategy"]["components"]:
             cid = component["component_id"]
             binding = segment.get("bindings", {}).get(cid, {})
-            tags = queries.get((sid, cid), {}).get("tags", [])
-            if component["kind"] in {"code_generated", "ai_generated"} and (
-                    not isinstance(tags, list) or not tags or any(not isinstance(t, str) or not t.strip() for t in tags)):
-                raise VisualConfirmationError("each motion component needs semantic retrieval tags")
-            template = (binding.get("template_id") or assignments.get((sid, cid))
-                        or binding.get("material_id") or binding.get("source_id")
-                        or binding.get("asset_id") or binding.get("provider_asset_id") or binding.get("job_path"))
+            tags = _semantic_tags(queries.get((sid, cid), {}))
+            source = _source_id(binding)
+            direct_material = component["kind"] in {"local_material", "official_material", "external_stock"}
+            template = ("素材直用（无动效模板）" if direct_material else
+                        (binding.get("template_id") or assignments.get((sid, cid))))
             if not template and component["kind"] == "ai_generated":
                 planned = [step["id"] for step in _steps(treatment) if
                            (step["segment_id"], step["component_id"]) == (sid, cid)]
-                if not planned and not binding.get("generation_id"):
+                if not planned and not binding.get("generation_id") and not source:
                     raise VisualConfirmationError("direct AI B-roll needs an explicit generation plan or completed result")
-                template = "AI生成方案：" + (" → ".join(planned) or binding["generation_id"])
+                template = ("AI生成方案：" + (" → ".join(planned) or binding["generation_id"])
+                            if planned or binding.get("generation_id") else "AI生成结果（无动效模板）")
             if not template:
                 raise VisualConfirmationError("each visual row needs its actual template or material source")
             rows.append({"row_id": sid + ":" + cid, "segment_id": sid, "component_id": cid,
                          "start": segment["start"], "end": segment["end"],
                          "type": "贴片" if component.get("layer_role") == "annotation" else "B-roll",
                          "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
-                         "tags": tags, "template": template})
+                         "tags": tags, "source": source, "template": template})
     return rows
 
 def _validate_template_choices(job, director, treatment):
@@ -164,15 +178,15 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         return str(value).replace("|", "／").replace("\n", "<br>")
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
              "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
-             "| 时间 | 类型 | 剪后原话 | 语义 | 标签 | 模板/素材 | 生成步骤 |",
-             "|---|---|---|---|---|---|---|"]
+             "| 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源 | 匹配动效模板 | 生成步骤 |",
+             "|---|---|---|---|---|---|---|---|"]
     for row in rows:
         generated = [s for s in steps if (s["segment_id"], s["component_id"]) == (row["segment_id"], row["component_id"])]
         labels = [s["id"] + "：" + ("生图" if s["purpose"] == "image" else "生视频")
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]
         lines.append("| " + " | ".join(cell(v) for v in (
             f"{row['start']:.3f}–{row['end']:.3f}s", row["type"], row["spoken_text"],
-            row["semantic"], "、".join(row["tags"]), row["template"], " → ".join(labels) or "复用/模板渲染")) + " |")
+            row["semantic"], "、".join(row["tags"]), row["source"] or "—", row["template"], " → ".join(labels) or "复用/模板渲染")) + " |")
     lines += ["", "生成费用说明：" + str(treatment.get("generation_plan", {}).get("cost_note", "按本次已确认渠道和规格执行")), ""]
     table = root / "visual-routing.md"
     artifacts.write_bytes_atomic(table, "\n".join(lines).encode())

@@ -10,4 +10,4 @@ python3.12 /absolute/path/hd-talking-head/run.py prepare
 python3.12 /absolute/path/hd-talking-head/run.py --help
 ```
 
-当前完整运行环境为 macOS arm64，需 Python 3.12、Node 和 FFmpeg。TalkCraft 的固定运行依赖随包提供，首次启动恢复；其余依赖按包内锁定版本安装。开始任务时确认生图、生视频渠道，素材和成片保存到独立 Job 目录。详见[发布与调用说明](skill-development/hd-talking-head/references/release-contract.md)。
+当前完整运行环境为 macOS arm64，需 Python 3.12、Node 和 FFmpeg。TalkCraft 的固定运行依赖随包提供，首次启动恢复；其余依赖在本次选中模板后按包内锁定版本安装，并在完整列表确认前检查。开始任务时确认生图、生视频渠道，素材和成片保存到独立 Job 目录。详见[发布与调用说明](skill-development/hd-talking-head/references/release-contract.md)。

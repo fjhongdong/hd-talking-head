@@ -1195,44 +1195,35 @@
     },
     {
       "id": "html-video-reference",
-      "kind": "reference_path",
+      "kind": "project_path",
       "required": false,
       "stages": [
         "visual-canary",
         "visual-assets"
       ],
-      "target": "html-video",
+      "target": "skill-development/hd-talking-head",
       "path_type": "directory",
       "capabilities": [
-        "visual.content-graph",
-        "render.html-frame"
+        "render.native-data-rollup"
       ],
       "entrypoints": [
-        "packages/core/src/registry.ts",
-        "packages/adapter-hyperframes/src/render.ts",
-        "packages/adapter-remotion/src"
+        "scripts/render_data_rollup.cjs"
       ],
       "binding_probes": [
         {
-          "entrypoint": "packages/adapter-hyperframes/src/render.ts",
-          "producer_version": "c414ecc07f795add03807d5d9ce4baefd807cea2",
+          "entrypoint": "scripts/render_data_rollup.cjs",
+          "producer_version": "1.0.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
-            "primary_renderer": "HyperFrames"
+            "primary_renderer": "Remotion"
           },
           "command": [
             "{python}",
-            "{preflight}",
-            "probe-code-binding",
+            "{dependency_root}/scripts/data_rollup_adapter.py",
             "--project-root",
             "{project_root}",
-            "--dependency-root",
-            "{dependency_root}",
-            "--dependency-id",
-            "{dependency_id}",
-            "--entrypoint",
-            "{entrypoint}"
+            "--identity"
           ]
         }
       ],
@@ -1241,12 +1232,6 @@
         "binding_field": "dependency_id",
         "equals": "html-video",
         "required_level": "bound"
-      },
-      "install": {
-        "method": "git-clone",
-        "source": "https://github.com/nexu-io/html-video.git",
-        "destination": "html-video",
-        "approval_required": true
       }
     },
     {
@@ -1928,6 +1913,9 @@
       "arguments": [
         "--skill",
         "eian-riso-broll"
+      ],
+      "dependency_ids": [
+        "eian-riso-broll"
       ]
     },
     {
@@ -1940,6 +1928,9 @@
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "doudou-remotion-whiteboard"
+      ],
+      "dependency_ids": [
         "doudou-remotion-whiteboard"
       ]
     },
@@ -1956,6 +1947,11 @@
       "script": "scripts/hyperframes_runtime.py",
       "arguments": [
         "--prepare"
+      ],
+      "dependency_ids": [
+        "hyperframes-native-adaptation",
+        "hyperframes",
+        "paper-collage-hyperframes"
       ]
     },
     {
@@ -1963,6 +1959,9 @@
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "wise-motion"
+      ],
+      "dependency_ids": [
         "wise-motion"
       ]
     },
@@ -1972,6 +1971,9 @@
       "arguments": [
         "--skill",
         "openfilm-motion-graphics"
+      ],
+      "dependency_ids": [
+        "openfilm-motion-graphics"
       ]
     },
     {
@@ -1979,6 +1981,9 @@
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "huashu-art-motion"
+      ],
+      "dependency_ids": [
         "huashu-art-motion"
       ]
     },
@@ -1988,6 +1993,9 @@
       "arguments": [
         "--skill",
         "huashu-motion"
+      ],
+      "dependency_ids": [
+        "huashu-motion-native"
       ]
     },
     {
@@ -1995,6 +2003,9 @@
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "adu-motion-video"
+      ],
+      "dependency_ids": [
         "adu-motion-video"
       ]
     },
@@ -2008,13 +2019,19 @@
       "node_tool": {
         "package": "pnpm",
         "version": "10.33.0"
-      }
+      },
+      "dependency_ids": [
+        "hypit-native-chat"
+      ]
     },
     {
       "id": "lemo-opuscar-source",
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "lemo-opuscar"
+      ],
+      "dependency_ids": [
         "lemo-opuscar"
       ]
     },
@@ -2023,6 +2040,9 @@
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
         "--skill",
+        "onetake"
+      ],
+      "dependency_ids": [
         "onetake"
       ]
     }

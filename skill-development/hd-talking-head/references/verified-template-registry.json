@@ -2638,7 +2638,7 @@
         "project": "huashu-art-motion",
         "repository": "https://github.com/alchaincyf/huashu-art-motion.git"
       },
-      "verification_id": "93ed2f3c1dd1ba5f7f74015d31769250003c0c780658180249bc4d559b27e13b",
+      "verification_id": "d323ef4029e2dba762e8f71c94864d8a3272449073b577e512f24f59ec3ba75d",
       "visual_qa": {
         "checks": {
           "balanced_layout": true,
@@ -2695,7 +2695,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v8/qualification/case-1/execution.json",
-              "sha256": "9c84f9802398bc0c646d97049c13b50a95eda076a78d5f8378159b06c2ef50e7"
+              "sha256": "0c0808084e0bfb781213a1c64092f096d2a9b39f22bbfe52d235c9e4c6e3a037"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v8/qualification/case-1/native.mp4",
@@ -2733,7 +2733,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v8/qualification/case-2/execution.json",
-              "sha256": "61ecb0b588f443212030f3f8fdd99a5ee8e0a49e8237f352fa27a33eb25a7c7f"
+              "sha256": "6664a8a25fc85cc447d1e94bc255dba80377987387ecb8c6614eb7c8b075de00"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v8/qualification/case-2/native.mp4",
@@ -2823,7 +2823,7 @@
         "project": "huashu-art-motion",
         "repository": "https://github.com/alchaincyf/huashu-art-motion.git"
       },
-      "verification_id": "e53cd4672c5426ff055963dd77f18cf45da2ab37b1e33ab66d4961d6d7718e9b",
+      "verification_id": "30b3560cfcff1255822ed007fe44622ac55f66bcdbe4521291fa4a971b450f23",
       "visual_qa": {
         "checks": {
           "balanced_layout": true,
@@ -2881,7 +2881,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v8/qualification/case-1/execution.json",
-              "sha256": "48d61cd63e83c77edd3de72140b9db9c9bec97365face24647588b39b073ecb4"
+              "sha256": "8e6f5946afab77acc47d993e1dc94fca71f33d3cccac22992c3c9dca69d6c7cf"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v8/qualification/case-1/native.mp4",
@@ -2919,7 +2919,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v8/qualification/case-2/execution.json",
-              "sha256": "32650b7d1c9c97dc142d51167f0cceba1ebc4024652aec05559e12bf2be16218"
+              "sha256": "19c2ff01770c19b95dd509b6885f2a9c31b655a2f986ed41df9e086205c60a51"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v8/qualification/case-2/native.mp4",
@@ -3009,7 +3009,7 @@
         "project": "huashu-art-motion",
         "repository": "https://github.com/alchaincyf/huashu-art-motion.git"
       },
-      "verification_id": "b637ab91ef74d63880388ba79f49734500e67524465c060954f0d74bfa20f2a0",
+      "verification_id": "40e46ddfde789c7b1bf7c381f2788953c8731d477c84796c4f16174cacb628de",
       "visual_qa": {
         "checks": {
           "balanced_layout": true,
@@ -3066,7 +3066,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v8/qualification/case-1/execution.json",
-              "sha256": "a498299833b767c7b0f78732b2f22b6f4838c9dc1cddd6d000d25e4c7068a789"
+              "sha256": "b7e3b8373039fba0e070bdcfec9718c9f891853182f4563493c99e4a078ad379"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v8/qualification/case-1/native.mp4",
@@ -3104,7 +3104,7 @@
             },
             "receipt": {
               "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v8/qualification/case-2/execution.json",
-              "sha256": "618b5d4de38a9b1bcfbf93b652615c38b24379ebe2ccb046314d088dcb8866ff"
+              "sha256": "2eaf0e68607b6315246226298052fe67f45a56d7fd247ac56cb388e32064e66d"
             },
             "sample": {
               "path": "assets/verified-templates/huashu-art-motion/y2_vox/execution-v8/qualification/case-2/native.mp4",

@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import subprocess
+import shutil
 from fractions import Fraction
 from pathlib import Path
 
@@ -24,6 +25,14 @@ PROVENANCE = (
     "semantic_families", "capacity",
 )
 
+
+def create_default_adapter(project_root, brief_loader):
+    return create_adapter(
+        runtime_root=Path(project_root) / 'edit/hd/integrations/talkcraft/runtime',
+        node_executable=shutil.which('node'),
+        browser_executable='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        brief_loader=brief_loader,
+    )
 
 
 
@@ -153,3 +162,24 @@ def create_artifact_probe(*, ffprobe_executable):
                 "fps": float(fps), "frame_count": int(s["nb_frames"]), "duration": float(s["duration"])}
 
     return ArtifactProbe(probe_id="native-data-rollup-ffprobe", probe_version=VERSION, probe=probe)
+
+
+if __name__ == '__main__':
+    import argparse
+    import sys
+    parser = argparse.ArgumentParser(description='Probe the packaged DataRollup entry without rendering')
+    parser.add_argument('--project-root', type=Path, required=True)
+    parser.add_argument('--identity', action='store_true', required=True)
+    args = parser.parse_args()
+    project = args.project_root.resolve(strict=True)
+    sys.path.insert(0, str(project))
+    adapter = create_default_adapter(project, lambda *_: b'')
+    subprocess.run([str(adapter.launcher), '-e',
+        "const r=require('node:module').createRequire(process.argv[1]);"
+        "r('remotion');r('@remotion/renderer');r('@remotion/bundler');",
+        str(project / 'edit/hd/integrations/talkcraft/runtime/package.json')],
+        check=True, capture_output=True, timeout=10)
+    print(json.dumps({'schema_version': 1, 'dependency_id': adapter.dependency_id,
+        'entrypoint': ENTRY, 'producer_version': VERSION,
+        'adapter_identity': {'adapter_type': 'ReferenceProcessAdapter',
+            'approved_executor': adapter.approved_executor, 'primary_renderer': adapter.primary_renderer}}))

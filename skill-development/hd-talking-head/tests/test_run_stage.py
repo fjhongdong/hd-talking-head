@@ -60,7 +60,9 @@ class ExecuteStageTests(unittest.TestCase):
         job = self.fake(current="visual_direction")
         review = self.root / "review.json"; review.write_text('{}')
         with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
-             mock.patch("edit.hd.tools.visual_plan.prepare_visual_direction") as visual, \
+             mock.patch("edit.hd.tools.visual_confirmation.prepare_visual_confirmation", return_value=self.root / 'proposal.json') as visual, \
+             mock.patch.object(run_stage, "prepare_visual_dependencies"), \
+             mock.patch.object(run_stage, "_json", return_value={}), \
              mock.patch.object(run_stage, "_summary", return_value={}):
             run_stage.run_visual_direction(self.root, PROJECT, Path("brief.json"), Path("treatment.json"), review)
         visual.assert_called_once()
@@ -115,24 +117,15 @@ class ReviewAndDispatchTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             run_stage._review(job, 'inspect', old_review)
 
-    def test_official_image_does_not_use_video_adapter(self):
-        component = {'kind': 'official_material', 'media_type': 'image'}
-        plan = {'segments': [{'shot_recipe': {'components': [component]}}]}
-        with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan), \
-             mock.patch.object(run_stage, '_module') as loader:
-            with self.assertRaisesRegex(ValueError, 'adapter-factory'):
-                run_stage.native_component_adapters(PROJECT, SimpleNamespace(job_dir=self.root))
-        loader.assert_not_called()
-
-    def test_official_video_keeps_native_adapter(self):
-        component = {'kind': 'official_material', 'media_type': 'video'}
-        plan = {'segments': [{'shot_recipe': {'components': [component]}}]}
-        factory = SimpleNamespace(create_adapter=mock.Mock(return_value='video-adapter'),
-                                  create_artifact_probe=mock.Mock(return_value='probe'))
-        with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan), \
-             mock.patch.object(run_stage, '_module', return_value=factory):
+    def test_material_factory_accepts_mixed_images_and_videos(self):
+        components = [{'component_id': 'image', 'kind': 'official_material', 'media_type': 'image'},
+                      {'component_id': 'video', 'kind': 'official_material', 'media_type': 'video'}]
+        plan = {'segments': [{'segment_id': 'seg-001', 'shot_recipe': {'components': components}}]}
+        with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan):
             adapters = run_stage.native_component_adapters(PROJECT, SimpleNamespace(job_dir=self.root))
-        self.assertEqual(adapters['official_material'], 'video-adapter')
+        self.assertEqual(adapters['official_material'][('seg-001', 'image')].artifact_media_type, 'image')
+        self.assertEqual(adapters['official_material'][('seg-001', 'video')].artifact_media_type, 'video')
+        self.assertEqual(adapters['official_material'][('seg-001', 'image')].approved_executor, 'official-media')
 
     def test_explicit_image_factory_reaches_existing_runner(self):
         factory = self.root / 'image_factory.py'
@@ -212,5 +205,105 @@ class ReviewAndDispatchTests(unittest.TestCase):
         finish.assert_called_once_with(job, expected_revision=19, delivery_sha256='b'*64, qa_note=review['note'])
         old_human_approval.assert_not_called()
         self.assertEqual(run_stage._summary(job, 'delivery')['review_required'], 'host')
+
+class SelectedPreparationTests(unittest.TestCase):
+    def test_supported_catalog_has_default_factory_and_exact_preflight_entry(self):
+        from edit.hd.tools.motion_capabilities import load_catalog
+        from project_python import _load_manifest
+        manifest = _load_manifest(SKILL / 'references/dependency-manifest.json')
+        registered = {(item['selection']['equals'], probe['entrypoint'], probe['producer_version'])
+                      for item in manifest['dependencies'] if item.get('selection', {}).get('component_kind') == 'code_generated'
+                      for probe in item.get('binding_probes', [])}
+        for row in load_catalog(PROJECT):
+            if row['status'] != 'supported' or row['role'] == 'design':
+                continue
+            with self.subTest(candidate=row['candidate_id']):
+                run_stage._check_default_binding(row)
+                self.assertIn((row['dependency_id'], row['entrypoint'], row['producer_version']), registered)
+
+    def test_base_preparation_excludes_optional_templates_and_checks(self):
+        import project_python as pp
+        manifest = pp._load_manifest(SKILL / 'references/dependency-manifest.json')
+        entries, checks = pp.preparation_selection(manifest, set())
+        self.assertEqual({x['id'] for x in entries}, {'talkcraft-runtime-health', 'punk-cover-project-skill', 'gbro-collage-broll-source'})
+        self.assertEqual(checks, [])
+        entries, checks = pp.preparation_selection(manifest, {'doudou-remotion-whiteboard'})
+        self.assertIn('doudou-whiteboard-source', {x['id'] for x in entries})
+        self.assertEqual([x['id'] for x in checks], ['doudou-remotion-adapter'])
+        self.assertNotIn('wise-motion', {x['id'] for x in entries})
+        with self.assertRaisesRegex(ValueError, 'Unknown'):
+            pp.preparation_selection(manifest, {'typo'})
+
+    def test_draft_binding_prepares_before_table_and_failure_does_not_publish(self):
+        draft = {'segments': [{'visual_strategy': {'components': [
+            {'kind': 'code_generated', 'component_id': 'v', 'executor': 'reference_adapter'}]},
+            'bindings': {'v': {'dependency_id': 'doudou-remotion-whiteboard', 'entrypoint': 'scripts/render_doudou.mjs',
+                               'producer_version': '2.0.0', 'primary_renderer': 'Remotion'}}}]}
+        import project_python as pp
+        calls = []
+        job = SimpleNamespace(job_dir=PROJECT)
+        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
+             mock.patch.object(run_stage, '_json', return_value=draft), \
+             mock.patch.object(pp, 'prepare_environment', side_effect=lambda *args: calls.append(('prepare', args))), \
+             mock.patch('edit.hd.tools.visual_confirmation.prepare_visual_confirmation', side_effect=lambda *a, **k: calls.append(('table', a)) or PROJECT / 'proposal.json'), \
+             mock.patch.object(run_stage, '_summary', return_value={}):
+            run_stage.run_visual_direction(PROJECT, PROJECT, Path('draft.json'), Path('treatment.json'))
+        self.assertEqual([c[0] for c in calls], ['prepare', 'table'])
+        self.assertEqual(calls[0][1][3], {'doudou-remotion-whiteboard'})
+        self.assertEqual(calls[0][1][4][0]['entrypoint'], 'scripts/render_doudou.mjs')
+        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
+             mock.patch.object(run_stage, '_json', return_value=draft), \
+             mock.patch.object(pp, 'prepare_environment', side_effect=RuntimeError('selected template unavailable')), \
+             mock.patch('edit.hd.tools.visual_confirmation.prepare_visual_confirmation') as publish:
+            with self.assertRaisesRegex(RuntimeError, 'unavailable'):
+                run_stage.run_visual_direction(PROJECT, PROJECT, Path('draft.json'), Path('treatment.json'))
+        publish.assert_not_called()
+
+    def test_new_native_constructor_signatures_and_launchers(self):
+        for dependency, module_name, node in [('doudou-remotion-whiteboard', 'doudou_adapter', True),
+                 ('motion-graphics-native', 'motion_graphics_adapter', False),
+                 ('lemo-opuscar', 'upstream_scene_adapter', False), ('onetake', 'upstream_scene_adapter', False)]:
+            module = run_stage._module(module_name)
+            factory = mock.create_autospec(module.create_adapter, return_value='bound')
+            plan = {'segments': [{'shot_recipe': {'components': [{'kind': 'code_generated', 'dependency_id': dependency}]}}]}
+            with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan), \
+                 mock.patch.object(run_stage, '_module', return_value=SimpleNamespace(create_adapter=factory)):
+                result = run_stage.native_component_adapters(PROJECT, object())
+            args = factory.call_args.args
+            self.assertEqual(args[1] if dependency not in {'onetake', 'lemo-opuscar'} else args[2],
+                             run_stage.shutil.which('node') if node else sys.executable)
+            self.assertEqual(result['code_generated'][dependency], 'bound')
+
+
+class MaterialExecutionSmoke(unittest.TestCase):
+    def test_default_materials_execute_and_preserve_sources(self):
+        import subprocess, hashlib
+        from PIL import Image
+        from edit.hd.tests import test_broll_component_executor as fixture
+        from edit.hd.tools import broll_component_executor as executor
+        with tempfile.TemporaryDirectory() as directory:
+            job = fixture._Job(Path(directory).resolve())
+            image = job.job_dir / 'image.jpg'; Image.new('RGB', (1080,1920), 'blue').save(image)
+            video = job.job_dir / 'video.mp4'
+            subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','color=blue:s=1080x1920:r=30:d=2',
+                            '-f','lavfi','-i','sine=frequency=440:duration=2','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',str(video)], check=True)
+            for kind, media in [('local_material','image'),('local_material','video'),('official_material','image'),('official_material','video'),('external_stock','video')]:
+                source = image if media == 'image' else video
+                original = source.read_bytes()
+                component = fixture._material_component(kind, relative=source.name, source_sha=hashlib.sha256(original).hexdigest(), component_id=kind+'-'+media)
+                component['executor'] = {'local_material':'local-media','official_material':'official-media','external_stock':'external-stock'}[kind]
+                component['media_type'] = media
+                if kind == 'external_stock':
+                    target = job.job_dir / component['job_path']; target.parent.mkdir(parents=True); target.write_bytes(original)
+                    fixture._write_stock_license(job, component, original)
+                plan = {'segments':[{'segment_id':'seg-001','shot_recipe':fixture._recipe([component])}]}
+                with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan):
+                    adapters = run_stage.native_component_adapters(PROJECT, job)
+                artifact = executor.execute_component(job, fixture._request(component), adapters=adapters)
+                self.assertEqual(artifact.status, 'success')
+                self.assertEqual(artifact.media_type, media)
+                self.assertEqual(source.read_bytes(), original)
+                self.assertTrue((job.job_dir / artifact.job_path).is_file())
+
 
 if __name__ == "__main__": unittest.main()

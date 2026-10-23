@@ -166,6 +166,7 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     if director_brief is None or treatment is None:
         return {'blocked': '请提供当前草稿的 --director-brief 和 --treatment。'}
     reviewed = _json(_path(job, reviewed_visual_text)) if reviewed_visual_text else None
+    prepare_visual_dependencies(project, _json(_path(job, director_brief)))
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
         _path(job, treatment), reviewed_visual_text=reviewed)
     result = _summary(state.load_job(job_dir), 'visual_direction')
@@ -226,16 +227,69 @@ def _module(name: str):
     return module
 
 
+# Default constructor bindings; selection and preparation use these same IDs.
+_NATIVE_MODULES = {
+    'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
+    'eian-riso-broll': ('riso_native_adapter', 'python'),
+    'huashu-art-motion': ('huashu_motion_adapter', 'python'),
+    'overlay-studio-native': ('overlay_studio_adapter', 'python'),
+    'openfilm-motion-graphics': ('openfilm_motion_adapter', 'python'),
+    'huashu-motion-native': ('huashu_stat_adapter', 'python'),
+    'doudou-remotion-whiteboard': ('doudou_adapter', 'node'),
+    'talkcraft-native-adaptation': ('talkcraft_native_adapter', 'node'),
+    'wise-motion': ('wise_motion_adapter', 'node'),
+    'adu-motion-video': ('adu_native_adapter', 'node'),
+    'hypit-native-chat': ('hypit_native_adapter', 'node'),
+    'paper-collage-hyperframes': ('paper_hyperframes_adapter', 'python'),
+    'lemo-opuscar': ('upstream_scene_adapter', 'python'),
+    'onetake': ('upstream_scene_adapter', 'python'),
+}
+_HYPERFRAMES_MODULES = {
+    'scripts/render_hyperframes_hw_pipeline.cjs': 'hyperframes_hw_pipeline_adapter',
+    'scripts/render_hyperframes_notification.cjs': 'hyperframes_notification_adapter',
+    'scripts/render_hyperframes_chatgpt_exchange.cjs': 'hyperframes_chatgpt_exchange_adapter',
+}
+
+
+def _check_default_binding(binding):
+    dependency = binding.get('dependency_id')
+    if dependency not in {*_NATIVE_MODULES, 'hyperframes', 'html-video', 'paper-collage-ad', 'whiteboard-video'}:
+        raise ValueError(f'Selected dependency {dependency} has no default execution binding')
+    if dependency == 'html-video' and binding.get('entrypoint') != 'scripts/render_data_rollup.cjs':
+        raise ValueError('Selected html-video entrypoint has no default execution binding')
+    if dependency == 'hyperframes' and binding.get('entrypoint') not in _HYPERFRAMES_MODULES:
+        raise ValueError('Selected HyperFrames entrypoint has no default execution binding')
+
+
+def prepare_visual_dependencies(project: Path, director: dict) -> None:
+    """Prepare the selected draft bindings before publishing any user candidate."""
+    bindings = []
+    for segment in director['segments']:
+        for component in segment['visual_strategy']['components']:
+            if component['kind'] != 'code_generated':
+                continue
+            binding = segment.get('bindings', {}).get(component['component_id'], {})
+            _check_default_binding(binding)
+            fields = ('dependency_id', 'entrypoint', 'producer_version', 'primary_renderer')
+            if any(not isinstance(binding.get(key), str) or not binding[key] for key in fields):
+                raise ValueError('Selected template needs its actual execution binding before confirmation')
+            selected = {key: binding[key] for key in fields}
+            selected.update(executor=component['executor'])
+            if selected not in bindings:
+                bindings.append(selected)
+    if bindings:
+        from project_python import project_environment, prepare_environment
+        environment, packages = project_environment(project)
+        prepare_environment(project, environment, packages,
+                            {binding['dependency_id'] for binding in bindings}, bindings)
+
+
 def native_component_adapters(project: Path, job) -> dict:
     """Prepare only native dependencies selected by this Job."""
     from edit.hd.tools import visual_canary
     plan = visual_canary.load_approved_visual_plan(job)
     selected = [c for s in plan['segments'] for c in s['shot_recipe']['components']]
     noncode = [c for c in selected if c['kind'] != 'code_generated']
-    unsupported = [c for c in noncode if c['kind'] not in {'ai_generated', 'official_material'}
-                   or (c['kind'] == 'official_material' and c['media_type'] != 'video')]
-    if unsupported:
-        raise ValueError('Selected material media types require their existing --adapter-factory')
     dependencies = {c['dependency_id'] for c in selected if c['kind'] == 'code_generated'}
 
     def brief_loader(current, recipe, component):
@@ -245,31 +299,45 @@ def native_component_adapters(project: Path, job) -> dict:
                 return payload
         raise ValueError('Frozen native brief is missing: ' + component['brief_sha256'])
 
-    python_modules = {'hyperframes-native-adaptation': 'hyperframes_native_adapter',
-        'eian-riso-broll': 'riso_native_adapter', 'huashu-art-motion': 'huashu_motion_adapter',
-        'overlay-studio-native': 'overlay_studio_adapter', 'openfilm-motion-graphics': 'openfilm_motion_adapter'}
-    node_modules = {'talkcraft-native-adaptation': 'talkcraft_native_adapter',
-        'wise-motion': 'wise_motion_adapter', 'adu-motion-video': 'adu_native_adapter',
-        'hypit-native-chat': 'hypit_native_adapter'}
     adapters = {}
     for dependency in sorted(dependencies):
+        components = [c for c in selected if c['kind'] == 'code_generated' and c['dependency_id'] == dependency]
+        for component in components:
+            _check_default_binding(component)
         if dependency == 'hyperframes':
             runtime = _module('hyperframes_runtime').resolve_runtime(
                 project / 'skill-development/runtime/hyperframes-0.8.167')['root']
-            adapters[dependency] = _module('hyperframes_hw_pipeline_adapter').create_adapter(
-                runtime_root=runtime, node_executable=shutil.which('node'),
-                browser_executable='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-                ffmpeg_executable=shutil.which('ffmpeg'), brief_loader=brief_loader)
-            continue
-        name = python_modules.get(dependency) or node_modules.get(dependency)
-        if name is None:
-            raise ValueError(f'Selected dependency {dependency} needs its existing --adapter-factory')
-        module = _module(name)
-        launcher = sys.executable if dependency in python_modules else shutil.which('node')
-        adapters[dependency] = module.create_adapter(project, launcher, brief_loader)
+            registry = {}
+            for segment in plan['segments']:
+                for component in segment['shot_recipe']['components']:
+                    if component.get('dependency_id') != dependency:
+                        continue
+                    registry[(segment['segment_id'], component['component_id'])] = _module(
+                        _HYPERFRAMES_MODULES[component['entrypoint']]).create_adapter(
+                            runtime_root=runtime, node_executable=shutil.which('node'),
+                            browser_executable='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                            ffmpeg_executable=shutil.which('ffmpeg'), brief_loader=brief_loader)
+            adapters[dependency] = registry
+        elif dependency == 'html-video':
+            adapters[dependency] = _module('data_rollup_adapter').create_default_adapter(project, brief_loader)
+        elif dependency == 'paper-collage-ad':
+            adapters[dependency] = _module('paper_collage_adapter').create_adapter(
+                project / 'skill-development/vendor/paper-collage-ad-codex', sys.executable,
+                shutil.which('node'), shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
+        elif dependency == 'whiteboard-video':
+            vendor = project / 'skill-development/vendor'
+            engine = vendor / 'whiteboard-video-engine'
+            adapters[dependency] = _module('whiteboard_adapter').create_adapter(
+                vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
+                engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
+        else:
+            name, launcher_kind = _NATIVE_MODULES[dependency]
+            launcher = sys.executable if launcher_kind == 'python' else shutil.which('node')
+            module = _module(name)
+            adapters[dependency] = (module.create_adapter(project, dependency, launcher, brief_loader)
+                                    if dependency in {'lemo-opuscar', 'onetake'}
+                                    else module.create_adapter(project, launcher, brief_loader))
     result = {'code_generated': adapters}
-    if any(c['kind'] == 'official_material' for c in noncode):
-        result['official_material'] = _module('official_video_adapter').create_adapter(shutil.which('ffmpeg'))
     if any(c['kind'] == 'ai_generated' for c in noncode):
         from edit.hd.tools import visual_confirmation as confirmation
         evidence = confirmation.validate_visual_authorization(job, require_realized=True)
@@ -284,9 +352,15 @@ def native_component_adapters(project: Path, job) -> dict:
             if key not in registry:
                 registry[key] = _module('lovart_existing_video_adapter').create_adapter(job, record)
         result['ai_generated'] = registry
-    # The existing dispatcher chooses alpha or opaque probes per component.
-    # Choosing the first dependency's probe breaks mixed Riso/overlay plans.
-    result['artifact_probe'] = _module('hyperframes_native_adapter').create_artifact_probe(shutil.which('ffprobe'))
+    from edit.hd.tools import material_adapter
+    for kind in ('local_material', 'external_stock', 'official_material'):
+        entries = [(seg['segment_id'], c) for seg in plan['segments']
+                   for c in seg['shot_recipe']['components'] if c['kind'] == kind]
+        if entries:
+            result[kind] = {(sid, c['component_id']): material_adapter.create_adapter(
+                kind, c['media_type'], shutil.which('ffmpeg'), shutil.which('ffprobe')) for sid, c in entries}
+    # The dispatcher probes both direct images and native opaque/alpha videos.
+    result['artifact_probe'] = material_adapter.create_artifact_probe(ffprobe_executable=shutil.which('ffprobe'))
     return result
 
 

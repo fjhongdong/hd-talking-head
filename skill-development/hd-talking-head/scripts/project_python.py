@@ -129,12 +129,31 @@ def prepare_packages(manifest: dict, environment: dict[str, str], packages: Path
     return {"status": "ready", "installed": [], "package_directory": str(packages)}
 
 
-def prepare_environment(project: Path, environment: dict[str, str], packages: Path) -> dict:
+def preparation_selection(manifest: dict, selected_dependencies: set[str]) -> tuple[list[dict], list[dict]]:
+    """Select setup actions from the same dependency IDs used by recipe probes."""
+    known = {item.get("selection", {}).get("equals") for item in manifest["dependencies"]
+             if item.get("selection", {}).get("component_kind") == "code_generated"} - {"*"}
+    if selected_dependencies - known:
+        raise ValueError("Unknown selected dependencies: " + ", ".join(sorted(selected_dependencies - known)))
+    required = {item["id"] for item in manifest["dependencies"] if item.get("required")}
+    entries = [entry for entry in manifest.get("preparation", [])
+               if (bool(set(entry["dependency_ids"]) & selected_dependencies)
+                   if "dependency_ids" in entry else entry["id"] in required)]
+    checks = [item for item in manifest["dependencies"]
+              if item["id"] in manifest.get("runtime_checks", [])
+              and (item["id"] in required or item.get("selection", {}).get("equals") in selected_dependencies)]
+    return entries, checks
+
+
+def prepare_environment(project: Path, environment: dict[str, str], packages: Path,
+                        selected_dependencies: set[str] | None = None,
+                        selected_bindings: list[dict] | None = None) -> dict:
     skill = Path(__file__).resolve().parents[1]
     release = verify_release(skill)
     if release["status"] != "pass":
         raise RuntimeError("Skill release check failed; no installation attempted")
     manifest = _load_manifest(skill / "references/dependency-manifest.json")
+    entries, checks = preparation_selection(manifest, set(selected_dependencies or ()))
     from edit.hd.tools.startup import assert_project_origin
     assert_project_origin(project)
     if packages.resolve() != packages.absolute() or not packages.resolve().is_relative_to(project):
@@ -154,7 +173,7 @@ def prepare_environment(project: Path, environment: dict[str, str], packages: Pa
             report["python_packages"] = prepare_packages(manifest, environment, packages, report["commands"])
             native_environment = {key: value for key, value in environment.items()
                                   if key not in {"PYTHONPATH", "PYTHONHOME"}}
-            for entry in manifest.get("preparation", []):
+            for entry in entries:
                 record = {"id": entry["id"]}
                 report["preparation"].append(record)
                 if "node_tool" in entry:
@@ -163,20 +182,22 @@ def prepare_environment(project: Path, environment: dict[str, str], packages: Pa
                 _run_preparation([
                     sys.executable, str(skill / entry["script"]), "--project-root", str(project), *entry["arguments"],
                 ], environment=native_environment, record=record, timeout=600)
-            for item in manifest["dependencies"]:
-                if item["id"] not in manifest.get("runtime_checks", []):
-                    continue
+            for item in checks:
                 base = project if item["kind"] == "project_path" else project / "参考项目/B-roll开源方案"
                 dependency_root = (base / item["target"]).resolve()
-                for probe in item["binding_probes"]:
-                    identity = probe["adapter_identity"]
-                    checked = _check_binding_probe(item, {
-                        "entrypoint": probe["entrypoint"], "producer_version": probe["producer_version"],
-                        "dependency_id": item["selection"]["equals"],
-                        "executor": identity["approved_executor"], "primary_renderer": identity["primary_renderer"],
-                    }, project_root=project, reference_root=project / "参考项目/B-roll开源方案",
+                bindings = ([binding for binding in selected_bindings
+                             if binding["dependency_id"] == item["selection"]["equals"]]
+                            if selected_bindings is not None else [
+                    {"entrypoint": probe["entrypoint"], "producer_version": probe["producer_version"],
+                     "dependency_id": item["selection"]["equals"],
+                     "executor": probe["adapter_identity"]["approved_executor"],
+                     "primary_renderer": probe["adapter_identity"]["primary_renderer"]}
+                    for probe in item["binding_probes"]])
+                for binding in bindings:
+                    checked = _check_binding_probe(item, binding,
+                        project_root=project, reference_root=project / "参考项目/B-roll开源方案",
                         dependency_root=dependency_root, env=environment)
-                    report["runtime_checks"].append({"id": item["id"], "entrypoint": probe["entrypoint"],
+                    report["runtime_checks"].append({"id": item["id"], "entrypoint": binding["entrypoint"],
                                                      "status": "callable" if checked["status"] == "bound" else checked["status"]})
                     if checked["status"] != "bound":
                         raise RuntimeError(f"runtime check failed: {item['id']}: " + json.dumps(checked))
@@ -199,6 +220,8 @@ def main() -> int:
     parser.add_argument("--project-root", type=Path,
                         default=Path(__file__).resolve().parents[3])
     parser.add_argument("--prepare", action="store_true")
+    parser.add_argument("--dependency-id", action="append", default=[],
+                        help="Prepare an optional selected dependency (repeatable)")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     project = args.project_root.expanduser().resolve()
@@ -209,7 +232,8 @@ def main() -> int:
     if args.prepare:
         try:
             sys.path.insert(0, str(project))
-            print(json.dumps(prepare_environment(project, environment, packages), ensure_ascii=False), flush=True)
+            print(json.dumps(prepare_environment(project, environment, packages,
+                set(args.dependency_id)), ensure_ascii=False), flush=True)
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
             print(str(exc), file=sys.stderr)
             return 2

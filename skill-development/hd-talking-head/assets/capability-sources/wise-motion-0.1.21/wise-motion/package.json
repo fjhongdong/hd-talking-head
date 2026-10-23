@@ -1,0 +1,58 @@
+{
+  "name": "wise-motion",
+  "version": "0.1.21",
+  "description": "理解动作需求，匹配动效参考，交付源码与接入说明",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "^24.15.0 || >=26"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs && node scripts/build-remotion.mjs",
+    "check": "node scripts/check.mjs && npm run check:fonts",
+    "check:fonts": "python3 scripts/build-fonts.py --check",
+    "publish:package": "node scripts/publish-package.mjs",
+    "test:files": "node --test --test-concurrency=4",
+    "test:publish": "npm run test:files -- tests/package-publish.test.mjs",
+    "test:ci": "npm run check && npm run test:files -- tests/release-workflow.test.mjs tests/package-publish.test.mjs tests/package-install.test.mjs tests/asset-install.test.mjs tests/asset-download.test.mjs tests/matching.test.mjs tests/source-delivery.test.mjs && npm run check:remotion",
+    "build:history": "node scripts/build-history.mjs",
+    "check:history": "node scripts/build-history.mjs --check",
+    "test": "npm run check && npm run check:history && npm run test:files -- tests/*.test.mjs",
+    "build:remotion": "node scripts/build-remotion.mjs",
+    "check:remotion": "npm run test:files -- tests/remotion-clock.test.mjs tests/remotion-adapter-regressions.test.mjs tests/remotion-resource-boundaries.test.mjs tests/remotion-production.test.mjs",
+    "render": "node scripts/render-remotion.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.1",
+    "esbuild": "0.28.2"
+  },
+  "exports": "./dist/index.mjs",
+  "files": [
+    "dist",
+    "catalog",
+    "vendor",
+    "scripts/install-assets.mjs",
+    "scripts/install-package.mjs",
+    "LICENSE",
+    "NOTICE.md",
+    "REMOTION.md",
+    "ASSET-MANIFEST.json"
+  ],
+  "dependencies": {
+    "remotion": "4.0.532",
+    "@remotion/player": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "@remotion/bundler": "4.0.532",
+    "@remotion/cli": "4.0.532",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WiseWong6/wise-motion.git"
+  },
+  "homepage": "https://github.com/WiseWong6/wise-motion#readme"
+}

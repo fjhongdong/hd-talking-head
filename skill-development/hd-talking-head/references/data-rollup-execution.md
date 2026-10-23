@@ -14,7 +14,7 @@
 
 ## 配置与真实调用
 
-宿主在新任务的环境确认中提供：兼容的 `edit/hd` 项目运行时、Python、Node、已安装的 Remotion runtime 目录、本地 Chromium 和 FFprobe 的绝对路径。封装不安装依赖、不使用 `npx` 下载、不调用付费 provider。本机验证版本为 Remotion / renderer / bundler 4.0.520；三者必须同版本，其他版本仍要重新跑本接口实测和本次 canary。
+正常流程由 `run_stage.py` 默认工厂组装：复用包内 `edit/hd/integrations/talkcraft/runtime` 的 Remotion 4.0.520、Node、系统 Chrome 和当前 Job brief。整表确认前，依赖预检实际加载该入口及渲染模块。显式调用时仍可提供兼容的运行环境路径。封装不安装依赖、不使用 `npx` 下载、不调用付费 provider。本机验证版本为 Remotion / renderer / bundler 4.0.520；三者必须同版本，其他版本仍要重新跑本接口实测和本次 canary。
 
 在已配置项目模块路径的新 Python 进程中加载 `<skill>/scripts/data_rollup_adapter.py`：
 

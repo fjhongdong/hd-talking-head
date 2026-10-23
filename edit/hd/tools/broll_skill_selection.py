@@ -159,7 +159,9 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         add(talkcraft_dependency, production["derived_entrypoint"],
             "hd-talking-head/talkcraft/" + card["card_id"], production["adapter_version"],
             families=card["semantic_families"], capacity={"min_units": 1, "max_units": 8},
-            limitations=(card["suitable_for"], "Required media: " + ", ".join(card["required_media"])))
+            status="needs_adapter",
+            limitations=(card["suitable_for"], "Required media: " + ", ".join(card["required_media"]),
+                         "Qualification retained; the current package has no TalkCraft production adapter"))
         found[-1]["summary"] = card["summary"]
 
     for dep, relative in (

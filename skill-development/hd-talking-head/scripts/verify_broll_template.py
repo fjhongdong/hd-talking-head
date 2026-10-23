@@ -191,6 +191,20 @@ def verify_production_video(path: Path, *, expected_frames: int) -> dict[str, An
     return probe
 
 
+def _historical_entrypoint(root: Path, source_template: dict, evidence: dict, label: str) -> Path:
+    """Verify what ran then; current execution still pins its own actual code."""
+    entry = evidence["approved_entrypoint"]
+    reference = {"path": entry, "sha256": evidence["entrypoint_sha256"]}
+    snapshots = [ref for ref in source_template.get("source_files", [])
+                 if "/native-source/" in ref["path"]]
+    if snapshots:
+        matches = [ref for ref in snapshots if ref["path"].split("/native-source/", 1)[1] == entry]
+        if len(matches) != 1 or matches[0]["sha256"] != reference["sha256"]:
+            raise RegistryError(label + ".historical entrypoint differs from its source snapshot")
+        reference = matches[0]
+    return _proof_asset(root, reference, label + ".entrypoint")
+
+
 def _proof_asset(root: Path, reference: object, label: str) -> Path:
     ref = _exact_object(reference, {"path", "sha256"}, label)
     path = _relative_asset(root, ref["path"], label + ".path")
@@ -662,7 +676,7 @@ def _verify_execution_pair(root: Path, item: dict[str, Any]) -> None:
             binding = _verify_published_execution(receipt, recipe)
             if binding["qualification_registry"] != qa["source_registry"]:
                 raise RegistryError(label + ".published execution does not bind source_registry")
-        _proof_asset(root, {"path": evidence["approved_entrypoint"], "sha256": evidence["entrypoint_sha256"]}, label + ".entrypoint")
+        _historical_entrypoint(root, previous, evidence, label)
         _verify_registry_invocation(evidence, qa["source_registry"], relation=relation or semantic)
         probe = verify_production_video(sample, expected_frames=frames)
         reported = artifact["media_probe"]
