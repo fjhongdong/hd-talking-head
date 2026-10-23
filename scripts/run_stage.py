@@ -233,15 +233,17 @@ def run_speech_cleanup(job_dir: Path, project: Path) -> dict:
 
 
 def _reset_stage(job_dir: Path, stage: str, job):
-    """Reset a stage to pending and clear its output directory."""
+    """Reset a stage to pending and clear its output directory.
+
+    07-visual-direction is owned by the runtime's generation swap; never
+    delete it here (the lineage gate requires the previous generation).
+    """
     from edit.hd.tools import state
     if job.stages[stage]["status"] not in ("pending",):
         state.revise(job, stage, "run_stage: 重跑")
-        target = job_dir / {
-            "speech_cleanup": "05-speech-cleanup",
-            "edit_structure": "06-edit-structure",
-            "visual_direction": "07-visual-direction",
-            "visual_canary": "08-visual-canary",
+        target = {
+            "speech_cleanup": job_dir / "05-speech-cleanup",
+            "edit_structure": job_dir / "06-edit-structure",
         }.get(stage)
         if target and target.exists():
             shutil.rmtree(target)
@@ -249,63 +251,108 @@ def _reset_stage(job_dir: Path, stage: str, job):
     return job
 
 
+def _density_preflight(job_dir: Path, plan: dict) -> None:
+    """The production default is an enriched plan; a bare plan fails here.
+
+    Checks overlay presence and B-roll density against the visual quality
+    contract BEFORE any rendering, so semantic selection cannot be skipped.
+    """
+    segments = plan.get("segments", [])
+    overlays = [s for s in segments
+                if s.get("visual_strategy", {}).get("composition", {}).get("family") == "aroll_with_overlay"]
+    broll = [s for s in segments
+             if s.get("visual_strategy", {}).get("composition", {}).get("family")
+             not in {"no_broll", "aroll_with_overlay"}]
+    duration = float(plan.get("duration") or 0) or max(
+        (float(s["end"]) for s in segments), default=0.0)
+    ratio = sum(s["end"] - s["start"] for s in broll) / duration * 100 if duration else 0
+    problems = []
+    if not overlays:
+        problems.append("no A-roll overlay segment (semantic selection was skipped)")
+    elif len(overlays) < max(4, round(duration / 20)):
+        problems.append(
+            f"only {len(overlays)} overlays; this project expects roughly one per "
+            "12-17s of speech (semantic judgement first, quantity follows)")
+    if not broll:
+        problems.append("no full-screen B-roll segment")
+    else:
+        if broll[0]["start"] > 15.0:
+            problems.append(f"first B-roll starts at {broll[0]['start']:.1f}s (>15s)")
+        if ratio < 55.0:
+            problems.append(
+                f"B-roll ratio {ratio:.1f}% is below the 55% floor (project target ~60%)")
+    if problems:
+        raise SystemExit(
+            "visual_direction density preflight failed — the production default is an "
+            "enriched plan:\n  " + "\n  ".join(problems)
+            + "\nRun scripts/build_native_visual.py for semantic overlay/B-roll "
+              "selection before approving this stage.")
+
+
 def run_visual_direction(job_dir: Path, project: Path) -> dict:
-    """visual_direction: pure A-roll plan from the approved edit, all schemas internal."""
+    """visual_direction: pure A-roll plan from the approved edit, all schemas internal.
+
+    When native-inputs/director-brief.json already exists (e.g. enriched by
+    build_native_visual.py), reuse it instead of regenerating the base plan.
+    """
     from edit.hd.tools import state, visual_plan
 
     job = _reset_stage(job_dir, "visual_direction", state.load_job(job_dir))
 
-    tm = json.loads((job_dir / "06-edit-structure/timeline-map.json").read_text())
-    cp = json.loads((job_dir / "06-edit-structure/edit-plan.json").read_text())["cleanup_proposal"]
-    ca = json.loads((job_dir / "02-content-analysis/content-analysis.json").read_text())
-    item_ids = [i["id"] for i in ca.get("items", [])] or ["item-1"]
-
-    # One segment per keep cut, contiguous over the edited timeline.
-    segments = []
-    for tm_seg, cp_seg in zip(tm["segments"], cp["segments"]):
-        if cp_seg["action"] != "keep":
-            continue
-        sid = f"seg-{len(segments)+1:03d}"
-        statement = (cp_seg.get("original_sentence") or "")[:60]
-        segments.append({
-            "segment_id": sid,
-            "start": tm_seg["timeline_start"],
-            "end": tm_seg["timeline_end"],
-            "content_item_ids": item_ids[:1],
-            "visible_text": [],
-            "visual_intent": {
-                "segment_id": sid, "statement": statement or "口播讲解",
-                "semantic_goals": ["explain"],
-                "claims": [], "entities": [], "relations": [],
-                "requirements": {"verifiability": "low", "realism": "medium",
-                                  "abstraction": "medium", "product_specificity": "low",
-                                  "emotional_intensity": "low"},
-                "presenter_presence": "allowed",
-            },
-            "visual_strategy": {
-                "schema_version": 1, "segment_id": sid, "mode": "none",
-                "rationale": "纯 A-roll 真人讲解",
-                "components": [],
-                "composition": {"family": "no_broll", "presenter_mode": "full_frame",
-                                 "reading_order": [], "component_dependencies": []},
-            },
-            "candidate_snapshots": {}, "bindings": {}, "strategy_revision": 1,
-        })
-
     ni = job_dir / "native-inputs"
-    ni.mkdir(exist_ok=True)
-    (ni / "director-brief.json").write_text(
-        json.dumps({"schema_version": 3, "segments": segments}, ensure_ascii=False, indent=2) + "\n")
-    (ni / "treatment.json").write_text(json.dumps({
-        "schema_version": 2,
-        "overlay_alignment": [], "overlay_selection": [], "repeat_review": [],
-        "scenes": [], "semantic_assessments": [],
-        "skill_selection": {
-            "schema_version": 1, "beats": [], "assignments": [], "fixed_context": [],
-            "recent_context": [], "history_note": "纯 A-roll 无 B-roll，无历史视频可参考",
-        },
-        "title": json.loads((job_dir / "workflow.json").read_text()).get("title", ""),
-    }, ensure_ascii=False, indent=2) + "\n")
+    brief_path = ni / "director-brief.json"
+    if not brief_path.is_file():
+        tm = json.loads((job_dir / "06-edit-structure/timeline-map.json").read_text())
+        cp = json.loads((job_dir / "06-edit-structure/edit-plan.json").read_text())["cleanup_proposal"]
+        ca = json.loads((job_dir / "02-content-analysis/content-analysis.json").read_text())
+        item_ids = [i["id"] for i in ca.get("items", [])] or ["item-1"]
+
+        # One segment per keep cut, contiguous over the edited timeline.
+        segments = []
+        for tm_seg, cp_seg in zip(tm["segments"], cp["segments"]):
+            if cp_seg["action"] != "keep":
+                continue
+            sid = f"seg-{len(segments)+1:03d}"
+            statement = (cp_seg.get("original_sentence") or "")[:60]
+            segments.append({
+                "segment_id": sid,
+                "start": tm_seg["timeline_start"],
+                "end": tm_seg["timeline_end"],
+                "content_item_ids": item_ids[:1],
+                "visible_text": [],
+                "visual_intent": {
+                    "segment_id": sid, "statement": statement or "口播讲解",
+                    "semantic_goals": ["explain"],
+                    "claims": [], "entities": [], "relations": [],
+                    "requirements": {"verifiability": "low", "realism": "medium",
+                                      "abstraction": "medium", "product_specificity": "low",
+                                      "emotional_intensity": "low"},
+                    "presenter_presence": "allowed",
+                },
+                "visual_strategy": {
+                    "schema_version": 1, "segment_id": sid, "mode": "none",
+                    "rationale": "纯 A-roll 真人讲解",
+                    "components": [],
+                    "composition": {"family": "no_broll", "presenter_mode": "full_frame",
+                                     "reading_order": [], "component_dependencies": []},
+                },
+                "candidate_snapshots": {}, "bindings": {}, "strategy_revision": 1,
+            })
+        ni.mkdir(exist_ok=True)
+        brief_path.write_text(
+            json.dumps({"schema_version": 3, "segments": segments}, ensure_ascii=False, indent=2) + "\n")
+
+    if not (ni / "treatment.json").is_file():
+        (ni / "treatment.json").write_text(json.dumps({
+            "schema_version": 2,
+            "overlay_alignment": [], "overlay_selection": [], "repeat_review": [],
+            "scenes": [], "semantic_assessments": [],
+            "skill_selection": {
+                "schema_version": 1, "beats": [], "assignments": [], "fixed_context": [],
+                "recent_context": [], "history_note": "纯 A-roll 无 B-roll，无历史视频可参考",
+            },
+            "title": json.loads((job_dir / "workflow.json").read_text()).get("title", ""),
+        }, ensure_ascii=False, indent=2) + "\n")
 
     (job_dir / "manifests").mkdir(exist_ok=True)
     (job_dir / "manifests/confirmed-content.json").write_text(json.dumps({
@@ -313,12 +360,24 @@ def run_visual_direction(job_dir: Path, project: Path) -> dict:
         "source_words": [], "visuals": [],
     }, ensure_ascii=False, indent=2) + "\n")
 
+    reviewed = None
+    reviewed_path = ni / "reviewed-visual-text.json"
+    if reviewed_path.is_file():
+        reviewed = json.loads(reviewed_path.read_text())
     plan_path = visual_plan.prepare_visual_direction(
-        job, ni / "director-brief.json",
+        job, brief_path,
         job_dir / "official-previews",
         treatment_path=ni / "treatment.json",
+        reviewed_visual_text=reviewed,
     )
-    state.approve(state.load_job(job_dir), "visual_direction")
+    published = json.loads(plan_path.read_text())
+    try:
+        _density_preflight(job_dir, published)
+    except SystemExit:
+        # Never leave a below-standard plan sitting in ready_for_review.
+        state.revise(state.load_job(job_dir), "visual_direction",
+                     "密度预检未过：回到语义选型")
+        raise
 
     # The startup preflight pins the approved plan's sha; refresh the binding.
     ctx = job_dir.parents[3] / "job-context.json"  # …/edit/hd/jobs/<id> → workspace
@@ -331,12 +390,41 @@ def run_visual_direction(job_dir: Path, project: Path) -> dict:
             "segments": len(plan["segments"]), "duration_s": round(plan["duration"], 2)}
 
 
+def native_component_adapters(project: Path) -> dict:
+    """Assemble the frozen native adapters + probes for every driven route."""
+    import importlib.util
+    import shutil
+    code: dict[str, object] = {}
+    probes = []
+    for module_name in ("hyperframes_native_adapter", "riso_native_adapter"):
+        spec = importlib.util.spec_from_file_location(
+            "hd_" + module_name, SKILL / "scripts" / (module_name + ".py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        def brief_loader(job, recipe, component, _module=module):
+            wanted = component["brief_sha256"]
+            for candidate in (Path(job.job_dir) / "native-inputs").glob("**/brief.json"):
+                data = candidate.read_bytes()
+                if hashlib.sha256(data).hexdigest() == wanted:
+                    return data
+            raise ValueError("frozen native brief not found: " + str(wanted))
+
+        code[module.DEPENDENCY_ID] = module.create_adapter(project, sys.executable, brief_loader)
+        probes.append(module.create_artifact_probe(shutil.which("ffprobe")))
+    probe = probes[0]
+    for extra in probes[1:]:
+        probe = extra if probe is None else probe
+    return {"code_generated": code, "artifact_probe": probe}
+
+
 def run_visual_canary(job_dir: Path, project: Path) -> dict:
     """visual_canary: render representative segments (A-roll passthrough for no_broll)."""
     from edit.hd.tools import state, visual_canary
 
     job = state.load_job(job_dir)
-    result = visual_canary.prepare_visual_canary(job, component_adapters={})
+    result = visual_canary.prepare_visual_canary(
+        job, component_adapters=native_component_adapters(project))
     state.approve(state.load_job(job_dir), "visual_canary")
     w = state.load_job(job_dir)
     video = job_dir / "08-visual-canary/visual-canary.mp4"
@@ -350,7 +438,7 @@ def run_visual_assets(job_dir: Path, project: Path) -> dict:
     from edit.hd.tools import state, visual_assets_v2
 
     result = visual_assets_v2.prepare_visual_assets_v2(
-        state.load_job(job_dir), component_adapters={})
+        state.load_job(job_dir), component_adapters=native_component_adapters(project))
     state.approve(state.load_job(job_dir), "visual_assets")
     w = state.load_job(job_dir)
     return {"visual_assets": w.stages["visual_assets"]["status"],
@@ -368,11 +456,37 @@ def run_subtitles(job_dir: Path, project: Path) -> dict:
             "track": result.name}
 
 
-def run_preview(job_dir: Path, project: Path) -> dict:
-    """preview: composite the review video (visual track + subtitles)."""
-    from edit.hd.tools import state, preview
+def _coverage_gate(job_dir: Path) -> None:
+    """Skill-mandated visual coverage audit on the preview/delivery chain."""
+    import subprocess
+    plan = job_dir / "07-visual-direction/visual-plan.json"
+    subs = job_dir / "10-subtitles/subtitle-plan.json"
+    if not (plan.is_file() and subs.is_file()):
+        return
+    cmd = [sys.executable, str(SKILL / "scripts/audit_visual_coverage.py"),
+           "--visual-plan", str(plan), "--subtitle-plan", str(subs),
+           "--require-overlays", "--require-density"]
+    ca = job_dir / "02-content-analysis/content-analysis.json"
+    treatment = job_dir / "native-inputs/treatment.json"
+    if ca.is_file():
+        cmd += ["--content-analysis", str(ca)]
+    if treatment.is_file():
+        cmd += ["--treatment", str(treatment)]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise SystemExit("visual coverage gate failed:\n" + result.stdout[-2000:])
 
-    preview.prepare_preview(state.load_job(job_dir))
+
+def run_preview(job_dir: Path, project: Path) -> dict:
+    """preview: cover opening (production default) + composite the review video."""
+    from edit.hd.tools import state, preview_v2
+
+    _coverage_gate(job_dir)
+    job = state.load_job(job_dir)
+    defaults = json.loads((SKILL / "references/production-defaults.json").read_text())
+    setup = json.loads((job_dir / "manifests/setup-approval.json").read_text())
+    preview_v2.prepare_preview_v2(
+        job, opening={**defaults["opening"], "user_confirmation": setup["user_confirmation"]})
     state.approve(state.load_job(job_dir), "preview")
     w = state.load_job(job_dir)
     review = job_dir / "11-preview/review.mp4"
@@ -384,6 +498,7 @@ def run_delivery(job_dir: Path, project: Path) -> dict:
     """delivery: build final.mp4 and stop at the human approval gate."""
     from edit.hd.tools import state, qa_delivery_v2
 
+    _coverage_gate(job_dir)
     qa_delivery_v2.prepare_delivery_v2(state.load_job(job_dir))
     w = state.load_job(job_dir)
     final = job_dir / "12-delivery/final.mp4"

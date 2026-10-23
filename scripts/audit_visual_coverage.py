@@ -36,6 +36,8 @@ def audit(
     window_seconds: float = 20.0,
     content_analysis: dict | None = None,
     require_overlays: bool = False,
+    require_density: bool = False,
+    treatment: dict | None = None,
 ) -> dict:
     segments = visual["segments"]
     cues = subtitles["render_plan"]["cues"]
@@ -144,12 +146,41 @@ def audit(
     }
     if content_analysis is not None:
         result["needs_review_items"] = needs_review_items
+    blocking: list[str] = []
     if require_overlays and not overlays:
-        result["blocking_issues"] = [
+        blocking.append(
             "require_overlays is enabled, but the visual plan contains no aroll_with_overlay segments"
-        ]
-    else:
-        result["blocking_issues"] = []
+        )
+    if require_density:
+        # Density contract: first B-roll within 15s, no silent gap over 15s,
+        # overlays never count as B-roll. The 50–65% ratio is a planning
+        # reference, so a low ratio blocks only without a written note.
+        gap_reasons = {}
+        for row in (treatment or {}).get("broll_gap_reasons", []):
+            if isinstance(row, dict) and isinstance(row.get("reason"), str) and row["reason"].strip():
+                gap_reasons[(round(float(row.get("start", -1), 1)), round(float(row.get("end", -1), 1)))] = row["reason"]
+        def _reasoned(interval):
+            return gap_reasons.get((round(interval["start"], 1), round(interval["end"], 1)))
+        if not broll_segments:
+            blocking.append("density gate: the plan has no full-screen B-roll segment")
+        else:
+            first_start = broll_segments[0]["start"]
+            if first_start > 15.0 and not gap_reasons.get((0.0, round(first_start, 1))):
+                blocking.append(
+                    "density gate: first B-roll starts after 15s "
+                    f"({first_start:.1f}s) without a declared reason")
+            for gap in gaps:
+                if gap["end"] - gap["start"] > 15.0 and not _reasoned(gap):
+                    blocking.append(
+                        "density gate: no B-roll for "
+                        f"{gap['end'] - gap['start']:.1f}s ({gap['start']:.1f}-{gap['end']:.1f}s) "
+                        "without a declared reason")
+            ratio = broll_seconds / duration * 100 if duration else 0.0
+            if ratio < 40.0 and not str((treatment or {}).get("broll_ratio_note", "")).strip():
+                blocking.append(
+                    f"density gate: B-roll ratio is {ratio:.1f}% (planning reference 50-65%) "
+                    "without a declared broll_ratio_note")
+    result["blocking_issues"] = blocking
     return result
 
 
@@ -159,7 +190,9 @@ def main() -> None:
     parser.add_argument("--subtitle-plan", type=Path, required=True)
     parser.add_argument("--window-seconds", type=float, default=20.0)
     parser.add_argument("--content-analysis", type=Path)
+    parser.add_argument("--treatment", type=Path)
     parser.add_argument("--require-overlays", action="store_true")
+    parser.add_argument("--require-density", action="store_true")
     args = parser.parse_args()
     if args.window_seconds <= 0:
         parser.error("--window-seconds must be positive")
@@ -169,12 +202,15 @@ def main() -> None:
         json.loads(args.content_analysis.read_text(encoding="utf-8"))
         if args.content_analysis else None
     )
+    treatment = json.loads(args.treatment.read_text(encoding="utf-8")) if args.treatment else None
     result = audit(
         visual,
         subtitles,
         args.window_seconds,
         content_analysis=content_analysis,
         require_overlays=args.require_overlays,
+        require_density=args.require_density,
+        treatment=treatment,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if result["blocking_issues"]:

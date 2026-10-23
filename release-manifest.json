@@ -2081,11 +2081,14 @@
   "scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
   "scripts/adu_native_adapter.py": "5e9ea378cef54083ac06fa99a76aef74b93a1e68d59d416230af7c5ea5aeec28",
   "scripts/audit_job_completion.py": "0ab6ed2597e69da4add97e042a696f32ee64cf6de07bb51fa262217b36922c87",
-  "scripts/audit_visual_coverage.py": "af573510a8f92cd71c3a3b9531628e0bb526448ac9d633c8203310e11a7c9448",
+  "scripts/audit_visual_coverage.py": "d36394dac428efc14759a251a46b364e5ea7f0fb006b1de7f191113ec0ac11ac",
   "scripts/auto_advance.py": "64a101e979788bafb13a42b597df0c737318872e8a59839b24c8bcc44bdba958",
   "scripts/avatar_profile.py": "761ce28db67147a7a45ba0fa4ff5a34688a39b0e87f848f88b7297d2b522fa5a",
   "scripts/broll_capability_router.py": "ca52e163e0fdd7a8e5801c93d61ad4bad0148fcc3125582d93993cb758003535",
+  "scripts/build_native_visual.py": "a6785e841c8eee4e90e801386166b2e25b8345089c0134ddbf9dbe69b99b5e2b",
+  "scripts/calibrate_avatars.py": "c1c4ae43e7eea2061e806b955e4ddd213cf9eed76f4b4eda1c589a6b1e93a801",
   "scripts/check_native_overlay_clock.mjs": "8346935e9d7230c95d419b2b7b4bae9afa8a4f1c12715de16a1031c29f66be58",
+  "scripts/compose_visual_plan.py": "97d699fb3dafea62302dc1f458673ccc4448724d793f71c566afdba84b4d94c9",
   "scripts/confirm_job_setup.py": "69c8d0a1f9f65532c3ee2dd46f0b8b2e972ab4bacb9aaf833f770c4598498647",
   "scripts/create_job_workspace.py": "8cb234f060bb480e82f199097cc35d6474d75cd82a854ff97617a698e4175723",
   "scripts/data_rollup_adapter.py": "c38600d04247c223da78de450d891155e8b7860d4ca2c35010f2b69fbd0a41fe",
@@ -2138,7 +2141,7 @@
   "scripts/render_whiteboard.py": "1742ba0274000396953e61fc3ad89a83a3034ef174da5c1a944a510935c9d121",
   "scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
   "scripts/riso_native_adapter.py": "b6a7d8d0bb4cf6f6e49476e25ce68524d61a60ce970e63fe13543c6b13a23a22",
-  "scripts/run_stage.py": "384fc126905f03f7284c3b300855853745b00b1bfd848dcef474844e17f339a3",
+  "scripts/run_stage.py": "9b8139eb9d4d7a6d10ad61d67247669d6606686491cee5c9b93545b50bd8a450",
   "scripts/run_video.py": "339161541b235fda4b07d38ed27ef7bc62508e53edbd1a457594195f6efc51b8",
   "scripts/runtime_bundle.py": "e43792f10fa5f9206d04a2b7c916bf4bbac5ae3da2f8826f871f93500c957d34",
   "scripts/select_broll_skills.py": "a1565042ed620d6e1da5e2271c0cefc8d3ab9ad64c61479cb473a5e1f297e30d",
@@ -2205,6 +2208,6 @@
   "tests/test_verified_template_registry.py": "dd75667bdadacafbcdb58b02140271b57afd53441894d83afaf96b063e421d20",
   "tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a"
  },
- "release_id": "2026-10-22-no-broll-canary-v168",
+ "release_id": "2026-10-23-semantic-composer-v169",
  "schema_version": 1
 }
