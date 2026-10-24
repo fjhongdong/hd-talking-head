@@ -69,12 +69,76 @@ def _source_id(binding):
             return value
     return None
 
-def number_visual_rows(rows):
-    """Keep display numbers tied to the frozen complete-list sequence."""
-    return [{**row, "number": number} for number, row in enumerate(rows, 1)]
+def _prior_numbering(job):
+    """Read numbering from an earlier approved proposal in this Job only.
+
+    Older proposals did not persist numbering; their frozen row order is the
+    explicit starting point for the new mapping.
+    """
+    candidates = []
+    for path in (Path(job.job_dir) / "manifests").glob("local-qa-visual_direction-r*.json"):
+        receipt = _read(path)
+        if receipt.get("source_schema") != SCHEMA or receipt.get("job_id") != job.job_id:
+            continue
+        if (receipt.get("job_dir") != str(job.job_dir) or receipt.get("stage") != "visual_direction"
+                or receipt.get("passed") is not True or receipt.get("reviewed_by") != "human"
+                or receipt.get("approval_scope") != "visual_plan_and_delivery"
+                or type(receipt.get("revision")) is not int or receipt["revision"] > job.revision):
+            raise VisualConfirmationError("invalid approved visual source")
+        try:
+            source = receipt.get("source")
+            if not isinstance(source, dict):
+                raise VisualConfirmationError("approved visual source descriptor is invalid")
+            proposal_path = _exact(job.job_dir, source)
+            proposal = _read(proposal_path)
+            if proposal.get("job_id") != job.job_id or proposal.get("job_dir") != str(job.job_dir) or proposal.get("kind") != SCHEMA:
+                raise VisualConfirmationError("approved visual proposal belongs to another Job")
+            rows = proposal.get("rows", [])
+            numbering = proposal.get("numbering")
+            if numbering is not None:
+                _validate_numbering(numbering)
+                if any(row["row_id"] not in numbering for row in rows):
+                    raise VisualConfirmationError("approved numbering is incomplete")
+                mapping = dict(numbering)
+            else:
+                mapping = {row["row_id"]: index for index, row in enumerate(rows, 1)
+                           if isinstance(row, dict) and isinstance(row.get("row_id"), str)}
+            candidates.append((int(receipt.get("revision", 0)), mapping))
+        except VisualConfirmationError:
+            raise
+        except (OSError, KeyError, TypeError, ValueError) as exc:
+            raise VisualConfirmationError("approved visual source is unreadable") from exc
+    return max(candidates, key=lambda item: item[0])[1] if candidates else {}
+
+
+def _validate_numbering(mapping):
+    if (not isinstance(mapping, dict)
+            or any(not isinstance(k, str) or not k or type(v) is not int or v < 1
+                   for k, v in mapping.items())
+            or len(set(mapping.values())) != len(mapping)):
+        raise VisualConfirmationError("invalid or duplicate visual numbers")
+
+
+def number_visual_rows(rows, numbering=None):
+    """Apply a frozen sparse row-id mapping; never recycle deleted numbers."""
+    mapping = dict(numbering or {})
+    _validate_numbering(mapping)
+    ids = [r.get("row_id") for r in rows]
+    if any(not isinstance(r, str) or not r for r in ids) or len(set(ids)) != len(ids):
+        raise VisualConfirmationError("visual row ids must be unique")
+    next_number = max(mapping.values(), default=0) + 1
+    numbered = []
+    for row in rows:
+        row_id = row.get("row_id")
+        if row_id not in mapping:
+            mapping[row_id] = next_number
+            next_number += 1
+        numbered.append({**row, "number": mapping[row_id]})
+    return numbered
 
 def approved_numbered_rows(job):
-    return number_visual_rows(validate_visual_authorization(job)["source"]["rows"])
+    proposal = validate_visual_authorization(job)["source"]
+    return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
 def _rows(director, treatment, speech):
     from .broll_skill_selection import source_channel
@@ -151,7 +215,12 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     _validate_template_choices(job, director, treatment)
     from . import motion_readability
     motion_readability.validate_direction_contract(job, director, treatment)
+    from . import avatar_profile, visual_review
+    avatar_profile.validate_avatar_plan_policy(director["segments"])
     rows = _rows(director, treatment, motion_capabilities._approved_speech(job.job_dir))
+    numbering = _prior_numbering(job)
+    numbered_rows = number_visual_rows(rows, numbering)
+    numbering = {**numbering, **{row["row_id"]: row["number"] for row in numbered_rows}}
     targets = {(r["segment_id"], r["component_id"]) for r in rows}
     for step in steps:
         if (step.get("segment_id"), step.get("component_id")) not in targets:
@@ -183,7 +252,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     proposal = {"schema_version": 1, "kind": SCHEMA, "source_id": source_id,
                 "job_id": job.job_id, "job_dir": str(job.job_dir), "revision": job.revision,
                 "inputs": files, "provider_config_sha256": config_sha,
-                "rows": rows, "generation_steps": steps,
+                "rows": rows, "numbering": numbering, "generation_steps": steps,
+                "visual_review_policy": visual_review.POLICY_VERSION,
                 "query_bindings": _record(job.job_dir, job.job_dir / "manifests/generation-channels.json")
                     if (job.job_dir / "manifests/generation-channels.json").is_file() else None}
     proposal_path = root / "proposal.json"
@@ -194,7 +264,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
              "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
              "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 渠道 | 素材来源 | 匹配动效模板 | 生成步骤 |",
              "|---|---|---|---|---|---|---|---|---|---|"]
-    for row in number_visual_rows(rows):
+    for row in numbered_rows:
         generated = [s for s in steps if (s["segment_id"], s["component_id"]) == (row["segment_id"], row["component_id"])]
         labels = [s["id"] + "：" + ("生图" if s["purpose"] == "image" else "生视频")
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]

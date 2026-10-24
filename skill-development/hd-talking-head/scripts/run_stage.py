@@ -80,6 +80,8 @@ def _summary(job, stage: str, **extra) -> dict:
     if result['status'] == 'ready_for_review':
         result['review_required'] = 'user' if stage in {'cover_direction', 'cover', 'visual_direction'} else 'host'
         if stage in {'visual_canary', 'visual_assets', 'preview'}:
+            from edit.hd.tools import visual_review
+            result['visual_review'] = visual_review.expected_observations(job, stage)
             from edit.hd.tools import motion_readability
             if motion_readability._managed(job):
                 result['motion_readability'] = motion_readability.inspect_job(job, stage)
@@ -130,6 +132,8 @@ def _review(job, stage: str, review: dict) -> dict:
         speech_edit_v2.validate_cleanup_review(job, review)
     receipt = {**review, 'reviewed_by': 'human' if human else 'host'}
     if stage in {'visual_canary', 'visual_assets', 'preview'}:
+        from edit.hd.tools import visual_review
+        receipt['visual_review'] = visual_review.validate_stage_review(job, stage, review)
         from edit.hd.tools import motion_readability
         if motion_readability._managed(job):
             receipt['motion_readability'] = motion_readability.validate_stage_review(job, stage, review)
@@ -179,12 +183,25 @@ def run_speech_cleanup(job_dir: Path, project: Path, video_use_result: Path | No
 
 def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | None = None,
                          treatment: Path | None = None, reviewed_visual_text: Path | None = None) -> dict:
-    from edit.hd.tools import state, visual_plan, visual_confirmation
+    from edit.hd.tools import state, visual_plan, visual_confirmation, avatar_profile, contract_artifacts
     job = state.load_job(job_dir)
     if director_brief is None or treatment is None:
         return {'blocked': '请提供当前草稿的 --director-brief 和 --treatment。'}
     reviewed = _json(_path(job, reviewed_visual_text)) if reviewed_visual_text else None
-    prepare_visual_dependencies(project, _json(_path(job, director_brief)))
+    director = _json(_path(job, director_brief))
+    planned = avatar_profile.plan_avatar_policy(director['segments'])
+    if planned['actions']:
+        return _summary(job, 'visual_direction', prepared=False, needs_visual_preparation=True,
+            actions=planned['actions'],
+            next='宿主按目标时窗延续原生末态，保留原声与编号；重新准备brief、绑定、完整口播引用、阅读窗和真实头像采样后重入本阶段。未支持安全末态保持时先内部调整草稿，不请求额外用户确认。')
+    if planned['segments'] != director['segments']:
+        director = {**director, 'segments': planned['segments']}
+        digest = contract_artifacts.sha256_json(director)[:16]
+        normalized = job.job_dir / '07-visual-confirmation' / 'drafts' / (digest + '.json')
+        normalized.parent.mkdir(parents=True, exist_ok=True)
+        contract_artifacts.write_json_artifact(normalized, director)
+        director_brief = normalized
+    prepare_visual_dependencies(project, director)
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
         _path(job, treatment), reviewed_visual_text=reviewed)
     result = _summary(state.load_job(job_dir), 'visual_direction')

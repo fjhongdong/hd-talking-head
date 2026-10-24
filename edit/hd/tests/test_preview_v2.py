@@ -454,6 +454,30 @@ class FormalPreviewContractTests(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        # These SimpleNamespace fixtures exercise publication/recovery, not a
+        # human-confirmed Job. Approval and badges have dedicated workflow tests.
+        numbered = preview_v2.visual_confirmation.approved_numbered_rows
+        check_content = preview_v2.confirmed_content.check_confirmed_content
+        approved = preview_v2._approved
+
+        def fixture_approved(job, stage, relative):
+            if not isinstance(job, preview_v2.state.JobState) and stage not in getattr(job, 'stages', {}):
+                path = Path(job.job_dir) / 'fixture-plan.json'
+                path.write_text('{}')
+                return path
+            return approved(job, stage, relative)
+
+        for target, name, function in (
+            (preview_v2.visual_confirmation, 'approved_numbered_rows',
+             lambda job: numbered(job) if isinstance(job, preview_v2.state.JobState) else []),
+            (preview_v2.confirmed_content, 'check_confirmed_content',
+             lambda job, plan: check_content(job, plan) if isinstance(job, preview_v2.state.JobState) else None),
+            (preview_v2, '_approved', fixture_approved),
+        ):
+            boundary = mock.patch.object(target, name, side_effect=function)
+            boundary.start()
+            self.addCleanup(boundary.stop)
+
     @staticmethod
     def _preview_build_patches(job: SimpleNamespace):
         def compose(command, **_kwargs) -> mock.Mock:

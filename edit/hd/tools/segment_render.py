@@ -706,7 +706,7 @@ def build_filter_graph(
             ))
         except (ValueError, OSError) as error:
             raise SegmentRenderError(str(error)) from None
-        position = avatar["position"]
+        position = ({"x": 0, "y": 0} if "entrance" in avatar or "exit" in avatar else avatar["position"])
         next_canvas = canvas_index + 1
         filters.append(
             f"[canvas_{canvas_index}][presenter]"

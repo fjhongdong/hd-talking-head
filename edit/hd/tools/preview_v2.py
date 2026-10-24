@@ -63,23 +63,40 @@ _ARTIFACT_KEYS = set(broll_component_executor.ComponentArtifact.__dataclass_fiel
 _PREVIEW_JOURNAL = ".11-preview.publication.json"
 
 
-def _write_number_atlas(path: Path, count: int) -> Path:
+def _write_number_atlas(path: Path, numbers) -> Path:
     """Create the small, deterministic numbered badge atlas used by preview."""
-    if count <= 0:
+    numbers = list(numbers)
+    if not numbers:
         raise PreviewV2Error("number atlas needs at least one row")
-    image = Image.new("RGBA", (64, 44 * count), (0, 0, 0, 0))
+    image = Image.new("RGBA", (64, 44 * len(numbers)), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default(size=28)
-    for index in range(count):
+    for index, number in enumerate(numbers):
         top = index * 44
         draw.rounded_rectangle((0, top, 63, top + 43), radius=7,
                                fill=(247, 239, 220, 255), outline=(55, 45, 35, 255))
-        label = str(index + 1)
+        label = str(number)
         box = draw.textbbox((0, 0), label, font=font)
+        if box[2] - box[0] > 56:
+            raise PreviewV2Error("number badge label does not fit")
         draw.text(((64 - (box[2] - box[0])) / 2, top + (44 - (box[3] - box[1])) / 2 - box[1]),
                    label, font=font, fill=(35, 30, 25, 255))
     image.save(path, format="PNG", optimize=True)
     return path
+
+def _number_badge_slots(rows):
+    gap, margin, badge_height = 8, 24, 44
+    capacity = (1920 - 1700 - margin + gap) // (badge_height + gap)
+    placed, slots = [], {}
+    for row in sorted(rows, key=lambda item: (float(item["start"]), item["number"])):
+        start_frame, end_frame = round(float(row["start"]) * 24), round(float(row["end"]) * 24)
+        used = {item["slot"] for item in placed if start_frame < item["end_frame"] and item["start_frame"] < end_frame}
+        slot = next((candidate for candidate in range(capacity) if candidate not in used), None)
+        if slot is None:
+            raise PreviewV2Error("number badges need more bottom-right soft-safe space")
+        placed.append({"start_frame": start_frame, "end_frame": end_frame, "slot": slot})
+        slots[row["row_id"]] = slot
+    return slots
 
 
 def _blocked() -> PreviewV2Error:
@@ -1112,8 +1129,9 @@ def _with_number_overlay(command, number_overlay, opening):
     offset = 0 if opening is None else opening["body_offset_frames"]
     for i, row in enumerate(rows):
         start, end = row["start_frame"] + offset, row["end_frame"] + offset
+        y = f"H-h-24-{row.get('slot', 0)}*(h+8)"
         filters += (f"[badge_source{i}]crop=64:44:0:{i * 44}[badge{i}];"
-                    f"[{current}][badge{i}]overlay=W-w-24:H-h-24:eof_action=pass:shortest=0:"
+                    f"[{current}][badge{i}]overlay=W-w-24:{y}:eof_action=pass:shortest=0:"
                     f"enable='gte(n,{start})*lt(n,{end})'[numbered{i}];")
         current = f"numbered{i}"
     filters += f"[{current}]null[outv]"
@@ -1322,11 +1340,20 @@ def _validate_published_preview_inventory(
     opening = validate_preview_opening(job, report)
     if report.get("number_badges") is True:
         offset = 0 if opening is None else opening["body_offset_frames"]
+        rows = visual_confirmation.approved_numbered_rows(job)
+        layout = report.get("number_badge_layout")
+        if layout not in (None, "stacked-v1"):
+            raise PreviewV2Error("unknown number badge layout")
+        source = visual_confirmation.validate_visual_authorization(job)["source"]
+        if "numbering" in source and layout != "stacked-v1":
+            raise PreviewV2Error("current proposal requires stacked number badges")
+        slots = _number_badge_slots(rows) if layout == "stacked-v1" else None
         expected_schedule = [
             {"number": row["number"], "row_id": row["row_id"],
              "start_frame": round(float(row["start"]) * 24) + offset,
-             "end_frame": round(float(row["end"]) * 24) + offset}
-            for row in visual_confirmation.approved_numbered_rows(job)]
+             "end_frame": round(float(row["end"]) * 24) + offset,
+             **({"slot": slots[row["row_id"]]} if slots is not None else {})}
+            for row in rows]
         if report["number_badge_schedule"] != expected_schedule:
             raise PreviewV2Error("number badge schedule differs from the approved complete list")
     validate_preview_music(job, report)
@@ -1861,12 +1888,16 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
         numbered_rows = visual_confirmation.approved_numbered_rows(job)
         number_overlay = None
         if numbered_rows:
-            atlas = _write_number_atlas(stage / "number-badges.png", len(numbered_rows))
+            atlas = _write_number_atlas(stage / "number-badges.png",
+                                        [row["number"] for row in numbered_rows])
+            # Assign one stable bottom-up slot to each simultaneously visible
+            # row. Half-open [start,end) windows make touching windows share a slot.
+            slots = _number_badge_slots(numbered_rows)
             number_overlay = {
                 "atlas": atlas,
                 "rows": [
                     {**row, "start_frame": round(float(row["start"]) * 24),
-                     "end_frame": round(float(row["end"]) * 24)}
+                     "end_frame": round(float(row["end"]) * 24), "slot": slots[row["row_id"]]}
                     for row in numbered_rows
                 ],
             }
@@ -1920,11 +1951,13 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             "broll_subtitle_cue_count": broll_subtitle_cue_count,
             "number_badges": bool(number_overlay),
             **({
+                "number_badge_layout": "stacked-v1",
                 "number_badge_atlas_sha256": contract_artifacts.sha256_file(number_overlay["atlas"]),
                 "number_badge_schedule": [
                     {"number": row["number"], "row_id": row["row_id"],
                      "start_frame": row["start_frame"] + (0 if opening_plan is None else opening_plan["body_offset_frames"]),
-                     "end_frame": row["end_frame"] + (0 if opening_plan is None else opening_plan["body_offset_frames"])}
+                     "end_frame": row["end_frame"] + (0 if opening_plan is None else opening_plan["body_offset_frames"]),
+                     "slot": row["slot"]}
                     for row in number_overlay["rows"]
                 ],
             } if number_overlay is not None else {}),

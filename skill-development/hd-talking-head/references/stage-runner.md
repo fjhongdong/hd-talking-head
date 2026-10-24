@@ -140,3 +140,17 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 视频宿主先保存供应商原始文件和原始响应。需要格式处理时另存同宽高比的规范文件；不覆盖原件、不变速、不随意裁切。规范文件路径、来源和处理链见下方统一示例。
 
 规范响应的处理后视频示例：`{"type":"video","path":"artifacts/normalized.mp4","source":{"path":"artifacts/provider-original.mp4"},"processing":"24fps silent H.264 yuv420p; aspect ratio preserved"}`。`record` 入口分别复制并保存原片与规范片，`source` 落盘为含 `path`、`sha256`、`bytes` 的身份；completed record 保留 `generation.source_media` 与 `generation.processing` 的关系。原片已合格时只写其 `path`，不添加虚假的处理来源。可选顶层 `provider_response` 仅保存真实供应商返回，provider 原始响应仍单独保存，规范 response 不得冒称 raw response。`upload` action 发出后，下一次 `next` 返回 `blocked` 与 `input_upload_pending`，等待宿主用原 upload action 和原上传 response 走现有 `record/generation_results` 回传，避免重复上传。
+
+### 确认前的头像编排与固定编号
+
+`run_visual_direction` 在准备所选依赖前安排整组头像。返回 `prepared=false`、`needs_visual_preparation=true` 及 `actions` 时，宿主在当前任务内按目标时窗准备原生输入、完整引用、阅读窗和真实采样，再次提交草稿。此返回不表示阶段完成；不要进入确认、生成或后续阶段，也不要向用户新增确认。空间不足、原生能力不支持安全保持时先调整本次草稿。无未决动作后，入口另存规范稿并按原流程准备依赖、检查、冻结proposal。确认准备的独立完整性门也拒绝直接提交的缺项草稿。
+
+新proposal中的 `numbering` 保存全部 `row_id → number`，包含已删除项目；活动项目以 `rows` 为准。局部返修保留 `segment_id:component_id`，新增组件使用新ID及从未用过的新号。首次引入时只继承此前真实批准清单的冻结编号，不改写旧proposal。清单、稀疏编号图集与成片共用映射；重叠时窗的角标分行，半开帧窗相接时复用位置。底部安全区容不下时明确停止，不缩小字号或覆盖正文。
+
+### 当前媒体的实际画面复核
+
+新proposal冻结 `visual_review_policy=visual-review-v1`。canary、assets、preview 返回的 `visual_review` 是待检查义务，列出计划身份、实际媒体引用、逐组件 `row_id`、可见意图及文件内播放时窗，不是已检查结论。
+
+宿主实际播放对应片段后，在同一review JSON加入 `visual_review`：沿用实际 `policy_version`、`stage`、`plan_ref`，`observations` 每项包含 `row_id`、`media_ref`、数值秒区间 `playback_window`、具体 `conclusion`，以及真实的 `size_position_clear`、`unobstructed`、`semantics_clear`。必须覆盖当前所有待查组件；回放区间完整包含义务时窗且位于实际媒体内。canary/资产使用段内时钟，preview包含正式封面偏移。不得把抽帧、解码、代码存在动画或待查列表复制为“已播放”。
+
+不改现有 `motion_readability_resolutions`：OCR硬失败仍需修正，低置信仍须真实量框。画面观察和文字检查同时通过后才内部批准。交付消费者再次核对当前preview回执，直接调用状态批准不能绕过。新要求不追溯追加到旧已批准proposal，创建新修订清单时才启用。

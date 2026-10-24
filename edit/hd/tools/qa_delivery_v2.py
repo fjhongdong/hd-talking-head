@@ -678,8 +678,9 @@ def _publish_delivery(
 
 
 def _prepare_delivery_v2_locked(job: state.JobState):
-    from . import motion_readability
+    from . import motion_readability, visual_review
     motion_readability.require_preview_review(job)
+    visual_review.require_preview_review(job)
     from .qa_delivery import DeliveryResult
 
     if job.version != 2:

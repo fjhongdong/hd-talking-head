@@ -30,7 +30,18 @@ def _inside(root, ref):
     f = (Path(root) / p).resolve(); base = Path(root).resolve()
     if base not in f.parents: raise ValueError("content_ref escapes root")
     if hashlib.sha256(f.read_bytes()).hexdigest() != ref["sha256"]: raise ValueError("content_ref sha256 mismatch")
-    obj = json.loads(f.read_text())
+    source = f.read_text()
+    if ref["pointer"].startswith("text:"):
+        if f.suffix.lower() not in {".html", ".htm", ".tsx", ".jsx", ".js", ".mjs", ".cjs", ".ts", ".svg"}:
+            raise ValueError("literal reference requires a rendered text source")
+        parts = ref["pointer"].split(":")
+        if len(parts) != 3 or not all(p.isdigit() for p in parts[1:]):
+            raise ValueError("invalid literal text span")
+        start, end = map(int, parts[1:])
+        if not 0 <= start < end <= len(source) or source[start:end] != ref["value"]:
+            raise ValueError("literal text reference mismatch")
+        return
+    obj = json.loads(source)
     for part in ref["pointer"].lstrip("/").split("/") if ref["pointer"] else []:
         part = part.replace("~1", "/").replace("~0", "~")
         obj = obj[int(part)] if isinstance(obj, list) else obj[part]

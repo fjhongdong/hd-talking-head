@@ -131,6 +131,114 @@ class AvatarProfileTests(unittest.TestCase):
                     {"start": 0, "end": 1, "visual_strategy": {"composition": composition}}
                 ])
 
+    def test_entrance_is_only_legal_after_contiguous_full_frame_presenter(self):
+        avatar = avatar_fixture(frames=48)
+        avatar["entrance"] = {"kind": "aroll_to_avatar", "frames": 12}
+        checked = self.module.validate_avatar(avatar, frames=48)
+        self.assertEqual(checked, avatar)
+        full = {"start": 0, "end": 1, "visual_strategy": {"composition": {"presenter_mode": "full_frame"}}}
+        small = {"start": 1, "end": 3, "visual_strategy": {"composition": {"presenter_mode": "bottom_window", "avatar": avatar}}}
+        self.module.validate_plan_avatars([full, small])
+        for plan in ([small], [small, {**small, "start": 3, "end": 5}],
+                     [{**full, "end": .9}, small]):
+            with self.assertRaises(ValueError): self.module.validate_plan_avatars(plan)
+        for frames in (True, 7, 19):
+            bad = copy.deepcopy(avatar); bad["entrance"]["frames"] = frames
+            with self.assertRaises(ValueError): self.module.validate_avatar(bad)
+
+    def test_exit_is_only_legal_before_contiguous_full_frame_presenter(self):
+        def segment(start, end, mode, avatar=None):
+            composition = {"presenter_mode": mode}
+            if avatar is not None:
+                composition["avatar"] = avatar
+            return {"start": start, "end": end,
+                    "visual_strategy": {"composition": composition}}
+
+        avatar = avatar_fixture(frames=24)
+        avatar["exit"] = {"kind": "avatar_to_aroll", "frames": 6}
+        full_before = segment(0, 1, "full_frame")
+        small = segment(1, 2, "bottom_window", avatar)
+        full_after = segment(2, 3, "full_frame")
+        self.module.validate_plan_avatars([full_before, small, full_after])
+        for plan in ([small], [full_before, small],
+                     [full_before, small, segment(2, 3, "bottom_window", avatar)],
+                     [full_before, small, {**full_after, "start": 2.1}]):
+            with self.assertRaises(ValueError):
+                self.module.validate_plan_avatars(plan)
+
+    def test_exit_rejects_invalid_shape_and_entrance_overlap(self):
+        for exit_value in (
+            {"kind": "wrong", "frames": 6},
+            {"kind": "avatar_to_aroll", "frames": True},
+            {"kind": "avatar_to_aroll", "frames": 5},
+            {"kind": "avatar_to_aroll", "frames": 19},
+            {"kind": "avatar_to_aroll", "frames": 6, "extra": 1},
+        ):
+            bad = avatar_fixture()
+            bad["exit"] = exit_value
+            with self.subTest(exit_value=exit_value), self.assertRaises(ValueError):
+                self.module.validate_avatar(bad, frames=24)
+
+        overlapping = avatar_fixture(frames=18)
+        overlapping["entrance"] = {"kind": "aroll_to_avatar", "frames": 12}
+        overlapping["exit"] = {"kind": "avatar_to_aroll", "frames": 6}
+        with self.assertRaises(ValueError):
+            self.module.validate_avatar(overlapping, frames=18)
+
+    def test_short_empty_full_frame_gap_between_transitions_is_rejected(self):
+        def segment(start, end, mode, avatar=None):
+            composition = {"presenter_mode": mode}
+            if avatar is not None:
+                composition["avatar"] = avatar
+            return {"start": start, "end": end,
+                    "visual_strategy": {"composition": composition}}
+
+        before = avatar_fixture(frames=12)
+        before["exit"] = {"kind": "avatar_to_aroll", "frames": 6}
+        after = avatar_fixture(frames=48)
+        after["entrance"] = {"kind": "aroll_to_avatar", "frames": 12}
+        short_gap = [segment(0, .5, "bottom_window", before),
+                     segment(.5, .75, "full_frame"),
+                     segment(.75, 1, "full_frame"),
+                     segment(1, 3, "bottom_window", after)]
+        with self.assertRaisesRegex(ValueError, "short empty A-roll"):
+            self.module.validate_plan_avatars(short_gap)
+
+        long_gap = [segment(0, .5, "bottom_window", before),
+                    segment(.5, 1.5, "full_frame"),
+                    segment(1.5, 3.5, "bottom_window", after)]
+        self.module.validate_plan_avatars(long_gap)
+
+    def test_continuation_requires_a_static_adjacent_bottom_window(self):
+        def segment(start, end, avatar):
+            return {"start": start, "end": end,
+                    "visual_strategy": {"composition": {
+                        "presenter_mode": "bottom_window", "avatar": avatar}}}
+
+        first = avatar_fixture(frames=24)
+        first["continuation"] = True
+        second = avatar_fixture(frames=24)
+        self.module.validate_plan_avatars([segment(0, 1, first), segment(1, 2, second)])
+
+        for bad in ("exit", "position", "next_full", "next_entrance"):
+            a = avatar_fixture(frames=24)
+            b = avatar_fixture(frames=24)
+            if bad == "exit":
+                a["exit"] = {"kind": "avatar_to_aroll", "frames": 6}
+            elif bad == "position":
+                b["position"]["x"] += 1
+            elif bad == "next_full":
+                b = None
+            else:
+                b["entrance"] = {"kind": "aroll_to_avatar", "frames": 12}
+            a["continuation"] = True
+            plan = [segment(0, 1, a),
+                    ({"start": 1, "end": 2,
+                      "visual_strategy": {"composition": {"presenter_mode": "full_frame"}}}
+                     if bad == "next_full" else segment(1, 2, b))]
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                self.module.validate_plan_avatars(plan)
+
     def test_filter_uses_calibrated_crop_and_circle_not_historical_constants(self):
         value = avatar_fixture(x=0)
         graph = ";".join(self.module.filter_chain(value, frames=24))

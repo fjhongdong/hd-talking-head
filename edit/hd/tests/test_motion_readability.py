@@ -10,6 +10,19 @@ class MotionReadabilityTest(unittest.TestCase):
         self.ref={"path":"x.json","sha256":"x","pointer":"/text","value":"小字"}
         self.seg=[{"segment_id":"s","start":0,"end":2,"shot_recipe":{"components":[{"component_id":"c","kind":"material"}]}}]
         self.target={"target_id":"t","content_ref":self.ref,"span":[0,2],"role":"body","region":{"x":100,"y":100,"width":400,"height":100},"windows":[{"start":0,"end":2}]}
+    def test_literal_source_reference_is_bound_without_fabricating_json_text(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); path = root / "scene.tsx"
+            source = '<text>版本号</text>'; path.write_text(source)
+            ref = {"path":"scene.tsx","sha256":hashlib.sha256(path.read_bytes()).hexdigest(),
+                   "pointer":"text:6:9","value":"版本号"}
+            target = {**self.target,"content_ref":ref,"span":[0,3]}
+            validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[target]}],[],root=root)
+            target["content_ref"]={**ref,"pointer":"text:0:3"}
+            with self.assertRaises(ValueError):
+                validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[target]}],[],root=root)
+
     def test_times_and_small_vs_large(self):
         out=validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[self.target]}],[])
         self.assertGreaterEqual(len(sample_times(out[0])),3)

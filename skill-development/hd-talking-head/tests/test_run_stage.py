@@ -62,7 +62,7 @@ class ExecuteStageTests(unittest.TestCase):
         with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
              mock.patch("edit.hd.tools.visual_confirmation.prepare_visual_confirmation", return_value=self.root / 'proposal.json') as visual, \
              mock.patch.object(run_stage, "prepare_visual_dependencies"), \
-             mock.patch.object(run_stage, "_json", return_value={}), \
+             mock.patch.object(run_stage, "_json", return_value={'segments': []}), \
              mock.patch.object(run_stage, "_summary", return_value={}):
             run_stage.run_visual_direction(self.root, PROJECT, Path("brief.json"), Path("treatment.json"), review)
         visual.assert_called_once()
@@ -253,6 +253,8 @@ class SelectedPreparationTests(unittest.TestCase):
             {'kind': 'code_generated', 'component_id': 'v'}]},
             'bindings': {'v': {'dependency_id': 'doudou-remotion-whiteboard', 'entrypoint': 'scripts/render_doudou.mjs',
                                'producer_version': '2.0.0', 'primary_renderer': 'Remotion'}}}]}
+        draft['segments'][0].update(start=0, end=3)
+        draft['segments'][0]['visual_strategy']['composition'] = {'presenter_mode': 'full_frame'}
         import project_python as pp
         calls = []
         job = SimpleNamespace(job_dir=PROJECT)
@@ -276,7 +278,6 @@ class SelectedPreparationTests(unittest.TestCase):
 
     def test_new_native_constructor_signatures_and_launchers(self):
         for dependency, module_name, node in [('doudou-remotion-whiteboard', 'doudou_adapter', True),
-                 ('motion-graphics-native', 'motion_graphics_adapter', False),
                  ('lemo-opuscar', 'upstream_scene_adapter', False), ('onetake', 'upstream_scene_adapter', False)]:
             module = run_stage._module(module_name)
             factory = mock.create_autospec(module.create_adapter, return_value='bound')
@@ -288,6 +289,8 @@ class SelectedPreparationTests(unittest.TestCase):
             self.assertEqual(args[1] if dependency not in {'onetake', 'lemo-opuscar'} else args[2],
                              run_stage.shutil.which('node') if node else sys.executable)
             self.assertEqual(result['code_generated'][dependency], 'bound')
+        with self.assertRaisesRegex(ValueError, 'no default execution binding'):
+            run_stage._check_default_binding({'dependency_id': 'motion-graphics-native'})
 
 
 class MaterialExecutionSmoke(unittest.TestCase):

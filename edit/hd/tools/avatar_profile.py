@@ -21,5 +21,13 @@ def validate_plan_avatars(segments, *, source_sha256=None):
     return _load().validate_plan_avatars(segments, source_sha256=source_sha256)
 
 
+def validate_avatar_plan_policy(segments):
+    return _load().validate_avatar_plan_policy(segments)
+
+
+def plan_avatar_policy(segments):
+    return _load().plan_avatar_policy(segments)
+
+
 def filter_chain(value, *, frames, fade_out=True):
     return _load().filter_chain(value, frames=frames, fade_out=fade_out)
