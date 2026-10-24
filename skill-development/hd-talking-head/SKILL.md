@@ -19,7 +19,11 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 1. **剪后语义理解**：完成 `speech_cleanup` 与 `edit_structure` 后，以实际剪后词级转写、时间轴和已批准内容项为唯一输入，逐段列出主体、动作、关系、变化、真实词锚和语义。原 `content_analysis` 仍服务封面与事实原文，不代替剪后语义分析。
 2. **先列完整视觉清单，再匹配能力**：清单覆盖本视频所有贴片与 B-roll，逐行记录开始/结束时间、剪后原话与语义、检索标签和视觉类型。先由语义得到 tags，再用 `select_motion_capabilities.py search --use broll|aroll_overlay --query "<tags>"` 匹配具体动效模板；不能先挑模板再硬套语义。用户素材、官方资料、素材库、AI 视频、代码动效及混合构图继续走各自已接通的准备入口。每项都在 treatment.motion_queries 填写实际语义标签；直接素材显示“素材直用（无动效模板）”，来源单列。
-3. **一次整表确认**：`visual_direction` 先根据草稿实际 bindings 准备并检查所选模板的执行入口，成功后才输出完整 `visual-routing.md` 与确认前方案清单，列全每个视觉组件及其匹配模板。用户只在这里确认整张表；确认前保持待审，不能自动批准或生成正式视觉资产。确认后由宿主生成并绑定视觉资产，再编译正式计划，随后内部完成 canary、字幕、预览 QA 和交付，不再请求用户确认样片、字幕、预览或成片。
+3. **一次整表确认**：`visual_direction` 先根据草稿实际 bindings 准备并检查所选模板的执行入口，成功后才输出完整 `visual-routing.md` 与确认前方案清单，列全每个视觉组件及其匹配模板，并从 1 起编号。编号绑定本期冻结清单中的 `row_id`；局部返修继续用原编号，不按修改后的稿件重新排序。用户只在这里确认整张表；确认前保持待审，不能自动批准或生成正式视觉资产。确认后由宿主生成并绑定视觉资产，再编译正式计划，随后内部完成 canary、字幕、预览 QA 和交付，不再请求用户确认样片、字幕、预览或成片。
+
+所有动效在整表确认前先按[实际文字检查](references/motion-text-readability.md)冻结文字目标；正式制作通过共享检查器读取最终像素。仅看手机缩略图、源字号或某一张好帧不够，识别不确定时也由宿主主动逐项量框处理。
+
+成片在每项动效的实际时窗内，于右下角显示对应的小编号，避开字幕和人物小窗；封面和没有动效的空档不显示。编号只在最终合成层加入，不重做原生动效。清单和画面共用已确认 proposal 的冻结行序与 `row_id` 映射，沿用正文帧窗并加正式封面偏移；检查编号、时间和可读性后直接交付。
 4. **先检查再发布**：新草稿写入独立目录，保留旧资料和 `confirmed-content.json`。正式发布前检查词锚、整帧时窗、绑定、重点、保留内容和密度；通过后由现有发布事务提交。失败不覆盖原计划，不清空用户确认。
 5. **统一密度标准**：机器规则只读取[默认制作配置](references/production-defaults.json)的 `visual_coverage`。B-roll 目标约 60%、默认下限 55%，首条不晚于 15 秒；超过 15 秒的空档须说明具体语义原因。贴片按当前台词和已承诺画面安排，不设全片固定数量，也不计入 B-roll 时长。比例达标仍须检查实际语义、动作、字幕和画质；题材不能满足时报告缺口，不自动降低下限。
 
@@ -33,7 +37,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 这是宿主编排输入，不是新的动效模板或第三方 props。主控读取配置后，按现成组件公开槽位和自有静态版式传入贴片样式；按[封面入场合同](references/cover-opening-bgm.md#正式封面入场接口)显式传入 `opening`。不将整个配置塞进 provider、ShotRecipe 或上游 brief 的未知字段，不修改第三方，不新增渲染器。首次预览漏传默认 `opening` 是编排缺项，不能将运行时的 `None` 当作本 Skill 的默认开场。
 
-字幕继续使用[唯一字幕样式](references/subtitle-style-contract.md)，B-roll 保持圆形人物小窗、语义优先的动态画面与多样性，按[视觉质量合同](references/visual-quality-contract.md)安排密度；首次清理即处理自然停顿。默认值一并放入本 Job 的常规配置说明，不逐项新增确认门；不复制历史批准或为采用默认值重做已验收视频。
+字幕继续使用[唯一字幕样式](references/subtitle-style-contract.md)，B-roll 保持圆形人物小窗、语义优先的动态画面与多样性，按[视觉质量合同](references/visual-quality-contract.md)安排密度；首次清理即处理自然停顿。`speech_cleanup` 自动检查实际保留的长间隔及中断重说；宿主消费返回的 `cleanup_checks`，核听并剪除口误，必要强调或呼吸按当前候选逐项记录保留理由，再继续成片，不新增用户确认门。默认值一并放入本 Job 的常规配置说明，不逐项新增确认门；不复制历史批准或为采用默认值重做已验收视频。
 
 只优化 A-roll 贴片时，不替换或挪动既有 B-roll。代表样片按[贴片选段检查](references/aroll-overlay-contract.md)先对照原已批准计划，确认窗口本来就是 A-roll；不能因为底层仍有原片，就把 B-roll 时段重新导出成人物贴片。已验收整片保持原样，样片另存。
 
@@ -46,6 +50,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 其他参考只在对应阶段加载：
 
 - [9:16 视觉质量合同](references/visual-quality-contract.md)
+- [动效文字实际字号与可读性](references/motion-text-readability.md)（所有渠道的贴片和B-roll；整表确认前冻结文字位置和阅读时窗，制作时逐项自动检查，失败先内部修正）
 - [统一头肩头像参数与校验](references/avatar-profile.md)（从 `visual_direction` 起，任何 B-roll 使用小头像时）
 - [B-roll 语义能力路由](references/broll-capability-router.md)
 - [统一动效能力库：理解、标签、检索与编排](references/motion-capability-library.md)（所有贴片与 B-roll 选型前；统一能力描述，不合并执行资格）
@@ -210,7 +215,7 @@ B-roll 默认追求高有效信息密度，区别于全片的插入频率和时�
 
 选择 Doudou 后，先按[原生手绘制作交接](references/generated-broll-skills.md#doudou-项目内调用)执行上游场景制作：把主体对象、构图、绘制动作与当前词锚交给制作阶段，实际使用其画布、笔刷或绘图算法，而不是先拼普通 CSS 框图再加箭头。本项目手绘默认使用原生 `RealHandFollower` 与已冻结的透明握笔图，不能把孤立铅笔当作真实手部。随后使用 `scripts/doudou_adapter.py` 冻结本期场景和手图并交给统一组件执行器；不另造白板模板或动画引擎。父级仍统一合成圆形人物小窗与唯一字幕轨。批准过的视觉方向不重复报审；改变语义、来源或配方时才进入相应修订流程。
 
-新计划充分使用现成 B-roll 能力：父 Skill 只做语义导演、镜头编排、批准门和最终合成验收；制作前完整读取并实际调用所选上游 Skill。候选先按语义匹配分，再按美观质量分排序，两分相同才比较来源资格，最后比较重复间隔。优先组合现成能力；只有记录真实能力缺口后才允许最小新增实现。使用依赖时如实写 `producer_type=dependency` 与 `dependency_id`，另记复用能力与新增实现；`custom_fallback / structural` 是适配资格，不等于自研，也不冒充第三方整屏模板。Lemo-Opuscar、OneTake 使用项目内固定提交。HyperFrames 透明贴片/轻组件、TalkCraft 精确数据、Doudou 白板/思维导图、Paper 分层拼贴及本 Job 已确认的视频生成渠道保留各自边界；prompt 库不是制作依赖。入口与验收见[上游场景 Skill 合同](references/upstream-scene-skills.md)与[生成型 B-roll 编排](references/generated-broll-skills.md)。
+新计划充分使用现成 B-roll 能力：父 Skill 只做语义导演、镜头编排、批准门和最终合成验收；制作前完整读取并实际调用所选上游 Skill。先筛出语义、质量和执行条件合格的候选，再按[画面多样性](references/visual-quality-contract.md#画面多样性)在全片尽可能组合不同来源渠道、不同模板及不同构图和动作；不必等到机械分数完全相等。优先组合现成能力；只有记录真实能力缺口后才允许最小新增实现。使用依赖时如实写 `producer_type=dependency` 与 `dependency_id`，另记复用能力与新增实现；`custom_fallback / structural` 是适配资格，不等于自研，也不冒充第三方整屏模板。Lemo-Opuscar、OneTake 使用项目内固定提交。HyperFrames 透明贴片/轻组件、TalkCraft 精确数据、Doudou 白板/思维导图、Paper 分层拼贴及本 Job 已确认的视频生成渠道保留各自边界；prompt 库不是制作依赖。入口与验收见[上游场景 Skill 合同](references/upstream-scene-skills.md)与[生成型 B-roll 编排](references/generated-broll-skills.md)。
 
 调用前区分现成模板、创作工具包与生成服务。Lemo 是原生风格创作工具包，不是填词导出模板：父级交付语义、真实词锚、时长、圆窗/字幕避让和相邻镜头外观，不先锁定“三卡片＋箭头＋圆点”。按其 DIRECTOR → 本期 treatment → STYLE/DEMO 技术学习 → 原生制作流程，让上游设计主要视觉动作；本期场景代码如实记为结构改编。美术质量看真实原尺寸画面与全速动作，多样性看实际构图和运动，不能用不同 Skill 名、函数引用或渲染成功代替。具体交接与审阅见[上游场景 Skill 合同](references/upstream-scene-skills.md)。
 

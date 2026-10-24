@@ -37,7 +37,7 @@
 
 ### 已验证模板入口
 
-五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
+五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。该顺序仅说明单段底层候选排序；全片选材按[画面多样性](visual-quality-contract.md#画面多样性)在语义与质量合格的候选中优先扩大真实渠道和模板覆盖，不受机械同分限制。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
 
 当前登记的 `html-video/frame-data-rollup` 来自 `html-video/templates/frame-data-rollup/source/DataRollup.tsx`，已用原始第三方源码真实渲染 1080×1920 样片；只用于 `bar_chart`、`numeric_comparison`、`data_summary`。HyperFrames Vignelli 虽能产出竖屏 MP4，但真实代表帧出现右侧裁切，因此不得写成 `verified_third_party`。这条失败经验说明“第三方模板”不等于“已验证模板”。
 
@@ -47,7 +47,7 @@
 
 ### 已验证第三方模板入口
 
-五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
+五类来源同级；候选先按 `semantic_match_score`、再按 `quality_score` 排序，同分才比较 `template_origin`，最后比较 `reuse_gap`。该顺序仅说明单段底层候选排序；全片选材按[画面多样性](visual-quality-contract.md#画面多样性)在语义与质量合格的候选中优先扩大真实渠道和模板覆盖，不受机械同分限制。先用 `scripts/verify_broll_template.py` 验证 `references/verified-template-registry.json`，并保留当前语义、信息容量和 `adaptation_level` 硬门；资格不能覆盖语义。
 
 活动资格及数量以 `verified-template-registry.json` 为准，实际新制作候选以 `select_broll_skills.py discover` 为准，两者不等同。Huashu 的 `y1_kurzgesagt` 仅支持三节点机制流程，`y2_vox` 仅支持单张横向来源图整行高亮，`t2_keynote_ui` 仅支持 `product_features` 的恰好三张原生功能卡。三条共用原生启动器，不改上游文件或动效，见 [Huashu 接入](huashu-native-motion.md)。`html-video/frame-data-rollup` 只用于 `bar_chart`、`numeric_comparison`、`data_summary`；`hyperframes/notification-cascade` 只用于四个顺序通知节点收束为结论，由 `scripts/hyperframes_notification_adapter.py` / `scripts/render_hyperframes_notification.cjs` 接入真实 CLI。ChatGPT Exchange 因正文和表格裁字已退出资格，历史样片与适配器不构成当前可用证明。
 

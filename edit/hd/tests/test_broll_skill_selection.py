@@ -313,8 +313,10 @@ class BrollSkillSelectionTest(unittest.TestCase):
                   "recent_context": [{"source_ref": "previous-preview:screen-flow-carousel", "video_id": "previous",
                                       "skill_id": carousel["skill_id"], "visual_pattern": "screen-flow", "start": 0, "end": 20}]}
         assigned = selection.assign_skills(ROOT, source)
+        # Both choices add a current-video channel; the fixed native carousel
+        # then adds a template, ahead of the softer recent-video preference.
         self.assertEqual([a["skill_id"] for a in assigned["assignments"]],
-                         [flat["skill_id"], vox["skill_id"], doudou["skill_id"]])
+                         [flat["skill_id"], vox["skill_id"], carousel["skill_id"]])
         self.assertEqual(selection.assign_skills(ROOT, assigned), assigned)
         # Snapshots are planned inputs, not fabricated execution success receipts.
         draft = {"segments": []}
@@ -421,6 +423,137 @@ class BrollSkillSelectionTest(unittest.TestCase):
         }], "history_note": "测试"}
         with self.assertRaisesRegex(ValueError, "not discovered"):
             selection.assign_skills(ROOT, source)
+
+    def test_fixed_overlay_context_is_strict_and_changes_same_tier_choice(self):
+        pool = [
+            {"candidate_id": "paper", "skill_id": "paper-collage-hyperframes", "dependency_id": "paper-collage-hyperframes", "template_id": "paper-template", "role": "native", "status": "supported", "entrypoint": "e", "producer_version": "1", "limitations": []},
+            {"candidate_id": "hf", "skill_id": "hyperframes", "dependency_id": "hyperframes", "template_id": "hf-template", "role": "native", "status": "supported", "entrypoint": "e", "producer_version": "1", "limitations": []},
+        ]
+        reviews = {row["skill_id"]: {"fit": "preferred", "reason": "同档"} for row in pool}
+        source = {"schema_version": 1, "beats": [{"segment_id": "b", "component_id": "scene", "start": 0, "end": 2, "transcript": "测", "semantic_goal": "测", "required_change": "测", "intent_statement": "测", "component_brief": "测", "binding_snapshot": {"dependency_id": "paper-collage-hyperframes", "entrypoint": "e", "template_id": "paper-template", "producer_version": "1"}, "skill_reviews": reviews, "candidates": [{"candidate_id": row["candidate_id"], "fit": "preferred", "reason": "同档", "visual_pattern": "p"} for row in pool]}], "fixed_context": [{"segment_id": "o", "component_id": "overlay", "start": 2, "end": 3, "skill_id": "hyperframes", "template_id": "hf-template", "source_ref": "brief-hash", "visual_pattern": "overlay"}], "history_note": "离线"}
+        draft = {"segments": [{"segment_id": "b", "start": 0, "end": 2, "visual_intent": {"statement": "测"}, "visual_strategy": {"mode": "single", "components": [{"component_id": "scene", "kind": "code_generated", "brief": "测"}]}, "bindings": {"scene": {"dependency_id": "paper-collage-hyperframes", "entrypoint": "e", "template_id": "paper-template", "producer_version": "1"}}}, {"segment_id": "o", "start": 2, "end": 3, "visual_strategy": {"mode": "none", "components": [{"component_id": "overlay", "kind": "code_generated"}]}, "bindings": {"overlay": {"dependency_id": "hyperframes-native-adaptation", "template_id": "hf-template", "brief_sha256": "brief-hash"}}}]}
+        treatment = {"skill_selection": source, "overlay_selection": [{"segment_id": "o", "component_id": "overlay", "visual_structure": "overlay"}]}
+        with patch.object(selection, "discover_candidates", return_value=pool):
+            assigned = selection.assign_skills(ROOT, source)
+            self.assertEqual(assigned["assignments"][0]["candidate_id"], "paper")
+            source["assignments"] = assigned["assignments"]
+            selection.validate_selection(ROOT, draft, treatment)
+            missing_overlay = copy.deepcopy(treatment)
+            missing_overlay["overlay_selection"] = []
+            with self.assertRaisesRegex(ValueError, "missing binding or overlay selection"):
+                selection.validate_selection(ROOT, draft, missing_overlay)
+            missing_binding = copy.deepcopy(treatment)
+            missing_draft = copy.deepcopy(draft)
+            del missing_draft["segments"][1]["bindings"]["overlay"]
+            with self.assertRaisesRegex(ValueError, "missing binding or overlay selection"):
+                selection.validate_selection(ROOT, missing_draft, missing_binding)
+            for field, value in (("source_ref", "forged"), ("template_id", "forged"), ("skill_id", "forged")):
+                altered = copy.deepcopy(treatment); altered["skill_selection"]["fixed_context"][0][field] = value
+                with self.assertRaises(ValueError): selection.validate_selection(ROOT, draft, altered)
+            altered = copy.deepcopy(treatment); altered["skill_selection"]["fixed_context"] = []
+            with self.assertRaises(ValueError): selection.validate_selection(ROOT, draft, altered)
+
+    def test_semantic_image_evidence_requires_current_bound_picture(self):
+        from PIL import Image
+        from edit.hd.tools import motion_capabilities as motion
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            picture = root / "picture.png"
+            Image.new("RGB", (8, 8), "#f4ebdd").save(picture)
+            brief = {"assets": [{"job_path": "picture.png", "sha256": motion.contract_artifacts.sha256_file(picture)}]}
+            path = root / "brief.json"
+            path.write_text(json.dumps(brief))
+            segment = {"segment_id": "picture", "start": 0, "end": 1,
+                       "bindings": {"scene": {"brief_sha256": motion.contract_artifacts.sha256_file(path)}}}
+            assessment = {"segment_id": "picture", "component_id": "scene", "candidate_id": "picture-scene",
+                "verdict": "pass", "reason": "A synthetic picture tests identity and decoding, not production semantics.",
+                "transcript_refs": [{"start_word": 0, "end_word": 1, "quote": "示意", "basis": "current_clause"}],
+                "content_refs": [{"path": "picture.png", "sha256": brief["assets"][0]["sha256"], "image": True}]}
+            treatment = {"scenes": [{"segment_id": "picture", "component_id": "scene", "brief_path": "brief.json"}],
+                         "semantic_assessments": [assessment]}
+            row = {"candidate_id": "picture-scene", "capability": {"capability_type": "native_component"}}
+            speech = [{"text": "示意", "start": 0, "end": 1}]
+            def check(candidate=row):
+                return motion._semantic_assessment(root, treatment, segment, "scene", candidate, speech, brief)
+            self.assertEqual(check()["status"], "pass")
+            creative = {**row, "capability": {"capability_type": "creative_skill"}}
+            self.assertEqual(check(creative)["status"], "needs_review")
+            assessment["content_refs"][0]["image"] = False
+            self.assertEqual(check()["status"], "needs_review")
+            assessment["content_refs"][0]["image"] = True
+            assessment["content_refs"][0]["path"] = "unbound.png"
+            self.assertEqual(check()["status"], "needs_review")
+            assessment["content_refs"][0]["path"] = "picture.png"
+            picture.write_bytes(b"not an image")
+            # Matching checksums alone must not qualify non-image bytes.
+            digest = motion.contract_artifacts.sha256_file(picture)
+            brief["assets"][0]["sha256"] = digest
+            assessment["content_refs"][0]["sha256"] = digest
+            path.write_text(json.dumps(brief))
+            segment["bindings"]["scene"]["brief_sha256"] = motion.contract_artifacts.sha256_file(path)
+            self.assertEqual(check()["status"], "needs_review")
+
+    def test_assignment_channel_and_template_diversity_offline(self):
+        def candidate(cid, skill, template):
+            return {"candidate_id": cid, "skill_id": skill, "template_id": template,
+                    "role": "native", "status": "supported", "entrypoint": "native-entry",
+                    "producer_version": "1", "limitations": []}
+
+        pool = [candidate("a", "hyperframes-native-adaptation", "first"),
+                candidate("b", "hyperframes", "second"),
+                candidate("c", "riso", "title")]
+        skills = {row["skill_id"] for row in pool}
+        def beat(index, choices):
+            return {"segment_id": f"s{index}", "component_id": "scene",
+                    "start": index * 3, "end": index * 3 + 2,
+                    "transcript": "整理信息", "semantic_goal": "整理信息", "required_change": "归类",
+                    "skill_reviews": {sid: {"fit": "equivalent", "reason": "此夹具已审阅的候选"}
+                                      for sid in skills},
+                    "candidates": [{"candidate_id": cid, "fit": "equivalent", "reason": "可用",
+                                    "visual_pattern": pattern} for cid, pattern in choices]}
+        source = {"schema_version": 1, "beats": [beat(0, [("a", "same")]),
+                  beat(1, [("b", "different"), ("c", "same")])], "history_note": "离线分配行为夹具",
+                  "recent_context": [{"source_ref": "last-video", "video_id": "previous",
+                                      "skill_id": "riso", "visual_pattern": "same", "start": 0, "end": 30}]}
+        with patch.object(selection, "discover_candidates", return_value=pool):
+            result = selection.assign_skills(ROOT, source)
+            # The two HyperFrames adapters are one channel. History does not
+            # claim a channel for this video; coverage precedes pattern preference.
+            self.assertEqual([a["candidate_id"] for a in result["assignments"]], ["a", "c"])
+            preferred = copy.deepcopy(source)
+            preferred["beats"][1]["candidates"][0]["fit"] = "preferred"
+            self.assertEqual(selection.assign_skills(ROOT, preferred)["assignments"][1]["candidate_id"], "b")
+            unsupported = copy.deepcopy(pool)
+            unsupported[2]["status"] = "needs_adapter"
+            with patch.object(selection, "discover_candidates", return_value=unsupported):
+                with self.assertRaisesRegex(ValueError, "not callable"):
+                    selection.assign_skills(ROOT, source)
+            # With one real channel available, use another actual template.
+            same_channel = copy.deepcopy(source)
+            same_channel["recent_context"] = []
+            same_channel["beats"][1] = beat(1, [("a", "same"), ("b", "same")])
+            self.assertEqual(selection.assign_skills(ROOT, same_channel)["assignments"][1]["candidate_id"], "b")
+            # A shared execution wrapper can expose different real templates.
+            routed = copy.deepcopy(pool)
+            for row in routed[:2]:
+                row.update(template_id="shared-wrapper", source_route="native/" + row["candidate_id"])
+            with patch.object(selection, "discover_candidates", return_value=routed):
+                self.assertEqual(selection.assign_skills(ROOT, same_channel)["assignments"][1]["candidate_id"], "b")
+
+        # Alias IDs point at the same source/template. Neither single change
+        # improves A/B/B; changing two positions reaches C/A/B.
+        pool = [candidate("a", "A", "ta"), candidate("b", "B", "tb"),
+                candidate("c", "C", "tc"), candidate("z", "A", "ta")]
+        skills = {row["skill_id"] for row in pool}
+        joint = {"schema_version": 1, "history_note": "联合替换夹具", "beats": [
+            beat(0, [("a", "same"), ("c", "same")]),
+            beat(1, [("b", "same"), ("z", "same")]), beat(2, [("b", "same")])]}
+        with patch.object(selection, "discover_candidates", return_value=pool):
+            result = selection.assign_skills(ROOT, joint)
+            self.assertEqual([a["skill_id"] for a in result["assignments"]], ["C", "A", "B"])
+            self.assertEqual(selection.assign_skills(ROOT, result), result)
+
 
 
 if __name__ == "__main__":

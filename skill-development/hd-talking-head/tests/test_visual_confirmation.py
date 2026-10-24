@@ -51,6 +51,10 @@ class VisualConfirmationTests(unittest.TestCase):
         proposal = self.prepare()
         self.assertFalse((self.job.job_dir / "07-visual-direction/visual-plan.json").exists())
         ready = self.confirm()
+        self.assertIn("| 编号 | 时间 |", (proposal.parent / "visual-routing.md").read_text())
+        numbered = vc.approved_numbered_rows(self.job)
+        self.assertEqual([(row["row_id"], row["number"]) for row in numbered],
+                         [("seg-001:component-1", 1)])
         self.assertEqual(ready["review_required"], "host")
         self.assertEqual(self.job.stages["visual_direction"]["status"], "ready_for_review")
         approval = vc.validate_visual_authorization(self.job)["artifact"]
@@ -60,6 +64,7 @@ class VisualConfirmationTests(unittest.TestCase):
         final = state.load_job(self.job.job_dir)
         checked = vc.validate_visual_authorization(final, require_realized=True)
         self.assertEqual(checked["artifact"], approval)
+        self.assertEqual(vc.approved_numbered_rows(final), numbered)
         self.assertEqual(original, (self.job.job_dir / approval["path"]).read_bytes())
         self.assertTrue(proposal.exists())
         changed = artifacts.read_json_artifact(self.fixture.brief)
@@ -223,6 +228,22 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertEqual(rows[0]["tags"], ["approved visual explanation"])
         self.assertEqual(rows[0]["source"], "asset-1")
         self.assertEqual(rows[0]["template"], "素材直用（无动效模板）")
+        self.assertEqual(rows[0]["channel"], "Example Stock")
+
+    def test_channel_uses_real_source_instead_of_adapter_alias(self):
+        director = {"segments": []}
+        treatment = {"motion_queries": []}
+        for index, dependency in enumerate(("hyperframes", "hyperframes-native-adaptation")):
+            sid = f"seg-{index}"
+            director["segments"].append({"segment_id": sid, "start": index, "end": index + 1,
+                "visual_intent": {"statement": "顺序展开"},
+                "visual_strategy": {"components": [{"component_id": "scene", "kind": "code_generated",
+                                                     "layer_role": "base"}]},
+                "bindings": {"scene": {"dependency_id": dependency, "template_id": f"template-{index}"}}})
+            treatment["motion_queries"].append({"segment_id": sid, "component_id": "scene", "tags": ["顺序展开"]})
+        rows = vc._rows(director, treatment, [])
+        self.assertEqual([r["channel"] for r in rows], ["hyperframes", "hyperframes"])
+        self.assertEqual([r["template"] for r in rows], ["template-0", "template-1"])
 
 if __name__ == "__main__":
     unittest.main()

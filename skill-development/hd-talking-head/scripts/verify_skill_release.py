@@ -37,7 +37,7 @@ def package_files(root: Path) -> dict[str, Path]:
     for directory, directories, names in os.walk(package_root):
         base = Path(directory)
         relative = base.relative_to(package_root).as_posix()
-        directories[:] = [name for name in directories if name not in excluded
+        directories[:] = [name for name in directories if name not in excluded and not name.endswith(".egg-info")
             and not (relative == "skill-development" and name == "runtime")
             and not (relative.startswith("skill-development/research/hypit-source") and name == "dist")]
         for name in names:

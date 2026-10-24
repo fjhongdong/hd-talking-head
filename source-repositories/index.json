@@ -163,6 +163,27 @@
         "source-repositories/hypit-source.source.part-000"
       ],
       "sha256": "52e8a66ecf850c2ff9d581a161f8ffccc5681fd85762a9cdf74068d1ecb7bf18"
+    },
+    {
+      "path": "参考项目/B-roll开源方案/hyperframes",
+      "repository": "https://github.com/heygen-com/hyperframes.git",
+      "commit": "35b17c3fe6cdf7e40d252f1d813b0a2cecec6a94",
+      "files": {
+        "LICENSE": "4259155fb06f127687ee7b0a8a3682d45132db0f2da26cbc0b7a2d1e796436b8",
+        "README.md": "3e8f26d5e35c6a8c32c661bf1439443d8eee332eedc9bf1a32bfe3dc417c218e",
+        "registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb",
+        "registry/blocks/macos-notification/macos-notification.html": "bd6547f25f1c80c0d7dbdef0344627e92d57ace5e31237610928700b0a664d85",
+        "registry/blocks/mk-specs-list/mk-specs-list.html": "5bff5b3726cb6041c8419d3b157ad27db76bb8b64f4bd975498d5049ea3bd699",
+        "registry/components/beat-timeline/beat-timeline.html": "19c6528e970766422978e26d5ac483bfe2c711b7fdcaf1f8a28805a4a53f584c",
+        "registry/components/before-after-wipe/before-after-wipe.html": "c04e8bf1bfbcec71d0921a03a786cc09e660732428aa04bf79036a30b7755e09",
+        "registry/components/chat-message/chat-message.html": "fe9b9e0dd4c886843713116811688565c6fea3995cbb52f8c2e044106072715a",
+        "registry/components/grid-card-assemble/grid-card-assemble.html": "8713fc92043a353732f4d9bd8832e0023a2019472d3a9cfffc566ff6fd194042",
+        "registry/components/notification-stack/notification-stack.html": "dfe78474314169e66fb3cb6fa26d3e09755873248a1ff72dc4b472edacbb2771",
+        "registry/components/screen-flow-carousel/screen-flow-carousel.html": "db49f679a66fb4505e07d395bff8188ae568fbfac36a50c94f1e58fcd925e11a",
+        "registry/components/strikethrough-replace/strikethrough-replace.html": "8ef7447fe6e1f122cec5f601b3388b8cb4c18eb0c7341dd7e5af3dac53e65e10",
+        "registry/components/toggle-flip/toggle-flip.html": "f73cefb798fe3cd1a5ac503c6feb494a644c17d53d8b2e1cf313973940f0161d",
+        "skills/talking-head-recut/assets/vendor/gsap.min.js": "c3a03a345e45bc954cd48c43f11572891f5dca7a5d99348d5bc14753a728618c"
+      }
     }
   ]
 }

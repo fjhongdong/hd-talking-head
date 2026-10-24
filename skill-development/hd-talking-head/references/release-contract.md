@@ -21,7 +21,7 @@ python3 <skill>/scripts/verify_broll_template.py
 `initialize_video_job.py` 在创建任何 Job 输出前强制运行发布完整性及模块来源检查，记录 release 与实际运行时身份。随后写非密钥配置草稿、执行带 `--job-context` 的预检，本次用户确认后调用 `confirm_job_setup.py`。单纯复制 Skill 到旧运行时不够：项目须包含 `startup.py`，且 `state.require_runnable` 已接入启动门。
 
 恢复同一视频时，先读它的 `job-context.json` 和 workflow，不重新新建 Job。对照保存的 release 身份及当前完整性报告。旧任务没有 release 字段或包版本已变时，应明确列出差异，决定继续旧包还是执行受控迁移；不得借升级绕过已有人工门或悄悄重做已批准资产。
-本项目内开发时如需继续同一 Job，先用正式 `revise` 将受影响阶段退回 `needs_revision`，再以 `scripts/migrate_job_context.py --job-context <workspace>/job-context.json --expected-context-sha256 <旧文件哈希> --expected-revision <当前revision> --allowed-module <唯一改动模块> --reason <原因> --dry-run` 审核差异；无运行时改动时省略 `--allowed-module`。去掉 `--dry-run` 后只更新 Job 上下文并留下审计，不改 workflow、provider 配置或批准的媒体。随后刷新本 Job 预检和原配置批准；模块差异超出指定范围时停止，不手改上下文解锁。该入口不是旧 Job 缺失 runtime/启动批准时的自动迁移器。
+本项目内开发时如需继续同一 Job，先用正式 `revise` 将受影响阶段退回 `needs_revision`，再以 `scripts/migrate_job_context.py --job-context <workspace>/job-context.json --expected-context-sha256 <旧文件哈希> --expected-revision <当前revision> --allowed-module <唯一改动模块> --reason <原因> --dry-run` 审核差异；无运行时改动时省略 `--allowed-module`。旧 Job 接入当前完整包时，必须额外显式传入 `--project-root <当前项目根> --user-confirmation <用户原文确认>`；跨根只允许 `delivery` 的 `ready_for_review` 且前序阶段全为 `approved`，或原 Job 已处于 `needs_revision`。当前包根由迁移脚本自身确定并校验归属，不接受手填 Skill 根。去掉 `--dry-run` 后只更新项目根、运行时模块和 release 身份并留下完整 before/after 审计，保留 Python、compositor、contract、provider 配置、workflow、批准媒体及原 setup-approval 原文；随后刷新本 Job 预检。缺显式授权、阶段状态不符、模块超出 `--allowed-module` 或哈希/revision 改变时停止，不手改上下文解锁。
 
 运行时绑定合成器 contract、实际 Python 及 `edit/hd/tools` 下 Python 源码哈希。不同工作树即使都叫 full-v2，也不能视为同一实现。长驻进程已导入另一项目时改用新进程，不删除 `sys.modules` 后混用旧对象。记录版本不等于证明全部视觉要求已满足，正式 canary 仍须验收。缺 `runtime`/启动批准的旧 Job 没有自动迁移器，先保留旧包与批准资产，明确处理差异，不重签上下文假装无变化。
 

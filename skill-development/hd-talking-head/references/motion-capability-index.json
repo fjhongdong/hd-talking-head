@@ -57,9 +57,9 @@
         "skill-development/vendor/adu-motion-video/template/templates.js"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed",
-        "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "5e9ea378cef54083ac06fa99a76aef74b93a1e68d59d416230af7c5ea5aeec28",
-        "skill-development/hd-talking-head/scripts/render_adu_native.mjs": "004ce4ec55781e2db4876870a41787c11396146ffe7b522c5b828a9c969f71b1",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
+        "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "1ea29e04e206c1b7bd4be686ff9edc68f97037bb3061ad8b6ebcc7f2ceb601bb",
+        "skill-development/hd-talking-head/scripts/render_adu_native.mjs": "4988ab1897192139c46806df145c45dbe72438a8bae9d89a7db17143b6ba63b4",
         "skill-development/vendor/adu-motion-video/SKILL.md": "6554f247f5503b3fdd0f3afb64760e16c85437eefd0aeaf99399309a39a4779c",
         "skill-development/vendor/adu-motion-video/package-lock.json": "a91ed888d1ea16625f5ad8c06dded81c320902c257040a91ca0b8cbeeda1bf1e",
         "skill-development/vendor/adu-motion-video/package.json": "de0bcad90be7b9c583adbf0d933cbbd3e85d89fa15c38f662d34e8085c431e9d",
@@ -200,7 +200,7 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
@@ -262,7 +262,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15",
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/Root.tsx": "613d7be4f5fe24f2f15280791af69fe871ac9a365ff68ff5d4a46b6e9a0d5b15",
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/entry.ts": "a70203d7cd74c6bf063461f10a968e4ceb796dd8f181f27416c8469687c92268",
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
         "skill-development/hd-talking-head/scripts/data_rollup_adapter.py": "7cdfa3835d956bce2a3b469c870792fc9faa8047bb555d569058af37a88f2850",
         "skill-development/hd-talking-head/scripts/render_data_rollup.cjs": "f29bcface7b956728086714d9977867de93664fa29a870f8fc1f114f6071800a"
       }
@@ -563,7 +563,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html": "19c6528e970766422978e26d5ac483bfe2c711b7fdcaf1f8a28805a4a53f584c"
       }
@@ -616,7 +616,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html": "fe9b9e0dd4c886843713116811688565c6fea3995cbb52f8c2e044106072715a"
       }
@@ -670,7 +670,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html": "bd6547f25f1c80c0d7dbdef0344627e92d57ace5e31237610928700b0a664d85"
       }
@@ -724,7 +724,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html": "db49f679a66fb4505e07d395bff8188ae568fbfac36a50c94f1e58fcd925e11a"
       }
@@ -786,7 +786,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/assets/hyperframes-logo-white.svg": "f9f942c43b465616c3af2fb8b07daf1cc05a4776903bbb27beb2bb608060e6c7",
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/notification-cascade.html": "9bb3a62e358ff2b66c2afa6b9bd6110bfc3e834c8ff4c543c52cfc368c0db1d9",
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/registry-item.json": "1208c8514e7cbd6cfd7a3832d4c7b22d8e64e35d3f6c432e3fb1bf3f4e245507",
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
         "skill-development/hd-talking-head/scripts/hyperframes_notification_adapter.py": "ec505e92f4262f521db1ad7507387d89f0559a37c1a5ee011f0963254776dcaa",
         "skill-development/hd-talking-head/scripts/render_hyperframes_notification.cjs": "85467b880392cac08734a1a7e0337b0c58a34c2b273b3f614d500f4342d83884"
       }
@@ -906,7 +906,7 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
@@ -1028,7 +1028,7 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "1fdce7e7a8dbdfdad2b0ff692acba6701efb624953f14397376aeded6cf508ad",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
@@ -1074,7 +1074,7 @@
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404",
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py": "af903772f52fdfce4c2c6294c29d3bd5a8fcde440edcb29d8f0ff94bb4a9a3bc"
       }
     },
@@ -1366,9 +1366,9 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22",
-        "skill-development/hd-talking-head/scripts/render_whiteboard.py": "1742ba0274000396953e61fc3ad89a83a3034ef174da5c1a944a510935c9d121",
-        "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "99270e3748d7fcc617b6e834c6f41f37878f1e6ef5779983930a63d999de5add",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404",
+        "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
+        "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/__init__.py": "d5335d7aaa4c5d9f00390cdbe8bfe1c6e378dd004c20e7c7eef2d2b9beb2a05a",
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/cli.py": "6551a163c5a7c4b25361c273ea313cdfb4cdacc9d917e64a0ecf040aa8b76e18",
@@ -1520,7 +1520,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html": "8713fc92043a353732f4d9bd8832e0023a2019472d3a9cfffc566ff6fd194042"
       }
@@ -1574,7 +1574,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html": "dfe78474314169e66fb3cb6fa26d3e09755873248a1ff72dc4b472edacbb2771"
       }
@@ -1628,7 +1628,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/toggle-flip/toggle-flip.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/toggle-flip/toggle-flip.html": "f73cefb798fe3cd1a5ac503c6feb494a644c17d53d8b2e1cf313973940f0161d"
       }
@@ -1683,7 +1683,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html": "c04e8bf1bfbcec71d0921a03a786cc09e660732428aa04bf79036a30b7755e09"
       }
@@ -1738,9 +1738,9 @@
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "b7638e5cdde76562347eda785da4295fe0060313c0fc4d377f7ab21a62400200",
-        "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "71f912851deb15eb0cc5fded4954f6abd1bd6dba32261d91345eab210733958c",
+        "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "0f3b1ff467f6ec9ed26902cf0027676c42d3924f2b8f7b80d9947dada1e45c12",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
       }
     },
@@ -1794,8 +1794,8 @@
         "skill-development/vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
-        "skill-development/hd-talking-head/references/overlay-studio-pinboard.md": "6d43acf118550bf681d484aba5fa0c26d9b8b51c1aaad58adc4ff60971b925fc",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
+        "skill-development/hd-talking-head/references/overlay-studio-pinboard.md": "00dbfeee3313a9fd1b0d59ddba39424fc674de4c43e30c29b2e4093ef5e45511",
         "skill-development/hd-talking-head/scripts/overlay_studio_adapter.py": "547a3fcb9de79736ff5e15e299e6e6888f052d8ee8bc14f59cbcf8967eaa9d22",
         "skill-development/vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx": "5073d9168bab4a77fa6464a8fb18cbd1f0849aacd42c73ac7795971d0ed31cb5"
       }
@@ -7052,8 +7052,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404"
       }
     },
     {
@@ -7082,8 +7082,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "6e0a48b47c035ec9318846189989cfedaf0b8e3416841405eca749a856a8fe22"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "b68b07d7c5fc09b16a062de98eb9a3b87a5801b412cb8b3222aca573fa750404"
       }
     },
     {
@@ -7112,7 +7112,7 @@
         "skill-development/hd-talking-head/references/upstream-scene-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
         "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3"
       }
     },
@@ -7146,8 +7146,8 @@
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784",
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "7d7f386940f674cebcc14efbe6d30127b4660f777740f1a9bd631d476181efed"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac"
       }
     },
     {
@@ -7180,8 +7180,8 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784"
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46"
       }
     },
     {
@@ -7214,8 +7214,8 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "af9743edfa4d9b4220d16aba9291d69e8254eb171a7016fd48b1d13e38fed5a6",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "28e3c9e60a839b3b4b2442648b9570fb6061152abf6930c1227e6294f06f7784"
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "f180ea99fae25c45b4eaa46a4faee6985f70512edb0127b63097d9bd64ee6f8a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "8920c2a47d06a4f40908d53791b9ff33de391b8929de0885299fb75bad9fff46"
       }
     },
     {

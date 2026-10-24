@@ -574,15 +574,7 @@ def _registered_template(
                 )
             _registered_report = report
             module._router_registered_report = report
-        matches = [item for item in _registered_report["verified"] if all(
-            key in binding and binding[key] == item[key]
-            for key in module.PROVENANCE_FIELDS
-        )]
-        if len(matches) != 1:
-            raise module.RegistryError(
-                "binding does not match a registered template; do not self-certify provenance"
-            )
-        return matches[0]
+        return module.match_registered_binding(binding, _registered_report["verified"], root=root)
     except module.RegistryError as exc:
         raise RouterError(str(exc)) from exc
 

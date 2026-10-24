@@ -22,6 +22,7 @@ def brief():
         "right": {"title": "新方案", "items": ["自动汇总"]},
         "left_frame": 24, "right_frame": 48, "strike_frame": 72,
         "stamp": "验证",
+        "typography": {"title_px": 64, "body_px": 56},
     }
 
 
@@ -35,6 +36,27 @@ class AduNativeBriefTests(unittest.TestCase):
     def test_valid_brief_round_trips(self):
         checked = adapter.validate_brief(json.dumps(brief()))
         self.assertEqual(checked["composition"]["frames"], 240)
+        self.assertEqual(checked["typography"], {"title_px": 64, "body_px": 56})
+
+    def test_portrait_typography_accepts_four_character_labels(self):
+        payload = brief()
+        payload["typography"] = {"title_px": 64, "body_px": 56}
+        checked = adapter.validate_brief(json.dumps(payload))
+        self.assertEqual(checked["typography"]["body_px"], 56)
+
+    def test_portrait_typography_rejects_overlong_label(self):
+        payload = brief()
+        payload["typography"] = {"title_px": 64, "body_px": 56}
+        payload["right"]["items"] = ["这是七个字标签"]
+        with self.assertRaisesRegex(ValueError, "typography body capacity"):
+            adapter.validate_brief(json.dumps(payload))
+
+    def test_portrait_typography_rejects_multiple_rows_at_large_body_size(self):
+        payload = brief()
+        payload["left"]["items"] = ["一行", "二行"]
+        payload["template_request"]["information_units"] = 3
+        with self.assertRaisesRegex(ValueError, "body line capacity"):
+            adapter.validate_brief(json.dumps(payload))
 
     def test_rejects_wrong_semantic_family(self):
         self.check(lambda b: b["template_request"].__setitem__("semantic_family", "other"),

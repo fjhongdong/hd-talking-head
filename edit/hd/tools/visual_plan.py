@@ -1032,7 +1032,8 @@ def _validate_job_context(
 def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, str]] | None = None,
                  skill_selection: dict[str, object] | None = None,
                  overlay_alignment_report: list[dict] | None = None,
-                 overlay_selection_report: list[dict] | None = None) -> str:
+                 overlay_selection_report: list[dict] | None = None,
+                 numbering: dict[str, int] | None = None) -> str:
     lines = [
         "# 本视频贴片与 B-roll 总表",
         "",
@@ -1048,8 +1049,14 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
         motion_review = skill_selection.get("motion_review") or {}
         checks = {(c.get("segment_id"), c.get("component_id")): c
                   for c in motion_review.get("checks", [])}
-        lines.extend(["## 贴片与 B-roll 完整清单（用户确认）", "", "| 时间 | 类型 | 剪后原话 | 语义 | 检索标签 | 具体动效模板/素材来源 |", "|---|---|---|---|---|---|"])
-        for segment in sorted(plan["segments"], key=lambda s: (s["start"], s["segment_id"])):
+        ordered = sorted(plan["segments"], key=lambda s: (s["start"], s["segment_id"]))
+        if numbering is None:
+            from .visual_confirmation import number_visual_rows
+            numbering = {row["row_id"]: row["number"] for row in number_visual_rows([
+                {"row_id": segment["segment_id"] + ":" + component["component_id"]}
+                for segment in ordered for component in segment["visual_strategy"]["components"]])}
+        lines.extend(["## 贴片与 B-roll 完整清单（用户确认）", "", "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 检索标签 | 具体动效模板/素材来源 |", "|---|---|---|---|---|---|---|"])
+        for segment in ordered:
             for component in segment["visual_strategy"]["components"]:
                 key = (segment["segment_id"], component["component_id"])
                 query, check = queries.get(key, {}), checks.get(key, {})
@@ -1062,7 +1069,8 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
                     template = check["template_title"] + " · " + template
                 tags = query.get("tags", [])
                 kind = "贴片" if component.get("layer_role") == "annotation" else "B-roll"
-                lines.append("| {start:.3f}–{end:.3f}s | {kind} | {spoken} | {semantic} | {tags} | `{template}` |".format(
+                lines.append("| {number} | {start:.3f}–{end:.3f}s | {kind} | {spoken} | {semantic} | {tags} | `{template}` |".format(
+                    number=numbering[segment["segment_id"] + ":" + component["component_id"]],
                     start=segment["start"], end=segment["end"], kind=kind,
                     spoken=cell(check.get("spoken_text", motion_review.get("spoken_segments", {}).get(segment["segment_id"], ""))),
                     semantic=cell(segment["visual_intent"].get("statement", "")),
@@ -1748,9 +1756,13 @@ def _publish_plan_generation(
         generation_id = secrets.token_hex(16)
         stage = job.job_dir / f".visual-direction-v3.stage-{generation_id}"
         plan_payload = contract_artifacts.canonical_json_bytes(plan)
+        numbering = None
+        if (job.root / "job-context.json").exists() or (job.root / "00-user-provided").exists():
+            from .visual_confirmation import approved_numbered_rows
+            numbering = {row["row_id"]: row["number"] for row in approved_numbered_rows(job)}
         review_payload = _review_text(plan, reviewed_visual_text, skill_selection,
                                       overlay_alignment_report,
-                                      overlay_selection_report).encode("utf-8")
+                                      overlay_selection_report, numbering).encode("utf-8")
         published_payload_paths = (
             "07-visual-direction/visual-plan.json",
             "07-visual-direction/visual-routing.md",

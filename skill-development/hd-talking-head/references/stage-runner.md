@@ -91,6 +91,12 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 
 `visual_canary`、`visual_assets` 只为实际选中的依赖组装适配器。原生代码组件、用户素材、官方资料、素材库及完成记录中的 AI 图片/视频使用包内默认工厂；图片与视频按各自组件绑定，混用时不会共用错误的媒体类型。直用素材保留原件和原尺寸，另存 PNG 或无声规范视频；按已确认时窗合成，不重复获取或生成素材。未知执行绑定在整表发布前报告缺口。
 
+局部视觉返修时，canary 自动采用本次 `artifact_scope` 中的受影响镜头，避免重做未变样段；也可通过 `input-json.segment_ids` 指定本次待检查镜头。正式资产仍按逐段输入身份复用其余媒体。
+
+清单和成片编号共用 `visual_confirmation.approved_numbered_rows(job)`，按本期已确认 proposal 的冻结行序定位 `row_id`，不从当前稿件各自排序。最终合成在对应帧窗右下角叠小编号，时间统一加 `opening.body_offset_frames`；封面与空档不显示。编号图集和时窗随现有 preview 产物、报告与哈希登记，交付直接沿用带编号的正式预览。
+
+待审 proposal 的反复修订须保留上一代 `07-visual-direction` 的发布 lineage。proposal 文件不能代替正式目录的覆盖依据；也不能将旧正式目录放进会在原子交换时失效的 ACTIVE 引用后直接发布。恢复现存 Job 时，先核对引擎保留快照与旧目录，再用现有状态 API 将旧发布身份移入 lineage，并保留原 proposal 与真实用户批准，不重签确认。
+
 宿主已有专用适配器仍可显式传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。正常支持的来源无需另写工厂；工厂只组装已接通入口，不替换来源、不批准阶段。
 
 ## 宿主审阅后推进
@@ -113,6 +119,10 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 <python> <skill>/scripts/run_stage.py --job-context <ctx> --stage visual_canary \
   --review-json <本次实际QA.json>
 ```
+
+`speech_cleanup` 的返回还包含实时 `cleanup_checks`。宿主核听后剪除口误并重建提案；残留的必要强调或呼吸，在同一 review JSON 填 `speech_cleanup_resolutions: [{"candidate_id":"返回的实际ID","decision":"keep","reason":"核听后的具体保留原因"}]`。必须覆盖每一剩余候选；无候选则省略。不增加用户逐项确认。
+
+视觉 canary、assets、preview 的返回含 `motion_readability`。`fail` 先修对应镜头；`needs_review` 由宿主按[实际文字检查](motion-text-readability.md)填写 `motion_readability_resolutions` 的真实帧和文字框，不靠自由 QA note 放行。该检查覆盖全部实际动效，最终交付会再次拒绝未决项。
 
 示例中的占位符、revision 和字节数都不能照抄。入口先核对被审任务、revision 和完整产物身份，再保存本地 QA 并调用原阶段批准；不为旧记录补上当前任务身份。`cover_direction`、`cover`、`visual_direction` 在同一 JSON 提供本次真实 `user_confirmation`。整表确认时使用 `--stage visual_direction --review-json <整表确认.json>`；入口自动记录 `approval_scope=visual_plan_and_delivery`，保存在 `manifests/local-qa-visual_direction-r<revision>.json`。随后宿主继续内部制作，不向用户逐阶段重复提问。
 

@@ -198,6 +198,21 @@ def _duration(row):
     return end - start
 
 
+def source_channel(skill_id):
+    """Return the real production channel, including the one known alias."""
+    return "hyperframes" if skill_id in {"hyperframes", "hyperframes-native-adaptation"} else skill_id
+
+
+def _fixed_template(row):
+    template = row.get("template_id")
+    if not template or row.get("role") == "design":
+        return None
+    if row["skill_id"] in {"openfilm-motion-graphics", "doudou-remotion-whiteboard",
+                            "whiteboard-video", "paper-collage-ad"}:
+        return None
+    return (source_channel(row["skill_id"]), row.get("source_route") or template)
+
+
 def assign_skills(project_root: Path, selection: Mapping) -> dict:
     """Lock semantic winners, then coordinate only host-reviewed peers globally."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
@@ -265,26 +280,39 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
 
     def cost(choices):
         patterns, sources = defaultdict(float), defaultdict(float)
+        channels, templates = set(), set()
         adjacency = 0.0
         for row in recent:
             duration = _duration(row)
             patterns[row["visual_pattern"]] += duration
-            sources[row["skill_id"]] += duration
+            sources[source_channel(row["skill_id"])] += duration
         sequence = [(row["start"], row["end"], row["visual_pattern"]) for row in fixed]
         for row in fixed:
             duration = _duration(row)
             patterns[row["visual_pattern"]] += duration
-            sources[row["skill_id"]] += duration
+            channel = source_channel(row["skill_id"])
+            sources[channel] += duration
+            channels.add(channel)
+            fixed_template = _fixed_template(row)
+            if fixed_template:
+                templates.add(fixed_template)
         for index, (beat, choice) in enumerate(zip(beats, choices)):
             duration = _duration(beat)
             patterns[choice["visual_pattern"]] += duration
-            sources[pool[choice["candidate_id"]]["skill_id"]] += duration
+            candidate = pool[choice["candidate_id"]]
+            channel = source_channel(candidate["skill_id"])
+            sources[channel] += duration
+            channels.add(channel)
+            fixed_template = _fixed_template(candidate)
+            if fixed_template:
+                templates.add(fixed_template)
             sequence.append((beat["start"], beat["end"], choice["visual_pattern"]))
         sequence.sort()
         for previous, current in zip(sequence, sequence[1:]):
             if current[0] >= previous[1] and current[2] == previous[2]:
                 adjacency += min(current[1] - current[0], previous[1] - previous[0])
-        return (adjacency, sum(v * v for v in patterns.values()),
+        return (-len(channels), -len(templates), adjacency,
+                sum(v * v for v in patterns.values()),
                 sum(v * v for v in sources.values()))
 
     # Unique/clearly better slots already constrain their domains. Every slot
@@ -302,6 +330,24 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             if best != chosen[index]:
                 chosen[index] = best
                 improved = True
+        if improved:
+            continue
+        # A joint move can escape a local minimum created by two mutually
+        # reinforcing choices. Keep it bounded to the reviewed domains.
+        best_pair, best_cost = None, cost(chosen)
+        for left in range(len(domains)):
+            for right in range(left + 1, len(domains)):
+                for first in domains[left]:
+                    for second in domains[right]:
+                        trial = list(chosen)
+                        trial[left], trial[right] = first, second
+                        trial_cost = cost(trial)
+                        if trial_cost < best_cost:
+                            best_pair, best_cost = (left, first, right, second), trial_cost
+        if best_pair:
+            left, first, right, second = best_pair
+            chosen[left], chosen[right] = first, second
+            improved = True
     result = copy.deepcopy(dict(selection))
     result["assignments"] = [
         {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
@@ -314,6 +360,34 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
     return result
 
 
+def fixed_overlay_context(draft: Mapping, treatment: Mapping) -> list[dict]:
+    """Build fixed A-roll overlay identities from the actual draft bindings."""
+    overlays = {(row.get("segment_id"), row.get("component_id")): row
+                for row in treatment.get("overlay_selection", [])}
+    result = []
+    for segment in draft.get("segments", []):
+        if segment.get("visual_strategy", {}).get("mode") != "none":
+            continue
+        for component in segment.get("visual_strategy", {}).get("components", []):
+            key = (segment.get("segment_id"), component.get("component_id"))
+            binding = segment.get("bindings", {}).get(component.get("component_id"))
+            overlay = overlays.get(key)
+            if not isinstance(binding, dict) or not isinstance(overlay, dict):
+                if component.get("kind") == "code_generated":
+                    raise ValueError("fixed code overlay is missing binding or overlay selection")
+                continue
+            source_ref = binding.get("brief_sha256") or binding.get("source_ref")
+            template_id = binding.get("template_id")
+            if not source_ref or not template_id:
+                raise ValueError("fixed overlay binding lacks source or template identity")
+            result.append({"segment_id": key[0], "component_id": key[1],
+                           "start": segment["start"], "end": segment["end"],
+                           "skill_id": binding.get("dependency_id", ""),
+                           "template_id": template_id, "source_ref": source_ref,
+                           "visual_pattern": overlay.get("visual_structure") or overlay.get("visible_action", "")})
+    return result
+
+
 def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -> dict:
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
@@ -322,6 +396,9 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
     if computed["assignments"] != selection.get("assignments"):
         raise ValueError("B-roll assignment changed; run assign before building bindings")
     expected, fixed_expected = {}, {}
+    fixed_overlay = fixed_overlay_context(draft, treatment)
+    for row in fixed_overlay:
+        fixed_expected[(row["segment_id"], row["component_id"])] = row
     for segment in draft["segments"]:
         if segment["visual_strategy"]["mode"] == "none":
             continue  # A-roll overlays have a separate contract.
@@ -336,12 +413,22 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
     beats = {(b["segment_id"], b["component_id"]): b for b in selection["beats"]}
     if set(beats) != set(expected):
         raise ValueError("B-roll selection must cover every code/AI B-roll component exactly once")
-    fixed = {(row["segment_id"], row["component_id"]): row for row in selection.get("fixed_context", [])}
+    fixed_rows = selection.get("fixed_context", [])
+    fixed = {(row["segment_id"], row["component_id"]): row for row in fixed_rows}
     if len(fixed) != len(selection.get("fixed_context", [])) or set(fixed) != set(fixed_expected):
         raise ValueError("B-roll whole-video context must include every material B-roll exactly once")
     for key, row in fixed.items():
-        if any(row[k] != fixed_expected[key][k] for k in ("start", "end")):
+        expected_row = fixed_expected.get(key)
+        if expected_row and any(row[k] != expected_row[k] for k in ("start", "end")):
             raise ValueError("B-roll fixed material context window drifted")
+        if expected_row:
+            for field in ("skill_id", "template_id", "source_ref", "visual_pattern"):
+                expected_value = expected_row.get(field)
+                actual_value = row.get(field)
+                if field == "skill_id":
+                    expected_value, actual_value = source_channel(expected_value), source_channel(actual_value)
+                if field in expected_row and actual_value != expected_value:
+                    raise ValueError("B-roll fixed material identity drifted")
     pool = {row["candidate_id"]: row for row in discover_candidates(project_root)}
     for assignment in computed["assignments"]:
         key = (assignment["segment_id"], assignment["component_id"])

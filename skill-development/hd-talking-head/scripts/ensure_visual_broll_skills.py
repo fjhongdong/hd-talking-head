@@ -14,6 +14,14 @@ import tempfile
 
 
 SOURCES = {
+    "overlay-studio-native": {
+        "commit": "e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8",
+        "project_path": "skill-development/vendor/overlay-studio",
+        "files": (".agents/skills/overlay-fx-generator/SKILL.md",
+                  "motion-playground/scripts/export-frames.mjs",
+                  "motion-playground/src/effects/hud/PinBoardPlate.tsx",
+                  "motion-playground/package.json", "motion-playground/package-lock.json"),
+    },
     "eian-riso-broll": {
         "url": "https://github.com/YIAN6557/eian-riso-broll.git",
         "commit": "e782ad7051f5fce1ca371523c144f4cb78ab5c40",
@@ -139,6 +147,14 @@ def ensure(project_root: Path, skill_id: str) -> dict[str, str]:
     if not (root / "edit/hd/tools/state.py").is_file():
         raise VisualBrollDependencyError(f"not a talking-head project: {root}")
     source = SOURCES[skill_id]
+    if skill_id == "overlay-studio-native":
+        destination = root / source["project_path"]
+        _validate_repo(destination, source)
+        from overlay_studio_runtime import prepare_runtime
+        runtime = prepare_runtime(root)
+        return {"status": "ready", "skill_id": skill_id,
+                "path": runtime["root"], "version": source["commit"],
+                "runtime_status": "callable"}
     if source.get("runtime"):
         from openfilm_runtime import prepare_runtime
         runtime = prepare_runtime(root)

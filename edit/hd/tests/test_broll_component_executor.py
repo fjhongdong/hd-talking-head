@@ -3227,6 +3227,15 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
 
 
 class CodeDependencyExecutionTests(unittest.TestCase):
+    def test_paper_freeze_failure_retains_bounded_native_diagnostic(self):
+        from types import SimpleNamespace
+        from edit.hd.tools import broll_component_executor as executor
+        message = b'ValueError: paper output contains a continuous freeze >= 3 seconds: {"duration":3.08}\n'
+        with self.assertRaises(executor.BrollComponentExecutionError) as raised:
+            executor._raise_reference_failure(SimpleNamespace(dependency_id="paper-collage-ad"), message, {})
+        self.assertEqual(str(raised.exception), "BROLL_RENDER_FAILED")
+        self.assertIn("continuous freeze", raised.exception.__notes__[0])
+
     def test_prequalification_registry_is_forwarded_only_from_the_bound_adapter(self) -> None:
         from dataclasses import replace
         from unittest.mock import Mock, patch

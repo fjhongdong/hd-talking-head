@@ -95,6 +95,76 @@ class CleanupRiskTests(unittest.TestCase):
         self.assertEqual(report["candidates"], [])
         self.assertEqual(report["counts"], {"high": 0, "review": 0, "low": 0})
 
+    def test_retained_interrupted_restart_is_reported_and_delete_clears_it(self):
+        words = [
+            {"text": "总", "start": 0.0, "end": 0.2},
+            {"text": "感觉-- ", "start": 0.2, "end": 0.4},
+            {"text": "总", "start": 1.0, "end": 1.2},
+            {"text": "觉得，", "start": 1.2, "end": 1.4},
+            {"text": "总", "start": 2.5, "end": 2.7},
+            {"text": "觉得", "start": 2.7, "end": 2.9},
+            {"text": "买", "start": 2.9, "end": 3.1},
+        ]
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 7,
+            "source_start": 0.0, "source_end": 3.1,
+            "original_sentence": "".join(w["text"] for w in words),
+            "cleaned_sentence": "".join(w["text"] for w in words),
+            "reason": "保留原句", "breathing_padding": {"before": 0.0, "after": 0.0},
+        }]}
+        found = edit_timeline.assess_cleanup_risk(words, plan, media_duration=4.0)["retained_repetitions"]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["kind"], "retained_repetition")
+        self.assertEqual((found[0]["word_start"], found[0]["word_end"]), (0, 7))
+        plan["segments"][0]["action"] = "delete"
+        plan["segments"][0]["cleaned_sentence"] = ""
+        self.assertEqual(edit_timeline.assess_cleanup_risk(words, plan, media_duration=4.0)["retained_repetitions"], [])
+
+    def test_retained_repetition_handles_punctuation_inside_one_asr_word(self):
+        words = [
+            {"text": "总觉得，总觉得买", "start": 0.0, "end": 1.0},
+        ]
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 1,
+            "source_start": 0.0, "source_end": 1.0,
+            "original_sentence": words[0]["text"], "cleaned_sentence": words[0]["text"],
+            "reason": "保留原句", "breathing_padding": {"before": 0.0, "after": 0.0},
+        }]}
+        found = edit_timeline.assess_cleanup_risk(words, plan, media_duration=2.0)["retained_repetitions"]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["word_start"], 0)
+
+    def test_non_adjacent_normal_repeat_is_not_reported(self):
+        words = [
+            {"text": "总觉得。", "start": 0.0, "end": 0.2},
+            {"text": "先说别的。", "start": 1.0, "end": 1.2},
+            {"text": "总觉得。", "start": 2.0, "end": 2.2},
+        ]
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 3,
+            "source_start": 0.0, "source_end": 2.2,
+            "original_sentence": "".join(w["text"] for w in words),
+            "cleaned_sentence": "".join(w["text"] for w in words),
+            "reason": "保留原句", "breathing_padding": {"before": 0.0, "after": 0.0},
+        }]}
+        self.assertEqual(edit_timeline.assess_cleanup_risk(words, plan, media_duration=3.0)["retained_repetitions"], [])
+
+    def test_adjacent_long_complete_sentence_repeat_is_reported(self):
+        sentence = "这是一段超过十四个字但完整重复的句子内容"
+        words = [
+            {"text": sentence + "。", "start": 0.0, "end": 1.0},
+            {"text": sentence + "。", "start": 1.5, "end": 2.5},
+        ]
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 2,
+            "source_start": 0.0, "source_end": 2.5,
+            "original_sentence": "".join(w["text"] for w in words),
+            "cleaned_sentence": "".join(w["text"] for w in words),
+            "reason": "保留原句", "breathing_padding": {"before": 0.0, "after": 0.0},
+        }]}
+        found = edit_timeline.assess_cleanup_risk(words, plan, media_duration=3.0)["retained_repetitions"]
+        self.assertEqual(len(found), 1)
+
     def test_correction_reader_accepts_new_diff_without_accepting_unknown_fields(self):
         words, plan, duration = proposal_inputs(["分享", "经验"], ["keep", "keep"])
         result = build_cleanup_proposal("分享经验", words, plan, media_duration=duration)

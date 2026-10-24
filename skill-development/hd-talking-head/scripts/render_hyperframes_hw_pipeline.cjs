@@ -84,7 +84,10 @@ async function main(args) {
     html = replaceOnce(html, '<!doctype html>', '<!-- hyperframes-registry-item: hw-pipeline -->\n<!doctype html>');
     html = replaceOnce(html, 'https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js', 'vendor/gsap.min.js');
     html = html.replaceAll('"Caveat", cursive', '"PingFang SC", "Heiti SC", sans-serif');
-    html = replaceOnce(html, '      #hw-pl-svg path {', `      #hw-pl-root::before {\n        content: ""; position: absolute; left: 120px; top: 200px;\n        width: 1680px; height: 310px; border-radius: 34px;\n        background: rgba(13, 19, 31, 0.84);\n        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.25);\n      }\n      #hw-pl-svg path {`);
+    html = replaceOnce(html, '--hw-ink: #f4f2ec;', '--hw-ink: #242a2d;');
+    html = replaceOnce(html, '--hw-accent: #ffb020;', '--hw-accent: #c79a36;');
+    html = replaceOnce(html, 'text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);', 'text-shadow: none;');
+    html = replaceOnce(html, '      #hw-pl-svg path {', `      #hw-pl-root::before {\n        content: ""; position: absolute; left: 120px; top: 200px;\n        width: 1680px; height: 310px; border-radius: 34px;\n        background: #fff8e8;\n        box-shadow: 0 16px 60px rgba(199, 154, 54, 0.18);\n      }\n      #hw-pl-svg path {`);
     const duration = (b.canvas.frames / 24).toFixed(4).replace(/0+$/u, '').replace(/\.$/u, '');
     html = html.replaceAll('data-duration="7"', `data-duration="${duration}"`);
     html = replaceOnce(html, 'nodes: [{ label: "Idea" }, { label: "Record" }, { label: "Shine!" }]',

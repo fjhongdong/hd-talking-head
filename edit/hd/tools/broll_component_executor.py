@@ -423,6 +423,11 @@ def _raise_reference_failure(
                           if line.strip().startswith(prefix))[:2000]
         if text:
             error.add_note(prefix + " " + text)
+    elif getattr(adapter, "dependency_id", None) == "paper-collage-ad":
+        details = [line.strip() for line in stderr.decode("utf-8", "replace").splitlines()
+                   if line.startswith("ValueError: paper output contains a continuous freeze")]
+        if details:
+            error.add_note("Paper native renderer diagnostic: " + details[-1][:2000])
     raise error
 
 

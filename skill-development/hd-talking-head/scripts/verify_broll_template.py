@@ -983,18 +983,57 @@ def verify_registry(registry_path: Path) -> dict[str, Any]:
     }
 
 
+def match_registered_binding(
+    binding: dict[str, Any], verified: list[dict[str, Any]], *, root: Path | None = None,
+) -> dict[str, Any]:
+    """Match current qualification while preserving an unchanged frozen binding.
+
+    Explicit predecessors prove a former identity, never former QA approval.
+    Callers must first validate the current registry and its execution evidence.
+    """
+    matches = [item for item in verified if all(
+        key in binding and binding[key] == item[key] for key in PROVENANCE_FIELDS
+    )]
+    if len(matches) == 1:
+        return matches[0]
+    same_template = [item for item in verified if all(
+        key in binding and binding[key] == item[key]
+        for key in PROVENANCE_FIELDS - {"verification_id"}
+    )]
+    if len(same_template) == 1:
+        current = same_template[0]
+        path = (root or Path(__file__).resolve().parents[1]) / "references/template-identity-predecessors.json"
+        try:
+            history = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RegistryError("template identity predecessors are unavailable") from exc
+        if not isinstance(history, dict) or set(history) != {"schema_version", "entries"} or history["schema_version"] != 1 or not isinstance(history["entries"], list):
+            raise RegistryError("template identity predecessors are invalid")
+        predecessors = [entry for entry in history["entries"] if isinstance(entry, dict)
+            and entry.get("current_verification_id") == current["verification_id"]
+            and isinstance(entry.get("record"), dict)
+            and entry["record"].get("verification_id") == binding.get("verification_id")]
+        if len(predecessors) == 1:
+            entry, previous = predecessors[0], predecessors[0]["record"]
+            native = lambda record: {key: value for key, value in record.items()
+                                     if key not in {"verification_id", "execution_qa"}}
+            if (set(entry) == {"source_commit", "source_path", "current_verification_id", "record"}
+                    and isinstance(entry["source_commit"], str)
+                    and re.fullmatch(r"[0-9a-f]{40}", entry["source_commit"])
+                    and entry["source_path"] == "references/verified-template-registry.json"
+                    and previous["verification_id"] == _verification_id(previous)
+                    and native(previous) == native(current)):
+                return current
+    raise RegistryError("binding does not match a registered template; do not self-certify provenance")
+
+
 def verify_registered_binding(binding: dict[str, Any]) -> dict[str, Any]:
     """Resolve provenance only from this package's registry and real assets."""
     root = Path(__file__).resolve().parents[1]
     report = verify_registry(root / "references/verified-template-registry.json")
     if report["failures"]:
         raise RegistryError("registered template verification failed: " + "; ".join(report["failures"]))
-    matches = [item for item in report["verified"] if all(
-        key in binding and binding[key] == item[key] for key in PROVENANCE_FIELDS
-    )]
-    if len(matches) != 1:
-        raise RegistryError("binding does not match a registered template; do not self-certify provenance")
-    return matches[0]
+    return match_registered_binding(binding, report["verified"], root=root)
 
 
 def verify_candidate_binding(

@@ -1908,6 +1908,17 @@
       "arguments": []
     },
     {
+      "id": "overlay-studio-native",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "overlay-studio-native"
+      ],
+      "dependency_ids": [
+        "overlay-studio-native"
+      ]
+    },
+    {
       "id": "eian-riso-broll-source",
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
@@ -2044,6 +2055,16 @@
       ],
       "dependency_ids": [
         "onetake"
+      ]
+    },
+    {
+      "id": "whiteboard-video-adapter",
+      "script": "scripts/whiteboard_adapter.py",
+      "arguments": [
+        "--prepare"
+      ],
+      "dependency_ids": [
+        "whiteboard-video"
       ]
     }
   ],

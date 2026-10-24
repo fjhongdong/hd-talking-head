@@ -34,7 +34,7 @@ Huashu 的 brief、能力边界与实际调用见[Huashu 原生动效接入](hua
 
 制作前固定执行两轮。第一轮逐段从完整口播语义出发，写清对象、动作、关系、变化、时窗和禁项，再列出所有语义合格且已核对真实入口的 Skill/具体原生组件候选；同时记录中文容量、画幅、透明/整屏输出、时长和费用授权状态。缺少接口只表示“待适配”或“当前不可执行”，不表示语义不适用；语义不适用也不能靠换字、换色或增加标签补救。
 
-第二轮把本期新增镜头和将复用的已批准镜头放回同一时间线，比较相邻镜头及近期成片的主体组织、构图家族、进入方式和主要动作。在语义和质量充分相近的候选中，优先减少重复；不要求数值分数完全相等，不设每个 Skill 的使用配额，也不随机轮换。没有合格替代时允许重复，但在分配表写明原因。整片分工、具体入口、画面家族、动作和状态冻结后，才生成 ShotRecipe 并调用；下游不得自行换 Skill、来源或样式。
+第二轮把本期新增镜头和将复用的已批准镜头放回同一时间线，按[画面多样性](visual-quality-contract.md#画面多样性)在合格候选中尽可能扩大真实来源渠道和具体模板的覆盖，同时减少主体组织、构图和动作的重复。不要求数值分数完全相等，不设每个 Skill 的使用配额，也不随机轮换。有合格替代时主动重选；确无合格替代或用户指定保留时，在分配表写明具体原因。整片分工、具体入口、画面家族、动作和状态冻结后，才生成 ShotRecipe 并调用；下游不得自行换 Skill、来源或样式。
 
 ### 思维导图与分支关系动效
 
@@ -201,6 +201,8 @@ GBRO 优先用于能由少量具体纸面对象直观表达的组装、替换或
 - `assets` 为两项或三项，必须含 `svg`、`source`，可选 `context`，每项保存 `job_path/sha256`。SVG 使用1080×1920绝对画布，PNG 为同几何、同线宽的非空白不透明配准图；禁用上游会忽略的文字、变换、外部图像及不完整采样的弧命令，不靠样式属性表达关键语义。
 - `provenance={record_path,record_sha256}`；该 JSON 来源记录至少保存 `tool`、实际 `method`、`canvas={width:1080,height:1920}`、适配器固定的 `ENGINE_SHA256`，以及 `assets.svg.sha256 / assets.source.sha256`。如实记录程序矢量及其派生图，不伪称图片模型生成。哈希和尺寸不能代替人工检查配准、美观和语义。
 
+整表发布前，语义能力检查还须复用渲染入口的 `validate_assets`，核对本句实际绑定的 SVG、来源图和来源记录。仅通过 brief 字段检查不足以认定原生输入完整；来源记录漏掉画布等字段时，在此停止，不能留到用户确认后才发现。
+
 以 `create_binding(adapter, brief_bytes, reference_sample=<真实参考视频>)` 创建 `dependency_id=whiteboard-video / primary_renderer=Whiteboard / template_origin=custom_fallback` 绑定，再注册到 `component_adapters["code_generated"]["whiteboard-video"]`，交给现有 canary / visual-assets 的 `execute_approved_components`。使用 `create_artifact_probe(ffprobe_executable)` 检查不透明视频；多类素材同阶段时按合同分派 probe，不覆盖透明贴片探针。
 
 执行器冻结所有登记素材与来源记录；可选 `context` 为同画布、不透明的当前主题 PNG，来源记录须同时绑定其 SHA-256；wrapper 只把冻结字节放入私有临时目录，以实际检查过的引擎执行原始 CLI。它固定无声、无手部、逐组展开、无重叠与配准原图，不接受任意追加命令。上游直接生成1080×1920；有 `context` 时先在 RGB 色彩空间以 multiply 合成主题底图并编码，避免 YUV 混合产生绿偏色。随后仅补写 H.264 方形像素标记，不缩放、不再次重编码，比较补写前后每帧像素和时间。最终 probe 核对 SAR 1:1、批准帧率及精确帧数。来源、时钟或配准记录错配时停止，不回读可变素材或自动换路线。
@@ -235,6 +237,7 @@ node <vendor>/paper-collage-ad-codex/scripts/layer-animate.mjs \
 - `schema_version=1`；`source_binding` 精确记录当前已批准 A-roll 的 `aroll_sha256`、`segment_id`、`start/end`。
 - `template_request` 沿用组件合同的语义家族、信息单元、数值及尺度字段；此图层入口不负责定量图表，数值列表为空、尺度为 `not_applicable`。
 - `manifest` 是上述上游清单，图片位置改为逻辑 `media_ref`；背景和最终帧是约 9:16 的完整画布。动作层可用完整透明画布并归一到 1080×1920，也可用已在 1080×1920 坐标中裁好的透明纸片（宽高不超过画布），保持其原始像素尺寸和 `x/y`，避免正式接入后改变运动轨迹。保留合理的负 `startAt`，不要截成零改变动作。
+- 按整段口播分配各层 `startAt/travel`，让最后一个关键物件在对应后半句出现。终态图与纸片静止构图相同时，不能让全部动作结束后还剩 3 秒或更多；那段渐变不会产生真实运动。保留原生连续静止检查，失败时调整公开入场参数并修订该镜头，不放宽阈值，也不重做已批准的图片。
 - `assets` 每项包含 `media_ref/job_path/sha256/geometry` 和 `provenance={kind,tool,record_path,record_sha256}`。`geometry=full_canvas` 的图像按整幅画布归一；`geometry=native_cutout` 的动作纸片保持原尺寸与清单中的 `x/y`，即使其裁切框恰好也是 9:16，也不能误放大。背景和最终帧只用 `full_canvas`。图像与实际生成提示词/来源记录一起存入本 Job；生成图标为 `ai_generated`，不因动画由代码执行就改写来源。来源记录须对应具体原图及其实际尺寸、生成过程；不得只填写一个无关文件哈希。
 
 通过 `create_adapter(upstream_root=..., python_executable=..., node_executable=..., ffmpeg_executable=..., ffprobe_executable=..., brief_loader=...)` 创建适配器，再以 `create_binding(adapter, brief_bytes, reference_sample=<真实参考片>)` 冻结本次绑定。绑定为 `dependency_id=paper-collage-ad / primary_renderer=PaperCollage / template_origin=custom_fallback`；`verification_id` 仅是该自定义实现身份，不是第三方模板资格。不得填 `verified_third_party`、预写退出成功或伪造样片。

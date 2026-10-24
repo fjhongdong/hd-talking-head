@@ -12,7 +12,7 @@
 - 我方运行时检查：`scripts/overlay_studio_runtime.py`
 - adapter 类型：`ReferenceProcessAdapter`；正式执行器：`reference_adapter`
 
-系统 Chrome 只按当前运行时实测身份记录，不固定写死版本，也不下载 Puppeteer 自带浏览器。缺依赖时由统一准备入口报告并停止；本说明不授权安装或升级第三方源码。
+系统 Chrome 只按当前运行时实测身份记录，不固定写死版本，也不下载 Puppeteer 自带浏览器。缺依赖时由统一准备入口在项目固定 runtime 内执行锁定文件的 `npm ci --ignore-scripts --no-audit --no-fund`，并设置 `PUPPETEER_SKIP_DOWNLOAD=true`；不覆盖不同的锁文件，不安装到全局，也不升级第三方源码。
 
 ## Brief 与时钟
 

@@ -6,6 +6,7 @@ must validate words, the plan, and media bounds before invoking this module.
 
 from bisect import bisect_left, bisect_right
 import re
+import hashlib
 from typing import Any
 
 
@@ -16,6 +17,122 @@ _PROTECTED = (
     ("condition_or_cause", re.compile(r"如果|除非|只要|只有|否则|因为|所以|因此|导致|取决于|但是|然而")),
 )
 _SENTENCE_END = re.compile(r"[。！？!?；;\n]")
+_INTERRUPTION = re.compile(r"(?:--+|—+|\.\.\.|…+)\s*$")
+_UNIT_BOUNDARY = re.compile(r"(?:[。！？!?；;，,、\n]|--+|—+|\.\.\.|…+)\s*$")
+
+
+def retained_repetitions(
+    words: list[dict[str, Any]], plan: dict[str, Any], *, media_duration: float,
+) -> list[dict[str, Any]]:
+    """Find conservative, still-retained restart/repetition chains.
+
+    This is review evidence only. It never changes the edit plan. Detection is
+    based on retained word text and real punctuation/interruption markers, so
+    keep-segment boundaries and ASR gaps cannot manufacture a candidate.
+    """
+    deleted = {
+        index
+        for segment in plan["segments"]
+        if segment["action"] == "delete"
+        for index in range(segment["word_start"], segment["word_end"])
+    }
+    cut_ranges = plan.get("reviewed_cut_ranges", [])
+    retained = []
+    for index, word in enumerate(words):
+        if index in deleted:
+            continue
+        if any(
+            cut["source_start"] <= word["start"]
+            and cut["source_end"] >= word["end"]
+            for cut in cut_ranges
+        ):
+            continue
+        retained.append((index, word))
+    if not retained:
+        return []
+
+    # Build units by character, because one ASR word may contain punctuation
+    # and therefore contain two restart units itself.
+    units: list[dict[str, Any]] = []
+    current: list[tuple[int, dict[str, Any]]] = []
+    chars: list[str] = []
+    for word_index, word in retained:
+        for char in str(word["text"]):
+            current.append((word_index, word))
+            chars.append(char)
+            text = "".join(chars)
+            if _UNIT_BOUNDARY.search(text):
+                units.append({"items": current, "text": text})
+                current, chars = [], []
+    if current:
+        units.append({"items": current, "text": "".join(chars)})
+
+    result: list[dict[str, Any]] = []
+    for left_index, left in enumerate(units):
+        left_text = left["text"].strip()
+        if len(left_text) < 2:
+            continue
+        # Only directly adjacent units are candidates.  A repeated topic much
+        # later in the paragraph is not evidence of a verbal restart.
+        for right in units[left_index + 1:left_index + 2]:
+            right_text = right["text"].strip()
+            # Source gaps may already have been cut out of the EDL.  Only
+            # retained adjacency, not the old source distance, limits a pair.
+            # A restart is strongest after an interruption, or when the whole
+            # short unit is the next unit's prefix.  Do not flag continuous
+            # emphatic wording without a real boundary.
+            interrupted = bool(_INTERRUPTION.search(left_text))
+            clean_left = re.sub(r"(?:--+|—+|\.\.\.|…+|[，,、。！？!?；;]+)$", "", left_text)
+            clean_right = re.sub(r"^[，,、。！？!?；;]+", "", right_text)
+            prefix = clean_left and clean_right.startswith(clean_left)
+            full_sentence_repeat = (
+                len(left_text) <= 120 and len(right_text) <= 120
+                and bool(_SENTENCE_END.search(left_text))
+                and bool(_SENTENCE_END.search(right_text))
+                and clean_left == re.sub(r"[。！？!?；;]+$", "", clean_right)
+            )
+            if not interrupted and not prefix and not full_sentence_repeat:
+                continue
+            if len(clean_left) < 2 or (len(left_text) > 14 and not full_sentence_repeat):
+                continue
+            first = min(left["items"][0][0], right["items"][0][0])
+            last = max(left["items"][-1][0], right["items"][-1][0]) + 1
+            source_start = float(words[first]["start"])
+            source_end = float(words[last - 1]["end"])
+            context = "".join(words[i]["text"] for i in range(max(0, first - 3), min(len(words), last + 3)))
+            digest = hashlib.sha256(f"retained_repetition:{source_start:.6f}:{source_end:.6f}:{clean_left}".encode()).hexdigest()[:16]
+            result.append({
+                "candidate_id": f"retained-repetition-{digest}",
+                "kind": "retained_repetition",
+                "word_start": first,
+                "word_end": last,
+                "source_start": source_start,
+                "source_end": source_end,
+                "context": context,
+                "evidence": "interruption_restart" if interrupted else "repeated_prefix_after_boundary",
+                "audition_range": {
+                    "source_start": max(0.0, source_start - 0.35),
+                    "source_end": min(float(media_duration), source_end + 0.35),
+                },
+            })
+            break
+    # Merge overlapping windows from a single restart chain.
+    merged: list[dict[str, Any]] = []
+    for item in sorted(result, key=lambda x: (x["source_start"], x["source_end"])):
+        if merged and item["word_start"] <= merged[-1]["word_end"]:
+            merged[-1]["word_end"] = max(merged[-1]["word_end"], item["word_end"])
+            merged[-1]["source_end"] = max(merged[-1]["source_end"], item["source_end"])
+            merged[-1]["audition_range"]["source_end"] = min(float(media_duration), merged[-1]["source_end"] + 0.35)
+        else:
+            merged.append(item)
+    for item in merged:
+        retained_text = "".join(words[i]["text"] for i in range(item["word_start"], item["word_end"]))
+        item["context"] = "".join(words[i]["text"] for i in range(max(0, item["word_start"] - 3), min(len(words), item["word_end"] + 3)))
+        digest = hashlib.sha256(
+            f"retained_repetition:{item['source_start']:.6f}:{item['source_end']:.6f}:{retained_text}".encode()
+        ).hexdigest()[:16]
+        item["candidate_id"] = f"retained-repetition-{digest}"
+    return merged
 
 
 def assess_cleanup_risk(
@@ -114,10 +231,12 @@ def assess_cleanup_risk(
             "reviewed_time_cut", start, end, first, last, cut["reason"], cut["evidence"],
         ))
     candidates.sort(key=lambda item: (item["source_start"], item["source_end"], item["kind"]))
+    retained = retained_repetitions(words, plan, media_duration=media_duration)
     return {
         "version": 1, "method": "conservative_rules_v1", "advisory_only": True,
         "requires_audio_review": True,
         "counts": {risk: sum(item["risk"] == risk for item in candidates)
                    for risk in ("high", "review", "low")},
         "candidates": candidates,
+        "retained_repetitions": retained,
     }

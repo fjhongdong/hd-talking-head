@@ -10,8 +10,10 @@ root and requires the failure to be environmental, never an argparse error.
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -23,6 +25,26 @@ MANIFEST = SKILL / "references/dependency-manifest.json"
 
 
 class PreparationContractTests(unittest.TestCase):
+    def test_bundled_source_subset_checks_actual_files_without_git_history(self):
+        from prepare_sources import bundled_source_revision
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory)
+            source = package / "source"
+            source.mkdir()
+            path = source / "template.html"
+            path.write_text("original native template")
+            index = package / "source-repositories/index.json"
+            index.parent.mkdir()
+            index.write_text(json.dumps({"schema_version": 1, "repositories": [{
+                "path": "source", "commit": "a" * 40,
+                "files": {"template.html": hashlib.sha256(path.read_bytes()).hexdigest()},
+            }]}))
+            self.assertEqual(bundled_source_revision(package, source), "a" * 40)
+            self.assertFalse((source / ".git").exists())
+            path.write_text("changed native template")
+            with self.assertRaisesRegex(ValueError, "source file changed"):
+                bundled_source_revision(package, source)
+
     def test_runner_shaped_argv_is_accepted_by_every_preparation_script(self):
         entries = json.loads(MANIFEST.read_text(encoding="utf-8"))["preparation"]
         checked = 0

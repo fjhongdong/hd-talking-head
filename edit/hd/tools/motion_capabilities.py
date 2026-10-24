@@ -413,7 +413,7 @@ def _check_talkcraft_fields(row: Mapping, brief: Mapping) -> bool:
     return all(bool(raw) and set(raw) in combinations for raw in payloads)
 
 
-def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None) -> dict:
+def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None, *, job_dir: Path | None = None) -> dict:
     """Reuse reviewed input validators only; never prepare or render a scene."""
     if row["role"] == "design":
         return {"status": "not_applicable", "reason": "design source; provider binding and output checks remain separate"}
@@ -458,6 +458,15 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None)
                         return {"status": "needs_review", "reason": "native JSON validator or existing Node is unavailable"}
                     method = name + "." + function.__name__ + " (--validate only)"
                     function(Path(node), payload)
+                if row.get("dependency_id") == "whiteboard-video":
+                    if job_dir is None:
+                        return {"status": "needs_review", "reason": "bound Whiteboard assets are unavailable"}
+                    from .overlay_alignment import _path
+                    root = Path(job_dir).resolve(strict=True)
+                    data = {asset["media_ref"]: _path(root, asset["job_path"]).read_bytes()
+                            for asset in brief["assets"]}
+                    data["provenance"] = _path(root, brief["provenance"]["record_path"]).read_bytes()
+                    module._wrapper().validate_assets(brief, data)
             finally:
                 sys.path[:] = previous
         return {"status": "pass", "method": method, "scope": "native_input_constraints_only"}
@@ -551,6 +560,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
         for ref in refs:
             if not isinstance(ref, dict) or set(ref) not in (
                 {"path", "sha256", "pointer", "value"}, {"path", "sha256", "quote"},
+                {"path", "sha256", "image"},
             ):
                 raise ValueError("invalid actual content reference")
             path = ref["path"]
@@ -559,7 +569,15 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
             file = _path(Path(job_dir).resolve(strict=True), path)
             if contract_artifacts.sha256_file(file) != ref["sha256"]:
                 raise ValueError("referenced content changed")
-            if "pointer" in ref:
+            if "image" in ref:
+                from PIL import Image
+                if ref["image"] is not True:
+                    raise ValueError("image evidence must explicitly cite a bound picture")
+                with Image.open(file) as picture:
+                    if picture.format not in {"PNG", "JPEG", "WEBP"}:
+                        raise ValueError("image evidence must be a supported static picture")
+                    picture.verify()
+            elif "pointer" in ref:
                 value = _json_pointer(contract_artifacts.read_json_artifact(file), ref["pointer"])
                 if path == relative and ref["pointer"].split("/")[1] in {
                     "source_binding", "template_request", "creative_handoff", "upstream",
@@ -579,7 +597,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
             raise ValueError("creative Skill requires evidence from its actual frozen scene")
         return {"status": assessment["verdict"], "judged_by": "host", "binding_verified": True,
                 "reason": assessment["reason"]}
-    except (ValueError, KeyError, TypeError, IndexError, OSError) as error:
+    except (ValueError, KeyError, TypeError, IndexError, OSError, ImportError) as error:
         return {**result, "reason": str(error)}
 
 
@@ -675,7 +693,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                                  "check": "approved_spoken_text"})
         brief = briefs.get(key) if use == "aroll_overlay" else _bound_brief(job_dir, treatment, segment, component)
         semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief)
-        native = _native_input_check(project_root, row, brief)
+        native = _native_input_check(project_root, row, brief, job_dir=job_dir)
         for name, result in (("semantic_fit", semantic), ("native_input_constraints", native)):
             item = {"segment_id": key[0], "component_id": component,
                     "check": name, "reason": result.get("reason", "")}

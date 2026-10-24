@@ -19,6 +19,7 @@ COMMANDS = {
     "run_stage": "run_stage.py",
     "run_generation": "run_generation.py",
     "confirm_job_setup": "confirm_job_setup.py",
+    "migrate_job_context": "migrate_job_context.py",
 }
 
 

@@ -36,8 +36,15 @@ def validate_brief(payload):
     b = json.loads(payload) if isinstance(payload, (bytes, str)) else payload
     fields = {"schema_version", "source_binding", "template_request", "composition",
               "title", "left", "right", "left_frame", "right_frame", "strike_frame", "stamp"}
-    if type(b) is not dict or set(b) != fields or b["schema_version"] != 1:
+    if type(b) is not dict or set(b) != fields | {"typography"} or b["schema_version"] != 1:
         raise ValueError("Invalid Adu native brief")
+    typography = b["typography"]
+    if (type(typography) is not dict or set(typography) != {"title_px", "body_px"}
+            or any(type(typography[k]) not in (int, float) or not 20 <= typography[k] <= 80
+                   for k in ("title_px", "body_px"))):
+        raise ValueError("Invalid Adu typography")
+    if typography["title_px"] < typography["body_px"]:
+        raise ValueError("Adu title typography must be at least body typography")
     s, c, r = b["source_binding"], b["composition"], b["template_request"]
     validate_source_binding(s, "Invalid Adu source binding")
     if (type(c) is not dict or set(c) != {"id", "width", "height", "fps", "frames"}
@@ -62,13 +69,27 @@ def validate_brief(payload):
             raise ValueError("Adu compare supports 1-3 items per side")
         for item in side["items"]:
             _text(item, "item", 14)
+    available_width = (760 - 2 * 44) * 0.5625
+    if any(len(b[name]["title"]) * typography["title_px"] > available_width
+           for name in ("left", "right")):
+        raise ValueError("Adu typography title capacity exceeded")
+    body_width = available_width - 2 * typography["body_px"]
+    if any(len(item) * typography["body_px"] > body_width
+           for name in ("left", "right") for item in b[name]["items"]):
+        raise ValueError("Adu typography body capacity exceeded")
     if sum(len(b[n]["items"]) for n in ("left", "right")) != r["information_units"]:
         raise ValueError("Adu item count differs from the request")
+    if typography["body_px"] > 90 * 0.5625 and any(
+        len(b[name]["items"]) > 1 for name in ("left", "right")
+    ):
+        raise ValueError("Adu typography body line capacity exceeded")
     frames = [b[k] for k in ("left_frame", "right_frame", "strike_frame")]
     # Stamp timing belongs to TPL.compare: strikeAt + .35, then a .55s native entrance.
     if (any(type(v) is not int or v < 0 for v in frames) or frames != sorted(frames)
             or frames[-1] + 36 >= c["frames"]):
         raise ValueError("Adu native actions do not fit the voice window")
+    # Values are final portrait pixels; the static host converts them to board
+    # pixels after the upstream 1920x1080 board is scaled to 1080x1920.
     return b
 
 

@@ -13,6 +13,9 @@ python3.12 <new-package>/run.py prepare
 
 首次准备从包内归档恢复模板来源的真实 Git 身份，并恢复 TalkCraft 固定运行依赖，再安装其余锁定的 Python、npm 和浏览器依赖。模板源码无需原开发项目；环境安装仍需相应下载来源可访问。
 
+仅随包提供所选源码文件的 HyperFrames 使用 `source-repositories/index.json` 中的固定提交和逐文件摘要核对版本，不复制完整 Git 历史。准备与绑定预检读取同一份来源登记；不得把 Skill 主仓库的提交误当作嵌套源码版本。
+来源登记统一保存在包的 `source-repositories/index.json`，不向上游源码目录额外写入身份标记，避免原生检查把打包文件视为源码改动。
+
 当前完整运行环境为 macOS arm64，需要 Python 3.12、Node 和 FFmpeg。其他系统尚未验证，包内 TalkCraft 原生依赖不适用于其他系统。
 
 独立验证从仓库外的新目录调用该包，检查预检和一条本地短渲染。图片和视频生成渠道仍由用户选择并授权，打包验证不调用外部生成。旧 Job、用户素材和批准记录保留原位置；移动 Skill 不自动迁移或重签旧 Job。

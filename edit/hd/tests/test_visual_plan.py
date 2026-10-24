@@ -277,6 +277,11 @@ class VisualPlanSchemaV3Tests(unittest.TestCase):
         table = text.split("## 内部选型与整片协调记录", 1)[0]
         self.assertNotIn("fake-query", table)
         self.assertNotIn("999", table)
+        self.assertIn("| 1 | 1.000–2.000s |", table)
+        frozen = visual_plan._review_text(plan, skill_selection=selection,
+                                         numbering={"a:c": 4, "b:c": 7, "c:c": 9})
+        self.assertIn("| 4 | 1.000–2.000s |", frozen)
+        self.assertIn("| 7 | 2.000–3.000s |", frozen)
     def test_completed_lovart_binding_survives_freeze_and_final_validation(self):
         for width, height in ((720, 1280), (1080, 1920)):
             with self.subTest(width=width):

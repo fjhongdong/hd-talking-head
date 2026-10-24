@@ -14,6 +14,8 @@ function arg(name) {
 }
 const briefBytes = await readFile(arg('--brief'));
 const b = JSON.parse(briefBytes);
+if (!b.typography || typeof b.typography !== 'object') throw new Error('Missing Adu typography');
+const typography = b.typography;
 
 const stable = value => {
   if (Array.isArray(value)) return value.map(stable);
@@ -115,7 +117,11 @@ try {
     '</style><h1>' + html(b.title) + '</h1><div class="rule"></div>' +
     '<iframe id="board" src="board/index.html"></iframe><script>' +
     'const board=document.getElementById("board");window.END=' + duration + ';' +
-    'window.READY=new Promise((resolve,reject)=>{board.addEventListener("load",async()=>{try{await board.contentWindow.READY;document.title="done";resolve()}catch(e){reject(e)}},{once:true})});' +
+    'window.READY=new Promise((resolve,reject)=>{board.addEventListener("load",async()=>{try{await board.contentWindow.READY;' +
+    'const s=board.contentDocument.createElement("style");s.textContent=' + JSON.stringify(
+      `.card > div:nth-child(2){font-size:${Number(typography.title_px) / 0.5625}px !important}` +
+      `.card > div:nth-child(n+3){font-size:${Number(typography.body_px) / 0.5625}px !important}`
+    ) + ';board.contentDocument.head.appendChild(s);document.title="done";resolve()}catch(e){reject(e)}},{once:true})});' +
     'window.renderAt=t=>board.contentWindow.renderAt(t);</script>');
   const native = path.join(temp, 'native.mp4');
   const childEnv = {...process.env, PATH: `${path.dirname(ffmpeg)}:${process.env.PATH || ''}`, ADU_PYTHON: python};

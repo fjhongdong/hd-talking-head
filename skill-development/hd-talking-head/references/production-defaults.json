@@ -29,7 +29,7 @@
       "letter_spacing": 0
     },
     "body": {
-      "font_size": 38
+      "font_size": 48
     },
     "card_family": {
       "border_radius": 22,
@@ -49,5 +49,17 @@
     "independent_preparations": 3,
     "shared_media_generations": 2,
     "local_heavy_renders": 1
+  },
+  "motion_text": {
+    "target_font_px": {
+      "title": 64,
+      "body": 48
+    },
+    "minimum_ocr_line_height_px": {
+      "title": 48,
+      "body": 36
+    },
+    "minimum_ocr_confidence": 0.45,
+    "sample_step_seconds": 1.0
   }
 }

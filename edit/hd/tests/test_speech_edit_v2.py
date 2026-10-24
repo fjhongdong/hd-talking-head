@@ -208,7 +208,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertFalse(terminology["report"]["automatic_replacement"])
 
     def test_cleanup_proposal_can_be_rebuilt_after_review_revision(self) -> None:
-        speech_edit_v2.prepare_cleanup_proposal(self.job, revised)
+        speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
         state.approve(self.job, "speech_cleanup")
         state.revise(self.job, "speech_cleanup", "补充清理重字")
         revised = {
@@ -711,20 +711,82 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         breathing_plan = copy.deepcopy(plan)
         breathing_plan["segments"][0]["breathing_padding"] = {"before": 0.16, "after": 0.18}
         breathing = speech_edit_v2._apply_video_use_pacing(breathing_plan, words, silent)
-        self.assertTrue(all(
-            segment["breathing_padding"] == {"before": 0.16, "after": 0.18}
-            for segment in breathing["segments"]
-        ))
+        self.assertEqual(breathing["segments"][0]["breathing_padding"]["before"], 0.16)
+        self.assertEqual(breathing["segments"][-1]["breathing_padding"]["after"], 0.18)
+        self.assertAlmostEqual(breathing["segments"][0]["breathing_padding"]["after"], 0.16)
+        self.assertAlmostEqual(breathing["segments"][-1]["breathing_padding"]["before"], 0.16, delta=1/16000)
 
         self.assertEqual(len(paced["segments"]), 2)
         self.assertEqual(
             [(round(start, 2), round(end, 2)) for start, end in intervals],
-            [(0.0, 0.52), (1.20, 1.62)],
+            [(0.0, 0.68), (1.04, 1.62)],
         )
         audible = speech_edit_v2._apply_video_use_pacing(
             plan, words, self.job.job_dir / "05-speech-cleanup/speech-16k.wav"
         )
         self.assertEqual(len(audible["segments"]), 1)
+
+    def test_residual_cleanup_requires_exact_host_audio_review(self) -> None:
+        speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
+        candidates = [{"candidate_id": "repeat-one"}]
+        with mock.patch.object(speech_edit_v2, "cleanup_check_candidates", return_value=candidates):
+            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2.validate_cleanup_review(self.job, {})
+            review = {"speech_cleanup_resolutions": [{
+                "candidate_id": "repeat-one", "decision": "keep",
+                "reason": "已核听为有意重复强调，保留原语气",
+            }]}
+            speech_edit_v2.validate_cleanup_review(self.job, review)
+            state.approve(self.job, "speech_cleanup")
+            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2._require_cleanup_review(self.job)
+            receipt = {**review, "job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
+                       "stage": "speech_cleanup", "passed": True, "reviewed_by": "host",
+                       "artifacts": self.job.stages["speech_cleanup"]["artifacts"]}
+            path = self.job.job_dir / "manifests/local-qa-speech_cleanup-r1.json"
+            contract_artifacts.write_json_artifact(path, receipt)
+            speech_edit_v2._require_cleanup_review(self.job)
+            receipt["artifacts"] = []
+            contract_artifacts.write_json_artifact(path, receipt)
+            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2._require_cleanup_review(self.job)
+
+    def test_pacing_finds_quiet_middle_after_audible_word_tail(self) -> None:
+        words = [
+            {"text": "第二。", "start": 0.1, "end": 0.4},
+            {"text": "这次", "start": 3.6, "end": 3.9},
+        ]
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 2,
+            "source_start": 0.1, "source_end": 3.9,
+            "original_sentence": "第二。这次", "cleaned_sentence": "第二。这次",
+            "reason": "保留", "breathing_padding": {"before": 0.5, "after": 0.5},
+        }]}
+        wav = self.root / "word-tail.wav"
+        with wave.open(str(wav), "wb") as audio:
+            audio.setnchannels(1); audio.setsampwidth(2); audio.setframerate(16000)
+            audio.writeframes(array("h", (
+                int(6000 * math.sin(2 * math.pi * 220 * i / 16000))
+                if i < 0.62 * 16000 or i >= 3.48 * 16000 else 20
+                for i in range(64000)
+            )).tobytes())
+        paced = speech_edit_v2._apply_video_use_pacing(plan, words, wav)
+        self.assertEqual(len(paced["segments"]), 2)
+        left, right = paced["segments"]
+        self.assertGreaterEqual(left["source_end"] + left["breathing_padding"]["after"], 0.62)
+        self.assertLessEqual(right["source_start"] - right["breathing_padding"]["before"], 3.48)
+        self.assertLess(left["breathing_padding"]["after"] + right["breathing_padding"]["before"], 0.8)
+        self.assertEqual(speech_edit_v2._apply_video_use_pacing(paced, words, wav), paced)
+        # A different keep partition must not hide the same retained long pause.
+        split = copy.deepcopy(plan)
+        split["segments"] = [dict(plan["segments"][0]), dict(plan["segments"][0])]
+        for segment, index in zip(split["segments"], (0, 1)):
+            segment.update(word_start=index, word_end=index + 1,
+                           source_start=words[index]["start"], source_end=words[index]["end"],
+                           original_sentence=words[index]["text"], cleaned_sentence=words[index]["text"])
+        result = speech_edit_v2._apply_video_use_pacing(split, words, wav)
+        self.assertLess(sum(result["segments"][i]["breathing_padding"][k]
+                            for i, k in ((0, "after"), (1, "before"))), 0.8)
 
     def test_video_use_pacing_preserves_and_applies_reviewed_cut_ranges(self) -> None:
         words = [
@@ -763,7 +825,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         )
         self.assertEqual(
             [(round(start, 2), round(end, 2)) for start, end in intervals],
-            [(0.0, 0.32), (0.44, 1.0)],
+            [(0.0, 0.32), (0.44, 0.6)],
         )
 
     def test_video_use_intervals_do_not_restore_long_recording_lead_in(self) -> None:
@@ -799,7 +861,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         intervals = speech_edit_v2._video_use_intervals(plan, 2.0)
         self.assertEqual(
             [(round(start, 2), round(end, 2)) for start, end in intervals],
-            [(0.0, 0.30), (1.32, 2.0)],
+            [(0.0, 0.30), (1.32, 1.68)],
         )
 
     def test_video_use_timeline_uses_complete_rendered_frames(self) -> None:

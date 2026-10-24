@@ -142,6 +142,20 @@ class ReviewAndDispatchTests(unittest.TestCase):
             run_stage.execute_stage(self.root, PROJECT, adapter_factory=factory)
         prepare.assert_called_once_with(job, component_adapters={'official_material': 'image-adapter'})
 
+    def test_visual_repair_canary_only_requests_affected_segments(self):
+        job = SimpleNamespace(job_dir=self.root, root=self.root, stages={
+            'visual_direction': {'status': 'approved', 'artifact_scope': ['seg-009']},
+            'visual_canary': {'status': 'pending', 'artifact_scope': []}})
+        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
+             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_canary'), \
+             mock.patch('edit.hd.tools.state.require_runnable'), \
+             mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
+             mock.patch.object(run_stage, '_startup'), \
+             mock.patch.object(run_stage, '_summary', return_value={}), \
+             mock.patch('edit.hd.tools.visual_canary.prepare_visual_canary') as prepare:
+            run_stage.execute_stage(self.root, PROJECT, component_adapters={})
+        prepare.assert_called_once_with(job, component_adapters={}, segment_ids=['seg-009'])
+
     def test_completion_status_controls_exit_code(self):
         context = self.root / 'job-context.json'
         context.write_text(json.dumps({'project_root': str(PROJECT), 'job_dir': str(self.root)}))
@@ -236,7 +250,7 @@ class SelectedPreparationTests(unittest.TestCase):
 
     def test_draft_binding_prepares_before_table_and_failure_does_not_publish(self):
         draft = {'segments': [{'visual_strategy': {'components': [
-            {'kind': 'code_generated', 'component_id': 'v', 'executor': 'reference_adapter'}]},
+            {'kind': 'code_generated', 'component_id': 'v'}]},
             'bindings': {'v': {'dependency_id': 'doudou-remotion-whiteboard', 'entrypoint': 'scripts/render_doudou.mjs',
                                'producer_version': '2.0.0', 'primary_renderer': 'Remotion'}}}]}
         import project_python as pp
@@ -251,6 +265,7 @@ class SelectedPreparationTests(unittest.TestCase):
         self.assertEqual([c[0] for c in calls], ['prepare', 'table'])
         self.assertEqual(calls[0][1][3], {'doudou-remotion-whiteboard'})
         self.assertEqual(calls[0][1][4][0]['entrypoint'], 'scripts/render_doudou.mjs')
+        self.assertEqual(calls[0][1][4][0]['executor'], 'reference_adapter')
         with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
              mock.patch.object(run_stage, '_json', return_value=draft), \
              mock.patch.object(pp, 'prepare_environment', side_effect=RuntimeError('selected template unavailable')), \

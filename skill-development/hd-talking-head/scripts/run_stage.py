@@ -79,6 +79,17 @@ def _summary(job, stage: str, **extra) -> dict:
             'revision': job.revision, 'artifacts': job.stages[stage]['artifacts'], **extra}
     if result['status'] == 'ready_for_review':
         result['review_required'] = 'user' if stage in {'cover_direction', 'cover', 'visual_direction'} else 'host'
+        if stage in {'visual_canary', 'visual_assets', 'preview'}:
+            from edit.hd.tools import motion_readability
+            if motion_readability._managed(job):
+                result['motion_readability'] = motion_readability.inspect_job(job, stage)
+                if result['motion_readability']['status'] not in {'sampled_pass', 'not_applicable'}:
+                    result['next'] = '先按实际文字框修正小字、裁切或遮挡，再重跑受影响镜头；识别不确定项由宿主逐项查看真实帧并量框复核，不交给用户逐个找问题。'
+        if stage == 'speech_cleanup' and (job.job_dir / '05-speech-cleanup/cleanup-proposal.json').is_file():
+            from edit.hd.tools import speech_edit_v2
+            result['cleanup_checks'] = speech_edit_v2.cleanup_check_candidates(job)
+            if result['cleanup_checks']:
+                result['next'] = '宿主逐项核听；口误重说按原流程剪除后重建提案，必要强调/呼吸保留并在speech_cleanup_resolutions逐项写明理由。无需用户逐项确认。'
         if stage == 'visual_direction':
             table = next((r['path'] for r in result['artifacts']
                           if r['path'].startswith('07-visual-confirmation/')
@@ -114,7 +125,14 @@ def _review(job, stage: str, review: dict) -> dict:
         raise ValueError("This stage requires the current user's actual confirmation")
     if stage == 'speech_cleanup' and not (job.job_dir / '05-speech-cleanup/cleanup-proposal.json').is_file():
         raise ValueError('Finish the cleanup proposal before approving speech_cleanup')
+    if stage == 'speech_cleanup':
+        from edit.hd.tools import speech_edit_v2
+        speech_edit_v2.validate_cleanup_review(job, review)
     receipt = {**review, 'reviewed_by': 'human' if human else 'host'}
+    if stage in {'visual_canary', 'visual_assets', 'preview'}:
+        from edit.hd.tools import motion_readability
+        if motion_readability._managed(job):
+            receipt['motion_readability'] = motion_readability.validate_stage_review(job, stage, review)
     if stage == 'visual_direction':
         paths = {record['path'] for record in job.stages[stage]['artifacts']}
         if any(path.startswith('07-visual-confirmation/') and path.endswith('/proposal.json') for path in paths):
@@ -263,6 +281,7 @@ def _check_default_binding(binding):
 
 def prepare_visual_dependencies(project: Path, director: dict) -> None:
     """Prepare the selected draft bindings before publishing any user candidate."""
+    router = _module('broll_capability_router')
     bindings = []
     for segment in director['segments']:
         for component in segment['visual_strategy']['components']:
@@ -274,7 +293,7 @@ def prepare_visual_dependencies(project: Path, director: dict) -> None:
             if any(not isinstance(binding.get(key), str) or not binding[key] for key in fields):
                 raise ValueError('Selected template needs its actual execution binding before confirmation')
             selected = {key: binding[key] for key in fields}
-            selected.update(executor=component['executor'])
+            selected.update(executor=router._executor(component['kind'], binding))
             if selected not in bindings:
                 bindings.append(selected)
     if bindings:
@@ -416,7 +435,7 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
             except (ValueError, OSError):
                 return _summary(job, stage, reused=True)
             return resume_visual_direction(job, project, payload)
-        return _summary(job, stage, reused=True, next='宿主检查当前产物后传入 --review-json；不要重新生成。')
+        return _summary(job, stage, reused=True)
     if not completing_cleanup:
         state.require_runnable(job, stage)
     data = payload or {}
@@ -451,7 +470,10 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
         adapters = component_adapters if component_adapters is not None else native_component_adapters(project, job)
         if stage == 'visual_canary':
             from edit.hd.tools import visual_canary
-            visual_canary.prepare_visual_canary(job, component_adapters=adapters)
+            scope = (data.get('segment_ids') or job.stages[stage].get('artifact_scope')
+                     or job.stages.get('visual_direction', {}).get('artifact_scope'))
+            options = {'segment_ids': scope} if scope else {}
+            visual_canary.prepare_visual_canary(job, component_adapters=adapters, **options)
         else:
             from edit.hd.tools import visual_assets_v2
             visual_assets_v2.prepare_visual_assets_v2(job, component_adapters=adapters)
@@ -493,6 +515,13 @@ def main() -> int:
             reviewed_visual_text=args.reviewed_visual_text, adapter_factory=args.adapter_factory)
     except (OSError, ValueError, KeyError, RuntimeError) as error:
         result = {'error': str(error)}
+        if getattr(error, '__notes__', None):
+            result['diagnostics'] = list(error.__notes__)
+    except Exception as error:
+        # WorkflowError and adapter boundary failures are user-facing results.
+        result = {'error': str(error)}
+        if getattr(error, '__notes__', None):
+            result['diagnostics'] = list(error.__notes__)
     print(json.dumps(result, ensure_ascii=False))
     return int('error' in result or 'blocked' in result or result.get('status') == 'inconsistent')
 

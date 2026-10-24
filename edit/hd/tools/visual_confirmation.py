@@ -69,7 +69,16 @@ def _source_id(binding):
             return value
     return None
 
+def number_visual_rows(rows):
+    """Keep display numbers tied to the frozen complete-list sequence."""
+    return [{**row, "number": number} for number, row in enumerate(rows, 1)]
+
+def approved_numbered_rows(job):
+    return number_visual_rows(validate_visual_authorization(job)["source"]["rows"])
+
 def _rows(director, treatment, speech):
+    from .broll_skill_selection import source_channel
+
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
     assignments = {(q["segment_id"], q["component_id"]): q["candidate_id"]
                    for q in treatment.get("skill_selection", {}).get("assignments", [])}
@@ -85,7 +94,7 @@ def _rows(director, treatment, speech):
             source = _source_id(binding)
             direct_material = component["kind"] in {"local_material", "official_material", "external_stock"}
             template = ("素材直用（无动效模板）" if direct_material else
-                        (binding.get("template_id") or assignments.get((sid, cid))))
+                        (assignments.get((sid, cid)) or binding.get("template_id")))
             if not template and component["kind"] == "ai_generated":
                 planned = [step["id"] for step in _steps(treatment) if
                            (step["segment_id"], step["component_id"]) == (sid, cid)]
@@ -99,7 +108,10 @@ def _rows(director, treatment, speech):
                          "start": segment["start"], "end": segment["end"],
                          "type": "贴片" if component.get("layer_role") == "annotation" else "B-roll",
                          "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
-                         "tags": tags, "source": source, "template": template})
+                         "tags": tags, "source": source,
+                         "channel": source_channel(binding.get("dependency_id") or
+                                     binding.get("provider") or component["kind"]),
+                         "template": template})
     return rows
 
 def _validate_template_choices(job, director, treatment):
@@ -137,6 +149,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     confirmed_content.check_confirmed_content(job, director)
     steps = _steps(treatment)
     _validate_template_choices(job, director, treatment)
+    from . import motion_readability
+    motion_readability.validate_direction_contract(job, director, treatment)
     rows = _rows(director, treatment, motion_capabilities._approved_speech(job.job_dir))
     targets = {(r["segment_id"], r["component_id"]) for r in rows}
     for step in steps:
@@ -178,15 +192,16 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         return str(value).replace("|", "／").replace("\n", "<br>")
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
              "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
-             "| 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源 | 匹配动效模板 | 生成步骤 |",
-             "|---|---|---|---|---|---|---|---|"]
-    for row in rows:
+             "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 渠道 | 素材来源 | 匹配动效模板 | 生成步骤 |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for row in number_visual_rows(rows):
         generated = [s for s in steps if (s["segment_id"], s["component_id"]) == (row["segment_id"], row["component_id"])]
         labels = [s["id"] + "：" + ("生图" if s["purpose"] == "image" else "生视频")
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]
         lines.append("| " + " | ".join(cell(v) for v in (
-            f"{row['start']:.3f}–{row['end']:.3f}s", row["type"], row["spoken_text"],
-            row["semantic"], "、".join(row["tags"]), row["source"] or "—", row["template"], " → ".join(labels) or "复用/模板渲染")) + " |")
+            row["number"], f"{row['start']:.3f}–{row['end']:.3f}s", row["type"], row["spoken_text"],
+            row["semantic"], "、".join(row["tags"]), row["channel"], row["source"] or "—",
+            row["template"], " → ".join(labels) or "复用/模板渲染")) + " |")
     lines += ["", "生成费用说明：" + str(treatment.get("generation_plan", {}).get("cost_note", "按本次已确认渠道和规格执行")), ""]
     table = root / "visual-routing.md"
     artifacts.write_bytes_atomic(table, "\n".join(lines).encode())
@@ -427,6 +442,8 @@ def generation_actions(job, *, account_limit=None):
 def _validate_draft_against_source(root, proposal, director, treatment):
     frozen = _read(_exact(root, proposal["inputs"]["director"]))
     frozen_treatment = _read(_exact(root, proposal["inputs"]["treatment"]))
+    if treatment.get("motion_readability", []) != frozen_treatment.get("motion_readability", []):
+        raise VisualConfirmationError("readability targets changed after visual approval")
     if (_core(director) != _core(frozen)
             or treatment.get("motion_queries", []) != frozen_treatment.get("motion_queries", [])
             or treatment.get("skill_selection", {}).get("assignments", []) != frozen_treatment.get("skill_selection", {}).get("assignments", [])

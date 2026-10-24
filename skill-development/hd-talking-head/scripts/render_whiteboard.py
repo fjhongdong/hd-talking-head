@@ -185,25 +185,8 @@ def _pixel_clock_hash(ffmpeg, path):
     return {"frames": len(rows), "sha256": sha(b"\n".join(rows))}
 
 
-def render(args) -> dict:
-    payload = Path(args.brief).read_bytes(); brief = validate_brief(payload)
-    runtime = check_runtime(args.upstream, args.engine_root, args.engine_python)
-    for name in ("engine_python", "ffmpeg", "ffprobe"):
-        if sha(Path(getattr(args, name)).read_bytes()) != getattr(args, name + "_sha256"):
-            raise ValueError(f"{name} dependency changed")
-    frozen = json.loads(Path(args.media_manifest).read_bytes())
-    if frozen.get("schema_version") != "reference-process-media/v1" or frozen.get("brief_sha256") != sha(payload):
-        raise ValueError("frozen media belongs to a different brief")
-    records = {item["media_ref"]: item for item in frozen.get("media", [])}
-    expected_refs = {a['media_ref'] for a in brief['assets']} | {'provenance'}
-    if set(records) != expected_refs or len(frozen["media"]) != len(expected_refs):
-        raise ValueError("frozen media must contain svg, source and provenance")
-    data = {}
-    for ref, record in records.items():
-        blob = Path(f"/dev/fd/{record['fd']}").read_bytes()
-        if len(blob) != record["byte_length"] or sha(blob) != record["sha256"]:
-            raise ValueError("frozen media hash mismatch")
-        data[ref] = blob
+def validate_assets(brief, data):
+    """Check the same frozen SVG, source picture and provenance before rendering."""
     byref = {a["media_ref"]: a for a in brief["assets"]}
     if any(sha(data[r]) != byref[r]["sha256"] for r in byref):
         raise ValueError("asset hash mismatch")
@@ -228,6 +211,28 @@ def render(args) -> dict:
                 or struct.unpack('>II', data['context'][16:24]) != (1080, 1920)
                 or record.get('assets', {}).get('context', {}).get('sha256') != byref['context']['sha256']):
             raise ValueError('initial context must be a registered native portrait PNG')
+
+
+def render(args) -> dict:
+    payload = Path(args.brief).read_bytes(); brief = validate_brief(payload)
+    runtime = check_runtime(args.upstream, args.engine_root, args.engine_python)
+    for name in ("engine_python", "ffmpeg", "ffprobe"):
+        if sha(Path(getattr(args, name)).read_bytes()) != getattr(args, name + "_sha256"):
+            raise ValueError(f"{name} dependency changed")
+    frozen = json.loads(Path(args.media_manifest).read_bytes())
+    if frozen.get("schema_version") != "reference-process-media/v1" or frozen.get("brief_sha256") != sha(payload):
+        raise ValueError("frozen media belongs to a different brief")
+    records = {item["media_ref"]: item for item in frozen.get("media", [])}
+    expected_refs = {a['media_ref'] for a in brief['assets']} | {'provenance'}
+    if set(records) != expected_refs or len(frozen["media"]) != len(expected_refs):
+        raise ValueError("frozen media must contain svg, source and provenance")
+    data = {}
+    for ref, record in records.items():
+        blob = Path(f"/dev/fd/{record['fd']}").read_bytes()
+        if len(blob) != record["byte_length"] or sha(blob) != record["sha256"]:
+            raise ValueError("frozen media hash mismatch")
+        data[ref] = blob
+    validate_assets(brief, data)
     with tempfile.TemporaryDirectory(prefix="hd-whiteboard-") as d:
         temp = Path(d); svg = temp / "source.svg"; png = temp / "source.png"; native = temp / "native.mp4"; target = temp / "target.mp4"
         svg.write_bytes(data["svg"]); png.write_bytes(data["source"])

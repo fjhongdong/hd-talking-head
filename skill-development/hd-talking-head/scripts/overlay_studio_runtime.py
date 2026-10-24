@@ -1,4 +1,4 @@
-"""Check the existing project runtime; never install or update dependencies."""
+"""Prepare and check the project-local Overlay Studio runtime."""
 from __future__ import annotations
 
 import argparse
@@ -32,6 +32,8 @@ def check_runtime(project_root, tools=None):
     for name in ("package.json", "package-lock.json"):
         if sha(runtime / name) != sha(vendor / "motion-playground" / name):
             raise ValueError("Overlay Studio runtime lock differs from native source")
+    if not (runtime / "node_modules").is_dir():
+        raise ValueError("Overlay Studio runtime dependencies are not installed")
     executables = {}
     for name in ("node", "ffmpeg", "ffprobe", "chrome"):
         raw = (tools or {}).get(name) or (SYSTEM_CHROME if name == "chrome" else shutil.which(name))
@@ -59,6 +61,27 @@ def check_runtime(project_root, tools=None):
                 node_version=node, chrome_version=chrome, source_revision=SOURCE_PIN)
 
 
+def prepare_runtime(project_root):
+    project = Path(project_root).resolve(strict=True)
+    vendor = project / "skill-development/vendor/overlay-studio"
+    runtime = project / "skill-development/runtime/overlay-studio-e35e1aff"
+    source = vendor / "motion-playground"
+    runtime.mkdir(parents=True, exist_ok=True)
+    for name in ("package.json", "package-lock.json"):
+        source_file = source / name
+        target_file = runtime / name
+        if target_file.exists():
+            if sha(target_file) != sha(source_file):
+                raise ValueError("Overlay Studio runtime lock exists and differs from native source")
+        else:
+            shutil.copy2(source_file, target_file)
+    if not (runtime / "node_modules").is_dir():
+        environment = dict(os.environ, PUPPETEER_SKIP_DOWNLOAD="true")
+        subprocess.run(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"],
+                       cwd=runtime, check=True, timeout=240, env=environment)
+    return check_runtime(project)
+
+
 def probe_runtime(project_root, runtime=None):
     info = runtime or check_runtime(project_root)
     # Actual module load and selected-browser launch. No scene, external page,
@@ -84,6 +107,6 @@ if __name__ == "__main__":
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--prepare", action="store_true")
     args = parser.parse_args()
-    # Check existing files; the registered adapter probe launches the browser.
-    print(json.dumps(check_runtime(args.project_root), ensure_ascii=False))
+    result = prepare_runtime(args.project_root) if args.prepare else check_runtime(args.project_root)
+    print(json.dumps(result, ensure_ascii=False))
 

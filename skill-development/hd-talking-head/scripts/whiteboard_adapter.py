@@ -5,17 +5,45 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 from adapter_kit import ffprobe_json, sha256_file as _sha
-import subprocess
 from fractions import Fraction
 
 SKILL = Path(__file__).resolve().parents[1]
 ENTRY = "scripts/render_whiteboard.py"
 DEPENDENCY_ID = "whiteboard-video"
 VERSION = "1.0.0"
+PINNED_PACKAGES = ("Pillow==12.3.0", "numpy==2.5.3", "pydantic==2.13.5")
 
+
+def prepare_runtime(project_root):
+    """Prepare only a missing isolated runtime at the tested project versions."""
+    project = Path(project_root).resolve(strict=True)
+    engine = project / "skill-development/vendor/whiteboard-video-engine"
+    venv = engine / ".venv"
+    python = venv / "bin/python"
+    if venv.is_symlink() or not venv.resolve().is_relative_to(project):
+        raise ValueError("Whiteboard runtime must stay inside the project")
+    installed = not venv.exists()
+    if installed:
+        source_python = sys.executable if sys.version_info[:2] == (3, 12) else shutil.which("python3.12")
+        if not source_python:
+            raise RuntimeError("Python 3.12 is unavailable; Whiteboard runtime not installed")
+        commands = ([source_python, "-m", "venv", str(venv)],
+                    [str(python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
+                     *PINNED_PACKAGES, "--editable", str(engine)])
+        for command in commands:
+            subprocess.run(command, cwd=project, check=True, timeout=300)
+    elif not python.is_file():
+        raise RuntimeError("Whiteboard runtime is incomplete; no overwrite")
+    runtime = _wrapper().check_runtime(
+        project / "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py",
+        engine, python)
+    return {"status": "ready", "installed": installed, "engine_python": str(python), "runtime": runtime}
 
 
 
@@ -162,18 +190,22 @@ def create_artifact_probe(ffprobe_executable):
 
 if __name__ == "__main__":
     import argparse
-    import shutil
-    import sys
 
-    parser = argparse.ArgumentParser(description="Read-only Whiteboard binding probe; does not generate media.")
+    parser = argparse.ArgumentParser(description="Prepare or probe the vendored Whiteboard runtime; never renders media.")
     parser.add_argument("--project-root", type=Path, required=True)
+    parser.add_argument("--prepare", action="store_true")
     args = parser.parse_args()
     project = args.project_root.resolve(strict=True)
     sys.path.insert(0, str(project))
     vendor = project / "skill-development/vendor"
     engine = vendor / "whiteboard-video-engine"
+    if args.prepare:
+        prepare_runtime(project)
+    native_python = engine / ".venv/bin/python"
+    if not native_python.is_file():
+        raise SystemExit("Whiteboard runtime is missing; use --prepare after selecting this dependency")
     adapter = create_adapter(vendor / "codex-whiteboard-video-skill", engine, sys.executable,
-                             engine / ".venv/bin/python", shutil.which("ffmpeg"), shutil.which("ffprobe"), lambda *_: b"")
+                             native_python, shutil.which("ffmpeg"), shutil.which("ffprobe"), lambda *_: b"")
     print(json.dumps({"schema_version": 1, "dependency_id": DEPENDENCY_ID, "entrypoint": ENTRY,
                       "producer_version": VERSION, "adapter_identity": {"adapter_type": type(adapter).__name__,
                       "approved_executor": adapter.approved_executor, "primary_renderer": adapter.primary_renderer}}, sort_keys=True))

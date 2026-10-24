@@ -2088,6 +2088,10 @@ def revise(
     for position, affected_id in enumerate(affected_ids):
         stage = job.stages[affected_id]
         lineage = lineages[affected_id] if stage["artifacts"] else stage["lineage"]
+        if affected_id == "visual_direction" and not any(
+            record["path"].startswith("07-visual-direction/") for record in stage["artifacts"]
+        ):
+            lineage = stage["lineage"]
         updates = {
             "status": "needs_revision" if position == 0 else "pending",
             "reason": (

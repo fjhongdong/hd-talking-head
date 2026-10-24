@@ -665,13 +665,7 @@ def _video_use_renderer(job: state.JobState) -> Path:
     return _video_use_entrypoint(job, VIDEO_USE_RENDERER)
 
 
-def _apply_video_use_pacing(
-    plan: Any, words: Any, wav_path: Path,
-) -> dict[str, Any]:
-    checked_words = edit_timeline._validate_words(words)
-    checked_plan = edit_timeline.validate_edit_plan(plan, checked_words)
-    threshold = VIDEO_USE_PACING_PROFILE["silence_threshold_seconds"]
-    padding = VIDEO_USE_PACING_PROFILE["edge_padding_seconds"]
+def _pacing_audio(wav_path: Path) -> tuple[int, array]:
     try:
         with wave.open(str(wav_path), "rb") as audio:
             if audio.getnchannels() != 1 or audio.getsampwidth() != 2:
@@ -680,73 +674,183 @@ def _apply_video_use_pacing(
             samples = array("h", audio.readframes(audio.getnframes()))
     except (EOFError, OSError, wave.Error) as exc:
         raise SpeechEditV2Error("pacing audio is invalid") from exc
-    if rate <= 0:
+    if rate <= 0 or not samples:
         raise SpeechEditV2Error("pacing audio is invalid")
+    return rate, samples
 
-    # An ASR timestamp gap is not proof of silence: it can contain missed words.
-    average_limit = (32768 * 10 ** (-48 / 20)) ** 2
+
+def _quiet_ranges(rate: int, samples: array, start: float, end: float) -> list[tuple[float, float]]:
+    """Contiguous quiet runs, retaining the existing RMS thresholds."""
+    first, last = max(0, math.ceil(start * rate)), min(len(samples), math.floor(end * rate))
+    window = max(1, round(rate * 0.04))
     window_limit = (32768 * 10 ** (-40 / 20)) ** 2
-    window_frames = max(1, round(rate * 0.04))
+    average_limit = (32768 * 10 ** (-48 / 20)) ** 2
+    runs = []
+    run_start, total, count = first, 0, 0
+    for offset in range(first, last, window):
+        block = samples[offset:min(offset + window, last)]
+        energy = sum(value * value for value in block)
+        if energy / len(block) <= window_limit:
+            if not count:
+                run_start = offset
+            total += energy
+            count += len(block)
+        else:
+            if count and total / count <= average_limit:
+                runs.append((run_start / rate, offset / rate))
+            total, count = 0, 0
+    if count and total / count <= average_limit:
+        runs.append((run_start / rate, last / rate))
+    return runs
 
-    def silent_gap(previous_end: float, next_start: float) -> bool:
-        start = math.ceil((previous_end + padding) * rate)
-        end = math.floor((next_start - padding) * rate)
-        if start < 0 or end > len(samples) or end - start < window_frames:
-            return False
-        gap = samples[start:end]
-        if sum(value * value for value in gap) / len(gap) > average_limit:
-            return False
-        return all(
-            sum(value * value for value in gap[offset:offset + window_frames])
-            / len(gap[offset:offset + window_frames]) <= window_limit
-            for offset in range(0, len(gap), window_frames)
-        )
 
-    segments: list[dict[str, Any]] = []
+def _output_word_gaps(plan: dict[str, Any], words: list[dict[str, Any]], duration: float):
+    intervals = _video_use_intervals(plan, duration)
+    def position(value):
+        cursor = 0.0
+        for start, end in intervals:
+            if start - 1e-8 <= value <= end + 1e-8:
+                return cursor + min(end, max(start, value)) - start
+            cursor += end - start
+        return None
+    kept = [i for segment in plan["segments"] if segment["action"] == "keep"
+            for i in range(segment["word_start"], segment["word_end"])
+            if position(float(words[i]["start"])) is not None
+            and position(float(words[i]["end"])) is not None]
+    for left, right in zip(kept, kept[1:]):
+        gap = position(float(words[right]["start"])) - position(float(words[left]["end"]))
+        yield left, right, max(0.0, gap)
+
+
+def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, Any]:
+    checked_words = edit_timeline._validate_words(words)
+    checked_plan = edit_timeline.validate_edit_plan(plan, checked_words)
+    threshold = VIDEO_USE_PACING_PROFILE["silence_threshold_seconds"]
+    padding = VIDEO_USE_PACING_PROFILE["edge_padding_seconds"]
+    rate, samples = _pacing_audio(wav_path)
+    cuts = {}
     for segment in checked_plan["segments"]:
         if segment["action"] != "keep":
-            segments.append(copy.deepcopy(segment))
             continue
-        boundaries = [segment["word_start"]]
         for index in range(segment["word_start"] + 1, segment["word_end"]):
-            gap = float(checked_words[index]["start"]) - float(
-                checked_words[index - 1]["end"]
-            )
-            if gap >= threshold and silent_gap(
-                float(checked_words[index - 1]["end"]),
-                float(checked_words[index]["start"]),
-            ):
-                boundaries.append(index)
-        boundaries.append(segment["word_end"])
-        for word_start, word_end in zip(boundaries, boundaries[1:]):
-            sentence = "".join(
-                str(checked_words[index]["text"])
-                for index in range(word_start, word_end)
-            )
+            left, right = float(checked_words[index - 1]["end"]), float(checked_words[index]["start"])
+            # Existing reviewed cuts remain authoritative, including partial words.
+            if any(c["source_start"] < right and c["source_end"] > left
+                   for c in checked_plan.get("reviewed_cut_ranges", [])):
+                continue
+            quiet = _quiet_ranges(rate, samples, left + padding, right - padding)
+            eligible = [(a, b) for a, b in quiet if b - a >= threshold]
+            if eligible:
+                a, b = max(eligible, key=lambda r: r[1] - r[0])
+                cuts[index] = (a + padding, b - padding)
+    segments = []
+    for segment in checked_plan["segments"]:
+        if segment["action"] != "keep":
+            segments.append(copy.deepcopy(segment)); continue
+        boundaries = [segment["word_start"], *[i for i in cuts
+                      if segment["word_start"] < i < segment["word_end"]], segment["word_end"]]
+        for first, last in zip(boundaries, boundaries[1:]):
             split = copy.deepcopy(segment)
-            split.update({
-                "word_start": word_start,
-                "word_end": word_end,
-                "source_start": float(checked_words[word_start]["start"]),
-                "source_end": float(checked_words[word_end - 1]["end"]),
-                "original_sentence": sentence,
-                "cleaned_sentence": sentence,
-                "breathing_padding": copy.deepcopy(segment["breathing_padding"]),
-            })
+            text = "".join(w["text"] for w in checked_words[first:last])
+            split.update(word_start=first, word_end=last,
+                         source_start=float(checked_words[first]["start"]),
+                         source_end=float(checked_words[last - 1]["end"]),
+                         original_sentence=text, cleaned_sentence=text)
+            if first in cuts:
+                split["breathing_padding"]["before"] = float(checked_words[first]["start"]) - cuts[first][1]
+            if last in cuts:
+                split["breathing_padding"]["after"] = cuts[last][0] - float(checked_words[last - 1]["end"])
             if len(boundaries) > 2:
-                split["reason"] = f"{segment['reason']}；按 video-use 节奏切分长停顿"
+                split["reason"] += "；按 video-use 节奏切分已确认安静中段"
             segments.append(split)
-    paced = {
-        "version": checked_plan["version"],
-        "segments": segments,
-        **(
-            {"reviewed_cut_ranges": copy.deepcopy(
-                checked_plan["reviewed_cut_ranges"]
-            )}
-            if checked_plan["version"] == 2 else {}
-        ),
-    }
+    paced = {**copy.deepcopy(checked_plan), "segments": segments}
+    # Across keep boundaries, shorten only already-retained quiet tails/heads.
+    # Never count the source gap that the current EDL has already removed.
+    keep_segments = [s for s in segments if s["action"] == "keep"]
+    gaps = {(a, b): gap for a, b, gap in _output_word_gaps(paced, checked_words, len(samples) / rate)}
+    for left, right in zip(keep_segments, keep_segments[1:]):
+        a, b = left["word_end"] - 1, right["word_start"]
+        if gaps.get((a, b), 0.0) < 0.8:
+            continue
+        lo, hi = float(checked_words[a]["end"]), float(checked_words[b]["start"])
+        if any(c["source_start"] < hi and c["source_end"] > lo
+               for c in paced.get("reviewed_cut_ranges", [])):
+            continue
+        tail = min(lo + float(left["breathing_padding"]["after"]), hi)
+        head = max(hi - float(right["breathing_padding"]["before"]), lo)
+        runs = _quiet_ranges(rate, samples, lo + padding, tail)
+        if runs and abs(runs[-1][1] - tail) < 1 / rate and runs[-1][1] - runs[-1][0] > padding * 2:
+            left["breathing_padding"]["after"] = min(left["breathing_padding"]["after"], runs[-1][0] + padding - lo)
+        runs = _quiet_ranges(rate, samples, head, hi - padding)
+        if runs and abs(runs[0][0] - head) < 1 / rate and runs[0][1] - runs[0][0] > padding * 2:
+            right["breathing_padding"]["before"] = min(right["breathing_padding"]["before"], hi - (runs[0][1] - padding))
     return edit_timeline.validate_edit_plan(paced, checked_words)
+
+
+def cleanup_check_candidates(job: state.JobState) -> list[dict[str, Any]]:
+    """Recheck the current retained output, including pauses across keep cuts."""
+    from .cleanup_risk import retained_repetitions
+    speech = job.job_dir / "05-speech-cleanup"
+    words = edit_timeline._validate_words(contract_artifacts.read_json_artifact(
+        speech / "word-transcript.json")["words"])
+    plan = edit_timeline.validate_edit_plan(contract_artifacts.read_json_artifact(
+        speech / "cleanup-proposal.json"), words)
+    rate, samples = _pacing_audio(speech / "speech-16k.wav")
+    duration = len(samples) / rate
+    candidates = retained_repetitions(words, plan, media_duration=duration)
+    for left, right, gap in _output_word_gaps(plan, words, duration):
+        if gap < 0.8:
+            continue
+        start, end = float(words[left]["end"]), float(words[right]["start"])
+        identity = contract_artifacts.sha256_json({"kind": "retained_pause", "start": start, "end": end})[:16]
+        candidates.append({
+            "candidate_id": "retained-pause-" + identity,
+            "kind": "retained_pause", "word_start": left, "word_end": right + 1,
+            "source_start": start, "source_end": end, "output_gap_seconds": round(gap, 6),
+            "context": "".join(w["text"] for w in words[max(0, left - 2):right + 3]),
+            "evidence": "retained_output_gap_requires_audio_review",
+            "audition_range": {"source_start": max(0.0, float(words[left]["start"]) - 0.35),
+                               "source_end": min(duration, float(words[right]["end"]) + 0.35)},
+        })
+    return sorted(candidates, key=lambda c: (c["source_start"], c["candidate_id"]))
+
+
+def _validate_cleanup_resolutions(candidates: list[dict[str, Any]], resolutions: Any) -> None:
+    if type(resolutions) is not list:
+        raise SpeechEditV2Error("cleanup candidates require per-candidate audio review")
+    identifiers = []
+    for item in resolutions:
+        if (type(item) is not dict or set(item) != {"candidate_id", "decision", "reason"}
+                or item["decision"] != "keep" or type(item["candidate_id"]) is not str
+                or type(item["reason"]) is not str or len(item["reason"].strip()) < 6
+                or item["reason"].strip() in {"已处理完成", "已经剪掉了", "已处理并通过"}):
+            raise SpeechEditV2Error("retained cleanup candidate needs a specific keep reason after listening")
+        identifiers.append(item["candidate_id"])
+    if len(identifiers) != len(set(identifiers)) or set(identifiers) != {c["candidate_id"] for c in candidates}:
+        raise SpeechEditV2Error("unresolved retained pauses or repetitions; revise the plan or review each candidate")
+
+
+def validate_cleanup_review(job: state.JobState, review: dict[str, Any]) -> None:
+    _validate_cleanup_resolutions(cleanup_check_candidates(job), review.get("speech_cleanup_resolutions", []))
+
+
+def _require_cleanup_review(job: state.JobState) -> None:
+    candidates = cleanup_check_candidates(job)
+    if not candidates:
+        return
+    for path in (job.job_dir / "manifests").glob("local-qa-speech_cleanup-r*.json"):
+        receipt = contract_artifacts.read_json_artifact(path)
+        if (receipt.get("job_id") != job.job_id or receipt.get("job_dir") != str(job.job_dir)
+                or receipt.get("stage") != "speech_cleanup" or receipt.get("passed") is not True
+                or receipt.get("reviewed_by") != "host"
+                or receipt.get("artifacts") != job.stages["speech_cleanup"]["artifacts"]):
+            continue
+        try:
+            _validate_cleanup_resolutions(candidates, receipt.get("speech_cleanup_resolutions", []))
+            return
+        except SpeechEditV2Error:
+            continue
+    raise SpeechEditV2Error("retained pauses or repetitions have no bound host audio review")
 
 
 def _video_use_intervals(
@@ -939,6 +1043,7 @@ def render_edit(job: state.JobState) -> Path:
     state.require_runnable(job, "edit_structure")
     if job.stages["speech_cleanup"]["status"] != "approved":
         raise SpeechEditV2Error("speech_cleanup must be approved")
+    _require_cleanup_review(job)
     source = _input(job, "video")
     inspection = _inspect(job)
     speech = job.job_dir / "05-speech-cleanup"

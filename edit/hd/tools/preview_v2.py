@@ -9,6 +9,7 @@ import os
 import secrets
 import shutil
 import subprocess
+from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
@@ -25,6 +26,7 @@ from . import (
     state,
     talkcraft_subtitles,
     visual_plan,
+    visual_confirmation,
 )
 
 
@@ -59,6 +61,25 @@ _SOURCE_COMPONENT_KEYS = {
 }
 _ARTIFACT_KEYS = set(broll_component_executor.ComponentArtifact.__dataclass_fields__)
 _PREVIEW_JOURNAL = ".11-preview.publication.json"
+
+
+def _write_number_atlas(path: Path, count: int) -> Path:
+    """Create the small, deterministic numbered badge atlas used by preview."""
+    if count <= 0:
+        raise PreviewV2Error("number atlas needs at least one row")
+    image = Image.new("RGBA", (64, 44 * count), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default(size=28)
+    for index in range(count):
+        top = index * 44
+        draw.rounded_rectangle((0, top, 63, top + 43), radius=7,
+                               fill=(247, 239, 220, 255), outline=(55, 45, 35, 255))
+        label = str(index + 1)
+        box = draw.textbbox((0, 0), label, font=font)
+        draw.text(((64 - (box[2] - box[0])) / 2, top + (44 - (box[3] - box[1])) / 2 - box[1]),
+                   label, font=font, fill=(35, 30, 25, 255))
+    image.save(path, format="PNG", optimize=True)
+    return path
 
 
 def _blocked() -> PreviewV2Error:
@@ -1078,6 +1099,29 @@ def validate_source_manifest_against_approved_sources(
     return checked
 
 
+def _with_number_overlay(command, number_overlay, opening):
+    if not number_overlay:
+        return command
+    rows = number_overlay["rows"]
+    atlas_index = command.count("-i")
+    index = command.index("-filter_complex")
+    filters = command[index + 1].replace("[outv]", "[number_base]", 1)
+    streams = "".join(f"[badge_source{i}]" for i in range(len(rows)))
+    filters += f";[{atlas_index}:v]format=rgba,split={len(rows)}{streams};"
+    current = "number_base"
+    offset = 0 if opening is None else opening["body_offset_frames"]
+    for i, row in enumerate(rows):
+        start, end = row["start_frame"] + offset, row["end_frame"] + offset
+        filters += (f"[badge_source{i}]crop=64:44:0:{i * 44}[badge{i}];"
+                    f"[{current}][badge{i}]overlay=W-w-24:H-h-24:eof_action=pass:shortest=0:"
+                    f"enable='gte(n,{start})*lt(n,{end})'[numbered{i}];")
+        current = f"numbered{i}"
+    filters += f"[{current}]null[outv]"
+    command[index + 1] = filters
+    command[index:index] = ["-loop", "1", "-framerate", "24", "-i", str(number_overlay["atlas"])]
+    return command
+
+
 def build_preview_command_v2(
     visual: Path,
     subtitle_track: Path,
@@ -1089,6 +1133,7 @@ def build_preview_command_v2(
     opening: Mapping[str, Any] | None = None,
     cover: Path | None = None,
     mixed_audio: Path | None = None,
+    number_overlay: Mapping[str, Any] | None = None,
 ) -> list[str]:
     if mixed_audio is not None:
         command = build_preview_command_v2(visual, subtitle_track, edited_aroll, output,
@@ -1100,7 +1145,7 @@ def build_preview_command_v2(
         audio_map = command.index("[outa]" if opening is not None else "2:a:0")
         command[audio_map] = "4:a:0" if opening is not None else "3:a:0"
         command[index:index] = ["-i", str(mixed_audio)]
-        return command
+        return _with_number_overlay(command, number_overlay, opening)
     if frames <= 0 or duration <= 0 or frames != round(duration * 24):
         raise PreviewV2Error("preview clock is invalid")
     if opening is not None:
@@ -1126,7 +1171,7 @@ def build_preview_command_v2(
             "[2:a:0]aresample=48000,asetpts=PTS-STARTPTS,"
             f"adelay={hold * 2000}S:all=1[outa]"
         )
-        return [
+        return _with_number_overlay([
             "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error",
             "-threads", "1", "-reinit_filter", "0", "-i", str(visual), "-threads", "1",
             "-c:v", "libvpx-vp9", "-reinit_filter", "0", "-i", str(subtitle_track),
@@ -1138,10 +1183,10 @@ def build_preview_command_v2(
             "-c:v", "libx264", "-threads", "4", "-preset", "medium", "-crf", "18",
             "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
             "-t", f"{total_frames / 24:.9f}", "-movflags", "+faststart", "-y", str(output),
-        ]
+        ], number_overlay, opening)
     if cover is not None:
         raise PreviewV2Error("cover needs an explicit opening plan")
-    return [
+    return _with_number_overlay([
         "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error",
         # Native segment color metadata may change at a cut. Reinitializing
         # this geometry-locked graph would reset N and the subtitle clock.
@@ -1163,7 +1208,7 @@ def build_preview_command_v2(
         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
         "-ar", "48000", "-ac", "2", "-t", f"{duration:.6f}",
         "-movflags", "+faststart", "-y", str(output),
-    ]
+    ], number_overlay, opening)
 
 
 def _approved(job: state.JobState, stage_id: str, relative: str) -> Path:
@@ -1236,6 +1281,14 @@ def _validate_published_preview_inventory(
         expected.update({"11-preview/opening-manifest.json", "11-preview/subtitles.srt"})
     if report.get("background_music") is True:
         expected.update(f"11-preview/{name}" for name in preview_music.ATTACHMENTS)
+    if report.get("number_badges") is True:
+        expected.add("11-preview/number-badges.png")
+        atlas = _published_preview(job, "11-preview/number-badges.png")
+        if report.get("number_badge_atlas_sha256") != contract_artifacts.sha256_file(atlas):
+            raise PreviewV2Error("number badge atlas changed")
+        schedule = report.get("number_badge_schedule")
+        if type(schedule) is not list or not schedule:
+            raise PreviewV2Error("number badge schedule is incomplete")
     if "event_audio_plan_sha256" in report:
         expected.update({"11-preview/event-audio-plan.json", "11-preview/event-audio.m4a"})
     artifact_paths = [
@@ -1266,7 +1319,16 @@ def _validate_published_preview_inventory(
         raise PreviewV2Error("preview file inventory is incomplete")
     if receipt_path in expected:
         material_usage.load_current_receipt(job, "preview")
-    validate_preview_opening(job, report)
+    opening = validate_preview_opening(job, report)
+    if report.get("number_badges") is True:
+        offset = 0 if opening is None else opening["body_offset_frames"]
+        expected_schedule = [
+            {"number": row["number"], "row_id": row["row_id"],
+             "start_frame": round(float(row["start"]) * 24) + offset,
+             "end_frame": round(float(row["end"]) * 24) + offset}
+            for row in visual_confirmation.approved_numbered_rows(job)]
+        if report["number_badge_schedule"] != expected_schedule:
+            raise PreviewV2Error("number badge schedule differs from the approved complete list")
     validate_preview_music(job, report)
     validate_preview_event_audio(job, report)
 
@@ -1796,6 +1858,18 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
     stage.mkdir()
     try:
         output = stage / "review.mp4"
+        numbered_rows = visual_confirmation.approved_numbered_rows(job)
+        number_overlay = None
+        if numbered_rows:
+            atlas = _write_number_atlas(stage / "number-badges.png", len(numbered_rows))
+            number_overlay = {
+                "atlas": atlas,
+                "rows": [
+                    {**row, "start_frame": round(float(row["start"]) * 24),
+                     "end_frame": round(float(row["end"]) * 24)}
+                    for row in numbered_rows
+                ],
+            }
         event_audio_mix = None
         if event_audio_plan is not None:
             if music_plan is not None:
@@ -1819,6 +1893,7 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             **({"mixed_audio": mixed_audio} if mixed_audio is not None else {}),
             **({"opening": opening_plan, "cover": job.job_dir / opening_plan["cover"]["path"]}
                if opening_plan is not None else {}),
+            **({"number_overlay": number_overlay} if number_overlay is not None else {}),
         )
         try:
             subprocess.run(
@@ -1843,6 +1918,16 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             "source_manifest_sha256": source_manifest["source_manifest_sha256"],
             "subtitle_plan_sha256": subtitle_plan["subtitle_plan_sha256"],
             "broll_subtitle_cue_count": broll_subtitle_cue_count,
+            "number_badges": bool(number_overlay),
+            **({
+                "number_badge_atlas_sha256": contract_artifacts.sha256_file(number_overlay["atlas"]),
+                "number_badge_schedule": [
+                    {"number": row["number"], "row_id": row["row_id"],
+                     "start_frame": row["start_frame"] + (0 if opening_plan is None else opening_plan["body_offset_frames"]),
+                     "end_frame": row["end_frame"] + (0 if opening_plan is None else opening_plan["body_offset_frames"])}
+                    for row in number_overlay["rows"]
+                ],
+            } if number_overlay is not None else {}),
             "audio_source_sha256": contract_artifacts.sha256_file(arroll),
             "audio_mix_layers": (
                 1 + len(event_audio_plan["cues"])
@@ -1895,6 +1980,8 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             "qa-report.json",
             "source-manifest.json",
         ]
+        if number_overlay is not None:
+            artifact_paths.append("number-badges.png")
         if event_audio_plan is not None:
             artifact_paths.extend(["event-audio-plan.json", "event-audio.m4a"])
         artifact_paths.extend(f"keyframes/{path.name}" for path in evidence)

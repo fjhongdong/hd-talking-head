@@ -39,6 +39,8 @@
 
 基础准备只执行清单 `preparation` 中未声明 `dependency_ids` 的必需项。模板选定后，`run_stage.py` 从实际组件 bindings 提取 dependency_id，在发布确认列表前调用同一准备入口；`preparation.dependency_ids` 选择相应准备动作，`runtime_checks` 仅检查本次所选能力和实际入口版本。未选模板不安装、不探测。探针结果在准备报告里只记 `callable`，不伪造当前镜头 `bound`。账号、收费生成、未接入研究库不进入准备列表。没有自动准备入口的缺失环境停止并列出准确缺口，不临时创建安装器。
 
+白板原生适配仅在本 Job 选中 `whiteboard-video` 后准备。入口为 `scripts/whiteboard_adapter.py --project-root <project> --prepare`；它在包内引擎目录创建一次 Python 3.12 `.venv`，安装项目合同冻结的 Pillow 12.3.0、NumPy 2.5.3、pydantic 2.13.5 与本地 editable `whiteboard-video-engine`，随后用原生 `render_whiteboard.py` 的严格源码、模块路径、解释器前缀和版本探针核验。已有环境不覆盖、不升级；缺失 Python 3.12、环境不符或安装失败即停止，不自动重试。上述精确版本是本项目已验证运行时合同，不声称来自上游锁文件。
+
 OpenFilm 只在本次选中后执行这两份清单的对应项：按 [原生创作合同](openfilm-motion-graphics.md)检查项目本地包、真实 motion-graphics 说明、手册、原生浏览器和工具版本；缺失时仅补项目内环境，不改全局。启动检查不打开 Studio 或素材生成服务；正式包装器使用公开 `openfilm/render` 导出，避免 CLI 的自动更新／下载／重试。它只是一种语义候选，准备成功不代表本句动作、美观或信息密度通过。
 
 其登记探针实际加载公共渲染模块并启动、关闭一次原生浏览器，失败区分模块加载与浏览器启动，不以文件存在冒充运行成功。该探针不渲染素材，不在每段导出或每帧重复执行；独立合成检查仍通过统一 Python 入口加载现有项目依赖，不直接换解释器、重装包或重试渲染。
@@ -184,7 +186,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 
 ## 5. 条件依赖
 
-- `overlay-studio-native` 仅供已选中的 A-roll `pin-board` 短要点候选。预检登记项目内固定 vendor 提交和本项目 adapter/runtime；探针只证明当前系统 Chrome 与原生入口可调用，不下载 Puppeteer 浏览器、不生成媒体。缺失或版本不符时停止并记录准确缺口；不得自动切换组件、重做动效或修改第三方源码。正式执行时区分 `native_export` 与 `reuse_png`，复用已有 PNG 不重新调用上游导出；最小合成检查只能证明透明层复用和父级合成，不扩大为全部原生卡片资格。
+- `overlay-studio-native` 仅供已选中的 A-roll `pin-board` 短要点候选。准备动作登记项目内固定 vendor 提交和本项目 adapter/runtime；缺少 runtime 锁定文件时只复制与 vendor 字节相同的文件，缺少 `node_modules` 时在项目 runtime 内执行锁定的 `npm ci --ignore-scripts --no-audit --no-fund`，并设置 `PUPPETEER_SKIP_DOWNLOAD=true`。探针只证明当前系统 Chrome 与原生入口可调用，不下载 Puppeteer 浏览器、不生成媒体；锁文件冲突、源码提交或版本不符时停止，不覆盖或修改第三方源码。正式执行时区分 `native_export` 与 `reuse_png`，复用已有 PNG 不重新调用上游导出；最小合成检查只能证明透明层复用和父级合成，不扩大为全部原生卡片资格。
 
 - 选中 `whiteboard-video` 时，`whiteboard-video-adapter` 探针核对项目 vendor 的纯 Skill wrapper、engine 源码/资源指纹、Python 3.12 虚拟环境的实际模块导入与锁定依赖版本，以及 FFmpeg/FFprobe。此探针不生成媒体。缺失或版本不符时停在准备阶段，按[生成型 B-roll 编排](generated-broll-skills.md)的项目内依赖边界处理，不换解释器或调用其他生成服务来绕过。
 - 选中 `paper-collage-ad` 时，项目内 Paper Skill、固定 `layer-animate.mjs`、Python/Node/FFmpeg/FFprobe 及本包 wrapper 必须同时可用；`paper-collage-adapter` 的真实绑定探针创建适配器并核对入口身份、工具可执行性，不生成图像或视频。详细调用及图片来源见[生成型 B-roll 编排](generated-broll-skills.md)。缺上游时停在准备阶段，按该页项目内安装边界处理，不能换回自画动画。
@@ -203,3 +205,5 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 - 安装完成后必须重新预检；只有达到 manifest 声明的 `required_level` 才计为满足。
 - 预检、安装和连接检查不调用图片或视频生成，不增加 generation 次数，也不消耗 provider 额度。
 - 不因当前机器已经存在目录而省略检查；代码入口、实际版本和 adapter identity 必须由可执行 probe 一次返回并逐字核对，不能从源码字符串推断。
+
+白板的本地 editable 安装会产生 `.egg-info` 元数据，它与 `.venv` 一样属于机器运行环境，不纳入发布源文件清单。Adu 另要求项目内 FFmpeg/FFprobe 9.0.2；这是机器工具前提，准备入口不自行编译或替换系统 FFmpeg。机器已有同版本可执行文件时可复制到包根的 `skill-development/runtime/ffmpeg-9.0.2/bin/`，保留其系统动态库条件，再由原生色彩探针核对；不得引用原开发项目路径作为运行依赖。

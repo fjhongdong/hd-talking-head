@@ -138,6 +138,33 @@ class WorkflowStateTests(unittest.TestCase):
         self.assertEqual(job.stages["preview"]["status"], "pending")
         self.assertEqual(job.stages["delivery"]["status"], "pending")
 
+    def test_visual_proposal_revisions_preserve_published_lineage(self):
+        job = self.create_full_v2()
+        for stage_id in state_module.FULL_V2_STAGE_IDS:
+            if stage_id == "visual_direction":
+                break
+            mark_ready(job, stage_id, [self.artifact(job, stage_id)])
+            approve(job, stage_id)
+        published = self.artifact(job, "07-visual-direction", b"published A")
+        state_module.mark_visual_ready(job, [published])
+        approve(job, "visual_direction")
+        revise(job, "visual_direction", "first proposal")
+        original = copy.deepcopy(job.stages["visual_direction"]["lineage"])
+        for number in (1, 2):
+            proposal = job.job_dir / "07-visual-confirmation" / f"proposal-{number}.json"
+            proposal.parent.mkdir(exist_ok=True)
+            proposal.write_text(str(number))
+            state_module.mark_visual_ready(job, [proposal])
+            revise(job, "visual_direction", "adjust proposal")
+            self.assertEqual(job.stages["visual_direction"]["lineage"], original)
+        published.write_bytes(b"published B")
+        state_module.mark_visual_ready(job, [published])
+        approve(job, "visual_direction")
+        revise(job, "visual_direction", "revise newly published result")
+        current = job.stages["visual_direction"]["lineage"]
+        self.assertEqual(current[0]["path"], "07-visual-direction/result.bin")
+        self.assertNotEqual(current[0]["sha256"], original[0]["sha256"])
+
     def test_approval_requires_ready_and_unlocks_next_stage(self):
         job = self.create()
         artifact = job.job_dir / "inspect" / "report.json"
