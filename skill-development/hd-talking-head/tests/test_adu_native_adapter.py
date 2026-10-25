@@ -71,6 +71,13 @@ class AduNativeBriefTests(unittest.TestCase):
         checked = adapter.validate_brief(json.dumps(payload))
         self.assertEqual(checked["typography"]["body_px"], 56)
 
+    def test_accepts_openai_title_at_real_native_geometry_size(self):
+        payload = brief()
+        payload["typography"] = {"title_px": 64, "body_px": 48}
+        payload["left"]["title"] = "OpenAI"
+        checked = adapter.validate_brief(json.dumps(payload))
+        self.assertEqual(checked["left"]["title"], "OpenAI")
+
     def test_portrait_typography_rejects_overlong_label(self):
         payload = brief()
         payload["typography"] = {"title_px": 64, "body_px": 56}

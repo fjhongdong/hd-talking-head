@@ -401,7 +401,7 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
     merged = 0
 
     sentence_punctuation = frozenset(
-        ",.!?;:'\"，。！？；：、‘’“”「」『』（）()［］[]《》〈〉【】"
+        ",.!?;:'\"，。！？；：、‘’“”「」『』（）()［］[]《》〈〉【】…—"
     )
 
     def is_punctuation_or_space(text: str) -> bool:

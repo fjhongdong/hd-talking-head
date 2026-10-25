@@ -1,12 +1,19 @@
 """Real pinned HyperFrames runtime regression; no video export or service call."""
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
+import threading
+import time
 import unittest
+from unittest.mock import patch
 
-from edit.hd.tools.overlay_alignment import bind_native_clock, bind_native_slots, _native_events
+from edit.hd.tools import overlay_alignment
+from edit.hd.tools.relation_browser_watchdog import _group_has_live_members, _process_start_identity, _terminate_registered
+from edit.hd.tools.overlay_alignment import bind_native_clock, bind_native_slots, _native_events, _clock_budgets
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / '参考项目/B-roll开源方案/hyperframes'
@@ -51,20 +58,25 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
                 'events': [{'slot': slot, 'kind': kind, 'text': text, 'time': time} for slot, kind, text, time in events]}
 
     def run_check(self, entries):
+        work = self.directory / ('runtime-' + str(len(list(self.directory.glob('runtime-*')))))
+        work.mkdir()
+        budgets, _ = _clock_budgets(entries)
         return subprocess.run([shutil.which('node'), str(CHECKER)],
-            input=json.dumps({'project_root': str(ROOT), 'entries': entries}),
+            input=json.dumps({'project_root': str(ROOT), 'work_directory': str(work),
+                              'python_executable': sys.executable,
+                              'entries': [{**entry, 'timeout_ms': round(budget * 1000)}
+                                          for entry, budget in zip(entries, budgets)]}),
             capture_output=True, text=True, timeout=60)
 
     def test_actual_runtime_authors_each_entry_and_preserves_native_clock(self):
-        result = self.run_check([self.entry('first'), self.entry('second')])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        rows = json.loads(result.stdout)['entries']
+        rows = overlay_alignment._assembled_clocks([self.entry('first'), self.entry('second')])
         self.assertEqual(len(rows), 2)
         for row in rows:
             self.assertEqual(row['authored_root_id'], 'root')
             self.assertAlmostEqual(row['timeline_duration'], 4, places=5)
             self.assertTrue(row['temporary_duration_removed'])
             self.assertEqual(row['visibility_checks'][0]['graphic_count'], 1)
+            self.assertLessEqual(row['sampled_frames'], 4 * 24 + 3)
 
     def test_right_content_with_left_clip_is_rejected(self):
         result = self.run_check([self.entry('bad-clip', bad_clip=True)])
@@ -80,3 +92,143 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
         result = self.run_check([self.entry('hidden', hidden=True)])
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('native content is never visible', result.stderr)
+
+    def test_sampling_work_ignores_unrelated_host_frames(self):
+        # Algorithm-only check complements the actual Chrome cases above.
+        script = '''
+import {SAMPLE} from CHECKER;
+async function measure(hostTotal) {
+ let time=0,seeks=0;
+ const start=3,duration=1,rect={left:0,right:100,top:0,bottom:30};
+ const root={parentElement:null,closest:()=>null,getBoundingClientRect:()=>rect,hasAttribute:()=>false,getAttribute:()=> 'root'};
+ const mount={querySelectorAll:()=>[root],getAttribute:()=>String(start)};
+ globalThis.window={__timelines:{'grid-card-assemble':{duration:()=>duration,time:()=>Math.max(0,Math.min(duration,time-start))}},
+ __player:{getDuration:()=>hostTotal,getTime:()=>time,renderSeek:async t=>{time=t;seeks++;}}};
+ globalThis.NodeFilter={SHOW_TEXT:4};
+ globalThis.getComputedStyle=()=>({display:'block',visibility:'visible',opacity:time>=start&&time<=start+duration?'1':'0',overflowX:'visible',overflowY:'visible',clipPath:'none'});
+ globalThis.document={querySelector:s=>s==='.stage'?{getAttribute:()=>String(hostTotal)}:mount,
+ createTreeWalker:()=>{let first=true;return{nextNode:()=>first?(first=false,{textContent:'label',parentElement:root}):null};},
+ createRange:()=>({selectNodeContents:()=>{},getBoundingClientRect:()=>rect})};
+ return {...await SAMPLE({route:'hyperframes/grid-card-assemble',start,duration,events:[]},24),seeks};
+}
+console.log(JSON.stringify([await measure(10),await measure(120)]));
+'''.replace('from CHECKER', 'from ' + json.dumps(CHECKER.as_uri()))
+        result = subprocess.run(['node', '--input-type=module'], input=script, capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for row in json.loads(result.stdout):
+            self.assertEqual(row['sampled_frames'], 27)
+            self.assertEqual(row['seeks'], 28)
+            self.assertEqual(row['sampling_window'], {'first_frame': 71, 'last_frame': 97})
+        small, small_total = _clock_budgets([{'duration': 4}])
+        large, large_total = _clock_budgets([{'duration': 4}] * 8)
+        self.assertGreater(large_total, small_total)
+        self.assertEqual(large, small * 8)
+
+    def test_deadlines_reclaim_started_preview_browser_and_work_directory(self):
+        original_temporary, original_popen = tempfile.TemporaryDirectory, subprocess.Popen
+        for mode in ('startup', 'entry', 'batch'):
+            with self.subTest(mode=mode):
+                entry = self.entry('stall-' + mode)
+                index = Path(entry['entry_directory']) / 'index.html'
+                index.write_text(index.read_text() + '<script>Object.defineProperty(document.fonts,"ready",{get:()=>new Promise(()=>{})})</script>')
+                created, snapshots, failures = [], {}, []
+                done = threading.Event()
+                def capture(*args, **kwargs):
+                    temporary = original_temporary(*args, **kwargs)
+                    created.append(Path(temporary.name))
+                    return temporary
+                def run():
+                    try:
+                        overlay_alignment._assembled_clocks([entry])
+                    except BaseException as error:
+                        failures.append(error)
+                    finally:
+                        done.set()
+                def launch(command, *args, **kwargs):
+                    if mode == 'startup' and command[0] == shutil.which('node'):
+                        # Fault injection: Chrome really starts, but the SDK
+                        # never hands BrowserServer back to the checker.
+                        script = 'import {createRequire} from "node:module";import {runCheck} from ' + json.dumps(CHECKER.as_uri()) + ';' + \
+                            'const require=createRequire(import.meta.url);const {chromium}=require(' + json.dumps(str(ROOT / 'skill-development/runtime/adu-native/node_modules/playwright-core')) + ');' + \
+                            'const launch=chromium.launchServer.bind(chromium);chromium.launchServer=async options=>{await launch(options);return new Promise(()=>{});};' + \
+                            'let data="";for await(const chunk of process.stdin)data+=chunk;await runCheck(JSON.parse(data));'
+                        command = [command[0], '--input-type=module', '-e', script]
+                    return original_popen(command, *args, **kwargs)
+                budgets = ([6], 20) if mode == 'entry' else ([60], 3 if mode == 'startup' else 8)
+                with patch.object(overlay_alignment, '_clock_budgets', return_value=budgets), \
+                     patch.object(overlay_alignment.tempfile, 'TemporaryDirectory', side_effect=capture), \
+                     patch.object(overlay_alignment.subprocess, 'Popen', side_effect=launch):
+                    worker = threading.Thread(target=run, daemon=True)
+                    worker.start()
+                    wait_until = time.monotonic() + 35
+                    while not done.wait(.02) and time.monotonic() < wait_until:
+                        if not created:
+                            continue
+                        for name in ('browser', 'progress'):
+                            try:
+                                snapshots[name] = json.loads((created[0] / (name + '.json')).read_text())
+                            except (OSError, ValueError):
+                                pass
+                    worker.join(timeout=1)
+                    self.assertFalse(worker.is_alive(), 'clock cleanup exceeded the test deadline')
+                self.assertEqual(len(failures), 1)
+                self.assertIsInstance(failures[0], ValueError)
+                self.assertIn('deadline exceeded' if mode == 'entry' else 'timed out', str(failures[0]))
+                self.assertIn('browser', snapshots, str(failures[0]))
+                progress = snapshots['progress']
+                self.assertIn(progress['phase'], {'browser_startup'} if mode == 'startup' else {'runtime_readiness', 'fonts_and_images'})
+                self.assertFalse(_group_has_live_members(progress['checker_pid']))
+                self.assertFalse(_group_has_live_members(snapshots['browser']['pid']))
+                self.assertFalse(any(path.exists() for path in created))
+
+    def test_browser_shim_does_not_exec_after_parent_final_registry_read(self):
+        directory = self.directory / 'late-registration'
+        directory.mkdir()
+        fifo = directory / 'resume'
+        os.mkfifo(fifo)
+        marker, entered = directory / 'executed', directory / 'entered'
+        executable = directory / 'fake-chrome'
+        executable.write_text('#!/bin/sh\ntouch "' + str(marker) + '"\n')
+        executable.chmod(0o700)
+        config = directory / 'launch.json'
+        shim = CHECKER.with_name('clock_browser_exec.py')
+        child_script = '''
+import importlib.util,sys
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('clock_child',sys.argv[1]);child=importlib.util.module_from_spec(spec);spec.loader.exec_module(child)
+identity=child._process_start_identity
+entered,resume=Path(sys.argv[3]),Path(sys.argv[4])
+def delayed(pid):
+ entered.write_text('entered');resume.read_bytes();return identity(pid)
+child._process_start_identity=delayed
+sys.argv=[sys.argv[1],sys.argv[2]]
+raise SystemExit(child.main())
+'''
+        parent_script = '''
+import json,os,subprocess,sys,time
+from pathlib import Path
+config=Path(sys.argv[1]);config.write_text(json.dumps({'parent_pid':os.getpid(),'work_directory':str(config.parent),'executable':sys.argv[2]}))
+child=subprocess.Popen([sys.executable,'-c',sys.argv[3],sys.argv[4],str(config),sys.argv[5],sys.argv[6]],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+deadline=time.monotonic()+5
+while not Path(sys.argv[5]).exists() and time.monotonic()<deadline:time.sleep(.01)
+print(child.pid)
+'''
+        result = subprocess.run([sys.executable, '-c', parent_script, str(config), str(executable),
+            child_script, str(shim), str(entered), str(fifo)], capture_output=True, text=True, timeout=7)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        pid = int(result.stdout.strip())
+        identity = _process_start_identity(pid)
+        try:
+            self.assertTrue(entered.exists())
+            self.assertFalse((directory / 'browser.json').exists())  # Parent's final read.
+            with fifo.open('wb') as resume:
+                resume.write(b'go')
+            deadline = time.monotonic() + 5
+            while _group_has_live_members(pid) and time.monotonic() < deadline:
+                time.sleep(.02)
+            self.assertFalse(_group_has_live_members(pid))
+            self.assertTrue((directory / 'browser.json').exists())  # Late registration.
+            self.assertFalse(marker.exists())
+        finally:
+            if identity is not None:
+                _terminate_registered({pid: identity})

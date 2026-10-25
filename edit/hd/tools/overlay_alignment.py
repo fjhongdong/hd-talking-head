@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import math
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
+import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -196,16 +199,78 @@ def _native_clock(source, actual, route, duration):
     return clocks[0]
 
 
+def _clock_budgets(entries):
+    # Public preview startup (30+15+10s), then 200ms per effective frame.
+    # Individual checks remain bounded; a larger table gets a larger total.
+    budgets = [min(300, 55 + (math.ceil(_number(e['duration']) * 24) + 3) * .2)
+               for e in entries]
+    return budgets, 40 + sum(budget + 5 for budget in budgets) + 15
+
+
+def _stop_clock_check(process, identity, directory):
+    from .relation_browser_watchdog import _terminate_registered
+    browser_record = directory / 'browser.json'
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+    groups = {process.pid: identity}
+    # Stop the registrar first, then read its final browser registry. The exec
+    # shim refuses to start Chrome if that parent has already gone away.
+    _terminate_registered(groups)
+    process.wait(timeout=5)
+    if browser_record.exists():
+        browser = json.loads(browser_record.read_text())
+        if (set(browser) != {'pid', 'identity'} or type(browser['pid']) is not int
+                or browser['pid'] <= 1 or not isinstance(browser['identity'], str)):
+            raise ValueError('native clock browser ownership record is invalid')
+        groups = {browser['pid']: browser['identity']}
+        _terminate_registered(groups)
+    # Chrome has its own detached process group; stopping Node alone is not
+    # sufficient. The shared helper checks start identities before signaling.
+    process.communicate(timeout=5)
+
+
 def _assembled_clocks(entries):
     """Execute the actual installed compiler and native timelines, without export."""
     project = Path(__file__).resolve().parents[3]
     checker = project / "skill-development/hd-talking-head/scripts/check_native_overlay_clock.mjs"
-    result = subprocess.run([shutil.which("node"), str(checker)],
-        input=json.dumps({"project_root": str(project), "entries": entries}),
-        text=True, capture_output=True, timeout=90, check=False)
-    if result.returncode:
-        raise ValueError("assembled native clock check failed: " + result.stderr[-5000:])
-    observed = json.loads(result.stdout)
+    from .relation_browser_watchdog import _process_start_identity
+    budgets, timeout = _clock_budgets(entries)
+    with tempfile.TemporaryDirectory(prefix='hf-clock-') as temporary:
+        directory = Path(temporary)
+        request = {'project_root': str(project), 'work_directory': str(directory),
+                   'python_executable': sys.executable,
+                   'entries': [{**entry, 'timeout_ms': round(budget * 1000)}
+                               for entry, budget in zip(entries, budgets)]}
+        process = subprocess.Popen([shutil.which('node'), str(checker)],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, start_new_session=True,
+            env={**os.environ, 'TMPDIR': str(directory)})
+        identity = _process_start_identity(process.pid)
+        try:
+            if identity is None:
+                raise ValueError('native clock process identity is unavailable')
+            try:
+                stdout, stderr = process.communicate(input=json.dumps(request), timeout=timeout)
+            except subprocess.TimeoutExpired as error:
+                progress = directory / 'progress.json'
+                try:
+                    detail = progress.read_text()[:2000]
+                except OSError:
+                    detail = 'progress unavailable'
+                raise ValueError('assembled native clock check timed out: ' + detail) from error
+            if process.returncode:
+                raise ValueError('assembled native clock check failed: ' + stderr[-5000:])
+            observed = json.loads(stdout)
+        finally:
+            if identity is not None:
+                _stop_clock_check(process, identity, directory)
+            else:
+                process.kill()
+                process.communicate(timeout=5)
     if observed.get("ok") is not True or len(observed.get("entries", [])) != len(entries):
         raise ValueError("assembled native clock evidence is incomplete")
     return observed["entries"]

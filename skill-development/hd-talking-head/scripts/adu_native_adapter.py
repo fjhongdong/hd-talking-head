@@ -70,9 +70,6 @@ def validate_brief(payload):
         for item in side["items"]:
             _text(item, "item", 14)
     available_width = (760 - 2 * 44) * 0.5625
-    if any(len(b[name]["title"]) * typography["title_px"] > available_width
-           for name in ("left", "right")):
-        raise ValueError("Adu typography title capacity exceeded")
     body_width = available_width - 2 * typography["body_px"]
     if any(len(item) * typography["body_px"] > body_width
            for name in ("left", "right") for item in b[name]["items"]):

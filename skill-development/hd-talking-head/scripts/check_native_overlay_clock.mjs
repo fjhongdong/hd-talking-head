@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Reconstructed assembled-native-clock checker for the HD talking-head skill.
 //
-// Reads {"project_root": ..., "entries": [{entry_directory, route, duration,
-// start, events}]} on stdin. For every assembled entry it loads the host HTML
+// Reads {project_root, work_directory, python_executable,
+// entries: [{entry_directory, route, duration, start, events, timeout_ms}]}.
+// For every assembled entry it loads the host HTML
 // in the actual pinned HyperFrames preview runtime in headless system Chrome,
 // blocks all non-loopback network access, then seeks the authored gsap timeline
-// frame by frame on the approved 24 fps clock and
+// over the mount and adjacent boundary frames on the approved 24 fps clock and
 // records the observed entry/exit times, timeline duration, peak visible
 // texts, and whether the temporary data-duration attribute was removed by the
 // post-handoff snippet. No media export, no online access, no source edits.
@@ -15,8 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
-import { spawn } from "node:child_process";
-import os from "node:os";
+import {spawn} from "node:child_process";
 import { createRequire } from "node:module";
 import {fileURLToPath} from 'node:url';
 import {once} from 'node:events';
@@ -112,12 +112,20 @@ export const SAMPLE = async (entry, fps) => {
     }
   };
   let entryFrame = null, exitFrame = null, peak = 0;
-  const frames = Math.ceil(hostTotal * fps);
-  for (let frame = 0; frame <= frames; frame++) {
+  // Keep global player coordinates, but inspect only this mount and one frame
+  // on either side. A long host must not multiply unrelated seek work.
+  const firstFrame = Math.max(0, Math.floor(entry.start * fps) - 1);
+  const lastFrame = Math.min(Math.ceil(hostTotal * fps), Math.ceil((entry.start + total) * fps) + 1);
+  let sampledFrames = 0;
+  for (let frame = firstFrame; frame <= lastFrame; frame++) {
     const time = Math.min(frame / fps, hostTotal);
     await seek(time);
     const count = texts(root).filter(item => visible(item.element, item.rect)).length;
     if (count) {entryFrame ??= frame; exitFrame = frame; peak = Math.max(peak, count);}
+    sampledFrames++;
+    if (window.__hdClockProgress && (sampledFrames === 1 || sampledFrames % fps === 0)) {
+      await window.__hdClockProgress({checked_frames: sampledFrames, frame});
+    }
   }
   if (!peak) throw new Error('native content is never visible');
   const visibilityChecks = [];
@@ -148,7 +156,8 @@ export const SAMPLE = async (entry, fps) => {
     entry_time: entryFrame / fps, exit_time: exitFrame / fps, peak_visible_texts: peak,
     temporary_duration_removed: !root.hasAttribute('data-duration'),
     host_duration: stage?.getAttribute('data-duration'), host_start: mount.getAttribute('data-start'),
-    authored_root_id: root.getAttribute('data-hf-authored-id'), visibility_checks: visibilityChecks};
+    authored_root_id: root.getAttribute('data-hf-authored-id'), visibility_checks: visibilityChecks,
+    sampled_frames: sampledFrames, sampling_window: {first_frame: firstFrame, last_frame: lastFrame}};
 };
 
 export function validateHostStyles(source) {
@@ -167,6 +176,12 @@ export function validateHostStyles(source) {
   }
 }
 
+function writeJson(directory, name, value) {
+  const target = path.join(directory, name);
+  fs.writeFileSync(target + '.tmp', JSON.stringify(value));
+  fs.renameSync(target + '.tmp', target);
+}
+
 export async function runCheck(request) {
   const projectRoot = request.project_root;
   const gsapPath = firstExisting(projectRoot, GSAP_CANDIDATES);
@@ -174,25 +189,73 @@ export async function runCheck(request) {
   const playwrightPath = firstExisting(projectRoot, PLAYWRIGHT_CANDIDATES);
   if (!gsapPath || !chromePath || !playwrightPath) throw new Error('assembled clock dependencies are unavailable');
   if (!Array.isArray(request.entries) || !request.entries.length) throw new Error('entries are required');
+  if (!request.entries.every(entry => Number.isFinite(entry.start) && entry.start >= 0 &&
+      Number.isFinite(entry.duration) && entry.duration > 0 && Number.isInteger(entry.timeout_ms) &&
+      entry.timeout_ms > 0 && entry.timeout_ms <= 300000)) throw new Error('invalid native clock window or deadline');
+  if (typeof request.work_directory !== 'string' || !path.isAbsolute(request.work_directory) ||
+      !fs.statSync(request.work_directory).isDirectory() || fs.readdirSync(request.work_directory).length) {
+    throw new Error('native clock check requires an empty owned work directory');
+  }
+  const work = request.work_directory;
+  if (typeof request.python_executable !== 'string' || !path.isAbsolute(request.python_executable)) {
+    throw new Error('native clock check requires the selected Python executable');
+  }
   const gsapBytes = fs.readFileSync(gsapPath);
   const require = createRequire(import.meta.url);
   const {chromium} = require(playwrightPath);
-  const browser = await chromium.launch({executablePath: chromePath, headless: true});
+  let browserServer, browser, activePage, activeServer, cancelled;
+  let progress = {phase: 'browser_startup', checker_pid: process.pid};
+  const update = (phase, values = {}) => {
+    progress = {...progress, phase, ...values};
+    writeJson(work, 'progress.json', progress);
+  };
+  const cancel = error => {
+    cancelled ||= error;
+    if (activeServer?.pid && activeServer.exitCode === null) activeServer.kill('SIGTERM');
+    if (activePage) void activePage.close().catch(() => {});
+    if (browserServer) void browserServer.close().catch(() => {});
+  };
+  const stopped = () => cancel(new Error('native clock check was terminated: ' + JSON.stringify(progress)));
+  const checkpoint = () => {if (cancelled) throw cancelled;};
+  process.on('SIGTERM', stopped);
+  process.on('SIGINT', stopped);
+  update('browser_startup');
   const entries = [];
   try {
-    for (const entry of request.entries) {
+    // The child registers its group before exec, closing the cancellation
+    // window while launchServer is still waiting for Chrome to become ready.
+    writeJson(work, 'browser-launch.json', {parent_pid: process.pid, work_directory: work, executable: chromePath});
+    const launcher = path.join(work, 'browser-launch.sh');
+    const shellQuote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+    fs.writeFileSync(launcher, '#!/bin/sh\nexec ' + [request.python_executable,
+      path.join(projectRoot, 'skill-development/hd-talking-head/scripts/clock_browser_exec.py'),
+      path.join(work, 'browser-launch.json')].map(shellQuote).join(' ') + ' "$@"\n', {mode: 0o700});
+    browserServer = await chromium.launchServer({executablePath: launcher, headless: true,
+      timeout: 30000, handleSIGTERM: false, handleSIGINT: false, handleSIGHUP: false});
+    const pid = browserServer.process().pid;
+    const registered = JSON.parse(fs.readFileSync(path.join(work, 'browser.json'), 'utf8'));
+    if (registered.pid !== pid) throw new Error('Chrome process differs from its launch registration');
+    checkpoint();
+    browser = await chromium.connect(browserServer.wsEndpoint(), {timeout: 10000});
+    checkpoint();
+    for (const [index, entry] of request.entries.entries()) {
       const directory = path.resolve(projectRoot, entry.entry_directory);
       if (!fs.existsSync(path.join(directory, 'index.html'))) throw new Error('assembled entry index.html is missing');
-      const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'hf-clock-'));
+      const temp = fs.mkdtempSync(path.join(work, 'entry-'));
       let server, page;
+      update('entry_startup', {entry_index: index, route: entry.route, checked_frames: 0, frame: null, preview_pid: null});
+      const deadline = setTimeout(() => cancel(new Error('native clock entry deadline exceeded: ' + JSON.stringify(progress))), entry.timeout_ms);
       try {
         fs.cpSync(directory, temp, {recursive: true});
+        checkpoint();
         const requestedPort = 31000 + Math.floor(Math.random() * 1000);
         let port;
-        server = spawn(process.execPath, [path.join(projectRoot, HYPERFRAMES), 'preview', temp,
+        server = activeServer = spawn(process.execPath, [path.join(projectRoot, HYPERFRAMES), 'preview', temp,
           '--foreground', '--json', '--no-open', '--port=' + requestedPort], {
-          env: {...process.env, HYPERFRAMES_NO_TELEMETRY: '1', DO_NOT_TRACK: '1'},
+          env: {...process.env, HYPERFRAMES_NO_TELEMETRY: '1', DO_NOT_TRACK: '1',
+            XDG_STATE_HOME: path.join(work, 'preview-state')},
           stdio: ['ignore', 'pipe', 'pipe']});
+        update('preview_startup', {preview_pid: server.pid});
         await new Promise((resolve, reject) => {
           let buffer = '';
           const timer = setTimeout(() => reject(new Error('HyperFrames preview readiness timeout')), 30000);
@@ -213,8 +276,11 @@ export async function runCheck(request) {
           };
           server.stdout.on('data', consume); server.stderr.on('data', consume);
         });
+        checkpoint();
         const base = `http://127.0.0.1:${port}`;
-        page = await browser.newPage({viewport: {width: 1080, height: 1920}});
+        page = activePage = await browser.newPage({viewport: {width: 1080, height: 1920}});
+        checkpoint();
+        await page.exposeFunction('__hdClockProgress', values => update('sampling', values));
         await page.evaluate(validateHostStyles, fs.readFileSync(path.join(temp, 'index.html'), 'utf8'));
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
@@ -226,40 +292,56 @@ export async function runCheck(request) {
         });
         const config = await (await page.request.get(base + '/__hyperframes_config')).json();
         if (typeof config.projectName !== 'string' || !config.projectName) throw new Error('preview project identity is missing');
+        update('runtime_readiness');
         await page.goto(base + '/api/projects/' + encodeURIComponent(config.projectName) + '/preview/comp/index.html',
           {waitUntil: 'domcontentloaded', timeout: 15000});
+        checkpoint();
         try {
           await page.waitForFunction(route => window.__player?.renderSeek && window.__timelines?.[route]?.time &&
             document.querySelector('[data-hf-authored-id="root"]'),
             entry.route.replace(/^hyperframes\//, ''), {timeout: 10000});
+          update('fonts_and_images');
           await page.evaluate(async () => {
             await document.fonts.ready;
             await Promise.all([...document.images].map(image => image.decode()));
           });
         } catch (error) {
+          checkpoint();
           const actual = await page.evaluate(() => ({player: !!window.__player,
             timelines: Object.keys(window.__timelines || {}),
             authored_roots: document.querySelectorAll('[data-hf-authored-id="root"]').length}));
           throw new Error('native runtime readiness failed for ' + entry.route + ': ' + error.message +
             '; observed=' + JSON.stringify(actual) + '; ' + errors.slice(0, 3).join('; '));
         }
+        checkpoint();
+        update('sampling');
         const observed = await page.evaluate(async ({sample, entry, fps}) => (0, eval)('(' + sample + ')')(entry, fps),
           {sample: SAMPLE.toString(), entry, fps: FPS});
+        checkpoint();
         entries.push({...observed, requested_duration: entry.duration, mount_start: entry.start, declared_events: entry.events});
+        update('entry_complete', {checked_frames: observed.sampled_frames});
+      } catch (error) {
+        throw cancelled || new Error('native clock check failed at ' + JSON.stringify(progress) + ': ' + error.message);
       } finally {
-        if (page) await page.close();
-        if (server && server.exitCode === null) {
-          const stopped = once(server, 'exit');
+        clearTimeout(deadline);
+        if (page) await page.close().catch(() => {});
+        activePage = undefined;
+        if (server?.pid && server.exitCode === null) {
+          const exited = once(server, 'exit');
           const timer = setTimeout(() => server.kill('SIGKILL'), 2000);
           server.kill('SIGTERM');
-          try {await stopped;} finally {clearTimeout(timer);}
+          try {await exited;} finally {clearTimeout(timer);}
         }
+        activeServer = undefined;
         fs.rmSync(temp, {recursive: true, force: true});
       }
     }
     return {ok: true, entries};
   } finally {
-    await browser.close();
+    if (browser) await browser.close().catch(() => {});
+    if (browserServer) await browserServer.close().catch(() => {});
+    process.off('SIGTERM', stopped);
+    process.off('SIGINT', stopped);
   }
 }
 
