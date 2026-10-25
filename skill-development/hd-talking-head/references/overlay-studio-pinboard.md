@@ -35,6 +35,8 @@ template_request, assets, upstream, execution_mode
 
 `parent_safe_zone={top,bottom,left,right}` 是从当前已批准组件 `render_window.safe_zone` 取得的派生快照，不是另一套可自由配置的安全区。正式 adapter 入口核对快照与实际组件逐值相等，并核对画布尺寸；缺失或不一致即停止，不补默认值。公共执行器仍冻结同一份 brief 原字节，子进程只读取一次。转换在现有全帧 alpha 扫描后，按实际 crop/placement 计算完整动作的最终范围（保守取整并留 2px 缩放采样余量）；越出父级安全矩形就在编码前停止。单独运行转换只证明符合所给快照，不能代替正式入口核对当前镜头。
 
+准备新 brief 时从本次草稿将编译的父级安全区派生快照，不照抄历史样片的 top/bottom。快照不一致时修订当前 brief 并重建 binding；不反改父级规则去配旧样片，也不改写旧 Job 的批准记录。
+
 ## 输出、复用与验收边界
 
 原生 PNG 使用 straight alpha；父级需要时只做无损 QTRLE/ARGB 转换，再由现有合成器叠加 A-roll 原声和唯一字幕轨。`execution_mode` 必须明确为 `native_export` 或 `reuse_png`，不自动 fallback。

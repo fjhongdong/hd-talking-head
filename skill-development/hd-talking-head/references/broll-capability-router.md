@@ -164,7 +164,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 - 每条 `candidates` 只列相关的具体 `candidate_id/fit/reason/visual_pattern`。主控先审阅语义、中文容量、原生动作、画幅、时长与美观；只有确实相当的方案才放入同档组。`visual_pattern` 使用主控统一的主体组织、构图和动作标签，例如“资料分组后汇聚”，不能以 Skill 名、色板或模板编号命名；换道具、换色或换 Skill 而动作相同，仍用同一标签，不能靠不同字符串假装不同画面。
 - `preferred` 表示有明确理由优先的一档，不表示必须只有一个。`assign` 只在存在的最高档内协调：有 `preferred` 时不再选择 `equivalent`，否则在 `equivalent` 中分配。没有明确胜者时保留多个 `equivalent`；多个同等更优方案也可共同列为 `preferred`。不要把熟悉的入口提前写成唯一 `preferred`，让整片协调失去选择空间。协调优先扩大本片真实渠道和具体模板覆盖，同时比较相邻模式以及全片、近期各模式/来源的实际时长；语义和质量合格才进入这一比较，不强求不适用来源出现。
 - `recent_context` 保存最近两条成片的 `video_id/source_ref/skill_id/visual_pattern/start/end`；依据实际制作记录和画面填写，不凭旧 Job 名称猜测。`fixed_context` 用同样的模式信息记录本期已选资料类 B-roll，另含 `segment_id/component_id`，让这些画面也参与整片协调。资料来源的 `skill_id` 可记实际资料类型，不伪称动画 Skill。
-- `assignments` 是命令输出，不手填。按结果实际调用所选 factory 构造原有 binding，随后将每条最终的 `intent_statement`、`component_brief` 与完整 `binding_snapshot` 写回对应 beat。后续生成才产生的结果仍按既有资产机制绑定；选型记录不能冒充已经实际调用。
+- `assignments` 是命令输出，不手填。按结果实际调用所选 factory 构造原有 binding，随后将每条最终的 `intent_statement`、`component_brief` 与完整 `binding_snapshot` 写回对应 beat。文案、字号、布局或 brief 字节变更后，先调用同一 factory 重建 binding，再同步 director 与该 beat 的完整快照并重新运行选型；不能只改 brief 路径或单个哈希。launcher、reference sample 与 template_request 均取真实 factory 返回值，不从另一模板或旧样片手拼。后续生成才产生的结果仍按既有资产机制绑定；选型记录不能冒充已经实际调用。
 
 正式 `prepare_visual_direction(..., treatment_path=...)` 在任何冻结器和发布动作之前重新发现、复算、核对当前草案；编译后继续检查冻结绑定和实际配方没有偏离。记录与结果一起写入已有 `visual-routing.md`，下游仍只执行冻结配方。A-roll 贴片仍走自身合同，不混算为 B-roll；已完成产物不读取新选型记录、不迁移旧 Job。
 

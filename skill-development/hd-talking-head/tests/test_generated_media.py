@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from types import SimpleNamespace
 
 import _env  # noqa: F401
 
@@ -24,6 +25,77 @@ from edit.hd.tools import visual_canary
 
 
 class GeneratedMediaPublicSmoke(unittest.TestCase):
+    def test_symlink_cannot_bind_media_outside_job(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            job_dir = root / 'job'
+            job_dir.mkdir()
+            external = root / 'outside.mp4'
+            external.write_bytes(b'outside content')
+            (job_dir / 'link.mp4').symlink_to(external)
+            record = self._complete_record(job_dir, 'link.mp4', external.read_bytes())
+            with self.assertRaisesRegex(ValueError, 'path or bytes'):
+                generated_media.create_adapter(SimpleNamespace(job_dir=job_dir, job_id='job'), record)
+
+    def _complete_record(self, job_dir, name, data):
+        record = self._binding_record()
+        record.update(schema_version=1, job_id='job', segment_id='seg', component_id='ai',
+                      generation={}, qa={'passed': True, 'observed_scene': 'observed'})
+        record['media'].update(job_path=name, sha256=hashlib.sha256(data).hexdigest(), byte_count=len(data))
+        return record
+
+    def test_media_source_window_must_match_current_approved_aroll(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source = root / 'media.mp4'
+            source.write_bytes(b'known local media')
+            job = SimpleNamespace(job_dir=root, job_id='job')
+            record = self._complete_record(root, source.name, source.read_bytes())
+            adapter = generated_media.create_adapter(job, record)
+            component = {'kind': 'ai_generated', **generated_media.prepare_binding(record)}
+            recipe = {'components': [component]}
+            context = SimpleNamespace(job_id='job', segment_id='seg', component_id='ai',
+                component=component, recipe=recipe, staging_path=root / 'output.mp4')
+            segment = {'segment_id': 'seg', 'start': 0, 'end': 2, 'shot_recipe': recipe}
+            with patch.object(visual_canary, 'load_approved_visual_plan', return_value={'segments': [segment]}), \
+                 patch.object(visual_canary, 'approved_aroll_record', return_value={'sha256': 'd' * 64}):
+                with self.assertRaisesRegex(ValueError, 'source window mismatch'):
+                    adapter.invoke(context)
+            self.assertFalse(context.staging_path.exists())
+
+    def _binding_record(self):
+        return {
+            "status": "completed", "provider": "fixture", "model": "model",
+            "endpoint_id": "endpoint", "generation_id": "generation",
+            "prompt_sha256": "a" * 64,
+            "media": {"sha256": "b" * 64, "media_type": "video"},
+            "semantic_brief": {"observed_scene": "observed"},
+            "source_binding": {"aroll_sha256": "c" * 64, "start": 0, "end": 2},
+            "source_dimensions": {"width": 1080, "height": 1920},
+        }
+
+    def test_prepare_binding_rejects_missing_observed_scene(self):
+        record = self._binding_record()
+        del record["semantic_brief"]["observed_scene"]
+        with self.assertRaisesRegex(ValueError, "observed scene"):
+            generated_media.prepare_binding(record)
+
+    def test_prepare_binding_rejects_extra_source_binding_field(self):
+        record = self._binding_record()
+        record["source_binding"]["segment_id"] = "seg"
+        with self.assertRaisesRegex(ValueError, "source binding"):
+            generated_media.prepare_binding(record)
+
+    def test_prepare_binding_rejects_invalid_source_clock(self):
+        record = self._binding_record()
+        record["source_binding"]["end"] = 0
+        with self.assertRaisesRegex(ValueError, "clock"):
+            generated_media.prepare_binding(record)
+
+    def test_prepare_binding_accepts_observed_scene_and_source_binding(self):
+        binding = generated_media.prepare_binding(self._binding_record())
+        self.assertEqual(binding["source_dimensions"], {"width": 1080, "height": 1920})
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "ffmpeg/ffprobe required")
     def test_actual_media_record_compiles_and_runs_public_entry(self):
         with tempfile.TemporaryDirectory() as directory:

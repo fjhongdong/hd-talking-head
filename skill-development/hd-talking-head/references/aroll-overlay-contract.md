@@ -22,6 +22,8 @@ Overlay Studio 的原生 `pin-board` 是独立的 A-roll 短要点候选。它�
 
 上述原生来源的薄适配使用 `scripts/hyperframes_native_adapter.py`，统一新 brief schema 2：`source_binding`、`template_request`、`entry`、`assets`、`upstream_route`、`source_pins={route,sha256}`，以及 `composition={width:1080,height:1920,fps:24,frames,alpha}`。透明 A-roll 的 `alpha=true`；整屏 B-roll 为 false。保留所选源文件的 HTML/CSS/GSAP 实现，Job 只绑定原生内容槽、字体、词时钟和必要版式；不得用只带相同类名的自写图形冒充调用。原生 CLI 输出透明 ProRes 后转换 QTRLE/ARGB，真实检查 alpha、精确帧数、尺寸与像素比例。每个候选仍需在当前真人画面检查，不复用上游演示人像。
 
+装配预检使用固定版本 HyperFrames 的真实 preview 页面、播放器和时间轴；手工 clone template 后执行脚本不构成实际装配证据。内嵌子组件的 `id="root"` 会变成 `data-hf-authored-id="root"` / `data-hf-inner-root`；宿主没有自己的 root 元素时，不能用 `#root .子类` 覆盖样式，应使用组件类或运行时保留属性，并检查真实计算样式。检查器按当前 mount 定位唯一实例，核对主、子时钟；启动或就绪失败不能降级为模拟通过。比较组件还在实际稳定事件后检查 after 标签与填充图形的祖先透明度、overflow 和 inset 裁剪交集，不强制从某一侧揭示。内容摆放方向必须与裁剪方向一致；非零交集只证明未被完全裁掉，残留小块、语义和完整可读性继续由正式实际画面检查判断。
+
 整屏 B-roll 的时间推进或拖延可选同一适配器的 `hyperframes/beat-timeline` 原生有序节拍：只绑定公开的 `beatCount`、`interval`、`labels` 和父级时窗，保留其逐拍进入与退场。它不是通用日历，也不自动证明某个产品已执行任务；按本句使用真实时间标签和明确未完成状态，不伪造日期或改写原生时间线。此入口尚未补齐透明贴片的实际词锚接法，不进入当前 A-roll 选型。
 
 薄适配不包括重写主要布局或时间线。若一张组件需要改写核心动作才能表达本句，换一个现成入口；不能因为组件名字成熟，继续把所有含义改成三框、双框或标题。标题/关键词与普通字幕重述相同内容时不算新增贴片。已有词锚、避脸、单字幕轨和已确认内容保留检查均继续生效。

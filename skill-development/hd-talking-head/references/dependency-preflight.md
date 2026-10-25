@@ -113,7 +113,7 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 `purpose` 为 `image/video/stock`，图片和视频各最多一项，可相同或不同；`connection_status` 为 `verified/unavailable/not_required`；`quota_status` 为 `available/unknown/unavailable`。能力字段为布尔值，不支持就写 false。endpoint 只存标识，不存密钥、token 或带凭据 URL。`verified` 须有宿主证据，不由密钥存在推断。配置批准不跳过请求时的 provider 检查。生成预检报告另保存 `generation_channels`，列出所选 provider、model、endpoint_id、连接状态和独立查询绑定。`probe_status=not_run` 表示没有发起真实生成；宿主须核对当前工具确实可调用后，才把配置写为 `verified`。本地 Python 只返回真实工具标识与参数，由宿主执行。异步渠道在下方完整配置的对应 purpose 中填写 `query`；同步渠道省略它。查询绑定与启动确认一起冻结，不把提交工具当查询工具。
 `manifests/generation-channels.json` 中 `image`、`video` 等每个 purpose 都必须声明 `model_binding`：`{"mode":"argument","parameter":"model"}` 表示 `prepare` 补齐已选型号且参数不符时拒绝；`parameter` 可按实际接口填写 `model_id` 等顶级参数名；`{"mode":"fixed"}` 表示服务管理模型，不注入 `model`，并记录真实工具标识。参考输入必须声明 `reference_mode=local_path` 或 `upload`。`upload` 时必须有 `upload:{"tool":"<真实上传工具>","arguments":{"file":{"$input":"path"}},"result_path":["data","asset_id"]}`；宿主使用响应原始字段路径取得引用，回传原 action 与真实响应，后续提交请求才替换逻辑请求中的本地路径，并保留上传回执供续做复用。
 
-最小完整示例（图片工具固定模型、视频工具接收模型参数；工具、参数名及响应路径须按本次真实渠道填写）。生成工具与选定型号只来自 `provider-config.json` 的 `endpoint_id/model`，本文件不重复配置它们：
+下例同时启用图片与视频（图片工具固定模型、视频工具接收模型参数；工具、参数名及响应路径须按本次真实渠道填写）。也允许仅启用其中一种：`providers` 只列已选用途，`generation-channels.json` 只保留对应的完整模型、输入和查询绑定；不能把不可用用途留在列表后默认为已关闭。完全不生成时使用 `generation_enabled=false`。实际请求仍核对所需用途已选且可用，不自动补齐另一用途。生成工具与选定型号只来自 `provider-config.json` 的 `endpoint_id/model`，本文件不重复配置它们：
 
 ```json
 {

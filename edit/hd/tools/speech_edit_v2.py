@@ -399,6 +399,14 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
     normalized: list[dict[str, Any]] = []
     prefix = ""
     merged = 0
+
+    sentence_punctuation = frozenset(
+        ",.!?;:'\"，。！？；：、‘’“”「」『』（）()［］[]《》〈〉【】"
+    )
+
+    def is_punctuation_or_space(text: str) -> bool:
+        return all(char.isspace() or char in sentence_punctuation for char in text)
+
     for event in events:
         if type(event) is not dict:
             raise SpeechEditV2Error("video-use transcription event is invalid")
@@ -422,15 +430,27 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
             or start < 0 or end < start or end > duration + 0.2
         ):
             raise SpeechEditV2Error("video-use word timestamp is invalid")
+        punctuation_only = is_punctuation_or_space(event["text"])
+        if punctuation_only and start != end:
+            if normalized:
+                if start < normalized[-1]["end"]:
+                    raise SpeechEditV2Error("video-use words overlap")
+                normalized[-1]["text"] += event["text"]
+            else:
+                prefix += event["text"]
+            continue
         if start == end:
             merged += 1
             if normalized:
                 previous = normalized[-1]
                 if start < previous["end"]:
                     raise SpeechEditV2Error("video-use words overlap")
+                if not punctuation_only and start > previous["end"]:
+                    raise SpeechEditV2Error("video-use zero-duration word is separated")
                 previous["text"] += event["text"]
-                previous["end"] = start
             else:
+                if not punctuation_only:
+                    raise SpeechEditV2Error("video-use zero-duration word is separated")
                 prefix += event["text"]
             continue
         if normalized and start < normalized[-1]["end"]:

@@ -5,12 +5,28 @@ record, checks the referenced bytes and exposes the normal component adapter.
 """
 from __future__ import annotations
 
-import hashlib, json, re, shutil, subprocess
+import hashlib, json, math, os, re, shutil, subprocess
+from contextlib import contextmanager
 from pathlib import Path
-from edit.hd.tools.broll_component_executor import AdapterResult, KindAdapter
+from edit.hd.tools.broll_component_executor import AdapterResult, KindAdapter, _plain_json
 
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 EXECUTOR = "generated_media"
+
+def _validate_observation_and_source(record: dict) -> None:
+    brief = record.get("semantic_brief")
+    observed = brief.get("observed_scene") if isinstance(brief, dict) else None
+    if not isinstance(observed, str) or not observed.strip():
+        raise ValueError("generated media semantic brief requires observed scene evidence")
+    source = record.get("source_binding")
+    if not isinstance(source, dict) or set(source) != {"aroll_sha256", "start", "end"}:
+        raise ValueError("generated media source binding is invalid")
+    if (not isinstance(source["aroll_sha256"], str) or not _HEX.fullmatch(source["aroll_sha256"])
+            or isinstance(source["start"], bool) or not isinstance(source["start"], (int, float))
+            or isinstance(source["end"], bool) or not isinstance(source["end"], (int, float))
+            or not math.isfinite(source["start"]) or not math.isfinite(source["end"])
+            or source["start"] < 0 or source["end"] <= source["start"]):
+        raise ValueError("generated media source binding clock or A-roll hash is invalid")
 
 def _sha(path: Path) -> str:
     h = hashlib.sha256()
@@ -42,6 +58,7 @@ def validate_record(record: dict, job) -> dict:
         if not isinstance(record.get(key), dict): raise ValueError(f"generated media {key} evidence is missing")
     if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
         raise ValueError("generated media requires host QA and observed scene evidence")
+    _validate_observation_and_source(record)
     return json.loads(_canonical(record))
 
 def record_from_completed_output(*, job_id, segment_id, component_id, provider, model,
@@ -113,6 +130,7 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
 def prepare_binding(record: dict, *, execution_mode="reuse_completed_generated_media") -> dict:
     if not isinstance(record, dict) or record.get("status") != "completed":
         raise ValueError("generated media binding requires a completed record")
+    _validate_observation_and_source(record)
     media = record.get("media")
     if not isinstance(media, dict) or not media.get("sha256") or media.get("media_type") not in {"image", "video"}:
         raise ValueError("generated media binding requires real media identity")
@@ -147,12 +165,27 @@ def create_job_adapter(job, records):
 def load_semantic_brief(record: dict) -> dict:
     return json.loads(_canonical(record["semantic_brief"]))
 
+@contextmanager
+def _pinned_media(source, media):
+    from edit.hd.tools import transcribe
+    try:
+        pinned = transcribe._pin_local_media(source, expected_sha256=media['sha256'],
+                                            expected_bytes=media['byte_count'])
+        try:
+            yield pinned
+            transcribe._verify_pinned(pinned)
+        finally:
+            if not transcribe._close_descriptor(pinned.descriptor):
+                raise ValueError('generated media descriptor cleanup failed')
+    except (OSError, transcribe.TranscriptionError) as error:
+        raise ValueError('generated media path or bytes do not match the completion record') from error
+
 def create_adapter(job, record: dict):
     bound = validate_record(record, job)
     media = bound["media"]
     source = Path(job.job_dir) / media["job_path"]
-    if not source.is_file() or source.stat().st_size != media["byte_count"] or _sha(source) != media["sha256"]:
-        raise ValueError("generated media bytes do not match completion record")
+    with _pinned_media(source, media):
+        pass
     record_hash = hashlib.sha256(_canonical(bound)).hexdigest()
     expected = prepare_binding(bound)
     def invoke(context):
@@ -162,8 +195,17 @@ def create_adapter(job, record: dict):
                 context.component.get(key) != value for key, value in expected.items()
                 if key not in {"execution_mode", "media_type", "source_dimensions"}):
             raise ValueError("generated media generation identity mismatch")
-        if _sha(source) != media["sha256"]: raise ValueError("generated media changed")
-        with source.open("rb") as src, context.staging_path.open("wb") as dst: shutil.copyfileobj(src, dst)
+        from edit.hd.tools import visual_canary
+        plan = visual_canary.load_approved_visual_plan(job)
+        segment = next(item for item in plan['segments'] if item['segment_id'] == context.segment_id)
+        arroll = visual_canary.approved_aroll_record(job, plan)
+        if (bound['source_binding'] != {'aroll_sha256': arroll['sha256'],
+                'start': segment['start'], 'end': segment['end']}
+                or _plain_json(context.recipe) != segment['shot_recipe']):
+            raise ValueError('generated media approved source window mismatch')
+        with _pinned_media(source, media) as pinned:
+            with os.fdopen(os.dup(pinned.descriptor), 'rb') as src, context.staging_path.open('wb') as dst:
+                shutil.copyfileobj(src, dst)
         return AdapterResult(invocation_evidence={"record_sha256": record_hash, "provider_request_reused": True,
             "external_requests": 0, "generation_id": bound["generation_id"], "provider": bound["provider"]},
             qa={"passed": True, "checks": ["completed generation record and media identity matched"]})

@@ -898,6 +898,56 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         with self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "overlap"):
             speech_edit_v2._normalize_video_use_words(payload, 1.0)
 
+    def test_video_use_zero_duration_punctuation_does_not_extend_previous_word(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "多", "start": 78.40, "end": 78.44},
+            {"type": "word", "text": "，", "start": 84.16, "end": 84.16},
+            {"type": "word", "text": "靠", "start": 84.40, "end": 84.42},
+        ]}
+        words, _ = speech_edit_v2._normalize_video_use_words(payload, 90.0)
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("多，", 78.40, 78.44), ("靠", 84.40, 84.42),
+        ])
+
+    def test_video_use_positive_duration_punctuation_is_attached(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "你好", "start": 0.10, "end": 0.30},
+            {"type": "word", "text": "，", "start": 0.30, "end": 0.80},
+            {"type": "word", "text": "世界", "start": 0.90, "end": 1.10},
+        ]}
+        words, _ = speech_edit_v2._normalize_video_use_words(payload, 2.0)
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("你好，", 0.10, 0.30), ("世界", 0.90, 1.10),
+        ])
+
+    def test_video_use_semantic_symbols_keep_their_timing(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "%", "start": 0.10, "end": 0.20},
+            {"type": "word", "text": "你好，", "start": 0.30, "end": 0.60},
+        ]}
+        words, _ = speech_edit_v2._normalize_video_use_words(payload, 1.0)
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("%", 0.10, 0.20), ("你好，", 0.30, 0.60),
+        ])
+
+    def test_video_use_zero_duration_lexical_word_requires_endpoint(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "前", "start": 0.10, "end": 0.30},
+            {"type": "word", "text": "图", "start": 0.60, "end": 0.60},
+        ]}
+        with self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "separated"):
+            speech_edit_v2._normalize_video_use_words(payload, 1.0)
+
+    def test_video_use_zero_duration_lexical_word_at_endpoint_keeps_text(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "前", "start": 0.10, "end": 0.30},
+            {"type": "word", "text": "图", "start": 0.30, "end": 0.30},
+        ]}
+        words, _ = speech_edit_v2._normalize_video_use_words(payload, 1.0)
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("前图", 0.10, 0.30),
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

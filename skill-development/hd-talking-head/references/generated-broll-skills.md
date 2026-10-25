@@ -133,7 +133,11 @@ node <skill>/scripts/render_doudou.mjs --project-root <project> --entry <Job内e
 
 ### 本次所选图片/视频渠道的完成结果
 
+登记完成记录前，按已批准的 `visual_intent` 核看实际使用时窗内的主体、动作与前后变化。提示词写了动作、供应商任务成功或媒体格式合格，都不能证明画面已经做到。例如“复制”要看到同一内容产生副本，只有两个不同结果不足以证明复制发生。部分内容合格时保留原始媒体及缺失结论；新增补画面、换来源或再次收费按现有修订和授权边界处理，不自动重试。新增独立画面分配新号，原画面内的修正保留原号。
+
 新生成使用 `scripts/generated_media.py`。宿主观察真实媒体后，调用 `record_from_queue(job, request_id, segment_id=..., component_id=..., source_binding={"aroll_sha256":...,"start":...,"end":...}, qa={"passed":true,"observed_scene":"实际画面"}, semantic_brief={"observed_scene":"实际画面"}, ffprobe_executable=...)`；保存返回 JSON，再用 `prepare_binding(record)` 取得真实 provider、model、endpoint、任务身份、媒体摘要与实测尺寸。实际媒体不合格式时先按已确认内容处理媒体，不修改记录冒充符合。图片和视频都保持真实源类型。
+
+完整记录消费入口同时检查 `semantic_brief.observed_scene` 和精确的 `{aroll_sha256,start,end}` 来源结构；不能从 QA 或生成提示词自动补写语义观察。此处的 `segment_id` 已在记录顶层，不把原生 adapter brief 中带 segment_id 的 source_binding 原样搬入。缺少观察、错误时钟或额外字段须先修当前记录，不能等到渲染后再补造来源。
 
 在新 realization treatment 的 `scenes` 登记 `{ "segment_id":..., "component_id":..., "brief_path":"<完成记录相对路径>", "completed_record": {"job_path":"<同路径>","sha256":"<文件摘要>","byte_count":123} }`，并补实际 `semantic_assessments`；引用完成记录 `/semantic_brief/observed_scene` 作为当前画面的依据。直接 AI B-roll 没有第三方模板时，`skill_selection.fixed_context` 明确记录该来源，不假冒库模板；其 `semantic_assessments.candidate_id` 使用 `ai-generated/direct`，仍保留该行 `motion_queries` 的语义标签。模板需要生成图片时，将图片实际路径及身份写入模板原生 brief。最终 execution mapping 保存显式完成记录，包内工厂用 `generated_media.create_job_adapter` 接入公共执行器，不扫描目录猜结果。已有 Lovart 完成记录继续使用其原有适配器，不重生成、不换身份。
 

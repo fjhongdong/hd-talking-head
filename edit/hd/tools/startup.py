@@ -145,14 +145,14 @@ def _config(job) -> tuple[Path, str]:
 
 
 def selected_channels(config: dict) -> dict:
-    """Return the one confirmed image/video channel for this Job."""
+    """Return the confirmed image/video channels configured for this Job."""
     providers = {p["purpose"]: p for p in config["providers"] if p["purpose"] in {"image", "video"}}
     if config.get("generation_enabled") is False:
         return {}
-    if set(providers) != {"image", "video"}:
-        raise WorkflowError("startup requires one image and one video channel")
+    if not providers:
+        raise WorkflowError("startup requires at least one image or video channel")
     if any(p["connection_status"] != "verified" or p["quota_status"] == "unavailable" for p in providers.values()):
-        raise WorkflowError("startup image and video channels must be connected and available")
+        raise WorkflowError("startup selected generation channels must be connected and available")
     return {purpose: {"provider": p["provider"], "model": p["model"],
                       "endpoint_id": p["endpoint_id"]}
             for purpose, p in providers.items()}
@@ -243,14 +243,18 @@ def _approval_identity(job, context: dict, config_sha256: str) -> dict:
             "skill_release": context["skill_release"]}
     bindings = job.job_dir / "manifests/generation-channels.json"
     config = _read(job.job_dir / "manifests/provider-config.json", "provider config")
-    if config.get("generation_enabled") and not bindings.is_file():
-        raise WorkflowError("confirm model and reference bindings for both generation channels")
+    selected = selected_channels(config) if config.get("generation_enabled") else {}
+    if selected and not bindings.is_file():
+        raise WorkflowError("confirm model and reference bindings for selected generation channels")
     if bindings.is_file():
         data = _read(bindings, "generation channels")
         if data.get("schema_version") != 1 or set(data) - {"schema_version", "image", "video"}:
             raise WorkflowError("generation channel bindings are invalid")
-        for purpose in ("image", "video"):
-            if config.get("generation_enabled"):
+        bound_purposes = set(data).intersection({"image", "video"})
+        if selected and bound_purposes != set(selected):
+            raise WorkflowError("generation channel bindings must match selected purposes")
+        for purpose in (selected if selected else bound_purposes):
+            if purpose in selected:
                 from . import generation_model, generation_inputs
                 try:
                     binding = data.get(purpose, {})

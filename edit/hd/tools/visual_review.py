@@ -52,7 +52,7 @@ def expected_observations(job, stage):
     else:
         ref = _registered(job, stage, _MANIFESTS[stage])
         manifest = artifacts.read_json_artifact(job.job_dir / ref["path"])
-        if manifest["visual_plan_sha256"] != plan_ref["sha256"]:
+        if manifest["visual_plan_sha256"] != plan["visual_plan_sha256"]:
             raise ValueError("visual review manifest belongs to another plan")
         selected = set(manifest["segment_ids"]) if stage == "visual_canary" else None
         manifest_ids = [item["segment_id"] for item in manifest["segments"]]

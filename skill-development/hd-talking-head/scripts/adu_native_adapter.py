@@ -122,9 +122,10 @@ def check_runtime(project_root):
         if (runtime / name).read_bytes() != (SKILL / "assets/adu-native-runtime" / name).read_bytes():
             raise ValueError("Adu dependency configuration changed")
     files = [f for f in sorted((source / "template").rglob("*")) if f.is_file()]
-    files += [source / "scripts/render_project.mjs", source / "scripts/chrome.mjs", source / "scripts/color_management.py", source / "scripts/output-signature.mjs", runtime / "package-lock.json", module / "package.json", browser, ffmpeg, ffprobe, python]
+    geometry = SKILL / "scripts/adu_text_geometry.mjs"
+    files += [source / "scripts/render_project.mjs", source / "scripts/chrome.mjs", source / "scripts/color_management.py", source / "scripts/output-signature.mjs", runtime / "package-lock.json", module / "package.json", browser, ffmpeg, ffprobe, python, geometry]
     identity = identity_from_bytes(files)
-    return {"source": str(source), "browser": str(browser), "playwright": str(module), "ffmpeg": str(ffmpeg), "ffprobe": str(ffprobe), "python": str(python), "identity": identity}
+    return {"source": str(source), "browser": str(browser), "playwright": str(module), "ffmpeg": str(ffmpeg), "ffprobe": str(ffprobe), "python": str(python), "geometry": str(geometry), "geometry_sha256": sha(geometry), "identity": identity}
 
 
 def prepare_runtime(project_root):
@@ -179,7 +180,8 @@ def create_adapter(project_root, node_executable, brief_loader):
         renderer_version=VERSION, artifact_media_type="video", launcher=node, launcher_sha256=node_sha,
         brief_loader=guard, media_loader=None, self_contained_wrapper=True, timeout_seconds=300,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--source", runtime["source"],
-                       "--browser", runtime["browser"], "--playwright-module", runtime["playwright"], "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--python", runtime["python"], "--output", "{output_path}"))
+                       "--browser", runtime["browser"], "--playwright-module", runtime["playwright"], "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--python", runtime["python"],
+                       "--geometry-module", runtime["geometry"], "--geometry-sha256", runtime["geometry_sha256"], "--output", "{output_path}"))
 
 
 def create_existing_adapter(project_root, node_executable, brief_loader, *, completed_record):

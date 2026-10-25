@@ -8,7 +8,7 @@
 
 ## 启动与恢复
 
-复制整个文件夹，或使用[完整包导出与安装](runtime-deployment.md)。`<project>` 固定为完整包根；`<skill>` 为其中的 `skill-development/hd-talking-head`。运行 `python3.12 <project>/run.py prepare` 从包内来源归档恢复模板 Git 身份，并按锁文件准备基础运行依赖；可选模板在选定后、整表确认前由阶段入口按需准备。源码已随包提供，缺源码时停止，不临时克隆其他版本。密钥与用户 Job 不随包分发。开始新 Job 时仍检查并确认图片、视频生成渠道；不重签旧 Job，也不重做已批准素材。
+复制整个文件夹，或使用[完整包导出与安装](runtime-deployment.md)。`<project>` 固定为完整包根；`<skill>` 为其中的 `skill-development/hd-talking-head`。运行 `python3.12 <project>/run.py prepare` 从包内来源归档恢复模板 Git 身份，并按锁文件准备基础运行依赖；可选模板在选定后、整表确认前由阶段入口按需准备。源码已随包提供，缺源码时停止，不临时克隆其他版本。密钥与用户 Job 不随包分发。开始新 Job 时按实际生成用途检查并确认所选渠道，允许单独启用图片或视频；不重签旧 Job，也不重做已批准素材。
 
 ```bash
 python3 <skill>/scripts/ensure_punk_cover.py --project-root <project>

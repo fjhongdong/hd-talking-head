@@ -36,6 +36,9 @@ class OverlayAlignmentTest(unittest.TestCase):
             _native_events(route, mount, 24, 1)
 
     def test_overlay_selection_records_native_action_and_rejects_missing_route(self):
+        from edit.hd.tools.motion_capabilities import overlay_candidates
+        registered = next(row for row in overlay_candidates(Path(__file__).resolve().parents[3])
+                          if row['source_route'] == 'toggle-flip')
         draft = {"segments": [{
             "segment_id": "seg-001",
             "visible_text": ["已提交", "未到账"],
@@ -44,6 +47,8 @@ class OverlayAlignmentTest(unittest.TestCase):
             "bindings": {"native-visual": {
                 "dependency_id": "hyperframes-native-adaptation",
                 "template_id": "hyperframes-toggle-flip-portrait-adaptation",
+                "entrypoint": registered['entrypoint'],
+                "producer_version": registered['producer_version'],
             }},
         }]}
         treatment = {"overlay_selection": [{

@@ -145,4 +145,4 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" 
 
 规范响应中的处理后文件使用 `{"type":"video","path":"artifacts/normalized.mp4","source":{"path":"artifacts/provider-original.mp4"},"processing":"24fps silent H.264 yuv420p; aspect ratio preserved"}`；`record` 分别留存原片与规范片，并将 `source` 补为 `{path,sha256,bytes}`，completed record 保留 `generation.source_media/processing`。`provider_response`（如有）只放真实供应商返回，原始响应另存。上传 action 发出后，`next` 返回 `blocked/input_upload_pending`，宿主回传原 action 与原上传 response 后再继续，避免重复上传。
 
-Adu `native-compare` brief 显式提供 `typography: {title_px, body_px}`，单位为最终 1080×1920 画面像素。四字短标签可采用64/56px；字体覆盖只在自有静态 host 中完成，不改上游 TPL.compare 动画。入口检查实际可用宽度及原生行距，容量不符先缩短文案或换合适模板，不能用缩到难读的字号过关。
+Adu `native-compare` brief 显式提供 `typography: {title_px, body_px}`，单位为最终 1080×1920 画面像素。四字短标签可采用64/56px；字体覆盖只在自有静态 host 中完成，不改上游 TPL.compare 动画。入口检查实际可用宽度；捕获前另在真实原生页面等待字体与样式就绪，以浏览器实际字形度量和基线检查标题、正文及相邻正文行的碰撞和卡片越界，画板与 iframe 缩放只计算一次。它不把 CSS 行框当作字形，不自动缩字或移动已批准版式；冲突时报告对应文字并停止，按原流程修订公开参数后重建 binding。容量不符先缩短文案或换合适模板，不能用缩到难读的字号过关，也不把本期可用字号固化成所有视频的上限。

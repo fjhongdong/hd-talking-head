@@ -16,6 +16,12 @@ const briefBytes = await readFile(arg('--brief'));
 const b = JSON.parse(briefBytes);
 if (!b.typography || typeof b.typography !== 'object') throw new Error('Missing Adu typography');
 const typography = b.typography;
+const geometryBytes = await readFile(arg('--geometry-module'));
+if (createHash('sha256').update(geometryBytes).digest('hex') !== arg('--geometry-sha256')) {
+  throw new Error('Adu text geometry module identity changed');
+}
+// The executor runs a frozen copy of this entry outside the Skill directory.
+const {validateAduTextGeometry} = await import('data:text/javascript;base64,' + geometryBytes.toString('base64'));
 
 const stable = value => {
   if (Array.isArray(value)) return value.map(stable);
@@ -117,11 +123,14 @@ try {
     '</style><h1>' + html(b.title) + '</h1><div class="rule"></div>' +
     '<iframe id="board" src="board/index.html"></iframe><script>' +
     'const board=document.getElementById("board");window.END=' + duration + ';' +
+    'const validateActualTextGeometry=' + validateAduTextGeometry.toString() + ';' +
     'window.READY=new Promise((resolve,reject)=>{board.addEventListener("load",async()=>{try{await board.contentWindow.READY;' +
     'const s=board.contentDocument.createElement("style");s.textContent=' + JSON.stringify(
       `.card > div:nth-child(2){font-size:${Number(typography.title_px) / 0.5625}px !important}` +
       `.card > div:nth-child(n+3){font-size:${Number(typography.body_px) / 0.5625}px !important}`
-    ) + ';board.contentDocument.head.appendChild(s);document.title="done";resolve()}catch(e){reject(e)}},{once:true})});' +
+    ) + ';board.contentDocument.head.appendChild(s);await board.contentDocument.fonts.ready;' +
+    'try{board.contentWindow.renderAt(' + (Math.max(b.left_frame,b.right_frame)/24+.8) + ');window.ADU_TEXT_GEOMETRY=validateActualTextGeometry(board)}finally{board.contentWindow.renderAt(0)}' +
+    ';document.title="done";resolve()}catch(e){reject(e)}},{once:true})});' +
     'window.renderAt=t=>board.contentWindow.renderAt(t);</script>');
   const native = path.join(temp, 'native.mp4');
   const childEnv = {...process.env, PATH: `${path.dirname(ffmpeg)}:${process.env.PATH || ''}`, ADU_PYTHON: python};

@@ -170,28 +170,78 @@ class StartupTests(unittest.TestCase):
 
     def test_selected_generation_channels_require_executable_bindings(self):
         startup = self.startup()
+        for purposes in (("image",), ("video",), ("image", "video")):
+            with self.subTest(purposes=purposes):
+                job, _, config, report_path = self.prepared()
+                config.write_text(json.dumps({"schema_version": 1, "generation_enabled": True, "max_concurrency": 2,
+                    "providers": [{"purpose": purpose, "provider": "fixture", "model": purpose + "-model",
+                        "endpoint_id": "fixture." + purpose, "connection_status": "verified", "quota_status": "available",
+                        "reference_images": True, "native_9_16": True, "silent_output": True}
+                        for purpose in purposes]}))
+                report = json.loads(report_path.read_text())
+                report["provider_config_sha256"] = hashlib.sha256(config.read_bytes()).hexdigest()
+                report_path.write_text(json.dumps(report))
+                bindings = config.parent / "generation-channels.json"
+                if bindings.exists():
+                    bindings.unlink()
+                with self.assertRaisesRegex(state.WorkflowError, "confirm model and reference"):
+                    startup.confirm_setup(job, config, user_confirmation="synthetic selected channels")
+                data = {"schema_version": 1, **{purpose: {"model_binding": {"mode": "fixed"},
+                    "reference_mode": "local_path"} for purpose in purposes}}
+                invalid = json.loads(json.dumps(data))
+                invalid[purposes[0]]["model_binding"] = {}
+                bindings.write_text(json.dumps(invalid))
+                with self.assertRaises(state.WorkflowError):
+                    startup.confirm_setup(job, config, user_confirmation="synthetic selected channels")
+                bindings.write_text(json.dumps(data))
+                receipt = startup.confirm_setup(job, config, user_confirmation="synthetic selected channels")
+                approval = json.loads(receipt.read_text())
+                self.assertEqual(set(approval["channels"]), set(purposes))
+                self.assertEqual(approval["generation_channels_sha256"], hashlib.sha256(bindings.read_bytes()).hexdigest())
+                state.require_runnable(job, "inspect")
+
+    def test_selected_generation_channels_allow_one_explicit_purpose(self):
+        startup = self.startup()
+        provider = {"purpose": "image", "provider": "fixture", "model": "image-model",
+                    "endpoint_id": "fixture.image", "connection_status": "verified",
+                    "quota_status": "available", "reference_images": True,
+                    "native_9_16": True, "silent_output": True}
+        config = {"schema_version": 1, "generation_enabled": True,
+                  "max_concurrency": 1, "providers": [provider]}
+        self.assertEqual(startup.selected_channels(config), {
+            "image": {"provider": "fixture", "model": "image-model", "endpoint_id": "fixture.image"}
+        })
+
+        provider["purpose"] = "video"
+        provider["model"] = "video-model"
+        provider["endpoint_id"] = "fixture.video"
+        config["providers"] = [provider]
+        self.assertEqual(startup.selected_channels(config), {
+            "video": {"provider": "fixture", "model": "video-model", "endpoint_id": "fixture.video"}
+        })
+
+    def test_generation_request_for_unconfigured_purpose_is_blocked(self):
+        startup = self.startup()
         job, _, config, report_path = self.prepared()
-        config.write_text(json.dumps({"schema_version": 1, "generation_enabled": True, "max_concurrency": 2,
-            "providers": [{"purpose": purpose, "provider": "fixture", "model": purpose + "-model",
-                "endpoint_id": "fixture." + purpose, "connection_status": "verified", "quota_status": "available",
-                "reference_images": True, "native_9_16": True, "silent_output": True}
-                for purpose in ("image", "video")]}))
+        provider = {"purpose": "image", "provider": "fixture", "model": "image-model",
+                    "endpoint_id": "fixture.image", "connection_status": "verified",
+                    "quota_status": "available", "reference_images": True,
+                    "native_9_16": True, "silent_output": True}
+        config.write_text(json.dumps({"schema_version": 1, "generation_enabled": True,
+                                      "max_concurrency": 1, "providers": [provider]}))
         report = json.loads(report_path.read_text())
         report["provider_config_sha256"] = hashlib.sha256(config.read_bytes()).hexdigest()
         report_path.write_text(json.dumps(report))
-        with self.assertRaisesRegex(state.WorkflowError, "confirm model and reference"):
-            startup.confirm_setup(job, config, user_confirmation="synthetic selected channels")
-        bindings = config.parent / "generation-channels.json"
-        bindings.write_text(json.dumps({"schema_version": 1,
-            "image": {"model_binding": {"mode": "fixed"}, "reference_mode": "local_path"},
-            "video": {"model_binding": {"mode": "argument", "parameter": "model_id"}, "reference_mode": "upload",
-                "upload": {"tool": "fixture.upload", "arguments": {"file": {"$input": "path"}},
-                           "result_path": ["data", "asset_id"]}}}))
-        receipt = startup.confirm_setup(job, config, user_confirmation="synthetic selected channels")
-        approval = json.loads(receipt.read_text())
-        self.assertEqual(approval["channels"]["video"]["model"], "video-model")
-        self.assertEqual(approval["generation_channels_sha256"], hashlib.sha256(bindings.read_bytes()).hexdigest())
-        state.require_runnable(job, "inspect")
+        from edit.hd.tools import generation_channels
+        with self.assertRaisesRegex(state.WorkflowError, "no verified video"):
+            generation_channels.selected_channel(job, "video")
+
+    def test_selected_generation_channels_require_a_configured_purpose(self):
+        startup = self.startup()
+        config = {"schema_version": 1, "generation_enabled": True,
+                  "max_concurrency": 1, "providers": []}
+        with self.assertRaisesRegex(state.WorkflowError, "at least one"):
+            startup.selected_channels(config)
 
     def test_stale_preflight_stops_even_after_confirmation(self):
         startup = self.startup()

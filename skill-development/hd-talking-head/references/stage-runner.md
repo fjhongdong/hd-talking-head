@@ -99,6 +99,8 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 
 宿主已有专用适配器仍可显式传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。正常支持的来源无需另写工厂；工厂只组装已接通入口，不替换来源、不批准阶段。
 
+提交视觉清单前，另行汇总贴片与 B-roll 的数量、覆盖时长和未使用的真人重点；贴片重点须对应提问、原因、转折、对照或结尾语义，未做贴片的重点写明保留真人理由。该汇总用于检查两类画面是否分别覆盖，不设固定贴片配额，也不能用 B-roll 比例替代贴片检查。
+
 ## 宿主审阅后推进
 
 每次执行返回 `job_id`、`job_dir`、`stage`、`status`、`revision` 和实际 `artifacts`（包含路径、文件摘要和字节数）。机器校验后，宿主仍检查这些实际产物的画面、原声、字幕及语义。通过后，将刚审阅候选返回的 `job_id`、`job_dir`、`stage`、`revision`、完整 `artifacts` 原样放入本次 QA JSON，再补充检查结果：
