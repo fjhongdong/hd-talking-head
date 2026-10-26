@@ -331,6 +331,13 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     director, treatment = _read(director_path), _read(treatment_path)
     numbering_scope_id = _numbering_scope(treatment)
     visual_plan._validate_draft_envelope(director)
+    from . import segment_render
+    for segment in director["segments"]:
+        segment_id = segment.get("segment_id")
+        if type(segment_id) is not str or not segment_render.re_full_segment_id(segment_id):
+            raise VisualConfirmationError(
+                f"director segment_id is not renderable: {segment_id!r}"
+            )
     context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
     confirmed_content.check_confirmed_content(job, director)
     steps = _steps(treatment)

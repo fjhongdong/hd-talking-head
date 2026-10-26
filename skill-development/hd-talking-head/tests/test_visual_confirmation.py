@@ -74,6 +74,14 @@ class VisualConfirmationTests(unittest.TestCase):
         with self.assertRaisesRegex(vc.VisualConfirmationError, "numbering_scope_id"):
             self.prepare()
 
+    def test_new_proposal_rejects_non_renderable_internal_segment_id(self):
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        director["segments"][0]["segment_id"] = "seg-102-followup"
+        artifacts.write_json_artifact(self.fixture.brief, director)
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "not renderable"):
+            self.prepare()
+        self.assertFalse(list((self.job.job_dir / vc.DIRECTORY).glob("*/proposal.json")))
+
     def test_numbering_scope_starts_new_universe(self):
         def approve(revision, scope, numbering):
             root = self.job.job_dir / "07-visual-confirmation" / f"history-{revision}"

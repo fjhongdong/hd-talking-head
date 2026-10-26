@@ -872,7 +872,7 @@
   "edit/hd/tools/visual_assets_v2.py": "f2f4806bbf48f21c213bd2b86afcf89cdc53e1ca8b43f43f8aad49aba023ac4c",
   "edit/hd/tools/visual_assignment.py": "cbcb53a185905bcdbfecd330743b97db737cc2fca2b636e26d8fbbbf8c392a53",
   "edit/hd/tools/visual_canary.py": "800e4acdde3ccc18841e7627087e86df7e81cb751bca2a369319f828641645e0",
-  "edit/hd/tools/visual_confirmation.py": "57c98a6436684b2caae2edaacae974f13881b36f23fd039d512574d0cc226223",
+  "edit/hd/tools/visual_confirmation.py": "c3f6baaa9963952388f88648f691b4e063b02913e274f91034ebd7930f0871bb",
   "edit/hd/tools/visual_coverage.py": "775287d7ce4c91394a537c80ef988b5a414dd95b391a16f87ea917f8ed36e769",
   "edit/hd/tools/visual_plan.py": "ff4f3d885b12ec8be79b8a17adeb7833f9194ca10b5e3e373488db80070f1e88",
   "edit/hd/tools/visual_review.py": "f4e421aab97c8bef65228062814325ae8f39e21972c4ca1088a2b85f0ecc394c",
@@ -2971,7 +2971,7 @@
   "skill-development/hd-talking-head/references/runtime-deployment.md": "0233b09a0b010bc16669c1b70b0f4db1b7f4d920364647c7465641601a634c17",
   "skill-development/hd-talking-head/references/semantic-motion.md": "422acf6cd05b0af1a5ff3de8c3ecdb7714c3db1646b5129da90ad1b375f80f3d",
   "skill-development/hd-talking-head/references/stage-contracts.md": "a80d3069bc91e498ffce85b3679ee5f92f7ac430df1bd12aea4886ee4fe75b66",
-  "skill-development/hd-talking-head/references/stage-runner.md": "896efe31bc43cb9f1e000cc9dd31ea3ca95824883f3e34bf484495c6dbe2ca10",
+  "skill-development/hd-talking-head/references/stage-runner.md": "e07327be0e1198f99f9442db778e7792022d80cd666c29fb475000df553e5187",
   "skill-development/hd-talking-head/references/subtitle-style-contract.md": "19b4031b21bba2dd04182b3ed7d44656406e7ef80a5c1c83be170af0e63c7399",
   "skill-development/hd-talking-head/references/template-identity-predecessors.json": "8b8528f5c99e8f61a01af330a0a2f7f4e6ef1177768dfdbc16eae46ab9523e59",
   "skill-development/hd-talking-head/references/template-qualification.md": "e09e190980d588cebe4c118e256e446562bccb9c0fdf0d586193b5c50cf81911",
@@ -3117,7 +3117,7 @@
   "skill-development/hd-talking-head/tests/test_template_execution_evidence.py": "55d61afffcacd5c6aab13e573f767943787366d5fb860df1a4c05162abb49f7a",
   "skill-development/hd-talking-head/tests/test_upstream_scene_adapter.py": "0c91dba5251b0d334fa149a5e73f710a58d3b476d922ade51e9aa349f2acfd5b",
   "skill-development/hd-talking-head/tests/test_verified_template_registry.py": "db6dab5f79455208e01939142fb74823a09d2e53c89c41480bdfc2a979c5d73b",
-  "skill-development/hd-talking-head/tests/test_visual_confirmation.py": "bbee25e670a8132316d25dd4a9b3b9bd62576b0cbf50178dc951c974a02e4168",
+  "skill-development/hd-talking-head/tests/test_visual_confirmation.py": "9dad3b751c006060fa388b60056831fef601b98625cc9ec7b67ca2155cda1193",
   "skill-development/hd-talking-head/tests/test_visual_workflow_policy.py": "04ef75b63b219bd51528d572915d123e401a1dfe9be60154c5e1dbe95315c4f8",
   "skill-development/hd-talking-head/tests/test_wise_motion_adapter.py": "33931533215df46a65a3a874fb15d60719531ff7c26c062e9bcfd6ec8fe7b15a",
   "skill-development/research/hypit-source/.claude/skills/hypit/SKILL.md": "4525dddfb6acd7d5e3b642f783c0b806605a9465d555175d0cb4148a387ba6c8",
@@ -11379,6 +11379,6 @@
   "参考项目/B-roll开源方案/video-use/install.md": "9a78c92932864a728cfe80700d1a6bd5a4c4b4cf2d3f4694f3fd53b49fc93394",
   "参考项目/B-roll开源方案/video-use/pyproject.toml": "4b27fdf0275016a5427416ee9a939ed5c8a756af02427394478d416b0909632d"
  },
- "release_id": "2026-10-27-pipeline-preflight-registration-v258",
+ "release_id": "2026-10-27-internal-segment-preflight-v259",
  "schema_version": 1
 }
