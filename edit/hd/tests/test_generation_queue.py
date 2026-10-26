@@ -31,6 +31,34 @@ def _retry_worker(job, plan, config, approval, start, results):
 
 
 class GenerationQueueTests(unittest.TestCase):
+    def test_reference_upload_encodes_frozen_bytes_for_lovart(self):
+        import base64
+        from edit.hd.tools import generation_inputs
+        source = self.job / "reference.png"
+        source.write_bytes(b"actual frozen image bytes")
+        bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+        bindings["video"].update(reference_mode="upload", upload={
+            "tool": "mcp__lovart__upload_asset",
+            "arguments": {"data_base64": {"$input": "base64"},
+                          "filename": {"$input": "filename"}, "project_id": "synthetic-project"},
+            "result_path": ["url"],
+        })
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+        request = self.request("reference-upload", "video")
+        request["arguments"]["ref_images"] = [str(source)]
+        request["input_files"] = [{"path": source.name, "sha256": artifacts.sha256_file(source),
+                                   "bytes": source.stat().st_size}]
+        action = generation_inputs.next_action(self.job, request)
+        self.assertEqual(base64.b64decode(action["arguments"]["data_base64"]), source.read_bytes())
+        self.assertEqual(action["arguments"]["filename"], source.name)
+        self.assertEqual(generation_inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        generation_inputs.record_result(self.job, request, action, {"url": "https://example.test/reference.png"})
+        self.assertEqual(generation_inputs.resolve_request(self.job, request)["arguments"]["ref_images"],
+                         ["https://example.test/reference.png"])
+        source.write_bytes(b"changed reference")
+        with self.assertRaisesRegex(ValueError, "reference changed"):
+            generation_inputs.resolve_request(self.job, request)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

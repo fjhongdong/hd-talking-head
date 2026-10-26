@@ -1,6 +1,7 @@
 """Immutable visual proposal, source approval, and realized production evidence."""
 from __future__ import annotations
 import copy
+from types import SimpleNamespace
 from pathlib import Path
 from . import contract_artifacts as artifacts
 
@@ -317,6 +318,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     from . import state, visual_plan, motion_capabilities, startup, confirmed_content
     state.require_runnable(job, "visual_direction")
     director, treatment = _read(director_path), _read(treatment_path)
+    visual_plan._validate_draft_envelope(director)
     context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
     confirmed_content.check_confirmed_content(job, director)
     steps = _steps(treatment)
@@ -324,6 +326,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         _validate_template_choices(job, director, treatment)
     except ValueError as error:
         raise VisualConfirmationError("visual selection: " + str(error)) from error
+    from . import overlay_alignment
+    overlay_alignment.validate_treatment(job, director, Path(treatment_path))
     from . import motion_readability
     motion_readability.validate_direction_contract(job, director, treatment)
     from . import avatar_profile, visual_review
@@ -584,9 +588,33 @@ def validate_visual_authorization(job, *, require_realized=False):
 def _request_id(source, step):
     return "visual-" + source["source_id"] + "-" + step["id"]
 
-def generation_item(queue, proposal, step):
+def _equivalent_request_id(queue, request, step_id, job):
+    matches = []
+    for rid, item in queue.get("items", {}).items():
+        auth = item.get("authorization", {})
+        steps = auth.get("steps", {}) if isinstance(auth, dict) else {}
+        old = item.get("request", {})
+        if steps.get(rid) == step_id and {k:v for k,v in old.items() if k != "id"} == {k:v for k,v in request.items() if k != "id"}:
+            validate_generation_request(job, auth, old)
+            matches.append(rid)
+    if len(matches) > 1:
+        raise VisualConfirmationError("equivalent generation request has ambiguous existing ids")
+    return matches[0] if matches else None
+
+def generation_item(queue, proposal, step, job=None):
     """Follow only explicitly approved retry successors of the original step."""
     rid = _request_id(proposal, step)
+    if job is None and queue.get("job_dir"):
+        job = SimpleNamespace(job_dir=Path(queue["job_dir"]), job_id=queue["job_id"])
+    if job is not None:
+        try:
+            current = _build_generation_request(job, proposal, step)
+        except VisualConfirmationError as error:
+            if str(error) != "generation dependency has not completed":
+                raise
+            current = None
+        if current is not None:
+            rid = _equivalent_request_id(queue, current, step["id"], job) or rid
     item = queue["items"].get(rid)
     while item is not None:
         successors = [(key, value) for key, value in queue["items"].items() if value.get("retry_of") == rid]
@@ -597,7 +625,7 @@ def generation_item(queue, proposal, step):
         rid, item = successors[0]
     return rid, item
 
-def resolve_generation_request(job, proposal, step):
+def _build_generation_request(job, proposal, step):
     from . import generation_channels, generation_queue
     queue = generation_queue.status(job.job_dir)
     inputs = copy.deepcopy(step.get("input_files", []))
@@ -606,7 +634,7 @@ def resolve_generation_request(job, proposal, step):
             dep = next(s for s in proposal["generation_steps"] if s["id"] == value["$step"])
             if dep["id"] not in step.get("depends_on", []):
                 raise VisualConfirmationError("future input must name an approved dependency")
-            _, item = generation_item(queue, proposal, dep)
+            _, item = generation_item(queue, proposal, dep, job)
             if not item or item.get("status") != "completed":
                 raise VisualConfirmationError("generation dependency has not completed")
             media = item.get("completion_response", item.get("response", {}))["artifacts"][value.get("output", 0)]
@@ -625,11 +653,20 @@ def resolve_generation_request(job, proposal, step):
     return generation_channels.prepare_request(job, step["purpose"], resolve(step["arguments"]),
         request_id=_request_id(proposal, step), input_files=inputs)
 
+def resolve_generation_request(job, proposal, step):
+    """Build the request and retain a pre-existing equivalent request identity."""
+    from . import generation_queue
+    request = _build_generation_request(job, proposal, step)
+    queue = generation_queue.status(job.job_dir)
+    rid = _equivalent_request_id(queue, request, step["id"], job) or request["id"]
+    request["id"] = rid
+    return request
+
 def validate_generation_request(job, authorization, request):
     receipt, proposal = _validate_source(job.job_dir, authorization["source"], job_id=job.job_id)
     step_id = authorization["steps"][request["id"]]
     step = next((s for s in proposal["generation_steps"] if s["id"] == step_id), None)
-    if step is None or request != resolve_generation_request(job, proposal, step):
+    if step is None or request != _build_generation_request(job, proposal, step):
         raise VisualConfirmationError("generation request differs from its approved step")
     return {"receipt": receipt, "step": step}
 
@@ -640,12 +677,12 @@ def generation_actions(job, *, account_limit=None):
     actions = []
     for step in proposal["generation_steps"]:
         queue = generation_queue.status(job.job_dir)
-        rid, item = generation_item(queue, proposal, step)
+        rid, item = generation_item(queue, proposal, step, job)
         if item and item["status"] == "completed":
             continue
         dependencies = [next(s for s in proposal["generation_steps"] if s["id"] == dep)
                         for dep in step.get("depends_on", [])]
-        if any((generation_item(queue, proposal, dep)[1] or {}).get("status") != "completed" for dep in dependencies):
+        if any((generation_item(queue, proposal, dep, job)[1] or {}).get("status") != "completed" for dep in dependencies):
             continue
         if not item:
             request = resolve_generation_request(job, proposal, step)
@@ -690,7 +727,7 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
     queue = generation_queue.status(job.job_dir)
     generations = []
     for step in proposal["generation_steps"]:
-        rid, item = generation_item(queue, proposal, step)
+        rid, item = generation_item(queue, proposal, step, job)
         item = item or {}
         if item.get("status") != "completed":
             raise VisualConfirmationError("an approved generation step is not complete")

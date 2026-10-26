@@ -66,6 +66,23 @@ class VisualConfirmationTests(unittest.TestCase):
         with self.assertRaisesRegex(vc.VisualConfirmationError, "beat_sheet"):
             self.prepare()
 
+    def test_missing_draft_version_blocks_before_proposal_or_generation(self):
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        director.pop("schema_version")
+        artifacts.write_json_artifact(self.fixture.brief, director)
+        with self.assertRaisesRegex(Exception, "BROLL_SCHEMA_UNSUPPORTED"):
+            self.prepare()
+        self.assertFalse((self.job.job_dir / vc.DIRECTORY).exists())
+
+    def test_native_timing_failure_blocks_proposal_before_generation(self):
+        before = copy.deepcopy(self.job.stages["visual_direction"])
+        with mock.patch("edit.hd.tools.overlay_alignment.validate_treatment",
+                        side_effect=ValueError("native clock differs")):
+            with self.assertRaisesRegex(ValueError, "native clock differs"):
+                self.prepare()
+        self.assertEqual(self.job.stages["visual_direction"], before)
+        self.assertFalse(list((self.job.job_dir / "07-visual-confirmation").glob("*/proposal.json")))
+
     def test_beat_sheet_rejects_gap_or_stale_quote(self):
         treatment = artifacts.read_json_artifact(self.treatment)
         treatment["beat_sheet"][0]["quote"] = "过期口播"
@@ -245,7 +262,31 @@ class VisualConfirmationTests(unittest.TestCase):
                 upload = actions[0]
                 self.assertEqual(upload["tool"], "fixture.upload")
                 self.assertTrue(Path(upload["arguments"]["file"]).is_file())
-                self.assertEqual(vc.generation_actions(self.job)[0]["status"], "input_upload_pending")
+                # A technical proposal revision must reuse the already-authorized
+                # request and pending upload without rewriting the old receipt.
+                before = queue.status(self.job.job_dir)
+                old_auth = copy.deepcopy(before["items"][upload["request_id"]]["authorization"])
+                previous_source = vc.validate_visual_authorization(self.job)["source"]["source_id"]
+                state.revise(self.job, "visual_direction", "same content, technical preparation revised")
+                revised = artifacts.read_json_artifact(self.treatment)
+                revised["planning_notes"] = ["technical preparation checked; same generation content"]
+                artifacts.write_json_artifact(self.treatment, revised)
+                self.prepare(); self.confirm()
+                current = vc.validate_visual_authorization(self.job)
+                self.assertNotEqual(current["source"]["source_id"], previous_source)
+                original_confirmation = current["artifact"]
+                resumed_actions = vc.generation_actions(self.job)
+                self.assertEqual(resumed_actions[0]["status"], "input_upload_pending")
+                self.assertEqual(resumed_actions[0]["request_id"], upload["request_id"])
+                after = queue.status(self.job.job_dir)
+                self.assertEqual(set(after["items"]), set(before["items"]))
+                self.assertEqual(after["items"][upload["request_id"]]["authorization"], old_auth)
+                step = current["source"]["generation_steps"][1]
+                request = vc.resolve_generation_request(self.job, current["source"], step)
+                self.assertEqual(request["id"], upload["request_id"])
+                changed = copy.deepcopy(request)
+                changed["arguments"]["prompt"] = "different request"
+                self.assertIsNone(vc._equivalent_request_id(after, changed, step["id"], self.job))
                 # Exercise the same stage entry the host uses for upload results.
                 resumed = run_stage.resume_visual_direction(self.job, _env.PROJECT, {"generation_results": [
                     {"action": upload, "response": {"data": {"asset_id": "actual-fixture-upload-id"}}}]})
@@ -269,7 +310,7 @@ class VisualConfirmationTests(unittest.TestCase):
             channel.record_result(self.job.job_dir, query, {"status": "completed", "artifacts": [output]})
             self.assertEqual(vc.generation_actions(self.job), [])
             proposal = vc.validate_visual_authorization(self.job)["source"]
-            rid = vc._request_id(proposal, proposal["generation_steps"][1])
+            rid, _ = vc.generation_item(queue.status(self.job.job_dir), proposal, proposal["generation_steps"][1])
             aroll = next(r for r in self.job.stages["edit_structure"]["artifacts"] if r["path"].endswith("edited-aroll.mp4"))
             record = generated_media.record_from_queue(self.job, rid, segment_id="seg-001", component_id="component-1",
                 source_binding={"aroll_sha256": aroll["sha256"], "start": 0.0, "end": 3.0},

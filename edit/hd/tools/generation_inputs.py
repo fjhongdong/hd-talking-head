@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import base64
+import hashlib
 import secrets
 from pathlib import Path
 
@@ -20,10 +22,10 @@ def validate_binding(binding):
             raise ValueError("upload binding needs its real tool, arguments and result_path")
         def has_input(value):
             if isinstance(value, dict):
-                return value == {"$input": "path"} or any(has_input(v) for v in value.values())
+                return value in ({"$input": "path"}, {"$input": "base64"}) or any(has_input(v) for v in value.values())
             return isinstance(value, list) and any(has_input(v) for v in value)
         if not has_input(upload["arguments"]):
-            raise ValueError("upload arguments must reference the actual input path")
+            raise ValueError("upload arguments must reference the actual input file")
     return binding
 
 
@@ -96,6 +98,13 @@ def next_action(job_dir, request):
             if isinstance(value, dict):
                 if value == {"$input": "path"}:
                     return local
+                if value == {"$input": "filename"}:
+                    return Path(local).name
+                if value == {"$input": "base64"}:
+                    data = Path(local).read_bytes()
+                    if len(data) != ref["bytes"] or hashlib.sha256(data).hexdigest() != ref["sha256"]:
+                        raise ValueError("generation reference changed before upload")
+                    return base64.b64encode(data).decode("ascii")
                 return {key: arguments(item) for key, item in value.items()}
             if isinstance(value, list):
                 return [arguments(item) for item in value]

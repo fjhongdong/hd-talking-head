@@ -570,10 +570,15 @@ def _validate_semantic_segment(
     return normalized
 
 
-def _validate_draft(value: object) -> dict[str, object]:
+def _validate_draft_envelope(value: object) -> dict[str, object]:
     draft = _schema_gate(value)
     if set(draft) != _DRAFT_KEYS or type(draft["segments"]) is not list or not draft["segments"]:
         raise _fail("visual direction draft fields are invalid")
+    return draft
+
+
+def _validate_draft(value: object) -> dict[str, object]:
+    draft = _validate_draft_envelope(value)
     segments = [
         _validate_semantic_segment(segment, draft=True)
         for segment in draft["segments"]

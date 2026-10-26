@@ -63,19 +63,21 @@ class CalibrateAvatarTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as directory:
                 value = self.calibrate.build_avatar(
-                    _CV2(boxes), self.profile, Path(directory) / "a.mp4",
+                    _CV2(boxes), Path(directory) / "a.mp4",
                     0, 2, "0" * 64,
                 )
-            self.profile.validate_avatar(value, frames=48)
             return value
         finally:
             self.calibrate.subprocess.run = original
 
     def test_still_face_passes_real_builder_and_validator(self):
-        self._build([(440, 400, 200, 200)] * 3)
+        value = self._build([(440, 400, 200, 200)] * 3)
+        self.assertTrue(value["manual_required"])
+        self.assertNotIn("landmarks", value["frames"][0])
 
     def test_middle_frame_vertical_shift_passes_real_builder_and_validator(self):
-        self._build([(440, 400, 200, 200), (440, 430, 200, 200), (440, 400, 200, 200)])
+        value = self._build([(440, 400, 200, 200), (440, 430, 200, 200), (440, 400, 200, 200)])
+        self.assertEqual(value["frames"][1]["face_box"][1], 430.0)
 
 
 if __name__ == "__main__":
