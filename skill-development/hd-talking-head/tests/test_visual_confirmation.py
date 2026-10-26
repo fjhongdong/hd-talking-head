@@ -356,6 +356,17 @@ class VisualConfirmationTests(unittest.TestCase):
             skill_id="gbro-collage-broll", template_id="gbro-collage-broll/design", role="design")
         rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
+        self.assertEqual(rows[0]["generation_channel"], "Lovart")
+        treatment["generation_plan"] = {"steps": [{"id":"image", "purpose":"image",
+            "segment_id":segment["segment_id"], "component_id":"component-1", "arguments":{}},
+            {"id":"video", "purpose":"video", "segment_id":segment["segment_id"],
+             "component_id":"component-1", "arguments":{}, "depends_on":["image"]}]}
+        rows = vc._rows(director, treatment, [],
+            validate_semantic_lists(treatment, director)["component_rows"], {
+                "image":{"provider":"Builtin", "model":"image-model"},
+                "video":{"provider":"Lovart", "model":"Kling O1"}})
+        self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
+        self.assertEqual(rows[0]["generation_channel"], "图片：Builtin / image-model；视频：Lovart / Kling O1")
         self.assertIn("无固定模板", rows[0]["template"])
 
     def test_channel_uses_real_source_instead_of_adapter_alias(self):

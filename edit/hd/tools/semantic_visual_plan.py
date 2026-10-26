@@ -1,8 +1,24 @@
 """Validation for the two semantic visual lists used by confirmation."""
 from __future__ import annotations
+import math
 
 class SemanticVisualPlanError(ValueError):
     pass
+
+def require_interval_coverage(windows, begin, finish, *, label):
+    """Cover a required interval with segment windows, within the 24fps clock."""
+    def valid(start, end):
+        return all(type(v) in (int, float) and math.isfinite(v) for v in (start, end)) and 0 <= start < end
+    if not valid(begin, finish) or any(not valid(a, b) for a, b in windows):
+        raise SemanticVisualPlanError(f"{label}: invalid word span or segment clock")
+    right = begin
+    for left, end in sorted(windows):
+        if left > right + 1 / 24:
+            break
+        right = max(right, end)
+        if right >= finish - 1 / 24:
+            return
+    raise SemanticVisualPlanError(f"{label}: referenced segments do not cover word span {begin:.3f}–{finish:.3f}s")
 
 def component_use(segment, component):
     """Return the logical use from real composition, not an inner annotation."""
@@ -19,13 +35,12 @@ def validate_semantic_lists(treatment, director, speech=None):
     components = {}
     for seg in director.get("segments", []):
         sid = seg.get("segment_id")
-        family = seg.get("visual_strategy", {}).get("composition", {}).get("family")
         for comp in seg.get("visual_strategy", {}).get("components", []):
             cid = comp.get("component_id")
             if isinstance(sid, str) and isinstance(cid, str) and cid:
                 if (sid, cid) in components:
                     raise SemanticVisualPlanError("visual component identity must be unique")
-                components[(sid, cid)] = (family, comp)
+                components[(sid, cid)] = (seg, comp)
     seen_rows, seen_components, seen_spans, items = set(), set(), set(), []
     for typ in ("overlay", "broll"):
         for row in lists[typ]:
@@ -51,7 +66,7 @@ def validate_semantic_lists(treatment, director, speech=None):
             refs = row.get("components")
             if not isinstance(refs, list) or not refs:
                 raise SemanticVisualPlanError("semantic rows need visual component references")
-            local = set()
+            local, windows = set(), []
             for ref in refs:
                 if not isinstance(ref, dict) or not isinstance(ref.get("segment_id"), str) or not isinstance(ref.get("component_id"), str):
                     raise SemanticVisualPlanError("semantic component reference is invalid")
@@ -59,10 +74,15 @@ def validate_semantic_lists(treatment, director, speech=None):
                 if key in local or key in seen_components or key not in components:
                     raise SemanticVisualPlanError("semantic component reference is duplicate or orphaned")
                 local.add(key); seen_components.add(key)
-                family, comp = components[key]
-                is_overlay = component_use({"visual_strategy": {"composition": {"family": family}}}, comp) == "overlay"
+                segment, comp = components[key]
+                is_overlay = component_use(segment, comp) == "overlay"
                 if (typ == "overlay") != is_overlay:
                     raise SemanticVisualPlanError("semantic row type does not match real composition")
+                if speech is not None:
+                    windows.append((segment.get("start"), segment.get("end")))
+            if speech is not None:
+                for word in words[start:end]:
+                    require_interval_coverage(windows, word.get("start"), word.get("end"), label=rid)
             item = dict(row); item["type"] = "贴片" if typ == "overlay" else "B-roll"
             items.append(item)
     if set(components) != seen_components:

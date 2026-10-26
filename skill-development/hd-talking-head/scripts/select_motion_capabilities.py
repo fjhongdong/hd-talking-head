@@ -18,7 +18,11 @@ def main() -> None:
     parser.add_argument("--director-brief", type=Path)
     parser.add_argument("--job-dir", type=Path, help="read existing approved speech and referenced native briefs only")
     parser.add_argument("--summary-only", action="store_true")
+    parser.add_argument("--planning-only", action="store_true",
+                        help="check final planning without native bindings, writing or generating media")
     args = parser.parse_args()
+    if args.planning_only and args.action != "check":
+        parser.error("--planning-only is only valid with check")
     from edit.hd.tools import contract_artifacts, motion_capabilities as motion
     from edit.hd.tools.startup import assert_project_origin
 
@@ -45,7 +49,8 @@ def main() -> None:
         else:
             if args.treatment is None or args.director_brief is None:
                 parser.error("check requires --treatment and --director-brief; both are read-only")
-            result = motion.check_offline_plan(project,
+            checker = motion.check_planning_only if args.planning_only else motion.check_offline_plan
+            result = checker(project,
                 contract_artifacts.read_json_artifact(args.director_brief),
                 contract_artifacts.read_json_artifact(args.treatment), job_dir=args.job_dir)
     except (OSError, ValueError, KeyError, TypeError, contract_artifacts.ContractArtifactError) as error:

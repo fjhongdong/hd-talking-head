@@ -610,6 +610,66 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
         return {**result, "reason": str(error)}
 
 
+def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, *,
+                        job_dir: Path | None = None) -> dict:
+    """Read-only final planning gate; no bindings, Job loading or media calls."""
+    from . import broll_skill_selection, motion_match_cache, semantic_visual_plan
+    from . import visual_confirmation, visual_coverage
+
+    report = {"status": "fail", "scope": "planning_only", "failures": [], "not_verified": [],
+              "not_run": ["runtime_preflight", "native_bindings", "native_timeline_word_alignment",
+                          "source_media_identity", "media_generation", "alpha_and_pixel_qa", "visual_acceptance"],
+              "source_plans_modified": False}
+    try:
+        speech = _approved_speech(job_dir)
+        semantic = semantic_visual_plan.validate_semantic_lists(treatment, draft, speech)
+        report["semantic_summary"] = {k: semantic[k] for k in ("overlay_count", "broll_count")}
+        if speech is None:
+            report["not_verified"].append({"check": "approved_word_clock",
+                "reason": "provide --job-dir with approved speech and timeline; structural matches do not verify time"})
+        else:
+            visual_confirmation._validate_beat_sheet(treatment, draft, speech)
+        motion_match_cache.validate_reviews(project_root, draft, treatment)
+        selection = treatment.get("skill_selection", {})
+        computed = broll_skill_selection.assign_skills(project_root, selection)
+        if (computed["assignments"] != selection.get("assignments") or
+                computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
+            raise ValueError("planning assignments changed; assign again using the existing match cache")
+        broll_skill_selection.validate_fixed_materials(draft, selection, require_bindings=False)
+        segments = {s["segment_id"]: s for s in draft["segments"]}
+        for beat in [*selection["beats"], *selection.get("overlay_beats", [])]:
+            segment = segments[beat["segment_id"]]
+            if any(beat[k] != segment[k] for k in ("start", "end")):
+                raise ValueError(f"{segment['segment_id']}: candidate review window differs from the draft")
+        current = {r["candidate_id"]: r for r in broll_skill_selection.discover_candidates(project_root)}
+        for assignment in computed["assignments"]:
+            row = current[assignment["candidate_id"]]
+            minimum = row.get("min_duration_seconds")
+            segment = segments[assignment["segment_id"]]
+            seconds = segment["end"] - segment["start"]
+            frames = round(seconds * 24)
+            if minimum is not None and (frames < minimum * 24 or abs(seconds * 24 - frames) > 1e-6):
+                raise ValueError(f"{segment['segment_id']}: {row['candidate_id']} has {seconds:.3f}s but needs at least {minimum}s on an exact 24fps clock; review timing and reassign from the existing cache")
+        if speech is not None:
+            timeline = contract_artifacts.read_json_artifact(Path(job_dir) / "06-edit-structure/timeline-map.json")
+            duration = max(c["timeline_end"] for c in timeline["segments"])
+            windows = [(s["start"], s["end"]) for s in draft["segments"]]
+            semantic_visual_plan.require_interval_coverage(windows, 0, duration, label="planning timeline")
+            if any(a < 0 or b > duration + 1/24 for a, b in windows):
+                raise ValueError("planning segments extend beyond the approved timeline")
+            coverage = visual_coverage.require_density({"duration": duration, "segments": draft["segments"]},
+                                                       treatment=treatment)
+            report["coverage"] = coverage
+            if coverage["blocking_issues"]:
+                raise ValueError("time coverage: " + "; ".join(coverage["blocking_issues"]) +
+                    "; return to the affected semantic list, match only additions and assign again")
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        report["failures"].append({"check": "final_planning", "reason": str(error)})
+        return report
+    report["status"] = "needs_review" if report["not_verified"] else "pass"
+    return report
+
+
 def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *,
                        job_dir: Path | None = None) -> dict:
     """Check real read-only inputs, distinguishing missing evidence from a pass."""
@@ -643,16 +703,21 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "cached_semantic_candidates", "reason": str(error)}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}
-    broll = broll_skill_selection.validate_selection(project_root, draft, treatment)
     speech = _approved_speech(job_dir)
-    semantic_visual_plan.validate_semantic_lists(treatment, draft, speech)
+    try:
+        semantic_visual_plan.validate_semantic_lists(treatment, draft, speech)
+    except (ValueError, KeyError, TypeError) as error:
+        return {"status": "fail", "scope": "offline_orchestration_only",
+                "failures": [{"check": "semantic_word_windows", "reason": str(error)}],
+                "checks": [], "not_verified": [], "source_plans_modified": False}
+    broll = broll_skill_selection.validate_selection(project_root, draft, treatment)
     spoken_segments = {
         segment["segment_id"]: "" if speech is None else "".join(str(word["text"]) for word in speech
             if word["start"] < segment["end"] and word["end"] > segment["start"])
         for segment in draft["segments"]
     }
     routes, briefs, overlay_targets = {}, {}, []
-    not_verified = []
+    not_verified = [] if speech is not None else [{"check": "approved_word_clock"}]
     for segment in draft["segments"]:
         if segment["visual_strategy"]["composition"]["family"] != "aroll_with_overlay":
             continue

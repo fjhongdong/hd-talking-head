@@ -110,6 +110,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
             for route, family in sorted(values["FAMILIES"].items()):
                 add(dep, entry, dep + "/" + route, version, route=route, families=[family],
                     limitations=("DATA-only native Riso information graphics; not a person/action scene or transparent A-roll overlay",))
+                found[-1]["min_duration_seconds"] = values["MIN_SECONDS"][route]
         elif module == "huashu_motion_adapter":
             for name, families in sorted(values["FAMILIES"].items()):
                 template = dep + "/" + name
@@ -404,7 +405,7 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
     return result
 
 
-def validate_fixed_materials(draft: Mapping, selection: Mapping) -> None:
+def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bindings=True) -> None:
     """Only real direct materials may contribute fixed source coverage."""
     adjustable = {(b["segment_id"], b["component_id"])
                   for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]}
@@ -420,11 +421,17 @@ def validate_fixed_materials(draft: Mapping, selection: Mapping) -> None:
         raise ValueError("fixed context must contain every direct material, without adjustable overlays")
     for key, row in fixed.items():
         segment, component = expected[key]
+        if component["kind"] not in {"local_material", "official_material", "external_stock", "ai_generated"}:
+            raise ValueError("fixed context must reference a direct material kind")
         if any(row[field] != segment[field] for field in ("start", "end")):
             raise ValueError("fixed material window changed")
+        if row.get("template_id") is not None:
+            raise ValueError("fixed material cannot invent a channel or a reusable template")
         binding = segment.get("bindings", {}).get(component["component_id"], {})
+        if not binding and not require_bindings:
+            continue  # Planning records a proposed source, not verified media identity.
         channel = source_channel(binding.get("dependency_id") or binding.get("provider") or component["kind"])
-        if source_channel(row["skill_id"]) != channel or row.get("template_id") is not None:
+        if source_channel(row["skill_id"]) != channel:
             raise ValueError("fixed material cannot invent a channel or a reusable template")
 
 

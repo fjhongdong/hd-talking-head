@@ -989,7 +989,7 @@
       "capability_type": "native_template",
       "reviewed_version": "1.0.0",
       "title": "纸艺分层拼贴动画",
-      "summary": "现成图层从指定方向移入并组装到完成图，动作来自上游 layer-animate；不让静态剪纸人物自动产生肢体动作。",
+      "summary": "已准备的静态图层从画布边缘移入并组装到完成图，动作来自上游 layer-animate；不能让已在屏内的对象离开原位置再搬到另一处。",
       "tags": {
         "subjects": [
           "物件",
@@ -1021,7 +1021,8 @@
         "manifest.duration/finalHold/fadeDuration"
       ],
       "limitations": [
-        "只支持既有分层移入语法，不是任意纸艺剧情；文字须在素材中，未提供独立可编辑文字槽。",
+        "from 仅为 left/right/top/bottom/none；方向表示从画布外移入到最终坐标，不是任意屏内起止点、取出或搬运动作。",
+        "静态剪纸人物不会自动产生肢体动作；文字须在实际素材中，没有独立可编辑文字槽。",
         "当前真实素材、坐标、停留和收尾必须满足已有适配器检查。"
       ],
       "evidence": [
@@ -7418,7 +7419,7 @@
       "capability_type": "native_template",
       "reviewed_version": "1.0.0",
       "title": "Riso 集合关系",
-      "summary": "用节点与连线展示口播中已有的集合、来源和关系结构。",
+      "summary": "以真实数字和程序生成的示意节点、连线表现关系规模；只提供 number、comma、unit、say、nodes 数据槽。",
       "tags": {
         "subjects": [
           "节点",
@@ -7447,7 +7448,9 @@
         "palette/mast/duration"
       ],
       "limitations": [
-        "nodes 只作信息关系展示，不代表真实数量；节点名称须来自当前内容。"
+        "nodes 控制示意节点数量，不是逐节点的命名数据；没有可编辑节点名称、三项功能分支或任意来源图内容槽。",
+        "展示的 number 必须有原文依据，示意网点不能冒充真实节点数量；不能用连线显现替代三项具体功能。",
+        "实际最短时长读取 riso_native_adapter.MIN_SECONDS；不能裁掉原生动作来适配短窗。"
       ],
       "evidence": [
         "skill-development/vendor/eian-riso-broll/templates/network.html",

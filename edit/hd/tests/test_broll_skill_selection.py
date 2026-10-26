@@ -607,5 +607,98 @@ class BrollSkillSelectionTest(unittest.TestCase):
 
 
 
+class PlanningOnlyChecksTest(unittest.TestCase):
+    """Use real catalog/matching/assignment and temporary approved word inputs."""
+    def make_plan(self, root, seconds):
+        from edit.hd.tools import contract_artifacts as artifacts, motion_capabilities as motion, motion_match_cache
+        words = [{"text": "十二项测试对象", "start": 0.1, "end": 2.8}]
+        workflow = {"stages": {}}
+        for stage, rel, value in (
+            ("speech_cleanup", "05-speech-cleanup/word-transcript.json", {"version": 1, "words": words}),
+            ("edit_structure", "06-edit-structure/timeline-map.json", {"segments": [{
+                "source_start": 0, "source_end": seconds, "timeline_start": 0, "timeline_end": seconds}]}),
+        ):
+            path = root / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            artifacts.write_json_artifact(path, value)
+            workflow["stages"][stage] = {"status":"approved", "artifacts":[{
+                "path": rel, "sha256":artifacts.sha256_file(path), "bytes":path.stat().st_size}]}
+        artifacts.write_json_artifact(root / "workflow.json", workflow)
+        draft = {"segments": [{"segment_id":"s", "start":0, "end":seconds,
+            "visual_strategy":{"mode":"single", "composition":{"family":"single_full_frame"},
+                "components":[{"component_id":"c", "kind":"code_generated", "layer_role":"base"}]}}]}
+        refs = [{"segment_id":"s", "component_id":"c"}]
+        row = {"row_id":"number", "start_word":0, "end_word":1, "quote":words[0]["text"],
+            "semantic":"真实数值强调", "visual_task":"展示十二项测试对象", "components":refs}
+        treatment = {"semantic_lists":{"overlay":[], "broll":[row]},
+            "beat_sheet":[{"start_word":0, "end_word":1, "quote":words[0]["text"],
+                "decision":"broll", "visual":"数值强调", "components":refs}],
+            "motion_queries":[{**refs[0], "tags":["数字与单位", "显现", "旧新"]}]}
+        treatment = motion_match_cache.match_once(ROOT, draft, treatment)
+        catalog = {r["candidate_id"]:r for r in motion.load_catalog(ROOT)}
+        candidates = []
+        for match in treatment["motion_matches"]["number"]["matches"]:
+            cid = match["candidate_id"]
+            fit = ("preferred" if cid == "eian-riso-broll:number" else
+                   "equivalent" if cid == "eian-riso-broll:versus" else
+                   "needs_adapter" if catalog[cid]["status"] != "supported" else "unsuitable")
+            candidates.append({"candidate_id":cid, "fit":fit, "rejection_basis":"semantic",
+                "reason":"独立规划夹具，数值强调优先，旧新为未选备选。", "visual_pattern":cid})
+        pool = selection.discover_candidates(ROOT)
+        reviews = {r["skill_id"]:{"fit":"equivalent" if r["skill_id"] == "eian-riso-broll" else "unsuitable",
+            "reason":"本夹具只选真实数值入口。"} for r in pool}
+        treatment["skill_selection"] = {"schema_version":1, "history_note":"synthetic planning only",
+            "recent_context":[], "fixed_context":[], "overlay_beats":[], "beats":[{
+                **refs[0], "semantic_row_id":"number", "start":0, "end":seconds,
+                "transcript":row["quote"], "semantic_goal":row["semantic"],
+                "required_change":row["visual_task"], "candidates":candidates, "skill_reviews":reviews}]}
+        treatment["skill_selection"] = selection.assign_skills(ROOT, treatment["skill_selection"])
+        return draft, treatment
+
+    def test_read_only_planning_passes_without_bindings_but_not_production(self):
+        from edit.hd.tools import motion_capabilities as motion
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            draft, treatment = self.make_plan(root, 4)
+            before = {str(p):p.read_bytes() for p in root.rglob("*") if p.is_file()}
+            result = motion.check_planning_only(ROOT, draft, treatment, job_dir=root)
+            self.assertEqual(result["status"], "pass", result)
+            self.assertEqual(result["semantic_summary"], {"overlay_count":0, "broll_count":1})
+            self.assertIn("visual_acceptance", result["not_run"])
+            self.assertFalse(result["source_plans_modified"])
+            self.assertEqual(before, {str(p):p.read_bytes() for p in root.rglob("*") if p.is_file()})
+            with self.assertRaises((KeyError, ValueError)):
+                motion.check_offline_plan(ROOT, draft, treatment, job_dir=root)
+
+    def test_selected_native_floor_is_current_and_unselected_floor_does_not_block(self):
+        from edit.hd.tools import motion_capabilities as motion
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for seconds in (3, 3.99):
+                draft, treatment = self.make_plan(root, seconds)
+                self.assertNotIn("min_duration_seconds", treatment["motion_matches"]["number"]["matches"][0])
+                result = motion.check_planning_only(ROOT, draft, treatment, job_dir=root)
+                self.assertEqual(result["status"], "fail", result)
+                self.assertIn("needs at least 4", result["failures"][0]["reason"])
+            draft, treatment = self.make_plan(root, 4)
+            result = motion.check_planning_only(ROOT, draft, treatment, job_dir=root)
+            self.assertEqual(result["status"], "pass", result)  # Unselected versus needs 6.5 seconds.
+
+    def test_missing_clock_is_not_verified_and_late_word_is_reported_first(self):
+        from edit.hd.tools import motion_capabilities as motion
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            draft, treatment = self.make_plan(root, 4)
+            result = motion.check_planning_only(ROOT, draft, treatment)
+            self.assertEqual(result["status"], "needs_review", result)
+            self.assertEqual(result["not_verified"][0]["check"], "approved_word_clock")
+            draft["segments"][0]["start"] = 0.75
+            for checker in (motion.check_planning_only, motion.check_offline_plan):
+                result = checker(ROOT, draft, treatment, job_dir=root)
+                self.assertEqual(result["status"], "fail", result)
+                self.assertIn("number", result["failures"][0]["reason"])
+                self.assertIn("word span", result["failures"][0]["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()

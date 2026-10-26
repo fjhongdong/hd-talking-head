@@ -142,12 +142,13 @@ def approved_numbered_rows(job):
     proposal = validate_visual_authorization(job)["source"]
     return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
-def _rows(director, treatment, speech, semantic_rows=None):
+def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None):
     from .broll_skill_selection import source_channel, _fixed_template
     from .semantic_visual_plan import component_use
 
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
     selected = treatment.get("skill_selection", {})
+    steps = _steps(treatment)
     assignments = {(q["segment_id"], q["component_id"]): q
                    for q in [*selected.get("assignments", []), *selected.get("overlay_assignments", [])]}
     rows = []
@@ -179,12 +180,22 @@ def _rows(director, treatment, speech, semantic_rows=None):
             semantic_row = semantic_rows.get((sid, cid)) if semantic_rows else None
             if semantic_row is None or semantic_row["type"] != ("贴片" if component_use(segment, component) == "overlay" else "B-roll"):
                 raise VisualConfirmationError("visual component is missing from semantic lists")
+            generation = []
+            for purpose in dict.fromkeys(s["purpose"] for s in steps
+                    if (s["segment_id"], s["component_id"]) == (sid, cid)):
+                channel = (generation_channels or {}).get(purpose, {})
+                if channel.get("provider"):
+                    generation.append(("图片：" if purpose == "image" else "视频：") +
+                                      channel["provider"] + " / " + channel["model"])
+            if not generation and binding.get("provider"):
+                generation.append(binding["provider"] + (" / " + binding["model"] if binding.get("model") else ""))
             rows.append({"row_id": physical_id, "semantic_row_id": semantic_row.get("row_id"),
                          "segment_id": sid, "component_id": cid,
                          "start": segment["start"], "end": segment["end"],
                          "type": semantic_row["type"],
                          "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
                          "tags": tags, "source": source,
+                         "generation_channel": "；".join(generation),
                          "channel": source_channel((chosen or {}).get("skill_id") or binding.get("dependency_id") or
                                      binding.get("provider") or component["kind"]),
                          "template": template})
@@ -225,7 +236,7 @@ def _validate_template_choices(job, director, treatment):
                 raise VisualConfirmationError("proposed binding differs from the selected native template")
 
 def _validate_beat_sheet(treatment, director, speech):
-    from .semantic_visual_plan import component_use
+    from .semantic_visual_plan import component_use, require_interval_coverage
     beats = treatment.get("beat_sheet")
     if not isinstance(beats, list) or not beats:
         raise VisualConfirmationError("new visual proposals require treatment.beat_sheet")
@@ -235,7 +246,6 @@ def _validate_beat_sheet(treatment, director, speech):
                   for c in s.get("visual_strategy", {}).get("components", [])}
     cursor = 0
     component_beats = {}
-    tolerance = 1 / 24
     def text(value):
         return isinstance(value, str) and bool(value.strip())
     for beat in beats:
@@ -269,13 +279,11 @@ def _validate_beat_sheet(treatment, director, speech):
                          and s.get("visual_strategy", {}).get("mode") == "none"
                          and not s.get("visual_strategy", {}).get("components")]
             presenter.sort(key=lambda s: s["start"])
-            right = begin
-            for segment in presenter:
-                if segment["start"] > right + tolerance:
-                    break
-                right = max(right, segment["end"])
-            if right < finish - tolerance:
-                raise VisualConfirmationError("aroll beat must map to a full-frame/no-broll interval")
+            try:
+                require_interval_coverage([(s["start"], s["end"]) for s in presenter],
+                    begin, finish, label="aroll beat full-frame/no-broll interval")
+            except ValueError as error:
+                raise VisualConfirmationError(str(error)) from error
         else:
             if not refs:
                 raise VisualConfirmationError("broll and overlay beats need visual components")
@@ -294,14 +302,10 @@ def _validate_beat_sheet(treatment, director, speech):
                 if (decision == "overlay") != is_overlay:
                     raise VisualConfirmationError("beat_sheet decision does not match component use")
                 component_beats.setdefault(key, []).append(beat)
-            covered.sort()
-            right = begin
-            for left, end_time in covered:
-                if left > right + tolerance:
-                    raise VisualConfirmationError("beat_sheet components do not cover its word span")
-                right = max(right, end_time)
-            if right < finish - tolerance:
-                raise VisualConfirmationError("beat_sheet components do not cover its word span")
+            try:
+                require_interval_coverage(covered, begin, finish, label="beat_sheet components")
+            except ValueError as error:
+                raise VisualConfirmationError(str(error)) from error
         cursor = end
     if cursor != len(words):
         raise VisualConfirmationError("beat_sheet does not cover the complete approved speech")
@@ -327,7 +331,10 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     speech = motion_capabilities._approved_speech(job.job_dir)
     from . import semantic_visual_plan
     semantic_plan = semantic_visual_plan.validate_semantic_lists(treatment, director, speech)
-    rows = _rows(director, treatment, speech, semantic_plan["component_rows"])
+    config_path, config_sha = startup._config(job)
+    config = _read(config_path)
+    channels = startup.selected_channels(config) if steps else {}
+    rows = _rows(director, treatment, speech, semantic_plan["component_rows"], channels)
     _validate_beat_sheet(treatment, director, speech)
     from . import visual_coverage
     coverage = visual_coverage.require_density({"duration": context[5], "segments": director["segments"]}, treatment=treatment)
@@ -343,10 +350,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             raise VisualConfirmationError("generation step has no visual row")
         for ref in step.get("input_files", []):
             _exact(job.job_dir, ref)
-    config_path, config_sha = startup._config(job)
-    config = _read(config_path)
     if steps:
-        channels = startup.selected_channels(config)
         for segment in director["segments"]:
             for cid, binding in segment.get("bindings", {}).items():
                 direct = any(c["component_id"] == cid and c["kind"] == "ai_generated" for c in segment["visual_strategy"]["components"])
@@ -388,8 +392,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
     lines += ["", f"语义清单摘要：贴片{semantic_plan['overlay_count']}处 / B-roll{semantic_plan['broll_count']}项 / 合计{len(semantic_plan['items'])}", "",
              "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
-             "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 渠道 | 素材来源 | 匹配动效模板 | 生成步骤 |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+             "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源渠道 | 生成渠道／模型 | 素材来源 | 匹配动效模板 | 生成步骤 |",
+             "|---|---|---|---|---|---|---|---|---|---|---|"]
     display_rows = {}
     for row in numbered_rows:
         display_rows.setdefault(row["semantic_row_id"], []).append(row)
@@ -404,6 +408,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             row["number"], "；".join(dict.fromkeys(f"{p['start']:.3f}–{p['end']:.3f}s" for p in parts)),
             row["type"], semantic_row["quote"], semantic_row["semantic"], "、".join(row["tags"]),
             "、".join(dict.fromkeys(p["channel"] for p in parts)),
+            "；".join(dict.fromkeys(p["generation_channel"] for p in parts if p["generation_channel"])) or "—",
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
             "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
     lines += ["", "## 口播逐句处置", "", "| 词区间 | 实际原话 | 时间 | 决策 | 画面 | 组件 | 合并原因 |", "|---|---|---|---|---|---|---|"]
