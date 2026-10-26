@@ -1698,7 +1698,7 @@
         "aroll_overlay"
       ],
       "capability_type": "native_component",
-      "reviewed_version": "1.1.0",
+      "reviewed_version": "1.1.1",
       "title": "三节点手绘流程",
       "summary": "真实三步做法以手绘框和连线依次出现，叠加在 A-roll 上。",
       "tags": {
@@ -1743,8 +1743,8 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "b55537c8f43dc1476df7ec4c74cd7a6d37e84741531a8cfac23e94f6617c6fe1",
-        "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "b7638e5cdde76562347eda785da4295fe0060313c0fc4d377f7ab21a62400200",
-        "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "0f3b1ff467f6ec9ed26902cf0027676c42d3924f2b8f7b80d9947dada1e45c12",
+        "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "7b615cbfa747972751685a5628d79001420321200395305b02a28a3a2c524b1e",
+        "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "21c759d07d3ab682e40ac0ac3d1678fa067b385fd9daa87d34e800c9c1c3c248",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
       }
     },

@@ -70,12 +70,18 @@ def _source_id(binding):
             return value
     return None
 
-def _prior_numbering(job):
-    """Read numbering from an earlier approved proposal in this Job only.
+def _numbering_scope(treatment):
+    """Require an explicit stable scope for every newly prepared proposal."""
+    scope = treatment.get("numbering_scope_id") if isinstance(treatment, dict) else None
+    if not isinstance(scope, str) or not scope.strip():
+        raise VisualConfirmationError(
+            "new visual proposals require treatment.numbering_scope_id"
+        )
+    return scope.strip()
 
-    Older proposals did not persist numbering; their frozen row order is the
-    explicit starting point for the new mapping.
-    """
+
+def _prior_numbering(job, numbering_scope_id):
+    """Read the latest approved mapping in this Job and numbering scope."""
     candidates = []
     for path in (Path(job.job_dir) / "manifests").glob("local-qa-visual_direction-r*.json"):
         receipt = _read(path)
@@ -94,6 +100,11 @@ def _prior_numbering(job):
             proposal = _read(proposal_path)
             if proposal.get("job_id") != job.job_id or proposal.get("job_dir") != str(job.job_dir) or proposal.get("kind") != SCHEMA:
                 raise VisualConfirmationError("approved visual proposal belongs to another Job")
+            # A proposal from another planning scope is a separate numbering
+            # universe.  Scope-less historical proposals remain readable, but
+            # are intentionally not inherited by a newly scoped proposal.
+            if proposal.get("numbering_scope_id") != numbering_scope_id:
+                continue
             rows = proposal.get("rows", [])
             numbering = proposal.get("numbering")
             if numbering is not None:
@@ -318,6 +329,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     from . import state, visual_plan, motion_capabilities, startup, confirmed_content
     state.require_runnable(job, "visual_direction")
     director, treatment = _read(director_path), _read(treatment_path)
+    numbering_scope_id = _numbering_scope(treatment)
     visual_plan._validate_draft_envelope(director)
     context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
     confirmed_content.check_confirmed_content(job, director)
@@ -345,7 +357,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     if coverage["blocking_issues"]:
         raise VisualConfirmationError("time coverage: " + "; ".join(coverage["blocking_issues"])
             + "; return to the affected semantic list, add a distinct supported task, match only new items and assign again")
-    numbering = _prior_numbering(job)
+    numbering = _prior_numbering(job, numbering_scope_id)
     numbered_rows = number_visual_rows(rows, numbering)
     numbering = {**numbering, **{row["semantic_row_id"]: row["number"] for row in numbered_rows}}
     targets = {(r["segment_id"], r["component_id"]) for r in rows}
@@ -376,7 +388,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     proposal = {"schema_version": 1, "kind": SCHEMA, "source_id": source_id,
                 "job_id": job.job_id, "job_dir": str(job.job_dir), "revision": job.revision,
                 "inputs": files, "provider_config_sha256": config_sha,
-                "rows": rows, "semantic_summary": {k: semantic_plan[k] for k in ("overlay_count", "broll_count")},
+                "rows": rows, "numbering_scope_id": numbering_scope_id,
+                "semantic_summary": {k: semantic_plan[k] for k in ("overlay_count", "broll_count")},
                 "numbering": numbering, "generation_steps": steps,
                 "visual_review_policy": visual_review.POLICY_VERSION,
                 "query_bindings": _record(job.job_dir, job.job_dir / "manifests/generation-channels.json")

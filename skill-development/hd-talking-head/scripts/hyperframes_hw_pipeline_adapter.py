@@ -15,7 +15,7 @@ PROJECT = SKILL.parents[1]
 ENTRY = "scripts/render_hyperframes_hw_pipeline.cjs"
 SOURCE = PROJECT / "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html"
 GSAP = PROJECT / "参考项目/B-roll开源方案/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 
 def _sha(path: Path) -> str:

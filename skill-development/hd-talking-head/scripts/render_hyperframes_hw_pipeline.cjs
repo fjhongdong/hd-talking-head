@@ -31,13 +31,17 @@ function validateBrief(b) {
   const contrast = b.template_request?.semantic_family === 'dual_contrast';
   const units = contrast ? 2 : 3;
   check(Array.isArray(b.labels) && b.labels.length === units && b.labels.every(s =>
-    typeof s === 'string' && [...s].length >= 1 && [...s].length <= 6 && !/[\x00-\x1f\x7f]/u.test(s)),
+    typeof s === 'string' && [...s].length >= 1 && [...s].length <= 4 && !/[\x00-\x1f\x7f]/u.test(s)),
   'concise visible labels required');
+  // The native drawing sequence needs 0.45s to reveal, 0.35s to fade in,
+  // and at least 0.5s of stable readability on the final label.
+  const minLabelTailFrames = Math.ceil((0.45 + 0.35 + 0.5) * 24);
   check(Array.isArray(b.label_frames) && b.label_frames.length === units &&
     b.label_frames.every(Number.isInteger) && b.label_frames[0] >= 0 &&
     b.label_frames[1] - b.label_frames[0] >= 20 &&
     (contrast || b.label_frames[2] - b.label_frames[1] >= 20) &&
-    b.label_frames.at(-1) <= b.canvas.frames - 30, 'label_frames must fit the spoken sequence');
+    b.label_frames.at(-1) <= b.canvas.frames - minLabelTailFrames,
+  `label_frames must leave ${minLabelTailFrames} frames for the final label`);
   check(Array.isArray(b.word_anchors) && b.word_anchors.length === units &&
     b.word_anchors.every(anchor => anchor && Object.keys(anchor).sort().join('|') === 'index|text' &&
       Number.isInteger(anchor.index) && anchor.index >= 0 &&
@@ -87,7 +91,6 @@ async function main(args) {
     html = replaceOnce(html, '--hw-ink: #f4f2ec;', '--hw-ink: #242a2d;');
     html = replaceOnce(html, '--hw-accent: #ffb020;', '--hw-accent: #c79a36;');
     html = replaceOnce(html, 'text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);', 'text-shadow: none;');
-    html = replaceOnce(html, '      #hw-pl-svg path {', `      #hw-pl-root::before {\n        content: ""; position: absolute; left: 120px; top: 200px;\n        width: 1680px; height: 310px; border-radius: 34px;\n        background: #fff8e8;\n        box-shadow: 0 16px 60px rgba(199, 154, 54, 0.18);\n      }\n      #hw-pl-svg path {`);
     const duration = (b.canvas.frames / 24).toFixed(4).replace(/0+$/u, '').replace(/\.$/u, '');
     html = html.replaceAll('data-duration="7"', `data-duration="${duration}"`);
     html = replaceOnce(html, 'nodes: [{ label: "Idea" }, { label: "Record" }, { label: "Shine!" }]',
@@ -96,14 +99,16 @@ async function main(args) {
       // The native boxes draw unchanged; comparison must not imply a causal arrow.
       html = replaceOnce(html, 'if (i < n - 1) {', 'if (false) {');
     }
-    html = replaceOnce(html, 'y: 455, // top of the row; x centers automatically', 'y: 260, // portrait safe area');
+    html = replaceOnce(html, 'y: 455, // top of the row; x centers automatically', 'y: 100, // native crop safe area');
     // Use the native editable box/font parameters; Chinese labels need glyph width,
     // not the upstream short Latin demo's fixed 320px box.
     const glyphs = Math.max(...b.labels.map(label => [...label].length));
-    const maxBoxWidth = Math.floor((1680 - (b.labels.length - 1) * 190) / b.labels.length);
-    const fontSize = Math.min(70, Math.floor((maxBoxWidth - 64) / glyphs));
-    const boxWidth = Math.max(320, glyphs * fontSize + 64);
+    const maxBoxWidth = Math.floor((1008 - (b.labels.length - 1) * 60) / b.labels.length);
+    const fontSize = 64;
+    const boxWidth = 288;
+    check(boxWidth <= maxBoxWidth, 'native three-node layout exceeds its 1008px safe width');
     html = replaceOnce(html, 'boxW: 320,', `boxW: ${boxWidth},`);
+    html = replaceOnce(html, 'gap: 190,', 'gap: 60,');
     html = replaceOnce(html, 'fontSize: 56,', `fontSize: ${fontSize},`);
     html = replaceOnce(html, 'var DUR = 7;', `var DUR = ${duration};`);
     html = replaceOnce(html, 'var t = 0.3;', `var starts = ${JSON.stringify(b.label_frames.map(frame => frame / 24))};`);
@@ -124,7 +129,7 @@ async function main(args) {
     check(fs.existsSync(rendered) && fs.statSync(rendered).size > 0, 'HyperFrames produced no MOV');
     const converted = path.join(temp, 'portrait.mov');
     run(opt.ffmpeg, ['-v', 'error', '-y', '-i', rendered, '-an', '-vf',
-      'scale=1080:608:flags=lanczos,pad=1080:1920:0:0:color=black@0,format=argb',
+      'crop=1080:608:420:0,pad=1080:1920:0:0:color=black@0,format=argb',
       '-frames:v', String(b.canvas.frames), '-r', '24', '-c:v', 'qtrle', '-pix_fmt', 'argb', converted], process.env);
     await pipeline(fs.createReadStream(converted), fs.createWriteStream(opt.output));
     process.stdout.write(JSON.stringify({upstream: 'hyperframes-registry/hw-pipeline',

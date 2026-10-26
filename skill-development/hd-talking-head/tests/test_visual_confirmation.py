@@ -27,6 +27,7 @@ class VisualConfirmationTests(unittest.TestCase):
             "max_concurrency": 1, "generation_enabled": False})
         self.treatment = self.fixture.root / "treatment.json"
         artifacts.write_json_artifact(self.treatment, {
+            "numbering_scope_id": "scope-test",
             "semantic_lists": {"overlay": [], "broll": [{"row_id": "sem-broll-1", "start_word": 0,
                 "end_word": 1, "quote": "实际剪后口播", "semantic": "资料解释", "visual_task": "展示资料",
                 "components": [{"segment_id": "seg-001", "component_id": "component-1"}]}]},
@@ -65,6 +66,52 @@ class VisualConfirmationTests(unittest.TestCase):
         artifacts.write_json_artifact(self.treatment, treatment)
         with self.assertRaisesRegex(vc.VisualConfirmationError, "beat_sheet"):
             self.prepare()
+
+    def test_new_proposal_requires_explicit_numbering_scope(self):
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment.pop("numbering_scope_id")
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "numbering_scope_id"):
+            self.prepare()
+
+    def test_numbering_scope_starts_new_universe(self):
+        def approve(revision, scope, numbering):
+            root = self.job.job_dir / "07-visual-confirmation" / f"history-{revision}"
+            root.mkdir(parents=True, exist_ok=True)
+            proposal_path = root / "proposal.json"
+            proposal = {"job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
+                        "kind": vc.SCHEMA, "numbering_scope_id": scope,
+                        "rows": [{"row_id": key, "semantic_row_id": key}
+                                 for key in numbering], "numbering": numbering}
+            artifacts.write_json_artifact(proposal_path, proposal)
+            source = vc._record(self.job.job_dir, proposal_path)
+            receipt = {"source_schema": vc.SCHEMA, "job_id": self.job.job_id,
+                       "job_dir": str(self.job.job_dir), "stage": "visual_direction",
+                       "passed": True, "reviewed_by": "human",
+                       "approval_scope": "visual_plan_and_delivery", "revision": revision,
+                       "source": source}
+            artifacts.write_json_artifact(self.job.job_dir / "manifests" /
+                                          f"local-qa-visual_direction-r{revision}.json", receipt)
+
+        # Same scope inherits the sparse mapping, including a deleted number.
+        approve(1, "scope-target", {"semantic-keep": 3, "semantic-deleted": 7})
+        self.assertEqual(vc._prior_numbering(self.job, "scope-target"),
+                         {"semantic-keep": 3, "semantic-deleted": 7})
+        numbered = vc.number_visual_rows(
+            [{"row_id": "physical-new", "semantic_row_id": "semantic-new"}],
+            vc._prior_numbering(self.job, "scope-target"))
+        self.assertEqual(numbered[0]["number"], 8)
+
+        # A different scope is a new numbering universe, so the old 20 is ignored.
+        approve(2, "scope-other", {"semantic-old": 20})
+        self.assertEqual(vc._prior_numbering(self.job, "scope-new"), {})
+        self.assertEqual(vc.number_visual_rows(
+            [{"row_id": "physical-first", "semantic_row_id": "semantic-first"}],
+            vc._prior_numbering(self.job, "scope-new"))[0]["number"], 1)
+
+        # Historical scope-less approvals remain readable but never seed a new scope.
+        approve(3, None, {"semantic-legacy": 99})
+        self.assertEqual(vc._prior_numbering(self.job, "scope-new"), {})
 
     def test_missing_draft_version_blocks_before_proposal_or_generation(self):
         director = artifacts.read_json_artifact(self.fixture.brief)
@@ -270,10 +317,13 @@ class VisualConfirmationTests(unittest.TestCase):
                 state.revise(self.job, "visual_direction", "same content, technical preparation revised")
                 revised = artifacts.read_json_artifact(self.treatment)
                 revised["planning_notes"] = ["technical preparation checked; same generation content"]
+                revised["numbering_scope_id"] = "scope-renumbered-plan"
+                treatment["numbering_scope_id"] = revised["numbering_scope_id"]
                 artifacts.write_json_artifact(self.treatment, revised)
                 self.prepare(); self.confirm()
                 current = vc.validate_visual_authorization(self.job)
                 self.assertNotEqual(current["source"]["source_id"], previous_source)
+                self.assertEqual(current["source"]["numbering_scope_id"], "scope-renumbered-plan")
                 original_confirmation = current["artifact"]
                 resumed_actions = vc.generation_actions(self.job)
                 self.assertEqual(resumed_actions[0]["status"], "input_upload_pending")
