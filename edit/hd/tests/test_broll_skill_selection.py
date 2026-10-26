@@ -13,6 +13,34 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
+    def complete_overlay_cache(self, draft, treatment):
+        from edit.hd.tools import motion_match_cache, overlay_selection
+        for segment in draft["segments"]:
+            segment.setdefault("visual_intent", {"statement": "并列说明"})
+            for component in segment["visual_strategy"]["components"]:
+                component["layer_role"] = "annotation"
+        treatment = motion_match_cache.match_once(ROOT, draft, treatment)
+        cached = motion_match_cache.validate_matches(ROOT, draft, treatment)
+        beats = []
+        for segment in draft["segments"]:
+            for component in segment["visual_strategy"]["components"]:
+                sid, cid = segment["segment_id"], component["component_id"]
+                chosen = "overlay:" + overlay_selection._route(segment["bindings"][cid])
+                item = cached[(sid, cid)]
+                beats.append({"segment_id": sid, "component_id": cid, "semantic_row_id": item["row_id"],
+                    "start": segment["start"], "end": segment["end"], "transcript": item["semantic"]["quote"],
+                    "semantic_goal": "explain", "required_change": component["brief"],
+                    "intent_statement": segment["visual_intent"]["statement"], "component_brief": component["brief"],
+                    "binding_snapshot": copy.deepcopy(segment["bindings"][cid]),
+                    "candidates": [{"candidate_id": match["candidate"]["candidate_id"],
+                        "fit": "preferred" if match["candidate"]["candidate_id"] == chosen else
+                            "equivalent" if match["candidate"]["status"] == "supported" else "needs_adapter",
+                        "reason": "测试中的完整原生候选评审", "visual_pattern": "parallel-list"}
+                        for match in item["matches"]]})
+        treatment["skill_selection"]["overlay_beats"] = beats
+        treatment["skill_selection"] = selection.assign_skills(ROOT, treatment["skill_selection"])
+        return treatment
+
     def test_cited_semantics_and_native_checks_offline_smoke(self):
         """Synthetic text inputs only: no existing Job, motion or video is used."""
         from edit.hd.tools import motion_capabilities as motion
@@ -57,7 +85,8 @@ class BrollSkillSelectionTest(unittest.TestCase):
             binding = {key: row[key] for key in ("dependency_id", "entrypoint", "producer_version", "template_id")}
             binding["brief_sha256"] = digest
             segment = {"segment_id": "seg-smoke", "start": 2, "end": 5,
-                "visual_strategy": {"mode": "none", "composition": {"family": "aroll_with_overlay"}},
+                "visual_strategy": {"mode": "none", "composition": {"family": "aroll_with_overlay"},
+                                     "components": [{"component_id": "scene", "kind": "code_generated", "brief": "并列说明"}]},
                 "bindings": {"scene": binding}}
             draft = {"segments": [segment]}
             assessment = {"segment_id": "seg-smoke", "component_id": "scene",
@@ -68,13 +97,15 @@ class BrollSkillSelectionTest(unittest.TestCase):
                     {"start_word": 0, "end_word": 1, "quote": words[0]["text"], "basis": "recap"}],
                 "content_refs": [{"path": brief["entry"]["job_path"], "sha256": brief["entry"]["sha256"],
                     "quote": "本地执行 · 无需云API · 先用手头工具"}]}
-            treatment = {"skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
+            treatment = {"semantic_lists": {"overlay": [{"row_id": "row-smoke", "start_word": 0, "end_word": 3, "quote": "模型在本地执行。无需云API，先用手头工具。之后再判断。", "semantic": "本地执行", "visual_task": "并列说明", "components": [{"segment_id": "seg-smoke", "component_id": "scene"}]}], "broll": []}, "motion_queries": [{"segment_id": "seg-smoke", "component_id": "scene", "tags": ["并列", "要点"]}], "skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
                 "history_note": "独立文字夹具，不用于制作或批准视频"},
                 "overlay_alignment": [{"segment_id": "seg-smoke", "component_id": "scene", "brief_path": relative}],
                 "overlay_selection": [{"segment_id": "seg-smoke", "component_id": "scene",
                     "intent_relation": "parallel", "native_route": "grid-card-assemble",
                     "visible_action": "staggered_card_reveal", "visual_structure": "grid-list",
                     "selection_reason": "此理由不作为证据"}], "semantic_assessments": [assessment]}
+            treatment["semantic_lists"]["overlay"][0].update(start_word=1, end_word=2, quote=words[1]["text"])
+            treatment = self.complete_overlay_cache(draft, treatment)
             report = motion.check_offline_plan(ROOT, draft, treatment, job_dir=root)
             self.assertEqual(report["status"], "pass", report)
             self.assertFalse(report["checks"][0]["retrieval"]["has_motion_basis"])
@@ -103,11 +134,9 @@ class BrollSkillSelectionTest(unittest.TestCase):
             # A tag hit alone still cannot produce semantic approval.
             altered = copy.deepcopy(treatment)
             altered["semantic_assessments"] = []
-            with patch.object(motion, "_approved_speech", return_value=[
-                    {"text": "并列要点累积", "start": 2, "end": 4}]):
-                report = motion.check_offline_plan(ROOT, draft, altered, job_dir=root)
-                self.assertTrue(report["checks"][0]["retrieval"]["has_motion_basis"])
-                self.assertEqual(report["status"], "needs_review")
+            report = motion.check_offline_plan(ROOT, draft, altered, job_dir=root)
+            self.assertEqual(report["checks"][0]["query_tags"], ["并列", "要点"])
+            self.assertEqual(report["status"], "needs_review")
             # The managed publication seam consumes the same check before freezing.
             path = root / "treatment.json"
             write("treatment.json", treatment)
@@ -132,6 +161,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
                    "numeric_values": [], "numeric_scale": "not_applicable"}
         adu = {"schema_version": 1, "source_binding": source, "template_request": request,
             "composition": {"id": "smoke", "width": 1080, "height": 1920, "fps": 24, "frames": 144},
+            "typography": {"title_px": 64, "body_px": 36},
             "title": "做法比较", "left": {"title": "旧", "items": ["手动反复"]},
             "right": {"title": "新", "items": ["拆分步骤"]},
             "left_frame": 0, "right_frame": 24, "strike_frame": 72, "stamp": "拆开"}
@@ -234,14 +264,16 @@ class BrollSkillSelectionTest(unittest.TestCase):
         pin = next(row for row in catalog if row["candidate_id"] == "overlay:pin-board")
         binding = {k: pin[k] for k in ("dependency_id", "entrypoint", "producer_version", "template_id")}
         segment = {"segment_id": "overlay-case", "start": 0, "end": 5,
-            "visual_strategy": {"mode": "none", "composition": {"family": "aroll_with_overlay"}},
+            "visual_strategy": {"mode": "none", "composition": {"family": "aroll_with_overlay"},
+                                 "components": [{"component_id": "scene", "kind": "code_generated", "brief": "并列说明"}]},
             "bindings": {"scene": binding}}
         draft = {"segments": [segment]}
-        treatment = {"skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
+        treatment = {"semantic_lists": {"overlay": [{"row_id": "row-overlay", "start_word": 0, "end_word": 1, "quote": "并列要点", "semantic": "并列", "visual_task": "标注", "components": [{"segment_id": "overlay-case", "component_id": "scene"}]}], "broll": []}, "motion_queries": [{"segment_id": "overlay-case", "component_id": "scene", "tags": ["并列", "要点"]}], "skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
             "history_note": "仅离线结构样本，无媒体执行"}, "overlay_selection": [{
             "segment_id": "overlay-case", "component_id": "scene", "intent_relation": "parallel",
             "native_route": "pin-board", "visible_action": "cumulative_pin_drop",
             "visual_structure": "pin-board", "selection_reason": "海边日落"}]}
+        treatment = self.complete_overlay_cache(draft, treatment)
         report = motion.check_offline_plan(ROOT, draft, treatment)
         treatment["overlay_selection"][0]["selection_reason"] = "并列 要点 累积 pin-board"
         self.assertEqual(report, motion.check_offline_plan(ROOT, draft, treatment))
@@ -259,7 +291,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         catalog = motion.load_catalog(ROOT)
         by_id = {row["candidate_id"]: row for row in catalog}
         self.assertEqual(len([cid for cid in by_id if cid.startswith("hd-talking-head-talkcraft:")]), 108)
-        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 7)
+        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 8)
         self.assertEqual(by_id["history:local-canonical/process-relations"]["status"], "excluded")
         self.assertEqual(by_id["unconnected:hyperframes/strikethrough-replace"]["status"], "needs_adapter")
         overlays = motion.search_capabilities(ROOT, "并列 要点 累积", use="aroll_overlay", catalog=catalog)
@@ -325,12 +357,15 @@ class BrollSkillSelectionTest(unittest.TestCase):
             binding = ({"provider": "lovart", "model": "kling-o1", "prompt_sha256": "a" * 64}
                        if candidate["role"] == "design" else
                        {k: candidate[k] for k in ("dependency_id", "entrypoint", "template_id", "producer_version")})
+            if candidate["role"] == "design":
+                binding.update(execution_mode="reuse_completed_generated_media", generation_id="generation-1", sha256="c" * 64)
             binding["brief_sha256"] = "b" * 64
+            binding["source_dimensions"] = {"width": 1080, "height": 1920, "fps": 24}
             beat.update(intent_statement=beat["semantic_goal"], component_brief=beat["required_change"],
                         binding_snapshot=copy.deepcopy(binding))
             draft["segments"].append({"segment_id": beat["segment_id"], "start": beat["start"], "end": beat["end"],
                                       "visual_intent": {"statement": beat["intent_statement"]},
-                                      "visual_strategy": {"mode": "single", "components": [{"component_id": "scene",
+                                      "visual_strategy": {"mode": "single", "composition": {"family": "single_full_frame"}, "components": [{"component_id": "scene",
                                           "kind": "ai_generated" if candidate["role"] == "design" else "code_generated",
                                           "brief": beat["component_brief"]}]}, "bindings": {"scene": binding}})
         treatment = {"skill_selection": assigned}
@@ -338,7 +373,8 @@ class BrollSkillSelectionTest(unittest.TestCase):
         self.assertEqual(report["status"], "pass")
         frozen = copy.deepcopy(draft["segments"])
         for segment in frozen:
-            segment["shot_recipe"] = {"components": [{"component_id": "scene", **segment["bindings"]["scene"]}]}
+            segment["shot_recipe"] = {"components": [{"component_id": "scene", **segment["bindings"]["scene"],
+                "artifact_contract": {"width": 1080, "height": 1920, "fps": 24}}]}
         visual_plan._check_selected_recipe_bindings(draft, frozen, report)
         frozen[0]["shot_recipe"]["components"][0]["brief_sha256"] = "c" * 64
         with self.assertRaisesRegex(visual_plan.VisualPlanError, "compiled recipe changed"):
@@ -424,34 +460,49 @@ class BrollSkillSelectionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not discovered"):
             selection.assign_skills(ROOT, source)
 
-    def test_fixed_overlay_context_is_strict_and_changes_same_tier_choice(self):
-        pool = [
-            {"candidate_id": "paper", "skill_id": "paper-collage-hyperframes", "dependency_id": "paper-collage-hyperframes", "template_id": "paper-template", "role": "native", "status": "supported", "entrypoint": "e", "producer_version": "1", "limitations": []},
-            {"candidate_id": "hf", "skill_id": "hyperframes", "dependency_id": "hyperframes", "template_id": "hf-template", "role": "native", "status": "supported", "entrypoint": "e", "producer_version": "1", "limitations": []},
-        ]
-        reviews = {row["skill_id"]: {"fit": "preferred", "reason": "同档"} for row in pool}
-        source = {"schema_version": 1, "beats": [{"segment_id": "b", "component_id": "scene", "start": 0, "end": 2, "transcript": "测", "semantic_goal": "测", "required_change": "测", "intent_statement": "测", "component_brief": "测", "binding_snapshot": {"dependency_id": "paper-collage-hyperframes", "entrypoint": "e", "template_id": "paper-template", "producer_version": "1"}, "skill_reviews": reviews, "candidates": [{"candidate_id": row["candidate_id"], "fit": "preferred", "reason": "同档", "visual_pattern": "p"} for row in pool]}], "fixed_context": [{"segment_id": "o", "component_id": "overlay", "start": 2, "end": 3, "skill_id": "hyperframes", "template_id": "hf-template", "source_ref": "brief-hash", "visual_pattern": "overlay"}], "history_note": "离线"}
-        draft = {"segments": [{"segment_id": "b", "start": 0, "end": 2, "visual_intent": {"statement": "测"}, "visual_strategy": {"mode": "single", "components": [{"component_id": "scene", "kind": "code_generated", "brief": "测"}]}, "bindings": {"scene": {"dependency_id": "paper-collage-hyperframes", "entrypoint": "e", "template_id": "paper-template", "producer_version": "1"}}}, {"segment_id": "o", "start": 2, "end": 3, "visual_strategy": {"mode": "none", "components": [{"component_id": "overlay", "kind": "code_generated"}]}, "bindings": {"overlay": {"dependency_id": "hyperframes-native-adaptation", "template_id": "hf-template", "brief_sha256": "brief-hash"}}}]}
-        treatment = {"skill_selection": source, "overlay_selection": [{"segment_id": "o", "component_id": "overlay", "visual_structure": "overlay"}]}
-        with patch.object(selection, "discover_candidates", return_value=pool):
+    def test_native_overlays_are_adjustable_and_not_fixed_context(self):
+        def candidate(cid, skill, template, role="native"):
+            return {"candidate_id": cid, "skill_id": skill, "dependency_id": skill,
+                    "template_id": template, "role": role, "status": "supported",
+                    "entrypoint": "native-entry", "producer_version": "1", "limitations": []}
+        native = [candidate("a", "hyperframes", "native-a"), candidate("b", "paper", "native-b")]
+        overlay = candidate("overlay:test", "hyperframes", "native-overlay", "aroll_overlay")
+        def beat(sid, cid, choices, start):
+            binding = {key: choices[0][key] for key in ("dependency_id", "entrypoint", "template_id", "producer_version")}
+            return {"segment_id": sid, "component_id": cid, "start": start, "end": start + 2,
+                    "transcript": "解释", "semantic_goal": "解释", "required_change": "展示",
+                    "intent_statement": "解释", "component_brief": "展示", "binding_snapshot": binding,
+                    "skill_reviews": {row["skill_id"]: {"fit": "equivalent", "reason": "已审阅"} for row in native},
+                    "candidates": [{"candidate_id": row["candidate_id"], "fit": "equivalent",
+                                    "reason": "已审阅", "visual_pattern": "native"} for row in choices]}
+        base = beat("b", "scene", [native[1], native[0]], 0)
+        annotation = beat("o", "annotation", [overlay], 2)
+        source = {"schema_version": 1, "beats": [base], "overlay_beats": [annotation],
+                  "fixed_context": [], "history_note": "独立联合分配测试"}
+        draft = {"segments": []}
+        for row, family in ((base, "single_full_frame"), (annotation, "aroll_with_overlay")):
+            draft["segments"].append({"segment_id": row["segment_id"], "start": row["start"], "end": row["end"],
+                "visual_intent": {"statement": "解释"}, "visual_strategy": {"mode": "single" if family == "single_full_frame" else "none",
+                    "composition": {"family": family}, "components": [{"component_id": row["component_id"],
+                        "kind": "code_generated", "brief": "展示"}]},
+                "bindings": {row["component_id"]: copy.deepcopy(row["binding_snapshot"])}})
+        with patch.object(selection, "discover_candidates", return_value=native), \
+             patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=[overlay]):
             assigned = selection.assign_skills(ROOT, source)
-            self.assertEqual(assigned["assignments"][0]["candidate_id"], "paper")
-            source["assignments"] = assigned["assignments"]
+            self.assertEqual(assigned["assignments"][0]["candidate_id"], "b")
+            self.assertEqual(assigned["overlay_assignments"][0]["candidate_id"], "overlay:test")
+            treatment = {"skill_selection": assigned}
             selection.validate_selection(ROOT, draft, treatment)
-            missing_overlay = copy.deepcopy(treatment)
-            missing_overlay["overlay_selection"] = []
-            with self.assertRaisesRegex(ValueError, "missing binding or overlay selection"):
-                selection.validate_selection(ROOT, draft, missing_overlay)
-            missing_binding = copy.deepcopy(treatment)
-            missing_draft = copy.deepcopy(draft)
-            del missing_draft["segments"][1]["bindings"]["overlay"]
-            with self.assertRaisesRegex(ValueError, "missing binding or overlay selection"):
-                selection.validate_selection(ROOT, missing_draft, missing_binding)
-            for field, value in (("source_ref", "forged"), ("template_id", "forged"), ("skill_id", "forged")):
-                altered = copy.deepcopy(treatment); altered["skill_selection"]["fixed_context"][0][field] = value
-                with self.assertRaises(ValueError): selection.validate_selection(ROOT, draft, altered)
-            altered = copy.deepcopy(treatment); altered["skill_selection"]["fixed_context"] = []
-            with self.assertRaises(ValueError): selection.validate_selection(ROOT, draft, altered)
+            for mutation in ("missing", "fixed"):
+                altered = copy.deepcopy(treatment)
+                if mutation == "missing":
+                    altered["skill_selection"]["overlay_beats"] = []
+                else:
+                    altered["skill_selection"]["fixed_context"] = [{"segment_id": "o", "component_id": "annotation",
+                        "start": 2, "end": 4, "skill_id": "hyperframes", "template_id": "native-overlay",
+                        "source_ref": "not-an-independent-fixed-material", "visual_pattern": "native"}]
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    selection.validate_selection(ROOT, draft, altered)
 
     def test_semantic_image_evidence_requires_current_bound_picture(self):
         from PIL import Image
@@ -523,7 +574,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
             self.assertEqual([a["candidate_id"] for a in result["assignments"]], ["a", "c"])
             preferred = copy.deepcopy(source)
             preferred["beats"][1]["candidates"][0]["fit"] = "preferred"
-            self.assertEqual(selection.assign_skills(ROOT, preferred)["assignments"][1]["candidate_id"], "b")
+            self.assertEqual(selection.assign_skills(ROOT, preferred)["assignments"][1]["candidate_id"], "c")
             unsupported = copy.deepcopy(pool)
             unsupported[2]["status"] = "needs_adapter"
             with patch.object(selection, "discover_candidates", return_value=unsupported):

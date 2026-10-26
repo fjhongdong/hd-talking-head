@@ -118,13 +118,16 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         state.approve(self.job, "content_analysis")
         self._approve_file("cover_direction", "03-cover-direction/cover-direction.json", b"{}\n")
         self._approve_file("cover", "04-cover/cover-report.json", b"{}\n")
-        self._approve_file("speech_cleanup", "05-speech-cleanup/word-transcript.json", b"{}\n")
+        self._approve_file("speech_cleanup", "05-speech-cleanup/word-transcript.json",
+            json.dumps({"version": 1, "words": [{"text": "Approved source evidence",
+                       "start": 0.0, "end": 3.0}]}).encode())
         edit_dir = self.job.job_dir / "06-edit-structure"
         edit_plan = edit_dir / "edit-plan.json"
         timeline = edit_dir / "timeline-map.json"
         edited = edit_dir / "edited-aroll.mp4"
         contract_artifacts.write_json_artifact(edit_plan, {"canvas": {"width": 1080, "height": 1920, "fps": 24}})
-        contract_artifacts.write_json_artifact(timeline, {"output_duration": 3.0})
+        contract_artifacts.write_json_artifact(timeline, {"output_duration": 3.0, "segments": [
+            {"source_start": 0.0, "source_end": 3.0, "timeline_start": 0.0, "timeline_end": 3.0}]})
         edited.write_bytes(b"edited-aroll")
         state.mark_ready(self.job, "edit_structure", (edit_plan, timeline, edited))
         state.approve(self.job, "edit_structure")
@@ -256,20 +259,16 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
             )
         compiler.assert_not_called()
 
-    def test_paper_collage_compiles_as_opaque_video(self) -> None:
+    def test_paper_collage_requires_a_real_native_binding(self) -> None:
         segment = draft_segment(("code_generated",))
         segment["bindings"]["component-1"]["dependency_id"] = "paper-collage-ad"
         segment["bindings"]["component-1"]["primary_renderer"] = "PaperCollage"
         self._write_brief(segment)
 
-        plan_path = visual_plan.prepare_visual_direction(
-            self.job, self.brief, self.asset_root
-        )
-        plan = contract_artifacts.read_json_artifact(plan_path)
-        self.assertIs(
-            plan["segments"][0]["shot_recipe"]["components"][0]["artifact_contract"]["alpha"],
-            False,
-        )
+        with self.assertRaisesRegex(visual_plan.VisualPlanError, "native scene or native-component binding"):
+            visual_plan.prepare_visual_direction(self.job, self.brief, self.asset_root)
+        self.assertEqual(self.job.stages["visual_direction"]["status"], "pending")
+        self.assertFalse((self.job.job_dir / "07-visual-direction/visual-plan.json").exists())
 
     def test_rejects_segment_id_that_renderer_cannot_render(self) -> None:
         segment = draft_segment((), segment_id="broll-old-process")
@@ -425,9 +424,42 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
     def test_declares_exact_local_material_segment_reference(self) -> None:
         self._install_local_material_index()
         self._write_brief(draft_segment(("local_material",)))
-
+        segment = contract_artifacts.read_json_artifact(self.brief)["segments"][0]
+        contract_artifacts.write_json_artifact(self.job.job_dir / "manifests/confirmed-content.json", {
+            "schema_version": 1, "job_id": self.job.job_id,
+            "source_words": [{"index": 0, "text": "Approved source evidence"}],
+            "visuals": [{"component_id": "component-1", "composition_family": "single_full_frame",
+                         "visible_text": [], "binding": segment["bindings"]["component-1"]}]})
+        from edit.hd.tools import motion_match_cache
+        director = contract_artifacts.read_json_artifact(self.brief)
+        treatment = {"semantic_lists": {"overlay": [], "broll": [{"row_id": "local-evidence",
+            "start_word": 0, "end_word": 1, "quote": "Approved source evidence",
+            "semantic": "说明已有本地资料", "visual_task": "展示原始资料",
+            "components": [{"segment_id": "seg-001", "component_id": "component-1"}]}]},
+            "motion_queries": [{"segment_id": "seg-001", "component_id": "component-1", "tags": ["真实资料"]}],
+            "skill_selection": {"schema_version": 1, "beats": [], "assignments": [], "overlay_beats": [],
+                "overlay_assignments": [], "history_note": "本地资料引用测试",
+                "fixed_context": [{"segment_id": "seg-001", "component_id": "component-1",
+                    "start": 0.0, "end": 3.0, "skill_id": "local_material", "source_ref": "asset-1",
+                    "visual_pattern": "source-evidence"}]}}
+        treatment = motion_match_cache.match_once(Path(__file__).resolve().parents[3], director, treatment)
+        treatment["beat_sheet"] = [{"start_word": 0, "end_word": 1, "quote": "Approved source evidence",
+            "decision": "broll", "visual": "展示本地资料",
+            "components": [{"segment_id": "seg-001", "component_id": "component-1"}]}]
+        treatment["motion_readability"] = [{"segment_id": "seg-001", "component_id": "component-1",
+            "targets": [], "no_critical_text_reason": "metadata fixture has no authored visual labels"}]
+        treatment_path = self.job.job_dir / "native-inputs/treatment.json"
+        treatment_path.parent.mkdir(parents=True, exist_ok=True)
+        contract_artifacts.write_json_artifact(treatment_path, treatment)
+        from edit.hd.tools import visual_confirmation
+        visual_confirmation.prepare_visual_confirmation(self.job, self.brief, treatment_path)
+        visual_confirmation.save_user_confirmation(self.job, {"job_id": self.job.job_id,
+            "job_dir": str(self.job.job_dir), "stage": "visual_direction", "revision": self.job.revision,
+            "artifacts": copy.deepcopy(self.job.stages["visual_direction"]["artifacts"]),
+            "passed": True, "note": "isolated material-reference fixture",
+            "user_confirmation": "synthetic confirmation of this exact local-material plan"})
         visual_plan.prepare_visual_direction(
-            self.job, self.brief, self.asset_root
+            self.job, self.brief, self.asset_root, treatment_path=treatment_path
         )
 
         receipt = material_usage.load_current_receipt(
@@ -529,7 +561,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         )
 
     def test_compiles_none_and_hybrid_without_kind_quotas(self) -> None:
-        for kinds in ((), ("official_material", "code_generated", "ai_generated")):
+        for kinds in ((), ("official_material", "external_stock", "ai_generated")):
             with self.subTest(kinds=kinds):
                 if self.job.stages["visual_direction"]["status"] != "pending":
                     state.revise(self.job, "visual_direction", "test next composition")
@@ -672,10 +704,9 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
                     list(self.job.job_dir.glob(".07-visual-direction.*")), []
                 )
 
-    def test_freezes_material_snapshots_and_generated_bindings_before_compile(self) -> None:
-        self._install_local_material_index()
+    def test_segment_freezes_all_bindings_before_native_rejection(self) -> None:
         kinds = ("local_material", "official_material", "external_stock", "code_generated", "ai_generated")
-        self._write_brief(draft_segment(kinds))
+        segment = draft_segment(kinds)
         events: list[tuple[str, str]] = []
 
         def freeze_candidate(kind: str, values: list[dict[str, object]]) -> dict[str, object]:
@@ -690,14 +721,15 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
             events.append(("compile", str(strategy["mode"])))
             return visual_plan._canonical_compile_strategy(strategy, context)
 
-        visual_plan.prepare_visual_direction(
-            self.job,
-            self.brief,
-            self.asset_root,
-            candidate_freezers={kind: freeze_candidate for kind in kinds[:3]},
-            binding_freezers={kind: freeze_binding for kind in kinds},
-            strategy_compiler=compile_strategy,
-        )
+        # Test the actual per-segment freeze seam. New full publication also
+        # requires the independently tested semantic/cache/native qualification.
+        with self.assertRaisesRegex(visual_plan.VisualPlanError, "native scene or native-component binding"):
+            visual_plan._freeze_and_compile_segment(
+                segment,
+                candidate_freezers={kind: freeze_candidate for kind in kinds[:3]},
+                binding_freezers={kind: freeze_binding for kind in kinds},
+                strategy_compiler=compile_strategy,
+            )
         self.assertEqual(events, [
             ("candidate", "local_material"), ("binding", "local_material"),
             ("candidate", "official_material"), ("binding", "official_material"),

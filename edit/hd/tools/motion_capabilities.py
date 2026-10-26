@@ -28,6 +28,7 @@ _OVERLAY_MODULES = {
     "hw-pipeline": "hyperframes_hw_pipeline_adapter",
     "pin-board": "overlay_studio_adapter",
     "huashu-stat": "huashu_stat_adapter",
+    "callout-pin": "motion_graphics_adapter",
 }
 
 
@@ -121,14 +122,16 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
         entry = values["ENTRY"]
         if not (skill / entry).is_file():
             raise ValueError(f"Motion overlay entry is missing: {route}")
-        rows.append({"candidate_id": "overlay:" + route,
+        candidate_id = "overlay:" + route
+        rows.append({"candidate_id": candidate_id,
                      "skill_id": values.get("DEPENDENCY_ID", "hyperframes"),
                      "dependency_id": values.get("DEPENDENCY_ID", "hyperframes"),
                      "entrypoint": entry, "producer_version": values["VERSION"],
                      "template_id": template, "source_route": route,
                      "role": "aroll_overlay", "status": "supported",
                      "adapter_module": _OVERLAY_MODULES[route]})
-    return describe_candidates(project, rows, use="aroll_overlay", profiles=profiles)
+    return [{**row, "limitations": row["capability"]["limitations"]}
+            for row in describe_candidates(project, rows, use="aroll_overlay", profiles=profiles)]
 
 
 def validate_overlay_capability(route: str, binding: Mapping, *, registered: Mapping | None = None) -> dict:
@@ -382,6 +385,12 @@ def _brief_overlay_route(brief: Mapping) -> str | None:
     route = brief.get("upstream_route")
     if isinstance(route, str):
         return route.removeprefix("hyperframes/")
+    if (brief.get("template_request", {}).get("semantic_family") == "callout_pin"
+            and isinstance(brief.get("data"), dict)
+            and set(brief["data"]) == {"target_desc", "label", "direction"}
+            and brief.get("composition", {}).get("alpha") is True
+            and "source_binding" in brief and "entry" in brief):
+        return "callout-pin"
     cards = brief.get("doc", {}).get("cards", [])
     if len(cards) == 1 and cards[0].get("kind") == "pin-board":
         return "pin-board"
@@ -627,8 +636,16 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "motion_queries", "reason": "every visual row needs explicit semantic retrieval tags"}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}
+    from . import motion_match_cache, semantic_visual_plan
+    try:
+        cached = motion_match_cache.validate_reviews(project_root, draft, treatment)
+    except (ValueError, KeyError, TypeError) as error:
+        return {"status": "fail", "scope": "offline_orchestration_only",
+                "failures": [{"check": "cached_semantic_candidates", "reason": str(error)}],
+                "checks": [], "not_verified": [], "source_plans_modified": False}
     broll = broll_skill_selection.validate_selection(project_root, draft, treatment)
     speech = _approved_speech(job_dir)
+    semantic_visual_plan.validate_semantic_lists(treatment, draft, speech)
     spoken_segments = {
         segment["segment_id"]: "" if speech is None else "".join(str(word["text"]) for word in speech
             if word["start"] < segment["end"] and word["end"] > segment["start"])
@@ -683,8 +700,8 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                                  "check": "motion_query", "reason": "retrieval tags are missing or invalid"})
                 query_tags, matched_dimensions = [], {}
             else:
-                matches = search_capabilities(project_root, " ".join(query_tags), use=use, catalog=catalog)
-                matched_dimensions = {item["candidate_id"]: item["matched_dimensions"] for item in matches}
+                matches = cached[key]["matches"]
+                matched_dimensions = {item["candidate"]["candidate_id"]: item["evidence"]["matched_dimensions"] for item in matches}
                 if cid not in matched_dimensions:
                     failures.append({"segment_id": key[0], "component_id": component,
                                      "check": "motion_retrieval", "reason": "selected template is not matched by declared tags"})

@@ -27,13 +27,25 @@ class VisualConfirmationTests(unittest.TestCase):
             "max_concurrency": 1, "generation_enabled": False})
         self.treatment = self.fixture.root / "treatment.json"
         artifacts.write_json_artifact(self.treatment, {
+            "semantic_lists": {"overlay": [], "broll": [{"row_id": "sem-broll-1", "start_word": 0,
+                "end_word": 1, "quote": "实际剪后口播", "semantic": "资料解释", "visual_task": "展示资料",
+                "components": [{"segment_id": "seg-001", "component_id": "component-1"}]}]},
+            "beat_sheet": [{"start_word": 0, "end_word": 1, "quote": "实际剪后口播",
+                            "decision": "broll", "visual": "资料画面承接口播",
+                            "components": [{"segment_id": "seg-001", "component_id": "component-1"}],
+                            "reason": "用具体资料画面解释这句口播"}],
             "motion_queries": [{"segment_id": "seg-001", "component_id": "component-1",
                                 "tags": ["approved visual explanation"]}], "overlay_selection": [],
             "skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
                 "fixed_context": [{"segment_id": "seg-001", "component_id": "component-1",
-                                   "visual_pattern": "existing material", "source_ref": "asset-1", "skill_id": "stock",
+                                   "visual_pattern": "existing material", "source_ref": "asset-1", "skill_id": "Example Stock",
                                    "start": 0.0, "end": 3.0}],
                 "recent_context": [], "history_note": "synthetic fixture"}})
+        from edit.hd.tools import motion_match_cache
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        treatment = artifacts.read_json_artifact(self.treatment)
+        artifacts.write_json_artifact(self.treatment,
+            motion_match_cache.match_once(_env.PROJECT, director, treatment))
 
     def prepare(self):
         with mock.patch("edit.hd.tools.motion_capabilities._approved_speech",
@@ -46,6 +58,70 @@ class VisualConfirmationTests(unittest.TestCase):
         review.update(passed=True, note="synthetic host inspected the proposed content",
                       user_confirmation="synthetic approval of this exact complete list")
         return run_stage._review(self.job, "visual_direction", review)
+
+    def test_new_proposal_requires_complete_beat_sheet(self):
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment.pop("beat_sheet")
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "beat_sheet"):
+            self.prepare()
+
+    def test_beat_sheet_rejects_gap_or_stale_quote(self):
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["beat_sheet"][0]["quote"] = "过期口播"
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "quote"):
+            self.prepare()
+
+    def test_beat_sheet_accepts_actual_full_frame_strategy(self):
+        director = {"segments": [{"start": 0, "end": 3,
+            "visual_strategy": {"mode": "none", "components": [],
+                "composition": {"family": "no_broll", "presenter_mode": "full_frame"}}}]}
+        treatment = {"beat_sheet": [{"start_word": 0, "end_word": 1,
+            "quote": "开场", "decision": "aroll", "visual": "真人开场称呼",
+            "components": [], "reason": "保留真人视线和称呼，建立交流"}]}
+        speech = [{"text": "开场", "start": 0, "end": 2.5}]
+        vc._validate_beat_sheet(treatment, director, speech)
+        director["segments"][0]["visual_strategy"]["mode"] = "single"
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "full-frame"):
+            vc._validate_beat_sheet(treatment, director, speech)
+
+    def test_beat_sheet_allows_continuous_parallel_components(self):
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        director["segments"][0]["visual_strategy"]["components"].append(
+            {"component_id": "component-2", "kind": "external_stock", "layer_role": "base"})
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["beat_sheet"][0]["components"].append(
+            {"segment_id": "seg-001", "component_id": "component-2"})
+        treatment["beat_sheet"][0]["merge_reason"] = "两个并列画面共同承接同一段连续动作"
+        vc._validate_beat_sheet(treatment, director,
+                                [{"text": "实际剪后口播", "start": 0.0, "end": 3.0}])
+
+    def test_reused_component_requires_merge_reason_on_each_beat(self):
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["beat_sheet"] = [
+            {"start_word": 0, "end_word": 1, "quote": "实际", "decision": "broll",
+             "visual": "连续资料", "components": [{"segment_id": "seg-001", "component_id": "component-1"}]},
+            {"start_word": 1, "end_word": 2, "quote": "剪后口播", "decision": "broll",
+             "visual": "连续资料", "components": [{"segment_id": "seg-001", "component_id": "component-1"}],
+             "merge_reason": "同一连续资料画面覆盖后半句"}]
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "reused"):
+            vc._validate_beat_sheet(treatment, director,
+                                    [{"text": "实际", "start": 0.0, "end": 1.0},
+                                     {"text": "剪后口播", "start": 1.0, "end": 3.0}])
+        treatment["beat_sheet"][0]["merge_reason"] = "同一连续资料画面覆盖前半句"
+        vc._validate_beat_sheet(treatment, director,
+                                [{"text": "实际", "start": 0.0, "end": 1.0},
+                                 {"text": "剪后口播", "start": 1.0, "end": 3.0}])
+
+    def test_beat_sheet_rejects_unknown_component_and_uncovered_time(self):
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["beat_sheet"][0]["components"][0]["component_id"] = "missing"
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "unknown"):
+            vc._validate_beat_sheet(treatment, director,
+                                    [{"text": "实际剪后口播", "start": 0.0, "end": 3.0}])
 
     def test_proposal_precedes_compile_and_one_confirmation_completes_plan(self):
         proposal = self.prepare()
@@ -71,6 +147,30 @@ class VisualConfirmationTests(unittest.TestCase):
         changed["segments"][0]["visual_intent"]["statement"] = "unapproved change"
         with self.assertRaises(vc.VisualConfirmationError):
             vc.validate_realization_draft(final, changed, artifacts.read_json_artifact(self.treatment))
+
+    def test_time_coverage_failure_returns_to_semantics_before_publication(self):
+        from edit.hd.tools import motion_match_cache
+        stock = fixture_api.draft_segment(("external_stock",), end=1.0)
+        presenter = fixture_api.draft_segment((), segment_id="seg-002", start=1.0, end=3.0)
+        director = {"schema_version": 3, "segments": [stock, presenter]}
+        from edit.hd.tools import avatar_profile
+        director["segments"] = avatar_profile.plan_avatar_policy(director["segments"])["segments"]
+        artifacts.write_json_artifact(self.fixture.brief, director)
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["skill_selection"]["fixed_context"][0]["end"] = 1.0
+        treatment["beat_sheet"] = [
+            {"start_word": 0, "end_word": 1, "quote": "实际剪后口播", "decision": "broll", "visual": "展示资料",
+             "components": [{"segment_id": "seg-001", "component_id": "component-1"}]},
+            {"start_word": 1, "end_word": 2, "quote": "继续解释", "decision": "aroll", "visual": "真人解释",
+             "components": [], "reason": "真人接着解释当前资料"}]
+        treatment = motion_match_cache.match_once(_env.PROJECT, director, treatment)
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with mock.patch("edit.hd.tools.motion_capabilities._approved_speech", return_value=[
+                {"text": "实际剪后口播", "start": 0.0, "end": 1.0},
+                {"text": "继续解释", "start": 1.0, "end": 3.0}]):
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "time coverage.*affected semantic list"):
+                vc.prepare_visual_confirmation(self.job, self.fixture.brief, self.treatment)
+        self.assertFalse((self.job.job_dir / vc.DIRECTORY).exists())
 
     def test_selected_image_to_video_channel_reaches_realized_template(self):
         self._selected_generation_flow("local_path")
@@ -108,11 +208,16 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertEqual(json.loads(cli.stdout)["tool"], "fixture.image")
         treatment = artifacts.read_json_artifact(self.treatment)
         treatment["motion_queries"] = [{"segment_id": "seg-001", "component_id": "component-1", "tags": ["蓝色场景"]}]
+        treatment["skill_selection"]["fixed_context"][0]["skill_id"] = "fixture"
         treatment["generation_plan"] = {"steps": [
             {"id": "image", "purpose": "image", "segment_id": "seg-001", "component_id": "component-1",
              "arguments": {"prompt": "a blue scene"}, "depends_on": []},
             {"id": "video", "purpose": "video", "segment_id": "seg-001", "component_id": "component-1",
              "arguments": {"prompt": "animate blue scene", "reference": {"$step": "image", "output": 0}}, "depends_on": ["image"]}]}
+        artifacts.write_json_artifact(self.treatment, treatment)
+        from edit.hd.tools import motion_match_cache
+        treatment = motion_match_cache.match_once(
+            _env.PROJECT, artifacts.read_json_artifact(self.fixture.brief), treatment)
         artifacts.write_json_artifact(self.treatment, treatment)
         self.prepare(); self.confirm()
         image = self.job.job_dir / "source-image.png"
@@ -199,13 +304,12 @@ class VisualConfirmationTests(unittest.TestCase):
             self.assertIn(("seg-001", "component-1"), adapters["ai_generated"])
             self.assertTrue(image.is_file() and video.is_file())
 
-    def test_startup_requires_both_generation_channels(self):
+    def test_startup_allows_one_selected_generation_channel(self):
         from edit.hd.tools import startup
         image = {"purpose": "image", "provider": "fixture", "model": "image-model", "endpoint_id": "fixture.image",
                  "connection_status": "verified", "quota_status": "available"}
         config = {"generation_enabled": True, "providers": [image]}
-        with self.assertRaisesRegex(state.WorkflowError, "one image and one video"):
-            startup.selected_channels(config)
+        self.assertEqual(startup.selected_channels(config)["image"]["endpoint_id"], "fixture.image")
         video = {**image, "purpose": "video", "model": "video-model", "endpoint_id": "fixture.video"}
         config["providers"].append(video)
         self.assertEqual(startup.selected_channels(config)["video"]["endpoint_id"], "fixture.video")
@@ -223,12 +327,36 @@ class VisualConfirmationTests(unittest.TestCase):
             vc._rows(director, treatment, [])
 
     def test_direct_material_keeps_source_separate_from_template(self):
-        rows = vc._rows(artifacts.read_json_artifact(self.fixture.brief),
-                        artifacts.read_json_artifact(self.treatment), [])
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        treatment = artifacts.read_json_artifact(self.treatment)
+        from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
+        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["tags"], ["approved visual explanation"])
         self.assertEqual(rows[0]["source"], "asset-1")
         self.assertEqual(rows[0]["template"], "素材直用（无动效模板）")
         self.assertEqual(rows[0]["channel"], "Example Stock")
+
+    def test_creative_scene_is_not_presented_as_a_new_fixed_template(self):
+        from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        segment = director["segments"][0]
+        segment["visual_strategy"]["components"][0]["kind"] = "code_generated"
+        segment["bindings"]["component-1"] = {"dependency_id": "openfilm-motion-graphics",
+                                               "template_id": "openfilm/motion-graphics-scene"}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["skill_selection"]["assignments"] = [{"segment_id": "seg-001", "component_id": "component-1",
+            "candidate_id": "openfilm-motion-graphics:motion-graphics", "skill_id": "openfilm-motion-graphics",
+            "template_id": "openfilm/motion-graphics-scene", "role": "native"}]
+        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        self.assertIn("无固定模板", rows[0]["template"])
+        self.assertEqual(rows[0]["channel"], "openfilm-motion-graphics")
+        segment["visual_strategy"]["components"][0]["kind"] = "ai_generated"
+        segment["bindings"]["component-1"] = {"provider": "Lovart", "generation_id": "fixture-generation"}
+        treatment["skill_selection"]["assignments"][0].update(candidate_id="gbro-collage-broll:design",
+            skill_id="gbro-collage-broll", template_id="gbro-collage-broll/design", role="design")
+        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
+        self.assertIn("无固定模板", rows[0]["template"])
 
     def test_channel_uses_real_source_instead_of_adapter_alias(self):
         director = {"segments": []}
@@ -241,7 +369,12 @@ class VisualConfirmationTests(unittest.TestCase):
                                                      "layer_role": "base"}]},
                 "bindings": {"scene": {"dependency_id": dependency, "template_id": f"template-{index}"}}})
             treatment["motion_queries"].append({"segment_id": sid, "component_id": "scene", "tags": ["顺序展开"]})
-        rows = vc._rows(director, treatment, [])
+        from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
+        treatment["semantic_lists"] = {"overlay": [], "broll": [{
+            "row_id": "shared", "start_word": 0, "end_word": 1, "quote": "x", "semantic": "顺序展开",
+            "visual_task": "顺序展开", "components": [{"segment_id": f"seg-{i}", "component_id": "scene"}
+                                                       for i in range(2)]}]}
+        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual([r["channel"] for r in rows], ["hyperframes", "hyperframes"])
         self.assertEqual([r["template"] for r in rows], ["template-0", "template-1"])
 

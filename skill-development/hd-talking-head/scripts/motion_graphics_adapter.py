@@ -93,17 +93,17 @@ def check_runtime(project_root):
     from hyperframes_runtime import resolve_runtime, resolve_tools
     runtime = resolve_runtime(project / "skill-development/runtime/hyperframes-0.8.167")
     tools, _ = resolve_tools()
-    cli, node = runtime["cli"], tools["node"]
-    return {"cli": str(cli), "node": str(node),
-            "identity": hashlib.sha256(b"\0".join([sha(cli).encode(), sha(node).encode()])).hexdigest()}
+    paths = {"cli": runtime["cli"], **{key: tools[key] for key in ("node", "ffmpeg", "ffprobe")}}
+    return {**{key: str(value) for key, value in paths.items()},
+            "identity": hashlib.sha256(b"\0".join(sha(value).encode() for value in paths.values())).hexdigest()}
 
 
 def create_adapter(project_root, python_executable, brief_loader):
-    from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter
+    from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter, ReferenceProcessMedia
     project = Path(project_root).resolve(strict=True)
     runtime = check_runtime(project_root)
     entry_sha = sha(SKILL / ENTRY)
-    py = Path(python_executable).resolve()
+    node = Path(runtime["node"]).resolve()
 
     def guard(job, recipe, component):
         from edit.hd.tools import visual_canary
@@ -111,6 +111,8 @@ def create_adapter(project_root, python_executable, brief_loader):
             raise ValueError("Motion graphics runtime changed")
         payload = brief_loader(job, recipe, component)
         b = validate_brief(payload)
+        if b["template_request"]["semantic_family"] != "callout_pin":
+            raise ValueError("Only the connected callout_pin route may execute")
         plan = visual_canary.load_approved_visual_plan(job)
         seg = next(x for x in plan["segments"] if x["segment_id"] == recipe["segment_id"])
         expected = {"aroll_sha256": plan["edited_aroll_sha256"], "segment_id": seg["segment_id"],
@@ -127,22 +129,31 @@ def create_adapter(project_root, python_executable, brief_loader):
             raise ValueError("Motion graphics brief no longer matches the approved shot")
         return payload
 
+    def media(job, recipe, component, payload):
+        b = validate_brief(payload)
+        return (ReferenceProcessMedia(media_ref="native-entry", job_path=b["entry"]["job_path"],
+                                      sha256=b["entry"]["sha256"]),)
+
     return ReferenceProcessAdapter(
         adapter_id="motion-graphics-native-v1", dependency_id=DEPENDENCY_ID,
         approved_executor="reference_adapter", dependency_root=SKILL,
         entrypoint=ENTRY, entrypoint_sha256=entry_sha,
         producer_version=VERSION, primary_renderer="HyperFrames",
         renderer_version="0.8.167", artifact_media_type="video",
-        launcher=py, launcher_sha256=sha(py), brief_loader=guard,
+        launcher=node, launcher_sha256=sha(node), brief_loader=guard, media_loader=media,
+        self_contained_wrapper=True,
         timeout_seconds=300,
-        argv_template=(str(py), ENTRY, "--skill-root", str(SKILL),
+        argv_template=("{launcher}", "{entrypoint}", "--skill-root", str(SKILL),
                        "--project-root", str(project), "--brief", "{brief_path}",
                        "--media-manifest", "{media_manifest_fd}",
+                       "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"],
                        "--output", "{output_path}"))
 
 
 def create_binding(adapter, brief_bytes, reference_sample):
     b = validate_brief(brief_bytes)
+    if b["template_request"]["semantic_family"] != "callout_pin":
+        raise ValueError("motion-graphics-native adapter is registered only for callout_pin")
     if (adapter.dependency_id != DEPENDENCY_ID or adapter.entrypoint != ENTRY
             or adapter.primary_renderer != "HyperFrames"):
         raise ValueError("Motion graphics adapter identity changed")
@@ -152,6 +163,8 @@ def create_binding(adapter, brief_bytes, reference_sample):
             "template_origin": "custom_fallback",
             "template_id": f"{DEPENDENCY_ID}/{b['template_request']['semantic_family']}",
             "template_version": VERSION, "adaptation_level": "structural",
+            "verification_id": hashlib.sha256(
+                (adapter.entrypoint_sha256 + hashlib.sha256(brief_bytes).hexdigest()).encode()).hexdigest(),
             "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
             "sample_sha256": sha(Path(reference_sample)),
             "semantic_families": [b["template_request"]["semantic_family"]],
@@ -160,6 +173,22 @@ def create_binding(adapter, brief_bytes, reference_sample):
             "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
             "invocation_record": {"argv": [str(adapter.launcher), ENTRY], "status": "planned",
                                   "exit_code": None, "template_request": b["template_request"]}}
+
+
+def inspect_native_clock(project_root, entry, brief):
+    """Observe the actual paused GSAP clock; do not infer it from HTML text."""
+    runtime = check_runtime(project_root)
+    result = subprocess.run(
+        [runtime["node"], str(SKILL / "scripts/probe_motion_graphics.cjs"),
+         str(Path(project_root).resolve()), str(Path(entry).resolve()),
+         brief["composition"]["id"], str(brief["composition"]["frames"] / FPS)],
+        check=False, capture_output=True, text=True, timeout=30)
+    if result.returncode:
+        raise ValueError("Native callout clock failed: " + result.stderr[-2000:])
+    observed = json.loads(result.stdout)
+    if observed["label"] != brief["data"]["label"]:
+        raise ValueError("Native callout label differs from its frozen DATA")
+    return observed
 
 
 def create_artifact_probe(ffprobe_executable):
@@ -173,10 +202,9 @@ def main() -> int:
     parser.add_argument("--probe", action="store_true")
     args = parser.parse_args()
     if args.probe:
-        rt = check_runtime(args.project_root)
+        check_runtime(args.project_root)
         print(json.dumps({"schema_version": 1, "dependency_id": DEPENDENCY_ID,
                           "entrypoint": ENTRY, "producer_version": VERSION,
-                          "runtime_identity": rt["identity"],
                           "adapter_identity": {"adapter_type": "ReferenceProcessAdapter",
                                                "approved_executor": "reference_adapter",
                                                "primary_renderer": "HyperFrames"}}))

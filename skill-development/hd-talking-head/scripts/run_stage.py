@@ -270,6 +270,7 @@ _NATIVE_MODULES = {
     'overlay-studio-native': ('overlay_studio_adapter', 'python'),
     'openfilm-motion-graphics': ('openfilm_motion_adapter', 'python'),
     'huashu-motion-native': ('huashu_stat_adapter', 'python'),
+    'motion-graphics-native': ('motion_graphics_adapter', 'python'),
     'doudou-remotion-whiteboard': ('doudou_adapter', 'node'),
     'talkcraft-native-adaptation': ('talkcraft_native_adapter', 'node'),
     'wise-motion': ('wise_motion_adapter', 'node'),
@@ -294,6 +295,10 @@ def _check_default_binding(binding):
         raise ValueError('Selected html-video entrypoint has no default execution binding')
     if dependency == 'hyperframes' and binding.get('entrypoint') not in _HYPERFRAMES_MODULES:
         raise ValueError('Selected HyperFrames entrypoint has no default execution binding')
+    if dependency == 'motion-graphics-native' and (
+            binding.get('entrypoint') != 'scripts/render_motion_graphics.cjs'
+            or binding.get('template_id') != 'motion-graphics-native/callout_pin'):
+        raise ValueError('Only the connected callout-pin motion graphics route may execute')
 
 
 def prepare_visual_dependencies(project: Path, director: dict) -> None:
@@ -329,7 +334,7 @@ def native_component_adapters(project: Path, job) -> dict:
     dependencies = {c['dependency_id'] for c in selected if c['kind'] == 'code_generated'}
 
     def brief_loader(current, recipe, component):
-        for candidate in (current.job_dir / 'native-inputs').rglob('brief.json'):
+        for candidate in (current.job_dir / 'native-inputs').rglob('*.json'):
             payload = candidate.read_bytes()
             if hashlib.sha256(payload).hexdigest() == component['brief_sha256']:
                 return payload

@@ -85,6 +85,125 @@ class CoverDirectionTests(unittest.TestCase):
             self.job, VALID_DIRECTION, frame_reader=lambda *_args: _png()
         )
 
+    def _punk_material(self):
+        approve_fixture_setup(self.job)
+        source = self.root / "00-user-provided" / "images" / "person.jpg"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(_png())
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        (self.root / "00-user-provided" / "material-index.json").write_text(
+            json.dumps({"schema_version": 1, "materials": [{
+                "material_id": "material-0003",
+                "imported_path": "00-user-provided/images/person.jpg",
+                "media_type": "images", "sha256": digest,
+                "size_bytes": source.stat().st_size,
+            }]}) + "\n", encoding="utf-8"
+        )
+        direction = copy.deepcopy(VALID_DIRECTION)
+        direction.update({
+            "output_aspect_ratio": "9:16",
+            "title": VALID_DIRECTION["title"],
+            "subtitle": VALID_DIRECTION["subtitle"],
+            "person_reference": {"source": "user-material", "material_id": "material-0003"},
+            "composition": {
+                "style_id": "interleaved-title-editorial-poster",
+                "person_side": "right", "person_width_ratio": 0.60,
+                "blank_width_ratio": 0.35,
+            },
+            "safe_zones": {"safe_margin_ratio": 0.05},
+        })
+        return direction
+
+    def _punk_direction_preview(self):
+        preview = self.job.job_dir / "punk-direction-preview.png"
+        Image.new("RGB", (1080, 1920), "#F3EBDD").save(preview, format="PNG")
+        return preview
+
+    def test_punk_full_preview_publishes_exact_pixels_and_never_calls_provider(self):
+        direction = self._punk_material()
+        preview = self._punk_direction_preview()
+        with mock.patch.object(
+            cover_direction, "_render_direction_preview",
+            side_effect=AssertionError("Punk direction must use the explicit PNG"),
+        ):
+            record = cover_direction.prepare_cover_direction(
+                self.job, direction, direction_preview=preview
+            )
+        self.assertEqual(
+            record["direction"]["composition"]["style_id"],
+            "interleaved-title-editorial-poster",
+        )
+        state.approve(self.job, "cover_direction")
+        approved = self.job.job_dir / "punk-assets" / "punk-cover" / "make-your-own" / "cover-source-normalized-1080x1920.png"
+        approved.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (1080, 1920), "#D97832").save(approved, format="PNG")
+        approved_bytes = approved.read_bytes()
+        output = cover.prepare_cover(
+            self.job, approved_preview=approved,
+            approved_preview_sha256=hashlib.sha256(approved_bytes).hexdigest(),
+            approved_preview_prompt="Punk full cover prompt with exact approved Chinese title.",
+            provider=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                AssertionError("Punk approved preview must not call provider")
+            ),
+        )
+        self.assertEqual(output.read_bytes(), approved_bytes)
+        self.assertEqual((output.parent / "cover-delivery-raster.png").read_bytes(), approved_bytes)
+        report = json.loads((output.parent / "cover-report.json").read_text())
+        self.assertEqual(report["mode"], "approved-full-image")
+        self.assertEqual(report["generator"], "punk-cover")
+        self.assertEqual(cover.review_cover(self.job)["images"]["final"]["sha256"],
+                         hashlib.sha256(approved_bytes).hexdigest())
+
+    def test_punk_direction_requires_explicit_preview_before_writing(self):
+        direction = self._punk_material()
+        with self.assertRaises(cover_direction.CoverDirectionError):
+            cover_direction.prepare_cover_direction(self.job, direction)
+        self.assertFalse((self.job.job_dir / "03-cover-direction" / "cover-direction.json").exists())
+
+    def test_punk_full_preview_requires_nonempty_prompt_and_rejects_old_routes(self):
+        direction = self._punk_material()
+        preview = self._punk_direction_preview()
+        record = cover_direction.prepare_cover_direction(
+            self.job, direction, direction_preview=preview
+        )
+        state.approve(self.job, "cover_direction")
+        approved = self.job.job_dir / "approved.png"
+        Image.new("RGB", (1080, 1920), "#D97832").save(approved, format="PNG")
+        digest = hashlib.sha256(approved.read_bytes()).hexdigest()
+        for prompt in (None, "", "   "):
+            with self.subTest(prompt=repr(prompt)):
+                with self.assertRaises(cover.CoverError):
+                    cover.prepare_cover(
+                        self.job, approved_preview=approved,
+                        approved_preview_sha256=digest, approved_preview_prompt=prompt,
+                    )
+        with self.subTest("old generated-scene route"):
+            with self.assertRaises(cover.CoverError):
+                cover.prepare_cover(
+                    self.job, approved_preview=approved,
+                    approved_preview_sha256=digest,
+                    approved_preview_prompt="valid punk prompt",
+                    generated_scene=approved, generated_scene_prompt="old route",
+                )
+        with self.subTest("old brief route"):
+            old_brief = copy.deepcopy(cover._brief_from_approved_direction(
+                record, approved_preview_prompt="valid Punk complete-image prompt"
+            ))
+            old_brief["base_generation"] = "scene_only_no_people_no_text"
+            old_brief["generator"] = "gbro-cover-design"
+            old_brief["person_composite"]["method"] = "local-foreground-cutout"
+            old_brief["text_layer"]["engine"] = "Pillow"
+            old_brief["rounds"]["visual_details"]["safe_margin_ratio"] = 0.10
+            old_brief["text_layer"]["safe_margin_ratio"] = 0.10
+            old_brief["base_prompt"] = cover._scene_prompt(old_brief["rounds"]["visual_details"])
+            old_brief["style_id"] = "style-02"
+            old_brief["rounds"]["style_and_title"]["selection"] = "style-02"
+            cover.validate_cover_brief(old_brief)
+            old_brief["style_id"] = "interleaved-title-editorial-poster"
+            old_brief["rounds"]["style_and_title"]["selection"] = old_brief["style_id"]
+            with self.assertRaises(cover.CoverError):
+                cover.validate_cover_brief(old_brief)
+
     def test_direction_binds_analysis_and_real_aroll_reference(self) -> None:
         record = self._prepare()
 

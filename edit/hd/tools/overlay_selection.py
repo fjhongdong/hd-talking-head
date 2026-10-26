@@ -14,13 +14,17 @@ _ROUTE_BY_TEMPLATE = {
     "hyperframes/hw-pipeline-portrait": "hw-pipeline",
     "overlay-studio/pin-board": "pin-board",
     "huashu-motion/talking-head-stat": "huashu-stat",
+    "motion-graphics-native/callout_pin": "callout-pin",
 }
 _DEPENDENCY = "hyperframes-native-adaptation"
 _PINBOARD_DEPENDENCY = "overlay-studio-native"
+_MOTION_GRAPHICS_DEPENDENCY = "motion-graphics-native"
 _STRUCTURE = {"grid-card-assemble": "grid-list", "notification-stack": "notification-stack", "toggle-flip": "toggle-rail", "before-after-wipe": "before-after-split", "hw-pipeline": "process-chain", "pin-board": "pin-board"}
 _STRUCTURE["huashu-stat"] = "single-metric"
+_STRUCTURE["callout-pin"] = "target-callout"
 _ACTION = {"grid-card-assemble": "staggered_card_reveal", "notification-stack": "notification_stack", "toggle-flip": "state_toggle", "before-after-wipe": "moving_split_reveal", "hw-pipeline": "three_node_process", "pin-board": "cumulative_pin_drop"}
 _ACTION["huashu-stat"] = "native_count_up"
+_ACTION["callout-pin"] = "ring_and_label_target"
 _REQUIRED = {"segment_id", "component_id", "intent_relation", "native_route", "visible_action", "visual_structure", "selection_reason"}
 
 def _route(binding: Mapping) -> str:
@@ -41,7 +45,8 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
             route = _route(binding)
             dependency = ("hyperframes" if route == "hw-pipeline" else
                           (_PINBOARD_DEPENDENCY if route == "pin-board" else
-                           ("huashu-motion-native" if route == "huashu-stat" else _DEPENDENCY)))
+                           (_MOTION_GRAPHICS_DEPENDENCY if route == "callout-pin" else
+                            ("huashu-motion-native" if route == "huashu-stat" else _DEPENDENCY))))
             if binding.get("dependency_id") != dependency:
                 raise ValueError("A-roll overlay dependency does not match the native adapter")
             from .motion_capabilities import overlay_candidates, validate_overlay_capability
@@ -73,7 +78,7 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
         _segment, route, structure = expected[key]
         if row["native_route"] != route or row["visible_action"] != _ACTION[route] or row["visual_structure"] != structure:
             raise ValueError("overlay_selection does not match the native binding structure")
-        allowed_relation = {"grid-card-assemble": "parallel", "notification-stack": "reminder", "toggle-flip": "state_change", "before-after-wipe": "compare", "hw-pipeline": "process", "pin-board": "parallel", "huashu-stat": "numeric_emphasis"}[route]
+        allowed_relation = {"grid-card-assemble": "parallel", "notification-stack": "reminder", "toggle-flip": "state_change", "before-after-wipe": "compare", "hw-pipeline": "process", "pin-board": "parallel", "huashu-stat": "numeric_emphasis", "callout-pin": "callout"}[route]
         if row["intent_relation"] != allowed_relation:
             raise ValueError("intent_relation is not supported by the native route")
         if not isinstance(row["intent_relation"], str) or not row["intent_relation"].strip() or not isinstance(row["selection_reason"], str) or not row["selection_reason"].strip():

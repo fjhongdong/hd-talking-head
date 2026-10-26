@@ -382,7 +382,7 @@ def validate_treatment(job, draft, treatment_path) -> list[dict]:
         if segment["visual_strategy"]["composition"]["family"] != "aroll_with_overlay":
             continue
         for cid, binding in segment["bindings"].items():
-            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID}:
+            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native"}:
                 targets.append((segment, cid, binding))
     if not targets:
         return []
@@ -439,6 +439,48 @@ def validate_treatment(job, draft, treatment_path) -> list[dict]:
             report.append({"segment_id": sid, "component_id": cid, "route": huashu_stat_alignment.ROUTE,
                            "brief_path": record["brief_path"], "brief_sha256": binding["brief_sha256"],
                            "events": checked, "native_exit": checked[0]["native_exit"]})
+            continue
+        if binding.get("dependency_id") == "motion-graphics-native":
+            from . import motion_capabilities
+            motion_capabilities.validate_overlay_capability("callout-pin", binding)
+            from importlib import import_module
+            motion = import_module("motion_graphics_adapter")
+            motion.validate_brief(brief)
+            entry = _path(job.job_dir, brief["entry"]["job_path"])
+            if artifacts.sha256_file(entry) != brief["entry"]["sha256"]:
+                raise ValueError(f"overlay HTML changed: {sid}")
+            observed = motion.inspect_native_clock(Path(__file__).resolve().parents[3], entry, brief)
+            events = record.get("events")
+            if (not isinstance(events, list) or len(events) != 1
+                    or events[0].get("slot") != 0 or events[0].get("kind") != "reveal"
+                    or events[0].get("text") != observed["label"]
+                    or segment["visible_text"] != [observed["label"]]):
+                raise ValueError("callout needs one actual label and source-word event")
+            event = events[0]
+            anchor = event.get("anchor", {})
+            index = anchor.get("index")
+            if (type(index) is not int or not 0 <= index < len(words)
+                    or words[index]["text"] != anchor.get("text")):
+                raise ValueError("callout source word differs from the approved transcript")
+            word = words[index]
+            positions = [word["start"] + part["timeline_start"] - part["source_start"] for part in cuts
+                         if part["source_start"] <= word["start"] < part["source_end"]]
+            if len(positions) != 1 or word["end"] <= word["start"]:
+                raise ValueError("callout anchor is outside the edited speech")
+            anchor_time = positions[0]
+            effective = segment["start"] + observed["reveal_time"]
+            basis = event.get("basis")
+            if basis == "current_clause":
+                if (not segment["start"] <= anchor_time < segment["end"]
+                        or effective < anchor_time - 1 / fps or effective > anchor_time + .8):
+                    raise ValueError("native callout reveal differs from its source word")
+            elif basis != "recap" or effective < anchor_time:
+                raise ValueError("callout recap refers to speech that has not happened")
+            checked = [{**event, "anchor_time": anchor_time, "effective_time": effective}]
+            report.append({"segment_id": sid, "component_id": cid, "route": "callout-pin",
+                           "brief_path": record["brief_path"], "brief_sha256": binding["brief_sha256"],
+                           "entry_sha256": brief["entry"]["sha256"], "native_clock": observed,
+                           "events": checked})
             continue
         entry = _path(job.job_dir, brief["entry"]["job_path"])
         entry_sha = artifacts.sha256_file(entry)

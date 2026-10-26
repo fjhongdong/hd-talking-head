@@ -97,7 +97,7 @@ def _prior_numbering(job):
             numbering = proposal.get("numbering")
             if numbering is not None:
                 _validate_numbering(numbering)
-                if any(row["row_id"] not in numbering for row in rows):
+                if any(row.get("semantic_row_id", row["row_id"]) not in numbering for row in rows):
                     raise VisualConfirmationError("approved numbering is incomplete")
                 mapping = dict(numbering)
             else:
@@ -129,23 +129,27 @@ def number_visual_rows(rows, numbering=None):
     next_number = max(mapping.values(), default=0) + 1
     numbered = []
     for row in rows:
-        row_id = row.get("row_id")
-        if row_id not in mapping:
-            mapping[row_id] = next_number
+        identity = row.get("semantic_row_id", row["row_id"])
+        if not isinstance(identity, str) or not identity:
+            raise VisualConfirmationError("semantic row identity must be stable")
+        if identity not in mapping:
+            mapping[identity] = next_number
             next_number += 1
-        numbered.append({**row, "number": mapping[row_id]})
+        numbered.append({**row, "number": mapping[identity]})
     return numbered
 
 def approved_numbered_rows(job):
     proposal = validate_visual_authorization(job)["source"]
     return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
-def _rows(director, treatment, speech):
-    from .broll_skill_selection import source_channel
+def _rows(director, treatment, speech, semantic_rows=None):
+    from .broll_skill_selection import source_channel, _fixed_template
+    from .semantic_visual_plan import component_use
 
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
-    assignments = {(q["segment_id"], q["component_id"]): q["candidate_id"]
-                   for q in treatment.get("skill_selection", {}).get("assignments", [])}
+    selected = treatment.get("skill_selection", {})
+    assignments = {(q["segment_id"], q["component_id"]): q
+                   for q in [*selected.get("assignments", []), *selected.get("overlay_assignments", [])]}
     rows = []
     for segment in director["segments"]:
         sid = segment["segment_id"]
@@ -157,8 +161,11 @@ def _rows(director, treatment, speech):
             tags = _semantic_tags(queries.get((sid, cid), {}))
             source = _source_id(binding)
             direct_material = component["kind"] in {"local_material", "official_material", "external_stock"}
-            template = ("素材直用（无动效模板）" if direct_material else
-                        (assignments.get((sid, cid)) or binding.get("template_id")))
+            chosen = assignments.get((sid, cid))
+            template = ("素材直用（无动效模板）" if direct_material else binding.get("template_id"))
+            if chosen is not None and not direct_material:
+                template = (chosen["template_id"] if _fixed_template(chosen) else
+                            "本期创作（无固定模板）：" + chosen["candidate_id"])
             if not template and component["kind"] == "ai_generated":
                 planned = [step["id"] for step in _steps(treatment) if
                            (step["segment_id"], step["component_id"]) == (sid, cid)]
@@ -168,26 +175,34 @@ def _rows(director, treatment, speech):
                             if planned or binding.get("generation_id") else "AI生成结果（无动效模板）")
             if not template:
                 raise VisualConfirmationError("each visual row needs its actual template or material source")
-            rows.append({"row_id": sid + ":" + cid, "segment_id": sid, "component_id": cid,
+            physical_id = sid + ":" + cid
+            semantic_row = semantic_rows.get((sid, cid)) if semantic_rows else None
+            if semantic_row is None or semantic_row["type"] != ("贴片" if component_use(segment, component) == "overlay" else "B-roll"):
+                raise VisualConfirmationError("visual component is missing from semantic lists")
+            rows.append({"row_id": physical_id, "semantic_row_id": semantic_row.get("row_id"),
+                         "segment_id": sid, "component_id": cid,
                          "start": segment["start"], "end": segment["end"],
-                         "type": "贴片" if component.get("layer_role") == "annotation" else "B-roll",
+                         "type": semantic_row["type"],
                          "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
                          "tags": tags, "source": source,
-                         "channel": source_channel(binding.get("dependency_id") or
+                         "channel": source_channel((chosen or {}).get("skill_id") or binding.get("dependency_id") or
                                      binding.get("provider") or component["kind"]),
                          "template": template})
     return rows
 
 def _validate_template_choices(job, director, treatment):
-    from . import broll_skill_selection, motion_capabilities, overlay_selection
+    from . import broll_skill_selection, motion_match_cache, overlay_selection
     project = Path(__file__).resolve().parents[3]
+    cached = motion_match_cache.validate_reviews(project, director, treatment)
     selection = treatment.get("skill_selection", {})
     if selection:
         chosen = broll_skill_selection.assign_skills(project, selection)
-        if chosen["assignments"] != selection.get("assignments"):
+        broll_skill_selection.validate_fixed_materials(director, selection)
+        if (chosen["assignments"] != selection.get("assignments")
+                or chosen["overlay_assignments"] != selection.get("overlay_assignments", [])):
             raise VisualConfirmationError("complete-list template assignments have not been resolved")
     candidates = {(a["segment_id"], a["component_id"]): a["candidate_id"]
-                  for a in selection.get("assignments", [])}
+                  for a in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]}
     for segment in director["segments"]:
         for component in segment["visual_strategy"]["components"]:
             sid, cid = segment["segment_id"], component["component_id"]
@@ -195,32 +210,133 @@ def _validate_template_choices(job, director, treatment):
                 continue
             candidate = candidates.get((sid, cid))
             if segment["visual_strategy"]["composition"]["family"] == "aroll_with_overlay":
-                candidate = "overlay:" + overlay_selection._route(segment["bindings"][cid])
+                actual = "overlay:" + overlay_selection._route(segment["bindings"][cid])
+                if candidate != actual:
+                    raise VisualConfirmationError("A-roll overlay differs from the joint maximum assignment")
             if candidate is None and component["kind"] == "ai_generated":
                 continue  # Explicit direct generation is a material source, not a library template.
-            query = next((q for q in treatment.get("motion_queries", [])
-                          if (q["segment_id"], q["component_id"]) == (sid, cid)), {})
-            matches = motion_capabilities.search_capabilities(project, " ".join(query.get("tags", [])),
-                        use="aroll_overlay" if candidate and candidate.startswith("overlay:") else "broll")
-            if candidate not in {match["candidate_id"] for match in matches}:
+            matches = {m["candidate"]["candidate_id"]: m["candidate"] for m in cached[(sid, cid)]["matches"]}
+            if candidate not in matches:
                 raise VisualConfirmationError("the selected template does not match this row's semantic tags")
+            native = matches[candidate]
+            if component["kind"] == "code_generated" and any(
+                    segment["bindings"][cid].get(field) != native[field]
+                    for field in ("dependency_id", "entrypoint", "producer_version", "template_id")):
+                raise VisualConfirmationError("proposed binding differs from the selected native template")
+
+def _validate_beat_sheet(treatment, director, speech):
+    from .semantic_visual_plan import component_use
+    beats = treatment.get("beat_sheet")
+    if not isinstance(beats, list) or not beats:
+        raise VisualConfirmationError("new visual proposals require treatment.beat_sheet")
+    words = speech or []
+    components = {(s["segment_id"], c["component_id"]): (s, c)
+                  for s in director.get("segments", [])
+                  for c in s.get("visual_strategy", {}).get("components", [])}
+    cursor = 0
+    component_beats = {}
+    tolerance = 1 / 24
+    def text(value):
+        return isinstance(value, str) and bool(value.strip())
+    for beat in beats:
+        if not isinstance(beat, dict):
+            raise VisualConfirmationError("beat_sheet entries must be objects")
+        start, end = beat.get("start_word"), beat.get("end_word")
+        if (type(start) is not int or type(end) is not int or start != cursor
+                or not start < end <= len(words)):
+            raise VisualConfirmationError("beat_sheet must cover approved words without gaps or overlaps")
+        if beat.get("quote") != "".join(w["text"] for w in words[start:end]):
+            raise VisualConfirmationError("beat_sheet quote does not match approved cut words")
+        decision = beat.get("decision")
+        if decision not in {"broll", "overlay", "aroll"} or not text(beat.get("visual")):
+            raise VisualConfirmationError("beat_sheet entries need decision and visual")
+        refs = beat.get("components")
+        if (not isinstance(refs, list)
+                or any(not isinstance(r, dict) or set(r) != {"segment_id", "component_id"}
+                       or type(r["segment_id"]) is not str or not r["segment_id"]
+                       or type(r["component_id"]) is not str or not r["component_id"] for r in refs)
+                or len({(r["segment_id"], r["component_id"]) for r in refs}) != len(refs)):
+            raise VisualConfirmationError("beat_sheet components must be unique references")
+        if "merge_reason" in beat and not text(beat["merge_reason"]):
+            raise VisualConfirmationError("merge_reason must be a non-empty string")
+        if decision == "aroll":
+            begin, finish = words[start]["start"], words[end - 1]["end"]
+            if refs or not text(beat.get("reason")):
+                raise VisualConfirmationError("aroll beats need a concrete reason and no visual component")
+            presenter = [s for s in director.get("segments", [])
+                         if s.get("visual_strategy", {}).get("composition", {}).get("family") == "no_broll"
+                         and s.get("visual_strategy", {}).get("composition", {}).get("presenter_mode") == "full_frame"
+                         and s.get("visual_strategy", {}).get("mode") == "none"
+                         and not s.get("visual_strategy", {}).get("components")]
+            presenter.sort(key=lambda s: s["start"])
+            right = begin
+            for segment in presenter:
+                if segment["start"] > right + tolerance:
+                    break
+                right = max(right, segment["end"])
+            if right < finish - tolerance:
+                raise VisualConfirmationError("aroll beat must map to a full-frame/no-broll interval")
+        else:
+            if not refs:
+                raise VisualConfirmationError("broll and overlay beats need visual components")
+            if len(refs) > 1 and not text(beat.get("merge_reason")):
+                raise VisualConfirmationError("merged beats need merge_reason")
+            begin, finish = words[start]["start"], words[end - 1]["end"]
+            covered = []
+            for ref in refs:
+                key = (ref.get("segment_id"), ref.get("component_id")) if isinstance(ref, dict) else None
+                if key not in components:
+                    raise VisualConfirmationError("beat_sheet references an unknown visual component")
+                segment, component = components[key]
+                covered.append((segment["start"], segment["end"]))
+                family = segment.get("visual_strategy", {}).get("composition", {}).get("family")
+                is_overlay = component_use(segment, component) == "overlay"
+                if (decision == "overlay") != is_overlay:
+                    raise VisualConfirmationError("beat_sheet decision does not match component use")
+                component_beats.setdefault(key, []).append(beat)
+            covered.sort()
+            right = begin
+            for left, end_time in covered:
+                if left > right + tolerance:
+                    raise VisualConfirmationError("beat_sheet components do not cover its word span")
+                right = max(right, end_time)
+            if right < finish - tolerance:
+                raise VisualConfirmationError("beat_sheet components do not cover its word span")
+        cursor = end
+    if cursor != len(words):
+        raise VisualConfirmationError("beat_sheet does not cover the complete approved speech")
+    for reused in component_beats.values():
+        if len(reused) > 1 and any(not text(beat.get("merge_reason")) for beat in reused):
+            raise VisualConfirmationError("a component reused across beats needs merge_reason on each beat")
 
 def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_visual_text=None):
     from . import state, visual_plan, motion_capabilities, startup, confirmed_content
     state.require_runnable(job, "visual_direction")
     director, treatment = _read(director_path), _read(treatment_path)
-    visual_plan._validate_job_context(job, director, reviewed_visual_text)
+    context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
     confirmed_content.check_confirmed_content(job, director)
     steps = _steps(treatment)
-    _validate_template_choices(job, director, treatment)
+    try:
+        _validate_template_choices(job, director, treatment)
+    except ValueError as error:
+        raise VisualConfirmationError("visual selection: " + str(error)) from error
     from . import motion_readability
     motion_readability.validate_direction_contract(job, director, treatment)
     from . import avatar_profile, visual_review
     avatar_profile.validate_avatar_plan_policy(director["segments"])
-    rows = _rows(director, treatment, motion_capabilities._approved_speech(job.job_dir))
+    speech = motion_capabilities._approved_speech(job.job_dir)
+    from . import semantic_visual_plan
+    semantic_plan = semantic_visual_plan.validate_semantic_lists(treatment, director, speech)
+    rows = _rows(director, treatment, speech, semantic_plan["component_rows"])
+    _validate_beat_sheet(treatment, director, speech)
+    from . import visual_coverage
+    coverage = visual_coverage.require_density({"duration": context[5], "segments": director["segments"]}, treatment=treatment)
+    if coverage["blocking_issues"]:
+        raise VisualConfirmationError("time coverage: " + "; ".join(coverage["blocking_issues"])
+            + "; return to the affected semantic list, add a distinct supported task, match only new items and assign again")
     numbering = _prior_numbering(job)
     numbered_rows = number_visual_rows(rows, numbering)
-    numbering = {**numbering, **{row["row_id"]: row["number"] for row in numbered_rows}}
+    numbering = {**numbering, **{row["semantic_row_id"]: row["number"] for row in numbered_rows}}
     targets = {(r["segment_id"], r["component_id"]) for r in rows}
     for step in steps:
         if (step.get("segment_id"), step.get("component_id")) not in targets:
@@ -252,7 +368,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     proposal = {"schema_version": 1, "kind": SCHEMA, "source_id": source_id,
                 "job_id": job.job_id, "job_dir": str(job.job_dir), "revision": job.revision,
                 "inputs": files, "provider_config_sha256": config_sha,
-                "rows": rows, "numbering": numbering, "generation_steps": steps,
+                "rows": rows, "semantic_summary": {k: semantic_plan[k] for k in ("overlay_count", "broll_count")},
+                "numbering": numbering, "generation_steps": steps,
                 "visual_review_policy": visual_review.POLICY_VERSION,
                 "query_bindings": _record(job.job_dir, job.job_dir / "manifests/generation-channels.json")
                     if (job.job_dir / "manifests/generation-channels.json").is_file() else None}
@@ -261,17 +378,43 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     def cell(value):
         return str(value).replace("|", "／").replace("\n", "<br>")
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
+             "## 贴片语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
+    for row in semantic_plan["items"]:
+        if row["type"] == "贴片":
+            lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
+    lines += ["", "## B-roll 语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
+    for row in semantic_plan["items"]:
+        if row["type"] == "B-roll":
+            lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
+    lines += ["", f"语义清单摘要：贴片{semantic_plan['overlay_count']}处 / B-roll{semantic_plan['broll_count']}项 / 合计{len(semantic_plan['items'])}", "",
              "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
              "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 渠道 | 素材来源 | 匹配动效模板 | 生成步骤 |",
              "|---|---|---|---|---|---|---|---|---|---|"]
+    display_rows = {}
     for row in numbered_rows:
-        generated = [s for s in steps if (s["segment_id"], s["component_id"]) == (row["segment_id"], row["component_id"])]
+        display_rows.setdefault(row["semantic_row_id"], []).append(row)
+    for identity, parts in display_rows.items():
+        row = parts[0]
+        semantic_row = next(item for item in semantic_plan["items"] if item["row_id"] == identity)
+        part_keys = {(part["segment_id"], part["component_id"]) for part in parts}
+        generated = [s for s in steps if (s["segment_id"], s["component_id"]) in part_keys]
         labels = [s["id"] + "：" + ("生图" if s["purpose"] == "image" else "生视频")
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]
         lines.append("| " + " | ".join(cell(v) for v in (
-            row["number"], f"{row['start']:.3f}–{row['end']:.3f}s", row["type"], row["spoken_text"],
-            row["semantic"], "、".join(row["tags"]), row["channel"], row["source"] or "—",
-            row["template"], " → ".join(labels) or "复用/模板渲染")) + " |")
+            row["number"], "；".join(dict.fromkeys(f"{p['start']:.3f}–{p['end']:.3f}s" for p in parts)),
+            row["type"], semantic_row["quote"], semantic_row["semantic"], "、".join(row["tags"]),
+            "、".join(dict.fromkeys(p["channel"] for p in parts)),
+            "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
+            "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
+    lines += ["", "## 口播逐句处置", "", "| 词区间 | 实际原话 | 时间 | 决策 | 画面 | 组件 | 合并原因 |", "|---|---|---|---|---|---|---|"]
+    for beat in treatment["beat_sheet"]:
+        refs = "、".join(r["segment_id"] + ":" + r["component_id"] for r in beat["components"])
+        begin = speech[beat["start_word"]]["start"]
+        finish = speech[beat["end_word"] - 1]["end"]
+        lines.append("| " + " | ".join(cell(v) for v in (
+            f"{beat['start_word']}–{beat['end_word']}", beat["quote"], f"{begin:.3f}–{finish:.3f}s",
+            beat["decision"], beat["visual"], refs or "A-roll",
+            beat.get("merge_reason") or beat.get("reason", ""))) + " |")
     lines += ["", "生成费用说明：" + str(treatment.get("generation_plan", {}).get("cost_note", "按本次已确认渠道和规格执行")), ""]
     table = root / "visual-routing.md"
     artifacts.write_bytes_atomic(table, "\n".join(lines).encode())
@@ -515,8 +658,11 @@ def _validate_draft_against_source(root, proposal, director, treatment):
     if treatment.get("motion_readability", []) != frozen_treatment.get("motion_readability", []):
         raise VisualConfirmationError("readability targets changed after visual approval")
     if (_core(director) != _core(frozen)
+            or treatment.get("semantic_lists") != frozen_treatment.get("semantic_lists")
+            or treatment.get("motion_matches") != frozen_treatment.get("motion_matches")
             or treatment.get("motion_queries", []) != frozen_treatment.get("motion_queries", [])
             or treatment.get("skill_selection", {}).get("assignments", []) != frozen_treatment.get("skill_selection", {}).get("assignments", [])
+            or treatment.get("skill_selection", {}).get("overlay_assignments", []) != frozen_treatment.get("skill_selection", {}).get("overlay_assignments", [])
             or treatment.get("generation_plan", {}) != frozen_treatment.get("generation_plan", {})):
         raise VisualConfirmationError("realization changed approved timing, meaning, tags or template")
     for segment, original in zip(director["segments"], frozen["segments"]):

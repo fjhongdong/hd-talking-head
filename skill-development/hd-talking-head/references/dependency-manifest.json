@@ -1245,6 +1245,14 @@
       ],
       "target": [
         {
+          "id": "yt-dlp-command",
+          "kind": "command",
+          "target": "yt-dlp",
+          "version_args": [
+            "--version"
+          ]
+        },
+        {
           "id": "yt-dlp-python-module",
           "kind": "python_module",
           "target": "yt_dlp"
@@ -1876,7 +1884,7 @@
       ],
       "binding_probes": [
         {
-          "entrypoint": "scripts/motion_graphics_adapter.py",
+          "entrypoint": "scripts/render_motion_graphics.cjs",
           "producer_version": "1.0.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",

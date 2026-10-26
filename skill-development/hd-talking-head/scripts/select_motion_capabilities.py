@@ -9,7 +9,7 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("catalog", "search", "check"))
+    parser.add_argument("action", choices=("catalog", "search", "match", "check"))
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--query")
     parser.add_argument("--use", choices=("aroll_overlay", "broll", "component", "design"))
@@ -33,6 +33,15 @@ def main() -> None:
                 parser.error("search requires --query after the host has analyzed the full clause")
             result = motion.search_capabilities(project, args.query, use=args.use,
                                                 include_history=args.include_history)
+        elif args.action == "match":
+            if args.treatment is None or args.director_brief is None:
+                parser.error("match requires --treatment and --director-brief")
+            from edit.hd.tools import motion_match_cache
+            treatment = motion_match_cache.match_once(project,
+                contract_artifacts.read_json_artifact(args.director_brief),
+                contract_artifacts.read_json_artifact(args.treatment))
+            contract_artifacts.write_json_artifact(args.treatment, treatment)
+            result = treatment["motion_matches"]
         else:
             if args.treatment is None or args.director_brief is None:
                 parser.error("check requires --treatment and --director-brief; both are read-only")

@@ -13,6 +13,8 @@
 
 配置和运行时身份沿用当前 Job。只有预检过期或尚未绑定新批准视觉计划时自动复检，不重写配置批准；模型、费用、项目或源码身份变化仍走原确认或迁移入口。所有阶段只处理本期 Job，不迁移其他视频。
 
+`visual_direction` 的 treatment 还须包含当前剪后口播的 `beat_sheet`。字段与真实词引用见[确认前的逐句盘点](visual-quality-contract.md#确认前的逐句盘点)；准备 helper 不自动代替该设计工作。确认入口检查完整性并在原路由表显示合并依据，不能只凭 B-roll 占比提交长镜头清单。
+
 ## 显式输入
 
 `--input-json` 用于以下阶段的已完成创作输入；相对媒体路径均相对当前 `job_dir`，命令行 JSON 文件本身应传绝对路径。
@@ -77,6 +79,10 @@
 
 原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。
 
+修订某枚原生 brief 后，须同步该组件的实际 binding、`skill_selection.beats[].binding_snapshot`、场景路径、引用摘要及源码摘录，并在重新发布提案前调用已有 `broll_skill_selection.validate_selection`。源输入已经具备时，还须调用 `motion_capabilities.check_offline_plan` 检查当前源码证据与语义引用，不能把摘录仍指旧代码的提案留到正式编译才发现。不得只改 director 的 brief 摘要，等用户确认后才发现选型快照仍指旧输入；也不得放宽完整绑定比对。未改动组件保留原绑定与媒体。
+
+默认执行器按已确认的 brief 内容摘要读取 Job 内 JSON，不要求文件必须名为 `brief.json`。自定义名称与分版本目录同样须精确匹配摘要，并通过适配器原有的结构、时窗和来源检查；不能按相近文件名替代缺失输入。
+
 未来图输入使用 `{"$step":"image-step","output":0}`，不得填写不存在的未来文件摘要。宿主实际完成生成后才写入真实媒体和哈希，再构造后续视频请求；模板内部生图、生视频与直接 B-roll 共用启动时确认的渠道。没有生成步骤的已确认素材直接沿原编译入口执行。
 
 自动 `treatment.json` 同样是候选资料：`semantic_assessments` 初始为 `needs_review`，Skill 比较和 assignments 只是待审选型。宿主检查引用原声、实际场景和候选比较理由，修正不实或通用填充理由后，才将实际通过的组件记为 `pass`。未审语义由现有正式发布检查阻断；不把离线输出 `needs_review` 当作审阅完成。
@@ -84,6 +90,8 @@
 每个原生 beat 显式提供 `tags` 和 `content_item_ids`；`tags` 是从剪后语义得出的检索短语，`labels` 才是屏显文字。其他准备入口在现有 treatment 的 `motion_queries` 为每个视觉组件（包括直用素材）记录一条 `{ "segment_id": "seg-001", "component_id": "native-visual", "tags": ["并列要点", "层叠出现"] }`。查询必须完整、唯一，包含非空的实际语义标签；直用素材只校验标签完整性，模板栏写“素材直用（无动效模板）”，素材编号放在来源栏。选中动效模板须由这些 tags 按实际用途召回；开始/结束、语义、原话和模板身份从当前计划及批准的剪后词表派生，不再另填一套。
 
 B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数起止时间精确匹配；相邻窗口不互相替代。
+
+编排辅助入口读取 `05-speech-cleanup/word-transcript.json` 的校对正本，并按正式 `timeline-map.json` 映射剪后词锚；不得回读 `report.json` 的原始识别文字覆盖已完成的校对。正本缺失时停止，不补用旧文本。
 
 其他来源继续使用各自已接通的准备入口，最终提交相同的视觉草稿合同。没有可执行绑定时停在资料准备，不把来源改标成代码动效。
 

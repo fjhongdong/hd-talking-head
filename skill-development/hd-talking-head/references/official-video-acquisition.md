@@ -8,7 +8,7 @@
 
 站点变化时可按 yt-dlp 官方说明更新运行时；YouTube 遇到 JavaScript 挑战时，使用带 `yt-dlp-ejs` 的当前 `yt-dlp[default]` 与受支持的 Node 运行时。浏览器登录状态只能在本机临时读取，不导出 cookie 文件、不记录凭据。每次先列出实际可用格式，再选符合用途的最高可下载格式；不要仅凭格式表或扩展名宣称已成功。只下载当前已确认的必要区间，放入当前 Job 的 `edit/downloads/`；来源不明确、权限拒绝或下载失败时报告并停在该来源，不伪造成功、不自动换其他来源类别。
 
-下载工具可独立使用项目内 `edit/hd/integrations/video-download-runtime/` 的 Python 环境，不改变已锁定的剪辑 Python 或全局安装。当前 yt-dlp 不再支持旧剪辑环境的 Python 3.9 时，在已获依赖安装许可的范围内，用本机受支持的 Python 创建该环境并安装 `yt-dlp[default]`。之后 metadata、formats、download 都使用此环境的 `bin/yt-dlp`，YouTube 显式传入 `--js-runtimes node`；不再调用旧 `python3 -m yt_dlp`。依赖预检优先检查此路径的真实 `--version`，存在但损坏时停止，不静默退回旧版。版本检查仍不证明站点可下载，实际视频文件才是下载结果。下载日志不保留 Googlevideo 临时签名 URL、浏览器 cookie 或其它凭据；只保存公开来源 URL、选中格式、工具版本、退出码和本地文件身份。
+下载工具可使用已经准备的项目内 `edit/hd/integrations/video-download-runtime/bin/yt-dlp`，不改变已锁定的剪辑 Python 或全局安装。依赖预检优先检查此路径的真实 `--version`，存在但损坏时停止，不改用其它工具掩盖失败；此路径不存在时，可复用机器已安装并实际通过版本执行的 `yt-dlp` 命令，预检记录其绝对路径和版本，不因剪辑 Python 缺少同名模块而重复安装。metadata、formats、download 均使用本 Job 当前预检记录的同一个实际 CLI；YouTube 显式传入 `--js-runtimes node`，不猜环境路径、不自动更新或全局安装。没有可用入口时按缺失环境处理，不在受控源码目录临时创建环境。版本检查仍不证明站点可下载，实际视频文件才是下载结果。下载日志不保留 Googlevideo 临时签名 URL、浏览器 cookie 或其它凭据；只保存公开来源 URL、选中格式、工具版本、退出码和本地文件身份。
 
 ## 下载后验收
 

@@ -50,8 +50,7 @@ OVERLAY_ROUTES = {
 }
 BROLL_ROUTES = ("macos-notification", "chat-message", "screen-flow-carousel", "beat-timeline")
 REGISTRY = Path("参考项目/B-roll开源方案/hyperframes/registry")
-RISO_SAMPLE = ("skill-development/test-output/cutcod-riso-20261021/"
-               "minimal-native-gbnr7_er/riso-number-normalized.mp4")
+RISO_SOURCE = "skill-development/vendor/eian-riso-broll/templates/{template}.html"
 
 
 def calibration_key(start: float, end: float) -> str:
@@ -109,8 +108,8 @@ def _module(name):
 
 
 def _word_cut_times(job_dir: Path):
-    report = json.loads((job_dir / "05-speech-cleanup/report.json").read_text())
-    words = report["transcript"]["words"]
+    transcript = json.loads((job_dir / "05-speech-cleanup/word-transcript.json").read_text())
+    words = transcript["words"]
     cuts = json.loads((job_dir / "06-edit-structure/timeline-map.json").read_text())["segments"]
     for word in words:
         word["cut"] = None
@@ -620,7 +619,8 @@ def main() -> int:
                 }
                 payload = json.dumps(brief, ensure_ascii=False, indent=2).encode("utf-8") + b"\n"
                 (folder / "brief.json").write_bytes(payload)
-                binding = riso.create_binding(riso_adapter, payload, project / RISO_SAMPLE)
+                binding = riso.create_binding(
+                    riso_adapter, payload, project / RISO_SOURCE.format(template=template))
                 candidate_id = f"eian-riso-broll:{template}"
                 content_pointer, content_value = "/template", template
             else:

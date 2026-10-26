@@ -1223,7 +1223,12 @@ def _publish_generation(
         except FileNotFoundError:
             old_records = None
         else:
-            if job.stages[stage_id]["status"] != "pending":
+            stage_state = job.stages[stage_id]
+            if not (
+                stage_state["status"] in {"pending", "needs_revision"}
+                and stage_state["artifacts"] == []
+                and stage_state["lineage"] == []
+            ):
                 raise
             # The workspace initializer creates empty stage directories. Only
             # an actually empty, regular directory is safe to replace here.

@@ -214,13 +214,21 @@ def _fixed_template(row):
 
 
 def assign_skills(project_root: Path, selection: Mapping) -> dict:
-    """Lock semantic winners, then coordinate only host-reviewed peers globally."""
+    """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
-    pool = {row["candidate_id"]: row for row in discover_candidates(project_root)}
-    skills = {row["skill_id"] for row in pool.values()}
-    beats = sorted(copy.deepcopy(selection["beats"]),
+    from .motion_capabilities import overlay_candidates
+    from .visual_assignment import assign_candidates
+
+    native = discover_candidates(project_root)
+    pool = {row["candidate_id"]: row for row in [*native, *overlay_candidates(project_root)]}
+    skills = {row["skill_id"] for row in native}
+    overlays = selection.get("overlay_beats", [])
+    if not isinstance(overlays, list):
+        raise ValueError("overlay_beats must be a list")
+    beats = sorted([*copy.deepcopy(selection["beats"]), *copy.deepcopy(overlays)],
                    key=lambda row: (row["start"], row["segment_id"], row["component_id"]))
+    overlay_keys = {(row["segment_id"], row["component_id"]) for row in overlays}
     keys = [(b["segment_id"], b["component_id"]) for b in beats]
     if len(keys) != len(set(keys)):
         raise ValueError("B-roll semantic component is duplicated")
@@ -230,7 +238,8 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
         for field in ("transcript", "semantic_goal", "required_change"):
             _text(beat.get(field), field)
         reviews = beat.get("skill_reviews", {})
-        if set(reviews) != skills:
+        is_overlay = (beat["segment_id"], beat["component_id"]) in overlay_keys
+        if not is_overlay and set(reviews) != skills:
             raise ValueError("B-roll must review the full discovered Skill pool, not only favorite sources")
         for review in reviews.values():
             if review.get("fit") not in {"preferred", "equivalent", "unsuitable", "needs_adapter"}:
@@ -249,12 +258,13 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
                 raise ValueError("B-roll candidate fit is invalid")
             _text(candidate.get("reason"), "candidate reason")
             if fit in {"preferred", "equivalent"}:
-                if pool[cid]["status"] != "supported" or reviews[pool[cid]["skill_id"]]["fit"] in {"unsuitable", "needs_adapter"}:
+                if (cid.startswith("overlay:")) != is_overlay:
+                    raise ValueError("visual candidate does not support the semantic item's use")
+                if pool[cid]["status"] != "supported" or (not is_overlay and reviews[pool[cid]["skill_id"]]["fit"] in {"unsuitable", "needs_adapter"}):
                     raise ValueError("B-roll candidate is not callable or contradicts the Skill review")
                 _text(candidate.get("visual_pattern"), "shared visual pattern")
                 eligible.append(candidate)
-        preferred = [c for c in eligible if c["fit"] == "preferred"]
-        domain = preferred or eligible
+        domain = eligible
         if not domain:
             raise ValueError("B-roll has no suitable supported candidate; retain A-roll or resolve the declared gap")
         domains.append(sorted(domain, key=lambda c: c["candidate_id"]))
@@ -276,7 +286,32 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
         for field in ("segment_id", "component_id", "visual_pattern", "source_ref", "skill_id"):
             _text(row.get(field), "fixed context " + field)
         _duration(row)
-    chosen = [domain[0] for domain in domains]
+    # A logical item may span several physical segments. It still receives one
+    # native route, one matching operation and one source/template reward.
+    grouped, group_order = {}, []
+    for beat, domain in zip(beats, domains):
+        identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+        if identity not in grouped:
+            grouped[identity] = domain
+            group_order.append(identity)
+        elif grouped[identity] != domain:
+            raise ValueError("parts of one semantic visual item must share the same candidate reviews")
+    normalized = []
+    for identity in group_order:
+        choices = []
+        for choice in grouped[identity]:
+            candidate = pool[choice["candidate_id"]]
+            template = _fixed_template(candidate)
+            choices.append({**choice, "channel": source_channel(candidate["skill_id"]),
+                            "template_id": template[1] if template else None})
+        normalized.append(choices)
+    exact = assign_candidates(normalized,
+        fixed_channels=tuple({source_channel(row["skill_id"]) for row in fixed}),
+        fixed_templates=tuple({_fixed_template(row) for row in fixed if _fixed_template(row)}))
+    exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
+    chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
+        beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])])
+        for beat, domain in zip(beats, domains)]
 
     def cost(choices):
         patterns, sources = defaultdict(float), defaultdict(float)
@@ -313,14 +348,19 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
                 adjacency += min(current[1] - current[0], previous[1] - previous[0])
         return (-len(channels), -len(templates), adjacency,
                 sum(v * v for v in patterns.values()),
-                sum(v * v for v in sources.values()))
+                sum(v * v for v in sources.values()),
+                sum(choice["fit"] != "preferred" for choice in choices))
 
-    # Unique/clearly better slots already constrain their domains. Every slot
-    # contributes to the whole-video cost before flexible positions are changed.
+    # The exact maxima cannot be traded away for timing/adjacency preferences.
+    # A multi-part item stays on its jointly selected route during refinement.
+    repeated_items = {b.get("semantic_row_id") for b in beats if b.get("semantic_row_id")
+                      and sum(other.get("semantic_row_id") == b["semantic_row_id"] for other in beats) > 1}
     improved = True
     while improved:
         improved = False
         for index, domain in enumerate(domains):
+            if beats[index].get("semantic_row_id") in repeated_items:
+                continue
             current_cost, best = cost(chosen), chosen[index]
             for candidate in domain:
                 trial = [*chosen[:index], candidate, *chosen[index + 1:]]
@@ -337,6 +377,8 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
         best_pair, best_cost = None, cost(chosen)
         for left in range(len(domains)):
             for right in range(left + 1, len(domains)):
+                if any(beats[i].get("semantic_row_id") in repeated_items for i in (left, right)):
+                    continue
                 for first in domains[left]:
                     for second in domains[right]:
                         trial = list(chosen)
@@ -349,7 +391,7 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             chosen[left], chosen[right] = first, second
             improved = True
     result = copy.deepcopy(dict(selection))
-    result["assignments"] = [
+    assignments = [
         {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
          "candidate_id": choice["candidate_id"],
          **{key: pool[choice["candidate_id"]][key]
@@ -357,35 +399,33 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
          "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
         for beat, choice in zip(beats, chosen)
     ]
+    result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]
+    result["overlay_assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) in overlay_keys]
     return result
 
 
-def fixed_overlay_context(draft: Mapping, treatment: Mapping) -> list[dict]:
-    """Build fixed A-roll overlay identities from the actual draft bindings."""
-    overlays = {(row.get("segment_id"), row.get("component_id")): row
-                for row in treatment.get("overlay_selection", [])}
-    result = []
-    for segment in draft.get("segments", []):
-        if segment.get("visual_strategy", {}).get("mode") != "none":
-            continue
-        for component in segment.get("visual_strategy", {}).get("components", []):
-            key = (segment.get("segment_id"), component.get("component_id"))
-            binding = segment.get("bindings", {}).get(component.get("component_id"))
-            overlay = overlays.get(key)
-            if not isinstance(binding, dict) or not isinstance(overlay, dict):
-                if component.get("kind") == "code_generated":
-                    raise ValueError("fixed code overlay is missing binding or overlay selection")
-                continue
-            source_ref = binding.get("brief_sha256") or binding.get("source_ref")
-            template_id = binding.get("template_id")
-            if not source_ref or not template_id:
-                raise ValueError("fixed overlay binding lacks source or template identity")
-            result.append({"segment_id": key[0], "component_id": key[1],
-                           "start": segment["start"], "end": segment["end"],
-                           "skill_id": binding.get("dependency_id", ""),
-                           "template_id": template_id, "source_ref": source_ref,
-                           "visual_pattern": overlay.get("visual_structure") or overlay.get("visible_action", "")})
-    return result
+def validate_fixed_materials(draft: Mapping, selection: Mapping) -> None:
+    """Only real direct materials may contribute fixed source coverage."""
+    adjustable = {(b["segment_id"], b["component_id"])
+                  for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]}
+    expected = {}
+    for segment in draft["segments"]:
+        for component in segment["visual_strategy"]["components"]:
+            key = (segment["segment_id"], component["component_id"])
+            if component["kind"] != "code_generated" and key not in adjustable:
+                expected[key] = (segment, component)
+    fixed_rows = selection.get("fixed_context", [])
+    fixed = {(row["segment_id"], row["component_id"]): row for row in fixed_rows}
+    if len(fixed) != len(fixed_rows) or set(fixed) != set(expected):
+        raise ValueError("fixed context must contain every direct material, without adjustable overlays")
+    for key, row in fixed.items():
+        segment, component = expected[key]
+        if any(row[field] != segment[field] for field in ("start", "end")):
+            raise ValueError("fixed material window changed")
+        binding = segment.get("bindings", {}).get(component["component_id"], {})
+        channel = source_channel(binding.get("dependency_id") or binding.get("provider") or component["kind"])
+        if source_channel(row["skill_id"]) != channel or row.get("template_id") is not None:
+            raise ValueError("fixed material cannot invent a channel or a reusable template")
 
 
 def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -> dict:
@@ -393,46 +433,35 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
     computed = assign_skills(project_root, selection)
-    if computed["assignments"] != selection.get("assignments"):
+    if (computed["assignments"] != selection.get("assignments")
+            or computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
         raise ValueError("B-roll assignment changed; run assign before building bindings")
-    expected, fixed_expected = {}, {}
-    fixed_overlay = fixed_overlay_context(draft, treatment)
-    for row in fixed_overlay:
-        fixed_expected[(row["segment_id"], row["component_id"])] = row
+    expected, overlay_expected = {}, {}
     for segment in draft["segments"]:
-        if segment["visual_strategy"]["mode"] == "none":
-            continue  # A-roll overlays have a separate contract.
         for component in segment["visual_strategy"]["components"]:
+            key = (segment["segment_id"], component["component_id"])
+            is_overlay = segment["visual_strategy"]["composition"]["family"] == "aroll_with_overlay"
+            if is_overlay and component["kind"] == "code_generated":
+                overlay_expected[key] = (segment, component)
+                continue
             if (component["kind"] in {"code_generated", "ai_generated"}
                     and (component["kind"] != "ai_generated" or any(
                         (b.get("segment_id"), b.get("component_id")) == (segment["segment_id"], component["component_id"])
                         for b in selection["beats"]))):
                 expected[(segment["segment_id"], component["component_id"])] = (segment, component)
-            else:
-                fixed_expected[(segment["segment_id"], component["component_id"])] = segment
     beats = {(b["segment_id"], b["component_id"]): b for b in selection["beats"]}
     if set(beats) != set(expected):
         raise ValueError("B-roll selection must cover every code/AI B-roll component exactly once")
-    fixed_rows = selection.get("fixed_context", [])
-    fixed = {(row["segment_id"], row["component_id"]): row for row in fixed_rows}
-    if len(fixed) != len(selection.get("fixed_context", [])) or set(fixed) != set(fixed_expected):
-        raise ValueError("B-roll whole-video context must include every material B-roll exactly once")
-    for key, row in fixed.items():
-        expected_row = fixed_expected.get(key)
-        if expected_row and any(row[k] != expected_row[k] for k in ("start", "end")):
-            raise ValueError("B-roll fixed material context window drifted")
-        if expected_row:
-            for field in ("skill_id", "template_id", "source_ref", "visual_pattern"):
-                expected_value = expected_row.get(field)
-                actual_value = row.get(field)
-                if field == "skill_id":
-                    expected_value, actual_value = source_channel(expected_value), source_channel(actual_value)
-                if field in expected_row and actual_value != expected_value:
-                    raise ValueError("B-roll fixed material identity drifted")
-    pool = {row["candidate_id"]: row for row in discover_candidates(project_root)}
-    for assignment in computed["assignments"]:
+    overlay_beats = {(b["segment_id"], b["component_id"]): b for b in selection.get("overlay_beats", [])}
+    if len(overlay_beats) != len(selection.get("overlay_beats", [])) or set(overlay_beats) != set(overlay_expected):
+        raise ValueError("joint selection must include every native A-roll overlay as an adjustable item")
+    validate_fixed_materials(draft, selection)
+    from .motion_capabilities import overlay_candidates
+    pool = {row["candidate_id"]: row for row in [*discover_candidates(project_root), *overlay_candidates(project_root)]}
+    all_beats, all_expected = {**beats, **overlay_beats}, {**expected, **overlay_expected}
+    for assignment in [*computed["assignments"], *computed["overlay_assignments"]]:
         key = (assignment["segment_id"], assignment["component_id"])
-        beat, (segment, component) = beats[key], expected[key]
+        beat, (segment, component) = all_beats[key], all_expected[key]
         candidate = pool[assignment["candidate_id"]]
         if beat["start"] != segment["start"] or beat["end"] != segment["end"]:
             raise ValueError("B-roll semantic window drifted from the draft")
@@ -452,5 +481,6 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
                      ("dependency_id", "entrypoint", "template_id", "producer_version"))):
             raise ValueError("B-roll binding does not execute the selected native candidate")
     return {"status": "pass", "assignments": computed["assignments"],
+            "overlay_assignments": computed["overlay_assignments"],
             "history_note": selection["history_note"],
             "recent_context": selection.get("recent_context", [])}

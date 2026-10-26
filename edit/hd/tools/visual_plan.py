@@ -345,6 +345,7 @@ def _prevalidate_draft_bindings(
                         "openfilm-motion-graphics",
                         "eian-riso-broll",
                         "overlay-studio-native",
+                        "motion-graphics-native",
                         "whiteboard-video",
                     }
                     else "prevalidation-only"
@@ -1903,6 +1904,8 @@ def _skill_selection_for_publication(
         raise _fail("B-roll treatment must belong to the current Job")
     try:
         treatment = contract_artifacts.read_json_artifact(path)
+        from .motion_match_cache import validate_reviews
+        validate_reviews(Path(__file__).resolve().parents[3], draft, treatment)
         selection = broll_skill_selection.validate_selection(
             Path(__file__).resolve().parents[3], draft, treatment,
         )
@@ -1925,7 +1928,7 @@ def _check_selected_recipe_bindings(draft, frozen_segments, selection):
         return
     originals = {s["segment_id"]: s for s in draft["segments"]}
     frozen = {s["segment_id"]: s for s in frozen_segments}
-    for assignment in selection["assignments"]:
+    for assignment in [*selection["assignments"], *selection.get("overlay_assignments", [])]:
         sid, cid = assignment["segment_id"], assignment["component_id"]
         binding = originals[sid]["bindings"][cid]
         if frozen[sid]["bindings"][cid] != binding:

@@ -266,6 +266,37 @@ def _binding_probe(
 
 
 class DependencyPreflightTests(unittest.TestCase):
+    def test_availability_command_requires_successful_version_execution(self):
+        for args, expected in ((["--version"], 0), (["-c", "raise SystemExit(7)"], 2)):
+            with self.subTest(args=args):
+                manifest = {"schema_version": 1, "dependencies": [{
+                    "id": "command-probe", "kind": "availability_any", "required": True,
+                    "target": [{"id": "installed-command", "kind": "command",
+                                "target": sys.executable, "version_args": args}]}]}
+                completed, report = self.run_preflight(manifest)
+                self.assertEqual(completed.returncode, expected, completed.stderr)
+                dependency = report["dependencies"][0]
+                command = dependency["alternatives"][0]
+                self.assertEqual(command["resolved_path"], sys.executable)
+                if expected == 0:
+                    self.assertTrue(dependency["callable"])
+                    self.assertTrue(command["version"].startswith("Python "))
+                else:
+                    self.assertFalse(dependency["callable"])
+                    self.assertEqual(command["status"], "unavailable")
+
+    def test_broken_project_download_tool_does_not_select_installed_command(self):
+        manifest = {"schema_version": 1, "dependencies": [{
+            "id": "official-video-acquisition", "kind": "availability_any", "required": True,
+            "target": [{"id": "installed-command", "kind": "command",
+                        "target": sys.executable, "version_args": ["--version"]}]}]}
+        completed, report = self.run_preflight(manifest, project_contents={
+            "edit/hd/integrations/video-download-runtime/bin/yt-dlp": "not executable\n"})
+        self.assertEqual(completed.returncode, 2, completed.stderr)
+        dependency = report["dependencies"][0]
+        self.assertFalse(dependency["callable"])
+        self.assertNotIn("selected_alternative", dependency)
+
     def test_native_probe_environment_does_not_mutate_main_environment(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))
         import dependency_preflight
@@ -536,13 +567,16 @@ class DependencyPreflightTests(unittest.TestCase):
             if visual_plan is not None:
                 # Validate with this fixture's real runtime, never a foreign
                 # module imported through the parent process's PYTHONPATH.
-                for source in (REPO_ROOT / "edit/hd/tools").rglob("*.py"):
+                # The contract validators import sibling runtime modules (including
+                # newly added semantic planning helpers); copy the complete runtime
+                # package so the subprocess cannot fall back to the parent checkout.
+                for source in (REPO_ROOT / "edit/hd").rglob("*.py"):
                     target = project_root / source.relative_to(REPO_ROOT)
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, target)
                 scripts = project_root / "skill-development/hd-talking-head/scripts"
                 scripts.mkdir(parents=True)
-                for name in ("broll_capability_router.py", "avatar_profile.py"):
+                for name in ("broll_capability_router.py", "avatar_profile.py", "audit_visual_coverage.py"):
                     shutil.copy2(SKILL_ROOT / "scripts" / name, scripts / name)
             for relative in project_files:
                 path = project_root / relative
@@ -1737,8 +1771,8 @@ _run_reference_process = "def _run_reference_process"
 
         expected_probes = {
             "html-video-reference": [(
-                "packages/adapter-hyperframes/src/render.ts",
-                "c414ecc07f795add03807d5d9ce4baefd807cea2",
+                "scripts/render_data_rollup.cjs",
+                "1.0.0",
                 "ReferenceProcessAdapter",
             )],
             "hyperframes-adapter": [
@@ -1783,7 +1817,11 @@ _run_reference_process = "def _run_reference_process"
             }
             self.assertEqual(actual, set(expected))
             for probe in dependency["binding_probes"]:
-                self.assertIn("probe-code-binding", probe["command"])
+                if dependency_id == "html-video-reference":
+                    self.assertTrue(any("data_rollup_adapter.py" in item for item in probe["command"]))
+                    self.assertIn("--identity", probe["command"])
+                else:
+                    self.assertIn("probe-code-binding", probe["command"])
                 if dependency_id in {"hyperframes-adapter", "local-canonical-adapter"}:
                     self.assertIn("--runtime-root", probe["command"])
                     self.assertIn("--runtime-revision", probe["command"])

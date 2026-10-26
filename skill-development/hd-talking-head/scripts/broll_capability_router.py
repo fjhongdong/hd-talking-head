@@ -89,6 +89,7 @@ _PRIMARY_RENDERER = {
     "openfilm-motion-graphics": "OpenFilm",
     "overlay-studio-native": "OverlayStudio",
     "huashu-motion-native": "HuashuMotion",
+    "motion-graphics-native": "HyperFrames",
 }
 _REGISTERED_ENGINE = {
     "remotion": "Remotion",
@@ -125,6 +126,7 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/riso_native_adapter.py",
     "scripts/overlay_studio_adapter.py",
     "scripts/huashu_stat_adapter.py",
+    "scripts/render_motion_graphics.cjs",
 })
 _NON_NATIVE_PRODUCERS = frozenset({
     "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
@@ -619,6 +621,13 @@ def _validate_code_cross_fields(
                 or component.get("template_origin") != "custom_fallback"
                 or component.get("adaptation_level") != "structural"):
             raise RouterError("Huashu Motion currently supplies only the native single stat")
+    if dependency_id == "motion-graphics-native":
+        if (entrypoint != "scripts/render_motion_graphics.cjs"
+                or component.get("source_entrypoint") != entrypoint
+                or component.get("template_id") != "motion-graphics-native/callout_pin"
+                or component.get("template_origin") != "custom_fallback"
+                or component.get("adaptation_level") != "structural"):
+            raise RouterError("Motion Graphics currently supplies only the native callout_pin")
     if dependency_id == "hd-talking-head-semantic-state" and component.get("template_origin") != "verified_local_canonical":
         raise RouterError("SemanticState requires a qualified local canonical template")
     if component.get("template_origin") in {
@@ -811,6 +820,7 @@ def _executor(kind: str, binding: Mapping[str, Any]) -> str:
             "eian-riso-broll": "reference_adapter",
             "overlay-studio-native": "reference_adapter",
             "huashu-motion-native": "reference_adapter",
+            "motion-graphics-native": "reference_adapter",
         }
         if not isinstance(dependency_id, str) or dependency_id not in executors:
             raise RouterError("code generation requires a registered dependency")
@@ -981,10 +991,11 @@ def _compile_shot_recipe(
             completed_contract = _consume_completed_lovart_binding(kind, approved_component["media_type"], binding)
         executor = _executor(kind, binding)
         if kind == "code_generated":
-            if (binding.get("dependency_id") in {"overlay-studio-native", "huashu-motion-native"}
+            if (binding.get("dependency_id") in {
+                    "overlay-studio-native", "huashu-motion-native", "motion-graphics-native"}
                     and (approved_component["layer_role"] != "annotation"
                          or approved["composition"]["family"] != "aroll_with_overlay")):
-                raise RouterError("Native pin-board and single stat are A-roll annotations, not B-roll")
+                raise RouterError("Native pin-board, single stat and callout are A-roll annotations, not B-roll")
             if (binding.get("dependency_id") == "openfilm-motion-graphics"
                     and (approved_component["layer_role"] != "base"
                          or approved_component["layout_slot"] != "full_frame"

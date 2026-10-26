@@ -75,6 +75,7 @@ _DEPENDENCY_CONTRACTS = {
     "openfilm-motion-graphics": ("reference_adapter", "OpenFilm"),
     "overlay-studio-native": ("reference_adapter", "OverlayStudio"),
     "huashu-motion-native": ("reference_adapter", "HuashuMotion"),
+    "motion-graphics-native": ("reference_adapter", "HyperFrames"),
 }
 _LICENSE_KEYS = {
     "schema_version",

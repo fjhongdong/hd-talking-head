@@ -15,6 +15,25 @@ from edit.hd.tools import visual_plan
 
 
 class ComposeVisualPlanTests(unittest.TestCase):
+    def test_word_cut_times_use_corrected_transcript(self):
+        with tempfile.TemporaryDirectory() as td:
+            job = Path(td)
+            (job / "05-speech-cleanup").mkdir()
+            (job / "06-edit-structure").mkdir()
+            original = [{"text": "语", "start": 1.0, "end": 1.25}]
+            corrected = [{"text": "宇", "start": 1.0, "end": 1.25}]
+            (job / "05-speech-cleanup/report.json").write_text(json.dumps({
+                "transcript": {"words": original}}))
+            (job / "05-speech-cleanup/word-transcript.json").write_text(json.dumps({
+                "version": 1, "words": corrected}))
+            (job / "06-edit-structure/timeline-map.json").write_text(json.dumps({
+                "segments": [{"source_start": 0.8, "source_end": 1.5,
+                              "timeline_start": 0.0, "timeline_end": 0.7}]}))
+            words = compose._word_cut_times(job)
+            self.assertEqual(words[0]["text"], "宇")
+            self.assertAlmostEqual(words[0]["cut"], 0.2)
+            self.assertAlmostEqual(words[0]["cut_end"], 0.45)
+
     def test_quantize_rejects_zero_frame_window(self):
         with self.assertRaises(ValueError):
             compose.quantize_windows([{"index": 0, "wa": 0.0, "wb": 0.001}], 0.02)

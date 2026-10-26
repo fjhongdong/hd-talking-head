@@ -67,6 +67,43 @@ class InspectInputsTests(unittest.TestCase):
         self.assertTrue((target / "report.json").is_file())
         self.assertEqual(job.stages["inspect"]["status"], "ready_for_review")
 
+    def test_unpublished_revised_job_can_publish_into_empty_stage_directory(self) -> None:
+        video = self.directory / "source.mp4"
+        video.write_bytes(self.video.read_bytes())
+        job = create_job(self.directory, video, self.script, profile="full-v2")
+        target = job.job_dir / "01-inspect"
+        target.mkdir()
+
+        revise(job, "inspect", "首次检查前修订启动状态")
+        self.assertEqual("needs_revision", job.stages["inspect"]["status"])
+        self.assertEqual([], job.stages["inspect"]["artifacts"])
+        self.assertEqual([], job.stages["inspect"]["lineage"])
+
+        inspect_job(job)
+
+        self.assertTrue((target / "report.json").is_file())
+        self.assertEqual("ready_for_review", job.stages["inspect"]["status"])
+
+    def test_revised_job_with_missing_published_generation_cannot_use_empty_stage(self) -> None:
+        video = self.directory / "source.mp4"
+        video.write_bytes(self.video.read_bytes())
+        job = create_job(self.directory, video, self.script, profile="full-v2")
+        target = job.job_dir / "01-inspect"
+        inspect_job(job)
+        old_report = (target / "report.json").read_bytes()
+        revise(job, "inspect", "已发布检查结果丢失，重新检查")
+        self.assertTrue(job.stages["inspect"]["lineage"])
+        retained = self.directory / "retained-old-generation"
+        retained.mkdir()
+        for artifact in target.iterdir():
+            artifact.rename(retained / artifact.name)
+
+        self.assertEqual([], list(target.iterdir()))
+
+        with self.assertRaises(GenerationRecoveryError):
+            inspect_job(job)
+        self.assertEqual(old_report, (retained / "report.json").read_bytes())
+
     def test_precreated_stage_with_unknown_file_is_preserved(self) -> None:
         video = self.directory / "source.mp4"
         video.write_bytes(self.video.read_bytes())

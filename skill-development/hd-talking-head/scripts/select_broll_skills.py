@@ -27,6 +27,11 @@ def main() -> None:
                 parser.error("assign/check require --treatment")
             treatment = contract_artifacts.read_json_artifact(args.treatment)
             if args.action == "assign":
+                if args.director_brief is None:
+                    parser.error("assign requires --director-brief to validate cached semantic matches")
+                from edit.hd.tools import motion_match_cache
+                motion_match_cache.validate_reviews(project,
+                    contract_artifacts.read_json_artifact(args.director_brief), treatment)
                 treatment["skill_selection"] = selection.assign_skills(
                     project, treatment.get("skill_selection", {}),
                 )
@@ -35,6 +40,9 @@ def main() -> None:
             else:
                 if args.director_brief is None:
                     parser.error("check requires --director-brief")
+                from edit.hd.tools import motion_match_cache
+                motion_match_cache.validate_reviews(project,
+                    contract_artifacts.read_json_artifact(args.director_brief), treatment)
                 result = selection.validate_selection(
                     project, contract_artifacts.read_json_artifact(args.director_brief),
                     treatment,

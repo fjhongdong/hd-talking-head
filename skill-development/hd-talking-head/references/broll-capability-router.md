@@ -146,7 +146,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 
 需要显式规划动作依赖时读取 [语义动效规划接口](semantic-motion.md)。已登记的 `hd-talking-head/relation-motion` 和五类 SemanticState 会消费已冻结的 `semantic_motion`，并以独立 adapter、正式 executor、真实双输入执行证据、逐态像素、动作顺序记录与人工批准样片证明登记资格。普通 Job 仍必须 fail closed：模板身份、family、容量、当前批准内容、当前实际填充三态 QA 或 canary 任一不通过，就不得选用或声称已执行。
 
-多样性统一按[画面多样性](visual-quality-contract.md#画面多样性)执行。选型分两轮：第一轮逐段从完整语义出发，列出所有合格 Skill 和具体原生入口候选，核对对象、动作、关系、变化、容量、画幅、时长及“可执行/待适配/待费用授权”状态；第二轮把全部新增与复用镜头放回整片时间线，在合格候选中尽可能扩大真实来源渠道和具体模板的覆盖，再减少主体、构图、动作与节奏重复。同一来源的不同 adapter 不算不同渠道，原生创作不冒称现成模板；不等机械分数完全相等才考虑多样性。保留明确的语义和质量优势、用户指定画面及费用授权边界，不设 Skill 配额，也不随机轮换。整片分工冻结后才生成 ShotRecipe；执行器不临时换类或换样式。
+先分别完成贴片语义列表和 B-roll 语义列表，再对每项做一次完整候选匹配；所有合格候选保留到统一分配阶段。整片联合分配先精确最大化真实来源渠道数量，再在该前提下最大化具体模板数量；同一来源的不同 adapter 或别名只算一个渠道，自创场景不冒充新增模板。`preferred` 只记录局部优势，不能删除合格 `equivalent`；缺素材、待准备或待授权是执行状态，不是语义 `unsuitable`。时间覆盖和可读性放到分配完成后校验，不能先按时长定条数；整片分工冻结后才生成 ShotRecipe。
 
 冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、第一轮列出的上游 Skill/具体入口候选、第二轮确定的整片分工、画面家族、主体动作，以及可执行/待适配/待费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表在整片协调完成前是制作草案；协调结果冻结后才生成已执行的 ShotRecipe。
 
@@ -162,7 +162,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 - `beats` 每条对应一个代码/AI B-roll 的 `segment_id/component_id/start/end`，包含 `transcript`、`semantic_goal`、`required_change`。新增与复用镜头均在同一表。
 - 每条 `skill_reviews` 按 `discover` 的全部 `skill_id` 记录 `fit/reason`。`fit` 为 `preferred/equivalent/unsuitable/needs_adapter`。先看完整能力池，不逐个复制所有卡片，也不拿“没有适配器”冒充语义不合适。
 - 每条 `candidates` 只列相关的具体 `candidate_id/fit/reason/visual_pattern`。主控先审阅语义、中文容量、原生动作、画幅、时长与美观；只有确实相当的方案才放入同档组。`visual_pattern` 使用主控统一的主体组织、构图和动作标签，例如“资料分组后汇聚”，不能以 Skill 名、色板或模板编号命名；换道具、换色或换 Skill 而动作相同，仍用同一标签，不能靠不同字符串假装不同画面。
-- `preferred` 表示有明确理由优先的一档，不表示必须只有一个。`assign` 只在存在的最高档内协调：有 `preferred` 时不再选择 `equivalent`，否则在 `equivalent` 中分配。没有明确胜者时保留多个 `equivalent`；多个同等更优方案也可共同列为 `preferred`。不要把熟悉的入口提前写成唯一 `preferred`，让整片协调失去选择空间。协调优先扩大本片真实渠道和具体模板覆盖，同时比较相邻模式以及全片、近期各模式/来源的实际时长；语义和质量合格才进入这一比较，不强求不适用来源出现。
+- `preferred` 表示有明确理由优先的一档，但不能裁剪合格 `equivalent`。`assign` 必须在完整候选池中统一协调，先最大化真实渠道，再最大化具体模板；没有合格替代时才保留唯一候选。别名去重，自创场景不冒充新增模板；语义和质量合格才进入比较，不强求不适用来源出现。
 - `recent_context` 保存最近两条成片的 `video_id/source_ref/skill_id/visual_pattern/start/end`；依据实际制作记录和画面填写，不凭旧 Job 名称猜测。`fixed_context` 用同样的模式信息记录本期已选资料类 B-roll，另含 `segment_id/component_id`，让这些画面也参与整片协调。资料来源的 `skill_id` 可记实际资料类型，不伪称动画 Skill。
 - `assignments` 是命令输出，不手填。按结果实际调用所选 factory 构造原有 binding，随后将每条最终的 `intent_statement`、`component_brief` 与完整 `binding_snapshot` 写回对应 beat。文案、字号、布局或 brief 字节变更后，先调用同一 factory 重建 binding，再同步 director 与该 beat 的完整快照并重新运行选型；不能只改 brief 路径或单个哈希。launcher、reference sample 与 template_request 均取真实 factory 返回值，不从另一模板或旧样片手拼。后续生成才产生的结果仍按既有资产机制绑定；选型记录不能冒充已经实际调用。
 

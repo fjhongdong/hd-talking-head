@@ -155,6 +155,11 @@ def audit(
         } for s in overlays],
         "windows": windows,
     }
+    if treatment is not None and "semantic_lists" in treatment:
+        from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
+        semantic = validate_semantic_lists(treatment, visual)
+        result["overlay_count"] = semantic["overlay_count"]
+        result["broll_count"] = semantic["broll_count"]
     if content_analysis is not None:
         result["needs_review_items"] = needs_review_items
     blocking: list[str] = []

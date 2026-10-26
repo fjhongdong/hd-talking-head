@@ -251,7 +251,9 @@ def _availability_alternatives(item: dict[str, Any]) -> list[dict[str, Any]]:
     checked: list[dict[str, Any]] = []
     identifiers: set[str] = set()
     for alternative in alternatives:
-        if not isinstance(alternative, dict) or set(alternative) != {"id", "kind", "target"}:
+        if not isinstance(alternative, dict) or not {"id", "kind", "target"}.issubset(alternative) or (
+            set(alternative) - {"id", "kind", "target", "version_args"}
+        ):
             raise PreflightError(f"availability alternative fields are invalid: {item['id']}")
         alternative_id = alternative.get("id")
         kind = alternative.get("kind")
@@ -263,6 +265,12 @@ def _availability_alternatives(item: dict[str, Any]) -> list[dict[str, Any]]:
         ):
             raise PreflightError(f"availability alternative values are invalid: {item['id']}")
         identifiers.add(alternative_id)
+        if "version_args" in alternative and (
+            kind != "command" or not isinstance(alternative["version_args"], list)
+            or not alternative["version_args"]
+            or any(not isinstance(value, str) for value in alternative["version_args"])
+        ):
+            raise PreflightError(f"availability command version arguments are invalid: {item['id']}")
         checked.append(dict(alternative))
     return checked
 
@@ -652,6 +660,8 @@ def _check_availability_any(
     records: list[dict[str, Any]] = []
     for alternative in _availability_alternatives(item):
         probe = {"id": alternative["id"], "target": alternative["target"]}
+        if "version_args" in alternative:
+            probe["version_args"] = alternative["version_args"]
         if alternative["kind"] == "command":
             checked = _check_command(probe)
         elif alternative["kind"] == "python_module":

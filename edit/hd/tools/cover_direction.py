@@ -47,7 +47,8 @@ _COMPOSITION_KEYS = {
 _PALETTE_KEYS = {"background", "font_color", "accent_color"}
 _TYPOGRAPHY_KEYS = {"font_style"}
 _SAFE_ZONE_KEYS = {"safe_margin_ratio"}
-_STYLE = re.compile(r"style-(?:0[1-9]|10)\Z")
+_PUNK_STYLE = "interleaved-title-editorial-poster"
+_STYLE = re.compile(rf"(?:style-(?:0[1-9]|10)|{_PUNK_STYLE})\Z")
 _BACKGROUND = re.compile(r"[a-z]+(?:-[a-z]+)*\Z")
 _COLOR = re.compile(r"#[0-9A-Fa-f]{6}\Z")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
@@ -337,7 +338,9 @@ def _normalize_direction(
     safe_zones = _object(value["safe_zones"], _SAFE_ZONE_KEYS, "safe_zones")
     margin = _number(
         safe_zones["safe_margin_ratio"], "safe_margin_ratio",
-        0.04 if style_id == "style-07" and output_aspect_ratio == "9:16" else 0.10,
+        0.04 if style_id == _PUNK_STYLE or (
+            style_id == "style-07" and output_aspect_ratio == "9:16"
+        ) else 0.10,
         0.15,
     )
 
@@ -654,6 +657,13 @@ def prepare_cover_direction(
     direction_preview: Path | None = None,
 ) -> Dict[str, Any]:
     state.require_runnable(job, "cover_direction")
+    composition = direction.get("composition") if isinstance(direction, Mapping) else None
+    if (
+        isinstance(composition, Mapping)
+        and composition.get("style_id") == _PUNK_STYLE
+        and direction_preview is None
+    ):
+        raise CoverDirectionError("Punk cover direction requires an explicit PNG preview")
     preview_bytes = None
     if direction_preview is not None:
         preview_bytes = _read_direction_preview(

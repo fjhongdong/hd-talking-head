@@ -57,7 +57,8 @@ _DETAIL_KEYS = {
 _TEXT_KEYS = {"engine", "side", "font_style", "color", "safe_margin_ratio"}
 _PERSON_KEYS = {"source", "method", "side", "person_width_ratio"}
 _SHA = re.compile(r"[0-9a-f]{64}")
-_STYLE = re.compile(r"style-(?:0[1-9]|10)")
+_PUNK_STYLE = "interleaved-title-editorial-poster"
+_STYLE = re.compile(rf"(?:style-(?:0[1-9]|10)|{_PUNK_STYLE})")
 _FONT_PATHS = (
     Path("/System/Library/Fonts/PingFang.ttc"),
     Path("/System/Library/Fonts/Hiragino Sans GB.ttc"),
@@ -736,6 +737,8 @@ def validate_cover_brief(
     style_id = _text(root["style_id"])
     if _STYLE.fullmatch(style_id) is None:
         raise _fail()
+    if style_id == _PUNK_STYLE and not full_image_mode:
+        raise _fail()
     subtitle = _text(root["subtitle"], nonempty=False)
     if style_id == "style-01":
         headline = _dict(root.get("headline"), _HEADLINE_KEYS)
@@ -800,7 +803,9 @@ def validate_cover_brief(
     if details["font_style"] != "heavy-sans":
         raise _fail()
     _color(details["font_color"])
-    margin_min = 0.04 if style_id == "style-07" and root.get("output_aspect_ratio") == "9:16" else 0.10
+    margin_min = 0.04 if style_id == _PUNK_STYLE or (
+        style_id == "style-07" and root.get("output_aspect_ratio") == "9:16"
+    ) else 0.10
     _ratio(details["safe_margin_ratio"], margin_min, 0.15)
 
     reference_mode = root["base_generation"] == "reference_person_scene_no_text"
@@ -910,6 +915,8 @@ def _brief_from_approved_direction(
     direction = record["direction"]
     reference = direction["person_reference"]
     composition = direction["composition"]
+    if composition["style_id"] == _PUNK_STYLE and approved_preview_prompt is None:
+        raise CoverError("Punk cover requires an approved complete image and its actual prompt")
     palette = direction["palette"]
     typography = direction["typography"]
     safe_zones = direction["safe_zones"]

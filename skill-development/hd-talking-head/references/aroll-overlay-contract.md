@@ -73,7 +73,7 @@ brief 包含 `schema_version=1`、`source_binding` 与 `renderer_input`：
 
 ## 必须验收
 
-制作前在已有 treatment 的 `overlay_selection` 为每个贴片明确记录语义关系、原生路由、可见动作、可见结构与选择理由。由主控阅读原话作判断，不用“出现不字就是状态变化”等关键词猜测。正式 `prepare_visual_direction` 同时执行 `overlay_selection.validate_selection` 和下述词锚检查，结果合并到原有 `visual-routing.md`。覆盖遗漏、未知入口或选择与真实绑定不符时停止。不同文案但相同结构仍算重复；相邻同形或某形态占多数时在同一记录写 `repeat_review` 说明保留依据，不强制配额、不随机换 Skill。声明写齐只证明可核对，语义和审美仍由主控看真实画面判断。
+制作前先把每个贴片写入独立贴片语义列表，再在已有 treatment 的 `overlay_selection` 为每项做一次完整候选匹配并保留全部合格候选。贴片候选与 B-roll 一起参与整片分配，先最大化真实渠道，再最大化具体模板；不能逐项提前锁定圈线或唯一 `preferred`。正式检查后才校验时间覆盖和可读性；`repeat_review` 只能记录比较后仍需复用的理由，不能替代候选比较或自动放行同形重复。覆盖遗漏、未知入口或绑定不符时停止。
 
 每项字段为 `segment_id / component_id / intent_relation / native_route / visible_action / visual_structure / selection_reason`。当前对应关系为：`parallel / grid-card-assemble / staggered_card_reveal / grid-list`；`reminder / notification-stack / notification_stack / notification-stack`；`state_change / toggle-flip / state_toggle / toggle-rail`；`compare / before-after-wipe / moving_split_reveal / before-after-split`；`process / hw-pipeline / three_node_process / process-chain`。`native_route` 不含 `hyperframes/` 前缀；正式入口还将它与词锚检查实际读取的 brief 路由核对，不能只按模板名字放行。`repeat_review` 是 `{native_route, visual_structure, reason}` 列表，理由非空并覆盖实际重复结构；它不授权文案与台词不符的组件。
 
