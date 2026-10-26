@@ -2945,7 +2945,7 @@
   "skill-development/hd-talking-head/references/cover-title-style.md": "dc14978d5773cb712b81ac7896b5afdbd3e4c8b82fa02052681c29dfc7ee2e27",
   "skill-development/hd-talking-head/references/cutcod-riso.md": "f8f275343db4be057acc228f971e1ad2a9e2381a518299cc3196f37957800c92",
   "skill-development/hd-talking-head/references/data-rollup-execution.md": "53c48eb6f944da3ad1874604623a56c0720e5f920ee7f1a90abf582ec17d220b",
-  "skill-development/hd-talking-head/references/dependency-manifest.json": "473c6a64a922024968a1dc57c888a3622cdca1b2239f9377e69959e37c022cba",
+  "skill-development/hd-talking-head/references/dependency-manifest.json": "7691da038dab3c9845d08ec9035797908419be53a7d1ebc4cd8f0b296180ab58",
   "skill-development/hd-talking-head/references/dependency-preflight.md": "232280b776a4d4201ddc09a1b4e57038237f69fa951d5def572e0f888ffa86ed",
   "skill-development/hd-talking-head/references/examples/schema-v2-example.json": "f05f286b79e2d928e44541c8dab4fcba6c371e49055e9833cc33f55d9c1c8eaa",
   "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
@@ -3082,7 +3082,7 @@
   "skill-development/hd-talking-head/tests/test_confirm_job_setup.py": "635242816e88b52846359dc5bb13bc50dafae1b96541a1a45a5677f6352e345f",
   "skill-development/hd-talking-head/tests/test_cross_package_surface.py": "2f609a9ad731b7562c859cc5ae4fe3625b19e5eb3740e5283b877de4d508d5ce",
   "skill-development/hd-talking-head/tests/test_data_rollup_adapter.py": "bdb0aa2181dd19a1788daa5ceec20b82e9b9d71bc5e3cfa8cf2b018e516f36dc",
-  "skill-development/hd-talking-head/tests/test_dependency_preflight.py": "418446ed9ad95353744ed8693c82a32dad211aebee1d7c0a62d018ca0ca7984e",
+  "skill-development/hd-talking-head/tests/test_dependency_preflight.py": "7866d0ab6dbcd0445dbff221895b2f1ae5deff6502f7262068f2f24b2bf27f38",
   "skill-development/hd-talking-head/tests/test_doudou_adapter.py": "0792060680982c9907eb74584d52e508e4148ccbd43b801c574aca4b9e4948c0",
   "skill-development/hd-talking-head/tests/test_ensure_punk_cover.py": "fbb0cff3e62cbee2954d710419dd13aae08e3092490566165754eca17d72a860",
   "skill-development/hd-talking-head/tests/test_ensure_visual_broll_skills.py": "1878de1761437a3b12246212cd81ec3116a240d58cd115c39754c763bce02506",
@@ -11379,6 +11379,6 @@
   "参考项目/B-roll开源方案/video-use/install.md": "9a78c92932864a728cfe80700d1a6bd5a4c4b4cf2d3f4694f3fd53b49fc93394",
   "参考项目/B-roll开源方案/video-use/pyproject.toml": "4b27fdf0275016a5427416ee9a939ed5c8a756af02427394478d416b0909632d"
  },
- "release_id": "2026-10-27-numbering-and-native-readability-v257",
+ "release_id": "2026-10-27-pipeline-preflight-registration-v258",
  "schema_version": 1
 }

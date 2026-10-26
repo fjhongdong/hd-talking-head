@@ -1558,7 +1558,7 @@
         },
         {
           "entrypoint": "scripts/render_hyperframes_hw_pipeline.cjs",
-          "producer_version": "1.1.0",
+          "producer_version": "1.1.1",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",

@@ -1788,7 +1788,7 @@ _run_reference_process = "def _run_reference_process"
                 ),
                 (
                     "scripts/render_hyperframes_hw_pipeline.cjs",
-                    "1.1.0",
+                    "1.1.1",
                     "ReferenceProcessAdapter",
                 ),
             ],
