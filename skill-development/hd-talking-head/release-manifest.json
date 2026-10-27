@@ -2937,7 +2937,7 @@
   "skill-development/hd-talking-head/assets/wise-motion-runtime/package-lock.json": "fe6aa83d1abe9d9d0b0eca97b27f407269ada820978824d2003e3f6535153b5a",
   "skill-development/hd-talking-head/assets/wise-motion-runtime/package.json": "a96a213673e5cc68a65b7f92d69cb669011e5e9ddbcc899438b450f285ba661b",
   "skill-development/hd-talking-head/package.json": "1f067d3cf4ae97977b453b44020ef186f14b868a891edfd26953c22af4a57d91",
-  "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "b55537c8f43dc1476df7ec4c74cd7a6d37e84741531a8cfac23e94f6617c6fe1",
+  "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
   "skill-development/hd-talking-head/references/avatar-profile.md": "05cf9cada09e790cdd7c64e001c820306c5f390b8faa495adc17b5219811d30a",
   "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
   "skill-development/hd-talking-head/references/cover-contract.md": "0564a11ff0eb91e4e39bbb5f468cda11b449a6f1cddb5a69513115f6849eafd9",
@@ -2957,10 +2957,10 @@
   "skill-development/hd-talking-head/references/hyperframes-notification-execution.md": "61361feef6993b0cd6b536db4831c97453dc0a4d114894c87994889dfd93350a",
   "skill-development/hd-talking-head/references/job-workspace-contract.md": "365ee98fd86ff1f958193072f6d5979fe5744e334d636e30bd56403f3c07bc1b",
   "skill-development/hd-talking-head/references/material-usage-contract.md": "9b2363b5dc0fa237e07fb62037bce6ad071f20809a22b674545f1d905a7927ae",
-  "skill-development/hd-talking-head/references/motion-capability-index.json": "89c9003b6a5b8c541aeb837e6f6e84f137180ef41460b84a678700bbcc606c83",
+  "skill-development/hd-talking-head/references/motion-capability-index.json": "0eeb60694aea74e53c81e82c8cc389b7fd8fbcfed89921f6b25b565aa0e2ce64",
   "skill-development/hd-talking-head/references/motion-capability-library.md": "8c5fc0dfc6c7e03863e2ad88d75174a3dcdb09d0cafa337ca4398ef4c45607d9",
   "skill-development/hd-talking-head/references/motion-graphics-native.md": "5e7f26b38a5b70ac7ff46d2f7bc18b006c4ad8c107034efd17031d2692ae5d7e",
-  "skill-development/hd-talking-head/references/motion-text-readability.md": "f945bf2801ef39fc700944f6a3258e0a6e5475b747c09ccf3f78f77b9333857b",
+  "skill-development/hd-talking-head/references/motion-text-readability.md": "eb46e804bb77b7a26a37521974407d595dd3be4f2d3be10cfe81e0b5ffc98425",
   "skill-development/hd-talking-head/references/official-video-acquisition.md": "ec4816e64a5fd95255bbedfa6f4b81034ced57d9c374ef11c2eafb2609b18c40",
   "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
   "skill-development/hd-talking-head/references/openfilm-motion-graphics.md": "c925a0b7539dbdbccdf15cf1114a4166d381d267c3f3bb538926394a86fd2158",
@@ -11379,6 +11379,6 @@
   "参考项目/B-roll开源方案/video-use/install.md": "9a78c92932864a728cfe80700d1a6bd5a4c4b4cf2d3f4694f3fd53b49fc93394",
   "参考项目/B-roll开源方案/video-use/pyproject.toml": "4b27fdf0275016a5427416ee9a939ed5c8a756af02427394478d416b0909632d"
  },
- "release_id": "2026-10-27-avatar-composition-revision-v262",
+ "release_id": "2026-10-27-final-composition-safe-text-v263",
  "schema_version": 1
 }
