@@ -35,7 +35,7 @@ def main() -> None:
                 motion_match_cache.validate_reviews(project,
                     contract_artifacts.read_json_artifact(args.director_brief), treatment, job_dir=args.job_dir)
                 treatment["skill_selection"] = selection.assign_skills(
-                    project, treatment.get("skill_selection", {}),
+                    project, treatment.get("skill_selection", {}), job_dir=args.job_dir,
                 )
                 contract_artifacts.write_json_artifact(args.treatment, treatment)
                 result = treatment["skill_selection"]
@@ -47,7 +47,7 @@ def main() -> None:
                     contract_artifacts.read_json_artifact(args.director_brief), treatment, job_dir=args.job_dir)
                 result = selection.validate_selection(
                     project, contract_artifacts.read_json_artifact(args.director_brief),
-                    treatment,
+                    treatment, job_dir=args.job_dir,
                 )
     except (OSError, ValueError, KeyError, TypeError, contract_artifacts.ContractArtifactError) as error:
         parser.exit(1, f"B-roll selection stopped: {error}\n")

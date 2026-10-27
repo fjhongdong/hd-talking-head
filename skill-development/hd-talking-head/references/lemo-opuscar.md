@@ -51,7 +51,11 @@ Lemo 使用官方 vendor `lemo-opuscar@413a6bd6d78ebd3bdd5abaec9538a26867f890df`
 }
 ```
 
-Lemo 的 `files` 为 3–8 个本地冻结文件，路径必须是相对路径；必须包含本期 TREATMENT，可加入脚本和本地素材，但总量不超过 8 个。workflow 需记录所选 style、TREATMENT、完整 `design_plan` 以及五份原生指引和所选 STYLE 的哈希。调用前后都核对 style 身份、输入文件、帧数、无声状态和真实画面；只通过 brief 或 renderer 检查不能宣称成片通过。
+Lemo 的 `files` 按本期实际输入冻结，入口、workflow、TREATMENT 分别记录，可加入脚本、字体和原生要求的真实素材，不再限制为 8 个。公共传输保留单文件 512 MiB 检查，并检查 4 GiB 总量及当前可用文件句柄；资源不足明确停止，不自动提高系统限制。workflow 记录所选 style、TREATMENT、完整 `design_plan` 和五份原生指引的哈希。调用前后核对 style、输入文件、帧数、无声状态和真实画面；brief 或 renderer 通过不能代替成片验收。
+
+`transcript / semantic_goal / required_change` 分别取已确认语义项的原话、语义、画面任务；引用同一语义项，不另写另一主题。`visual_pattern` 和 `design_plan` 沿用所选设计。交接核对语义列表、选型和 brief，生产入口再核对冻结绑定。主体等自由创作字段由现有独立语义及像素 QA 验收，不伪造权威默认值。
+
+候选复核逐项核对 profile 的具体 `limitations`：例如 countdown 需同一事件的多路视频、文档、照片及同步点，档案、比赛、调查等按各自 STYLE 核对真实资料。缺素材不能靠标签命中入选。竖屏布局、24fps 和无声表现先交原生流程按本 Job 规格设计，不把 demo 的画幅帧率一律判为硬不兼容；只有明确不可调整的冲突才排除。
 
 ## 执行边界
 

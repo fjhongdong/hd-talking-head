@@ -61,7 +61,7 @@ def relative(value):
     if not isinstance(value, str) or not value:
         raise ValueError("A nonempty relative path is required")
     path = Path(value)
-    if path.is_absolute() or ".." in path.parts or path.as_posix() != value:
+    if not path.parts or path.is_absolute() or ".." in path.parts or path.as_posix() != value:
         raise ValueError("Scene assets must have canonical relative paths")
     return path
 
@@ -69,37 +69,51 @@ def relative(value):
 def validate_brief(payload):
     b = json.loads(payload)
     base = {"schema_version", "dependency_id", "source_binding", "template_request", "composition", "files", "workflow_media_ref"}
-    if (type(b) is not dict or not base.issubset(b) or
+    if (type(b) is not dict or not base.issubset(b)
+            or type(b.get("dependency_id")) is not str
+            or type(b.get("schema_version")) is not int
+            or type(b.get("workflow_media_ref")) is not str
+            or type(b.get("source_binding")) is not dict
+            or type(b.get("template_request")) is not dict
+            or type(b.get("composition")) is not dict
+            or type(b.get("files")) is not list or
             (b.get("dependency_id") == "onetake" and set(b) != base) or
             (b.get("dependency_id") == "lemo-opuscar" and set(b) != base | {"style_slug", "creative_handoff"})
             or b["schema_version"] != 1 or b["dependency_id"] not in SOURCES):
         raise ValueError("Invalid upstream scene brief")
     s, c, request = b["source_binding"], b["composition"], b["template_request"]
     if (set(s) != {"aroll_sha256", "segment_id", "start", "end"}
+            or type(s.get("aroll_sha256")) is not str
+            or type(s.get("segment_id")) is not str
             or not re.fullmatch(r"[a-f0-9]{64}", s["aroll_sha256"])
             or not re.fullmatch(r"seg-[a-zA-Z0-9_-]+", s["segment_id"])
             or any(type(s[k]) not in (int, float) or not math.isfinite(s[k]) for k in ("start", "end"))
             or not 0 <= s["start"] < s["end"]):
         raise ValueError("Invalid upstream source clock")
     if (set(c) != {"id", "width", "height", "fps", "frames"}
+            or type(c.get("id")) is not str
             or not re.fullmatch(r"[a-zA-Z0-9_-]+", c["id"])
             or (c["width"], c["height"], c["fps"]) != (1080, 1920, 24)
             or type(c["frames"]) is not int or not 1 <= c["frames"] <= 1440
             or abs((s["end"] - s["start"]) * 24 - c["frames"]) > 1e-6):
         raise ValueError("Upstream scene must match the approved portrait frame clock")
     if (set(request) != {"semantic_family", "information_units", "numeric_values", "numeric_scale"}
-            or not isinstance(request["semantic_family"], str) or not request["semantic_family"]
+            or type(request["semantic_family"]) is not str or not request["semantic_family"]
             or type(request["information_units"]) is not int or request["information_units"] < 1
             or type(request["numeric_values"]) is not list
             or any(type(v) not in (int, float) or not math.isfinite(v) for v in request["numeric_values"])
+            or type(request.get("numeric_scale")) is not str
             or request["numeric_scale"] not in (("linear", "log") if request["numeric_values"] else ("not_applicable",))
             or (request["numeric_scale"] == "log" and any(v <= 0 for v in request["numeric_values"]))):
         raise ValueError("Invalid current semantic or numeric request")
     files = b["files"]
-    if type(files) is not list or not 2 <= len(files) <= 8:
-        raise ValueError("Freeze 2 to 8 scene files, including the workflow record")
+    if type(files) is not list or len(files) < 2:
+        raise ValueError("Freeze at least 2 scene files, including the workflow record")
     for f in files:
-        if (set(f) != {"media_ref", "job_path", "scene_path", "sha256"}
+        if (type(f) is not dict
+                or set(f) != {"media_ref", "job_path", "scene_path", "sha256"}
+                or type(f.get("media_ref")) is not str
+                or type(f.get("sha256")) is not str
                 or not re.fullmatch(r"[a-zA-Z0-9_-]+", f["media_ref"])
                 or not re.fullmatch(r"[a-f0-9]{64}", f["sha256"])):
             raise ValueError("Invalid scene file identity")
@@ -119,7 +133,7 @@ def validate_brief(payload):
                 or b["style_slug"] not in lemo_styles(SKILL.parents[1])):
             raise ValueError("Invalid Lemo style slug")
         h = b["creative_handoff"]
-        if not isinstance(h, dict) or set(h) != {"transcript", "semantic_goal", "required_change", "subject", "visual_pattern", "design_plan", "beats", "forbidden_outcomes"}:
+        if (not isinstance(h, dict) or set(h) != {"transcript", "semantic_goal", "required_change", "subject", "visual_pattern", "design_plan", "beats", "forbidden_outcomes"}):
             raise ValueError("Lemo creative handoff is incomplete")
         if any(not isinstance(h[k], str) or not h[k].strip() for k in ("transcript", "semantic_goal", "required_change", "subject", "visual_pattern")):
             raise ValueError("Lemo creative handoff text is required")
@@ -127,7 +141,11 @@ def validate_brief(payload):
         if not isinstance(plan, dict) or set(plan) != {"composition", "typography", "finish", "focus"} or any(not isinstance(v, str) or not v.strip() for v in plan.values()):
             raise ValueError("Lemo design plan must contain four nonempty parts")
         duration = b["composition"]["frames"] / 24
-        if not isinstance(h["beats"], list) or not h["beats"] or any(not isinstance(x, dict) or set(x) != {"time", "action"} or not isinstance(x["action"], str) or not x["action"].strip() or type(x["time"]) not in (int, float) or not math.isfinite(x["time"]) or not 0 <= x["time"] < duration for x in h["beats"]):
+        if (not isinstance(h["beats"], list) or not h["beats"] or any(
+                not isinstance(x, dict) or set(x) != {"time", "action"}
+                or not isinstance(x.get("action"), str) or not x["action"].strip()
+                or type(x.get("time")) not in (int, float) or not math.isfinite(x["time"])
+                or not 0 <= x["time"] < duration for x in h["beats"])):
             raise ValueError("Lemo beats must use local seconds within the scene")
         if not isinstance(h["forbidden_outcomes"], list) or any(not isinstance(x, str) or not x.strip() for x in h["forbidden_outcomes"]):
             raise ValueError("Lemo forbidden outcomes must be text")
@@ -209,6 +227,13 @@ def create_adapter(project_root, dependency_id, python_executable, brief_loader)
             raise ValueError("Upstream scene no longer matches the approved source, request or recipe")
         if dependency_id == "lemo-opuscar" and component.get("template_id") != "lemo-opuscar/" + b["style_slug"]:
             raise ValueError("Lemo component template identity does not match the selected style")
+        if dependency_id == "lemo-opuscar":
+            expected_handoff = component.get("invocation_record", {}).get("creative_handoff")
+            actual_handoff = b["creative_handoff"]
+            if (not isinstance(expected_handoff, dict)
+                    or any(expected_handoff.get(k) != actual_handoff.get(k)
+                           for k in ("transcript", "semantic_goal", "required_change", "subject", "visual_pattern", "design_plan"))):
+                raise ValueError("Lemo creative handoff differs from the approved semantic binding")
         return payload
 
     def media_loader(job, recipe, component, payload):
@@ -256,6 +281,10 @@ def create_binding(adapter, brief_bytes, reference_sample):
         if b["style_slug"] not in lemo_styles(SKILL.parents[1]):
             raise ValueError("Unknown Lemo style")
         binding["invocation_record"]["style_slug"] = b["style_slug"]
+        binding["invocation_record"]["creative_handoff"] = {
+            key: b["creative_handoff"][key]
+            for key in ("transcript", "semantic_goal", "required_change", "subject", "visual_pattern", "design_plan")
+        }
     return binding
 
 

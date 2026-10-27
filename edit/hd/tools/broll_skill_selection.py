@@ -241,12 +241,92 @@ def source_channel(skill_id):
 def _template_identity(row):
     """Count a registered template equally, including native creation styles."""
     template = row.get("template_id")
-    if not template or row.get("role") == "design":
+    if not template:
         return None
     return (source_channel(row["skill_id"]), row.get("source_route") or template)
 
 
-def assign_skills(project_root: Path, selection: Mapping) -> dict:
+def approved_creative_identity(job, generation, *, segment_id, component_id):
+    """Resolve identity from the existing approved request, never its provider."""
+    from . import visual_confirmation as confirmation
+    if not isinstance(generation, dict):
+        raise ValueError("completed generation evidence must be an object")
+    authorization, request = generation.get("approved_plan"), generation.get("approved_request")
+    if authorization is None and request is None:
+        return None
+    if not isinstance(authorization, dict) or not isinstance(request, dict):
+        raise ValueError("completed media needs its complete approved request reference")
+    if generation.get("approved_request_id") != request.get("id"):
+        raise ValueError("completed media approved request identity changed")
+    checked = confirmation.validate_generation_request(job, authorization, request)
+    for reference in request.get("input_files", []):
+        confirmation._exact(job.job_dir, reference)
+    step = checked["step"]
+    if (step["segment_id"], step["component_id"]) != (segment_id, component_id):
+        raise ValueError("completed media belongs to another approved visual item")
+    proposal = confirmation._read(confirmation._exact(job.job_dir, checked["receipt"]["source"]))
+    treatment = confirmation._read(confirmation._exact(job.job_dir, proposal["inputs"]["treatment"]))
+    selection = treatment.get("skill_selection", {})
+    assignments = [a for a in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]
+                   if (a["segment_id"], a["component_id"]) == (segment_id, component_id)]
+    if len(assignments) > 1:
+        raise ValueError("approved creative assignment is duplicated")
+    if not assignments:
+        # The approved plan explicitly selected a standalone generation flow.
+        # This is stronger evidence than a provider name on an output receipt.
+        from . import generation_channels
+        provider = generation_channels.selected_channel(job, request["purpose"])
+        return {"skill_id": source_channel(provider["provider"]), "template_id": None,
+                "candidate_id": "ai-generated/direct"}
+    assignment = assignments[0]
+    for field in ("skill_id", "template_id", "candidate_id"):
+        _text(assignment.get(field), "approved " + field)
+    # source_route distinguishes registered cards that share a wrapper ID.
+    return ({field: assignment[field] for field in ("skill_id", "template_id", "candidate_id")}
+            | ({"source_route": assignment["source_route"]} if assignment.get("source_route") else {}))
+
+
+def fixed_identity(row, *, job_dir=None):
+    """Keep proven creation identity; an execution receipt alone is insufficient."""
+    reference = row.get("completed_record")
+    if reference is None:
+        # These are direct material sources, not inferred creation Skills.
+        if row.get("skill_id") in {"local_material", "official_material", "external_stock"}:
+            return {"skill_id": row["skill_id"], "template_id": None}
+        return None
+    if job_dir is None:
+        raise ValueError("fixed creative provenance requires --job-dir")
+    from types import SimpleNamespace
+    from . import visual_confirmation as confirmation
+    root = Path(job_dir).resolve(strict=True)
+    if not isinstance(reference, dict) or set(reference) != {"job_path", "sha256", "byte_count"}:
+        raise ValueError("fixed material needs a frozen completed-record descriptor")
+    record_path = confirmation._path(root, reference["job_path"])
+    if (record_path.stat().st_size != reference["byte_count"]
+            or contract_artifacts.sha256_file(record_path) != reference["sha256"]):
+        raise ValueError("fixed completed record changed")
+    record = confirmation._read(record_path)
+    workflow = contract_artifacts.read_json_artifact(root / "workflow.json")
+    if record.get("status") != "completed" or record.get("job_id") != workflow["job_id"]:
+        raise ValueError("fixed creation record belongs to another Job or is incomplete")
+    if (record.get("segment_id"), record.get("component_id")) != (row.get("segment_id"), row.get("component_id")):
+        raise ValueError("fixed creation record belongs to another visual item")
+    if (not isinstance(record.get("qa"), dict) or record["qa"].get("passed") is not True
+            or not isinstance(record.get("semantic_brief"), dict) or not record["semantic_brief"].get("observed_scene")):
+        raise ValueError("fixed creation record needs its completed visual QA")
+    media = record["media"]
+    path = confirmation._path(root, media["job_path"])
+    if (contract_artifacts.sha256_file(path) != media["sha256"]
+            or path.stat().st_size != media["byte_count"]):
+        raise ValueError("fixed creation media changed")
+    identity = approved_creative_identity(SimpleNamespace(job_dir=root, job_id=workflow["job_id"]),
+        record["generation"], segment_id=record["segment_id"], component_id=record["component_id"])
+    if identity and any(row.get(k) != identity[k] for k in ("skill_id", "template_id")):
+        raise ValueError("fixed material differs from its approved creative identity")
+    return identity
+
+
+def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
@@ -319,6 +399,7 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
         for field in ("segment_id", "component_id", "visual_pattern", "source_ref", "skill_id"):
             _text(row.get(field), "fixed context " + field)
         _duration(row)
+    fixed_routes = [(row, fixed_identity(row, job_dir=job_dir)) for row in fixed]
     # A logical item may span several physical segments. It still receives one
     # native route, one matching operation and one source/template reward.
     grouped, group_order = {}, []
@@ -339,8 +420,9 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
                             "template_id": template[1] if template else None})
         normalized.append(choices)
     exact = assign_candidates(normalized,
-        fixed_channels=tuple({source_channel(row["skill_id"]) for row in fixed}),
-        fixed_templates=tuple({_template_identity(row) for row in fixed if _template_identity(row)}))
+        fixed_channels=tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity}),
+        fixed_templates=tuple({_template_identity(identity) for _, identity in fixed_routes
+                               if identity and _template_identity(identity)}))
     exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
     chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
         beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])])
@@ -355,13 +437,14 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             patterns[row["visual_pattern"]] += duration
             sources[source_channel(row["skill_id"])] += duration
         sequence = [(row["start"], row["end"], row["visual_pattern"]) for row in fixed]
-        for row in fixed:
+        for row, identity in fixed_routes:
             duration = _duration(row)
             patterns[row["visual_pattern"]] += duration
-            channel = source_channel(row["skill_id"])
-            sources[channel] += duration
-            channels.add(channel)
-            template = _template_identity(row)
+            if identity:
+                channel = source_channel(identity["skill_id"])
+                sources[channel] += duration
+                channels.add(channel)
+            template = _template_identity(identity) if identity else None
             if template:
                 templates.add(template)
         for index, (beat, choice) in enumerate(zip(beats, choices)):
@@ -431,6 +514,8 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             for key in ("skill_id", "entrypoint", "template_id", "role", "limitations")},
          "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
         | ({"design_plan": copy.deepcopy(choice["design_plan"])} if "design_plan" in choice else {})
+        | ({"source_route": pool[choice["candidate_id"]]["source_route"]}
+           if pool[choice["candidate_id"]].get("source_route") else {})
         for beat, choice in zip(beats, chosen)
     ]
     result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]
@@ -438,7 +523,7 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
     return result
 
 
-def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bindings=True) -> None:
+def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bindings=True, job_dir=None) -> None:
     """Only real direct materials may contribute fixed source coverage."""
     adjustable = {(b["segment_id"], b["component_id"])
                   for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]}
@@ -458,21 +543,35 @@ def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bind
             raise ValueError("fixed context must reference a direct material kind")
         if any(row[field] != segment[field] for field in ("start", "end")):
             raise ValueError("fixed material window changed")
-        if row.get("template_id") is not None:
+        identity = fixed_identity(row, job_dir=job_dir)
+        if (not row.get("completed_record") and identity
+                and identity["skill_id"] != component["kind"]):
+            raise ValueError("fixed direct material source differs from its real kind")
+        if row.get("template_id") is not None and not identity:
             raise ValueError("fixed material cannot invent a channel or a reusable template")
         binding = segment.get("bindings", {}).get(component["component_id"], {})
         if not binding and not require_bindings:
             continue  # Planning records a proposed source, not verified media identity.
-        channel = source_channel(binding.get("dependency_id") or binding.get("provider") or component["kind"])
+        if row.get("completed_record") is not None:
+            from . import visual_confirmation as confirmation
+            record = confirmation._read(confirmation._path(Path(job_dir), row["completed_record"]["job_path"]))
+            if (binding.get("sha256") != record["media"]["sha256"]
+                    or any(binding.get(k) != record.get(k) for k in
+                           ("generation_id", "provider", "model", "endpoint_id", "prompt_sha256"))):
+                raise ValueError("fixed material binding differs from its completed result")
+        dependency = binding.get("dependency_id")
+        if not dependency:
+            continue
+        channel = source_channel(dependency)
         if source_channel(row["skill_id"]) != channel:
             raise ValueError("fixed material cannot invent a channel or a reusable template")
 
 
-def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -> dict:
+def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *, job_dir=None) -> dict:
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
-    computed = assign_skills(project_root, selection)
+    computed = assign_skills(project_root, selection, job_dir=job_dir)
     if (computed["assignments"] != selection.get("assignments")
             or computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
         raise ValueError("B-roll assignment changed; run assign before building bindings")
@@ -495,7 +594,7 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
     overlay_beats = {(b["segment_id"], b["component_id"]): b for b in selection.get("overlay_beats", [])}
     if len(overlay_beats) != len(selection.get("overlay_beats", [])) or set(overlay_beats) != set(overlay_expected):
         raise ValueError("joint selection must include every native A-roll overlay as an adjustable item")
-    validate_fixed_materials(draft, selection)
+    validate_fixed_materials(draft, selection, job_dir=job_dir)
     from .motion_capabilities import overlay_candidates
     pool = {row["candidate_id"]: row for row in [*discover_candidates(project_root), *overlay_candidates(project_root)]}
     all_beats, all_expected = {**beats, **overlay_beats}, {**expected, **overlay_expected}
@@ -516,6 +615,13 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping) -
                     or not binding.get("provider") or not binding.get("generation_id")
                     or (binding.get("execution_mode") == "reuse_completed_generated_media" and not binding.get("sha256"))):
                 raise ValueError("B-roll design Skill must bind a completed generated-media result")
+            if job_dir is not None:
+                from . import motion_capabilities, state
+                record, _ = motion_capabilities._ai_brief_evidence(job_dir, treatment, segment, assignment["component_id"])
+                identity = approved_creative_identity(state.load_job(Path(job_dir)), record.get("generation", {}),
+                    segment_id=segment["segment_id"], component_id=assignment["component_id"])
+                if not identity or any(identity[k] != assignment[k] for k in ("skill_id", "template_id", "candidate_id")):
+                    raise ValueError("generated media does not belong to the approved creative template")
         elif (component["kind"] != "code_generated"
               or any(binding.get(field) != candidate[field] for field in
                      ("dependency_id", "entrypoint", "template_id", "producer_version"))):

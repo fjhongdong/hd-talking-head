@@ -37,6 +37,26 @@ def _sha(path: Path) -> str:
 def _canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
 
+def _approved_generation_request(job, generation, record):
+    """Re-check a queue result against its frozen visual proposal when present."""
+    authorization = generation.get("approved_plan")
+    request = generation.get("approved_request")
+    if authorization is None and request is None:
+        return
+    if not isinstance(authorization, dict) or not isinstance(request, dict):
+        raise ValueError("generated media approved request evidence is incomplete")
+    from edit.hd.tools import broll_skill_selection, generation_channels, contract_artifacts
+    identity = broll_skill_selection.approved_creative_identity(job, generation,
+        segment_id=record["segment_id"], component_id=record["component_id"])
+    provider = generation_channels.selected_channel(job, request["purpose"])
+    if any(record.get(k) != provider[k] for k in ("provider", "model", "endpoint_id")):
+        raise ValueError("completed generation provider differs from its approved service")
+    submitted = generation.get("submitted_request")
+    if (not isinstance(submitted, dict)
+            or record["prompt_sha256"] != contract_artifacts.sha256_json(submitted.get("arguments"))):
+        raise ValueError("completed generation prompt differs from its submitted request")
+    return identity
+
 def validate_record(record: dict, job) -> dict:
     if not isinstance(record, dict) or record.get("schema_version") not in (1, 2):
         raise ValueError("generated media record schema is invalid")
@@ -56,6 +76,11 @@ def validate_record(record: dict, job) -> dict:
     if media["media_type"] not in {"image", "video"}: raise ValueError("generated media type is invalid")
     for key in ("generation", "qa", "semantic_brief"):
         if not isinstance(record.get(key), dict): raise ValueError(f"generated media {key} evidence is missing")
+    approved_request_id = record["generation"].get("approved_request_id")
+    if approved_request_id is not None and (not isinstance(approved_request_id, str) or not approved_request_id):
+        raise ValueError("generated media approved request identity is invalid")
+    if ("approved_plan" in record["generation"] or "approved_request" in record["generation"]):
+        _approved_generation_request(job, record["generation"], record)
     if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
         raise ValueError("generated media requires host QA and observed scene evidence")
     _validate_observation_and_source(record)
@@ -114,7 +139,9 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
             item["submitted_request"]["arguments"]),
         media={"job_path": path.relative_to(job.job_dir).as_posix(), "sha256": _sha(path),
                "byte_count": path.stat().st_size, "media_type": output["type"]},
-        generation={"approved_plan": item.get("authorization") or item.get("approved_plan_sha256"),
+        generation={**({"approved_plan": authorization,
+                       "approved_request_id": original_id,
+                       "approved_request": original["request"]} if authorization else {}),
                     "request_id": request_id, "task_ids": item.get("task_ids", []),
                     "channel_identity": identity,
                     "input_bindings": generation_inputs.evidence(job.job_dir, item["request"]),
@@ -197,6 +224,7 @@ def create_adapter(job, record: dict):
             raise ValueError("generated media generation identity mismatch")
         from edit.hd.tools import visual_canary
         plan = visual_canary.load_approved_visual_plan(job)
+        _approved_generation_request(job, bound["generation"], bound)
         segment = next(item for item in plan['segments'] if item['segment_id'] == context.segment_id)
         arroll = visual_canary.approved_aroll_record(job, plan)
         if (bound['source_binding'] != {'aroll_sha256': arroll['sha256'],

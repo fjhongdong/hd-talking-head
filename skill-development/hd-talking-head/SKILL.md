@@ -11,9 +11,11 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`发现/安装`、`configured`、`connected`、`callable`、`bound` 是[依赖预检合同](references/dependency-preflight.md)定义的五个递进状态，产物另经阶段质量门验收，不得混用；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。能力未接通时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
-所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md) 和 [Lemo 的 59 种风格模板](references/lemo-opuscar.md)在同一候选池中选择。选中后，宿主完整执行该 Skill 的原生流程，在当前 Job 创作主题场景并调用原生渲染入口；这属于第三方 Skill 的正常制作，不是父级自写替代动效。来源和适配资格继续如实记录，临时场景沿用所选模板身份，历史停用入口不因此恢复。
+所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md) 和 [Lemo 的 59 种风格模板](references/lemo-opuscar.md)在同一候选池中选择。选中后完整执行该 Skill 的原生流程，调用其制作入口：有原生渲染器的使用原生渲染器，通过生成服务制作的使用本 Job 已批准的图片、视频渠道；不因上游默认模型自动更换服务或增加费用。主题场景沿用所选模板身份，不以父级自写动效替代原生能力；来源和适配资格如实记录，历史停用入口不因此恢复。
 
 ## 统一执行与语义规划
+
+渠道是完整创作流程，既可直接渲染，也可先设计再调用本 Job 已批准的生图、生视频服务。GBRO、Flat 共用底层服务仍各算渠道；依赖调用不额外计渠道。原生风格、配方和已登记的完整工作流模板同等参与优化，内部 design/native 调度分类不改变计数。内容和模型变化不新增模板。生成、完成绑定和素材复用读取同一已批准 assignment，不能由 provider 反推创作身份，见[创作身份与复用](references/visual-quality-contract.md#创作身份与生成结果复用)。
 
 仅规划请求按[仅规划任务](references/visual-quality-contract.md#仅规划任务)执行；使用只读规划检查，不创建或修订制作 Job。
 

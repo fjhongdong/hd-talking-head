@@ -193,9 +193,39 @@ def validate_design_handoffs(director, treatment, job_dir):
         brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, assignment["component_id"])
         handoff = brief.get("creative_handoff", {}) if isinstance(brief, dict) else {}
         if assignment["skill_id"] == "lemo-opuscar":
-            if (handoff.get("design_plan") != design
+            beat = next((b for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]
+                         if b.get("segment_id") == assignment["segment_id"]
+                         and b.get("component_id") == assignment["component_id"]), None)
+            if not isinstance(beat, dict):
+                raise ValueError("selected Lemo component has no approved semantic beat")
+            # The semantic list is the authority.  The handoff and selection
+            # beat are only bindings to that approved row, never evidence by
+            # copying the handoff back into the invocation record.
+            rows = []
+            for row_type in ("overlay", "broll"):
+                for row in treatment.get("semantic_lists", {}).get(row_type, []):
+                    if isinstance(row, dict) and any(
+                        isinstance(ref, dict)
+                        and ref.get("segment_id") == assignment["segment_id"]
+                        and ref.get("component_id") == assignment["component_id"]
+                        for ref in row.get("components", [])
+                    ):
+                        rows.append(row)
+            if len(rows) != 1:
+                raise ValueError("selected Lemo component must bind exactly one approved semantic row")
+            if rows:
+                row = rows[0]
+                if (handoff.get("transcript") != row.get("quote")
+                        or handoff.get("semantic_goal") != row.get("semantic")
+                        or handoff.get("required_change") != row.get("visual_task")
+                        or beat.get("semantic_row_id") != row.get("row_id")):
+                    raise ValueError("selected Lemo semantic handoff is not bound to the approved semantic row")
+            if (any(handoff.get(field) != beat.get(field)
+                    for field in ("transcript", "semantic_goal", "required_change"))
+                    or handoff.get("visual_pattern") != assignment.get("visual_pattern")
+                    or handoff.get("design_plan") != design
                     or assignment.get("template_id") != "lemo-opuscar/" + brief.get("style_slug", "")):
-                raise ValueError("selected Lemo template and design_plan must reach its native creative handoff")
+                raise ValueError("selected Lemo semantic handoff differs from the approved beat")
             continue
         style = handoff.get("style_reason")
         if not isinstance(style, str) or any(value not in style for value in design.values()):

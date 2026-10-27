@@ -1913,7 +1913,7 @@ def _skill_selection_for_publication(
         validate_reviews(Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir)
         validate_design_handoffs(draft, treatment, job.job_dir)
         selection = broll_skill_selection.validate_selection(
-            Path(__file__).resolve().parents[3], draft, treatment,
+            Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir,
         )
         selection["motion_queries"] = treatment.get("motion_queries", [])
         if managed:

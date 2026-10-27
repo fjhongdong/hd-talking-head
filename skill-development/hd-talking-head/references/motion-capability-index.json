@@ -136,7 +136,7 @@
         "skill-development/vendor/doudou-remotion-whiteboard/recipes/index.ts"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "84194e7884a461da85796918da623aeb393a7a5297b301e06e5b8580cb95b880",
         "skill-development/hd-talking-head/scripts/doudou_adapter.py": "1da42da726eb3149295bd4c560442c5885dbb55d75a9483160e006da75d36c9f",
         "skill-development/hd-talking-head/scripts/render_doudou.mjs": "018966e9d4d5db2aae2a5761baa022384323fb2c6f487fb362d876fbd034fbd2",
         "skill-development/vendor/doudou-remotion-whiteboard/SKILL.md": "e889984ec9166ca3248066475738cc7de51c56261d1eb9a2ccd9057f9d71926a",
@@ -160,7 +160,7 @@
       "capability_type": "design_source",
       "reviewed_version": "source",
       "title": "GBRO 半调纸拼贴视觉设计",
-      "summary": "为抽象概念提供 editorial 半调纸拼贴构图；视频执行由已批准的生成路线完成。",
+      "summary": "为抽象概念提供 editorial 半调纸拼贴的完整创作渠道 workflow 模板；底层图像/视频服务作为已批准的执行依赖。",
       "tags": {
         "subjects": [
           "抽象概念",
@@ -193,7 +193,7 @@
         "构图与配色"
       ],
       "limitations": [
-        "这是设计来源，不是独立视频渲染器；不得把静帧设计直接登记为动态能力；人物感受只可在生成 brief 中明确要求，标签不证明动作已经存在。"
+        "完整纸拼贴创作工作流模板；图片、视频须由本 Job 已批准服务实际生成并通过 QA，静帧设计不等于动画完成，底层服务不另计渠道。"
       ],
       "evidence": [
         "skill-development/hd-talking-head/references/generated-broll-skills.md",
@@ -203,7 +203,7 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
@@ -566,7 +566,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html": "19c6528e970766422978e26d5ac483bfe2c711b7fdcaf1f8a28805a4a53f584c"
       }
@@ -619,7 +619,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html": "fe9b9e0dd4c886843713116811688565c6fea3995cbb52f8c2e044106072715a"
       }
@@ -673,7 +673,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html": "bd6547f25f1c80c0d7dbdef0344627e92d57ace5e31237610928700b0a664d85"
       }
@@ -727,7 +727,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html": "db49f679a66fb4505e07d395bff8188ae568fbfac36a50c94f1e58fcd925e11a"
       }
@@ -848,7 +848,7 @@
         "skill-development/research/hypit-source/skills/hypit/SKILL.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "84194e7884a461da85796918da623aeb393a7a5297b301e06e5b8580cb95b880",
         "skill-development/hd-talking-head/scripts/hypit_native_adapter.py": "96414dcbe38eb7a1eba52db30365a864b88725da265f77752ffab465d9640eb8",
         "skill-development/hd-talking-head/scripts/render_hypit_native.mjs": "930077c15b5737ffb9cd329b69bffe9a3f40da37657757dbca8267289e84fbab",
         "skill-development/research/hypit-source/bin/hypit.mjs": "07c2b67e3af3bfdcb18b5042889aaa5cd46111358303c090dc2b978603b7be96",
@@ -867,7 +867,7 @@
       "capability_type": "design_source",
       "reviewed_version": "source",
       "title": "扁平手绘动画设计来源",
-      "summary": "为人物、物件和痛点隐喻提供扁平手绘画面方案，视频执行走已批准生成路线。",
+      "summary": "为人物、物件和痛点隐喻提供扁平手绘动画的完整创作渠道 workflow 模板；底层图像/视频服务作为已批准的执行依赖。",
       "tags": {
         "subjects": [
           "人物",
@@ -900,7 +900,7 @@
         "配色"
       ],
       "limitations": [
-        "是设计/参考来源，不是独立视频渲染器；不能登记为已接通动态模板；人物困扰需在生成 brief 中单独说明并验收。"
+        "完整扁平动画创作工作流模板；设计、静帧、实际视频生成与 QA 均须完成，人物动作和感受以最终画面验收，底层服务不另计渠道。"
       ],
       "evidence": [
         "skill-development/hd-talking-head/references/generated-broll-skills.md",
@@ -909,7 +909,7 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
@@ -1032,7 +1032,7 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "ac2ece2b51d82742f62c4f0a31f965e390d05be1f8cae946f095471ecee537a6",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
@@ -1078,7 +1078,7 @@
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783",
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py": "af903772f52fdfce4c2c6294c29d3bd5a8fcde440edcb29d8f0ff94bb4a9a3bc"
       }
     },
@@ -1370,7 +1370,7 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783",
         "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
         "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",
@@ -1463,7 +1463,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/assets/wise-motion-runtime/index.jsx": "47bab320baa93daf59debca477b9c2e892f600c1b1179707548eb91cbb520a7c",
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "84194e7884a461da85796918da623aeb393a7a5297b301e06e5b8580cb95b880",
         "skill-development/hd-talking-head/scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
         "skill-development/hd-talking-head/scripts/wise_motion_adapter.py": "11b9027ca0046dfacf99295b52a74fdca169b78a2a603548b996b70a9d8177a8",
         "skill-development/vendor/wise-motion/REMOTION.md": "3a55aa7ccaee1fd380a8823e7bf3c2c7b250317c01367563245b0a34a0358dee",
@@ -7056,8 +7056,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783"
       }
     },
     {
@@ -7086,8 +7086,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "5e64f4a801f516657ac5ce30be5955e168dc0ebc2fc92cdb37679f206fb32783"
       }
     },
     {
@@ -7117,7 +7117,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff"
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "84194e7884a461da85796918da623aeb393a7a5297b301e06e5b8580cb95b880"
       }
     },
     {
@@ -7150,7 +7150,7 @@
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9",
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac"
       }
     },
@@ -7185,7 +7185,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9"
       }
     },
     {
@@ -7219,7 +7219,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "ce357159b4b71b0c180987b90b8fdbed6d8b6c7e42421d6aabaee835d20615e9"
       }
     },
     {
@@ -7897,7 +7897,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实档案对象及其目录编号、日期、标题和来源记录；不用生成图冒充档案。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -7919,7 +7919,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -7984,7 +7984,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8049,7 +8049,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8113,7 +8113,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8178,7 +8178,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8243,7 +8243,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8286,7 +8286,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实对象照片及对应的测量、工程或事实资料；对象与问题须有依据，不能以虚构照片冒充事实。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -8308,7 +8308,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8351,7 +8351,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实视频、照片和原始资料文件；数字附出处，竖屏需按原生指引重排而非裁切横屏。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -8373,7 +8373,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8438,7 +8438,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8481,7 +8481,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "实际题材地点的真实影像及所用延时、航拍或档案来源；出现统计数字时核对官方出处。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -8503,7 +8503,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8546,7 +8546,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "同一事件 2–8 路有共同时间基准的视频，另有文档和照片；零点和源偏移可核对，数字来自官方来源。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -8568,7 +8568,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8633,7 +8633,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8698,7 +8698,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8741,7 +8741,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "公开统计或用户自有数字、量纲及可核对出处；实体数量与比例须对应原始数据。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -8763,7 +8763,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8828,7 +8828,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8893,7 +8893,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -8958,7 +8958,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9023,7 +9023,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9088,7 +9088,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9153,7 +9153,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9218,7 +9218,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9283,7 +9283,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9348,7 +9348,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9413,7 +9413,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9456,7 +9456,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "与主题对应的真实影像、照片及文件或报刊来源；剪接不得把不同来源伪装为同一事实。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -9478,7 +9478,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9521,7 +9521,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "实际地点的点云或扫描数据、许可及坐标或尺度信息；不用程序生成点云冒充测绘事实。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -9543,7 +9543,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9608,7 +9608,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9673,7 +9673,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9738,7 +9738,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9781,7 +9781,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "有授权的真实样本显微图或全切片图、尺度和样本元数据；不同样本不得伪装为连续放大。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -9803,7 +9803,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9868,7 +9868,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9911,7 +9911,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实现场或档案影像、采访或引文及事实资料；按本期新闻主题核对来源。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -9933,7 +9933,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -9976,7 +9976,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实档案影像、新闻照片和相关报刊或事件记录；资料日期与叙述事实对应。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -9998,7 +9998,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10063,7 +10063,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10128,7 +10128,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10193,7 +10193,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10258,7 +10258,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10323,7 +10323,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10388,7 +10388,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10453,7 +10453,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10518,7 +10518,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10562,7 +10562,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "实际地点的卫星或航拍影像、许可及地理配准或比例依据；日期对比保留采集时间。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -10584,7 +10584,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10649,7 +10649,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10714,7 +10714,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10779,7 +10779,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10844,7 +10844,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10909,7 +10909,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -10974,7 +10974,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11039,7 +11039,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11082,7 +11082,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "题材产品可验证的 CAD、PCB、BOM 或装配结构资料；结构演示与来源对应，不虚构内部功能。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -11104,7 +11104,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11148,7 +11148,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "真实比赛镜头、对应回合或时间及可核对的战术观察；标注锚定源画面。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -11170,7 +11170,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11235,7 +11235,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11300,7 +11300,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11365,7 +11365,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11409,7 +11409,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "同一事件至少三类真实来源（文档、照片、视频、声音或地图）及可核对同步点；事实与推论分开记录。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -11431,7 +11431,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11496,7 +11496,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11539,7 +11539,7 @@
         "合法输入素材与色彩强调规则"
       ],
       "limitations": [
-        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "实际地点建筑轮廓和高度数据，或有依据的建筑模型、尺度与出处；投影信息对应真实对象。",
         "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
         "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
       ],
@@ -11561,7 +11561,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11626,7 +11626,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     },
     {
@@ -11691,7 +11691,7 @@
         "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
-        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
     }
   ]

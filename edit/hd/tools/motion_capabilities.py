@@ -643,11 +643,11 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
             visual_confirmation._validate_beat_sheet(treatment, draft, speech)
         motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
         selection = treatment.get("skill_selection", {})
-        computed = broll_skill_selection.assign_skills(project_root, selection)
+        computed = broll_skill_selection.assign_skills(project_root, selection, job_dir=job_dir)
         if (computed["assignments"] != selection.get("assignments") or
                 computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
             raise ValueError("planning assignments changed; assign again using the existing match cache")
-        broll_skill_selection.validate_fixed_materials(draft, selection, require_bindings=False)
+        broll_skill_selection.validate_fixed_materials(draft, selection, require_bindings=False, job_dir=job_dir)
         segments = {s["segment_id"]: s for s in draft["segments"]}
         for beat in [*selection["beats"], *selection.get("overlay_beats", [])]:
             segment = segments[beat["segment_id"]]
@@ -722,7 +722,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "semantic_word_windows", "reason": str(error)}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}
-    broll = broll_skill_selection.validate_selection(project_root, draft, treatment)
+    broll = broll_skill_selection.validate_selection(project_root, draft, treatment, job_dir=job_dir)
     spoken_segments = {
         segment["segment_id"]: "" if speech is None else "".join(str(word["text"]) for word in speech
             if word["start"] < segment["end"] and word["end"] > segment["start"])

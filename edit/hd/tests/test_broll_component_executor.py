@@ -4546,3 +4546,55 @@ class CodeDependencyExecutionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReferenceMediaBudgetTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.directory = Path(self.temporary.name).resolve()
+        self.addCleanup(self.temporary.cleanup)
+
+    def test_reference_media_freezes_more_than_eight_and_closes_on_budget_or_fd_failure(self) -> None:
+        job = _Job(self.directory)
+        records = []
+        for index in range(9):
+            data = f"media-{index}".encode()
+            path = job.job_dir / f"media-{index}.bin"
+            path.write_bytes(data)
+            records.append(executor.ReferenceProcessMedia(
+                media_ref=f"media-{index}", job_path=path.name,
+                sha256=hashlib.sha256(data).hexdigest()))
+        from types import SimpleNamespace
+        adapter = SimpleNamespace(media_loader=lambda *_args: tuple(records))
+        pinned = executor._job_context(job)
+        try:
+            nonce = self.directory / "nonce-many"
+            nonce.mkdir(); nonce_fd = os.open(nonce, os.O_RDONLY | os.O_DIRECTORY)
+            manifest_fd = media_fds = None
+            try:
+                manifest_fd, media_fds = executor._freeze_reference_media(
+                    adapter=adapter, job=job, pinned_job=pinned, recipe={},
+                    component={}, brief=b'{}', nonce_fd=nonce_fd)
+                self.assertEqual(len(media_fds), 9)
+                self.assertTrue(all(os.fstat(fd).st_size > 0 for fd in media_fds))
+            finally:
+                for fd in (() if manifest_fd is None else (manifest_fd,)) + (() if media_fds is None else tuple(media_fds)):
+                    os.close(fd)
+                os.close(nonce_fd)
+
+            for label, patcher in (
+                ("budget", mock.patch("edit.hd.tools.broll_component_executor._MAX_REFERENCE_MEDIA_TOTAL_BYTES", 1)),
+                ("fd", mock.patch("edit.hd.tools.broll_component_executor.resource.getrlimit", return_value=(1, 1))),
+            ):
+                nonce = self.directory / f"nonce-{label}"
+                nonce.mkdir(); nonce_fd = os.open(nonce, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    with patcher, self.assertRaises(executor.BrollComponentExecutionError):
+                        executor._freeze_reference_media(
+                            adapter=adapter, job=job, pinned_job=pinned, recipe={},
+                            component={}, brief=b'{}', nonce_fd=nonce_fd)
+                    self.assertEqual(list(nonce.iterdir()), [])
+                finally:
+                    os.close(nonce_fd)
+        finally:
+            pinned.close()

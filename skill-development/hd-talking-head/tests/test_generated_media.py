@@ -96,6 +96,95 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
         binding = generated_media.prepare_binding(self._binding_record())
         self.assertEqual(binding["source_dimensions"], {"width": 1080, "height": 1920})
 
+    def test_validate_record_preserves_approved_request_reference(self):
+        from edit.hd.tools import visual_confirmation as vc, broll_skill_selection as selection
+        from edit.hd.tools import contract_artifacts as a
+        import copy
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / 'manifests').mkdir()
+            job = SimpleNamespace(job_id='job', job_dir=root)
+            provider = {"purpose":"video", "provider":"fixture", "model":"model",
+                "endpoint_id":"endpoint", "connection_status":"verified", "quota_status":"available",
+                "reference_images":True, "native_9_16":True, "silent_output":True}
+            config = root / 'manifests/provider-config.json'
+            a.write_json_artifact(config, {"schema_version":1,"generation_enabled":True,
+                "max_concurrency":1,"providers":[provider]})
+            a.write_json_artifact(root / 'manifests/generation-channels.json',
+                {"video":{"model_binding":{"mode":"fixed"}}})
+            a.write_json_artifact(root / 'workflow.json', {"job_id":"job"})
+            spec = root / 'TREATMENT.md'; spec.write_text('Original creative workflow.')
+            step = {"id":"video", "purpose":"video", "segment_id":"seg", "component_id":"ai",
+                "arguments":{"prompt":"assemble paper objects"}, "input_files":[vc._record(root,spec)]}
+            assignment = {"segment_id":"seg", "component_id":"ai", "skill_id":"gbro-collage-broll",
+                "template_id":"gbro-collage-broll/design", "candidate_id":"gbro-collage-broll:design"}
+            treatment = root / 'treatment.json'
+            a.write_json_artifact(treatment, {"skill_selection":{"assignments":[assignment]}})
+            director = root / 'director.json'; a.write_json_artifact(director,{})
+            proposal = {"job_id":"job", "kind":vc.SCHEMA, "source_id":"fixture",
+                "inputs":{"treatment":vc._record(root,treatment),"director":vc._record(root,director)},
+                "provider_config_sha256":a.sha256_file(config), "generation_steps":[step]}
+            proposal_path = root / 'proposal.json'; a.write_json_artifact(proposal_path,proposal)
+            receipt = {"source_schema":vc.SCHEMA,"job_id":"job","job_dir":str(root),
+                "stage":"visual_direction","passed":True,"reviewed_by":"human",
+                "approval_scope":"visual_plan_and_delivery","note":"synthetic local test",
+                "user_confirmation":"fixture only", "artifacts":[],"source":vc._record(root,proposal_path)}
+            receipt_path = root / 'receipt.json'; a.write_json_artifact(receipt_path,receipt)
+            request = vc._build_generation_request(job,proposal,step)
+            authorization = {"source":vc._record(root,receipt_path), "steps":{request['id']:'video'}}
+            record = self._complete_record(root,'generated.mp4',b'fixture bytes')
+            (root / 'generated.mp4').write_bytes(b'fixture bytes')
+            record['generation'] = {"approved_plan":authorization,"approved_request":request,
+                "approved_request_id":request['id'],"submitted_request":request}
+            record['prompt_sha256'] = a.sha256_json(request['arguments'])
+            checked = generated_media.validate_record(record,job)
+            self.assertEqual(checked['generation']['approved_request_id'],request['id'])
+            identity = selection.approved_creative_identity(job,record['generation'],segment_id='seg',component_id='ai')
+            self.assertEqual(identity['skill_id'],'gbro-collage-broll')
+            record_path = root / 'completed.json'; a.write_json_artifact(record_path,record)
+            fixed = {**identity, 'segment_id':'seg','component_id':'ai', 'completed_record':{'job_path':record_path.name,
+                'sha256':a.sha256_file(record_path),'byte_count':record_path.stat().st_size}}
+            self.assertEqual(selection.fixed_identity(fixed,job_dir=root),identity)
+            wrong = {**fixed,'component_id':'other'}
+            with self.assertRaisesRegex(ValueError,'another visual item'):
+                selection.fixed_identity(wrong,job_dir=root)
+            fixed.update(segment_id='seg',component_id='ai',start=0,end=2)
+            binding = generated_media.prepare_binding(record)
+            draft = {'segments':[{'segment_id':'seg','start':0,'end':2,
+                'visual_strategy':{'components':[{'component_id':'ai','kind':'ai_generated'}]},
+                'bindings':{'ai':binding}}]}
+            selection.validate_fixed_materials(draft,{'fixed_context':[fixed]},job_dir=root)
+            binding['provider']='another-service'
+            with self.assertRaisesRegex(ValueError,'completed result'):
+                selection.validate_fixed_materials(draft,{'fixed_context':[fixed]},job_dir=root)
+            binding['provider']='fixture'
+            (root/'generated.mp4').write_bytes(b'changed result')
+            with self.assertRaisesRegex(ValueError,'media changed'):
+                selection.fixed_identity(fixed,job_dir=root)
+            (root/'generated.mp4').write_bytes(b'fixture bytes')
+            altered = copy.deepcopy(record); altered['component_id']='other'
+            with self.assertRaisesRegex(ValueError,'another approved visual'):
+                generated_media.validate_record(altered,job)
+            altered = copy.deepcopy(record); altered['generation']['approved_request']['arguments']['prompt']='another theme'
+            with self.assertRaisesRegex(ValueError,'approved step'):
+                generated_media.validate_record(altered,job)
+            spec.write_text('Different workflow.')
+            with self.assertRaisesRegex(ValueError,'evidence changed'):
+                generated_media.validate_record(record,job)
+            spec.write_text('Original creative workflow.')
+            a.write_json_artifact(treatment,{'skill_selection':{'assignments':[]}})
+            with self.assertRaisesRegex(ValueError,'evidence changed'):
+                generated_media.validate_record(record,job)
+
+    def test_validate_record_rejects_invalid_approved_request_reference(self):
+        record = self._binding_record()
+        record.update(schema_version=1, job_id='job', segment_id='seg', component_id='ai',
+                      generation={"approved_request_id": "", "approved_plan": {}, "approved_request": {}},
+                      qa={"passed": True, "observed_scene": "observed"})
+        record["media"].update(job_path="generated.mp4", byte_count=1)
+        with self.assertRaisesRegex(ValueError, "approved request identity"):
+            generated_media.validate_record(record, SimpleNamespace(job_id='job'))
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "ffmpeg/ffprobe required")
     def test_actual_media_record_compiles_and_runs_public_entry(self):
         with tempfile.TemporaryDirectory() as directory:

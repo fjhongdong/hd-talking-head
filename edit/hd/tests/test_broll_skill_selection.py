@@ -514,6 +514,46 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                     selection.validate_selection(ROOT, draft, altered)
 
+    def test_design_templates_participate_in_template_identity(self):
+        def candidate(skill, role):
+            return {"candidate_id":skill, "skill_id":skill, "role":role,
+                    "template_id":skill+'/workflow', "entrypoint":'entry',
+                    "limitations":[], "status":"supported"}
+        pool = [candidate('gbro','design'),candidate('native','native')]
+        def beat(index):
+            return {"segment_id":f'seg-{index}',"component_id":"scene","start":index*3,"end":index*3+3,
+                "transcript":"quote","semantic_goal":"meaning","required_change":"change",
+                "skill_reviews":{r['skill_id']:{"fit":"equivalent","reason":"eligible"} for r in pool},
+                "candidates":[{"candidate_id":r['candidate_id'],"fit":"preferred" if r['skill_id']=='gbro' else 'equivalent',
+                    "reason":"eligible","visual_pattern":"objects"} for r in pool]}
+        draft = {"schema_version":1,"history_note":"none","beats":[beat(0)]}
+        from edit.hd.tools import motion_capabilities
+        with patch.object(selection,'discover_candidates',side_effect=lambda _:pool), \
+             patch.object(motion_capabilities,'overlay_candidates',return_value=[]):
+            result = selection.assign_skills(ROOT,draft)
+            self.assertEqual(result['assignments'][0]['skill_id'],'gbro')
+            pool[1] = candidate('flat','design')  # Both can use the same underlying provider.
+            draft['beats'] = [beat(0),beat(1)]
+            result = selection.assign_skills(ROOT,draft)
+            self.assertEqual({a['skill_id'] for a in result['assignments']},{'gbro','flat'})
+            draft['fixed_context'] = [{"segment_id":"seg-fixed","component_id":"fixed","start":8,"end":9,
+                "source_ref":"unverified.mp4","skill_id":"gbro","template_id":None,"visual_pattern":"objects"}]
+            draft['beats'] = [beat(0)]
+            result = selection.assign_skills(ROOT,draft)
+            self.assertEqual(result['assignments'][0]['skill_id'],'gbro')
+
+    def test_fixed_generated_media_does_not_use_provider_as_skill_channel(self):
+        draft = {"segments": [{"segment_id": "seg-fixed", "start": 0, "end": 2,
+            "visual_strategy": {"components": [{"component_id": "scene",
+                "kind": "ai_generated"}]},
+            "bindings": {"scene": {"provider": "lovart", "generation_id": "g1",
+                "execution_mode": "reuse_completed_lovart_video"}}}]}
+        selection.validate_fixed_materials(draft, {"beats": [], "overlay_beats": [],
+            "fixed_context": [{"segment_id": "seg-fixed", "component_id": "scene",
+                "start": 0, "end": 2, "skill_id": "gbro-collage-broll",
+                "template_id": None, "source_ref": "job/media.mp4",
+                "visual_pattern": "collage"}], "history_note": "test"})
+
     def test_semantic_image_evidence_requires_current_bound_picture(self):
         from PIL import Image
         from edit.hd.tools import motion_capabilities as motion

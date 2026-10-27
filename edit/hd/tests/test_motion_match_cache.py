@@ -174,6 +174,32 @@ class CacheTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'creative_handoff'):
                 cache.validate_design_handoffs(director, treatment, root)
 
+    def test_selected_lemo_handoff_rejects_changed_semantic_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            design = {"composition": "构图", "typography": "字形", "finish": "质感", "focus": "重点"}
+            director = {"segments": [{"segment_id": "seg-001", "start": 0, "end": 2}]}
+            row = {"row_id": "row-001", "start_word": 2, "end_word": 5,
+                   "quote": "原话", "semantic": "目标", "visual_task": "变化",
+                   "components": [{"segment_id": "seg-001", "component_id": "visual"}]}
+            handoff = {"transcript": "原话", "semantic_goal": "目标", "required_change": "变化",
+                       "visual_pattern": "模式", "design_plan": design}
+            treatment = {"semantic_lists": {"overlay": [], "broll": [row]},
+                         "skill_selection": {"beats": [{"segment_id": "seg-001", "component_id": "visual",
+                             "semantic_row_id": "row-001", "start_word": 2, "end_word": 5,
+                             "transcript": "原话", "semantic_goal": "目标", "required_change": "变化",
+                             "visual_pattern": "模式", "design_plan": design}], "overlay_beats": [],
+                             "assignments": [{"segment_id": "seg-001", "component_id": "visual",
+                                 "skill_id": "lemo-opuscar", "template_id": "lemo-opuscar/blueprint",
+                                 "visual_pattern": "模式", "design_plan": design}]}}
+            with patch.object(cache.motion_capabilities, "_bound_brief",
+                              return_value={"style_slug": "blueprint", "creative_handoff": handoff}):
+                cache.validate_design_handoffs(director, treatment, root)
+                bad = copy.deepcopy(treatment)
+                bad["skill_selection"]["beats"][0]["transcript"] = "篡改"
+                with self.assertRaisesRegex(ValueError, "semantic handoff"):
+                    cache.validate_design_handoffs(director, bad, root)
+
     def test_confirmed_constraint_uses_existing_workflow_job_identity(self):
         from edit.hd.tools import visual_confirmation
         with tempfile.TemporaryDirectory() as directory:

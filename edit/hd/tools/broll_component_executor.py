@@ -18,6 +18,7 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import resource
 import secrets
 import selectors
 import signal
@@ -126,7 +127,7 @@ _STOCK_RECEIPT_KEYS = {
 _MAX_BRIEF_BYTES = 4 * 1024 * 1024
 _MAX_LICENSE_BYTES = 1024 * 1024
 _MAX_REFERENCE_MEDIA_BYTES = 512 * 1024 * 1024
-_MAX_REFERENCE_MEDIA_ITEMS = 8
+_MAX_REFERENCE_MEDIA_TOTAL_BYTES = 4 * 1024 * 1024 * 1024
 _TERM_GRACE_SECONDS = 0.25
 _KILL_GRACE_SECONDS = 1.0
 _MAX_ADAPTER_JSON_BYTES = 64 * 1024
@@ -2309,7 +2310,6 @@ def _freeze_reference_media(
         _raise("BROLL_RENDER_FAILED")
     if (
         type(requested) is not tuple
-        or len(requested) > _MAX_REFERENCE_MEDIA_ITEMS
         or any(type(item) is not ReferenceProcessMedia for item in requested)
         or len({item.media_ref for item in requested}) != len(requested)
     ):
@@ -2318,7 +2318,39 @@ def _freeze_reference_media(
     media_fds: list[int] = []
     manifest_fd: int | None = None
     try:
+        # Every snapshot stays open until the child exits and is passed through
+        # pass_fds.  Reject an impossible manifest before creating partial
+        # state; never raise the process or system descriptor limit here.
+        soft_limit, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+        required_fds = len(requested) + 8  # media + manifest + parent/child overhead
+        if soft_limit != resource.RLIM_INFINITY:
+            fd_directory = "/proc/self/fd" if os.path.isdir("/proc/self/fd") else "/dev/fd"
+            open_fds = len(os.listdir(fd_directory))
+            if open_fds + required_fds >= soft_limit:
+                _raise("BROLL_RENDER_FAILED")
         records: list[dict[str, Any]] = []
+        # Preflight the actual manifest before creating snapshots.  The old
+        # eight-item limit is replaced by the same 4 GiB aggregate budget.
+        sizes: list[int] = []
+        for item in requested:
+            if (
+                _IDENTIFIER.fullmatch(item.media_ref) is None
+                or _HASH.fullmatch(item.sha256) is None
+            ):
+                _raise("BROLL_RENDER_FAILED")
+            source_fd = _open_job_regular(
+                pinned_job, item.job_path, "BROLL_RENDER_FAILED"
+            )
+            try:
+                size = os.fstat(source_fd).st_size
+                if not 0 < size <= _MAX_REFERENCE_MEDIA_BYTES:
+                    _raise("BROLL_RENDER_FAILED")
+                sizes.append(size)
+            finally:
+                os.close(source_fd)
+        if sum(sizes) > _MAX_REFERENCE_MEDIA_TOTAL_BYTES:
+            _raise("BROLL_RENDER_FAILED")
+        total_bytes = 0
         for index, item in enumerate(requested):
             if (
                 _IDENTIFIER.fullmatch(item.media_ref) is None
@@ -2350,7 +2382,9 @@ def _freeze_reference_media(
                     if not block:
                         break
                     byte_count += len(block)
-                    if byte_count > _MAX_REFERENCE_MEDIA_BYTES:
+                    total_bytes += len(block)
+                    if (byte_count > _MAX_REFERENCE_MEDIA_BYTES
+                            or total_bytes > _MAX_REFERENCE_MEDIA_TOTAL_BYTES):
                         _raise("BROLL_RENDER_FAILED")
                     digest.update(block)
                     _write_all(destination_fd, block, "BROLL_RENDER_FAILED")

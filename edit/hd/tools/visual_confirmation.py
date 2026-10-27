@@ -154,7 +154,7 @@ def approved_numbered_rows(job):
     proposal = validate_visual_authorization(job)["source"]
     return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
-def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None):
+def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None, *, job_dir=None):
     from .broll_skill_selection import source_channel
     from .semantic_visual_plan import component_use
 
@@ -175,9 +175,17 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
             source = _source_id(binding)
             direct_material = component["kind"] in {"local_material", "official_material", "external_stock"}
             chosen = assignments.get((sid, cid))
+            fixed = next((r for r in selected.get("fixed_context", [])
+                          if (r["segment_id"], r["component_id"]) == (sid, cid)), None)
+            fixed_route = None
+            if fixed is not None:
+                from .broll_skill_selection import fixed_identity
+                fixed_route = fixed_identity(fixed, job_dir=job_dir)
             template = ("素材直用（无动效模板）" if direct_material else binding.get("template_id"))
             if chosen is not None and not direct_material:
                 template = chosen["template_id"]
+            elif fixed_route and fixed_route.get("template_id"):
+                template = fixed_route["template_id"]
             if not template and component["kind"] == "ai_generated":
                 planned = [step["id"] for step in _steps(treatment) if
                            (step["segment_id"], step["component_id"]) == (sid, cid)]
@@ -200,6 +208,9 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
                                       channel["provider"] + " / " + channel["model"])
             if not generation and binding.get("provider"):
                 generation.append(binding["provider"] + (" / " + binding["model"] if binding.get("model") else ""))
+            direct_steps = [s for s in steps if (s["segment_id"], s["component_id"]) == (sid, cid)]
+            direct_service = ((generation_channels or {}).get(direct_steps[-1]["purpose"], {}).get("provider", "")
+                              if direct_steps else "")
             rows.append({"row_id": physical_id, "semantic_row_id": semantic_row.get("row_id"),
                          "segment_id": sid, "component_id": cid,
                          "start": segment["start"], "end": segment["end"],
@@ -207,8 +218,10 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
                          "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
                          "tags": tags, "source": source,
                          "generation_channel": "；".join(generation),
-                         "channel": source_channel((chosen or {}).get("skill_id") or binding.get("dependency_id") or
-                                     binding.get("provider") or component["kind"]),
+                         "channel": (source_channel(chosen["skill_id"]) if chosen else
+                                     source_channel(fixed_route["skill_id"]) if fixed_route else
+                                     direct_service if component["kind"] == "ai_generated" else
+                                     source_channel(binding.get("dependency_id") or binding.get("provider") or component["kind"])),
                          "template": template})
     return rows
 
@@ -237,7 +250,9 @@ def _routing_distribution(rows, treatment):
         bucket = summary[group["row"]["type"]]
         bucket["logical_count"] += 1
         by_channel = {}
-        for item in group["rows"]: by_channel.setdefault(channel(item), []).append(item)
+        for item in group["rows"]:
+            if channel(item):
+                by_channel.setdefault(channel(item), []).append(item)
         for name, parts in by_channel.items():
             entry = bucket["channels"].setdefault(name, {"count": 0, "duration": 0.0})
             entry["count"] += 1
@@ -254,7 +269,7 @@ def _routing_distribution(rows, treatment):
         pattern = row.get("visual_pattern") or assignments.get((row["segment_id"], row["component_id"]), {}).get("visual_pattern")
         current = (channel(row), pattern, float(row["end"]), float(row["start"]))
         if previous and row["semantic_row_id"] != previous[2]:
-            same_channel = current[0] == previous[1][0]
+            same_channel = bool(current[0]) and current[0] == previous[1][0]
             same_pattern = current[1] and previous[1][1] and current[1] == previous[1][1]
             if same_channel or same_pattern:
                 labels = (["同渠道：" + current[0]] if same_channel else []) + (["同构图/动作：" + current[1]] if same_pattern else [])
@@ -269,8 +284,8 @@ def _validate_template_choices(job, director, treatment):
     cached = motion_match_cache.validate_reviews(project, director, treatment, job_dir=job.job_dir)
     selection = treatment.get("skill_selection", {})
     if selection:
-        chosen = broll_skill_selection.assign_skills(project, selection)
-        broll_skill_selection.validate_fixed_materials(director, selection)
+        chosen = broll_skill_selection.assign_skills(project, selection, job_dir=job.job_dir)
+        broll_skill_selection.validate_fixed_materials(director, selection, job_dir=job.job_dir)
         if (chosen["assignments"] != selection.get("assignments")
                 or chosen["overlay_assignments"] != selection.get("overlay_assignments", [])):
             raise VisualConfirmationError("complete-list template assignments have not been resolved")
@@ -408,7 +423,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     config_path, config_sha = startup._config(job)
     config = _read(config_path)
     channels = startup.selected_channels(config) if steps else {}
-    rows = _rows(director, treatment, speech, semantic_plan["component_rows"], channels)
+    rows = _rows(director, treatment, speech, semantic_plan["component_rows"], channels, job_dir=job.job_dir)
     _validate_beat_sheet(treatment, director, speech)
     from . import visual_coverage
     coverage = visual_coverage.require_density({"duration": context[5], "segments": director["segments"]}, treatment=treatment)
@@ -482,7 +497,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         lines.append("| " + " | ".join(cell(v) for v in (
             row["number"], "；".join(dict.fromkeys(f"{p['start']:.3f}–{p['end']:.3f}s" for p in parts)),
             row["type"], semantic_row["quote"], semantic_row["semantic"], "、".join(row["tags"]),
-            "、".join(dict.fromkeys(p["channel"] for p in parts)),
+            "、".join(dict.fromkeys(p["channel"] for p in parts if p["channel"])) or "素材直用（创作来源未确认）",
             "；".join(dict.fromkeys(p["generation_channel"] for p in parts if p["generation_channel"])) or "—",
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
             "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
@@ -791,6 +806,7 @@ def _validate_draft_against_source(root, proposal, director, treatment):
             or treatment.get("motion_queries", []) != frozen_treatment.get("motion_queries", [])
             or treatment.get("skill_selection", {}).get("assignments", []) != frozen_treatment.get("skill_selection", {}).get("assignments", [])
             or treatment.get("skill_selection", {}).get("overlay_assignments", []) != frozen_treatment.get("skill_selection", {}).get("overlay_assignments", [])
+            or treatment.get("skill_selection", {}).get("fixed_context", []) != frozen_treatment.get("skill_selection", {}).get("fixed_context", [])
             or treatment.get("generation_plan", {}) != frozen_treatment.get("generation_plan", {})):
         raise VisualConfirmationError("realization changed approved timing, meaning, tags or template")
     for segment, original in zip(director["segments"], frozen["segments"]):

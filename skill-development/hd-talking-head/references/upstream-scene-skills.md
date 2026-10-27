@@ -182,7 +182,7 @@ composition={id,width:1080,height:1920,fps:24,frames}
 dependency_id="lemo-opuscar"
 style_slug
 creative_handoff={transcript,semantic_goal,required_change,subject,visual_pattern,design_plan,beats,forbidden_outcomes}
-files=[2..8 个冻结 Job 相对文件]
+files=[实际冻结 Job 相对文件；含入口与 workflow，Lemo 另含 TREATMENT；按公共字节及文件句柄预算检查]
 workflow_media_ref
 ```
 

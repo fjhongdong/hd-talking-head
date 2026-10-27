@@ -121,6 +121,20 @@ class UpstreamSceneTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "TREATMENT.md"):
             scene.validate_brief(json.dumps(b))
         self.assertNotIn("style_slug", scene.create_binding(SimpleNamespace(dependency_id="onetake", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY), renderer_version=scene.SOURCES["onetake"][0], launcher="python"), json.dumps(brief()).encode(), __file__))
+
+    def test_scene_freeze_accepts_more_than_eight_files_and_rejects_bad_types(self):
+        b = lemo_brief()
+        for index in range(7):
+            b["files"].append({"media_ref": f"extra_{index}", "job_path": f"scene/extra-{index}.txt",
+                                "scene_path": f"extra-{index}.txt", "sha256": "e" * 64})
+        self.assertEqual(len(scene.validate_brief(json.dumps(b))["files"]), 10)
+        for value in ([], {}):
+            bad = json.loads(json.dumps(b)); bad["dependency_id"] = value
+            with self.assertRaises(ValueError): scene.validate_brief(json.dumps(bad))
+        bad = json.loads(json.dumps(b)); bad["source_binding"]["segment_id"] = []
+        with self.assertRaises(ValueError): scene.validate_brief(json.dumps(bad))
+        bad = json.loads(json.dumps(b)); bad["template_request"]["numeric_scale"] = []
+        with self.assertRaises(ValueError): scene.validate_brief(json.dumps(bad))
     def test_scene_clock_and_frozen_paths_are_required(self):
         self.assertEqual(scene.validate_brief(json.dumps(brief())), brief())
         for mutate in (lambda b: b["composition"].update(frames=143),

@@ -18,7 +18,7 @@ profile 记录主体、可见动作、信息关系、人物感受、视觉特点
 
 TalkCraft 的 108 张卡按当前 `src/cards/*.tsx`、contract 与资格案例核对；库中逐卡列出已验证的 `raw.*` 字段、`scene_inputs.*` 槽和帧钟。`card-semantic-index.json` 的旧 demo 描述不再作为本库的动作正本；保留它与 `card-registry.json` 的原资格关联，以及 `card-event-capabilities.json` 的事件限制，不修改这些正本。每个实际 raw 输入必须完整匹配某个已验证字段组合；空、缺项或跨组合拼接返回待复核，额外字段继续拒绝。字段组合检查不绑定案例中的演示值，不代替原生值／帧校验，也不证明每个字段都影响画面。未有正式透明接法的卡片仍是组件，不因原生角色含 overlay 就进入 A-roll。
 
-库同时列出当前原生入口、设计来源、待适配项和历史停用项。已有资格库中的旧 canonical、RelationMotion 与 SemanticState 只读引用；`history:lemo-free-scene` 等历史排除记录保留，不恢复 OneTake 或其他未接入自由场景。Flat／GBRO 仅提供设计，实际视频使用本 Job 启动时确认且真实可调用的视频渠道，不能把设计标签当作已生成的动作。
+库同时列出当前原生入口、完整创作工作流、待适配项和历史停用项。已有资格库中的旧 canonical、RelationMotion 与 SemanticState 只读引用；`history:lemo-free-scene` 等历史排除记录保留，不恢复 OneTake 或其他未接入自由场景。Flat／GBRO 各自完整工作流计为渠道，已有 `/design` 入口是稳定工作流模板，与原生渲染模板同等参与选择；图片、视频服务是本 Job 已确认的底层依赖。设计、实际生成与视频 QA 均须完成，不能用设计标签冒充已生成的动作。
 
 本轮从 CutCod 的公开资源目录接入一组可核对的 `eian-riso-broll` 原生信息模板，登记为同一 B-roll 入口下的 10 个语义 profile：`title`（章节标题）、`number`（数字强调）、`compare`（同单位数值对比）、`converge`（多项归类收束）、`network`（集合关系）、`focus`（选项突出）、`steps`（顺序流程）、`shot`（真实资料截图）、`quote`（结论引语）和 `versus`（旧新状态对照）。它们共同使用双色印刷纸面与原生 GSAP 时间轴，但不共享同一种语义：选择由口播主体、动作和关系决定，不按颜色或网站分类轮换。模板字段只写入我们自己的项目副本，第三方仓库保持原样。
 
@@ -56,7 +56,7 @@ Riso 的输入绑定引用本包中本次实际模板的原生源码，不依赖
   --job-dir <已有Job目录>
 ```
 
-`catalog` 是档案，不是可执行计数。`supported` 延续原发现器的入口登记含义，不证明本机环境已通过；`needs_adapter`、`not_registered`、`excluded` 均不能作为已接通入口。`search --include-history` 仅用于追溯，不能恢复执行。设计来源即使在 B-roll 检索中命中，也只有设计用途。
+`catalog` 是档案，不是可执行计数。`supported` 延续原发现器的入口登记含义，不证明本机环境已通过；`needs_adapter`、`not_registered`、`excluded` 均不能作为已接通入口。`search --include-history` 仅用于追溯，不能恢复执行。内部 `design_source` 和 `role=design` 描述执行及证据方式，不是模板或渠道的降级条件；未完成生成及视频 QA，仍不能宣称视频完成。
 
 ## 不能由索引替代的检查
 
