@@ -110,6 +110,15 @@ SOURCES = {
                   "muyang-flat-animation/references/style-guide.md",
                   "muyang-flat-animation/references/motion-grammar.md"),
     },
+    "lemo-wake": {
+        "url": "https://github.com/lemomo-ai/lemo-wake.git",
+        "files_snapshot": True,
+        "commit": "f070df8bdf891d792012aabc054582b16e04f759",
+        "files": (".claude-plugin/plugin.json", "skills/wake/SKILL.md",
+                  "skills/wake/scripts/doctor.mjs", "skills/wake/scripts/render.mjs",
+                  "skills/wake/scripts/package.json", "skills/wake/scripts/package-lock.json",
+                  "skills/wake/assets/template/index.html", "skills/wake/assets/template/lib.js"),
+    },
 }
 
 
@@ -136,10 +145,20 @@ def _validate_repo(path: Path, source: dict) -> None:
         file = path / name
         if file.is_symlink() or not file.is_file():
             raise VisualBrollDependencyError(f"visual Skill instruction is missing: {file}")
-    if _git("-C", str(path), "rev-parse", "HEAD") != source["commit"]:
-        raise VisualBrollDependencyError(f"visual Skill commit changed: {path}")
-    if _git("-C", str(path), "status", "--porcelain", "--", *source["files"]):
-        raise VisualBrollDependencyError(f"visual Skill instructions have local changes: {path}")
+    if (path / ".git").exists():
+        if _git("-C", str(path), "rev-parse", "HEAD") != source["commit"]:
+            raise VisualBrollDependencyError(f"visual Skill commit changed: {path}")
+        if _git("-C", str(path), "status", "--porcelain", "--", *source["files"]):
+            raise VisualBrollDependencyError(f"visual Skill instructions have local changes: {path}")
+    elif source.get("files_snapshot"):
+        from prepare_sources import bundled_source_revision
+        try:
+            if bundled_source_revision(path.parent.parent.parent, path) != source["commit"]:
+                raise VisualBrollDependencyError(f"visual Skill snapshot commit changed: {path}")
+        except (OSError, ValueError) as error:
+            raise VisualBrollDependencyError(f"visual Skill snapshot is invalid: {path}") from error
+    else:
+        raise VisualBrollDependencyError(f"visual Skill Git identity is missing: {path}")
 
 
 def ensure(project_root: Path, skill_id: str) -> dict[str, str]:
@@ -217,6 +236,9 @@ def main() -> int:
             from wise_motion_adapter import prepare_runtime
             prepare_runtime(args.project_root.resolve())
             result["runtime_status"] = "callable"
+        elif args.skill == "lemo-wake":
+            prepare_wake_runtime(args.project_root.resolve())
+            result["runtime_status"] = "callable"
     except (OSError, ValueError, subprocess.SubprocessError, VisualBrollDependencyError) as error:
         parser.exit(2, f"visual B-roll Skill unavailable: {error}\n")
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -253,6 +275,24 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
         check_runtime(project_root, skill_id)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         raise VisualBrollDependencyError(f"project-only scene runtime is unavailable: {error}") from error
+
+
+def prepare_wake_runtime(project_root: Path) -> None:
+    """Install only Wake's local JS dependency; models and browser setup stay opt-in."""
+    from lemo_wake_adapter import source_root
+    root = source_root(project_root) / "skills/wake/scripts"
+    try:
+        if not (root / "node_modules/playwright-core/package.json").is_file():
+            subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
+        doctor_env = dict(os.environ)
+        doctor = subprocess.run(["node", "doctor.mjs"], cwd=root, env=doctor_env,
+                                capture_output=True, text=True, check=False, timeout=60)
+        source_root(project_root)
+        if doctor.returncode != 0:
+            detail = (doctor.stdout + doctor.stderr).strip().splitlines()
+            raise VisualBrollDependencyError(detail[-1] if detail else "Wake doctor reported missing runtime dependencies")
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise VisualBrollDependencyError(f"project-only Wake runtime is unavailable: {error}") from error
 
 
 if __name__ == "__main__":

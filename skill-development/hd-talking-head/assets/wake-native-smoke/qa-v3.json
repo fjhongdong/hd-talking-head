@@ -1,0 +1,37 @@
+[
+ {
+  "level": "PASS",
+  "item": "render errors",
+  "msg": "none"
+ },
+ {
+  "level": "PASS",
+  "item": "source seen",
+  "msg": "peak similarity 1.00 (#0, 0.00s)"
+ },
+ {
+  "level": "PASS",
+  "item": "source hold",
+  "msg": "1.54s"
+ },
+ {
+  "level": "PASS",
+  "item": "first frame",
+  "msg": "detail 100% / similarity to source 1.00"
+ },
+ {
+  "level": "WARN",
+  "item": "dead zone",
+  "msg": "3.33–6.00s"
+ },
+ {
+  "level": "PASS",
+  "item": "jump",
+  "msg": "none"
+ },
+ {
+  "level": "PASS",
+  "item": "MP4 (posts)",
+  "msg": "0.23MB 1080x1920 24.0fps"
+ }
+]

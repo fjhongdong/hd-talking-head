@@ -405,6 +405,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
                 f"director segment_id is not renderable: {segment_id!r}"
             )
     context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
+    from . import wake_opening
+    wake_opening.validate(job, director, treatment)
     confirmed_content.check_confirmed_content(job, director)
     steps = _steps(treatment)
     try:
@@ -807,6 +809,7 @@ def _validate_draft_against_source(root, proposal, director, treatment):
             or treatment.get("skill_selection", {}).get("assignments", []) != frozen_treatment.get("skill_selection", {}).get("assignments", [])
             or treatment.get("skill_selection", {}).get("overlay_assignments", []) != frozen_treatment.get("skill_selection", {}).get("overlay_assignments", [])
             or treatment.get("skill_selection", {}).get("fixed_context", []) != frozen_treatment.get("skill_selection", {}).get("fixed_context", [])
+            or treatment.get("skill_selection", {}).get("opening") != frozen_treatment.get("skill_selection", {}).get("opening")
             or treatment.get("generation_plan", {}) != frozen_treatment.get("generation_plan", {})):
         raise VisualConfirmationError("realization changed approved timing, meaning, tags or template")
     for segment, original in zip(director["segments"], frozen["segments"]):

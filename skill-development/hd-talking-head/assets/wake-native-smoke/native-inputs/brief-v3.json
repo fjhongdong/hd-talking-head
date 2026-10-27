@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "job_id": "wake-native-smoke",
+  "source_binding": {
+    "aroll_sha256": "2f4eb6a913001c4cc9d847bc1ad00cacb56694f4da306f2f8d0454506f698766",
+    "segment_id": "seg-opening",
+    "start": 0,
+    "end": 6
+  },
+  "image": {
+    "job_path": "source.png",
+    "sha256": "2f4eb6a913001c4cc9d847bc1ad00cacb56694f4da306f2f8d0454506f698766",
+    "byte_count": 257796
+  },
+  "purpose": "opening",
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "frames": 144
+  },
+  "semantic_goal": "当前语义电流三行关系",
+  "template_request": {
+    "semantic_family": "image_alive",
+    "information_units": 3,
+    "numeric_values": [],
+    "numeric_scale": "not_applicable"
+  },
+  "result_record_path": "native-inputs/wake-result-v3.json"
+}

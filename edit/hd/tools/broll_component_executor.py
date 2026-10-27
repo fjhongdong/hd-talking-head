@@ -77,6 +77,7 @@ _DEPENDENCY_CONTRACTS = {
     "overlay-studio-native": ("reference_adapter", "OverlayStudio"),
     "huashu-motion-native": ("reference_adapter", "HuashuMotion"),
     "motion-graphics-native": ("reference_adapter", "HyperFrames"),
+    "lemo-wake": ("reference_adapter", "HTMLCanvas"),
 }
 _LICENSE_KEYS = {
     "schema_version",

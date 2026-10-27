@@ -23,6 +23,7 @@ _ADAPTERS = (
     "openfilm_motion_adapter",
     "upstream_scene_adapter",
     "riso_native_adapter",
+    "lemo_wake_adapter",
 )
 _REGISTRY_DEPENDENT = {
     "huashu_motion_adapter", "data_rollup_adapter",
@@ -134,6 +135,10 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                 add(dep, entry, route.replace("/", "-") + "-portrait-adaptation",
                     version, route=route,
                     limitations=("Public native slots only; review duration, Chinese capacity and subject action",))
+        elif module == "lemo_wake_adapter":
+            add(dep, entry, values["TEMPLATE_ID"], version, route="wake",
+                limitations=("Complete native image-to-motion Skill; existing bound image required",
+                             "First body shot uses approved cover with hidden presenter; body scenes match semantics"))
         elif module == "openfilm_motion_adapter":
             add(dep, entry, values["TEMPLATE_ID"], version, route="motion-graphics",
                 limitations=("Registered native creation template: read its Skill, author the subject-specific scene, and freeze it before rendering; new scenes do not create new template identities",
@@ -345,6 +350,19 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
     keys = [(b["segment_id"], b["component_id"]) for b in beats]
     if len(keys) != len(set(keys)):
         raise ValueError("B-roll semantic component is duplicated")
+    # The treatment's existing first-beat/opening declaration narrows only the
+    # first body item.  It does not remove Wake (or any other reviewed route)
+    # from the candidate pool for later semantic items.
+    first = selection.get("opening")
+    if first is not None:
+        if not isinstance(first, dict):
+            raise ValueError("opening declaration must be an object")
+        for field in ("segment_id", "component_id", "candidate_id"):
+            _text(first.get(field), "opening " + field)
+        if first["candidate_id"] != "lemo-wake:wake":
+            raise ValueError("opening must use the registered lemo-wake/wake candidate")
+    if first is not None and (first["segment_id"], first["component_id"]) not in keys:
+        raise ValueError("opening declaration has no B-roll semantic beat")
     domains = []
     for beat in beats:
         _duration(beat)
@@ -377,6 +395,13 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
                     raise ValueError("B-roll candidate is not callable or contradicts the Skill review")
                 _text(candidate.get("visual_pattern"), "shared visual pattern")
                 eligible.append(candidate)
+        if first is not None and (beat["segment_id"], beat["component_id"]) == (first["segment_id"], first["component_id"]):
+            if beat["start"] != 0:
+                raise ValueError("opening must start at 0")
+            eligible = [candidate for candidate in eligible
+                        if candidate["candidate_id"] == first["candidate_id"]]
+            if not eligible:
+                raise ValueError("opening candidate is missing or not suitable")
         domain = eligible
         if not domain:
             raise ValueError("B-roll has no suitable supported candidate; retain A-roll or resolve the declared gap")

@@ -6,8 +6,15 @@
     "fps": 24
   },
   "opening": {
-    "hold_frames": 6,
-    "transition_frames": 0
+    "policy": "native_wake_first",
+    "first_shot": {
+      "channel": "lemo-wake",
+      "template_id": "lemo-wake/wake",
+      "candidate_id": "lemo-wake:wake",
+      "start_frame": 0,
+      "presenter_mode": "hidden",
+      "poster_role": "platform_poster_only"
+    }
   },
   "background_music": false,
   "visual_coverage": {

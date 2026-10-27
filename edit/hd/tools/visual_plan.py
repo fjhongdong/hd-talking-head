@@ -2035,6 +2035,8 @@ def prepare_visual_direction(
         try:
             treatment_relative = str(Path(treatment_path).relative_to(job.job_dir)) if treatment_path and Path(treatment_path).is_absolute() else treatment_path
             treatment_payload = contract_artifacts.read_json_artifact(overlay_alignment._path(job.job_dir, treatment_relative)) if treatment_path else None
+            from . import wake_opening
+            wake_opening.validate(job, brief, treatment_payload or {})
             native_routes = {(row["segment_id"], row["component_id"]): row["route"].removeprefix("hyperframes/") for row in overlay_report}
             overlay_selection_report = overlay_selection.validate_selection(draft, treatment_payload, native_routes)
         except (contract_artifacts.ContractArtifactError, ValueError, OSError, KeyError, TypeError) as error:

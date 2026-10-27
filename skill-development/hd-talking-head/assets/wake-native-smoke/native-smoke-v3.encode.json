@@ -1,0 +1,21 @@
+{
+ "frames": 144,
+ "src_fps": 24.0,
+ "dur": 6.0,
+ "canvas": [
+  1080,
+  1920
+ ],
+ "mp4": {
+  "path": "native-smoke-v3.mp4",
+  "size": [
+   1080,
+   1920
+  ],
+  "fps": 24.0,
+  "crf": 18,
+  "bytes": 230859,
+  "ok": true,
+  "use": "posts: WeChat Moments, Xiaohongshu, Douyin, Instagram, X"
+ }
+}

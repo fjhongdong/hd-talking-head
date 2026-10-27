@@ -378,6 +378,22 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
     source = brief.get("source_binding")
     if source is not None and any(source.get(k) != segment[k] for k in ("segment_id", "start", "end")):
         raise ValueError("Motion check native brief belongs to another segment")
+    if segment["bindings"][component].get("dependency_id") == "lemo-wake":
+        scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+        previous = sys.path[:]
+        try:
+            sys.path.insert(0, str(scripts))
+            module = importlib.import_module("lemo_wake_adapter")
+            module.validate_brief(path.read_bytes())
+            record_path = brief["result_record_path"]
+            if (root / record_path).is_file():
+                result = module.load_result(root, path.read_bytes())
+                entry = next(f for f in result["project_files"] if f["job_path"].endswith("/index.html"))
+                director = next(f for f in result["project_files"] if f["job_path"].endswith("/DIRECTOR.md"))
+                brief = {**brief, "native_result": {**result, "entry": entry, "director": director,
+                    "record": module.descriptor(root, root / record_path)}}
+        finally:
+            sys.path[:] = previous
     return brief
 
 
@@ -448,7 +464,9 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                 module = importlib.import_module(name)
                 if Path(module.__file__).resolve() != (scripts / (name + ".py")).resolve():
                     raise ValueError("native validator module belongs to another project")
-                payload = contract_artifacts.canonical_json_bytes(brief)
+                payload = contract_artifacts.canonical_json_bytes(
+                    {k: v for k, v in brief.items() if k != "native_result"}
+                    if row.get("dependency_id") == "lemo-wake" else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
@@ -568,8 +586,25 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
         refs = assessment["content_refs"]
         if not isinstance(refs, list) or not refs:
             raise ValueError("actual content evidence is missing")
+        if row.get("dependency_id") == "lemo-wake":
+            # Planning cites the actual frozen image. Once
+            # a native result is claimed, the host must cite its real project
+            # entry, DIRECTOR brief, and produced media record.
+            native_result = brief.get("native_result") if isinstance(brief, dict) else None
+            if isinstance(native_result, dict) and native_result.get("status") == "completed":
+                paths = {item.get("path") for item in refs if isinstance(item, dict)}
+                required = {native_result["entry"]["job_path"], native_result["director"]["job_path"],
+                            native_result["record"]["job_path"]}
+                if None in required or not required.issubset(paths):
+                    raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
         from .overlay_alignment import _path
         entry_cited = row["capability"]["capability_type"] != "creative_skill"
+        if row.get("dependency_id") == "lemo-wake":
+            image_cited = any(ref.get("path") == brief["image"]["job_path"] and ref.get("image") is True
+                              for ref in refs if isinstance(ref, dict))
+            entry_cited = image_cited and (not brief.get("native_result") or any(
+                ref.get("path") == brief["native_result"]["entry"]["job_path"] and "quote" in ref
+                for ref in refs if isinstance(ref, dict)))
         lemo_sources = ({f["job_path"] for f in brief["files"]
                          if Path(f["scene_path"]).suffix in {".html", ".js", ".mjs"}}
                         if row.get("dependency_id") == "lemo-opuscar" else set())
@@ -598,7 +633,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 value = _json_pointer(contract_artifacts.read_json_artifact(file), ref["pointer"])
                 if path == relative and ref["pointer"].split("/")[1] in {
                     "source_binding", "template_request", "creative_handoff", "upstream",
-                    "composition", "canvas", "assets", "entry",
+                    "composition", "canvas", "assets", "entry", "semantic_goal",
                 }:
                     raise ValueError("metadata or creative instructions are not actual visible content")
                 if value != ref["value"]:
@@ -608,7 +643,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     raise ValueError("scene evidence requires a frozen source excerpt")
                 if ref["quote"] not in file.read_text(encoding="utf-8"):
                     raise ValueError("scene excerpt differs from frozen content")
-            if path == brief.get("entry", {}).get("job_path"):
+            if path == brief.get("entry", {}).get("job_path") and row.get("dependency_id") != "lemo-wake":
                 entry_cited = True
             if path in lemo_sources and "quote" in ref:
                 cited_lemo_sources.add(path)
@@ -786,6 +821,11 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
             not_verified.append({"segment_id": key[0], "component_id": component,
                                  "check": "approved_spoken_text"})
         brief = briefs.get(key) if use == "aroll_overlay" else _bound_brief(job_dir, treatment, segment, component)
+        if (cid.startswith("lemo-wake:") and
+                not (isinstance(brief, dict) and isinstance(brief.get("native_result"), dict)
+                     and brief["native_result"].get("status") == "completed")):
+            not_verified.append({"segment_id": key[0], "component_id": component,
+                                 "check": "completed_wake_native_result"})
         semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief)
         native = _native_input_check(project_root, row, brief, job_dir=job_dir)
         for name, result in (("semantic_fit", semantic), ("native_input_constraints", native)):

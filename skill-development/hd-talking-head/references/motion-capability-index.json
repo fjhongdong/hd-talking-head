@@ -11693,6 +11693,82 @@
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
       }
+    },
+    {
+      "candidate_id": "lemo-wake:wake",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Lemo Wake 原生整屏动画",
+      "summary": "调用完整 Lemo Wake 原生 Skill，将一张已批准图片按当前语义编排为竖屏无声 B-roll；同一身份也固定用于新 Job 首镜。",
+      "tags": {
+        "subjects": [
+          "人物",
+          "物件",
+          "概念",
+          "关系",
+          "封面",
+          "图文"
+        ],
+        "actions": [
+          "唤醒",
+          "连接",
+          "展开",
+          "变化",
+          "入场"
+        ],
+        "relations": [
+          "因果",
+          "输入输出",
+          "前后"
+        ],
+        "feelings": [
+          "困惑",
+          "发现",
+          "明确"
+        ],
+        "styles": [
+          "原生动态图形",
+          "语义场景",
+          "封面首镜"
+        ],
+        "patterns": [
+          "semantic_scene",
+          "process_flow",
+          "subject_action"
+        ]
+      },
+      "editable_content": [
+        "已批准源图与图片哈希",
+        "语义目标与真实词锚",
+        "原生 DIRECTOR 选择的场景动作",
+        "画幅、帧率与精确时长"
+      ],
+      "limitations": [
+        "只有一个完整模板 lemo-wake/wake；不得把 Wake 内部风格、图层或重置目录登记成额外模板。",
+        "父级只负责调用、编排和验收；原生 Skill 必须实际完成 DIRECTOR、项目动画、render、encode 和 QA，并保存真实命令收据。",
+        "仅输出整屏无声 H.264 竖屏片段；圆形头像、原声和唯一字幕轨由父级统一合成。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-wake/skills/wake/SKILL.md",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/new_project.py",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/render.mjs",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/encode.py",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/qa.py",
+        "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py",
+        "skill-development/hd-talking-head/references/cover-opening-bgm.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-wake/skills/wake/SKILL.md": "bb6b9c65c611cf951da61eed3274ed07a96adf26cd353e32d596c3707ad1bf01",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/new_project.py": "a4e6a8ffe1e44b398f6531be52235cab104f97becb76f58b7a93f28b20e7e385",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/render.mjs": "cd9ed9f7348a9eed80d1fe135a61800cb80f79e4b324c78a93789cf39ba98ec1",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/encode.py": "8b6e642fcb3a05be75463f609cebd9809bc7856ef747986e5490295e412c5bda",
+        "skill-development/vendor/lemo-wake/skills/wake/scripts/qa.py": "f6324c57c5c833ea13bd7a0ca6c3d07262b98ac30d8d42e3e4fb4f208dbffa64",
+        "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "df499be37d9e9c882fb0892a70111087174b0e126a4a032d07f7afa3b5757029",
+        "skill-development/hd-talking-head/references/cover-opening-bgm.md": "17e5dc2fe58bc0122741acbf14c08b88df4503e7073638396bf1fa821bb10fc6"
+      }
     }
   ]
 }

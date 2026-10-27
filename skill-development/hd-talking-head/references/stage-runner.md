@@ -24,7 +24,7 @@
 | `content_analysis` | `analysis`，按内容分析合同的完整对象 |
 | `cover_direction` | `direction`；本期完整预览另用 `direction_preview` |
 | `cover` | `image`、`prompt`，直接绑定已确认的完整带字图片，不重画或缩放 |
-| `preview` | 仅本期明确覆盖默认开场或配乐时传 `opening`、`music` |
+| `preview` | Wake 已在正文首镜；不传静态 `opening`，按本期批准配乐选择传 `music` |
 
 `inspect`、`edit_structure`、`subtitles`、`delivery` 直接消费此前批准的正式产物。
 

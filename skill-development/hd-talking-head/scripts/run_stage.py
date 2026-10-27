@@ -278,6 +278,10 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     if not isinstance(note, str) or not note.strip():
         raise ValueError('Actual generated content needs a host semantic QA note')
     confirmation.validate_realization_draft(job, _json(director), _json(treatment))
+    native_actions = pending_native_actions(job, _json(director), _json(treatment))
+    if native_actions:
+        return _summary(job, 'visual_direction', actions=native_actions,
+            next='宿主执行完整原生 Skill；产物完成后核对真实画面并更新 treatment 的实际语义引用，回传 realization 后继续。无需用户再次确认。')
     visual_plan.prepare_visual_direction(job, director, job.job_dir / 'official-previews',
         treatment_path=treatment, reviewed_visual_text=_json(_path(job, reviewed)) if reviewed else None)
     job = state.load_job(job.job_dir)
@@ -285,6 +289,31 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     state.approve(job, 'visual_direction')
     confirmation.validate_visual_authorization(job, require_realized=True)
     return _summary(state.load_job(job.job_dir), 'visual_direction', reviewed=True)
+
+
+def pending_native_actions(job, director: dict, treatment: dict) -> list:
+    """Only after whole-list approval: hand off missing native creative work."""
+    from lemo_wake_adapter import native_task, load_result, validate_brief
+    scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
+    actions = []
+    for segment in director['segments']:
+        for component in segment['visual_strategy']['components']:
+            cid = component['component_id']
+            binding = segment.get('bindings', {}).get(cid, {})
+            if binding.get('dependency_id') != 'lemo-wake':
+                continue
+            scene = scenes.get((segment['segment_id'], cid), {})
+            brief_path = _path(job, scene['brief_path'])
+            payload = brief_path.read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding['brief_sha256']:
+                raise ValueError('Wake brief changed after visual approval')
+            brief = validate_brief(payload)
+            if not _path(job, brief['result_record_path']).exists():
+                actions.append(native_task(job, {'segment_id': segment['segment_id']},
+                    {**binding, 'component_id': cid}, brief_path))
+            else:
+                load_result(job.job_dir, payload)
+    return actions
 
 
 def _module(name: str):
@@ -311,6 +340,7 @@ _NATIVE_MODULES = {
     'paper-collage-hyperframes': ('paper_hyperframes_adapter', 'python'),
     'lemo-opuscar': ('upstream_scene_adapter', 'python'),
     'onetake': ('upstream_scene_adapter', 'python'),
+    'lemo-wake': ('lemo_wake_adapter', 'python'),
 }
 _HYPERFRAMES_MODULES = {
     'scripts/render_hyperframes_hw_pipeline.cjs': 'hyperframes_hw_pipeline_adapter',
@@ -330,7 +360,7 @@ def _check_default_binding(binding):
     if dependency == 'motion-graphics-native' and (
             binding.get('entrypoint') != 'scripts/render_motion_graphics.cjs'
             or binding.get('template_id') != 'motion-graphics-native/callout_pin'):
-        raise ValueError('Only the connected callout-pin motion graphics route may execute')
+        raise ValueError('Selected motion graphics route has no default execution binding; use the connected callout-pin route')
 
 
 def prepare_visual_dependencies(project: Path, director: dict) -> None:
@@ -537,10 +567,17 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
     elif stage == 'preview':
         from edit.hd.tools import preview_v2
         coverage = _coverage_gate(job, treatment)
-        defaults = _json(SKILL / 'references/production-defaults.json')
-        setup = _json(job_dir / 'manifests/setup-approval.json')
-        preview_v2.prepare_preview_v2(job, opening=data.get('opening', {
-            **defaults['opening'], 'user_confirmation': setup['user_confirmation']}), music=data.get('music'))
+        # The opening is a body component. Never prepend or shift its audio/SRT.
+        from edit.hd.tools import visual_canary
+        plan = visual_canary.load_approved_visual_plan(job)
+        first = plan['segments'][0]
+        if (first['start'] != 0 or not any(c.get('dependency_id') == 'lemo-wake'
+                for c in first['shot_recipe']['components'])):
+            raise ValueError('Current Skill preview requires the approved Wake first shot')
+        if data.get('opening') is not None:
+            raise ValueError('Wake first shot cannot be combined with a static opening prefix')
+        opening = None
+        preview_v2.prepare_preview_v2(job, opening=opening, music=data.get('music'))
         return _summary(state.load_job(job_dir), stage, needs_review_items=coverage.get('needs_review_items', []))
     elif stage == 'delivery':
         from edit.hd.tools import qa_delivery_v2

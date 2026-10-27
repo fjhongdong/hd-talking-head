@@ -439,6 +439,69 @@
       ]
     },
     {
+      "id": "lemo-wake-source",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-direction",
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/vendor/lemo-wake",
+      "path_type": "directory",
+      "entrypoints": [
+        "skills/wake/SKILL.md",
+        "skills/wake/scripts/new_project.py",
+        "skills/wake/scripts/render.mjs",
+        "skills/wake/scripts/encode.py",
+        "skills/wake/scripts/qa.py"
+      ],
+      "required_level": "installed",
+      "capabilities": [
+        "visual.lemo-wake-opening",
+        "visual.lemo-wake-broll"
+      ]
+    },
+    {
+      "id": "lemo-wake",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/lemo_wake_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/lemo_wake_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/lemo_wake_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "lemo-wake",
+        "required_level": "bound"
+      }
+    },
+    {
       "id": "onetake-source",
       "kind": "project_path",
       "required": true,
@@ -2055,6 +2118,17 @@
       ]
     },
     {
+      "id": "lemo-wake-source",
+      "script": "scripts/ensure_visual_broll_skills.py",
+      "arguments": [
+        "--skill",
+        "lemo-wake"
+      ],
+      "dependency_ids": [
+        "lemo-wake"
+      ]
+    },
+    {
       "id": "onetake-source",
       "script": "scripts/ensure_visual_broll_skills.py",
       "arguments": [
@@ -2084,6 +2158,7 @@
     "adu-motion-video",
     "huashu-art-motion",
     "lemo-opuscar",
+    "lemo-wake",
     "onetake",
     "hyperframes-native-adaptation",
     "overlay-studio-native",

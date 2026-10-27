@@ -90,6 +90,7 @@ _PRIMARY_RENDERER = {
     "overlay-studio-native": "OverlayStudio",
     "huashu-motion-native": "HuashuMotion",
     "motion-graphics-native": "HyperFrames",
+    "lemo-wake": "HTMLCanvas",
 }
 _REGISTERED_ENGINE = {
     "remotion": "Remotion",
@@ -127,6 +128,7 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/overlay_studio_adapter.py",
     "scripts/huashu_stat_adapter.py",
     "scripts/render_motion_graphics.cjs",
+    "vendor/lemo-wake/skills/wake/SKILL.md",
 })
 _NON_NATIVE_PRODUCERS = frozenset({
     "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
@@ -137,6 +139,12 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
+    if candidate.get("dependency_id") == "lemo-wake":
+        return (candidate.get("template_origin") == "custom_fallback"
+                and candidate.get("adaptation_level") == "structural"
+                and candidate.get("source_entrypoint") == "scripts/lemo_wake_adapter.py"
+                and candidate.get("producer_version") == "1.0.0"
+                and template_id == "lemo-wake/wake")
     if candidate.get("dependency_id") == "lemo-opuscar":
         from upstream_scene_adapter import ENTRY, VERSION, lemo_styles
         root = Path(__file__).resolve().parents[3]
@@ -627,6 +635,16 @@ def _validate_code_cross_fields(
                 or evidence.get("template_id") != component["template_id"]
                 or evidence.get("upstream_commit") != SOURCES[dependency_id][0]):
             raise RouterError("Lemo style differs from the frozen production evidence")
+    if dependency_id == "lemo-wake":
+        if (not _native_selection(component)
+                or entrypoint != "scripts/lemo_wake_adapter.py"
+                or component.get("source_entrypoint") != entrypoint
+                or component.get("producer_version") != "1.0.0"
+                or component.get("template_id") != "lemo-wake/wake"
+                or primary_renderer != "HTMLCanvas"
+                or component.get("renderer_version") != "f070df8bdf891d792012aabc054582b16e04f759"
+                or component.get("template_version") != "1.0.0"):
+            raise RouterError("Wake requires the registered native adapter and template")
     if dependency_id == "overlay-studio-native":
         if (entrypoint != "scripts/overlay_studio_adapter.py"
                 or component.get("source_entrypoint") != entrypoint
