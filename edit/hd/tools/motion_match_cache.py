@@ -27,24 +27,57 @@ def _items(root, director, treatment):
     if set(qmap) != set(plan["component_rows"]): raise ValueError("motion_queries must cover every component exactly")
     return items
 
-def _identity(row, typ, tags):
+def _opening_context(treatment, director, row):
+    opening = treatment.get("skill_selection", {}).get("opening")
+    if opening is None:
+        return None
+    if (not isinstance(opening, dict) or set(opening) != {"segment_id", "component_id", "candidate_id"}
+            or opening["candidate_id"] != "lemo-wake:wake"):
+        raise ValueError("fixed opening requires the registered Wake declaration")
+    refs = row.get("components", [])
+    if not any(ref.get("segment_id") == opening.get("segment_id")
+               and ref.get("component_id") == opening.get("component_id")
+               for ref in refs if isinstance(ref, dict)):
+        return None
+    if len(refs) != 1:
+        raise ValueError("fixed Wake opening cannot share a semantic row with other components")
+    # Bind cache identity to the approved opening declaration and its current
+    # native brief/source binding.  Generic fixtures have no opening and keep
+    # the old identity unchanged.
+    binding = None
+    for segment in director.get("segments", []):
+        if segment.get("segment_id") == opening.get("segment_id"):
+            binding = segment.get("bindings", {}).get(opening.get("component_id"))
+    return {"policy": "fixed_wake", "opening": dict(opening),
+            "binding": {k: binding.get(k) for k in ("dependency_id", "template_id", "producer_version", "brief_sha256", "source_sha256")}
+            if isinstance(binding, dict) else None}
+
+def _identity(row, typ, tags, *, opening=None):
     payload={k:row[k] for k in ("row_id","quote","start_word","end_word","semantic","visual_task")}
     payload["type"]=typ; payload["tags"]=tags
+    if opening is not None:
+        payload["opening"] = opening
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
 
 def match_once(project_root, director, treatment):
     out=copy.deepcopy(treatment); rows,csha=_catalog(project_root); items=_items(project_root,director,out)
     cache=out.get("motion_matches",{}); new={}
     for row,typ,tags in items:
-        rid=row["row_id"]; use="aroll_overlay" if typ=="贴片" else "broll"; sid=_identity(row,typ,tags)
+        rid=row["row_id"]; use="aroll_overlay" if typ=="贴片" else "broll"
+        opening = _opening_context(out, director, row) if typ != "贴片" else None
+        sid=_identity(row,typ,tags,opening=opening)
         old=cache.get(rid)
         if isinstance(old,dict) and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
-            _validate_entry(old, rows, use, tags)
+            _validate_entry(old, rows, use, tags, opening=opening)
             new[rid]=old; continue
-        matches=motion_capabilities.search_capabilities(Path(project_root), " ".join(tags), use=use, catalog=rows)
+        if opening is not None:
+            matches = [m for m in rows if m.get("candidate_id") == "lemo-wake:wake"]
+        else:
+            matches=motion_capabilities.search_capabilities(Path(project_root), " ".join(tags), use=use, catalog=rows)
         frozen = [{k:m.get(k) for k in ("candidate_id","matched_dimensions","retrieval_score")} for m in matches]
         new[rid]={"catalog_sha256":csha,"semantic_sha256":sid,"use":use,"tags":tags,
-                  "matches":frozen,"matches_sha256":contract_artifacts.sha256_json(frozen)}
+                  "matches":frozen,"matches_sha256":contract_artifacts.sha256_json(frozen),
+                  "opening_policy": opening}
     out["motion_matches"]=new; return out
 
 def validate_matches(project_root,director,treatment):
@@ -54,8 +87,9 @@ def validate_matches(project_root,director,treatment):
     out={}
     for row,typ,tags in items:
         rid=row["row_id"]; e=cache[rid]; use="aroll_overlay" if typ=="贴片" else "broll"
-        if e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
-        _validate_entry(e, rows, use, tags)
+        opening = _opening_context(treatment, director, row) if typ != "贴片" else None
+        if e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags,opening=opening) or e.get("use")!=use or e.get("tags")!=tags or e.get("opening_policy") != opening: raise ValueError("motion match cache identity changed")
+        _validate_entry(e, rows, use, tags, opening=opening)
         raw=[]
         for m in e.get("matches",[]):
             cid=m.get("candidate_id")
@@ -231,17 +265,22 @@ def validate_design_handoffs(director, treatment, job_dir):
         if not isinstance(style, str) or any(value not in style for value in design.values()):
             raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")
 
-def _validate_entry(entry, rows, use, tags):
+def _validate_entry(entry, rows, use, tags, *, opening=None):
     if not isinstance(entry, dict) or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")
     if entry.get("matches_sha256") != contract_artifacts.sha256_json(entry["matches"]):
         raise ValueError("complete motion match cache changed")
     catalog={r.get("candidate_id"):r for r in rows}; seen=set()
+    if opening is not None and [item.get("candidate_id") for item in entry["matches"]] != ["lemo-wake:wake"]:
+        raise ValueError("fixed opening requires exactly its registered Wake candidate")
     for evidence in entry["matches"]:
         if not isinstance(evidence, dict) or set(evidence)-{"candidate_id","matched_dimensions","retrieval_score"}: raise ValueError("invalid cached match evidence")
         cid=evidence.get("candidate_id")
         if not isinstance(cid,str) or cid in seen or cid not in catalog: raise ValueError("cached candidate is missing or duplicated")
         seen.add(cid); profile=catalog[cid].get("capability",{}); uses=profile.get("uses",[])
         if use not in uses and not (use=="broll" and "design" in uses): raise ValueError("cached candidate use is invalid")
+        if opening is not None:
+            if cid != "lemo-wake:wake": raise ValueError("opening cache must contain fixed Wake candidate")
+            continue
         expected=motion_capabilities._match_evidence(profile," ".join(tags))
         if not expected["has_motion_basis"]:
             raise ValueError("cached candidate has no semantic motion match")

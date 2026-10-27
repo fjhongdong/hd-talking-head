@@ -32,7 +32,7 @@ def validate(job, director, treatment):
             or not component or component.get('kind') != 'code_generated' or component.get('layer_role') != 'base'
             or binding.get('dependency_id') != 'lemo-wake'
             or binding.get('entrypoint') != 'scripts/lemo_wake_adapter.py'
-            or binding.get('producer_version') != '1.0.0'
+            or binding.get('producer_version') != '2.0.0'
             or binding.get('template_id') != 'lemo-wake/wake'):
         raise ValueError('Wake opening must use its complete native opaque template')
     if (segment.get('visual_intent', {}).get('presenter_presence') != 'hidden'

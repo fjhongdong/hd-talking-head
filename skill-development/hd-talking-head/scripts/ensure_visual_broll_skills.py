@@ -279,12 +279,12 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
 
 def prepare_wake_runtime(project_root: Path) -> None:
     """Install only Wake's local JS dependency; models and browser setup stay opt-in."""
-    from lemo_wake_adapter import source_root
+    from lemo_wake_adapter import source_root, runtime_environment
     root = source_root(project_root) / "skills/wake/scripts"
     try:
         if not (root / "node_modules/playwright-core/package.json").is_file():
             subprocess.run(["npm", "ci", "--ignore-scripts"], cwd=root, check=True, timeout=240)
-        doctor_env = dict(os.environ)
+        doctor_env = runtime_environment(project_root)
         doctor = subprocess.run(["node", "doctor.mjs"], cwd=root, env=doctor_env,
                                 capture_output=True, text=True, check=False, timeout=60)
         source_root(project_root)

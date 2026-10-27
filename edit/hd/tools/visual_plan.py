@@ -38,6 +38,7 @@ from .visual_strategy import (
     validate_visual_strategy,
 )
 from . import visual_coverage
+from .dependency_contracts import executor_for, output_alpha
 
 __all__ = [
     "VisualPlanError",
@@ -330,25 +331,7 @@ def _prevalidate_draft_bindings(
                     ("generated_media" if bindings[component_id].get("execution_mode") == "reuse_completed_generated_media" else "lovart_existing_video")
                     if completed_contract is not None
                     else
-                    "reference_adapter"
-                    if binding.get("dependency_id") in {
-                        "hd-talking-head-relation-motion",
-                        "hd-talking-head-semantic-state",
-                        "doudou-remotion-whiteboard",
-                        "talkcraft-native-adaptation",
-                        "hyperframes-native-adaptation",
-                        "paper-collage-hyperframes",
-                        "lemo-opuscar",
-                        "onetake",
-                        "adu-motion-video",
-                        "wise-motion",
-                        "openfilm-motion-graphics",
-                        "eian-riso-broll",
-                        "overlay-studio-native",
-                        "motion-graphics-native",
-                        "whiteboard-video",
-                    }
-                    else "prevalidation-only"
+                    executor_for(kind, binding)
                 ),
                 "media_type": component["media_type"],
                 "render_window": {
@@ -368,24 +351,7 @@ def _prevalidate_draft_bindings(
                     "width": 1080,
                     "height": 1920,
                     "fps": 24,
-                    "alpha": kind == "code_generated"
-                    and binding.get("dependency_id") not in {
-                        "hd-talking-head-talkcraft",
-                        "hd-talking-head-relation-motion",
-                        "hd-talking-head-semantic-state",
-                        "paper-collage-ad",
-                        "paper-collage-hyperframes",
-                        "doudou-remotion-whiteboard",
-                        "talkcraft-native-adaptation",
-                        "lemo-opuscar",
-                        "onetake",
-                        "adu-motion-video",
-                        "wise-motion",
-                        "openfilm-motion-graphics",
-                        "whiteboard-video",
-                    }
-                    and (binding.get("dependency_id") not in {"hyperframes-native-adaptation", "paper-collage-hyperframes"}
-                         or strategy["composition"]["family"] == "aroll_with_overlay"),
+                    "alpha": output_alpha(kind, binding.get("dependency_id"), strategy["composition"]["family"]),
                 },
                 **binding,
             }
@@ -1043,7 +1009,7 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
     lines = [
         "# 本视频贴片与 B-roll 总表",
         "",
-        "时间统一为剪后正文时间，不含封面入场。确认整张表后，按表制作并直接交付成片。",
+        "时间统一为剪后正文时间，Wake 首镜从第 0 帧开始。确认整张表后，按表制作并直接交付成片。",
         "",
     ]
     if skill_selection is not None:

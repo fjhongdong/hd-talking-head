@@ -24,15 +24,16 @@ else:
 PROJECT = SKILL.parents[1]
 sys.path[:0] = [str(PROJECT), str(SKILL / 'scripts')]
 from edit.hd.tools import contract_artifacts as artifacts
+from edit.hd.tools.segment_render import re_full_segment_id
 from adapter_kit import sha256_file as sha
 
 DEPENDENCY_ID = 'lemo-wake'
 ENTRY = 'scripts/lemo_wake_adapter.py'
-VERSION = '1.0.0'
+VERSION = '2.0.0'
 TEMPLATE_ID = 'lemo-wake/wake'
 UPSTREAM_COMMIT = 'f070df8bdf891d792012aabc054582b16e04f759'
 NATIVE_ENTRY = 'skills/wake/SKILL.md'
-STEPS = {'render': 'render.mjs', 'encode': 'encode.py', 'qa': 'qa.py'}
+STEPS = {'init': 'new_project.py', 'render': 'render.mjs', 'encode': 'encode.py', 'qa': 'qa.py'}
 
 
 def relative(value):
@@ -85,7 +86,7 @@ def validate_brief(payload):
     s, c, r = b['source_binding'], b['composition'], b['template_request']
     if (not isinstance(s, dict) or set(s) != {'aroll_sha256', 'segment_id', 'start', 'end'}
             or not isinstance(s['aroll_sha256'], str) or not re.fullmatch('[a-f0-9]{64}', s['aroll_sha256'])
-            or not isinstance(s['segment_id'], str) or not re.fullmatch('seg-[A-Za-z0-9_-]+', s['segment_id'])
+            or not isinstance(s['segment_id'], str) or not re_full_segment_id(s['segment_id'])
             or any(type(s[k]) not in (int, float) or not math.isfinite(s[k]) for k in ('start', 'end'))
             or not 0 <= s['start'] < s['end']):
         raise ValueError('Invalid Wake source clock')
@@ -106,6 +107,34 @@ def validate_brief(payload):
     return b
 
 
+def validate_selected_inputs(job, director, treatment):
+    """Check callable image inputs before publishing the complete proposal."""
+    scenes = {(x.get('segment_id'), x.get('component_id')): x for x in treatment.get('scenes', [])}
+    opening = treatment.get('skill_selection', {}).get('opening', {})
+    from edit.hd.tools.visual_plan import _approved_artifact
+    approved_aroll = None
+    for segment in director.get('segments', []):
+        for cid, binding in segment.get('bindings', {}).items():
+            if binding.get('dependency_id') != DEPENDENCY_ID:
+                continue
+            key = (segment['segment_id'], cid)
+            scene = scenes.get(key)
+            if not scene or not isinstance(scene.get('brief_path'), str):
+                raise ValueError('Selected Wake item requires an existing image brief before confirmation')
+            payload = path(job.job_dir, scene['brief_path']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                raise ValueError('Selected Wake image brief differs from its binding')
+            b = validate_brief(payload)
+            exact(job.job_dir, b['image'])
+            if approved_aroll is None:
+                approved_aroll = sha(_approved_artifact(job, 'edit_structure', '06-edit-structure/edited-aroll.mp4'))
+            purpose = 'opening' if key == (opening.get('segment_id'), opening.get('component_id')) else 'body'
+            if (b['job_id'] != job.job_id or b['purpose'] != purpose
+                    or b['source_binding'] != {'aroll_sha256': approved_aroll, 'segment_id': segment['segment_id'],
+                                               'start': segment['start'], 'end': segment['end']}):
+                raise ValueError('Selected Wake input belongs to another Job, clock or purpose')
+
+
 def source_root(project=PROJECT):
     from prepare_sources import bundled_source_revision
     root = Path(project) / 'skill-development/vendor/lemo-wake'
@@ -117,6 +146,79 @@ def source_root(project=PROJECT):
         if head != UPSTREAM_COMMIT or dirty:
             raise ValueError('Native Wake source changed; do not reset or edit it')
     return root
+
+
+def runtime_environment(project=PROJECT):
+    """Use the existing untracked runtime area, never the vendor source tree."""
+    project = Path(project).resolve(strict=True)
+    models = project / 'skill-development/runtime/lemo-wake/models'
+    if models.resolve() != models.absolute():
+        raise ValueError('Wake model data must use the regular project runtime directory')
+    from project_python import project_environment
+    environment, _ = project_environment(project)
+    return {**environment, 'LEMO_WAKE_MODELS': str(models)}
+
+
+def _config(root, src, b, normalized=None):
+    directory = Path(src).resolve(strict=True)
+    text = (directory / 'config.js').read_text()
+    def number(key):
+        hit = re.search(r'\b' + key + r'\s*:\s*([0-9.]+)', text)
+        if not hit:
+            raise ValueError('Wake config is missing ' + key)
+        return float(hit.group(1))
+    if ((number('outW'), number('outH'), number('fps')) != (1080, 1920, 24)
+            or round(number('dur') * 24) != b['composition']['frames']):
+        raise ValueError('Native Wake config differs from the approved clock')
+    hit = re.search(r"\bsource\s*:\s*(['\"])([^'\"]+)\1", text)
+    if not hit:
+        raise ValueError('Native Wake config source is missing')
+    source = path(directory, hit.group(2))
+    if normalized and descriptor(root, source) != normalized:
+        raise ValueError('Native normalized source changed after initialization')
+    return descriptor(root, source)
+
+
+def _write_call(root, b, step, record):
+    target = path(root, str(Path(b['result_record_path']).parent / 'calls' / (step + '-' + uuid.uuid4().hex + '.json')))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    artifacts.write_json_artifact(target, record)
+    return target
+
+
+def initialize_project(job_dir, brief_path, *, slug, parent='native-projects'):
+    """Run the original new_project program with the frozen input and public options."""
+    root = Path(job_dir).resolve(strict=True)
+    brief_path = Path(brief_path).resolve(strict=True)
+    brief_path.relative_to(root)
+    b = validate_brief(brief_path.read_bytes())
+    image = exact(root, b['image'])
+    if not isinstance(slug, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', slug):
+        raise ValueError('Native project slug must be a lowercase project name')
+    destination = path(root, parent)
+    src = destination / (slug + '-alive') / 'src'
+    if src.parent.exists():
+        raise ValueError('Native project already exists; preserve it and inspect its init record')
+    destination.mkdir(parents=True, exist_ok=True)
+    native = source_root() / 'skills/wake/scripts/new_project.py'
+    argv = [sys.executable, str(native), str(image), slug, '--parent', str(destination),
+            '--out', '1080x1920', '--fps', '24', '--dur', str(b['composition']['frames'] / 24)]
+    environment = runtime_environment()
+    result = subprocess.run(argv, cwd=root, env=environment, capture_output=True, text=True, timeout=120)
+    record = {'schema_version': 2, 'kind': 'wake-native-call', 'step': 'init',
+              'request_sha256': sha(brief_path), 'job_id': b['job_id'], 'argv': argv,
+              'native_script_sha256': sha(native), 'upstream_commit': UPSTREAM_COMMIT,
+              'exit_code': result.returncode, 'project_src': src.relative_to(root).as_posix(),
+              'source_image': b['image'], 'environment': {'LEMO_WAKE_MODELS': environment['LEMO_WAKE_MODELS']},
+              'stdout': result.stdout, 'stderr': result.stderr}
+    if result.returncode == 0:
+        record['normalized_source'] = _config(root, src, b)
+    target = _write_call(root, b, 'init', record)
+    if result.returncode:
+        raise ValueError('Native initialization failed; inspect ' + str(target) + ': ' + result.stderr[-1000:])
+    exact(root, b['image'])
+    source_root()
+    return {'project_src': str(src), 'initialization_record': str(target)}
 
 
 def probe(video):
@@ -149,6 +251,8 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
     brief_path.relative_to(root)
     b = validate_brief(brief_path.read_bytes())
     exact(root, b['image'])
+    if step not in {'render', 'encode', 'qa'}:
+        raise ValueError('Use initialize_project for the original native init step')
     native = source_root() / 'skills/wake/scripts' / STEPS[step]
     if (not isinstance(argv, list) or any(not isinstance(x, str) for x in argv)
             or argv.count(str(native)) != 1 or not 1 <= argv.index(str(native)) <= 3
@@ -162,34 +266,35 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
     if step == 'qa' and ('--no-loop' not in argv or '--json' not in argv or '--src' not in argv
                          or argv[argv.index('--src') + 1] != src):
         raise ValueError('Native single-pass QA must save JSON and check this project source')
+    _config(root, project_src, b)
     before = project_files(root, project_src)
-    result = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=600)
+    environment = runtime_environment()
+    result = subprocess.run(argv, cwd=root, env=environment, capture_output=True, text=True, timeout=600)
     if before != project_files(root, project_src):
         raise ValueError('Native project changed during execution; review before recapturing')
     source_root()
-    record = {'schema_version': 1, 'kind': 'wake-native-call', 'request_sha256': sha(brief_path),
+    record = {'schema_version': 2, 'kind': 'wake-native-call', 'request_sha256': sha(brief_path),
               'job_id': b['job_id'], 'step': step, 'argv': argv, 'native_script_sha256': sha(native),
               'upstream_commit': UPSTREAM_COMMIT, 'exit_code': result.returncode,
               'project_src': Path(src).relative_to(root).as_posix(), 'project_files': before,
+              'environment': {'LEMO_WAKE_MODELS': environment['LEMO_WAKE_MODELS']},
               'stdout': result.stdout, 'stderr': result.stderr}
-    target = path(root, str(Path(b['result_record_path']).parent / 'calls' / (step + '-' + uuid.uuid4().hex + '.json')))
-    target.parent.mkdir(parents=True, exist_ok=True)
-    artifacts.write_json_artifact(target, record)
+    target = _write_call(root, b, step, record)
     if result.returncode:
         raise ValueError('Native ' + step + ' failed; inspect ' + str(target) + ': ' + result.stderr[-1000:])
     return target
 
 
 def check_result(b, request_sha, record, read):
-    if any(record.get(k) != v for k, v in {'schema_version': 1, 'status': 'completed',
+    if any(record.get(k) != v for k, v in {'schema_version': 2, 'status': 'completed',
             'dependency_id': DEPENDENCY_ID, 'template_id': TEMPLATE_ID, 'upstream_commit': UPSTREAM_COMMIT,
             'job_id': b['job_id'], 'request_sha256': request_sha,
             'source_image_sha256': b['image']['sha256'], 'media_probe': {**b['composition'], 'audio_streams': 0}}.items()):
         raise ValueError('Native Wake result differs from its approved request or clock')
     files, calls = record.get('project_files', []), record.get('calls', [])
     if (not files or not any(f['job_path'].endswith('/index.html') for f in files)
-            or not any(f['job_path'].endswith('/DIRECTOR.md') for f in files) or len(calls) != 3):
-        raise ValueError('Wake requires native project source and all three actual commands')
+            or not any(f['job_path'].endswith('/DIRECTOR.md') for f in files) or len(calls) != 4):
+        raise ValueError('Wake requires native project source and all four actual commands')
     for d in [b['image'], record['media'], record['native_qa'], *files, *calls]:
         check_descriptor(d)
         content = read(d['job_path'])
@@ -206,7 +311,8 @@ def check_result(b, request_sha, record, read):
         if (step in steps or step not in STEPS or call.get('kind') != 'wake-native-call'
                 or call.get('exit_code') != 0 or call.get('job_id') != b['job_id']
                 or call.get('request_sha256') != request_sha or call.get('upstream_commit') != UPSTREAM_COMMIT
-                or call.get('native_script_sha256') != sha(native) or call.get('project_files') != files
+                or call.get('schema_version') != 2 or call.get('native_script_sha256') != sha(native)
+                or (step != 'init' and call.get('project_files') != files)
                 or sum(arg.endswith('/lemo-wake/skills/wake/scripts/' + STEPS[step])
                        for arg in call.get('argv', [])) != 1):
             raise ValueError('Wake command evidence is incomplete or belongs to another execution')
@@ -219,11 +325,30 @@ def check_result(b, request_sha, record, read):
     src = sources.pop()
     relative(src)
     for step, call in steps.items():
+        if step == 'init':
+            continue
         argv = call['argv']
         index = next(i for i, arg in enumerate(argv) if arg.endswith('/lemo-wake/skills/wake/scripts/' + STEPS[step]))
         expected = src if step == 'render' else src + '/frames'
         if not argv[index + 1].endswith('/' + expected) or (step == 'render' and argv[index + 2] != 'frames'):
             raise ValueError('Native command does not consume its recorded project')
+    init = steps['init']
+    argv = init['argv']
+    script_index = next(i for i, arg in enumerate(argv) if arg.endswith('/lemo-wake/skills/wake/scripts/new_project.py'))
+    if (init.get('source_image') != b['image'] or not argv[script_index + 1].endswith('/' + b['image']['job_path'])
+            or '--fps' not in argv or argv[argv.index('--fps') + 1] != '24'
+            or '--out' not in argv or argv[argv.index('--out') + 1] != '1080x1920'):
+        raise ValueError('Native initialization did not consume the approved source and output request')
+    normalized = init.get('normalized_source')
+    check_descriptor(normalized)
+    if normalized not in files or not normalized['job_path'].startswith(src + '/assets/source.'):
+        raise ValueError('Native initialization source is not the frozen project source')
+    for call in steps.values():
+        environment = call.get('environment')
+        if (environment != init.get('environment') or not isinstance(environment, dict)
+                or set(environment) != {'LEMO_WAKE_MODELS'}
+                or not environment['LEMO_WAKE_MODELS'].endswith('/skill-development/runtime/lemo-wake/models')):
+            raise ValueError('Native Wake commands did not use the isolated model directory')
     if src + '/index.html' not in {f['job_path'] for f in files}:
         raise ValueError('Rendered Wake project entry is not frozen')
     qa_argv, enc_argv = steps['qa']['argv'], steps['encode']['argv']
@@ -240,21 +365,43 @@ def check_result(b, request_sha, record, read):
     return record
 
 
-def load_result(job_dir, payload):
+def _read_result(job_dir, payload, data):
     b = validate_brief(payload)
     root = Path(job_dir).resolve(strict=True)
     exact(root, b['image'])
-    record = json.loads(path(root, b['result_record_path']).read_bytes())
+    record = json.loads(data)
     checked = check_result(b, hashlib.sha256(payload).hexdigest(), record, lambda name: path(root, name).read_bytes())
     if probe(exact(root, checked['media'])) != checked['media_probe']:
         raise ValueError('Native Wake output differs from its recorded probe')
+    src = root / next(f['job_path'] for f in checked['project_files'] if f['job_path'].endswith('/index.html'))
+    init = next(json.loads(path(root, d['job_path']).read_bytes()) for d in checked['calls']
+                if json.loads(path(root, d['job_path']).read_bytes())['step'] == 'init')
+    _config(root, src.parent, b, init['normalized_source'])
     return checked
+
+
+def inspect_result(job_dir, payload, *, record_bytes=None):
+    """Inspect unapproved native work; never use this entry to produce a component."""
+    b = validate_brief(payload)
+    return _read_result(job_dir, payload, record_bytes if record_bytes is not None else path(job_dir, b['result_record_path']).read_bytes())
+
+
+def load_result(job_dir, payload, *, expected_record):
+    """Production consumes the exact result the host reviewed and froze."""
+    b = validate_brief(payload)
+    if (not isinstance(expected_record, dict) or set(expected_record) != {'path', 'sha256', 'bytes'}
+            or expected_record['path'] != b['result_record_path']):
+        raise ValueError('Approved Wake result descriptor is required')
+    data = path(job_dir, expected_record['path']).read_bytes()
+    if len(data) != expected_record['bytes'] or hashlib.sha256(data).hexdigest() != expected_record['sha256']:
+        raise ValueError('Wake result differs from the reviewed version')
+    return _read_result(job_dir, payload, data)
 
 
 def publish_completed(job_dir, brief_path, project_src, video, native_qa, calls):
     root, payload = Path(job_dir).resolve(strict=True), Path(brief_path).read_bytes()
     b = validate_brief(payload)
-    record = {'schema_version': 1, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
+    record = {'schema_version': 2, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
               'template_id': TEMPLATE_ID, 'upstream_commit': UPSTREAM_COMMIT, 'job_id': b['job_id'],
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'source_image_sha256': b['image']['sha256'],
               'media': descriptor(root, video), 'media_probe': probe(video),
@@ -284,6 +431,9 @@ def native_task(job, recipe, component, brief_path):
             'skill_path': str(source_root() / NATIVE_ENTRY), 'job_dir': str(job.job_dir),
             'brief_path': str(brief_path), 'brief_sha256': component['brief_sha256'],
             'source_image': str(path(job.job_dir, b['image']['job_path'])),
+            'working_directory': str(job.job_dir),
+            'environment': {'LEMO_WAKE_MODELS': runtime_environment()['LEMO_WAKE_MODELS']},
+            'history_path': str(Path(job.job_dir) / 'lemo-wake-history.jsonl'),
             'segment_id': recipe['segment_id'], 'component_id': component['component_id'],
             'requirements': {**b['composition'], 'semantic_goal': b['semantic_goal'], 'purpose': b['purpose'],
                              'transcript': ''.join(word['text'] for word in spoken),
@@ -292,7 +442,7 @@ def native_task(job, recipe, component, brief_path):
                                  'end': min(b['source_binding']['end'], word['end']) - b['source_binding']['start']} for word in spoken],
                              'silent': True, 'single_pass': True, 'complete_source_first_frame': True},
             'result_record_path': b['result_record_path'],
-            'next': 'Read and execute the complete native Skill in a native subtask. Author its project, capture its original render/encode/qa (--no-loop --json) commands with this bridge, inspect frames and motion, then publish. Do not edit the approved brief, vendor code or user movie.'}
+            'next': 'Read and execute the complete native Skill in a native subtask. Use initialize_project to record the original new_project call and source derivation. Author its project, capture its original render/encode/qa (--no-loop --json) commands with this bridge, inspect frames and motion, then publish. Do not edit the approved brief, vendor code or user movie.'}
 
 
 def create_adapter(project_root, python_executable, brief_loader):
@@ -321,8 +471,10 @@ def create_adapter(project_root, python_executable, brief_loader):
         return payload
 
     def media_loader(job, recipe, component, payload):
-        b, result = validate_brief(payload), load_result(job.job_dir, payload)
-        descriptors = [b['image'], descriptor(job.job_dir, path(job.job_dir, b['result_record_path'])),
+        from edit.hd.tools.visual_confirmation import native_result_descriptor
+        expected = native_result_descriptor(job, recipe['segment_id'], component['component_id'], hashlib.sha256(payload).hexdigest())
+        b, result = validate_brief(payload), load_result(job.job_dir, payload, expected_record=expected)
+        descriptors = [b['image'], {'job_path': expected['path'], 'sha256': expected['sha256'], 'byte_count': expected['bytes']},
                        result['media'], result['native_qa'], *result['project_files'], *result['calls']]
         distinct = {d['job_path']: d for d in descriptors}
         return tuple(ReferenceProcessMedia('wake-' + hashlib.sha256(d['job_path'].encode()).hexdigest()[:32], d['job_path'], d['sha256']) for d in distinct.values())
@@ -364,7 +516,10 @@ def main():
     p.add_argument('--probe', action='store_true')
     p.add_argument('--project-root', type=Path)
     p.add_argument('--job-dir', type=Path)
-    p.add_argument('--capture', choices=STEPS)
+    p.add_argument('--capture', choices=('render', 'encode', 'qa'))
+    p.add_argument('--initialize', action='store_true')
+    p.add_argument('--slug')
+    p.add_argument('--parent', default='native-projects')
     p.add_argument('--argv-json')
     p.add_argument('--project-src', type=Path)
     p.add_argument('--publish', action='store_true')
@@ -384,7 +539,9 @@ def main():
         return
     if a.brief is None:
         p.error('--brief is required for native execution and reuse')
-    if a.capture:
+    if a.initialize:
+        print(json.dumps(initialize_project(a.job_dir, a.brief, slug=a.slug, parent=a.parent)))
+    elif a.capture:
         print(capture_call(a.job_dir, a.brief, a.capture, json.loads(a.argv_json), a.project_src))
     elif a.publish:
         print(publish_completed(a.job_dir, a.brief, a.project_src, a.video, a.native_qa, a.calls))

@@ -224,6 +224,72 @@ class CacheTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 cache._constraint_refs(review,semantic,candidate,beat,job_dir=root)
 
+    def test_fixed_wake_opening_bypasses_motion_basis_but_body_does_not(self):
+        """The approved-cover opening is fixed before retrieval; body rows remain semantic."""
+        from edit.hd.tools import broll_skill_selection as selection
+        wake = "lemo-wake:wake"
+        director = {"segments": [{"segment_id": "open", "start": 0, "end": 4,
+            "bindings": {"cover": {"brief_sha256": "a" * 64, "source_sha256": "b" * 64}},
+            "visual_strategy": {"composition": {"family": "single_full_frame"},
+                "components": [{"component_id": "cover", "kind": "code_generated"}]}},
+            {"segment_id": "body", "start": 4, "end": 8,
+             "visual_strategy": {"composition": {"family": "single_full_frame"},
+                "components": [{"component_id": "scene", "kind": "code_generated"}]}}]}
+        treatment = {"semantic_lists": {"overlay": [], "broll": [
+            {"row_id": "opening-row", "start_word": 0, "end_word": 1,
+             "quote": "展示已批准封面", "semantic": "展示已批准封面", "visual_task": "展示已批准封面",
+             "components": [{"segment_id": "open", "component_id": "cover"}]},
+            {"row_id": "body-row", "start_word": 1, "end_word": 2,
+             "quote": "展示已批准封面", "semantic": "展示已批准封面", "visual_task": "展示已批准封面",
+             "components": [{"segment_id": "body", "component_id": "scene"}]}]},
+            "motion_queries": [{"segment_id": sid, "component_id": cid, "tags": []}
+                for sid, cid in (("open", "cover"), ("body", "scene"))],
+            "skill_selection": {"schema_version": 1,
+                "opening": {"segment_id": "open", "component_id": "cover", "candidate_id": wake},
+                "beats": [], "overlay_beats": [], "history_note": "无历史视频"}}
+        # Empty tags are not valid for normal semantic rows.  The opening gets
+        # its fixed policy, while the body uses one ordinary non-action query.
+        treatment["motion_queries"] = [
+            {"segment_id": "open", "component_id": "cover", "tags": ["封面"]},
+            {"segment_id": "body", "component_id": "scene", "tags": ["完全不相关的海边日落宠物散步"]}]
+        with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
+            first = cache.match_once(ROOT, director, treatment)
+            self.assertEqual(search.call_count, 1)
+        self.assertEqual([m["candidate_id"] for m in first["motion_matches"]["opening-row"]["matches"]], [wake])
+        self.assertNotEqual(first["motion_matches"]["body-row"]["matches"], [{"candidate_id": wake}])
+        cache.validate_matches(ROOT, director, first)
+        self.assertEqual(cache.match_once(ROOT, director, first), first)
+        opening = first["skill_selection"]["opening"]
+        candidate = next(r for r in motion.load_catalog(ROOT) if r["candidate_id"] == wake)
+        beat = {"segment_id": "open", "component_id": "cover", "semantic_row_id": "opening-row",
+            "start": 0, "end": 4, "transcript": "展示已批准封面", "semantic_goal": "展示已批准封面",
+            "required_change": "展示已批准封面", "skill_reviews": {
+                candidate["skill_id"]: {"fit": "equivalent", "reason": "固定首镜"}},
+            "candidates": [{"candidate_id": wake, "fit": "equivalent",
+                "reason": "固定首镜", "visual_pattern": "semantic_scene",
+                "design_plan": copy.deepcopy(DESIGN)}],
+            "single_source_review": {"decision": "keep", "reason": "固定首镜不切换来源"}}
+        first["skill_selection"]["beats"] = [beat]
+        first["skill_selection"]["beats"].append({"segment_id": "body", "component_id": "scene",
+            "semantic_row_id": "body-row", "start": 4, "end": 8,
+            "transcript": "展示已批准封面", "semantic_goal": "展示已批准封面",
+            "required_change": "展示已批准封面", "skill_reviews": {}, "candidates": []})
+        cache.validate_reviews(ROOT, director, first)
+        first["skill_selection"]["beats"][0]["skill_reviews"] = {
+            row["skill_id"]: {"fit": "unsuitable", "reason": "不适用本首镜"}
+            for row in selection.discover_candidates(ROOT)}
+        first["skill_selection"]["beats"][0]["skill_reviews"][candidate["skill_id"]] = {
+            "fit": "equivalent", "reason": "固定首镜"}
+        assign_input = copy.deepcopy(first["skill_selection"])
+        assign_input["beats"] = [assign_input["beats"][0]]
+        assigned = selection.assign_skills(ROOT, assign_input)
+        self.assertEqual(assigned["assignments"][0]["candidate_id"], wake)
+        changed = copy.deepcopy(first)
+        director["segments"][0]["bindings"]["cover"]["brief_sha256"] = "c" * 64
+        refreshed = cache.match_once(ROOT, director, changed)
+        self.assertNotEqual(refreshed["motion_matches"]["opening-row"]["semantic_sha256"],
+                            first["motion_matches"]["opening-row"]["semantic_sha256"])
+
 
 if __name__ == "__main__":
     unittest.main()

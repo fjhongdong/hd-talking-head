@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "job_id": "554761436582d7eeadb8616f3befdc612999c0f4765422f6cb04b096ba54fcfa",
+  "source_binding": {
+    "aroll_sha256": "df1e308779453e7152dd3a47bf5721f02d8425f9bd7c7b54df3586b903696615",
+    "segment_id": "seg-001",
+    "start": 0,
+    "end": 6
+  },
+  "image": {
+    "job_path": "04-cover/cover-delivery-raster.png",
+    "sha256": "2f4eb6a913001c4cc9d847bc1ad00cacb56694f4da306f2f8d0454506f698766",
+    "byte_count": 257796
+  },
+  "purpose": "opening",
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 24,
+    "frames": 144
+  },
+  "semantic_goal": "三行语义依次连接到模板，完整保留图文，橙色轨迹形成因果动作",
+  "template_request": {
+    "semantic_family": "image_alive",
+    "information_units": 3,
+    "numeric_values": [],
+    "numeric_scale": "not_applicable"
+  },
+  "result_record_path": "native-inputs/wake-result.json"
+}

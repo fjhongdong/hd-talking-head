@@ -478,7 +478,7 @@
       "binding_probes": [
         {
           "entrypoint": "scripts/lemo_wake_adapter.py",
-          "producer_version": "1.0.0",
+          "producer_version": "2.0.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",

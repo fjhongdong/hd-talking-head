@@ -202,6 +202,8 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
         contract_artifacts.write_json_artifact(normalized, director)
         director_brief = normalized
     treatment_payload = _json(_path(job, treatment))
+    from lemo_wake_adapter import validate_selected_inputs
+    validate_selected_inputs(job, director, treatment_payload)
     prepare_visual_dependencies(project, director)
     _validate_selected_hw_word_anchors(job, director, treatment_payload)
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
@@ -293,7 +295,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
 
 def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
-    from lemo_wake_adapter import native_task, load_result, validate_brief
+    from lemo_wake_adapter import native_task, inspect_result, validate_brief
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
     for segment in director['segments']:
@@ -312,7 +314,7 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
                 actions.append(native_task(job, {'segment_id': segment['segment_id']},
                     {**binding, 'component_id': cid}, brief_path))
             else:
-                load_result(job.job_dir, payload)
+                inspect_result(job.job_dir, payload)
     return actions
 
 

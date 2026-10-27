@@ -1,6 +1,7 @@
 """Immutable visual proposal, source approval, and realized production evidence."""
 from __future__ import annotations
 import copy
+import hashlib
 from types import SimpleNamespace
 from pathlib import Path
 from . import contract_artifacts as artifacts
@@ -33,6 +34,84 @@ def _exact(root, record):
     if record != _record(Path(root), path):
         raise VisualConfirmationError("confirmed visual evidence changed: " + record["path"])
     return path
+
+def _wake_adapter():
+    import importlib.util
+    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py"
+    spec = importlib.util.spec_from_file_location("_wake_mapping_adapter", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _wake_review_reference(treatment, segment_id, component_id, result_path):
+    assessments = [item for item in treatment.get("semantic_assessments", [])
+                   if item.get("segment_id") == segment_id and item.get("component_id") == component_id]
+    if (len(assessments) != 1 or assessments[0].get("verdict") != "pass"
+            or assessments[0].get("candidate_id") != "lemo-wake:wake"):
+        raise VisualConfirmationError("Wake needs one passing content assessment for this component")
+    refs = [ref for ref in assessments[0].get("content_refs", []) if ref.get("path") == result_path]
+    if (len(refs) != 1 or refs[0].get("pointer") != "/status" or refs[0].get("value") != "completed"
+            or not isinstance(refs[0].get("sha256"), str)):
+        raise VisualConfirmationError("Wake assessment must identify the reviewed completed result")
+    return refs[0]
+
+
+def _freeze_reviewed_wake_result(root, treatment, segment_id, component_id, brief_payload):
+    """Bind the bytes that were reviewed; never bless the current path implicitly."""
+    import json
+    brief = json.loads(brief_payload)
+    relative = brief["result_record_path"]
+    reviewed = _wake_review_reference(treatment, segment_id, component_id, relative)
+    data = _path(root, relative).read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != reviewed["sha256"]:
+        raise VisualConfirmationError("Wake result differs from the content the host reviewed")
+    _wake_adapter().inspect_result(root, brief_payload, record_bytes=data)
+    return {"path": relative, "sha256": digest, "bytes": len(data)}
+
+
+def _validate_native_results(root, mapping, director, treatment):
+    """Validate frozen native results without calling an approved-plan loader."""
+    for segment in director["segments"]:
+        for cid, binding in segment.get("bindings", {}).items():
+            if binding.get("dependency_id") != "lemo-wake":
+                continue
+            matches = [item for item in mapping.get("native_inputs", [])
+                       if item.get("segment_id") == segment["segment_id"] and item.get("component_id") == cid]
+            if len(matches) != 1 or matches[0].get("artifact", {}).get("sha256") != binding["brief_sha256"]:
+                raise VisualConfirmationError("Wake result mapping is missing, duplicated or belongs to another brief")
+            native = matches[0]
+            if "result_record" not in native:
+                raise VisualConfirmationError("Wake reviewed result is missing from the frozen mapping")
+            payload = _exact(root, native["artifact"]).read_bytes()
+            expected = native["result_record"]
+            reviewed = _wake_review_reference(treatment, segment["segment_id"], cid, expected["path"])
+            if reviewed["sha256"] != expected["sha256"]:
+                raise VisualConfirmationError("Wake mapping differs from the host's reviewed result")
+            _wake_adapter().load_result(root, payload, expected_record=expected)
+
+
+def native_result_descriptor(job, segment_id, component_id, brief_sha256):
+    """Read only the already-approved mapping; the consumer verifies the result bytes."""
+    if job.stages["visual_direction"]["status"] != "approved":
+        raise VisualConfirmationError("Wake production requires an approved visual mapping")
+    authorized = validate_visual_authorization(job)
+    refs = [r for r in job.stages["visual_direction"]["artifacts"] if r["path"].endswith("/" + MAPPING)]
+    if len(refs) != 1:
+        raise VisualConfirmationError("approved visual mapping is missing or ambiguous")
+    mapping = _read(_exact(job.job_dir, refs[0]))
+    if mapping.get("source_approval") != authorized["artifact"]:
+        raise VisualConfirmationError("approved visual mapping does not match its confirmation")
+    matches = [item for item in mapping.get("native_inputs", [])
+               if item.get("segment_id") == segment_id and item.get("component_id") == component_id]
+    if (len(matches) != 1 or matches[0].get("artifact", {}).get("sha256") != brief_sha256
+            or "result_record" not in matches[0]):
+        raise VisualConfirmationError("Wake reviewed result is missing, duplicated or belongs to another brief")
+    record = matches[0]["result_record"]
+    if not isinstance(record, dict) or set(record) != {"path", "sha256", "bytes"}:
+        raise VisualConfirmationError("approved Wake result descriptor is invalid")
+    return copy.deepcopy(record)
 
 def _core(director):
     return [{key: (segment.get(key, segment.get("shot_recipe", {}).get(key))
@@ -483,7 +562,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         if row["type"] == "B-roll":
             lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
     lines += ["", f"语义清单摘要：贴片{semantic_plan['overlay_count']}处 / B-roll{semantic_plan['broll_count']}项 / 合计{len(semantic_plan['items'])}", "",
-             "时间为剪后正文时间，不含封面。整表确认后按表制作并直接交付。", "",
+             "时间为剪后正文时间，Wake 首镜从第 0 帧开始。整表确认后按表制作并直接交付。", "",
              "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源渠道 | 生成渠道／模型 | 素材来源 | 匹配动效模板 | 生成步骤 |",
              "|---|---|---|---|---|---|---|---|---|---|---|"]
     display_rows = {}
@@ -644,6 +723,7 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
         elif isinstance(value, list):
             for nested in value:
                 collect(nested)
+    _validate_native_results(root, mapping, realized["director"], realized["treatment"])
     collect(realized)
     for record in mapping.get("completed_records", []):
         collect(_read(_exact(root, record)))
@@ -868,7 +948,11 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
             key = keys[0]
             if bindings.get(key, {}).get("brief_sha256") != ref["sha256"]:
                 raise VisualConfirmationError("template brief differs from its actual binding")
-            native_inputs.append({"segment_id": key[0], "component_id": key[1], "artifact": ref})
+            item = {"segment_id": key[0], "component_id": key[1], "artifact": ref}
+            if bindings[key].get("dependency_id") == "lemo-wake":
+                item["result_record"] = _freeze_reviewed_wake_result(
+                    job.job_dir, treatment, key[0], key[1], _exact(job.job_dir, ref).read_bytes())
+            native_inputs.append(item)
     payload = {"schema_version": 1, "source_approval": authorized["artifact"],
                "proposal": authorized["payload"]["source"], "final_v3": final,
                "artifacts": final_records, "rows": proposal["rows"],

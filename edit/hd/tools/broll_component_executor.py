@@ -30,6 +30,7 @@ import time
 from typing import Any, Callable, Iterator, Mapping
 
 from . import broll_media, visual_strategy
+from .dependency_contracts import DEPENDENCY_CONTRACTS
 from .runtime_contracts import normalize_contracts
 
 
@@ -53,32 +54,9 @@ _MATERIAL_KINDS = frozenset(
     {"local_material", "official_material", "external_stock"}
 )
 _DEPENDENCY_CONTRACTS = {
-    "html-video": ("reference_adapter", "HyperFrames"),
-    "hyperframes": ("reference_adapter", "HyperFrames"),
-    "hd-talking-head-local-canonical": ("reference_adapter", "HyperFrames"),
-    "hd-talking-head-relation-motion": ("reference_adapter", "RelationMotion"),
-    "hd-talking-head-semantic-state": ("reference_adapter", "SemanticState"),
-    "hd-talking-head-talkcraft": ("reference_adapter", "Remotion"),
-    "hd-talking-head-talkcraft-overlay": ("reference_adapter", "Remotion"),
-    "paper-collage-ad": ("reference_adapter", "PaperCollage"),
-    "whiteboard-video": ("reference_adapter", "Whiteboard"),
-    "doudou-remotion-whiteboard": ("reference_adapter", "Remotion"),
-    "talkcraft-native-adaptation": ("reference_adapter", "Remotion"),
-    "hyperframes-native-adaptation": ("reference_adapter", "HyperFrames"),
-    "paper-collage-hyperframes": ("reference_adapter", "HyperFrames"),
-    "lemo-opuscar": ("reference_adapter", "HTMLCanvas"),
-    "onetake": ("reference_adapter", "HTMLCanvas"),
-    "adu-motion-video": ("reference_adapter", "HTMLCanvas"),
-    "hypit-native-chat": ("reference_adapter", "HTMLCanvas"),
-    "huashu-art-motion": ("reference_adapter", "HTMLCanvas"),
-    "eian-riso-broll": ("reference_adapter", "HTMLCanvas"),
-    "wise-motion": ("reference_adapter", "Remotion"),
-    "openfilm-motion-graphics": ("reference_adapter", "OpenFilm"),
-    "overlay-studio-native": ("reference_adapter", "OverlayStudio"),
-    "huashu-motion-native": ("reference_adapter", "HuashuMotion"),
-    "motion-graphics-native": ("reference_adapter", "HyperFrames"),
-    "lemo-wake": ("reference_adapter", "HTMLCanvas"),
+    key: (value["executor"], value["renderer"]) for key, value in DEPENDENCY_CONTRACTS.items()
 }
+
 _LICENSE_KEYS = {
     "schema_version",
     "idempotency_key",

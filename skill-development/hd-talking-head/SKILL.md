@@ -11,7 +11,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`发现/安装`、`configured`、`connected`、`callable`、`bound` 是[依赖预检合同](references/dependency-preflight.md)定义的五个递进状态，产物另经阶段质量门验收，不得混用；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。能力未接通时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
-所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md)、[Lemo Opuscar](references/lemo-opuscar.md) 和 [Lemo Wake](references/lemo-wake-integration.md) 在同一候选池中选择。Lemo Wake 只有一个完整原生模板身份 `lemo-wake/wake`，不把其内部风格、图层或重置目录拆成多个模板。选中后完整执行该 Skill 的原生流程，调用其制作入口：有原生渲染器的使用原生渲染器，通过生成服务制作的使用本 Job 已批准的图片、视频渠道；不因上游默认模型自动更换服务或增加费用。主题场景沿用所选模板身份，不以父级自写动效替代原生能力；来源和适配资格如实记录，历史停用入口不因此恢复。
+所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md)、[Lemo Opuscar](references/lemo-opuscar.md) 和 [Lemo Wake](references/lemo-wake-integration.md) 在同一候选池中选择。Lemo Wake 的调用、首镜固定、图片来源和已审结果绑定统一遵守[原生交接合同](references/lemo-wake-integration.md)。正文仅使用已有可校验图片；缺图在清单确认前处理。Lemo Wake 只有一个完整原生模板身份 `lemo-wake/wake`，不把其内部风格、图层或重置目录拆成多个模板。选中后完整执行该 Skill 的原生流程，调用其制作入口：有原生渲染器的使用原生渲染器，通过生成服务制作的使用本 Job 已批准的图片、视频渠道；不因上游默认模型自动更换服务或增加费用。主题场景沿用所选模板身份，不以父级自写动效替代原生能力；来源和适配资格如实记录，历史停用入口不因此恢复。
 
 ## 统一执行与语义规划
 

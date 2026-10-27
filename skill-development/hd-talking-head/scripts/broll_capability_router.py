@@ -23,6 +23,11 @@ from edit.hd.tools.visual_strategy import (
     validate_visual_intent,
     validate_visual_strategy,
 )
+from edit.hd.tools.dependency_contracts import (
+    PRIMARY_RENDERERS,
+    executor_for,
+    output_alpha,
+)
 
 
 HEAVY_CONCURRENCY = 1
@@ -66,32 +71,7 @@ _RESERVED_BINDING_FIELDS = frozenset(
         "z_index",
     }
 )
-_PRIMARY_RENDERER = {
-    "html-video": "HyperFrames",
-    "hyperframes": "HyperFrames",
-    "hd-talking-head-relation-motion": "RelationMotion",
-    "hd-talking-head-semantic-state": "SemanticState",
-    "hd-talking-head-talkcraft": "Remotion",
-    "hd-talking-head-talkcraft-overlay": "Remotion",
-    "paper-collage-ad": "PaperCollage",
-    "whiteboard-video": "Whiteboard",
-    "doudou-remotion-whiteboard": "Remotion",
-    "talkcraft-native-adaptation": "Remotion",
-    "hyperframes-native-adaptation": "HyperFrames",
-    "paper-collage-hyperframes": "HyperFrames",
-    "lemo-opuscar": "HTMLCanvas",
-    "onetake": "HTMLCanvas",
-    "adu-motion-video": "HTMLCanvas",
-    "hypit-native-chat": "HTMLCanvas",
-    "huashu-art-motion": "HTMLCanvas",
-    "eian-riso-broll": "HTMLCanvas",
-    "wise-motion": "Remotion",
-    "openfilm-motion-graphics": "OpenFilm",
-    "overlay-studio-native": "OverlayStudio",
-    "huashu-motion-native": "HuashuMotion",
-    "motion-graphics-native": "HyperFrames",
-    "lemo-wake": "HTMLCanvas",
-}
+_PRIMARY_RENDERER = PRIMARY_RENDERERS
 _REGISTERED_ENGINE = {
     "remotion": "Remotion",
     "hyperframes": "HyperFrames",
@@ -143,7 +123,7 @@ def _native_selection(candidate: Mapping[str, Any]) -> bool:
         return (candidate.get("template_origin") == "custom_fallback"
                 and candidate.get("adaptation_level") == "structural"
                 and candidate.get("source_entrypoint") == "scripts/lemo_wake_adapter.py"
-                and candidate.get("producer_version") == "1.0.0"
+                and candidate.get("producer_version") == "2.0.0"
                 and template_id == "lemo-wake/wake")
     if candidate.get("dependency_id") == "lemo-opuscar":
         from upstream_scene_adapter import ENTRY, VERSION, lemo_styles
@@ -639,11 +619,11 @@ def _validate_code_cross_fields(
         if (not _native_selection(component)
                 or entrypoint != "scripts/lemo_wake_adapter.py"
                 or component.get("source_entrypoint") != entrypoint
-                or component.get("producer_version") != "1.0.0"
+                or component.get("producer_version") != "2.0.0"
                 or component.get("template_id") != "lemo-wake/wake"
                 or primary_renderer != "HTMLCanvas"
                 or component.get("renderer_version") != "f070df8bdf891d792012aabc054582b16e04f759"
-                or component.get("template_version") != "1.0.0"):
+                or component.get("template_version") != "2.0.0"):
             raise RouterError("Wake requires the registered native adapter and template")
     if dependency_id == "overlay-studio-native":
         if (entrypoint != "scripts/overlay_studio_adapter.py"
@@ -826,52 +806,10 @@ def _canonical_snapshot(
 
 
 def _executor(kind: str, binding: Mapping[str, Any]) -> str:
-    if kind == "local_material":
-        return "local-media"
-    if kind == "official_material":
-        return "official-media"
-    if kind == "external_stock":
-        return "external-stock"
-    if kind == "code_generated":
-        dependency_id = binding.get("dependency_id")
-        executors = {
-            "html-video": "reference_adapter",
-            "hyperframes": "reference_adapter",
-            "hd-talking-head-local-canonical": "reference_adapter",
-            "hd-talking-head-relation-motion": "reference_adapter",
-            "hd-talking-head-semantic-state": "reference_adapter",
-            "hd-talking-head-talkcraft": "reference_adapter",
-            "hd-talking-head-talkcraft-overlay": "reference_adapter",
-            "paper-collage-ad": "reference_adapter",
-            "whiteboard-video": "reference_adapter",
-            "doudou-remotion-whiteboard": "reference_adapter",
-            "talkcraft-native-adaptation": "reference_adapter",
-            "hyperframes-native-adaptation": "reference_adapter",
-            "paper-collage-hyperframes": "reference_adapter",
-            "lemo-opuscar": "reference_adapter",
-            "onetake": "reference_adapter",
-            "adu-motion-video": "reference_adapter",
-            "hypit-native-chat": "reference_adapter",
-            "huashu-art-motion": "reference_adapter",
-            "wise-motion": "reference_adapter",
-            "openfilm-motion-graphics": "reference_adapter",
-            "eian-riso-broll": "reference_adapter",
-            "overlay-studio-native": "reference_adapter",
-            "huashu-motion-native": "reference_adapter",
-            "motion-graphics-native": "reference_adapter",
-        }
-        if not isinstance(dependency_id, str) or dependency_id not in executors:
-            raise RouterError("code generation requires a registered dependency")
-        return executors[dependency_id]
-    model = binding.get("model")
-    if not isinstance(model, str) or not model:
-        model = "invalid-binding"
-    if model == "grok-imagine-video":
-        return "OpenMontage:GrokVideo"
-    provider = binding.get("provider")
-    if not isinstance(provider, str) or not provider:
-        provider = "invalid-binding"
-    return f"ai-provider:{provider}:{model}"
+    try:
+        return executor_for(kind, binding)
+    except ValueError as error:
+        raise RouterError(str(error)) from None
 
 
 def _binding_matches_candidate(
@@ -1103,26 +1041,9 @@ def _compile_shot_recipe(
                 "width": 1080,
                 "height": 1920,
                 "fps": 24,
-                "alpha": kind == "code_generated"
-                and binding.get("dependency_id") not in {
-                    "hd-talking-head-talkcraft",
-                    "hd-talking-head-relation-motion",
-                    "hd-talking-head-semantic-state",
-                    "paper-collage-ad",
-                    "paper-collage-hyperframes",
-                    "doudou-remotion-whiteboard",
-                    "talkcraft-native-adaptation",
-                    "lemo-opuscar",
-                    "onetake",
-                    "adu-motion-video",
-                    "hypit-native-chat",
-                    "huashu-art-motion",
-                    "wise-motion",
-                    "openfilm-motion-graphics",
-                    "whiteboard-video",
-                }
-                and (binding.get("dependency_id") != "hyperframes-native-adaptation"
-                     or approved["composition"]["family"] == "aroll_with_overlay"),
+                "alpha": output_alpha(
+                    kind, binding.get("dependency_id"), approved["composition"]["family"]
+                ),
             },
         }
         if completed_contract is not None:

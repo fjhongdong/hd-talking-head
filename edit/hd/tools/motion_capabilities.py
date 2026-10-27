@@ -6,6 +6,7 @@ environment, changes a Job, invokes a renderer, or approves semantic/visual QA.
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib
 import re
 import shutil
@@ -387,11 +388,12 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
             module.validate_brief(path.read_bytes())
             record_path = brief["result_record_path"]
             if (root / record_path).is_file():
-                result = module.load_result(root, path.read_bytes())
+                result_bytes = (root / record_path).read_bytes()
+                result = module.inspect_result(root, path.read_bytes(), record_bytes=result_bytes)
                 entry = next(f for f in result["project_files"] if f["job_path"].endswith("/index.html"))
                 director = next(f for f in result["project_files"] if f["job_path"].endswith("/DIRECTOR.md"))
                 brief = {**brief, "native_result": {**result, "entry": entry, "director": director,
-                    "record": module.descriptor(root, root / record_path)}}
+                    "record": {"job_path": record_path, "sha256": hashlib.sha256(result_bytes).hexdigest(), "byte_count": len(result_bytes)}}}
         finally:
             sys.path[:] = previous
     return brief

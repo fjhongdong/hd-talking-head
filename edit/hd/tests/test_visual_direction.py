@@ -421,7 +421,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         )
         self.assertEqual(receipt["references"], [])
 
-    def test_declares_exact_local_material_segment_reference(self) -> None:
+    def test_declares_exact_local_material_reference_and_requires_wake_opening(self) -> None:
         self._install_local_material_index()
         self._write_brief(draft_segment(("local_material",)))
         segment = contract_artifacts.read_json_artifact(self.brief)["segments"][0]
@@ -453,19 +453,18 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         treatment_path.parent.mkdir(parents=True, exist_ok=True)
         contract_artifacts.write_json_artifact(treatment_path, treatment)
         from edit.hd.tools import visual_confirmation
-        visual_confirmation.prepare_visual_confirmation(self.job, self.brief, treatment_path)
-        visual_confirmation.save_user_confirmation(self.job, {"job_id": self.job.job_id,
-            "job_dir": str(self.job.job_dir), "stage": "visual_direction", "revision": self.job.revision,
-            "artifacts": copy.deepcopy(self.job.stages["visual_direction"]["artifacts"]),
-            "passed": True, "note": "isolated material-reference fixture",
-            "user_confirmation": "synthetic confirmation of this exact local-material plan"})
-        visual_plan.prepare_visual_direction(
-            self.job, self.brief, self.asset_root, treatment_path=treatment_path
-        )
-
-        receipt = material_usage.load_current_receipt(
-            self.job, "visual_direction"
-        )
+        # Managed jobs must reject this old material-first draft.  Check the
+        # material declaration at its own public boundary; a valid Wake Job's
+        # publication/readback is covered by the native business smoke.
+        with self.assertRaisesRegex(ValueError, "fixed lemo-wake/wake opening declaration"):
+            visual_confirmation.prepare_visual_confirmation(self.job, self.brief, treatment_path)
+        published = ["07-visual-direction/visual-plan.json", "07-visual-direction/visual-routing.md"]
+        references = material_usage.visual_segment_references(director["segments"],
+            consumer_kind="visual_segment", artifact_paths_by_segment={"seg-001": published})
+        receipt = material_usage.build_receipt_for_publication(self.job, "visual_direction",
+            producer="edit.hd.tools.visual_plan", producer_version="3",
+            stage_input_records=material_usage.current_stage_input_records(self.job, "visual_direction"),
+            references=references, artifact_paths=published)
         self.assertEqual(
             receipt["references"],
             [
