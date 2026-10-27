@@ -138,6 +138,8 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 
 `review_required=user` 表示需展示当前封面或完整视觉表；`review_required=host` 表示宿主自己核对后继续。后续 canary、visual_assets、subtitles、preview、delivery 均为后者。交付 QA JSON 沿用同一组真实任务/产物字段及 `note`，无需 `user_confirmation` 或重复填写最终视频摘要；入口从已核对的 artifacts 取得成片身份，调用 `approve_plan_delivery` 写入 `plan_authorized` 完成记录，引用真实整表批准来源。该记录表示已制作交付，不表示用户看过并验收成片。
 
+冻结视觉 proposal 前，入口会从当前 `treatment.scenes` 按组件读取已绑定的 HyperFrames HW brief，核对 binding SHA，并调用现有 `_validate_word_anchors`。这一步沿用正式执行的同一锚点算法和错误边界，确保坏锚在冻结前停止。
+
 导演稿 `director.segments` 里的内部 `segment_id` 必须始终是可渲染的 `seg-NNN` 标识；同一语义项需要拆成多个物理片段时，使用新的合法内部 ID，显示编号仍由 `semantic_row_id` 共享。`visual_direction` 在读取导演稿后、冻结 proposal 前执行 `segment_render.re_full_segment_id` 检查，避免把仅用于语义描述的内部别名带入正式编译。
 
 已批准阶段再次调用不会重做。十二阶段均批准后，仍由 `audit_job_completion.py` 核实正式完成，不以阶段列表代替最终交付回执。

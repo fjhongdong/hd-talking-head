@@ -201,12 +201,44 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
         normalized.parent.mkdir(parents=True, exist_ok=True)
         contract_artifacts.write_json_artifact(normalized, director)
         director_brief = normalized
+    treatment_payload = _json(_path(job, treatment))
     prepare_visual_dependencies(project, director)
+    _validate_selected_hw_word_anchors(job, director, treatment_payload)
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
         _path(job, treatment), reviewed_visual_text=reviewed)
     result = _summary(state.load_job(job_dir), 'visual_direction')
     result['confirmation_source'] = str(source.relative_to(job.job_dir))
     return result
+
+
+def _validate_selected_hw_word_anchors(job, director: dict, treatment: dict) -> None:
+    """Validate selected HW briefs before the visual proposal is frozen."""
+    from hyperframes_hw_pipeline_adapter import _checked_brief, _validate_word_anchors
+
+    scenes = {(item.get('segment_id'), item.get('component_id')): item
+              for item in treatment.get('scenes', []) if isinstance(item, dict)}
+    segments = {item.get('segment_id'): item for item in director.get('segments', [])}
+    node = Path(shutil.which('node') or 'node')
+    for segment_id, segment in segments.items():
+        for component in segment.get('visual_strategy', {}).get('components', []):
+            component_id = component.get('component_id')
+            binding = segment.get('bindings', {}).get(component_id, {})
+            if (binding.get('dependency_id') != 'hyperframes'
+                    or binding.get('entrypoint') != 'scripts/render_hyperframes_hw_pipeline.cjs'):
+                continue
+            scene = scenes.get((segment_id, component_id))
+            if not scene or not isinstance(scene.get('brief_path'), str):
+                raise ValueError('selected HW component is missing its treatment scene brief')
+            brief_path = _path(job, scene['brief_path'])
+            payload = brief_path.read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                raise ValueError('selected HW brief does not match its binding')
+            brief = _checked_brief(node, payload)
+            try:
+                _validate_word_anchors(job, segment, brief)
+            except ValueError as error:
+                raise ValueError(
+                    f"HW word-anchor validation failed for {segment_id}/{component_id}: {error}") from error
 
 
 def resume_visual_direction(job, project: Path, payload: dict | None = None) -> dict:

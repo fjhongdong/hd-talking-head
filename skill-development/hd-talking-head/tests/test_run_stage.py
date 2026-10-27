@@ -1,6 +1,6 @@
 """Minimal contract tests for execute_stage (no media or provider calls)."""
 from __future__ import annotations
-import contextlib, copy, io, json, sys, tempfile, unittest
+import contextlib, copy, hashlib, io, json, sys, tempfile, unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -67,6 +67,61 @@ class ExecuteStageTests(unittest.TestCase):
             run_stage.run_visual_direction(self.root, PROJECT, Path("brief.json"), Path("treatment.json"), review)
         visual.assert_called_once()
         self.assertEqual(json.loads(confirmed.read_text()), original)
+
+    def test_hw_word_anchor_is_checked_before_visual_confirmation(self):
+        from edit.hd.tools import contract_artifacts
+
+        job = self.fake(current="visual_direction")
+        job.stages["speech_cleanup"] = {"status": "approved", "artifacts": []}
+        job.stages["edit_structure"] = {"status": "approved", "artifacts": []}
+        for stage_name, relative, payload in (
+                ("speech_cleanup", "05-speech-cleanup/word-transcript.json",
+                 {"words": [{"text": text, "start": start, "end": start + .1}
+                            for text, start in (("A", .7), ("B", 1.533333), ("C", 2.75))]}),
+                ("edit_structure", "06-edit-structure/timeline-map.json",
+                 {"segments": [{"source_start": 0, "source_end": 10,
+                                 "timeline_start": 0}]})):
+            path = self.root / relative; path.parent.mkdir(parents=True, exist_ok=True)
+            contract_artifacts.write_json_artifact(path, payload)
+            job.stages[stage_name]["artifacts"] = [{"path": relative, "bytes": path.stat().st_size,
+                                                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}]
+        brief_path = self.root / "native-inputs" / "hw-brief.json"
+        brief_path.parent.mkdir(parents=True, exist_ok=True)
+        brief = {"schema_version": 1,
+                 "source_binding": {"aroll_sha256": "0" * 64, "segment_id": "seg-106", "start": 0, "end": 83 / 24},
+                 "canvas": {"width": 1080, "height": 1920, "fps": 24, "frames": 83},
+                 "labels": ["A", "B", "C"],
+                 "template_request": {"semantic_family": "three_step_flow", "information_units": 3,
+                                      "numeric_values": [], "numeric_scale": "not_applicable"},
+                 "word_anchors": [{"index": 0, "text": "A"}, {"index": 1, "text": "B"},
+                                  {"index": 2, "text": "C"}], "label_frames": [6, 26, 46]}
+        payload = json.dumps(brief).encode(); brief_path.write_bytes(payload)
+        segment = {"segment_id": "seg-106", "start": 0, "end": 10,
+                   "visual_strategy": {"components": [{"component_id": "visual"}]},
+                   "bindings": {"visual": {"dependency_id": "hyperframes",
+                       "entrypoint": "scripts/render_hyperframes_hw_pipeline.cjs",
+                       "brief_sha256": hashlib.sha256(payload).hexdigest()}}}
+        director = {"segments": [segment]}
+        treatment = {"scenes": [{"segment_id": "seg-106", "component_id": "visual",
+                                  "brief_path": "native-inputs/hw-brief.json"}]}
+        director_path = self.root / "director.json"
+        treatment_path = self.root / "treatment.json"
+        director_path.write_text(json.dumps(director))
+        treatment_path.write_text(json.dumps(treatment))
+        with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
+             mock.patch("edit.hd.tools.avatar_profile.plan_avatar_policy", return_value={"segments": [segment], "actions": []}), \
+             mock.patch.object(run_stage, "prepare_visual_dependencies"), \
+             mock.patch("edit.hd.tools.visual_confirmation.prepare_visual_confirmation", return_value=self.root / "proposal.json") as confirm, \
+             mock.patch.object(run_stage, "_summary", return_value={}):
+            with self.assertRaisesRegex(ValueError, "seg-106/visual.*label reveal"):
+                run_stage.run_visual_direction(self.root, PROJECT, director_path, treatment_path)
+            confirm.assert_not_called()
+            brief["label_frames"][-1] = 47
+            payload = json.dumps(brief).encode(); brief_path.write_bytes(payload)
+            segment["bindings"]["visual"]["brief_sha256"] = hashlib.sha256(payload).hexdigest()
+            director_path.write_text(json.dumps(director))
+            run_stage.run_visual_direction(self.root, PROJECT, director_path, treatment_path)
+            confirm.assert_called_once()
 
 class ReviewAndDispatchTests(unittest.TestCase):
     def setUp(self):
