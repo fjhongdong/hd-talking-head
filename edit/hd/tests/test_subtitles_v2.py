@@ -217,6 +217,10 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 (target / "subtitles.srt").write_text("")
                 (target / "material-usage.json").write_text("{}")
                 job.stages["subtitles"]["lineage"] = subtitles_v2._snapshot(target, identity=True)
+                if not corrupt:
+                    for record in job.stages["subtitles"]["lineage"]:
+                        record["device"] += 1
+                        record["parent_device"] += 1
                 if corrupt:
                     old.write_bytes(b"changed-media")
                 before = {path.name: path.read_bytes() for path in target.iterdir()}
@@ -224,6 +228,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 stack.enter_context(mock.patch.object(subtitles_v2.state, "require_runnable"))
                 stack.enter_context(mock.patch.object(subtitles_v2.content_analysis, "load_approved_content_analysis", return_value={"analysis_sha256": "a"}))
                 stack.enter_context(mock.patch.object(subtitles_v2, "approved_keyword_index", return_value=self.keywords))
+                stack.enter_context(mock.patch.object(subtitles_v2, "_corrected_phrases", return_value=[]))
                 stack.enter_context(mock.patch.object(subtitles_v2, "_build_terminology_review", return_value=None))
                 stack.enter_context(mock.patch.object(subtitles_v2, "_load_inputs", return_value=({}, {}, {"visual_plan_sha256": "b"}, self.records)))
                 stack.enter_context(mock.patch.object(subtitles_v2.subtitles, "_validate_words", return_value=self.words))
@@ -237,6 +242,44 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 self.assertEqual(render.call_count, 0 if corrupt else 1)
                 self.assertEqual(before, {path.name: path.read_bytes() for path in target.iterdir()})
                 self.assertEqual(list(root.glob(".10-subtitles.stage-*")), [])
+
+    def test_fixed_baseline_rejects_same_content_inode_replacement_before_renderer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); target = root / "10-subtitles"; target.mkdir()
+            job = SimpleNamespace(version=2, job_id="maintenance", job_dir=root,
+                                  stages={"subtitles": {"status": "pending"}},
+                                  revision=1, expected_sha256="w", expected_bytes=1)
+            old_payload = subtitles_v2._wrapper(job, "old-analysis", "old-visual", {}, renderer_input={"old": True})
+            (target / "subtitle-plan.json").write_text(json.dumps(old_payload)); old = target / "subtitles.webm"; old.write_bytes(b"old-webm")
+            (target / "subtitles.srt").write_text(""); (target / "material-usage.json").write_text("{}")
+            job.stages["subtitles"]["lineage"] = subtitles_v2._snapshot(target, identity=True)
+            patches = [
+                mock.patch.object(talkcraft_subtitles, "identity", return_value={"id": "test"}),
+                mock.patch.object(subtitles_v2, "_load_transaction", return_value=None),
+                mock.patch.object(subtitles_v2.state, "require_runnable"),
+                mock.patch.object(subtitles_v2.content_analysis, "load_approved_content_analysis", return_value={"analysis_sha256": "a"}),
+                mock.patch.object(subtitles_v2, "approved_keyword_index", return_value=self.keywords),
+                mock.patch.object(subtitles_v2, "_corrected_phrases", return_value=[]),
+                mock.patch.object(subtitles_v2, "_build_terminology_review", return_value=None),
+                mock.patch.object(subtitles_v2, "_load_inputs", return_value=({}, {}, {"visual_plan_sha256": "b"}, self.records)),
+                mock.patch.object(subtitles_v2.subtitles, "_validate_words", return_value=self.words),
+                mock.patch.object(subtitles_v2.subtitles, "_validate_timeline", return_value=self.timeline),
+                mock.patch.object(subtitles_v2, "build_render_plan", return_value={"canvas": {"width": 1080, "height": 1920, "fps": 24, "frames": 96}, "cues": [], "source_bindings": self.records, "layout_counts": {"emphasis": 0, "statement": 0, "source": 0, "action": 0}}),
+                mock.patch.object(talkcraft_subtitles, "render", side_effect=talkcraft_subtitles.TalkCraftSubtitleError("renderer failed")),
+            ]
+            with ExitStack() as stack:
+                render = [stack.enter_context(p) for p in patches][-1]
+                def replace_same_content(*args, **kwargs):
+                    replacement = target / "replacement.tmp"
+                    replacement.write_bytes(old.read_bytes())
+                    previous_inode = old.stat().st_ino
+                    os.replace(replacement, old)
+                    self.assertNotEqual(previous_inode, old.stat().st_ino)
+                stack.enter_context(mock.patch.object(subtitles_v2.contract_artifacts, "write_json_artifact", side_effect=replace_same_content))
+                with self.assertRaisesRegex(subtitles_v2.SubtitlesV2Error, "previous subtitle generation changed"):
+                    subtitles_v2._prepare_subtitles_v2_locked(job)
+                render.assert_not_called()
+                self.assertFalse(list(root.glob(".10-subtitles.stage-*")))
 
     def test_terminology_report_is_in_existing_hashed_review_payload(self):
         report = {"version": 1, "automatic_replacement": False, "doubts": []}

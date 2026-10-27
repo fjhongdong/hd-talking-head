@@ -763,7 +763,7 @@
   "edit/hd/tests/test_state.py": "55ce2f4b9cc067678c2edd2039b15ddb1a17f5501f6c922dc41eae486af9c177",
   "edit/hd/tests/test_stock_media.py": "ca007442dae70c84b41f211778a11256ce92705d2a19e2122811760695a81710",
   "edit/hd/tests/test_subtitles.py": "353584a782721cf3d2bb07d6bdfd25d8c3e469ad59d3ce11a120d3f97e3872ee",
-  "edit/hd/tests/test_subtitles_v2.py": "cb0dbd4f18fa65dc76af1ce11aae1fcc97cc0dbefa5833cfdb14d6a0f54e1c58",
+  "edit/hd/tests/test_subtitles_v2.py": "e5545eb6d7a01311fb2dee9c466658bd7e81ba3cd234579901a41ab888980861",
   "edit/hd/tests/test_talkcraft_adapter.py": "0e6c2e515b2042c6038e23938dfc9274560cb3cc83a3c27ec0d41a5d801009cf",
   "edit/hd/tests/test_talkcraft_batch_renderer.py": "fdb6d6f0aef22acf910c30c6923f0052e69cec44d6e341c79438623a212c3577",
   "edit/hd/tests/test_talkcraft_binding.py": "9706878f234f410e9045596f45a821ab246eabbc2069b116fd0418c7a9b00164",
@@ -856,7 +856,7 @@
   "edit/hd/tools/state.py": "34586dbf1e71b8c1a6ba05a12a968f462e743995bef905d2c7a8faca9e3dd452",
   "edit/hd/tools/stock_media.py": "b4e1e1ee4224dd3ab87a324b1f42380777f353b27bd70580d696aa75bd5807f9",
   "edit/hd/tools/subtitles.py": "6e07c2c04552e6f0a11c8f5a9b5af718c34ce21d0489e08920e751803fe0bdc8",
-  "edit/hd/tools/subtitles_v2.py": "d90c539b8c182f30efcf29e7e2dcf3289b9494c956f39bf00aca6b00cfce33ff",
+  "edit/hd/tools/subtitles_v2.py": "3412f5be1b3a114da92fd7ea55c74bef878b8fab5d47e0968cf9575904b9df4f",
   "edit/hd/tools/talkcraft_binding.py": "981c9edfb76a5c1c2aff1bc3adfa7d60c6e3240649d20ef135f64fb40800cf26",
   "edit/hd/tools/talkcraft_contract.py": "4c2c706caeefd1c838b3c61b81a1d241290b90576fccaaaf5207b8f56a01e51c",
   "edit/hd/tools/talkcraft_matcher.py": "c1f6a236a9ee87c8a15a4a4eac17a9e747858663e90533d24fd4b1f4bf92f0cf",
@@ -2979,7 +2979,7 @@
   "skill-development/hd-talking-head/references/verified-template-registry.json": "dd45a9cf74fce0aa330181278fbbe47bb8b7fd50231c544ff5e21dc4f43999a7",
   "skill-development/hd-talking-head/references/visual-assets-preflight.md": "3694905d5b76d99cf6614b969fc49a3255622f9e7d70294077536076471c56df",
   "skill-development/hd-talking-head/references/visual-quality-contract.md": "b5c0f1a5fda26027d5dcec922856ff1b78ec70c2432dbfa79308edbb92f21cb6",
-  "skill-development/hd-talking-head/references/visual-revision-reuse.md": "289402b5f18d4134d5629f107b371dd5e80d483066c5e7ae0a921ab973882b6a",
+  "skill-development/hd-talking-head/references/visual-revision-reuse.md": "000ea362c1dff6400ba50d68cfc725347fc7b224b7c129c9e8c6f02a3c610341",
   "skill-development/hd-talking-head/scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
   "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "79ca69b8a7ea42fd56b97dfb9001babd82542fcf4b09e40381dab687dbf7577e",
   "skill-development/hd-talking-head/scripts/adu_text_geometry.mjs": "9bd9231e80a9107d3ad74ccfb14f93ecf6aa3d19bffbc558119d0cefb7322fb9",
@@ -11379,6 +11379,6 @@
   "参考项目/B-roll开源方案/video-use/install.md": "9a78c92932864a728cfe80700d1a6bd5a4c4b4cf2d3f4694f3fd53b49fc93394",
   "参考项目/B-roll开源方案/video-use/pyproject.toml": "4b27fdf0275016a5427416ee9a939ed5c8a756af02427394478d416b0909632d"
  },
- "release_id": "2026-10-27-final-composition-safe-text-v263",
+ "release_id": "2026-10-27-subtitle-durable-history-identity-v264",
  "schema_version": 1
 }

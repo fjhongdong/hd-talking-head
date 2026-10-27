@@ -589,6 +589,15 @@ def _records_match(
         return False
 
 
+def _content_records(records: object) -> list[dict[str, object]] | None:
+    if type(records) is not list:
+        return None
+    try:
+        return [{key: record[key] for key in ("path", "sha256", "bytes")} for record in records]
+    except (KeyError, TypeError):
+        return None
+
+
 def _artifact_records_match(
     job: state.JobState, records: list[dict[str, object]]
 ) -> bool:
@@ -977,12 +986,15 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
         renderer_input=talkcraft_subtitles.renderer_input(render_plan, renderer_cues),
     )
     reuse_source: Path | None = None
+    baseline_records: list[dict[str, object]] | None = None
     # A non-empty existing generation is only a candidate when its persisted
     # lineage is still intact.  This check deliberately happens before stage
     # creation so damaged history cannot be silently treated as a cache miss.
     if target.is_dir() and any(target.iterdir()):
+        baseline_records = _snapshot(target, identity=True)
         lineage = job.stages["subtitles"].get("lineage")
-        if type(lineage) is not list or not _records_match(target, lineage, identity=True):
+        if (_content_records(lineage) is None
+                or _content_records(baseline_records) != _content_records(lineage)):
             raise SubtitlesV2Error("previous subtitle generation changed")
         old_payload = contract_artifacts.read_json_artifact(target / "subtitle-plan.json")
         plan_record = next((record for record in lineage
@@ -1007,13 +1019,10 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
                 and isinstance(new_renderer, Mapping)
                 and {k: v for k, v in old_renderer.items() if k != "render_plan_sha256"}
                 == {k: v for k, v in new_renderer.items() if k != "render_plan_sha256"}):
-            media_records = [
-                {key: record[key] for key in ("path", "sha256", "bytes")}
-                for record in lineage
-            ]
+            media_records = _content_records(lineage)
             validated_old_payload = _validate_generation(target, media_records)
             if (validated_old_payload != old_payload
-                    or not _records_match(target, lineage, identity=True)):
+                    or not _records_match(target, baseline_records, identity=True)):
                 raise SubtitlesV2Error("previous subtitle generation changed")
             reuse_source = target / "subtitles.webm"
     stage = job.job_dir / f".10-subtitles.stage-{secrets.token_hex(8)}"
@@ -1021,6 +1030,10 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
     journal_owns_stage = False
     try:
         contract_artifacts.write_json_artifact(stage / "subtitle-plan.json", payload)
+        if baseline_records is not None and not _records_match(
+            target, baseline_records, identity=True
+        ):
+            raise SubtitlesV2Error("previous subtitle generation changed")
         webm = stage / "subtitles.webm"
         descriptor = os.open(
             webm,
@@ -1110,14 +1123,13 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
             target.rmdir()
             _fsync_directory(job.job_dir)
         had_target = os.path.lexists(target)
+        if had_target != (baseline_records is not None):
+            raise SubtitlesV2Error("previous subtitle generation changed")
         old_records: list[dict[str, object]] = []
         if had_target:
-            old_records = _snapshot(target, identity=True)
-            lineage = job.stages["subtitles"].get("lineage")
-            if type(lineage) is not list or not _records_match(
-                target, lineage, identity=True
-            ):
+            if baseline_records is None or not _records_match(target, baseline_records, identity=True):
                 raise SubtitlesV2Error("previous subtitle generation changed")
+            old_records = baseline_records
         transaction = {
             "schema_version": 1,
             "job_id": job.job_id,
