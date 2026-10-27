@@ -35,6 +35,16 @@ def _number(value, name: str) -> float:
     return value
 
 
+def _normalize_png(ffmpeg: str, source: Path, target: Path, *, full_canvas: bool,
+                   width: int, height: int) -> None:
+    """Decode palette/gray PNGs to RGBA before the alpha contract check."""
+    filters = ("format=rgba" if full_canvas and (width, height) == (1080, 1920)
+               else ("scale=1080:1920:flags=lanczos,setsar=1,format=rgba"
+                     if full_canvas else "format=rgba"))
+    _run([ffmpeg, "-v", "error", "-i", str(source), "-vf", filters,
+          "-frames:v", "1", str(target)])
+
+
 def _relative(value):
     if not isinstance(value, str) or not value:
         raise ValueError("missing Job-relative asset path")
@@ -183,13 +193,8 @@ def render(args) -> dict:
             original = temp / f"original-{index}.png"
             original.write_bytes(data)
             target = temp / f"layer-{index}.png"
-            if full_canvas:
-                filters = ("format=rgba" if (width, height) == (1080, 1920)
-                           else "scale=1080:1920:flags=lanczos,setsar=1,format=rgba")
-                _run([args.ffmpeg, "-v", "error", "-i", str(original), "-vf",
-                      filters, "-frames:v", "1", str(target)])
-            else:
-                target.write_bytes(data)
+            _normalize_png(args.ffmpeg, original, target, full_canvas=full_canvas,
+                           width=width, height=height)
             check_width, check_height = (1080, 1920) if full_canvas else (width, height)
             alpha = _run([args.ffmpeg, "-v", "error", "-i", str(target), "-vf", "alphaextract",
                           "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "pipe:1"]).stdout

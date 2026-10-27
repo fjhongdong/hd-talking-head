@@ -1034,7 +1034,7 @@
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
-        "skill-development/hd-talking-head/scripts/render_paper_collage.py": "1fdce7e7a8dbdfdad2b0ff692acba6701efb624953f14397376aeded6cf508ad",
+        "skill-development/hd-talking-head/scripts/render_paper_collage.py": "ac2ece2b51d82742f62c4f0a31f965e390d05be1f8cae946f095471ecee537a6",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
       }
     },
