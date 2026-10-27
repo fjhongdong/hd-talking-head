@@ -9,6 +9,7 @@
 1. 恢复同一个 Job，核对当前 runtime/release 和已批准文件，不新建任务、不重新提炼关键词或生成封面。
    同时读取 `manifests/confirmed-content.json`，从当前正式计划增量修改；禁止以较早样片或快照重建全片、覆盖后来增加的内容。新增贴片或样片被用户要求保留后，立即将原生调用、词锚和对应组件提交到同一 Job 的正式 director，并追加保留记录。局部预览不能代替这一步。
 2. 文案、来源、时码、字体、头像或配方需要修改时，通过 `state.revise` 返回最早受影响阶段。只有重试同一冻结配方时才直接修订 `visual_assets`，可使用 `artifact_scope=("seg-xxx",)` 指定强制重做段。
+   同一片段的修改若改变正式 `component_input` 身份，必须递增 `strategy_revision`；头像入场、退场和组内延续也属于 composition 输入，不能因原生 brief 未变而沿用旧版本。未变组件继续保留原版本。新版本目标已存在时按原 replay 规则核对，不能反复加版本绕开冲突；保留旧媒体及失败事务，不删除旧文件或改写回执来发布新状态。
 3. 修改后的 `visual_direction` 仍须更新整张视觉路由表并报审。新 canary 选取受影响的代表镜头及必要边界，总长不超过 30 秒，并使用正式配方；用户确认更新后的整表后，由宿主记录 `approval_scope=visual_plan_and_delivery`，再由内部 QA 推进正式资产。只有出现语义/审美方向歧义、模型费用授权变化，或用户明确要求查看时才停下等待用户。
 4. 调用原有 `visual_assets.prepare_visual_assets` / `visual_assets_v2.prepare_visual_assets_v2`。runner 自动判定复用，不手工复制文件、修改 identity 或冒充批准。
 5. 正式资产完成后，内部核对新 manifest 中的 `reused_formal_segment_ids` 和 `reused_canary_segment_ids`。其余 ID 是本轮合成段；是否真正发出外部请求另以执行器 receipt/ledger 为准，不能用合成段数冒充请求数。除非用户询问或出现异常，不向用户展示这些技术 ID。

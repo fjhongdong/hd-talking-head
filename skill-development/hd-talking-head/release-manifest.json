@@ -2979,7 +2979,7 @@
   "skill-development/hd-talking-head/references/verified-template-registry.json": "dd45a9cf74fce0aa330181278fbbe47bb8b7fd50231c544ff5e21dc4f43999a7",
   "skill-development/hd-talking-head/references/visual-assets-preflight.md": "3694905d5b76d99cf6614b969fc49a3255622f9e7d70294077536076471c56df",
   "skill-development/hd-talking-head/references/visual-quality-contract.md": "b5c0f1a5fda26027d5dcec922856ff1b78ec70c2432dbfa79308edbb92f21cb6",
-  "skill-development/hd-talking-head/references/visual-revision-reuse.md": "a4cb7c14a1541bf854c13ade6b1bdba587c043b04b53527d9100e7e4cb25315c",
+  "skill-development/hd-talking-head/references/visual-revision-reuse.md": "289402b5f18d4134d5629f107b371dd5e80d483066c5e7ae0a921ab973882b6a",
   "skill-development/hd-talking-head/scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
   "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "79ca69b8a7ea42fd56b97dfb9001babd82542fcf4b09e40381dab687dbf7577e",
   "skill-development/hd-talking-head/scripts/adu_text_geometry.mjs": "9bd9231e80a9107d3ad74ccfb14f93ecf6aa3d19bffbc558119d0cefb7322fb9",
@@ -11379,6 +11379,6 @@
   "参考项目/B-roll开源方案/video-use/install.md": "9a78c92932864a728cfe80700d1a6bd5a4c4b4cf2d3f4694f3fd53b49fc93394",
   "参考项目/B-roll开源方案/video-use/pyproject.toml": "4b27fdf0275016a5427416ee9a939ed5c8a756af02427394478d416b0909632d"
  },
- "release_id": "2026-10-27-hw-word-anchor-preconfirmation-v261",
+ "release_id": "2026-10-27-avatar-composition-revision-v262",
  "schema_version": 1
 }
