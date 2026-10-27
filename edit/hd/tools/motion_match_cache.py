@@ -66,7 +66,7 @@ def validate_matches(project_root,director,treatment):
         for ref in row["components"]: out[(ref["segment_id"],ref["component_id"])]= {"row_id":rid,"semantic":row,"matches":raw}
     return out
 
-def validate_reviews(project_root, director, treatment):
+def validate_reviews(project_root, director, treatment, *, job_dir=None):
     """Validate concrete per-beat review coverage without performing search."""
     matched = validate_matches(project_root, director, treatment)
     plan = semantic_visual_plan.validate_semantic_lists(treatment, director)
@@ -99,11 +99,102 @@ def validate_reviews(project_root, director, treatment):
             callable = required in uses or (required == "broll" and "design" in uses)
             if fit in {"preferred", "equivalent"} and (row.get("status") != "supported" or not callable): raise ValueError("unsupported candidate cannot be eligible")
             if fit == "unsuitable" and candidate.get("rejection_basis") not in basis: raise ValueError("unsuitable review needs a controlled rejection basis")
+            if fit in {"preferred", "equivalent"}:
+                _design_plan(candidate)
+            elif row.get("status") == "supported":
+                _constraint_refs(candidate, matched[key]["semantic"], row, beat, job_dir=job_dir)
+        eligible = [c for c in candidates if c["fit"] in {"preferred", "equivalent"}]
+        from .broll_skill_selection import source_channel
+        channels = {source_channel(by_id[c["candidate_id"]]["skill_id"]) for c in eligible}
+        if len(channels) == 1:
+            review = beat.get("single_source_review")
+            if (not isinstance(review, dict) or set(review) != {"decision", "reason"}
+                    or review.get("decision") != "keep"
+                    or not isinstance(review.get("reason"), str) or not review["reason"].strip()):
+                raise ValueError("single-source candidates need a completed single_source_review")
     for key in matched:
         if key not in covered:
             seg, cid = key; comp = next((c for s in director.get("segments", []) if s.get("segment_id") == seg for c in s.get("visual_strategy", {}).get("components", []) if c.get("component_id") == cid), {})
             if comp.get("kind") == "code_generated": raise ValueError("code component is missing a review beat")
     return matched
+
+DESIGN_FIELDS = ("composition", "typography", "finish", "focus")
+
+def _design_plan(candidate):
+    """Require a content-specific plan, not an automated aesthetic score."""
+    plan = candidate.get("design_plan")
+    if (not isinstance(plan, dict) or set(plan) != set(DESIGN_FIELDS)
+            or any(not isinstance(plan.get(k), str) or not plan[k].strip()
+                   for k in DESIGN_FIELDS)):
+        raise ValueError("eligible candidate needs a complete design_plan")
+    return plan
+
+def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
+    """Resolve only this row's meaning and this candidate's pinned capability."""
+    refs = review.get("constraint_refs")
+    if not isinstance(refs, dict) or set(refs) != {"requirement", "capability"}:
+        raise ValueError("excluded supported candidate needs concrete constraint_refs")
+    requirement = refs.get("requirement")
+    if isinstance(requirement, str):
+        if requirement not in {"quote", "semantic"} or not semantic.get(requirement):
+            raise ValueError("constraint requirement must cite the current quote or semantic, not visual_task")
+        if review.get("rejection_basis") in {"timing", "authorization"}:
+            raise ValueError("timing and authorization exclusions need a confirmed constraint source")
+    elif isinstance(requirement, dict) and set(requirement) == {"source", "receipt"}:
+        basis = review.get("rejection_basis")
+        if (basis not in {"timing", "authorization"}
+                or requirement["source"] != {"timing": "locked_window", "authorization": "authorization"}[basis]):
+            raise ValueError("constraint source does not match its rejection basis")
+        if job_dir is None:
+            raise ValueError("confirmed constraint source needs the existing Job directory")
+        from . import visual_confirmation
+        workflow = contract_artifacts.read_json_artifact(Path(job_dir) / "workflow.json")
+        job_id = workflow.get("job_id")
+        if not isinstance(job_id, str) or not job_id:
+            raise ValueError("confirmed constraint source needs the current Job identity")
+        _, proposal = visual_confirmation._validate_source(
+            Path(job_dir), requirement["receipt"], job_id=job_id)
+        targets = [r for r in proposal["rows"] if r.get("semantic_row_id") == semantic["row_id"]
+                   and r["segment_id"] == beat["segment_id"] and r["component_id"] == beat["component_id"]]
+        if len(targets) != 1:
+            raise ValueError("confirmed constraint belongs to another visual item")
+        if basis == "timing":
+            target = targets[0]
+            minimum = candidate.get("min_duration_seconds")
+            if (any(beat.get(k) != target[k] for k in ("start", "end"))
+                    or type(minimum) not in (float, int)
+                    or minimum <= target["end"] - target["start"]):
+                raise ValueError("timing exclusion must exceed the confirmed item's unchanged window")
+    else:
+        raise ValueError("invalid constraint requirement reference")
+    reference = refs.get("capability")
+    profile = candidate.get("capability", {})
+    if isinstance(reference, str) and reference in {"summary", "status", "min_duration_seconds"}:
+        value = profile.get("summary") if reference == "summary" else candidate.get(reference)
+    elif isinstance(reference, str) and reference.count("/") == 1:
+        field, index = reference.split("/")
+        values = profile.get(field)
+        value = (values[int(index)] if field in {"limitations", "editable_content", "evidence"}
+                 and isinstance(values, list) and index.isascii() and index.isdigit()
+                 and int(index) < len(values) else None)
+    else:
+        value = None
+    if value is None or value == "":
+        raise ValueError("constraint capability reference must belong to the current candidate")
+
+def validate_design_handoffs(director, treatment, job_dir):
+    """Bind selected OpenFilm design to its existing eight-field creative brief."""
+    selection = treatment.get("skill_selection", {})
+    for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
+        if assignment.get("skill_id") != "openfilm-motion-graphics":
+            continue
+        design = _design_plan(assignment)
+        segment = next(s for s in director["segments"] if s["segment_id"] == assignment["segment_id"])
+        brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, assignment["component_id"])
+        handoff = brief.get("creative_handoff", {}) if isinstance(brief, dict) else {}
+        style = handoff.get("style_reason")
+        if not isinstance(style, str) or any(value not in style for value in design.values()):
+            raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")
 
 def _validate_entry(entry, rows, use, tags):
     if not isinstance(entry, dict) or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")

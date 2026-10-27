@@ -119,7 +119,23 @@ Riso 被选实例的硬时长从当前适配器唯一 `MIN_SECONDS` 动态读取
 
 `skill_selection` schema 仍为 1。`beats` 保持 B-roll，新增 `overlay_beats`；两组每个物理 beat 都填写 `semantic_row_id`、`start`、`end`、`transcript`、`semantic_goal`、`required_change`、`intent_statement`、`component_brief` 和 `binding_snapshot`。`candidates` 必须覆盖缓存命中的全集，每项填写 `fit`（`preferred`、`equivalent`、`unsuitable` 或 `needs_adapter`）与 `reason`；`unsuitable` 另填 `rejection_basis`（`semantic`、`quality`、`capacity`、`output`、`timing`、`qualification` 或 `authorization`）。素材待准备不能作为淘汰理由，`preferred` 不能裁剪 `equivalent`。
 
+`quote/semantic` 表示本句原话与必须表达的意思；`visual_task` 是可替换的表现方案。先核对必须项是否由原话或本期明确要求支持，不能把自选门框、界面操作或几何机制当作所有候选必须复制的动作。连续镜头保持同一对象和状态；其他渠道能复用同一素材并满足动作时，仍参与候选。
+
+每个合格候选另填 `design_plan={composition,typography,finish,focus}`，四项均为具体设计说明：主体位置与比例、文字层级及去重、所选视觉语言的完成度、动作发生时的焦点。没有画内文字时明确说明。候选阶段依据公开能力和已有证据评估可实现性，不渲染全部候选，也不把未生成的画面称为实看通过。
+
+这些候选评审、设计说明和单一来源复核由宿主自主完成，不是用户批准，也不要求用户逐项填写。缺少批准词时钟时仍可做离线内部规划，最终检查如实标明时间未核验；用户只确认已有流程中的完整清单一次。
+
+排除仍为 `supported` 的具体候选时，填写 `constraint_refs={requirement,capability}`。普通限制的 `requirement` 只能为当前行的 `quote` 或 `semantic`，不能引用 `visual_task`；`capability` 为当前候选中的 `summary`、`status`、`min_duration_seconds` 或 `limitations/N`、`editable_content/N`、`evidence/N`（N为零基索引），不接受其他候选或任意文件路径。引用核对证明来源与归属，不自动证明自然语言判断正确。
+
+`timing/authorization` 限制须有当前 Job 已确认的来源：`requirement={source:"locked_window"|"authorization",receipt:{path,sha256,bytes}}`，receipt 使用原整表批准记录；CLI 额外传 `--job-dir`，正式入口自动传本 Job。入口沿原批准校验核对 Job、来源、配置与目标行；时长排除还须保持原窗口不变，且当前适配器的真实最短时长确实超出它。宿主另据本轮用户原文核对是否明确锁定时间或费用，过去的窗口不是永久锁定。首次规划没有这种确认依据时，不用尚未确定的短窗口或尚未准备的生成素材提前排除候选；保留方案并沿现有时间、渠道及费用门处理。
+
+同一语义项的合格候选只来自一个真实渠道时，填写该 beat 的 `single_source_review={decision:"keep",reason:"具体复核结论"}`；核对是否误把表现偏好当作必须项，并汇总其他候选的实际限制。需要重新评审时用 `decision:"revise"` 停止分配，基于同一次缓存纠正评审，不再次检索。入口只检查复核已完成，不凭字数或关键词判定美观。
+
+分配结果携带所选 `design_plan`，随原 treatment/assignment 冻结，制作与实看以它为对照。OpenFilm 的新 brief 在现有 `creative_handoff.style_reason` 中逐项包含这四段原设计说明；可按“构图／字级／完成度／焦点”连接成同一字符串，不新增 brief 字段或改旧媒体。正式入口检查设计说明确实传入已绑定的 brief。实际画面仍须通过当前媒体的审美检查。
+
 统一调用 `select_broll_skills.py assign --director-brief <director> --treatment <treatment>`，共同求解 B-roll 与贴片，分别写回 `assignments` 和 `overlay_assignments`。`fixed_context` 只记录真实固定资料或直接 AI，不把原生贴片整体伪装成固定资料；`check` 复核缓存、两组 assignments 和绑定，不重新匹配。确认前冻结两份语义列表、缓存、两组 assignments 和编号，确认后不得偷换。
+
+现有完整清单同时按贴片、B-roll 分别列出真实渠道的逻辑项次数和累计可见时长，以及相邻同渠道／同构图动作的已有选择原因。一项跨多个物理段只计一次；时长取同类同渠道实际区间并集，各渠道时间不能相加冒充视频总长。局部返修后重新看全片分布，渠道集中上升时回原缓存复核；有合法合格替代就重选，否则写清保留依据。此汇总不重跑匹配、不引入渠道配额，也不把同一接法中的自创场景冒充多个固定模板。
 
 A-roll 贴片也执行此原则。配色、字体层级和人物避让统一，卡片外形不统一；比较保留分割变化，开关保留旋钮动作，通知保留层叠关系，流程保留真实连线。`production-defaults.json` 的 `card_family` 仅供卡片组件使用。不能批量隐藏图标、改成等高横条或将每层文字设成同一字号，再用不同 Skill 名称宣称多样化。贴片选型与重复理由进入已有 treatment 和 visual-routing，不新增审批环节。
 

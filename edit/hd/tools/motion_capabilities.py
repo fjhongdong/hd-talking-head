@@ -629,7 +629,7 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
                 "reason": "provide --job-dir with approved speech and timeline; structural matches do not verify time"})
         else:
             visual_confirmation._validate_beat_sheet(treatment, draft, speech)
-        motion_match_cache.validate_reviews(project_root, draft, treatment)
+        motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
         selection = treatment.get("skill_selection", {})
         computed = broll_skill_selection.assign_skills(project_root, selection)
         if (computed["assignments"] != selection.get("assignments") or
@@ -698,7 +698,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                 "checks": [], "not_verified": [], "source_plans_modified": False}
     from . import motion_match_cache, semantic_visual_plan
     try:
-        cached = motion_match_cache.validate_reviews(project_root, draft, treatment)
+        cached = motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
     except (ValueError, KeyError, TypeError) as error:
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "cached_semantic_candidates", "reason": str(error)}],

@@ -66,6 +66,23 @@ def _literal_field(tree, name):
     return values[0] if len(values) == 1 else None
 
 
+def _native_frame_floor(tree):
+    """Read the two existing chained frame-clock guards without importing runtimes."""
+    floors = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Compare) and len(node.ops) == 2
+                and all(isinstance(op, ast.LtE) for op in node.ops)
+                and isinstance(node.left, ast.Constant) and type(node.left.value) is int
+                and isinstance(node.comparators[0], ast.Subscript)
+                and isinstance(node.comparators[0].slice, ast.Constant)
+                and node.comparators[0].slice.value == "frames"
+                and isinstance(node.comparators[1], ast.Constant)):
+            floors.append(node.left.value / 24)
+    if len(floors) != 1:
+        raise ValueError("Native frame-clock declaration changed; review its duration limit")
+    return floors[0]
+
+
 def _discover_native_candidates(project_root: Path) -> list[dict]:
     """Read actual bridge routes and qualified cards, not caller favorites."""
     project = Path(project_root).resolve(strict=True)
@@ -148,6 +165,8 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                 limitations=("Use current adapter validation and native components; not a generic scene API",))
         for row in found[first:]:
             row["adapter_module"] = module
+            if module in {"adu_native_adapter", "hypit_native_adapter"}:
+                row["min_duration_seconds"] = _native_frame_floor(tree)
 
     from .talkcraft_matcher import load_card_catalog
     from .talkcraft_contract import DEPENDENCY_ID as talkcraft_dependency
@@ -398,6 +417,7 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
          **{key: pool[choice["candidate_id"]][key]
             for key in ("skill_id", "entrypoint", "template_id", "role", "limitations")},
          "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
+        | ({"design_plan": copy.deepcopy(choice["design_plan"])} if "design_plan" in choice else {})
         for beat, choice in zip(beats, chosen)
     ]
     result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]

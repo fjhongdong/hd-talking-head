@@ -432,7 +432,8 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
                          "visible_text": [], "binding": segment["bindings"]["component-1"]}]})
         from edit.hd.tools import motion_match_cache
         director = contract_artifacts.read_json_artifact(self.brief)
-        treatment = {"semantic_lists": {"overlay": [], "broll": [{"row_id": "local-evidence",
+        treatment = {"numbering_scope_id": "local-material-publication-test",
+            "semantic_lists": {"overlay": [], "broll": [{"row_id": "local-evidence",
             "start_word": 0, "end_word": 1, "quote": "Approved source evidence",
             "semantic": "说明已有本地资料", "visual_task": "展示原始资料",
             "components": [{"segment_id": "seg-001", "component_id": "component-1"}]}]},

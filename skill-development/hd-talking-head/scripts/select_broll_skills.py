@@ -13,6 +13,8 @@ def main() -> None:
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--treatment", type=Path)
     parser.add_argument("--director-brief", type=Path)
+    parser.add_argument("--job-dir", type=Path,
+                        help="existing Job for confirmed timing or authorization constraint references")
     args = parser.parse_args()
     from edit.hd.tools import broll_skill_selection as selection, contract_artifacts
 
@@ -31,7 +33,7 @@ def main() -> None:
                     parser.error("assign requires --director-brief to validate cached semantic matches")
                 from edit.hd.tools import motion_match_cache
                 motion_match_cache.validate_reviews(project,
-                    contract_artifacts.read_json_artifact(args.director_brief), treatment)
+                    contract_artifacts.read_json_artifact(args.director_brief), treatment, job_dir=args.job_dir)
                 treatment["skill_selection"] = selection.assign_skills(
                     project, treatment.get("skill_selection", {}),
                 )
@@ -42,7 +44,7 @@ def main() -> None:
                     parser.error("check requires --director-brief")
                 from edit.hd.tools import motion_match_cache
                 motion_match_cache.validate_reviews(project,
-                    contract_artifacts.read_json_artifact(args.director_brief), treatment)
+                    contract_artifacts.read_json_artifact(args.director_brief), treatment, job_dir=args.job_dir)
                 result = selection.validate_selection(
                     project, contract_artifacts.read_json_artifact(args.director_brief),
                     treatment,

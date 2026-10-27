@@ -181,8 +181,12 @@ proposal 的 `numbering` 保存全部 `semantic_row_id → number`，包含已�
 
 宿主必须播放当前实际媒体及对应原声，在正常速度检查入场、动作过程、结果和退出，而不是只看抽帧、元数据或待查清单。涉及人物操作时，额外核对操作者视角、设备朝向和手与设备的接触关系；生成素材先确认静帧中的主体关系，再进入视频生成。OCR、标签、颜色变化或“能播放”不能替代动作和语义检查；本句要求的动作或结果缺失，或只能靠解释文字补义时，当前路线失败并回到候选/配方修订。已有 `visual_review.conclusion` 写具体观察、播放时刻和结果，不新增布尔字段、审计包或用户审片轮。
 
-新proposal冻结 `visual_review_policy=visual-review-v1`。canary、assets、preview 返回的 `visual_review` 是待检查义务，列出计划身份、实际媒体引用、逐组件 `row_id`、可见意图及文件内播放时窗，不是已检查结论。
+新proposal冻结 `visual_review_policy=visual-review-v2`。canary、assets、preview 返回的 `visual_review` 是待检查义务，列出计划身份、实际媒体引用、逐组件 `row_id`、可见意图及文件内播放时窗，不是已检查结论。
 
 宿主实际播放对应片段后，在同一review JSON加入 `visual_review`：沿用实际 `policy_version`、`stage`、`plan_ref`，`observations` 每项包含 `row_id`、`media_ref`、数值秒区间 `playback_window`、具体 `conclusion`，以及真实的 `size_position_clear`、`unobstructed`、`semantics_clear`。必须覆盖当前所有待查组件；回放区间完整包含义务时窗且位于实际媒体内。canary/资产使用段内时钟，preview包含正式封面偏移。不得把抽帧、解码、代码存在动画或待查列表复制为“已播放”。
+
+v2 每条观察还须有 `design_review={verdict,composition,typography,finish,focus}`。四段文字分别记录当前实际画面的构图与比例、字体层级与去重、所选视觉语言的完成度、动作焦点；无文字等情况写实际适用原因，不复制候选设计当作实看结论。只有 `verdict:"pass"` 能批准；`revise/reselect` 或缺项都停在当前段。字号通过不能代替美观，宿主须实际检查，机器只核对记录、覆盖、媒体身份及通过状态。
+
+问题属于版式、字级、比例、质感时先分析后在当前路线针对性修订；能力不成立或修改未改善则回已匹配候选重选，不重做全库检索、不擅自新增付费。无合法合格方案时报告具体缺口。旧冻结v1只保留已批准阶段的原语义只读核验，不补字段、不重签，不可用v1批准新工作。
 
 不改现有 `motion_readability_resolutions`：OCR硬失败仍需修正，低置信仍须真实量框。画面观察和文字检查同时通过后才内部批准。交付消费者再次核对当前preview回执，直接调用状态批准不能绕过。新要求不追溯追加到旧已批准proposal，创建新修订清单时才启用。

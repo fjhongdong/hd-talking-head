@@ -9,7 +9,9 @@ from pathlib import Path
 
 from . import contract_artifacts as artifacts, visual_confirmation as confirmation
 
-POLICY_VERSION = "visual-review-v1"
+POLICY_VERSION = "visual-review-v2"
+_FROZEN_POLICIES = {"visual-review-v1", POLICY_VERSION}
+_DESIGN_FIELDS = ("composition", "typography", "finish", "focus")
 _MANIFESTS = {"visual_canary": "08-visual-canary/canary-manifest.json",
               "visual_assets": "09-visual-assets/asset-manifest.json"}
 _STAGES = {*_MANIFESTS, "preview"}
@@ -31,7 +33,7 @@ def expected_observations(job, stage):
     policy = authorization["source"].get("visual_review_policy")
     if policy is None:
         return {"status": "not_applicable", "stage": stage}
-    if policy != POLICY_VERSION:
+    if policy not in _FROZEN_POLICIES:
         raise ValueError("unknown visual review policy")
     plan_ref = authorization["mapping"]["final_v3"]
     plan = artifacts.read_json_artifact(confirmation._exact(job.job_dir, plan_ref))
@@ -85,7 +87,7 @@ def expected_observations(job, stage):
                 "window": [origin + window["start_frame"] / 24,
                            origin + window["end_frame"] / 24],
             })
-    return {"status": "required", "policy_version": POLICY_VERSION,
+    return {"status": "required", "policy_version": policy,
             "stage": stage, "plan_ref": plan_ref, "observations": observations}
 
 
@@ -93,8 +95,11 @@ def validate_stage_review(job, stage, review):
     expected = expected_observations(job, stage)
     if expected["status"] == "not_applicable":
         return expected
+    if (expected["policy_version"] == "visual-review-v1"
+            and job.stages[stage].get("status") != "approved"):
+        raise ValueError("frozen v1 visual review is read-only; new approval requires v2")
     payload = review.get("visual_review")
-    if (not isinstance(payload, dict) or payload.get("policy_version") != POLICY_VERSION
+    if (not isinstance(payload, dict) or payload.get("policy_version") != expected["policy_version"]
             or payload.get("stage") != stage or payload.get("plan_ref") != expected["plan_ref"]):
         raise ValueError("current-media visual_review is required")
     rows = payload.get("observations")
@@ -120,6 +125,13 @@ def validate_stage_review(job, stage, review):
             raise ValueError("visual review needs a concrete observation")
         if any(row.get(k) is not True for k in ("size_position_clear", "unobstructed", "semantics_clear")):
             raise ValueError("visual review has unresolved size, occlusion or meaning")
+        if expected["policy_version"] == POLICY_VERSION:
+            design = row.get("design_review")
+            if (not isinstance(design, dict) or set(design) != {"verdict", *_DESIGN_FIELDS}
+                    or design.get("verdict") != "pass"
+                    or any(not isinstance(design.get(k), str) or not design[k].strip()
+                           for k in _DESIGN_FIELDS)):
+                raise ValueError("design review needs passing composition, typography, finish and focus observations")
     if seen != set(wanted):
         raise ValueError("visual review is missing components")
     return payload

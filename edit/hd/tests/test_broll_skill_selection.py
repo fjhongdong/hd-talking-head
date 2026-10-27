@@ -13,6 +13,12 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
+    def test_native_timing_evidence_reads_existing_adapter_frame_limits(self):
+        candidates=selection.discover_candidates(ROOT)
+        for source in ('adu-motion-video','hypit-native-chat'):
+            row=next(c for c in candidates if c['skill_id']==source)
+            self.assertEqual(row['min_duration_seconds'],5)
+
     def complete_overlay_cache(self, draft, treatment):
         from edit.hd.tools import motion_match_cache, overlay_selection
         for segment in draft["segments"]:
@@ -36,7 +42,10 @@ class BrollSkillSelectionTest(unittest.TestCase):
                         "fit": "preferred" if match["candidate"]["candidate_id"] == chosen else
                             "equivalent" if match["candidate"]["status"] == "supported" else "needs_adapter",
                         "reason": "测试中的完整原生候选评审", "visual_pattern": "parallel-list"}
+                        | {"design_plan": {"composition": "并列主体在同一视觉范围。", "typography": "主副字级明确。",
+                                           "finish": "细线平面图形保持完整。", "focus": "当前项目累积时保持其他项。"}}
                         for match in item["matches"]]})
+                beats[-1]['single_source_review'] = {'decision': 'keep', 'reason': '完整保留缓存中可用的原生组件。'}
         treatment["skill_selection"]["overlay_beats"] = beats
         treatment["skill_selection"] = selection.assign_skills(ROOT, treatment["skill_selection"])
         return treatment
@@ -609,6 +618,21 @@ class BrollSkillSelectionTest(unittest.TestCase):
 
 class PlanningOnlyChecksTest(unittest.TestCase):
     """Use real catalog/matching/assignment and temporary approved word inputs."""
+    def test_selected_design_is_copied_and_changes_require_reassignment(self):
+        from edit.hd.tools import motion_capabilities as motion
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            draft,treatment=self.make_plan(root,8)
+            assignment=treatment['skill_selection']['assignments'][0]
+            chosen=next(c for c in treatment['skill_selection']['beats'][0]['candidates']
+                        if c['candidate_id']==assignment['candidate_id'])
+            self.assertEqual(assignment['design_plan'],chosen['design_plan'])
+            chosen['design_plan']['finish']='改成有纸张层次的当前设计方案。'
+            self.assertNotEqual(assignment['design_plan'],chosen['design_plan'])
+            result=motion.check_planning_only(ROOT,draft,treatment,job_dir=root)
+            self.assertEqual(result['status'],'fail')
+            self.assertIn('assignments changed',result['failures'][0]['reason'])
+
     def make_plan(self, root, seconds):
         from edit.hd.tools import contract_artifacts as artifacts, motion_capabilities as motion, motion_match_cache
         words = [{"text": "十二项测试对象", "start": 0.1, "end": 2.8}]
@@ -643,6 +667,9 @@ class PlanningOnlyChecksTest(unittest.TestCase):
                    "equivalent" if cid == "eian-riso-broll:versus" else
                    "needs_adapter" if catalog[cid]["status"] != "supported" else "unsuitable")
             candidates.append({"candidate_id":cid, "fit":fit, "rejection_basis":"semantic",
+                "design_plan":{"composition":"数值和单位共同成为主体。","typography":"主数值高于辅助说明。",
+                               "finish":"用完整数字排版和细线图形。","focus":"当前数值显现后稳定阅读。"},
+                "constraint_refs":{"requirement":"semantic","capability":"summary"},
                 "reason":"独立规划夹具，数值强调优先，旧新为未选备选。", "visual_pattern":cid})
         pool = selection.discover_candidates(ROOT)
         reviews = {r["skill_id"]:{"fit":"equivalent" if r["skill_id"] == "eian-riso-broll" else "unsuitable",
@@ -650,6 +677,7 @@ class PlanningOnlyChecksTest(unittest.TestCase):
         treatment["skill_selection"] = {"schema_version":1, "history_note":"synthetic planning only",
             "recent_context":[], "fixed_context":[], "overlay_beats":[], "beats":[{
                 **refs[0], "semantic_row_id":"number", "start":0, "end":seconds,
+                "single_source_review":{"decision":"keep","reason":"夹具保留Riso数值与旧新两个具体合格入口。"},
                 "transcript":row["quote"], "semantic_goal":row["semantic"],
                 "required_change":row["visual_task"], "candidates":candidates, "skill_reviews":reviews}]}
         treatment["skill_selection"] = selection.assign_skills(ROOT, treatment["skill_selection"])

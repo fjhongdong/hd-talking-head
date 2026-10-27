@@ -1909,8 +1909,9 @@ def _skill_selection_for_publication(
         raise _fail("B-roll treatment must belong to the current Job")
     try:
         treatment = contract_artifacts.read_json_artifact(path)
-        from .motion_match_cache import validate_reviews
-        validate_reviews(Path(__file__).resolve().parents[3], draft, treatment)
+        from .motion_match_cache import validate_reviews, validate_design_handoffs
+        validate_reviews(Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir)
+        validate_design_handoffs(draft, treatment, job.job_dir)
         selection = broll_skill_selection.validate_selection(
             Path(__file__).resolve().parents[3], draft, treatment,
         )

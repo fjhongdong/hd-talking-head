@@ -15,6 +15,52 @@ from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
+    def test_routing_distribution_separates_logical_counts_channels_and_repeats(self):
+        rows = [
+            {"row_id": "a:1", "semantic_row_id": "logical-a", "segment_id": "a", "component_id": "1",
+             "type": "B-roll", "start": 0, "end": 2, "number": 1},
+            {"row_id": "a:2", "semantic_row_id": "logical-a", "segment_id": "a", "component_id": "2",
+             "type": "B-roll", "start": 2, "end": 3, "number": 1, "channel": "Paper"},
+            {"row_id": "b:1", "semantic_row_id": "logical-b", "segment_id": "b", "component_id": "1",
+             "type": "B-roll", "start": 3, "end": 4, "number": 2, "channel": "Paper",
+             "visual_pattern": "说明", "selection_reason": "保持动作连续"},
+            {"row_id": "c:1", "semantic_row_id": "logical-c", "segment_id": "c", "component_id": "1",
+             "type": "贴片", "start": 4, "end": 5, "number": 3, "channel": "Overlay"},
+        ]
+        rows[0]["channel"] = "Lovart"
+        summary, repeats = vc._routing_distribution(rows, {"skill_selection": {}})
+        self.assertEqual(summary["B-roll"]["logical_count"], 2)
+        self.assertEqual(summary["B-roll"]["channels"]["Lovart"]["count"], 1)
+        self.assertEqual(summary["B-roll"]["channels"]["Paper"]["duration"], 2.0)
+        self.assertEqual(summary["贴片"]["logical_count"], 1)
+        self.assertTrue(any(item[0] == 1 and item[1] == 2 for item in repeats))
+
+    def test_routing_distribution_unions_overlaps_and_skips_same_logical_repeat(self):
+        rows = [
+            {"row_id": "a:1", "semantic_row_id": "same", "segment_id": "a", "component_id": "1", "type": "B-roll", "start": 0, "end": 3, "number": 1, "channel": "Paper"},
+            {"row_id": "a:2", "semantic_row_id": "same", "segment_id": "a", "component_id": "2", "type": "B-roll", "start": 2, "end": 4, "number": 1, "channel": "Paper"},
+            {"row_id": "b:1", "semantic_row_id": "next", "segment_id": "b", "component_id": "1", "type": "B-roll", "start": 4, "end": 5, "number": 2, "channel": "Paper", "visual_pattern": "同动作", "template": "other-template"},
+        ]
+        rows[1]['visual_pattern'] = '同动作'
+        summary, repeats = vc._routing_distribution(rows, {"skill_selection": {}})
+        self.assertEqual(summary["B-roll"]["logical_count"], 2)
+        self.assertEqual(summary["B-roll"]["channels"]["Paper"]["duration"], 5.0)
+        self.assertEqual(len(repeats), 1)
+        self.assertIn("同构图/动作", repeats[0][2])
+
+    def test_routing_uses_actual_incoming_and_outgoing_physical_channels(self):
+        def row(sid, logical, begin, end, number, channel):
+            return {'row_id':sid+':v','semantic_row_id':logical,'segment_id':sid,'component_id':'v',
+                    'type':'B-roll','start':begin,'end':end,'number':number,'channel':channel}
+        rows=[row('a','one',0,2,1,'Lovart'),row('b','one',2,3,1,'Paper'),
+              row('c','two',3,4,2,'Paper'),row('d','two',4,5,2,'OpenFilm'),
+              row('e','three',4.5,6,3,'OpenFilm')]
+        summary,repeats=vc._routing_distribution(rows,{'skill_selection':{}})
+        self.assertEqual(summary['B-roll']['channels']['OpenFilm']['duration'],2)
+        self.assertEqual([(r[0],r[1]) for r in repeats],[(1,2),(2,3)])
+        self.assertIn('同渠道：Paper',repeats[0][2])
+        self.assertIn('同屏重叠',repeats[1][2])
+
     def setUp(self):
         self.fixture = fixture_api.VisualDirectionSchemaV3Tests()
         self.fixture.setUp()

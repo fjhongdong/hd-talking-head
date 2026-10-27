@@ -72,15 +72,16 @@ class PlanningAndNumberTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);(root/'manifests').mkdir();job=SimpleNamespace(job_dir=root,job_id='job',revision=10)
             p=root/'proposal.json';ca.write_json_artifact(p,{'kind':vc.SCHEMA,'job_id':'job','job_dir':str(root),
+                'numbering_scope_id':'current-scope',
                 'rows':[{'row_id':'b'}],'numbering':{'a':1,'b':2,'retired':3}})
             ref={'path':'proposal.json','sha256':ca.sha256_file(p),'bytes':p.stat().st_size}
             receipt={'source_schema':vc.SCHEMA,'job_id':'job','job_dir':str(root),'stage':'visual_direction',
                      'passed':True,'reviewed_by':'human','approval_scope':'visual_plan_and_delivery','revision':9,'source':ref}
             ca.write_json_artifact(root/'manifests/local-qa-visual_direction-r9.json',receipt)
-            mapping=vc._prior_numbering(job)
+            mapping=vc._prior_numbering(job,'current-scope')
             self.assertEqual([r['number'] for r in vc.number_visual_rows([{'row_id':'new'},{'row_id':'b'}],mapping)],[4,2])
             p.write_text('{}')
-            with self.assertRaises(ValueError):vc._prior_numbering(job)
+            with self.assertRaises(ValueError):vc._prior_numbering(job,'current-scope')
         with self.assertRaises(ValueError):vc.number_visual_rows([{'row_id':'a'}],{'a':1,'b':1})
 
     def test_badge_slots_follow_identity_and_half_open_time(self):
@@ -109,6 +110,7 @@ class CurrentMediaReviewTests(unittest.TestCase):
             'visual_intent':{'statement':'对应负责人和待办'},'shot_recipe':{'components':[
                 {'component_id':'a','render_window':{'start_frame':0,'end_frame':24}},
                 {'component_id':'b','render_window':{'start_frame':24,'end_frame':48}}]}}]}
+        self.plan['visual_plan_sha256']=ca.sha256_json(self.plan)
         self.plan_ref=self.write('plan.json',self.plan)
         self.auth={'source':{'rows':[{'row_id':'s:a'},{'row_id':'s:b'}],
                              'visual_review_policy':vr.POLICY_VERSION},'mapping':{'final_v3':self.plan_ref}}
@@ -117,7 +119,7 @@ class CurrentMediaReviewTests(unittest.TestCase):
         for stage,folder,name in [('visual_canary','08-visual-canary','canary-manifest.json'),
                                   ('visual_assets','09-visual-assets','asset-manifest.json')]:
             media=self.write(folder+'/segments/s/segment.mp4',b'synthetic media identity')
-            manifest={'visual_plan_sha256':self.plan_ref['sha256'],'segment_ids':['s'],
+            manifest={'visual_plan_sha256':self.plan['visual_plan_sha256'],'segment_ids':['s'],
                       'segments':[{'segment_id':'s','video_path':str(self.root/media['path']),
                                    'video_sha256':media['sha256'],'video_bytes':media['bytes']}]}
             m=self.write(folder+'/'+name,manifest)
@@ -134,11 +136,43 @@ class CurrentMediaReviewTests(unittest.TestCase):
 
     def review(self,stage):
         expected=vr.expected_observations(self.job,stage)
-        return {'visual_review':{'policy_version':vr.POLICY_VERSION,'stage':stage,'plan_ref':expected['plan_ref'],
+        return {'visual_review':{'policy_version':expected['policy_version'],'stage':stage,'plan_ref':expected['plan_ref'],
             'observations':[{'row_id':r['row_id'],'media_ref':r['media_ref'],'playback_window':r['window'],
                 'conclusion':'synthetic fixture observation, not a watched production video',
+                'design_review': {'verdict': 'pass',
+                    'composition': 'Synthetic subject and label share a clear focal area.',
+                    'typography': 'Synthetic primary label is distinct from secondary text.',
+                    'finish': 'Synthetic flat surfaces and fine lines use one visual language.',
+                    'focus': 'Synthetic state change stays on the current object.'},
                 'size_position_clear':True,'unobstructed':True,'semantics_clear':True}
                 for r in expected['observations']]}}
+
+    def test_new_policy_requires_design_observations_and_refuses_unfinished_design(self):
+        for stage in ('visual_canary','visual_assets','preview'):
+            for field in ('composition','typography','finish','focus'):
+                bad=self.review(stage)
+                del bad['visual_review']['observations'][0]['design_review'][field]
+                with self.subTest(stage=stage,missing=field), self.assertRaisesRegex(ValueError,'design review'):
+                    vr.validate_stage_review(self.job,stage,bad)
+            for verdict in ('revise','reselect'):
+                bad=self.review(stage)
+                bad['visual_review']['observations'][0]['design_review']['verdict']=verdict
+                with self.subTest(stage=stage,verdict=verdict), self.assertRaisesRegex(ValueError,'design review'):
+                    vr.validate_stage_review(self.job,stage,bad)
+            vr.validate_stage_review(self.job,stage,self.review(stage))
+
+    def test_frozen_v1_review_remains_read_only_and_cannot_downgrade_new_policy(self):
+        old=self.review('preview')
+        old['visual_review']['policy_version']='visual-review-v1'
+        for row in old['visual_review']['observations']:
+            row.pop('design_review')
+        with self.assertRaises(ValueError):
+            vr.validate_stage_review(self.job,'preview',old)
+        self.auth['source']['visual_review_policy']='visual-review-v1'
+        with self.assertRaisesRegex(ValueError,'read-only'):
+            vr.validate_stage_review(self.job,'preview',old)
+        self.job.stages['preview']['status']='approved'
+        self.assertEqual(vr.validate_stage_review(self.job,'preview',old),old['visual_review'])
 
     def test_real_manifest_shape_and_current_component_clocks(self):
         for stage in ('visual_canary','visual_assets','preview'):

@@ -213,10 +213,61 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
                          "template": template})
     return rows
 
+def _routing_distribution(rows, treatment):
+    """Summarize logical rows, channel exposure, and adjacent repeats for routing.md."""
+    selection = treatment.get("skill_selection", {}) or {}
+    choices = [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]
+    assignments = {(a["segment_id"], a["component_id"]): a for a in choices}
+    from . import broll_skill_selection
+    def channel(item):
+        return broll_skill_selection.source_channel(item["channel"])
+    def reason(item):
+        for source in (item, assignments.get((item["segment_id"], item["component_id"]), {})):
+            for key in ("selection_reason", "reason", "style_reason"):
+                if str(source.get(key, "")).strip(): return str(source[key]).strip()
+            if str(source.get("source_ref", "")).strip(): return "固定素材：" + str(source["source_ref"]).strip()
+        return "未记录选择原因"
+    logical = {}
+    ordered = sorted(rows, key=lambda r: (float(r["start"]), str(r["row_id"])))
+    for row in ordered:
+        key = row["semantic_row_id"]
+        logical.setdefault(key, {"row": row, "rows": []})["rows"].append(row)
+    summary = {"贴片": {"logical_count": 0, "channels": {}}, "B-roll": {"logical_count": 0, "channels": {}}}
+    intervals_by_bucket_channel = {}
+    for group in logical.values():
+        bucket = summary[group["row"]["type"]]
+        bucket["logical_count"] += 1
+        by_channel = {}
+        for item in group["rows"]: by_channel.setdefault(channel(item), []).append(item)
+        for name, parts in by_channel.items():
+            entry = bucket["channels"].setdefault(name, {"count": 0, "duration": 0.0})
+            entry["count"] += 1
+            intervals_by_bucket_channel.setdefault((group["row"]["type"], name), []).extend(
+                (float(p["start"]), float(p["end"])) for p in parts if float(p["end"]) > float(p["start"]))
+    for (typ, name), intervals in intervals_by_bucket_channel.items():
+        merged = []
+        for begin, end in sorted(intervals):
+            if merged and begin <= merged[-1][1]: merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
+            else: merged.append((begin, end))
+        summary[typ]["channels"][name]["duration"] = sum(end - begin for begin, end in merged)
+    repeats, previous = [], None
+    for row in ordered:
+        pattern = row.get("visual_pattern") or assignments.get((row["segment_id"], row["component_id"]), {}).get("visual_pattern")
+        current = (channel(row), pattern, float(row["end"]), float(row["start"]))
+        if previous and row["semantic_row_id"] != previous[2]:
+            same_channel = current[0] == previous[1][0]
+            same_pattern = current[1] and previous[1][1] and current[1] == previous[1][1]
+            if same_channel or same_pattern:
+                labels = (["同渠道：" + current[0]] if same_channel else []) + (["同构图/动作：" + current[1]] if same_pattern else [])
+                relation = "同屏重叠" if current[3] < previous[1][2] else ("连续" if current[3] == previous[1][2] else "有时间间隔")
+                repeats.append((previous[0], row.get("number", row["semantic_row_id"]), "；".join(labels) + "；" + relation, reason(row)))
+        previous = (row.get("number", row["semantic_row_id"]), current, row["semantic_row_id"])
+    return summary, repeats
+
 def _validate_template_choices(job, director, treatment):
     from . import broll_skill_selection, motion_match_cache, overlay_selection
     project = Path(__file__).resolve().parents[3]
-    cached = motion_match_cache.validate_reviews(project, director, treatment)
+    cached = motion_match_cache.validate_reviews(project, director, treatment, job_dir=job.job_dir)
     selection = treatment.get("skill_selection", {})
     if selection:
         chosen = broll_skill_selection.assign_skills(project, selection)
@@ -246,6 +297,7 @@ def _validate_template_choices(job, director, treatment):
                     segment["bindings"][cid].get(field) != native[field]
                     for field in ("dependency_id", "entrypoint", "producer_version", "template_id")):
                 raise VisualConfirmationError("proposed binding differs from the selected native template")
+    motion_match_cache.validate_design_handoffs(director, treatment, job.job_dir)
 
 def _validate_beat_sheet(treatment, director, speech):
     from .semantic_visual_plan import component_use, require_interval_coverage
@@ -435,6 +487,21 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             "；".join(dict.fromkeys(p["generation_channel"] for p in parts if p["generation_channel"])) or "—",
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
             "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
+    distribution, repeats = _routing_distribution(numbered_rows, treatment)
+    lines += ["", "## 渠道分布（按贴片与 B-roll 分开统计）", ""]
+    for typ in ("贴片", "B-roll"):
+        bucket = distribution.get(typ, {"logical_count": 0, "channels": {}})
+        lines += [f"### {typ}：{bucket['logical_count']} 个逻辑项", "", "| 渠道 | 逻辑项次数 | 累计可见时长 |", "|---|---:|---:|"]
+        for name, value in sorted(bucket["channels"].items()):
+            lines.append(f"| {cell(name)} | {value['count']} | {value['duration']:.3f}s |")
+        if not bucket["channels"]: lines.append("| 未记录 | 0 | 0.000s |")
+    lines += ["", "## 相邻重复与当前选择原因", ""]
+    if repeats:
+        lines += ["| 前项 | 后项 | 重复项 | 当前选择原因 |", "|---|---|---|---|"]
+        for before, after, match, why in repeats:
+            lines.append("| " + " | ".join(cell(v) for v in (before, after, match, why)) + " |")
+    else:
+        lines.append("未发现相邻同渠道或同构图/动作项。")
     lines += ["", "## 口播逐句处置", "", "| 词区间 | 实际原话 | 时间 | 决策 | 画面 | 组件 | 合并原因 |", "|---|---|---|---|---|---|---|"]
     for beat in treatment["beat_sheet"]:
         refs = "、".join(r["segment_id"] + ":" + r["component_id"] for r in beat["components"])
