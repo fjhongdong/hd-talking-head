@@ -1,4 +1,4 @@
-// 全片装配：段落 → 画面；电视框转场、舞台、老虎机、Boss 拼贴、片尾卡、字幕、音效事件
+// Whole-film assembly: segments → picture; TV-frame transitions, stage, slot machine, Boss collage, end card, subtitles, sound-effect events
 import { P, K, setCtx, part, line, circ, rrect, poly, outlined } from './toon.js';
 import { drawDot, drawTick, whiteGlove } from './chars.js';
 import { drawStage, TV, tvCam, confetti } from './stage.js';
@@ -21,13 +21,13 @@ const SCENE = { G1: CRY.scenePump, G2: INK.sceneSneeze, G3: AS.sceneStrap, G4: R
 const GAMES = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'];
 let MAIN = null;
 function renderGameTo(ctx, id, lt) { setCtx(ctx); ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 1920, 1080); SCENE[id](ctx, lt); ctx.restore(); setCtx(MAIN); }
-// 静态帧缓存（游戏首帧 / 末帧、Boss 首帧、舞台静帧）
+// Static frame cache (game first / last frame, Boss first frame, stage stills)
 const CACHE = {};
 function still(key, fn) { if (CACHE[key]) return CACHE[key]; const [c, x] = canvas(); fn(x); return (CACHE[key] = c); }
 const lastFrame = id => still('last_' + id, x => renderGameTo(x, id, S[id].t1 - S[id].t0 - 1e-3));
 const firstFrame = id => still('first_' + id, x => renderGameTo(x, id, 0));
 
-// ───────── 台词 / 字幕 / 音效事件 ─────────
+// ───────── lines / subtitles / sound-effect events ─────────
 let LINES = [], DURS = {};
 export function setLines(lines, dur) { LINES = lines; DURS = dur; }
 export function subs() {
@@ -36,7 +36,7 @@ export function subs() {
   L.forEach((l, i) => { let t1 = l.t + Math.max(1.8, (DURS[l.id] || 1) + .6); const nx = L[i + 1]; if (nx && t1 > nx.t - .05) t1 = nx.t - .05; out.push({ t0: l.t, t1, text: l.text, who: l.who }); });
   return out;
 }
-export function srtCues() {   // .srt 含命令词
+export function srtCues() {   // the .srt includes command words
   return LINES.filter(l => !l.fx).map(l => ({ t0: l.t, t1: l.t + Math.max(l.cmd ? .9 : 1.8, (DURS[l.id] || 1) + .6), text: l.text }));
 }
 export function events() {
@@ -47,7 +47,7 @@ export function events() {
     if (s.kind === 'game' || s.kind === 'boss') { ev(s.t0, 'fuse_on', { dur: s.t1 - s.t0, boss: s.kind === 'boss' }); ev(s.t0, 'cmd_slam'); }
     if (s.kind === 'stage' || s.id === 'END') { ev(s.t0, 'tv_out'); }
   }
-  // 舞台：拍表冠、电视冲入、生命裂开、灯灭、按钮
+  // stage: crown tap, TV push-in, life cracking, lights off, button
   const crown = { S1: 3.5, S2: 1.5, S3: 1.5, S5: .65, S6: .65 };
   for (const [id, lt] of Object.entries(crown)) ev(S[id].t0 + lt, 'crown');
   for (const id of ['S1', 'S2', 'S3', 'S5', 'S6', 'RESULT']) ev(S[id].t1 - tvOutDur(S[id]), 'tv_in');
@@ -56,13 +56,13 @@ export function events() {
   ev(S.S2.t0 + .05, 'stamp_bad'); ev(S.S7.t0 + .05, 'stamp_bad');
   ev(S.S4.t0 + 1.25, 'insert_whoosh'); ev(S.S4.t0 + 1.5, 'button');
   for (let k = 0; k < 8; k++) ev(S.S1.t0 + .25 + k * .09, 'bulb', { i: k });
-  // SPEED：滚轮
+  // SPEED: reels
   ev(S.SPEED.t0, 'reels_spin', { dur: S.SPEED.beatT[3] - S.SPEED.t0 }); for (let k = 1; k <= 3; k++) ev(S.SPEED.beatT[k], 'reel_stop', { k });
   ev(S.SPEED.t1 - .2, 'zoom_whoosh');
-  // BOSSIN：瓷砖翻面
+  // BOSSIN: tiles flipping over
   for (let k = 0; k < 8; k++) ev(bt('BOSSIN', k / 2), 'tile_flip', { k });
   for (let k = 0; k < 6; k++) ev(bt('BOSSIN', 2.3 + k * .25), 'tile_flip', { k: k + 8, soft: true });
-  // 各游戏拟音
+  // foley for each game
   const g = id => S[id].t0;
   CRY.PUMPS.forEach((p, i) => ev(g('G1') + p, 'pump', { i })); ev(g('G1') + 3.0, 'float_up'); ev(g('G1') + 3.0, 'yay');
   ev(g('G2') + .5, 'dust'); ev(g('G2') + 2.5, 'sneeze'); ev(g('G2') + 2.5, 'ink_splat'); ev(g('G2') + 3.0, 'drip'); ev(g('G2') + 3.5, 'blink');
@@ -84,7 +84,7 @@ export function events() {
   return E;
 }
 
-// ───────── 舞台段 ─────────
+// ───────── stage segments ─────────
 const R2 = s => (s.bpm === 140 || (Array.isArray(s.bpm) && s.bpm[0] >= 140));
 function tvOutDur(s) { return s.id === 'RESULT' ? .3 : R2(s) ? .2 : .25; }
 function tvInDur(s) { return R2(s) ? .25 : .33; }
@@ -112,7 +112,7 @@ function stageSeg(g, s, lt, t) {
   let u = 0, screen = prev ? lastFrame(prev) : null, showStamp = true;
   if (lt < tin) u = 1 - eo(lt / tin);
   if (next && lt > dur - tout) { u = ei((lt - (dur - tout)) / tout); screen = next === 'END' ? still('endcard', x => endCard(x, 0)) : firstFrame(next); showStamp = false; }
-  // S4 按钮特写插入
+  // S4 button close-up insert
   if (id === 'S4' && lt >= 1.25) return buttonInsert(g, lt - 1.25, t);
   const lives = { S1: 3, S2: 2, S3: 2, S4: 2, S5: 2, S6: 2, S7: 1, RESULT: 1 }[id];
   const crack = id === 'S2' ? [2, seg(lt, .2, 1.1)] : id === 'S7' ? [1, seg(lt, .05, .95)] : null;
@@ -137,25 +137,25 @@ function stageSeg(g, s, lt, t) {
     stamp(g, ok, id === 'RESULT' ? TV.cx - 300 : TV.cx + 300, TV.cy + 150, lt - tin * .6, .85);
   }
   g.restore();
-  // 字幕
+  // subtitles
 }
 function buttonInsert(g, lt, t) {
-  // 大红按钮特写：白手套从上方砸下（第 1.5 拍 = 本地 .25）
+  // big red button close-up: white glove slams down from above (beat 1.5 = local .25)
   g.fillStyle = P.deep; g.fillRect(0, 0, 1920, 1080);
   g.save(); g.translate(960, 640); g.scale(3.2, 3.2); g.translate(-1600, -700);
   drawStage(g, t, { lives: 2, marquee: false, tick: { x: -900 }, press: lt >= .25 ? 1 : 0 });
   g.restore();
-  // 放射速度线
+  // radial speed lines
   g.save(); g.globalAlpha = .5; g.strokeStyle = P.gold; g.lineWidth = 8;
   for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; g.beginPath(); g.moveTo(960 + Math.cos(a) * 700, 560 + Math.sin(a) * 700); g.lineTo(960 + Math.cos(a) * 1300, 560 + Math.sin(a) * 1300); g.stroke(); }
   g.restore();
   const gy = lt < .25 ? lerp(-300, 330, ei(lt / .25)) : 330 + (lt < .33 ? 0 : 0);
   K.s = 3; g.save(); whiteGlove(960, gy, Math.PI, 3.4); g.restore(); K.s = 1;
-  // 手臂
+  // arm
   g.save(); g.fillStyle = P.mag; g.strokeStyle = P.ink; g.lineWidth = 8; g.fillRect(900, -40, 120, gy - 40 + 40); g.strokeRect(900, -40, 120, gy); g.restore();
   if (lt >= .25) { g.save(); g.globalAlpha = .6 * Math.max(0, 1 - (lt - .25) / .2); g.fillStyle = '#fff'; g.fillRect(0, 0, 1920, 1080); g.restore(); outlined(g, 'SMASH!', 960, 250, { font: '160px Titan', lw: 18, fill: P.gold, shadow: P.mag, sd: [8, 12] }); }
 }
-// ───────── SPEED UP 老虎机 ─────────
+// ───────── SPEED UP slot machine ─────────
 const REEL_ITEMS = () => [still('stageS4', x => { setCtx(x); drawStage(x, 24, { lives: 2, stage: 5, screen: lastFrame('G4'), tick: tickState('S4', .5, 24.5) }); setCtx(MAIN); }), lastFrame('G1'), lastFrame('G2'), lastFrame('G3'), lastFrame('G4')];
 function speedTile(g, k, x0, w) {
   g.fillStyle = [P.gold, P.mag, P.cyan][k]; g.fillRect(x0, 0, w, 1080);
@@ -176,7 +176,7 @@ function speedSeg(g, s, lt, t) {
       g.translate(0, bounce); speedTile(g, k, x0, w);
       g.restore(); continue;
     }
-    // 旋转中：位移 = 速度积分（先加速后减速），停的前 0.1s 减速
+    // spinning: offset = integral of speed (accelerate then decelerate), decelerating in the 0.1s before the stop
     const spin = Math.min(lt, stop), v0 = 5200;
     const pos = v0 * (spin - .5 * spin * spin / (stop * 1.6)) + k * 400;
     const n = items.length + 1, total = n * H;
@@ -187,23 +187,23 @@ function speedSeg(g, s, lt, t) {
         if (j !== 0) continue;
         if (ii === items.length) speedTile(g, k, x0, w);
         else { g.globalAlpha = 1; g.drawImage(items[ii], x0, 0, w, H, x0, yy, w, H); }
-        // 动态模糊：再叠两层偏移的半透明
+        // motion blur: two more offset semi-transparent layers on top
         g.globalAlpha = .35; if (ii < items.length) { g.drawImage(items[ii], x0, 0, w, H, x0, yy - 60, w, H); g.drawImage(items[ii], x0, 0, w, H, x0, yy - 120, w, H); } g.globalAlpha = 1;
       }
     }
     g.restore();
   }
-  // 滚轮框：金色框 + 墨色隔条
+  // reel frame: gold frame + ink-coloured dividers
   g.save(); g.fillStyle = P.ink; for (const x of [0, 640, 1280, 1920]) g.fillRect(x - 12, 0, 24, 1080);
   g.strokeStyle = P.gold; g.lineWidth = 8; for (const x of [640, 1280]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 1080); g.stroke(); }
-  // 上下阴影（滚筒弧度）
+  // top and bottom shading (drum curvature)
   const gr = g.createLinearGradient(0, 0, 0, 1080); gr.addColorStop(0, 'rgba(20,6,50,.55)'); gr.addColorStop(.2, 'rgba(20,6,50,0)'); gr.addColorStop(.8, 'rgba(20,6,50,0)'); gr.addColorStop(1, 'rgba(20,6,50,.55)');
   g.fillStyle = gr; g.fillRect(0, 0, 1920, 1080); g.restore();
-  // 最后 0.2s：冲进"!"并白闪
+  // last 0.2s: push into the "!" and flash white
   const zu = seg(lt, s.t1 - s.t0 - .2, s.t1 - s.t0);
   if (zu > 0) { g.save(); g.globalAlpha = zu * .9; g.fillStyle = '#fff'; g.fillRect(0, 0, 1920, 1080); g.restore(); }
 }
-// ───────── BOSS STAGE 拼贴 ─────────
+// ───────── BOSS STAGE collage ─────────
 function bossinSeg(g, s, lt, t) {
   g.fillStyle = '#0c0420'; g.fillRect(0, 0, 1920, 1080);
   const bossF = still('boss0', x => renderGameTo(x, 'BOSS', 0));
@@ -223,7 +223,7 @@ function bossinSeg(g, s, lt, t) {
   const e15 = bt('BOSSIN', .75) - s.t0, e5 = bt('BOSSIN', 2.3) - s.t0;
   command(g, 'BOSS STAGE!', lt - e15, e5 - e15 - .05, { burst: P.red, size: 190, noTag: true });
 }
-// ───────── 片尾卡 ─────────
+// ───────── end card ─────────
 export function endCard(g, lt) {
   setCtx(g);
   g.fillStyle = P.deep; g.fillRect(0, 0, 1920, 1080);
@@ -239,7 +239,7 @@ export function endCard(g, lt) {
   drawTick(1600, 1030, 1.0 * pop(.25), { face: 'grin', pose: 'present', view: 'q', flip: true, hand: 0 });
   setCtx(MAIN);
 }
-// ───────── 主渲染 ─────────
+// ───────── main render ─────────
 let SUBS = [];
 export function renderFilm(g, t, Q) {
   MAIN = g; setCtx(g); K.s = 1;
@@ -263,6 +263,6 @@ export function renderFilm(g, t, Q) {
   else if (s.kind === 'bossin') bossinSeg(g, s, lt, t);
   else if (s.kind === 'end') endCard(g, lt);
   g.restore();
-  // 字幕
+  // subtitles
   if (!Q || !Q.has('nosub')) for (const c of SUBS) if (t >= c.t0 && t < c.t1) subtitle(g, c.text, t - c.t0, c.t1 - c.t0, { icon: c.who === 'dot' ? 'dot' : 'tick', y: (s.kind === 'game' || s.kind === 'boss') ? 900 : 950 });
 }

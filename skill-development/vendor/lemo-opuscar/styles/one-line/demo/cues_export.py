@@ -1,4 +1,4 @@
-# 从 story.js 的 VO 字幕区间导出 cues.json（与烧录字幕同一份数据）
+# export cues.json from the VO subtitle ranges in story.js (same data as the burned-in subtitles)
 import re, json, os
 D = 'styles/one-line/demo'
 src = open(os.path.join(D, 'story.js')).read()

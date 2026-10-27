@@ -1,9 +1,9 @@
-// 用法（在任意目录运行均可，脚本会 chdir 到 demo/）：
-//   node render.mjs events                  → events.json（DUR + 全部打点，给 music.py 用）
-//   node render.mjs stills 1.9 3.1 ...      → stills/t_*.png（STILLS_DIR=out/check 可改输出目录）
-//   node render.mjs video [workers]         → out/seg_*.mp4 + out/list.txt（再跑 sh finish.sh 拼接+混音）
-//   SEGS=5 node render.mjs video 6          → 只重渲 6 等分里的第 5 段（片尾 124.0–148.8 s）
-//   CHROME=/path/to/chrome-headless-shell 可覆盖浏览器路径
+// Usage (can be run from any directory; the script chdirs to demo/):
+//   node render.mjs events                  → events.json (DUR + all hits, for music.py)
+//   node render.mjs stills 1.9 3.1 ...      → stills/t_*.png (STILLS_DIR=out/check changes the output dir)
+//   node render.mjs video [workers]         → out/seg_*.mp4 + out/list.txt (then run sh finish.sh to concatenate + mix)
+//   SEGS=5 node render.mjs video 6          → re-renders only segment 5 of 6 equal parts (end of film 124.0–148.8 s)
+//   CHROME=/path/to/chrome-headless-shell overrides the browser path
 import { chromium } from 'playwright-core';
 import { spawn } from 'child_process';
 import fs from 'fs';
@@ -11,7 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 process.chdir(path.dirname(fileURLToPath(import.meta.url)));
 const EXE_DEFAULT = `${process.env.HOME}/Library/Caches/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell`;
-const EXE = process.env.CHROME || (fs.existsSync(EXE_DEFAULT) ? EXE_DEFAULT : undefined);   // undefined → playwright 自带默认
+const EXE = process.env.CHROME || (fs.existsSync(EXE_DEFAULT) ? EXE_DEFAULT : undefined);   // undefined → playwright's own default
 const URL = 'file://' + path.resolve('index.html');
 const FPS = 30;
 const mode = process.argv[2];
@@ -45,7 +45,7 @@ if (mode === 'stills') {
   const probe = await openPage(browser); const TOTAL = Math.round(FPS * await probe.evaluate(() => window.DUR)); await probe.close();
   const per = Math.ceil(TOTAL / W);
   const t0 = Date.now();
-  // SEGS=5 只重渲第 5 段（按 W 等分；配合 finish.sh 用旧分段拼接，例如只改片尾时）
+  // SEGS=5 re-renders only segment 5 (W equal parts; use with finish.sh, concatenating the old segments, e.g. when only the ending changed)
   const SEGS = process.env.SEGS ? process.env.SEGS.split(',').map(Number) : null;
   await Promise.all([...Array(W)].map(async (_, w) => {
     if (SEGS && !SEGS.includes(w)) return;

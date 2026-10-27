@@ -1,4 +1,4 @@
-"""字幕区间 → cues.json（与页面 main.js 的 SUBS 规则一致：显示到 语音+0.8 s（≥1.8 s），并截到下一句前 0.3 s）"""
+"""Subtitle intervals → cues.json (same rule as SUBS in the page's main.js: shown until voice + 0.8 s (≥1.8 s), and cut off 0.3 s before the next line)"""
 import json, os, re, sys
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = open(os.path.join(D, 'story.js')).read()

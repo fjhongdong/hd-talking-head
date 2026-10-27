@@ -1,8 +1,10 @@
 # OpenFilm motion-graphics
 
-这是已授权的原生创作 Skill，不是现成模板库。执行者按其说明为本句编写可编辑场景；我们的 adapter 只冻结输入、调用原生公开渲染入口和检查输出，不临时写动画。已认可样片证明这类主体动作和完成度可用，不把样片中的手机、放大镜、信封、颜色或时码固化为下一条的设计。
+这是已授权的原生创作 Skill；能力库当前登记一个通用模板，按原生 Skill 创作，不宣称存在多个现成模板。执行者按其说明为本句编写可编辑场景；我们的 adapter 只冻结输入、调用原生公开渲染入口和检查输出，不临时写动画。已认可样片证明这类主体动作和完成度可用，不把样片中的手机、放大镜、信封、颜色或时码固化为下一条的设计。
 
 ## 选型
+
+能力库将本入口登记为渠道 `OpenFilm`、模板 `openfilm/motion-graphics-scene`，再用标签匹配语义。每期场景内容随主题创作，但沿用该模板身份；适配资格不改变渠道或模板层级。
 
 唯一发现入口返回 `openfilm-motion-graphics:motion-graphics`，与其他 Skill 一起进入既有两轮选择。适合需要具体对象操作、状态转变、检查与发现、控制权交接，或需要按主题专门组织主体与信息的短镜头。标准数据卡、原生聊天、手绘推导已有组件更直接时，仍按语义和质量选择它们；真人行为、真实产品操作或事实凭证不以画出来的示意图冒充。
 
@@ -48,7 +50,7 @@
 - `creative_handoff={transcript,semantic_goal,required_change,subject,visual_pattern,style_reason,beats,forbidden_outcomes}`。
 - `schema_version:1`。
 
-按既有 factory/binding 接口创建 `ReferenceProcessAdapter`，加入父级 `component_adapters`，把同一 payload 作为 brief_loader 的结果。`dependency_id=openfilm-motion-graphics`、renderer 为 `OpenFilm`、入口 `scripts/openfilm_motion_adapter.py`；`template_id=openfilm/motion-graphics-scene` 只是接法身份，不是固定视觉样式。资格固定 `custom_fallback / structural`，不加入 verified-template-registry，不冒称双输入已验证模板。正式计划继续通过唯一选型 check、ShotRecipe 和批准门；渲染前不得修改已冻结页面。
+按既有 factory/binding 接口创建 `ReferenceProcessAdapter`，加入父级 `component_adapters`，把同一 payload 作为 brief_loader 的结果。`dependency_id=openfilm-motion-graphics`、renderer 为 `OpenFilm`、入口 `scripts/openfilm_motion_adapter.py`；`template_id=openfilm/motion-graphics-scene` 是稳定的渠道内模板身份，不等于每个具体场景都已单独完成模板资格验收。资格固定 `custom_fallback / structural`，不加入 verified-template-registry，不冒称双输入已验证模板。正式计划继续通过唯一选型 check、ShotRecipe 和批准门；渲染前不得修改已冻结页面。
 
 正式包装器实际调用包公开导出的 `openfilm/render` 原生 `render([page], {fps:24,workers:1,out})`，而非复制或修改其渲染器。这样不触发 CLI 首次运行时自动打开 Studio、查询更新或下载浏览器的副作用；创作阶段仍按原生手册使用工作台。包装器先输出私有临时文件，再只补 SAR 元信息、检查真实帧数，最后交给公共执行器；不会把受控输出 FD 当成可派生日志的目录，不补帧、不循环、不变速、不在失败时换场景。失败保留命令、输出和日志后停止。已有正式产物复用沿用公共 canary／镜头复用，不新增第二套“恢复生成”入口。
 

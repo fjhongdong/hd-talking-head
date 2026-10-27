@@ -1,5 +1,5 @@
-// 录像带 + CRT 后期（WebGL2）：透过光辉光 + 晕染 + 调色 → 色度渗色 / 红右移 → 字幕 → 荧光辉光 → 扫描线 + RGB 光栅 + 四角压暗；开机亮线、磁带跟踪噪声
-// 输入两张 2D 画布：scene（画面）与 glow（只画发光体：霓虹、车灯、透过光文字）
+// Videotape + CRT post (WebGL2): backlight (tōka-kō, 透过光) bloom + halation + grade → chroma bleed / red shifted right → subtitles → phosphor glow → scanlines + RGB grille + corner vignette; power-on bright line, tape tracking noise
+// Takes two 2D canvases: scene (the picture) and glow (only light emitters: neon, headlights, backlit text)
 const VS = `#version 300 es
 in vec2 p; out vec2 uv; void main(){ uv = p*.5+.5; gl_Position = vec4(p,0,1); }`;
 const PRE = `#version 300 es
@@ -23,7 +23,7 @@ float h1(float n){ return fract(sin(n*127.1+311.7)*43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
 vec3 rgb2yc(vec3 c){ float Y = dot(c, vec3(.299,.587,.114)); return vec3(Y, (c.b-Y)*.564, (c.r-Y)*.713); }
 vec3 yc2rgb(vec3 y){ return vec3(y.x+1.403*y.z, y.x-.344*y.y-.714*y.z, y.x+1.773*y.y); }
-// 录像带信号：亮度清晰，色度水平糊开（NTSC/VHS 的色度带宽只有亮度的几分之一），红色略右移
+// Videotape signal: luma sharp, chroma smeared horizontally (NTSC/VHS chroma bandwidth is only a fraction of luma's), red shifted slightly right
 vec3 samp(vec2 q){
   vec2 s = 1.0/res;
   vec3 c0 = texture(scene, q).rgb;
@@ -37,11 +37,11 @@ vec3 samp(vec2 q){
 }
 void main(){
   vec2 q = uv;
-  // CRT 开机：先是一个亮点横向拉成一条线，再纵向展开
+  // CRT power-on: a bright dot first stretches horizontally into a line, then opens vertically
   float pw = power, sy = 1.0, sx = 1.0, boost = 0.0;
   if (pw < 1.0) { sx = smoothstep(0.0, .3, pw); sy = max(.003, smoothstep(.3, 1.0, pw)); boost = pow(1.0-sy, 3.0); }
   q = vec2(.5 + (q.x-.5)/max(sx,.001), .5 + (q.y-.5)/sy);
-  // 磁带跟踪噪声：逐行横向撕裂 + 一条滚动噪声带 + 底部磁头切换条
+  // Tape tracking noise: per-line horizontal tearing + one rolling noise band + head-switching bar at the bottom
   float band = 0.0;
   if (track > 0.0) {
     float by = fract(h1(floor(frame)) * .7 + .15);
@@ -63,25 +63,25 @@ void main(){
   c = c * tint;
   c = c*(1.0-lift) + lift*shadowTint;
   c = mix(c, vec3(dot(c,vec3(.33))), fade);
-  // 字幕：录在带子上的一部分，所以也吃扫描线和光栅（但不吃调色）
+  // Subtitles: part of what is recorded on the tape, so they get scanlines and grille too (but not the grade)
   if (hasSubs > 0.5) { vec4 sb = texture(subs, q); c = mix(c, sb.rgb, sb.a); }
-  // 荧光辉光（亮处向周围溢出）
+  // phosphor glow (bright areas spill into their surroundings)
   vec3 gb = texture(b1,q).rgb*.6 + texture(b2,q).rgb*.4;
   c += glow * max(gb - .15, 0.0);
   if (q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) c = vec3(0);
-  // 信号噪声 + 跟踪噪声带
+  // signal noise + tracking noise band
   vec2 P = uv*res;
   c += (h2(P + frame*17.0) - .5) * noiseA;
   if (track > 0.0) { float nz = h2(vec2(floor(P.x/3.0), floor(P.y/2.0)) + frame*31.0); c = mix(c, vec3(nz), band * .75 * track); c = mix(c, vec3(dot(c, vec3(.33))), band*.5*track); }
-  // 扫描线：3px 周期，亮处暗缝变窄
+  // scanlines: 3px period, dark gaps narrow in bright areas
   float L = dot(clamp(c,0.,1.), vec3(.3,.59,.11));
   float ph = .5 - .5*cos(6.2831853 * (P.y) / 3.0);
   c *= 1.0 - scan * ph * (1.0 - .6*L);
-  // 光栅：RGB 竖条
+  // grille: RGB vertical stripes
   int gx = int(mod(floor(P.x), 3.0));
   vec3 m = vec3(1.0 - grille); if (gx == 0) m.r = 1.0 + grille*2.0; else if (gx == 1) m.g = 1.0 + grille*2.0; else m.b = 1.0 + grille*2.0;
   c *= m;
-  // 四角压暗（不做曲面黑边）
+  // corner vignette (no curved black border)
   vec2 u2 = (uv - .5) * 2.0;
   c *= 1.0 - corner * (u2.x*u2.x*u2.y*u2.y*2.0 + .25*(u2.x*u2.x + u2.y*u2.y));
   c *= 1.0 + (h1(frame*.73)-.5)*flick;
@@ -108,7 +108,7 @@ export function makePost(cv) {
   const bindT = (unit, t) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); };
   const upload = (t, c) => { gl.bindTexture(gl.TEXTURE_2D, t); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, c); };
 
-  // CRT 克制版 A：扫描线 3px/.18、光栅 .06、色度渗色 7px + 红右移 2px、荧光辉光 .35、四角压暗
+  // Restrained CRT, setting A: scanlines 3px/.18, grille .06, chroma bleed 7px + red shift right 2px, phosphor glow .35, corner vignette
   const params = { bloom: .85, halo: .22, thr: .9, sk: .12, soft: .2, sat: 1.05, lift: .04, contrast: .15, flick: .01, expo: 1.06, fade: .03,
     scan: .18, grille: .06, bleed: 7, rshift: 2, glow: .35, corner: .28, noiseA: .018, power: 1, track: 0,
     tint: [1.0, .985, .97], shadowTint: [.16, .08, .22] };

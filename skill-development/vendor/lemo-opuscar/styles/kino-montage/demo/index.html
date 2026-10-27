@@ -1,0 +1,751 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>410 天 · Constructivist Montage</title>
+<style>
+@font-face{font-family:SC;src:url(fonts/NotoSansSC-sub.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:Osw;src:url('fonts/Oswald[wght].ttf') format('truetype');font-weight:200 700}
+@font-face{font-family:Mono;src:url(fonts/SpaceMono-Bold.ttf) format('truetype');font-weight:700}
+html,body{margin:0;background:#141210;overflow:hidden}
+canvas{display:block}
+</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+import { clamp, lerp, seg, eo, ei, eio, back, hash, mulberry } from '/core/lib.js';
+
+// ============================================================ grid, palette, timeline
+const BPM = 120, BEAT = 60 / BPM;                  // 0.5 s; one bar = 2 s
+const DUR = 60.0;
+const RED = '#D52B1E', INK = '#141210', PAPER = '#EDE4D0';
+const TH = -18 * Math.PI / 180;                     // the constructivist axis
+const W = 1920, H = 1080, FPS = 24;
+// scene starts (s). Every boundary sits on a beat or half-beat of the 120 BPM grid.
+const T = { title: 0, map: 5.0, iris: 8.25, steel: 8.75, grid: 11.5, strips: 14.5, freeze: 16.0, doc: 18.5,
+  hours: 23.25, men: 28.0, acc: 29.5, expo: 31.5, chart: 35.5, tower: 43.25, silence: 48.25, result: 48.75, end: 56.0 };
+// narration: line id -> start (s). Durations come from audio/vo/dur.json (Kokoro output).
+const VO = [['L1', 5.15], ['L2', 8.9], ['L3', 12.75], ['L4', 16.4], ['L5', 19.4], ['L6', 23.6], ['L7', 28.2],
+  ['L8', 32.0], ['L9', 37.6], ['L10', 49.0], ['L11', 53.6]];
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+
+// ============================================================ assets
+const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => { console.warn('optional missing ' + src); r(null); }; i.src = src; });
+const A = { clip: {}, st: {}, ph: {}, cut: {}, doc: {}, bld: {} };
+const CLIPS = await (await fetch('assets/clips.json')).json();
+const BLD = await (await fetch('assets/bld.json')).json();
+const LINES = await (await fetch('audio/lines.json')).json();
+const VODUR = await (await fetch('audio/vo/dur.json')).json();
+const ST = ['rider', 'highmen', 'edge', 'field', 'grid', 'colrise', 'facade', 'bolting', 'beamset', 'sitter', 'derrtop', 'climb', 'window', 'grillage'];
+const jobs = [];
+for (const [k, m] of Object.entries(CLIPS)) {
+  A.clip[k] = new Array(m.n);
+  for (let i = 0; i < m.n; i++) jobs.push(img(`assets/${k}/${String(i).padStart(3, '0')}.jpg`).then(x => A.clip[k][i] = x));
+}
+for (const k of ST) jobs.push(img(`assets/st_${k}.jpg`).then(x => A.st[k] = x));
+for (const k of ['icarus', 'workman', 'sitter']) { jobs.push(img(`assets/ph_${k}.jpg`).then(x => A.ph[k] = x)); jobs.push(img(`assets/cut_${k}.png`).then(x => A.cut[k] = x)); }
+for (const k of [1, 2, 3]) jobs.push(img(`assets/doc${k}.jpg`).then(x => A.doc[k] = x));
+for (const k of Object.keys(BLD)) jobs.push(img(`assets/bld_${k}.png`).then(x => A.bld[k] = x));
+await Promise.all(jobs);
+for (const [w, s] of [['900', 100], ['700', 40], ['500', 40]]) await document.fonts.load(`${w} ${s}px SC`);
+for (const w of ['700', '600', '500']) await document.fonts.load(`${w} 100px Osw`);
+await document.fonts.load('700 20px Mono');
+
+// red copy of the Empire State outline (the winner of the chart)
+const bldRed = (() => { const b = A.bld.empire, c = document.createElement('canvas'); c.width = b.width; c.height = b.height;
+  const g = c.getContext('2d'); g.drawImage(b, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = RED; g.fillRect(0, 0, c.width, c.height); return c; })();
+
+// paper fibre: a fixed seeded texture multiplied over everything (deterministic, drawn once)
+const fibre = document.createElement('canvas'); fibre.width = W; fibre.height = H;
+{ const f = fibre.getContext('2d'), d = f.createImageData(W, H), r = mulberry(1930);
+  for (let i = 0; i < W * H; i++) { const v = 235 + r() * 20 - (r() < .002 ? 60 : 0); d.data[i * 4] = v; d.data[i * 4 + 1] = v * .985; d.data[i * 4 + 2] = v * .96; d.data[i * 4 + 3] = 255; }
+  f.putImageData(d, 0, 0); }
+
+// ============================================================ helpers
+let TX = [];                                         // texts drawn this frame (for readcheck)
+const frameNo = t => Math.floor(t * FPS + 1e-6);
+const FILM = 'FILM · EMPIRES OF STEEL · NEW YORK 1930–31';
+const SRC = '来源 · EMPIRE STATE, INC. 1931';
+
+function clipImg(name, lt, speed = 1, mode = 'clamp') {
+  const fr = A.clip[name]; if (!fr) return null;
+  let i = Math.floor(lt * speed * FPS + 1e-6); const n = fr.length;
+  if (mode === 'loop') i = ((i % n) + n) % n;
+  else if (mode === 'ping') { const p = 2 * n - 2; i = ((i % p) + p) % p; if (i >= n) i = p - i; }
+  else if (mode === 'rev') i = n - 1 - clamp(i, 0, n - 1);
+  return fr[clamp(i, 0, n - 1)];
+}
+// cover-fit an image into rect (x,y,w,h) keeping focus (fx,fy) as centred as possible
+function cover(im, x, y, w, h, fx = .5, fy = .5, zoom = 1) {
+  if (!im) { cx.fillStyle = '#555'; cx.fillRect(x, y, w, h); return; }
+  const s = Math.max(w / im.width, h / im.height) * zoom, dw = im.width * s, dh = im.height * s;
+  const ox = clamp(x + w / 2 - fx * dw, x + w - dw, x), oy = clamp(y + h / 2 - fy * dh, y + h - dh, y);
+  cx.drawImage(im, ox, oy, dw, dh);
+}
+function poly(pts) { cx.beginPath(); pts.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.closePath(); }
+function withClip(pts, fn) { cx.save(); poly(pts); cx.clip(); fn(); cx.restore(); }
+function band(x, y, L, T_, a, fill) { cx.save(); cx.translate(x, y); cx.rotate(a); cx.fillStyle = fill; cx.fillRect(-L / 2, -T_ / 2, L, T_); cx.restore(); }
+// slam-in offset: 1 before t0, 0 once settled (hard stop)
+const slam = (t, t0, d = .12) => 1 - eo(seg(t, t0, t0 + d));
+function measure(s, font, size, wt, ls = 0) { cx.save(); cx.font = `${wt} ${size}px ${font}`; cx.letterSpacing = ls + 'px'; const w = cx.measureText(s).width; cx.restore(); return w; }
+// text: draws and (with an id) registers its screen box for readcheck
+function txt(id, s, x, y, o = {}) {
+  const size = o.size || 60, font = o.font || 'SC', wt = o.wt || (font === 'SC' ? 900 : 700);
+  cx.save(); cx.translate(x, y); cx.rotate(o.ang || 0); if (o.alpha != null) cx.globalAlpha = o.alpha;
+  cx.font = `${wt} ${size}px ${font}`; cx.textBaseline = 'alphabetic'; cx.letterSpacing = (o.ls || 0) + 'px';
+  const tw = cx.measureText(s).width;
+  const asc = size * (font === 'SC' ? .88 : .8), desc = size * (font === 'SC' ? .12 : .04);
+  const ax = o.align === 'right' ? -tw : o.align === 'center' ? -tw / 2 : 0, pad = o.pad ?? 0;
+  if (o.bg) { cx.fillStyle = o.bg; cx.fillRect(ax - pad, -asc - pad, tw + pad * 2, asc + desc + pad * 2); }
+  cx.fillStyle = o.fill || INK; cx.fillText(s, ax, 0);
+  const tr = cx.getTransform(), pts = [[ax, -asc], [ax + tw, -asc], [ax, desc], [ax + tw, desc]].map(([u, v]) => [tr.a * u + tr.c * v + tr.e, tr.b * u + tr.d * v + tr.f]);
+  cx.restore();
+  const box = { x0: Math.min(...pts.map(p => p[0])), y0: Math.min(...pts.map(p => p[1])), x1: Math.max(...pts.map(p => p[0])), y1: Math.max(...pts.map(p => p[1])) };
+  if (id && (o.alpha ?? 1) > .5) TX.push({ id, text: s, ...box });
+  return Object.assign(box, { w: tw });
+}
+// one registered text drawn in several pieces (big number + unit, vertical type)
+function reg(id, text, boxes) { TX.push({ id, text, x0: Math.min(...boxes.map(b => b.x0)), y0: Math.min(...boxes.map(b => b.y0)), x1: Math.max(...boxes.map(b => b.x1)), y1: Math.max(...boxes.map(b => b.y1)) }); }
+function tag(s, x, y, o = {}) { txt(null, s, x, y, { font: 'Mono, SC', wt: 700, size: o.size || 17, fill: o.fill || PAPER, bg: o.bg || INK, pad: 6, ang: o.ang || 0, ls: 1, align: o.align }); }
+function flicker(t, x, y, w, h, k = .05) {
+  const f = hash(frameNo(t) * 3.1) - .5;
+  cx.fillStyle = f > 0 ? `rgba(237,228,208,${f * k})` : `rgba(20,18,16,${-f * k})`; cx.fillRect(x, y, w, h);
+}
+function flash(t, t0, x = 0, y = 0, w = W, h = H, a = .6) { if (t >= t0 && t < t0 + 1.5 / FPS) { cx.fillStyle = `rgba(237,228,208,${a})`; cx.fillRect(x, y, w, h); } }
+function dayTag(n, x, y) {      // the day counter: a red block, "第 N 天" over "DAY N"
+  const a = txt(null, `第 ${n} 天`, x, y, { size: 44, wt: 900, fill: PAPER, bg: RED, pad: 12 });
+  txt(null, `DAY ${n}`, x, y + 44, { font: 'Mono', size: 22, fill: RED, bg: INK, pad: 6, ls: 2 });
+  return a;
+}
+const HITS = [];
+function shake(t) {
+  let x = 0, y = 0;
+  for (const [th, amp] of HITS) { const d = t - th; if (d < 0 || d > .35) continue; const e = Math.exp(-d * 14) * amp; x += Math.sin(d * 90) * e; y += Math.cos(d * 77) * e * .7; }
+  return [x, y];
+}
+// diagonal red wipe: a steep red band sweeps across; the next scene is revealed behind it
+const WIPES = [T.map, T.doc, T.chart];
+function wipeAt(t) { for (const w0 of WIPES) if (t >= w0 - .25 && t < w0) return [w0, (t - (w0 - .25)) / .25]; return null; }
+const WIPE_A = 72 * Math.PI / 180;
+const wipeFront = p => lerp(-700, W + 700, eio(p));
+function wipeRegion(xc) { const dx = Math.cos(WIPE_A) / Math.sin(WIPE_A) * H / 2; return [[xc + dx, 0], [W + 2000, 0], [W + 2000, H], [xc - dx, H]]; }
+// a window cut along the axis: parallelogram with top/bottom edges at angle a
+function slant(x0, x1, yTop, yBot, a = TH) { const k = Math.tan(a); return [[x0, yTop + k * (x0 - x1)], [x1, yTop], [x1, yBot], [x0, yBot + k * (x0 - x1)]]; }
+
+// ============================================================ S1 0–5: title ---------------------------------------
+const BAR = { x: 960, y: 790, T: 150 };
+const onBar = (x, d = 0) => [x - Math.sin(TH) * d, BAR.y + Math.tan(TH) * (x - BAR.x) + Math.cos(TH) * d];
+const TITLE_SEQ = [[0.25, 'rider', 1, .5, .45], [2.0, 'boom', 1.3, .5, .5], [3.0, 'climb', 1.2, .55, .45], [4.0, 'derrtop', 1.4, .5, .55]];
+function S1(t) {
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  // the window above the bar (archive film), arriving along the axis
+  if (t >= .25) {
+    const o = slam(t, .25, .16) * 1300, ox = o * Math.cos(TH), oy = o * Math.sin(TH);
+    const L = 780, R = 1880, top = 40;
+    const yb = x => onBar(x)[1] - BAR.T / 2 / Math.cos(TH);
+    const pts = [[L + ox, top + oy], [R + ox, top + oy], [R + ox, yb(R) + oy], [L + ox, yb(L) + oy]];
+    withClip(pts, () => {
+      let cur = TITLE_SEQ[0]; for (const s of TITLE_SEQ) if (t >= s[0]) cur = s;
+      cover(clipImg(cur[1], t - cur[0], cur[2]), L + ox, top + oy, R - L, yb(L) - top, cur[3], cur[4], 1 + (t - cur[0]) * .03);
+      flicker(t, L, 0, R - L, H);
+      for (const s of TITLE_SEQ.slice(1)) flash(t, s[0], L + ox, 0, R - L, H, .5);
+    });
+    tag(FILM, 1868, 72, { align: 'right' });
+  }
+  // the red girder slams in at 0
+  const bo = slam(t, 0, .22) * 2600;
+  band(BAR.x - bo * Math.cos(TH), BAR.y - bo * Math.sin(TH), 3400, BAR.T, TH, RED);
+  band(BAR.x + 220, BAR.y + 150, 3400, 30, TH, INK);
+  // 4 · 1 · 0, then 天 ("days")
+  const DIG = [['4', .5], ['1', .625], ['0', .75]]; let x = 64; const boxes = [];
+  for (const [d, t0] of DIG) {
+    const w = measure(d, 'Osw', 400, 700);
+    if (t >= t0) { const o = slam(t, t0, .08); boxes.push(txt(null, d, x, 470 - o * 900, { font: 'Osw', size: 400, fill: INK })); }
+    x += w + 6;
+  }
+  if (t >= .875) { const o = slam(t, .875, .1); boxes.push(txt(null, '天', x + 20 + o * 600, 470, { size: 210, fill: RED })); }
+  if (t >= .875) reg('ttl', '410 天', boxes);
+  if (t >= 1.0) {
+    const o = slam(t, 1.0, .12) * 800;
+    txt('ttle', '410 DAYS', 72 - o, 556, { font: 'Osw', wt: 600, size: 62, fill: INK, ls: 10 });
+    const [bx, by] = onBar(330, 46);
+    txt('ttl2', '帝国大厦 · 纽约 1930–1931', bx + o * Math.cos(TH), by + o * Math.sin(TH), { size: 66, fill: PAPER, ang: TH });
+    const [ex, ey] = onBar(760, 166);
+    txt('ttl2e', 'EMPIRE STATE BUILDING · NEW YORK', ex + o * Math.cos(TH), ey + o * Math.sin(TH), { font: 'Osw', wt: 500, size: 36, fill: INK, ang: TH, ls: 4 });
+  }
+}
+
+// ============================================================ S2 5–11.5: the site, first steel ---------------------
+// brochure map (doc3 2200-px space): the map block and the Empire State site on it
+const MAP = { sx: 151, sy: 1080, sw: 1916, sh: 958, px: 524, py: 1555 };
+function mapXf(t) {           // map placement: whole map at 5.0, pushing in toward the site
+  const p = eio(seg(t, T.map, T.iris)), s = lerp(.92, 1.9, p);
+  const fx = lerp(MAP.sx + MAP.sw / 2, MAP.px + 40, p), fy = lerp(MAP.sy + MAP.sh / 2, MAP.py - 20, p);
+  return { s, fx, fy, ang: lerp(-4, -2, p) * Math.PI / 180, cxs: lerp(960, 760, p), cys: lerp(500, 470, p) };
+}
+function mapToScreen(m, x, y) {
+  const dx = (x - m.fx) * m.s, dy = (y - m.fy) * m.s;
+  return [m.cxs + dx * Math.cos(m.ang) - dy * Math.sin(m.ang), m.cys + dx * Math.sin(m.ang) + dy * Math.cos(m.ang)];
+}
+function drawMap(t) {
+  const m = mapXf(t), d = A.doc[3];
+  cx.fillStyle = INK; cx.fillRect(0, 0, W, H);
+  cx.save(); cx.translate(m.cxs, m.cys + slam(t, T.map - .25, .25) * 900); cx.rotate(m.ang); cx.scale(m.s, m.s); cx.translate(-m.fx, -m.fy);
+  cx.fillStyle = 'rgba(0,0,0,.35)'; cx.fillRect(MAP.sx + 16, MAP.sy + 16, MAP.sw, MAP.sh);
+  if (d) cx.drawImage(d, MAP.sx, MAP.sy, MAP.sw, MAP.sh, MAP.sx, MAP.sy, MAP.sw, MAP.sh);
+  cx.restore();
+  return m;
+}
+function S2(t) {
+  if (t < T.steel) {
+    const m = drawMap(t);
+    const [px, py] = mapToScreen(m, MAP.px, MAP.py), r = 150 * m.s;
+    if (t >= T.iris) {          // the red circle becomes an aperture onto the site from above
+      const p = eio(seg(t, T.iris, T.steel)), R = lerp(r, 1400, p);
+      cx.save(); cx.beginPath(); cx.arc(px, py, R, 0, 7); cx.clip();
+      cx.fillStyle = INK; cx.fillRect(0, 0, W, H); cover(clipImg('excav', t - T.iris + .5, 1), 80, -110, 1760, 1300, .5, .5, 1);
+      cx.restore();
+      cx.strokeStyle = RED; cx.lineWidth = 16; cx.beginPath(); cx.arc(px, py, R, 0, 7); cx.stroke();
+    } else if (t >= 5.5) {      // red marker circle drawn round the site
+      const p = eo(seg(t, 5.5, 5.95));
+      cx.strokeStyle = RED; cx.lineWidth = 12; cx.lineCap = 'round';
+      cx.beginPath(); cx.arc(px, py, r, -2.2, -2.2 + p * 2 * Math.PI * 1.06); cx.stroke();
+    }
+    tag('地图 · EMPIRE STATE, INC. 1931', 70, 72);
+    if (t >= 5.25 && t < T.iris) {   // lower third
+      const o = slam(t, 5.25, .14) * 1200;
+      cx.fillStyle = RED; cx.fillRect(0 - o, 760, 790, 92);
+      txt('lt1', '第五大道 33–34 街', 70 - o, 828, { size: 56, fill: PAPER });
+      txt('lt1e', 'FIFTH AVE · 33RD–34TH ST', 70 - o, 892, { font: 'Osw', wt: 500, size: 34, fill: PAPER, bg: INK, pad: 8, ls: 3 });
+    }
+    if (t >= T.iris) { const p = eio(seg(t, T.iris, T.steel)); cx.fillStyle = RED; cx.fillRect(-1200 * p, 760, 790, 92); }
+    return;
+  }
+  // first steel: a tall window left, the words stacked vertically on the right, the date on a red girder
+  const lt = t - T.steel;
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  const win = slant(0, 1340, 0, 1080, 0); win[1][0] = 1340; win[2][0] = 1180;     // right edge leans with the axis
+  withClip(win, () => { cover(clipImg('grillage', lt, 1), 0, 0, 1340, 1080, .5, .55, 1.0 + lt * .02); flicker(t, 0, 0, 1340, H); });
+  flash(t, T.steel, 0, 0, 1340, H);
+  tag(FILM, 70, 72);
+  // 第一根钢 ("first steel"), top to bottom
+  const boxes = [];
+  if (t >= T.steel) '第一根钢'.split('').forEach((ch, i) => {
+    const o = slam(t, T.steel + i * .0625, .1) * 700;
+    boxes.push(txt(null, ch, 1450 + o, 210 + i * 175, { size: 168, fill: INK }));
+  });
+  if (boxes.length === 4) reg('fs', '第一根钢', boxes);
+  if (t >= T.steel + .25) txt('fse', 'FIRST STEEL', 1660, 860, { font: 'Osw', wt: 600, size: 44, fill: INK, ls: 6, ang: -Math.PI / 2 });
+  // the girder with the date, across the window
+  const bo = slam(t, T.steel + .375, .16) * 2400;
+  band(480 - bo * Math.cos(TH), 770 - bo * Math.sin(TH), 1560, 140, TH, RED);
+  if (t >= T.steel + .375) { const [bx, by] = [110 - bo * Math.cos(TH), 930 - bo * Math.sin(TH)]; txt('fsd', '1930.3.17', bx, by, { font: 'Osw', size: 120, fill: PAPER, ang: TH, ls: 4 }); }
+  if (t >= T.steel + .75) dayTag(0, 1500, 1000);
+}
+
+// ============================================================ S3 11.5–16: nine derricks, then three strips ----------
+const GRID = { x: 42, y: 34, cw: 600, ch: 286, g: 18 };
+const CELLS = [['derrtop', 1.6], ['boom', 1.6], ['colstreet', 1.4], ['beamswing', 1.5], [null, 0], ['floorbeam', 1.5], ['truck', 1.6], ['beamset', 1.4], ['risetower', 1.8]];
+const ORDER = [0, 1, 2, 5, 8, 7, 6, 3, 4];           // spiral, centre last
+function labelDerricks(t) {
+  if (t < 12.0) return;
+  const o = slam(t, 12.0, .12) * 1000;
+  cx.fillStyle = RED; cx.fillRect(42 - o, 790, 690, 150);
+  txt('nd', '九台吊车', 70 - o, 875, { size: 74, fill: PAPER });
+  txt('nde', 'NINE DERRICKS', 420 - o, 870, { font: 'Osw', wt: 600, size: 40, fill: INK, ls: 4 });
+}
+function S3(t) {
+  cx.fillStyle = INK; cx.fillRect(0, 0, W, H);
+  if (t < T.strips) {
+    let lit = 0;
+    ORDER.forEach((c, k) => {
+      const t0 = T.grid + k * .25; if (t < t0) return; lit++;
+      const x = GRID.x + (c % 3) * (GRID.cw + GRID.g), y = GRID.y + Math.floor(c / 3) * (GRID.ch + GRID.g);
+      const s = back(seg(t, t0, t0 + .12), 1.6), w = GRID.cw * s, h = GRID.ch * s;
+      cx.save(); cx.beginPath(); cx.rect(x + (GRID.cw - w) / 2, y + (GRID.ch - h) / 2, w, h); cx.clip();
+      if (c === 4) { cx.fillStyle = RED; cx.fillRect(x, y, GRID.cw, GRID.ch); }
+      else { const [n, sp] = CELLS[c]; cover(clipImg(n, t - t0 + c * .2, sp, 'ping'), x, y, GRID.cw, GRID.ch, .5, .5); flicker(t + c, x, y, GRID.cw, GRID.ch); }
+      cx.restore();
+      flash(t, t0, x, y, GRID.cw, GRID.ch, .5);
+    });
+    const n = Math.min(9, lit);
+    if (t >= T.grid + 8 * .25) txt(null, String(n), 960, 34 + GRID.ch + GRID.g + 262, { font: 'Osw', size: 300, fill: INK, align: 'center' });
+    else if (n) txt(null, String(n), 960, 34 + GRID.ch + GRID.g + 262, { font: 'Osw', size: 300, fill: RED, align: 'center' });
+    labelDerricks(t);
+    tag(FILM, 1878, 26, { align: 'right' });
+    return;
+  }
+  // three strips along the axis, each split in two panels (a 704-px film source never shown above 2.5x);
+  // one panel changes per beat, the strips drift in opposite directions (conveyor belt)
+  const SEQ = [['colrise', 'field', 'beamset', 'colrise'], ['field', 'highmen', 'gridframe', 'field'], ['facade', 'gridframe', 'highmen', 'risetower']];
+  const SEQ2 = [['highmen', 'beamset', 'colrise', 'field'], ['risetower', 'colrise', 'facade', 'beamset'], ['gridframe', 'field', 'beamswing', 'highmen']];
+  const lt = t - T.strips;
+  cx.save(); cx.translate(W / 2, H / 2 - 40); cx.rotate(TH);
+  const SH = 290, GAP = 22, total = SH * 3 + GAP * 2, PW = 1160;
+  for (let i = 0; i < 3; i++) {
+    const y = -total / 2 + i * (SH + GAP), dir = i % 2 ? -1 : 1;
+    const beat = Math.floor(lt / BEAT + 1e-6), ch = Math.floor((beat + (3 - i)) / 3);
+    const ent = slam(t, T.strips + i * .0625, .14) * 2600 * dir, drift = dir * (lt * 90 - 60);
+    for (let j = 0; j < 2; j++) {
+      const name = (j ? SEQ2 : SEQ)[i][(ch + j) % 4], x0 = -PW - 12 + j * (PW + 24) + drift + ent;
+      cx.save(); cx.beginPath(); cx.rect(x0, y, PW, SH); cx.clip();
+      cover(clipImg(name, lt + i * .3 + j * .5, 1.6, 'ping'), x0, y - 40, PW, SH + 80, .5, .5);
+      cx.restore();
+    }
+    if (i === 1) { cx.fillStyle = RED; cx.fillRect(-1500, y - GAP, 3000, GAP); }
+  }
+  cx.restore();
+  labelDerricks(t);
+  tag(FILM, 1878, 1050, { align: 'right' });
+}
+
+// ============================================================ S4 16–19: freeze-frame, 44 tons -----------------------
+const FZ = { x: 60, y: 60, w: 1440, h: 960, fx: .5, fy: .42, cxp: .515, cyp: .40, r: 190 };
+function S4(t) {
+  const lt = t - T.freeze;
+  cx.fillStyle = INK; cx.fillRect(0, 0, W, H);
+  const JUMP = 1.25, jumped = lt >= JUMP;
+  const z = (1 + eo(seg(lt, 0, .45)) * .1 + lt * .012) * (jumped ? 1.2 : 1);
+  const im = clipImg('colrise', 1.1, 1);
+  cx.save(); cx.beginPath(); cx.rect(FZ.x, FZ.y, FZ.w, FZ.h); cx.clip();
+  cover(im, FZ.x, FZ.y, FZ.w, FZ.h, FZ.fx, FZ.fy, z);
+  cx.restore();
+  flash(t, T.freeze, FZ.x, FZ.y, FZ.w, FZ.h, .8); flash(t, T.freeze + JUMP, FZ.x, FZ.y, FZ.w, FZ.h, .4);
+  // annotation: circle on the column section, leader to the label
+  const fxs = FZ.x + FZ.w * FZ.fx, fys = FZ.y + FZ.h * FZ.fy, k = jumped ? 1.2 : 1;   // the circle follows the jump
+  const ccx = fxs + (FZ.x + FZ.w * FZ.cxp - fxs) * k, ccy = fys + (FZ.y + FZ.h * FZ.cyp - fys) * k;
+  if (lt >= .2) {
+    const p = eo(seg(lt, .2, .5));
+    cx.strokeStyle = RED; cx.lineWidth = 12; cx.lineCap = 'round';
+    cx.beginPath(); cx.ellipse(ccx, ccy, FZ.r * .62 * k, FZ.r * 1.35 * k, 0, -1.9, -1.9 + p * 2 * Math.PI * 1.05); cx.stroke();
+  }
+  if (lt >= .45) {
+    const p = eo(seg(lt, .45, .6));
+    cx.strokeStyle = RED; cx.lineWidth = 8; cx.beginPath(); cx.moveTo(ccx + FZ.r * .6 * k, ccy + 40); cx.lineTo(lerp(ccx + FZ.r * .6 * k, 1470, p), lerp(ccy + 40, 640, p)); cx.stroke();
+  }
+  if (lt >= .05) {
+    const o = slam(t, T.freeze + .05, .12) * 700;
+    cx.fillStyle = RED; cx.fillRect(1440 + o, 560, 440, 300);
+    const a = txt(null, '44', 1475 + o, 790, { font: 'Osw', size: 230, fill: PAPER });
+    const b = txt(null, '吨', 1475 + o + a.w + 14, 790, { size: 110, fill: INK });
+    reg('t44', '44 吨', [a, b]);
+    txt('t44e', '44 TONS EACH', 1440 + o, 905, { font: 'Osw', wt: 600, size: 38, fill: PAPER, bg: INK, pad: 10, ls: 3 });
+  }
+  if (lt >= .5) {          // the film keeps running in a small frame within the frame
+    const o = slam(t, T.freeze + .5, .12) * 600, px = 1540 + o, py = 110, pw = 340, ph = 250;
+    cx.fillStyle = RED; cx.fillRect(px - 8, py - 8, pw + 16, ph + 16);
+    cx.save(); cx.beginPath(); cx.rect(px, py, pw, ph); cx.clip();
+    cover(clipImg('colrise', 1.1 + (lt - .5), 1, 'ping'), px, py, pw, ph, .5, .42); flicker(t, px, py, pw, ph);
+    cx.restore();
+  }
+  tag('定格 · ' + FILM, 70, 100);
+  tag('来源 · 影片字幕 FILM INTERTITLE', 1878, 1050, { align: 'right', bg: RED });
+}
+
+// ============================================================ S5 19–23.25: the brochure, 4½ a week -----------------
+function S5(t) {
+  const lt = t - T.doc;
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  const d = A.doc[2];
+  const push = 1 + eio(seg(lt, .6, 4.2)) * .2, dy = slam(t, T.doc - .25, .25) * 1100;
+  cx.save(); cx.translate(520, 520 + dy); cx.rotate(-4 * Math.PI / 180); cx.scale(push, push);
+  const sx = 40, sy = 60, sw = 1000, sh = 1180, s = .8;
+  cx.fillStyle = 'rgba(20,18,16,.25)'; cx.fillRect(-sw * s / 2 + 14, -sh * s / 2 + 14, sw * s, sh * s);
+  if (d) cx.drawImage(d, sx, sy, sw, sh, -sw * s / 2, -sh * s / 2, sw * s, sh * s);
+  const hl = eo(seg(t, T.doc + .5, T.doc + .9));          // red marker over the sentence
+  cx.globalCompositeOperation = 'multiply'; cx.fillStyle = RED;
+  for (const [L, a, b] of [[{ x: 520, y: 790, w: 444 }, 0, .45], [{ x: 128, y: 830, w: 610 }, .45, 1]]) {
+    const p = clamp((hl - a) / (b - a));
+    cx.fillRect((L.x - sx) * s - sw * s / 2, (L.y - sy) * s - sh * s / 2, L.w * s * p, 36 * s);
+  }
+  cx.globalCompositeOperation = 'source-over';
+  cx.restore();
+  tag('文件 · "EMPIRE STATE" 小册子 · EMPIRE STATE, INC. 1931', 1010, 1010);
+  // the number as a block
+  const o = slam(t, T.doc + .25, .14) * 1000;
+  cx.fillStyle = RED; cx.fillRect(1010 + o, 120, 600, 740);
+  const a = txt(null, '每周', 1050 + o, 250, { size: 110, fill: PAPER });
+  const b = txt(null, '4½', 1030 + o, 690, { font: 'Osw', size: 360, fill: INK });
+  const c = txt(null, '层', 1580 + o, 830, { size: 120, fill: PAPER, align: 'right' });
+  reg('wk', '每周 4½ 层', [a, b, c]);
+  txt('wke', '4½ STORIES A WEEK', 1010 + o, 935, { font: 'Osw', wt: 600, size: 46, fill: INK, ls: 3 });
+  // speed: the facade from above, floors rushing past in a tall slot
+  const so = slam(t, T.doc + .5, .14) * -1200;
+  cx.save(); cx.beginPath(); cx.rect(1650, 60 + so, 230, 960); cx.clip();
+  cover(clipImg('facade', lt, 2.6, 'loop'), 1650, 60 + so, 230, 960, .5, .5); flicker(t, 1650, 60, 230, 960);
+  cx.restore();
+}
+
+// ============================================================ S6 23.25–28: eighty hours -----------------------------
+function S6(t) {
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  const steps = [
+    { t0: T.hours, x: 70, y: 540, w: 560, h: 380, n: 'truck', sp: 1.2, fx: .5, fy: .55 },
+    { t0: T.hours + .75, x: 680, y: 380, w: 560, h: 380, n: 'floorbeam', sp: 1.1, fx: .5, fy: .5 },
+    { t0: T.hours + 1.5, x: 1290, y: 220, w: 560, h: 380, n: 'bolting', sp: 1.0, fx: .45, fy: .45 },
+  ];
+  steps.forEach((s, i) => {
+    if (t < s.t0) return;
+    const o = slam(t, s.t0, .14) * 700;
+    cx.save(); cx.beginPath(); cx.rect(s.x, s.y + o, s.w, s.h); cx.clip();
+    cover(clipImg(s.n, t - s.t0, s.sp, 'ping'), s.x, s.y + o, s.w, s.h, s.fx, s.fy); flicker(t, s.x, s.y + o, s.w, s.h);
+    cx.restore();
+    if (i < 2 && t >= steps[i + 1].t0 - .1) { cx.fillStyle = RED; poly([[s.x + s.w - 20, s.y - 30], [s.x + s.w + 70, s.y - 120], [s.x + s.w + 70, s.y + 50]]); cx.fill(); }
+  });
+  tag(FILM, 1850, 640, { align: 'right' });
+  const hrs = Math.round(80 * eo(seg(t, T.hours + .1, T.hours + 2.3)));
+  const a = txt(null, String(hrs), 70, 300, { font: 'Osw', size: 270, fill: RED });
+  txt(null, '小时', 70 + measure('80', 'Osw', 270, 700) + 24, 300, { size: 100, fill: INK });
+  if (t >= T.hours + .25) {
+    const o = slam(t, T.hours + .25, .12) * 900;
+    txt('h80', '出厂 80 小时，就铆进楼里', 70 - o, 415, { size: 66, fill: PAPER, bg: INK, pad: 14 });
+    txt('h80e', 'FROM THE MILL TO A RIVET IN 80 HOURS', 70 - o, 487, { font: 'Osw', wt: 600, size: 34, fill: INK, bg: PAPER, pad: 8, ls: 2 });
+  }
+  const d = A.doc[2];               // the brochure's own sentence
+  if (d && t >= T.hours + 2.0) {
+    const o = slam(t, T.hours + 2.0, .14) * 1200;
+    cx.save(); cx.translate(700 + o, 800); cx.rotate(TH * .2);
+    const sx = 120, sy = 942, sw = 860, sh = 92, s = 1.2;
+    cx.fillStyle = INK; cx.fillRect(-10, -10, sw * s + 20, sh * s + 20);
+    cx.drawImage(d, sx, sy, sw, sh, 0, 0, sw * s, sh * s);
+    cx.globalCompositeOperation = 'multiply'; cx.fillStyle = RED;
+    cx.fillRect(298 * s, 4 * s, 340 * s * eo(seg(t, T.hours + 2.2, T.hours + 2.5)), 36 * s);
+    cx.globalCompositeOperation = 'source-over';
+    cx.restore();
+    tag(SRC, 700 + o, 785);
+  }
+}
+
+// ============================================================ S7 28–35.5: the men who did the job -----------------
+const ACC = [   // [t0, kind, name, fx, fy, tilt°]
+  [29.5, 'clip', 'highmen', .5, .5, -5], [30.0, 'ph', 'workman', .42, .5, 4], [30.5, 'clip', 'edge', .5, .4, -6], [30.75, 'st', 'window', .6, .5, 5],
+  [31.0, 'clip', 'climb', .5, .5, -4], [31.125, 'ph', 'sitter', .45, .55, 6], [31.25, 'clip', 'bolting', .5, .5, -6], [31.375, 'st', 'sitter', .6, .45, 4]];
+const COUNT = [1, 40, 230, 610, 1100, 1650, 2100, 2400];
+function S7(t) {
+  if (t < T.acc) {        // the question, in the brochure's own words
+    cx.fillStyle = INK; cx.fillRect(0, 0, W, H);
+    const d = A.doc[3], o = slam(t, T.men, .16) * 1400;
+    cx.save(); cx.translate(120 - o, 360); cx.rotate(-4 * Math.PI / 180);
+    const sx = 1290, sy = 118, sw = 720, sh = 62, s = 1.75;
+    cx.fillStyle = PAPER; cx.fillRect(-30, -30, sw * s + 60, sh * s + 60);
+    if (d) cx.drawImage(d, sx, sy, sw, sh, 0, 0, sw * s, sh * s);
+    if (t >= T.men + .5) { const p = eo(seg(t, T.men + .5, T.men + .9)); cx.strokeStyle = RED; cx.lineWidth = 12; cx.lineCap = 'round';
+      cx.beginPath(); cx.ellipse(sw * s / 2, sh * s / 2, sw * s / 2 + 60, sh * s / 2 + 55, 0, 3.6, 3.6 + p * 2 * Math.PI * 1.04); cx.stroke(); }
+    cx.restore();
+    tag('文件 · "THE MEN WHO DID THE JOB" · EMPIRE STATE, INC. 1931', 120, 640);
+    if (t >= T.men + 1.0) { const s2 = back(seg(t, T.men + 1.0, T.men + 1.15), 2); cx.save(); cx.translate(1620, 520); cx.scale(s2, s2); txt(null, '?', 0, 260, { font: 'Osw', size: 700, fill: RED, align: 'center' }); cx.restore(); }
+    return;
+  }
+  if (t < T.expo) {       // acceleration: half, quarter, eighth beats; the count climbs with every cut
+    let k = 0; for (let i = 0; i < ACC.length; i++) if (t >= ACC[i][0]) k = i;
+    const [t0, kind, name, fx, fy, tilt] = ACC[k];
+    cx.fillStyle = k % 2 ? RED : INK; cx.fillRect(0, 0, W, H);
+    cx.save(); cx.translate(W / 2, H / 2 - 30); cx.rotate(tilt * Math.PI / 180);
+    const im = kind === 'clip' ? clipImg(name, t - t0 + .3, 1.2) : kind === 'ph' ? A.ph[name] : A.st[name];
+    cover(im, -750, -415, 1500, 830, fx, fy, 1.02 + (t - t0) * .18);
+    cx.restore();
+    flash(t, t0, 0, 0, W, H, .35);
+    const n = COUNT[k];
+    cx.fillStyle = k % 2 ? INK : RED; cx.fillRect(1180, 720, 700, 230);
+    const cw = txt(null, String(n).padStart(4, '0'), 1210, 920, { font: 'Osw', size: 230, fill: PAPER, ls: 6 }).w;
+    txt(null, '人', 1210 + cw + 18, 850, { size: 72, fill: PAPER });
+    txt(null, 'MEN', 1210 + cw + 20, 905, { font: 'Osw', wt: 600, size: 34, fill: PAPER, ls: 3 });
+    tag(kind === 'clip' || kind === 'st' ? FILM : 'PHOTO · LEWIS HINE 1930–31', 70, 60);
+    return;
+  }
+  // multiple exposure: the steel field from above, workers printed over it, and the answer
+  const lt = t - T.expo;
+  cx.fillStyle = RED; cx.fillRect(0, 0, W, H);
+  const EW = { x: 190, y: 30, w: 1700, h: 1020 };          // the exposure window (<= 2.5x of the film source)
+  cx.save(); cx.beginPath(); cx.rect(EW.x, EW.y, EW.w, EW.h); cx.clip();
+  cover(clipImg('field', lt, .8, 'clamp'), EW.x, EW.y, EW.w, EW.h, .5, .5, 1.0 + lt * .006);
+  cx.globalCompositeOperation = 'screen'; cx.globalAlpha = .45;
+  cover(clipImg('highmen', lt, .9, 'ping'), EW.x, EW.y, EW.w, EW.h, .5, .5, 1.0);
+  cx.globalAlpha = 1; cx.globalCompositeOperation = 'multiply';
+  for (const [k, x, y, h, flip] of [['workman', 1120, 90, 900, false], ['sitter', 1520, 200, 760, true]]) {
+    const c = A.cut[k]; if (!c) continue; const w = c.width * h / c.height, o = slam(t, T.expo + (flip ? .25 : 0), .14) * 900;
+    cx.save(); cx.translate(x + o + (flip ? w : 0), y); cx.scale(flip ? -1 : 1, 1); cx.drawImage(c, 0, 0, w, h); cx.restore();
+  }
+  cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = 'rgba(20,18,16,.25)'; cx.fillRect(0, 0, W, H);
+  cx.restore();
+  flicker(t, EW.x, EW.y, EW.w, EW.h);
+  const o = slam(t, T.expo, .1) * 900;
+  cx.fillStyle = INK; cx.fillRect(40 - o, 120, 980, 470);
+  const a = txt(null, '每天', 80 - o, 230, { size: 86, fill: PAPER });
+  const b = txt(null, '2,500', 70 - o, 520, { font: 'Osw', size: 300, fill: RED });
+  const c = txt(null, '人', 80 - o + b.w + 30, 520, { size: 150, fill: PAPER });
+  reg('m25', '每天 2,500 人', [a, b, c]);
+  txt('m25e', '2,500 MEN A DAY', 40 - o, 650, { font: 'Osw', wt: 600, size: 48, fill: INK, bg: PAPER, pad: 12, ls: 4 });
+  if (t >= T.expo + .5) {
+    const o2 = slam(t, T.expo + .5, .12) * 1000;
+    txt('m40', '最多一天约 4,000 人', 40 - o2, 770, { size: 60, fill: INK, bg: PAPER, pad: 14 });
+    txt('m40e', 'UP TO ABOUT 4,000 IN ONE DAY', 40 - o2, 845, { font: 'Osw', wt: 500, size: 34, fill: PAPER, bg: INK, pad: 8, ls: 3 });
+  }
+  tag(SRC, 1878, 40, { align: 'right', bg: RED });
+  tag('PHOTOS · LEWIS HINE 1930–31 · ' + FILM, 1878, 72, { align: 'right' });
+}
+
+// ============================================================ S8 35.5–43.25: the brochure's scale drawing -----------
+const FT = { woolworth: 792, eiffel: 984, chrysler: 1046, empire: 1250 };
+const NAME = { woolworth: ['伍尔沃斯大楼', 'WOOLWORTH'], eiffel: ['埃菲尔铁塔', 'EIFFEL TOWER'], chrysler: ['克莱斯勒大厦', 'CHRYSLER'], empire: ['帝国大厦', 'EMPIRE STATE'] };
+const KEYS = ['woolworth', 'eiffel', 'chrysler', 'empire'];
+const SLOT = { woolworth: 230, eiffel: 600, chrysler: 980, empire: 1340 }, BASE = 800, PXFT = .56;
+const STAND = { woolworth: 36.25, eiffel: 36.625, chrysler: 37.0, empire: 37.375 }, VERDICT = 40.0;
+// where each outline sits on the printed page (doc2 coords, before the page is turned): base centre and scale
+const PAGEPOS = { woolworth: [2104, 290], eiffel: [2104, 830], chrysler: [2104, 1375], empire: [2104, 1905] };
+function S8(t) {
+  const lt = t - T.chart;
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  const z = 1 + lt * .004; cx.save(); cx.translate(W / 2, H / 2); cx.scale(z, z); cx.translate(-W / 2, -H / 2);
+  const zp = 1 + eio(seg(t, VERDICT + .25, T.tower)) * .22;   // after the verdict the camera pushes into the winner
+  cx.translate(SLOT.empire, 560); cx.scale(zp, zp); cx.translate(-SLOT.empire, -560);
+  // the page arrives as printed (drawings lying on their side), then turns a quarter so they stand up
+  const turn = eio(seg(t, T.chart + .25, T.chart + .85)), PS = .42;
+  const pageM = new DOMMatrix().translate(980, 520 + slam(t, T.chart - .25, .25) * 900).rotate(lerp(0, 90, turn)).scale(PS).translate(-1640, -1100);
+  const pageA = 1 - eo(seg(t, T.chart + 1.0, T.chart + 1.6));
+  if (pageA > 0 && A.doc[2]) { cx.save(); cx.globalAlpha = pageA; cx.setTransform(cx.getTransform().multiply(pageM)); cx.drawImage(A.doc[2], 1000, 0, 1200, 2189, 1000, 0, 1200, 2189); cx.restore(); }
+  // ground line
+  const gl = eo(seg(t, T.chart + .9, T.chart + 1.3));
+  cx.fillStyle = INK; cx.fillRect(120, BASE, 1600 * gl, 10);
+  for (const k of KEYS) {
+    const b = BLD[k], im = k === 'empire' ? bldRed : A.bld[k];
+    const hpx = FT[k] * PXFT, s1 = hpx / (b.h - b.tip);
+    const p = eio(seg(t, STAND[k] - .5, STAND[k]));
+    // from its place on the turned page to its slot on the line
+    const pg = pageM.transformPoint(new DOMPoint(...PAGEPOS[k]));
+    const bx = lerp(pg.x, SLOT[k], p), by = lerp(pg.y, BASE, p), sc = lerp(PS, s1, p);
+    if (t < T.chart + .25) continue;
+    if (p <= 0 && pageA <= 0) continue;
+    cx.save(); cx.translate(bx, by); cx.rotate(lerp(Math.PI / 2 * (1 - turn), 0, p) * 0);
+    cx.drawImage(im, -b.w * sc / 2, -b.h * sc, b.w * sc, b.h * sc);
+    cx.restore();
+    if (t >= STAND[k]) {     // dimension line, number, name
+      const q = eo(seg(t, STAND[k], STAND[k] + .2)), dx = SLOT[k] + b.w * s1 / 2 + 26, top = BASE - hpx;
+      cx.fillStyle = k === 'empire' ? RED : INK;
+      cx.fillRect(dx, BASE - hpx * q, 8, hpx * q); cx.fillRect(dx - 14, top, 36, 8); cx.fillRect(dx - 14, BASE - 8, 36, 8);
+      const big = k === 'empire';
+      txt('n_' + k, FT[k].toLocaleString('en-US'), dx + 30, top + (big ? 86 : 56), { font: 'Osw', size: big ? 100 : 62, fill: big ? RED : INK, wt: 700 });
+      txt('c_' + k, NAME[k][0], SLOT[k] - 110, BASE + 66, { size: 40, wt: 700, fill: k === 'empire' ? RED : INK });
+      txt('e_' + k, NAME[k][1], SLOT[k] - 110, BASE + 104, { font: 'Osw', wt: 500, size: 26, fill: INK, ls: 3 });
+    }
+  }
+  if (t >= T.chart + 1.3) txt('ftu', '英尺 · FEET', 1720, 785, { font: 'Mono, SC', wt: 700, size: 22, fill: INK, align: 'right' });
+  cx.restore();
+  if (t >= VERDICT) {         // the verdict lands only after all four have been held still
+    const o = slam(t, VERDICT, .14) * 900;
+    cx.fillStyle = RED; cx.fillRect(40 - o, 40, 510, 160);
+    txt('vd', '世界最高', 70 - o, 166, { size: 110, fill: PAPER });
+    txt('vde', 'TALLEST IN THE WORLD', 44 - o, 248, { font: 'Osw', wt: 600, size: 30, fill: INK, ls: 2 });
+  }
+  tag('比例图 · ' + SRC.replace('来源 · ', ''), 1878, 1050, { align: 'right' });
+}
+
+// ============================================================ S9 43.25–48.25: the photomontage tower (signature) -----
+const FLOORS = (() => {
+  const src = ['grillage', 'field', 'bolting', 'workman', 'grid', 'colrise', 'highmen', 'beamset', 'sitter', 'edge', 'facade', 'window', 'derrtop', 'climb', 'field', 'highmen'];
+  const kind = { workman: 'ph', sitter: 'ph' };
+  const cuts = ['workman', null, 'sitter', null, 'workman', null, 'sitter', null, 'workman', null, 'sitter', null, 'workman', null, 'sitter', null];
+  const r = mulberry(31);
+  return src.map((k, i) => ({ k, kind: kind[k] || (i === 7 || i === 9 ? 'clip' : 'st'), cut: cuts[i], flip: i % 4 >= 2, t0: i < 10 ? 43.3 + i * .1 : 47.2 + (i - 10) * .075, side: i % 2 ? 1 : -1, w: 1000 - i * 30, fy: .25 + r() * .5, dx: (r() - .5) * 60 }));
+})();
+const FH = 150, TOP = 47.65, HOLD = [44.25, 47.2];   // the count rests on 86 while its dated line is up
+function S9(t) {
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  cx.globalAlpha = .22; cover(clipImg('skyline', t - T.tower, .6), 80, -110, 1760, 1300, .5, .5); cx.globalAlpha = 1;     // the city, faint, printed under the wedge
+  cx.fillStyle = RED; poly([[0, H], [W * .62, -40], [W * .80, -40], [W * .2, H]]); cx.fill();
+  const built = FLOORS.filter(f => t >= f.t0).length;
+  const builtC = FLOORS.reduce((a, f) => a + eio(seg(t, f.t0, f.t0 + .25)), 0);
+  const camY = Math.max(0, (builtC + 1.6) * FH - 700) + eio(seg(t, HOLD[0], HOLD[1])) * 140 + eo(seg(t, TOP, TOP + .5)) * 330;   // a slow climb through the hold
+  const baseY = 1000;
+  cx.save(); cx.translate(0, camY);
+  if (A.doc[3]) { cx.save(); cx.beginPath(); cx.rect(250, baseY, 1420, 600); cx.clip(); cx.drawImage(A.doc[3], 100, 360, 1100, 470, 250, baseY, 1420, 607); cx.restore(); }
+  FLOORS.forEach((f, i) => {
+    if (t < f.t0) return;
+    const y = baseY - (i + 1) * FH, o = slam(t, f.t0, .1) * 1400 * f.side, x = W / 2 - f.w / 2 + f.dx + o;
+    cx.fillStyle = INK; cx.fillRect(x - 14, y + FH - 14, f.w + 28, 14);
+    cx.save(); cx.beginPath(); cx.rect(x, y, f.w, FH - 14); cx.clip();
+    cover(f.kind === 'ph' ? A.ph[f.k] : f.kind === 'clip' ? clipImg(f.k, t - f.t0, 1, 'ping') : A.st[f.k], x, y, f.w, FH - 14, .5, f.fy, 1);
+    cx.restore();
+    if (f.cut && A.cut[f.cut]) {
+      const c = A.cut[f.cut], ch = 290, cw = c.width * ch / c.height, land = 1 - ei(1 - seg(t, f.t0 + .05, f.t0 + .2));
+      const x0 = x + (i % 4 < 2 ? f.w * .74 : f.w * .06), y0 = y - ch + 40 - (1 - land) * 300;
+      cx.save(); cx.translate(x0 + (f.flip ? cw : 0), y0); cx.scale(f.flip ? -1 : 1, 1); cx.drawImage(c, 0, 0, cw, ch); cx.restore();
+    }
+  });
+  // the crown: the mooring-mast steel with its flag, then Icarus on top
+  const topY = baseY - FLOORS.length * FH;
+  if (t >= TOP) {
+    const o = slam(t, TOP, .14) * 900, w = 560, h = 400;
+    cx.save(); cx.beginPath(); cx.rect(W / 2 - w / 2, topY - h - o, w, h); cx.clip();
+    cover(clipImg('dome', t - TOP, 1), W / 2 - w / 2, topY - h - o, w, h, .5, .45); flicker(t, W / 2 - w / 2, topY - h, w, h);
+    cx.restore();
+    cx.fillStyle = INK; cx.fillRect(W / 2 - w / 2 - 14, topY - 14, w + 28, 14);
+  }
+  if (t >= TOP + .35 && A.cut.icarus) {
+    const c = A.cut.icarus, ch = 380, cw = c.width * ch / c.height;
+    const y = topY - 400 - ch + 30 - (1 - eo(seg(t, TOP + .35, TOP + .5))) * 400;
+    cx.drawImage(c, W / 2 + 150, y, cw, ch);
+  }
+  cx.restore();
+  // floor counter (graphic) + the dated anchor (text)
+  const n = t < HOLD[0] ? Math.round(lerp(0, 86, seg(builtC, 0, 10))) : t < HOLD[1] ? 86 : Math.round(lerp(86, 102, seg(builtC, 10, FLOORS.length)));
+  const nw = measure(String(n), 'Osw', 260, 700);
+  cx.fillStyle = INK; cx.fillRect(40, 50, nw + 170, 290);
+  txt(null, String(n), 66, 290, { font: 'Osw', size: 260, fill: n >= 102 ? RED : PAPER });
+  txt(null, '层', 66 + nw + 16, 290, { size: 100, fill: PAPER });
+  if (t >= HOLD[0] && t < HOLD[1]) {
+    txt('a86', '1930.9.15 钢架 86 层', 50, 420, { size: 50, fill: INK, bg: PAPER, pad: 10 });
+    txt('a86e', 'STEEL AT 86 · 15 SEPT 1930', 50, 482, { font: 'Osw', wt: 500, size: 30, fill: INK, bg: PAPER, pad: 8, ls: 2 });
+    dayTag(182, 50, 580);
+  }
+  tag('PHOTOMONTAGE · ' + FILM, 1878, 1050, { align: 'right' });
+}
+
+// ============================================================ S10 + S11: silence, the result ------------------------
+function S11(t) {
+  if (t < T.result) {      // half a bar of nothing: one rivet
+    cx.fillStyle = INK; cx.fillRect(0, 0, W, H);
+    cx.fillStyle = RED; cx.beginPath(); cx.arc(960, 540, 14, 0, 7); cx.fill(); return;
+  }
+  const lt = t - T.result, z = 1 + lt * .004;
+  cx.save(); cx.translate(W / 2, H / 2); cx.scale(z, z); cx.translate(-W / 2, -H / 2);
+  cx.fillStyle = PAPER; cx.fillRect(-60, -60, W + 120, H + 120);
+  // the finished tower in a tall slanted window
+  const o = slam(t, T.result, .16) * 1200;
+  const win = [[1080, -20 - o], [1640, -20 - o], [1560, 1100 - o], [1000, 1100 - o]];
+  cx.fillStyle = INK; poly(win.map(([x, y], i) => [x + (i % 3 ? 14 : -14), y + (i < 2 ? -14 : 14)])); cx.fill();
+  const fy = lerp(.85, .12, eio(seg(t, T.result, T.end)));          // the camera tilts up the tower
+  const RC = t < 51.0 ? ['tower', T.result, .52] : t < 53.0 ? ['deco', 51.0, .5] : ['finished', 53.0, .5];   // a cut on each bar
+  withClip(win, () => { cover(clipImg(RC[0], t - RC[1], .6), 1000, -20 - o, 640, 1120, RC[2], fy, 1.12); flicker(t, 1000, 0, 640, H); flash(t, 51.0, 1000, 0, 640, H, .4); flash(t, 53.0, 1000, 0, 640, H, .4); });
+  // Icarus, tilted, overlapping the window
+  const o2 = slam(t, T.result + .25, .16) * 900;
+  cx.save(); cx.translate(1610 + o2 - lt * 9, 600 + lt * 4); cx.rotate((6 - lt * .4) * Math.PI / 180);
+  cx.fillStyle = INK; cx.fillRect(-300, -235, 600, 470);
+  cx.save(); cx.beginPath(); cx.rect(-288, -223, 576, 446); cx.clip(); cover(A.ph.icarus, -288, -223, 576, 446, .44, .42, 1.05 + lt * .006); cx.restore();
+  cx.restore();
+  // the red wedge from the bottom left
+  const wo = slam(t, T.result, .2);
+  cx.fillStyle = RED; poly([[-60, H + 140 + wo * 600], [1160 - wo * 1200, 720 + wo * 600], [1220 - wo * 1200, 860 + wo * 600], [-60, H + 400]]); cx.fill();
+  const a1 = slam(t, T.result, .1) * 1000, a2 = slam(t, T.result + .25, .1) * 1000;
+  const RS = 53.6, rs = t >= RS ? eo(seg(t, RS, RS + .12)) : 0;     // "four hundred and ten days": the number is stamped red
+  if (rs > 0) { cx.fillStyle = RED; cx.fillRect(30, 70, 620 * rs, 290); }
+  const b1 = txt(null, '410', 60 - a1, 330, { font: 'Osw', size: 300, fill: rs >= 1 ? PAPER : INK });
+  const b2 = txt(null, '天', 60 - a1 + b1.w + 18, 330, { size: 170, fill: rs >= 1 ? PAPER : INK });
+  reg('r410', '410 天', [b1, b2]);
+  const c1 = txt(null, '102', 60 - a2, 620, { font: 'Osw', size: 300, fill: RED });
+  const c2 = txt(null, '层', 60 - a2 + c1.w + 18, 620, { size: 170, fill: RED });
+  reg('r102', '102 层', [c1, c2]);
+  if (t >= T.result + .5) {
+    const o3 = slam(t, T.result + .5, .12) * 900;
+    txt('rs', '1931.5.1 开放 · 比计划提前近一个月', 66 - o3, 735, { size: 44, fill: PAPER, bg: INK, pad: 12 });
+    txt('rse', 'OPENED 1 MAY 1931 · NEARLY A MONTH AHEAD OF SCHEDULE', 66 - o3, 800, { font: 'Osw', wt: 500, size: 28, fill: INK, ls: 2 });
+  }
+  cx.restore();
+  tag(FILM, 1600, 1050, { align: 'right' });
+  tag('PHOTO · LEWIS HINE, "ICARUS, EMPIRE STATE BUILDING" 1930', 1878, 900, { align: 'right' });
+}
+
+// ============================================================ S12 56–60: end card -----------------------------------
+const CREDITS = [
+  'FILM  Empires of Steel (American Bridge Co. / Pathescope, 1930–31) · public domain · Internet Archive',
+  'PHOTOS  Lewis Hine, 1930–31 · U.S. National Archives (public domain) · The Metropolitan Museum of Art (CC0)',
+  'DOCUMENT  What Everybody Wants to Know About Empire State (Empire State, Inc., 1931) · Columbia University Libraries · public domain',
+  'SOUND  "WWS Rivetingmachine" by Work With Sounds / Konrad Gutkowski · CC BY 4.0',
+  'Unofficial film from public archives · fonts OFL · samples CC0',
+];
+function S12(t) {
+  cx.fillStyle = PAPER; cx.fillRect(0, 0, W, H);
+  // the opening girder returns, a still of the rider in a slanted window
+  band(1650, 930, 1100, 120, TH, RED);
+  withClip([[1300, 120], [1840, 120], [1840, 520], [1300, 695]], () => cover(A.st.rider, 1300, 120, 540, 575, .5, .45));
+  const o = slam(t, T.end, .12) * 600;
+  const a = txt(null, '410 天', 90 - o, 250, { size: 150, fill: INK });
+  reg('et', '410 天', [a]);
+  txt('ete', '410 DAYS', 96 - o, 330, { font: 'Osw', wt: 600, size: 46, fill: INK, ls: 8 });
+  cx.fillStyle = RED; cx.fillRect(90, 380, 720 * eo(seg(t, T.end + .1, T.end + .4)), 5);
+  txt('es', '构成主义蒙太奇', 90, 460, { size: 50, wt: 700, fill: INK });
+  txt('ese', 'CONSTRUCTIVIST MONTAGE', 92, 510, { font: 'Osw', wt: 500, size: 32, fill: INK, ls: 5 });
+  txt('eby', 'LemoLab × Claude Opus 5.5', 90, 600, { font: 'Osw', wt: 600, size: 42, fill: RED, ls: 2 });
+  CREDITS.forEach((s, i) => txt(null, s, 90, 700 + i * 36, { font: 'Mono', size: 18, fill: INK }));
+}
+
+// ============================================================ subtitles (burned in; the .srt is written from the same table)
+const SUBS = VO.map(([id, t0], i) => {
+  const L = LINES.find(l => l.id === id), d = VODUR[id];
+  const next = i + 1 < VO.length ? VO[i + 1][1] - .05 : T.end - .05;
+  return { id, t0, t1: Math.min(t0 + Math.max(d + .6, 1.8), next), zh: L.zh, en: L.en };
+});
+function subtitles(t) {
+  const s = SUBS.find(s => t >= s.t0 && t < s.t1); if (!s) return;
+  const a = clamp(Math.min((t - s.t0) / .08, (s.t1 - t) / .08));
+  cx.save(); cx.globalAlpha = a;
+  const wz = measure(s.zh, 'SC', 40, 700), we = measure(s.en, 'Osw', 28, 500, 1);
+  const w = Math.max(wz, we) + 56;
+  cx.fillStyle = 'rgba(20,18,16,.9)'; cx.fillRect(56, 952, w, 104);
+  cx.fillStyle = RED; cx.fillRect(56, 952, 10, 104);
+  txt(null, s.zh, 88, 998, { size: 40, wt: 700, fill: PAPER });
+  txt(null, s.en, 88, 1040, { font: 'Osw', wt: 500, size: 28, fill: PAPER, ls: 1 });
+  cx.restore();
+}
+
+// ============================================================ timeline
+const SHOTS = [[0, T.map, S1], [T.map, T.grid, S2], [T.grid, T.freeze, S3], [T.freeze, T.doc, S4], [T.doc, T.hours, S5],
+  [T.hours, T.men, S6], [T.men, T.chart, S7], [T.chart, T.tower, S8], [T.tower, T.silence, S9], [T.silence, T.end, S11], [T.end, DUR + 1, S12]];
+const shotAt = t => SHOTS.find(s => t >= s[0] && t < s[1]) || SHOTS[SHOTS.length - 1];
+HITS.push([0, 16], [.25, 8], [.5, 7], [.625, 5], [.75, 6], [.875, 6], [1.0, 4], [5.0, 8], [T.iris, 6], [T.steel, 8], [T.steel + .375, 9],
+  [T.strips, 8], [T.freeze, 10], [T.freeze + .05, 6], [T.freeze + 1.25, 6], [T.doc, 8], [T.doc + .25, 7], [T.hours, 6], [T.hours + .75, 5], [T.hours + 1.5, 5],
+  [T.men, 9], [T.men + 1.0, 10], [T.acc, 6], [T.expo, 10], [T.chart, 8], [VERDICT, 12], [T.tower + .25, 4], [TOP, 8], [T.result, 18], [T.result + .25, 10], [53.6, 7]);
+for (const k of KEYS) HITS.push([STAND[k], 4]);
+for (const f of FLOORS) HITS.push([f.t0, 3]);
+for (let k = 0; k < 9; k++) HITS.push([T.grid + k * .25, 2.5]);
+
+function render(t) {
+  TX = [];
+  const [sx, sy] = shake(t);
+  cx.setTransform(1, 0, 0, 1, sx, sy);
+  const w = wipeAt(t);
+  if (w) {
+    const [w0, p] = w, xc = wipeFront(p);
+    const prev = shotAt(w0 - 1e-3), next = shotAt(w0 + 1e-3);
+    prev[2](t);
+    const keep = TX; TX = [];
+    cx.save(); poly(wipeRegion(xc).map(([x, y]) => [W - x, y])); cx.clip(); next[2](t); cx.restore();   // the next scene is already arriving behind the band
+    TX = keep;
+    band(W - xc, H / 2, 260, 3000, WIPE_A - Math.PI / 2, RED);
+  } else shotAt(t)[2](t);
+  cx.setTransform(1, 0, 0, 1, 0, 0);
+  subtitles(t);
+  cx.globalCompositeOperation = 'multiply'; cx.globalAlpha = .5; cx.drawImage(fibre, 0, 0); cx.globalAlpha = 1;
+  cx.globalCompositeOperation = 'source-over';
+}
+
+// ============================================================ events (sound cues) — exported by events.mjs
+const EV = [];
+const ev = (t, type, o = {}) => EV.push({ t: +t.toFixed(4), type, ...o });
+ev(0, 'slam', { g: 1 }); ev(.25, 'window');
+for (const t0 of [.5, .625, .75]) ev(t0, 'stamp', { g: .8 }); ev(.875, 'stamp', { g: 1 }); ev(1.0, 'type', { g: .6 });
+for (const s of TITLE_SEQ.slice(1)) ev(s[0], 'cut');
+for (const w0 of WIPES) ev(w0 - .25, 'wipe');
+ev(T.map, 'paper'); ev(5.25, 'type', { g: .6 }); ev(5.5, 'marker', { d: .45 }); ev(T.iris, 'iris');
+ev(T.steel, 'slam', { g: .7 }); for (let i = 0; i < 4; i++) ev(T.steel + i * .0625, 'stamp', { g: .5 }); ev(T.steel + .375, 'girder');
+for (let k = 0; k < 9; k++) ev(T.grid + k * .25, 'cell', { k });
+ev(12.0, 'type', { g: .6 });
+for (let b = 0; b < 3; b++) ev(T.strips + b * BEAT, 'stripcut', { k: b });
+ev(T.freeze, 'freeze'); ev(T.freeze + .05, 'type', { g: .8 }); ev(T.freeze + .2, 'marker', { d: .3 }); ev(T.freeze + 1.25, 'freeze');
+ev(T.doc, 'paper'); ev(T.doc + .25, 'slam', { g: .7 }); ev(T.doc + .5, 'marker', { d: .4 });
+ev(T.hours - .25, 'whistle');
+for (const k of [0, .75, 1.5]) ev(T.hours + k, 'window'); ev(T.hours + .25, 'type', { g: .6 }); ev(T.hours + 2.0, 'paper'); ev(T.hours + 2.2, 'marker', { d: .3 });
+ev(T.men, 'slam', { g: .8 }); ev(T.men + .5, 'marker', { d: .4 }); ev(T.men + 1.0, 'slam', { g: 1 });
+for (const a of ACC) ev(a[0], 'rivet', { g: .9 });
+ev(T.expo, 'slam', { g: .9 }); ev(T.expo + .5, 'type', { g: .6 });
+ev(T.chart, 'paper'); ev(T.chart + .25, 'turn');
+for (const k of KEYS) ev(STAND[k], 'stand', { k: KEYS.indexOf(k) });
+ev(VERDICT, 'verdict');
+for (const f of FLOORS) ev(f.t0, 'floor'); ev(TOP, 'slam', { g: .7 }); ev(TOP + .35, 'land');
+ev(T.silence, 'silence'); ev(T.result, 'final'); ev(T.result + .25, 'slam', { g: .8 }); ev(T.result + .5, 'type', { g: .5 });
+ev(51.0, 'cut'); ev(53.0, 'cut'); ev(53.6, 'stamp', { g: 1 }); ev(T.end, 'end');
+for (const [id, t0] of VO) ev(t0, 'vo', { id });
+
+window.DUR = DUR; window.EV = EV; window.SUBS = SUBS;
+window.render = render;
+window.TEXTS = t => { render(t); return TX; };
+window.READY = true;
+render(0);
+</script></body></html>

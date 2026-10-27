@@ -1,4 +1,4 @@
-// 后期：每个镜头 → (MSAA+深度) → 物理景深 → 辉光 → rtA/rtB；最终合成：叠化 / 调色 / 暗角 / 色调映射 / sRGB
+// Post-processing: each shot → (MSAA + depth) → physical depth of field → bloom → rtA/rtB; final composite: crossfade / grading / vignette / tone mapping / sRGB
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -59,7 +59,7 @@ const finalShader = {
       vec3 a = texture2D(tA, vUv).rgb;
       if (mixB > 0.) {
         vec3 b = texture2D(tB, vUv).rgb; float m = mixB;
-        if (mode > .5) { vec2 d = vUv - center; d.x *= aspect; float r = length(d); m = smoothstep(mixB * 1.3 - .08, mixB * 1.3, r) ; m = 1. - m; }   // 圆形扩散
+        if (mode > .5) { vec2 d = vUv - center; d.x *= aspect; float r = length(d); m = smoothstep(mixB * 1.3 - .08, mixB * 1.3, r) ; m = 1. - m; }   // circular spread
         a = mix(a, b, m);
       }
       a *= expo;
@@ -73,7 +73,7 @@ const finalShader = {
     }`
 };
 
-export const GRADE0 = { expo: 1, fade: 1, vig: .35, sat: 1, contrast: .1, time: 0, lift: [0, .005, .018], gain: [1.03, 1, .95] };   // = finalShader 初始值
+export const GRADE0 = { expo: 1, fade: 1, vig: .35, sat: 1, contrast: .1, time: 0, lift: [0, .005, .018], gain: [1.03, 1, .95] };   // = finalShader initial values
 
 export class Pipe {
   constructor(renderer, w, h, s = 2) {
@@ -106,7 +106,7 @@ export class Pipe {
     const u = this.fin.material.uniforms;
     u.tA.value = this.rtA.texture; u.tB.value = this.rtB.texture; u.mixB.value = o.mixB || 0; u.mode.value = o.mode || 0;
     if (o.center) u.center.value.set(o.center[0], o.center[1]);
-    // 每帧都从默认值开始：镜头没给的调色参数一律回到默认，不继承上一个镜头 / 不依赖 worker 起点（v1 在分段边界有调色跳变）
+    // Every frame starts from the defaults: any grading parameter a shot doesn't set returns to its default, never inherited from the previous shot and never dependent on where a worker started (otherwise the grade jumps at segment boundaries)
     for (const k of ['expo', 'fade', 'vig', 'sat', 'contrast', 'time']) u[k].value = o[k] !== undefined ? o[k] : GRADE0[k];
     u.lift.value.set(...(o.lift || GRADE0.lift)); u.gain.value.set(...(o.gain || GRADE0.gain));
     this.r.setRenderTarget(null); this.fin.render(this.r);

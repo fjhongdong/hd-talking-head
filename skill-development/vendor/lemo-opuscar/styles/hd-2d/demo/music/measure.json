@@ -20,7 +20,7 @@
  "resume_measured": 12.386333333333333,
  "sections": [
   {
-   "name": "章节卡",
+   "name": "Chapter card",
    "a": 0.0,
    "b": 5.5,
    "rms": -39.4,
@@ -28,7 +28,7 @@
    "min_st": -94.3
   },
   {
-   "name": "港镇夜景(旁白N1)",
+   "name": "Harbour town at night (narration N1)",
    "a": 5.5,
    "b": 11.6,
    "rms": -31.1,
@@ -36,7 +36,7 @@
    "min_st": -44.5
   },
   {
-   "name": "灯灭停顿",
+   "name": "Lamp-out pause",
    "a": 11.6,
    "b": 12.4,
    "rms": -43.4,
@@ -44,7 +44,7 @@
    "min_st": -54.6
   },
   {
-   "name": "港镇/码头",
+   "name": "Harbour town / pier",
    "a": 12.4,
    "b": 25.5,
    "rms": -31.1,
@@ -52,7 +52,7 @@
    "min_st": -51.1
   },
   {
-   "name": "夜林",
+   "name": "Night forest",
    "a": 25.5,
    "b": 35.5,
    "rms": -26.5,
@@ -60,7 +60,7 @@
    "min_st": -40.3
   },
   {
-   "name": "风暴石阶",
+   "name": "Storm, stone steps",
    "a": 35.5,
    "b": 42.0,
    "rms": -19.9,
@@ -68,7 +68,7 @@
    "min_st": -23.8
   },
   {
-   "name": "火苗将熄(抽空)",
+   "name": "Flame almost out (drop-out)",
    "a": 42.0,
    "b": 44.3,
    "rms": -37.8,
@@ -76,7 +76,7 @@
    "min_st": -45.9
   },
   {
-   "name": "重燃→爬塔",
+   "name": "Relit → climbing the tower",
    "a": 44.3,
    "b": 53.5,
    "rms": -29.6,
@@ -84,7 +84,7 @@
    "min_st": -43.5
   },
   {
-   "name": "高潮:光柱扫海",
+   "name": "Climax: beam sweeps the sea",
    "a": 53.5,
    "b": 67.0,
    "rms": -14.7,
@@ -92,7 +92,7 @@
    "min_st": -20.4
   },
   {
-   "name": "片名收束",
+   "name": "Title wrap-up",
    "a": 67.0,
    "b": 74.5,
    "rms": -17.3,
@@ -100,7 +100,7 @@
    "min_st": -28.4
   },
   {
-   "name": "混响尾",
+   "name": "Reverb tail",
    "a": 74.5,
    "b": 76.5,
    "rms": -33.7,

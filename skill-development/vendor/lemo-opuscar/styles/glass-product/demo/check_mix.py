@@ -1,4 +1,4 @@
-"""成片自检：从 mp4 抽出音轨，按字幕区间逐句 whisper 转写并比对。python check_mix.py film.mp4"""
+"""Final-film self-check: extract the audio track from the mp4, whisper-transcribe it line by line over the subtitle spans and compare.python check_mix.py film.mp4"""
 import sys, json, os, re, subprocess, numpy as np, soundfile as sf
 from faster_whisper import WhisperModel
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +14,7 @@ for k, c in enumerate(json.load(open(os.path.join(HERE, 'cues.json')))):
     seg = np.concatenate([np.zeros(int(.5 * sr)), y[a:b], np.zeros(int(.5 * sr))]).astype(np.float32)
     got = ' '.join(s.text.strip() for s in m.transcribe(seg, beam_size=5, language='en')[0])
     ok = norm(got) == norm(c['text'])
-    homo = not ok and [HOMO.get(w, w) for w in norm(got)] == [HOMO.get(w, w) for w in norm(c['text'])]   # 同音误听（hear/here）人工判定通过
+    homo = not ok and [HOMO.get(w, w) for w in norm(got)] == [HOMO.get(w, w) for w in norm(c['text'])]   # homophone mishearings (hear/here) are judged a pass by hand
     bad += not (ok or homo)
     print('OK  ' if ok else 'OK~ (同音)' if homo else 'DIFF', c['t0'], c['text'], '→', got)
 print('mismatches:', bad)

@@ -1,8 +1,8 @@
 #!/bin/zsh
-# 拼接分段 → 轻颗粒 → 混入配乐 → 成片
-# 用法：./mux.sh [输出路径]
-#   OUTDIR=out_ej（默认，英日版）→ 默认输出 ../pictogram-motion.mp4（= styles/pictogram-motion/pictogram-motion.mp4）
-#   OUTDIR=out   （中文版）      → 默认输出 out/pictogram-motion_zh.mp4
+# Concatenate segments → light grain → mix in the score → final film
+# Usage: ./mux.sh [output path]
+#   OUTDIR=out_ej (default, English/Japanese version) → default output ../pictogram-motion.mp4 (= styles/pictogram-motion/pictogram-motion.mp4)
+#   OUTDIR=out    (Chinese version)                 → default output out/pictogram-motion_zh.mp4
 set -e
 cd "${0:A:h}"
 SEG="${OUTDIR:-out_ej}"

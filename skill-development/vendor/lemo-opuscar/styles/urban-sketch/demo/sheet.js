@@ -1,4 +1,4 @@
-// 角色设定表：?sheet=1
+// Character model sheet: ?sheet=1
 import { figure, drawPrims, hat, handwrite, R3 } from './engine.js';
 import { LOOK, sit, run, walk, stand, cycle, dive, prone, wave } from './poses.js';
 const ctx = document.getElementById('c').getContext('2d');

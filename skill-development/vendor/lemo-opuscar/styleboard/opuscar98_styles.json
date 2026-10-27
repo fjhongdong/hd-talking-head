@@ -321,8 +321,8 @@
      "zh": "切到 Clawd 骑马的近景：举起左轮朝天开枪，画面随着后坐力一震；轻推。"
     }
    ],
-   "direction_en": "Clawd is Yancey Cravat in a white Stetson and a neckerchief, riding a black horse at the front. The run plays at 1.1×. Following the v6 note, the camera first pulls back to show more horses, then one cut to the close shot, where Clawd draws and fires on beat 5.",
-   "direction_zh": "Clawd 扮扬西·克拉瓦特：白色宽边牛仔帽、领巾，骑黑马冲在最前。整段按 1.1 倍跑。按 v6 的意见先拉远看到更多的马，再一刀切回近景，第 5 拍拔枪朝天开火。",
+   "direction_en": "Clawd is Yancey Cravat in a white Stetson and a neckerchief, riding a black horse at the front. The run plays at 1.1×. The camera first pulls back to show more horses, then one cut to the close shot, where Clawd draws and fires on beat 5.",
+   "direction_zh": "Clawd 扮扬西·克拉瓦特：白色宽边牛仔帽、领巾，骑黑马冲在最前。整段按 1.1 倍跑。先拉远看到更多的马，再一刀切回近景，第 5 拍拔枪朝天开火。",
    "refs": [
     "Wesley Ruggles, 1931",
     "Gold-toned albumen prints, 1880s",
@@ -372,8 +372,8 @@
      "zh": "贴着 Clawd 身高的侧面跟拍：它拎着皮箱往前走，大堂从身后滑过，前方旋转门在转；镜头边跟边往前、往里靠。"
     }
    ],
-   "direction_en": "Clawd is the bellboy in a pillbox cap, carrying a suitcase covered in hotel labels. In v6 it really walks, 1.4 m/s at 2.4 strides a second, matched to the distance it covers. The film plays 1:1 with one hard cut at 1.08 s, from the overhead to the tracking shot.",
-   "direction_zh": "Clawd 扮门童，戴圆筒小帽，拎一只贴满旅馆标签的皮箱。v6 改成真的在走：每秒 1.4 米、2.4 步，步子和位移对得上。整段 1:1 播放，1.08 秒处从俯拍一刀切到侧面跟拍。",
+   "direction_en": "Clawd is the bellboy in a pillbox cap, carrying a suitcase covered in hotel labels. It really walks, 1.4 m/s at 2.4 strides a second, matched to the distance it covers. The film plays 1:1 with one hard cut at 1.08 s, from the overhead to the tracking shot.",
+   "direction_zh": "Clawd 扮门童，戴圆筒小帽，拎一只贴满旅馆标签的皮箱。它是真的在走：每秒 1.4 米、2.4 步，步子和位移对得上。整段 1:1 播放，1.08 秒处从俯拍一刀切到侧面跟拍。",
    "refs": [
     "Edmund Goulding, 1932",
     "Cedric Gibbons (art direction)",
@@ -531,8 +531,8 @@
      "zh": "一镜到底：从整张海图开始，邦蒂号沿虚线航迹前进，镜头滑进图上的船舶插画，四周仍是恒向线和罗盘玫瑰；甲板上 Clawd 举起弯刀、指着布莱让他下船，小艇落到船尾，驶向帝汶的航迹在图上一路画出来。"
     }
    ],
-   "direction_en": "Clawd is Fletcher Christian in a bicorne worn athwartships, cutlass in hand. Following the v6 note, the film never leaves the chart: one glide, no cuts. The cutlass goes up on beat 4 and levels at the launch a moment later with a glint, while the launch drifts astern through the last beats.",
-   "direction_zh": "Clawd 扮弗莱彻·克里斯蒂安：横戴双角帽、手持弯刀。按 v6 的意见整段不离开海图，一个镜头滑进去，不切。第 4 拍举刀，紧接着刀锋一闪指向小艇；最后几拍小艇往船尾漂开。",
+   "direction_en": "Clawd is Fletcher Christian in a bicorne worn athwartships, cutlass in hand. The film never leaves the chart: one glide, no cuts. The cutlass goes up on beat 4 and levels at the launch a moment later with a glint, while the launch drifts astern through the last beats.",
+   "direction_zh": "Clawd 扮弗莱彻·克里斯蒂安：横戴双角帽、手持弯刀。整段不离开海图，一个镜头滑进去，不切。第 4 拍举刀，紧接着刀锋一闪指向小艇；最后几拍小艇往船尾漂开。",
    "refs": [
     "Frank Lloyd, 1935",
     "Robert Dodd, The Mutineers turning Lieut. Bligh… adrift (1790)",
@@ -865,8 +865,8 @@
    ],
    "dim": "2D",
    "render": "2D",
-   "desc_en": "Opaque gouache in the 1941 poster's gold and green: solid colour masses, coal-black tips, Kyffin Williams' heavy dark hills and broken contours. It replaced a woodcut that repeated No. 3; the scene is the colliers walking home down the valley, singing.",
-   "desc_zh": "用 1941 年原海报金黄加绿配色的不透明水粉：扎实的色块、煤黑的渣山、Kyffin Williams 式厚重的深色山体和断续描边。原定的木刻和第 3 部重复，改成水粉；画的是矿工唱着歌走下山谷回家。",
+   "desc_en": "Opaque gouache in the 1941 poster's gold and green: solid colour masses, coal-black tips, Kyffin Williams' heavy dark hills and broken contours. Gouache keeps it apart from No. 3's woodcut; the scene is the colliers walking home down the valley, singing.",
+   "desc_zh": "用 1941 年原海报金黄加绿配色的不透明水粉：扎实的色块、煤黑的渣山、Kyffin Williams 式厚重的深色山体和断续描边。用水粉而不用木刻，和第 3 部区分开；画的是矿工唱着歌走下山谷回家。",
    "prompt_en": "Opaque gouache after Welsh painter Kyffin Williams. Directional strokes 1/80-1/40 of frame width, 2-5 times as long, ragged, fully covering; broken dark dashes outline buildings, walls and ridges; dark hills flecked with lighter green or slate knife marks. Palette: sky and light pale gold #F1C565 (not mustard), fields green #86A03F, darks coal #1D1B1E, far hills and water slate #48505E, small accents yellow #F6CF2F, other colours mixed from these; the hero the story centres on #D97757, at least 1/8 of frame height. Fields and sky light (~60%), hills and buildings dark. Warm grade under 10%, vignette, grain. Default low late-afternoon side light: fields lit, ridges rim-lit. From high ground in true perspective, a path leading the eye down; small repeated buildings (or walls, rocks) stepping along slopes. Motion: looping smoke or cloud, a lateral track. Avoid: watercolour transparency, vector fills, mud.",
    "prompt_zh": "仿威尔士画家 Kyffin Williams 的不透明水粉。方向性笔触宽为画幅宽 1/80–1/40，长是宽的 2–5 倍，边缘毛糙，完全覆盖；房子、墙、山脊用断续深色短线勾边；暗山上刮几笔亮绿或灰蓝。色板：天空和光淡金 #F1C565（别成芥末黄），田野绿 #86A03F，暗部煤黑 #1D1B1E，远山和水面灰蓝 #48505E，小点缀黄 #F6CF2F，其他颜色由这几色调出；故事围绕的那个主角用 #D97757，至少占画面高八分之一。田野和天空偏亮（约六成），山和房子偏暗。暖色调色不超过一成，暗角，颗粒。默认傍晚低角度侧光，田野受光，山脊有轮廓光。从高处真透视取景，一条路把视线引下去；小房子（或墙、石块）顺山坡一级级排开。动起来：烟或云循环飘动，横向跟拍。避免：水彩透明感、矢量平涂、发暗发脏。",
    "shots": [
@@ -4491,8 +4491,8 @@
      "zh": "一镜到底：开场仰拍立交桥上的光轨，往下摇到警戒带后的追尾现场，焦点在事故上；再沿着路缘往右摇到钠灯下的 Clawd，焦点拉过来；Clawd 抬起手臂接一片雪，眨了下眼。"
     }
    ],
-   "direction_en": "Clawd wears a hand-knitted teal scarf and stands under a street lamp looking up into the snow. The v6 cut turns three shots into one camera move, with motion blur on the fast stretches: trails, then the crash, then Clawd. The snow thickens as the camera reaches it, and the catch comes near the end.",
-   "direction_zh": "Clawd 围一条手织的深青色围巾，站在路灯下仰头看雪。v6 把原来的三个镜头改成一个连续运镜，快速移动的几段带运动模糊：先光轨，再车祸，最后是 Clawd。镜头到它那里时雪变大，接雪的动作落在快结束的地方。",
+   "direction_en": "Clawd wears a hand-knitted teal scarf and stands under a street lamp looking up into the snow. One continuous camera move runs from the light trails to the crash to Clawd, with motion blur on the fast stretches. The snow thickens as the camera reaches it, and the catch comes near the end.",
+   "direction_zh": "Clawd 围一条手织的深青色围巾，站在路灯下仰头看雪。一个连续运镜从光轨到车祸再到 Clawd，快速移动的几段带运动模糊。镜头到它那里时雪变大，接雪的动作落在快结束的地方。",
    "refs": [
     "Paul Haggis, 2004",
     "J. Michael Muro (cinematography)",

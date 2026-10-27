@@ -1,4 +1,4 @@
-// 《Sunday Ride》全片时间线：120 BPM，1 小节 = 2 s。所有时间对齐拍点（0.5 s）。
+// "Sunday Ride" full timeline: 120 BPM, 1 bar = 2 s. All times are aligned to beats (0.5 s).
 import { g, W, H, S, clear, rect, rrect, line, circle, ellipse, poly, text, over, inkA, layer, blob } from './draw.js';
 import { clamp, lerp, seg, ss, eio, eo, ei, back, hash, mulberry } from '/core/lib.js';
 import { PAL, riderBike, pigeon, baguette, figureSide, poseSit, L, head } from './rider.js';
@@ -10,9 +10,9 @@ export const SHOTS = [
   ['bell', 0, 2], ['street', 2, 8], ['bakery', 8, 16], ['park', 16, 19], ['pigeons', 19, 21.5],
   ['passenger', 21.5, 24], ['sun', 24, 26], ['stop', 26, 29], ['share', 29, 32], ['pull', 32, 36], ['end', 36, 40],
 ];
-// 套色"跳一下"的节拍点（秒, 幅度 px）
+// Beats where the registration "jumps" (seconds, amplitude px)
 const KICKS = [[2, 9], [5.5, 5], [8, 12], [12, 8], [16, 12], [20, 14], [24, 12], [30, 4], [31, 4], [36, 9], [38, 5]];
-// 声音事件（给 mix.py）
+// Sound events (for mix.py)
 export const EV = [];
 const ev = (t, type, o = {}) => EV.push({ t, type, ...o });
 ev(0.02, 'drum', { plate: 'blue' }); ev(1.0, 'bell', { n: 2 }); ev(2.0, 'titlehit');
@@ -20,11 +20,11 @@ ev(8.0, 'drum', { plate: 'yellow' }); ev(8.2, 'doorchime'); ev(12.0, 'catch'); e
 ev(16.0, 'drum', { plate: 'pink' }); ev(19.5, 'bell', { n: 3 }); ev(20.0, 'flock'); ev(21.9, 'flap'); ev(22.05, 'land'); ev(22.7, 'coo');
 ev(24.0, 'whoosh'); ev(26.0, 'brake'); ev(26.3, 'church'); ev(28.0, 'snap'); ev(29.5, 'crunch'); ev(30.6, 'coo'); ev(31.3, 'peck'); ev(31.7, 'peck');
 ev(32.6, 'paperout'); ev(35.4, 'paperland'); ev(38.0, 'bell', { n: 2 });
-// 环境与车轮（区间）
+// Ambience and wheels (intervals)
 ev(0, 'amb', { kind: 'street', t1: 8 }); ev(8, 'amb', { kind: 'bakery', t1: 16 }); ev(16, 'amb', { kind: 'park', t1: 24 }); ev(24, 'amb', { kind: 'river', t1: 32 });
 ev(0, 'ride', { t1: 2, v: 1 }); ev(2, 'ride', { t1: 8, v: .8 }); ev(8, 'ride', { t1: 16, v: 1 }); ev(16, 'ride', { t1: 24, v: 1 }); ev(24.6, 'ride', { t1: 26, v: .7 });
 
-// 旁白（lines.json 的 t + dur.json）
+// Narration (t from lines.json + dur.json)
 let LINES = [];
 export function setLines(lines, dur) {
   LINES = lines.map(l => ({ ...l, dur: dur[l.id] }));
@@ -32,9 +32,9 @@ export function setLines(lines, dur) {
 }
 export const subs = () => LINES.map(l => ({ t0: l.t0, t1: l.t1, text: l.text }));
 
-// ───────── 印刷参数 ─────────
+// ───────── Print parameters ─────────
 function regist(t) {
-  const st = shotAt(t)[1] * 10;   // 每个镜头一套固定的错位（真实印刷：一张纸内套色是静止的）；只在节拍上跳
+  const st = shotAt(t)[1] * 10;   // each shot has one fixed misregistration (real printing: registration is static within one sheet); it only jumps on beats
   const base = [[0, 0], [3, -2], [-3, 2.5]];
   const off = base.map((b, i) => [b[0] + (hash(st * 3 + i) - .5) * (i ? 3 : 1), b[1] + (hash(st * 7 + i + 50) - .5) * (i ? 3 : 1)]);
   for (const [tk, amp] of KICKS) {
@@ -42,7 +42,7 @@ function regist(t) {
     const e = Math.exp(-x * 11) * Math.cos(x * 34);
     for (let i = 0; i < 3; i++) { const a = hash(tk * 13 + i * 5) * 6.283; off[i][0] += Math.cos(a) * amp * e * (i ? 1 : .5); off[i][1] += Math.sin(a) * amp * e * (i ? 1 : .5); }
   }
-  // 音乐停顿的一小节：三块版慢慢漂开，28.0 "咔"地套准
+  // the one bar where the music pauses: the three plates slowly drift apart, then snap into register with a "click" at 28.0
   if (t >= 26 && t < 28.6) {
     const d = t < 28 ? ss(seg(t, 26.05, 27.9)) : Math.exp(-(t - 28) * 16) * Math.cos((t - 28) * 40);
     const dv = [[-6, 5], [24, -13], [-22, 15]];
@@ -51,7 +51,7 @@ function regist(t) {
   return off;
 }
 function plates(t) {
-  // 蓝版 0.02–0.6 刷墨；黄版 8.0；粉版 16.0
+  // blue plate inks in at 0.02–0.6; yellow plate at 8.0; pink plate at 16.0
   const sw = (a) => lerp(-60, W + 200, eio(seg(t, a, a + .55)));
   return {
     gate: [1, t >= 8 ? 1 : 0, t >= 16 ? 1 : 0],
@@ -59,13 +59,13 @@ function plates(t) {
   };
 }
 
-// ───────── 工具 ─────────
+// ───────── Helpers ─────────
 const cam = (z, px, py, dx = 0, dy = 0) => g.setTransform(z, 0, 0, z, px * (1 - z) + dx, py * (1 - z) + dy);
-const step = t => Math.floor(t * 12) / 12;          // 角色表演 on twos
-const RS = .7;                                       // 街道段人物比例
+const step = t => Math.floor(t * 12) / 12;          // character animation on twos
+const RS = .7;                                       // character scale in the street section
 const riderAt = (x, y, s, o) => layer(() => riderBike(x, y, s, { shadow: false, ...o }), o.halo ?? 5);
 
-// ───────── 各镜头 ─────────
+// ───────── Shots ─────────
 const SHOT = {
   bell(t) {
     const rg = t >= 1.0 ? t - 1.0 : -1;
@@ -78,7 +78,7 @@ const SHOT = {
     const wa = cx / (96 * RS), crank = wa / 2.2;
     const yawn = tt > 3.2 && tt < 4.3;
     riderAt(760, ST.RY, RS, { crank, wa, lean: .22, expr: yawn ? 'yawn' : (tt > 6.8 ? 'calm' : 'sleepy'), headO: { tilt: yawn ? -.12 : 0 }, ph: tt, scarfAmt: .7, bob: Math.sin(crank * 2) * 2 });
-    // 片名（只印在蓝版上），2.0 起由左往右刷出，5.5 拍点撤下
+    // title (printed on the blue plate only), inked in from left to right from 2.0, removed on the 5.5 beat
     if (t >= 2 && t < 5.5) {
       g.save(); g.beginPath(); g.rect(0, 0, lerp(300, 1700, eo(seg(t, 2, 2.45))), H); g.clip();
       text('SUNDAY RIDE', 960, 215, '800 190px Bricolage', [1, 0, 0], 'center', 'alphabetic', 6);
@@ -93,7 +93,7 @@ const SHOT = {
     const light = ss(seg(t, 8, 8.4));
     cam(Z, 760, ST.RY);
     street({ cx, light, sun: ss(seg(t, 8.2, 15)), lamps: 1 - seg(t, 13, 15) });
-    // 面包师的手（从门里伸出）
+    // the baker's hand (reaching out of the door)
     const ext = ss(seg(tt, 10.8, 11.5)) * (1 - ss(seg(tt, 12.4, 12.9)));
     const hx = doorX - cx + ext * 120, hy = ST.FB - 100 - ext * 110;
     if (ext > .01) {
@@ -103,7 +103,7 @@ const SHOT = {
       circle(hx + 6, hy, 13, PAL.skin);
       if (tt < 12) baguette(hx + 8, hy - 20, 210, -1.1);
     }
-    // 骑车人
+    // the rider
     const wa = cx / (96 * RS), crank = wa / 2.2;
     const hand = [(hx + 8 - 760) / RS, (hy - 8 - ST.RY) / RS];
     let o = { crank, wa, lean: .2, ph: tt, scarfAmt: .8, expr: 'calm', bob: Math.sin(crank * 2) * 2 };
@@ -115,7 +115,7 @@ const SHOT = {
       const pUp = [-30, -560], pBk = [190, -330];
       o.armN = [lerp(lerp(hand[0], pUp[0], up), pBk[0], down), lerp(lerp(hand[1], pUp[1], up), pBk[1], down)];
       o.hand = w => { baguette(w[0] + 2, w[1] - 30 + down * 20, 200, lerp(-1.25, -1.15, down)); circle(w[0], w[1], 11, PAL.skin); };
-      if (tt >= 12.9 && tt < 13.3) o.gripF = [50, -318];   // 另一只手按铃
+      if (tt >= 12.9 && tt < 13.3) o.gripF = [50, -318];   // the other hand rings the bell
     } else if (tt >= 14.4) { o.inBasket = inB; o.expr = 'calm'; }
     riderAt(760, ST.RY, RS, o);
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -124,26 +124,26 @@ const SHOT = {
   park(t) {
     const tt = step(t);
     park({ cx: 0, t });
-    // 静止大全景：人物从左入画（塔蒂式：人小、景大）
+    // static extreme wide shot: the character enters from the left (Tati-style: small figure, big scene)
     const x = lerp(-180, 520, seg(t, 16, 19)), s = .52;
     const wa = x / (96 * s), crank = wa / 2.2;
     riderAt(x, PARK.path + 20, s, { crank, wa, lean: .2, ph: tt, scarfAmt: .8, expr: 'calm', inBasket: () => baguette(200, -330, 200, -1.15), halo: 4 });
-    // 小径右侧啄食的鸽子（伏笔）
+    // pigeon pecking on the right of the path (setup for later)
     for (let i = 0; i < 5; i++) pigeon(1150 + i * 110 + (i % 2) * 30, PARK.path + 18 - (i % 2) * 10, .5, { pose: (Math.floor(tt * 2) + i) % 3 ? 'peck' : 'walk', step: tt * 2 + i * .3, flip: i % 2 === 1 });
     return {};
   },
   pigeons(t) {
     const tt = step(t);
-    // 低机位：地平线压低，草地只露一条，天占大半
+    // low angle: horizon pushed down, only a strip of grass, sky takes most of the frame
     cam(1.25, 960, 1080, 0, 0);
     park({ cx: 300 + (t - 19) * 60, t });
     g.setTransform(1, 0, 0, 1, 0, 0);
-    // 车从左后方驶入
+    // the bike rides in from back left
     const bx = lerp(-260, 820, seg(t, 19, 21.5)), s = .78;
     const wa = bx / (96 * s), crank = wa / 2.2;
     const gy = 1000;
     riderAt(bx, gy - 30, s, { crank, wa, lean: .2, ph: tt, scarfAmt: .8, expr: tt > 19.9 ? 'surprise' : 'calm', inBasket: () => baguette(200, -330, 200, -1.15), gripF: tt > 19.4 && tt < 19.8 ? [50, -318] : undefined });
-    // 前景鸽群
+    // pigeons in the foreground
     const R = mulberry(77);
     const birds = [];
     for (let i = 0; i < 16; i++) birds.push({ x: 150 + R() * 1700, y: gy + 20 + R() * 60, s: 1.2 + R() * 1.2, ph: R(), dx: (R() - .3) * 900, dy: -(700 + R() * 700), delay: R() * .35, fl: R() < .5 });
@@ -155,7 +155,7 @@ const SHOT = {
         if (b.y < gy + 20 + 60 && b.s < 2.6) pigeon(b.x, b.y - 30 * b.s, b.s * .9, { pose: (Math.floor(tt * 2 + b.ph * 5)) % 3 ? 'peck' : 'walk', step: tt * 2 + b.ph, flip: b.fl, tilt: t > 19.6 ? -.3 : 0 });
       } else flock.push(b);
     }
-    // 起飞的鸽群：叠印（翅膀的蓝叠在粉花、黄天上 → 紫、绿）
+    // pigeons taking off: overprint (blue wings over pink flowers and yellow sky → purple, green)
     layer(() => {
       for (const b of flock) {
         const tb = t - 20 - b.delay, k = eo(clamp(tb / 1.4));
@@ -177,7 +177,7 @@ const SHOT = {
     o.expr = tt < 22.2 ? 'calm' : tt < 22.9 ? 'surprise' : 'joy';
     if (tt >= 22.2 && tt < 23.6) { o.headDX = 8; o.headO = { tilt: .3, lookX: 2, lookY: 3 }; }
     riderAt(X, Y, sc, o);
-    // 鸽子落在车筐边（法棍旁）
+    // a pigeon lands on the edge of the basket (next to the baguette)
     const px = X + 250 * sc, py = Y - 345 * sc;
     layer(() => {
       if (land < 1) pigeon(lerp(px + 620, px, eo(land)), lerp(py - 460, py, eo(land)), 1.3, { pose: 'fly', frame: Math.floor(tt * 12), flip: true });
@@ -186,7 +186,7 @@ const SHOT = {
     return {};
   },
   sun(t) {
-    // 24.0–24.6：粉色圆从车筐那里长大吞没整个画面；24.6 画面底下换成河边；24.6–25.4 缩回成河上的太阳
+    // 24.0–24.6: a pink circle grows from the basket and swallows the whole frame; at 24.6 the scene underneath switches to the riverside; 24.6–25.4 it shrinks back into the sun over the river
     const grow = t < 24.6;
     let r, cxs, cys;
     if (grow) { SHOT.passenger(t); r = lerp(20, 2300, ei(seg(t, 24.0, 24.6))); cxs = 640 + 250 * 1.25; cys = 1135 - 400 * 1.25; }
@@ -215,7 +215,7 @@ const SHOT = {
     const fd = ss(seg(tt, 26, 26.3));
     const o = { crank: .4, wa: 860 / (96 * s), lean: lerp(.18, .03, fd), ph: tt, scarfAmt: lerp(.6, .25, fd), expr: tt > 27.1 && tt < 27.25 ? 'blink' : 'calm', inBasket: () => baguette(200, -330, 200, -1.15) };
     if (fd > 0) { o.footDown = [lerp(-10, 30, fd), 0]; o.hip = [lerp(-88, -52, fd), lerp(-290, -252, fd)]; }
-    if (tt > 26.6) o.headO = { tilt: .18, lookY: 2 };   // 低头看水
+    if (tt > 26.6) o.headO = { tilt: .18, lookY: 2 };   // looks down at the water
     riderAt(x, y, s, o);
     const ptilt = [0, .35, -.2, .4, 0, -.3][Math.floor((t - 26) * 2) % 6];
     layer(() => pigeon(x + 205 * s, y - (304 + 36) * s, s * 1.15, { pose: 'stand', flip: true, tilt: ptilt }), 4);
@@ -223,10 +223,10 @@ const SHOT = {
   },
   share(t) {
     const tt = step(t);
-    // 中景：人坐在河堤护墙上，巨大的太阳在身后
+    // medium shot: he sits on the embankment wall, a huge sun behind him
     const HZ = 640, QY = 770;
     river({ cx: 0, hz: HZ, quay: QY, sunX: 1020, sunY: 420, sunR: 400, coping: 30, wallRow: 60 });
-    // 倚墙的自行车（车筐已空）
+    // bike leaning against the wall (basket now empty)
     layer(() => riderBike(230, 1165, .95, { crank: 1, noRider: true }), 4);
     const mx = 800, wy = QY + 4, SC = 1.45;
     const tear = seg(tt, 29.4, 29.7), give = ss(seg(tt, 30.2, 30.7)), bite = tt > 31.1 && tt < 31.5;
@@ -244,19 +244,19 @@ const SHOT = {
       if (tear > 0) { const w = J.wristF; baguette(w[0] - 10, w[1] - 16, 90, -1.0, { half: true, r: 12 }); circle(w[0], w[1], 10.5, PAL.skin); }
       g.restore();
     }, 5);
-    // 鸽子：歪头、跳近、啄
+    // pigeon: tilts head, hops closer, pecks
     const hop = ss(seg(tt, 30.7, 31.0));
     const pk = (tt > 31.25 && tt < 31.4) || (tt > 31.65 && tt < 31.8);
     layer(() => pigeon(mx + lerp(560, 450, hop) * SC / 1.1, wy - 50 - Math.sin(hop * Math.PI) * 40, 1.75, { pose: pk ? 'peck' : (hop > 0 && hop < 1 ? 'walk' : 'stand'), step: hop * 2, flip: true, tilt: tt < 30.5 ? .4 : 0 }), 4);
     return { water: { ...waterFx(t), y: HZ, b: QY, refl: .4 } };
   },
   pull(t) {
-    // 32–33：正上方俯拍；33–35.6：拉远 → 纸从出纸口滑出，落到纸堆上
+    // 32–33: straight top-down shot; 33–35.6: pull back → the sheet slides out of the output tray onto the stack
     const k = eio(seg(t, 32.6, 35.4));
     const z = lerp(1, .3, k);
     if (z > .985) { overhead({ t }); return {}; }
     printerTable();
-    // 纸堆（前面几张：只有蓝版的街、面包店、公园）
+    // paper stack (the earlier sheets: blue-plate-only street, bakery, park)
     const cxS = 960, cyS = 700, w = W * .3 * 1.08, h = H * .3 * 1.08;
     const old = [[[1, 0, 0], -.05, -34, 30, 'street'], [[1, 1, 0], .04, 26, 18, 'bakery'], [[1, 1, 1], -.02, -12, 8, 'park']];
     for (const [m, rot, dx, dy, kind] of old) {
@@ -264,7 +264,7 @@ const SHOT = {
       paperSheet(cxS + dx, cyS + dy, w, h, rot, () => miniScene(kind));
       S.mask = [1, 1, 1];
     }
-    // 当前这张：从出纸口滑下
+    // the current sheet: slides down from the output slot
     const fall = seg(t, 34.6, 35.4);
     const sy = lerp(lerp(540, 470, k), cyS, eo(fall));
     const sw = lerp(W * 1.08, w, k), shh = lerp(H * 1.08, h, k);
@@ -274,16 +274,16 @@ const SHOT = {
     return {};
   },
   end(t) {
-    // 片尾卡：纸白；片名三版分别印、各自错位
+    // end card: paper white; title printed on each of the three plates, each out of register on its own
     const sl = 4 + 10 * ss(seg(t, 36, 36.6));
     text('SUNDAY RIDE', 960 + sl, 470 + sl * .4, '800 170px Bricolage', [0, 0, 1], 'center', 'alphabetic', 6);
     over(() => { text('SUNDAY RIDE', 960 - sl, 470 - sl * .4, '800 170px Bricolage', [.8, 0, 0], 'center', 'alphabetic', 6); });
     text('RISOGRAPH PRINT', 960, 575, '600 44px Jost', [1, 0, 0], 'center', 'alphabetic', 14);
     text('LemoLab × Claude Opus 5.5', 960, 650, '500 34px Jost', [0, 0, 1], 'center', 'alphabetic', 3);
-    // 套准十字
+    // registration crosses
     const cross = (x, y) => { line([[x - 22, y], [x + 22, y]], 3, [1, 0, 0]); line([[x, y - 22], [x, y + 22]], 3, [1, 0, 0]); g.beginPath(); g.arc(x, y, 10, 0, 7); g.lineWidth = 3; g.strokeStyle = inkA([1, 0, 0]); g.stroke(); };
     cross(80, 80); cross(W - 80, 80); cross(80, H - 80); cross(W - 80, H - 80);
-    // 底线上一个小小的骑车人横穿（38.0 按铃）
+    // a tiny rider crosses along the bottom line (rings the bell at 38.0)
     line([[300, 880], [W - 300, 880]], 3, [.5, 0, .1]);
     const x = lerp(200, W - 200, seg(t, 36.6, 39.6)), s = .32;
     if (t > 36.6 && t < 39.6) riderAt(x, 878, s, { crank: x / 30 / 2.2, wa: x / 30, lean: .2, ph: step(t), scarfAmt: .9, expr: 'joy', inBasket: () => baguette(200, -330, 200, -1.15), halo: 3, gripF: t > 37.9 && t < 38.3 ? [50, -318] : undefined });
@@ -302,7 +302,7 @@ function miniScene(kind) {
 
 export function shotAt(t) { for (const s of SHOTS) if (t >= s[1] && t < s[2]) return s; return SHOTS[SHOTS.length - 1]; }
 
-// ───────── 字幕：纸白挖空条 + 蓝版文字 ─────────
+// ───────── Subtitles: paper-white knockout bar + blue-plate text ─────────
 function subtitle(t) {
   for (const l of LINES) {
     if (t < l.t0 || t >= Math.min(l.t1, 36)) continue;

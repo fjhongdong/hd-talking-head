@@ -1,14 +1,14 @@
-// 用法（在 demo/ 目录下运行）：
+// Usage (run from the demo/ folder):
 //   node render.mjs stills 1.9 3.1 ...   → stills/t_*.png
-//   node render.mjs video [workers]      → $OUTDIR/seg_*.mp4 + list.txt（无声分段，交给 mux.sh）
-// 语言：LANGQ=ej（默认，英日版）→ 输出 out_ej/；LANGQ=zh（中文版）→ 输出 out/
-// 可选：START / END（秒）只渲一段；FPS（默认 60）
+//   node render.mjs video [workers]      → $OUTDIR/seg_*.mp4 + list.txt (silent segments, handed to mux.sh)
+// Language: LANGQ=ej (default, English/Japanese version) → output to out_ej/; LANGQ=zh (Chinese version) → output to out/
+// Optional: START / END (seconds) to render only one stretch; FPS (default 60)
 import { chromium } from 'playwright-core';
 import { EXE as CORE_EXE } from '../../../core/render/browser.mjs';
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-const EXE = CORE_EXE; // 本机 playwright 缓存里的 headless shell（或 PLAYWRIGHT_CHROME）
+const EXE = CORE_EXE; // headless shell from this machine's playwright cache (or PLAYWRIGHT_CHROME)
 const LANGQ = process.env.LANGQ || 'ej';
 const URL = 'file://' + path.resolve('index.html') + '?lang=' + LANGQ;
 const OUT = process.env.OUTDIR || (LANGQ === 'ej' ? 'out_ej' : 'out');

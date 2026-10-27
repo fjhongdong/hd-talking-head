@@ -1,8 +1,8 @@
-// 低多边形海面：三角网格顶点动画（多组正弦），flatShading 让每个三角面各自反光；
-// 浅滩颜色由"已长出的地块"实时画出的浅水图驱动（泻湖跟岛一起长）
+// Low-poly sea: triangle-mesh vertex animation (several sets of sines), flatShading makes each triangle reflect on its own;
+// shallows colour is driven by a shallow-water map drawn live from "the tiles that have grown so far" (the lagoon grows with the island)
 import * as THREE from 'three';
 
-// CPU 版同一个波函数（浮标、小船跟着起伏）
+// CPU version of the same wave function (the buoy and boat bob with it)
 export function waveH(x, z, t, amp = 1) {
   return amp * (.075 * Math.sin(.9 * x + 1.25 * t) + .06 * Math.sin(.77 * z - 1.05 * t + 1.3)
     + .045 * Math.sin(1.6 * (x + z) + 2.0 * t) + .03 * Math.sin(2.3 * x - 1.9 * z + 2.6 * t));
@@ -13,7 +13,7 @@ const WAVE_GLSL = `
       + .045 * sin(1.6 * (p.x + p.y) + 2.0 * t) + .03 * sin(2.3 * p.x - 1.9 * p.y + 2.6 * t));
   }`;
 
-export const SHALLOW_SPAN = 64;   // 浅水图覆盖的世界范围（以原点为中心）
+export const SHALLOW_SPAN = 64;   // world extent covered by the shallow-water map (centred on the origin)
 
 export function makeSea(scene) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512;
@@ -34,7 +34,7 @@ export function makeSea(scene) {
         .replace('#include <begin_vertex>', `#include <begin_vertex>
           vec4 wp0 = modelMatrix * vec4(transformed, 1.);
           vW = wp0.xz;
-          transformed.z += waveH(wp0.xz, uTime, uAmp);`);   // 平面先绕 x 转了 -90°，局部 z = 世界 y
+          transformed.z += waveH(wp0.xz, uTime, uAmp);`);   // the plane was first rotated -90° around x, so local z = world y
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', `#include <common>\nuniform vec3 uDeep, uShal, uFoam, uBeamCol; uniform sampler2D uShallow; uniform float uSpan, uSpanF, uNight, uTime; uniform vec2 uFwd, uTgt; uniform vec4 uBeam; varying vec2 vW;\nfloat hh(vec2 p){ p = fract(p * vec2(233.34, 851.73)); p += dot(p, p + 23.45); return fract(p.x * p.y); }`)
         .replace('#include <color_fragment>', `#include <color_fragment>
@@ -43,12 +43,12 @@ export function makeSea(scene) {
           if (suv.x < 0. || suv.y < 0. || suv.x > 1. || suv.y > 1.) s = 0.;
           vec3 wc = mix(uDeep, uShal, smoothstep(.05, .85, s));
           wc = mix(wc, uFoam, smoothstep(.9, .99, s) * .55);
-          // 夜：近处更暗、远处向天空带渐亮
+          // night: darker near, brightening toward the sky band in the distance
           float farK = dot(vW - uTgt, uFwd) / uSpanF;
           wc *= mix(1., mix(.55, 1.12, smoothstep(-.55, .9, farK)), uNight);
           diffuseColor.rgb = wc;`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-          // 灯塔光束照亮的水面：一条亮带 + 波面高光闪烁
+          // water lit by the lighthouse beam: a bright band + glinting highlights on the waves
           if (uBeam.y > 0.) {
             vec2 rel = vW; float r = length(rel);
             float da = abs(mod(atan(rel.y, rel.x) - uBeam.x + 3.14159265, 6.2831853) - 3.14159265);
@@ -65,7 +65,7 @@ export function makeSea(scene) {
   const near = new THREE.Mesh(geo, mkMat(true)); near.rotation.x = -Math.PI / 2; near.receiveShadow = false; scene.add(near);
   const far = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000, 180, 180), mkMat(false)); far.rotation.x = -Math.PI / 2; far.position.y = -.55; scene.add(far);
 
-  // 浅水图：每帧按地块位置与升起进度画模糊的圆斑
+  // shallow-water map: each frame, draw blurred round spots from tile positions and rise progress
   function drawShallow(blobs) {
     sg.fillStyle = '#000'; sg.fillRect(0, 0, 512, 512);
     const k = 512 / SHALLOW_SPAN;

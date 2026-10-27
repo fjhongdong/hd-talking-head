@@ -1,8 +1,8 @@
-"""原创配乐合成 → music/score.wav（48k 立体声，成片长度）+ music/stems/*.wav
-全部 numpy 合成：特雷门琴（连续音高 + 滑音 + 渐入颤音）、模拟贝斯、方波琶音、复古鼓机、
-果冻宇宙的摇摆大号、马克杯宇宙的刷子鼓爵士、电梯 bossa（Karplus-Strong 尼龙弦）、弹簧/房间混响。
-cue 时间全部来自 events.json（由 story.js 导出），所以每个 cue 的第一拍就是剪辑点。
-用法：python music/score.py"""
+"""Original score synthesis → music/score.wav (48k stereo, full film length) + music/stems/*.wav
+All synthesized in numpy: theremin (continuous pitch + glides + vibrato that fades in), analogue bass, square-wave arpeggios, retro drum machine,
+swinging tuba for the jelly universe, brushed-drum jazz for the mug universe, elevator bossa (Karplus-Strong nylon strings), spring/room reverb.
+All cue times come from events.json (exported from story.js), so the first beat of each cue lands on its cut.
+Usage: python music/score.py"""
 import json, os, numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt, fftconvolve
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
@@ -11,7 +11,7 @@ CUE = {e['name']: e for e in E['ev'] if e['type'] == 'cue'}
 SR = 48000; N = int(DUR * SR); BEAT = .5
 rng = np.random.default_rng(11)
 
-# ———————————————— 基础 ————————————————
+# ———————————————— basics ————————————————
 def tt(d): return np.arange(int(round(d * SR))) / SR
 def mf(m): return 440 * 2 ** ((m - 69) / 12)
 NOTE = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11}
@@ -38,15 +38,15 @@ class Bus:
         if st < 0: x = x[-st:]; st = 0
         e = min(N, st + len(x));
         if e > st: s.b[st:e] += x[:e - st] * g
-    def cut(s, t0, t1, fade=.008):   # 静音区间（硬切）
+    def cut(s, t0, t1, fade=.008):   # silence a range (hard cut)
         a, b = int(t0 * SR), int(t1 * SR); f = int(fade * SR)
         s.b[a:b] = 0
         if a - f > 0: s.b[a - f:a] *= np.linspace(1, 0, f)[:, None]
 BUS = {k: Bus(k) for k in ['drums', 'bass', 'lead', 'harm', 'fx']}
 
-# ———————————————— 乐器 ————————————————
+# ———————————————— instruments ————————————————
 def theremin(notes, glide=.07, vib=.32, rate=5.7, bright=.14, v=1.):
-    """notes: [(t, dur, midi)] 连续演奏；返回 (起点, 信号)"""
+    """notes: [(t, dur, midi)] played legato; returns (start, signal)"""
     t0 = notes[0][0]; t1 = max(t + d for t, d, _ in notes) + .25; n = int((t1 - t0) * SR)
     target = np.full(n, float(notes[0][2])); amp = np.zeros(n)
     for t, d, m in notes:
@@ -55,7 +55,7 @@ def theremin(notes, glide=.07, vib=.32, rate=5.7, bright=.14, v=1.):
     k = 1 - np.exp(-1 / (glide * SR))
     from scipy.signal import lfilter
     mid = lfilter([k], [1, -(1 - k)], target, zi=[target[0] * (1 - k)])[0]
-    # 颤音在每个音开始 150ms 后渐入
+    # vibrato fades in 150 ms after each note starts
     vib_env = np.zeros(n)
     for t, d, m in notes:
         a = int((t - t0) * SR); L = int((d + .12) * SR); w = np.clip((np.arange(L) / SR - .15) / .25, 0, 1); vib_env[a:a + L] = np.maximum(vib_env[a:a + L], w[:n - a])
@@ -90,7 +90,7 @@ def vibes(d, m, v=1.):
 def xylo(m, v=1.):
     n = int(.5 * SR); tn = np.arange(n) / SR; f = mf(m)
     return (np.sin(2 * np.pi * f * tn) * np.exp(-tn / .18) + .4 * np.sin(2 * np.pi * f * 3.93 * tn) * np.exp(-tn / .05) + .2 * hp(rng.standard_normal(n), 3000) * np.exp(-tn / .004)) * v
-def ks(m, d=1.2, v=1., bright=.5):   # Karplus-Strong 尼龙弦
+def ks(m, d=1.2, v=1., bright=.5):   # Karplus-Strong nylon string
     n = int(d * SR); f = mf(m); L = int(SR / f); buf = lp(rng.standard_normal(L), 2000 + 4000 * bright); out = np.zeros(n)
     for i in range(n): out[i] = buf[i % L]; buf[i % L] = .5 * (buf[i % L] + buf[(i + 1) % L]) * .996
     return out * v
@@ -98,7 +98,7 @@ def tuba(t, d, m, v=1.):
     n = int((d + .08) * SR); tn = np.arange(n) / SR; f = mf(m) * (1 - .06 * np.exp(-tn / .03))
     ph = np.cumsum(f) / SR; x = saw(ph) + .5 * np.sin(2 * np.pi * ph)
     return lp(x, 700) * adsr(n, .02, .1, .7, .06, hold=d) * v
-def wobble_lead(notes, v=1.):   # 果冻颤音主旋律：大幅快颤音
+def wobble_lead(notes, v=1.):   # jelly wobble lead: wide, fast vibrato
     return theremin(notes, glide=.04, vib=.7, rate=7.5, bright=.35, v=v)
 def brass(d, ms, v=1.):
     n = int((d + .2) * SR); x = np.zeros(n)
@@ -113,7 +113,7 @@ def strings_trem(d, ms, v=1., rise=0):
     for m in ms:
         for dt in (-.12, 0, .12): ph = np.cumsum(mf(m + dt + rise * tn / d)) / SR + rng.random(); x += saw(ph)
     return lp(x, 2600) * (.55 + .45 * np.sin(2 * np.pi * 13 * tn)) * adsr(n, .08, .1, 1, .02, hold=d - .02) * v / len(ms)
-# 鼓
+# Drums
 def kick(v=1.):
     n = int(.4 * SR); tn = np.arange(n) / SR; f = 45 + 95 * np.exp(-tn / .04)
     return (np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tn / .18) + .3 * hp(rng.standard_normal(n), 2000) * np.exp(-tn / .003)) * v
@@ -154,32 +154,32 @@ def noise_riser(d, v=1.):
 def rev_swell(d, ms, v=1.):
     x = pad(d, ms, 1, 3000, .02)[:int(d * SR)]; e = (np.arange(len(x)) / len(x)) ** 3; return x * e * v
 
-# 节拍工具
+# Beat helpers
 def at(cue, beat): return CUE[cue]['t0'] + beat * BEAT
 def swing(b, amt=.16): return b + (amt if (b * 2) % 2 == 1 else 0)
 
 D, L, H, F = BUS['drums'], BUS['lead'], BUS['harm'], BUS['fx']; B = BUS['bass']
 
-# ———————————————— riser：Vask 抬起遥控器 ————————————————
+# ———————————————— riser: Vask raises the remote ————————————————
 c = CUE['riser']; d = c['t1'] - c['t0']
 t0, th = theremin([(c['t0'], d - .05, M('D3'))], glide=.9, vib=.5, rate=6.5); th *= np.linspace(.3, 1, len(th))
-# 用长滑音：目标瞬间设到 A5，glide 很慢 → 一路滑上去
+# Use one long glide: set the target to A5 instantly with a very slow glide → it slides all the way up
 t0, th = theremin([(c['t0'], .05, M('D3')), (c['t0'] + .05, d - .1, M('A5'))], glide=.45, vib=.45, rate=6.2)
 L.add(th * np.linspace(.25, .9, len(th)), t0, .5)
 F.add(noise_riser(d, .5), c['t0'], .6)
 BUS['lead'].cut(c['t1'], c['t1'] + .02)
 
-# ———————————————— 主题：传送门炸开 + 片名 ————————————————
+# ———————————————— theme: portal bursts open + title ————————————————
 def theme_band(cue, bars, gain=1., melody=True, start_beat=0, drums=True):
     base = CUE[cue]['t0']; chords = [('D', [M('D3'), M('F3'), M('A3')], M('D2')), ('Bb', [M('Bb2'), M('D3'), M('F3')], M('Bb1')),
                                      ('Gm', [M('G2'), M('Bb2'), M('D3')], M('G1')), ('A7', [M('A2'), M('C#3'), M('E3'), M('G3')], M('A1'))]
     for bi in range(bars):
         name, ch, root = chords[bi % 4]; tb = base + bi * 4 * BEAT
         H.add(pad(4 * BEAT, [m + 12 for m in ch], .5, 1800, .05), tb, .55 * gain)
-        for k in range(8):   # 八分音符贝斯：根音-根音-五度-八度
+        for k in range(8):   # eighth-note bass: root-root-fifth-octave
             m = [root, root, root + 7, root + 12, root, root, root + 7, root + 10][k]
             B.add(bass(0, .22, m, 1., 1100), tb + k * BEAT / 2, .55 * gain)
-        for k in range(16):   # 16 分琶音
+        for k in range(16):   # 16th-note arpeggio
             m = (ch + [ch[0] + 12])[k % 4] + 24
             H.add(pluck(0, .09, m, 1., .25, 3000), tb + k * BEAT / 4, .12 * gain, pan=.35 * (1 if k % 2 else -1))
         if drums:
@@ -201,9 +201,9 @@ theme_band('theme', 2, 1.0)
 theme_melody('theme', 6, 1.0)
 for b in BUS.values(): b.cut(c['t1'] - .01, c['t1'] + 3.0, .12)
 
-# ———————————————— 果冻宇宙：摇摆大号 + 颤音主旋律（G 大调）————————————————
+# ———————————————— jelly universe: swinging tuba + wobble lead (G major)————————————————
 c = CUE['jelly']; base = c['t0']
-t0, sl = theremin([(base, .05, M('G4')), (base + .05, .35, M('G6'))], glide=.12, vib=0, bright=.02)   # 滑哨
+t0, sl = theremin([(base, .05, M('G4')), (base + .05, .35, M('G6'))], glide=.12, vib=0, bright=.02)   # slide whistle
 F.add(sl, t0, .3)
 JB = [('G', M('G1'), [M('G3'), M('B3'), M('D4')]), ('C', M('C2'), [M('G3'), M('C4'), M('E4')]), ('D', M('D2'), [M('F#3'), M('A3'), M('D4')]), ('G', M('G1'), [M('G3'), M('B3'), M('D4')])]
 nb = int((c['t1'] - base) / BEAT) + 1
@@ -217,9 +217,9 @@ for k in range(nb):
 JM = [(1, .5, 'B4'), (1.5, .5, 'D5'), (2, 1, 'G5'), (3, .5, 'E5'), (3.5, .5, 'C5'), (4, 1, 'E5'), (5, .5, 'D5'), (5.5, .5, 'B4'), (6, 1, 'A4'), (7, .5, 'F#4'), (7.5, .5, 'A4'), (8, 1.5, 'G4')]
 t0, jl = wobble_lead([(at('jelly', b), d * BEAT - .03, M(n)) for b, d, n in JM])
 L.add(jl, t0, .42, pan=.1)
-for b in BUS.values(): b.cut(c['t1'], c['t1'] + 3.2)   # 眼球眨眼：音乐硬切
+for b in BUS.values(): b.cut(c['t1'], c['t1'] + 3.2)   # eyeball blinks: music hard-cuts
 
-# ———————————————— 马克杯宇宙：慵懒爵士（C 小调，刷子鼓）————————————————
+# ———————————————— mug universe: lazy jazz (C minor, brushed drums)————————————————
 c = CUE['mug']; base = c['t0']
 MC = [([M('C3'), M('Eb3'), M('G3'), M('Bb3'), M('D4')], M('C2')), ([M('F2'), M('A2'), M('Eb3'), M('G3'), M('D4')], M('F1')),
       ([M('Bb2'), M('D3'), M('F3'), M('A3'), M('C4')], M('Bb1')), ([M('Eb3'), M('G3'), M('Bb3'), M('D4')], M('Eb2'))]
@@ -237,7 +237,7 @@ for b, d, n in MM:
     if base + b * BEAT < c['t1'] - .2: H.add(vibes(d, M(n), 1), base + swing(b) * BEAT, .22, pan=.15)
 for bb in BUS.values(): bb.cut(c['t1'] - .01, c['t1'] + 3.0, .1)
 
-# ———————————————— 蒙太奇：四拍底鼓 + 每宇宙一个 stinger ————————————————
+# ———————————————— montage: four-on-the-floor kick + one stinger per universe ————————————————
 c = CUE['montage']; base = c['t0']
 for k in range(int((c['t1'] - base) / BEAT)):
     tb = base + k * BEAT
@@ -255,7 +255,7 @@ t0, ch3 = theremin([(h[2], .8, M('A4'))], vib=.6, rate=5.1); L.add(ch3, t0, .3, 
 t0, ch3 = theremin([(h[2], .8, M('Eb4'))], vib=.6, rate=6.3); L.add(ch3, t0, .28)
 for bb in BUS.values(): bb.cut(c['t1'] - .01, c['t1'] + 3.0, .1)
 
-# ———————————————— 正常宇宙：电梯 bossa（F 大调）————————————————
+# ———————————————— normal universe: elevator bossa (F major)————————————————
 c = CUE['muzak']; base = c['t0']
 BC = [([M('F3'), M('A3'), M('C4'), M('E4')], M('F2')), ([M('G3'), M('Bb3'), M('D4'), M('F4')], M('G2')), ([M('E3'), M('G3'), M('Bb3'), M('C4')], M('C2')), ([M('F3'), M('A3'), M('C4'), M('E4')], M('F2'))]
 nbars = int((c['t1'] - base) / 2) + 1
@@ -271,26 +271,26 @@ for b, d, n in NM:
     if base + b * BEAT < c['t1'] - .1: H.add(rhodes(d * BEAT, M(n), 1), base + b * BEAT, .2, pan=-.1)
 for bb in BUS.values(): bb.cut(c['t1'] - .01, c['t1'] + 3.0, .1)
 
-# ———————————————— 回家喝一口：温暖的满足 ————————————————
+# ———————————————— home, first sip: warm contentment ————————————————
 c = CUE['bliss']; base = c['t0']; d = c['t1'] - base
 H.add(pad(d, [M('D3'), M('F#3'), M('A3'), M('C#4'), M('E4')], 1, 2200, .5), base, .5)
 for i, m in enumerate([M('D4'), M('F#4'), M('A4'), M('C#5'), M('E5'), M('A5')]): H.add(rhodes(1.2, m, 1), base + .1 + i * .18, .16, pan=-.3 + i * .12)
 t0, ah = theremin([(base + .4, 1.0, M('F#5')), (base + 1.4, d - 1.5, M('A5'))], glide=.2, vib=.28, rate=5.2, bright=.06)
 L.add(ah, t0, .3)
-for bb in BUS.values(): bb.cut(c['t1'], c['t1'] + .7)   # 咖啡冒泡：音乐切断
+for bb in BUS.values(): bb.cut(c['t1'], c['t1'] + .7)   # coffee bubbles up: music cuts out
 
-# ———————————————— 惊慌：颤弓弦乐上升 → 硬切进冷场 ————————————————
+# ———————————————— panic: rising tremolo strings → hard cut into awkward silence ————————————————
 c = CUE['panic']; base = c['t0']; d = c['t1'] - base
 H.add(strings_trem(d, [M('E4'), M('F4'), M('Bb4'), M('B4')], 1, rise=4), base, .32)
 for k in range(int(d / .25)): D.add(kick(.7), base + k * .25, .35 + .2 * k / (d / .25))
-for bb in BUS.values(): bb.cut(c['t1'], c['t1'] + 5.3, .004)   # 冷场：全静
+for bb in BUS.values(): bb.cut(c['t1'], c['t1'] + 5.3, .004)   # awkward silence: total silence
 
-# ———————————————— 片尾：主题回归 → 片尾卡重音 ————————————————
+# ———————————————— ending: theme returns → accent on the end card ————————————————
 c = CUE['finale']; base = c['t0']
 pk = c['pickup']
 t0, sw = theremin([(pk, .1, M('D4')), (pk + .15, base - pk - .2, M('D5'))], glide=.35, vib=.55)
 L.add(sw * np.linspace(.4, 1, len(sw)), t0, .35)
-for k in range(int((base - pk) / .0625)):   # 军鼓滚奏渐强
+for k in range(int((base - pk) / .0625)):   # snare roll crescendo
     D.add(snare(1), pk + .25 + k * .0625, .05 + .25 * (k * .0625 / (base - pk)))
 D.add(crash(1), base, .45)
 theme_band('finale', 1, 1.0)
@@ -302,16 +302,16 @@ H.add(brass(.9, [M('D4'), M('F4'), M('A4'), M('D5')], 1), hit, .4)
 B.add(bass(0, 2.5, M('D2'), 1, 500), hit, .6)
 t0, top = theremin([(hit, 2.2, M('D5'))], vib=.45, rate=5.5); L.add(top, t0, .45)
 for k in range(12): H.add(pluck(0, .09, [M('D5'), M('F5'), M('A5'), M('D6')][k % 4], 1, .25, 2600), hit + .5 + k * .125, .1 * (1 - k / 12), pan=.4 * (1 if k % 2 else -1))
-tb = hit + 3.0   # 结尾小按钮：嘀-嗒-嘀
+tb = hit + 3.0   # closing button: di-da-di
 t0, bt = theremin([(tb, .22, M('D5')), (tb + .25, .22, M('A4')), (tb + .5, .6, M('D5'))], glide=.03, vib=.3); L.add(bt, t0, .35)
 D.add(tom(50, 1), tb + .5, .25)
 
-# ———————————————— 混响 + 总线 ————————————————
+# ———————————————— reverb + bus ————————————————
 def ir(d=2.0, decay=.45, lpf=5000, pre=.015):
     n = int(d * SR); tn = np.arange(n) / SR
     x = np.stack([lp(rng.standard_normal(n), lpf) * np.exp(-tn / decay), lp(rng.standard_normal(n), lpf) * np.exp(-tn / decay)], 1)
     x[:int(pre * SR)] = 0; return x / np.sqrt((x ** 2).sum(0))
-def spring_ir(d=1.2):   # 弹簧混响：带一点色散的"嘣"
+def spring_ir(d=1.2):   # spring reverb: a "boing" with a bit of dispersion
     n = int(d * SR); tn = np.arange(n) / SR; ch = np.sin(2 * np.pi * (1800 * tn - 700 * tn ** 2)) * np.exp(-tn / .05) * .3
     x = np.stack([rng.standard_normal(n), rng.standard_normal(n)], 1) * np.exp(-tn / .35)[:, None]; x[:, 0] += ch; x[:, 1] += np.roll(ch, 300)
     x = np.stack([bp(x[:, 0], 300, 4500), bp(x[:, 1], 300, 4500)], 1); x[:int(.02 * SR)] = 0; return x / np.sqrt((x ** 2).sum(0))
@@ -321,24 +321,24 @@ send = {'drums': .08, 'bass': .0, 'lead': .28, 'harm': .22, 'fx': .2}
 dry = sum(b.b for b in BUS.values())
 wet = conv(sum(BUS[k].b * send[k] for k in ['drums', 'harm', 'fx']), room) * .9 + conv(BUS['lead'].b * send['lead'], spr) * 1.1
 out = dry + wet
-# 冷场与硬切要真静：把混响尾巴也切掉
+# Awkward silences and hard cuts must be truly silent: cut the reverb tails too
 for c0, c1 in [(CUE['jelly']['t1'], CUE['jelly']['t1'] + 3.0), (CUE['bliss']['t1'], CUE['bliss']['t1'] + .6), (CUE['panic']['t1'], CUE['panic']['t1'] + 5.2)]:
     a, b = int(c0 * SR), int(c1 * SR); out[a:b] = 0
     f = int(.01 * SR); out[a - f:a] *= np.linspace(1, 0, f)[:, None]
-# 各 cue 相对电平（主题段乐器最满，其余段落补一点）
+# Relative level of each cue (the theme has the fullest instrumentation; lift the other sections a little)
 CUE_GAIN = {'jelly': 1.6, 'mug': 1.9, 'montage': 1.1, 'muzak': 1.4, 'bliss': 1.35}
 gain = np.ones(N)
 for k, gk in CUE_GAIN.items():
     a0, a1 = int(CUE[k]['t0'] * SR), min(N, int((CUE[k]['t1'] + .8) * SR)); f = int(.01 * SR)
     gain[a0:a1] = gk
 gain = np.convolve(gain, np.ones(480) / 480, mode='same'); out *= gain[:, None]
-# 低频整理 + 轻压缩
+# Low-end cleanup + light compression
 out = np.stack([hp(out[:, c], 30) for c in range(2)], 1)
 pk = np.abs(out).max(); out = out / pk * .89
 os.makedirs(os.path.join(HERE, 'stems'), exist_ok=True)
 for k, b in BUS.items(): sf.write(os.path.join(HERE, 'stems', k + '.wav'), (b.b / pk * .89).astype(np.float32), SR)
 sf.write(os.path.join(HERE, 'score.wav'), out.astype(np.float32), SR)
-# 频段能量自检（低频不能独大）
+# Band-energy self-check (the low end must not dominate)
 X = np.abs(np.fft.rfft(out.mean(1))) ** 2; fr = np.fft.rfftfreq(N, 1 / SR); tot = X.sum()
 for a, b in [(20, 120), (120, 500), (500, 2000), (2000, 8000), (8000, 20000)]: print(f'{a:>5}-{b:<5} Hz  {10 * np.log10(X[(fr >= a) & (fr < b)].sum() / tot):6.1f} dB')
 print('score.wav', DUR, 's  peak norm', round(pk, 3))

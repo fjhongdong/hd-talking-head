@@ -1,9 +1,9 @@
-// 片名 THE VELVET CIPHER：自己拼的剪纸几何字形（直线 + 圆弧，笔画不匀、基线错落），不参照任何真实片名 logo
-// CIPHER 的 I = 一块黑色"锁板"，中间剪出红色钥匙孔；钥匙放进去就是芥末黄的 I
+// Title THE VELVET CIPHER: home-made paper-cut geometric letterforms (straight lines + arcs, uneven strokes, staggered baseline), not based on any real film title logo
+// The I of CIPHER = a black "lock plate" with a red keyhole cut in the middle; once the key goes in, it becomes a mustard-yellow I
 import { g, C, S, piece, rough, roughC, arcP } from './paper.js';
 import { keyholeP } from './chars.js';
 
-// 字形：高 100 单位，左上为原点；返回 [外轮廓, (镂空)...]
+// Letterforms: 100 units tall, origin at top left; returns [outer contour, (cut-outs)...]
 const arc = (cx, cy, r, a0, a1, n = 16) => arcP(cx, cy, r, a0 * Math.PI / 180, a1 * Math.PI / 180, n);
 const D = Math.PI / 180;
 export const GLYPH = {
@@ -18,8 +18,8 @@ export const GLYPH = {
   I: { w: 44, lock: true },
 };
 
-// 片名排版（单位：像素，原点 = 片名框左上）
-// 返回每个字母的 {ch, x, y, h, rot, seed}；THE 小、VELVET/CIPHER 大且错落
+// Title layout (units: pixels, origin = top left of the title box)
+// Returns {ch, x, y, h, rot, seed} per letter; THE small, VELVET/CIPHER large and staggered
 export function titleLayout(H = 250) {
   const out = []; const k = H / 100, sp = 12 * k;
   const put = (str, x0, y0, h, rots, dys, seed0) => {
@@ -42,19 +42,19 @@ export function titleBox(H = 250) {
   return { w: x1, h: y1, L };
 }
 
-// 画一个字母（x,y = 左上）。lock 字母：黑板 + 红钥匙孔（keyFill 0..1：钥匙已放入）
+// Draw one letter (x,y = top left). lock letter: black plate + red keyhole (keyFill 0..1: key inserted)
 export function drawGlyph(l, col = C.ink, opt = {}) {
   const G = GLYPH[l.ch], k = l.h / 100;
   g.save(); g.translate(l.x + l.w / 2, l.y + l.h / 2); g.rotate(l.rot); g.translate(-l.w / 2, -l.h / 2);
   if (G.lock) {
     const plate = roughC('lockplate' + l.h.toFixed(0), () => [[0, 0], [G.w * k, 1 * k], [G.w * k - 1 * k, 100 * k], [1 * k, 100 * k]], l.seed, 1.4, 10);
     piece(plate, col, { gap: opt.gap });
-    const kh = l.h * .62 / 154;   // 钥匙孔高 ≈ 62% 字高
+    const kh = l.h * .62 / 154;   // keyhole height ≈ 62% of letter height
     g.save(); g.translate(G.w * k / 2, l.h * .2 + 31 * kh);
     g.scale(kh, kh);
     piece(roughC('khT', () => keyholeP(1), 301, .7, 6), opt.holeCol || C.red, { gap: 0, shadow: false });
     g.restore();
-    l.keyhole = { x: l.x + l.w / 2, y: l.y + l.h * .2 + 31 * kh, s: kh };  // 局部近似（不含旋转）
+    l.keyhole = { x: l.x + l.w / 2, y: l.y + l.h * .2 + 31 * kh, s: kh };  // local approximation (ignores rotation)
   } else {
     const all = G.p().map((p, j) => roughC('tg' + l.ch + l.seed + j + l.h.toFixed(0), () => p.map(([x, y]) => [x * k, y * k]), l.seed * 3 + j, 1.2 + l.h * .004, 8));
     piece(all, col, { gap: opt.gap });
@@ -62,18 +62,18 @@ export function drawGlyph(l, col = C.ink, opt = {}) {
   g.restore();
 }
 
-// 整个片名：split = 沿斜线错开的距离（0 = 合拢）。斜线角度与开场劈刀一致（与竖直成 30°）
+// Whole title: split = distance the halves slide apart along the diagonal (0 = closed). The diagonal matches the opening blade cut (30° from vertical)
 export const CUT_ANG = 30 * D;
 export function drawTitle(x, y, H, opt = {}) {
   const { L, w, h } = titleBox(H);
   const split = opt.split || 0;
   const cx = x + (opt.cutX ?? w * .5), cy = y + (opt.cutY ?? h * .55);
-  const dir = [Math.sin(CUT_ANG), -Math.cos(CUT_ANG)];      // 切线方向（向右上）
+  const dir = [Math.sin(CUT_ANG), -Math.cos(CUT_ANG)];      // cut direction (towards upper right)
   const halves = split > .01 ? [0, 1] : [-1];
   for (const side of halves) {
     g.save();
     if (side >= 0) {
-      // 半平面裁切
+      // half-plane clip
       const n = [dir[1], -dir[0]]; const sgn = side ? 1 : -1, big = 4000;
       g.beginPath();
       g.moveTo(cx - dir[0] * big, cy - dir[1] * big); g.lineTo(cx + dir[0] * big, cy + dir[1] * big);

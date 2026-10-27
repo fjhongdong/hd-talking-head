@@ -1,4 +1,4 @@
-// 角色造型 + 姿势库（身体坐标，单位 = 身高；yaw 0 = 背对镜头）
+// Character looks + pose library (body coordinates, unit = body height; yaw 0 = facing away from camera)
 import { hex, lerp, clamp, ss, R3 } from './engine.js';
 const { V } = R3;
 
@@ -16,7 +16,7 @@ export const LOOK = {
   rower: { skin: hex('#d9a383'), top: hex('#e8e2d4'), bottom: hex('#7a8aa0'), hair: hex('#4a3a30') },
 };
 
-// 坐在地上（背影）：腿向前，手撑在身后两侧
+// Sitting on the ground (seen from behind): legs forward, hands propped behind on both sides
 export function sit(o = {}) {
   return {
     hipY: .085, hipZ: 0, lean: o.lean ?? -.08, side: o.side ?? 0, twist: o.twist ?? 0, headYaw: o.headYaw ?? 0, nod: o.nod ?? 0, headSide: o.headSide ?? 0,
@@ -24,7 +24,7 @@ export function sit(o = {}) {
     handL: o.handL ?? V(-.07, .2, .26), handR: o.handR ?? V(.08, .2, .28), elbL: o.elbL ?? V(-1, -.3, 0), elbR: o.elbR ?? V(1, -.3, 0), hairBlow: o.hairBlow ?? 0,
   };
 }
-// 跑：φ 相位（弧度），k 强度 0..1（起跑/收步）
+// Run: φ phase (radians), k intensity 0..1 (starting off / slowing to a stop)
 export function run(ph, k = 1, o = {}) {
   const s = Math.sin(ph), c = Math.cos(ph), s2 = Math.sin(ph + Math.PI), c2 = Math.cos(ph + Math.PI);
   const knee = cc => .25 + 1.35 * Math.pow(Math.max(0, cc), 1.2);
@@ -43,19 +43,19 @@ export function walk(ph, o = {}) {
   };
 }
 export function stand(o = {}) { return { hipY: .52, lean: o.lean ?? 0, armL: .05, armR: -.05, bendL: .2, bendR: .2, headYaw: o.headYaw ?? 0, nod: o.nod ?? 0, ...o }; }
-// 骑车：踏板相位
+// Cycling: pedal phase
 export function cycle(ph) {
   const r = .085, pedal = s => V(0, .2 + Math.sin(ph + s) * r, .05 + Math.cos(ph + s) * r);
   return { hipY: .6, hipZ: -.02, lean: .55, footL: pedal(0), footR: pedal(Math.PI), handL: V(-.12, .74, .34), handR: V(.12, .74, .34), elbL: V(-.5, -.5, -1), elbR: V(.5, -.5, -1), nod: -.35 };
 }
-// 扑：p 0..1（腾空 → 伸直 → 落地）
+// Dive: p 0..1 (airborne → stretched out → landing)
 export function dive(p, catchHand) {
   const e = ss(p);
   return { hipY: lerp(.5, .16, e), hipZ: 0, lean: lerp(.4, 1.35, e), legL: lerp(.3, -.55, e), kneeL: lerp(.9, .3, e), legR: lerp(-.4, -.75, e), kneeR: lerp(.4, .5, e),
     handR: catchHand ?? V(.08, lerp(.95, .2, e), lerp(.3, .78, e)), handL: V(-.12, lerp(.9, .22, e), lerp(.25, .7, e)), elbL: V(-1, 0, 0), elbR: V(1, 0, 0), nod: -.2 };
 }
-// 趴着（接住后）
+// Lying prone (after the catch)
 export function prone(p = 0) { return { hipY: .09, lean: 1.45, legL: -.2, kneeL: .5 + p * .3, legR: -.3, kneeR: .9, handR: V(.1, .1, .78), handL: V(-.15, .06, .6), elbL: V(-1, -1, 0), elbR: V(1, -1, 0), nod: -.9 + p * .3 }; }
-// 挥手 / 举帽
+// Waving / raising the hat
 export function wave(ph, o = {}) { const a = Math.sin(ph) * .12; return { ...stand(o), handR: V(.16 + a, 1.12, .02), elbR: V(1, 0, 0), handL: o.handL, elbL: V(-1, 0, 0) }; }
 export const mixPose = (a, b, t) => { const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[k], y = b[k]; if (x === undefined) o[k] = y; else if (y === undefined) o[k] = x; else if (Array.isArray(x)) o[k] = x.map((v, i) => lerp(v, y[i], t)); else o[k] = lerp(x, y, t); } return o; };

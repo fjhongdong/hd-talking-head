@@ -1,10 +1,10 @@
-// 海与立起来的巨浪：普鲁士蓝浪身 + 流线条纹 + 白色浪沫带 + 浪爪
+// The sea and the standing great wave: Prussian blue wave body + flow-line stripes + white foam band + wave claws
 import { clamp, lerp, seg, ss, hash, mulberry, vnoise, TAU } from '/core/lib.js';
 import { PAL, smooth, poly, dense, carve, rgba, mix, printTex } from './print.js';
 import { claw } from './nature.js';
 
 const HZ = 612;
-// —— 远近排列的涌浪 ——
+// —— Swells arranged from far to near ——
 export function sea(x, tq, rise = 0, part = 'all') {
   for (let r = 0; r < 11; r++) {
     const u = r / 10, y = HZ + 12 + 440 * Math.pow(u, 1.55), sc = .22 + u * 1.25, wl = 230 * sc, amp = 20 * sc;
@@ -13,18 +13,18 @@ export function sea(x, tq, rise = 0, part = 'all') {
     const pts = [];
     for (let X = -wl * 2 + drift; X < 1980 + wl; X += wl / 8) {
       const ph = ((X - drift) / wl) % 1, p = (ph + 1) % 1;
-      // 尖顶的摆线形浪
+      // pointed-crest trochoid waves
       const yy = y - amp * Math.pow(Math.abs(Math.sin(p * Math.PI)), 3.2) + (rise * 30 * Math.exp(-Math.pow((X - 800) / 500, 2)) * u);
       pts.push([X, yy]);
     }
     const body = pts.concat([[2000, y + 180 * sc], [-300, y + 180 * sc]]);
     const g = x.createLinearGradient(0, y - amp, 0, y + 120 * sc); g.addColorStop(0, mix(PAL.prusL, PAL.prus, u * .6)); g.addColorStop(1, PAL.prus);
     x.fillStyle = g; x.beginPath(); poly(x, body); x.fill();
-    // 浪身里的浅色流线
+    // light flow lines inside the wave body
     x.strokeStyle = rgba(PAL.sky, .55); x.lineWidth = 1.2 + sc * 1.4;
     for (let k = 1; k <= 2; k++) { x.beginPath(); smooth(x, pts.map(([a, b]) => [a + k * 9 * sc, b + k * 11 * sc])); x.stroke(); }
     x.strokeStyle = PAL.prusD; x.lineWidth = 1.4 + sc * 1.3; x.beginPath(); smooth(x, pts); x.stroke();
-    // 浪尖的小浪爪
+    // small claws on the crests
     if (sc > 1.05) {
       for (let X = -wl * 2 + drift; X < 1980 + wl; X += wl) {
         const px = X + wl * .5, py = y - amp;
@@ -35,24 +35,24 @@ export function sea(x, tq, rise = 0, part = 'all') {
   }
 }
 
-// —— 巨浪的四拍状态（起浪 / 高悬 / 倒下 / 泡沫）——
+// —— Four-beat states of the great wave (rise / hang / fall / foam) ——
 export function wstate(t, T) {
   const rise = ss(seg(t, T.waveRise[0], T.waveRise[1])), hang = seg(t, T.hang[0], T.hang[1]);
   const fall = Math.pow(seg(t, T.fall[0], T.crash[1]), 1.5), hold = t >= T.hang[0] && t < T.fall[0] ? 1 : 0;
   return { rise, hang, fall, hold, open: .85 + .3 * ss(hang) };
 }
-// —— 巨浪几何（归一化：u 横向、v 高度，单位 = 浪高）——
+// —— Great wave geometry (normalised: u horizontal, v height, unit = wave height) ——
 export const B = 742, XC = 860;
 const BACK = [[-1.05, 0], [-.66, .05], [-.4, .18], [-.21, .4], [-.1, .64], [-.02, .85], [.1, 1.0]];
-const LIP = [[.26, 1.06], [.41, 1.03], [.53, .93], [.6, .8]];           // 浪头（前翻）
-const CURL = [[.565, .72], [.48, .705], [.415, .76]];                    // 卷回的内缘
+const LIP = [[.26, 1.06], [.41, 1.03], [.53, .93], [.6, .8]];           // lip (curling forward)
+const CURL = [[.565, .72], [.48, .705], [.415, .76]];                    // inner edge of the curl
 const FRONT = [[.37, .7], [.31, .55], [.305, .38], [.36, .2], [.48, .07], [.66, 0]];
 const FRONT0 = [[.22, .88], [.29, .62], [.36, .38], [.45, .19], [.55, .07], [.66, 0]];
 export function waveGeo(rise, crash = 0) {
   const h = 820 * Math.pow(rise, .9), sx = 820 * (.45 + .55 * rise), curl = ss(seg(rise, .38, 1));
   const P = ([u, v]) => [XC + u * sx, B - v * h];
   const crest = BACK[BACK.length - 1];
-  // 碎浪：浪头绕浪顶向前下方旋转
+  // breaking: the lip rotates forward and down around the crest
   const rot = crash * 1.05, cr = Math.cos(rot), sr = Math.sin(rot);
   const ext = 1 + crash * .45;
   const R = ([u, v]) => { const du = (u - crest[0]) * curl * ext, dv = (v - crest[1]) * curl * ext; return [crest[0] + du * cr + dv * sr * .9, crest[1] - (du * sr - dv * cr) - crash * .12]; };
@@ -63,7 +63,7 @@ export function waveGeo(rise, crash = 0) {
 function offsetCurve(pts, d) {
   return pts.map((p, i) => { const q = pts[Math.min(pts.length - 1, i + 1)], o = pts[Math.max(0, i - 1)]; let dx = q[0] - o[0], dy = q[1] - o[1]; const L = Math.hypot(dx, dy) || 1; return [p[0] - dy / L * d, p[1] + dx / L * d]; });
 }
-// 浪身：沿背坡轮廓的 3 阶蓝带（浅蓝近浪顶 → 普鲁士蓝 → 深槽），带间 ぼかし；成组白色流线
+// Wave body: 3 blue bands following the back-slope outline (light blue near the crest → Prussian blue → deep trough), bokashi (ぼかし, hand-wiped gradation) between bands; grouped white flow lines
 const BL = '#6f95bb', BM = PAL.prus, BD = '#0f2344';
 export function wave(x, t12, rise, crash = 0) {
   if (rise <= 0.001) return null;
@@ -72,7 +72,7 @@ export function wave(x, t12, rise, crash = 0) {
   x.save(); x.beginPath(); smooth(x, outline, false); x.closePath(); x.clip();
   x.fillStyle = BD; x.fillRect(-500, B - h - 600, 3000, h + 800);
   const ridge = dense(back.concat(curl > .03 ? lip.slice(0, 2) : []), 7), sc = .4 + .6 * rise;
-  // 三阶蓝带：浅蓝（近浪顶）→ 普鲁士蓝 → 深槽；带间用 3 条过渡色做 ぼかし
+  // three blue bands: light blue (near the crest) → Prussian blue → deep trough; bokashi between bands using 3 transition colours
   const bands = [[0, BL], [70, BL], [100, mix(BL, BM, .5)], [125, BM], [230, BM], [262, mix(BM, BD, .5)], [290, BD]];
   for (let k = bands.length - 1; k >= 0; k--) {
     const [d, col] = bands[k], d2 = k ? bands[k - 1][0] : 0;
@@ -81,7 +81,7 @@ export function wave(x, t12, rise, crash = 0) {
   }
   for (let k = bands.length - 1; k >= 0; k--) { const [d, col] = bands[k]; x.strokeStyle = col; x.lineWidth = 60 * sc; x.beginPath(); smooth(x, offsetCurve(ridge, d * sc)); x.stroke(); }
   x.fillStyle = BL; x.beginPath(); smooth(x, ridge.concat(offsetCurve(ridge, 40 * sc).reverse()), true); x.fill();
-  // 成组流线：5 组 × 3 根，沿水流方向的长弧，偶有断口
+  // grouped flow lines: 5 groups × 3 lines, long arcs along the water flow, with occasional breaks
   const R = mulberry(5), ridgeB = dense(back, 7);
   for (let gI = 0; gI < 5; gI++) {
     const base = [34, 88, 150, 205, 300][gI] * sc;
@@ -92,7 +92,7 @@ export function wave(x, t12, rise, crash = 0) {
       while (i < L - 3) { const len = 16 + Math.floor(R() * 24); x.beginPath(); smooth(x, c.slice(i, Math.min(L, i + len))); x.stroke(); i += len + 2 + Math.floor(R() * 4); }
     }
   }
-  // 浪腹空腔（浪头下）更深
+  // the hollow belly (under the lip) is darker
   if (curl > .05) {
     const cav = [G.top].concat(lip.slice(1), cu, front.slice(0, 3));
     x.fillStyle = rgba('#081a36', .7 * curl); x.beginPath(); smooth(x, offsetCurve(cav, -6), true); x.fill();
@@ -103,7 +103,7 @@ export function wave(x, t12, rise, crash = 0) {
   x.fillStyle = BD; carve(x, back, 4.2, { taper: [.08, .02], seed: 2 }); carve(x, front, 3.6, { taper: [.02, .2], seed: 3 });
   return G;
 }
-// 分形浪爪：大爪在中段分出 2–3 个小爪，小爪再分叉；爪尖向内勾
+// Fractal wave claws: a large claw branches into 2–3 small claws midway, the small claws fork again; tips hook inward
 export function fclaw(x, bx, by, ang, len, wid, curl, depth, st, R) {
   const n = 12, split = depth > 0 ? .55 + R() * .15 : 1, sp = [[bx, by]]; let a = ang, px = bx, py = by;
   const cv = depth === 2 ? curl * .3 : depth === 1 ? curl * .75 : curl * 1.25;
@@ -128,7 +128,7 @@ export function fclaw(x, bx, by, ang, len, wid, curl, depth, st, R) {
     x.fillStyle = st.fill; x.beginPath(); x.arc(px, py, wid * .5 * .48, 0, TAU); x.fill();
   }
 }
-// 浪沫带 + 两层分形浪爪 + 成簇飞沫（可越过画框）
+// Foam band + two layers of fractal claws + clustered spray (may cross the picture frame)
 export function foam(x, G, t12, rise, crash = 0, st0 = {}) {
   if (!G || G.curl <= .03) return;
   const { h, curl, back, lip, cu } = G;
@@ -152,12 +152,12 @@ export function foam(x, G, t12, rise, crash = 0, st0 = {}) {
     }
   };
   layer(true, 71);
-  // 白色浪沫带
+  // white foam band
   x.fillStyle = PAL.white; x.beginPath(); poly(x, cd.concat(inner.slice().reverse())); x.fill();
   x.strokeStyle = PAL.prusD; x.lineWidth = 2.6; x.lineJoin = 'round'; x.beginPath(); smooth(x, inner); x.stroke();
   x.lineWidth = 3; x.beginPath(); smooth(x, cd); x.stroke();
   layer(false, 77);
-  // 爪根埋进不规则的泡沫白块里：先画所有描边，再画所有白填（得到并集轮廓）
+  // claw roots are buried in irregular white foam blobs: draw all outlines first, then all white fills (gives the union outline)
   const Rb = mulberry(123), blobs = [];
   for (const [px, py, n, r] of roots) for (let k = 0; k < 6; k++) {
     const a = n + (Rb() - .5) * 2.6, d = r * (.1 + Rb() * .6);
@@ -165,7 +165,7 @@ export function foam(x, G, t12, rise, crash = 0, st0 = {}) {
   }
   x.strokeStyle = PAL.prusD; x.lineWidth = 4; blobs.forEach(([bx, by, r]) => { x.beginPath(); x.arc(bx, by, r, 0, TAU); x.stroke(); });
   x.fillStyle = PAL.white; blobs.forEach(([bx, by, r]) => { x.beginPath(); x.arc(bx, by, r, 0, TAU); x.fill(); });
-  // 成簇飞沫：每簇 1 大 + 若干中 + 若干小
+  // clustered spray: each cluster is 1 large + several medium + several small
   const R2 = mulberry(90 + Math.floor(t12 * 12) % 3), nc = Math.round(7 * curl);
   for (let c = 0; c < nc; c++) {
     const k = Math.round((.25 + c / Math.max(1, nc - 1) * .55) * (N - 1)), p = cd[k];

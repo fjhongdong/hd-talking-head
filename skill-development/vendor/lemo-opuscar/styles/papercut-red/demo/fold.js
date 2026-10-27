@@ -1,4 +1,4 @@
-// 折—剪—展开：纸坐标 = 团花坐标（原点 = 纸中心，半边长 400 = TR）
+// Fold–cut–unfold: paper coordinates = tuanhua (团花, round folded-and-cut rosette) coordinates (origin = paper centre, half side length 400 = TR)
 import { PAL, canvas, piece, fill, trace, finishPaper, fillPaper, paperShadow, noShadow } from './paper.js';
 import { put, mul, T, S, R } from './rig.js';
 import { TR, outerR, wedgeFlat, D4 } from './tuanhua.js';
@@ -18,7 +18,7 @@ function build() {
   return F;
 }
 const TRI = [[0, 0], [TR, 0], [TR, TR]];
-// 在 M 变换下，把 face 片裁进 poly（纸坐标）
+// Under transform M, clip the face piece into poly (paper coordinates)
 function layer(g, M, poly, face, opt = {}) {
   const p = face === 'back' ? F.back : F.front;
   g.save(); g.setTransform(...M);
@@ -30,11 +30,11 @@ function layer(g, M, poly, face, opt = {}) {
   if (opt.hi) { g.fillStyle = `rgba(255,220,200,${opt.hi})`; g.fillRect(-TR, -TR, 2 * TR, 2 * TR); }
   g.restore();
 }
-// 纸叠的厚度：往右下偏移画几层深色
+// thickness of the folded stack: draw a few darker layers offset toward the bottom right
 function stack(g, M, poly, n) {
   for (let i = n; i >= 1; i--) { g.save(); g.setTransform(...M); g.translate(i * 1.1, i * 1.4); g.beginPath(); trace(g, poly); g.fillStyle = i % 2 ? '#9c1418' : '#b51a1c'; g.fill(); g.restore(); }
 }
-// 翻起的纸：沿法线分 16 条，每条按抬起高度做近大远小（伪透视），画进离屏再整体投影
+// paper being flipped up: split into 16 strips along the normal, each scaled by its lift height (nearer = bigger, fake perspective), drawn into an offscreen canvas and then projected as a whole
 const [Fc, Fg] = canvas(1920, 1080);
 function flap(g, C, n, s, poly, face) {
   const tv = [-n[1], n[0]], ds = poly.map(p => p[0] * n[0] + p[1] * n[1]), D = Math.max(...ds.map(Math.abs)), sg = Math.sign(ds.reduce((a, b) => Math.abs(b) > Math.abs(a) ? b : a, 0)) || 1;
@@ -48,7 +48,7 @@ function flap(g, C, n, s, poly, face) {
     const MM = mul(C, M), p = face === 'back' ? F.back : F.front;
     Fg.save(); Fg.setTransform(...MM); Fg.beginPath(); trace(Fg, poly); Fg.clip(); Fg.beginPath(); trace(Fg, strip); Fg.clip();
     Fg.drawImage(p.c, p.x0, p.y0, p.w, p.h);
-    // 明暗：竖起时变暗，背面朝上时略亮
+    // shading: darker while standing upright, slightly lighter when the back faces up
     const shade = .38 * lift * (s > 0 ? 1 : .6);
     Fg.fillStyle = s > 0 ? `rgba(40,0,6,${shade})` : `rgba(255,225,205,${.12 + .1 * lift})`; Fg.fillRect(-TR * 2, -TR * 2, TR * 4, TR * 4);
     Fg.restore();
@@ -56,12 +56,12 @@ function flap(g, C, n, s, poly, face) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); const z = C[0];
   g.shadowColor = `rgba(50,8,6,${.3 + .25 * lift})`; g.shadowBlur = (6 + 30 * lift) * z; g.shadowOffsetX = (3 + 22 * lift) * z; g.shadowOffsetY = (4 + 28 * lift) * z;
   g.drawImage(Fc, 0, 0); g.restore();
-  // 折痕：一道细暗线
+  // crease: one thin dark line
   g.save(); g.setTransform(...C); g.strokeStyle = 'rgba(80,6,10,.45)'; g.lineWidth = 1.6 / z; g.beginPath(); g.moveTo(-2000 * tv[0], -2000 * tv[1]); g.lineTo(2000 * tv[0], 2000 * tv[1]); g.restore();
 }
 const flapM = (n, s) => { const [nx, ny] = n; return [1 + (s - 1) * nx * nx, (s - 1) * nx * ny, (s - 1) * nx * ny, 1 + (s - 1) * ny * ny, 0, 0]; };
 const foldS = u => Math.cos(Math.PI * eio(u));       // 1 → -1
-// 刀路（楔形坐标）：外缘花边 → 外圈叶脉 → 灯笼 → 镂空中圈 → 内圈 → 花心
+// cutting path (wedge coordinates): outer scalloped edge → outer-ring leaf veins → lantern → cut-out middle ring → inner ring → flower centre
 const PATH = (() => {
   const p = [], pol = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
   p.push([TR * 1.08, TR * .05]);
@@ -80,7 +80,7 @@ function pathAt(u) {
   return { p: [lerp(a[0], b[0], f), lerp(a[1], b[1], f)], ang: Math.atan2(b[1] - a[1], b[0] - a[0]), i, s };
 }
 const cutU = t => seg(t, TL.cut0 + .1, TL.cut1);
-// 相机
+// camera
 const camK = track([[TL.folds[0] - .01, [0, 0, .95]], [TL.folds[0] + .7, [0, 190, 1.22]], [TL.folds[1] + .7, [190, 190, 1.62]], [TL.folds[2] + .6, [262, 140, 2.25]],
   [TL.cut1 + .3, [262, 140, 2.2]], [TL.unfolds[0] + .02, [240, 130, 2.0]], [TL.unfolds[2] + .45, [0, 0, 1.12]], [TL.bloom + 1, [0, 0, 1.14]]]);
 export function camFold(t) {
@@ -93,7 +93,7 @@ const [Mc, Mg] = canvas(1920, 1080);
 export function drawFold(g, t) {
   build();
   const C = camFold(t), z = C[0];
-  // 桌面：宣纸 + 烛光暖晕
+  // tabletop: rice paper + warm candle halo
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); fillPaper(g, 'rice', 0, 0, 1920, 1080, [z * .9, 0, 0, z * .9, C[4], C[5]]);
   const gr = g.createRadialGradient(560, 300, 100, 900, 560, 1400); gr.addColorStop(0, 'rgba(255,200,120,.10)'); gr.addColorStop(1, 'rgba(60,20,10,.45)');
   g.fillStyle = gr; g.fillRect(0, 0, 1920, 1080); g.restore();
@@ -121,9 +121,9 @@ export function drawFold(g, t) {
     layer(g, C, TRI, 'front', { shadow: 1 });
     flap(g, C, n, s, [[0, 0], [TR, TR], [0, TR]], s > 0 ? 'front' : 'back');
   } else if (t < TL.unfolds[0]) {
-    // —— 剪 ——
+    // —— cut ——
     const u = cutU(t), tip = pathAt(u);
-    // 已剪的部分 = 楔形剪纸（下面几层错开 = 厚度）；没剪的 = 整块三角（用蒙版遮住）
+    // part already cut = the wedge paper-cut (layers below offset = thickness); part not yet cut = a solid triangle (hidden with a mask)
     g.save(); g.setTransform(...C); g.beginPath(); trace(g, TRI); g.clip(); paperShadow(g, z, 1);
     g.filter = 'brightness(.62)'; for (let i = 3; i >= 1; i--) g.drawImage(F.wBack.c, F.wBack.x0 + i * 1.1 / z, F.wBack.y0 + i * 1.4 / z, F.wBack.w, F.wBack.h);
     g.filter = 'none'; g.drawImage(F.wBack.c, F.wBack.x0, F.wBack.y0, F.wBack.w, F.wBack.h); g.restore();
@@ -133,13 +133,13 @@ export function drawFold(g, t) {
     Mg.globalCompositeOperation = 'destination-out'; Mg.fillStyle = '#000'; Mg.beginPath();
     const n = Math.floor(tip.s / 10); for (let k = 0; k <= n; k++) { const q = pathAt(k * 10 / PL[PL.length - 1]).p; Mg.moveTo(q[0] + 62, q[1]); Mg.arc(q[0], q[1], 62, 0, 7); }
     Mg.fill();
-    // 外缘花边剪过的角度之外的角料整块去掉
+    // remove, as one block, the corner offcut beyond the angle the outer scalloped edge has been cut to
     const edgeLen = PL[11], thd = Math.min(1, tip.s / edgeLen) * Q * 1.02;
     if (thd > 0) { Mg.beginPath(); Mg.moveTo(900, -30); for (let i = 0; i <= 40; i++) { const a = -.05 + (thd + .05) * i / 40; Mg.lineTo(Math.cos(a) * (outerR(a) - 1), Math.sin(a) * (outerR(a) - 1)); } Mg.lineTo(Math.cos(thd) * 900, Math.sin(thd) * 900); Mg.closePath(); Mg.fill(); }
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(Mc, 0, 0); g.restore();
-    // 纸屑（每 0.25 s 一片，从刀尖飘开落下）
+    // paper scraps (one every 0.25 s, drifting off the blade tip and falling)
     drawScraps(g, C, t);
-    // 剪刀：沿刀路，刃每 0.25 s 开合一次
+    // scissors: follow the cutting path, blades open and close once every 0.25 s
     if (t < TL.cut1 + .35) {
       const ph = ((t - TL.cut0) / .25) % 1, open = t < TL.cut1 ? .1 + .42 * (.5 + .5 * Math.cos(ph * Math.PI * 2)) : .5;
       const lift = seg(t, TL.cut1, TL.cut1 + .35), p = tip.p;
@@ -164,28 +164,28 @@ function drawScraps(g, C, t) {
     g.beginPath(); g.moveTo(-sz, -sz * .3); g.lineTo(sz * .8, -sz * .6); g.lineTo(sz * .3, sz * .7); g.closePath(); g.fillStyle = k % 3 ? BACK : FRONT; g.fill(); g.restore();
   }
 }
-// 展开：楔形 8 份（D4），按三次展开逐步翻开
+// unfold: the wedge in 8 copies (D4), opened step by step over three unfolds
 function drawUnfold(g, C, t) {
   const [u1, u2, u3] = TL.unfolds, Dd = .2;
   const sOf = t0 => t < t0 ? -1 : t > t0 + Dd ? 1 : -Math.cos(Math.PI * eo((t - t0) / Dd));
   const sA = sOf(u1), sB = sOf(u2), sC = sOf(u3);
   const Rx = [-1, 0, 0, 1, 0, 0], Ry = [1, 0, 0, -1, 0, 0];
   const n1 = [-Math.SQRT1_2, Math.SQRT1_2];
-  // 第一次展开：W0 + 对角翻开的 W1
+  // first unfold: W0 + W1 flipping open across the diagonal
   const copies = [];
   const push = (M, s) => copies.push({ M, s });
   const flapA = flapM(n1, sA);
   const L1 = [[D4[0], 1], [mul(flapA, D4[0]), sA]];
-  // 翻开 = 镜像版本从折叠位置转开：W1 = 对角镜像，flapM 作用于 W0 的镜像（swap）
+  // flipping open = the mirrored version rotating away from the folded position: W1 = diagonal mirror, flapM applies to the mirror of W0 (swap)
   const baseSet = [{ M: D4[0], s: 1 }, { M: mul(flapA, D4[1]), s: sA }];
   const fB = flapM([1, 0], sB), fC = flapM([0, 1], sC);
   let set = baseSet;
   if (t >= u2) set = set.concat(baseSet.map(c => ({ M: mul(fB, mul(Rx, c.M)), s: sB })));
   if (t >= u3) set = set.concat(set.map(c => ({ M: mul(fC, mul(Ry, c.M)), s: sC })));
-  // 未展开到的层叠厚度
+  // stack thickness of the layers not yet unfolded
   const bloomHi = t > TL.bloom - .03 ? .35 * Math.exp(-(t - TL.bloom) * 4) : 0;
   const nl = t < u2 ? 4 : t < u3 ? 2 : 0;
-  // 先画翻开中的（s<1）在上面
+  // draw the ones still flipping (s<1) first, on top
   const sorted = set.slice().sort((a, b) => (b.s > .999) - (a.s > .999));
   for (const c of sorted) {
     const w = c.s < 0 ? F.wBack : F.wFront, M = mul(C, c.M);

@@ -1,4 +1,4 @@
-// 入口：?test=swatch|model 进入试画页；否则渲染正片
+// Entry: ?test=swatch|model opens a test-drawing page; otherwise renders the film
 import { makeComp } from './gl.js';
 import { BOIL } from './crayon.js';
 const Q = new URLSearchParams(location.search);

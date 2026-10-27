@@ -1,9 +1,9 @@
-// 场景搭建小件：世界坐标 UV、像素材质、房子、木箱、木桶、火焰、窗、灯柱、远山剪影
+// Scene-building pieces: world-space UVs, pixel materials, houses, crates, barrels, flames, windows, lamp posts, distant hill silhouettes
 import * as THREE from 'three';
 import { PX, PPM, ramp, hex, h2, fbm, texOf, woodPlanks, plaster, shingles, billboard, glow, mulberry } from './px.js';
 import { flick } from './fx.js';
 
-// 按法线做平面投影 UV（米 / tile）：让任何几何体上的像素密度一致
+// Planar-projected UVs by normal (metres / tile): keeps pixel density the same on any geometry
 export function worldUV(geo, tile, o = {}) {
   geo = geo.index ? geo.toNonIndexed() : geo; geo.computeVertexNormals();
   const p = geo.attributes.position, n = geo.attributes.normal, uv = new Float32Array(p.count * 2);
@@ -20,14 +20,14 @@ export function mat(canvas, o = {}) {
   if (o.em) { m.emissiveMap = texOf(o.em, { repeat: [1, 1] }); m.emissive = new THREE.Color(o.emCol ?? '#ffffff'); m.emissiveIntensity = o.emI ?? 1; }
   m.userData.tile = canvas.width / PPM; return m;
 }
-// 带世界 UV 的网格
+// Mesh with world UVs
 export function mesh(geo, m, o = {}) {
   const g = worldUV(geo, m.userData.tile ?? 4, o);
   const me = new THREE.Mesh(g, m); me.castShadow = o.cast ?? true; me.receiveShadow = o.recv ?? true; return me;
 }
 export const box = (w, h, d, m, o) => { const g = new THREE.BoxGeometry(w, h, d); g.translate(0, h / 2, 0); return mesh(g, m, o); };
 
-// —— 常用材质（缓存）——
+// —— Common materials (cached) ——
 const M = {};
 export function mats() {
   if (M.ok) return M;
@@ -43,42 +43,42 @@ export function mats() {
   M.ok = true; return M;
 }
 
-// —— 窗户：像素窗格，暖光可调（emissive）——
+// —— Windows: pixel panes, adjustable warm light (emissive) ——
 let _win = null;
 export function windowMat() {
   if (_win) return _win;
   const P = new PX(12, 16), E = new PX(12, 16), F = ramp(['#1a0f0b', '#33200f', '#4d3219']), G = ramp(['#8a3e14', '#e0822c', '#ffc05a', '#ffe6a4']);
   P.fill((x, y) => { const fr = x === 0 || x === 11 || y === 0 || y === 15 || x === 5 || x === 6 || y === 7; if (fr) return F(y === 0 || x === 0 ? .9 : .4, x, y); const v = .55 + (1 - y / 16) * .2 + (h2(x, y, 3) - .5) * .25 - (x > 6 && y > 8 ? .3 : 0); const c = G(v, x, y); E.set(x, y, c); return c; });
-  // 窗台
+  // Sill
   const t = texOf(P.done()), e = texOf(E.done());
   _win = new THREE.MeshStandardMaterial({ map: t, emissiveMap: e, emissive: new THREE.Color('#ffffff'), emissiveIntensity: 2.2, roughness: .6 }); return _win;
 }
 export function windowQuad(w = .8, h = 1.05) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), windowMat()); return m; }
 
-// —— 房子：墙体 + 山墙屋顶 + 窗 + 门 + 烟囱 ——
+// —— House: walls + gabled roof + windows + door + chimney ——
 export function house(o) {
   const MM = mats(), g = new THREE.Group(), { w, d, h } = o, rh = o.rh ?? w * .45, wm = MM[o.wall ?? 'wall'], rm = MM[o.roof ?? 'roof'];
   const body = box(w, h, d, wm); g.add(body);
-  // 山墙三角（沿 x 方向的两端）
+  // Gable triangles (the two ends along x)
   const tri = new THREE.Shape([new THREE.Vector2(-d / 2, 0), new THREE.Vector2(d / 2, 0), new THREE.Vector2(0, rh)]);
   for (const s of [-1, 1]) { const tg = new THREE.ShapeGeometry(tri); tg.rotateY(Math.PI / 2 * s); tg.translate(s * w / 2, h, 0); const m = mesh(tg, wm); g.add(m); }
-  // 屋顶两坡（稍出檐）
+  // Two roof slopes (slight eave overhang)
   const ov = .35, sl = Math.hypot(d / 2 + ov, rh + ov * rh / (d / 2));
   for (const s of [-1, 1]) {
     const pg = new THREE.BoxGeometry(w + ov * 2, .14, sl); pg.translate(0, 0, s * sl / 2);
     const m = mesh(pg, rm); m.rotation.x = s * Math.atan2(rh, d / 2); m.position.set(0, h + rh + .06, 0); g.add(m);
   }
-  // 屋脊
+  // Ridge
   const ridge = box(w + ov * 2 + .1, .16, .22, MM.beam); ridge.position.set(0, h + rh, 0); g.add(ridge);
-  // 烟囱
+  // Chimney
   if (o.chimney !== false) { const c = box(.6, rh + 1.2, .6, MM.wall2); c.position.set(w * .25, h, -d * .15); g.add(c); }
-  // 窗：前面（+z）与侧面
+  // Windows: front (+z) and side
   const wins = [];
   (o.windows ?? [[-w * .25, h * .55], [w * .25, h * .55]]).forEach(([x, y]) => { const q = windowQuad(); q.position.set(x, y, d / 2 + .02); g.add(q); wins.push(q);
     const sill = box(.95, .08, .18, MM.beam, { cast: false }); sill.position.set(x, y - .6, d / 2 + .06); g.add(sill); });
   if (o.upper) o.upper.forEach(([x, y]) => { const q = windowQuad(.7, .9); q.position.set(x, y, d / 2 + .02); g.add(q); wins.push(q); });
   if (o.side) o.side.forEach(([z, y, s]) => { const q = windowQuad(.7, .95); q.rotation.y = Math.PI / 2 * s; q.position.set(s * (w / 2 + .02), y, z); g.add(q); wins.push(q); });
-  // 门
+  // Door
   if (o.door) { const dm = box(1.0, 1.9, .12, MM.plankDark); dm.position.set(o.door, 0, d / 2 + .02); g.add(dm); }
   g.position.set(o.x, o.y ?? 0, o.z); g.rotation.y = o.ry ?? 0;
   g.userData.windows = wins; return g;
@@ -99,13 +99,13 @@ export function barrel(r = .35, h = .9) {
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: texOf(P.done()), roughness: .9 })); m.castShadow = m.receiveShadow = true; return m;
 }
 
-// —— 像素火焰：4 帧图集，公告板，发光 ——
+// —— Pixel flame: 4-frame atlas, billboard, emissive ——
 let _fire = null;
 function fireAtlas() {
   if (_fire) return _fire;
   const FWp = 16, FHp = 22, n = 6, P = new PX(FWp * n, FHp), G = ramp(['#b3260e', '#f0561a', '#ff9a2a', '#ffd35a', '#fff6c8'], .3);
   for (let f = 0; f < n; f++) for (let y = 0; y < FHp; y++) for (let x = 0; x < FWp; x++) {
-    const u = (x + .5 - FWp / 2) / (FWp / 2), v = 1 - (y + .5) / FHp;   // v: 0 底 → 1 顶
+    const u = (x + .5 - FWp / 2) / (FWp / 2), v = 1 - (y + .5) / FHp;   // v: 0 bottom → 1 top
     const wob = Math.sin(v * 7 + f * 1.05) * .12 * v + (fbm(x * .3, y * .25 - f * 1.4, 7) - .5) * .5 * v;
     const wid = Math.pow(1 - v, .7) * (1 - v * .15), d = Math.abs(u - wob) / Math.max(.05, wid);
     const heat = 1 - d - v * .55 + (fbm(x * .5 + f, y * .4 - f * 2, 3) - .5) * .5;
@@ -122,7 +122,7 @@ export function fire(size = .8, o = {}) {
   return me;
 }
 
-// —— 远山剪影（像素山脊公告板）——
+// —— Distant hill silhouette (pixel ridgeline billboard) ——
 export function ridge(wM, hM, col, seed, o = {}) {
   const W = Math.round(wM * (o.ppm ?? 3)), H = Math.round(hM * (o.ppm ?? 3)), P = new PX(W, H), c = hex(col);
   for (let x = 0; x < W; x++) { const top = H * (1 - (.35 + .6 * fbm(x * (o.f ?? .012), 0, seed, 4))); for (let y = Math.floor(top); y < H; y++) P.set(x, y, y - top < 2 ? [c[0] + 14, c[1] + 16, c[2] + 20] : c); }

@@ -1,5 +1,5 @@
-// 无头 Chrome：优先 PLAYWRIGHT_CHROME 环境变量，否则找本机 playwright 缓存里的 headless shell
-// GPU 参数让 WebGL 走 ANGLE/GL（M 系列 Mac 上比默认 SwiftShader 快 ~6 倍）
+// Headless Chrome: prefer the PLAYWRIGHT_CHROME environment variable, otherwise find the headless shell in the local playwright cache
+// GPU flags route WebGL through ANGLE/GL (~6× faster than the default SwiftShader on M-series Macs)
 import fs from 'fs'; import path from 'path';
 function findExe() {
   if (process.env.PLAYWRIGHT_CHROME) return process.env.PLAYWRIGHT_CHROME;
@@ -9,7 +9,7 @@ function findExe() {
     const p = path.join(base, d, 'chrome-headless-shell-mac-arm64/chrome-headless-shell');
     if (fs.existsSync(p)) return p;
   }
-  return undefined;   // 交给 playwright 自己找
+  return undefined;   // leave it to playwright to find one
 }
 export const EXE = findExe();
 export const ARGS = ['--use-angle=gl', '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];

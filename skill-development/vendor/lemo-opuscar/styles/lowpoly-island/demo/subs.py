@@ -1,5 +1,5 @@
-"""字幕导出：与页面烧录字幕同一规则（显示 = 语音开始前 0.05s 起，至少 1.8s 且不短于语音 + 0.6s，不与下一句重叠）
-用法：.venv/bin/python styles/lowpoly-island/demo/subs.py → out/cues.json（再由 core/render/srt.py 转 .srt）"""
+"""Subtitle export: same rule as the subtitles burned in by the page (shown from 0.05s before the speech starts, for at least 1.8s and no shorter than the speech + 0.6s, never overlapping the next line)
+Usage: .venv/bin/python styles/lowpoly-island/demo/subs.py → out/cues.json (then core/render/srt.py converts it to .srt)"""
 import json, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 ev = [e for e in json.load(open(os.path.join(HERE, 'events.json')))['ev'] if e['type'] == 'vo']

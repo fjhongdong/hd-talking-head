@@ -1,7 +1,7 @@
-// 木版画引擎：和纸、色版（带错位 / 胡麻摺 / 木纹）、ぼかし、刻刀墨线、吃墨显现、题签与朱印
+// Woodblock print engine: washi paper, colour blocks (with misregistration / goma-zuri (胡麻摺, sesame-seed speckle) / wood grain), bokashi (ぼかし, hand-wiped gradation), carved key lines, ink-take reveal, title slips and vermilion seals
 import { clamp, lerp, mulberry, hash, vnoise, ss, TAU } from '/core/lib.js';
 export const W = 1920, H = 1080;
-// 画框（墨线边框）
+// picture frame (key-line border)
 export const FR = { x0: 44, y0: 38, x1: 1876, y1: 1042 };
 export const PAL = {
   paper: '#eee2c6', paperD: '#e2d3b0', mount: '#c9b690', mountD: '#b19d74',
@@ -13,7 +13,7 @@ export const PAL = {
 };
 export const mk = (w = W, h = H) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 
-// —— 噪声场（双线性 + smoothstep 的格点噪声，fbm）——
+// —— Noise field (bilinear + smoothstep lattice noise, fbm) ——
 function field(w, h, cell, seed) {
   const R = mulberry(seed), gw = Math.ceil(w / cell) + 2, gh = Math.ceil(h / cell) + 2, g = new Float32Array(gw * gh);
   for (let i = 0; i < g.length; i++) g[i] = R();
@@ -38,10 +38,10 @@ const hex = s => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), pars
 export const rgba = (s, a = 1) => { const [r, g, b] = hex(s); return `rgba(${r},${g},${b},${a})`; };
 export const mix = (s1, s2, t) => { const a = hex(s1), b = hex(s2); return '#' + a.map((v, i) => Math.round(lerp(v, b[i], t)).toString(16).padStart(2, '0')).join(''); };
 
-// —— 纹理（启动时生成一次）——
+// —— Textures (generated once at startup) ——
 export const TX = {};
 export function buildTextures() {
-  // 1. 和纸底
+  // 1. washi base
   {
     const c = mk(), x = c.getContext('2d');
     const w = 480, h = 270, m = fbm(w, h, [90, 30, 9, 3], 11), sm = mk(w, h), sx = sm.getContext('2d'), id = sx.createImageData(w, h);
@@ -53,15 +53,15 @@ export function buildTextures() {
     const gr = x.createRadialGradient(W / 2, H / 2, 380, W / 2, H / 2, 1150); gr.addColorStop(0, 'rgba(160,120,60,0)'); gr.addColorStop(1, 'rgba(150,108,55,.16)');
     x.fillStyle = gr; x.fillRect(0, 0, W, H); TX.paper = c;
   }
-  // 2. 压在墨上的浅色纤维（纸纤维透过墨色）
+  // 2. light fibres laid over the ink (paper fibres showing through the ink)
   { const c = mk(), x = c.getContext('2d'); fibers(x, 3000, '#f4ead4', .09, .8, 21); fibers(x, 90, '#f4ead4', .13, 1.3, 22, 160); TX.fiber = c; }
-  // 3. 胡麻摺斑点（destination-out 用）
+  // 3. goma-zuri speckles (used with destination-out)
   {
     const w = 960, h = 540, m = fbm(w, h, [60, 16], 31), R = mulberry(32), c = mk(w, h), x = c.getContext('2d'), id = x.createImageData(w, h);
     for (let i = 0; i < w * h; i++) { const p = .02 + .32 * Math.pow(m[i], 3.5); id.data[i * 4 + 3] = R() < p ? 90 + R() * 140 : 0; }
     x.putImageData(id, 0, 0); TX.speck = c;
   }
-  // 4. 木纹（source-atop 用）：扭曲场的等值线 = 年轮纹，偶有节疤；另有宽的浓淡带
+  // 4. wood grain (used with source-atop): contour lines of a warped field = growth rings, with occasional knots; plus wide bands of dense/light ink
   {
     const w = 1920, h = 1080, m = fbm(w / 2, h / 2, [160, 48, 14], 41, [1, .45, .2]), c = mk(w, h), x = c.getContext('2d'), id = x.createImageData(w, h);
     const knots = [[420, 300], [1300, 760], [1650, 180], [760, 900]];
@@ -74,7 +74,7 @@ export function buildTextures() {
     }
     x.putImageData(id, 0, 0); TX.grain = c;
   }
-  // 4b. 馬連擦痕：一圈圈的圆弧压痕与横向之字擦痕（destination-out 用 → 墨色不均）
+  // 4b. baren (馬連, hand rubbing pad) marks: concentric arc pressure marks and horizontal zigzag rubs (used with destination-out → uneven ink)
   {
     const c = mk(), x = c.getContext('2d'), R = mulberry(61);
     x.filter = 'blur(7px)'; x.lineCap = 'round';
@@ -90,7 +90,7 @@ export function buildTextures() {
     x.filter = 'none'; TX.baren = c;
     const p = mk(), px = p.getContext('2d'); px.fillStyle = PAL.paper; px.fillRect(0, 0, W, H); px.globalCompositeOperation = 'destination-in'; px.drawImage(c, 0, 0); TX.barenPaper = p;
   }
-  // 5. 吃墨显现遮罩（馬連压痕：大块斑驳 + 细点），12 级
+  // 5. ink-take reveal masks (baren pressure marks: large blotches + fine dots), 12 levels
   {
     const w = 960, h = 540, m = fbm(w, h, [120, 40, 12, 3], 51, [1, .7, .45, .35]);
     TX.reveal = [];
@@ -113,7 +113,7 @@ function fibers(x, n, col, a, lw, seed, len = 60) {
   x.globalAlpha = 1;
 }
 
-// 把一块色版做成"印出来的"：胡麻摺斑点 + 木纹
+// Make a colour block look "printed": goma-zuri speckles + wood grain
 export function inkify(c, { speck = .5, grain = 0, gx = 0, gy = 0, baren = 0, bx = 0, by = 0 } = {}) {
   const x = c.getContext('2d'); x.save();
   if (grain) { x.globalCompositeOperation = 'source-atop'; x.globalAlpha = grain; x.drawImage(TX.grain, gx, gy, W, H); x.drawImage(TX.grain, gx - W, gy, W, H); }
@@ -122,7 +122,7 @@ export function inkify(c, { speck = .5, grain = 0, gx = 0, gy = 0, baren = 0, bx
   x.restore(); return c;
 }
 
-// —— 路径与墨线 ——
+// —— Paths and key lines ——
 export function smooth(x, p, closed = false) {
   const n = p.length; if (n < 2) return;
   if (!closed) {
@@ -137,7 +137,7 @@ export function smooth(x, p, closed = false) {
   }
 }
 export function poly(x, p) { x.moveTo(p[0][0], p[0][1]); for (let i = 1; i < p.length; i++) x.lineTo(p[i][0], p[i][1]); x.closePath(); }
-// Catmull-Rom 加密
+// Catmull-Rom densification
 export function dense(p, per = 8, closed = false) {
   const n = p.length, out = [], N = closed ? n : n - 1;
   const P = i => closed ? p[(i + n) % n] : p[clamp(i, 0, n - 1)];
@@ -152,7 +152,7 @@ export function dense(p, per = 8, closed = false) {
   if (!closed) out.push(p[n - 1]);
   return out;
 }
-// 刻刀墨线：变宽填充线（两端收尖、带低频粗细抖动）
+// Carved key line: variable-width filled stroke (tapered at both ends, with low-frequency width jitter)
 export function carve(x, pts, w, { taper = [.25, .25], seed = 1, jit = .22, closed = false, per = 6, col } = {}) {
   const p = dense(pts, per, closed), n = p.length; if (n < 2) return;
   let L = [0]; for (let i = 1; i < n; i++) L.push(L[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
@@ -169,15 +169,15 @@ export function carve(x, pts, w, { taper = [.25, .25], seed = 1, jit = .22, clos
   x.beginPath(); x.moveTo(left[0][0], left[0][1]); for (let i = 1; i < n; i++) x.lineTo(left[i][0], left[i][1]);
   for (let i = n - 1; i >= 0; i--) x.lineTo(right[i][0], right[i][1]); x.closePath(); x.fill();
 }
-// 手刻的轻微抖动（对点列做低频位移）
+// Slight hand-carved wobble (low-frequency displacement of the point list)
 export function wob(pts, amp = 2, seed = 1, f = .02) {
   return pts.map(([a, b]) => [a + (vnoise(a * f + b * f * .7 + seed * 7.3) - .5) * 2 * amp, b + (vnoise(b * f + a * f * .6 + seed * 3.1 + 50) - .5) * 2 * amp]);
 }
-// 普通墨线（圆头）
+// Plain ink line (round caps)
 export function line(x, pts, w = 2.6, col = PAL.sumi, closed = false) { x.strokeStyle = col; x.lineWidth = w; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); smooth(x, pts, closed); x.stroke(); }
 export function fillPath(x, pts, col, closed = true) { x.fillStyle = col; x.beginPath(); smooth(x, pts, closed); x.fill(); }
 
-// ぼかし：手抹的渐变（逐像素生成，边缘按列低频错开，不留接缝）
+// bokashi: hand-wiped gradation (generated per pixel, edge offset per column at low frequency, no seams)
 export function bokashi(x, x0, y0, x1, y1, col, a0, a1, { rough = 22, seed = 3, col2, ease = 1 } = {}) {
   const X0 = Math.max(0, Math.floor(x0)), X1 = Math.min(W, Math.ceil(x1));
   const Y0 = Math.max(0, Math.floor(Math.min(y0, y1) - rough * 1.4)), Y1 = Math.min(H, Math.ceil(Math.max(y0, y1) + rough * 1.4));
@@ -194,7 +194,7 @@ export function bokashi(x, x0, y0, x1, y1, col, a0, a1, { rough = 22, seed = 3, 
   }
   cx.putImageData(id, 0, 0); x.drawImage(c, X0, Y0);
 }
-// 横向霞带（すやり霞）：两端圆头的长条
+// Horizontal mist band (suyari-gasumi, すやり霞): a long strip with rounded ends
 export function kasumi(x, cx, cy, w, h, col, a = 1, vfade = 0) {
   if (vfade) { x.save(); const t = mk(W, H), tx = t.getContext('2d'); kasumi(tx, cx, cy, w, h, col, a); tx.globalCompositeOperation = 'destination-in'; const vg = tx.createLinearGradient(0, cy - h / 2, 0, cy + h / 2); vg.addColorStop(0, 'rgba(0,0,0,1)'); vg.addColorStop(.35, 'rgba(0,0,0,1)'); vg.addColorStop(1, `rgba(0,0,0,${1 - vfade})`); tx.fillStyle = vg; tx.fillRect(0, 0, W, H); x.drawImage(t, 0, 0); x.restore(); return; }
   x.save(); const g = x.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
@@ -203,7 +203,7 @@ export function kasumi(x, cx, cy, w, h, col, a = 1, vfade = 0) {
   x.moveTo(cx - w / 2 + h / 2, cy - h / 2); x.lineTo(cx + w / 2 - h / 2, cy - h / 2); x.arc(cx + w / 2 - h / 2, cy, h / 2, -Math.PI / 2, Math.PI / 2);
   x.lineTo(cx - w / 2 + h / 2, cy + h / 2); x.arc(cx - w / 2 + h / 2, cy, h / 2, Math.PI / 2, Math.PI * 1.5); x.fill(); x.restore();
 }
-// 画一层到目标上：reveal ∈[0,1]（吃墨显现 + 错位对准）
+// Draw one layer onto the target: reveal ∈[0,1] (ink-take reveal + misregistration settling into register)
 export function stampLayer(dst, src, reveal = 1, reg = [0, 0], shift = [5, -4]) {
   if (reveal <= 0) return;
   if (reveal >= 1) { dst.drawImage(src, reg[0], reg[1]); return; }
@@ -213,7 +213,7 @@ export function stampLayer(dst, src, reveal = 1, reg = [0, 0], shift = [5, -4]) 
   x.globalCompositeOperation = 'destination-in'; x.drawImage(TX.reveal[k], 0, 0, W, H); x.globalCompositeOperation = 'source-over';
   dst.drawImage(t, 0, 0);
 }
-// 把一段即时绘制的内容（函数）按 reveal 印上去
+// Print a piece of immediate-mode drawing (a function) according to reveal
 export function stampFn(dst, fn, reveal = 1, shift = [5, -4]) {
   if (reveal <= 0) return;
   if (reveal >= 1) { fn(dst); return; }
@@ -221,12 +221,12 @@ export function stampFn(dst, fn, reveal = 1, shift = [5, -4]) {
   fn(x); stampLayer(dst, t, reveal, [0, 0], shift);
 }
 
-// —— 朱印 ——
+// —— Vermilion seal ——
 const sealCache = {};
 export function sealCanvas(chars, size, { white = true, seed = 1, col = PAL.beni } = {}) {
   const key = chars + size + white + seed; if (sealCache[key]) return sealCache[key];
   const pad = 6, c = mk(size + pad * 2, size + pad * 2), x = c.getContext('2d'), R = mulberry(seed);
-  // 略不规则的方框
+  // slightly irregular square frame
   const q = [[pad + R() * 2, pad + R() * 2], [pad + size - R() * 2, pad + R() * 2.5], [pad + size - R() * 2, pad + size - R() * 2], [pad + R() * 2.5, pad + size - R() * 2]];
   x.fillStyle = col;
   if (white) { x.beginPath(); poly(x, q); x.fill(); x.globalCompositeOperation = 'destination-out'; }
@@ -236,14 +236,14 @@ export function sealCanvas(chars, size, { white = true, seed = 1, col = PAL.beni
   if (n === 1) { x.font = `400 ${size * .78}px Yuji`; x.fillText(chars, pad + size / 2, pad + size / 2 + size * .04); }
   else if (n === 2) { x.font = `400 ${size * .5}px Yuji`; x.fillText(chars[0], pad + size / 2, pad + size * .29); x.fillText(chars[1], pad + size / 2, pad + size * .74); }
   else { x.font = `400 ${size * .42}px Yuji`; const cc = [...chars];[[.72, .28], [.72, .73], [.28, .28], [.28, .73]].forEach(([u, v], i) => cc[i] && x.fillText(cc[i], pad + size * u, pad + size * v)); }
-  // 印泥不匀 + 边缘磕损
+  // uneven seal paste + chipped edges
   x.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < size * 1.6; i++) { x.globalAlpha = .2 + R() * .6; x.beginPath(); const ed = R() < .5; const px = ed ? pad + (R() < .5 ? R() * 4 : size - R() * 4) : pad + R() * size, py = ed ? pad + R() * size : pad + (R() < .5 ? R() * 4 : size - R() * 4); x.arc(px, py, .5 + R() * 1.8, 0, TAU); x.fill(); }
   for (let i = 0; i < size * 2; i++) { x.globalAlpha = .12 + R() * .3; x.beginPath(); x.arc(pad + R() * size, pad + R() * size, .4 + R() * 1.1, 0, TAU); x.fill(); }
   x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
   return sealCache[key] = c;
 }
-// 盖章动画：p 0→1（下压放大 → 落定），之后常显
+// Stamping animation: p 0→1 (press down enlarged → settle), stays visible afterwards
 export function drawSeal(x, chars, cx, cy, size, p, opts = {}) {
   if (p <= 0) return;
   const c = sealCanvas(chars, size, opts), s = p < 1 ? lerp(1.35, 1, ss(clamp(p / .55))) : 1, a = clamp(p / .35);
@@ -251,14 +251,14 @@ export function drawSeal(x, chars, cx, cy, size, p, opts = {}) {
   x.drawImage(c, -c.width / 2, -c.height / 2); x.restore();
 }
 
-// —— 题签（竖式）——
+// —— Title slip (vertical) ——
 export function vtext(x, str, cx, y0, size, gap = 1.06, font = 'Yuji', weight = 400) {
   x.font = `${weight} ${size}px ${font}`; x.textAlign = 'center'; x.textBaseline = 'middle';
   let y = y0 + size / 2; for (const ch of str) { if (ch === ' ') { y += size * .45; continue; } x.fillText(ch, cx, y); y += size * gap; }
   return y - size / 2;
 }
 export function vlen(str, size, gap = 1.06) { let h = 0; for (const ch of str) h += ch === ' ' ? size * .45 : size * gap; return h; }
-// 竖题签：series（上方浅红小签）+ title
+// Vertical title slip: series (small light-red slip above) + title
 export function cartouche(x, cx, y0, title, { series = '山へ五景', w = 84, size = 50, ssize = 27, fill = '#f3e7c6', tab = PAL.beniL } = {}) {
   const th = vlen(title, size) + 26, sh = series ? vlen(series, ssize) + 20 : 0, h = sh + th, x0 = cx - w / 2;
   x.save();
@@ -273,7 +273,7 @@ export function cartouche(x, cx, y0, title, { series = '山へ五景', w = 84, s
   return { x0, y0, w, h };
 }
 
-// 动态绘制的大色块（浪身、海）也要有版画质感：在当前 clip 内压木纹与纸色擦痕
+// Large colour areas drawn live (wave body, sea) also need the print texture: stamp wood grain and paper-coloured rub marks inside the current clip
 export function printTex(x, grain = .1, baren = .5, ox = 0, oy = 0) {
   x.save(); x.globalAlpha = grain; x.drawImage(TX.grain, ox, oy); x.globalAlpha = baren; x.drawImage(TX.barenPaper, -ox * .5, oy * .3); x.restore();
 }

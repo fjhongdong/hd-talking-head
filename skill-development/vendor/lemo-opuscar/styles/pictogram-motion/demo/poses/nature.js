@@ -1,10 +1,10 @@
-// 第 6 章 山与海：赛艇、皮划艇、帆船、冲浪、铁人三项、公路/场地/BMX/山地自行车、马术
+// Chapter 6 Land & sea: rowing, canoe, sailing, surfing, triathlon, road/track/BMX/mountain-bike cycling, equestrian
 (function () {
   const G = window.G, P = G.P, POSES = window.POSES, L = G.LEN, D2R = G.D2R;
   const R2D = 180 / Math.PI;
   const { lerp, clamp, E } = G;
 
-  // ── 反向运动学：给世界坐标目标点，求四肢角度（逐帧解，角度跳变无所谓，渲染只用 sin/cos）──
+  // ── Inverse kinematics: given world-coordinate target points, solve the limb angles (solved per frame; angle jumps don't matter because rendering only uses sin/cos) ──
   function ik(A, T, L1, L2, bend) {
     const dx = T[0] - A[0], dy = T[1] - A[1];
     let d = Math.hypot(dx, dy);
@@ -15,7 +15,7 @@
     const K = [A[0] + Math.sin(a1) * L1, A[1] + Math.cos(a1) * L1];
     return [a1 * R2D, Math.atan2(T[0] - K[0], T[1] - K[1]) * R2D];
   }
-  // base: {x,y,rot,torso,head}；T: fR/fL 脚、hR/hL 手（世界坐标），kR/kL/eR/eL 弯向（+1 / -1）
+  // base: {x,y,rot,torso,head}; T: fR/fL feet, hR/hL hands (world coordinates), kR/kL/eR/eL bend direction (+1 / -1)
   function solve(base, T) {
     const p = Object.assign({ x: 0, y: 0, rot: 0, torso: 0, head: 0 }, base);
     const hip = [p.x, p.y], tf = p.rot + p.torso, sl = L.torso - 0.025;
@@ -28,11 +28,11 @@
     if (T.hL) [p.aL1, p.aL2] = arm(T.hL, T.eL ?? -1);
     return p;
   }
-  // 局部（骑手坐标，未旋转，原点 = 髋）→ 世界
+  // Local (rider coordinates, unrotated, origin = hips) → world
   const W = (p, loc) => { const v = G.rot2(loc, p.rot || 0); return [(p.x || 0) + v[0], (p.y || 0) + v[1]]; };
   const inFrame = (ctx, J, fn) => { ctx.save(); ctx.translate(J.hip[0], J.hip[1]); ctx.rotate((J.p.rot || 0) * D2R); fn(); ctx.restore(); };
   const fract = (x) => x - Math.floor(x);
-  // 水：同色系更深一档 + 顶部一排青海波（官方核心图形里的鳞纹）
+  // Water: one shade darker in the same palette + a row of seigaiha (青海波, overlapping wave scales) along the top (the scale pattern of the official core graphic)
   const waterCol = (C) => G.mix(C.bg, '#000000', 0.16);
   function waterBand(ctx, y, u, C, per = 0.3, loop = 1, dir = 1) {
     const wc = waterCol(C), off = fract(u / loop) * per * dir;
@@ -47,8 +47,8 @@
   }
   const capsule = (ctx, a, b, w, col) => G.seg(ctx, a, b, w, col);
 
-  // ── 自行车 ──
-  // g：局部几何 { ra, fa, r, bb, sc, ht, hb, bar, crank, kind }
+  // ── Bicycles ──
+  // g: local geometry { ra, fa, r, bb, sc, ht, hb, bar, crank, kind }
   function drawBike(ctx, g, u, C, spin, o = {}) {
     const lw = 0.024;
     const wheel = (c, disc) => {
@@ -68,14 +68,14 @@
     capsule(ctx, g.bb, g.hb, fw * 1.15, fc); capsule(ctx, g.ht, g.hb, fw * 1.2, fc);
     if (g.susp) { G.seg(ctx, g.hb, g.fa, 0.03, fc); G.seg(ctx, g.hb, G.lerp(g.hb[0], g.fa[0], 0.5) === 0 ? g.fa : [lerp(g.hb[0], g.fa[0], 0.55), lerp(g.hb[1], g.fa[1], 0.55)], 0.05, fc); }
     else capsule(ctx, g.hb, g.fa, fw * 0.8, fc);
-    // 座
+    // Saddle
     capsule(ctx, [g.sc[0] - 0.08, g.sc[1] - 0.02], [g.sc[0] + 0.05, g.sc[1] - 0.025], 0.03, C.fg);
-    // 把
+    // Handlebar
     capsule(ctx, g.ht, g.bar, 0.022, C.fg);
     if (g.drops) { ctx.strokeStyle = C.fg; ctx.lineWidth = 0.02; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(g.bar[0], g.bar[1]); ctx.arc(g.bar[0], g.bar[1] + 0.045, 0.045, -Math.PI / 2, Math.PI / 2); ctx.lineTo(g.bar[0] - 0.03, g.bar[1] + 0.09); ctx.stroke(); }
     if (g.aero) capsule(ctx, g.bar, [g.bar[0] + 0.12, g.bar[1] - 0.01], 0.018, C.fg);
     if (g.riser) capsule(ctx, [g.bar[0] - 0.02, g.bar[1] + 0.02], [g.bar[0] + 0.02, g.bar[1] - 0.04], 0.022, C.fg);
-    // 牙盘 + 远侧曲柄
+    // Chainring + far-side crank
     G.ring(ctx, g.bb[0], g.bb[1], 0.05, 0.014, C.fg);
     const th = o.crank ?? u * Math.PI * 2;
     const pL = [g.bb[0] + Math.cos(th + Math.PI) * g.crank, g.bb[1] + Math.sin(th + Math.PI) * g.crank];
@@ -92,13 +92,13 @@
     [g.bb[0] + Math.cos(th) * g.crank, g.bb[1] + Math.sin(th) * g.crank],
     [g.bb[0] + Math.cos(th + Math.PI) * g.crank, g.bb[1] + Math.sin(th + Math.PI) * g.crank],
   ];
-  // 骑车人：base 姿势 + 几何 + 曲柄角 → 姿势
+  // Rider: base pose + geometry + crank angle → pose
   function rider(base, g, th, hands) {
     const [pR, pL] = pedals(g, th);
     const hb = hands || g.hand || g.bar;
     return solve(base, { fR: W(base, pR), fL: W(base, pL), hR: W(base, hb), hL: W(base, [hb[0] - 0.015, hb[1] + 0.005]), kR: 1, kL: 1, eR: -1, eL: -1 });
   }
-  // 路面：虚线滚动（2 拍循环）
+  // Road: scrolling dashed line (2-beat loop)
   function road(ctx, y, u, C, loop = 2, x0 = -1.4, x1 = 1.4) {
     P.ground(ctx, y, C, x0, x1);
     const per = 0.5, off = fract(u / loop) * per * 4;
@@ -125,7 +125,7 @@
     iconU: 0.25,
     pose: (u) => rider({ torso: 78, head: -40 }, GTRACK, u * Math.PI * 2 * 1.25),
     back: (ctx, J, u, C) => {
-      // 赛道倾斜的色带（场地赛车道的蓝线红线）
+      // Tilted colour bands of the banked track (the blue and red lines of a velodrome)
       ctx.save();
       ctx.beginPath(); ctx.rect(-1.6, -1, 3.2, 1.55); ctx.clip();
       const off = fract(u / 2) * 0.6;
@@ -143,7 +143,7 @@
     front: (ctx, J, u, C) => inFrame(ctx, J, () => drawNearCrank(ctx, GTRACK, u, C, { crank: u * Math.PI * 2 * 1.25 })),
   };
 
-  // BMX：土坡飞跃（2 拍：0 起跳，~0.8 最高点，1.6 落地）
+  // BMX: jump over a dirt mound (2 beats: takeoff at 0, peak at ~0.8, landing at 1.6)
   const GBMX = { ra: [-0.2, 0.38], fa: [0.3, 0.38], r: 0.14, bb: [0.06, 0.37], sc: [-0.08, 0.2], ht: [0.26, 0.14], hb: [0.27, 0.22], bar: [0.3, 0.02], hand: [0.3, 0.03], crank: 0.075, riser: true };
   function bmxState(u) {
     u = ((u % 2) + 2) % 2;
@@ -161,12 +161,12 @@
       const s = bmxState(u);
       const hipLoc = [0, -0.02 + s.tuck * 0.08];
       const base = { x: 0, y: s.y, rot: s.rot, torso: 30 + s.tuck * 12, head: -10 };
-      // 起跳后收腿：脚仍踩踏板，髋往下压（屈膝）
+      // After takeoff the legs tuck: feet stay on the pedals, hips press down (knees bend)
       const p = rider(base, GBMX, 0.15, null);
       return p;
     },
     back: (ctx, J, u, C) => {
-      // 土坡：以 0.8 拍时正好在车下
+      // Dirt mound: exactly under the bike at beat 0.8
       const ph = ((u % 2) + 2) % 2;
       const cx = (0.8 - ph) * 1.1;
       ctx.fillStyle = C.far2;
@@ -181,7 +181,7 @@
     front: (ctx, J, u, C) => inFrame(ctx, J, () => drawNearCrank(ctx, GBMX, u, C, { crank: 0.15 })),
   };
 
-  // 山地：下坡，车身前倾，每拍压过一块石头
+  // Mountain bike: downhill, bike tilted forward, rolls over one rock per beat
   const GMTB = { ra: [-0.3, 0.38], fa: [0.5, 0.38], r: 0.21, bb: [0.1, 0.36], sc: [-0.1, 0.12], ht: [0.36, 0.1], hb: [0.39, 0.19], bar: [0.38, 0.0], hand: [0.37, 0.01], crank: 0.08, knobby: true, susp: true, riser: true };
   POSES.cyc_mtb = {
     fig: { s: 0.9, x: -0.05, y: -0.04 },
@@ -193,7 +193,7 @@
     },
     back: (ctx, J, u, C) => {
       inFrame(ctx, J, () => {
-        // 坡面（跟车身同角度），石头每拍经过前轮
+        // Slope (same angle as the bike), a rock passes the front wheel every beat
         ctx.fillStyle = C.far2;
         ctx.beginPath(); ctx.moveTo(-2, 0.59); ctx.lineTo(2, 0.59); ctx.lineTo(2, 1.4); ctx.lineTo(-2, 1.4); ctx.fill();
         const off = fract(u) * 0.8;
@@ -208,11 +208,11 @@
     front: (ctx, J, u, C) => inFrame(ctx, J, () => drawNearCrank(ctx, GMTB, u, C, { crank: 0 })),
   };
 
-  // ── 赛艇：每拍一次入水（catch 落在整拍）──
+  // ── Rowing: one catch per beat (the catch lands on the whole beat) ──
   const OAR_PIVOT = [0.17, 0.03];
   function rowState(u) {
     const f = fract(u);
-    // s：0 = 入水（catch），1 = 出水（finish）
+    // s: 0 = catch, 1 = finish
     const s = f < 0.42 ? E.o2(f / 0.42) : 1 - E.io((f - 0.42) / 0.58);
     const legs = clamp(s / 0.6), body = clamp((s - 0.25) / 0.5), arms = clamp((s - 0.55) / 0.45);
     const hipX = lerp(0.03, -0.13, E.io(legs));
@@ -231,24 +231,24 @@
       return solve({ x: r.hipX, y: 0, torso: r.torso, head: -r.torso * 0.5 }, { fR: [0.36, 0.08], fL: [0.35, 0.085], hR: r.hand, hL: [r.hand[0] - 0.01, r.hand[1] + 0.005], kR: 1, kL: 1 });
     },
     back: (ctx, J, u, C) => {
-      // 水 + 青海波（向右流：船往左走）
+      // Water + seigaiha (flowing right: the boat moves left)
       waterBand(ctx, 0.17, u, C, 0.3, 1);
-      // 远侧桨
+      // Far-side oar
       const r = rowState(u);
       const hand = J.aL[2];
       const d = [OAR_PIVOT[0] - hand[0], OAR_PIVOT[1] - hand[1]], n = Math.hypot(d[0], d[1]);
       const bl = [OAR_PIVOT[0] + d[0] / n * 0.5, OAR_PIVOT[1] + d[1] / n * 0.5 - 0.02];
       G.seg(ctx, hand, bl, 0.016, C.far);
-      // 艇身
+      // Hull
       ctx.fillStyle = C.acc;
       ctx.beginPath(); ctx.moveTo(-1.1, 0.075); ctx.quadraticCurveTo(0, 0.28, 1.1, 0.075); ctx.closePath(); ctx.fill();
       ctx.fillStyle = C.fg; ctx.fillRect(-1.05, 0.07, 2.1, 0.014);
-      // 滑座轨道 + 脚蹬板
+      // Sliding-seat track + foot stretcher
       ctx.fillStyle = C.fg; ctx.fillRect(-0.2, 0.06, 0.34, 0.02);
       G.seg(ctx, [0.38, 0.12], [0.41, -0.0], 0.02, C.fg);
-      // 座
+      // Seat
       G.seg(ctx, [J.hip[0] - 0.07, 0.05], [J.hip[0] + 0.06, 0.05], 0.03, C.fg);
-      // 桨架
+      // Rigger
       G.seg(ctx, [0.02, 0.09], OAR_PIVOT, 0.014, C.fg);
       P.speed(ctx, 0.9, -0.1, 0.5, 3, C, 0.0);
     },
@@ -258,11 +258,11 @@
       const d = [OAR_PIVOT[0] - hand[0], OAR_PIVOT[1] - hand[1]], n = Math.hypot(d[0], d[1]);
       const bl = [OAR_PIVOT[0] + d[0] / n * 0.55, OAR_PIVOT[1] + d[1] / n * 0.55];
       G.seg(ctx, hand, bl, 0.02, C.fg);
-      // 桨叶
+      // Blade
       ctx.save(); ctx.translate(bl[0], bl[1]); ctx.rotate(Math.atan2(d[1], d[0]));
       ctx.fillStyle = C.fg; ctx.beginPath(); ctx.ellipse(0.02, 0, 0.09, r.recov ? 0.018 : 0.045, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-      // 入水溅起：整拍时
+      // Splash at the catch: on whole beats
       const f = r.f;
       if (f < 0.3) {
         const k = f / 0.3;
@@ -273,15 +273,15 @@
     },
   };
 
-  // ── 皮划艇：双叶桨，每拍一侧入水 ──
+  // ── Canoe: double-bladed paddle, one side enters the water per beat ──
   function paddle(u) {
-    const beat = Math.floor(u), f = u - beat, side = beat % 2; // 0 = 近侧入水，1 = 远侧
+    const beat = Math.floor(u), f = u - beat, side = beat % 2; // 0 = near side in the water, 1 = far side
     const catchB = [0.56, 0.15], exitB = [0.1, 0.14];
     const catchD = [-0.5, -0.87], exitD = [-0.16, -0.99];
     let B, D;
     if (f < 0.5) { const t = E.o2(f / 0.5); B = [lerp(catchB[0], exitB[0], t), lerp(catchB[1], exitB[1], t)]; D = [lerp(catchD[0], exitD[0], t), lerp(catchD[1], exitD[1], t)]; }
     else {
-      // 回桨：桨杆转半圈，另一端来到前面
+      // Recovery: the shaft turns half a revolution, bringing the other end forward
       const t = E.io((f - 0.5) / 0.5);
       const a0 = Math.atan2(exitD[1], exitD[0]), a1 = Math.atan2(-catchD[1], -catchD[0]);
       let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
@@ -293,7 +293,7 @@
     }
     const n = Math.hypot(D[0], D[1]); D = [D[0] / n, D[1] / n];
     const e1 = B, e2 = [B[0] + D[0] * 0.85, B[1] + D[1] * 0.85];
-    // side 1 时两端对调（同一支桨转了半圈）
+    // On side 1 the two ends swap (the same paddle turned half a revolution)
     return side === 0 ? { a: e1, b: e2, dip: f < 0.5 ? 'a' : null } : { a: e2, b: e1, dip: f < 0.5 ? 'b' : null };
   }
   POSES.canoe = {
@@ -307,13 +307,13 @@
       return solve({ torso, head: -torso * 0.4 }, { fR: [0.44, 0.04], fL: [0.43, 0.045], kR: -1, kL: -1, hR: at(0.36), hL: at(0.64), eR: -1, eL: -1 });
     },
     back: (ctx, J, u, C) => {
-      // 激流回旋门：条纹杆从右往左经过
+      // Slalom gate: striped poles pass from right to left
       const gx = 1.3 - fract(u / 4) * 2.8;
       G.seg(ctx, [gx - 0.8, -0.9], [gx + 0.8, -0.9], 0.008, C.line);
       for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? C.fg : C.acc; ctx.fillRect(gx - 0.012, -0.9 + i * 0.13, 0.024, 0.13); }
       const pd = paddle(u);
       G.seg(ctx, pd.a, pd.b, 0.022, C.far);
-      // 远端桨叶（本拍如果是远侧入水，画暗）
+      // Far blade (drawn dark if this beat's stroke is on the far side)
       const blade = (p, q, col) => { ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(Math.atan2(p[1] - q[1], p[0] - q[0])); ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 0.085, 0.04, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); };
       blade(pd.b, pd.a, C.far);
     },
@@ -322,13 +322,13 @@
       G.seg(ctx, pd.a, pd.b, 0.022, C.fg);
       const blade = (p, q, col) => { ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(Math.atan2(p[1] - q[1], p[0] - q[0])); ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, 0.085, 0.04, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); };
       blade(pd.a, pd.b, C.fg);
-      // 艇身盖住腿
+      // Hull covers the legs
       ctx.fillStyle = C.acc;
       ctx.beginPath(); ctx.moveTo(-0.9, 0.06); ctx.quadraticCurveTo(0.0, -0.06, 0.98, 0.08); ctx.quadraticCurveTo(0.0, 0.24, -0.9, 0.06); ctx.fill();
-      G.seg(ctx, [-0.13, 0.0], [0.15, 0.0], 0.032, C.fg); // 舱口
-      // 水面
+      G.seg(ctx, [-0.13, 0.0], [0.15, 0.0], 0.032, C.fg); // cockpit
+      // Water surface
       waterBand(ctx, 0.1, u, C, 0.24, 1);
-      // 入水水花
+      // Splash at the catch
       const f = fract(u);
       if (f < 0.35 && pd.dip) {
         const p = pd.dip === 'a' ? pd.a : pd.b, k = f / 0.35;
@@ -339,7 +339,7 @@
     },
   };
 
-  // ── 帆船：压舷，随浪起伏；每拍一阵风让人往外压 ──
+  // ── Sailing: hiking out, rising and falling with the waves; a gust on each beat pushes the sailor further out ──
   function sailState(u) {
     const heel = Math.sin(u * Math.PI / 2) * 5, pitch = Math.sin(u * Math.PI / 2 + 1) * 0.03;
     const f = fract(u), gust = Math.exp(-f * 4) * (1 - Math.exp(-f * 30));
@@ -355,46 +355,46 @@
     },
     back: (ctx, J, u, C) => {
       const s = sailState(u);
-      // 浪
+      // Waves
       const off = fract(u / 4) * 0.5;
       ctx.fillStyle = waterCol(C);
       for (let i = -9; i < 10; i++) { const x = i * 0.5 + off; ctx.beginPath(); ctx.arc(x, 0.3, 0.25, Math.PI, 0); ctx.fill(); ctx.fillStyle = C.bg; ctx.beginPath(); ctx.arc(x, 0.3, 0.15, Math.PI, 0); ctx.fill(); ctx.fillStyle = waterCol(C); }
       ctx.fillRect(-4, 0.3, 8, 0.7);
       ctx.save(); ctx.translate(0, s.pitch); ctx.rotate(s.heel * D2R);
-      // 帆（三角 + 帆骨）、桅杆、横杆
+      // Sail (triangle + battens), mast, boom
       const mast = [0.3, 0.06], top = [0.3, -1.15], boom = [-0.55, -0.34];
       ctx.fillStyle = C.acc;
       ctx.beginPath(); ctx.moveTo(top[0] - 0.02, top[1] + 0.02); ctx.quadraticCurveTo(-0.3 - s.gust * 0.05, -0.75, boom[0], boom[1]); ctx.lineTo(0.3, -0.34); ctx.fill();
       for (let i = 1; i < 4; i++) { const y = -0.34 - i * 0.2; G.seg(ctx, [0.28, y], [lerp(boom[0], 0.3, i * 0.24) + 0.02, y + 0.02], 0.008, C.bg); }
       G.seg(ctx, mast, top, 0.022, C.fg);
       G.seg(ctx, [0.3, -0.34], boom, 0.02, C.fg);
-      // 主帆索
+      // Mainsheet
       G.seg(ctx, [-0.35, -0.34], [-0.2, 0.04], 0.006, C.line);
-      // 船身
+      // Hull
       ctx.fillStyle = C.fg;
       ctx.beginPath(); ctx.moveTo(-0.62, 0.06); ctx.lineTo(0.95, 0.06); ctx.quadraticCurveTo(0.7, 0.26, 0.3, 0.26); ctx.lineTo(-0.58, 0.24); ctx.closePath(); ctx.fill();
-      // 舵柄延长杆
+      // Tiller extension
       G.seg(ctx, [-0.6, 0.04], [-0.3, 0.0], 0.014, C.fg);
       ctx.restore();
     },
     front: (ctx, J, u, C) => {
-      // 前景一排浪头
+      // A row of wave crests in the foreground
       const off = fract(u / 4) * 0.5;
       ctx.fillStyle = C.bg;
       for (let i = -6; i < 7; i++) { const x = i * 0.5 - off * 0.6; ctx.beginPath(); ctx.arc(x + 0.25, 0.42, 0.12, Math.PI, 0); ctx.fill(); }
     },
   };
 
-  // ── 冲浪：卷浪 = 偏心同心圆（管浪）+ 一条二次曲线浪面；0 拍底部转向，2 拍顶部甩浪 ──
+  // ── Surfing: barrel = off-centre concentric circles (the tube) + one quadratic-curve wave face; bottom turn at beat 0, top turn with spray at beat 2 ──
   const SQ = [[-0.45, -0.52], [0.12, -0.2], [1.3, 0.42]];
   const qpt = (t) => [0, 1].map((i) => (1 - t) * (1 - t) * SQ[0][i] + 2 * t * (1 - t) * SQ[1][i] + t * t * SQ[2][i]);
   const qtan = (t) => [0, 1].map((i) => 2 * (1 - t) * (SQ[1][i] - SQ[0][i]) + 2 * t * (SQ[2][i] - SQ[1][i]));
   function surfState(u) {
-    const up = u < 2 ? E.io(u / 2) : 1 - E.io((u - 2) / 2); // 0 底部 → 1 顶部
+    const up = u < 2 ? E.io(u / 2) : 1 - E.io((u - 2) / 2); // 0 bottom → 1 top
     const t = lerp(0.5, 0.28, up);
     const p = qpt(t), tg = qtan(t);
     const a = Math.atan2(tg[1], tg[0]) * R2D;
-    const board = a - up * 22; // 顶部转向时板头抬起
+    const board = a - up * 22; // nose lifts during the top turn
     const n = G.rot2([0, -1], board);
     return { up, board, bp: p, hip: [p[0] + n[0] * 0.35, p[1] + n[1] * 0.35] };
   }
@@ -408,13 +408,13 @@
     },
     back: (ctx, J, u, C) => {
       const wc = waterCol(C), lite = G.mix(C.bg, C.fg, 0.12);
-      // 远处海面
+      // Distant sea
       ctx.fillStyle = wc; ctx.fillRect(-2.4, SQ[2][1], 4.8, 1.2);
-      // 浪面（曲线以下）
+      // Wave face (below the curve)
       ctx.fillStyle = wc;
       ctx.beginPath(); ctx.moveTo(SQ[0][0], SQ[0][1]); ctx.quadraticCurveTo(SQ[1][0], SQ[1][1], SQ[2][0], SQ[2][1]);
       ctx.lineTo(SQ[2][0], 1.4); ctx.lineTo(-2.4, 1.4); ctx.lineTo(-2.4, SQ[0][1]); ctx.fill();
-      // 管浪：偏心同心圆，越往里越往左下偏，像卷进去
+      // Tube: off-centre concentric circles, shifting further down-left towards the inside, as if curling in
       const spin = u * 0.12;
       const rings = 7;
       for (let i = 0; i < rings; i++) {
@@ -423,7 +423,7 @@
         const cx = lerp(-0.92, -1.08 + Math.sin(spin + k) * 0.02, k), cy = lerp(-0.04, 0.16, k);
         G.disc(ctx, cx, cy, r, i % 2 ? wc : (i % 4 === 0 ? C.acc : lite));
       }
-      // 浪唇：一道粗弧从浪面顶端卷过管浪
+      // Lip: a thick arc curling from the top of the wave face over the tube
       ctx.strokeStyle = wc; ctx.lineWidth = 0.16; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.arc(-0.92, -0.04, 0.6, Math.PI * 1.25, Math.PI * 1.92); ctx.stroke();
       G.disc(ctx, -1.3, -0.4, 0.09, wc);
@@ -431,7 +431,7 @@
         const t = i / 8, a = Math.PI * (1.05 + t * 0.9);
         G.disc(ctx, -0.92 + Math.cos(a) * 0.66, -0.04 + Math.sin(a) * 0.66, 0.035 - t * 0.012 + Math.sin(u * 3 + i) * 0.004, C.fg);
       }
-      // 浪面的条纹（速度感）
+      // Stripes on the wave face (sense of speed)
       ctx.save();
       ctx.beginPath(); ctx.moveTo(SQ[0][0], SQ[0][1]); ctx.quadraticCurveTo(SQ[1][0], SQ[1][1], SQ[2][0], SQ[2][1]); ctx.lineTo(SQ[2][0], 1.4); ctx.lineTo(-0.3, 1.4); ctx.closePath(); ctx.clip();
       ctx.strokeStyle = C.line; ctx.lineWidth = 0.01;
@@ -440,16 +440,16 @@
         ctx.beginPath(); ctx.moveTo(SQ[0][0] + 0.2, SQ[0][1] + o); ctx.quadraticCurveTo(SQ[1][0], SQ[1][1] + o, SQ[2][0], SQ[2][1] + o); ctx.stroke();
       }
       ctx.restore();
-      // 板
+      // Board
       const s = surfState(u);
       inFrame(ctx, J, () => {
         ctx.fillStyle = C.acc;
         ctx.beginPath(); ctx.ellipse(0.0, 0.365, 0.5, 0.038, 0, 0, Math.PI * 2); ctx.fill();
         G.seg(ctx, [-0.42, 0.365], [0.42, 0.365], 0.008, C.fg);
-        // 板尾的尾流
+        // Wake behind the tail
         ctx.fillStyle = G.rgba(C.fg, 0.5); ctx.fillRect(-1.0, 0.39, 0.48, 0.012); ctx.fillRect(-0.85, 0.415, 0.32, 0.01);
       });
-      // 甩浪水花：2 拍
+      // Spray thrown off the top: beat 2
       const d = u - 1.85;
       if (d > 0 && d < 1.3) {
         const k = d / 1.3;
@@ -465,7 +465,7 @@
     },
   };
 
-  // ── 铁人三项：游 → 骑 → 跑，三个小人依次在拍点上出现，一条赛道线串起来 ──
+  // ── Triathlon: swim → bike → run, three small figures appear in turn on the beats, strung together by one course line ──
   const GTRI = { ra: [-0.22, 0.36], fa: [0.48, 0.36], r: 0.19, bb: [0.13, 0.34], sc: [-0.02, 0.07], ht: [0.4, 0.09], hb: [0.43, 0.17], bar: [0.44, 0.07], hand: [0.55, 0.04], crank: 0.08, aero: true };
   const TRI_S = 0.4, TRI_DX = 0.6 / 0.4;
   const pop = (u, t0) => E.oBack(clamp((u - t0) / 0.35), 2.2);
@@ -478,7 +478,7 @@
     iconU: 2.5,
     pose: (u) => swimPose(u * 0.75),
     back: (ctx, J, u, C) => {
-      // 赛道线（三段颜色不同，逐段生长）
+      // Course line (three segments in different colours, growing segment by segment)
       const y = 0.55;
       const segs = [[-0.6, TRI_DX * 0.5], [TRI_DX * 0.5, TRI_DX * 1.5], [TRI_DX * 1.5, TRI_DX * 2 + 0.6]];
       segs.forEach((s, i) => {
@@ -488,17 +488,17 @@
         ctx.fillRect(s[0], y + 0.12, (s[1] - s[0]) * E.o3(p), 0.035);
         G.disc(ctx, i * TRI_DX, y + 0.1375, 0.055 * E.oBack(p), C.fg);
       });
-      // 标签
+      // Labels
       ctx.save(); ctx.fillStyle = C.fg; ctx.font = '500 0.15px "DM Mono"'; ctx.textAlign = 'center'; ctx.letterSpacing = '0.02px';
       ['SWIM', 'BIKE', 'RUN'].forEach((t, i) => { const p = clamp((u - i * 0.9) / 0.4); if (p > 0) { ctx.globalAlpha = p; ctx.fillText(t, i * TRI_DX, 1.0); } });
       ctx.restore();
     },
     front: (ctx, J, u, C) => {
-      // 水面：几道波纹盖住泳者下半身
+      // Water: a few ripples cover the swimmer's lower body
       ctx.strokeStyle = C.fg; ctx.lineWidth = 0.022; ctx.lineCap = 'round';
       for (let i = 0; i < 5; i++) { const x = -0.64 + i * 0.26 + fract(u) * 0.26 * -1 + 0.26; ctx.beginPath(); ctx.arc(x, 0.2, 0.13, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
       ctx.fillStyle = C.bg; ctx.fillRect(-0.9, 0.2, 1.7, 0.2);
-      // 骑
+      // Bike
       const pb = pop(u, 0.9);
       if (pb > 0) {
         ctx.save(); ctx.translate(TRI_DX, -0.08); ctx.scale(pb, pb);
@@ -510,7 +510,7 @@
         drawNearCrank(ctx, GTRI, u, C, { crank: th });
         ctx.restore();
       }
-      // 跑
+      // Run
       const pr = pop(u, 1.8);
       if (pr > 0) {
         ctx.save(); ctx.translate(TRI_DX * 2, 0); ctx.scale(pr, pr);
@@ -521,9 +521,9 @@
     },
   };
 
-  // ── 马术：障碍跳跃，第 2 拍在栏上方 ──
+  // ── Equestrian: show jumping, above the fence on beat 2 ──
   function horseState(u) {
-    // 0–1.2 慢跑接近，1.2 起跳，2 最高点，2.8 落地，之后慢跑
+    // 0–1.2 canter in, 1.2 takeoff, 2 peak, 2.8 landing, canter afterwards
     const jt = clamp((u - 1.2) / 1.6);
     const air = u > 1.2 && u < 2.8;
     const y = air ? -0.45 * Math.sin(Math.PI * jt) : 0;
@@ -537,7 +537,7 @@
     const fr = [0.34, 0.26], hd = [-0.42, 0.24];
     let fA, fB, hA, hB;
     if (s.air) {
-      // 前腿收起，后腿后蹬
+      // Front legs tucked, hind legs pushing back
       const t = s.jt;
       fA = [lerp(40, 70, t), lerp(-60, -30, t)]; fB = [lerp(30, 60, t), lerp(-70, -40, t)];
       hA = [lerp(-50, 10, t), lerp(-40, 30, t)]; hB = [lerp(-40, 20, t), lerp(-30, 40, t)];
@@ -548,19 +548,19 @@
     }
     const LL = 0.27;
     leg(fr, fB[0], fB[1], LL, far, 0.07); leg(hd, hB[0], hB[1], LL, far, 0.08);
-    // 尾
+    // Tail
     ctx.strokeStyle = far; ctx.lineWidth = 0.06; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(-0.58, 0.12); ctx.quadraticCurveTo(-0.78, 0.15 + (s.air ? -0.1 : 0), -0.74, 0.42); ctx.stroke();
-    // 身体
+    // Body
     G.seg(ctx, [-0.44, 0.19], [0.36, 0.19], 0.3, col);
-    // 颈 + 头
+    // Neck + head
     G.seg(ctx, [0.32, 0.14], [0.56, -0.2], 0.17, col);
     G.seg(ctx, [0.56, -0.22], [0.76, -0.06], 0.11, col);
-    G.poly(ctx, [[0.52, -0.3], [0.55, -0.4], [0.59, -0.29]], col); // 耳
-    // 鬃
+    G.poly(ctx, [[0.52, -0.3], [0.55, -0.4], [0.59, -0.29]], col); // ear
+    // Mane
     ctx.strokeStyle = far; ctx.lineWidth = 0.035; ctx.beginPath(); ctx.moveTo(0.34, 0.04); ctx.lineTo(0.52, -0.26); ctx.stroke();
     leg(fr, fA[0], fA[1], LL, col, 0.075); leg(hd, hA[0], hA[1], LL, col, 0.085);
-    // 马鞍
+    // Saddle
     G.seg(ctx, [-0.12, 0.05], [0.12, 0.05], 0.04, C.fg);
   }
   POSES.equestrian = {
@@ -573,7 +573,7 @@
       return solve(base, { fR: W(base, [0.08 + jump * 0.04, 0.36]), fL: W(base, [0.07 + jump * 0.04, 0.365]), kR: 1, kL: 1, hR: W(base, [0.4 + jump * 0.08, 0.0 - jump * 0.04]), hL: W(base, [0.39 + jump * 0.08, 0.01 - jump * 0.04]) });
     },
     back: (ctx, J, u, C) => {
-      // 障碍：u = 2 时在马身下
+      // Fence: under the horse at u = 2
       const x = (2 - u) * 0.9;
       const gy = 0.83;
       ctx.fillStyle = C.line; ctx.fillRect(-2.2, gy, 4.4, 0.016);

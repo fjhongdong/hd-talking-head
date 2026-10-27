@@ -1,21 +1,21 @@
 // Urban Sketch · Pen & Wash engine
-// 钢笔淡彩引擎：细墨线（抖、出头、断笔、按笔顺出现）+ 透明水彩（错位、溢出、积色边、颗粒）
-// 所有绘制都是确定性的（同样的 seed → 同样的笔触），可以逐帧离线渲染。
+// Pen-and-wash engine: fine ink lines (wobble, overshoot, broken strokes, appearing in stroke order) + transparent watercolour (offset, bleeding past the lines, pooled dark edges, granulation)
+// All drawing is deterministic (same seed → same strokes), so it can be rendered offline frame by frame.
 //
-// 三层结构：
-//   1. 静态层：penStroke/rasterPen 把墨线画进 ink+time 两张画布（time = 这一笔在第几秒被画到）；
-//      wash/dab/foliage 把颜色画进 color 画布（乘法叠色，白 = 纸）。
-//   2. 颜色到达场：arrivalField(sources) 给每个像素算"颜色哪一刻到"，GL 合成时按它洇开，前沿有积色暗边。
-//   3. 动态层：figure()/hat() 生成图元（knock 纸色遮挡 / wash 颜色 / ink 墨线），drawPrims 每帧画到屏幕。
+// Three layers:
+//   1. Static layer: penStroke/rasterPen draw ink lines into two canvases, ink + time (time = the second at which this stroke gets drawn);
+//      wash/dab/foliage paint colour into the color canvas (multiplicative layering, white = paper).
+//   2. Colour arrival field: arrivalField(sources) computes "when colour arrives" for every pixel; the GL composite blooms colour by it, with a pooled dark edge at the front.
+//   3. Dynamic layer: figure()/hat() generate primitives (knock = paper-colour occluder / wash = colour / ink = ink line); drawPrims draws them to the screen every frame.
 
-export const INK = [43, 37, 32];            // 深褐墨 #2b2520
-export const PAPER = [245, 238, 222];       // 冷压水彩纸 #f5eede
+export const INK = [43, 37, 32];            // dark sepia ink #2b2520
+export const PAPER = [245, 238, 222];       // cold-press watercolour paper #f5eede
 export const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const ss = t => { t = clamp(t); return t * t * (3 - 2 * t); };
 export const TAU = Math.PI * 2;
 
-// ---------- 随机与噪声 ----------
+// ---------- Random and noise ----------
 export function rng(seed) {
   let s = (seed * 2654435761) >>> 0 || 1;
   return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -32,8 +32,8 @@ export const rgba = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a}
 export const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 export const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 
-// ---------- 路径工具 ----------
-// 按弧长重采样，返回 [[x,y],...]
+// ---------- Path helpers ----------
+// Resample by arc length, returns [[x,y],...]
 export function resample(pts, step) {
   const out = [pts[0]]; let carry = 0;
   for (let i = 1; i < pts.length; i++) {
@@ -46,7 +46,7 @@ export function resample(pts, step) {
   if (Math.hypot(last[0] - pl[0], last[1] - pl[1]) > step * .3) out.push(last);
   return out;
 }
-// Catmull-Rom 平滑
+// Catmull-Rom smoothing
 export function spline(pts, n = 8, closed = false) {
   const P = pts, out = [], N = P.length; if (N < 3) return P.slice();
   const g = i => closed ? P[(i + N) % N] : P[clamp(i, 0, N - 1)];
@@ -62,7 +62,7 @@ export function spline(pts, n = 8, closed = false) {
   return out;
 }
 export const ellipse = (cx, cy, rx, ry, n = 28, a0 = 0) => [...Array(n)].map((_, i) => { const a = a0 + i / n * TAU; return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]; });
-// 闭合多边形的边加噪声（水彩边缘）
+// Add noise to the edges of a closed polygon (watercolour edges)
 export function rough(poly, amp, seed, step = 9, freq = .02) {
   const P = resample([...poly, poly[0]], step); P.pop();
   const n = P.length, out = [];
@@ -76,15 +76,15 @@ export function rough(poly, amp, seed, step = 9, freq = .02) {
 }
 function pathPoly(ctx, poly) { if (!poly || poly.length < 2) return; ctx.beginPath(); ctx.moveTo(poly[0][0], poly[0][1]); for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]); ctx.closePath(); }
 
-// ---------- 钢笔 ----------
-// 一笔 = 抖动 + 两头出头 + 轻微粗细变化 + 偶尔断笔。o: w 线宽, wob 抖动幅度, over 出头, gap 断笔概率, seed
+// ---------- Pen ----------
+// One stroke = wobble + overshoot at both ends + slight width variation + occasional breaks. o: w line width, wob wobble amplitude, over overshoot, gap break probability, seed
 export function penStroke(pts, o = {}) {
   const w = o.w ?? 2.4, wob = o.wob ?? 1.1, seed = o.seed ?? 1, r = rng(seed);
   let P = pts.length > 2 && o.smooth !== false ? spline(pts, 6) : pts;
   const step = o.step ?? Math.max(2, w * 1.4);
   P = resample(P, step);
   if (P.length < 2) P = [pts[0], pts[pts.length - 1]];
-  // 出头：两端沿切线延长一点（速写的"不封口"）
+  // overshoot: extend both ends a little along the tangent (the sketch's "unclosed" corners)
   const over = (o.over ?? 4) * (.4 + r());
   const ext = (a, b, d) => { const l = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; return [a[0] + (a[0] - b[0]) / l * d, a[1] + (a[1] - b[1]) / l * d]; };
   P.unshift(ext(P[0], P[1], over * .5)); P.push(ext(P[P.length - 1], P[P.length - 2], over));
@@ -99,13 +99,13 @@ export function penStroke(pts, o = {}) {
     W.push(w * (.55 + .45 * Math.pow(Math.sin(Math.PI * clamp(u * 1.1 - .02)), .35)) * (.85 + .3 * n2(s * .01 + 5, ph, seed)));
     if (i) S.push(S[i - 1] + Math.hypot(out[i][0] - out[i - 1][0], out[i][1] - out[i - 1][1]));
   }
-  // 断笔：钢笔划过纸面偶尔跳一下
+  // breaks: the pen occasionally skips as it crosses the paper
   const gaps = [];
   if (o.gap && S[n - 1] > 60 && r() < o.gap) { const g0 = .25 + r() * .5; gaps.push([g0, g0 + (3 + r() * 6) / S[n - 1]]); }
   return { P: out, W, S, L: S[n - 1], gaps, alpha: o.alpha ?? 1 };
 }
 const inGap = (st, u) => st.gaps.some(g => u > g[0] && u < g[1]);
-// 画一笔（p = 画到百分之几），动态层用
+// Draw one stroke (p = fraction drawn so far), used by the dynamic layer
 export function drawPen(ctx, st, p = 1, col = INK, alpha = 1, from = 0) {
   if (p <= 0 || from >= p) return;
   const end = st.L * clamp(p), beg = st.L * clamp(from); ctx.strokeStyle = rgba(col, alpha * st.alpha); ctx.lineCap = 'round';
@@ -118,7 +118,7 @@ export function drawPen(ctx, st, p = 1, col = INK, alpha = 1, from = 0) {
     ctx.lineWidth = st.W[i]; ctx.beginPath(); ctx.moveTo(st.P[i - 1][0], st.P[i - 1][1]); ctx.lineTo(x1, y1); ctx.stroke();
   }
 }
-// 画进静态层：ink 画布（不透明黑 = 覆盖度）+ time 画布（灰度 = 到达时间，darken 取最早）
+// Draw into the static layer: ink canvas (opaque black = coverage) + time canvas (grey level = arrival time, darken keeps the earliest)
 export function rasterPen(inkCtx, timeCtx, st, t0, dur, win) {
   inkCtx.strokeStyle = '#000'; inkCtx.lineCap = 'round'; timeCtx.lineCap = 'round';
   for (let i = 1; i < st.P.length; i++) {
@@ -133,8 +133,8 @@ export function rasterPen(inkCtx, timeCtx, st, t0, dur, win) {
   inkCtx.globalAlpha = 1;
 }
 
-// ---------- 水彩 ----------
-// 一块淡彩：几层噪声边的半透明填充（乘法叠色）+ 干后积色的暗边。o: a 浓度, j 边缘抖动, layers, edge, seed, dx/dy 错位
+// ---------- Watercolour ----------
+// One wash: several translucent fills with noisy edges (multiplicative layering) + the dark edge where pigment pools as it dries. o: a strength, j edge jitter, layers, edge, seed, dx/dy offset
 export function wash(ctx, poly, col, o = {}) {
   if (!poly || poly.length < 3) return;
   const a = o.a ?? .5, j = o.j ?? 6, L = o.layers ?? 3, seed = o.seed ?? 7, dx = o.dx ?? 0, dy = o.dy ?? 0;
@@ -149,9 +149,9 @@ export function wash(ctx, poly, col, o = {}) {
   if (e > 0) { ctx.strokeStyle = rgba(mix3(col, [60, 50, 40], .15), a * e); ctx.lineWidth = o.edgeW ?? 1.8; ctx.lineJoin = 'round'; pathPoly(ctx, last); ctx.stroke(); }
   ctx.restore();
 }
-// 留白：把下面的颜色擦回纸色（水彩"留白"/前景遮挡）
+// Reserve: erase the colour underneath back to paper (watercolour "reserved whites" / foreground occlusion)
 export function reserve(ctx, poly, a = .9, j = 4, seed = 3) { ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(255,255,255,${a})`; pathPoly(ctx, j ? rough(poly, j, seed) : poly); ctx.fill(); ctx.restore(); }
-// 一个叶片状色点
+// One leaf-shaped dab of colour
 export function dab(ctx, x, y, r, ang, col, a, seed) {
   const R = rng(seed), n = 5 + (R() * 3 | 0), el = 1.15 + R() * .5, P = [];
   for (let i = 0; i < n; i++) { const t = i / n * TAU + R() * .5, rr = r * (.6 + R() * .55); const lx = Math.cos(t) * rr * el, ly = Math.sin(t) * rr; P.push([x + lx * Math.cos(ang) - ly * Math.sin(ang), y + lx * Math.sin(ang) + ly * Math.cos(ang)]); }
@@ -159,7 +159,7 @@ export function dab(ctx, x, y, r, ang, col, a, seed) {
   for (let i = 0; i < n; i++) { const p = P[i], q = P[(i + 1) % n]; ctx.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2); }
   ctx.fill();
 }
-// 树冠：底色淡彩 + 上千个叶片色点（左上受光黄绿 → 右下暗绿），留出透光的洞
+// Tree crown: base wash + over a thousand leaf dabs (lit yellow-green at top-left → dark green at bottom-right), leaving holes where light shows through
 export const LEAF = { sun: hex('#d6d56f'), light: hex('#aabf57'), mid: hex('#7fa04a'), dark: hex('#56793c'), deep: hex('#3f5d36') };
 export function crownDepth(crown, x, y) { let k = -1; for (const c of crown) k = Math.max(k, 1 - Math.hypot(x - c.x, y - c.y) / c.r); return k; }
 export function foliage(ctx, crown, o = {}) {
@@ -168,9 +168,9 @@ export function foliage(ctx, crown, o = {}) {
   for (const c of crown) { x0 = Math.min(x0, c.x - c.r); y0 = Math.min(y0, c.y - c.r); x1 = Math.max(x1, c.x + c.r); y1 = Math.max(y1, c.y + c.r); area += Math.PI * c.r * c.r; }
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rad = Math.max(x1 - x0, y1 - y0) / 2;
   ctx.save(); ctx.globalCompositeOperation = 'multiply';
-  // 底色：整团浅黄绿
+  // base colour: the whole mass in light yellow-green
   for (const c of crown) wash(ctx, ellipse(c.x, c.y, c.r * .92, c.r * .88, 22), pal.sun, { a: .22 * (o.base ?? 1), j: c.r * .12, layers: 2, edge: 0, seed: (o.seed ?? 11) + c.x | 0 });
-  // 体积：受光的一团 + 背光的一团（大块湿画），再点叶片
+  // volume: a lit mass + a shadow mass (large wet washes), then dab the leaves
   for (const c of crown) {
     wash(ctx, ellipse(c.x + c.r * .18, c.y + c.r * .22, c.r * .7, c.r * .55, 18), pal.mid, { a: .22 * (o.base ?? 1), j: c.r * .15, layers: 2, edge: .08, seed: (o.seed ?? 11) + 7 + c.y | 0, freq: .012 });
     wash(ctx, ellipse(c.x + c.r * .3, c.y + c.r * .42, c.r * .5, c.r * .3, 16), pal.dark, { a: .2 * (o.base ?? 1), j: c.r * .12, layers: 2, edge: .1, seed: (o.seed ?? 11) + 9 + c.x | 0, freq: .012 });
@@ -181,9 +181,9 @@ export function foliage(ctx, crown, o = {}) {
     const x = x0 + R() * (x1 - x0), y = y0 + R() * (y1 - y0), k = crownDepth(crown, x, y);
     if (k < 0) continue;
     const hole = fbm(x * .012 / sc, y * .012 / sc, o.seed ?? 11, 3);
-    if (k < .5 && hole > .6 + k * .3) continue;          // 边缘的透光洞
-    if (R() > .35 + k * 1.6) continue;                    // 外缘稀疏
-    if (k > .45 && R() < .45) continue;                  // 内部交给大块颜色
+    if (k < .5 && hole > .6 + k * .3) continue;          // see-through holes at the edge
+    if (R() > .35 + k * 1.6) continue;                    // sparse at the outer edge
+    if (k > .45 && R() < .45) continue;                  // leave the interior to the large colour masses
     const lx = (x - cx) / rad, ly = (y - cy) / rad, lit = clamp(.5 - lx * .45 - ly * .6 + (R() - .5) * .5 + (hole - .5) * .6, 0, 1);
     const col = lit > .78 ? pal.sun : lit > .55 ? pal.light : lit > .33 ? pal.mid : lit > .16 ? pal.dark : pal.deep;
     dab(ctx, x, y, (4 + R() * R() * 16) * sc * (1.1 - k * .3), R() * TAU, col, .32 + R() * .38, i * 7 + (o.seed ?? 11));
@@ -191,11 +191,11 @@ export function foliage(ctx, crown, o = {}) {
   ctx.restore();
 }
 
-// ---------- 颜色到达场 ----------
-// sources: {x,y,t,v,R}（从 (x,y) 在 t 秒开始，以 v px/s 洇开，最远 R）；返回 Float32Array(gw*gh)，单位秒
+// ---------- Colour arrival field ----------
+// sources: {x,y,t,v,R} (starting from (x,y) at t seconds, blooming at v px/s, out to at most R); returns Float32Array(gw*gh), in seconds
 export function arrivalField(W, H, gw, gh, sources, o = {}) {
   const F = new Float32Array(gw * gh).fill(999), cw = W / gw, ch = H / gh;
-  // 每格一个噪声偏移（像素）：让洇开的边缘成不规则的"花椰菜"形，而不是圆
+  // one noise offset per cell (pixels): makes the blooming edge an irregular "cauliflower" shape instead of a circle
   const N = new Float32Array(gw * gh), amp = o.amp ?? 170, creep = o.creep ?? .028;
   for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) { const x = (i + .5) * cw, y = (j + .5) * ch; N[j * gw + i] = (fbm(x * .0024, y * .0024, 17, 4) - .5) * 2 * amp + (fbm(x * .011, y * .011, 23, 2) - .5) * amp * .35; }
   for (const s of sources) {
@@ -206,7 +206,7 @@ export function arrivalField(W, H, gw, gh, sources, o = {}) {
       if (s.mask && !s.mask(x, y)) continue;
       const k = j * gw + i, d = Math.max(0, Math.hypot(x - s.x, (y - s.y) * (s.sy ?? 1)) + N[k] * (s.noise ?? 1));
       if (s.hard ? d > R : d > reach) continue;
-      // R 以内按 v 洇开；R 以外慢慢渗（creep 秒/像素），边缘干后成一道深色水痕
+      // within R it blooms at v; beyond R it seeps slowly (creep, seconds/pixel), and the edge dries into a dark tide mark
       const t = s.t + Math.min(d, R) / s.v + Math.max(0, d - R) * creep; if (t < F[k]) F[k] = t;
     }
   }
@@ -214,7 +214,7 @@ export function arrivalField(W, H, gw, gh, sources, o = {}) {
 }
 export function sampleField(F, W, H, gw, gh, x, y) { const i = clamp(Math.floor(x / W * gw), 0, gw - 1), j = clamp(Math.floor(y / H * gh), 0, gh - 1); return F[j * gw + i]; }
 
-// ---------- GL 合成：纸 × 颜色（按到达场洇开）× 墨线（按笔顺出现） ----------
+// ---------- GL composite: paper × colour (blooming by the arrival field) × ink lines (appearing in stroke order) ----------
 const VS = `#version 300 es
 in vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
 const FS = `#version 300 es
@@ -230,11 +230,11 @@ void main(){
   float c = cos(uRot), s = sin(uRot);
   vec2 w = uCam.xy + mat2(c,-s,s,c) * sp / uCam.z;
   vec2 uv = w / uWorld;
-  // 纸：大块的深浅 + 纤维
+  // paper: large-scale light/dark variation + fibres
   float m = fbm(w*.0011) * .6 + fbm(w*.0062 + 9.) * .4;
   vec3 paper = vec3(.961,.933,.871) * (1. - .045 * (m - .45)) ;
   paper *= 1. - .018 * smoothstep(.55, .9, n(w * vec2(.9, .05) + 3.));
-  // 颜色：按到达时间洇开，前沿积色
+  // colour: blooms by arrival time, pigment pooling at the front
   vec3 col = texture(uColor, uv).rgb;
   float T = texture(uArr, uv).r;
   float jn = (fbm(w*.0032 + 3.1) - .5) * .7 + (fbm(w*.021 + 7.) - .5) * .22 + (n(w*.09) - .5) * .06;
@@ -244,9 +244,9 @@ void main(){
   float wet = step(0., dt) * exp(-max(dt, 0.) / .55);
   vec3 pig = (1. - col) * rev * (1. + .7 * front + .12 * wet);
   float g = fbm(w * .21 + 1.7);
-  pig *= .82 + .36 * g;                          // 颗粒：颜料沉在纸纹里
+  pig *= .82 + .36 * g;                          // granulation: pigment settles into the paper grain
   vec3 outc = paper * (1. - clamp(pig, 0., 1.));
-  // 墨线：按笔顺出现（time 纹理 = 到达时刻）
+  // ink lines: appear in stroke order (time texture = arrival time)
   vec2 ink = texture(uInk, uv).rg; vec2 tm = texture(uTime, uv).rg * 255.;
   float nowA = 1. + clamp((uT - uWin.x) / uWin.y, 0., 1.) * 253.;
   float nowB = 1. + clamp((uT - uWin.z) / uWin.w, 0., 1.) * 253.;
@@ -281,8 +281,8 @@ export function compositor(canvas, L) {
   return ({ cx, cy, z, rot = 0 }, t) => { gl.uniform3f(U('uCam'), cx, cy, z); gl.uniform1f(U('uRot'), rot); gl.uniform1f(U('uT'), t); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.finish(); };
 }
 
-// ---------- 图元：knock（纸色遮挡）/ wash（淡彩）/ ink（墨线） ----------
-// 动态物体（人物、帽子）先生成图元列表，再统一画；静态物体可以用同一套图元烘进静态层。
+// ---------- Primitives: knock (paper-colour occluder) / wash (colour wash) / ink (ink line) ----------
+// Dynamic objects (figures, the hat) first generate a primitive list, then everything is drawn together; static objects can bake the same primitives into the static layer.
 export function drawPrims(ctx, prims, o = {}) {
   const colorAmt = o.color ?? 1, inkP = o.ink ?? 1, clip = o.clip;
   for (const p of prims) {
@@ -301,8 +301,8 @@ export function drawPrims(ctx, prims, o = {}) {
   }
 }
 
-// ---------- 人物：3D 骨架正交投影成 2D，胶囊体 + 服装色 ----------
-// 身体坐标：y 上、z 前（面朝方向）、x 右，单位 = 身高。yaw=0 背对镜头，-90° 朝画面左，180° 朝镜头。
+// ---------- Figures: 3D skeleton orthographically projected to 2D, capsules + clothing colours ----------
+// Body coordinates: y up, z forward (facing direction), x right, unit = body height. yaw=0 faces away from camera, -90° faces screen left, 180° faces camera.
 const V = (x, y, z) => [x, y, z];
 const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sc3 = (a, k) => [a[0] * k, a[1] * k, a[2] * k], sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const len3 = a => Math.hypot(a[0], a[1], a[2]), nrm3 = a => sc3(a, 1 / (len3(a) || 1)), cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -310,7 +310,7 @@ const rx = (v, a) => [v[0], v[1] * Math.cos(a) - v[2] * Math.sin(a), v[1] * Math
 const ry = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
 const rz = (v, a) => [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a), v[2]];
 export const R3 = { V, add3, sc3, sub3, len3, nrm3, rx, ry, rz };
-// 两段 IK：从 a 出发，段长 l1/l2，够向 target，pole 决定肘/膝朝向
+// Two-bone IK: from a, segment lengths l1/l2, reaching for target; pole sets the elbow/knee direction
 export function ik(a, target, l1, l2, pole) {
   let d = sub3(target, a), L = len3(d); const Lc = clamp(L, Math.abs(l1 - l2) + 1e-3, l1 + l2 - 1e-3); d = nrm3(d);
   const cosA = (l1 * l1 + Lc * Lc - l2 * l2) / (2 * l1 * Lc), sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
@@ -318,7 +318,7 @@ export function ik(a, target, l1, l2, pole) {
   const mid = add3(a, add3(sc3(d, cosA * l1), sc3(pv, sinA * l1)));
   return [mid, add3(a, sc3(d, Lc))];
 }
-// 姿势参数 → 关节（身体坐标）。q 里全是角度（弧度）或目标点
+// Pose parameters → joints (body coordinates). Everything in q is an angle (radians) or a target point
 export const BODY = { hip: .52, torso: .29, neck: .035, head: .066, sh: .105, hipW: .055, ua: .165, fa: .155, th: .245, sn: .25 };
 export function skeleton(q = {}) {
   const B = BODY, j = {};
@@ -353,11 +353,11 @@ export function skeleton(q = {}) {
   }
   return j;
 }
-// 投影：身体坐标 → 屏幕（ground 点 gx,gy，比例 S = 身高像素，yaw 朝向，pitch 俯视）
+// Projection: body coordinates → screen (ground point gx,gy, scale S = body height in pixels, yaw heading, pitch looking down)
 export function projector(gx, gy, S, yaw, pitch = .28) {
   return p => { const q = ry(p, yaw); return [gx + q[0] * S, gy - (q[1] + q[2] * pitch) * S, q[2]]; };
 }
-// 胶囊链轮廓：pts=[[x,y],...] radii=[...] → 闭合多边形 + 左右边线
+// Capsule-chain outline: pts=[[x,y],...] radii=[...] → closed polygon + left/right edge lines
 function tube(pts, rad) {
   const n = pts.length, Lft = [], Rgt = [];
   for (let i = 0; i < n; i++) {
@@ -372,7 +372,7 @@ function tube(pts, rad) {
   Rgt.reverse();
   return { poly, L: Lft, R: Rgt };
 }
-// 一个人：pose → 图元。look: {skin, top, bottom, hair, shoe, hairLong, curly, dress, sleeve, torso:[臀,腰,肩]}
+// One person: pose → primitives. look: {skin, top, bottom, hair, shoe, hairLong, curly, dress, sleeve, torso:[hips,waist,shoulders]}
 export function figure(look, pose, place, o = {}) {
   const S = place.S, yaw = place.yaw ?? 0, pr = projector(place.x, place.y, S, yaw, place.pitch ?? .28);
   const j = skeleton(pose), P = k => pr(j[k]);
@@ -387,7 +387,7 @@ export function figure(look, pose, place, o = {}) {
   const tr = look.torso ?? [.078, .084, .104];
   const tR = tr.map((r, i) => r * (1 - side * (i === 2 ? .45 : .32)));
   const midBack = add3(j.chest, sc3(sub3(j.neck, j.chest), .45));
-  // 躯干：几圈横截面（宽 × 厚）投影后沿脊柱法线取外轮廓
+  // torso: several cross-sections (width × depth) projected, then the outer outline taken along the spine normal
   const upv = nrm3(sub3(j.neck, j.pel)), sxv = nrm3(sub3(j.shR, j.shL)), fzv = nrm3(cross(sxv, upv));
   const lvl = (c, wx, wz) => ({ c, wx, wz });
   const torsoPoly = (levels) => {
@@ -417,7 +417,7 @@ export function figure(look, pose, place, o = {}) {
     if (look.sleeve === 'long') addTube([...seg(sh, el, 2), ...seg(el, ha, 3).slice(1)], [.037, .032, .03, .026], look.top, 0);
     else if (look.sleeve === 'none') addTube([...seg(sh, el, 3), ...fore.slice(1)], [.034, .031, .025, .026, .019], look.skin, 0);
     else { addTube(fore, [.025, .026, .019], look.skin, 0); addTube([mid, el], [.03, .025], look.skin, .5); addTube([sh, mid], [.036, .033], look.top, 1); }
-    // 手：顺着前臂方向的小椭圆
+    // hand: small ellipse aligned with the forearm
     const hd = nrm3(sub3(ha, el)), hc = add3(ha, sc3(hd, .022));
     parts.push({ z: pr(hc)[2] - .003, hand: true, c: pr(hc), c2: pr(add3(ha, sc3(hd, .045))), r: .021 * S, col: look.skin });
     const shortsEnd = add3(sc3(hp, .35), sc3(kn, .65)), shin = seg(kn, an, 4);
@@ -426,7 +426,7 @@ export function figure(look, pose, place, o = {}) {
     else { addTube([shortsEnd, ...shin], [.04, .035, .039, .03, .022], look.skin, 0); addTube([hp, shortsEnd], [.058, .05], look.bottom, 1); }
     addTube([an, j['to' + s]], [.026, .02], look.shoe ?? [80, 70, 64], -.5);
   }
-  if (look.dress) {   // 裙摆：腰 → 膝上，张开的圆锥（坐着时铺在地上）
+  if (look.dress) {   // skirt: waist → above the knee, a flared cone (spread on the ground when sitting)
     const w = j.pel, kn = sc3(add3(j.knL, j.knR), .5), seated = w[1] < .25;
     const hem = seated ? V(w[0], .02, w[2] + .1) : add3(sc3(w, .25), sc3(kn, .75));
     const sp = seated ? .2 : look.flare ?? .15;
@@ -434,11 +434,11 @@ export function figure(look, pose, place, o = {}) {
     const hull = spline(convexHull([...ring(add3(w, V(0, .09, 0)), .075, 16), ...ring(hem, sp, 20)].map(p => [p[0], p[1]])), 3, true);
     parts.push({ z: Math.min(pr(w)[2], pr(hem)[2]) - .006, poly: hull, col: look.top });
   }
-  // 头 + 头发（一个整体：先整颗头发色，再按朝向擦出脸）
+  // head + hair (one unit: fill the whole head in hair colour first, then erase the face according to heading)
   const hc = pr(add3(j.neck, sc3(nrm3(sub3(j.head, j.neck)), .1)));
   const fwd = ry(V(Math.sin(j.headYaw), 0, Math.cos(j.headYaw)), yaw);
   parts.push({ z: hc[2] - .004 - (fwd[2] > 0 ? .01 : 0), head: true, c: hc, r: .063 * S, fwd });
-  if (look.hairLong) {   // 长发：从头顶散开到肩，再收成发梢；风从右往左吹（hairBlow）
+  if (look.hairLong) {   // long hair: spreads from the crown to the shoulders, then gathers into the ends; wind blows right to left (hairBlow)
     const hb = pose.hairBlow ?? 0, hz = -.05, hd = j.head, nk = j.neck;
     const q = (x, y, z) => pr(add3(V(0, 0, 0), V(x, y, z)));
     const at = (base, x, dy, z, blow) => { const p = add3(base, V(x - blow * hb, dy, z)); return pr(p); };
@@ -456,14 +456,14 @@ export function figure(look, pose, place, o = {}) {
       const { c, r, fwd } = p, circ = ellipse(c[0], c[1], r * .93, r, 20);
       prims.push({ k: 'knock', poly: circ });
       const hair = rough(ellipse(c[0] - fwd[0] * r * .06, c[1] - r * .04, r * 1.02 * (look.hairVol ?? 1), r * 1.04 * (look.hairVol ?? 1), 20), r * (look.curly ? .12 : .05), sd, Math.max(3, r * .22), .08);
-      const faceAmt = clamp(.45 - fwd[2]);           // 背对 = 0
+      const faceAmt = clamp(.45 - fwd[2]);           // facing away = 0
       prims.push({ k: 'wash', poly: circ, col: look.skin, a: .5, seed: sd, dx: lw * .5 });
       prims.push({ k: 'knock', poly: hair, a: .5 }, { k: 'wash', poly: hair, col: look.hair, a: .8, seed: sd + 1, j: 1.2 });
       if (faceAmt > .05) {
         const fx = c[0] + fwd[0] * r * .42, fy = c[1] + r * (.22 + .12 * clamp(-fwd[2])), fr = r * (.55 + .22 * clamp(-fwd[2]));
         const face = ellipse(fx, fy, fr, r * .72, 16).map(([x, y]) => { const dx = x - c[0], dy = y - c[1], d = Math.hypot(dx, dy), m = r * .95; return d > m ? [c[0] + dx / d * m, c[1] + dy / d * m] : [x, y]; });
         prims.push({ k: 'knock', poly: face, a: .97 * clamp(faceAmt * 2) }, { k: 'wash', poly: face, col: look.skin, a: .48, seed: sd + 2 });
-        if (Math.abs(fwd[0]) > .5) prims.push({ k: 'ink', st: penStroke([[fx + fwd[0] * fr * .9, fy - r * .25], [fx + fwd[0] * fr * 1.12, fy - r * .02], [fx + fwd[0] * fr * .95, fy + r * .12]], { w: lw * .8, wob: lw * .2, seed: sd + 3, over: 1 }) });   // 侧脸鼻子
+        if (Math.abs(fwd[0]) > .5) prims.push({ k: 'ink', st: penStroke([[fx + fwd[0] * fr * .9, fy - r * .25], [fx + fwd[0] * fr * 1.12, fy - r * .02], [fx + fwd[0] * fr * .95, fy + r * .12]], { w: lw * .8, wob: lw * .2, seed: sd + 3, over: 1 }) });   // nose in profile
       }
       prims.push({ k: 'ink', st: penStroke(hair.slice(0, Math.ceil(hair.length * .7)), { w: lw, wob: lw * .35, seed: sd + 4, smooth: false, over: lw * 2 }) });
       prims.push({ k: 'ink', st: penStroke(circ.slice(1, 9), { w: lw * .9, wob: lw * .3, seed: sd + 5, smooth: false, over: lw }) });
@@ -496,7 +496,7 @@ export function figure(look, pose, place, o = {}) {
       continue;
     }
     if (p.hand) { const a = Math.atan2(p.c2[1] - p.c[1], p.c2[0] - p.c[0]); const h = ellipse(p.c[0], p.c[1], p.r * 1.35, p.r * .85, 10).map(([x, y]) => { const dx = x - p.c[0], dy = y - p.c[1]; return [p.c[0] + dx * Math.cos(a) - dy * Math.sin(a), p.c[1] + dx * Math.sin(a) + dy * Math.cos(a)]; }); prims.push({ k: 'knock', poly: h }, { k: 'wash', poly: h, col: p.col, a: .5, seed: sd }, { k: 'ink', st: penStroke(h.slice(0, 7), { w: lw * .8, wob: lw * .2, seed: sd, smooth: false, over: 1 }) }); continue; }
-    if (p.poly) {   // 裙子
+    if (p.poly) {   // skirt
       const c = light(p.poly);
       prims.push({ k: 'knock', poly: p.poly }, { k: 'wash', poly: p.poly, col: p.col, a: .42, seed: sd, dx: lw, dy: lw * .5 });
       prims.push({ k: 'wash', poly: p.poly.map(([x, y]) => [lerp(c[0], x, .95) + (x - c[0]) * .0, y]).filter(([x, y]) => x + y * .6 > c[0] + c[1] * .6), col: shadeCol(p.col), a: .28, seed: sd + 5 });
@@ -507,7 +507,7 @@ export function figure(look, pose, place, o = {}) {
     const T = tube(p.pts, p.rad);
     prims.push({ k: 'knock', poly: T.poly });
     prims.push({ k: 'wash', poly: T.poly, col: p.col, a: p.opt.hair ? .8 : .62, seed: sd, dx: lw * .7, dy: lw * .4 });
-    // 背光面：离左上光源远的那一侧
+    // shadow side: the side away from the top-left light
     const n0 = T.L[0], m0 = T.R[0], dark = (m0[0] + m0[1]) > (n0[0] + n0[1]) ? T.R : T.L, lit = dark === T.R ? T.L : T.R;
     const sh = [...p.pts.map((q, i) => [lerp(q[0], dark[i][0], .5), lerp(q[1], dark[i][1], .5)]), ...dark.slice().reverse()];
     prims.push({ k: 'wash', poly: sh, col: shadeCol(p.col), a: p.opt.hair ? .35 : .3, seed: sd + 2, j: 1.2 });
@@ -533,15 +533,15 @@ export function convexHull(pts) {
   up.pop(); lo.pop(); return lo.concat(up);
 }
 
-// ---------- 草帽：3D 帽檐 + 帽冠，任意翻转 ----------
-// c: 中心 [x,y]，r: 帽檐半径（像素），rot: [绕 x, 绕 y, 绕 z]，col: 草黄
+// ---------- Straw hat: 3D brim + crown, can tumble in any direction ----------
+// c: centre [x,y], r: brim radius (pixels), rot: [about x, about y, about z], col: straw yellow
 export const STRAW = hex('#d8ad5f'), BAND = hex('#4b4a6a');
 export function hat(c, r, rot, o = {}) {
   const pitch = o.pitch ?? .28, lw = o.lw ?? Math.max(1.2, r * .035), seed = o.seed ?? 5;
   const tf = v => { let q = rx(v, rot[0]); q = rz(q, rot[2]); q = ry(q, rot[1]); q = rx(q, pitch); return [c[0] + q[0] * r, c[1] - q[1] * r, q[2]]; };
   const ring = (h, rr, n = 28, wob = 0) => [...Array(n)].map((_, i) => { const a = i / n * TAU, w = 1 + wob * Math.sin(a * 3 + 1); return tf(V(Math.cos(a) * rr * w, h, Math.sin(a) * rr * w)); });
   const brim = ring(0, 1, 36, .035), crownB = ring(.02, .5, 24), crownM = ring(.3, .47, 24), crownT = ring(.44, .34, 24), band = ring(.1, .505, 24);
-  const upv = sub3(tf(V(0, 1, 0)), tf(V(0, 0, 0))); const topFacing = upv[2] < 0 ? 1 : 0; // 帽顶朝向镜头？
+  const upv = sub3(tf(V(0, 1, 0)), tf(V(0, 0, 0))); const topFacing = upv[2] < 0 ? 1 : 0; // crown top facing the camera?
   const hull = pts => convexHull(pts.map(p => [p[0], p[1]]));
   const crownPoly = hull([...crownB, ...crownM, ...crownT]), brimPoly = brim.map(p => [p[0], p[1]]), bandPoly = hull([...band, ...ring(.2, .49, 24)]);
   const prims = [];
@@ -557,7 +557,7 @@ export function hat(c, r, rot, o = {}) {
     prims.push({ k: 'knock', poly: brimPoly }, { k: 'wash', poly: brimPoly, col: STRAW, a: .55 * colA, seed: seed + 4, dx: lw * .8, dy: lw * .4 });
     const under = brim.filter(p => p[2] < 0).map(p => [p[0], p[1]]);
     if (under.length > 4 && !topFacing) prims.push({ k: 'wash', poly: [...under, ...under.slice().reverse().map(p => [lerp(p[0], c[0], .25), lerp(p[1], c[1], .25)])], col: shade, a: .3 * colA, seed: seed + 5 });
-    // 草编的短线纹理
+    // short-line texture of the straw weave
     for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + .2; const p0 = tf(V(Math.cos(a) * .62, 0, Math.sin(a) * .62)), p1 = tf(V(Math.cos(a) * .92, 0, Math.sin(a) * .92)); prims.push({ k: 'ink', st: penStroke([[p0[0], p0[1]], [p1[0], p1[1]]], { w: lw * .5, wob: .3, seed: seed + 20 + i, over: 0 }), alpha: .5 }); }
     prims.push({ k: 'ink', st: penStroke([...brimPoly, brimPoly[0], brimPoly[1]], { w: lw, wob: lw * .35, seed: seed + 6, over: lw * 2, smooth: false, gap: .5 }) });
   };
@@ -565,8 +565,8 @@ export function hat(c, r, rot, o = {}) {
   return prims;
 }
 
-// ---------- 手写字 ----------
-// 从左到右"写出来"（按字宽裁切），p = 进度。字体用 OFL 手写体（Caveat / Reenie Beanie）
+// ---------- Handwriting ----------
+// "Written out" left to right (clipped by glyph width), p = progress. Fonts are OFL handwriting faces (Caveat / Reenie Beanie)
 export function handwrite(ctx, text, x, y, size, p, o = {}) {
   if (p <= 0) return;
   ctx.save(); ctx.font = `${o.weight ?? 400} ${size}px ${o.font ?? 'Caveat'}`; ctx.textBaseline = 'alphabetic';
@@ -578,7 +578,7 @@ export function handwrite(ctx, text, x, y, size, p, o = {}) {
   return w;
 }
 
-// ---------- 自行车（身体坐标，和骑车人共用投影）----------
+// ---------- Bicycle (body coordinates, shares the rider's projection)----------
 export function bike(place, ph, col, o = {}) {
   const S = place.S, pr = projector(place.x, place.y, S, place.yaw ?? 0, place.pitch ?? .28), lw = Math.max(1, (o.lw ?? .0045) * S), seed = o.seed ?? 3;
   const P = (x, y, z) => { const q = pr(V(x, y, z)); return [q[0], q[1]]; };
@@ -597,9 +597,9 @@ export function bike(place, ph, col, o = {}) {
   return prims;
 }
 
-// ---------- 任意形状 → 钢笔淡彩 ----------
-// poly: 闭合多边形（世界坐标）；col: [r,g,b]；o: { ink 线宽, wash 浓度, offset 错位, reserve 留白度, color 0..1（到达程度）, p 墨线进度 }
-// 例：一颗暖橙色 #D97757 的四角光点 + 光标尾巴 —— 见 DEMO.md（Engine reference）
+// ---------- Any shape → pen and wash ----------
+// poly: closed polygon (world coordinates); col: [r,g,b]; o: { ink line width, wash strength, offset colour offset, reserve amount of reserved white, color 0..1 (how far colour has arrived), p ink-line progress }
+// Example: a warm orange #D97757 four-point sparkle + cursor tail — see DEMO.md (Engine reference)
 export function sketchShape(ctx, poly, col, o = {}) {
   const lw = o.ink ?? 2.4, off = o.offset ?? lw * .8, seed = o.seed ?? 1;
   const prims = [{ k: 'knock', poly, a: o.reserve ?? .9 }, { k: 'wash', poly, col, a: o.wash ?? .6, dx: off, dy: off * .5, seed, j: o.jitter ?? lw * 1.2, layers: 3, edge: .35 },
@@ -607,6 +607,6 @@ export function sketchShape(ctx, poly, col, o = {}) {
   drawPrims(ctx, prims, { color: o.color ?? 1, ink: o.p ?? 1 });
   return prims;
 }
-export function sparkle(cx, cy, r, k = .22) {   // 四角星
+export function sparkle(cx, cy, r, k = .22) {   // four-point star
   const P = []; for (let i = 0; i < 8; i++) { const a = i / 8 * TAU - Math.PI / 2, rr = i % 2 ? r * k : r; P.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } return P;
 }

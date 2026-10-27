@@ -1,5 +1,5 @@
-// Five Rules for a Poster —— 时间线与绘制。所有坐标都在网格上；所有运动都是 snap（精确缓动）或 lin（线性）。
-// 唯一例外：红圆出走（线性、不吸附、离开网格）。
+// Five Rules for a Poster —— timeline and drawing. Every coordinate is on the grid; every motion is snap (precise ease) or lin (linear).
+// The only exception: the red circle's escape (linear, no snap, leaves the grid).
 import { clamp, lerp, seg, E, snap, lin, steps, track, E8, E16, BEAT, BAR } from './ease.js';
 
 export const W = 1920, H = 1080, DUR = 44;
@@ -7,15 +7,15 @@ export const C = {
   page: '#EAE9E5', paper: '#FFFFFF', ink: '#111111', red: '#E30613',
   grid: '#CFCEC9', pgrid: '#E2E1DC', bass: '#CFCEC9', mute: '#77766F', col: '#E2E1DC', wall: '#DFDED9',
 };
-// ---------- 画面网格：12 列，边距 96，栏距 24 ----------
+// ---------- frame grid: 12 columns, margin 96, gutter 24 ----------
 const FM = 96, FG = 24, FC = 122;
 export const fx = i => FM + i * (FC + FG);
-// ---------- 海报（局部坐标）：706×1008；7 列 × 91 = A 多利亚 7 个音；16 行 × 40 = 16 个八分音符 ----------
+// ---------- poster (local coordinates): 706×1008; 7 columns × 91 = the 7 notes of A Dorian; 16 rows × 40 = 16 eighth notes ----------
 export const PW = 706, PH = 1008, PM = 35, PMX = 34.5, CW = 91, RH = 40, NC = 7;
 export const px = c => PMX + c * CW, py = r => PM + r * RH;
 const SCORE_B = py(16);
 
-// ---------- 关键时刻 ----------
+// ---------- key moments ----------
 export const T = {
   run: 18.0, circleIn: 20.0, hes: 23.5, pageOut: 24.5, fly0: 24.5, pause: [25.0, 25.25], land: 26.0,
   reflow: 26.125, txtFinal: 27.125, gridOff: 27.5, rot: 30.0, rotD: 1.5 * BEAT, labels: 30.5,
@@ -25,7 +25,7 @@ export const T = {
 let S = null, WORDS = {}, LINES = [];
 export function setScore(s) { S = s; buildUnits(); }
 export function setWords(w) { WORDS = w || {}; }
-// 字幕 = 版面里的一行排版。第一句做小字（导语），其余做大字（陈述）
+// subtitles = a line of typesetting within the layout. The first line is set small (lead-in), the rest large (statements)
 const LAYOUT = { l1: [7.8, 'page'], l2: [11.8, 'page'], l3: [15.8, 'page'], l4: [19.85, 'page'], l4b: [22.15, 'page', 1], l5: [99, 'page'], l5b: [27.4, 'center'], l6: [39.95, 'wall'] };
 export function setLines(lines, dur) {
   LINES = lines.map(L => {
@@ -42,7 +42,7 @@ function font(g, weight, size, fam = 'Archivo') {
   g.letterSpacing = size >= 90 && fam === 'Archivo' ? `${(-size * 0.022).toFixed(1)}px` : '0px';
 }
 const textW = (g, s) => g.measureText(s).width;
-// 从基线下方吸附出现的一段文字（p: 0→1 进入；q: 0→1 向上翻走）
+// a run of text that snaps in from below the baseline (p: 0→1 enters; q: 0→1 flips away upward)
 function revealText(g, s, x, y, size, p, q = 0) {
   if (p <= 0 || q >= 1) return;
   const w = textW(g, s) + size * .1;
@@ -67,7 +67,7 @@ function drawLine(g, L, t, x, ySmall, yBig, bigSize = 76) {
 }
 
 // ======================================================================
-// 海报文字块：A 杂乱（三种字体）→ B 统一 Archivo → C 留白压缩 → D 齐左 → E 最终
+// poster text blocks: A messy (three typefaces) → B unified Archivo → C white space tightened → D flush left → E final
 const TX = [
   { A: ['Neue Musik', 'Fraktur', 400, 118, 200], B: ['neue musik', 800, 112], C: [104, 800, 790], E: [PMX, 861, 150, 800], split: [PMX, 973] },
   { A: ['Grosses Konzert', 'DMSerif', 400, 62, 300], B: ['grosses konzert', 300, 62], cut: 14.0 },
@@ -100,7 +100,7 @@ function drawPosterText(g, t) {
       if (pf > 0) { xl = lerp(xl, d.E[0], pf); y = lerp(y, d.E[1], pf); size = lerp(size, d.E[2], pf); if (pf > .5) wt = d.E[3]; }
     }
     font(g, wt, size, fam); g.fillStyle = C.ink;
-    if (d.split && t >= T.txtFinal - E8) {      // 标题拆成两行：musik 落到第二行
+    if (d.split && t >= T.txtFinal - E8) {      // title split into two lines: musik drops to the second line
       const pf = snap(t, T.txtFinal, E8), w1 = text.split(' ')[0];
       const x2 = lerp(xl + textW(g, w1 + ' '), d.split[0], pf), y2 = lerp(y, d.split[1], snap(t, T.txtFinal + E16, E8));
       g.fillText(w1, xl, y); g.fillText(text.slice(w1.length + 1), x2, y2);
@@ -112,14 +112,14 @@ function drawPosterText(g, t) {
     g.beginPath(); g.rect(x0 - 10, y - size * 1.1, w + 20, size * 1.45 * pin); g.clip();
     g.fillText(text, x0, y);
     g.restore();
-    if (d.cut && t > d.cut - E16 && t < d.cut + E8) {   // 刀线
+    if (d.cut && t > d.cut - E16 && t < d.cut + E8) {   // knife line
       g.fillStyle = C.ink; g.fillRect(PMX - 10, y - size * .35 - 1, (PW - 2 * PMX + 20) * lin(t, d.cut - E16, d.cut), 2);
     }
   });
 }
 
 // ======================================================================
-// 乐谱单元：16 个一格长的黑块，从呆板阶梯 → 最终乐句（相邻格合并成长条；首条出血到上边，末条出血到右边）
+// score units: 16 one-cell black blocks, from a rigid staircase → the final phrase (adjacent cells merge into long bars; the first bleeds off the top, the last bleeds off the right)
 let UNITS = [];
 function buildUnits() {
   const slots = [];
@@ -160,14 +160,14 @@ function drawBass(g, t) {
 }
 
 // ======================================================================
-// 红圆：呆板位 = 右上角格子（2 列直径）；最终 = 左下、4 列直径、出血到左边、被标题压住
+// red circle: rigid position = top-right cell (2-column diameter); final = bottom left, 4-column diameter, bleeding off the left, overlapped by the title
 const D0 = () => CW * S.circleDiameterCols.stiff, D1 = () => CW * S.circleDiameterCols.final;
 function circleFinalCenter() { const [c, r] = S.final.circle, d = CW * S.circleDiameterCols.final; return [px(c) + d / 2, py(r) + d / 2]; }
 export function flight(t) { return lin(t, T.fly0, T.pause[0]) * .4 + lin(t, T.pause[1], T.land) * .6; }
-export function circleState(t) {   // → [left, top, d]（海报局部像素）
+export function circleState(t) {   // → [left, top, d] (poster-local pixels)
   const [c0, r0] = S.stiff.circle, [c1, r1] = S.final.circle, d0 = D0(), d1 = D1();
   let x0 = px(c0) + .25 * CW * (snap(t, T.hes, E16) - snap(t, T.hes + .375, E16)), y0 = py(r0);
-  y0 = lerp(-d0 - 4, y0, snap(t, T.circleIn, BEAT));     // 进场：从海报上边沿着自己的列落下
+  y0 = lerp(-d0 - 4, y0, snap(t, T.circleIn, BEAT));     // entrance: drops from the poster's top edge down its own column
   const a = flight(t), d = lerp(d0, d1, a);
   const cx = lerp(x0 + d0 / 2, px(c1) + d1 / 2, a), cy = lerp(y0 + d0 / 2, py(r1) + d1 / 2, a);
   return [cx - d / 2, cy - d / 2, d];
@@ -175,7 +175,7 @@ export function circleState(t) {   // → [left, top, d]（海报局部像素）
 function drawCircle(g, t, pulse) {
   if (t < T.circleIn - BEAT) return;
   const [l, tp, d] = circleState(t), cx = l + d / 2, cy = tp + d / 2;
-  if (t > T.fly0 && t < T.gridOff + E8) {      // 离开后留下的空格与轨迹（1.5 px 红线）
+  if (t > T.fly0 && t < T.gridOff + E8) {      // the empty cell and track left behind after it leaves (1.5 px red line)
     const [c0, r0] = S.stiff.circle, d0 = D0(), gx = px(c0) + d0 / 2, gy = py(r0) + d0 / 2;
     const k = 1 - snap(t, T.gridOff + E8, E8);
     g.strokeStyle = C.red; g.lineWidth = 1.5;
@@ -183,14 +183,14 @@ function drawCircle(g, t, pulse) {
     g.beginPath(); g.moveTo(lerp(gx, cx, 1 - k), lerp(gy, cy, 1 - k)); g.lineTo(cx, cy); g.stroke();
   }
   g.fillStyle = C.red; g.beginPath(); g.arc(cx, cy, d / 2, 0, Math.PI * 2); g.fill();
-  if (pulse > 0 && pulse < 1) {    // 被播放线击中：一圈红线向外扩散
+  if (pulse > 0 && pulse < 1) {    // hit by the playhead: a ring of red line spreads outward
     g.strokeStyle = C.red; g.lineWidth = 6 * (1 - pulse);
     g.beginPath(); g.arc(cx, cy, d / 2 + 70 * E(pulse), 0, Math.PI * 2); g.stroke();
   }
 }
 
 // ======================================================================
-// 海报网格线
+// poster grid lines
 function gridState(t) {
   const v = [], h = [];
   const off1 = seg(t, 20.0, 20.5), on2 = seg(t, 24.0, 24.5), off2 = seg(t, T.gridOff, T.gridOff + .5), off3 = seg(t, 36.0, 36.4);
@@ -216,7 +216,7 @@ function drawPosterGrid(g, t, G, stroke) {
   G.h.forEach((p, r) => { if (p > 0) { g.moveTo(PMX, py(r) + .5); g.lineTo(PMX + (PW - 2 * PMX) * p, py(r) + .5); } });
   g.stroke();
 }
-function drawGridExt(g, G) {       // 网格延伸出海报、铺满画面
+function drawGridExt(g, G) {       // grid extends beyond the poster to fill the frame
   if (G.ext <= 0) return;
   const L = 2600 * G.ext;
   g.strokeStyle = C.grid; g.lineWidth = 1; g.beginPath();
@@ -226,7 +226,7 @@ function drawGridExt(g, G) {       // 网格延伸出海报、铺满画面
 }
 
 // ======================================================================
-// 机位：海报中心、缩放、旋转
+// camera: poster centre, zoom, rotation
 const SPREAD = [1471, 540, 1, 0];
 const CAM = track([
   [0, SPREAD],
@@ -241,7 +241,7 @@ export function posterMatrix(t) {
 }
 
 // ======================================================================
-// 左页：巨大数字、规则注释、注释行、小节计数
+// left page: giant numeral, rule annotation, annotation lines, bar counter
 const RULES = [[4.0, '1', 'Grid'], [8.0, '2', 'Typeface'], [12.0, '3', 'Space'], [16.0, '4', 'Alignment'], [22.0, '5', 'Exception']];
 let NUM_SIZE = 980, NUM_ASC = 0.72;
 export function measureNumeral(g) { font(g, 700, 100); NUM_ASC = g.measureText('4').actualBoundingBoxAscent / 100; NUM_SIZE = Math.round(700 / NUM_ASC); }
@@ -253,7 +253,7 @@ function drawNumeral(g, t) {
     const up = steps(t, tr, tr + BEAT, 4), down = snap(t, tn, E8 * 2);
     g.save(); g.beginPath(); g.rect(0, base - h - 40, 1100, h + 40); g.clip();
     font(g, 700, NUM_SIZE); g.fillStyle = C.ink;
-    const lsb = -g.measureText(n).actualBoundingBoxLeft;       // 光学左对齐
+    const lsb = -g.measureText(n).actualBoundingBoxLeft;       // optical left alignment
     g.fillText(n, fx(0) - lsb, base + (1 - up) * (h + 40) + down * (h + 40));
     g.restore();
   }
@@ -292,11 +292,11 @@ function drawBarCounter(g, t, pageX) {
 }
 
 // ======================================================================
-// 开场：红线 + 网格列 + 片名
+// opening: red line + grid columns + title
 function drawOpening(g, t) {
   if (t > 8.3) return;
   const Y = 300;
-  for (let c = 0; c < 12; c++) {     // 网格列：从红线处向上下同时长出（十六分音符一列）；规则一结束时收起
+  for (let c = 0; c < 12; c++) {     // grid columns: grow up and down at once from the red line (one column per sixteenth note); retract when rule one ends
     const p = snap(t, .5 + c * E16 + E16, E16) * (1 - snap(t, 8.0 + (11 - c) * E16 * .25, E8));
     if (p > 0) { g.fillStyle = C.col; g.fillRect(fx(c), Y - Y * p, FC, Y * p + (H - Y) * p); }
   }
@@ -310,7 +310,7 @@ function drawOpening(g, t) {
 }
 
 // ======================================================================
-// 海报墙：同一套系统，每张打破一条不同的规则（叛逆元素都是红色）
+// poster wall: the same system, each poster breaks a different rule (the rebel elements are all red)
 const GAP = 80, SLOT = PW + GAP;
 const VAR = [
   { k: -2, head: ['klang'], sub: 'konzert 1962', lead: [[0, 2, 2], [1, 4, 1], [2, 5, 3], [4, 8, 2], [5, 10, 1], [6, 11, 3]], bass: [[0, 0, 8], [4, 8, 8]], circ: [4, 1], rebel: 'typeface', label: 'breaks rule 2 · typeface' },
@@ -325,7 +325,7 @@ function drawVariant(g, v) {
   g.beginPath(); g.rect(0, 0, PW, PH); g.clip();
   const chaos = v.rebel === 'all';
   v.bass.forEach(([c, r, l]) => { g.fillStyle = C.bass; g.fillRect(px(c), py(r), CW, l * RH); });
-  if (v.rebel === 'space') { g.fillStyle = C.red; g.fillRect(px(3), py(0), PW - px(3) + 2, py(8) - py(0)); }   // 空白被填满
+  if (v.rebel === 'space') { g.fillStyle = C.red; g.fillRect(px(3), py(0), PW - px(3) + 2, py(8) - py(0)); }   // the white space is filled
   v.lead.forEach(([c, r, l], i) => {
     g.save();
     if (chaos) { g.translate(px(c) + CW / 2, py(r)); g.rotate((i % 2 ? .35 : -.25)); g.translate(-(px(c) + CW / 2), -py(r)); }
@@ -338,15 +338,15 @@ function drawVariant(g, v) {
     const ox = chaos ? 57 : 0, oy = chaos ? 23 : 0;
     g.beginPath(); g.arc(px(c) + d / 2 + ox, py(r) + d / 2 + oy, d / 2, 0, Math.PI * 2); g.fill();
   }
-  // 标题
+  // title
   const head = v.head[0];
   if (v.rebel === 'typeface') { font(g, 400, 190, 'Fraktur'); g.fillStyle = C.red; g.fillText('Klang', PMX, 960); }
   else if (chaos) {
     font(g, 400, 150, 'DMSerif'); g.fillStyle = C.ink; g.save(); g.translate(PW / 2, 900); g.rotate(-.12); g.textAlign = 'center'; g.fillText('Puls!', 0, 0); g.restore();
     font(g, 400, 60, 'Fraktur'); g.textAlign = 'center'; g.fillText('Konzert 1965', PW / 2, 990); g.textAlign = 'left';
-  } else if (v.rebel === 'align') { font(g, 800, 170); g.fillStyle = C.red; g.fillText(head, PW - PMX - textW(g, head) + 6, 973); }   // 标题不齐左
+  } else if (v.rebel === 'align') { font(g, 800, 170); g.fillStyle = C.red; g.fillText(head, PW - PMX - textW(g, head) + 6, 973); }   // title not flush left
   else { font(g, 800, 170); g.fillStyle = C.ink; g.fillText(head, PMX, 973); }
-  // 信息块
+  // info block
   const info = [v.sub, 'freitag · 20.15 uhr', 'kleiner saal', 'eintritt fr. 3.–'];
   if (!chaos) info.forEach((s, i) => {
     font(g, i ? 500 : 700, i ? 20 : 32);
@@ -357,7 +357,7 @@ function drawVariant(g, v) {
   else { font(g, 700, 34, 'DMSerif'); g.fillStyle = C.ink; g.textAlign = 'center'; g.fillText('freitag 20.15 uhr', PW / 2 + 60, 120); g.textAlign = 'left'; }
   g.restore();
 }
-// 墙上的展签
+// the wall labels
 function drawWallLabels(g, t, M) {
   if (t < T.wall || t > T.cut + .01) return;
   VAR.forEach((v, i) => {
@@ -368,12 +368,12 @@ function drawWallLabels(g, t, M) {
 }
 
 // ======================================================================
-// 片尾卡
+// end card
 function drawEndCard(g, t, opt = {}) {
   if (t < T.cut) return;
   if (t < T.home - E8) return;
   const p = snap(t, T.home + E8, E8);
-  if (opt.poster) {      // 海报：片名做主标题
+  if (opt.poster) {      // poster: the film title as main headline
     captionRow(g, 0, 1, 0, 'Swiss Motion Graphics', 'A Lemo-Opuscar film', 'LemoLab \u00d7 Claude Opus 5.5');
     font(g, 700, 120); g.fillStyle = C.ink; g.fillText('Five Rules', fx(0), 168); g.fillText('for a Poster', fx(0), 276);
     font(g, 500, 19); ['Typeface Archivo', 'Score A dorian \u00b7 120 bpm', 'Grid 7 \u00d7 16'].forEach((s, i) => g.fillText(s, fx(4), 992 + i * 26));
@@ -391,7 +391,7 @@ function drawEndCard(g, t, opt = {}) {
 }
 
 // ======================================================================
-// 主渲染
+// main render
 export function renderFilm(g, t, opt = {}) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = C.page; g.fillRect(0, 0, W, H);
@@ -407,15 +407,15 @@ export function renderFilm(g, t, opt = {}) {
     drawBarCounter(g, t, pageX);
   }
   drawCaptions(g, t);
-  if (t >= T.home - BEAT) { g.fillStyle = C.red; g.fillRect(0, lerp(452, 300, snap(t, T.home, BEAT)), W, 3); }   // 红线落到片名线（在海报后面）
+  if (t >= T.home - BEAT) { g.fillStyle = C.red; g.fillRect(0, lerp(452, 300, snap(t, T.home, BEAT)), W, 3); }   // the red line drops to the title line (behind the poster)
 
   if (t >= 3.5 - E8) {
     const M = posterMatrix(t);
     g.setTransform(M);
-    // 海报墙（拉远时才出现；39.0 被红线裁掉）
+    // poster wall (appears only on the pull-out; cut away by the red line at 39.0)
     if (t > 36.0 && t < T.home) {
       const cutX = lin(t, T.cut, T.cut + .5) * W;
-      {   // 墙板：红线划过的地方被裁掉（屏幕空间里从左往右）
+      {   // wall panels: cut away where the red line passes (left to right in screen space)
         const a = M.transformPoint(new DOMPoint(-2 * SLOT - 120, -110)), b = M.transformPoint(new DOMPoint(2 * SLOT + PW + 120, PH + 110));
         const x0 = Math.max(Math.min(a.x, b.x), t > T.cut ? cutX : -1e9), x1 = Math.max(a.x, b.x);
         g.setTransform(1, 0, 0, 1, 0, 0);
@@ -447,7 +447,7 @@ export function renderFilm(g, t, opt = {}) {
     drawCircle(g, t, playRow != null ? seg(playRow, cr, cr + 4) : 0);
     drawPosterText(g, t);
     g.restore();
-    // 播放线：31.75 竖直画出，32–36 线性扫过，36 收起
+    // playhead: drawn vertically at 31.75, sweeps linearly 32–36, retracts at 36
     const ph = seg(t, T.sweep - BEAT / 2, T.sweep) * (1 - seg(t, T.sweep + 4, T.sweep + 4 + E8));
     if (ph > 0) {
       const row = clamp((t - T.sweep) / E8, 0, 16);
@@ -465,7 +465,7 @@ export function renderFilm(g, t, opt = {}) {
   }
 }
 
-// 旋转揭示后的音名与小节号（直立文字，画在屏幕坐标里）
+// note names and bar numbers after the rotation reveal (upright text, drawn in screen coordinates)
 function drawScoreLabels(g, t, M) {
   const q = snap(t, 36.0 + E8, E8);
   if (t < T.labels || q >= 1) return;
@@ -482,7 +482,7 @@ function drawScoreLabels(g, t, M) {
     g.fillStyle = C.ink; revealText(g, `bar ${i + 1}`, pt.x, pt.y - 10, 22, snap(t, T.labels + BEAT + i * E8, E16), q);
   });
 }
-// 出走时的坐标读数（贴近海报右边）
+// coordinate readout during the escape (close to the poster's right edge)
 function drawHUD(g, t) {
   const p = snap(t, T.fly0, E8) * (1 - snap(t, T.gridOff + E8, E8));
   if (p <= 0) return;
@@ -498,7 +498,7 @@ function drawHUD(g, t) {
 }
 
 // ======================================================================
-// 音效事件（拟音），events.mjs 导出给 mix.py
+// sound events (foley), exported by events.mjs for mix.py
 export function buildEvents() {
   const ev = [], add = (t, type, o = {}) => ev.push({ t: +t.toFixed(4), type, ...o });
   add(0, 'knife', { g: 1 });

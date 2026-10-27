@@ -1,5 +1,5 @@
-// 程序化贴图（Canvas2D）：墙纸、地毯、吊顶板、日光灯格栅、告示纸、出口标志
-// 全部确定性（mulberry 种子），不依赖外部图片
+// Procedural textures (Canvas2D): wallpaper, carpet, ceiling tiles, fluorescent light grilles, notices, exit sign
+// All deterministic (mulberry seed), no external images
 import * as THREE from 'three';
 import { mulberry } from '/core/lib.js';
 
@@ -11,7 +11,7 @@ function tex(c, { srgb = true, repeat = true, aniso = 8 } = {}) {
   t.anisotropy = aniso; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
   return t;
 }
-// 纸/布纹理底噪：大量半透明小点
+// Paper/cloth texture base noise: lots of small translucent dots
 function grain(x, w, h, n, a, R, cols) {
   for (let i = 0; i < n; i++) {
     x.fillStyle = cols[Math.floor(R() * cols.length)]; x.globalAlpha = a * (0.3 + R() * 0.7);
@@ -20,20 +20,20 @@ function grain(x, w, h, n, a, R, cols) {
   x.globalAlpha = 1;
 }
 
-// 墙纸：一张贴图 = 0.53 m 宽（一幅墙纸卷）× 0.53 m 高，竖向重复
-// 旧式办公墙纸：暖黄底 + 细竖条 + 两条竖条之间一列小菱形/人字纹，褪色、印刷略错位
+// Wallpaper: one texture = 0.53 m wide (one wallpaper roll) × 0.53 m high, repeating vertically
+// Old-style office wallpaper: warm yellow ground + thin vertical stripes + a column of small diamonds/herringbone between pairs of stripes, faded, print slightly misregistered
 export function wallpaper() {
   const S = 512, c = cv(S, S), x = c.getContext('2d'), R = mulberry(11);
   x.fillStyle = '#d5bd66'; x.fillRect(0, 0, S, S);
-  // 竖向的轻微色带（印刷不均）
+  // Slight vertical colour banding (uneven printing)
   for (let i = 0; i < S; i += 2) { x.fillStyle = `rgba(120,100,40,${0.03 + 0.03 * Math.sin(i * 0.05) ** 2})`; x.fillRect(i, 0, 2, S); }
   const cols = 8, cw = S / cols;
   for (let k = 0; k < cols; k++) {
     const x0 = k * cw;
-    if (k % 2) { x.fillStyle = 'rgba(150,120,40,.10)'; x.fillRect(x0, 0, cw, S); }   // 宽窄相间的底色条（远处也看得出竖纹）
-    // 双细竖线
+    if (k % 2) { x.fillStyle = 'rgba(150,120,40,.10)'; x.fillRect(x0, 0, cw, S); }   // alternating wide and narrow ground stripes (the vertical stripes still read at a distance)
+    // Double thin vertical lines
     x.fillStyle = 'rgba(140,112,40,.7)'; x.fillRect(x0 + 2, 0, 3, S); x.fillRect(x0 + 8, 0, 2, S);
-    // 菱形列（每 32px 一个），交替实心/空心
+    // Diamond column (one every 32px), alternating filled/hollow
     for (let j = 0; j < S / 32; j++) {
       const cx = x0 + cw * 0.6 + 0.8, cy = j * 32 + 16 + (k % 2) * 16;
       x.beginPath(); x.moveTo(cx, cy - 7); x.lineTo(cx + 5, cy); x.lineTo(cx, cy + 7); x.lineTo(cx - 5, cy); x.closePath();
@@ -42,33 +42,33 @@ export function wallpaper() {
     }
   }
   grain(x, S, S, 26000, 0.08, R, ['#8a7433', '#f3e6ad', '#6b5a26']);
-  // 幅边接缝（左边缘）：一条亮线 + 一条暗线
+  // Seam between widths (left edge): one light line + one dark line
   x.fillStyle = 'rgba(255,245,200,.35)'; x.fillRect(0, 0, 2, S);
   x.fillStyle = 'rgba(90,70,20,.35)'; x.fillRect(2, 0, 1, S);
   return tex(c);
 }
 
-// 地毯：短绒工业地毯，芥末棕 + 斑驳；R/G/B 贴图 + 单独一张"绒面起伏"灰度作粗糙度/法线的来源
+// Carpet: low-pile industrial carpet, mustard brown + mottled; R/G/B texture + a separate greyscale "pile relief" map as the source for roughness/normals
 export function carpet() {
   const S = 512, c = cv(S, S), x = c.getContext('2d'), R = mulberry(23);
   x.fillStyle = '#8c763c'; x.fillRect(0, 0, S, S);
   grain(x, S, S, 90000, 0.22, R, ['#6d5b2e', '#a88f55', '#7d6a38', '#b59c60', '#5d4d26']);
-  // 细密的簇绒行（很淡）
+  // Fine tufted rows (very faint)
   for (let j = 0; j < S; j += 3) { x.fillStyle = `rgba(60,48,20,${0.05 + R() * 0.05})`; x.fillRect(0, j, S, 1); }
   return tex(c);
 }
 
-// 吊顶矿棉板：0.6 × 1.2 m 一块，贴图覆盖 1.2 × 1.2（两块）；龙骨 T 条画在边上
+// Mineral-fibre ceiling tiles: 0.6 × 1.2 m each, the texture covers 1.2 × 1.2 (two tiles); the T-bar grid is drawn on the edges
 export function ceiling() {
   const S = 512, c = cv(S, S), x = c.getContext('2d'), R = mulberry(31);
   x.fillStyle = '#d9d3b8'; x.fillRect(0, 0, S, S);
-  // 矿棉板的虫蛀状小孔
+  // Wormhole-like small pits in the mineral-fibre tile
   for (let i = 0; i < 5200; i++) {
     x.fillStyle = `rgba(110,100,70,${0.18 + R() * 0.3})`;
     const w = 1 + R() * 2.5, h = 1 + R() * 1.2; x.fillRect(R() * S, R() * S, w, h);
   }
   grain(x, S, S, 20000, 0.1, R, ['#a79f82', '#eee8d0']);
-  // T 形龙骨：宽 ~2.4cm（=10px），两块板之间
+  // T-bar grid: ~2.4cm wide (=10px), between two tiles
   x.fillStyle = '#e6e1cf';
   x.fillRect(0, 0, S, 5); x.fillRect(0, S - 5, S, 5); x.fillRect(0, 0, 5, S); x.fillRect(S - 5, 0, 5, S); x.fillRect(S / 2 - 5, 0, 10, S);
   x.fillStyle = 'rgba(70,60,40,.6)';
@@ -76,25 +76,25 @@ export function ceiling() {
   return tex(c);
 }
 
-// 日光灯格栅（棱镜扩散板）：0.6 × 1.2 m；alpha 通道 = 发光区域
+// Fluorescent light grille (prismatic diffuser): 0.6 × 1.2 m; alpha channel = emissive area
 export function troffer() {
   const W = 128, H = 256, c = cv(W, H), x = c.getContext('2d'), R = mulberry(41);
-  x.fillStyle = '#9a9786'; x.fillRect(0, 0, W, H);        // 金属边框
+  x.fillStyle = '#9a9786'; x.fillRect(0, 0, W, H);        // metal frame
   x.fillStyle = '#fbfaf0'; x.fillRect(7, 7, W - 14, H - 14);
-  // 棱镜纹：细网格
+  // Prism pattern: fine grid
   for (let i = 7; i < W - 7; i += 4) { x.fillStyle = 'rgba(180,180,160,.25)'; x.fillRect(i, 7, 1, H - 14); }
   for (let j = 7; j < H - 7; j += 4) { x.fillStyle = 'rgba(180,180,160,.25)'; x.fillRect(7, j, W - 14, 1); }
-  // 两根灯管在扩散板后更亮
+  // The two tubes behind the diffuser are brighter
   const g1 = x.createLinearGradient(7, 0, W - 7, 0);
   g1.addColorStop(0, 'rgba(255,255,255,0)'); g1.addColorStop(.3, 'rgba(255,255,255,.5)'); g1.addColorStop(.36, 'rgba(255,255,255,0)');
   g1.addColorStop(.64, 'rgba(255,255,255,0)'); g1.addColorStop(.7, 'rgba(255,255,255,.5)'); g1.addColorStop(1, 'rgba(255,255,255,0)');
   x.fillStyle = g1; x.fillRect(7, 7, W - 14, H - 14);
-  // 扩散板里死虫子的影子（老办公楼的细节）
+  // Shadows of dead insects inside the diffuser (an old-office-building detail)
   for (let i = 0; i < 3; i++) { x.fillStyle = 'rgba(60,55,40,.35)'; x.beginPath(); x.ellipse(15 + R() * (W - 30), 20 + R() * (H - 40), 2 + R() * 3, 1 + R() * 2, R() * 3, 0, 7); x.fill(); }
   return tex(c, { repeat: false });
 }
 
-// 文字排版
+// Text layout
 function wrap(x, text, maxW) {
   const words = text.split(' '), lines = []; let cur = '';
   for (const w of words) { const t = cur ? cur + ' ' + w : w; if (x.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
@@ -107,10 +107,10 @@ export const RULES = [
   'There are no exits on this floor. If you see an EXIT sign, do not follow it.',
   'If a coworker waves at you, wave back.',
 ];
-// 告示纸：纵向 0.34 × 0.46 m，1020×1380 px（3px/mm）；kind = 'rules' | 'six'
+// Notice: portrait 0.34 × 0.46 m, 1020×1380 px (3px/mm); kind = 'rules' | 'six'
 export function notice(kind = 'rules', { age = 0.5, seed = 5 } = {}) {
   const W = 1020, H = 1380, c = cv(W, H), x = c.getContext('2d'), R = mulberry(seed);
-  // 纸：偏黄的复印纸 + 边缘更黄
+  // Paper: yellowish photocopy paper + yellower at the edges
   x.fillStyle = age > .5 ? '#ece4c6' : '#f2eedd'; x.fillRect(0, 0, W, H);
   const eg = x.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.75);
   eg.addColorStop(0, 'rgba(0,0,0,0)'); eg.addColorStop(1, `rgba(150,120,50,${0.18 + age * 0.2})`);
@@ -118,7 +118,7 @@ export function notice(kind = 'rules', { age = 0.5, seed = 5 } = {}) {
   grain(x, W, H, 30000, 0.06, R, ['#8c7c55', '#fff9e6']);
   const ink = '#1d1b17', M = 80;
   x.fillStyle = ink; x.textBaseline = 'alphabetic';
-  // 页眉：粗体大字 + 细线
+  // Header: large bold type + thin rule
   x.font = "700 30px 'IBM Plex Sans Condensed'"; x.fillText('FLOOR STAFF — PLEASE READ', M, 118);
   x.fillText('FORM NS-01 (REV. 9)', W - M - x.measureText('FORM NS-01 (REV. 9)').width, 118);
   x.fillRect(M, 136, W - 2 * M, 5);
@@ -151,13 +151,13 @@ export function notice(kind = 'rules', { age = 0.5, seed = 5 } = {}) {
     x.font = "400 30px 'IBM Plex Sans'"; x.fillStyle = '#3a362d';
     x.fillText('Your orientation is complete.', M, H - 118);
   }
-  // 复印机的灰点、一道折痕
+  // Photocopier grey specks, one fold crease
   for (let i = 0; i < 90; i++) { x.fillStyle = `rgba(30,30,30,${R() * 0.25})`; x.fillRect(R() * W, R() * H, 1 + R() * 3, 1 + R() * 2); }
   x.fillStyle = 'rgba(0,0,0,.05)'; x.fillRect(0, H * 0.52, W, 3); x.fillStyle = 'rgba(255,255,255,.25)'; x.fillRect(0, H * 0.52 + 3, W, 2);
   return tex(c, { repeat: false, aniso: 16 });
 }
 
-// 软木板
+// Corkboard
 export function cork() {
   const S = 256, c = cv(S, S), x = c.getContext('2d'), R = mulberry(51);
   x.fillStyle = '#a07a4a'; x.fillRect(0, 0, S, S);
@@ -165,7 +165,7 @@ export function cork() {
   return tex(c);
 }
 
-// 出口标志面板：白底红字 EXIT + 两侧箭头；alpha = 发光强度
+// Exit sign panel: red EXIT on white + arrows on both sides; alpha = emissive strength
 export function exitSign() {
   const W = 512, H = 256, c = cv(W, H), x = c.getContext('2d');
   x.fillStyle = '#1a1512'; x.fillRect(0, 0, W, H);
@@ -176,7 +176,7 @@ export function exitSign() {
   return tex(c, { repeat: false });
 }
 
-// 电源插座面板
+// Power socket plate
 export function outlet() {
   const W = 64, H = 112, c = cv(W, H), x = c.getContext('2d');
   x.fillStyle = '#e8e2cc'; x.fillRect(0, 0, W, H);

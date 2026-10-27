@@ -1,13 +1,13 @@
-// 蜡笔绘本画风（向 crayon-book 学：蜡只沾在纸牙上、RGB=颜色 A=压力、靛蓝描边不用黑、来回排线涂出界、12fps 线条沸腾）——自写简化版
+// Crayon picture-book look (learned from crayon-book: wax only catches on the paper tooth, RGB = colour A = pressure, indigo outlines instead of black, back-and-forth hatching that goes outside the lines, 12fps line boil) — a simplified version written from scratch
 import { pass, canvas } from './glpass.js';
 import { mulberry, vnoise, clamp } from '/core/lib.js';
 const TAU = Math.PI * 2;
 export const [crC, cx] = canvas();
 export const CR = { ink: '#2d3263', yel: '#f5c63c', org: '#ec8a3c', red: '#d4483c', pink: '#ee8ea4', peach: '#f4c7a4', brown: '#7a4b31', ochre: '#e7b867', green: '#62a24c', sky: '#79acd9', violet: '#6a5aa6', white: '#fbfaf4' };
-let BOIL = 0;   // 沸腾种子（每 2 帧换）
+let BOIL = 0;   // boil seed (changes every 2 frames)
 export function clearCrayon(boil = 0) { cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, 1920, 1080); BOIL = boil; }
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${clamp(a)})`;
-// 手抖描边：沿折线加低频法向抖动，宽度 ±15%，两端收笔
+// Shaky-hand outline: low-frequency jitter along the polyline normal, width ±15%, tapered at both ends
 export function cline(pts, o = {}) {
   const w = o.w || 7, col = o.col || CR.ink, pr = o.p ?? .82, seed = (o.seed || 1) + BOIL * 17;
   const P = []; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = [pts[i], pts[i + 1]]; const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 6)); for (let k = 0; k < n; k++) P.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); }
@@ -24,7 +24,7 @@ export function cline(pts, o = {}) {
 }
 export function cpoly(pts, o = {}) { cline([...pts, pts[0]], o); }
 export function circlePts(x, y, rx, ry = rx, n = 40, a0 = 0) { const p = []; for (let i = 0; i <= n; i++) { const a = a0 + i / n * TAU; p.push([x + Math.cos(a) * rx, y + Math.sin(a) * ry]); } return p; }
-// 来回排线上色：裁剪到（放大一点的）形状里，涂出界 0–7px
+// Back-and-forth hatch fill: clipped to the (slightly enlarged) shape, going 0–7px outside the lines
 export function hatch(pathPts, o = {}) {
   const col = o.col || CR.yel, pr = o.p ?? .74, gap = o.gap || 10.5, ang = o.ang ?? -.6, seed = (o.seed || 1) + BOIL * 13;
   const xs = pathPts.map(p => p[0]), ys = pathPts.map(p => p[1]);
@@ -44,7 +44,7 @@ export function hatch(pathPts, o = {}) {
   cx.restore();
 }
 export function cfill(pathPts, col, o = {}) { hatch(pathPts, { col, ...o }); }
-// 前面的东西擦掉后面的蜡（小孩先画人物，再绕着涂背景）
+// Things in front erase the wax behind them (a child draws the figure first, then colours the background around it)
 export function knock(pts) { cx.save(); cx.globalCompositeOperation = 'destination-out'; cx.beginPath(); pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1])); cx.closePath(); cx.fillStyle = '#000'; cx.fill(); cx.restore(); }
 export function print(g, o = {}) {
   const out = pass('crayon', crC, { pageOff: o.off || [0, 0], pageScale: o.scale || 1, layer: o.layer ? 1 : 0 });
@@ -55,19 +55,19 @@ export function ctext(txt, x, y, size, col, rot = 0, pr = .95) {
   cx.fillStyle = rgba(col, pr); cx.fillText(txt, 0, 0); cx.restore();
 }
 
-// ───────── 蜡笔版 Dot（儿童画比例：头盔很大、手是圆、脚是椭圆）(x,y)=脚底，s=缩放 ─────────
+// ───────── Crayon Dot (child-drawing proportions: huge helmet, hands are circles, feet are ellipses) (x,y) = feet, s = scale ─────────
 export function cadetCrayon(x, y, s = 1, o = {}) {
   const k = s, P = (px, py) => [x + px * k, y + py * k], face = o.face || 'smile';
   const hy = -210, R = 92;
-  // 天线 + 球
+  // antenna + ball
   const aw = o.ant || 0;
   cline([P(0, hy - R), P(4 + aw * 10, hy - R - 30), P(aw * 24, hy - R - 58)], { w: 6 * k, seed: 2 });
   const ball = circlePts(...P(aw * 24, hy - R - 76), 18 * k);
   cfill(ball, CR.org, { gap: 8 * k, lw: 9 * k, seed: 3 }); cline(ball, { w: 6 * k, seed: 4 });
-  // 背包
+  // backpack
   const bp = [P(-104, -170), P(104, -170), P(108, -58), P(-108, -58)];
   cfill(bp, CR.org, { seed: 5, gap: 10 * k, lw: 11 * k }); cpoly(bp, { w: 7 * k, seed: 6 });
-  // 身体（白 = 纸，只有描边 + 淡淡的灰紫排线阴影）
+  // body (white = paper, only outline + faint grey-violet hatched shading)
   const body = [P(-78, -150), P(78, -150), P(88, -40), P(-88, -40)];
   knock(body);
   hatch(body, { col: CR.white, p: .9, seed: 7, gap: 9 * k, lw: 11 * k });
@@ -75,14 +75,14 @@ export function cadetCrayon(x, y, s = 1, o = {}) {
   cpoly(body, { w: 7 * k, seed: 9 });
   // 05
   ctext('05', ...P(-8, -88), 58 * k, CR.red, -.06);
-  // 腿 + 靴
+  // legs + boots
   for (const sx of [-1, 1]) {
     const leg = [P(sx * 52 - 22, -42), P(sx * 52 + 22, -42), P(sx * 52 + 22, -18), P(sx * 52 - 22, -18)];
     cpoly(leg, { w: 6 * k, seed: 10 + sx });
     const boot = circlePts(...P(sx * 58, -8), 36 * k, 16 * k, 30);
     cfill(boot, CR.org, { seed: 12 + sx, gap: 8 * k, lw: 9 * k }); cline(boot, { w: 7 * k, seed: 14 + sx });
   }
-  // 手臂 + 圆手
+  // arms + round hands
   const arms = o.arms || [[-1, -140, -130, -92], [1, 140, -130, -92]];
   for (const [sx, hx, hy2, sy] of arms) {
     cline([P(sx * 76, sy - 40), P(hx, hy2)], { w: 7 * k, seed: 16 + sx });
@@ -90,19 +90,19 @@ export function cadetCrayon(x, y, s = 1, o = {}) {
     const hand = circlePts(...P(hx, hy2 + 12), 20 * k);
     cfill(hand, CR.org, { seed: 20 + sx, gap: 8 * k, lw: 9 * k }); cline(hand, { w: 6 * k, seed: 22 + sx });
   }
-  // 头盔：大圆，淡天蓝轻压（只沾纸牙峰）
+  // helmet: big circle, pale sky blue at light pressure (only catches the peaks of the paper tooth)
   const helm = circlePts(...P(0, hy), R * k);
   cfill(helm, CR.sky, { p: .38, seed: 24, gap: 12 * k, lw: 10 * k });
-  // 脸
+  // face
   const facep = circlePts(...P(0, hy + 10), 62 * k, 58 * k);
   knock(facep);
   cfill(facep, CR.peach, { p: .85, seed: 25, gap: 9 * k, lw: 11 * k }); cline(facep, { w: 5 * k, seed: 26, col: CR.brown, p: .8 });
-  // 头发：扇贝刘海
+  // hair: scalloped fringe
   const hair = []; for (let i = 0; i <= 8; i++) { const a = Math.PI + i / 8 * Math.PI; hair.push(P(Math.cos(a) * 64, hy + 4 + Math.sin(a) * 60 + (i % 2 ? 14 : 0))); }
   cfill(hair, CR.brown, { seed: 27, gap: 8 * k, lw: 10 * k }); cline(hair, { w: 5 * k, seed: 28, col: CR.brown });
   const bun = circlePts(...P(0, hy - 62), 24 * k, 16 * k);
   cfill(bun, CR.brown, { seed: 29, gap: 8 * k, lw: 9 * k });
-  // 眼睛（点点 + 白蜡高光）+ 腮红 + 嘴
+  // eyes (dots + white crayon highlight) + blush + mouth
   for (const sx of [-1, 1]) {
     if (face === 'yay') cline([P(sx * 24 - 10, hy + 16), P(sx * 24, hy + 6), P(sx * 24 + 10, hy + 16)], { w: 6 * k, seed: 30 + sx });
     else { const e = circlePts(...P(sx * 24, hy + 12), 8 * k); cfill(e, CR.ink, { p: 1, seed: 31 + sx, gap: 5 * k, lw: 8 * k }); }
@@ -110,63 +110,63 @@ export function cadetCrayon(x, y, s = 1, o = {}) {
   }
   if (face === 'yay' || face === 'smile') { const m = []; for (let i = 0; i <= 10; i++) { const a = .2 + i / 10 * (Math.PI - .4); m.push(P(Math.cos(a) * 18, hy + 36 + Math.sin(a) * (face === 'yay' ? 16 : 10))); } cline(m, { w: 5 * k, seed: 35, col: CR.red }); }
   if (face === 'effort') { cline([P(-14, hy + 42), P(14, hy + 40)], { w: 5 * k, seed: 35, col: CR.red }); }
-  // 头盔轮廓 + 两道白蜡反光
+  // helmet outline + two white crayon reflections
   cline(helm, { w: 7 * k, seed: 36 });
   const hl = []; for (let i = 0; i <= 8; i++) { const a = Math.PI * 1.1 + i / 8 * .5; hl.push(P(Math.cos(a) * (R - 16), hy + Math.sin(a) * (R - 16))); }
   cline(hl, { w: 8 * k, col: CR.white, seed: 37 });
-  // 领圈
+  // neck ring
   const col = circlePts(...P(0, hy + R - 2), 58 * k, 12 * k, 30);
   cfill(col, CR.sky, { seed: 38, gap: 8 * k, lw: 9 * k, p: 1 }); cline(col, { w: 6 * k, seed: 39 });
   return { ball: P(aw * 24, hy - R - 76) };
 }
 export function testCadet(g, t) { clearCrayon(0); cadetCrayon(700, 1000, 2.3); cadetCrayon(1400, 1000, 1.2, { face: 'yay', ant: .5 }); print(g); }
 
-// ───────── G1 PUMP!（本地 lt 0..4s，120 BPM；8fps 步进 + 线条沸腾）─────────
+// ───────── G1 PUMP! (local lt 0..4s, 120 BPM; 8fps stepped + line boil)─────────
 import { seg as _seg, eo as _eo, back as _back } from '/core/lib.js';
 export const PUMPS = [1.0, 1.5, 2.0, 2.5];
 export function scenePump(g, lt, o = {}) {
   const T = o.step === false ? lt : Math.floor(lt * 8) / 8;
   clearCrayon(Math.floor(lt * 12));
-  // 太阳（左上角，儿童画四分之一太阳）
+  // sun (top-left corner, a child-drawing quarter sun)
   const sun = []; for (let i = 0; i <= 20; i++) { const a = i / 20 * Math.PI / 2; sun.push([Math.cos(a) * 170, Math.sin(a) * 170]); } sun.push([0, 0]);
   cfill(sun, CR.yel, { seed: 50, p: .85 }); cline(sun.slice(0, 21), { w: 7, col: CR.org, seed: 51 });
   for (let i = 0; i < 6; i++) { const a = .1 + i / 5 * 1.37; cline([[Math.cos(a) * 200, Math.sin(a) * 200], [Math.cos(a) * 270, Math.sin(a) * 270]], { w: 7, col: CR.org, seed: 52 + i }); }
-  // 云
+  // clouds
   for (const [x, y, s] of [[760, 150, 1], [1560, 110, .8]]) { const c = []; for (let i = 0; i <= 30; i++) { const a = i / 30 * Math.PI * 2; c.push([x + Math.cos(a) * 110 * s * (1 + .18 * Math.sin(a * 5)), y + Math.sin(a) * 48 * s * (1 + .2 * Math.sin(a * 5))]); } cline(c, { w: 6, col: CR.sky, seed: x }); }
-  // 草地
+  // grass
   const grass = [[0, 900], [1920, 890], [1920, 1080], [0, 1080]];
   cfill(grass, CR.green, { seed: 60, p: .8, ang: -.2 }); cline([[0, 902], [640, 896], [1280, 906], [1920, 892]], { w: 7, col: CR.green, seed: 61 });
-  // 打气次数 → 火箭鼓起
+  // pump count → rocket inflates
   let n = 0, since = 9; for (const p of PUMPS) if (T >= p) { n++; since = T - p; }
-  const press = PUMPS.some(p => T >= p - .01 && T < p + .25);   // 按下
+  const press = PUMPS.some(p => T >= p - .01 && T < p + .25);   // pressed
   const fill = n / PUMPS.length;
   const pop = since < .25 ? (1 - since / .25) * .08 : 0;
   const lift = _eo(_seg(T, 3.0, 3.5)) * 110 + (T > 3.0 ? Math.sin((T - 3) * 9) * 8 : 0);
-  // 火箭（右）：气球似的，越打越圆
+  // rocket (right): like a balloon, rounder with every pump
   const rx = 1390, base = 880 - lift, sx = .55 + .45 * fill + pop, sy = .7 + .3 * fill + pop * .5;
   const body = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2; const r = 1 + .08 * Math.cos(a * 2); body.push([rx + Math.sin(a) * 150 * sx * r, base - 260 * sy + Math.cos(a) * 250 * sy]); }
-  // 鳍
+  // fins
   for (const s of [-1, 1]) { const fin = [[rx + s * 110 * sx, base - 120 * sy], [rx + s * 220 * sx, base + 10], [rx + s * 70 * sx, base - 40 * sy]]; cfill(fin, CR.red, { seed: 70 + s }); cpoly(fin, { w: 7, seed: 72 + s }); }
   knock(body); cfill(body, CR.white, { seed: 74, p: .9 }); hatch(body.slice(0, 21).concat([[rx, base - 260 * sy]]), { col: CR.violet, p: .25, seed: 75, gap: 13 });
   cline(body, { w: 8, seed: 76 });
-  // 鼻锥
+  // nose cone
   const nose = [[rx - 90 * sx, base - 440 * sy], [rx, base - 560 * sy - 30 * fill], [rx + 90 * sx, base - 440 * sy]];
   cfill(nose, CR.red, { seed: 77 }); cline(nose, { w: 7, seed: 78 });
-  // 舷窗
+  // porthole
   const win = circlePts(rx, base - 320 * sy, 50 * Math.min(sx, sy)); cfill(win, CR.sky, { seed: 79, p: .8 }); cline(win, { w: 7, seed: 80 });
-  // 星星贴纸
+  // star sticker
   ctext('★', rx, base - 170 * sy, 80 * sy, CR.yel);
-  // 浮起时：抖动线 + 底下的影子
+  // when floating: wobble lines + shadow underneath
   if (lift > 5) { for (const s of [-1, 1]) cline([[rx + s * 160 * sx, base + 30], [rx + s * 190 * sx, base + 50]], { w: 6, seed: 81 + s }); cfill(circlePts(rx, 905, 160 * (1 - lift / 300), 16), CR.green, { p: .6, seed: 83 }); }
-  // 打气筒（中）+ 软管
+  // pump (centre) + hose
   const px = 980, hy = press ? 700 : 600;
   cline([[px + 40, 880], [px + 140, 880], [rx - 160, base - 80]].map((p, i) => i === 2 ? p : p), { w: 9, col: CR.ink, seed: 84 });
   const cyl = [[px - 34, 880], [px + 34, 880], [px + 34, 680], [px - 34, 680]]; cfill(cyl, CR.green, { seed: 85, p: .9 }); cpoly(cyl, { w: 7, seed: 86 });
   cline([[px, hy], [px, 690]], { w: 8, seed: 87 });
   const handle = [[px - 110, hy - 16], [px + 110, hy - 16], [px + 110, hy + 16], [px - 110, hy + 16]]; cfill(handle, CR.brown, { seed: 88, p: .95 }); cpoly(handle, { w: 7, seed: 89 });
-  // 每次按下：一团"噗"
+  // each press: a "poof" puff
   if (press) { ctext('pff!', rx - 250, base - 120, 64, CR.ink, -.1, .9); }
-  // Dot（左），双手抓住把手
+  // Dot (left), both hands gripping the handle
   const won = T >= 3.0;
   const dx = 640, dyy = 1000 - (won ? Math.abs(Math.sin((T - 3) * 12)) * 50 : 0);
   const hk = 1.35, hyLocal = (hy - dyy) / hk;

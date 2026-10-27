@@ -1,4 +1,4 @@
-// 导出 .srt：node styles/pixel-rpg/demo/tools/subs.mjs → styles/pixel-rpg/pixel-rpg.srt（与烧录对话框同一份 window.SUBS）
+// Export .srt: node styles/pixel-rpg/demo/tools/subs.mjs → styles/pixel-rpg/pixel-rpg.srt (same window.SUBS as the burned-in dialogue box)
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url)), demo = path.resolve(here, '..');

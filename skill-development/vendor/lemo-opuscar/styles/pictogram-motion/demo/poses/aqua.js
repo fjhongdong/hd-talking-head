@@ -1,13 +1,13 @@
-// 水上 7 项：四种泳姿（2 拍卡，2 拍一个完整划水循环）+ 跳水、花样游泳、水球
-// 泳姿人形水平：rot = 90 头朝右、俯卧；rot = -90 头朝左、仰卧。
-// 此时手臂局部角：180 = 指向头顶方向，90 = 腹侧，0 = 指向脚，-90 = 背侧。
+// Aquatics, 7 events: four strokes (2-beat cards, one full stroke cycle per 2 beats) + diving, artistic swimming, water polo
+// Swimming figures are horizontal: rot = 90 head to the right, face down; rot = -90 head to the left, face up.
+// Arm angles in this local frame: 180 = pointing past the head, 90 = belly side, 0 = pointing to the feet, -90 = back side.
 (function () {
   const G = window.G, P = G.P, POSES = window.POSES;
   const mod = (u, L) => ((u % L) + L) % L;
   const TAU = Math.PI * 2;
   const fly = (p0, v, g, t) => [p0[0] + v[0] * t, p0[1] + v[1] * t + 0.5 * g * t * t];
 
-  // 水：back() 里画水下的鳞纹，front() 里盖一层半透明水体 + 水面波峰
+  // Water: back() draws the underwater scale pattern, front() lays a semi-transparent water body + wave crests on top
   const crests = (ctx, y, u, C, flow) => {
     const k = 0.13, off = mod(u * flow, k);
     ctx.fillStyle = C.line;
@@ -28,7 +28,7 @@
     ctx.fillStyle = C.line; ctx.fillRect(-2, y - 0.006, 4, 0.012);
     if (o.crests) crests(ctx, y, u, C, o.flow ?? 0.5);
   };
-  // 身后的尾流线
+  // Wake lines behind the body
   const wake = (ctx, x, y, u, C) => {
     ctx.save();
     for (let i = 0; i < 4; i++) {
@@ -43,13 +43,13 @@
     const s = Math.sin(TAU * 3 * ph);
     return { lR1: amp * s, lR2: amp * s - 14 * Math.max(0, Math.sin(TAU * 3 * ph + 1)), lL1: -amp * s, lL2: -amp * s - 14 * Math.max(0, Math.sin(TAU * 3 * ph + 1 + Math.PI)) };
   };
-  const SURF = 0.03; // 泳姿：身体中线略高于水面，读得清
+  const SURF = 0.03; // strokes: body centre line sits slightly above the water so it reads clearly
 
-  // ───────── 自由泳：两臂交替，每拍一臂入水 ─────────
+  // ───────── Freestyle: arms alternate, one arm enters the water per beat ─────────
   const freeArm = (a) => {
     a = ((a + 180) % 360 + 360) % 360 - 180; // (-180, 180]
-    if (a >= 0) return [a, a + 32 * Math.sin(Math.PI * a / 180)];            // 水下抱水
-    return [a, a - 105 * Math.sin(Math.PI * -a / 180)];                     // 空中高肘移臂
+    if (a >= 0) return [a, a + 32 * Math.sin(Math.PI * a / 180)];            // underwater catch
+    return [a, a - 105 * Math.sin(Math.PI * -a / 180)];                     // high-elbow recovery in the air
   };
   POSES.free = {
     iconU: 0.4,
@@ -62,7 +62,7 @@
     front: (ctx, J, u, C) => { waterFront(ctx, SURF, u, C, { flow: 1 }); wake(ctx, -0.55, SURF, u, C); },
   };
 
-  // ───────── 蛙泳：划手抬头换气 → 收腿 → 蹬夹 → 滑行 ─────────
+  // ───────── Breaststroke: pull and lift head to breathe → draw legs up → kick and squeeze → glide ─────────
   const breastKeys = [
     { b: 0, rot: 90, x: -0.04, y: 0.0, torso: 0, head: 0, aR1: 178, aR2: 180, aL1: 172, aL2: 176, lR1: 2, lR2: 0, lL1: -2, lL2: -4 },
     { b: 0.55, rot: 84, x: -0.04, y: -0.04, torso: -20, head: -14, aR1: 116, aR2: 168, aL1: 110, aL2: 162, lR1: 34, lR2: -48, lL1: 30, lL2: -52 },
@@ -81,11 +81,11 @@
     },
   };
 
-  // ───────── 仰泳：头朝左仰卧，直臂出水 ─────────
+  // ───────── Backstroke: head to the left, face up, straight arm out of the water ─────────
   const backArm = (a) => {
     a = ((a % 360) + 360) % 360;
-    if (a <= 180) return [a, a];                                            // 空中直臂
-    return [a, a + 55 * Math.sin(Math.PI * (a - 180) / 180)];               // 水下屈臂推水
+    if (a <= 180) return [a, a];                                            // straight arm in the air
+    return [a, a + 55 * Math.sin(Math.PI * (a - 180) / 180)];               // bent arm pushing underwater
   };
   POSES.back = {
     iconU: 0.5,
@@ -102,7 +102,7 @@
     },
   };
 
-  // ───────── 蝶泳：双臂同时，身体波浪起伏 ─────────
+  // ───────── Butterfly: both arms together, body undulates ─────────
   POSES.fly = {
     iconU: 1.5,
     pose: (u) => {
@@ -120,7 +120,7 @@
     front: (ctx, J, u, C) => { waterFront(ctx, SURF, u, C, { flow: 0.9 }); wake(ctx, -0.55, SURF, u, C); },
   };
 
-  // ───────── 跳水：第 1 拍起跳，空中抱膝翻转一周半，第 3 拍垂直入水 ─────────
+  // ───────── Diving: takeoff on beat 1, tucked one-and-a-half somersault in the air, vertical entry on beat 3 ─────────
   const DV_SURF = 0.55, DV_BOARD = -0.415;
   const dvKeys = [
     { b: 0, x: -0.8, y: -0.865, torso: 0, head: 0, aR1: 4, aR2: 6, aL1: -4, aL2: -2, lR1: 2, lR2: 2, lL1: -2, lL2: -2 },
@@ -139,20 +139,20 @@
     fig: { s: 0.6, y: 0.15, x: 0.12 },
     pose: (u) => G.keyPose(dvKeys, mod(u, 4)),
     back: (ctx, J, u, C) => {
-      // 跳台 + 支柱
+      // Platform + support pillar
       ctx.fillStyle = C.line; ctx.fillRect(-1.42, DV_BOARD + 0.05, 0.1, DV_SURF - DV_BOARD);
       ctx.fillStyle = C.acc; ctx.fillRect(-1.55, DV_BOARD, 0.86, 0.06);
       waterBack(ctx, DV_SURF, u, C, 0.3);
     },
     front: (ctx, J, u, C) => {
       u = mod(u, 4);
-      // 水体：入水后完全遮住人形（渐隐横条是官方图形里的元素）
+      // Water body: fully covers the figure after entry (fading horizontal bars are an element of the official graphic)
       ctx.fillStyle = C.bg; ctx.fillRect(-2, DV_SURF, 4, 2);
       ctx.fillStyle = C.line;
       for (let i = 0; i < 6; i++) { ctx.globalAlpha = 1 - i / 6; ctx.fillRect(-1.6, DV_SURF + 0.04 + i * 0.07, 3.2, 0.018); }
       ctx.globalAlpha = 1;
       ctx.fillRect(-2, DV_SURF - 0.008, 4, 0.016);
-      // 入水：竖直水花 + 扩散涟漪
+      // Entry: vertical splash + spreading ripples
       const t = u - 3.0;
       if (t > 0 && t < 1) {
         const x = -0.12;
@@ -168,7 +168,7 @@
     },
   };
 
-  // ───────── 花样游泳（双人镜像）：第 1 拍托举出水 V 字，第 3 拍倒立举腿 ─────────
+  // ───────── Artistic swimming (mirrored pair): beat 1 lift out of the water in a V, beat 3 inverted leg lift ─────────
   const AS_SURF = 0.1;
   const asKeys = [
     { b: 0, x: -0.26, y: 0.42, torso: 0, head: 0, aR1: 62, aR2: 84, aL1: 54, aL2: 74, lR1: 56, lR2: -30, lL1: 36, lL2: -52 },
@@ -187,7 +187,7 @@
     back: (ctx, J, u, C) => waterBack(ctx, AS_SURF, u, C, 0.2),
     front: (ctx, J, u, C) => {
       waterFront(ctx, AS_SURF, u, C, { flow: 0.2, alpha: 0.7 });
-      // 托举 / 举腿瞬间的水花
+      // Splash at the moment of the lift / leg lift
       const t = mod(u, 4);
       for (const [t0, xs] of [[1.0, [-0.26, 0.26]], [3.0, [-0.26, 0.26]]]) {
         const k = t - t0 + 0.15;
@@ -202,7 +202,7 @@
     },
   };
 
-  // ───────── 水球：踩水 → 引球 → 第 2 拍射门 ─────────
+  // ───────── Water polo: egg-beater → wind up → shot on beat 2 ─────────
   const WP_SURF = -0.04;
   const eggbeater = (u) => ({ lR1: 56 + 14 * Math.sin(TAU * u), lR2: -30 + 22 * Math.sin(TAU * u + 1), lL1: 50 - 14 * Math.sin(TAU * u), lL2: -40 - 22 * Math.sin(TAU * u + 1) });
   const wpKeys = [
@@ -225,7 +225,7 @@
     iconU: 1.4,
     pose: wpPose,
     back: (ctx, J, u, C) => {
-      // 球门：门柱 + 横梁 + 网格
+      // Goal: posts + crossbar + net grid
       ctx.fillStyle = C.fg; ctx.fillRect(0.6, -0.44, 0.03, 0.42); ctx.fillRect(0.6, -0.44, 0.5, 0.03);
       ctx.strokeStyle = C.line; ctx.lineWidth = 0.008;
       for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(0.63 + i * 0.07, -0.41); ctx.lineTo(0.63 + i * 0.07 + 0.05, WP_SURF); ctx.stroke(); }
@@ -237,7 +237,7 @@
       waterFront(ctx, WP_SURF, u, C, { flow: 0.2, alpha: 0.62 });
       if (t < 0) wpBall(ctx, J.aR[2], C);
       else if (t < 0.55) wpBall(ctx, fly(WP_REL, [1.1, 0.1], 0.6, t), C);
-      else { // 入网后落在网里
+      else { // after going in, it drops into the net
         const p = fly(WP_REL, [1.1, 0.1], 0.6, 0.55);
         wpBall(ctx, [p[0] + (t - 0.55) * 0.08, Math.min(WP_SURF - 0.07, p[1] + (t - 0.55) * 0.6)], C);
       }

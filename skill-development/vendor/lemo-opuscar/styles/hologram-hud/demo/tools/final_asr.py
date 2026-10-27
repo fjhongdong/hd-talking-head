@@ -1,5 +1,5 @@
-"""成片 whisper 抽查：按旁白时间从 mp4 切片转写（期望文本用 lines.json 的 asr 字段，没有就用 text），并算 300–4000 Hz 人声/背景 SNR。
-用法（仓库根）：.venv/bin/python styles/hologram-hud/demo/tools/final_asr.py styles/hologram-hud/hologram-hud.mp4"""
+"""Whisper spot check of the final film: slices the mp4 at the narration times and transcribes them (expected text is the asr field of lines.json, or text if there is none), and computes the voice/background SNR in 300–4000 Hz.
+Usage (repo root): .venv/bin/python styles/hologram-hud/demo/tools/final_asr.py styles/hologram-hud/hologram-hud.mp4"""
 import sys, os, json, re, subprocess, numpy as np, soundfile as sf
 from faster_whisper import WhisperModel
 from scipy.signal import butter, sosfilt, resample_poly

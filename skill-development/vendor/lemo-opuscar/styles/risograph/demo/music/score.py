@@ -1,13 +1,13 @@
-"""《Sunday Ride》原创配乐 —— 轻快 bossa nova，120 BPM，D 大调，40.000 s
-一键生成：.venv/bin/python styles/risograph/demo/music/score.py
-产物：music/score.wav（立体声 48k，峰值 −3 dBFS）、music/stems/*.wav、music/score.json
+""""Sunday Ride" original score — light bossa nova, 120 BPM, D major, 40.000 s
+One-command build: .venv/bin/python styles/risograph/demo/music/score.py
+Outputs: music/score.wav (stereo 48k, peak −3 dBFS), music/stems/*.wav, music/score.json
 
-全部 numpy/numba 合成（core/audio/INSTRUMENTS.md 未就绪时的约定做法）：
-  尼龙弦吉他 / 低音提琴 = 扩展 Karplus-Strong 波导（分数延迟全通 + 单极点损耗 + 拨弦位置梳状 + 琴体共鸣峰）
-  颤音琴 = 模态合成（1 : 3.93 : 9.9 分音 + 马达颤音）
-  口哨 = 正弦 + 少量二次谐波 + 气声窄带噪声 + 滑音/延迟揉音
-  沙锤 / 边击 / 刷子 / 软底鼓 / 吊镲 = 滤波噪声 + 阻尼正弦
-"音乐也叠版"：吉他(蓝版) → +打击(黄版) → +贝斯+口哨(粉版) → +颤音琴(全版) → 26–28 全停 → 回来 → 逐件撤。
+All synthesised in numpy/numba (the agreed approach while core/audio/INSTRUMENTS.md is not ready):
+  nylon-string guitar / double bass = extended Karplus-Strong waveguide (fractional-delay allpass + one-pole loss + pluck-position comb + body resonance peaks)
+  vibraphone = modal synthesis (1 : 3.93 : 9.9 partials + motor tremolo)
+  whistle = sine + a little 2nd harmonic + narrow-band breath noise + glides / delayed vibrato
+  shaker / rim click / brushes / soft kick / suspended cymbal = filtered noise + damped sines
+"The music is layered like plates too": guitar (blue plate) → +percussion (yellow plate) → +bass +whistle (pink plate) → +vibraphone (all plates) → 26–28 everything stops → comes back → instruments drop out one by one.
 """
 import os, sys, json
 import numpy as np
@@ -49,13 +49,13 @@ def hp(x, f, o=2): return sosfilt(butter(o, f, 'high', fs=SR, output='sos'), x)
 
 
 def peak(x, f, gain_db, q):
-    """RBJ 峰值 EQ（琴体共鸣）"""
+    """RBJ peaking EQ (body resonance)"""
     A = 10 ** (gain_db / 40); w = 2 * np.pi * f / SR; al = np.sin(w) / (2 * q)
     b = [1 + al * A, -2 * np.cos(w), 1 - al * A]; a = [1 + al / A, -2 * np.cos(w), 1 - al / A]
     return lfilter(np.array(b) / a[0], np.array(a) / a[0], x)
 
 
-# ───────── 波导弦 ─────────
+# ───────── Waveguide string ─────────
 @njit(cache=True)
 def _ks(exc, n, Nd, c, g, a):
     L = Nd + 4
@@ -64,8 +64,8 @@ def _ks(exc, n, Nd, c, g, a):
     for i in range(n):
         r = (w - Nd) % L
         v = buf[r]
-        s = (1 - a) * v + a * s                     # 单极点低通（频率相关损耗）
-        o = c * s + apx - c * apy                    # 一阶全通（分数延迟）
+        s = (1 - a) * v + a * s                     # one-pole lowpass (frequency-dependent loss)
+        o = c * s + apx - c * apy                    # first-order allpass (fractional delay)
         apx = s; apy = o
         x = (exc[i] if i < exc.shape[0] else 0.0) + g * o
         buf[w] = x; y[i] = x
@@ -76,7 +76,7 @@ def _ks(exc, n, Nd, c, g, a):
 def string(m, dur, vel=.8, t60=3.0, damp=.35, pos=.15, bright=.5, cents=0.0):
     f0 = mhz(m + cents / 100); P = SR / f0
     a = damp * (1 - bright * .5)
-    lpd = a / (1 - a)                                 # 低通在低频的相位延迟（样本）
+    lpd = a / (1 - a)                                 # phase delay of the lowpass at low frequencies (samples)
     tot = P - lpd; Nd = int(np.floor(tot - .15)); d = tot - Nd
     if d < .15: Nd -= 1; d += 1
     c = (1 - d) / (1 + d)
@@ -86,7 +86,7 @@ def string(m, dur, vel=.8, t60=3.0, damp=.35, pos=.15, bright=.5, cents=0.0):
     ex = rng.standard_normal(L)
     ex = lp(ex, 800 + 5000 * bright * vel, 1)
     ex *= np.hanning(L) ** .5
-    k = int(pos * L); ex = ex - np.concatenate([np.zeros(k), ex[:L - k]])  # 拨弦位置梳状
+    k = int(pos * L); ex = ex - np.concatenate([np.zeros(k), ex[:L - k]])  # pluck-position comb
     ex *= vel / (np.abs(ex).max() + 1e-9)
     return _ks(ex.astype(np.float64), n, Nd, c, g, a)
 
@@ -115,12 +115,12 @@ def bass_note(m, hold, vel=.8):
     n = int(min(hold + .4, 3) * SR)
     y = string(m, n / SR, vel, t60=1.6, damp=.6, pos=.27, bright=.25, cents=rng.normal(0, 3))
     t = np.arange(n) / SR
-    thump = np.sin(2 * np.pi * mhz(m) * t) * np.exp(-t / .12) * .5 * vel     # 指腹的低频
-    fn = lp(rng.standard_normal(n), 900) * np.exp(-t / .006) * .25 * vel        # 拨弦噪声
+    thump = np.sin(2 * np.pi * mhz(m) * t) * np.exp(-t / .12) * .5 * vel     # low-frequency thump of the fingertip
+    fn = lp(rng.standard_normal(n), 900) * np.exp(-t / .006) * .25 * vel        # pluck noise
     return (y + thump + fn) * rel_env(n, hold, .07)
 
 
-# ───────── 颤音琴（模态）─────────
+# ───────── Vibraphone (modal) ─────────
 def vibe_note(m, hold, vel=.7, motor=5.6, pedal=.6, rel=.25):
     f = mhz(m); ring = min(hold + 1.8, 4.0)
     n = int(ring * SR); t = np.arange(n) / SR
@@ -130,23 +130,23 @@ def vibe_note(m, hold, vel=.7, motor=5.6, pedal=.6, rel=.25):
     mallet = lp(rng.standard_normal(n), 2500) * np.exp(-t / .004) * .15
     trem = 1 - .28 * (.5 + .5 * np.sin(2 * np.pi * motor * t + rng.random() * 6))
     y = (y * trem + mallet) * vel
-    return y * rel_env(n, hold + pedal, rel)       # 踏板：延音到 hold + pedal 再阻尼
+    return y * rel_env(n, hold + pedal, rel)       # pedal: sustains to hold + pedal, then damps
 
 
-# ───────── 口哨 ─────────
+# ───────── Whistle ─────────
 def whistle_line(notes, n_total):
-    """notes = [(t0, dur, midi, vel, trill)] 连续一条线：滑音、揉音、气声"""
+    """notes = [(t0, dur, midi, vel, trill)] one continuous line: glides, vibrato, breath"""
     f = np.zeros(n_total); amp = np.zeros(n_total)
     prev = None
     for (t0, d, m, v, tr) in notes:
         i0, i1 = int(t0 * SR), int((t0 + d) * SR)
         tt = np.arange(i1 - i0) / SR
-        base = m - .6 * np.exp(-tt / .035)                                       # 起音微微往上"兜"
-        if prev is not None and abs(prev[0] + prev[1] - t0) < .035:               # 连音：滑过去
+        base = m - .6 * np.exp(-tt / .035)                                       # the attack "scoops" up slightly
+        if prev is not None and abs(prev[0] + prev[1] - t0) < .035:               # legato: glide across
             base = base + (prev[2] - m) * np.exp(-tt / .03)
-        vibd = .18 * np.clip((tt - .18) / .25, 0, 1)                            # 延迟揉音
+        vibd = .18 * np.clip((tt - .18) / .25, 0, 1)                            # delayed vibrato
         base = base + vibd * np.sin(2 * np.pi * 5.4 * tt)
-        if tr: base = base + np.where(tt < tr, 1.0 * (np.sin(2 * np.pi * 14 * tt) > 0), 0)   # 颤音（上方二度）
+        if tr: base = base + np.where(tt < tr, 1.0 * (np.sin(2 * np.pi * 14 * tt) > 0), 0)   # trill (a second above)
         f[i0:i1] = mhz(base)
         a = np.minimum(1, tt / .03) * np.minimum(1, (d - tt) / .05) * v
         amp[i0:i1] = np.maximum(amp[i0:i1], a)
@@ -159,7 +159,7 @@ def whistle_line(notes, n_total):
     return (y + breath) * amp
 
 
-# ───────── 打击 ─────────
+# ───────── Percussion ─────────
 def shaker(v=1.0):
     d = .09; n = int(d * SR); t = np.arange(n) / SR
     x = rng.standard_normal(n)
@@ -173,7 +173,7 @@ def rim(v=1.0, big=False):
     x = (np.sin(2 * np.pi * 1750 * t) * np.exp(-t / .018) + .6 * np.sin(2 * np.pi * 820 * t) * np.exp(-t / .03)
          + .35 * np.sin(2 * np.pi * 380 * t) * np.exp(-t / .04))
     x += hp(rng.standard_normal(n), 2000) * np.exp(-t / .002) * .8
-    if big: x += np.sin(2 * np.pi * 540 * t) * np.exp(-t / .06) * .8   # 木质"咔"
+    if big: x += np.sin(2 * np.pi * 540 * t) * np.exp(-t / .06) * .8   # woody "click"
     return lp(x, 8500) * v
 
 
@@ -209,15 +209,15 @@ def brush_roll(t0, t1, v=1.0):
     return x * mod * (t / d) ** 1.8 * v
 
 
-# ───────── 编曲数据 ─────────
-# 和弦：(低音 midi, 上方音)
+# ───────── Arrangement data ─────────
+# chords: (bass midi, upper notes)
 CH = {
     'Dmaj9': ('D3', ['F#3', 'C#4', 'E4']), 'Em9': ('E2', ['G3', 'D4', 'F#4']), 'A13': ('A2', ['G3', 'C#4', 'F#4']),
     'F#m7': ('F#2', ['E3', 'A3', 'C#4']), 'B7b9': ('B2', ['D#3', 'A3', 'C4']), 'Bm9': ('B2', ['D3', 'A3', 'C#4']),
     'E9': ('E2', ['G#3', 'D4', 'F#4']), 'A7sus': ('A2', ['G3', 'D4', 'E4']), 'Gmaj7': ('G2', ['F#3', 'B3', 'D4']),
     'Gm6': ('G2', ['A#3', 'D4', 'E4']), 'B7': ('B2', ['A3', 'D#4', 'F#4']), 'Gmaj9': ('G2', ['F#3', 'A3', 'B3']),
 }
-# 每小节两半（小节号从 1 开始；bar b 起点 = (b-1)*2 s）
+# each bar in two halves (bar numbers start at 1; bar b starts at (b-1)*2 s)
 PROG = {2: ('Dmaj9', 'Dmaj9'), 3: ('Em9', 'A13'), 4: ('F#m7', 'B7b9'), 5: ('Em9', 'A13'), 6: ('Dmaj9', 'Dmaj9'),
         7: ('Bm9', 'E9'), 8: ('Em9', 'A7sus'), 9: ('Dmaj9', 'Dmaj9'), 10: ('Gmaj7', 'Gm6'), 11: ('F#m7', 'B7'),
         12: ('Em9', 'A13'), 13: ('Dmaj9', 'Bm9'), 15: ('Gmaj9', 'F#m7'), 16: ('Em9', 'A13'), 17: ('Dmaj9', 'Bm9'),
@@ -257,40 +257,40 @@ BEL = Bus('bell', .20, .3)
 cues = {}
 
 
-def hum(): return rng.normal(0, .006)   # 人手时值误差
+def hum(): return rng.normal(0, .006)   # human timing error
 
 
-# ── 吉他 ──
+# ── Guitar ──
 def guitar():
-    # 1.5 弱起：A3 → C#4（引向 2.0 的 Dmaj9）
+    # 1.5 pickup: A3 → C#4 (leading into the Dmaj9 at 2.0)
     GTR.add(guitar_note(M('A3'), .22, .45), 1.5)
     GTR.add(guitar_note(M('C#4'), .4, .5), 1.75)
     for b in range(2, 19):
         if b == 14: continue
-        t0 = bar_t(b); cyc = (b - 2) % 2          # 0 = A 小节，1 = B 小节
-        # 拇指低音：第 1 拍根音、第 3 拍五度（或第二个和弦的根音）
+        t0 = bar_t(b); cyc = (b - 2) % 2          # 0 = A bar, 1 = B bar
+        # thumb bass: root on beat 1, fifth on beat 3 (or the root of the second chord)
         c1, c2 = PROG[b]
         r1 = M(CH[c1][0]); r2 = M(CH[c2][0])
-        # 低音不低于 D2
+        # bass no lower than D2
         bn1 = r1 if r1 >= M('D2') else r1 + 12
         bn2 = (r2 if c2 != c1 else r1 + 7)
         if bn2 > M('A3'): bn2 -= 12
         vb = .85 if b == 2 else .7
         GTR.add(guitar_note(bn1, .85, vb, .35), t0 + hum())
         GTR.add(guitar_note(bn2, .85, .62, .35), t0 + 2 * BEAT + hum())
-        # 手指和弦：A 小节 [0,3,6]，B 小节 [2,5]（八分位置）
+        # finger chords: A bar [0,3,6], B bar [2,5] (eighth-note positions)
         pos = [0, 3, 6] if cyc == 0 else [2, 5]
-        if b in (4, 8, 12, 16):                  # 每四小节的第四小节加一个推进
+        if b in (4, 8, 12, 16):                  # add a push on the fourth bar of every four
             pos = [2, 5, 7]
         for p in pos:
             ch = chord_at(b, p if p != 3 else 3)
-            if p == 7 and b + 1 in PROG: ch = PROG[b + 1][0]   # 反拍预示下一小节
+            if p == 7 and b + 1 in PROG: ch = PROG[b + 1][0]   # offbeat anticipates the next bar
             up = CH[ch][1]
             hold = .42 if p in (0, 3) else .3
             v = (.62 if p else .7) * (1.15 if (b == 2 and p == 0) else 1)
             for k, nm in enumerate(up):
                 GTR.add(guitar_note(M(nm), hold, v * (.9 + .1 * k), .5), t0 + p * BEAT / 2 + k * .006 + hum())
-    # 36.0 最终和弦 Dmaj9（慢扫，长延音）+ 37.0 泛音
+    # 36.0 final chord Dmaj9 (slow strum, long sustain) + 37.0 harmonics
     fin = ['D2', 'A2', 'F#3', 'C#4', 'E4', 'A4']
     for k, nm in enumerate(fin):
         GTR.add(guitar_note(M(nm), 3.4, .72, .45, t60=9.0), 36.0 + k * .028)
@@ -298,7 +298,7 @@ def guitar():
     cues['guitar'] = {'in': 1.5, 'out': 40.0, 'first_chord': 2.0, 'final_chord': 36.0}
 
 
-# ── 低音提琴 ──
+# ── Double bass ──
 def bass():
     for b in range(9, 18):
         if b == 14: continue
@@ -312,17 +312,17 @@ def bass():
         nr = nr - 12 if nr >= M('C3') else nr
         appr = nr - 1 if (b % 2) else nr + 7 - 12 if nr + 7 - 12 > M('E1') else nr + 7
         pat = [(0, 1.4, r1, .9), (1.5, .45, r1 + 7 if c1 == c2 else r1, .6), (2, 1.4, f1, .8), (3.5, .45, appr, .6)]
-        if b == 17: pat = [(0, 1.4, r1, .85), (1.5, .45, r1 + 7, .55), (2, 1.9, r2 if r2 else r1, .75)]  # 34.0 干净收尾
+        if b == 17: pat = [(0, 1.4, r1, .85), (1.5, .45, r1 + 7, .55), (2, 1.9, r2 if r2 else r1, .75)]  # 34.0 clean ending
         if b == 13: pat = [(0, 1.4, r1, 1.0), (1.5, .45, r1 + 7, .65), (2, 1.4, r2, .85), (3.5, .4, r2 + 7, .6)]
         for (bt, d, m, v) in pat:
             hold = d * BEAT
-            if b == 17 and bt == 2: hold = 2 * BEAT - .03        # 结束在 34.0
-            if b == 13 and bt == 3.5: hold = .22                # 26.0 前收住
+            if b == 17 and bt == 2: hold = 2 * BEAT - .03        # ends at 34.0
+            if b == 13 and bt == 3.5: hold = .22                # stops before 26.0
             BAS.add(bass_note(m, hold, v), t0 + bt * BEAT + hum())
     cues['bass'] = {'in': 16.0, 'out': 34.0}
 
 
-# ── 打击 ──
+# ── Percussion ──
 def perc():
     acc = [.5, .28, .9, .33]
     t = 8.0
@@ -332,7 +332,7 @@ def perc():
             lvl = .55 if t < 16 else .7
             PRC.add(shaker(acc[k] * lvl), t + hum() * .5)
         t += BEAT / 4
-    # bossa clave（两小节循环，八分位置）
+    # bossa clave (two-bar loop, eighth-note positions)
     clave = [0, 3, 6, 10, 13]
     for cyc0 in np.arange(8.0, 35.0, 2 * BAR):
         for p in clave:
@@ -340,48 +340,48 @@ def perc():
             if tt >= 35.0 - 1e-6 or in_break(tt): continue
             big = abs(tt - 12.0) < 1e-6
             PRC.add(rim(1.25 if big else .55, big), tt + (0 if big else hum() * .5))
-    if True:  # 12.0 的"接住"重音再补一层
+    if True:  # add another layer to the "catch" accent at 12.0
         PRC.add(kick(.5), 12.0)
-    # 刷子：第 2、4 拍（8–16 极轻，16 起正常）
+    # brushes: beats 2 and 4 (very soft 8–16, normal from 16)
     for b in range(5, 18 + 1):
         for bt in (1, 3):
             tt = bar_t(b) + bt * BEAT
             if tt >= 35.0 or in_break(tt) or tt < 8.0: continue
             PRC.add(brush(.16 if tt < 16 else .3), tt - .05)
-    # 软底鼓：跟贝斯（16 起），第 1 拍与 2&
+    # soft kick: follows the bass (from 16), on beat 1 and 2&
     for b in range(9, 18 + 1):
         for bt in (0, 1.5, 2):
             tt = bar_t(b) + bt * BEAT
             if tt >= 35.0 or in_break(tt): continue
             PRC.add(kick(.55 if bt == 0 else .35), tt)
-    # 23–24 刷子滚奏 + 吊镲渐强 → 24.0 镲；28.0 镲
+    # 23–24 brush roll + suspended cymbal crescendo → cymbal at 24.0; cymbal at 28.0
     PRC.add(brush_roll(23.0, 24.0, .35), 23.0)
     PRC.add(cymbal(.28, 1.0, swell=1), 23.0)
     PRC.add(cymbal(.3, 1.9), 24.0); PRC.add(kick(.8), 24.0)
     PRC.add(cymbal(.32, 1.9), 28.0); PRC.add(kick(.85), 28.0)
-    # 车铃当打击乐：15.5 一声极轻
+    # bike bell as percussion: one very soft ring at 15.5
     BEL.add(bell(single=True, seed=4) * .22, 15.5)
     cues['perc'] = {'in': 8.0, 'out': 35.0, 'accent_catch': 12.0, 'roll': [23.0, 24.0], 'cymbal': [24.0, 28.0], 'bell_tick': 15.5}
 
 
-# ── 颤音琴 ──
+# ── Vibraphone ──
 def vibes():
     def chordv(names, t, hold, v=.5):
         for k, nm in enumerate(names): VIB.add(vibe_note(M(nm), hold, v * (.9 + .05 * k)), t + k * .012)
-    chordv(['F#4', 'A4', 'C#5', 'E5'], 24.0, 1.0, .6)            # 24.0 全版重拍
+    chordv(['F#4', 'A4', 'C#5', 'E5'], 24.0, 1.0, .6)            # 24.0 all-plates downbeat
     chordv(['D4', 'F#4', 'A4', 'C#5'], 25.0, .55, .42)
-    chordv(['F#4', 'A4', 'B4', 'D5'], 28.0, .8, .58)              # 28.0 回来
-    chordv(['E4', 'A4', 'C#5'], 29.0, .7, .3)                     # 旁白下退让
+    chordv(['F#4', 'A4', 'B4', 'D5'], 28.0, .8, .58)              # 28.0 comes back
+    chordv(['E4', 'A4', 'C#5'], 29.0, .7, .3)                     # backs off under the narration
     chordv(['D4', 'G4', 'B4'], 30.0, .4, .3)
-    # 30.5–32.0 与口哨三度和声（口哨下方三度）
+    # 30.5–32.0 harmony in thirds with the whistle (a third below the whistle)
     th = [(30.5, .25, 'G5'), (30.75, .25, 'A5'), (31.0, .5, 'C#6'), (31.5, .25, 'B5'), (31.75, .2, 'A5')]
     for t, d, nm in th: VIB.add(vibe_note(M(nm) - 12, d, .5, pedal=.02, rel=.06), t)
     cues['vibes'] = {'in': 24.0, 'out': 32.0}
 
 
-# ── 口哨 ──
+# ── Whistle ──
 def whistle():
-    b = 0.5  # 1 拍
+    b = 0.5  # 1 beat
     W = []
     def ph(t0, seq):  # seq: [(beats, note, vel, trill)]
         t = t0
@@ -389,15 +389,15 @@ def whistle():
             v = rest[0] if rest else .8; tr = rest[1] if len(rest) > 1 else 0
             if nm: W.append((t, d * b - .02, M(nm), v, tr))
             t += d * b
-    # 16.0 主题（粉版进）
+    # 16.0 theme (pink plate comes in)
     ph(16.0, [(1.5, 'A5'), (.5, 'F#5'), (.5, 'E5', .7), (1.0, 'F#5'), (.5, 'A5'),
               (1.5, 'B5'), (.5, 'A5', .7), (.5, 'G5', .7), (1.0, 'A#5'), (.5, 'A5', .7)])
-    # 20.0 鸽群起飞：上行快速音阶 + 颤音
+    # 20.0 pigeons take off: fast rising scale + trill
     ph(20.0, [(.25, 'D5', .6), (.25, 'E5', .65), (.25, 'F#5', .7), (.25, 'A5', .75), (1.0, 'C#6', .9, .35),
-              (.5, 'B5', .75), (.5, 'A5', .7), (.5, 'F#5', .65), (.4, 'E5', .6)])      # 21.7 前收
-    # 24.75 小句（旁白 24.7 结束后）
+              (.5, 'B5', .75), (.5, 'A5', .7), (.5, 'F#5', .65), (.4, 'E5', .6)])      # ends before 21.7
+    # 24.75 short phrase (after the narration ends at 24.7)
     ph(24.75, [(.5, 'A5', .7), (.5, 'B5', .75), (1.0, 'D6', .85), (.45, 'C#6', .7)])
-    # 30.5 旋律高点（与颤音琴三度）→ 32.0 落 D6 → 33.0 收
+    # 30.5 melodic peak (in thirds with the vibraphone) → 32.0 lands on D6 → 33.0 ends
     ph(30.5, [(.5, 'B5', .8), (.5, 'C#6', .85), (1.0, 'E6', .95), (.5, 'D6', .85), (.4, 'C#6', .8)])
     ph(32.0, [(1.5, 'D6', .7), (.44, 'A5', .5)])
     y = whistle_line(W, len(WHI.x))
@@ -405,7 +405,7 @@ def whistle():
     cues['whistle'] = {'in': 16.0, 'out': 33.0, 'trill': 20.0, 'phrases': [[16.0, 21.7], [24.75, 26.0], [30.5, 33.0]]}
 
 
-# ───────── 混音 ─────────
+# ───────── Mix ─────────
 def reverb_ir(rt=.9, seed=1):
     r = np.random.default_rng(seed); n = int(rt * 1.2 * SR); t = np.arange(n) / SR
     ir = np.zeros((n, 2))
@@ -452,7 +452,7 @@ def main():
     for nm, s in stems.items(): sf.write(os.path.join(HERE, 'stems', nm + '.wav'), (s * k).astype(np.float32), SR)
     mix *= k
     sf.write(os.path.join(HERE, 'score.wav'), mix.astype(np.float32), SR)
-    # 自检
+    # self-check
     def rms_db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-12)
     table = []
     for s in range(40):

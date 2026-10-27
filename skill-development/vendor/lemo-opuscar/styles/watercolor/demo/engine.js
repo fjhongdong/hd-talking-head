@@ -1,4 +1,4 @@
-// ---------- 基础工具 ----------
+// ---------- basic utilities ----------
 const W = 1920, H = 1080;
 function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let RNG = mulberry(20260924);
@@ -16,7 +16,7 @@ const hash = n => { n = Math.sin(n * 127.1 + 311.7) * 43758.5453; return n - Mat
 const vnoise = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash(i), hash(i + 1), u); };
 const fbm = x => vnoise(x) * .55 + vnoise(x * 2.1 + 17) * .3 + vnoise(x * 4.3 + 41) * .15;
 
-// 单调三次插值（Fritsch–Carlson），相机路径用
+// monotone cubic interpolation (Fritsch–Carlson), for camera paths
 function monotone(keys) {
   const n = keys.length, xs = keys.map(k => k[0]), ys = keys.map(k => k[1]);
   const d = [], m = new Array(n).fill(0);
@@ -36,14 +36,14 @@ function monotone(keys) {
   };
 }
 
-// ---------- 颜色 ----------
+// ---------- colour ----------
 const PAPER = '#f1e9da', INK = '#2b2520', INK2 = '#3d3129';
 const _rgb = {};
 const hex2rgb = h => _rgb[h] || (_rgb[h] = [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 const mixc = (a, b, t) => { const A = hex2rgb(a), B = hex2rgb(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
 const rgba = (h, a) => { const c = hex2rgb(h); return `rgba(${c[0]},${c[1]},${c[2]},${clamp(a).toFixed(3)})`; };
 
-// ---------- 笔触 ----------
+// ---------- brush strokes ----------
 function qcurve(x0, y0, x1, y1, bend = 0, n = 12) {
   const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
   const cx = mx - dy / L * bend, cy = my + dx / L * bend, out = [];
@@ -57,7 +57,7 @@ function qctrl(x0, y0, cx, cy, x1, y1, n = 12) {
 }
 const polar = (x, y, a, len, bend = 0, n = 8) => qcurve(x, y, x + Math.cos(a) * len, y + Math.sin(a) * len, bend, n);
 
-// 一笔：中心线 + 宽度轮廓 + 干笔飞白（若干"毛"）
+// one stroke: centreline + width profile + dry-brush feibai (飞白, dry-brush streaks: a number of "bristles")
 function mk(pts, w, col, o = {}) {
   const n = pts.length, ws = [], nx = [], ny = [];
   const seed = rnd(0, 1000), rough = o.rough ?? .22, prof = o.prof || 'brush';
@@ -105,7 +105,7 @@ function drawS(c, s, p = 1, col = null, am = 1) {
   }
 }
 
-// 一组笔触按顺序"画出来"：p∈[0,1]
+// a set of strokes "painted in" in order: p∈[0,1]
 function drawList(c, L, p = 1, col = null, am = 1) {
   const N = L.length; if (!N) return;
   if (p >= 1) { for (const s of L) drawS(c, s, 1, col, am); return; }
@@ -125,7 +125,7 @@ function sprite(L, col = null) {
   return { cv, x0, y0, x1, y1 };
 }
 
-// 叶团：一簇点叶
+// leaf clump: a cluster of dotted leaves
 function clump(S, cx, cy, r, n, cols, o = {}) {
   for (let i = 0; i < n; i++) {
     const a = rnd(0, Math.PI * 2), rr = r * Math.sqrt(rnd());
@@ -135,7 +135,7 @@ function clump(S, cx, cy, r, n, cols, o = {}) {
     S.push(mk(qcurve(x, y, x + Math.cos(d) * len, y + Math.sin(d) * len, rnd(-3, 3), 5), w, pick(cols), { prof: 'leaf', nb: w > 9 ? 3 : 0, a: rnd(o.a0 ?? .72, o.a1 ?? .95), rough: .3 }));
   }
 }
-// 沿笔触一侧的墨线（树干明暗边）
+// ink line along one side of a stroke (the light/shadow edge of a trunk)
 function edgeOf(s, side, w, col, a = .85) {
   const pts = s.pts.map((p, i) => [p[0] + s.nx[i] * s.ws[i] * .47 * side, p[1] + s.ny[i] * s.ws[i] * .47 * side]);
   return mk(pts, w, col, { prof: 'even', nb: 0, a, rough: .35 });

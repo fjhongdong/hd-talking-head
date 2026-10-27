@@ -2,7 +2,8 @@
 
   python3 tools/release.py check [--strict] [slug ...]
                                 what git would commit: fails on big files, local paths, secrets and incomplete styles.
-                                Warnings (missing web cut, broken still links…) fail only with --strict, which also checks
+                                Warnings (missing web cut, broken still links, images nothing names, demo files nothing
+                                leads to, process wording such as PRODUCTION_LOG) fail only with --strict, which also checks
                                 the style format (style.json, STYLE.md, DEMO.md, no sign-off in STYLE.md). Slugs limit
                                 the per-style checks to those styles: the gate for a new style is `check --strict <slug>`.
   python3 tools/release.py pack      build the asset packs in .release/ and write tools/assets.json (their size and sha256)
@@ -149,6 +150,95 @@ def completeness(have, bad, warn, slugs):
                 else: warn.append(f'{slug}: {doc} points to demo/stills/{ref}, which git would not commit (add `!{path}` to .gitignore)')
 
 
+# Clutter and internal notes a commit should not carry. All three are warnings (failures with --strict) and lean towards
+# silence: a file that might be loaded counts as used.
+IMAGE = re.compile(r'\.(?:jpe?g|png|webp|gif)$', re.I)
+CONVENTION_FILES = ('poster.jpg', 'demo/stills/styleframe.jpg')        # used by the gallery build without being named
+REF_TEXT = re.compile(r'\.(?:md|js|mjs|cjs|ts|py|sh|html|json|css|txt|srt)$|(?:^|/)(?:CREDITS|FACTS)$', re.I)
+STYLE_ENTRIES = CONVENTION_FILES + ('STYLE.md', 'DEMO.md', 'style.json', 'demo/build.sh', 'demo/build.py', 'demo/index.html',
+                                    'demo/CREDITS')
+# kept by name: licences, notes on sources, package manifests (files named in core/, which its tools write, are kept too)
+KEEP_NAME = re.compile(r'(?i)^(?:OFL|LICEN[CS]E|COPYING|NOTICE|README|SOURCES|CREDITS|FACTS)|[_-](?:OFL|LICEN[CS]E)\b|^__init__\.py$|^\.gitignore$|^package(?:-lock)?\.json$|^requirements[\w.-]*\.txt$|^pyproject\.toml$')
+CODE = re.compile(r'\.(?:js|mjs|cjs|ts|py)$')
+NAME_TOKEN = re.compile(r'(?<![\w.-])[\w-]+(?:\.[\w-]+)+')
+WORD_TOKEN = re.compile(r'[\w-]+')
+# a folder named as a prefix (`scenes/` before a quote, `${`, `*`, a `+` or the end of a line): globs, readdir and dynamic imports
+DIR_END = re.compile(r'''/(?=[\s'"`)$*{,\]]|$|\s*['"`]?\s*\+)''', re.M)
+DIR_NAME = re.compile(r'([\w.-]+)$')
+WILD_TOKEN = re.compile(r'''(?<![^\s'"`(),;:=|])[^\s'"`(),;:=|]*?\.(?:jpe?g|png|webp|gif|m?js|cjs|py|json|txt|svg|wav|mp3|srt|css|html)\b''', re.I)
+PLACEHOLDER = re.compile(r'\$\{[^}]*\}|\{[^}]*\}|<[^>]*>|%0?\d*d|\[[^\]]*\]|\*+|\?')    # alt_*, alt_<n>, alt_{n}, alt_${n}, alt_%03d, alt_[0-9]
+# internal process wording that belongs in local notes, not in the library (add words here)
+PROCESS_WORDS = ('PRODUCTION_LOG', '返修', '定稿版', '定稿片', '审片', '用户说', '用户选', r'v[0-9] 的意见', '(?i:reviewer note)',
+                 'LemoOpuscarTrial', r'lemomo\.studio')
+PROCESS = re.compile('|'.join(PROCESS_WORDS))
+PROCESS_EXEMPT = re.compile(r'(?:^|/)\.gitignore$|^MAINTAINING\.md$|^tools/release\.py$')   # files that state the rules
+
+
+def text_index(t):
+    """what a text can point at: names with a dot (`foo.js`), bare words (`foo`, imports without the extension), folders named
+    as a prefix, and file-name patterns (`alt_*.jpg`, `frame_${i}.png`, `still_%03d.jpg`) as regexes."""
+    dirs = set()
+    for m in DIR_END.finditer(t):
+        d = DIR_NAME.search(t, max(0, m.start() - 80), m.start())
+        if d and d.group(1).strip('.'): dirs.add(d.group(1).strip('.'))
+    pats = []
+    for tok in WILD_TOKEN.findall(t):
+        parts = PLACEHOLDER.split(tok.rsplit('/', 1)[-1])
+        if len(parts) > 1 and len(''.join(parts).strip('.')) >= 4:
+            pats.append(re.compile('.*'.join(re.escape(p) for p in parts) + '$', re.I))
+    return set(NAME_TOKEN.findall(t)), set(WORD_TOKEN.findall(t)), dirs, pats
+
+
+def hygiene(files, slugs, warn):
+    """Images nothing names, demo files no entry reaches, and process wording, in what git would commit."""
+    texts, index = {}, {}
+    for f in files:
+        if BINARY.search(f): continue
+        try: texts[f] = open(os.path.join(ROOT, f), encoding='utf-8').read()
+        except (UnicodeDecodeError, OSError): pass
+    def idx(f):
+        if f not in index: index[f] = text_index(texts[f])
+        return index[f]
+    chosen = tuple(f'styles/{s}/' for s in slugs)
+    # 1. images under styles/ that no committed text names, by file name or by a pattern
+    refs = [idx(f) for f in texts if REF_TEXT.search(f)]
+    names = set().union(*(r[0] for r in refs))
+    pats = [p for r in refs for p in r[3]]
+    orphans = set()
+    for f in files:
+        if not (f.startswith(chosen) and IMAGE.search(f)) or f.split('/', 2)[2] in CONVENTION_FILES: continue
+        b = os.path.basename(f)
+        if b not in names and not any(p.match(b) for p in pats):
+            orphans.add(f); warn.append(f'{f}: no committed doc or code names this image (by name or pattern): delete it or link it')
+    # 2. files of a style that nothing reaches from its entries (by name, import, folder prefix or pattern)
+    paths = {m.rstrip('.') for t in texts.values() for m in re.findall(r'styles/[\w./-]+', t)}
+    folders = tuple({p.rstrip('/') + '/' for p in paths if p.rstrip('/').count('/') >= 3})   # styles/<slug>/demo/<folder>, not demo/ itself
+    made = {n for f, t in texts.items() if f.startswith('core/') for n in idx(f)[0]}  # what core tools write (events.json, words.json)
+    for slug in slugs:
+        pre = f'styles/{slug}/'
+        own = [f for f in files if f.startswith(pre)]
+        reach = {f for f in own if f[len(pre):] in STYLE_ENTRIES + (f'{slug}.srt',) or KEEP_NAME.search(os.path.basename(f))
+                 or os.path.basename(f) in made or f in paths or f.startswith(folders)}
+        todo = list(reach)
+        while todo:
+            g = todo.pop()
+            if g not in texts: continue
+            n, words, dirs, ps = idx(g)
+            for f in own:
+                if f in reach: continue
+                b, below = os.path.basename(f), os.path.dirname(f)[len(pre):].split('/')[1:]   # folders below demo/
+                if b in n or (CODE.search(b) and os.path.splitext(b)[0] in words) or dirs.intersection(below) or any(p.match(b) for p in ps):
+                    reach.add(f); todo.append(f)
+        for f in sorted(set(own) - reach - orphans):
+            warn.append(f'{f}: nothing in {slug} leads to this file (STYLE.md, DEMO.md, build.sh, index.html and what they load): delete it or link it')
+    # 3. process wording
+    for f, t in sorted(texts.items()):
+        if PROCESS_EXEMPT.search(f): continue
+        for i, line in enumerate(t.splitlines(), 1):
+            m = PROCESS.search(line)
+            if m: warn.append(f'{f}:{i}: process wording "{m.group(0)}" (internal notes stay local)')
+
+
 def check():
     args = [a for a in sys.argv[2:] if not a.startswith('--')]
     strict = '--strict' in sys.argv
@@ -167,6 +257,7 @@ def check():
             if SECRET.search(b): bad.append(f'possible secret: {f}')
     print(f'git would hold {len(files)} files, {size / 1e6:.0f} MB')
     completeness(have, bad, warn, [s for s in style_slugs() if not args or s in args])
+    hygiene(files, [s for s in style_slugs() if not args or s in args], warn)
     if strict:
         style_format([s for s in style_slugs() if not args or s in args], bad)
         bad += [f'(--strict) {w}' for w in warn]; warn = []

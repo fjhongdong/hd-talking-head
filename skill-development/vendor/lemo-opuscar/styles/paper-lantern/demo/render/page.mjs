@@ -1,10 +1,10 @@
-// 打开 demo/index.html（静态服务根 = 仓库根，页面可引用 /node_modules/three、/core/assets/...），等待 window.READY
+// Open demo/index.html (static server root = repo root, so the page can reference /node_modules/three, /core/assets/...), wait for window.READY
 import { chromium } from 'playwright-core';
 import path from 'path'; import { fileURLToPath } from 'url';
 import { serve } from './serve.mjs';
 import { EXE, ARGS } from './browser.mjs';
-export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');          // demo 目录
-export const REPO = path.resolve(ROOT, '../../..');                                                  // 仓库根（静态服务根）
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');          // demo directory
+export const REPO = path.resolve(ROOT, '../../..');                                                  // repo root (static server root)
 export const PAGE = '/' + path.relative(REPO, ROOT).split(path.sep).map(encodeURIComponent).join('/') + '/index.html';
 let srv = null;
 export async function server() { if (!srv) srv = await serve(REPO); return srv; }

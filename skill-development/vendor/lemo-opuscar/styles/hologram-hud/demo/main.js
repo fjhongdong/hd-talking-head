@@ -1,4 +1,4 @@
-// 页面入口：读 content.json（可用 ?content=content_alt.json 换内容）→ 模型 → 片子
+// Page entry: read content.json (swap content with ?content=content_alt.json) → model → film
 import { loadModel } from './engine/holo.js';
 import { makeFilm } from './film.js';
 const cv = document.getElementById('c'), g = cv.getContext('2d');

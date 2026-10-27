@@ -1,11 +1,11 @@
-"""《Five-Second Astronaut》原创配乐：放克 / 流行融合（120 → 140 → 160 BPM，E 多利亚 → F# 多利亚 → G# 小调 → A 小调 → A 大调）
-运行：.venv/bin/python styles/microgame/demo/music/score.py
-输入：demo/timeline.json（全片速度网格）
-输出：music/score.wav、music/stems/*.wav、music/score.json、music/CREDITS_music.txt
+"""Original score for "Five-Second Astronaut": funk / pop fusion (120 → 140 → 160 BPM, E Dorian → F# Dorian → G# minor → A minor → A major)
+Run: .venv/bin/python styles/microgame/demo/music/score.py
+Input: demo/timeline.json (the whole film's tempo grid)
+Output: music/score.wav, music/stems/*.wav, music/score.json, music/CREDITS_music.txt
 
-配器：drum_kit（十六分踩镲 + 军鼓鬼音 + 拍手）· 合成 slap 贝斯（拨弦体 + 高通 pop 音头 + 八度跳 + 滑音）
-      · 铜管齐奏（trumpet_stac + alto_sax + trombone_stac 叠八度）· 电钢琴（vibraphone_hard + piano，5 Hz 颤音）
-      · 每关的画风乐器（木琴 / 古琴 / 方波 / 颤音琴 + 萨克斯 / 脉冲波琶音 / 弱音小号 + 棘轮 / 响棒 + 钢琴）
+Orchestration: drum_kit (sixteenth-note hi-hats + snare ghost notes + claps) · synthesised slap bass (plucked body + high-passed pop attack + octave jumps + slides)
+      · brass section (trumpet_stac + alto_sax + trombone_stac stacked in octaves) · electric piano (vibraphone_hard + piano, 5 Hz tremolo)
+      · a look-specific instrument per level (xylophone / guqin / square wave / vibraphone + sax / pulse-wave arpeggio / muted trumpet + ratchet / claves + piano)
 """
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
@@ -22,7 +22,7 @@ SEG = {s['id']: s for s in TL['segs']}
 S.seed(11); RNG = np.random.default_rng(11)
 STEMS = ['drums', 'bass', 'brass', 'keys', 'color', 'jingles']
 bus = {k: np.zeros((N, 2), np.float32) for k in STEMS}
-KEY = {}          # 关键点：name -> 时间
+KEY = {}          # key points: name -> time
 def mark(name, t): KEY[name] = [round(float(x), 4) for x in t] if isinstance(t, (list, tuple)) else round(float(t), 4)
 
 def put(b, x, t, g=1.0, pan=0.0): add(bus[b], np.asarray(x, np.float32), t, g, pan)
@@ -32,24 +32,24 @@ def lp(x, f, o=2): return sosfilt(butter(o, f, 'low', fs=SR, output='sos'), x)
 def hp(x, f, o=2): return sosfilt(butter(o, f, 'high', fs=SR, output='sos'), x)
 def bpf(x, a, b, o=2): return sosfilt(butter(o, [a, b], 'band', fs=SR, output='sos'), x)
 
-# ─── 时间工具（按段内拍号取绝对时间，可小数拍）───
+# ─── Time helpers (absolute time from a beat number within a segment; fractional beats allowed)───
 def bt(sid, k):
     s = SEG[sid]; B = s['beatT']; i = int(np.floor(k)); f = k - i
     a = B[i] if i < len(B) else s['t1']; b = B[i + 1] if i + 1 < len(B) else s['t1']
-    if i >= len(B): # 越界：按最后一拍长度外推
+    if i >= len(B): # out of range: extrapolate using the last beat's length
         L = s['t1'] - B[-1]; return s['t1'] + (k - len(B)) * L
     return a + (b - a) * f
 def beatlen(sid, k=0): return bt(sid, k + 1) - bt(sid, k)
 
-# ─── 音色 ───
-PRE = .003   # tr() 已把起音对齐到 +3ms
+# ─── Sounds ───
+PRE = .003   # tr() has already aligned the attack to +3ms
 def tr(x):
-    """把起音对齐：切掉采样开头到 30% 峰值前 3ms 之间的部分，使"冲击点"落在放置时刻 + 3ms"""
+    """Align the attack: cut the part from the sample start up to 3ms before 30% of peak, so the "impact point" lands at the placement time + 3ms"""
     x = np.asarray(x); a = np.abs(x); i = int(np.argmax(a > .3 * a.max())); return x[max(0, i - int(.003 * SR)):]
 def note(inst, p, d, v=.8): return tr(S.note(inst, p, d, vel=v))
 
 def slap(p, d=.25, v=.9, pop=False, slide=0.0, slide_t=.08):
-    """合成 slap 贝斯：锯齿状拨弦体（高次谐波衰减更快）+ 次低正弦 + 拇指/勾弦音头（带通噪声 + click）+ 滑音"""
+    """Synthesised slap bass: sawtooth-like plucked body (higher harmonics decay faster) + sub-bass sine + thumb/pop attack (band-passed noise + click) + slide"""
     n = int((d + .06) * SR); t = np.arange(n) / SR
     f0 = hz(p); semis = slide * np.clip(t / max(slide_t, 1e-3), 0, 1) if slide else 0
     f = f0 * 2 ** (semis / 12) if slide else np.full(n, f0)
@@ -69,7 +69,7 @@ def slap(p, d=.25, v=.9, pop=False, slide=0.0, slide_t=.08):
     return (hp(x, 38) * v * .5).astype(np.float32)
 
 def square(p, d, v=.5, duty=.5, slide=0.0, vib=0.0):
-    """带限方波 / 脉冲波（加法合成到 8 kHz），可滑音"""
+    """Band-limited square / pulse wave (additive synthesis up to 8 kHz), can slide"""
     n = int(d * SR); t = np.arange(n) / SR
     semis = np.linspace(0, slide, n) if slide else 0
     f = hz(p) * 2 ** ((semis + vib * np.sin(2 * np.pi * 6 * t)) / 12) if (slide or vib) else np.full(n, hz(p))
@@ -82,7 +82,7 @@ def square(p, d, v=.5, duty=.5, slide=0.0, vib=0.0):
     return (x * env * v * .35).astype(np.float32)
 
 def epiano(chord, d, v=.5):
-    """电钢琴近似：vibraphone_hard + 轻钢琴，5 Hz 颤音"""
+    """Electric piano approximation: vibraphone_hard + light piano, 5 Hz tremolo"""
     out = None
     for i, p in enumerate(chord):
         a = note('vibraphone_hard', p, d, v * .8); b = note('piano', p, d, v * .45)
@@ -92,7 +92,7 @@ def epiano(chord, d, v=.5):
     return (out * (1 + .16 * np.sin(2 * np.pi * 5 * t)) / len(chord) ** .5).astype(np.float32)
 
 def bend(x, semis):
-    """对采样做时变移调（semis 为与 x 同长或可广播的半音曲线），用相位累加重采样"""
+    """Time-varying pitch shift of a sample (semis is a semitone curve the same length as x, or broadcastable), resampled by phase accumulation"""
     rate = 2 ** (np.asarray(semis) / 12.0)
     if np.ndim(rate) == 0: rate = np.full(len(x), rate)
     pos = np.cumsum(rate); pos = pos[pos < len(x) - 1]
@@ -109,7 +109,7 @@ def clap(t, v=.7): put('drums', lp(hit('claps', 'group', v), 9000), t, .5, -.1)
 def tom(t, i, v=.7): put('drums', hit('drum_kit', f'tom_{i}', v), t, .7, (i - 2.5) * .2)
 
 def stab(t, chord, v=.85, d=.16, g=1.0):
-    """铜管齐奏：上面小号、中间萨克斯、下面长号（叠八度）"""
+    """Brass section: trumpet on top, sax in the middle, trombone below (stacked in octaves)"""
     top = chord[-2:]; mid = chord[1:-1] if len(chord) > 2 else chord[:1]
     for p in top: put('brass', note('trumpet_stac', p, d, v), t - PRE, .55 * g, .15)
     for p in mid: put('brass', note('alto_sax', p, d, v * .8), t - PRE, .32 * g, -.1)
@@ -118,7 +118,7 @@ def blow(t, p, d, v=.8, g=1.0, pan=0.0, inst='trumpet_stac'):
     put('brass', note(inst, p, d, v), t - PRE, g, pan)
 
 def success(t, root='E4', name=None):
-    """成功 jingle：铜管大调三连音上行（1-3-5-8）+ 拍手，≤0.5s"""
+    """Success jingle: brass major triplet run upward (1-3-5-8) + claps, ≤0.5s"""
     r = m(root); step = .075
     for i, iv in enumerate([0, 4, 7, 12]):
         blow(t + i * step, r + iv, .14 if i < 3 else .3, .85, .5, .15)
@@ -128,7 +128,7 @@ def success(t, root='E4', name=None):
     if name: mark(name, t)
 
 def fail(t, notes, long_last=True, name=None, grunt=True, gong=True):
-    """失败 jingle：长号半音下滑（每音带 portamento）+ 最后一音颤抖拖长 + 大号"咕噜" + 小锣"""
+    """Fail jingle: trombone chromatic slide down (portamento on each note) + last note wobbling and drawn out + tuba "gurgle" + small gong"""
     tt = t
     for i, (p, d) in enumerate(notes):
         x = note('trombone', p, d + .1, .75)
@@ -153,7 +153,7 @@ def heartbeat(t, v=.9):
         put('color', x, t + dt, 1.4 * v)
 
 def scratch(t, d=.3):
-    """刮碟：锯齿音高来回扫 + 带通噪声"""
+    """Record scratch: sawtooth pitch swept back and forth + band-passed noise"""
     n = int(d * SR); tc = np.arange(n) / SR
     f = 300 + 900 * np.abs(np.sin(2 * np.pi * tc / d * 1.5))
     ph = 2 * np.pi * np.cumsum(f) / SR
@@ -161,8 +161,8 @@ def scratch(t, d=.3):
     x = bpf(x, 200, 5000) * np.hanning(n) ** .3
     put('color', x.astype(np.float32), t, .5, 0)
 
-# ─── 和弦 / 贝斯根音表 ───
-CH = {  # 电钢琴/铜管和弦（低→高），贝斯根音
+# ─── Chord / bass root table ───
+CH = {  # electric piano / brass chords (low → high), bass root
     'Em7':  (['E3', 'G3', 'B3', 'D4'], 'E2'), 'A9': (['G3', 'B3', 'C#4', 'E4'], 'A2'),
     'Gmaj': (['G3', 'B3', 'D4', 'F#4'], 'G2'), 'Dsus': (['D3', 'G3', 'A3', 'D4'], 'D2'),
     'F#m7': (['F#3', 'A3', 'C#4', 'E4'], 'F#2'), 'B9': (['A3', 'C#4', 'D#4', 'F#4'], 'B2'),
@@ -172,11 +172,11 @@ CH = {  # 电钢琴/铜管和弦（低→高），贝斯根音
     'A69':  (['A3', 'C#4', 'F#4', 'B4', 'E5'], 'A2'),
 }
 
-# ─── 律动引擎 ───
-KICK16 = [0, 7, 10]            # 一小节 16 格里的底鼓位置（放克：1、2 拍的"a"、3 拍）
-BASS16 = [(0, 'r', False), (3, 'o', True), (6, 'r', False), (7, 'o', True), (10, 'r', False), (11, 'f', True), (14, 'o', True)]   # r=根 o=八度 f=五度；True=pop
+# ─── Groove engine ───
+KICK16 = [0, 7, 10]            # kick positions among the 16 steps of a bar (funk: beat 1, the "a" of beat 2, beat 3)
+BASS16 = [(0, 'r', False), (3, 'o', True), (6, 'r', False), (7, 'o', True), (10, 'r', False), (11, 'f', True), (14, 'o', True)]   # r = root, o = octave, f = fifth; True = pop
 def groove(sid, k0, k1, chords, drums=True, bass=True, keys=True, v=1.0, hatop=False, claps=True, busy=1.0):
-    """在段 sid 的 [k0,k1) 拍区间铺放克律动；chords = 每小节(4 拍)的和弦名列表（循环）"""
+    """Lay a funk groove over beats [k0,k1) of segment sid; chords = list of chord names per bar (4 beats), cycled"""
     s = SEG[sid]
     for bi in range(int(np.floor(k0 * 4)), int(np.ceil(k1 * 4))):
         kb = bi / 4
@@ -196,22 +196,22 @@ def groove(sid, k0, k1, chords, drums=True, bass=True, keys=True, v=1.0, hatop=F
         if keys and pos in (2, 6, 11) and busy > .3:
             put('keys', epiano(ch, .22, .5 * v), t, .5, .2)
 
-# ═══════════════════════ 各段 ═══════════════════════
+# ═══════════════════════ Segments ═══════════════════════
 def B(sid, k): return bt(sid, k)
 E_R = 'E4'
 
-# G1 PUMP（蜡笔 · 木琴）
+# G1 PUMP (crayon · xylophone)
 stab(0.0, ['E3', 'G3', 'B3', 'D4', 'E4'], .95); crash(0.0, .7); mark('G1_cmd', 0.0)
 groove('G1', 0, 8, ['Em7', 'A9'], keys=False, v=.8)
 for i, t in enumerate([1.0, 1.5, 2.0, 2.5]):
     put('color', note('xylophone', ['E5', 'F#5', 'G5', 'A5'][i], .3, .85), t, .7, .25); put('bass', slap(m('E2') + 12, .14, .9, pop=True), t + .25, .6)
     mark(f'G1_pump{i+1}', t)
-for i, p in enumerate(['B5', 'C#6', 'D6', 'E6', 'F#6', 'G6', 'A6', 'B6']):   # 3.0 浮起：上行刮奏
+for i, p in enumerate(['B5', 'C#6', 'D6', 'E6', 'F#6', 'G6', 'A6', 'B6']):   # 3.0 float-up: upward glissando
     put('color', note('xylophone', p, .2, .7), 3.0 + i * .045, .55, .3)
 mark('G1_float', 3.0)
 success(3.5, 'E4', 'G1_ok')
 
-# S1 舞台 · 片名
+# S1 stage · title
 crash(4.0, .8); kick(4.0, .9); mark('S1_in', 4.0)
 RIFF = [(0, 'E4', 1), (3, 'G4', 1), (4, 'A4', 1), (6, 'B4', 1), (8, 'A4', 1), (10, 'G4', 1), (11, 'E4', 2), (14, 'D4', 1), (15, 'E4', 1)]
 def riff(sid, k0, trans=0, v=.8, g=1.0, minor=False, lower=0, upto=16, frm=0):
@@ -220,17 +220,17 @@ def riff(sid, k0, trans=0, v=.8, g=1.0, minor=False, lower=0, upto=16, frm=0):
         pp = m(p) + trans - (1 if minor and p in ('G4',) else 0) - lower
         t = bt(sid, k0 + p16 / 4)
         blow(t, pp, .12 * l + .04, v, .45 * g, .15); blow(t, pp - 12, .12 * l + .04, v, .3 * g, -.2, 'trombone_stac')
-for i, p in enumerate(['E4', 'G4', 'B4', 'D5', 'E5', 'G5']):   # 片名逐字亮：电钢琴十六分上行
+for i, p in enumerate(['E4', 'G4', 'B4', 'D5', 'E5', 'G5']):   # title lights up letter by letter: electric piano sixteenth-note run upward
     put('keys', epiano([p], .25, .55), 4.25 + i * .125, .55, .1)
 mark('S1_title_run', 4.25)
 groove('S1', 0, 7, ['Em7', 'A9'], v=.75)
-groove('S1', 2, 6.2, ['Em7', 'A9'], drums=False, bass=False, keys=True, v=.6)   # 旁白下只保留电钢琴 + 律动
-riff('S1', 0, v=.8, g=.9, upto=8)   # 4.0–5.0 前半 riff（5.0 起旁白）
+groove('S1', 2, 6.2, ['Em7', 'A9'], drums=False, bass=False, keys=True, v=.6)   # under the voice-over keep only electric piano + groove
+riff('S1', 0, v=.8, g=.9, upto=8)   # 4.0–5.0 first half of the riff (voice-over from 5.0)
 for t in [bt('S1', 5.25), bt('S1', 5.75), bt('S1', 6.25)]: stab(t, ['E3', 'G3', 'A3', 'D4', 'E4'], .7, g=.6)
 mark('S1_click_gap', 7.5)
-for k in [7.5, 7.625, 7.75, 7.875]: tom(bt('S1', k), 1 + int((k - 7.5) * 8) % 4, .6)   # 7.75 起 tom 小过门
+for k in [7.5, 7.625, 7.75, 7.875]: tom(bt('S1', k), 1 + int((k - 7.5) * 8) % 4, .6)   # small tom fill from 7.75
 
-# G2 DON'T SNEEZE（水墨 · 古琴 + 木块）
+# G2 DON'T SNEEZE (ink wash · guqin + woodblock)
 stab(8.0, ['E3', 'G3', 'B3', 'D4', 'E4'], .9); mark('G2_cmd', 8.0)
 groove('G2', 0, 4, ['Em7', 'A9'], keys=False, v=.7, claps=False, busy=.4)
 for k in range(0, 8): put('color', hit('woodblock', 'b' if k % 2 else 'a', .5), bt('G2', k + .5), .35, -.3)
@@ -241,15 +241,15 @@ kick(10.5, 1.0); crash(10.5, 1.0); stab(10.5, ['E3', 'G3', 'B3', 'D4', 'G4'], 1.
 for k in [5, 5.5]: hat(bt('G2', k), .4)
 fail(11.0, [('D3', .22), ('C#3', .22), ('C3', .5)], name='G2_fail')
 
-# S2 舞台（小调变体，铜管下行）
+# S2 stage (minor variant, brass descending)
 groove('S2', 0, 3, ['Em7', 'Em7'], v=.7)
 for i, p in enumerate(['E4', 'D4', 'B3', 'G3']): blow(bt('S2', i * .5), p, .14, .7, .35, .1)
 mark('S2_click_gap', 13.5)
 
-# G3 STRAP IN（ASCII · 方波 + 电传）
+# G3 STRAP IN (ASCII · square wave + teletype)
 stab(14.0, ['E3', 'G3', 'B3', 'D4', 'E4'], .9); mark('G3_cmd', 14.0)
 groove('G3', 0, 8, ['Em7', 'A9'], keys=False, v=.75)
-for k in range(0, 8 * 4):   # 电传咔嗒（很轻的高音 click）
+for k in range(0, 8 * 4):   # teletype clatter (very light high clicks)
     if k % 3 != 1: put('color', lp(hit('claves', None, .25), 7000), bt('G3', k / 4), .12, .4)
 for i, t in enumerate([15.0, 15.5, 16.0]):
     put('color', square(['E5', 'G5', 'B5'][i], .18, .55), t, .6, -.2); mark(f'G3_belt{i+1}', t)
@@ -258,11 +258,11 @@ for dt in [0, .12]: put('color', square('E6', .08, .5), 17.0 + dt, .5, .2)
 mark('G3_secured', 17.0)
 success(17.5, 'E4', 'G3_ok')
 
-# S3 舞台
+# S3 stage
 groove('S3', 0, 3, ['Em7', 'A9'], v=.75); riff('S3', 0, v=.75, g=.7)
 mark('S3_click_gap', 19.5)
 
-# G4 CATCH（孔版 · 颤音琴 + 萨克斯长音）
+# G4 CATCH (risograph · vibraphone + sustained sax)
 stab(20.0, ['E3', 'G3', 'B3', 'D4', 'E4'], .9); mark('G4_cmd', 20.0)
 groove('G4', 0, 6, ['Em7', 'A9'], keys=False, v=.6, busy=.4)
 for k in range(1, 10):
@@ -274,15 +274,15 @@ mark('G4_chomp_gap', 23.0)
 groove('G4', 7, 8, ['Em7'], keys=False, v=.5)
 success(23.5, 'E4', 'G4_ok')
 
-# S4 舞台 · 按钮
+# S4 stage · button
 groove('S4', 0, .5, ['Em7'], v=.6)
-groove('S4', .5, 3, ['Em7'], drums=False, keys=False, v=.45)                      # 旁白：只剩轻贝斯
-for i in range(16):   # 24.5–25.5 军鼓滚奏渐强
+groove('S4', .5, 3, ['Em7'], drums=False, keys=False, v=.45)                      # voice-over: only light bass left
+for i in range(16):   # 24.5–25.5 snare roll crescendo
     t = 24.5 + i / 16
     put('drums', lp(hit('drum_kit', 'snare_2', .2 + .6 * i / 16), 9000), t, .3 + .5 * i / 16, .05)
 kick(25.5, 1.0); crash(25.5, 1.0); stab(25.5, ['E3', 'B3', 'D4', 'E4', 'B4'], 1.0); mark('S4_button', 25.5)
 
-# SPEED UP（120 → 140）：上行铜管半音爬 + 军鼓十六分 + 滚轮停三下
+# SPEED UP (120 → 140): brass climbing chromatically + sixteenth-note snare + three reel stops
 sp = SEG['SPEED']
 for k in range(0, 16):
     t = bt('SPEED', k / 4)
@@ -294,11 +294,11 @@ for k in range(0, 16):
 for i, (k, ch) in enumerate([(1, ['G3', 'B3', 'D4', 'G4']), (2, ['A3', 'C#4', 'E4', 'A4']), (3, ['B3', 'D#4', 'F#4', 'B4'])]):
     t = bt('SPEED', k); stab(t, ch, .9, g=.9); kick(t, .9); mark(f'SPEED_reel{i+1}', t)
 crash(bt('SPEED', 3), .6)
-put('bass', slap('B1', .4, .9, slide=7, slide_t=.35), bt('SPEED', 3), .8)   # 滑进 F#
+put('bass', slap('B1', .4, .9, slide=7, slide_t=.35), bt('SPEED', 3), .8)   # slide into F#
 
-# ─── 第 2 轮：F# 多利亚 140 ───
+# ─── Round 2: F# Dorian 140 ───
 F_R = 'F#4'
-# G5 DODGE（像素 · 脉冲波琶音）
+# G5 DODGE (pixel · pulse-wave arpeggio)
 t0 = SEG['G5']['t0']; stab(t0, ['F#3', 'A3', 'C#4', 'E4', 'F#4'], .95); crash(t0, .7); mark('G5_cmd', t0)
 groove('G5', 0, 6, ['F#m7', 'B9'], keys=False, v=.8)
 arp = ['F#4', 'A4', 'C#5', 'E5', 'C#5', 'A4']
@@ -315,7 +315,7 @@ s5 = SEG['S5']['t0']; groove('S5', 0, 1.5, ['F#m7'], v=.75)
 stab(s5, ['F#3', 'A3', 'C#4', 'E4', 'F#4'], .8, g=.8); stab(bt('S5', .75), ['E3', 'G#3', 'B3', 'D4', 'E4'], .8, g=.7)
 mark('S5_click_gap', 31.07)
 
-# G6 ZIP（蓝图 · 弱音小号 + 棘轮）
+# G6 ZIP (blueprint · muted trumpet + ratchet)
 t0 = SEG['G6']['t0']; stab(t0, ['F#3', 'A3', 'C#4', 'E4', 'F#4'], .9); mark('G6_cmd', t0)
 groove('G6', 0, 6, ['F#m7', 'B9'], keys=False, v=.75)
 for i, t in enumerate([32.35, 32.56, 32.78, 32.99, 33.21, 33.42]):
@@ -329,7 +329,7 @@ s6 = SEG['S6']['t0']; groove('S6', 0, 1.5, ['F#m7'], v=.75)
 stab(s6, ['F#3', 'A3', 'C#4', 'E4', 'F#4'], .8, g=.8); stab(bt('S6', .75), ['E3', 'G#3', 'B3', 'D4', 'E4'], .8, g=.7)
 mark('S6_click_gap', 34.5)
 
-# G7 SALUTE（瑞士 · 响棒 + 钢琴断奏，极简；含即时回放）
+# G7 SALUTE (Swiss · claves + staccato piano, minimal; includes the instant replay)
 t0 = SEG['G7']['t0']; stab(t0, ['F#3', 'A3', 'C#4', 'E4', 'F#4'], .9); mark('G7_cmd', t0)
 for k in range(0, 4):
     tk = bt('G7', k); kick(tk, .6) if k % 2 == 0 else snare(tk, .45)
@@ -341,22 +341,22 @@ mark('G7_swing', 35.564)
 put('color', hit('woodblock', 'c', .95), 35.993, .9, 0); put('bass', slap('F#2', .45, 1.0, slide=-7, slide_t=.4), 35.993, .9); mark('G7_bonk', 35.993)
 for i, t in enumerate([36.21, 36.42]): put('color', hit('woodblock', 'a', .6 - .15 * i), t, .6, .3); mark(f'G7_bounce{i+1}', t)
 scratch(36.421, .28); mark('G7_replay', [36.421, 37.278])
-# 回放：半速——一个低长音 + 慢放的鼓
+# replay: half speed — one low sustained note + slowed-down drums
 put('bass', slap('F#1', .8, .7), 36.45, .7)
 put('drums', lp(bend(hit('drum_kit', 'kick_drum_left', .9), -12), 3000), 36.45, 1.0)
 put('drums', lp(bend(hit('drum_kit', 'snare_1', .7), -12), 5000), 36.87, .7)
-# 恢复原速
+# back to normal speed
 for k in [6, 6.5, 7]:
     tk = bt('G7', k); hat(tk, .4); put('color', hit('claves', None, .5), tk, .35, .2)
 kick(37.278, .7); mark('G7_resume', 37.278)
 fail(37.707, [('C#3', .16), ('C3', .3)], name='G7_fail', gong=False)
 
-# S7：灯灭 → 真静音（只留心跳 + 低长音）
+# S7: lights off → true silence (only heartbeat + low sustained note left)
 s7 = SEG['S7']['t0']; kick(s7, .9); stab(s7, ['F#2', 'C3', 'F#3', 'C4'], .9, d=.08); mark('S7_lightsoff', s7)
 mark('S7_silence', [38.2, SEG['S7']['t1']])
 SIL = [(10.0, 10.5, 'G2'), (38.2, SEG['S7']['t1'], 'S7'), (45.952, 47.452, 'B4')]
 
-# BOSSIN（140 → 160）：上行铜管（比 SPEED 高一个全音）+ 定音鼓滚奏
+# BOSSIN (140 → 160): rising brass (a whole tone higher than SPEED) + timpani roll
 for k in range(0, 16):
     t = bt('BOSSIN', k / 4)
     put('drums', hit('timpani', 'drum1' if k % 2 else 'drum2', .35 + .5 * k / 16), t, .55, -.1)
@@ -372,7 +372,7 @@ bs = SEG['BOSS']
 def BB(bar, beat=0): return bt('BOSS', bar * 4 + beat)
 kick(BB(0), 1.0); crash(BB(0), .9); stab(BB(0), ['G#3', 'B3', 'D#4', 'F#4', 'G#4'], 1.0); mark('BOSS_land', BB(0))
 groove('BOSS', 0, 12, ['G#m7', 'Emaj7', 'F#'], v=.95, hatop=True)
-for bar in range(0, 3):   # 铜管反拍强奏
+for bar in range(0, 3):   # brass offbeat stabs
     for beat in [1.5, 3.5] if bar < 2 else [1.5]:
         stab(BB(bar, beat), CH[['G#m7', 'Emaj7', 'F#'][bar % 3]][0][-4:], .85, g=.7)
 for beat in range(4): hat(BB(1, beat), .6, op=True); mark(f'BOSS_cloud{beat+1}', BB(1, beat))
@@ -381,7 +381,7 @@ put('color', square('G#4', .3, .5, slide=12), 44.83 - .3 + .05, .5, .2); mark('B
 put('color', square('G#5', .3, .5, slide=-14), 45.2, .5, .2); put('color', bpf(RNG.standard_normal(int(.12 * SR)), 300, 2000).astype(np.float32) * .3, 45.35, .5, .2); mark('BOSS_err', 45.2)
 mark('BOSS_silence', [45.952, 47.452])
 guqin_harm(46.0, 'E5'); guqin_slide(46.7, 'A3', 2); guqin_slide(47.08, 'C4', 3); mark('BOSS_dust', 46.0); mark('BOSS_ah1', 46.7); mark('BOSS_ah2', 47.08)
-# B5 ACHOO：A 小调
+# B5 ACHOO: A minor
 kick(BB(4), 1.0); crash(BB(4), 1.0); put('drums', hit('bass_drum', None, 1.0), BB(4), .8); stab(BB(4), ['A3', 'C4', 'E4', 'G4', 'A4'], 1.0); mark('BOSS_achoo', BB(4))
 for i, p in enumerate(['A4', 'C5', 'E5', 'A5']):
     t = BB(4, i); blow(t, p, .3 if i < 3 else .45, .9, .6, .15); blow(t, m(p) - 12, .3, .85, .4, -.2, 'trombone_stac'); put('brass', note('alto_sax', m(p) - 12, .3, .7), t - PRE, .3, -.05)
@@ -399,18 +399,18 @@ groove('BOSS', 28, 30, ['Am7'], v=.8)
 stab(52.7, ['F3', 'A3', 'C4', 'E4', 'A4'], .95); kick(52.7, .9); crash(52.7, .6); mark('BOSS_clear', 52.7)
 mark('BOSS_pause', [53.2, 53.452])
 
-# RESULT：A 大调舞台主题
+# RESULT: stage theme in A major
 rs = SEG['RESULT']['t0']
 kick(rs, .9); crash(rs, .8); stab(rs, ['A3', 'C#4', 'E4', 'A4'], .9); mark('RESULT_in', rs)
 groove('RESULT', 0, 10, ['A', 'D/A', 'E7', 'A'], v=.8)
 riff('RESULT', 0, trans=5, v=.7, g=.55, upto=3)
 riff('RESULT', 5 - 0, trans=5, v=.75, g=.6, upto=8)
 for k in [1, 1.5, 2.5, 3.5]: put('keys', epiano(CH['A'][0], .25, .45), bt('RESULT', k), .45, .2)
-# 53.8–55.3 旁白：铜管让位（只剩律动）
+# 53.8–55.3 voice-over: brass steps aside (only the groove left)
 t = bt('RESULT', 7); stab(t, ['A3', 'C#4', 'E4', 'A4', 'C#5'], .95); put('jingles', note('glockenspiel', 'E7', .8, .7), t, .35, .3); mark('RESULT_salute', t)
 put('jingles', note('glockenspiel', 'A7', .9, .75), 56.45, .35, .35); mark('RESULT_ding', 56.45)
 
-# END：最后一个大和弦 + 小尾巴
+# END: one last big chord + a little tag
 es = SEG['END']['t0']
 kick(es, 1.0); crash(es, .8); put('drums', hit('bass_drum', None, .9), es, .7)
 for p in ['A3', 'C#4', 'F#4', 'B4', 'E5']: put('brass', note('trumpet' if m(p) >= 64 else 'trombone', p, 1.6, .75), es - PRE, .32, .1)
@@ -421,7 +421,7 @@ mark('END_chord', es)
 put('bass', slap('A2', .35, .95, slide=12, slide_t=.25), 59.4, .9); put('drums', lp(hit('drum_kit', 'snare_1', .5), 8000), 59.4 + .3, .4)
 mark('END_button', 59.4)
 
-# ─── 真静音：鼓/贝斯/铜管/电钢琴在区间内清零（10ms 渐变），只留 color 里的心跳 / 古琴 / 低长音 ───
+# ─── True silence: drums/bass/brass/electric piano zeroed inside the ranges (10ms ramps), only the heartbeat / guqin / low sustained note in color remain ───
 def gate(stems, a, b, fade=.01):
     ia, ib, f = int(a * SR), int(b * SR), int(fade * SR)
     g = np.ones(N, np.float32); g[ia:ib] = 0
@@ -431,7 +431,7 @@ def gate(stems, a, b, fade=.01):
 gate(['drums', 'bass', 'brass', 'keys', 'jingles'], 10.0, 10.5)
 gate(['drums', 'bass', 'brass', 'keys', 'jingles', 'color'], 38.2, SEG['S7']['t1'])
 gate(['drums', 'bass', 'brass', 'keys', 'jingles', 'color'], 45.952, 47.452)
-# 允许的东西（加在静音之后）
+# what is allowed through (added after the silencing)
 for k in range(1, 4): heartbeat(bt('S7', k), .9)
 heartbeat(bt('S7', 0) + .12, .8)
 dn = int((SEG['S7']['t1'] - 38.2) * SR); tt = np.arange(dn) / SR
@@ -439,14 +439,14 @@ drone = (np.sin(2 * np.pi * 46.25 * tt) + .3 * np.sin(2 * np.pi * 92.5 * tt)) * 
 put('color', drone.astype(np.float32), 38.2, 1.0)
 for k in range(0, 4): heartbeat(bt('BOSS', 12 + k), .9)
 guqin_harm(46.0, 'E5'); guqin_slide(46.7, 'A3', 2); guqin_slide(47.08, 'C4', 3)
-# G2 静音区：只留古琴余音（古琴已在 color，未被门掉）
-# 回放段的鼓/贝斯变半速：已单独写；把回放区间里的常规律动压低
+# G2 silent zone: only the guqin's decay remains (the guqin is already in color, not gated out)
+# drums/bass at half speed in the replay segment: written separately; turn down the regular groove inside the replay range
 
-# ─── 混合 ───
+# ─── Mix ───
 GAIN = {'drums': 1.0, 'bass': .5, 'brass': 1.15, 'keys': .95, 'color': .85, 'jingles': 1.0}
 mix = sum(bus[k] * GAIN[k] for k in STEMS)
 mix = lp(mix.T, 14000, 4).T.astype(np.float32)
-pk = np.percentile(np.abs(mix), 99.99) / 1.35; mix *= .62 / max(pk, 1e-6)   # ×1.35 再进限幅 ≈ −16.5 LUFS
+pk = np.percentile(np.abs(mix), 99.99) / 1.35; mix *= .62 / max(pk, 1e-6)   # ×1.35 then into the limiter ≈ −16.5 LUFS
 mix = np.stack([limit(mix[:, 0], .88), limit(mix[:, 1], .88)], 1)
 fo = int(.4 * SR); mix[-fo:] *= np.linspace(1, 0, fo)[:, None]
 mix = mix[:N].astype(np.float32)

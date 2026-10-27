@@ -1,4 +1,4 @@
-// 速度网格 + 音符表 → timeline.json（配乐 / 混音 / 自检共用）
+// tempo grid + note tables → timeline.json (shared by score / mix / self-check)
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import * as T from '../timeline.js';
 const D = path.dirname(path.dirname(fileURLToPath(import.meta.url)));

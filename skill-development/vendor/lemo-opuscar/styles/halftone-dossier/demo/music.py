@@ -1,8 +1,8 @@
-# 《胖橘案卷》配乐 + 音效：纯代码合成，120 BPM，一小节 = 2 秒
+# Score + sound effects for 《胖橘案卷》 ("The Fat Orange Dossier"): synthesized purely in code, 120 BPM, one bar = 2 seconds
 import numpy as np
 from scipy.signal import lfilter, butter
 import wave, sys, os
-# 用法：python music.py [输出.wav]   默认写到本脚本旁的 music.wav
+# usage: python music.py [output.wav]   writes music.wav next to this script by default
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'music.wav')
 
 SR = 44100
@@ -39,7 +39,7 @@ def hp(x, fc, order=2):
 def bp(x, lo, hi, order=2):
     b, a = butter(order, [lo / (SR / 2), hi / (SR / 2)], 'band'); return lfilter(b, a, x)
 
-# ---------- 乐器 ----------
+# ---------- instruments ----------
 def kick(g=1.0):
     n = int(0.35 * SR); t = np.arange(n) / SR
     f = 48 + 110 * np.exp(-t * 28)
@@ -69,7 +69,7 @@ def hat(open_=False):
     return hp(rng.standard_normal(n), 7000) * np.exp(-t * (18 if open_ else 90)) * 0.35
 
 def pluck(m, dur=0.35, bright=1.0):
-    # 木琴/马林巴感：基频 + 4 倍泛音快速衰减
+    # xylophone/marimba feel: fundamental + 4× overtone with fast decay
     n = int(dur * SR); t = np.arange(n) / SR; f = mtof(m)
     s = (np.sin(2 * np.pi * f * t) * np.exp(-t * 7)
          + 0.35 * bright * np.sin(2 * np.pi * f * 3.99 * t) * np.exp(-t * 30)
@@ -77,7 +77,7 @@ def pluck(m, dur=0.35, bright=1.0):
     return s * np.minimum(1, t / 0.002)
 
 def bell(m, dur=1.6):
-    # 八音盒
+    # music box
     n = int(dur * SR); t = np.arange(n) / SR; f = mtof(m)
     s = (np.sin(2 * np.pi * f * t) * np.exp(-t * 2.6)
          + 0.4 * np.sin(2 * np.pi * f * 2.76 * t) * np.exp(-t * 6)
@@ -102,12 +102,12 @@ def pad(ms, dur):
         f = mtof(m)
         for det in (-0.12, 0.12):
             ph = 2 * np.pi * f * (1 + det / 100) * t
-            s += 2 / np.pi * np.arcsin(np.sin(ph))  # 三角波
+            s += 2 / np.pi * np.arcsin(np.sin(ph))  # triangle wave
     s = lp(s / (len(ms) * 2), 2200)
     a = np.minimum(1, t / 0.08); r = np.minimum(1, (dur - t) / 0.15)
     return s * a * np.clip(r, 0, 1)
 
-# ---------- 音效 ----------
+# ---------- sound effects ----------
 def stamp(big=False):
     n = int(0.9 * SR); t = np.arange(n) / SR
     f = 40 + 90 * np.exp(-t * 18)
@@ -179,7 +179,7 @@ def meow(dur=0.5, f0=640, gain=0.6):
     n = int(dur * SR); t = np.arange(n) / SR; p = t / dur
     f = f0 * (0.9 + 0.45 * np.sin(np.pi * np.clip(p * 1.25, 0, 1)) - 0.25 * p) * (1 + 0.012 * np.sin(2 * np.pi * 6 * t))
     ph = 2 * np.pi * np.cumsum(f) / SR
-    # 共振峰从 /i/ → /a/ → /u/ 滑动
+    # formants glide /i/ → /a/ → /u/
     F1 = np.interp(p, [0, .35, 1], [350, 850, 400]); F2 = np.interp(p, [0, .35, 1], [2300, 1400, 900])
     s = np.zeros(n)
     for h in range(1, 16):
@@ -191,14 +191,14 @@ def meow(dur=0.5, f0=640, gain=0.6):
     return s / 6 * e * gain
 
 def roll(t0, t1):
-    # 军鼓滚奏，渐快 + 渐强
+    # snare roll, accelerando + crescendo
     t = t0
     while t < t1:
         p = (t - t0) / (t1 - t0)
         add(snare(), t, 0.15 + 0.5 * p, pan=rng.uniform(-.2, .2))
         t += 0.125 * (1 - p) + 0.03 * p
 
-# ---------- 编曲 ----------
+# ---------- arrangement ----------
 C, Am, F, G, E7 = [60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59, 62]
 MEL = {
     'C':  [72, 0, 76, 79, 81, 79, 76, 0],
@@ -210,7 +210,7 @@ MEL = {
     'F2': [77, 0, 81, 84, 86, 84, 81, 77],
     'G2': [79, 81, 83, 86, 0, 83, 86, 0],
 }
-# 小节 → (和弦, 旋律, 模式)
+# bar → (chord, melody, mode)
 PLAN = {
     0: (C, 'C', 'intro'), 1: (Am, 'Am', 'intro'),
     2: (F, 'F', 'full'), 3: (G, 'G', 'full'), 4: (C, 'C2', 'full'), 5: (Am, 'Am2', 'full'),
@@ -227,7 +227,7 @@ for b, (ch, mel, mode) in PLAN.items():
     root = ch[0] - 12 if ch[0] >= 55 else ch[0]
     root = root - 12 if root > 50 else root
     if mode in ('intro', 'full', 'drop'):
-        start_beat = 2 if mode == 'drop' else 0  # 结论小节前半留白
+        start_beat = 2 if mode == 'drop' else 0  # first half of the verdict bar left empty
         for k in range(start_beat, 4):
             add(kick(), t0 + k * BEAT, 0.9)
         if mode != 'intro':
@@ -248,9 +248,9 @@ for b, (ch, mel, mode) in PLAN.items():
             for k, m in enumerate(MEL[mel]):
                 if m and k >= start_beat * 2:
                     add(pluck(m), t0 + k * BEAT / 2, 0.32, pan=0.2 if k % 2 else -0.2)
-                    add(pluck(m + 12, bright=0.5), t0 + k * BEAT / 2 + 0.25 * 0 + 0.18, 0.06, 0.6)  # 轻回声
+                    add(pluck(m + 12, bright=0.5), t0 + k * BEAT / 2 + 0.25 * 0 + 0.18, 0.06, 0.6)  # light echo
     elif mode == 'sneak':
-        # 深夜跑酷：拨弦 + 响指，蹑手蹑脚
+        # late-night parkour: plucks + finger snaps, tiptoeing
         line = [45, 0, 48, 0, 49, 50, 0, 0] if b == 6 else [52, 0, 51, 50, 49, 0, 47, 0]
         for k, m in enumerate(line):
             if m: add(pizz(m), t0 + k * BEAT / 2, 0.8)
@@ -275,7 +275,7 @@ for b, (ch, mel, mode) in PLAN.items():
         for k, m in enumerate([72, 76, 79, 84, 88]):
             add(bell(m, 2.2), t0 + k * 0.035, 0.2, pan=-0.4 + 0.2 * k)
 
-# ---------- 音效时间表（与画面 index.html 对齐） ----------
+# ---------- sound-effect timetable (aligned with the picture in index.html) ----------
 for i in range(6): add(pop(500 + 90 * i), 0.0 + i * 0.25, 0.25)
 add(boing(260, 620), 1.5, 0.5)
 add(whoosh(0.4), 1.8, 0.35)
@@ -309,7 +309,7 @@ add(stamp(), 26.8, 0.4)
 add(pop(1100), 27.3, 0.2)
 add(meow(0.55, 560, 0.45), 29.0, 0.6)
 
-# ---------- 总线：轻压缩 + 限幅 + 淡出 ----------
+# ---------- bus: light compression + limiting + fade-out ----------
 mix = np.stack([L, R])
 t = np.arange(N) / SR
 fade = np.clip((DUR - t) / 1.2, 0, 1)

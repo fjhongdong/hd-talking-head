@@ -1,7 +1,7 @@
-// font.js — 原创可变宽像素字体：大写高 7、x 高 5、降部 2，行高 10；逐字打印用
+// font.js — original variable-width pixel font: cap height 7, x-height 5, descender 2, line height 10; used for letter-by-letter typing
 const G = {};
 const def = (ch, ...rows) => { G[ch] = rows; };
-// 大写
+// Uppercase
 def('A', '.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#');
 def('B', '####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.');
 def('C', '.###.', '#...#', '#....', '#....', '#....', '#...#', '.###.');
@@ -28,7 +28,7 @@ def('W', '#...#', '#...#', '#...#', '#.#.#', '#.#.#', '##.##', '#...#');
 def('X', '#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#');
 def('Y', '#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..');
 def('Z', '#####', '....#', '...#.', '..#..', '.#...', '#....', '#####');
-// 小写（前两行空 = x 高 5；g j p q y 带 2 行降部）
+// Lowercase (first two rows empty = x-height 5; g j p q y have a 2-row descender)
 def('a', '....', '....', '.##.', '...#', '.###', '#..#', '.###');
 def('b', '#...', '#...', '###.', '#..#', '#..#', '#..#', '###.');
 def('c', '...', '...', '.##', '#..', '#..', '#..', '.##');
@@ -55,7 +55,7 @@ def('w', '.....', '.....', '#...#', '#...#', '#.#.#', '#.#.#', '.#.#.');
 def('x', '....', '....', '#..#', '#..#', '.##.', '#..#', '#..#');
 def('y', '....', '....', '#..#', '#..#', '#..#', '#..#', '.###', '...#', '.##.');
 def('z', '....', '....', '####', '...#', '.##.', '#...', '####');
-// 数字
+// Digits
 def('0', '.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.');
 def('1', '.#.', '##.', '.#.', '.#.', '.#.', '.#.', '###');
 def('2', '.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####');
@@ -66,7 +66,7 @@ def('6', '.###.', '#....', '#....', '####.', '#...#', '#...#', '.###.');
 def('7', '#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...');
 def('8', '.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.');
 def('9', '.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.');
-// 标点与符号
+// Punctuation and symbols
 def('.', '.', '.', '.', '.', '.', '.', '#');
 def(',', '..', '..', '..', '..', '..', '.#', '.#', '#.');
 def('!', '#', '#', '#', '#', '#', '.', '#');
@@ -91,7 +91,7 @@ export const LINE_H = 10;
 export const glyphW = ch => (G[ch] || G['?'])[0].length;
 export function textW(s, sc = 1) { let w = 0; for (const ch of s) w += (glyphW(ch) + 1) * sc; return Math.max(0, w - sc); }
 
-// 画字符串；col 字色，shadow 投影色（右下 1 px），sc 缩放；返回右端 x
+// Draw a string; col = text colour, shadow = drop-shadow colour (1 px down-right), sc = scale; returns the right-edge x
 export function text(fb, s, x0, y0, col, shadow = null, sc = 1) {
   let x = x0;
   for (const ch of s) {
@@ -104,12 +104,12 @@ export function text(fb, s, x0, y0, col, shadow = null, sc = 1) {
   }
   return x;
 }
-// 带描边的大字（片名）：outline 先画 8 邻域，再画填充（col 可为按行函数做渐变）
+// Large outlined text (title): outline first draws the 8 neighbours, then the fill (col can be a per-row function for a gradient)
 export function textOutlined(fb, s, x0, y0, col, outline, sc = 2) {
   for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1], [0, 2], [1, 2], [-1, 2]]) text(fb, s, x0 + dx, y0 + dy, outline, null, sc);
   return text(fb, s, x0, y0, col, null, sc);
 }
-// 自动换行（按像素宽度）
+// Word wrap (by pixel width)
 export function wrap(s, maxW) {
   const words = s.split(' '), lines = []; let cur = '';
   for (const w of words) { const t = cur ? cur + ' ' + w : w; if (textW(t) > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }

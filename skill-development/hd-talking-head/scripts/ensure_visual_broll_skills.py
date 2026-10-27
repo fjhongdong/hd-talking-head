@@ -79,7 +79,7 @@ SOURCES = {
     },
     "lemo-opuscar": {
         "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
-        "commit": "b5e8ef93930b6d828f352055a689320f138237b1",
+        "commit": "413a6bd6d78ebd3bdd5abaec9538a26867f890df",
         "files": ("plugin/skills/lemo-opuscar/SKILL.md", "AGENTS.md",
                   "DIRECTOR.md", "TECHNIQUE.md", "styles/README.md",
                   "core/render/video.mjs", "core/lib.js", "package-lock.json"),

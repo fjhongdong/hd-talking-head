@@ -1,4 +1,4 @@
-"""成片 whisper 抽查：从 mp4 里按旁白时间切片转写，并算 300–4000 Hz 频段的人声/背景 SNR。
+"""Whisper spot-check of the finished film: slices the mp4 at the narration times and transcribes them, and computes the voice/background SNR in the 300–4000 Hz band.
 python styles/dark-keynote/demo/tools/final_asr.py styles/dark-keynote/dark-keynote.mp4"""
 import sys, os, json, re, subprocess, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel

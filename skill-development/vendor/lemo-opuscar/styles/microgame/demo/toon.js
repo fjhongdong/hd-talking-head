@@ -1,4 +1,4 @@
-// "家"画风（主持人舞台）：粗描边扁平卡通 + 硬边阴影。所有角色/舞台/UI 共用。
+// "Home" look (the host's stage): thick-outline flat cartoon + hard-edged shadows. Shared by all characters / stage / UI.
 export const P = {
   ink: '#1a1030', mag: '#ff2e88', magD: '#c3136a', vio: '#6b2bd9', vioD: '#4a1aa6', deep: '#2a0f5c', night: '#170838',
   gold: '#ffc928', goldD: '#e08a00', goldL: '#fff0a0', dial: '#fff6de', dialD: '#f0dcb0',
@@ -8,12 +8,12 @@ export const P = {
   glass: 'rgba(170,240,255,0.16)', gray: '#8a84a3', grayD: '#5c5577',
 };
 
-// 当前画布与"屏幕线宽→局部线宽"换算：角色在 scale s 下画，线宽 = LW/s，屏幕上恒定
+// Current canvas and the "screen line width → local line width" conversion: characters are drawn at scale s, line width = LW/s, so it stays constant on screen
 export const K = { g: null, s: 1, lw: 7 };
 export const setCtx = g => { K.g = g; };
 export const lw = (px = K.lw) => px / K.s;
 
-// 一块"零件"：阴影色打底 → 裁剪内把形状往左上挪 sh 再填亮色（剩下右下月牙 = 硬阴影）→ 描边
+// One "part": fill with the shadow colour → inside a clip, shift the shape up-left by sh and fill the light colour (the crescent left at bottom-right = hard shadow) → outline
 export function part(path, fill, shade, o = {}) {
   const g = K.g, sh = o.sh ?? 9;
   g.save();
@@ -28,7 +28,7 @@ export function part(path, fill, shade, o = {}) {
   if (o.stroke !== false) { g.beginPath(); path(g); g.lineWidth = lw(o.lw); g.strokeStyle = o.stroke || P.ink; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke(); }
   g.restore();
 }
-// 描边管子（手臂/腿）：先粗墨线再细填色线
+// Outlined tube (arms/legs): thick ink line first, then a thinner fill-colour line
 export function tube(pts, w, fill, o = {}) {
   const g = K.g;
   const path = () => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); };
@@ -47,7 +47,7 @@ export const circ = (x, y, r) => g => g.arc(x, y, r, 0, Math.PI * 2);
 export const ell = (x, y, rx, ry, rot = 0) => g => g.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot, 0, Math.PI * 2);
 export const rrect = (x, y, w, h, r) => g => { if (w < 0) { x += w; w = -w; } g.roundRect(x, y, w, h, r); };
 export const poly = pts => g => { g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); };
-// 平滑闭合曲线（Catmull-Rom → 贝塞尔）
+// Smooth closed curve (Catmull-Rom → Bézier)
 export const smooth = (pts, closed = true) => g => {
   const n = pts.length, p = i => pts[closed ? (i + n) % n : Math.max(0, Math.min(n - 1, i))];
   g.moveTo(p(0)[0], p(0)[1]);
@@ -57,13 +57,13 @@ export const smooth = (pts, closed = true) => g => {
   }
   if (closed) g.closePath();
 };
-// 两段肢体：肩点、两段长度、角度（0 = 向下，正 = 向前/右转），返回 [肩, 肘, 手]
+// Two-segment limb: shoulder point, two segment lengths, angles (0 = straight down, positive = forward/turning right), returns [shoulder, elbow, hand]
 export function limb(x, y, l1, l2, a1, a2) {
   const ex = x + Math.sin(a1) * l1, ey = y + Math.cos(a1) * l1;
   const a = a1 + a2, hx = ex + Math.sin(a) * l2, hy = ey + Math.cos(a) * l2;
   return [[x, y], [ex, ey], [hx, hy], a];
 }
-// 带描边的粗体字（UI、命令词）
+// Outlined bold text (UI, command words)
 export function outlined(g, txt, x, y, o = {}) {
   g.save();
   g.font = o.font || '80px Titan'; g.textAlign = o.align || 'center'; g.textBaseline = o.base || 'alphabetic';

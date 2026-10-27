@@ -3,3 +3,4 @@
 kokoro-onnx
 edge-tts
 faster-whisper
+av<19   # av 19 dropped an option faster-whisper 1.2 passes when it opens a file (TypeError: metadata_errors)

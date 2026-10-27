@@ -1,5 +1,5 @@
-// film.js · 场景 demo：户外步道指南（丝印旅行海报）
-// 时间线完全由 content.json 推出来（1–4 条步道都成立），100 BPM，一拍 0.6 s
+// film.js · scene demo: an outdoor trail guide (silkscreen travel poster)
+// The timeline is derived entirely from content.json (works for 1–4 trails), 100 BPM, one beat = 0.6 s
 import { makeTextures, squeegee, screenFrame, wipeFront, wipeRegion, ink, rectPath, polyPath, circlePath, ringPath, clamp, lerp, mix, hash, mulberry, paperSheet, inkFinish } from './engine/silk.js';
 import { buildPoster, drawPoster, drawBanner, swapFrontLine, pickInk, BANNER_ART, BANNER_BANDS, PW, PH, ART, BW, BH, readTime } from './engine/poster.js';
 
@@ -12,9 +12,9 @@ const seg = (t, a, b) => clamp((t - a) / (b - a));
 const W = 1920, H = 1080;
 
 let C, T, POS, TL, ctx;
-// 世界坐标（印刷台）：横幅居中在原点，海报在下方
-const BAN = [-900, -220];          // 横幅左上角（1800×440，中心在原点）
-const PO = [-500, 420];            // 海报左上角（印刷台上）
+// World coordinates (the print table): banner centred on the origin, posters below it
+const BAN = [-900, -220];          // banner top-left (1800×440, centred on the origin)
+const PO = [-500, 420];            // poster top-left (on the print table)
 
 export function setup(content, canvas) {
   C = content; ctx = canvas.getContext('2d');
@@ -25,11 +25,11 @@ export function setup(content, canvas) {
 }
 const pal = (key) => C.palette[key] || C.palette.noon;
 
-// ---------------- 时间线 ----------------
+// ---------------- Timeline ----------------
 function timeline() {
   const n = POS.length, secs = [], ev = [];
   const E = (t, type, o = {}) => ev.push({ t: +t.toFixed(3), type, ...o });
-  // S1 横幅 + 片名
+  // S1 banner + title
   const s1 = { kind: 'banner', t0: 0, sky: [-.45, 1.0], lift: 1.0, title: [1.2, 1.5], footer: [1.35, 1.6], pull: [1.0, 1.65], t1: 8 * B };
   E(0, 'squeegee', { dur: 1.0, ink: 'sky' }); E(1.0, 'lift'); E(1.2, 'squeegee', { dur: .3, ink: 'title' }); E(1.35, 'squeegee', { dur: .25, ink: 'footer' });
   E(1.5, 'title'); secs.push(s1);
@@ -55,7 +55,7 @@ function timeline() {
       sec.items = P.items.map((_, k) => s + 10 * B + k * B / 2);
       sec.pals = [...new Set([POS[i - 1] ? POS[i - 1].trail.time_of_day : 'noon', 'golden', P.trail.time_of_day])].filter(k => C.palette[k]);
     }
-    // ---- 事件（音效 / 配乐卡点都从这里取） ----
+    // ---- events (sound-effect and score sync points are all taken from here) ----
     if (mode === 'press') { E(sec.tilt[0], 'tilt', { i }); ['sky', 'far', 'mid', 'near'].forEach((k, j) => E(sec.pulls[k], 'pull', { i, layer: k, n: j, dur: sec.pullDur })); E(sec.lift, 'lift', { i }); }
     else if (mode === 'quick') { E(s, 'wipe', { i }); ['sky', 'far', 'mid', 'near'].forEach((k, j) => E(sec.pulls[k], 'pull', { i, layer: k, n: j, dur: sec.pullDur, quick: 1 })); E(sec.back[0], 'pullback', { i }); }
     else {
@@ -71,13 +71,13 @@ function timeline() {
     sec.t1 = Math.ceil((need + .05) / B) * B + (mode === 'ascent' ? 0 : B);
     secs.push(sec); s = sec.t1;
   });
-  // S5 墙面落版
+  // S5 posters go up on the wall
   const foot = readTime(C.footer);
   const wall = { kind: 'wall', t0: s, pull: [s, s + 2 * B], t1: 0 };
   wall.hold0 = s + 2 * B; wall.t1 = wall.hold0 + Math.ceil(Math.max(3.6, foot) / B) * B;
   secs.push(wall);
   const end = { kind: 'end', t0: wall.t1, t1: wall.t1 + 6 * B }; secs.push(end);
-  // 快印段结尾的静音（进入签名段之前）
+  // silence at the end of the quick-print section (before the signature section)
   const asc = secs.find(q => q.kind === 'ascent'); if (asc) E(asc.t0 - 2 * B, 'silence', { dur: 2 * B, pre: 1 });
   E(wall.t0, 'wallpull'); E(wall.hold0, 'land', { dur: wall.t1 - wall.hold0 }); E(end.t0, 'endcard', { dur: end.t1 - end.t0 }); E(end.t0 + .5, 'endpull', { dur: .3 });
   secs.forEach(q => E(q.t0, 'section', { kind: q.kind, t1: q.t1, time_of_day: q.P ? q.P.trail.time_of_day : null }));
@@ -85,10 +85,10 @@ function timeline() {
   return { secs, ev, dur: end.t1 };
 }
 
-// ---------------- 相机 ----------------
+// ---------------- Camera ----------------
 function cam(cx, cy, z, rot = 0) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(W / 2, H / 2); if (rot) ctx.rotate(rot); ctx.scale(z, z); ctx.translate(-cx, -cy); }
 
-// ---------------- 印刷台：旧木工作台（平涂木板 + 木纹 + 干掉的墨渍 + 胶带痕） ----------------
+// ---------------- Print table: old wooden workbench (flat boards + wood grain + dried ink stains + tape marks) ----------------
 const TABLE = '#6B4E36';
 let TABLE_CACHE = null;
 function buildTable() {
@@ -104,7 +104,7 @@ function buildTable() {
     for (let q = 0; q < 3; q++) { const kx = x0 + r() * (x1 - x0), ky = y + 30 + r() * (ph - 60); knots.ellipse(kx, ky, 22 + r() * 18, 7 + r() * 5, 0, 0, 7); }
     planks.push({ y, color: tones[k % tones.length], grain, knots });
   }
-  // 干墨渍：不规则的平涂块（印刷时溢出的墨），颜色取自本片的调色板
+  // dried ink stains: irregular flat blobs (ink spilled while printing), colours taken from this film's palette
   const pals = Object.keys(C.palette).filter(k => C.palette[k] && C.palette[k].sky2).map(k => C.palette[k]);
   const avoid = (x, y) => (x > PO[0] - 60 && x < PO[0] + PW + 60 && y > PO[1] - 60 && y < PO[1] + PH + 60) || (x > BAN[0] - 60 && x < BAN[0] + BW + 60 && y > BAN[1] - 60 && y < BAN[1] + BH + 60);
   for (let i = 0; i < 12; i++) {
@@ -114,11 +114,11 @@ function buildTable() {
     for (let j = 0; j < m; j++) { const a = j / m * 6.283, rr = R * (.65 + .5 * r()) * (j % 3 === 0 ? 1.3 : 1); pts.push([x + Math.cos(a) * rr * 1.25, y + Math.sin(a) * rr * .8]); }
     const path = new Path2D(); pts.forEach((q, j) => { const nq = pts[(j + 1) % m]; if (!j) path.moveTo((q[0] + nq[0]) / 2, (q[1] + nq[1]) / 2); else path.quadraticCurveTo(q[0], q[1], (q[0] + nq[0]) / 2, (q[1] + nq[1]) / 2); });
     path.closePath();
-    if (r() < .45) { const d = new Path2D(); d.arc(x + R * 1.6, y + (r() - .5) * R, 4 + r() * 6, 0, 7); path.addPath(d); }   // 甩出的墨点
-    if (r() < .35) { const sm = new Path2D(); const sx = x - R * 2.4; sm.rect(sx, y - 5, R * 1.8, 10 + r() * 6); path.addPath(sm); }   // 刮刀抹痕
+    if (r() < .45) { const d = new Path2D(); d.arc(x + R * 1.6, y + (r() - .5) * R, 4 + r() * 6, 0, 7); path.addPath(d); }   // flicked ink dots
+    if (r() < .35) { const sm = new Path2D(); const sx = x - R * 2.4; sm.rect(sx, y - 5, R * 1.8, 10 + r() * 6); path.addPath(sm); }   // squeegee smear
     stains.push({ path, col: mix(col, TABLE, .45), a: .7 });
   }
-  // 胶带痕：撕下后留下的旧胶带条（浅米色、边缘不齐）
+  // tape marks: old tape strips left after peeling (light beige, ragged edges)
   for (let i = 0; i < 9; i++) {
     let x, y, n = 0; do { x = x0 + 300 + r() * (x1 - x0 - 600); y = y0 + 200 + r() * (y1 - y0 - 400); n++; } while (avoid(x, y) && n < 30);
     tapes.push({ x, y, w: 60 + r() * 120, h: 22 + r() * 8, a: (r() - .5) * .6, torn: r() < .6, dirty: r() < .5 });
@@ -131,7 +131,7 @@ function table() {
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = TABLE; ctx.fillRect(0, 0, W, H); ctx.restore();
   for (const p of TB.planks) {
     ctx.fillStyle = p.color; ctx.fillRect(TB.x0, p.y, TB.x1 - TB.x0, TB.ph);
-    ctx.fillStyle = 'rgba(35,22,12,.55)'; ctx.fillRect(TB.x0, p.y, TB.x1 - TB.x0, 5);           // 板缝
+    ctx.fillStyle = 'rgba(35,22,12,.55)'; ctx.fillRect(TB.x0, p.y, TB.x1 - TB.x0, 5);           // board seams
     ctx.fillStyle = 'rgba(255,230,190,.07)'; ctx.fillRect(TB.x0, p.y + 5, TB.x1 - TB.x0, 3);
     ctx.save(); ctx.strokeStyle = 'rgba(40,24,12,.22)'; ctx.lineWidth = 2; ctx.stroke(p.grain); ctx.fillStyle = 'rgba(40,24,12,.25)'; ctx.fill(p.knots); ctx.restore();
   }
@@ -156,16 +156,16 @@ function regTape(x, y, w, h) {
 }
 function sheetShadow(x, y, w, h, a = .3) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#000'; ctx.fillRect(x + 8, y + 12, w, h); ctx.restore(); }
 
-// ---------------- 各段 ----------------
+// ---------------- Sections ----------------
 function banner(sec, t) {
   const p = seg(t, sec.sky[0], sec.sky[1]);
   const sqX = wipeFront([BAN[0], BAN[1], BW, BH], 'right', p, 34);
-  // 相机：先跟刮板横移（特写），刮完拉开看整条横幅，随后缓推
+  // camera: first tracks sideways with the squeegee (close-up), pulls back to the whole banner once the pull ends, then slowly pushes in
   const k = eo(seg(t, sec.pull[0], sec.pull[1]));
-  const zc = lerp(1.95, 1.8, ss(seg(t, 0, 1.0))), zw = .96;         // 开场特写 → 横幅撑满画宽（边距约 5%），占画高约 40%
+  const zc = lerp(1.95, 1.8, ss(seg(t, 0, 1.0))), zw = .96;         // opening close-up → banner fills the frame width (about 5% margins), about 40% of frame height
   const cxClose = sqX - 150, cyClose = 0;
   let z = lerp(zc, zw, k), cx = lerp(cxClose, 0, k), cy = lerp(cyClose, 0, k);
-  z *= 1 + .03 * ss(seg(t, 1.8, sec.t1));                 // 读片名时的缓推
+  z *= 1 + .03 * ss(seg(t, 1.8, sec.t1));                 // slow push-in while the title is read
   cam(cx, cy, z, lerp(-.03, 0, k));
   table();
   regTape(BAN[0], BAN[1], BW, BH);
@@ -173,7 +173,7 @@ function banner(sec, t) {
   ctx.save(); ctx.translate(BAN[0], BAN[1]);
   drawBanner(ctx, C, { pal: pal(C.banner_time || 'golden'), T, sky: p, title: seg(t, sec.title[0], sec.title[1]), footer: seg(t, sec.footer[0], sec.footer[1]), reg: 1 });
   ctx.restore();
-  // 湿墨反光：刚刮过的墨面在刮板后面亮一截，随刮板走、慢慢变哑
+  // wet-ink sheen: freshly pulled ink shines for a stretch behind the squeegee, travels with it and slowly goes matte
   const wet = 1 - seg(t, sec.sky[1], sec.sky[1] + .8);
   if (p > 0 && wet > 0) {
     ctx.save(); ctx.globalAlpha = wet; ctx.beginPath(); ctx.rect(BAN[0] + 14, BAN[1] + 14, Math.max(0, sqX - BAN[0] - 14), BANNER_ART[3]); ctx.clip();
@@ -185,7 +185,7 @@ function banner(sec, t) {
   const box = [BAN[0] - 90, BAN[1] - 90, BW + 180, BH + 180];
   const emu = new Path2D(); emu.rect(box[0], box[1], box[2], box[3]); emu.rect(BAN[0] + 14, BAN[1] + 14, BW - 28, BANNER_ART[3]);
   if (lift < 1) screenFrame(ctx, box, { lift: ss(lift), frame: 40, mesh: 'rgba(236,214,128,.03)', emulsion: emu, emulsionAlpha: .55, meshStep: 3.4, meshLine: 'rgba(70,60,30,.16)' });
-  // 刮板（分色刮：刀口上的墨珠按天空色带分段）
+  // squeegee (split fountain: the ink bead on the blade is segmented by the sky colour bands)
   if (t < sec.lift + .35) {
     const bp = pal(C.banner_time || 'golden');
     const up = ss(seg(t, sec.lift, sec.lift + .35));
@@ -196,7 +196,7 @@ function banner(sec, t) {
     squeegee(ctx, [x, y0], [x, y1], [1, 0], { beads: [['sky2', bp.sky2], ['sky1', bp.sky1], ['far', bp.far]].map(([k, c]) => ({ t0: tt(BAN[1] + BB[k][0] + 16), t1: tt(BAN[1] + BB[k][1]), color: c })), seed: 3, scale: 1.25, roll: sqX / 30 });
     ctx.restore();
   }
-  // 片名刮板（快速一刮，深色墨）
+  // title squeegee (one quick pull, dark ink)
   const tp = seg(t, sec.title[0], sec.title[1]);
   if (tp > 0 && tp < 1) {
     const x = wipeFront([BAN[0], BAN[1] + 20, BW, 330], 'right', tp, 40) + 12;
@@ -204,7 +204,7 @@ function banner(sec, t) {
   }
 }
 
-// 海报在印刷台上的通用绘制
+// Shared drawing of a poster on the print table
 function posterOnTable(P, st) {
   regTape(PO[0], PO[1], PW, PH);
   sheetShadow(PO[0], PO[1], PW, PH, .22);
@@ -215,7 +215,7 @@ function planeGroup(id) { return id === 'sun' ? 'sky' : ['main', 'spurA', 'spurB
 
 function press(sec, t) {
   const P = POS[sec.i], pl = pal(P.trail.time_of_day);
-  // 相机：从横幅下摇到海报全景 → 推到信息带
+  // camera: tilts down from the banner to the full poster → pushes in to the info band
   const tilt = eio(seg(t, sec.tilt[0], sec.tilt[1]));
   const push = eio(seg(t, sec.push[0], sec.push[1]));
   const full = [0, PO[1] + PH / 2 - 10, .66];
@@ -227,7 +227,7 @@ function press(sec, t) {
   if (tilt < 1) { ctx.save(); ctx.translate(BAN[0], BAN[1]); sheetShadow(0, 0, BW, BH, .25); drawBanner(ctx, C, { pal: pal(C.banner_time || 'golden'), T }); ctx.restore(); }
   const st = { pal: pl, T, prog: id => pullProg(sec, planeGroup(id), t), band: seg(t, sec.band, sec.band + .3), name: seg(t, sec.name, sec.name + .3), header: seg(t, sec.name, sec.name + .3), trail: seg(t, sec.band, sec.band + .6), items: sec.items.map(a => seg(t, a, a + .18)) };
   posterOnTable(P, st);
-  // 网版 + 刮板
+  // screen + squeegee
   const lift = seg(t, sec.lift, sec.lift + .4);
   const box = [PO[0] - 70, PO[1] - 70, PW + 140, PH + 140];
   if (lift < 1) screenFrame(ctx, box, { lift: ss(lift), frame: 44 });
@@ -241,11 +241,11 @@ function press(sec, t) {
   }
 }
 
-// 穿过近景树影的转场（屏幕空间遮挡物，颜色 = 上一张的近景墨）
+// Transition through foreground tree shadows (screen-space occluder, colour = the previous poster's near-layer ink)
 function treeWipe(t, t0, color) {
   const u = seg(t, t0 - .3, t0 + .3); if (u <= 0 || u >= 1) return;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
-  const w = W * 1.25, cxw = lerp(W + w / 2 + 120, -w / 2 - 120, ss(u)), x = cxw - w / 2;   // 中点正好盖满画面（约 1 帧），此时换下一张
+  const w = W * 1.25, cxw = lerp(W + w / 2 + 120, -w / 2 - 120, ss(u)), x = cxw - w / 2;   // at the midpoint it exactly covers the frame (about 1 frame); the next poster swaps in then
   const p = new Path2D(); p.moveTo(x, -20);
   for (let y = -20; y <= H + 20; y += 40) p.lineTo(x - 50 - 70 * hash(y * .37), y);
   for (let y = H + 20; y >= -20; y -= 40) p.lineTo(x + w + 60 + 80 * hash(y * .61 + 3), y);
@@ -257,16 +257,16 @@ function quick(sec, t) {
   const P = POS[sec.i], pl = pal(P.trail.time_of_day);
   const back = eio(seg(t, sec.back[0], sec.back[1]));
   const s = seg(t, sec.t0 - .3, sec.back[0]);
-  const close = [0, PO[1] + 400 + 40 * s, 1.25 + .04 * s];      // 整张纸宽和上沿都在画里：知道在看哪张海报，海报占画高 100%
-  const bandC = [0, PO[1] + 1300, 1.5];                          // 信息带完整入画，左右各留 ~13%
+  const close = [0, PO[1] + 400 + 40 * s, 1.25 + .04 * s];      // the full sheet width and top edge are in frame, so it's clear which poster this is; the poster fills 100% of the frame height
+  const bandC = [0, PO[1] + 1300, 1.5];                          // the info band is fully in frame, ~13% margin each side
   const cx = lerp(close[0], bandC[0], back), cy = lerp(close[1], bandC[1], back), z = lerp(close[2], bandC[2], back);
   cam(cx, cy, z); table();
   posterOnTable(P, { pal: pl, T, prog: id => pullProg(sec, planeGroup(id), t), band: seg(t, sec.band, sec.band + .25), name: seg(t, sec.name, sec.name + .3), header: seg(t, sec.far ?? sec.name, sec.name + .3), trail: seg(t, sec.band, sec.band + .5), items: sec.items.map(a => seg(t, a, a + .18)) });
 }
 
-// ---- 墙面（游客中心）：布局 ----
+// ---- Wall (visitor centre): layout ----
 function wallLayout() {
-  // 横幅（4:1）居中挂在海报上方；高度预算先保证海报上墙后数值 ≥30 px（s ≥ .47）
+  // banner (4:1) hung centred above the posters; the height budget first guarantees the values are ≥30 px once the posters are on the wall (s ≥ .47)
   const n = POS.length, gap = 54, maxW = 1700;
   const bw0 = Math.min(1150, W * .62), bh0 = BH * bw0 / BW;
   const s = Math.min((maxW - (n - 1) * gap) / n / PW, (H - 44 - bh0 - 26) / PH, .62);
@@ -282,7 +282,7 @@ function wall(t, glint = -1) {
   ctx.fillStyle = wp.groove; for (let x = -1200; x < 3200; x += 96) ctx.fillRect(x, -2000, 5, 6000);
   ctx.fillStyle = mix(wp.board, '#ffffff', .07); for (let x = -1200; x < 3200; x += 96) ctx.fillRect(x + 5, -2000, 3, 6000);
   ctx.fillStyle = wp.rail; ctx.fillRect(-2000, H - 44, 6000, 18); ctx.fillStyle = wp.groove; ctx.fillRect(-2000, H - 26, 6000, 2000);
-  // 横幅
+  // banner
   const [bx, by] = Lw.banner;
   ctx.save(); ctx.globalAlpha = .35; ctx.fillStyle = '#1a120c'; ctx.fillRect(bx + 10, by + 12, BW * Lw.bs, BH * Lw.bs); ctx.restore();
   ctx.save(); ctx.translate(bx, by); ctx.scale(Lw.bs, Lw.bs); drawBanner(ctx, C, { pal: pal(C.banner_time || 'golden'), T }); ctx.restore();
@@ -290,7 +290,7 @@ function wall(t, glint = -1) {
     const [x, y] = Lw.posters[i];
     ctx.save(); ctx.globalAlpha = .35; ctx.fillStyle = '#1a120c'; ctx.fillRect(x + 12, y + 14, Lw.pw, Lw.ph); ctx.restore();
     ctx.save(); ctx.translate(x, y); ctx.scale(Lw.s, Lw.s); drawPoster(ctx, P, { pal: pal(P.trail.time_of_day), T }); ctx.restore();
-    // 图钉
+    // push pins
     ctx.fillStyle = '#C9C2B2'; for (const dx of [18, Lw.pw - 18]) { ctx.beginPath(); ctx.arc(x + dx, y + 16, 5, 0, 7); ctx.fill(); }
   });
   return Lw;
@@ -299,14 +299,14 @@ function wall(t, glint = -1) {
 function ascent(sec, t) {
   const P = POS[sec.i], Lw = wallLayout(), [wx, wy] = Lw.posters[sec.i];
   const u = seg(t, sec.climb[0], sec.climb[1]);
-  const ue = u < .5 ? ss(u * 2) * .5 * .7 + u * .3 : .5 + (1 - Math.pow(1 - (u - .5) * 2, 2)) * .5;   // 起步缓、中段匀速、到顶减速
-  // 相机（海报单位）：谷底 → 山顶（同一镜头里升起）
+  const ue = u < .5 ? ss(u * 2) * .5 * .7 + u * .3 : .5 + (1 - Math.pow(1 - (u - .5) * 2, 2)) * .5;   // slow start, steady middle, decelerates at the top
+  // camera (poster units): valley floor → summit (rising within one shot)
   const start = [520, 800, 2.3], top = [500, 400, 2.06], band = [500, 1300, 1.72];
   let cx = lerp(start[0], top[0], ue), cy = lerp(start[1], top[1], ue), z = lerp(start[2], top[2], ue);
   const dn = eio(seg(t, sec.down[0], sec.down[1]));
   cx = lerp(cx, band[0], dn); cy = lerp(cy, band[1], dn); z = lerp(z, band[2], dn);
-  z *= 1 + .025 * ss(seg(t, sec.items[0], sec.t1));          // 读数时极慢推
-  // 各层视差：近层下沉更快；每道山梁在镜头经过它时向两侧让开，到顶后全部回位，卡嗒一声套准
+  z *= 1 + .025 * ss(seg(t, sec.items[0], sec.t1));          // very slow push-in while the numbers are read
+  // per-layer parallax: near layers sink faster; each ridge parts to the sides as the camera passes it, and at the top everything returns and clicks into register
   const settle = seg(t, sec.climb[1], sec.clack);
   const loose = 1 - ss(seg(t, sec.clack - .02, sec.clack + .04));
   const pass = { near: .12, spurC: .3, spurB: .5, spurA: .7, main: .95 };
@@ -318,12 +318,12 @@ function ascent(sec, t) {
     const jig = loose * 5 * (1 - settle * .6);
     return [(sx + jig * Math.sin(f * 9)) * loose, (dy + bump * 40 * (f - .3) + jig * Math.cos(f * 7)) * loose];
   };
-  // 换色：同一张海报随时间整体重印（中午 → 午后 → 黄昏）
+  // colour swap: the same poster is reprinted whole as time passes (noon → afternoon → dusk)
   const pals = sec.pals.map(pal); const nS = pals.length - 1;
   const swapTimes = pals.slice(1).map((_, k) => lerp(sec.climb[0], sec.climb[1], (k + 1) / (nS + 1)));
   let base = pals[0], swap = null;
   swapTimes.forEach((st, k) => { const p = seg(t, st, st + .35); if (p >= 1) base = pals[k + 1]; else if (p > 0) swap = { pal: pals[k + 1], p, dir: 'up' }; });
-  // 转成墙面坐标
+  // convert to wall coordinates
   cam(wx + cx * Lw.s, wy + cy * Lw.s, z / Lw.s);
   wall(t);
   ctx.save(); ctx.translate(wx, wy); ctx.scale(Lw.s, Lw.s);
@@ -331,10 +331,10 @@ function ascent(sec, t) {
   if (swap) swap.angle = ANG;
   const sep = loose * (settle > 0 ? 1 - .5 * settle : 1) * clamp(u * 6);
   drawPoster(ctx, P, { pal: base, T, off, reg: .35 + loose * 1.25, sep, swap, trail: clamp(u * 1.08), band: seg(t, sec.band, sec.band + .3), name: seg(t, sec.name, sec.name + .3), header: 1, items: sec.items.map(a => seg(t, a, a + .18)) });
-  // 重印换色：一把大刮板从下往上推过整张海报
-  if (swap) {                // 斜着推的大刮板：只露刀口、墨珠和一截手柄
+  // colour-swap reprint: one big squeegee pushes up across the whole poster
+  if (swap) {                // big diagonal squeegee: shows only the blade, the ink bead and a section of handle
     const [a0, a1] = swapFrontLine(swap.p, ANG), dx = a1[0] - a0[0], dy = a1[1] - a0[1], L = Math.hypot(dx, dy);
-    const nrm = [dy / L, -dx / L];                       // 前进方向（向上偏）
+    const nrm = [dy / L, -dx / L];                       // direction of travel (biased upward)
     const off2 = 26;
     squeegee(ctx, [a0[0] + nrm[0] * -off2, a0[1] + nrm[1] * -off2], [a1[0] + nrm[0] * -off2, a1[1] + nrm[1] * -off2], nrm, { color: swap.pal.sky2, scale: 1.1, seed: 11, shadow: .1, handle: .3, roll: t * 40 });
   }
@@ -348,7 +348,7 @@ function wallShot(sec, t) {
   const cx = lerp(from[0], W / 2, k), cy = lerp(from[1], H / 2, k), z = Math.exp(lerp(Math.log(from[2]), 0, k));
   cam(cx, cy, z * (1 + .012 * seg(t, sec.hold0, sec.t1)));
   wall(t);
-  // 墨层光泽：一道斜向的反光慢慢扫过三张海报（只在墨面上，很淡）
+  // ink-film sheen: a diagonal glint slowly sweeps across the three posters (only on inked areas, very faint)
   const g = seg(t, sec.hold0 + .6, sec.hold0 + 3.2);
   if (g > 0 && g < 1) {
     ctx.save(); ctx.beginPath(); Lw.posters.forEach(([x, y]) => ctx.rect(x, y, Lw.pw, Lw.ph)); ctx.rect(Lw.banner[0], Lw.banner[1], BW * Lw.bs, BH * Lw.bs); ctx.clip();
@@ -359,7 +359,7 @@ function wallShot(sec, t) {
   }
 }
 
-// 片尾：最后一刮 —— 把片尾信息印成一张横版小海报（分色刮印画面，第二刮印信息带）
+// Ending: the last pull — the closing information is printed as a small landscape poster (a split-fountain pull prints the picture, a second pull prints the info band)
 let END_CACHE = null;
 function endShapes() {
   if (END_CACHE) return END_CACHE;
@@ -375,7 +375,7 @@ function endCard(sec, t) {
   const p1 = seg(t, sec.t0, sec.t0 + .55), p2 = seg(t, sec.t0 + .5, sec.t0 + .8);
   const M = 36, ART_B = 610;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  // 纸（整张换上一张新纸，随第一刮一起出现）
+  // paper (a whole fresh sheet, appearing with the first pull)
   const c1 = wipeRegion([0, 0, W, H], 'right', p1, 3, 60, 8);
   ctx.save(); ctx.clip(c1); paperSheet(ctx, T, 0, 0, W, H, 1.1);
   ctx.save(); ctx.beginPath(); ctx.rect(M, M, W - 2 * M, ART_B - M); ctx.clip();
@@ -390,7 +390,7 @@ function endCard(sec, t) {
   ctx.restore();
   ink(ctx, { paint: (c) => { c.font = '900 118px BigShoulders'; c.letterSpacing = '3px'; c.textAlign = 'center'; c.fillText(C.title.toUpperCase(), W / 2 - 60, 300); } }, { color: pickInk([pl.sky1, pl.sky2], [pl.near, pl.mid], 3), reg: [2, -1] });
   ctx.restore();
-  // 第二刮：信息带 + 署名
+  // second pull: info band + credit
   if (p2 > 0) {
     const c2 = p2 < 1 ? wipeRegion([0, ART_B, W, H - ART_B], 'right', p2, 9, 50, 8) : null;
     ink(ctx, { path: rectPath(M, ART_B + 12, W - 2 * M, H - ART_B - 12 - M) }, { color: pl.near, clip: c2, sheen: 1 });
@@ -405,7 +405,7 @@ function endCard(sec, t) {
     } }, { color: hi, clip: c2, reg: [1.2, .6] });
   }
   inkFinish(ctx, T, 0, 0, W, H, 1.1, p1 >= 1 ? 1 : 0);
-  // 刮板
+  // squeegee
   if (p1 > 0 && p1 < 1) { const x = wipeFront([0, 0, W, H], 'right', p1, 60); const BB = [[pl.sky2, 0, .28], [pl.sky1, .28, .5], [pl.far, .5, .6]];
     squeegee(ctx, [x + 10, -40], [x + 10, H + 40], [1, 0], { beads: BB.map(([c, a, b]) => ({ t0: a + .04, t1: b, color: c })), scale: 1.6, seed: 9, roll: x / 30 }); }
   if (p2 > 0 && p2 < 1) { const x = wipeFront([0, ART_B, W, H - ART_B], 'right', p2, 50); squeegee(ctx, [x + 10, ART_B - 10], [x + 10, H + 40], [1, 0], { color: pl.near, scale: 1.4, seed: 4, roll: x / 30 }); }
@@ -420,7 +420,7 @@ export function render(t) {
   else if (sec.kind === 'ascent') ascent(sec, t);
   else if (sec.kind === 'wall') wallShot(sec, t);
   else endCard(sec, t);
-  // 段间的树影转场
+  // tree-shadow transitions between sections
   TL.secs.forEach((s, k) => { if ((s.kind === 'quick' || s.kind === 'ascent') && Math.abs(t - s.t0) < .3) { const prev = TL.secs[k - 1]; treeWipe(t, s.t0, pal(prev.P.trail.time_of_day).near); } });
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }

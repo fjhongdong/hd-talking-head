@@ -1,5 +1,5 @@
-// hologram-hud · 界面层：目标框、引线标注、滚动数字、面板、画框、字幕、背景网格、故障闪烁
-// 全部是 Canvas 2D 函数，参数化，确定性。颜色从 theme(hue, accent) 取。
+// hologram-hud · UI layer: target boxes, leader-line callouts, rolling numbers, panels, frame, subtitles, background grid, glitch flicker
+// All Canvas 2D functions, parametric, deterministic. Colours come from theme(hue, accent).
 const TAU = Math.PI * 2;
 export const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -19,14 +19,14 @@ export function theme(hue = 190, accent = 38) {
   };
 }
 
-// ---------- 背景：暗场 + 中心微光 + 远景点阵（视差） ----------
+// ---------- Background: dark field + faint central glow + distant dot grid (parallax) ----------
 export function background(ctx, W, H, T, o = {}) {
   ctx.fillStyle = T.bg0; ctx.fillRect(0, 0, W, H);
   const cx = o.cx ?? W * 0.5, cy = o.cy ?? H * 0.55;
   const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, W * 0.62);
   g.addColorStop(0, T.bg1); g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // 点阵
+  // dot grid
   const px = o.px || 0, py = o.py || 0, step = 48, a = o.alpha ?? 1;
   ctx.fillStyle = T.dim(0.16 * a);
   const ox = ((px % step) + step) % step, oy = ((py % step) + step) % step;
@@ -38,14 +38,14 @@ export function background(ctx, W, H, T, o = {}) {
   }
 }
 
-// 暗角
+// vignette
 export function vignette(ctx, W, H, k = 0.6) {
   const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.72);
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${k})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
-// ---------- 底板：深色半透明（~70%）+ 细边框 + 四角短刻，让文字永远不和线框互相干扰 ----------
+// ---------- Backing plate: dark translucent (~70%) + thin border + short corner ticks, so text never interferes with the wireframe ----------
 export function plate(ctx, T, x, y, w, h, a = 1, o = {}) {
   if (a <= 0 || w <= 0 || h <= 0) return;
   ctx.save(); ctx.globalCompositeOperation = 'source-over';
@@ -56,13 +56,13 @@ export function plate(ctx, T, x, y, w, h, a = 1, o = {}) {
   ctx.restore();
 }
 
-// ---------- 取景框：四角 + 边缘刻度 + 顶部状态 ----------
+// ---------- Viewfinder frame: corners + edge ticks + top status ----------
 export function chrome(ctx, W, H, T, o = {}) {
   const a = o.alpha ?? 1, m = 44, L = 46, px = o.px || 0;
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
   ctx.strokeStyle = T.line(0.55 * a); ctx.lineWidth = 1.5;
   corners(ctx, m, m, W - m, H - m, L);
-  // 左右刻度尺（前景视差）
+  // left and right tick rulers (foreground parallax)
   ctx.strokeStyle = T.dim(0.45 * a); ctx.lineWidth = 1;
   ctx.beginPath();
   const off = ((px * 1.4) % 24 + 24) % 24;
@@ -72,7 +72,7 @@ export function chrome(ctx, W, H, T, o = {}) {
     ctx.moveTo(W - m - 8, y); ctx.lineTo(W - m - 8 - (big ? 14 : 7), y);
   }
   ctx.stroke();
-  // 顶部状态
+  // top status
   ctx.font = `20px ${FONT.mono}`; ctx.textBaseline = 'middle';
   ctx.fillStyle = T.line(0.75 * a);
   if (o.tl) { ctx.textAlign = 'left'; ctx.fillText(o.tl, m + 22, m + 26); }
@@ -91,7 +91,7 @@ export function corners(ctx, x0, y0, x1, y1, L) {
   ctx.stroke();
 }
 
-// ---------- 目标框：k=0 大而斜、k=1 锁定贴合；flash 为锁定瞬间闪白 ----------
+// ---------- Target box: k=0 large and tilted, k=1 locked and fitted; flash is the white flash at the moment of lock ----------
 export function targetBox(ctx, T, bb, k, o = {}) {
   if (!bb || k <= 0) return;
   const pad = o.pad ?? 26;
@@ -105,7 +105,7 @@ export function targetBox(ctx, T, bb, k, o = {}) {
   const L = Math.min(hw, hh) * 0.38 + 8;
   ctx.strokeStyle = o.flash ? T.hi(a) : T.line(0.9 * a); ctx.lineWidth = o.flash ? 3 : 2;
   corners(ctx, -hw, -hh, hw, hh, L);
-  // 中心十字 + 边中点刻度
+  // centre cross + ticks at edge midpoints
   ctx.lineWidth = 1; ctx.strokeStyle = T.line(0.5 * a);
   ctx.beginPath();
   ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.moveTo(0, -10); ctx.lineTo(0, 10);
@@ -113,7 +113,7 @@ export function targetBox(ctx, T, bb, k, o = {}) {
   ctx.moveTo(0, -hh); ctx.lineTo(0, -hh + 10); ctx.moveTo(0, hh); ctx.lineTo(0, hh - 10);
   ctx.stroke();
   ctx.restore();
-  // 标签（锁定后出现）
+  // label (appears after lock)
   if (o.tag && e > 0.8) {
     const ta = a * clamp((e - 0.8) * 5);
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -128,7 +128,7 @@ export function targetBox(ctx, T, bb, k, o = {}) {
   }
 }
 
-// ---------- 引线：锚点圆 → 斜线 → 水平线；prog 0–1 逐段画出 ----------
+// ---------- Leader line: anchor circle → diagonal → horizontal; prog 0–1 draws it segment by segment ----------
 export function leader(ctx, T, from, elbow, to, prog, o = {}) {
   if (prog <= 0) return;
   const a = o.alpha ?? 1;
@@ -140,7 +140,7 @@ export function leader(ctx, T, from, elbow, to, prog, o = {}) {
   if (L <= d1) ctx.lineTo(lerp(from[0], elbow[0], L / d1), lerp(from[1], elbow[1], L / d1));
   else { ctx.lineTo(elbow[0], elbow[1]); L -= d1; ctx.lineTo(lerp(elbow[0], to[0], L / d2), lerp(elbow[1], to[1], L / d2)); }
   ctx.stroke();
-  // 锚点
+  // anchor
   const ra = clamp(prog * 5);
   ctx.beginPath(); ctx.arc(from[0], from[1], 9 * ra, 0, TAU); ctx.stroke();
   ctx.fillStyle = T.hi(a); ctx.beginPath(); ctx.arc(from[0], from[1], 3, 0, TAU); ctx.fill();
@@ -148,15 +148,15 @@ export function leader(ctx, T, from, elbow, to, prog, o = {}) {
   ctx.restore();
 }
 
-// ---------- 滚动数字：从乱码滚到真值 ----------
-// k 0–1：各字符从右往左依次锁定；frame 决定乱码帧（24fps 每帧换一次）
+// ---------- Rolling number: rolls from garbage to the true value ----------
+// k 0–1: characters lock one by one from right to left; frame picks the garbage frame (changes every frame at 24fps)
 const GLY_D = '0123456789', GLY_A = 'ABCDEFGHJKLMNPRSTUVWXYZ#%/<>=';
 export function rollText(str, k, frame, seed = 0) {
   if (k >= 1) return str;
   const n = str.length; let out = '';
   for (let i = 0; i < n; i++) {
     const ch = str[i];
-    const order = (n - 1 - i) / Math.max(1, n);          // 右边先锁
+    const order = (n - 1 - i) / Math.max(1, n);          // right side locks first
     const lockAt = 0.25 + order * 0.7;
     if (k >= lockAt || ch === ' ' || ch === '.' || ch === ',' || ch === '·') { out += ch; continue; }
     if (k <= 0) { out += ' '; continue; }
@@ -166,14 +166,14 @@ export function rollText(str, k, frame, seed = 0) {
   return out;
 }
 
-// 等宽排版（按最宽数字定字距，滚动时不抖）
+// monospaced layout (spacing set by the widest digit, so it does not jitter while rolling)
 export function monoText(ctx, s, x, y, adv) {
   let cx = x;
   for (let i = 0; i < s.length; i++) {
     const ch = s[i], w = ctx.measureText(ch).width;
     const narrow = ch === '.' || ch === ',' || ch === ' ' || ch === ':';
     const a = narrow ? w * 1.1 : adv;
-    if (ch === '.') {   // 小数点画成方点（细字重的句点在辉光下像逗号）
+    if (ch === '.') {   // draw the decimal point as a square dot (a thin-weight period looks like a comma under glow)
       const m = ctx.measureText('0'), d = Math.max(3, m.width * 0.13);
       ctx.fillRect(cx + (a - d) / 2, y - d, d, d);
     } else ctx.fillText(ch, cx + (a - w) / 2, y);
@@ -182,14 +182,14 @@ export function monoText(ctx, s, x, y, adv) {
   return cx - x;
 }
 
-// 文字适配：超宽时缩字号
-export function fitFont(ctx, text, weight, size, family, maxW, minSize = 12) {   // 注意：先设好 letterSpacing 再调用
+// text fit: shrink the font size when too wide
+export function fitFont(ctx, text, weight, size, family, maxW, minSize = 12) {   // note: set letterSpacing before calling
   let s = size; ctx.font = `${weight} ${s}px ${family}`;
   while (ctx.measureText(text).width > maxW && s > minSize) { s -= 1; ctx.font = `${weight} ${s}px ${family}`; }
   return s;
 }
 
-// 自动换行
+// word wrap
 export function wrap(ctx, text, maxW) {
   const words = text.split(' '), lines = []; let cur = '';
   for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
@@ -197,24 +197,24 @@ export function wrap(ctx, text, maxW) {
   return lines;
 }
 
-// ---------- 参数卡：序号 / 名称 / 大数值 + 单位 / 细节 ----------
-// st: { reveal 0–1(框体), roll 0–1(数值), detail 0–1, frame, flash }
+// ---------- Spec card: index / name / big value + unit / detail ----------
+// st: { reveal 0–1(frame), roll 0–1(value), detail 0–1, frame, flash }
 export function specCard(ctx, T, x, y, c, st, o = {}) {
   const w = o.w ?? 460, a = o.alpha ?? 1, big = o.big ?? 132;
   if (st.reveal <= 0) return { w, h: 0 };
   const r = eo(st.reveal);
-  {   // 底板：按最终高度一次画好（跟随展开）
+  {   // backing plate: drawn once at its final height (follows the unfold)
     ctx.save(); ctx.font = `500 25px ${FONT.ui}`;
     const dl = c.detail ? wrap(ctx, c.detail, w).length : 0; ctx.restore();
     const hh = 48 + big * 0.9 + 12 + (dl ? 36 + dl * 30 : 0) + 20;
     plate(ctx, T, x - 22, y - 20, (w + 44) * r, hh + 20, a * clamp(st.reveal * 2));
   }
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
-  // 顶线从左往右展开
+  // top line unfolds left to right
   ctx.strokeStyle = T.line(0.9 * a); ctx.lineWidth = 1.6;
   ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * r, y); ctx.stroke();
   ctx.fillStyle = T.line(0.9 * a); ctx.fillRect(x, y - 3, 34 * r, 6);
-  // 序号 + 名称
+  // index + name
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   ctx.font = `20px ${FONT.mono}`; ctx.fillStyle = T.dim(0.95 * a * r);
   ctx.fillText(o.index || '', x, y + 34);
@@ -224,7 +224,7 @@ export function specCard(ctx, T, x, y, c, st, o = {}) {
   ctx.letterSpacing = '3px';
   ctx.fillText(rollText(lab, clamp(st.reveal * 1.6 - 0.2), st.frame, 3), x + 52, y + 36);
   ctx.letterSpacing = '0px';
-  // 大数值
+  // big value
   let h = 48;
   if (st.roll > 0) {
     const val = String(c.value), unit = c.unit || '';
@@ -238,7 +238,7 @@ export function specCard(ctx, T, x, y, c, st, o = {}) {
     ctx.font = `500 ${Math.round(bs * 0.3)}px ${FONT.ui}`; ctx.fillStyle = locked ? T.acc(0.9 * a) : T.line(0.6 * a);
     ctx.fillText(unit, x + vw + 10, y + 48 + bs * 0.78);
     h = 48 + bs * 0.9;
-    // 进度条（数值滚动时满格）
+    // progress bar (fills while the value rolls)
     ctx.fillStyle = T.dim(0.35 * a); ctx.fillRect(x, y + h + 8, w, 2);
     ctx.fillStyle = locked ? T.acc(0.9 * a) : T.line(0.9 * a); ctx.fillRect(x, y + h + 8, w * clamp(st.roll), 2);
     h += 12;
@@ -253,7 +253,7 @@ export function specCard(ctx, T, x, y, c, st, o = {}) {
   return { w, h };
 }
 
-// ---------- 参数芯片：停靠在侧栏、一直留到落版（名称 + 数值 + 细节） ----------
+// ---------- Spec chip: docked in the side column, stays until the end lock-up (name + value + detail) ----------
 export function chip(ctx, T, x, y, c, a = 1, o = {}) {
   if (a <= 0) return 0;
   const w = o.w ?? 360;
@@ -283,7 +283,7 @@ export function chip(ctx, T, x, y, c, a = 1, o = {}) {
   ctx.restore();
   return h;
 }
-function monoTextFit(ctx, s, x, y) {   // 普通排版，但小数点画成方点
+function monoTextFit(ctx, s, x, y) {   // normal layout, but the decimal point is drawn as a square dot
   let cx = x;
   for (const ch of s) {
     const w = ctx.measureText(ch).width;
@@ -293,7 +293,7 @@ function monoTextFit(ctx, s, x, y) {   // 普通排版，但小数点画成方�
   }
 }
 
-// ---------- 字幕：界面里的"语音转写"条 ----------
+// ---------- Subtitles: a "speech transcript" bar inside the UI ----------
 export function subtitle(ctx, W, H, T, text, a, o = {}) {
   if (!text || a <= 0) return;
   ctx.save();
@@ -302,7 +302,7 @@ export function subtitle(ctx, W, H, T, text, a, o = {}) {
   const lines = wrap(ctx, text, maxW);
   const tw = Math.max(...lines.map(l => ctx.measureText(l).width));
   const x = (o.x ?? W / 2) - tw / 2, lh = 46, h = lines.length * lh;
-  // 底板
+  // backing plate
   ctx.fillStyle = `rgba(1,8,12,${0.62 * a})`;
   ctx.fillRect(x - 58, y - h - 18, tw + 86, h + 30);
   ctx.globalCompositeOperation = 'lighter';
@@ -311,7 +311,7 @@ export function subtitle(ctx, W, H, T, text, a, o = {}) {
   ctx.moveTo(x - 58, y - h - 18 + 12); ctx.lineTo(x - 58, y - h - 18); ctx.lineTo(x - 46, y - h - 18);
   ctx.moveTo(x + tw + 28 - 12, y + 12); ctx.lineTo(x + tw + 28, y + 12); ctx.lineTo(x + tw + 28, y);
   ctx.stroke();
-  // 声纹指示
+  // voiceprint indicator
   ctx.fillStyle = T.line(0.9 * a);
   for (let i = 0; i < 4; i++) { const hh = 6 + 14 * Math.abs(Math.sin((o.t || 0) * 9 + i * 1.7)); ctx.fillRect(x - 42 + i * 7, y - h / 2 - 3 - hh / 2, 3, hh); }
   ctx.fillStyle = T.hi(0.96 * a); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -319,7 +319,7 @@ export function subtitle(ctx, W, H, T, text, a, o = {}) {
   ctx.restore();
 }
 
-// ---------- 故障闪烁：横向切片错位 + 色偏（克制，只在一两帧） ----------
+// ---------- Glitch flicker: horizontal slice offsets + colour shift (restrained, only one or two frames) ----------
 export function glitch(ctx, W, H, amt, seed) {
   if (amt <= 0) return;
   const src = ctx.canvas;
@@ -334,7 +334,7 @@ export function glitch(ctx, W, H, amt, seed) {
   ctx.drawImage(tmp, 8 * amt, 0); ctx.restore();
 }
 
-// ---------- 热点标记：钉在零件本体上的编号圈，编号牌紧贴圈的一侧（落版用） ----------
+// ---------- Hotspot marker: a numbered circle pinned on the part itself, with the number tag tight against one side of the circle (for the end lock-up) ----------
 export function marker(ctx, T, p, label, a = 1, pulse = 0, dir = 1) {
   if (!p || a <= 0) return;
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
@@ -357,7 +357,7 @@ export function marker(ctx, T, p, label, a = 1, pulse = 0, dir = 1) {
   ctx.restore();
 }
 
-// ---------- 投影光柱：从投影台升起的光锥 + 上升光尘 ----------
+// ---------- Projection beam: a cone of light rising from the projector pad + rising light dust ----------
 export function beam(ctx, T, project, a, t, o = {}) {
   if (a <= 0) return;
   const r0 = o.r0 ?? 1.05, r1 = o.r1 ?? 0.9, y1 = o.y1 ?? 1.25, c = o.c || [0, 0, 0];
@@ -373,27 +373,27 @@ export function beam(ctx, T, project, a, t, o = {}) {
   const L0 = bot[bl][0], R0 = bot[br][0], L1 = top[tl][0], R1 = top[tr][0];
   const yb = Math.max(...bot.map(q => q[1])), yt = Math.min(...top.map(q => q[1]));
   project(c[0], 0, c[2], p); const ym = p[1]; project(c[0], y1, c[2], p); const ytc = p[1];
-  // 下弧（屏幕上靠下的一半）与上弧（靠上的一半）
+  // lower arc (the half lower on screen) and upper arc (the upper half)
   const arc = (arr, from, to, lower) => { const out = []; const n = arr.length; const cy = arr.reduce((s, q) => s + q[1], 0) / n; for (let k = 0; k <= n; k++) { const q = arr[(from + k) % n]; if ((lower ? q[1] >= cy - 1 : q[1] <= cy + 1)) out.push(q); if ((from + k) % n === to && k > 0) break; } return out; };
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
   const g = ctx.createLinearGradient(0, yb, 0, yt);
   g.addColorStop(0, T.line(0.10 * a)); g.addColorStop(0.45, T.line(0.04 * a)); g.addColorStop(1, T.line(0));
   ctx.fillStyle = g;
-  // 一条路径三个子路径（底椭圆 + 侧面梯形 + 顶椭圆），一次 nonzero 填充 = 并集，不会重叠加亮
+  // one path with three subpaths (bottom ellipse + side trapezoid + top ellipse); a single nonzero fill = their union, so overlaps do not double the brightness
   ctx.beginPath();
   const poly = arr => { arr.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); };
   const cw = arr => { let a = 0; for (let i = 0; i < arr.length; i++) { const p0 = arr[i], p1 = arr[(i + 1) % arr.length]; a += p0[0] * p1[1] - p1[0] * p0[1]; } return a > 0 ? arr : arr.slice().reverse(); };
   poly(cw(bot)); poly(cw(top)); poly(cw([[L0, bot[bl][1]], [L1, top[tl][1]], [R1, top[tr][1]], [R0, bot[br][1]]]));
   ctx.fill('nonzero');
   const yT = ytc;
-  // 竖向光纹
+  // vertical light streaks
   ctx.lineWidth = 1;
   for (let i = 0; i < 26; i++) {
     const u = (i + 0.5) / 26, w = 0.5 + 0.5 * Math.sin(i * 12.9898 + t * 1.3);
     ctx.strokeStyle = T.line(0.05 * a * w);
     ctx.beginPath(); ctx.moveTo(L0 + (R0 - L0) * u, ym + (yb - ym) * Math.sin(u * Math.PI)); ctx.lineTo(L1 + (R1 - L1) * u, yT); ctx.stroke();
   }
-  // 光尘
+  // light dust
   for (let i = 0; i < 70; i++) {
     const h1 = hash(i * 3.7), h2 = hash(i * 9.1), h3 = hash(i * 1.3);
     const life = (t * (0.12 + 0.1 * h3) + h1) % 1;

@@ -78,7 +78,7 @@ demo/
   tools/            plates.py (registration, cleaning, plates, collagen masks and counts, tissue axis), nucleus.py,
                     fonts.py (all fonts), export.mjs (voice lines, cues, number check), subcheck.mjs, cuecheck.py, finalasr.py
   assets/           raw/Ventana-1.bif (227 MB, gitignored), plates/ (plates, ROI overlays, plates.json, nucleus.json)
-  FACTS.md, CREDITS, TREATMENT.md, PRODUCTION_LOG.md, stills/styleframe.jpg
+  FACTS.md, CREDITS, stills/styleframe.jpg
 ```
 
 - `sh demo/build.sh` takes about 5 minutes on Apple silicon (the picture renders in ~20–90 s with 4 workers; the final speech check is the slowest step). In a fresh clone it first downloads the slide (227 MB), rebuilds the plates and measurements (about a minute) and fetches the fonts (Barlow Condensed and IBM Plex Mono from github.com/google/fonts, Noto Sans SC / Noto Serif SC subsets from the Google Fonts API); `FETCH=1` forces all of that again. The slide reader runs in its own `demo/.venv` (tifffile, imagecodecs).

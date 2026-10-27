@@ -1,5 +1,5 @@
-// 生成 aus.js（澳洲大陆 + 塔斯马尼亚两条海岸线环）：node extract_aus.mjs
-// 依赖已内置 vendor/：topojson-client 3.1.0（ISC）+ world-atlas 2.0.2 countries-50m.json（Natural Earth，ISC/公有领域）
+// Generates aus.js (two coastline rings: mainland Australia + Tasmania): node extract_aus.mjs
+// dependencies are bundled in vendor/: topojson-client 3.1.0 (ISC) + world-atlas 2.0.2 countries-50m.json (Natural Earth, ISC/public domain)
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';

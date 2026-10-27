@@ -48,17 +48,23 @@ class MotionCapabilityPinTests(unittest.TestCase):
 class VisualRetrievalTests(unittest.TestCase):
     def check(self, queries):
         """Exercise tag retrieval while isolating already-tested native inputs."""
+        from edit.hd.tools import motion_match_cache, overlay_selection
         profile = {'title': '逐项通知', 'uses': ['aroll_overlay'],
                    'tags': {name: [] for name in motion_capabilities.TAG_FIELDS}}
         profile['tags']['actions'] = ['层叠出现']
         profile['tags']['relations'] = ['并列要点']
         catalog = [{'candidate_id': 'overlay:notification-stack', 'status': 'supported',
-                    'role': 'overlay', 'capability': profile}]
+                    'role': 'overlay', 'skill_id': 'overlay', 'capability': profile}]
         draft = {'segments': [{'segment_id': 'seg-1', 'start': 0.0, 'end': 3.0,
+            'visual_intent': {'statement': '并列说明'},
             'visual_strategy': {'mode': 'none', 'composition': {'family': 'aroll_with_overlay'},
-                                'components': [{'component_id': 'overlay', 'kind': 'code_generated'}]},
+                                'components': [{'component_id': 'overlay', 'kind': 'code_generated', 'layer_role': 'annotation', 'brief': '并列说明'}]},
             'bindings': {'overlay': {}}}]}
-        treatment = {'motion_queries': queries, 'semantic_assessments': []}
+        treatment = {'motion_queries': queries, 'semantic_assessments': [],
+                     'semantic_lists': {'overlay': [{'row_id': 'row-1', 'start_word': 0, 'end_word': 1,
+                         'quote': '先摆出三项待办', 'semantic': '并列要点', 'visual_task': '并列说明',
+                         'components': [{'segment_id': 'seg-1', 'component_id': 'overlay'}]}], 'broll': []},
+                     'skill_selection': {'schema_version': 1, 'beats': [], 'assignments': [], 'overlay_beats': []}}
         patches = (
             mock.patch.object(motion_capabilities, 'load_catalog', return_value=catalog),
             mock.patch.object(motion_capabilities, '_approved_speech', return_value=[{'text': '先摆出三项待办', 'start': 0.0, 'end': 3.0}]),
@@ -73,6 +79,29 @@ class VisualRetrievalTests(unittest.TestCase):
         with ExitStack() as stack:
             for patch in patches:
                 stack.enter_context(patch)
+            try:
+                treatment = motion_match_cache.match_once(PROJECT, draft, treatment)
+            except ValueError:
+                return {'status': 'fail'}
+            cached = motion_match_cache.validate_matches(PROJECT, draft, treatment)
+            item = cached[('seg-1', 'overlay')]
+            chosen = 'overlay:' + overlay_selection._route(draft['segments'][0]['bindings']['overlay'])
+            treatment['skill_selection']['overlay_beats'] = [{
+                'segment_id': 'seg-1', 'component_id': 'overlay', 'semantic_row_id': item['row_id'],
+                'start': 0.0, 'end': 3.0, 'transcript': item['semantic']['quote'],
+                'semantic_goal': '并列说明', 'required_change': '并列说明', 'intent_statement': '并列说明',
+                'component_brief': '并列说明', 'binding_snapshot': {},
+                'candidates': [{'candidate_id': m['candidate']['candidate_id'],
+                                'fit': 'preferred' if m['candidate']['candidate_id'] == chosen else 'equivalent',
+                                'reason': '测试中的完整原生候选评审', 'visual_pattern': 'parallel-list',
+                                'design_plan': {'composition': '并列主体在同一视觉范围。',
+                                                'typography': '主副字级明确。',
+                                                'finish': '细线平面图形保持完整。',
+                                                'focus': '当前项目累积时保持其他项。'}}
+                               for m in item['matches']],
+                'single_source_review': {'decision': 'keep', 'reason': '保留缓存中的原生组件。'}
+            }]
+            motion_match_cache.validate_reviews(PROJECT, draft, treatment)
             return motion_capabilities.check_offline_plan(PROJECT, draft, treatment)
 
     def test_overlay_uses_semantic_tags_to_recall_actual_template(self):

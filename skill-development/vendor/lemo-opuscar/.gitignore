@@ -80,6 +80,8 @@ styles/*/demo/stills/*
 !styles/*/demo/stills/frame_*.jpg
 !styles/*/demo/stills/alt_*.jpg
 !styles/*/demo/stills/engine*.jpg
+# Illustrative plates a demo's build needs (AI-generated, credited in CREDITS) are committed, not re-fetched
+!styles/news-package/demo/assets/plates/*.jpg
 
 # 用户自己的片子（agent 输出）
 /films/
@@ -100,3 +102,37 @@ styles/*/demo/**/*.tif
 styles/*/demo/**/*.tiff
 styles/*/demo/**/*.npz
 styles/*/demo/assets/raw/
+# Downloaded archive sources (footage, scans, PDFs) and edit caches stay local; each demo's build.sh re-fetches them from SOURCES.jsonl
+styles/*/demo/raw/
+styles/*/demo/work/
+styles/*/demo/**/*.webm
+styles/*/demo/**/*.mpeg
+styles/*/demo/**/*.ogv
+styles/*/demo/**/*.mov
+styles/*/demo/**/*.pdf
+
+# ---- Process notes and drafts stay local, anywhere in the repo ----
+**/TREATMENT.md
+**/PRODUCTION_LOG*
+**/HANDOFF*.md
+**/NOTES.md
+**/进度*.md
+**/TODO*.md
+*.bak
+*.orig
+*~
+*_old.*
+*_bak.*
+*_draft.*
+**/tmp/
+**/scratch/
+# Self-check reports the music scripts rewrite on every build
+styles/*/demo/music/check.txt
+styles/*/demo/music/check.json
+styles/*/demo/music/*report*.txt
+# Partial outputs and try-out helpers
+styles/*/demo/**/*_partial.json
+styles/*/demo/**/*_try.py
+# Superseded first-round review frames; only those a doc or CREDITS names are re-included
+styles/*/demo/stills/*_v1*
+!styles/art-deco/demo/stills/kit_v2.jpg

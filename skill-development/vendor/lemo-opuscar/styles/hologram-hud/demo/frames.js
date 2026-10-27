@@ -1,8 +1,8 @@
-// 单独的引擎演示帧（STYLE.md §10 用）：?scene=star&t=…
+// Standalone engine demo frames (used by STYLE.md §10): ?scene=star&t=…
 import { Holo, modelFromPath, normalizeModel, drawPad, drawScanPlane } from './engine/holo.js';
 import * as U from './engine/hud.js';
 const W = 1920, H = 1080;
-// 暖橙色四角光点 + 一截光标尾巴：用"唯一彩色"keep 保持它自己的颜色，其余按全息主色
+// warm orange four-point star + a short cursor tail: the "single accent colour" keep holds its own colour, everything else uses the hologram main hue
 export function star(g, t) {
   const T = U.theme(188, 38), holo = new Holo(W, H);
   const P = []; for (let i = 0; i < 8; i++) { const a = Math.PI / 2 + i * Math.PI / 4, r = i % 2 ? 0.16 : 0.5; P.push([Math.cos(a) * r, Math.sin(a) * r + 0.6]); }

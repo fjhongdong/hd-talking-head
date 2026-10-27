@@ -1,15 +1,15 @@
-// chars.js — 橡皮管角色：马克杯（主角）、方糖，以及共用部件（派饼眼、嘴、白手套、大圆头鞋、橡皮管四肢、蒸汽）
-// 所有坐标是角色局部坐标：原点 = 两脚之间的地面，y 向下为正（杯子高约 280）
+// chars.js — rubber-hose characters: the mug (lead), the sugar cube, and shared parts (pie-cut eyes, mouths, white gloves, big round-toed shoes, rubber-hose limbs, steam)
+// All coordinates are character-local: origin = the ground between the feet, y positive downwards (the mug is about 280 tall)
 import * as T from './toon.js';
 import { clamp, lerp, TAU, hash } from '/core/lib.js';
 const { shape, stroke, ell, arc, spline, noodle, quad, push, pop, translate, rotate, scale, transform, dot, tx, S } = T;
 
-// 6 级灰 + 角色白
+// 6 grey levels + character white
 export const P = { white: '#FCFBF7', paper: '#F1EEE6', pale: '#E2DFD6', light: '#C8C5BC', mid: '#9A978F', dmid: '#6B6963', dark: '#3B3A37', ink: '#0E0D0C' };
 const D2R = Math.PI / 180;
 
-// ———————————————————— 工具 ————————————————————
-// 沿中心线生成带宽度的闭合轮廓（渐细飘带：蒸汽、手指、毛巾边）
+// ———————————————————— Utilities ————————————————————
+// Build a closed outline with width along a centre line (tapering ribbons: steam, fingers, towel edge)
 export function ribbon(c, w0, w1 = w0, caps = true) {
   const n = c.length, L = [], R = [];
   for (let i = 0; i < n; i++) {
@@ -23,16 +23,16 @@ export function ribbon(c, w0, w1 = w0, caps = true) {
   const aE = Math.atan2(e[1] - e2[1], e[0] - e2[0]), aS = Math.atan2(s1[1] - s0[1], s1[0] - s0[0]);
   return [...L, ...arc(e[0], e[1], w1 / 2, w1 / 2, aE + Math.PI / 2, aE - Math.PI / 2, 6), ...R.reverse(), ...arc(s0[0], s0[1], w0 / 2, w0 / 2, aS - Math.PI / 2, aS - Math.PI * 1.5, 6)];
 }
-// 多个形状的"并集描边"：先全部粗描，再全部填色 → 只剩外轮廓
+// "Union outline" of several shapes: stroke all of them thick first, then fill all of them → only the outer contour remains
 export function union(list, fill, lw = S.lw) {
   const ps = list.map(pts => shape(pts, { stroke: false }));
   ps.forEach(p => T.outline(p, lw * 2));
   T.g.setTransform(1, 0, 0, 1, 0, 0); T.g.fillStyle = fill; ps.forEach(p => T.g.fill(p));
   return ps;
 }
-// 屏幕空间下在裁剪里画局部多边形
+// Draw a local polygon inside a clip, in screen space
 function fillLocal(pts, col) { const s = pts.map(p => tx(p[0], p[1])); const g = T.g; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = col; g.beginPath(); g.moveTo(s[0][0], s[0][1]); for (const q of s) g.lineTo(q[0], q[1]); g.closePath(); g.fill(); }
-// 圆角多边形（凸）
+// Rounded polygon (convex)
 function roundPoly(pts, r) {
   const n = pts.length, out = [];
   for (let i = 0; i < n; i++) {
@@ -53,9 +53,9 @@ function hull(ps) {
   return lo.slice(0, -1).concat(up.slice(0, -1));
 }
 
-// ———————————————————— 部件 ————————————————————
-// 派饼眼：白眼眶 + 大黑瞳孔（切掉一块三角"派"作高光）
-// o = { lx, ly 视线 -1..1, lid 0..1 上眼皮, lidCol, type: open|wide|happy|squeeze|shut|sad, side: ±1 挤眼方向 }
+// ———————————————————— Parts ————————————————————
+// Pie-cut eye: white eye socket + big black pupil (a triangular "pie" slice cut out as the highlight)
+// o = { lx, ly gaze -1..1, lid 0..1 upper eyelid, lidCol, type: open|wide|happy|squeeze|shut|sad, side: ±1 squint direction }
 export function pieEye(cx, cy, rx, ry, o = {}) {
   const type = o.type || 'open', lw = S.lw * (o.lwk ?? .85);
   if (type === 'happy') { stroke(arc(cx, cy + ry * .35, rx * .95, ry * .55, Math.PI * 1.08, Math.PI * 1.92, 14), lw * 1.25); return; }
@@ -68,7 +68,7 @@ export function pieEye(cx, cy, rx, ry, o = {}) {
   const pcx = cx + lx * eR * (1 - pr) * .95, pcy = cy + ly * eY * (1 - pry) * .9 + eY * .05;
   shape(ell(cx, cy, eR, eY), {
     fill: P.white, lw, shade: () => {
-      // 瞳孔：派饼形（缺一块朝右上的三角）
+      // pupil: pie shape (a triangle missing towards the upper right)
       const w0 = -100 * D2R, w1 = -40 * D2R, prx = eR * pr, pry2 = eY * pry, pts = [];
       const apx = pcx + Math.cos((w0 + w1) / 2) * prx * .16, apy = pcy + Math.sin((w0 + w1) / 2) * pry2 * .16;
       for (let i = 0; i <= 28; i++) { const a = w1 + i / 28 * (TAU - (w1 - w0)); pts.push([pcx + Math.cos(a) * prx, pcy + Math.sin(a) * pry2]); }
@@ -79,38 +79,38 @@ export function pieEye(cx, cy, rx, ry, o = {}) {
   });
   if (o.lid) { const yl = cy - eY + o.lid * 2 * eY, hw = Math.sqrt(Math.max(0, 1 - Math.pow((yl - cy) / eY, 2))) * eR; if (hw > 2) stroke([[cx - hw, yl - (o.lidTilt || 0) * hw], [cx + hw, yl + (o.lidTilt || 0) * hw]], lw * 1.05); }
 }
-// 眉毛：短粗弧线，type: up(惊) sad(八字) angry determined
+// Eyebrows: short thick arcs, type: up (surprised) sad (slanting down at the outer ends) angry determined
 export function brow(cx, cy, w, type, side = 1) {
-  // side = -1 左眼 / +1 右眼；inner = 靠近鼻梁的一端
+  // side = -1 left eye / +1 right eye; inner = the end near the bridge of the nose
   const s = side, lw = S.lw * 1.15, ix = cx - s * w * .5, ox = cx + s * w * .5;
   if (type === 'up') stroke(arc(cx, cy + w * .5, w * .55, w * .4, Math.PI * 1.15, Math.PI * 1.85, 10), lw);
   else if (type === 'sad') stroke(quad([ix, cy - w * .36], [cx, cy - w * .14], [ox, cy + w * .06]), lw);
   else if (type === 'angry') stroke(quad([ix, cy + w * .14], [cx, cy - w * .06], [ox, cy - w * .3]), lw);
   else if (type === 'flat') stroke([[cx - w * .45, cy], [cx + w * .45, cy]], lw);
 }
-// 嘴：smile / grin / open / o / frown / wavy / pucker / beam / yawn / flat
+// Mouth: smile / grin / open / o / frown / wavy / pucker / beam / yawn / flat
 export function mouth(cx, cy, w, type = 'smile', o = {}) {
   const lw = S.lw * .95, h = w * (o.open ?? .6);
   const tongue = (pts) => () => { fillLocal(pts, P.dmid); };
   if (type === 'smile') { stroke(quad([cx - w / 2, cy - w * .08], [cx, cy + w * .32], [cx + w / 2, cy - w * .08]), lw * 1.1); stroke(arc(cx - w / 2 - 2, cy - w * .08, w * .09, w * .09, Math.PI * .6, Math.PI * 1.4, 6), lw * .8); stroke(arc(cx + w / 2 + 2, cy - w * .08, w * .09, w * .09, -Math.PI * .4, Math.PI * .4, 6), lw * .8); return; }
   if (type === 'frown') { stroke(quad([cx - w / 2, cy + w * .12], [cx, cy - w * .22], [cx + w / 2, cy + w * .12]), lw * 1.1); return; }
   if (type === 'flat') { stroke([[cx - w * .4, cy], [cx + w * .4, cy + 2]], lw * 1.1); return; }
-  if (type === 'pucker') { // 苦：皱成一团的小嘴 + 两道皱纹
+  if (type === 'pucker') { // bitter: a small mouth scrunched up + two wrinkles
     stroke(spline([[cx - w * .28, cy], [cx - w * .14, cy - w * .1], [cx, cy + w * .06], [cx + w * .14, cy - w * .1], [cx + w * .28, cy]], false, 6), lw * 1.1);
     stroke(arc(cx - w * .42, cy - w * .02, w * .1, w * .16, Math.PI * .55, Math.PI * 1.45, 6), lw * .7); stroke(arc(cx + w * .42, cy - w * .02, w * .1, w * .16, -Math.PI * .45, Math.PI * .45, 6), lw * .7); return;
   }
-  if (type === 'wavy') { // 害怕：波浪形张嘴
+  if (type === 'wavy') { // scared: wavy open mouth
     const top = [], bot = []; for (let i = 0; i <= 12; i++) { const u = i / 12, x = cx - w / 2 + u * w; top.push([x, cy - h * .25 + Math.sin(u * TAU * 2) * w * .05]); bot.push([x, cy + h * .35 + Math.sin(u * TAU * 2 + 1) * w * .05]); }
     shape([...top, ...bot.reverse()], { fill: P.ink, lw }); return;
   }
   if (type === 'o') { const r = w * .22; shape(ell(cx, cy + r * .2, r, r * 1.25 * (o.open ?? 1)), { fill: P.ink, lw, shade: tongue(ell(cx, cy + r * 1.25, r * .75, r * .55)) }); return; }
-  if (type === 'bleh') { // 呸：张嘴 + 舌头耷拉出来
+  if (type === 'bleh') { // blech: open mouth + tongue hanging out
     mouth(cx, cy, w, 'open', { open: .45 });
     shape(spline([[cx - w * .16, cy + w * .14], [cx - w * .2, cy + w * .42], [cx, cy + w * .58], [cx + w * .2, cy + w * .42], [cx + w * .16, cy + w * .14]], true, 6), { fill: P.dmid, lw: lw * .9 });
     stroke([[cx, cy + w * .2], [cx, cy + w * .42]], lw * .6); return;
   }
   if (type === 'yawn') { const r = w * .3; shape(ell(cx, cy + r * .5, r, r * 1.5), { fill: P.ink, lw, shade: tongue(ell(cx, cy + r * 1.6, r * .8, r * .6)) }); return; }
-  // grin / open / beam：上沿微弯、下沿大 U
+  // grin / open / beam: slightly curved top edge, big U bottom edge
   const up = type === 'beam' ? .1 : (type === 'grin' ? .04 : -.02);
   const pts = [...quad([cx - w / 2, cy - w * up], [cx, cy + w * (up * .6)], [cx + w / 2, cy - w * up], 10), ...quad([cx + w / 2, cy - w * up], [cx, cy + h * 1.55], [cx - w / 2, cy - w * up], 14).slice(1)];
   shape(pts, {
@@ -122,7 +122,7 @@ export function mouth(cx, cy, w, type = 'smile', o = {}) {
   if (type === 'grin' || type === 'beam') { stroke(arc(cx - w / 2 - 3, cy - w * up, w * .08, w * .1, Math.PI * .5, Math.PI * 1.5, 6), lw * .8); stroke(arc(cx + w / 2 + 3, cy - w * up, w * .08, w * .1, -Math.PI * .5, Math.PI * .5, 6), lw * .8); }
 }
 
-// 白手套：局部坐标中手腕在原点、手指朝 +x；type: open fist point grab wave thumb
+// White glove: in local coordinates the wrist is at the origin, fingers point +x; type: open fist point grab wave thumb
 export function glove(x, y, ang, type = 'open', k = 1, o = {}) {
   push(); translate(x, y); rotate(ang); scale(k, k * (o.flip ? -1 : 1));
   const fw = 13.5, parts = [];
@@ -136,28 +136,28 @@ export function glove(x, y, ang, type = 'open', k = 1, o = {}) {
   parts.push(ell(22, 0, palmR, palmR * .95, 26));
   const cuff = spline([[-6, -12], [4, -20], [11, -15], [11, 15], [4, 20], [-6, 12], [-8, 0]], true, 5);
   union([...parts, cuff], P.white);
-  // 手背缝线 + 袖口褶
+  // stitching on the back of the hand + cuff fold
   const lw = S.lw * .6;
   if (type !== 'fist' && type !== 'point' && type !== 'thumb') { for (const dy of [-6, 0, 6]) stroke([[14, dy * 1.1], [25, dy * 1.4]], lw, { boil: .5 }); }
   else { stroke(arc(30, 0, 9, 13, -1.2, 1.2, 8), lw); stroke([[31, -6], [38, -7]], lw); stroke([[31, 6], [38, 7]], lw); }
   stroke(quad([2, -16], [6, 0], [2, 16]), lw);
   pop();
 }
-// 大圆头鞋（黑）：局部坐标脚跟在原点，鞋尖朝 +x（dir = ±1）
+// Big round-toed shoe (black): in local coordinates the heel is at the origin, toe points +x (dir = ±1)
 export function shoe(x, y, dir = 1, k = 1, ang = 0) {
   push(); translate(x, y); rotate(ang); scale(dir * k, k);
   shape(spline([[-15, 0], [-17, -12], [-6, -19], [10, -21], [27, -18], [37, -8], [34, 3], [12, 5], [-8, 4]], true, 6), { fill: P.ink, lw: S.lw * .9 });
   shape(ell(22, -12, 7, 3.6, 12, 0), { fill: P.white, stroke: false, boil: .3 });
   pop();
 }
-// 橡皮管四肢：等粗软管（a→b，bend 为弯曲量）
+// Rubber-hose limbs: constant-width hose (a→b, bend = amount of bend)
 export const hose = (a, b, bend, w, col = P.ink) => shape(noodle(a, b, bend, w, w), { fill: col, lw: S.lw * .8 });
 
-// 蒸汽：从 (x,y) 往上的几缕；type: lazy bitter up heart sad none；t 驱动飘动
+// Steam: a few wisps rising from (x,y); type: lazy bitter up heart sad none; t drives the drift
 export function steam(x, y, type = 'lazy', t = 0, k = 1) {
   if (type === 'none') return;
   const lw = S.lw * .8, col = type === 'bitter' ? P.mid : P.white;
-  if (type === 'sad') { // 一缕蒸汽像蔫了的花一样耷拉下来
+  if (type === 'sad') { // one wisp of steam droops like a wilted flower
     const c = spline([[x - 8 * k, y], [x - 14 * k, y - 42 * k], [x + 4 * k, y - 76 * k], [x + 36 * k, y - 70 * k], [x + 46 * k, y - 44 * k + Math.sin(t * 4) * 3 * k]], false, 6);
     shape(ribbon(c, 14 * k, 4 * k), { fill: col, lw }); return;
   }
@@ -178,7 +178,7 @@ export function steam(x, y, type = 'lazy', t = 0, k = 1) {
     shape(ribbon(pts, (type === 'bitter' ? 16 : 13) * k, (type === 'bitter' ? 5 : 3) * k), { fill: col, lw });
   }
   if (type === 'heart') {
-    // 两缕蒸汽从杯口升起，在顶上卷成一颗心
+    // two wisps rise from the rim and curl into a heart at the top
     const hy = y - 95 * k, r = 26 * k;
     const L = [[x, y - 4 * k], [x - 8 * k, y - 30 * k], [x - 34 * k, hy + 34 * k], [x - 2 * r, hy], [x - r * 1.4, hy - r * 1.05], [x - r * .4, hy - r * .95], [x, hy - r * .35]];
     const R = L.map(p => [2 * x - p[0], p[1]]);
@@ -187,23 +187,23 @@ export function steam(x, y, type = 'lazy', t = 0, k = 1) {
   }
 }
 
-// ———————————————————— 马克杯 ————————————————————
+// ———————————————————— Mug ————————————————————
 export const MUG = { R: 104, y0: -70, y1: -250, leg: 70 };
-// p: { x, y, k 缩放, turn(°, +右), mirror, sx, sy 压扁拉伸, lean(rad), shake,
+// p: { x, y, k scale, turn(°, + = right), mirror, sx, sy squash and stretch, lean(rad), shake,
 //      armL/armR: { x,y, hand, rot, bend, front }, legL/legR: { x,y, bend, ang }, eyes:{type,lx,ly,lid,side}, mouth:{type,open,w}, brows, steam, t, sooty, inCup(fn) }
 export function mug(p) {
   const { R, y0, y1 } = MUG, th = (p.turn || 0) * D2R;
   push(); translate(p.x, p.y); if (p.mirror) scale(-1, 1); scale(p.k || 1);
   translate(0, 0); scale(p.sx || 1, p.sy || 1); if (p.lean) rotate(p.lean);
   const hipY = y0 + 6;
-  // 腿与鞋
+  // legs and shoes
   const legs = [['legL', -1], ['legR', 1]];
   for (const [key, s] of legs) {
     const L = p[key] || { x: s * 36, y: 0 };
     hose([s * 30, hipY], [L.x, L.y - 8], L.bend ?? s * 4, 14);
   }
   for (const [key, s] of legs) { const L = p[key] || { x: s * 36, y: 0 }; shoe(L.x - (L.dir ?? (p.turn ? 1 : s)) * 6, L.y, L.dir ?? (Math.abs(p.turn || 0) > 20 ? 1 : s), 1, L.ang || 0); }
-  // 胳膊（身后）
+  // arms (behind the body)
   const shoulderY = -150, arm = (key, s) => {
     const A = p[key]; if (!A) return;
     const sh = [s * (R - 8), shoulderY];
@@ -213,7 +213,7 @@ export function mug(p) {
     glove(A.x, A.y, ang, A.hand || 'open', A.hk || 1, { flip: A.flip ?? s < 0 });
   };
   for (const [key, s] of [['armL', -1], ['armR', 1]]) if (p[key] && !p[key].front) arm(key, s);
-  // 杯把（背后，方位 −120°）
+  // handle (behind, at bearing −120°)
   const ha = th - 120 * D2R, hs = Math.sin(ha), hz = Math.cos(ha);
   const handle = () => {
     const pts = [], n = 18;
@@ -226,32 +226,32 @@ export function mug(p) {
     g.strokeStyle = P.light; g.lineWidth = 7 * zk; g.globalAlpha = .9; g.stroke(P2); g.globalAlpha = 1;
   };
   if (hz <= 0) handle();
-  // 杯身
+  // body
   const ry = 24, rb = R * .9;
-  // 杯身 = 杯口椭圆后半（在上）+ 两侧直线 + 杯底前半
+  // body = back half of the rim ellipse (on top) + straight sides + front half of the base
   const side = s => quad([s * R, y1], [s * R * 1.1, (y1 + y0) / 2], [s * rb, y0 - 6], 12);
   const outline = [...arc(0, y1, R, ry, Math.PI, TAU, 24), ...side(1).slice(1), ...arc(0, y0 - 6, rb, ry * .95, 0, Math.PI, 24).slice(1), ...side(-1).reverse().slice(1)];
   const bodyCol = p.sooty ? P.dark : P.white;
   shape(outline, {
     fill: bodyCol, shade: () => {
-      // 右侧硬边暗面（光从左上来）
+      // hard-edged shadow side on the right (light from the upper left)
       const sh = []; for (let i = 0; i <= 20; i++) { const u = i / 20, yy = lerp(y1, y0 + 20, u); sh.push([R * .6 + Math.sin(u * Math.PI) * 4, yy]); }
       fillLocal([...sh, [R + 20, y0 + 30], [R + 20, y1 - 30]], p.sooty ? P.ink : P.light);
-      // 杯口两道环纹
+      // two rings below the rim
       const band = (yy, w) => { const pts = arc(0, yy, R + 2, ry, 0, Math.PI, 24); stroke(pts, w, { boil: .6 }); };
       band(y1 + 17, S.lw * 1.9); band(y1 + 33, S.lw * .7);
-      // 左侧一道高光竖条
+      // one vertical highlight stripe on the left
     }
   });
-  // 杯口 + 咖啡
+  // rim + coffee
   shape(ell(0, y1, R, ry, 40), { fill: bodyCol, lw: S.lw * .9 });
   shape(ell(0, y1 + 1.5, R - 11, ry - 6, 40), { fill: P.ink, lw: S.lw * .6 });
   shape(ribbon(arc(-8, y1 + 1, R - 26, ry - 11, Math.PI * 1.12, Math.PI * 1.55, 10), 3, 6), { fill: P.white, stroke: false, boil: .3 });
-  if (p.inCup) { // 泡在咖啡里的东西：只露出水线以上，水线处一圈涟漪
+  if (p.inCup) { // something soaking in the coffee: only the part above the waterline shows, with a ring of ripples at the waterline
     const g = T.g, wl = y1 + (p.waterline ?? 7); g.save(); const top = shape([[-R * 3, y1 - 600], [R * 3, y1 - 600], [R * 3, wl], [-R * 3, wl]], { stroke: false, boil: 0 }); g.setTransform(1, 0, 0, 1, 0, 0); g.clip(top); p.inCup(); g.restore();
     stroke(arc(0, wl - 2, 52, 9, Math.PI * .05, Math.PI * .95, 14), S.lw * .6, { line: P.mid }); }
   if (hz > 0) handle();
-  // 脸（背面不画）
+  // face (not drawn when facing away)
   const showFace = Math.cos(th) > -.25;
   const fx = R * .70 * Math.sin(th), fk = .56 + .44 * Math.cos(th), fy = -172;
   const sj = p.shake ? [Math.sin(p.t * 97) * p.shake, Math.cos(p.t * 83) * p.shake * .5] : [0, 0];
@@ -266,7 +266,7 @@ export function mug(p) {
   if (eyeFar || sgn > 0) drawEye(eyeL, 1); else drawEye(eyeL, 1);
   if (eyeFar || sgn < 0) drawEye(eyeR, -1);
   if (p.brows) { brow(eyeL[0], fy - ery - 10, 32, p.brows, -1); if (eyeFar) brow(eyeR[0], fy - ery - 10, 32, p.brows, 1); }
-  // 鼻子：黑色小圆
+  // nose: small black circle
   const nx = fx + 14 * Math.sin(th) * 1.9, ny = fy + 36;
   shape(ell(nx, ny, 13 * (.8 + .2 * fk), 10, 18), { fill: P.ink, lw: S.lw * .6 });
   shape(ell(nx - 3, ny - 3, 3.2, 2.2, 10), { fill: P.white, stroke: false, boil: 0 });
@@ -275,14 +275,14 @@ export function mug(p) {
   if (p.blush) { shape(ell(fx - eyeDX - 22, fy + 46, 12, 7), { fill: P.light, stroke: false, boil: .3 }); if (eyeFar) shape(ell(fx + eyeDX + 22, fy + 46, 12, 7), { fill: P.light, stroke: false, boil: .3 }); }
   }
   pop();
-  // 胳膊（身前）
+  // arms (in front of the body)
   for (const [key, s] of [['armL', -1], ['armR', 1]]) if (p[key] && p[key].front) arm(key, s);
-  // 蒸汽
+  // steam
   if (p.steam !== 'none') steam(p.steamX || 0, y1 - 8, p.steam || 'lazy', p.t || 0);
   pop();
 }
 
-// ———————————————————— 方糖 ————————————————————
+// ———————————————————— Sugar cube ————————————————————
 export const CUBE = { a: 66, leg: 28, e: .26 };
 // p: { x,y,k, turn(°), sx, sy, lean, armL/armR, legL/legR, eyes, mouth, brows, sweat, towel, blush, hideBelow(y) }
 export function cube(p) {
@@ -293,7 +293,7 @@ export function cube(p) {
   const V = [];
   for (const X of [-h, h]) for (const Y of [0, a]) for (const Z of [-h, h]) V.push({ X, Y, Z, p: pr(X, Y, Z) });
   const vi = (X, Y, Z) => V.find(v => v.X === X && v.Y === Y && v.Z === Z).p;
-  // 面：法线（旋转后） → 可见性、明暗
+  // faces: normals (after rotation) → visibility, shading
   const F = [
     { n: 'front', N: [st, 0, ct], q: [[-h, a, h], [h, a, h], [h, 0, h], [-h, 0, h]] },
     { n: 'right', N: [ct, 0, -st], q: [[h, a, h], [h, a, -h], [h, 0, -h], [h, 0, h]] },
@@ -303,17 +303,17 @@ export function cube(p) {
   ];
   const vis = F.filter(f => f.n === 'top' || f.N[2] > .02);
   const light = [-.55, .75, .45], tone = f => { const d = f.N[0] * light[0] + f.N[1] * light[1] + f.N[2] * light[2]; return d > .5 ? P.white : d > .05 ? P.pale : P.light; };
-  // 腿、鞋
+  // legs, shoes
   for (const [key, s] of [['legL', -1], ['legR', 1]]) { const L = p[key] || { x: s * 15, y: 0 }; hose([s * 13, -legLen + 6], [L.x, L.y - 5], L.bend ?? s * 3, 8); }
   for (const [key, s] of [['legL', -1], ['legR', 1]]) { const L = p[key] || { x: s * 15, y: 0 }; shoe(L.x - 4 * (L.dir ?? s), L.y, L.dir ?? (Math.abs(p.turn || 0) > 20 ? 1 : s), .56, L.ang || 0); }
-  // 胳膊（身后）
+  // arms (behind the body)
   const hl = hull(V.map(v => v.p)), xs = hl.map(q => q[0]);
   const minX = Math.min(...xs), maxX = Math.max(...xs), midY = -legLen - a * .45 * ce;
   const arm = (key, s) => { const A = p[key]; if (!A) return; const sh = [s > 0 ? maxX - 5 : minX + 5, midY]; hose(sh, [A.x, A.y], A.bend ?? s * -8, 7.5); glove(A.x, A.y, A.rot ?? Math.atan2(A.y - sh[1], A.x - sh[0]), A.hand || 'open', A.hk ?? .52, { flip: A.flip ?? s < 0 }); };
   for (const [key, s] of [['armL', -1], ['armR', 1]]) if (p[key] && !p[key].front) arm(key, s);
-  // 身体：圆角外轮廓 + 各面色块 + 糖晶点
+  // body: rounded outer contour + per-face colour blocks + sugar-crystal dots
   const sil = roundPoly(hl, 9);
-  const faceAffine = (f) => { // 面局部 (u,v)∈[-1,1]² → 角色局部
+  const faceAffine = (f) => { // face-local (u,v)∈[-1,1]² → character-local
     const c = f.q.map(q => pr(q[0], q[1], q[2]));
     const o = [(c[0][0] + c[2][0]) / 2, (c[0][1] + c[2][1]) / 2];
     const u = [(c[1][0] - c[0][0]) / 2, (c[1][1] - c[0][1]) / 2], v = [(c[3][0] - c[0][0]) / 2, (c[3][1] - c[0][1]) / 2];
@@ -323,25 +323,25 @@ export function cube(p) {
     fill: P.white, shade: () => {
       for (const f of vis) {
         fillLocal(f.q.map(q => pr(q[0], q[1], q[2])), tone(f));
-        // 糖晶：细小的点
+        // sugar crystals: tiny dots
         const A = faceAffine(f); push(); transform(...A);
         for (let i = 0; i < 16; i++) { const u = hash(i * 3.1 + f.n.length * 7) * 1.7 - .85, v = hash(i * 5.7 + f.n.length * 3) * 1.7 - .85; const pt = tx(u, v); const g = T.g; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = f.n === 'top' ? P.light : P.mid; g.globalAlpha = .55; g.fillRect(pt[0] - 1.2, pt[1] - 1.2, 2.6, 2.4); g.globalAlpha = 1; }
         pop();
       }
     }
   });
-  // 内棱线
+  // inner edge lines
   const edges = [];
   for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++) {
     const A = vis[i].q, B = vis[j].q, sh = A.filter(q => B.some(r => r[0] === q[0] && r[1] === q[1] && r[2] === q[2]));
     if (sh.length === 2) edges.push(sh.map(q => pr(q[0], q[1], q[2])));
   }
   for (const [e0, e1] of edges) { const k0 = .12, a0 = [lerp(e0[0], e1[0], k0), lerp(e0[1], e1[1], k0)], a1 = [lerp(e0[0], e1[0], 1 - k0), lerp(e0[1], e1[1], 1 - k0)]; stroke([a0, a1], S.lw * .6, { boil: .6 }); }
-  // 脸：画在"前面"那一面（front 不可见时不画）
+  // face: drawn on the "front" face (not drawn when front is not visible)
   const front = vis.find(f => f.n === 'front');
   if (front && front.N[2] > .3) {
     push(); transform(...faceAffine(front));
-    // 面局部单位 = 半边长；用 1/33 缩放得到"像素"坐标
+    // face-local unit = half the edge length; scale by 1/33 to get "pixel" coordinates
     scale(1 / 33, 1 / 33);
     const E = p.eyes || {}, ex = 11.5, ey = -7;
     pieEye(-ex, ey, 10.5, 15, { ...E, lidCol: P.white, lwk: .7, side: 1 });
@@ -352,11 +352,11 @@ export function cube(p) {
     if (p.blush !== false) { shape(ell(-21, 11, 5, 3), { fill: P.light, stroke: false, boil: .3 }); shape(ell(21, 11, 5, 3), { fill: P.light, stroke: false, boil: .3 }); }
     pop();
   }
-  // 胳膊（身前）
+  // arms (in front of the body)
   for (const [key, s] of [['armL', -1], ['armR', 1]]) if (p[key] && p[key].front) arm(key, s);
-  // 汗滴
+  // sweat drops
   if (p.sweat) for (const [sx, sy, r] of p.sweat) shape(spline([[sx, sy - r * 1.6], [sx + r, sy], [sx, sy + r], [sx - r, sy]], true, 5), { fill: P.white, lw: S.lw * .6 });
-  // 小毛巾（泡澡）
+  // small towel (for the bath)
   if (p.towel) {
     const ty = -legLen - a * ce - h * se + 2;
     shape(spline([[-30, ty + 4], [-20, ty - 9], [0, ty - 13], [20, ty - 9], [31, ty + 3], [24, ty + 11], [0, ty + 5], [-22, ty + 12]], true, 6), { fill: P.white, shade: () => { for (const dx of [-15, -6]) stroke([[dx, ty - 11], [dx + 3, ty + 9]], S.lw * 1.0, { line: P.mid }); } });

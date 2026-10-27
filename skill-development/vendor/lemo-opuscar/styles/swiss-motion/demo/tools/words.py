@@ -1,5 +1,5 @@
-"""whisper 逐词时间 → 字幕逐词出现时刻（相对句首）。python tools/words.py
-字幕词数与 whisper 词数不同时（type face / typeface）按字母对齐合并。首词时间夹到 0（asr_check 补静音导致 −0.6）。"""
+"""whisper word timings → the moment each subtitle word appears (relative to the start of the line). python tools/words.py
+When the subtitle word count differs from whisper's (type face / typeface), words are merged by aligning letters. The first word's time is clamped to 0 (asr_check's added silence gives −0.6)."""
 import json, os, re
 D = os.path.dirname(os.path.abspath(__file__)) + '/..'
 lines = json.load(open(f'{D}/lines.json')); words = json.load(open(f'{D}/voices/words.json'))

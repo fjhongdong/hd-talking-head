@@ -1,4 +1,4 @@
-"""混音：拟音（纸 / 木 / 笔尖 / 黄铜 / 水）+ 旁白 + 配乐（旁白下闪避）→ mix.wav
+"""Mix: foley (paper / wood / pen nib / brass / water) + narration + score (ducked under narration) → mix.wav
 .venv/bin/python styles/blueprint/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, librosa
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))
@@ -13,15 +13,15 @@ FX = np.zeros((N, 2)); VO = np.zeros((N, 2))
 def nz(d): return rng.standard_normal(int(round(d * SR)))
 def tt(d): return np.arange(int(round(d * SR))) / SR
 def ex(d, tau): return np.exp(-tt(d) / tau)
-# ——— 纸与绘图工具 ———
+# ——— paper and drafting tools ———
 def pen(d, v=1.0):
-    """针管笔划纸：2–6 kHz 颗粒噪声 + 纸纤维的不规则振幅"""
+    """Technical pen on paper: 2–6 kHz grainy noise + irregular amplitude from the paper fibres"""
     d = max(d, .05); x = bp(nz(d), 1800, 6500, 2)
     grain = np.clip(lp(rng.standard_normal(len(x)), 60) * 6 + 1, .2, 2)
     e = np.minimum(1, tt(d) / .015) * np.minimum(1, (d - tt(d)) / .03)
     return norm(x * grain * e) * .5 * v
 def letter(d, v=1.0):
-    """写字：一串短笔画"""
+    """Writing: a string of short strokes"""
     out = np.zeros(int(d * SR) + SR // 10); p = 0.0
     while p < d:
         L = rng.uniform(.04, .11); s = pen(L, rng.uniform(.5, 1)); i = int(p * SR); out[i:i + len(s)] += s[:len(out) - i]; p += L + rng.uniform(.02, .07)
@@ -36,7 +36,7 @@ def compass(d, v=1.0):
     sq = np.sin(2 * np.pi * (2600 + 80 * np.sin(2 * np.pi * 5 * q)) * q) * .05 * np.sin(np.pi * q / d)
     return (x + sq) * v
 def slide(d, v=1.0, f=900):
-    """丁字尺木头在纸上滑：低通噪声 + 细颤"""
+    """Wooden T-square sliding on paper: low-passed noise + fine chatter"""
     q = tt(d); x = lp(nz(d), f) * (1 + .3 * np.sin(2 * np.pi * 31 * q)); e = np.sin(np.pi * np.minimum(1, q / d)) ** .7
     return norm(x * e) * .5 * v
 def unroll():
@@ -52,7 +52,7 @@ def paperpuff(v=1.0):
     return norm(x) * .5 * v
 def swell(d, v=1.0):
     q = tt(d); x = bp(nz(d), 300, 1500) * (q / d) ** 2; return norm(x) * .25 * v
-# ——— 机器（黄铜、木、链）———
+# ——— machine (brass, wood, chain)———
 def brass(v=1.0, p=1.0):
     d = .09; q = tt(d)
     x = hp(nz(d), 3000) * ex(d, .0012) + sum(a * np.sin(2 * np.pi * f * p * q + rng.random() * 6) * ex(d, tau) for f, a, tau in [(3100, .6, .014), (5200, .4, .009), (1700, .3, .02)])
@@ -86,7 +86,7 @@ def cap():
     d = .06; q = tt(d); return norm(hp(nz(d), 2000) * ex(d, .003) + np.sin(2 * np.pi * 2400 * q) * ex(d, .01) * .5) * .8
 def room(d):
     return norm(lp(sfx.brown(d), 400)) * .02
-# ——— 事件 → 拟音 ———
+# ——— events → foley ———
 G = {'pen': .55, 'letter': .5, 'hatch': .45, 'compass': .5}
 for e in ev['ev']:
     t, ty, v, d, pan = e['t'], e['type'], e.get('v', 1.0), e.get('d', .5), e.get('pan', 0)
@@ -121,7 +121,7 @@ for e in ev['ev']:
     elif ty == 'stampair': add(FX, sfx.whoosh(.25, .5), t, .6)
     elif ty == 'stamp': add(FX, rubberstamp(), t, 1.0)
     elif ty == 'cap': add(FX, cap(), t, .8)
-# ——— 旁白 ———
+# ——— narration ———
 vo_spans = []
 for e in ev['ev']:
     if e['type'] != 'vo': continue
@@ -130,7 +130,7 @@ for e in ev['ev']:
     y = librosa.resample(y, orig_sr=sr, target_sr=SR)
     y = hp(y, 80); y = compress(norm(y, .9), thr=.3, ratio=3)
     add(VO, y, e['t'], 1.0); vo_spans.append((e['t'], e['t'] + len(y) / SR))
-# ——— 配乐 + 闪避 ———
+# ——— score + ducking ———
 mus, msr = sf.read(os.path.join(HERE, 'music', 'score.wav'))
 if msr != SR: mus = librosa.resample(mus.T, orig_sr=msr, target_sr=SR).T
 M = np.zeros((N, 2)); M[:min(N, len(mus))] = mus[:N]
@@ -140,7 +140,7 @@ for a, b in vo_spans:
 from scipy.ndimage import uniform_filter1d
 duck = uniform_filter1d(duck, int(.25 * SR))
 M *= duck[:, None]
-# 旁白期间拟音也让一点
+# Foley also ducks a little under the narration
 fxd = 1 - (1 - duck) * .5
 mix = M * 1.0 + FX * .55 * fxd[:, None] + VO * .7
 for c in range(2): mix[:, c] = limit(mix[:, c], .95)

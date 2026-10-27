@@ -1,4 +1,4 @@
-// Whiteboard Explainer engine (v2) — dry-erase marker ink on a glossy board, no hands.
+// Whiteboard Explainer engine — dry-erase marker ink on a glossy board, no hands.
 // World units ≈ screen px at zoom 1. Everything is deterministic in t.
 //   shapes  : line / poly / curve / arc / circle / rect / arrow / dashed / text / hatch → Stroke[]
 //   timeline: Timeline.draw(pen, shapes, t0, opts) schedules strokes; pens float in, draw, lift, park off-frame

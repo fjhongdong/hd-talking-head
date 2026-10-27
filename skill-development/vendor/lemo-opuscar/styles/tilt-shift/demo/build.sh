@@ -1,5 +1,5 @@
 #!/bin/sh
-# 从零重现《Toy Town Rush Hour》：sh styles/tilt-shift/demo/build.sh（在仓库根或任意目录运行均可）
+# Rebuild "Toy Town Rush Hour" from scratch: sh styles/tilt-shift/demo/build.sh (runs from the repo root or any directory)
 set -e
 D="$(cd "$(dirname "$0")" && pwd)"; R="$(cd "$D/../../.." && pwd)"; PY="$R/.venv/bin/python"
 cd "$R"

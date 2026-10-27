@@ -183,15 +183,20 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
         raise ValueError("constraint capability reference must belong to the current candidate")
 
 def validate_design_handoffs(director, treatment, job_dir):
-    """Bind selected OpenFilm design to its existing eight-field creative brief."""
+    """Pass the selected design unchanged to the native creation Skill."""
     selection = treatment.get("skill_selection", {})
     for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
-        if assignment.get("skill_id") != "openfilm-motion-graphics":
+        if assignment.get("skill_id") not in {"openfilm-motion-graphics", "lemo-opuscar"}:
             continue
         design = _design_plan(assignment)
         segment = next(s for s in director["segments"] if s["segment_id"] == assignment["segment_id"])
         brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, assignment["component_id"])
         handoff = brief.get("creative_handoff", {}) if isinstance(brief, dict) else {}
+        if assignment["skill_id"] == "lemo-opuscar":
+            if (handoff.get("design_plan") != design
+                    or assignment.get("template_id") != "lemo-opuscar/" + brief.get("style_slug", "")):
+                raise ValueError("selected Lemo template and design_plan must reach its native creative handoff")
+            continue
         style = handoff.get("style_reason")
         if not isinstance(style, str) or any(value not in style for value in design.values()):
             raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")

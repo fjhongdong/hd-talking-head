@@ -451,7 +451,11 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                 payload = contract_artifacts.canonical_json_bytes(brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
-                    module.validate_brief(payload)
+                    checked = module.validate_brief(payload)
+                    if row.get("dependency_id") == "lemo-opuscar" and (
+                            checked.get("dependency_id") != "lemo-opuscar"
+                            or row["template_id"] != "lemo-opuscar/" + checked["style_slug"]):
+                        raise ValueError("Lemo brief style differs from the selected template")
                 elif hasattr(module, "_wrapper_validator"):
                     method = name + "._wrapper_validator.validate_brief"
                     module._wrapper_validator()(payload)
@@ -566,6 +570,10 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
             raise ValueError("actual content evidence is missing")
         from .overlay_alignment import _path
         entry_cited = row["capability"]["capability_type"] != "creative_skill"
+        lemo_sources = ({f["job_path"] for f in brief["files"]
+                         if Path(f["scene_path"]).suffix in {".html", ".js", ".mjs"}}
+                        if row.get("dependency_id") == "lemo-opuscar" else set())
+        cited_lemo_sources = set()
         for ref in refs:
             if not isinstance(ref, dict) or set(ref) not in (
                 {"path", "sha256", "pointer", "value"}, {"path", "sha256", "quote"},
@@ -602,6 +610,10 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     raise ValueError("scene excerpt differs from frozen content")
             if path == brief.get("entry", {}).get("job_path"):
                 entry_cited = True
+            if path in lemo_sources and "quote" in ref:
+                cited_lemo_sources.add(path)
+        if lemo_sources:
+            entry_cited = cited_lemo_sources == lemo_sources
         if not entry_cited:
             raise ValueError("creative Skill requires evidence from its actual frozen scene")
         return {"status": assessment["verdict"], "judged_by": "host", "binding_verified": True,

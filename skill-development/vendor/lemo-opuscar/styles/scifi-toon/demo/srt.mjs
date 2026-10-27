@@ -1,4 +1,4 @@
-// 导出字幕：node styles/scifi-toon/demo/srt.mjs → ../scifi-toon.srt（与烧录字幕同一份 window.SUBS）
+// Export subtitles: node styles/scifi-toon/demo/srt.mjs → ../scifi-toon.srt (same window.SUBS as the burned-in subtitles)
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { openDemo, closeServer } from '../../../core/render/page.mjs';
 const dir = path.dirname(fileURLToPath(import.meta.url));

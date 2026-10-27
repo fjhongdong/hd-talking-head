@@ -1,5 +1,5 @@
-"""TRANQUILITY.LOG 混音：拟音（全部合成）+ 旁白（闪避配乐）+ music/score.wav → mix.wav
-事件来自 events.json（node core/render/events.mjs 导出 window.EV）。拟音跟"材质"走：继电器、塑料键帽、显像管、电话线。"""
+"""TRANQUILITY.LOG mix: foley (all synthesised) + narration (ducking the score) + music/score.wav → mix.wav
+Events come from events.json (node core/render/events.mjs exports window.EV). The foley follows the "materials": relays, plastic keycaps, the picture tube, the phone line."""
 import json, os, sys, numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt, resample_poly
 D = os.path.dirname(os.path.abspath(__file__))
@@ -22,9 +22,9 @@ def add(name, x, at, g=1.0, pan=0.0):
     l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
     bus[name][i:i + len(x), 0] += x * l * 1.414; bus[name][i:i + len(x), 1] += x * r * 1.414
 
-# ---------- 拟音 ----------
+# ---------- Foley ----------
 def key(v=1.0, kind='key'):
-    """弹簧屈曲式机械键：塑料咔 + 弹簧叮 + 键帽回弹的低嗒"""
+    """Buckling-spring mechanical key: plastic clack + spring ping + low tap of the keycap bouncing back"""
     d = .09; t = T(d)
     p = rng.uniform(.93, 1.08)
     clickn = hp(nz(d), 2200) * np.exp(-t / .0028)
@@ -33,7 +33,7 @@ def key(v=1.0, kind='key'):
     if kind == 'space': thock *= 1.6; ping *= .4; thock = lp(thock, 500)
     if kind == 'enter': thock *= 2.0
     return (clickn * .8 + ping + thock) * v
-def tick(v=1.0):           # 对面来的字符：电传式的轻滴答
+def tick(v=1.0):           # characters arriving from the other end: a light teletype tick
     d = .03; t = T(d)
     return (bp(nz(d), 1200, 4200) * np.exp(-t / .004) + np.sin(2 * np.pi * 1850 * t) * np.exp(-t / .008) * .3) * v
 def relay(v=1.0):
@@ -41,7 +41,7 @@ def relay(v=1.0):
     return (hp(nz(d), 1500) * np.exp(-t / .004) * .8 + bp(nz(d), 80, 400) * np.exp(-t / .03) * 1.4 +
             hp(nz(d), 1500) * np.exp(-np.maximum(0, t - .035) / .003) * (t > .035) * .4) * v
 def degauss(v=1.0):
-    """消磁线圈：60Hz 及谐波的"嗡—"快速衰减 + 一声闷"咚" """
+    """Degauss coil: a fast-decaying 60Hz-plus-harmonics "hummm" + one dull "thunk" """
     d = 1.3; t = T(d)
     wob = 1 + .04 * np.sin(2 * np.pi * 7 * t)
     hum = sum(np.sin(2 * np.pi * 60 * h * t * wob) / h for h in (1, 2, 3, 5)) * np.exp(-t / .35)
@@ -61,7 +61,7 @@ def bel(v=1.0):
     d = .45; t = T(d)
     return (np.sin(2 * np.pi * 1000 * t) + .3 * np.sin(2 * np.pi * 2000 * t)) * np.exp(-t / .12) * np.minimum(1, t / .003) * v
 def modem(d, up=False, v=1.0):
-    """原创握手：应答音（两次相位翻转）→ 双音 → 1200/2400 交替 → 扰码数据噪声。发送版更短更高。"""
+    """Original handshake: answer tone (two phase reversals) → dual tone → alternating 1200/2400 → scrambled data noise. The sending version is shorter and higher."""
     t = T(d); x = np.zeros_like(t)
     if not up:
         a = t < .42
@@ -78,7 +78,7 @@ def modem(d, up=False, v=1.0):
         x += np.sin(2 * np.pi * np.cumsum(fsk) / SR) * .3
         x += bp(nz(d), 900, 3600) * .35 * (t > .25)
     e = np.minimum(1, t / .01) * np.minimum(1, (d - t) / .02)
-    return lp(np.tanh(x * 1.3), 3800) * e * v      # 电话线的带宽
+    return lp(np.tanh(x * 1.3), 3800) * e * v      # phone-line bandwidth
 def swell(d, v=1.0, down=False):
     t = T(d); e = np.sin(np.pi * np.clip(t / d, 0, 1)) ** 2
     f = np.linspace(200, 1400, len(t)) if not down else np.linspace(1400, 200, len(t))
@@ -116,7 +116,7 @@ for e in E['ev']:
     elif ty == 'poweroff': add('sfx', poweroff(), t, .6)
     elif ty == 'land': add('sfx', landtick(e['n']), t, .09, rng.uniform(-.5, .5))
 
-# ---------- 机器底噪：风扇 + 120Hz + 显像管高压啸叫（极轻） ----------
+# ---------- Machine noise floor: fan + 120Hz + picture-tube high-voltage whine (very faint) ----------
 t = np.arange(N) / SR
 fan = lp(rng.standard_normal(N), 700) * .05 + lp(rng.standard_normal(N), 180) * .05
 fan += np.sin(2 * np.pi * 120 * t) * .006
@@ -129,7 +129,7 @@ dn = (t > 58.6) & (t < 59.2)
 whine += np.sin(2 * np.pi * np.cumsum(np.where(dn, 15734 - 9000 * (t - 58.6), 0)) / SR) * dn * .003 * (1 - (t - 58.6) / .6)
 bus['bed'][:, 0] += fan + whine; bus['bed'][:, 1] += fan * .97 + whine
 
-# ---------- 旁白 ----------
+# ---------- Narration ----------
 vo_env = np.zeros(N)
 for e in E['ev']:
     if e['type'] != 'vo': continue
@@ -140,11 +140,11 @@ for e in E['ev']:
     y = y / np.abs(y).max() * .75
     add('vo', y, e['t'], 1.0, 0)
     i = int(e['t'] * SR); vo_env[i:i + len(y)] = 1
-# 闪避包络：前后 0.25s 平滑
+# Ducking envelope: 0.25s smoothing either side
 k = int(.25 * SR); ker = np.ones(k) / k
-duck = 1 - .6 * np.clip(np.convolve(vo_env, ker, 'same') * 1.5, 0, 1)      # 约 −8 dB
+duck = 1 - .6 * np.clip(np.convolve(vo_env, ker, 'same') * 1.5, 0, 1)      # about −8 dB
 
-# ---------- 配乐 ----------
+# ---------- Score ----------
 m, sr = sf.read(os.path.join(D, 'music', 'score.wav'))
 if sr != SR: m = resample_poly(m, SR, sr, axis=0)
 m = m[:N]; bus['music'][:len(m)] += m * 1.25
@@ -153,7 +153,7 @@ bus['music'] *= duck[:, None]
 mix = bus['music'] + bus['vo'] * 1.25 + bus['sfx'] * .9 + bus['bed']
 mix = limit(mix, .95) if mix.ndim == 1 else np.stack([limit(mix[:, 0], .95), limit(mix[:, 1], .95)], 1)
 sf.write(os.path.join(D, 'mix.wav'), mix.astype(np.float32), SR)
-# 电平表：每段各声部 RMS
+# Level table: RMS of each part per section
 def rms(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
 for a, b, lab in [(0, 4.8, 'open'), (11.6, 15.5, 'vo1'), (16.2, 21.4, 'silence'), (21.4, 25.3, 'vo2'), (33.6, 37.2, 'fall'), (37.2, 40.2, 'bloom'), (42.2, 46.6, 'vo4'), (52.4, 55, 'vo5')]:
     s = slice(int(a * SR), int(b * SR))

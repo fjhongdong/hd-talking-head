@@ -1,4 +1,4 @@
-// 时间线：唯一真值（镜头、旁白、灯、箭、音效、配乐 cue 都从这里来）。100 BPM：1 拍 = 0.6 s，1 小节 = 2.4 s
+// Timeline: the single source of truth (shots, narration, lamps, arrows, sound effects and music cues all come from here). 100 BPM: 1 beat = 0.6 s, 1 bar = 2.4 s
 export const BEAT = .6, BAR = 2.4;
 export const DUR = 54.4;
 export const T = {
@@ -13,10 +13,10 @@ export const T = {
   pull0: 40.6, truck0: 43.2, cutBack: 43.8, truck1: 44.5,
   bow: 48.3, clap2: 50.6, endIn: 50.9, end: 54.4
 };
-// 被射顺序（sun 0 留下）
+// Order in which the suns are shot (sun 0 is spared)
 export const KILL = [6, 1, 3, 7, 2, 8, 4, 9, 5];
 export const hitT = i => T.rel[i] + T.fly[i];
-// 旁白（起点；时长读 voices/dur.json）
+// Narration (start times; durations are read from voices/dur.json)
 export const VO = [
   { id: 'L1', t: 7.45, text: 'Long ago, ten suns climbed the sky at once.' },
   { id: 'L2', t: 12.3, text: 'The rivers boiled. The fields cracked. The whole earth began to burn.' },
@@ -25,7 +25,7 @@ export const VO = [
   { id: 'L5', t: 37.75, text: 'But the last one, he spared. So the world would have light, and not fire.' },
   { id: 'L6', t: 45.2, text: 'One light is enough. Even now, every shadow play burns just one.' }
 ];
-// 镜头表：[t0, t1, name]
+// Shot list: [t0, t1, name]
 export const SHOTS = [
   [0, 7.2, 'house'], [7.2, 12.0, 'suns'], [12.0, 18.0, 'land'], [18.0, 21.6, 'enter'], [21.6, 25.2, 'liang'],
   [25.2, 28.3, 'draw'], [28.3, 30.0, 'second'], [30.0, 34.8, 'volley'], [34.8, 37.2, 'last'], [37.2, 43.2, 'heal'],

@@ -1,7 +1,7 @@
-// 用法（可在任意目录运行，脚本会先 cd 到自己所在的 demo/）：
-//       node render.mjs stills 1.9 3.1 ...   → stills/t_*.jpg（STILLS_DIR=out/check 改输出目录）
+// Usage (can run from any directory; the script first cds into its own demo/):
+//       node render.mjs stills 1.9 3.1 ...   → stills/t_*.jpg (STILLS_DIR=out/check changes the output directory)
 //       node render.mjs events               → events.json
-//       node render.mjs video [workers] [只渲这些 worker 号,逗号分隔]  → out/seg_*.mp4 + out/list.txt
+//       node render.mjs video [workers] [render only these worker numbers, comma-separated]  → out/seg_*.mp4 + out/list.txt
 import { chromium } from 'playwright-core';
 import { spawn } from 'child_process';
 import fs from 'fs';
@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 process.chdir(path.dirname(fileURLToPath(import.meta.url)));
 import { serve } from './serve.mjs';
-import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME 或本机 playwright 缓存里最新的 headless shell
+import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME, or the newest headless shell in the local playwright cache
 const ARGS = ['--use-angle=gl', '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
 const FPS = parseInt(process.env.FPS || '60');
 const QS = process.env.QS || '';

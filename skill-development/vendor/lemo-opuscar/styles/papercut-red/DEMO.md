@@ -75,7 +75,7 @@ Whisper hears "Nian" as "Nyan"/"Nion", the correct pronunciation of nián, so it
 
 - Heroes and window flowers `#d2201f`; Nian one step deeper `#b00f26`; near limbs one step brighter `#c4162c`, far limbs darker (`#8a0c20`, girl `#b8191b`); fold back colour `#de3b30`.
 - Rice paper `#f2e8d0`, night paper indigo `#1c2446`, ink sky `#0f142a`, gold foil `#d9a93f` only at the end (sun, title flecks).
-- Night: far hills `#1f2a55`, near hills `#29356e`, houses `#35457f`, trees `#28346c`, snow `#7a88ba`, all indigo papers; only window flowers, lanterns, the girl and Nian are red (at gate 1 the background was red too and the silhouettes stopped popping). Day: rice-paper sky, red houses, far hills `#e0877f`, mid hills `#cf4f4a`.
+- Night: far hills `#1f2a55`, near hills `#29356e`, houses `#35457f`, trees `#28346c`, snow `#7a88ba`, all indigo papers; only window flowers, lanterns, the girl and Nian are red (a red background too makes the silhouettes stop popping). Day: rice-paper sky, red houses, far hills `#e0877f`, mid hills `#cf4f4a`.
 - Paper shadow: offset 2.6/3.6 px, blur 5 px × zoom, `rgba(52,6,10,.38)`. Inset contour: a 1.5-unit slit 3.5 units inside the outline. Night ambient ~`rgb(214,214,236)`; bloom 10 px / 40 px at strength ≈ 0.55.
 - Backlit window flower: radial light `#fff6d6 → #ffc46e → #ec782e`, rice-paper fibres multiplied at 50 %, the rosette's transmission sprite in `#b51d18`. Projected pattern squashed onto the ground with `[1.25,0,-0.9,0.3]`.
 - The rosette: middle ring *yang* cut (lanterns, ruyi scrolls on the fold lines, sawtooth on the ring edges), inner and outer rings *yin* cut.
@@ -101,7 +101,7 @@ styles/papercut-red/demo/
   world.js    village layout (night/day palettes) + lighting pass
   fold.js     fold – cut – unfold sequence   hud.js      subtitle banner, cut-letter text
   story.js    timeline (single source of truth, 120 BPM)   main.js  shots, cameras, events
-  sheet.js / climax.js / test.js   model sheets and gate-1 style frame (?test=sheet_girl | sheet_nian | frame)
+  sheet.js / climax.js / test.js   model sheets and style frame (?test=sheet_girl | sheet_nian | frame)
   lines.json  voice script   music/score.py  original score   mix.py  foley + voice + music   subs.py  srt
 ```
 

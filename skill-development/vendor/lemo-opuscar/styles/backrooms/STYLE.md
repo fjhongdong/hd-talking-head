@@ -3,7 +3,7 @@
 > Camcorder tapes recovered from empty, endless, fluorescent-lit spaces. Rules instead of monsters.
 > Genre reference (grammar only): "the Backrooms" internet folklore and new-weird / rule-horror; 1990s consumer camcorder footage. **Never** use the word "Backrooms", wiki "Level" numbers, community entity names, or any existing organisation or logo inside the film. Everything on screen (rules, forms, company voice, any presence) is original.
 
-Suits films of 45–60 s.
+Suits short films; the length follows the walk, and the dread thins out once nothing new goes wrong.
 
 ## 1. Essence, and what it is not
 

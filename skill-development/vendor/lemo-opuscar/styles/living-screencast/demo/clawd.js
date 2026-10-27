@@ -1,14 +1,14 @@
-// Clawd：18×10 方像素。由 Claude Code 终端 logo 的象限字符 ▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝ 1:1 展开
-//（每个字符格 = 2×2 象限，行加倍成方像素）。道具与特效用同一像素网格。
+// Clawd: 18×10 square pixels. Expanded 1:1 from the quadrant characters of the Claude Code terminal logo ▐▛███▜▌ / ▝▜█████▛▘ / ▘▘ ▝▝
+// (each character cell = 2×2 quadrants, rows doubled to make square pixels). Props and effects use the same pixel grid.
 export const CLAY = '#D97757', CLAY_D = '#B85F40', EYE = '#2A2622';
 
-// 返回 [[c, r, kind]]，kind: 1 身体 2 眼睛
+// returns [[c, r, kind]], kind: 1 body 2 eye
 export function grid({ eyes = 'n', arms = 'down', legs = 'stand' } = {}) {
   const P = new Map(), put = (c, r, v = 1) => P.set(c + ',' + r, v);
   for (let r = 0; r < 8; r++) for (let c = 3; c <= 14; c++) put(c, r);
   if (arms === 'up') for (const r of [0, 1, 2, 3]) { put(1, r); put(2, r); put(15, r); put(16, r); }
   else if (arms === 'wave') { for (const r of [4, 5]) { put(1, r); put(2, r); } for (const r of [0, 1, 2, 3]) { put(15, r); put(16, r); } }
-  else if (arms === 'tuck') { /* 手收起 */ }
+  else if (arms === 'tuck') { /* arms tucked */ }
   else for (const r of [4, 5]) for (const c of [1, 2, 15, 16]) put(c, r);
   const L = { stand: [[4, 2], [6, 2], [11, 2], [13, 2]], walkA: [[4, 2], [6, 1], [11, 2], [13, 1]], walkB: [[4, 1], [6, 2], [11, 1], [13, 2]],
     tuck: [[4, 1], [6, 1], [11, 1], [13, 1]], none: [] }[legs];
@@ -21,17 +21,17 @@ export function grid({ eyes = 'n', arms = 'down', legs = 'stand' } = {}) {
   return [...P].map(([k, v]) => { const [c, r] = k.split(',').map(Number); return [c, r, v]; });
 }
 
-// x,y = 脚底中点（世界坐标）；px = 像素边长；sq>0 压扁 <0 拉长；flip 朝左；rot 弧度（空翻）
+// x,y = midpoint under the feet (world coords); px = pixel side length; sq>0 squash, <0 stretch; flip faces left; rot in radians (flips)
 export function sprite({ x, y, px = 7, flip = false, sq = 0, rot = 0, op = 1, shadow = 0, ...pose }) {
   const G = grid(pose); let s = '';
   for (let [c, r, v] of G) { if (flip) c = 17 - c; s += `<rect x="${c}" y="${r}" width="1.04" height="1.04" fill="${v === 2 ? EYE : CLAY}"/>`; }
-  // 身体下沿一排暗色像素 = 体积感（只画在身体行 7）
+  // a row of dark pixels along the bottom of the body = sense of volume (drawn only on body row 7)
   for (let c = 3; c <= 14; c++) s += `<rect x="${c}" y="7" width="1.04" height="1.04" fill="${CLAY_D}" opacity=".55"/>`;
   const sy = 1 - sq, sx = 1 + sq * .7, w = 18 * px * sx, h = 10 * px * sy;
   const sh = shadow > 0 ? `<div style="position:absolute;left:${x - 7 * px}px;top:${y - px * .4}px;width:${14 * px}px;height:${px * .8}px;border-radius:50%;background:rgba(0,0,0,${.16 * shadow})"></div>` : '';
   return sh + `<svg class="px" viewBox="0 0 18 10" width="${w}" height="${h}" style="left:${x - w / 2}px;top:${y - h}px;opacity:${op};transform:rotate(${rot}rad);transform-origin:50% 60%" shape-rendering="crispEdges">${s}</svg>`;
 }
-// 精灵的像素中心点（世界坐标），给像素爆散/合体用
+// the sprite's pixel centres (world coords), for pixel burst/merge
 export function pixels(o) {
   const { x, y, px = 7, flip = false } = o;
   return grid(o).map(([c, r, v]) => ({ x: x + ((flip ? 17 - c : c) - 9 + .5) * px, y: y + (r - 10 + .5) * px, v }));
@@ -48,7 +48,7 @@ export const SPARK = (x, y, px = 6, col = '#F2C14E', op = 1) => pixart(['..y..',
 export const HEART = (x, y, px = 5, op = 1) => pixart(['.rr.rr.', 'rrrrrrr', 'rrrrrrr', '.rrrrr.', '..rrr..', '...r...'], { x: x - 3.5 * px, y: y - 3 * px, px, op, pal: { r: '#E0543A' } });
 export const CHECK = (x, y, px = 6, op = 1) => pixart(['.....g', '....gg', 'g..gg.', 'gggg..', '.gg...'], { x, y, px, op, pal: { g: '#2F9E4F' } });
 export const SWEAT = (x, y, px = 5, op = 1) => pixart(['.b.', 'bbb', 'bbb', '.b.'], { x, y, px, op, pal: { b: '#7FB6E8' } });
-// 尘土：t 0→1 向两侧散开
+// dust: t 0→1 spreads out to both sides
 export function dust(x, y, t, px = 5, n = 6, seed = 1) {
   if (t <= 0 || t >= 1) return ''; let s = '';
   for (let i = 0; i < n; i++) {
@@ -59,7 +59,7 @@ export function dust(x, y, t, px = 5, n = 6, seed = 1) {
   }
   return s;
 }
-// 速度线：像素短横
+// speed lines: short pixel dashes
 export function speedlines(x, y, dir, t, px = 5) {
   if (t <= 0 || t >= 1) return ''; let s = '';
   for (let i = 0; i < 4; i++) {

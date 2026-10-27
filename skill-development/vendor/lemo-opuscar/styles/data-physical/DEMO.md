@@ -4,7 +4,7 @@ One example among many. Don't reuse its story, arc, shots, props or timings.
 
 Demo: *Two Spirals* 《两条螺旋》 (39.4 s) · `data-physical.mp4` · source in [`demo/`](demo/)
 
-Twelve years of global wind and solar capacity (IRENA 2026, via Our World in Data, CC BY 4.0), built as two spirals of real plates on a walnut dial: one plate is 10 GW for both, aluminium for solar, teal acrylic for wind, a brass plate every 100 GW. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below).
+Twelve years of global wind and solar capacity (IRENA 2026, via Our World in Data, CC BY 4.0), built as two spirals of real plates on a walnut dial: one plate is 10 GW for both, aluminium for solar, teal acrylic for wind, a brass plate every 100 GW. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below). This is an unofficial film made from published data; IRENA and Our World in Data did not make or endorse it.
 
 ## Story & structure
 
@@ -73,7 +73,7 @@ demo/
   mix.py            score, material foley, voice, suck-outs, mix and master → out/mix.wav, out/stems/
   tools/            export.mjs (voice lines, timeline.json, cues), fonts.mjs (OFL subsets), srt.mjs, subcheck.mjs, holdcheck.py
   data/             the downloaded CSVs and metadata
-  FACTS.md, CREDITS, TREATMENT.md, PRODUCTION_LOG.md, stills/styleframe.jpg
+  FACTS.md, CREDITS, stills/styleframe.jpg
 ```
 
 - Needs `setup.sh deps voice` (Kokoro and faster-whisper; the Whisper `small.en` model downloads on the first check). `build.sh` fetches what git doesn't hold, only when missing: the studio HDRI (`sh tools/fetch.sh hdri`, 12 MB), the Kokoro model (`fetch.sh voice`), the sample libraries `vsco2ce`, `vcsl`, `freepats` (`fetch.sh instruments <lib>`, ~1 GB together), and the font subsets (`tools/fonts.mjs` from the Google Fonts CSS2 API, OFL: Noto Sans SC, Noto Serif SC, Inter, JetBrains Mono) whenever a `.woff2` named in `fonts.css` is missing. The walnut veneer textures are in git (`core/assets/polyhaven/`), the data CSVs in `demo/data/`.

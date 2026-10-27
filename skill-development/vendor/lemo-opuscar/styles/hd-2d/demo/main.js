@@ -1,6 +1,6 @@
-// The Lampbearer — HD-2D 风格 demo
+// The Lampbearer — HD-2D style demo
 import * as THREE from 'three';
-import { makePost } from './post_ts.js';   // 本地副本，多了移轴项（?tilt=1 开启）
+import { makePost } from './post_ts.js';   // local copy, adds a tilt-shift term (enabled with ?tilt=1)
 import { DUR, SHOTS, shotAt } from './story.js';
 import { buildHarbor } from './harbor.js';
 import { buildForest } from './forest.js';
@@ -15,7 +15,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('stage').appendChild(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(32, W / H, .3, 2000);
-const ONLY = Q.get('only');   // 调试：只建某个场景
+const ONLY = Q.get('only');   // debug: build only one scene
 const sets = {};
 if (!ONLY || ONLY === 'harbor') sets.harbor = buildHarbor();
 if (!ONLY || ONLY === 'forest') sets.forest = buildForest();
@@ -29,7 +29,7 @@ if (Q.has('nodof')) post.dof.maxCoc = 0;
 renderer.domElement.style.width = W + 'px'; renderer.domElement.style.height = H + 'px';
 await overlayReady();
 
-// —— 移轴：清晰带跟随 Wren 的屏幕高度；无角色的大全景用固定位置 ——
+// —— Tilt-shift: the sharp band follows Wren's screen height; wide shots with no character use a fixed position ——
 const TILT = Q.has('tilt'), TILT_C = { harborWide: .34, harborEnd: .36, title: .36 };
 const _v = new THREE.Vector3();
 function tiltCenter(S, shot) {
@@ -44,7 +44,7 @@ window.render = t => {
   const shot = shotAt(t), sid = SET_OF[shot.id];
   if (sid && sets[sid]) {
     const S = sets[sid]; post.dof.scene = S.scene; if (post.dof.ao) post.dof.ao.scene = S.scene;
-    // 每个场景可在 update 里覆盖这些默认值
+    // each scene can override these defaults in update
     post.vig.uniforms.fade.value = 1; post.bloom.strength = .55; post.bloom.threshold = .85; renderer.toneMappingExposure = 1.15;
     V.warm.value = .1; V.sat.value = 1.05; V.amt.value = .62;
     S.update(t, shot, camera, post, renderer);

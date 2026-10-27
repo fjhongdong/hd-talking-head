@@ -1,4 +1,4 @@
-"""字幕区间（与 film.js 的 setLines/subtitle 同一规则）→ out/subs.json，再交给 core/render/srt.py"""
+"""Subtitle intervals (same rule as setLines/subtitle in film.js) → out/subs.json, then handed to core/render/srt.py"""
 import json, os, sys
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 L = json.load(open(os.path.join(D, 'lines.json'))); dur = json.load(open(os.path.join(D, 'voices', 'dur.json')))

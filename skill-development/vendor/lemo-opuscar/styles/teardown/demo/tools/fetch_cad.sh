@@ -1,6 +1,6 @@
 #!/bin/sh
-# 从开源仓库 foostan/crkbd（固定提交 63366fb）重新生成 data/pcb.json 与 data/case.bin。
-# 需要：网络、python3、node、npm（临时安装 occt-import-js@0.0.23 到 $TMP）
+# Regenerate data/pcb.json and data/case.bin from the open-source repo foostan/crkbd (pinned commit 63366fb).
+# Needs: network, python3, node, npm (installs occt-import-js@0.0.23 temporarily into $TMP)
 set -e
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 TMP=${TMP_DIR:-$(mktemp -d)}

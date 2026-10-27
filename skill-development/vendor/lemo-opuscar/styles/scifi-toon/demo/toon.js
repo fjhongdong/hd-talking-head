@@ -1,14 +1,14 @@
-// toon.js — 2D 卡通矢量引擎
-// 1) 自己维护仿射矩阵：形状先变换到屏幕坐标再描边 → 任何景别线宽恒定（卡通特写不会变细线）
-// 2) line boil：屏幕空间按 ~7px 重采样，沿法向做低频噪声位移；BOIL 状态 12fps 在 3 张之间循环
-// 3) 平涂：fill → clip 内画硬边阴影块 → 最后描边
+// toon.js — 2D cartoon vector engine
+// 1) Keeps its own affine matrix: shapes are transformed to screen coordinates before stroking → line width stays constant at every shot size (cartoon close-ups don't get thin lines)
+// 2) line boil: resample in screen space every ~7 px and displace along the normal with low-frequency noise; the BOIL state cycles through 3 drawings at 12 fps
+// 3) flat colour: fill → draw hard-edged shadow blocks inside the clip → stroke last
 import { clamp, lerp, hash, vnoise, TAU } from '/core/lib.js';
 export const W = 1920, H = 1080;
 export const INK = '#1b1422';
 export let g = null;
 export function init(canvas) { g = canvas.getContext('2d'); return g; }
 
-// —— 矩阵栈 ——
+// —— matrix stack ——
 let M = [1, 0, 0, 1, 0, 0]; const ST = [];
 export const push = () => ST.push(M.slice());
 export const pop = () => { M = ST.pop(); };
@@ -22,20 +22,20 @@ export const mirrored = () => M[0] * M[3] - M[1] * M[2] < 0;
 export const getM = () => M.slice();
 export const setM = m => { M = m.slice(); };
 
-// —— 全局状态（每帧设置）——
+// —— global state (set every frame)——
 export const S = { boil: 0, amp: 1.7, sid: 0, lw: 7, lwScale: 1 };
 export function frame(t, { amp = 1.7 } = {}) {
   S.boil = Math.floor(t * 12 + 1e-6) % 3; S.amp = amp; S.sid = 0; reset();
   g.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-// —— 局部坐标下的形状点 ——
+// —— shape points in local coordinates ——
 export function ell(cx, cy, rx, ry, n = 0, a0 = 0) {
   if (!n) n = Math.max(16, Math.min(90, Math.round((rx + ry) * zoom() * .25)));
   const p = []; for (let i = 0; i < n; i++) { const a = a0 + i / n * TAU; p.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return p;
 }
 export function arc(cx, cy, rx, ry, a0, a1, n = 24) { const p = []; for (let i = 0; i <= n; i++) { const a = lerp(a0, a1, i / n); p.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return p; }
-// Catmull-Rom 样条
+// Catmull-Rom spline
 export function spline(c, closed = true, k = 8) {
   const n = c.length, out = [], P = i => closed ? c[(i + n) % n] : c[clamp(i, 0, n - 1)];
   const m = closed ? n : n - 1;
@@ -56,9 +56,9 @@ export function rr(x, y, w, h, r) {
   return p;
 }
 export const rect = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
-// 二次曲线
+// Quadratic curve
 export function quad(a, c, b, n = 16) { const p = []; for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; p.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]); } return p; }
-// 面条肢体：a→b 二次曲线，bend 为垂直偏移，w0→w1 渐细，两端圆头
+// Noodle limb: quadratic curve a→b, bend is the perpendicular offset, tapers w0→w1, round caps at both ends
 export function noodle(a, b, bend, w0, w1 = w0) {
   const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
   const c = [(a[0] + b[0]) / 2 + nx * bend, (a[1] + b[1]) / 2 + ny * bend];
@@ -76,10 +76,10 @@ export function noodle(a, b, bend, w0, w1 = w0) {
   return [...L1, ...capB, ...R1.reverse(), ...capA];
 }
 
-// —— 变换 + 重采样 + boil ——
+// —— transform + resample + boil ——
 function toScreen(pts, closed) {
   const s = pts.map(p => tx(p[0], p[1]));
-  // 按弧长重采样（屏幕空间）
+  // resample by arc length (screen space)
   const out = [], step = 7; let acc = 0;
   const n = closed ? s.length : s.length - 1;
   out.push(s[0]);
@@ -113,7 +113,7 @@ function pathOf(s, closed) {
   for (let i = 1; i < s.length; i++) P.lineTo(s[i][0], s[i][1]);
   if (closed) P.closePath(); return P;
 }
-// 主绘制：返回 Path2D（可再用来 clip / 描边）
+// Main draw: returns a Path2D (reusable for clip / stroke)
 export function shape(pts, o = {}) {
   const closed = o.closed !== false, id = S.sid++;
   const seed = hash(id * 1.37 + 3) * 90 + S.boil * 23.7;
@@ -136,7 +136,7 @@ export const fillOnly = (pts, fill, o = {}) => shape(pts, { ...o, fill, stroke: 
 export const stroke = (pts, lw = S.lw, o = {}) => shape(pts, { ...o, closed: false, lw });
 export const dot = (x, y, r, col = INK) => { const [a, b] = tx(x, y); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = col; g.beginPath(); g.arc(a, b, Math.max(1.5, r * zoom()), 0, TAU); g.fill(); };
 
-// 世界坐标里写字（招牌等）
+// Text in world coordinates (signs etc.)
 export function text(str, x, y, { font = '800 40px "Baloo 2"', fill = INK, align = 'center', base = 'middle', rot = 0, outlineW = 0, outlineCol = INK } = {}) {
   g.save(); g.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
   g.translate(x, y); if (rot) g.rotate(rot); if (mirrored()) g.scale(-1, 1);
@@ -145,9 +145,9 @@ export function text(str, x, y, { font = '800 40px "Baloo 2"', fill = INK, align
   g.fillStyle = fill; g.fillText(str, 0, 0); g.restore();
 }
 
-// —— 屏幕空间工具 ——
+// —— screen-space helpers ——
 export function screenRect(col, a = 1) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
-// 平涂带状"渐变"（卡通天空：硬边色带）
+// Flat banded "gradient" (cartoon sky: hard-edged colour bands)
 export function bands(cols, y0, y1, x0 = -4000, x1 = 6000) {
   const n = cols.length;
   for (let i = 0; i < n; i++) fillOnly(rect(x0, lerp(y0, y1, i / n), x1 - x0, (y1 - y0) / n + 2), cols[i], { boil: 0 });

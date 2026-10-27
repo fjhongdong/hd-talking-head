@@ -1,0 +1,97 @@
+[
+ {
+  "id": "L1",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Fifth Avenue. The old Waldorf-Astoria site.",
+  "zh": "第五大道，原华尔道夫酒店的地块。",
+  "en": "Fifth Avenue. The old Waldorf-Astoria site.",
+  "asr": "5th Avenue, the old Waldorf Astoria site."
+ },
+ {
+  "id": "L2",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "March seventeenth, nineteen thirty. First steel.",
+  "zh": "1930 年 3 月 17 日，第一根钢。",
+  "en": "17 March 1930. First steel.",
+  "asr": "March 17, 1930, first steel."
+ },
+ {
+  "id": "L3",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Nine derricks lift the frame.",
+  "zh": "九台吊车把钢架吊起来。",
+  "en": "Nine derricks lift the frame."
+ },
+ {
+  "id": "L4",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Some columns weigh forty-four tons.",
+  "zh": "有的柱段一段就重 44 吨。",
+  "en": "Some columns weigh 44 tons.",
+  "asr": "Some columns weigh 44 tons."
+ },
+ {
+  "id": "L5",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Four and a half floors of steel, every week.",
+  "zh": "每周立起四层半钢架。",
+  "en": "Four and a half floors of steel, every week."
+ },
+ {
+  "id": "L6",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Eighty hours from the mill in Pittsburgh to a rivet in the frame.",
+  "zh": "匹兹堡出厂 80 小时，就铆进楼里。",
+  "en": "80 hours from the mill in Pittsburgh to a rivet in the frame."
+ },
+ {
+  "id": "L7",
+  "voice": "am_michael",
+  "speed": 0.95,
+  "text": "The men who did the job?",
+  "zh": "干活的人是谁？",
+  "en": "The men who did the job?"
+ },
+ {
+  "id": "L8",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Twenty-five hundred men a day. Up to four thousand.",
+  "zh": "每天 2,500 人，最多一天约 4,000 人。",
+  "en": "2,500 men a day. Up to 4,000.",
+  "asr": "2,500 men a day, up to 4,000."
+ },
+ {
+  "id": "L9",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Twelve hundred and fifty feet. The tallest structure in the world.",
+  "zh": "1,250 英尺，世界上最高的建筑物。",
+  "en": "1,250 feet. The tallest structure in the world.",
+  "asr": "1250 feet, the tallest structure in the world."
+ },
+ {
+  "id": "L10",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "May first, nineteen thirty-one. Open, nearly a month early.",
+  "zh": "1931 年 5 月 1 日开放，比计划提前近一个月。",
+  "en": "1 May 1931. Open, nearly a month early.",
+  "asr": "May 1, 1931. Open nearly a month early."
+ },
+ {
+  "id": "L11",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "text": "Four hundred and ten days.",
+  "zh": "410 天。",
+  "en": "410 days.",
+  "asr": "410 days."
+ }
+]

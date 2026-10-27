@@ -1,7 +1,7 @@
-// memsprites.js — 回忆里的精灵：4 色小时候（160×90 原生）、8-bit 少年（篝火，坐姿）
+// memsprites.js — sprites inside the memories: 4-colour childhood (160×90 native), 8-bit teenagers (campfire, sitting)
 import { C, GBI, sprFromRows } from './px.js';
 const G4 = { k: GBI[0], d: GBI[1], l: GBI[2], w: GBI[3] };
-// 小 ARLO：深色头发、拿木剑；两帧走路
+// Little ARLO: dark hair, wooden sword; two walk frames
 const KA = [[
   '...kkk....',
   '..kdddk...',
@@ -31,7 +31,7 @@ const KA = [[
   '...kkkk...',
   '...kk.kk..',
 ]];
-// 小 WREN：浅色头发 + 发辫；两帧走路（围巾尾巴由场景程序画）
+// Little WREN: light hair + braid; two walk frames (the scarf tail is drawn procedurally by the scene)
 const KW = [[
   '...kkkk...',
   '..kllllk..',
@@ -61,7 +61,7 @@ const KW = [[
   '...kkkk...',
   '...kk.kk..',
 ]];
-// 小 WREN 指向远方
+// Little WREN pointing into the distance
 const KW_POINT = [
   '...kkkk...',
   '..kllllk..',

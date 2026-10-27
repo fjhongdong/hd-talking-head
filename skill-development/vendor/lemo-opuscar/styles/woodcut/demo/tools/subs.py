@@ -1,4 +1,4 @@
-"""字幕 cues → ../woodcut.srt（规则同 film.js：t0 = 旁白起点 − 0.05，停留 ≥ max(1.8 s, 语音 + 0.6 s)）"""
+"""Subtitle cues → ../woodcut.srt (same rule as film.js: t0 = narration start − 0.05, on screen ≥ max(1.8 s, speech + 0.6 s))"""
 import json, os, subprocess, sys
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); R = os.path.abspath(os.path.join(D, '../../..'))
 K = json.load(open(os.path.join(D, 'timeline.json')))['keys']; dur = json.load(open(os.path.join(D, 'voices/dur.json')))

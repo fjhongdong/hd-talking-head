@@ -1,0 +1,936 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>定格 Freeze Frame</title>
+<style>
+@font-face{font-family:SansSC;src:url(fonts/sans500.woff2) format('woff2');font-weight:500}
+@font-face{font-family:SansSC;src:url(fonts/sans700.woff2) format('woff2');font-weight:700}
+@font-face{font-family:SansSC;src:url(fonts/sans900.woff2) format('woff2');font-weight:900}
+@font-face{font-family:Cond;src:url(fonts/cond800i.woff2) format('woff2');font-weight:800;font-style:italic}
+@font-face{font-family:Cond;src:url(fonts/cond600.woff2) format('woff2');font-weight:600}
+@font-face{font-family:Mono;src:url(fonts/mono500.woff2) format('woff2');font-weight:500}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Sports telestrator "Freeze Frame" (《定格》) — three goals in 12 minutes. render(t) is deterministic; footage frames are loaded and cached on demand.
+// Footage frames: a = third goal (Commons clip), b = first goal, main camera, c = second goal, main camera F001–090 + high reverse angle F091–192 (official highlights)
+const C = document.getElementById('c'), X = C.getContext('2d');
+const W = 1920, H = 1080;
+const Q = new URLSearchParams(location.search), DBG = Q.get('dbg') === '1', NOSUB = Q.get('nosub') === '1';   // nosub=1: used to render the cover
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eo = k => 1 - Math.pow(1 - clamp(k), 3);
+const eio = k => { k = clamp(k); return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+const back = (k, s = 1.7) => { k = clamp(k) - 1; return k * k * ((s + 1) * k + s) + 1; };
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+// —— Palette ——
+const COL = {
+  ink: '#FFD400',      // attacking side / main line: fluorescent yellow marker
+  def: '#3FD8FF',      // defending side: cyan
+  space: '#FF3B30',    // space (gap): red
+  chalk: '#F4F1E8',    // whiteboard pen
+  board: '#0C1411',    // programme base board: dark green-black
+  card: 'rgba(8,12,14,0.9)',
+  paper: '#F2ECDD', pen: '#1E2A44'
+};
+const F_ZH = 'SansSC', F_C = 'Cond', F_M = 'Mono';
+
+// —— Footage ——
+const cache = new Map();
+function img(src) {
+  if (!cache.has(src)) {
+    if (cache.size > 90) { const k = cache.keys().next().value; cache.delete(k); }
+    cache.set(src, new Promise(res => { const im = new Image(); im.onload = () => im.decode().then(() => res(im), () => res(im)); im.onerror = () => res(null); im.src = src; }));
+  }
+  return cache.get(src);
+}
+const NFR = { a: 350, b: 196, c: 192 };
+const fsrc = (f, clip = 'a') => `assets/${clip}/${String(clamp(Math.round(f), 1, NFR[clip])).padStart(3, '0')}.jpg`;
+let TL, STAD, HAK, PITCH;
+
+// —— Tracking (source 1280×720 coordinates, point at the player's feet; hand-set keyframes) ——
+const P = (x, y) => [x * 1.5, y * 1.5];
+const Q2 = arr => arr.map(([f, x, y]) => [f, x / 1.5, y / 1.5]);
+const TRK = {
+  kald: [[13,13,430],[19,87,410],[25,154,414],[31,205,405],[35,226,393],[37,230,392],[43,228,388],[49,234,388],[55,250,386],[56,251,386],[61,243,386],[67,220,382],[73,154,382]],
+  ball: [[1,484,412],[7,388,401],[13,330,407],[19,298,406],[25,278,397],[31,252,390],[35,239,386],[37,240,386],[43,250,382],[49,254,382],[55,262,388],[56,264,388],[57,278,358],[58,327,347],[59,369,337],[60,419,326],[61,461,315],[62,500,307],[64,580,295],[67,695,277],[70,812,265],[73,888,256],[74,905,255],[75,925,252],[76,945,249],[77,965,246],[78,982,243],[80,1000,241],[82,962,240],[84,922,240]],
+  d26w: [[43,450,388],[49,426,390],[55,410,383],[56,408,383],[58,400,383],[61,390,383]],
+  r3: [[262,1100,590],[272,947,598],[288,998,598],[300,832,595],[308,900,605],[310,986,614]],
+  r26: [[262,330,560],[272,538,572],[288,550,585],[300,614,550],[308,632,548],[310,640,550]],
+  // —— First goal (clip b), second goal (clip c): measured in 1920 frame coordinates, converted back to source coordinates here ——
+  dir: Q2([[86,1794,894],[90,1794,894],[96,1800,842],[100,1744,841],[106,1779,836],[110,1833,833]]),
+  zaj: Q2([[100,520,600],[106,595,590],[110,670,570],[113,735,570],[116,795,555],[119,857,564],[121,895,550]]),
+  bb: Q2([[96,1700,800],[100,1562,737],[106,1300,660],[110,1180,613],[114,1075,570],[116,1035,555],[119,985,540],[121,945,525]]),
+  rball: [[262,620,560],[272,745,579],[288,657,588],[300,687,585],[308,710,552],[310,600,426],[312,554,336],[314,550,266],[316,570,210],[318,584,166],[320,594,150],[322,624,140],[324,640,154],[326,650,184],[328,674,220],[330,712,256],[332,740,272],[334,736,280],[336,716,280]]
+};
+function at(tr, f) {
+  const k = TRK[tr]; if (f <= k[0][0]) return P(k[0][1], k[0][2]);
+  for (let i = 1; i < k.length; i++) if (f <= k[i][0]) { const a = k[i - 1], b = k[i], u = (f - a[0]) / (b[0] - a[0]); return P(lerp(a[1], b[1], u), lerp(a[2], b[2], u)); }
+  const l = k[k.length - 1]; return P(l[1], l[2]);
+}
+
+// —— Timeline ——
+function S(id) { return TL.seg.find(s => s.id === id); }
+function segAt(t) { for (const s of TL.seg) if (t >= s.t0 && t < s.t1) return s; return TL.seg[TL.seg.length - 1]; }
+function srcFrame(s, t) {
+  const k = seg(t, s.t0, s.t1);
+  if (s.id === 'rewind') return lerp(s.f0, s.f1, eio(k));
+  return lerp(s.f0, s.f1, k);
+}
+
+// —— Small drawing helpers ——
+function wob(pts, amp, seed) {
+  // hand-drawn feel: small jitter along the normal (deterministic)
+  return pts.map((p, i) => { if (i === 0 || i === pts.length - 1) return p; const n = (hash(seed + i * 3.1) - .5) * 2 * amp; return [p[0] + n, p[1] + n * .6]; });
+}
+function bez(a, c, b, n = 28) { const o = []; for (let i = 0; i <= n; i++) { const u = i / n; o.push([(1-u)*(1-u)*a[0] + 2*(1-u)*u*c[0] + u*u*b[0], (1-u)*(1-u)*a[1] + 2*(1-u)*u*c[1] + u*u*b[1]]); } return o; }
+function plen(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); return L; }
+function partial(pts, k) {
+  const L = plen(pts) * clamp(k); const o = [pts[0]]; let acc = 0;
+  for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]); if (acc + d >= L) { const u = (L - acc) / (d || 1); o.push([lerp(pts[i-1][0], pts[i][0], u), lerp(pts[i-1][1], pts[i][1], u)]); return o; } acc += d; o.push(pts[i]); }
+  return o;
+}
+function path(pts) { X.beginPath(); X.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) X.lineTo(pts[i][0], pts[i][1]); }
+// Marker line: dark outline + bright core + glow; optional dash; arrow = arrowhead at the end
+function marker(pts, k, col, w = 9, o = {}) {
+  if (k <= 0) return;
+  const p = partial(pts, k); if (p.length < 2) return;
+  X.save(); X.lineCap = 'round'; X.lineJoin = 'round';
+  if (o.dash) X.setLineDash(o.dash);
+  path(p); X.strokeStyle = 'rgba(0,0,0,0.55)'; X.lineWidth = w + 6; X.stroke();
+  X.shadowColor = col; X.shadowBlur = 18; path(p); X.strokeStyle = col; X.lineWidth = w; X.stroke();
+  X.shadowBlur = 0; path(p); X.strokeStyle = 'rgba(255,255,255,0.55)'; X.lineWidth = Math.max(2, w * .28); X.stroke();
+  X.setLineDash([]);
+  if (o.arrow && k > .9) {
+    const a = p[p.length - 1], b = p[Math.max(0, p.length - 4)]; const ang = Math.atan2(a[1] - b[1], a[0] - b[0]); const s = w * 3.2 * eo(seg(k, .9, 1));
+    X.translate(a[0], a[1]); X.rotate(ang);
+    X.beginPath(); X.moveTo(s * .4, 0); X.lineTo(-s, -s * .62); X.lineTo(-s * .62, 0); X.lineTo(-s, s * .62); X.closePath();
+    X.fillStyle = 'rgba(0,0,0,0.55)'; X.lineWidth = 6; X.strokeStyle = 'rgba(0,0,0,0.55)'; X.stroke();
+    X.shadowColor = col; X.shadowBlur = 16; X.fillStyle = col; X.fill();
+  }
+  X.restore();
+}
+// Player ring: perspective ellipse + rotating dashed outer ring + vertical light column
+function ring(x, y, r, col, k = 1, t = 0, o = {}) {
+  if (k <= 0) return;
+  const ry = r * .36;
+  X.save();
+  if (o.beam) {
+    const g = X.createLinearGradient(x, y - r * 3.2, x, y);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, col + '55');
+    X.globalAlpha = k * .9; X.fillStyle = g;
+    X.beginPath(); X.moveTo(x - r * .55, y - r * 3.2); X.lineTo(x + r * .55, y - r * 3.2); X.lineTo(x + r, y); X.lineTo(x - r, y); X.closePath(); X.fill();
+    X.globalAlpha = 1;
+  }
+  X.beginPath(); X.ellipse(x, y, r * eo(k), ry * eo(k), 0, 0, Math.PI * 2); X.fillStyle = col + '30'; X.fill();
+  X.lineWidth = 11; X.strokeStyle = 'rgba(0,0,0,0.5)';
+  X.beginPath(); X.ellipse(x, y, r, ry, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * eo(k)); X.stroke();
+  X.shadowColor = col; X.shadowBlur = 16; X.lineWidth = 6; X.strokeStyle = col; X.stroke(); X.shadowBlur = 0;
+  X.setLineDash([16, 14]); X.lineDashOffset = -t * 60; X.lineWidth = 3; X.globalAlpha = .85 * k;
+  X.beginPath(); X.ellipse(x, y, r * 1.32, ry * 1.32, 0, 0, Math.PI * 2); X.stroke();
+  X.restore();
+}
+// Label: black box + coloured vertical bar; large Chinese text + one line of small English text
+function tag(x, y, zh, en, col, k = 1, o = {}) {
+  if (k <= 0) return;
+  X.save();
+  X.font = `900 ${o.size || 40}px ${F_ZH}`; const wz = X.measureText(zh).width;
+  X.font = `600 ${o.esize || 21}px ${F_C}`; X.letterSpacing = '2px'; const we = X.measureText(en).width; X.letterSpacing = '0px';
+  const w = Math.max(wz, we) + 46, h = (o.size || 40) + (o.esize || 21) + 30;
+  const ax = o.right ? x - w : x;
+  const kk = eo(k);
+  X.beginPath(); X.rect(ax, y, w * kk, h); X.clip();
+  X.fillStyle = COL.card; X.fillRect(ax, y, w, h);
+  X.fillStyle = col; X.fillRect(ax, y, 8, h);
+  X.fillStyle = '#fff'; X.font = `900 ${o.size || 40}px ${F_ZH}`; X.textBaseline = 'top'; X.fillText(zh, ax + 26, y + 10);
+  X.fillStyle = col; X.font = `600 ${o.esize || 21}px ${F_C}`; X.letterSpacing = '2px'; X.fillText(en, ax + 27, y + 16 + (o.size || 40));
+  X.restore();
+}
+function cover(im, sc = 1, fx = .5, fy = .5, alpha = 1) {
+  if (!im) return; const iw = im.width, ih = im.height; const s = Math.max(W / iw, H / ih) * sc;
+  const w = iw * s, h = ih * s; X.globalAlpha = alpha; X.drawImage(im, (W - w) * fx, (H - h) * fy, w, h); X.globalAlpha = 1;
+}
+// Footage frame: cross-blends two frames in slow motion; zoom is centred on (cx,cy)
+async function drawSrc(f, o = {}) {
+  const a = Math.floor(f), u = f - a;
+  const A = await img(fsrc(a, o.clip)), B = u > 0.02 ? await img(fsrc(a + 1, o.clip)) : null;
+  X.save();
+  if (o.zoom && o.zoom !== 1) { const z = o.zoom, cx = o.cx ?? W / 2, cy = o.cy ?? H / 2; X.translate(cx, cy); X.scale(z, z); X.translate(-cx, -cy); }
+  if (o.jx) X.translate(o.jx, 0);
+  if (A) X.drawImage(A, 0, 0, W, H);
+  if (B) { X.globalAlpha = u; X.drawImage(B, 0, 0, W, H); X.globalAlpha = 1; }
+  X.restore();
+}
+function grade(o = {}) {
+  // one grade for all: slightly darkened corners; on a freeze, desaturate + a bit cooler
+  if (o.freeze) { X.save(); X.globalCompositeOperation = 'saturation'; X.fillStyle = `rgba(128,128,128,${0.42 * o.freeze})`; X.fillRect(0, 0, W, H); X.restore();
+    X.fillStyle = `rgba(10,22,30,${0.16 * o.freeze})`; X.fillRect(0, 0, W, H); }
+  const g = X.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * 1.05);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${0.38 + 0.2 * (o.freeze || 0)})`); X.fillStyle = g; X.fillRect(0, 0, W, H);
+}
+// Spotlight: darken outside the focus ellipse
+function spot(cx, cy, rx, ry, k) {
+  if (k <= 0) return;
+  X.save(); X.fillStyle = `rgba(0,0,0,${0.42 * k})`;
+  X.beginPath(); X.rect(0, 0, W, H); X.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2, true); X.fill('evenodd');
+  X.restore();
+}
+function flash(t, t0, d = .12, a = .65) { const k = seg(t, t0, t0 + d); if (k > 0 && k < 1) { X.fillStyle = `rgba(255,255,255,${a * (1 - k)})`; X.fillRect(0, 0, W, H); } }
+
+// —— Programme graphics package ——
+function bugTop(mode, k = 1) {
+  // top right: programme name + mode; also covers the broadcaster logo in the footage
+  if (k <= 0) return;
+  const M = { live: ['直播回看', 'LIVE', '#FF3B30'], ana: ['战术分析', 'ANALYSIS', COL.ink], rep: ['反打回放', 'REPLAY', COL.def] }[mode];
+  X.save(); X.translate(lerp(60, 0, eo(k)), 0); X.globalAlpha = clamp(k * 2);
+  const x = 1452, y = 38, h = 72;   // covers the broadcaster logo (logo sits at y 75–107)
+  X.fillStyle = COL.ink; X.fillRect(x, y, 112, h);
+  X.fillStyle = '#0B0F14'; X.font = `900 38px ${F_ZH}`; X.textBaseline = 'middle'; X.fillText('定格', x + 18, y + h / 2 + 1);
+  X.fillStyle = '#080C0E'; X.fillRect(x + 112, y, 316, h);
+  X.fillStyle = '#fff'; X.font = `800 italic 26px ${F_C}`; X.letterSpacing = '3px'; X.fillText('FREEZE FRAME', x + 130, y + 24);
+  X.letterSpacing = '1px'; X.fillStyle = M[2]; X.font = `500 20px ${F_ZH}`; X.fillText(M[0], x + 130, y + 52);
+  X.font = `600 18px ${F_C}`; X.letterSpacing = '3px'; X.fillText(M[1], x + 226, y + 52);
+  if (mode === 'live') { X.beginPath(); X.arc(x + 404, y + 24, 7, 0, Math.PI * 2); X.fillStyle = '#FF3B30'; X.fill(); }
+  X.restore();
+}
+// Score bar state: one span per goal, flips on the frame of the goal (55′ 0→1, 61′ 1→2, 67′ 2→3)
+let GOALS = [];
+function scoreAt(t) {
+  let st = { fb: 0, min: '55′', g: 0 };
+  for (const G of GOALS) { if (t < G.from) break; st = { fb: t >= G.t ? G.n : G.n - 1, min: G.min, g: seg(t, G.t, G.t + .5), n: G.n }; }
+  return st;
+}
+function bugScore(st, k = 1) {
+  // bottom-right score bar: BJK 3–x FB minute, flips on the frame of the goal; also covers the URL watermark in the footage
+  if (k <= 0) return;
+  X.save(); X.globalAlpha = clamp(k * 2); X.translate(lerp(40, 0, eo(k)), 0);
+  const x = 1392, y = 926, h = 70;
+  X.fillStyle = '#080C0E'; X.fillRect(x, y, 488, h);
+  X.fillStyle = '#fff'; X.font = `800 italic 36px ${F_C}`; X.textBaseline = 'middle'; X.letterSpacing = '2px';
+  X.fillText('BJK', x + 22, y + h / 2 + 1);
+  X.fillStyle = COL.ink; X.fillRect(x + 108, y + 10, 150, h - 20);
+  X.fillStyle = '#0B0F14'; X.font = `800 italic 44px ${F_C}`; X.textAlign = 'center';
+  const g = st.g && st.g < 1 ? st.g : 1, fbN = String(st.g > 0 && st.g < .5 ? st.fb - 1 : st.fb);
+  X.fillText('3', x + 145, y + h / 2 + 2); X.fillText('–', x + 183, y + h / 2 + 2);
+  X.save(); X.beginPath(); X.rect(x + 200, y + 10, 50, h - 20); X.clip();
+  const dy = g > 0 && g < 1 ? Math.sin(g * Math.PI) * -6 : 0; X.fillText(fbN, x + 222, y + h / 2 + 2 + dy); X.restore();
+  X.textAlign = 'left'; X.fillStyle = '#fff'; X.font = `800 italic 36px ${F_C}`; X.fillText('FB', x + 276, y + h / 2 + 1);
+  X.fillStyle = 'rgba(255,255,255,0.14)'; X.fillRect(x + 352, y + 12, 2, h - 24);
+  X.fillStyle = COL.ink; X.font = `800 italic 36px ${F_C}`; X.fillText(st.min, x + 376, y + h / 2 + 1);
+  if (g > 0 && g < 1) { X.fillStyle = `rgba(255,212,0,${0.6 * (1 - g)})`; X.fillRect(x, y, 488, h); }
+  X.restore();
+}
+function clockTag(f, mode) {
+  // top left: source footage timecode + frame number (all the data is counted from here)
+  X.save(); X.fillStyle = 'rgba(8,12,14,0.85)'; X.fillRect(40, 38, 330, 52);
+  X.fillStyle = mode === 'freeze' ? COL.ink : '#fff'; X.font = `500 24px ${F_M}`; X.textBaseline = 'middle';
+  const s = (f - 1) / 25; const ss = Math.floor(s), cc = Math.round((s - ss) * 100);
+  const icon = mode === 'freeze' ? '❚❚' : mode === 'rew' ? '◀◀' : mode === 'slow' ? '▶ ½' : '▶';
+  X.fillText(`${icon}  ${String(ss).padStart(2, '0')}.${String(Math.min(cc, 99)).padStart(2, '0')}s  F${String(Math.round(f)).padStart(3, '0')}`, 58, 65);
+  X.restore();
+}
+// Subtitles: one Chinese line on top, one English line below, each language takes exactly one line (no wrapping; if it doesn't fit, shorten the line, don't shrink the type).
+// A cue runs from when the voice-over line starts to the end of the line + 0.45 s, or 0.08 s before the next line starts (tools/cues.py exports the .srt with the same rule).
+const SUB = { cx: 880, zh: 38, en: 32, maxW: 960 };   // centre x=880: right edge no further than 1360, clear of the bottom-right score bar (x≥1392)
+function cueSpan(i) {
+  const v = TL.vo[i], d = (TL.vdur && TL.vdur[v.id]) || 2.5, nx = TL.vo[i + 1];
+  return [v.t, Math.min(v.t + d + .45, nx ? nx.t - .08 : 1e9)];
+}
+function subtitle(t) {
+  if (NOSUB) return;
+  TL.vo.forEach((v, i) => {
+    const [t0, t1] = cueSpan(i);
+    const a = seg(t, t0, t0 + .12) * (1 - seg(t, t1 - .18, t1)); if (a <= 0) return;
+    X.save(); X.globalAlpha = a; X.textAlign = 'center'; X.textBaseline = 'middle';
+    X.font = `500 ${SUB.zh}px ${F_ZH}`; const wz = X.measureText(v.zh).width;
+    X.font = `600 ${SUB.en}px ${F_C}`; X.letterSpacing = '1px'; const we = X.measureText(v.text).width;
+    const w = Math.max(wz, we) + 52;
+    if (w > SUB.maxW) console.warn('subtitle too wide (shorten the line):', v.id, Math.round(w));
+    const y0 = 938, h = 106;
+    X.fillStyle = 'rgba(0,0,0,0.64)'; X.fillRect(SUB.cx - w / 2, y0, w, h);
+    X.fillStyle = COL.ink; X.fillRect(SUB.cx - w / 2, y0, 4, h);
+    X.letterSpacing = '0px'; X.fillStyle = '#fff'; X.font = `500 ${SUB.zh}px ${F_ZH}`; X.fillText(v.zh, SUB.cx, y0 + 34);
+    X.letterSpacing = '1px'; X.fillStyle = 'rgba(255,255,255,0.86)'; X.font = `600 ${SUB.en}px ${F_C}`; X.fillText(v.text, SUB.cx, y0 + 79);
+    X.restore();
+  });
+}
+function wipe(t, t0, d = .34) {
+  // package transition: yellow diagonal band sweeping across (not a page turn)
+  const k = seg(t, t0 - d / 2, t0 + d / 2); if (k <= 0 || k >= 1) return;
+  const x = lerp(-900, W + 900, eio(k));
+  X.save(); X.translate(x, 0); X.transform(1, 0, -0.38, 1, 0, 0);
+  X.fillStyle = COL.ink; X.fillRect(-260, 0, 520, H);
+  X.fillStyle = '#0B0F14'; X.fillRect(-300, 0, 40, H); X.fillRect(260, 0, 18, H);
+  X.restore();
+}
+
+// —— Sections ——
+function sting(t) {
+  X.fillStyle = COL.board; X.fillRect(0, 0, W, H);
+  // whiteboard pen draws the half-pitch line frame (0.05–0.9)
+  const k = seg(t, .04, .8);
+  X.save(); X.globalAlpha = .28;
+  const fieldL = [[160, 980], [520, 300], [1400, 300], [1760, 980]];
+  marker(wob(fieldL, 3, 1), k, COL.chalk, 4);
+  marker(wob([[430, 470], [1490, 470]], 2, 2), seg(t, .2, .7), COL.chalk, 4);
+  marker(wob([[700, 300], [655, 385], [1265, 385], [1220, 300]], 2, 3), seg(t, .25, .75), COL.chalk, 4);
+  X.restore();
+  // one diagonal slash of yellow marker (0.12–0.5) — the strong action at 0.5 s
+  marker(wob(bez([170, 900], [900, 760], [1760, 830]), 4, 9), eo(seg(t, .12, .48)), COL.ink, 26, { arrow: true });
+  // programme name stamped on
+  const s = seg(t, .42, .62);
+  if (s > 0) {
+    X.save(); X.translate(W / 2, 470); const sc = lerp(1.6, 1, back(s, 2.2)); X.scale(sc, sc); X.globalAlpha = clamp(s * 3);
+    X.fillStyle = '#fff'; X.font = `900 230px ${F_ZH}`; X.textAlign = 'center'; X.textBaseline = 'middle'; X.fillText('定格', 0, 0);
+    X.restore();
+  }
+  const s2 = seg(t, .62, .86);
+  if (s2 > 0) {
+    X.save(); X.globalAlpha = s2; X.textAlign = 'center';
+    X.fillStyle = COL.ink; X.font = `800 italic 46px ${F_C}`; X.letterSpacing = '14px'; X.fillText('FREEZE FRAME', W / 2 + 7, 640);
+    X.letterSpacing = '4px'; X.fillStyle = '#fff'; X.font = `500 36px ${F_ZH}`; X.fillText('一个进球是怎么来的', W / 2, 712);
+    X.restore();
+  }
+  flash(t, .44, .1, .5);
+}
+async function record(t) {
+  const s = S('record'), k = seg(t, s.t0, s.t1);
+  X.fillStyle = '#000'; X.fillRect(0, 0, W, H);
+  X.save(); X.filter = 'saturate(0.7) brightness(0.55)'; cover(STAD, lerp(1.04, 1.12, k), .62, .45); X.restore();
+  const g = X.createLinearGradient(0, 0, W, 0); g.addColorStop(0, 'rgba(6,10,12,0.92)'); g.addColorStop(.62, 'rgba(6,10,12,0.55)'); g.addColorStop(1, 'rgba(6,10,12,0.1)');
+  X.fillStyle = g; X.fillRect(0, 0, W, H);
+  const T0 = s.t0;
+  // title row
+  const a1 = eo(seg(t, T0 + .05, T0 + .35));
+  X.save(); X.globalAlpha = a1; X.translate(lerp(-40, 0, a1), 0);
+  X.fillStyle = COL.ink; X.fillRect(120, 178, 10, 74);
+  X.fillStyle = '#fff'; X.font = `900 52px ${F_ZH}`; X.textBaseline = 'top'; X.fillText('赛况记录', 152, 176);
+  X.fillStyle = COL.ink; X.font = `600 24px ${F_C}`; X.letterSpacing = '5px'; X.fillText('MATCH RECORD', 152, 236);
+  X.restore();
+  const a2 = eo(seg(t, T0 + .2, T0 + .5));
+  X.save(); X.globalAlpha = a2; X.fillStyle = 'rgba(255,255,255,0.86)'; X.font = `500 32px ${F_ZH}`; X.textBaseline = 'top';
+  X.fillText('2019.02.25 · 土耳其超级联赛 · 伊斯坦布尔 Vodafone Park', 122, 300); X.restore();
+  // score: 3–0 at half time, Fenerbahçe's three digits tick up one after another
+  const a3 = eo(seg(t, T0 + .3, T0 + .6));
+  const goals = [[55, T0 + .8], [61, T0 + 1.0], [67, T0 + 1.2]];
+  const fb = goals.filter(g => t >= g[1]).length;
+  X.save(); X.globalAlpha = a3; X.textBaseline = 'alphabetic';
+  X.fillStyle = '#fff'; X.font = `900 60px ${F_ZH}`; X.fillText('贝西克塔斯', 122, 470);
+  X.font = `800 italic 170px ${F_C}`; X.fillText('3', 470, 500); X.fillStyle = 'rgba(255,255,255,0.5)'; X.fillText('–', 575, 500);
+  const pop = goals.reduce((m, g) => Math.max(m, 1 - seg(t, g[1], g[1] + .25)), 0) * (fb > 0 ? 1 : 0);
+  X.save(); X.translate(720, 500); X.scale(1 + .18 * pop, 1 + .18 * pop); X.fillStyle = COL.ink; X.fillText(String(fb), 0, 0); X.restore();
+  X.fillStyle = '#fff'; X.font = `900 60px ${F_ZH}`; X.fillText('费内巴切', 850, 470);
+  X.restore();
+  // time axis 0′–90′
+  const x0 = 122, x1 = 1180, y = 610, a4 = eo(seg(t, T0 + .45, T0 + .8));
+  X.save(); X.globalAlpha = a4;
+  X.fillStyle = 'rgba(255,255,255,0.25)'; X.fillRect(x0, y - 2, (x1 - x0) * a4, 4);
+  X.fillStyle = 'rgba(255,255,255,0.55)'; X.fillRect(x0 + (x1 - x0) * .5 - 1, y - 18, 2, 36);
+  X.font = `500 22px ${F_ZH}`; X.fillStyle = 'rgba(255,255,255,0.7)'; X.textAlign = 'center'; X.fillText('半场 3–0', x0 + (x1 - x0) * .5, y + 56);
+  X.font = `600 24px ${F_C}`; X.fillText("0′", x0, y + 56); X.fillText("90′", x1, y + 56);
+  const bj = [[10, '10′'], [18, '18′'], [47, '45+2′']];
+  for (const [m, lab] of bj) { const xx = x0 + (x1 - x0) * m / 90; X.fillStyle = '#fff'; X.beginPath(); X.arc(xx, y, 10, 0, Math.PI * 2); X.fill(); X.font = `600 24px ${F_C}`; X.fillText(lab, xx, y - 26); }
+  for (const [m, tt] of goals) {
+    const kk = eo(seg(t, tt, tt + .2)); if (kk <= 0) continue; const xx = x0 + (x1 - x0) * m / 90;
+    X.fillStyle = COL.ink; X.beginPath(); X.arc(xx, y, 12 * kk, 0, Math.PI * 2); X.fill();
+    X.font = `800 italic 30px ${F_C}`; X.fillText(m + '′', xx, y - 26);
+  }
+  X.textAlign = 'left'; X.restore();
+  // marker brackets the three second-half goals (55′–67′): these are what this episode takes apart
+  const xa = x0 + (x1 - x0) * 55 / 90 - 14, xb = x0 + (x1 - x0) * 67 / 90 + 14;
+  marker(wob([[xa, y + 22], [xa, y + 44], [xb, y + 44], [xb, y + 22]], 1.5, 5), eo(seg(t, T0 + 1.35, T0 + 1.65)), COL.ink, 7);
+  tag(xa, y + 74, '下半场 三球', 'THREE IN THE SECOND HALF', COL.ink, seg(t, T0 + 1.55, T0 + 1.8), { size: 34, esize: 18 });
+  X.save(); X.globalAlpha = a2 * .7; X.fillStyle = '#fff'; X.font = `500 20px ${F_ZH}`; X.fillText('来源：beIN Sports、Habertürk 赛报', 122, 760); X.restore();
+}
+function transcript(t) {
+  // live section: real-time transcript of the original commentary (Turkish + Chinese)
+  const s = S('live');
+  const lines = [[2.05, '00:02', 'Hasan Ali…', '哈桑·阿里……'], [3.55, '00:03', 'vurdu —', '起脚——'], [3.98, '00:04', 'GOL!', '进了！']];
+  const a = seg(t, s.t0 + 1.8, s.t0 + 2.0) * (1 - seg(t, s.t1 - .05, s.t1));
+  if (a <= 0) return;
+  X.save(); X.globalAlpha = a;
+  X.fillStyle = 'rgba(8,12,14,0.86)'; X.fillRect(40, 806, 520, 196);
+  X.fillStyle = '#FF3B30'; X.fillRect(40, 806, 520, 4);
+  X.fillStyle = 'rgba(255,255,255,0.6)'; X.font = `500 19px ${F_ZH}`; X.textBaseline = 'top'; X.fillText('解说原声转写 · beIN SPORTS Türkiye', 62, 824);
+  let yy = 862;
+  for (const [st, tc, tr, zh] of lines) {
+    const kk = eo(seg(t, s.t0 + st, s.t0 + st + .12)); if (kk <= 0) continue;
+    X.globalAlpha = a * kk;
+    X.fillStyle = 'rgba(255,255,255,0.5)'; X.font = `500 20px ${F_M}`; X.fillText(tc, 62, yy + 8);
+    X.fillStyle = tr === 'GOL!' ? COL.ink : '#fff'; X.font = `800 italic 34px ${F_C}`; X.fillText(tr, 150, yy);
+    X.font = `500 26px ${F_ZH}`; X.fillStyle = 'rgba(255,255,255,0.8)'; X.fillText(zh, 340, yy + 4);
+    yy += 44;
+  }
+  X.restore();
+}
+function notes(t) {
+  // Review notes: dark data card (same graphics package as the opening, match card and score bar: dark green-black base + yellow accent + printed type), no handwriting
+  const s = S('notes'), T0 = s.t0;
+  X.fillStyle = COL.board; X.fillRect(0, 0, W, H);
+  X.strokeStyle = 'rgba(244,241,232,0.045)'; X.lineWidth = 1;   // tactics-board grid
+  for (let x = 30; x < W; x += 60) { X.beginPath(); X.moveTo(x + .5, 0); X.lineTo(x + .5, H); X.stroke(); }
+  for (let y = 30; y < H; y += 60) { X.beginPath(); X.moveTo(0, y + .5); X.lineTo(W, y + .5); X.stroke(); }
+  const vg = X.createRadialGradient(760, 520, 200, 760, 520, 1250); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  X.fillStyle = vg; X.fillRect(0, 0, W, H);
+  // push in (no tilt any more: the layout is printed)
+  const pk = seg(t, T0, s.t1), z = lerp(1.0, 1.03, pk);
+  X.save(); X.translate(W / 2, H / 2); X.scale(z, z); X.translate(-W / 2, -H / 2);
+  const L = 150, NX = 640, R = 1250;   // left column for labels, number column, right edge of the layout
+  // title
+  const ta = eo(seg(t, T0 + .02, T0 + .3));
+  X.globalAlpha = ta; X.fillStyle = COL.ink; X.fillRect(L, 118, 10, 140); X.globalAlpha = 1;
+  X.textBaseline = 'alphabetic'; X.fillStyle = '#fff'; X.font = `900 64px ${F_ZH}`;
+  revealText('复盘笔记', L + 34, 178, seg(t, T0 + .02, T0 + .3));
+  const tw = (X.measureText('复盘笔记').width);
+  X.fillStyle = COL.ink; X.font = `800 italic 64px ${F_C}`; revealText('67′', L + 34 + tw + 24, 178, seg(t, T0 + .15, T0 + .38));
+  X.fillStyle = 'rgba(255,212,0,0.85)'; X.font = `600 22px ${F_C}`; X.letterSpacing = '5px';
+  revealText('POST-MATCH NOTES · DATA FROM THE FOOTAGE', L + 36, 252, seg(t, T0 + .2, T0 + .45)); X.letterSpacing = '0px';
+  marker(wob([[L + 30, 206], [L + 34 + tw + 140, 202]], 2, 11), seg(t, T0 + .35, T0 + .6), COL.ink, 10);
+  // three data rows: label in the left column + grey note, big number on the right
+  const rows = [
+    { lab: '接球 → 起脚', pre: '', num: '0.84', unit: '秒', note: '21 帧 ÷ 25 fps', tt: T0 + .3 },
+    { lab: '起脚 → 入网', pre: '≈ ', num: '0.9', unit: '秒', note: '入网几帧有拖影，估算', tt: T0 + .6 },
+    { lab: '半场 0–3', pre: '', num: '12', unit: '分钟扳平', note: '下半场三球', tt: T0 + .9, mins: ['55′', '61′', '67′'] }
+  ];
+  const Y0 = 420, DY = 190;
+  rows.forEach((r, i) => {
+    const y = Y0 + i * DY, tt = r.tt;
+    if (i > 0) { X.fillStyle = 'rgba(244,241,232,0.12)'; X.fillRect(L, y - 150, (R - L) * eo(seg(t, tt - .1, tt + .25)), 1); }
+    X.fillStyle = '#fff'; X.font = `700 42px ${F_ZH}`; revealText(r.lab, L, y - 40, seg(t, tt, tt + .3));
+    X.fillStyle = 'rgba(244,241,232,0.5)'; X.font = `500 24px ${F_ZH}`; revealText(r.note, L, y + 6, seg(t, tt + .4, tt + .6));
+    // big number
+    X.font = `800 italic 150px ${F_C}`; const nw = X.measureText(r.num).width;
+    X.font = `600 84px ${F_C}`; const pw = r.pre ? X.measureText(r.pre).width + 8 : 0;
+    X.font = `700 40px ${F_ZH}`; const uw = X.measureText(r.unit).width;
+    const nk = seg(t, tt + .22, tt + .5);
+    X.fillStyle = 'rgba(244,241,232,0.6)'; X.font = `600 84px ${F_C}`; if (r.pre) revealText(r.pre, NX, y - 26, nk);   // ≈ one size smaller, grey
+    X.fillStyle = COL.ink; X.font = `800 italic 150px ${F_C}`; revealText(r.num, NX + pw, y, nk);
+    X.fillStyle = '#fff'; X.font = `700 40px ${F_ZH}`; revealText(r.unit, NX + pw + nw + 22, y, seg(t, tt + .35, tt + .55));
+    if (r.mins) {
+      let mx = NX + pw + nw + 22 + uw + 48;
+      X.font = `800 italic 52px ${F_C}`;
+      r.mins.forEach((m, j) => { X.fillStyle = j === 2 ? COL.ink : 'rgba(244,241,232,0.75)'; revealText(m, mx, y, seg(t, tt + .4 + j * .07, tt + .55 + j * .07)); mx += X.measureText(m).width + 28; });
+    }
+    if (i === 0) NOTE84 = { x: NX + pw, w: nw + 22 + uw, y };   // circle the number + unit
+  });
+  // red circle: circles 0.84 (using the measured box of the actual number)
+  { const { x, w, y } = NOTE84, cx = x + w / 2, cy = y - 52, rx = w / 2 + 48, ry = 86;
+    const circ = []; for (let i = 0; i <= 40; i++) { const u = i / 40 * Math.PI * 2.1 - 2.4; circ.push([cx + Math.cos(u) * rx, cy + Math.sin(u) * ry]); }
+    marker(wob(circ, 3, 21), seg(t, T0 + 1.6, T0 + 2.0), COL.space, 7); }
+  X.fillStyle = `rgba(244,241,232,${0.45 * eo(seg(t, T0 + 1.45, T0 + 1.65))})`; X.fillRect(L, 930, 4, 30);
+  X.fillStyle = 'rgba(244,241,232,0.62)'; X.font = `500 26px ${F_ZH}`; revealText('数据都从镜头里数：只算帧，不猜球速', L + 22, 955, seg(t, T0 + 1.5, T0 + 1.9));
+  X.restore();
+  // Polaroid photo (slides in)
+  const pk2 = eo(seg(t, T0 + .25, T0 + .7));
+  if (HAK && pk2 > 0) {
+    X.save(); X.translate(lerp(W + 300, 1560, pk2), 470); X.rotate(lerp(.2, .045, pk2));
+    X.shadowColor = 'rgba(0,0,0,0.55)'; X.shadowBlur = 40; X.shadowOffsetY = 16;
+    X.fillStyle = '#fbfaf6'; X.fillRect(-210, -300, 420, 560); X.shadowBlur = 0; X.shadowOffsetY = 0;
+    X.drawImage(HAK, 0, 40, 500, 600, -186, -276, 372, 446);
+    X.textAlign = 'center'; X.fillStyle = '#0B0F14'; X.font = `600 36px ${F_C}`; X.letterSpacing = '1px'; X.fillText('Hasan Ali Kaldırım', 0, 212);
+    X.letterSpacing = '0px'; X.fillStyle = 'rgba(11,15,20,0.62)'; X.font = `500 26px ${F_ZH}`; X.fillText('3 号 · 左后卫', 0, 246);
+    X.fillStyle = 'rgba(255,212,0,0.85)'; X.save(); X.rotate(-.08); X.fillRect(-70, -318, 140, 40); X.restore();
+    X.restore();
+    X.save(); X.globalAlpha = pk2 * .8; X.fillStyle = 'rgba(244,241,232,0.75)'; X.font = `500 18px ${F_ZH}`; X.textAlign = 'right'; X.fillText('照片 2013 · Thomas Rodenbücher · CC BY 2.0', 1860, 1050); X.restore();
+  }
+}
+let NOTE84 = { x: 640, w: 230, y: 420 };
+function revealText(str, x, y, k, latin) {
+  if (k <= 0) return; const w = X.measureText(str).width;
+  X.save(); X.beginPath(); X.rect(x - 4, y - 170, (w + 12) * clamp(k), 230); X.clip(); X.fillText(str, x, y); X.restore();
+}
+// End plate background: celebration close-up, slowed down continuously across the two sections end + card. Zoom centre (1600,680), 1.01→1.05:
+// the broadcaster logo (y 75–107) always stays under the top-right bug, the URL (y 948–975) always stays under the score bar (the zoom centre and scale were computed from these two constraints)
+async function endPlate(t, s) {
+  const E = S('end'), Cd = S('card');
+  const z = lerp(1.01, 1.05, seg(t, E.t0, Cd.t1));
+  await drawSrc(lerp(s.f0, s.f1, seg(t, s.t0, s.t1)), { zoom: z, cx: 1600, cy: 680 });
+  grade({});
+}
+async function endSlate(t) {
+  const s = S('end'), T0 = s.t0;
+  await endPlate(t, s);
+  const g = X.createLinearGradient(0, 0, W, 0); g.addColorStop(0, 'rgba(6,10,12,0.95)'); g.addColorStop(.55, 'rgba(6,10,12,0.75)'); g.addColorStop(1, 'rgba(6,10,12,0.05)');
+  X.fillStyle = g; X.fillRect(0, 0, W, H);
+  const a = eo(seg(t, T0 + .05, T0 + .4));
+  X.save(); X.globalAlpha = a; X.textBaseline = 'alphabetic';
+  X.fillStyle = COL.ink; X.font = `800 italic 300px ${F_C}`; X.fillText('67′', 110 + lerp(-60, 0, a), 440);
+  X.fillStyle = '#fff'; X.font = `900 72px ${F_ZH}`; X.fillText('哈桑·阿里·卡尔德勒姆', 120, 560);
+  X.fillStyle = 'rgba(255,255,255,0.85)'; X.font = `500 36px ${F_ZH}`; X.fillText('禁区外远射 · 费内巴切 3–3 贝西克塔斯', 122, 630);
+  X.fillStyle = 'rgba(255,255,255,0.55)'; X.font = `600 26px ${F_C}`; X.letterSpacing = '3px'; X.fillText('HASAN ALI KALDIRIM · 25 FEB 2019 · VODAFONE PARK', 122, 680);
+  X.restore();
+  const a2 = eo(seg(t, T0 + .4, T0 + .7));
+  X.save(); X.globalAlpha = a2; X.fillStyle = 'rgba(255,255,255,0.8)'; X.font = `800 italic 40px ${F_C}`; X.fillText('“Mükemmel bir gol!”', 122, 790);
+  X.font = `500 26px ${F_ZH}`; X.fillStyle = 'rgba(255,255,255,0.6)'; X.fillText('“完美的进球！”—— beIN 解说原声', 122, 835); X.restore();
+  marker(wob([[118, 470], [760, 462]], 2, 31), seg(t, T0 + .4, T0 + .75), COL.ink, 12);
+  bugTop('ana', 1); bugScore({ fb: 3, min: '67′', g: 1 }, 1);   // also covers the broadcaster logo and URL watermark in the footage
+}
+// Shared end card: title (Chinese + English) → hairline → style name → credit → small footage credits. All text is in place before card.t0+0.52 and holds until t1−0.3 before fading out (holds 2.58 s)
+const CREDITS = [
+  'Match footage: beIN SPORTS Türkiye, “Beşiktaş 3 - 3 Fenerbahçe | Maç Özeti | 2018/19” (YouTube) and its Wikimedia Commons cut, CC BY 3.0',
+  '   edited, reversed, slowed and frozen, colour-graded, graphics added; the broadcaster’s logo and URL are covered',
+  'Player photo: Thomas Rodenbücher, via Wikimedia Commons, CC BY 2.0 — cropped',
+  'Drums: “MuldjordKit” by Lars Muldjord (drumgizmo.org), FreePats version, CC BY 4.0',
+  'CC0: stadium photo by Olos88 · samples FreePats, VSCO 2 CE, VCSL · Voice: Kokoro TTS · unofficial fan analysis'
+];
+async function endCard(t) {
+  const s = S('card'), T0 = s.t0, out = seg(t, s.t1 - .3, s.t1);
+  await endPlate(t, s);
+  const g = X.createLinearGradient(0, 0, W, 0); g.addColorStop(0, 'rgba(6,10,12,0.96)'); g.addColorStop(.6, 'rgba(6,10,12,0.84)'); g.addColorStop(1, 'rgba(6,10,12,0.3)');
+  X.fillStyle = g; X.fillRect(0, 0, W, H);
+  bugTop('ana', 1); bugScore({ fb: 3, min: '67′', g: 1 }, 1);
+  const x0 = 122, A = (d0, d1) => eo(seg(t, T0 + d0, T0 + d1)) * (1 - out);
+  X.save(); X.textBaseline = 'alphabetic';
+  const a1 = A(.1, .32);
+  X.globalAlpha = a1; X.fillStyle = '#fff'; X.font = `900 150px ${F_ZH}`; X.fillText('定格', x0 - 6 + lerp(-30, 0, a1), 420);
+  const a2 = A(.16, .38);
+  X.globalAlpha = a2; X.fillStyle = COL.ink; X.font = `800 italic 64px ${F_C}`; X.letterSpacing = '3px'; X.fillText('Freeze Frame', x0, 496);
+  X.letterSpacing = '0px';
+  const a3 = A(.24, .46);
+  X.globalAlpha = a3 * .8; X.fillStyle = COL.chalk; X.fillRect(x0, 532, 640 * a3, 2);
+  X.globalAlpha = a3; X.fillStyle = 'rgba(255,255,255,0.92)'; X.font = `600 30px ${F_C}`; X.letterSpacing = '4px';
+  X.fillText('SPORTS TELESTRATOR', x0, 590); const sw = X.measureText('SPORTS TELESTRATOR').width;
+  X.letterSpacing = '2px'; X.font = `500 28px ${F_ZH}`; X.fillText('·  体育战术板', x0 + sw + 14, 589);
+  X.letterSpacing = '1px'; X.fillStyle = 'rgba(255,255,255,0.8)'; X.font = `500 26px ${F_ZH}`; X.fillText('LemoLab × Claude Opus 5.5', x0, 640);
+  const a4 = A(.3, .52);
+  X.globalAlpha = a4; X.letterSpacing = '0px'; X.font = `500 21px ${F_ZH}`; X.fillStyle = 'rgba(255,255,255,0.76)';
+  CREDITS.forEach((c, i) => { X.fillText(c, x0, 846 + i * 34); const w = X.measureText(c).width; if (x0 + w > 1360) console.warn('credit line too wide:', i, Math.round(w)); });
+  X.restore();
+  if (out > 0) { X.fillStyle = `rgba(0,0,0,${eio(out)})`; X.fillRect(0, 0, W, H); }   // last 0.3 s: fade to black together with the picture
+}
+
+// —— Analysis layer (each section's tactical lines) ——
+function overlayAnalysis(s, t, f) {
+  const id = s.id, k = seg(t, s.t0, s.t1), lt = t - s.t0;
+  if (id === 'fz1') {
+    const [bx, by] = at('ball', 1);
+    spot(bx - 120, by, 520, 300, eo(seg(lt, 0, .3)));
+    ring(bx, by + 8, 34, COL.ink, seg(lt, .1, .4), t);
+    marker(wob(bez([bx - 20, by + 10], [bx - 200, by + 40], [bx - 360, by - 10]), 3, 41), eo(seg(lt, .35, .9)), COL.ink, 10, { arrow: true, dash: [26, 18] });
+    tag(bx - 40, by - 230, '解围没解远', 'HALF-CLEARED', COL.ink, seg(lt, .5, .8));
+    // left side: No. 3 about to burst in from out of frame
+    marker(wob([[20, 720], [180, 690]], 2, 43), eo(seg(lt, 1.0, 1.4)), COL.ink, 8, { arrow: true });
+    tag(30, 740, '3 号从画外插上', 'NO. 3 ARRIVING', COL.ink, seg(lt, 1.15, 1.4), { size: 30, esize: 17 });
+  }
+  if (id === 'slow1') {
+    const [bx, by] = at('ball', f); ring(bx, by + 6, 26, COL.ink, 1 - seg(lt, .8, 1.1), t);
+    if (f >= 14) { const [kx, ky] = at('kald', f); ring(kx, ky, 46, COL.ink, seg(f, 14, 20), t, { beam: true }); trail('kald', f, 14, COL.ink); }
+  }
+  if (id === 'fz2') {
+    const [kx, ky] = at('kald', 35);
+    spot(kx + 120, ky - 60, 560, 330, eo(seg(lt, 0, .3)));
+    // red space (gap) zone
+    const sk = eo(seg(lt, .15, .5));
+    X.save(); X.globalAlpha = .38 * sk; X.fillStyle = COL.space; X.beginPath(); X.ellipse(kx + 40, ky - 6, 230 * sk, 84 * sk, -0.12, 0, Math.PI * 2); X.fill(); X.restore();
+    X.save(); X.globalAlpha = sk; X.setLineDash([14, 10]); X.strokeStyle = COL.space; X.lineWidth = 4; X.beginPath(); X.ellipse(kx + 40, ky - 6, 230, 84, -0.12, 0, Math.PI * 2); X.stroke(); X.restore();
+    ring(kx, ky, 46, COL.ink, 1, t, { beam: true });
+    // nearest defender: cyan connecting line (no distance marked, it can't be measured accurately from the footage)
+    for (const [i, d] of DEF2.entries()) {
+      const kk = eo(seg(lt, .45 + i * .15, .8 + i * .15)); if (kk <= 0) continue;
+      ring(d[0], d[1], 32, COL.def, kk, t);
+      marker([[d[0], d[1]], [lerp(d[0], kx, .55), lerp(d[1], ky, .55)]], kk, COL.def, 5, { dash: [12, 10] });
+    }
+    tag(kx + 200, ky - 300, '无人上抢', 'NO ONE STEPS OUT', COL.space, seg(lt, .8, 1.1));
+  }
+  if (id === 'slow2') {
+    const [kx, ky] = at('kald', f); ring(kx, ky, 46, COL.ink, 1, t, { beam: true }); trail('kald', f, 35, COL.ink);
+    // stopwatch: counts from the frame the ball is received
+    const sec = (f - 35) / 25; stopwatch(40, 104, sec, 1);
+  }
+  if (id === 'fz3') {
+    const [kx, ky] = at('kald', 56), [bx, by] = at('ball', 56);
+    spot(1000, 520, 980, 380, eo(seg(lt, 0, .3)));
+    ring(kx, ky, 46, COL.ink, 1, t);
+    stopwatch(40, 104, 21 / 25, 1, true);
+    // highlight the edge of the box: he is outside the line
+    marker(BOXLINE, eo(seg(lt, .15, .55)), COL.chalk, 6, { dash: [22, 14] });
+    tag(BOXLINE[1][0] + 10, BOXLINE[1][1] + 30, '禁区线', 'EDGE OF THE BOX', COL.chalk, seg(lt, .4, .65), { size: 28, esize: 16 });
+    // No. 26 comes out to block
+    const [dx, dy] = at('d26w', 56);
+    ring(dx, dy, 34, COL.def, seg(lt, .35, .6), t);
+    marker(wob([[dx + 10, dy - 4], [dx - 120, dy + 10]], 2, 51), eo(seg(lt, .5, .8)), COL.def, 7, { arrow: true });
+    // shot line
+    marker(wob(bez([bx + 10, by], [1100, 360], GOALPT), 2, 53), eo(seg(lt, .6, 1.15)), COL.ink, 10, { arrow: true, dash: [30, 16] });
+    tag(820, 140, '禁区外 一脚打门', 'STRIKE FROM OUTSIDE THE BOX', COL.ink, seg(lt, .9, 1.2));
+  }
+  if (id === 'flight') {
+    if (f <= 82) comet(f);
+    const gk = seg(f, 77.5, 80);   // the goal ring follows the net (the camera is still panning)
+    if (gk > 0 && gk < 1) { const [gx, gy] = at('ball', f); X.save(); X.globalAlpha = 1 - gk; X.strokeStyle = COL.ink; X.lineWidth = 8; X.beginPath(); X.ellipse(gx, gy, 40 + 200 * gk, 30 + 140 * gk, 0, 0, Math.PI * 2); X.stroke(); X.restore(); }
+  }
+  if (id === 'rep1' || id === 'fz4' || id === 'rep2') {
+    const fz = id === 'fz4', lt4 = fz ? lt : 0;
+    if (f <= 310) {
+      const [ax, ay] = at('r3', f), [dx, dy] = at('r26', f);
+      ring(ax, ay, 92, COL.ink, seg(f, 263, 272), t, { beam: !fz }); ring(dx, dy, 84, COL.def, seg(f, 266, 276), t);
+    }
+    if (fz) {
+      spot(900, 640, 700, 330, eo(seg(lt4, 0, .2)));
+      const [dx, dy] = at('r26', 308), [bx, by] = at('rball', 308);
+      marker(wob([[dx - 160, dy - 40], [dx - 10, dy - 20]], 2, 61), eo(seg(lt4, .05, .3)), COL.def, 8, { arrow: true });
+      marker(wob(bez([bx, by], [bx - 10, by - 300], [bx + 120, by - 640]), 2, 63), eo(seg(lt4, .15, .5)), COL.ink, 10, { arrow: true, dash: [26, 16] });
+      tag(250, 220, '26 号滑铲封堵', 'THE BLOCK ATTEMPT', COL.def, seg(lt4, .1, .35));
+    }
+    if (id === 'rep2' && f >= 310) rcomet(f);
+  }
+}
+let DEF2 = [], BOXLINE = [], GOALPT = [0, 0];
+function trail(tr, f, f0, col) {
+  // Running dashed line: draws only the last ~0.6 s (screen coordinates, the camera is panning)
+  const pts = []; for (let g = Math.max(f0, f - 15); g <= f; g += .5) pts.push(at(tr, g));
+  if (pts.length > 2) marker(pts, 1, col, 6, { dash: [14, 12] });
+}
+function comet(f) {
+  const pts = []; for (let g = Math.max(56, f - 6); g <= f; g += .25) pts.push(at('ball', g));
+  if (pts.length < 2) return;
+  X.save(); X.lineCap = 'round';
+  for (let i = 1; i < pts.length; i++) { const u = i / pts.length; X.strokeStyle = `rgba(255,212,0,${u})`; X.lineWidth = 4 + 14 * u; X.shadowColor = COL.ink; X.shadowBlur = 20; X.beginPath(); X.moveTo(...pts[i - 1]); X.lineTo(...pts[i]); X.stroke(); }
+  X.restore();
+}
+function rcomet(f) {
+  const pts = []; for (let g = Math.max(310, f - 6); g <= f; g += .25) pts.push(at('rball', g));
+  if (pts.length < 2) return;
+  X.save(); X.lineCap = 'round';
+  for (let i = 1; i < pts.length; i++) { const u = i / pts.length; X.strokeStyle = `rgba(255,212,0,${u})`; X.lineWidth = 6 + 18 * u; X.shadowColor = COL.ink; X.shadowBlur = 22; X.beginPath(); X.moveTo(...pts[i - 1]); X.lineTo(...pts[i]); X.stroke(); }
+  X.restore();
+}
+function stopwatch(x, y, sec, k, hold) {
+  X.save(); X.globalAlpha = k;
+  X.fillStyle = COL.card; X.fillRect(x, y, 250, 96); X.fillStyle = COL.ink; X.fillRect(x, y, 8, 96);
+  X.fillStyle = 'rgba(255,255,255,0.65)'; X.font = `500 20px ${F_ZH}`; X.textBaseline = 'top'; X.fillText('接球 → 起脚', x + 24, y + 12);
+  X.fillStyle = hold ? COL.ink : '#fff'; X.font = `800 italic 50px ${F_C}`; X.fillText(sec.toFixed(2) + ' s', x + 22, y + 36);
+  X.restore();
+}
+
+// —— First goal (55′): freezes while it plays ——
+function overlayG1(s, t, f) {
+  const id = s.id, lt = t - s.t0;
+  if (id === 'g1live') {
+    if (f >= 84) { const [x, y] = at('dir', f); ring(x, y, 44, COL.ink, seg(f, 84, 92), t, { beam: true }); }
+  }
+  if (id === 'g1fz') {
+    const [dx, dy] = at('dir', 106), [zx, zy] = at('zaj', 106), [bx, by] = at('bb', 106);
+    const TG = G1TARGET;
+    spot(1180, 680, 900, 330, eo(seg(lt, 0, .3)));
+    ring(dx, dy, 44, COL.ink, 1, t, { beam: true });
+    // ball path: at No. 17's feet → the ball now → the finishing point in front of goal (the finishing point is converted to this frame through the g1 frame's perspective matrix)
+    marker(wob(bez([dx - 20, dy - 6], [bx + 40, by - 30], TG), 2, 71), eo(seg(lt, .12, .6)), COL.ink, 10, { arrow: true, dash: [26, 16] });
+    // space in front of goal
+    const sk = eo(seg(lt, .45, .8));
+    X.save(); X.globalAlpha = .34 * sk; X.fillStyle = COL.space; X.beginPath(); X.ellipse(TG[0] - 10, TG[1] + 6, 150 * sk, 46 * sk, -0.12, 0, Math.PI * 2); X.fill(); X.restore();
+    // Zajc: ring + running arrow
+    ring(zx, zy, 40, COL.ink, seg(lt, .55, .85), t);
+    marker(wob([[zx + 30, zy - 6], [TG[0] - 40, TG[1] + 4]], 2, 73), eo(seg(lt, .7, 1.0)), COL.ink, 7, { arrow: true });
+    tag(zx - 250, zy + 60, '扎伊茨', 'ZAJC', COL.ink, seg(lt, .8, 1.05), { size: 30, esize: 17 });
+    tag(1080, 150, '右路送进来 · 门前推射', 'IN FROM THE RIGHT, FINISHED IN FRONT OF GOAL', COL.ink, seg(lt, .95, 1.25));
+  }
+  if (id === 'g1go') {
+    if (f <= 122) { const [zx, zy] = at('zaj', f); ring(zx, zy, 40, COL.ink, 1 - seg(f, 119, 122), t, { beam: true }); }
+    if (f <= 121) comet2('bb', f, 96);
+  }
+}
+let G1TARGET = [767, 545];
+function comet2(tr, f, f0) {
+  const pts = []; for (let g = Math.max(f0, f - 6); g <= f; g += .25) pts.push(at(tr, g));
+  if (pts.length < 2) return;
+  X.save(); X.lineCap = 'round';
+  for (let i = 1; i < pts.length; i++) { const u = i / pts.length; X.strokeStyle = `rgba(255,212,0,${u})`; X.lineWidth = 4 + 12 * u; X.shadowColor = COL.ink; X.shadowBlur = 18; X.beginPath(); X.moveTo(...pts[i - 1]); X.lineTo(...pts[i]); X.stroke(); }
+  X.restore();
+}
+
+// —— Second goal (61′): two-camera split screen, each runs to the header frame and both freeze together ——
+// Each panel is 960×1080 = a vertical window of the footage at original size (1920 frame): main camera takes x 460–1420, reverse angle takes x 480–1440; the broadcaster logo and URL are both outside the window
+const SPL = [{ cx0: 460, lab: ['A  主机位', 'MAIN CAMERA'] }, { cx0: 480, lab: ['B  反打高机位', 'HIGH REVERSE'] }];
+async function splitView(s, t) {
+  const lt = t - s.t0, fz = s.id === 'g2fz', open = S('g2split');
+  const k = seg(t, open.t0, open.t0 + .32);
+  const kk = seg(t, s.t0, s.t1);
+  const fm = lerp(s.f0, s.f1, kk), fr = lerp(s.r0, s.r1, kk);
+  X.fillStyle = COL.board; X.fillRect(0, 0, W, H);
+  for (let side = 0; side < 2; side++) {
+    const P0 = SPL[side], px = side * 960, cx = P0.cx0 + 480;
+    const off = side ? lerp(520, 0, eo(k)) : lerp(-520, 0, eo(k));
+    const punch = fz ? lerp(1.035, 1.0, eo(seg(lt, 0, .35))) + .012 * seg(lt, 0, s.t1 - s.t0) : 1;
+    X.save(); X.beginPath(); X.rect(px, 0, 960, H); X.clip();
+    X.translate(px + off - P0.cx0, 0);
+    X.beginPath(); X.rect(P0.cx0, 0, 960, H); X.clip();   // show only this vertical window: the logo and URL outside it can't show even while sliding in
+    await drawSrc(side ? fr : fm, { clip: 'c', zoom: punch, cx, cy: 540 });
+    grade({ freeze: fz ? eo(seg(lt, 0, .25)) : 0 });
+    X.translate(cx, 540); X.scale(punch, punch); X.translate(-cx, -540);
+    if (fz) overlayG2(side, lt, t);
+    X.restore();
+    // camera label (top left)
+    X.save(); X.globalAlpha = eo(seg(t, open.t0 + .15, open.t0 + .4));
+    const lx = px + 40; X.fillStyle = 'rgba(8,12,14,0.86)'; X.fillRect(lx, 38, 330, 72); X.fillStyle = side ? COL.def : COL.ink; X.fillRect(lx, 38, 6, 72);
+    X.fillStyle = '#fff'; X.font = `700 30px ${F_ZH}`; X.textBaseline = 'top'; X.fillText(P0.lab[0], lx + 22, 46);
+    X.fillStyle = 'rgba(255,255,255,0.6)'; X.font = `600 18px ${F_C}`; X.letterSpacing = '3px'; X.fillText(P0.lab[1], lx + 24, 84);
+    X.restore();
+  }
+  // centre seam: yellow divider bar
+  X.fillStyle = '#0B0F14'; X.fillRect(954, 0, 12, H * eo(k)); X.fillStyle = COL.ink; X.fillRect(957, 0, 6, H * eo(k));
+  if (fz) {
+    flash(t, s.t0, .1, .55);
+    tag(1000, 150, '任意球 · 门前头球', 'FREE KICK, HEADED IN', COL.ink, seg(lt, .7, 1.0));
+    tag(40, 150, '萨迪克', 'SADIK', COL.ink, seg(lt, .45, .7), { size: 30, esize: 17 });
+  }
+  bugTop('ana', 1); bugScore(scoreAt(t), 1);
+}
+function overlayG2(side, lt, t) {
+  if (side === 0) {   // main camera F046: the ball flies in from the right, Sadik heads it in the crowd of players
+    spot(960, 420, 330, 210, eo(seg(lt, 0, .3)));
+    // free kick lifted in from bottom right (out of frame), ball positions measured on F032–F042: (1085,352) → (1025,346) → (985,356) → (948,370)
+    marker(wob([...bez([1415, 760], [1300, 380], [1085, 352], 18), [1025, 346], [985, 356], [948, 370]], 1.5, 81), eo(seg(lt, .1, .5)), COL.ink, 8, { dash: [22, 14] });
+    ring(915, 470, 40, COL.ink, seg(lt, .25, .55), t, { beam: true });
+    marker(wob([[955, 368], [1010, 374], [1062, 388]], 1.5, 83), eo(seg(lt, .55, .85)), COL.ink, 9, { arrow: true });
+  } else {            // high reverse angle F156: free kick delivered from the bottom-left corner
+    spot(1010, 440, 340, 230, eo(seg(lt, 0, .3)));
+    marker(wob(bez([560, 1010], [700, 470], [1040, 412]), 2, 85), eo(seg(lt, .1, .5)), COL.ink, 8, { dash: [22, 14] });
+    ring(1030, 492, 40, COL.ink, seg(lt, .25, .55), t, { beam: true });
+    marker(wob([[1046, 410], [1200, 404], [1340, 398]], 1.5, 87), eo(seg(lt, .55, .85)), COL.ink, 9, { arrow: true });
+  }
+}
+function varStamp(t, t0) {
+  // VAR review stamp: stamps down (1.7→1 rebound) + white flash
+  const k = seg(t, t0, t0 + .22); if (k <= 0) return;
+  X.save(); X.translate(560, 380); X.rotate(-0.06); const sc = lerp(1.7, 1, back(k, 2.4)); X.scale(sc, sc); X.globalAlpha = clamp(k * 3);
+  X.fillStyle = 'rgba(8,12,14,0.88)'; X.fillRect(-250, -110, 500, 220);
+  X.strokeStyle = COL.chalk; X.lineWidth = 6; X.strokeRect(-238, -98, 476, 196);
+  X.textAlign = 'center'; X.textBaseline = 'middle';
+  X.fillStyle = COL.ink; X.font = `800 italic 64px ${F_C}`; X.letterSpacing = '6px'; X.fillText('VAR ✓', 0, -48);
+  X.letterSpacing = '2px'; X.fillStyle = '#fff'; X.font = `900 56px ${F_ZH}`; X.fillText('进球有效', 0, 22);
+  X.fillStyle = 'rgba(255,255,255,0.7)'; X.font = `600 22px ${F_C}`; X.letterSpacing = '5px'; X.fillText('CHECKED FOR A FOUL · GOAL STANDS', 0, 74);
+  X.restore();
+  flash(t, t0 + .02, .1, .35);
+}
+
+// —— Top-down tactics board: the third goal's strike frame flattened along the pitch lines, the three strike points land ——
+const BD = { gx: 1590, cy: 520, S: 20 };
+const B2 = (x, y) => [BD.gx - x * BD.S, BD.cy + y * BD.S];
+function Hap(H, x, y) { const w = H[2][0] * x + H[2][1] * y + H[2][2]; return [(H[0][0] * x + H[0][1] * y + H[0][2]) / w, (H[1][0] * x + H[1][1] * y + H[1][2]) / w]; }
+function drawTri(im, s0, s1, s2, d0, d1, d2) {
+  const den = (s1[0] - s0[0]) * (s2[1] - s0[1]) - (s2[0] - s0[0]) * (s1[1] - s0[1]); if (Math.abs(den) < 1e-6) return;
+  const cx = (d0[0] + d1[0] + d2[0]) / 3, cy = (d0[1] + d1[1] + d2[1]) / 3, g = p => { const dx = p[0] - cx, dy = p[1] - cy, l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * .8, p[1] + dy / l * .8]; };
+  const e0 = g(d0), e1 = g(d1), e2 = g(d2);
+  X.save(); X.beginPath(); X.moveTo(...e0); X.lineTo(...e1); X.lineTo(...e2); X.closePath(); X.clip();
+  const a = ((d1[0] - d0[0]) * (s2[1] - s0[1]) - (d2[0] - d0[0]) * (s1[1] - s0[1])) / den, b = ((d2[0] - d0[0]) * (s1[0] - s0[0]) - (d1[0] - d0[0]) * (s2[0] - s0[0])) / den;
+  const c = ((d1[1] - d0[1]) * (s2[1] - s0[1]) - (d2[1] - d0[1]) * (s1[1] - s0[1])) / den, d = ((d2[1] - d0[1]) * (s1[0] - s0[0]) - (d1[1] - d0[1]) * (s2[0] - s0[0])) / den;
+  X.transform(a, c, b, d, d0[0] - a * s0[0] - b * s0[1], d0[1] - c * s0[0] - d * s0[1]);
+  X.drawImage(im, 0, 0, W, H); X.restore();
+}
+let MAPIMG = null;
+async function mapImage() {
+  // base image for flattening: the third goal's strike frame; the URL watermark strip is covered with the grass just above it (when flattened, the watermark would be pulled into the middle of the picture)
+  if (MAPIMG) return MAPIMG;
+  const im = await img(fsrc(56, 'a')); if (!im) return null;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  x.drawImage(im, 0, 0, W, H); x.drawImage(c, 1420, 890, 380, 50, 1420, 938, 380, 50);
+  MAPIMG = c; return c;
+}
+function pitchLines(V, k, alpha = 1) {
+  // penalty box, six-yard box, penalty arc, penalty spot, goal line (pitch coordinates → mapped to the screen by V)
+  const L = [
+    [[0, -24], [0, 24]],
+    [[0, -20.16], [16.5, -20.16], [16.5, 20.16], [0, 20.16]],
+    [[0, -9.16], [5.5, -9.16], [5.5, 9.16], [0, 9.16]]
+  ];
+  const arc = []; const a0 = Math.acos(5.5 / 9.15); for (let i = 0; i <= 24; i++) { const u = -a0 + (2 * a0) * i / 24; arc.push([11 + Math.cos(u) * 9.15, Math.sin(u) * 9.15]); }
+  L.push(arc);
+  X.save(); X.globalAlpha = alpha;
+  L.forEach((ln, i) => {
+    const pts = []; for (let j = 1; j < ln.length; j++) for (let q = 0; q <= 8; q++) { const u = q / 8; pts.push(V(lerp(ln[j - 1][0], ln[j][0], u), lerp(ln[j - 1][1], ln[j][1], u))); }
+    marker(pts, eo(seg(k, i * .12, .55 + i * .12)), COL.chalk, 4);
+  });
+  const ps = V(11, 0); X.fillStyle = COL.chalk; X.beginPath(); X.arc(ps[0], ps[1], 5 * clamp(k * 2), 0, 7); X.fill();
+  X.restore();
+}
+async function shotMap(s, t) {
+  const lt = t - s.t0, H3 = PITCH.g3.H;
+  const wk = eio(seg(lt, .55, 1.45));                       // flattening progress
+  const V = (x, y) => { const a = Hap(H3, x, y), b = B2(x, y); return [lerp(a[0], b[0], wk), lerp(a[1], b[1], wk)]; };
+  X.fillStyle = COL.board; X.fillRect(0, 0, W, H);
+  // tactics-board grid (fades in with the flattening)
+  X.save(); X.globalAlpha = wk; X.strokeStyle = 'rgba(244,241,232,0.045)'; X.lineWidth = 1;
+  for (let x = 30; x < W; x += 60) { X.beginPath(); X.moveTo(x + .5, 0); X.lineTo(x + .5, H); X.stroke(); }
+  for (let y = 30; y < H; y += 60) { X.beginPath(); X.moveTo(0, y + .5); X.lineTo(W, y + .5); X.stroke(); }
+  X.restore();
+  const im = await mapImage();
+  const ia = 1 - seg(wk, .55, 1);
+  if (im && ia > 0) {
+    const punch = lerp(1.035, 1.0, eo(seg(lt, 0, .35)));
+    // the full frame (stands included) shows only before flattening starts, fades out as soon as flattening begins, leaving only the pitch plane
+    const fa = 1 - seg(wk, 0, .12);
+    if (fa > 0) { X.save(); X.globalAlpha = fa; await drawSrc(56, { zoom: punch }); grade({ freeze: 1 }); X.restore(); }
+    if (wk > 0) {
+      // the mesh is in pitch coordinates (0–39 m × ±30 m, 1.5 m cells), the two triangles of each cell are affine-mapped separately; parts outside the picture are transparent anyway
+      X.save(); X.globalAlpha = ia; X.filter = 'saturate(0.55) brightness(0.85)';
+      for (let x = 0; x < 39; x += 1.5) for (let y = -30; y < 30; y += 1.5) {
+        const c = [[x, y], [x + 1.5, y], [x + 1.5, y + 1.5], [x, y + 1.5]], si = c.map(p => Hap(H3, p[0], p[1]));
+        if (si.every(p => p[0] < 0) || si.every(p => p[0] > W) || si.every(p => p[1] > H) || si.every(p => p[1] < 0)) continue;
+        const di = c.map(p => V(p[0], p[1]));
+        drawTri(im, si[0], si[1], si[2], di[0], di[1], di[2]); drawTri(im, si[0], si[2], si[3], di[0], di[2], di[3]);
+      }
+      X.restore();
+    }
+  }
+  pitchLines(V, seg(lt, .08, .6), 1);
+  // goal (only meaningful after flattening: drawn beyond the goal line)
+  const gk = seg(wk, .7, 1);
+  if (gk > 0) { const [gx, gy] = B2(0, 0); X.save(); X.globalAlpha = gk; X.strokeStyle = COL.chalk; X.lineWidth = 4; X.strokeRect(gx, gy - 3.66 * BD.S, 2 * BD.S, 7.32 * BD.S); X.restore(); }
+  // the three strike points
+  const SH = [
+    { id: 'g1', min: '55′', zh: '扎伊茨 · 门前推射', en: 'ZAJC · CLOSE-RANGE FINISH', t: 1.45 },
+    { id: 'g2', min: '61′', zh: '萨迪克 · 任意球头球', en: 'SADIK · HEADER FROM A FREE KICK', t: 1.65 },
+    { id: 'g3', min: '67′', zh: '哈桑·阿里 · 禁区外远射', en: 'HASAN ALI · FROM OUTSIDE THE BOX', t: 0.2 }
+  ];
+  SH.forEach((d, i) => {
+    const m = PITCH[d.id].marks_m.shot, last = d.id === 'g3';
+    const k = last ? 1 : eo(seg(lt, d.t, d.t + .25));
+    if (k <= 0) return;
+    const [px, py] = last ? V(m[0], m[1]) : B2(m[0], m[1]);
+    // shot line: strike point → centre of the goal
+    const lk = last ? seg(lt, 1.5, 2.0) : seg(lt, d.t + .15, d.t + .5);
+    marker([[px, py], B2(0, 0)], eo(lk), COL.ink, last ? 7 : 5, { arrow: true, dash: last ? null : [16, 12] });
+    const r = last ? 22 : 16;
+    X.save(); X.globalAlpha = k; X.fillStyle = COL.ink; X.shadowColor = COL.ink; X.shadowBlur = 18;
+    X.beginPath(); X.ellipse(px, py, r * (last ? lerp(1.8, 1, wk) : k), r * (last ? lerp(.36 * 1.8, 1, wk) : k), 0, 0, 7); X.fill();
+    X.shadowBlur = 0; X.fillStyle = '#0B0F14'; X.font = `800 italic ${last ? 22 : 17}px ${F_C}`; X.textAlign = 'center'; X.textBaseline = 'middle';
+    if (wk > .9) X.fillText(String(i + 1), px, py + 1);
+    X.restore();
+    // small marker on the map: minute
+    X.save(); X.globalAlpha = last ? seg(wk, .8, 1) : k; X.fillStyle = '#fff'; X.font = `800 italic 34px ${F_C}`;
+    if (last) { X.textAlign = 'center'; X.textBaseline = 'bottom'; X.fillText(d.min, px, py - r - 8); }
+    else { X.textAlign = 'right'; X.textBaseline = 'middle'; X.fillText(d.min, px - r - 12, py + 2); }
+    X.restore();
+  });
+  // left column: title + three comparison rows (each row appears with its point), holds ≥2.5 s once everything is in place
+  const L0 = 110;
+  X.save(); X.textBaseline = 'alphabetic';
+  const ta = eo(seg(lt, 1.2, 1.5));
+  X.globalAlpha = ta; X.fillStyle = COL.ink; X.fillRect(L0, 150, 10, 112);
+  X.fillStyle = '#fff'; X.font = `900 60px ${F_ZH}`; X.fillText('三球起脚点', L0 + 34, 214);
+  X.fillStyle = COL.ink; X.font = `600 22px ${F_C}`; X.letterSpacing = '5px'; X.fillText('SHOT MAP · 55′  61′  67′', L0 + 36, 254); X.letterSpacing = '0px';
+  const rows = [SH[0], SH[1], SH[2]], RT = [1.45, 1.65, 1.85];
+  rows.forEach((d, i) => {
+    const y = 380 + i * 150, a = eo(seg(lt, RT[i], RT[i] + .3)); if (a <= 0) return;
+    const m = PITCH[d.id].marks_m.shot, dist = Math.round(Math.hypot(m[0], m[1]));
+    X.globalAlpha = a;
+    if (i > 0) { X.fillStyle = 'rgba(244,241,232,0.12)'; X.fillRect(L0, y - 104, 700 * a, 1); }
+    X.fillStyle = i === 2 ? COL.ink : 'rgba(244,241,232,0.8)'; X.font = `800 italic 58px ${F_C}`; X.fillText(d.min, L0, y);
+    X.fillStyle = '#fff'; X.font = `700 34px ${F_ZH}`; X.fillText(d.zh, L0 + 130, y - 10);
+    X.fillStyle = 'rgba(244,241,232,0.5)'; X.font = `600 19px ${F_C}`; X.letterSpacing = '2px'; X.fillText(d.en, L0 + 132, y + 22); X.letterSpacing = '0px';
+    X.textAlign = 'right'; X.fillStyle = i === 2 ? COL.ink : '#fff'; X.font = `800 italic 64px ${F_C}`; X.fillText('≈' + dist + ' m', L0 + 760, y + 2); X.textAlign = 'left';
+  });
+  X.globalAlpha = eo(seg(lt, 2.1, 2.4)); X.fillStyle = 'rgba(244,241,232,0.45)'; X.fillRect(L0, 836, 4, 26);
+  X.fillStyle = 'rgba(244,241,232,0.6)'; X.font = `500 22px ${F_ZH}`; X.fillText('起脚点到球门中心的距离：按各自画面里的禁区线做透视换算，误差约 1 米', L0 + 18, 858);
+  X.restore();
+  bugTop('ana', 1);
+  bugScore(scoreAt(t), 1 - seg(lt, .5, .8));   // covers the URL watermark before flattening, exits afterwards
+  flash(t, s.t0, .1, .55);
+}
+
+// —— Main render ——
+const FZ = ['fz1', 'fz2', 'fz3', 'fz4', 'g1fz'];
+const LIVE = ['live', 'g1live', 'g1go'];   // g2go is slow motion + VAR review: counts as an analysis section (corner bug 「战术分析」, top-left timecode ▶ ½)
+async function render(t) {
+  const s = segAt(t);
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.filter = 'none';
+  if (s.id === 'sting') { sting(t); }
+  else if (s.id === 'record') { await record(t); }
+  else if (s.id === 'notes') { notes(t); }
+  else if (s.id === 'end') { await endSlate(t); }
+  else if (s.id === 'card') { await endCard(t); }
+  else if (s.id === 'g2split' || s.id === 'g2fz') { await splitView(s, t); }
+  else if (s.id === 'map') { await shotMap(s, t); }
+  else {
+    const f = srcFrame(s, t), clip = s.clip || 'a';
+    const fz = FZ.includes(s.id);
+    const lt = t - s.t0;
+    const punch = fz ? lerp(1.035, 1.0, eo(seg(lt, 0, .35))) * 1.0 + 0.012 * seg(lt, 0, s.t1 - s.t0) : 1;
+    const jx = s.id === 'rewind' ? (hash(Math.floor(t * 30)) - .5) * 26 : 0;
+    await drawSrc(f, { zoom: punch, jx, clip });
+    if (s.id === 'rewind') rewindFx(t);
+    grade({ freeze: fz ? eo(seg(lt, 0, .25)) : 0 });
+    X.save(); X.translate(W / 2, H / 2); X.scale(punch, punch); X.translate(-W / 2, -H / 2);
+    if (DBG) dbgMarks(f, clip);
+    else if (clip === 'b') overlayG1(s, t, f);
+    else if (clip === 'a') overlayAnalysis(s, t, f);
+    X.restore();
+    if (s.id === 'g2go') varStamp(t, VART);
+    const mode = LIVE.includes(s.id) ? 'live' : s.id.startsWith('rep') || s.id === 'fz4' ? 'rep' : 'ana';
+    bugTop(mode, 1);   // the package is there from the first frame: covers the broadcaster logo in the footage
+    bugScore(scoreAt(t), 1);
+    if (!LIVE.includes(s.id)) clockTag(f, fz ? 'freeze' : s.id === 'rewind' ? 'rew' : 'slow');
+    if (s.id === 'live') transcript(t);
+    if (fz) flash(t, s.t0, .1, .55);
+    for (const G of GOALS) if (G.ring && t >= G.t && t < G.t + .6) netPulse(t, G);
+  }
+  subtitle(t);
+  // package transition between sections
+  for (const tt of [S('record').t0, S('g1live').t0, S('g2split').t0, S('live').t0, S('rep1').t0, S('notes').t0, S('end').t0, S('card').t0]) wipe(t, tt);
+}
+let VART = 0;
+// Reading-time self-check (core/render/readcheck.mjs): reports only "information to be read" — match card title and score, split-screen camera names, tactics-board title and three rows, three review rows, end card.
+// Freeze labels and the VAR stamp are on-screen echoes of the voice-over subtitles (subtitle hold time is handled by the .srt), so they are not reported here.
+window.TEXTS = t => {
+  const out = [], s = segAt(t), lt = t - s.t0, R = (id, text, x0, y0, x1, y1) => out.push({ id, text, x0, y0, x1, y1 });
+  if (s.id === 'record') { if (lt > .4) R('rec', '赛况记录', 120, 170, 420, 260); if (lt > 1.45) R('score', '3–3', 460, 340, 820, 520); }
+  if (s.id === 'g2split' || s.id === 'g2fz') { if (t - S('g2split').t0 > .4) { R('camA', 'A 主机位', 40, 38, 370, 110); R('camB', 'B 反打高机位', 1000, 38, 1330, 110); } }
+  if (s.id === 'map') {
+    if (lt > 1.5) R('mapT', '三球起脚点', 110, 150, 600, 262);
+    [['55′ 门前推射', 'g1'], ['61′ 任意球头球', 'g2'], ['67′ 禁区外远射', 'g3']].forEach(([txt, id], i) => {
+      if (lt > [1.45, 1.65, 1.85][i] + .3) { const m = PITCH[id].marks_m.shot; R('row' + i, txt + ' ≈' + Math.round(Math.hypot(m[0], m[1])) + ' m', 110, 320 + i * 150, 880, 410 + i * 150); } });
+  }
+  if (s.id === 'notes') [['接球 → 起脚 0.84 秒', .3], ['起脚 → 入网 ≈0.9 秒', .6], ['12 分钟扳平', .9]].forEach(([txt, d], i) => { if (lt > d + .55) R('n' + i, txt, 150, 260 + i * 190, 1300, 440 + i * 190); });
+  if (s.id === 'end' && lt > .4) R('e67', '67′', 110, 170, 560, 450);
+  if (s.id === 'card' && lt > .55 && t < s.t1 - .3) { R('cT', '定格', 116, 270, 420, 430); R('cE', 'Freeze Frame', 122, 440, 560, 510); R('cS', 'SPORTS TELESTRATOR · 体育战术板', 122, 556, 760, 600); R('cL', 'LemoLab × Claude Opus 5.5', 122, 612, 520, 650); }
+  return out;
+};
+function netPulse(t, G) {
+  // the frame of the goal: a yellow ring spreads out at the net
+  const k = seg(t, G.t, G.t + .6); X.save(); X.globalAlpha = 1 - k; X.strokeStyle = COL.ink; X.lineWidth = 8;
+  X.beginPath(); X.ellipse(G.ring[0], G.ring[1], 40 + 220 * eo(k), 30 + 150 * eo(k), 0, 0, Math.PI * 2); X.stroke(); X.restore();
+}
+function rewindFx(t) {
+  // rewind: horizontal tracking stripes + corner bug
+  X.save();
+  for (let i = 0; i < 4; i++) { const y = (hash(Math.floor(t * 30) + i * 7) * H) | 0; X.fillStyle = 'rgba(255,255,255,0.18)'; X.fillRect(0, y, W, 6 + hash(i + t) * 24); }
+  X.fillStyle = 'rgba(255,255,255,0.92)'; X.font = `800 italic 120px ${F_C}`; X.textBaseline = 'middle'; X.fillText('◀◀', 120, 540);
+  X.font = `900 46px ${F_ZH}`; X.fillText('倒回去看', 420, 520); X.font = `600 26px ${F_C}`; X.letterSpacing = '4px'; X.fillStyle = COL.ink; X.fillText('REWIND', 422, 572);
+  X.restore();
+}
+function dbgMarks(f, clip = 'a') {
+  X.save(); X.font = '20px Mono'; X.fillStyle = '#f0f';
+  for (const tr of (clip === 'b' ? ['dir', 'zaj', 'bb'] : clip === 'c' ? [] : ['kald', 'ball', 'd26w', 'r3', 'r26', 'rball'])) { const [x, y] = at(tr, f); X.beginPath(); X.arc(x, y, 7, 0, 7); X.fill(); X.fillText(tr, x + 10, y - 10); }
+  for (const d of DEF2) { X.fillStyle = '#0ff'; X.beginPath(); X.arc(d[0], d[1], 7, 0, 7); X.fill(); }
+  X.strokeStyle = '#fff'; X.lineWidth = 2; if (BOXLINE.length) { path(BOXLINE); X.stroke(); }
+  X.fillStyle = '#f00'; X.beginPath(); X.arc(GOALPT[0], GOALPT[1], 9, 0, 7); X.fill();
+  X.fillText('F' + f.toFixed(1), 900, 120); X.restore();
+}
+
+(async () => {
+  TL = await (await fetch('timeline.json')).json();
+  try { TL.vdur = await (await fetch('vdur.json')).json(); } catch (e) { TL.vdur = {}; }
+  window.DUR = TL.dur;
+  // F2 nearest defender (source coordinates → 1920), F3 edge of the box and where the shot lands
+  DEF2 = [P(497, 397), P(579, 321)];
+  BOXLINE = [P(356, 256), P(565, 348)];
+  GOALPT = P(1192, 252);
+  PITCH = await (await fetch('assets/pitch.json')).json();
+  { // first goal's finishing point: pitch coordinates measured on the g1 frame (F119), converted back to the picture with the perspective matrix of freeze frame F106
+    const m = PITCH.g1.marks_m.shot; G1TARGET = Hap(PITCH.g1fz.H, m[0], m[1]); }
+  GOALS = [
+    { n: 1, min: '55′', from: 0, t: S('g1go').t0 + (125 - 106) / ((S('g1go').f1 - 106) / (S('g1go').t1 - S('g1go').t0)), ring: null },
+    { n: 2, min: '61′', from: S('g2split').t0, t: S('g2go').t0 + (57 - 46) / ((S('g2go').f1 - 46) / (S('g2go').t1 - S('g2go').t0)), ring: null },
+    { n: 3, min: '67′', from: S('live').t0, t: S('live').t0 + 78 / 25, ring: null }
+  ];
+  VART = S('g2go').t0 + .95;   // after the ball hits the net (F057)
+  await Promise.all([`900 40px ${F_ZH}`, `500 20px ${F_ZH}`, `800 italic 40px ${F_C}`, `600 20px ${F_C}`, `500 20px ${F_M}`, `700 40px ${F_ZH}`].map(f => document.fonts.load(f, '定格A1')));
+  STAD = await img('assets/stadium.jpg'); HAK = await img('assets/hak.jpg');
+  await img(fsrc(1));
+  await render(0);
+  window.render = render;
+  window.READY = true;
+})();
+</script></body></html>

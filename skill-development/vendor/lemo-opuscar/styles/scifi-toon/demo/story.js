@@ -1,11 +1,11 @@
-// story.js — 时间线（唯一的真值来源：画面、字幕、拟音、配乐 cue 全部从这里导出）
-// 角色 12fps 步进（q），镜头/传送门/特效每帧平滑
+// story.js — timeline (the single source of truth: picture, subtitles, foley and music cues are all exported from here)
+// Characters step at 12 fps (q); camera/portal/effects are smooth every frame
 export const DUR = 57.5;
 export const ANIM_FPS = 12;
 export const q = t => Math.floor(t * ANIM_FPS + 1e-6) / ANIM_FPS;
-export const BEAT = .5;   // 120 BPM；每个音乐 cue 的第一拍 = 它的剪辑点
+export const BEAT = .5;   // 120 BPM; the first beat of each music cue = its cut point
 
-// 对白：id → 开始时间（台词文本、说话人来自 lines.json）
+// Dialogue: id → start time (line text and speaker come from lines.json)
 export const VO = {
   p1: 2.75, v1: 5.62, v2: 8.2,
   v3: 15.35, v4: 19.25, p2: 19.72,
@@ -15,7 +15,7 @@ export const VO = {
   v7: 38.55, c1: 41.45, p5: 42.4, v8: 46.55, c2: 48.2, v9: 50.75,
 };
 
-// 镜头表 [起, 止, 名, 宇宙]
+// Shot list [start, end, name, universe]
 export const SHOTS = [
   [0, 2.3, 'pot', 'lab'], [2.3, 5.6, 'two', 'lab'], [5.6, 6.7, 'vCU1', 'lab'], [6.7, 7.9, 'gCU1', 'lab'], [7.9, 9.5, 'vCU2', 'lab'],
   [9.5, 12.6, 'open', 'lab'], [12.6, 12.85, 'rush', 'lab'],
@@ -29,10 +29,10 @@ export const SHOTS = [
 ];
 export const shotAt = t => SHOTS.find(s => t >= s[0] && t < s[1]) || SHOTS[SHOTS.length - 1];
 
-// 传送门转场（全屏漩涡在 tc 时刻盖满画面）：[tc, 半宽]
+// Portal transitions (the full-screen vortex covers the frame at time tc): [tc, half-width]
 export const WIPES = [[12.85, .2], [20.9, .2], [28.4, .16], [29.4, .12], [30.4, .12], [31.4, .18], [36.05, .2]];
 
-// 宇宙标签（左上角读数）：[起, 止, 编号, 描述, 底色, 字色]
+// Universe labels (top-left readout): [start, end, code, description, background colour, text colour]
 export const TAGS = [
   [13.2, 17.55, 'DIMENSION J-9', 'EVERYTHING IS JELLY', '#ff4f9a', '#fff'],
   [21.15, 28.35, 'DIMENSION M-2', 'COFFEE DRINKS YOU', '#ff8a3d', '#fff'],
@@ -42,7 +42,7 @@ export const TAGS = [
   [31.6, 36.0, 'DIMENSION 1-A', 'COMPLETELY NORMAL', '#b08a62', '#fff'],
 ];
 
-// 关键时刻
+// Key moments
 export const T = {
   drip: .62, enter: 2.3, twitch: [3.0, 4.6], gulp: 6.98, raise: 7.95, press: 9.38,
   burst: 9.55, title: [10.0, 12.35], vaskIn: 11.55, garyLook: 11.95, garyIn: 12.25,
@@ -57,7 +57,7 @@ export const T = {
   end: 53.0,
 };
 
-// 配乐 cue（给 music/score.py）：每个 cue 的 t0 就是它的第一拍
+// Music cues (for music/score.py): each cue's t0 is its first beat
 export const CUES = [
   { name: 'riser', t0: 8.15, t1: 9.55 },
   { name: 'theme', t0: 10.0, t1: 12.85, pickup: 9.55 },

@@ -1,4 +1,4 @@
-// 打印每段、每个 part 在段内的弧长比例，以及每 0.25s 的笔尖位置/速度
+// print each segment's and each part's arc-length fraction within the segment, and the pen tip position/speed every 0.25s
 import { chromium } from 'playwright-core';
 import { serve } from '../../../../core/render/serve.mjs';
 import { EXE, ARGS } from '../../../../core/render/browser.mjs';

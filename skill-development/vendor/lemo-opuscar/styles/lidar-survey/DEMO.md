@@ -4,7 +4,7 @@ One example among many. Don't reuse its story, arc, shots, props or timings.
 
 Demo: *The Fields Under the Forest* 《林下的田》 (40.0 s) · `lidar-survey.mp4` · source in [`demo/`](demo/)
 
-From the air, a patch of Ashford, Connecticut is only forest. A laser survey turns the photo into points, a cutting plane strips the canopy layer by layer, and the ground that is left condenses into a surface with stone walls on it: the field system of farms that were here, 3.4 km of wall traced in 0.74 km². One wall is cut and measured; the town's history comes in two numbers; the forest grows back over the walls. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below).
+From the air, a patch of Ashford, Connecticut is only forest. A laser survey turns the photo into points, a cutting plane strips the canopy layer by layer, and the ground that is left condenses into a surface with stone walls on it: the field system of farms that were here, 3.4 km of wall traced in 0.74 km². One wall is cut and measured; the town's history comes in two numbers; the forest grows back over the walls. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English line below). This is an unofficial film made from public-domain survey data and imagery; the U.S. Geological Survey, the USDA and the town of Ashford did not make or endorse it.
 
 ## Story & structure
 
@@ -76,7 +76,7 @@ demo/
   tools/            fetch_ept.py, terrain.py, load.py, walls.py, trace.py, profile.py, build_data.py, fetch_naip.py, fonts.py,
                     scout_dem.py (finding the site); export.mjs (voice/cues); cuecheck.py, subcheck.mjs, audiocheck.py, motioncheck.py (checks)
   assets/raw/       ept/ (EPT nodes), work/ (DTM, relief), build/ (points.bin, ground.bin, canopy.bin, naip.jpg), fonts/, .venv (laspy, lazrs, scikit-image)
-  FACTS.md, CREDITS, TREATMENT.md, PRODUCTION_LOG.md, stills/styleframe.jpg
+  FACTS.md, CREDITS, stills/styleframe.jpg
 ```
 
 - `sh demo/build.sh` takes about 5 minutes on Apple silicon (the picture renders in ~30 s with 3 workers; Kokoro and the Whisper check take most of the rest). With no data yet, or `FETCH=1`, it first fetches and builds the data (~3 minutes, ~350 MB in `assets/raw/`).

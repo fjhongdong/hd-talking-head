@@ -1,14 +1,14 @@
-// Claude 应用（Code 页）与终端的纯 2D 重绘。所有函数：状态 → HTML 字符串（确定性）
+// Pure 2D redraw of the Claude app (Code page) and the terminal. Every function: state → HTML string (deterministic)
 import { grid, CLAY } from './clawd.js';
 export const WIN = { x: 110, y: 74, w: 1700, h: 950 };
 export const TERM = { x: 580, y: 380, w: 760, h: 320 };
-// 终端 logo 的象限网格几何（JetBrains Mono 19px：字宽 0.6em，行高 30）
+// quadrant-grid geometry of the terminal logo (JetBrains Mono 19px: char width 0.6em, line height 30)
 export const LOGO = { x: TERM.x + 22, y: TERM.y + 34 + 18 + 2 * 30, qw: 19 * .6 / 2, qh: 15 };
 
 const st = (o = {}) => { let s = ''; if (o.op !== undefined && o.op < 1) s += `opacity:${Math.max(0, o.op).toFixed(3)};`;
   if (o.tf) s += `transform:${o.tf};`; if (o.blur) s += `filter:blur(${o.blur.toFixed(2)}px);`; return s; };
 
-// ───────── 桌面
+// ───────── desktop
 export function desk(D) {
   let h = `<div id="wall"></div><div id="menubar"><b>Claude</b><span>File</span><span>Edit</span><span>View</span><span>Window</span><span>Help</span><span class="r"><span>Fri 9:41</span></span></div>`;
   if (D.term && D.term.op > 0) h += terminal(D.term);
@@ -21,10 +21,10 @@ function terminal(T) {
   for (let i = 0; i < 3; i++) lines.push(`<span style="display:inline-block;width:${9 * 11.4 + 26}px"></span>${logo > i / 3 ? `<span style="opacity:${Math.min(1, info * 3 - i)}">${i === 0 ? '<b>' + inf[i] + '</b>' : '<span class="dim">' + inf[i] + '</span>'}</span>` : ''}`);
   lines.push('', hint > 0 ? `<span class="dim" style="opacity:${hint}">&gt; Try "add a dark mode toggle"</span>` : '');
   let lg = '';
-  if (logo > 0 && !gone) {   // logo = 象限像素矩形（与 Clawd 精灵共用网格，便于"化身"）
+  if (logo > 0 && !gone) {   // logo = quadrant pixel rectangles (shares the grid with the Clawd sprite, so the "incarnation" works)
     const G = grid({}); const rows = Math.ceil(logo * 3);
     for (const [c, r, v] of G) { const q = r >> 1, line = q >> 1; if (line >= rows) continue;
-      const eye = v === 2 && !blink; if (eye || (r & 1)) continue;   // 每个象限只画一次（取偶数行）
+      const eye = v === 2 && !blink; if (eye || (r & 1)) continue;   // draw each quadrant only once (take even rows)
       const jx = jit ? Math.round(Math.sin(c * 7.1 + q * 3.3 + jit * 40) * jit) : 0;
       lg += `<rect x="${c * LOGO.qw + jx}" y="${q * LOGO.qh}" width="${LOGO.qw + .3}" height="${LOGO.qh + .3}" fill="${CLAY}"/>`; }
   }
@@ -35,7 +35,7 @@ function terminal(T) {
     <svg style="position:absolute;left:${LOGO.x - TERM.x}px;top:${LOGO.y - TERM.y}px;overflow:visible" width="${18 * LOGO.qw}" height="${5 * LOGO.qh}" shape-rendering="crispEdges">${lg}</svg></div>`;
 }
 
-// ───────── 应用窗口
+// ───────── app window
 const ICON = {
   read: '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1.5h5l3 3v6H2z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>',
   search: '<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M7.5 7.5 11 11" stroke="currentColor" stroke-width="1.4"/></svg>',
@@ -99,7 +99,7 @@ function pane(P, t) {
   }
   return `<div class="pane" data-a="pane" style="width:${P.w}px;${st({ blur: P.blur })}"><div class="ph2">${TABS.map(x => `<span class="${x === P.type ? 'on' : ''}">${x}</span>`).join('')}</div><div class="pc">${body}</div></div>`;
 }
-// theme.ts 的 diff；rev = 0..1 改写进度（第 6 行删、3 行新写入）
+// theme.ts diff; rev = 0..1 rewrite progress (line 6 deleted, 3 new lines written)
 const K = s => s.replace(/\b(export|const|function|return)\b/g, '<span class="k">$1</span>').replace(/('[^']*')/g, '<span class="s">$1</span>').replace(/\b(useTheme|getItem|useState|matchMedia)\b/g, '<span class="f">$1</span>');
 const BASE = [[' ', "export const light = { bg: '#FFF8F0', ink: '#2B2320' };"], ['+', "export const dark  = { bg: '#1E1A18', ink: '#F4EDE4' };"], [' ', ''],
   ['+', 'export function useTheme() {'], ['+', "  const saved = localStorage.getItem('theme');"], ['+', "  const initial = saved ?? 'light';"], ['+', '  return useState(initial);'], ['+', '}']];
@@ -124,7 +124,7 @@ function diff(P) {
   const f = P.files || [['theme.ts', 12, 1], ['Header.tsx', 10, 2], ['App.tsx', 2, 0]];
   return `<div class="diff"><div class="files">${f.map(([n, a, d], i) => `<div class="${i === 0 ? 'on' : ''}" data-a="df-${i}">${n}<span class="p">+${a}</span>${d ? `<span class="m">−${d}</span>` : ''}</div>`).join('')}</div><div class="code">${L.join('')}</div></div>`;
 }
-// 第二个会话列（分屏）
+// second session column (split screen)
 function column(C, t) {
   let tail = '';
   if (C.ci) tail = `<div class="ci" data-a="ci-${C.id}"><span class="chk">${[0, 1, 2, 3, 4, 5].map(i => `<i class="${i < C.ci.n ? 'ok' : ''}"></i>`).join('')}</span><span class="${C.ci.n >= 6 ? 'ok' : ''}">${C.ci.n >= 6 ? '6 checks passed' : `Checks running · ${C.ci.n}/6`}</span>

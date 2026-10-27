@@ -1,4 +1,4 @@
-// S9 · 嫦娥：大月亮前飞过的嫦娥与飘带、云上的玉兔；镜头下摇到人间——屋顶上抬头看月亮的人
+// S9 · Chang'e: Chang'e and her streamers flying past the big moon, the Jade Rabbit on the clouds; the camera tilts down to the human world, people on a rooftop looking up at the moon
 import * as THREE from 'three';
 import { sheet, skyPanel, moon, setMoon, paperMat, tex, paint } from '../paper.js';
 import { osmanthus, xiangyun, jiangnanHouse, lantern, reeds, ridge, FONT } from '../art.js';
@@ -6,7 +6,7 @@ import { change, rabbit, ribbon, childStand, grannyStand, girlStand } from '../p
 import { stage, aim } from '../stage.js';
 import { seg, ss, eio, eo, lerp, clamp, mulberry, TAU } from '../lib.js';
 
-// 飘带网格：沿 x 方向的细长条，顶点每帧按波动更新
+// Streamer mesh: a long thin strip along x, vertices updated every frame by a wave
 function ribbonMesh(U, len, w, col) {
   const geo = new THREE.PlaneGeometry(len, w, 48, 1); geo.translate(-len / 2, 0, 0);
   const c = paint(len, w, x => { x.fillStyle = col; x.fillRect(-len / 2, -w / 2, len, w); }, 2000);
@@ -31,22 +31,22 @@ export function build(E) {
   const mn = S.add(moon({ x: MN[0], y: MN[1], z: MN[2], r: .08, gain: 1.35, halo: 2.4, haloGain: .22, art: x => {
     x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(200,160,110,.28)';
     osmanthus(x, { cx: .035, by: -.075, h: .07, seed: 7, leaves: 25, cut: true });
-    x.fillRect(-.07, -.062, .08, .012); x.beginPath(); x.moveTo(-.075, -.05); x.quadraticCurveTo(-.03, -.035, .015, -.05); x.lineTo(.005, -.045); x.lineTo(-.065, -.045); x.fill();   // 广寒宫
+    x.fillRect(-.07, -.062, .08, .012); x.beginPath(); x.moveTo(-.075, -.05); x.quadraticCurveTo(-.03, -.035, .015, -.05); x.lineTo(.005, -.045); x.lineTo(-.065, -.045); x.fill();   // Guanghan Palace (广寒宫, the moon palace)
     x.fillRect(-.055, -.05, .04, .01); x.beginPath(); x.moveTo(-.062, -.04); x.quadraticCurveTo(-.035, -.03, -.008, -.04); x.fill();
   } }));
   const clouds = S.add(sheet({ U, w: .7, h: .5, y: -.02, z: -.115, trans: .85, draw: x => { x.fillStyle = '#c3cbe8'; xiangyun(x, -.09, .02, .012, 1, { tail: 3 }); xiangyun(x, .1, .005, .011, -1, { tail: 2.6 }); xiangyun(x, -.2, .1, .008, 1); xiangyun(x, .21, .12, .007, -1); } }));
   const bunny = S.add(sheet({ U, w: .08, h: .06, x: .085, y: .02, z: -.108, trans: .3, draw: x => { x.fillStyle = '#e9e2d0'; x.translate(0, -.015); rabbit(x, .03); x.fillStyle = '#b89a6a'; x.fillRect(.012, 0, .012, .008); } }));
-  // 嫦娥 + 两条飘带
+  // Chang'e + two streamers
   const ce = new THREE.Group(); S.scene.add(ce);
   const body = sheet({ U, w: .2, h: .16, trans: .25, draw: x => { x.fillStyle = '#231c3a'; change(x, .115); } });
   const rb1 = ribbonMesh(U, .17, .006, '#b8322a'), rb2 = ribbonMesh(U, .14, .005, '#d9a441');
   rb1.position.set(.0, .02, .001); rb2.position.set(-.006, .008, -.001);
   ce.add(body, rb1, rb2);
-  // 人间：屋顶、灯窗、抬头望月的人
+  // Human world: rooftops, lit windows, people looking up at the moon
   const town = S.add(sheet({ U, w: .7, h: .3, y: -.085, z: -.07, trans: .3, glow: 2, glowCol: '#ffb862', draw: x => drawTown(x, null), glowDraw: g => drawTown(null, g) }));
   const people = S.add(sheet({ U, w: .7, h: .3, y: -.06, z: -.05, trans: .1, glow: 1.5, glowCol: '#ff8a48', draw: x => {
     x.fillStyle = '#141c38'; x.fillRect(-.35, -.15, .7, .06);
-    // 屋顶平台上的一家人：外婆指着月亮，孩子
+    // A family on the rooftop terrace: Grandma pointing at the moon, a child
     x.fillRect(-.15, -.09, .12, .004);
     x.save(); x.translate(-.12, -.086); grannyStand(x, .045); x.restore();
     x.save(); x.translate(-.095, -.086); childStand(x, .026); x.restore();
@@ -55,7 +55,7 @@ export function build(E) {
     lantern(x, { cx: -.02, cy: -.05, r: .006, stringLen: .03 }); lantern(x, { cx: .03, cy: -.045, r: .005, stringLen: .03 });
     x.strokeStyle = '#141c38'; reeds(x, { x0: -.35, x1: .35, by: -.095, h: .02, n: 50, seed: 9 });
   }, glowDraw: g => { const o = { col: '#000', rib: '#000', cap: '#000', string: false, tassel: false }; lantern(g, { ...o, cx: -.02, cy: -.05, r: .006 }, g); lantern(g, { ...o, cx: .03, cy: -.045, r: .005 }, g); } }));
-  const tDown = E.word('L13', 24) - .4;   // “好让地上想家的人”
+  const tDown = E.word('L13', 24) - .4;   // “好让地上想家的人” ("so that those on earth who miss home")
   return {
     S,
     update(t) {

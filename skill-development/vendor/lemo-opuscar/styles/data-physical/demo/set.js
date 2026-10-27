@@ -1,5 +1,5 @@
-// 实物：胡桃木表盘、两圈实物柱（太阳能 = 拉丝铝片，风电 = 亚克力片，两者每 100 GW 都夹一片黄铜）、最后落下的黄铜圆片
-// 每一片的位置都是时间的纯函数：任意帧可单独渲染
+// Physical objects: walnut dial, two rings of physical stacks (solar = brushed aluminium sheets, wind = acrylic sheets, both with a brass sheet every 100 GW), and the brass puck that drops last
+// every sheet's position is a pure function of time: any frame can be rendered on its own
 import * as THREE from 'three';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { clamp, seg, eo, ei, hash, lerp } from '/core/lib.js';
@@ -22,7 +22,7 @@ export const NEW25 = P25.sol.n - P24.sol.n;
 export const FALL25 = .42;
 export const LAND25 = T.drop25 + (NEW25 - 1) * T.dropStep + FALL25;
 
-// —— 叠片时间表 ——
+// —— stacking schedule ——
 function buildLen(y) { return y === 2014 ? BUILD_LEN[2014] : y === 2021 ? BUILD_LEN[2021] : y >= 2022 ? BUILD_LEN.fast : BUILD_LEN.def; }
 export const SHEETS = [], EVENTS = [];
 for (const p of PAIRS) {
@@ -44,7 +44,7 @@ for (const p of PAIRS) {
     }
   }
 }
-// 当前（时间 t）某一摞落定了多少片
+// how many sheets of a given stack have settled at time t
 export function landed(s, t) { let c = 0; for (const sh of SHEETS) if (sh.s === s && sh.land <= t) c++; return c; }
 
 export async function buildSet(scene, renderer) {
@@ -52,7 +52,7 @@ export async function buildSet(scene, renderer) {
   hdr.mapping = THREE.EquirectangularReflectionMapping;
   scene.environment = hdr; scene.environmentIntensity = .8; scene.environmentRotation = new THREE.Euler(0, 1.2, 0);
 
-  // 暖色低角度主光（长影）+ 冷色轮廓光（让远景的铝和亚克力从胡桃木里分出来）+ 顶部柔光
+  // warm low-angle key light (long shadows) + cool rim light (separates the distant aluminium and acrylic from the walnut) + soft top light
   const key = new THREE.DirectionalLight('#fff1dc', 3.1);
   key.position.set(-6.2, 4.4, 1.6); key.castShadow = true; key.shadow.mapSize.set(4096, 4096);
   Object.assign(key.shadow.camera, { left: -4.6, right: 4.6, top: 4.6, bottom: -4.6, near: .5, far: 20 });
@@ -76,7 +76,7 @@ export async function buildSet(scene, renderer) {
   const rimRing = new THREE.Mesh(new THREE.TorusGeometry(R, .006, 8, 256), new THREE.MeshStandardMaterial({ color: '#d8d8d6', metalness: 1, roughness: .25 }));
   rimRing.rotation.x = Math.PI / 2; rimRing.position.y = DISC_H; scene.add(rimRing);
 
-  // 盘面镶嵌（白蜡木色）：外圈刻度、两条螺旋轨迹、年份
+  // dial inlay (ash-wood colour): outer tick ring, the two spiral tracks, the years
   {
     const C = 4096, c = document.createElement('canvas'); c.width = c.height = C;
     const x = c.getContext('2d'), px = v => (v / R + 1) / 2 * C;
@@ -100,11 +100,11 @@ export async function buildSet(scene, renderer) {
     inlay.rotation.x = -Math.PI / 2; inlay.position.y = DISC_H + .0005; inlay.receiveShadow = true; scene.add(inlay);
   }
 
-  // —— 片 ——
+  // —— sheets ——
   const geo = new THREE.BoxGeometry(SW, TH * .985, SD);
   const alu = new THREE.MeshStandardMaterial({ color: '#c8ccd1', metalness: 1, roughness: .27 });
   const brass = new THREE.MeshStandardMaterial({ color: '#d2b07a', metalness: 1, roughness: .27 });
-  // 风电：乳白亚克力（半透、清漆面），一眼和金属分开
+  // wind: milky acrylic (translucent, varnished surface), reads apart from the metal at a glance
   const acrylic = new THREE.MeshPhysicalMaterial({ color: '#9fd3d6', roughness: .22, metalness: 0, clearcoat: 1, clearcoatRoughness: .06,
     transmission: .72, thickness: .5, ior: 1.49, attenuationColor: new THREE.Color('#5fb3b8'), attenuationDistance: .45, specularIntensity: 1 });
   const groups = { alu: [], brass: [], acr: [] };
@@ -116,7 +116,7 @@ export async function buildSet(scene, renderer) {
     m.instanceColor.needsUpdate = true; scene.add(m); meshes[g] = m;
   }
 
-  // —— 最后一件实物：黄铜圆片，面上刻比值 ——
+  // —— the last object: the brass puck, with the ratio engraved on its face ——
   const PR = .64, PH = .075;
   const pc = document.createElement('canvas'); pc.width = pc.height = 1024; const px2 = pc.getContext('2d');
   px2.fillStyle = '#fff'; px2.fillRect(0, 0, 1024, 1024);
@@ -150,7 +150,7 @@ export async function buildSet(scene, renderer) {
   function update(t, puckYaw) {
     for (const sh of SHEETS) meshes[sh.g].setMatrixAt(sh.idx, pose(sh, t));
     for (const g in meshes) meshes[g].instanceMatrix.needsUpdate = true;
-    // 圆片：从画外落下（重力），落定后一次很小的回弹
+    // puck: drops in from out of frame (gravity), one very small bounce after it lands
     const t0 = T.puck - .5, u = seg(t, t0, T.puck);
     puck.visible = t > t0;
     let y = DISC_H + PH / 2 + 2.6 * (1 - u * u);

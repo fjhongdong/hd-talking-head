@@ -131,12 +131,20 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
 _NON_NATIVE_PRODUCERS = frozenset({
     "hd-talking-head-local-canonical", "hd-talking-head-relation-motion",
     "hd-talking-head-semantic-state", "hd-talking-head-talkcraft-overlay",
-    "lemo-opuscar", "onetake",
+    "onetake",
 })
 
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
+    if candidate.get("dependency_id") == "lemo-opuscar":
+        from upstream_scene_adapter import ENTRY, VERSION, lemo_styles
+        root = Path(__file__).resolve().parents[3]
+        return (candidate.get("template_origin") == "custom_fallback"
+                and candidate.get("adaptation_level") == "structural"
+                and candidate.get("source_entrypoint") == ENTRY
+                and candidate.get("producer_version") == VERSION
+                and template_id in {"lemo-opuscar/" + slug for slug in lemo_styles(root)})
     if isinstance(template_id, str) and template_id.startswith("hd-talking-head/talkcraft/"):
         return _is_qualified_talkcraft(candidate)
     origin = candidate.get("template_origin")
@@ -607,6 +615,18 @@ def _validate_code_cross_fields(
                 or component.get("template_origin") != "custom_fallback"
                 or component.get("adaptation_level") != "structural"):
             raise RouterError("OpenFilm is a native creative Skill, not a verified template")
+    if dependency_id == "lemo-opuscar":
+        from upstream_scene_adapter import ENTRY, SOURCES, VERSION
+        if (not _native_selection(component) or entrypoint != ENTRY
+                or component.get("renderer_version") != SOURCES[dependency_id][0]
+                or component.get("template_version") != VERSION):
+            raise RouterError("Lemo requires a registered official style and its native creation entry")
+        evidence = record.get("production_evidence", {})
+        slug = component["template_id"].removeprefix("lemo-opuscar/")
+        if (record.get("style_slug") != slug or evidence.get("style_slug") != slug
+                or evidence.get("template_id") != component["template_id"]
+                or evidence.get("upstream_commit") != SOURCES[dependency_id][0]):
+            raise RouterError("Lemo style differs from the frozen production evidence")
     if dependency_id == "overlay-studio-native":
         if (entrypoint != "scripts/overlay_studio_adapter.py"
                 or component.get("source_entrypoint") != entrypoint

@@ -1,4 +1,4 @@
-"""字幕 cues（.srt 用，含命令词；规则同 film.js：停留 ≥ max(1.8s, 语音 + 0.6s)，命令词 ≥ 0.9s，不与下一句重叠）→ out/srt.json"""
+"""Subtitle cues (for the .srt, command words included; same rules as film.js: hold ≥ max(1.8s, speech + 0.6s), command words ≥ 0.9s, never overlapping the next line) → out/srt.json"""
 import json, os
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 L = [l for l in json.load(open(os.path.join(D, 'lines.json'))) if not l.get('fx')]

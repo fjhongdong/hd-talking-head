@@ -1,5 +1,5 @@
-// 五幅画：每幅 = 若干缓存色版（layers）+ 每帧的动态元素（paint）
-// 图层组 g：0 = 墨线版，1 = 蓝版，2 = 绿/次色版，3 = 红/人物版（用于"一版一版印出来"）
+// Five pictures: each = several cached colour blocks (layers) + per-frame live elements (paint)
+// Layer group g: 0 = key-line block, 1 = blue block, 2 = green/secondary block, 3 = red/figure block (for "printing one block at a time")
 import { clamp, lerp, seg, ss, eio, eo, ei, mulberry, hash, vnoise, TAU } from '/core/lib.js';
 import { W, H, FR, PAL, smooth, poly, carve, wob, line, fillPath, bokashi, kasumi, rgba, mix } from './print.js';
 import { mountain, mtnPts, pine, rock, rain, goose, claw } from './nature.js';
@@ -10,18 +10,18 @@ import { wave, sea, foam, wstate } from './wave.js';
 const S = PAL.sumi;
 const rectFill = (x, c, x0, y0, x1, y1) => { x.fillStyle = c; x.fillRect(x0, y0, x1 - x0, y1 - y0); };
 
-// ————————————————————————— 一 · 田毎の朝 —————————————————————————
+// ————————————————————————— 一 · 田毎の朝 (I · Morning in the paddies) —————————————————————————
 const HZ1 = 500;
-// 水田几何：高视角的平行层叠——横埂略起伏、间距只缓慢变大；纵埂彼此平行（统一略斜），不做一点透视汇聚
+// Paddy geometry: parallel stacking seen from a high viewpoint — horizontal ridges undulate slightly and their spacing grows only slowly; vertical ridges are parallel to each other (all slightly slanted), no one-point perspective convergence
 const ROWS1 = [516, 540, 568, 600, 638, 684, 740, 806, 890, 980, 1070];
 const sc1 = y => .25 + (y - 500) / 570 * .75;
 const rowY = (r, X) => ROWS1[r] + (r > 0 && r !== 6 && r !== 7 ? (vnoise(X * .003 + r * 3.7) - .5) * 16 * sc1(ROWS1[r]) + Math.sin(X * .0018 + r) * 5 : 0);
-const SLANT = .28;   // 纵埂统一斜度（dx/dy）
+const SLANT = .28;   // common slant of the vertical ridges (dx/dy)
 const CELLS1 = [], DIKES1 = [];
 {
   const R = mulberry(42);
   for (let r = 0; r < ROWS1.length - 1; r++) {
-    if (r === 6) continue; // 主田埂
+    if (r === 6) continue; // main ridge
     const y0 = ROWS1[r], y1 = ROWS1[r + 1], sp = 300 + 260 * sc1((y0 + y1) / 2);
     let X = -300 - R() * sp; const xs = [];
     while (X < W + 300) { xs.push(X); X += sp * (.55 + R() * 1.0); }
@@ -40,29 +40,29 @@ export const V1 = {
       bokashi(x, 0, FR.y0, W, 360, PAL.prus, .92, 0, { rough: 26, seed: 2 });
       bokashi(x, 0, 250, W, HZ1, PAL.sky, 0, .35, { rough: 18, seed: 6 });
       mountain(x, 330, HZ1 - 6, 132, 64, { body: PAL.prusL, snow: PAL.white, frac: .36, seed: 4 });
-      // 水田：每块倒映天空（上浅下蓝，个别偏粉）
+      // paddies: each reflects the sky (light at the top, blue at the bottom, a few pinkish)
       for (const c of CELLS1) {
         const y0 = c.q[0][1], y1 = c.q[2][1], g = x.createLinearGradient(0, y0, 0, y1);
         const top = c.tint > .8 ? PAL.beniP : PAL.skyL;
         g.addColorStop(0, rgba(top, .35)); g.addColorStop(1, rgba(PAL.sky, .95 - c.r * .03));
         x.fillStyle = g; x.beginPath(); poly(x, c.q); x.fill();
       }
-      // 远山倒影（落在最远一排水田里）
+      // reflection of the far mountain (falls in the farthest row of paddies)
       x.save(); x.beginPath(); CELLS1.filter(c => c.r <= 1).forEach(c => poly(x, c.q)); x.clip();
       x.translate(0, 2 * (HZ1 + 18)); x.scale(1, -1); x.globalAlpha = .4; mountain(x, 330, HZ1 + 18, 132, 50, { body: PAL.prusL }); x.restore();
-      // 村落屋顶（茅草）
+      // village roofs (thatch)
       [[1560, 70], [1655, 54], [1740, 84]].forEach(([cx, w]) => { x.fillStyle = PAL.greyD; x.beginPath(); poly(x, [[cx - w / 2, HZ1 - 4], [cx - w * .28, HZ1 - 24], [cx + w * .28, HZ1 - 24], [cx + w / 2, HZ1 - 4]]); x.fill(); });
     } },
     greens: { g: 2, grain: .03, draw(x) {
-      // 远树带
+      // band of distant trees
       x.fillStyle = PAL.greenD; x.beginPath(); x.moveTo(0, HZ1 + 8);
       for (let X = 0; X <= W; X += 14) x.lineTo(X, HZ1 - 3 - Math.abs(Math.sin(X * .05)) * 7 - vnoise(X * .015) * 12 - (X > 1480 && X < 1800 ? 10 : 0));
       x.lineTo(W, HZ1 + 16); x.lineTo(0, HZ1 + 16); x.fill();
-      // 横向田埂
+      // horizontal ridges
       x.lineCap = 'round'; x.lineJoin = 'round';
       for (let r = 1; r < ROWS1.length - 1; r++) { if (r === 6 || r === 7) continue; x.strokeStyle = PAL.green; x.lineWidth = 3 + 16 * sc1(ROWS1[r]); x.beginPath(); smooth(x, rowPts(r)); x.stroke(); }
       for (const d of DIKES1) { x.strokeStyle = PAL.green; x.lineWidth = d.w; x.beginPath(); x.moveTo(d.a[0], d.a[1]); x.lineTo(d.b[0], d.b[1]); x.stroke(); }
-      // 主田埂（旅人走的路）
+      // main ridge (the traveller's path)
       rectFill(x, PAL.ochreL, 0, 746, W, 800);
       rectFill(x, PAL.green, 0, 738, W, 750); rectFill(x, PAL.greenD, 0, 796, W, 808);
       pine(x, 1790, 1060, 2.6, { seed: 3, lean: -.4, lines: false, minI: 4 });
@@ -85,7 +85,7 @@ export const V1 = {
   },
   paint(x, t, R) {
     R.L('skyB'); R.L('reds'); R.L('greens');
-    // 秧苗：一簇簇，风吹成排起伏（8fps）
+    // rice seedlings: in clumps, swaying in rows in the wind (8fps)
     const tq = q8(t);
     R.D(2, x => {
       x.strokeStyle = PAL.greenD; x.lineCap = 'round';
@@ -104,15 +104,15 @@ export const V1 = {
       }
     });
     R.L('key');
-    // 雁阵
+    // geese formation
     if (t > 3.5 && t < 10.5) R.D(0, x => { const u = (tq - 3.5) / 7; for (let i = 0; i < 7; i++) { const off = Math.abs(i - 3), px = lerp(1500, 520, u) + off * 34 + i * 2, py = 175 + off * 18 - (i < 3 ? 0 : 0) + Math.sin(u * 6 + i) * 3; goose(x, px, py, 1.25, Math.sin(tq * 9 + i) > 0 ? 1 : -.4); } });
-    // 旅人：沿主田埂向左走
+    // traveller: walks left along the main ridge
     const u = seg(t, 3.2, 10.5), px = lerp(1480, 930, u);
     R.D(3, x => traveler(x, px, 772, 128, { mode: t > 3.2 && t < 10.5 ? 'walk' : 'stand', ph: tq * 1.05, t: tq, wind: 1 }));
   },
 };
 
-// ————————————————————————— 二 · 雨の橋 —————————————————————————
+// ————————————————————————— 二 · 雨の橋 (II · Bridge in the rain) —————————————————————————
 const bridgeY = X => 452 + Math.pow((X - 960) / 780, 2) * 250;
 export const V2 = {
   id: 'v2',
@@ -121,29 +121,29 @@ export const V2 = {
       bokashi(x, 0, FR.y0, W, 400, PAL.sumi, .88, 0, { rough: 30, seed: 12 });
       bokashi(x, 0, 300, W, 600, PAL.greyL, 0, .45, { rough: 20, seed: 13 });
       mountain(x, 560, 600, 560, 270, { body: '#8e959b', shade: '#7b8389', frac: .2, seed: 8 });
-      // 远岸树影
+      // tree silhouettes on the far bank
       x.fillStyle = PAL.greyL; x.beginPath(); x.moveTo(0, 620);
       for (let X = 0; X <= W; X += 14) x.lineTo(X, 588 - vnoise(X * .018) * 26 - Math.abs(Math.sin(X * .045)) * 10);
       x.lineTo(W, 630); x.fill();
       x.fillStyle = '#9ea39f'; x.beginPath(); x.moveTo(1150, 630); for (let X = 1150; X <= W; X += 12) x.lineTo(X, 596 - vnoise(X * .03 + 4) * 34); x.lineTo(W, 640); x.fill();
-      // 河
+      // river
       const g = x.createLinearGradient(0, 615, 0, 1042); g.addColorStop(0, '#aebfc6'); g.addColorStop(1, PAL.ai); x.fillStyle = g; x.fillRect(0, 615, W, 440);
     } },
     bridge: { g: 2, grain: .05, draw(x) {
       fillPath(x, [[-20, 700], [120, 690], [260, 730], [300, 820], [200, 1060], [-20, 1060]], PAL.greenD);
       fillPath(x, [[1940, 690], [1760, 700], [1660, 740], [1640, 830], [1760, 1060], [1940, 1060]], PAL.greenD);
       x.fillStyle = PAL.green; for (let i = 0; i < 60; i++) { const L = i < 30, X = L ? hash(i) * 250 : 1680 + hash(i) * 240, Y = 720 + hash(i + 7) * 330; x.fillRect(X, Y, 2, -8 - hash(i + 2) * 8); }
-      // 桥柱
+      // bridge piers
       for (const X of [330, 470, 640, 820, 1100, 1280, 1450, 1590]) {
         const y = bridgeY(X) + 28; x.fillStyle = PAL.woodD; x.fillRect(X - 9, y, 18, 900 - y + (X % 3) * 6);
       }
-      // 斜撑
+      // diagonal braces
       x.strokeStyle = PAL.woodD; x.lineWidth = 7;
       [[330, 470], [470, 640], [1280, 1450], [1450, 1590]].forEach(([a, b]) => { x.beginPath(); x.moveTo(a, bridgeY(a) + 60); x.lineTo(b, bridgeY(b) + 160); x.stroke(); });
-      // 桥面侧板
+      // deck side boards
       x.fillStyle = PAL.woodL; x.beginPath(); x.moveTo(170, bridgeY(170)); for (let X = 170; X <= 1750; X += 10) x.lineTo(X, bridgeY(X));
       for (let X = 1750; X >= 170; X -= 10) x.lineTo(X, bridgeY(X) + 30); x.fill();
-      // 栏杆
+      // railing
       x.fillStyle = PAL.wood;
       for (let X = 200; X <= 1720; X += 95) x.fillRect(X - 5, bridgeY(X) - 50, 10, 50);
       x.strokeStyle = PAL.wood; x.lineWidth = 9; x.beginPath(); for (let X = 190; X <= 1730; X += 10) X === 190 ? x.moveTo(X, bridgeY(X) - 46) : x.lineTo(X, bridgeY(X) - 46); x.stroke();
@@ -164,7 +164,7 @@ export const V2 = {
   paint(x, t, R) {
     R.L('back');
     const tq = q8(t), t12 = q12(t);
-    // 水纹
+    // water ripples
     R.D(1, x => {
       x.strokeStyle = rgba(PAL.prusL, .8); x.lineWidth = 2.2; x.lineCap = 'round';
       for (let i = 0; i < 26; i++) {
@@ -175,10 +175,10 @@ export const V2 = {
       }
     });
     R.L('bridge'); R.L('key');
-    // 旅人过桥（披蓑衣，压低斗笠）
+    // traveller crosses the bridge (wearing the mino, hat pulled low)
     const u = seg(t, 11.7, 16.4), px = lerp(1400, 830, u);
     R.D(3, x => traveler(x, px, bridgeY(px) + 1, 124, { mode: t > 11.7 && t < 16.4 ? 'walk' : 'stand', ph: tq * .9, t: tq, tilt: -.16, mino: true }));
-    // 前景柳枝（右上垂下，随风摆）
+    // foreground willow branches (hanging from top right, swaying in the wind)
     R.D(2, x => {
       for (let i = 0; i < 11; i++) {
         const bx = 1440 + i * 44 + hash(i) * 20, len = 280 + hash(i + 3) * 300, sw = Math.sin(tq * 2.1 + i * .8) * 20 - 14;
@@ -188,18 +188,18 @@ export const V2 = {
         for (let k = 2; k < 16; k++) { const p = P(k / 16), sd = k % 2 ? 1 : -1; x.beginPath(); x.ellipse(p[0] + sd * 5, p[1] + 2, 8, 1.8, sd * 1.25, 0, TAU); x.fill(); }
       }
     });
-    // 雨
+    // rain
     R.D(0, x => rain(x, t12, [FR.x0 - 100, FR.y0 - 200, FR.x1, FR.y1]));
   },
 };
 
-// ————————————————————————— 三 · 茶屋の窓 —————————————————————————
+// ————————————————————————— 三 · 茶屋の窓 (III · Teahouse window) —————————————————————————
 const WC = [760, 450], WR = 318;
 export const V3 = {
   id: 'v3',
   layers: {
     view: { g: 1, grain: .06, draw(x) {
-      // 圆窗里的景：暮色 ぼかし + 大山
+      // view in the round window: dusk bokashi (ぼかし, hand-wiped gradation) + the great mountain
       x.save(); x.beginPath(); x.arc(WC[0], WC[1], WR, 0, TAU); x.clip();
       rectFill(x, '#f0dcc0', 0, 0, W, H);
       bokashi(x, WC[0] - WR, WC[1] - WR, WC[0] + WR, WC[1] + 40, PAL.prus, .95, 0, { rough: 14, seed: 21 });
@@ -210,36 +210,36 @@ export const V3 = {
       x.restore();
     } },
     room: { g: 2, grain: .018, baren: .22, draw(x) {
-      // 灰泥墙（挖出圆窗）
+      // plaster wall (with the round window cut out)
       x.save(); x.beginPath(); x.rect(0, 0, W, H); x.arc(WC[0], WC[1], WR + 16, 0, TAU, true); x.clip('evenodd');
       rectFill(x, PAL.plaster, 0, 0, W, 890);
       bokashi(x, 0, 110, W, 420, '#b9a987', .5, 0, { rough: 30, seed: 23 });
       x.restore();
-      // 窗框（竹环）
+      // window frame (bamboo ring)
       x.strokeStyle = PAL.wood; x.lineWidth = 22; x.beginPath(); x.arc(WC[0], WC[1], WR + 9, 0, TAU); x.stroke();
-      // 梁与柱
+      // beam and posts
       rectFill(x, PAL.woodD, 0, FR.y0, W, 112); rectFill(x, PAL.wood, 0, 112, W, 128);
       rectFill(x, PAL.woodD, FR.x0, 112, 150, 890); rectFill(x, PAL.woodD, 1880 - 70, 112, 1880, 890);
-      // 地板
+      // floor
       rectFill(x, PAL.woodL, 0, 880, W, H);
       x.strokeStyle = rgba(PAL.woodD, .55); x.lineWidth = 2; for (let i = 0; i < 7; i++) { const y = 900 + i * i * 4.5 + i * 8; x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke(); }
-      // 长凳 + 红毡
+      // bench + red felt
       rectFill(x, PAL.woodD, 1140, 812, 1162, 905); rectFill(x, PAL.woodD, 1790, 812, 1812, 905); rectFill(x, PAL.woodD, 1160, 850, 1790, 862);
       x.fillStyle = PAL.beni; x.beginPath(); poly(x, [[1110, 790], [1850, 790], [1854, 842], [1106, 842]]); x.fill();
       x.fillStyle = mix(PAL.beni, '#000', .25); x.fillRect(1106, 830, 748, 12);
-      // 火盆 + 铁壶
+      // brazier + iron kettle
       x.fillStyle = PAL.woodD; x.beginPath(); poly(x, [[930, 842], [1090, 842], [1080, 906], [940, 906]]); x.fill();
       x.fillStyle = PAL.sumiL; x.beginPath(); x.moveTo(958, 820); x.bezierCurveTo(958, 770, 1062, 770, 1062, 820); x.bezierCurveTo(1062, 846, 958, 846, 958, 820); x.fill();
       x.fillStyle = PAL.sumi; x.fillRect(996, 768, 28, 8); x.beginPath(); x.arc(1010, 766, 6, 0, TAU); x.fill();
       x.strokeStyle = PAL.sumi; x.lineWidth = 5; x.beginPath(); x.moveTo(966, 800); x.quadraticCurveTo(1010, 700, 1054, 800); x.stroke();
       x.fillStyle = PAL.sumiL; x.beginPath(); poly(x, [[1058, 812], [1090, 790], [1094, 796], [1060, 824]]); x.fill();
       x.fillStyle = PAL.beni; x.beginPath(); x.ellipse(1010, 846, 60, 6, 0, 0, TAU); x.fill();
-      // 放在凳上的斗笠与靠着的手杖
+      // hat placed on the bench and staff leaning against it
       x.strokeStyle = PAL.woodL; x.lineWidth = 7; x.beginPath(); x.moveTo(1830, 895); x.lineTo(1868, 600); x.stroke();
     } },
     key: { g: 0, speck: .12, draw(x) {
       x.strokeStyle = S; x.lineWidth = 3; x.beginPath(); x.arc(WC[0], WC[1], WR, 0, TAU); x.stroke(); x.lineWidth = 2.4; x.beginPath(); x.arc(WC[0], WC[1], WR + 20, 0, TAU); x.stroke();
-      // 竹节
+      // bamboo nodes
       x.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + .2; x.beginPath(); x.moveTo(WC[0] + Math.cos(a) * WR, WC[1] + Math.sin(a) * WR); x.lineTo(WC[0] + Math.cos(a) * (WR + 20), WC[1] + Math.sin(a) * (WR + 20)); x.stroke(); }
       x.save(); x.beginPath(); x.arc(WC[0], WC[1], WR, 0, TAU); x.clip(); mountain(x, 790, 700, 820, 450, { lines: true, lw: 2.4, snowLine: PAL.prusD, frac: .34, seed: 5 }); x.restore();
       x.fillStyle = S;
@@ -254,7 +254,7 @@ export const V3 = {
   paint(x, t, R) {
     R.L('view'); R.L('room'); R.L('key');
     const tq = q8(t);
-    // 灯笼（右上，轻摆）
+    // lantern (top right, swaying gently)
     R.D(3, x => {
       const sw = Math.sin(tq * 1.6) * .05; x.save(); x.translate(1450, 128); x.rotate(sw);
       x.strokeStyle = S; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 40); x.stroke();
@@ -264,7 +264,7 @@ export const V3 = {
       x.strokeStyle = S; x.lineWidth = 2.2; x.beginPath(); x.ellipse(0, 146, 70, 92, 0, 0, TAU); x.stroke();
       x.lineWidth = 1; x.strokeStyle = rgba(S, .6); for (let k = -3; k <= 3; k++) { x.beginPath(); x.ellipse(0, 146 + k * 25, 70 * Math.cos(k * .33), 5, 0, 0, Math.PI); x.stroke(); }
       x.restore();
-      // 风铃
+      // wind chime
       const fs = Math.sin(tq * 3.1) * .18; x.save(); x.translate(WC[0] + 180, 128); x.rotate(fs);
       x.strokeStyle = S; x.lineWidth = 1.4; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 30); x.stroke();
       x.fillStyle = rgba('#a9c8d0', .95); x.beginPath(); x.moveTo(-17, 58); x.quadraticCurveTo(-17, 30, 0, 30); x.quadraticCurveTo(17, 30, 17, 58); x.closePath(); x.fill(); x.stroke();
@@ -272,11 +272,11 @@ export const V3 = {
       x.save(); x.translate(0, 80); x.rotate(Math.sin(tq * 3.1 + 1) * .3); x.fillStyle = PAL.beniL; x.fillRect(-9, 0, 18, 58); x.strokeRect(-9, 0, 18, 58); x.restore();
       x.restore();
     });
-    // 前景框景：右上角伸进来一枝红叶（随风轻摆，偶有一片落下）
+    // foreground framing: a branch of red maple leaves reaches in from the top right (sways in the wind, now and then one leaf falls)
     R.D(3, x => momiji(x, tq));
-    // 斗笠放在凳上
+    // hat resting on the bench
     R.D(3, x => kasa(x, 1640, 786, .05, 2.2, 3.1));
-    // 铁壶的热气（8fps 卷曲上升）
+    // steam from the iron kettle (curling upward at 8fps)
     R.D(0, x => steam(x, 1094, 786, tq, 4, 1.1));
     const cup = ss(seg(t, 18.4, 19.2)) * (1 - ss(seg(t, 21.2, 21.8)));
     R.D(3, x => traveler(x, 1370, 887, 240, { mode: 'sit', t: tq, cup }));
@@ -295,7 +295,7 @@ function momiji(x, tq) {
   for (let k = 0; k < 8; k++) { const p = br[1 + (k % 4)]; leaves.push([p[0] + (R() - .5) * 70, p[1] + 20 + R() * 40, 14 + R() * 8, R() * TAU, R()]); }
   for (const [lx, ly, r, a, c] of leaves) leaf(x, lx, ly, r, a + Math.sin(tq * 2 + lx) * .06, c < .7 ? PAL.beni : c < .9 ? '#d0602e' : PAL.ochre);
   x.restore();
-  // 一片落叶
+  // one falling leaf
   const ph = (tq * .16) % 1; leaf(x, 1560 - ph * 260 + Math.sin(ph * 12) * 40, 220 + ph * 640, 14, ph * 9, PAL.beni);
 }
 function leaf(x, cx, cy, r, a, col) {
@@ -313,7 +313,7 @@ function steam(x, bx, by, tq, n, sc) {
     x.bezierCurveTo(bx + 22 * sc, y0 - 25 * sc, bx - 22 * sc, y0 - 45 * sc, bx + Math.sin(ph * 5 + i * 2) * 14 * sc, y0 - 70 * sc); x.stroke();
   }
 }
-// ————————————————————————— 四 · 海立つ —————————————————————————
+// ————————————————————————— 四 · 海立つ (IV · The sea rises) —————————————————————————
 export const HZ4 = 612;
 export const ROCK4 = [[1300, 1060], [1330, 900], [1380, 830], [1440, 790], [1560, 772], [1680, 740], [1760, 660], [1830, 600], [1900, 590], [1940, 1060]];
 export const V4 = {
@@ -353,7 +353,7 @@ export const V4 = {
   },
 };
 
-// ————————————————————————— 五 · 山 —————————————————————————
+// ————————————————————————— 五 · 山 (V · The mountain) —————————————————————————
 const M5 = [960, 900, 2280, 770];
 const GR5 = X => 902 + Math.pow((X - 960) / 960, 2) * -70 + (vnoise(X * .02) - .5) * 14;
 export const V5 = {
@@ -363,14 +363,14 @@ export const V5 = {
       bokashi(x, 0, FR.y0, W, 470, PAL.prus, .95, 0, { rough: 30, seed: 41 });
       bokashi(x, 0, 380, W, 900, PAL.sky, 0, .4, { rough: 20, seed: 42 });
       mountain(x, ...M5, { grad: [[0, PAL.prusD], [.45, PAL.prus], [1, PAL.prusL]], shade: rgba(PAL.prusD, .5), frac: .36, seed: 13 });
-      // 山腰的冲沟（深色条）
+      // gullies on the mountainside (dark strips)
       x.save(); x.beginPath(); poly(x, mtnPts(...M5)); x.clip(); x.strokeStyle = rgba(PAL.prusD, .55); x.lineCap = 'round';
       for (let i = 0; i < 22; i++) { const u = (i + .5) / 22, X = lerp(120, 1800, u), y0 = 935 - 800 * Math.pow(1 - Math.abs(u - .5) * 2, 1.6) * .62; x.lineWidth = 2 + hash(i) * 3; x.globalAlpha = .45; x.beginPath(); x.moveTo(X, y0); x.quadraticCurveTo(X + (u - .5) * 60, (y0 + 935) / 2, X + (u - .5) * 140, 935); x.stroke(); }
       x.restore();
     } },
     snow: { g: 2, draw(x) {
       mountain(x, ...M5, { snow: PAL.white, frac: .36, seed: 13 });
-      // 雪上淡红（晨光）+ 霞带
+      // faint red on the snow (morning light) + mist bands
       mountain(x, ...M5, { glow: '#e79a86', frac: .36, seed: 13 });
       kasumi(x, 560, 760, 1100, 46, '#f2e6cf', .95, .9); kasumi(x, 1460, 812, 980, 40, '#f2e6cf', .92, .9);
     } },
@@ -388,7 +388,7 @@ export const V5 = {
   paint(x, t, R) {
     R.L('sky'); R.L('snow'); R.L('ground'); R.L('key');
     const tq = q8(t);
-    // 一只鸢在高空盘旋
+    // a single kite (bird) circling high up
     if (t > 32) R.D(0, x => { const a = (tq - 32) * .35; const px = 1350 + Math.cos(a) * 160, py = 250 + Math.sin(a) * 40; goose(x, px, py, 1.5, Math.sin(tq * 2) * .3); });
     const off = ss(seg(t, T.hatOff[0], T.hatOff[1]));
     R.D(3, x => traveler(x, 960, GR5(960) + 4, 100, { mode: 'back', t: tq, hatOff: off }));

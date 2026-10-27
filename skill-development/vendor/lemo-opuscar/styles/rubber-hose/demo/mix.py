@@ -1,5 +1,5 @@
-"""mix.py — 拟音（按材质合成）+ 电台腔旁白 + 配乐闪避 + 1930s 光学声轨老化 → mix.wav
-运行：.venv/bin/python styles/rubber-hose/demo/mix.py（先 node core/render/events.mjs 导出 events.json）"""
+"""mix.py — foley (synthesised by material) + radio-style narration + score ducking + 1930s optical-soundtrack ageing → mix.wav
+Run: .venv/bin/python styles/rubber-hose/demo/mix.py (first export events.json with node core/render/events.mjs)"""
 import os, sys, json, numpy as np, soundfile as sf
 from scipy.signal import resample_poly, butter, sosfilt
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))
@@ -13,16 +13,16 @@ ev = json.load(open(os.path.join(HERE, 'events.json'))); DUR = ev['dur']; E = ev
 N = int(round(DUR * SR))
 FX = np.zeros((N, 2)); VOX = np.zeros((N, 2)); BED = np.zeros((N, 2))
 
-# ———————————————————— 拟音配方 ————————————————————
+# ———————————————————— Foley recipes ————————————————————
 def sine_sweep(f0, f1, d, curve=1.0):
     tt = t_(d); f = f0 + (f1 - f0) * (tt / d) ** curve; return np.sin(2 * np.pi * np.cumsum(f) / SR)
 def partials(fs, d, taus, amps=None):
     tt = t_(d); amps = amps or [1] * len(fs)
     return sum(a * np.sin(2 * np.pi * f * tt + R.random() * 6) * np.exp(-tt / tau) for f, tau, a in zip(fs, taus, amps))
-def porcelain(p=1.0, d=.25):   # 瓷器：高而硬的非谐分音 + 极短瞬态
+def porcelain(p=1.0, d=.25):   # porcelain: high, hard inharmonic partials + a very short transient
     x = partials([2750 * p, 4180 * p, 6320 * p, 1650 * p], d, [.07, .05, .03, .09], [1, .7, .4, .5]); x += hp(nz(d), 3000) * env_exp(d, .002) * .6
     return norm(x)
-def ceramic_low(p=1.0, d=.3):   # 厚陶瓷马克杯：低一些、闷一些
+def ceramic_low(p=1.0, d=.3):   # thick ceramic mug: a bit lower and duller
     x = partials([880 * p, 1690 * p, 2480 * p, 330 * p], d, [.05, .035, .025, .06], [1, .6, .35, .6]); x += lp(nz(d), 1200) * env_exp(d, .01) * .5
     return norm(x)
 def woodblock(f=2400, d=.09):
@@ -36,7 +36,7 @@ def slide_whistle(f0, f1, d, vib=0):
 def boing(f=210, d=.6, depth=.35):
     tt = t_(d); f_ = f * (1 + depth * np.sin(2 * np.pi * 13 * tt) * np.exp(-tt * 4)); ph = 2 * np.pi * np.cumsum(f_) / SR
     return norm((np.sin(ph) + .4 * np.sin(2 * ph) + .2 * np.sin(3 * ph)) * np.exp(-tt * 4.5))
-def bell_ring(d):   # 闹钟铃：小锤 18 次/秒敲两只铃
+def bell_ring(d):   # alarm bell: a small hammer striking two bells 18 times a second
     out = np.zeros(len(t_(d) ) + int(.3 * SR))
     for k in range(int(d * 18)):
         s = int(k / 18 * SR); b = partials([2100 + (k % 2) * 180, 3350, 5200, 7100], .3, [.06, .04, .025, .015], [1, .7, .5, .3]); out[s:s + len(b)] += b
@@ -68,7 +68,7 @@ def ratchet(d):
     for k in range(n): s = int((1 - (1 - k / n) ** 1.6) * d * SR); c = woodblock(3200, .03) * .6; out[s:s + len(c)] += c
     return norm(out)
 
-def seq(clips, total):   # [(t, clip)] 放进定长缓冲
+def seq(clips, total):   # put [(t, clip)] into a fixed-length buffer
     out = np.zeros(int(total * SR))
     for t0, c in clips:
         s0 = int(t0 * SR); n = max(0, min(len(c), len(out) - s0)); out[s0:s0 + n] += c[:n]
@@ -129,15 +129,15 @@ RECIPES = {
 for e in E:
     ty = e['type']
     if ty in ('vo', 'projector'): continue
-    if ty == 'boing': continue          # 7.3 的"啵嘤"已在配乐 drums_fx 里，不叠两层
+    if ty == 'boing': continue          # the "boing" at 7.3 is already in the score's drums_fx; don't double it
     x, g = RECIPES[ty](e)
     pan = {'stepCube': .15, 'stepMug': -.15, 'clinkSmall': .1, 'clonk': -.1}.get(ty, 0)
     add(FX, np.asarray(x, dtype=np.float64), e['t'], g, pan)
-# 扑通：额外叠一层水花
+# plop: layer an extra splash
 for e in E:
     if e['type'] == 'plop': add(FX, water_splash(.45, .9), e['t'] + .02, .4)
 
-# ———————————————————— 旁白：电台话筒链 ————————————————————
+# ———————————————————— Narration: radio microphone chain ————————————————————
 lines = {L['id']: L for L in json.load(open(os.path.join(HERE, 'lines.json')))}
 def room_ir(d=.28):
     tt = t_(d); ir = R.standard_normal(len(tt)) * np.exp(-tt / .06); ir[0] = 1; return ir / np.abs(ir).sum() * 6
@@ -155,7 +155,7 @@ for e in E:
     add(VOX, norm(y), e['t'], 1.1)
     s = int(e['t'] * SR); vo_mask[max(0, s - 2400): s + len(y) + 4800] = 1
 
-# ———————————————————— 配乐 + 闪避 ————————————————————
+# ———————————————————— Score + ducking ————————————————————
 mus, msr = sf.read(os.path.join(HERE, 'music', 'score.wav'))
 if mus.ndim == 1: mus = np.stack([mus, mus], 1)
 mus = mus[:N]; mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
@@ -163,17 +163,17 @@ from scipy.ndimage import uniform_filter1d
 duck = uniform_filter1d(vo_mask, int(.12 * SR))
 mus = mus * (1 - .62 * duck)[:, None]
 
-# ———————————————————— 1930s 光学声轨：带宽、饱和、抖晃、爆豆、底噪 ————————————————————
+# ———————————————————— 1930s optical soundtrack: bandwidth, saturation, wow and flutter, crackle, noise floor ————————————————————
 def optical(x):
     y = np.stack([hp(lp(x[:, c], 6200, 2), 110, 2) for c in range(2)], 1)
-    # 抖晃：0.6 Hz + 7 Hz 的微小时基变化
+    # wow and flutter: tiny time-base variation at 0.6 Hz + 7 Hz
     tt = np.arange(N) / SR; dl = (.00035 * np.sin(2 * np.pi * .6 * tt) + .00008 * np.sin(2 * np.pi * 7 * tt)) * SR
     idx = np.clip(np.arange(N) - 40 + dl, 0, N - 1); i0 = idx.astype(int); fr = idx - i0; i1 = np.minimum(i0 + 1, N - 1)
     y = y[i0] * (1 - fr)[:, None] + y[i1] * fr[:, None]
     y = np.tanh(y * 1.4) / np.tanh(1.4)
     return y
 bus = optical(mus * 1.0 + FX * .9)
-# 胶片底噪 + 爆豆（整片都有，静音那一拍它和放映机就是全部声音）
+# film noise floor + crackle (throughout the film; on the silent beat it and the projector are the only sound)
 hiss = bp(R.standard_normal(N), 800, 6000) * .0035
 crk = np.zeros(N); pos = R.random(int(DUR * 9)) * (N - 200)
 for p in pos.astype(int): L_ = R.integers(8, 60); crk[p:p + L_] += R.standard_normal(L_) * np.exp(-np.arange(L_) / 10) * (.02 + R.random() * .05)
@@ -186,7 +186,7 @@ mix = bus + VOX + BED
 for c in range(2): mix[:, c] = X.limit(mix[:, c], .95)
 mix = mix / np.abs(mix).max() * .89
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR)
-# 电平自检：旁白段 vs 非旁白段
+# level self-check: narration sections vs non-narration sections
 def db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-12)
 m = vo_mask > 0
 print('mix.wav', DUR, 's  | VO RMS', round(db(VOX[m]), 1), 'dB  music-under-VO', round(db(bus[m]), 1), 'dB  music-alone', round(db(bus[~m]), 1), 'dB  FX', round(db(FX), 1), 'dB')

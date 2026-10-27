@@ -1,7 +1,7 @@
-// 故事时间轴：旁白、气泡、章节横幅（秒）
+// Story timeline: narration, bubbles, chapter banners (seconds)
 export const DUR = 133.0;
 
-// 旁白：[id, 开始, 英文, 中文]；时长在 voices/dur.json
+// Narration: [id, start, English, Chinese]; durations are in voices/dur.json
 export const VO = [
   ['v01', 1.6, 'On a quiet desk, in a quiet room, sat a book that nobody had opened in a very long time.', '安静的书桌上，安静的房间里，有一本很久很久没人翻开的书。'],
   ['v02', 8.3, 'Until one evening… somebody did.', '直到某个傍晚……有人翻开了它。'],
@@ -20,7 +20,7 @@ export const VO = [
   ['v15', 124.5, 'The end? Or maybe… just the beginning.', '结束了？也许……才刚刚开始。'],
 ];
 
-// 角色气泡：[谁, 开始, 结束, 英文, 中文]
+// Character bubbles: [who, start, end, English, Chinese]
 export const BUB = [
   ['pip', 22.4, 25.4, 'Good morning, Papervale!', '早上好，纸片谷！'],
   ['pip', 45.2, 48.5, "I'm going to find out where it comes from!", '我要去找到它从哪里来！'],
@@ -44,6 +44,6 @@ export const CREDITS = [
   '音乐：Kevin MacLeod · 场景素材：Poly Haven · 配音：Kokoro',
 ];
 
-// 书的机关时间
-export const OPEN = [10.0, 12.6];                                  // 封面翻开
-export const TURNS = [[48.6, 51.4], [71.6, 74.4], [86.8, 89.6]];   // 三次翻页
+// Book mechanism timings
+export const OPEN = [10.0, 12.6];                                  // cover opens
+export const TURNS = [[48.6, 51.4], [71.6, 74.4], [86.8, 89.6]];   // three page turns

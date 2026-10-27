@@ -1,4 +1,4 @@
-// 下载字体到本地；中文只取 story.js / hud.js 里用到的字
+// Download fonts locally; for Chinese, subset to only the characters used in story.js / hud.js
 import fs from 'fs';
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 const src = ['story.js', 'hud.js', 'main.js', 'art.js'].filter(f => fs.existsSync(f)).map(f => fs.readFileSync(f, 'utf8')).join('');

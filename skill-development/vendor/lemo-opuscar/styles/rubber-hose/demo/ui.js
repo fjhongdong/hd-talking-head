@@ -1,7 +1,7 @@
-// ui.js — 片名字、播音员字卡（字幕）、话筒图标：直接用 Canvas2D 屏幕坐标绘制
+// ui.js — title lettering, announcer title cards (subtitles), microphone icon: drawn directly in Canvas2D screen coordinates
 import { P } from './chars.js';
 
-// 胖字片名：墨色外描边 + 右下投影 + 白色字面；letters 可逐字蹦（bounce(i) → 偏移像素）
+// Fat-letter title: ink outer stroke + drop shadow to the lower right + white letter face; letters can bounce one by one (bounce(i) → offset in pixels)
 export function fatTitle(g, text, cx, cy, size, { font = 'Shrikhand', bounce = null, face = P.white, shadow = P.ink, track = 0 } = {}) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
   g.font = `${size}px ${font}`; g.textBaseline = 'alphabetic'; g.textAlign = 'left'; g.lineJoin = 'round';
@@ -15,7 +15,7 @@ export function fatTitle(g, text, cx, cy, size, { font = 'Shrikhand', bounce = n
   g.restore();
 }
 
-// 30 年代丝带话筒小图标
+// small 1930s ribbon-microphone icon
 export function mic(g, x, y, s, col = P.white) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.translate(x, y); g.scale(s, s);
   g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 2.4; g.lineCap = 'round';
@@ -26,7 +26,7 @@ export function mic(g, x, y, s, col = P.white) {
   g.restore();
 }
 
-// 播音员字卡：黑牌 + 白色双线框 + 四角小花饰 + 话筒 + 旧式铅字小型大写
+// Announcer title card: black plaque + white double-rule frame + small corner flourishes + microphone + old metal-type small caps
 export function subPlate(g, text, cx, cy, { size = 38, alpha = 1 } = {}) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = alpha;
   g.font = `${size}px "IM Fell English SC"`; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -35,7 +35,7 @@ export function subPlate(g, text, cx, cy, { size = 38, alpha = 1 } = {}) {
   g.fillStyle = 'rgba(12,11,10,.92)'; g.beginPath(); g.roundRect(x0, y0, w, h, size * .22); g.fill();
   g.strokeStyle = P.paper; g.lineWidth = 2.2; g.beginPath(); g.roundRect(x0 + 7, y0 + 7, w - 14, h - 14, size * .16); g.stroke();
   g.lineWidth = 1; g.beginPath(); g.roundRect(x0 + 12, y0 + 12, w - 24, h - 24, size * .12); g.stroke();
-  // 四角小花饰
+  // small corner flourishes
   for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
     const ax = sx > 0 ? x0 + 12 : x0 + w - 12, ay = sy > 0 ? y0 + 12 : y0 + h - 12;
     g.fillStyle = P.paper; g.beginPath(); g.arc(ax + sx * 7, ay + sy * 7, 3.2, 0, 7); g.fill();

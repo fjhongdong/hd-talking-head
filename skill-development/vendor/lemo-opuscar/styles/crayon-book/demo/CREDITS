@@ -6,7 +6,7 @@ Music: original score (demo/music/score.py). Lullaby melody, motifs and arrangem
     (flute, flute staccato, clarinet, clarinet staccato);
     Versilian Community Sample Library — Versilian Studios (glockenspiel, harp).
   Music box: physical/modal synthesis, core/audio/pluck.py (no samples). Toy piano: numpy synthesis.
-Voice: Kokoro TTS v1.0 (Apache-2.0), voice af_heart (v3; v1–v2 used bf_emma).
+Voice: Kokoro TTS v1.0 (Apache-2.0), voice af_heart.
 Fonts (SIL Open Font License 1.1, licence files in demo/fonts/):
   Patrick Hand — Patrick Wagesreiter (subtitles, book text)
   Gaegu — JIKJI SOFT (title, "The End")

@@ -1,6 +1,6 @@
-"""mix.py — 芯片拟音 + 旁白 + 配乐闪避 → mix.wav（48 kHz 立体声）
-读取 events.json（node core/render/events.mjs 导出）、voices/*.wav、music/score.wav
-拟音全部程序化合成；按"色深"处理：4 色回忆里的声音降到 4-bit / 11 kHz，8-bit 回忆 8-bit；呼吸是唯一不"芯片"的声音。"""
+"""mix.py — chip foley + narration + music ducking → mix.wav (48 kHz stereo)
+Reads events.json (exported by node core/render/events.mjs), voices/*.wav, music/score.wav
+All foley is synthesised procedurally and treated by "colour depth": sounds inside the 4-colour memory drop to 4-bit / 11 kHz, the 8-bit memory is 8-bit; the breath is the only sound that is not "chip"."""
 import sys, os, json, numpy as np, soundfile as sf
 from scipy.signal import resample_poly
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '../../..'))
@@ -16,13 +16,13 @@ def put(bus, x, at, g=1.0, pan=0.0):
     x = x[:N - s]; l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
     bus[s:s + len(x), 0] += x * l * 1.414; bus[s:s + len(x), 1] += x * r * 1.414
 
-# —— 芯片音源 ——
+# —— Chip sources ——
 def sq(f, d, duty=.5, v=1.0):
     tt = t_(d); f = np.broadcast_to(f, tt.shape) if np.ndim(f) else np.full(tt.shape, f)
     ph = np.cumsum(f) / SR; return ((ph % 1) < duty).astype(float) * 2 - 1
 def tri(f, d):
     tt = t_(d); ph = np.cumsum(np.full(tt.shape, f) if not np.ndim(f) else f) / SR; x = 2 * np.abs(2 * (ph % 1) - 1) - 1
-    return np.round(x * 7) / 7                                   # 4-bit 阶梯
+    return np.round(x * 7) / 7                                   # 4-bit steps
 def crush(x, bits=8, sr=48000):
     if sr < SR: step = int(SR / sr); x = np.repeat(x[::step], step)[:len(x)]
     q = 2 ** (bits - 1); return np.round(x * q) / q
@@ -94,7 +94,7 @@ def S(type_, e):
         out = np.zeros(int(.9 * SR))
         for k in range(5): f = 2637 * 2 ** (rng.integers(0, 5) / 12); s = np.sin(2 * np.pi * f * t_(.2)) * env_exp(.2, .05); i = int((k * .12 + .05) * SR); out[i:i + len(s)] += s
         return out * .06, .5
-    if type_ == 'breath':         # 真实气声：吸 0.6 s + 呼 0.4 s（带通噪声，唯一不"芯片"的声音）
+    if type_ == 'breath':         # real breath: inhale 0.6 s + exhale 0.4 s (band-passed noise, the only sound that is not "chip")
         a = bp(noise(.62), 900, 3800) * np.sin(np.pi * t_(.62) / .62 / 2) ** 1.5 * np.linspace(.3, 1, int(round(.62 * SR)))
         b = bp(noise(.5), 400, 2200) * env_exp(.5, .16)
         x = np.concatenate([a * .8, np.zeros(int(.05 * SR)), b]); return norm(x) * .22, 1.0
@@ -119,7 +119,7 @@ def S(type_, e):
         return x * .12, 1.0
     return None, 0
 
-# —— 环境床 ——
+# —— Ambience bed ——
 def bed(name, t0, t1, g):
     d = t1 - t0; n = int(round(d * SR)); tt = t_(d)
     if name == 'hum':
@@ -144,7 +144,7 @@ for e in EV:
     if x is None: continue
     put(bus_sfx, x, e['t'], g, e.get('pan', 0))
 
-# —— 旁白（24k → 48k，压缩，轻微早反射）——
+# —— Narration (24k → 48k, compression, light early reflections) ——
 for e in EV:
     if e['type'] != 'vo': continue
     y, sr = sf.read(os.path.join(HERE, 'voices', e['id'] + '.wav'))
@@ -153,7 +153,7 @@ for e in EV:
     y = norm(y, .9); y2 = np.concatenate([y, np.zeros(int(.2 * SR))]); s = int(.023 * SR); y2[s:s + len(y)] += y * .12
     put(bus_vo, y2, e['t'], 1.0)
 
-# —— 配乐：旁白下闪避 ——
+# —— Music: ducked under narration ——
 mus, msr = sf.read(os.path.join(HERE, 'music', 'score.wav')); mus = mus[:N]
 if len(mus) < N: mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
 env = np.abs(bus_vo).max(1); k = int(.02 * SR); env = np.convolve(env, np.ones(k) / k, 'same') > .02
@@ -162,7 +162,7 @@ a, r = np.exp(-1 / (.06 * SR)), np.exp(-1 / (.35 * SR)); d = np.empty(N); v = 1.
 for i in range(N): tgt = duck[i]; c = a if tgt < v else r; v = tgt + (v - tgt) * c; d[i] = v
 mus = mus * d[:, None]
 
-# —— 静音窗：29.8–30.1、34.6–35.5 拟音也清零（HP 滚动的细哔在 29.3–29.7，保留）——
+# —— Silence windows: 29.8–30.1 and 34.6–35.5 also zero the foley (the thin HP-ticking beeps at 29.3–29.7 are kept) ——
 def silence(t0, t1, bus):
     s, e_ = int(t0 * SR), int(t1 * SR); bus[s:e_] = 0; f = int(.02 * SR); bus[max(0, s - f):s] *= np.linspace(1, 0, min(f, s))[:, None]
 silence(29.85, 30.1, bus_sfx); silence(34.6, 35.5, bus_sfx)
@@ -170,7 +170,7 @@ silence(29.85, 30.1, bus_sfx); silence(34.6, 35.5, bus_sfx)
 mix = mus * 1.0 + bus_sfx * 0.9 + bus_vo * 1.05
 peak = np.abs(mix).max(); mix = mix / peak * .89 if peak > .89 else mix
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR, subtype='FLOAT')
-# 电平表（每 2 秒）
+# Level meter (every 2 seconds)
 for t0 in np.arange(0, DUR, 2.0):
     s, e_ = int(t0 * SR), int(min(DUR, t0 + 2) * SR)
     rms = lambda b: 20 * np.log10(np.sqrt((b[s:e_] ** 2).mean()) + 1e-9)

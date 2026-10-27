@@ -1,10 +1,10 @@
-// 交通：车道、红绿灯相位、IDM 跟驰预模拟（按时间窗）、路口"堵死"占用、斑马线让行；行人（人行道绕街区 + 路口成群过街）；车辆实例化渲染与车灯光轨
+// Traffic: lanes, traffic-light phases, IDM car-following pre-simulation (per time window), junction "gridlock" occupancy, yielding at the zebra crossing; pedestrians (walking round blocks on the pavements + crossing in groups at junctions); instanced vehicle rendering and headlight trails
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { AV, ST, avW, stW, EXT, ZEBRA_Z, CURB, SW } from './city.js';
 import { mulberry, clamp, lerp, hash } from '/core/lib.js';
 
-// —— 车道 ——
+// —— Lanes ——
 export const LANES = [];
 const addLane = (axis, c, dir, road, main) => {
   const lo = axis === 'z' ? -266 : -720, hi = axis === 'z' ? 720 : 720;
@@ -25,7 +25,7 @@ for (const Z of ST) for (const o of (Z === 0 ? [2.0, 5.5] : [2.4])) { addLane('x
 export const laneWorld = (L, s, out = new THREE.Vector3()) => { const a = L.a0 + L.dir * s; return L.axis === 'z' ? out.set(L.c, 0, a) : out.set(a, 0, L.c); };
 export const laneYaw = L => L.axis === 'x' ? (L.dir > 0 ? 0 : Math.PI) : (L.dir > 0 ? -Math.PI / 2 : Math.PI / 2);
 
-// —— 红绿灯 ——  状态：0 绿 1 黄 2 红（对 ns=南北向车流 / ew）
+// —— Traffic lights ——  state: 0 green 1 amber 2 red (for ns = north-south traffic / ew)
 export const LIGHT = { C: 96, off: 0, heroX: 0, heroZ: 0 };
 export const ixOff = (X, Z) => (X === LIGHT.heroX && Z === LIGHT.heroZ) ? 0 : Math.floor(hash(X * 7.1 + Z * 3.3) * 8) * 12;
 export function lightState(X, Z, axisNS, simT) {
@@ -34,22 +34,22 @@ export function lightState(X, Z, axisNS, simT) {
   return ph < .5 ? 2 : ph < .96 ? 0 : 1;
 }
 
-// —— 车辆类型与颜色 ——
+// —— Vehicle types and colours ——
 const CARCOL = ['#f4f4f0', '#f4f4f0', '#c9ccd0', '#2a2d33', '#1f4e9c', '#3d7fd0', '#b8272c', '#2f6b3f', '#e67a1e', '#8a8f96', '#e9e2cf', '#5a2a3c', '#77b7d8', '#f2f2ee'];
 export const HERO_COL = '#e0262e';
 
-// —— IDM 预模拟 ——
-// cfg: { t0, t1, dt, warm, rate(lane, simT) → 车/秒, heroLane, heroSpawn, zebra: { trigger: 'hero', until }, seed }
+// —— IDM pre-simulation ——
+// cfg: { t0, t1, dt, warm, rate(lane, simT) → cars/second, heroLane, heroSpawn, zebra: { trigger: 'hero', until }, seed }
 export function simulate(cfg) {
   const dt = cfg.dt || .25, t0 = cfg.t0 - (cfg.warm || 300), t1 = cfg.t1, N = Math.ceil((t1 - t0) / dt) + 2;
   const R = mulberry(cfg.seed || 1);
   const cars = [], q = LANES.map(() => []);
   const boxKey = (X, Z) => X * 10000 + Z;
   let zebraOn = false, zebraFrom = null;
-  const occ = new Map();   // 路口占用：key → { ns: n, ew: n }
+  const occ = new Map();   // junction occupancy: key → { ns: n, ew: n }
   for (let k = 0; k < N; k++) {
     const T = t0 + k * dt;
-    // 生成
+    // Spawn
     for (const L of LANES) {
       const lam = cfg.rate(L, T);
       if (R() < lam * dt) {
@@ -65,7 +65,7 @@ export function simulate(cfg) {
     }
     if (cfg.hero && !cfg.hero.car && T >= cfg.hero.spawn) {
       const L = LANES[cfg.hero.lane], Q = q[L.id], s0 = cfg.hero.s0 ?? 0;
-      // 插入到车道队列里 s0 附近的空档（队列按 s 从大到小）
+      // Insert into a gap near s0 in the lane queue (queue sorted by s, largest first)
       let idx = Q.findIndex(c => c.s < s0); if (idx < 0) idx = Q.length;
       const ahead = Q[idx - 1], behind = Q[idx];
       let s = s0; if (ahead) s = Math.min(s, ahead.s - ahead.len - 3); if (behind) { const gap = s - 4.4 - behind.s; if (gap < 2) Q.splice(idx, 1); }
@@ -74,14 +74,14 @@ export function simulate(cfg) {
       while (c.si < L.stops.length && c.s > L.stops[c.si].s + .6) c.si++;
       cars.push(c); Q.splice(idx, 0, c); cfg.hero.car = c;
     }
-    // 斑马线触发（红车接近时开始让行，直到 until）
+    // Zebra-crossing trigger (yielding starts when the red car approaches, until `until`)
     if (cfg.zebra && !zebraOn && cfg.hero?.car) {
       const h = cfg.hero.car, st = LANES[h.lane].stops.find(s => s.kind === 'zebra');
       const Q = q[h.lane], i = Q.indexOf(h), lead = i === 0 || Q[i - 1].s - Q[i - 1].len > st.s + 1;
       if (st && st.s - h.s < cfg.zebra.dist && st.s - h.s > 0 && lead) { zebraOn = true; zebraFrom = T; }
     }
     const zebraActive = zebraOn && T < cfg.zebra.until;
-    // 路口占用
+    // Junction occupancy
     occ.clear();
     for (const L of LANES) for (const c of q[L.id]) {
       for (const st of L.stops) if (st.kind === 'light' && c.s > st.box[0] - .5 && c.s - c.len < st.box[1]) {
@@ -89,7 +89,7 @@ export function simulate(cfg) {
         if (L.axis === 'z') o.ns++; else o.ew++;
       }
     }
-    // 跟驰
+    // Car following
     for (const L of LANES) {
       const Q = q[L.id], ns = L.axis === 'z';
       for (let i = 0; i < Q.length; i++) {
@@ -119,7 +119,7 @@ export function simulate(cfg) {
         c.v = Math.max(0, v + acc * dt);
         c.s += Math.min(c.v * dt, Math.max(0, gap - .3));
       }
-      // 记录 + 驶出
+      // Record + exit
       for (const c of Q) c.hist.push(c.s);
       while (Q.length && Q[0].s > L.len) { const c = Q.shift(); c.dead = k; }
     }
@@ -128,7 +128,7 @@ export function simulate(cfg) {
   return { t0, dt, N, cars, zebraFrom, hero: cfg.hero?.car };
 }
 
-// 在某个模拟时刻取样：返回 [{car, s, v}]
+// Sample at a given sim time: returns [{car, s, v}]
 export function sampleSim(S, simT, out = []) {
   out.length = 0;
   const f = (simT - S.t0) / S.dt, k = Math.floor(f), u = f - k;
@@ -139,21 +139,21 @@ export function sampleSim(S, simT, out = []) {
   }
   return out;
 }
-// 某辆车在某时刻的位置（光轨用）
+// Position of a given car at a given time (for light trails)
 export function carS(S, c, simT) {
   const f = (simT - S.t0) / S.dt, k = Math.floor(f), u = f - k, i = k - c.born;
   if (i < 0) return null; if (i >= c.hist.length - 1) return null;
   return lerp(c.hist[i], c.hist[i + 1], u);
 }
 
-// —— 车辆渲染（实例化）——
+// —— Vehicle rendering (instanced) ——
 let NIGHT = 0;
 export function makeFleet(scene, MAX = 3400) {
   const std = (c, r = .35, cc = .6) => new THREE.MeshPhysicalMaterial({ color: c, roughness: r, clearcoat: cc, clearcoatRoughness: .15 });
   const body = new THREE.InstancedMesh(new RoundedBoxGeometry(4.3, .95, 1.8, 2, .28).translate(0, .72, 0), std('#ffffff'), MAX);
   const cab = new THREE.InstancedMesh(new RoundedBoxGeometry(2.3, .72, 1.62, 2, .22).translate(-.25, 1.42, 0), new THREE.MeshPhysicalMaterial({ color: '#1c232c', roughness: .15, clearcoat: 1 }), MAX);
   const roof = new THREE.InstancedMesh(new RoundedBoxGeometry(1.9, .1, 1.4, 1, .04).translate(-.3, 1.8, 0), std('#ffffff'), MAX);
-  // 公交：侧窗贴图
+  // Bus: side-window texture
   const busTex = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 64); x.fillStyle = '#1c232c'; for (let i = 0; i < 8; i++) x.fillRect(8 + i * 31, 10, 26, 26); x.fillStyle = '#ddd'; x.fillRect(0, 50, 256, 14); return new THREE.CanvasTexture(c); })();
   busTex.colorSpace = THREE.SRGBColorSpace;
   const busSide = std('#ffffff'); busSide.map = busTex;
@@ -161,10 +161,10 @@ export function makeFleet(scene, MAX = 3400) {
   const bus = new THREE.InstancedMesh(new THREE.BoxGeometry(11, 2.6, 2.5).translate(0, 1.6, 0), [busTop, busTop, busTop, busTop, busSide, busSide], 160);
   const van = new THREE.InstancedMesh(new THREE.BoxGeometry(5.2, 2.7, 2.3).translate(-1, 1.7, 0), std('#f2f2ee', .6, .1), 160);
   const vcab = new THREE.InstancedMesh(new RoundedBoxGeometry(2, 1.9, 2.2, 2, .25).translate(2.6, 1.25, 0), std('#ffffff'), 160);
-  // 车灯（夜间可见的小发光块）
-  const lampF = new THREE.InstancedMesh(new THREE.BoxGeometry(.34, .1, 1.5).translate(2.02, 1.12, 0), new THREE.MeshBasicMaterial({ color: '#ffffff' }), MAX);   // 前灯：做在车头上沿，俯视也看得到
+  // Vehicle lamps (small emissive blocks visible at night)
+  const lampF = new THREE.InstancedMesh(new THREE.BoxGeometry(.34, .1, 1.5).translate(2.02, 1.12, 0), new THREE.MeshBasicMaterial({ color: '#ffffff' }), MAX);   // headlights: placed on the top front edge of the car so they show from overhead too
   const lampR = new THREE.InstancedMesh(new THREE.BoxGeometry(.12, .18, 1.5).translate(-2.16, .85, 0), new THREE.MeshBasicMaterial({ color: '#ffffff' }), MAX);
-  // 车轮 + 车底接触阴影（微缩模型的"落地感"）
+  // Wheels + contact shadow under the car (the "grounded" feel of a miniature model)
   const wheelGeo = new THREE.CylinderGeometry(.34, .34, .24, 12).rotateX(Math.PI / 2);
   const wheel = new THREE.InstancedMesh(wheelGeo, new THREE.MeshStandardMaterial({ color: '#1c1c1e', roughness: .8 }), MAX * 4);
   const blobTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 4, 32, 32, 32); gr.addColorStop(0, 'rgba(0,0,0,.75)'); gr.addColorStop(.55, 'rgba(0,0,0,.45)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
@@ -177,7 +177,7 @@ export function makeFleet(scene, MAX = 3400) {
   const shadowAt = (sx, sz) => { if (nS >= MAX + 400) return; sc2.set(sx, 1, sz); off.set(p.x, p.y + .035, p.z); m5.compose(off, q, sc2); blob.setMatrixAt(nS++, m5); };
   return {
     begin() { nC = nB = nV = nW = nS = 0; },
-    // x,z 车身中心；yaw；type；color；lights 0..1
+    // x,z body centre; yaw; type; color; lights 0..1
     put(x, z, yaw, type, color, y = 0, heroRoof = false, lit = true, brake = false) {
       q.setFromAxisAngle(Y, yaw); p.set(x, y, z); m4.compose(p, q, sc); col.set(color);
       if (type === 'bus') { if (nB < 160) { bus.setMatrixAt(nB, m4); bus.setColorAt(nB, col); nB++; shadowAt(12.4, 3.4); } return; }
@@ -187,7 +187,7 @@ export function makeFleet(scene, MAX = 3400) {
       shadowAt(5.0, 2.5);
       for (const [wx, wz] of [[1.38, .8], [1.38, -.8], [-1.38, .8], [-1.38, -.8]]) { off.set(wx, .34, wz).applyQuaternion(q).add(p); m5.compose(off, q, sc); wheel.setMatrixAt(nW++, m5); }
       lampR.setColorAt(nC, brake ? cBrake : cTail.setRGB(.35, .03, .03).lerp(cBrake, NIGHT * .6));
-      lampF.setColorAt(nC, heroRoof ? cHead.setRGB(2.6, 2.5, 2.2) : cHead.setRGB(3.2, 2.9, 2.3).multiplyScalar(NIGHT));   // 红车白天也开着日行灯
+      lampF.setColorAt(nC, heroRoof ? cHead.setRGB(2.6, 2.5, 2.2) : cHead.setRGB(3.2, 2.9, 2.3).multiplyScalar(NIGHT));   // the red car keeps its daytime running lights on even by day
       if (!lit) { m4.makeScale(0, 0, 0); } lampR.setMatrixAt(nC, m4); if (!heroRoof && NIGHT < .03) m4.makeScale(0, 0, 0); lampF.setMatrixAt(nC, m4); nC++;
     },
     setNight(n) { NIGHT = n; },
@@ -199,7 +199,7 @@ export function makeFleet(scene, MAX = 3400) {
   };
 }
 
-// —— 光轨：每辆车前灯（暖白）+ 尾灯（红）两条带状轨迹，加法混合 ——
+// —— Light trails: two ribbon trails per car, headlights (warm white) + tail lights (red), additive blending ——
 export function makeTrails(scene, MAXR = 1200, K = 14) {
   const nv = MAXR * K * 2;
   const pos = new Float32Array(nv * 3), colA = new Float32Array(nv * 3), idx = [];
@@ -212,7 +212,7 @@ export function makeTrails(scene, MAXR = 1200, K = 14) {
   const HEAD = [1.0, .86, .62], TAIL = [1.0, .08, .04];
   return {
     begin() { n = 0; },
-    // pts: [[x,z],...] 从旧到新；kind 'head'|'tail'；I 亮度；w 宽
+    // pts: [[x,z],...] oldest to newest; kind 'head'|'tail'; I brightness; w width
     ribbon(pts, kind, I, w = .9, y = .75) {
       if (n >= MAXR || pts.length < 2) return;
       const C = kind === 'head' ? HEAD : TAIL, m = pts.length;
@@ -234,14 +234,14 @@ export function makeTrails(scene, MAXR = 1200, K = 14) {
   };
 }
 
-// —— 行人 ——
+// —— Pedestrians ——
 export function makeWalkers(scene, city, MAX = 5200) {
   const geo = new THREE.CapsuleGeometry(.24, .95, 2, 6).translate(0, .72, 0);
   const mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: .8 }), MAX);
   mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false; mesh.count = 0; scene.add(mesh);
   const R = mulberry(77);
   const PC = ['#e8463c', '#2f5fb3', '#f2c230', '#f4f4f0', '#2a2d33', '#3f8f5a', '#e07bb0', '#f08a2c', '#6fb7e0', '#7a4a8c', '#c9c2b4', '#1f3b66'];
-  // 人行道行人：绕街区矩形走
+  // Pavement pedestrians: walk round the block rectangle
   const W = [];
   for (const b of city.blocks) {
     const sp = city.special.get(b);

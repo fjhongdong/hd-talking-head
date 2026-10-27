@@ -107,7 +107,7 @@ Everything lives in `demo/index.html`: helpers (`el`, `txt`, `tf`, `seg`, easing
 
 ## 11. Variation space
 
-You decide what the file is about, its counts or exhibits, the characters (or none), the inks within the colour logic, the tone (farce or grave), the opening, the ending and the length (30 s for three exhibits, ~60 s for five).
+You decide what the file is about, its counts or exhibits, the characters (or none), the inks within the colour logic, the tone (farce or grave), the opening, the ending and the length (it grows with the number of exhibits; each needs time to be read).
 
 All far from our demo:
 

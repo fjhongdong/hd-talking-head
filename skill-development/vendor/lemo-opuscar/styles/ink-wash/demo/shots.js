@@ -1,4 +1,4 @@
-// 镜头调度：按时间选镜头，处理墨晕转场，给出合成参数与音效事件
+// Shot scheduling: picks the shot by time, handles the ink-bloom transitions, returns compositor parameters and sound events
 import { T, VO, DUR, stepTimes } from './story.js';
 import { renderCross, renderRise, heroX } from './cross.js';
 import * as W from './world.js';
@@ -10,9 +10,9 @@ export { seal } from './seal.js';
 export async function init(TMP) { W.init(); C.init(TMP); }
 
 export function frame(t, A, B, TMP) {
-  // 1–2 虚白 → 江岸（手卷横移）
+  // 1–2 Xubai (虚白, empty white) → River Bank (handscroll pans sideways)
   if (t < T.x3a) return W.renderOpen(A, t, TMP);
-  // 2→3 墨晕转场
+  // 2→3 ink-bloom transition
   if (t < T.x3b) {
     const oa = W.renderOpen(A, t, TMP), ob = renderCross(B, t);
     const u = (t - T.x3a) / (T.x3b - T.x3a);
@@ -29,7 +29,7 @@ export function frame(t, A, B, TMP) {
   return P.render(A, t, TMP);
 }
 
-// 字幕位置：每个镜头的留白处 [x, y, size]
+// Subtitle position: each shot's liubai (留白, left-blank space) [x, y, size]
 export function subPos(id, t) {
   switch (id) {
     case 'L1': return [170, 860];
@@ -41,7 +41,7 @@ export function subPos(id, t) {
   return [150, 900];
 }
 
-// 音效与对白事件（events.mjs 导出给 mix.py）
+// Sound and dialogue events (exported by events.mjs for mix.py)
 export function events() {
   const E = [];
   for (const v of VO) E.push({ t: v.t, type: 'vo', id: v.id });

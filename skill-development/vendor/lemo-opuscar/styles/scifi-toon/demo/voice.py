@@ -1,16 +1,16 @@
-"""配音后处理：out/raw/<id>.wav（core/tts/tts.py 生成）→ voices/<id>.wav（48k，已按角色处理）
-+ voices/dur.json（时长）+ voices/lips.json（口型：每 1/24s 的张合 o 与"亮度" b）
-- "pitch": 半音升降（咖啡生物 +7）
-- "cut":   截断秒数（Gary 被打断的那句），40ms 淡出
-- VASK：轻度饱和 + 低中频抬升 = 沙哑；GARY：略提亮
-用法：python voice.py"""
+"""Voice post-processing: out/raw/<id>.wav (made by core/tts/tts.py) → voices/<id>.wav (48k, processed per character)
++ voices/dur.json (durations) + voices/lips.json (lip sync: openness o and "brightness" b per 1/24 s)
+- "pitch": shift in semitones (coffee creature +7)
+- "cut":   truncate at this many seconds (Gary's interrupted line), 40 ms fade-out
+- VASK: light saturation + low-mid boost = raspy; GARY: slightly brightened
+Usage: python voice.py"""
 import json, os, numpy as np, soundfile as sf, librosa
 from scipy.signal import butter, sosfilt
 HERE = os.path.dirname(os.path.abspath(__file__)); SR = 48000
 L = json.load(open(os.path.join(HERE, 'lines.json')))
 os.makedirs(os.path.join(HERE, 'voices'), exist_ok=True)
 dur, lips = {}, {}
-def peq(x, f, gain_db, q=1.0):   # 峰值 EQ（RBJ biquad）
+def peq(x, f, gain_db, q=1.0):   # peaking EQ (RBJ biquad)
     A = 10 ** (gain_db / 40); w = 2 * np.pi * f / SR; al = np.sin(w) / (2 * q)
     b = [1 + al * A, -2 * np.cos(w), 1 - al * A]; a = [1 + al / A, -2 * np.cos(w), 1 - al / A]
     from scipy.signal import lfilter; return lfilter(np.array(b) / a[0], np.array(a) / a[0], x)
@@ -30,7 +30,7 @@ for l in L:
     y = y / (np.abs(y).max() + 1e-9) * .9
     sf.write(os.path.join(HERE, 'voices', l['id'] + '.wav'), y.astype(np.float32), SR)
     dur[l['id']] = round(len(y) / SR, 3)
-    # 口型：50ms 窗 RMS（按句 95 分位归一）+ 频谱质心
+    # lip sync: 50 ms window RMS (normalized to the line's 95th percentile) + spectral centroid
     hop = SR // 24; win = int(.05 * SR); o, b = [], []
     S = np.abs(librosa.stft(y, n_fft=4096, hop_length=hop, win_length=win, center=True))
     freqs = librosa.fft_frequencies(sr=SR, n_fft=4096)

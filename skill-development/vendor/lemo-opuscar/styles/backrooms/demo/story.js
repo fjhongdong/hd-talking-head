@@ -1,10 +1,10 @@
-// 时间线：唯一真值。机位关键帧、对白、广播、灯闪、对焦、磁带断点、字幕全部从这里读
-// 坐标：米；x 东，z 南（-z = 北，走廊方向）；yaw 0 = 朝北，+π/2 = 朝西（左转），−π/2 = 朝东
+// Timeline: the single source of truth. Camera keyframes, dialogue, PA, light flickers, focus, tape breaks and subtitles are all read from here
+// Coordinates: metres; x east, z south (-z = north, the corridor direction); yaw 0 = facing north, +π/2 = facing west (left turn), −π/2 = facing east
 import { track, monotone } from '/core/lib.js';
 
 const PI = Math.PI;
-// 时间压缩（关卡 1 后压到 60 s 以内）：下面所有时间按"原始时间"写，再经 W() 映射到成片时间。
-// 只压走路段：摇镜后起步 −0.3 s、变焦拉回 −0.3 s、走向出口门并进屋 −0.7 s；片尾卡与 REC 熄灭前的停留不动
+// Time compression (the whole film squeezed under 60 s): all times below are written in "original time", then mapped to film time through W().
+// Only the walking stretches are compressed: start after the pan −0.3 s, zoom pull-back −0.3 s, walk to the exit door and into the room −0.7 s; the end card and the hold before REC goes off are untouched
 const WARP = [[0, 0], [7.0, 7.0], [7.9, 7.6], [39.6, 39.3], [40.2, 39.6], [49.5, 48.9], [54.3, 53.0]];
 export function W(t) {
   for (let i = 0; i < WARP.length - 1; i++) { const [a, A] = WARP[i], [b, B] = WARP[i + 1]; if (t <= b) return A + (t - a) * (B - A) / (b - a); }
@@ -13,33 +13,33 @@ export function W(t) {
 const K = arr => arr.map(([t, v]) => [W(t), v]);
 export const DUR = W(61.0);
 
-// —— 关键时刻 ——
+// —— Key moments ——
 const T0 = {
-  rollIn: .55,          // 磁带画面滚入
-  afLock: 1.55,         // 第一次对焦成功
-  title: [1.1, 4.6],    // 摄像机字幕机片名
+  rollIn: .55,          // tape picture rolls in
+  afLock: 1.55,         // first successful focus lock
+  title: [1.1, 4.6],    // camcorder character-generator title
   chime0: 1.9, p0: 2.7,
   w1: 5.55,
   pan: [6.0, 7.3],
   chime1: 7.9, p1: 8.7,
   lookDown1: [11.3, 13.4],
   chime2: 13.0, p2: 13.8,
-  notice2: [16.2, 21.2],   // 第二张同样的告示（位置变了），读到第 5 条
+  notice2: [16.2, 21.2],   // the same notice a second time (in a different place), read up to rule 5
   chime3: 21.6, p3: 22.4,
-  flick: [27.45, 27.95, 28.45],   // 三次灯闪
+  flick: [27.45, 27.95, 28.45],   // three light flickers
   lookDown2: [28.55, 31.1],
   rise: [31.1, 32.3],
   zoom: [32.2, 33.4],
-  figOn: [32.2, 33.95],   // "东西"在画面里的时间（大部分时候是虚的）
-  afFig: [33.15, 33.65],  // 对焦短暂清楚、看到它
+  figOn: [32.2, 33.95],   // time "the Thing" is in frame (out of focus most of the time)
+  afFig: [33.15, 33.65],  // focus briefly sharp, it is seen
   w2: 34.05,
-  afEmpty: 35.15,         // 第二次对上焦：已经不在了
-  tear: [36.35, 37.0],    // 磁带跟踪撕裂 → 时间码 +3 小时
+  afEmpty: 35.15,         // second focus lock: it's already gone
+  tear: [36.35, 37.0],    // tape tracking tear → timecode +3 hours
   w3: 37.7,
   unzoom: [39.6, 40.4],
   chime4: 40.2, p4: 41.0,
   turn: [42.7, 44.5],
-  hush: [47.35, 48.35],   // 全部声音消失 1 秒：空间屏住呼吸
+  hush: [47.35, 48.35],   // all sound gone for 1 second: the space holds its breath
   w4: 48.55,
   door: [51.0, 52.3],
   afFinal: 54.1,
@@ -49,7 +49,7 @@ const T0 = {
 };
 export const T = Object.fromEntries(Object.entries(T0).map(([k, v]) => [k, Array.isArray(v) ? v.map(W) : W(v)]));
 
-// —— 台词（id 对应 lines.json / voices）；t = 开始秒 ——
+// —— Lines (id matches lines.json / voices); t = start second ——
 export const LINES = [
   { id: 'p0', t: T.p0, who: 'PA' }, { id: 'w1', t: T.w1, who: 'ME' },
   { id: 'p1', t: T.p1, who: 'PA' }, { id: 'p2', t: T.p2, who: 'PA' },
@@ -59,7 +59,7 @@ export const LINES = [
 ];
 export const CHIMES = [T.chime0, T.chime1, T.chime2, T.chime3, T.chime4];
 
-// —— 机位（位置 / 朝向 / 俯仰 / 视场角 / 对焦） ——
+// —— Camera (position / heading / pitch / field of view / focus) ——
 const W0 = [0.05, 0.0];
 export const POS = track(K([
   [0, W0], [6.6, W0], [13.0, [0.1, -8.4]], [14.6, [-0.25, -11.0]], [16.2, [-0.85, -12.5]],
@@ -77,26 +77,26 @@ export const PITCH = monotone(K([
   [28.55, -0.06], [28.85, -1.28], [31.1, -1.2], [32.3, -0.015], [40.9, -0.02],
   [44.5, 0.04], [47.3, 0.06], [49.5, 0.05], [52.5, 0.0], [53.6, -0.08], [54.3, -0.12], [61.0, -0.12],
 ]));
-// 视场角（水平，度）：推变焦看走廊尽头
-// 摄像机高度偏移（米）：读告示时蹲低一点，让镜头与纸面平行（否则俯拍的梯形畸变会把字拉斜）
+// Field of view (horizontal, degrees): zoom in to look at the end of the corridor
+// Camera height offset (metres): crouch a little while reading the notices so the lens is parallel to the paper (otherwise the keystone of a downward angle skews the text)
 export const CAMH = monotone(K([[0, 0], [16.4, 0], [18.6, -0.16], [21.2, -0.16], [22.2, 0], [61.0, 0]]));
 export const FOV = monotone(K([[0, 52], [32.2, 52], [33.4, 27], [39.6, 27], [40.4, 52], [61.0, 52]]));
-// 自动对焦：对焦距离（米）；AF 找焦 = 来回拉
+// Autofocus: focus distance (metres); AF hunting = racking back and forth
 export const FOCUS = monotone(K([
   [0, 0.4], [0.8, 0.5], [1.2, 3.5], [1.55, 1.7], [6.5, 1.7], [7.3, 6], [16.2, 3], [16.8, 0.35], [17.2, 0.7], [17.5, 0.62],
   [19.0, 0.46], [21.2, 0.46], [22.2, 5], [28.6, 5], [29.0, 1.5], [32.2, 1.8],
   [32.8, 2.5], [33.02, 3.5], [33.15, 33.2], [33.65, 32.8], [33.95, 70], [34.35, 4], [34.8, 12], [35.15, 33.3], [39.6, 33.3], [40.4, 6],
   [53.4, 3], [53.8, 0.35], [54.1, 0.8], [61.0, 0.8],
 ]));
-// 光圈（景深强度，像素/屈光度）：推到长焦时景深变浅
+// Aperture (depth-of-field strength, pixels/dioptre): depth of field gets shallower at the long end of the zoom
 export const APER = monotone(K([[0, 3.0], [32.2, 3.0], [33.4, 14], [39.6, 14], [40.4, 3.0], [61.0, 3.0]]));
-// 手抖 / 恐惧程度（0 平静 … 1 发抖）；hold = 屏住呼吸，所有手持晃动冻结
+// Hand shake / fear level (0 calm … 1 trembling); hold = holding breath, all handheld shake frozen
 export const FEAR = monotone(K([[0, 0.15], [20, 0.2], [27.4, 0.3], [28.6, 0.85], [31.5, 0.7], [34.0, 0.9], [37.0, 0.55], [44.5, 0.6], [47.3, 0.8], [49.5, 0.8], [55, 0.6], [61.0, 0.6]]));
 export const HOLD = t => (t > T.hush[0] - 0.1 && t < T.hush[1] + 0.25) ? 0 : 1;
 
-// —— OSD 时间码（剧情的一部分）——
+// —— OSD timecode (part of the story) ——
 export function clock(t) {
   if (t < T.tear[0] + 0.3) return t < W(19.5) ? 'PM 11:58' : 'PM 11:59';
   return t < W(50.0) ? 'AM  2:59' : 'AM  3:00';
 }
-export const battery = t => t < T.tear[0] + 0.3 ? 3 : 1;   // 电量格数（撕裂后只剩一格并闪烁）
+export const battery = t => t < T.tear[0] + 0.3 ? 3 : 1;   // battery bars (after the tear only one is left, blinking)

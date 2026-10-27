@@ -329,7 +329,8 @@ class BrollSkillSelectionTest(unittest.TestCase):
         self.assertEqual(openfilm["source_route"], "motion-graphics")
         self.assertEqual(openfilm["role"], "native")
         self.assertEqual(openfilm["semantic_families"], [])
-        self.assertFalse(any("canonical" in c["candidate_id"] or c["skill_id"] in {"onetake", "lemo-opuscar"} for c in pool))
+        self.assertFalse(any("canonical" in c["candidate_id"] or c["skill_id"] == "onetake" for c in pool))
+        self.assertEqual(len({c["template_id"] for c in pool if c["skill_id"] == "lemo-opuscar"}), 59)
         # Real wording from 3.docx/Scribe, not new claims or revised narration.
         cases = [
             ("我接了个兼职，活干完了，但是钱却迟迟拿不到。", "交付后仍未收到报酬", [flat], ["deliver-unpaid"]),
@@ -354,10 +355,10 @@ class BrollSkillSelectionTest(unittest.TestCase):
                   "recent_context": [{"source_ref": "previous-preview:screen-flow-carousel", "video_id": "previous",
                                       "skill_id": carousel["skill_id"], "visual_pattern": "screen-flow", "start": 0, "end": 20}]}
         assigned = selection.assign_skills(ROOT, source)
-        # Both choices add a current-video channel; the fixed native carousel
-        # then adds a template, ahead of the softer recent-video preference.
+        # Both choices add a channel and a template. With those maxima tied,
+        # avoid the carousel already used throughout the previous video.
         self.assertEqual([a["skill_id"] for a in assigned["assignments"]],
-                         [flat["skill_id"], vox["skill_id"], carousel["skill_id"]])
+                         [flat["skill_id"], vox["skill_id"], doudou["skill_id"]])
         self.assertEqual(selection.assign_skills(ROOT, assigned), assigned)
         # Snapshots are planned inputs, not fabricated execution success receipts.
         draft = {"segments": []}
@@ -553,6 +554,40 @@ class BrollSkillSelectionTest(unittest.TestCase):
             path.write_text(json.dumps(brief))
             segment["bindings"]["scene"]["brief_sha256"] = motion.contract_artifacts.sha256_file(path)
             self.assertEqual(check()["status"], "needs_review")
+
+    def test_native_creation_templates_share_the_diversity_objective(self):
+        """A registered style counts like a component, not like each new scene."""
+        for skill in ("openfilm-motion-graphics", "doudou-remotion-whiteboard",
+                      "whiteboard-video", "paper-collage-ad"):
+            with self.subTest(skill=skill):
+                pool = [{"candidate_id": cid, "skill_id": skill, "template_id": template,
+                         "role": "native", "status": "supported", "entrypoint": "native-entry",
+                         "producer_version": "1", "limitations": []}
+                        for cid, template in (("a", "style-a"), ("b", "style-b"),
+                                              ("z", "style-a"))]
+                def beat(index, choices):
+                    return {"segment_id": f"s{index}", "component_id": "scene",
+                            "start": index * 3, "end": index * 3 + 2,
+                            "transcript": "整理信息", "semantic_goal": "整理信息",
+                            "required_change": "归类", "skill_reviews": {
+                                skill: {"fit": "equivalent", "reason": "已核对原生能力"}},
+                            "candidates": [{"candidate_id": cid, "fit": fit,
+                                            "reason": "语义与画面均适合", "visual_pattern": "same"}
+                                           for cid, fit in choices]}
+                source = {"schema_version": 1, "history_note": "仅测试已登记模板的分配",
+                          "beats": [beat(0, [("a", "preferred")]),
+                                    beat(1, [("a", "preferred"), ("b", "equivalent")])]}
+                with patch.object(selection, "discover_candidates", return_value=pool):
+                    result = selection.assign_skills(ROOT, source)
+                    self.assertEqual([row["candidate_id"] for row in result["assignments"]],
+                                     ["a", "b"])
+                    self.assertEqual({selection.source_channel(row["skill_id"])
+                                      for row in result["assignments"]}, {skill})
+                    # Another current project or alias of the same style is
+                    # still one template, even when it is locally preferred.
+                    source["beats"][1] = beat(1, [("b", "equivalent"), ("z", "preferred")])
+                    self.assertEqual(selection.assign_skills(ROOT, source)["assignments"][1]
+                                     ["candidate_id"], "b")
 
     def test_assignment_channel_and_template_diversity_offline(self):
         def candidate(cid, skill, template):

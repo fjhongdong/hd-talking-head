@@ -1,8 +1,8 @@
 #!/bin/sh
-# 本地副本（core/render/mux.sh）：CRF 做成环境变量（默认 22）。颗粒 2 + CRF 19 时成片 60 MB，CRF 22 约减半，肉眼无差。
-# 合成成片：mux.sh video.mp4 mix.wav out.mp4 [fps] [grain]
-# 视频按目标帧率输出（定格片段自动复制帧）；grain = 颗粒强度（默认 2，0 = 不加；像素/矢量风格用 0）
-# 音频两遍 loudnorm → −14 LUFS / TP −1.2（单遍会偏 0.5 LU 左右）
+# Local copy (of core/render/mux.sh): CRF made an environment variable (default 22). With grain 2 + CRF 19 the film is 60 MB; CRF 22 roughly halves that with no visible difference.
+# Mux the finished film: mux.sh video.mp4 mix.wav out.mp4 [fps] [grain]
+# Video is output at the target frame rate (held segments get frames duplicated automatically); grain = grain strength (default 2, 0 = none; use 0 for pixel/vector styles)
+# Audio two-pass loudnorm → −14 LUFS / TP −1.2 (a single pass is off by about 0.5 LU)
 V="$1"; A="$2"; O="$3"; FPS="${4:-24}"; GR="${5:-2}"
 J=$(ffmpeg -hide_banner -nostats -i "$A" -af loudnorm=I=-14:TP=-1.2:LRA=11:print_format=json -f null - 2>&1 | sed -n '/{/,/}/p')
 g() { echo "$J" | grep "\"$1\"" | sed 's/.*: "\(.*\)".*/\1/'; }

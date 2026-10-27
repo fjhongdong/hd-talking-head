@@ -155,7 +155,7 @@ def approved_numbered_rows(job):
     return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
 def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None):
-    from .broll_skill_selection import source_channel, _fixed_template
+    from .broll_skill_selection import source_channel
     from .semantic_visual_plan import component_use
 
     queries = {(q["segment_id"], q["component_id"]): q for q in treatment.get("motion_queries", [])}
@@ -177,8 +177,7 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
             chosen = assignments.get((sid, cid))
             template = ("素材直用（无动效模板）" if direct_material else binding.get("template_id"))
             if chosen is not None and not direct_material:
-                template = (chosen["template_id"] if _fixed_template(chosen) else
-                            "本期创作（无固定模板）：" + chosen["candidate_id"])
+                template = chosen["template_id"]
             if not template and component["kind"] == "ai_generated":
                 planned = [step["id"] for step in _steps(treatment) if
                            (step["segment_id"], step["component_id"]) == (sid, cid)]

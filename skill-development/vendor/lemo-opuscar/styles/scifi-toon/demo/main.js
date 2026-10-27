@@ -1,4 +1,4 @@
-// Coffee Run — Sci-Fi Sitcom Toon 风格 demo
+// Coffee Run — Sci-Fi Sitcom Toon style demo
 import { clamp, lerp, seg, ss, eo, ei, eio, back, spring, hash, TAU } from '/core/lib.js';
 import { W, H, INK, init, frame, g, push, pop, translate, rotate, scale, shape, fillOnly, stroke, ell, arc, rr, rect, spline, dot, text, screenRect, S, noodle, reset } from './toon.js';
 import { vask, gary, coffeeCup, PAL } from './chars.js';
@@ -11,7 +11,7 @@ const LINES = await J('lines.json'), DURS = (await J('voices/dur.json')) || {}, 
 const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
 const vdur = id => DURS[id] ?? LINE[id].text.length * .07;
 
-// —— 口型：说话人当前句的张合（12fps 步进）——
+// —— lip sync: open/close of the speaker's current line (stepped at 12 fps)——
 function talk(who, t) {
   const tq = q(t);
   for (const [id, t0] of Object.entries(VO)) {
@@ -27,9 +27,9 @@ function talk(who, t) {
 const blinkAt = (t, list, d = .12) => list.some(b => t >= b && t < b + d);
 const garyBlinks = t => { const k = Math.floor(t * 12); return hash(Math.floor(k / 26) * 7.1) > .4 && k % 26 === 0 || k % 26 === 1 && hash(Math.floor(k / 26) * 7.1) > .4; };
 
-// 传送门弹开：轻微过冲（~12%），不盖住角色
+// Portal pops open: slight overshoot (~12%), doesn't cover the characters
 const popOpen = x => x <= 0 ? 0 : back(clamp(x / .32), 1.7);
-// —— 镜头 ——
+// —— camera ——
 function cam(cx, cy, z, rot = 0, shake = 0, t = 0) {
   reset(); translate(W / 2, H / 2);
   if (shake) { const f = Math.floor(t * 24); translate((hash(f) - .5) * shake * 2, (hash(f + 77) - .5) * shake * 2); }
@@ -37,17 +37,17 @@ function cam(cx, cy, z, rot = 0, shake = 0, t = 0) {
 }
 const walk = (t, t0, t1, a, b) => lerp(a, b, ss(seg(t, t0, t1)));
 const legsWalk = (tq, on, amp = 22) => on ? [[Math.sin(tq * 12) * amp, -Math.max(0, Math.cos(tq * 12)) * 14], [-Math.sin(tq * 12) * amp, -Math.max(0, -Math.cos(tq * 12)) * 14]] : [[0, 0], [0, 0]];
-// 弹跳落地挤压
+// Bounce-landing squash
 const landSq = (t, tl) => { const u = t - tl; if (u < 0 || u > .5) return 1; return 1 - .22 * Math.exp(-u * 9) * Math.cos(u * 30); };
-// 从 a 抛物线飞到 b
+// Fly from a to b on a parabola
 const arcPos = (t, t0, t1, a, b, h) => { const u = clamp((t - t0) / (t1 - t0)); return [lerp(a[0], b[0], u), lerp(a[1], b[1], u) - Math.sin(u * Math.PI) * h]; };
 
-// —— Vask / Gary 的默认姿态 ——
+// —— default poses for Vask / Gary ——
 const VX = 1180, GX = 760, FLOOR = 900;
 const armRest = { R: { h: [22, 168], bend: 18 }, L: { h: [-22, 168], bend: -18 } };
 function V(t, o = {}) {
   const m = talk('VASK', t);
-  const tq = q(t);   // 呼吸 + 说话时的点头（12fps）
+  const tq = q(t);   // breathing + nodding while talking (12 fps)
   return { x: VX, y: FLOOR, s: 1, face: -1, lid: .47, look: [0, 0], armR: armRest.R, armL: armRest.L, mouth: { o: m.o, w: m.w, sm: -.35 }, sq: 1 + .008 * Math.sin(tq * 2.3), headTilt: .12 + (m.talking ? (m.o - .3) * .07 : 0), ...o };
 }
 function G(t, o = {}) {
@@ -57,7 +57,7 @@ function G(t, o = {}) {
 }
 const withMouth = (P, sm) => { P.mouth = { ...P.mouth, sm }; return P; };
 
-// —— 世界 ——
+// —— worlds ——
 function world(name, t, o = {}) {
   if (name === 'lab') Wd.lab(t, o);
   else if (name === 'jelly') Wd.jelly(t, o);
@@ -67,19 +67,19 @@ function world(name, t, o = {}) {
   else if (name === 'vasks') Wd.vaskCafe(t, o);
   else if (name === 'normal') Wd.normalCafe(t);
 }
-// 被传送门吸进去：往门中心压扁缩小
+// Sucked into the portal: squashed and shrunk toward the portal centre
 function sucked(P, t, t0, t1, px, py) {
   const u = ei(seg(t, t0, t1)); if (u <= 0) return P;
   return { ...P, x: lerp(P.x, px, u), y: lerp(P.y, py + 200, u), s: (P.s ?? 1) * (1 - u * .95), sq: 1 + u * .6, lean: (P.lean || 0) + u * .4 };
 }
-// 从传送门吐出来：飞行 + 落地挤压
+// Spat out of the portal: flight + landing squash
 function spit(P, t, t0, tl, from, h = 160) {
   if (t < t0) return null;
   if (t < tl) { const [x, y] = arcPos(t, t0, tl, from, [P.x, P.y], h); const u = seg(t, t0, tl); return { ...P, x, y, sq: 1.25 - u * .25, lean: (P.lean || 0) + (1 - u) * .5 * (P.face || 1), s: (P.s ?? 1) * lerp(.4, 1, eo(u * 2)), armR: { h: [60, -150], bend: 30 }, armL: { h: [-60, -150], bend: -30 } }; }
   return { ...P, sq: landSq(t, tl) };
 }
 
-// ———————————————————— 镜头 ————————————————————
+// ———————————————————— shots ————————————————————
 const SH = {};
 SH.pot = (t, tq) => {
   cam(330, 470, lerp(2.15, 2.4, ss(seg(t, 0, 2.3))));
@@ -97,7 +97,7 @@ SH.two = (t, tq) => {
 SH.vCU1 = (t, tq) => {
   cam(1150, 440, 2.5);
   world('lab', t, { potDrops: 1 });
-  const lk = tq > 5.8 ? [-.1, .1] : [.1, .45];   // 眼珠转向 Gary（脸不动）
+  const lk = tq > 5.8 ? [-.1, .1] : [.1, .45];   // eyes turn toward Gary (face stays still)
   gary(G(t, { x: GX - 60 }));
   vask(V(t, { holdR: 'mug', armR: { h: [40, 100], bend: 44 }, look: lk, lid: .52, brow: -.2 }));
 };
@@ -110,7 +110,7 @@ SH.gCU1 = (t, tq) => {
 SH.vCU2 = (t, tq) => {
   cam(1175, 470, 1.95);
   world('lab', t, { potDrops: 1 });
-  // 预备动作：先微沉，再抬起遥控器
+  // anticipation: dip slightly first, then raise the remote
   const up = ss(seg(tq, T.raise + .08, T.raise + .4)), dip = Math.sin(seg(tq, T.raise - .05, T.raise + .12) * Math.PI);
   const press = tq >= T.press && tq < T.press + .2 ? 1 : 0;
   vask(V(t, { holdR: 'remote', armR: { h: [lerp(30, 95, up), lerp(170 + dip * 10, -30, up)], bend: 40, ra: .1 }, look: [-.2, .1], lid: .5, press, holdL: 'mug', armL: { h: [-10, 120], bend: -30 }, bob: dip * 6 }));
@@ -121,13 +121,13 @@ SH.open = (t, tq) => {
   world('lab', t, { green: seg(t, T.burst, T.burst + .2) });
   const op = t < T.burst ? 0 : popOpen(t - T.burst);
   Wd.portal(960, 610, 250, t, { open: op });
-  // Gary 吓一跳往后蹦
+  // Gary jumps back, startled
   const hop = seg(tq, T.burst + .05, T.burst + .45);
   let gp = G(t, { x: 560 - eo(hop) * 60, y: FLOOR - Math.sin(hop * Math.PI) * 70, nerv: 1, look: [.7, 0], sweat: t * 1.3, eyeS: 1.15, pupil: 2.6, armR: hop > 0 && hop < 1 ? { h: [50, -120], bend: 30 } : { h: [-40, 60], bend: 20 }, armL: hop > 0 && hop < 1 ? { h: [-50, -120], bend: -30 } : { h: [40, 60], bend: -20 } });
-  // Gary 看镜头（打破第四面墙），然后跳进去
+  // Gary looks at the camera (breaking the fourth wall), then jumps in
   if (tq >= T.garyLook && tq < T.garyIn) gp = { ...gp, look: [0, 0], face: 1, mouth: { o: 0, w: .6, sm: -.9 } };
   if (tq >= T.garyIn) { const u = seg(tq, T.garyIn, T.garyIn + .3); gp = { ...gp, x: lerp(500, 960, u), y: FLOOR - Math.sin(u * Math.PI) * 180, lean: .6, sq: 1.2, armR: { h: [80, -60], bend: 20 }, armL: { h: [60, -80], bend: -20 } }; gp = sucked(gp, t, T.garyIn + .15, T.garyIn + .33, 960, 610); }
-  // Vask：端着空杯，面无表情地走进门
+  // Vask: holding the empty cup, walks into the portal deadpan
   let vp = V(t, { x: 1360, holdR: 'remote', armR: { h: [60, 60], bend: 40 }, holdL: 'mug', armL: { h: [-10, 120], bend: -30 }, look: [.4, .1] });
   if (tq > T.vaskIn - .6) { const walking = tq < T.vaskIn + .1; vp.x = walk(tq, T.vaskIn - .6, T.vaskIn + .1, 1360, 1080); [vp.legL, vp.legR] = legsWalk(tq, walking, 18); }
   vp = sucked(vp, t, T.vaskIn + .1, T.vaskIn + .35, 960, 610);
@@ -140,7 +140,7 @@ SH.rush = (t) => {
   world('lab', t, { green: 1 });
   Wd.portal(960, 610, 250, t);
 };
-// —— 果冻宇宙 ——
+// —— jelly universe ——
 SH.jWide = (t, tq) => {
   cam(960, 560, 1.0);
   world('jelly', t);
@@ -158,7 +158,7 @@ SH.jCounter = (t, tq) => {
   const gl = seg(tq, T.glorp - .1, T.glorp + .35);
   Wd.blobby(1160, 700, .95, t, { look: [-.7, .3], o: Math.sin(gl * Math.PI) });
   Wd.jellyCounter(t);
-  // 杯子滑到吧台上
+  // cup slides onto the counter
   const su = eo(seg(tq, T.slide[0], T.slide[1]));
   if (tq >= T.slide[0]) Wd.jellyCup(lerp(1040, 830, su), 700, .42, t, { blink: 0 });
   vask(V(t, { x: 640, y: 1030, face: 1, holdR: 'remote', armR: { h: [40, 110], bend: 40 }, holdL: 'mug', armL: { h: [60, 60], bend: -30 }, look: [.8, -.1], lid: .5 }));
@@ -184,7 +184,7 @@ SH.jReact = (t, tq) => {
   if (back > 0) { vp = sucked({ ...vp, x: lerp(1110, 1040, back), legL: legsWalk(tq, back < 1)[0], legR: legsWalk(tq, back < 1)[1] }, t, T.jBack[0] + .25, T.jBack[1], 960, 640); gp = sucked({ ...gp, x: lerp(800, 880, back), legL: legsWalk(tq, back < 1)[0], legR: legsWalk(tq, back < 1)[1] }, t, T.jBack[0] + .3, T.jBack[1], 960, 640); }
   if (tq < T.jBack[1]) { gary(gp); vask(vp); }
 };
-// —— 马克杯宇宙 ——
+// —— mug universe ——
 SH.mWide = (t, tq) => {
   cam(960, 560, 1.0);
   world('mug', t);
@@ -221,7 +221,7 @@ SH.vNope = (t, tq) => {
   world('mug', t);
   vask(V(t, { x: 820, y: 1000, face: 1, holdR: 'remote', armR: { h: [70, 40], bend: 40 }, holdL: 'mug', armL: { h: [-10, 120], bend: -30 }, look: [0, 0], lid: .56, press: tq >= T.mClick ? 1 : 0, blink: blinkAt(tq, [27.15], .09) }));
 };
-// —— 蒙太奇：每宇宙 1 秒 ——
+// —— montage: 1 second per universe ——
 function montageDuo(t, tq, tc, click, px = 300) {
   const op = popOpen(t - tc + .1);
   Wd.portal(px, 620, 190, t, { open: Math.min(1, op) });
@@ -245,11 +245,11 @@ SH.vasks = (t, tq) => {
   cam(960, 560, lerp(1.0, 1.05, seg(t, 30.4, 31.4)));
   Wd.vaskCafe(t, { seats: false });
   montageDuo(t, tq, 30.4, T.montClick[2]);
-  // 一排 Vask 齐刷刷转头
+  // a row of Vasks all turn their heads in unison
   const turn = tq >= T.vasksTurn;
   for (let i = 0; i < 4; i++) vask(V(t, { x: 1080 + i * 210, y: 960 + (i % 2) * 20, s: .72, face: -1, holdR: 'mug', armR: { h: [40, 100], bend: 44 }, look: turn ? [-.9, 0] : [.8, .3], lid: .5, mouth: { o: 0, sm: -.35 } }));
 };
-// —— 正常宇宙 ——
+// —— normal universe ——
 SH.nWide = (t, tq) => {
   cam(1000, 560, 1.02);
   world('normal', t);
@@ -273,7 +273,7 @@ SH.nTwo = (t, tq) => {
   const clk = tq >= T.nClick;
   vask(V(t, { x: 1250, y: 1010, face: -1, holdR: 'cup', cupP: {}, armR: { h: [70, 60], bend: 40 }, holdL: 'remote', armL: { h: clk ? [-60, 40] : [-10, 120], bend: -30 }, look: [-.6, 0], lid: .5 }));
 };
-// —— 回到实验室 ——
+// —— back to the lab ——
 SH.lReturn = (t, tq) => {
   cam(960, 540, 1.0);
   world('lab', t, { green: t < T.lClose[1] ? 1 - seg(t, T.lClose[0], T.lClose[1]) : 0 });
@@ -283,7 +283,7 @@ SH.lReturn = (t, tq) => {
   const gq = spit(G(t, { x: 640, nerv: .8, look: [.6, -.2] }), tq, T.lSpit + .15, T.lLandG, [960, 610], 90);
   if (gq) gary(gq); if (v) vask(v);
 };
-// 杯子在 Vask 手里的世界坐标（与 chars.js 的 drawArm 同一套几何）
+// World position of the cup in Vask's hand (same geometry as drawArm in chars.js)
 function cupWorld(P) {
   const s = P.s ?? 1, f = P.face ?? 1, lean = P.lean ?? .06, sh = [52, -332], h = P.armR.h;
   let x = sh[0] + h[0] + 4, y = sh[1] + h[1] + 34;
@@ -337,7 +337,7 @@ SH.toss = (t, tq) => {
   world('lab', t, { green: seg(t, T.tOpen, T.tOpen + .2) * .8 });
   const op = t < T.tOpen ? 0 : popOpen(t - T.tOpen);
   Wd.portal(1700, 600, 200, t, { open: op });
-  // 杯子被反手扔到身后，飞进传送门
+  // the cup is tossed backhand over the shoulder and flies into the portal
   const pre = seg(tq, T.toss - .2, T.toss), fl = seg(tq, T.toss, T.toss + .12);
   let armR = { h: [70, 60], bend: 40 };
   if (tq < T.toss) armR = { h: [lerp(70, 50, pre), lerp(60, 120, pre)], bend: 40 };
@@ -348,7 +348,7 @@ SH.toss = (t, tq) => {
   const clicked = tq >= T.tClick;
   const vp = V(t, { x: 1180, face: turned ? -1 : -1, holdR: holding ? 'cup' : null, cupP: { rise: 1, eyes: 1, happy: 1, t, arms: .6 }, armR, holdL: 'remote', armL: { h: clicked && tq < T.tClick + .6 ? [-70, 20] : [-10, 120], bend: -30 }, press: clicked && tq < T.tClick + .15 ? 1 : 0, look: turned ? [.6, .1] : [-.3, .2], lid: .5 });
   vask(vp);
-  if (!holding && tq < T.tossLand + .05) {   // 飞行中的杯子（旋转 + 小手举起 "wheee"）
+  if (!holding && tq < T.tossLand + .05) {   // the cup in flight (spinning + little hands up, "wheee")
     const [x, y] = arcPos(t, T.toss + .06, T.tossLand, [1190, 470], [1700, 600], 260);
     const u = seg(t, T.toss + .06, T.tossLand);
     coffeeCup(x, y + 60, .55 * (1 - u * .6), { rise: 1, eyes: 1, happy: 1, arms: 1, t, a: u * 7 });
@@ -357,7 +357,7 @@ SH.toss = (t, tq) => {
   gary(G(t, { x: 650, nerv: .5 * (1 - sag), look: [.7, -.2 + sag * .4], lid: sag * .4, sq: 1 - sag * .05, lean: sag * .1, mouth: { o: 0, sm: -1, w: .7 }, armR: { h: [0, 110], bend: 10 }, armL: { h: [0, 110], bend: -10 }, sweat: sag > 0 ? t : null }));
 };
 
-// ———————————————————— 屏幕层 ————————————————————
+// ———————————————————— screen layer ————————————————————
 function wipe(t) {
   for (const [tc, hw] of WIPES) {
     const d = Math.abs(t - tc); if (d > hw) continue;
@@ -366,7 +366,7 @@ function wipe(t) {
     if (d < .03) screenRect('#dcffa8', .7);
   }
 }
-// 宇宙标签：复古终端读数，逐字打出
+// Universe label: retro terminal readout, typed out character by character
 function tag(t) {
   for (const [a, b, id, desc, bg, fg] of TAGS) {
     if (t < a || t >= b) continue;
@@ -381,16 +381,16 @@ function tag(t) {
     pop();
   }
 }
-// 字幕：粗圆体白字 + 厚黑边 + 说话人色块（也在 boil）
+// Subtitles: bold rounded white type + thick black outline + speaker colour block (also boiling)
 const WHO_COL = { VASK: '#2a9d8f', GARY: '#ef5b3f', COFFEE: '#8a5431' };
-const WORLD_CUTS = [12.85, 20.9, 28.4, 29.4, 30.4, 31.4, 36.05, 44.0, 53.0];   // 44.0：冷场要干净的画面
+const WORLD_CUTS = [12.85, 20.9, 28.4, 29.4, 30.4, 31.4, 36.05, 44.0, 53.0];   // 44.0: the awkward-silence beat needs a clean frame
 const SUBS = Object.entries(VO).map(([id, t0]) => {
   const L = LINE[id], text_ = L.sub || L.text, d = vdur(id);
   let t1 = t0 + Math.max(d + .35, .9 + text_.length / 17);
   const cut = WORLD_CUTS.find(c => c > t0 + .1); if (cut && t1 > cut) t1 = Math.max(cut - .02, t0 + d + .2);
   return { id, t0, t1, who: L.who, text: text_ };
 });
-// 太长的句子拆成两行（在中点附近的空格处断开）
+// Split over-long lines into two (break at the space nearest the midpoint)
 function wrapSub(str) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.font = '800 50px "Baloo 2"';
   if (g.measureText(str).width < 1300) return [str];
@@ -424,17 +424,17 @@ function titleCard(t) {
   titleArt(t);
 }
 function titleArt(t, big = 1) {
-  // 片名：50 年代原子时代电视片头——奶油色块状字 + 品红硬投影 + 青色轨道环，一颗咖啡豆绕字飞行（不用荧光绿、不做滴液，避开原作 logo 的联想）
+  // title: 1950s atomic-age TV title card — cream block letters + hard magenta drop shadow + cyan orbit ring, with a coffee bean orbiting the type (no neon green and no dripping, to avoid evoking the original show's logo)
   const k = big, orb = t * 1.6, rx = 560 * k, ry = 92 * k;
   const ring = (a0, a1, lw) => { const P = arc(0, 6 * k, rx, ry, a0, a1, 40); stroke(P, lw + 12, { boil: .5 }); stroke(P, lw, { line: '#5ee6ff', boil: .5 }); };
   const bean = () => { const bx = Math.cos(orb) * rx, by = 6 * k + Math.sin(orb) * ry; push(); translate(bx, by); rotate(orb + 1.2);
     shape(ell(0, 0, 26 * k, 18 * k), { fill: '#8a4b2a', lw: 6 }); stroke([[-18 * k, 3 * k], [0, -3 * k], [18 * k, 3 * k]], 4); pop(); };
   rotate(-.05);
-  push(); rotate(.12); ring(Math.PI, TAU, 9 * k); if (Math.sin(orb) < 0) bean(); pop();   // 环的后半圈在字后面
+  push(); rotate(.12); ring(Math.PI, TAU, 9 * k); if (Math.sin(orb) < 0) bean(); pop();   // back half of the ring sits behind the type
   text('COFFEE RUN', 12 * k, 12 * k, { font: `400 ${150 * k}px Bungee`, fill: '#ff4fa3', outlineW: 22, outlineCol: INK });
   text('COFFEE RUN', 0, 0, { font: `400 ${150 * k}px Bungee`, fill: '#fff3d6', outlineW: 22, outlineCol: INK });
-  push(); rotate(.12); ring(0, Math.PI, 9 * k); if (Math.sin(orb) >= 0) bean(); pop();   // 前半圈压在字上
-  for (let i = 0; i < 4; i++) {   // 四角星闪
+  push(); rotate(.12); ring(0, Math.PI, 9 * k); if (Math.sin(orb) >= 0) bean(); pop();   // front half overlaps the type
+  for (let i = 0; i < 4; i++) {   // four-point star twinkles
     const x = [-600, 610, -420, 470][i] * k, y = [-110, -95, 120, 118][i] * k, r = (16 + 10 * Math.sin(t * 5 + i * 1.7)) * k;
     shape([[x, y - r], [x + r * .28, y - r * .28], [x + r, y], [x + r * .28, y + r * .28], [x, y + r], [x - r * .28, y + r * .28], [x - r, y], [x - r * .28, y - r * .28]], { fill: '#ffe066', lw: 5 });
   }
@@ -444,7 +444,7 @@ function endCard(t) {
   reset(); screenRect('#241339');
   Wd.portal(960, 520, 460, t * .6, { open: spring(t - T.end, 7, .45), sx: 1 });
   screenRect('#241339', .5);
-  // 片尾彩蛋：Decaf 在漩涡里打转挥手
+  // end-credit gag: Decaf spinning in the vortex, waving
   const k = t - T.end;
   if (k > 1.2) coffeeCup(960 + Math.sin(k * 1.3) * 70, 770 + Math.cos(k * 1.1) * 14, .56, { rise: 1, eyes: 1, happy: 1, arms: 1, t, a: Math.sin(k * 2) * .4 });
   const s = back(seg(q(t), T.end, T.end + .3), 2.2);
@@ -470,12 +470,12 @@ function render(t) {
   subs(t);
 }
 
-// —— 音效事件（给 mix.py / score.py）——
+// —— sound events (for mix.py / score.py)——
 function events() {
   const ev = [], add = (type, t, o = {}) => ev.push({ type, t: +t.toFixed(3), ...o });
   for (const [id, t0] of Object.entries(VO)) add('vo', t0, { id });
   for (const c of CUES) add('cue', c.t0, c);
-  // 环境声段
+  // ambience segments
   let cur = null;
   for (const [a, b, , w] of SHOTS) { if (cur && cur.w === w && Math.abs(cur.b - a) < .01) cur.b = b; else { if (cur) add('amb', cur.a, { w: cur.w, d: +(cur.b - cur.a).toFixed(3) }); cur = { a, b, w }; } }
   add('amb', cur.a, { w: cur.w, d: +(cur.b - cur.a).toFixed(3) });
@@ -488,19 +488,19 @@ function events() {
   add('boing', T.burst + .08, { v: .5 }); add('slam', T.title[0]);
   add('suck', T.vaskIn + .1); add('suck', T.garyIn + .15); add('whooshBig', 12.55);
   for (const [tc] of WIPES) add('portalWhoosh', tc - .16);
-  // 果冻
+  // jelly
   add('portalOpen', 12.9, { v: .6 }); add('pop', T.jSpitV); add('pop', T.jSpitG); add('boing', T.jLandV); add('boing', T.jLandG, { v: 1.1 }); add('portalClose', T.jClose + .25);
   add('gurgle', 15.3); add('glorp', T.glorp); add('slide', T.slide[0]); add('squish', T.slide[1]); add('wetblink', T.eyeBlink);
   add('click', T.jClick); add('portalOpen', T.jClick + .03, { v: .7 }); add('suck', T.jBack[0] + .35);
-  // 马克杯
+  // mug
   add('pop', T.mSpit); add('thud', T.mSpit + .4); add('thud', T.mSpit + .6, { v: .7 }); add('portalClose', 22.25, { v: .6 });
   add('slurp', T.sip[0], { d: T.sip[1] - T.sip[0] }); add('page', T.page); add('lick', T.lick[0] + .05); add('click', T.mClick);
-  // 蒙太奇
+  // montage
   T.montClick.forEach(x => add('click', x, { v: .8 }));
   add('chomp', T.chomp); add('chomp', T.chomp + .28); add('coo', T.coo); add('swish', T.vasksTurn);
-  // 正常宇宙
+  // normal universe
   add('shopbell', 31.5); add('portalClose', T.nClose + .25, { v: .6 }); add('cupSet', T.take); add('click', T.nClick);
-  // 回家
+  // home
   add('portalOpen', 36.08, { v: .7 }); add('pop', T.lSpit); add('thud', T.lLandV); add('thud', T.lLandG, { v: .8 }); add('portalClose', T.lClose[1] - .05);
   add('slurp', T.sipL[0], { d: .5, v: .8 });
   add('bloop', T.bubble); add('bloop', T.bubble + .12, { v: .7 }); add('squish', T.rise[0], { v: .6 }); add('blip', T.eyesOpen);
@@ -508,7 +508,7 @@ function events() {
   add('bloop', T.nod, { v: .6 });
   add('whoosh', T.toss); add('wheee', T.toss + .05, { d: T.tossLand - T.toss }); add('click', T.tClick); add('portalOpen', T.tOpen); add('portalHum', T.tOpen + .1, { d: T.end - T.tOpen - .1, v: .6 }); add('gulpPortal', T.tossLand);
   add('slam', T.end, { v: .8 });
-  // 脚步（抽样表演里的腿）
+  // footsteps (sampled from the legs in the performance)
   return ev.sort((a, b) => a.t - b.t);
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# 从零一键重现《Aura — Hear the Light》：sh styles/glass-product/demo/build.sh（任意目录运行皆可）
+# Rebuild "Aura — Hear the Light" from scratch in one command: sh styles/glass-product/demo/build.sh (runs from any folder)
 set -e
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"; cd "$ROOT"
 D=styles/glass-product/demo; PY=.venv/bin/python

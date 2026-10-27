@@ -1,8 +1,8 @@
-// 零件几何：圆角矩形放样（键帽、轴体外壳）、KiCad 轮廓挤出（定位板、电路板）
+// Part geometry: rounded-rectangle lofts (keycaps, switch housings), KiCad outline extrusions (plate, PCB)
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
-// 圆角矩形一圈点（逆时针，固定点数，便于放样）
+// One ring of points around a rounded rectangle (counter-clockwise, fixed point count so rings can be lofted)
 export function rrect(w, d, r, seg = 6) {
   r = Math.min(r, w / 2 - 1e-3, d / 2 - 1e-3);
   const pts = [], cs = [[w / 2 - r, d / 2 - r, 0], [-w / 2 + r, d / 2 - r, 1], [-w / 2 + r, -d / 2 + r, 2], [w / 2 - r, -d / 2 + r, 3]];
@@ -12,21 +12,21 @@ export function rrect(w, d, r, seg = 6) {
   return pts;
 }
 
-// 放样：rings = [{w,d,r,y,ox?,oz?}]，返回侧壁几何（平滑法线）
+// Loft: rings = [{w,d,r,y,ox?,oz?}], returns the side-wall geometry (smooth normals)
 export function loft(rings, seg = 6, flip = false) {
   const R = rings.map(g => rrect(g.w, g.d, g.r, seg).map(([x, z]) => [x + (g.ox || 0), g.y, z + (g.oz || 0)]));
   const n = R[0].length, pos = [], idx = [];
   for (const ring of R) for (const p of ring) pos.push(...p);
   for (let j = 0; j < R.length - 1; j++) for (let i = 0; i < n; i++) {
     const a = j * n + i, b = j * n + (i + 1) % n, c = (j + 1) * n + i, e = (j + 1) * n + (i + 1) % n;
-    if (!flip) idx.push(a, c, b, b, c, e); else idx.push(a, b, c, b, e, c);   // 默认外法线
+    if (!flip) idx.push(a, c, b, b, c, e); else idx.push(a, b, c, b, e, c);   // outward normals by default
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
   return g;
 }
 
-// 顶面（带球面凹槽）：从外圈向中心缩放的同心圈
+// Top face (with a spherical dish): concentric rings scaled from the outer ring towards the centre
 export function dishedCap(top, dish, seg = 6, rings = 8) {
   const base = rrect(top.w, top.d, top.r, seg), n = base.length, pos = [], idx = [];
   for (let k = 0; k <= rings; k++) {
@@ -46,7 +46,7 @@ export function dishedCap(top, dish, seg = 6, rings = 8) {
   return g;
 }
 
-function flatCap(r, flipUp = true) {   // 平顶/平底（扇形）
+function flatCap(r, flipUp = true) {   // flat top/bottom (triangle fan)
   const pts = rrect(r.w, r.d, r.r, 6), pos = [r.ox || 0, r.y, r.oz || 0], idx = [];
   for (const [x, z] of pts) pos.push(x + (r.ox || 0), r.y, z + (r.oz || 0));
   const n = pts.length;
@@ -59,7 +59,7 @@ function flatCap(r, flipUp = true) {   // 平顶/平底（扇形）
 const strip = g => { const o = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(o.attributes)) if (k !== 'position' && k !== 'normal') o.deleteAttribute(k); return o; };
 const merge = gs => mergeGeometries(gs.map(strip));
 
-// 键帽：W×D 底面（mm），H 高。均匀高度的球面凹槽外形（通用造型，不对应任何品牌）
+// Keycap: W×D footprint (mm), H tall. Uniform-height profile with a spherical dish (generic shape, not modelled on any brand)
 export function keycapGeometry(W = 18.0, D = 18.0, H = 7.6) {
   const tw = W - 5.6, td = D - 5.2, wall = 1.2;
   const outer = [
@@ -71,7 +71,7 @@ export function keycapGeometry(W = 18.0, D = 18.0, H = 7.6) {
   ];
   const side = loft(outer, 6);
   const cap = dishedCap({ w: tw, d: td, r: 2.5, y: H - .02 }, .65, 6, 9);
-  // 底沿 + 内腔 + 十字轴座
+  // bottom rim + inner cavity + cross-stem socket
   const rim = loft([{ w: W, d: D, r: 1.1, y: 0 }, { w: W - 2 * wall, d: D - 2 * wall, r: .6, y: 0 }], 6, true);
   const inner = loft([{ w: W - 2 * wall, d: D - 2 * wall, r: .6, y: 0 }, { w: tw - .6, d: td - .6, r: 1.2, y: H - 1.4 }], 6, true);
   const ceil = flatCap({ w: tw - .6, d: td - .6, r: 1.2, y: H - 1.4 }, false);
@@ -80,7 +80,7 @@ export function keycapGeometry(W = 18.0, D = 18.0, H = 7.6) {
   return mergeVertices(g, 1e-4);
 }
 
-// 十字轴体（通用规格：底座 14×14，上盖 15.6×15.6，PCB 面以上 11.6 mm 外壳 + 3.6 mm 轴心）
+// Cross-stem switch (generic spec: base 14×14, top housing 15.6×15.6, 11.6 mm of housing above the PCB surface + 3.6 mm stem)
 export function switchGeometries() {
   const bottom = merge([
     loft([{ w: 13.9, d: 13.9, r: .6, y: 0 }, { w: 13.9, d: 13.9, r: .6, y: 5.0 }], 3),
@@ -103,8 +103,8 @@ export function switchGeometries() {
   return { bottom: mergeVertices(bottom, 1e-4), top: mergeVertices(top, 1e-4), stem, pin };
 }
 
-// KiCad 轮廓 -> THREE.Shape（shape 平面坐标 = (x, -y_pcb)，网格 rotation.x = -π/2 后落到世界 X/Z）
-// 去掉重复/过近的相邻点（零长边会让挤出侧面出现零法线 → 着色 NaN）
+// KiCad outline -> THREE.Shape (shape plane coords = (x, -y_pcb); after the mesh gets rotation.x = -π/2 they land on world X/Z)
+// drop duplicate / too-close neighbouring points (a zero-length edge gives the extruded side a zero normal → NaN in shading)
 export function clean(poly, eps = .02) {
   const out = [];
   for (const p of poly) if (!out.length || Math.hypot(p[0] - out[out.length - 1][0], p[1] - out[out.length - 1][1]) > eps) out.push(p);
@@ -118,7 +118,7 @@ export function shapeFrom(outline, holes = [], circles = []) {
   return s;
 }
 
-// 多边形向内偏移（简单顶点法线偏移，适合平滑外形）
+// Inset a polygon (simple per-vertex normal offset, fine for smooth outlines)
 export function inset(poly, d) {
   const n = poly.length, out = [];
   let A = 0; for (let i = 0; i < n; i++) { const [x0, y0] = poly[i], [x1, y1] = poly[(i + 1) % n]; A += x0 * y1 - x1 * y0; }
@@ -134,13 +134,13 @@ export function inset(poly, d) {
 }
 const norm = v => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
 
-// 六角铜柱（对边 3.5 mm）
+// hex brass standoff (3.5 mm across flats)
 export function hexSpacer(len = 7.5, af = 3.5) {
   const r = af / Math.sqrt(3);
   const g = new THREE.CylinderGeometry(r, r, len, 6, 1, false); g.translate(0, len / 2, 0);
   return g.toNonIndexed();
 }
-// M2 盘头螺丝（头 Ø3.8×1.3 + 杆 Ø2×5）
+// M2 pan-head screw (head Ø3.8×1.3 + shank Ø2×5)
 export function screwGeometry() {
   const head = new THREE.CylinderGeometry(1.75, 1.9, 1.3, 28); head.translate(0, .65, 0);
   const dome = new THREE.SphereGeometry(1.75, 28, 6, 0, Math.PI * 2, 0, Math.PI * .22); dome.scale(1, .5, 1); dome.translate(0, 1.3 - .35, 0);

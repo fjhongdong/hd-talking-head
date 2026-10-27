@@ -1,5 +1,5 @@
-// 晒图纸合成器（WebGL2）：纸张在纸面坐标里程序生成（任意缩放都清晰），
-// ink 画布（R = 白线曝光度，黑 = 纸）+ fx 画布（R = 投影变暗，G = 水渍湿度，B = 红色印章）合成到输出画布。
+// Blueprint-paper compositor (WebGL2): paper is generated procedurally in paper coordinates (sharp at any zoom);
+// the ink canvas (R = white-line exposure, black = paper) + fx canvas (R = shadow darkening, G = water-stain wetness, B = red stamp) are composited onto the output canvas.
 const VS = `#version 300 es
 in vec2 p; out vec2 uv; void main(){ uv = p*.5+.5; gl_Position = vec4(p,0.,1.); }`;
 const FS = `#version 300 es
@@ -9,37 +9,37 @@ uniform sampler2D ink, fx, ov;
 uniform vec2 res, sheet;
 uniform vec4 cam;        // cx, cy, zoom, rot
 uniform float wetBlur, seed, desk, sheetA, fade;
-uniform vec4 roll;       // 纸卷甩开：x = 已铺开的纸面 x（>= sheet.x 表示全铺开），y = 卷筒半径
+uniform vec4 roll;       // paper roll flung open: x = paper x unrolled so far (>= sheet.x means fully unrolled), y = roll radius
 float h21(vec2 p){ vec3 q = fract(vec3(p.xyx)*.1031 + seed*.0173); q += dot(q, q.yzx+33.33); return fract((q.x+q.y)*q.z); }
 float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.-2.*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
 float fbm(vec2 p){ float s = 0., a = .5; for(int i=0;i<5;i++){ s += a*vn(p); p = p*2.03 + 17.1; a *= .5; } return s; }
 vec2 toSheet(vec2 s){ vec2 d = (s - res*.5)/cam.z; float c = cos(-cam.w), si = sin(-cam.w); return vec2(c*d.x - si*d.y, si*d.x + c*d.y) + cam.xy; }
 vec3 paper(vec2 p){
-  // 普鲁士蓝：低频褪色 + 涂布刷痕（横向拉长）
+  // Prussian blue: low-frequency fading + coating brush marks (stretched horizontally)
   float n1 = fbm(p/760.), n2 = fbm(vec2(p.x/1500., p.y/70.) + 3.), n3 = fbm(p/190. + 9.);
   vec3 dark = vec3(.094,.200,.420), light = vec3(.165,.345,.650);   // ≈ #18336B → #2A58A6
   float m = clamp(.10 + .95*(n1-.25) + .22*(n2-.5) + .14*(n3-.5) + .18*(p.x/sheet.x) , 0., 1.);
   vec3 c = mix(dark, light, m);
-  // 纸纤维：高频亮暗 + 稀疏纤维丝
+  // paper fibres: high-frequency light/dark + sparse fibre strands
   float fib = vn(p*.55)*.5 + vn(p*1.7)*.5;
   c *= .955 + .075*fib;
   float fl = smoothstep(.93, 1., vn(vec2(p.x*.02 + p.y*.07, p.y*.9 - p.x*.3)*.35));
   c = mix(c, c*1.12 + .02, fl*.35);
-  // 折痕：纸面十字折（亮边/暗边 + 折线上掉色磨白）
+  // creases: a cross fold in the sheet (light/dark edges + colour worn white along the fold lines)
   float fx = p.x - sheet.x*.5 - 6.*(vn(vec2(p.y*.01, 2.))-.5), fy = p.y - sheet.y*.5 - 6.*(vn(vec2(p.x*.01, 5.))-.5);
   float cx = exp(-fx*fx/18.), cy = exp(-fy*fy/18.);
   float sx = smoothstep(-14., 0., fx) - smoothstep(0., 14., fx), sy = smoothstep(-14., 0., fy) - smoothstep(0., 14., fy);
   c *= 1. + .06*sign(fx)*(1.-abs(sx))*exp(-fx*fx/260.) + .05*sign(fy)*exp(-fy*fy/260.);
   float wear = (cx + cy)*smoothstep(.45, .8, fbm(p/9.));
   c = mix(c, vec3(.55,.66,.82), clamp(wear*.55, 0., .6));
-  // 边缘褪白：不规则
+  // edges faded to white: irregular
   float e = min(min(p.x, sheet.x - p.x), min(p.y, sheet.y - p.y));
   float bl = smoothstep(90., 0., e + 70.*(fbm(p/60.)-.5));
   c = mix(c, vec3(.50,.62,.80), bl*.8);
   float cor = smoothstep(260., 0., length(min(p, sheet - p)) + 90.*(fbm(p/40.)-.5));
   c = mix(c, vec3(.58,.68,.84), cor*.5);
-  // 小污点
+  // small blemishes
   float sp = smoothstep(.985, 1., vn(p/14. + 40.));
   c *= 1. - .18*sp;
   return c;
@@ -52,26 +52,26 @@ void main(){
   vec4 Fb = textureLod(fx, tuv, 3.);
   float wet = clamp(max(F.g, Fb.g*.9), 0., 1.);
   float inside = step(0., p.x)*step(p.x, sheet.x)*step(0., p.y)*step(p.y, sheet.y);
-  // 纸卷甩开：roll.x 以右还没铺开
+  // paper roll flung open: everything right of roll.x is not unrolled yet
   float unrolled = step(p.x, roll.x);
   inside *= unrolled;
-  // 桌面：深色绘图桌布
+  // desk: dark drafting-table cover
   vec3 deskC = vec3(.052,.066,.086) * (.9 + .2*fbm(p/30.)) ;
   deskC *= desk;
   vec3 col = deskC;
-  // 纸的投影（落在桌上）
+  // shadow of the paper (falling on the desk)
   vec2 sp2 = p - vec2(10., 16.);
   float shadowIn = step(0., sp2.x)*step(sp2.x, min(sheet.x, roll.x))*step(0., sp2.y)*step(sp2.y, sheet.y);
   col *= 1. - .55*shadowIn*(1.-inside);
   if (inside > .5) {
     vec3 pc = paper(p);
-    // 湿：蓝变深、更饱和；水痕边
+    // wet: blue gets darker and more saturated; tide-mark edge
     float rim = clamp(wet*(1.-wet)*4., 0., 1.);
     float wn = fbm(p/35.);
     vec3 wetC = pc*vec3(.70,.78,.92) + vec3(0.,.01,.05);
     pc = mix(pc, wetC, smoothstep(.05, .5, wet)*.85);
     pc = mix(pc, pc*1.25 + vec3(.05,.07,.10), rim*rim*(.5 + .5*wn)*.55);
-    // 白线：锐利 + 晕开；湿处被泡软
+    // white lines: sharp + halo; softened where wet
     float L0 = texture(ink, tuv).r;
     float L1 = textureLod(ink, tuv, 1.6).r, L2 = textureLod(ink, tuv, 2.8).r, L3 = textureLod(ink, tuv, 4.).r;
     float w = clamp(wet*wetBlur, 0., 1.);
@@ -82,16 +82,16 @@ void main(){
     pc = mix(pc, lineC, L*mix(.96, .72, w));
     col = pc;
   }
-  // 投影（手、云）：纸面变暗
+  // cast shadows (hand, cloud): darken the paper
   col *= 1. - .62*clamp(Fb.r*.5 + F.r*.5, 0., 1.);
-  // 红色印章：橡皮章的颗粒与漏墨
+  // red stamp: rubber-stamp grain and ink gaps
   float st = F.b;
   if (st > .001) {
     float holes = smoothstep(.12, .45, vn(p*.45 + 11.)*.6 + fbm(p/6.)*.6);
     vec3 red = vec3(.76,.22,.17);
     col = mix(col, red*(.85 + .2*fbm(p/20.)), clamp(st*holes*1.05, 0., .92));
   }
-  // 纸卷筒：铺开边缘上的卷筒（卷起的纸，背面是浅色）
+  // paper roll: the roll at the unrolling edge (rolled-up paper, lighter on the back)
   if (roll.x < sheet.x) {
     float d = p.x - roll.x;
     if (d > -roll.y && d < roll.y*1.2 && p.y > -4. && p.y < sheet.y + 4.) {
@@ -102,7 +102,7 @@ void main(){
       col *= .8 + .35*sin(k*3.14159);
     }
   }
-  // 暗角
+  // vignette
   vec2 q = uv - .5; col *= 1. - .22*dot(q, q)*2.2;
   col = mix(deskC*.0, col, sheetA);
   vec4 O = texture(ov, tuv);

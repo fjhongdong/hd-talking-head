@@ -1,0 +1,92 @@
+[
+ {
+  "t0": 0.4,
+  "t1": 2.5,
+  "text": "GLS：同意移交 ALS 自动程序。\nGLS, go for ALS."
+ },
+ {
+  "t0": 2.5,
+  "t1": 5.26,
+  "text": "好口令。火箭现在靠自己了。\nGreat call-out. The rocket is on its own."
+ },
+ {
+  "t0": 5.26,
+  "t1": 7.86,
+  "text": "四位勇敢的探索者，准备乘上\nFour brave explorers, ready to ride"
+ },
+ {
+  "t0": 7.86,
+  "t1": 13.1,
+  "text": "NASA 发射过的最强大的火箭。\nthe most powerful rocket NASA has ever launched."
+ },
+ {
+  "t0": 13.4,
+  "t1": 16,
+  "text": "约 10 天：绕过月球，再飞回来。\nAbout ten days: around the Moon, and back."
+ },
+ {
+  "t0": 16.47,
+  "t1": 20,
+  "text": "消声水正在喷注。\nSound suppression water is flowing."
+ },
+ {
+  "t0": 20.12,
+  "t1": 22.42,
+  "text": "开始了。\nAnd here we go."
+ },
+ {
+  "t0": 22.42,
+  "t1": 26.46,
+  "text": "十、九、八、七，\nTen, nine, eight, seven,"
+ },
+ {
+  "t0": 26.46,
+  "t1": 29.2,
+  "text": "RS-25 发动机点火……\nRS-25 engines lit…"
+ },
+ {
+  "t0": 29.24,
+  "t1": 34.1,
+  "text": "四、三、二、一，助推器点火。\nfour, three, two, one, booster ignition."
+ },
+ {
+  "t0": 34.16,
+  "t1": 36.3,
+  "text": "升空。\nAnd liftoff."
+ },
+ {
+  "t0": 36.36,
+  "t1": 39.45,
+  "text": "阿尔忒弥斯二号乘组，正飞向月球。\nThe crew of Artemis II, now bound for the Moon."
+ },
+ {
+  "t0": 39.5,
+  "t1": 42.2,
+  "text": "人类下一段伟大航程，就此开始。\nHumanity’s next great voyage begins."
+ },
+ {
+  "t0": 42.3,
+  "t1": 46,
+  "text": "下一个节点：助推器分离，T+2 分 09 秒。\nNext on the clock: booster separation, at two minutes nine."
+ },
+ {
+  "t0": 46.4,
+  "t1": 49.7,
+  "text": "滚转、俯仰正常。\nGood roll, pitch."
+ },
+ {
+  "t0": 49.78,
+  "t1": 53.7,
+  "text": "收到，滚转、俯仰。\nRoger, roll, pitch."
+ },
+ {
+  "t0": 53.78,
+  "t1": 56.2,
+  "text": "休斯敦现在接管 Integrity 号的飞行，\nHouston, now controlling the flight of Integrity"
+ },
+ {
+  "t0": 56.2,
+  "t1": 59.5,
+  "text": "执行阿尔忒弥斯二号绕月任务。\non the Artemis II mission around the Moon."
+ }
+]

@@ -136,4 +136,4 @@ function frame(g, t) {
 }
 ```
 
-**Filter on a photo or film frame** (for re-drawing footage): `const F = WC.woodcutFilter(video, { rect: [36, 36, 1848, 912], sp: 5, reveal: { t0, t1, mode: 'light' } }); m.fillStyle = '#000'; m.fillRect(…); WC.drawStrokes(m, F.strokes, { t });` then print. About 1,900 cuts and 140 ms for a 1080p frame. See `demo/stills/filter_v1.jpg` and `?test=filter&img=…`. For a moving shot, re-run it on twos (12 fps) with the same `seed` so the cuts stay stable where the image does.
+**Filter on a photo or film frame** (for re-drawing footage): `const F = WC.woodcutFilter(video, { rect: [36, 36, 1848, 912], sp: 5, reveal: { t0, t1, mode: 'light' } }); m.fillStyle = '#000'; m.fillRect(…); WC.drawStrokes(m, F.strokes, { t });` then print. About 1,900 cuts and 140 ms for a 1080p frame. See `demo/stills/frame_filter.jpg` and `?test=filter&img=…`. For a moving shot, re-run it on twos (12 fps) with the same `seed` so the cuts stay stable where the image does.

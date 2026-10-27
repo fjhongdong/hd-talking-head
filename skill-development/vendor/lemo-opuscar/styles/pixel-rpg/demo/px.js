@@ -1,14 +1,14 @@
-// px.js — 索引色像素引擎：320×180 帧缓冲存调色板索引，色深 / 褪色 / 塌缩 / 回涨都是换查找表（像 SNES 的 CGRAM）
+// px.js — indexed-colour pixel engine: a 320×180 framebuffer stores palette indices; colour depth / fading / collapse / colour return are all lookup-table swaps (like the SNES CGRAM)
 export const W = 320, H = 180, SCALE = 6;
-export const T = 255;                      // 透明
+export const T = 255;                      // transparent
 
-// —— 主调色板：ENDESGA-32（0–31）+ 保护色（32+，褪色表不动它们）——
+// —— Main palette: ENDESGA-32 (0–31) + protected colours (32+, the fade tables leave them alone) ——
 const HEX = [
   '#be4a2f', '#d77643', '#ead4aa', '#e4a672', '#b86f50', '#733e39', '#3e2731', '#a22633',
   '#e43b44', '#f77622', '#feae34', '#fee761', '#63c74d', '#3e8948', '#265c42', '#193c3e',
   '#124e89', '#0099db', '#2ce8f5', '#ffffff', '#c0cbdc', '#8b9bb4', '#5a6988', '#3a4466',
   '#262b44', '#181425', '#ff0044', '#68386c', '#b55088', '#f6757a', '#e8b796', '#c28569',
-  // 32 围巾红 33 围巾暗 34 围巾高光   35 水晶青 36 水晶蓝 37 水晶白 38 水晶深
+  // 32 scarf red 33 scarf dark 34 scarf highlight   35 crystal cyan 36 crystal blue 37 crystal white 38 crystal deep
   '#e43b44', '#a22633', '#f6757a', '#2ce8f5', '#0099db', '#ffffff', '#124e89',
 ];
 export const C = {
@@ -24,14 +24,14 @@ export const RGB = HEX.map(rgb);
 const lum = ([r, g, b]) => .299 * r + .587 * g + .114 * b;
 const pack = ([r, g, b]) => (255 << 24) | (b << 16) | (g << 8) | r;
 
-// 查找表 = Uint32Array(256)：索引 → ABGR
+// Lookup table = Uint32Array(256): index → ABGR
 function lutFrom(fn) { const L = new Uint32Array(256); for (let i = 0; i < NPAL; i++) L[i] = pack(fn(i)); return L; }
 function nearest(c, set) {
   let best = set[0], bd = 1e9;
   for (const s of set) { const d = (c[0] - s[0]) ** 2 * .3 + (c[1] - s[1]) ** 2 * .59 + (c[2] - s[2]) ** 2 * .11; if (d < bd) { bd = d; best = s; } }
   return best;
 }
-// 按亮度分位映射到一条色带（保证层次不丢）
+// Map onto a colour ramp by luminance quantile (so no tonal levels are lost)
 function rampMap(ramp, keep) {
   const Ls = RGB.map(lum), sorted = [...Ls].sort((a, b) => a - b);
   return lutFrom(i => {
@@ -43,29 +43,29 @@ function rampMap(ramp, keep) {
 
 export const LUT = {};
 LUT.full = lutFrom(i => RGB[i]);
-// 现在：失去之后的褪色世界——7 阶蓝灰，只有围巾与水晶保留颜色
+// Present: the faded world after the loss — 7 blue-grey steps, only the scarf and the crystal keep their colour
 export const FADED_RAMP = ['#0e0d17', '#1d2031', '#2d3349', '#434c66', '#646e8a', '#8f99b0', '#c3c9d6'];
 const fadedIdx = i => Math.min(6, Math.floor(Math.pow(lum(RGB[i]) / 255, .8) * 7.2));
 LUT.faded = lutFrom(i => PROTECT.has(i) ? RGB[i] : rgb(FADED_RAMP[fadedIdx(i)]));
-// 最早的回忆：4 色单色（偏橄榄的老掌机色，自定色值）
+// Earliest memory: 4-colour monochrome (olive-leaning old handheld colours, custom values)
 export const GB4 = ['#1f2a1c', '#4b5e3a', '#93a263', '#d6dba6'];
-// 4 色按固定亮度阈值分级：画 4 色场景时用 GBI[0..3]（ink/slate/steel/white）即可精确落在每一级
+// 4 colours graded by fixed luminance thresholds: drawing a 4-colour scene with GBI[0..3] (ink/slate/steel/white) lands exactly on each step
 LUT.gb4 = lutFrom(i => { const l = lum(RGB[i]); return rgb(GB4[l < 60 ? 0 : l < 115 ? 1 : l < 175 ? 2 : 3]); });
 export const GBI = [25, 22, 21, 19];
-// 8-bit：13 色受限调色板（自定，接近早期主机的"少而饱和"）
+// 8-bit: 13-colour restricted palette (custom, close to the "few but saturated" look of early consoles)
 export const NES = ['#000000', '#fcfcfc', '#a4a4b8', '#58587c', '#1c2c8c', '#3c7cfc', '#94e0fc', '#b8141c', '#fc7454', '#fcb81c', '#8c4c1c', '#2c9c2c', '#fcd8a8', '#0c4c18', '#4c2410'];
 const NESr = NES.map(rgb);
 LUT.nes = lutFrom(i => nearest(RGB[i], NESr));
 LUT.nesKeep = lutFrom(i => PROTECT.has(i) ? RGB[i] : nearest(RGB[i], NESr));
-// 塌缩的中间级：16 色、8 色、4 色（从主调色板里取子集）
+// Intermediate collapse steps: 16, 8 and 4 colours (subsets of the main palette)
 const SUB16 = [25, 24, 23, 22, 21, 19, 16, 17, 7, 8, 9, 10, 11, 27, 28, 5].map(i => RGB[i]);
 const SUB8 = [25, 23, 21, 19, 7, 9, 11, 27].map(i => RGB[i]);
 LUT.c16 = lutFrom(i => PROTECT.has(i) ? RGB[i] : nearest(RGB[i], SUB16));
 LUT.c8 = lutFrom(i => PROTECT.has(i) ? RGB[i] : nearest(RGB[i], SUB8));
 LUT.c4 = rampMap(['#16152a', '#3a3f60', '#7c86a8', '#c9cfe4'], true);
 LUT.c2 = rampMap(['#1b1d2c', '#565f77'], true);
-// 淡入淡出：整体压暗 n 级（调色板步进，而不是 alpha）
-export function darken(L, f) {   // f 0..1，按 4 级量化
+// Fade in/out: darken the whole frame by n steps (palette stepping, not alpha)
+export function darken(L, f) {   // f 0..1, quantised to 4 steps
   const q = Math.round(f * 4) / 4, O = new Uint32Array(256);
   for (let i = 0; i < 256; i++) {
     const v = L[i]; if (!v) continue;
@@ -100,7 +100,7 @@ export const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); retur
 export const eo = t => 1 - (1 - t) * (1 - t);
 export const eio = t => t < .5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
 
-// —— 帧缓冲 ——
+// —— Framebuffer ——
 export class FB {
   constructor(w = W, h = H) { this.w = w; this.h = h; this.d = new Uint8Array(w * h); this.clip = [0, 0, w, h]; }
   clear(c = 0) { this.d.fill(c); }
@@ -115,9 +115,9 @@ export class FB {
     for (;;) { this.px(x0, y0, c); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
   }
   disc(cx, cy, r, c) { for (let y = Math.floor(-r); y <= r; y++) for (let x = Math.floor(-r); x <= r; x++) if (x * x + y * y <= r * r + r * .8) this.px(cx + x, cy + y, c); }
-  // 抖动填充：f(x,y) 返回 0..1，按 Bayer 在 a/b 两色之间取
+  // Dithered fill: f(x,y) returns 0..1, picks between colours a/b by Bayer
   dither(x0, y0, w, h, f, a, b) { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const X = x0 + x, Y = y0 + y; this.px(X, Y, bayer(X, Y) < f(X, Y) ? b : a); } }
-  // 竖向多色抖动渐变
+  // Vertical multi-colour dithered gradient
   gradV(x0, y0, w, h, cols) {
     const n = cols.length - 1;
     for (let y = 0; y < h; y++) {
@@ -134,13 +134,13 @@ export class FB {
   }
   copy(src, sx, sy, sw, sh, dx, dy) { for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const c = src.get(sx + x, sy + y); if (c !== T) this.px(dx + x, dy + y, c); } }
 }
-export function sprFromRows(rows, map) {       // 字符串精灵 → {w,h,d}
+export function sprFromRows(rows, map) {       // string sprite → {w,h,d}
   const h = rows.length, w = Math.max(...rows.map(r => r.length)), d = new Uint8Array(w * h).fill(T);
   rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const ch = r[x]; if (ch === '.' || ch === ' ') continue; const c = map[ch]; if (c === undefined) throw new Error('sprite char ' + ch); d[y * w + x] = c; } });
   return { w, h, d };
 }
 
-// —— 输出：索引 → RGB（可选两张表 + 逐像素选择：回涨 / 塌缩的抖动过渡）→ ×6 最近邻 ——
+// —— Output: index → RGB (optionally two tables + per-pixel choice: dithered transition for colour return / collapse) → ×6 nearest neighbour ——
 export function makeOut(canvas) {
   const lo = document.createElement('canvas'); lo.width = W; lo.height = H;
   const g = lo.getContext('2d'); const img = g.createImageData(W, H); const u32 = new Uint32Array(img.data.buffer);
@@ -153,11 +153,11 @@ export function makeOut(canvas) {
       else for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i++) u32[i] = (pick(x, y) ? lutB : lut)[d[i]];
       g.putImageData(img, 0, 0);
     },
-    post(fn) { fn(u32); g.putImageData(img, 0, 0); },   // RGB 级后处理（马赛克、旋涡）
+    post(fn) { fn(u32); g.putImageData(img, 0, 0); },   // RGB-level post-processing (mosaic, swirl)
     show() { o.drawImage(lo, 0, 0, W * SCALE, H * SCALE); },
   };
 }
-// RGB 级马赛克：块 n，块取左上角颜色（对齐到屏幕中心）
+// RGB-level mosaic: block size n, each block takes its top-left colour (aligned to the screen centre)
 export function mosaic(u32, n) {
   if (n <= 1) return; const src = u32.slice();
   const ox = (W / 2) % n, oy = (H / 2) % n;

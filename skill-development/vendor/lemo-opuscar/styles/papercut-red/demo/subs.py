@@ -1,4 +1,4 @@
-"""从 story.js 的 VO 表 + voices/dur.json 生成 cues.json（与页面 SUBS 同一规则），再导出 .srt"""
+"""Build cues.json from the VO table in story.js + voices/dur.json (same rule as SUBS in the page), then export .srt"""
 import json, re, os, subprocess, sys
 D = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(D, '../../..'))
 src = open(os.path.join(D, 'story.js')).read()

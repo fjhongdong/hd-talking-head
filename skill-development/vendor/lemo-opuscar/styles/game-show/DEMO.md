@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *AI进化节拍 · Rhythm of AI 1997 → 2026* (v3, 148.8 s, 1920×1080, 30 fps) · `game-show.mp4` · source in [`demo/`](demo/) · engine: plain SVG DOM with a pure `render(t)`, screenshotted by Playwright + Chrome Headless Shell; original score synthesized in numpy from the picture's own `events.json`.
+Demo: *AI进化节拍 · Rhythm of AI 1997 → 2026* (148.8 s, 1920×1080, 30 fps) · `game-show.mp4` · source in [`demo/`](demo/) · engine: plain SVG DOM with a pure `render(t)`, screenshotted by Playwright + Chrome Headless Shell; original score synthesized in numpy from the picture's own `events.json`.
 
 
 **Language note.** All on-screen text in the demo is **Chinese** (level names, year banners, labels, the report card, the credit card). The only audio words are short **English shouts** ("Checkmate.", "Hey!", "Question!"). There is **no narration**. To make an English version, see "Switching the text to English" below.
@@ -10,6 +10,8 @@ Demo: *AI进化节拍 · Rhythm of AI 1997 → 2026* (v3, 148.8 s, 1920×1080, 3
 ## Story & structure
 
 The history of AI from 1997 to 2026 staged as a **game show made of rhythm levels**. The film opens on a title set where the whole cast drops in on the beat and counts "One! Two! Three! Four!". Then comes a run of **levels**. Each level is **one bar of title card** (GAME N + name + years, flying in on a brass jingle) followed by **eight bars of play**: a pattern is set up in the first half, answered or escalated in the second, and the last beat (bar 7, beat 3) is a **slam + "Perfect!"** judgement. A **remix** level near the end piles every recent event onto one set, with a month timeline across the top and shrunken thumbnails of each finished bit parked along the bottom. The ending hatches a new character from an egg, types out a **report card** ("AI 进化史 · 成绩单") with a Superb! star, and closes on a **credit card**.
+
+This is an unofficial fan piece about the history of AI. The companies and products named on screen (among them OpenAI, Google, Anthropic, Meta, DeepSeek, xAI, Mistral, IBM, Alibaba's Qwen, Moonshot's Kimi and Midjourney) did not make or endorse it. Its claims about 2026 products have no source file; a film about real products needs every fact checked and sourced.
 
 How the demo spent the native moves:
 
@@ -80,7 +82,7 @@ The demo's last card carries **"LemoLab × Claude Opus 5.5"** (× is U+00D7). It
 
 ## Rights & facts
 
-- **macOS system voices are licensed for personal, non-commercial use** under the macOS licence. For a commercial or public release, re-voice the shouts with Kokoro (`core/tts/`) or another cleared TTS.
+- **The shouts are outside the CC BY 4.0 licence.** They are macOS system voices (`say`), which Apple licenses for personal, non-commercial use under the macOS licence, so the voice track of `game-show.mp4` and `demo/voices/*.wav` are not covered by the library's CC BY 4.0 licence for demo films. We plan to re-voice them with Kokoro (`core/tts/`). In your own film, use Kokoro or a voice you have the right to use; `make_voices.sh` is only a quick way to sketch timings.
 - **Real brands:** the contestants stand for real AI products (GPT, Claude, Gemini, DeepSeek, Kimi, Grok, Midjourney…): names only on name tags, original mascots, loose colour nods; never official logos, wordmarks or product UI. Real people (Kasparov, Lee Sedol, the KEN / BRAD podiums) appear only as generic cartoon stand-ins in factual banners.
 - **Facts date fast.** The 2026 remix (Sonnet 5 as default, WAIC 2026, DeepSeek V4-Pro, "GPT-6 Astra", token-volume figures) was written as current news at production time. Re-check every figure and name before reusing any of it.
 - The G7 task note on screen literally says "做一个节奏天国风格的视频" (names a real game series). In new films describe the genre, don't name it.
@@ -99,8 +101,8 @@ All strings are literals in `main_b.js` (and three in `main_v1.js`):
 
 ```
 styles/game-show/demo/
-  main_v1.js     v1 source: palette K, tempo (at/ev/punch), hop/squash helpers, stripes/dots/rays, burst, judge, banner, 1990s robots, chess board
-  main_b.js      v2/v3 source: bean characters + CAST, human, podium, stage (scene/card), props, ALL scenes (buildAll), render(t), init()
+  main_v1.js     base source: palette K, tempo (at/ev/punch), hop/squash helpers, stripes/dots/rays, burst, judge, banner, 1990s robots, chess board
+  main_b.js      main source: bean characters + CAST, human, podium, stage (scene/card), props, ALL scenes (buildAll), render(t), init()
   assemble.py    main_v1.js[0:109] (BPM→150, END_BAR→93) + main_v1 robotDB…stage + main_b.js  →  main.js
   frame_head.html  HTML/SVG frame + base helpers (el, txt, tf, op, E, chars, charsPop, measure, bg …)
   build.py       frame_head.html + main.js  →  index.html
@@ -109,7 +111,7 @@ styles/game-show/demo/
   voices/        40 shout wavs + lines*.txt (name|voice|rate|pitch|text)          make_voices.sh  regenerate them (macOS)
   finish.sh      concat segments + loudnorm −14 LUFS + mux → ../game-show.mp4       make_srt.py  → ../game-show.srt
   fonts/ fonts.css   Noto Sans SC, Fredoka, ZCOOL KuaiLe (woff2 subsets)
-  historical: main.js (generated), remix2026.js (draft of the remix section, superseded by main_b.js)
+  main.js        generated (do not edit by hand)
 ```
 
 All commands from `styles/game-show/demo/` (the scripts also `chdir` there themselves). `PY=../../../.venv/bin/python`.

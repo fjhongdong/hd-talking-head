@@ -1,5 +1,141 @@
 [
  {
+  "slug": "caption-news",
+  "num": "63",
+  "en": "Caption News",
+  "cn": "字幕新闻",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "The Bee Ledger",
+  "line": "America lost 1.3 million bee colonies, yet the count rose 6 %: a news short that works with the sound off.",
+  "line_cn": "美国一年死掉 130 万箱蜜蜂，总数却涨了 6%：静音也能看懂的新闻。",
+  "uses": [
+   "Social news",
+   "Report explainers",
+   "Data shorts"
+  ],
+  "dur": 59.5
+ },
+ {
+  "slug": "newsreel",
+  "num": "64",
+  "en": "1920s Newsreel",
+  "cn": "1920s 新闻影片",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "Knock-Knee Alert",
+  "line": "1926: the papers say the Charleston will ruin America's knees; at Ford's own picnic the kids dance it anyway.",
+  "line_cn": "1926 年报纸说查尔斯顿会跳坏膝盖，福特工人野餐会上的孩子照跳不误。",
+  "uses": [
+   "History stories",
+   "Fads & eras",
+   "Anniversaries"
+  ],
+  "dur": 54.6
+ },
+ {
+  "slug": "countdown",
+  "num": "65",
+  "en": "Live Countdown Split-screen",
+  "cn": "实时倒计时分屏",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "Counting Itself Down",
+  "line": "The last minute of the Artemis II launch, uncut: one cell opens to nine, and they merge into one at ignition.",
+  "line_cn": "阿尔忒弥斯二号发射的最后一分钟，一秒不剪：格子从 1 开到 9，点火合成 1。",
+  "uses": [
+   "Launches",
+   "Countdowns",
+   "Live events"
+  ],
+  "dur": 59.5
+ },
+ {
+  "slug": "city-symphony",
+  "num": "66",
+  "en": "Time-lapse Symphony",
+  "cn": "延时交响",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "One Day in New York",
+  "line": "One day in New York in time-lapse: rivers of light, a grid on the sixteenths, 1899 beside today.",
+  "line_cn": "纽约的一天：延时光河、踩着十六分音符的网格，1899 年和今天并排。",
+  "uses": [
+   "City films",
+   "Music montages",
+   "Openers"
+  ],
+  "dur": 52.0
+ },
+ {
+  "slug": "visual-investigation",
+  "num": "67",
+  "en": "Visual Investigation",
+  "cn": "视觉调查",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "The Hindenburg: Four Minutes, 32 Seconds",
+  "line": "Newsreel, photos, testimony and the 1937 inquiry on one clock: five sources point to the same spot.",
+  "line_cn": "新闻片、照片、证词和调查报告排上同一条时间轴，五路来源指向一处。",
+  "uses": [
+   "Reconstructions",
+   "Fact-checks",
+   "Incident reports"
+  ],
+  "dur": 60.0
+ },
+ {
+  "slug": "kino-montage",
+  "num": "68",
+  "en": "Constructivist Montage",
+  "cn": "构成主义蒙太奇",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "410 Days",
+  "line": "The Empire State's 1931 brochure credits its builders; the site film and Hine's photos answer: 2,500 a day.",
+  "line_cn": "帝国大厦的小册子写着建造者，工地实拍和老照片给出答案：每天 2,500 人。",
+  "uses": [
+   "Industry histories",
+   "Milestones",
+   "Collective effort"
+  ],
+  "dur": 60.0
+ },
+ {
+  "slug": "telestrator",
+  "num": "69",
+  "en": "Sports Telestrator",
+  "cn": "体育战术板",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "Freeze Frame",
+  "line": "Down 3–0 at half-time, Fenerbahçe scored three in 12 minutes: freeze, draw, split screen, shot map.",
+  "line_cn": "半场 0–3，费内巴切 12 分钟连进三球：冻住画面、画线、分屏、射门图。",
+  "uses": [
+   "Sports analysis",
+   "Match recaps",
+   "Coaching"
+  ],
+  "dur": 54.4
+ },
+ {
+  "slug": "news-package",
+  "num": "70",
+  "en": "Broadcast News Package",
+  "cn": "电视新闻包装",
+  "cat": "剪辑与纪实",
+  "cat_en": "Edit & Documentary",
+  "film": "The Week in AI",
+  "line": "Four AI stories from one week in a full on-air package: rundown, headline strap, price board, spec card.",
+  "line_cn": "一周四条 AI 新闻，一整套电视台包装：串联单、标题条、翻牌价格表、规格卡。",
+  "uses": [
+   "News round-ups",
+   "Bulletins",
+   "Market updates"
+  ],
+  "dur": 53.5
+ },
+ {
   "slug": "satellite-briefing",
   "num": "55",
   "en": "Satellite Briefing",
@@ -7,12 +143,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "The Map Still Says Sea",
-  "line": "A satellite follows the map to the Aral Sea and finds a desert; the only part that came back is the part someone dammed.",
-  "line_cn": "卫星照着地图去找咸海，找到的是沙漠；唯一回来的那一小块，是有人筑坝留住的。",
+  "line": "A satellite follows the map to the Aral Sea and finds a desert; only the part someone dammed came back.",
+  "line_cn": "卫星照着地图去找咸海，找到的是沙漠；只有筑了坝的那一块回来了。",
   "uses": [
-   "Climate & environment",
-   "Investigations & news explainers",
-   "Geography & history"
+   "Climate",
+   "News explainers",
+   "Geography"
   ],
   "dur": 37.8
  },
@@ -24,12 +160,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "The Ship Decides",
-  "line": "A river needs a bridge; four bridge types are tested on one briefing wall, and the ship that must pass underneath picks the winner.",
+  "line": "Four bridge types are tested on one briefing wall, and the ship that must pass under picks the winner.",
   "line_cn": "一条河要架桥，四种桥型在一面简报墙上逐个受检，拍板的是桥下要过的船。",
   "uses": [
-   "Engineering decisions",
+   "Engineering",
    "Option comparisons",
-   "Briefings & explainers"
+   "Briefings"
   ],
   "dur": 40.0
  },
@@ -41,12 +177,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "The Fields Under the Forest",
-  "line": "A laser survey strips the canopy off a Connecticut forest, layer by layer, and finds the stone walls of the farms that were there: 3.4 km of them, measured.",
-  "line_cn": "激光点云把康涅狄格州一片森林的树冠一层层剥掉，地面上露出当年农田的石墙：描出 3.4 公里，逐一量过。",
+  "line": "A laser survey strips the canopy off a Connecticut forest and finds 3.4 km of old farm walls.",
+  "line_cn": "激光点云剥掉一片森林的树冠，露出当年农田的石墙：3.4 公里。",
   "uses": [
-   "Archaeology & heritage",
-   "Forestry & environment",
-   "Infrastructure & site surveys"
+   "Heritage",
+   "Environment",
+   "Site surveys"
   ],
   "dur": 40.0
  },
@@ -58,12 +194,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "How a Flattened City Grew Back",
-  "line": "A projector lights Rotterdam's white model layer by layer: what stood before 1940, the decades that filled the hole, the towers, and the winter shadow the tallest one casts on the pre-war roofs.",
-  "line_cn": "投影机把数据一层层刷上鹿特丹白模：1940 年前留下的楼、填满空洞的几十年、长起来的塔楼，以及最高那栋在冬至正午投向战前屋顶的影子。",
+  "line": "A projector paints Rotterdam's white model layer by layer, from the 1940 gap to today's towers.",
+  "line_cn": "投影机把数据一层层刷上鹿特丹白模：从 1940 年的空洞到今天的塔楼。",
   "uses": [
-   "Urban planning & real estate",
-   "Exhibitions & showrooms",
-   "City data & history"
+   "Urban planning",
+   "Exhibitions",
+   "City data"
   ],
   "dur": 40.0
  },
@@ -75,12 +211,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "Two Spirals",
-  "line": "Twelve years of wind and solar capacity stacked as real plates on a walnut dial: wind led in 2014, solar passed it in 2021, and by 2025 the ratio has turned the other way round.",
-  "line_cn": "十二年的风电和太阳能装机，按同一个单位叠成实物，绕胡桃木表盘升成两条螺旋：2014 年风电领先，2021 年太阳能超过，2025 年比值整个反了过来。",
+  "line": "Twelve years of wind and solar stacked as real plates, spiralling round a walnut dial until solar overtakes.",
+  "line_cn": "十二年风电和太阳能装机叠成实物，绕表盘升成两条螺旋，2021 年太阳能反超。",
   "uses": [
-   "Annual reports & ESG",
-   "Investor communications",
-   "Energy & climate statistics"
+   "Annual reports",
+   "Investor decks",
+   "Energy data"
   ],
   "dur": 39.4
  },
@@ -92,12 +228,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "21 Keys, Opened",
-  "line": "One half of an open-source keyboard comes apart in a single orbit, dives under its circuit board to the chip, the lights and the sockets, then closes with its real dimensions drawn on it.",
-  "line_cn": "开源键盘的一半在一次环绕中逐层拆开，镜头钻到电路板背面看主控、灯珠和热插拔座，再合拢，把真实尺寸画在实物上。",
+  "line": "Half an open-source keyboard comes apart in one orbit, down to the chip, then closes with its real dimensions.",
+  "line_cn": "开源键盘的一半在一次环绕中逐层拆开，看到主控再合拢，标上真实尺寸。",
   "uses": [
    "Hardware launches",
-   "E-commerce product pages",
-   "Technical marketing & spec explainers"
+   "Product pages",
+   "Spec explainers"
   ],
   "dur": 38.8
  },
@@ -109,12 +245,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "Measured Blue",
-  "line": "One continuous camera takes a liver slide from the eye down to a single nucleus; two circles 1.4 mm apart are counted pixel by pixel, and one holds 2.4 times the blue.",
-  "line_cn": "一镜从肉眼看到的肝组织玻片推到单个细胞核；相隔 1.4 毫米的两个圆被逐像素计数，其中一个的蓝色是另一个的 2.4 倍。",
+  "line": "One continuous move from a liver slide to a single nucleus; two circles, counted pixel by pixel, differ 2.4 times in blue.",
+  "line_cn": "一镜从肝组织玻片推到单个细胞核，两个圆逐像素数出 2.4 倍的蓝。",
   "uses": [
-   "Biomedicine & pathology",
-   "Materials & surface science",
-   "Skincare & cosmetic science"
+   "Biomedicine",
+   "Materials science",
+   "Skincare science"
   ],
   "dur": 39.5
  },
@@ -126,12 +262,12 @@
   "cat": "实证影像",
   "cat_en": "Evidence Films",
   "film": "Two Seconds Short",
-  "line": "The telegram said the longest flight lasted 57 seconds and the newspaper printed it; under a loupe, the Wright brothers' glass negatives and the Library of Congress record say 59.",
-  "line_cn": "电报说最长一次飞了 57 秒，第二天报纸照登；放大镜下，莱特兄弟的玻璃底片和国会图书馆的记录说是 59 秒。",
+  "line": "The telegram said 57 seconds; under a loupe, the Wrights' glass negatives and the archive say 59.",
+  "line_cn": "电报说最长飞了 57 秒；放大镜下，莱特兄弟的底片和档案说是 59 秒。",
   "uses": [
-   "Brand history & anniversaries",
-   "Documentary & archive explainers",
-   "Museum & collection stories"
+   "Brand history",
+   "Archive stories",
+   "Museums"
   ],
   "dur": 40.0
  },
@@ -278,9 +414,9 @@
   "cn": "浮世绘",
   "cat": "东方传统",
   "cat_en": "East Asian Traditions",
-  "film": "A Journey Toward the Mountain",
-  "line": "A traveller walks toward a distant mountain; every shot is a woodblock print, ending in a great wave.",
-  "line_cn": "旅人走向远山，每个镜头都是一幅版画，最后迎来一道巨浪。",
+  "film": "Toward the Mountain",
+  "line": "A traveller walks toward a distant mountain; every shot is a woodblock print, a great wave at the climax, the mountain and the whole scroll at the end.",
+  "line_cn": "旅人走向远山，每个镜头都是一幅版画；巨浪是高潮，结尾是远山与整幅画轴拉远。",
   "uses": [
    "Travel",
    "Japanese culture",
@@ -326,12 +462,12 @@
   "slug": "risograph",
   "num": "12",
   "en": "Risograph Print",
-  "cn": "Risograph 丝网印刷",
+  "cn": "Risograph 孔版印刷",
   "cat": "印刷与版画",
   "cat_en": "Print & Printmaking",
   "film": "Sunday Ride",
-  "line": "A Sunday-morning bike ride through the city — bakery, park, riverside — in two misregistered inks.",
-  "line_cn": "周日早晨骑车穿过城市：面包店、公园、河边。",
+  "line": "A Sunday-morning bike ride through the city — bakery, park, riverside — each stop adding an ink until three misregistered plates overprint.",
+  "line_cn": "周日早晨骑车穿过城市：面包店、公园、河边，每到一处加一版油墨，最后三版套印。",
   "uses": [
    "Indie brands",
    "Zines",
@@ -401,8 +537,8 @@
   "line": "Three trail posters are screen-printed one ink at a time, then climbed in one long take from noon to dusk.",
   "line_cn": "三条步道各一张丝印海报，一色一刮印出来，再沿山脊一镜到底从正午爬到黄昏。",
   "uses": [
-   "Trail & destination guides",
-   "Tourism promos",
+   "Destination guides",
+   "Tourism",
    "Event posters"
   ],
   "dur": 38.4
@@ -585,8 +721,8 @@
   "cat": "信息与发布",
   "cat_en": "Information & Keynote",
   "film": "Clawd Moves In",
-  "line": "Clawd, the Claude Code pixel mascot, hops out of the terminal into the Claude app and acts out plan mode, diff comments and self-checks in a one-take screencast.",
-  "line_cn": "像素小人 Clawd 跳出终端、搬进 Claude 应用，在一镜到底的录屏里演示 Plan 模式、diff 评论和自检。",
+  "line": "Clawd hops out of the terminal into the Claude app and acts out plan mode and self-checks in one take.",
+  "line_cn": "像素小人 Clawd 搬进 Claude 应用，一镜到底演示 Plan 模式和自检。",
   "uses": [
    "Product tutorials",
    "Feature launches",
@@ -602,12 +738,12 @@
   "cat": "信息与发布",
   "cat_en": "Information & Keynote",
   "film": "Volt · Spec Scan",
-  "line": "An e-bike is scanned into a hologram; target boxes lock onto the battery, motor and brakes, and each spec rolls into place.",
-  "line_cn": "一辆电助力车被扫描成全息线框，目标框依次锁定电池、电机、刹车，参数逐个滚到真值。",
+  "line": "An e-bike is scanned into a hologram; target boxes lock onto the battery, motor and brakes.",
+  "line_cn": "电助力车被扫描成全息线框，目标框依次锁定电池、电机、刹车。",
   "uses": [
-   "Product spec walkthroughs",
-   "Launch & crowdfunding videos",
-   "Trade-show screens"
+   "Spec walkthroughs",
+   "Launch videos",
+   "Trade shows"
   ],
   "dur": 39.0
  },
@@ -670,12 +806,12 @@
   "cat": "卡通与动画",
   "cat_en": "Cartoon & Anime",
   "film": "Meet Pip",
-  "line": "A robot vacuum set up in three steps, told like a 1950s classroom film: place the dock, connect the app, press start.",
-  "line_cn": "用 50 年代教育片的口吻，三步教你装好一台扫地机：放充电座、连 app、按开始。",
+  "line": "A robot vacuum set up in three steps, told like a 1950s classroom film.",
+  "line_cn": "用 50 年代教育片的口吻，三步教你装好一台扫地机。",
   "uses": [
-   "Product set-up guides",
-   "Help-centre explainers",
-   "How-to steps"
+   "Set-up guides",
+   "Help centres",
+   "How-to"
   ],
   "dur": 40.0
  },
@@ -717,7 +853,7 @@
   "slug": "microgame",
   "num": "32",
   "en": "Microgame Frenzy",
-  "cn": "微游戏快闪（瓦里奥制造式）",
+  "cn": "微游戏快闪",
   "cat": "游戏",
   "cat_en": "Games",
   "film": "Five-Second Astronaut",

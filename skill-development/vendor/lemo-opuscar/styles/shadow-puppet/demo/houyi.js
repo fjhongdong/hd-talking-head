@@ -1,17 +1,17 @@
-// 后羿皮影：11 片驴皮 + 箭壶 + 弓箭 + 两根雉尾翎子；三根操纵杆（颈杆、两根手杆）
-// 侧身朝右。所有坐标单位 = 幕布 px（机位 1×）。旋转：弧度，正 = 顺时针；手臂/腿 0 = 自然下垂，负值 = 向前（向右）抬
+// Hou Yi (后羿) shadow puppet: 11 pieces of donkey hide + quiver + bow and arrow + two pheasant-tail plumes (雉尾翎子, lingzi); three control rods (签子): the neck rod and two arm rods
+// Side view facing right. All coordinate units = screen (幕布) px (camera at 1×). Rotation: radians, positive = clockwise; arms/legs 0 = hanging naturally, negative = raised forward (to the right)
 import { piece, drawPiece, fill, cut, cutLine, ink, within, smooth, poly, scales, scalesOpen, lattice, coin, cloud, beads, beadLine, plum, waves, meander, rivet, DYE } from './carve.js';
 
-// —— 关节（父片局部坐标）——
-const HK = 1.2;   // 头部放大（皮影头茬大，头盔占全身约 1/4）
+// —— Joints (in the parent piece's local coordinates) ——
+const HK = 1.2;   // Head enlarged (shadow-puppet head pieces (头茬, touchar) are big; the helmet takes up about 1/4 of the whole figure)
 export const J = {
   neck: [7, -122], shF: [16, -106], shB: [1, -110], rod: [5, -117],
   hipF: [10, 52], hipB: [-8, 50], elbow: [0, 62], wrist: [0, 54], feather: [-9 * HK, -104 * HK]
 };
-export const LEGLEN = 222 + 52;   // 腰 → 靴底
-const UA = 62, FA = 54, HANDR = 13;      // 上臂、前臂、手心到腕
+export const LEGLEN = 222 + 52;   // waist → boot sole
+const UA = 62, FA = 54, HANDR = 13;      // upper arm, forearm, palm to wrist
 
-// ================= 各片 =================
+// ================= Pieces =================
 const facePts = [[-6, 6], [8, 6], [9, -6], [13, -12], [18, -15], [19.5, -19], [21, -21.5], [19.5, -23.2], [22.5, -24.5], [21.5, -28], [24, -29.5], [27.5, -32.5], [22, -42], [18.5, -52], [17.5, -60], [17, -65], [-2, -64], [-6, -56], [-5, -40], [-9, -26], [-10, -10]];
 const hairPts = [[-2, -64], [-18, -64], [-28, -58], [-31, -40], [-27, -18], [-17, 2], [-6, 7], [-10, -10], [-9, -26], [-4.5, -33], [-5, -40], [-6, -56]];
 function head() {
@@ -24,7 +24,7 @@ function head() {
     const hair = q => poly(q, hairPts);
     fill(g, DYE.ink, hair);
     within(g, hair, () => { for (let k = 0; k < 7; k++) cutLine(g, .7, q => { q.moveTo(-6 - k * 3, -60); q.quadraticCurveTo(-24 - k * 1.2, -40 + k * 2, -16 - k * 1.5, -2 + k); }); });
-    // 空脸：脸部镂空，只留轮廓与五官细皮线
+    // Hollow face (空脸): the face is cut out, leaving only the outline and thin lines of hide for the features
     ink(g, 2.3, q => poly(q, facePts.slice(1, 17), false));
     ink(g, 1.2, q => { q.moveTo(16.5, -15); q.quadraticCurveTo(6, -9, -6, -24); });
     ink(g, 1.5, q => { q.moveTo(15.5, -44.2); q.quadraticCurveTo(8, -48.2, -1, -46); q.quadraticCurveTo(-4, -46.5, -6.5, -49.5); });
@@ -57,7 +57,7 @@ function chest() {
   return piece([-40, -136, 50, 10], g => {
     fill(g, DYE.red, body);
     within(g, body, () => { scalesOpen(g, -38, -92, 48, -18, 6.4); });
-    // 甲片分区线（留皮）
+    // Lines dividing the armour plates (left as hide)
     ink(g, 2.4, q => { q.moveTo(-30, -52); q.quadraticCurveTo(6, -44, 42, -52); });
     const mir = q => { q.arc(20, -64, 14, 0, Math.PI * 2); };
     fill(g, DYE.yellow, mir); cut(g, q => { q.arc(20, -64, 11, 0, Math.PI * 2); q.arc(20, -64, 8, 0, Math.PI * 2, true); }, 'nonzero');
@@ -113,18 +113,18 @@ function skirt() {
 }
 function leg() {
   return piece([-22, -12, 50, 226], g => {
-    // 裤：锦纹菱格 + 膝部团花
+    // Trousers: brocade diamond lattice + a round flower medallion at the knee
     const tr = q => smooth(q, [[-13, -8], [13, -8], [15, 60], [15, 100], [13, 130], [-11, 132], [-14, 100], [-14, 60]]);
     fill(g, DYE.jade, tr);
     within(g, tr, () => { lattice(g, -16, 60, 18, 132, 9, 1.7); });
     fill(g, DYE.jade, q => q.arc(1, 96, 9, 0, 7)); cloud(g, 1, 96, 6.5, .5, 1.4); ink(g, 1.2, q => q.arc(1, 96, 9, 0, 7));
     ink(g, 1.7, tr);
-    // 朝靴：高靴筒（墨色，刻云头）+ 翘头
+    // Court boots (朝靴): tall boot shaft (ink-black, carved cloud heads) + upturned toe
     const boot = q => smooth(q, [[-13, 118], [13, 116], [14, 150], [15, 178], [26, 186], [38, 190], [43, 184], [45, 192], [40, 200], [-15, 200], [-15, 160]]);
     fill(g, DYE.ink, boot);
     within(g, boot, () => { cloud(g, 0, 138, 7, .3, 1.6); cloud(g, -2, 166, 5.5, 2.4, 1.4, -1); cutLine(g, 1.3, q => { q.moveTo(-13, 124); q.lineTo(13, 122); }); cutLine(g, 1.1, q => { q.moveTo(8, 184); q.quadraticCurveTo(22, 180, 36, 190); }); beadLine(g, -9, 151, 9, 150, 1.3, 4.5); });
     ink(g, 1.2, boot, '#000');
-    // 厚白底：一整片刻花
+    // Thick white sole: one whole piece with carved flowers
     const sole = q => poly(q, [[-17, 199], [44, 197], [43, 204], [41, 221], [-15, 223], [-17, 212]]);
     fill(g, DYE.white, sole);
     within(g, sole, () => { cutLine(g, 1.4, q => { q.moveTo(-15, 205); q.lineTo(42, 203); q.moveTo(-15, 217); q.lineTo(41, 215.5); }); for (let x = -11; x < 40; x += 6.5) cut(g, q => { q.ellipse(x, 210.5, 2.1, 3.2, 0, 0, 7); }); });
@@ -172,7 +172,7 @@ export function build() {
   return P;
 }
 
-// ================= 矩阵 =================
+// ================= Matrices =================
 const mul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
 const T = (x, y) => [1, 0, 0, 1, x, y];
 const R = a => { const c = Math.cos(a), s = Math.sin(a); return [c, s, -s, c, 0, 0]; };
@@ -181,7 +181,7 @@ export const ap = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y 
 export { mul, T, R, S };
 const set = (g, M) => g.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
 
-// 两段 IK：肩 s（世界）→ 目标 p（世界，手心），返回上臂/前臂的世界旋转（0 = 下垂）
+// Two-bone IK: shoulder s (world) → target p (world, palm), returns the world rotations of upper arm / forearm (0 = hanging down)
 function ik(s, p, bend) {
   const L1 = UA, L2 = FA + HANDR; let dx = p[0] - s[0], dy = p[1] - s[1], d = Math.hypot(dx, dy);
   d = Math.max(Math.abs(L1 - L2) + 1, Math.min(L1 + L2 - .3, d));
@@ -191,12 +191,12 @@ function ik(s, p, bend) {
   return [a1 - Math.PI / 2, a2 - Math.PI / 2];
 }
 
-// 雉尾翎子：链条（静止曲率 + 动态偏转 dyn[i]）
+// Pheasant-tail plumes (lingzi): a chain (rest curvature + dynamic deflection dyn[i])
 function feather(g, K, base, dir0, n, seg, k, dyn, w0) {
   const pts = [[base[0], base[1]]]; let a = dir0, x = base[0], y = base[1];
   for (let i = 0; i < n; i++) { a += k + (dyn ? dyn[i] || 0 : 0); x += Math.cos(a) * seg; y += Math.sin(a) * seg; pts.push([x, y]); }
   set(g, [1, 0, 0, 1, 0, 0]);
-  // 翎身：渐细带状 + 横斑
+  // Plume body: tapering ribbon + cross bars
   const L = [], Rr = [];
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i], q = pts[Math.min(i + 1, pts.length - 1)], o = pts[Math.max(i - 1, 0)];
@@ -205,7 +205,7 @@ function feather(g, K, base, dir0, n, seg, k, dyn, w0) {
   }
   g.beginPath(); g.moveTo(L[0][0], L[0][1]); for (const p of L) g.lineTo(p[0], p[1]); for (let i = Rr.length - 1; i >= 0; i--) g.lineTo(Rr[i][0], Rr[i][1]); g.closePath();
   g.fillStyle = DYE.hide; g.fill();
-  for (let i = 1; i < pts.length - 1; i++) {   // 横斑
+  for (let i = 1; i < pts.length - 1; i++) {   // cross bars
     const j = i + .5, p0 = L[i], p1 = Rr[i], q0 = L[Math.min(i + 1, L.length - 1)], q1 = Rr[Math.min(i + 1, Rr.length - 1)];
     g.beginPath(); g.moveTo(p0[0], p0[1]); g.lineTo(p1[0], p1[1]); g.lineTo((p1[0] + q1[0]) / 2, (p1[1] + q1[1]) / 2); g.lineTo((p0[0] + q0[0]) / 2, (p0[1] + q0[1]) / 2); g.closePath();
     g.fillStyle = i % 2 ? '#5a2a14' : DYE.gold; g.fill();
@@ -215,7 +215,7 @@ function feather(g, K, base, dir0, n, seg, k, dyn, w0) {
   return pts;
 }
 
-// 弓（世界坐标里画）：握点 G，前向 f，上向 u；draw 0..1；nock 拉弦点
+// Bow (drawn in world coordinates): grip point G, forward f, up u; draw 0..1; nock = the point where the string is drawn
 function bow(g, K, G, f, u, draw, nock, arrow) {
   set(g, [1, 0, 0, 1, 0, 0]);
   const Lh = 100 * K, pt = s => {
@@ -224,9 +224,9 @@ function bow(g, K, G, f, u, draw, nock, arrow) {
   };
   const top = pt(-1), bot = pt(1);
   const np = nock || [(top[0] + bot[0]) / 2, (top[1] + bot[1]) / 2];
-  // 弦
+  // String
   g.beginPath(); g.moveTo(top[0], top[1]); g.lineTo(np[0], np[1]); g.lineTo(bot[0], bot[1]); g.strokeStyle = '#3b2616'; g.lineWidth = 1.1 * K; g.stroke();
-  // 箭
+  // Arrow
   if (arrow) {
     const ax = G[0] - np[0], ay = G[1] - np[1], al = Math.hypot(ax, ay) || 1, dx = ax / al, dy = ay / al, len = Math.max(150 * K, al + 40 * K);
     const tip = [np[0] + dx * len, np[1] + dy * len];
@@ -234,7 +234,7 @@ function bow(g, K, G, f, u, draw, nock, arrow) {
     g.beginPath(); g.moveTo(tip[0] + dx * 12 * K, tip[1] + dy * 12 * K); g.lineTo(tip[0] - dy * 4.5 * K, tip[1] + dx * 4.5 * K); g.lineTo(tip[0] + dy * 4.5 * K, tip[1] - dx * 4.5 * K); g.closePath(); g.fillStyle = DYE.ink; g.fill();
     for (const sd of [1, -1]) { g.beginPath(); g.moveTo(np[0] + dx * 4 * K, np[1] + dy * 4 * K); g.lineTo(np[0] + (dx * 22 - dy * 5 * sd) * K, np[1] + (dy * 22 + dx * 5 * sd) * K); g.lineTo(np[0] + dx * 26 * K, np[1] + dy * 26 * K); g.closePath(); g.fillStyle = DYE.red; g.fill(); }
   }
-  // 弓身：渐细 + 缠带
+  // Bow limbs: tapering + wrapped bands
   const N = 30, Lp = [], Rp = [];
   for (let i = 0; i <= N; i++) {
     const s = -1 + 2 * i / N, p = pt(s), q = pt(Math.min(1, s + .02)), o = pt(Math.max(-1, s - .02));
@@ -247,8 +247,8 @@ function bow(g, K, G, f, u, draw, nock, arrow) {
   return { top, bot };
 }
 
-// ================= 姿势 → 画到透射率画布 =================
-// pose: {x,y,rot,head,waist,legF,legB, bowT:[dx,dy] 相对肩的握弓手目标, drawT, draw, arrow, bowOn, hB, hF, feat:[dynA,dynB]}
+// ================= Pose → drawn onto the transmittance canvas =================
+// pose: {x,y,rot,head,waist,legF,legB, bowT:[dx,dy] bow-hand target relative to the shoulder, drawT, draw, arrow, bowOn, hB, hF, feat:[dynA,dynB]}
 export const REST = { x: 0, y: 0, rot: 0, head: 0, waist: 0, legF: -.06, legB: .08, bowT: [16, 118], drawT: [10, 122], draw: 0, arrow: false, bowOn: true };
 export function solve(pose) {
   const p = { ...REST, ...pose };
@@ -257,7 +257,7 @@ export function solve(pose) {
   const toW = (s, d) => ap(MW, J[s][0] + d[0], J[s][1] + d[1]);
   const pB = toW('shB', p.bowT);
   const [aB1, aB2] = ik(sB, pB, p.bendB ?? 1);
-  // 拉弦手：拉满时在下巴旁（锚点），否则按 drawT
+  // Drawing hand: at full draw it sits beside the chin (the anchor point), otherwise follows drawT
   const pF = toW('shF', p.drawT);
   const [aF1, aF2] = ik(sF, pF, p.bendF ?? 1);
   return { p, MW, sB, sF, aB1, aB2, aF1, aF2 };
@@ -279,12 +279,12 @@ export function drawHouYi(g, Cam, pose, opt = {}) {
   const riv = [];
   const dp = (M, pc) => { set(g, M); drawPiece(g, pc); };
   g.save(); g.globalCompositeOperation = 'multiply';
-  // 弓：握点在握弓手的孔
+  // Bow: grip point at the hole in the bow hand
   const Minv = MhB, G = ap(MhB, 1.7, 14.4), fx = ap(MhB, 1.7, 15.4), f = [fx[0] - G[0], fx[1] - G[1]];
   const fl = Math.hypot(f[0], f[1]); f[0] /= fl; f[1] /= fl; const u = [f[1], -f[0]];
   const nockW = p.draw > 0 ? ap(MhF, 3.5, 16) : null;
   const camK = Math.hypot(Cam[0], Cam[1]);
-  // 画序：翎子 → 后臂(握弓) → 后腿 → 前腿 → 裙 → 箭壶 → 胸 → 头 → 前臂 → 弓 → 前手
+  // Draw order: plumes → back arm (holding the bow) → back leg → front leg → skirt → quiver → chest → head → front arm → bow → front hand
   const headM = Mhead;
   const fb = ap(headM, ...J.feather);
   const worldHeadA = p.rot + p.head;
@@ -298,19 +298,19 @@ export function drawHouYi(g, Cam, pose, opt = {}) {
   dp(W, P.quiver); dp(W, P.chest); dp(Mhead, P.head);
   dp(MuF, P.ua); dp(MfF, P.fa); dp(MhF, P.handDraw);
   g.restore();
-  // 铆钉
+  // Rivets (joint pins)
   set(g, [1, 0, 0, 1, 0, 0]);
   const rv = (M, x, y) => { const q = ap(M, x, y); riv.push(q); };
   rv(W, ...J.neck); rv(W, ...J.shB); rv(W, ...J.shF); rv(W, 0, 0);
   rv(Mskirt, ...J.hipB); rv(Mskirt, ...J.hipF);
   rv(MuB, ...J.elbow); rv(MfB, ...J.wrist); rv(MuF, ...J.elbow); rv(MfF, ...J.wrist);
   if (opt.rivets !== false) for (const q of riv) rivet(g, q[0], q[1], 3.4 * camK);
-  // 操纵杆锚点（世界 = 幕布坐标，已含机位的在屏幕坐标）
+  // Control-rod anchors (world = screen (幕布) coordinates; once the camera is applied, viewport coordinates)
   const rods = [ap(W, ...J.rod), ap(MhB, 0, 8), ap(MhF, 0, 8)];
   return { rods, rivets: riv, M: { W, Mhead, MuB, MfB, MhB, MuF, MfF, MhF, Mskirt, MlegB, MlegF }, bow: B, plume: [plumeA, plumeB] };
 }
 
-// 操纵杆：离布的竹杆，虚、半透明（屏幕坐标）；ends = 杆尾（艺人手里）
+// Control rods: bamboo rods held off the cloth, so soft-focus and translucent (viewport coordinates); ends = rod butts (in the puppeteer's hands)
 export function drawRods(g, pts, ends, blur = 2.5, alpha = .62) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'multiply'; g.filter = `blur(${blur}px)`; g.globalAlpha = alpha;
   pts.forEach((p, i) => {

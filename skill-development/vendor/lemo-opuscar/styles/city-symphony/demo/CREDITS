@@ -1,0 +1,80 @@
+Time-lapse Symphony — "One Day in New York" (library demo)
+Every third-party asset in the film, with its source and licence. Full per-second usage: SOURCES.md / SOURCES.jsonl.
+Unofficial film; no person, institution or rights holder named here endorses it.
+
+FOOTAGE · CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/) and CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/)
+All of it was cut, retimed (sped up with frame blending, speed-ramped, slowed with frame interpolation), cropped,
+reframed in grids and split screens, and colour-graded with grain and a 1.85:1 matte. No sound from it is used.
+Only files whose licence has been checked: a passed review on Wikimedia Commons (VimeoReview / LicenseReview /
+Flickrreview), or the author's own source page still showing the licence.
+- "New York in Motion" by Scott Herder (2018), CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:New_York_in_Motion.webm  (from https://vimeo.com/272678388; VimeoReview passed)
+  Changes: every shot scaled 1.18× from the centre so the author's corner logo is out of frame; title, kaleidoscope,
+  whip transitions and end card not used.
+- "Time-lapse of New York City skyline July 2023" by David Schwab, CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Time-lapse_of_New_York_City_skyline_July_2023.webm
+  (1080p transcode; from YouTube "New York City Skyline Timelapse 4K", RwKjos0lwi8, which still shows CC BY)
+- "Empty New York city" by Longfellow Films (2020), CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Empty_New_York_city.webm  (from https://vimeo.com/408504731; VimeoReview passed)
+  Changes: downscaled from 4K and cropped so the "© Longfellow Films" corner mark is out of frame.
+- "DIS:CONNECTED - NYC DURING COVID-19" by Joe Cavallini (2020), CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:DIS-CONNECTED_-_NYC_DURING_COVID-19.webm  (from https://vimeo.com/421319675;
+  VimeoReview passed). Burnt-in subtitle and end credits not used.
+- "Aerial Footage - People's Climate March" by 350.org (2014), CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Aerial_Footage_-_People%27s_Climate_March.webm  (from https://vimeo.com/107517186;
+  LicenseReview passed)
+- "Earth Hour Set At Times Square" by Branded Cities (2019), CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Earth_Hour_Set_At_Times_Square.webm  (from https://vimeo.com/327177357;
+  VimeoReview passed). Only the night view from above (84.25–85.75 s); the watermarked tail is not used.
+- "42nd Time Lapse" by Steven Kelley (2012), CC BY 2.0
+  https://www.flickr.com/photos/yukonblizzard/6817133180/  (also on Commons as "Time-lapse looking down on 42nd and 7th
+  in Times Square", Flickrreview passed; the 720p Flickr stream is used)
+- "steel beams | N over the Manhattan Bridge" by Jason Eppink (2012), CC BY 2.0
+  https://www.flickr.com/photos/jasoneppink/6655180315  via
+  https://commons.wikimedia.org/wiki/File:Manhattan_Bridge_N_train_vc.ogv  (Flickrreview passed)
+- "5 seconds of Times Square" by Sunny Ripert (2010), CC BY 2.0
+  https://www.flickr.com/photos/sunfox/5251933908/  (author's own Flickr page, still CC BY 2.0)
+
+ARCHIVE FILM · public domain
+- "New Brooklyn to New York via Brooklyn Bridge, no. 2" (Edison, copyright 1899; camera credited to James H. White),
+  Library of Congress, Motion Picture, Broadcasting and Recorded Sound Division, digital ID ntscrm.00045645,
+  via https://commons.wikimedia.org/wiki/File:New_Brooklyn_to_New_York_via_Brooklyn_Bridge,_no._2_(1899).webm
+  Public domain: published in the US before 1931. Changes: excerpt 23.4–26.4 s, slowed to 0.75× with frame crossfades,
+  light denoise and sharpening, centre-cropped to a half-frame panel. Not restored, not colourised.
+
+FOOTAGE · public domain
+- "Parade of Ships B-Roll - Fleet Week NYC 2016", U.S. Marine Corps, DVIDS https://www.dvidshub.net/video/465706/parade-ships-b-roll
+  via https://commons.wikimedia.org/wiki/File:Parade_of_Ships_B-Roll_-_Fleet_Week_NYC_2016.webm  (PD-USMC: work of the
+  U.S. federal government; LicenseReview passed). Downloaded excerpt 100–200 s; used: Lower Manhattan and the Empire State
+  Building seen from the water.
+
+PHOTOGRAPHS · public domain
+- "ISS-47 New York City at night" (ISS047), NASA, photographed by astronaut Tim Kopra. Public domain (NASA).
+  https://commons.wikimedia.org/wiki/File:ISS-47_New_York_City_at_night.jpg
+- Carol M. Highsmith Archive, Library of Congress (dedicated to the public domain by the photographer):
+  "Concourse clock at Grand Central Station, New York, New York" (LCCN2011634940)
+  "Interior, Grand Central Station, New York, New York" (LCCN2010630085)
+  "Times Square, New York, New York" (LCCN2011635107)
+  "Times Square, which is actually triangular, in New York, New York" (LCCN2011632416)
+  via Wikimedia Commons (pages listed in SOURCES.md). Changes: cropped to 16:9, slow pushes, colour-graded.
+
+TEXT · public domain
+- Walt Whitman, "Crossing Brooklyn Ferry", Leaves of Grass (Boston: Thayer and Eldridge, 1860), p. 380, section 6.
+  Scan: University of California Libraries / Internet Archive (NOT_IN_COPYRIGHT)
+  https://archive.org/details/whitleavesofgrass00whitrich/page/380
+  Chinese translation of the quoted line: our own.
+
+DATA (facts, not licensed material; see FACTS.md)
+- U.S. Census Bureau, 2020 Census (QuickFacts, New York city, New York).
+- NYC Department of Transportation, Brooklyn Bridge page (2024 daily averages).
+- Times Square Alliance, market research page (2024 daily pedestrians).
+
+MUSIC
+- Original score (tools/music.py), played with sampled instruments, CC0 1.0:
+  VS Chamber Orchestra: Community Edition (Versilian Studios) — organ, organ pedal, strings, winds, horn, percussion;
+  Versilian Community Sample Library (Versilian Studios) — glockenspiel, bowed vibraphone, concert bass drum, cymbal.
+
+FONTS · SIL Open Font License 1.1 (fonts/OFL-*.txt)
+- Michroma (Vernon Adams), Noto Sans SC (Adobe / Google).
+
+Library demo sign-off on the end card: "LemoLab × Claude Opus 5.5" (library demos only).

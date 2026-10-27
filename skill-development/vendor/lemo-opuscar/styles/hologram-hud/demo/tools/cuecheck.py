@@ -1,5 +1,5 @@
-"""卡点自检：画面关键事件（锁定 / 数值确认 / 点亮 / 热点 / CTA / 旁白起点）↔ 配乐 onset 与静音区。
-用法（仓库根）：.venv/bin/python styles/hologram-hud/demo/tools/cuecheck.py"""
+"""Hit-point self-check: key picture events (lock / value confirm / ignite / hotspot / CTA / narration start) ↔ score onsets and silence zones.
+Usage (repo root): .venv/bin/python styles/hologram-hud/demo/tools/cuecheck.py"""
 import os, json
 D = os.environ.get('HH_WORK') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 EV = json.load(open(os.path.join(D, 'events.json')))['ev']
@@ -10,7 +10,7 @@ KEY = {'lock', 'confirm', 'ignite', 'ping', 'cta', 'confirm_small', 'detect', 's
 bad, rows = 0, []
 for e in EV:
     if e['type'] not in KEY: continue
-    g = abs(e['t'] / .125 - round(e['t'] / .125)) * .125          # 离 1/16 网格
+    g = abs(e['t'] / .125 - round(e['t'] / .125)) * .125          # distance from the 1/16 grid
     d = near(e['t'])
     ok = g < 1e-3 and d < 1 / 24
     bad += not ok

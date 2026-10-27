@@ -41,12 +41,13 @@
     {
       "path": "skill-development/vendor/lemo-opuscar",
       "repository": "https://github.com/lemomo-ai/lemo-opuscar.git",
-      "commit": "b5e8ef93930b6d828f352055a689320f138237b1",
+      "commit": "413a6bd6d78ebd3bdd5abaec9538a26867f890df",
       "archives": [
         "source-repositories/lemo-opuscar.source.part-000",
-        "source-repositories/lemo-opuscar.source.part-001"
+        "source-repositories/lemo-opuscar.source.part-001",
+        "source-repositories/lemo-opuscar.source.part-002"
       ],
-      "sha256": "6f1f0849458c5b24b4b52c96202b585d75fa24d91776b257dc8a95773df1039f"
+      "sha256": "dde2ba3e5f1b0be1190f184cf1b3be20f770ff0aca1481fa3951cf6274e8f8dd"
     },
     {
       "path": "skill-development/vendor/onetake",

@@ -1,0 +1,41 @@
+Broadcast News Package (电视新闻包装) — library demo
+本周 AI 四件事 · The Week in AI — LEMO AI NEWS, week 42 (12–18 Oct 2026)
+LemoLab × Claude Opus 5.5
+An unofficial film. LEMO AI NEWS is LemoLab's own channel brand; no company in the news made or endorsed it.
+
+News sources (per fact, with quoted wording: FACTS.md)
+- Google: Gemini API changelog and latest-model page (ai.google.dev); blog.google "Gemini 4 Argon" (30 Sep 2026)
+- Korea Exchange KOSPI daily closes, retrieved via Naver Finance (data/kospi_daily.csv)
+- The Korea Herald (15 Oct 2026); The Korea Times (16 Oct 2026); Bloomberg (15 Oct 2026, headline and summary)
+- Euronews, Luca Bertuzzi (14 Oct 2026) — only for the requests sent to OpenAI and Anthropic
+- Meta AI research blog "Muse Spark Open" (15 Oct 2026)
+- European Commission Press Corner, speech by Executive Vice-President Henna Virkkunen, International AI Summit, Dublin (14 Oct 2026)
+
+Data
+- KOSPI daily closing prices 15 Sep – 15 Oct 2026: Korea Exchange index data as served by Naver Finance's chart API
+  (api.stock.naver.com/chart/domestic/index/KOSPI); raw responses kept in data/. Facts, not a creative work.
+
+Map data
+- Natural Earth 1:50m Admin 0 countries — public domain (naturalearthdata.com), via world-atlas 2.0.2 (ISC licence,
+  https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-50m.json)
+
+Music samples
+- VS Chamber Orchestra: Community Edition, Versilian Studios / Sam Gossner — CC0 1.0 (github.com/sgossner/VSCO-2-CE)
+- Versilian Community Sample Library, Versilian Studios — CC0 1.0 (github.com/sgossner/VCSL)
+  Score composed for this film; sound effects synthesised in code (core/audio/sfx.py).
+
+Voice
+- Chinese narration generated with Doubao TTS 2.0 (Volcengine seed-tts-2.0), voice 解说小明 2.0
+  (zh_male_jieshuoxiaoming_uranus_bigtts), via tools/tts_doubao.py. Subject to Volcengine's service terms.
+  The library's free default voice is Kokoro (core/tts/tts.py, Apache 2.0).
+
+Fonts (SIL Open Font License 1.1, subsets from Google Fonts)
+- Noto Sans SC (Google); Barlow Condensed (Jeremy Tribby); IBM Plex Mono (IBM)
+
+Images
+- Two illustrative background plates (data-centre aisle, silicon wafer): AI-generated with the Codex CLI image tool
+  (image_gen) from the prompts in tools/gen_plates.sh; committed as assets/plates/plate_datacenter.jpg and
+  assets/plates/plate_wafer.jpg. They are illustrations, not news pictures: they show no real place, event,
+  person, text or logo, and carry an "ILLUSTRATION / 示意 · AI 生成画面" tag whenever they are on screen.
+- Charts, maps, documents, the quote card, the spec card and the LEMO plate are drawn in code. No third-party logos;
+  company names are set in type.

@@ -1,4 +1,4 @@
-// main.js — 《The Last Save Point》导演脚本：按 timeline.json 排镜头、转场、调色板、事件（EV）与字幕（SUBS）
+// main.js — director script for "The Last Save Point": lays out shots, transitions, palettes, events (EV) and subtitles (SUBS) from timeline.json
 import { W, H, FB, C, T, GBI, LUT, makeOut, mosaic, darken, whiten, bayer, bayer8, clamp, ss, eio, eo } from './px.js';
 import { corridor, doorScene, CORR, FLOOR, DOOR } from './scenes.js';
 import { village, blitHalf, half, campfire, battle, battleUI, BATTLE, thumbVillage, thumbCamp, thumbBattle, thumbNow, titleCard, endCard } from './memscenes.js';
@@ -15,7 +15,7 @@ const VDUR = await (await fetch('./voices/dur.json')).json();
 const LINE = Object.fromEntries(LINES.map(l => [l.id, l]));
 const vo = id => ({ t0: TL.vo[id].t, t1: TL.vo[id].t + VDUR[id], expr: TL.vo[id].expr, text: LINE[id].sub || LINE[id].text });
 
-// —— 存档位 ——
+// —— Save files ——
 const FILES = [
   { label: 'FILE 1', place: 'HOLLOWMERE', time: '00:12', thumb: thumbVillage, lut: LUT.gb4 },
   { label: 'FILE 2', place: 'EMBER RIDGE', time: '23:48', thumb: thumbCamp, lut: LUT.nes },
@@ -23,12 +23,12 @@ const FILES = [
 ];
 const WREN_LINE = 'Cold? Here. Nothing finds you if we share it.';
 
-// ———————————————— 事件与字幕（混音 / srt 用）————————————————
+// ———————————————— Events and subtitles (for the mix / srt) ————————————————
 const EV = [], SUBS = [];
 const ev = (t, type, o = {}) => EV.push({ t: +t.toFixed(3), type, ...o });
 function typing(t0, s, cps, type, every = 2) { let k = 0; for (let i = 0; i < s.length; i++) { if (s[i] === ' ') continue; if (k++ % every === 0) ev(t0 + i / cps, type, { ch: i }); } }
 for (const id of ['vo1', 'vo2', 'vo4', 'vo5', 'vo6']) { const v = vo(id); ev(v.t0, 'vo', { id }); }
-// 字幕区间（≥ 语音 + 0.6，且 ≥ 1.8）
+// Subtitle spans (≥ voice + 0.6, and ≥ 1.8)
 const box = (t0, t1, s) => { SUBS.push({ t0, t1, text: s }); return { t0, t1, text: s }; };
 const B = {};
 { const v = vo('vo1'); B.vo1 = box(v.t0 - .1, Math.max(v.t1 + .6, v.t0 + 1.8), v.text); }
@@ -39,7 +39,7 @@ B.fell = box(29.9, 32.05, 'WREN fell.');
 { const v = vo('vo4'); B.vo4 = box(v.t0 - .1, Math.min(35.45, Math.max(v.t1 + .6, v.t0 + 1.8)), v.text); }
 { const v = vo('vo5'); B.vo5 = box(v.t0 - .1, Math.max(v.t1 + .6, v.t0 + 1.8), v.text); }
 { const v = vo('vo6'); B.vo6 = box(v.t0 - .1, Math.min(49.4, Math.max(v.t1 + .6, v.t0 + 1.8)), v.text); }
-// 拟音事件
+// Foley events
 ev(0, 'chime'); ev(0, 'bed', { name: 'hum', t1: 10.4, gain: .5 });
 for (let s = 0.25; s < 7.5; s += .25) ev(s, 'step', { v: .6 + .4 * Math.sin(s * 3) ** 2 });
 ev(7.5, 'flare'); ev(8.0, 'open'); ev(8.75, 'select'); ev(8.8, 'slide'); ev(9.5, 'cursor'); ev(10.25, 'select'); ev(10.25, 'mosaic', { up: 1 });
@@ -62,7 +62,7 @@ ev(48.7, 'stepB'); ev(49.05, 'stepB'); ev(48.9, 'swell', { t1: 49.5 });
 ev(51.2, 'cursor');
 window.EV = EV; window.SUBS = SUBS;
 
-// ———————————————— 分镜函数 ————————————————
+// ———————————————— Shot functions ————————————————
 const heroX = t => t < 7.5 ? 70 + 30 * t : CORR.heroStop;
 const heroPose = t => t < 7.5 ? 'walk' + (Math.floor(t * 8) % 4) : (t < 8.3 ? 'lookup' : 'idle');
 const camA = t => Math.round(99 * eio(clamp((t - .4) / 7.1, 0, 1)));
@@ -73,7 +73,7 @@ function drawDialog(b, t, expr, skin = 'snes', portrait) {
 }
 function listSlide(t, t0) { return Math.round(-190 * (1 - eo(clamp((t - t0) / .3, 0, 1)))); }
 
-// 现在 · 走廊 + 存档（t < 10.25 或 35.5 ≤ t < 41.9）
+// Present · corridor + save (t < 10.25 or 35.5 ≤ t < 41.9)
 function shotCorridor(t, regionsOut) {
   const late = t >= 35.5;
   const flare = !late && t > 7.5 && t < 8.3 ? 6 * (1 - (t - 7.5) / .8) : late && t > 40.3 && t < 41.2 ? 8 * (1 - (t - 40.3) / .9) : 0;
@@ -91,7 +91,7 @@ function shotCorridor(t, regionsOut) {
       regs.forEach(r => regionsOut.push({ ...r, x: r.x + dx }));
     }
   } else {
-    // 回到现在：存档位上的犹豫
+    // Back to the present: hesitation at the save point
     if (t >= 36.2) {
       const cur = t < 36.9 ? 0 : t < 37.4 ? 0 + ss(36.9, 37.02, t) : t < 38.9 ? 1 + ss(37.4, 37.52, t) : 2 + ss(38.9, 39.02, t);
       const saved = t >= 40.3;
@@ -105,7 +105,7 @@ function shotCorridor(t, regionsOut) {
     }
   }
 }
-// 回忆三 · 战斗
+// Memory three · battle
 function battleState(t) {
   const lt = t - 26.2, st = { wrenVis: true, arloPose: 'ready' };
   if (t < 26.95) { st.wrenX = BATTLE.wrenX0; st.wrenPose = 'idle'; }
@@ -132,7 +132,7 @@ function shotBattle(t) {
   drawDialog(B.vo4, t, 'sad');
 }
 function battleLUT(t) { return t < 31.0 ? LUT.full : t < 31.9 ? LUT.c16 : t < 32.8 ? LUT.c8 : t < 33.7 ? LUT.c4 : t < 34.6 ? LUT.c2 : LUT.faded; }
-// 最终之门
+// Final gate
 function doorState(t) {
   const TOPY = -386, camY = t < 42.1 ? 0 : t < 43.3 ? TOPY * eio((t - 42.1) / 1.2) : t < 43.9 ? TOPY : t < 44.9 ? TOPY * (1 - eio((t - 43.9) / 1.0)) : 0;
   let pose = 'backlook', y = 146;
@@ -153,7 +153,7 @@ function shotDoor(t) {
   return st;
 }
 
-// ———————————————— 渲染 ————————————————
+// ———————————————— Render ————————————————
 const bufA = new Uint32Array(W * H), bufB = new Uint32Array(W * H);
 function applyRegions(regs) { for (const r of regs) for (let y = Math.max(0, r.y); y < Math.min(H, r.y + r.h); y++) for (let x = Math.max(0, r.x); x < Math.min(W, r.x + r.w); x++) { const i = y * W + x; out.u32[i] = r.lut[fb.d[i]]; } }
 function renderVillage(t) { const f = village(t, t - 11.0); if (!NOSUB && inBox(B.vo2, t)) dialog(f, { skin: 'gb', portrait: null, text: B.vo2.text, t: t - B.vo2.t0 - .1, cps: 40 }); fileLabelGB(f); blitHalf(fb, f); }
@@ -168,9 +168,9 @@ function frame(t) {
     shotCorridor(t, regs);
     let L = LUT.faded; if (t < .5) L = darken(L, .75 * (1 - t / .5));
     out.present(fb, L); applyRegions(regs);
-    if (t >= 35.5 && t < 35.55) {}   // 匹配剪辑：硬切
+    if (t >= 35.5 && t < 35.55) {}   // match cut: hard cut
   } else if (t < 11.0) {
-    // 缩略图放大进入回忆一（马赛克）
+    // Thumbnail zooms in to memory one (mosaic)
     shotCorridor(10.25, regs); out.present(fb, LUT.faded); applyRegions(regs); bufA.set(out.u32);
     fb.clear(C.ink); renderVillage(11.0); out.present(fb, LUT.gb4); bufB.set(out.u32);
     const u = eio((t - 10.25) / .75), r0 = { x: LIST.x + 20, y: LIST.y + 17, w: LIST.thumbW, h: LIST.thumbH };
@@ -186,7 +186,7 @@ function frame(t) {
     renderCamp(t); out.present(fb, LUT.nes);
     if (t < 18.4) mosaic(out.u32, Math.round(1 + 15 * (1 - ss(18.0, 18.4, t))));
   } else if (t < 26.2) {
-    // 遇敌旋涡
+    // Encounter swirl
     renderCamp(25.4 + (t - 25.4) * .3); out.present(fb, LUT.nes); bufA.set(out.u32);
     const s = Math.pow((t - 25.4) / .8, 1.6), n = 1 + Math.round(6 * s);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -220,7 +220,7 @@ function frame(t) {
   out.post(() => {}); out.show();
 }
 
-// 测试帧：?frame=corridor|door（环境自查）
+// Test frame: ?frame=corridor|door (environment self-check)
 function testFrame(t) {
   const which = q.get('frame'), lut = LUT[q.get('lut') || 'full'];
   fb.clear(C.ink);
@@ -228,7 +228,7 @@ function testFrame(t) {
   if (which === 'door') doorScene(fb, t, +(q.get('camY') || 0), { open: +(q.get('open') || 0), torch: +(q.get('torch') || 0), hero: { x: 160, y: 138, pose: q.get('pose') || 'backlook' } });
   out.present(fb, lut); out.show();
 }
-// 海报：门开、颜色回涨后的一刻 + 片名
+// Poster: the moment the gate is open and colour has come back + title
 function posterFrame() {
   fb.clear(C.ink);
   const st = doorState(48.75); st.hero.sil = 0; st.hero.pose = 'backpush'; st.hero.y = 138; st.torch = 1;

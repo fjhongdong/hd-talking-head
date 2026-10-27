@@ -1,4 +1,4 @@
-// 打印时间线（可换内容）：node styles/silkscreen-poster/demo/tools/timeline.mjs [content_alt.json]
+// Print the timeline (content can be swapped): node styles/silkscreen-poster/demo/tools/timeline.mjs [content_alt.json]
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
 import path from 'path'; import { fileURLToPath } from 'url';
 const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

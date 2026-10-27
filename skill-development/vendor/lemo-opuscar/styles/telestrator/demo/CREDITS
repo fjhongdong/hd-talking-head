@@ -1,0 +1,50 @@
+定格 Freeze Frame — Sports Telestrator · 体育战术板 (Lemo-Opuscar) · LemoLab × Claude Opus 5.5
+An unofficial fan analysis of a real match: Beşiktaş 3–3 Fenerbahçe, Süper Lig, Vodafone Park, Istanbul,
+25 February 2019 — Fenerbahçe's three second-half goals (55′ Zajc, 61′ Sadık Çiftpınar, 67′ Hasan Ali Kaldırım).
+Made from openly licensed footage and photos; no AI-generated images, no stock footage. Every line, ring, label,
+the shot map and the show packaging ("定格 FREEZE FRAME" is a fictional show) are drawn in code (index.html).
+beIN SPORTS did not make or endorse this film. Sources accessed 2026-10-18 and 2026-10-21; full records in
+SOURCES.md / SOURCES.jsonl; licence check in SOURCES.md ("许可核实") and tools/license-evidence.json.
+The first five lines below are also burned into the end card.
+
+FOOTAGE (CC BY 3.0) — both from the same release by the broadcaster's own verified YouTube channel
+- "Beşiktaş 3 - 3 Fenerbahçe | Maç Özeti | 2018/19" by beIN SPORTS Türkiye (YouTube, @beINSPORTSTürkiye),
+  published 24 July 2019 under the YouTube Creative Commons Attribution licence (CC BY 3.0,
+  https://creativecommons.org/licenses/by/3.0/). https://www.youtube.com/watch?v=sYfsd9Hv7hc
+  Used: the 55′ and 61′ goals (main camera and high reverse replay), 110–148 s, and match sound.
+- "Kaldırım scored the goal for a 3-3 draw (Beşiktaş-Fenerbahçe Derby - February 2019)" by beIN SPORTS Türkiye,
+  a 14 s cut of the video above, via Wikimedia Commons, licensed under CC BY 3.0.
+  https://commons.wikimedia.org/wiki/File:Kald%C4%B1r%C4%B1m_scored_the_goal_for_a_3-3_draw_(Be%C5%9Fikta%C5%9F-Fenerbah%C3%A7e_Derby_-_February_2019).webm
+  Changes (both): cut and re-ordered, reversed, slowed and frozen, shown side by side, one frame flattened into
+  a top-down pitch by a perspective transform, upscaled 1.5×, deblocked and colour-graded, tactical graphics and
+  show packaging overlaid (the corner bug and score bar sit over the broadcaster's logo and URL), original
+  commentary and crowd sound edited into the mix. On-screen Turkish commentary transcript by the film's author.
+
+PHOTOS
+- "Hasan Ali Kaldırım 2013 1.jpg" by Thomas Rodenbücher, via Wikimedia Commons, licensed under CC BY 2.0
+  (https://creativecommons.org/licenses/by/2.0/). https://commons.wikimedia.org/wiki/File:Hasan_Ali_Kald%C4%B1r%C4%B1m_2013_1.jpg
+  Changes: cropped and placed in a polaroid frame.
+- "Vodafone Park, Istanbul (from outside).jpg" by Olos88, via Wikimedia Commons, CC0.
+  https://commons.wikimedia.org/wiki/File:Vodafone_Park,_Istanbul_(from_outside).jpg — cropped to 16:9, darkened.
+
+MUSIC & SOUND (original score in tools/mix.py, sampled instruments through core/audio/sampler.py)
+- Drums: "MuldjordKit" by Lars Muldjord (drumgizmo.org), FreePats version, licensed under CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/)
+- Samples (CC0): FreePats project (freepats.zenvoid.org), VS Chamber Orchestra: Community Edition (Versilian Studios),
+  Versilian Community Sample Library (Versilian Studios) — electric bass, trumpet and trombone staccato, timpani,
+  horn, cellos, glockenspiel
+- Sound effects (marker squeak, shutter, thump, pen, whoosh, stopwatch, tape rewind): synthesised in tools/mix.py
+  with core/audio/sfx.py
+
+VOICE
+- Kokoro-82M (hexgrad), voice bm_george, Apache License 2.0; run locally via kokoro-onnx (MIT) through core/tts/tts.py.
+  Speech check: faster-whisper base.en (MIT; OpenAI Whisper weights, MIT).
+
+FACTS
+- Score, date, venue, goal times and how each goal was scored: beIN SPORTS Türkiye (video description and
+  beinsports.com.tr match report), Habertürk, Hürriyet Daily News, beIN Sports — quoted in FACTS.md.
+- Timings (0.84 s, ≈0.9 s) counted frame by frame at 25 fps; shot distances (≈9, ≈8, ≈27 m) measured from each
+  shot's own frame with a perspective transform fitted to the pitch markings (tools/homography.py).
+
+FONTS (SIL Open Font License 1.1; tools/fonts.py subsets each face from Google Fonts with &text=)
+- Noto Sans SC — Google / Adobe · Barlow Condensed — The Barlow Project Authors · IBM Plex Mono — IBM

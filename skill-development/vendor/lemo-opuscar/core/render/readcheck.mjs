@@ -1,12 +1,12 @@
-// 阅读时长自检：node core/render/readcheck.mjs <demo> [--q 'k=v'] [--step 0.04] [--latin-cps 15] [--cjk-cps 4.5] [--pad 1.5] [--min 1.5] [--size 1920x1080]
-// 页面约定 window.TEXTS(t) → [{id, text, x0, y0, x1, y1}]：t 秒时画面上看得见的每段文字和它的屏幕框（像素，视口大小同 --size，默认 1920×1080）。
-//   id 标识"这一块文字"（数字或字符串都行）；同一个 id 下文字换了，算新的一段重新计时。字幕条不用报：它的停留由 .srt 决定。
-//   text 必须从这块文字第一次出现的那一帧起就是它的【完整文字】：打字机效果如果报"目前打出来的子串"，每多一个字都是新的一段，整个检查会失败——
-//   打字机的文字请在 TEXTS 里一直报全文，把"哪些字已经显示"留给画面自己处理。
-// 规则（同 DIRECTOR.md §7）：每段文字从第一次完整进入画框起，连续完整在画、并且还在 TEXTS 里的时长，要 ≥
-//   （汉字/假名/谚文数 ÷ cjk-cps + 其它非空白字符数 ÷ latin-cps）+ pad 秒，且不低于 min。默认 4.5 字/秒（中日韩）、15 字/秒（字母数字）、pad 1.5、min 1.5。
-//   从没完整进入画框的文字（被裁边、出画的滚动条）报 "never fully visible"。
-// 退出码：0 全部达标；1 有不达标；2 检查没能运行（页面没有 window.TEXTS，或整片没返回过任何文字）——这不算通过。
+// Reading-time self-check: node core/render/readcheck.mjs <demo> [--q 'k=v'] [--step 0.04] [--latin-cps 15] [--cjk-cps 4.5] [--pad 1.5] [--min 1.5] [--size 1920x1080]
+// Page contract: window.TEXTS(t) → [{id, text, x0, y0, x1, y1}]: every piece of text visible on screen at t seconds and its screen box (pixels, viewport the same as --size, default 1920×1080).
+//   id identifies "this block of text" (a number or a string); if the text under the same id changes, it counts as a new piece and timing restarts. Don't report the subtitle bar: its hold is set by the .srt.
+//   text must be the block's [complete text] from the first frame it appears: if a typewriter effect reports "the substring typed so far", every extra character is a new piece and the whole check fails —
+//   for typewriter text, always report the full text in TEXTS and leave "which characters are shown yet" to the picture itself.
+// Rule (same as DIRECTOR.md §7): from the moment a piece of text first fully enters the frame, the time it stays fully in frame continuously, and still in TEXTS, must be ≥
+//   (number of hanzi/kana/hangul ÷ cjk-cps + number of other non-whitespace characters ÷ latin-cps) + pad seconds, and no less than min. Defaults 4.5 chars/s (CJK), 15 chars/s (alphanumeric), pad 1.5, min 1.5.
+//   Text that never fully enters the frame (cropped at the edge, a ticker running out of frame) is reported as "never fully visible".
+// Exit code: 0 all pass; 1 some fail; 2 the check couldn't run (the page has no window.TEXTS, or the whole film never returned any text) — this does not count as a pass.
 import { openDemo, closeServer, requireDemo, takeSize } from './page.mjs';
 const args = process.argv.slice(2), { w: VW, h: VH } = takeSize(args), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const dir = args[0]; requireDemo(dir);
@@ -21,14 +21,14 @@ const res = await page.evaluate(({ STEP }) => {
     window.render(t);
     const vis = new Set();
     for (const b of window.TEXTS(t) || []) {
-      b.id = String(b.id);   // 数字 id 也行
-      const key = b.id + '\u0000' + b.text;   // 同一个 id 下文字变了 = 新的一段
+      b.id = String(b.id);   // numeric ids are fine too
+      const key = b.id + '\u0000' + b.text;   // text changed under the same id = a new piece
       if (!(b.x0 >= 0 && b.y0 >= 0 && b.x1 <= W && b.y1 <= H)) { partial[key] ??= { id: b.id, text: b.text, t0: t }; continue; }
       vis.add(key);
       const s = seen[key] ??= { id: b.id, text: b.text, t0: t, run: 0, done: false };
       if (!s.done) s.run = Math.min(t + STEP, window.DUR) - s.t0;
     }
-    for (const k in seen) if (!vis.has(k)) seen[k].done = true;   // 只算第一次连续在画的时长
+    for (const k in seen) if (!vis.has(k)) seen[k].done = true;   // only the first continuous on-screen stretch counts
   }
   for (const k in partial) if (seen[k]) delete partial[k];
   return { seen: Object.values(seen), partial: Object.values(partial) };

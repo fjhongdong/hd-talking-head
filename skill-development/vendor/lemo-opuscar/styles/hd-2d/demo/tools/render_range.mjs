@@ -1,6 +1,6 @@
-// 只渲一段时间：node styles/hd-2d/demo/tools/render_range.mjs <a> <b> [--fps 60] [--workers 2] [--q 'tilt=1'] [--out styles/hd-2d/demo/out/range.mp4]
-// 与 core/render/video.mjs 同一套逐帧截图管线（同样的 JPEG q95 → x264 crf14），只是帧号范围是 [round(a*fps), round(b*fps))。
-// 用途：改片尾字卡后只重渲最后几秒，再与原 video_tilt.mp4 的前段拼接（见 ../../DEMO.md「Build notes」的 Partial re-render / ../PRODUCTION_LOG.md）。
+// Render only a time range: node styles/hd-2d/demo/tools/render_range.mjs <a> <b> [--fps 60] [--workers 2] [--q 'tilt=1'] [--out styles/hd-2d/demo/out/range.mp4]
+// Same frame-capture pipeline as core/render/video.mjs (same JPEG q95 → x264 crf14), only the frame range is [round(a*fps), round(b*fps)).
+// Use: after changing the end card, re-render only the last few seconds, then join them to the front of the original video_tilt.mp4 (see the Partial re-render in "Build notes" in ../../DEMO.md).
 import fs from 'fs'; import path from 'path'; import { spawn, execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
@@ -28,4 +28,4 @@ fs.writeFileSync(list, [...Array(WK)].map((_, w) => `file 'seg_${w}.mp4'`).filte
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', out]);
 const sec = (Date.now() - t0) / 1000;
 console.log('done', out, TOTAL, 'frames', sec.toFixed(1) + 's', (TOTAL / sec).toFixed(1) + ' fps');
-closeServer(); process.exit(0);   // 静态服务器的 keep-alive 连接会让进程挂住
+closeServer(); process.exit(0);   // keep-alive connections from the static server would otherwise keep the process hanging

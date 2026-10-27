@@ -1,6 +1,6 @@
-"""原创画内电梯音乐 "Hold Music No. 9"：88 BPM，F 大调，8 小节循环 ×3
-颤音琴（软槌）旋律 + 清音电吉他在 2、4 拍轻扫和弦 + 指弹电贝斯（根音/五音）。全部 CC0 采样（VCSL / FreePats）。
-输出 music/muzak_raw.wav（原速、干声）；带速变化、隔墙滤波、混响在 mix.py 里做。"""
+"""Original in-scene elevator music "Hold Music No. 9": 88 BPM, F major, 8-bar loop ×3
+Vibraphone (soft mallets) melody + clean electric guitar lightly strumming chords on beats 2 and 4 + fingerstyle electric bass (root/fifth). All CC0 samples (VCSL / FreePats).
+Writes music/muzak_raw.wav (original speed, dry); tape-speed change, through-the-wall filtering and reverb are done in mix.py."""
 import sys, os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
 sys.path.insert(0, ROOT)
@@ -12,7 +12,7 @@ CH = [('Fmaj7', ['F2', 'C3'], ['A3', 'C4', 'E4', 'F4']), ('Dm7', ['D2', 'A2'], [
       ('Gm7', ['G2', 'D2'], ['F3', 'Bb3', 'D4', 'G4']), ('C7', ['C2', 'G2'], ['E3', 'Bb3', 'C4', 'E4']),
       ('Am7', ['A2', 'E2'], ['G3', 'C4', 'E4', 'A4']), ('D7', ['D2', 'A2'], ['F#3', 'C4', 'D4', 'A4']),
       ('Gm7', ['G2', 'D2'], ['F3', 'Bb3', 'D4', 'G4']), ('C7sus', ['C2', 'G2'], ['F3', 'Bb3', 'C4', 'G4'])]
-# 旋律（每小节：[(音, 拍数)]，None = 休止）
+# Melody (per bar: [(note, beats)], None = rest)
 MEL = [[('A4', 2), ('C5', 1), ('E5', 1)], [('D5', 3), ('C5', 1)], [('Bb4', 2), ('D5', 1), ('F5', 1)], [('E5', 3), (None, 1)],
        [('E5', 2), ('C5', 1), ('A4', 1)], [('F#4', 2), ('A4', 1), ('C5', 1)], [('Bb4', 1), ('A4', 1), ('G4', 2)], [('G4', 2), ('E4', 2)]]
 MEL2 = [[('C5', 2), ('A4', 1), ('C5', 1)], [('F5', 2), ('E5', 1), ('D5', 1)], [('D5', 3), ('Bb4', 1)], [('C5', 2), ('G4', 2)],

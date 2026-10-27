@@ -1,1 +1,1 @@
-原创配乐：旋律、琶音与低音音型全部原创，numpy 实时合成（polyBLEP 锯齿/方波、噪声鼓、808 式正弦下滑），未使用任何采样或第三方素材。
+Original score: melody, arpeggios and bass figures are all original, synthesized in real time in numpy (PolyBLEP saw/square waves, noise drums, 808-style sine drops). No samples or third-party material were used.

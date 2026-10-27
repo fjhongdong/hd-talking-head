@@ -11,7 +11,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`发现/安装`、`configured`、`connected`、`callable`、`bound` 是[依赖预检合同](references/dependency-preflight.md)定义的五个递进状态，产物另经阶段质量门验收，不得混用；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。能力未接通时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
-明确例外仅为用户已批准接入的 [OpenFilm motion-graphics 原生创作](references/openfilm-motion-graphics.md)：选中后实际读取并执行它的创作 Skill，在本 Job 编写主题专属 `window.film` 场景，再调用原生公开导出入口。它不是现成模板库，身份记为原生 Skill 创作／`custom_fallback + structural`，不能冒称复用了第三方模板。此例外不恢复其他自由场景入口，也不允许借 OpenFilm 重写已有组件、动效引擎或失败后的替代路线。
+所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md) 和 [Lemo 的 59 种风格模板](references/lemo-opuscar.md)在同一候选池中选择。选中后，宿主完整执行该 Skill 的原生流程，在当前 Job 创作主题场景并调用原生渲染入口；这属于第三方 Skill 的正常制作，不是父级自写替代动效。来源和适配资格继续如实记录，临时场景沿用所选模板身份，历史停用入口不因此恢复。
 
 ## 统一执行与语义规划
 
@@ -68,6 +68,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
+- [Lemo 原生 Skill 的 59 种风格模板](references/lemo-opuscar.md)（选中 Lemo 后读取，按具体 STYLE 制作当前主题）
 - [OpenFilm 原生 motion-graphics 创作与验收](references/openfilm-motion-graphics.md)（选择主题专属主体动作、物件操作或信息探索场景时）
 - [生成型 B-roll 的子 Skill 编排](references/generated-broll-skills.md)（白板、拼贴、手绘动画进入候选时；区分真实调用测试与正式准入）
 - [官方视频下载 Skill 调用与验收](references/official-video-acquisition.md)（`official_material` 选中在线视频时）

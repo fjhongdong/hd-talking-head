@@ -1,4 +1,4 @@
-// out/cues.json → 双语字幕条目（中文一行 + 英文一行），时长与画面上烧进去的一致：≥ max(1.8 s, 语音 + 0.6 s)
+// out/cues.json → bilingual subtitle entries (one Chinese line + one English line), durations match the burned-in ones: ≥ max(1.8 s, speech + 0.6 s)
 import fs from 'fs'; import path from 'path';
 const dir = path.resolve(process.argv[2] || '.');
 const cues = JSON.parse(fs.readFileSync(path.join(dir, 'out/cues.json'), 'utf8'));

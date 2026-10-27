@@ -1,4 +1,4 @@
-// 《Volt · Spec Scan》场景编排：所有文案来自 content.json，时间线按条目数自动重排（120 BPM，1 小节 = 2 s）
+// "Volt · Spec Scan" scene choreography: all copy comes from content.json, the timeline re-lays itself by the number of items (120 BPM, 1 bar = 2 s)
 import { Holo, drawScanPlane, drawPad } from './engine/holo.js';
 import * as U from './engine/hud.js';
 const { clamp } = U;
@@ -9,16 +9,16 @@ const ss = t => { t = clamp(t); return t * t * (3 - 2 * t); };
 const eo = t => 1 - Math.pow(1 - clamp(t), 3);
 const eio = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
 const sine = t => 0.5 - 0.5 * Math.cos(Math.PI * clamp(t));
-let YK = 1;   // 模型高度 / demo 自行车高度（1.02）：扫描高度、镜头目标高度按它缩放
+let YK = 1;   // model height / demo bike height (1.02): scan heights and camera target heights are scaled by it
 
-// ---------- 时间线 ----------
+// ---------- Timeline ----------
 export function buildTimeline(C, dur = {}) {
   const n = C.callouts.length;
   const TL = { intro: [0, 4 * BAR], calls: [] };
   let t = TL.intro[1];
   const modes = ['push', 'orbit', 'loupe'];
   C.callouts.forEach((c, i) => {
-    const bars = i === 0 ? 3 : 2;              // 第一个慢讲，之后加速
+    const bars = i === 0 ? 3 : 2;              // the first one is told slowly, then it speeds up
     TL.calls.push({ i, c, mode: modes[i % 3], t0: t, t1: t + bars * BAR, long: bars === 3 });
     t += bars * BAR;
   });
@@ -27,7 +27,7 @@ export function buildTimeline(C, dur = {}) {
   TL.lock = [t, t + 3 * BAR]; t += 3 * BAR;
   TL.end = [t, t + 5]; t += 5;
   TL.DUR = t;
-  // 旁白起点（拍点上）
+  // narration start (on a beat)
   TL.vo = [{ id: 'intro', t: 3.0, text: C.intro_vo }];
   TL.calls.forEach(s => TL.vo.push({ id: 'c' + s.i, t: s.t0 + (s.long ? 1.0 : 0.25), text: s.c.vo }));
   TL.vo.push({ id: 'outro', t: TL.lock[0] + 1.0, text: C.outro_vo });
@@ -35,7 +35,7 @@ export function buildTimeline(C, dur = {}) {
   return TL;
 }
 
-// 每个参数卡的内部节拍（相对锁定时刻）
+// internal beats of each spec card (relative to the lock moment)
 function callBeats(s) {
   const k = s.long ? 1 : 0.5;
   return {
@@ -46,7 +46,7 @@ function callBeats(s) {
   };
 }
 
-// ---------- 相机 ----------
+// ---------- Camera ----------
 const CAM = {
   hook: { target: [0.05, 0.50, 0], yaw: 1.00, pitch: 0.24, dist: 2.7, cx: 0.56, cy: 0.54, roll: 0 },
   introEnd: { target: [0.0, 0.52, 0], yaw: 0.42, pitch: 0.12, dist: 2.85, cx: 0.60, cy: 0.49, roll: 0 },
@@ -58,7 +58,7 @@ function partCam(model, s, u) {
   const P = model.byId[s.c.part], a = P?.center || P?.anchor || [0, 0.5, 0];
   if (s.mode === 'push') return { target: a, yaw: lerp(0.66, 0.78, u), pitch: 0.2, dist: lerp(1.62, 1.5, u), cx: 0.37, cy: 0.5, roll: 0 };
   if (s.mode === 'orbit') return { target: a, yaw: lerp(-0.2, 0.8, sine(u)), pitch: 0.14, dist: 1.35, cx: 0.48, cy: 0.5, roll: 0 };
-  return { ...CAM.loupe, cx: lerp(0.49, 0.475, u) };   // 右移，给左栏芯片留出干净的空间
+  return { ...CAM.loupe, cx: lerp(0.49, 0.475, u) };   // shift right to leave clean space for the left-column chips
 }
 const mixCam = (A, B, w) => ({
   target: A.target.map((x, i) => lerp(x, B.target[i], w)),
@@ -75,7 +75,7 @@ function segCam(model, TL, t) {
     const u = seg(t, s.t0, s.t1), b = callBeats(s);
     const prev = s.i === 0 ? CAM.introEnd : partCam(model, TL.calls[s.i - 1], 1);
     let here = partCam(model, s, u);
-    // 进入：第一个用推（慢），之后用甩（快，跟着目标框；甩镜跨段：下一段锁定前 0.45 s 开始）
+    // entry: the first uses a push-in (slow), later ones a whip pan (fast, following the target box; the whip straddles segments: it starts 0.45 s before the next segment locks)
     if (s.i === 0) here = mixCam(prev, here, eio(seg(t, s.t0, s.t0 + b.push)));
     else here = mixCam(prev, here, eio(seg(t, s.t0 - 0.45, s.t0 + 0.05)));
     const nx = TL.calls[s.i + 1];
@@ -96,10 +96,10 @@ function segCam(model, TL, t) {
 import { makeCamera } from './engine/holo.js';
 const projOf = cam => makeCamera(cam, W, H).project;
 const spinPt = (x, z, a) => [x * Math.cos(a) + z * Math.sin(a), -x * Math.sin(a) + z * Math.cos(a)];
-// 把 cx/cy 比例换成像素
+// convert cx/cy fractions to pixels
 const px = c => ({ ...c, cx: c.cx * W, cy: c.cy * H, fov: 0.6 });
 
-// ---------- 主渲染 ----------
+// ---------- Main render ----------
 export function makeFilm(C, model, dur) {
   YK = (model.ymax || 1.02) / 1.02;
   for (const k in CAM) { CAM[k].target0 = CAM[k].target0 || CAM[k].target; CAM[k].target = [CAM[k].target0[0], CAM[k].target0[1] * YK, CAM[k].target0[2]]; }
@@ -109,7 +109,7 @@ export function makeFilm(C, model, dur) {
   const n = C.callouts.length;
   const railStep = Math.min(112, 410 / Math.max(1, n - 1)), railY = i => 470 + i * railStep;
 
-  // 甩镜运动模糊：只在甩的 0.5 s 里，按 180° 快门（1/48 s）取 5 个子帧做累积平均
+  // whip-pan motion blur: only during the 0.5 s of the whip, accumulate-average 5 subframes over a 180° shutter (1/48 s)
   const accC = document.createElement('canvas'); accC.width = W; accC.height = H;
   const subC = document.createElement('canvas'); subC.width = W; subC.height = H;
   function whipK(t) { for (const s of TL.calls) if (s.i > 0 && t > s.t0 - 0.45 && t < s.t0 + 0.05) return Math.sin(Math.PI * seg(t, s.t0 - 0.45, s.t0 + 0.05)); return 0; }
@@ -127,7 +127,7 @@ export function makeFilm(C, model, dur) {
   function renderFrame(ctx, t, opt = {}) {
     const frame = Math.round((opt.frameT ?? t) * 24);
     const cam = px(segCam(model, TL, t));
-    // ---- 状态 ----
+    // ---- State ----
     let scan = null, scanDown = null, solid = 0, spin = 0, gain = 1, glitchAmt = 0, focus = null, dim = 0.22;
     const explode = {}, angle = {};
     const [i0, i1] = TL.intro;
@@ -138,12 +138,12 @@ export function makeFilm(C, model, dur) {
       const out = 1 - eio(seg(t, s.t1 - 0.55, s.t1 - 0.05));
       const k = eo(seg(t, L + b.ex0, L + b.ex1)) * out;
       for (const P of model.byId[s.c.part]?.pieces || []) explode[P.id] = k;
-      if (t >= s.t0 - (s.mode === 'loupe' ? 0 : 0.45) && t < s.t1 - 0.05) active = s;   // 甩向放大镜时先别把全车点亮
+      if (t >= s.t0 - (s.mode === 'loupe' ? 0 : 0.45) && t < s.t1 - 0.05) active = s;   // when whipping to the loupe, don't light up the whole bike yet
       if (s.c.part === 'motor' || s.mode === 'orbit') { angle['motor-rotor'] = (t - L) * 1.6 * k; angle['motor-stator'] = -(t - L) * 0.9 * k; }
       angle['brake-rotor'] = (t - L) * 0.8 * k * (s.c.part === 'brakes' ? 1 : 0) + (angle['brake-rotor'] || 0);
     }
     if (active && active.mode !== 'loupe') { focus = active.c.part; dim = 0.13; }
-    // 重组：变暗 → 静音一拍 → 点亮
+    // regroup: dim → one beat of silence → light up
     const [r0, r1] = TL.regroup, [h0, h1] = TL.high;
     if (t >= r0 && t < h0) gain = lerp(1, 0.32, eio(seg(t, r1 - 0.6, r1 - 0.45)));
     if (t >= h0) {
@@ -152,21 +152,21 @@ export function makeFilm(C, model, dur) {
       spin = t < h1 ? eio(seg(t, h0, h1)) * Math.PI * 2 : 0;
       glitchAmt = t < h0 + 0.13 ? 1 - (t - h0) / 0.13 : 0;
     }
-    // 点亮后沿车身上行的光波（24.0 一次，和弦换时 26.0 再一次）
+    // after lighting up, a light wave travels up the body (once at 24.0, again at 26.0 on the chord change)
     let wave = null;
     if (t >= h0 && t < h0 + 1.4) wave = { y: lerp(-0.1, 1.35, eio(seg(t, h0, h0 + 1.3))), w: 0.07 };
     else if (t >= h0 + 2 && t < h0 + 3.2) wave = { y: lerp(-0.1, 1.35, eio(seg(t, h0 + 2, h0 + 3.1))), w: 0.05 };
     const [e0, e1] = TL.end;
     if (t >= e0) scanDown = { y: lerp(1.2, -0.05, eio(seg(t, e0, e0 + 1.25))) * YK };
 
-    // ---- 背景 ----
+    // ---- Background ----
     U.background(ctx, W, H, T, { px: -cam.yaw * 260 - cam.cx * 0.2, py: cam.pitch * 300, cx: cam.cx, cy: cam.cy + 40 });
     const padA = t >= e0 ? 1 - seg(t, e0 + 1.0, e0 + 2.0) * 0.6 : clamp(0.25 + t * 0.5);
     drawPad(ctx, cam, W, H, { hue: T.hue, rot: t * 0.12 + spin, alpha: padA * (t >= r0 && t < h0 ? gain : 1) });
 
-    // ---- 投影光柱（点亮之后） ----
+    // ---- Projection beam (after lighting up) ----
     if (solid > 0) U.beam(ctx, T, (x, y, z, o) => { const q = spinPt(x, z, spin); return projOf(cam)(q[0], y, q[1], o); }, solid * (t >= e0 ? 1 - seg(t, e0, e0 + 1.0) : 1), t, { y1: 1.25 * YK });
-    // ---- 主体 ----
+    // ---- Subject ----
     const flash = {};
     if (t >= TL.lock[0]) TL.calls.forEach((s, j) => { const tt = TL.lock[0] + 0.5 + j * BEAT / 2; flash[s.c.part] = t >= tt && t < tt + 0.16 ? 1 : 0; });
     const info = holo.draw(ctx, model, cam, { flash,
@@ -176,22 +176,22 @@ export function makeFilm(C, model, dur) {
     if (scan && scan.y < 1.15) drawScanPlane(ctx, cam, W, H, scan.y, { hue: T.hue, r: 1.0, rot: t * 0.3, alpha: 1 - seg(t, 2.35, 2.7) });
     if (scanDown && t < e0 + 1.4) drawScanPlane(ctx, cam, W, H, scanDown.y, { hue: T.hue, r: 1.0, rot: -t * 0.3, alpha: 1 - seg(t, e0 + 1.1, e0 + 1.4) });
 
-    // ---- 界面 ----
+    // ---- UI ----
     const hudA = t >= e0 ? 1 - seg(t, e0, e0 + 0.5) : 1;
-    // 片头标题（开场与落版共用左栏）
+    // opening title (the opening and the end lock-up share the left column)
     const titleIn = clamp(seg(t, 2.0, 2.5) * 1.0), titleOut = 1 - seg(t, i1 - 0.5, i1 - 0.1);
     const titleBack = seg(t, TL.lock[0] + 0.25, TL.lock[0] + 0.9);
     const tA = t < TL.lock[0] ? titleIn * titleOut : titleBack * hudA;
     if (tA > 0) titleBlock(ctx, T, t, frame, tA, t < TL.lock[0] ? { roll: seg(t, 2.0, 2.5), sub: seg(t, 3.0, 3.4), tag: seg(t, 3.5, 3.9) } : { roll: seg(t, TL.lock[0] + 0.25, TL.lock[0] + 0.75), sub: 1, tag: 1 });
-    // 开场"探测到系统"：三个预备目标框闪一下
-    if (t > 5.9 && t < i1) {   // 6.0 / 6.5 / 7.0，7.5 是静音
+    // opening "system detected": three preliminary target boxes flash
+    if (t > 5.9 && t < i1) {   // 6.0 / 6.5 / 7.0; 7.5 is silence
       TL.calls.forEach((s, j) => {
         const tt = 6.0 + j * 0.5 * (3 / Math.max(3, n));
         const k = seg(t, tt, tt + 0.12) * (1 - seg(t, i1 - 0.35, i1 - 0.05));
         U.targetBox(ctx, T, info.bbox[s.c.part], 0.35 * k, { alpha: 0.55 * k, lockK: 0.2 + 0.1 * Math.sin(t * 20 + j), pad: 10 });
       });
     }
-    // 参数卡
+    // spec cards
     for (const s of TL.calls) {
       const b = callBeats(s), L = s.t0;
       const vis = t >= L - 0.05 && t < s.t1;
@@ -218,22 +218,22 @@ export function makeFilm(C, model, dur) {
         flash: t >= L + b.roll1 && t < L + b.roll1 + 0.1,
       }, { index: idx, alpha: out, w: s.mode === 'loupe' ? 440 : 470, big: s.mode === 'loupe' ? 116 : 136 });
     }
-    // 左侧停靠栏：读过的参数
+    // left dock column: specs already read
     const lockLead = t >= TL.lock[0] && t < TL.end[0];
     TL.calls.forEach((s, j) => {
       const inA = seg(t, s.t1 - 0.25, s.t1 + 0.1);
       if (inA <= 0) return;
       const x = lerp(140, 110, eo(inA));
       U.chip(ctx, T, x, railY(j), s.c, inA * hudA * (t >= r0 && t < h0 ? Math.max(0.5, gain) : 1), { index: String(j + 1).padStart(2, '0'), w: 360 });
-      // 落版：芯片引线接到零件
+      // end lock-up: chip leader lines connect to the parts
       if (lockLead) {
         const tt = TL.lock[0] + 0.5 + j * BEAT / 2, lp = seg(t, tt, tt + 0.2);
         U.marker(ctx, T, info.anchor[s.c.part], String(j + 1).padStart(2, '0'), lp * hudA, t > tt ? seg(t, tt, tt + 0.6) : 0, (model.byId[s.c.part].tagDir ?? 1));
       }
     });
-    // 落版：右栏重量 / 价格 / 行动
+    // end lock-up: right column weight / price / call to action
     if (t >= TL.lock[0]) footer(ctx, T, t, frame, TL, C, hudA);
-    // 取景框
+    // viewfinder frame
     U.chrome(ctx, W, H, T, {
       alpha: hudA * (t >= r0 && t < h0 ? Math.max(0.35, gain) : 1),
       tl: `${C.product} ${C.model_code}  //  SPEC SCAN`,
@@ -242,16 +242,16 @@ export function makeFilm(C, model, dur) {
       br: `${(cam.yaw * 57.3).toFixed(1)}°  ·  ${(cam.pitch * 57.3).toFixed(1)}°  ·  ${cam.dist.toFixed(2)} M`,
       px: -cam.yaw * 200,
     });
-    // 甩镜速度线
+    // whip-pan speed lines
     for (const s of TL.calls) if (s.i > 0) {
       const w = seg(t, s.t0 - 0.45, s.t0 + 0.05); if (w > 0 && w < 1) streaks(ctx, T, Math.sin(w * Math.PI), s.i);
     }
-    // 字幕
+    // subtitles
     if (!opt.nosub) {
       const v = subAt(TL, t);
       if (v) U.subtitle(ctx, W, H, T, v.text, v.a * hudA, { t });
     }
-    // 片尾卡
+    // end card
     if (t >= e0 + 1.0) endCard(ctx, T, t - (e0 + 1.0), frame, C);
     U.vignette(ctx, W, H, 0.5);
     if (glitchAmt > 0) U.glitch(ctx, W, H, glitchAmt, frame * 7.3);
@@ -275,20 +275,20 @@ export function makeFilm(C, model, dur) {
     return `SPEC SHEET  ·  READY`;
   }
 
-  // 放大镜：画中画，用第二个相机放大零件
+  // loupe: picture-in-picture, a second camera magnifies the part
   function loupe(ctx, T, t, s, b, model, cam, info, explode, angle, out) {
     const L = s.t0, open = eo(seg(t, L + 0.05, L + 0.5)) * out;
     const R = 225 * open, cxL = 1530, cyL = 355;
     const a = info.anchor[s.c.part] || [W / 2, H / 2];
     if (open <= 0.01) return { anchor: [cxL, cyL] };
-    // 连接线：零件小圈 → 放大镜
+    // connector line: small circle on the part → loupe
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     ctx.strokeStyle = T.line(0.6 * open); ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.arc(a[0], a[1], 46, 0, Math.PI * 2); ctx.stroke();
     const ang = Math.atan2(cyL - a[1], cxL - a[0]), perp = ang + Math.PI / 2;
     for (const sg of [-1, 1]) { ctx.beginPath(); ctx.moveTo(a[0] + Math.cos(perp) * 46 * sg, a[1] + Math.sin(perp) * 46 * sg); ctx.lineTo(cxL + Math.cos(perp) * R * sg, cyL + Math.sin(perp) * R * sg); ctx.stroke(); }
     ctx.restore();
-    // 内容
+    // contents
     const pa = model.byId[s.c.part].center || model.byId[s.c.part].anchor;
     const lc = { target: pa, yaw: lerp(0.75, 0.45, seg(t, L, s.t1)), pitch: 0.16, dist: 0.7, fov: 0.6, cx: cxL, cy: cyL, roll: 0 };
     ctx.save();
@@ -307,7 +307,7 @@ export function makeFilm(C, model, dur) {
     ctx.font = `20px ${U.FONT.mono}`; ctx.fillStyle = T.line(0.85 * open); ctx.textAlign = 'left';
     ctx.fillText(`ZOOM ×${(CAM.loupe.dist / 0.7).toFixed(1)}`, cxL - R + 10, cyL - R - 12);
     ctx.restore();
-    // 目标框在放大镜里锁定
+    // the target box locks inside the loupe
     const lk = seg(t, L + 0.25, L + 0.5);
     U.targetBox(ctx, T, li.bbox[s.c.part], lk, { flash: t >= L + 0.25 && t < L + 0.37, pad: 14, tag: `TGT ${String(s.i + 1).padStart(2, '0')} · LOCK`, alpha: out });
     return { anchor: [cxL, cyL + R] };
@@ -390,11 +390,11 @@ export function makeFilm(C, model, dur) {
     ctx.restore();
   }
 
-  // ---------- 声音事件（给混音 / 配乐 / 卡点自检） ----------
+  // ---------- Sound events (for the mix / score / hit-point self-check) ----------
   function events() {
     const E = [], ev = (t, type, o = {}) => E.push({ t: +t.toFixed(4), type, ...o });
     ev(0, 'scan', { d: 2.6 });
-    for (const y of [0.3, 0.55, 0.8, 1.0]) { // 扫描面经过的高度 → 时间
+    for (const y of [0.3, 0.55, 0.8, 1.0]) { // heights the scan plane passes → times
       let lo = 0, hi = 2.6; for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; (lerp(0.2, 1.16, sine(seg(m, -0.35, 2.6))) * YK < y * YK ? lo = m : hi = m); } ev(lo, 'scan_tick', { y });
     }
     ev(2.0, 'roll', { d: 0.5, n: C.product.length }); ev(2.5, 'confirm_small'); ev(2.5, 'scan_done');

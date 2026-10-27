@@ -1,5 +1,5 @@
-// 线框模型构建工具：几何基本体 → {v, e, q}（顶点 / 边 / 四边面）
-// 输出格式（engine/holo.js 读取）：
+// Wireframe model builder: geometric primitives → {v, e, q} (vertices / edges / quad faces)
+// Output format (read by engine/holo.js):
 // { name, parts: [{ id, anchor:[x,y,z], pieces: [{ id, v:[x,y,z,...], e:[a,b,...], q:[a,b,c,d,...], explode:[dx,dy,dz], axis?:{c,d} }] }] }
 const TAU = Math.PI * 2;
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -23,7 +23,7 @@ export class Model {
   vtx(p) { this.C.v.push(p); return this.C.v.length - 1; }
   edge(a, b) { this.C.e.push([a, b]); }
   quad(a, b, c, d) { this.C.q.push([a, b, c, d]); }
-  // 圆环（可选厚度：两道圈 + 连线）
+  // ring (optional thickness: two circles + connecting lines)
   circle(c, n, r, seg, [u, w] = basis(n).slice(1), a0 = 0, a1 = TAU, closed = true) {
     const ids = [];
     const cnt = closed ? seg : seg + 1;
@@ -38,7 +38,7 @@ export class Model {
     for (let i = 0; i < seg; i++) { if (i % 4 === 0) this.edge(A[i], B[i]); this.quad(A[i], A[(i + 1) % seg], B[(i + 1) % seg], B[i]); }
     return [A, B];
   }
-  // 管子：环 + 纵线 + 面；arc = [起, 止]（以圈为单位，可只做半圈）；zA 起点 z 偏移（叉子外张）
+  // tube: rings + lengthwise lines + faces; arc = [start, end] (in turns, can be just half a turn); zA = z offset at the start point (fork splay)
   tube(a, b, r, o = {}) {
     const rings = o.rings || 6, seg = o.seg || 10, longs = o.longs || 4;
     if (o.zA) a = add(a, [0, 0, o.zA]);
@@ -73,7 +73,7 @@ export class Model {
     for (let k = 0; k < R.length - 1; k++) for (let i = 0; i < seg; i++) { this.quad(R[k][i], R[k][(i + 1) % seg], R[k + 1][(i + 1) % seg], R[k + 1][i]); if (i % 4 === 0) this.edge(R[k][i], R[k + 1][i]); }
   }
   saddle(c) {
-    // 由 5 道截面环组成的座垫
+    // saddle made of 5 cross-section rings
     const secs = [[-0.13, 0.075, 0.018], [-0.08, 0.08, 0.024], [-0.01, 0.06, 0.022], [0.06, 0.028, 0.016], [0.12, 0.018, 0.012]];
     const seg = 12, R = [];
     for (const [x, hw, hh] of secs) {
@@ -96,15 +96,15 @@ export class Model {
   }
   wheel(c, R, o) {
     const n = [0, 0, 1];
-    // 胎：3 道环（外径 + 两侧胎壁）+ 横纹
+    // tyre: 3 rings (outer diameter + both sidewalls) + cross treads
     const tw = 0.022, seg = 72;
     const T0 = this.circle([c[0], c[1], -tw], n, R - 0.02, seg), T1 = this.circle(c, n, R, seg), T2 = this.circle([c[0], c[1], tw], n, R - 0.02, seg);
     for (let i = 0; i < seg; i++) { this.quad(T0[i], T0[(i + 1) % seg], T1[(i + 1) % seg], T1[i]); this.quad(T1[i], T1[(i + 1) % seg], T2[(i + 1) % seg], T2[i]); if (i % 3 === 0) { this.edge(T0[i], T1[i]); this.edge(T1[i], T2[i]); } }
-    // 轮圈
+    // rim
     const r1 = R - 0.045, r2 = R - 0.07;
     const A = this.circle([c[0], c[1], -0.012], n, r1, 60), B = this.circle([c[0], c[1], 0.012], n, r1, 60), C = this.circle(c, n, r2, 60);
     for (let i = 0; i < 60; i++) { this.quad(A[i], A[(i + 1) % 60], C[(i + 1) % 60], C[i]); this.quad(C[i], C[(i + 1) % 60], B[(i + 1) % 60], B[i]); }
-    // 辐条
+    // spokes
     const k = o.spokes, rf = o.spokeFrom;
     for (let i = 0; i < k; i++) {
       const s = i % 2 ? 1 : -1, a = i / k * TAU, a2 = a + (s > 0 ? 0.35 : -0.35);
@@ -117,7 +117,7 @@ export class Model {
   beltLines(a, ra, b, rb) {
     for (const s of [1, -1]) { const p = this.vtx([a[0], a[1] + ra * s, a[2]]), q = this.vtx([b[0], b[1] + rb * s, b[2]]); this.edge(p, q); }
   }
-  // 电池电芯：沿下管排两行圆柱
+  // battery cells: two rows of cylinders along the down tube
   cells(a, b, r, n, rows) {
     const [d, u, w] = basis(sub(b, a)), L = len(sub(b, a)), cl = L / n * 0.86;
     for (let row = 0; row < rows; row++) for (let i = 0; i < n; i++) {
@@ -151,22 +151,22 @@ export class Model {
       const a = i / n * TAU, h = TAU / n * 0.28;
       const P = [[ri, a - h * 0.6], [ro * 0.86, a - h * 0.6], [ro, a - h * 1.3], [ro, a + h * 1.3], [ro * 0.86, a + h * 0.6], [ri, a + h * 0.6]];
       for (const z of [-w / 2, w / 2]) { const ids = P.map(([r, t]) => this.vtx([c[0] + Math.cos(t) * r, c[1] + Math.sin(t) * r, c[2] + z])); for (let k = 0; k < ids.length - 1; k++) this.edge(ids[k], ids[k + 1]); if (z > 0) { this.quad(ids[0], ids[1], ids[4], ids[5]); this.quad(ids[1], ids[2], ids[3], ids[4]); } }
-      // 线圈绕组：两道小环
+      // coil windings: two small rings
       const mid = (ri + ro * 0.86) / 2;
       this.circle([c[0] + Math.cos(a) * mid, c[1] + Math.sin(a) * mid, c[2]], [Math.cos(a), Math.sin(a), 0], 0.012, 8);
     }
-    this.tube([c[0], c[1], -0.09], [c[0], c[1], 0.09], 0.008, { rings: 3, seg: 8, longs: 4 });   // 轴
+    this.tube([c[0], c[1], -0.09], [c[0], c[1], 0.09], 0.008, { rings: 3, seg: 8, longs: 4 });   // axle
   }
   rotor(c, r) {
     const n = [0, 0, 1];
     this.disc(c, n, r, { rings: [r, r - 0.018], seg: 48 });
     this.circle(c, n, 0.028, 16);
     for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; const p = this.vtx([c[0] + Math.cos(a) * 0.028, c[1] + Math.sin(a) * 0.028, c[2]]), q = this.vtx([c[0] + Math.cos(a + 0.5) * (r - 0.018), c[1] + Math.sin(a + 0.5) * (r - 0.018), c[2]]); this.edge(p, q); }
-    // 通风孔两圈（交错）
+    // two rings of vent holes (staggered)
     for (let i = 0; i < 24; i++) { const a = i / 24 * TAU + 0.1; this.circle([c[0] + Math.cos(a) * (r - 0.006), c[1] + Math.sin(a) * (r - 0.006), c[2]], n, 0.0034, 8); }
     for (let i = 0; i < 24; i++) { const a = (i + 0.5) / 24 * TAU + 0.1; this.circle([c[0] + Math.cos(a) * (r - 0.0135), c[1] + Math.sin(a) * (r - 0.0135), c[2]], n, 0.003, 8); }
   }
-  // 弧形块：以 c 为圆心、半径 r0–r1、角度 a0–a1、z0–z1 的扇环体（卡钳体、刹车片）
+  // arc block: an annular-sector solid centred on c, radius r0–r1, angle a0–a1, z0–z1 (caliper body, brake pads)
   arcBlock(c, r0, r1, a0, a1, z0, z1, seg = 10) {
     const L = [];
     for (const z of [z0, z1]) for (const r of [r0, r1]) { const ids = []; for (let i = 0; i <= seg; i++) { const a = a0 + (a1 - a0) * i / seg; ids.push(this.vtx([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r, z])); } for (let i = 0; i < seg; i++) this.edge(ids[i], ids[i + 1]); L.push(ids); }
@@ -175,13 +175,13 @@ export class Model {
     for (let i = 0; i < seg; i++) { this.quad(A[i], A[i + 1], B[i + 1], B[i]); this.quad(C[i], C[i + 1], D[i + 1], D[i]); this.quad(B[i], B[i + 1], D[i + 1], D[i]); this.quad(A[i], A[i + 1], C[i + 1], C[i]); }
     for (let i = 2; i < seg; i += 3) { this.edge(B[i], D[i]); }
   }
-  // 油压卡钳的一半（s = ±1 表示碟片哪一侧）：弧形钳体 + 两个活塞孔
+  // one half of a hydraulic caliper (s = ±1 says which side of the rotor): arc-shaped body + two piston bores
   caliperHalf(c, rc, ac, zr, s) {
     this.arcBlock(c, rc - 0.024, rc + 0.02, ac - 0.42, ac + 0.42, zr + s * 0.007, zr + s * 0.03, 12);
-    for (const da of [-0.19, 0.19]) { const p = [c[0] + Math.cos(ac + da) * rc, c[1] + Math.sin(ac + da) * rc, zr + s * 0.007]; this.circle(p, [0, 0, 1], 0.0125, 16); }   // 活塞孔
-    const m = [c[0] + Math.cos(ac) * (rc + 0.03), c[1] + Math.sin(ac) * (rc + 0.03), zr + s * 0.02]; this.box(m, [0.02, 0.014, 0.016]);   // 固定耳
+    for (const da of [-0.19, 0.19]) { const p = [c[0] + Math.cos(ac + da) * rc, c[1] + Math.sin(ac + da) * rc, zr + s * 0.007]; this.circle(p, [0, 0, 1], 0.0125, 16); }   // piston bores
+    const m = [c[0] + Math.cos(ac) * (rc + 0.03), c[1] + Math.sin(ac) * (rc + 0.03), zr + s * 0.02]; this.box(m, [0.02, 0.014, 0.016]);   // mounting tab
   }
-  // 活塞：端面看是圆（端面同心圆 + 短圆柱）
+  // piston: round when seen end-on (concentric circles on the end face + short cylinder)
   pistons(c, rc, ac, zr, s) {
     for (const da of [-0.19, 0.19]) {
       const x = c[0] + Math.cos(ac + da) * rc, y = c[1] + Math.sin(ac + da) * rc;
@@ -189,7 +189,7 @@ export class Model {
       this.disc([x, y, zr + s * 0.006], [0, 0, 1], 0.011, { rings: [0.011, 0.007, 0.003], seg: 16 });
     }
   }
-  // 刹车片：贴着碟片的弧形片（背板 + 摩擦块）
+  // brake pad: an arc-shaped plate against the rotor (backing plate + friction block)
   pad(c, rc, ac, zr, s) {
     this.arcBlock(c, rc - 0.016, rc + 0.014, ac - 0.36, ac + 0.36, zr + s * 0.0035, zr + s * 0.0065, 10);
     this.arcBlock(c, rc - 0.013, rc + 0.011, ac - 0.32, ac + 0.32, zr + s * 0.0065, zr + s * 0.0085, 8);
@@ -197,9 +197,9 @@ export class Model {
   caliper(c, s) {
     const z = c[2] + 0.018 * s;
     this.box([c[0], c[1], z], [0.07, 0.035, 0.022]);
-    this.tube([c[0] - 0.02, c[1], z], [c[0] - 0.02, c[1], z + 0.012 * s], 0.012, { rings: 2, seg: 10, longs: 4 });   // 活塞
+    this.tube([c[0] - 0.02, c[1], z], [c[0] - 0.02, c[1], z + 0.012 * s], 0.012, { rings: 2, seg: 10, longs: 4 });   // piston
     this.tube([c[0] + 0.02, c[1], z], [c[0] + 0.02, c[1], z + 0.012 * s], 0.012, { rings: 2, seg: 10, longs: 4 });
-    this.box([c[0], c[1] - 0.012, c[2] + 0.004 * s], [0.05, 0.016, 0.004]);   // 刹车片
+    this.box([c[0], c[1] - 0.012, c[2] + 0.004 * s], [0.05, 0.016, 0.004]);   // brake pad
   }
   lever(p) {
     this.box([p[0] + 0.01, p[1] + 0.005, p[2]], [0.035, 0.03, 0.03]);

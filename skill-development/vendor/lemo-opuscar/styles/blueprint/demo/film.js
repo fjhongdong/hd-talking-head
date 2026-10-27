@@ -1,4 +1,4 @@
-// 全片时间线：108 BPM，21 小节。所有动作、镜头、字幕、音效事件都从这里来。
+// Full-film timeline: 108 BPM, 21 bars. All action, camera, subtitles and sound events come from here.
 import { W, H, g, f, ov, setCam, clear, proj, nibs, line, text, dim, LW, FONT, rect, circ, fillV, S, cam, fxWet, fxShadow, knock, TAU, NIBS, lw, trunc, xf } from './draw.js';
 import { drawMachine, drawGarden, flower, explodePaths, G, X, M } from './machine.js';
 import { SW, SH, TB, border, header, titleBlock, partsList, notes, revCloud, revImprint, cloudLobes, handShadow, stamp, makeDrops, rain, wrap } from './sheet.js';
@@ -10,10 +10,10 @@ const eio = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2
 const eo = t => 1 - Math.pow(1 - clamp(t), 3);
 const ei = t => Math.pow(clamp(t), 3);
 export const BEAT = 60 / 108, BAR = BEAT * 4;
-export const B = (n, b = 0) => (n - 1) * BAR + b * BEAT;     // 第 n 小节第 b 拍
+export const B = (n, b = 0) => (n - 1) * BAR + b * BEAT;     // bar n, beat b
 export const DUR = B(22);                                       // 46.667
-const PETAL0 = B(17, 1);                                        // 花瓣：一瓣一拍（竖琴分解和弦）
-// ——— 单调插值轨道 ———
+const PETAL0 = B(17, 1);                                        // petals: one petal per beat (harp arpeggio)
+// ——— monotone interpolation tracks ———
 function mono(keys) {
   const n = keys.length, xs = keys.map(k => k[0]), ys = keys.map(k => k[1]); const d = [], m = new Array(n).fill(0);
   for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
@@ -22,7 +22,7 @@ function mono(keys) {
   return t => { if (t <= xs[0]) return ys[0]; if (t >= xs[n - 1]) return ys[n - 1]; let i = 0; while (t > xs[i + 1]) i++; const h = xs[i + 1] - xs[i], u = (t - xs[i]) / h, u2 = u * u, u3 = u2 * u; return (2 * u3 - 3 * u2 + 1) * ys[i] + (u3 - 2 * u2 + u) * h * m[i] + (-2 * u3 + 3 * u2) * ys[i + 1] + (u3 - u2) * h * m[i + 1]; };
 }
 const trk = keys => { const fs = [0, 1, 2].map(j => mono(keys.map(k => [k[0], k[1][j]]))); return t => fs.map(q => q(t)); };
-// ——— 镜头：分段（段间硬切） ———
+// ——— camera: segments (hard cuts between them) ———
 const CAMS = [
   [0, trk([[0, [1600, 1100, .44]], [1.9, [1600, 1100, .455]], [2.3, [1480, 900, .52]], [4.3, [1120, 560, .74]], [5.7, [1400, 1250, .72]], [10.9, [1390, 1240, .76]], [12.4, [1440, 1250, .70]], [15.4, [1500, 1225, .64]], [16.7, [1500, 1225, .645]], [17.7, [1470, 1250, .70]]])],
   [B(9), trk([[B(9), [X - 130, G - 185, 2.05]], [19.0, [X - 80, G - 215, 1.95]], [19.3, [X - 20, G - 330, 1.85]], [20.5, [X + 10, M.pivot[1] + 60, 1.6]], [21.4, [X + 320, 720, 1.1]], [22.3, [1570, 790, .78]]])],
@@ -30,7 +30,7 @@ const CAMS = [
   [B(15), trk([[B(15), [1790, 720, 1.05]], [31.9, [1780, 780, .9]], [33.4, [1760, 1330, .72]], [34.4, [1740, 1400, .8]], [35.3, [1668, 1660, 1.38]], [38.9, [1662, 1650, 1.44]], [39.85, [1600, 1100, .47]], [40.25, [1600, 1100, .475]], [41.8, [2430, 1790, 1.25]], [43.4, [2445, 1800, 1.28]], [44.6, [2690, 1925, 1.95]], [DUR, [2690, 1928, 2.0]]])],
 ];
 function camAt(t) { let c = CAMS[0][1]; for (const [t0, fn] of CAMS) if (t >= t0) c = fn; const [x, y, z] = c(t); return { x, y, z }; }
-// ——— 旁白 / 字幕 ———
+// ——— narration / subtitles ———
 export let LINES = [], DURS = {};
 const VO = { v1: 5.2, v2: 12.2, v3: 21.9, v4: 26.1, v5: 35.0, v6: 40.7 };
 const SUBPOS = { v1: [940, 300], v2: [1000, 300], v3: [1180, 860], v4: [1180, 860], v5: [1200, 70], v6: [90, 60] };
@@ -51,7 +51,7 @@ function subtitle(n, str, u, a, x0, y0, maxW = 880) {
   c.strokeStyle = 'rgba(232,240,250,.9)'; c.lineWidth = 1.2; c.strokeRect(x0 + .5, y0 + .5, w, h);
   c.lineWidth = .8; c.strokeRect(x0 + 5.5, y0 + 5.5, w - 10, h - 10);
   c.beginPath(); c.moveTo(x0 + 108, y0 + 16); c.lineTo(x0 + 108, y0 + h - 16); c.stroke();
-  // 引线折角（注释框的"指针"）
+  // leader-line elbow (the note box's "pointer")
   c.beginPath(); c.moveTo(x0, y0 + h); c.lineTo(x0 - 18, y0 + h + 18); c.stroke();
   c.fillStyle = 'rgba(234,241,250,1)'; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.font = `700 17px B612`; c.letterSpacing = '3px'; c.fillText('NOTE', x0 + 56, y0 + 28);
@@ -61,10 +61,10 @@ function subtitle(n, str, u, a, x0, y0, maxW = 880) {
   ls.forEach((l, i) => { const uu = clamp((u * total - acc) / l.length); acc += l.length; if (uu <= 0) return; const lw2 = c.measureText(l).width; c.save(); c.beginPath(); c.rect(x0 + 116, y0, (lw2 + 16) * uu, h); c.clip(); c.fillText(l, x0 + 124, y0 + 30 + 23 + i * 46 - 1); c.restore(); });
   c.globalAlpha = 1; c.textBaseline = 'alphabetic';
 }
-// ——— 机器状态 ———
+// ——— machine state ———
 const eighths = (t, t0, t1) => { const n = (t - t0) / (BEAT / 2); if (n < 0) return 0; const nmax = (t1 - t0) / (BEAT / 2); const k = Math.min(Math.floor(n), nmax); return k + (k < nmax ? eo((n - k) / .35) : 0); };
 function gearAt(t) {
-  // 运转段：每个八分音符一格（7.5° = 1 齿）；泄气段减速
+  // running section: one notch per eighth note (7.5° = 1 tooth); slows down in the deflating section
   let a = .3;
   if (t > B(9)) a += eighths(Math.min(t, B(11)), B(9), B(11)) * TAU / 48;
   if (t > B(11)) { const k = t - B(11); a += Math.min(k, 1.6) * TAU / 48 * 1.2 * (1 - Math.min(k, 1.6) / 3.2) / (BEAT / 2) * .5; }
@@ -76,12 +76,12 @@ function boomAt(t) {
   return mono([[0, -.52], [20.0, -.52], [21.2, -.8], [21.8, -.74], [22.3, -.78], [23.0, -.75], [24.4, .05], [24.9, .09], [25.5, .06], [30.95, .06], [31.35, -.5], [31.6, -.45], [32.3, -.3], [33.2, .1], [33.5, .08], [DUR, .08]])(t) + (t > 15.9 && t < 16.67 ? 0 : 0);
 }
 export const netHC = boomA => [X + Math.cos(boomA) * (M.boomLen + 104), M.pivot[1] + Math.sin(boomA) * (M.boomLen + 104)];
-// ——— 雨 ———
+// ——— rain ———
 const DROPS = makeDrops(7, 150, [1590, 1060, 2020, G - 58], 34.35, 38.6).concat(makeDrops(11, 40, [1560, 1060, 2060, G + 110], 34.8, 38.6));
 const LATE = makeDrops(19, 30, [1600, 1060, 2000, G - 58], 38.6, 41.5);
-// 结尾一滴落在签名上
+// At the end, one drop lands on the signature
 const SIGN = [TB.x0 + 200, TB.y0 + 96 + 52];
-// ——— 事件（音效）———
+// ——— events (sound effects)———
 export const EV = [];
 function ev(t, type, o = {}) { EV.push({ t: +t.toFixed(3), type, ...o }); }
 (function buildEV() {
@@ -113,21 +113,21 @@ function ev(t, type, o = {}) { EV.push({ t: +t.toFixed(3), type, ...o }); }
   ev(43.8, 'letter', { d: .9, v: .8 }); ev(44.6, 'letter', { d: 1.0, v: .8 }); ev(46.0, 'cap');
   for (const id of Object.keys(VO)) ev(VO[id], 'vo', { id });
 })();
-// ——— 渲染 ———
+// ——— render ———
 export function renderFilm(t) {
   const c = camAt(t);
-  // 开印章时镜头轻震
+  // slight camera shake when the stamp comes down
   const shake = (t > 40 && t < 40.35 ? Math.sin((t - 40) * 90) * 5 * (1 - (t - 40) / .35) : 0) + (t > .55 && t < .8 ? Math.sin((t - .55) * 80) * 4 * (1 - (t - .55) / .25) : 0);
   setCam({ x: c.x, y: c.y + shake / c.z, z: c.z, r: 0 });
   clear();
   const P = {};
-  // 投影方式：爆炸时转成斜二测，之后保持 0.42
+  // projection: switches to cabinet oblique during the explosion, then stays at 0.42
   proj.k = lerp(0, .5, eio(seg(t, B(6), B(6) + 1.1))) - .08 * ss(seg(t, 16.6, 17.8));
-  // 图框、丁字尺
+  // drawing border, T-square
   border(seg(t, .95, 2.35));
-  // 页眉
+  // header
   header(seg(t, B(2), B(2) + 1.35), seg(t, 3.3, 4.3));
-  // 标题栏、零件表、注释
+  // title block, parts list, notes
   const tbU = seg(t, 2.6, 4.6);
   const stampT = B(19);
   const signWet = seg(t, 42.05, 43.2);
@@ -135,17 +135,17 @@ export function renderFilm(t) {
   partsList(seg(t, 12.3, 15.6));
   const S0 = subs();
   notes(S0.map(s => [NOTETEXT[s.id], seg(t, s.t0 + .2, s.t0 + 1.4)]), seg(t, 4.2, 5.2));
-  // Fig 标签
+  // Fig labels
   figLabel(t);
-  // 花坛
+  // flower bed
   drawGarden({ u: seg(t, 6.1, 7.6), ud: seg(t, 7.2, 8.4), uh: seg(t, 7.9, 8.9), ug: seg(t, 4.5, 5.3) });
-  // 花：低垂的老花 + 雨后新花
+  // flowers: the drooping old flower + the new flower after the rain
   const lift = ss(seg(t, 35.2, 36.8));
   flower(1570, G - 62, 96 + 18 * lift, .85 * (1 - lift), .25 + .6 * lift, seg(t, 8.0, 9.3), { sway: .05 * Math.sin(t * 1.3) * lift });
   flower(1525, G - 62, 34 + 20 * lift, .5 * (1 - lift), lift * .6, seg(t, 8.3, 9.1), { size: .5, leaf: .5 });
   flower(1730, G - 62, 26 + 30 * lift, .6 * (1 - lift), lift * .7, seg(t, 8.5, 9.2), { size: .45, leaf: .45 });
   heroFlower(t);
-  // 机器
+  // machine
   const E = t < B(8, 2) ? eio(seg(t, B(6) + 1.05, 15.5)) : 1 - eighths(t, B(8, 2), B(9)) / 4;
   const boomA = lerp(boomAt(t), -.18, t < B(9) ? E : 0);
   const bel = t < B(9) ? .45 : t < B(11) ? .45 + .4 * Math.sin((t - B(9)) / BEAT * Math.PI) : t < B(15) ? .45 * (1 - ss(seg(t, 23.3, 24.3))) : .45 * ss(seg(t, 31.1, 31.8)) + .3 * Math.sin((t - B(15)) / BEAT * Math.PI) * seg(t, 31.1, 31.8);
@@ -158,31 +158,31 @@ export function renderFilm(t) {
   const catchT = B(15), caught = t >= catchT + .12;
   const bag = caught ? eo(seg(t, catchT, catchT + .5)) : 0;
   const mp = { E, gear: gearAt(t), boom: boomA, bellows: bel, vane, gauge: gv, section: secX, pr: drawn, bag, balloons: t < 31 };
-  if (t < 4.4) { /* 机器还没画 */ } else drawMachine({ ...mp, net: caught ? 'skip' : undefined });
+  if (t < 4.4) { /* machine not drawn yet */ } else drawMachine({ ...mp, net: caught ? 'skip' : undefined });
   if (t > B(6) && t < B(9) + .3) explodePaths(E, boomA, 1);
   if (t < 4.4) {}
-  // 尺寸线（活的）
+  // dimension lines (live)
   dims(t, E, boomA);
-  // 运转段的活标注：齿轮转速
+  // live annotation during the running section: gear speed
   if (t > B(9) && t < B(11) + .8) { const a = clamp(seg(t, B(9) + .2, B(9) + .8)) * (1 - seg(t, B(11), B(11) + .8)); if (a > 0) { text(`n = ${Math.round(108 / 2 * (1 - seg(t, B(11), B(11) + 1.5)))} RPM`, X - 470, G - 400, { size: 28, v: a }); } }
   // (NO CLOUDS ON SHEET)
   const nc = seg(t, 22.5, 23.3) * (1 - seg(t, 28.9, 29.5));
   if (nc > 0) { text('(NO CLOUDS ON SHEET)', 1800, 632, { size: 30, u: nc, v: .75, align: 'center' }); }
-  // 修订云线 → 云
+  // revision cloud → cloud
   cloud(t, boomA, caught, mp);
-  // 雨
+  // rain
   if (t > 33.3) rainScene(t);
-  // 印章
+  // stamp
   stampScene(t);
-  // 签名洇开
+  // signature bleeds
   if (signWet > 0) { fxWet(SIGN[0], SIGN[1], 40 + 120 * eo(signWet), .95); fxWet(SIGN[0] + 90, SIGN[1] + 6, 30 + 70 * eo(seg(t, 42.2, 43.6)), .8); }
   if (t > 41.2 && t < 42.08) { const k = seg(t, 41.2, 42.05); const y = lerp(SIGN[1] - 700, SIGN[1], ei(k)); line([[SIGN[0], y - 40], [SIGN[0], y]], { w: LW.thin, v: .9, nib: false }); }
-  // 丁字尺
+  // T-square
   tsquare(t);
   nibs(1);
-  // 字幕
+  // subtitles
   for (const s of S0) { if (t < s.t0 - .05 || t > s.t1 + .2) continue; const a = seg(t, s.t0 - .05, s.t0 + .15) * (1 - seg(t, s.t1, s.t1 + .2)); const [x0, y0] = SUBPOS[s.id]; subtitle(s.n, s.text, seg(t, s.t0, s.t0 + .35), a, x0, y0, s.id === 'v5' ? 600 : 880); }
-  // 纸卷
+  // paper roll
   const roll = t < .6 ? [lerp(260, SW, eo(seg(t, 0, .55))), 80] : [1e6, 80];
   return { cam: c, roll, sheet: [SW, SH], seed: 3, wetBlur: 1.35, fade: seg(t, DUR - .5, DUR) };
 }
@@ -193,7 +193,7 @@ function figLabel(t) {
   if (u1 <= 0) return;
   const n = t < B(6) ? '1' : t < B(9) ? '2' : '3';
   text('FIG.', x - 30, y, { size: 64, align: 'right', ls: 4, u: u1 });
-  // 编号改写：划掉旧号 → 写新号
+  // number rewrite: strike out the old number → write the new one
   const tw = [B(6), B(9)];
   let shown = '1';
   if (t >= tw[0]) shown = t < tw[1] ? '2' : '3';
@@ -221,21 +221,21 @@ function dims(t, E, boomA) {
     const p0 = [X, M.pivot[1]], p1 = [X + Math.cos(boomA) * M.boomLen, M.pivot[1] + Math.sin(boomA) * M.boomLen];
     dim(p0, p1, -70, '1800', { u });
   }
-  // 爆炸：活尺寸（数字跟着变）
+  // explosion: live dimensions (the numbers change along with it)
   const ue = seg(t, 12.6, 13.2) * (1 - seg(t, 16.55, 16.75));
   if (ue > 0 && E > .02) {
-    const e1 = clamp(E * 1.2), gap = 170 * e1 - 0;           // 桅杆顶 ↔ 顶箱
+    const e1 = clamp(E * 1.2), gap = 170 * e1 - 0;           // mast top ↔ top box
     const headE = E, mastE = E;
     const topM = M.mastTop - 170 * mastE, botH = M.pivot[1] + 40 - 260 * headE;
     const val = Math.max(0, Math.round((topM - botH) * 3));
     dim([X + 60, topM], [X + 60, botH], -110, String(val), { d: -36, size: 32, u: ue });
-    // 网 ↔ 吊臂尖
+    // net ↔ boom tip
     const bt = [X + 80 * E + Math.cos(boomA) * M.boomLen, M.pivot[1] - 280 * E + Math.sin(boomA) * M.boomLen];
     const nt = [X + 210 * E + Math.cos(boomA) * M.boomLen, M.pivot[1] - 300 * E + Math.sin(boomA) * M.boomLen];
     if (Math.hypot(nt[0] - bt[0], nt[1] - bt[1]) > 30) dim(bt, nt, -60, String(Math.round(Math.hypot(nt[0] - bt[0], nt[1] - bt[1]) * 3)), { size: 28, u: ue, d: -10 });
   }
 }
-// 丁字尺：0.7–1.3 从下滑到上图框线，1.25–1.9 沿尺边画线，1.45–2.0 退出
+// T-square: 0.7–1.3 slides up from the bottom to the top border line, 1.25–1.9 a line is drawn along its edge, 1.45–2.0 exits
 function tsquare(t) {
   if (t < .66 || t > 2.1) return;
   const yEdge = t < 1.3 ? lerp(SH + 300, 80, eo(seg(t, .7, 1.28))) : t < 1.5 ? 80 : lerp(80, -260, ei(seg(t, 1.5, 2.05)));
@@ -245,9 +245,9 @@ function tsquare(t) {
   knock(blade); fillV(blade, .2);
   line(blade, { w: LW.out * 1.4, closed: true, v: 1, nib: false });
   line([[x0, yEdge + 12], [x1, yEdge + 12]], { w: LW.thin, v: .6, nib: false });
-  // 刻度
+  // graduations
   for (let x = x0 + 40; x < x1; x += 40) line([[x, yEdge + th], [x, yEdge + th - ((x / 40) % 5 ? 14 : 30)]], { w: LW.hair, v: .7, nib: false });
-  // 尺头
+  // head of the T-square
   const hd = [[x0 - 40, yEdge - 60], [x0 + 60, yEdge - 60], [x0 + 60, yEdge + th + 60], [x0 - 40, yEdge + th + 60]];
   fxShadow(hd.map(([x, y]) => [x + 22, y + 30]), .75, 12); knock(hd); fillV(hd, .26); line(hd, { w: LW.out * 1.4, closed: true, v: 1, nib: false });
   line(circ(x0 + 10, yEdge + th / 2, 14, 16), { w: LW.det, closed: true, v: .8, nib: false });
@@ -261,17 +261,17 @@ function cloud(t, boomA, caught, mp) {
   const breath = .07 * pulse(B(14)) + .1 * pulse(B(14, 1));
   const pf = Math.max(breath, eio(seg(t, B(14, 2), B(15) - .15)));
   const liftK = eo(seg(t, B(14, 2) + .2, B(15) + .3));
-  // 云的位置：醒来后向网漂过去，接住后跟着网走
+  // cloud position: after waking it drifts toward the net; once caught it moves with the net
   const hc = netHC(boomA);
   let cx = C0[0], cy = C0[1];
   const drift = eio(seg(t, B(14, 2), B(15)));
   cx = lerp(cx, 1760, drift); cy = lerp(cy, 520, drift);
   if (t > B(15)) { const k = eio(seg(t, B(15), B(15) + .5)); cx = lerp(cx, hc[0] + 10, k); cy = lerp(cy, hc[1] - 70, k); }
   const dark = ss(seg(t, 32.6, 34.2)) * .8;
-  // 纸上的修订云线（醒来前）/ 印子（醒来后）
+  // revision cloud on the paper (before waking) / the mark left behind (after waking)
   if (pf < .15) revCloud(C0[0], C0[1], 250, 120, { pf: 0, u: drawU, tremble: 0 });
   if (liftK > 0) revImprint(C0[0], C0[1], 250, 120, Math.min(1, liftK * 2));
-  // 修订三角 + 注释
+  // revision triangle + note
   const tx = C0[0] + 250, ty = C0[1] + 210;
   const ut = seg(t, 27.0, 27.3);
   if (ut > 0) {
@@ -280,10 +280,10 @@ function cloud(t, boomA, caught, mp) {
     text('REV. 1 — ADD ONE (1) CLOUD.', tx - 60, ty + 70, { size: 30, u: seg(t, 27.35, 27.85) });
     text('C.W.', tx - 60, ty + 108, { size: 30, font: FONT.sign, u: seg(t, 27.8, 28.0) });
   }
-  // 鼓起的云（全片唯一有柔和体积和辉光的东西）
+  // the puffed-up cloud (the only thing in the film with soft volume and glow)
   if (pf >= .15) {
     const glowA = clamp(liftK) * (1 - .6 * dark);
-    if (glowA > 0) {   // 柔和白色辉光
+    if (glowA > 0) {   // soft white glow
       const L = cloudLobes(cx, cy, 250, 120, pf);
       g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.filter = `blur(${40 * cam.z}px)`;
       g.fillStyle = `rgba(255,255,255,${.22 * glowA})`; g.beginPath();
@@ -293,9 +293,9 @@ function cloud(t, boomA, caught, mp) {
     const tr = t < B(15) ? .6 * seg(t, B(14), B(14) + .3) * (1 - liftK) : 0;
     revCloud(cx, cy, 250, 120, { pf, lift: liftK, dark, t, tremble: tr, glow: glowA });
   }
-  // 接住后：网画在云上面
+  // after the catch: the net is drawn over the cloud
   if (caught) drawMachine({ ...mp, net: 'only', netNoFill: true, bagFill: eo(seg(t, B(15), B(15) + .5)) * (1 - .4 * dark) });
-  // 手影 + 笔尖
+  // hand shadow + pen tip
   if (hand) {
     let nx, ny;
     if (t < 25.0) { const k = eo(seg(t, 24.5, 25.0)); nx = lerp(2600, C0[0], k); ny = lerp(1300, C0[1] - 120, k); }
@@ -309,7 +309,7 @@ function cloud(t, boomA, caught, mp) {
   }
 }
 function rainScene(t) {
-  // 雨线标注：先画几滴带 Ø 的水滴标注
+  // rain annotations: first draw a few raindrops labelled with Ø
   const ua = seg(t, 33.4, 34.0) * (1 - seg(t, 34.3, 34.6));
   const specs = [[1650, 1180, '4'], [1790, 1250, '6'], [1930, 1170, '5']];
   for (const [x, y, dd] of specs) {
@@ -322,10 +322,10 @@ function rainScene(t) {
   }
   const ud = seg(t, 33.6, 34.1) * (1 - seg(t, 34.4, 34.7));
   if (ud > 0) dim([2080, 1100], [2080, G - 60], 0, '2280', { size: 24, u: ud });
-  // 真雨
+  // real rain
   rain(DROPS, t);
   rain(LATE, t);
-  // 大水渍：花坛下
+  // large water stain: under the flower bed
   const bloom = eo(seg(t, 34.8, 37.6));
   if (bloom > 0) { fxWet(1665, G - 40, 30 + 190 * bloom, .95); fxWet(1600, G - 10, 20 + 110 * eo(seg(t, 35.4, 38)), .85); fxWet(1760, G + 20, 20 + 120 * eo(seg(t, 35.9, 38.6)), .85); }
   const puddle = ss(seg(t, 35.0, 38.0));
@@ -337,7 +337,7 @@ function stampScene(t) {
   if (t >= B(19)) stamp(x, y, .6 + .05 * (1 - eo(seg(t, B(19), B(19) + .12))), 1);
 }
 
-// 雨后的主花：逐笔画出（茎 → 叶 → 花瓣一瓣一拍 → 花心）
+// The main flower after the rain: drawn stroke by stroke (stem → leaves → petals one per beat → centre)
 function heroFlower(t) {
   if (t < 34.85) return;
   const rx = 1665, ry = G - 62, H0 = 200, d = -45;
@@ -345,14 +345,14 @@ function heroFlower(t) {
   const stem = []; for (let i = 0; i <= 30; i++) { const k = i / 30; stem.push([rx + 10 * Math.sin(k * 3.2) + sway * H0 * k * k * 3, ry - H0 * k]); }
   line(stem, { w: LW.out, u: eo(seg(t, 34.9, 35.75)), d });
   const hd = stem[30];
-  // 叶
+  // leaves
   const leaf = (k, side, t0) => { const u = seg(t, t0, t0 + .35); if (u <= 0) return; const [bx, by] = stem[k], la = -Math.PI / 2 + side * 1.0, L = 86;
     const tip = [bx + Math.cos(la) * L, by + Math.sin(la) * L], n = [-Math.sin(la) * 22, Math.cos(la) * 22];
     const pts = []; for (let i = 0; i <= 16; i++) { const q = i / 16, w = Math.sin(q * Math.PI); pts.push([bx + (tip[0] - bx) * q + n[0] * w, by + (tip[1] - by) * q + n[1] * w]); }
     for (let i = 16; i >= 0; i--) { const q = i / 16, w = Math.sin(q * Math.PI); pts.push([bx + (tip[0] - bx) * q - n[0] * w, by + (tip[1] - by) * q - n[1] * w]); }
     line(pts, { w: LW.det, u, d }); line([[bx, by], tip], { w: LW.thin, u: seg(t, t0 + .25, t0 + .5), d, nib: false }); };
   leaf(9, 1, 35.45); leaf(16, -1, 35.7);
-  // 花瓣
+  // petals
   for (let k = 0; k < 5; k++) {
     const t0 = PETAL0 + k * BEAT, u = eo(seg(t, t0, t0 + .34)); if (u <= 0) continue;
     const a = -Math.PI / 2 + (k - 2) * (TAU / 5) + .2, L = 62, W2 = 26;
@@ -362,7 +362,7 @@ function heroFlower(t) {
     knock(pts, d); line(pts, { w: LW.det, u, d });
     const uv = seg(t, t0 + .25, t0 + .5); if (uv > 0) { line([P(18, 0), P(60, 0)], { w: LW.hair, u: uv, d, nib: false }); line([P(24, 6), P(48, 12)], { w: LW.hair, u: uv, d, nib: false }); line([P(24, -6), P(48, -12)], { w: LW.hair, u: uv, d, nib: false }); }
   }
-  // 花心
+  // flower centre
   const uc = seg(t, 38.45, 38.8);
   if (uc > 0) { knock(circ(hd[0], hd[1], 15, 24), d); line(circ(hd[0], hd[1], 15, 30, -Math.PI / 2, -Math.PI / 2 + TAU), { w: LW.det, u: uc, d }); for (let i = 0; i < 7; i++) { const a = i / 7 * TAU; if (uc > i / 7) line(circ(hd[0] + Math.cos(a) * 7, hd[1] + Math.sin(a) * 7, 1.6, 8), { w: LW.thin, closed: true, d, nib: false }); } }
 }

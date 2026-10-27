@@ -1,8 +1,8 @@
-"""《两条螺旋》配乐 + 音效 + 旁白 → out/mix.wav（及 out/stems/）
-读 out/timeline.json（tools/export.mjs 写）与 events.json（core/render/events.mjs 写）。
-96 BPM，D 大调。乐器：VSCO 2 CE / VCSL 采样（CC0）+ numpy 合成；音效全部程序化。
-金属片落定 = 明亮短促的金属 tick；亚克力 = 更闷的塑料 tok；黄铜刻度片 = 有音高的一声（太阳能：钟琴，风电：玻璃杯琴），
-按"第几个 100 GW"在 D 大调五声音阶上一级一级往上走。
+"""《两条螺旋》Two Spirals: score + sound effects + voice-over → out/mix.wav (and out/stems/)
+Reads out/timeline.json (written by tools/export.mjs) and events.json (written by core/render/events.mjs).
+96 BPM, D major. Instruments: VSCO 2 CE / VCSL samples (CC0) + numpy synthesis; all sound effects are procedural.
+A metal sheet landing = a bright, short metallic tick; acrylic = a duller plastic tok; a brass tick sheet = a pitched note (solar: glockenspiel, wind: glass harmonica),
+stepping up the D major pentatonic scale one degree per "which 100 GW it is".
 """
 import os, sys, json
 import numpy as np, soundfile as sf, soxr
@@ -52,7 +52,7 @@ def saw(f, d, det=0.0, nh=30):
 def stereo(x, w=.0006): d = int(w * SR); return np.stack([x, np.concatenate([np.zeros(d), x[:-d]]) if d else x], 1)
 def bass(m, d, vel=.8, cut=420):
     f = hz(m); x = np.sin(2 * np.pi * f * tv(d)) * .9 + saw(f, d, nh=12) * .55
-    x = lpf(x, cut) + .14 * np.tanh(3 * lpf(x, 900))            # 2、3 次谐波：小喇叭上也听得见
+    x = lpf(x, cut) + .14 * np.tanh(3 * lpf(x, 900))            # 2nd and 3rd harmonics: audible on small speakers too
     return x * adsr(d, .01, min(.2, d * .4)) * vel * .8
 def pad(ms, d, vel=.25, cut=1500, a=.8, r=1.0):
     x = np.zeros(int(d * SR))
@@ -69,15 +69,15 @@ def punch(vel=1.0, d=.9):
     kn = bpf(rng.standard_normal(len(t)), 90, 400) * np.exp(-t / .045) * .7
     y = b1 + b2 + kn; return (y + .25 * np.tanh(2.5 * y)) * vel
 
-# —— 材质的声音 ——
+# —— the sound of the materials ——
 def tick_alu(v=1.0):
-    """拉丝铝片落定：极短瞬态 + 高频金属共振（非谐）"""
+    """Brushed aluminium sheet landing: very short transient + high-frequency metallic resonance (inharmonic)"""
     d = .07; t = tv(d); p = .92 + rng.random() * .16
     tr = hpf(rng.standard_normal(len(t)), 3000) * np.exp(-t / .0012)
     res = sum(a * np.sin(2 * np.pi * f * p * t + rng.random() * 6) * np.exp(-t / tau) for f, a, tau in [(3150, .5, .02), (5230, .35, .014), (7480, .25, .009), (1870, .2, .012)])
     return (tr * .7 + res) * v
 def tok_acr(v=1.0):
-    """亚克力片落定：更闷、更短的塑料声"""
+    """Acrylic sheet landing: a duller, shorter plastic sound"""
     d = .06; t = tv(d); p = .9 + rng.random() * .2
     tr = bpf(rng.standard_normal(len(t)), 900, 5000) * np.exp(-t / .0018)
     res = sum(a * np.sin(2 * np.pi * f * p * t + rng.random() * 6) * np.exp(-t / tau) for f, a, tau in [(1450, .6, .012), (2650, .35, .008), (520, .3, .015)])
@@ -115,7 +115,7 @@ def foley():
         elif ty == 'verdict':
             inst(HIT, t, 'vibraphone_hard', 'A5', 1.2, .5, .5, .2); inst(HIT, t, 'vibraphone', 'D5', 1.6, .45, .45, -.2)
         elif ty == 'turn':
-            # 交汇：低音 D 的一记（大鼓 + 定音鼓 + 冲击体），圆号 D 大调和弦，钟琴点亮
+            # crossover: one low-D hit (bass drum + timpani + impact), horns on a D major chord, glockenspiel lights up
             put(HIT, stereo(punch(1.0)), t, .9)
             inst(HIT, t, 'bass_drum', None, None, .9, .8); inst(HIT, t, 'timpani', 'D3', 2.2, .9, .9)
             for m, p in (('D3', -.3), ('F#3', 0), ('A3', .3)): inst(HIT, t, 'horn', m, 2.4, .8, .55, p)
@@ -126,42 +126,42 @@ def foley():
             inst(HIT, t, 'vibraphone_hard', 'D5', 1.8, .6, .45, -.2); inst(HIT, t, 'vibraphone_hard', 'F#5', 1.8, .55, .4, .1); inst(HIT, t, 'vibraphone_hard', 'A5', 1.8, .55, .4, .3)
             inst(HIT, t, 'timpani', 'D3', 1.4, .45, .5)
         elif ty == 'puck':
-            # 最后一件实物：黄铜圆片落在盘心——全片最重的一下
+            # the last object: the brass puck lands in the centre of the dial — the heaviest hit in the film
             put(HIT, stereo(punch(1.2)), t, 1.0)
             inst(HIT, t, 'bass_drum', None, None, 1.0, .9); inst(HIT, t, 'gran_cassa', 'hit', None, .9, .6); inst(HIT, t, 'timpani', 'D3', 3.0, 1.0, .9)
             inst(HIT, t, 'tubular_bells', 'D5', 4.0, .8, .6, .15); inst(HIT, t, 'tubular_bells', 'A4', 4.0, .6, .4, -.2)
             put(HIT, metal_ring(mi('D4'), .9, 4.0), t, .35); put(HIT, metal_ring(mi('A4') + .1, .4, 3.0), t, .35)
             put(FX, tick_alu(1.0), t, .9)
-            for k in range(5): put(FX, tick_alu(.5 / (k + 1)), t + .07 + k * .055 * (1 - k * .1), .4)   # 圆片在木头上的细小回弹
+            for k in range(5): put(FX, tick_alu(.5 / (k + 1)), t + .07 + k * .055 * (1 - k * .1), .4)   # the puck's small bounces on the wood
         elif ty == 'end':
             inst(HIT, t, 'harp', 'D4', 3, .45, .45, -.3)
 
 def score():
-    # 和声：每小节一和弦；D 大调
+    # harmony: one chord per bar; D major
     CH = {0: ['D3', 'A3', 'E4'], 1: ['D3', 'A3', 'E4'], 2: ['B2', 'F#3', 'D4'], 3: ['G2', 'D3', 'F#4'],
           4: ['D3', 'A3', 'F#4'], 5: ['C#3', 'A3', 'E4'], 6: ['B2', 'F#3', 'D4'], 7: ['G2', 'D3', 'A3'], 8: ['A2', 'D3', 'E4'],
           9: ['D3', 'A3', 'F#4'], 10: ['B2', 'F#3', 'D4'], 11: ['G2', 'D3', 'B3'], 12: ['A2', 'E3', 'C#4'], 13: ['G2', 'D3', 'F#4'],
           14: ['D3', 'A3', 'F#4'], 15: ['D3', 'A3', 'F#4']}
     ROOT = {b: ch[0] for b, ch in CH.items()}
-    # 1) 铺底：低音合成 pad + 弓奏颤音琴（只放 A3 以上）
+    # 1) bed: low synth pad + bowed vibraphone (only A3 and above)
     for b in range(16):
         t = q(b); d = BAR + .4
-        if b == 8: d = BAR * .7                                            # 交汇前那一小节收短：留出抽空
+        if b == 8: d = BAR * .7                                            # shorten the bar before the crossover: leaves room for the drop-out
         put(MUS, stereo(pad([mi(n) for n in CH[b]], d, .3 if b < 4 else .36, 1300 if b < 9 else 1900)), t, .9)
         top = [n for n in CH[b] if mi(n) >= mi('A3')]
         for n in top: inst(MUS, t, 'vibraphone_bowed', n, d, .4, .35, rng.uniform(-.4, .4), attack=.3)
-    # 2) 开场两小节：风的音色——玻璃杯琴 + 竖琴的稀疏动机（风电领先）
+    # 2) opening two bars: the wind timbre — sparse motif on glass harmonica + harp (wind is ahead)
     for i, (b, bt, n) in enumerate([(0, 1, 'A5'), (0, 3, 'F#5'), (1, 0, 'E5'), (1, 2, 'D5'), (2, 0, 'F#5'), (2, 2, 'E5'), (3, 0, 'D5')]):
         inst(MUS, q(b, bt), 'glass', n, 1.4, .45, .4, -.3 + .1 * i)
         inst(MUS, q(b, bt), 'harp', n[:-1] + str(int(n[-1]) - 1), 1.4, .35, .25, .3)
-    # 3) 增长段起脉冲：合成低音（四分 → 八分）+ 马林巴琶音（八分 → 十六分），用细分加速，不改速度
+    # 3) the growth section starts a pulse: synth bass (quarters → eighths) + marimba arpeggios (eighths → sixteenths); accelerate by subdivision, not by changing tempo
     for b in range(4, 15):
         if b == 8: continue
         sub = 1 if b < 9 else .5
         k = 0
         while k * sub < 4:
             t = q(b, k * sub)
-            if not (b == 13 and k * sub >= 2):                            # 圆片落下前抽空
+            if not (b == 13 and k * sub >= 2):                            # drop-out before the puck falls
                 put(PUL, stereo(bass(mi(ROOT[b]) - 12 + (12 if ROOT[b][-1] == '1' else 0), BEAT * sub * .9, .55 if (k * sub) % 1 == 0 else .4)), t, 1.0)
             k += 1
         arp = [mi(n) + 12 for n in CH[b]] + [mi(CH[b][1]) + 24]
@@ -174,13 +174,13 @@ def score():
             if b in (12, 14): m = arp[(k * 3) % len(arp)]
             inst(PUL, q(b, k * div), 'marimba', int(m), .4, .42 if k % 2 == 0 else .3, .5, .35 if k % 2 else -.35)
             k += 1
-    # 4) 交汇小节（8）：只留定音鼓心跳与悬挂和弦，在抽空前停住
+    # 4) the crossover bar (8): only a timpani heartbeat and a suspended chord, stopping before the drop-out
     for bt in (0, 2): inst(PUL, q(8, bt), 'timpani', 'A2', 1.0, .4, .5)
     inst(MUS, q(7, 2), 'horn', 'A3', BAR * .9, .35, .3, -.2, attack=.4)
-    # 5) 2025 落片段：钟琴在落片上方唱一条往上的旋律（每两拍一音）
+    # 5) the 2025 falling-sheets section: the glockenspiel sings a rising melody above the falling sheets (one note every two beats)
     for i, n in enumerate(['D6', 'E6', 'F#6', 'A6', 'B6', 'A6']):
         inst(MUS, T['drop25'] + i * BEAT * 1, 'glockenspiel', n, .8, .4, .22, .2)
-    # 6) 表盘：圆号与大提琴的宽和弦，竖琴琶音收尾
+    # 6) dial: wide chord on horns and cellos, ending on a harp arpeggio
     for n, p in (('D3', -.3), ('A3', 0), ('F#4', .3)): inst(MUS, q(12, 0), 'horn', n, BAR * 1.5, .5, .32, p, attack=.5)
     inst(MUS, q(12, 0), 'cellos', 'D3', BAR * 1.5, .45, .3, -.2, attack=.6)
     for i, n in enumerate(['D4', 'F#4', 'A4', 'D5', 'E5', 'F#5', 'A5', 'D6']):
@@ -189,7 +189,7 @@ def score():
     inst(MUS, q(14, 2), 'vibraphone_bowed', 'A4', 4.0, .4, .35, 0, attack=.4)
 
 def bed():
-    # 棚里的空气：很轻的粉噪 + 低频房间音
+    # the studio air: very light pink noise + low-frequency room tone
     n = rng.standard_normal(N); b = lpf(np.cumsum(n) / 200, 300)
     air_ = lpf(hpf(n, 200), 3000)
     x = (b / (np.abs(b).max() + 1e-9) * .4 + air_ / (np.abs(air_).max() + 1e-9) * .25)
@@ -224,7 +224,7 @@ def main():
     mus = S.room(MUS, .6, .24); pul = S.room(PUL, .35, .15); hit = S.room(HIT, .7, .26); fx = S.room(FX, .25, .1)
     v = np.abs(VOX).mean(1)
     env = uniform_filter1d(maximum_filter1d(v, int(.12 * SR)), int(.15 * SR)); env = np.clip(env / (env.max() + 1e-9) * 3, 0, 1)
-    # 抽空：交汇判定前、圆片落下前，音乐和音效一起掉下去，冲击落在抽空之后
+    # drop-out: before the crossover verdict and before the puck falls, music and effects drop away together, and the impact lands after the drop-out
     for a_, b_ in ((T['suck'], T['verdict21'] - .01), (T['suck2'], T['puck'] - .01)):
         i0, i1 = int(a_ * SR), int(b_ * SR); f = int(.08 * SR)
         g = np.ones(N); g[i0:i0 + f] = np.linspace(1, .03, f); g[i0 + f:i1] = .03
@@ -235,7 +235,7 @@ def main():
     def act(x):
         m = x.mean(1); w = int(.05 * SR); n_ = len(m) // w; r = np.sqrt((m[:n_ * w].reshape(n_, w) ** 2).mean(1)); on = r > r.max() * .03
         return float(np.sqrt((r[on] ** 2).mean()))
-    # 电平：音乐（铺底 + 脉冲）在旁白下约 10 dB，音效约 −7 dB，冲击与人声相当；床 −24 dB
+    # levels: music (bed + pulse) about 10 dB under the voice-over, effects about −7 dB, impacts on par with the voice; bed −24 dB
     g_mus = vr / act(mus) * 10 ** (-9.5 / 20); g_pul = vr / act(pul) * 10 ** (-10.5 / 20)
     g_fx = vr / act(fx) * 10 ** (-8 / 20); g_hit = vr / act(hit) * 10 ** (-3 / 20); g_bed = vr / act(BED) * 10 ** (-27 / 20)
     duck = lambda k: (1 - k * env)[:, None]

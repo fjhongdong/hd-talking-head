@@ -1,10 +1,10 @@
-"""《The Honeybee, Plate VII》原创配乐 —— 巴洛克室内乐：羽管键琴 + 弦乐四重奏（拨奏 → 首次拉弓）
-D 大调，96 BPM，4/4，一拍 0.625 s，一小节 2.5 s，16 小节 = 40.0 s。
-运行（仓库根目录）：.venv/bin/python styles/engraving/demo/music/score.py
-输出：music/score.wav、music/stems/{harpsichord,pizz,bowed}.wav、music/cues.json、music/CREDITS_music.txt，
-      并打印卡点校验报告（同时写入 music/timing_report.txt，NOTES.md 引用）。
+"""《The Honeybee, Plate VII》 original score: Baroque chamber music, harpsichord + string quartet (pizzicato → first bowed note)
+D major, 96 BPM, 4/4, one beat 0.625 s, one bar 2.5 s, 16 bars = 40.0 s.
+Run (from the repo root): .venv/bin/python styles/engraving/demo/music/score.py
+Output: music/score.wav, music/stems/{harpsichord,pizz,bowed}.wav, music/cues.json, music/CREDITS_music.txt,
+      and prints the hit-point check report (also written to music/timing_report.txt).
 
-雕版段（2.5–25.0）= 细碎拨奏，像刻刀一刀一刀；上色段（26.25 起）= 全片第一次拉弓，长音舒展。
+Engraving section (2.5–25.0) = fine, broken pizzicato, like the burin cutting stroke by stroke; colouring section (from 26.25) = the first bowed note of the whole film, long notes opening out.
 """
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
@@ -35,16 +35,16 @@ CUES = []                    # {t, what, stem}
 USED = set()
 
 def T(bar, beat=1.0):
-    """小节号（1 起）+ 拍（1 起，可小数）→ 秒"""
+    """bar number (from 1) + beat (from 1, fractions allowed) → seconds"""
     return (bar - 1) * BAR + (beat - 1) * BEAT
 
 def cue(t, what, stem, band=None):
-    """band='low' 只看 <300 Hz（低音落地），'high' 只看 >2 kHz（高音“叮”）"""
+    """band='low' looks only at <300 Hz (bass landings), 'high' only at >2 kHz (high “ding”)"""
     CUES.append(dict(t=round(float(t) + OFF, 4), what=what, stem=stem, **({'band': band} if band else {})))
 
 PRE = .003
 def tr(x):
-    """起音对齐：切掉 30% 峰值前 3 ms 以前的部分 → 放在 t-PRE 时冲击点正好落在 t"""
+    """Onset alignment: trim everything before 3 ms ahead of the 30%-of-peak point → placed at t-PRE, the transient lands exactly on t"""
     x = np.asarray(x, np.float32); a = np.abs(x); i = int(np.argmax(a > .3 * a.max()))
     return x[max(0, i - int(PRE * SR)):]
 
@@ -54,7 +54,7 @@ PAN = {'harpsichord': -.12, 'violin_pizz': -.4, 'violins_pizz': .35, 'violas_piz
 STEM_OF = lambda inst: 'harpsichord' if inst == 'harpsichord' else ('pizz' if inst.endswith('pizz') else 'bowed')
 
 def pl(t, inst, p, d=.25, v=.6, g=1.0, exact=False, pan=None, release=None):
-    """拨奏 / 羽管键琴一音。exact=False 时加 ±4 ms 人味和 ±0.04 力度浮动（卡点音一律 exact）"""
+    """One pizzicato / harpsichord note. With exact=False adds ±4 ms human timing and ±0.04 velocity variation (hit-point notes are always exact)"""
     USED.add(inst)
     if not exact:
         t = t + RNG.uniform(-.004, .004); v = float(np.clip(v + RNG.uniform(-.04, .04), .05, 1))
@@ -63,24 +63,24 @@ def pl(t, inst, p, d=.25, v=.6, g=1.0, exact=False, pan=None, release=None):
     add(bus[STEM_OF(inst)], x, t + OFF - PRE, g, PAN[inst] if pan is None else pan)
 
 def hch(t, ps, d=.4, v=.55, g=1.0, strum=.012, exact=False):
-    """羽管键琴和弦（轻琶，最低音落在 t）"""
+    """harpsichord chord (lightly rolled, lowest note lands on t)"""
     for i, p in enumerate(ps): pl(t + i * strum, 'harpsichord', p, d, v, g, exact=(exact and i == 0))
 
 def bow(t, inst, p, d, v=.45, g=1.0, attack=.5, release=.6, pan=None):
-    """拉弓长音：从 t 开始（采样起点即 t，不做起音裁切），attack 秒淡入"""
+    """bowed long note: starts at t (the sample start is t, no onset trimming), fades in over attack seconds"""
     USED.add(inst)
     x = S.note(inst, p, d, vel=v, release=release)
-    a = np.abs(x); i0 = int(np.argmax(a > a.max() * 10 ** (-40 / 20)))        # 去掉采样开头的空白，弓毛接触即 t
+    a = np.abs(x); i0 = int(np.argmax(a > a.max() * 10 ** (-40 / 20)))        # trim the silence at the head of the sample so the bow hair touching the string is t
     x = x[i0:].copy(); na = int(attack * SR); x[:na] *= np.linspace(0, 1, na) ** 1.5
     add(bus['bowed'], x, t + OFF, g, PAN[inst] if pan is None else pan)
 
 # ════════════════════════════════════════════════════════════════════
-# 0.0–1.875：无音乐（刻刀拟音）
-# 1.875 / 2.1875：羽管键琴两音弱起（A4 → C#5，导入 D）
+# 0.0–1.875: no music (burin foley)
+# 1.875 / 2.1875: two-note harpsichord pickup (A4 → C#5, leading into D)
 pl(1.875, 'harpsichord', 'A4', .09, .62, exact=True, release=.03); cue(1.875, 'pickup 1: harpsichord A4', 'harpsichord')
 pl(2.1875, 'harpsichord', 'C#5', .09, .66, exact=True, release=.03); cue(2.1875, 'pickup 2: harpsichord C#5', 'harpsichord')
 
-# ─── 和声与声部素材 ───
+# ─── harmony and voice material ───
 RH = {'D': ['D4', 'F#4', 'A4'], 'A/C#': ['C#4', 'E4', 'A4'], 'Bm': ['D4', 'F#4', 'B4'], 'G': ['D4', 'G4', 'B4'],
       'A7': ['C#4', 'E4', 'G4'], 'Em': ['E4', 'G4', 'B4'], 'Em7': ['D4', 'G4', 'B4']}
 HATCH = {'D': ['F#4', 'A4', 'D5', 'A4'], 'A/C#': ['E4', 'A4', 'C#5', 'A4'], 'Bm': ['D4', 'F#4', 'B4', 'F#4'],
@@ -99,7 +99,7 @@ def viola8(t0, chord, n, v=.42, g=1.0, off_only=False):
         pl(t0 + i * E8, 'violas_pizz', VLA[chord][i % 2], .25, v * (.85 if i % 2 == 0 else 1), g)
 
 def hatch16(t0, chord, beats, v=.36, g=1.0, cresc=0.0):
-    """第二小提琴十六分拨奏交叉排线"""
+    """second violin sixteenth-note pizzicato cross-hatching"""
     n = int(round(beats * 4))
     for i in range(n):
         vv = v + cresc * i / max(1, n - 1) + (.05 if i % 4 == 0 else 0)
@@ -108,7 +108,7 @@ def hatch16(t0, chord, beats, v=.36, g=1.0, cresc=0.0):
 def cont(t0, chord, beats, v=.5, g=1.0, every=1):
     for k in range(0, beats, every): hch(t0 + k * BEAT, RH[chord], .3, v, g)
 
-# ─── 第 2 小节（2.5）：拉印 —— 大提琴 + 中提琴八分拨奏 + 羽管键琴通奏低音，强下拍 ───
+# ─── bar 2 (2.5): the print is pulled: cello + viola eighth-note pizzicato + harpsichord continuo, strong downbeat ───
 t = T(2)
 hch(t, ['D3', 'A3', 'D4', 'F#4', 'A4'], .5, .78, .95, strum=.008, exact=True)
 pl(t, 'contrabass_pizz', 'D2', .5, .85, 1.1, exact=True)
@@ -120,7 +120,7 @@ cello8(T(2, 3), ['C#3', 'A2', 'C#3', 'E3'])
 viola8(t + E8, 'D', 3, off_only=False); viola8(T(2, 3), 'A/C#', 4)
 hch(T(2, 3), RH['A/C#'], .3, .5)
 
-# ─── 第 3 小节（5.0）：第二小提琴十六分交叉排线进入；6.25 羽管键琴琶音华彩落 7.5 ───
+# ─── bar 3 (5.0): second violin sixteenth cross-hatching enters; 6.25 harpsichord arpeggio flourish landing on 7.5 ───
 t = T(3)
 cello8(t, ['B2', 'F#2', 'B2', 'D3']); cello8(T(3, 3), ['G2', 'D3', 'A2', 'E3'], v=.55)
 viola8(t, 'Bm', 4); viola8(T(3, 3), 'G', 2, v=.34); viola8(T(3, 4), 'A7', 2, v=.34)
@@ -128,13 +128,13 @@ pl(t, 'violins_pizz', 'D4', .16, .5, exact=True); cue(t, 'bar 3: 2nd violin 16th
 hatch16(t + E16, 'Bm', 2 - .25, v=.34)
 hatch16(T(3, 3), 'G', 1, v=.26); hatch16(T(3, 4), 'A7', 1, v=.26)
 hch(t, RH['Bm'], .3, .5); hch(T(3, 2), RH['Bm'], .25, .4)
-# 华彩：G 大调琶音上行 8 音 + A7 琶音上行 8 音（三十二分），7.5 落 F#5 于 D 和弦
+# flourish: G major arpeggio up 8 notes + A7 arpeggio up 8 notes (thirty-seconds), 7.5 lands on F#5 over a D chord
 FL = ['G2', 'B2', 'D3', 'G3', 'B3', 'D4', 'G4', 'B4', 'A3', 'C#4', 'E4', 'G4', 'A4', 'C#5', 'E5', 'G5']
 for i, p in enumerate(FL):
     pl(T(3, 3) + i * (BAR / 2 / 16), 'harpsichord', p, .18, .44 + .01 * i, .9, exact=(i == 0))
 cue(T(3, 3), 'harpsichord flourish starts (title engraved)', 'harpsichord')
 
-# ─── 第 4 小节（7.5）：全奏，自信 ───
+# ─── bar 4 (7.5): tutti, confident ───
 t = T(4)
 hch(t, ['D3', 'A3', 'D4', 'F#4', 'A4', 'D5', 'F#5'], .5, .72, .9, strum=.006, exact=True)
 pl(t, 'contrabass_pizz', 'D2', .5, .75, 1.0, exact=True); pl(t, 'cellos_pizz', 'D3', .3, .75, exact=True)
@@ -146,18 +146,18 @@ cont(T(4, 2), 'D', 1, .45); cont(T(4, 3), 'G', 1, .5)
 pl(T(4, 3), 'contrabass_pizz', 'G1', .4, .6)
 
 def sec_A():
-    # ─── 9.375（第 4 小节第 4 拍）：织体变薄 —— 只留高音羽管键琴音型 + 大提琴 A 持续低音 ───
+    # ─── 9.375 (bar 4, beat 4): texture thins: only the high harpsichord figure + cello A pedal remain ───
     t = T(4, 4)
     pl(t, 'cellos_pizz', 'A2', .4, .6, exact=True); cue(t, 'texture thins: cello A pedal + high harpsichord figure', 'pizz', 'low')
-    for k in range(1, 3): pl(t + k * BEAT, 'cellos_pizz', 'A2', .4, .44)          # 10.0, 10.625（11.25 让给上行线）
+    for k in range(1, 3): pl(t + k * BEAT, 'cellos_pizz', 'A2', .4, .44)          # 10.0, 10.625 (11.25 is left to the rising line)
     FIG = ['E5', 'A5', 'C#5', 'A5', 'D5', 'A5', 'C#5', 'A5']
-    for i in range(6):                                                              # 9.375 … 10.9375（8 分）
+    for i in range(6):                                                              # 9.375 … 10.9375 (eighths)
         pl(t + i * E8, 'harpsichord', FIG[i % 8], .2, .36, exact=(i == 0))
-    # 10.425：放大镜圆环被刻出 —— 一声高亮 "叮"
+    # 10.425: the magnifier ring is cut: one bright high "ding"
     pl(10.425, 'violin_pizz', 'A6', .5, .72, 1.1, exact=True)
     pl(10.425, 'harpsichord', 'A5', .3, .35, .5, exact=True)
     cue(10.425, 'ring ting #1 (violin pizz A6 + harpsichord A5)', 'pizz', 'high')
-    # 11.275–12.775：圆框飞过 —— 上行音阶；12.775 落地
+    # 11.275–12.775: the round frame flies across: rising scale; lands at 12.775
     RISE1 = ['A4', 'B4', 'C#5', 'D5', 'E5', 'F#5', 'G5', 'A5']
     for i, p in enumerate(RISE1):
         tt = 11.275 + i * .1875
@@ -169,7 +169,7 @@ def sec_A():
     pl(12.775, 'harpsichord', 'D3', .3, .5, .7, exact=True)
     cue(12.775, 'landing #1: low cello + bass pizz D', 'pizz', 'low')
 
-    # ─── 第 6 小节（12.5–15.0）：拨奏回来，更轻 ───
+    # ─── bar 6 (12.5–15.0): pizzicato returns, lighter ───
     cello8(T(6, 2), ['A2', 'D3', 'F#3'], v=.5)
     cello8(T(6, 3), ['B2', 'F#2', 'B2', 'D3'], v=.5)
     viola8(T(6, 2), 'D', 2, v=.34, off_only=True); viola8(T(6, 3), 'Bm', 4, v=.34, off_only=True)
@@ -178,11 +178,11 @@ def sec_A():
 
 
 def sec_B():
-    # ─── 第 7 小节（15.0）：第二个局部，同样语法更快 ───
+    # ─── bar 7 (15.0): second detail, same grammar, faster ───
     t = T(7)
     cello8(t, ['E3', 'B2', 'E3', 'G3'], v=.5)
     hch(t, ['E3'] + RH['Em7'], .3, .5, exact=True); cue(t, 'bar 7: second detail begins (Em7 downbeat)', 'harpsichord')
-    for i, p in enumerate(['B5', 'E5', 'G5', 'E5']): pl(t + i * E8, 'harpsichord', p, .18, .33)   # 高音音型到 15.9
+    for i, p in enumerate(['B5', 'E5', 'G5', 'E5']): pl(t + i * E8, 'harpsichord', p, .18, .33)   # high figure up to 15.9
     pl(15.5, 'violin_pizz', 'B6', .5, .72, 1.1, exact=True); pl(15.5, 'harpsichord', 'B5', .3, .35, .5, exact=True)
     cue(15.5, 'ring ting #2 (violin pizz B6)', 'pizz', 'high')
     pl(T(7, 3), 'cellos_pizz', 'A2', .4, .5)
@@ -197,7 +197,7 @@ def sec_B():
     cue(16.8, 'landing #2: low cello + bass pizz D', 'pizz', 'low')
     cello8(T(7, 4), ['D3', 'F#3'], v=.5); viola8(T(7, 4), 'D', 2, v=.34)
 
-    # ─── 第 8 小节（17.5）：织体再满一点；19.375 第三个局部 ───
+    # ─── bar 8 (17.5): texture a little fuller; 19.375 third detail ───
     t = T(8)
     pl(t, 'contrabass_pizz', 'B1', .4, .6)
     cello8(t, ['B2', 'F#2', 'B2', 'D3'], v=.58); cello8(T(8, 3), ['G2', 'D3'], v=.55)
@@ -213,7 +213,7 @@ def sec_C():
     pl(19.875, 'violin_pizz', 'A6', .5, .72, 1.1, exact=True); pl(19.875, 'harpsichord', 'A5', .3, .35, .5, exact=True)
     cue(19.875, 'ring ting #3 (violin pizz A6)', 'pizz', 'high')
 
-    # ─── 第 9 小节（20.0）：第一小提琴的拨奏旋律 —— 旁白之下整条上移八度，让出人声频段 ───
+    # ─── bar 9 (20.0): first violin pizzicato melody: under the narration the whole line moves up an octave to clear the voice band ───
     MEL = [(0, 'A5', .5), (.5, 'F#5', .5), (1, 'D6', 1), (2, 'B5', .5), (2.5, 'G5', .25), (2.75, 'A5', .25),
            (3, 'B5', .5), (3.5, 'C#6', .25), (3.75, 'D6', .25), (4, 'E6', 1), (5, 'G5', .5), (5.5, 'F#5', .5)]
     for i, (b, p, d) in enumerate(MEL):
@@ -222,19 +222,19 @@ def sec_C():
     cello8(T(9), ['D3', 'A2', 'D3', 'F#3'], v=.46)
     viola8(T(9), 'D', 4, v=.3, off_only=True)
     hch(T(9), RH['D'], .3, .4); hch(T(9, 2), RH['D'], .25, .32)
-    # 21.475：第三个落地（G）
+    # 21.475: third landing (G)
     pl(21.475, 'cellos_pizz', 'G2', .5, .85, 1.2, exact=True); pl(21.475, 'contrabass_pizz', 'G1', .5, .85, 1.1, exact=True)
     pl(21.475, 'harpsichord', 'G2', .3, .5, .7, exact=True)
     cue(21.475, 'landing #3: low cello + bass pizz G', 'pizz', 'low')
     cello8(T(9, 4), ['D3', 'B2'], v=.46)
     hch(T(9, 4), RH['G'], .25, .36)
-    # 22.2：小小的托起 —— 第二小提琴十六分渐强 + 羽管键琴轻琶
+    # 22.2: a small lift: second violin sixteenths crescendo + light harpsichord roll
     pl(22.1875, 'violins_pizz', 'G4', .16, .34, exact=True)
     hatch16(22.1875 + E16, 'G', .25, v=.36, cresc=.04)
     hch(22.1875, ['B3', 'D4', 'G4', 'B4'], .35, .45, .9, strum=.03, exact=True)
     cue(22.1875, 'gentle lift (swell into bar 10)', 'harpsichord')
 
-    # ─── 第 10 小节（22.5）：Em | A7，23.75 羽管键琴下行音阶，25.0 戛然而止 ───
+    # ─── bar 10 (22.5): Em | A7, 23.75 harpsichord falling scale, 25.0 abrupt stop ───
     t = T(10)
     cello8(t, ['E3', 'B2', 'E3', 'G3'], v=.55)
     viola8(t, 'Em', 4, v=.36)
@@ -254,8 +254,8 @@ def sec_outro():
     cue(T(10, 3) + 7 * E16, 'run last note A4 (short) -> dead stop by 25.0', 'harpsichord')
 
     # ════════════════════════════════════════════════════════════════════
-    # 25.0–26.25：绝对静音
-    # 26.25 起：全片第一次拉弓 —— pp 渐强的长音，颜色晕开；羽管键琴稀疏轻琶
+    # 25.0–26.25: absolute silence
+    # from 26.25: the first bowed notes of the film: long notes swelling from pp as the colour spreads; sparse light harpsichord rolls
     CH = [  # (t, cellos, violas, vln2, vln1, contrabass)
         (26.25, 'D3', 'A3', 'F#4', 'A5', None),
         (27.5, 'B2', 'B3', 'F#4', 'B5', None),
@@ -266,7 +266,7 @@ def sec_outro():
     ]
     END_BOW = 36.0
     def legato(col, inst, g, v0, pan=None):
-        """把某声部的长音连起来：同音延续不换弓"""
+        """join a voice's long notes: a repeated pitch continues without a bow change"""
         seq = [(c[0], c[col]) for c in CH if c[col] is not None]
         merged = []
         for tt, p in seq:
@@ -284,25 +284,25 @@ def sec_outro():
     legato(4, 'violins', .8, .4, pan=-.35)
     legato(5, 'contrabass', .75, .4)
     cue(26.25, 'FIRST BOWED NOTE: strings enter pp on D (cellos/violas/violins)', 'bowed')
-    # 渐强包络：26.25 pp → 27.6 mp，30.0–31.25 再微托起
+    # crescendo envelope: 26.25 pp → 27.6 mp, a slight lift again at 30.0–31.25
     env = np.ones(N, np.float32); tt_ = np.arange(N) / SR
     tt_ = tt_ - O2
     env = np.where(tt_ < 27.6, .55 + .45 * np.clip((tt_ - 26.25) / 1.35, 0, 1), 1.0)
     env = env * (1 + .15 * np.clip((tt_ - 30.0) / 1.25, 0, 1) * (tt_ < 33.0) + .15 * (tt_ >= 33.0) * np.clip(1 - (tt_ - 33.0) / 1.0, 0, 1))
     bus['bowed'] *= env[:, None].astype(np.float32)
 
-    # 羽管键琴：稀疏、高音区、轻（旁白 26.9–30.9 让开中频）
+    # harpsichord: sparse, high register, light (clears the mids for the narration 26.9–30.9)
     for t0, ps in [(27.5, ['B4', 'D5', 'F#5', 'B5']), (28.75, ['G4', 'B4', 'D5', 'G5']), (30.0, ['E4', 'G4', 'B4', 'E5'])]:
         for i, p in enumerate(ps): pl(t0 + i * E8, 'harpsichord', p, .25, .28)
     for i, p in enumerate(['A4', 'C#5', 'E5']): pl(30.625 + i * E16, 'harpsichord', p, .2, .3)
-    # 31.25：完满终止 V–I 落在第 13 小节第 3 拍 —— 成品揭晓
-    for p in ['D2', 'A2', 'D3']: pl(31.25, 'harpsichord', p, 1.6, .66, 1.0, exact=True)       # 低音三音齐下，不琶
+    # 31.25: perfect cadence V–I landing on bar 13, beat 3: the finished plate is revealed
+    for p in ['D2', 'A2', 'D3']: pl(31.25, 'harpsichord', p, 1.6, .66, 1.0, exact=True)       # three bass notes together, not rolled
     hch(31.25 + .014, ['F#3', 'A3', 'D4', 'F#4', 'A4', 'D5'], 1.6, .6, 1.0, strum=.014)
     pl(31.25, 'contrabass_pizz', 'D2', .8, .6, .9, exact=True)
     cue(31.25, 'perfect cadence V-I: tonic D lands (harpsichord roll + bass pizz + bowed D)', 'harpsichord')
-    # 33.75：最后一个轻轻的拨弦（眨眼）
+    # 33.75: one last soft pluck (a wink)
     pl(33.75, 'violin_pizz', 'D6', .4, .46, .9, exact=True); cue(33.75, 'wink: soft violin pizz D6', 'pizz')
-    # 35.625：片尾卡 —— 极轻的羽管键琴主和弦，随后自然淡出
+    # 35.625: end card: a very soft harpsichord tonic chord, then a natural fade
     hch(35.625, ['D4', 'A4', 'D5'], .9, .3, .7, strum=.05, exact=True)
     cue(35.625, 'end card: soft harpsichord tonic, fade begins', 'harpsichord')
 
@@ -318,7 +318,7 @@ sec_outro()
 OFF = 0.0
 
 # ════════════════════════════════════════════════════════════════════
-# 混响 → 静音门 → 电平
+# reverb → silence gate → levels
 ROOM = {'harpsichord': dict(size=.28, mix=.16), 'pizz': dict(size=.3, mix=.18), 'bowed': dict(size=.42, mix=.24)}
 for k in STEMS: bus[k] = S.room(bus[k], damp=.55, **ROOM[k]).astype(np.float32)
 
@@ -329,16 +329,16 @@ def gate(a, b, fin=.012, fout=.02):
     return g
 G = gate(0.0, 1.874, 0, 0) * gate(24.985 + O2, 26.25 + O2, .02, 0)
 tt_ = np.arange(N) / SR
-G *= np.clip(1 - (tt_ - 36.6 - O2) / 2.3, 0, 1).astype(np.float32)          # 36.6 起自然淡出，38.9 归零
+G *= np.clip(1 - (tt_ - 36.6 - O2) / 2.3, 0, 1).astype(np.float32)          # natural fade from 36.6, reaching zero at 38.9
 for k in STEMS: bus[k] *= G[:, None]
 _HP = butter(2, 35, 'high', fs=SR, output='sos')
-for k in STEMS: bus[k] = sosfilt(_HP, bus[k], axis=0).astype(np.float32) * G[:, None]   # 去超低频隆隆声
+for k in STEMS: bus[k] = sosfilt(_HP, bus[k], axis=0).astype(np.float32) * G[:, None]   # remove sub-low rumble
 
 GAIN = {'harpsichord': 1.0, 'pizz': 1.0, 'bowed': 1.45}
 mix = sum(bus[k] * GAIN[k] for k in STEMS)
 
 def lufs(x):
-    """ITU-R BS.1770-4 积分响度（48 kHz K 计权 + 双门限）"""
+    """ITU-R BS.1770-4 integrated loudness (48 kHz K-weighting + two-stage gating)"""
     b1, a1 = [1.53512485958697, -2.69169618940638, 1.19839281085285], [1, -1.69065929318241, .73248077421585]
     b2, a2 = [1, -2, 1], [1, -1.99004745483398, .99007225036621]
     y = lfilter(b2, a2, lfilter(b1, a1, x, axis=0), axis=0)
@@ -368,10 +368,10 @@ open(os.path.join(MOUT, 'CREDITS_music.txt'), 'w').write(
     + '\n'.join(S.credits(sorted(USED))) + '\n')
 
 # ════════════════════════════════════════════════════════════════════
-# 卡点校验：在对应 stem（混响后）上找 cue 附近 ±60 ms 内的最大能量跃升（5 ms 帧，log 能量差分）
+# hit-point check: on the matching stem (after reverb) find the largest energy jump within ±60 ms of the cue (5 ms frames, log-energy difference)
 TOL = .042
 def onset_near(x, t, win=.06):
-    """攻击点：窗口 [t-60ms, t+120ms] 内，包络从局部谷底升到 (谷底 + 30%×(峰-谷)) 的首个时刻"""
+    """Attack point: within the window [t-60ms, t+120ms], the first moment the envelope rises from the local trough to (trough + 30%×(peak-trough))"""
     m = x.mean(1) if x.ndim == 2 else x
     hop = int(.001 * SR); w = int(.004 * SR)
     a = int((t - win) * SR); b = int((t + .12) * SR)
@@ -386,7 +386,7 @@ allok = True
 for c in sorted(CUES, key=lambda c: c['t']):
     x = bus[c['stem']]
     if c['stem'] == 'bowed':
-        m = np.abs(x.mean(1)); i = int(np.argmax(m > 1e-5)); got = i / SR; rise = 0.0   # 首个 > -100 dBFS 的弓奏样本
+        m = np.abs(x.mean(1)); i = int(np.argmax(m > 1e-5)); got = i / SR; rise = 0.0   # first bowed sample above -100 dBFS
     else:
         if c.get('band') == 'low': x = sosfilt(butter(4, 300, 'low', fs=SR, output='sos'), x, axis=0)
         if c.get('band') == 'high': x = sosfilt(butter(4, 2000, 'high', fs=SR, output='sos'), x, axis=0)

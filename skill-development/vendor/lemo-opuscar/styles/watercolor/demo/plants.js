@@ -1,4 +1,4 @@
-// ---------- 植物生成器：局部坐标，原点 = 根部落地点，y 向上为负 ----------
+// ---------- plant generators: local coords, origin = where the root meets the ground, y negative upward ----------
 const COL = {
   straw: ['#b59a55', '#a38d4b', '#8c8446', '#c2a864'],
   mulga: ['#8a9577', '#77866a', '#9aa487', '#6c7a60'],
@@ -18,7 +18,7 @@ function spinifex(sc) {
   S.push(mk(qcurve(-r * 1.05, 2, r * 1.05, 2, -hh * 1.1, 12), hh * .9, '#c9a15e', { prof: 'leaf', a: .32, nb: 5 }));
   const N = Math.round(46 * sc + 16);
   for (let i = 0; i < N; i++) {
-    const u = rnd(-1, 1), a = Math.PI + (u + 1) / 2 * Math.PI; // 穹顶上的一点
+    const u = rnd(-1, 1), a = Math.PI + (u + 1) / 2 * Math.PI; // a point on the dome
     const bx = Math.cos(a) * r * .55, by = Math.sin(a) * hh * .45;
     const ang = a + rnd(-.25, .25), len = r * rnd(.4, .62);
     S.push(mk(polar(bx, by, ang, len, rnd(-.18, .18) * len, 6), rnd(2.2, 3.4) * sc, pick(COL.straw), { prof: 'tip', nb: 0, a: rnd(.75, .95) }));
@@ -73,7 +73,7 @@ function tussock(sc, cols = COL.gold, n = 14) {
   return { S };
 }
 
-// 桉树：浅色树干 + 弯折枝 + 下垂叶团（稀疏、透光）
+// eucalypt: pale trunk + kinked branches + drooping leaf clumps (sparse, light shows through)
 function gum(sc, hm = 1) {
   const woody = [], leaves = [], tips = [], shoots = [];
   const Hh = rnd(300, 400) * sc * hm, lean = rnd(-.1, .1), tx = lean * Hh * .55, ty = -Hh * rnd(.45, .55);
@@ -94,7 +94,7 @@ function gum(sc, hm = 1) {
   const nl = rnd() < .5 ? 3 : 2;
   for (let k = 0; k < nl; k++) limb(tx, ty, -Math.PI / 2 + (k - (nl - 1) / 2) * .62 + rnd(-.2, .2), Hh * rnd(.26, .34), tw * .6, 2);
   for (const [x, y] of tips) clump(leaves, x, y + 4 * sc, rnd(26, 40) * sc, Math.round(16 * Math.min(1.2, sc + .3)), COL.gum, { dir: Math.PI / 2, spread: .55, l0: 10 * sc, l1: 20 * sc, w0: 4 * sc, w1: 7.5 * sc, sx: 1.2, sy: .75 });
-  // 火后萌发：沿主干和大枝的新芽（鲜绿短簇）
+  // post-fire resprouting: new shoots along the trunk and main branches (short bright-green tufts)
   for (const pts of segs.slice(0, 6)) for (let i = 1; i < pts.length - 1; i += 2) {
     const [x, y] = pts[i]; if (rnd() < .25) continue;
     clump(shoots, x + rnd(-3, 3), y, 7 * sc, 4, ['#8fbf5a', '#a3cc66', '#7fb24f'], { l0: 5 * sc, l1: 11 * sc, w0: 3.5 * sc, w1: 6 * sc, sx: 1.4, sy: 1 });
@@ -180,7 +180,7 @@ function vine(sc) {
   return { S };
 }
 
-// 远景树剪影：几笔色团
+// distant tree silhouette: a few strokes of colour mass
 function farTree(sc, cols, tall = 1) {
   const S = [], Hh = rnd(60, 100) * sc * tall;
   S.push(mk(qcurve(0, 0, rnd(-3, 3), -Hh * .7, 2, 5), 3 * sc, INK2, { prof: 'tip', nb: 0, a: .6 }));

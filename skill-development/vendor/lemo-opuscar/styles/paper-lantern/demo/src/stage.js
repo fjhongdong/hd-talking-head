@@ -1,4 +1,4 @@
-// 灯箱舞台：场景 + 顶部 LED 主光（向下投影）+ 环境光 + 背光 uniforms + 摄影机
+// Lightbox stage: scene + top LED key light (casting shadows downward) + ambient light + backlight uniforms + camera
 import * as THREE from 'three';
 import { vnoise } from './lib.js';
 
@@ -9,7 +9,7 @@ export function stage(o = {}) {
     uLightCol: { value: new THREE.Color(o.lightCol || '#ffe0a8') }, uLit: { value: 1 },
   };
   const cam = new THREE.PerspectiveCamera(o.fov ?? 26, 16 / 9, .01, 30);
-  // 顶部 LED：在盒子前上方向后下方打，影子落在后面的纸层上
+  // Top LED: shines from above the front of the box toward the lower back, so shadows fall on the paper layers behind
   const key = new THREE.SpotLight(o.keyCol || '#ffeedd', o.key ?? 2.2, 0, o.keyAngle ?? .75, 1, 0);
   key.position.set(...(o.keyPos || [0, .34, .3])); key.target.position.set(...(o.keyTarget || [0, -.04, -.08]));
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -.0008; key.shadow.normalBias = 0;
@@ -23,7 +23,7 @@ export function stage(o = {}) {
   };
 }
 
-// 摄影机：位置 / 注视点 + 手持微动
+// Camera: position / look-at point + handheld micro-motion
 export function aim(cam, p, t, o = {}) {
   const h = o.hand ?? .0006, f = o.handF ?? .35;
   cam.position.set(p[0] + (vnoise(t * f + 3) - .5) * h, p[1] + (vnoise(t * f + 17) - .5) * h, p[2]);
@@ -33,7 +33,7 @@ export function aim(cam, p, t, o = {}) {
 }
 export const dist = (cam, z) => cam.position.z - z;
 
-// 释放场景里的 GPU 资源
+// Release the GPU resources in the scene
 export function dispose(scene) {
   scene.traverse(o => {
     if (o.geometry) o.geometry.dispose();

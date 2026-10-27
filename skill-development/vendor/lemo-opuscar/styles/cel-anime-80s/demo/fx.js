@@ -1,7 +1,7 @@
-// 特效：雨（3 张循环）、水花、速度线（流線）、镜头光晕、光条、尾灯光轨
+// Effects: rain (3-drawing cycle), splashes, speed lines (ryūsen, 流線), lens flare, light streaks, tail-light trails
 import { rng, rgba, mix, TAU, hash, W, H } from './cel.js';
 
-// 雨丝：drawing = 第几张（3 张循环，12fps 换张）；ang = 倾角（弧度，0 = 竖直）
+// Rain streaks: drawing = which drawing (3-drawing cycle, swapped at 12fps); ang = slant (radians, 0 = vertical)
 export function rain(g, e, drawing, o = {}) {
   const R = rng(1000 + (drawing % 3) * 77 + (o.seed || 0));
   const n = o.n ?? 220, ang = o.ang ?? .25, len = o.len ?? [40, 110], a = o.a ?? .35, col = o.col || '#cfe3ff';
@@ -15,7 +15,7 @@ export function rain(g, e, drawing, o = {}) {
   }
   g.restore();
 }
-// 地面水花：小王冠 + 涟漪（y0..y1 之间，透视缩放）
+// Ground splashes: small crown + ripple (between y0..y1, scaled for perspective)
 export function splashes(g, drawing, y0, y1, n = 40, col = '#cfe3ff', seed = 0) {
   const R = rng(500 + drawing * 13 + seed);
   g.save(); g.strokeStyle = rgba(col, .45); g.lineWidth = 1.4;
@@ -27,7 +27,7 @@ export function splashes(g, drawing, y0, y1, n = 40, col = '#cfe3ff', seed = 0) 
   g.restore();
 }
 
-// 速度线背景：radial（放射，中心 cx,cy）或 horizontal
+// Speed-line background: radial (radiating from centre cx,cy) or horizontal
 export function speedLines(g, drawing, o) {
   const R = rng(3000 + drawing * 31 + (o.seed || 0));
   const col = o.col || '#ffffff';
@@ -52,19 +52,19 @@ export function speedLines(g, drawing, o) {
   g.restore();
 }
 
-// 镜头光晕：星芒 + 横向光条（anamorphic）+ 沿中心线的鬼影
+// Lens flare: star burst + horizontal streak (anamorphic) + ghosts along the centre line
 export function flare(e, x, y, s = 1, col = '#bfe6ff', o = {}) {
   e.save(); e.globalCompositeOperation = 'lighter';
   const core = e.createRadialGradient(x, y, 0, x, y, 180 * s);
   core.addColorStop(0, rgba('#ffffff', .95)); core.addColorStop(.12, rgba(col, .6)); core.addColorStop(1, rgba(col, 0));
   e.fillStyle = core; e.beginPath(); e.arc(x, y, 180 * s, 0, TAU); e.fill();
-  // 横向光条
+  // horizontal streak
   const L = (o.streak ?? 900) * s, hh = 5 * s;
   const gr = e.createLinearGradient(x - L, 0, x + L, 0);
   gr.addColorStop(0, rgba(col, 0)); gr.addColorStop(.5, rgba(mix(col, '#ffffff', .6), .9)); gr.addColorStop(1, rgba(col, 0));
   e.fillStyle = gr; e.fillRect(x - L, y - hh, L * 2, hh * 2);
   e.fillStyle = rgba('#ffffff', .8); e.fillRect(x - L * .3, y - 1.2 * s, L * .6, 2.4 * s);
-  // 星芒（4 + 2 条）
+  // star burst (4 + 2 rays)
   const spikes = o.spikes ?? 6, rot = o.rot ?? .3;
   for (let k = 0; k < spikes; k++) {
     const a = rot + k * TAU / spikes, len = (k % 2 ? 160 : 300) * s;
@@ -72,7 +72,7 @@ export function flare(e, x, y, s = 1, col = '#bfe6ff', o = {}) {
     const sg = e.createLinearGradient(0, 0, len, 0); sg.addColorStop(0, rgba('#ffffff', .8)); sg.addColorStop(1, rgba(col, 0));
     e.fillStyle = sg; e.beginPath(); e.moveTo(0, -3 * s); e.lineTo(len, 0); e.lineTo(0, 3 * s); e.fill(); e.restore();
   }
-  // 鬼影
+  // ghosts
   if (o.ghosts !== false) {
     const cx = W / 2, cy = H / 2, dx = cx - x, dy = cy - y;
     const G = [[.35, 40, '#7fffd4', .16], [.62, 22, '#ff9fe0', .22], [1.15, 70, '#8fb0ff', .1], [1.4, 30, '#ffe08a', .18], [1.75, 110, '#b08aff', .07]];
@@ -86,13 +86,13 @@ export function flare(e, x, y, s = 1, col = '#bfe6ff', o = {}) {
   e.restore();
 }
 
-// 发光点（透过光的小光源）：scene 上画实心亮核，glow 上画色光
+// Glow point (small backlit light source, tōka-kō 透过光): solid bright core on scene, coloured light on glow
 export function lamp(g, e, x, y, r, col, a = 1) {
   if (g) { g.fillStyle = mix(col, '#ffffff', .7); g.beginPath(); g.arc(x, y, r * .45, 0, TAU); g.fill(); }
   if (e) { const gr = e.createRadialGradient(x, y, 0, x, y, r * 3); gr.addColorStop(0, rgba(col, a)); gr.addColorStop(.3, rgba(col, a * .5)); gr.addColorStop(1, rgba(col, 0)); e.fillStyle = gr; e.beginPath(); e.arc(x, y, r * 3, 0, TAU); e.fill(); }
 }
 
-// 光轨：沿折线的发光条（尾灯拖影）
+// Light trail: glowing strip along a polyline (tail-light smear)
 export function trail(g, e, pts, col, w = 6) {
   for (const [ctx, ww, a] of [[e, w * 3, .7], [e, w, 1], [g, w * .5, .9]]) {
     if (!ctx) continue;

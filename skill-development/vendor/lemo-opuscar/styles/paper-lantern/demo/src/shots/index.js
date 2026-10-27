@@ -1,4 +1,4 @@
-// 镜头表：start 用台词定位；in = 入场转场
+// Shot list: start is anchored to narration lines; in = entrance transition
 import * as s01 from './s01_night.js';
 import * as sheetShot from './sheet.js';
 import * as s02 from './s02_kitchen.js';

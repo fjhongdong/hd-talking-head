@@ -1,4 +1,4 @@
-"""整片混音的 whisper 回听：人声在音乐音效下是否仍听得清（逐词匹配率）"""
+"""whisper listen-back on the full mix: whether the voice is still intelligible under music and effects (per-word match rate)"""
 import sys, json, re, difflib, numpy as np, soundfile as sf, librosa, os
 from faster_whisper import WhisperModel
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

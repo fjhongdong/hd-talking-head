@@ -1,12 +1,12 @@
-// WebGL2 合成器：纸面 → 蜡笔层（纸纹阈值附着）→ 水彩层（蜡笔防水）→ 终合成（纸纹浮雕、暗角）
-// 每个蜡笔层是一张 Canvas2D：RGB = 蜡笔颜色，A = 笔压。着色器按"笔压 > 纸纹凹陷深度"决定蜡是否附着。
+// WebGL2 compositor: paper → crayon layers (adhesion by paper-tooth threshold) → watercolour layer (crayon resist) → final composite (paper-tooth emboss, vignette)
+// Each crayon layer is a Canvas2D: RGB = crayon colour, A = pressure. The shader decides whether wax sticks by "pressure > depth of the paper-tooth pit".
 export const W = 1920, H = 1080;
 
 const VS = `#version 300 es
 in vec2 p; out vec2 uv;
 void main(){ uv = p*.5+.5; gl_Position = vec4(p,0,1); }`;
 
-// 纸纹：像素坐标 → 高度 [0,1]（1 = 纸面凸起）
+// Paper tooth: pixel coords → height [0,1] (1 = raised paper)
 const TOOTH = `
 float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
 float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
@@ -15,12 +15,12 @@ uniform float uToothScale;
 float toothRaw(vec2 px){
   px /= uToothScale;
   float n = vn(px/1.35)*.34 + vn(px/2.9+17.)*.33 + vn(px/6.3+41.)*.21;
-  n += (vn(vec2(px.x/10., px.y/1.9)+7.)-.5)*.22;   // 纤维方向的细长凹槽（横向拖出的条纹）
+  n += (vn(vec2(px.x/10., px.y/1.9)+7.)-.5)*.22;   // long thin grooves along the fibre direction (horizontally dragged streaks)
   n += (vn(vec2(px.x/2.1, px.y/13.)+71.)-.5)*.08;
   return n;
 }
 float tooth(vec2 px){ return smoothstep(.16,.86,toothRaw(px)+.06); }
-// 纸跟着画走：屏幕像素 → 纸面坐标（随镜头平移；缩放时在两个八度之间交叉，颗粒在屏幕上始终约 1 px）
+// Paper moves with the drawing: screen pixels → paper coords (pans with the camera; when zooming it crossfades between two octaves so the grain stays about 1 px on screen)
 uniform vec3 uPC;
 vec2 paperQ(vec2 uv, vec2 res){ vec2 sp = vec2(uv.x*res.x, (1.-uv.y)*res.y); return (sp - res*.5)/uPC.z + uPC.xy; }
 float toothRawAt(vec2 uv, vec2 res, vec2 off){
@@ -32,7 +32,7 @@ float toothRawAt(vec2 uv, vec2 res, vec2 off){
 float toothAt(vec2 uv, vec2 res, vec2 off){ return smoothstep(.16,.86,toothRawAt(uv,res,off)+.06); }
 `;
 
-// 纸面底色：低频斑驳
+// Paper base colour: low-frequency mottling
 const FS_PAPER = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform vec3 uPaper; uniform vec2 uRes; uniform vec2 uPoff;
@@ -48,7 +48,7 @@ const FS_IMG = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o; uniform sampler2D uL;
 void main(){ o = texture(uL, uv); }`;
 
-// 剪影垫底：角色身后的背景被"留白"（孩子先画人、再绕着人画背景）
+// Silhouette backing: the background behind a character is left blank (a child draws the figure first, then the background around it)
 const FS_KNOCK = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uL; uniform vec3 uPaper; uniform vec2 uRes; uniform vec2 uPoff;
@@ -61,7 +61,7 @@ void main(){
   o = vec4(uPaper*(0.975+0.035*n), 0.);
 }`;
 
-// 蜡笔层
+// Crayon layer
 const FS_CRAYON = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uL; uniform vec2 uRes; uniform vec2 uGoff; uniform float uGain; uniform float uSoft;
@@ -71,15 +71,15 @@ void main(){
   if (L.a < .003) { o = vec4(0); return; }
   float t = toothAt(uv, uRes, uGoff);
   float a = clamp(L.a*uGain, 0., 1.);
-  // 笔压越大，越能压进纸纹凹处
+  // the harder the pressure, the deeper it gets into the paper-tooth pits
   float thr = 1.0 - a*1.22;
   float cov = smoothstep(thr - uSoft, thr + uSoft, t);
   cov *= smoothstep(0.0, 0.18, a);
-  vec3 c = L.rgb * (1.0 - 0.10*a*a);           // 重压时蜡更厚、颜色更沉
+  vec3 c = L.rgb * (1.0 - 0.10*a*a);           // heavy pressure: thicker wax, deeper colour
   o = vec4(c, cov);
 }`;
 
-// 水彩层：读上一张（rgb + 蜡覆盖 a），乘上水彩透射色；蜡处防水
+// Watercolour layer: reads the previous pass (rgb + wax coverage a), multiplies by the watercolour transmission colour; wax resists it
 const FS_WASH = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uPrev; uniform sampler2D uW; uniform vec2 uRes; uniform vec3 uT; uniform vec2 uGoff;
@@ -93,14 +93,14 @@ void main(){
   if (d > .002) {
     float blur = textureLod(uW, uv, 4.0).a;
     float blur2 = textureLod(uW, uv, 2.0).a;
-    float edge = clamp(d - blur, 0., 1.)*uEdge + clamp(d - blur2, 0., 1.)*uEdge*.6;   // 水痕：颜料在边缘堆积
+    float edge = clamp(d - blur, 0., 1.)*uEdge + clamp(d - blur2, 0., 1.)*uEdge*.6;   // tide marks: pigment pools at the edges
     float t = smoothstep(.16,.86, toothRaw(paperQ(uv,uRes)*0.55 + uGoff + 300.) + .06);
     vec2 wq = paperQ(uv, uRes);
-    float lo = vn(wq/160.)*.5 + vn(wq/55.+3.)*.3 + vn(wq/19.+8.)*.2;                 // 渲开的浓淡（花椰菜状）
-    float gr = smoothstep(.35, .05, t);                                              // 颗粒只沉积在最深的纸纹凹处
+    float lo = vn(wq/160.)*.5 + vn(wq/55.+3.)*.3 + vn(wq/19.+8.)*.2;                 // bloom density variation (cauliflower blooms)
+    float gr = smoothstep(.35, .05, t);                                              // granulation settles only in the deepest paper-tooth pits
     float dd = d * (0.82 + 0.3*lo) * (1.0 + uGran*.45*gr) + edge;
     float wax = P.a;
-    float res = 1.0 - uResist*smoothstep(.12, .55, wax);                            // 蜡笔防水
+    float res = 1.0 - uResist*smoothstep(.12, .55, wax);                            // crayon resist
     dd = clamp(dd*res, 0., 1.25);
     vec3 tr = mix(vec3(1.), uT, clamp(dd,0.,1.));
     tr *= mix(1.0, 0.82, clamp(dd-1.0,0.,1.)*4.);
@@ -108,7 +108,7 @@ void main(){
   } else o = P;
 }`;
 
-// 终合成：纸纹浮雕（蜡在凸起处，所以浮雕盖在一切之上）、暖暗角
+// Final composite: paper-tooth emboss (wax sits on the raised tooth, so the emboss goes over everything), warm vignette
 const FS_FINAL = `#version 300 es
 precision highp float; in vec2 uv; out vec4 o;
 uniform sampler2D uS; uniform vec2 uRes; uniform float uVig; uniform float uEmb; uniform vec2 uPoff; uniform float uLift; uniform vec4 uLamp;
@@ -118,14 +118,14 @@ void main(){
   vec2 du = vec2(1./uRes.x, 0.), dv = vec2(0., 1./uRes.y);
   float t0 = toothRawAt(uv, uRes, uPoff), tx = toothRawAt(uv+du, uRes, uPoff), ty = toothRawAt(uv-dv, uRes, uPoff);
   vec2 g = vec2(tx-t0, ty-t0);
-  float waxSmooth = 1.0 - .55*S.a;                     // 蜡把纸纹填平一些
+  float waxSmooth = 1.0 - .55*S.a;                     // wax fills the paper tooth in a little
   float lit = 1.0 + (g.x*-.9 + g.y*.9)*uEmb*waxSmooth - (1.0-t0)*.035*waxSmooth;
   vec3 c = S.rgb*lit;
-  c += S.a*.018*uLift;                                   // 蜡的微光
+  c += S.a*.018*uLift;                                   // faint sheen of the wax
   vec2 q = uv-.5; q.x *= uRes.x/uRes.y;
   float v = 1.0 - uVig*dot(q,q);
   c *= mix(vec3(1.), vec3(1.0,.965,.9), clamp((1.0-v)*1.4,0.,1.)) * v;
-  if (uLamp.w > 0.) {   // 台灯暖光：一团暖黄，边缘落进暖暗
+  if (uLamp.w > 0.) {   // desk-lamp glow: a pool of warm yellow, edges falling off into warm dark
     vec2 d = (uv - uLamp.xy); d.x *= uRes.x/uRes.y;
     float fall = exp(-dot(d,d)/(uLamp.z*uLamp.z));
     vec3 lamp = mix(vec3(.46,.36,.30), vec3(1.07,1.0,.9), fall);
@@ -179,7 +179,7 @@ export function makeComp(canvas, w = W, h = H) {
   return {
     gl,
     set toothScale(v) { toothScale = v; },
-    paperCam(x, y, z) { pc = [x, y, z]; },   // 纸面坐标：镜头中心（纸面像素）与相对缩放
+    paperCam(x, y, z) { pc = [x, y, z]; },   // paper coords: camera centre (in paper pixels) and relative zoom
     begin(paper = [0.957, 0.937, 0.890], poff = [0, 0]) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, T[cur].f); gl.disable(gl.BLEND);
       use(P.paper, { uPaper: paper, uPoff: poff }); draw();
@@ -208,7 +208,7 @@ export function makeComp(canvas, w = W, h = H) {
       gl.uniform1i(P.wash.u.uPrev, 0); gl.uniform1i(P.wash.u.uW, 1); draw();
       cur = nx;
     },
-    image(cv) {   // 预渲染好的图（书页）：普通 alpha 叠加，不再过纸纹
+    image(cv) {   // a pre-rendered image (book page): plain alpha over, not passed through the paper tooth again
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, layerTex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
       gl.bindFramebuffer(gl.FRAMEBUFFER, T[cur].f);

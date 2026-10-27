@@ -1,4 +1,4 @@
-// S15 · 同一个晚上，外婆也收到了一个盒子（蓝色的，小满寄的）
+// S15 · The same night, Grandma also receives a box (a blue one, sent by Xiaoman)
 import * as THREE from 'three';
 import { burst, sheet } from '../paper.js';
 import { boxFront, label, chair, table, bowl } from '../props.js';

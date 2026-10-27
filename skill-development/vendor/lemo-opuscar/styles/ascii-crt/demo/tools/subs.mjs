@@ -1,4 +1,4 @@
-// 导出页面的 window.SUBS → out/subs.json（和画面里的日志栏用同一份时间）
+// Export the page's window.SUBS → out/subs.json (same timings as the on-screen log panel)
 import fs from 'fs'; import path from 'path';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
 const dir = process.argv[2];

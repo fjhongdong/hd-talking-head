@@ -1,4 +1,4 @@
-// The Runaway Loaf (v2, tightened) — tempo grid: single source of truth for picture, score, mix and cue check.
+// The Runaway Loaf — tempo grid: single source of truth for picture, score, mix and cue check.
 // Photoplay cue-sheet sections. Every section starts on the previous one's end; beats are in that section's tempo.
 export const FPS = 24;
 

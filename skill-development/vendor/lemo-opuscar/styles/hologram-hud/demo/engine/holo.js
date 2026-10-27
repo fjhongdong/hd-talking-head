@@ -1,13 +1,13 @@
-// hologram-hud · 全息线框引擎
-// 读 JSON 线框模型（顶点 / 边 / 四边面），负责：透视投影、转台旋转、扫描生长、局部爆炸、
-// 零件自转、实心全息面（菲涅尔）、景深衰减、两级辉光。纯 Canvas 2D，确定性（只依赖参数）。
+// hologram-hud · holographic wireframe engine
+// Reads a JSON wireframe model (vertices / edges / quad faces) and handles: perspective projection, turntable rotation, scan growth, partial explode,
+// per-part spin, solid hologram faces (Fresnel), depth falloff, two-level glow. Pure Canvas 2D, deterministic (depends only on parameters).
 //
 //   const model = await loadModel('models/volt.json');
 //   const H = new Holo(1920, 1080);
 //   const info = H.draw(ctx, model, cam, { hue: 190, scan: { y: 0.6 }, explode: { battery: 1 } });
 //   info.bbox.battery -> [x0, y0, x1, y1]   info.anchor.battery -> [sx, sy]
 //
-// cam = { target:[x,y,z], yaw, pitch, dist, fov(弧度), cx, cy(屏幕上 target 的位置), roll }
+// cam = { target:[x,y,z], yaw, pitch, dist, fov(radians), cx, cy(position of target on screen), roll }
 
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -29,8 +29,8 @@ export function prepModel(j) {
   return j;
 }
 
-// 归一化：把任意尺寸的模型缩放到统一的"舞台尺寸"（包围盒对角线 = diag，默认 2.3117 = demo 里的自行车），
-// x/z 居中、落地 y = 0。锚点、中心、爆炸向量、自转轴一起缩放。镜头参数因此可以跨产品复用。
+// Normalise: scale a model of any size to a common "stage size" (bounding-box diagonal = diag, default 2.3117 = the bike in the demo),
+// centred on x/z, standing on y = 0. Anchors, centres, explode vectors and spin axes are scaled with it, so camera parameters can be reused across products.
 export function normalizeModel(m, diag = 2.3117) {
   let mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
   for (const P of m.parts) for (const C of P.pieces) for (let i = 0; i < C.v.length; i += 3) for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], C.v[i + k]); mx[k] = Math.max(mx[k], C.v[i + k]); }
@@ -49,12 +49,12 @@ export function normalizeModel(m, diag = 2.3117) {
   return m;
 }
 
-// 相机：返回 project(p) -> [sx, sy, z]
+// Camera: returns project(p) -> [sx, sy, z]
 export function makeCamera(cam, W, H) {
   const { target: T, yaw, pitch, dist } = cam;
   const cp = Math.cos(pitch), sp = Math.sin(pitch), cy = Math.cos(yaw), sy = Math.sin(yaw);
   const eye = [T[0] + dist * sy * cp, T[1] + dist * sp, T[2] + dist * cy * cp];
-  // 前向 f = T - eye；右 r = f × up；上 u = r × f
+  // forward f = T - eye; right r = f × up; up u = r × f
   let f = [T[0] - eye[0], T[1] - eye[1], T[2] - eye[2]]; const fl = Math.hypot(...f); f = f.map(x => x / fl);
   let r = [f[1] * 0 - f[2] * 1, f[2] * 0 - f[0] * 0, f[0] * 1 - f[1] * 0]; const rl = Math.hypot(...r); r = r.map(x => x / rl);
   const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
@@ -72,35 +72,35 @@ export function makeCamera(cam, W, H) {
   return { project, eye, f, dist, foc };
 }
 
-// 主体绘制器（持有离屏层，复用）
+// Subject renderer (owns offscreen layers, reused)
 export class Holo {
   constructor(W = 1920, H = 1080) {
     this.W = W; this.H = H;
-    this.L = mk(W, H);                         // 线框层
-    this.G1 = mk(W / 4, H / 4); this.G2 = mk(W / 8, H / 8);   // 辉光
-    this.F = mk(W, H);                                          // 实心面层（隔行扫描纹理）
+    this.L = mk(W, H);                         // wireframe layer
+    this.G1 = mk(W / 4, H / 4); this.G2 = mk(W / 8, H / 8);   // glow
+    this.F = mk(W, H);                                          // solid-face layer (interlaced scanline texture)
     const pc = mk(1, 4), pg = pc.getContext('2d');
     pg.fillStyle = 'rgba(0,0,0,1)'; pg.fillRect(0, 0, 1, 2); pg.fillStyle = 'rgba(0,0,0,0.38)'; pg.fillRect(0, 2, 1, 2);
     this.scanPat = this.F.getContext('2d').createPattern(pc, 'repeat');
     this.tmp = new Float32Array(3);
   }
   // opts:
-  //  hue            主色相（0–360）
-  //  spin           转台角（弧度，绕 y 轴，中心 spinC）
-  //  scan           { y, band=0.06, hot=1 }：只画 y 以下（世界高度），扫描前沿发白；null=全部
-  //  scanDown       { y }：反向——只画 y 以下（从上往下擦掉），用于收尾
+  //  hue            main hue (0–360)
+  //  spin           turntable angle (radians, around the y axis, centre spinC)
+  //  scan           { y, band=0.06, hot=1 }: draw only below y (world height), the scan front glows white; null = everything
+  //  scanDown       { y }: reverse — draw only below y (erasing from the top down), used for the ending
   //  explode        { partId | pieceId : 0–1 }
-  //  angle          { pieceId : 弧度 } 沿 piece.axis 自转
-  //  solid          0–1 实心全息面
-  //  focus          partId：其余零件压暗到 dim
-  //  dim            0–1（focus 之外的亮度）
-  //  gain           整体亮度
-  //  only           [partId] 只画这些
-  //  keep           { pieceId: color } 唯一彩色：这些零件保持自己的颜色（hex）
-  //  glow           辉光强度（默认 1）
-  //  wave           { y, w }：世界高度 y 附近 ±w 的边和面加亮（沿车身上行的光波）
-  //  piece.hot      模型里标 hot 的 piece 爆炸时整体发白（例如电芯）
-  //  flash          { partId: 0–1 }：>0.5 时整个零件发白（热点打点时闪一下）
+  //  angle          { pieceId : radians } spin around piece.axis
+  //  solid          0–1 solid hologram faces
+  //  focus          partId: all other parts are dimmed to dim
+  //  dim            0–1 (brightness outside focus)
+  //  gain           overall brightness
+  //  only           [partId] draw only these
+  //  keep           { pieceId: color } the single accent colour: these parts keep their own colour (hex)
+  //  glow           glow strength (default 1)
+  //  wave           { y, w }: edges and faces within ±w of world height y are brightened (a light wave travelling up the body)
+  //  piece.hot      pieces marked hot in the model glow white as a whole when exploded (e.g. battery cells)
+  //  flash          { partId: 0–1 }: > 0.5 turns the whole part white (a flash when a hotspot is marked)
   draw(ctx, model, cam, o = {}) {
     const { W, H } = this, L = this.L, g = L.getContext('2d');
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
@@ -110,14 +110,14 @@ export class Holo {
     const scan = o.scan, sy = scan ? scan.y : Infinity, band = scan?.band ?? 0.06;
     const down = o.scanDown, wave = o.wave;
     const info = { bbox: {}, anchor: {}, project: P, cam: C, dots: 0 };
-    // 深度范围（用于雾化）
+    // depth range (for fog)
     const dN = C.dist - 1.1, dF = C.dist + 1.1;
-    const LV = 7;                                        // 透明度量化级数
+    const LV = 7;                                        // number of alpha quantisation levels
     const paths = [], hot = [], fills = [];
     for (let i = 0; i < LV; i++) { paths.push(new Path2D()); hot.push(new Path2D()); fills.push(new Path2D()); }
     const keepPaths = {};
     const dots = new Path2D();
-    const tr = (x, y, z, out) => {   // 转台
+    const tr = (x, y, z, out) => {   // turntable
       const dx = x - sc[0], dz = z - sc[2];
       out[0] = sc[0] + dx * cs + dz * sn; out[1] = y; out[2] = sc[2] - dx * sn + dz * cs;
       return out;
@@ -133,17 +133,17 @@ export class Holo {
         const ang = o.angle ? (o.angle[Pc.id] || 0) : 0;
         const ex = Pc.explode[0] * k, ey = Pc.explode[1] * k, ez = Pc.explode[2] * k;
         const n = Pc.n, V = Pc.v;
-        const S = new Float32Array(n * 3), Y = new Float32Array(n);   // 屏幕坐标 + 世界高度
+        const S = new Float32Array(n * 3), Y = new Float32Array(n);   // screen coords + world height
         let ca = 1, sa = 0, ax = null;
         if (ang && Pc.axis) { ca = Math.cos(ang); sa = Math.sin(ang); ax = Pc.axis; }
         for (let i = 0; i < n; i++) {
           let x = V[i * 3], y = V[i * 3 + 1], z = V[i * 3 + 2];
-          if (ax) { const dx = x - ax.c[0], dy = y - ax.c[1]; x = ax.c[0] + dx * ca - dy * sa; y = ax.c[1] + dx * sa + dy * ca; }   // 只支持 z 轴自转
+          if (ax) { const dx = x - ax.c[0], dy = y - ax.c[1]; x = ax.c[0] + dx * ca - dy * sa; y = ax.c[1] + dx * sa + dy * ca; }   // only z-axis spin is supported
           x += ex; y += ey; z += ez;
           Y[i] = y;
           tr(x, y, z, t3); P(t3[0], t3[1], t3[2], t3);
           S[i * 3] = t3[0]; S[i * 3 + 1] = t3[1]; S[i * 3 + 2] = t3[2];
-          if (y <= sy && !Pc.internal && Pc.box !== false) {   // 目标框用静止姿态（不含爆炸位移、内部件）
+          if (y <= sy && !Pc.internal && Pc.box !== false) {   // target box uses the rest pose (no explode offset, no internal parts)
             let bx = t3[0], by = t3[1];
             if (k) { tr(x - ex, y - ey, z - ez, t3); P(t3[0], t3[1], t3[2], t3); bx = t3[0]; by = t3[1]; }
             if (bx < bx0) bx0 = bx; if (bx > bx1) bx1 = bx; if (by < by0) by0 = by; if (by > by1) by1 = by;
@@ -159,14 +159,14 @@ export class Holo {
           const zm = (S[a * 3 + 2] + S[b * 3 + 2]) / 2;
           if (scan) {
             if (ya > sy && yb > sy) continue;
-            if (ya > sy || yb > sy) {   // 剪到扫描面
+            if (ya > sy || yb > sy) {   // clip to the scan plane
               const tcut = (sy - ya) / (yb - ya);
               const xi = x0 + (x1 - x0) * tcut, yi = y0 + (y1 - y0) * tcut;
               if (ya > sy) { x0 = xi; y0 = yi; ya = sy; } else { x1 = xi; y1 = yi; yb = sy; }
               dots.rect(xi - 1.5, yi - 1.5, 3, 3); info.dots++;
             }
           }
-          if (down) {   // 反向擦除：只留 y 以下，截断处打点
+          if (down) {   // reverse erase: keep only below y, put a dot where it is cut
             if (ya > down.y && yb > down.y) continue;
             if (ya > down.y || yb > down.y) {
               const tcut = (down.y - ya) / (yb - ya);
@@ -189,12 +189,12 @@ export class Holo {
             const a = Q[j], b = Q[j + 1], c = Q[j + 2], d = Q[j + 3];
             if (scan && Math.max(Y[a], Y[b], Y[c], Y[d]) > sy) continue;
             if (down && Math.max(Y[a], Y[b], Y[c], Y[d]) > down.y) continue;
-            // 屏幕空间面积法线近似菲涅尔：面越侧（投影越窄）越亮
+            // approximate Fresnel from screen-space area/normal: the more edge-on the face (narrower projection), the brighter
             const ax_ = S[a * 3], ay_ = S[a * 3 + 1], bx_ = S[b * 3], by_ = S[b * 3 + 1], cx_ = S[c * 3], cy_ = S[c * 3 + 1], dx_ = S[d * 3], dy_ = S[d * 3 + 1];
             const area = Math.abs((cx_ - ax_) * (dy_ - by_) - (dx_ - bx_) * (cy_ - ay_)) / 2;
             const e1 = Math.hypot(bx_ - ax_, by_ - ay_), e2 = Math.hypot(dx_ - ax_, dy_ - ay_);
-            const facing = clamp(area / Math.max(1e-3, e1 * e2));   // 1 = 正对，0 = 侧面
-            let fr = 0.3 + 0.7 * Math.pow(1 - facing, 1.6);   // 菲涅尔：侧面（轮廓）更亮
+            const facing = clamp(area / Math.max(1e-3, e1 * e2));   // 1 = facing, 0 = edge-on
+            let fr = 0.3 + 0.7 * Math.pow(1 - facing, 1.6);   // Fresnel: edge-on faces (silhouette) are brighter
             if (wave) { const ym = (Y[a] + Y[c]) / 2, dw = Math.abs(ym - wave.y); if (dw < wave.w * 2) fr += (1 - dw / (wave.w * 2)) * 0.9; }
             const lv = Math.min(LV - 1, Math.floor(fr * solid * focusMul * vis * gain * LV));
             if (lv < 1) continue;
@@ -206,7 +206,7 @@ export class Holo {
       if (bx1 > bx0) info.bbox[Pt.id] = [bx0, by0, bx1, by1];
       const an = Pt.anchor; tr(an[0], an[1], an[2], t3); P(t3[0], t3[1], t3[2], t3); info.anchor[Pt.id] = [t3[0], t3[1], t3[2]];
     }
-    // 画：面 → 线 → 热线 → 交点
+    // draw order: faces → lines → hot lines → vertices
     g.globalCompositeOperation = 'lighter';
     g.lineCap = 'round';
     if (solid > 0) {
@@ -231,7 +231,7 @@ export class Holo {
     this.composite(ctx, o.glow ?? 1, o.alpha ?? 1);
     return info;
   }
-  // 把线框层 + 两级辉光叠到目标画布
+  // composite the wireframe layer + two glow levels onto the target canvas
   composite(ctx, glow = 1, alpha = 1) {
     const { L, G1, G2, W, H } = this;
     const g1 = G1.getContext('2d'), g2 = G2.getContext('2d');
@@ -245,18 +245,18 @@ export class Holo {
   }
 }
 
-// 扫描面：在世界高度 y 处画一圈投影环 + 径向刻度 + 屏幕上的光幕
+// Scan plane: at world height y draw a projected ring + radial ticks + an on-screen light curtain
 export function drawScanPlane(ctx, cam, W, H, y, o = {}) {
   const C = makeCamera(cam, W, H), P = C.project, t = new Float32Array(3);
   const hue = o.hue ?? 190, R = o.r ?? 0.95, c = o.c || [0, 0, 0], a = o.alpha ?? 1;
   const pts = [];
   for (let i = 0; i <= 96; i++) { const th = i / 96 * TAU; P(c[0] + Math.cos(th) * R, y, c[2] + Math.sin(th) * R, t); pts.push([t[0], t[1]]); }
   ctx.save(); ctx.globalCompositeOperation = 'lighter';
-  // 光幕：椭圆内填充
+  // light curtain: fill inside the ellipse
   ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
   ctx.fillStyle = `hsla(${hue},90%,60%,${0.07 * a})`; ctx.fill();
   ctx.strokeStyle = `hsla(${hue},80%,85%,${0.75 * a})`; ctx.lineWidth = 1.6; ctx.stroke();
-  // 刻度
+  // ticks
   ctx.beginPath();
   for (let i = 0; i < 72; i++) {
     const th = i / 72 * TAU + (o.rot || 0), r2 = R * (i % 6 ? 1.03 : 1.07);
@@ -264,7 +264,7 @@ export function drawScanPlane(ctx, cam, W, H, y, o = {}) {
     P(c[0] + Math.cos(th) * r2, y, c[2] + Math.sin(th) * r2, t); ctx.lineTo(t[0], t[1]);
   }
   ctx.strokeStyle = `hsla(${hue},80%,80%,${0.5 * a})`; ctx.lineWidth = 1; ctx.stroke();
-  // 屏幕空间光幕（横向渐隐）
+  // screen-space light curtain (fades out horizontally)
   P(c[0], y, c[2], t); const yy = t[1];
   const gr = ctx.createLinearGradient(0, yy - 60, 0, yy + 60);
   gr.addColorStop(0, `hsla(${hue},90%,60%,0)`); gr.addColorStop(0.5, `hsla(${hue},90%,70%,${0.10 * a})`); gr.addColorStop(1, `hsla(${hue},90%,60%,0)`);
@@ -275,7 +275,7 @@ export function drawScanPlane(ctx, cam, W, H, y, o = {}) {
   ctx.restore();
 }
 
-// 投影台：地面上的同心环 + 刻度 + 放射网格（跟着相机透视）
+// Projector pad: concentric rings on the ground + ticks + radial grid (in camera perspective)
 export function drawPad(ctx, cam, W, H, o = {}) {
   const C = makeCamera(cam, W, H), P = C.project, t = new Float32Array(3);
   const hue = o.hue ?? 190, a = o.alpha ?? 1, rot = o.rot || 0, y = o.y ?? 0, c = o.c || [0, 0, 0];
@@ -295,7 +295,7 @@ export function drawPad(ctx, cam, W, H, o = {}) {
     P(c[0] + Math.cos(th) * r1, y, c[2] + Math.sin(th) * r1, t); ctx.lineTo(t[0], t[1]);
   }
   ctx.strokeStyle = `hsla(${hue},80%,78%,${0.5 * a})`; ctx.lineWidth = 1; ctx.stroke();
-  // 放射线 + 地面网格（距离渐隐）
+  // radial lines + ground grid (fade with distance)
   for (let i = 0; i < 24; i++) {
     const th = i / 24 * TAU + rot * 0.25;
     ctx.beginPath();
@@ -308,8 +308,8 @@ export function drawPad(ctx, cam, W, H, o = {}) {
 
 function mk(w, h) { const c = document.createElement('canvas'); c.width = Math.round(w); c.height = Math.round(h); return c; }
 
-// 任意形状 → 线框模型：给一条 2D 闭合路径（米），挤出成有厚度的线框体（前后轮廓 + 侧棱 + 侧面四边面 + 若干中间截面）。
-// 例：modelFromPath(starPts, { depth: 0.12, id: 'star', slices: 3 }) → 可直接交给 Holo.draw（可扫描、可爆炸、可实心）
+// Any shape → wireframe model: give a closed 2D path (metres) and it is extruded into a wireframe solid with thickness (front and back outlines + side edges + side quad faces + a few intermediate cross-sections).
+// e.g. modelFromPath(starPts, { depth: 0.12, id: 'star', slices: 3 }) → can be passed straight to Holo.draw (scannable, explodable, solid-capable)
 export function modelFromPath(pts, o = {}) {
   const d = o.depth ?? 0.1, id = o.id || 'shape', sl = Math.max(2, o.slices ?? 3), n = pts.length;
   const v = [], e = [], q = [];

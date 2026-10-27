@@ -1,9 +1,9 @@
-// 2D 叠加层：旁白字幕、角色气泡（打字机）、章节横幅、动作评价字、片尾
+// 2D overlay: narration subtitles, character speech bubbles (typewriter), chapter banners, action-rating words, end card
 import { VO, BUB, CHAPTERS, CREDITS, TITLE_CN, DUR } from './story.js';
 import { clamp, seg, back, ss, eo, lerp, TAU, mulberry } from './lib.js';
 
 const INK = '#3a2a24';
-export const CPS = 30;   // 气泡打字速度（字/秒）
+export const CPS = 30;   // bubble typing speed (characters/second)
 
 function wrap(x, text, maxW) {
   const words = text.split(' '), lines = []; let cur = '';
@@ -28,7 +28,7 @@ export function drawSubs(x, t, dur) {
   }
 }
 
-// 气泡：anchor=[sx,sy] 说话者头顶屏幕坐标
+// Bubble: anchor=[sx,sy] = screen position of the top of the speaker's head
 export function drawBubbles(x, t, anchors) {
   for (const [who, t0, t1, en, zh] of BUB) {
     if (t < t0 - .05 || t > t1 + .25) continue;
@@ -42,26 +42,26 @@ export function drawBubbles(x, t, anchors) {
     const tx = clamp(an[0], bx + 50, bx + bw - 50);
     x.translate(tx, by + bh); x.scale(k, k); x.translate(-tx, -(by + bh));
     x.globalAlpha = clamp(kout * 1.5);
-    // 影子
+    // shadow
     x.fillStyle = 'rgba(40,25,15,.22)'; x.beginPath(); x.roundRect(bx + 8, by + 12, bw, bh, 44); x.fill();
-    // 尾巴 + 身体
+    // tail + body
     x.beginPath(); x.roundRect(bx, by, bw, bh, 44);
     x.moveTo(tx - 26, by + bh - 2); x.lineTo(lerp(tx, an[0], .7), Math.min(an[1] - 16, by + bh + 58)); x.lineTo(tx + 20, by + bh - 2);
     x.fillStyle = '#fffdf8'; x.fill(); x.lineWidth = 6; x.strokeStyle = INK; x.lineJoin = 'round';
     x.beginPath(); x.roundRect(bx, by, bw, bh, 44); x.stroke();
     x.beginPath(); x.moveTo(tx - 26, by + bh); x.lineTo(lerp(tx, an[0], .7), Math.min(an[1] - 16, by + bh + 58)); x.lineTo(tx + 20, by + bh); x.stroke();
     x.fillStyle = '#fffdf8'; x.fillRect(tx - 22, by + bh - 8, 40, 9);
-    // 文本
+    // text
     x.fillStyle = '#241814'; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
     x.fillText(en.slice(0, n), bx + 45, by + 68);
     const za = seg(t, t0 + .12 + en.length / CPS, t0 + .4 + en.length / CPS);
     x.globalAlpha *= za; x.font = '32px "ZCOOL KuaiLe"'; x.fillStyle = '#7a5e4c'; x.fillText(zh, bx + 47, by + 118);
-    // 下一页箭头
+    // next-page arrow
     if (za > .5) { const yy = by + bh - 34 + Math.sin(t * 9) * 5; x.beginPath(); x.moveTo(bx + bw - 52, yy); x.lineTo(bx + bw - 30, yy); x.lineTo(bx + bw - 41, yy + 13); x.closePath(); x.fillStyle = '#e8413a'; x.fill(); }
     x.restore();
   }
 }
-// 打字音效时间点
+// Times of the typing sound effects
 export function blipTimes() {
   const ev = [];
   for (const [who, t0, t1, en] of BUB) for (let i = 0; i < en.length; i++) { const ch = en[i]; if (/[A-Za-z!?']/.test(ch) && i % 2 === 0) ev.push({ t: t0 + .12 + i / CPS, type: 'blip', who }); }
@@ -74,14 +74,14 @@ export function drawChapter(x, t) {
     const kin = seg(t, t0, t0 + .7), kout = seg(t, t1, t1 + .5);
     const drop = (1 - back(kin, 1.4)) * -320 - ss(kout) * 420, sw = Math.sin((t - t0) * 3.2) * .03 * (1 - kin * .6) * (1 - kout);
     x.save(); x.translate(960, 150 + drop); x.rotate(sw);
-    // 挂绳
+    // hanging cord
     x.strokeStyle = '#6b5a4a'; x.lineWidth = 3; x.beginPath(); x.moveTo(-300, -40); x.lineTo(-300, -400); x.moveTo(300, -40); x.lineTo(300, -400); x.stroke();
-    // 纸板
+    // cardboard sign
     x.font = '84px "Lilita One"'; const w = Math.max(640, x.measureText(b).width + 160);
     x.fillStyle = 'rgba(40,25,15,.25)'; x.beginPath(); x.roundRect(-w / 2 + 10, -40 + 14, w, 190, 20); x.fill();
     x.fillStyle = '#fffaf0'; x.beginPath(); x.roundRect(-w / 2 - 10, -52, w + 20, 214, 26); x.fill();
     x.fillStyle = '#f4e6c8'; x.beginPath(); x.roundRect(-w / 2, -40, w, 190, 20); x.fill(); x.lineWidth = 6; x.strokeStyle = INK; x.stroke();
-    // 缎带
+    // ribbon
     x.fillStyle = '#d8423a'; x.beginPath(); x.moveTo(-170, -70); x.lineTo(170, -70); x.lineTo(150, -32); x.lineTo(170, 6); x.lineTo(-170, 6); x.lineTo(-150, -32); x.closePath(); x.fill(); x.stroke();
     x.textAlign = 'center'; x.textBaseline = 'middle';
     x.font = '38px "Lilita One"'; x.fillStyle = '#fff4d6'; x.fillText(a, 0, -30);
@@ -91,13 +91,13 @@ export function drawChapter(x, t) {
   }
 }
 
-// 动作评价：NICE! GREAT!
+// Action ratings: NICE! GREAT!
 export function drawAction(x, t, list) {
   for (const { t0, text, p, col } of list) {
     if (t < t0 || t > t0 + 1.2 || !p) continue;
     const k = back(seg(t, t0, t0 + .18), 2.5), fo = 1 - seg(t, t0 + .85, t0 + 1.2);
     x.save(); x.translate(p[0], p[1] - 40 - seg(t, t0, t0 + 1.2) * 50); x.rotate(-.12); x.scale(k, k); x.globalAlpha = fo;
-    // 星芒
+    // star burst
     const R = mulberry(Math.round(t0 * 10));
     for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + R() * .3, r0 = 90, r1 = 150 + R() * 60 * eo(seg(t, t0, t0 + .4)); x.strokeStyle = i % 2 ? '#ffe35a' : '#ffffff'; x.lineWidth = 8; x.lineCap = 'round'; x.beginPath(); x.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * .6); x.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * .6); x.stroke(); }
     x.font = 'italic 120px "Lilita One"'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
@@ -128,7 +128,7 @@ export function drawEnd(x, t) {
   x.restore();
   if (k2 > 0) { x.save(); x.translate(960, 350); x.scale(k2, k2); x.rotate(-.05); x.font = 'italic 64px "IM Fell English"'; x.lineWidth = 8; x.strokeStyle = 'rgba(30,20,14,.7)'; x.strokeText('The End?', 0, 0); x.fillStyle = '#fffaf0'; x.fillText('The End?', 0, 0); x.restore(); }
   if (k3 > 0) {
-    // LemoLab 署名：The End? 下方，深色描边（背景是奶白书页），与素材署名同时淡入
+    // LemoLab credit: below The End?, dark outline (the background is the cream page), fades in together with the asset credits
     x.save(); x.globalAlpha = fo * k3; x.font = '600 36px Fredoka'; x.lineWidth = 7; x.strokeStyle = 'rgba(30,20,14,.75)';
     x.strokeText('LemoLab × Claude Opus 5.5', 960, 430); x.fillStyle = '#fffaf0'; x.fillText('LemoLab × Claude Opus 5.5', 960, 430); x.restore();
     x.globalAlpha = fo * k3; x.font = '26px Fredoka'; x.fillStyle = 'rgba(255,248,235,.92)'; x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 10;

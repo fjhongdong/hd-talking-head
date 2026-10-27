@@ -20,8 +20,8 @@ canvas { display:block; }
 <script src="poses/nature.js" onerror="0"></script>
 <script src="poses/asia.js" onerror="0"></script>
 <script>
-// 姿势检查表：lab.html?p=sprint,hurdles&pal=red&n=8&beats=4
-// 每行一个姿势，横向是时间（0 → beats 拍，均分 n 格）
+// Pose check sheet: lab.html?p=sprint,hurdles&pal=red&n=8&beats=4
+// One pose per row; time runs horizontally (0 → `beats` beats, split evenly into n cells)
 const q = new URLSearchParams(location.search);
 const names = (q.get('p') || Object.keys(POSES).join(',')).split(',').filter(Boolean);
 const n = +(q.get('n') || 8), beats = +(q.get('beats') || 4);

@@ -1,4 +1,4 @@
-// The Island That Grew — Low-poly Isometric Island 风格 demo
+// The Island That Grew — Low-poly Isometric Island style demo
 import * as THREE from 'three';
 import { clamp, seg, ss, eio, eo, lerp, monotone, TAU } from '/core/lib.js';
 import { DUR, T, VO, SKY, shotAt, BEAT, CREDITS } from './story.js';
@@ -22,14 +22,14 @@ post.bloom.strength = .32; post.bloom.threshold = .95; post.bloom.radius = .55;
 const sea = makeSea(scene);
 const world = buildWorld(scene);
 
-// —— 灯光 ——
+// —— lights ——
 const hemi = new THREE.HemisphereLight('#eef6fb', '#c6b89c', 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight('#fff6e8', 2.6); sun.castShadow = true;
 sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -.0006; sun.shadow.normalBias = .02; sun.shadow.radius = 3;
 Object.assign(sun.shadow.camera, { left: -13, right: 13, top: 13, bottom: -13, near: 1, far: 120 }); sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun, sun.target);
 
-// —— 天色插值 ——
+// —— sky colour interpolation ——
 const C = h => new THREE.Color(h);
 const SK = SKY.map(k => ({ t: k[0], zen: C(k[1]), hor: C(k[2]), deep: C(k[3]), shal: C(k[4]), sun: C(k[5]), sunI: k[6], hs: C(k[7]), hg: C(k[8]), hI: k[9], el: k[10], az: k[11], night: k[12] }));
 function skyAt(t) {
@@ -40,7 +40,7 @@ function skyAt(t) {
   return o;
 }
 
-// —— 镜头：正交等距；target / 方位角 / 俯角 / 视野高 ——
+// —— camera: orthographic isometric; target / azimuth / elevation / view height ——
 const DEG = Math.PI / 180;
 const K = (keys) => { const f = monotone(keys); return f; };
 const grow = {
@@ -67,15 +67,15 @@ function cam(t) {
     case 'dusk': tg = [0, .7, 0]; az = lerp(222, 216, u); el = 31; fh = lerp(15, 13.2, eio(u)); break;
     case 'lost': { const b = world.boatFar; tg = [b[0] * .45, .5, b[1] * .45]; az = lerp(186, 182, u); el = 21; fh = 24; hzA = .0; hzB = .34; break; }
     case 'tower': tg = [0, 3.7, 0]; az = lerp(206, 213, u); el = 24; fh = 6.9; hzA = .04; hzB = .36; tiltB = .34; break;
-    default: {   // beam：高俯角，随光束半速旋转；回港后正交拉远
+    default: {   // beam: high elevation, rotating at half the beam's speed; after the return to harbour, orthographic pull-back
       const z = ss(seg(t, T.home, T.end + .6)), zz = Math.pow(z, 1.6);
-      // 点亮后先高俯角看光束扫过全岛（八音盒），再缓慢下俯让星空"升起来"，最后正交拉远
+      // after ignition, first a high angle watching the beam sweep the whole island (music box), then slowly tilt down so the starry sky "rises", finally an orthographic pull-back
       const dn = ss(seg(t, 38.4, T.home + .6));
       tg = [0, lerp(1.2, 0, z), 0]; az = 200 + (t - T.ignite) * (world.OMEGA / DEG) * .22; el = lerp(lerp(50, 25, dn), 22, z);
       fh = lerp(17, 19, dn) * Math.pow(420 / 19, zz); hzA = lerp(lerp(.1, .0, dn), -.02, z); hzB = lerp(lerp(.52, .36, dn), .3, z); tiltB = lerp(.3, .5, z);
     }
   }
-  const D = Math.max(300, fh * 3), ce = Math.cos(el * DEG);   // 相机要足够远：正交画面下缘的视线起点不能落到海面以下
+  const D = Math.max(300, fh * 3), ce = Math.cos(el * DEG);   // the camera must be far enough away: the ray origin at the bottom edge of the orthographic frame must not fall below the sea surface
   camera.position.set(tg[0] + D * ce * Math.sin(az * DEG), tg[1] + D * Math.sin(el * DEG), tg[2] + D * ce * Math.cos(az * DEG));
   camera.up.set(0, 1, 0); camera.lookAt(tg[0], tg[1], tg[2]);
   const fw = fh * W / H; camera.left = -fw / 2; camera.right = fw / 2; camera.top = fh / 2; camera.bottom = -fh / 2; camera.near = 1; camera.far = D + fh * 5 + 800; camera.updateProjectionMatrix();
@@ -85,13 +85,13 @@ function cam(t) {
   CAM = { tg, az, el, fh, name };
 }
 
-// —— 2D 层：片名、字幕、片尾 ——
+// —— 2D layer: title, subtitles, end card ——
 const ov = document.getElementById('ov'), g = ov.getContext('2d');
 let DURS = {};
 try { const r = await fetch('voices/dur.json'); if (r.ok) DURS = await r.json(); } catch (e) { }
 const voDur = v => DURS[v.id] ?? v.text.length * .065;
 const subSpan = v => { const i = VO.indexOf(v), nx = VO[i + 1]; let b = v.t + Math.max(1.8, voDur(v) + .6); if (nx) b = Math.min(b, nx.t - .05); return [v.t - .05, b]; };
-function hexIcon(x, y, s, top) {   // 平面着色的小六边形地块：顶面 + 两个侧面
+function hexIcon(x, y, s, top) {   // small flat-shaded hexagonal tile: top face + two side faces
   const P = a => [x + Math.cos(a) * s, y + Math.sin(a) * s * .58];
   const pts = [0, 1, 2, 3, 4, 5].map(i => P(i * Math.PI / 3 + Math.PI / 6 * 0));
   const dy = s * .55;
@@ -103,7 +103,7 @@ function hexIcon(x, y, s, top) {   // 平面着色的小六边形地块：顶面
   g.restore();
 }
 const iconTop = t => t < 6 ? '#f5c2b0' : t < 26 ? '#93c96c' : t < 31 ? '#ffa860' : '#ffc676';
-function spaced(text, x, y, track, align = 'center') {   // 手动字距
+function spaced(text, x, y, track, align = 'center') {   // manual letter spacing
   const ws = [...text].map(ch => g.measureText(ch).width), tot = ws.reduce((a, b) => a + b, 0) + track * (text.length - 1);
   let cx = align === 'center' ? x - tot / 2 : x; const pos = [];
   [...text].forEach((ch, i) => { pos.push(cx); cx += ws[i] + track; });
@@ -120,7 +120,7 @@ function titleBlock(t, t0, y, alpha, rise = true) {
     g.shadowColor = 'rgba(20,40,70,.35)'; g.shadowBlur = 18; g.shadowOffsetY = 4; g.fillStyle = '#ffffff'; g.fillText(ch, pos[i], y + off);
   });
   g.restore();
-  // 水线
+  // waterline
   const wl = rise ? ss(seg(t, t0, t0 + .8)) : 1; g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2;
   g.beginPath(); g.moveTo(W / 2 - 330 * wl, y + 22); g.lineTo(W / 2 + 330 * wl, y + 22); g.stroke();
   g.font = '300 34px "Josefin Sans"'; g.fillStyle = 'rgba(255,255,255,.92)'; g.shadowColor = 'rgba(20,40,70,.3)'; g.shadowBlur = 10;
@@ -157,7 +157,7 @@ function hud(t) {
   }
 }
 
-// —— 渲染 ——
+// —— render ——
 function render(t) {
   const sk = skyAt(t);
   cam(t);
@@ -180,7 +180,7 @@ function render(t) {
   hud(t);
 }
 
-// —— 音效 / 配乐事件（给 mix.py 和配乐脚本）——
+// —— sound effect / score events (for mix.py and the score script)——
 function events() {
   const ev = world.EVS.slice();
   VO.forEach(v => ev.push({ t: v.t, type: 'vo', id: v.id, text: v.text }));
@@ -193,7 +193,7 @@ function events() {
   return ev.sort((a, b) => a.t - b.t);
 }
 
-// 远方浮标：放在结尾机位画面右下（先算出那一刻的相机，再反投影到海面）
+// distant buoy: placed at lower right of the final camera's frame (compute the camera at that moment first, then unproject onto the sea surface)
 { cam(T.bellFar + .3); const fw = CAM.fh * W / H, R = new THREE.Vector3(), U = new THREE.Vector3(), F = new THREE.Vector3();
   camera.updateMatrixWorld(); R.setFromMatrixColumn(camera.matrixWorld, 0); U.setFromMatrixColumn(camera.matrixWorld, 1); camera.getWorldDirection(F);
   const p = new THREE.Vector3(...CAM.tg).addScaledVector(R, fw * .3).addScaledVector(U, -CAM.fh * .27); const k = -p.y / F.y; p.addScaledVector(F, k);

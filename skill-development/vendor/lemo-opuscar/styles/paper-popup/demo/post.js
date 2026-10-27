@@ -1,4 +1,4 @@
-// 后期：场景 → (MSAA+深度) → 物理景深（CoC∝|1/f−1/z|，64 点螺旋采样）→ 辉光 → 色调映射 + 暗角
+// Post: scene → (MSAA + depth) → physical depth of field (CoC ∝ |1/f−1/z|, 64-tap spiral sampling) → bloom → tone mapping + vignette
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
@@ -15,7 +15,7 @@ const cocShader = {
     void main(){
       float d = texture2D(tDepth, vUv).x;
       float z = -perspectiveDepthToViewZ(d, near, far);
-      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // 负=近景，正=远景（像素）
+      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // negative = near, positive = far (pixels)
       gl_FragColor = vec4(texture2D(tColor, vUv).rgb, c);
     }`
 };
@@ -35,7 +35,7 @@ const gatherShader = {
         vec2 off = vec2(cos(th), sin(th)) * r / res;
         vec4 s = texture2D(tIn, vUv + off);
         float sa = abs(s.a);
-        // 比中心更远的样本，扩散半径不超过中心自己的（防止背景糊到清晰前景上）
+        // for samples farther than the centre, the spread radius is capped at the centre's own (stops the background bleeding over a sharp foreground)
         if (s.a > c0.a) sa = min(sa, max(a0, 0.));
         float w = smoothstep(r - 1.5, r + .5, sa) / (sa*sa + 1.);
         acc += s.rgb * w; wsum += w;

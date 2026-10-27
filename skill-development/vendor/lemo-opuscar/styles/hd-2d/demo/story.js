@@ -1,4 +1,4 @@
-// 时间线（秒）：镜头、旁白、关键事件
+// Timeline (seconds): shots, narration, key events
 export const DUR = 76.5;
 export const SHOTS = [
   { id: 'card', a: 0, b: 5.5 },
@@ -11,15 +11,15 @@ export const SHOTS = [
   { id: 'title', a: 67.0, b: 76.5 },
 ];
 export const T = {
-  lhFlicker: 11.5, lhOut: 12.35,          // 灯塔熄灭
-  light: 16.2,                             // 守灯人点亮小提灯
-  dlgIn: 17.3, dlgOut: 24.0,               // 对话框
+  lhFlicker: 11.5, lhOut: 12.35,          // lighthouse goes out
+  light: 16.2,                             // the lamp-keeper lights the small hand lamp
+  dlgIn: 17.3, dlgOut: 24.0,               // dialogue box
   wrenRun: 23.6,
   gust: 40.6, dim: 41.3, dark: 42.0, relight: 45.6, stand: 47.6,
   pour: 52.6, ignite: 53.5, beam: 54.4,
   ships: 59.2,
 };
-// 旁白：t = 开始时间；dur 取自 voices/dur.json
+// Narration: t = start time; dur comes from voices/dur.json
 export const VO = [
   { id: 'n1', t: 6.8, sub: 'For a hundred years, the lighthouse of Greywater never once went dark.' },
   { id: 'n2', t: 12.6, sub: 'Tonight, it did.' },

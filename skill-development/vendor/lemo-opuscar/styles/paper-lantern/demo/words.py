@@ -1,5 +1,5 @@
 import json, sys
-import os as _os; _os.chdir(_os.path.dirname(_os.path.abspath(__file__)))   # 路径相对 demo/
+import os as _os; _os.chdir(_os.path.dirname(_os.path.abspath(__file__)))   # paths relative to demo/
 from faster_whisper import WhisperModel
 m = WhisperModel('medium', device='cpu', compute_type='int8')
 out = {}

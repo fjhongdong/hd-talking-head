@@ -1,5 +1,5 @@
-# NASA GISTEMP v4 全球海陆温度距平（基准 1951–1980）→ 每年夏季（JJA，6–8 月）距平
-# 输入 data/GLB.Ts+dSST.csv（原样下载，公版）→ 输出 data/jja.json + 打印叙事里用到的事实
+# NASA GISTEMP v4 global land-ocean temperature anomaly (baseline 1951–1980) → summer (JJA, June–August) anomaly for each year
+# Input data/GLB.Ts+dSST.csv (downloaded as is, public domain) → output data/jja.json + prints the facts used in the narration
 import csv, json, os
 H = os.path.dirname(os.path.abspath(__file__)); D = os.path.join(H, '..', 'data')
 rows = list(csv.reader(open(os.path.join(D, 'GLB.Ts+dSST.csv'))))

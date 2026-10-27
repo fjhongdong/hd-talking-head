@@ -1,5 +1,5 @@
-// 用 KiCad 数据画电路板贴图：阻焊、铜皮、走线、焊盘、过孔、钻孔、丝印
-// 输出 color / ORM（G=粗糙度 B=金属度）/ bump 三张画布，坐标 = PCB 毫米 × PPM
+// Draws the PCB textures from KiCad data: solder mask, copper pours, traces, pads, vias, drill holes, silkscreen
+// Outputs three canvases: color / ORM (G = roughness, B = metalness) / bump; coordinates = PCB millimetres × PPM
 import * as THREE from 'three';
 
 export function paintPCB(D, side, outline, box, PPM = 14) {
@@ -11,9 +11,9 @@ export function paintPCB(D, side, outline, box, PPM = 14) {
   const MASK = '#0a3123', CU = '#134a35', GOLD = '#c8a456', SILK = '#e9e7df', HOLE = '#060606';
   const fillAll = (col, rr, bb) => { c.fillStyle = col; c.fillRect(x0, y0, x1 - x0, y1 - y0); r.fillStyle = rr; r.fillRect(x0, y0, x1 - x0, y1 - y0); b.fillStyle = bb; b.fillRect(x0, y0, x1 - x0, y1 - y0); };
   fillAll(MASK, 'rgb(0,150,0)', '#4d4d4d');
-  // 板外轮廓裁切
+  // clip to the board outline
   for (const ctx of [c, r, b]) { ctx.save(); ctx.beginPath(); outline.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.clip(); }
-  // 铜皮 + 走线（在阻焊下面：颜色更亮、微凸）
+  // copper pours + traces (under the solder mask: lighter colour, slightly raised)
   const poly = (ctx, pts) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); };
   for (const z of D.zones[side]) {
     poly(c, z); c.fillStyle = CU; c.fill();
@@ -22,19 +22,19 @@ export function paintPCB(D, side, outline, box, PPM = 14) {
   for (const [ax, ay, bx, by, w] of D.tracks[side]) {
     for (const [ctx, col] of [[c, CU], [b, '#808080']]) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
   }
-  // 丝印
+  // silkscreen
   for (const s of D.silk[side]) {
     for (const [ctx, col] of [[c, SILK], [r, 'rgb(0,200,0)'], [b, '#b0b0b0']]) {
       ctx.strokeStyle = ctx.fillStyle = col; ctx.lineWidth = s.w; poly(ctx, s.pts); if (s.fill) ctx.fill(); else { ctx.beginPath(); s.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); }
     }
   }
-  // 过孔（盖油：只见小环）
+  // vias (tented under the mask: only a small ring shows)
   for (const [x, y, d, dr] of D.vias) {
     c.fillStyle = '#1e6448'; c.beginPath(); c.arc(x, y, d / 2, 0, 7); c.fill();
     c.fillStyle = '#0a2219'; c.beginPath(); c.arc(x, y, dr / 2, 0, 7); c.fill();
     b.fillStyle = '#909090'; b.beginPath(); b.arc(x, y, d / 2, 0, 7); b.fill();
   }
-  // 焊盘（露铜镀金）
+  // pads (exposed copper, gold-plated)
   const padPath = (ctx, p) => {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(-p.rot * Math.PI / 180); ctx.beginPath();
     const w = p.w, h = p.h;
@@ -55,7 +55,7 @@ export function paintPCB(D, side, outline, box, PPM = 14) {
       for (const [ctx, col] of [[c, HOLE], [r, 'rgb(0,255,0)'], [b, '#000']]) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, p.drill / 2, 0, 7); ctx.fill(); }
     }
   }
-  // 板上安装孔（Ø5，铜柱从这里穿过）
+  // board mounting holes (Ø5; the brass standoffs pass through here)
   for (const h of D.pcb_holes) for (const [ctx, col] of [[c, HOLE], [r, 'rgb(0,255,0)'], [b, '#000']]) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(h.c[0], h.c[1], h.r, 0, 7); ctx.fill(); }
   for (const ctx of [c, r, b]) ctx.restore();
   const tex = (cv, srgb) => {

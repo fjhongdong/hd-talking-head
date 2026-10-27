@@ -1,5 +1,5 @@
-// 摄像机 OSD：自制 5×7 点阵字体（REC、电量、时间码、日期、字幕机片名）
-// 画在 720×540 的"磁带空间"画布上，由 VHS 着色器合成进信号（所以也吃色度渗色和跟踪抖动）
+// Camcorder OSD: custom 5×7 dot-matrix font (REC, battery, timecode, date, character-generator title)
+// Drawn on the 720×540 "tape-space" canvas and composited into the signal by the VHS shader (so it also gets chroma bleed and tracking jitter)
 const G = {
   '0': '01110 10001 10011 10101 11001 10001 01110', '1': '00100 01100 00100 00100 00100 00100 01110',
   '2': '01110 10001 00001 00010 00100 01000 11111', '3': '11111 00010 00100 00010 00001 10001 01110',
@@ -25,7 +25,7 @@ const G = {
   '(': '00010 00100 01000 01000 01000 00100 00010', ')': '01000 00100 00010 00010 00010 00100 01000',
 };
 const ROWS = {}; for (const k in G) ROWS[k] = G[k].split(' ');
-// s = 点阵像素尺寸；描边 = 1 个点阵像素的黑边（OSD 字符的典型做法）
+// s = dot-matrix pixel size; outline = a 1-dot black border (the usual treatment for OSD characters)
 export function text(x, str, px, py, s, col = '#f4f4ee', outline = true) {
   const draw = (ox, oy, c) => {
     x.fillStyle = c; let cx = px;
@@ -41,7 +41,7 @@ export function text(x, str, px, py, s, col = '#f4f4ee', outline = true) {
 }
 export const width = (str, s) => str.length * 6 * s - s;
 
-// 画一帧 OSD。o = {rec, clock, date, bat, batBlink, title:[str,...], titleN(可见字符数), counter, t}
+// Draw one OSD frame. o = {rec, clock, date, bat, batBlink, title:[str,...], titleN (number of visible characters), counter, t}
 export function drawOSD(cv, o) {
   const x = cv.getContext('2d'), W = cv.width, H = cv.height;
   x.clearRect(0, 0, W, H);
@@ -53,7 +53,7 @@ export function drawOSD(cv, o) {
     x.fillStyle = '#e8261c'; x.beginPath(); x.arc(58, 55, 8.5, 0, 7); x.fill();
     text(x, 'REC', 76, 45, s);
   }
-  // 电量
+  // Battery
   if (o.bat != null && !(o.batBlink && Math.floor(o.t * 2) % 2)) {
     const bx = W - 118, by = 44;
     x.fillStyle = 'rgba(0,0,0,.85)'; x.fillRect(bx - 2, by - 2, 58, 26); x.fillRect(bx + 54, by + 5, 8, 12);
@@ -62,15 +62,15 @@ export function drawOSD(cv, o) {
     x.fillStyle = o.bat <= 1 ? '#f4f4ee' : '#f4f4ee';
     for (let k = 0; k < o.bat; k++) x.fillRect(bx + 5 + k * 16, by + 5, 12, 12);
   }
-  // 时间码 + 日期（右下）
+  // Timecode + date (bottom right)
   if (o.clock) {
     const w1 = width(o.clock, s), w2 = width(o.date, s);
     text(x, o.clock, W - 50 - w1, H - 92, s);
     text(x, o.date, W - 50 - w2, H - 58, s);
   }
-  // 磁带计数（左下）
+  // Tape counter (bottom left)
   if (o.counter) text(x, o.counter, 48, H - 58, s);
-  // 字幕机片名：大号点阵，逐字出现
+  // Character-generator title: large dot matrix, appearing character by character
   if (o.title) {
     const ts = 6, n = o.titleN ?? 999; let k = 0;
     o.title.forEach((ln, i) => {

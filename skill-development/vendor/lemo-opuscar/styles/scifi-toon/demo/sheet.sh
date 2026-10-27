@@ -1,5 +1,5 @@
 #!/bin/sh
-# 缩略图总览：sh sheet.sh <name> <t0> <t1> <step> [cols]  → out/<name>.jpg
+# Contact sheet: sh sheet.sh <name> <t0> <t1> <step> [cols]  → out/<name>.jpg
 cd "$(dirname "$0")/../../.."
 N="$1"; A="$2"; B="$3"; S="$4"; C="${5:-6}"
 D=styles/scifi-toon/demo/out/sheet_$N; rm -rf "$D"; mkdir -p "$D"

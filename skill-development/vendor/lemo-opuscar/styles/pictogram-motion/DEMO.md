@@ -2,10 +2,10 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *Aichi-Nagoya 2026 — All 43 Sports* (EN-JP version, 163.6 s, 1920×1080 @ 60 fps, 150 BPM, 70 sport cards, no narration) · `pictogram-motion.mp4` · source in [`demo/`](demo/) (local, not published) · engine: Canvas2D (`engine.js` + `scenes.js` + `poses/*.js`), headless Chrome frame capture, numpy-synthesised score.
+Demo: *Aichi-Nagoya 2026 — All 43 Sports* (EN-JP version, 163.6 s, 1920×1080 @ 60 fps, 150 BPM, 70 sport cards, no narration) · `pictogram-motion.mp4` · source in [`demo/`](demo/) · engine: Canvas2D (`engine.js` + `scenes.js` + `poses/*.js`), headless Chrome frame capture, numpy-synthesised score.
 
 
-> **Rights note.** The demo is a fan-made promo for a real event, the 20th Asian Games Aichi-Nagoya 2026. The event name (AICHI-NAGOYA 2026 / THE 20TH ASIAN GAMES), the slogan (IMAGINE ONE ASIA / ここで、ひとつに。), the emblem-like red-sun-and-rings mark drawn in code, the five-colour palette and its colour names, and the grid pattern language all follow the organiser's identity. They belong to the organiser (Aichi-Nagoya Asian Games Organising Committee / Olympic Council of Asia). `demo/ref/` holds official images downloaded from the Games' website for reference only. They are never drawn into the film and must not be redistributed. **Any other film made from this code must replace all event-specific elements** (see [Replacing the event elements](#replacing-the-event-elements)).
+> **Rights note.** The demo is an unofficial fan-made promo for a real event, the 20th Asian Games Aichi-Nagoya 2026; the Aichi-Nagoya Asian Games Organising Committee and the Olympic Council of Asia did not make or endorse it. The red-sun-and-rings mark is drawn in code to imitate the official emblem, and the slogan is the official one, quoted; neither is ours to reuse. In a film of your own, replace both with original ones. The event name (AICHI-NAGOYA 2026 / THE 20TH ASIAN GAMES), the slogan (IMAGINE ONE ASIA / ここで、ひとつに。), the emblem-like red-sun-and-rings mark drawn in code, the five-colour palette and its colour names, and the grid pattern language all follow the organiser's identity. They belong to the organiser (Aichi-Nagoya Asian Games Organising Committee / Olympic Council of Asia). `demo/ref/` holds official images downloaded from the Games' website for reference only. They are never drawn into the film and must not be redistributed. **Any other film made from this code must replace all event-specific elements** (see [Replacing the event elements](#replacing-the-event-elements)).
 
 ## Story & structure
 
@@ -109,7 +109,7 @@ Cream `G.CREAM = #fbf6ec`, ink `G.INK = #15111c`. **Gold and ochre take dark typ
 ## End card
 
 - The type on the cards *is* the text layer; nothing extra is burned in. `pictogram-motion.srt` lists the title cards (intro lines, chapter titles, each card "01/43  ATHLETICS — SPRINT / 短距離", slogan, end card), generated from the EDL by `demo/srt.cjs`.
-- **Bilingual rule**: EN is always the big title. The second language is chosen by `?lang=`: `ej` puts Japanese in the big second line (`s.jpBig || s.jp`) and drops the small JP line; the default (ZH) puts Chinese big and Japanese small.
+- **Bilingual rule**: EN is always the big title. The second language is chosen by `?lang=`: `ej` puts Japanese in the big second line (`s.jpBig || s.jp`) and drops the small JP line; without `?lang=ej` (the page's own fallback, `scenes.js`) Chinese is big and Japanese small. The render and still scripts pass `?lang=ej` unless `LANGQ=zh`, so the published film is the EN-JP version.
 - **End sequence (demo)**: cream end card, red sun + five-colour rings → **IMAGINE ONE ASIA / ここで、ひとつに。** (the official slogan) → **AICHI-NAGOYA 2026**, the dates, five colour bars and the credit line → fade to black (the last 1.3 s) → 2 s black tail over the music's ring-out.
 - **Credit line**: our library's demo ends with "LemoLab × Claude Opus 5.5". It sits on the end card, centred under the five colour bars: `G.maskText(ctx, 'LemoLab × Claude Opus 5.5', W / 2, 1000, F.mono(24), rgba(G.INK, 0.6), inv(0.6, 1.2, l), { ls: '4px', align: 'center' })` in `finaleScene` (right after the colour-bar loop). It slides up 0.6 s after the end card lands (just after the bars), holds for about 3.5 s and fades out with the card. It is quieter than the date line, so it never competes with the title. This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card (take the line out of `finaleScene` when you adapt the code).
 
@@ -132,7 +132,7 @@ styles/pictogram-motion/demo/
   ref/            official reference images (NOT used by the film, do not publish)
 ```
 
-All commands run from `styles/pictogram-motion/demo/`. Node uses the repo's `node_modules/playwright-core`, and Chrome is found by `core/render/browser.mjs` (the playwright headless shell or `PLAYWRIGHT_CHROME`). **The language defaults to EN-JP.**
+All commands run from `styles/pictogram-motion/demo/`. Node uses the repo's `node_modules/playwright-core`, and Chrome is found by `core/render/browser.mjs` (the playwright headless shell or `PLAYWRIGHT_CHROME`). **The scripts default to EN-JP** (`LANGQ=ej`); set `LANGQ=zh` for the Chinese version.
 
 ```sh
 cd styles/pictogram-motion/demo
@@ -178,7 +178,7 @@ Pitfalls we hit (several are tied to this demo's props):
 - **Pattern canvases are big** (2520×1260 each, and every card uses a new seed). Cache them, but cap the cache: `G.pattern` keeps an LRU of about 10 entries. An unbounded cache eats memory fast when 12 browsers render at once.
 - **zsh loops**: in `while read line` loops the variable does not word-split. Use `${=line}` when passing lists of times to `node shot.mjs`.
 - **Horizontal poses** (swimming) need the stage moved right (`wide`: disc at 1370, text max width 700) or the arms cross the title.
-- **Official identity**: the demo imitates a real event's identity closely. That is fine for a fan piece but not for a style library; see [Replacing the event elements](#replacing-the-event-elements).
+- **Official identity**: the demo imitates a real event's identity closely. That is tolerable only in an unofficial fan piece; a film made from this code must replace it, see [Replacing the event elements](#replacing-the-event-elements).
 
 ## Engine reference
 

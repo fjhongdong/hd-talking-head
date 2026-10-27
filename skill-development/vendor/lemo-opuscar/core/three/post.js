@@ -1,5 +1,5 @@
-// 后期：场景 → (MSAA+深度) → [GTAO 环境光遮蔽] → 物理景深（CoC∝|1/f−1/z|，螺旋采样）→ 辉光 → 调色/暗角 → 色调映射
-// makePost(renderer, scene, camera, w, h, { ssaa: 2, ao: true })：ssaa 为内部超采样倍数（画布按 CSS 尺寸显示，截图时由浏览器缩小）
+// Post: scene → (MSAA + depth) → [GTAO ambient occlusion] → physical depth of field (CoC∝|1/f−1/z|, spiral sampling) → bloom → grade/vignette → tone mapping
+// makePost(renderer, scene, camera, w, h, { ssaa: 2, ao: true }): ssaa is the internal supersampling factor (the canvas is shown at CSS size; the browser scales it down when capturing)
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
@@ -17,7 +17,7 @@ const cocShader = {
     void main(){
       float d = texture2D(tDepth, vUv).x;
       float z = -perspectiveDepthToViewZ(d, near, far);
-      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // 负=近景，正=远景（像素）
+      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // negative = foreground, positive = background (pixels)
       vec3 col = texture2D(tColor, vUv).rgb;
       if (aoAmt > 0.) col *= mix(1., pow(texture2D(tAO, vUv).r, 1.6), aoAmt);
       if (aoDebug > .5) col = vec3(pow(texture2D(tAO, vUv).r, 1.6));
@@ -40,7 +40,7 @@ const gatherShader = {
         vec2 off = vec2(cos(th), sin(th)) * r / res;
         vec4 s = texture2D(tIn, vUv + off);
         float sa = abs(s.a);
-        // 比中心更远的样本，扩散半径不超过中心自己的（防止背景糊到清晰前景上）
+        // samples farther away than the centre spread no wider than the centre's own radius (stops the background blurring over a sharp foreground)
         if (s.a > c0.a) sa = min(sa, max(a0, 0.));
         float w = smoothstep(r - 1.5, r + .5, sa) / (sa*sa + 1.);
         acc += s.rgb * w; wsum += w;
@@ -86,7 +86,7 @@ const vignetteShader = {
     void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5; d.x *= 1.25; float v = 1. - amt * smoothstep(.25, .85, length(d));
       c.rgb *= v * fade; c.rgb *= mix(vec3(1.), vec3(1.06, 1., .9), warm);
       float l = dot(c.rgb, vec3(.2126, .7152, .0722)); c.rgb = mix(vec3(l), c.rgb, sat);
-      c.rgb = c.rgb * (1. + contrast) / (1. + contrast * c.rgb / (c.rgb + .6));   // 线性域里的柔和对比
+      c.rgb = c.rgb * (1. + contrast) / (1. + contrast * c.rgb / (c.rgb + .6));   // soft contrast in linear space
       gl_FragColor = c; }`
 };
 

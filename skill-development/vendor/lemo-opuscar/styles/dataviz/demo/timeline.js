@@ -15,7 +15,7 @@ export function yearK(y) {
 }
 export const lifeYears = () => Array.from({ length: LIFE1 - LIFE0 + 1 }, (_, i) => LIFE0 + i);
 
-// Key beats (see TREATMENT §7 / §8)
+// Key beats: picture events in seconds (single times or [start, end]); music/score.py and the cue check use the same times
 export const K = {
   birth: 1, write1926: [1.4, 3.3],
   axis: [4, 5.5], title: [4.2, 5.1], sub: [4.9, 5.7],

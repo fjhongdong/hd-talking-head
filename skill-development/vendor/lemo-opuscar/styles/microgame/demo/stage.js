@@ -1,13 +1,13 @@
-// 主持人舞台（"家"）：放射背景、招牌、中央大电视、Coach Tick、按钮讲台、生命板、关卡牌
+// Host's stage ("home"): sunburst backdrop, marquee sign, big central TV, Coach Tick, button podium, lives board, level card
 import { P, K, part, line, dot, circ, ell, rrect, poly, smooth, outlined } from './toon.js';
 import { drawTick, drawDot } from './chars.js';
 import { livesBoard, stageBadge } from './hud.js';
 import { clamp, seg, eo, lerp, mulberry } from '/core/lib.js';
 const TAU = Math.PI * 2;
-// 电视屏幕（16:9，放大 2.5 倍正好满屏）
+// TV screen (16:9; scaled up 2.5× it exactly fills the frame)
 export const TV = { cx: 960, cy: 500, w: 768, h: 432 };
 export const TVZ = 1920 / TV.w;
-// 推进电视的摄像机：u = 0（舞台）→ 1（屏幕满屏）
+// Camera pushing into the TV: u = 0 (stage) → 1 (screen fills the frame)
 export function tvCam(g, u) {
   const z = lerp(1, TVZ, u), px = TV.cx, py = lerp(TV.cy, 540, u);
   g.translate(px, py); g.scale(z, z); g.translate(-TV.cx, -TV.cy);
@@ -26,7 +26,7 @@ function marquee(g, t, o) {
   const x = 960, y = 140, w = 1060, h = 150, lit = o.title ?? 1;
   part(rrect(x - w / 2, y - h / 2, w, h, 34), P.mag, P.magD, { sh: 10, lw: 9 });
   part(rrect(x - w / 2 + 22, y - h / 2 + 22, w - 44, h - 44, 20), P.night, null, { lw: 6 });
-  // 灯泡（追逐闪烁）
+  // light bulbs (chasing blink)
   const nb = 34;
   for (let i = 0; i < nb; i++) {
     const u = i / nb, per = 2 * (w + h - 60);
@@ -52,14 +52,14 @@ function marquee(g, t, o) {
 }
 function tvSet(g, t, o) {
   const { cx, cy, w, h } = TV;
-  // 支架
+  // stand
   part(poly([[cx - 120, cy + h / 2 + 30], [cx + 120, cy + h / 2 + 30], [cx + 170, 880], [cx - 170, 880]]), P.vio, P.vioD, { sh: 10, lw: 8 });
-  // 机身
+  // cabinet
   part(rrect(cx - w / 2 - 56, cy - h / 2 - 50, w + 112, h + 120, 52), P.gold, P.goldD, { sh: 14, lw: 9, hi: gg => { gg.strokeStyle = 'rgba(255,255,255,.55)'; gg.lineWidth = 10; gg.lineCap = 'round'; gg.beginPath(); gg.moveTo(cx - w / 2 - 20, cy - h / 2 - 22); gg.lineTo(cx + w / 2 - 60, cy - h / 2 - 22); gg.stroke(); } });
-  // 下方喇叭 + 旋钮
+  // speaker + knobs below
   for (let i = 0; i < 9; i++) line([[cx - 200 + i * 22, cy + h / 2 + 34], [cx - 200 + i * 22, cy + h / 2 + 52]], 5, P.goldD);
   part(circ(cx + 220, cy + h / 2 + 42, 16), P.red, P.redD, { sh: 3, lw: 5 }); part(circ(cx + 280, cy + h / 2 + 42, 16), P.cyan, P.cyanD, { sh: 3, lw: 5 });
-  // 屏幕内框
+  // inner screen bezel
   part(rrect(cx - w / 2 - 14, cy - h / 2 - 14, w + 28, h + 28, 26), P.ink, null, { lw: 4 });
 }
 function tvScreen(g, o) {
@@ -67,7 +67,7 @@ function tvScreen(g, o) {
   g.save(); g.beginPath(); g.roundRect(cx - w / 2, cy - h / 2, w, h, 16); g.clip();
   if (o.screen) g.drawImage(o.screen, cx - w / 2, cy - h / 2, w, h);
   else { g.fillStyle = '#10082a'; g.fillRect(cx - w / 2, cy - h / 2, w, h); }
-  // 玻璃反光
+  // glass reflection
   g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.moveTo(cx - w / 2, cy - h / 2); g.lineTo(cx - w / 2 + 300, cy - h / 2); g.lineTo(cx - w / 2 + 120, cy + h / 2); g.lineTo(cx - w / 2, cy + h / 2); g.fill();
   g.restore();
 }
@@ -76,7 +76,7 @@ function podium(g, t, o) {
   part(poly([[x - 130, y], [x + 130, y], [x + 100, y - 250], [x - 100, y - 250]]), P.vio, P.vioD, { sh: 10, lw: 8 });
   part(rrect(x - 124, y - 280, 248, 44, 14), P.gold, P.goldD, { sh: 6, lw: 8 });
   outlined(g, '5', x, y - 110, { font: '120px Titan', base: 'middle', lw: 12, fill: P.gold });
-  // 大红按钮（press = 0..1 按下）
+  // big red button (press = 0..1 pressed)
   const pr = o.press || 0;
   part(ell(x, y - 286, 96, 26), '#8a8aa0', '#5a5a70', { sh: 4, lw: 8 });
   part(g2 => { g2.ellipse(x, y - 300 + pr * 16, 76, 22, 0, 0, Math.PI); g2.lineTo(x - 76, y - 336 + pr * 30); g2.ellipse(x, y - 336 + pr * 30, 76, 22, 0, Math.PI, 0); g2.closePath(); }, P.red, P.redD, { sh: 6, lw: 8 });
@@ -93,7 +93,7 @@ function floor(g, o) {
   line([[-50, 862], [1970, 862]], 7);
 }
 function spots(g, t, o) {
-  if (o.dark) {   // 只剩一束顶光
+  if (o.dark) {   // only a single top light left
     g.save(); g.globalCompositeOperation = 'lighter';
     const gr = g.createLinearGradient(0, 0, 0, 1000); gr.addColorStop(0, 'rgba(255,240,200,.28)'); gr.addColorStop(1, 'rgba(255,240,200,.05)');
     g.fillStyle = gr; g.beginPath(); g.moveTo(o.spotX - 60, -20); g.lineTo(o.spotX + 60, -20); g.lineTo(o.spotX + 260, 1010); g.lineTo(o.spotX - 260, 1010); g.fill();

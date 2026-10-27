@@ -24,7 +24,7 @@ if (TEST) {
 const W = 1920, H = 1080;
 let DURS = {}; try { const r = await fetch('voices/dur.json'); if (r.ok) DURS = await r.json(); } catch (e) { }
 const E_ = (t, a, b) => ss(seg(t, a, b));
-const st = t => Math.floor(t * 12) / 12;         // 角色 12 fps 步进
+const st = t => Math.floor(t * 12) / 12;         // characters step at 12 fps
 const cam = (x, y, z) => [z, 0, 0, z, 960 - x * z, 540 - y * z];
 const lerpA = (a, b, u) => a.map((v, i) => lerp(v, b[i], u));
 function mix(A, B, u) { const o = { ...A }; for (const k of Object.keys(B)) { const a = A[k], b = B[k]; if (typeof a === 'number' && typeof b === 'number') o[k] = lerp(a, b, u); else o[k] = u < .5 ? (a ?? b) : b; } return o; }
@@ -33,21 +33,21 @@ const FLOWER = tuanhua(1.4), HOLES = tuanhuaHoles(1);
 const SPOT = (() => { const [c, q] = canvas(256, 256), gr = q.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, '#fff'); gr.addColorStop(.55, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); q.fillStyle = gr; q.fillRect(0, 0, 256, 256); return { c, x0: -1, y0: -1, w: 2, h: 2 }; })();
 const [TCc, TC] = canvas(W, H), [OCc, OC] = canvas(W, H);
 
-// ===================== 字幕 =====================
+// ===================== subtitles =====================
 const SUBS = VO.map((v, i) => {
   const d = DURS[v.id] || 3; const next = VO[i + 1] ? VO[i + 1].t - .15 : DUR;
   return { t0: v.t - .05, t1: Math.min(next, v.t + Math.max(1.8, d + .7)), text: v.text };
 });
 window.SUBS = SUBS;
 
-// ===================== S1 剪刀特写 =====================
+// ===================== S1 scissors close-up =====================
 const MAC = {};
 function buildMacro() {
   if (MAC.sheet) return;
   MAC.sheet = piece([0, 0, 1700, 1500], q => fill(q, qq => trace(qq, Pl([[0, 0], [1700, 0], [1700, 1500], [0, 1500]], true, .6, 3)), PAL.red), { ss: 1, seed: 31 });
   MAC.path = curve([[760, 1300], [700, 1000], [820, 760], [1060, 640], [1300, 700], [1500, 600], [1640, 420], [2140, 380]], false, 4);
 }
-function macroProg(t) {   // 刀路进度：每一剪推进一截
+function macroProg(t) {   // cutting-path progress: each snip advances one segment
   let p = .02 * seg(t, 0, .25);
   for (const s of T.snips) p += .28 * eo(seg(t, s - .12, s + .02));
   return Math.min(1, p + .14 * seg(t, 1.85, 2.2));
@@ -69,7 +69,7 @@ function shotMacro(g, t, piecesOnly = false) {
   const drawPart = (poly, M, sh) => { g.save(); g.setTransform(...M); g.beginPath(); trace(g, poly); g.clip(); paperShadow(g, M[0], sh); g.drawImage(MAC.sheet.c, 440, -300, 1700, 1500); g.restore(); };
   if (t < T.lift) {
     g.save(); g.setTransform(...C); paperShadow(g, z, 1.2); g.drawImage(MAC.sheet.c, 440, -300, 1700, 1500); noShadow(g);
-    // 刀口：已剪开的缝
+    // cut: the slit already opened
     g.strokeStyle = '#efe4c8'; g.lineWidth = 3.2; g.lineJoin = 'round'; g.beginPath(); trace(g, done, false); g.stroke();
     g.strokeStyle = 'rgba(90,10,14,.5)'; g.lineWidth = 1; g.translate(1.5, 2); g.beginPath(); trace(g, done, false); g.stroke();
     g.restore();
@@ -78,14 +78,14 @@ function shotMacro(g, t, piecesOnly = false) {
     drawPart(A, mul(C, mul(Tm(900 * ei(fly) + 1300, -700 * ei(fly) + 300), mul(R(.5 * fly), Tm(-1300, -300)))), 1.2 + 6 * fly);
   }
   if (piecesOnly) return;
-  // 碎纸
+  // paper scraps
   T.snips.forEach((s, k) => {
     if (t < s) return; const v = t - s, p0 = pathPt(MAC.path, macroProg(s)).p;
     const x = p0[0] + 60 * v + Math.sin(v * 7 + k) * 30, y = p0[1] + 30 + 380 * v * v, r = v * 3 + k;
     g.save(); g.setTransform(...mul(C, mul(Tm(x, y), mul(R(r), S(1 + v * .8))))); paperShadow(g, z, 2 + v * 4);
     g.beginPath(); g.moveTo(-26, -8); g.lineTo(22, -18); g.lineTo(10, 20); g.closePath(); g.fillStyle = PAL.red; g.fill(); g.restore();
   });
-  // 剪刀：每一剪前 0.12 s 合刃
+  // scissors: blades close 0.12 s before each snip
   if (t < T.lift + .3) {
     let open = .55; for (const s of T.snips) { if (t > s - .12 && t < s) open = lerp(.55, .03, (t - s + .12) / .12); else if (t >= s && t < s + .3) open = lerp(.03, .55, (t - s) / .3); }
     const away = E_(t, T.lift - .2, T.lift + .3);
@@ -94,7 +94,7 @@ function shotMacro(g, t, piecesOnly = false) {
   if (t < .3) { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgba(0,0,0,${1 - t / .3})`; g.fillRect(0, 0, W, H); g.restore(); }
 }
 
-// ===================== S2 片名 =====================
+// ===================== S2 title =====================
 const TITLE = {};
 function buildTitle() {
   if (TITLE.l1) return;
@@ -110,7 +110,7 @@ function drawTitleCard(g, t) {
   buildTitle();
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); fillPaper(g, 'rice', 0, 0, W, H); g.restore();
   const t0 = T.title, pop = (i, d = .06) => { const u = st(t - t0 - i * d); return u < 0 ? 0 : u < .09 ? 1.18 : 1; };
-  // 上下锯齿条
+  // top and bottom sawtooth strips
   const sl = E_(t, t0, t0 + .35);
   put(g, TITLE.top, [1, 0, 0, 1, 310 - (1 - sl) * 1500, 150], { shadow: 1 });
   put(g, TITLE.top, [1, 0, 0, -1, 310 + (1 - sl) * 1500, 930], { shadow: 1 });
@@ -118,7 +118,7 @@ function drawTitleCard(g, t) {
   TITLE.l1.forEach((p, i) => { const s = pop(i); if (s) put(g, p, [s, 0, 0, s, x + (1 - s) * p.w / 2, 250 + (1 - s) * p.h / 2], { shadow: 1.4 }); x += p.w - 20 + 6; });
   x = 960 - TITLE.w2 / 2;
   TITLE.l2.forEach((p, i) => { const s = pop(i + 4, .04); if (s) put(g, p, [s, 0, 0, s, x, 590], { shadow: 1.1 }); x += p.w - 20 + 2; });
-  // 两侧小团花 + 印章
+  // small tuanhua on both sides + seal
   const fs = pop(4, 0) ? 1 : 0;
   if (t > t0 + .5) { const r = (t - t0) * .08; for (const [fx, d] of [[260, 1], [1660, -1]]) put(g, TITLE.flower, mul([1, 0, 0, 1, fx, 420], mul(R(r * d), S(.3))), { shadow: 1 }); }
   if (t > t0 + .95) { const u = st(t - t0 - .95), s = u < .09 ? 1.5 : 1; put(g, TITLE.seal, [s, 0, 0, s, 1330 - 55 * (s - 1), 700 - 55 * (s - 1)], { shadow: 1 }); }
@@ -126,7 +126,7 @@ function drawTitleCard(g, t) {
 }
 function shotTitle(g, t) {
   if (t < T.titleFold) { drawTitleCard(g, t); if (t < T.lift + .56) shotMacro(g, t, true); return; }
-  // 翻页：右半边向左折过来，露出下面的夜村
+  // page turn: the right half folds over to the left, revealing the night village underneath
   shotVillage(g, Math.max(T.village, t));
   drawTitleCard(TC, t);
   const u = seg(t, T.titleFold, T.titleFold + .38), s = Math.cos(Math.PI * eio(u)), slide = ei(seg(t, T.titleFold + .3, T.village - .02));
@@ -139,7 +139,7 @@ function shotTitle(g, t) {
   g.restore();
 }
 
-// ===================== 年兽姿势 =====================
+// ===================== Nian beast poses =====================
 function nianLying(extra = {}) { return { ...NPOSE.stand, head: -.5, eye: 'sniff', tail: .3, ...extra }; }
 function riseNian(ctx, C, t) {
   const ts = st(t), up = eo(seg(ts, T.rise, T.rise + 1.3)), headUp = E_(ts, T.rise + .5, T.rise + 1.5);
@@ -152,7 +152,7 @@ function riseNian(ctx, C, t) {
   return drawNian(ctx, mul(C, mul(Tm(x, y), mul(S(1.15), Tm(0, -NJ.ground)))), { ...pose, flip: true }, { shadow: 1.6 });
 }
 
-// ===================== S3 夜村 =====================
+// ===================== S3 night village =====================
 const vCam = track([[T.village, [1000, 560, 1.0]], [10.2, [2150, 560, 1.0]], [12.0, [HERO.x - 110 * HERO.s, GROUND + 25 - 150 * HERO.s, 2.2]]]);
 function girlCutting(ctx, M, t) {
   const s = st(t), ph = Math.sin(s * 9);
@@ -166,7 +166,7 @@ function shotVillage(g, t) {
     girlSil: (ctx, HM) => girlCutting(ctx, mul(HM, mul(Tm(-150, 110), S(.78))), t)
   });
 }
-// ===================== S4 年兽起身 =====================
+// ===================== S4 Nian beast rises =====================
 const rCam = track([[T.rise, [1450, 470, .56]], [14.2, [1500, 500, .6]], [17.0, [1900, 560, .7]]]);
 function shake(t, times, a = 5) { let d = 0; for (const s of times) if (t > s && t < s + .35) d += a * Math.exp(-(t - s) * 12) * Math.sin((t - s) * 70); return d; }
 function shotRise(g, t) {
@@ -178,17 +178,17 @@ function shotRise(g, t) {
     hero: 'girl', heroI, girlSil: (ctx, HM) => drawGirl(ctx, mul(HM, mul(Tm(-150, 110), S(.78))), { expr: 'scared', shF: -1.6, elF: -1.5, shB: -1.2, elB: -1.6, head: -.1 })
   });
 }
-// ===================== S5 窗里的眼 =====================
+// ===================== S5 eye in the window =====================
 const ROOM = {};
 function buildRoom() {
   if (ROOM.frame) return;
-  // 方窗框（靛蓝纸），3×3 窗格
+  // square window frame (indigo paper), 3×3 lattice
   ROOM.frame = piece([-460, -380, 460, 380], q => {
     fill(q, qq => qq.rect(-460, -380, 920, 760), '#2b3668');
     q.save(); q.globalCompositeOperation = 'destination-out';
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) q.fillRect(-420 + i * 280 + 8, -340 + j * 227 + 8, 264, 211);
     q.restore();
-    // 窗格上的回纹角花（剪）
+    // fret-pattern (回纹) corner ornaments on the lattice (cut)
     for (let i = 0; i <= 3; i++) for (let j = 0; j <= 3; j++) { const x = -420 + i * 280, y = -340 + j * 227; q.save(); q.fillStyle = '#2b3668'; q.beginPath(); q.arc(x + 4, y + 4, 18, 0, 7); q.fill(); q.restore(); plum(q, x + 4, y + 4, 10); }
   }, { ss: 1.5, seed: 131, col: '#2b3668' });
   ROOM.sill = piece([-700, -30, 700, 60], q => fill(q, qq => trace(qq, Pl([[-700, -20], [700, -20], [700, 50], [-700, 50]], true, .6, 5)), '#303c74'), { ss: 1, seed: 133, col: '#303c74' });
@@ -209,9 +209,9 @@ function shotEye(g, t) {
   buildRoom();
   beginLight('rgb(170,176,220)');
   const WX = [500, 140, 920, 760];
-  // 墙
+  // wall
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); fillPaper(g, 'indigo', 0, 0, W, H, [1, 0, 0, 1, 0, 0], 'rgba(6,8,22,.45)');
-  // 窗外：夜空 + 远处黑下来的村子 + 年兽的眼
+  // outside the window: night sky + the distant village going dark + the Nian beast's eye
   g.beginPath(); g.rect(...WX); g.clip();
   fillPaper(g, 'ink', 0, 0, W, H);
   const kk = kit().night; put(g, kk.mid, [.5, 0, 0, .5, 900, 900], { shadow: .6 });
@@ -224,13 +224,13 @@ function shotEye(g, t) {
   g.restore();
   put(g, ROOM.frame, [1, 0, 0, 1, 960, 520], { shadow: 1.4 });
   put(g, ROOM.sill, [1, 0, 0, 1, 960, 912], { shadow: 1.2 });
-  // 前景：女孩缩在窗台下，只露出头顶和眼睛
+  // foreground: the girl crouches under the windowsill, only the top of her head and her eyes showing
   const peek = E_(t, 17.25, 17.55) * (1 - .6 * E_(t, 18.35, 18.6));
   drawGirl(g, [2.25, 0, 0, 2.25, 330, 1980 - 250 * peek], { expr: 'scared', head: -.06, shF: -2.3, elF: -1.1, shB: -2.1, elB: -1.2 });
   pool(960, 480, 800, 'rgba(170,180,240,1)', .3);
   applyLight(g);
 }
-// ===================== S6 下决心 =====================
+// ===================== S6 making up her mind =====================
 function shotDecide(g, t) {
   buildRoom();
   const lit = E_(t, T.light, T.light + .25);
@@ -250,7 +250,7 @@ function shotDecide(g, t) {
     put(E, fl, mul(cm, S(ig)), { shadow: 0 }); put(g, fl, mul(cm, S(ig)), { shadow: 0 });
     const c = ap(cm, [0, -20]); pool(c[0], c[1], 1300, 'rgba(255,190,115,1)', .95 * lit); lightRect(q => { q.setTransform(...cm); q.ellipse(0, -24, 16, 46, 0, 0, 7); });
   }
-  pool(300, 200, 900, 'rgba(150,165,235,1)', .35);   // 窗外夜光
+  pool(300, 200, 900, 'rgba(150,165,235,1)', .35);   // night light from outside the window
   const e = t < T.red - .35 ? 'scared' : t < T.noise + .15 ? 'surprise' : 'determined';
   const nod = t > T.nod && t < T.nod + .35 ? Math.sin(seg(t, T.nod, T.nod + .35) * Math.PI) * .2 : 0;
   const look = t > T.red - .35 ? .08 : -.08;
@@ -259,13 +259,13 @@ function shotDecide(g, t) {
   applyLight(g);
   bloom(g, .6);
 }
-// ===================== S8b 贴窗 =====================
+// ===================== S8b pasting on the window =====================
 function shotPaste(g, t) {
   buildRoom();
   beginLight('rgb(150,132,160)');
   const C = cam(980, 540, 1);
   roomBg(g, C, 1);
-  // 圆窗（从里面看，窗纸是暗的）
+  // round window (seen from inside, the window paper is dark)
   g.save(); g.setTransform(...C); g.fillStyle = '#141a38'; g.beginPath(); g.arc(1320, 470, 300, 0, 7); g.fill(); g.restore();
   const ring = kit().night.hero;
   g.save(); g.setTransform(...C); paperShadow(g, 1, 1.2); g.strokeStyle = '#34437f'; g.lineWidth = 34; g.beginPath(); g.arc(1320, 470, 316, 0, 7); g.stroke(); g.restore();
@@ -275,7 +275,7 @@ function shotPaste(g, t) {
   const fp = lerpA([r.joints.hand[0] + 60, r.joints.hand[1] - 90], [1320, 470], u), fs = lerp(.55, .74, u);
   const pat = t > T.paste && t < T.paste + .15 ? 1.03 : 1;
   put(g, FLOWER, [fs * pat, 0, 0, fs * pat, fp[0], fp[1]], { shadow: 1 + 3 * (1 - u) });
-  // 桌上蜡烛在身后
+  // candle on the table behind her
   put(g, ROOM.table, mul(C, Tm(300, 1000)), { shadow: 1.2 });
   put(g, ROOM.candle, mul(C, mul(Tm(360, 975), S(1.3))), { shadow: 1.2 });
   const cm = mul(C, mul(Tm(360, 975 - 143 * 1.3), S(1.3))), fl = ROOM.flame[Math.floor(t * 12) % 3];
@@ -283,9 +283,9 @@ function shotPaste(g, t) {
   pool(360, 780, 1500, 'rgba(255,186,110,1)', .85); lightRect(q => { q.setTransform(...cm); q.ellipse(0, -20, 14, 40, 0, 0, 7); });
   applyLight(g); bloom(g, .5);
 }
-// ===================== S9 满村红 =====================
+// ===================== S9 the whole village turns red =====================
 const LANTERN = kit().lantern;
-function flightPos(h, t, wc, C) {   // 灯笼纹样从窗花飞向第 i 户
+function flightPos(h, t, wc, C) {   // lantern pattern flies from the window flower to household i
   const t1 = h.relit, t0 = t1 - .62, u = seg(t, t0, t1), hp = kit().night.houses[h.i];
   const M = mul(C, mul(Tm(h.x, GROUND), S(h.s))), dst = ap(M, [hp.win.x, hp.win.y]);
   const e = eio(u), x = lerp(wc[0], dst[0], e), y = lerp(wc[1], dst[1], e) - Math.sin(u * Math.PI) * 260 * C[0] * (1 + (h.i % 3) * .3);
@@ -302,7 +302,7 @@ function fireworks(g, C, t, list, sc = 1) {
     E.save(); E.globalAlpha = a * .8; put(E, FLOWER, M, { shadow: 0 }); E.restore();
   }
 }
-function crackers(g, C, t, x0, y0, t0, n = 16, sc = 1) {   // 纸屑爆竹：一串红纸屑炸开 + 闪光
+function crackers(g, C, t, x0, y0, t0, n = 16, sc = 1) {   // paper-scrap firecrackers: a string of red paper scraps bursting + flash
   for (let k = 0; k < n; k++) {
     const tb = t0 + k * .09 + hash(k) * .05, u = t - tb; if (u < 0 || u > .8) continue;
     const bx = x0 + (hash(k * 2.3) - .5) * 260, by = y0 - k * 18;
@@ -331,7 +331,7 @@ function shotNianClose(g, t) {
   const C = cam(1300 - 30 * seg(t, 34, 35.3), 300, 1.08 + .05 * seg(t, 34, 35.3));
   const fl = t > T.flinch;
   const pose = fl ? { ...NPOSE.flinch, lean: .06, head: .1 + .025 * Math.sin(st(t) * 20) } : { ...NPOSE.stalk, head: -.12, eye: 'normal' };
-  if (fl && st(t - T.flinch) < .17) pose.head = .24;   // 被照到的一缩
+  if (fl && st(t - T.flinch) < .17) pose.head = .24;   // flinch when the light hits
   let NM;
   drawVillage(g, C, t, {
     hero: 'flower', heroI: 1.1, nianDark: 'rgb(150,126,172)', bloom: .5,
@@ -344,7 +344,7 @@ function shotNianClose(g, t) {
       const PM = [k, .05 * k, -.04 * k, k * .97, fc[0], fc[1]];
       addMasked(gg, HOLES, PM, NLc, 'rgb(255,200,140)', .85, .5);
       addMasked(gg, HOLES, PM, NLc, 'rgb(255,110,50)', .4, 6);
-      // 光从右边窗口来：一道暖色斜光
+      // light comes from the window on the right: one warm slanting beam
       gg.save(); gg.setTransform(1, 0, 0, 1, 0, 0); gg.globalCompositeOperation = 'lighter'; const gr = gg.createLinearGradient(1920, 400, 900, 300); gr.addColorStop(0, 'rgba(255,170,90,.22)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); gg.fillStyle = gr; gg.fillRect(0, 0, 1920, 1080); gg.restore();
     },
     front: (gg) => { crackers(gg, C, t, 1750, 560, 34.05, 12, 1.4); crackers(gg, C, t, 1450, 640, 34.55, 10, 1.2); }
@@ -367,7 +367,7 @@ function shotFlee(g, t) {
     }
   });
 }
-// ===================== S10 天亮 =====================
+// ===================== S10 daybreak =====================
 const [NCc, NC] = canvas(W, H);
 function sun(g, C, t) {
   const u = eo(seg(t, T.sunUp - .4, T.asleep)), c = ap(C, [1500, 560 - 330 * u]), r = 120 * C[0] / .62 * .6;
@@ -384,7 +384,7 @@ function shotDawn(g, t) {
   dayScene(g, t, C);
   const u = eio(seg(t, T.dawn + .1, T.dawn + 1.3));
   if (u < 1) {
-    // 夜纸从右上角揭起：折线 x - y = m，m 从 1940 扫到 -1100
+    // the night paper peels away from the top-right corner: fold line x - y = m, m sweeps from 1940 to -1100
     drawVillage(NC, C, T.dawn, { hero: 'flower', heroI: 1, snow: true });
     const m = lerp(1940, -1100, u);
     g.save(); g.beginPath(); trace(g, [[-3000, -3000 - m], [3000, 3000 - m], [-3000, 3000]]); g.clip(); g.drawImage(NCc, 0, 0); g.restore();
@@ -408,7 +408,7 @@ function shotAsleep(g, t) {
   const fl = { p: FLOWER, M: [win.r / 400, 0, 0, win.r / 400, win.x, win.y] };
   glowWindow(g, C, win, 1, fl, { tcol: '#c92a1c' }); glowWindow(E, C, win, .28, fl, { tcol: '#c92a1c' });
   g.save(); g.setTransform(...C); paperShadow(g, 1, 1.2); g.strokeStyle = '#b8191b'; g.lineWidth = 32; g.beginPath(); g.arc(win.x, win.y, win.r + 16, 0, 7); g.stroke(); g.restore();
-  // 桌 + 女孩趴着睡
+  // table + girl asleep with her head down
   const br = Math.sin(st(t) * 2.6) * .02;
   drawGirl(g, mul(C, mul(Tm(640, 1330), S(2.35))), { expr: 'sleep', lean: .22 + br * .5, head: .42 + br, shF: -1.3, elF: -.4, shB: -1.2, elB: -.5, handF: 'fist', handB: 'open' });
   const tb = ROOM.tableDay || (ROOM.tableDay = piece([-800, -30, 800, 300], q => { fill(q, qq => trace(qq, Pl([[-800, -24], [800, -24], [800, 300], [-800, 300]], true, .6, 9)), '#b8191b'); sawRow(q, [[-790, 8], [790, 8]], 12, 14, 1, .7); }, { ss: 1, seed: 151 }));
@@ -417,7 +417,7 @@ function shotAsleep(g, t) {
   pool(1290, 420, 1300, 'rgba(255,236,200,1)', .3);
   applyLight(g); bloom(g, .3);
 }
-// ===================== S11 尺度揭示 =====================
+// ===================== S11 scale reveal =====================
 const [SCc, SC] = canvas(W, H);
 const REAL = {};
 function buildReal() {
@@ -451,24 +451,24 @@ function realScissors(g, x, y, s, a) {
 function shotReveal(g, t) {
   buildReal();
   const u = eio(seg(t, T.reveal + .1, 45.6)), k = lerp(1.55, .42, u);
-  // 1) 渲染白天的村子（窗花内容）
+  // 1) render the daytime village (contents of the window flower)
   dayScene(SC, t, cam(1800, 700, .8));
-  // 2) 墙（真实：暖白灰泥 + 阳光）
+  // 2) wall (realistic: warm white plaster + sunlight)
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#e9dfcc'; g.fillRect(0, 0, W, H);
   const cx = 960, cy = lerp(540, 470, u);
-  // 3) 木格窗：窗户纸发光（背光） + 木格
+  // 3) wooden lattice window: window paper glowing (backlit) + wooden lattice
   const winW = 1500 * k * 1.25, winH = 1180 * k * 1.25;
   g.save(); g.translate(cx, cy);
   const gl = g.createRadialGradient(0, -winH * .2, 0, 0, 0, winW * .8); gl.addColorStop(0, '#fffaf0'); gl.addColorStop(1, '#f6dcaa');
   g.fillStyle = gl; g.fillRect(-winW / 2, -winH / 2, winW, winH);
-  // 窗花 = 村子画面裁成圆，背光（提亮、偏暖）
+  // window flower = the village image cropped to a circle, backlit (brightened, warmer)
   const rr = 392 * k * 1.25;
   g.save(); g.beginPath(); g.arc(0, 0, rr, 0, 7); g.clip(); g.filter = `brightness(${lerp(1, 1.12, u)}) saturate(${lerp(1, 1.18, u)})`;
   const sk = k * 1.25 * 392 / 540; g.drawImage(SCc, -960 * sk, -540 * sk, W * sk, H * sk); g.filter = 'none';
   g.globalCompositeOperation = 'soft-light'; g.fillStyle = `rgba(255,190,110,${.35 * u})`; g.fillRect(-rr, -rr, rr * 2, rr * 2);
   g.restore();
   put(g, REAL.ring, [k * 1.25, 0, 0, k * 1.25, cx, cy], { shadow: 1 }); g.setTransform(1, 0, 0, 1, cx, cy);
-  // 木格
+  // wooden lattice
   const woodPat = g.createPattern(REAL.wood, 'repeat');
   g.fillStyle = woodPat; g.shadowColor = 'rgba(40,20,5,.5)'; g.shadowBlur = 16 * k; g.shadowOffsetX = 8 * k; g.shadowOffsetY = 10 * k;
   const bw = 34 * k * 1.25;
@@ -476,7 +476,7 @@ function shotReveal(g, t) {
   for (const fx of [-1, 1]) { g.fillRect(fx * rr * 1.06 - (fx > 0 ? 0 : bw * .6), -winH / 2, bw * .6, winH); }
   for (const fy of [-1, 1]) { g.fillRect(-winW / 2, fy * rr * 1.04 - (fy > 0 ? 0 : bw * .6), winW, bw * .6); }
   g.restore();
-  // 窗台 + 真剪刀 + 红纸屑
+  // windowsill + real scissors + red paper scraps
   const sy = cy + winH / 2 + bw;
   g.fillStyle = g.createPattern(REAL.wood, 'repeat'); g.shadowColor = 'rgba(40,20,5,.4)'; g.shadowBlur = 20; g.shadowOffsetY = 10;
   g.fillRect(cx - winW / 2 - bw * 3, sy, winW + bw * 6, 60 * k * 1.25 + 30); g.shadowColor = 'transparent';
@@ -484,10 +484,10 @@ function shotReveal(g, t) {
     realScissors(g, cx + winW * .18, sy + 14, k * 1.3, -.08);
     for (let i = 0; i < 14; i++) { const x = cx - winW * .3 + hash(i) * winW * .45, y = sy + 6 + hash(i * 2) * 26 * k; g.save(); g.translate(x, y); g.rotate(hash(i * 3) * 6); g.fillStyle = PAL.red; g.shadowColor = 'rgba(40,10,5,.4)'; g.shadowBlur = 4; g.shadowOffsetY = 3; g.beginPath(); g.moveTo(-12 * k, -3); g.lineTo(12 * k, -6 * k); g.lineTo(3, 9 * k); g.closePath(); g.fill(); g.restore(); }
   }
-  // 阳光斜光束 + 暖色
+  // slanting sunbeam + warm colour
   g.globalCompositeOperation = 'soft-light'; const sl = g.createLinearGradient(0, 0, W, H); sl.addColorStop(0, 'rgba(255,220,160,.5)'); sl.addColorStop(1, 'rgba(120,80,40,.4)'); g.fillStyle = sl; g.fillRect(0, 0, W, H);
   g.restore();
-  // 4) 片尾：对联 + 横批 + 落款
+  // 4) end card: couplets + hengpi + signature
   const e = E_(t, T.end - .4, T.end + .1), ban = st(t - T.end);
   if (t > T.end - .4) {
     const cy2 = cy;
@@ -504,7 +504,7 @@ function shotReveal(g, t) {
   }
 }
 
-// ===================== 调度 =====================
+// ===================== dispatch =====================
 const SHOT = { macro: shotMacro, title: shotTitle, village: shotVillage, rise: shotRise, eye: shotEye, decide: shotDecide, fold: (g, t) => drawFold(g, t), paste: shotPaste, glow: shotGlow, nianClose: shotNianClose, flee: shotFlee, dawn: shotDawn, asleep: shotAsleep, reveal: shotReveal };
 function render(t) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.filter = 'none'; noShadow(g);
@@ -512,7 +512,7 @@ function render(t) {
   (SHOT[name])(g, t);
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.filter = 'none'; noShadow(g);
   if (qs.get('nosub') !== '1') drawSubs(g, t, SUBS);
-  if (qs.get('poster') === '1') {   // 海报：顶部红纸横批片名
+  if (qs.get('poster') === '1') {   // poster: title on a red-paper hengpi across the top
     const tp = textPiece('NIAN COMES TO TOWN', 92, 800, '#fff1d6', 'Fraunces', 7, 4), w = tp.w + 140, x0 = 960 - w / 2;
     g.save(); g.shadowColor = 'rgba(20,4,8,.5)'; g.shadowBlur = 14; g.shadowOffsetX = 5; g.shadowOffsetY = 8; g.fillStyle = PAL.sub;
     g.beginPath(); trace(g, Pl([[x0, 40], [x0 + w, 40], [x0 + w - 36, 110], [x0 + w, 180], [x0, 180], [x0 + 36, 110]], true, .8, 3)); g.fill(); g.restore();
@@ -520,7 +520,7 @@ function render(t) {
     g.save(); g.font = 'italic 500 30px "Fraunces"'; g.fillStyle = '#fff1d6'; g.textAlign = 'center'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8; g.fillText('Red Paper-cut  ·  LemoLab × Claude Opus 5.5', 960, 222); g.restore();
   }
 }
-// 事件（拟音 / 旁白）
+// events (foley / narration)
 const EV = [];
 T.snips.forEach(s => EV.push({ t: s, type: 'snip', big: 1 }));
 EV.push({ t: T.lift, type: 'paperwhoosh' });

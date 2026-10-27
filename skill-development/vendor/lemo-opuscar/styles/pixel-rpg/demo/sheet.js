@@ -1,6 +1,6 @@
-// sheet.js — 角色设定表 / 精灵图（480×270 原生，×4 = 1920×1080）
-// ?sheet=1                整张设定表
-// ?sheet=1&zoom=a:b,...    开发用放大（arlo:idle / pa:neutral / pw:smile / pw8:x）
+// sheet.js — character model sheet / sprite sheet (480×270 native, ×4 = 1920×1080)
+// ?sheet=1                full model sheet
+// ?sheet=1&zoom=a:b,...    zoom-in for development (arlo:idle / pa:neutral / pw:smile / pw8:x)
 import { FB, C, T, LUT, RGB, NES, GB4, FADED_RAMP, bayer, hash } from './px.js';
 import { drawChar, scarfTail } from './sprites.js';
 import { text, textW } from './font.js';
@@ -32,7 +32,7 @@ function zoomView() {
 const put = (spr, x, y, flip = false) => fb.blit(spr, flip ? x - (spr.w - spr.ox) : x - spr.ox, y - spr.oy, flip);
 const label = (s, x, y, col = C.steel) => text(fb, s, Math.round(x - textW(s) / 2), y, col);
 
-// 小场景（色深演示用）：黄昏原野 + 两人 + 水晶
+// Small scene (for the colour-depth demo): dusk field + the two + crystal
 function miniScene(f, x0, y0, w, h, t) {
   f.clip = [x0, y0, x0 + w, y0 + h];
   for (let y = 0; y < h; y++) {
@@ -52,7 +52,7 @@ function miniScene(f, x0, y0, w, h, t) {
   f.clip = [0, 0, f.w, f.h];
 }
 
-// 4 色原生场景：半分辨率画完再 ×2 贴进设定表
+// 4-colour native scene: drawn at half resolution, then pasted into the sheet at ×2
 function gbScene(x0, y0, w, h) {
   const hw = w >> 1, hh = h >> 1, f = new FB(hw, hh), [K, D, Lg, Wt] = GBI;
   f.clear(Wt);
@@ -69,9 +69,9 @@ function gbScene(x0, y0, w, h) {
 window.render = () => {
   if (Z) return zoomView();
   fb.clear(C.night);
-  // 底纹：细网格
+  // Background texture: fine grid
   for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) if ((x % 8 === 0 || y % 8 === 0) && bayer(x, y) < .5) fb.px(x, y, C.ink);
-  // 标题
+  // Title
   fb.rect(0, 0, SW, 13, C.ink);
   text(fb, 'THE LAST SAVE POINT', 6, 3, C.white, C.navy);
   text(fb, 'model sheet v1 · sprites 8-12 fps · 320x180 native', 122, 3, C.steel);
@@ -103,12 +103,12 @@ window.render = () => {
   const labW = { front: 'front', idle: 'side', back: 'back', walk0: '1', walk1: '2', walk2: '3', walk3: '4', cast: 'ward', kneel: 'falls' };
   for (const [p, x] of Wp) label(labW[p], x, byW + 3, p.startsWith('walk') ? C.slate : C.steel);
 
-  // —— 存档水晶 8 帧 ——
+  // —— Save crystal, 8 frames ——
   text(fb, 'SAVE CRYSTAL', 262, 88, C.white, C.navy); text(fb, '8 frames / 90 deg', 262 + 76, 88, C.steel);
   for (let k = 0; k < 8; k++) { const xs = crystal(k); fb.blit(xs, 262 + k * 13, byW - xs.h - 2); }
   label('flat-shaded 3D, quantized', 314, byW + 3, C.slate);
 
-  // —— 头像 ——
+  // —— Portraits ——
   const py = 151;
   text(fb, 'PORTRAITS', 6, py - 3 - 8, C.white, C.navy); text(fb, 'dialog box · 32x32', 66, py - 11, C.steel);
   const P = [['neutral', portraitArlo('neutral')], ['wistful', portraitArlo('wistful')], ['smile', portraitArlo('smile')], ['sad', portraitArlo('sad')], ['resolve', portraitArlo('determined')], ['wren', portraitWren('smile')], ['wren 8-bit', portraitWren8()]];
@@ -117,25 +117,25 @@ window.render = () => {
     if (n === 'wren 8-bit') { fb.rect(x, py, 32, 32, C.ink); fb.blit(s, x + 4, py + 6); } else fb.blit(s, x, py);
     label(n, x + 16, py + 35, i < 5 ? C.steel : C.rose);
   });
-  // 石台 + 水晶 + 光晕
+  // Stone pedestal + crystal + glow
   pedestal(fb, 300, py + 34); halo(fb, 300, py + 8, 16, 1); { const xs = crystal(3); fb.blit(xs, 300 - (xs.w >> 1), py + 8 - (xs.h >> 1)); }
   label('save point', 300, py + 36, C.cyan);
-  // 菜单光标样例
+  // Menu cursor sample
   fb.rect(326, py + 2, 40, 24, C.ink); fb.gradV(327, py + 3, 38, 22, [C.blue, C.navy, C.night]); fb.rect(326, py + 2, 40, 1, C.white);
   text(fb, 'SAVE', 340, py + 6, C.white, C.ink); text(fb, 'QUIT', 340, py + 16, C.steel, C.ink);
   text(fb, '▶', 331, py + 6, C.yellow);
 
-  // —— 色深演示 ——
+  // —— Colour-depth demo ——
   const dy = 205, pw = 86, ph = 45;
   text(fb, 'COLOR DEPTH = MEMORY', 6, dy - 11, C.white, C.navy); text(fb, 'older = fewer colors · now: only her scarf + the crystal', 126, dy - 11, C.steel);
   const names = [['16-bit · recent', 'full'], ['8-bit · older', 'nes'], ['4-color · oldest', 'gb4'], ['now · faded', 'faded']];
   names.forEach(([n, l], i) => { const x = 6 + i * (pw + 4); fb.rect(x - 1, dy - 1, pw + 2, ph + 2, C.ink); if (l === 'gb4') gbScene(x, dy, pw, ph); else miniScene(fb, x, dy, pw, ph, 1.2); label(n, x + pw / 2, dy + ph + 8, C.steel); });
-  // 最终之门
+  // Final gate
   text(fb, 'THE LAST DOOR', 376, 17, C.white, C.navy);
   door(fb, 374, 28, 102, 226, 0, 1.0);
   label('3 screens tall in film', 425, 258, C.slate);
 
-  // —— 输出：每个演示面板用自己的查找表；4 色面板还要降一半分辨率 ——
+  // —— Output: each demo panel uses its own lookup table; the 4-colour panel is also downscaled by half ——
   for (let i = 0; i < fb.d.length; i++) u32[i] = LUT.full[fb.d[i]];
   names.forEach(([, l], i) => {
     const x0 = 6 + i * (pw + 4), L = LUT[l];
@@ -143,7 +143,7 @@ window.render = () => {
       const sx = x, sy = y;
       u32[y * SW + x] = L[fb.d[sy * SW + sx]];
     }
-    // 调色板色块
+    // Palette swatches
     const pal = l === 'full' ? RGB.map(c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('')) : l === 'nes' ? NES : l === 'gb4' ? GB4 : [...FADED_RAMP, '#e43b44', '#2ce8f5'];
     const sw = Math.floor(pw / pal.length);
     pal.forEach((h, k) => { for (let y = dy + ph + 2; y < dy + ph + 6; y++) for (let x = x0 + k * sw; x < x0 + (k + 1) * sw; x++) u32[y * SW + x] = pack(h); });

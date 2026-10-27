@@ -45,7 +45,7 @@ window.render = t => {
   const o = renderFilm(t);
   if (Q.has('nogrid')) o.grain = 0;
   if (Q.has('boil')) o.boil = +Q.get('boil');
-  if (Q.has('poster')) {   // 海报：片名印在天上（蓝版 + 粉版错位叠印）
+  if (Q.has('poster')) {   // poster: title printed in the sky (blue plate + pink plate, overprinted out of register)
     g.setTransform(1, 0, 0, 1, 0, 0);
     text('SUNDAY RIDE', 968, 196, '800 170px Bricolage', [0, 0, 1], 'center', 'alphabetic', 6);
     over(() => text('SUNDAY RIDE', 956, 190, '800 170px Bricolage', [.9, 0, 0], 'center', 'alphabetic', 6));

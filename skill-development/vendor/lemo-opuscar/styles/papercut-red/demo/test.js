@@ -18,7 +18,7 @@ export function test(g, mode, t, qs) {
   if (mode === 'tuan') {
     fillPaper(g, 'rice', 0, 0, 1920, 1080);
     put(g, tuanhua(), [1.1, 0, 0, 1.1, 500, 540]);
-    // 背光版
+    // backlit version
     g.fillStyle = '#10131f'; g.fillRect(960, 0, 960, 1080);
     const gr = g.createRadialGradient(1440, 540, 0, 1440, 540, 520); gr.addColorStop(0, '#fff4d6'); gr.addColorStop(1, '#ffae52');
     g.fillStyle = gr; g.fillRect(1000, 80, 880, 920);

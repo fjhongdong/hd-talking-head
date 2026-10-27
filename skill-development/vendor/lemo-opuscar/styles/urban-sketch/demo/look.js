@@ -1,4 +1,4 @@
-// 风格试看：?look=1&cx=..&cy=..&z=..
+// Style preview: ?look=1&cx=..&cy=..&z=..
 import { arrivalField, compositor } from './engine.js';
 import { buildWorld, W, H } from './world.js';
 const q = new URLSearchParams(location.search);

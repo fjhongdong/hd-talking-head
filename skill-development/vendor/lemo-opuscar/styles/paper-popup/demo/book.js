@@ -1,11 +1,11 @@
-// 立体书：书脊在远端（z=0），封面向后翻到 90° 立起来当舞台背景
+// Pop-up book: spine at the far end (z=0); the cover flips back to 90° and stands up as the stage backdrop
 import * as THREE from 'three';
 import { cv, paperFill, GRAIN } from './paper.js';
 import { mulberry, clamp } from './lib.js';
 
-export const BW = 0.44, BD = 0.30;       // 书页宽（x）× 深（z）
-export const BT = 0.0035, HB = 0.014;    // 封板厚、半本书页厚
-export const PG = BT + HB;               // 下半本页面高度
+export const BW = 0.44, BD = 0.30;       // page width (x) × depth (z)
+export const BT = 0.0035, HB = 0.014;    // cover-board thickness, thickness of half the page block
+export const PG = BT + HB;               // height of the lower half's page surface
 
 export function texOf(c, o = {}) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = o.linear ? THREE.NoColorSpace : THREE.SRGBColorSpace;
@@ -13,7 +13,7 @@ export function texOf(c, o = {}) {
   return t;
 }
 
-// 书页边（细横线）
+// page edges (thin horizontal lines)
 function edgeCanvas() {
   const c = cv(512, 64), x = c.getContext('2d'); x.fillStyle = '#efe6d2'; x.fillRect(0, 0, 512, 64);
   const R = mulberry(9);
@@ -21,16 +21,16 @@ function edgeCanvas() {
   return c;
 }
 
-// 布面封面 + 烫金标题；同时生成 roughness(g)/metalness(b) 贴图
+// cloth cover + gold-foil title; also generates the roughness(g)/metalness(b) map
 export function coverCanvases(drawPipIcon) {
   const w = 2048, h = Math.round(2048 * BD / BW), c = cv(w, h), x = c.getContext('2d'), m = cv(w, h), y = m.getContext('2d');
-  // 布纹
+  // cloth weave
   x.fillStyle = '#1f5566'; x.fillRect(0, 0, w, h);
   const R = mulberry(3);
   for (let i = 0; i < h; i += 3) { x.fillStyle = `rgba(0,0,0,${.05 + R() * .07})`; x.fillRect(0, i, w, 1.2); }
   for (let i = 0; i < w; i += 3) { x.fillStyle = `rgba(255,255,255,${.02 + R() * .04})`; x.fillRect(i, 0, 1.2, h); }
   for (let i = 0; i < 90; i++) { const px = R() * w, py = R() * h, r = 60 + R() * 300, g = x.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, `rgba(${R() < .5 ? '0,0,0' : '120,170,180'},${.06 * R()})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(px - r, py - r, 2 * r, 2 * r); }
-  // 金色区域同时画进 m（b=金属，g=粗糙）
+  // gold areas are also drawn into m (b = metal, g = roughness)
   y.fillStyle = 'rgb(0,235,0)'; y.fillRect(0, 0, w, h);
   const GOLD = '#e0b456';
   const both = fn => { x.save(); fn(x, GOLD); x.restore(); y.save(); fn(y, 'rgb(0,90,255)'); y.restore(); };
@@ -41,7 +41,7 @@ export function coverCanvases(drawPipIcon) {
     k.font = '210px "Lilita One"'; k.fillText("Sprite's", w * .63, h * .52);
     k.font = '170px "Lilita One"'; k.fillText('Adventure', w * .63, h * .69);
     k.font = 'italic 70px "IM Fell English"'; k.fillText('~ a paper tale ~', w * .63, h * .81); });
-  // 圆形插图（纸色底 + 皮普）
+  // round illustration (paper-coloured ground + Pip)
   const cx = w * .24, cy = h * .52, r = 330;
   both((k, col) => { k.beginPath(); k.arc(cx, cy, r + 26, 0, Math.PI * 2); k.lineWidth = 14; k.strokeStyle = col; k.stroke(); });
   x.save(); x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.clip();
@@ -61,18 +61,18 @@ export function makeBook(cover) {
   const edgeMat = new THREE.MeshStandardMaterial({ map: edge, roughness: .95 });
   const pageTop = new THREE.MeshStandardMaterial({ color: '#f3ead6', roughness: .95 });
 
-  // 下半本：封板 + 书页块
+  // lower half: cover board + page block
   const lb = new THREE.Mesh(new THREE.BoxGeometry(BW + .012, BT, BD + .006), cloth); lb.position.set(0, BT / 2, BD / 2 + .002);
   const lp = new THREE.Mesh(new THREE.BoxGeometry(BW, HB, BD - .002), [edgeMat, edgeMat, pageTop, pageTop, edgeMat, edgeMat]); lp.position.set(0, BT + HB / 2, BD / 2);
   for (const m of [lb, lp]) { m.castShadow = m.receiveShadow = true; root.add(m); }
-  // 书脊
+  // spine
   const spine = new THREE.Mesh(new THREE.CylinderGeometry(PG, PG, BW + .012, 24, 1, false, Math.PI, Math.PI), cloth);
   spine.rotation.z = Math.PI / 2; spine.position.set(0, PG, -.001); spine.castShadow = true; root.add(spine);
 
   const hinge = new THREE.Group(); hinge.position.set(0, PG, 0); root.add(hinge);
   const upper = new THREE.Group(); hinge.add(upper);
   const open = new THREE.Group(); open.rotation.x = Math.PI / 2; upper.add(open);
-  // 打开状态坐标（open 帧 = 立起时的世界朝向）：背景页在 z=0 朝 +z，书块在 z<0
+  // open-state coordinates (open frame = world orientation when standing up): backdrop page at z=0 facing +z, page block at z<0
   const up = new THREE.Mesh(new THREE.BoxGeometry(BW, BD - .002, HB), [edgeMat, edgeMat, edgeMat, edgeMat, pageTop, pageTop]); up.position.set(0, BD / 2, -HB / 2);
   const ub = new THREE.Mesh(new THREE.BoxGeometry(BW + .012, BD + .006, BT), cloth); ub.position.set(0, BD / 2 + .002, -HB - BT / 2);
   const coverTex = texOf(cover.c), mr = texOf(cover.m, { linear: true });
@@ -80,7 +80,7 @@ export function makeBook(cover) {
   const cp = new THREE.Mesh(new THREE.PlaneGeometry(BW + .008, BD + .002), coverMat); cp.rotation.x = Math.PI; cp.position.set(0, BD / 2 + .002, -HB - BT - .0003);
   for (const m of [up, ub, cp]) { m.castShadow = m.receiveShadow = true; open.add(m); }
 
-  // 地面页（stage 帧）与背景页（open 帧），带书沟弯曲
+  // ground page (stage frame) and backdrop page (open frame), with the gutter curve
   const groundGeo = new THREE.PlaneGeometry(BW - .006, BD - .004, 1, 30); groundGeo.rotateX(-Math.PI / 2); groundGeo.translate(0, 0, BD / 2);
   gutter(groundGeo, 'z');
   const groundMat = new THREE.MeshStandardMaterial({ roughness: .92, color: '#ffffff' });
@@ -91,14 +91,14 @@ export function makeBook(cover) {
   const back = new THREE.Mesh(backGeo, backMat); back.position.z = .0003; back.receiveShadow = true; open.add(back);
   const sky = new THREE.Group(); open.add(sky);
 
-  // 翻页：一张弯曲的纸，正面=旧地面，背面=新天空
+  // page turn: one curved sheet, front = old ground, back = new sky
   const NS = 40, mkLeafGeo = () => { const g = new THREE.PlaneGeometry(BW - .008, 1, 1, NS); return g; };
   const lf = mkLeafGeo(), lb2 = mkLeafGeo();
   const leafFront = new THREE.Mesh(lf, new THREE.MeshStandardMaterial({ roughness: .92, side: THREE.FrontSide }));
   const leafBack = new THREE.Mesh(lb2, new THREE.MeshStandardMaterial({ roughness: .92, side: THREE.BackSide }));
-  // UV：正面 v=1 在书沟；背面 v=1 在自由端（立起后在上）
+  // UV: front has v=1 at the gutter; back has v=1 at the free edge (on top once standing)
   const uvF = lf.attributes.uv, uvB = lb2.attributes.uv;
-  for (let i = 0; i < uvF.count; i++) { const v = uvF.getY(i); /* v:1 顶行 → s=0 */ uvB.setY(i, 1 - v); }
+  for (let i = 0; i < uvF.count; i++) { const v = uvF.getY(i); /* v:1 top row → s=0 */ uvB.setY(i, 1 - v); }
   uvB.needsUpdate = true;
   for (const m of [leafFront, leafBack]) { m.material.emissive = new THREE.Color(.42, .4, .38); m.castShadow = true; m.receiveShadow = true; m.visible = false; stage.add(m); }
   function setLeaf(u, bendAmt = .55) {
@@ -106,7 +106,7 @@ export function makeBook(cover) {
     const th = Math.PI / 2 * u, L = bendAmt * Math.sin(Math.PI * u);
     for (const g of [lf, lb2]) {
       const p = g.attributes.position, n = NS + 1;
-      // PlaneGeometry 顶点顺序：行 iy=0..NS（y 从 +0.5 到 -0.5），每行 2 个
+      // PlaneGeometry vertex order: rows iy=0..NS (y from +0.5 to -0.5), 2 per row
       let zz = 0, yy = 0;
       const col = [];
       for (let iy = 0; iy <= NS; iy++) {

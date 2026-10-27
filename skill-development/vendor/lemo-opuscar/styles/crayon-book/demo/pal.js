@@ -1,19 +1,19 @@
-// 有限的一盒蜡笔（11 支）+ 一管水彩
+// a limited box of crayons (11 sticks) + one tube of watercolour
 export const PAL = {
-  paper: [0.957, 0.937, 0.890],        // #f4efe3 暖白画纸
+  paper: [0.957, 0.937, 0.890],        // #f4efe3 warm-white drawing paper
   crayon: {
-    ink: '#2d3263',      // 靛蓝：所有轮廓线（不用纯黑，睡前的柔和）
-    yellow: '#f5c63c',   // 月亮
-    orange: '#ec8a3c',   // 环形山、窗光边
-    red: '#d4483c',      // 屋顶
-    pink: '#ee8ea4',     // 睡裙、腮红
-    peach: '#f4c7a4',    // 皮肤（轻压）
-    brown: '#7a4b31',    // 头发、门、梯子
-    ochre: '#e7b867',    // 墙
-    green: '#62a24c',    // 草
-    sky: '#79acd9',      // 被子、小羊的蓝
-    violet: '#6a5aa6',   // 月亮的"被子"、阴影
-    white: '#fbfaf4',    // 白蜡：星星（水彩前几乎看不见）
+    ink: '#2d3263',      // indigo: all outlines (no pure black, for bedtime softness)
+    yellow: '#f5c63c',   // moon
+    orange: '#ec8a3c',   // craters, window-light edges
+    red: '#d4483c',      // roof
+    pink: '#ee8ea4',     // nightdress, blush
+    peach: '#f4c7a4',    // skin (light pressure)
+    brown: '#7a4b31',    // hair, door, ladder
+    ochre: '#e7b867',    // walls
+    green: '#62a24c',    // grass
+    sky: '#79acd9',      // blanket, the lamb's blue
+    violet: '#6a5aa6',   // the moon's "blanket", shadows
+    white: '#fbfaf4',    // white wax: stars (almost invisible before the watercolour wash)
   },
-  wash: [0.15, 0.19, 0.44],              // 群青水彩的透射色
+  wash: [0.15, 0.19, 0.44],              // transmitted colour of the ultramarine watercolour
 };

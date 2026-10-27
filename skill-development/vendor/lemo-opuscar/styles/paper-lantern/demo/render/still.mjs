@@ -1,4 +1,4 @@
-// 渲静帧：node render/still.mjs <t> [<t> ...] [--out dir] [--q ?ssaa=1]
+// Render stills: node render/still.mjs <t> [<t> ...] [--out dir] [--q ?ssaa=1]
 import fs from 'fs'; import path from 'path';
 import { openPage, closeServer, ROOT } from './page.mjs';
 const args = process.argv.slice(2), take = k => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };

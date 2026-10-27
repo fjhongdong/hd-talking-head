@@ -1,6 +1,6 @@
 // ============================================================
-// 《AI 进化节拍》—— 节奏天国风格，140 BPM
-// 所有“打点”都通过 ev() 登记，渲染器导出 events.json，配乐脚本据此放音效/人声
+// "AI 进化节拍" (AI Evolution Beat) — Rhythm Heaven (节奏天国) style, 140 BPM
+// Every "hit" is registered through ev(); the renderer exports events.json, and the music script places SFX/voices from it
 // ============================================================
 const K = {
   ol: '#1B1B1B', white: '#FFFFFF', cream: '#FFF6E5', yellow: '#FFD23F', orange: '#FF8C42', red: '#FF5A5F',
@@ -18,17 +18,17 @@ const at = (bar, beat = 0) => (bar * 4 + beat) * B;
 const END_BAR = 61;
 window.DUR = at(END_BAR);
 
-// ---------------- 事件登记 ----------------
+// ---------------- Event registry ----------------
 const EV = [];
 const PUNCH = [];
 function ev(t, s, o = {}) { EV.push({ t: +t.toFixed(4), s, ...o }); }
 function punch(t, a = 0.018) { PUNCH.push([t, a]); }
 window.EV = EV;
 
-// 节拍工具
+// Beat helpers
 const frac = (t) => ((t / B) % 1 + 1) % 1;
 const hopY = (t, h = 40) => { const f = frac(t); return -h * 4 * f * (1 - f); };
-// 在 t0 处被“打”一下的挤压值
+// Squash value for being "hit" once at t0
 const hitSq = (t, t0, amt = 0.2) => (t >= t0 && t < t0 + 0.35) ? 1 - amt * Math.exp(-(t - t0) * 14) * Math.cos((t - t0) * 30) : 1;
 const near = (t, t0, a = 0.05, b = 0.22) => t >= t0 - a && t < t0 + b;
 function gtext(parent, s, x, y, size, o = {}) {
@@ -36,7 +36,7 @@ function gtext(parent, s, x, y, size, o = {}) {
     stroke: o.stroke || K.ol, 'stroke-width': o.sw ?? size * 0.14, 'paint-order': 'stroke', 'stroke-linejoin': 'round', 'text-anchor': o.anchor || 'middle' });
 }
 
-// ---------------- 通用视觉 ----------------
+// ---------------- Shared visuals ----------------
 function stripes(parent, col, w = 60, angle = -30) {
   const g = el('g', { transform: `rotate(${angle} 960 540)` }, parent);
   let d = '';
@@ -62,7 +62,7 @@ function starPath(n, r1, r2) {
   for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2 - Math.PI / 2, r = i % 2 ? r2 : r1; d += `${i ? 'L' : 'M'}${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`; }
   return d + 'Z';
 }
-// 打击特效（星爆 + 圆环），返回每帧更新函数
+// Hit effect (starburst + ring); returns a per-frame update function
 function burst(parent, x, y, t0, col = K.yellow, size = 1) {
   const g = el('g', {}, parent);
   const ring = el('circle', { cx: 0, cy: 0, r: 50, fill: 'none', stroke: K.white, 'stroke-width': 10 }, g);
@@ -88,7 +88,7 @@ function judge(parent, word, x, y, t0, col = K.pink, dur = 1.0) {
     tf(g, x, y - 20 * E.out(seg(t, t0, t0 + dur)), E.back(seg(t, t0, t0 + 0.25)), -6);
   };
 }
-// 年代横幅
+// Year banner
 function banner(parent, year, name, sub, col) {
   const g = el('g', {}, parent);
   const yw = measure(year, 64, F.round, 700), nw = measure(name, 54, F.sans, 900), sw = measure(sub, 34, F.sans, 900);
@@ -107,8 +107,8 @@ function bannerAnim(b, t, t0, t1, x = 56, y = 44) {
   tf(b.g, lerp(-900, x, pin), y - 260 * pout, 1, lerp(-6, -1.5, pin));
 }
 
-// ---------------- 角色 ----------------
-// 豆豆型模型角色（原点=脚底中心）
+// ---------------- Characters ----------------
+// Bean-shaped model character (origin = centre of the feet)
 function bean(parent, o) {
   const { color, belly = null, antenna = K.white, name = null, kind = 'bot', tagCol = K.ol } = o;
   const g = el('g', {}, parent);
@@ -154,7 +154,7 @@ function bean(parent, o) {
   pose(c, {});
   return c;
 }
-// hey: 0..1 举手；open 张嘴；sq 挤压；face: 'x' | 'up'
+// hey: 0..1 hands raised; open: mouth open; sq: squash; face: 'x' | 'up'
 function pose(c, { hey = 0, open = false, sq = 1, lean = 0, face = null, blink = false, armsL = null, armsR = null }) {
   const aL = armsL ?? lerp(18, 158, hey), aR = armsR ?? lerp(18, 158, hey);
   c.armL.setAttribute('transform', `translate(-72 -98) rotate(${aL})`);
@@ -163,7 +163,7 @@ function pose(c, { hey = 0, open = false, sq = 1, lean = 0, face = null, blink =
   show(c.mO, open); show(c.mC, !open);
   show(c.eyes, !face && !blink); show(c.eyesX, face === 'x'); show(c.eyesUp, face === 'up' || (blink && !face));
 }
-// 双子（Gemini）：两个小豆豆
+// Twins (Gemini): two small beans
 function twins(parent) {
   const g = el('g', {}, parent);
   const a = el('g', { transform: 'translate(-52 0) scale(0.72)' }, g), b = el('g', { transform: 'translate(52 0) scale(0.72)' }, g);
@@ -184,7 +184,7 @@ const CAST = {
 };
 function smallBot(parent, col) { return bean(parent, { color: col, antenna: K.yellow }); }
 
-// 人类棋手（原点=脚底）
+// Human chess player (origin = feet)
 function human(parent) {
   const g = el('g', {}, parent);
   const body = el('g', {}, g);
@@ -247,7 +247,7 @@ function robotAG(parent) {
   return { g, body, pupil, arm: { aO, aI, hand } };
 }
 function robotT(parent) {
-  // Transformer 拳击机器人（原点=脚底）
+  // Transformer boxing robot (origin = feet)
   const g = el('g', {}, parent);
   const body = el('g', {}, g);
   for (const x of [-50, 50]) el('rect', { x: x - 26, y: -60, width: 52, height: 64, rx: 12, fill: K.gray, ...SO }, body);
@@ -271,7 +271,7 @@ function robotT(parent) {
   return { g, body, visor, arm: { aO, aI }, glove, glove2 };
 }
 
-// ---------------- 棋盘（透视四边形） ----------------
+// ---------------- Chessboard (perspective quad) ----------------
 const BQ = { tl: [700, 600], tr: [1220, 600], br: [1330, 770], bl: [590, 770] };
 function quad(u, v) {
   const top = [lerp(BQ.tl[0], BQ.tr[0], u), lerp(BQ.tl[1], BQ.tr[1], u)];
@@ -289,7 +289,7 @@ function pawn(parent, col, king = false) {
 }
 
 // ============================================================
-// 舞台
+// 舞台 (Stage; assemble.py finds the end of the character block by this "// 舞台" line, so the Chinese prefix stays)
 // ============================================================
 const world = document.getElementById('world');
 const cam = document.getElementById('cam');
@@ -304,7 +304,7 @@ function scene(t0, t1, build) {
   return s;
 }
 
-// 关卡标题卡
+// Level title card
 function card(bar0, num, name, years, col, col2, icon) {
   scene(at(bar0), at(bar0 + 2), (g) => {
     bg(g, col);
@@ -330,7 +330,7 @@ function card(bar0, num, name, years, col, col2, icon) {
 }
 
 function buildAll() {
-  // ================= 标题 bar 0–3 =================
+  // ================= Title bar 0–3 =================
   scene(at(0), at(4), (g, s) => {
     bg(g, K.yellow);
     const rays = raysEl(g, 28, '#FFE37A');
@@ -371,14 +371,14 @@ function buildAll() {
     };
   });
 
-  // ================= 第一关：人机棋局 bar 4–13 =================
+  // ================= Level 1: Human vs Machine (人机棋局) bar 4–13 =================
   card(4, 'GAME 1', '人机棋局', '1997 – 2016', K.orange, '#FF9E5E', (p) => { const w = el('g', { transform: 'scale(2.2)' }, p); pawn(w, K.white, true); });
   scene(at(6), at(14), (g, s) => {
     bg(g, '#FFB870');
     stripes(g, '#FFA85A', 50, -20);
     el('rect', { x: 0, y: 880, width: 1920, height: 200, fill: '#E08A4A' }, g);
     el('line', { x1: 0, y1: 880, x2: 1920, y2: 880, stroke: K.ol, 'stroke-width': OW }, g);
-    // 桌子与棋盘
+    // Table and board
     el('polygon', { points: `560,590 1360,590 1400,790 520,790`, fill: K.woodD, ...SO }, g);
     el('rect', { x: 520, y: 790, width: 880, height: 40, fill: K.wood, ...SO }, g);
     for (const x of [570, 1330]) el('rect', { x, y: 830, width: 30, height: 120, fill: K.woodD, ...SO }, g);
@@ -396,7 +396,7 @@ function buildAll() {
     const dbw = el('g', {}, g); const db = robotDB(dbw);
     const agw = el('g', {}, g); const ag = robotAG(agw);
     const fxG = el('g', {}, g);
-    // 走子表：[bar, beat, who(h/a), u, v, special]
+    // Move list: [bar, beat, who(h/a), u, v, special]
     const chessMoves = [[6, 0, 'h', 3, 5], [6, 2, 'a', 4, 2], [7, 0, 'h', 2, 5], [7, 2, 'a', 5, 2], [8, 0, 'h', 4, 4], [8, 2, 'a', 3, 3], [9, 0, 'h', 1, 6], [9, 1, 'a', 6, 3], [9, 2, 'a', 5, 5, 'mate']];
     const goMoves = [];
     const r = rng(8);
@@ -443,7 +443,7 @@ function buildAll() {
         const sc = E.back(seg(t, m.t0, m.t0 + 0.18)) * hitSq(t, m.t0, 0.25);
         tf(m.pg, m.x, m.y, sc * (m.sp === 'move37' ? 1.4 : 1), rot);
       });
-      // 手臂：找最近一次/下一次自己的落子
+      // Arm: find this player's most recent / next move
       const armFor = (who) => {
         let best = null;
         for (const m of moves) if (m.who === who && t >= m.t0 - 0.2 && t < m.t0 + 0.3) best = m;
@@ -456,21 +456,21 @@ function buildAll() {
       setArm(hu.arm, HS[0] - 420, HS[1] - 930, lerp(HS[0] + 70, hx, hr) - 420, lerp(HS[1] + 80, hy, hr) - 930);
       const ax = am ? am.x : 1280, ay = am ? am.y - 20 : 700;
       setArm((goMode ? ag : db).arm, RS[0] - 1500, RS[1] - 930, lerp(RS[0] - 70, ax, ar) - 1500, lerp(RS[1] + 80, ay, ar) - 930);
-      // 人类：越来越慌
+      // Human: more and more flustered
       const panic = t > at(9, 2) && t < at(10) || t > at(13);
       show(hu.mO, panic); show(hu.mC, !panic);
       op(hu.sweat, t > at(8) ? 1 : 0);
       hu.sweat.setAttribute('transform', `translate(0 ${(t * 60) % 24})`);
       tf(hw, 420, 930 + hopY(t, 10), 1);
       hu.body.setAttribute('transform', `translate(0 0) scale(1 ${hitSq(t, hm ? hm.t0 : -9, 0.06)}) rotate(${panic ? Math.sin(t * 30) * 3 : 0})`);
-      // 机器人
+      // Robot
       show(dbw, !goMode); show(agw, goMode);
       const botY = 930 + hopY(t, 12);
       tf(dbw, 1500, botY, 1); tf(agw, 1500, botY, 1, 0);
       db.lights.forEach((l, i) => l.setAttribute('fill', Math.floor(t / B) % 3 === i ? K.lime : K.yellow));
       db.mouth.setAttribute('height', near(t, at(9, 2), 0, 0.6) ? 36 : 12);
       ag.pupil.setAttribute('cx', 12 + Math.sin(t * 3) * 10);
-      // 换人烟雾
+      // Smoke when players swap
       const pp = seg(t, at(10) - 0.12, at(10) + 0.3);
       op(poofG, pp > 0 && pp < 1 ? 1 - pp : 0); tf(poofG, 1500, 700, 0.6 + pp);
       bannerAnim(b1, t, at(6), at(10));
@@ -480,7 +480,7 @@ function buildAll() {
     };
   });
 
-  // ================= 第二关：Transformer 工厂 bar 14–23 =================
+  // ================= Level 2: Transformer factory bar 14–23 =================
   card(14, 'GAME 2', '注意力工厂', '2017 – 2020', K.teal, '#56C7BF', (p) => { const w = el('g', { transform: 'scale(1.7)' }, p); el('path', { d: 'M -46 -40 C -70 -40 -76 40 -40 46 L 40 46 C 70 40 70 -40 40 -46 Z', fill: K.red, ...SO }, w); });
   scene(at(16), at(24), (g, s) => {
     bg(g, K.teal);
@@ -494,7 +494,7 @@ function buildAll() {
     el('rect', { x: 0, y: 840, width: 1920, height: 40, fill: '#555', ...SO }, g);
     const rollers = el('g', {}, g);
     for (let x = 20; x < 1960; x += 80) el('circle', { cx: x, cy: 860, r: 12, fill: K.gray, ...SO, 'stroke-width': 4 }, rollers);
-    // 顶部“句子架”
+    // "Sentence shelf" at the top
     el('rect', { x: 170, y: 490, width: 1180, height: 26, rx: 13, fill: K.tealD, ...SO, 'stroke-width': 6 }, g);
     const arcsG = el('g', {}, g);
     const wordsG = el('g', {}, g);
@@ -514,7 +514,7 @@ function buildAll() {
       ev(t0 - B * 0.5, 'swish'); ev(t0, 'punch'); punch(t0, 0.03);
       s.fx.push(burst(fxG, 1010, 560, t0, K.yellow, 1));
     }));
-    // 注意力连线：每个新词与之前的词相连
+    // Attention links: each new word connects to every word before it
     const arcs = [];
     words.forEach(w => words.filter(o => o.si === w.si && o.k < w.k).forEach(o => {
       const x1 = w.sx, x2 = o.sx, mid = (x1 + x2) / 2, h = 60 + Math.abs(x1 - x2) * 0.28;
@@ -522,7 +522,7 @@ function buildAll() {
       arcs.push({ p, t0: w.t0 + 0.3, si: w.si });
     }));
     ev(at(16), 'v:attention'); ev(at(18), 'v:attention');
-    // 打气：GPT 盒子
+    // Pumping up: GPT box
     const boxG = el('g', {}, g);
     const boxIn = el('g', {}, boxG);
     el('rect', { x: -130, y: -220, width: 260, height: 220, rx: 40, fill: K.gpt, ...SO }, boxIn);
@@ -550,7 +550,7 @@ function buildAll() {
       gears.forEach((ge, i) => { const k = Math.floor(t / B) + E.out(Math.min(1, frac(t) * 4)); tf(ge.gg, ge.x, ge.y, 1, k * 15 * (i % 2 ? -1 : 1)); });
       rollers.setAttribute('transform', `translate(${-((t * 200) % 80)} 0)`);
       const pumpMode = t >= at(20);
-      // 机器人与拳头
+      // Robot and fist
       let pm = null; for (const w of words) if (t >= w.t0 - 0.12 && t < w.t0 + 0.25) pm = w;
       const pr = pm ? (t < pm.t0 ? E.in(seg(t, pm.t0 - 0.08, pm.t0)) : 1 - E.io(seg(t, pm.t0 + 0.04, pm.t0 + 0.25))) : 0;
       tf(rbw, 1360, 900 + hopY(t, 12), 1);
@@ -561,7 +561,7 @@ function buildAll() {
       tf(rb.glove, gx - 1360, gy - 900, 1 + 0.15 * pr, 0);
       tf(rb.glove2, 1440 - 1360, 690 - 900 + Math.sin(t * 8) * 6, 0.9);
       show(rb.glove, !pumpMode); show(rb.arm.aO, !pumpMode); show(rb.arm.aI, !pumpMode);
-      // 词块飞入 → 被打 → 上架
+      // Word blocks fly in → get punched → go up on the shelf
       words.forEach(w => {
         const t0 = w.t0;
         const cleared = t >= at(18) - 0.15 && w.si === 0;
@@ -578,7 +578,7 @@ function buildAll() {
         op(a.p, vis ? 0.9 : 0);
         a.p.setAttribute('stroke-dashoffset', 1 - E.out(seg(t, a.t0, a.t0 + 0.25)));
       });
-      // 打气
+      // Pumping up
       show(boxG, pumpMode); show(pump, pumpMode); show(param, pumpMode);
       if (pumpMode) {
         let sc = 0.7, last = null;
@@ -600,7 +600,7 @@ function buildAll() {
     };
   });
 
-  // ================= 第三关：聊天合唱团 bar 24–33 =================
+  // ================= Level 3: Chat choir (聊天合唱团) bar 24–33 =================
   card(24, 'GAME 3', '聊天合唱团', '2022 – 2023', K.purple, '#7C62C9', (p) => {
     const w = el('g', { transform: 'scale(2.2)' }, p);
     el('rect', { x: -18, y: -60, width: 36, height: 70, rx: 18, fill: K.gray, ...SO }, w); el('line', { x1: 0, y1: 10, x2: 0, y2: 50, stroke: K.ol, 'stroke-width': 8 }, w);
@@ -628,7 +628,7 @@ function buildAll() {
     const dates = { llama: '2023.2', claude: '2023.3', gemini: '2023.12' };
     const dateEls = {};
     for (const k of ['llama', 'claude', 'gemini']) { dateEls[k] = el('g', {}, g); gtext(dateEls[k], dates[k], 0, 0, 50, { family: F.round, weight: 700, fill: K.yellow, sw: 10 }); ev(land[k], 'land'); punch(land[k], 0.025); }
-    // 小模型雨
+    // Rain of small models
     const botsG = el('g', {}, g);
     const bots = []; const r = rng(21);
     const botCols = [K.yellow, K.pink, K.lime, K.sky, K.orange, K.gray, '#FF6FD8', '#7DF9FF'];
@@ -638,16 +638,16 @@ function buildAll() {
       bots.push({ w, c, t0, x: 200 + ((i * 523) % 1500), y: 950 + (i % 3) * 40 });
       ev(t0, 'pip', { f: 700 + (i % 6) * 110 });
     }
-    // 观众
+    // Audience
     const aud = el('g', {}, g);
     const heads = [];
     for (let i = 0; i < 16; i++) { const h = el('g', {}, aud); el('circle', { cx: 0, cy: 0, r: 58, fill: '#2B1F55' }, h); el('rect', { x: -70, y: 30, width: 140, height: 120, rx: 50, fill: '#2B1F55' }, h); heads.push({ h, x: 60 + i * 125, ph: i % 2 }); }
-    // 用户计数
+    // User counter
     const counter = el('g', {}, g);
     el('rect', { x: -250, y: -60, width: 500, height: 120, rx: 26, fill: K.ol, stroke: K.white, 'stroke-width': 5 }, counter);
     txt(counter, '用户', { x: -220, y: 18, 'font-size': 40, 'font-family': F.sans, 'font-weight': 900, fill: K.white });
     const cnt = txt(counter, '0', { x: 225, y: 22, 'font-size': 60, 'font-family': F.round, 'font-weight': 700, fill: K.lime, 'text-anchor': 'end' });
-    // 口令表
+    // Call-and-response table
     const lead = [], echo = [], all = [];
     for (let bar = 26; bar <= 29; bar++) { lead.push(at(bar, 0), at(bar, 1)); echo.push(at(bar, 2), at(bar, 3)); }
     all.push(at(31, 2), at(31, 3), at(32, 0), at(32, 2), at(33, 0), at(33, 1), at(33, 2), at(33, 3));
@@ -689,7 +689,7 @@ function buildAll() {
         tf(b.w, b.x, lerp(-200, b.y, fall) + (fall >= 1 ? hopY(t, 14) : 0), 0.45);
         pose(b.c, { hey: ah ? 1 : 0, open: ah, sq: hitSq(t, b.t0, 0.3) });
       });
-      // 计数：每次观众回应涨一截
+      // Counter: jumps up a step with every audience response
       const n = echo.filter(t0 => t >= t0).length;
       const target = Math.round(1000000 * Math.pow(n / 8, 2));
       cnt.textContent = (n >= 8 ? 1000000 : target).toLocaleString('en-US');
@@ -706,7 +706,7 @@ function buildAll() {
     };
   });
 
-  // ================= 第四关：想一想 & 价格战 bar 34–43 =================
+  // ================= Level 4: Think it over & price war (想一想 · 价格战) bar 34–43 =================
   card(34, 'GAME 4', '想一想 · 价格战', '2024 – 2025', K.blue, '#6B93FF', (p) => {
     const w = el('g', { transform: 'scale(2.2)' }, p);
     el('circle', { cx: 0, cy: -20, r: 40, fill: K.yellow, ...SO }, w); el('rect', { x: -18, y: 16, width: 36, height: 30, rx: 6, fill: K.gray, ...SO }, w);
@@ -735,7 +735,7 @@ function buildAll() {
       return { g: bg2, ds, bulb, wrong, right, x };
     });
     const fxG = el('g', {}, g);
-    // 节拍：bar36 抢答（错），bar37 继续想，bar38 想明白（对），bar39 庆祝
+    // Beats: bar36 blurts out an answer (wrong), bar37 keeps thinking, bar38 works it out (right), bar39 celebrates
     for (const bar of [36, 37, 38]) for (let b = 0; b < 3; b++) ev(at(bar, b), 'tick');
     ev(at(36, 3), 'buzz'); ev(at(36, 3), 'v:wrong');
     ev(at(37, 3), 'tick');
@@ -777,7 +777,7 @@ function buildAll() {
     stripes(g, '#FF7074', 60, -30);
     el('rect', { x: 0, y: 880, width: 1920, height: 200, fill: '#C8383D' }, g);
     el('line', { x1: 0, y1: 880, x2: 1920, y2: 880, stroke: K.ol, 'stroke-width': OW }, g);
-    // 价签
+    // Price tags
     const sign = el('g', {}, g);
     el('rect', { x: -16, y: -260, width: 32, height: 260, fill: K.gray, ...SO }, sign);
     const signBoard = el('g', {}, sign);
@@ -815,9 +815,9 @@ function buildAll() {
       op(cracks, squash >= 1 ? 1 : 0);
       op(sign2, t >= at(42) ? 1 : 0);
       tf(sign2, 900, sgY + (1 - E.back(seg(t, at(42), at(42) + 0.3))) * 400, 1, Math.sin(t * 6) * 2);
-      // 鲸鱼 + 锤子
+      // Whale + hammer
       tf(ww, 1150, lerp(-300, 880, E.in(seg(t, at(40) - 0.3, at(40)))) + hopY(t, 10), 1.1);
-      let hr = 0; // 0 举起 1 砸下
+      let hr = 0; // 0 raised, 1 slammed down
       let nextS = slams.find(t0 => t < t0 + 0.25);
       if (nextS !== undefined) hr = t < nextS ? E.in(seg(t, nextS - 0.16, nextS)) : 1 - E.out(seg(t, nextS + 0.05, nextS + 0.25));
       const ang = lerp(20, -58, hr);
@@ -852,7 +852,7 @@ function buildAll() {
     const lblT = gtext(lbl, '', 0, 0, 90, { family: F.sans, sw: 16 });
     const parts = labels.map(() => el('g', {}, g));
     const fxG = el('g', {}, g);
-    // 0 智能体：Claude 敲代码
+    // 0 Agents: Claude typing code
     const p0 = parts[0];
     const cw = el('g', {}, p0); const cl = CAST.claude(cw);
     const lap = el('g', {}, p0);
@@ -861,17 +861,17 @@ function buildAll() {
     el('path', { d: 'M -360 30 L 360 30 L 320 80 L -320 80 Z', fill: K.gray, ...SO }, lap);
     const codeLines = [0, 1, 2, 3, 4, 5, 6].map(i => el('rect', { x: -250, y: -286 + i * 40, width: 0, height: 20, rx: 10, fill: [K.lime, K.pink, K.sky, K.yellow][i % 4] }, lap));
     for (let i = 0; i < 8; i++) { ev(at(45) + i * B / 2, 'clack'); }
-    // 1 多模态：拳击图标
+    // 1 Multimodal: boxing icon
     const p1 = parts[1];
     const rw = el('g', {}, p1); const rb = robotT(rw);
     const icons = ['🖼', '♪', '▶', '👁'];
     const iconEls = icons.map((ic, i) => { const w = el('g', {}, p1); el('rect', { x: -70, y: -70, width: 140, height: 140, rx: 30, fill: [K.pink, K.yellow, K.lime, K.sky][i], ...SO }, w); gtext(w, ic, 0, 30, 80, { sw: 0, fill: K.ol, family: F.round }); return w; });
     for (let i = 0; i < 4; i++) { ev(at(46, i), 'punch'); punch(at(46, i), 0.025); s.fx.push(burst(fxG, 900, 560, at(46, i), K.yellow, 0.9)); }
-    // 2 大合唱：五个角色依次 Hey
+    // 2 Big chorus: five characters say Hey in turn
     const p2 = parts[2];
     const five = ['llama', 'gemini', 'gpt', 'claude', 'deepseek'].map((k, i) => { const w = el('g', {}, p2); return { w, c: CAST[k](w), x: 360 + i * 300 }; });
     for (let i = 0; i < 4; i++) { ev(at(47, i), i === 3 ? 'v:heyAll' : 'v:hey'); punch(at(47, i), 0.02); }
-    // 3 想一想
+    // 3 Think it over
     const p3 = parts[3];
     const tw = el('g', {}, p3); const tc = CAST.gpt(tw);
     const tb = el('g', {}, p3);
@@ -880,14 +880,14 @@ function buildAll() {
     const tbulb = el('g', {}, tb); el('circle', { cx: 0, cy: -6, r: 50, fill: K.yellow, ...SO }, tbulb);
     for (let i = 0; i < 3; i++) ev(at(48, i), 'tick');
     ev(at(48, 3), 'ding'); ev(at(48, 3), 'v:aha'); s.fx.push(burst(fxG, 1160, 330, at(48, 3), K.yellow, 1.1));
-    // 4 人机对弈（简化）
+    // 4 Human vs machine (simplified)
     const p4 = parts[4];
     const bd = el('g', {}, p4);
     for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) el('rect', { x: -330 + i * 110, y: -220 + j * 110, width: 110, height: 110, fill: (i + j) % 2 ? '#B07A4F' : '#F6DDB5' }, bd);
     el('rect', { x: -330, y: -220, width: 660, height: 440, fill: 'none', ...SO }, bd);
     const rmxP = [[-220, -110, 'h'], [110, 0, 'a'], [-110, 110, 'h'], [220, -110, 'a']].map(([x, y, w], i) => { const pg = el('g', {}, bd); pawn(pg, w === 'h' ? K.white : '#3A3A3A'); return { pg, x, y: y + 40, w }; });
     for (let i = 0; i < 4; i++) { ev(at(49, i), i % 2 ? 'bleep' : 'tock'); punch(at(49, i), 0.015); }
-    // 5 价格战
+    // 5 Price war
     const p5 = parts[5];
     const whw = el('g', {}, p5); const wh2 = CAST.deepseek(whw);
     const hm = el('g', {}, p5);
@@ -897,7 +897,7 @@ function buildAll() {
     el('rect', { x: -180, y: -100, width: 360, height: 200, rx: 26, fill: K.white, ...SO }, price);
     const priceT = gtext(price, '$60', 0, 40, 110, { family: F.round, weight: 700, fill: K.ol, stroke: K.white, sw: 0 });
     for (const b of [0, 2]) { ev(at(50, b), 'hammer'); punch(at(50, b), 0.03); s.fx.push(burst(fxG, 600, 520, at(50, b), K.yellow, 1)); }
-    // 6 一起跳
+    // 6 Dance together
     const p6 = parts[6];
     const six = ['llama', 'gemini', 'gpt', 'claude', 'deepseek'].map((k, i) => { const w = el('g', {}, p6); return { w, c: CAST[k](w), x: 360 + i * 300 }; });
     for (let i = 0; i < 4; i++) { ev(at(51, i), 'pop', { f: 600 + i * 150 }); punch(at(51, i), 0.02); }
@@ -977,7 +977,7 @@ function buildAll() {
     };
   });
 
-  // ================= 结算 bar 53–60 =================
+  // ================= Results bar 53–60 =================
   scene(at(53), at(END_BAR), (g, s) => {
     bg(g, K.navy);
     const rays = raysEl(g, 30, '#30305A');
@@ -1034,15 +1034,15 @@ function buildAll() {
 }
 
 // ============================================================
-// 渲染
+// Render
 // ============================================================
 function render(t) {
   for (const s of scenes) { const on = t >= s.t0 && t < s.t1; show(s.g, on); if (on) s.update(t); }
-  // 镜头打点：每个打击点轻微放大
+  // Camera punch: zoom in slightly on every hit
   let z = 1;
   for (const [t0, a] of PUNCH) if (t >= t0 && t < t0 + 0.18) z += a * Math.pow(1 - (t - t0) / 0.18, 2);
   cam.setAttribute('transform', `translate(${(960 * (1 - z)).toFixed(2)} ${(540 * (1 - z)).toFixed(2)}) scale(${z.toFixed(4)})`);
-  // 切换闪白
+  // White flash on cuts
   let fl = 0;
   for (const c of [at(4), at(14), at(24), at(34), at(44), at(45), at(53), at(59)]) if (t >= c && t < c + 0.1) fl = Math.max(fl, 0.6 * (1 - (t - c) / 0.1));
   if (t >= at(13) && t < at(13) + 0.15) fl = Math.max(fl, 0.8 * (1 - (t - at(13)) / 0.15));

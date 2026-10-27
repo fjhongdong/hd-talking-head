@@ -1,6 +1,6 @@
-"""《Sunday Ride》混音：配乐 + 旁白（闪避）+ 拟音 + 环境 → mix.wav
-在仓库根运行：.venv/bin/python styles/risograph/demo/mix.py
-拟音跟材质走：纸（印刷机进纸/滚筒/出纸/落纸）、金属小钟（车铃、刹车）、面包皮、鸽子羽毛、水。"""
+""""Sunday Ride" mix: score + narration (ducked) + foley + ambience → mix.wav
+Run from the repo root: .venv/bin/python styles/risograph/demo/mix.py
+Foley follows the materials: paper (printer feed / drum / paper out / paper landing), small metal bell (bike bell, brakes), bread crust, pigeon feathers, water."""
 import os, sys, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'music'))
@@ -19,8 +19,8 @@ def mixin(*xs):
     return o
 env = lambda d, a, r: np.minimum(1, t_(d) / max(a, 1e-4)) * np.exp(-np.maximum(0, t_(d) - a) / r)
 
-# ───── 拟音 ─────
-def riso_drum(v=1.0):          # 进纸"唰" + 滚筒"咔嚓—咚"
+# ───── Foley ─────
+def riso_drum(v=1.0):          # paper feed "whoosh" + drum "click-clack—thunk"
     d = .7; x = np.zeros(int(d * SR))
     feed = bp(nz(.32), 1800, 7000) * np.linspace(0, 1, int(.32 * SR)) ** 1.5 * .35
     x[:len(feed)] += feed
@@ -78,7 +78,7 @@ def crunch(v=1.0):
     return x * .8 * v
 def peck(v=1.0):
     return (hp(nz(.012), 1500) * np.exp(-t_(.012) / .002) * .6) * v
-def paper_out(d=2.0, v=1.0):   # 印刷机出纸：马达嗡 + 滚轮 + 纸面摩擦
+def paper_out(d=2.0, v=1.0):   # printer paper out: motor hum + rollers + paper surface friction
     tt = t_(d); e = np.minimum(1, tt / .15) * np.minimum(1, (d - tt) / .2)
     motor = (np.sin(2 * np.pi * 100 * tt) * .3 + np.sin(2 * np.pi * 200 * tt) * .15) * (1 + .3 * np.sin(2 * np.pi * 7 * tt))
     rub = bp(nz(d), 1500, 6000) * .18 * (1 + .5 * np.sin(2 * np.pi * 13 * tt))
@@ -89,7 +89,7 @@ def whoosh_swell(v=1.0):
     d = 1.0; tt = t_(d); e = (tt / d) ** 2 * np.exp(-np.maximum(0, tt - .6) / .1)
     return bp(nz(d), 400, 3000) * e * .5 * v
 
-# ───── 环境 ─────
+# ───── Ambience ─────
 def birds(d, dens, v=1.0):
     out = np.zeros((int(d * SR), 2))
     for k in range(int(d * dens)):
@@ -104,7 +104,7 @@ def water(d, v=1.0):
     for k in range(int(d * 1.6)):
         s = int(rng.random() * (d - .4) * SR); lap[s:s + int(.35 * SR)] += bp(nz(.35), 300, 1400) * np.sin(np.pi * t_(.35) / .35) ** 2 * .6
     return (x * .25 + lap * .3) * v
-def ride(d, v=1.0):             # 轮胎压石板 + 链条
+def ride(d, v=1.0):             # tyres on flagstones + chain
     tt = t_(d); x = lp(nz(d), 260) * .35 + bp(nz(d), 2500, 6000) * .025 * (1 + np.sin(2 * np.pi * 5.5 * tt))
     return x * v
 
@@ -142,7 +142,7 @@ for e in EV:
         if y.ndim > 1: y = y.mean(1)
         y = soxr.resample(y, sr, SR); y = compress(y / (np.abs(y).max() + 1e-9) * .9, thr=.3, ratio=3); add(vo, y, t, .75, 0)
 
-# 配乐 + 旁白闪避（−8 dB，平滑）
+# score + narration ducking (−8 dB, smoothed)
 mus, msr = sf.read(os.path.join(D, 'music', 'score.wav'))
 if msr != SR: mus = soxr.resample(mus, msr, SR)
 mus = mus[:N]; mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
@@ -153,7 +153,7 @@ duck = 1 - act * (1 - 10 ** (-8 / 20))
 mix = mus * duck[:, None] * .95 + fx * .8 + vo
 for c in range(2): mix[:, c] = limit(mix[:, c], .95)
 sf.write(os.path.join(D, 'mix.wav'), mix.astype(np.float32), SR)
-# 电平表（每 2 秒）
+# level meter (every 2 seconds)
 for s in range(0, int(DUR), 2):
     a, b = s * SR, (s + 2) * SR
     r = lambda x: 20 * np.log10(np.sqrt((x[a:b] ** 2).mean()) + 1e-9)

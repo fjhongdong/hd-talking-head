@@ -1,36 +1,36 @@
-// 宣纸合成器（WebGL2）
-// 每个画面三张 2D 画布：wet（湿墨，晕开 + 边缘积墨 + 颗粒）、dry（干墨，纸纹咬边）、col（朱砂、绫裱等颜色层）。
-// 两套画面 A/B 用"墨晕"蒙版转场：新画面从一团正在扩散的墨里长出来，前沿有一圈深色水线。
+// Xuan-paper (宣纸, rice paper) compositor (WebGL2)
+// Each picture has three 2D canvases: wet (wet ink: bleed + jimo (积墨, ink pooling at the edges) + grain), dry (dry ink, edges bitten by the paper texture), col (colour layer for cinnabar, silk mounting, etc.).
+// The two pictures A/B transition through an "ink bloom" mask: the new picture grows out of a spreading blot of ink, with a ring of dark water-line at its front.
 const VS = `#version 300 es
 in vec2 p; void main(){ gl_Position = vec4(p,0,1); }`;
 const FS = `#version 300 es
 precision highp float; out vec4 o;
 uniform sampler2D wA, dA, cA, wB, dB, cB;
 uniform vec2 res;
-uniform vec3 paperX;           // 纸纹偏移(px) + 缩放
+uniform vec3 paperX;           // paper texture offset (px) + scale
 uniform vec3 paperXB;
-uniform vec2 bleed;            // A/B 晕染半径 px
-uniform vec2 rim;              // A/B 积边强度
-uniform vec4 trans;            // 转场：cx, cy, R(px), on
-uniform vec4 rev;              // A 画面的墨晕显现：cx, cy, R, on
+uniform vec2 bleed;            // A/B bleed radius px
+uniform vec2 rim;              // A/B edge pooling strength
+uniform vec4 trans;            // transition: cx, cy, R(px), on
+uniform vec4 rev;              // ink-bloom reveal of picture A: cx, cy, R, on
 uniform vec2 shake; uniform float flash, fade, vig, warm;
 uniform vec3 paperCol;
 float h21(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
 float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
   return mix(mix(h21(i), h21(i+vec2(1,0)), f.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), f.x), f.y); }
 float fbm(vec2 p){ float a = 0., w = .5; for(int i=0;i<5;i++){ a += w*vn(p); p = p*2.03 + 17.1; w *= .5; } return a; }
-// 纸：大块云纹 + 三个方向的长纤维 + 细颗粒
+// Paper: large cloud mottling + long fibres in three directions + fine grain
 float fiber(vec2 p, float ang){ float c = cos(ang), s = sin(ang); vec2 q = vec2(c*p.x + s*p.y, -s*p.x + c*p.y);
   float n = vn(vec2(q.x*.018, q.y*.9)); return smoothstep(.78, .95, n); }
 vec3 paper(vec2 fc, vec3 X){
   vec2 p = (fc + X.xy) / X.z;
-  float fine = clamp(X.z*1.2, 0., 1.);                 // 缩小时淡出细纹，防闪烁
+  float fine = clamp(X.z*1.2, 0., 1.);                 // fade out the fine texture when zoomed out, to avoid flicker
   float cloud = fbm(p*.0028) - .5, cloud2 = fbm(p*.011 + 3.) - .5;
   float fb = fiber(p, .35) + fiber(p + 91., 2.1) * .8 + fiber(p*1.7 + 13., 1.2) * .6;
   float grain = vn(p*.9) - .5;
   vec3 c = paperCol * (1. + cloud*.07 + cloud2*.03*fine + grain*.035*fine);
   c += vec3(.018,.016,.012) * fb * fine;
-  c -= vec3(.012,.014,.018) * smoothstep(.65,.9, vn(p*.05 + 7.)) * fine;   // 纸浆暗斑
+  c -= vec3(.012,.014,.018) * smoothstep(.65,.9, vn(p*.05 + 7.)) * fine;   // dark pulp spots
   return c;
 }
 const vec2 PD[12] = vec2[](vec2(-.326,-.406), vec2(-.840,-.074), vec2(-.696,.457), vec2(-.203,.621), vec2(.962,-.195), vec2(.473,-.480),
@@ -41,7 +41,7 @@ float revealM(vec2 fc){
   float dn = d * (.7 + n) ;
   return 1. - smoothstep(rev.z*.92, rev.z, dn);
 }
-// 一套画面的墨色密度（0..1）与朱砂层
+// Ink density (0..1) and cinnabar layer of one picture
 float inkD(sampler2D W, sampler2D D, vec2 fc, float R, float rimK, vec3 X, bool isA){
   vec2 p = (fc + X.xy) / X.z;
   vec2 disp = vec2(fbm(p*.012), fbm(p*.012 + 31.)) - .5;
@@ -59,13 +59,13 @@ float inkD(sampler2D W, sampler2D D, vec2 fc, float R, float rimK, vec3 X, bool 
   float edge = max(0., a - b);
   float g1 = vn(p*.35), g2 = fbm(p*.06);
   float wet = mix(s0, a, .72) * (.86 + .22*g2) + edge * rimK * (.8 + .5*g1) + b * .10;
-  // 干墨：纤维抖动 + 纸纹咬边
+  // Dry ink: fibre jitter + edges bitten by the paper texture
   vec2 j = vec2(vn(p*.7), vn(p*.7 + 5.)) - .5;
   float dry = texture(D, (fc + j * 1.6) / res).a;
   if (isA && rev.w > .5) dry *= revealM(fc);
   float tooth = smoothstep(.62, .9, vn(p*.55 + 3.)) * .45;
   dry *= 1. - tooth * (1. - dry*.5);
-  // 显现前沿的积墨水线
+  // Pooled-ink water-line at the reveal front
   float front = 0.;
   if (isA && rev.w > .5) { float m = revealM(fc); front = m * (1. - smoothstep(.0, .6, m)) ; }
   return clamp(1. - (1. - clamp(wet,0.,1.)) * (1. - clamp(dry,0.,1.)), 0., 1.);
@@ -74,7 +74,7 @@ vec3 inkCol(float D){ return mix(vec3(.52,.55,.58), vec3(.075,.068,.062), smooth
 vec3 shade(vec3 pc, float D, vec4 col, vec2 fc, vec3 X){
   vec3 c = pc * mix(vec3(1.), inkCol(D), clamp(D*1.05, 0., 1.));
   vec2 p = (fc + X.xy) / X.z;
-  float sp = smoothstep(.2, .45, vn(p*.8 + 11.)) * .25 + .75;        // 印泥/颜料吃纸不匀
+  float sp = smoothstep(.2, .45, vn(p*.8 + 11.)) * .25 + .75;        // seal paste / pigment soaks into the paper unevenly
   c = mix(c, col.rgb * (pc / paperCol) , col.a * sp);
   return c;
 }
@@ -97,7 +97,7 @@ void main(){
     c = mix(c, cb, m);
     c *= 1. - band * .38 * smoothstep(0., 40., trans.z) * (1. - smoothstep(res.x*1.1, res.x*1.5, trans.z));
   }
-  // 暗角 + 旧纸暖调
+  // Vignette + warm tone of old paper
   vec2 uv = gl_FragCoord.xy / res - .5;
   c *= 1. - vig * dot(uv*vec2(1.,.9), uv*vec2(1.,.9)) * 1.2;
   c = mix(c, c * vec3(1.02, .99, .94), warm);
@@ -127,7 +127,7 @@ export function makeComp(canvas) {
   });
   const up = (i, cv) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, tex[i]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); };
   const W = canvas.width, H = canvas.height;
-  // A、B: {wet, dry, col} 画布；o: 参数
+  // A, B: {wet, dry, col} canvases; o: parameters
   return function composite(A, B, o = {}) {
     gl.viewport(0, 0, W, H);
     up(0, A.wet); up(1, A.dry); up(2, A.col);
@@ -148,7 +148,7 @@ export function makeComp(canvas) {
   };
 }
 
-// 一套三张画布
+// One picture's set of three canvases
 export function layerSet(W = 1920, H = 1080) {
   const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
   const wet = mk(), dry = mk(), col = mk();

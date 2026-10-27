@@ -1,5 +1,5 @@
-"""混音：配乐 + 人声（Tick 主持腔 / Dot 小声）+ 按画风材质合成的拟音 → mix.wav
-python styles/microgame/demo/mix.py（先跑 events.mjs 与 music/score.py）"""
+"""Mix: score + voices (Tick's host voice / Dot's small voice) + foley synthesised per look's material → mix.wav
+python styles/microgame/demo/mix.py(run events.mjs and music/score.py first)"""
 import sys, os, json, numpy as np, soundfile as sf, librosa
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, ROOT)
@@ -15,8 +15,8 @@ def sine(f, d, ph=0): return np.sin(2 * np.pi * np.cumsum(np.broadcast_to(f, len
 def env_ad(d, a=.005, tau=.1): x = env_exp(d, tau); n = int(a * SR); x[:n] *= np.linspace(0, 1, n) if n else 1; return x
 def nz(d): return rng.standard_normal(len(t_(d)))
 
-# ───────── 拟音库（按材质）─────────
-def sizzle(d, boss=False):     # 引线：带通噪声 + 随机噼啪
+# ───────── Foley library (by material)─────────
+def sizzle(d, boss=False):     # fuse: band-passed noise + random crackle
     x = bp(nz(d), 2500, 7000) * .25
     cr = (rng.random(len(x)) > (.9965 if boss else .998)).astype(float); cr = lp(cr * rng.standard_normal(len(x)), 6000) * 3
     e = np.minimum(1, t_(d) / .05) * np.minimum(1, (d - t_(d)) / .05)
@@ -26,7 +26,7 @@ def swoosh(d=.25, lo=300, hi=3000, up=True):
     for i in range(0, len(n), step):
         u = i / len(n); f = lo * (hi / lo) ** (u if up else 1 - u); s = bp(n[max(0, i - 1200):i + step], f * .7, min(f * 1.4, 20000))[-step:]; out[i:i + len(s)] = s
     return norm(out * np.sin(np.pi * tt / d) ** 1.5)
-def spring_click():            # 表冠：金属咔哒 + 弹簧余振
+def spring_click():            # crown: metallic click + spring ring-out
     d = .25; tt = t_(d)
     return norm(hp(nz(d), 3000) * env_exp(d, .002) + np.sin(2 * np.pi * 3100 * tt) * env_exp(d, .03) * .5 + np.sin(2 * np.pi * 870 * tt * (1 + .02 * np.sin(2 * np.pi * 40 * tt))) * env_exp(d, .08) * .35)
 def glass_crack():
@@ -132,7 +132,7 @@ def whirr(d):
 def reel_clunk(): return norm(thump(1, 90) * .8 + np.pad(clack(.9, 1), (0, len(thump(1, 90)) - len(clack(.9, 1)))))
 def tick_clock(): return click(2.0, .7)
 
-# ───────── 事件 → 拟音（增益、声像）─────────
+# ───────── Events → foley (gain, pan)─────────
 G = {'fuse': .045, 'ui': .5}
 for e in EV['ev']:
     t, ty = e['t'], e['type']
@@ -152,32 +152,32 @@ for e in EV['ev']:
     elif ty == 'reel_stop': add(fx, reel_clunk(), t, .55, (e['k'] - 2) * .6)
     elif ty == 'zoom_whoosh': add(fx, swoosh(.22, 400, 6000), t, .4)
     elif ty == 'tile_flip': add(fx, card_flip(), t, .18 if e.get('soft') else .3, -.7 + (e['k'] % 8) * .2)
-    # 蜡笔：橡胶、纸
+    # crayon: rubber, paper
     elif ty == 'pump': add(fx, rubber_squeak(500, 800, .15), t - .05, .25, .1); add(fx, air_pff(.28), t + .05, .35, .35); add(fx, crayon_scribble(.18), t, .06, -.2)
     elif ty == 'float_up': add(fx, rubber_squeak(700, 1600, .5), t, .22, .4)
-    # 水墨：宣纸、水
+    # ink wash: xuan paper, water
     elif ty == 'dust': add(fx, brush_swish(.6), t, .18, .5)
     elif ty == 'sneeze': add(fx, sneeze_burst(), t, .5)
     elif ty == 'ink_splat': add(fx, wet_splat(), t + .02, .6)
     elif ty == 'drip': [add(fx, drip(), t + k * .13, .2, -.4 + k * .2) for k in range(5)]
     elif ty == 'blink': add(fx, pop(.4), t, .25)
-    # ASCII：电传、继电器
+    # ASCII: teletype, relays
     elif ty == 'typing': add(fx, teletype(e['dur']), t, .35, .4)
     elif ty == 'ratchet': add(fx, ratchet(4), t, .45, -.3)
     elif ty == 'buckle': add(fx, metal_click(), t, .7, -.1)
-    # 孔版：纸、滚筒
+    # risograph: paper, drum
     elif ty == 'float_whoosh': add(fx, swoosh(1.2, 200, 900), t, .18)
     elif ty == 'grab': add(fx, paper_thump(), t, .55); add(fx, swoosh(.12, 2000, 6000), t, .2)
     elif ty == 'chomp': add(fx, crunch(), t, .6, .3)
-    # 像素
+    # pixel
     elif ty == 'jump': add(fx, blip_up(300, 900, .1), t, .25, -.4)
     elif ty == 'meteor': add(fx, bitcrush_noise(.35), t - .1, .3, .6)
     elif ty == 'graze': add(fx, bitcrush_noise(.15, 6), t, .25, -.3)
-    # 蓝图：铅笔、金属
+    # blueprint: pencil, metal
     elif ty == 'pencil': add(fx, pencil(.6), t, .2, -.3)
     elif ty == 'zip': add(fx, ratchet(3, .012), t, .45, (e['i'] - 2.5) * .08)
     elif ty == 'red_stamp': add(fx, stamp_thunk(), t, .7, .4)
-    # 瑞士：干净的物体
+    # Swiss: clean objects
     elif ty == 'swing': add(fx, air_swish(.28), t, .35, .3)
     elif ty == 'bonk': add(fx, hollow_bonk(), t, .7, .2)
     elif ty == 'bounce': add(fx, boing(420 - e['i'] * 80, .25), t, .35, -.2 - e['i'] * .2)
@@ -204,12 +204,12 @@ for e in EV['ev']:
     elif ty == 'tick_hand': add(fx, tick_clock(), t, .5, -.4)
     elif ty == 'rocket_pop': add(fx, rocket_pop(), t, .5, .5)
 
-# ───────── 人声 ─────────
+# ───────── Voices ─────────
 def load(id):
     y, sr = sf.read(os.path.join(D, 'voices', id + '.wav'))
     if y.ndim > 1: y = y.mean(1)
     return librosa.resample(y, orig_sr=sr, target_sr=SR)
-def room(x, rt=.35, wet=.12):   # 小舞台房间感
+def room(x, rt=.35, wet=.12):   # small-stage room sound
     n = int(rt * SR); ir = rng.standard_normal(n) * np.exp(-np.arange(n) / (rt * SR / 6.9)); ir = lp(ir, 5000); ir /= np.sqrt((ir ** 2).sum())
     return x + np.convolve(x, ir)[:len(x)] * wet
 for e in EV['ev']:
@@ -221,28 +221,28 @@ for e in EV['ev']:
         if e['id'].startswith('fx_choo'): g = 1.0
         y = compress(norm(y, .9), .3, 3) ; add(vo, room(y, .25, .08), e['t'], g * (1.25 if e['id'] == 'fx_choo2' else 1), .1)
     else:
-        y = hp(y, 90); y = y + bp(y, 2500, 5000) * .25   # 主持腔：提一点临场感
+        y = hp(y, 90); y = y + bp(y, 2500, 5000) * .25   # host voice: a little presence lift
         y = compress(norm(y, .9), .28, 4)
         add(vo, room(y, .4, .1 if L.get('cmd') else .14), e['t'] + (.1 if L.get('cmd') else 0), 1.7 if L.get('cmd') else (1.3 if e['id'] == 'l7' else 1.0), -.05)
 
-# ───────── 配乐 + 闪避 ─────────
+# ───────── Score + ducking ─────────
 mus, msr = sf.read(os.path.join(D, 'music', 'score.wav'))
 if msr != SR: mus = librosa.resample(mus.T, orig_sr=msr, target_sr=SR).T
 mus = mus[:N]; mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
 ve = np.abs(vo).max(1); from scipy.ndimage import maximum_filter1d, uniform_filter1d
 ve = uniform_filter1d(maximum_filter1d(ve, int(.12 * SR)), int(.08 * SR))
-duck = 1 - .72 * np.clip(ve / .12, 0, 1)                 # 最多约 −11 dB
-fduck = 1 - .5 * np.clip(ve / .12, 0, 1)                 # 拟音也让一让（约 −6 dB）
+duck = 1 - .72 * np.clip(ve / .12, 0, 1)                 # at most about −11 dB
+fduck = 1 - .5 * np.clip(ve / .12, 0, 1)                 # foley also steps back a little (about −6 dB)
 mix = mus * 1.35 * duck[:, None] + fx * fduck[:, None] + vo * 1.4
-# 总线：轻压 + 14 kHz 低通 + 限幅
+# bus: light compression + 14 kHz low-pass + limiter
 for c in range(2): mix[:, c] = lp(mix[:, c], 15000, 2)
 pk = np.abs(mix).max(); mix *= .95 / pk
 for c in range(2): mix[:, c] = limit(mix[:, c], .89)
-# 结尾 0.4s 淡出
+# 0.4s fade-out at the end
 n = int(.4 * SR); mix[-n:] *= np.linspace(1, 0, n)[:, None]
 sf.write(os.path.join(D, 'mix.wav'), mix.astype(np.float32), SR)
 print('mix.wav', round(len(mix) / SR, 3), 's  peak', round(float(np.abs(mix).max()), 3))
-# 审查用分轨（电平表）
+# stems for checking (level meters)
 os.makedirs(os.path.join(D, 'out', 'stems'), exist_ok=True)
 k = .95 / pk
 for nm, x in [('music', mus * 1.35 * duck[:, None] * k), ('fx', fx * fduck[:, None] * k), ("voice", vo * 1.4 * k)]: sf.write(os.path.join(D, 'out', 'stems', nm + '.wav'), x.astype(np.float32), SR)

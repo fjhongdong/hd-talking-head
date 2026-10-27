@@ -1,4 +1,4 @@
-"""成片 whisper 自检：从 mp4 抽音轨转写，逐句比对旁白与时间"""
+"""whisper self-check on the finished film: extract the audio track from the mp4, transcribe it, compare narration text and timing line by line"""
 import sys, json, re, subprocess, numpy as np, os
 from faster_whisper import WhisperModel
 H = os.path.dirname(os.path.abspath(__file__)); mp4 = sys.argv[1]

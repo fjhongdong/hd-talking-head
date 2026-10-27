@@ -15,7 +15,7 @@
 <body>
 <svg id="stage" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- 线条抖动（逐 0.1s 换种子）+ 油墨颗粒 -->
+    <!-- line boil (new seed every 0.1s) + ink grain -->
     <filter id="boil" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence id="boilT" type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="1" result="w"/>
       <feDisplacementMap in="SourceGraphic" in2="w" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
@@ -50,7 +50,7 @@
 
 <script>
 // ============================================================
-// 基础工具
+// basic utilities
 // ============================================================
 const NS = 'http://www.w3.org/2000/svg';
 const C = {
@@ -93,7 +93,7 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 const mctx = document.createElement('canvas').getContext('2d');
 function measure(str, size, family, weight = 900) { mctx.font = `${weight} ${size}px ${family}`; return mctx.measureText(str).width; }
 
-// 逐字文字（可做逐字弹入），可选错版阴影
+// per-character text (can pop in char by char), optional misregistration shadow
 function chars(parent, str, o) {
   const { x, y, size, family, weight = 900, fill = C.navy, anchor = 'start', ls = 0, shadow, stroke, sw = 0 } = o;
   const g = el('g', {}, parent);
@@ -114,7 +114,7 @@ function chars(parent, str, o) {
   });
   return { g, items, total };
 }
-// 逐字动画：弹入（从下方挤压回弹）
+// per-character animation: pop in (squash-and-rebound from below)
 function charsPop(c, t, t0, stagger = 0.05, d = 0.38, from = 60) {
   c.items.forEach((it, i) => {
     const s = t0 + i * stagger;
@@ -131,7 +131,7 @@ function charsIdle(c, t, amp = 4, spd = 3) {
   c.items.forEach((it, i) => tf(it.g, it.x, it.y + Math.sin(t * spd + i * 0.8) * amp));
 }
 
-// 半调网点：f(x,y) → 0..1 网点大小
+// halftone dots: f(x,y) → 0..1 dot size
 function halftone(parent, { x0 = 0, y0 = 0, w = 1920, h = 1080, step = 22, angle = 15, color, f, maxK = 0.62 }) {
   const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
   const n = Math.ceil(Math.hypot(w, h) / step / 2) + 2;
@@ -151,7 +151,7 @@ const edge = (R = 900, pw = 1.6) => (x, y) => Math.pow(clamp(Math.hypot(x - 960,
 
 function bg(parent, color) { return el('rect', { width: 1920, height: 1080, fill: color }, parent); }
 
-// 字幕条
+// subtitle bar
 function caption(parent, parts, { x = 960, y = 980, size = 46 } = {}) {
   const g = el('g', {}, parent);
   const inner = el('g', {}, g);
@@ -170,7 +170,7 @@ function captionAnim(c, t, t0) {
   tf(c.g, c.x, c.y + 40 * (1 - E.out(p)), lerp(0.8, 1, E.back(p)), -1.2 * (1 - p) - 0.6);
 }
 
-// 印章
+// stamp
 function stampEl(parent, str, { size = 200, color = C.red, family = F.sans, padX = 50, padY = 26, border = 12 } = {}) {
   const g = el('g', {}, parent);
   const inner = el('g', { filter: 'url(#stampInk)' }, g);
@@ -194,9 +194,9 @@ function heartPath(s = 1) {
 }
 
 // ============================================================
-// 猫（胖橘）
+// cat (胖橘, "Fat Orange")
 // ============================================================
-const LW = 7; // 描边
+const LW = 7; // outline
 function catHead(parent) {
   const g = el('g', {}, parent);
   const S = { stroke: C.navy, 'stroke-width': LW, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
@@ -235,7 +235,7 @@ function catHead(parent) {
   setFace(cat, {});
   return cat;
 }
-// open: 0..1 睁眼程度；look: 瞳孔偏移；mouthOpen；earL/earR 旋转角
+// open: 0..1 how open the eyes are; look: pupil offset; mouthOpen; earL/earR rotation angles
 function setFace(cat, { open = 1, lookX = 0, lookY = 0, mouthOpen = false, earL = 0, earR = 0, happy = false }) {
   for (const e of [cat.eyeL, cat.eyeR]) {
     const o = happy ? 0 : open;
@@ -260,7 +260,7 @@ function tailEl(parent, d, width = 34) {
   el('path', { d, fill: 'none', stroke: C.ored, 'stroke-width': width, 'stroke-linecap': 'butt', 'stroke-dasharray': '10 34', 'stroke-dashoffset': -20 }, g);
   return g;
 }
-// 正面坐姿
+// front-facing sitting pose
 function catSit(parent) {
   const g = el('g', { filter: 'url(#boil)' }, parent);
   const tail = tailEl(g, 'M 0 0 C 90 0 150 -50 132 -150');
@@ -279,7 +279,7 @@ function catSit(parent) {
   const head = catHead(headWrap);
   return { g, tail, body, paws, headWrap, head };
 }
-// 侧面跑姿（原点：身体中心；朝右）
+// side running pose (origin: body centre; facing right)
 function catRun(parent) {
   const g = el('g', {}, parent);
   const inner = el('g', { filter: 'url(#boil)' }, g);
@@ -308,7 +308,7 @@ function runCycle(c, t, speed = 14, amp = 38) {
   });
   c.tail.setAttribute('transform', `translate(-140 -10) rotate(${Math.sin(t * speed * 0.5) * 12})`);
 }
-// 趴姿（踩键盘后）：原点身体底部中心
+// lying pose (after walking on the keyboard): origin at the bottom centre of the body
 function catLoaf(parent) {
   const g = el('g', {}, parent);
   const inner = el('g', { filter: 'url(#boil)' }, g);
@@ -322,7 +322,7 @@ function catLoaf(parent) {
   tf(headWrap, -110, -150, 0.86);
   return { g, inner, tail, headWrap, head };
 }
-// 蜷睡（原点：身体中心）
+// curled-up sleep (origin: body centre)
 function catCurl(parent) {
   const g = el('g', {}, parent);
   const inner = el('g', { filter: 'url(#boil)' }, g);
@@ -337,7 +337,7 @@ function catCurl(parent) {
 }
 
 // ============================================================
-// 舞台
+// stage
 // ============================================================
 const world = document.getElementById('world');
 const cam = document.getElementById('cam');
@@ -355,7 +355,7 @@ function scene(t0, t1, build) {
 }
 
 function buildAll() {
-  // ---------------- S1 标题 0–2 ----------------
+  // ---------------- S1 title 0–2 ----------------
   scene(0, 2, (g) => {
     bg(g, C.blue);
     halftone(g, { color: C.navy, step: 24, angle: 20, f: edge(820, 1.4), maxK: 0.7 });
@@ -387,7 +387,7 @@ function buildAll() {
         const h = 0;
         it.g.setAttribute('transform', `translate(${it.x} ${y + Math.sin(t * 5 + i) * (t > 1.4 ? 3 : 0)}) scale(${(1 / sq).toFixed(3)} ${sq.toFixed(3)})`);
       });
-      // 猫头从字母后面探出
+      // cat head peeks out from behind the letters
       const ph = seg(t, 1.45, 1.8);
       const hy = lerp(760, 470, E.back(ph));
       tf(headG, 960, hy, 1.45, Math.sin(t * 3) * 3);
@@ -402,7 +402,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S2 为什么…惯犯 2–4 ----------------
+  // ---------------- S2 "why… repeat offender" (为什么…惯犯) 2–4 ----------------
   scene(2, 4, (g) => {
     bg(g, C.paper);
     halftone(g, { color: C.yellow, step: 22, angle: 15, f: radial(1500, 520, 700, 1.0), maxK: 0.68 });
@@ -412,7 +412,7 @@ function buildAll() {
     const l3 = chars(g, '是个', { x: 170, y: 790, size: 110, family: F.serif, fill: C.navy });
     const st = stampEl(g, '惯犯', { size: 210, color: C.red });
     const sub = chars(g, '—— 第 2026-CAT-001 号起诉书', { x: 175, y: 920, size: 40, family: F.cute, weight: 400, fill: C.navy });
-    // 一串小脚印
+    // a trail of little paw prints
     const prints = [];
     for (let i = 0; i < 6; i++) {
       const p = el('g', { fill: C.navy, opacity: 0.85 }, g);
@@ -434,7 +434,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S3 嫌疑人档案照 4–8 ----------------
+  // ---------------- S3 suspect mugshot (嫌疑人档案照) 4–8 ----------------
   scene(4, 8, (g) => {
     bg(g, C.paper);
     const cm = el('g', {}, g);
@@ -449,7 +449,7 @@ function buildAll() {
     txt(cm, 'cm', { x: 1810, y: 145, 'font-size': 22, 'font-family': F.mono, 'font-weight': 500, fill: C.navy, opacity: .6 });
     const halo = halftone(g, { color: C.blue, step: 22, angle: 30, f: radial(960, 560, 560, 0.9), maxK: 0.66 });
     halo.setAttribute('class', 'mul');
-    // 右侧档案
+    // right-hand file
     const info = el('g', {}, g);
     txt(info, '嫌疑人档案 · PROFILE', { x: 1330, y: 330, 'font-size': 26, 'font-family': F.mono, 'font-weight': 800, fill: C.pink });
     txt(info, 'Pang Ju', { x: 1330, y: 400, 'font-size': 58, 'font-family': F.serif, 'font-weight': 900, fill: C.navy });
@@ -462,7 +462,7 @@ function buildAll() {
     txt(infoL, '次 · 均未悔改', { x: 234, y: 500, 'font-size': 34, 'font-family': F.sans, 'font-weight': 900, fill: C.navy });
     const catG = el('g', {}, g);
     const cat = catSit(catG);
-    // 号牌
+    // placard
     const plate = el('g', {}, g);
     el('rect', { x: -250, y: -84, width: 500, height: 168, rx: 10, fill: C.navy }, plate);
     txt(plate, 'PANG JU, O.', { x: 0, y: -18, 'font-size': 56, 'font-family': F.mono, 'font-weight': 800, fill: C.cream, 'text-anchor': 'middle' });
@@ -489,7 +489,7 @@ function buildAll() {
       tf(platePaws, 960, lerp(1400, 780, E.back(seg(t, 4.25, 4.65))));
       op(info, seg(t, 4.5, 4.8)); tf(info, 30 * (1 - E.out(seg(t, 4.5, 4.8))), 0);
       op(infoL, seg(t, 4.6, 4.9)); tf(infoL, -30 * (1 - E.out(seg(t, 4.6, 4.9))), 0);
-      // 闪光后眯眼
+      // squints after the flash
       const squint = (t > 5 && t < 5.35) || (t > 6 && t < 6.35);
       const slow = seg(t, 6.45, 6.75) - seg(t, 6.95, 7.2);
       const open = squint ? 0.1 : Math.min(1 - slow, blinkAt(t, [4.9, 7.6]));
@@ -507,7 +507,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S4 罪状01 测试重力 8–12 ----------------
+  // ---------------- S4 charge 01 "testing gravity" (罪状01 测试重力) 8–12 ----------------
   scene(8, 12, (g) => {
     bg(g, C.paper);
     const big = el('g', {}, g);
@@ -522,13 +522,13 @@ function buildAll() {
     const counter = el('g', {}, g);
     txt(counter, '今日次数', { x: 0, y: 0, 'font-size': 28, 'font-family': F.mono, 'font-weight': 800, fill: C.pink });
     const cnt = txt(counter, '16', { x: 0, y: 92, 'font-size': 100, 'font-family': F.bagel, fill: C.navy });
-    // 猫（在桌后）
+    // cat (behind the table)
     const catG = el('g', {}, g);
     const catIn = el('g', { filter: 'url(#boil)' }, catG);
     el('path', { d: 'M -150 150 C -160 110 -110 60 0 60 C 110 60 160 110 150 150 Z', fill: C.orange, stroke: C.navy, 'stroke-width': LW }, catIn);
     const headWrap = el('g', {}, catIn);
     const catHd = catHead(headWrap);
-    // 前爪（手臂）
+    // front paw (arm)
     const arm = el('g', { filter: 'url(#boil)' }, g);
     const armOut = el('line', { x1: 0, y1: 0, x2: -100, y2: 0, stroke: C.navy, 'stroke-width': 50 + LW * 2, 'stroke-linecap': 'round' }, arm);
     const armIn = el('line', { x1: 0, y1: 0, x2: -100, y2: 0, stroke: C.orange, 'stroke-width': 50, 'stroke-linecap': 'round' }, arm);
@@ -536,14 +536,14 @@ function buildAll() {
     el('ellipse', { cx: 0, cy: 0, rx: 34, ry: 30, fill: C.cream, stroke: C.navy, 'stroke-width': LW }, paw);
     el('ellipse', { cx: -8, cy: 4, rx: 11, ry: 9, fill: C.pink }, paw);
     for (const [x, y] of [[-22, -12], [-6, -19], [10, -16]]) el('circle', { cx: x, cy: y, r: 5, fill: C.pink }, paw);
-    // 桌子
+    // table
     const table = el('g', {}, g);
     el('rect', { x: 560, y: 700, width: 1500, height: 46, fill: C.blue, stroke: C.navy, 'stroke-width': LW }, table);
     const tH = el('g', { 'clip-path': 'url(#tclip)' }, table);
     const tc = el('clipPath', { id: 'tclip' }, g); el('rect', { x: 560, y: 700, width: 1500, height: 46 }, tc);
     halftone(tH, { x0: 560, y0: 700, w: 1500, h: 46, color: C.navy, step: 12, angle: 45, f: () => 0.5, maxK: 0.5 });
     el('rect', { x: 600, y: 746, width: 40, height: 400, fill: C.navy }, table);
-    // 杯子
+    // cup
     const cup = el('g', {}, g);
     const cupIn = el('g', { filter: 'url(#boil)' }, cup);
     el('path', { d: 'M 58 -96 C 108 -96 108 -30 56 -30', fill: 'none', stroke: C.navy, 'stroke-width': 30, 'stroke-linecap': 'round' }, cupIn);
@@ -552,7 +552,7 @@ function buildAll() {
     el('path', { d: 'M -60 -110 L 60 -110', stroke: C.pink, 'stroke-width': 10 }, cupIn);
     el('path', { d: heartPath(0.62), fill: C.pink, transform: 'translate(0 -56)' }, cupIn);
     const steam = el('path', { d: 'M -20 -150 q 12 -18 0 -36 q -12 -18 0 -36 M 20 -150 q 12 -18 0 -36 q -12 -18 0 -36', fill: 'none', stroke: C.navy, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .5 }, cup);
-    // 碎片
+    // shards
     const r = rng(42);
     const shards = [];
     for (let i = 0; i < 9; i++) {
@@ -574,14 +574,14 @@ function buildAll() {
       if (t >= 11.0) cnt.setAttribute('fill', C.red);
       const cscale = t >= 11.0 ? 1 + 0.4 * Math.exp(-(t - 11) * 8) : 1;
       cnt.setAttribute('transform', `translate(40 60) scale(${cscale}) translate(-40 -60)`);
-      // 桌子与猫入场
+      // table and cat enter
       tf(table, 0, 300 * (1 - E.out(seg(t, 8.0, 8.35))));
       const cy = lerp(900, 560, E.back(seg(t, 8.15, 8.55)));
       tf(catG, 1400, cy, 1.05);
       tf(headWrap, 0, 0, 1, -8 + Math.sin(t * 2) * 2);
-      const look = t > 10.0 && t < 10.5; // 盯镜头
+      const look = t > 10.0 && t < 10.5; // stares into the lens
       setFace(catHd, { open: look ? 1 : blinkAt(t, [9.7, 11.5]), lookX: look ? 0 : -9, lookY: look ? 4 : 2, earL: look ? -10 : 0, earR: look ? -10 : 0, happy: t > 11.1 });
-      // 杯子位置：两次试探 + 最后一推
+      // cup position: two test nudges + the final push
       let cx = 850;
       cx -= 45 * E.back(seg(t, 9.0, 9.15));
       cx -= 45 * E.back(seg(t, 9.5, 9.65));
@@ -596,7 +596,7 @@ function buildAll() {
       show(cup, !broken);
       tf(cup, cx, Math.min(cyy, 1080), 1, rot);
       op(steam, 0.5); steam.setAttribute('transform', `translate(0 ${-((t * 30) % 12)})`);
-      // 手臂长度跟随杯子
+      // arm length follows the cup
       const reach = t < 8.6 ? 0 : E.out(seg(t, 8.6, 8.95));
       const target = Math.max(cx + 95, 580);
       const retract = seg(t, 10.75, 11.2);
@@ -605,7 +605,7 @@ function buildAll() {
       armOut.setAttribute('x2', px - ax); armIn.setAttribute('x2', px - ax);
       tf(arm, ax, ay); tf(paw, px - ax, 0, 1, 0);
       op(arm, reach > 0 ? 1 : 0);
-      // 碎裂
+      // shatter
       shards.forEach((s, i) => {
         if (!broken) { op(s.el, 0); return; }
         const tt = t - 11.0;
@@ -624,7 +624,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S5 罪状02 凌晨四点跑酷 12–16 ----------------
+  // ---------------- S5 charge 02 "4 a.m. parkour" (罪状02 凌晨四点跑酷) 12–16 ----------------
   scene(12, 16, (g) => {
     bg(g, C.night);
     halftone(g, { color: C.night2, step: 24, angle: 20, f: edge(700, 1.1), maxK: 0.72 });
@@ -637,11 +637,11 @@ function buildAll() {
       stars.push({ el: s, ph: r() * 6, sp: 1 + r() * 3 });
     }
     const h1 = chars(g, '凌晨四点跑酷', { x: 120, y: 330, size: 120, family: F.serif, fill: C.cream, shadow: { fill: C.pink, dx: 8, dy: 8 } });
-    // 电子钟
+    // digital clock
     const clock = el('g', {}, g);
     el('rect', { x: -170, y: -80, width: 340, height: 160, rx: 22, fill: '#0F142C', stroke: C.cream, 'stroke-width': 6 }, clock);
     const cl = txt(clock, '04:00', { x: 0, y: 40, 'font-size': 110, 'font-family': F.mono, 'font-weight': 800, fill: C.pink, 'text-anchor': 'middle' });
-    // 床与主人
+    // bed and owner
     const bed = el('g', {}, g);
     el('rect', { x: 1030, y: 800, width: 700, height: 90, rx: 10, fill: C.night2, stroke: C.cream, 'stroke-width': 6 }, bed);
     el('rect', { x: 1680, y: 620, width: 60, height: 300, rx: 12, fill: C.night2, stroke: C.cream, 'stroke-width': 6 }, bed);
@@ -656,7 +656,7 @@ function buildAll() {
     const zz = el('g', {}, g);
     const zs = ['Z', 'z', 'z'].map((s, i) => txt(zz, s, { x: 0, y: 0, 'font-size': 60 - i * 12, 'font-family': F.bagel, fill: C.cream }));
     const shock = txt(g, '!?', { x: 1650, y: 640, 'font-size': 110, 'font-family': F.bagel, fill: C.yellow, 'text-anchor': 'middle' });
-    // 跑酷猫 + 速度线
+    // parkour cat + speed lines
     const speed = el('g', { stroke: C.cream, 'stroke-width': 8, 'stroke-linecap': 'round', opacity: .8 }, g);
     const lines = [0, 1, 2, 3].map(i => el('line', { x1: 0, y1: 0, x2: -200, y2: 0 }, speed));
     const runG = el('g', {}, g);
@@ -678,7 +678,7 @@ function buildAll() {
         op(z, awake ? 0 : Math.sin(p * Math.PI));
         tf(z, 1630 + p * 60 + Math.sin(p * 6) * 10, 680 - p * 160, 1, -10);
       });
-      // 路线：13.0 左→右，14.0 右→左，15.0 跳过床
+      // route: 13.0 left→right, 14.0 right→left, 15.0 jumps over the bed
       let x = -400, y = 800, dir = 1, rot = 0, sx = 1, vis = false, fast = 0;
       if (t >= 12.95 && t < 13.7) { const p = seg(t, 13.0, 13.6); x = lerp(-350, 2300, E.io(p)); dir = 1; vis = true; fast = Math.sin(p * Math.PI); }
       else if (t >= 13.95 && t < 14.7) { const p = seg(t, 14.0, 14.6); x = lerp(2300, -350, E.io(p)); dir = -1; vis = true; fast = Math.sin(p * Math.PI); }
@@ -703,7 +703,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S6 罪状03 代写周报 16–20 ----------------
+  // ---------------- S6 charge 03 "ghost-writing the weekly report" (罪状03 代写周报) 16–20 ----------------
   scene(16, 20, (g) => {
     bg(g, C.paper);
     const big = el('g', {}, g);
@@ -714,7 +714,7 @@ function buildAll() {
     halftone(bh, { color: C.pink, step: 20, angle: 25, f: (x, y) => 0.2 + 0.7 * clamp((y - 200) / 600), maxK: 0.7 });
     halftone(g, { color: C.blue, step: 22, angle: 60, f: radial(0, 1080, 520, 1.2), maxK: 0.6 }).setAttribute('class', 'mul');
     const h1 = chars(g, '代写周报', { x: 120, y: 330, size: 150, family: F.serif, fill: C.navy, shadow: { fill: C.pink, dx: 8, dy: 8 } });
-    // 笔记本电脑
+    // laptop
     const lap = el('g', {}, g);
     el('rect', { x: 660, y: 300, width: 860, height: 500, rx: 26, fill: C.navy }, lap);
     el('rect', { x: 690, y: 330, width: 800, height: 440, rx: 10, fill: C.cream }, lap);
@@ -731,7 +731,7 @@ function buildAll() {
     el('rect', { x: -95, y: -80, width: 190, height: 160, fill: C.yellow, stroke: C.navy, 'stroke-width': 5 }, sticky);
     txt(sticky, '18:00', { x: 0, y: -6, 'font-size': 52, 'font-family': F.bagel, fill: C.navy, 'text-anchor': 'middle' });
     txt(sticky, '必须交！', { x: 0, y: 52, 'font-size': 38, 'font-family': F.cute, fill: C.red, 'text-anchor': 'middle' });
-    // 猫：先走进来，再趴下
+    // cat: walks in first, then lies down
     const walkG = el('g', {}, g);
     const walk = catRun(walkG);
     const loafG = el('g', {}, g);
@@ -746,7 +746,7 @@ function buildAll() {
       op(big, seg(t, 16, 16.25));
       tf(lap, 0, 400 * (1 - E.out(seg(t, 16.0, 16.4))));
       tf(sticky, 1545, 330 + 400 * (1 - E.back(seg(t, 16.3, 16.65))), 1, 8 + Math.sin(t * 3) * 1.5);
-      // 走进来
+      // walks in
       const walking = t < 17.45;
       op(walkG, walking && t > 16.3 ? 1 : 0); op(loafG, walking ? 0 : 1);
       const wx = lerp(2200, 1300, E.out(seg(t, 16.4, 17.3)));
@@ -754,7 +754,7 @@ function buildAll() {
       walk.g.setAttribute('transform', 'scale(-1 1)');
       runCycle(walk, t, 16, 30);
       setFace(walk.head, { open: blinkAt(t, [16.9]), lookX: -4 });
-      // 扑通趴下（挤压回弹）
+      // flops down (squash and rebound)
       const a = Math.max(0, t - 17.45);
       const sq = 1 - 0.3 * Math.exp(-a * 7) * Math.cos(a * 22);
       const breathe = 1 + 0.018 * Math.sin(t * 4);
@@ -762,7 +762,7 @@ function buildAll() {
       loaf.g.setAttribute('transform', `scale(${(1 / sq).toFixed(3)} ${(sq * breathe).toFixed(3)})`);
       loaf.tail.setAttribute('transform', `rotate(${Math.sin(t * 3) * 4} 196 -30)`);
       setFace(loaf.head, { happy: t > 17.8, open: 1, earL: Math.sin(t * 7) > 0.95 ? 14 : 0 });
-      // 乱码输入
+      // gibberish typing
       const n = t < 17.6 ? 0 : Math.min(66, Math.floor((t - 17.6) * 42));
       const s = garbage.slice(0, n);
       let last = 0;
@@ -781,7 +781,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S7 综上所述 20–22 ----------------
+  // ---------------- S7 "in summary" (综上所述) 20–22 ----------------
   scene(20, 22, (g) => {
     bg(g, C.paper);
     halftone(g, { color: C.blue, step: 24, angle: 20, f: edge(760, 1.3), maxK: 0.7 }).setAttribute('class', 'mul');
@@ -818,7 +818,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S8 结论：无罪释放 22–24 ----------------
+  // ---------------- S8 verdict: "acquitted" (结论：无罪释放) 22–24 ----------------
   scene(22, 24, (g) => {
     bg(g, C.night);
     halftone(g, { color: C.night2, step: 26, angle: 20, f: edge(700, 1.1), maxK: 0.72 });
@@ -848,7 +848,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S9 理由：太可爱了 24–26 ----------------
+  // ---------------- S9 reason: "too cute" (理由：太可爱了) 24–26 ----------------
   scene(24, 26, (g) => {
     bg(g, C.pink);
     halftone(g, { color: C.yellow, step: 24, angle: 30, f: radial(960, 1080, 900, 0.8), maxK: 0.64 });
@@ -881,7 +881,7 @@ function buildAll() {
     };
   });
 
-  // ---------------- S10 结案 26–30 ----------------
+  // ---------------- S10 case closed (结案) 26–30 ----------------
   scene(26, 30, (g) => {
     bg(g, C.paper);
     halftone(g, { color: C.blue, step: 22, angle: 20, f: radial(1920, 1080, 700, 1.2), maxK: 0.64 }).setAttribute('class', 'mul');
@@ -907,7 +907,7 @@ function buildAll() {
     l2.innerHTML = '胖橘表示：<tspan fill="#E8384F">全程没有配合。</tspan>';
     const meow = el('g', {}, g);
     txt(meow, '喵', { x: 0, y: 0, 'font-size': 64, 'font-family': F.cute, fill: C.pink, 'text-anchor': 'middle', stroke: C.navy, 'stroke-width': 8, 'paint-order': 'stroke' });
-    // 片尾署名（2026-09-26 补）
+    // end credit line
     const credit = txt(g, 'LemoLab × Claude Opus 5.5', { x: 960, y: 1040, 'font-size': 30, 'font-family': F.mono, 'font-weight': 800, fill: C.navy, 'text-anchor': 'middle', 'letter-spacing': 3 });
     return (t) => {
       op(credit, seg(t, 27.6, 27.9)); tf(credit, 0, 12 * (1 - E.out(seg(t, 27.6, 27.9))));
@@ -966,7 +966,7 @@ function buildAll() {
     op(rec, Math.floor(t * 2) % 2 ? 0.25 : 1);
   };
 
-  // ---------------- 网点转场 ----------------
+  // ---------------- halftone-dot transition ----------------
   const dotsG = el('g', {}, wipe);
   const wipeDots = [];
   for (let y = 0; y <= 1080 + 80; y += 80) for (let x = 0; x <= 1920 + 80; x += 80) {
@@ -990,13 +990,13 @@ function buildAll() {
 let hudUpdate = () => {}, wipeUpdate = () => {};
 
 // ============================================================
-// 纸张 & 颗粒
+// paper & grain
 // ============================================================
 function buildPaper() {
   const cv = document.getElementById('paper'), ctx = cv.getContext('2d');
   const img = ctx.createImageData(1920, 1080);
   const r = rng(3);
-  // 低频斑驳
+  // low-frequency mottling
   const small = document.createElement('canvas'); small.width = 96; small.height = 54;
   const sctx = small.getContext('2d'); const sim = sctx.createImageData(96, 54);
   for (let i = 0; i < sim.data.length; i += 4) { const v = 242 + r() * 13; sim.data[i] = sim.data[i + 1] = sim.data[i + 2] = v; sim.data[i + 3] = 255; }
@@ -1010,11 +1010,11 @@ function buildPaper() {
     base.data[i + 2] = clamp(base.data[i + 2] + n - 4, 0, 255);
   }
   ctx.putImageData(base, 0, 0);
-  // 暗角
+  // vignette
   const gr = ctx.createRadialGradient(960, 540, 400, 960, 540, 1150);
   gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(120,100,80,0.35)');
   ctx.fillStyle = gr; ctx.fillRect(0, 0, 1920, 1080);
-  // 折痕
+  // fold creases
   ctx.strokeStyle = 'rgba(140,120,100,0.18)'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(960, 0); ctx.lineTo(962, 1080); ctx.stroke();
 }
@@ -1032,7 +1032,7 @@ function drawFx(frame) {
 }
 
 // ============================================================
-// 渲染
+// render
 // ============================================================
 const SHAKES = [[3.0, 16, 0.3], [11.0, 14, 0.3], [17.45, 7, 0.25], [23.0, 26, 0.45], [26.8, 6, 0.2], [15.5, 5, 0.2]];
 const boilT = document.getElementById('boilT');
@@ -1044,7 +1044,7 @@ function render(t) {
     show(s.g, on);
     if (on) s.update(t);
   }
-  // 镜头：震动 + 鼓点脉冲
+  // camera: shake + drum-hit pulse
   let dx = 0, dy = 0;
   for (const [t0, a, d] of SHAKES) {
     if (t >= t0 && t < t0 + d) { const k = 1 - (t - t0) / d; dx += a * k * k * Math.sin(t * 91 + t0); dy += a * k * k * Math.cos(t * 77 + t0 * 3); }
@@ -1052,7 +1052,7 @@ function render(t) {
   const inGroove = (t < 12) || (t >= 16 && t < 20) || (t >= 23 && t < 26);
   const pulse = inGroove ? 1 + 0.006 * Math.exp(-((t % 0.5) / 0.07)) : 1;
   cam.setAttribute('transform', `translate(${(dx + 960 * (1 - pulse)).toFixed(2)} ${(dy + 540 * (1 - pulse)).toFixed(2)}) scale(${pulse.toFixed(4)})`);
-  // 闪光灯
+  // camera flash
   let fl = 0;
   for (const f of [5.0, 6.0]) if (t >= f && t < f + 0.3) fl = Math.max(fl, 0.95 * Math.pow(1 - (t - f) / 0.3, 2));
   if (t >= 23.0 && t < 23.12) fl = Math.max(fl, 0.5 * (1 - (t - 23) / 0.12));
@@ -1064,7 +1064,7 @@ function render(t) {
 }
 
 async function init() {
-  // 预加载所有用到的字形（Google Fonts 按 unicode-range 分片）
+  // preload every glyph used (Google Fonts splits by unicode-range)
   const all = document.documentElement.innerHTML;
   const fams = ['900 50px "Noto Serif SC"', '400 50px "ZCOOL KuaiLe"', '400 50px "Bagel Fat One"', '800 50px "JetBrains Mono"', '500 50px "JetBrains Mono"', '900 50px "Noto Sans SC"', '500 50px "Noto Sans SC"'];
   const sample = all.replace(/[\x00-\x2f]/g, '') + 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:：。，！？～·—';
@@ -1072,7 +1072,7 @@ async function init() {
   await document.fonts.ready;
   buildPaper();
   buildAll();
-  // 第二轮：确保动态文本字形也已加载
+  // second pass: make sure glyphs for dynamic text are loaded too
   const all2 = document.getElementById('stage').textContent;
   await Promise.all(fams.map(f => document.fonts.load(f, all2)));
   await document.fonts.ready;

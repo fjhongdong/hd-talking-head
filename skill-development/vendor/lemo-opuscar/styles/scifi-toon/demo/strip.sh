@@ -1,5 +1,5 @@
 #!/bin/sh
-# 连续帧条：sh strip.sh <name> <t0> <n> [fps] → out/<name>.jpg（n 帧，4 列）
+# Consecutive-frame strip: sh strip.sh <name> <t0> <n> [fps] → out/<name>.jpg (n frames, 4 columns)
 cd "$(dirname "$0")/../../.."
 N="$1"; A="$2"; K="$3"; F="${4:-24}"
 D=styles/scifi-toon/demo/out/strip_$N; rm -rf "$D"; mkdir -p "$D"

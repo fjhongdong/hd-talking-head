@@ -29,7 +29,7 @@ Not low-poly 3D (no perspective, no lighting beyond three face tones), not a fla
 - **Colour codes meaning**, the way a legend does: one hue per material or role (water is always the same blue, the subject always its hue). Never reuse a hue for two meanings.
 - **The subject's hue is reserved**: when the story needs "this one", everything else desaturates toward warm grey and only the subject keeps its colour (focus + context).
 - Stations that must be found in a wide shot get a pale plate with a dashed ink outline plus one accent hue.
-- Examples: a coffee supply chain — coffee red, leaf green, sea blue, soil, mustard on cream; a hospital — teal, coral, lavender, steel grey on pale grey; a data centre — electric blue, amber, graphite, mint on off-white.
+- Examples: a recycling chain — bottle green, kraft brown, can silver-blue, compost umber, mustard on cream; a hospital — teal, coral, lavender, steel grey on pale grey; a data centre — electric blue, amber, graphite, mint on off-white.
 
 ## 4. Type & subtitles
 

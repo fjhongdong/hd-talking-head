@@ -1,11 +1,11 @@
-// 整机渲染限流（可选）：同一时间最多 RENDER_SLOTS 个整片渲染；已有渲染在跑、且空闲内存低于 RENDER_MIN_FREE%（默认 30）时排队。
-// 只有设了 RENDER_SLOTS 时 video.mjs 才调用它；也可以包住任何命令：node core/render/slot.mjs -- <command…>（不设 RENDER_SLOTS 时按 3 个槽）
-// 环境变量：RENDER_SLOTS（整数 ≥1）、RENDER_MIN_FREE（0–100）、RENDER_SLOT_DIR（锁目录，默认 <tmp>/lemo-opuscar-render-slots-<uid>，所有克隆共用，只读仓库也能用）。
-//   RENDER_SLOT_HELD=1 表示外层已经占了槽：acquire() 直接放行，slot.mjs -- <cmd> 直接运行命令。
-//   所以在一个外层 slot.mjs 里并行起多个 video.mjs 时，它们合起来只占一个槽（想各占一个，就不要包外层）。
-// 一个槽位 = 锁目录下的一个目录：里面有 pid（占用者）和 beat（占用者每 15 秒 touch 一次的心跳）。
-// 占用者进程不在了（EPERM 算还在）、或心跳超过 90 秒没动，槽位就是过期的，可以被接管。
-// 所有"看状态 → 接管/占槽"的动作都在一把极短的互斥锁（.mutex 目录）里做，所以任何时刻一个槽位只有一个持有者。
+// Machine-wide render throttling (optional): at most RENDER_SLOTS full-film renders at a time; queues when a render is already running and free memory is below RENDER_MIN_FREE% (default 30).
+// video.mjs calls it only when RENDER_SLOTS is set; it can also wrap any command: node core/render/slot.mjs -- <command…> (3 slots when RENDER_SLOTS is unset)
+// Environment variables: RENDER_SLOTS (integer ≥1), RENDER_MIN_FREE (0–100), RENDER_SLOT_DIR (lock directory, default <tmp>/lemo-opuscar-render-slots-<uid>, shared by all clones, works with a read-only repo too).
+//   RENDER_SLOT_HELD=1 means an outer process already holds a slot: acquire() passes straight through, and slot.mjs -- <cmd> just runs the command.
+//   So several video.mjs started in parallel inside one outer slot.mjs take one slot between them (to have one each, don't wrap them in an outer one).
+// One slot = one directory under the lock directory, holding pid (the owner) and beat (a heartbeat the owner touches every 15 seconds).
+// If the owner process is gone (EPERM counts as still there), or the heartbeat hasn't moved for over 90 seconds, the slot is stale and can be taken over.
+// Every "check state → take over / take a slot" action happens inside a very short mutex (the .mutex directory), so at any moment a slot has only one holder.
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn, execFileSync } from 'child_process'; import { fileURLToPath } from 'url';
 
 const DIR = process.env.RENDER_SLOT_DIR || path.join(os.tmpdir(), `lemo-opuscar-render-slots-${process.getuid?.() ?? 'u'}`);
@@ -19,14 +19,14 @@ function envNum(name, def, ok) {
   warnOnce(`ignoring ${name}="${v}" (using ${def})`); return def;
 }
 const alive = pid => {
-  if (!Number.isInteger(pid) || pid <= 0) return false;   // kill(0) 会打到整个进程组，必须挡掉
-  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }   // EPERM = 进程在，只是不是我们的
+  if (!Number.isInteger(pid) || pid <= 0) return false;   // kill(0) would hit the whole process group; must be blocked
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }   // EPERM = the process exists, it just isn't ours
 };
 const mtime = p => { try { return fs.statSync(p).mtimeMs; } catch { return 0; } };
 const readPid = d => { try { return Number(fs.readFileSync(path.join(d, 'pid'), 'utf8').trim()); } catch { return NaN; } };
 const rmrf = p => { try { fs.rmSync(p, { recursive: true, force: true }); } catch {} };
 
-// 空闲内存百分比；探测不到就当 100（不设门槛）
+// free memory as a percentage; if it can't be detected, treat it as 100 (no threshold)
 export function freePct() {
   try {
     if (process.platform === 'darwin') return +(/free percentage:\s*(\d+)/.exec(execFileSync('memory_pressure', { encoding: 'utf8' }))?.[1] ?? 100);
@@ -38,7 +38,7 @@ export function freePct() {
   } catch { return 100; }
 }
 
-// 互斥锁：mkdir 是原子的；持有者只做几次文件操作，超过 10 秒说明它崩在里面了，可以清掉
+// mutex: mkdir is atomic; the holder only does a few file operations, so more than 10 seconds means it crashed inside and the lock can be cleared
 function withMutex(fn) {
   const m = path.join(DIR, '.mutex');
   for (;;) {
@@ -53,12 +53,12 @@ function withMutex(fn) {
 
 function stale(d) {
   const pid = readPid(d);
-  if (!Number.isInteger(pid) || pid <= 0) return Date.now() - mtime(d) > GRACE;   // pid 文件空/坏：刚建的给 10 秒，之后算过期
+  if (!Number.isInteger(pid) || pid <= 0) return Date.now() - mtime(d) > GRACE;   // pid file empty/corrupt: a freshly created one gets 10 seconds, after that it counts as stale
   if (!alive(pid)) return true;
   return Date.now() - (mtime(path.join(d, 'beat')) || mtime(d)) > STALE_AFTER;
 }
 
-export function tryTake(slots, free, minFree) {   // 导出仅供测试
+export function tryTake(slots, free, minFree) {   // exported for tests only
   return withMutex(() => {
     let live = 0; const open = [];
     for (let i = 0; i < slots; i++) {
@@ -67,7 +67,7 @@ export function tryTake(slots, free, minFree) {   // 导出仅供测试
       if (stale(d)) { const t = `${d}.stale-${process.pid}-${Date.now()}`; try { fs.renameSync(d, t); } catch { live++; continue; } rmrf(t); open.push(d); } else live++;
     }
     if (!open.length) return null;
-    if (live > 0 && free < minFree) return null;   // 一个渲染都没在跑时永远放行，内存门槛只管"再多开一个"
+    if (live > 0 && free < minFree) return null;   // always lets one through when no render is running; the memory threshold only governs "start one more"
     const d = open[0]; fs.mkdirSync(d);
     fs.writeFileSync(path.join(d, 'pid'), String(process.pid)); fs.writeFileSync(path.join(d, 'beat'), '');
     return d;
@@ -86,7 +86,7 @@ export async function acquire({ slots, minFree } = {}) {
       let done = false;
       const release = () => {
         if (done) return; done = true; clearInterval(timer);
-        if (readPid(d) === process.pid) { const t = `${d}.rel-${process.pid}-${Date.now()}`; try { fs.renameSync(d, t); rmrf(t); } catch { rmrf(d); } }   // 只删自己的（被接管后不动别人的）
+        if (readPid(d) === process.pid) { const t = `${d}.rel-${process.pid}-${Date.now()}`; try { fs.renameSync(d, t); rmrf(t); } catch { rmrf(d); } }   // delete only our own (after a takeover, leave the other owner's alone)
       };
       process.on('exit', release);
       return release;

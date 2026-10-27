@@ -51,7 +51,7 @@ Motion as used in the demo:
 
 ## Score structure
 
-- **Music first**: write the tempo grid (`timeline.js`) before any animation. Every hit is listed in a cue table (see `demo/TREATMENT.md`) and the picture lands on it. `tools/cuecheck.py` checks 57 picture events against `music/score.json` (demo max offset 4.7 ms).
+- **Music first**: write the tempo grid (`timeline.js`) before any animation. Every hit is listed in a cue table (per section: time, BPM and key, the instrument layered over the drums and bass, and the beats the picture must land on, e.g. 10.5 s the whole band drops out for a beat and a half, 11.0 s ACHOO = kick + cymbal + ink splat) and the picture lands on it. `tools/cuecheck.py` checks 57 picture events against `music/score.json` (demo max offset 4.7 ms).
 - **Score**: original funk/pop fusion. Drum kit with 16th hats and ghost notes, **synthesized slap bass** (additive pluck + band-passed thumb noise + 1.8–6.5 kHz pop + octave jumps and slides), stacked brass stabs (trumpet_stac + alto sax + trombone_stac), and a vibraphone+piano "e-piano". Drums and bass run through the whole film. On top, one **colour instrument per style**: xylophone (crayon), guqin harmonics and bends (ink), square beeps (ASCII), vibes and sax (riso), pulse arpeggio (pixel), muted trumpet (blueprint), claves and dry piano (Swiss). Each speed-up gets a rising brass run, and the key rises a whole step each round.
 - **Real silences**: 1 beat before the first sneeze, the last-life stage (heartbeat only), and the boss close-up (heartbeat + the same guqin note as the first dust mote). The biggest hit comes right after the longest silence.
 - **Foley follows the medium**: rubber squeak + air for the crayon pump, a wet splat and drips for ink, teletype clicks and a relay for ASCII, a paper thump and crunch for riso, bit-crushed noise for pixel, ratchet teeth and a stamp thunk for blueprint, a hollow bonk and small rubber boings for Swiss. Home-stage sounds: spring-loaded crown click, glass crack plus bouncing clinks for a lost life, card flips, slot-reel whirr, sparse sampled claps.
@@ -66,6 +66,7 @@ Motion as used in the demo:
 - *Host* = a gold **stopwatch head**. The dial is the face, the red second hand is his pointer and nose, and he **slaps his own crown button** to start every game. His hand ticks every beat, spins when he is excited, and stops dead on the last life.
 - *Hero* = a 2.3-head-tall cadet: bubble helmet, spring antenna with an orange ball (the **mood meter**, which boings on every action), and the number "05".
 - **Translation rule:** in every microgame style the hero is redrawn from scratch, but **three silhouette marks always survive**: round helmet, antenna ball, "05". See `demo/stills/modelsheet_v2_styles.jpg` for 8 renderings of one character.
+- **Model sheet:** [`demo/stills/modelsheet_v2.jpg`](demo/stills/modelsheet_v2.jpg) has both characters in the home style: turnarounds (front, 3/4, side, back), expressions, key poses and palette swatches (`?scene=frames.modelSheet`).
 
 **Microgame media (simplified re-drawings, each about 100–200 lines of code):**
 | Style | How it is made |

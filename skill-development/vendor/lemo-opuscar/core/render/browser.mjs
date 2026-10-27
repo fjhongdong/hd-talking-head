@@ -1,12 +1,12 @@
-// 无头 Chrome 的启动参数。浏览器本身交给 playwright 按它的版本自己找（npm run 时装的 chromium-headless-shell）；
-// 想用别的可执行文件：PLAYWRIGHT_CHROME=/path/to/chrome-headless-shell
-// GPU：macOS 显式用 Metal（新版 headless-shell 上 --use-angle=gl 会退回 SwiftShader 软渲染，慢 ~6 倍）；
-//      其它系统不强加后端。LEMO_ANGLE=metal|gl|vulkan|swiftshader… 可覆盖，LEMO_ANGLE=default 表示不传 --use-angle。
-export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = 让 playwright 自己找
+// Launch arguments for headless Chrome. Finding the browser itself is left to playwright, matched to its version (the chromium-headless-shell installed by npm run);
+// to use a different executable: PLAYWRIGHT_CHROME=/path/to/chrome-headless-shell
+// GPU: on macOS, Metal explicitly (on newer headless-shell, --use-angle=gl falls back to SwiftShader software rendering, ~6x slower);
+//      other systems get no forced backend. LEMO_ANGLE=metal|gl|vulkan|swiftshader… overrides it; LEMO_ANGLE=default means don't pass --use-angle.
+export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = let playwright find it
 const angle = process.env.LEMO_ANGLE || (process.platform === 'darwin' ? 'metal' : 'default');
 export const ARGS = [...(angle === 'default' ? [] : [`--use-angle=${angle}`]), '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
 
-// WebGL 走了软渲染就提醒一次（2D 画布的 demo 不受影响；不会让渲染失败）
+// warn once if WebGL ended up on software rendering (2D-canvas demos are unaffected; never fails the render)
 let warned = false;
 export async function warnIfSoftwareGL(page) {
   if (warned) return; warned = true;

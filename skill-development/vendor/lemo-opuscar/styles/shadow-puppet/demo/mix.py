@@ -1,5 +1,5 @@
-"""混音：拟音（布 / 皮 / 竹 / 木 / 火）+ 旁白 + 配乐（旁白下闪避）→ mix.wav
-用法（仓库根）：.venv/bin/python styles/shadow-puppet/demo/mix.py"""
+"""Mix: foley (cloth / hide / bamboo / wood / fire) + narration + music (ducked under the narration) → mix.wav
+Usage (from the repo root): .venv/bin/python styles/shadow-puppet/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')); sys.path.insert(0, ROOT)
 from core.audio.sfx import SR, t_, env_exp, bp, lp, hp, noise, norm, brown, creak, whoosh, compress, limit, add
@@ -16,8 +16,8 @@ def room_ir(d=.7, damp=3000):
 def verb(x, ir, mix=.25):
     y = np.stack([fftconvolve(x[:, c], ir[:, c])[:len(x)] for c in range(2)], 1); return x * (1 - mix) + y * mix
 
-# —— 拟音 ——
-def woodclap(v=1.):       # 醒木：硬木拍桌
+# —— Foley ——
+def woodclap(v=1.):       # xingmu (醒木, the storyteller's wooden clapper): hardwood slapped on a table
     d = .5; tt = t_(d)
     x = hp(noise(d), 900) * env_exp(d, .002) * 1.2
     x += sum(a * np.sin(2 * np.pi * f * tt + rng.random() * 6) * env_exp(d, tau) for f, a, tau in [(1150, .7, .03), (2350, .5, .018), (3500, .3, .01), (620, .4, .05)])
@@ -31,24 +31,24 @@ def match_(v=1.):
 def fwoomp(v=1., d=.8, f=900):
     tt = t_(d); e = np.minimum(1, tt / .06) * np.exp(-tt / (d / 3))
     return norm(lp(noise(d), f) * e + np.sin(2 * np.pi * 70 * tt) * e * .4) * v
-def rodtap(v=1.):         # 竹杆碰布
+def rodtap(v=1.):         # bamboo rod tapping the cloth
     d = .12; tt = t_(d)
     x = hp(noise(d), 1500) * env_exp(d, .003) + sum(a * np.sin(2 * np.pi * f * tt) * env_exp(d, tau) for f, a, tau in [(1800, .5, .01), (3200, .3, .006)]) + lp(noise(d), 500) * env_exp(d, .015) * .6
     return norm(x) * v
-def flap(v=1.):           # 驴皮翻动 / 离布
+def flap(v=1.):           # donkey hide flipping / lifting off the cloth
     d = .18; tt = t_(d)
     return norm(bp(noise(d), 600, 5000) * np.sin(np.pi * tt / d) ** 2 * (1 + .6 * np.sin(2 * np.pi * 30 * tt))) * v
 def leather_step(v=1.):
     d = .07; tt = t_(d)
     return norm(bp(noise(d), 900, 4000) * env_exp(d, .006) + np.sin(2 * np.pi * 380 * tt) * env_exp(d, .01) * .5) * v
-def twang(v=1.):          # 弓弦
+def twang(v=1.):          # bowstring
     d = .6; tt = t_(d); f = 196 * (1 + .03 * np.exp(-tt / .02))
     x = sum(a * np.sin(2 * np.pi * f * k * tt) * env_exp(d, .18 / k) for k, a in [(1, 1), (2, .5), (3, .35), (4, .2), (6, .1)])
     return norm(x + hp(noise(d), 2000) * env_exp(d, .004) * .6) * v
-def thwack(v=1.):         # 箭中皮
+def thwack(v=1.):         # arrow striking hide
     d = .25; tt = t_(d)
     return norm(bp(noise(d), 300, 2500) * env_exp(d, .02) + np.sin(2 * np.pi * 160 * tt * (1 - tt)) * env_exp(d, .05)) * v
-def snuff(v=1.):          # 灯芯被捏灭：噗 + 嘶
+def snuff(v=1.):          # wick pinched out: a puff + a hiss
     d = .7; tt = t_(d)
     return norm(lp(noise(d), 700) * env_exp(d, .05) * 1.2 + hp(noise(d), 4000) * np.minimum(1, tt / .05) * env_exp(d, .25) * .35) * v
 def wingflap(v=1.):
@@ -69,7 +69,7 @@ def crackle_bed(d, dens=1.):
     return out
 def heat_bed(d):
     tt = t_(d); b = lp(brown(d), 160) * 1.0 + bp(noise(d), 2500, 7000) * .08
-    return b * np.minimum(1, tt / 1.2) * np.minimum(1, (d - tt) / .03)   # 静场处硬切
+    return b * np.minimum(1, tt / 1.2) * np.minimum(1, (d - tt) / .03)   # hard cut where the silence starts
 def water_bed(d):
     tt = t_(d); m = lp(rng.random(len(tt)), 6); x = bp(noise(d), 500, 3500) * (.4 + m)
     return x * np.minimum(1, tt / 1.0) * np.minimum(1, (d - tt) / 1.0)
@@ -108,10 +108,10 @@ for e in ev:
     elif ty == 'cloth': add(fx, cloth(1), t, G[ty])
     elif ty == 'room': add(amb, room_bed(e['d']), t, .12)
     elif ty == 'breath': add(fx, breath(1), t, G[ty], .5)
-# 灯芯底噪：灯亮着就有极轻的噼啪
+# Wick bed noise: a very faint crackle whenever the lamps are lit
 add(amb, crackle_bed(DUR - 1.3, .6), 1.3, .15)
 
-# —— 旁白：压缩 + 暖 + 小剧场混响 ——
+# —— Narration: compression + warmth + small-theatre reverb ——
 vo_env = np.zeros(N)
 for e in ev:
     if e['type'] != 'vo': continue
@@ -123,7 +123,7 @@ for e in ev:
     s = int(e['t'] * SR); vo_env[s:s + len(y)] = 1
 vo = verb(vo, room_ir(.9), .14)
 
-# —— 配乐 + 闪避 ——
+# —— Music + ducking ——
 mp = os.path.join(D, 'music', 'score.wav')
 mus = np.zeros((N, 2))
 if os.path.exists(mp):
@@ -141,14 +141,14 @@ fx = verb(fx, room_ir(.6), .18)
 fx *= (10 ** (-4 * k / 20))[:, None] if os.path.exists(mp) else 1
 amb *= (10 ** (-5 * k / 20))[:, None] if os.path.exists(mp) else 1
 mix = mus * .85 + fx + amb + vo
-# 静场（34.8–36.85）只留灯芯与弓弦：确保音乐和底噪无残留
+# The silence (34.8–36.85) keeps only the wick and the bowstring: make sure no music or bed noise is left there
 mix = np.stack([limit(mix[:, c], .95) for c in range(2)], 1)[:int(DUR * SR)]
 sf.write(os.path.join(D, 'mix.wav'), mix.astype(np.float32), SR)
 def rms(a, b): x = mix[int(a * SR):int(b * SR)]; return 20 * np.log10(np.sqrt((x ** 2).mean()) + 1e-9)
 print('mix.wav', mix.shape, 'peak', np.abs(mix).max().round(3))
 for a, b, n in [(0, 2.4, 'open'), (7.2, 12, 'suns'), (18, 21.6, 'run'), (30, 34.8, 'volley'), (34.85, 36.8, 'silence'), (37.2, 43.2, 'heal'), (44.5, 50.4, 'back'), (50.5, 54.3, 'end')]:
     print(f'{n:8s} {rms(a, b):6.1f} dB')
-# 人声 / 其余 的电平差（每句）
+# Level difference between voice and everything else (per line)
 bed = mus * .85 + fx + amb
 for e in ev:
     if e['type'] != 'vo': continue

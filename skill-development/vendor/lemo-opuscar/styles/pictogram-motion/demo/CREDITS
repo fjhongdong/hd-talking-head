@@ -17,7 +17,7 @@ Third-party names and marks shown in the film (NOT covered by this repo's licenc
   slogan, a press photo). They were used as colour/shape reference only, are not drawn into the film,
   and must not be redistributed.
 
-Fonts (SIL Open Font License 1.1; licence texts not bundled yet, see PRODUCTION_LOG.md)
+Fonts (SIL Open Font License 1.1; licence texts in fonts/OFL-*.txt)
 - Inter Tight (variable) — Rasmus Andersson / The Inter Project Authors, via Google Fonts — fonts/InterTightwght.ttf
 - Noto Sans SC (variable) — Google / Adobe (Noto CJK), via Google Fonts — fonts/NotoSansSCwght.ttf
 - Noto Sans JP (variable) — Google / Adobe (Noto CJK), via Google Fonts — fonts/NotoSansJPwght.ttf

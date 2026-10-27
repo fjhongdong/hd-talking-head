@@ -1,4 +1,4 @@
-// 关节分片骨架：2D 仿射矩阵 [a,b,c,d,e,f]（与 canvas setTransform 同序）
+// Jointed cut-out skeleton: 2D affine matrix [a,b,c,d,e,f] (same order as canvas setTransform)
 import { drawPiece, paperShadow, noShadow, transmitOf } from './paper.js';
 export const mul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
 export const T = (x, y) => [1, 0, 0, 1, x, y];
@@ -8,7 +8,7 @@ export const ap = (M, p) => [M[0] * p[0] + M[2] * p[1] + M[4], M[1] * p[0] + M[3
 export const scaleOf = M => Math.sqrt(Math.abs(M[0] * M[3] - M[1] * M[2]));
 export const I = [1, 0, 0, 1, 0, 0];
 
-// 画一片：M = 片局部→屏幕；opt.shadow（纸影强度，0 = 不投影）
+// draw one piece: M = piece local→screen; opt.shadow (paper-shadow strength, 0 = no shadow)
 export function put(g, p, M, opt = {}) {
   g.save(); g.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
   if (opt.alpha != null) g.globalAlpha = opt.alpha;
@@ -17,8 +17,8 @@ export function put(g, p, M, opt = {}) {
   g.drawImage(opt.img || p.c, p.x0, p.y0, p.w, p.h);
   g.restore();
 }
-// 骨架：parts = [{name, parent, at:[x,y]（在父坐标里的关节位置）, piece, ang:key, z}]
-// 返回各部件的矩阵表（供铆钉示意、道具挂点使用）
+// skeleton: parts = [{name, parent, at:[x,y] (joint position in parent coordinates), piece, ang:key, z}]
+// returns the matrix table of all parts (used for rivet markers and prop attachment points)
 export function solveRig(parts, root, pose) {
   const Ms = {};
   for (const p of parts) {

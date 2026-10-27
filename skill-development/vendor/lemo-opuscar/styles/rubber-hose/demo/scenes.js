@@ -1,5 +1,5 @@
-// scenes.js — 全片镜头。每个镜头 = 机位（世界点→画面中心 + 缩放）+ 背景 + 群演（随拍呼吸）+ 角色表演
-// 角色用 tq = q(t)（12fps 拍两格），机位用连续 t（每帧平滑）
+// scenes.js — every shot in the film. Each shot = camera (world point → frame centre + zoom) + background + extras (breathing with the beat) + character performance
+// Characters use tq = q(t) (12fps, on twos); the camera uses continuous t (smooth every frame)
 import * as T from './toon.js';
 import { P, mug, cube, glove, ribbon, steam, shoe as _shoe } from './chars.js';
 import * as C from './cast.js';
@@ -12,15 +12,15 @@ const { shape, stroke, ell, arc, spline, rr, rect, push, pop, translate, rotate,
 let BGK, BGC, sg;
 export function initScenes(bgK, bgC, sceneCtx) { BGK = bgK; BGC = bgC; sg = sceneCtx; }
 
-// —— 小工具 ——
+// —— Small helpers ——
 const tw = (t, t0, t1, a, b, e = eio) => lerp(a, b, e(seg(t, t0, t1)));
-const pulse = (t, t0, k = 6) => t < t0 ? 0 : Math.exp(-(t - t0) * k);          // 冲击后衰减
-const hop = (u, h) => -4 * h * u * (1 - u);                                     // 抛物线
+const pulse = (t, t0, k = 6) => t < t0 ? 0 : Math.exp(-(t - t0) * k);          // decay after an impact
+const hop = (u, h) => -4 * h * u * (1 - u);                                     // parabola
 function setCam(t, bg, cam, squash = 0) {
   drawBG(sg, bg, cam, squash, FLOOR_Y);
   T.BASE.splice(0, 6, ...camBase(cam)); T.frame(t);
 }
-// 走路（每步一拍）：p = 步数相位；返回腿、胳膊、身体起伏
+// Walk (one step per beat): p = step phase; returns legs, arms, body bob
 function walk(p, { L = 56, lift = 22, bob = 10, swing = 26 } = {}) {
   const a = Math.PI * p, c = Math.cos(a), s = Math.sin(a);
   return {
@@ -28,7 +28,7 @@ function walk(p, { L = 56, lift = 22, bob = 10, swing = 26 } = {}) {
     bob: -(1 - Math.abs(c)) * bob, sw: c * swing,
   };
 }
-// 跑（双腿抡成风车）：p = 步数相位
+// Run (legs spin like a windmill): p = step phase
 function run(p, R = 46) {
   const a = Math.PI * p;
   return { legL: { x: Math.cos(a) * R + 10, y: Math.min(0, -Math.sin(a) * R * .9), dir: 1, bend: -10, ang: -Math.sin(a) * .4 }, legR: { x: Math.cos(a + Math.PI) * R + 10, y: Math.min(0, -Math.sin(a + Math.PI) * R * .9), dir: 1, bend: -10, ang: -Math.sin(a + Math.PI) * .4 }, bob: -Math.abs(Math.sin(a)) * 12 };
@@ -37,13 +37,13 @@ function cubeRun(p, R = 18) {
   const a = Math.PI * p;
   return { legL: { x: Math.cos(a) * R + 4, y: Math.min(0, -Math.sin(a) * R), dir: 1 }, legR: { x: Math.cos(a + Math.PI) * R + 4, y: Math.min(0, -Math.sin(a + Math.PI) * R), dir: 1 }, bob: -Math.abs(Math.sin(a)) * 7 };
 }
-// 速度线（世界坐标，向左拖）
+// Speed lines (world coordinates, trailing to the left)
 function speedLines(x, y, n = 3, len = 90, gap = 26, col = P.light) { for (let i = 0; i < n; i++) stroke([[x - len - i * 14, y + i * gap], [x - 14 - i * 14, y + i * gap]], T.S.lw * .7, { line: col }); }
 function puff(x, y, r, col = P.light) { shape(ell(x, y, r, r * .8, 18), { fill: col, lw: T.S.lw * .6 }); }
 function star(x, y, r, rot = 0) { const pts = []; for (let i = 0; i < 8; i++) { const a = rot + i / 8 * TAU, rr_ = i % 2 ? r * .38 : r; pts.push([x + Math.cos(a) * rr_, y + Math.sin(a) * rr_]); } shape(pts, { fill: P.white, lw: T.S.lw * .6 }); }
 function drop(x, y, r) { shape(spline([[x, y - r * 1.8], [x + r, y], [x, y + r], [x - r, y]], true, 5), { fill: P.white, lw: T.S.lw * .55 }); }
 
-// —— 厨房群演（标准站位）——
+// —— Kitchen extras (standard positions) ——
 export const POS = { window: 330, clock: 380, mug: 640, bowl: 980, salt: 1400, pepper: 1456, toaster: 1900, hooks1: [1080, 1210, 1350], hooks2: [2300, 2430, 2570] };
 function kitchen(tq, o = {}) {
   const amp = o.amp ?? 1, b = breath(tq) * amp, bt = beats(tq), dance = o.dance || 0;
@@ -51,33 +51,33 @@ function kitchen(tq, o = {}) {
   const kinds = ['pot', 'pan', 'ladle'];
   POS.hooks1.forEach((x, i) => C.hanging(x, 330, .8, kinds[i], b * .07 * (i % 2 ? -1 : 1)));
   POS.hooks2.forEach((x, i) => C.hanging(x, 330, .8, kinds[(i + 1) % 3], b * .07 * (i % 2 ? -1 : 1)));
-  // 闹钟：响铃 / 跳舞时每拍一跳
+  // alarm clock: ringing / one hop per beat when dancing
   const ck = o.clock || {};
   const clockHop = dance ? -Math.abs(Math.cos(bt * Math.PI)) * 0 + (1 - Math.abs(Math.sin(bt * Math.PI))) * -34 * dance : 0;
   C.clock(POS.clock, CY + 4 + clockHop, .95, b, { t: tq, ring: ck.ring || 0, lx: ck.lx ?? .6, ly: ck.ly || 0, eyes: ck.eyes, mouth: ck.mouth || 'smile' });
-  // 盐和胡椒：被经过时转成陀螺；跳舞时踢腿
+  // salt and pepper: spin like tops when passed; kick when dancing
   const spin = o.spin || 0;
   const kickL = dance ? { x: -12 + Math.max(0, Math.cos(bt * Math.PI)) * 26, y: -Math.max(0, Math.cos(bt * Math.PI)) * 30 * dance } : null;
   const kickR = dance ? { x: 12 + Math.max(0, -Math.cos(bt * Math.PI)) * 26, y: -Math.max(0, -Math.cos(bt * Math.PI)) * 30 * dance } : null;
   const sh = (x, pepper, ph) => { push(); translate(x, 0); scale(Math.cos(spin * TAU + ph) || .02, 1); translate(-x, 0); C.shaker(x, CY + 4, .95, pepper ? -b : b, { pepper, lx: o.shLook ?? (pepper ? -.6 : .6), eyes: o.shEyes, mouth: o.shMouth || 'smile', lean: dance ? (pepper ? -1 : 1) * .12 * Math.cos(bt * Math.PI) : 0, legL: kickL || undefined, legR: kickR || undefined }); pop(); };
   sh(POS.salt, false, 0); sh(POS.pepper, true, .25);
-  // 烤面包机
+  // toaster
   const ts = o.toaster || {};
   const toast = dance ? Math.max(0, Math.cos(bt * Math.PI * 2)) * 60 * dance : (ts.toast || 0);
   if (!o.noToaster) C.toaster(POS.toaster, CY + 4 + (ts.dy || 0), .9, b + (ts.pop || 0), { lx: ts.lx ?? -.6, ly: ts.ly || 0, eyes: ts.eyes, mouth: ts.mouth || 'smile', lever: ts.lever || 0, toast: toast || undefined });
-  // 水龙头
+  // tap
   C.faucet(SINK_X, CY - 2, .9, b, { drip: 10 + (tq * 40 % 40), spin: dance ? bt * Math.PI * .5 : 0, ly: .3 });
 }
 function bowl(tq, lid = 0, amp = 1) { C.sugarBowl(POS.bowl, CY + 4, 1.12, breath(tq) * .5 * amp, { lid }); }
 
-// —— 马克杯默认手臂 ——
+// —— Mug default arms ——
 const ARMS = { armL: { x: -128, y: -34, hand: 'open', bend: 14 }, armR: { x: 128, y: -34, hand: 'open', bend: -14 } };
 
-// ———————————————————— 镜头 ————————————————————
+// ———————————————————— Shots ————————————————————
 const CAM_WIDE = { x: 720, y: 515, z: 1.3 };
 
 export function shotTitle(t) {
-  shotWide1(t);                                         // 片名卡下面已经是厨房
+  shotWide1(t);                                         // the kitchen is already under the title card
   const u = eio(seg(t, K.roll[0], K.roll[1]));
   if (u >= 1) return;
   const g = sg, beat = beats(t), lift = u * 1180;
@@ -86,7 +86,7 @@ export function shotTitle(t) {
   g.save(); g.translate(960, 540); g.rotate(t * .22);
   for (let i = 0; i < 24; i++) { g.fillStyle = i % 2 ? '#8A877F' : '#C4C1B8'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 1400, i / 24 * TAU, (i + 1) / 24 * TAU); g.fill(); }
   g.restore();
-  // 卡片呼吸（每拍一次）
+  // card breathes (once per beat)
   const bb = Math.cos(beats(q(t)) * TAU);
   g.save(); g.translate(960, 540); g.scale(1 - bb * .008, 1 + bb * .012); g.translate(-960, -540);
   g.fillStyle = '#F4F1EA'; g.strokeStyle = P.ink; g.lineWidth = 9; g.beginPath(); g.roundRect(430, 290, 1060, 490, 60); g.fill(); g.stroke();
@@ -96,7 +96,7 @@ export function shotTitle(t) {
   fatTitle(g, 'Cup Chase', 960, 575, 132, { bounce: i => hopL(i + 6) });
   g.fillStyle = P.ink; g.font = '40px Limelight'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText('A  RUBBER  HOSE  CARTOON', 960, 722);
   g.restore(); g.restore();
-  // 卷轴（窗帘卷在下沿）
+  // roller (blind rolled at the bottom edge)
   if (u > 0) { const y = 1080 - lift; g.save(); g.fillStyle = '#4A4844'; g.strokeStyle = P.ink; g.lineWidth = 6; g.beginPath(); g.roundRect(222, y - 14, 1476, 58, 29); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,250,.35)'; g.fillRect(240, y - 2, 1440, 8); g.restore(); }
 }
 
@@ -106,7 +106,7 @@ export function shotWide1(t) {
   const ringing = tq >= K.ring[0] && tq < K.ring[1];
   kitchen(tq, { clock: { ring: ringing ? 1 : 0, lx: tq > K.ring[1] ? .8 : .6, mouth: ringing ? 'o' : 'smile', eyes: ringing ? 'wide' : undefined } });
   bowl(tq);
-  // 马克杯
+  // mug
   const p = { x: POS.mug, y: CY + 6, turn: 0, t: tq, ...ARMS, eyes: { type: 'shut' }, mouth: { type: 'flat' }, steam: 'lazy' };
   const b = breath(tq);
   if (tq < K.wake) { const s = Math.sin(tq * Math.PI * 1.2); p.sy = 1 + s * .03; p.sx = 1 - s * .02; p.mouth = { type: 'o', open: .5 + s * .3 }; }
@@ -136,7 +136,7 @@ export function shotWide2(t) {
   setCam(t, BGK, CAM_WIDE);
   const ftq = frozen ? K.lock : tq;
   kitchen(ftq, { amp: 1 });
-  // 方糖：探头 → 对视（定格）→ 眼珠弹出 → 蹦出糖罐 → 原地空转双腿
+  // sugar cube: peeks out → eyes meet (hold) → eyes pop out → bounces out of the sugar bowl → legs spin in place
   const lidUp = tq < K.boing ? tw(tq, K.peek[0], K.peek[1], 0, 1.85, eo) : tw(tq, K.boing, K.boing + .2, 1.85, 0, ei);
   const peekY = tw(tq, K.peek[0], K.peek[1], 30, 0, eo);
   if (tq < K.boing) {
@@ -151,7 +151,7 @@ export function shotWide2(t) {
       legL: inAir ? { x: -8, y: -10 } : r.legL, legR: inAir ? { x: 12, y: -16 } : r.legR, armL: { x: -44, y: -104, hand: 'open', bend: 8 }, armR: { x: 48, y: -110, hand: 'open', bend: -8 } });
     if (!inAir) speedLines(x - 40, CY - 80, 3, 60, 20);
   }
-  // 马克杯
+  // mug
   const p = { x: POS.mug, y: CY + 6, turn: 30, t: ftq, ...ARMS, eyes: { lx: .95, ly: .1 }, mouth: { type: 'o', open: .6 }, steam: 'bitter' };
   if (tq >= K.peek[0]) { p.steam = 'up'; p.eyes = { lx: 1, lid: .35 }; p.mouth = { type: 'grin', open: .4 }; p.brows = 'angry'; }
   if (tq >= K.lock) { p.armR = { x: 150, y: -220, hand: 'grab', front: true, bend: -30 }; }
@@ -164,14 +164,14 @@ export function shotChase(t) {
   const tq = q(t);
   const TX = POS.toaster, camX = tw(t, K.go - .1, K.dive + .2, 860, TX - 100, eio);
   setCam(t, BGK, { x: camX, y: 515, z: 1.3 });
-  // 谁经过盐胡椒就把它们转起来
+  // whoever passes salt and pepper sets them spinning
   const cubeX = tq < K.dive - .17 ? lerp(POS.bowl + 120, TX - 60, ss(seg(tq, K.go, K.dive - .17)) * .15 + seg(tq, K.go, K.dive - .17) * .85) : TX - 60;
   const mugX = lerp(POS.mug, TX - 170, clamp(seg(tq, K.go, K.skid[1]) ** .9 * 1.0));
   const nearSh = x => Math.max(0, 1 - Math.abs(x - 1428) / 120);
   const spin = (tq - K.go) * 2.2 * Math.max(nearSh(cubeX) > 0 ? 1 : 0, 0) + seg(tq, K.shakerPass - .2, K.shakerPass + .9) * 2 + seg(tq, K.shakerPass + .6, K.shakerPass + 1.4) * 2;
   kitchen(tq, { spin, shEyes: 'wide', shMouth: 'o', shLook: 1 });
   bowl(tq, 0);
-  // 方糖：跑 → 跳 → 挤进吐司槽（被机身挡住）
+  // sugar cube: runs → jumps → squeezes into the toast slot (hidden by the toaster body)
   const slotY = CY + 4 - 118 * .9;
   if (tq < K.dive + .2) {
     let x = cubeX, y = CY, sx = 1, sy = 1, r = cubeRun((tq - K.go) * 10);
@@ -180,9 +180,9 @@ export function shotChase(t) {
     cube({ x, y, k: .95, turn: 40, lean: .2, sx, sy, eyes: { type: 'wide', lx: -1 }, mouth: { type: 'wavy', open: .7 }, brows: 'up', sweat: [[-44, -100, 5]], legL: r.legL, legR: r.legR, armL: { x: -40, y: -110, hand: 'open', bend: 10 }, armR: { x: 44, y: -116, hand: 'open', bend: -10 } });
     if (tq < K.dive - .17) speedLines(x - 30, CY - 80, 3, 70, 18);
   }
-  // 烤面包机最后画（挡住钻进去的方糖）
+  // toaster drawn last (covers the sugar cube that slipped in)
   C.toaster(POS.toaster, CY + 4, .9, breath(tq) + pulse(tq, K.dive, 8) * 1.4, { lx: -.8, eyes: tq > K.dive ? 'wide' : undefined, mouth: tq > K.dive ? 'o' : 'smile' });
-  // 马克杯：风车腿追 → 急刹
+  // mug: chases on windmill legs → skids to a stop
   const skid = tq >= K.skid[0], r = run((tq - K.go) * 7, 46);
   const p = { x: mugX, y: CY + 6 + (skid ? 0 : r.bob), turn: 40, t: tq, lean: skid ? -.22 : .24, eyes: { lx: 1, lid: .15 }, brows: 'angry', mouth: { type: 'grin', open: .5 }, steam: 'blown', legL: r.legL, legR: r.legR,
     armR: { x: 190, y: -150, hand: 'grab', front: true, bend: -26 }, armL: { x: -170, y: -70, hand: 'fist', bend: 24 } };
@@ -196,13 +196,13 @@ export function shotToaster(t) {
   const TX = POS.toaster; setCam(t, BGK, { x: TX - 60, y: 560, z: 1.9 });
   const ding = tq >= K.ding;
   kitchen(tq, { noToaster: true });
-  // 方糖像吐司一样弹上天
+  // sugar cube pops into the air like toast
   if (ding && tq < K.ding + .35) { const u = seg(tq, K.ding, K.ding + .35); const y = lerp(CY - 110, 180, eo(u)); cube({ x: TX - 18, y, k: .95, turn: 0, sy: 1.35, sx: .8, eyes: { type: 'wide' }, mouth: { type: 'o', open: 1 }, brows: 'up', legL: { x: -8, y: 0 }, legR: { x: 8, y: 0 }, armL: { x: -40, y: -120, hand: 'open' }, armR: { x: 40, y: -120, hand: 'open' } }); for (let i = 0; i < 3; i++) stroke([[TX - 44 + i * 26, y + 30], [TX - 44 + i * 26, y + 110]], T.S.lw * .7, { line: P.light }); }
   const tick = !ding ? Math.sin(tq * 60) * 2 : 0;
   C.toaster(POS.toaster + tick, CY + 4, .9, ding ? pulse(tq, K.ding, 6) * -2 + breath(tq) : breath(tq) * .4, { lever: ding ? 1 - seg(tq, K.ding, K.ding + .1) : seg(tq, K.lever, K.lever + .1), lx: ding ? -.6 : -.3, ly: ding ? -.8 : .3, eyes: ding ? 'happy' : 'wide', mouth: ding ? 'grin' : 'flat' });
-  // 热浪一闪：放射线
+  // flash of heat: radiating lines
   if (ding && tq < K.ding + .25) for (let i = 0; i < 9; i++) { const a = -Math.PI / 2 + (i - 4) * .3; stroke([[TX - 20 + Math.cos(a) * 80, 596 + Math.sin(a) * 80], [TX - 20 + Math.cos(a) * 170, 596 + Math.sin(a) * 170]], T.S.lw * 1.2); }
-  // 马克杯凑过去看
+  // mug leans in to look
   const blink = (tq > K.blink[0] && tq < K.blink[0] + .12) || (tq > K.blink[1] && tq < K.blink[1] + .12);
   const p = { x: TX - 180, y: CY + 6, turn: 38, t: tq, lean: ding ? -.08 : .16, eyes: ding ? { type: blink ? 'shut' : 'open', lx: 0, ly: 0 } : { lx: tq < K.lever + .3 ? .9 : .6, ly: tq < K.lever + .3 ? .7 : .2 }, mouth: ding ? { type: 'flat' } : { type: 'grin', open: .3 }, brows: ding ? undefined : 'angry', steam: ding ? 'none' : 'up',
     armR: { x: 160, y: -60, hand: 'open', front: true, bend: -20 }, armL: { x: -130, y: -40, hand: 'open' }, sooty: ding };
@@ -211,9 +211,9 @@ export function shotToaster(t) {
   if (ding) { const off = [[-40, 0], [18, -30], [58, 10], [-8, -60], [30, -85]]; off.forEach(([ox, oy], i) => { const u = seg(tq, K.ding + i * .07, K.ding + .75 + i * .05); if (u > 0 && u < 1) puff(TX - 180 + ox + Math.sin(u * 5 + i) * 10, CY - 280 + oy - u * 150, (14 + i * 3) * (1 + u * 1.3) * (1 - u * .3), i % 2 ? P.dmid : P.mid); }); }
 }
 
-// —— 橱柜 + 水槽（同一张竖长背景，下摇）——
+// —— Cupboard + sink (one tall background, tilt down) ——
 function plateState(i, tq) {
-  // 返回 {x,y,rot,press,gone}
+  // returns {x,y,rot,press,gone}
   const [x, y] = PLATES[i];
   if (tq >= K.crash) { const d = tq - K.crash - (6 - i) * .05; if (d > 0) { return { x: x - d * 120 * (i % 2 ? 1 : -.6), y: y + 600 * d * d + 60 * d, rot: d * (i % 2 ? 4 : -5), press: 0 }; } }
   let press = 0;
@@ -223,7 +223,7 @@ function plateState(i, tq) {
   return { x, y, rot: wob, press };
 }
 function cubeInCupboard(tq) {
-  // 返回 {x,y,sx,sy,turn,visible}
+  // returns {x,y,sx,sy,turn,visible}
   if (tq < K.plateCube(0)) { const u = seg(tq, K.fallIn, K.plateCube(0)); return { x: PLATES[0][0], y: lerp(PLATES[0][1] - 420, PLATES[0][1] - 8, u * u), sy: 1.2, sx: .85, turn: 30, air: true }; }
   for (let i = 1; i <= 6; i++) if (tq < K.plateCube(i)) { const u = seg(tq, K.plateCube(i - 1), K.plateCube(i)); const a = PLATES[i - 1], b = PLATES[i]; return { x: lerp(a[0], b[0], u), y: lerp(a[1], b[1], u) - 8 + hop(u, 50), turn: 40, air: true, sy: 1.1, sx: .92 }; }
   if (tq < K.leap) return { x: PLATES[6][0], y: PLATES[6][1] - 8, turn: -30, taunt: true };
@@ -250,13 +250,13 @@ function cupCam(t) {
 }
 export function shotCupboard(t) {
   const tq = q(t);
-  // 三个中景：A 跟方糖爬楼梯（木琴八分音符）→ B 跟杯子爬（大号四分音符）→ C 顶部：方糖跳勺子、盘子塌 → 下摇到水槽
+  // three medium shots: A follows the sugar cube up the stairs (xylophone eighth notes) → B follows the mug climbing (tuba quarter notes) → C at the top: sugar cube jumps onto the ladle, plates collapse → tilt down to the sink
   const cam = cupCam(t), camY = cam.y;
   setCam(t, BGC, cam);
   const b = breath(tq);
   ladle(tq);
   for (let i = 0; i < 7; i++) { const s = plateState(i, tq); C.plate(s.x, s.y, 1, { press: s.press, rot: s.rot }); }
-  // 方糖
+  // sugar cube
   const c = cubeInCupboard(tq), ck = 1.1;
   const cr = cubeRun(tq * 10);
   const cp = { x: c.x, y: c.y, k: ck, turn: c.turn, sx: c.sx || 1, sy: c.sy || 1, eyes: { type: 'wide', lx: -.6 }, mouth: { type: 'o', open: .7 }, brows: 'up', legL: c.air ? { x: -8, y: -10 } : cr.legL, legR: c.air ? { x: 12, y: -16 } : cr.legR, armL: { x: -42, y: -108, hand: 'open', bend: 8 }, armR: { x: 46, y: -112, hand: 'open', bend: -8 } };
@@ -268,7 +268,7 @@ export function shotCupboard(t) {
   if (c.slide) Object.assign(cp, { lean: .5, legL: { x: 20, y: -6 }, legR: { x: 30, y: -2 }, eyes: { type: 'happy' }, mouth: { type: 'beam', open: .7 }, armL: { x: -50, y: -126, hand: 'open' }, armR: { x: 40, y: -130, hand: 'open' } });
   if (c.fall) Object.assign(cp, { lean: c.spin, eyes: { type: 'wide' }, mouth: { type: 'wavy', open: .8 } });
   if (tq < K.splash) cube(cp);
-  // 马克杯：抓住隔板把自己拽上来 → 踩盘子 → 塌 → 踩盘子滑下
+  // mug: grabs a shelf and hauls itself up → steps on plates → collapse → slides down on a plate
   const mk = .78;
   if (tq >= K.mugHand && tq < K.crash + .75) {
     let x, y, p = { turn: 35, t: tq, eyes: { lx: .8, ly: -.6, lid: .15 }, brows: 'angry', mouth: { type: 'grin', open: .4 }, steam: 'up', ...ARMS };
@@ -283,7 +283,7 @@ export function shotCupboard(t) {
       const land = pulse(tq, K.plateMug(i), 10); p.sy = 1 - land * .15 + (u > 0 && u < 1 ? .08 : 0); p.sx = 1 + land * .1;
       p.armL = { x: -140, y: -170, hand: 'open', bend: 20 }; p.armR = { x: 150, y: -190, hand: 'open', front: true };
       if (tq >= K.plateMug(6)) { p.eyes = { lx: .9, ly: .8 }; p.mouth = { type: 'o' }; p.brows = 'up'; p.turn = 30; }
-      if (tq >= K.crash) { // 踩着盘子滑下去
+      if (tq >= K.crash) { // sliding down standing on a plate
         const d = tq - K.crash, u2 = seg(d, 0, .7), path = Math.min(6, u2 * 6), j = Math.floor(path), f = path - j;
         const A = PLATES[6 - j], B = PLATES[Math.max(0, 5 - j)];
         x = lerp(A[0], B[0], f); y = lerp(A[1], B[1], f) - 22;
@@ -296,7 +296,7 @@ export function shotCupboard(t) {
   shotSinkLayer(t, tq, camY);
 }
 
-// —— 水槽：漩涡、方糖打转、胳膊伸长 ——
+// —— Sink: whirlpool, sugar cube spinning, arm stretching ——
 const DRAIN = [BASIN.x, BASIN.y + 14];
 const MUGSINK = { x: 230, y: 1810, k: .8 };
 const armPath = (() => {
@@ -328,7 +328,7 @@ function shotSinkLayer(t, tq, camY) {
   if (camY < 1150) return;
   water(tq);
   C.faucet(BASIN.x, 1545, 1.1, breath(tq), { drip: (tq * 60) % 60, ly: .7 });
-  // 方糖在漩涡里打转、被吸进下水口
+  // sugar cube spins in the whirlpool and is sucked into the drain
   if (tq >= K.splash && tq < K.sink + .25) {
     const [x, y] = cubeSpiral(tq), sk = 1 - seg(tq, K.sink - .1, K.sink + .25);
     const splash = pulse(tq, K.splash, 5);
@@ -336,7 +336,7 @@ function shotSinkLayer(t, tq, camY) {
     cube({ x, y, k: .78 * sk, turn: (tq * 400) % 360 > 180 ? 30 : -30, lean: Math.sin(tq * 9) * .3, legLen: 10, eyes: { type: 'wide', lx: Math.cos(tq * 5) }, mouth: { type: 'wavy', open: .8 }, brows: 'up', sweat: [[-40, -80, 4]], armL: { x: -44, y: -100, hand: 'open', bend: 8 }, armR: { x: 48, y: -104, hand: 'open', bend: -8 } });
     stroke(arc(x, y - 4, 50 * sk, 12 * sk, 0, Math.PI, 12), T.S.lw * .6, { line: P.white });
   }
-  // 马克杯
+  // mug
   if (tq < K.mugLand - .25) return;
   const M = MUGSINK;
   let y = M.y, p = { x: M.x, y, k: M.k, turn: 30, t: tq, ...ARMS, eyes: { lx: .9, ly: .5 }, mouth: { type: 'o' }, brows: 'up', steam: 'up' };
@@ -347,7 +347,7 @@ function shotSinkLayer(t, tq, camY) {
   else if (tq < K.resolve) { p.armR = { x: 60, y: -170, hand: 'fist', front: true }; p.lean = -.1; p.shake = 2.5; p.mouth = { type: 'wavy', open: .5 }; p.eyes = { type: 'wide', lx: .9, ly: .5 }; }
   else if (tq < K.stretch[0]) { Object.assign(p, { brows: 'angry', mouth: { type: 'grin', open: .25 }, eyes: { lx: 1, ly: .6, lid: .2 }, sy: 1.06, armR: { x: 120, y: -200, hand: 'fist', front: true } }); }
   else {
-    // 伸长 → 钻进下水口 → 静音 → 收回
+    // stretch → into the drain → silence → pull back
     let f;
     if (tq < K.stretch[1]) f = eio(seg(tq, K.stretch[0], K.stretch[1]));
     else if (tq < K.retract[0]) f = 1 - (tq > K.tug && tq < K.tug + .2 ? .012 : 0);
@@ -363,7 +363,7 @@ function shotSinkLayer(t, tq, camY) {
       if (tq < K.retract[0] && f > .95) drainHole();
       return;
     }
-    // 收回来了：手里捧着湿淋淋的方糖，两人对视
+    // pulled back: holding the dripping sugar cube, the two look at each other
     Object.assign(p, { lean: 0, shake: 0, brows: undefined, eyes: { lx: .7, ly: -.1, lid: .15 }, mouth: { type: 'smile' }, steam: 'lazy', armR: { x: 150, y: -196, hand: 'grab', front: true, bend: -30 } });
     mug(p);
     const cx = M.x + 162 * M.k, cy2 = M.y - 214 * M.k;
@@ -374,7 +374,7 @@ function shotSinkLayer(t, tq, camY) {
   mug(p);
 }
 
-// —— 放下、拍拍、转身（台面，水槽旁）——
+// —— Set down, pat, turn away (counter, next to the sink) ——
 export function shotTwo(t) {
   const tq = q(t);
   setCam(t, BGK, { x: 2420, y: 560, z: 1.9 });
@@ -386,7 +386,7 @@ export function shotTwo(t) {
   else hand = { x: 196, y: -12 };
   const cubeOnCounter = tq >= K.setDown;
   const cubeX = mx + hand.x + 6, cubeY = cubeOnCounter ? CY : CY + 6 + hand.y - 36;
-  // 拍拍
+  // pat
   let pat = null;
   if (tq >= K.pats[0] - .12 && tq < K.turnAway) { const ph = Math.min(1, Math.abs(((tq - K.pats[0]) / (BEAT / 2)) % 1 - .5) * 2); pat = { x: 206, y: -120 + (1 - ph) * 22, hand: 'open', rot: Math.PI / 2, front: true, bend: -40 }; }
   const drip = !cubeOnCounter || tq < K.setDown + .8;
@@ -404,17 +404,17 @@ export function shotTwo(t) {
   if (drip) for (let i = 0; i < 3; i++) drop(cubeX - 18 + i * 18, cubeY - 20 + ((tq * 400 + i * 33) % 70), 5);
 }
 
-// —— 背影走开；前景的方糖犹豫、跳 ——
+// —— Walks off seen from behind; the sugar cube in the foreground hesitates, jumps ——
 const LEAVE_CAM = { x: 2300, y: 600, z: 1.35 };
 const MUG_STOP = 2150;
 function leaveMugX(tq) { return tq < K.walk[0] ? 2330 : lerp(2330, MUG_STOP, seg(tq, K.walk[0], K.walk[1])); }
 export function shotLeaving(t) {
   const tq = q(t);
-  // 犹豫那一小节：镜头慢慢推近方糖（让眼神来回看读得清）
+  // the bar of hesitation: camera slowly pushes in on the sugar cube (so the back-and-forth glances read clearly)
   const pu = eio(seg(t, bar(21, 3), bar(22, 1.5)));
   setCam(t, BGK, { x: lerp(LEAVE_CAM.x, 2390, pu), y: lerp(LEAVE_CAM.y, 715, pu), z: lerp(LEAVE_CAM.z, 1.7, pu) });
   kitchen(tq, {});
-  // 马克杯背影：慢、小起伏
+  // mug from behind: slow, small bob
   const mx = leaveMugX(tq), walking = tq < K.walk[1];
   const w = walk((tq - K.walk[0]) / BEAT, { L: 34, lift: 10, bob: 4 });
   const sag = seg(tq, K.sigh, K.sigh + .35);
@@ -424,11 +424,11 @@ export function shotLeaving(t) {
     legL: walking ? w.legL : undefined, legR: walking ? w.legR : undefined, sy: 1 - sag * .07 + plop * .14, sx: 1 + sag * .04 - plop * .06 };
   mug(p);
   if (tq >= K.plop && tq < K.plop + .45) { const u = seg(tq, K.plop, K.plop + .45); for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .35; drop(mx + Math.cos(a) * 90 * u, CY - 256 + Math.sin(a) * 110 * u + u * u * 120, 7); } }
-  // 叹气：一小团蒸汽
+  // sigh: a small puff of steam
   if (tq >= K.sigh && tq < K.sigh + .6) puff(mx - 30 - seg(tq, K.sigh, K.sigh + .6) * 40, CY - 300 - seg(tq, K.sigh, K.sigh + .6) * 30, 16, P.white);
-  // 前景：离镜头更近的一截台面（方糖站在上面）
+  // foreground: a stretch of counter nearer the camera (the sugar cube stands on it)
   T.push(); shape(T.rect(2470, 956, 420, 30), { fill: '#C4C1B8', lw: T.S.lw * .8, boil: .3 }); shape(T.rect(2470, 986, 420, 140), { fill: '#3F3E3A', lw: T.S.lw * .8, boil: .3 }); T.pop();
-  // 前景方糖（大一号、靠近镜头）
+  // foreground sugar cube (one size bigger, close to the camera)
   if (tq < K.plop) {
     const fx = 2640, fy = 960, fk = 2.0;
     let x = fx, y = fy, k = fk, sy = 1, sx = 1;
@@ -437,12 +437,12 @@ export function shotLeaving(t) {
     if (tq >= K.lookUp) eyes = { lx: -1, ly: -.3 };
     if (tq >= K.crouch) { sy = .8; sx = 1.12; brows = undefined; arms = { armL: { x: -50, y: -30, hand: 'fist', bend: 10 }, armR: { x: 50, y: -30, hand: 'fist', bend: -10 } }; }
     const [g1, g2, g3, g4] = K.glances;
-    if (tq >= g1) { eyes = { lx: -1, ly: .1 }; lean = .06; }                  // 看杯子背影
-    if (tq >= g2) { eyes = { lx: -.6, ly: -1 }; lean = -.12; }                // 抬头看杯口
+    if (tq >= g1) { eyes = { lx: -1, ly: .1 }; lean = .06; }                  // looks at the mug's back
+    if (tq >= g2) { eyes = { lx: -.6, ly: -1 }; lean = -.12; }                // looks up at the rim of the mug
     if (tq >= g3) { eyes = { lx: -1, ly: .1 }; lean = .06; }
     if (tq >= g4) { eyes = { lx: -.6, ly: -1, lid: .25 }; mouthT = { type: 'grin', open: .4 }; lean = -.12; }
     if (tq >= K.hop && tq < K.launch) { const u = seg(tq, K.hop, K.launch); y = fy + hop(u, 26); sy = u < .8 ? 1.15 : .85; sx = u < .8 ? .9 : 1.1; }
-    if (tq >= K.launch) { // 纵身一跳：从前景跳进背景里的杯口（边飞边缩小 = 纵深）
+    if (tq >= K.launch) { // the big leap: from the foreground into the mug's rim in the background (shrinking in flight = depth)
       const u = seg(tq, K.launch, K.plop), tx2 = MUG_STOP + 8, ty2 = CY - 228;
       x = lerp(fx, tx2, u); y = lerp(fy, ty2, u) + hop(u, 110); k = lerp(fk, .8, u); sy = 1.25; sx = .82; lean = -.5 * u; eyes = { type: 'happy' }; mouthT = { type: 'beam', open: .7 };
       arms = { armL: { x: -40, y: -120, hand: 'open' }, armR: { x: 44, y: -124, hand: 'open' } };
@@ -451,7 +451,7 @@ export function shotLeaving(t) {
   }
 }
 
-// —— 叮！甜 ——
+// —— Ding! Sweet ——
 export function shotSweet(t) {
   const tq = q(t);
   setCam(t, BGK, { x: MUG_STOP, y: 530, z: 2.3 });
@@ -467,8 +467,8 @@ export function shotSweet(t) {
   if (ding && tq < K.dingSweet + .8) { const u = seg(tq, K.dingSweet, K.dingSweet + .8); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + .3; star(MUG_STOP + Math.cos(a) * (150 + u * 90), CY - 180 + Math.sin(a) * (130 + u * 70), 16 * (1 - u * .6), u * 3); } }
 }
 
-// —— 高潮：全厨房同拍起舞（中全景，前景塞满跳舞的物件）——
-// 三种舞步：24 小节左右摇摆 → 25 小节踢腿 → 26 小节一起下蹲弹起 → 26.4 全体定格亮相（保持到 iris 关上）
+// —— Climax: the whole kitchen dances on the same beat (medium-wide, foreground packed with dancing objects) ——
+// three dance steps: bar 24 sway side to side → bar 25 kicks → bar 26 squat and spring up together → 26.4 everyone freezes in a pose (held until the iris closes)
 function move(t) {
   const tq = q(t), bt = beats(tq) - beats(bar(24));
   if (tq >= bar(26, 4)) return { step: 'pose', lean: 0, dx: 0, sy: 1.04, hop: 0, kick: 0, side: 0, freeze: 1 };
@@ -477,7 +477,7 @@ function move(t) {
   const v = Math.cos(2 * Math.PI * bt);
   return { step: 'bounce', lean: 0, dx: 0, sy: 1 - .2 * Math.max(0, v), hop: -Math.max(0, -v) * 46, kick: 0, side: 0 };
 }
-// 通用舞者包装：绕脚底摇摆、蹲、跳
+// generic dancer wrapper: sway around the feet, squat, jump
 function dancer(x, y, m, fn, amp = 1) {
   push(); translate(x + m.dx * amp, y + m.hop * amp); rotate(m.lean * amp); scale(1 + (1 - m.sy) * .6, m.sy); translate(-x, -y); fn(); pop();
 }
@@ -502,7 +502,7 @@ function shakerDancer(x, y, k, pepper, m, b) {
   const legR = (pepper ? up : !up) && kick > .05 ? { x: 12 + kick * 16, y: -kick * 30 } : { x: 12, y: 0 };
   dancer(x, y, m, () => C.shaker(x, y, k, m.freeze ? 0 : (pepper ? -b : b), { pepper, eyes: 'happy', mouth: 'grin', legL, legR }));
 }
-function saucepan(x, y, k, m, b) {   // 会跳舞的小锅（锅把当胳膊甩）
+function saucepan(x, y, k, m, b) {   // dancing saucepan (swings its handle like an arm)
   dancer(x, y, m, () => {
     push(); translate(x, y); scale(k);
     const L = m.step === 'kick' && m.side > 0 ? { x: -30, y: -26 * m.kick } : { x: -20, y: 0 }, R = m.step === 'kick' && m.side < 0 ? { x: 30, y: -26 * m.kick } : { x: 20, y: 0 };
@@ -520,7 +520,7 @@ function saucepan(x, y, k, m, b) {   // 会跳舞的小锅（锅把当胳膊甩�
 const noodleL = (ax, ay, bx, by) => _noodle([ax, ay], [bx, by], 3, 8, 8);
 const shoeK = (x, y, d) => _shoe(x, y, d, .5);
 const CAM_DANCE = { x: 2150, y: 610, z: 1.12 };
-const FG_Y = 1000;   // 前景台面（离镜头更近的一排舞者）
+const FG_Y = 1000;   // foreground counter (a row of dancers nearer the camera)
 function danceCam(t) {
   const u = eio(seg(t, K.pull[0], K.pull[0] + 1.1));
   return { x: lerp(MUG_STOP, CAM_DANCE.x, u), y: lerp(530, CAM_DANCE.y, u), z: Math.exp(lerp(Math.log(2.3), Math.log(CAM_DANCE.z), u)) };
@@ -528,16 +528,16 @@ function danceCam(t) {
 function danceStage(t, cam) {
   const tq = q(t), m = move(t), b = m.freeze ? 0 : breath(tq) * 3;
   setCam(t, BGK, cam, m.freeze ? 0 : breath(tq) * .025);
-  // 背景层：窗帘、挂锅、烤面包机、水龙头（都随拍）
+  // background layer: curtains, hanging pots, toaster, tap (all on the beat)
   dancer(1760, 470, { ...m, hop: 0, dx: 0 }, () => C.windowCurtain(1760, 470, .9, m.freeze ? 1 : b), .4);
   POS.hooks2.forEach((x, i) => C.hanging(x, 330, .8, ['pan', 'ladle', 'pot'][i], m.freeze ? 0 : (m.step === 'sway' ? m.lean * 1.4 : b * .1) * (i % 2 ? -1 : 1)));
   POS.hooks1.forEach((x, i) => C.hanging(x, 330, .8, ['pot', 'pan', 'ladle'][i], m.freeze ? 0 : (m.step === 'sway' ? m.lean * 1.4 : b * .1) * (i % 2 ? 1 : -1)));
   dancer(POS.toaster, CY + 4, m, () => C.toaster(POS.toaster, CY + 4, .9, b * .3, { eyes: 'happy', mouth: 'grin', toast: m.step === 'bounce' ? Math.max(0, -Math.cos(2 * Math.PI * beats(tq))) * 70 : (m.freeze ? 50 : 0), lx: 0 }));
   dancer(SINK_X, CY - 2, m, () => C.faucet(SINK_X, CY - 2, .9, b * .3, { spin: beats(tq) * Math.PI * .5, eyes: 'happy', mouth: 'grin', drip: (tq * 60) % 40 }));
   dancer(2420, CY + 4, m, () => C.sugarBowl(2420, CY + 4, .9, 0, { lid: m.freeze ? 1.2 : .3 + Math.max(0, b / 3) * .9 }));
-  // 中间：杯子和方糖
+  // middle: mug and sugar cube
   danceMug(t, MUG_STOP);
-  // 前景台面 + 前景舞者（大一号）
+  // foreground counter + foreground dancers (one size bigger)
   shape(T.rect(1300, FG_Y, 1800, 28), { fill: '#C4C1B8', lw: T.S.lw * .8, boil: .3 }); shape(T.rect(1300, FG_Y + 28, 1800, 200), { fill: '#3F3E3A', lw: T.S.lw * .8, boil: .3 });
   dancer(1600, FG_Y + 4, m, () => C.clock(1600, FG_Y + 4, 1.55, m.freeze ? 0 : b / 3, { eyes: 'happy', mouth: 'grin', ring: m.step === 'bounce' && m.sy < .95 ? .6 : 0, t: tq }));
   shakerDancer(1775, FG_Y + 4, 1.8, false, m, b / 3); shakerDancer(1880, FG_Y + 4, 1.8, true, m, b / 3);
@@ -546,20 +546,20 @@ function danceStage(t, cam) {
 }
 export function shotDance(t) { danceStage(t, danceCam(t)); }
 
-// —— iris：收拢到杯子上；方糖的小手伸出来把 iris 拉上 ——
+// —— Iris: closes on the mug; the sugar cube's little hand reaches out and pulls the iris shut ——
 export function shotIris(t) {
   const tq = q(t);
   const u = eio(seg(t, K.irisClose[0], K.irisClose[0] + 1.2));
   const cam = { x: lerp(CAM_DANCE.x, MUG_STOP, u), y: lerp(CAM_DANCE.y, 520, u), z: Math.exp(lerp(Math.log(CAM_DANCE.z), Math.log(1.45), u)) };
   danceStage(t, cam);
-  // 圆心 = 杯口附近（屏幕坐标）
+  // centre = near the mug rim (screen coordinates)
   const cx = 960 + (MUG_STOP - cam.x) * cam.z, cy = 540 + (CY - 200 - cam.y) * cam.z;
   let r;
   if (t < K.handOut) r = lerp(1250, 175, eio(seg(t, K.irisClose[0], K.handOut)));
   else if (t < K.grab + .15) r = 175;
   else r = 175 * (1 - ei(seg(t, K.grab + .15, K.shut)));
   const g = sg; g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#050505'; g.beginPath(); g.rect(0, 0, 1920, 1080); g.arc(cx, cy, Math.max(0, r), 0, TAU, true); g.fill('evenodd'); g.restore();
-  // 小手：从洞口伸出来、抓住边、往里拉
+  // little hand: reaches out of the opening, grabs the edge, pulls it in
   if (t >= K.handOut && t < K.shut + .05) {
     T.BASE.splice(0, 6, 1, 0, 0, 1, 0, 0); T.frame(t);
     const ang = -.75, reach = t < K.grab ? eo(seg(t, K.handOut, K.grab)) : 1;
@@ -570,7 +570,7 @@ export function shotIris(t) {
   }
 }
 
-// —— 片尾卡 ——
+// —— End card ——
 export function shotEnd(t) {
   const g = sg, tq = q(t), bt = beats(tq);
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#000'; g.fillRect(0, 0, 1920, 1080);
@@ -578,7 +578,7 @@ export function shotEnd(t) {
   for (let i = 0; i < 24; i++) { g.fillStyle = i % 2 ? '#8A877F' : '#C4C1B8'; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, 1400, i / 24 * TAU, (i + 1) / 24 * TAU); g.fill(); }
   g.restore();
   g.save(); const bb = Math.cos(bt * TAU); g.translate(960, 540); g.scale(1 - bb * .008, 1 + bb * .012); g.translate(-960, -540);
-  // 波浪形标牌
+  // wavy-edged sign
   g.fillStyle = '#F4F1EA'; g.strokeStyle = P.ink; g.lineWidth = 9; g.beginPath();
   const x0 = 470, x1 = 1450, y0 = 300, y1 = 790; g.moveTo(x0, y0);
   for (let x = x0; x <= x1; x += 10) g.lineTo(x, y0 + Math.sin((x - x0) / (x1 - x0) * TAU * 3) * 14);
@@ -593,12 +593,12 @@ export function shotEnd(t) {
   g.save(); g.fillStyle = '#F4F1EA'; g.strokeStyle = 'rgba(10,10,8,.85)'; g.lineWidth = 5; g.font = '22px "IM Fell English SC"'; g.textAlign = 'center';
   const cr = ['Original score & sound made in code  ·  Samples: VSCO 2 CE, VCSL (CC0)  ·  Voice: Kokoro TTS', 'Drums: "MuldjordKit" by Lars Muldjord (drumgizmo.org), CC BY 4.0  ·  Fonts: Shrikhand, Limelight, IM Fell English SC (OFL)'];
   cr.forEach((s, i) => { g.strokeText(s, 960, 960 + i * 32); g.fillText(s, 960, 960 + i * 32); }); g.restore();
-  // 从黑里 iris 打开
+  // iris opens out of black
   const r = 1250 * eo(seg(t, K.end, K.end + .45));
   if (r < 1250) { g.save(); g.fillStyle = '#050505'; g.beginPath(); g.rect(0, 0, 1920, 1080); g.arc(960, 540, r, 0, TAU, true); g.fill('evenodd'); g.restore(); }
 }
 
-// —— 字卡（画在场景画布上，跟着片门一起抖）——
+// —— Title cards (drawn on the scene canvas so they weave with the film gate) ——
 export function subtitles(t) {
   for (const [t0, t1, text, pos] of SUBS) {
     if (t < t0 || t >= t1) continue;

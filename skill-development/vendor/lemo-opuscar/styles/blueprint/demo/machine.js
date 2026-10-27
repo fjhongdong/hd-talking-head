@@ -1,23 +1,23 @@
-// 接云机：正立面几何（纸面坐标，y 向下），斜二测挤出，爆炸视图，活标注。
+// The Cloud Catcher: front-elevation geometry (paper coordinates, y down), cabinet oblique extrusion, exploded view, live annotations.
 import { g, S, line, solid, knock, hatch, circ, ell, rect, xf, gearPts, text, dim, balloon, LW, FONT, TAU, proj, cam, lw, fillV } from './draw.js';
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const ss = t => { t = clamp(t); return t * t * (3 - 2 * t); };
 const eio = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
 
-export const G = 1860, X = 1100;           // 地面线、桅杆轴
+export const G = 1860, X = 1100;           // ground line, mast axis
 export const M = {
   pinion: [X, G - 120], idler: [X - 50.7, G - 138.5], big: [X - 157.1, G - 157.3],
   gauge: [X - 214, G - 290], pivot: [X, G - 940], house: [X - 272, G - 340, X + 68, G - 56],
   mastBot: G - 340, mastTop: G - 900, boomLen: 600, tail: 130,
 };
 const m3 = 3;
-// 啮合相位
+// Gear mesh phase
 function meshAngle(t1, T1, T2, c1, c2) { const phi = Math.atan2(c2[1] - c1[1], c2[0] - c1[0]); return phi + Math.PI - Math.PI / T2 - (t1 - phi) * T1 / T2; }
 export function gearAngles(th) {
   const a1 = th, a2 = meshAngle(a1, 48, 24, M.big, M.idler), a3 = meshAngle(a2, 24, 12, M.idler, M.pinion);
   return [a1, a2, a3];
 }
-// 爆炸偏移（dx, dy, dz），dz < 0 朝向观众
+// Explosion offsets (dx, dy, dz), dz < 0 toward the viewer
 const EXP = {
   base: [0, 20, 0], house: [0, -70, 0], crank: [-150, -390, -430], big: [-60, -250, -310], idler: [-20, -200, -220], pinion: [0, -160, -150],
   gauge: [-60, -220, -200], bellows: [-240, 50, 0], mast: [0, -170, 0], chain: [0, -170, -110], head: [0, -260, 0],
@@ -29,25 +29,25 @@ export function explodeOf(part, E) {
   const i = EXSEQ.indexOf(part); if (i < 0) return 0;
   return eio(clamp((E * (1 + EXSEQ.length * .055) - i * .055) / 1));
 }
-// 阶段进度 → 单项进度
+// Phase progress → per-part progress
 const stag = (P, i, n, span = .45) => clamp((P - (i / Math.max(1, n)) * (1 - span)) / span);
 
 export function drawMachine(P = {}) {
   const pr = Object.assign({ c: 1, o: 1, g: 1, d: 1, h: 1, m: 1, b: 1 }, P.pr || {});
   const E = P.E || 0, th = P.gear || 0, boomA = P.boom ?? -.52, bel = P.bellows ?? .5, vane = P.vane ?? 0, gv = P.gauge ?? 0;
-  const sec = P.section;          // 剖切线扫过的 x（null = 不剖）
+  const sec = P.section;          // x the section line has swept to (null = no section)
   const off = k => { const e = explodeOf(k, E), v = EXP[k]; return [v[0] * e, v[1] * e, v[2] * e]; };
   const [ga1, ga2, ga3] = gearAngles(th);
-  const BAL = [];                 // 零件号（最后画，永远在上层）
+  const BAL = [];                 // part balloons (drawn last, always on top)
   const DIMS = [];
   const parts = {
     base() {
       const [ox, oy, oz] = off('base');
       const pts = xf(rect(X - 322, G - 58, X + 198, G - 28), ox, oy);
       solid(pts, { d0: oz - 70, th: 140, u: stag(pr.o, 0, 6) });
-      // 螺栓
+      // bolts
       for (const bx of [X - 294, X + 170]) { line(xf(rect(bx - 9, G - 70, bx + 9, G - 58), ox, oy), { w: LW.det, closed: true, u: pr.d, d: oz - 70 }); }
-      // 脚轮
+      // casters
       for (const wx of [X - 272, X + 148]) { const c = xf([[wx, G - 14]], ox, oy)[0]; solid(circ(c[0], c[1], 14, 28), { d0: oz - 60, th: 18, w: LW.det, u: stag(pr.o, 1, 6), conn: false }); line(circ(c[0], c[1], 4, 12), { w: LW.thin, closed: true, u: pr.d, d: oz - 60 }); }
       hatch(pts, { sp: 13, u: pr.h, d: oz - 70 });
       BAL.push([[X + 188 + ox, G - 44 + oy], [X + 273 + ox, G + 20 + oy], 1, oz - 70, pr.b]);
@@ -59,33 +59,33 @@ export function drawMachine(P = {}) {
       const u = stag(pr.o, 1, 6);
       if (sec == null) {
         solid(pts, { d0, th: T, u });
-        // 面板螺钉 + 铭牌
+        // panel screws + nameplate
         if (pr.d > 0) for (const [bx, by] of [[x0 + 16, y0 + 16], [x1 - 16, y0 + 16], [x0 + 16, y1 - 16], [x1 - 16, y1 - 16]]) line(circ(bx, by, 5, 14), { w: LW.thin, closed: true, u: pr.d, d: d0 });
         line(rect(x0 + 120, y0 + 22, x1 - 80, y0 + 62), { w: LW.thin, closed: true, u: pr.d, d: d0 });
         text('No. 1', (x0 + 120 + x1 - 80) / 2, y0 + 51, { size: 26, align: 'center', font: FONT.hand, u: pr.d, d: d0, nib: false });
       } else {
-        // 剖切：左侧（x < sec）露出内部
+        // section cut: the left side (x < sec) shows the interior
         solid(pts, { d0, th: T, u: 1 });
         g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
         const cl = rect(x0 - 40, y0 - 40, Math.min(x1 + 40, sec), y1 + 40);
         g.beginPath(); cl.forEach(([x, y], i) => { const [sx, sy] = S(x, y, d0); i ? g.lineTo(sx, sy) : g.moveTo(sx, sy); }); g.closePath(); g.clip();
         knock(pts, d0);
         const wt = 16;
-        // 剖开的墙（剖面线）
+        // cut walls (section hatching)
         const walls = [rect(x0, y0, x1, y0 + wt), rect(x0, y1 - wt, x1, y1), rect(x0, y0, x0 + wt, y1), rect(x1 - wt, y0, x1, y1)];
         for (const wv of walls) { line(wv, { w: LW.det, closed: true, d: d0 }); hatch(wv, { sp: 8, d: d0, v: .9 }); }
         line(rect(x0 + wt, y0 + wt, x1 - wt, y1 - wt), { w: LW.det, closed: true, d: d0 });
-        // 发条（阿基米德螺线）+ 棘轮 + 下链轮
+        // mainspring (Archimedean spiral) + ratchet + lower sprocket
         const sc = [X - 162, G - 170], sp = [];
         for (let i = 0; i <= 260; i++) { const a = i / 260 * TAU * 5.2 + th * .2; const r = 10 + i / 260 * 78; sp.push([sc[0] + Math.cos(a) * r, sc[1] + Math.sin(a) * r]); }
         line(sp, { w: LW.thin, d: d0 });
         line(circ(sc[0], sc[1], 10, 20), { w: LW.det, closed: true, d: d0 });
         line(gearPts(M.pinion[0], M.pinion[1], 16, 2.4, ga3), { w: LW.det, closed: true, d: d0 });
         line(circ(M.pinion[0], M.pinion[1], 6, 14), { w: LW.thin, closed: true, d: d0 });
-        // 棘爪
+        // pawl
         line([[X - 57, G - 250], [X - 32, G - 225], [X - 7, G - 250]], { w: LW.det, d: d0 });
         g.restore();
-        // 剖切线 A–A
+        // section line A–A
         const top = y0 - 90, bot = y1 + 90;
         line([[sec, top], [sec, bot]], { w: LW.out, dash: 'phantom', d: d0 });
         for (const [yy, dir] of [[top, 1], [bot, -1]]) {
@@ -112,7 +112,7 @@ export function drawMachine(P = {}) {
       const [ox, oy, oz] = off('big'); const [cx, cy] = [M.big[0] + ox, M.big[1] + oy], d0 = -72 + oz, u = stag(pr.g, 0, 6);
       solid(gearPts(cx, cy, 48, m3, ga1), { d0, th: 18, w: LW.det, u, conn: false });
       line(circ(cx, cy, 72, 72), { w: LW.hair, dash: 'center', closed: true, u: pr.c, d: d0 });
-      // 轮辐 + 轮毂
+      // spokes + hub
       for (let i = 0; i < 5; i++) { const a = ga1 + i * TAU / 5; line([[cx + Math.cos(a) * 16, cy + Math.sin(a) * 16], [cx + Math.cos(a) * 52, cy + Math.sin(a) * 52]], { w: LW.det, u: pr.d, d: d0, nib: false }); }
       line(circ(cx, cy, 55, 56), { w: LW.thin, closed: true, u: pr.d, d: d0 });
       line(circ(cx, cy, 16, 24), { w: LW.det, closed: true, u: pr.d, d: d0 });
@@ -137,7 +137,7 @@ export function drawMachine(P = {}) {
       const arm = [[cx + nx * 11, cy + ny * 11], [ex[0] + nx * 7, ex[1] + ny * 7], [ex[0] - nx * 7, ex[1] - ny * 7], [cx - nx * 11, cy - ny * 11]];
       solid(arm, { d0, th: 10, w: LW.det, u });
       solid(circ(cx, cy, 13, 20), { d0: d0 - 4, th: 10, w: LW.det, u, conn: false });
-      // 手柄（朝向观众的圆柱）
+      // crank handle (a cylinder pointing toward the viewer)
       solid(circ(ex[0], ex[1], 11, 20), { d0: d0 - 46, th: 46, w: LW.det, u, conn: false });
       BAL.push([ex, [ex[0] - 70, ex[1] - 60], 3, d0 - 46, pr.b]);
     },
@@ -148,7 +148,7 @@ export function drawMachine(P = {}) {
       const body = [...top, ...bot.slice().reverse()];
       solid(body, { d0: d0 + 10, th: 60, w: LW.det, u, conn: false });
       for (let i = 1; i < n; i++) line([top[i], bot[i]], { w: LW.hair, u: pr.d, d: d0 + 10, nib: false });
-      // 端板 + 喷嘴
+      // end plate + nozzle
       const bd = rect(x0 - 14, y0 - 12, x0, y1 + 12);
       solid(bd, { d0, th: 80, w: LW.det, u });
       const nz = [[x0 - 14, (y0 + y1) / 2 - 12], [x0 - 70, (y0 + y1) / 2 - 42], [x0 - 76, (y0 + y1) / 2 - 32], [x0 - 14, (y0 + y1) / 2 + 12]];
@@ -167,7 +167,7 @@ export function drawMachine(P = {}) {
         for (let i = 0; i < n; i++) { line([L[i], R[i]], { w: LW.det, u: ud, d, nib: false }); line(i % 2 ? [L[i], R[i + 1]] : [R[i], L[i + 1]], { w: LW.det, u: ud, d, nib: false }); }
         line([L[n], R[n]], { w: LW.det, u: ud, d, nib: false });
       };
-      if (proj.k > .01) face(oz + 30); // 后片桁架
+      if (proj.k > .01) face(oz + 30); // back truss panel
       face(oz - 30);
       line([[X + ox, yb + 60], [X + ox, yt - 150]], { w: LW.hair, dash: 'center', u: pr.c, d: oz - 30 });
       BAL.push([[X + ox + wAt(yb - 260) , yb - 260], [X + ox + 120, yb - 330], 6, oz - 30, pr.b]);
@@ -177,12 +177,12 @@ export function drawMachine(P = {}) {
       const yb = M.mastBot + oy + 20, yt = M.mastTop + oy - 20, d = oz - 5, u = stag(pr.d, 3, 8);
       const cw = 12;
       line([[X + ox - cw, yb], [X + ox - cw, yt]], { w: LW.thin, u, d }); line([[X + ox + cw, yb], [X + ox + cw, yt]], { w: LW.thin, u, d });
-      // 链节（随小齿轮转动而移动）
+      // chain links (move as the pinion turns)
       if (u >= 1) {
         const ph = ((gearAngles(th)[2] * 20) % 22 + 22) % 22;
         for (let y = yt + ph; y < yb; y += 22) { line([[X + ox - cw, y], [X + ox - cw, y + 12]], { w: LW.det, d, nib: false }); line([[X + ox + cw, y + 11 - 2 * ph % 11], [X + ox + cw, y + 23 - 2 * ph % 11]], { w: LW.det, d, nib: false }); }
       }
-      // 隐藏段（在齿轮箱里）：虚线
+      // hidden stretch (inside the gearbox): dashed
       line([[X + ox - cw, M.mastBot + oy + 20], [X + ox - cw, M.pinion[1] + oy]], { w: LW.hair, dash: 'hidden', u, d });
       line([[X + ox + cw, M.mastBot + oy + 20], [X + ox + cw, M.pinion[1] + oy]], { w: LW.hair, dash: 'hidden', u, d });
       BAL.push([[X + ox - cw, (yb + yt) / 2 + 60], [X + ox - 120, (yb + yt) / 2], 7, d, pr.b]);
@@ -215,7 +215,7 @@ export function drawMachine(P = {}) {
       const bp = tf([[L * .55, -hAt(L * .55)]])[0];
       BAL.push([bp, [bp[0] + 40, bp[1] - 120], 9, oz - 22, pr.b]);
     },
-    cw() {   // 配重：祖母的熨斗
+    cw() {   // counterweight: grandmother's flat iron
       const [ox, oy, oz] = off('cw'); const px = X + ox, py = M.pivot[1] + oy;
       const hang = xf([[-M.tail + 14, 16]], px, py, boomA)[0];
       const hx = hang[0], hy = hang[1];
@@ -234,7 +234,7 @@ export function drawMachine(P = {}) {
       const u = stag(pr.o, 5, 6), ud = stag(pr.d, 6, 8);
       line(tf([[L - 6, -10], [L + 8, -10], [L + 8, 10], [L - 6, 10]]), { w: LW.det, closed: true, u, d });
       const hoopBack = ell(hc[0], hc[1], rx, ry, boomA, 40, Math.PI, TAU), hoopFront = ell(hc[0], hc[1], rx, ry, boomA, 40, 0, Math.PI);
-      const bag = P.bag ?? 0;             // 0 = 空网下垂，1 = 兜住云（鼓起）
+      const bag = P.bag ?? 0;             // 0 = empty net sagging, 1 = cloud caught (bulging)
       const depth = 170 + 30 * bag, bw = 1 + .25 * bag;
       const bottom = [hc[0] + 10, hc[1] + depth];
       const left = ell(hc[0], hc[1], rx, ry, boomA, 1, Math.PI, Math.PI)[0], right = ell(hc[0], hc[1], rx, ry, boomA, 1, 0, 0)[0];
@@ -242,7 +242,7 @@ export function drawMachine(P = {}) {
       const bagOutline = [...curve(left, bottom, [-40 * bw, 30]), ...curve(bottom, right, [40 * bw, 30]).slice(1)];
       const bagPoly = [...bagOutline, ...hoopBack.slice().reverse()];
       if (!P.netNoFill) knock(bagPoly, d);
-      if ((P.bagFill || 0) > 0) {   // 兜住的云：云体鼓进网兜，网线压在上面
+      if ((P.bagFill || 0) > 0) {   // caught cloud: the cloud bulges into the net bag, net lines pressing over it
         const inBag = [...bagOutline, ...hoopFront];
         g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath(); inBag.forEach(([x, y], i) => { const [sx, sy] = S(x, y, d); i ? g.lineTo(sx, sy) : g.moveTo(sx, sy); }); g.closePath(); g.clip();
         knock(inBag, d);
@@ -254,7 +254,7 @@ export function drawMachine(P = {}) {
         g.restore();
       }
       if (P.net !== 'only') line(hoopBack, { w: LW.det, u, d });
-      // 网眼：经线（从网圈到底）+ 纬线
+      // mesh: vertical lines (from the hoop to the bottom) + horizontal lines
       for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8; const q = ell(hc[0], hc[1], rx, ry, boomA, 1, a, a)[0]; line(curve(q, bottom, [(q[0] - hc[0]) * .35 * bw, 20]), { w: LW.hair, u: ud, d, nib: false }); }
       for (let j = 1; j < 5; j++) { const t = j / 5; const cy = hc[1] + depth * t * .92, wd = rx * (1 - t * t * .85) * bw; line(ell(hc[0] + 6 * t, cy, wd, ry * (1 - t) * .8 + 2, 0, 36, 0, Math.PI), { w: LW.hair, u: ud, d, nib: false }); }
       line(bagOutline, { w: LW.det, u, d });
@@ -267,7 +267,7 @@ export function drawMachine(P = {}) {
       const u = stag(pr.d, 7, 8);
       line([[cx, y0], [cx, y1]], { w: LW.det, u, d });
       line(circ(cx, y1 - 6, 6, 14), { w: LW.det, closed: true, u, d });
-      const a = vane * 1.35;  // 0 = 迎风竖起，1 = 耷拉
+      const a = vane * 1.35;  // 0 = standing up into the wind, 1 = drooping
       const fl = xf([[0, 0], [70, 12], [0, 30]], cx, y1 + 6, a);
       solid(fl, { d0: d, th: 4, w: LW.det, u });
       BAL.push([[cx - 4, y1 + 36], [cx - 90, y1 + 10], 12, d, pr.b]);
@@ -276,26 +276,26 @@ export function drawMachine(P = {}) {
   const order = P.net === 'only' ? ['net'] : P.net === 'skip' ? ORDER.filter(k => k !== 'net') : ORDER;
   for (const k of order) parts[k]();
   if (P.net === 'only') { if (P.balloons !== false) for (const [a, b, n, d, u] of BAL) balloon(a, b, n, { u, d, dt: d }); return parts._net; }
-  // 零件号（爆炸时跟着零件飞）
+  // part balloons (fly with their parts during the explosion)
   if (P.balloons !== false) for (const [a, b, n, d, u] of BAL) if (Number.isInteger(n)) balloon(a, b, n, { u, d, dt: d });
   return parts._net;
 }
 
-// 花坛（不参与爆炸）
+// Flower bed (not part of the explosion)
 export function drawGarden(P = {}) {
   const u = P.u ?? 1, d0 = -45;
   const box = rect(1460, G - 60, 1820, G);
   solid(box, { d0, th: 90, u });
   for (let i = 1; i < 3; i++) line([[1460, G - 60 + 20 * i], [1820, G - 60 + 20 * i]], { w: LW.hair, u: P.ud ?? u, d: d0, nib: false });
-  // 土
+  // soil
   const soil = [[1466, G - 60]]; for (let i = 0; i <= 18; i++) soil.push([1466 + i * 19, G - 64 - 6 * Math.abs(Math.sin(i * 1.7))]); soil.push([1814, G - 60]);
   line(soil, { w: LW.thin, u: P.ud ?? u, d: d0 });
   hatch(rect(1460, G - 60, 1820, G), { sp: 11, u: P.uh ?? u, d: d0, v: .55 });
-  // 地面线 + 地面阴影短线
+  // ground line + short ground-shadow strokes
   line([[640, G], [1990, G]], { w: LW.out, u: P.ug ?? u, d: 0 });
   for (let x = 650; x < 1980; x += 26) line([[x, G + 4], [x - 14, G + 18]], { w: LW.hair, u: P.ug ?? u, d: 0, nib: false });
 }
-// 花：root 根部，h 高度，droop 0–1（低垂），bloom 0–1（花瓣展开），u 画出进度
+// Flower: root base, h height, droop 0–1 (drooping), bloom 0–1 (petals opening), u draw-on progress
 export function flower(x, y, h, droop, bloom, u = 1, o = {}) {
   if (u <= 0) return;
   const d = o.d ?? -45, stem = [];
@@ -305,7 +305,7 @@ export function flower(x, y, h, droop, bloom, u = 1, o = {}) {
   for (let i = 0; i <= N; i++) { stem.push([px, py]); const t = i / N; a += (bend * t * t) / N * 2.2 + (o.sway || 0) / N; px += Math.cos(a) * h / N; py += Math.sin(a) * h / N; }
   const us = clamp(u / .5);
   line(stem, { w: LW.det, u: us, d });
-  // 叶
+  // leaves
   if (u > .35) {
     const ul = clamp((u - .35) / .3);
     for (const [k, s] of [[8, 1], [13, -1]]) {
@@ -316,7 +316,7 @@ export function flower(x, y, h, droop, bloom, u = 1, o = {}) {
       line([[bx, by], tip], { w: LW.hair, u: ul, d, nib: false });
     }
   }
-  // 花头
+  // flower head
   if (u > .6) {
     const uh = clamp((u - .6) / .4);
     const [hx, hy] = stem[N], ha = a + Math.PI / 2;
@@ -330,11 +330,11 @@ export function flower(x, y, h, droop, bloom, u = 1, o = {}) {
   }
 }
 
-// 爆炸装配路径（点划线：零件从哪里来）
+// Exploded assembly paths (dash-dot lines: where each part comes from)
 export function explodePaths(E, boomA = -.52, u = 1) {
   if (E <= 0.001 || u <= 0) return;
   const P = (k, x, y, d0) => { const e = explodeOf(k, E), v = EXP[k]; if (e < .02) return; line([[x, y], [x + v[0] * e + 0.0001, y + v[1] * e]], { w: LW.hair, dash: 'center', v: .75, u, d: d0, nib: false }); };
-  // 深度方向的路径需要逐点投影：用短折线沿深度插值
+  // paths along the depth direction must be projected point by point: interpolate along depth with short polyline segments
   const PD = (k, x, y, d0) => { const e = explodeOf(k, E), v = EXP[k]; if (e < .02) return; const pts = []; for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([x + v[0] * e * t, y + v[1] * e * t, d0 + v[2] * e * t]); }
     for (let i = 1; i < pts.length; i++) { if (i % 2 === 0) continue; const a = pts[i - 1], b = pts[i]; lineD(a, b); } };
   PD('crank', M.big[0], M.big[1], -92); PD('big', M.big[0], M.big[1], -72); PD('idler', M.idler[0], M.idler[1], -66); PD('pinion', M.pinion[0], M.pinion[1], -62); PD('gauge', M.gauge[0], M.gauge[1], -64);

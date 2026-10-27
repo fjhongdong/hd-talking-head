@@ -1,6 +1,6 @@
-// 皮影"刻皮"工具：每一片驴皮 = 一张预渲染的透射率贴图（颜色 = 透过的光色；镂空 = 透明；墨线 = 近黑）
-// 画到透射率画布上时用 multiply，重叠的皮片自然更暗。坐标单位 = 1920×1080 幕布上的 1 px（机位 1×）。
-export const SS = 3;                 // 贴图每单位像素数（特写 2.8× 时仍清晰）
+// Piyingxi (皮影, shadow puppet) "hide carving" (刻皮) tools: each piece of donkey hide = one pre-rendered transmittance texture (colour = colour of the light let through; cut-outs = transparent; ink lines = near black)
+// Drawn onto the transmittance canvas with multiply, so overlapping pieces of hide naturally come out darker. Coordinate unit = 1 px on the 1920×1080 screen (camera at 1×).
+export const SS = 3;                 // texture pixels per unit (still sharp in a 2.8× close-up)
 export const DYE = {
   red: '#b8211a', crim: '#8e1813', orange: '#d9541c', yellow: '#dc9d1e', gold: '#c98a26',
   green: '#236e3a', jade: '#2f8a5c', teal: '#22647e', blue: '#2a5690', hide: '#e2bd80', hide2: '#cf9f5e',
@@ -8,7 +8,7 @@ export const DYE = {
 };
 export function canvas(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return [c, c.getContext('2d')]; }
 
-// 平滑闭合路径（过中点的二次曲线）
+// Smooth closed path (quadratic curves through the midpoints)
 export function smooth(g, pts, closed = true) {
   const n = pts.length; if (n < 2) return;
   if (!closed) {
@@ -21,10 +21,10 @@ export function smooth(g, pts, closed = true) {
   for (let i = 1; i <= n; i++) { const p = pts[i % n], q = m(i); g.quadraticCurveTo(p[0], p[1], q[0], q[1]); }
   g.closePath();
 }
-// 折线闭合（尖角，用于锯齿、刀刻感的边）
+// Closed polyline (sharp corners, for jagged, knife-cut-looking edges)
 export function poly(g, pts, closed = true) { g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); if (closed) g.closePath(); }
 
-// 一片皮：box = [x0,y0,x1,y1]（单位，相对枢轴），draw(g) 在单位坐标里画，枢轴在原点
+// One piece of hide: box = [x0,y0,x1,y1] (units, relative to the pivot), draw(g) draws in unit coordinates, pivot at the origin
 export function piece(box, draw, opt = {}) {
   const [x0, y0, x1, y1] = box, w = x1 - x0, h = y1 - y0, K = opt.ss || SS;
   const [c, g] = canvas(w * K, h * K);
@@ -33,14 +33,14 @@ export function piece(box, draw, opt = {}) {
   if (opt.tex !== false) hideTexture(c, g, opt.seed || 0);
   return { c, x0, y0, w, h };
 }
-// 驴皮质感：半透明皮子的疏密斑驳 + 纤维 + 手染不匀；乘上去后用原 alpha 还原镂空
+// Donkey-hide texture: mottled density of the translucent hide + fibres + uneven hand dyeing; after multiplying it in, the original alpha restores the cut-outs
 let HIDE = null;
 function hideCanvas() {
   if (HIDE) return HIDE;
   const N = 512, [c, g] = canvas(N, N), id = g.createImageData(N, N), d = id.data;
   const h = (x, y) => { const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); };
   const vn = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
-    const w = (a, b) => h(((a % 64) + 64) % 64, ((b % 64) + 64) % 64);   // 64 格周期 → 可平铺
+    const w = (a, b) => h(((a % 64) + 64) % 64, ((b % 64) + 64) % 64);   // 64-cell period → tileable
     return (w(i, j) * (1 - u) + w(i + 1, j) * u) * (1 - v) + (w(i, j + 1) * (1 - u) + w(i + 1, j + 1) * u) * v; };
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const f = vn(x / 64, y / 64) * .5 + vn(x / 32, y / 32) * .3 + vn(x / 8, y / 8) * .2;
@@ -63,22 +63,22 @@ export function hideTexture(c, g, seed) {
 }
 export function drawPiece(g, p) { g.drawImage(p.c, p.x0, p.y0, p.w, p.h); }
 
-// —— 刻皮基本操作 ——
+// —— Basic hide-carving operations ——
 export function fill(g, col, pathFn, rule = 'evenodd') { g.beginPath(); pathFn(g); g.fillStyle = col; g.fill(rule); }
-export function cut(g, pathFn, rule = 'evenodd') {       // 镂空：destination-out，先设不透明黑（fillStyle 的 alpha 决定挖多少）
+export function cut(g, pathFn, rule = 'evenodd') {       // Cut out: destination-out; set opaque black first (the alpha of fillStyle decides how much is removed)
   g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.strokeStyle = '#000';
   g.beginPath(); pathFn(g); g.fill(rule); g.restore();
 }
-export function cutLine(g, w, pathFn) {  // 刻一条细缝
+export function cutLine(g, w, pathFn) {  // carve one thin slit
   g.save(); g.globalCompositeOperation = 'destination-out'; g.strokeStyle = '#000'; g.lineWidth = w; g.lineCap = 'round'; g.lineJoin = 'round';
   g.beginPath(); pathFn(g); g.stroke(); g.restore();
 }
 export function ink(g, w, pathFn, col = DYE.ink) { g.beginPath(); pathFn(g); g.strokeStyle = col; g.lineWidth = w; g.stroke(); }
-// 把当前内容裁在 pathFn 内（atop 绘制用）
+// Clip the current content to inside pathFn (for atop drawing)
 export function within(g, pathFn, fn) { g.save(); g.beginPath(); pathFn(g); g.clip('evenodd'); fn(); g.restore(); }
 
-// —— 纹样库（都在调用处的 clip 范围内使用）——
-// 鱼鳞甲：一排排小月牙缝
+// —— Pattern library (all used inside the caller's clip region) ——
+// Fish-scale armour: rows of small crescent slits
 export function scales(g, x0, y0, x1, y1, r = 7, w = 1.3) {
   let row = 0;
   for (let y = y0; y < y1 + r; y += r * 1.05, row++) {
@@ -87,7 +87,7 @@ export function scales(g, x0, y0, x1, y1, r = 7, w = 1.3) {
     }
   }
 }
-// 云头卷：螺旋细缝 + 泪滴孔
+// Cloud-head scroll: spiral slit + teardrop hole
 export function cloud(g, x, y, r, rot = 0, w = 1.4, flip = 1) {
   cutLine(g, w, q => {
     for (let i = 0; i <= 40; i++) {
@@ -98,29 +98,29 @@ export function cloud(g, x, y, r, rot = 0, w = 1.4, flip = 1) {
   });
   cut(g, q => { q.arc(x + Math.cos(rot + Math.PI * 2.2 * flip) * r * .2, y + Math.sin(rot + Math.PI * 2.2 * flip) * r * .2, r * .16, 0, Math.PI * 2); });
 }
-// 联珠：一串小圆孔
+// String of beads: a row of small round holes
 export function beads(g, pts, r) { cut(g, q => { for (const [x, y] of pts) { q.moveTo(x + r, y); q.arc(x, y, r, 0, Math.PI * 2); } }); }
 export function beadLine(g, x0, y0, x1, y1, r, gap) {
   const L = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.floor(L / gap)), pts = [];
   for (let i = 0; i <= n; i++) pts.push([x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
   beads(g, pts, r);
 }
-// 梅花：五瓣小圆孔
+// Plum blossom: five small round holes as petals
 export function plum(g, x, y, r) { const pts = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k * Math.PI * 2 / 5; pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); } beads(g, pts, r * .62); }
-// 水波纹：一排平行弧缝
+// Water ripples: a row of parallel arc slits
 export function waves(g, x0, y0, x1, y1, r = 8, w = 1.3) {
   for (let y = y0, row = 0; y < y1; y += r * .9, row++)
     for (let x = x0 + (row % 2) * r; x < x1 + r; x += r * 2)
       cutLine(g, w, q => { q.arc(x, y, r, 1.1 * Math.PI, 1.9 * Math.PI); });
 }
-// 回纹（方折线）
+// Fret pattern (回纹, square meander)
 export function meander(g, x0, y, x1, s = 6, w = 1.2) {
   cutLine(g, w, q => {
     q.moveTo(x0, y);
     for (let x = x0; x < x1 - s * 2; x += s * 2) { q.lineTo(x, y - s); q.lineTo(x + s * 1.4, y - s); q.lineTo(x + s * 1.4, y - s * .3); q.lineTo(x + s * .7, y - s * .3); q.lineTo(x + s * .7, y); q.lineTo(x + s * 2, y); }
   });
 }
-// 铆钉：深色小圈 + 浅色线结（画在透射率画布上，世界坐标）
+// Rivet (joint pin): small dark ring + light-coloured thread knot (drawn on the transmittance canvas, world coordinates)
 export function rivet(g, x, y, r = 3.4) {
   g.save(); g.globalCompositeOperation = 'multiply';
   g.beginPath(); g.arc(x, y, r * .74, 0, Math.PI * 2); g.strokeStyle = '#2e1c10'; g.lineWidth = r * .52; g.stroke();
@@ -128,8 +128,8 @@ export function rivet(g, x, y, r = 3.4) {
   g.restore();
 }
 
-// —— 加密镂空纹样（大面积透光，只留细皮筋）——
-// 开口鱼鳞：每片鳞刻成一个厚月牙孔
+// —— Dense cut-out patterns (large areas let light through, leaving only thin strips of hide) ——
+// Open fish scales: each scale carved as one thick crescent hole
 export function scalesOpen(g, x0, y0, x1, y1, r = 7) {
   cut(g, q => {
     let row = 0;
@@ -141,7 +141,7 @@ export function scalesOpen(g, x0, y0, x1, y1, r = 7) {
       }
   }, 'nonzero');
 }
-// 菱形格（锦纹）
+// Diamond lattice (brocade pattern, 锦纹)
 export function lattice(g, x0, y0, x1, y1, s = 10, w = 2.2) {
   cut(g, q => {
     let row = 0;
@@ -151,24 +151,24 @@ export function lattice(g, x0, y0, x1, y1, s = 10, w = 2.2) {
       }
   }, 'nonzero');
 }
-// 古钱纹：圆孔里留方形皮
+// Ancient-coin pattern: a square of hide left inside a round hole
 export function coin(g, x, y, r) { cut(g, q => { q.arc(x, y, r, 0, Math.PI * 2); q.rect(x - r * .38, y - r * .38, r * .76, r * .76); }, 'evenodd'); }
-// 厚条纹（地层 / 山纹）：沿曲线 fn(x)+k*gap 刻出宽缝
+// Thick stripes (rock strata / mountain pattern): carve wide slits along the curves fn(x)+k*gap
 export function strata(g, x0, x1, fn, n, gap, w) {
   for (let k = 1; k <= n; k++) cutLine(g, w, q => { for (let x = x0; x <= x1; x += 8) { const y = fn(x) + k * gap; if (x === x0) q.moveTo(x, y); else q.lineTo(x, y); } });
 }
 
-// 火舌（传统火焰纹）：宽根、腹部鼓起、尖端向一侧卷成小钩。局部坐标：根在 (0,0)，向 -y 生长，高 h、宽 w，dir=±1 卷向
+// Flame tongue (traditional flame pattern): wide root, swelling belly, tip curling to one side into a small hook. Local coordinates: root at (0,0), grows toward -y, height h, width w, dir=±1 curl direction
 export function flameTongue(q, h, w, dir = 1) {
   const d = dir;
   q.moveTo(-w / 2, 0);
   q.bezierCurveTo(-w * .75, -h * .3, -w * .25 * d - w * .1, -h * .55, w * .15 * d, -h * .82);
-  q.bezierCurveTo(w * .3 * d, -h * .95, w * .55 * d, -h * 1.02, w * .62 * d, -h * .9);      // 钩尖
+  q.bezierCurveTo(w * .3 * d, -h * .95, w * .55 * d, -h * 1.02, w * .62 * d, -h * .9);      // hook tip
   q.bezierCurveTo(w * .52 * d, -h * .93, w * .38 * d, -h * .88, w * .36 * d, -h * .76);
   q.bezierCurveTo(w * .55, -h * .5, w * .62, -h * .22, w / 2, 0);
   q.closePath();
 }
-// 锥形裂缝：沿折线刻出中间宽两头尖的缝
+// Tapered crack: carve a slit along a polyline, wide in the middle and pointed at both ends
 export function cutTaper(g, pts, w) {
   if (pts.length < 2) return;
   const L = [], R = [], n = pts.length;

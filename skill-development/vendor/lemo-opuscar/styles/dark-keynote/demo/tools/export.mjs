@@ -1,4 +1,4 @@
-// 导出 events.json（混音）+ out/srt.json（字幕）：node styles/dark-keynote/demo/tools/export.mjs
+// Export events.json (mix) + out/srt.json (subtitles): node styles/dark-keynote/demo/tools/export.mjs
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
 const D = path.dirname(path.dirname(fileURLToPath(import.meta.url)));

@@ -1,8 +1,8 @@
-// 太阳皮影：一整片刻花圆皮件（外圈火焰纹镂空 + 联珠 + 半透明橙红盘）+ 盘心一只三足金乌剪影（单独一片，被射中时跌落）
+// Sun shadow puppet: one carved round piece of hide (outer ring of cut-out flame pattern + a string of beads + a translucent orange-red disc) + a silhouette of the three-legged golden crow (金乌) in the centre of the disc (a separate piece that falls when the sun is shot)
 import { piece, drawPiece, fill, cut, cutLine, ink, within, smooth, poly, beads, cloud, flameTongue, DYE } from './carve.js';
 import { mulberry } from '/core/lib.js';
 
-// 火焰舌：从角度 a 的根部卷出去（S 形，尖端回勾）
+// Flame tongue: curls out from its root at angle a (S-shaped, tip hooking back)
 function tongue(q, a, r0, r1, wd, hook = 1) {
   const P = (ang, r) => [Math.cos(ang) * r, Math.sin(ang) * r];
   const b0 = P(a - wd, r0), b1 = P(a + wd, r0), m0 = P(a - wd * .55, (r0 + r1) / 2), m1 = P(a + wd * .9, (r0 + r1) / 2 + 2);
@@ -14,9 +14,9 @@ function sunDisk(n, seed) {
     const R0 = 42, R1 = 56;
     const tongues = (q, s = 1) => { for (let k = 0; k < n; k++) { const a = seed + k / n * Math.PI * 2; tongueAt(q, a, R1 - 7, 40 * s, (Math.PI * 2 * R1 / n) * .78 * s, k % 2 ? 1 : -1); } };
     fill(g, DYE.orange, q => { q.moveTo(R1, 0); q.arc(0, 0, R1, 0, Math.PI * 2); tongues(q); }, 'nonzero');
-    // 火舌内层黄
+    // Yellow inner layer of the flame tongues
     fill(g, DYE.yellow, q => { for (let k = 0; k < n; k++) { const a = seed + k / n * Math.PI * 2; tongueAt(q, a, R1 - 2, 24, (Math.PI * 2 * R1 / n) * .4, k % 2 ? 1 : -1); } }, 'nonzero');
-    // 外圈镂空：舌与舌之间的泪滴孔 + 舌根小卷
+    // Outer-ring cut-outs: teardrop holes between tongues + small curls at the tongue roots
     for (let k = 0; k < n; k++) {
       const a = seed + (k + .5) / n * Math.PI * 2, P = r => [Math.cos(a) * r, Math.sin(a) * r];
       cut(g, q => { const c = P((R0 + R1) / 2 + 1); q.ellipse(c[0], c[1], 3.2, 5.4, a, 0, Math.PI * 2); });
@@ -28,29 +28,29 @@ function sunDisk(n, seed) {
     ink(g, 1.6, q => { tongues(q); });
   }, { seed: 30 + Math.round(seed * 10) });
 }
-function tongueAt(q, a, r, h, w, dir) {   // 在半径 r、角度 a 处立一条向外的火舌
+function tongueAt(q, a, r, h, w, dir) {   // stand an outward-pointing flame tongue at radius r, angle a
   const ca = Math.cos(a), sa = Math.sin(a);
-  // 局部 (x, y)：-y = 向外；x = 切向
+  // Local (x, y): -y = outward; x = tangential
   const M = (x, y) => [ca * (r - y) + (-sa) * x, sa * (r - y) + ca * x];
   const P = { moveTo: (x, y) => q.moveTo(...M(x, y)), bezierCurveTo: (a1, b1, a2, b2, a3, b3) => q.bezierCurveTo(...M(a1, b1), ...M(a2, b2), ...M(a3, b3)), closePath: () => q.closePath() };
   flameTongue(P, h, w, dir);
 }
-// 三足乌：侧身朝右、双翅上扬、三根长尾羽、三足
+// Three-legged crow: side view facing right, both wings raised, three long tail feathers, three legs
 function crowPath(q) {
   smooth(q, [[-13, 5], [-4, -1], [7, -3], [12, -8], [16, -10], [20, -9], [28, -6], [20, -4.5], [18, 0], [12, 6], [2, 9], [-10, 9]]);
-  // 近翼
+  // Near wing
   smooth(q, [[-3, -1], [-6, -14], [-12, -26], [-22, -34], [-30, -33], [-26, -30], [-24, -25], [-18, -24], [-17, -18], [-11, -17], [-9, -10], [-3, -7], [3, -3]]);
-  // 远翼
+  // Far wing
   smooth(q, [[2, -4], [3, -16], [8, -28], [14, -34], [13, -27], [16, -24], [12, -19], [12, -12], [9, -5]]);
-  // 尾羽
+  // Tail feathers
   smooth(q, [[-11, 4], [-24, 0], [-35, -4], [-38, 0], [-33, 1], [-26, 6], [-37, 7], [-39, 12], [-34, 11], [-25, 10], [-33, 16], [-34, 20], [-28, 16], [-12, 9]]);
-  // 三足
+  // Three legs
   for (const [a, b] of [[-5, 8], [1, 9], [7, 7]]) { q.moveTo(a - 1.3, b); q.lineTo(a + 1.3, b); q.lineTo(a + 2.4, b + 10); q.lineTo(a + 4.6, b + 11.5); q.lineTo(a - .4, b + 12); q.closePath(); }
 }
 export function crowPiece(col = '#3a120c') {
   return piece([-44, -40, 34, 26], g => {
     fill(g, col, q => crowPath(q), 'nonzero');
-    // 刻羽：翅上三道弧缝 + 尾羽中缝 + 眼
+    // Carved feathers: three arc slits on the wing + a centre slit in each tail feather + the eye
     for (let k = 0; k < 3; k++) cutLine(g, 1, q => { q.moveTo(-6 - k * 5, -7 - k * 2); q.quadraticCurveTo(-12 - k * 4, -18 - k * 3, -20 - k * 3, -27 - k); });
     cutLine(g, .9, q => { q.moveTo(6, -8); q.quadraticCurveTo(8, -18, 12, -28); });
     cutLine(g, .9, q => { q.moveTo(-14, 5); q.lineTo(-33, -1); q.moveTo(-14, 7); q.lineTo(-35, 10); q.moveTo(-14, 8); q.lineTo(-30, 16); });
@@ -66,7 +66,7 @@ export function buildSuns() {
 }
 export const mulM = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
 const rotM = a => [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0];
-// 太阳（不含乌）：M = 屏幕变换；opt: {v 款式, rot, blur, alpha}
+// Sun (without the crow): M = viewport transform; opt: {v variant, rot, blur, alpha}
 export function drawSun(g, M, opt = {}) {
   const sp = buildSuns();
   g.save(); g.globalCompositeOperation = 'multiply'; if (opt.alpha != null) g.globalAlpha = opt.alpha; if (opt.blur) g.filter = `blur(${opt.blur}px)`;
@@ -79,5 +79,5 @@ export function drawCrow(g, M, blur = 0, alpha = 1) {
   g.save(); g.globalCompositeOperation = 'multiply'; g.globalAlpha = alpha; if (blur) g.filter = `blur(${blur}px)`;
   g.setTransform(...M); drawPiece(g, sp.crowFall); g.restore();
 }
-// 十个太阳在幕布上的位置（= 幕后油灯位置）；[0] 是开场第一盏、也是最后留下的那一个
+// Positions of the ten suns on the screen (= positions of the oil lamps behind it); [0] is the first lamp lit at the opening and also the one left at the end
 export const SUNPOS = [[1450, 190, 12, 0], [820, 150, 14, 1], [1080, 105, 10, 2], [1260, 290, 12, 3], [1640, 110, 14, 0], [1830, 250, 10, 1], [960, 300, 12, 2], [1180, 460, 10, 3], [1560, 400, 14, 1], [1750, 520, 12, 2]];

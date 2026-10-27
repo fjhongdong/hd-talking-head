@@ -1,4 +1,4 @@
-"""字幕 cues（与 main.js 的 SUBS 同一规则）→ subs.json → core/render/srt.py 导出 .srt"""
+"""Subtitle cues (same rule as SUBS in main.js) → subs.json → core/render/srt.py exports the .srt"""
 import json, os, re
 H = os.path.dirname(os.path.abspath(__file__))
 L = {l['id']: l for l in json.load(open(f'{H}/lines.json'))}; D = json.load(open(f'{H}/voices/dur.json'))

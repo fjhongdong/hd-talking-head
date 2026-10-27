@@ -1,5 +1,5 @@
-"""自检：配乐（music/score.json）↔ 画面事件（events.json）逐项对齐。
-① 关键卡点逐项对比；② "每个元素一个音"：每个生成元素的出现时间都要落在某个配乐音符上。
+"""Self-check: score (music/score.json) ↔ picture events (events.json), item by item.
+① Key sync points compared one by one; ② "one note per element": every generated element's appearance time has to land on a score note.
 python styles/dark-keynote/demo/tools/cuecheck.py"""
 import json, os
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

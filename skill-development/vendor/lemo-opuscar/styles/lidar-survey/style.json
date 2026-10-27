@@ -6,12 +6,12 @@
  "category_en": "Evidence Films",
  "category_cn": "实证影像",
  "film": "The Fields Under the Forest",
- "line": "A laser survey strips the canopy off a Connecticut forest, layer by layer, and finds the stone walls of the farms that were there: 3.4 km of them, measured.",
- "line_cn": "激光点云把康涅狄格州一片森林的树冠一层层剥掉，地面上露出当年农田的石墙：描出 3.4 公里，逐一量过。",
+ "line": "A laser survey strips the canopy off a Connecticut forest and finds 3.4 km of old farm walls.",
+ "line_cn": "激光点云剥掉一片森林的树冠，露出当年农田的石墙：3.4 公里。",
  "uses": [
-  "Archaeology & heritage",
-  "Forestry & environment",
-  "Infrastructure & site surveys"
+  "Heritage",
+  "Environment",
+  "Site surveys"
  ],
  "frame_sec": 18.6,
  "dur": 40.0

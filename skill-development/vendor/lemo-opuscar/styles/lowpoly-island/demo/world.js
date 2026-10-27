@@ -1,4 +1,4 @@
-// 岛：六边形柱地块布局 + 全部低多边形道具 + 生长日程（每个生长事件带音高 → 配乐旋律声部）
+// Island: hexagonal-prism tile layout + all low-poly props + growth schedule (every growth event carries a pitch → the score's melody voice)
 import * as THREE from 'three';
 import { clamp, seg, ss, eo, eio, lerp, hash, TAU } from '/core/lib.js';
 import { T, BEAT, BAR, bar, noteAt, DUR } from './story.js';
@@ -8,7 +8,7 @@ const SQ3 = Math.sqrt(3);
 export const hex2w = (q, r) => [SQ3 * (q + r / 2), 1.5 * r];
 const hdist = (q, r) => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
 
-// —— 材质（全部 flatShading，无贴图）——
+// —— materials (all flatShading, no textures)——
 const MC = new Map();
 export function mat(hex, o = {}) {
   const k = hex + JSON.stringify(o);
@@ -27,12 +27,12 @@ export const PAL = {
   win: '#4d5c74', warm: '#ffc676', wood: '#a8764e', woodDark: '#7d5436',
 };
 
-// —— 布局 ——
-// 半径 3 的六边形去掉 4 个海岸格；中心 = 礁石山顶（空着的灯塔石台）；第 2 圈 12 格正好每 30° 一格：
-// 灯塔光束每拍扫过一格（一圈 = 12 拍 = 3 小节），8 栋房子站在其中 8 格上 = 八音盒的 8 个音
+// —— layout ——
+// a radius-3 hexagon minus 4 coast cells; centre = rocky summit (the empty lighthouse plinth); ring 2 has 12 cells, exactly one every 30°:
+// the lighthouse beam sweeps one cell per beat (one turn = 12 beats = 3 bars), 8 houses stand on 8 of those cells = the music box's 8 notes
 const REMOVE = new Set(['0,-3', '-3,0', '3,-3', '-1,3']);
 const FIRST = '3,-1', DOCK = '-3,2';
-export const BEAM_NOTES = [74, 78, null, 81, 83, null, 81, 78, null, 76, 74, null];   // 第 2 圈第 k 格（k=拍）→ 音高；null = 非房子
+export const BEAM_NOTES = [74, 78, null, 81, 83, null, 81, 78, null, 76, 74, null];   // ring 2 cell k (k = beat) → pitch; null = not a house
 const RING2_ROLE = { 2: 'tree', 5: 'mill', 8: 'tree', 11: 'tree' };
 
 function buildLayout() {
@@ -47,23 +47,23 @@ function buildLayout() {
     else { type = 'sand'; h = .36 + hash(q * 3 + r * 5) * .06; if (key === '-2,-1' || key === '-3,1') { type = 'rock'; h = .62; } }
     cells.push({ q, r, d, x, z, ang, key, type, h });
   }
-  // 第 2 圈按角度编号（从 +x 方向逆时针，k = 光束扫到它的拍）
+  // ring 2 numbered by angle (counter-clockwise from +x, k = the beat on which the beam reaches it)
   cells.filter(c => c.d === 2).forEach(c => { c.k = Math.round(((c.ang + TAU) % TAU) / (TAU / 12)) % 12; });
   return cells;
 }
 export const CELLS = buildLayout();
 const byKey = k => CELLS.find(c => c.key === k);
 
-// —— 几何件 ——
+// —— geometry pieces ——
 function hexPrism(r, h, top, side, y0 = -2.4) {
   const g = new THREE.Group();
-  const bt = h - .1;   // 侧面柱体顶面藏在草皮/沙皮帽里，避免 z-fighting
+  const bt = h - .1;   // the top of the side prism is hidden inside the grass / sand cap, to avoid z-fighting
   const body = M(new THREE.CylinderGeometry(r * .985, r * .985, bt - y0, 6, 1), mat(side));
   body.position.y = (bt + y0) / 2; g.add(body);
   const cap = M(new THREE.CylinderGeometry(r, r, .16, 6, 1), mat(top)); cap.position.y = h - .08; g.add(cap);
   return g;
 }
-function gable(w, d, h, over = .08) {   // 双坡屋顶：沿 x 的三棱柱（坡面），两端山墙另做
+function gable(w, d, h, over = .08) {   // gable roof: a triangular prism along x (the slopes), gable ends built separately
   const W = w / 2 + over, D = d / 2 + over, g = new THREE.BufferGeometry();
   const v = [-W, 0, -D, W, 0, -D, W, h, 0, -W, 0, -D, W, h, 0, -W, h, 0, -W, 0, D, -W, h, 0, W, h, 0, -W, 0, D, W, h, 0, W, 0, D,
     -W, 0, -D, -W, 0, D, W, 0, D, -W, 0, -D, W, 0, D, W, 0, -D];
@@ -88,7 +88,7 @@ function makeHouse(i, floors, winMat) {
         const wm = new THREE.Mesh(wg, winMat), off = n === 1 ? .2 : (j - .5) * .42;
         wm.position.set(Math.sin(a) * (W / 2 + .004) + Math.cos(a) * off, FH * .55, Math.cos(a) * (W / 2 + .004) - Math.sin(a) * off); wm.rotation.y = a; fl.add(wm);
       }
-      if (s === 0 && f === 0) {   // 门
+      if (s === 0 && f === 0) {   // door
         const door = new THREE.Mesh(new THREE.PlaneGeometry(.2, .36), mat(PAL.woodDark)); door.position.set(Math.sin(a) * (W / 2 + .004) - .18 * Math.cos(a), .18, Math.cos(a) * (W / 2 + .004) + .18 * Math.sin(a)); door.rotation.y = a; fl.add(door);
       }
     }
@@ -165,14 +165,14 @@ function makeLighthouse() {
   return { g, rings, glassM, lampY: 4 * H + .23 };
 }
 
-// 光束：水平锥体（加色、沿长度衰减）+ 海面上的扇形光斑
+// beam: horizontal cone (additive, fading along its length) + a fan-shaped light patch on the sea
 function beamMats() {
   const vs = `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`;
-  const cone = new THREE.ShaderMaterial({   // 朝向相机的柔边光带：横向高斯 × 纵向衰减
+  const cone = new THREE.ShaderMaterial({   // soft-edged light band facing the camera: Gaussian across × falloff along
     uniforms: { amt: { value: 0 }, len: { value: 60 }, soft: { value: 4.5 }, gain: { value: 1 }, col: { value: new THREE.Color('#fff1c8') } },
     vertexShader: `attribute float across; varying float vA; varying float vX; void main(){ vA = across; vX = position.x; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
     fragmentShader: `varying float vA; varying float vX; uniform float amt, len, soft, gain; uniform vec3 col; void main(){ float s = clamp(vX / len, 0., 1.);
-      float core = pow(1. - s, 1.7) * .42 + exp(-s * 10.) * .75;   // 根部亮、远端淡
+      float core = pow(1. - s, 1.7) * .42 + exp(-s * 10.) * .75;   // bright at the root, faint at the far end
       float dust = .86 + .14 * sin(vX * 1.3) * sin(vX * .37 + 1.7);
       float a = exp(-vA * vA * soft) * core * dust * gain * amt * smoothstep(0., .012, s); gl_FragColor = vec4(col * a, a); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
@@ -190,7 +190,7 @@ export function buildWorld(scene) {
   const W = {};
   const S = new THREE.Group(); scene.add(S);
 
-  // —— 地块 ——
+  // —— tiles ——
   const tiles = CELLS.map(c => {
     const j = (hash(c.q * 17 + c.r * 31) - .5) * .08;
     let top = PAL.grassTop, side = PAL.earth;
@@ -198,17 +198,17 @@ export function buildWorld(scene) {
     if (c.type === 'rock') { top = PAL.rockTop; side = PAL.rockSide; }
     if (c.type === 'grass' && hash(c.q * 5 - c.r * 11) > .55) top = PAL.grassTop2;
     const g = hexPrism(1, c.h, jit(top, j), jit(side, j * .7)); g.position.set(c.x, 0, c.z); S.add(g);
-    // 岸边浪花环
+    // ring of surf along the shore
     const foam = new THREE.Mesh(new THREE.RingGeometry(.99, 1.12, 6, 1, Math.PI / 6), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .0, depthWrite: false }));
     foam.rotation.x = -Math.PI / 2; foam.position.set(c.x, .07, c.z); S.add(foam);
     return { c, g, foam, t0: 99 };
   });
-  // 中心石台（灯塔地基，全片前半段一直空着）
+  // central stone plinth (the lighthouse foundation, empty throughout the first half of the film)
   const center = byKey('0,0');
   const plinth = M(new THREE.CylinderGeometry(.56, .62, .14, 8), mat(PAL.stone)); plinth.position.set(0, center.h + .07, 0);
   tiles.find(t => t.c.key === '0,0').g.add(plinth); plinth.position.set(0, center.h + .07, 0);
 
-  // —— 生长日程 ——
+  // —— growth schedule ——
   const EVS = [];   // {t, type, note?, v?, ...}
   const ev = (t, type, o = {}) => { EVS.push({ t: +t.toFixed(4), type, ...o }); return t; };
   const first = byKey(FIRST);
@@ -228,31 +228,31 @@ export function buildWorld(scene) {
     cs.forEach(c => { tiles.find(x => x.c === c).t0 = t; });
   });
 
-  // —— 第 2 圈：房子 / 风车 / 树 ——
+  // —— ring 2: houses / windmill / trees ——
   const ring2 = CELLS.filter(c => c.d === 2).sort((a, b) => a.k - b.k);
   const houses = [], trees = [];
   const HF = [2, 1, 2, 1, 1, 2, 1, 2];
-  const hOrder = [3, 0, 6, 1, 7, 4, 2, 5];   // 建造顺序（打乱）；光束顺序 = 空间顺序 = 旋律顺序
+  const hOrder = [3, 0, 6, 1, 7, 4, 2, 5];   // build order (shuffled); beam order = spatial order = melody order
   let hi = 0;
   for (const c of ring2) {
     if (BEAM_NOTES[c.k] != null) {
       const winMat = new THREE.MeshStandardMaterial({ color: PAL.win, emissive: PAL.warm, emissiveIntensity: 0, flatShading: true, roughness: .4 });
       const h = makeHouse(hi, HF[hi], winMat);
-      const out = Math.atan2(c.x, c.z);   // 门朝外
+      const out = Math.atan2(c.x, c.z);   // door faces outward
       h.root.position.set(c.x, c.h, c.z); h.root.rotation.y = out + (hash(hi) - .5) * .3; S.add(h.root);
       const pl = new THREE.PointLight('#ffb766', 0, 4.2, 1.6); pl.position.set(c.x * 1.18, c.h + .45, c.z * 1.18); S.add(pl);
       houses.push({ c, ...h, winMat, note: BEAM_NOTES[c.k], idx: hi, pl, lit: 99, hits: [] }); hi++;
     }
   }
-  // 每个部件独占一个十六分音符格：楼层 = 木块声（和弦低音），屋顶 = 这栋房子自己的旋律音
+  // each part gets its own sixteenth-note slot: storeys = wood-block sound (chord bass), roof = this house's own melody note
   let hSlot = 0; const S16 = i => T.houses + i * BEAT / 4;
   hOrder.forEach(hIdx => {
     const H = houses[hIdx];
     H.parts.forEach((p, pi) => { const t = S16(hSlot++); p.t0 = t; ev(t, p.kind === 'roof' ? 'roof' : 'floor', p.kind === 'roof' ? { note: H.note, v: .8, house: H.idx } : { v: .7, note: noteAt(t, .15 + pi * .2, 50, 66) }); });
   });
-  const DET0 = hSlot;   // 细节从房子之后的下一个十六分格开始
+  const DET0 = hSlot;   // details start at the next sixteenth slot after the houses
 
-  // 树（第 1 圈大部分、第 2 圈的空格、沙滩上两棵椰子）
+  // trees (most of ring 1, the empty cells of ring 2, two coconut palms on the beach)
   const treeSpots = [];
   CELLS.filter(c => c.d === 1).forEach((c, i) => { if (i === 4) return; const n = c.h > 1.25 ? 2 : 1; for (let k = 0; k < n; k++) treeSpots.push({ c, kind: c.h > 1.25 ? 'pine' : 'round', dx: n > 1 ? (k - .5) * .5 : (hash(i) - .5) * .3, dz: n > 1 ? (hash(i + k) - .5) * .4 : (hash(i + 9) - .5) * .3 }); });
   ring2.filter(c => RING2_ROLE[c.k] === 'tree').forEach((c, i) => treeSpots.push({ c, kind: i === 1 ? 'pine' : 'round', dx: 0, dz: 0 }));
@@ -268,11 +268,11 @@ export function buildWorld(scene) {
     if (cnt > 0) ev(t, 'pop', { note: noteAt(t, i / 7, 69, 88), n: cnt, v: .7 });
   });
 
-  // 风车
+  // windmill
   const millC = ring2.find(c => RING2_ROLE[c.k] === 'mill');
   const mill = makeMill(); mill.g.position.set(millC.x, millC.h, millC.z); mill.g.rotation.y = Math.atan2(millC.x, millC.z) + .5; S.add(mill.g);
 
-  // 码头：从 DOCK 沙滩格向外铺 4 块木板
+  // dock: 4 planks laid outward from the DOCK beach cell
   const dc = byKey(DOCK), dAng = Math.atan2(dc.z, dc.x) + .12, dDir = [Math.cos(dAng), Math.sin(dAng)];
   const planks = [];
   for (let k = 0; k < 4; k++) {
@@ -283,7 +283,7 @@ export function buildWorld(scene) {
   }
   const dockEnd = [dc.x + dDir[0] * (.75 + 3 * .56 + .55), dc.z + dDir[1] * (.75 + 3 * .56 + .55) + .5];
 
-  // 灯柱（沙滩上 3 盏）
+  // lamp posts (3 on the beach)
   const lampSpots = ['-2,3', '1,2', '-3,3'].map(byKey).filter(Boolean);
   const lampMat = new THREE.MeshStandardMaterial({ color: '#fff0c8', emissive: PAL.warm, emissiveIntensity: 0, flatShading: true });
   const lamps = lampSpots.map((c, i) => {
@@ -291,9 +291,9 @@ export function buildWorld(scene) {
     const head = M(new THREE.OctahedronGeometry(.07, 0), lampMat, false); head.position.y = .6; g.add(head);
     g.position.set(c.x + .35, c.h, c.z - .2); g.scale.setScalar(0); S.add(g); return { g, t0: 99 };
   });
-  // 烟囱（3 栋房子）
+  // chimneys (3 houses)
   const chims = [0, 2, 5].map(i => { const H = houses[i]; const ch = M(new THREE.BoxGeometry(.12, .3, .12), mat('#b0786a')); ch.position.set(.22, H.top - .2, .15); H.root.add(ch); ch.scale.setScalar(0); return { ch, H, t0: 99 }; });
-  // 花与篱笆（点缀）
+  // flowers and fences (accents)
   const flowers = [];
   CELLS.filter(c => c.type === 'grass' && c.d >= 2).forEach((c, i) => {
     for (let k = 0; k < 3; k++) {
@@ -309,17 +309,17 @@ export function buildWorld(scene) {
     for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) { const k = i * (NY + 1) + j; I.push(k, k + NY + 1, k + 1, k + 1, k + NY + 1, k + NY + 2); }
     g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('across', new THREE.Float32BufferAttribute(A, 1)); g.setIndex(I); return g; })();
   const beam = new THREE.Mesh(beamGeo, bm.cone); beam.position.set(0, center.h + .14 + lh.lampY, 0); beam.renderOrder = 5; S.add(beam);
-  // 外层光晕：同一条光带放宽 2.4 倍、低强度，给体积感和柔边
+  // outer glow: the same light band widened 2.4× at low intensity, for volume and soft edges
   const haloMat = bm.cone.clone(); haloMat.uniforms.soft.value = 2.2; haloMat.uniforms.gain.value = .32;
   const halo = new THREE.Mesh(beamGeo, haloMat); halo.scale.set(1, 2.4, 1); beam.add(halo); halo.renderOrder = 5;
   bm.cone.uniforms.len.value = BL;
   const poolGeo = new THREE.CircleGeometry(BL, 48, -.2, .4); poolGeo.rotateX(-Math.PI / 2);
-  // CircleGeometry 的 thetaStart 围绕 +x；rotateX 后 z 取反，着色器用 atan(z,x) 绝对值判断，对称无妨
+  // CircleGeometry's thetaStart is around +x; after rotateX, z is negated; the shader tests the absolute value of atan(z,x), so the symmetry makes this harmless
   const pool = new THREE.Mesh(poolGeo, bm.pool); pool.position.y = .2; pool.renderOrder = 4; S.add(pool); bm.pool.uniforms.len.value = BL;
   const spot = new THREE.SpotLight('#fff0cc', 0, 60, .2, .6, 1.2); spot.position.copy(beam.position); S.add(spot, spot.target);
   const lampLight = new THREE.PointLight('#ffe2a0', 0, 9, 1.5); lampLight.position.copy(beam.position); S.add(lampLight);
 
-  // 浮标（开场）+ 远方的另一只浮标（结尾）
+  // buoy (opening) + another distant buoy (ending)
   function makeBuoy() {
     const g = new THREE.Group();
     const base = M(new THREE.CylinderGeometry(.34, .4, .2, 8), mat('#d9544a')); base.position.y = .05; g.add(base);
@@ -331,13 +331,13 @@ export function buildWorld(scene) {
   }
   const buoy = makeBuoy(); const BUOY = [first.x + 2.6, first.z + 1.9]; S.add(buoy.g);
   const buoyFar = makeBuoy(); const BUOY_FAR = [96, 58]; buoyFar.g.scale.setScalar(2.2); S.add(buoyFar.g);
-  // 远方浮标的光晕（拉远时保持可见）：朝相机的发光小圆片
+  // glow of the distant buoy (stays visible during the pull-back): a small glowing disc facing the camera
   const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,236,190,1)'); gr.addColorStop(.25, 'rgba(255,210,140,.55)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
   const glows = [];
   const mkGlow = () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); S.add(s); glows.push(s); return s; };
   const glowFar = mkGlow(), glowBuoy = mkGlow(), glowBoat = mkGlow(), glowLH = mkGlow(); glowFar.material.depthTest = false; glowBoat.material.depthTest = false; glowFar.renderOrder = glowBoat.renderOrder = 9;
 
-  // 海鸥
+  // gulls
   const gulls = [0, 1, 2].map(i => {
     const g = new THREE.Group(), wm = mat('#fbfbf6', { side: THREE.DoubleSide });
     const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -.06, 0, 0, .06, .34, 0, 0], 3)); wg.computeVertexNormals();
@@ -346,18 +346,18 @@ export function buildWorld(scene) {
     g.add(L, R, body); g.visible = false; S.add(g); return { g, L, R, ph: i * 2.1, rad: 5.5 + i * 1.6, hgt: 3.6 + i * .7, sp: .55 - i * .08 };
   });
 
-  // 水花：所有地块升起共用一个 InstancedMesh
+  // splashes: all tile rises share one InstancedMesh
   const DROP_N = 14, dropMesh = new THREE.InstancedMesh(new THREE.TetrahedronGeometry(.09, 0), new THREE.MeshBasicMaterial({ color: '#f4fdff' }), tiles.length * DROP_N + 40);
   dropMesh.castShadow = false; S.add(dropMesh);
   const splashRing = tiles.map(() => { const m = new THREE.Mesh(new THREE.RingGeometry(1.08, 1.2, 6, 1, Math.PI / 6), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = .09; S.add(m); return m; });
-  // 烟
+  // smoke
   const smoke = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.07, 0), new THREE.MeshStandardMaterial({ color: '#f4f2ee', flatShading: true, transparent: true, opacity: .8 }), 60); smoke.count = 0; smoke.frustumCulled = false; dropMesh.count = 0; dropMesh.frustumCulled = false; S.add(smoke);
 
-  // —— 细节日程（第 5 小节，十六分音符）——
-  const D16 = i => T.houses + (DET0 + i) * BEAT / 4;   // 接在房子后面，到 21.25 前收完
+  // —— detail schedule (bar 5, sixteenth notes)——
+  const D16 = i => T.houses + (DET0 + i) * BEAT / 4;   // follows the houses, finished before 21.25
   mill.t = [D16(0), D16(1), D16(2)];
   ev(D16(0), 'floor', { note: 55, v: .7 }); ev(D16(1), 'roof', { note: 62, v: .6 }); ev(D16(2), 'pop', { note: 66, v: .5 });
-  chims.forEach((c, i) => { const H = c.H; c.t0 = H.parts[H.parts.length - 1].t0 + .08; });   // 烟囱跟屋顶一起冒出，不单独占音
+  chims.forEach((c, i) => { const H = c.H; c.t0 = H.parts[H.parts.length - 1].t0 + .08; });   // chimneys pop up with the roof, no note of their own
   planks.forEach((p, i) => { p.t0 = D16(3 + i); ev(p.t0, 'plank', { note: [69, 71, 74, 78][i], v: .7 }); });
   const boatT = D16(7); ev(boatT, 'splash', { note: 81, v: .8 });
   lamps.forEach((l, i) => { l.t0 = D16(8) + i * .05; }); ev(D16(8), 'pop', { note: 78, v: .5 });
@@ -365,28 +365,28 @@ export function buildWorld(scene) {
   if (D16(10) >= T.day - 1e-6) throw new Error('details overflow ' + D16(10));
   ev(T.day, 'chord', { note: 62, v: 1 });
 
-  // 黄昏：按光束顺序逐盏亮窗（= 主题的预告，半速的两倍快）
+  // dusk: windows light one by one in beam order (= a preview of the theme, twice as fast as half speed)
   houses.forEach((H, j) => { H.lit = T.dusk + j * BEAT / 2; ev(H.lit, 'window', { note: H.note, v: .6 }); });
   const lampLit = T.night0 + BEAT; ev(lampLit, 'window', { note: 69, v: .4 });
   const millLit = T.night0 + 2 * BEAT; ev(millLit, 'window', { note: 66, v: .35 });
-  // 灯塔四环 + 灯室
+  // lighthouse's four rings + lantern room
   lh.rings.forEach((r, i) => { r.t0 = i < 4 ? T.rise + i * BEAT : T.rise + 3 * BEAT + BEAT / 2; ev(r.t0, i < 4 ? 'ring' : 'lamproom', i < 4 ? { note: [69, 71, 74, 78][i], v: .8 } : { v: .5 }); });
   ev(T.ignite, 'ignite', { v: 1 });
-  // 光束：一圈 12 拍，第 k 拍扫过第 2 圈第 k 格
+  // beam: 12 beats per turn, on beat k it sweeps ring 2 cell k
   const OMEGA = TAU / (12 * BEAT), PHI0 = 0;
   for (let b = 0; T.ignite + b * BEAT < T.end + 2; b++) {
     const k = b % 12, H = houses.find(h => h.c.k === k), t = T.ignite + b * BEAT;
     if (H) { H.hits.push(t); ev(t, 'beamhit', { note: H.note, v: t > T.far ? .45 : .8, rev: Math.floor(b / 12) }); }
   }
-  // 小船：在光束第一次扫到它的角度上
+  // boat: at the angle where the beam first reaches it
   const BOAT_ANG = PHI0 + OMEGA * (T.found - T.ignite), BOAT_R = 12.5;
   const boatFar = [Math.cos(BOAT_ANG) * BOAT_R, Math.sin(BOAT_ANG) * BOAT_R];
   ev(T.dock + BEAT, 'boatbell', { note: 74, v: .5 }); ev(T.found + BEAT / 2, 'boatbell', { note: 81, v: .8, answer: 1 });
   ev(T.bell1, 'bell', { note: 74, v: .9 }); ev(T.bell2, 'bell', { note: 74, v: .6 }); ev(T.first, 'bell', { note: 74, v: .5 }); ev(T.bellFar, 'bell', { note: 74, v: .55, far: 1 });
 
-  // —— 每帧更新 ——
+  // —— per-frame update ——
   const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _v = new THREE.Vector3(), _s = new THREE.Vector3();
-  const dropY = (s, h0 = 2.4, dur = .22) => {   // 从上方落下 + 弹性回弹；s = t - 落定时刻
+  const dropY = (s, h0 = 2.4, dur = .22) => {   // drop from above + springy rebound; s = t - landing time
     if (s < -dur) return null;
     if (s < 0) { const u = 1 + s / dur; return { y: h0 * (1 - u * u), sy: 1 + .12 * u }; }
     return { y: Math.abs(Math.sin(s * 15)) * Math.exp(-s * 9) * .22, sy: 1 - .16 * Math.exp(-s * 12) * Math.cos(s * 26) };
@@ -412,14 +412,14 @@ export function buildWorld(scene) {
       const s = t - T0.t0, c = T0.c;
       if (s < -.5) { T0.g.visible = false; T0.foam.visible = false; splashRing[i].visible = false; return; }
       T0.g.visible = true;
-      // 升起：0.3s 冲出水面 + 弹性回弹（事件时刻 = 到位）
+      // rise: bursts out of the water in 0.3s + springy rebound (event time = in place)
       const dep = c.h + 2.6; let y;
       if (s < 0) { const u = 1 + s / .5; y = -dep * (1 - u * u * u); } else y = Math.sin(s * 13) * Math.exp(-s * 7) * .18 * (c.h > 1.5 ? 1.4 : 1);
       T0.g.position.y = y;
       blobs.push([c.x, c.z, 2.5, clamp((s + .3) / .6) * 1]);
       T0.foam.visible = s > -.1; T0.foam.material.opacity = .32 * clamp((s + .1) / .5) * (.7 + .3 * Math.sin(t * 1.7 + i)) * (1 - .45 * night);
       T0.foam.scale.setScalar(1 + .05 * Math.sin(t * 1.3 + i * 1.7));
-      // 水花：冲出水面那一刻（s≈-0.12）炸开
+      // splash: bursts at the moment it breaks the surface (s≈-0.12)
       const ss_ = s + .12, rg = splashRing[i];
       if (ss_ > 0 && ss_ < .9) {
         rg.visible = true; rg.position.set(c.x, .09, c.z); rg.scale.setScalar(1 + ss_ * 1.3); rg.material.opacity = .6 * (1 - ss_ / .9);
@@ -432,12 +432,12 @@ export function buildWorld(scene) {
         }
       } else rg.visible = false;
     });
-    // 小船落水的水花
+    // splash of the boat dropping into the water
     { const s = t - boatT + .12; if (s > 0 && s < .8) for (let k = 0; k < 16; k++) { const a = k / 16 * TAU, yy = 2.6 * s - 7 * s * s; if (yy < 0) continue; _v.set(dockEnd[0] + Math.cos(a) * (.3 + s * 1.5), yy, dockEnd[1] + Math.sin(a) * (.3 + s * 1.5)); _q.identity(); _s.setScalar(.8 - s); dropMesh.setMatrixAt(di++, _m.compose(_v, _q, _s)); } }
     dropMesh.count = di; dropMesh.instanceMatrix.needsUpdate = true;
     ctx.sea.drawShallow(blobs);
 
-    // 房子
+    // houses
     houses.forEach(H => {
       H.root.visible = t > H.parts[0].t0 - .3;
       H.parts.forEach(p => { const d = dropY(t - p.t0); if (!d) { p.obj.visible = false; return; } p.obj.visible = true; p.obj.position.y = p.y + d.y; p.obj.scale.set(1 / Math.sqrt(d.sy), d.sy, 1 / Math.sqrt(d.sy)); });
@@ -447,7 +447,7 @@ export function buildWorld(scene) {
       H.pl.intensity = lit * night * 1.4 + fl * 2.6;
     });
     trees.forEach(tr => { tr.g.scale.setScalar(popS(t - tr.t0) * tr.s); tr.g.visible = t > tr.t0; });
-    // 风车
+    // windmill
     { const [a, b, c] = mill.t, dt = dropY(t - a), dc_ = dropY(t - b); mill.tower.visible = !!dt; mill.cap.visible = !!dc_; mill.hub.visible = t > c;
       if (dt) { mill.tower.position.y = .6 + dt.y; mill.tower.scale.y = dt.sy; } if (dc_) mill.cap.position.y = 1.4 + dc_.y;
       mill.hub.scale.setScalar(popS(t - c));
@@ -457,14 +457,14 @@ export function buildWorld(scene) {
     lampMat.emissiveIntensity = ss(seg(t, lampLit, lampLit + .15)) * 2.2 * ctx.winAmt;
     chims.forEach(c => { c.ch.scale.setScalar(popS(t - c.t0)); });
     flowers.forEach(f => { const s = popS(t - flowerT[f.grp]); f.f.scale.setScalar(s); f.f.visible = s > 0; });
-    // 烟：白天从烟囱冒
+    // smoke: rises from the chimneys in the daytime
     { let si = 0; if (t > T.day - .5 && t < T.night + 2) chims.forEach((c, ci) => { c.ch.getWorldPosition(_v); for (let k = 0; k < 6; k++) { const ph = ((t * .45 + k / 6 + ci * .3) % 1); const a = 1 - ph; _s.setScalar((.5 + ph * 1.6) * a * clamp((t - T.day + .5) * 2) * (1 - seg(t, T.night0, T.night + 1))); _q.identity(); dropY; smoke.setMatrixAt(si++, _m.compose(new THREE.Vector3(_v.x + ph * .5 + Math.sin(ph * 5 + k) * .08, _v.y + .2 + ph * 1.3, _v.z + ph * .2), _q, _s)); } }); smoke.count = si; smoke.instanceMatrix.needsUpdate = true; }
-    // 小船
+    // boat
     { const B = boatAt(t); boat.g.visible = !!B.vis; if (B.vis) { const wy = waveH(B.x, B.z, t, amp); boat.g.position.set(B.x, wy + .02 + (B.drop || 0) * 1.6, B.z); boat.g.rotation.set(0, -B.yaw, 0); boat.body.rotation.set(Math.sin(t * 2.1) * .08 * amp, 0, Math.sin(t * 1.7 + 1) * .06 * amp);
         const tA = T.found + BEAT / 2, flick = t > T.night - 1 && t < tA ? .75 + .25 * Math.sin(t * 17) * Math.sin(t * 5.3) : 1, ans = t > tA - .02 ? Math.exp(-(t - tA) * 2.5) * 5 * seg(t, tA - .02, tA + .02) : 0;
         boat.lamp.material.emissiveIntensity = (ss(seg(t, T.night0, T.night)) * 2.5 * flick + ans);
         boat.lamp.getWorldPosition(_v); glowBoat.position.copy(_v); glowBoat.material.opacity = Math.min(1, ss(seg(t, T.night0, T.night)) * .9 * flick + ans * .15); glowBoat.scale.setScalar(ctx.px * 40 * (1 + Math.min(ans, 1) * .7)); } else glowBoat.material.opacity = 0; }
-    // 灯塔
+    // lighthouse
     lh.rings.forEach(r => { const d = dropY(t - r.t0, 2.6); r.obj.visible = !!d; if (d) { r.obj.position.y = r.y + d.y; r.obj.scale.y = d.sy; } });
     const ig = t >= T.ignite ? 1 : 0, igF = ig ? 1 + 2.2 * Math.exp(-(t - T.ignite) * 3) : 0;
     lh.glassM.emissiveIntensity = ig * 3.2 * igF;
@@ -477,7 +477,7 @@ export function buildWorld(scene) {
     spot.intensity = ig * 90 * Math.min(1.5, igF); spot.target.position.set(Math.cos(phi) * 20, 0, Math.sin(phi) * 20);
     lampLight.intensity = ig * 6 * igF;
     glowLH.position.copy(beam.position); glowLH.material.opacity = ig * .9; glowLH.scale.setScalar(ctx.px * 60 * igF);
-    // 浮标
+    // buoys
     const bob = (g, x, z, sc = 1) => { const y = waveH(x, z, t, amp); const dx = waveH(x + .3, z, t, amp) - waveH(x - .3, z, t, amp), dz = waveH(x, z + .3, t, amp) - waveH(x, z - .3, t, amp); g.position.set(x, y - .08 * sc, z); g.rotation.set(dz * 1.2, 0, -dx * 1.2); };
     bob(buoy.g, BUOY[0], BUOY[1]); bob(buoyFar.g, BUOY_FAR[0], BUOY_FAR[1], 2.2);
     const ring = th => t >= th ? Math.exp(-(t - th) * 1.4) : 0;
@@ -486,7 +486,7 @@ export function buildWorld(scene) {
     buoy.lm.emissiveIntensity *= 1; buoy.g.children[3].getWorldPosition(_v); glowBuoy.position.copy(_v); glowBuoy.material.opacity = clamp(bl * .9 + night * .4); glowBuoy.scale.setScalar(ctx.px * 30 * (1 + bl));
     const blf = ring(T.bellFar);
     buoyFar.lm.emissiveIntensity = blf * 8 + night * .8; buoyFar.g.children[3].getWorldPosition(_v); glowFar.position.copy(_v); glowFar.material.opacity = clamp(blf * 1.2 + (t > T.far ? .25 : 0)); glowFar.scale.setScalar(ctx.px * 20 * (1 + blf * 1.2));
-    // 海鸥
+    // gulls
     gulls.forEach(G => { const vis = t > T.day - 1 && t < T.night0 + 1; G.g.visible = vis; if (!vis) return; const a = G.ph + t * G.sp; G.g.position.set(Math.cos(a) * G.rad, G.hgt + Math.sin(t * 1.3 + G.ph) * .3, Math.sin(a) * G.rad); G.g.rotation.set(0, -a, Math.sin(t * 1.1 + G.ph) * .25); const f = Math.sin(t * 9 + G.ph * 3) * .55; G.L.rotation.z = f; G.R.rotation.z = -f; });
     glows.forEach(s => { s.visible = s.material.opacity > .002; });
   };

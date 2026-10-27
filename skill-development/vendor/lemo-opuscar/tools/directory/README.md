@@ -23,9 +23,11 @@ Open Claude Code in a folder for your film, and ask:
 
 > I want to change the Ukiyo-e style into my own version.
 
+> I want to make my own style from scratch: chalk on a blackboard, warm and slow.
+
 Name a style in English or Chinese, or describe your topic and let Claude suggest two or three. Claude asks you once, up front: anything about your topic it can't decide, whether you have your own voice, music or photos, and whether you want to see a storyboard first. Then it makes the film in a project folder where you started.
 
-To make a style your own, pick one and say what you'd change: Claude tells you what can change in it, writes your version to `~/lemo-my-styles/<name>/` (outside the plugin, so updates never touch it), shows you a style frame, then makes a 15–30 second test film. After that, name your style like any other.
+To make a style your own, change a library style or start from a blank page: Claude plans it with you one question at a time (each with a recommended answer), shows you a style frame, makes a 15–30 second demo film, and keeps the style, with the film's source, in `~/lemo-my-styles/<name>/` (outside the plugin, so updates never touch it). After that, name your style like any other; start the skill without a request and your own styles are listed first.
 
 ## Before you start
 
@@ -45,7 +47,7 @@ The library ships inside the plugin. On first use it is copied to `~/.lemo-opusc
 | Python packages: numpy, scipy, soundfile, soxr, pillow | PyPI | first film | ~150 MB |
 | Voice tier: kokoro-onnx, edge-tts, faster-whisper | PyPI | only for a film with narration | ~200 MB |
 | Kokoro voice model (offline TTS) | this project's [GitHub Releases](https://github.com/lemomo-ai/lemo-opuscar/releases/tag/assets) | only for a film with narration | 354 MB |
-| Whisper model for the speech check | Hugging Face (or the mirror you set in `HF_ENDPOINT`) | first narration check | ~145 MB |
+| Whisper model for the speech check | Hugging Face (or the mirror you set in `HF_ENDPOINT`) | first narration check | ~145 MB (English), ~480 MB (Chinese) |
 | numba, for plucked strings | PyPI | only if the score uses them | ~140 MB |
 | Instrument sample libraries (VSCO 2 CE, VCSL, FreePats, Karoryfer, Salamander) | this project's GitHub Releases | only the libraries the score uses | 70–400 MB each |
 | HDRIs for 3D styles (Poly Haven, CC0) | this project's GitHub Releases | only for 3D styles | 12 MB |

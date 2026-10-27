@@ -30,7 +30,7 @@ Not HD-2D (no depth of field, bloom or real-time light), not CRT nostalgia (no s
 - **Colour depth can stand for time**: older = fewer colours, lower resolution.
 - **Protected indices**: a few colours exempt from every effect become the thread through the film and allow match cuts between eras. Use one or two; more and they stop meaning anything.
 - **Warm hues survive reductions**: keep orange, pink and plum in reduced subsets, or the first step turns a scene solid red.
-- Example uses of protected colours: a red scarf across eras; a gold coin in a grey economy; the green of one plant in a faded city.
+- Example uses of protected colours: a red kite across a childhood; a gold coin in a grey economy; the green of one plant in a faded city.
 
 ## 4. Type & subtitles
 

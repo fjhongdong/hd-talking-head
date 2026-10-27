@@ -1,0 +1,9 @@
+# local, rebuilt by build.sh
+raw/
+assets/
+fonts/
+out/
+audio/vo/
+events.json
+TREATMENT.md
+PRODUCTION_LOG.md

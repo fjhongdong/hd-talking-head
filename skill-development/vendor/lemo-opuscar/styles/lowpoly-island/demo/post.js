@@ -1,5 +1,5 @@
-// 正交相机后期：场景(MSAA+深度) → GTAO → 远处按深度融进渐变天空(+星星) → 移轴模糊 → 辉光 → 粉彩调色/暗角 → 色调映射
-// 改自 core/three/post.js（core 的景深用 perspectiveDepthToViewZ，正交相机下不成立）
+// Post for the orthographic camera: scene (MSAA + depth) → GTAO → distance blends into the gradient sky by depth (+ stars) → tilt-shift blur → bloom → pastel grade / vignette → tone mapping
+// adapted from core/three/post.js (core's depth of field uses perspectiveDepthToViewZ, which doesn't hold for an orthographic camera)
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
@@ -30,11 +30,11 @@ const compShader = {
       vec3 col = texture2D(tColor, vUv).rgb;
       float ao = pow(texture2D(tAO, vUv).r, 1.5);
       col *= mix(1., ao, aoAmt);
-      // 天空：屏幕纵向渐变（地平线色 → 天顶色）
+      // sky: vertical screen gradient (horizon colour → zenith colour)
       float gy = smoothstep(.55, 1.3, vUv.y);
       vec3 sky = mix(hor, zen, gy);
       float hz = d >= .99999 ? 1. : smoothstep(hz0, hz1, vz - camDist);
-      // 星星：只在"天"的部分（雾浓处）出现
+      // stars: only appear in the "sky" part (where the fog is dense)
       if (stars > 0.) {
         vec2 sp = vec2(vUv.x * res.x / res.y + starOff, vUv.y) * 150.;
         vec2 cell = floor(sp), f = fract(sp) - .5;
@@ -74,7 +74,7 @@ class ScenePass extends Pass {
   }
 }
 
-// 移轴：画面上下两端轻微模糊（微缩模型感）
+// tilt-shift: slight blur at the top and bottom of frame (miniature-model feel)
 const tiltShader = {
   uniforms: { tDiffuse: { value: null }, res: { value: new THREE.Vector2(1920, 1080) }, fy: { value: .5 }, band: { value: .28 }, maxR: { value: 5 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,

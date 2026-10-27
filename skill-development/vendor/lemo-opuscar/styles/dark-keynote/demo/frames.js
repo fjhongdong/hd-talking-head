@@ -1,4 +1,4 @@
-// frames.js — 关卡风格帧 / 引擎示例
+// frames.js — style frames / engine examples
 import * as E from './engine.js';
 export function engineDemo(g, t) {
   E.bg(g); E.grid(g, { ox: 960, oy: 540 });
@@ -9,12 +9,12 @@ export function engineDemo(g, t) {
   const card = new Path2D(); card.roundRect(300, 200, 420, 160, 28); E.litShape(g, card, { sweep: 0.5, bbox: [300, 200, 420, 160] });
 }
 
-// 海报：揭幕后的 Tidy 窗口 + 片名
+// Poster: the Tidy window after the reveal + title
 import { renderFilm } from './film.js';
 export function poster(g) {
   const [c, cg] = E.buf('posterSrc'); renderFilm(cg, 23.6, { nosub: true });
   E.bg(g); E.grid(g, { ox: 960, oy: 540, alpha: 0.6 });
-  // 画面边缘羽化，避免缩小后的画框露出矩形边
+  // Feather the picture edges so the frame doesn't show a rectangular border once scaled down
   cg.setTransform(1, 0, 0, 1, 0, 0); cg.globalCompositeOperation = 'destination-in';
   const m = cg.createRadialGradient(960, 560, 520, 960, 560, 1080); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
   cg.fillStyle = m; cg.fillRect(0, 0, 1920, 1080); cg.globalCompositeOperation = 'source-over';

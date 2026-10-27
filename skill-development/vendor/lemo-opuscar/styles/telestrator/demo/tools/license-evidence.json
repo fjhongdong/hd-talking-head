@@ -1,0 +1,14 @@
+{
+ "id": "sYfsd9Hv7hc",
+ "title": "Beşiktaş 3 - 3 Fenerbahçe | Maç Özeti | 2018/19",
+ "channel": "beIN SPORTS Türkiye",
+ "channel_id": "UCPe9vNjHF1kEExT5kHwc7aw",
+ "uploader_id": "@beINSPORTSTürkiye",
+ "channel_is_verified": true,
+ "channel_follower_count": 2890000,
+ "license": "Creative Commons Attribution license (reuse allowed)",
+ "upload_date": "20190724",
+ "duration": 187,
+ "webpage_url": "https://www.youtube.com/watch?v=sYfsd9Hv7hc",
+ "checked": "2026-10-21, yt-dlp --write-info-json + page HTML (ownerChannelName, BADGE_STYLE_TYPE_VERIFIED, \"Creative Commons Attribution license (reuse allowed)\")"
+}

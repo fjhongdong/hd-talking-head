@@ -1,4 +1,4 @@
-"""导出字幕：python srt.py → ../cel-anime-80s.srt（与 hud.js 的显示区间一致：t-0.05 → t+max(dur+0.6, 1.9)）"""
+"""Export subtitles: python srt.py → ../cel-anime-80s.srt (same display intervals as hud.js: t-0.05 → t+max(dur+0.6, 1.9))"""
 import json, os, re
 HERE = os.path.dirname(os.path.abspath(__file__)); D = os.path.join(HERE, '..')
 src = open(os.path.join(D, 'story.js')).read()

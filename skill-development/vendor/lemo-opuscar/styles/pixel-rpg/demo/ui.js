@@ -1,8 +1,8 @@
-// ui.js — RPG 界面：对话框（三种色深皮肤）、战报窗、菜单 + 手形光标、存档位列表、状态栏、存档进度、SAVE COMPLETE
+// ui.js — RPG interface: dialogue box (three colour-depth skins), battle-log window, menu + hand cursor, save-file list, status bar, save progress, SAVE COMPLETE
 import { W, H, C, T, GBI, bayer, sprFromRows } from './px.js';
 import { text, textW, wrap, LINE_H } from './font.js';
 
-// 窗口：皮肤 snes = 蓝渐变 + 白/银边；nes = 黑底白框；gb = 浅底深框（传入 4 色索引）
+// Windows: skin snes = blue gradient + white/silver border; nes = black background with white frame; gb = light background with dark frame (pass in 4-colour indices)
 export function win(fb, x, y, w, h, skin = 'snes') {
   if (skin === 'gb') {
     const [K, D, Lg, Wt] = GBI;
@@ -20,8 +20,8 @@ export function win(fb, x, y, w, h, skin = 'snes') {
   fb.hline(x + 3, x + w - 4, y + 3, C.blue);
 }
 
-// —— 对话框（字幕）——
-// o: { skin, portrait(spr|null), text, t (秒，从开打起), cps, big: gb 时在 160 分辨率上 }
+// —— Dialogue box (subtitles) ——
+// o: { skin, portrait(spr|null), text, t (seconds since typing starts), cps, big: on the 160 resolution when gb }
 export function dialog(fb, o) {
   const skin = o.skin || 'snes', gb = skin === 'gb';
   const X = gb ? 3 : 8, Y = gb ? 62 : 134, Wd = gb ? 154 : 304, Hd = gb ? 26 : 42;
@@ -41,14 +41,14 @@ export function dialog(fb, o) {
   if (n >= total && Math.floor(o.t * 3) % 2 === 0) text(fb, '▼', X + Wd - (gb ? 10 : 14), Y + Hd - (gb ? 10 : 12), gb ? GBI[1] : C.white);
   return { n: Math.min(n, total), total };
 }
-// 顶部战报窗
+// Top battle-log window
 export function battleMsg(fb, s, t) {
   const w = Math.max(120, textW(s) + 24), x = Math.round((W - w) / 2);
   win(fb, x, 4, w, 17);
   const n = Math.floor(t * 45); text(fb, s.slice(0, n), x + Math.round((w - textW(s)) / 2), 9, C.white, C.night);
 }
 
-// —— 手形光标 ——
+// —— Hand cursor ——
 const HAND = sprFromRows([
   '.kk......',
   'kwwk.....',
@@ -60,7 +60,7 @@ const HAND = sprFromRows([
 ], { k: C.ink, w: C.white });
 export function hand(fb, x, y, t, bob = true) { fb.blit(HAND, x + (bob && Math.floor(t * 4) % 2 ? 1 : 0), y); }
 
-// SAVE / QUIT 小菜单
+// Small SAVE / QUIT menu
 export function saveMenu(fb, x, y, t, pressed = false) {
   win(fb, x, y, 56, 34);
   text(fb, 'SAVE', x + 20, y + 8, pressed ? C.yellow : C.white, C.night);
@@ -68,14 +68,14 @@ export function saveMenu(fb, x, y, t, pressed = false) {
   hand(fb, x + 7, y + 8, t, !pressed);
 }
 
-// —— 迷你头像 7×7（存档位里的队伍）——
+// —— Mini portraits 7×7 (the party inside a save file) ——
 const HEADA = sprFromRows(['..kkk..', '.khhhk.', 'khhhhhk', 'khfffhk', 'kfefefk', '.kfffk.', '..kkk..'], { k: C.ink, h: C.dbrown, f: C.skin, e: C.ink });
 const HEADW = sprFromRows(['..kkk..', '.khhhk.', 'khhhhhk', 'khfffhk', 'hfefefh', 'hkfffkh', 'h.kkk.h'], { k: C.ink, h: C.rust, f: C.skin, e: C.ink });
 export const miniHeads = { arlo: HEADA, wren: HEADW };
 
-// —— 存档位列表 ——
-// files: [{label, place, time, thumb(fb,x,y)}]；cursor 行号（可为小数 = 移动中），newFile 行在最后
-// 返回缩略图区域 [{x,y,w,h,lut}] 供按区域换查找表（回忆保有自己的颜色）
+// —— Save-file list ——
+// files: [{label, place, time, thumb(fb,x,y)}]; cursor = row index (can be fractional = moving), the newFile row comes last
+// Returns thumbnail regions [{x,y,w,h,lut}] so lookup tables can be swapped per region (memories keep their own colours)
 export const LIST = { x: 4, y: 6, w: 176, rowH: 27, thumbW: 40, thumbH: 22 };
 export function fileList(fb, files, cursor, t, o = {}) {
   const { x, y, w, rowH } = LIST, h = 16 + rowH * (files.length + 1) + 2;
@@ -91,7 +91,7 @@ export function fileList(fb, files, cursor, t, o = {}) {
     text(fb, f.label, tx + 46, ry + 2, sel ? C.yellow : C.silver, C.night);
     text(fb, f.place, tx + 46 + textW(f.label) + 6, ry + 2, sel ? C.white : C.steel, C.night);
     text(fb, f.time, tx + 46, ry + 13, C.steel, C.night);
-    // 队伍小头像（在回忆颜色区域里）
+    // Small party portraits (inside the memory's colour region)
     const hx = tx + 46 + textW(f.time) + 8;
     fb.blit(HEADA, hx, ry + 13); fb.blit(HEADW, hx + 9, ry + 13);
     regions.push({ x: hx, y: ry + 13, w: 16, h: 7, lut: f.lut });
@@ -102,13 +102,13 @@ export function fileList(fb, files, cursor, t, o = {}) {
   if (o.newThumb) { o.newThumb(fb, tx, ny); regions.push({ x: tx, y: ny, w: LIST.thumbW, h: LIST.thumbH, lut: o.newLut }); }
   const selN = Math.round(cursor) === files.length;
   text(fb, o.newLabel || 'NEW FILE', tx + 46, ny + 7, selN ? C.yellow : C.silver, C.night);
-  // 光标（行间移动时按整数像素插值）
+  // Cursor (interpolated in whole pixels while moving between rows)
   const cy = Math.round(y + 17 + cursor * rowH + 7);
   hand(fb, x + 5, cy, t, o.bob ?? true);
   return regions;
 }
 
-// —— 状态栏（门前）——
+// —— Status bar (at the gate) ——
 export function statusWin(fb, x, y) {
   win(fb, x, y, 150, 38);
   text(fb, 'ARLO', x + 8, y + 7, C.white, C.night); text(fb, 'LV 42', x + 38, y + 7, C.steel, C.night);
@@ -120,7 +120,7 @@ function bar(fb, x, y, lab, f, c1, c2) {
   const bx = x + 14, bw = 56; fb.rect(bx - 1, y, bw + 2, 6, C.ink); fb.rect(bx, y + 1, bw, 4, C.night);
   const fw = Math.round(bw * f); fb.rect(bx, y + 1, fw, 2, c1); fb.rect(bx, y + 3, fw, 2, c2);
 }
-// 存档进度 / 完成
+// Save progress / complete
 export function savingWin(fb, f, t) {
   const x = 184, y = 70, w = 128, h = 30;
   win(fb, x, y, w, h);
@@ -132,6 +132,6 @@ export function saveCompleteWin(fb, t) {
   win(fb, x, y, w, h);
   const s = 'SAVE COMPLETE', tw = textW(s);
   text(fb, s, x + Math.round((w - tw) / 2), y + 12, Math.floor(t * 6) % 4 === 0 && t < .8 ? C.white : C.yellow, C.night);
-  // 两颗闪光（像素星）
+  // Two sparkles (pixel stars)
   for (const [sx, sy, ph] of [[x + 8, y + 8, 0], [x + w - 10, y + h - 9, .4]]) { const k = Math.floor((t + ph) * 6) % 3; if (k === 2) continue; fb.px(sx, sy, C.white); if (k === 0) { fb.px(sx - 1, sy, C.yellow); fb.px(sx + 1, sy, C.yellow); fb.px(sx, sy - 1, C.yellow); fb.px(sx, sy + 1, C.yellow); } }
 }

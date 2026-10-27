@@ -1,0 +1,59 @@
+Constructivist Montage — "410 Days" (library demo)
+Every third-party asset in the film, with its source and licence. Download links and the seconds used: SOURCES.md / SOURCES.jsonl.
+An unofficial film made from public archives; it is not affiliated with or endorsed by the Empire State Building or any company named here.
+
+MOVING IMAGE
+- "Empires of Steel: The Story of a Supreme Achievement in Steel Construction" (1930–31), presented by the American Bridge
+  Company (subsidiary of the United States Steel Corporation), a Pathescope Production. Silent, black and white.
+  Public domain in the United States: published 1930–31 with no copyright notice on its title, credit or end cards;
+  Internet Archive marks it Public Domain Mark 1.0; listed as a 1930 film by the Harvard Business School Baker Library
+  U.S. Steel exhibit (https://www.library.hbs.edu/special-collections-and-archives/exhibits/us-steel/films-tv).
+  https://archive.org/details/EmpiresOfSteel  (16 mm transfer, end card "Source: Margaret P. Pierson")
+  Changes: excerpts only, gate edge cropped, denoised, scaled (lanczos, at most 2.5x of the source on screen), graded to
+  the ink / paper duotone; the film's own title, credit and end cards and its intertitles are not shown.
+
+PHOTOGRAPHS (Lewis Hine, 1930–31; graded to the duotone, cut out with u2net_human_seg and a paper border)
+- "Photograph of a Workman on the Framework of the Empire State Building", Lewis Hine. U.S. National Archives,
+  NAID 518290 (Records of the Work Projects Administration, RG 69). Public domain.
+  https://commons.wikimedia.org/wiki/File:Photograph_of_a_Workman_on_the_Framework_of_the_Empire_State_Building_-_NARA_-_518290.jpg
+- "Icarus, Empire State Building", Lewis Hine, 1930. The Metropolitan Museum of Art, released under CC0 1.0
+  (https://creativecommons.org/publicdomain/zero/1.0/) through the Met's Open Access donation to Wikimedia Commons.
+  https://commons.wikimedia.org/wiki/File:Icarus,_Empire_State_Building_MET_DP106525.jpg
+- "Empire State Building", Lewis Hine, 1930s. The Metropolitan Museum of Art, CC0 1.0 (as above).
+  https://commons.wikimedia.org/wiki/File:Empire_State_Building_MET_DP106404.jpg
+
+DOCUMENT
+- "What Everybody Wants to Know About Empire State: Facts and Figures About the World's Greatest Structure",
+  Empire State, Inc., 1931 (catalogued "[1930?]"). Columbia University Libraries, Durst Old York Library:
+  "Digital version available with no restrictions". Public domain (US publication with no copyright notice).
+  https://archive.org/details/ldpd_11290475_000
+  Used: the statistics page (two sentences marked in red), the four scale outlines of its height comparison (lifted
+  off the page and stood on one ground line), the map, the heading "The Men Who Did the Job", a strip of the chronology.
+
+SOUND
+- "WWS Rivetingmachine" by Work With Sounds / Konrad Gutkowski, licensed under CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/). https://commons.wikimedia.org/wiki/File:WWS_Rivetingmachine.ogg
+  Changes: short slices, levelled.
+- "Steam Whistle at Georgia Tech" by Zeroping, CC0 1.0. https://commons.wikimedia.org/wiki/File:Steam_Whistle_at_Georgia_Tech.ogg
+- "Construction" by Dsw4, public domain. https://commons.wikimedia.org/wiki/File:Construction.ogg (ambience bed)
+
+MUSIC
+- Original score written for this film (audio/mix.py).
+- Samples (CC0): VS Chamber Orchestra: Community Edition (Versilian Studios), Versilian Community Sample Library (Versilian Studios).
+
+VOICE
+- Narration: Kokoro-82M text-to-speech (Apache-2.0), voice am_michael, run offline with kokoro-onnx (MIT).
+- Speech check: faster-whisper (MIT).
+
+FONTS (SIL Open Font License 1.1; texts in fonts/; from github.com/google/fonts, fetched by tools/fonts.py)
+- Noto Sans SC, Adobe / Google (subset)
+- Oswald, The Oswald Project Authors
+- Space Mono, The Space Mono Project Authors
+
+TOOLS
+- Cut-outs: U²-Net human segmentation (u2net_human_seg, Apache-2.0; ONNX from https://github.com/danielgatis/rembg/releases),
+  run through onnxruntime (MIT).
+- Rendering: headless Chromium (Playwright); ffmpeg.
+
+FACTS
+- Every fact on screen and in the voice-over is sourced in FACTS.md (claim, URL, quoted wording).

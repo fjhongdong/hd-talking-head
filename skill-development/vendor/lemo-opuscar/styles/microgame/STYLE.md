@@ -3,7 +3,7 @@
 > A rapid-fire party-game film: one command word, a few seconds, one action. Every microgame is drawn in a completely different art style, and the film keeps getting faster.
 > Genre reference (grammar only): the WarioWare series. Never use its name, characters, UI, microgames or music.
 
-The format suits 45–60 s films; longer ones lose the frenzy.
+The format suits short films; once the frenzy stops building, end it.
 
 ## 1. Essence, and what it is not
 

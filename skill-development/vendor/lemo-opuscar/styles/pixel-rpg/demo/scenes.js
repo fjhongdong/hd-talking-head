@@ -1,9 +1,9 @@
-// scenes.js — 场景：走廊 + 水晶厅（现在）、最终之门（正面仰摇）；光照 = 调色板索引提亮/压暗（不混色）
+// scenes.js — scenes: corridor + crystal hall (present), final gate (frontal tilt-up); lighting = brightening/darkening palette indices (no colour blending)
 import { W, H, C, T, bayer, bayer8, hash, vnoise, clamp } from './px.js';
 import { drawChar, scarfTail, scarfTailBack } from './sprites.js';
 import { crystal, halo, pedestal, door } from './props.js';
 
-// —— 索引提亮 / 压暗表 ——
+// —— Index brighten / darken tables ——
 export const LIGHT = new Uint8Array(256), DARK = new Uint8Array(256);
 for (let i = 0; i < 256; i++) { LIGHT[i] = i; DARK[i] = i; }
 const up = [[C.ink, C.night], [C.night, C.dslate], [C.dslate, C.slate], [C.slate, C.steel], [C.steel, C.silver], [C.silver, C.white],
@@ -16,7 +16,7 @@ const dn = [[C.night, C.ink], [C.dslate, C.night], [C.slate, C.dslate], [C.steel
   [C.blue, C.navy], [C.cyan, C.blue], [C.red, C.crimson], [C.pink, C.red], [C.rose, C.plum], [C.clay, C.rust], [C.amber, C.orange], [C.yellow, C.amber],
   [C.orange, C.rust], [C.skin, C.skinS], [C.skinS, C.brown], [C.navy, C.night], [C.teal, C.ink], [C.umber, C.ink], [C.plum, C.night], [C.crimson, C.umber]];
 for (const [a, b] of dn) DARK[a] = b;
-// 抖动光斑：以 (cx,cy) 为中心、半径 R，按 Bayer 把像素提亮 1–2 级
+// Dithered light patch: centred on (cx,cy), radius R, brightens pixels 1–2 steps by Bayer
 export function glow(fb, cx, cy, R, k = 1, sy = 1) {
   for (let y = Math.floor(-R); y <= R; y++) for (let x = Math.floor(-R); x <= R; x++) {
     const X = Math.round(cx + x), Y = Math.round(cy + y); if (X < 0 || Y < 0 || X >= fb.w || Y >= fb.h) continue;
@@ -25,11 +25,11 @@ export function glow(fb, cx, cy, R, k = 1, sy = 1) {
     if (b < f * .55) fb.d[i] = LIGHT[LIGHT[c]]; else if (b < f * 1.1) fb.d[i] = LIGHT[c];
   }
 }
-export function shade(fb, x0, y0, w, h, f) {        // 区域压暗（f(x,y) 0..1）
+export function shade(fb, x0, y0, w, h, f) {        // darken a region (f(x,y) 0..1)
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { if (x < 0 || y < 0 || x >= fb.w || y >= fb.h) continue; const v = f(x, y); if (bayer(x, y) < v) { const i = y * fb.w + x; fb.d[i] = DARK[fb.d[i]]; } }
 }
 
-// —— 火把 ——（lit 0..1；12 fps 四帧火焰）
+// —— Torches —— (lit 0..1; 12 fps four-frame flame)
 export function torch(fb, x, y, t, lit = 1) {
   fb.rect(x - 1, y, 3, 9, C.dbrown); fb.px(x - 1, y, C.brown); fb.vline(x - 1, y + 1, y + 8, C.brown);
   fb.rect(x - 3, y - 2, 7, 3, C.slate); fb.hline(x - 3, x + 3, y - 2, C.steel); fb.px(x - 3, y, C.night); fb.px(x + 3, y, C.night);
@@ -50,7 +50,7 @@ export function torch(fb, x, y, t, lit = 1) {
 }
 export function torchGlow(fb, x, y, t, lit = 1) { if (lit > 0) glow(fb, x, y - 5, 26 * lit + Math.sin(t * 9 + x) * 1.2, .9 * lit, .8); }
 
-// ————————————————————— 走廊（世界坐标，地面 y = 128）—————————————————————
+// ————————————————————— Corridor (world coordinates, ground y = 128) —————————————————————
 export const FLOOR = 128;
 export const CORR = { crystalX: 331, heroStop: 295, doorFar: 297 };
 function farWall(fb, cam, t) {
@@ -62,7 +62,7 @@ function farWall(fb, cam, t) {
     if (!mort && hash(Math.floor((wx + o2) / 14), row, 11) < .12) c = C.dslate;
     fb.d[y * W + x] = c;
   }
-  // 拱窗（每 96 px），窗外夜空 + 星 + 月
+  // Arched windows (every 96 px), night sky + stars + moon outside
   for (let k = Math.floor(off / 96) - 1; k <= Math.floor((off + W) / 96) + 1; k++) {
     const wx0 = k * 96 + 30; if (wx0 + 30 > CORR.doorFar) continue;
     const x0 = wx0 - off, top = 20, bot = 98, ww = 26, cx = x0 + ww / 2;
@@ -76,14 +76,14 @@ function farWall(fb, cam, t) {
       if (x === x0 || x === x0 + ww - 1 || (!pointed)) c = C.ink;
       fb.px(x, y, c);
     }
-    // 窗棂 + 窗台
+    // Window bars + sill
     fb.vline(Math.round(cx), top + 4, bot - 1, C.ink); fb.hline(x0, x0 + ww - 1, 60, C.ink);
     fb.rect(x0 - 3, bot, ww + 6, 3, C.slate); fb.hline(x0 - 3, x0 + ww + 2, bot, C.steel); fb.hline(x0 - 3, x0 + ww + 2, bot + 3, C.ink);
-    // 月亮（只在一扇窗里）
+    // Moon (in one window only)
     if (k === 2) { const mx = x0 + 18, my = top + 22; fb.disc(mx, my, 5, C.silver); fb.disc(mx + 2, my - 1, 4, C.night); for (let yy = my - 5; yy < my + 6; yy++) for (let xx = mx - 5; xx < mx + 6; xx++) { const i = yy * W + xx; if (xx >= 0 && xx < W && fb.d[i] === C.silver && Math.hypot(xx - mx, yy - my) > 4.2) fb.d[i] = C.white; } }
   }
 }
-// 月光斜束（窗 → 地面），在墙、柱之后叠加提亮
+// Slanted moonbeams (window → floor), brightening layered after the walls and pillars
 function moonShafts(fb, cam) {
   const off = Math.round(cam * .35);
   for (let k = Math.floor(off / 96) - 1; k <= Math.floor((off + W) / 96) + 1; k++) {
@@ -111,9 +111,9 @@ function colonnade(fb, cam, t, torchLit = 1) {
       fb.px(x0 + x, y, c);
     }
     for (const yy of [8, FLOOR - 7]) { fb.rect(x0 - 2, yy, pw + 4, 6, C.slate); fb.hline(x0 - 2, x0 + pw + 1, yy, C.steel); fb.hline(x0 - 2, x0 + pw + 1, yy + 5, C.ink); }
-    // 拱（柱间上方）
+    // Arch (above each bay between pillars)
     for (let x = x0 + pw; x < x0 + 72; x++) { const u = (x - x0 - pw) / (72 - pw), h = Math.round(18 * Math.sin(u * Math.PI)); for (let y = 0; y < 26 - h; y++) fb.px(x, y, y === 25 - h ? C.slate : y === 26 - h - 2 ? C.night : C.ink); }
-    // 横幅（隔一个柱间一面）
+    // Banners (one in every other bay)
     if (((k % 2) + 2) % 2 === 0) {
       const bx = x0 + pw + 20, sway = Math.round(Math.sin(t * 1.3 + k) * .6);
       for (let y = 22; y < 70; y++) for (let x = 0; x < 16; x++) {
@@ -123,12 +123,12 @@ function colonnade(fb, cam, t, torchLit = 1) {
         if (x > 2 && x < 13 && (y === 26 || y === 58)) c = C.amber;
         fb.px(X, y, c);
       }
-      // 徽记：一颗水晶
+      // Emblem: a crystal
       const ex = bx + 8 + sway, ey = 42;
       for (let d = 0; d < 6; d++) { fb.hline(ex - Math.floor(d / 2), ex + Math.floor(d / 2) - 1 + 1, ey - 5 + d, C.amber); fb.hline(ex - Math.floor(d / 2), ex + Math.floor(d / 2), ey + 5 - d, C.amber); }
       fb.hline(bx - 1, bx + 16, 21, C.dbrown); fb.px(bx - 2, 21, C.amber); fb.px(bx + 17, 21, C.amber);
     }
-    // 火把（每根柱子）
+    // Torches (one per pillar)
     torch(fb, x0 + pw / 2, 64, t + k, torchLit);
   }
 }
@@ -158,7 +158,7 @@ function fgPillars(fb, cam) {
     for (let y = 0; y < H; y++) for (let x = 0; x < 24; x++) { const c = x === 23 ? C.night : C.ink; fb.px(x0 + x, y, c); }
   }
 }
-// 水晶厅：门（远景层）+ 石台 + 水晶
+// Crystal hall: gate (far layer) + stone pedestal + crystal
 function chamberBack(fb, cam, t) {
   const off = Math.round(cam * .35), dx = CORR.doorFar - off;
   if (dx < W) door(fb, dx, -150, 196, FLOOR + 150, 0, t, 1);
@@ -170,7 +170,7 @@ export function corridor(fb, t, cam, hero) {
   colonnade(fb, cam, t, 1);
   colonnadeGlow(fb, cam, t, 1);
   floor(fb, cam);
-  // 水晶
+  // Crystal
   const cx = CORR.crystalX - Math.round(cam), cyc = FLOOR - 26 + Math.round(Math.sin(t * 2) * 1.2);
   if (cx > -30 && cx < W + 30) {
     pedestal(fb, cx, FLOOR + 1);
@@ -178,7 +178,7 @@ export function corridor(fb, t, cam, hero) {
     const xs = crystal(Math.floor(t * 8)); fb.blit(xs, cx - (xs.w >> 1), cyc - (xs.h >> 1));
     glow(fb, cx, FLOOR + 2, 16, .6, .3);
   }
-  // 主角
+  // Hero
   if (hero) {
     const hx = Math.round(hero.x - cam), spr = drawChar('arlo', hero.pose, { t });
     shadowBlob(fb, hx, FLOOR, 7);
@@ -189,13 +189,13 @@ export function corridor(fb, t, cam, hero) {
 }
 export function shadowBlob(fb, cx, y, r) { for (let x = -r; x <= r; x++) { const i = y * W + cx + x; if (cx + x < 0 || cx + x >= W) continue; fb.d[i] = DARK[fb.d[i]]; if (Math.abs(x) < r - 2) fb.d[i + W] = DARK[fb.d[i + W]]; } }
 
-// ————————————————————— 最终之门（正面，仰摇）—————————————————————
-// 世界 y：门底 = 132（地面）；门高 440；camY < 0 表示镜头上移
+// ————————————————————— Final gate (frontal, tilt-up) —————————————————————
+// World y: gate bottom = 132 (ground); gate height 440; camY < 0 means the camera has moved up
 export const DOOR = { floor: 134, w: 200, h: 452 };
 export function doorScene(fb, t, camY, o) {
   const top = DOOR.floor - DOOR.h, cy = Math.round(camY);
-  const litT = o.torch || 0;                         // 0..1 火把依次点燃
-  // 墙
+  const litT = o.torch || 0;                         // 0..1 torches light one after another
+  // Wall
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const wy = y + cy, row = Math.floor((wy + 900) / 9), o2 = row % 2 ? 7 : 0, ly = ((wy + 900) % 9);
     const mort = ly === 8 || (x + o2) % 14 === 0;
@@ -203,12 +203,12 @@ export function doorScene(fb, t, camY, o) {
     if (!mort && hash(Math.floor((x + o2) / 14), row, 13) < .12) c = C.dslate;
     fb.d[y * W + x] = c;
   }
-  // 两侧高处的横幅
+  // Banners high up on both sides
   for (const bx of [22, 282]) for (let k = 0; k < 3; k++) {
     const by = DOOR.floor - 120 - k * 110 - cy; if (by > H || by < -80) continue;
     for (let y = 0; y < 60; y++) for (let x = 0; x < 16; x++) { if (y > 52 && Math.abs(x - 7.5) < (y - 52) * 1.1) continue; fb.px(bx + x, by + y, x === 0 || x === 15 ? C.umber : x < 3 ? C.crimson : x > 12 ? C.umber : C.crimson); if (x > 2 && x < 13 && (y === 4 || y === 48)) fb.px(bx + x, by + y, C.amber); }
   }
-  // 门上方的圆形玫瑰窗（仰摇到顶才看得到）
+  // Round rose window above the gate (only visible once the tilt reaches the top)
   { const rx = 160, ry = top - 34 - cy, R = 26;
     if (ry > -R - 4 && ry < H + R) for (let y = -R - 3; y <= R + 3; y++) for (let x = -R - 3; x <= R + 3; x++) {
       const d = Math.hypot(x, y); if (d > R + 3) continue; const X = rx + x, Y = ry + y;
@@ -218,13 +218,13 @@ export function doorScene(fb, t, camY, o) {
       if (!spoke && c !== C.ink && bayer(X, Y) < .15) c = LIGHT[c];
       fb.px(X, Y, c);
     } }
-  // 门
+  // Gate
   door(fb, 60, top - cy, DOOR.w, DOOR.h, o.open || 0, t, o.runes ?? 1);
-  // 火把（左右各 3 支，自下而上依次点燃）
+  // Torches (3 each side, lit one after another from bottom to top)
   const torches = [[40, 70], [280, 70], [40, 190], [280, 190], [40, 310], [280, 310]];
   torches.forEach(([x, h], i) => { const y = DOOR.floor - h - cy; const lit = clamp(litT * 6 - i * .8, 0, 1); if (y > -20 && y < H + 20) torch(fb, x, y, t + i, lit); });
   torches.forEach(([x, h], i) => { const y = DOOR.floor - h - cy; const lit = clamp(litT * 6 - i * .8, 0, 1); if (y > -40 && y < H + 40) torchGlow(fb, x, y, t + i, lit); });
-  // 门缝的光洒在地面
+  // Light from the gate's gap spills onto the floor
   const fy = DOOR.floor - cy;
   for (let y = fy; y < H; y++) for (let x = 0; x < W; x++) {
     const d = y - fy; let c = d === 0 ? C.slate : d === 1 ? C.ink : (Math.floor(Math.sqrt(d * 4)) % 2 ? C.night : C.dslate);
@@ -232,7 +232,7 @@ export function doorScene(fb, t, camY, o) {
     const gw = (o.open || 0) * 90;
     if (gw > 0) { const f = 1 - Math.abs(x - 160) / (gw + d * 1.8); if (f > 0 && bayer(x, y) < f * .9) { const i = y * W + x; fb.d[i] = LIGHT[LIGHT[fb.d[i]]]; } }
   }
-  // 主角（背面）
+  // Hero (from behind)
   if (o.hero) {
     const hx = o.hero.x, hy = o.hero.y - cy, spr = drawChar('arlo', o.hero.pose, { t });
     shadowBlob(fb, hx, hy, 7);

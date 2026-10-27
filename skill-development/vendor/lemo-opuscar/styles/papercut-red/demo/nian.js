@@ -1,5 +1,5 @@
-// 年兽：深红纸关节分片巨兽（侧面朝左）。憨：大头、大眼、圆身、短腿、云尾；压迫感来自体积。
-// 原点 = 身体中心，站立时地面在 y ≈ +395。分片：身、头（换眼片）、下颌、鬃毛、尾、四腿（上 + 下）
+// Nian beast: giant jointed dark-red paper cut-out (profile facing left). Goofy: big head, big eyes, round body, short legs, cloud tail; the menace comes from its bulk.
+// origin = body centre, ground at y ≈ +395 when standing. Pieces: body, head (swappable eye pieces), lower jaw, mane, tail, four legs (upper + lower)
 import { PAL, piece, P, trace, fill, cut, cutLine, cutTaper, inset, within, ellipsePoly, curve } from './paper.js';
 import { sawRow, sawEdge, crescent, crescentPts, crescentRows, swirl, doubleSwirl, rosette, plum, coin, dots, taper, along } from './motifs.js';
 import { mul, T, R, S, put, ap } from './rig.js';
@@ -7,44 +7,44 @@ import { mul, T, R, S, put, ap } from './rig.js';
 const COL = PAL.nian, FARC = '#8a0c20', NEAR = '#c4162c';
 const N = {};
 export const NJ = { neck: [-262, -130], jaw: [-196, 12], tail: [322, -128], fn: [-194, 38], ff: [-144, 26], bn: [208, 38], bf: [256, 26], knee: [0, 150], ground: 325 };
-export const HS = 1.32;   // 头部放大（憨：大头）
+export const HS = 1.32;   // head enlarged (goofy: big head)
 
-// ---------- 身 ----------
+// ---------- body ----------
 function bodyPiece() {
   return piece([-350, -320, 380, 230], g => {
     g.scale(.85, 1.05);
     const top = curve([[-300, -168], [-200, -214], [-80, -238], [60, -240], [200, -222], [318, -182], [380, -120]], false, 4);
-    const ridge = sawEdge(top.slice(8, top.length - 6), 46, 58, 1, .25, 3);   // 背脊锯齿（像山脊）
+    const ridge = sawEdge(top.slice(8, top.length - 6), 46, 58, 1, .25, 3);   // sawtooth spine (like a mountain ridge)
     const belly = curve([[330, 120], [240, 150], [80, 166], [-80, 166], [-220, 150], [-300, 110]], false, 4);
-    const bellyF = sawEdge(belly, 26, 34, 1, .3, 5);                         // 腹下毛边
+    const bellyF = sawEdge(belly, 26, 34, 1, .3, 5);                         // fringe under the belly
     const pts = [...top.slice(0, 8), ...ridge, ...top.slice(top.length - 6), ...curve([[380, -120], [398, -40], [384, 50], [330, 120]], false, 4), ...bellyF, ...curve([[-300, 110], [-352, 40], [-362, -60], [-336, -132], [-300, -168]], false, 4)];
     const out = pts;
     fill(g, q => trace(q, out), COL);
     inset(g, out, 7, 3, COL);
     within(g, out, () => {
-      // 关节旋涡
+      // joint swirls
       doubleSwirl(g, -222, -10, 96, 9, -.5);
       doubleSwirl(g, 252, -14, 96, 9, 2.4);
-      // 中段月牙鳞
+      // crescent scales on the midsection
       const mid = ellipsePoly(16, -40, 150, 120, 0, 40);
       within(g, mid, () => crescentRows(g, -140, -170, 170, 90, 22, 8, 0, .72));
       cutTaper(g, curve([[-120, -150], [-150, -40], [-120, 80]], false, 3), 6);
       cutTaper(g, curve([[150, -150], [180, -40], [150, 80]], false, 3), 6);
-      // 背脊下一条锯齿刻带
+      // a sawtooth carved band below the spine
       const band = curve([[-250, -168], [-80, -200], [60, -202], [200, -188], [320, -150]], false, 3);
       cutTaper(g, band, 5);
       sawRow(g, band, 22, 13, 1, .7);
-      // 腹部一串圆孔
+      // a row of round holes on the belly
       dots(g, along(curve([[-200, 118], [-60, 132], [80, 132], [220, 116]], false, 3), 34).map(p => [p.x, p.y]), 6.5);
     });
   }, { seed: 41, col: COL, ss: 2 });
 }
-// ---------- 头（原点 = 颈关节），朝左 ----------
+// ---------- head (origin = neck joint), facing left ----------
 function headOutline() {
-  const mouthUp = sawEdge(curve([[-438, -4], [-360, 6], [-280, 4], [-212, -14]], false, 3), 20, 30, -1, 0, 7);   // 上牙朝下（嘴角上扬 = 憨笑）
+  const mouthUp = sawEdge(curve([[-438, -4], [-360, 6], [-280, 4], [-212, -14]], false, 3), 20, 30, -1, 0, 7);   // upper teeth pointing down (mouth corner turned up = goofy grin)
   return [
     ...curve([[-20, -180], [-60, -250], [-110, -278]], false, 4),
-    [-96, -268], [-40, -318], [0, -332], [-12, -294], [-50, -262],             // 耳
+    [-96, -268], [-40, -318], [0, -332], [-12, -294], [-50, -262],             // ear
     ...curve([[-80, -272], [-150, -292], [-196, -292]], false, 4),
     ...curve([[-326, -238], [-352, -180], [-356, -146], [-372, -132], [-402, -138], [-438, -126], [-456, -96], [-450, -64], [-432, -50], [-444, -30], [-446, -8]], false, 4).slice(0, 0),
     ...curve([[-196, -292], [-260, -284], [-326, -238], [-352, -180], [-356, -146], [-374, -134], [-404, -140], [-440, -128], [-458, -96], [-452, -64], [-434, -50], [-444, -30], [-442, -6]], false, 4),
@@ -57,21 +57,21 @@ function eye(g, kind) {
   const E = [-252, -166];
   if (kind === 'normal' || kind === 'sniff' || kind === 'fierce') {
     const up = kind === 'sniff' ? 26 : 16;
-    crescent(g, E[0], E[1] + (kind === 'sniff' ? 12 : 0), 62, Math.PI * 1.06, Math.PI * 1.94, up);   // 上眼睑
-    crescent(g, E[0], E[1], 60, Math.PI * .1, Math.PI * .9, 9);                                       // 下眼睑
-    cut(g, q => q.arc(E[0] - 12, E[1] + (kind === 'sniff' ? 10 : 4), 24, 0, 7));                       // 瞳孔
-    cut(g, q => q.arc(E[0] - 42, E[1] - 20, 7, 0, 7));                                                  // 眼角点
+    crescent(g, E[0], E[1] + (kind === 'sniff' ? 12 : 0), 62, Math.PI * 1.06, Math.PI * 1.94, up);   // upper eyelid
+    crescent(g, E[0], E[1], 60, Math.PI * .1, Math.PI * .9, 9);                                       // lower eyelid
+    cut(g, q => q.arc(E[0] - 12, E[1] + (kind === 'sniff' ? 10 : 4), 24, 0, 7));                       // pupil
+    cut(g, q => q.arc(E[0] - 42, E[1] - 20, 7, 0, 7));                                                  // eye-corner dot
   } else if (kind === 'squint') {
-    crescent(g, E[0], E[1] + 12, 46, Math.PI * 1.1, Math.PI * 1.9, 16);        // 紧闭 ∩
+    crescent(g, E[0], E[1] + 12, 46, Math.PI * 1.1, Math.PI * 1.9, 16);        // squeezed shut ∩
     crescent(g, E[0], E[1] - 16, 40, Math.PI * .15, Math.PI * .85, 8);
-    for (const k of [0, 1, 2]) cut(g, q => { const x = E[0] + 26 - k * 30, y = E[1] + 50 + k * 26, z = 1.7 - k * .25; q.moveTo(x, y - 14 * z); q.quadraticCurveTo(x + 10 * z, y + 3 * z, x, y + 9 * z); q.quadraticCurveTo(x - 10 * z, y + 3 * z, x, y - 14 * z); });   // 泪（大颗，憨）
+    for (const k of [0, 1, 2]) cut(g, q => { const x = E[0] + 26 - k * 30, y = E[1] + 50 + k * 26, z = 1.7 - k * .25; q.moveTo(x, y - 14 * z); q.quadraticCurveTo(x + 10 * z, y + 3 * z, x, y + 9 * z); q.quadraticCurveTo(x - 10 * z, y + 3 * z, x, y - 14 * z); });   // tears (big drops, goofy)
   } else if (kind === 'blink') {
     crescent(g, E[0], E[1] + 4, 56, Math.PI * .08, Math.PI * .92, 12);
     for (const k of [-2, -1, 0, 1, 2]) cutTaper(g, [[E[0] + k * 22, E[1] + 48], [E[0] + k * 26, E[1] + 66]], 6);
   } else if (kind === 'dizzy') {
     swirl(g, E[0], E[1], 46, 2.6, 9, 0, 1);
   }
-  // 眉：火焰状锯齿眉
+  // brows: flame-shaped sawtooth brows
   const br = kind === 'fierce' ? [[-330, -206], [-280, -218], [-222, -236], [-180, -252]] : kind === 'squint' ? [[-330, -236], [-280, -228], [-226, -220], [-184, -226]] : [[-330, -222], [-280, -232], [-226, -236], [-180, -230]];
   const bc = curve(br, false, 3);
   cutTaper(g, bc, 12);
@@ -84,42 +84,42 @@ function headPiece(kind = 'normal') {
     fill(g, q => trace(q, out), COL);
     inset(g, out, 6, 2.6, COL);
     cutTaper(g, curve([[-198, -286], [-176, -296], [-152, -290]], false, 2), 5);
-    // 角上的环纹
+    // ring bands on the horns
     { const o = curve([[-200, -280], [-202, -350], [-170, -408], [-118, -444], [-62, -456], [-22, -440]], false, 3), inn = curve([[-150, -282], [-154, -338], [-140, -380], [-110, -410], [-74, -424], [-44, -426], [-22, -440]], false, 3);
       for (let k = 1; k <= 6; k++) { const f = k / 8, A = o[Math.floor(f * (o.length - 1))], B = inn[Math.floor(f * (inn.length - 1))], m = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
         cutTaper(g, [[A[0] + (m[0] - A[0]) * .25, A[1] + (m[1] - A[1]) * .25], [m[0] + 3, m[1] + 3], [B[0] + (m[0] - B[0]) * .25, B[1] + (m[1] - B[1]) * .25]], 7); } }
-    // 耳内
+    // inner ear
     taper(g, [[-60, -276], [-30, -306], [-10, -320]], 8);
-    // 鼻孔旋 + 鼻梁皱纹
+    // nostril swirls + wrinkles on the bridge of the nose
     swirl(g, -424, -96, 24, 1.8, 7, 0, -1);
     cutTaper(g, curve([[-376, -134], [-392, -110], [-412, -70], [-434, -54]], false, 2), 5);
     for (const k of [0, 1, 2]) crescent(g, -318 + k * 18, -112 - k * 4, 16, Math.PI * .95, Math.PI * 1.6, 5);
-    // 额头火纹（三瓣）
+    // flame mark on the forehead (three lobes)
     for (const [dx, s] of [[0, 1], [-18, .7], [18, .7]]) cut(g, q => { const x = -300 + dx, y = -242; q.moveTo(x, y + 10); q.quadraticCurveTo(x - 9 * s, y - 6 * s, x, y - 26 * s); q.quadraticCurveTo(x + 9 * s, y - 6 * s, x, y + 10); });
-    // 腮旋
+    // cheek swirl
     doubleSwirl(g, -150, -40, 58, 7, .6);
-    // 口线（上唇刻线）
+    // mouth line (carved line of the upper lip)
     cutTaper(g, curve([[-440, -24], [-360, -14], [-280, -16], [-200, -40]], false, 3), 5);
-    // 脸颊月牙
-    // 脸与后脑的分界：锯齿毛边
+    // cheek crescents
+    // boundary between face and back of the head: sawtooth fringe
     { const b = curve([[-120, -262], [-96, -190], [-100, -110], [-130, -40], [-176, 10]], false, 3); cutTaper(g, b, 5); sawRow(g, b, 18, 12, 1, .7); }
     eye(g, kind);
   }, { seed: 43, col: COL, ss: 2 });
 }
-// ---------- 下颌（原点 = 铰链） ----------
+// ---------- lower jaw (origin = hinge) ----------
 function jawPiece() {
   return piece([-280, -40, 40, 150], g => {
-    const upper = sawEdge(curve([[-240, -2], [-160, -4], [-80, -2], [-10, 0]], false, 3), 18, 30, 1, 0, 9);   // 下牙朝上
+    const upper = sawEdge(curve([[-240, -2], [-160, -4], [-80, -2], [-10, 0]], false, 3), 18, 30, 1, 0, 9);   // lower teeth pointing up
     const beard = sawEdge(curve([[-200, 88], [-120, 104], [-40, 90], [12, 50]], false, 3), 30, 26, -1, .3, 11);
     const out = [...upper, ...curve([[-10, 0], [16, 30], [12, 50]], false, 3), ...beard.reverse(), ...curve([[-200, 88], [-246, 60], [-252, 24], [-240, -2]], false, 3)];
     fill(g, q => trace(q, out), COL);
     inset(g, out, 5, 2.2, COL);
     cutTaper(g, curve([[-222, 26], [-150, 36], [-60, 30], [-10, 16]], false, 3), 5);
-    // 舌头卷
+    // curled tongue
     swirl(g, -150, 58, 20, 1.5, 6, 0, 1);
   }, { seed: 45, col: COL, ss: 2 });
 }
-// ---------- 鬃毛（在头后，原点 = 颈关节） ----------
+// ---------- mane (behind the head, origin = neck joint) ----------
 function manePiece() {
   return piece([-260, -400, 170, 220], g => {
     const lobes = [[-130, -300, 74], [-40, -272, 80], [30, -196, 82], [66, -104, 80], [62, -10, 78], [24, 76, 72], [-50, 130, 62]];
@@ -129,7 +129,7 @@ function manePiece() {
     for (const [x, y, r] of lobes) crescent(g, x, y, r * .9, -1.0, .9, 9);
   }, { seed: 47, col: COL, ss: 2 });
 }
-// ---------- 尾（原点 = 尾根） ----------
+// ---------- tail (origin = tail root) ----------
 function tailPiece() {
   return piece([-120, -360, 220, 60], g => {
     const c = curve([[0, 0], [60, -30], [100, -110], [90, -200], [40, -270], [-30, -280], [-60, -230], [-30, -196]], false, 3);
@@ -145,14 +145,14 @@ function tailPiece() {
     cutTaper(g, c.slice(0, Math.floor(n * .55)), 6);
   }, { seed: 49, col: COL, ss: 2 });
 }
-// ---------- 腿 ----------
+// ---------- legs ----------
 function upperLegPiece(col, seed) {
   return piece([-120, -60, 120, 180], g => {
     g.scale(1.1, .8);
     const back = sawEdge(curve([[64, -34], [78, 40], [58, 120], [46, 190]], false, 3), 22, 26, -1, .4, seed);
     const out = [[-76, -34], ...back, [-44, 194], ...curve([[-44, 194], [-58, 130], [-86, 40], [-76, -34]], false, 3)];
     fill(g, q => trace(q, out), col);
-    // 毛：几道长锥形刻线（不做横纹）
+    // fur: a few long tapered carved lines (no horizontal stripes)
     for (const [x, y, l] of [[-40, 40, 110], [-10, 60, 120], [20, 50, 110]]) cutTaper(g, curve([[x, y], [x - 4, y + l * .5], [x + 2, y + l]], false, 3), 7);
   }, { seed, col, ss: 2 });
 }
@@ -162,12 +162,12 @@ function lowerLegPiece(col, seed) {
     const back = sawEdge(curve([[46, -12], [40, 60], [48, 120], [56, 150]], false, 3), 18, 22, -1, .4, seed + 1);
     const out = [[-48, -14], ...back, ...curve([[56, 150], [58, 176], [40, 194], [-40, 196], [-96, 192], [-110, 176], [-96, 150], [-54, 128], [-40, 60], [-48, -14]], false, 3)];
     fill(g, q => trace(q, out), col);
-    // 四个爪尖（向前下弯的尖月牙）
+    // four claw tips (pointed crescents curving forward and down)
     for (const [x, k] of [[-104, 1], [-78, .95], [-52, .9], [-26, .8]]) fill(g, q => { q.moveTo(x - 12, 186); q.quadraticCurveTo(x - 20 * k, 206, x - 30 * k, 214 * 1); q.quadraticCurveTo(x - 6, 208, x + 10, 188); q.closePath(); }, col);
-    for (const x of [-90, -64, -38]) cutTaper(g, [[x, 160], [x + 1, 176], [x, 192]], 5);   // 趾缝
-    // 膝部旋涡（关节）
+    for (const x of [-90, -64, -38]) cutTaper(g, [[x, 160], [x + 1, 176], [x, 192]], 5);   // gaps between toes
+    // knee swirl (joint)
     swirl(g, -2, 16, 30, 1.8, 7, -1.2, 1);
-    // 小腿两道毛线
+    // two fur lines on the lower leg
     cutTaper(g, curve([[-24, 60], [-28, 100], [-22, 140]], false, 3), 6);
     cutTaper(g, curve([[14, 64], [12, 100], [18, 134]], false, 3), 5);
   }, { seed, col, ss: 2 });

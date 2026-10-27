@@ -1,4 +1,4 @@
-// 田径 14 项
+// Athletics, 14 events
 (function () {
   const G = window.G, P = G.P, POSES = window.POSES;
 
@@ -8,7 +8,7 @@
     back: (ctx, J, u, C) => { P.speed(ctx, -0.35, -0.05, 0.9, 5, C, 0.8); },
   };
 
-  // 跨栏：每 2 拍过一个栏，第 1 拍腾空
+  // Hurdles: one hurdle every 2 beats, airborne on beat 1
   POSES.hurdles = {
     iconU: 0.62,
     pose: (u) => {
@@ -21,9 +21,9 @@
       return { ...k, head: -8 };
     },
     back: (ctx, J, u, C) => {
-      // 栏架从右往左划过，第 0.55 拍正好在身下
+      // Hurdles slide from right to left, passing exactly under the body at beat 0.55
       const ph = ((u % 2) + 2) % 2;
-      const x = (0.62 - ph) * 1.1; // 每 2 拍移动 2.2 = 一个栏间距；u=0.62 时栏在正下方
+      const x = (0.62 - ph) * 1.1; // moves 2.2 every 2 beats = one hurdle spacing; at u=0.62 the hurdle is directly below
       ctx.fillStyle = C.acc;
       for (const ox of [x - 2.2, x, x + 2.2]) {
         ctx.fillRect(ox - 0.14, 0.12, 0.28, 0.035);
@@ -34,24 +34,24 @@
     },
   };
 
-  // ───────── 公用小工具 ─────────
+  // ───────── Shared helpers ─────────
   const mod = (u, L) => ((u % L) + L) % L;
   const mixP = G.lerpPose;
   const R2D = 180 / Math.PI;
-  // 世界方向 → 该坐标系下的肢体角（dirDown 的反函数）
+  // World direction → limb angle in that frame (inverse of dirDown)
   const angTo = (dir, frame) => { const l = G.rot2(dir, -frame); return Math.atan2(l[0], l[1]) * R2D; };
-  // 抛物线：p0 起点，v 初速（每拍），g 重力（每拍²），t 拍
+  // Parabola: p0 start, v initial velocity (per beat), g gravity (per beat²), t beats
   const fly = (p0, v, g, t) => [p0[0] + v[0] * t, p0[1] + v[1] * t + 0.5 * g * t * t];
-  // 跑动中逐渐过渡到关键帧
+  // Blend gradually from running into a keyframe
   const runInto = (u, ph, k, lean, key, t0, t1) => mixP({ ...G.runCycle(ph, k, { lean }) }, key, G.E.io(G.inv(t0, t1, u)));
-  // 地面刻度线（跑道分道标记），随速度左移
+  // Ground tick marks (lane markings), moving left with speed
   const dashes = (ctx, y, u, speed, C, gap = 0.5) => {
     ctx.fillStyle = C.line;
     const off = mod(u * speed, gap);
     for (let x = -1.6 - off; x < 1.6; x += gap) ctx.fillRect(x, y, gap * 0.45, 0.012);
   };
 
-  // ───────── 接力：第 2 拍交棒 ─────────
+  // ───────── Relay: baton handover on beat 2 ─────────
   const relayMain = (u) => {
     const x = u < 2 ? G.lerp(-0.5, -0.26, G.E.io(u / 2)) : G.lerp(-0.26, -0.48, G.E.io((u - 2) / 2));
     const k = u < 2 ? 1 : G.lerp(1, 0.55, G.E.io((u - 2) / 2));
@@ -74,7 +74,7 @@
     second: relaySecond, secondX: [0.24, 0],
     back: (ctx, J, u, C) => { dashes(ctx, 0.46, u, 0.9, C, 0.42); },
     front: (ctx, J, u, C) => {
-      // 交棒：2 拍前在后一棒手里，之后到前一棒手里
+      // Handover: before beat 2 the baton is in the hand of the runner behind, after it in the hand of the runner ahead
       const J2 = G.joints(relaySecond(u));
       const h2 = [J2.aR[2][0] + 0.24, J2.aR[2][1]];
       const h1 = J.aR[2];
@@ -84,7 +84,7 @@
     },
   };
 
-  // ───────── 中长跑：两人成团，步频不变、幅度收小 ─────────
+  // ───────── Middle & long distance: two runners in a pack, same cadence, smaller amplitude ─────────
   POSES.distance = {
     iconU: 0.25,
     fig: { x: 0.18 },
@@ -97,7 +97,7 @@
     },
   };
 
-  // ───────── 障碍跑：踩上障碍架，跳进水池 ─────────
+  // ───────── Steeplechase: step onto the barrier, jump into the water pit ─────────
   const steepleKeys = [
     { b: 0.75, torso: 16, y: -0.1, lR1: 45, lR2: -35, lL1: -35, lL2: -100, aR1: -35, aR2: 25, aL1: 55, aL2: 110 },
     { b: 1.0, torso: 22, y: -0.22, lR1: 62, lR2: -8, lL1: -40, lL2: -105, aR1: -45, aR2: 5, aL1: 70, aL2: 110, e: 'o3' },
@@ -115,13 +115,13 @@
     },
     back: (ctx, J, u, C) => {
       u = mod(u, 4);
-      const x = (1 - u) * 0.85 + 0.12; // u=1 时障碍架在前脚下
-      // 水池
+      const x = (1 - u) * 0.85 + 0.12; // at u=1 the barrier is under the front foot
+      // Water pit
       ctx.fillStyle = C.line; ctx.fillRect(x + 0.18, 0.47, 1.0, 0.1);
       ctx.strokeStyle = C.acc; ctx.lineWidth = 0.012;
       for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(x + 0.28 + i * 0.16, 0.5, 0.06, Math.PI, 0); ctx.stroke(); }
       P.ground(ctx, 0.46, C, -1.6, x + 0.18); P.ground(ctx, 0.46, C, x + 1.18, 1.8);
-      // 障碍架：粗横梁 + 两腿
+      // Barrier: thick beam + two legs
       ctx.fillStyle = C.acc;
       ctx.fillRect(x - 0.24, 0.13, 0.48, 0.07);
       ctx.fillRect(x - 0.2, 0.2, 0.035, 0.26); ctx.fillRect(x + 0.165, 0.2, 0.035, 0.26);
@@ -130,7 +130,7 @@
       u = mod(u, 4);
       const t = u - 2;
       if (t < 0 || t > 0.9) return;
-      const x0 = (1 - u) * 0.85 + 0.12 + 0; // 落水点跟着水池走
+      const x0 = (1 - u) * 0.85 + 0.12 + 0; // splash point moves with the water pit
       const fx = J.lL[2][0];
       ctx.save(); ctx.globalAlpha = 1 - t / 0.9;
       for (let i = 0; i < 7; i++) {
@@ -142,7 +142,7 @@
     },
   };
 
-  // ───────── 马拉松：放松的步子，4 拍 3 个步态循环；公里牌掠过 ─────────
+  // ───────── Marathon: relaxed stride, 3 gait cycles in 4 beats; kilometre markers slide past ─────────
   POSES.marathon = {
     iconU: 1.0,
     pose: (u) => {
@@ -151,12 +151,12 @@
       return p;
     },
     back: (ctx, J, u, C) => {
-      // 路面中线
+      // Road centre line
       ctx.fillStyle = C.line;
       const off = mod(u * 0.55, 0.36);
       for (let x = -1.6 - off; x < 1.6; x += 0.36) ctx.fillRect(x, 0.54, 0.2, 0.018);
       P.ground(ctx, 0.46, C, -1.6, 1.6);
-      // 公里牌
+      // Kilometre marker
       const x = 1.25 - mod(u, 4) * 0.62;
       ctx.fillStyle = C.line; ctx.fillRect(x - 0.008, -0.2, 0.016, 0.66);
       G.disc(ctx, x, -0.26, 0.09, C.acc);
@@ -164,7 +164,7 @@
     },
   };
 
-  // ───────── 竞走：前腿伸直、屈臂摆动，每拍一步 ─────────
+  // ───────── Race walk: front leg straight, bent arms swinging, one step per beat ─────────
   POSES.walk = {
     iconU: 0.5,
     pose: (u) => {
@@ -180,11 +180,11 @@
     back: (ctx, J, u, C) => { dashes(ctx, 0.46, u, 0.45, C, 0.5); P.ground(ctx, 0.46, C, -1.6, 1.6); },
   };
 
-  // ───────── 跳高：背越式。第 1 拍起跳，第 2 拍过杆，第 3 拍落垫 ─────────
-  // 起跳时转身 180°（2D 里就是镜像），所以腾空段在 front() 里画一个镜像人形，主人形移出画面。
+  // ───────── High jump: Fosbury flop. Takeoff on beat 1, over the bar on beat 2, onto the mat on beat 3 ─────────
+  // At takeoff the jumper turns 180° (in 2D that is a mirror), so the airborne stretch draws a mirrored figure in front() and moves the main figure out of frame.
   const HJ_SWITCH = 1.1;
   const hjTake = { b: 1.0, x: -0.28, y: -0.08, torso: -8, head: -6, lR1: 82, lR2: 2, lL1: -8, lL2: -14, aR1: 150, aR2: 168, aL1: 138, aL2: 158 };
-  // 镜像人形的姿势（未镜像的值；x 为世界坐标，画的时候取负）
+  // Pose of the mirrored figure (unmirrored values; x is in world coordinates and negated when drawn)
   const hjAir = [
     { b: HJ_SWITCH, X: -0.22, y: -0.16, rot: -18, torso: -6, head: -8, lR1: 60, lR2: 0, lL1: -6, lL2: -12, aR1: 150, aR2: 165, aL1: 140, aL2: 155 },
     { b: 1.55, X: -0.04, y: -0.5, rot: -62, torso: -18, head: -14, lR1: 20, lR2: -30, lL1: 10, lL2: -40, aR1: 40, aR2: 50, aL1: 30, aL2: 40, e: 'o2' },
@@ -207,10 +207,10 @@
     },
     back: (ctx, J, u, C) => {
       P.ground(ctx, 0.46, C, -1.6, 1.6);
-      // 海绵垫
+      // Foam mat
       ctx.fillStyle = C.line; ctx.fillRect(0.06, 0.22, 0.8, 0.24);
       ctx.fillStyle = C.acc; ctx.fillRect(0.06, 0.22, 0.8, 0.03);
-      // 立柱 + 横杆端头
+      // Uprights + bar ends
       ctx.fillStyle = C.line; ctx.fillRect(HJ_BAR[0] - 0.008, HJ_BAR[1] - 0.06, 0.016, 0.46 - HJ_BAR[1] + 0.06);
       G.seg(ctx, [HJ_BAR[0] - 0.16, HJ_BAR[1] + 0.02], [HJ_BAR[0] + 0.16, HJ_BAR[1] - 0.02], 0.022, C.acc);
     },
@@ -225,7 +225,7 @@
     },
   };
 
-  // ───────── 撑竿跳高：第 1 拍插斗，第 2 拍倒立，第 3 拍过杆 ─────────
+  // ───────── Pole vault: plant in the box on beat 1, inverted on beat 2, over the bar on beat 3 ─────────
   const PV_BOX = [0.02, 0.46];
   const pvKeys = [
     { b: 1.0, x: -0.5, y: -0.06, torso: 4, head: -4, lR1: 82, lR2: -6, lL1: -22, lL2: -30, aR1: 168, aR2: 172, aL1: 132, aL2: 146 },
@@ -254,12 +254,12 @@
     back: (ctx, J, u, C) => {
       u = mod(u, 4);
       P.ground(ctx, 0.46, C, -2.0, 2.0);
-      // 插斗
+      // Plant box
       G.poly(ctx, [[PV_BOX[0] - 0.12, 0.46], [PV_BOX[0], 0.52], [PV_BOX[0] + 0.02, 0.46]], C.line);
-      // 垫子
+      // Mat
       ctx.fillStyle = C.line; ctx.fillRect(0.14, 0.18, 0.9, 0.28);
       ctx.fillStyle = C.acc; ctx.fillRect(0.14, 0.18, 0.9, 0.035);
-      // 立柱 + 横杆
+      // Uprights + bar
       const bx = 0.12, by = -0.95;
       ctx.fillStyle = C.line; ctx.fillRect(bx - 0.01, by - 0.05, 0.02, 0.46 - by + 0.05);
       G.seg(ctx, [bx - 0.2, by + 0.025], [bx + 0.2, by - 0.025], 0.028, C.acc);
@@ -269,15 +269,15 @@
       const hand = J.aR[2];
       ctx.strokeStyle = C.acc; ctx.lineWidth = 0.032; ctx.lineCap = 'round';
       if (u < 1) {
-        // 持竿助跑：竿穿过双手，竿头从上扬降到插斗
-        const a = G.lerp(-16, 20, G.E.io(u)) * G.D2R; // 与水平夹角，正 = 向下
+        // Run-up carrying the pole: pole passes through both hands, the tip drops from raised to the plant box
+        const a = G.lerp(-16, 20, G.E.io(u)) * G.D2R; // angle to horizontal, positive = downward
         const d = [Math.cos(a), Math.sin(a)];
         ctx.beginPath(); ctx.moveTo(hand[0] - d[0] * 0.35, hand[1] - d[1] * 0.35); ctx.lineTo(hand[0] + d[0] * (PV_LEN - 0.35), hand[1] + d[1] * (PV_LEN - 0.35)); ctx.stroke();
         return;
       }
       let top = hand;
       if (u > 2.85) {
-        // 放竿：竿绕插斗往回倒
+        // Release the pole: it falls back, pivoting on the plant box
         const t = G.E.io(G.inv(2.85, 4, u));
         const a = G.lerp(-78, -140, t) * G.D2R;
         top = [PV_BOX[0] + Math.cos(a) * PV_LEN, PV_BOX[1] + Math.sin(a) * PV_LEN];
@@ -289,7 +289,7 @@
     },
   };
 
-  // ───────── 跳远 · 三级跳：第 1 拍踏板，第 3 拍落沙坑 ─────────
+  // ───────── Long jump · triple jump: take-off board on beat 1, into the sand pit on beat 3 ─────────
   const ljKeys = [
     { b: 1.0, x: -0.4, y: -0.06, torso: 6, head: -4, lL1: -28, lL2: -34, lR1: 86, lR2: 2, aR1: -52, aR2: -20, aL1: 125, aL2: 145 },
     { b: 1.55, x: -0.18, y: -0.34, torso: -8, head: -6, lR1: -8, lR2: -64, lL1: -22, lL2: -86, aR1: 168, aR2: 176, aL1: 158, aL2: 170, e: 'o2' },
@@ -307,10 +307,10 @@
     },
     back: (ctx, J, u, C) => {
       P.ground(ctx, 0.46, C, -1.6, -0.02);
-      // 起跳板 + 三级跳的三个脚印
+      // Take-off board + the three footprints of the triple jump
       ctx.fillStyle = C.fg; ctx.fillRect(-0.47, 0.455, 0.1, 0.02);
       for (let i = 0; i < 3; i++) G.disc(ctx, -1.35 + i * 0.28, 0.5, 0.018, C.line);
-      // 沙坑
+      // Sand pit
       ctx.fillStyle = C.line; ctx.fillRect(-0.02, 0.46, 0.95, 0.07);
       ctx.fillStyle = C.acc;
       for (let i = 0; i < 9; i++) G.disc(ctx, 0.04 + i * 0.105, 0.47, 0.03, C.acc);
@@ -329,7 +329,7 @@
     },
   };
 
-  // ───────── 铅球：滑步 → 第 3 拍推出 ─────────
+  // ───────── Shot put: glide → put on beat 3 ─────────
   const shotKeys = [
     { b: 0, x: -0.3, y: 0.1, torso: 55, head: 10, lR1: 62, lR2: -34, lL1: -34, lL2: -46, aR1: -100, aR2: 52, aL1: 70, aL2: 92 },
     { b: 1.0, x: -0.3, y: 0.14, torso: 62, head: 14, lR1: 74, lR2: -50, lL1: 20, lL2: -10, aR1: -100, aR2: 52, aL1: 40, aL2: 70 },
@@ -346,7 +346,7 @@
     pose: shotPose,
     back: (ctx, J, u, C) => {
       P.ground(ctx, 0.46, C, -1.6, 1.6);
-      // 投掷圈的抵趾板（半圆）
+      // Stop board of the throwing circle (half circle)
       ctx.fillStyle = C.line; ctx.beginPath(); ctx.arc(0.4, 0.46, 0.08, Math.PI, 0); ctx.fill();
     },
     front: (ctx, J, u, C) => {
@@ -358,8 +358,8 @@
     },
   };
 
-  // ───────── 铁饼：后引 → 第 3 拍甩出 ─────────
-  // 注意：手臂角在躯干坐标系里，世界角 = 局部角 − 躯干前倾
+  // ───────── Discus: wind-up → sling on beat 3 ─────────
+  // Note: arm angles are in the torso frame; world angle = local angle − torso lean
   const discKeys = [
     { b: 0, x: -0.12, y: 0.04, torso: 22, head: 4, lR1: 26, lR2: -14, lL1: -22, lL2: -34, aR1: -46, aR2: -44, aL1: 96, aL2: 110 },
     { b: 1.2, x: -0.16, y: 0.09, torso: 30, head: 6, lR1: 32, lR2: -24, lL1: -28, lL2: -46, aR1: -52, aR2: -50, aL1: 120, aL2: 130 },
@@ -380,7 +380,7 @@
     pose: discPose,
     back: (ctx, J, u, C) => {
       P.ground(ctx, 0.46, C, -1.6, 1.6);
-      // 挥臂弧线
+      // Arc of the arm swing
       u = mod(u, 4);
       if (u > 2.2 && u < 3.3) {
         const s = J.sho, a = G.clamp((u - 2.2) / 0.8);
@@ -398,11 +398,11 @@
     },
   };
 
-  // ───────── 链球：三圈加速，第 3 拍出手 ─────────
+  // ───────── Hammer: three accelerating turns, release on beat 3 ─────────
   const HAM_C = [0, -0.12], HAM_RX = 0.78, HAM_RY = 0.32;
-  const HAM_REL = 1.75 * Math.PI; // 出手相位：在身前、向右上方运动
+  const HAM_REL = 1.75 * Math.PI; // release phase: in front of the body, moving up and to the right
   const hamPhi = (u) => {
-    // 3 拍 3 圈，越转越快
+    // 3 turns in 3 beats, getting faster
     const t = G.clamp(u / 3);
     return HAM_REL - 2 * Math.PI * 3 * (1 - t) * (0.6 + 0.4 * (1 - t));
   };
@@ -445,7 +445,7 @@
     pose: hamPose,
     back: (ctx, J, u, C) => {
       P.ground(ctx, 0.46, C, -1.6, 1.6);
-      // 旋转轨迹
+      // Rotation path
       if (mod(u, 4) < 3) {
         ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = C.line; ctx.lineWidth = 0.012;
         ctx.beginPath(); ctx.ellipse(HAM_C[0], HAM_C[1], HAM_RX, HAM_RY, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
@@ -455,8 +455,8 @@
     front: (ctx, J, u, C) => drawHammer(ctx, J, u, C, true),
   };
 
-  // ───────── 标枪：持枪助跑 → 引枪 → 第 3 拍鞭打出手 ─────────
-  const javCarry = { aR1: -168, aR2: -110 }; // 枪举在肩上方
+  // ───────── Javelin: carry and run up → withdraw → whip release on beat 3 ─────────
+  const javCarry = { aR1: -168, aR2: -110 }; // javelin held above the shoulder
   const javKeys = [
     { b: 1.3, x: -0.3, y: 0.0, torso: -6, head: -4, lR1: 30, lR2: 10, lL1: -30, lL2: -70, aR1: -120, aR2: -108, aL1: 100, aL2: 120 },
     { b: 2.2, x: -0.2, y: 0.02, torso: -22, head: -8, lR1: 40, lR2: 22, lL1: -32, lL2: -56, aR1: -100, aR2: -96, aL1: 110, aL2: 130 },

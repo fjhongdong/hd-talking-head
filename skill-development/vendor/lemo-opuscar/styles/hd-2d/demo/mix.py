@@ -1,5 +1,5 @@
-# 混音：配乐 music/score.wav（配音时自动避让）+ 分场景环境声 + 事件拟音 + 旁白/对白 → mix.wav
-# 用法：.venv/bin/python styles/hd-2d/demo/mix.py [out.wav]（默认写 demo/mix.wav）
+# Mix: score music/score.wav (ducks automatically under voice) + per-scene ambience + event foley + narration/dialogue → mix.wav
+# Usage: .venv/bin/python styles/hd-2d/demo/mix.py [out.wav] (writes demo/mix.wav by default)
 import sys, os, json, numpy as np, soundfile as sf, librosa
 from scipy.ndimage import uniform_filter1d
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -8,7 +8,7 @@ from sfx import *
 
 DUR = 76.5; N = int(DUR * SR); tt = np.arange(N) / SR
 rng = np.random.default_rng(11)
-EV = json.load(open(os.path.join(HERE, 'sfx_events.json')))   # 各场景给出的事件时间（脚步、闪电等）
+EV = json.load(open(os.path.join(HERE, 'sfx_events.json')))   # event times provided by each scene (footsteps, lightning, etc.)
 
 def curve(keys): k = np.array(keys, float); return np.interp(tt, k[:, 0], k[:, 1])
 def stereo(x, pan=0.0): l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4); return np.stack([x * l * 1.414, x * r * 1.414], 1)
@@ -18,7 +18,7 @@ def place(buf, x, t, pan=0.0, g=1.0):
     n = min(len(x), len(buf) - s); buf[s:s + n] += x[:n] * g
 def rms_db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
 
-# —— 环境床 ——
+# —— Ambience beds ——
 harbor_g = curve([(0, 0), (5.2, 0), (6.2, .9), (14.8, .9), (15.2, .7), (25.2, .6), (25.6, 0), (57.8, 0), (58.6, .8), (74, .6), (76.5, 0)])
 waves = lp(brown(DUR), 700) * (.45 + .55 * np.sin(2 * np.pi * .11 * tt + 1) ** 4) + hp(lp(noise(DUR), 3500), 600) * .12 * (.3 + .7 * np.sin(2 * np.pi * .11 * tt + .6) ** 6)
 waves *= .45 * harbor_g
@@ -39,11 +39,11 @@ windB = bp(noise(DUR), 200, 1200) * (.55 + .45 * np.sin(2 * np.pi * .31 * tt) **
 amb = stereo(waves, -.2) + stereo(np.roll(waves, 7919), .2) + creakB * .5 + stereo(fireB, .15) + stereo(forestB, -.3) + stereo(np.roll(forestB, 5003), .3) \
     + stereo(rainB * .8, -.35) + stereo(np.roll(rainB, 4801) * .8, .35) + stereo(windB, -.5) + stereo(np.roll(windB, 9001), .5)
 
-# —— 事件拟音 ——
+# —— Event foley ——
 fx = np.zeros((N, 2))
-def fwoomp(v=1.0, d=1.2):   # 火焰熄灭：低频吸气 + 噪声收尾
+def fwoomp(v=1.0, d=1.2):   # flame going out: low-frequency in-breath + noise tail
     x = t_(d); return norm(lp(noise(d), 500) * np.exp(-x / .25) * np.sin(np.pi * np.minimum(x / .08, 1) / 2) + np.sin(2 * np.pi * 60 * x * (1 - .4 * x)) * np.exp(-x / .3) * .6) * v
-def strike(v=1.0):          # 划火 + 呼的一下
+def strike(v=1.0):          # match strike + a whoosh
     d = .9; x = t_(d); scr = hp(noise(.12), 2500) * np.exp(-t_(.12) / .03)
     out = np.zeros(len(x)); out[:len(scr)] += scr * .8; out += lp(noise(d), 1800) * np.exp(-x / .35) * np.minimum(1, x / .05) * .7
     return norm(out) * v
@@ -60,7 +60,7 @@ def stepSoft(v=1.0, kind='dirt'):
     if kind == 'dirt': return norm(lp(noise(d), 1400) * np.exp(-x / .02) + np.sin(2 * np.pi * 120 * x) * np.exp(-x / .015) * .4) * v
     if kind == 'stone': return norm(bp(noise(d), 900, 5000) * np.exp(-x / .012) + np.sin(2 * np.pi * 300 * x) * np.exp(-x / .01) * .3) * v
     return norm(bp(noise(d), 400, 2500) * np.exp(-x / .018) + np.sin(2 * np.pi * 180 * x) * np.exp(-x / .02) * .5) * v   # wood
-def boom(v=1.0):            # 灯塔点亮：低频冲击 + 明亮的闪光噪声 + 长混响尾
+def boom(v=1.0):            # lighthouse ignition: low-frequency impact + bright flash noise + long reverb tail
     d = 4.5; x = t_(d); sub = np.sin(2 * np.pi * 42 * x * (1 - .2 * x)) * np.exp(-x / .9)
     air = lp(noise(d), 3000) * np.exp(-x / .5) * .6; shim = sum(np.sin(2 * np.pi * f * x) * np.exp(-x / 2.2) * .08 for f in [1760, 2217, 2637, 3520])
     return norm(sub + air + shim) * v
@@ -73,15 +73,15 @@ for t0 in EV.get('forestSteps', []): place(fx, stepSoft(.3, 'dirt'), t0, pan=flo
 for t0 in EV.get('cliffSteps', []): place(fx, stepSoft(.3, 'stone'), t0)
 for t0 in EV.get('lampSteps', []): place(fx, stepSoft(.3, 'stone'), t0)
 for t0 in EV.get('thunder', []): place(fx, thunder(.6), t0 + .25)
-place(fx, whoosh(1.1, .9), 40.45, pan=-.3)                       # 狂风
-place(fx, fwoomp(.35, .9), 41.2)                                 # 火被压小
+place(fx, whoosh(1.1, .9), 40.45, pan=-.3)                       # gale
+place(fx, fwoomp(.35, .9), 41.2)                                 # flame pushed down
 place(fx, heartbeat(.22), 42.6); place(fx, heartbeat(.18), 43.5)
-place(fx, strike(.28), 45.55)                                     # 火苗重燃（轻）
-place(fx, strike(.3), 52.6)                                       # 倒火
+place(fx, strike(.28), 45.55)                                     # flame relights (light)
+place(fx, strike(.3), 52.6)                                       # pouring the fire
 place(fx, boom(1.0), 53.5)
 for i in range(6): place(fx, bell(.16 if i % 2 == 0 else .1, [784, 659, 988, 587, 880, 698][i]), 59.2 + i * .7, pan=[-.5, .3, -.1, .6, -.6, .2][i])
 
-# —— 人声 ——
+# —— Voices ——
 L = json.load(open(os.path.join(HERE, 'lines.json'))); T0 = {v['id']: v['t'] for v in json.load(open(os.path.join(HERE, 'vo_times.json')))}
 vo = np.zeros((N, 2)); vmask = np.zeros(N)
 for Ln in L:
@@ -89,24 +89,24 @@ for Ln in L:
     if y.ndim > 1: y = y.mean(1)
     y = librosa.resample(y, orig_sr=sr, target_sr=SR)
     y = compress(norm(y, .9), thr=.25, ratio=3.2)
-    act = np.abs(y) > .02 * np.abs(y).max(); y = y * (10 ** (-20 / 20)) / (np.sqrt(np.mean(y[act] ** 2)) + 1e-9)   # 每句有声部分 RMS 统一
+    act = np.abs(y) > .02 * np.abs(y).max(); y = y * (10 ** (-20 / 20)) / (np.sqrt(np.mean(y[act] ** 2)) + 1e-9)   # normalise the RMS of the voiced part of each line
     if Ln['id'] == 'k1': y = lp(y, 7000) * 1.05
     t0 = T0[Ln['id']]; place(vo, y, t0)
     s = int(t0 * SR); vmask[s:s + len(y)] = 1
 
-# —— 配乐 + 避让 ——
+# —— Music + ducking ——
 mus = np.zeros((N, 2))
 mp = os.path.join(HERE, 'music', 'score.wav')
 if os.path.exists(mp):
     m, sr = sf.read(mp, always_2d=True)
     if sr != SR: m = librosa.resample(m.T, orig_sr=sr, target_sr=SR).T
     n = min(len(m), N); mus[:n] = m[:n]
-duck = uniform_filter1d(vmask, int(.35 * SR)); duck = 1 - .22 * np.clip(duck * 1.6, 0, 1)   # 约 -2.2 dB（配乐本身已在旁白处让了 2–3.5 dB）
+duck = uniform_filter1d(vmask, int(.35 * SR)); duck = 1 - .22 * np.clip(duck * 1.6, 0, 1)   # about -2.2 dB (the score itself already leaves 2–3.5 dB of room under the narration)
 mus *= duck[:, None]
 
 def lvl(x, db): r = np.sqrt(np.mean(x[np.abs(x).sum(1) > 1e-4] ** 2)) if np.any(np.abs(x) > 1e-4) else 1; return x * (10 ** (db / 20)) / (r + 1e-9)
 voS = lvl(vo, -17); musS = lvl(mus, -21); ambS = lvl(amb, -30); fxS = lvl(fx, -27)
-# 按句自动避让：让每句旁白窗口里 配乐+环境 比人声低约 10 dB（只压不抬）
+# Per-line automatic ducking: within each narration line's window, music + ambience sits about 10 dB below the voice (only pulls down, never lifts)
 Dd = json.load(open(os.path.join(HERE, 'voices', 'dur.json'))); keys = [(0, 1.0)]
 for k, t0 in sorted(T0.items(), key=lambda kv: kv[1]):
     a, b = int(t0 * SR), int((t0 + Dd[k]) * SR); need = rms_db(voS[a:b]) - 10 - rms_db((musS + ambS)[a:b]); g = min(1.0, 10 ** (need / 20))
@@ -120,7 +120,7 @@ OUT_WAV = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 'mix.wav')
 sf.write(OUT_WAV, mix.astype(np.float32), SR, subtype='FLOAT')
 print('wrote', OUT_WAV, DUR, 's  |  vo', round(rms_db(voS), 1), 'mus', round(rms_db(musS), 1), 'amb', round(rms_db(ambS), 1), 'fx', round(rms_db(fxS), 1))
 
-# —— 自检：每句旁白窗口内 人声 vs 配乐+环境 的 RMS 差 ——
+# —— Self-check: RMS difference, voice vs music + ambience, within each narration line's window ——
 D = json.load(open(os.path.join(HERE, 'voices', 'dur.json')))
 for k, t0 in T0.items():
     a, b = int(t0 * SR), int((t0 + D[k]) * SR)

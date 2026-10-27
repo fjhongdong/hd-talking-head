@@ -1,4 +1,4 @@
-// 角色：皮普（正/背两面，逐帧重画姿势）、皱皱、折折（立体纸飞机）、鲸鱼、小船
+// Characters: Pip (front and back, pose redrawn every frame), Crumple, Fold (3D paper plane), the whale, the boat
 import * as THREE from 'three';
 import * as A from './art.js';
 import { cv, INK } from './paper.js';
@@ -31,7 +31,7 @@ export function makePip(H = .036) {
       if (k === key) return; key = k;
       A.drawPip(cF.getContext('2d'), p); A.drawPipBack(cB.getContext('2d'), p); F.t.needsUpdate = B.t.needsUpdate = true;
     },
-    // 头顶在世界中的位置（气泡锚点）
+    // top of the head in world space (speech-bubble anchor)
     head(v = new THREE.Vector3()) { return v.set(0, H * .98, 0).applyMatrix4(body.matrixWorld); },
   };
   return pip;
@@ -50,7 +50,7 @@ export function makeCrumple(D = .042) {
   };
 }
 
-// ---------- 折折：可折叠的立体纸飞机 ----------
+// ---------- Fold: a foldable 3D paper plane ----------
 function planeFaceCanvas() {
   const c = cv(512, 256), x = c.getContext('2d');
   x.fillStyle = '#fbf8f1'; x.fillRect(0, 0, 512, 256);
@@ -62,7 +62,7 @@ export function makeFold(L = .052, S = .05, KD = .011) {
   const tPaper = texOf(paper), tFace = texOf(face);
   const drawFace = (mood = 'happy', blink = 0) => {
     fx.drawImage(paper, 0, 0);
-    // 眼睛靠机头（u 大的一侧）
+    // eyes near the nose (the large-u side)
     const ex = 390, ey = 70;
     fx.fillStyle = INK;
     if (mood === 'sleep') { fx.lineWidth = 9; fx.lineCap = 'round'; fx.strokeStyle = INK; for (const d of [0, 46]) { fx.beginPath(); fx.moveTo(ex - 14 + d, ey); fx.quadraticCurveTo(ex + d, ey + 10, ex + 14 + d, ey); fx.stroke(); } }
@@ -74,7 +74,7 @@ export function makeFold(L = .052, S = .05, KD = .011) {
   drawFace('sleep');
   const mPaper = new THREE.MeshStandardMaterial({ map: tPaper, roughness: .9, side: THREE.DoubleSide });
   const mFace = new THREE.MeshStandardMaterial({ map: tFace, roughness: .9, side: THREE.DoubleSide });
-  // 四个三角：左右翼、左右龙骨；全部绕机身中线（x 轴）铰接
+  // four triangles: left/right wings, left/right keels; all hinged on the fuselage centre line (x axis)
   const mkTri = (mat, uvs) => {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(9), 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; return m;

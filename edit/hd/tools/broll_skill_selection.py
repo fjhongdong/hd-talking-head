@@ -21,6 +21,7 @@ _ADAPTERS = (
     "talkcraft_native_adapter", "data_rollup_adapter", "hyperframes_notification_adapter",
     "hyperframes_chatgpt_exchange_adapter",
     "openfilm_motion_adapter",
+    "upstream_scene_adapter",
     "riso_native_adapter",
 )
 _REGISTRY_DEPENDENT = {
@@ -105,11 +106,25 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
     for module in _ADAPTERS:
         first = len(found)
         values, tree = _declarations(skill / "scripts" / (module + ".py"))
-        dep = values.get("DEPENDENCY_ID") or _literal_field(tree, "dependency_id")
+        dep = ("lemo-opuscar" if module == "upstream_scene_adapter" else
+               values.get("DEPENDENCY_ID") or _literal_field(tree, "dependency_id"))
         entry, version = values["ENTRY"], values["VERSION"]
         if not isinstance(dep, str) or not (skill / entry).is_file():
             raise ValueError(f"B-roll discovery entry is incomplete: {module}")
-        if module == "hyperframes_native_adapter":
+        if module == "upstream_scene_adapter":
+            styles = project / "skill-development/vendor/lemo-opuscar/styles"
+            entries = sorted(p for p in styles.glob("*/style.json") if p.parent.name != "_template")
+            if len(entries) != 59:
+                raise ValueError("Lemo discovery requires the complete official 59-style catalog")
+            for path in entries:
+                metadata = contract_artifacts.read_json_artifact(path)
+                slug = path.parent.name
+                if metadata.get("slug") != slug or not (path.parent / "STYLE.md").is_file():
+                    raise ValueError("Lemo style identity or native instructions are missing")
+                add(dep, entry, dep + "/" + slug, version, route=dep + "/" + slug,
+                    limitations=("Invoke the complete original Lemo Skill and selected STYLE; freeze its topic-specific project before native rendering",
+                                 "Opaque B-roll only; verify actual materials, Chinese text and subject action for this content"))
+        elif module == "hyperframes_native_adapter":
             routes = values.get("BROLL_ROUTES")
             if not isinstance(routes, (tuple, list)):
                 raise ValueError(f"B-roll HyperFrames routes are undeclared: {module}")
@@ -121,7 +136,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                     limitations=("Public native slots only; review duration, Chinese capacity and subject action",))
         elif module == "openfilm_motion_adapter":
             add(dep, entry, values["TEMPLATE_ID"], version, route="motion-graphics",
-                limitations=("Native creative Skill, not a fixed template: read current instructions, author a subject-specific scene, freeze it before rendering",
+                limitations=("Registered native creation template: read its Skill, author the subject-specific scene, and freeze it before rendering; new scenes do not create new template identities",
                              "Opaque B-roll only; inspect real subject action, word anchors, reading time and neighboring visual patterns"))
         elif module == "riso_native_adapter":
             for route, family in sorted(values["FAMILIES"].items()):
@@ -223,12 +238,10 @@ def source_channel(skill_id):
     return "hyperframes" if skill_id in {"hyperframes", "hyperframes-native-adaptation"} else skill_id
 
 
-def _fixed_template(row):
+def _template_identity(row):
+    """Count a registered template equally, including native creation styles."""
     template = row.get("template_id")
     if not template or row.get("role") == "design":
-        return None
-    if row["skill_id"] in {"openfilm-motion-graphics", "doudou-remotion-whiteboard",
-                            "whiteboard-video", "paper-collage-ad"}:
         return None
     return (source_channel(row["skill_id"]), row.get("source_route") or template)
 
@@ -321,13 +334,13 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
         choices = []
         for choice in grouped[identity]:
             candidate = pool[choice["candidate_id"]]
-            template = _fixed_template(candidate)
+            template = _template_identity(candidate)
             choices.append({**choice, "channel": source_channel(candidate["skill_id"]),
                             "template_id": template[1] if template else None})
         normalized.append(choices)
     exact = assign_candidates(normalized,
         fixed_channels=tuple({source_channel(row["skill_id"]) for row in fixed}),
-        fixed_templates=tuple({_fixed_template(row) for row in fixed if _fixed_template(row)}))
+        fixed_templates=tuple({_template_identity(row) for row in fixed if _template_identity(row)}))
     exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
     chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
         beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])])
@@ -348,9 +361,9 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             channel = source_channel(row["skill_id"])
             sources[channel] += duration
             channels.add(channel)
-            fixed_template = _fixed_template(row)
-            if fixed_template:
-                templates.add(fixed_template)
+            template = _template_identity(row)
+            if template:
+                templates.add(template)
         for index, (beat, choice) in enumerate(zip(beats, choices)):
             duration = _duration(beat)
             patterns[choice["visual_pattern"]] += duration
@@ -358,9 +371,9 @@ def assign_skills(project_root: Path, selection: Mapping) -> dict:
             channel = source_channel(candidate["skill_id"])
             sources[channel] += duration
             channels.add(channel)
-            fixed_template = _fixed_template(candidate)
-            if fixed_template:
-                templates.add(fixed_template)
+            template = _template_identity(candidate)
+            if template:
+                templates.add(template)
             sequence.append((beat["start"], beat["end"], choice["visual_pattern"]))
         sequence.sort()
         for previous, current in zip(sequence, sequence[1:]):

@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *Clawd Moves In* (59.4 s) · `living-screencast.mp4` · source in [`demo/`](demo/) (Chinese discussion draft) · Claude Code in the Claude app, with Clawd (the Claude Code pixel mascot) as the protagonist. Unofficial fan film.
+Demo: *Clawd Moves In* (59.4 s) · `living-screencast.mp4` · source in [`demo/`](demo/) · Claude Code in the Claude app, with Clawd (the Claude Code pixel mascot) as the protagonist. Unofficial fan film; Anthropic did not make or endorse it.
 
 
 ## Story & structure
@@ -96,7 +96,7 @@ Clawd hops across "Say it. Plan it. Review it. Ship it." word by word as it is s
 - `demo/sound.py` builds the score, foley and VO from `events.json`, with ducking.
 - Run everything with `sh styles/living-screencast/demo/build.sh`. The full render takes about 30 s.
 
-Other files: `demo/lines.json` (VO lines), `demo/tools/asr_check.py` (whisper check + word timestamps, `sh demo/build.sh --vo`), `demo/tools/mixcheck.py`, `demo/tools/subs.mjs` (captions → `.srt`), `storyboard/` (the pre-production storyboard page and contact sheet). `build.sh` also renders the style frame (40.9 s) and the poster (8.9 s).
+Other files: `demo/lines.json` (VO lines), `demo/tools/asr_check.py` (whisper check + word timestamps, `sh demo/build.sh --vo`), `demo/tools/mixcheck.py`, `demo/tools/subs.mjs` (captions → `.srt`). `build.sh` also renders the style frame (40.9 s) and the poster (8.9 s).
 
 Don'ts we wrote for this demo (now STYLE.md §9):
 

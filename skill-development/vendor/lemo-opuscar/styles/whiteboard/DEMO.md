@@ -9,7 +9,7 @@ The demo's original one-line pitch: A science explainer drawn live on one glossy
 
 ## Story & structure
 
-Why GPS needs relativity, told from the map pin on your phone. The original style notes, as written for this demo:
+Why GPS needs relativity, told from the map pin on your phone. This is an unofficial educational film: Albert Einstein appears only as the historical scientist, by name, and his estate and the holders of rights in his name and image did not make or endorse it; nor did the operators of GPS. The original style notes, as written for this demo:
 
 A lesson on **one physical whiteboard**. Everything the viewer learns is drawn in dry-erase marker in front of them, in real handwriting order. The board is a *map*: each idea lives in its own region, and the camera travels between regions, usually **led by the pen** (the pen draws a line, the camera rides it). At the end the camera pulls back and the viewer sees that the whole explanation was one picture.
 

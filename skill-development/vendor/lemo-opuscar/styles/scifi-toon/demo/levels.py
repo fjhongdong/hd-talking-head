@@ -1,4 +1,4 @@
-"""电平表：每 1 秒各声部 RMS（dBFS），用于配平检查。python levels.py"""
+"""Level meter: RMS (dBFS) of each stem per 1 s, for balance checks. python levels.py"""
 import numpy as np, soundfile as sf, sys, os
 sys.argv = ['mix.py']; SAVE = {}
 src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mix.py')).read().replace("sf.write(os.path.join(HERE, 'mix.wav')", "SAVE['m'] = (mus * .42 * duck[:, None], sfxb * .8, vob, amb, mix); (lambda *a: None)(os.path.join(HERE, 'mix.wav')")

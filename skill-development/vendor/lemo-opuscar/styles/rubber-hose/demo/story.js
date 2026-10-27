@@ -1,17 +1,17 @@
-// story.js — 时间线（唯一真值：画面、字幕、拟音、配乐 cue 都从这里导出）
-// 144 BPM，4/4：1 拍 = 5/12 s = 10 帧，1 小节 = 5/3 s；bar(b, beat) 都是 1 起算，beat 可带小数
+// story.js — timeline (single source of truth: picture, subtitles, foley and score cues are all derived from here)
+// 144 BPM, 4/4: 1 beat = 5/12 s = 10 frames, 1 bar = 5/3 s; bar(b, beat) is 1-based, beat may be fractional
 export const BPM = 144, BEAT = 60 / BPM, BAR = BEAT * 4;
 export const bar = (b, beat = 1) => (b - 1) * BAR + (beat - 1) * BEAT;
 export const NBARS = 30, DUR = bar(NBARS + 1);            // 50.0 s
 export const ANIM_FPS = 12;
-export const q = t => Math.floor(t * ANIM_FPS + 1e-6) / ANIM_FPS;   // 角色拍两格
+export const q = t => Math.floor(t * ANIM_FPS + 1e-6) / ANIM_FPS;   // characters animated on twos
 export const beats = t => t / BEAT;
-// 呼吸：每拍一个极端（拍点 = +1 拉长，反拍 = −1 压扁），按拍两格取样
+// Breathing: one extreme per beat (on the beat = +1 stretched, offbeat = −1 squashed), sampled on twos
 export const breath = t => Math.cos(beats(q(t)) * Math.PI * 2);
 
-// 旁白（id → 开始时间）；v1b 的 "bitter" 在 1.28 s 处，对齐到切近景 bar(6,1)
+// Narration (id → start time); the "bitter" in v1b is at 1.28 s, aligned to the cut to the close-up at bar(6,1)
 export const VO = { v1a: bar(4) + .15, v1b: bar(6, 1) - 1.28, v2: bar(8, 1), v3: bar(11, 2), v4: bar(15, 2), v5: bar(23, 3), v6: bar(27, 2) };
-// 字卡（一张卡可以覆盖多条语音）：[t0, t1, 文本, 位置 'b'|'t']
+// Title cards (one card can cover several voice lines): [t0, t1, text, position 'b'|'t']
 export const SUBS = [
   [VO.v1a, bar(6, 1) + 1.25, 'Seven a.m., folks! And boy, is this coffee bitter!', 'b'],
   [VO.v2, VO.v2 + 1.95, "And they're off!", 'b'],
@@ -21,26 +21,26 @@ export const SUBS = [
   [VO.v6, VO.v6 + 1.95, 'Good night, folks!', 'b'],
 ];
 
-// 镜头表 [起, 止, 名]
+// Shot list [start, end, name]
 export const SHOTS = [
-  [0, bar(4), 'title'],                 // 片名卡（3.4 卷上去，下面是 wide1）
-  [bar(4), bar(6), 'wide1'],            // 闹钟、醒来、蘸一口
-  [bar(6), bar(7), 'bitterCU'],         // 苦！
-  [bar(7), bar(8), 'wide2'],            // 看见糖罐、对视、起跑
-  [bar(8), bar(10), 'chase'],           // 台面横移
-  [bar(10), bar(11), 'toaster'],        // 烤面包机
-  [bar(11), bar(15), 'cupboard'],       // 盘子木琴 → 勺子滑梯 → 下摇
-  [bar(15), bar(19), 'sink'],           // 漩涡、伸胳膊、静音、收回
-  [bar(19), bar(20), 'twoShot'],        // 放下、拍拍、转身
-  [bar(20), bar(23, 1.5), 'leaving'],   // 背影走开；方糖犹豫、跳
-  [bar(23, 1.5), bar(24), 'sweetCU'],   // 叮！甜
-  [bar(24), bar(27), 'dance'],          // 拉远：全厨房起舞
-  [bar(27), bar(29), 'iris'],           // iris 收拢、被拉上
+  [0, bar(4), 'title'],                 // title card (rolls up at 3.4, wide1 underneath)
+  [bar(4), bar(6), 'wide1'],            // alarm clock, wake up, take a sip
+  [bar(6), bar(7), 'bitterCU'],         // bitter!
+  [bar(7), bar(8), 'wide2'],            // spots the sugar bowl, eyes meet, off they go
+  [bar(8), bar(10), 'chase'],           // tracking along the counter
+  [bar(10), bar(11), 'toaster'],        // toaster
+  [bar(11), bar(15), 'cupboard'],       // plate xylophone → ladle slide → tilt down
+  [bar(15), bar(19), 'sink'],           // whirlpool, arm stretch, silence, pull back
+  [bar(19), bar(20), 'twoShot'],        // set down, pat, turn away
+  [bar(20), bar(23, 1.5), 'leaving'],   // walks off, seen from behind; sugar cube hesitates, jumps
+  [bar(23, 1.5), bar(24), 'sweetCU'],   // ding! sweet
+  [bar(24), bar(27), 'dance'],          // pull back: the whole kitchen dances
+  [bar(27), bar(29), 'iris'],           // iris closes, gets pulled shut
   [bar(29), DUR, 'end'],
 ];
 export const shotAt = t => SHOTS.find(s => t >= s[0] && t < s[1]) || SHOTS[SHOTS.length - 1];
 
-// 关键时刻
+// Key moments
 export const K = {
   roll: [bar(3, 4), bar(4)],
   ring: [bar(4), bar(4, 2.5)], wake: bar(4), yawn: [bar(4, 3), bar(4, 4.8)], dip: bar(5, 1), lick: bar(5, 2), taste: bar(5, 3),
@@ -63,7 +63,7 @@ export const K = {
   end: bar(29),
 };
 
-// 配乐 cue（给 music/score.py）：t0 = 第一拍
+// Score cues (for music/score.py): t0 = first beat
 export const CUES = [
   { name: 'C1_title', bars: [1, 3], key: 'F', note: 'fanfare tpt+clar unison theme, tuba oom-pah, snare; slide whistle up bar3 beat4; cymbal on bar4.1' },
   { name: 'C2_morning', bars: [4, 7], key: 'F', note: 'lazy half-time banjo+tuba, soft piano; alarm bell 4.1; muted tpt wah 6.2/6.3/6.4(long); band STOP on 7.2 (choke cymbal) hold; 7.3 boing; 7.4 snare roll' },

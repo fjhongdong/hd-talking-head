@@ -18,5 +18,6 @@ Type
 
 Images
   core/assets/polyhaven/walnut_diff.jpg — "American Walnut Veneer", Poly Haven, CC0 (the table under the block, 7–9 s)
-  assets/bearded_man_cc0.jpg — CC0 photo by ThuyHaBich (Pixabay, via Wikimedia Commons); used only for the filter test
-    still demo/stills/filter_v1.jpg, not in the film
+  assets/bearded_man_cc0.jpg — "Bearded man smoking pipe", CC0 photo by ThuyHaBich (Pixabay, via Wikimedia Commons),
+    https://commons.wikimedia.org/wiki/File:Bearded_man_smoking_pipe-3013924.jpg (1920 px copy, not in the repo);
+    used only for the filter test still demo/stills/frame_filter.jpg, not in the film

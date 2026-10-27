@@ -1,4 +1,4 @@
-"""自检：配乐卡点（music/score.json）↔ 画面事件（events.json）逐项对齐。python tools/cuecheck.py"""
+"""Self-check: score hit points (music/score.json) ↔ picture events (events.json), aligned item by item. python tools/cuecheck.py"""
 import json, os
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 K = json.load(open(os.path.join(D, 'music/score.json')))['keys']; E = json.load(open(os.path.join(D, 'events.json')))['ev']

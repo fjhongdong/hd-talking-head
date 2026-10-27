@@ -1,9 +1,9 @@
-# Whiteboard Explainer — Style Prompt (v2, no hands)
+# Whiteboard Explainer — Style Prompt
 
 > An explainer drawn live on one glossy dry-erase board: single-line handwriting that is actually *written* stroke by stroke, floating markers with no hand, magnets that can move, an eraser that can rewind, and a camera that travels across the board instead of cutting.
 > References (grammar only): RSA Animate / Cognitive Media (one continuous board, the camera travels instead of cutting, a full-board view); minutephysics (one sentence = one drawing, the simplest geometry that carries the idea); Steve Reich's *Piano Phase* (two copies of one figure at two tempi as a structure). Never copy their drawings, characters, hands or music.
 
-Suits explainers of 60–120 s, usually science or "how does X work".
+Suits explainers, usually science or "how does X work"; the length follows how many ideas the board has to hold.
 
 ## 1. Essence, and what it is not
 

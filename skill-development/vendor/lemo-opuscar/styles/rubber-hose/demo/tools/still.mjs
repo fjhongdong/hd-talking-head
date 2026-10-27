@@ -1,5 +1,5 @@
-// 本地副本：加 --w/--h（设定表用大画布）。渲静帧：node core/render/still.mjs styles/<slug>/demo <t> [<t> ...] [--range a:b:step] [--q 'k=v&..'] [--prefix t_] [--out dir]
-// 以仓库根为静态服务根，页面需暴露 window.READY 和 window.render(t)；页面报错立即退出（非 0）
+// Local copy: adds --w/--h (large canvas for model sheets). Render stills: node core/render/still.mjs styles/<slug>/demo <t> [<t> ...] [--range a:b:step] [--q 'k=v&..'] [--prefix t_] [--out dir]
+// Serves the repo root statically; the page must expose window.READY and window.render(t); exits immediately (non-zero) on a page error
 import { chromium } from 'playwright-core';
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { serve } from '../../../../core/render/serve.mjs';
@@ -11,7 +11,7 @@ const out = take('--out'), q = take('--q') || '', prefix = take('--prefix') || '
 const [dir, ...times] = args;
 if (rg) { const [a, b, st] = rg.split(':').map(Number); for (let x = a; x <= b + 1e-9; x += st) times.push(x.toFixed(2)); }
 const outDir = out || path.join(dir, 'stills'); fs.mkdirSync(outDir, { recursive: true });
-const { server, port } = await serve(ROOT);   // 单页多帧静图
+const { server, port } = await serve(ROOT);   // one page, many stills
 const browser = await chromium.launch({ executablePath: EXE, args: ARGS });
 const page = await browser.newPage({ viewport: { width: VW, height: VH }, deviceScaleFactor: 1 });
 page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') console.error('[page]', m.text().slice(0, 300)); });

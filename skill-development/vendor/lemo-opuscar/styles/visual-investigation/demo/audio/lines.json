@@ -1,0 +1,56 @@
+[
+ {
+  "id": "v1",
+  "text": "May sixth, nineteen thirty-seven. The Hindenburg reaches Lakehurst, hours late.",
+  "voice": "am_michael",
+  "speed": 1.08,
+  "asr": "May 6, 1937. The Hindenburg reaches Lakehurst, hours late."
+ },
+ {
+  "id": "v2",
+  "text": "The station's answer: delay landing. The ship waits.",
+  "voice": "am_michael",
+  "speed": 1.0
+ },
+ {
+  "id": "v3",
+  "text": "At six twenty-one, the ropes go down, at least seven hundred feet from the mast.",
+  "voice": "am_michael",
+  "speed": 1.08,
+  "asr": "At 621, the ropes go down, at least 700 feet from the mast."
+ },
+ {
+  "id": "v4",
+  "text": "Seconds before the fire, a man on the ground sees the cover flutter, near cell five.",
+  "voice": "am_michael",
+  "speed": 1.1,
+  "asr": "Seconds before the fire, a man on the ground sees the cover flutter, near cell 5."
+ },
+ {
+  "id": "v5",
+  "text": "Five sources, one place: above gas cells four and five.",
+  "voice": "am_michael",
+  "speed": 1.0,
+  "asr": "Five sources, one place, above gas cells 4 and 5."
+ },
+ {
+  "id": "v6",
+  "text": "From first flame to impact: thirty-two seconds.",
+  "voice": "am_michael",
+  "speed": 0.97,
+  "asr": "From first flame to impact, 32 seconds."
+ },
+ {
+  "id": "v7",
+  "text": "The inquiry names the cause: leaking hydrogen, ignited. The spark itself remains a theory.",
+  "voice": "am_michael",
+  "speed": 1.08
+ },
+ {
+  "id": "v8",
+  "text": "Thirty-six people died.",
+  "voice": "am_michael",
+  "speed": 0.9,
+  "asr": "36 people died."
+ }
+]

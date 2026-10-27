@@ -1,4 +1,4 @@
-// 时间线：120 BPM（1 拍 0.5s，1 小节 2s）。每个"时间窗"有自己的城市时钟起点与延时倍率曲线（倍率随时间变化 = 速度变化）
+// Timeline: 120 BPM (1 beat 0.5 s, 1 bar 2 s). Each "time window" has its own city-clock start and time-lapse rate curve (rate changing over time = speed ramp)
 import { clamp, ss } from '/core/lib.js';
 
 export const BPM = 120, BEAT = .5, BAR = 2;
@@ -6,12 +6,12 @@ export const DUR = 38;
 export const T = {
   vo: { v1: .9, v2: 9.6, v3: 14.3, v4: 19.4, v5: 25.9, v6: 30.6 },
   firstNote: 3.0, secondNote: 4.5,
-  title0: 5.0,                       // 片名字母：每 0.25s 亮一个
-  greenA: 10.0, greenB: 12.0,        // 路口变灯
+  title0: 5.0,                       // title letters: one lights every 0.25 s
+  greenA: 10.0, greenB: 12.0,        // junction light change
   trainStop: 17.0, trainGo: 18.6,
   jamHorn: [20.0, 22.0],
   rampDown: [22.5, 24.0], rampUp: [30.0, 30.6],
-  hops: [24.8, 25.6, 26.4, 27.1, 27.8, 29.4],   // 母鸭、小鸭 1–3、小鸭 4 第一次失败、成功
+  hops: [24.8, 25.6, 26.4, 27.1, 27.8, 29.4],   // mother duck, ducklings 1–3, duckling 4's first (failed) try, success
   release: 30.0, finalChord: 34.0, end: 34.0,
 };
 export const SHOTS = [
@@ -19,7 +19,7 @@ export const SHOTS = [
 ];
 export const shotAt = t => SHOTS.find(s => t < s[1]) || SHOTS[SHOTS.length - 1];
 
-// 时间窗：clock0 = 窗口起点的城市时钟（6:00 起的秒数）；rate(t) = 延时倍率
+// Time windows: clock0 = city clock at the window start (seconds since 6:00); rate(t) = time-lapse rate
 const jamRate = t => {
   if (t < T.rampDown[0]) return 40;
   if (t < T.rampDown[1]) { const u = (t - T.rampDown[0]) / (T.rampDown[1] - T.rampDown[0]); return 1 + 39 * (1 - ss(u)); }
@@ -34,7 +34,7 @@ export const WINDOWS = [
   { name: 'train', t0: 14, t1: 19, clock0: 99 * 60 + 25, rate: () => 6 },
   { name: 'jam', t0: 19, t1: DUR + .5, clock0: 118 * 60, rate: jamRate },
 ];
-// 预积分（1ms 步长，确定性）
+// Pre-integration (1 ms steps, deterministic)
 for (const W of WINDOWS) {
   const n = Math.ceil((W.t1 - W.t0) * 1000) + 1, tab = new Float64Array(n); let acc = 0;
   for (let i = 0; i < n; i++) { tab[i] = acc; const t = W.t0 + i / 1000; acc += (W.rate(t) + W.rate(t + .001)) / 2 / 1000; }

@@ -2,6 +2,7 @@
 
 > Hand-made pixel sprites standing like paper cut-outs inside a lit, fogged, fully 3D diorama, shot from a high three-quarter angle through a tilt-shift lens: a toy world where every lamp throws a real shadow.
 > References (grammar only): *Octopath Traveler* (Square Enix × Acquire, 2018) and its sequel (2023), the games that defined the HD-2D look. Learn the grammar: sprite-in-diorama, high 3/4 camera, tilt-shift focus band, point lights with shadows, heavy bloom and vignette, framed dialogue box. Never use their characters, places, logos, UI ornaments or music, and never name them in the film.
+> Name: "HD-2D" is Square Enix's term (and trademark) for that look. The library borrows it only to describe the style; this style and its demo have no connection to Square Enix and are not endorsed by it. Don't use "HD-2D" as a title or brand in a film.
 
 ## 1. Essence, and what it is not
 
@@ -26,7 +27,7 @@ Not a voxel game (no cubic characters), not a flat 2D pixel RPG (the set is real
 - Each set owns one fog colour and one light key, so a cut to a new place reads instantly.
 - The hero wears the one saturated costume colour that no set uses, so the tiny sprite is findable in a wide.
 - UI is one metal (gold, silver, copper) plus one paper white over a dark translucent plate.
-- Examples: night harbour (blue fog, amber windows); autumn market at dusk (violet sky, pink paper lanterns); snowy mine at noon (grey-white daylight, green mineral glow).
+- Examples: night canal town (blue fog, amber windows); autumn market at dusk (violet sky, pink paper lanterns); snowy mine at noon (grey-white daylight, green mineral glow).
 
 ## 4. Type & subtitles
 
@@ -74,7 +75,7 @@ Framing: characters ~1/12–1/8 of frame height; the sharp band follows the subj
 A menu: use the ones your story needs.
 
 - **Shadows jump when a light is lit.** A practical turns on next to sprites and their shadows swing across the floor. *Fits content like:* a shop opening at dawn; a server rack powering up; a teacher switching on a projector.
-- **The carried light as a meter.** One small light the hero holds is key light and emotion at once: bright → guttering → almost out → relit. *Fits content like:* a phone battery on a long trip; a patient's heart monitor; a candle vigil.
+- **The carried light as a meter.** One small light a character carries is key light and gauge at once: its brightness rises and falls with whatever the story is measuring. *Fits content like:* a phone battery on a long trip; a patient's heart monitor; a candle vigil.
 - **Tilt-shift preciousness.** An extra-wide with the band on one tiny subject. *Fits content like:* a single delivery van in a city; a newborn's room in a whole hospital; one stall in a night market.
 - **Lights popping on one by one.** Windows, lamps or boats light up at a steady cadence across the map. *Fits content like:* users joining a network; a village getting electricity; a festival beginning.
 - **RPG grammar.** Chapter card, named character in a dialogue box, biomes, a landmark, a title card. *Fits content like:* onboarding a new employee; a history in eras; a recipe in stages.

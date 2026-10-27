@@ -55,6 +55,35 @@ Three layers: room tone (a quiet workroom with a faint clock on copper; paper ro
 - **Foley as built**: burin = band-passed hiss (2.6–9 kHz) with chatter clicks and a faint plate resonance (1.18/2.31/3.47 kHz); swarf = tiny 5–9 kHz pings; lift = metallic tick; press = low roller rumble (J-cut 0.35 s early) and a thump; peel = dense paper crackle; hatching = granular micro-scratches whose density rises with each pass; ring = circular scribe; burnish = soft rub; roundel flight = paper whoosh; landing = paper tap; letters = dotted ticks; notes = pen scratch at ~4 Hz strokes; colour = a falling water "plip" then a wet brush swish per region; end card = tissue rustle (J-cut).
 - **Narrator**: Kokoro `bm_fable` (en-gb), speed 0.92, a gentle naturalist; music ducked to ~50 % under him (the bowed strings duck least).
 
+### Score form, bar by bar
+
+Original, written in code (`music/score.py`, deterministic: a rebuild gives a byte-identical `score.wav`); no existing or public-domain tunes. Key D major, 96 BPM in 4/4 (beat 0.625 s, bar 2.5 s, 16 bars = 40.0 s). Forces: harpsichord (continuo and solo figures) and a string quartet (solo violin I, ensemble violin II, violas, cellos, contrabass); the strings play pizzicato up to 25.0 s and use the bow only from 26.25 s. Rebuild from the repo root with `.venv/bin/python styles/engraving/demo/music/score.py` (about 5 s; writes `score.wav`, `stems/`, `cues.json`, `CREDITS_music.txt`). Level −18.0 LUFS integrated (BS.1770), peak −1.2 dBFS, 48 kHz stereo 24-bit. Stems `harpsichord.wav`, `pizz.wav`, `bowed.wav` (40.0 s each, same gain as the mix, so they sum to the mix before the limiter, about 1 dB of peak limiting on two hits).
+
+The form is a trio-sonata texture: the grammar of engraving, then colour. Times are for the demo's three details.
+
+| Bars / time | Harmony | What happens |
+|---|---|---|
+| 1 (0–2.5) | — | Silent for burin foley. **1.875 / 2.1875** harpsichord pickup A4 → C#5, damped short (below −28 dBFS by 2.3). |
+| 2 (2.5) | D, A/C# | **The print is pulled:** tutti downbeat accent (harpsichord D chord, cello, contrabass and viola pizz). Cello walking bass and viola in pizz 8ths. |
+| 3 (5.0) | Bm, G, A7 | **5.0** violin II enters in 16th pizz, broken-chord "cross-hatching". **6.25** harpsichord 32nd-note arpeggio flourish (G, then A7) rises into **7.5**. |
+| 4 (7.5) | D, G | Full texture. **9.375** it thins to a cello pizz A pedal plus a high harpsichord 8th figure (dominant, "curious"). |
+| 5 (10.0) | A pedal | **10.425** ring "ting": solo violin pizz A6 with harpsichord A5. **11.275–12.5875** rising pizz and harpsichord scale A4 → A5 (8 notes, 0.1875 s apart). **12.775** landing on low D (cello, contrabass and harpsichord D). |
+| 6 (12.5) | D, Bm | The pizz texture comes back lighter (it restarts at 13.125). |
+| 7 (15.0) | Em7, A7, D | **15.0** Em7 downbeat. **15.5** ting (B6). **15.8–16.66** faster rise (7 notes, 1/7 s apart). **16.8** landing on D. |
+| 8 (17.5) | Bm, G, A | Fuller texture. **19.375** thins to an A pedal (third detail). **19.875** ting (A6). |
+| 9 (20.0) | D, G | **20.0** the violin I pizz melody, the most tuneful moment: A5 F#5 D6 · B5 G5-A5 B5 C#6-D6 · E6 G5 F#5. **21.475** landing on low G. **22.19** the lift: violin II 16th crescendo plus a harpsichord roll. |
+| 10 (22.5) | Em, A7 | **23.75** harpsichord descending 16th run A5 → A4 (in octaves), ending on the dominant. The last note is 90 ms long and everything is gated to zero at 25.0. The expected tonic never comes, which is the joke. |
+| 11 (25.0–26.25) | — | **Total digital silence** (−inf dBFS, reverb tails included). |
+| 11b–13 (26.25) | D, Bm, G, Em7, A7 → **D** | **26.25** the first bowed notes of the film. Cellos, violas and violins enter pp on D and swell to mp by 27.6. Soprano line A5 B5 · D6 C#6 → D6, bass line descending in thirds D-B-G-E then A → D. The harpsichord is sparse and high: slow broken chords at 27.5, 28.75 and 30.0. **31.25** perfect cadence V7 → I: a low harpsichord D (not rolled) with the upper chord rolled after it, contrabass pizz, and bowed D chord. The tonic then rings. |
+| 14 (32.5) | D | **33.75** wink: one soft solo-violin pizz D6. |
+| 15–16 (35.0–40.0) | D | **35.625** a very soft harpsichord D-A-D roll for the end card. A fade from 36.6 reaches zero at 38.9. Digital silence from 39.0 to 40.0. |
+
+**Narration windows.** Inside 6.4–9.6, 9.8–14.9, 15.3–19.2 and 19.7–23.3 the pizz is short and dry, which keeps 300 Hz–3 kHz transient rather than sustained. During 26.9–30.9 the bowed chords sit mostly in the bass (cellos and contrabass below 300 Hz) and above 900 Hz (violins at A5–D6), with only violas and violin II in the voice band at pp. The harpsichord plays only four soft broken chords there.
+
+**Reverb.** `S.room` per stem, applied before the silence gates, so no tail leaks into 25.0–26.25: harpsichord size .28 / mix .16, pizz .30 / .18, bowed .42 / .24. A 35 Hz high-pass on every stem.
+
+**Timing check.** Each accent in `music/cues.json` is measured on its own rendered stem, after reverb: the first 30 % rise from the local trough to the local peak in [t − 60 ms, t + 120 ms]; low landings measured below 300 Hz, tings above 2 kHz; tolerance ±42 ms (one frame at 24 fps). For the bowed entry, the first bowed sample above −100 dBFS.
+
 ## Palette & props
 
 **The sheet**: 1920×1080 world units, laid paper `#f1e8d2`, world-space paper texture (fibres, laid lines, sparse foxing `#9a6a34`). Plate mark (the pressed, bevelled rectangle) at (70, 44)–(1850, 1036): plate tone `#e8ddc2` at 55 % inside; bevel dark on the top/left walls, light on bottom/right (light from the upper left). Ruled border: 2.4 px rule + 0.8 px hairline 9 px inside, (100, 72)–(1820, 1008).
@@ -86,7 +115,7 @@ sh styles/engraving/demo/build.sh              # voice → check → score → e
 ```
 - `demo/engine/`: `burin.js` (lines), `plate.js` (sheet, lettering, roundels), `wash.js` (colour), `copper.js` (copper, burin, swarf), `index.js` (public entry + `engraveShape`).
 - `demo/subjects/`: `bee.js`, `details.js` (eye, hamuli, corbicula roundel drawings), `scallop.js` (second built-in subject).
-- `demo/film.js`: timeline (96 BPM grid), camera, render; reads `content.json`. `demo/mix.py`: foley + voice + ducked stems. `demo/music/score.py`: the score (written by a composer sub-agent against the cue map in `demo/TREATMENT.md`). `demo/tools/cuecheck.py`: score accents vs picture events (all within 1 frame) and the silence level.
+- `demo/film.js`: timeline (96 BPM grid), camera, render; reads `content.json`. `demo/mix.py`: foley + voice + ducked stems. `demo/music/score.py`: the score, written against the cue map of picture events (bar-by-bar form under Score structure). `demo/tools/cuecheck.py`: score accents vs picture events (all within 1 frame) and the silence level.
 - Render with `core/render/video.mjs --workers 2`; frames take 60–500 ms (copper and colour frames are the slowest).
 
 Pitfalls tied to this demo's props:

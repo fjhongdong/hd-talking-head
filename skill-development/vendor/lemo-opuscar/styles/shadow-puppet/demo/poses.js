@@ -1,4 +1,4 @@
-// 后羿关键姿势（bowT/drawT = 手心目标，相对各自肩关节；bendB/bendF = 肘弯方向，+1 肘朝后下）
+// Hou Yi (后羿) key poses (bowT/drawT = palm targets, relative to each arm's shoulder joint; bendB/bendF = elbow bend direction, +1 = elbow points back and down)
 export const POSES = {
   rest:   { rot: 0, head: 0, waist: 0, legF: -.05, legB: .07, bowT: [40, 104], drawT: [-22, 112], bendB: 1, bendF: 1, draw: 0, hB: -.2 },
   stride: { rot: .1, head: -.05, waist: -.06, legF: -.36, legB: .3, bowT: [70, 70], drawT: [-62, 80], bendB: 1, bendF: 1, draw: 0, hB: -.4 },

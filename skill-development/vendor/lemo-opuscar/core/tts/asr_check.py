@@ -7,16 +7,16 @@ A line in lines.json may carry an "asr" field that overrides the expected text (
         numbers with punctuation (3.5, 1:30, 1,000, 40%) are not, so write the expected transcription in the "asr" field). zh (also ja / ko) compares
         characters: after dropping punctuation, folding full-width to half-width and turning Chinese numerals into digits, a difflib similarity
         ≥ --threshold (default 0.92) passes.
-Model: --model (or the WHISPER_MODEL environment variable; a model name, or a local folder for offline use); default en → base.en, other languages → base (multilingual).
-      If base mishears a line that sounds right to you, check again with --model small (more accurate, about 480 MB, several times slower).
-      The first run downloads from Hugging Face (base / base.en ≈ 145 MB); behind a firewall set HF_ENDPOINT=https://hf-mirror.com,
+Model: --model (or the WHISPER_MODEL environment variable; a model name, or a local folder for offline use); default en → base.en, zh → small (base mishears too many Chinese lines), other languages → base (multilingual).
+      If the default mishears a line that sounds right to you, check again with a larger model (base → small, about 480 MB; small → medium), more accurate and several times slower.
+      The first run downloads from Hugging Face (base / base.en ≈ 145 MB, small ≈ 480 MB); behind a firewall set HF_ENDPOINT=https://hf-mirror.com,
       or download the model beforehand and pass --model /path/to/model-dir.
 Exit codes: 0 all lines pass; 1 some lines differ; 2 the check could not run (model failed to load, etc.).
 """
 import sys, json, re, os, argparse, difflib, unicodedata
 
 CJK = re.compile('[㐀-鿿豈-﫿぀-ヿ가-힯]')
-CHAR_LANGS = {'zh', 'ja', 'ko'}           # 这些语言按字符比，其余按词比
+CHAR_LANGS = {'zh', 'ja', 'ko'}           # these languages are compared by character, the rest by word
 _DIGITS = str.maketrans('零〇一二三四五六七八九', '00123456789')
 
 
@@ -25,28 +25,28 @@ _TENS = 'x x twenty thirty forty fifty sixty seventy eighty ninety'.split()
 
 
 def num_words(n):
-    """0–999 → 英文读法的词列表：40 → ['forty']，105 → ['one', 'hundred', 'five']"""
+    """0–999 → list of words for the English reading: 40 → ['forty'], 105 → ['one', 'hundred', 'five']"""
     out = []
     if n >= 100: out += [_ONES[n // 100], 'hundred']; n %= 100
     if n >= 20: out.append(_TENS[n // 10]); n %= 10
-    if n or not out: out.append(_ONES[n])   # 整百（100、200…）不再补 zero；0 本身要读 zero
+    if n or not out: out.append(_ONES[n])   # whole hundreds (100, 200…) don't get a trailing zero; 0 itself is read as zero
     return out
 
 
-_SENTENCE_PUNCT = '.,;:!?"()[]{}\u2026\u201c\u201d\u2018\u2019'   # 词两头的标点（句号、逗号、括号…）；百分号不在其内
+_SENTENCE_PUNCT = '.,;:!?"()[]{}\u2026\u201c\u201d\u2018\u2019'   # punctuation at either end of a word (full stops, commas, brackets…); the percent sign isn't included
 
 
 def _is_formatted_number(raw):
-    """数字之间带标点的写法：小数 3.5、时间 1:30、日期 12/25、千分位 1,000，以及带百分号的 40%。
-    去掉标点后它们会和另一个数长得一样（3.5 → 35），所以不能转成读法。"""
+    """Numbers written with punctuation between digits: decimals 3.5, times 1:30, dates 12/25, thousands separators 1,000, and percentages such as 40%.
+    With the punctuation removed they would look like a different number (3.5 → 35), so they can't be converted to a reading."""
     core = raw.strip(_SENTENCE_PUNCT)
     return bool(re.search(r'\d[.,:/]\d', core) or ('%' in core and re.search(r'\d', core)))
 
 
 def norm_en(s):
-    """英文比较用的词表：小写、去标点；0–999 的整数（whisper 常把 forty 写成 40）换成读法，"hundred and" 的 and 不计。
-    保持原样（只去标点，不换成读法）的：更大的数、年份、序数（3rd）、以及带标点的数（小数 3.5、时间 1:30、千分位 1,000、百分数 40%）——
-    否则 3.5 会变成 35、和 "thirty five" 混淆。它们的读法请在 lines.json 的 asr 字段里写出期望的转写。"""
+    """Word list for English comparison: lowercase, punctuation removed; integers 0–999 (whisper often writes forty as 40) replaced by their reading; the "and" in "hundred and" isn't counted.
+    Kept as is (punctuation removed only, not converted to a reading): larger numbers, years, ordinals (3rd), and numbers with punctuation (decimals 3.5, times 1:30, thousands separators 1,000, percentages 40%) —
+    otherwise 3.5 would become 35 and be confused with "thirty five". For their reading, write the expected transcription in the asr field of lines.json."""
     out = []
     for raw in s.lower().replace("'", '').replace('-', ' ').split():
         w = re.sub(r"[^a-z0-9]", '', raw)
@@ -58,8 +58,8 @@ def norm_en(s):
 
 
 def norm_zh(s):
-    s = unicodedata.normalize('NFKC', s).lower().translate(_DIGITS)   # NFKC：全角→半角、兼容字形归一
-    return ''.join(c for c in s if unicodedata.category(c)[0] in 'LN')   # 只留字母/汉字/数字，标点空白全去掉
+    s = unicodedata.normalize('NFKC', s).lower().translate(_DIGITS)   # NFKC: full-width → half-width, compatibility forms normalised
+    return ''.join(c for c in s if unicodedata.category(c)[0] in 'LN')   # keep only letters/hanzi/digits; strip all punctuation and whitespace
 
 
 def detect_lang(texts):
@@ -68,7 +68,7 @@ def detect_lang(texts):
 
 
 def compare(want, got, lang, threshold=0.92):
-    """返回 (是否通过, 相似度 0..1)"""
+    """Returns (passed or not, similarity 0..1)"""
     if lang in CHAR_LANGS:
         a, b = norm_zh(want), norm_zh(got)
         r = difflib.SequenceMatcher(None, a, b).ratio() if (a or b) else 1.0
@@ -99,7 +99,7 @@ def main():
     lines = json.load(open(a.lines, encoding='utf-8'))
     want = {L['id']: L.get('asr', L['text']) for L in lines}
     lang = detect_lang(list(want.values())) if a.lang == 'auto' else a.lang
-    name = a.model or os.environ.get('WHISPER_MODEL') or ('base.en' if lang == 'en' else 'base')
+    name = a.model or os.environ.get('WHISPER_MODEL') or {'en': 'base.en', 'zh': 'small'}.get(lang, 'base')
     if lang != 'en' and os.path.basename(name.rstrip('/')).endswith('.en'):
         print(f"asr_check.py: model '{name}' is English-only but the lines are '{lang}'. Use a multilingual model (e.g. --model base or --model small).", file=sys.stderr); sys.exit(2)
     import numpy as np, soundfile as sf, soxr
@@ -108,8 +108,8 @@ def main():
     for L in lines:
         y, sr = sf.read(os.path.join(a.voices_dir, L['id'] + '.wav'))
         if y.ndim > 1: y = y.mean(1)
-        y = soxr.resample(y, sr, 16000, quality='HQ'); pad = np.zeros(int(.6 * 16000))   # 与 librosa 默认的 soxr_hq 相同
-        kw = dict(initial_prompt='以下是普通话的句子。') if lang == 'zh' else {}          # 提示成简体，避免转写出繁体
+        y = soxr.resample(y, sr, 16000, quality='HQ'); pad = np.zeros(int(.6 * 16000))   # same as librosa's default soxr_hq
+        kw = dict(initial_prompt='以下是普通话的句子。') if lang == 'zh' else {}          # prompt in Simplified Chinese so the transcription doesn't come out in Traditional
         segs, _ = m.transcribe(np.concatenate([pad, y, pad]).astype(np.float32), beam_size=5, language=lang, word_timestamps=True, **kw)
         tail = (len(y) + len(pad)) / 16000 - .5   # Whisper sometimes repeats the line inside the trailing pad: drop such no-speech segments
         segs = [s for s in segs if not (s.no_speech_prob > .5 and s.start > tail)]; got = ' '.join(s.text.strip() for s in segs)

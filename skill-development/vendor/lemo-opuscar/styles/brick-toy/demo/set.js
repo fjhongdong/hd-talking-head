@@ -1,4 +1,4 @@
-// 布景：真实书桌（HDRI + 胡桃木 + 茶具 + 台灯 + 铅笔 + 一摞书）+ 绿色底板 + 书顶的积木月球
+// Set: real desk (HDRI + walnut + tea set + desk lamp + pencil + a stack of books) + green baseplate + brick moon on top of the books
 import * as THREE from 'three';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -7,8 +7,8 @@ import { COL, PLATE, BRICK, mesh, plate, brickGeo, roundGeo, plastic } from './b
 import { mulberry } from '/core/lib.js';
 
 const PH = '/core/assets/polyhaven/';
-export const M = 125;              // 1 米 = 125 凸点单位（8mm）
-export const TOP = .3;             // 底板顶面
+export const M = 125;              // 1 metre = 125 stud units (8mm)
+export const TOP = .3;             // baseplate top surface
 export const PAD = { x: 9, z: -2 };
 export const PAD_TOP = TOP + PLATE;
 export const MOON = { x: -58, z: -34 };
@@ -24,19 +24,19 @@ export async function buildSet(scene) {
   const desk = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshStandardMaterial({ map: tex('walnut_diff.jpg', true), normalMap: tex('walnut_nor.jpg'), roughnessMap: tex('walnut_rough.jpg'), roughness: 1 }));
   desk.rotation.x = -Math.PI / 2; desk.position.set(-20, 0, -20); desk.receiveShadow = true; scene.add(desk);
 
-  // 灯
+  // lights
   const key = new THREE.DirectionalLight('#fff4e8', 3.0); key.position.set(-60, 110, 50); key.target.position.set(-10, 0, -10);
   key.castShadow = true; key.shadow.mapSize.set(4096, 4096); key.shadow.bias = -.0004; key.shadow.normalBias = .03; key.shadow.radius = 4;
   Object.assign(key.shadow.camera, { left: -95, right: 95, top: 95, bottom: -95, near: 10, far: 400 }); scene.add(key, key.target);
   const fill = new THREE.DirectionalLight('#cfe0ff', .45); fill.position.set(60, 40, -50); scene.add(fill);
-  // 柔光箱：大面积面光源给塑料清晰的矩形高光（玩具摄影的标志）
+  // softbox: large area light gives the plastic crisp rectangular highlights (the signature of toy photography)
   RectAreaLightUniformsLib.init();
   const box = (col, I, w, h, p, at) => { const l = new THREE.RectAreaLight(col, I, w, h); l.position.set(...p); l.lookAt(...at); scene.add(l); return l; };
   const softKey = box('#fff6ee', 6, 70, 45, [-55, 60, 55], [0, 4, 0]);
   const softRim = box('#e4eeff', 9, 60, 30, [45, 45, -75], [0, 6, 0]);
   const softMoon = box('#fff6ee', 5, 50, 35, [-20, 70, 10], [-58, 17, -34]);
 
-  // 真实道具
+  // real props
   const gl = new GLTFLoader();
   const load = async n => (await gl.loadAsync(`${PH}${n}/${n}.gltf`)).scene;
   const tea = await load('tea_set_01');
@@ -49,7 +49,7 @@ export async function buildSet(scene) {
   for (const o of [tea, lamp]) o.traverse(m => { if (m.isMesh) { m.castShadow = m.receiveShadow = true; } });
   const bulb = new THREE.PointLight('#ffe2b8', 700, 120, 2); bulb.position.set(-75, 46, -32); scene.add(bulb);
 
-  // 铅笔
+  // pencil
   const pencil = new THREE.Group();
   const body = new THREE.Mesh(new THREE.CylinderGeometry(.95, .95, 22, 6), new THREE.MeshStandardMaterial({ color: '#f3b61f', roughness: .45 }));
   const wood = new THREE.Mesh(new THREE.ConeGeometry(.95, 2.6, 6), new THREE.MeshStandardMaterial({ color: '#e9c89a', roughness: .8 })); wood.position.y = 12.3;
@@ -59,7 +59,7 @@ export async function buildSet(scene) {
   pencil.add(body, wood, lead, fer, eras); pencil.rotation.set(Math.PI / 2, 0, 1.1); pencil.position.set(22, .95, 22);
   pencil.traverse(m => { if (m.isMesh) m.castShadow = m.receiveShadow = true; }); scene.add(pencil);
 
-  // 一摞书（顶上放月球）
+  // stack of books (moon sits on top)
   const books = new THREE.Group(); books.position.set(MOON.x, 0, MOON.z); scene.add(books);
   const cloth = ['#7b2d26', '#274b6d', '#3d5c3a', '#c9a45c'];
   let by = 0; const R = mulberry(11);
@@ -74,7 +74,7 @@ export async function buildSet(scene) {
   });
   const moonTop = by;
 
-  // 积木月球：灰色圆板堆出的高地 + 陨石坑
+  // brick moon: highlands stacked from grey round plates + craters
   const moon = new THREE.Group(); moon.position.set(MOON.x, moonTop, MOON.z); scene.add(moon);
   const g1 = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 10.8, PLATE * 2, 48), plastic(COL.lgray)); g1.position.y = PLATE; moon.add(g1);
   for (let i = 0; i < 26; i++) {
@@ -88,7 +88,7 @@ export async function buildSet(scene) {
   moon.traverse(m => { if (m.isMesh) m.castShadow = m.receiveShadow = true; });
   const MOON_TOP = moonTop + PLATE * 2;
 
-  // 绿色底板 + 发射台 + 警示条
+  // green baseplate + launch pad + hazard stripes
   const bp = new THREE.Mesh(brickGeo(32, 24, .3), new THREE.MeshPhysicalMaterial({ color: '#4f9e3a', roughness: .55, clearcoat: .12, clearcoatRoughness: .5 }));
   bp.receiveShadow = bp.castShadow = true; scene.add(bp);
   const pad = plate(8, 8, COL.dgray); pad.position.set(PAD.x, TOP, PAD.z); scene.add(pad);
@@ -97,5 +97,5 @@ export async function buildSet(scene) {
   return { key, bulb, moon, MOON_TOP, lamp };
 }
 
-// 地面高度：底板范围内是底板顶，否则桌面
+// ground height: baseplate top within the baseplate, otherwise the desk
 export const groundY = (x, z) => (Math.abs(x - PAD.x) < 4 && Math.abs(z - PAD.z) < 4) ? PAD_TOP : (Math.abs(x) < 16 && Math.abs(z) < 12) ? TOP : 0;

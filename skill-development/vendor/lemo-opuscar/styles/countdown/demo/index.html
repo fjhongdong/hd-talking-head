@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Counting Itself Down</title>
+<style>
+  @font-face { font-family: 'BarlowC'; src: url('fonts/BarlowCondensed-SemiBold.ttf'); font-weight: 600; }
+  @font-face { font-family: 'BarlowC'; src: url('fonts/BarlowCondensed-Medium.ttf'); font-weight: 500; }
+  @font-face { font-family: 'Barlow'; src: url('fonts/Barlow-Medium.ttf'); font-weight: 500; }
+  @font-face { font-family: 'Barlow'; src: url('fonts/Barlow-SemiBold.ttf'); font-weight: 600; }
+  @font-face { font-family: 'Plex'; src: url('fonts/IBMPlexMono-Medium.ttf'); font-weight: 500; }
+  @font-face { font-family: 'Plex'; src: url('fonts/IBMPlexMono-SemiBold.ttf'); font-weight: 600; }
+  @font-face { font-family: 'NotoSC'; src: url('fonts/NotoSansSC-500-sub.woff2'); font-weight: 500; }
+  @font-face { font-family: 'NotoSC'; src: url('fonts/NotoSansSC-700-sub.woff2'); font-weight: 700; }
+  html, body { margin: 0; background: #06080A; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// ————————————————————————————————————————————————————————————————
+// Live Countdown Split-screen (实时倒计时分屏) · 《自己倒数》Counting Itself Down (Artemis II, T−32.5 → T+27.0)
+// Film time t ↔ mission time M = t − T0 (T0 = 32.5). Screen time = real time; the film never jumps in time.
+// Each camera's time alignment is fixed in tools/prep.sh (frames/<cam>/<film frame number>.jpg).
+// ————————————————————————————————————————————————————————————————
+const W = 1920, H = 1080, FPS = 30, T0 = 32.5, DUR = 59.5;
+window.DUR = DUR;
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+
+const C = {
+  bg: '#06080A', line: 'rgba(222,232,238,0.16)', ink: '#F2F5F7', dim: '#7C878D', faint: 'rgba(242,245,247,0.45)',
+  org: '#FF5B1F', live: '#FF3B30', plate: 'rgba(6,8,10,0.80)', dark: '#0A0B0C'
+};
+const F_NUM = 'BarlowC', F_LAT = 'Barlow, NotoSC', F_MONO = 'Plex', F_ZH = 'Barlow, NotoSC';
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eio = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+const eo = t => 1 - Math.pow(1 - clamp(t), 3);
+const lerpR = (a, b, k) => a.map((v, i) => lerp(v, b[i], k));
+const fmtT = (m, dec = 0) => { const s = Math.abs(m), mm = Math.floor(s / 60), ss = s - mm * 60; return (m < 0 ? 'T−' : 'T+') + mm + ':' + (dec ? ss.toFixed(dec).padStart(3 + dec, '0') : String(Math.floor(ss)).padStart(2, '0')); };
+
+// ——— frame images ———
+const cache = new Map();
+function img(src) {
+  if (!cache.has(src)) cache.set(src, new Promise(res => { const im = new Image(); im.onload = () => im.decode().then(() => res(im), () => res(im)); im.onerror = () => res(null); im.src = src; }));
+  return cache.get(src);
+}
+const pad4 = n => String(n).padStart(4, '0');
+// Film frames available for each camera (prep.sh output); fr1 has two segments
+const FR = { live: [[0, 1788]], livehi: [[492, 737]], slscam: [[510, 1787]], orion: [[660, 990]], uas: [[690, 1787]], banana: [[795, 1289]], osb: [[960, 1115]], fr1: [[75, 395], [756, 983]] };
+function frameSrc(cam, f) {
+  const rs = FR[cam]; let best = null, bd = 1e9;
+  for (const [a, b] of rs) { const c = clamp(f, a, b), d = Math.abs(c - f); if (d < bd) { bd = d; best = c; } }
+  return `frames/${cam}/${pad4(best)}.jpg`;
+}
+const SRC = { live: 'live', track: 'live', fr1: 'fr1', slscam: 'slscam', orion: 'orion', uas: 'uas', banana: 'banana', osb: 'osb' };
+
+// ——— camera tags / sync badges ———
+const LABEL = {
+  live: ['CAM 1', '直播信号', 'NASA TV', 'sync'], track: ['CAM 1', '跟踪望远镜', 'TRACKING', 'sync'],
+  fr1: ['CAM 2', '1 号发射控制室', 'FIRING ROOM 1', 'window'],
+  slscam: ['CAM 3', '箭载摄像机', 'SLS VEHICLE CAM', 'sync'], orion: ['CAM 4', '猎户座俯视', 'ORION CAM', 'sync'],
+  uas: ['CAM 5', '无人机', 'UAS', 'sync'], banana: ['CAM 6', '香蕉河远景', 'BANANA CREEK', 'sync'],
+  osb: ['CAM 7', 'OSB II 阳台', 'OSB II', 'restored'],
+  photo: ['PHOTO', '乘组出发 · 当天', 'CREW WALKOUT', ''], doc: ['DOC', '任务简介', 'FACT SHEET', ''],
+  thrust: ['DATA', '起飞推力', 'LIFTOFF THRUST', ''], check: ['LIST', '倒计时节点', 'COUNTDOWN MILESTONES', ''],
+  profile: ['NEXT', '飞行节点', 'FLIGHT EVENTS', '']
+};
+const SYNC = { sync: ['实时同步', 'LIVE SYNC'], window: ['同一时段 · 未逐帧同步', 'SAME WINDOW'], restored: ['慢动作还原 1×', 'REAL-TIME'] };
+
+// ——— layouts (event-driven; every t lands on a real spoken line in the source audio) ———
+const HUD_CLOCK = [24, 872, 656, 184], HUD_TX = [688, 872, 1208, 184];
+const GX = [24, 651, 1278], GY = [24, 371, 718], GW = 618, GH = 338;
+const gc = (c, r, cw = 1) => [GX[c], GY[r], cw === 1 ? GW : GX[c + cw - 1] + GW - GX[c], GH];
+const FULL = [0, 0, W, H];
+const LAY = [
+  { t: 0, cells: { live: [24, 24, 1872, 840] } },                                                                 // 1 cell
+  { t: 2.5, cells: { live: [24, 24, 1240, 840], fr1: [1272, 24, 624, 840] } },                                     // "Great call-out"
+  { t: 5.26, cells: { live: [24, 24, 1240, 840], fr1: [1272, 24, 624, 412], photo: [1272, 444, 624, 420] } },      // "Four brave explorers"
+  { t: 7.4, cells: { live: [24, 24, 1240, 560], thrust: [24, 592, 1240, 272], fr1: [1272, 24, 624, 412], photo: [1272, 444, 624, 420] } }, // "most powerful"
+  { t: 13.1, cells: { live: [24, 24, 1240, 840], check: [1272, 24, 624, 412], doc: [1272, 444, 624, 420] } },      // lull: document + checklist
+  { t: 19.6, cells: { live: [24, 24, 1240, 840], check: [1272, 24, 624, 412], slscam: [1272, 444, 624, 420] }, swap: { slscam: 'doc' } },
+  { t: 22.42, grid: true, cells: { live: gc(1, 0), slscam: gc(2, 0), clock: gc(1, 1), check: gc(2, 1), tx: gc(1, 2, 2) } },   // "Ten"
+  { t: 23.10, grid: true, cells: { orion: gc(0, 0), live: gc(1, 0), slscam: gc(2, 0), clock: gc(1, 1), check: gc(2, 1), tx: gc(1, 2, 2) } },  // "nine"
+  { t: 24.22, grid: true, cells: { orion: gc(0, 0), live: gc(1, 0), slscam: gc(2, 0), uas: gc(0, 1), clock: gc(1, 1), check: gc(2, 1), tx: gc(1, 2, 2) } },  // "eight"
+  { t: 25.24, grid: true, cells: { orion: gc(0, 0), live: gc(1, 0), slscam: gc(2, 0), uas: gc(0, 1), clock: gc(1, 1), check: gc(2, 1), fr1: gc(0, 2), tx: gc(1, 2, 2) } }, // "seven"
+  { t: T0, merge: true, cells: { osb: FULL } },                                                                   // "booster ignition"
+  { t: 36.36, cut: true, cells: { uas: FULL } },                                                                  // "The crew of Artemis II"
+  { t: 39.5, cut: true, cells: { banana: FULL } },                                                                // "Humanity's next great voyage"
+  { t: 42.0, cells: { uas: [24, 24, 1240, 840], slscam: [1272, 24, 624, 412], profile: [1272, 444, 624, 420] } },  // drone + onboard + milestones
+  { t: 51.3, cells: { track: [24, 24, 1240, 840], slscam: [1272, 24, 624, 412], profile: [1272, 444, 624, 420] }, swap: { track: 'uas' } },
+  { t: 54.0, cells: { slscam: FULL } }                                                                            // end card: back to one cell
+];
+const TR = 0.34, POP = 0.30, MERGE = 0.42;
+const ORDER = ['live', 'track', 'fr1', 'photo', 'thrust', 'check', 'doc', 'slscam', 'orion', 'uas', 'banana', 'osb', 'profile', 'clock', 'tx'];
+
+// Usable region of each camera at time t (avoiding burned-in text in the source: the broadcast corner bug, the "809"/"813" camera numbers, tracking data)
+const PUNCH = 16.47;   // "Sound suppression water is flowing": the live cell jump-cuts in closer
+function camRegion(cam, t, full) {
+  if (cam === 'live') {
+    if (t >= PUNCH && t < 24.5) return { r: [450, 260, 1570, 1020], fx: .5, fy: .5 };   // pushed in: base of the launch pad (sound-suppression water)
+    if (t < 24.5) return { r: [0, 110, 1920, 1080], fx: .5, fy: .5 };            // wide of the launch pad (broadcast bug along the top edge)
+    if (t < 27.27) return { r: [200, 40, 1380, 960], fx: .52, fy: .55 };         // fisheye: hydrogen igniters ("809" below)
+    return { r: [0, 290, 1920, 1080], fx: .45, fy: .5 };                         // engine close-up ("813" at top-right)
+  }
+  if (cam === 'track') return { r: [490, 0, 1400, 1080], fx: .5, fy: .5 };       // tracking telescope: avoid the data on both sides and the reticle at bottom-left
+  if (cam === 'uas') return (t < T0 && !full) ? { r: [380, 330, 1540, 900], fx: .5, fy: .5 } : { r: [0, 0, 1920, 1080], fx: .5, fy: .5 };
+  if (cam === 'banana') return full ? { r: [0, 0, 1920, 1080], fx: .5, fy: .5 } : { r: [100, 250, 1300, 925], fx: .5, fy: .5 };
+  if (cam === 'orion') return { r: [0, 0, 1080, 760], fx: .5, fy: .5 };
+  if (cam === 'fr1') return { r: [0, 0, 1920, 1080], fx: .35, fy: .45 };
+  if (cam === 'slscam' && t < T0) return { r: [0, 0, 1920, 1080], fx: .45, fy: .5 };
+  return { r: [0, 0, 1920, 1080], fx: .5, fy: .5 };
+}
+function crop(region, aspect, fx = .5, fy = .5) {
+  let [x0, y0, x1, y1] = region, rw = x1 - x0, rh = y1 - y0, w, h;
+  if (rw / rh > aspect) { h = rh; w = h * aspect; } else { w = rw; h = w / aspect; }
+  const x = clamp(x0 + fx * rw - w / 2, x0, x1 - w), y = clamp(y0 + fy * rh - h / 2, y0, y1 - h);
+  return [x, y, w, h];
+}
+
+// ——— source-audio transcript (film seconds; word by word). who: kc launch commentary / loop loop calls / nar narration (our voice-over) ———
+const CUES = [
+  { who: 'loop', t0: 0.40, t1: 2.5, zh: 'GLS：同意移交 ALS 自动程序。', w: [['GLS,', .40], ['go', .88], ['for', 1.12], ['ALS.', 1.36]] },
+  { who: 'kc', t0: 2.5, t1: 5.26, zh: '好口令。火箭现在靠自己了。', w: [['Great', 2.50], ['call-out.', 2.76], ['The', 3.48], ['rocket', 3.60], ['is', 3.82], ['on', 4.06], ['its', 4.20], ['own.', 4.38]] },
+  { who: 'kc', t0: 5.26, t1: 7.86, zh: '四位勇敢的探索者，准备乘上', w: [['Four', 5.26], ['brave', 5.32], ['explorers,', 5.64], ['ready', 6.20], ['to', 6.76], ['ride', 6.96]] },
+  { who: 'kc', t0: 7.86, t1: 13.1, zh: 'NASA 发射过的最强大的火箭。', w: [['the', 7.18], ['most', 7.34], ['powerful', 7.54], ['rocket', 7.98], ['NASA', 11.0], ['has', 11.48], ['ever', 11.84], ['launched.', 12.32]] },
+  { who: 'nar', t0: 13.4, t1: 16.0, zh: '约 10 天：绕过月球，再飞回来。', w: [['About', 13.40], ['ten', 13.58], ['days:', 13.86], ['around', 14.12], ['the', 14.56], ['Moon,', 14.76], ['and', 14.94], ['back.', 15.16]] },
+  { who: 'kc', t0: 16.47, t1: 20.0, zh: '消声水正在喷注。', w: [['Sound', 16.47], ['suppression', 16.86], ['water', 17.16], ['is', 17.48], ['flowing.', 17.66]] },
+  { who: 'kc', t0: 20.12, t1: 22.42, zh: '开始了。', w: [['And', 20.12], ['here', 20.52], ['we', 20.70], ['go.', 20.84]] },
+  { who: 'kc', t0: 22.42, t1: 26.46, zh: '十、九、八、七，', w: [['Ten,', 22.42], ['nine,', 23.10], ['eight,', 24.22], ['seven,', 25.24]] },
+  { who: 'kc', t0: 26.46, t1: 29.2, zh: 'RS-25 发动机点火……', w: [['RS-25', 26.46], ['engines', 27.18], ['lit…', 28.02]] },
+  { who: 'kc', t0: 29.24, t1: 34.1, zh: '四、三、二、一，助推器点火。', w: [['four,', 29.24], ['three,', 29.90], ['two,', 30.82], ['one,', 31.56], ['booster', 32.70], ['ignition.', 32.82]] },
+  { who: 'kc', t0: 34.16, t1: 36.3, zh: '升空。', w: [['And', 34.16], ['liftoff.', 34.42]] },
+  { who: 'kc', t0: 36.36, t1: 39.45, zh: '阿尔忒弥斯二号乘组，正飞向月球。', w: [['The', 36.36], ['crew', 36.58], ['of', 36.82], ['Artemis', 37.00], ['II,', 37.26], ['now', 37.68], ['bound', 37.98], ['for', 38.30], ['the', 38.60], ['Moon.', 38.72]] },
+  { who: 'kc', t0: 39.5, t1: 42.2, zh: '人类下一段伟大航程，就此开始。', w: [['Humanity’s', 39.50], ['next', 40.06], ['great', 40.36], ['voyage', 40.66], ['begins.', 41.12]] },
+  { who: 'nar', t0: 42.3, t1: 46.0, zh: '下一个节点：助推器分离，T+2 分 09 秒。', w: [['Next', 42.30], ['on', 42.48], ['the', 42.70], ['clock:', 42.80], ['booster', 43.44], ['separation,', 43.60], ['at', 44.16], ['two', 44.52], ['minutes', 44.66], ['nine.', 44.86]] },
+  { who: 'loop', t0: 46.4, t1: 49.7, zh: '滚转、俯仰正常。', w: [['Good', 46.40], ['roll,', 47.08], ['pitch.', 47.48]] },
+  { who: 'loop', t0: 49.78, t1: 53.7, zh: '收到，滚转、俯仰。', w: [['Roger,', 49.78], ['roll,', 50.32], ['pitch.', 50.38]] },
+  { who: 'kc', t0: 53.78, t1: 56.2, zh: '休斯敦现在接管 Integrity 号的飞行，', w: [['Houston,', 53.78], ['now', 53.96], ['controlling', 54.32], ['the', 54.68], ['flight', 54.86], ['of', 55.08], ['Integrity', 55.22]] },
+  { who: 'kc', t0: 56.2, t1: 59.5, zh: '执行阿尔忒弥斯二号绕月任务。', w: [['on', 55.60], ['the', 55.94], ['Artemis', 56.08], ['II', 56.30], ['mission', 56.58], ['around', 56.86], ['the', 57.22], ['Moon.', 57.40]] }
+];
+window.CUES = CUES;
+const WHO = { kc: ['发射解说', 'LAUNCH COMMENTARY'], loop: ['回路通话', 'LOOP'], nar: ['旁白', 'NARRATOR'] };
+
+// ——— handovers of control (the story's three beats) ———
+const HANDS = [{ t: -1, i: 0 }, { t: 0.40, i: 1 }, { t: 53.78, i: 2 }];
+const HAND_LAB = [['地面', 'GLS'], ['火箭', 'ALS'], ['休斯敦', 'HOUSTON']];
+
+// ——— countdown milestones (NASA's published planned times; "听到" (heard) = the time actually called out in the source audio) ———
+const CHECK = [
+  { m: -33, zh: '移交自动程序', en: 'GO FOR ALS', heard: -32.10 },
+  { m: -30, zh: '芯级计算机接管', en: 'CORE STAGE → ALS' },
+  { m: -12, zh: '氢气燃烧点火器', en: 'H2 BURN-OFF IGNITERS' },
+  { m: -10, zh: '发动机启动指令', en: 'ENGINE START CMD' },
+  { m: -6.36, zh: 'RS-25 启动', en: 'RS-25 STARTUP', heard: -6.04 },
+  { m: 0, zh: '助推器点火 · 升空', en: 'BOOSTER IGNITION', heard: 0.20 }
+];
+// ——— flight milestones (after liftoff) ———
+const FLIGHT = [
+  { zh: '升空', en: 'LIFTOFF', m: 0, heard: 0 },
+  { zh: '滚转、俯仰', en: 'ROLL & PITCH', heard: 13.90 },
+  { zh: '休斯敦接管', en: 'HOUSTON CONTROL', heard: 21.28 },
+  { zh: '助推器分离', en: 'BOOSTER SEP', m: 129, expected: true }
+];
+
+// ——— photo / document ———
+const CREW = [[.225, '汉森', 'HANSEN · MS · CSA'], [.49, '格洛弗', 'GLOVER · PILOT'], [.706, '怀斯曼', 'WISEMAN · CDR'], [.904, '科赫', 'KOCH · MS']];
+const DOC_ROWS = [   // measured on doc.jpg (2880 wide): top/bottom of each line y0/y1; the framing window's top/bot fall in the white space between lines
+  { t: 13.45, y0: 913, y1: 1027, top: 880, bot: 1168, x0: 1830, x1: 2375, zh: '10 天试飞', en: '10-DAY TEST FLIGHT' },
+  { t: 16.45, y0: 1308, y1: 1420, top: 1168, bot: 1429, x0: 1830, x1: 2330, zh: '先绕地球 2 圈', en: '2 EARTH ORBITS FIRST' }
+];
+let PHOTO = null, DOC = null;
+
+// ———————————————————————————— drawing helpers ————————————————————————————
+function text(s, x, y, font, color, align = 'left', ls = 0) {
+  g.font = font; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic';
+  g.letterSpacing = ls + 'px'; g.fillText(s, x, y); g.letterSpacing = '0px';
+}
+function slots(str, x, y, font, color) {   // digits drawn centred in fixed-width slots, so they don't jitter when the second ticks over
+  g.font = font; const dw = Math.max(...'0123456789'.split('').map(d => g.measureText(d).width));
+  g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; let cx = x;
+  for (const ch of str) { const sw = /[0-9]/.test(ch) ? dw : g.measureText(ch).width; g.fillText(ch, cx + sw / 2, y); cx += sw; }
+  g.textAlign = 'left'; return cx - x;
+}
+function tw(s, font, ls = 0) { g.font = font; g.letterSpacing = ls + 'px'; const w = g.measureText(s).width; g.letterSpacing = '0px'; return w; }
+function chip(x, y, id, maxW) {
+  const [code, zh, en, sync] = LABEL[id];
+  const f1 = `600 15px ${F_MONO}`, f2 = `700 19px ${F_ZH}`, f3 = `500 13px ${F_MONO}`;
+  const w1 = tw(code, f1), w2 = tw(zh, f2), w3 = tw(en, f3);
+  const w = 14 + 10 + w1 + 12 + w2 + 10 + w3 + 14;
+  g.fillStyle = 'rgba(6,8,10,0.84)'; g.fillRect(x, y, w, 32);
+  g.fillStyle = sync === 'sync' || sync === 'restored' ? C.org : C.dim; g.fillRect(x + 12, y + 12, 8, 8);
+  text(code, x + 28, y + 22, f1, C.org);
+  text(zh, x + 40 + w1, y + 23, f2, C.ink);
+  text(en, x + 50 + w1 + w2, y + 22, f3, C.dim);
+  return w;
+}
+function badgeW(kind) { const [zh, en] = SYNC[kind]; return 12 + 12 + tw(zh, `500 15px ${F_ZH}`) + 8 + tw(en, `500 12px ${F_MONO}`) + 12; }
+function syncBadge(x1, y, kind) {   // sync badge at top-right (right-aligned to x1)
+  if (!kind) return;
+  const [zh, en] = SYNC[kind];
+  const f2 = `500 15px ${F_ZH}`, f3 = `500 12px ${F_MONO}`;
+  const w = 12 + 12 + tw(zh, f2) + 8 + tw(en, f3) + 12, x = x1 - w;
+  if (kind === 'window') {
+    g.fillStyle = 'rgba(6,8,10,0.84)'; g.fillRect(x, y, w, 28);
+    g.save(); g.beginPath(); g.rect(x, y, w, 28); g.clip(); g.strokeStyle = 'rgba(124,135,141,0.28)'; g.lineWidth = 2;
+    for (let k = -30; k < w + 30; k += 9) { g.beginPath(); g.moveTo(x + k, y + 28); g.lineTo(x + k + 28, y); g.stroke(); }
+    g.restore(); g.strokeStyle = C.dim; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, 27);
+    g.beginPath(); g.arc(x + 15, y + 14, 4.5, 0, 7); g.stroke();
+    text(zh, x + 26, y + 20, f2, C.ink); text(en, x + 34 + tw(zh, f2), y + 19, f3, C.dim);
+  } else {
+    g.fillStyle = 'rgba(6,8,10,0.84)'; g.fillRect(x, y, w, 28);
+    g.fillStyle = C.org; g.beginPath(); g.arc(x + 15, y + 14, 4.5, 0, 7); g.fill();
+    text(zh, x + 26, y + 20, f2, C.ink); text(en, x + 34 + tw(zh, f2), y + 19, f3, C.org);
+  }
+}
+function vignette(r) {
+  const [x, y, w, h] = r;
+  const gr = g.createRadialGradient(x + w / 2, y + h / 2, Math.min(w, h) * .35, x + w / 2, y + h / 2, Math.hypot(w, h) * .62);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.36)');
+  g.fillStyle = gr; g.fillRect(x, y, w, h);
+}
+function drawCam(im, cam, t, rect, full) {
+  if (!im) return;
+  const [x, y, w, h] = rect; if (w < 2 || h < 2) return;
+  const { r, fx, fy } = camRegion(cam, t, full);
+  const [sx, sy, sw, sh] = crop(r, w / h, fx, fy);
+  const k = im.width / 1920;   // high-res frames (livehi) are framed in the same 1920 coordinates
+  g.drawImage(im, sx * k, sy * k, sw * k, sh * k, x, y, w, h);
+}
+
+// ——— photo cell: crew + name tags ———
+function drawPhoto(t, rect) {
+  const [x, y, w, h] = rect; if (!PHOTO || w < 2) return;
+  const k = 1 + 0.06 * seg(t, 5.26, 13.1);
+  const [sx, sy, sw, sh] = crop([0, 0, PHOTO.width, PHOTO.height], 624 / 420, .55, .5);
+  const cw = sw / k, ch = sh / k, cx0 = sx + (sw - cw) * .55, cy0 = sy + (sh - ch) * .4;
+  const sc = h / 420;   // drawn in proportion to the cell height; when the cell opens / closes, only the crop changes
+  g.drawImage(PHOTO, cx0, cy0, cw, ch, x, y, 624 * sc, h);
+  const gr = g.createLinearGradient(0, y + h - 130, 0, y + h); gr.addColorStop(0, 'rgba(6,8,10,0)'); gr.addColorStop(1, 'rgba(6,8,10,0.88)');
+  g.fillStyle = gr; g.fillRect(x, y + h - 130, w, 130);
+  CREW.forEach(([fxr, zh, en], i) => {
+    const a = eo(seg(t, 5.7 + i * .16, 6.0 + i * .16)); if (a <= 0) return;
+    const px = x + (fxr * PHOTO.width - cx0) / cw * 624 * sc;
+    g.globalAlpha = a;
+    g.fillStyle = C.org; g.fillRect(px - 1, y + h - 72 - 10 * (1 - a), 2, 14);
+    text(zh, px, y + h - 34, `700 21px ${F_ZH}`, C.ink, 'center');
+    text(en, px, y + h - 14, `500 11px ${F_MONO}`, C.faint, 'center');
+    g.globalAlpha = 1;
+  });
+  text('NASA/John Kraus', x + w - 10, y + 62, `500 11px ${F_MONO}`, 'rgba(242,245,247,0.5)', 'right');
+}
+
+// ——— data cell: liftoff thrust (SLS 15% more than Saturn V) ———
+function drawThrust(t, rect) {
+  const [x, y, w, h] = rect; if (w < 2) return;
+  g.fillStyle = '#0B0E11'; g.fillRect(x, y, w, h);
+  // fine grid
+  g.strokeStyle = 'rgba(222,232,238,0.05)'; g.lineWidth = 1;
+  for (let gx = x + 260; gx < x + w; gx += 80) { g.beginPath(); g.moveTo(gx + .5, y + 56); g.lineTo(gx + .5, y + h - 30); g.stroke(); }
+  const L = 820, k1 = eio(seg(t, 7.7, 8.5)), k2 = eio(seg(t, 7.9, 8.6));
+  const bx = x + 262, b1y = y + 84, b2y = y + 168;
+  text('SLS', x + 40, b1y + 34, `600 34px ${F_NUM}`, C.ink);
+  text('BLOCK 1', x + 104, b1y + 34, `500 14px ${F_MONO}`, C.dim);
+  text('土星五号', x + 40, b2y + 33, `700 26px ${F_ZH}`, C.faint);
+  text('SATURN V', x + 152, b2y + 32, `500 14px ${F_MONO}`, C.dim);
+  g.fillStyle = C.org; g.fillRect(bx, b1y, L * k1, 46);
+  g.fillStyle = 'rgba(242,245,247,0.32)'; g.fillRect(bx, b2y, (L / 1.15) * k2, 46);
+  const a = eo(seg(t, 8.4, 8.7));
+  g.globalAlpha = a;
+  text('880 万磅', bx + L + 22, b1y + 33, `700 30px ${F_ZH}`, C.ink);
+  text('8.8 M LBF', bx + L + 22, b1y + 54, `500 13px ${F_MONO}`, C.dim);
+  // +15% bracket
+  const ex = bx + L / 1.15, ey = b2y + 23;
+  g.strokeStyle = C.org; g.lineWidth = 2; g.setLineDash([5, 5]);
+  g.beginPath(); g.moveTo(ex, b1y + 46); g.lineTo(ex, b2y + 46); g.stroke(); g.setLineDash([]);
+  text('+15%', ex + 18, ey + 12, `600 30px ${F_NUM}`, C.org);
+  text('SLS 多 15%', ex + 86, ey + 10, `700 20px ${F_ZH}`, C.ink);
+  text('来源 NASA RS-25 发动机简介', x + w - 16, y + h - 12, `500 12px ${F_ZH}`, 'rgba(124,135,141,0.8)', 'right');
+  g.globalAlpha = 1;
+}
+
+// ——— checklist cell ———
+function drawCheck(t, rect) {
+  const [x, y, w, h] = rect; if (w < 2) return;
+  const M = t - T0;
+  g.fillStyle = '#0B0E11'; g.fillRect(x, y, w, h);
+  const top = y + 54, rh = Math.min(56, (h - 84) / CHECK.length);
+  CHECK.forEach((c, i) => {
+    const ry = top + i * rh, passed = M >= c.m, heard = c.heard !== undefined && M >= c.heard;
+    const pk = eo(seg(M, c.m, c.m + .25));
+    // check box
+    g.strokeStyle = passed ? C.org : 'rgba(124,135,141,0.6)'; g.lineWidth = 2; g.strokeRect(x + 22, ry + 8, 20, 20);
+    if (passed) { g.fillStyle = C.org; g.fillRect(x + 22, ry + 8, 20 * pk, 20); g.strokeStyle = C.dark; g.lineWidth = 3; g.beginPath(); g.moveTo(x + 26, ry + 18); g.lineTo(x + 31, ry + 23); g.lineTo(x + 39, ry + 12); g.stroke(); }
+    text(checkTime(c), x + 56, ry + 26, `600 22px ${F_NUM}`, passed ? C.ink : C.dim);
+    text(c.zh, x + 132, ry + 26, `700 20px ${F_ZH}`, passed ? C.ink : C.dim);
+    text(c.en, x + 132 + tw(c.zh, `700 20px ${F_ZH}`) + 10, ry + 25, `500 12px ${F_MONO}`, passed ? 'rgba(242,245,247,0.6)' : 'rgba(124,135,141,0.7)');
+    if (heard) {   // "听到" (heard) tag: the time actually called out in the source audio
+      const a = eo(seg(M, c.heard, c.heard + .3)), lab = '听到 ' + (c.heard < 0 ? '−' : '+') + Math.abs(c.heard).toFixed(1);
+      const lw = tw(lab, `500 14px ${F_ZH}`) + 34;
+      g.globalAlpha = a; g.fillStyle = 'rgba(255,59,48,0.16)'; g.fillRect(x + w - lw - 16, ry + 6, lw, 24);
+      g.fillStyle = C.live; for (let b = 0; b < 4; b++) { const bh = [6, 12, 8, 14][b]; g.fillRect(x + w - lw - 8 + b * 4, ry + 18 - bh / 2, 2, bh); }
+      text(lab, x + w - lw + 12, ry + 23, `500 14px ${F_ZH}`, C.ink); g.globalAlpha = 1;
+    }
+    g.fillStyle = 'rgba(222,232,238,0.07)'; g.fillRect(x + 18, ry + rh - 2, w - 36, 1);
+  });
+  text('NASA 公布的计划时刻 · 红牌为原声实际喊出', x + 22, y + h - 12, `500 12px ${F_ZH}`, 'rgba(124,135,141,0.85)');
+}
+function checkTime(c) { return c.m === -6.36 ? 'T−6.36' : (c.m < 0 ? 'T−' + (-c.m) : 'T−0'); }
+
+// ——— document cell: the NASA mission fact sheet line by line (top 72% a close-up of the paper, a black caption band below) ———
+function drawDoc(t, rect) {
+  const [x, y, w, h] = rect; if (!DOC || w < 2) return;
+  let cur = DOC_ROWS[0], prev = DOC_ROWS[0];
+  for (const r of DOC_ROWS) if (t >= r.t) { prev = cur; cur = r; }
+  const k = eio(seg(t, cur.t, cur.t + .45));
+  const top = lerp(prev.top, cur.top, k), bot = lerp(prev.bot, cur.bot, k);
+  const sc = h / 420, dw = 624 * sc, dh = 302 * sc;
+  // the framing window is a fixed 600 source pixels wide (1800–2400: every text line fully inside, the mission patch on the right outside), height follows the line; scaled to "fit", with paper white above and below
+  const sh = bot - top, sx = 1800, sw = 600, sy = top;
+  const s = Math.min(dw / sw, dh / sh), ox = x + (dw - sw * s) / 2, oy = y + (dh - sh * s) / 2;
+  g.fillStyle = '#FFFFFF'; g.fillRect(x, y, dw, dh);
+  g.drawImage(DOC, sx, sy, sw, sh, ox, oy, sw * s, sh * s);
+  g.fillStyle = 'rgba(10,14,18,0.10)'; g.fillRect(x, y, dw, dh);
+  g.fillStyle = '#0B0E11'; g.fillRect(x, y + dh, dw, h - dh);
+  if (t >= cur.t) {
+    const hy = oy + (cur.y0 - 8 - sy) * s, hx0 = ox + (cur.x0 - sx) * s, hx1 = ox + (cur.x1 - sx) * s, hh = (cur.y1 - cur.y0 + 16) * s;
+    const ww = (hx1 - hx0) * eo(seg(t, cur.t + .05, cur.t + .4));
+    g.fillStyle = 'rgba(255,91,31,0.22)'; g.fillRect(hx0, hy, ww, hh);
+    g.fillStyle = C.org; g.fillRect(hx0 - 8, hy, 5, hh);
+    const a = eo(seg(t, cur.t + .15, cur.t + .4));
+    g.save(); g.beginPath(); g.rect(x, y + dh, dw * a, h - dh); g.clip();
+    g.fillStyle = C.org; g.fillRect(x, y + dh, 5, h - dh);
+    text(cur.zh, x + 24, y + dh + (h - dh) / 2 + 14, `700 38px ${F_ZH}`, C.ink);
+    text(cur.en, x + 34 + tw(cur.zh, `700 38px ${F_ZH}`), y + dh + (h - dh) / 2 + 12, `500 15px ${F_MONO}`, C.dim);
+    g.restore();
+  }
+}
+
+// ——— flight-milestone cell: schematic profile + the second countdown (to booster separation) ———
+function drawProfile(t, rect) {
+  const [x, y, w, h] = rect; if (w < 2) return;
+  const M = t - T0;
+  g.fillStyle = '#0B0E11'; g.fillRect(x, y, w, h);
+  // schematic arc: by time (0 → T+2:09)
+  const ax = x + 40, ay = y + 236, bx = x + w - 40, by = y + 70;
+  const pt = u => [lerp(ax, bx, u), ay - (ay - by) * Math.sin(u * Math.PI / 2) ** 1.4];
+  g.strokeStyle = 'rgba(222,232,238,0.22)'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath();
+  for (let i = 0; i <= 60; i++) { const [px, py] = pt(i / 60); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); g.setLineDash([]);
+  const u = clamp(M / 129);
+  g.strokeStyle = C.org; g.lineWidth = 3; g.beginPath();
+  for (let i = 0; i <= 60; i++) { const uu = u * i / 60, [px, py] = pt(uu); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke();
+  const [dx, dy] = pt(u); g.fillStyle = C.org; g.beginPath(); g.arc(dx, dy, 7, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,91,31,0.4)'; g.lineWidth = 2; g.beginPath(); g.arc(dx, dy, 12 + 4 * Math.sin(t * 6), 0, 7); g.stroke();
+  const [sx2, sy2] = pt(1); g.strokeStyle = C.ink; g.lineWidth = 2; g.beginPath(); g.arc(sx2, sy2, 8, 0, 7); g.stroke();
+  text('助推器分离 BOOSTER SEP', sx2 - 14, sy2 + 34, `700 17px ${F_ZH}`, C.ink, 'right');
+  text('示意 · 按时间，不按距离', ax, ay + 26, `500 12px ${F_ZH}`, 'rgba(124,135,141,0.85)');
+  // the second countdown
+  const left = 129 - M, a = eo(seg(t, 42.3, 42.7));
+  g.globalAlpha = a;
+  text('距助推器分离 TO BOOSTER SEP', x + 22, y + h - 112, `500 15px ${F_ZH}`, C.dim);
+  slots('−' + Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0'), x + 22, y + h - 40, `600 76px ${F_NUM}`, C.ink);
+  text('预计 T+2:09 EXPECTED', x + 22, y + h - 14, `500 13px ${F_MONO}`, C.org);
+  g.globalAlpha = 1;
+  // milestone list (bottom-right)
+  const lx = x + w - 260;
+  FLIGHT.slice(0, 3).forEach((e, i) => {
+    const ry = y + h - 120 + i * 36, on = M >= e.heard, k = eo(seg(M, e.heard, e.heard + .25));
+    g.strokeStyle = on ? C.org : 'rgba(124,135,141,0.6)'; g.lineWidth = 2; g.strokeRect(lx, ry, 18, 18);
+    if (on) { g.fillStyle = C.org; g.fillRect(lx, ry, 18 * k, 18); }
+    text(e.zh, lx + 30, ry + 16, `700 18px ${F_ZH}`, on ? C.ink : C.dim);
+    text(on ? (e.heard ? '+' + e.heard.toFixed(1) : '0.0') : '', lx + 236, ry + 15, `600 15px ${F_MONO}`, on ? C.org : C.dim, 'right');
+  });
+}
+
+// ——— the clock (the protagonist) ———
+function drawClock(t, r, over, bigness = 0) {
+  const [x, y, w, h] = r, M = t - T0, neg = M < 0;
+  const inv = !neg;
+  const flash = inv ? Math.exp(-M * 6) : 0;
+  g.fillStyle = inv ? C.org : (over ? C.plate : '#0B0E11'); g.fillRect(x, y, w, h);
+  if (flash > .01) { g.fillStyle = `rgba(255,255,255,${flash * .8})`; g.fillRect(x, y, w, h); }
+  g.strokeStyle = inv ? C.org : C.line; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  const ink = inv ? C.dark : C.ink, acc = inv ? C.dark : C.org, dim = inv ? 'rgba(10,11,12,0.6)' : C.dim;
+  // header: countdown / mission elapsed time + control bar
+  text(inv ? '任务时间 MISSION ELAPSED' : '倒计时 COUNTDOWN', x + 20, y + 30, `500 15px ${F_ZH}`, dim);
+  let hi = 0, hk = 1, ht = -1; for (const hd of HANDS) if (t >= hd.t) { hi = hd.i; ht = hd.t; }
+  hk = eo(seg(t, ht, ht + .3));
+  const PW = HAND_LAB.map(([zh, en]) => tw(zh, `700 15px ${F_ZH}`) + tw(en, `500 10px ${F_MONO}`) + 24);
+  const px0 = x + w - 20 - PW.reduce((a, b) => a + b + 4, 0) + 4;
+  text('控制', px0 - 10, y + 30, `500 13px ${F_ZH}`, dim, 'right');
+  HAND_LAB.forEach(([zh, en], i) => {
+    const pw = PW[i], bx = px0 + PW.slice(0, i).reduce((a, b) => a + b + 4, 0), act = i === hi;
+    g.fillStyle = act ? (inv ? C.dark : C.org) : (inv ? 'rgba(10,11,12,0.12)' : 'rgba(255,255,255,0.06)');
+    if (act) g.fillRect(bx, y + 12, pw * hk, 26); else g.fillRect(bx, y + 12, pw, 26);
+    text(zh, bx + 8, y + 31, `700 15px ${F_ZH}`, act ? (inv ? C.org : C.dark) : dim);
+    text(en, bx + pw - 6, y + 30, `500 10px ${F_MONO}`, act ? (inv ? C.org : C.dark) : dim, 'right');
+  });
+  // handover flash
+  if (ht > 0 && t - ht < .6) { g.fillStyle = `rgba(255,248,236,${.35 * (1 - (t - ht) / .6)})`; g.fillRect(x, y, w, h); }
+  // digits: scale with the cell size; each new second drops in from 14 px above
+  const secs = Math.floor(Math.abs(M)), tenth = Math.floor((Math.abs(M) % 1) * 10), sub = Math.abs(M) % 1;
+  const since = neg ? 1 - sub : sub;
+  const fs = Math.min(132, (h - 70) * .92, w * .2), sym = fs * .85;
+  const drop = (1 - eo(clamp(since / .12))) * -14 * fs / 132;
+  const base = y + 44 + fs * .98 + Math.max(0, (h - 64 - fs * 1.05) * .45);
+  text(neg ? 'T−' : 'T+', x + 20, base, `600 ${sym}px ${F_NUM}`, acc);
+  const tw0 = tw('T−', `600 ${sym}px ${F_NUM}`);
+  const mm = String(Math.floor(secs / 60)).padStart(2, '0'), s2 = String(secs % 60).padStart(2, '0');
+  g.save(); g.beginPath(); g.rect(x, base - fs * .95, w, fs * 1.05); g.clip();
+  const dw = slots(`${mm}:${s2}`, x + 26 + tw0, base + drop, `600 ${fs}px ${F_NUM}`, ink);
+  g.restore();
+  slots('.' + tenth, x + 32 + tw0 + dw, base, `500 ${fs * .41}px ${F_NUM}`, dim);
+  const bx = x + 20, by = Math.min(base + 14, y + h - 12), n = 10, bw = (w - 40 - (n - 1) * 4) / n;
+  for (let i = 0; i < n; i++) {
+    const on = neg ? i < Math.ceil((1 - sub) * 10 - 1e-6) : i < Math.floor(sub * 10) + 1;
+    g.fillStyle = on ? acc : (inv ? 'rgba(10,11,12,0.18)' : 'rgba(255,255,255,0.10)');
+    g.fillRect(bx + i * (bw + 4), by, bw, 6);
+  }
+}
+
+// ——— live transcript box (subtitles): English word by word, Chinese as whole sentences; one line each ———
+function drawTx(t, r, over) {
+  const [x, y, w, h] = r;
+  g.fillStyle = over ? C.plate : '#0B0E11'; g.fillRect(x, y, w, h);
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  let cue = null; for (const c of CUES) if (t >= c.t0 && t < c.t1) cue = c;
+  const speaking = cue && cue.w.some(([, wt], i) => t >= wt && t < (cue.w[i + 1] ? cue.w[i + 1][1] : wt + .6));
+  const lab = WHO[cue ? cue.who : 'kc'];
+  g.fillStyle = speaking ? C.live : C.dim; g.beginPath(); g.arc(x + 26, y + 26, 5, 0, 7); g.fill();
+  text(lab[0], x + 42, y + 32, `500 16px ${F_ZH}`, cue && cue.who === 'nar' ? C.org : C.dim);
+  text(lab[1], x + 52 + tw(lab[0], `500 16px ${F_ZH}`), y + 31, `500 13px ${F_MONO}`, C.dim);
+  text('实时转写 LIVE TRANSCRIPT', x + w - 20, y + 31, `500 13px ${F_MONO}`, 'rgba(124,135,141,0.7)', 'right');
+  if (!cue) return;
+  const extra = Math.max(0, h - 184) * .35;
+  const ef = `500 ${h > 200 ? 34 : 30}px ${F_LAT}`, ey = y + 82 + extra;
+  let cx = x + 24;
+  for (const [word, wt] of cue.w) {
+    const ts = Math.max(wt, cue.t0); if (t < ts) break;
+    g.globalAlpha = eo(seg(t, ts, ts + .08)); text(word, cx, ey, ef, C.ink); g.globalAlpha = 1;
+    cx += tw(word + ' ', ef);
+  }
+  if (Math.floor(t * 3) % 2 === 0 || speaking) { g.fillStyle = C.org; g.fillRect(cx, ey - 24, 12, 28); }
+  g.globalAlpha = eo(seg(t, cue.t0, cue.t0 + .12));
+  text(cue.zh, x + 24, y + h - 30 - extra * .6, `700 ${h > 200 ? 56 : 50}px ${F_ZH}`, C.ink);
+  g.globalAlpha = 1;
+}
+
+// ——— event flags ———
+const FLAGS = [
+  { id: 'water', cell: 'live', t0: 16.47, t1: 21.6, zh: '消声水喷注', en: 'SOUND SUPPRESSION WATER' },
+  { id: 'rs25', cell: 'live', t0: 26.46, t1: 32.3, zh: 'RS-25 ×4 启动', en: 'ENGINE START · T−6.36' }
+];
+function drawFlag(f, t, r) {
+  const s = eo(seg(t, f.t0, f.t0 + .26)), o = 1 - seg(t, f.t1 - .3, f.t1);
+  const f1 = `700 26px ${F_ZH}`, f2 = `600 15px ${F_MONO}`, w = 36 + tw(f.zh, f1) + 16 + tw(f.en, f2) + 20;
+  const bx = r[0] + 12, by = r[1] + r[3] - 64;
+  g.save(); g.globalAlpha = o; g.beginPath(); g.rect(r[0], r[1], r[2], r[3]); g.clip();
+  g.fillStyle = C.org; g.fillRect(bx, by, w * s, 50);
+  g.beginPath(); g.rect(bx, by, w * s, 50); g.clip();
+  text(f.zh, bx + 18, by + 35, f1, C.dark);
+  text(f.en, bx + 34 + tw(f.zh, f1), by + 32, f2, 'rgba(10,11,12,0.72)');
+  g.restore();
+}
+
+// ——— title package (opening) and end card ———
+function drawTitle(t, r) {
+  if (t > 6.9) return;
+  const a = eo(seg(t, .45, .85)), o = 1 - eio(seg(t, 6.4, 6.85));
+  const x = r[0] + 48, y = r[1] + r[3] - 70;
+  g.save(); g.beginPath(); g.rect(r[0], r[1], r[2], r[3]); g.clip();
+  const gr = g.createLinearGradient(r[0], 0, r[0] + 1100, 0);
+  gr.addColorStop(0, `rgba(6,8,10,${.72 * a * o})`); gr.addColorStop(1, 'rgba(6,8,10,0)');
+  g.fillStyle = gr; g.fillRect(r[0], y - 250, 1100, 280);
+  g.beginPath(); g.rect(x - 8, y - 260, 1100 * a * o, 300); g.clip();
+  g.translate(-36 * (1 - a), 0);
+  g.fillStyle = C.org; g.fillRect(x, y - 218, 6, 132);
+  text('自己倒数', x + 26, y - 128, `700 92px ${F_ZH}`, C.ink);
+  text('COUNTING ITSELF DOWN', x + 30, y - 92, `600 26px ${F_NUM}`, C.org, 'left', 6);
+  const b = eo(seg(t, .9, 1.25));
+  g.globalAlpha = b;
+  text('阿尔忒弥斯二号 · 2026 年 4 月 1 日 · 39B 发射台', x + 28, y - 34, `500 26px ${F_ZH}`, C.ink);
+  text('ARTEMIS II · APRIL 1, 2026 · LC-39B, KENNEDY SPACE CENTER', x + 28, y - 6, `500 15px ${F_MONO}`, C.dim);
+  g.restore();
+}
+const END = 54.0;
+function drawEnd(t) {
+  if (t < END) return;
+  const a0 = eo(seg(t, END, END + .5));
+  const gr = g.createLinearGradient(0, 0, 1300, 0);
+  gr.addColorStop(0, `rgba(6,8,10,${.86 * a0})`); gr.addColorStop(.6, `rgba(6,8,10,${.55 * a0})`); gr.addColorStop(1, 'rgba(6,8,10,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 1300, 860);
+  const X0 = 120;
+  const L = [
+    [END + .00, () => text('自己倒数', X0 - 6, 330, `700 112px ${F_ZH}`, C.ink), 330],
+    [END + .10, () => text('COUNTING ITSELF DOWN', X0, 392, `600 40px ${F_NUM}`, C.ink, 'left', 8), 392],
+    [END + .22, s => { g.fillStyle = C.org; g.fillRect(X0, 432, 420 * s, 3); }, 436],
+    [END + .30, () => { text('实时倒计时分屏', X0, 496, `700 34px ${F_ZH}`, C.ink); text('LIVE COUNTDOWN SPLIT-SCREEN', X0 + tw('实时倒计时分屏', `700 34px ${F_ZH}`) + 22, 494, `600 22px ${F_NUM}`, C.dim, 'left', 3); }, 496],
+    [END + .38, () => text('LemoLab × Claude Opus 5.5', X0, 552, `600 26px ${F_LAT}`, C.org), 552],
+    [END + .46, () => text('素材：NASA · 公有领域 · 非官方作品', X0, 616, `500 22px ${F_ZH}`, 'rgba(242,245,247,0.82)'), 616],
+    [END + .52, () => text('FOOTAGE: NASA · PUBLIC DOMAIN · UNOFFICIAL', X0, 646, `500 15px ${F_MONO}`, C.dim), 646]
+  ];
+  for (const [ts, fn, by] of L) {
+    const s = eo(seg(t, ts, ts + .38)); if (s <= 0) continue;
+    g.save(); g.beginPath(); g.rect(X0 - 20, by - 130, 1500 * s + 20, 150); g.clip();
+    g.translate(-40 * (1 - s), 0); fn(s); g.restore();
+  }
+}
+
+// ——— layout interpolation ———
+function layoutAt(t) {
+  let li = 0; for (let i = 0; i < LAY.length; i++) if (t >= LAY[i].t) li = i;
+  const L = LAY[li], Lp = LAY[Math.max(0, li - 1)];
+  const dur = L.merge ? MERGE : (L.grid && Lp.grid ? POP : TR);
+  const k = li === 0 || L.cut ? 1 : eio(seg(t, L.t, L.t + dur));
+  return { L, Lp, k, li, dur };
+}
+function hudRect(id, L) { if (L.cells[id]) return L.cells[id]; return id === 'clock' ? HUD_CLOCK : HUD_TX; }
+
+// ——— main render ———
+async function render(t) {
+  const f = Math.round(t * FPS);
+  const { L, Lp, k, dur } = layoutAt(t);
+  const ids = new Set([...Object.keys(L.cells), ...(k < 1 ? Object.keys(Lp.cells) : [])]);
+  if (L.merge && k < 1) for (const id of Object.keys(Lp.cells)) ids.add(id);
+  const ims = {};
+  const camIds = [...ids].filter(id => SRC[id]);
+  if (L.merge) camIds.push('osb');
+  await Promise.all(camIds.map(async id => { ims[id] = await img(frameSrc(SRC[id], f)); }));
+  if (ims.live && t >= PUNCH && t < 24.5) ims.live = await img(frameSrc('livehi', f));
+  for (let d = 1; d <= 3; d++) for (const id of camIds) img(frameSrc(SRC[id], f + d));
+  if (cache.size > 200) { const ks = [...cache.keys()]; for (const kk of ks.slice(0, cache.size - 150)) if (!kk.includes(`/${pad4(f)}`)) cache.delete(kk); }
+
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  const mergeK = L.merge ? eio(seg(t, T0, T0 + MERGE)) : 0;
+  const isFull = id => { const r = L.cells[id]; return r && r[2] >= W - 1 && k >= 1; };
+  let flagRects = {};
+
+  // nine-cell skeleton: cells not yet connected first light up as "待接入" (awaiting feed); a cell's picture opens only when the count reaches it
+  if (L.grid || (Lp.grid && k < 1 && !L.merge)) {
+    const a = L.grid && !Lp.grid ? k : 1;
+    g.globalAlpha = a;
+    for (const [c, rr] of [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2]]) {
+      const [x, y, w, h] = gc(c, rr);
+      g.fillStyle = '#0B0E11'; g.fillRect(x, y, w, h);
+      g.strokeStyle = C.line; g.lineWidth = 1; g.setLineDash([6, 6]); g.strokeRect(x + .5, y + .5, w - 1, h - 1); g.setLineDash([]);
+      g.strokeStyle = 'rgba(124,135,141,0.5)'; g.lineWidth = 2; g.beginPath(); g.arc(x + w / 2 - 70, y + h / 2 - 6, 6, 0, 7); g.stroke();
+      text('待接入', x + w / 2 - 54, y + h / 2, `500 17px ${F_ZH}`, C.dim);
+      text('STANDBY', x + w / 2 + 2, y + h / 2 - 1, `500 13px ${F_MONO}`, 'rgba(124,135,141,0.7)');
+    }
+    g.globalAlpha = 1;
+  }
+  for (const id of ORDER) {
+    if (!ids.has(id)) continue;
+    if ((id === 'clock' || id === 'tx') && !L.grid && !(Lp.grid && k < 1)) continue;   // the HUD is drawn separately
+    let a = Lp.cells[id], b = L.cells[id];
+    if (id === 'clock' || id === 'tx') { a = Lp.grid ? Lp.cells[id] : (id === 'clock' ? HUD_CLOCK : HUD_TX); b = L.grid ? L.cells[id] : (id === 'clock' ? HUD_CLOCK : HUD_TX); }
+    let r;
+    if (L.merge && a) {
+      // merge: each of the nine cells moves to its matching spot on the full screen, the gaps close, and they dissolve into one full-screen picture
+      const col = a[0] < 600 ? 0 : a[0] < 1200 ? 1 : 2, row = a[1] < 300 ? 0 : a[1] < 700 ? 1 : 2, span = a[2] > 1000 ? 2 : 1;
+      const tgt = [col * 640, row * 360, 640 * span, 360];
+      r = lerpR(a, tgt, mergeK);
+    } else if (a && b) r = lerpR(a, b, k);
+    else if (b) {
+      const swapFrom = L.swap && Object.keys(L.swap).includes(id);
+      r = swapFrom ? [b[0], b[1], b[2] * k, b[3]] : (L.cut ? b : [b[0], b[1], b[2] * k, b[3]]);
+    } else {
+      if (k >= 1 || L.cut) continue;
+      const swapped = L.swap && Object.values(L.swap).includes(id);
+      if (swapped) r = a;                                                  // a cell being replaced: stays in place and is covered from the left by the new cell
+      else r = (L.cells.slscam && L.cells.slscam[2] === W) ? [a[0] + a[2] * k, a[1], a[2] * (1 - k), a[3]] : [a[0], a[1], a[2] * (1 - k), a[3]];
+    }
+    if (r[2] < 1 || r[3] < 1) continue;
+    const full = r[2] >= W - 1 && r[3] >= H - 1;
+    g.save(); g.beginPath(); g.rect(r[0], r[1], r[2], r[3]); g.clip();
+    g.fillStyle = '#000'; g.fillRect(r[0], r[1], r[2], r[3]);
+    if (SRC[id]) drawCam(ims[id], SRC[id], t, r, full);
+    else if (id === 'photo') drawPhoto(t, r);
+    else if (id === 'thrust') drawThrust(t, r);
+    else if (id === 'check') drawCheck(t, r);
+    else if (id === 'doc') drawDoc(t, r);
+    else if (id === 'profile') drawProfile(t, r);
+    else if (id === 'clock') drawClock(t, r, false);
+    else if (id === 'tx') drawTx(t, r, false);
+    if (L.merge && a) { g.globalAlpha = eio(seg(t, T0, T0 + MERGE * .8)); if (ims.osb) g.drawImage(ims.osb, 0, 0, W, H); g.globalAlpha = 1; }
+    else if (SRC[id] && !full) vignette(r);
+    g.restore();
+    if (id === 'live' && !Lp.merge) flagRects.live = r;
+    const chrome = !full && !(L.merge && mergeK > .45) && r[2] > 220 && id !== 'clock' && id !== 'tx';
+    if (chrome) {
+      g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(r[0] + .5, r[1] + .5, r[2] - 1, r[3] - 1);
+      g.save(); g.beginPath(); g.rect(r[0], r[1], r[2], r[3]); g.clip();
+      const cw = chip(r[0] + 12, r[1] + 12, id);
+      const bw = LABEL[id][3] ? badgeW(LABEL[id][3]) : 0;
+      if (bw && cw + bw + 40 < r[2]) syncBadge(r[0] + r[2] - 12, r[1] + 14, LABEL[id][3]);
+      else if (bw) syncBadge(r[0] + r[2] - 12, r[1] + r[3] - 40, LABEL[id][3]);
+      g.restore();
+      // new cell lands: orange outline flashes once
+      if (!a && b && !L.cut) { const fl = 1 - seg(t, L.t + dur * .6, L.t + dur + .18); if (fl > 0) { g.strokeStyle = `rgba(255,91,31,${fl})`; g.lineWidth = 3; g.strokeRect(r[0] + 1.5, r[1] + 1.5, r[2] - 3, r[3] - 3); } }
+    }
+    if (full && SRC[id]) {   // full-screen camera: camera tag at top-left + sync badge
+      const s = eo(seg(t, L.t + (L.merge ? MERGE : 0), L.t + (L.merge ? MERGE : 0) + .25));
+      g.save(); g.beginPath(); g.rect(24, 24, 1000 * s, 40); g.clip(); const cw = chip(24, 24, id); g.restore();
+      g.save(); g.beginPath(); g.rect(24, 24, 1872 * s, 40); g.clip(); if (LABEL[id][3]) syncBadge(24 + cw + 10 + badgeW(LABEL[id][3]), 26, LABEL[id][3]); g.restore();
+    }
+  }
+  // event flags
+  for (const fl of FLAGS) if (t >= fl.t0 && t < fl.t1 && flagRects[fl.cell]) drawFlag(fl, t, flagRects[fl.cell]);
+  // title package
+  if (t < 7) drawTitle(t, flagRects.live || [24, 24, 1872, 840]);
+  // white flash at T0
+  if (t >= T0 - .02 && t < T0 + 1.2) { const fl = Math.exp(-(t - T0) * 9); g.fillStyle = `rgba(255,248,236,${.7 * fl})`; g.fillRect(0, 0, W, H); }
+  // darken the bottom when full-screen (a backing for the HUD)
+  const anyFull = Object.values(L.cells).some(r => r[2] >= W - 1) && k >= .5;
+  if (anyFull) { const gr = g.createLinearGradient(0, 760, 0, 1080); gr.addColorStop(0, 'rgba(6,8,10,0)'); gr.addColorStop(1, 'rgba(6,8,10,0.75)'); g.fillStyle = gr; g.fillRect(0, 760, W, 320); }
+  drawEnd(t);
+  // HUD (when not in the nine-cell grid)
+  const inGrid = L.grid || (Lp.grid && k < 1 && !L.merge);
+  if (!inGrid) {
+    if (L.merge && k < 1) {   // during the merge, the clock / transcript return from the centre of the grid to the bottom
+      const kk = eio(seg(t, T0 + .12, T0 + MERGE + .1));
+      drawClock(t, lerpR(Lp.cells.clock, HUD_CLOCK, kk), true);
+      drawTx(t, lerpR(Lp.cells.tx, HUD_TX, kk), true);
+    } else {
+      const over = t >= T0 || anyFull;
+      drawClock(t, HUD_CLOCK, over); drawTx(t, HUD_TX, over);
+    }
+  }
+}
+window.render = render;
+
+// ——— one-line subtitle check: each Chinese and English line takes exactly one line in the transcript box (in both sizes, HUD and nine-cell) ———
+window.SUBFIT = () => CUES.map(c => {
+  const en = c.w.map(w => w[0]).join(' ') + ' ';
+  const boxes = [HUD_TX[2] - 48, gc(1, 2, 2)[2] - 48];
+  const enW = Math.max(tw(en, `500 30px ${F_LAT}`), tw(en, `500 34px ${F_LAT}`) * (boxes[0] / boxes[1]));
+  const zhW = Math.max(tw(c.zh, `700 50px ${F_ZH}`), tw(c.zh, `700 56px ${F_ZH}`) * (boxes[0] / boxes[1]));
+  return { t0: c.t0, en: Math.round(enW + 14), zh: Math.round(zhW), max: boxes[0], ok: enW + 14 <= boxes[0] && zhW <= boxes[0] };
+});
+
+// ——— events (for the mix): ticks, cell opens, cell swaps, tick marks, flags, handovers, merge ———
+const EV = [];
+for (let m = -32; m <= 27; m++) EV.push({ t: m + T0, type: 'tick', m });
+LAY.forEach((l, i) => { if (i) EV.push({ t: l.t, type: l.merge ? 'merge' : l.cut ? 'cut' : l.grid ? 'pop' : l.swap ? 'swap' : 'relayout' }); });
+CHECK.forEach(c => { if (c.m + T0 > 13.1) EV.push({ t: c.m + T0, type: 'check' }); });
+FLIGHT.forEach(e => { if (e.heard) EV.push({ t: e.heard + T0, type: 'check' }); });
+FLAGS.forEach(f => EV.push({ t: f.t0, type: 'flag' }));
+HANDS.forEach(h => { if (h.t > 0) EV.push({ t: h.t, type: 'hand' }); });
+EV.push({ t: 7.7, type: 'bars' }, { t: END, type: 'end' });
+EV.sort((a, b) => a.t - b.t);
+window.EV = EV;
+
+// ——— text inventory (for readcheck; the clock and transcript box are excluded: the clock changes every second, the transcript is checked through the .srt) ———
+window.TEXTS = t => {
+  const out = [], add = (id, text, r) => out.push({ id, text, x0: r[0], y0: r[1], x1: r[0] + r[2], y1: r[1] + r[3] });
+  if (t >= .85 && t < 6.4) { add('title', '自己倒数 COUNTING ITSELF DOWN', [72, 600, 900, 160]); }
+  if (t >= 1.25 && t < 6.4) { add('info-zh', '阿尔忒弥斯二号 · 2026 年 4 月 1 日 · 39B 发射台', [72, 760, 900, 40]); add('info-en', 'ARTEMIS II · APRIL 1, 2026 · LC-39B, KENNEDY SPACE CENTER', [72, 800, 900, 30]); }
+  if (t >= 6.4 && t < 13.1) CREW.forEach(([, zh, en], i) => { if (t >= 6.2 + i * .16) add('crew' + i, zh + ' ' + en, [1300 + i * 140, 800, 130, 50]); });
+  if (t >= 8.7 && t < 13.1) { add('thrust-a', 'SLS BLOCK 1 880 万磅 8.8 M LBF', [64, 670, 1200, 50]); add('thrust-b', '土星五号 SATURN V +15% SLS 多 15%', [64, 760, 1200, 50]); }
+  for (let i = 0; i < DOC_ROWS.length; i++) { const r = DOC_ROWS[i], nx = DOC_ROWS[i + 1]; if (t >= r.t + .4 && t < (nx ? nx.t : 19.6)) { add('doc' + i, r.zh, [1300, 760, 300, 60]); add('doc-en' + i, r.en, [1500, 760, 380, 60]); } }
+  for (const fl of FLAGS) if (t >= fl.t0 + .26 && t < fl.t1 - .3) { add(fl.id + '-zh', fl.zh, [40, 700, 400, 50]); add(fl.id + '-en', fl.en, [400, 700, 400, 50]); }
+  if (t >= 42.7 && t < END) add('sep', '距助推器分离 TO BOOSTER SEP 预计 T+2:09 EXPECTED', [1290, 700, 600, 140]);
+  if (t >= END + .5) { add('end-title', '自己倒数 COUNTING ITSELF DOWN', [114, 200, 1000, 210]); add('end-style-zh', '实时倒计时分屏', [120, 460, 300, 40]); add('end-style-en', 'LIVE COUNTDOWN SPLIT-SCREEN', [420, 460, 700, 40]); add('end-sign', 'LemoLab × Claude Opus 5.5', [120, 525, 600, 35]); }
+  if (t >= END + .9) { add('end-cred-zh', '素材：NASA · 公有领域 · 非官方作品', [120, 590, 1000, 35]); add('end-cred-en', 'FOOTAGE: NASA · PUBLIC DOMAIN · UNOFFICIAL', [120, 630, 1000, 25]); }
+  return out;
+};
+
+(async () => {
+  await Promise.all([`600 112px ${F_NUM}`, `500 26px ${F_NUM}`, `500 30px Barlow`, `600 26px Barlow`, `500 16px ${F_MONO}`, `600 16px ${F_MONO}`, `500 26px NotoSC`, `700 52px NotoSC`].map(fnt => document.fonts.load(fnt, '阿T0')));
+  PHOTO = await img('frames/photo.jpg'); DOC = await img('frames/doc.jpg');
+  await render(0);
+  window.READY = true;
+})();
+</script>
+</body>
+</html>

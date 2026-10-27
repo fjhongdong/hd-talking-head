@@ -31,7 +31,7 @@ Not a flat vector illustration with a paper overlay (no woodgrain, no misregistr
 - **Sumi key line** over everything; **paper is the white** (no white pigment for foam, snow, mist, blank sky).
 - **One dominant hue family** carries sky and water (in the 19th-century prints, Prussian blue); **red is rare**: seals, a sun, one garment or tab.
 - Far layers pale and low-contrast, near layers saturated with dark key lines.
-- Examples, one per film: an indigo-and-beni landscape (Prussian blue, pale blue, beni red, ochre, greens, sumi, as in our demo); a bijin-ga interior (pale pink, mauve, grey-green, lacquer black, a mica-grey ground); an autumn surimono (persimmon, ochre, grey-green, deep brown, one blue).
+- Examples, one per film: an indigo-and-beni landscape (Prussian blue, pale blue, beni red, ochre, greens, sumi); a bijin-ga interior (pale pink, mauve, grey-green, lacquer black, a mica-grey ground); an autumn surimono (persimmon, ochre, grey-green, deep brown, one blue).
 
 ## 4. Type & subtitles
 

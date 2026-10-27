@@ -1,6 +1,6 @@
-# 配乐 + 旁白 + 合成环境声 → mix.wav（48k 立体声）
-# 用法（仓库根）：.venv/bin/python styles/watercolor/demo/mix.py [out.wav]   （默认写 demo/mix.wav）
-# 输入：music/score.wav、voices/v*.wav + dur.json、scene.js 里 VO 表的开始时间
+# score + narration + synthesized ambience → mix.wav (48k stereo)
+# usage (repo root): .venv/bin/python styles/watercolor/demo/mix.py [out.wav]   (writes demo/mix.wav by default)
+# inputs: music/score.wav, voices/v*.wav + dur.json, start times from the VO table in scene.js
 import json, re, os, sys, numpy as np, soundfile as sf
 OUTWAV = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else None
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -38,7 +38,7 @@ def put(buf, t, x):
     i = int(t * SR); j = min(N, i + len(x))
     if j > i: buf[i:j] += x[:j - i]
 
-# ---- 笔刷：纸上的沙沙 ----
+# ---- brush: rustle on paper ----
 def brush(d, g, pan0=-.5, pan1=.5):
     n = int(d * SR); p = np.arange(n) / n
     x = bp(noise(n), 1500, 7000) * (.6 + .4 * np.abs(np.sin(np.arange(n) / SR * 2 * np.pi * 9)))
@@ -48,14 +48,14 @@ def brush(d, g, pan0=-.5, pan1=.5):
     y = norm(x * e, .5) * g
     return np.stack([y * np.cos((pan + 1) * np.pi / 4) * 1.414, y * np.sin((pan + 1) * np.pi / 4) * 1.414], 1)
 put(sfx, .5, brush(2.3, .5, -.8, .8))
-# 太阳像盖印：一声闷响
+# the sun stamped like a seal: one dull thud
 def stamp(g):
     n = int(1.2 * SR); t = np.arange(n) / SR
     x = np.sin(2 * np.pi * np.cumsum(90 * (1 + .5 * np.exp(-t * 30))) / SR) * np.exp(-t * 9) + lp(noise(n), 900) * env(n, .002, .05) * .6
     return verb(st(norm(x, .8) * g), .25)
 put(sfx, 1.6, stamp(.55))
 put(sfx, 10.2, brush(3.2, .35, -.9, .9))
-# ---- 沙漠风 ----
+# ---- desert wind ----
 def wind(d, g):
     n = int(d * SR); t = np.arange(n) / SR
     gust = .55 + .45 * np.sin(2 * np.pi * .21 * t + 1) * np.sin(2 * np.pi * .09 * t)
@@ -63,7 +63,7 @@ def wind(d, g):
     b = lp(pink(n), 600) * gust
     return fade(np.stack([norm(a, .5), norm(b, .5)], 1) * g, 2.5, 3)
 put(sfx, 9.0, wind(26, .30))
-# ---- 虎皮鹦鹉的叽喳 ----
+# ---- budgerigar chirps ----
 def chirp(g, f0):
     n = int(.09 * SR); t = np.arange(n) / SR
     f = f0 * (1 + .35 * np.sin(2 * np.pi * 38 * t)) * (1 + 1.2 * t)
@@ -72,13 +72,13 @@ def chirp(g, f0):
 for k in range(46):
     tt = 25.6 + rng.uniform(0, 6.6); pan = np.clip(.9 - (tt - 25.6) / 3.8, -.9, .9)
     put(sfx, tt, verb(st(chirp(rng.uniform(.05, .11), rng.uniform(3200, 4800)), pan), .2))
-# ---- 雨滴落在穆加树上 ----
+# ---- raindrops on the mulga ----
 def plink(g, f):
     n = int(.35 * SR); t = np.arange(n) / SR
     fr = f * (1 + .8 * np.exp(-t * 60)); x = np.sin(2 * np.pi * np.cumsum(fr) / SR) * np.exp(-t * 22)
     return verb(st(x * g, rng.uniform(-.3, .3)), .3)
 for i in range(14): put(sfx, 27.1 + i * .36 + .45, plink(.12, rng.uniform(900, 1500)))
-# ---- 火：噼啪 + 低吼 ----
+# ---- fire: crackle + low roar ----
 def fire(d, g):
     n = int(d * SR); t = np.arange(n) / SR
     roar = lp(pink(n), 500) * (.6 + .4 * np.sin(2 * np.pi * .7 * t) ** 2)
@@ -87,7 +87,7 @@ def fire(d, g):
     x = norm(roar, .5) + norm(crack, .7)
     return fade(np.stack([x, np.roll(x, 500)], 1) * g, 1.2, 2.0)
 put(sfx, 41.4, fire(6.4, .42))
-# ---- 雨（渐大）----
+# ---- rain (building) ----
 def rain(d, g):
     n = int(d * SR); t = np.arange(n) / SR
     base = hp(pink(n), 1200) * .5 + bp(noise(n), 3000, 9000) * .3
@@ -98,7 +98,7 @@ def rain(d, g):
     y = np.stack([x, np.roll(x, 900)], 1) * ramp[:, None]
     return fade(y * g, .5, 3.0)
 put(sfx, 51.0, rain(23.0, .28))
-# ---- 东部鞭鸟：长哨音 + 鞭响 + 雌鸟回应 ----
+# ---- eastern whipbird: long whistle + whip crack + female's reply ----
 def whipbird(g, pan):
     d = 2.1; n = int(d * SR); t = np.arange(n) / SR; x = np.zeros(n)
     k1 = int(1.25 * SR); t1 = t[:k1]
@@ -112,7 +112,7 @@ def whipbird(g, pan):
     return verb(st(x * g, pan), .4)
 put(sfx, 63.4, whipbird(.16, .5))
 put(sfx, 68.6, whipbird(.11, -.4))
-# ---- 转场：雾起、海岸线笔刷、倒带、地图上的火 ----
+# ---- transitions: mist rising, coastline brush, rewind, fire on the map ----
 def swell(d, g, rev=False):
     n = int(d * SR); p = np.arange(n) / n
     e = (p if not rev else p) ** 2.2
@@ -127,12 +127,12 @@ put(sfx, 73.3, brush(3.1, .22, -.6, .6))
 put(sfx, 79.2, swell(1.6, .38))
 put(sfx, 89.4, fire(5.4, .16))
 
-# ---- 配乐 ----
+# ---- score ----
 mus, sr = sf.read('music/score.wav'); assert sr == SR
 mus = mus[:N]; mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
 mus = fade(mus, 0, 1.2)
 
-# ---- 旁白：压缩 + 摆放 ----
+# ---- narration: compression + placement ----
 dur = json.load(open('voices/dur.json'))
 vo_times = [(m[0], float(m[1])) for m in re.findall(r"\['(v\d\d)', ([\d.]+),", open('scene.js').read())]
 vo = np.zeros(N); duck = np.zeros(N)
@@ -148,15 +148,15 @@ duck = lp(np.convolve(duck, np.ones(int(.3 * SR)) / int(.3 * SR), 'same'), 5)
 act = duck > .5
 mus_db = dbfs(mus[act]); vo_db = dbfs(vo[act])
 from scipy.ndimage import maximum_filter1d
-def limit(x, ceil):  # 5ms 预读的峰值限制
+def limit(x, ceil):  # peak limiter with 5ms look-ahead
     pk = maximum_filter1d(np.abs(x), int(.005 * SR)); g = np.minimum(1, ceil / (pk + 1e-9))
     g = np.minimum.reduce([g, np.roll(g, int(.0025 * SR))]); g = lp(g, 200); return x * np.clip(g, 0, 1)
 speech = np.abs(vo) > 10 ** (-40 / 20) * np.abs(vo).max()
 vr = np.sqrt(np.mean(vo[np.convolve(speech, np.ones(2400), 'same') > 0] ** 2))
 vo = limit(vo, vr * 10 ** (11 / 20))
 vo_db = dbfs(vo[act])
-vo *= 10 ** ((mus_db + 8 - vo_db) / 20)       # 旁白比配乐高约 8 dB
-mus *= (1 - .38 * duck)[:, None]               # 说话时配乐让开约 4 dB
+vo *= 10 ** ((mus_db + 8 - vo_db) / 20)       # narration about 8 dB above the score
+mus *= (1 - .38 * duck)[:, None]               # score ducks about 4 dB under speech
 vo2 = verb(st(vo), .06)
 mix = mus + vo2 + sfx
 pk = lambda x: round(20 * np.log10(np.abs(x).max() + 1e-12), 1); print('peaks mus', pk(mus), 'vo', pk(vo2), 'sfx', pk(sfx)); print('music', round(dbfs(mus), 1), 'vo(active)', round(dbfs(vo2[act]), 1), 'sfx', round(dbfs(sfx), 1), 'peak', round(20 * np.log10(np.abs(mix).max()), 1))

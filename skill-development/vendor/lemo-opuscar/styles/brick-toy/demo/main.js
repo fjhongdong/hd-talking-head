@@ -1,4 +1,4 @@
-// Rocket from Spare Parts — Brick Toy 风格 demo
+// Rocket from Spare Parts — Brick Toy style demo
 import * as THREE from 'three';
 import { makePost } from '/core/three/post.js';
 import { clamp, seg, eio, eo, ss, lerp, hash } from '/core/lib.js';
@@ -23,7 +23,7 @@ post.vig.uniforms.amt.value = .36; post.vig.uniforms.warm.value = -.35; post.vig
 const set = await buildSet(scene);
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
-// —— 散落的备用零件（左后方与桌面，避开倒塌方向 +x）——
+// —— scattered spare parts (back-left and on the desk, clear of the collapse direction +x) ——
 {
   let s = 7; const R = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const PAL = [COL.red, COL.blue, COL.yellow, COL.green, COL.white, COL.orange, COL.lgray, COL.azure, COL.black, COL.tan];
@@ -44,12 +44,12 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const astro = makeAstro(); scene.add(astro.root);
 const rockets = makeRockets(scene);
 const pickBrick = brick(2, 2, COL.red); scene.add(pickBrick);
-// 开场特写那块砖的接触阴影（主光影子落在砖背后，镜头这侧需要一点 AO）
+// contact shadow for the brick in the opening close-up (the key light's shadow falls behind the brick; the camera side needs a little AO)
 const aoTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 10, 64, 64, 64); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
 const ao = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.6), new THREE.MeshBasicMaterial({ map: aoTex, transparent: true, depthWrite: false })); ao.rotation.set(-Math.PI / 2, 0, -.35); ao.position.set(24, .02, 6); scene.add(ao);
 const moonBrick = brick(2, 2, COL.red); scene.add(moonBrick);
 
-// —— 宇航员的表演 ——
+// —— the astronaut's performance ——
 const FWD = ry => V(Math.sin(ry), 0, Math.cos(ry));
 const SP_PLACE = V(PAD.x - 4.3, TOP, PAD.z), RY_PLACE = Math.PI / 2;
 const SP_THROW = V(PAD.x - 6.5, TOP, PAD.z + 3.5), RY_THROW = Math.atan2(PAD.x - SP_THROW.x, PAD.z - SP_THROW.z);
@@ -66,45 +66,45 @@ function astroAt(t) {
   let vis = true, hold = 'over', mv = null;
   const put = (p, ry) => { P.x = p.x; P.y = p.y; P.z = p.z; P.ry = ry; };
   if (t < 3.4) vis = false;
-  else if (t < T.firstClick) {   // 端着第一块砖走进来
+  else if (t < T.firstClick) {   // walks in carrying the first brick
     mv = walk(t, 3.4, 3.85, SP_PLACE.clone().add(V(-4.5, 0, 0)), SP_PLACE); put(mv.p, RY_PLACE);
     if (mv.moving) Object.assign(P, walkPose(mv.phi, .4));
     P.armL = P.armR = [-.95, .05]; hold = 'carry'; P.nod = .25;
-  } else if (t < 5.4) {   // 放下 → 小跳庆祝 → 走去抛砖位
+  } else if (t < 5.4) {   // sets it down → little celebratory hop → walks to the tossing spot
     if (t < 4.9) { put(SP_PLACE, RY_PLACE); const u = seg(t, 4.2, 4.7); P.y += Math.sin(u * Math.PI) * .9; P.armL = P.armR = [lerp(-.6, -2.9, ss(seg(t, 4.1, 4.4))), .15]; P.nod = -.2; }
     else { mv = walk(t, 4.9, 5.4, SP_PLACE, SP_THROW); put(mv.p, RY_THROW); Object.assign(P, walkPose(mv.phi)); }
-  } else if (t < T.cone1 + .1) {   // 抛砖蒙太奇
+  } else if (t < T.cone1 + .1) {   // brick-tossing montage
     put(SP_THROW, RY_THROW);
     const L = layerLand.find(l => t < l + .1) ?? T.cone1, c0 = L - 2 * BEAT, u = clamp((t - c0) / (2 * BEAT));
     const a = u < .4 ? lerp(-2.3, -2.95, ss(u / .4)) : u < .5 ? lerp(-2.95, -3.35, (u - .4) / .1) : lerp(-3.35, -2.3, ss((u - .5) / .5));
     P.armL = P.armR = [a, .12]; P.nod = -.45 - .1 * Math.sin(u * Math.PI); P.bob = u > .4 && u < .55 ? .15 : 0;
-  } else if (t < T.wobble) {   // 后退两步，得意
+  } else if (t < T.wobble) {   // steps back two paces, pleased
     mv = walk(t, 14.2, 15.0, SP_THROW, SP_BACK, 1.6); put(mv.p, RY_THROW);
     if (mv.moving) Object.assign(P, walkPose(-mv.phi, .35)); else { const v = ss(seg(t, 15.0, 15.25)); P.armL = P.armR = [-.15, .1 + v * 2.3]; P.nod = -.45; P.y += Math.sin(seg(t, 15.0, 15.3) * Math.PI) * .5; }
-  } else if (t < T.fall) {   // 塔在晃：紧张
+  } else if (t < T.fall) {   // tower wobbling: nervous
     put(SP_BACK, RY_THROW); const w = seg(t, T.wobble, T.fall); P.armL = P.armR = [-.2, .45 + w * .6]; P.nod = -.45; P.look = Math.sin(t * 14) * .08 * w;
-  } else if (t < T.sit) {   // 倒塌：举手惊呼，跳开，然后垂头
+  } else if (t < T.sit) {   // collapse: arms up in alarm, jumps away, then hangs head
     const u = seg(t, T.fall, T.fall + .4), p = SP_BACK.clone().lerp(SP_SIT, eo(u)); put(p, RY_THROW); P.y += Math.sin(u * Math.PI) * 1.1;
     const drop = ss(seg(t, 18.6, 20.2)); P.armL = P.armR = [lerp(-.5, -.25, drop), lerp(2.6, .1, drop)]; P.nod = lerp(-.3, .35, drop);
-  } else if (t < 25.6) {   // 坐在废墟边
+  } else if (t < 25.6) {   // sits by the wreckage
     put(SP_SIT, RY_THROW); P.sit = ss(seg(t, T.sit, T.sit + .45)); P.nod = .5 - ss(seg(t, 24.0, 24.6)) * .25; P.armL = P.armR = [-.45, .05]; P.tipGlow = .8;
     if (t > T.pickUp) { P.armR = [lerp(-.45, -1.2, ss(seg(t, T.pickUp, T.pickUp + .25))), .1]; P.look = -.25; P.nod = .3; }
-  } else if (t < 26.4) {   // 站起来
+  } else if (t < 26.4) {   // stands up
     put(SP_SIT, RY_THROW); P.sit = 1 - ss(seg(t, 25.6, 26.1)); P.armR = [-1.2, .1]; P.armL = [-.3, .05]; P.nod = .1;
-  } else if (t < 27.0) {   // 走向零件堆
+  } else if (t < 27.0) {   // walks to the parts pile
     mv = walk(t, 26.4, 27.0, SP_SIT, SP_PILE); put(mv.p, lerp(RY_THROW, RY_PILE, ss(seg(t, 26.4, 26.7)))); Object.assign(P, walkPose(mv.phi)); P.armR = [-1.1, .1];
-  } else if (t < T.found) {   // 翻找：扔轮子、扔小花
+  } else if (t < T.found) {   // rummages: tosses a wheel, tosses a flower
     put(SP_PILE, RY_PILE); P.lean = .32; const dig = Math.sin((t - 27) * 11);
     P.armL = [-.9 + dig * .35, .1]; P.armR = [-.9 - dig * .35, .1]; P.nod = .35;
     const fl = (tt, side) => { const u = seg(t, tt - .1, tt + .25); if (u > 0 && u < 1) { const a = lerp(-1.0, -3.5, Math.sin(u * Math.PI)); if (side) P.armR = [a, .2]; else P.armL = [a, .2]; P.lean = .1; } };
     fl(T.toss[0], 1); fl(T.toss[1], 0); hold = 'hand';
-  } else if (t < T.coneLand) {   // 找到了！举起锥头 → 转向火箭 → 抛
+  } else if (t < T.coneLand) {   // found it! lifts the nose cone → turns to the rocket → throws
     const turn = ss(seg(t, 29.8, 30.2)); put(SP_PILE, lerp(RY_PILE, RY_TOPAD, turn));
     P.y += Math.sin(seg(t, T.found + .1, T.found + .45) * Math.PI) * .8;
     const th = T.coneLand - .5, u = seg(t, th - .15, th + .2);
     P.armL = P.armR = [u > 0 ? lerp(-2.9, -3.4, Math.sin(u * Math.PI)) : -2.9, .12]; P.nod = -.25;
-  } else if (t < T.walkOut) vis = false;   // 在火箭里
-  else {   // 月球：走出来，放下一块砖，挥手
+  } else if (t < T.walkOut) vis = false;   // inside the rocket
+  else {   // moon: walks out, sets down a brick, waves
     const base = V(MOON.x, set.MOON_TOP, MOON.z), A = base.clone().add(V(2.5, 0, -4.5)), B = base.clone().add(V(5.2, 0, 2.2));
     mv = walk(t, T.walkOut, 46.0, A, B); put(mv.p, .75);
     if (mv.moving) Object.assign(P, walkPose(mv.phi));
@@ -117,7 +117,7 @@ function astroAt(t) {
 const _a = V(0, 0, 0), _b = V(0, 0, 0);
 function handsWorld() { astro.root.updateMatrixWorld(true); astro.arms[0].hand.getWorldPosition(_a); astro.arms[1].hand.getWorldPosition(_b); return _a.clone().add(_b).multiplyScalar(.5); }
 
-// —— 镜头 ——
+// —— camera ——
 const cockpitW = V(PAD.x, PAD_TOP + 3.5 * BRICK, PAD.z + 2.02);
 const moonC = () => V(MOON.x, set.MOON_TOP, MOON.z);
 let ctxX = null;
@@ -150,7 +150,7 @@ function cam(t, st) {
       const oy = ctxX ? ctxX.off.y : 0;
       pos = V(PAD.x - 12, 2 + oy * .1, PAD.z + 26); look = V(PAD.x, 5 + oy * .78, PAD.z); fov = 38; focus = V(PAD.x, 5 + oy, PAD.z); aper = 900; break;
     }
-    case 'cruise': {   // 跟拍：摄影机贴着火箭侧面飞
+    case 'cruise': {   // tracking: camera flies alongside the rocket
       const d = V(MOON.x - PAD.x, 0, MOON.z - PAD.z).normalize(), perp = V(d.z, 0, -d.x), rc = V(PAD.x, PAD_TOP + 4, PAD.z).add(ctxX.off);
       pos = rc.clone().addScaledVector(perp, 11).addScaledVector(d, -17).add(V(0, 6, 0)); look = rc.clone().addScaledVector(d, 8).add(V(0, -1.2, 0)); fov = 40; focus = rc; aper = 450; break;
     }
@@ -162,14 +162,14 @@ function cam(t, st) {
     }
   }
   camera.position.copy(pos); camera.fov = fov; camera.updateProjectionMatrix(); camera.lookAt(look);
-  // 阴影视锥按镜头收紧（越紧越锐利）
+  // shadow frustum tightened to the shot (tighter = sharper)
   const k = set.key, fc = focus || look, span = name === 'reveal' || name === 'endcard' ? 95 : name === 'cruise' || name === 'liftoff' ? 60 : 32;
   k.target.position.copy(fc); k.position.copy(fc).add(V(-60, 110, 50)); k.target.updateMatrixWorld();
   Object.assign(k.shadow.camera, { left: -span, right: span, top: span, bottom: -span }); k.shadow.camera.updateProjectionMatrix();
   post.dof.focus = focus ? camera.position.distanceTo(focus) : 40; post.dof.aper = aper; post.dof.maxCoc = 16;
 }
 
-// —— 2D 层：字幕、片名、片尾 ——
+// —— 2D layer: subtitles, title, end card ——
 const ov = document.getElementById('ov'), g = ov.getContext('2d');
 let DURS = {};
 try { const r = await fetch('voices/dur.json'); if (r.ok) DURS = await r.json(); } catch (e) { }
@@ -194,7 +194,7 @@ function hud(t) {
   const cnt = VO.filter(v => v.radio && t >= v.t - .05 && t < T.ignite);
   if (cnt.length) pill(cnt.map(v => v.text).join('  '), H - 150, 'MISSION CONTROL');
   else if (t < T.end) { const v = VO.find(v => !v.radio && t >= v.t - .05 && t < v.t + voDur(v) + .5); if (v) pill(v.text, H - 150); }
-  if (t >= T.title[0] && t < T.title[1]) {   // 片名（12fps 步进弹出）
+  if (t >= T.title[0] && t < T.title[1]) {   // title (pops in stepped at 12fps)
     const u = seg(q(t), T.title[0], T.title[0] + .25), s = u < 1 ? .6 + .5 * Math.sin(u * Math.PI * .75) : 1, a = 1 - seg(t, T.title[1] - .25, T.title[1]);
     g.save(); g.globalAlpha = a; g.translate(W / 2, 200); g.scale(s, s);
     g.font = '700 104px Fredoka'; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -202,7 +202,7 @@ function hud(t) {
     g.shadowBlur = 0; g.shadowOffsetY = 0; g.font = '600 34px Fredoka'; g.fillStyle = '#f2cd37'; g.fillText('A BRICK TOY FILM', 0, 78);
     g.restore();
   }
-  if (t >= T.end) {   // 片尾卡
+  if (t >= T.end) {   // end card
     const a = ss(seg(t, T.end, T.end + .5));
     const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, `rgba(10,12,16,${.25 * a})`); gr.addColorStop(1, `rgba(10,12,16,${.8 * a})`); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     g.save(); g.globalAlpha = a; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
@@ -223,11 +223,11 @@ function render(t0) {
   const behind = side => V(A.P.x, TOP, A.P.z).addScaledVector(fwd, -5).add(V(side * 2.5, 0, 0));
   const r = rockets.update(t0, { set, handPos: mid, handsUpPos: holdPos, carryPos: holdPos, carryRy: A.P.ry, astroRy: A.P.ry, behind });
   ctxX = r.X;
-  const pbRest = SP_SIT.clone().add(V(1.9, 0, 1.2));   // 捡起的那块红砖
+  const pbRest = SP_SIT.clone().add(V(1.9, 0, 1.2));   // the red brick that gets picked up
   if (t < T.pickUp + .2) { pickBrick.position.copy(pbRest); pickBrick.rotation.set(0, .5, 0); }
   else if (t < 27.0) { pickBrick.position.copy(astro.arms[1].hand.getWorldPosition(V(0, 0, 0)).add(V(0, -.6, 0))); pickBrick.rotation.set(0, A.P.ry, 0); }
   else { pickBrick.position.copy(SP_PILE.clone().add(V(1.4, 0, 1.8))); pickBrick.rotation.set(0, .9, 0); }
-  const mbSlot = moonC().add(V(6.2, 0, 4.6));   // 月球上放下的砖
+  const mbSlot = moonC().add(V(6.2, 0, 4.6));   // the brick set down on the moon
   moonBrick.visible = t >= T.walkOut;
   if (t < 46.5) moonBrick.position.copy(holdPos);
   else { const u = seg(t, 46.5, T.placeBrick); moonBrick.position.copy(u >= 1 ? mbSlot : holdPos.clone().lerp(mbSlot, u * u)); }
@@ -238,7 +238,7 @@ function render(t0) {
   hud(t0);
 }
 
-// —— 音效事件（给 mix.py）——
+// —— sound-effect events (for mix.py) ——
 function events() {
   const ev = [], add = (type, t, o = {}) => ev.push({ type, t: +t.toFixed(3), ...o });
   add('click', qc(T.firstClick), { v: 1.2 }); add('title', T.title[0]);
@@ -255,7 +255,7 @@ function events() {
   add('whoosh', T.coneLand - .5, { v: .7 }); add('click', qc(T.coneLand), { v: 1.3, pitch: .8 });
   add('quindar', T.quindar); add('rumble', T.flicker, { d: 1.5, v: .3 }); add('ignite', T.ignite); add('roar', T.ignite, { d: 42.5 - T.ignite });
   add('roar', 42.5, { d: T.land - 42.5, v: .35 }); add('thump', qc(T.land), { v: 1 }); add('click', qc(T.placeBrick), { v: 1.1 }); add('click', T.end, { v: 1.2 });
-  let last = null;   // 脚步：抽样表演
+  let last = null;   // footsteps: sampled from the performance
   for (let f = 0; f < DUR * 12; f++) {
     const t = f / 12, A = astroAt(t); if (!A.vis) { last = null; continue; }
     const l = A.P.legs?.[0] ?? 0, s = Math.sign(l);

@@ -1,6 +1,12 @@
 # 自有动效能力库
 
+Lemo 当前以一个渠道、59 个独立风格模板参与统一选型，具体原生制作流程见 [Lemo 合同](lemo-opuscar.md)。登记和调用通过不代表每个主题的画面都已验收。
+
+能力选择统一采用“渠道→模板→标签”。固定动效与完整原生 Skill 模板进入同一候选池；新增来源也必须完整接入其原生 Skill/组件和真实执行入口，不拆源码、不重写第三方、不以 metadata 冒充接通。执行资格、用途和内容证据仍按各自合同检查。临时内容沿用所选模板身份，不因本期场景名称新增模板。
+
 本库统一现有 A-roll 贴片、B-roll、可组合组件和设计／原生创作能力的理解与检索，不增加渲染器，也不合并它们的执行资格。维护数据为本包 `motion-capability-index.json`；入口为 `scripts/select_motion_capabilities.py`，项目接法为 `edit.hd.tools.motion_capabilities`。视觉规划先从剪后语义生成 tags，再用 tags 检索并匹配具体模板；tags 是语义检索字段，不等同于最终屏显 labels。
+
+现有字段映射为：`skill_id` 经 `source_channel` 得到渠道，`source_route` 或 `template_id` 得到稳定的渠道内模板，`profile.tags` 提供标签。`capability_type` 只保留执行证据边界，不再把固定与创作能力分成两个选择池；本段不新增 schema。
 
 > 本页与 `motion-capability-index.json` 中的 evidence 路径以**完整 Skill 包根**为基准（如 `skill-development/...`、`edit/hd/...`）。全部固定资源随包迁移；`skill-development/runtime/` 中的依赖由包内锁文件准备，不读取原开发项目。
 
@@ -12,7 +18,7 @@ profile 记录主体、可见动作、信息关系、人物感受、视觉特点
 
 TalkCraft 的 108 张卡按当前 `src/cards/*.tsx`、contract 与资格案例核对；库中逐卡列出已验证的 `raw.*` 字段、`scene_inputs.*` 槽和帧钟。`card-semantic-index.json` 的旧 demo 描述不再作为本库的动作正本；保留它与 `card-registry.json` 的原资格关联，以及 `card-event-capabilities.json` 的事件限制，不修改这些正本。每个实际 raw 输入必须完整匹配某个已验证字段组合；空、缺项或跨组合拼接返回待复核，额外字段继续拒绝。字段组合检查不绑定案例中的演示值，不代替原生值／帧校验，也不证明每个字段都影响画面。未有正式透明接法的卡片仍是组件，不因原生角色含 overlay 就进入 A-roll。
 
-库同时列出当前原生入口、设计来源、待适配项和历史停用项。已有资格库中的旧 canonical、RelationMotion 与 SemanticState 只读引用，旧 Lemo／OneTake 自由场景、旧 TalkCraft 贴片及退出资格的场景不恢复调用。Flat／GBRO 仅提供设计，实际视频使用本 Job 启动时确认且真实可调用的视频渠道，不能把设计标签当作已生成的动作。
+库同时列出当前原生入口、设计来源、待适配项和历史停用项。已有资格库中的旧 canonical、RelationMotion 与 SemanticState 只读引用；`history:lemo-free-scene` 等历史排除记录保留，不恢复 OneTake 或其他未接入自由场景。Flat／GBRO 仅提供设计，实际视频使用本 Job 启动时确认且真实可调用的视频渠道，不能把设计标签当作已生成的动作。
 
 本轮从 CutCod 的公开资源目录接入一组可核对的 `eian-riso-broll` 原生信息模板，登记为同一 B-roll 入口下的 10 个语义 profile：`title`（章节标题）、`number`（数字强调）、`compare`（同单位数值对比）、`converge`（多项归类收束）、`network`（集合关系）、`focus`（选项突出）、`steps`（顺序流程）、`shot`（真实资料截图）、`quote`（结论引语）和 `versus`（旧新状态对照）。它们共同使用双色印刷纸面与原生 GSAP 时间轴，但不共享同一种语义：选择由口播主体、动作和关系决定，不按颜色或网站分类轮换。模板字段只写入我们自己的项目副本，第三方仓库保持原样。
 
@@ -28,7 +34,7 @@ Riso 的输入绑定引用本包中本次实际模板的原生源码，不依赖
 2. 从全库查询候选。检索需有完整动作或关系短语命中；中文单字、普通文字碎片、人物素材、情绪或配色不能独立使候选入选。主体与美术线索只辅助排序，返回 `matched_dimensions` 展示实际依据，允许无匹配。宿主先理解原话，再用既有 `semantic_goal / required_change` 表达预期可见变化；不新增另一套意图语言、配额或随机轮换。`search` 不是语义模型，否定、条件、隐喻与真实动作仍由宿主复核；无匹配不等于上游一定没有能力，先核对目录与实际入口。限制、候选名和选择理由不作适配证据。
 3. 比较候选能否完整表达本句。并列不画成流程，“无需”不自动画成关开关，推测不画成事实，人物痛点不靠卡片移动代替。擦入比较可表达有原文依据的做法、方案或状态对照，不限于时间前后；它不能凭空增加因果或状态切换。美观、多样性比较真实构图与动作，不只看颜色或 Skill 名。
 4. 把宿主先从剪后语义得到的检索短语存入现有 treatment 的 `motion_queries`，每个代码/生成型组件一条 `{segment_id, component_id, tags}`，不使用屏显 labels。正式检查按 tags 和用途查询，要求选中的具体模板实际命中；检查结果保存 query_tags、匹配依据、剪后原话及模板身份。B-roll 继续使用 `skill_selection` 的 `discover → assign → check`，贴片使用 `overlay_selection`、`overlay_alignment`。完整表从当前计划和这些检查结果派生，不另建最终计划 schema；未知或版本变化的元数据先复核。
-5. 先将贴片与 B-roll 分别形成语义列表，再将每项一次匹配到全库并保留全部合格候选。整片联合分配时先精确最大化真实渠道数量，再在此前提下最大化具体模板数量；`preferred` 不能裁掉合格 `equivalent`，别名去重，同一自创场景不冒充新增模板。只有分配完成后才校验时长、覆盖、可读性与间隔；缺口回到对应语义列表补有原话依据的新项，不能用时间倒推初始数量。
+5. 先将贴片与 B-roll 分别形成语义列表，再将每项一次匹配到全库并保留全部合格候选。每项统一记录渠道、渠道内模板和标签；整片联合分配时先精确最大化真实渠道数量，再在此前提下最大化具体模板数量；`preferred` 不能裁掉合格 `equivalent`，别名去重，临时内容沿用所选模板身份。只有分配完成后才校验时长、覆盖、可读性与间隔；缺口回到对应语义列表补有原话依据的新项，不能用时间倒推初始数量。
 
 统一入口均经项目现有 Python 入口运行，不加 `--prepare`。下列 `catalog/search/check` 命令只读，不安装、访问生成服务或渲染；`match` 只更新当前草稿的匹配缓存，不发布计划、不执行生成，字段见[语义列表与一次匹配](visual-quality-contract.md)。
 

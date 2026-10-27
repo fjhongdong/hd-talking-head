@@ -22,11 +22,11 @@ canvas { display:block; }
 <script src="poses/asia.js"></script>
 <script src="scenes.js"></script>
 <script>
-// 4:3 封面 2880×2160：上面 8×4 方格（象形图 + 核心图形纹样 + 红日），下面墨色标题区
-// cover.html?lang=ej → 英日版；默认中文版
+// 4:3 cover, 2880×2160: an 8×4 grid on top (pictograms + core-graphic patterns + red sun), ink-coloured title area below
+// cover.html?lang=ej → English/Japanese version; Chinese version by default
 const EJ = new URLSearchParams(location.search).get('lang') === 'ej';
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-// 3:4 竖版 2160×2880：上面 6×5 方格，下面标题区
+// 3:4 portrait, 2160×2880: a 6×5 grid on top, title area below
 const CW = 2160, CH = 2880, S = 360, COLS = 6, ROWS = 5;
 const { PAL, mix, rgba, F } = G;
 const T = [
@@ -67,7 +67,7 @@ function draw() {
   G.disc(ctx, cx, cy, 108, PAL.red.t[2]);
   ctx.font = F.en(900, 96); ctx.letterSpacing = '-3px'; ctx.textAlign = 'center'; ctx.fillStyle = G.CREAM;
   ctx.fillText('43', cx, cy + 34);
-  // 整行错位：第 1 行左移、第 5 行右移，露出的半格补纹样
+  // Whole-row offset: row 1 shifts left, row 5 shifts right; the exposed half cells are filled with patterns
   const shift = (j, dx, kind, pk) => {
     const tmp = G.canvas(CW, S); tmp.getContext('2d').drawImage(cv, 0, j * S, CW, S, 0, 0, CW, S);
     const gx = dx < 0 ? CW + dx : 0;
@@ -79,7 +79,7 @@ function draw() {
   };
   shift(0, -S / 2, 1, 'gold'); shift(4, S / 2, 0, 'red');
 
-  // 标题区
+  // Title area
   const ty = ROWS * S; // 1800
   ctx.fillStyle = PAL.ink.t[0]; ctx.fillRect(0, ty, CW, CH - ty);
   cols.forEach((k, n) => { ctx.fillStyle = PAL[k].t[2]; ctx.fillRect(n * CW / 5, ty, CW / 5, 18); });
@@ -94,7 +94,7 @@ function draw() {
   const y2 = ty + 125 + oy + px * 0.95 + px * 0.92;
   ctx.fillText('2026', L - 10, y2);
   const w26 = ctx.measureText('2026').width;
-  // 副标题：放在 2026 右边，两行
+  // Subtitle: to the right of 2026, two lines
   const sx2 = L + w26 + 70;
   if (EJ) {
     ctx.font = F.en(800, 92); ctx.letterSpacing = '-1px'; ctx.fillStyle = G.CREAM;
@@ -107,7 +107,7 @@ function draw() {
     ctx.fillStyle = PAL.gold.t[2];
     ctx.fillText('一口气看完', sx2, y2 - 6);
   }
-  // 底部
+  // Bottom
   G.disc(ctx, L + 44, CH - 150, 44, PAL.red.t[2]);
   ctx.font = F.mono(32); ctx.letterSpacing = '9px'; ctx.fillStyle = rgba(G.CREAM, 0.6); ctx.textAlign = 'right';
   ctx.fillText('IMAGINE ONE ASIA  ·  ここで、ひとつに。', CW - L, CH - 138);

@@ -1,20 +1,20 @@
-// 程序化小城：路网、街区、带窗建筑（着色器开窗 + 夜间亮窗）、屋顶细节、树、路灯、红绿灯、公园池塘、工地塔吊、学校跑道、停车场、火车站与铁轨、屋顶霓虹招牌、郊区与农田
+// Procedural small town: road grid, blocks, windowed buildings (shader windows + lit windows at night), rooftop details, trees, street lamps, traffic lights, park pond, construction site with tower crane, school running track, car park, railway station and tracks, rooftop neon sign, suburbs and farmland
 import * as THREE from 'three';
 import { GB } from './geo.js';
 import { mulberry, clamp } from '/core/lib.js';
 
-export const AV = [-360, -270, -180, -90, 0, 90, 180, 270, 360];   // 南北向大道（x 坐标）
-export const ST = [-240, -180, -120, -60, 0, 60, 120, 180, 240];   // 东西向街道（z 坐标）
+export const AV = [-360, -270, -180, -90, 0, 90, 180, 270, 360];   // north-south avenues (x coordinates)
+export const ST = [-240, -180, -120, -60, 0, 60, 120, 180, 240];   // east-west streets (z coordinates)
 export const avW = x => x === 0 ? 24 : 12;
 export const stW = z => z === 0 ? 20 : 12;
-export const SW = 4;                                  // 人行道宽
+export const SW = 4;                                  // pavement width
 export const CURB = .16;
 export const RAIL = { zA: -281, zB: -290.5, pz0: -287.4, pz1: -283.1, px0: -95, px1: 95 };
 export const EXT = { x0: -450, x1: 450, z0: -272, z1: 300 };
 export const PARK = { x0: 12, x1: 84, z0: 10, z1: 54 };
 export const POND = { x: 44, z: 34, rx: 20, rz: 11 };
 export const ZEBRA_Z = 30;
-export const SIGN = { x: -52, z: -76, y: 0 };        // 屋顶霓虹招牌所在楼（y 在建造时填）
+export const SIGN = { x: -52, z: -76, y: 0 };        // building that carries the rooftop neon sign (y filled in at build time)
 export const U = { night: { value: 0 }, sky: { value: new THREE.Color('#8fb4d8') }, sun: { value: 1 }, lit: { value: 1 } };
 
 const FACADE = ['#efe6d6', '#e9d9bd', '#d9c3a0', '#c9784f', '#b85c45', '#e8c872', '#f0d9a8', '#d8e2dc', '#a9c5c2', '#c8d0d8', '#9fb3c8', '#e3a58c', '#f2ece2', '#cfc6b8', '#8e9aa6', '#dcb67a'];
@@ -22,7 +22,7 @@ const TOWER = ['#9fb3c8', '#b8c4cc', '#7f95a8', '#c9d3d8', '#d9d4c8', '#6f8596']
 const ROOF = ['#8b8a86', '#a09c94', '#6e6c69', '#b7b2a8', '#7d7870', '#9a8f80', '#c2bcb0', '#5f5c58'];
 const TILE = ['#b4553c', '#9c4a36', '#c26a48', '#7a5a4a', '#5f6770', '#a8543f'];
 
-// —— 建筑材质：着色器开窗、夜间亮窗、玻璃更光滑 ——
+// —— Building material: shader windows, lit windows at night, smoother glass ——
 export function buildingMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .86, metalness: 0 });
   m.onBeforeCompile = sh => {
@@ -59,7 +59,7 @@ export function buildingMaterial() {
         float frame = win * (1. - smoothstep(0., fw.y * 2.5 + .03, min(min(inY, 1. - inY) * (wy1-wy0) * cs.y, min(inX, 1.-inX) * (1.-2.*wx) * cs.x) - .06));
         diffuseColor.rgb = mix(diffuseColor.rgb, glass, win);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.92, .91, .88), frame * (1. - lod) * .7);
-        // 顶部女儿墙一条暗线、楼层之间的腰线
+        // A dark line for the parapet at the top, a string course between storeys
         float band = 1. - smoothstep(0., fw.y*2., abs(f.y - .02)) * .12 * (1.-lod);
         diffuseColor.rgb *= band;
         gLit = win * step(r, .2) * step(.55, hh(vec3(vWp.z, id.y, id.x*.37))) * (1. - lod * .6) * step(hh(vec3(id.yx, 3.3)), uLit);
@@ -80,7 +80,7 @@ export function buildCity(scene) {
   const trees = [], lamps = [], tlights = [], props = [];
   const blocks = [], bl = [];
 
-  // —— 街区划分 ——
+  // —— Block layout ——
   const xs = [EXT.x0 + 6, ...AV, EXT.x1 - 6], zs = [EXT.z0 + 6, ...ST, EXT.z1 - 6];
   for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < zs.length - 1; j++) {
     const xa = xs[i], xb = xs[i + 1], za = zs[j], zb = zs[j + 1];
@@ -95,14 +95,14 @@ export function buildCity(scene) {
   special.set(find(-130, 90), 'school');
   special.set(find(130, 30), 'parking');
   special.set(find(-40, 30), 'plaza');
-  special.set(find(0 + 1, -260), 'station');      // 大道北端与铁路之间
+  special.set(find(0 + 1, -260), 'station');      // between the north end of the avenue and the railway
   special.set(find(-1, -260), 'station');
   special.set(find(-220, -30), 'pool');
 
-  // —— 人行道底座 ——
+  // —— Pavement plinths ——
   for (const b of blocks) plain.box(b.x0, b.x1, 0, CURB, b.z0, b.z1, '#c7c3ba', '#c9c5bc');
 
-  // —— 建筑 ——
+  // —— Buildings ——
   const downtown = (x, z) => Math.exp(-((x * x) / (230 * 230) + (z * z) / (190 * 190)));
   function building(x0, x1, z0, z1, floors, o = {}) {
     const fh = o.fh || 3.1 + R() * .4, h = floors * fh + CURB;
@@ -111,19 +111,19 @@ export function buildCity(scene) {
     const wall = o.wall || FACADE[Math.floor(R() * FACADE.length)], roof = o.roof || ROOF[Math.floor(R() * ROOF.length)];
     bld.box(x0, x1, CURB, h, z0, z1, wall, roof, { facade: true, wp: [bay, fh, ty * 1000 + R() * 97] });
     bl.push({ x0, x1, z0, z1, h });
-    // 底商雨篷（彩色条纹）
+    // Shop-front awnings (coloured stripes)
     if (floors >= 2 && R() < .4 && ty !== 2) {
       const AW = ['#d8412f', '#2f8a5a', '#2b6cb0', '#f2b705', '#e07b39', '#7a4a8c', '#1f6b6b'][Math.floor(R() * 7)], y = CURB + fh * .95, dp = 1.4;
       plain.box(x0 + .5, x1 - .5, y, y + .35, z1, z1 + dp, AW); plain.box(x0 + .5, x1 - .5, y, y + .35, z0 - dp, z0, AW);
       plain.box(x1, x1 + dp, y, y + .35, z0 + .5, z1 - .5, AW); plain.box(x0 - dp, x0, y, y + .35, z0 + .5, z1 - .5, AW);
     }
-    // 女儿墙
+    // Parapet
     const pw = .35, ph = .7;
     if (!o.noParapet && (x1 - x0) > 4) {
       plain.box(x0, x1, h, h + ph, z0, z0 + pw, wall); plain.box(x0, x1, h, h + ph, z1 - pw, z1, wall);
       plain.box(x0, x0 + pw, h, h + ph, z0, z1, wall); plain.box(x1 - pw, x1, h, h + ph, z0, z1, wall);
     }
-    // 屋顶细节：空调机组、楼梯间、水塔
+    // Rooftop details: AC units, stair housings, water towers
     const w = x1 - x0, d = z1 - z0;
     if (w > 6 && d > 6) {
       const n = 1 + Math.floor(R() * 4);
@@ -132,17 +132,17 @@ export function buildCity(scene) {
         plain.box(px, px + s, h, h + .8 + R() * .8, pz, pz + s * (.7 + R() * .8), R() < .5 ? '#d9d9d6' : '#9ea3a8');
       }
       if (R() < .35) { const s = 3 + R() * 2, px = x0 + 1 + R() * (w - s - 2), pz = z0 + 1 + R() * (d - s - 2); plain.box(px, px + s, h, h + 2.6, pz, pz + s, wall, roof); }
-      if (R() < .22 && floors > 4) {   // 木水塔
+      if (R() < .22 && floors > 4) {   // wooden water tower
         const px = x0 + 2 + R() * (w - 4), pz = z0 + 2 + R() * (d - 4);
         for (const [ox, oz] of [[-.9, -.9], [.9, -.9], [-.9, .9], [.9, .9]]) plain.box(px + ox - .1, px + ox + .1, h, h + 2, pz + oz - .1, pz + oz + .1, '#4a4440');
         plain.cyl(px, pz, 1.5, h + 2, h + 4.6, '#8b6a4c', 10); plain.cyl(px, pz, 1.6, h + 4.6, h + 5.3, '#5a4a40', 10);
       }
-      if (R() < .12) grass.box(x0 + .8, x1 - .8, h + .02, h + .12, z0 + .8, z1 - .8, '#6f9a4a', '#77a352', { noSides: true });   // 屋顶绿化
-      if (R() < .3) { const px = x0 + 1 + R() * (w - 2), pz = z0 + 1 + R() * (d - 2), ah = 2.5 + R() * 4; plain.box(px - .06, px + .06, h, h + ah, pz - .06, pz + .06, '#6a6e72'); plain.box(px - .7, px + .7, h + ah * .7, h + ah * .7 + .06, pz - .04, pz + .04, '#6a6e72'); }   // 天线
-      if (R() < .18 && floors < 7) { const nx = Math.floor((w - 3) / 2.2); for (let k = 0; k < nx; k++) plain.box(x0 + 1.5 + k * 2.2, x0 + 3.3 + k * 2.2, h + .3, h + .45, z0 + 1.5, z0 + Math.min(d - 1.5, 5), '#27406e', '#2f4f8a'); }   // 太阳能板
-      for (let k = 0; k < 2; k++) if (R() < .5) { plain.cyl(x0 + 1 + R() * (w - 2), z0 + 1 + R() * (d - 2), .3, h, h + .9, '#b8bcc0', 8); }   // 排风管
+      if (R() < .12) grass.box(x0 + .8, x1 - .8, h + .02, h + .12, z0 + .8, z1 - .8, '#6f9a4a', '#77a352', { noSides: true });   // rooftop greenery
+      if (R() < .3) { const px = x0 + 1 + R() * (w - 2), pz = z0 + 1 + R() * (d - 2), ah = 2.5 + R() * 4; plain.box(px - .06, px + .06, h, h + ah, pz - .06, pz + .06, '#6a6e72'); plain.box(px - .7, px + .7, h + ah * .7, h + ah * .7 + .06, pz - .04, pz + .04, '#6a6e72'); }   // antenna
+      if (R() < .18 && floors < 7) { const nx = Math.floor((w - 3) / 2.2); for (let k = 0; k < nx; k++) plain.box(x0 + 1.5 + k * 2.2, x0 + 3.3 + k * 2.2, h + .3, h + .45, z0 + 1.5, z0 + Math.min(d - 1.5, 5), '#27406e', '#2f4f8a'); }   // solar panels
+      for (let k = 0; k < 2; k++) if (R() < .5) { plain.cyl(x0 + 1 + R() * (w - 2), z0 + 1 + R() * (d - 2), .3, h, h + .9, '#b8bcc0', 8); }   // vent pipes
     }
-    // 立面细节：窗下空调外机、阳台、底商招牌
+    // Facade details: AC units under windows, balconies, shop signs
     const faces = [[0, x0, x1, z1, 1], [0, x0, x1, z0, -1], [1, z0, z1, x1, 1], [1, z0, z1, x0, -1]];
     const unit = (f, a, y, wA, hh2, dp, col) => { const [ax, , , c, n] = f; if (ax === 0) plain.box(a - wA / 2, a + wA / 2, y, y + hh2, n > 0 ? c : c - dp, n > 0 ? c + dp : c, col); else plain.box(n > 0 ? c : c - dp, n > 0 ? c + dp : c, y, y + hh2, a - wA / 2, a + wA / 2, col); };
     const balc = ty === 0 && floors >= 3 && R() < .35, acP = ty === 2 ? .0 : .05;
@@ -154,13 +154,13 @@ export function buildCity(scene) {
         else if (R() < acP) unit(f, a, y + .15, .8, .55, .45, '#dedcd6');
       }
     }
-    if (floors >= 2 && ty !== 2 && R() < .45) {   // 底商招牌
+    if (floors >= 2 && ty !== 2 && R() < .45) {   // shop sign
       const SC = ['#d8412f', '#2b6cb0', '#f2b705', '#2f8a5a', '#e07bb0', '#1f3b66', '#f4f1ea'];
       for (const f of faces) if (R() < .6) { const L2 = f[2] - f[1]; if (L2 < 6) continue; const sw = Math.min(L2 - 2, 3 + R() * 5), a = f[1] + 1 + R() * (L2 - 2 - sw) + sw / 2; unit(f, a, CURB + fh * .95 + .4, sw, .7, .25, SC[Math.floor(R() * SC.length)]); unit(f, a, CURB + fh * .95 + .6, sw * .7, .3, .27, '#f7f5ef'); }
     }
     return h;
   }
-  // 塔楼（带退台）
+  // Towers (with setbacks)
   function tower(x0, x1, z0, z1, floors) {
     const wall = TOWER[Math.floor(R() * TOWER.length)], fh = 3.6, bay = 1.7 + R() * .5, ty = R() < .7 ? 2 : 1;
     const h1 = building(x0, x1, z0, z1, Math.floor(floors * .7), { wall, fh, bay, ty, noParapet: true });
@@ -175,16 +175,16 @@ export function buildCity(scene) {
     const floorsAt = (x, z) => { if (low) return 1 + Math.floor(R() * 3); const f = downtown(x, z); let n = Math.round(2 + f * 4.5 + R() * (1.5 + 3 * f)); return clamp(n, 2, 10); };
     const lots = (a0, a1, cb) => { let a = a0; while (a < a1 - 4) { let w = 9 + R() * 14; if (a1 - (a + w) < 8) w = a1 - a; cb(a, a + w); a += w; } };
     const dN = dmin + R() * (dmax - dmin), dS = dmin + R() * (dmax - dmin);
-    // 北排、南排（整宽）
+    // North row, south row (full width)
     lots(x0, x1, (a, c) => { const d = dN * (.8 + R() * .2); const f = floorsAt(a, z0); if (f > 7 && R() < .3 && c - a > 14) tower(a, c, z0, z0 + d, f + 5); else building(a, c, z0, z0 + d, f); });
     lots(x0, x1, (a, c) => { const d = dS * (.8 + R() * .2); const f = floorsAt(a, z1); if (f > 7 && R() < .3 && c - a > 14) tower(a, c, z1 - d, z1, f + 5); else building(a, c, z1 - d, z1, f); });
-    // 东西排（中段）
+    // East and west rows (middle section)
     const zA = z0 + dN, zB = z1 - dS;
     if (zB - zA > 8) {
       const dW = Math.min(dmin + R() * 8, W / 2 - 3), dE = Math.min(dmin + R() * 8, W / 2 - 3);
       lots(zA, zB, (a, c) => building(x0, x0 + dW, a, c, floorsAt(x0, a)));
       lots(zA, zB, (a, c) => building(x1 - dE, x1, a, c, floorsAt(x1, a)));
-      // 内院：草地或铺地 + 几棵树
+      // Inner courtyard: grass or paving + a few trees
       const cx0 = x0 + dW + 1, cx1 = x1 - dE - 1, cz0 = zA + 1, cz1 = zB - 1;
       if (cx1 - cx0 > 4 && cz1 - cz0 > 4) {
         const green = R() < .6;
@@ -202,7 +202,7 @@ export function buildCity(scene) {
     const x0 = b.x0 + SW, x1 = b.x1 - SW, z0 = b.z0 + SW, z1 = b.z1 - SW;
     if (sp === 'park') {
       grass.flat(x0, x1, z0, z1, CURB + .01, '#6fa24a');
-      // 小路
+      // Paths
       grass.flat(x0, x1, ZEBRA_Z - 1.6, ZEBRA_Z + 1.6, CURB + .02, '#d8c9a4');
       grass.ring(POND.x, POND.z, POND.rx + 1.2, POND.rz + 1.2, POND.rx + 3.4, POND.rz + 3.4, CURB + .03, '#d8c9a4');
       grass.ring(POND.x, POND.z, POND.rx, POND.rz, POND.rx + 1.2, POND.rz + 1.2, CURB + .04, '#8f8a7c');
@@ -225,7 +225,7 @@ export function buildCity(scene) {
       P.fountain = [(mx + x1) / 2, (z0 + z1) / 2];
     } else if (sp === 'construction') {
       grass.flat(x0, x1, z0, z1, CURB + .01, '#b89a6a');
-      // 半成品框架：柱网 + 楼板
+      // Unfinished frame: column grid + floor slabs
       const fx0 = x0 + 12, fx1 = x0 + 44, fz0 = z0 + 8, fz1 = z1 - 8;
       for (let f = 0; f < 5; f++) {
         const y = CURB + f * 3.6;
@@ -233,12 +233,12 @@ export function buildCity(scene) {
         for (let x = fx0; x <= fx1 + .01; x += 8) for (let z = fz0; z <= fz1 + .01; z += (fz1 - fz0) / 3) plain.box(x - .3, x + .3, y, y + 3.3, z - .3, z + .3, '#a9a39a');
       }
       for (let x = fx0; x <= fx1 + .01; x += 8) for (let z = fz0; z <= fz1 + .01; z += (fz1 - fz0) / 3) plain.box(x - .3, x + .3, CURB + 18, CURB + 21, z - .3, z + .3, '#a9a39a');
-      // 塔吊塔身
+      // Tower-crane mast
       const cx = x1 - 14, cz = (z0 + z1) / 2, H = 46;
       plain.box(cx - 1, cx + 1, CURB, H, cz - 1, cz + 1, '#f2b705');
       plain.box(cx - 2.5, cx + 2.5, CURB, CURB + 1, cz - 2.5, cz + 2.5, '#8a8a8a');
       P.crane = { x: cx, z: cz, y: H };
-      // 材料堆、工棚
+      // Material piles, site huts
       plain.box(x0 + 3, x0 + 9, CURB, CURB + 2.6, z0 + 3, z0 + 6, '#e8e4dc', '#3f6fb0');
       plain.box(x0 + 3, x0 + 9, CURB, CURB + 2.6, z0 + 7, z0 + 10, '#e8e4dc', '#3f6fb0');
       for (let k = 0; k < 8; k++) plain.box(x0 + 50 + (k % 4) * 2.2, x0 + 52 + (k % 4) * 2.2, CURB, CURB + .6 + (k > 3 ? .6 : 0), z1 - 10, z1 - 4, '#9c7b54');
@@ -265,7 +265,7 @@ export function buildCity(scene) {
     } else if (sp === 'station') {
       grass.flat(x0, x1, z0, z1, CURB + .01, '#d6cfc0');
       if (b.x0 < 0 && b.x1 > 0 || Math.abs(b.cx) < 60) {
-        // 站房
+        // Station building
         const sx0 = Math.max(x0, -38), sx1 = Math.min(x1, 38);
         if (sx1 - sx0 > 10) {
           bld.box(sx0, sx1, CURB, 11, z0, z0 + 16, '#e7dcc7', '#7b6e62', { facade: true, wp: [5.5, 5.4, 3.3] });
@@ -282,11 +282,11 @@ export function buildCity(scene) {
     }
   }
 
-  // —— 路面标线 ——
+  // —— Road markings ——
   const WHITE = '#ecebe6', YEL = '#e8c24a', MY = .025;
-  const worn = col => { const c = new THREE.Color(col); const k = R(); return k < .35 ? c.lerp(new THREE.Color('#8a8b8d'), .25 + R() * .3) : c; };   // 标线磨损
+  const worn = col => { const c = new THREE.Color(col); const k = R(); return k < .35 ? c.lerp(new THREE.Color('#8a8b8d'), .25 + R() * .3) : c; };   // worn markings
   const dash = (ax, a0, a1, c, w, col, L = 3, G = 4) => { for (let a = a0; a < a1; a += L + G) { const e = Math.min(a + L, a1); if (ax === 'z') mark.flat(c - w / 2, c + w / 2, a, e, MY, worn(col)); else mark.flat(a, e, c - w / 2, c + w / 2, MY, worn(col)); } };
-  // 井盖、补丁路面、油渍
+  // Manhole covers, patched asphalt, oil stains
   const PATCH = ['#3f4246', '#56595d', '#44474b', '#5e5f60'];
   for (const X of AV) for (let z = EXT.z0 + 10; z < EXT.z1 - 10; z += 11 + R() * 30) { const ox = (R() - .5) * (avW(X) - 3); if (ST.some(Z => Math.abs(z - Z) < stW(Z) / 2 + 5)) continue;
     if (R() < .45) { mark.disc(X + ox, z, .38, .38, .018, '#2b2d30', 12); mark.ring(X + ox, z, .38, .38, .45, .45, .019, '#6a6c6f', 12); }
@@ -311,8 +311,8 @@ export function buildCity(scene) {
       else dash('x', a2, b2, Z, .15, WHITE);
     }
   }
-  // 斑马线与停止线
-  const zebraAcross = (axis, c, from, to, at) => {   // 跨越 from..to 的斑马线；条纹沿行车方向
+  // Zebra crossings and stop lines
+  const zebraAcross = (axis, c, from, to, at) => {   // zebra crossing spanning from..to; stripes run along the direction of travel
     for (let s = from + .4; s < to - .4; s += 1.2) { if (axis === 'av') mark.flat(s, s + .6, at - 1.6, at + 1.6, MY, WHITE); else mark.flat(at - 1.6, at + 1.6, s, s + .6, MY, WHITE); }
   };
   for (const X of AV) for (const Z of ST) {
@@ -322,41 +322,41 @@ export function buildCity(scene) {
     mark.flat(X - hx, X, Z - hz - 4.6, Z - hz - 4.2, MY, WHITE); mark.flat(X, X + hx, Z + hz + 4.2, Z + hz + 4.6, MY, WHITE);
     mark.flat(X - hx - 4.6, X - hx - 4.2, Z, Z + hz, MY, WHITE); mark.flat(X + hx + 4.2, X + hx + 4.6, Z - hz, Z, MY, WHITE);
   }
-  zebraAcross('av', 0, -12, 12, ZEBRA_Z);   // 鸭子过的斑马线（大道中段）
+  zebraAcross('av', 0, -12, 12, ZEBRA_Z);   // the zebra crossing the ducks use (middle of the avenue)
   mark.flat(-12, 0, ZEBRA_Z - 3.2, ZEBRA_Z - 2.8, MY, WHITE); mark.flat(0, 12, ZEBRA_Z + 2.8, ZEBRA_Z + 3.2, MY, WHITE);
 
-  // —— 树：大道、主街两侧 + 公园 ——
+  // —— Trees: along the avenues and main streets + park ——
   for (const [a, b] of spans(ST, stW, EXT.z0 + 8, EXT.z1 - 8)) for (let z = a + 8; z < b - 6; z += 9) { if (Math.abs(z - ZEBRA_Z) < 5) continue; trees.push([-13.6, CURB, z, 3.2 + R()]); trees.push([13.6, CURB, z, 3.2 + R()]); }
   for (const [a, b] of spans(AV, avW, EXT.x0 + 8, EXT.x1 - 8)) for (let x = a + 8; x < b - 6; x += 9) { trees.push([x, CURB, -11.6, 3 + R()]); trees.push([x, CURB, 11.6, 3 + R()]); }
 
-  // —— 路灯 ——
+  // —— Street lamps ——
   for (const X of AV) for (const [a, b] of spans(ST, stW, EXT.z0 + 8, EXT.z1 - 8)) for (let z = a + 8; z < b - 5; z += 16) { lamps.push([X - avW(X) / 2 - .8, z, 1]); lamps.push([X + avW(X) / 2 + .8, z + 8, -1]); }
   for (const Z of ST) for (const [a, b] of spans(AV, avW, EXT.x0 + 8, EXT.x1 - 8)) for (let x = a + 8; x < b - 5; x += 16) { lamps.push([x, Z - stW(Z) / 2 - .8, 2]); lamps.push([x + 8, Z + stW(Z) / 2 + .8, -2]); }
 
-  // —— 红绿灯杆（每个路口四角）——
+  // —— Traffic-light poles (four corners of each junction) ——
   for (const X of AV) for (const Z of ST) {
     const hx = avW(X) / 2 + .9, hz = stW(Z) / 2 + .9;
     tlights.push({ X, Z, x: X - hx, z: Z - hz, face: 'ns' }, { X, Z, x: X + hx, z: Z + hz, face: 'ns' }, { X, Z, x: X + hx, z: Z - hz, face: 'ew' }, { X, Z, x: X - hx, z: Z + hz, face: 'ew' });
   }
 
-  // —— 铁路：道床、钢轨、站台、雨棚、接触网杆 ——
+  // —— Railway: trackbed, rails, platforms, canopies, catenary poles ——
   const RX0 = -3200, RX1 = 3200;
   plain.box(RX0, RX1, 0, .35, RAIL.zB - 3.2, RAIL.zA + 3.2, '#8e8577', '#8a8174');
   for (const zc of [RAIL.zA, RAIL.zB]) for (const o of [-.72, .72]) plain.box(RX0, RX1, .35, .55, zc + o - .05, zc + o + .05, '#6d6a66', '#b9bcc0');
-  for (const zc of [RAIL.zA, RAIL.zB]) for (let x = -420; x < 420; x += .9) plain.box(x - .13, x + .13, .35, .45, zc - 1.25, zc + 1.25, '#6b5a4a');   // 枕木
+  for (const zc of [RAIL.zA, RAIL.zB]) for (let x = -420; x < 420; x += .9) plain.box(x - .13, x + .13, .35, .45, zc - 1.25, zc + 1.25, '#6b5a4a');   // sleepers
   plain.box(RAIL.px0, RAIL.px1, 0, 1.1, RAIL.pz0, RAIL.pz1, '#bdb7ab', '#cfc9bd');
   mark.flat(RAIL.px0, RAIL.px1, RAIL.pz1 - .5, RAIL.pz1 - .2, 1.12, '#e8c24a'); mark.flat(RAIL.px0, RAIL.px1, RAIL.pz0 + .2, RAIL.pz0 + .5, 1.12, '#e8c24a');
-  // 站台：灯柱、长椅（不做整片雨棚——俯拍时会挡住站台上的人）
+  // Platforms: lamp posts, benches (no full canopy — from the overhead view it would hide the people on the platform)
   for (let x = RAIL.px0 + 6; x < RAIL.px1 - 3; x += 16) { const pz = (RAIL.pz0 + RAIL.pz1) / 2; plain.box(x - .1, x + .1, 1.1, 4.4, pz - .1, pz + .1, '#54606b'); plain.box(x - .5, x + .5, 4.3, 4.5, pz - .25, pz + .25, '#e8e4dc'); plain.box(x + 4, x + 6, 1.1, 1.55, pz - .35, pz + .35, '#8a5a3c'); }
 
   for (let x = RX0; x < RX1; x += 50) { const zc = RAIL.zB - 3.6; plain.box(x - .15, x + .15, 0, 7.6, zc - .15, zc + .15, '#6b6f73'); plain.box(x - .08, x + .08, 7.1, 7.3, zc, RAIL.zA + 1, '#6b6f73'); }
-  // 天桥（站台 → 站房）
-  // 站台上的地道楼梯口（通往站房的地下通道）
+  // Footbridge (platform → station building)
+  // Subway stair entrances on the platforms (underpass to the station building)
   { const pz = (RAIL.pz0 + RAIL.pz1) / 2; plain.box(-3.5, 3.5, 1.1, 3.6, pz - 1.2, pz + 1.2, '#cfc9bd', '#6e8aa3'); plain.box(-3.2, 3.2, 1.1, 3.2, pz - 1.25, pz + 1.25, '#2a2e33', '#6e8aa3', { noTop: true }); }
-  // 铁路北侧：围栏后的小屋与田地
+  // North of the railway: cottages behind a fence and fields
   plain.box(RX0, RX1, 0, 1.4, RAIL.zB - 5.5, RAIL.zB - 5.35, '#7c8a73');
 
-  // —— 郊区：小房子（人字屋顶）——
+  // —— Suburbs: small houses (gabled roofs) ——
   const sub = new GB();
   const inCity = (x, z) => x > EXT.x0 - 10 && x < EXT.x1 + 10 && z > RAIL.zB - 8 && z < EXT.z1 + 10;
   const GZ = [];
@@ -368,7 +368,7 @@ export function buildCity(scene) {
     if (gz < RAIL.zB - 6 && gz + 44 > RAIL.zB - 6) continue;
     const dist = Math.hypot(gx, gz * 1.3);
     if (dist > 1150 + 250 * Math.sin(gx * .004 + gz * .003)) continue;
-    // 街道留空：只在每个格子内部排房
+    // Streets left empty: houses placed only inside each grid cell
     sub.box(gx + 3, gx + 57, 0, CURB, gz + 3, gz + 41, '#c7c3ba');
     if (R() < .18) { sub.flat(gx + 4, gx + 56, gz + 4, gz + 40, CURB + .01, '#78a553'); for (let k = 0; k < 6; k++) trees.push([gx + 6 + R() * 48, CURB, gz + 6 + R() * 32, 4 + R() * 2]); continue; }
     for (let r = 0; r < 2; r++) for (let k = 0; k < 5; k++) {
@@ -382,7 +382,7 @@ export function buildCity(scene) {
       if (R() < .5) trees.push([hx0 + w + 1.2, CURB, hz0 + d + 3, 3 + R() * 2]);
     }
   }
-  // 农田拼布
+  // Patchwork farmland
   const fields = new GB(), FC = ['#9cbf5c', '#b9c46a', '#7ea84c', '#d6c27a', '#8fb35a', '#a7b86a', '#c9b56c', '#6f9a48'];
   for (let gx = -3000; gx < 3000; gx += 120) for (let gz = -3000; gz < 3000; gz += 90) {
     const d = Math.hypot(gx + 60, (gz + 45) * 1.3); if (d < 1050) continue;
@@ -390,14 +390,14 @@ export function buildCity(scene) {
     if (R() < .25) for (let k = 0; k < 8; k++) trees.push([gx + R() * 120, 0, gz + (R() < .5 ? 0 : 90), 5 + R() * 3]);
   }
 
-  // —— 建网格 ——
+  // —— Build the meshes ——
   const matB = buildingMaterial();
   const matP = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 });
   const matM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .7 });
   const add = (g, m, cast = true) => { const o = new THREE.Mesh(g.build(), m); o.castShadow = cast; o.receiveShadow = true; scene.add(o); return o; };
   add(bld, matB); add(plain, matP); add(grass, matP, false); add(mark, matM, false); add(sub, matP, false); add(fields, matP, false);
 
-  // 路面（沥青，带细微噪声纹理）
+  // Road surface (asphalt, with a fine noise texture)
   const asph = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
     x.fillStyle = '#4b4e53'; x.fillRect(0, 0, 512, 512);
@@ -408,17 +408,17 @@ export function buildCity(scene) {
   })();
   const road = new THREE.Mesh(new THREE.PlaneGeometry(EXT.x1 - EXT.x0 + 40, EXT.z1 - EXT.z0 + 40), new THREE.MeshStandardMaterial({ map: asph, roughness: .92 }));
   road.rotation.x = -Math.PI / 2; road.position.set((EXT.x0 + EXT.x1) / 2, 0, (EXT.z0 + EXT.z1) / 2); road.receiveShadow = true; scene.add(road);
-  // 郊区路面（更浅的沥青）+ 远处地面
+  // Suburban roads (lighter asphalt) + distant ground
   const sroad = new THREE.Mesh(new THREE.PlaneGeometry(3200, 3000), new THREE.MeshStandardMaterial({ color: '#5d6062', roughness: .95 }));
   sroad.rotation.x = -Math.PI / 2; sroad.position.set(0, -.02, 0); sroad.receiveShadow = true; scene.add(sroad);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(14000, 14000), new THREE.MeshStandardMaterial({ color: '#86a45a', roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -.05; ground.receiveShadow = true; scene.add(ground);
 
-  // 池塘水面
+  // Pond water surface
   const water = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: '#3f86a3', roughness: .12, metalness: .1 }));
   water.rotation.x = -Math.PI / 2; water.scale.set(POND.rx, POND.rz, 1); water.position.set(POND.x, CURB + .02, POND.z); water.receiveShadow = true; scene.add(water);
 
-  // —— 树（实例化：树干 + 两团树冠）——
+  // —— Trees (instanced: trunk + two canopy clumps) ——
   const nT = trees.length;
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.18, .25, 1, 6), new THREE.MeshStandardMaterial({ color: '#6b4f3a', roughness: .9 }), nT);
   const cg = new THREE.IcosahedronGeometry(1, 1);
@@ -435,7 +435,7 @@ export function buildCity(scene) {
   });
   for (const o of [trunk, crown]) { o.castShadow = true; o.receiveShadow = true; scene.add(o); }
 
-  // —— 路灯（实例化杆 + 灯头；夜间光斑）——
+  // —— Street lamps (instanced poles + lamp heads; light pools at night) ——
   for (let i = lamps.length - 1; i >= 0; i--) if (Math.abs(lamps[i][0]) < 18 && Math.abs(lamps[i][1] - ZEBRA_Z) < 9) lamps.splice(i, 1);
   const nL = lamps.length;
   const pole = new THREE.InstancedMesh(new THREE.BoxGeometry(.18, 7, .18), new THREE.MeshStandardMaterial({ color: '#4a5058', roughness: .6 }), nL);
@@ -456,19 +456,19 @@ export function buildCity(scene) {
   });
   pole.castShadow = arm.castShadow = true; scene.add(pole, arm, head, pools);
 
-  // —— 红绿灯（杆 + 三色灯实例化，颜色逐帧更新）——
+  // —— Traffic lights (pole + instanced three-colour lamps, colours updated every frame) ——
   const nTL = tlights.length;
   const tpole = new THREE.InstancedMesh(new THREE.BoxGeometry(.2, 4.2, .2), new THREE.MeshStandardMaterial({ color: '#3d4247', roughness: .6 }), nTL);
   const tbox = new THREE.InstancedMesh(new THREE.BoxGeometry(.5, 1.4, .5), new THREE.MeshStandardMaterial({ color: '#23272b', roughness: .5 }), nTL);
   const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-  const tlamp = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 8, 6), lampMat, nTL * 2);   // 每杆两个灯：面向两个方向的"当前色"
+  const tlamp = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 8, 6), lampMat, nTL * 2);   // two lamps per pole: the "current colour" facing each of the two directions
   tlights.forEach((L, i) => {
     m4.compose(pv.set(L.x, 2.1, L.z), q.identity(), sv.set(1, 1, 1)); tpole.setMatrixAt(i, m4);
     m4.compose(pv.set(L.x, 4.5, L.z), q.identity(), sv.set(1, 1, 1)); tbox.setMatrixAt(i, m4);
   });
   tpole.castShadow = tbox.castShadow = true; scene.add(tpole, tbox, tlamp);
 
-  // —— 塔吊的吊臂（逐帧旋转）——
+  // —— Tower-crane jib (rotated every frame) ——
   const craneArm = new THREE.Group();
   if (P.crane) {
     const Y = new THREE.MeshStandardMaterial({ color: '#f2b705', roughness: .6 });
@@ -483,13 +483,13 @@ export function buildCity(scene) {
     craneArm.traverse(m => { if (m.isMesh) { m.castShadow = m.receiveShadow = true; } }); scene.add(craneArm);
   }
 
-  // —— 屋顶霓虹招牌 ——
+  // —— Rooftop neon sign ——
   const sign = makeSign(scene);
 
   return { bl, blocks, special, trees, lamps, tlights, props, P, tlamp, head, headMat, pools, poolMat, craneArm, sign, water };
 }
 
-// 屋顶招牌：钢架 + 每个字母一块面板（亮/灭两套材质）
+// Rooftop sign: steel frame + one panel per letter (two material sets, lit/unlit)
 function makeSign(scene) {
   const g = new THREE.Group();
   const L1 = 'TOY TOWN', L2 = 'RUSH HOUR';
@@ -511,8 +511,8 @@ function makeSign(scene) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(size * .8, size), on);
       m.position.set(-total / 2 + w * (i + .5), y, .32);
       g.add(m); letters.push({ m, col: new THREE.Color(col), ch });
-      // 字母背板（白天可见的漆面字）
-      const back = new THREE.Mesh(new THREE.PlaneGeometry(size * .8, size), new THREE.MeshStandardMaterial({ map: tex, transparent: true, color: new THREE.Color(col).lerp(new THREE.Color('#2a2c30'), .82), roughness: .5, alphaTest: .3 }));   // 未点亮的灯管：暗灰带一点底色
+      // Letter back panel (painted letters visible in daylight)
+      const back = new THREE.Mesh(new THREE.PlaneGeometry(size * .8, size), new THREE.MeshStandardMaterial({ map: tex, transparent: true, color: new THREE.Color(col).lerp(new THREE.Color('#2a2c30'), .82), roughness: .5, alphaTest: .3 }));   // unlit tubes: dark grey with a little of the base colour
       back.position.set(m.position.x, y, .28); back.castShadow = true; g.add(back);
     });
     return total;

@@ -1,4 +1,4 @@
-"""把 EMS 单线 SVG 字体转成引擎用的 JSON：{meta, glyphs:{char:{w, s:[[x,y,x,y...],...]}}}（y 向上，单位 1/1000 em）"""
+"""Converts an EMS single-line SVG font into the JSON the engine uses: {meta, glyphs:{char:{w, s:[[x,y,x,y...],...]}}} (y up, units of 1/1000 em)"""
 import re, json, sys, html
 src, dst = sys.argv[1], sys.argv[2]
 t = open(src, encoding='utf8').read()

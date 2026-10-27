@@ -1,4 +1,4 @@
-"""混音：纸 + 金属 + 磁带拟音（全部程序合成）+ 磁带简报旁白 + 配乐（旁白下闪避）→ mix.wav
+"""Mix: paper + metal + tape foley (all procedurally synthesised) + tape-briefing narration + score (ducked under narration) → mix.wav
 .venv/bin/python styles/spy-titles/demo/mix.py
 """
 import sys, os, json, numpy as np, soundfile as sf, librosa
@@ -16,7 +16,7 @@ def nz(d): return rng.standard_normal(int(round(d * SR)))
 def n1(x, p=1.0): m = np.abs(x).max(); return x * p / m if m > 0 else x
 def env_ad(d, a, tau): tt = t_(d); return np.minimum(1, tt / max(a, 1e-4)) * np.exp(-np.maximum(0, tt - a) / tau)
 
-# ── 纸 ──
+# ── paper ──
 def paper_cut(): d = .32; tt = t_(d); x = bp(nz(d), 2500, 9000) * env_ad(d, .2, .05); return n1(x) * .6
 def paper_slide(): d = .24; x = bp(nz(d), 1200, 6000) * env_ad(d, .16, .04); return n1(x) * .5
 def paper_whoosh(): d = .42; x = bp(nz(d), 500, 5000) * np.sin(np.pi * t_(d) / d) ** 2; return n1(x) * .55
@@ -46,7 +46,7 @@ def coat_whoosh(): d = .9; x = bp(nz(d), 150, 1600) * np.sin(np.pi * t_(d) / d) 
 def shatter():
     d = .9; tt = t_(d); x = bp(nz(d), 600, 7000) * (np.abs(np.sin(tt * 90 + 3 * np.sin(tt * 23))) ** 3) * env_ad(d, .02, .35)
     return n1(x + whoosh(d) * .5) * .8
-# ── 金属 ──
+# ── metal ──
 def metal(d, parts, tau):
     tt = t_(d); return sum(a * np.sin(2 * np.pi * f * tt + rng.random() * 6) * env_exp(d, tau * (1 + .3 * rng.random())) for f, a in parts)
 def key_jingle():
@@ -70,7 +70,7 @@ def lock_click():
     body = np.sin(2 * np.pi * 180 * tt) * env_exp(d, .03)
     return n1(a + b + body) * .9
 def grab(): d = .2; tt = t_(d); return n1(bp(nz(d), 250, 1600) * env_exp(d, .04) + np.sin(2 * np.pi * 80 * tt) * env_exp(d, .05)) * .7
-# ── 环境 ──
+# ── ambience ──
 def jet(d=1.9):
     tt = t_(d); f = 400 + 1400 * (tt / d)
     x = bp(nz(d), 150, 3500) * np.sin(np.pi * tt / d) ** 1.2
@@ -110,20 +110,20 @@ for e in ev['ev']:
     elif ty == 'wind': x = wind(e['d'])
     elif ty in FX: x = FX[ty]()
     else: print('?? unknown', ty); continue
-    if ty == 'jet':   # 从左飞到右
+    if ty == 'jet':   # flies left to right
         L = len(x); pan = np.linspace(-.8, .9, L); s = int(t * SR); e2 = min(N, s + L)
         fol[s:e2, 0] += x[:e2 - s] * np.cos((pan[:e2 - s] + 1) * np.pi / 4) * 1.2; fol[s:e2, 1] += x[:e2 - s] * np.sin((pan[:e2 - s] + 1) * np.pi / 4) * 1.2
         continue
     add(fol, x.astype(np.float64), t, gn, PAN.get(ty, 0))
 
-# ── 旁白：磁带简报链路（带通 + 轻微饱和 + 抖晃）──
+# ── narration: tape-briefing chain (band-pass + light saturation + wow/flutter) ──
 lines = json.load(open(os.path.join(HERE, 'lines.json')))
 venv = np.zeros(N)
 for L in lines:
     y, sr = sf.read(os.path.join(HERE, 'voices', L['id'] + '.wav'))
     if y.ndim > 1: y = y.mean(1)
     y = librosa.resample(y, orig_sr=sr, target_sr=SR)
-    # 抖晃：0.9 Hz ±0.25% 变速
+    # wow/flutter: 0.9 Hz ±0.25% speed variation
     n = len(y); tt = np.arange(n) / SR; idx = np.arange(n) + (np.sin(2 * np.pi * .9 * tt) * .0025 * SR / (2 * np.pi * .9))
     y = np.interp(np.clip(idx, 0, n - 1), np.arange(n), y)
     y = bp(y, 220, 5200, 3); y = np.tanh(y * 2.2) / np.tanh(2.2)
@@ -131,31 +131,31 @@ for L in lines:
     s = int(L['t'] * SR); e2 = min(N, s + len(y))
     vox[s:e2, 0] += y[:e2 - s] * .62; vox[s:e2, 1] += y[:e2 - s] * .62
     venv[s:e2] = 1
-# 磁带嘶声（整片很轻，旁白处略高）
+# tape hiss (very light across the film, slightly higher under narration)
 hiss = hp(rng.standard_normal(N), 3000) * .0035
 hiss = hiss * (1 + 1.8 * uniform_filter1d(venv, int(.3 * SR)))
 fol[:, 0] += hiss; fol[:, 1] += hiss * .97
 
-# ── 配乐 + 闪避 ──
+# ── score + ducking ──
 mus, msr = sf.read(os.path.join(HERE, 'music', 'score.wav'))
 assert msr == SR
 mus = mus[:N] if len(mus) >= N else np.pad(mus, ((0, N - len(mus)), (0, 0)))
 duck = uniform_filter1d(uniform_filter1d(venv, int(.25 * SR)), int(.15 * SR))
 music = mus * (1 - .55 * duck)[:, None]
 
-for c in range(2): fol[:, c] = lp(fol[:, c], 11000, 4)   # 拟音里的尖锐噪声瞬态会造成采样间峰值（true peak 比 sample peak 高 3 dB）
+for c in range(2): fol[:, c] = lp(fol[:, c], 11000, 4)   # sharp noise transients in the foley cause inter-sample peaks (true peak 3 dB above sample peak)
 mix = music * .95 + fol * .9 + vox
-# 绝对静音区（stop-time 与结尾那一拍）：全部清零（5 ms 淡入淡出）
+# absolute-silence zones (stop-time and the final beat): zero everything (5 ms fades)
 for a, b in [(20.60, 21.364), (37.10, 37.727)]:
     s, e2 = int(a * SR), int(b * SR); f = int(.005 * SR)
     mix[s - f:s] *= np.linspace(1, 0, f)[:, None]; mix[s:e2] = 0; mix[e2:e2 + f] *= np.linspace(0, 1, f)[:, None]
-mix *= .89 / np.abs(mix).max() * 1.9   # 约 +4 dB 推进限幅器，压低峰均比（loudnorm 线性模式才能到 −14）
+mix *= .89 / np.abs(mix).max() * 1.9   # drive about +4 dB into the limiter to lower the crest factor (only then can loudnorm reach −14 in linear mode)
 for c in range(2): mix[:, c] = limit(mix[:, c], .89)
 for c in range(2): mix[:, c] = lp(mix[:, c], 17000, 4)
 for c in range(2): mix[:, c] = limit(mix[:, c], .8)
 assert np.isfinite(mix).all()
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR)
-# 电平表
+# level meter
 def db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
 print('mix.wav', round(len(mix) / SR, 2), 's  peak', round(20 * np.log10(np.abs(mix).max()), 2), 'dBFS')
 for a, b, n_ in [(0, 2.27, 'open'), (2.27, 9.5, 'grid/velvet/intro'), (9.5, 16.8, 'airport'), (16.8, 22.3, 'train'), (22.3, 25.9, 'casino'), (25.9, 31.4, 'roof'), (31.4, 36.8, 'title'), (37.9, 40.4, 'vo6'), (40.9, 44, 'end')]:

@@ -1,7 +1,7 @@
-// sprites.js — 角色骨架（胶囊肢体 + 光向分阶明暗 + 自动描边）+ 手绘 ASCII 头部
+// sprites.js — character rig (capsule limbs + stepped shading by light direction + automatic outline) + hand-drawn ASCII heads
 import { C, T, sprFromRows } from './px.js';
 
-// —— 材质色阶 [line, dark, mid, light] ——
+// —— Material tone steps [line, dark, mid, light] ——
 export const MAT = {
   skin: [C.brown, C.skinS, C.skin, C.sand],
   hairA: [C.umber, C.umber, C.dbrown, C.brown],
@@ -19,10 +19,10 @@ export const MAT = {
   glow: [C.orange, C.orange, C.amber, C.yellow],
   blade: [C.dslate, C.steel, C.silver, C.white],
 };
-const L = [-.55, -.83];                         // 光从左上来
+const L = [-.55, -.83];                         // light comes from the upper left
 
-// —— 头部 ASCII（无外描边，外描边由全局描边补）——
-// h/H/j 头发 中/亮/暗，f/F 皮肤 亮/暗，e 眼（墨），w 眼白，b 眉（发暗），m 嘴
+// —— ASCII heads (no outer outline; the global outline pass adds it) ——
+// h/H/j hair mid/light/dark, f/F skin light/dark, e eye (ink), w eye white, b brow (dark hair), m mouth
 const HEADS_A = {
   side: [
     '......jjjj....',
@@ -160,12 +160,12 @@ export function headSprite(rows, hairMat) {
   return sprFromRows(rows, { h: hm[2], H: hm[3], j: hm[1], f: sk[2], F: sk[1], e: C.ink, w: C.white, b: hm[1], m: sk[0] });
 }
 
-// —— 骨架绘制 ——
-// 画布 48×48，原点（脚底中心）在 (24,44)
+// —— Rig drawing ——
+// Canvas 48×48, origin (centre of the feet) at (24,44)
 const SW = 48, SH = 48, OX = 24, OY = 44;
 class Buf {
   constructor() { this.m = new Int16Array(SW * SH).fill(-1); this.part = new Int16Array(SW * SH).fill(-1); this.np = 0; this.lineMask = new Uint8Array(SW * SH); }
-  // 把一个部件（像素集合 + 每像素色阶）叠上来；与已有部件交界处画内描边
+  // Layer a part on (pixel set + per-pixel tone step); draw an inner outline where it meets parts already there
   stamp(pix, mat) {
     const id = this.np++, set = new Set(pix.map(p => p.i));
     for (const p of pix) {
@@ -200,12 +200,12 @@ class Buf {
   }
 }
 function toneOf(nx, ny, ramp = [.38, -.28]) { const v = nx * L[0] + ny * L[1]; return v > ramp[0] ? 3 : v < ramp[1] ? 1 : 2; }
-// 胶囊：a→b，半径 r0→r1；明暗按截面法线
+// Capsule: a→b, radius r0→r1; shading by the cross-section normal
 function capsule(x0, y0, x1, y1, r0, r1 = r0, bias = 0) {
   const pix = [], dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1e-6, ux = dx / len, uy = dy / len, px_ = -uy, py_ = ux;
   const R = Math.max(r0, r1) + 1;
   for (let y = Math.floor(Math.min(y0, y1) - R); y <= Math.ceil(Math.max(y0, y1) + R); y++) for (let x = Math.floor(Math.min(x0, x1) - R); x <= Math.ceil(Math.max(x0, x1) + R); x++) {
-    const cx = x + .5 - .5, cy = y;                  // 像素中心
+    const cx = x + .5 - .5, cy = y;                  // pixel centre
     const t = Math.max(0, Math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / len)), qx = x0 + ux * len * t, qy = y0 + uy * len * t;
     const r = r0 + (r1 - r0) * t, d = Math.hypot(cx - qx, cy - qy); if (d > r + .15) continue;
     const s = ((cx - qx) * px_ + (cy - qy) * py_) / Math.max(.6, r), nx = px_ * s, ny = py_ * s;
@@ -214,7 +214,7 @@ function capsule(x0, y0, x1, y1, r0, r1 = r0, bias = 0) {
   }
   return pix;
 }
-// 多边形（扫描线），明暗按到中心的伪法线
+// Polygon (scanline), shading by a pseudo-normal toward the centre
 function poly(pts, cx, cy, rx, ry, ramp) {
   const pix = []; let y0 = Infinity, y1 = -Infinity; for (const [, y] of pts) { y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) {
@@ -230,21 +230,21 @@ function poly(pts, cx, cy, rx, ry, ramp) {
 }
 function disc(cx, cy, r) { const pix = []; for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++) { const dx = x - cx, dy = y - cy; if (dx * dx + dy * dy > r * r + .3) continue; const X = x + OX, Y = y + OY; if (X < 0 || Y < 0 || X >= SW || Y >= SH) continue; pix.push({ i: Y * SW + X, tone: toneOf(dx / (r || 1), dy / (r || 1)) }); } return pix; }
 const rot = (a, x, y) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
-// 肢体正向运动学：从根部起，角度 0 = 竖直向下，正 = 向前（+x）
+// Limb forward kinematics: from the root, angle 0 = straight down, positive = forward (+x)
 function limb(root, a1, l1, a2, l2) {
   const k = [root[0] + Math.sin(a1) * l1, root[1] + Math.cos(a1) * l1];
   const e = [k[0] + Math.sin(a1 - a2) * l2, k[1] + Math.cos(a1 - a2) * l2];
   return [k, e];
 }
 
-// 呆毛：一撮翘起的头发（dir 1 = 朝前卷，0 = 正/背面），随步伐 2 帧摆
+// Ahoge: one tuft of hair sticking up (dir 1 = curls forward, 0 = front/back view), sways with the step over 2 frames
 function ahoge(b, x, y, dir, t) {
   const sw = Math.floor(t * 8) % 2;
   const hc = MAT.hairA;
   if (dir === 0) { b.raw(x, y - 1, hc[2]); b.raw(x, y - 2, hc[2]); b.raw(x + 1 - sw, y - 3, hc[3]); b.raw(x + 2 - sw, y - 3, hc[2]); return; }
   b.raw(x, y - 1, hc[2]); b.raw(x + dir * sw * 0, y - 2, hc[2]); b.raw(x + dir, y - 3, hc[3]); b.raw(x + dir * 2, y - 3 + sw, hc[2]);
 }
-// —— 角色定义 ——
+// —— Character definitions ——
 export const CHARS = {
   arlo: { heads: HEADS_A, hair: 'hairA', tunic: 'tunicA', h: 1, scarf: true, sword: true },
   wren: { heads: HEADS_W, hair: 'hairW', tunic: 'cloakW', h: 0, scarf: true, staff: true, cloak: false, dress: true },
@@ -252,7 +252,7 @@ export const CHARS = {
 const headCache = new Map();
 function head(ch, kind) { const k = ch + kind; if (!headCache.has(k)) headCache.set(k, headSprite(CHARS[ch].heads[kind] || CHARS[ch].heads.side, CHARS[ch].hair)); return headCache.get(k); }
 
-// 姿势：{ by 身体下沉, lean 躯干前倾, legF:[a1,a2], legB, armF:[a1,a2], armB, head:'side'|'up'|..., item: 'sword'|'staff'|null, scarfWrap }
+// Pose: { by body drop, lean torso lean forward, legF:[a1,a2], legB, armF:[a1,a2], armB, head:'side'|'up'|..., item: 'sword'|'staff'|null, scarfWrap }
 export const POSE = {
   idle: { by: 0, lean: 0, legF: [.12, 0], legB: [-.1, 0], armF: [-.05, -.25], armB: [.1, -.2], head: 'side' },
   breathe: { by: 0, lean: 0, rise: 1, legF: [.12, 0], legB: [-.1, 0], armF: [-.1, -.2], armB: [.12, -.15], head: 'side' },
@@ -275,22 +275,22 @@ export const POSE = {
   backpush: { view: 'back', arms: 'push', lean: 1 }, backwalk0: { view: 'back', legL: -1 }, backwalk1: { view: 'back', legR: -1 },
 };
 
-// 生成角色帧。opts: {scarf:bool, wind:0..1, t:相位}
+// Generate a character frame. opts: {scarf:bool, wind:0..1, t:phase}
 export function drawChar(ch, poseName, opts = {}) {
   const P = POSE[poseName], D = CHARS[ch], b = new Buf(); b.flat = !!opts.flat;
   if (P.view) return drawFrontBack(ch, P.view, opts, P);
-  const H0 = D.h;                                     // 身高差（ARLO 高 1）
+  const H0 = D.h;                                     // height difference (ARLO is 1 taller)
   const by = P.by || 0, lean = P.lean || 0, rise = P.rise || 0;
   const hip = [0, -12 - H0 + by];
   const [shx, shy] = rot(lean, 0, -8 - rise); const sh = [hip[0] + shx, hip[1] + shy];
   const neck = [sh[0] + rot(lean, 0, -1.5)[0] + .5, sh[1] - 1.5];
   const tunic = D.tunic;
-  // 后景：剑（背着）/ 斗篷
+  // Back layer: sword (on the back) / cloak
   if (D.cloak) {
     const sway = Math.sin((opts.t || 0) * 5) * (opts.wind || .4);
     b.stamp(poly([[sh[0] - 1, sh[1] - 1], [sh[0] + 1.5, sh[1]], [hip[0] - 1, hip[1] + 7], [hip[0] - 7 - sway * 2, hip[1] + 8], [hip[0] - 6 - sway, hip[1] + 1]], hip[0] - 3, hip[1] - 2, 5, 8), { name: 'cloakW' });
   }
-  // 后臂、后腿（整体压暗一阶：bias 往阴影偏）
+  // Back arm, back leg (darkened one step overall: bias pushes toward shadow)
   const legLen = [6, 6];
   const [kB, aB] = limb(hip, P.legB[0], legLen[0], P.legB[1], legLen[1]);
   b.stamp(capsule(hip[0] - .5, hip[1], kB[0], kB[1], 1.7, 1.4, -.6), { name: 'pants' });
@@ -299,32 +299,32 @@ export function drawChar(ch, poseName, opts = {}) {
   const [eB, hB] = limb(sh, P.armB[0], 4.5, P.armB[1], 4.5);
   b.stamp(capsule(sh[0], sh[1] + .5, eB[0], eB[1], 1.3, 1.2, -.7), { name: tunic });
   b.stamp(capsule(eB[0], eB[1], hB[0], hB[1], 1.1, 1.1, -.7), { name: ch === 'arlo' ? 'leather' : 'skin' });
-  if (D.staff && P.item !== 'raise') {          // 后手握杖：杖在身体后面
+  if (D.staff && P.item !== 'raise') {          // staff held in the back hand: the staff is behind the body
     const bot = [hB[0] + 1.5, -1 + Math.min(0, (P.by || 0) - 3)], top = [bot[0] + 3, bot[1] - 31 + (P.by || 0)];
     b.stamp(capsule(bot[0], bot[1], top[0], top[1], .7, .7, -.5), { name: 'wood' });
     b.stamp(disc(top[0], top[1] - 1, 1.6), { name: 'glow' });
   }
-  // 躯干 + 下摆
+  // Torso + hem
   const [hx1, hy1] = rot(lean, 3.4, -8), [hx0, hy0] = rot(lean, -3.6, -8);
   const flare = D.dress ? 5.2 : 4.2, hem = D.dress ? 5.5 : 3.5;
   b.stamp(poly([[hip[0] + hx0, hip[1] + hy0 - rise], [hip[0] + hx1, hip[1] + hy1 - rise], [hip[0] + flare, hip[1] + hem], [hip[0] - flare - .5, hip[1] + hem]], hip[0] - .5 + rot(lean, 0, -4)[0], hip[1] - 4, 4.2, 6.5), { name: tunic });
-  // 腰带
+  // Belt
   const beltY = hip[1] - 1;
   b.stamp(poly([[hip[0] - 4.2, beltY - 1], [hip[0] + 4, beltY - 1], [hip[0] + 4.2, beltY + 1], [hip[0] - 4.4, beltY + 1]], hip[0], beltY, 5, 3), { name: 'leather' });
   b.raw(hip[0] + 2.6, beltY - .5, C.amber); b.raw(hip[0] + 2.6, beltY + .5, C.brown);
-  if (D.sword && P.item !== 'held' && P.item !== 'swing') {   // 腰间佩剑：剑鞘斜向后下，剑柄在前
+  if (D.sword && P.item !== 'held' && P.item !== 'swing') {   // sword at the hip: scabbard slants back and down, hilt in front
     b.stamp(capsule(hip[0] + 1, hip[1] - .5, hip[0] - 7, hip[1] + 4.5, .9, .8), { name: 'leather' });
     b.raw(hip[0] - 7, hip[1] + 4.5, C.amber);
     b.stamp(capsule(hip[0] + 1.5, hip[1] - 1.5, hip[0] + 4, hip[1] - 3.2, .6), { name: 'steel' });
     b.raw(hip[0] + 1.5, hip[1] - .5, C.amber); b.raw(hip[0] + 1.5, hip[1] - 2.5, C.amber);
   }
-  // 前腿
+  // Front leg
   const [kF, aF] = limb(hip, P.legF[0], legLen[0], P.legF[1], legLen[1]);
   b.stamp(capsule(hip[0] + .5, hip[1], kF[0], kF[1], 1.7, 1.4), { name: 'pants' });
   b.stamp(capsule(kF[0], kF[1], aF[0], aF[1], 1.5, 1.4), { name: 'boots' });
   b.stamp(capsule(aF[0], aF[1], aF[0] + 2.4, aF[1], 1.2, 1.1), { name: 'boots' });
-  // 围巾绕颈（尾巴由场景程序化绘制）
-  // 头
+  // Scarf wrapped round the neck (the tail is drawn procedurally by the scene)
+  // Head
   const hk = P.head || 'side', hs = head(ch, hk);
   const hx = Math.round(neck[0] - 6), hy = Math.round(neck[1] - 13);
   b.sprite(hs, hx, hy);
@@ -333,14 +333,14 @@ export function drawChar(ch, poseName, opts = {}) {
     const sy = Math.round(neck[1]) - 1;
     b.stamp(poly([[neck[0] - 3.5, sy - 1], [neck[0] + 3, sy - 1.5], [neck[0] + 3.5, sy + 1.5], [neck[0] - 3.5, sy + 1.5]], neck[0] - 1, sy - 2, 4, 3), { name: 'scarf' });
   }
-  // 肩甲（ARLO）
+  // Pauldron (ARLO)
   if (ch === 'arlo') b.stamp(disc(sh[0] - .5, sh[1] + 1, 2.3), { name: 'steel' });
-  // 前臂
+  // Front arm
   const [eF, hF] = limb(sh, P.armF[0], 4.5, P.armF[1], 4.5);
   b.stamp(capsule(sh[0], sh[1] + .5, eF[0], eF[1], 1.4, 1.2), { name: tunic });
   b.stamp(capsule(eF[0], eF[1], hF[0], hF[1], 1.2, 1.1), { name: ch === 'arlo' ? 'steel' : 'skin' });
   b.stamp(disc(hF[0], hF[1], 1.1), { name: ch === 'arlo' ? 'leather' : 'skin' });
-  // 手持物
+  // Held item
   if (P.item === 'held' || P.item === 'swing') {
     const a = P.item === 'swing' ? .25 : -.55, len = 12, ca = Math.cos(a), sa = Math.sin(a);
     b.stamp(capsule(hF[0] + ca * 1.5, hF[1] + sa * 1.5, hF[0] + ca * len, hF[1] + sa * len, .8, .55), { name: 'blade', line: false });
@@ -386,7 +386,7 @@ function drawFrontBack(ch, view, opts, P = {}) {
   if (armBack) drawArms();
   return b.finish();
 }
-// 围巾尾巴（侧面）：两条链，按 8 fps 三帧循环步进（像手绘的 3 帧飘动），wind 0..1，dir = 1 面向右
+// Scarf tail (side view): two chains, stepped through a three-frame cycle at 8 fps (like 3-frame hand-drawn flutter), wind 0..1, dir = 1 faces right
 export function scarfTail(fb, x, y, t, wind = .5, dir = 1, len = 15, pal = [C.scarfD, C.scarf, C.scarfL]) {
   const ph = (Math.floor(t * 8) % 3) * 2.1;
   for (let k = 0; k < 2; k++) {
@@ -402,7 +402,7 @@ export function scarfTail(fb, x, y, t, wind = .5, dir = 1, len = 15, pal = [C.sc
     }
   }
 }
-// 围巾尾巴（背面）：从后颈垂下，偏向一侧飘
+// Scarf tail (back view): hangs from the nape and drifts to one side
 export function scarfTailBack(fb, x, y, t, wind = .5, len = 13, pal = [C.scarfD, C.scarf, C.scarfL]) {
   const ph = (Math.floor(t * 8) % 3) * 2.1;
   for (let k = 0; k < 2; k++) {

@@ -1,4 +1,4 @@
-"""缩略图总览：python sheet.py out.jpg img1 img2 ... [--cols 4] [--w 480]"""
+"""Thumbnail contact sheet: python sheet.py out.jpg img1 img2 ... [--cols 4] [--w 480]"""
 import sys
 from PIL import Image, ImageDraw
 args = sys.argv[1:]; cols = 4; w = 480

@@ -1,0 +1,252 @@
+{
+  "artifact": {
+    "artifact_contract": {
+      "alpha": false,
+      "fps": 24,
+      "height": 1920,
+      "width": 1080
+    },
+    "artifact_media_type": "video",
+    "byte_count": 155583,
+    "component_id": "scene",
+    "error_code": null,
+    "input_sha256": "39905fa154cda5b454027de387cc10bf2cecc07f1b619c2a32849dc35c60a5d5",
+    "invocation_evidence": {
+      "adapter_id": "lemo-opuscar-scene-v1",
+      "approved_entrypoint": "scripts/upstream_scene_adapter.py",
+      "approved_executor": "reference_adapter",
+      "argv": [
+        "$LAUNCHER",
+        "$DEPENDENCY/scripts/upstream_scene_adapter.py",
+        "--brief",
+        "$JOB/brief.json",
+        "--media-manifest",
+        "$JOB/reference-media-manifest.json",
+        "--runtime",
+        "eyJicm93c2VyIjogIi9Vc2Vycy9BYm5lci9cdTVkZTVcdTRmNWNcdTdhN2FcdTk1ZjQvXHUzMDEwQUlcdThiYjJcdTVlMDhJUFx1NTE4NVx1NWJiOVx1MzAxMS9za2lsbC1kZXZlbG9wbWVudC9oZC10YWxraW5nLWhlYWQvLnJlbW90aW9uL2Nocm9tZS1oZWFkbGVzcy1zaGVsbC9tYWMtYXJtNjQvY2hyb21lLWhlYWRsZXNzLXNoZWxsLW1hYy1hcm02NC9jaHJvbWUtaGVhZGxlc3Mtc2hlbGwiLCAiY29tbWl0IjogIjQxM2E2YmQ2ZDc4ZWJkM2JkZDVhYmFlYzk1MzhhMjY4NjdmODkwZGYiLCAiZW50cnkiOiAiY29yZS9yZW5kZXIvdmlkZW8ubWpzIiwgImVudHJ5X3NoYTI1NiI6ICI1MDJiZmU0ZmQ5ZjVlMmQ5ZmYxNGQ1OTMwOTI3ZGM3ZTJiMDNmYjU1YjJiM2QxN2YyMDEwNjRhNzY2YmI4N2IzIiwgImV4ZWN1dGFibGVfaGFzaGVzIjogeyJicm93c2VyIjogImI0NjlkMDVjNjk4Y2NmOWY0YWUzZGM0M2ZiMTk0ZmJkY2Y1NmY5ZGExZmM0NmRjYzE5ZjJiZjlmZTJhYTIwYjgiLCAiZmZtcGVnIjogImRhZDRiMzBiMzZhMWE5OTliZmE0YjZmZmJkZTEzOGJkMTdlZTQ5NmM2OWUxMmVlZjYzODIyN2RmZjJjNjQxNWMiLCAiZmZwcm9iZSI6ICJjZmVlZmNjOTIwN2ViM2ZhNDI0Njc5MjI4ZmUzODQ4ZGIyOTIxYjE1NTM3ZDI2YzFjY2M0YTdhNjFkZTk1ZDAwIiwgIm5vZGUiOiAiMDJkYzhmYTAwZDdmODU3YzI0MTJhNWQ1NWE4NWExYjdhMzQxZTk0YzNkZjQzMGJkODczM2M3MzJlMzFkY2E0NiJ9LCAiZmZtcGVnIjogIi9vcHQvaG9tZWJyZXcvQ2VsbGFyL2ZmbXBlZy84LjEuMl8xL2Jpbi9mZm1wZWciLCAiZmZwcm9iZSI6ICIvb3B0L2hvbWVicmV3L0NlbGxhci9mZm1wZWcvOC4xLjJfMS9iaW4vZmZwcm9iZSIsICJub2RlIjogIi9vcHQvaG9tZWJyZXcvQ2VsbGFyL25vZGUvMjYuMTAuMF8yL2Jpbi9ub2RlIiwgInBhY2thZ2VzX3NoYTI1NiI6ICJmMDYxYzU4NDI3ZTQ3ZTg0M2UyNmQyMDFmMGE1NzA3NmM3MzRlNTdjNzM0ZWNiYmQ4N2Q0YTIzYjdhMjBkYjliIiwgInJvb3QiOiAiL1VzZXJzL0FibmVyL1x1NWRlNVx1NGY1Y1x1N2E3YVx1OTVmNC9cdTMwMTBBSVx1OGJiMlx1NWUwOElQXHU1MTg1XHU1YmI5XHUzMDExL3NraWxsLWRldmVsb3BtZW50L2hkLXRhbGtpbmctaGVhZC9za2lsbC1kZXZlbG9wbWVudC92ZW5kb3IvbGVtby1vcHVzY2FyIn0=",
+        "--skill-root",
+        "$PATH[9]",
+        "--output",
+        "$JOB/08-visual-assets/components/seg-001/.staging/scene-r3.12ec99c3cc7485a517c75ae2dc9a4190/output.mp4"
+      ],
+      "brief_sha256": "387a752a2d5cb928b3d99efda323b39863adfb4b4e08b23720401fafd1dd7f76",
+      "dependency_id": "lemo-opuscar",
+      "descendants_terminated": false,
+      "entrypoint_sha256": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d",
+      "exit_code": 0,
+      "invocation_id": "process-31811417f2aa1310f780e9213404fe44",
+      "invocation_type": "reference_process",
+      "kind": "code_generated",
+      "launcher_sha256": "fe46716a94d8efa4514feb3c39ba3e270deee2187556986f6ddcff54aba7bb9a",
+      "output_job_path": "08-visual-assets/components/seg-001/scene-r3.mp4",
+      "output_sha256": "0f5b94582ba01d699e382e035fda6e32e18ce9957b2a076b420d5e38a14a646f",
+      "pid": 41579,
+      "primary_renderer": "HTMLCanvas",
+      "probe_id": "whiteboard-ffprobe",
+      "probe_version": "1.0.0",
+      "producer_version": "2.0.0",
+      "renderer_version": "413a6bd6d78ebd3bdd5abaec9538a26867f890df",
+      "stderr_bytes": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 1034,
+      "stdout_sha256": "693dc82ec47c400c8dfdce3b23d4457906e6922fa23adca7d74424501aa5219d",
+      "timed_out": false,
+      "unresolved_process_group": false
+    },
+    "job_id": "lemo-native-integration-fixture",
+    "job_path": "08-visual-assets/components/seg-001/scene-r3.mp4",
+    "kind": "code_generated",
+    "layout_slot": "main",
+    "media_probe": {
+      "alpha": false,
+      "codec": "h264",
+      "container": "mp4",
+      "duration": 6.0,
+      "fps": 24.0,
+      "frame_count": 144,
+      "height": 1920,
+      "media_type": "video",
+      "pixel_format": "yuv420p",
+      "width": 1080
+    },
+    "media_type": "video",
+    "opacity": 1.0,
+    "output_sha256": "0f5b94582ba01d699e382e035fda6e32e18ce9957b2a076b420d5e38a14a646f",
+    "qa": {
+      "checks": [
+        "process_completed"
+      ],
+      "passed": true
+    },
+    "render_window": {
+      "end_frame": 144,
+      "layout_slot": "main",
+      "opacity": 1.0,
+      "safe_zone": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "start_frame": 0,
+      "z_index": 0
+    },
+    "safe_zone": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+    },
+    "schema_version": 1,
+    "segment_id": "seg-001",
+    "source_media_type": "animation",
+    "status": "success",
+    "strategy_revision": 3,
+    "z_index": 0
+  },
+  "human_approval_claimed": false,
+  "output": "/Users/Abner/工作空间/【AI讲师IP内容】/lemo-integration-smoke-20261027/executor-fixture/08-visual-assets/components/seg-001/scene-r3.mp4",
+  "selection": {
+    "assignments": [
+      {
+        "candidate_id": "lemo-opuscar:lemo-opuscar/swiss-motion",
+        "component_id": "scene",
+        "design_plan": {
+          "composition": "竖屏四列导线与三行语义分组，底部三个渠道模块",
+          "finish": "米白、黑、单橙，平面矩形与裁切揭示，无音频",
+          "focus": "同一渠道拥有多个模板",
+          "typography": "左对齐中文大字，主字>=64px"
+        },
+        "entrypoint": "scripts/upstream_scene_adapter.py",
+        "limitations": [
+          "Invoke the complete original Lemo Skill and selected STYLE; freeze its topic-specific project before native rendering",
+          "Opaque B-roll only; verify actual materials, Chinese text and subject action for this content"
+        ],
+        "reason": "原生瑞士网格分组归位",
+        "role": "native",
+        "segment_id": "seg-001",
+        "skill_id": "lemo-opuscar",
+        "template_id": "lemo-opuscar/swiss-motion",
+        "visual_pattern": "瑞士动态排版模块网格"
+      }
+    ],
+    "beats": [
+      {
+        "candidates": [
+          {
+            "candidate_id": "lemo-opuscar:lemo-opuscar/swiss-motion",
+            "design_plan": {
+              "composition": "竖屏四列导线与三行语义分组，底部三个渠道模块",
+              "finish": "米白、黑、单橙，平面矩形与裁切揭示，无音频",
+              "focus": "同一渠道拥有多个模板",
+              "typography": "左对齐中文大字，主字>=64px"
+            },
+            "fit": "preferred",
+            "reason": "原生瑞士网格分组归位",
+            "visual_pattern": "瑞士动态排版模块网格"
+          }
+        ],
+        "component_id": "scene",
+        "end": 6,
+        "required_change": "把语义分组和渠道/模板扩张关系变成可读网格",
+        "segment_id": "seg-001",
+        "semantic_goal": "先按语义找到合适模板，再扩大渠道与模板的多样性",
+        "skill_reviews": {
+          "adu-motion-video": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "doudou-remotion-whiteboard": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "eian-riso-broll": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "gbro-collage-broll": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "hd-talking-head-talkcraft": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "html-video": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "huashu-art-motion": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "hyperframes": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "hyperframes-native-adaptation": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "hypit-native-chat": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "lemo-opuscar": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "muyang-flat-animation": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "openfilm-motion-graphics": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "paper-collage-ad": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "paper-collage-hyperframes": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "talkcraft-native-adaptation": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "whiteboard-video": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          },
+          "wise-motion": {
+            "fit": "equivalent",
+            "reason": "当前仅选择与网格分组动作匹配的已登记模板"
+          }
+        },
+        "start": 0,
+        "transcript": "先按语义找到合适模板，再扩大渠道与模板的多样性。数字、比较、流程，先归类，再看渠道。一个渠道，也可以有多个模板。"
+      }
+    ],
+    "history_note": "独立原生接入样片；不是用户正式成片",
+    "overlay_assignments": [],
+    "schema_version": 1
+  },
+  "synthetic_fixture": true,
+  "template_id": "lemo-opuscar/swiss-motion",
+  "review": {
+    "upstream_commit": "413a6bd6d78ebd3bdd5abaec9538a26867f890df",
+    "sample_sha256": "0f5b94582ba01d699e382e035fda6e32e18ce9957b2a076b420d5e38a14a646f",
+    "media_probe": {
+      "width": 1080,
+      "height": 1920,
+      "fps": "24/1",
+      "frames": "144",
+      "pix_fmt": "yuv420p",
+      "audio_streams": 0
+    },
+    "observation": "原生网格归位和三渠道模块可见；中文正常显示，稳定状态无文字重叠；12项文字均通过原生阅读时长检查。",
+    "scope": "一条原生风格的独立接入样片；59风格均有发现、绑定和路由检查，不代表每个主题均已出片。"
+  }
+}

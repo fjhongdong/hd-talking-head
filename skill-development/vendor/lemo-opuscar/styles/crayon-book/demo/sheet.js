@@ -1,4 +1,4 @@
-// 角色设定表：?test=model&page=girl|moon&v=1
+// Character model sheet: ?test=model&page=girl|moon&v=1
 import { layer, clear, line, fill, text, handCircle, CAM } from './crayon.js';
 import { group, clearGroup } from './rig.js';
 import { girl, head, sheep, moon, star } from './chars.js';
@@ -28,7 +28,7 @@ function rule(x0, y0, x1, y1, seed) { line(BG, [[x0, y0], [x1, y1]], { w: 3, col
 function girlPage(v) {
   label(`PIP  —  model sheet v${v}`, 40, 58, 48, { align: 'left', font: 'Gaegu', weight: 700 });
   label('"The Moon Can\'t Sleep"  ·  crayon picture book  ·  about 2.6 heads tall, drawn the way a child would', 560, 56, 26, { align: 'left', p: 0.6 });
-  // 转面
+  // turnaround
   const views = [['front', 'FRONT'], ['q', '3/4'], ['side', 'SIDE'], ['back', 'BACK']];
   views.forEach(([vw, lab], i) => {
     const x = 150 + i * 235;
@@ -36,7 +36,7 @@ function girlPage(v) {
     label(lab, x, 562, 30);
   });
   rule(40, 590, 1000, 590, 3); rule(1010, 90, 1010, 1060, 4);
-  // 表情
+  // expressions
   const ex = [['awake', 'awake (curious)'], ['smile', 'happy wave'], ['sing', 'singing'], ['yawn', 'yawn'], ['sleep', 'asleep']];
   ex.forEach(([e, lab], i) => {
     const x = 125 + i * 190;
@@ -44,7 +44,7 @@ function girlPage(v) {
     label(lab, x, 822, 26);
   });
   rule(40, 850, 1000, 850, 5);
-  // 调色盒
+  // palette box
   const cols = Object.entries(PAL.crayon);
   cols.forEach(([k, c], i) => {
     const x = 60 + i * 80, y = 900;
@@ -53,33 +53,33 @@ function girlPage(v) {
     label(k, x + 29, y + 112, 22);
   });
   label('12 crayons only · outlines always indigo, never black', 520, 1050, 24, { p: 0.7 });
-  // 关键姿势
+  // key poses
   label('KEY POSES', 1040, 130, 34, { align: 'left', font: 'Gaegu', weight: 700 });
-  // 1 被窝里挥手
+  // 1 waving from under the covers
   girl(C, { x: 1170, y: 470, s: 0.95, view: 'front', pose: 'bed', expr: 'smile', arms: { R: [[34, -182], [80, -200], [94, -252]] }, seed: 3100 });
   fill(BG, [[1040, 380], [1300, 380], [1310, 470], [1030, 470]], { col: PAL.crayon.sky, p: 0.7, seed: 3150, ang: 0.3 });
   line(BG, [[1030, 382], [1100, 370], [1180, 386], [1250, 372], [1310, 382]], { w: 7, seed: 3151 });
   label('1 · waves from bed', 1170, 520, 26);
-  // 2 爬梯（背面，小羊坐肩上）
+  // 2 climbing the ladder (back view, lamb sitting on her shoulder)
   const lad = [[1440, 110], [1440, 480]], lad2 = [[1520, 110], [1520, 480]];
   line(BG, lad, { w: 8, col: PAL.crayon.brown, seed: 3201 }); line(BG, lad2, { w: 8, col: PAL.crayon.brown, seed: 3202 });
   for (let r = 0; r < 6; r++) line(BG, [[1436, 140 + r * 62], [1524, 138 + r * 62]], { w: 7, col: PAL.crayon.brown, seed: 3210 + r });
   girl(C, { x: 1480, y: 470, s: 0.92, view: 'back', pose: 'climb', ph: 0, seed: 3300, sheep: P => sheep(C, { x: P([[4, -128]])[0][0], y: P([[4, -128]])[0][1], s: 0.78, seed: 3350, r: -0.2 }) });
   label('2 · climbs (back view)', 1480, 520, 26);
-  // 3 屋顶上唱歌
+  // 3 singing on the roof
   fill(BG, [[1600, 460], [1900, 340], [1900, 480], [1600, 480]], { col: PAL.crayon.red, p: 0.75, seed: 3400, ang: -0.4 });
   line(BG, [[1600, 460], [1900, 340]], { w: 7, seed: 3401 });
   girl(C, { x: 1700, y: 416, s: 0.92, view: 'side', pose: 'sit', expr: 'sing', headTilt: -0.3, seed: 3500, sheep: P => sheep(C, { x: P([[46, -58]])[0][0], y: P([[46, -58]])[0][1], s: 0.72, seed: 3550 }) });
-  // 飘起的音符
+  // floating music notes
   [[1800, 170, 0], [1850, 120, 1], [1770, 110, 2]].forEach(([x, y, i]) => note(x, y, 900 + i));
   label('3 · sings on the roof', 1740, 520, 26);
-  // 4 睡着：仰面躺在屋顶上，小羊趴在胸口
+  // 4 asleep: lying on her back on the roof, the lamb lying on her chest
   const sl = 0.2;
   fill(BG, [[1030, 734], [1500, 830], [1500, 870], [1030, 870]], { col: PAL.crayon.red, p: 0.75, seed: 3600, ang: 0.4 });
   line(BG, [[1030, 734], [1500, 830]], { w: 7, seed: 3601 });
   girl(C, { x: 1270, y: 800, s: 0.95, view: 'side', pose: 'lieback', expr: 'sleep', r: sl, seed: 3700, sheep: P => sheep(C, { x: P([[-58, -112]])[0][0], y: P([[-58, -112]])[0][1], s: 0.74, r: sl, seed: 3750, eyesClosed: true }) });
   label('4 · asleep on the roof, sheep on her chest', 1270, 900, 26);
-  // 小羊
+  // lamb
   sheep(C, { x: 1700, y: 760, s: 1.6, seed: 3800 });
   label('the plush sheep', 1700, 900, 26);
   label('she carries it everywhere', 1700, 935, 22, { p: 0.6 });
@@ -101,7 +101,7 @@ function moonPage(v) {
     label(lab, x, 470, 28);
   });
   rule(40, 505, 1880, 505, 7);
-  // 入睡：闭眼 → 拉上被子 → 弯月
+  // falling asleep: eyes close → blanket pulled up → crescent moon
   label('FALLING ASLEEP  (the phase change is the moon pulling up its blanket)', 40, 560, 30, { align: 'left', font: 'Gaegu', weight: 700 });
   const ph = [[0, 0, 0], [0.4, 1, 0], [0.75, 1, 0.3], [1, 0, 0]];
   ph.forEach(([b, hand, tuck], i) => {
@@ -109,7 +109,7 @@ function moonPage(v) {
     moon(C, { x, y, s: 92, expr: 'asleep', cap: 1, blanket: b, hand, tuck, r: -1.0 * Math.min(1, i), seed: 5000 + i * 31 });
     label(['nightcap drawn on', 'hand pulls the quilt', 'fold edge, tuck', 'sleeping crescent'][i], x, 930, 24);
   });
-  // 右下：蜡笔防水材质试样
+  // bottom right: crayon-resist material swatch
   label('WAX RESIST  (the climax)', 1150, 560, 30, { align: 'left', font: 'Gaegu', weight: 700 });
   for (let i = 0; i < 26; i++) { const x = 1170 + (i * 97 % 670), y = 620 + ((i * 53) % 290); star(WXG, [x, y], 9 + (i % 4) * 4, 6000 + i, 0.1 * i, PAL.crayon.white, false); }
   moon(WXG, { x: 1720, y: 700, s: 66, expr: 'asleep', blanket: 1, cap: 1, r: -1.0, seed: 6100 });
@@ -118,7 +118,7 @@ function moonPage(v) {
   label('white crayon stars, invisible on paper', 1280, 960, 22, { p: 0.7 });
   label('→ a sweep of ultramarine wash reveals them', 1640, 960, 22, { p: 0.7 });
   rule(1120, 540, 1120, 1000, 8);
-  // 小羊（数羊用的羊）
+  // lamb (the counting-sheep lamb)
   sheep(C, { x: 1270, y: 760, s: 1.1, seed: 6200 });
   label('counted sheep', 1270, 830, 22, { p: 0.7 });
   label('lines boil on 2s · colouring spills past the outline · 12 crayons + 1 watercolour', 960, 1050, 24, { p: 0.65 });

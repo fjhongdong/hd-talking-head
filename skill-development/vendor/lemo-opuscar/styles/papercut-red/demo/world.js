@@ -1,4 +1,4 @@
-// 村子世界：布局 + 夜 / 昼两套纸色 + 夜景光照。背景层 = 靛蓝纸；只有窗花、灯笼、主角是红的。
+// Village world: layout + two paper palettes (night / day) + night lighting. Background layers = indigo paper; only the window flowers, lanterns and the heroine are red.
 import { PAL, fillPaper, canvas } from './paper.js';
 import { put, mul, T, S, R } from './rig.js';
 import { tuanhua, tuanhuaHoles } from './tuanhua.js';
@@ -9,7 +9,7 @@ import { lerp, clamp, seg, ss, hash } from '/core/lib.js';
 export const W = 1920, H = 1080, GROUND = 905;
 export const NIGHT = { sky: 'ink', far: '#1f2a55', mid: '#29356e', house: '#35457f', tree: '#28346c', snow: '#7a88ba', lantern: PAL.red };
 export const DAY = { sky: 'rice', far: '#e0877f', mid: '#cf4f4a', house: PAL.red, tree: '#b8191b', snow: '#f4ecd8', lantern: PAL.red };
-// 8 户人家（x, 缩放, 熄灯时刻, 灯笼到达时刻）+ 女孩家
+// 8 households (x, scale, lights-out time, lantern arrival time) + the girl's house
 export const HOUSES = [
   [230, 1.05, 14.0, 33.75], [560, .95, 14.5, 33.5], [900, 1.12, 14.5, 33.25], [1240, .98, 15.0, 33.0],
   [1580, 1.08, 15.5, 32.75], [1900, .94, 15.5, 32.5], [2200, 1.0, 16.0, 32.0], [3060, 1.0, 16.0, 32.25]
@@ -33,7 +33,7 @@ function build() {
 }
 export const kit = () => build();
 const pt = (M, p) => [M[0] * p[0] + M[2] * p[1] + M[4], M[1] * p[0] + M[3] * p[1] + M[5]];
-// 房子窗的亮度
+// brightness of the house windows
 export function winI(h, t) {
   if (t < h.out) return 1;
   if (t < h.out + .14) return (1 - (t - h.out) / .14) * (.6 + .4 * Math.sin(t * 90));
@@ -42,8 +42,8 @@ export function winI(h, t) {
 }
 const [NLc, NL] = canvas(W, H), [GLc, GL] = canvas(W, H), [SIc, SI] = canvas(W, H);
 export { NLc };
-// 画村子。o: { pal:'night'|'day', light: bool, nian(ctx) 画年兽（返回 M）, nianLayer:'back'|'front',
-//   hero: 'girl'|'dark'|'flower'|'none', heroI, girlSil(ctx,C) 画窗里的剪影, girl(ctx) 前景女孩, pattern: {on, a}, rays, snow }
+// draw the village. o: { pal:'night'|'day', light: bool, nian(ctx) draws the Nian beast (returns M), nianLayer:'back'|'front',
+//   hero: 'girl'|'dark'|'flower'|'none', heroI, girlSil(ctx,C) draws the silhouette in the window, girl(ctx) foreground girl, pattern: {on, a}, rays, snow }
 export function drawVillage(g, C, t, o = {}) {
   const k = build(), P = o.pal === 'day' ? DAY : NIGHT, kk = k[o.pal === 'day' ? 'day' : 'night'], night = o.pal !== 'day';
   const z = C[0];
@@ -63,9 +63,9 @@ export function drawVillage(g, C, t, o = {}) {
   put(g, kk.far, mul(C, T(1600, 690)), { shadow: .9 });
   if (o.nian && !o.nianBehindFar) nianLayer();
   put(g, kk.mid, mul(C, T(1600, 812)), { shadow: .9 });
-  // 树
+  // trees
   for (const [x, s] of [[80, .8], [1400, .7], [2280, .85], [3200, .9]]) put(g, kk.tree, mul(C, mul(T(x, GROUND + 6), S(s))), { shadow: .9 });
-  // 房子
+  // houses
   HOUSES.forEach((h, i) => {
     const hp = kk.houses[i], M = mul(C, mul(T(h.x, GROUND), S(h.s))), win = hp.win;
     const I = night ? winI(h, t) : 0;
@@ -78,11 +78,11 @@ export function drawVillage(g, C, t, o = {}) {
       } else { g.save(); g.setTransform(...M); g.fillStyle = '#0c1024'; g.fillRect(win.x - win.w / 2, win.y - win.h / 2, win.w, win.h); g.restore(); }
     } else { g.save(); g.setTransform(...M); g.fillStyle = '#f7efdc'; g.fillRect(win.x - win.w / 2, win.y - win.h / 2, win.w, win.h); put(g, K.mini, mul([1, 0, 0, 1, 0, 0], [win.w / 900, 0, 0, win.w / 900, win.x, win.y]), { shadow: .5 }); g.restore(); }
     put(g, hp, M, { shadow: .9 });
-    // 檐下两盏红灯笼
+    // two red lanterns under the eaves
     for (const dx of [-hp.win.w * 1.7, hp.door.x + 40]) { const sw = Math.sin(t * 1.3 + i + dx) * .06; put(g, K.lantern, mul(M, mul(T(dx, -hp.wallH + 8), mul(R(sw), S(.8)))), { shadow: .8 }); }
     if (!night && o.dayWin) o.dayWin(g, M, win, h);
   });
-  // 女孩家
+  // the girl's house
   const HM = mul(C, mul(T(HERO.x, GROUND + 25), S(HERO.s))), hw = kk.hero.win;
   let wc = pt(HM, [hw.x, hw.y]);
   if (night) {
@@ -94,7 +94,7 @@ export function drawVillage(g, C, t, o = {}) {
     } else if (hero === 'girl' && I > 0) {
       glowWindow(g, HM, hw, I, null, {}); glowWindow(E, HM, hw, I * .6, null, {});
       lightRect(q => { q.setTransform(...HM); q.arc(hw.x, hw.y, hw.r, 0, 7); });
-      if (o.girlSil) {  // 窗纸上的剪影
+      if (o.girlSil) {  // silhouette on the window paper
         SI.setTransform(1, 0, 0, 1, 0, 0); SI.globalCompositeOperation = 'source-over'; SI.clearRect(0, 0, W, H);
         o.girlSil(SI, HM); SI.globalCompositeOperation = 'source-in'; SI.fillStyle = 'rgba(92,16,12,.9)'; SI.fillRect(0, 0, W, H);
         g.save(); g.setTransform(...HM); g.beginPath(); g.arc(hw.x, hw.y, hw.r, 0, 7); g.clip(); g.setTransform(1, 0, 0, 1, 0, 0); g.filter = 'blur(1.2px)'; g.drawImage(SIc, 0, 0); g.restore();
@@ -105,7 +105,7 @@ export function drawVillage(g, C, t, o = {}) {
   for (const dx of [-250, 250]) put(g, K.lantern, mul(HM, mul(T(dx, -262), mul(R(Math.sin(t * 1.1 + dx) * .05), S(1.1)))), { shadow: .8 });
   put(g, kk.snow, mul(C, T(1600, GROUND + 8)), { shadow: .6 });
   if (o.front) o.front(g, { HM, wc });
-  // —— 光 ——
+  // —— light ——
   if (night) {
     const hero = o.hero || 'girl', I = o.heroI ?? 1;
     if (I > 0 && hero !== 'dark' && hero !== 'none') {
@@ -125,6 +125,6 @@ export function drawVillage(g, C, t, o = {}) {
   if (o.snow !== false) { drawSnow(g, t, W, H, 0, C, night ? {} : { col: '#fff8e8' }); drawSnow(g, t, W, H, 1, C, night ? {} : { col: '#fff8e8' }); }
   return { HM, wc, NM };
 }
-// 地面投影（落在雪地上）：直接加到光照图
+// ground projection (falling on the snow): added straight to the light map
 import { lightImage } from './light.js';
 function lightMaskedFlat(M, a) { lightImage(K.holes, M, Math.min(1, a * 1.3), 'rgb(255,206,140)', 1); }

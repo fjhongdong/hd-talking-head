@@ -1,4 +1,4 @@
-"""混音：原创配乐（music/score.wav）+ 玻璃/金属拟音（events.json）+ 旁白（voices/）→ mix.wav（48k 立体声）
+"""Mix: original score (music/score.wav) + glass/metal foley (events.json) + narration (voices/) → mix.wav (48k stereo)
 python styles/glass-product/demo/mix.py"""
 import json, os, sys, numpy as np, soundfile as sf, librosa
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +15,7 @@ def nz(d): return rng.standard_normal(int(round(d * SR)))
 
 
 def sweep(d, v):
-    """光扫：手指划过玻璃杯口的 shimmer —— 高频带通噪声扫频 + 非谐波泛音"""
+    """Light sweep: the shimmer of a finger run round a glass rim — swept high-frequency band-passed noise + inharmonic partials"""
     tt = t_(d); n = nz(d); out = np.zeros_like(n); hop = 480
     for i in range(0, len(n), hop):
         f = 2500 + 5500 * (i / len(n)); s = bp(n[max(0, i - 4000):i + hop], f * .8, f * 1.25)[-hop:]; out[i:i + len(s)] = s
@@ -31,7 +31,7 @@ def panned_sweep(buf, at, d, v, p0, p1):
 
 
 def mag_click(v=1.0):
-    """磁吸：极短瞬态 + 3.2k/5.1k 金属共振 + 低频咚"""
+    """Magnetic snap: very short transient + 3.2k/5.1k metal resonances + low thump"""
     d = .12; tt = t_(d)
     tr = hp(nz(d), 3000) * env_exp(d, .0012)
     res = sum(a * np.sin(2 * np.pi * f * tt + rng.random() * 6) * env_exp(d, tau) for f, a, tau in [(3200, .55, .018), (5100, .35, .012), (1900, .3, .025)])
@@ -40,7 +40,7 @@ def mag_click(v=1.0):
 
 
 def glass_ding(freqs=(1568, 1976, 2349), d=2.4, v=1.0):
-    """玻璃叮：每个音带非谐波泛音（2.76×、5.4×），长衰减"""
+    """Glass ting: each note carries inharmonic partials (2.76×, 5.4×), long decay"""
     tt = t_(d); x = np.zeros_like(tt)
     for f in freqs:
         for m, a, tau in [(1, 1, .9), (2.76, .35, .4), (5.4, .15, .18)]:
@@ -50,7 +50,7 @@ def glass_ding(freqs=(1568, 1976, 2349), d=2.4, v=1.0):
 
 
 def slide(d, v):
-    """玻璃-金属缓慢摩擦：粗糙带通噪声，慢调制"""
+    """Slow glass-on-metal friction: rough band-passed noise, slow modulation"""
     tt = t_(d); n = bp(nz(d), 300, 1400, 2)
     grain = 1 + .5 * np.sin(2 * np.pi * 7 * tt + 2 * np.sin(2 * np.pi * .9 * tt))
     e = np.sin(np.pi * np.clip(tt / d, 0, 1)) ** 1.5
@@ -95,7 +95,7 @@ for e in ev['ev']:
         y = librosa.resample(y, orig_sr=sr, target_sr=SR)
         y = hp(y, 90); y = compress(y / (np.abs(y).max() + 1e-9) * .9, .3, 3.0); add(vo, y, t, 1.0, 0)
 
-# 旁白加一点"影棚"短混响（早反射）
+# Give the narration a little short "studio" reverb (early reflections)
 def early(x):
     out = x.copy()
     for dl, g in [(.011, .22), (.019, .16), (.031, .1), (.047, .06)]:
@@ -108,15 +108,15 @@ if mus.ndim == 1: mus = np.stack([mus, mus], 1)
 if msr != SR: mus = np.stack([librosa.resample(mus[:, c], orig_sr=msr, target_sr=SR) for c in range(2)], 1)
 mus = mus[:N]; mus = np.pad(mus, ((0, N - len(mus)), (0, 0)))
 
-# 旁白闪避：人声包络 → 音乐 −7 dB
+# Narration ducking: voice envelope → music −7 dB
 venv = np.abs(vo).max(1); from scipy.ndimage import maximum_filter1d, uniform_filter1d
 venv = uniform_filter1d(maximum_filter1d(venv, int(.25 * SR)), int(.12 * SR))
 duck = 1 - (1 - 10 ** (-12 / 20)) * np.clip(venv / (venv.max() * .25 + 1e-9), 0, 1)
-fxduck = 1 - .5 * np.clip(venv / (venv.max() * .25 + 1e-9), 0, 1)   # 拟音也给人声让一点
+fxduck = 1 - .5 * np.clip(venv / (venv.max() * .25 + 1e-9), 0, 1)   # the foley also makes a little room for the voice
 mix = mus * duck[:, None] * 1.0 + fx * .32 * fxduck[:, None] + vo * .95
-# 15.5–16.0 保持绝对静默之外只留反向 whoosh（配乐本身已清零）
+# 15.5–16.0: absolute silence apart from the reverse whoosh (the score itself is already zeroed there)
 pk = np.abs(mix).max(); mix = mix / pk * .89
-# 只削 808 drop 的最高峰（约 3 dB），给 loudnorm 留出线性增益的余量（否则会退回动态模式，响度偏 0.3 LU）
+# Shave only the highest peak of the 808 drop (about 3 dB) to leave loudnorm headroom for linear gain (otherwise it falls back to dynamic mode and loudness is off by 0.3 LU)
 mix = np.stack([limit(mix[:, 0], .63), limit(mix[:, 1], .63)], 1) / .63 * .85
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR, subtype='FLOAT')
 

@@ -1,11 +1,11 @@
-// 场景：片头 / 章节卡 / 项目卡（三种版式）/ 田径长镜头 / 片尾 / 转场 / HUD
+// Scenes: opening / chapter cards / event cards (three layouts) / athletics long take / ending / transitions / HUD
 (function () {
   const G = window.G, E = G.E, EDL = window.EDL, POSES = window.POSES;
   const { W, H, clamp, lerp, inv, PAL, mix, rgba, F, CELL } = G;
   const BEAT = EDL.BEAT;
   const EJ = new URLSearchParams(location.search).get('lang') === 'ej';
   G.EJ = EJ;
-  // 大号第二语言：中文版 = 中文；英日版 = 日文
+  // Large second language: Chinese version = Chinese; English/Japanese version = Japanese
   const big2 = (s) => (EJ ? s.jpBig || s.jp : s.zh);
   const F2 = (w, px) => (EJ ? F.jp(w, px) : F.zh(w, px));
   const SH = EDL.shots;
@@ -13,7 +13,7 @@
   const TRACK = SH.filter((s) => s.track);
   SH.forEach((s, i) => (s.i = i));
 
-  // 每张卡的色系
+  // Palette for each card
   for (const s of SH) {
     if (s.kind === 'card') s.pk = s.pal === 'multi' ? G.CYCLE[s.ci % 5] : s.pal;
     else if (s.kind === 'chapter') s.pk = s.pal === 'multi' ? 'purple' : s.pal;
@@ -31,7 +31,7 @@
   };
   G.colorsFor = colorsFor;
 
-  // ───────── 人形 ─────────
+  // ───────── Figures ─────────
   const bufFig = G.canvas();
   function poseOf(def, u) { return def.pose ? def.pose(u) : G.keyPose(def.keys, u, def.loop); }
   function drawFigUnits(ctx, def, u, C) {
@@ -49,8 +49,8 @@
     ctx.restore();
   }
   G.drawFigUnits = drawFigUnits;
-  // 在舞台上画人形；asm = 组装进度（0 = 被切成横条错开，1 = 完整）
-  // mask = { x0, x1, y1, f }：把人形层（含水面、坡道等环境）限制在文字区之外，边缘 f 像素柔和过渡
+  // Draw the figure on the stage; asm = assembly progress (0 = cut into horizontal strips and offset, 1 = whole)
+  // mask = { x0, x1, y1, f }: keeps the figure layer (including environment such as water surface and ramps) out of the text area, with an f-pixel soft edge
   function stageFigure(ctx, name, u, C, x, y, U, asm = 1, mask) {
     const def = POSES[name];
     const f = bufFig.getContext('2d');
@@ -90,7 +90,7 @@
     ctx.restore();
   }
 
-  // ───────── 背景：整行错位的图案 ─────────
+  // ───────── Background: pattern with whole-row offsets ─────────
   function patBg(ctx, pk, seed, lt, o = {}) {
     const pat = G.pattern(pk, seed, { spread: o.spread ?? 0.5, density: o.density ?? 0.42 });
     const amp = o.amp ?? 22, sp = o.sp ?? 26;
@@ -107,25 +107,25 @@
     }
   }
 
-  // ───────── 文字块 ─────────
+  // ───────── Text block ─────────
   function textBlock(ctx, s, lt, x, y, o = {}) {
     const P = PAL[s.pk], fg = o.fg || P.fg, dim = o.dim || rgba(fg, 0.72);
     const k = s.beats <= 2 ? 0.7 : 1;
     const maxW = o.maxW || 860;
     const al = o.align || 'left';
-    // 家族 / 编号
+    // family / number
     const no = String(s.n).padStart(2, '0');
     const meta = (s.family ? s.family + '   ' : '') + no + ' / 43';
     G.typeText(ctx, meta, x, y - (o.titlePx || 170) - 40, F.mono(22), dim, inv(0.02, 0.3 * k, lt), { ls: '3px', align: al, caret: false });
-    // 大标题
+    // big title
     const px = G.fitFont(ctx, s.title, 'en', 900, o.titlePx || 170, maxW, -0.02);
     G.maskText(ctx, s.title, x, y, F.en(900, px), fg, inv(0.0, 0.5 * k, lt), { ls: -0.02 * px + 'px', align: al });
-    // 中文
+    // Chinese
     const zpx = EJ ? G.fitFont(ctx, big2(s), 'jp', 900, o.zhPx || 92, maxW, 0.02) : (o.zhPx || 92);
     G.maskText(ctx, big2(s), x, y + zpx + 34, F2(900, zpx), fg, inv(0.08 * k, 0.55 * k, lt), { ls: '2px', align: al });
-    // 日文小字（英日版里日文已经是大字，这行不要）
+    // small Japanese line (in the English/Japanese version Japanese is already the big text, so skip this line)
     if (!EJ) G.maskText(ctx, s.jp, x, y + zpx + 96, F.jp(500, 28), dim, inv(0.16 * k, 0.6 * k, lt), { ls: '5px', align: al });
-    // 角标
+    // corner tag
     if (s.tag) {
       ctx.save(); ctx.font = F.mono(20); ctx.letterSpacing = '3px';
       const tw = ctx.measureText(s.tag).width + 28;
@@ -141,9 +141,9 @@
     }
   }
 
-  // ───────── 项目卡 ─────────
+  // ───────── Event card ─────────
   function layoutOf(s) {
-    // 2 拍快切一串用同一版式；否则按章节内顺序轮换
+    // A run of 2-beat fast cuts uses the same layout; otherwise layouts rotate by order within the chapter
     if (s.beats <= 2) return s.racket ? 'B' : 'A';
     const order = { ball: 'ACBAB', combat: 'CAMBC', power: 'BCA', nature: 'CABAC', asia: 'ABCM', aqua: 'CAB' }[s.chap] || 'ACB';
     return order[s.ci % order.length];
@@ -160,20 +160,20 @@
     const dp = E.o5(inv(0, 0.5, lt));
     if (L === 'A' || L === 'M') {
       const mir = L === 'M';
-      const wide = s.water && !mir; // 游泳是横躺的，舞台再往右挪
+      const wide = s.water && !mir; // swimming lies horizontal, so move the stage further right
       const cx = mir ? 640 : wide ? 1370 : 1290, cy = 540;
       bigNumber(ctx, no, mir ? 80 : 1850, 1000, P, lt, mir ? 'left' : 'right');
       sun(ctx, cx, cy, 380 * lerp(0.82, 1, dp), discCol, P, lt);
       stageFigure(ctx, s.pose, u, C, cx, cy + 20, 560, asm, mir ? { x1: 1060, f: 110 } : { x0: wide ? 960 : 880, f: 110 });
       textBlock(ctx, s, lt, mir ? 1800 : 130, 610, { align: mir ? 'right' : 'left', maxW: wide ? 700 : 820 });
     } else if (L === 'B') {
-      // 标题铺满，人形压在字上
+      // Title fills the frame, figure sits on top of the text
       const px = G.fitFont(ctx, s.title, 'en', 900, 330, 1760, -0.03);
       const ghost = lightFg(s.pk) ? P.t[1] : P.t[4];
       G.maskText(ctx, s.title, W / 2, 700, F.en(900, px), ghost, inv(0, 0.5, lt), { ls: -0.03 * px + 'px', align: 'center' });
       sun(ctx, W / 2, 470, 250 * lerp(0.8, 1, dp), discCol, P, lt);
       stageFigure(ctx, s.pose, u, C, W / 2, 470, 520, asm, { y1: 850, f: 70 });
-      // 底部信息条
+      // Bottom info bar
       const k = s.beats <= 2 ? 0.7 : 1;
       const zpx = 80;
       G.maskText(ctx, big2(s), 130, 930, F2(900, zpx), P.fg, inv(0.06 * k, 0.5 * k, lt), { ls: '2px' });
@@ -183,11 +183,11 @@
       if (!EJ) G.maskText(ctx, s.jp, 130 + zw + 42, 876, F.jp(500, 24), rgba(P.fg, 0.7), inv(0.14 * k, 0.6 * k, lt), { ls: '4px' });
       G.typeText(ctx, (s.family ? s.family + '   ' : '') + no + ' / 43' + (s.tag ? '   ·   ' + s.tag : ''), 1790, 930, F.mono(22), rgba(P.fg, 0.75), inv(0.05, 0.3 * k, lt), { ls: '3px', align: 'right', caret: false });
     } else if (L === 'C') {
-      // 左侧实色面板 + 右侧图案与人形
+      // Solid panel on the left + pattern and figure on the right
       const pw = 820 * E.o5(inv(0, 0.4, lt));
       const panel = lightFg(s.pk) ? P.t[0] : P.t[4];
       ctx.fillStyle = panel; ctx.fillRect(0, 0, pw, H);
-      // 面板上的细线网格（高级感的小细节）
+      // Thin line grid on the panel (a small detail that reads as premium)
       ctx.save(); ctx.beginPath(); ctx.rect(0, 0, pw, H); ctx.clip();
       ctx.strokeStyle = rgba(P.fg, 0.1); ctx.lineWidth = 1;
       for (let x = 90; x < 820; x += 90) { ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); ctx.stroke(); }
@@ -199,7 +199,7 @@
       stageFigure(ctx, s.pose, u, C, cx, cy + 20, 540, asm, { x0: 820 + 110, f: 110 });
     }
   }
-  // 太阳盘：实色圆 + 一道缓慢扫过的光
+  // Sun disc: solid circle + a slowly sweeping highlight
   function sun(ctx, x, y, r, col, P, lt) {
     G.disc(ctx, x, y, r, col);
     ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
@@ -209,7 +209,7 @@
     ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
     ctx.restore();
   }
-  // 空心大编号
+  // Big outlined number
   function bigNumber(ctx, no, x, y, P, lt, align = 'left') {
     ctx.save();
     ctx.font = F.en(800, 300); ctx.letterSpacing = '-10px'; ctx.textAlign = align;
@@ -218,11 +218,11 @@
     ctx.restore();
   }
 
-  // ───────── 章节卡 ─────────
+  // ───────── Chapter card ─────────
   function chapterScene(ctx, s, lt) {
     const P = PAL[s.pk], u = lt / BEAT;
     ctx.fillStyle = P.t[2]; ctx.fillRect(0, 0, W, H);
-    // 第二小节每拍整行跳一格（跟鼓点）
+    // In the second bar, whole rows jump one cell every beat (on the drum hits)
     const step = (j) => {
       let v = 0;
       for (let b = 4; b <= 7; b++) v += E.oExp(inv(b, b + 0.35, u)) * (j % 2 ? 1 : -1) * CELL * 0.25;
@@ -230,14 +230,14 @@
     };
     if (s.pal === 'multi') multiBg(ctx, 3, (j) => (j % 2 ? 1 : -1) * lt * 30 + step(j), 0.95);
     else patBg(ctx, s.pk, 100 + s.i, lt, { spread: s.pk === 'ink' ? 1 : 0.95, density: 0.55, step, sp: 30 });
-    // 中间实色带（两行高）
+    // Solid band in the middle (two rows tall)
     const bp = E.o5(inv(0.05, 0.5, lt));
     const band = s.pal === 'multi' ? G.INK : lightFg(s.pk) ? P.t[0] : P.t[4];
     const fg = s.pal === 'multi' ? G.CREAM : P.fg;
     const by = 2 * CELL - 90, bh = 2 * CELL;
     ctx.fillStyle = band; ctx.fillRect(W / 2 - (W / 2) * bp, by, W * bp, bh);
     ctx.save(); ctx.beginPath(); ctx.rect(0, by, W, bh); ctx.clip();
-    // 空心章节号
+    // Outlined chapter number
     ctx.font = F.en(800, 330); ctx.letterSpacing = '-14px';
     ctx.strokeStyle = rgba(fg, 0.85); ctx.lineWidth = 2.5;
     const ny = by + bh - 34 + (1 - E.oExp(inv(0.1, 0.7, lt))) * 300;
@@ -253,14 +253,14 @@
       G.maskText(ctx, s.jp, tx + zw + 40, by + 310, F.jp(500, 28), rgba(fg, 0.7), inv(0.35, 0.9, lt), { ls: '6px' });
     }
     ctx.restore();
-    // 带子上下的细线
+    // Thin lines above and below the band
     G.hair(ctx, W / 2 - (W / 2) * bp, by - 10, W * bp, rgba(fg, 0.5), 1, 2);
     G.hair(ctx, W / 2 - (W / 2) * bp, by + bh + 8, W * bp, rgba(fg, 0.5), 1, 2);
   }
 
-  // ───────── 田径长镜头 ─────────
-  const T_OUT = 0.14, T_IN = 0.24; // 甩镜窗口：拍点前 / 后
-  const TV = 42; // 匀速漂移 px/s
+  // ───────── Athletics long take ─────────
+  const T_OUT = 0.14, T_IN = 0.24; // whip-pan window: before / after the beat
+  const TV = 42; // constant drift, px/s
   const SPEC = { sprint: '100M', hurdles: '110M H', relay: '4×100M', distance: '1500M', steeple: '3000M SC', marathon: '42.195 KM', walk: '20 KM', highjump: 'HJ', polevault: 'PV', longjump: 'LJ · TJ', shot: '7.26 KG', discus: '2 KG', hammer: '7.26 KG', javelin: '800 G' };
   const RUNNING = { sprint: 1, hurdles: 1, relay: 1, distance: 0.7, steeple: 0.7, marathon: 0.5, walk: 0.35 };
   function trackCam(t) {
@@ -269,7 +269,7 @@
     for (let k = 1; k < TRACK.length; k++) c += W * E.ioExp(inv(TRACK[k].t0 - T_OUT, TRACK[k].t0 + T_IN, t));
     return c;
   }
-  function stationX(k) { // 该站中点时刻相机正对
+  function stationX(k) { // the moment the camera faces the middle of this station
     const s = TRACK[k]; const T0 = TRACK[0].t0;
     return TV * (s.t0 + s.dur / 2 - T0) + k * W;
   }
@@ -279,7 +279,7 @@
     const cam = trackCam(t);
     const ci = TRACK.indexOf(s);
     ctx.fillStyle = P.t[2]; ctx.fillRect(0, 0, W, H);
-    // 远景两行大格，视差不同速 = 官方图形的整行错位
+    // Two rows of large cells in the distance, parallax at different speeds = the whole-row offset of the official graphic
     const rows = [{ y: -80, S: 360, par: 0.28 }, { y: 280, S: 360, par: 0.42 }];
     const T = P.t.map((c) => mix(P.t[2], c, 0.5));
     rows.forEach((R, ri) => {
@@ -292,9 +292,9 @@
         G.motif(ctx, Math.floor(r() * 14), Math.round(i * R.S - off), R.y, R.S, [a, b, pick(), T[4]], r);
       }
     });
-    // 跑道
+    // Track
     const ty = 780;
-    // 各站的太阳（在跑道后面升起）
+    // Each station's sun (rises behind the track)
     for (let k = Math.max(0, ci - 1); k <= Math.min(TRACK.length - 1, ci + 1); k++) {
       const x = stationX(k) - cam + 1250;
       if (x < -600 || x > W + 600) continue;
@@ -305,7 +305,7 @@
     const lanes = [0, 44, 98, 162, 236, 320];
     ctx.fillStyle = rgba(G.CREAM, 0.5);
     lanes.forEach((y) => ctx.fillRect(0, ty + y, W, 3));
-    // 跑道上的刻度 / 起跑线，随世界移动；速度感额外加滚动
+    // Ticks / start lines on the track, moving with the world; extra scrolling for a sense of speed
     const run = s.pose in RUNNING ? RUNNING[s.pose] : 0.15;
     const roll = cam + t * 900 * run;
     ctx.fillStyle = rgba(G.CREAM, 0.28);
@@ -314,21 +314,21 @@
       const sp = 260 + li * 70;
       for (let x = -((roll * (1 + li * 0.18)) % sp); x < W; x += sp) ctx.fillRect(x, y + h * 0.42, 56 + li * 10, Math.max(3, h * 0.12));
     }
-    // 各站：规格字刷在跑道上、人形、文字
+    // Each station: spec text painted on the track, figure, text
     for (let k = Math.max(0, ci - 1); k <= Math.min(TRACK.length - 1, ci + 1); k++) {
       const st = TRACK[k];
       const ox = stationX(k) - cam;
       if (ox < -W * 1.2 || ox > W * 1.2) continue;
       const lk = t - st.t0;
       ctx.save(); ctx.translate(ox, 0);
-      // 跑道字
+      // Track text
       ctx.font = F.en(900, 150); ctx.letterSpacing = '-4px'; ctx.textAlign = 'left';
       ctx.fillStyle = rgba(G.CREAM, 0.12);
       ctx.save(); ctx.translate(820, 1060); ctx.transform(1, 0, -0.35, 1, 0, 0); ctx.fillText(SPEC[st.pose] || '', 0, 0); ctx.restore();
-      // 人形
+      // Figure
       const C = colorsFor('red', P.t[0]);
       stageFigure(ctx, st.pose, Math.max(0, lk) / BEAT, C, 1250, ty + 10 - 0.46 * 480, 480, E.o3(inv(0, 0.45, lk)), { x0: 900, f: 120 });
-      // 文字
+      // Text
       if (lk > -0.3) {
         const ss = Object.assign({}, st, { pk: 'red' });
         textBlock(ctx, ss, Math.max(0, lk), 130, 420, { maxW: 820, titlePx: 160, zhPx: 88 });
@@ -337,7 +337,7 @@
     }
   }
 
-  // ───────── 片头 ─────────
+  // ───────── Opening ─────────
   const RINGS = ['red', 'purple', 'gold', 'green', 'ochre'];
   function rings(ctx, x, y, r0, gap, w, prog, rot, alpha = 1, cols) {
     for (let i = 0; i < 5; i++) {
@@ -355,7 +355,7 @@
     const INK = PAL.ink.t[0];
     if (u < 16) {
       ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H);
-      // 心跳脉冲
+      // Heartbeat pulse
       let pulse = 0;
       for (const b of [0, 2, 4, 6, 8, 10, 12, 14]) pulse += Math.exp(-Math.max(0, u - b) * 5) * (u >= b ? 1 : 0);
       for (const b of [0, 4, 8, 12]) {
@@ -364,18 +364,18 @@
       }
       const r = 78 * E.oBack(inv(0, 1.2, u), 2.2) * (1 + 0.08 * pulse) * (1 - 0.25 * E.i3(inv(14.5, 16, u)));
       G.disc(ctx, W / 2, H / 2, r, PAL.red.t[2]);
-      // 五色环
+      // Five-colour rings
       const rp = (i) => E.io3(inv(8 + i * 0.5, 13 + i * 0.3, u));
       const squeeze = 1 - 0.18 * E.i3(inv(14.8, 16, u));
       rings(ctx, W / 2, H / 2, 150 * squeeze, 58 * squeeze, 30, rp, u * 0.35);
-      // 文字
+      // Text
       G.typeText(ctx, '2026  ·  AICHI – NAGOYA  ·  JAPAN', W / 2, H - 120, F.mono(22), rgba(G.CREAM, 0.7), inv(2.5, 6, u), { ls: '6px', align: 'center', caret: false });
       G.typeText(ctx, 'THE 20TH ASIAN GAMES', W / 2, 140, F.mono(22), rgba(G.CREAM, 0.7), inv(8, 10, u), { ls: '8px', align: 'center', caret: false });
       if (u > 15.6) { ctx.fillStyle = rgba(G.CREAM, E.i3(inv(15.6, 16, u)) * 0.9); ctx.fillRect(0, 0, W, H); }
       return;
     }
     if (u < 32) {
-      // 标题：五色方格铺满 + 中间墨色带
+      // Title: five-colour grid fills the frame + ink band in the middle
       const q = u - 16;
       multiBg(ctx, 11, (j) => {
         const dir = j % 2 ? 1 : -1;
@@ -383,7 +383,7 @@
         const hit = [20, 24, 28].reduce((v, b) => v + E.oExp(inv(b - 16, b - 15.6, q)) * CELL * 0.25 * dir, 0);
         return clamp(inn, -CELL, CELL) + q * 6 * dir + hit;
       });
-      // 进场时整行从屏外滑入：用遮罩盖住还没进来的部分
+      // On entry whole rows slide in from off-screen: a mask covers the parts not yet in
       for (let j = 0; j < 6; j++) {
         const k = 1 - E.oExp(inv(j * 0.12, 1.4 + j * 0.12, q));
         if (k <= 0.001) continue;
@@ -409,7 +409,7 @@
       return;
     }
     if (u < 44) {
-      // 三个数字，每小节一个
+      // Three numbers, one per bar
       const k = Math.floor((u - 32) / 4), q = (u - 32) - k * 4, ql = q * BEAT;
       const D = [
         { n: 43, pk: 'red', en: 'SPORTS', zh: EJ ? '競技' : '个大项', jp: EJ ? '' : '競技' },
@@ -419,7 +419,7 @@
       const P = PAL[D.pk];
       ctx.fillStyle = P.t[2]; ctx.fillRect(0, 0, W, H);
       patBg(ctx, D.pk, 40 + k, ql, { spread: 0.9, density: 0.5, amp: 0 });
-      // 实色大块盖住中间 4 行，只留上下各一行图案
+      // Solid block covers the middle 4 rows, leaving only one row of pattern above and below
       const bp = E.o5(inv(0, 0.35, ql));
       ctx.fillStyle = P.t[2]; ctx.fillRect(0, CELL * 0.5 + (1 - bp) * CELL * 2, W, (H - CELL) * bp);
       ctx.fillStyle = P.t[1]; ctx.fillRect(0, CELL * 0.5 + (1 - bp) * CELL * 2, W, 3);
@@ -435,7 +435,7 @@
       G.maskText(ctx, D.jp, 1138, 722, F.jp(500, 28), rgba(P.fg, 0.7), inv(0.15, 0.55, ql), { ls: '6px' });
       return;
     }
-    // 各就各位 — 预备 — （静音）— 砰
+    // On your marks — set — (silence) — bang
     const q = u - 44;
     ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H);
     const lines = EJ ? [[0, 'ON YOUR MARKS', '位置について'], [2, 'SET', 'よーい']] : [[0, 'ON YOUR MARKS', '各就各位'], [2, 'SET', '预备']];
@@ -448,7 +448,7 @@
       G.maskText(ctx, zh, W / 2, 680, F2(800, 54), rgba(G.CREAM, 0.8), inv(0.05, 0.35, l), { ls: '20px', align: 'center' });
       ctx.globalAlpha = 1;
     }
-    // 起跑线上的五色小方块，随拍点亮
+    // Five-colour squares on the start line, lighting up on the beats
     for (let i = 0; i < 5; i++) {
       const on = q >= i * 0.7;
       ctx.fillStyle = on && q < 3.5 ? PAL[RINGS[i]].t[2] : rgba(G.CREAM, 0.08);
@@ -456,12 +456,12 @@
     }
   }
 
-  // ───────── 片尾 ─────────
+  // ───────── Ending ─────────
   const GRID = { cols: 9, rows: 5 };
   function finaleScene(ctx, s, lt) {
     const u = lt / BEAT;
     const cw = W / GRID.cols, ch = H / GRID.rows;
-    // 43 个大项各取第一张卡
+    // The first card of each of the 43 sports
     const firsts = [];
     for (const c of CARDS) if (!firsts.find((f) => f.n === c.n)) firsts.push(c);
     if (u < 20) {
@@ -470,24 +470,24 @@
       const gap = 10 * E.io3(inv(12, 16, u));
       const collapse = E.i3(inv(16.2, 19.6, u));
       ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
-      // 格子顺序：从左上到右下，中间两格留给红日和年份
+      // Cell order: top-left to bottom-right; the two middle cells are kept for the red sun and the year
       let idx = 0;
       for (let r = 0; r < GRID.rows; r++) for (let c = 0; c < GRID.cols; c++) {
         const special = r === 2 && (c === 4 || c === 3) ? (c === 4 ? 'sun' : 'yr') : null;
         const card = special ? null : firsts[idx++];
         const order = special ? -1.5 : idx - 1;
-        const t0 = (order + 1.5) * (12 / 45); // 先亮中间的红日和年份，再 12 拍内依次翻开
+        const t0 = (order + 1.5) * (12 / 45); // light the red sun and year in the middle first, then flip the cells open one by one over 12 beats
         const fp = E.o3(inv(t0, t0 + 0.8, u));
         const allRed = E.io3(inv(16 + (Math.abs(c - 4) + Math.abs(r - 2)) * 0.15, 16.6 + (Math.abs(c - 4) + Math.abs(r - 2)) * 0.15, u));
         let x = c * cw + gap / 2, y = r * ch + gap / 2, w = cw - gap, h = ch - gap;
-        // 收拢：向中心缩
+        // Gather: shrink towards the centre
         if (collapse > 0) {
           const cx = x + w / 2, cy = y + h / 2;
           const k = 1 - collapse;
           x = lerp(W / 2, cx, k) - (w * k) / 2; y = lerp(H / 2, cy, k) - (h * k) / 2; w *= k; h *= k;
         }
         if (fp <= 0) continue;
-        const sy = Math.abs(Math.cos(Math.PI * (1 - fp) / 2)); // 翻开
+        const sy = Math.abs(Math.cos(Math.PI * (1 - fp) / 2)); // flip open
         const pk = card ? card.pk : 'red';
         const P = PAL[pk];
         ctx.save();
@@ -514,14 +514,14 @@
         ctx.restore();
       }
       ctx.restore();
-      // 收拢时红日从中心长出来
+      // While gathering, the red sun grows out of the centre
       if (u > 17) {
         const rr = 150 * E.oExp(inv(18.4, 20, u));
         G.disc(ctx, W / 2, H / 2, rr, PAL.red.t[2]);
       }
       return;
     }
-    // 口号 + 结尾卡：米白底，红日 + 五色环
+    // Slogan + end card: off-white ground, red sun + five-colour rings
     const q = u - 20;
     ctx.fillStyle = G.CREAM; ctx.fillRect(0, 0, W, H);
     const up = E.io3(inv(1.5, 4, q));
@@ -539,20 +539,20 @@
       G.maskText(ctx, 'AICHI-NAGOYA 2026', W / 2, 700, F.en(900, 120), G.INK, inv(0, 0.5, l), { ls: '-3px', align: 'center' });
       G.maskText(ctx, 'THE 20TH ASIAN GAMES   ·   2026.9.19 — 10.4', W / 2, 780, F.mono(26), rgba(G.INK, 0.7), inv(0.2, 0.8, l), { ls: '6px', align: 'center' });
       G.maskText(ctx, EJ ? '第20回アジア競技大会  ·  愛知・名古屋' : '第20届亚洲运动会  ·  爱知 · 名古屋', W / 2, 850, F2(700, 36), G.INK, inv(0.35, 1, l), { ls: '8px', align: 'center' });
-      // 五色条
+      // Five-colour bar
       for (let i = 0; i < 5; i++) {
         const p = E.o5(inv(0.3 + i * 0.06, 1.1 + i * 0.06, l));
         ctx.fillStyle = PAL[RINGS[i]].t[2]; ctx.fillRect(W / 2 - 300 + i * 120, 920, 110 * p, 10);
       }
-      // 片尾署名（Lemo-Opuscar 统一署名）：五色条下方，DM Mono，随结尾卡一起淡出
+      // End credit (the uniform Lemo-Opuscar credit): below the five-colour bar, DM Mono, fades out with the end card
       G.maskText(ctx, 'LemoLab × Claude Opus 5.5', W / 2, 1000, F.mono(24), rgba(G.INK, 0.6), inv(0.6, 1.2, l), { ls: '4px', align: 'center' });
-      // 最后淡出
+      // Final fade-out
       const fo = E.io(inv(EDL.shots[EDL.shots.length - 1].dur - 1.3, EDL.shots[EDL.shots.length - 1].dur - 0.1, lt));
       if (fo > 0) { ctx.fillStyle = rgba('#000000', fo); ctx.fillRect(0, 0, W, H); }
     }
   }
 
-  // ───────── HUD（持续叠加）─────────
+  // ───────── HUD (persistent overlay) ─────────
   function hud(ctx, s, lt) {
     if (s.kind !== 'card' && s.kind !== 'chapter') return;
     const pk = s.pk;
@@ -566,7 +566,7 @@
     const ch = SH.filter((x) => x.kind === 'chapter' && x.t0 <= s.t0).pop();
     ctx.fillText('CH.' + ch.no + '  ' + ch.en, W - 64, 70);
     ctx.fillText('9.19 — 10.4', W - 64, 96);
-    // 进度：43 个刻度
+    // Progress: 43 ticks
     const x0 = 64, x1 = W - 64, y = H - 58;
     const cur = s.kind === 'card' ? s.n : 0;
     for (let i = 1; i <= 43; i++) {
@@ -578,7 +578,7 @@
     ctx.restore();
   }
 
-  // ───────── 场景分发 ─────────
+  // ───────── Scene dispatch ─────────
   function drawShot(ctx, s, lt) {
     ctx.save();
     if (s.kind === 'intro') introScene(ctx, s, lt);
@@ -589,7 +589,7 @@
     ctx.restore();
   }
 
-  // ───────── 转场 ─────────
+  // ───────── Transitions ─────────
   const TA = 0.12, TB = 0.26;
   function transType(a, b) {
     if (a.track && b.track) return 'none';
@@ -637,7 +637,7 @@
         ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, 0, Math.PI * 2);
       }
       ctx.clip();
-      // 只在各自格子里生效：用格子矩形再裁一次不方便，这里用大小限制近似（r ≤ 1.42S 覆盖本格，略溢出邻格，视觉上更有机）
+      // Should take effect only inside each cell: clipping again with the cell rectangle is awkward, so a size limit approximates it (r ≤ 1.42S covers this cell and spills slightly into neighbours, which looks more organic)
       ctx.drawImage(B, 0, 0);
       ctx.restore();
     } else if (type === 'iris') {
@@ -648,7 +648,7 @@
       G.ring(ctx, cx, cy, r, 22 * (1 - p), b.ring || G.CREAM);
     } else if (type === 'flip') {
       const cols = 11, rows = 6;
-      // 翻牌背后先垫一层压暗的 B，翻到侧面时不会露黑
+      // Behind the flipping card, first lay a darkened B so no black shows when the card is edge-on
       ctx.drawImage(B, 0, 0); ctx.fillStyle = rgba('#000', 0.45); ctx.fillRect(0, 0, W, H);
       for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
         const d = ((i * 0.6 + j) / (cols * 0.6 + rows)) * 0.5;
@@ -663,7 +663,7 @@
     }
   }
 
-  // ───────── 帧 ─────────
+  // ───────── Frame ─────────
   function shotAt(t) {
     let lo = 0, hi = SH.length - 1;
     while (lo < hi) { const m = (lo + hi + 1) >> 1; if (SH[m].t0 <= t) lo = m; else hi = m - 1; }
@@ -673,7 +673,7 @@
     t = clamp(t, 0, EDL.DUR - 1e-6);
     let i = shotAt(t);
     let s = SH[i];
-    // 属于哪个转场窗口？
+    // Which transition window does this fall in?
     let tr = null;
     const nx = SH[i + 1];
     if (nx && t >= nx.t0 - TA) tr = [s, nx];
@@ -695,7 +695,7 @@
     drawShot(ctx, s, t - s.t0);
     hud(ctx, s, t - s.t0);
   }
-  // 需要运动模糊的时刻：转场窗口、田径甩镜、片头冲击
+  // Moments that need motion blur: transition windows, athletics whip pans, opening impacts
   function isFast(t) {
     const i = shotAt(t), s = SH[i], nx = SH[i + 1];
     if (nx && t >= nx.t0 - TA - 0.02) return true;

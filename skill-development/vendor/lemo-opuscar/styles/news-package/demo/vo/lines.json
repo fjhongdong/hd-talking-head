@@ -1,0 +1,52 @@
+[
+ {
+  "id": "v1",
+  "text": "这里是 Lemo AI 新闻，本周 AI 四件事。",
+  "say": "这里是 Lemo AI 新闻，本周 AI 四件事。",
+  "speech_rate": 10
+ },
+ {
+  "id": "v2",
+  "text": "谷歌向全部开发者开放了 Gemini 4 Argon，入门价每百万输入 token 2 美元，12 月起翻倍。",
+  "say": "谷歌向全部开发者开放了 Gemini 四 Argon，入门价每百万输入 token 两美元，十二月起翻倍。",
+  "speech_rate": 15
+ },
+ {
+  "id": "v3",
+  "text": "在首尔，韩国综合股价指数单日跌超 7.5%，较 9 月高点跌去两成多，跌入熊市。",
+  "say": "在首尔，韩国综合股价指数单日跌超百分之七点五，较九月高点跌去两成多，跌入熊市。",
+  "speech_rate": 10
+ },
+ {
+  "id": "v4",
+  "text": "三星和 SK 海力士单日都跌了 9% 以上。",
+  "say": "三星和 SK 海力士单日都跌了百分之九以上。",
+  "speech_rate": 10,
+  "asr": "三星和SK海利市单日都跌了9%以上。"
+ },
+ {
+  "id": "v5",
+  "text": "欧盟 AI 办公室向 OpenAI 和 Anthropic 发出问询，据欧洲新闻台报道。",
+  "say": "欧盟 AI 办公室向 OpenAI 和 Anthropic 发出问询，据欧洲新闻台报道。",
+  "speech_rate": 10
+ },
+ {
+  "id": "v6",
+  "text": "维尔库宁在都柏林说：AI 办公室已开始执行这些规则。",
+  "say": "维尔库宁在都柏林说：AI 办公室已开始执行这些规则。",
+  "speech_rate": 10,
+  "asr": "维尔库宁在督伯林说，AI办公室已开始执行这些规则。"
+ },
+ {
+  "id": "v7",
+  "text": "Meta 开放了 Muse Spark Open 的权重。总参数 8160 亿，每个 token 只激活 420 亿，两台 Mac Studio 就能跑。",
+  "say": "Meta 开放了 Muse Spark Open 的权重。总参数八千一百六十亿，每个 token 只激活四百二十亿，两台 Mac Studio 就能跑。",
+  "speech_rate": 15
+ },
+ {
+  "id": "v8",
+  "text": "本周就到这里。这里是 Lemo AI 新闻。",
+  "say": "本周就到这里。这里是 Lemo AI 新闻。",
+  "speech_rate": 0
+ }
+]

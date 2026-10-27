@@ -1,4 +1,4 @@
-// 高潮画面：窗花背光透亮，光与纹样把年兽挡在门外（风格帧 + 成片 S9 共用）
+// Climax image: the window flower (窗花, paper-cut window decoration) glows backlit, and light plus pattern keep the Nian beast outside the door (shared by the style frame and shot S9 of the film)
 import { PAL, fillPaper, paperTile, canvas } from './paper.js';
 import { put, mul, T, S, R } from './rig.js';
 import { drawGirl } from './girl.js';
@@ -30,10 +30,10 @@ export function drawClimax(g, t = 0, o = {}) {
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
   fillPaper(g, 'indigo', 0, 0, W, H, C);
   g.restore();
-  // 远山、中山
+  // far hills, middle hills
   put(g, K.mFar, mul(C, T(900, 760)), { shadow: .8 });
   put(g, K.mMid, mul(C, T(1100, 850)), { shadow: .9 });
-  // 远处小房子（窗亮）
+  // small distant houses (windows lit)
   const smalls = [[260, 880, .8], [980, 876, .72], [1180, 884, .66]];
   smalls.forEach(([x, y, s], i) => {
     const h = K.small[i], M = mul(C, mul(T(x, y), S(s)));
@@ -44,16 +44,16 @@ export function drawClimax(g, t = 0, o = {}) {
     put(g, h, M, { shadow: .8 });
     const c = [M[4] + M[0] * win.x, M[5] + M[3] * win.y]; pool(c[0], c[1] + 30, 170 * s, 'rgba(255,170,90,1)', .55 * lit);
   });
-  // 雪地
+  // snowfield
   put(g, K.snow, mul(C, T(960, 915)), { shadow: .6 });
-  // 年兽（朝右，后仰、捂眼）
+  // Nian beast (facing right, leaning back, covering its eyes)
   const ns = o.ns || .64;
   NL.setTransform(1, 0, 0, 1, 0, 0); NL.clearRect(0, 0, W, H);
   const NR = drawNian(NL, mul(C, mul(T(o.nx || 600, 960), mul(S(ns), T(0, -NJ.ground)))), {
     ...NPOSE.flinch, flip: true
   }, { shadow: 1.4 });
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(NLc, 0, 0); g.restore();
-  // 主屋：窗花背光
+  // main house: backlit window flower
   const HM = mul(C, T(1540, 935)), win = K.house.win;
   const fl = { p: K.flower, M: mul(T(win.x, win.y), S(win.r * 1.02 / 400)) };
   glowWindow(g, HM, win, lit, fl, {});
@@ -61,15 +61,15 @@ export function drawClimax(g, t = 0, o = {}) {
   lightRect(q => { q.setTransform(...HM); q.arc(win.x, win.y, win.r, 0, 7); });
   put(g, K.house, HM, { shadow: 1 });
   put(g, K.tree, mul(C, mul(T(1880, 930), S(.9))), { shadow: 1 });
-  // 女孩：门前举剪刀
+  // girl: in front of the door, holding up the scissors
   drawGirl(g, mul(C, mul(T(1265, 950), S(1.12))), {
     flip: true, expr: 'determined', lean: -.03, shF: -1.62, elF: -.12, handF: 'fist', scissors: { ang: -1.45, open: .5 }, shB: .35, elB: -1.2, hipF: -.18, knF: .1, hipB: .2, knB: .05
   });
-  // —— 光 ——
+  // —— light ——
   const wc = [HM[4] + HM[0] * win.x, HM[5] + HM[3] * win.y], z = C[0];
   pool(wc[0], wc[1], 620 * z, 'rgba(255,184,112,1)', .8 * lit);
   pool(wc[0] - 300 * z, wc[1] + 60 * z, 560 * z, 'rgba(255,110,70,1)', .55 * lit);
-  // 投影纹样：地面（压扁）+ 年兽（放大、偏红）
+  // projected pattern: on the ground (squashed) + on the Nian beast (enlarged, redder)
   lightImage(K.holes, mul(C, [1.25, 0, -.9, .3, 1190, 1010]), .85 * lit, 'rgb(255,190,120)', 1.5);
   const fc = xy(NR.M.head, [-410, -30]), PM = [.62 * z, .07 * z, -.05 * z, .6 * z, fc[0], fc[1]];
   lightMasked(K.holes, PM, NLc, 1.0 * lit, 'rgb(255,228,180)', .6);

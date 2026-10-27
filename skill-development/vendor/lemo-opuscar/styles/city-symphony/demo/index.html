@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>City Symphony · text manifest</title>
+<style>html,body{margin:0;background:#000;color:#b0aaa0;font:14px/1.5 sans-serif}</style>
+</head>
+<body>
+<!-- The picture of this film comes from tools/render.py (frame-by-frame compositing in Python), not from rendering in the browser.
+     This page only exposes texts.json written by render.py (the frames each on-screen text appears and its screen box) to core/render/readcheck.mjs, following the library's page contract:
+     window.DUR、window.render(t)、window.TEXTS(t)、window.READY。 -->
+<script>
+(async () => {
+  const m = await (await fetch('texts.json')).json();
+  window.DUR = m.dur;
+  let F = 0;
+  window.render = t => { F = Math.round(t * m.fps); };
+  window.TEXTS = t => {
+    const f = Math.round(t * m.fps);
+    return m.spans.filter(s => s.f0 <= f && f <= s.f1)
+      .map(s => ({ id: s.id, text: s.text, x0: s.box[0], y0: s.box[1], x1: s.box[2], y1: s.box[3] }));
+  };
+  document.body.textContent = m.spans.length + ' text spans';
+  window.READY = true;
+})();
+</script>
+</body>
+</html>

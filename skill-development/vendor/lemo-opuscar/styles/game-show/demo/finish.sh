@@ -1,8 +1,8 @@
 #!/bin/sh
-# 拼接 render.mjs video 产出的分段 + 混入 music.wav → 成片
-# 用法：sh finish.sh [out.mp4]   默认输出 ../game-show.mp4（会覆盖库里的成片，试跑请传别的路径，如 out/test.mp4）
-# 参数与 v3 成片一致：x264 slow crf16 / AAC 256k 48 kHz / 两遍 loudnorm → −14 LUFS
-# AUDIO_FROM=旧成片.mp4 sh finish.sh …  → 不重混，直接拷贝旧成片的音轨（局部重渲画面、音频保持原样时用）
+# Concatenates the segments produced by `render.mjs video` + mixes in music.wav → finished film
+# Usage: sh finish.sh [out.mp4]   default output ../game-show.mp4 (this overwrites the library's finished film; for test runs pass another path, e.g. out/test.mp4)
+# Settings match the finished film: x264 slow crf16 / AAC 256k 48 kHz / two-pass loudnorm → −14 LUFS
+# AUDIO_FROM=old_film.mp4 sh finish.sh …  → no remix, copies the old film's audio track as-is (for re-rendering part of the picture while keeping the audio unchanged)
 set -e
 cd "$(dirname "$0")"
 O="${1:-../game-show.mp4}"

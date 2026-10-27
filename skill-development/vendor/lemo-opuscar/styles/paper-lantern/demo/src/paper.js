@@ -1,12 +1,12 @@
-// 纸雕层：画布（米制坐标、y 向上）→ 纸纹 + 顶边受光 + 底边暗 → 三维平面（背光透纸 + 自发光窗 + 投影）
+// Paper-cut layer: canvas (metric coordinates, y up) → paper texture + lit top edge + dark bottom edge → 3D plane (backlight through the paper + self-lit windows + cast shadows)
 import * as THREE from 'three';
 import { mulberry, TAU } from './lib.js';
 
-export const PPM = 5200;   // 每米像素数（0.4 m 宽的画面 ≈ 2080 px）
+export const PPM = 5200;   // pixels per metre (a 0.4 m wide picture ≈ 2080 px)
 
 export function cv(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
 
-// —— 纹理：纸纤维（正面肌理）与透光云纹（背光时看到的纸浆絮状）——
+// —— Textures: paper fibres (front-face grain) and translucent cloud pattern (the flocculent pulp seen when backlit) ——
 function makeGrain(n, seed) {
   const c = cv(n, n), x = c.getContext('2d'), R = mulberry(seed), img = x.createImageData(n, n), d = img.data;
   for (let i = 0; i < n * n; i++) { const v = R(); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v < .5 ? 0 : 255; d[i * 4 + 3] = Math.abs(v - .5) * 30; }
@@ -20,7 +20,7 @@ function makeGrain(n, seed) {
 }
 export const GRAIN = makeGrain(512, 7);
 
-function makeCloud(n, seed) {   // 平铺的多倍频值噪声 + 纤维，灰度
+function makeCloud(n, seed) {   // tileable multi-octave value noise + fibres, greyscale
   const R = mulberry(seed), c = cv(n, n), x = c.getContext('2d');
   x.fillStyle = '#808080'; x.fillRect(0, 0, n, n);
   for (const [cnt, rmin, rmax, a] of [[60, 40, 120, .22], [260, 10, 40, .16], [900, 3, 10, .12]]) {
@@ -47,8 +47,8 @@ export function CLOUD() {
   return cloudTex;
 }
 
-// —— 画布：米制，原点在中心，y 向上 ——
-// draw(x, k)：x 已变换到米制；k = 像素/米（用来换算线宽）
+// —— Canvas: metric, origin at the centre, y up ——
+// draw(x, k): x is already transformed to metric; k = pixels/metre (for converting line widths)
 export function paint(w, h, draw, ppm = PPM) {
   const c = cv(w * ppm, h * ppm), x = c.getContext('2d');
   x.setTransform(ppm, 0, 0, -ppm, c.width / 2, c.height / 2);
@@ -56,18 +56,18 @@ export function paint(w, h, draw, ppm = PPM) {
   x.setTransform(1, 0, 0, 1, 0, 0);
   return c;
 }
-// 在米制画布里写字（局部翻转回正）
+// Write text on the metric canvas (locally flipped back upright)
 export function text(x, s, px, py, size, font, o = {}) {
   x.save(); x.translate(px, py); x.scale(.001, -.001); if (o.rot) x.rotate(o.rot);
   x.font = `${o.weight || ''} ${size * 1000}px ${font}`.trim(); x.textAlign = o.align || 'center'; x.textBaseline = o.base || 'middle';
   x.fillStyle = o.fill || '#000'; x.fillText(s, 0, 0); if (o.stroke) { x.lineWidth = o.stroke * 1000; x.strokeStyle = o.fill; x.stroke(); } x.restore();
 }
-export function vtext(x, s, px, py, size, font, o = {}) {   // 竖排
+export function vtext(x, s, px, py, size, font, o = {}) {   // vertical text
   const gap = o.gap ?? 1.08;
   [...s].forEach((ch, i) => text(x, ch, px, py - i * size * gap, size, font, o));
 }
 
-// 纸面处理：纸纹、顶边受光、底边暗（像素空间）
+// Paper-surface treatment: paper texture, lit top edge, dark bottom edge (pixel space)
 export function finish(c, o = {}) {
   const x = c.getContext('2d'), W = c.width, H = c.height;
   if (o.grain !== false) { x.save(); x.globalCompositeOperation = 'source-atop'; x.globalAlpha = o.grainA ?? .9; x.fillStyle = x.createPattern(GRAIN, 'repeat'); x.fillRect(0, 0, W, H); x.restore(); }
@@ -87,8 +87,8 @@ export function tex(c, o = {}) {
   t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; return t;
 }
 
-// —— 材质：纸（受光 + 背光透纸 + 自发光贴图）——
-// U：镜头共享的 uniforms { uLight: vec3 背光中心, uLightR, uLightCol, uLit }
+// —— Material: paper (front light + backlight through the paper + emissive map) ——
+// U: uniforms shared by the shot { uLight: vec3 backlight centre, uLightR, uLightCol, uLit }
 export function paperMat(map, U, o = {}) {
   const m = new THREE.MeshStandardMaterial({
     map, alphaTest: .5, alphaToCoverage: true, roughness: o.rough ?? .92, metalness: o.metal ?? 0, side: THREE.FrontSide,
@@ -119,8 +119,8 @@ function depthMat(map) {
   return depthCache.get(map.uuid);
 }
 
-// 一张纸雕层。o: { w, h, draw, glowDraw?, glow, trans, z, x, y, ax, ay, U, shadow, recv, finish:{...}, ppm }
-// ax/ay：锚点（米，相对画布中心），网格原点即锚点，便于做关节
+// One paper-cut layer. o: { w, h, draw, glowDraw?, glow, trans, z, x, y, ax, ay, U, shadow, recv, finish:{...}, ppm }
+// ax/ay: anchor (metres, relative to the canvas centre); the mesh origin is the anchor, which makes joints easy
 export function sheet(o) {
   const ppm = o.ppm || PPM;
   const c = finish(paint(o.w, o.h, o.draw, ppm), o.finish || {});
@@ -138,7 +138,7 @@ export function sheet(o) {
   return mesh;
 }
 
-// 天幕：不受光的渐变背板（HDR 亮度倍数），可叠星点
+// Sky backdrop: an unlit gradient back panel (HDR brightness multiplier), can carry star dots
 export function skyPanel(o) {
   const c = paint(o.w, o.h, (x, k) => {
     const g = x.createLinearGradient(0, o.h / 2, 0, -o.h / 2);
@@ -161,7 +161,7 @@ export function skyPanel(o) {
   return mesh;
 }
 
-// 月亮：盘面（带淡淡的月海）+ 光晕
+// Moon: disc (with faint maria) + halo
 export function moon(o) {
   const r = o.r, g = new THREE.Group();
   const c = paint(r * 2.02, r * 2.02, (x, k) => {
@@ -189,12 +189,12 @@ export function moon(o) {
   g.position.set(o.x, o.y, o.z);
   return g;
 }
-export function setMoon(m, k) {   // k: 0..1 亮度
+export function setMoon(m, k) {   // k: 0..1 brightness
   m.userData.disc.material.color.setScalar(m.userData.gain * k);
   m.userData.halo.material.color.set('#ffd9a0').multiplyScalar(m.userData.haloGain * k);
 }
 
-// 加色光晕（纸层外的“光”）：解析式径向衰减，中心在底边中点（不用贴图，避免透明贴图的边）
+// Additive halo (the "light" outside the paper layers): analytic radial falloff centred on the midpoint of the bottom edge (no texture, to avoid the edges of transparent textures)
 export function burst(w, h, col = '#ffcd82') {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.ShaderMaterial({
     uniforms: { col: { value: new THREE.Color(col) }, k: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,

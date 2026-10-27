@@ -1,4 +1,4 @@
-// City Lights, 1987 — 时间线：所有剪辑点对齐配乐小节（原创配乐 116 BPM，4/4）
+// City Lights, 1987 — timeline: every cut point is aligned to a bar of the score (original score, 116 BPM, 4/4)
 export const BPM = 116;
 export const BEAT = 60 / BPM;
 export const BAR = BEAT * 4;
@@ -6,28 +6,28 @@ export const bar = n => n * BAR;
 export const beat = n => n * BEAT;
 export const DUR = 59.0;
 
-// 有限动画：角色 12fps（on twos），眨眼 / 拧油门等 8fps（on threes）
+// Limited animation: characters at 12fps (on twos), blinks / throttle twists etc. at 8fps (on threes)
 export const q12 = t => Math.floor(t * 12 + 1e-6) / 12;
 export const q8 = t => Math.floor(t * 8 + 1e-6) / 8;
 export const qc12 = t => Math.ceil(t * 12 - 1e-6) / 12;
 
 export const T = {
-  eyesOpen: 7.75,             // 三张画睁眼
-  rev: [bar(4) + BEAT * 1, bar(4) + BEAT * 2.5],  // 两次轰油
-  title: bar(5),              // 10.345 铜管齐奏
-  warn: bar(13),              // 26.90 吊桥警示
-  throttle: bar(14) + BEAT,   // 拧油门
-  cutout: bar(15) + BEAT * 3, // 32.59 音乐抽空一拍 + 白闪
-  jump: bar(16),              // 33.10 冲击帧 + 副歌
-  land: bar(18),              // 37.24 落地
-  handoff: bar(20) + BEAT,    // 手交磁带
-  play: bar(21) + BEAT * .5,  // 按下 PLAY，配乐变卡带音质
-  lift: bar(22),              // 45.52 火箭升空，配乐展开 + 升调
-  smile: bar(25) + BEAT * 1,  // 微笑
-  end: bar(26),               // 53.79 片尾卡
+  eyesOpen: 7.75,             // eyes open over three drawings
+  rev: [bar(4) + BEAT * 1, bar(4) + BEAT * 2.5],  // two throttle revs
+  title: bar(5),              // 10.345 brass tutti
+  warn: bar(13),              // 26.90 drawbridge warning
+  throttle: bar(14) + BEAT,   // throttle twist
+  cutout: bar(15) + BEAT * 3, // 32.59 music drops out for one beat + white flash
+  jump: bar(16),              // 33.10 impact frame + chorus
+  land: bar(18),              // 37.24 landing
+  handoff: bar(20) + BEAT,    // tape handed over
+  play: bar(21) + BEAT * .5,  // PLAY pressed, the score switches to cassette sound quality
+  lift: bar(22),              // 45.52 rocket lifts off, score opens up + key change up
+  smile: bar(25) + BEAT * 1,  // smile
+  end: bar(26),               // 53.79 end card
 };
 
-// 台词（D = 调度员，走无线电；G = 少女）
+// lines (D = dispatcher, over the radio; G = the girl)
 export const VO = [
   { id: 'd1', t: 0.9, who: 'D', text: 'Nightbird, come in. The launch is at dawn.' },
   { id: 'd2', t: 4.35, who: 'D', text: "The pilot won't fly without his tape." },
@@ -39,7 +39,7 @@ export const VO = [
   { id: 'g4', t: bar(24) + BEAT * 2.2, who: 'G', text: "Told you I'd beat the sun." },
 ];
 
-// 镜头：[起, 止, 名]
+// shots: [start, end, name]
 export const SHOTS = [
   [0, bar(2), 'crane'],
   [bar(2), 7.24, 'tape'],

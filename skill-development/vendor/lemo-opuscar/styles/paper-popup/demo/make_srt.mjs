@@ -1,11 +1,11 @@
-// 字幕导出：node styles/paper-popup/demo/make_srt.mjs [out.srt]   （默认 ../paper-popup.srt）
-// 直接读 story.js 的旁白 VO / 气泡 BUB 与 voices/dur.json，时间区间与 hud.js 的显示区间一致：
-//   旁白 drawSubs：t0-.15 淡入 … t0+dur+.25 开始淡出 → 取 [t0, t0+dur+.4]
-//   气泡 drawBubbles：t0 弹出 … t1 开始收起（.2 s）   → 取 [t0, t1+.2]
-// 每条两行：英文 + 中文（与片中双语字幕一致）；章节横幅、片尾字卡不进 srt
+// Subtitle export: node styles/paper-popup/demo/make_srt.mjs [out.srt]   (default ../paper-popup.srt)
+// Reads the narration VO / bubbles BUB from story.js and voices/dur.json directly; time ranges match what hud.js displays:
+//   narration drawSubs: fades in at t0-.15 … starts fading out at t0+dur+.25 → use [t0, t0+dur+.4]
+//   bubbles drawBubbles: pop up at t0 … start closing at t1 (.2 s)   → use [t0, t1+.2]
+// Two lines per cue: English + Chinese (same as the bilingual subtitles in the film); chapter banners and the end card are not in the srt
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// package.json 是 commonjs，story.js 按 ES module 用 data: URL 载入
+// package.json is commonjs, so story.js is loaded as an ES module through a data: URL
 const { VO, BUB } = await import('data:text/javascript;base64,' + fs.readFileSync(path.join(HERE, 'story.js')).toString('base64'));
 const dur = JSON.parse(fs.readFileSync(path.join(HERE, 'voices/dur.json'), 'utf8'));
 const cues = [

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-"""City Lights, 1987 — 原创 city pop / 合成器放克配乐（numpy + numba 从零合成）
+"""City Lights, 1987 — original city pop / synth-funk score (synthesised from scratch with numpy + numba)
 
-运行：.venv/bin/python styles/cel-anime-80s/demo/music/score.py
-输出：score.wav（48k 立体声 float，正好 59.0 s）、stems/*.wav、score.json
+Run: .venv/bin/python styles/cel-anime-80s/demo/music/score.py
+Output: score.wav (48k stereo float, exactly 59.0 s), stems/*.wav, score.json
 
-116 BPM，4/4，E♭ 大调 → 第 22 小节升半音到 E 大调。结构与 demo/story.js 的镜头一一对齐：
-  bar 0–4   前奏（弦乐垫 + FM 电钢分解和弦 + FM 钟预示副歌动机）
-  bar 4     过门：低音上行 + 噪声 riser + 门限混响嗵鼓（后两拍）
-  bar 5–7   片名：铜管齐奏 riff（片名重音 = bar 5 第一拍）
-  bar 7–13  主歌律动：slap 贝斯 + 电钢 + 合唱切音吉他 + 鼓 + 柔和主旋律
-  bar 13–16 预副歌：上行和弦、铜管渐强、军鼓滚奏；bar 15 第 4 拍 → bar 16 全静音
-  bar 16–21 副歌（王道进行 IVM9–V13–iii9–vi9），bar 18 落地重音
-  bar 21    卡带/收音机音质（带通 + wow/flutter + 嘶声）
-  bar 22–26 升调最后副歌（E 大调），bar 24–25 稍收给台词
-  bar 26    结束和弦 EM9 + 铜管最后一击 + FM 钟琶音，余韵到 59.0 s
+116 BPM, 4/4, E♭ major → up a semitone to E major at bar 22. The structure lines up one-to-one with the shots in demo/story.js:
+  bar 0–4   intro (string pad + FM electric-piano arpeggios + FM bell foreshadowing the chorus motif)
+  bar 4     fill: rising bass + noise riser + gated-reverb toms (last two beats)
+  bar 5–7   title: brass tutti riff (title accent = bar 5 beat 1)
+  bar 7–13  verse groove: slap bass + electric piano + chorused muted-strum guitar + drums + soft lead melody
+  bar 13–16 pre-chorus: rising chords, brass crescendo, snare roll; bar 15 beat 4 → bar 16 full silence
+  bar 16–21 chorus (ōdō progression, 王道进行 "royal road": IVM9–V13–iii9–vi9), landing accent at bar 18
+  bar 21    cassette/radio sound quality (band-pass + wow/flutter + hiss)
+  bar 22–26 key-changed final chorus (E major), pulled back slightly at bars 24–25 for the lines
+  bar 26    final chord EM9 + last brass hit + FM bell arpeggio, ringing out to 59.0 s
 """
 import os, json, numpy as np, soundfile as sf
 from numba import njit
@@ -33,9 +33,9 @@ rng = np.random.default_rng(1987)
 def T(bar, beat=0.0): return (bar * 4 + beat) * BEAT
 
 
-CUT0, CUT1 = T(15, 3), T(16)          # 全静音
-LOFI0, LOFI1 = T(21), T(22)           # 卡带音质
-KEY_UP = 22                           # 从这一小节起升半音
+CUT0, CUT1 = T(15, 3), T(16)          # full silence
+LOFI0, LOFI1 = T(21), T(22)           # cassette sound quality
+KEY_UP = 22                           # up a semitone from this bar on
 
 
 def mtof(m): return 440.0 * 2 ** ((m - 69) / 12)
@@ -49,10 +49,10 @@ def hp(x, f, o=2): return sosfilt(_sos('high', f, o), x, axis=0)
 def bp(x, lo, hi, o=2): return sosfilt(_sos('band', [lo, hi], o), x, axis=0)
 
 
-# ───────────────────────── DSP 内核（numba） ─────────────────────────
+# ───────────────────────── DSP kernels (numba) ─────────────────────────
 @njit(cache=True)
 def svf(x, fc, res, mode):
-    """TPT 状态变量滤波器，逐样本截止频率。mode 0=低通 1=带通 2=高通"""
+    """TPT state-variable filter, per-sample cutoff. mode 0=low-pass 1=band-pass 2=high-pass"""
     n = x.shape[0]; y = np.empty(n); ic1 = 0.0; ic2 = 0.0; k = 1.0 / res
     for i in range(n):
         f = fc[i]
@@ -70,7 +70,7 @@ def svf(x, fc, res, mode):
 
 @njit(cache=True)
 def ks_loop(exc, L, P, damp, bright):
-    """Karplus-Strong：延迟 P 的环路 + 可调亮度的平均滤波"""
+    """Karplus-Strong: loop of delay P + averaging filter with adjustable brightness"""
     y = np.zeros(L)
     for i in range(L):
         v = exc[i] if i < exc.shape[0] else 0.0
@@ -95,7 +95,7 @@ def env_follow(x, att, rel):
 
 
 def saw(freq, phase0=0.0):
-    """PolyBLEP 带限锯齿，freq 可为逐样本数组"""
+    """PolyBLEP band-limited sawtooth; freq may be a per-sample array"""
     dt = np.asarray(freq, dtype=float) / SR
     ph = (phase0 + np.cumsum(dt)) % 1.0
     y = 2 * ph - 1
@@ -129,11 +129,11 @@ def make_ir(dur, rt60, predelay=0.02, damp=3500, seed=1, early=True):
 IR_HALL = make_ir(2.6, 1.9, .024, 3800, 11)
 IR_PLATE = make_ir(1.1, 0.9, .006, 6500, 12, early=False)
 
-# ───────────────────────── 乐器 ─────────────────────────
+# ───────────────────────── instruments ─────────────────────────
 
 
 def epiano(m, dur, vel=0.7):
-    """DX7 式 FM 电钢：1:1 载波对（音色主体，调制指数随时间衰减）+ 14:1 铃音瞬态"""
+    """DX7-style FM electric piano: 1:1 carrier pair (body of the tone, modulation index decays over time) + 14:1 bell transient"""
     f = mtof(m); rel = 0.22; n = int((dur + rel) * SR); t = ts(n)
     tau = 1.2 * (262 / f) ** .5 + .35
     rel_env = np.where(t < dur, 1.0, np.exp(-(t - dur) / .06))
@@ -146,7 +146,7 @@ def epiano(m, dur, vel=0.7):
 
 
 def bass(m, dur, vel=.8, kind='T'):
-    """加法合成 slap 贝斯：高次谐波衰减更快（拨弦的自然滤波）+ 起音音高下滑 + 击弦噪声"""
+    """Additive slap bass: higher harmonics decay faster (the natural filtering of a plucked string) + pitch drop on attack + string-slap noise"""
     f0 = mtof(m); rel = .025; n = int((dur + rel) * SR); t = ts(n)
     P = dict(T=(1.1, .30, 1.0, .03, .5), P=(.8, .12, .8, .045, .9), D=(.045, .9, 1.5, 0, .7), F=(1.8, .7, 1.5, .01, .1))[kind]
     base_tau, kk, tilt, drop, click = P
@@ -172,7 +172,7 @@ def _gate(n, hold, fall=.018):
 
 
 def snare(vel=1.0, gate=.26):
-    """门限混响军鼓：干声 + 板式混响，混响尾巴在 ~260 ms 被硬门限切掉"""
+    """Gated-reverb snare: dry + plate reverb, the reverb tail is cut by a hard gate at ~260 ms"""
     n = int(.6 * SR); t = ts(n)
     tone = np.sin(2 * np.pi * np.cumsum(190 * (1 + .12 * np.exp(-t / .01))) / SR) * np.exp(-t / .05) * .6 \
         + np.sin(2 * np.pi * 335 * t) * np.exp(-t / .03) * .3
@@ -227,7 +227,7 @@ def boom(vel=1.0):
 
 
 def brass(m, dur, vel=.8, bright=1.0, att=.012):
-    """合成铜管：3 只失谐 PolyBLEP 锯齿 + 起音音高下滑（scoop）+ 滤波包络 swell + 延迟颤音"""
+    """Synth brass: 3 detuned PolyBLEP saws + pitch drop on attack (scoop) + filter-envelope swell + delayed vibrato"""
     f = mtof(m); rel = .14; n = int((dur + rel) * SR); t = ts(n)
     scoop = 2 ** ((-.3 * np.exp(-t / .035)) / 12)
     vib = 1 + .0035 * np.sin(2 * np.pi * 5.3 * t) * np.clip((t - .35) / .3, 0, 1)
@@ -247,7 +247,7 @@ def pad(m, dur, vel=.5):
 
 
 def gtr(m, dur, vel=.7, mute=False):
-    """Karplus-Strong 电吉他：拨片噪声激励，muted 切音用高阻尼"""
+    """Karplus-Strong electric guitar: pick-noise excitation, high damping for muted strums"""
     f = mtof(m); P = int(round(SR / f - .5)); L = int((dur + .06) * SR)
     exc = lp(noise(P), 2500 + 3500 * vel, 1) * vel
     y = ks_loop(exc, L, P, .975 if mute else .9965, .15 if mute else .35)
@@ -271,11 +271,11 @@ def riser(dur, vel=1.0, f0=250, f1=7000):
     return y * vel
 
 
-# ───────────────────────── 和声数据 ─────────────────────────
+# ───────────────────────── harmony data ─────────────────────────
 PC = dict(C=0, Db=1, **{'C#': 1}, D=2, Eb=3, E=4, F=5, **{'F#': 6}, G=7, Ab=8, **{'G#': 8}, A=9, Bb=10, B=11)
 Q = {'M7': [0, 4, 7, 11], 'M9': [0, 4, 7, 11, 14], 'm7': [0, 3, 7, 10], 'm9': [0, 3, 7, 10, 14], '7': [0, 4, 7, 10],
      '13': [0, 4, 10, 14, 21], '7sus4': [0, 5, 7, 10], '7b9': [0, 4, 7, 10, 13], 'add9': [0, 4, 7, 14]}
-# bar -> [(起拍, 拍数, 根音, 性质)]
+# bar -> [(start beat, beats, root, quality)]
 CH = {
     0: [(0, 4, 'Ab', 'M9')], 1: [(0, 4, 'G', 'm9')], 2: [(0, 4, 'F', 'm9')], 3: [(0, 4, 'Bb', '7sus4')],
     4: [(0, 2, 'Bb', '7sus4'), (2, 2, 'Bb', '7b9')],
@@ -323,10 +323,10 @@ def harm(top, r, q, nv=4):
     return out + [top - 12]
 
 
-# ───────────────────────── 总线与放置 ─────────────────────────
+# ───────────────────────── buses and placement ─────────────────────────
 STEMS = ['drums', 'bass', 'keys', 'guitar', 'pad', 'brass', 'lead', 'fx']
 BUS = {k: np.zeros((N, 2)) for k in STEMS}
-SEND = {k: np.zeros(N) for k in STEMS}          # 混响发送（单声道）
+SEND = {k: np.zeros(N) for k in STEMS}          # reverb send (mono)
 SEND_AMT = dict(drums=.05, bass=0, keys=.22, guitar=.12, pad=.35, brass=.2, lead=.28, fx=.45)
 KICKS = []
 
@@ -336,7 +336,7 @@ def place(bus, sig, t, gain=1.0, pan=0.0, send=None):
     if s >= N: return
     st = sig if sig.ndim == 2 else np.stack([sig * np.cos((pan + 1) * np.pi / 4), sig * np.sin((pan + 1) * np.pi / 4)], 1) * 1.4142
     st = st * gain
-    if t < CUT0 - 1e-6:                      # 静音段之前开始的声音，不许漏进静音段
+    if t < CUT0 - 1e-6:                      # sounds that start before the silent section must not leak into it
         c = int(CUT0 * SR) - s
         if c < len(st):
             fl = min(int(.012 * SR), c)
@@ -350,10 +350,10 @@ def place(bus, sig, t, gain=1.0, pan=0.0, send=None):
 
 def hum(ms=3.0): return rng.normal(0, ms / 1000)
 def jv(v, j=.08): return v * (1 + rng.uniform(-j, j))
-def tr(m, b): return m + (1 if b >= KEY_UP else 0)   # 旋律数据按原调写，升调段 +1
+def tr(m, b): return m + (1 if b >= KEY_UP else 0)   # melody data is written in the original key, +1 in the key-changed section
 
 
-# ───────────────────────── 编曲 ─────────────────────────
+# ───────────────────────── arrangement ─────────────────────────
 SNARES = [snare(1, .26) for _ in range(3)]
 KICKW = [kick(1) for _ in range(2)]
 
@@ -444,7 +444,7 @@ def bass_bar(b, pat, dyn=1.0, stop=16):
 
 def ep_bar(b, pat, dyn=1.0, center=64):
     for beat, d, vm in pat:
-        r, q = chord_at(b, beat + (.5 if beat % 1 == .5 and beat >= 3.5 else 0))   # 3.5 拍的切分提前进下一和弦
+        r, q = chord_at(b, beat + (.5 if beat % 1 == .5 and beat >= 3.5 else 0))   # the syncopation on beat 3.5 anticipates the next chord
         for i, m in enumerate(voicing(r, q, center)):
             place('keys', epiano(m, d * BEAT, jv(.62 * vm)), T(b, beat) + i * .004 + hum(2), .27 * dyn, -.35 + .18 * i)
 
@@ -477,7 +477,7 @@ def stab(b, beat, dur, top, dyn=1.0, bright=1.0, att=.012, vel=.85):
         place('brass', brass(m, dur, jv(vel, .05), bright, att), T(b, beat) + hum(3), .15 * dyn, (-.45, .45, -.2, .2, 0)[i % 5])
 
 
-# 主旋律（原调 E♭，拍, 时值, MIDI）
+# lead melody (original key E♭, beat, duration, MIDI)
 V_MEL = {7: [(0.5, .5, 75), (1, .5, 77), (1.5, 1.0, 79), (2.5, .5, 77), (3, 1.0, 75)],
          8: [(0.5, .5, 74), (1, .5, 75), (1.5, .5, 77), (2, 1.5, 82)],
          9: [(0.5, .5, 80), (1, .5, 79), (1.5, .5, 77), (2, .5, 75), (2.5, 1.5, 72)],
@@ -497,7 +497,7 @@ TITLE_RIFF = {5: [(0, .5, 75), (.75, .25, 72), (1.25, .75, 75), (2, .5, 77), (2.
 
 
 def lead_line(notes, bright, gain):
-    """单音主旋律：连续相位锯齿 + 滑音 + 延迟颤音；notes=[(t, dur, midi, vel)]"""
+    """Monophonic lead: continuous-phase sawtooth + glide + delayed vibrato; notes=[(t, dur, midi, vel)]"""
     if not notes: return
     notes = sorted(notes); t0 = max(0, notes[0][0] - .2); t1 = min(DUR, notes[-1][0] + notes[-1][1] + .6)
     a, b_ = int(t0 * SR), int(t1 * SR); n = b_ - a; t = ts(n) + t0
@@ -521,7 +521,7 @@ def lead_line(notes, bright, gain):
 
 def build():
     lead_notes_soft, lead_notes = [], []
-    # ── 前奏 bar 0–3 ──
+    # ── intro bar 0–3 ──
     ARP = [0, 1, 2, 3, 4, 3, 2, 1]
     for b in range(4):
         pad_bar(b, .8 + .1 * b)
@@ -536,7 +536,7 @@ def build():
         place('fx', bell(m, 3.0, .38), T(0, s), .085, .25)
     for s, d, m in [(0, 1.0, 80), (1, 1.0, 79), (2, 2.0, 75)]:
         place('fx', bell(m, 3.0, .35), T(2, s), .075, -.25)
-    # ── 过门 bar 4 ──
+    # ── fill bar 4 ──
     pad_bar(4, 1.0)
     for beat in (0, 2):
         r, q = chord_at(4, beat)
@@ -548,7 +548,7 @@ def build():
     place('fx', riser(BAR, 1.0), T(4), .12)
     rc = crash(1.0, 1.6)[::-1] * np.linspace(0, 1, int(1.6 * SR))[:, None] ** 2
     place('fx', rc, T(5) - 1.6, .14)
-    # ── 片名 bar 5–6 ──
+    # ── title bar 5–6 ──
     place('fx', boom(1), T(5), .32)
     place('fx', bell(87, 3.0, .6), T(5), .08, .3); place('fx', bell(94, 3.0, .5), T(5, .02), .06, -.3)
     for b in (5, 6):
@@ -559,7 +559,7 @@ def build():
         for s, d, top in TITLE_RIFF[b]:
             stab(b, s, d * BEAT * .95, top, 2.0, 1.1, vel=.95 if s == 0 else .85)
         ep_bar(b, [(0, 1.0, 1), (2, 1.0, .9), (3.5, .45, .8)], .9)
-    # ── 主歌 bar 7–12 ──
+    # ── verse bar 7–12 ──
     for b in range(7, 13):
         drums_bar(b, 'groove', .78)
         bass_bar(b, B_VERSE, .85)
@@ -569,7 +569,7 @@ def build():
         for s, d, m in V_MEL[b]: lead_notes_soft.append((T(b, s), d * BEAT, m, .8))
     for b, s, top in [(10, 2.5, 77), (10, 3.5, 79), (12, 2.5, 76), (12, 3.5, 77)]:
         stab(b, s, BEAT * .4, top, .8, .8)
-    # ── 预副歌 bar 13–15 ──
+    # ── pre-chorus bar 13–15 ──
     for i, b in enumerate((13, 14, 15)):
         drums_bar(b, ('pre13', 'pre14', 'pre15')[i], .95 + .05 * i)
         pat = [(s, 'T' if s % 4 == 0 else 'P', 0 if s % 4 == 0 else 12, 2) for s in range(0, 16, 2)]
@@ -581,7 +581,7 @@ def build():
             top = max(voicing(r, q, 70))
             stab(b, s, dd * BEAT, top, .75 + .2 * i, .45 + .25 * i + .15 * (s > 0), att=.22, vel=.7 + .1 * i)
     place('fx', riser(CUT0 - T(14), 1.0, 300, 9000), T(14), .26)
-    # ── 副歌 bar 16–21 ──
+    # ── chorus bar 16–21 ──
     for b in range(16, 22):
         drums_bar(b, 'chorus', 1.0, crash_=b in (16, 18, 20))
         bass_bar(b, B_CHORUS, 1.0)
@@ -595,11 +595,11 @@ def build():
     place('drums', tom(90, 1), T(18), .35)
     for b, s, top in [(17, 2.5, 77), (17, 3.5, 79), (19, 2.5, 79), (19, 3.5, 77), (20, 1.5, 79), (20, 3.5, 77), (21, 2, 78), (21, 3, 78)]:
         stab(b, s, BEAT * .45, top, 1.4, 1.0)
-    # 铜管齐奏低八度叠主旋律（副歌 hook）
+    # brass tutti doubles the lead an octave down (chorus hook)
     for b in (16, 17, 18, 19, 20):
         for s, d, m in C_MEL[b]:
             place('brass', brass(m - 12, d * BEAT * .95, .8, .9), T(b, s), .17, .15)
-    # ── 升调最后副歌 bar 22–25 ──
+    # ── key-changed final chorus bar 22–25 ──
     for b in range(22, 26):
         pb = b in (24, 25)
         drums_bar(b, 'fill25' if b == 25 else ('pullback' if b == 24 else 'chorus'), 1.05 if not pb else .85, crash_=b in (22,))
@@ -613,7 +613,7 @@ def build():
             for s, d, m in C_MEL[b]:
                 place('brass', brass(tr(m, b) - 12, d * BEAT * .95, .85, 1.0), T(b, s), .19, .15)
     place('fx', boom(1.1), T(22), .36)
-    for b in (22, 23):   # 升调段加一层高八度弦乐，释放感
+    for b in (22, 23):   # extra layer of strings an octave up in the key-changed section, for a sense of release
         for s, d, r, q in CH[b]:
             for i, m in enumerate(voicing(r, q, 76, nmax=4)):
                 place('pad', pad(m, d * BEAT, .55), T(b, s), .2, (-.7, .7)[i % 2])
@@ -622,7 +622,7 @@ def build():
         stab(b, s, BEAT * .45, top, 1.45, 1.0)
     rc2 = crash(1.0, 1.0)[::-1] * np.linspace(0, 1, int(1.0 * SR))[:, None] ** 2
     place('fx', rc2, T(22) - 1.0, .12)
-    # ── 结尾 bar 26 ──
+    # ── ending bar 26 ──
     place('drums', crash(1.2, 5.0), T(26), .4); place('drums', KICKW[0], T(26), .6); place('fx', boom(1), T(26), .32)
     place('drums', SNARES[0], T(26), .45)
     for m in harm(80, 'E', 'M9', 4): place('brass', brass(m, BAR * 1.1, .95, 1.15, .015), T(26), .22, rng.uniform(-.4, .4))
@@ -637,7 +637,7 @@ def build():
     lead_line(lead_notes, 1.0, .3)
 
 
-# ───────────────────────── 效果与母带 ─────────────────────────
+# ───────────────────────── effects and mastering ─────────────────────────
 def chorus_fx(x, base=.009, depth=.0028, rates=(.73, 1.11), mix=.55):
     n = len(x); ar = np.arange(n); t = ar / SR; mono = x.mean(1); out = x.copy()
     for c in range(2):
@@ -655,7 +655,7 @@ def pingpong(mono, dt, fb=.36, taps=5, lpf=4200):
 
 
 def split_fx(dry_mono_or_st, fx):
-    """静音段前的效果尾巴在 CUT0 处切断，静音段后的正常"""
+    """Effect tails from before the silent section are cut at CUT0; those after it are left as normal"""
     A = np.ones(N); c0, c1 = int(CUT0 * SR), int(CUT1 * SR); fl = int(.012 * SR)
     A[c0 - fl:c0] = np.linspace(1, 0, fl); A[c0:] = 0
     B = np.zeros(N); B[c1:] = 1
@@ -687,33 +687,33 @@ def apply_lofi(st):
 def main():
     import time; t0 = time.time()
     build(); print('build', round(time.time() - t0, 1), 's')
-    # 电钢：立体声颤音（Rhodes 式 autopan）+ chorus
+    # electric piano: stereo tremolo (Rhodes-style autopan) + chorus
     t = ts(N); trem = .22 * np.sin(2 * np.pi * 3.4 * t)
     BUS['keys'][:, 0] *= 1 - trem; BUS['keys'][:, 1] *= 1 + trem
     BUS['keys'] = chorus_fx(BUS['keys'], .007, .0018, (.5, .63), .35)
-    BUS['guitar'] = chorus_fx(hp(BUS['guitar'], 180), .010, .0032, (.8, 1.13), .6)   # 合唱效果吉他
+    BUS['guitar'] = chorus_fx(hp(BUS['guitar'], 180), .010, .0032, (.8, 1.13), .6)   # chorused guitar
     BUS['pad'] = chorus_fx(BUS['pad'], .012, .004, (.25, .33), .5)
-    # 侧链：垫子 / 电钢随底鼓轻微呼吸
+    # sidechain: pad / electric piano breathe slightly with the kick
     pump = np.ones(N)
     for k in KICKS:
         s = int(k * SR); e = min(N, s + int(.3 * SR)); pump[s:e] = np.minimum(pump[s:e], 1 - .28 * np.exp(-ts(e - s) / .09))
     BUS['pad'] *= pump[:, None]; BUS['keys'] *= (1 - (1 - pump) * .5)[:, None]
     BUS['bass'] = hp(BUS['bass'], 32, 2)
-    # 主旋律延迟（附点八分乒乓）
+    # lead delay (dotted-eighth ping-pong)
     dl = split_fx(BUS['lead'].mean(1), lambda x: pingpong(x, BEAT * .75, .34, 5))
     BUS['lead'] += dl * .32
-    # 混响（总发送），按静音段切分
+    # reverb (master send), split at the silent section
     send = sum(SEND.values())
     wet = split_fx(send, lambda x: np.stack([fftconvolve(x, IR_HALL[:, c])[:N] for c in range(2)], 1))
     BUS['fx'] += hp(wet, 200) * .42
-    # 每轨：静音段 + 卡带段 + 结尾淡出
+    # per track: silent section + cassette section + fade-out at the end
     c0, c1 = int(CUT0 * SR), int(CUT1 * SR)
     fade = np.ones(N); fe = int(.5 * SR); fade[-fe:] = np.linspace(1, 0, fe) ** 2
     for k in STEMS:
         x = BUS[k]; x[c0:c1] = 0; x = apply_lofi(x); BUS[k] = x * fade[:, None]
     BUS['drums'] *= .85
     mix = sum(BUS.values()); mix = hp(mix, 28, 2)
-    # 总线压缩（glue）+ 轻微磁带饱和 + 前瞻限幅
+    # bus compression (glue) + light tape saturation + look-ahead limiting
     pre = 1.0 / np.abs(mix).max(); mix *= pre
     det = uniform_filter1d(np.abs(mix).max(1), int(.005 * SR))
     g = np.ones(N)
@@ -722,7 +722,7 @@ def main():
     mix *= g[:, None]; mix /= np.abs(mix).max()
     mix = np.tanh(mix * 1.25) / np.tanh(1.25)
     ceil = 10 ** (-1.2 / 20); look = int(.004 * SR)
-    target_gain = 1.3   # 限幅前推 ~2.3 dB（响度由 mux 的 loudnorm 统一）
+    target_gain = 1.3   # push ~2.3 dB into the limiter (loudness is set uniformly by loudnorm in mux)
     raw = np.minimum(1, ceil / np.maximum(np.abs(mix * target_gain).max(1), 1e-9))
     gl = uniform_filter1d(minimum_filter1d(raw, 2 * look + 1), look)
     mix = mix * target_gain * gl[:, None]

@@ -79,7 +79,7 @@ demo/
                     cuecheck.mjs, subcheck.mjs
   sources/          the Library of Congress catalogue records (MARCXML) behind FACTS.md
   assets/           raw/ (downloads), tex/ (textures the page reads)
-  FACTS.md, CREDITS, TREATMENT.md, PRODUCTION_LOG.md, stills/styleframe.jpg
+  FACTS.md, CREDITS, stills/styleframe.jpg
 ```
 
 - `sh demo/build.sh` takes about 4 minutes on Apple silicon (the picture renders in about 40 s with 4 workers; the master pass is the slowest step). From a clean clone it first fetches what git does not hold: the fonts from Google Fonts (`tools/fonts.py`), the Kokoro model and the salamander, vsco2ce and vcsl sample libraries (`tools/fetch.sh`), and about 100 MB of Library of Congress scans, which `tools/prep.py` turns into textures (about 25 s). `FETCH=1` forces the fonts and scans again.

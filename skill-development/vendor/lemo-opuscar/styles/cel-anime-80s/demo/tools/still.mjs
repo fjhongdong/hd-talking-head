@@ -1,5 +1,5 @@
-// core/render/still.mjs 的本地副本，多了 --q（页面查询串，如 test=side&raw=1）和 --prefix
-// 用法：node styles/cel-anime-80s/demo/tools/still.mjs styles/cel-anime-80s/demo 1.5 3 --q test=side --out dir
+// Local copy of core/render/still.mjs, with --q (page query string, e.g. test=side&raw=1) and --prefix added
+// Usage: node styles/cel-anime-80s/demo/tools/still.mjs styles/cel-anime-80s/demo 1.5 3 --q test=side --out dir
 import { chromium } from 'playwright-core';
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { serve } from '../../../../core/render/serve.mjs';

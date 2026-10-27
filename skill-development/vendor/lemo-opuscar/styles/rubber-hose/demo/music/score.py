@@ -1,9 +1,9 @@
-"""《Coffee Cup Chase》原创配乐：30 年代大乐队 / ragtime（144 BPM，4/4，30 小节 = 50.0 s）
-运行：.venv/bin/python styles/rubber-hose/demo/music/score.py
-乐器：core/audio/sampler.py 采样（VSCO 2 CE 小号/弱音小号/单簧管/大号/立式钢琴/军鼓/镲/底鼓；VCSL 木琴/木鱼/吊镲）
-      + core/audio/pluck.py 班卓（物理建模）+ numpy 合成的滑哨、弹簧"啵嘤"、军鼓刷扫
-输出：score.wav（48 kHz 立体声）、stems/*.wav、score.json（卡点 + cue + 自检）
-所有时间点按 story.js 的 bar(b, beat) 计算（1 起算）。"""
+"""Original score for "Coffee Cup Chase": 1930s big band / ragtime (144 BPM, 4/4, 30 bars = 50.0 s)
+Run: .venv/bin/python styles/rubber-hose/demo/music/score.py
+Instruments: core/audio/sampler.py samples (VSCO 2 CE trumpet/muted trumpet/clarinet/tuba/upright piano/snare/cymbals/bass drum; VCSL xylophone/woodblock/suspended cymbal)
+      + core/audio/pluck.py banjo (physical model) + numpy-synthesised slide whistle, spring "boing", snare brush sweeps
+Output: score.wav (48 kHz stereo), stems/*.wav, score.json (hit points + cues + self-check)
+All times are computed with story.js's bar(b, beat) (1-based)."""
 import os, sys, json
 import numpy as np
 import soundfile as sf
@@ -29,7 +29,7 @@ STEMS = ['brass', 'reeds', 'piano', 'banjo_tuba', 'drums_fx', 'xylo']
 buf = {k: np.zeros((N, 2), np.float32) for k in STEMS}
 HITS = {}
 
-# 起音补偿：铜管/簧管采样发声有 15–30 ms 的起音，提前放置让重音落在拍点上（真人演奏也会提前送气）
+# Attack compensation: brass/reed samples have a 15–30 ms attack, so they are placed early to land the accent on the beat (live players also push the air early)
 LEAD = {'tuba_stac': .022, 'tuba': .025, 'trumpet': .018, 'trumpet_stac': .012, 'trumpet_mute': .02, 'trombone': .02, 'clarinet': .015, 'clarinet_stac': .008}
 class Note(np.ndarray): pass
 def put(stem, x, t, gain=1.0, pan=0.0):
@@ -39,8 +39,8 @@ def put(stem, x, t, gain=1.0, pan=0.0):
 def nt(inst, pitch, dur, vel=.7, **kw):
     x = S.note(inst, pitch, dur, vel, **kw).view(Note); x.lead = LEAD.get(inst, 0.0); return x
 
-# ——— 和弦 ———
-CH = {  # (低音根音, 五度低音, 和弦中音区)
+# ——— Chords ———
+CH = {  # (bass root, bass fifth, chord in the middle register)
     'F': ('F2', 'C2', ['A3', 'C4', 'F4']), 'D7': ('D2', 'A1', ['F#3', 'C4', 'D4']), 'G7': ('G2', 'D2', ['F3', 'B3', 'D4']),
     'C7': ('C2', 'G1', ['E3', 'Bb3', 'C4']), 'Dm': ('D2', 'A1', ['F3', 'A3', 'D4']), 'Bb': ('Bb1', 'F2', ['F3', 'Bb3', 'D4']),
     'A7': ('A1', 'E2', ['G3', 'C#4', 'E4']), 'E7': ('E2', 'B1', ['G#3', 'D4', 'E4']), 'G': ('G2', 'D2', ['B3', 'D4', 'G4']),
@@ -50,7 +50,7 @@ CH = {  # (低音根音, 五度低音, 和弦中音区)
 def up(p, k=12): return S.name(S.midi(p) + k)
 
 def stride(b, chords, vel=.62, beats=(1, 2, 3, 4)):
-    """跨步钢琴：1/3 拍低音（八度），2/4 拍中音区和弦（短）。chords = [前两拍, 后两拍]"""
+    """Stride piano: bass (octaves) on beats 1/3, middle-register chords (short) on beats 2/4. chords = [first two beats, last two beats]"""
     for bt in beats:
         c = chords[0] if bt <= 2 else chords[1]; root, fifth, tri = CH[c]; t = bar(b, bt)
         if bt in (1, 3):
@@ -61,7 +61,7 @@ def stride(b, chords, vel=.62, beats=(1, 2, 3, 4)):
             for p in tri: put('piano', nt('upright', p, BEAT * .35, vel * .8), t, .55, .1)
 
 def oompah(b, chords, vel=.6, two_beat=False):
-    """大号 oom（1、3 拍）+ 班卓 pah（2、4 拍扫弦）"""
+    """Tuba oom (beats 1, 3) + banjo pah (strummed on beats 2, 4)"""
     for bt in (1, 3):
         c = chords[0] if bt == 1 else chords[1]; root, fifth, tri = CH[c]
         p = up(root, 12) if S.midi(root) < 36 else root
@@ -75,7 +75,7 @@ def oompah(b, chords, vel=.6, two_beat=False):
         put('banjo_tuba', x, bar(b, bt) - .012, .55, .35)
 
 def brush(b, vel=.5, beats=(1, 2, 3, 4)):
-    """军鼓刷：每拍一记扫（带通噪声，慢起），2/4 拍加一记轻点"""
+    """Snare brushes: one sweep per beat (band-passed noise, slow attack), plus a light tap on beats 2/4"""
     rng = np.random.default_rng(int(b * 13))
     for bt in beats:
         n = int(BEAT * .9 * SR); w = rng.standard_normal(n)
@@ -90,7 +90,7 @@ def snare_back(b, vel=.6):
     put('drums_fx', S.hit('bass_drum', None, vel * .7), bar(b, 3), .9, 0)
 
 def roll(t0, t1, v0=.3, v1=.8):
-    """军鼓滚奏（采样 roll 变体按长度切）+ 渐强"""
+    """Snare roll (sampled roll variant cut to length) + crescendo"""
     d = t1 - t0; x = S.hit('snare', 'roll', .8)
     if len(x) < d * SR: x = np.concatenate([x] * int(np.ceil(d * SR / len(x) + 1)))
     x = x[:int(d * SR)].copy(); x *= np.linspace(v0, v1, len(x), dtype=np.float32); x[-240:] *= np.linspace(1, 0, 240)
@@ -100,7 +100,7 @@ def cymbal(t, vel=.8, short=False, pan=.1):
     put('drums_fx', S.hit('clash', 'short') if short else S.hit('crash', None, vel), t - .012, .75 if not short else .9, pan)
 
 def slide(t0, d, f0, f1, vel=.25, stem='drums_fx', curve=1.0):
-    """滑哨：正弦 + 气声，指数滑音，轻颤音"""
+    """Slide whistle: sine + breath noise, exponential glide, light vibrato"""
     n = int(d * SR); u = np.linspace(0, 1, n) ** curve
     f = f0 * (f1 / f0) ** u * (1 + .006 * np.sin(2 * np.pi * 6 * np.arange(n) / SR))
     ph = 2 * np.pi * np.cumsum(f) / SR
@@ -110,7 +110,7 @@ def slide(t0, d, f0, f1, vel=.25, stem='drums_fx', curve=1.0):
     put(stem, x.astype(np.float32), t0, 1, .2)
 
 def boing(t, vel=.35):
-    """弹簧啵嘤：下行 FM 啁啾 + 颤"""
+    """Spring boing: descending FM chirp + wobble"""
     d = .55; n = int(d * SR); tt = np.arange(n) / SR
     f = 220 * (1 + .9 * np.exp(-tt * 9)) * (1 + .12 * np.sin(2 * np.pi * 18 * tt) * np.exp(-tt * 3))
     x = np.sin(2 * np.pi * np.cumsum(f) / SR + 2.2 * np.sin(2 * np.pi * np.cumsum(f * 1.5) / SR) * np.exp(-tt * 5)) * np.exp(-tt * 4.5)
@@ -120,13 +120,13 @@ def wood(t, vel=.6, v='c', pan=.25):
     put('drums_fx', S.hit('woodblock', v, vel), t, 1.0, pan)
 
 def mel(inst, b0, notes, vel=.72, pan=0., stem='reeds', legato=.95, gain=1.0, shift=0):
-    """notes = [(相对 b0 小节第 1 拍的拍数, 时值拍, 音高), ...]"""
+    """notes = [(beats from beat 1 of bar b0, duration in beats, pitch), ...]"""
     for off, d, p in notes:
         if p is None: continue
         pp = up(p, shift) if shift else p
         put(stem, nt(inst, pp, d * BEAT * legato, vel), bar(b0) + off * BEAT, gain, pan)
 
-# ——— 原创主题（F 大调，4 小节，切分）———
+# ——— Original theme (F major, 4 bars, syncopated) ———
 THEME = [
     (0, .5, 'A4'), (.5, .5, 'C5'), (1, .5, 'F5'), (1.5, 1, 'E5'), (2.5, .5, 'F5'), (3, .5, 'A5'), (3.5, .5, 'G5'),        # F
     (4, .5, 'F#5'), (4.5, 1, 'A5'), (5.5, .5, 'F#5'), (6, .5, 'D5'), (6.5, .5, 'C5'), (7, 1, 'A4'),                       # D7
@@ -134,16 +134,16 @@ THEME = [
     (12, 1.5, 'A4'), (13.5, .5, 'C5'), (14, 1, 'F5'),                                                                     # F
 ]
 THEME_CH = [['F', 'F'], ['D7', 'D7'], ['G7', 'C7'], ['F', 'F']]
-def theme_part(lo, hi):  # 取主题 [lo, hi) 拍
+def theme_part(lo, hi):  # take beats [lo, hi) of the theme
     return [(o - lo, d, p) for o, d, p in THEME if lo <= o < hi]
 
-# ======================= C1 片名进行曲 1–3 =======================
+# ======================= C1 title march 1–3 =======================
 mel('trumpet', 1, theme_part(0, 8), .78, .2, 'brass')
 mel('clarinet', 1, theme_part(0, 8), .7, -.25, 'reeds', shift=12, gain=.55)
 mel('trombone', 1, [(o, d, up(p, -12)) for o, d, p in theme_part(0, 8)], .6, -.05, 'brass', gain=.45)
 for b, c in [(1, THEME_CH[0]), (2, THEME_CH[1])]:
     stride(b, c, .6); oompah(b, c, .62); snare_back(b, .55)
-# 第 3 小节：G7–C7 号角齐奏 + 滚奏渐强，第 4 拍滑哨上行（卷帘）
+# Bar 3: G7–C7 horn tutti + roll crescendo, rising slide whistle on beat 4 (the roll-up)
 mel('trumpet_stac', 3, [(0, .5, 'B4'), (.5, .5, 'D5'), (1, .5, 'G5'), (1.5, .5, 'F5'), (2, 1, 'E5')], .8, .2, 'brass')
 mel('clarinet_stac', 3, [(0, .5, 'D5'), (.5, .5, 'G5'), (1, .5, 'B5'), (1.5, .5, 'A5'), (2, 1, 'G5')], .7, -.25, 'reeds', gain=.6)
 stride(3, THEME_CH[2], .6, beats=(1, 2, 3)); oompah(3, THEME_CH[2], .62)
@@ -152,8 +152,8 @@ slide(bar(3, 4), BEAT, 500, 1900, .3)
 HITS['roll_up_slide'] = bar(3, 4)
 cymbal(bar(4), .8); HITS['title_cymbal'] = bar(4)
 
-# ======================= C2 晨间慢拉格 4–7 =======================
-# 懒洋洋的二拍子：大号 1 拍、班卓 3 拍（半速感），钢琴轻
+# ======================= C2 slow morning rag 4–7 =======================
+# Lazy two-feel: tuba on beat 1, banjo on beat 3 (half-time feel), piano light
 put('piano', S.chord('upright', ['F3', 'A3', 'C4', 'F4'], BEAT * 2, .5), bar(4), .6, 0)
 for b, c in [(4, ['F', 'F']), (5, ['C7', 'C7'])]:
     root, fifth, tri = CH[c[0]]
@@ -161,17 +161,17 @@ for b, c in [(4, ['F', 'F']), (5, ['C7', 'C7'])]:
     put('banjo_tuba', nt('tuba_stac', up(fifth) if S.midi(fifth) < 36 else fifth, BEAT * .7, .45), bar(b, 3), 1.1, -.1)
     for bt in (2, 4): put('banjo_tuba', PL.strum('banjo', [up(p) for p in tri], BEAT * .4, .45, spread=.015), bar(b, bt), .4, .35)
     brush(b, .35)
-# 第 5 小节：尝一口——钢琴踮脚上行（每拍一个短音）
+# Bar 5: a sip — piano tiptoes upward (one short note per beat)
 for i, p in enumerate(['C4', 'E4', 'G4', 'Bb4']): put('piano', nt('upright', p, BEAT * .3, .45), bar(5, 1 + i), .6, .15)
-# 第 6 小节：6.1 低音酸涩音簇（"苦"），6.2/6.3/6.4 弱音小号 哇-哇-哇——（塞子开合）
+# Bar 6: 6.1 sour low cluster ("bitter"), 6.2/6.3/6.4 muted trumpet wah-wah-waaah (plunger opening and closing)
 put('piano', S.chord('upright', ['C2', 'Db2', 'Gb2', 'B2'], BEAT * 1.2, .55), bar(6), .7, -.1)
 WAH = []
 for i, (p, d) in enumerate([('Bb4', .9), ('A4', .9), ('Ab4', 1.9)]):
     t = bar(6, 2 + i); WAH.append((t, d * BEAT, i == 2))
     x = nt('trumpet_mute', p, d * BEAT, .82, release=.12)
-    if i == 2:  # 最后一个长音：揉音（音量颤 + 轻微下滑）
+    if i == 2:  # last long note: shake (volume tremolo + slight downward slide)
         tt = np.arange(len(x)) / SR; x = x * (1 + .35 * np.sin(2 * np.pi * 5.5 * tt) * np.minimum(1, tt / .25)).astype(np.float32)
-    # 塞子"哇"：时变低通 350 Hz→2600 Hz→(长音)
+    # plunger "wah": time-varying low-pass 350 Hz→2600 Hz→(long note)
     n = len(x); cut = np.full(n, 2600.0); a = int(.12 * SR)
     cut[:a] = np.linspace(350, 2600, a)
     if i == 2: cut[int(.5 * SR):] = 2600 - 1900 * np.clip((np.arange(n - int(.5 * SR)) / SR) / .6, 0, 1)
@@ -183,7 +183,7 @@ for i, (p, d) in enumerate([('Bb4', .9), ('A4', .9), ('Ab4', 1.9)]):
     put('brass', y, t, 2.2, .15)
     HITS[f'wah{i + 1}'] = t
 put('banjo_tuba', nt('tuba', 'F2', BEAT * 3, .45), bar(6, 2), 1.0, -.1)
-# 第 7 小节：7.1 偷看——大号+单簧管踮脚；7.2 全乐队停 + 钹闷音；7.3 啵嘤；7.4 滚奏
+# Bar 7: 7.1 peek — tuba + clarinet tiptoe; 7.2 full band stops + choked cymbal; 7.3 boing; 7.4 roll
 put('banjo_tuba', nt('tuba_stac', 'C3', BEAT * .4, .5), bar(7), 1.1, -.1)
 put('reeds', nt('clarinet_stac', 'G4', BEAT * .3, .5), bar(7, 1.5), .9, -.25)
 put('piano', S.chord('upright', ['E3', 'Bb3', 'C4', 'G4'], BEAT * .5, .7), bar(7, 2), .8, 0)
@@ -192,18 +192,18 @@ cymbal(bar(7, 2), short=True); HITS['stop_7_2'] = bar(7, 2)
 boing(bar(7, 3), .35); HITS['boing_7_3'] = bar(7, 3)
 roll(bar(7, 4), bar(8), .3, 1.0)
 
-# ======================= C3 追逐快步舞 8–10 =======================
+# ======================= C3 chase quickstep 8–10 =======================
 CH_CHASE = [['F', 'F'], ['D7', 'G7']]
 for i, b in enumerate([8, 9]):
     stride(b, CH_CHASE[i], .7); oompah(b, CH_CHASE[i], .7); snare_back(b, .7)
     for bt in np.arange(1, 5, .5): put('drums_fx', S.hit('snare2', 'taps', .35), bar(b, bt), .5, -.05)
 cymbal(bar(8), .75)
-# 旁白 "And they're off!"（8.1–8.3）期间号角休止；8.3 单簧管快速上行跑句 → 9.1 小号主题
+# Horns rest during the narration "And they're off!" (8.1–8.3); 8.3 fast rising clarinet run → 9.1 trumpet theme
 run = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'C5']
 mel('clarinet_stac', 8, [(2 + i * .25, .25, p) for i, p in enumerate(run)], .7, -.25, 'reeds', gain=.8)
 mel('trumpet', 9, theme_part(0, 4), .85, .2, 'brass')
 mel('clarinet', 9, [(o, d, up(p, -3) if False else p) for o, d, p in [(0, .5, 'F5'), (.5, .5, 'A5'), (1, .5, 'C6'), (1.5, 1, 'Bb5'), (2.5, .5, 'A5'), (3, .5, 'F5'), (3.5, .5, 'E5')]], .7, -.25, 'reeds', gain=.5)
-# 10.1–10.2 乐队停（只剩烤面包机嘀嗒，拟音由混音做）；10.3 "叮" + 齐奏重音
+# 10.1–10.2 band stops (only the toaster ticking remains; the foley is done in the mix); 10.3 "ding" + tutti accent
 put('xylo', nt('xylophone', 'F6', .6, .9), bar(10, 3), 1.1, .15); put('xylo', nt('xylophone', 'C7', .6, .8), bar(10, 3), .8, .15)
 put('brass', S.chord('trumpet_stac', ['A4', 'C5', 'F5'], BEAT * .5, .9), bar(10, 3), 1.0, .2)
 put('reeds', nt('clarinet_stac', 'A5', BEAT * .5, .8), bar(10, 3), .8, -.25)
@@ -211,30 +211,30 @@ put('piano', S.chord('upright', ['F2', 'F3', 'A3', 'C4', 'F4'], BEAT * .6, .8), 
 put('banjo_tuba', nt('tuba_stac', 'F2', BEAT * .5, .8), bar(10, 3), 1.3, -.1)
 cymbal(bar(10, 3), .9); put('drums_fx', S.hit('bass_drum', None, .9), bar(10, 3), 1, 0)
 HITS['ding_10_3'] = bar(10, 3)
-# 10.4：单簧管滑音上行接橱柜
+# 10.4: clarinet glissando upward into the cupboard
 mel('clarinet_stac', 10, [(3 + i * .125, .125, p) for i, p in enumerate(['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'Bb5', 'C6'])], .6, -.25, 'reeds', gain=.7)
 
-# ======================= C4 盘子木琴 11–14 =======================
-# 编制变薄：钢琴轻 + 班卓；木琴上行八分音符 = 方糖脚步；大号上行四分音符 = 杯子脚步
+# ======================= C4 plate xylophone 11–14 =======================
+# Thinner scoring: light piano + banjo; rising xylophone eighth notes = the sugar cube's steps; rising tuba quarter notes = the mug's steps
 for b, c in [(11, ['F', 'F']), (12, ['C7', 'C7']), (13, ['F', 'C7'])]:
     for bt in (2, 4): put('banjo_tuba', PL.strum('banjo', [up(p) for p in CH[c[0] if bt == 2 else c[1]][2]], BEAT * .4, .5, spread=.012), bar(b, bt), .45, .35)
     for bt in (1, 3):
         root, fifth, tri = CH[c[0] if bt == 1 else c[1]]
         put('piano', nt('upright', root if bt == 1 else fifth, BEAT * .6, .45), bar(b, bt), .7, -.15)
     brush(b, .3)
-put('banjo_tuba', nt('tuba_stac', 'F2', BEAT * .6, .6), bar(11), 1.2, -.1)  # 11.1 落地
+put('banjo_tuba', nt('tuba_stac', 'F2', BEAT * .6, .6), bar(11), 1.2, -.1)  # 11.1 landing
 XY = ['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5']
 for i, p in enumerate(XY):
     put('xylo', nt('xylophone', p, .5, .85), plateCube(i), 1.0, .15); HITS[f'plateCube{i}'] = plateCube(i)
-put('xylo', nt('xylophone', 'C6', .7, .9), plateCube(6) + BEAT / 2, 1.0, .15)   # 登顶 ta-da
+put('xylo', nt('xylophone', 'C6', .7, .9), plateCube(6) + BEAT / 2, 1.0, .15)   # reaches the top, ta-da
 TU = ['F2', 'G2', 'A2', 'Bb2', 'C3', 'D3', 'E3']
 for i, p in enumerate(TU):
     put('banjo_tuba', nt('tuba_stac', p, BEAT * .7, .85), plateMug(i), 1.6, -.1); HITS[f'plateMug{i}'] = plateMug(i)
-# 12–13 方糖在顶上得意：单簧管调皮的短句（避开 v3 旁白 11.2–12.4）
+# 12–13 sugar cube gloating at the top: cheeky clarinet phrases (avoiding the v3 narration 11.2–12.4)
 mel('clarinet_stac', 12, [(2, .5, 'E5'), (2.5, .5, 'G5'), (3, .5, 'Bb5'), (3.5, .5, 'G5')], .55, -.25, 'reeds', gain=.7)
 mel('clarinet_stac', 13, [(0, .5, 'A5'), (.5, .5, 'F5'), (1, 1, 'C5')], .55, -.25, 'reeds', gain=.7)
 slide(bar(13, 3), BEAT * 1.4, 1800, 420, .3); HITS['slide_13_3'] = bar(13, 3)
-# 14.1 盘子塌：镲 + 通鼓过门 + 木琴/单簧管下行
+# 14.1 plates collapse: cymbal + tom fill + descending xylophone/clarinet
 cymbal(bar(14), .95); HITS['crash_14_1'] = bar(14)
 for i in range(8): put('drums_fx', S.hit('drum_kit', ['tom_1', 'tom_2', 'tom_3', 'tom_4'][i // 2], .75), bar(14, 1.5 + i * .375), .8, -.2 + i * .05)
 for i, p in enumerate(['C7', 'A6', 'F6', 'D6', 'C6', 'A5', 'F5', 'D5', 'C5', 'A4']): put('xylo', nt('xylophone', p if S.midi(p) >= 67 else 'G4', .3, .6), bar(14, 1.2 + i * .25), .6, .15)
@@ -242,54 +242,54 @@ mel('clarinet', 14, [(1, 2.5, 'C6')], .5, -.25, 'reeds', gain=.4)
 roll(bar(14, 3), bar(15), .3, .9)
 put('banjo_tuba', nt('tuba', 'A1' if False else 'A2', BEAT * 2, .6), bar(14, 3), .9, -.1)
 
-# ======================= C5 危急快板 15–17（d 小调）=======================
+# ======================= C5 peril allegro 15–17 (D minor)=======================
 OST = ['D2', 'A1', 'D2', 'Eb2']
 for b in (15, 16, 17):
     for bt in range(4):
         p = OST[bt]; p = up(p) if S.midi(p) < 36 else p
         put('banjo_tuba', nt('tuba_stac', p, BEAT * .55, .75), bar(b, bt + 1), 1.4, -.1)
-    # 单簧管低音颤音（A3–Bb3 32 分音符交替），第 17 小节半音爬升
+    # low clarinet trill (A3–Bb3 alternating 32nd notes), climbing chromatically in bar 17
     tr = ['A3', 'Bb3'] if b < 17 else None
     if tr:
         for k in range(32): put('reeds', nt('clarinet_stac', tr[k % 2], BEAT * .14, .45), bar(b) + k * BEAT / 8, .55, -.25)
     else:
         for k, p in enumerate(['A3', 'Bb3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'Bb4', 'B4', 'C5']):
             put('reeds', nt('clarinet_stac', p, BEAT * .22, .5 + k * .02), bar(b) + k * BEAT / 4, .6, -.25)
-    # 通鼓滚
+    # tom roll
     for k in range(8): put('drums_fx', S.hit('drum_kit', 'tom_3' if k % 2 else 'tom_4', .45 + .03 * k), bar(b) + k * BEAT / 2, .32, -.1)
-    # 钢琴低音 Dm 半拍重复
+    # piano low Dm repeated on half-beats
     for bt in (1, 3): put('piano', S.chord('upright', ['D2', 'A2', 'D3'], BEAT * .4, .55), bar(b, bt), .6, -.1)
-# 小号短刺：反拍 Dm 和弦（旁白 v4 15.2–16.2 期间休止）
+# Short trumpet stabs: offbeat Dm chords (resting during narration v4 15.2–16.2)
 for b, bts in [(15, [1.5]), (16, [3.5, 4.5]), (17, [1.5, 2.5])]:
     for bt in bts: put('brass', S.chord('trumpet_stac', ['F4', 'A4', 'D5'], BEAT * .3, .8), bar(b, bt), .8, .2)
-put('brass', S.chord('trumpet', ['D4', 'F4', 'A4'], BEAT * 1.4, .7), bar(16, 4) - BEAT * .5, .6, .2)  # 下决心
+put('brass', S.chord('trumpet', ['D4', 'F4', 'A4'], BEAT * 1.4, .7), bar(16, 4) - BEAT * .5, .6, .2)  # makes up its mind
 roll(bar(17), bar(18), .25, .75)
 slide(bar(17), bar(18) - bar(17) - .03, 2000, 260, .3, curve=.8); HITS['stretch_slide'] = bar(17)
 cymbal(bar(15), .6); HITS['agitato'] = bar(15)
-# 18.1 硬切（见 GATES）；18.3 啵嘤 + 轻钢琴和弦
+# 18.1 hard cut (see GATES); 18.3 boing + light piano chord
 boing(bar(18, 3), .3); HITS['boing_18_3'] = bar(18, 3)
 put('piano', S.chord('upright', ['F4', 'A4', 'C5', 'E5'], BEAT * 2.5, .42, strum=.03), bar(18, 3) + .05, .6, .05)
 
-# ======================= C7 单簧管慢版 19–22 =======================
-# 主题慢一倍（二分音符感）：19–20 = 主题第 1 小节，21 = 第 2 小节前半 + 叹息
+# ======================= C7 clarinet slow section 19–22 =======================
+# Theme at half speed (half-note feel): 19–20 = theme bar 1, 21 = first half of bar 2 + sigh
 slow = [(o * 2, d * 2, p) for o, d, p in theme_part(0, 4)]
 mel('clarinet', 19, [(o, d, p) for o, d, p in slow if o < 8], .55, -.1, 'reeds', legato=.98, gain=1.1)
-# 21：叹息（21.2 杯子叹气）：D5 → C5 → A4 下行
+# 21: sigh (the mug sighs at 21.2): D5 → C5 → A4 descending
 mel('clarinet', 21, [(0, .9, 'D5'), (1, 1, 'C5'), (2, 1.9, 'A4')], .5, -.1, 'reeds', legato=.98, gain=1.0)
 for b, c in [(19, 'F'), (20, 'Dm'), (21, 'Bb')]:
     for bt in (1, 3):
         v = .38 if b < 21 else .32
         put('piano', S.chord('upright', [CH[c][0] if bt == 1 else CH[c][1]] + CH[c][2], BEAT * 1.6, v, strum=.02), bar(b, bt), .6, 0)
-# 第 22 小节：停顿式——22.1 静（仅一个极轻的 C7sus 钢琴和弦开头即收）
+# Bar 22: stop-time — 22.1 silent (only a very soft C7sus piano chord at the start, cut off at once)
 put('piano', S.chord('upright', ['C3', 'F3', 'Bb3', 'C4'], BEAT * .6, .3), bar(22) - .0, .5, 0)
 for i, bt in enumerate([2, 2.5, 3, 3.5]):
     wood(bar(22, bt), .45, 'c' if i % 2 == 0 else 'b', .3 if i % 2 == 0 else -.3); HITS[f'glance{i + 1}'] = bar(22, bt)
 wood(bar(22, 4), .6, 'b', .2); wood(bar(22, 4.5), .7, 'a', .25)
 HITS['hop'] = bar(22, 4); HITS['launch'] = bar(22, 4.5)
-slide(bar(22, 4.5), BEAT * .95, 700, 1600, .18, curve=1.0)   # 飞过去的一小段上行滑哨
+slide(bar(22, 4.5), BEAT * .95, 700, 1600, .18, curve=1.0)   # a short rising slide whistle for the flight
 HITS['plop'] = bar(23)
 
-# ======================= C8 甜蜜重奏 23–26（G 大调）=======================
+# ======================= C8 sweet ensemble 23–26 (G major)=======================
 put('xylo', nt('xylophone', 'D6', .8, .9), bar(23, 3), 1.0, .15); put('xylo', nt('xylophone', 'G6', 1.0, .95), bar(23, 3), 1.0, .15)
 put('xylo', nt('xylophone', 'B6', 1.0, .8), bar(23, 3) + .06, .8, .15)
 cymbal(bar(23, 3), .7); HITS['ding_sweet'] = bar(23, 3)
@@ -299,21 +299,21 @@ for i, b in enumerate([24, 25, 26]):
     stride(b, G_CH[i], .78); oompah(b, G_CH[i], .8); snare_back(b, .8)
     for bt in np.arange(1, 5, .5): put('drums_fx', S.hit('snare2', 'taps', .4), bar(b, bt), .5, -.05)
 cymbal(bar(24), .95); HITS['outchorus'] = bar(24)
-# 旁白 v5（23.3–24.3）期间小号 mf、单簧管高音区装饰，25.1 起全开
+# During narration v5 (23.3–24.3) trumpet mf, clarinet decorations in the high register; full out from 25.1
 mel('trumpet', 24, theme_part(0, 4), .7, .2, 'brass', shift=2, gain=.7)
 mel('trumpet', 25, theme_part(4, 12), .9, .2, 'brass', shift=2, gain=1.0)
 mel('trombone', 25, [(o, d, up(p, -10)) for o, d, p in theme_part(4, 12)], .75, -.05, 'brass', gain=.6)
 mel('clarinet', 24, [(0, .5, 'D6'), (.5, .5, 'B5'), (1, .5, 'G5'), (1.5, .5, 'B5'), (2, 1, 'D6'), (3, 1, 'E6')], .5, -.25, 'reeds', gain=.45)
 mel('clarinet', 25, [(o, d, up(p, 14)) for o, d, p in theme_part(4, 12)], .65, -.25, 'reeds', gain=.5)
 for b in (24, 25, 26):
-    for bt in (1, 2, 3, 4): put('drums_fx', S.hit('bass_drum', None, .55), bar(b, bt), .6, 0)   # 每拍重音 = 全厨房同拍
+    for bt in (1, 2, 3, 4): put('drums_fx', S.hit('bass_drum', None, .55), bar(b, bt), .6, 0)   # accent on every beat = the whole kitchen on the same beat
 
-# ======================= C9 iris 尾句 27–28 =======================
+# ======================= C9 iris closing phrase 27–28 =======================
 stride(27, ['G', 'G'], .62); oompah(27, ['G', 'E7'], .62); brush(27, .45)
-mel('trumpet', 27, [(0, 1.5, 'B4'), (1.5, .5, 'D5'), (2, 1, 'G5')], .6, .2, 'brass', gain=.6)   # v6 27.2 期间保持轻
+mel('trumpet', 27, [(0, 1.5, 'B4'), (1.5, .5, 'D5'), (2, 1, 'G5')], .6, .2, 'brass', gain=.6)   # kept light during v6 at 27.2
 stride(28, ['A7', 'D7'], .55, beats=(1, 2)); oompah(28, ['A7', 'D7'], .55)
 mel('clarinet', 28, [(0, .5, 'E5'), (.5, .5, 'G5'), (1, .5, 'C#5'), (1.5, .5, 'E5')], .55, -.25, 'reeds', gain=.7)
-# 28.3 结束和弦 + 大号低音（手把 iris 拉上）
+# 28.3 final chord + low tuba (the hand pulls the iris shut)
 t_end = bar(28, 3)
 put('brass', S.chord('trumpet', ['B4', 'D5', 'G5'], BEAT * 1.6, .85), t_end, .9, .2)
 put('reeds', nt('clarinet', 'G5', BEAT * 1.6, .75), t_end, .7, -.25)
@@ -323,7 +323,7 @@ put('banjo_tuba', nt('tuba_stac', 'D2' if False else 'D3', BEAT * .5, .7), t_end
 cymbal(t_end, .8); put('drums_fx', S.hit('bass_drum', None, 1.0), t_end, 1.1, 0)
 HITS['final_chord_28_3'] = t_end
 
-# ======================= C10 片尾 29–30 =======================
+# ======================= C10 end card 29–30 =======================
 stride(29, ['G', 'G'], .45, beats=(1, 2, 3, 4)); brush(29, .3)
 mel('clarinet', 29, [(0, .5, 'D5'), (.5, .5, 'E5'), (1, .5, 'G5'), (1.5, 1, 'B5'), (2.5, .5, 'A5'), (3, 1, 'G5')], .5, -.2, 'reeds', gain=.8)
 stride(30, ['C', 'G'], .42, beats=(1, 2))
@@ -331,7 +331,7 @@ put('piano', S.chord('upright', ['G1', 'G2', 'D3', 'G3', 'B3', 'E4', 'G4'], 2.6,
 put('reeds', nt('clarinet', 'B4', 2.2, .45), bar(30, 3), .6, -.2)
 put('banjo_tuba', PL.strum('banjo', ['G3', 'B3', 'D4', 'G4'], .6, .5, spread=.02), bar(30, 3), .5, .35)
 
-# ======================= 混响、门限、配平 =======================
+# ======================= Reverb, gates, balance =======================
 room = S.room
 for k in STEMS:
     buf[k] = room(buf[k], size=.22, mix=.14, damp=.6)
@@ -343,17 +343,17 @@ def gate(t0, t1, fade=.02, stems=STEMS, keep=None):
         x[max(0, a - f):a] *= np.linspace(1, 0, min(f, a))[:, None]
         x[a:b] = 0
 GATES = [
-    (bar(7, 2) + .16, bar(7, 3) - .005, .06),   # 7.2 全乐队停（钹闷音后）→ 7.3
-    (bar(10) + .02, bar(10, 3) - .004, .05),     # 10.1–10.2 乐队停
-    (bar(18), bar(18, 3) - .002, .012),          # 18.1 硬切全静（含混响尾巴）
-    (bar(23) + .02, bar(23, 3) - .003, .05),     # 23.1 扑通后静
+    (bar(7, 2) + .16, bar(7, 3) - .005, .06),   # 7.2 full band stops (after the choked cymbal) → 7.3
+    (bar(10) + .02, bar(10, 3) - .004, .05),     # 10.1–10.2 band stops
+    (bar(18), bar(18, 3) - .002, .012),          # 18.1 hard cut to total silence (including reverb tails)
+    (bar(23) + .02, bar(23, 3) - .003, .05),     # 23.1 silence after the plop
 ]
-# 第 7.2 的钹闷音本身要保留：先门限，再把闷音补回（钹在 drums_fx）
+# The choked cymbal at 7.2 itself must stay: gate first, then add the choke back (the cymbal is in drums_fx)
 for t0, t1, f in GATES: gate(t0, t1, f)
-# 22.1 附近只有木鱼：把 22.1 第 1 拍后半的钢琴余音压掉
+# Only the woodblock around 22.1: suppress the piano ring-out in the second half of beat 1 at 22.1
 gate(bar(22) + BEAT * .7, bar(22, 2) - .003, .08, stems=['piano', 'reeds'])
 
-# 各组配平（按 99.99% 分位看峰，RMS 目标）：人声闪避由主混音做
+# Per-group balance (peak read at the 99.99th percentile, RMS target): voice ducking is done by the main mix
 GAIN = {'brass': 1.0, 'reeds': 1.0, 'piano': 1.25, 'banjo_tuba': .95, 'drums_fx': .8, 'xylo': .9}
 mix = np.zeros((N, 2), np.float32)
 for k in STEMS: mix += buf[k] * GAIN[k]
@@ -369,7 +369,7 @@ os.makedirs(os.path.join(HERE, 'stems'), exist_ok=True)
 sf.write(os.path.join(HERE, 'score.wav'), mix, SR, subtype='PCM_24')
 for k in STEMS: sf.write(os.path.join(HERE, 'stems', k + '.wav'), buf[k], SR, subtype='PCM_24')
 
-# ——— 自检 ———
+# ——— Self-check ———
 m = mix.mean(1)
 def band_db(lo, hi):
     F = np.fft.rfft(m); f = np.fft.rfftfreq(len(m), 1 / SR); tot = np.sum(np.abs(F) ** 2)

@@ -8,7 +8,7 @@ const comp = makePaper(out, W, H);
 const Q = new URLSearchParams(location.search);
 await Promise.all(['400 40px Architects', '400 40px B612', '700 40px B612', '400 40px B612Mono', '400 40px Allura'].map(s => document.fonts.load(s)));
 
-// 屏幕固定的字幕：图纸上的 NOTE 注释框
+// Screen-fixed subtitles: the NOTE boxes on the drawing
 function subtitle(n, str, u = 1, a = 1) {
   if (a <= 0) return;
   const c = ov; c.setTransform(1, 0, 0, 1, 0, 0);
@@ -26,7 +26,7 @@ function subtitle(n, str, u = 1, a = 1) {
   c.fillText(str, x0 + 162, (y0 + y1) / 2 + 3); c.restore(); c.globalAlpha = 1; c.textBaseline = 'alphabetic';
 }
 
-function frame1() {  // 标题栏 + Fig. 1 总图
+function frame1() {  // title block + Fig. 1 general arrangement
   setCam({ x: 1650, y: 1310, z: .6 }); proj.k = 0; clear();
   border(1); header(1, 1);
   drawGarden(); flower(1570, G - 62, 96, .85, .25, 1); flower(1525, G - 62, 34, .5, 0, 1, { size: .5, leaf: .5 }); flower(1730, G - 62, 26, .6, 0, 1, { size: .4, leaf: .4 });
@@ -45,7 +45,7 @@ export function fig1Dims(u) {
   const a = -.52, p0 = [X, M.pivot[1]], p1 = [X + Math.cos(a) * M.boomLen, M.pivot[1] + Math.sin(a) * M.boomLen];
   dim(p0, p1, -70, '1800', { u });
 }
-function frame2() {  // 爆炸视图
+function frame2() {  // exploded view
   setCam({ x: 1600, y: 1304, z: .62 }); proj.k = .5; clear();
   border(1); header(1, 1);
   drawGarden();
@@ -54,24 +54,24 @@ function frame2() {  // 爆炸视图
   partsList(1); titleBlock({}); notes([['An apparatus for catching clouds.', 1]]);
   explodePaths(E, -.18);
   drawMachine({ E, gear: .3, boom: -.18, bellows: .45, vane: .15, gauge: 0, section: X - 60 });
-  // 活标注：桅杆顶 ↔ 顶箱间距
+  // live annotation: mast top ↔ top box distance
   const gap = 260 - 170;
   dim([X + 60, M.mastTop - 170], [X + 60, M.pivot[1] + 40 - 260], -110, String(Math.round(gap * 3)), { d: -36, size: 32 });
-  // 装配轴（点划线）
+  // assembly axes (dash-dot)
   for (const [x, y0, y1] of [[X, M.pivot[1] - 400, M.mastBot + 80]]) line([[x, y0], [x, y1]], { w: LW.hair, dash: 'center', v: .7 });
   text('FIG. 2', 2090, G - 60, { size: 64, font: FONT.hand, ls: 6, align: 'center' });
   text('EXPLODED VIEW', 2090, G - 16, { size: 26, font: FONT.tech, ls: 5, align: 'center' });
   subtitle(2, 'Figure two. Thirteen parts, one bellows, and a rather optimistic net.', 1);
 }
-function frame3() {  // 修订云线变成雨云
+function frame3() {  // the revision cloud turns into a rain cloud
   setCam({ x: 1800, y: 990, z: .92 }); proj.k = 0; clear();
   border(1); header(1, 1);
   drawGarden(); flower(1570, G - 62, 96, .85, .25, 1);
   drawMachine({ gear: .3, boom: -.03, bellows: .2, vane: .75, gauge: 0 });
-  // 离开纸面后留下的曝光印子
+  // the exposed mark left after it leaves the paper
   revImprint(2010, 790, 250, 120, .8);
   text('△', 2150, 470, { size: 1, u: 0 });
-  // 修订三角 + 注释
+  // revision triangle + note
   const tx = 2150, ty = 1130;
   line([[tx, ty - 30], [tx + 30, ty + 22], [tx - 30, ty + 22]], { w: LW.det, closed: true });
   text('1', tx, ty + 14, { size: 30, align: 'center' });
@@ -94,7 +94,7 @@ window.render = t => {
   }
   const o = renderFilm(t);
   if (Q.has('nosub') || Q.has('poster')) ov.clearRect(0, 0, W, H);
-  if (Q.has('poster')) {   // 海报：片名写在左上的天空里
+  if (Q.has('poster')) {   // poster: title written in the sky at top-left
     const bx = 1120, by = 830, bw = 770, bh = 200;
     ov.setTransform(1, 0, 0, 1, 0, 0); ov.fillStyle = 'rgba(12,28,62,.5)'; ov.fillRect(bx, by, bw, bh);
     ov.strokeStyle = 'rgba(234,241,250,.9)'; ov.lineWidth = 1.5; ov.strokeRect(bx + .5, by + .5, bw, bh); ov.strokeRect(bx + 8.5, by + 8.5, bw - 16, bh - 16);

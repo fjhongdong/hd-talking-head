@@ -1,4 +1,4 @@
-// 关卡 1 风格帧（?test=frame&f=wide|cross|cut）
+// Style frames (?test=frame&f=wide|cross|cut)
 import { mk, draw, blot, TONE } from './ink.js';
 import { hero, POSE } from './hero.js';
 import { wave } from './wave.js';
@@ -23,36 +23,36 @@ export function renderFrame(t, A, comp, f) {
     pine(L, 1810, 804, 1.25, 5, 0, 0, -1);
     hero(L, POSE.stand, { x: 1640, y: 800, s: 1.7, dir: -1, seed: 2, t: .4 });
     ripple(L, 1380, 905, 60, .35, 1, .18, 2.2); ripple(L, 1300, 960, 110, .22, 2, .18, 2);
-    // 远处两点帆影（尺度）
+    // Two far-off sail shapes (for scale)
     draw(L, mk([[520, 700], [522, 684]], { w: 2, tone: .5, dry: .3, prof: 'tip', seed: 900 }));
     draw(L, mk([[512, 701], [534, 701]], { w: 2.2, tone: .45, dry: .3, prof: 'lens', seed: 901 }));
     subtitle(A, 'The river keeps no name.\nIt waits for no one.', 170, 860, 1);
     comp(A, null, { bleed: 5, rim: 1.0 });
   }
   if (f === 'cut') {
-    // 远山一抹（极淡）
+    // A smudge of distant mountains (extremely pale)
     A.cw.drawImage(mountainLayer({ W: 1920, H: 1080, ridge: ridgeFn([[300, 160, 120], [620, 90, 140], [1700, 120, 150]], 820, 5, 20), depth: 160, tone: .1, rim: .5, mist: .8, seed: 5 }), 0, 0);
-    // 浪（被劈开）：先画进临时层，再按断流线分上下两半贴回
+    // Wave (split open): drawn into a temporary layer first, then pasted back as an upper and a lower half divided along the cut line
     const W = tmp();
     wave(W.ink, { x: 1240, y: 900, s: 1.0, rise: 1, curl: 1, t: 3.2, seed: 21 });
     const box = [300, 120, 480];
     const cx0 = 300 + 84 * 4.8, cy0 = 120 + 73 * 4.8, cx1 = 2200, cy1 = 640;
     const lineY = x => x < cx0 ? cy0 : cy0 + (x - cx0) / (cx1 - cx0) * (cy1 - cy0);
-    const k = .8;   // 劈开后的进度
+    const k = .8;   // progress after the split
     for (const key of ['wet', 'dry']) {
       const c = A.ink[key];
-      // 下半
+      // Lower half
       c.save(); c.beginPath(); c.moveTo(0, lineY(0) + 14); c.lineTo(1920, lineY(1920) + 14); c.lineTo(1920, 1080); c.lineTo(0, 1080); c.closePath(); c.clip();
       c.drawImage(W[key], 0, 18 * k); c.restore();
-      // 上半：沿切线滑开、变淡（化成雾）
+      // Upper half: slides apart along the cut and fades (turns into mist)
       c.save(); c.beginPath(); c.moveTo(0, lineY(0) - 14); c.lineTo(1920, lineY(1920) - 14); c.lineTo(1920, 0); c.lineTo(0, 0); c.closePath(); c.clip();
       c.globalAlpha = 1 - k * .5; c.drawImage(W[key], 90 * k, -80 * k); c.restore(); c.globalAlpha = 1;
     }
-    // 水字前三笔 + 断流飞白
+    // First three strokes of the character 水 + the cutting-the-current feibai (飞白, dry-brush streaks)
     const S = shuiStrokes(box, { dry: .26, w: 11 });
     for (let i = 0; i < 3; i++) draw(L, S[i], 1);
     draw(L, cutStroke(box, cx1, cy1, { w: 16, dry: .6 }), 1);
-    // 墨点炸开
+    // Ink spots burst out
     const R = mulberry(9);
     for (let i = 0; i < 90; i++) {
       const u = R(), x = cx0 + u * (1920 - cx0), y = lineY(x);
@@ -61,7 +61,7 @@ export function renderFrame(t, A, comp, f) {
       blot(A.cw, px, py, 2 + R() * 9 * (1 - u * .5), .85, R() * 3, .5 + R() * .5, i);
       if (R() < .3) draw(L, mk([[px, py], [px - Math.cos(a) * 18, py - Math.sin(a) * 18]], { w: 3, tone: .8, dry: .4, prof: 'tip', seed: 1000 + i }));
     }
-    // 侠客（过肩，背面，剑随势横出）
+    // Swordsman (over-the-shoulder, from behind, sword swung out level with the motion)
     hero(L, { ...POSE.backWrite, aR: [[8.5, -74], [22, -74], [36, -72]], sword: { a: .12 }, rib: [-1, -.1, 30] }, { x: 330, y: 1330, s: 6.4, seed: 8, t: 1.2 });
     comp(A, null, { bleed: 5, rim: 1.0, shake: [3, -2] });
   }

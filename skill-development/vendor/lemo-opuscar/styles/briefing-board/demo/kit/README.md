@@ -1,4 +1,4 @@
-# Briefing Board kit (v3)
+# Briefing Board kit
 
 A small, data-driven kit for the Engineering Briefing Board look: one real whiteboard wall, filmed,
 with cut-out photographs mounted on it, magnetic tags, magnets, a steel ruler, rubber stamps, and

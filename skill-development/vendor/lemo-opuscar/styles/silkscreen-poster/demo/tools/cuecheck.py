@@ -1,5 +1,5 @@
-"""卡点自检：mix.wav 里每个画面事件附近（±80 ms）最近的起音，与事件时间比。
-仓库根运行：.venv/bin/python styles/silkscreen-poster/demo/tools/cuecheck.py"""
+"""Sync-point self-check: for each picture event, find the nearest onset in mix.wav (within ±80 ms) and compare with the event time.
+Run from the repo root: .venv/bin/python styles/silkscreen-poster/demo/tools/cuecheck.py"""
 import json, os, numpy as np, soundfile as sf, librosa
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 E = json.load(open(os.path.join(D, 'events.json')))

@@ -1,10 +1,10 @@
-// 《两条螺旋》Two Spirals — 唯一的时间源：节拍、旁白、字幕、事件
-// 96 BPM，4/4：一拍 0.625 s，一小节 2.5 s。画面动作、旁白起点、音乐重拍都对在这张格子上。
+// 《两条螺旋》Two Spirals — the single source of timing: beats, voice-over, subtitles, events
+// 96 BPM, 4/4: one beat 0.625 s, one bar 2.5 s. Picture actions, voice-over starts and musical downbeats are all aligned to this grid.
 export const BPM = 96, BEAT = 60 / BPM, BAR = BEAT * 4;
-export const q = (bar, beat = 0) => +(bar * BAR + beat * BEAT).toFixed(4);   // 小节 + 拍 → 秒
+export const q = (bar, beat = 0) => +(bar * BAR + beat * BEAT).toFixed(4);   // bar + beat → seconds
 export const DUR = q(15, 3);                     // 39.375 s
 
-// 每一对（风电 + 太阳能）开始叠起的时刻
+// when each pair (wind + solar) starts stacking
 export const BUILD = {
   2014: q(0, 0) + .1,
   2015: q(4, 0), 2016: q(4, 2), 2017: q(5, 0), 2018: q(5, 2), 2019: q(6, 0), 2020: q(6, 2),
@@ -13,21 +13,21 @@ export const BUILD = {
 };
 export const BUILD_LEN = { 2014: BEAT * 1.6, 2021: BEAT * 1.6, def: BEAT * 1.4, fast: BEAT * .9 };
 export const T = {
-  hold14: [q(0, 3), q(3, 0)],                    // 2014 一对的两个读数停稳
-  verdict14: q(2, 0),                            // "将近两倍"判定（读数已停 ≥ 2.5 s）
-  unit: [q(3, 0), q(4, 0)],                      // 推近：一片 = 10 GW，黄铜 = 100 GW
-  hold21: [q(7, 2) + .1, q(8, 3)],                   // 2020 / 2021 两对四个读数停稳
-  suck: q(8, 2.4),                               // 判定前的抽空
-  verdict21: q(8, 3),                            // 超过
-  drop25: q(10, 1),                              // 2025 当年新增的片开始落
-  dropStep: BEAT / 10,                           // 52 片，每 1/10 拍一片
-  crane: q(12, 0),                               // 拉远成表盘
+  hold14: [q(0, 3), q(3, 0)],                    // the two readouts of the 2014 pair hold
+  verdict14: q(2, 0),                            // the "将近两倍" ("nearly twice") verdict (readouts have held ≥ 2.5 s)
+  unit: [q(3, 0), q(4, 0)],                      // push in: one sheet = 10 GW, brass = 100 GW
+  hold21: [q(7, 2) + .1, q(8, 3)],                   // the four readouts of the 2020 / 2021 pairs hold
+  suck: q(8, 2.4),                               // the drop-out before the verdict
+  verdict21: q(8, 3),                            // overtaken
+  drop25: q(10, 1),                              // the sheets for 2025's additions start falling
+  dropStep: BEAT / 10,                           // 52 sheets, one every 1/10 beat
+  crane: q(12, 0),                               // pull out into the dial
   suck2: q(13, 2),
-  puck: q(13, 3),                                // 最后一件实物（黄铜圆片）落定
-  end: q(14, 2),                                 // 落版卡
+  puck: q(13, 3),                                // the last object (the brass puck) settles
+  end: q(14, 2),                                 // end card
 };
 
-// 旁白（英文，Kokoro af_heart）与双语字幕：中文一行、英文一行，各自绝不换行
+// voice-over (English, Kokoro af_heart) and bilingual subtitles: one Chinese line, one English line, neither ever wraps
 export const VO = [
   { id: 'l1', t: q(0, 2), text: 'In 2014, the world had almost twice as much wind power as solar.',
     zh: '2014 年，全球风电装机将近太阳能的两倍。' },
@@ -46,7 +46,7 @@ export const VO = [
 ];
 export const VOICE = { voice: 'af_heart', speed: .95, lang: 'en-us' };
 
-// 画面上所有固定文字（字体子集也从这里取字）
+// all fixed on-screen text (the font subset also takes its characters from here)
 export const LABELS = {
   wind: '风电', solar: '太阳能',
   verdict14: '风电 = 太阳能 × 1.95',

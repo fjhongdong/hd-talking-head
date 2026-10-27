@@ -1,0 +1,47 @@
+Caption News — "The Bee Ledger" (蜜蜂账本), library demo
+Every third-party asset in the film, with its source and licence. Full trail (URL, date, seconds used): SOURCES.md / SOURCES.jsonl.
+An unofficial film. The channel "简闻" is fictional; the film is not made by or endorsed by USDA.
+
+DATA
+- "Honey Bee Colonies" (ISSN 2470-993X), released August 3, 2026, USDA National Agricultural Statistics Service (NASS).
+  U.S. federal government work, public domain. https://release.nass.usda.gov/reports/hcny0726.pdf
+  Page 1 shown as a document close-up; every number in the film is from its tables (see FACTS.md).
+- US state outlines: Natural Earth "Admin 1 – States, Provinces" 1:110m, public domain.
+  https://www.naturalearthdata.com/downloads/110m-cultural-vectors/  (projected to Albers, Alaska and Hawaii left out)
+
+FOOTAGE (Wikimedia Commons; cropped, scaled at most 1.5x, colour-graded, captions and graphics added)
+- "Te veel bijen in de Biesbosch door bijenkasten in de Noordwaard - Altena TV" by Altena TV (A-TV), CC BY 3.0
+  https://creativecommons.org/licenses/by/3.0/ · https://commons.wikimedia.org/wiki/File:Te_veel_bijen_in_de_Biesbosch_door_bijenkasten_in_de_Noordwaard_-_Altena_TV.webm
+  Changes: cropped to exclude the station logo; a beekeeper's name and phone number on two hives blurred; desaturated in the split screen.
+- "Apis mellifera flying x40 SlowMotion01" by Phonon.b, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+  https://commons.wikimedia.org/wiki/File:Apis_mellifera_flying_x40_SlowMotion01.webm
+- "Slow Motion Bee Flight - Close-up video of honey bees" by Martin J. Calabrese, CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Slow_Motion_Bee_Flight_-_Close-up_video_of_honey_bees.webm
+  Changes: one frame frozen, desaturated and annotated.
+- "Bees flying in HD in slow motion" by Midsummer Bees, CC BY 3.0
+  https://commons.wikimedia.org/wiki/File:Bees_flying_in_HD_in_slow_motion.webm   (a 40 s segment from 400 s)
+- "People's Garden Apiary and Pollinator Garden" (20130522-NRCS-LSC-0226-v6), USDA, public domain
+  https://commons.wikimedia.org/wiki/File:People%27s_Garden_Apiary_and_Pollinator_Garden_(20130522-NRCS-LSC-0226-v6).webm
+  Shots with burned-in text and the close-ups of a face were not used.
+
+PHOTOGRAPHS (Wikimedia Commons)
+- "Three bee packages for Park" by vastateparksstaff (Virginia State Parks), CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/)
+  https://commons.wikimedia.org/wiki/File:Three_bee_packages_for_Park_(16272512611).jpg   Changes: cropped, graded.
+- "Varroa destructor on honeybee host", Eric Erbe and Christopher Pooley, USDA ARS Electron Microscopy Unit, public domain
+  https://commons.wikimedia.org/wiki/File:Varroa_destructor_on_honeybee_host.jpg
+- "Queen Bee" (16545241268), U.S. Geological Survey Bee Inventory and Monitoring Lab, public domain
+  https://commons.wikimedia.org/wiki/File:Queen_Bee_(16545241268).jpg   (the 1920 px Commons thumbnail)
+- "20140225-OC-DK-0002" (bee on an almond blossom, McFarland, California), USDA, public domain
+  https://commons.wikimedia.org/wiki/File:20140225-OC-DK-0002_(12813166013).jpg
+
+SOUND
+- Natural sound: "Рій на землі 02" by Сарапулов, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — the video's own audio (swarm buzz)
+  https://commons.wikimedia.org/wiki/File:%D0%A0%D1%96%D0%B9_%D0%BD%D0%B0_%D0%B7%D0%B5%D0%BC%D0%BB%D1%96_02.webm
+- Drums: "MuldjordKit" by Lars Muldjord (drumgizmo.org), FreePats version, CC BY 4.0
+- Other instruments: VS Chamber Orchestra: Community Edition (Versilian Studios / Sam Gossner), Versilian Community Sample
+  Library, FreePats (electric bass) — CC0 1.0. Score and foley composed for this film (audio/mix.py, core/audio/sfx.py).
+- Voice: Kokoro TTS (kokoro-onnx, Apache 2.0), voice af_bella.
+
+FONTS (SIL Open Font License 1.1, subsets in fonts/ with the licence texts)
+- Noto Sans SC (Google), weights 500 and 900.
+- Inter Tight (Rasmus Andersson), weights 500, 800 and 600 italic.

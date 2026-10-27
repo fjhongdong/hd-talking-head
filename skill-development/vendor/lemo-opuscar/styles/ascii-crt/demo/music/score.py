@@ -1,6 +1,6 @@
-"""TRANQUILITY.LOG 原创配乐：Carpenter / 80 年代科幻模拟合成器（numpy + numba，从零合成、确定性）
-python score.py → score.wav（48k 立体声 59.8s）+ stems/*.wav + score.json
-D 小调，100 BPM（拍 0.6s，小节 2.4s）。音色：PolyBLEP 锯齿/方波 + 失谐 + 4 极点 ladder 低通（截止可随时间变化）+ ADSR + 磁带 wow + 长混响 / 门限混响。"""
+"""TRANQUILITY.LOG original score: Carpenter / 80s sci-fi analogue synth (numpy + numba, synthesised from scratch, deterministic)
+python score.py → score.wav(48k stereo, 59.8s)+ stems/*.wav + score.json
+D minor, 100 BPM (beat 0.6s, bar 2.4s). Sound: PolyBLEP saw/square + detune + 4-pole ladder low-pass (cutoff can vary over time) + ADSR + tape wow + long reverb / gated reverb."""
 import os, json, numpy as np, soundfile as sf
 from numba import njit
 from scipy.signal import fftconvolve, butter, sosfilt
@@ -15,10 +15,10 @@ def m(s):  # 'D3' → midi
     n, o = (s[:-1], int(s[-1])); return 12 * (o + 1) + NOTE[n]
 ix = lambda t: int(round(t * SR))
 
-# ---------------- DSP 内核 ----------------
+# ---------------- DSP kernels ----------------
 @njit(cache=True)
 def osc(freq, sr, ph0, kind):
-    # kind 0 = 锯齿，1 = 方波（两支错相锯齿相减），PolyBLEP 抗混叠
+    # kind 0 = saw, 1 = square (two phase-offset saws subtracted), PolyBLEP anti-aliasing
     n = len(freq); out = np.empty(n); ph = ph0
     for i in range(n):
         dt = freq[i] / sr
@@ -43,7 +43,7 @@ def osc(freq, sr, ph0, kind):
 
 @njit(cache=True)
 def ladder(x, fc, res, sr):
-    # 4 极点梯形低通（非线性、带共振），fc 每个采样可变
+    # 4-pole ladder low-pass (nonlinear, resonant), fc can change every sample
     y1 = 0.0; y2 = 0.0; y3 = 0.0; y4 = 0.0
     out = np.empty(len(x))
     for i in range(len(x)):
@@ -72,7 +72,7 @@ def adsr(n, a, d, s, r, rel_at=None):
         e = np.where(t > ra, np.interp(ra, t, e) * np.exp(-(t - ra) / max(r, 1e-4)), e)
     return e
 
-def pan2(x, p):  # p: -1 左 … +1 右（等功率）
+def pan2(x, p):  # p: -1 left … +1 right (equal power)
     a = (p + 1) * np.pi / 4
     return np.stack([x * np.cos(a), x * np.sin(a)], 1)
 
@@ -82,9 +82,9 @@ def place(bus, x, t):
     L = min(len(x), N - i)
     bus[i:i + L] += x[:L]
 
-# ---------------- 乐器 ----------------
+# ---------------- Instruments ----------------
 def voice_saw(midi, dur, t0, detune=(-7, 0, 7), cutoff=900., res=.2, amp=1., a=.01, d=.2, s=.8, r=.3, kind=0, fenv=0., fdec=.15, seed=0, spread=.6):
-    """一支（多振荡器失谐）合成音：返回立体声数组"""
+    """One synth voice (multiple detuned oscillators): returns a stereo array"""
     n = ix(dur + r * 5)
     w = wow(n, t0, seed)
     sig = np.zeros((n, 2))
@@ -130,11 +130,11 @@ def delay(x, dt, fb, wet, pingpong=True):
     lp = butter(2, 3200, 'low', fs=SR, output='sos')
     return x + sosfilt(lp, y, axis=0) * wet
 
-# ---------------- 编曲 ----------------
+# ---------------- Arrangement ----------------
 stems = {k: np.zeros((N, 2)) for k in ['drone', 'seq', 'bass', 'pad', 'arp', 'hits']}
 cues = {}
 
-# 2. 低 D 持续音 4.8–16.2
+# 2. Low D drone 4.8–16.2
 def drone():
     t0, t1 = 4.8, 16.2
     n = ix(t1 - t0); t = np.arange(n) / SR
@@ -150,7 +150,7 @@ def drone():
     cues['drone'] = t0
 drone()
 
-# 3. 方波十六分音符音序 7.2–16.2（Carpenter 式固定音型），滤波慢开，10.35–11.4 上扬扫频
+# 3. Square-wave 16th-note sequence 7.2–16.2 (a Carpenter-style ostinato), filter opening slowly, rising sweep 10.35–11.4
 SEQ = ['D3', 'A3', 'F3', 'A3', 'D4', 'A3', 'F3', 'A3']
 def seq():
     t = 7.2; k = 0
@@ -167,7 +167,7 @@ def seq():
     cues['seq'] = 7.2; cues['sweep'] = 10.35
 seq()
 
-# 11.4 "咚"（sub + 噪声，门限混响）；37.2 高点"咚"（tom + sub）
+# 11.4 "boom" (sub + noise, gated reverb); 37.2 climax "boom" (tom + sub)
 def thump(t0, f0=48, amp=1., tom=False):
     n = ix(1.2); t = np.arange(n) / SR
     f = f0 * (1 + 1.6 * np.exp(-t / .045))
@@ -184,7 +184,7 @@ def thump(t0, f0=48, amp=1., tom=False):
     stems['hits'][:] += tmp
 thump(11.4, 44, .8); cues['thump1'] = 11.4
 
-# 4 + 13. 贝斯：锯齿八分音符脉冲，滤波包络有"嗒"的起音
+# 4 + 13. Bass: sawtooth eighth-note pulse, the filter envelope gives a "tick" attack
 def bass(t0, t1, root, amp=.5, cut=240):
     t = t0; k = 0
     while t < t1 - 1e-6:
@@ -193,7 +193,7 @@ def bass(t0, t1, root, amp=.5, cut=240):
         place(stems['bass'], v, t); t += S8; k += 1
 bass(12.0, 16.2, m('D2')); cues['bass1'] = 12.0
 
-# pad：6 支失谐锯齿
+# pad: 6 detuned saws
 def pad(notes, t0, t1, amp=.2, a=1.5, r=.9, cut=1100, bright=False, seed=0):
     for j, nm in enumerate(notes):
         mid = m(nm) if isinstance(nm, str) else nm
@@ -201,11 +201,11 @@ def pad(notes, t0, t1, amp=.2, a=1.5, r=.9, cut=1100, bright=False, seed=0):
         place(stems['pad'], v, t0)
 DM = ['D3', 'F3', 'A3', 'D4']
 pad(DM + ['D2'], 12.0, 16.2, .16, a=1.5, cut=900, seed=10); cues['pad1'] = 12.0
-# 6. 21.4 pad 轻轻回来，26.4 转 Bbmaj7（无三音），29.4 起淡出到 32.1
+# 6. 21.4 pad gently returns, 26.4 moves to Bbmaj7 (no third), fades out from 29.4 to 32.1
 pad(DM, 21.4, 26.6, .08, a=1.8, r=.8, cut=800, seed=20); cues['pad2'] = 21.4
 pad(['Bb2', 'F3', 'A3', 'D4'], 26.3, 29.4, .08, a=.6, r=1.1, cut=800, seed=30); cues['pad_bb'] = 26.4
 
-# 8. 琶音 33.6–37.2：D3 F3 A3 C4 上行（偶尔 E4），滤波逐拍打开
+# 8. Arpeggio 33.6–37.2: D3 F3 A3 C4 ascending (occasionally E4), filter opening beat by beat
 def arp_note(mid, t, cut, res, amp, seed, p=0.):
     v = voice_saw(mid, S16 * .82, t, detune=(-5, 5), cutoff=cut, res=res, amp=amp, a=.002, d=.09, s=.25, r=.08, fenv=2.2, fdec=.04, seed=seed, spread=.25)
     place(stems['arp'], v * np.array([[1 - max(0, p) * .5, 1 + min(0, p) * .5]]), t)
@@ -223,7 +223,7 @@ def arp1():
 arp1()
 bass(35.4, 37.2, m('D2'), amp=.42, cut=220); cues['bass2'] = 35.4
 
-# 9–11. 高点和弦段：37.2 Bbmaj7 → 39.6 F/A → 42.0 Gm9 → 44.4 Ebmaj7 → 46.8 A7sus4 → 49.2 A7
+# 9–11. Climax chord section:37.2 Bbmaj7 → 39.6 F/A → 42.0 Gm9 → 44.4 Ebmaj7 → 46.8 A7sus4 → 49.2 A7
 CH = [
     (37.2, 39.6, ['Bb2', 'D3', 'F3', 'A3'], ['Bb2', 'D3', 'F3', 'A3', 'Bb3', 'D4', 'F4', 'A4', 'D5'], 'Bb1'),
     (39.6, 42.0, ['A2', 'C3', 'F3', 'A3'], ['A2', 'C3', 'F3', 'A3', 'C4', 'F4', 'A4', 'C5'], 'A1'),
@@ -235,7 +235,7 @@ CH = [
 for ci, (t0, t1, chord, arpn, root) in enumerate(CH):
     big = ci == 0
     pad(chord, t0 - (0 if big else .05), t1 + .1, .15 if ci < 2 else .11, a=(.25 if big else .5), r=1.2, cut=1300 if ci < 2 else 950, bright=False, seed=100 + ci * 13)
-    if ci < 2:  # 高八度明亮层
+    if ci < 2:  # bright layer an octave up
         pad([nm[:-1] + str(int(nm[-1]) + 1) for nm in chord[1:]], t0, t1 + .1, .06, a=.6, r=1.4, cut=2600, seed=150 + ci)
     seqn = arpn + arpn[-2:0:-1]
     t = t0; k = 0
@@ -250,13 +250,13 @@ for ci, (t0, t1, chord, arpn, root) in enumerate(CH):
 cues.update({'peak': 37.2, 'F/A': 39.6, 'Gm9': 42.0, 'Ebmaj7': 44.4, 'A7sus4': 46.8, 'A7': 49.2})
 thump(37.2, 62, 1.0, tom=True); cues['thump2'] = 37.2
 
-# 12. 49.8–51.6 悬置长音 A3
+# 12. 49.8–51.6 suspended long note A3
 pad(['A3'], 49.8, 51.5, .1, a=.3, r=.5, cut=900, seed=300); cues['wait'] = 49.8
-# 13. 51.6 D 大三和弦
+# 13. 51.6 D major triad
 pad(['D3', 'F#3', 'A3', 'D4'], 51.6, 58.6, .13, a=.9, r=.8, cut=1000, seed=320); cues['Dmaj'] = 51.6
 pad(['F#4', 'A4'], 51.6, 58.6, .045, a=1.4, r=.8, cut=2400, seed=340)
 
-# 14. 54.0–58.4 开场动机的回声：单音、八分音符、逐渐稀疏；55.2 落点
+# 14. 54.0–58.4 echo of the opening motif: single notes, eighth notes, thinning out; lands at 55.2
 def reprise():
     motif = ['D4', 'A3', 'F#3', 'A3', 'D4', 'A3', 'F#3', 'A3']
     t = 54.0; k = 0
@@ -273,7 +273,7 @@ def reprise():
     cues['reprise'] = 54.0; cues['endcard_note'] = 55.2
 reprise()
 
-# ---------------- 效果、剪切、混合 ----------------
+# ---------------- Effects, cuts, mix ----------------
 IRL = ir_long(3.6, 1); IRM = ir_long(1.6, 3, hp=300)
 stems['pad'] = reverb(stems['pad'], IRL, .55)
 stems['drone'] = reverb(stems['drone'], IRM, .25)
@@ -281,31 +281,31 @@ stems['seq'] = delay(stems['seq'], S8 * 1.5, .38, .35); stems['seq'] = reverb(st
 stems['arp'] = delay(stems['arp'], S8 * 1.5, .35, .32); stems['arp'] = reverb(stems['arp'], IRL, .3)
 stems['bass'] = reverb(stems['bass'], IRM, .08)
 
-# 硬切 / 数字静音区间（连混响尾巴一起清零）
+# Hard cuts / digital-silence spans (reverb tails zeroed too)
 t = np.arange(N) / SR
 mask = np.ones(N)
 for a, b in [(0, 4.8), (16.2, 21.4), (32.1, 33.6), (59.4, DUR)]:
     mask[ix(a):ix(b)] = 0
-# 29.4–32.1 pad 淡出（整条总线乘包络，保证 32.1 归零）
+# 29.4–32.1 pad fade-out (the whole bus is multiplied by an envelope so it is guaranteed zero at 32.1)
 fo = (t >= 29.4) & (t < 32.1); mask[fo] *= ((32.1 - t[fo]) / 2.7) ** 2
-# 58.6 起 0.6s 淡出
+# 0.6s fade-out from 58.6
 fo2 = (t >= 58.6) & (t < 59.4); mask[fo2] *= np.clip((59.2 - t[fo2]) / .6, 0, 1) ** 2
-# 16.2 前 4ms 斜坡防爆音
+# 4ms ramp before 16.2 to prevent a click
 r4 = ix(.004); mask[ix(16.2) - r4:ix(16.2)] *= np.linspace(1, 0, r4)
 for k in stems: stems[k] *= mask[:, None]
 
 G = {'drone': 1.0, 'seq': .9, 'bass': .9, 'pad': 1.0, 'arp': 1.0, 'hits': .9}
 mix = sum(stems[k] * G[k] for k in stems)
-# 高频温柔一点
+# soften the highs a little
 mix = sosfilt(butter(2, 9500, 'low', fs=SR, output='sos'), mix, axis=0)
-mix *= (mask > 0)[:, None]   # 滤波振铃也清零：静音段保持数字静音
+mix *= (mask > 0)[:, None]   # filter ringing is zeroed too: silent spans stay digitally silent
 pk = np.abs(mix).max(); sc = 10 ** (-1.5 / 20) / pk
 mix *= sc
 for k in stems:
     sf.write(os.path.join(D, 'stems', k + '.wav'), (stems[k] * G[k] * sc).astype(np.float32), SR)
 sf.write(os.path.join(D, 'score.wav'), mix.astype(np.float32), SR)
 
-# ---------------- 自检 ----------------
+# ---------------- Self-check ----------------
 def bands(x):
     X = np.abs(np.fft.rfft(x.mean(1))) ** 2; f = np.fft.rfftfreq(len(x), 1 / SR)
     tot = X.sum() + 1e-20

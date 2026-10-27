@@ -1,4 +1,4 @@
-// timeline.js → voice/lines.json（TTS 用的念法 + 语音识别应听到的原文）；有 voice/out/dur.json 时再写 out/cues.json 并检查旁白不重叠
+// timeline.js → voice/lines.json (the spoken form for TTS + the original text speech recognition should hear); when voice/out/dur.json exists, also write out/cues.json and check that voice-over lines don't overlap
 // usage: node tools/export.mjs <demo>
 import fs from 'fs'; import path from 'path'; import { pathToFileURL } from 'url';
 const dir = path.resolve(process.argv[2] || '.');

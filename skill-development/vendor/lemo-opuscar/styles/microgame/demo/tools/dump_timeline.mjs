@@ -1,4 +1,4 @@
-// node tools/dump_timeline.mjs → timeline.json（配乐 / 混音脚本读）
+// node tools/dump_timeline.mjs → timeline.json (read by the score / mix scripts)
 import { SEGS, DUR } from '../timeline.js';
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));

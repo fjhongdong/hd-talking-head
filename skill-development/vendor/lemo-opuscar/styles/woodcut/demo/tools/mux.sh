@@ -1,7 +1,7 @@
 #!/bin/sh
-# 成片合成（本片版）：先走 core/render/mux.sh（两遍 loudnorm −14 LUFS + 颗粒），再按 CRF 28 + tune grain 重编码。
-# 木刻的细排线 + 每帧墨色与颗粒让 CRF 19 的片子到 326 MB；CRF 28 在 1:1 裁切对比里看不出差别，93 MB。
-# 用法：sh tools/mux.sh video.mp4 mix.wav out.mp4 [fps] [grain]
+# Final mux (this film's version): first run core/render/mux.sh (two-pass loudnorm −14 LUFS + grain), then re-encode at CRF 28 + tune grain.
+# The woodcut's fine hatching + per-frame ink and grain push a CRF 19 file to 326 MB; CRF 28 shows no difference in a 1:1 crop comparison, at 93 MB.
+# Usage: sh tools/mux.sh video.mp4 mix.wav out.mp4 [fps] [grain]
 set -e
 V="$1"; A="$2"; O="$3"; FPS="${4:-24}"; GR="${5:-6}"
 R="$(cd "$(dirname "$0")/../../../.." && pwd)"; TMP="$(dirname "$V")/master_crf19.mp4"

@@ -136,7 +136,7 @@
         "skill-development/vendor/doudou-remotion-whiteboard/recipes/index.ts"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
         "skill-development/hd-talking-head/scripts/doudou_adapter.py": "1da42da726eb3149295bd4c560442c5885dbb55d75a9483160e006da75d36c9f",
         "skill-development/hd-talking-head/scripts/render_doudou.mjs": "018966e9d4d5db2aae2a5761baa022384323fb2c6f487fb362d876fbd034fbd2",
         "skill-development/vendor/doudou-remotion-whiteboard/SKILL.md": "e889984ec9166ca3248066475738cc7de51c56261d1eb9a2ccd9057f9d71926a",
@@ -203,7 +203,7 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
@@ -566,7 +566,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html": "19c6528e970766422978e26d5ac483bfe2c711b7fdcaf1f8a28805a4a53f584c"
       }
@@ -619,7 +619,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html": "fe9b9e0dd4c886843713116811688565c6fea3995cbb52f8c2e044106072715a"
       }
@@ -673,7 +673,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html": "bd6547f25f1c80c0d7dbdef0344627e92d57ace5e31237610928700b0a664d85"
       }
@@ -727,7 +727,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "812cd396ca25fabbf0bed133215143d7e66d6a84095337d5a4549a1ed7ac8cd8",
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html": "db49f679a66fb4505e07d395bff8188ae568fbfac36a50c94f1e58fcd925e11a"
       }
@@ -848,7 +848,7 @@
         "skill-development/research/hypit-source/skills/hypit/SKILL.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
         "skill-development/hd-talking-head/scripts/hypit_native_adapter.py": "96414dcbe38eb7a1eba52db30365a864b88725da265f77752ffab465d9640eb8",
         "skill-development/hd-talking-head/scripts/render_hypit_native.mjs": "930077c15b5737ffb9cd329b69bffe9a3f40da37657757dbca8267289e84fbab",
         "skill-development/research/hypit-source/bin/hypit.mjs": "07c2b67e3af3bfdcb18b5042889aaa5cd46111358303c090dc2b978603b7be96",
@@ -909,7 +909,7 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
@@ -922,8 +922,8 @@
       ],
       "capability_type": "creative_skill",
       "reviewed_version": "1.0.0",
-      "title": "OpenFilm Motion Graphics 创作场景",
-      "summary": "根据已批准语义创作主体动作和信息层级，不是固定模板。",
+      "title": "OpenFilm Motion Graphics 通用模板",
+      "summary": "按原生 Skill 根据已批准语义创作主体动作和信息层级；当前登记为一个通用模板。",
       "tags": {
         "subjects": [
           "人物",
@@ -958,7 +958,7 @@
         "时长"
       ],
       "limitations": [
-        "每次都需读取当前指令并冻结专属场景；只输出整屏无声 B-roll，不是固定组件。"
+        "每次都需读取当前指令并冻结专属场景；只输出整屏无声 B-roll，本期内容沿用同一模板身份。"
       ],
       "evidence": [
         "skill-development/hd-talking-head/references/openfilm-motion-graphics.md",
@@ -971,7 +971,7 @@
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/render.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/openfilm-motion-graphics.md": "d43b3690df18b7799d39c3e7ef2d54f83ede044c91d0086f25a630627a5c8efd",
+        "skill-development/hd-talking-head/references/openfilm-motion-graphics.md": "68ee843c198b64210ea983e4c4ba3feac8832d0b3717045f9ecea4c643df3e13",
         "skill-development/hd-talking-head/scripts/openfilm_motion_adapter.py": "015303bef79b5dd79e822890c50c552aede51feec334f0483149ecf7696e2244",
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/MANUAL.md": "f92be3da02f1724bbbef3bd70fa01c42b4c24e85aa6987fb8401e501bb61d7b9",
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/bin/openfilm.mjs": "de783c7f8982d3fa6232da955dd62f63b523ebac0c89a6da415a35bfa0eb1e68",
@@ -1032,7 +1032,7 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "ac2ece2b51d82742f62c4f0a31f965e390d05be1f8cae946f095471ecee537a6",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
@@ -1078,7 +1078,7 @@
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
         "skill-development/hd-talking-head/scripts/paper_hyperframes_adapter.py": "af903772f52fdfce4c2c6294c29d3bd5a8fcde440edcb29d8f0ff94bb4a9a3bc"
       }
     },
@@ -1370,7 +1370,7 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166",
         "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
         "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",
@@ -1463,7 +1463,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/assets/wise-motion-runtime/index.jsx": "47bab320baa93daf59debca477b9c2e892f600c1b1179707548eb91cbb520a7c",
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff",
         "skill-development/hd-talking-head/scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
         "skill-development/hd-talking-head/scripts/wise_motion_adapter.py": "11b9027ca0046dfacf99295b52a74fdca169b78a2a603548b996b70a9d8177a8",
         "skill-development/vendor/wise-motion/REMOTION.md": "3a55aa7ccaee1fd380a8823e7bf3c2c7b250317c01367563245b0a34a0358dee",
@@ -7056,8 +7056,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166"
       }
     },
     {
@@ -7086,8 +7086,8 @@
         "skill-development/hd-talking-head/references/generated-broll-skills.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "217e18c74c56e35c77591baaae5675ca240e8590d27d846a2858a0bc82005667"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "d523426771ea7fb29cb033eb2d3217a7e2c52f4e20ba45db853372f5912c2166"
       }
     },
     {
@@ -7117,7 +7117,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "1c69fb50117bcd054aa44d5520fcd5dc4f62a601deb3bf254222843aa4956fe3"
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "f0cd283ac67ac759a10445f48afe2fb7089a7d6fae5d8806f5bf7be14b6ca3ff"
       }
     },
     {
@@ -7150,7 +7150,7 @@
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47",
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a",
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac"
       }
     },
@@ -7185,7 +7185,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a"
       }
     },
     {
@@ -7219,7 +7219,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
-        "skill-development/hd-talking-head/references/broll-capability-router.md": "fddf1313eb31cd45411f97c997caf7627a63f153c82ded5136155dca54bf4d47"
+        "skill-development/hd-talking-head/references/broll-capability-router.md": "083deaa1c3f27ba9d03c7af17107760839379d9e20e29e3e756771d4db2f658a"
       }
     },
     {
@@ -7855,6 +7855,3843 @@
         "skill-development/hd-talking-head/references/motion-graphics-native.md": "5e7f26b38a5b70ac7ff46d2f7bc18b006c4ad8c107034efd17031d2692ae5d7e",
         "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25072ab0e545744e897f75181b5f740ee172482aa9f680d650489d713f06d198",
         "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "7f20f47330428ef320f0a638045673b5b36abd0f024832bdbc21625db457e8a2"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/archive-lighttable",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜档案灯台",
+      "summary": "底片在放大镜下由负片显影为正片；镜下单行文字被提亮并抽成阅读卡。",
+      "tags": {
+        "subjects": [
+          "档案照片",
+          "底片",
+          "账页"
+        ],
+        "actions": [
+          "底片显影",
+          "重点文字提亮",
+          "镜下景深推进"
+        ],
+        "relations": [
+          "原件与放大区域",
+          "来源证据"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "档案灯台"
+        ],
+        "patterns": [
+          "archive-lighttable"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/archive-lighttable/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/archive-lighttable/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/archive-lighttable/STYLE.md": "2f18ac9a42822b7a9941866c42b0642e5417dea5431d61f141f6e11b29c1ec14",
+        "skill-development/vendor/lemo-opuscar/styles/archive-lighttable/style.json": "555a56a6edb2a27820b5a140e07ac21dbf8fff2886d1b6b55a726919dbf122c7",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/art-deco",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜装饰艺术",
+      "summary": "灯牌按节拍逐字点亮；门缝分割完成场景切换。",
+      "tags": {
+        "subjects": [
+          "霓虹字牌",
+          "门框",
+          "章节场景"
+        ],
+        "actions": [
+          "灯牌逐字点亮",
+          "门框分割场景",
+          "计数灯光"
+        ],
+        "relations": [
+          "章节分组",
+          "阶段切换"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "装饰艺术"
+        ],
+        "patterns": [
+          "art-deco"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/art-deco/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/art-deco/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/art-deco/STYLE.md": "d73b30c0fa6d153487549d32d8c6c599733cf5e7576badec862a12da6d284761",
+        "skill-development/vendor/lemo-opuscar/styles/art-deco/style.json": "0ea0e1866adf9c601ca4118229555a563f0f9f0b2dca433f60c2b70a21bf23d5",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/ascii-crt",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜ASCII / CRT 终端",
+      "summary": "句子拆解为字符密度图像；推近到单字符并显出其中嵌套文字。",
+      "tags": {
+        "subjects": [
+          "字符",
+          "终端屏幕",
+          "文字图像"
+        ],
+        "actions": [
+          "字符密度成像",
+          "字符嵌套推近",
+          "终端故障闪烁"
+        ],
+        "relations": [
+          "文字与图像互换",
+          "层级嵌套"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "ASCII / CRT 终端"
+        ],
+        "patterns": [
+          "ascii-crt"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/ascii-crt/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/ascii-crt/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/ascii-crt/STYLE.md": "cbe0b8957c785a165f85ccb3b8eba61c30c0462b32983db6a16c76046a2bb333",
+        "skill-development/vendor/lemo-opuscar/styles/ascii-crt/style.json": "6698b02e4a68e1c12c3c7dc95874337e40642e813dc2ae50f1d3530cbb9dac8d",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/backrooms",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜后室 / 新怪谈",
+      "summary": "自动对焦寻找时短暂显出身影；磁带撕裂造成同构图跳时。",
+      "tags": {
+        "subjects": [
+          "空走廊",
+          "录像带",
+          "失焦身影"
+        ],
+        "actions": [
+          "失焦身影显现",
+          "磁带撕裂跳时",
+          "曝光搜寻"
+        ],
+        "relations": [
+          "同构图时间跳跃"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cinema & Eras",
+          "后室 / 新怪谈"
+        ],
+        "patterns": [
+          "backrooms"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/backrooms/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/backrooms/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/backrooms/STYLE.md": "2a3697a1ce37d0fbae3281220ae6154eeb9789233f1fae472d55ac169ba26fb4",
+        "skill-development/vendor/lemo-opuscar/styles/backrooms/style.json": "8e40af80d492119fd0ec63ab5a4284d52c65c0ce2e5b12a71d9e7d41e35a9299",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/blueprint",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜蓝图 / 工程制图",
+      "summary": "工程对象按图层逐层绘制；尺寸线追随部件、气泡标注飞入，剖面揭示内部。",
+      "tags": {
+        "subjects": [
+          "工程对象",
+          "尺寸线",
+          "剖面"
+        ],
+        "actions": [
+          "图层逐层绘制",
+          "尺寸线追随部件",
+          "剖面展开"
+        ],
+        "relations": [
+          "部件与标注",
+          "外壳与内部"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "蓝图 / 工程制图"
+        ],
+        "patterns": [
+          "blueprint"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/blueprint/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/blueprint/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/blueprint/STYLE.md": "de01fc7fcb38b17b58eb017c9cdbcb36b9242b029435a33587614c93088e1717",
+        "skill-development/vendor/lemo-opuscar/styles/blueprint/style.json": "6d50613e83879a1741bc1ca60f2ad528c2a0e35778fdac6f55d4af7e67ea4da7",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/brick-toy",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜积木玩具",
+      "summary": "部件沿弧线飞入并卡扣成型；成品拆散后重组成新结构。",
+      "tags": {
+        "subjects": [
+          "积木部件",
+          "街区",
+          "产品组件"
+        ],
+        "actions": [
+          "积木飞入卡扣",
+          "结构拆散重组",
+          "部件逐件搭建"
+        ],
+        "relations": [
+          "部件与整体",
+          "失败与重组"
+        ],
+        "feelings": [],
+        "styles": [
+          "Materials & 3D",
+          "积木玩具"
+        ],
+        "patterns": [
+          "brick-toy"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/brick-toy/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/brick-toy/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/brick-toy/STYLE.md": "29b23e846951856b722a698a03c9458cfc17b4fc71d044f45d773acf2a742768",
+        "skill-development/vendor/lemo-opuscar/styles/brick-toy/style.json": "74691fbe30fb39816e51f8a0290f79a7b130e980e67967400f98267b7d31aa56",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/briefing-board",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜工程简报板",
+      "summary": "整墙海报分区后逐区揭示；实物沿方案路线移动，尺寸线按比例延展。",
+      "tags": {
+        "subjects": [
+          "整墙信息板",
+          "路线",
+          "数量线"
+        ],
+        "actions": [
+          "整墙分区揭示",
+          "路线实物移动",
+          "比例尺寸线延展"
+        ],
+        "relations": [
+          "信息分区",
+          "方案与实物"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "工程简报板"
+        ],
+        "patterns": [
+          "briefing-board"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/briefing-board/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/briefing-board/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/briefing-board/STYLE.md": "44669da808da4ed37e2a4a0f6e5d2b23008775a3c4870add04641d714e9f323d",
+        "skill-development/vendor/lemo-opuscar/styles/briefing-board/style.json": "9a4767b21623df0b3bcb2e33555da08a260d2567cbe80d95d9dbe85b6d2a4fc1",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/caption-news",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜字幕新闻",
+      "summary": "巨型数字滚动到目标值；黄色关键词砸入卡片，比例线扫过画面后压暗非重点区域。",
+      "tags": {
+        "subjects": [
+          "新闻画面",
+          "黄色数字卡",
+          "比例线"
+        ],
+        "actions": [
+          "数字滚动到值",
+          "关键词卡片砸入",
+          "比例线扫过"
+        ],
+        "relations": [
+          "数字与单位",
+          "重点与背景"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "字幕新闻"
+        ],
+        "patterns": [
+          "caption-news"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/caption-news/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/caption-news/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/caption-news/STYLE.md": "ba4c0bb5dd13e49c2c2b520af5e42a28112b36354dc445d0f6ade3727b458fd2",
+        "skill-development/vendor/lemo-opuscar/styles/caption-news/style.json": "efa7d8e1dd42d11301dd5e7f1a4f66968c7b8d0259292153454a7926b6a52a0f",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/cel-anime-80s",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜80 年代赛璐璐动画",
+      "summary": "小角色在巨大场景中保持比例反差；关键表情或动作定格承载转折。",
+      "tags": {
+        "subjects": [
+          "扁平角色",
+          "巨大手绘场景",
+          "定格表情"
+        ],
+        "actions": [
+          "角色与场景比例反差",
+          "关键动作定格",
+          "手绘背景横移"
+        ],
+        "relations": [
+          "角色与环境",
+          "动作与情绪"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cartoon & Anime",
+          "80 年代赛璐璐动画"
+        ],
+        "patterns": [
+          "cel-anime-80s"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/cel-anime-80s/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/cel-anime-80s/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/cel-anime-80s/STYLE.md": "1e16f5c6f90ebf09556ec94d37434400d309c978e00ee89e9d38dec476664eaf",
+        "skill-development/vendor/lemo-opuscar/styles/cel-anime-80s/style.json": "6a4afb02b4d388d7c8462b930556cfa2d79c61092efe9606783be7b626a62c4c",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/city-symphony",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜延时交响",
+      "summary": "城市街区和交通节奏按声部并置；建筑、人流、车辆形成连续都市段落。",
+      "tags": {
+        "subjects": [
+          "城市建筑",
+          "交通",
+          "人流"
+        ],
+        "actions": [
+          "建筑群节奏推进",
+          "交通流线穿行",
+          "人流分层汇聚"
+        ],
+        "relations": [
+          "建筑与交通",
+          "多声部并列"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "延时交响"
+        ],
+        "patterns": [
+          "city-symphony"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/city-symphony/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/city-symphony/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/city-symphony/STYLE.md": "8b78d2b08cadb045ac1649cade1e5274fba935b1177c64c176e7567c6e8b31e1",
+        "skill-development/vendor/lemo-opuscar/styles/city-symphony/style.json": "4ad353d02e858d16534179ed39eaa05761225865dc818e0544529e2fff2fcd4b",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/countdown",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜实时倒计时分屏",
+      "summary": "倒计时归零时九宫格合成整幅画面；暗色T−翻转为亮色T+，控制条交接高亮。",
+      "tags": {
+        "subjects": [
+          "倒计时钟",
+          "九宫格画面",
+          "控制条"
+        ],
+        "actions": [
+          "九宫格合成整屏",
+          "倒计时翻转正计时",
+          "控制条交接高亮"
+        ],
+        "relations": [
+          "分格与整体",
+          "控制权交接"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "实时倒计时分屏"
+        ],
+        "patterns": [
+          "countdown"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/countdown/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/countdown/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/countdown/STYLE.md": "867cca6e0c9bb0d6fb914cc4e9a2e295623ecd345fda9bd00bc362ff233f220f",
+        "skill-development/vendor/lemo-opuscar/styles/countdown/style.json": "d30ae465e30a1576cd08d2357e488209d5042cfde16d85dc6452562400c12e61",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/crayon-book",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜蜡笔儿童绘本",
+      "summary": "蜡笔留白被水洗显影；主角前方实时补画路径或时间线。",
+      "tags": {
+        "subjects": [
+          "蜡笔线",
+          "洗染纸面",
+          "隐藏图形"
+        ],
+        "actions": [
+          "蜡笔留白显影",
+          "水洗铺色",
+          "路径实时绘制"
+        ],
+        "relations": [
+          "隐藏与显现",
+          "路径与主体"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "蜡笔儿童绘本"
+        ],
+        "patterns": [
+          "crayon-book"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/crayon-book/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/crayon-book/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/crayon-book/STYLE.md": "ba558478fe519fa6777fe28fa7d1980117297c7beb6fe2e366ef6f00688aa175",
+        "skill-development/vendor/lemo-opuscar/styles/crayon-book/style.json": "6a03a6548019ba3393a8e2c73c96aa38aefc3257cdf8f6b87f32c808da27f098",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/dark-keynote",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜暗色科技发布",
+      "summary": "条目按规则加速堆积；所有元素一拍飞入网格并锁定。",
+      "tags": {
+        "subjects": [
+          "暗色界面",
+          "卡片网格",
+          "成堆条目"
+        ],
+        "actions": [
+          "条目规则堆积",
+          "卡片飞入网格",
+          "状态整体锁定"
+        ],
+        "relations": [
+          "条目与总量",
+          "散乱与归档"
+        ],
+        "feelings": [],
+        "styles": [
+          "Information & Keynote",
+          "暗色科技发布"
+        ],
+        "patterns": [
+          "dark-keynote"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/dark-keynote/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/dark-keynote/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/dark-keynote/STYLE.md": "b0791b5e95f56bf46c621e6064d426ebbee810c7515fb87e951b73668a2a0d24",
+        "skill-development/vendor/lemo-opuscar/styles/dark-keynote/style.json": "c992e65414bb4e96ff6e0eeeba2cfc7a795d332fadfb3baa5301faa0b0c6b992",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/data-physical",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜数据实物化",
+      "summary": "单个实体被推近并配刻度；两组材料逐年堆高，在交叉点停住对读。",
+      "tags": {
+        "subjects": [
+          "实体堆叠",
+          "刻度尺",
+          "双系列材料"
+        ],
+        "actions": [
+          "实体堆叠计量",
+          "双系列逐年攀升",
+          "增量落到旧层"
+        ],
+        "relations": [
+          "两组数据对照",
+          "增量与基线"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "数据实物化"
+        ],
+        "patterns": [
+          "data-physical"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/data-physical/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/data-physical/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/data-physical/STYLE.md": "2d2e6685b0dcf8a1e2ba2ff904ab02d51aede1f5dbb246fd2f6e81c8d146f208",
+        "skill-development/vendor/lemo-opuscar/styles/data-physical/style.json": "dfe640da294e2e128260bf788bab25eeceb9415a46675c3d7d1e0cbecfe90319",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/dataviz",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜数据叙事",
+      "summary": "一个标记对应一条事实；叙述到单位时坐标轴才生长出来。",
+      "tags": {
+        "subjects": [
+          "数据点",
+          "坐标轴",
+          "图表"
+        ],
+        "actions": [
+          "数据点逐个出现",
+          "坐标轴随单位生长",
+          "标记组成图表"
+        ],
+        "relations": [
+          "数据点与事实",
+          "单位与坐标轴"
+        ],
+        "feelings": [],
+        "styles": [
+          "Information & Keynote",
+          "数据叙事"
+        ],
+        "patterns": [
+          "dataviz"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/dataviz/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/dataviz/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/dataviz/STYLE.md": "e94013d5a7c548c8844598a671ff0b49bc78770696cbca0d8d00846336f3c67f",
+        "skill-development/vendor/lemo-opuscar/styles/dataviz/style.json": "a459b5b712af023a00112b94c6812f0bf7e0b3a7cd39ae818e4a47805f57a8f3",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/engraving",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜铜版画",
+      "summary": "雕刻刀刻出第一道线；形体经过三遍刻线逐层获得体积。",
+      "tags": {
+        "subjects": [
+          "雕刻刀",
+          "金属线",
+          "版面"
+        ],
+        "actions": [
+          "刀尖刻线显形",
+          "三遍刻线叠加",
+          "刻痕形成体积"
+        ],
+        "relations": [
+          "刻线与形体",
+          "过程与结果"
+        ],
+        "feelings": [],
+        "styles": [
+          "Print & Printmaking",
+          "铜版画"
+        ],
+        "patterns": [
+          "engraving"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/engraving/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/engraving/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/engraving/STYLE.md": "0c6816b8b47163d158ae0ea668feecf53dcbef9d1310e27b9e797d9b9e7aac0d",
+        "skill-development/vendor/lemo-opuscar/styles/engraving/style.json": "f5c99e129f786bfb75185f3d61c6be212c55b497e269ded71f55e0b971b6db80",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/game-show",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜综艺节奏扁平",
+      "summary": "回合卡飞入后开始一轮；结尾用打字复盘卡和等级印章总结。",
+      "tags": {
+        "subjects": [
+          "回合卡",
+          "题目板",
+          "成绩章"
+        ],
+        "actions": [
+          "回合卡飞入",
+          "题目板切换",
+          "成绩章盖印"
+        ],
+        "relations": [
+          "回合与章节",
+          "过程与成绩"
+        ],
+        "feelings": [],
+        "styles": [
+          "Games",
+          "综艺节奏扁平"
+        ],
+        "patterns": [
+          "game-show"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/game-show/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/game-show/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/game-show/STYLE.md": "cadee8f0ff8cfc206b49d852e5a0b15d7da432ad497fa8b19ac568ce386ff8e3",
+        "skill-development/vendor/lemo-opuscar/styles/game-show/style.json": "4596e00ca6942c151ae4cba763bf4f91c26a001c88f2ac0a1b0353c1f6b069aa",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/glass-product",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜玻璃质感产品",
+      "summary": "焦点从玻璃外壳切到内部机构；厚玻璃穹顶放大并弯折背后部件。",
+      "tags": {
+        "subjects": [
+          "透明玻璃",
+          "内部机构",
+          "折射光"
+        ],
+        "actions": [
+          "焦点切换到内部",
+          "玻璃折射放大",
+          "材质扫光"
+        ],
+        "relations": [
+          "外壳与内部",
+          "光线与材质"
+        ],
+        "feelings": [],
+        "styles": [
+          "Materials & 3D",
+          "玻璃质感产品"
+        ],
+        "patterns": [
+          "glass-product"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/glass-product/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/glass-product/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/glass-product/STYLE.md": "630fa80cde0930154ba64f15bce5c8ee0c8dcf48d921253f8c7e3194712c8fb5",
+        "skill-development/vendor/lemo-opuscar/styles/glass-product/style.json": "12a59c3c50e9fdd6d5613d9d093c5da7489c6baa746037dd4686ecad4a899290",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/halftone-dossier",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜复古半调案卷",
+      "summary": "主题被装入案件框架并列出计数；每个论点获得巨型半调编号。",
+      "tags": {
+        "subjects": [
+          "半调档案页",
+          "编号展品",
+          "案件板"
+        ],
+        "actions": [
+          "案件框架建立",
+          "编号展品落版",
+          "半调数字压入"
+        ],
+        "relations": [
+          "论点与证据",
+          "编号与步骤"
+        ],
+        "feelings": [],
+        "styles": [
+          "Print & Printmaking",
+          "复古半调案卷"
+        ],
+        "patterns": [
+          "halftone-dossier"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/halftone-dossier/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/halftone-dossier/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/halftone-dossier/STYLE.md": "71b4b8f089836d95f6bd8fc3719ae184cbf2be4a04ecd935c6d55d89a5bb558d",
+        "skill-development/vendor/lemo-opuscar/styles/halftone-dossier/style.json": "c732c96a0d0b117252fda4cc734dac4f73ab14c323742d6ace0eff04f45c6d95",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/hd-2d",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜HD-2D",
+      "summary": "灯光打开时角色旁的阴影跳起；角色手持小灯，其亮度随测量值变化。",
+      "tags": {
+        "subjects": [
+          "二维角色",
+          "投影光",
+          "地面阴影"
+        ],
+        "actions": [
+          "灯光点亮阴影",
+          "手持灯亮度计量",
+          "角色与阴影摆动"
+        ],
+        "relations": [
+          "角色与阴影",
+          "光照与数值"
+        ],
+        "feelings": [],
+        "styles": [
+          "Games",
+          "HD-2D"
+        ],
+        "patterns": [
+          "hd-2d"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/hd-2d/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/hd-2d/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/hd-2d/STYLE.md": "bdc5ef4f60d8ba9ff6e5151391a6a62d8da4685d393c242699fd5c6188f0551a",
+        "skill-development/vendor/lemo-opuscar/styles/hd-2d/style.json": "e3dd21ebeb8b4efc07e9caa85fb7264105ef4a43e85d875ff8a0ede8a3998e29",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/hologram-hud",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜科幻全息界面",
+      "summary": "扫描线生长证明数据存在；目标框锁定指定部件并成为视线窗口。",
+      "tags": {
+        "subjects": [
+          "扫描框",
+          "目标框",
+          "全息物体"
+        ],
+        "actions": [
+          "扫描线生长",
+          "目标框锁定",
+          "全息层叠显现"
+        ],
+        "relations": [
+          "对象与标注",
+          "扫描与目标"
+        ],
+        "feelings": [],
+        "styles": [
+          "Information & Keynote",
+          "科幻全息界面"
+        ],
+        "patterns": [
+          "hologram-hud"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/hologram-hud/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/hologram-hud/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/hologram-hud/STYLE.md": "81e2c6b0ede2cc211a8dd676417a1ce5efda278514f273c5249165e38ff34573",
+        "skill-development/vendor/lemo-opuscar/styles/hologram-hud/style.json": "acbce6cfe0ff3c1a622090d424f60f8a3e47f9485f43f825bfc3f5980eafff34",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/impasto",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜油画厚涂",
+      "summary": "刀痕逐笔把灰阶重新铺成彩色；全画面保持灰度，仅一个对象保留颜色。",
+      "tags": {
+        "subjects": [
+          "厚涂刀痕",
+          "灰阶画面",
+          "单色主体"
+        ],
+        "actions": [
+          "刀痕逐笔上色",
+          "单色对象突出",
+          "厚涂波纹覆盖"
+        ],
+        "relations": [
+          "主体与环境",
+          "灰阶与强调色"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "油画厚涂"
+        ],
+        "patterns": [
+          "impasto"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/impasto/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/impasto/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/impasto/STYLE.md": "38a0dcb2808c2ff03ef721c1319b9145438b4074ed37ab7a09dcf20b7268e062",
+        "skill-development/vendor/lemo-opuscar/styles/impasto/style.json": "8eb0c2c320a2c7dd58600d2eaee537bd6f3137bed1d40f65b7e05a52bd600c31",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/ink-wash",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜中国水墨",
+      "summary": "一笔连续生成主体；撤去墨色后纸白显出门洞或缺席区域。",
+      "tags": {
+        "subjects": [
+          "墨线",
+          "宣纸留白",
+          "山水形体"
+        ],
+        "actions": [
+          "一笔连续成形",
+          "墨色退去显留白",
+          "水墨晕染扩散"
+        ],
+        "relations": [
+          "墨色与留白",
+          "出现与缺席"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "中国水墨"
+        ],
+        "patterns": [
+          "ink-wash"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/ink-wash/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/ink-wash/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/ink-wash/STYLE.md": "5d71598f0b9cf4034c6461956b0d8bd63bd33750b4045376044f0d956b01d645",
+        "skill-development/vendor/lemo-opuscar/styles/ink-wash/style.json": "19fca58eb8e84cecaae62837f88b33e286f4ed8e45942b3395e9a320af172bde",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/iso-infographic",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜等距信息图",
+      "summary": "剖切线移开外壳露出内部；同形图标重排组成比例和数量。",
+      "tags": {
+        "subjects": [
+          "等距物体",
+          "剖切线",
+          "同形图标"
+        ],
+        "actions": [
+          "外壳滑开剖切",
+          "同形图标重排",
+          "比例阵列成形"
+        ],
+        "relations": [
+          "外部与内部",
+          "图标与数量"
+        ],
+        "feelings": [],
+        "styles": [
+          "Information & Keynote",
+          "等距信息图"
+        ],
+        "patterns": [
+          "iso-infographic"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/iso-infographic/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/iso-infographic/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/iso-infographic/STYLE.md": "a3bf89913255043ff2c8616bff9be9f9536efe1eb7a3b98c755cb4189bd7dff1",
+        "skill-development/vendor/lemo-opuscar/styles/iso-infographic/style.json": "53b58520900edafef0a5229e456206fbcfdeb0665fcc8c661b73792bfc985b97",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/kino-montage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜构成主义蒙太奇",
+      "summary": "文档原句被红条标出并转成红色数字块；页面图形抬起成为按比例排列的图表。",
+      "tags": {
+        "subjects": [
+          "档案文档",
+          "比例图",
+          "交替画面"
+        ],
+        "actions": [
+          "原句红条标注",
+          "页面图形立体化",
+          "两类画面交替碰撞"
+        ],
+        "relations": [
+          "文档与结论",
+          "图像与数据"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "构成主义蒙太奇"
+        ],
+        "patterns": [
+          "kino-montage"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/kino-montage/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/kino-montage/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/kino-montage/STYLE.md": "8c63deefda22d4677d286ddfffb243ce6385dfa7ab56fbc493705fe13908f204",
+        "skill-development/vendor/lemo-opuscar/styles/kino-montage/style.json": "57ffe5f5aabf16c010ea0ae8c96de5b265ab744307e76a473023b8b9008a7f6a",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/lidar-survey",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜点云测绘",
+      "summary": "扫描线扫过照片后留下点云；点云按高度剥离，再凝成实体表面并依次点亮特征。",
+      "tags": {
+        "subjects": [
+          "航拍照片",
+          "点云",
+          "地形表面"
+        ],
+        "actions": [
+          "照片扫描成点云",
+          "点云按高度剥离",
+          "点云凝成表面"
+        ],
+        "relations": [
+          "照片与点云",
+          "层高与地形"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "点云测绘"
+        ],
+        "patterns": [
+          "lidar-survey"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/lidar-survey/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/lidar-survey/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/lidar-survey/STYLE.md": "d1b60fda2793932286372e7cf68d62af5723bba14c37e9a437639ea57b1a310d",
+        "skill-development/vendor/lemo-opuscar/styles/lidar-survey/style.json": "16250593c1a9123ba85f38e45a81e3e2111d1cc1a7c07a5e091501a006bf4d82",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/living-screencast",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜活体实机录屏",
+      "summary": "吉祥物从界面图标中长出并留下轮廓；名称成为真实界面元素后角色落在其上。",
+      "tags": {
+        "subjects": [
+          "软件界面",
+          "图标",
+          "吉祥物"
+        ],
+        "actions": [
+          "图标长出角色",
+          "界面元素承载标题",
+          "角色落到控件"
+        ],
+        "relations": [
+          "界面与角色",
+          "控件与标题"
+        ],
+        "feelings": [],
+        "styles": [
+          "Information & Keynote",
+          "活体实机录屏"
+        ],
+        "patterns": [
+          "living-screencast"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/living-screencast/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/living-screencast/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/living-screencast/STYLE.md": "02e8e5521fe1f553b0e58dacc2a556aea361dd5823e2ca0996963839d3c7d5c7",
+        "skill-development/vendor/lemo-opuscar/styles/living-screencast/style.json": "47b9b1c6e209f5a320b4c136efdb43f8caf8e7ee705e2428485f6021877f0fdc",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/lowpoly-island",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜低多边形等距",
+      "summary": "部件落地组成建筑并按空间顺序回放音符；地块升起、楼层堆叠、树木弹出。",
+      "tags": {
+        "subjects": [
+          "低多边形岛屿",
+          "建筑",
+          "地形块"
+        ],
+        "actions": [
+          "地块升起生长",
+          "部件落地成建筑",
+          "空间顺序回放"
+        ],
+        "relations": [
+          "部件与地形",
+          "建筑与声音"
+        ],
+        "feelings": [],
+        "styles": [
+          "Materials & 3D",
+          "低多边形等距"
+        ],
+        "patterns": [
+          "lowpoly-island"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/lowpoly-island/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/lowpoly-island/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/lowpoly-island/STYLE.md": "1ae7bcd6aa3d521f563d8905f8109842fd7252ff8b70c1bd18265105a8a450f9",
+        "skill-development/vendor/lemo-opuscar/styles/lowpoly-island/style.json": "7ab82e432e2e725a361ef54b1df252ba19416aead6f87897bc0bc79a48c8177a",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/microgame",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜微游戏快闪",
+      "summary": "每项任务切换到适合的媒介；一个命令词同时成为字幕、脚本和节拍。",
+      "tags": {
+        "subjects": [
+          "多媒介任务卡",
+          "命令词",
+          "步骤物件"
+        ],
+        "actions": [
+          "媒介按任务切换",
+          "命令词击打出现",
+          "步骤物件逐项完成"
+        ],
+        "relations": [
+          "任务与媒介",
+          "命令词与动作"
+        ],
+        "feelings": [],
+        "styles": [
+          "Games",
+          "微游戏快闪"
+        ],
+        "patterns": [
+          "microgame"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/microgame/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/microgame/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/microgame/STYLE.md": "ad13d34bd06a65bef81b04f531c4f256bcc0bff4f229f976d52e07d5beef9dd5",
+        "skill-development/vendor/lemo-opuscar/styles/microgame/style.json": "827824fb45b72ca9ec6176f40e06ae755d1b075818f5f732eb53a4bcd8104aee",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/microscope",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜显微叙事",
+      "summary": "镜头从载玻片潜入细胞并逐级换倍率；扫描前穿过计数圆，像素点亮并滚动比例。",
+      "tags": {
+        "subjects": [
+          "显微镜",
+          "样本切片",
+          "计数圆"
+        ],
+        "actions": [
+          "倍率逐级下潜",
+          "扫描计数像素",
+          "两处样本同尺度对读"
+        ],
+        "relations": [
+          "样本与倍率",
+          "处理前后对照"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "显微叙事"
+        ],
+        "patterns": [
+          "microscope"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/microscope/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/microscope/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/microscope/STYLE.md": "63040631bdc28a3c7f8cf05e2e8523969becd0267741e00dd3e171c22be16e92",
+        "skill-development/vendor/lemo-opuscar/styles/microscope/style.json": "eb4afae4910ec49ce0d8dac9fb228deffb080ef81ba096be8df49adb906fc4db",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/midcentury-toon",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜50s 扁平卡通",
+      "summary": "颜色错位让信息卡产生印刷温度；身体静止，仅手部按节拍完成步骤。",
+      "tags": {
+        "subjects": [
+          "复古信息卡",
+          "手部动作",
+          "偏移色层"
+        ],
+        "actions": [
+          "错位色层套印",
+          "手部逐步操作",
+          "信息卡切换"
+        ],
+        "relations": [
+          "手部与步骤",
+          "色层与信息"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cartoon & Anime",
+          "50s 扁平卡通"
+        ],
+        "patterns": [
+          "midcentury-toon"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/midcentury-toon/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/midcentury-toon/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/midcentury-toon/STYLE.md": "e73614b6f9e2f2e8ee279f4909da8429235b96f6d13a12345b6e57d5823c30b8",
+        "skill-development/vendor/lemo-opuscar/styles/midcentury-toon/style.json": "5595ed4524303d0e5ae3a5b6805255c0fb9cb7232ee5d680df5ae59ba8998c68",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/news-package",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜电视新闻包装",
+      "summary": "台标牌飞到角落成为持续 bug；栏目条切换类别，清单开头列出、结尾逐项打勾。",
+      "tags": {
+        "subjects": [
+          "新闻台标",
+          "栏目条",
+          "清单"
+        ],
+        "actions": [
+          "台标飞入角标",
+          "栏目条切类",
+          "清单逐项打勾"
+        ],
+        "relations": [
+          "栏目与内容",
+          "开头清单与结尾复盘"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "电视新闻包装"
+        ],
+        "patterns": [
+          "news-package"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/news-package/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/news-package/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/news-package/STYLE.md": "6f9d1b6a04878229260ea542fe71f2b77c560ed8e40df68b68e80ac4e21710ce",
+        "skill-development/vendor/lemo-opuscar/styles/news-package/style.json": "7b399ecf0a748e4f4b3dab016fda9eed2167a1c707aed6c8b0d2eee896bd7965",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/newsreel",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜1920s 新闻影片",
+      "summary": "探照灯点亮地球标识并锁定片名；旋转纸张带残影砸入并推进到下一拍。",
+      "tags": {
+        "subjects": [
+          "新闻片头",
+          "地球标识",
+          "旋转纸张"
+        ],
+        "actions": [
+          "探照灯点亮标识",
+          "旋转纸张砸入",
+          "地球标识收束"
+        ],
+        "relations": [
+          "标识与片名",
+          "标题与画面"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "1920s 新闻影片"
+        ],
+        "patterns": [
+          "newsreel"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/newsreel/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/newsreel/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/newsreel/STYLE.md": "0f82c1423d2463dfc2700b23dff9ec183f596724a4820757e189c6fa5225e600",
+        "skill-development/vendor/lemo-opuscar/styles/newsreel/style.json": "d20ae96a49893f17a46b4d549bd9324d6129e76392376b6089673f72a2a2339f",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/one-line",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜一笔画",
+      "summary": "画笔不抬起地连接完整对象；线条状态随时间、疲劳或磨损改变。",
+      "tags": {
+        "subjects": [
+          "连续线条",
+          "河流",
+          "生产线"
+        ],
+        "actions": [
+          "连续线一笔成形",
+          "线条状态渐变",
+          "线条连接路径"
+        ],
+        "relations": [
+          "连续路径",
+          "时间与状态"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "一笔画"
+        ],
+        "patterns": [
+          "one-line"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/one-line/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/one-line/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/one-line/STYLE.md": "69d26cb06f48ab6b03c12a76c2390d0945cdaddc38bc109b7d5e292b9af1399b",
+        "skill-development/vendor/lemo-opuscar/styles/one-line/style.json": "52f2dec514028b976dfa080270b45b1bbbe1a0e965ae358fdd929ad4f2035ea0",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/paper-lantern",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜纸雕灯影",
+      "summary": "灯光从源头传到远层和窗格；两个窗口共享同一光源。",
+      "tags": {
+        "subjects": [
+          "纸灯笼",
+          "窗格",
+          "远近层"
+        ],
+        "actions": [
+          "灯光逐层点亮",
+          "远近窗格传光",
+          "双窗口共光"
+        ],
+        "relations": [
+          "光源与窗口",
+          "远景与近景"
+        ],
+        "feelings": [],
+        "styles": [
+          "East Asian Traditions",
+          "纸雕灯影"
+        ],
+        "patterns": [
+          "paper-lantern"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/paper-lantern/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/paper-lantern/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/paper-lantern/STYLE.md": "6f3001ad45657262384b3012f441883ef5ac9c558b82d23e503d14e2f672ac91",
+        "skill-development/vendor/lemo-opuscar/styles/paper-lantern/style.json": "39d839aafce6dfa94455e9857e852951bce92cac30c0153bba6e5c6c47d935e2",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/paper-popup",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜纸片立体书",
+      "summary": "书板掀起后场景按前后层弹出；翻页让旧部件折下、新部件弹起。",
+      "tags": {
+        "subjects": [
+          "纸书",
+          "折页",
+          "立体场景"
+        ],
+        "actions": [
+          "书页掀起立体化",
+          "部件前后弹出",
+          "翻页替换场景"
+        ],
+        "relations": [
+          "纸页与场景",
+          "旧层与新层"
+        ],
+        "feelings": [],
+        "styles": [
+          "Materials & 3D",
+          "纸片立体书"
+        ],
+        "patterns": [
+          "paper-popup"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/paper-popup/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/paper-popup/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/paper-popup/STYLE.md": "8e5c0ca430fd96b75c4d9c2af92a87c84d4d1af8cda64280a189c51279e1ee9b",
+        "skill-development/vendor/lemo-opuscar/styles/paper-popup/style.json": "aa52b5e53c3125c0a3dcb74f9964200dad1780efba557129512bafcaf817e490",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/papercut-red",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜红色窗花剪纸",
+      "summary": "纸张折叠后一次剪孔，展开变成多重图案；孔洞背光并投射到世界。",
+      "tags": {
+        "subjects": [
+          "红纸",
+          "折叠剪孔",
+          "背光图案"
+        ],
+        "actions": [
+          "折叠剪孔展开",
+          "孔洞背光显现",
+          "图案投射"
+        ],
+        "relations": [
+          "单体与群体",
+          "纸面与投影"
+        ],
+        "feelings": [],
+        "styles": [
+          "East Asian Traditions",
+          "红色窗花剪纸"
+        ],
+        "patterns": [
+          "papercut-red"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/papercut-red/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/papercut-red/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/papercut-red/STYLE.md": "65e317d83335e0cb34696b643e31ad9e46fb0bb93fd748c2e21d74358aea61ec",
+        "skill-development/vendor/lemo-opuscar/styles/papercut-red/style.json": "9dd9b45e83f3eafd09c2740cfc93f9021fd2239f915af9011f4fa01063e3dc05",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/pictogram-motion",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜象形运动图形",
+      "summary": "一张卡对应一个项目并汇总总数；章节用色相区分不同图标家族。",
+      "tags": {
+        "subjects": [
+          "图标卡片",
+          "颜色章节",
+          "计数集合"
+        ],
+        "actions": [
+          "图标卡逐项入场",
+          "图标聚合计数",
+          "章节颜色切换"
+        ],
+        "relations": [
+          "图标与项目",
+          "章节与颜色"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "象形运动图形"
+        ],
+        "patterns": [
+          "pictogram-motion"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/pictogram-motion/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/pictogram-motion/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/pictogram-motion/STYLE.md": "e982606f3d7d132d320abdc1a74c226b1e0642b664a0c41582bc76fec646da1a",
+        "skill-development/vendor/lemo-opuscar/styles/pictogram-motion/style.json": "55f9659926edf159471051da1bed0d2d48b2bc2c4571afee738ba5e2711bd111",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/pixel-rpg",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜16-bit 像素 RPG",
+      "summary": "色深按节拍坍缩或被抖动波恢复；保护色块在不同年代位置匹配切换。",
+      "tags": {
+        "subjects": [
+          "像素角色",
+          "调色板",
+          "保护色块"
+        ],
+        "actions": [
+          "调色板坍缩恢复",
+          "抖动波填色",
+          "保护色匹配切镜"
+        ],
+        "relations": [
+          "色彩与状态",
+          "同色跨年代"
+        ],
+        "feelings": [],
+        "styles": [
+          "Games",
+          "16-bit 像素 RPG"
+        ],
+        "patterns": [
+          "pixel-rpg"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/pixel-rpg/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/pixel-rpg/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/pixel-rpg/STYLE.md": "f79fac0d9aed03d2a69f17a50b37adca2da84156b3fa525537761c507bcaea8e",
+        "skill-development/vendor/lemo-opuscar/styles/pixel-rpg/style.json": "79e57f1bf9536dda3826519f4b09be75f6643e34abace9fcd98d056840721c6b",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/risograph",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜Risograph 孔版印刷",
+      "summary": "每个转折新增一块印版；两种油墨相交生成第三色并成为发现区域。",
+      "tags": {
+        "subjects": [
+          "套色版",
+          "双色叠印",
+          "交叠区域"
+        ],
+        "actions": [
+          "印版逐层叠加",
+          "双色相交成第三色",
+          "套色对齐"
+        ],
+        "relations": [
+          "版色与章节",
+          "两组数据与交集"
+        ],
+        "feelings": [],
+        "styles": [
+          "Print & Printmaking",
+          "Risograph 孔版印刷"
+        ],
+        "patterns": [
+          "risograph"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/risograph/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/risograph/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/risograph/STYLE.md": "c3d85c91a81b0afde091d964482749482adc66c12730afe124708f7b18b331a6",
+        "skill-development/vendor/lemo-opuscar/styles/risograph/style.json": "9fddc997a4daa93ff7fb696749d1143d35044412d78fd887558147d19b8f3759",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/rubber-hose",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜1930s 橡皮管卡通",
+      "summary": "场景整体随节拍呼吸和起舞；每一步都让道具成为对应的乐器。",
+      "tags": {
+        "subjects": [
+          "弹性角色",
+          "会动的场景",
+          "节拍道具"
+        ],
+        "actions": [
+          "场景整体呼吸",
+          "道具节拍演奏",
+          "角色弹性摆动"
+        ],
+        "relations": [
+          "角色与环境",
+          "动作与声音"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cartoon & Anime",
+          "1930s 橡皮管卡通"
+        ],
+        "patterns": [
+          "rubber-hose"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/rubber-hose/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/rubber-hose/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/rubber-hose/STYLE.md": "bf850f9cd22e68b2125fed00d1b9804e91479620b44420ba7ec50e570e472a94",
+        "skill-development/vendor/lemo-opuscar/styles/rubber-hose/style.json": "c23b23f1363450dd324e8c6ca14a4e980d61e570faae64d08fa57f63a2848fcf",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/satellite-briefing",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜卫星简报",
+      "summary": "地图被扫描条撕开露出地面；日期板逐张叠出时间环，距离线从A追到B并计数。",
+      "tags": {
+        "subjects": [
+          "地图",
+          "航拍照片",
+          "时间环",
+          "距离线"
+        ],
+        "actions": [
+          "地图撕开露地",
+          "时间环逐层叠出",
+          "距离线追踪计数"
+        ],
+        "relations": [
+          "地图与实景",
+          "时间与地点"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "卫星简报"
+        ],
+        "patterns": [
+          "satellite-briefing"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/satellite-briefing/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/satellite-briefing/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/satellite-briefing/STYLE.md": "39fec0c7fda13600de04f1a9631ca636dc8850429033c1f65bb6d3283ec2988d",
+        "skill-development/vendor/lemo-opuscar/styles/satellite-briefing/style.json": "43fb790ce6bc3257aeb5d8c2736c99fbd578b0a854935e864531379bed4368ae",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/scifi-toon",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜科幻情景喜剧卡通",
+      "summary": "每次跳跃换调色板和生物；两种反应并置制造冷静与慌张反差。",
+      "tags": {
+        "subjects": [
+          "科幻角色",
+          "平行世界",
+          "反差表情"
+        ],
+        "actions": [
+          "平行世界跳转",
+          "调色板随世界切换",
+          "双角色反应对照"
+        ],
+        "relations": [
+          "角色与世界",
+          "反应与情境"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cartoon & Anime",
+          "科幻情景喜剧卡通"
+        ],
+        "patterns": [
+          "scifi-toon"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/scifi-toon/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/scifi-toon/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/scifi-toon/STYLE.md": "9a720a57ce50dc554e9237e698a979cdf7311527e6e6a0dad803278dfe8ad2ce",
+        "skill-development/vendor/lemo-opuscar/styles/scifi-toon/style.json": "e8920bbceae36c8811e88f15ccb0cf8b04158c4b93d008320b2c4643d272cbf9",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/shadow-puppet",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜皮影戏",
+      "summary": "灯光数量驱动热度和色彩；物件拉近灯源时放大并失焦。",
+      "tags": {
+        "subjects": [
+          "灯幕",
+          "剪影",
+          "模糊前景"
+        ],
+        "actions": [
+          "灯光数量增减",
+          "剪影热度变化",
+          "物件近灯放大模糊"
+        ],
+        "relations": [
+          "光源与剪影",
+          "距离与尺度"
+        ],
+        "feelings": [],
+        "styles": [
+          "East Asian Traditions",
+          "皮影戏"
+        ],
+        "patterns": [
+          "shadow-puppet"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/shadow-puppet/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/shadow-puppet/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/shadow-puppet/STYLE.md": "8be075a8262d5a3deea9b05684d8a9abdc1e54c0d90649bf14609ecb4106c3af",
+        "skill-development/vendor/lemo-opuscar/styles/shadow-puppet/style.json": "de2e5662f81e12a95a2f6370bed8d706d8a4d8387a2715532f15e18bc9441e1f",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/silent-film",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜1920s 默片",
+      "summary": "道具触发下一个道具并离开画面，链条在一次长镜中传递；手在物件原位置合拢造成近失误。",
+      "tags": {
+        "subjects": [
+          "默片道具",
+          "连锁动作",
+          "近失误"
+        ],
+        "actions": [
+          "道具连锁触发",
+          "长镜链条传递",
+          "近失误停顿"
+        ],
+        "relations": [
+          "因果链条",
+          "动作与错位"
+        ],
+        "feelings": [],
+        "styles": [
+          "Cinema & Eras",
+          "1920s 默片"
+        ],
+        "patterns": [
+          "silent-film"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/silent-film/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/silent-film/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/silent-film/STYLE.md": "44633a4edd4ec6b84be809bd48b38503a75a71531112b3d28a52f27135012b20",
+        "skill-development/vendor/lemo-opuscar/styles/silent-film/style.json": "0afe1c8a86cb16bcea47782d43abd90ef206b8e9ab380102a2ef44c5943f29d0",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/silkscreen-poster",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜丝印旅行海报",
+      "summary": "事实按阅读顺序一色一拍印出；多色在一次推印中填满画面。",
+      "tags": {
+        "subjects": [
+          "丝网印刷",
+          "单色信息",
+          "分色喷泉"
+        ],
+        "actions": [
+          "单色逐拍印刷",
+          "多色同时套印",
+          "信息顺序落版"
+        ],
+        "relations": [
+          "事实与阅读顺序",
+          "颜色与层次"
+        ],
+        "feelings": [],
+        "styles": [
+          "Print & Printmaking",
+          "丝印旅行海报"
+        ],
+        "patterns": [
+          "silkscreen-poster"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/silkscreen-poster/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/silkscreen-poster/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/silkscreen-poster/STYLE.md": "a8b3792efb1476b78493f86a033221b27f60c1927463cc435f8816e4d9eda148",
+        "skill-development/vendor/lemo-opuscar/styles/silkscreen-poster/style.json": "1da0fc7bbb16158d7ef082d86238b95486fdd0a23c93e8ba63203a7428ba34f4",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/spy-titles",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜60s 间谍片头",
+      "summary": "地点由字母搭成建筑；字幕按节拍落下，鼓点对应切口。",
+      "tags": {
+        "subjects": [
+          "字母建筑",
+          "片名字幕",
+          "节拍名单"
+        ],
+        "actions": [
+          "字母搭建场景",
+          "字幕节拍落点",
+          "名单节奏切换"
+        ],
+        "relations": [
+          "文字与空间",
+          "字幕与节拍"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "60s 间谍片头"
+        ],
+        "patterns": [
+          "spy-titles"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/spy-titles/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/spy-titles/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/spy-titles/STYLE.md": "ea6e9e9073af43ef0bb860e368f60b16ec32a91668386115a142907d92cb1f75",
+        "skill-development/vendor/lemo-opuscar/styles/spy-titles/style.json": "229b04a3a23d83c29840c3e8ba8e077ed1586dde14c57ba635c54e7b807d1885",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/stained-glass",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜彩色玻璃窗",
+      "summary": "被照亮的窗格才运动，光离开时人物冻结；关键场景投到石地并随太阳拉长。",
+      "tags": {
+        "subjects": [
+          "彩色玻璃窗",
+          "光斑",
+          "石地投影"
+        ],
+        "actions": [
+          "窗格逐块点亮",
+          "人物随光冻结",
+          "玻璃投影拉长"
+        ],
+        "relations": [
+          "光与时间",
+          "窗格与场景"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "彩色玻璃窗"
+        ],
+        "patterns": [
+          "stained-glass"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/stained-glass/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/stained-glass/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/stained-glass/STYLE.md": "0f6551bd109a4127404068aa1e75f18f16b58c80b486c23480b3d193e597b060",
+        "skill-development/vendor/lemo-opuscar/styles/stained-glass/style.json": "f65be17f876377c074be18f641e9e003b5b1d8e3567bac59294318611e4c9b23",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/swiss-motion",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜瑞士动态排版",
+      "summary": "网格行列对应楼层、小时或年份；卡片到位即形成节拍并归入分组。",
+      "tags": {
+        "subjects": [
+          "网格",
+          "卡片",
+          "栏目数量"
+        ],
+        "actions": [
+          "网格分组归位",
+          "卡片吸附到格",
+          "数量映射行列"
+        ],
+        "relations": [
+          "网格与数量",
+          "卡片与分组"
+        ],
+        "feelings": [],
+        "styles": [
+          "Graphic & Type",
+          "瑞士动态排版"
+        ],
+        "patterns": [
+          "swiss-motion"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/swiss-motion/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/swiss-motion/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/swiss-motion/STYLE.md": "14ddeb6dc495e691a220497069a2ee4827d820f9ee7a3173de5846489ef41f57",
+        "skill-development/vendor/lemo-opuscar/styles/swiss-motion/style.json": "90019625917e8461bb2ed091cc7cd0cc7dc47ba8a32f8d9cc9ca3a39cae9ed5e",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/teardown",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜产品拆解",
+      "summary": "重复部件波浪式抬起；镜头进入层间空隙看隐藏面，引线末端落在具体部件。",
+      "tags": {
+        "subjects": [
+          "模块化部件",
+          "爆炸层",
+          "引线标注"
+        ],
+        "actions": [
+          "部件波浪抬起",
+          "层间空隙进入",
+          "引线追随标注"
+        ],
+        "relations": [
+          "整体与部件",
+          "部件与引线"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "产品拆解"
+        ],
+        "patterns": [
+          "teardown"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/teardown/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/teardown/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/teardown/STYLE.md": "90df05a02a3d33add58e0dd99bef19ca20ea16b10390b3c2350d8483106922ee",
+        "skill-development/vendor/lemo-opuscar/styles/teardown/style.json": "8c55836a46c932b455b87b513a66eb919be9bd2d390bc8669a06947dd349f6c3",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/telestrator",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜体育战术板",
+      "summary": "画面冻结后红圈和聚光标出重点；跟踪圈贴住脚点，计时器数到击中帧。",
+      "tags": {
+        "subjects": [
+          "冻结画面",
+          "红圈",
+          "跟踪点",
+          "计时器"
+        ],
+        "actions": [
+          "冻结画面标重点",
+          "红圈跟踪目标",
+          "帧数计时命中"
+        ],
+        "relations": [
+          "源画面与标注",
+          "事件与时间"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "体育战术板"
+        ],
+        "patterns": [
+          "telestrator"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/telestrator/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/telestrator/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/telestrator/STYLE.md": "7289027728dc5e1b6d095b7c7bc7806790bb579934c81682265c0c1b4897a3d0",
+        "skill-development/vendor/lemo-opuscar/styles/telestrator/style.json": "e9eb4d0796252b34b6eb5042f943258dcaeacf32e4ee8dc02b1c985cf99821ee",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/tilt-shift",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜移轴微缩",
+      "summary": "时间从高速坠回真实速度聚焦一个细节；清晰窄带滑动引导视线。",
+      "tags": {
+        "subjects": [
+          "高速人群",
+          "清晰窄带",
+          "单个动作"
+        ],
+        "actions": [
+          "速度骤降聚焦",
+          "清晰带滑移",
+          "局部动作突出"
+        ],
+        "relations": [
+          "局部与全景",
+          "速度与重点"
+        ],
+        "feelings": [],
+        "styles": [
+          "Materials & 3D",
+          "移轴微缩"
+        ],
+        "patterns": [
+          "tilt-shift"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/tilt-shift/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/tilt-shift/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/tilt-shift/STYLE.md": "131ae50c6bddd30922638cbd5f2fae5c047223360a3f6924b074b0db525a5c63",
+        "skill-development/vendor/lemo-opuscar/styles/tilt-shift/style.json": "a41aa18fd789273c049562d08f0d6e63ba8fbb8c95527c3fce212428b653ebe9",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/ukiyoe",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜浮世绘",
+      "summary": "同一主体在不同构图中移动位置讲述变化；手卷从右向左滑出下一景而不断切。",
+      "tags": {
+        "subjects": [
+          "浮世绘构图",
+          "同一主体",
+          "手卷"
+        ],
+        "actions": [
+          "主体位置变换",
+          "手卷连续平移",
+          "版画景别替换"
+        ],
+        "relations": [
+          "主体与构图",
+          "场景与时间"
+        ],
+        "feelings": [],
+        "styles": [
+          "East Asian Traditions",
+          "浮世绘"
+        ],
+        "patterns": [
+          "ukiyoe"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/ukiyoe/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/ukiyoe/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/ukiyoe/STYLE.md": "218c48a204f9034d1c2fb7f11698b4834f1faee1ca68c9e336f3d6ab992ff2e4",
+        "skill-development/vendor/lemo-opuscar/styles/ukiyoe/style.json": "58f9c8f2315fd7545f6804cb1bbc5c6bb9faaf46aea9f11de138fa39395964f0",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/urban-sketch",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜钢笔淡彩",
+      "summary": "钢笔按真实笔顺画出主体，水彩随后铺入；湿画前沿把事件染上页面。",
+      "tags": {
+        "subjects": [
+          "城市线稿",
+          "钢笔",
+          "湿画水彩"
+        ],
+        "actions": [
+          "线稿按笔顺绘制",
+          "水彩湿画铺开",
+          "颜色沿事件扩散"
+        ],
+        "relations": [
+          "线稿与色彩",
+          "事件与画面"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "钢笔淡彩"
+        ],
+        "patterns": [
+          "urban-sketch"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/urban-sketch/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/urban-sketch/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/urban-sketch/STYLE.md": "2baf1a19f31b06e55d66d62e4c3449c7a2686c689190976f3e3d0cbdce2faa9a",
+        "skill-development/vendor/lemo-opuscar/styles/urban-sketch/style.json": "0a7d9cfef5b650413a9d8ea4516bd8d56aa0ef9b1c10f2ce4afbf3604bc4f179",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/visual-investigation",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜视觉调查",
+      "summary": "冻结画面后红圈和放大镜锁定细节；文档、照片、视频按同一时刻填入同步网格。",
+      "tags": {
+        "subjects": [
+          "监控帧",
+          "红圈",
+          "放大镜",
+          "三栏证据"
+        ],
+        "actions": [
+          "冻结圈选放大",
+          "来源同步对齐",
+          "三栏证据填充"
+        ],
+        "relations": [
+          "来源与时间点",
+          "证据并列对照"
+        ],
+        "feelings": [],
+        "styles": [
+          "Edit & Documentary",
+          "视觉调查"
+        ],
+        "patterns": [
+          "visual-investigation"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/visual-investigation/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/visual-investigation/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/visual-investigation/STYLE.md": "9b39ebaa00c3d77ae544d7453e99b79caf4dfaae1d37798b1f995a5578aac30b",
+        "skill-development/vendor/lemo-opuscar/styles/visual-investigation/style.json": "4c07d9fdf3c14c7ceb375c65933b7de9fba4d5b1aef788a73ddbc43596e39d8b",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/watercolor",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜水彩笔刷",
+      "summary": "新对象随笔触逐步画入；高潮时整组对象在一秒内同时铺开。",
+      "tags": {
+        "subjects": [
+          "水彩笔触",
+          "纸面",
+          "群体对象"
+        ],
+        "actions": [
+          "笔触逐步显影",
+          "群体同时铺色",
+          "湿边扩散"
+        ],
+        "relations": [
+          "对象与笔触",
+          "个体与群体"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "水彩笔刷"
+        ],
+        "patterns": [
+          "watercolor"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/watercolor/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/watercolor/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/watercolor/STYLE.md": "662d57568408a7c82ef8f64980ca85798b8bb239df3dc3a6715283d7f4555ef0",
+        "skill-development/vendor/lemo-opuscar/styles/watercolor/style.json": "fe64241069de6aaf0173de56b6ff038ae03eb131ef96c799512a5efea7821b47",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/white-model",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜白模投影",
+      "summary": "室内灯灭后单灯照出第一层；满足条件的建筑被点亮，其余空缺勾勒边界，年代层逐年开启。",
+      "tags": {
+        "subjects": [
+          "建筑模型",
+          "灯具",
+          "时间层"
+        ],
+        "actions": [
+          "单灯揭示模型",
+          "条件筛选点亮",
+          "年代层逐级开启"
+        ],
+        "relations": [
+          "条件与空间",
+          "时间与建筑"
+        ],
+        "feelings": [],
+        "styles": [
+          "Evidence Films",
+          "白模投影"
+        ],
+        "patterns": [
+          "white-model"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "需要用户提供或授权的真实视频、照片、档案、数据或工程资料；不以代码示意替代事实材料。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/white-model/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/white-model/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/white-model/STYLE.md": "02b6423a69ac5a30322997ec9523bd6b6f776b7c8cf14f249eeb996b9d21e2c2",
+        "skill-development/vendor/lemo-opuscar/styles/white-model/style.json": "411b60987f3e61c827b8cf4ec3449acaa7514b2f6c19ad7ce723b9ded2ae9849",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/whiteboard",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜白板讲解",
+      "summary": "公式按说话顺序逐项写出；笔线引导镜头沿路径行进。",
+      "tags": {
+        "subjects": [
+          "白板",
+          "公式",
+          "路径线"
+        ],
+        "actions": [
+          "公式逐项书写",
+          "路径线引导镜头",
+          "笔迹连接步骤"
+        ],
+        "relations": [
+          "公式与解释",
+          "路径与过程"
+        ],
+        "feelings": [],
+        "styles": [
+          "Hand-drawn & Painting",
+          "白板讲解"
+        ],
+        "patterns": [
+          "whiteboard"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/whiteboard/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/whiteboard/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/whiteboard/STYLE.md": "19f66326257bcafb8aca18af3e209d1fee31d9e23902ce1708bbb606cbf4b718",
+        "skill-development/vendor/lemo-opuscar/styles/whiteboard/style.json": "d0037e21fb291faca08cd0f379d51f8a452bb73992165b713d7b229653648f5b",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
+      }
+    },
+    {
+      "candidate_id": "lemo-opuscar:lemo-opuscar/woodcut",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "Lemo｜木刻版画",
+      "summary": "放射刻线从一点向外显形；刻刀一刀一刀累积时间和体积。",
+      "tags": {
+        "subjects": [
+          "木刻刀痕",
+          "放射刻线",
+          "黑白版面"
+        ],
+        "actions": [
+          "放射刻线显形",
+          "刻刀逐刀累积",
+          "黑白版面压印"
+        ],
+        "relations": [
+          "刻线与光",
+          "过程与结果"
+        ],
+        "feelings": [],
+        "styles": [
+          "Print & Printmaking",
+          "木刻版画"
+        ],
+        "patterns": [
+          "woodcut"
+        ]
+      },
+      "editable_content": [
+        "主题与叙事结构",
+        "画面主体、场景与镜头节奏",
+        "中文标题、字幕与标注文本",
+        "合法输入素材与色彩强调规则"
+      ],
+      "limitations": [
+        "按该风格原生规则创作主题画面，并遵守其字体、素材与运动限制。",
+        "整屏无声 B-roll；不作为透明贴片；必须通过当前 Job 的真实像素、字幕可读性与全速播放检查。",
+        "本条登记代表可匹配的 Lemo 原生风格，不等于已对每个主题完成成片实证；具体成片资格以绑定后的媒体验收为准。"
+      ],
+      "evidence": [
+        "skill-development/vendor/lemo-opuscar/styles/woodcut/STYLE.md",
+        "skill-development/vendor/lemo-opuscar/styles/woodcut/style.json",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/lemo-opuscar/styles/woodcut/STYLE.md": "b96fda6eeac038137310cc0766d979c8d8a5f3ff6acd87bada5aa50d5136a6a0",
+        "skill-development/vendor/lemo-opuscar/styles/woodcut/style.json": "5143205fccfc7977a594f360ce1549630cd15c4a0df04873e9428fe352f152c4",
+        "skill-development/vendor/lemo-opuscar/plugin/skills/lemo-opuscar/SKILL.md": "9036c5fd58ac3c3acc30b9183ed3a415829755a59d66b259a2b13a9fde5dd7c4",
+        "skill-development/vendor/lemo-opuscar/AGENTS.md": "511015d34b8705ebd6d758ec6424be0dcb0eacc0f83283ffcc27460fccfd7d66",
+        "skill-development/vendor/lemo-opuscar/DIRECTOR.md": "3b8b0c40011a0cea796bb1afe6dae0f212115b57e2aa4c9a976b1994a923d564",
+        "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
+        "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
+        "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "4e761cb0796e51371dc0d0f00ca70be574d1345e188df1d6f9b88fffbb0d828d"
       }
     }
   ]

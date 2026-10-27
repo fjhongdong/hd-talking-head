@@ -19,32 +19,32 @@ SR = 24000
 def rate_of(L, default):
     r = L.get('rate')
     if r is None and 'speed' in L: r = float(L['speed'])
-    if isinstance(r, (int, float)): r = f'{round((float(r) - 1) * 100):+d}%'   # 数字当倍速
+    if isinstance(r, (int, float)): r = f'{round((float(r) - 1) * 100):+d}%'   # a number means a speed multiplier
     return r or default
 
 
 async def synth(text, voice, rate, pitch, path):
-    """下载到 path：先写 path.part，成功了才改名，所以 path 存在就一定是完整的（任何中断，包括 Ctrl-C，都不会留下半个文件）"""
+    """Download to path: write path.part first and rename only on success, so if path exists it is always complete (no interruption, Ctrl-C included, leaves half a file)"""
     import edge_tts
     part = path + '.part'
     last = None
     try:
-        for attempt in range(3):   # 偶发的网络抖动重试两次
+        for attempt in range(3):   # retry twice on occasional network hiccups
             try:
                 await edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(part)
                 if os.path.getsize(part) == 0: raise OSError('the service returned an empty file')
                 os.replace(part, path); return
             except Exception as e:
                 last = e
-                if type(e).__name__ == 'NoAudioReceived': break   # 声音名/文字不对，重试没用
+                if type(e).__name__ == 'NoAudioReceived': break   # wrong voice name/text; retrying won't help
                 await asyncio.sleep(1.5 * (attempt + 1))
         raise last
     finally:
-        if os.path.exists(part): os.remove(part)   # 失败、Ctrl-C 都清掉
+        if os.path.exists(part): os.remove(part)   # clean up on failure and on Ctrl-C
 
 
 def to_wav(mp3):
-    """解码成 24 kHz 单声道；文件坏了返回 None（调用者删掉缓存重下）"""
+    """Decode to 24 kHz mono; returns None if the file is damaged (the caller deletes the cache entry and downloads again)"""
     try:
         r = subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', mp3, '-ar', str(SR), '-ac', '1', '-f', 'wav', '-'], capture_output=True, check=True)
     except FileNotFoundError: sys.exit('tts_zh.py: ffmpeg is needed to decode the audio (install it and make sure it is on PATH)')
@@ -55,7 +55,7 @@ def to_wav(mp3):
 
 
 def plausible(decoded):
-    """缓存里的 mp3 解出来要像一句话：至少 0.15 秒且不是静音（半截文件常常"解码成功"但只剩一小段静音）"""
+    """A cached mp3 must decode to something like a sentence: at least 0.15 s and not silent (a half file often "decodes successfully" but leaves only a short stretch of silence)"""
     if decoded is None: return False
     a, sr = decoded; return len(a) >= 0.15 * sr and float(np.abs(a).max()) > 1e-3
 
@@ -74,7 +74,7 @@ def main():
     except ImportError: sys.exit('tts_zh.py: edge-tts is missing: install the voice tier: sh plugin/skills/lemo-opuscar/scripts/setup.sh deps voice')
     os.makedirs(os.path.join(a.out_dir, '.cache'), exist_ok=True); dur = {}
     for n in os.listdir(os.path.join(a.out_dir, '.cache')):
-        if n.endswith('.part'): os.remove(os.path.join(a.out_dir, '.cache', n))   # 上次被打断留下的半成品
+        if n.endswith('.part'): os.remove(os.path.join(a.out_dir, '.cache', n))   # partial file left by an interrupted previous run
     for L in lines:
         voice, rate, pitch, say = L.get('voice', a.voice), rate_of(L, a.rate), L.get('pitch', a.pitch), L.get('say', L['text'])
         key = hashlib.sha1(json.dumps([voice, rate, pitch, say], ensure_ascii=False).encode('utf-8')).hexdigest()[:16]
@@ -87,16 +87,16 @@ def main():
             except Exception as e:
                 if type(e).__name__ == 'NoAudioReceived':
                     sys.exit(f"tts_zh.py: no audio came back for line '{L['id']}'. Is the voice name '{voice}' valid (python -m edge_tts --list-voices) and the text speakable?")
-                if isinstance(e, ValueError):   # 参数本身不对（比如声音名不存在），根本没发请求
+                if isinstance(e, ValueError):   # the arguments themselves are wrong (e.g. the voice name doesn't exist); no request was ever sent
                     sys.exit(f"tts_zh.py: line '{L['id']}': {e}  (voices: python -m edge_tts --list-voices)")
                 print(f"tts_zh.py: could not reach Microsoft's speech service for line '{L['id']}': {type(e).__name__}: {str(e)[:200]}\n"
                       "  edge-tts needs a network connection (and can be blocked by a firewall/proxy). Offline alternative: tts.py with \"lang\": \"cmn\".", file=sys.stderr)
-                sys.exit(2)   # 退出码 2 = 网络问题；1 = 输入/配置有误
+                sys.exit(2)   # exit code 2 = network problem; 1 = bad input/configuration
             decoded = to_wav(mp3)
             if decoded is None: sys.exit(f"tts_zh.py: the audio Microsoft returned for line '{L['id']}' could not be decoded (ffmpeg); try again")
         y, sr = decoded
         nz = np.where(np.abs(y) > (np.abs(y).max() if len(y) else 0) * .02)[0]
-        if len(nz): y = y[max(0, nz[0] - int(.03 * sr)): nz[-1] + int(.10 * sr)]   # 去首尾静音；尾巴留长一点，免得吃掉句尾的余音
+        if len(nz): y = y[max(0, nz[0] - int(.03 * sr)): nz[-1] + int(.10 * sr)]   # trim leading/trailing silence; leave a slightly longer tail so the sentence's last ring isn't cut off
         else: print('warning: line', L['id'], 'is silent', file=sys.stderr)
         sf.write(os.path.join(a.out_dir, L['id'] + '.wav'), y, sr); dur[L['id']] = round(len(y) / sr, 3)
         print(L['id'], dur[L['id']], L['text'])

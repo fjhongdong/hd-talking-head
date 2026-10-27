@@ -1,10 +1,10 @@
-// 氛围件：天空、星、海面、粒子（萤火/浮尘/火星/雨）、体积光柱、火光闪烁
+// Atmosphere pieces: sky, stars, sea surface, particles (fireflies/dust/sparks/rain), volumetric light shafts, firelight flicker
 import * as THREE from 'three';
 import { h2, mulberry } from './px.js';
 
 export const flick = (t, s = 0) => 1 + .09 * Math.sin(t * 13.1 + s) + .06 * Math.sin(t * 23.7 + s * 2.1) + .05 * Math.sin(t * 7.3 + s * 3.3);
 
-// —— 天空穹顶（渐变 + 月亮光晕），不受雾影响 ——
+// —— Sky dome (gradient + moon halo), not affected by fog ——
 export function sky(o = {}) {
   const u = {
     top: { value: new THREE.Color(o.top ?? '#070b1c') }, mid: { value: new THREE.Color(o.mid ?? '#16254a') }, hor: { value: new THREE.Color(o.hor ?? '#3a5270') },
@@ -23,7 +23,7 @@ export function sky(o = {}) {
   return { mesh, u };
 }
 
-// —— 星星：方形像素点，闪烁 ——
+// —— Stars: square pixel dots, twinkling ——
 export function stars(n = 600, seed = 3, o = {}) {
   const R = mulberry(seed), pos = [], ph = [];
   for (let i = 0; i < n; i++) { const a = R() * Math.PI * 2, y = .08 + Math.pow(R(), .8) * .9, r = Math.sqrt(1 - y * y); pos.push(Math.cos(a) * r * 800, y * 800, Math.sin(a) * r * 800); ph.push(R() * 10, .4 + R() * R() * 1.6); }
@@ -36,7 +36,7 @@ export function stars(n = 600, seed = 3, o = {}) {
   const p = new THREE.Points(g, m); p.frustumCulled = false; p.renderOrder = -9; return p;
 }
 
-// —— 海面：像素化波纹 + 灯光倒影条 + 月光碎光 ——
+// —— Sea surface: pixelated ripples + streaks of reflected light + glints of moonlight ——
 export function sea(size = 600, o = {}) {
   const N = 8;
   const u = {
@@ -54,7 +54,7 @@ export function sea(size = 600, o = {}) {
       float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
       float bayer(vec2 p){ vec2 q = mod(floor(p), 4.); int x = int(q.x), y = int(q.y); int i = y*4+x; float B[16]; B[0]=0.;B[1]=8.;B[2]=2.;B[3]=10.;B[4]=12.;B[5]=4.;B[6]=14.;B[7]=6.;B[8]=3.;B[9]=11.;B[10]=1.;B[11]=9.;B[12]=15.;B[13]=7.;B[14]=13.;B[15]=5.; for(int k=0;k<16;k++) if(k==i) return (B[k]+.5)/16.; return .5; }
       void main(){
-        vec2 P = floor(vW.xz * ppm) / ppm;           // 像素量化
+        vec2 P = floor(vW.xz * ppm) / ppm;           // pixel quantisation
         vec2 G = floor(vW.xz * ppm);
         float amp = 1. - calm * .7;
         float w1 = n(P * vec2(.35, 1.4) + vec2(t * .25, t * .06)), w2 = n(P * vec2(.8, 2.6) - vec2(t * .18, -t * .1) + 13.);
@@ -62,7 +62,7 @@ export function sea(size = 600, o = {}) {
         float dist = length(vW.xz - camPos.xz);
         vec3 col = mix(shallow, deep, smoothstep(10., 120., dist));
         float band = smoothstep(.62, .7, w) * amp; col = mix(col, crest, band * .55 * (1. - smoothstep(60., 220., dist)));
-        // 灯光倒影：沿"光源→相机"方向拉长的竖条，被波纹打碎
+        // reflected light: vertical streaks stretched along the "light → camera" direction, broken up by the ripples
         vec3 add = vec3(0.);
         for (int i = 0; i < ${N}; i++) { if (float(i) >= nL) break;
           vec2 L = lp[i].xz, C = camPos.xz; vec2 dir = normalize(C - L); vec2 d = vW.xz - L; float along = dot(d, dir); float perp = abs(d.x * dir.y - d.y * dir.x);
@@ -70,7 +70,7 @@ export function sea(size = 600, o = {}) {
           float br = step(.45 - .12 * sin(t * 2. + G.y * .7), fract(w * 5. + G.y * .13 + t * .6));
           add += lc[i] * s * (.25 + .75 * br);
         }
-        // 碎光闪点
+        // glint sparkles
         float sp = step(.985, h(G + floor(t * 6.))) * step(.55, w) * amp * (1. - smoothstep(20., 90., dist));
         col += add * bright + crest * sp * 1.2 * bright;
         float fog = 1. - exp(-fogDensity * fogDensity * vFog * vFog);
@@ -82,7 +82,7 @@ export function sea(size = 600, o = {}) {
   return { mesh, u, setLights(arr) { arr.slice(0, N).forEach((L, i) => { u.lp.value[i].copy(L.p); u.lc.value[i].set(L.c.r * L.i, L.c.g * L.i, L.c.b * L.i); }); u.nL.value = Math.min(N, arr.length); } };
 }
 
-// —— 粒子：CPU 按 t 确定性计算位置 → Points（方形像素点，可柔边） ——
+// —— Particles: CPU computes positions deterministically from t → Points (square pixel dots, optional soft edge) ——
 export function particles(n, fn, o = {}) {
   const g = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), a = new Float32Array(n), sz = new Float32Array(n), col = new Float32Array(n * 3);
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('a', new THREE.BufferAttribute(a, 1)); g.setAttribute('sz', new THREE.BufferAttribute(sz, 1)); g.setAttribute('col', new THREE.BufferAttribute(col, 3));
@@ -100,7 +100,7 @@ export function particles(n, fn, o = {}) {
   return p;
 }
 
-// —— 雨：线段，按风向倾斜 ——
+// —— Rain: line segments, slanted by the wind ——
 export function rain(n, box, o = {}) {
   const g = new THREE.BufferGeometry(), pos = new Float32Array(n * 6); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const m = new THREE.LineBasicMaterial({ color: o.color ?? '#9fb4d0', transparent: true, opacity: o.opacity ?? .35, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -116,7 +116,7 @@ export function rain(n, box, o = {}) {
   return L;
 }
 
-// —— 体积光柱：加色的锥/板，沿长度渐隐，边缘柔，浮尘噪声 ——
+// —— Volumetric light shafts: additive cones/planes, fading along the length, soft edges, dust noise ——
 export function shaft(len, r0, r1, col, o = {}) {
   const geo = new THREE.CylinderGeometry(r0, r1, len, 24, 1, true); geo.translate(0, -len / 2, 0);
   const m = new THREE.ShaderMaterial({
@@ -130,7 +130,7 @@ export function shaft(len, r0, r1, col, o = {}) {
   return new THREE.Mesh(geo, m);
 }
 
-// —— 光柱卡片：沿轴线、始终把宽面朝向相机（轴向公告板）；正对相机时淡出，由光晕接力 ——
+// —— Light-shaft cards: along the axis, always turning the wide face toward the camera (axial billboard); fade out when facing the camera head-on, the halo takes over ——
 export function beamCard(len, w0, w1, col, o = {}) {
   const geo = new THREE.BufferGeometry(), N = 16, pos = [], uv = [], idx = [];
   for (let i = 0; i <= N; i++) { const u = i / N, w = w0 + (w1 - w0) * u; pos.push(u * len, -w / 2, 0, u * len, w / 2, 0); uv.push(u, 0, u, 1); if (i < N) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); } }
@@ -145,7 +145,7 @@ export function beamCard(len, w0, w1, col, o = {}) {
   });
   const mesh = new THREE.Mesh(geo, m); mesh.frustumCulled = false;
   const D = new THREE.Vector3(), V = new THREE.Vector3(), Nn = new THREE.Vector3(), B = new THREE.Vector3(), M4 = new THREE.Matrix4();
-  // origin: 世界坐标；dir: 单位方向；返回侧向系数（1=侧看，0=正对）
+  // origin: world coordinates; dir: unit direction; returns the side factor (1 = seen from the side, 0 = head-on)
   mesh.userData.aim = (origin, dir, cam) => {
     D.copy(dir).normalize(); V.copy(cam.position).sub(origin); const vl = V.length(); V.divideScalar(vl);
     Nn.copy(V).addScaledVector(D, -V.dot(D)); if (Nn.lengthSq() < 1e-8) Nn.set(0, 1, 0); Nn.normalize(); B.crossVectors(Nn, D).normalize();

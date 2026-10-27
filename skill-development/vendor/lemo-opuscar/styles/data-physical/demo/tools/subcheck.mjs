@@ -1,5 +1,5 @@
-// 字幕单行检查：在页面里用真实字体量宽（中文 Noto Sans SC 500 36px，英文 Inter 400 27px，nowrap），每行都必须窄于安全宽度
-// usage（库根目录）：node <demo>/tools/subcheck.mjs <demo>     有任何一行过宽就 exit 1
+// Subtitle one-line check: measure widths in the page with the real fonts (Chinese Noto Sans SC 500 36px, English Inter 400 27px, nowrap); every line must be narrower than the safe width
+// usage (from the library root): node <demo>/tools/subcheck.mjs <demo>     exit 1 if any line is too wide
 import path from 'path';
 const LIB = process.env.LIB || path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../..');
 const { openDemo, closeServer } = await import(path.join(LIB, 'core/render/page.mjs'));

@@ -1,5 +1,5 @@
-# 配乐 + 旁白 + 合成音效（纸片马里奥式）→ mix.wav
-# 用法（仓库根）：.venv/bin/python styles/paper-popup/demo/mix.py [输出路径，默认 demo/mix.wav]
+# Score + narration + synthesized sound effects (Paper Mario style) → mix.wav
+# Usage (repo root): .venv/bin/python styles/paper-popup/demo/mix.py [output path, default demo/mix.wav]
 import json, re, os, sys, numpy as np, soundfile as sf
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'mix.wav'
@@ -39,7 +39,7 @@ def put(buf, t, x):
     i = int(t * SR); j = min(N, i + len(x))
     if j > i and i >= 0: buf[i:j] += x[:j - i]
 
-# ---------- 音效库 ----------
+# ---------- Sound-effect library ----------
 def bell(f, d=.6, g=1., bright=1.):
     t = tt(d); x = sum(np.sin(2 * np.pi * f * k * t) * np.exp(-t * (4 + k * 3)) / k ** (1.6 / bright) for k in (1, 2, 3, 4.2))
     return x * ex(t, .002, d) * g
@@ -141,7 +141,7 @@ for e in EV:
         else: f = rng.choice([C5, C5 * 1.12, C5 * 1.26, C5 * 1.5]); x = blip(f, .07, .05, 'tri') * 1.4
         putg(sfx, t, st(x))
 
-# ---------- 环境声 ----------
+# ---------- Ambience ----------
 def bed(t0, t1, fn, fi=1.5, fo=1.5):
     x = fn(t1 - t0); put(amb, t0, fade(x, fi, fo))
 def room(d): return np.stack([lp(pink(int(d * SR)), 400), lp(pink(int(d * SR)), 400)], 1) * .004
@@ -177,11 +177,11 @@ bed(74.4, 87.0, waves, 1, 1.5)
 bed(89.6, 104.0, room, 1, .5)
 bed(104.8, DUR, lambda d: room(d) + ticks(d) * .9, 1.5, 3)
 
-# ---------- 配乐 ----------
+# ---------- Score ----------
 mus, sr = sf.read('music/score.wav'); assert sr == SR
 mus = np.pad(mus[:N], ((0, max(0, N - len(mus))), (0, 0)))
 
-# ---------- 旁白 ----------
+# ---------- Narration ----------
 dur = json.load(open('voices/dur.json'))
 vo_times = [(m[0], float(m[1])) for m in re.findall(r"\['(v\d\d)', ([\d.]+),", open('story.js').read())]
 vo = np.zeros(N); duck = np.zeros(N)
@@ -211,7 +211,7 @@ pk = lambda x: round(20 * np.log10(np.abs(x).max() + 1e-12), 1)
 print('peaks mus', pk(mus), 'vo', pk(vo2), 'sfx', pk(sfx), 'amb', pk(amb)); print('music', round(dbfs(mus), 1), 'vo(active)', round(dbfs(vo2[act]), 1), 'sfx', round(dbfs(sfx), 1), 'amb', round(dbfs(amb), 1))
 mix = mix / np.abs(mix).max() * .89
 sf.write(OUT, mix.astype(np.float32), SR, subtype='FLOAT')
-# 诊断：各类音效峰值相对同时刻配乐 RMS
+# Diagnostics: peak of each sound-effect type relative to the score RMS at the same moment
 if __name__ == '__main__':
     import collections
     rep = collections.defaultdict(list)

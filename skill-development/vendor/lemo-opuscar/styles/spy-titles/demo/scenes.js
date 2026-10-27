@@ -1,19 +1,19 @@
-// 片中各场景的"世界"绘制（世界坐标 + 摄像机）。角色表演、时间线在 film.js
+// "World" drawing for each scene in the film (world coords + camera). Character performance and the timeline live in film.js
 import { g, C, S, W, H, clear, piece, rough, roughC, rectP, circP, ellP, arcP, label } from './paper.js';
 import { layout, drawLine } from './glyph.js';
 import { agentSide, courierSide, key, keyholeP } from './chars.js';
 import { drawTitle, titleBox, drawGlyph, CUT_ANG, GLYPH } from './title.js';
 import { hash, clamp, lerp } from '/core/lib.js';
 
-// ── 摄像机：世界点 (cx,cy) 放在画面中心，缩放 s ──
+// ── camera: world point (cx,cy) at the centre of the frame, scale s ──
 export const CAM = { cx: 960, cy: 540, s: 1 };
 export function cam(cx = 960, cy = 540, s = 1) { CAM.cx = cx; CAM.cy = cy; CAM.s = s; g.setTransform(s, 0, 0, s, W / 2 - cx * s, H / 2 - cy * s); }
 export function view(m = 60) { const hw = W / 2 / CAM.s + m, hh = H / 2 / CAM.s + m; return { x0: CAM.cx - hw, x1: CAM.cx + hw, y0: CAM.cy - hh, y1: CAM.cy + hh }; }
-export const DIR = [Math.sin(CUT_ANG), -Math.cos(CUT_ANG)];   // 斜切线方向（向右上）
-export const NRM = [Math.cos(CUT_ANG), Math.sin(CUT_ANG)];    // 法线（向右下）
+export const DIR = [Math.sin(CUT_ANG), -Math.cos(CUT_ANG)];   // direction of the diagonal cut (towards upper right)
+export const NRM = [Math.cos(CUT_ANG), Math.sin(CUT_ANG)];    // normal (towards lower right)
 
-// ═══════════ 开场：黑底红钥匙孔（= 片名 I 的大特写） ═══════════
-export const KH_SCREEN = { x: 960, y: 430, h: 560 };          // 开场与结尾共用的钥匙孔屏幕位置/高度
+// ═══════════ Opening: red keyhole on black (= extreme close-up of the title's I) ═══════════
+export const KH_SCREEN = { x: 960, y: 430, h: 560 };          // keyhole screen position/height shared by the opening and the ending
 export function keyholeShot(grow = 1, splitOpen = 0) {
   clear(C.ink);
   const k = KH_SCREEN.h / 154 * grow;
@@ -21,10 +21,10 @@ export function keyholeShot(grow = 1, splitOpen = 0) {
   if (splitOpen <= 0) { draw(); return; }
 }
 
-// ── 斜线网格（North by Northwest 语法）：A 族平行于切线，B 族浅斜线 ──
+// ── diagonal grid (North by Northwest grammar): family A parallel to the cut line, family B shallow diagonals ──
 export const GRID = { ang2: -20 * Math.PI / 180, dA: 170, dB: 150 };
 export function gridField(prog, opt = {}) {
-  // prog：0..1 网格从切线向两侧长出来的进度
+  // prog: 0..1 progress of the grid growing out from the cut line to both sides
   clear(opt.bg || C.red);
   const cx = KH_SCREEN.x, cy = KH_SCREEN.y + 90;
   const nA = 12, L = 2600;
@@ -41,21 +41,21 @@ export function gridField(prog, opt = {}) {
     piece(rough([[-600, oy - 600 * s2 * -1 * 0 + (-600 - cx) * s2 - w], [2600, oy + (2600 - cx) * s2 - w], [2600, oy + (2600 - cx) * s2 + w], [-600, oy + (-600 - cx) * s2 + w]], 950 + j, .8, 40), opt.line || C.ink, { gap: 0, shadow: false });
   }
 }
-// B 族第 j 条线上 x 处的 y
+// y at x on line j of family B
 export function gridBY(j, x) { const cx = KH_SCREEN.x, cy = KH_SCREEN.y + 90; return cy + j * GRID.dB + (x - cx) * Math.sin(GRID.ang2); }
 
-// ═══════════ 丝绒垫 + 钥匙 ═══════════
+// ═══════════ Velvet cushion + key ═══════════
 export function velvet(o = {}) {
   clear(C.paper);
-  // 一束纸剪的光（淡）
+  // a beam of paper-cut light (faint)
   piece(rough([[760, -20], [1160, -20], [1500, 900], [420, 900]], 960, 2, 30), 'rgba(255,248,226,.55)', { gap: 0, shadow: false });
   const cx = 960, cy = 610, w = 980, h = 430;
-  // 垫子（圆角 + 扣钉簇绒）
+  // cushion (rounded corners + button tufting)
   const pts = []; for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); pts.push([cx + Math.sign(c) * Math.pow(Math.abs(c), .35) * w / 2, cy + Math.sign(s) * Math.pow(Math.abs(s), .35) * h / 2]); }
   piece(roughC('cushion', () => pts, 961, 2.2, 16), C.red, { gap: 0, shA: .38, shB: 10, shX: 6, shY: 10 });
   for (let i = -4; i <= 4; i++) for (let j = -1; j <= 1; j++) {
     const bx = cx + i * 105 + (j & 1) * 52, by = cy + j * 120; if (Math.abs(i * 105) > 440) continue;
-    // 簇绒折线（暗红细缝）
+    // tufting creases (thin dark-red slits)
     g.save(); g.strokeStyle = C.redD; g.lineWidth = 2.2; g.beginPath(); g.moveTo(bx - 50, by - 60); g.lineTo(bx, by); g.lineTo(bx + 50, by - 60); g.stroke(); g.restore();
     piece(circP(bx, by, 7, 12), C.redD, { gap: 0, shadow: false });
   }
@@ -63,14 +63,14 @@ export function velvet(o = {}) {
   if (o.key) key(cx - 20, cy - 10, 1.9, -.55);
 }
 
-// ═══════════ 特工登场：纸白底 + 大红斜条 ═══════════
+// ═══════════ Agent entrance: paper-white ground + big red diagonal band ═══════════
 export function introSet() {
   clear(C.paper);
   piece(roughC('introSlash', () => [[1180, -40], [1520, -40], [820, 1120], [480, 1120]], 970, 2, 20), C.red, { gap: 0, shadow: false });
   piece(roughC('introFloor', () => rectP(-40, 880, W + 80, 260), 971, 1.4, 14), C.ink, { gap: 0, shadow: false });
 }
 
-// ═══════════ 机场 ═══════════
+// ═══════════ Airport ═══════════
 export const AIR = { floor: 880, size: 900 };
 let airLay = null;
 export function airLayout() { if (!airLay) { airLay = layout('STARRING', AIR.size, { track: .2 }); } return airLay; }
@@ -79,11 +79,11 @@ export function airport(o) {
   clear(C.mus);
   const v = view(120), lay = airLayout();
   if (o.plane) o.plane();
-  // 地面 + 跑道长破折号
+  // ground + long runway dashes
   piece(rough(rectP(v.x0, AIR.floor, v.x1 - v.x0, 900), 610, 1.4, 14), C.ink, { gap: 0, shadow: false });
   const d0 = Math.floor(v.x0 / 260) - 1;
   for (let i = d0; i < d0 + (v.x1 - v.x0) / 260 + 3; i++) piece(roughC('dash' + (i & 3), () => [[0, 0], [150, -2], [152, 14], [2, 16]], 620 + (i & 3), 1, 10).map(([a, b]) => [a + i * 260, b + 980]), C.paper, { gap: 0, shadow: false });
-  // 悬挂翻牌指示牌 THE AGENT（在 N G 上方）
+  // hanging split-flap sign THE AGENT (above N G)
   const sx = lay.width - 720;
   piece([[sx + 60, -400], [sx + 66, -400], [sx + 66, 60], [sx + 60, 60]], C.ink, { gap: 0 });
   piece([[sx + 454, -400], [sx + 460, -400], [sx + 460, 60], [sx + 454, 60]], C.ink, { gap: 0 });
@@ -108,7 +108,7 @@ export function plane(x, y, s, r) {
   g.restore();
 }
 
-// ═══════════ 列车 ═══════════
+// ═══════════ Train ═══════════
 export const TR = { rail: 858, base: 808, size: 380, speed: 900 };
 let trLay = null;
 export function trainLayout() {
@@ -121,7 +121,7 @@ export function trainLayout() {
 export function train(o) {
   clear(C.red);
   const t = o.t || 0, v = view(200), scroll = t * TR.speed;
-  // 远山（屏幕空间视差）
+  // distant hills (screen-space parallax)
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
   const ss = CAM.s, sy = (y) => H / 2 + (y - CAM.cy) * ss * .6;
   for (let k = 0; k < 2; k++) {
@@ -132,7 +132,7 @@ export function train(o) {
     }
   }
   g.restore();
-  // 电线杆（暗红，背景层）+ 电线
+  // telegraph poles (dark red, background layer) + wires
   const P0 = Math.floor((v.x0 + scroll) / 520) - 1;
   for (let i = P0; i < P0 + (v.x1 - v.x0) / 520 + 3; i++) {
     const x = i * 520 - scroll;
@@ -142,12 +142,12 @@ export function train(o) {
     g.moveTo(x - 50, 283); g.quadraticCurveTo(x + 210, 330, x + 470, 283); g.moveTo(x + 50, 280); g.quadraticCurveTo(x + 310, 326, x + 570, 280);
     g.stroke(); g.restore();
   }
-  // 地面 + 铁轨 + 枕木
+  // ground + rails + sleepers
   piece(rough(rectP(v.x0, TR.rail + 6, v.x1 - v.x0, 900), 720, 1.4, 14), C.ink, { gap: 0, shadow: false });
   piece(rough(rectP(v.x0, TR.rail - 2, v.x1 - v.x0, 9), 721, .8, 14), C.paper, { gap: 0, shadow: false });
   const K0 = Math.floor((v.x0 + scroll) / 96) - 1;
   for (let i = K0; i < K0 + (v.x1 - v.x0) / 96 + 3; i++) { const x = i * 96 - scroll; piece([[x, TR.rail + 16], [x + 44, TR.rail + 16], [x + 42, TR.rail + 24], [x + 2, TR.rail + 24]], C.redD, { gap: 0, shadow: false }); }
-  // 车厢 = 单词
+  // carriages = words
   const { cars } = trainLayout();
   const bob = (i) => (Math.floor(t * 12) % 2) * (i % 2 ? 1 : -1) * 1.5;
   cars.forEach((c, i) => {
@@ -164,7 +164,7 @@ export function train(o) {
     }
     drawLine(c.L, cx, by + 2, { col: C.ink, seed: 50 + i * 9, jit: .8, amp: 1.8, shA: .35 });
   });
-  // 火车头
+  // locomotive
   const last = cars[cars.length - 1], lx = last.x1 + 60, by = TR.base + bob(9);
   piece(roughC('loco', () => [[0, -250], [120, -250], [240, -40], [260, 30], [0, 30]], 740, 1.4, 10).map(([a, b]) => [a + lx, b + by]), C.ink);
   piece(roughC('beam', () => [[0, 0], [900, -140], [900, 110]], 741, 2, 20).map(([a, b]) => [a + lx + 200, b + by - 70]), 'rgba(226,165,42,.5)', { gap: 0, shadow: false });
@@ -173,7 +173,7 @@ export function train(o) {
   for (const wx of [lx + 60, lx + 170]) { piece(circP(wx, by + 34, 24, 22), C.ink, { gap: 2 }); g.save(); g.translate(wx, by + 34); g.rotate(-scroll / 24); piece([[-18, -2.5], [18, -2.5], [18, 2.5], [-18, 2.5]], C.red, { gap: 0, shadow: false }); g.restore(); }
   if (o.front) o.front();
 }
-// 车轮大特写（→ 轮盘的图形匹配）
+// wheel extreme close-up (→ graphic match to the roulette wheel)
 export const RW = { x: 960, y: 470, r: 170 };
 export function wheelShot(t) {
   clear(C.red);
@@ -184,12 +184,12 @@ export function wheelShot(t) {
   for (let i = 0; i < 6; i++) { g.save(); g.rotate(i * Math.PI / 3); piece([[-6, 26], [6, 26], [5, RW.r - 22], [-5, RW.r - 22]], C.red, { gap: 0, shadow: false }); g.restore(); }
   piece(circP(0, 0, 26, 20), C.mus, { gap: 0, shadow: false });
   g.restore();
-  // 连杆
+  // connecting rod
   const a = -Math.floor(t * 12) / 12 * 9, px = RW.x + Math.cos(a) * RW.r * .6, py = RW.y + Math.sin(a) * RW.r * .6;
   piece(rough([[px - 8, py - 10], [px + 700, py - 14], [px + 700, py + 14], [px - 8, py + 10]], 753, 1, 14), C.ink, { gap: 3 });
 }
 
-// ═══════════ 赌场：and THE COURIER，O = 轮盘 ═══════════
+// ═══════════ Casino: and THE COURIER, O = roulette wheel ═══════════
 let caLay = null;
 export function casinoLayout() {
   if (caLay) return caLay;
@@ -200,19 +200,19 @@ export function casinoLayout() {
 }
 export function casino(o) {
   clear(C.red);
-  // 桌面边框（纸白细线）+ 下注格
+  // table border (thin paper-white line) + betting grid
   const cl = casinoLayout();
   g.save(); g.strokeStyle = 'rgba(239,228,201,.8)'; g.lineWidth = 3; g.strokeRect(70, 60, W - 140, H - 120); g.restore();
   for (let i = 0; i < 12; i++) {
     const x = 300 + i * 110, y = 810;
     piece(roughC('cell' + i, () => rectP(0, 0, 100, 150), 1000 + i, 1, 10).map(([a, b]) => [a + x, b + y]), i % 2 ? C.ink : C.redD, { gap: 0, shA: .2 });
   }
-  // and（小）+ THE C URIER（大）
+  // and (small) + THE C URIER (large)
   const aL = layout('and', 120, { track: .05 });
   drawLine(aL, cl.xA + 8, cl.base - cl.size * .74 - 26, { col: C.paper, seed: 71, jit: 1, amp: 1.2, shA: .3 });
   drawLine(cl.A, cl.xA, cl.base, { col: C.paper, seed: 72, jit: .8, amp: 1.8, shA: .35 });
   drawLine(cl.Bw, cl.xB, cl.base, { col: C.paper, seed: 73, jit: .8, amp: 1.8, shA: .35 });
-  // 轮盘
+  // roulette wheel
   roulette(RW.x, RW.y, RW.r, o.spin || 0, o.ball || 0, o.ballR);
   if (o.front) o.front();
 }
@@ -236,7 +236,7 @@ export function roulette(x, y, r, spin, ball, ballR) {
   piece(circP(x + Math.cos(ball) * br, y + Math.sin(ball) * br, 11, 14), C.paper, { gap: 2, gapCol: C.ink });
 }
 
-// ═══════════ 瞳孔 ═══════════
+// ═══════════ Pupil ═══════════
 export function pupilShot(pr) {
   clear(C.ink);
   const x = RW.x, y = RW.y;
@@ -249,24 +249,24 @@ export function pupilShot(pr) {
   piece(circP(x, y, pr, 30), C.ink, { gap: 0, shadow: false });
   piece(ellP(x - RW.r * .35, y - RW.r * .4, 22, 14, 16, -.5), 'rgba(239,228,201,.9)', { gap: 0, shadow: false });
   g.restore();
-  // 帽檐的阴影压在上方
+  // hat-brim shadow pressing down from above
   piece(roughC('brimBand', () => [[-40, -40], [W + 40, -40], [W + 40, 150], [-40, 230]], 1101, 2, 20), C.ink, { gap: 0 });
 }
 
-// ═══════════ 屋顶 ═══════════
+// ═══════════ Rooftops ═══════════
 export const RF = { ledge: 720, end: 2500 };
 export function rooftop(o) {
   clear(C.ink);
   const v = view(200);
-  // 月亮（屏幕空间固定 = 远景）
+  // moon (fixed in screen space = far distance)
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
   const mr = o.moonR ?? 330, mx = o.moonX ?? 960, my = o.moonY ?? 430;
   piece(roughC('moon', () => circP(0, 0, 1, 90), 1200, .004, .06).map(([a, b]) => [mx + a * mr, my + b * mr]), C.paper, { gap: 0, shadow: false });
-  // 远处楼群（屏幕空间，慢视差）
+  // distant buildings (screen space, slow parallax)
   const off = -(CAM.cx * .25) % 2400;
   for (let r = -1; r < 2; r++) piece(roughC('farCity', () => { const p = [[0, 1200]]; let x = 0; let i = 0; while (x < 2400) { const hgt = 520 + hash(i * 3.3) * 260; p.push([x, 1200 - 0], [x, hgt]); x += 80 + hash(i * 7.1) * 140; p.push([x, hgt]); i++; } p.push([2400, 1200]); return p.map(([a, b]) => [a, b]); }, 1201, 1.4, 14).map(([a, b]) => [a + off + r * 2400, b + 120]), C.inkL, { gap: 0, shadow: false });
   g.restore();
-  // 近处屋顶（红）+ 黄窗
+  // near rooftops (red) + yellow windows
   const B0 = Math.floor(v.x0 / 300) - 1;
   for (let i = B0; i < B0 + (v.x1 - v.x0) / 300 + 3; i++) {
     const x = i * 300, top = RF.ledge + 30 + hash(i * 1.7) * 120, w = 260 + hash(i * 2.9) * 60;
@@ -274,12 +274,12 @@ export function rooftop(o) {
     piece(roughC('bld' + i, () => rectP(0, 0, w, 900), 1210 + i, 1.4, 12).map(([a, b]) => [a + x, b + top]), C.red, { gap: 3 });
     for (let k = 0; k < 6; k++) { if (hash(i * 13 + k) < .45) continue; const wx = x + 30 + (k % 3) * 75, wy = top + 50 + Math.floor(k / 3) * 110; piece([[wx, wy], [wx + 40, wy], [wx + 40, wy + 60], [wx, wy + 60]], C.mus, { gap: 0, shadow: false }); }
   }
-  // 长破折号 = 屋檐
+  // long dashes = eaves
   piece(roughC('ledge', () => [[-2000, 0], [RF.end, -3], [RF.end + 2, 24], [-2000, 26]], 1220, 1.6, 14).map(([a, b]) => [a, b + RF.ledge]), C.paper, { gap: 3 });
   if (o.front) o.front();
 }
 
-// ═══════════ 片名 ═══════════
+// ═══════════ Title ═══════════
 export const TT = { H: 250 };
 export function titleGeom() {
   const { w, h, L } = titleBox(TT.H);

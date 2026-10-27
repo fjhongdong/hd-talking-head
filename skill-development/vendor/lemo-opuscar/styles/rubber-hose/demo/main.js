@@ -1,4 +1,4 @@
-// main.js — 入口：?mode=sheet|kitchen|test 出设定表；默认 = 成片
+// main.js — entry point: ?mode=sheet|kitchen|test renders model sheets; default = the film
 import * as T from './toon.js';
 import { P, mug, cube } from './chars.js';
 const Q = new URLSearchParams(location.search), MODE = Q.get('mode') || 'film';
@@ -40,13 +40,13 @@ if (MODE === 'film') {
     const sh = ST.shotAt(t);
     FN[sh[2]](t);
     if (!nosub) S.subtitles(t);
-    if (Q.get('poster') === '1') {   // 海报：片名压在画面上方
-      const { fatTitle } = await_ui;   // 片名压在下方一块黑牌上（上方留给角色亮相）
+    if (Q.get('poster') === '1') {   // poster: title over the picture
+      const { fatTitle } = await_ui;   // title sits on a black plaque at the bottom (the top is left for the characters' pose)
       sg.save(); sg.fillStyle = 'rgba(12,11,10,.9)'; sg.strokeStyle = '#F1EEE6'; sg.lineWidth = 3; sg.beginPath(); sg.roundRect(560, 880, 800, 170, 26); sg.fill(); sg.beginPath(); sg.roundRect(572, 892, 776, 146, 20); sg.stroke(); sg.restore();
       fatTitle(sg, 'Coffee Cup Chase', 960, 945, 76);
       sg.save(); sg.fillStyle = '#F1EEE6'; sg.font = '28px Limelight'; sg.textAlign = 'center'; sg.fillText('A  RUBBER  HOSE  CARTOON', 960, 1018); sg.restore();
     }
-    const f = Math.round(t * 24), jump = cutAt.some(c => c > 0 && Math.abs(Math.round(c * 24) - f) === 0) ? 3 : 0;   // 剪接处片门跳一下
+    const f = Math.round(t * 24), jump = cutAt.some(c => c > 0 && Math.abs(Math.round(c * 24) - f) === 0) ? 3 : 0;   // gate jumps at each cut
     post(F, t, { jump });
   };
   window.DUR = ST.DUR;

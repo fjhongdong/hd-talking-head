@@ -1,13 +1,13 @@
-"""自行车车铃（拨片敲金属小钟）：bell(n_rings=2, sr=48000, seed=0, v=1.0) → 单声道 float32
+"""Bicycle bell (a lever striking a small metal bell): bell(n_rings=2, sr=48000, seed=0, v=1.0) → mono float32
 
-一次"铃"= 拨片连续敲 ~5 下（~18 Hz）形成"叮铃铃"；n_rings 次之间隔 0.34 s。
-钟的分音：2100 Hz / 3400 Hz 两个非谐和主分音（各带一个相差几 Hz 的孪生分音 → 金属颤动），
-加 5230 Hz 弱分音；每次敲击有短促的金属瞬态（高通噪声 1.5 ms）。
+One "ring" = the lever strikes ~5 times in a row (~18 Hz), giving a "ring-a-ling"; n_rings rings spaced 0.34 s apart.
+Bell partials: two inharmonic main partials at 2100 Hz / 3400 Hz (each with a twin partial a few Hz away → metallic shimmer),
+plus a weak 5230 Hz partial; each strike has a short metallic transient (high-passed noise, 1.5 ms).
 """
 import numpy as np
 from scipy.signal import butter, sosfilt
 
-PARTIALS = [  # (Hz, 幅度, 衰减 tau s)
+PARTIALS = [  # (Hz, amplitude, decay tau s)
     (2100, 1.00, .55), (2106.5, .55, .60),
     (3400, .62, .32), (3409, .30, .28),
     (5230, .16, .12), (1045, .10, .25),
@@ -42,7 +42,7 @@ def bell(n_rings=2, sr=48000, seed=0, v=1.0, single=False):
     for t0, a in hits:
         s = strike(sr, 1.2, a, rng)
         i = int(max(0, t0) * sr)
-        # 后一次敲击部分阻尼前一次（拨片压住钟）
+        # each strike partly damps the previous one (the lever presses on the bell)
         out[i:] *= .82
         out[i:i + len(s)] += s[:len(out) - i]
     out = sosfilt(butter(2, 700, 'high', fs=sr, output='sos'), out)

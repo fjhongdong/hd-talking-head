@@ -1,4 +1,4 @@
-// 字幕：手写体 Caveat，小而安静；从左到右"写"出来，淡出；背后一圈纸色光晕避开墨线
+// Subtitles: handwritten Caveat, small and quiet; "written" out left to right, then fade; a paper-coloured halo behind keeps them clear of the ink line
 import { clamp, ss } from '/core/lib.js';
 const INK = 'rgba(29,26,23,';
 function halo(ctx, text, x, y, w) { ctx.strokeStyle = 'rgba(244,239,228,0.9)'; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.filter = 'blur(3px)'; ctx.strokeText(text, x, y); ctx.filter = 'none'; }
@@ -17,13 +17,13 @@ export function subtitle(ctx, text, t0, t1, t, W, H, opt = {}) {
   ctx.restore();
 }
 
-// 片名：单线连笔的 Sacramento，从左到右写出，写在纸的空白处（画面右上，风筝在中间）
+// Title: single-line connected script Sacramento, written out left to right on the blank paper (top right of frame, kite in the middle)
 export function title(ctx, T, t, W, H) {
   if (t < T.t0 || t > T.t1 + 0.7) return;
   const y = 190;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.font = '76px Sacramento'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  const w = ctx.measureText(T.text).width, x = W - 90 - w;   // 写在右上角的空白纸上
+  const w = ctx.measureText(T.text).width, x = W - 90 - w;   // written on the blank paper at top right
   const write = clamp((t - T.t0) / 1.6), fade = 1 - clamp((t - T.t1) / 0.7);
   ctx.globalAlpha = fade;
   ctx.save(); ctx.beginPath(); ctx.rect(x - 30, y - 96, (w + 60) * write, 170); ctx.clip();
@@ -33,7 +33,7 @@ export function title(ctx, T, t, W, H) {
   ctx.restore();
 }
 
-// 片尾卡：写在右侧空白纸上，孩子的新线还在左边画
+// end card: written on the blank paper on the right while the child's new line is still drawing on the left
 export function endCard(ctx, E, t, W, H) {
   if (t < E.t0) return;
   const x = 1330, y = 470;

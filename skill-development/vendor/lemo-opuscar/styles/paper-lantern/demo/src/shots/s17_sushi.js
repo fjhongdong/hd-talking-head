@@ -1,4 +1,4 @@
-// S17 · 九百多年前的中秋：苏轼临江举杯望月；“但愿人长久，千里共婵娟”逐列写出
+// S17 · A Mid-Autumn more than nine hundred years ago: Su Shi by the river raising his cup to the moon; “但愿人长久，千里共婵娟” ("may we all live long, and share the moon's beauty a thousand miles apart") written out column by column
 import * as THREE from 'three';
 import { sheet, skyPanel, moon, setMoon, vtext, text } from '../paper.js';
 import { karst, xiangyun, waves, waterTop, willow, reeds, ridge, FONT } from '../art.js';
@@ -6,7 +6,7 @@ import { sushi, spline, SUSHI_SHOULDER } from '../people.js';
 import { stage, aim } from '../stage.js';
 import { seg, ss, eio, eo, ei, lerp, clamp, mulberry, TAU } from '../lib.js';
 
-export function cloudCurtain(S, z) {   // 近景祥云幕（转场用）：左右两片，前缘是一串云头，面上刻旋涡
+export function cloudCurtain(S, z) {   // foreground auspicious-cloud curtain (for transitions): two panels left and right, the leading edge a string of cloud heads, swirls carved into the face
   const mk = side => S.add(sheet({ U: S.U, w: .5, h: .4, z, trans: .7, shadow: false, recv: false, draw: x => {
     const R = mulberry(side > 0 ? 3 : 7), edge = side > 0 ? -.03 : .03;
     x.fillStyle = '#cfc4dc'; x.fillRect(side > 0 ? edge : -.25, -.2, .25 - Math.abs(edge) + .0, .4);
@@ -30,10 +30,10 @@ export function build(E) {
     x.fillStyle = '#22325e'; waterTop(x, { x0: -.3, x1: .3, base: -.045, amp: .001, len: .05 });
     x.save(); x.beginPath(); x.rect(-.3, -.2, .6, .15); x.clip(); waves(x, { x0: -.3, x1: .3, y0: -.052, y1: -.2, r: .006, fill: '#22325e', line: '#34487a', lw: .0006 }); x.restore();
     trail(x, '#e9cf96');
-    x.fillStyle = '#1a2850'; x.beginPath(); x.moveTo(.0, -.07); x.lineTo(.06, -.07); x.lineTo(.05, -.078); x.lineTo(.01, -.078); x.fill(); x.fillRect(.028, -.07, .002, .03);   // 小舟
+    x.fillStyle = '#1a2850'; x.beginPath(); x.moveTo(.0, -.07); x.lineTo(.06, -.07); x.lineTo(.05, -.078); x.lineTo(.01, -.078); x.fill(); x.fillRect(.028, -.07, .002, .03);   // small boat
   }, glowDraw: g => trail(g, '#fff') }));
   function trail(x, col) { x.fillStyle = col; const R = mulberry(5); for (let i = 0; i < 34; i++) { const w = .022 * (.3 + R() * .8); x.beginPath(); x.ellipse(MN[0] + (R() - .5) * .01, -.053 - i * .0026, w / 2, .0004, 0, 0, TAU); x.fill(); } }
-  // 岸、柳、苏轼
+  // Riverbank, willows, Su Shi
   S.add(sheet({ U, w: .6, h: .36, z: -.055, trans: .12, draw: x => {
     x.fillStyle = '#141e40';
     x.beginPath(); x.moveTo(-.3, -.2); x.lineTo(-.3, -.06); x.quadraticCurveTo(-.2, -.055, -.12, -.075); x.quadraticCurveTo(-.08, -.085, -.04, -.095); x.lineTo(-.02, -.2); x.fill();
@@ -42,17 +42,17 @@ export function build(E) {
   const SX = -.078, SY = -.07, SS = .09;
   const su = S.add(sheet({ U, w: .2, h: .2, x: SX, y: SY + .06, z: -.05, trans: .06, draw: x => { x.fillStyle = '#10183a'; x.translate(0, -.06); sushi(x, SS); } }));
   const sh = [SX + SUSHI_SHOULDER[0] * SS, SY + SUSHI_SHOULDER[1] * SS];
-  const armS = S.add(sheet({ U, w: .08, h: .08, x: sh[0], y: sh[1], z: -.0495, trans: .06, draw: x => {   // 抬臂举杯 + 下垂的宽袖
+  const armS = S.add(sheet({ U, w: .08, h: .08, x: sh[0], y: sh[1], z: -.0495, trans: .06, draw: x => {   // arm raised holding the cup + hanging wide sleeve
     const k = SS * 2; x.fillStyle = '#10183a';
     spline(x, k, [[-.012, .025], [.04, .03], [.09, .075], [.112, .088, 1], [.12, .07], [.1, .045], [.095, .0], [.085, -.07], [.06, -.13, 1], [.03, -.09], [.0, -.05], [-.02, -.02]]);
     x.fill();
     x.beginPath(); x.ellipse(.118 * k, .086 * k, .014 * k, .01 * k, .9, 0, TAU); x.fill();
-    x.beginPath(); x.moveTo(.112 * k, .1 * k); x.lineTo(.142 * k, .1 * k); x.lineTo(.136 * k, .12 * k); x.lineTo(.118 * k, .12 * k); x.closePath(); x.fill(); x.fillRect(.124 * k, .09 * k, .006 * k, .012 * k);   // 酒杯
+    x.beginPath(); x.moveTo(.112 * k, .1 * k); x.lineTo(.142 * k, .1 * k); x.lineTo(.136 * k, .12 * k); x.lineTo(.118 * k, .12 * k); x.closePath(); x.fill(); x.fillRect(.124 * k, .09 * k, .006 * k, .012 * k);   // wine cup
   } }));
-  // 江边的石头
+  // Rocks by the river
   S.add(sheet({ U, w: .2, h: .06, x: SX, y: SY - .004, z: -.051, trans: .06, draw: x => { x.fillStyle = '#10183a'; spline(x, 1, [[-.06, -.03, 1], [-.05, -.004], [-.025, .004], [.01, .003], [.04, -.002], [.07, -.03, 1]]); x.fill(); } }));
   S.add(sheet({ U, w: .62, h: .38, z: -.015, trans: .03, draw: x => { x.fillStyle = '#070c1e'; x.strokeStyle = '#070c1e'; ridge(x, { x0: -.31, x1: .31, base: -.15, amp: .008, seed: 4, freq: 12 }); reeds(x, { x0: -.31, x1: -.1, by: -.155, h: .05, n: 36, seed: 2 }); } }));
-  // 诗句：两列金字，逐列写出；朱印“东坡”
+  // Poem lines: two columns of gold characters, written out column by column; vermilion seal “东坡” (Dongpo)
   const cols = [['但愿人长久', .165, E.cue('L23') - .05], ['千里共婵娟', .132, E.word('L23', 5) - .05]];
   const CS = .021, CH = CS * 1.06 * 5 + CS * .5;
   const poem = cols.map(([s, cx, t0]) => {
@@ -64,7 +64,7 @@ export function build(E) {
   return {
     S,
     update(t) {
-      // 祥云幕拉开
+      // auspicious-cloud curtain parts
       const op = eio(seg(t, .0, 1.3)); curtain[0].position.x = .035 + op * .35; curtain[1].position.x = -.035 - op * .35; curtain.forEach(c => c.visible = op < .99);
       armS.rotation.z = lerp(-.35, 0, eio(seg(t, .6, 2.6))) + .012 * Math.sin(t * 1.1);
       poem.forEach(m => { const k = Math.max(.001, eo(seg(t, m.userData.t0, m.userData.t0 + 1.25))); m.scale.y = k; m.material.map.repeat.y = k; m.material.map.offset.y = 1 - k; m.visible = t > m.userData.t0 - .02; });

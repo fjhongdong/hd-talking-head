@@ -1,4 +1,4 @@
-// 暖白纸：程序化纸纹（云斑 + 纤维 + 颗粒），锚定在纸面上随镜头移动缩放
+// Warm white paper: procedural paper texture (cloudy mottling + fibres + grain), anchored to the paper surface so it moves and scales with the camera
 import { mulberry } from '/core/lib.js';
 
 function tile(size, seed, fn) {
@@ -10,20 +10,20 @@ function noiseLayer(g, S, rnd, cells, amp) {
   const im = sg.createImageData(cells, cells);
   for (let i = 0; i < cells * cells; i++) { const v = 128 + (rnd() - .5) * 2 * amp; im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = v; im.data[i * 4 + 3] = 255; }
   sg.putImageData(im, 0, 0);
-  // 平铺无缝：3×3 画再取中间
+  // seamless tiling: draw 3×3 and take the middle tile
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) g.drawImage(s, x * S, y * S, S, S);
 }
 
 export function makePaper() {
-  // 大尺度：云斑（中性灰 128 为不变）
+  // large scale: cloudy mottling (neutral grey 128 = no change)
   const mottle = tile(512, 11, (g, S, rnd) => {
     g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, S, S);
     g.globalAlpha = 1; noiseLayer(g, S, rnd, 8, 26);
     g.globalAlpha = .55; noiseLayer(g, S, rnd, 24, 22);
     g.globalAlpha = 1;
   });
-  // 细尺度：纤维 + 颗粒
+  // fine scale: fibres + grain
   const fiber = tile(1024, 23, (g, S, rnd) => {
     g.fillStyle = 'rgb(128,128,128)'; g.fillRect(0, 0, S, S);
     g.globalAlpha = .6; noiseLayer(g, S, rnd, 160, 26); g.globalAlpha = 1;
@@ -44,7 +44,7 @@ export function makePaper() {
   return { mottle, fiber };
 }
 
-// cam: {cx, cy, k, r}；世界 → 屏幕：R(-r)·(p - c)·k + 中心
+// cam: {cx, cy, k, r}; world → screen: R(-r)·(p - c)·k + centre
 export function drawPaper(ctx, paper, cam, W, H) {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -53,7 +53,7 @@ export function drawPaper(ctx, paper, cam, W, H) {
     if (alpha <= 0.01) return;
     const pat = ctx.createPattern(img, 'repeat');
     const s = worldSize / img.width * cam.k, c = Math.cos(-cam.r), sn = Math.sin(-cam.r);
-    // 世界点 p 映射：screen = R·(p - c)·k + W/2；图案坐标 u = p / (worldSize/img.width)
+    // world point p maps to: screen = R·(p - c)·k + W/2; pattern coordinate u = p / (worldSize/img.width)
     const m = new DOMMatrix([c * s, sn * s, -sn * s, c * s, 0, 0]);
     const o = [-cam.cx * cam.k, -cam.cy * cam.k];
     m.e = W / 2 + c * o[0] - sn * o[1]; m.f = H / 2 + sn * o[0] + c * o[1];
@@ -61,7 +61,7 @@ export function drawPaper(ctx, paper, cam, W, H) {
     ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = alpha; ctx.fillStyle = pat; ctx.fillRect(0, 0, W, H);
   };
   layer(paper.mottle, 1400, .55);
-  // 纤维层随缩放淡出（拉远时太细会闪）
+  // the fibre layer fades out with zoom (too fine when zoomed out, it would flicker)
   const fz = Math.min(1, Math.max(0, (cam.k - 0.7) / 1.6));
   layer(paper.fiber, 260, .85 * fz);
   layer(paper.fiber, 1100, .6 * (1 - fz) + .25);
@@ -74,7 +74,7 @@ export function vignette(ctx, W, H, amt = .13) {
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
 }
 
-// 纸齿：稀疏的亮点和短纤维，用 screen 叠在墨上——墨线里透出一点纸的颗粒
+// paper tooth: sparse bright specks and short fibres, composited over the ink with screen, so a little paper grain shows through the ink line
 export function makeTooth() {
   const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
   const rnd = mulberry(77); g.fillStyle = '#000'; g.fillRect(0, 0, 512, 512);

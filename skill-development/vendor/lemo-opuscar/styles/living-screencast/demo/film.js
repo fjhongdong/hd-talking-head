@@ -1,15 +1,15 @@
-// 《Clawd Moves In》时间线：VO 挂词、镜头、Clawd 表演、光标、界面状态、音效事件
+// "Clawd Moves In" timeline: VO word anchors, camera, Clawd's performance, cursor, UI state, sound events
 import { clamp, lerp, seg, ss, eio, eo, ei, back, hash } from '../../../core/lib.js';
 import { WIN, TERM, LOGO } from './ui.js';
 import * as CW from './clawd.js';
 
-export const BPM = 100, B = 60 / BPM;            // 0.6 s 一拍；段落切点都落在拍上
+export const BPM = 100, B = 60 / BPM;            // 0.6 s per beat; section cuts all land on beats
 export const DUR = 59.4;
 export const VO = { v01: 2.3, v02: 3.5, v03: 6.2, v04: 10.9, v05: 13.5, v06: 16.1, v07: 20.3, v08: 22.9, v09: 28.1, v10: 30.5, v11: 32.8,
   v12: 36.5, v13: 38.2, v14: 43.0, v15: 45.8, v16: 50.8, v17: 52.42 };
 const LINES = {}; let WORDS = {};
 const nrm = s => s.toLowerCase().replace(/[^a-z0-9@]/g, '');
-// 某句第 n 个匹配词的开始时刻（whisper 时间戳；首词 -0.6 为补静音假象，按 0 算）
+// start time of the n-th matching word in a line (whisper timestamps; a first word at -0.6 is an artefact of the padded silence, treated as 0)
 export const W = (id, word, n = 0) => { const ws = WORDS[id] || []; let k = 0;
   for (const [w, a] of ws) if (nrm(w) === nrm(word) && k++ === n) return VO[id] + Math.max(0, a);
   throw new Error(`word ${word} not in ${id}`); };
@@ -17,11 +17,11 @@ export const WE = (id, word, n = 0) => { const ws = WORDS[id] || []; let k = 0;
   for (const [w, , b] of ws) if (nrm(w) === nrm(word) && k++ === n) return VO[id] + b;
   throw new Error(`word ${word} not in ${id}`); };
 
-// ───────── 事件（音效/配乐 cue）
+// ───────── events (sound-effect / score cues)
 export const EV = [];
 const ev = (t, type, o = {}) => EV.push({ t: +t.toFixed(3), type, ...o });
 
-// ───────── 打字：人手节奏（确定性抖动），返回 i→时刻
+// ───────── typing: human-hand rhythm (deterministic jitter), returns i→time
 function typing(t0, text, cps = 14, seed = 1, kind = 'key') {
   const T = []; let t = t0;
   for (let i = 0; i < text.length; i++) {
@@ -33,7 +33,7 @@ function typing(t0, text, cps = 14, seed = 1, kind = 'key') {
 }
 const typed = (T, text, t) => { let n = 0; while (n < T.length && T[n] <= t) n++; return text.slice(0, n); };
 
-// ───────── 镜头：一镜到底的"录屏软件"镜头，move 可重叠（后者从前者的当前值出发，连续）
+// ───────── camera: a single-take "screen-recorder" camera; moves may overlap (a later move starts from the earlier one's current value, continuously)
 const EASE = { eio, ss, eo, whip: x => { x = clamp(x); return x < .5 ? 16 * x ** 5 : 1 - (-2 * x + 2) ** 5 / 2; },
   spring: x => { x = clamp(x); return 1 - Math.exp(-6 * x) * Math.cos(x * 9.5) * (1 - x) - (x >= 1 ? 0 : 0); } };
 const CAM0 = [960, 540, 1.5], MOVES = [];
@@ -42,11 +42,11 @@ export function camAt(t) {
   let v = CAM0.slice(); v[2] = Math.log(v[2]);
   for (const m of MOVES) { if (t <= m.t0) break; const p = EASE[m.e]((t - m.t0) / m.d);
     v = [lerp(v[0], m.to[0], p), lerp(v[1], m.to[1], p), lerp(v[2], Math.log(m.to[2]), p)]; }
-  // 极轻的漂移，像手持触控板时的微动（录屏自动跟随也会这样）
+  // very slight drift, like the micro-movement of a hand on a trackpad (screen-recorder auto-follow does this too)
   return [v[0] + Math.sin(t * .7) * 1.2, v[1] + Math.sin(t * .53 + 1) * .9, Math.exp(v[2])];
 }
 
-// ───────── 演员：Clawd
+// ───────── actor: Clawd
 class Actor {
   constructor(px = 7) { this.px = px; this.segs = []; this.jumps = []; this.fx = []; }
   add(s) { this.segs.push(s); return this; }
@@ -55,7 +55,7 @@ class Actor {
   jump(t0, t1, from, to, h = 120, o = {}) { this.jumps.push({ t0, t1 }); ev(t0 - .02, 'jump', { d: t1 - t0 }); ev(t1, 'land', { v: o.big ? 1 : .6 }); return this.add({ k: 'jump', t0, t1, from, to, h, ...o }); }
   hide(t0, t1) { return this.add({ k: 'hide', t0, t1 }); }
   seg(t) { let s = null; for (const x of this.segs) { if (x.t0 <= t && t < x.t1) return x; if (x.t0 <= t) s = x; } return s; }
-  // 当前脚底位置与姿态
+  // current foot position and pose
   eval(t, A, ctx) {
     const s = this.seg(t); if (!s || s.k === 'hide') return null;
     const px = s.px || this.px; let pos, legs = 'stand', flip = s.flip || false, sq = 0, rot = 0, arms = 'down', eyes = 'n';
@@ -64,21 +64,21 @@ class Actor {
     if (s.k === 'walk') { const a = P(s.from), b = P(s.to); if (!a || !b) return null; const p = (s.ease || ss)(seg(t, s.t0, s.t1));
       pos = { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p) }; legs = Math.floor(t * 9) % 2 ? 'walkA' : 'walkB'; flip = b.x < a.x; }
     if (s.k === 'jump') { const a = P(s.from), b = P(s.to); if (!a || !b) return null; const p = seg(t, s.t0, s.t1);
-      const ap = Math.min(a.y, b.y) - s.h; // 顶点高度：抛物线过 a、b，顶点 ap
+      const ap = Math.min(a.y, b.y) - s.h; // apex height: parabola through a and b with apex ap
       const x = lerp(a.x, b.x, p);
-      // 以 u∈[0,1] 求 y：二次贝塞尔控制点反推，使最高点≈ap
+      // solve y for u∈[0,1]: back-solve the quadratic Bézier control point so the peak ≈ ap
       const cy = 2 * ap - (a.y + b.y) / 2; const y = (1 - p) ** 2 * a.y + 2 * (1 - p) * p * cy + p * p * b.y;
       pos = { x, y }; legs = 'tuck'; flip = b.x < a.x - 2 ? true : b.x > a.x + 2 ? false : flip;
       sq = p < .5 ? -.22 * (1 - p * 2) : -.12 * (p * 2 - 1); if (s.flipRot) rot = p * Math.PI * 2 * (b.x < a.x ? -1 : 1); arms = 'up'; }
     if (!pos) return null;
-    // 起跳前蓄力、落地压扁
+    // wind-up before the jump, squash on landing
     for (const j of this.jumps) {
       if (t >= j.t0 - .14 && t < j.t0) sq = Math.max(sq, .28 * ss(seg(t, j.t0 - .14, j.t0)));
       if (t >= j.t1 && t < j.t1 + .22) { const k = seg(t, j.t1, j.t1 + .22); sq = .34 * (1 - k) * Math.cos(k * 7); }
     }
-    // 站立时随拍轻点（和配乐同步呼吸）
+    // light bob on the beat while standing (breathes in sync with the score)
     if (s.k === 'stand' && !s.still) { const bp = ((t % B) + B) % B; if (bp < .12) sq += .07 * Math.sin(bp / .12 * Math.PI); }
-    // 眨眼
+    // blink
     const bl = Math.floor(t / 2.9), bt = t - bl * 2.9 - hash(bl * 3.7 + this.px) * 2;
     if (bt > 0 && bt < .1) eyes = 'blink';
     if (s.eyes) { const e = typeof s.eyes === 'function' ? s.eyes(t, A, ctx) : s.eyes; if (e && !(eyes === 'blink' && (e === 'n' || e === 'l' || e === 'r'))) eyes = e; }
@@ -90,7 +90,7 @@ class Actor {
   }
 }
 
-// ───────── 光标
+// ───────── cursor
 class Cursor {
   constructor() { this.moves = []; this.clicks = []; this.vis = []; }
   show(t0, t1) { this.vis.push([t0, t1]); return this; }
@@ -113,19 +113,19 @@ class Cursor {
   }
 }
 
-// ───────── 锚点快捷
-// 元素暂时不在时沿用上一次位置（逐帧顺序渲染）
+// ───────── anchor shortcuts
+// when an element is temporarily absent, reuse its last position (frames render sequentially)
 const at = (key, fx = .5, fy = 0, dx = 0, dy = 0) => { let last = null; return A => { const p = A(key, fx, fy); if (p) last = { x: p.x + dx, y: p.y + dy }; return last; }; };
 const pt = (x, y) => () => ({ x, y });
 
-// ───────── 构建时间线
+// ───────── build the timeline
 export const SUBS = [], T = {};
-let C, C2, CUR;          // 主 Clawd、分身、光标
-let TY = {};             // 打字时刻表
+let C, C2, CUR;          // main Clawd, clone, cursor
+let TY = {};             // typing time table
 export function build(words) {
   WORDS = words; EV.length = 0; MOVES.length = 0;
   C = new Actor(7); C2 = new Actor(6); CUR = new Cursor();
-  // 字幕：{} 内为强调
+  // subtitles: text inside {} is emphasis
   const cap = { v01: 'Meet {Clawd}.', v02: 'It used to live in your terminal.', v03: 'Now it lives right inside the {Claude app}.', v04: 'Just say what you want, in plain words.',
     v05: 'Point at a file with the {@} sign,', v06: 'and Claude reads your project {before} it touches a thing.', v07: 'Not sure yet? Switch to {Plan} mode.',
     v08: 'You get a clear plan, and nothing changes until you say go.', v09: 'Every edit shows up as a {diff}.', v10: 'Click any line, leave a note,', v11: 'and Claude {revises} it.',
@@ -133,18 +133,18 @@ export function build(words) {
   const dur = words.__dur;
   for (const [id, t] of Object.entries(VO)) { ev(t, 'vo', { id }); if (cap[id]) SUBS.push({ id, t0: t - .05, t1: t + dur[id] + .25, text: cap[id] }); }
 
-  // ═════ A. 冷开场：终端 → Clawd 化身 → 跳进 Claude 应用（0–10.2）
+  // ═════ A. cold open: terminal → Clawd incarnates → jumps into the Claude app (0–10.2)
   TY.term = typing(.45, 'claude', 9, 3, 'tkey'); ev(1.35, 'tenter');
   T.logo = [1.55, 1.7, 1.85]; T.logo.forEach((x, i) => ev(x, 'blip', { n: i }));
   T.blink = W('v01', 'Claude') + .05; ev(T.blink, 'blink');
   T.shiver = W('v02', 'terminal') - .2; T.morph0 = WE('v02', 'terminal') - .05; T.morph1 = T.morph0 + .55; ev(T.morph0, 'morph');
   T.land0 = T.morph1 + .22;
   cam(0, 2.2, [900, 520, 1.62], 'ss');
-  cam(2.2, 2.6, [720, 500, 2.5], 'eio');                    // 推到 logo
-  cam(T.morph0 - .1, .8, [700, 440, 2.05], 'eio');           // 跟随化身上浮
+  cam(2.2, 2.6, [720, 500, 2.5], 'eio');                    // push in to the logo
+  cam(T.morph0 - .1, .8, [700, 440, 2.05], 'eio');           // follow the incarnation as it floats up
   T.win0 = W('v03', 'inside') - .1; T.win1 = T.win0 + .75; ev(T.win0, 'winopen');
-  cam(W('v03', 'now') + .1, 1.5, [960, 540, 1.0], 'eio');    // 拉出，看到桌面与窗口
-  T.jump0 = 7.62; T.land1 = 8.4;                              // 8.4 = 第 14 拍，重拍落地
+  cam(W('v03', 'now') + .1, 1.5, [960, 540, 1.0], 'eio');    // pull out to reveal desktop and window
+  T.jump0 = 7.62; T.land1 = 8.4;                              // 8.4 = beat 14, lands on the downbeat
   ev(T.land1, 'hit');
   T.title = 8.18;
   cam(8.4, 1.6, [960, 530, 1.05], 'ss');
@@ -157,7 +157,7 @@ export function build(words) {
 
   // ═════ B. 01 Just say it（10.2–19.2）
   T.wipe1 = 10.2;
-  cam(10.4, .1, [830, 830, 1.62], 'eio');                    // 在转场遮挡下换机位
+  cam(10.4, .1, [830, 830, 1.62], 'eio');                    // change camera position under cover of the transition
   T.click1 = 11.25; CUR.show(10.95, 11.7).move(10.95, 10.95, pt(1500, 1020)).move(10.95, 11.2, at('pb', .3, .45)).click(T.click1);
   const p1 = 'Add a dark mode toggle to ', p2 = 'Hea';
   TY.p1 = typing(11.45, p1, 15, 5); T.atKey = W('v05', 'at', 1) - .02; ev(T.atKey, 'key', { v: 1 }); ev(T.atKey + .06, 'pop');
@@ -175,7 +175,7 @@ export function build(words) {
    .jump(T.atPick + .02, T.atPick + .3, at('atpop', .82, 0, 0, 0), at('caret', 0, 0, 60, 0), 20)
    .stand(T.atPick + .3, T.send, at('caret', 0, 0, 60, 0), { eyes: 'r' })
    .stand(T.send, T.files + .1, at('umsg', .82, 0), { still: true, eyes: 'u' });
-  // 文件树里逐行奔读（4× 速度）
+  // runs down the file tree line by line (4× speed)
   const rows = ['App', 'Header', 'Timer', 'theme', 'main', 'pkg']; T.rows = [];
   let tj = T.files + .1, from = at('umsg', .82, 0);
   rows.forEach((r, i) => { const to = at('f-' + r, .56, 0), d = i === 0 ? .42 : .26; C.jump(tj, tj + d, from, to, i === 0 ? 110 : 26); T.rows.push(tj + d);
@@ -206,7 +206,7 @@ export function build(words) {
    .stand(T.menu + .45, T.menuX + .02, at('menu', .72, 0), { eyes: 'd' })
    .jump(T.menuX + .02, T.menuX + .3, at('menu', .72, 0), at('pb', .3, 0), 30)
    .stand(T.menuX + .3, T.plan + .1, at('pb', .3, 0), { eyes: 'u', arms: 'tuck' });
-  // 写计划：沿每条的文字末端走（像素铅笔）
+  // writing the plan: walks along the end of each item's text (pixel pencil)
   C.jump(T.plan + .1, T.items[0] - .02, at('pb', .3, 0), at('pl-0', 0, 0, 6, 0), 160, { px: 4 });
   T.items.forEach((ti, i) => { C.walk(ti, ti + .42, at('pl-' + i, 0, 0, 6, 0), at('pl-' + i, 1, 0, 30, 0), { px: 4, pencil: true, ease: x => x, eyes: 'd' });
     if (i < 3) C.jump(ti + .42, T.items[i + 1], at('pl-' + i, 1, 0, 30, 0), at('pl-' + (i + 1), 0, 0, 6, 0), 16, { px: 4 }); });
@@ -261,7 +261,7 @@ export function build(words) {
    .jump(T.stomp - .3, T.stomp, at('toggle', .5, 0, 0, -28), at('toggle', .5, 0), 50, { px: 5, big: true })
    .stand(T.stomp, 43.15, at('toggle', .5, 0), { px: 5, eyes: t => t < T.stomp + .5 ? 'wide' : 'happy', arms: t => t > T.stomp + .9 ? 'up' : 'down' });
 
-  // ═════ F. 并行会话（43–49.2）
+  // ═════ F. parallel sessions (43–49.2)
   T.paneX = 43.2; ev(T.paneX, 'whoosh', { d: -1 });
   T.cmdN = W('v14', 'start') - .4; ev(T.cmdN, 'key', { v: 1 }); ev(T.cmdN + .05, 'pop');
   T.split = 45.0; ev(T.split - .1, 'split'); ev(T.split + .15, 'mitosis');
@@ -279,7 +279,7 @@ export function build(words) {
    .walk(T.split + .15, T.split + .8, at('pb', .5, 0), at('term-2', .7, 0), { eyes: 'r' })
    .stand(T.split + .8, 49.4, at('term-2', .7, 0), { flip: true, eyes: t => t < T.side ? 'd' : t < T.side + .9 ? 'l' : 'happy', arms: t => t > T.side && t < T.side + .9 ? 'wave' : 'down' });
 
-  // ═════ G. 片尾（49.2–59.4）
+  // ═════ G. ending (49.2–59.4)
   T.out = 49.3; ev(T.out, 'whoosh', { d: 0 });
   T.meet = 50.25; ev(T.meet, 'merge2');
   C.jump(49.4, T.meet, at('ci-1', .6, 0), pt(960, 470), 160, { px: 6 })
@@ -293,22 +293,22 @@ export function build(words) {
   T.light = T.w[3]; ev(T.light + .04, 'lighton');
   CH.forEach(([t0]) => ev(t0, 'wipe'));
   T.card = T.light + 1.2; T.fade = DUR - .6;
-  cam(T.light + .3, DUR - T.light, [960, 560, 1.06], 'ss');   // 片尾极慢推近，让静帧也在呼吸
+  cam(T.light + .3, DUR - T.light, [960, 560, 1.06], 'ss');   // very slow push-in at the end so even the still frame breathes
   ev(55.2, 'final');
   return { C, C2, CUR };
 }
 
-// ───────── 每帧：界面状态
+// ───────── per frame: UI state
 const CH = [[10.2, '01', 'Just say it'], [19.2, '02', 'Plan first'], [27.0, '03', 'Review every change'], [35.4, '04', 'It checks its own work']];
 export function frame(t) {
   const F = { t, hud: {}, fx: [], actors: [C, C2], cursor: CUR };
   F.cam = camAt(t);
-  // ── 桌面与终端
+  // ── desktop and terminal
   const termOp = 1 - seg(t, T.win0 + .35, T.win1);
   F.desk = { term: termOp > 0 ? { op: termOp, typed: typed(TY.term, 'claude', t), caret: t < 1.35 ? Math.floor(t * 2.2) % 2 === 0 : false,
     logo: t < T.logo[0] ? 0 : t < T.logo[1] ? .34 : t < T.logo[2] ? .67 : 1, info: seg(t, 1.6, 2.2), gone: t >= T.morph0 + .02, hint: seg(t, 2.1, 2.5),
     blink: t > T.blink && t < T.blink + .16, jit: t > T.shiver && t < T.morph0 ? .6 + 1.6 * seg(t, T.shiver, T.morph0) : 0 } : null };
-  // ── 化身：logo 象限像素 → Clawd 方像素
+  // ── incarnation: logo quadrant pixels → Clawd square pixels
   if (t >= T.morph0 && t < T.morph1 + .02) {
     const p = seg(t, T.morph0, T.morph1), dst = CW.pixels({ x: LOGO.x + 9 * LOGO.qw, y: TERM.y - 70, px: 7 }); let h = '';
     dst.forEach((d, i) => { const c = Math.round((d.x - (LOGO.x + 9 * LOGO.qw)) / 7 + 9 - .5), r = Math.round((d.y - (TERM.y - 70)) / 7 + 10 - .5), q = r >> 1;
@@ -319,20 +319,20 @@ export function frame(t) {
       h += `<div style="position:absolute;left:${x}px;top:${y}px;width:${w + .4}px;height:${hh + .4}px;background:${col}"></div>`; });
     F.fx.push(() => h);
   }
-  // ── 应用窗口
+  // ── app window
   if (t >= T.win0) {
     const wp = seg(t, T.win0, T.win1), e = back(wp, 1.2);
     const A = F.app = { sessions: [{ name: 'Dark mode toggle', on: 1, run: t > T.send && t < T.merged }], msgs: [], prompt: { mode: 'Manual' }, winSt: {} };
     if (wp < 1) A.winSt = { op: Math.min(1, wp * 10), tf: `translate(${(1 - e) * 260}px,${(1 - e) * 160}px) scale(${.12 + .88 * e})` };
-    // 片名（Clawd 落在上面）
+    // title (Clawd lands on it)
     if (t >= T.title && t < T.wipe1 + .4) A.title = { p: seg(t, T.title, T.title + .5), sub: seg(t, 8.9, 9.3) };
     appState(A, t);
     if (t >= T.out) { const k = eio(seg(t, T.out, T.out + .9)); A.winSt = { op: 1 - k, tf: `scale(${1 - .12 * k})` }; }
     if (t >= T.out + .9) F.app = null;
   }
-  // ── 片尾卡（世界层）
+  // ── end card (world layer)
   if (t >= T.out) F.extra = endCard(t);
-  // ── 明暗
+  // ── light/dark
   const r0 = seg(t, T.stomp, T.dark1), r1 = seg(t, T.light, T.light + 1.0);
   if (t < T.stomp) F.dark = { base: 'L' };
   else if (t < T.dark1) F.dark = { base: 'L', over: 'D', at: F.revealAt = 'toggle', r: 3200 * ei(r0) ** .8 + 20 };
@@ -346,7 +346,7 @@ export function frame(t) {
 
 function appState(A, t) {
   const P = A.prompt;
-  // B：输入
+  // B: input
   if (t < T.send + .05) {
     P.focus = t > T.click1; P.caret = t > T.click1 && (t < TY.p1[0] || Math.floor(t * 2.4) % 2 === 0 || (t > TY.p1[0] && t < T.atPick));
     let s = typed(TY.p1, 'Add a dark mode toggle to ', t);
@@ -401,7 +401,7 @@ function appState(A, t) {
     if (t > T.shot + .5) A.msgs.push({ k: 't', html: 'Verified in the preview: the toggle works.', p: seg(t, T.shot + .5, T.shot + 1.2) });
     if (t >= T.prev && t < T.paneX + .7) A.pane = { type: 'Preview', w: 860 * (t < T.paneX ? back(seg(t, T.prev, T.prev + .45), 1.3) : 1 - eio(seg(t, T.paneX, T.paneX + .6))), load: seg(t, T.load0, T.load1) * 1 + seg(t, T.load1, T.load1 + .35) * .5, sun: t >= T.stomp };
   }
-  // F：分屏
+  // F: split screen
   if (t >= T.cmdN) {
     A.sessions.push({ name: 'Fix flaky timer test', run: 1, on: t > T.cmdClick, p: back(seg(t, T.cmdN + .05, T.cmdN + .35)) });
     A.newHot = t > T.cmdN - .05 && t < T.cmdN + .25;
@@ -432,25 +432,25 @@ function endCard(t) {
 function hud(F, t) {
   const H = F.hud, dark = F.dark.base === 'D' && !F.dark.over;
   H.dark = dark || (F.dark.over === 'D' && F.dark.r > 1500);
-  // 字幕
+  // subtitles
   const s = SUBS.find(x => t >= x.t0 && t < x.t1);
   if (s) H.cap = { text: s.text, op: Math.min(seg(t, s.t0, s.t0 + .12), 1 - seg(t, s.t1 - .15, s.t1)), y: (1 - eo(seg(t, s.t0, s.t0 + .2))) * 10 };
-  // 章节转场与章节签
+  // chapter transitions and chapter tags
   for (const [t0, no, nm] of CH) {
     if (t >= t0 && t < t0 + .85) H.wipe = { p: (t - t0) / .85, no, nm };
     if (t >= t0 + .6 && t < t0 + 7.8) H.chap = { no, nm, op: Math.min(seg(t, t0 + .6, t0 + .9), 1 - seg(t, t0 + 7.5, t0 + 7.8)) };
   }
   if (t >= 43.2 && t < 49.2) H.chap = { no: '05', nm: 'Side by side', op: Math.min(seg(t, 43.2, 43.5), 1 - seg(t, 48.9, 49.2)) };
-  // 按键 HUD
+  // keystroke HUD
   const KC = [[T.atKey - .1, ['@'], 'mention a file', [T.atKey]], [T.menu - .35, ['⇧', '⌘', 'M'], 'permission mode', [T.menu - .05]], [T.cmSend - .45, ['⌘', '↵'], 'send comments', [T.cmSend]],
     [T.cmdN - .35, ['⌘', 'N'], 'new session', [T.cmdN]], [T.cmdClick - .3, ['⌘', 'click'], 'split view', [T.cmdClick]]];
   for (const [t0, keys, label, press] of KC) if (t >= t0 && t < t0 + 1.5) { const nxt = KC.find(k => k[0] > t0); if (nxt && t >= nxt[0]) continue;
     H.keys = { keys, label, op: Math.min(seg(t, t0, t0 + .15), 1 - seg(t, t0 + 1.25, t0 + 1.5)), dn: press.some(p => t >= p && t < p + .18), y: (1 - back(seg(t, t0, t0 + .3))) * 20 }; }
-  // 4× 快进标签
+  // 4× fast-forward label
   if (t > T.rows[0] - .1 && t < T.readEnd + .1) H.ramp = { op: Math.min(seg(t, T.rows[0] - .1, T.rows[0]), 1 - seg(t, T.readEnd - .1, T.readEnd + .1)), blink: Math.floor(t * 4) % 2 };
-  // 聚光：No files changed
+  // spotlight: No files changed
   if (t > T.spot - .1 && t < T.spotEnd + .3) H.spot = { key: 'nfc', op: Math.min(seg(t, T.spot - .1, T.spot + .2), 1 - seg(t, T.spotEnd, T.spotEnd + .3)) };
-  // 截图闪光 + 提示
+  // screenshot flash + toast
   if (t > T.shot && t < T.shot + .3) H.flash = .5 * (1 - seg(t, T.shot, T.shot + .3));
   if (t > T.shot + .05 && t < T.shot + 1.8) H.toast = { key: 'pane', text: '▣  Screenshot · contrast OK', op: Math.min(seg(t, T.shot + .05, T.shot + .2), 1 - seg(t, T.shot + 1.5, T.shot + 1.8)) };
   if (t > T.fade) H.fade = seg(t, T.fade, DUR);

@@ -1,11 +1,11 @@
-// 渲视频：node render/video.mjs [--fps 30] [--workers 6] [--from s] [--to s] [--out out/video.mp4]
+// Render video: node render/video.mjs [--fps 30] [--workers 6] [--from s] [--to s] [--out out/video.mp4]
 import fs from 'fs'; import path from 'path'; import { spawn, execFileSync } from 'child_process';
 import { openPage, closeServer, ROOT } from './page.mjs';
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const FPS = +opt('--fps', 30), WK = +opt('--workers', 6), q = opt('--q', '');
 const outDir = path.join(ROOT, 'out'); fs.mkdirSync(outDir, { recursive: true });
 const out = path.resolve(opt('--out', path.join(outDir, 'video.mp4')));
-const segDir = path.dirname(out); fs.mkdirSync(segDir, { recursive: true });   // 分段文件写在输出文件旁边
+const segDir = path.dirname(out); fs.mkdirSync(segDir, { recursive: true });   // segment files are written next to the output file
 const probe = await openPage(q); const DUR = await probe.page.evaluate(() => window.DUR); await probe.browser.close();
 const F0 = Math.round(+opt('--from', 0) * FPS), F1 = Math.round(+opt('--to', DUR) * FPS);
 const TOTAL = F1 - F0, per = Math.ceil(TOTAL / WK), t0 = Date.now();

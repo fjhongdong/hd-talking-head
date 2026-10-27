@@ -1,4 +1,4 @@
-// 2D 叠加层：章节卡、对话框、字幕、片名、镜头间黑场
+// 2D overlay: chapter card, dialogue box, subtitles, title, black between shots
 import { VO, SHOTS, T } from './story.js';
 
 const cv = document.getElementById('ov'), g = cv.getContext('2d');
@@ -13,11 +13,11 @@ export async function overlayReady() {
   DURS = await (await fetch('voices/dur.json')).json();
 }
 export const CREDIT = { music: 'Music: “Precipice” by Scott Buckley — scottbuckley.com.au (CC BY 4.0)   ·   Voices: Kokoro TTS' };
-// 片尾署名（2026-09-26 已加进成片）：默认开启；?nocredit=1 可关掉（复现旧版 hd-2d_v1.mp4 的片尾）
+// End credits: on by default; ?nocredit=1 turns them off (the end then keeps only the music and voice credits)
 const SHOW_TEAM = !new URLSearchParams(location.search).has('nocredit');
 CREDIT.team = 'LemoLab × Claude Opus 5.5';
 
-// 金色细线 + 菱形饰件
+// Thin gold line + diamond ornament
 function ornament(cx, y, w, a) {
   g.save(); g.globalAlpha = a; g.strokeStyle = '#c9a863'; g.fillStyle = '#e2c989'; g.lineWidth = 1.5;
   for (const s of [-1, 1]) {
@@ -29,13 +29,13 @@ function ornament(cx, y, w, a) {
   g.beginPath(); g.moveTo(cx, y - 3.5); g.lineTo(cx + 3.5, y); g.lineTo(cx, y + 3.5); g.lineTo(cx - 3.5, y); g.closePath(); g.fill();
   g.restore();
 }
-function spaced(text, x, y, sp) {   // 字距
+function spaced(text, x, y, sp) {   // letter spacing
   const ws = [...text].map(c => g.measureText(c).width), tot = ws.reduce((a, b) => a + b, 0) + sp * (ws.length - 1);
   let cx = x - tot / 2; [...text].forEach((c, i) => { g.fillText(c, cx + ws[i] / 2, y); cx += ws[i] + sp; });
 }
 function glowText(fn, col, blur) { g.save(); g.shadowColor = col; g.shadowBlur = blur; fn(); g.restore(); fn(); }
 
-// —— 章节卡 ——
+// —— Chapter card ——
 function chapterCard(t) {
   const a0 = ss(seg(t, .5, 1.6)), a1 = ss(seg(t, 1.5, 2.6)), out = 1 - ss(seg(t, 4.6, 5.4));
   const bg = g.createRadialGradient(W / 2, H / 2, 50, W / 2, H / 2, 1100); bg.addColorStop(0, '#11172a'); bg.addColorStop(1, '#020308');
@@ -45,14 +45,14 @@ function chapterCard(t) {
   ornament(W / 2, 500, 240 * (.4 + .6 * a0), a0 * out);
   g.globalAlpha = a1 * out; g.fillStyle = '#f3ead6'; g.font = 'italic 500 78px "Cormorant Garamond"';
   glowText(() => g.fillText('Wren, the Lampbearer', W / 2, 578 - (1 - a1) * 10), 'rgba(255,190,110,.35)', 24);
-  // 一粒火星慢慢飘过
+  // A single spark drifts slowly across
   const u = seg(t, .8, 5.2), ex = 600 + u * 760, ey = 700 - u * 260 + Math.sin(u * 9) * 18, ea = Math.sin(u * Math.PI) * out;
   g.globalAlpha = 1; const eg = g.createRadialGradient(ex, ey, 0, ex, ey, 26); eg.addColorStop(0, `rgba(255,220,150,${.9 * ea})`); eg.addColorStop(.25, `rgba(255,150,60,${.35 * ea})`); eg.addColorStop(1, 'rgba(255,120,40,0)');
   g.fillStyle = eg; g.fillRect(ex - 30, ey - 30, 60, 60); g.fillStyle = `rgba(255,240,200,${ea})`; g.fillRect(Math.round(ex) - 2, Math.round(ey) - 2, 4, 4);
   g.globalAlpha = 1;
 }
 
-// —— 对话框（深色半透明 + 金色细框 + 名牌 + 打字机）——
+// —— Dialogue box (dark translucent + thin gold frame + name plate + typewriter) ——
 function wrap(text, maxW) { const words = text.split(' '), lines = []; let cur = ''; for (const w of words) { const n = cur ? cur + ' ' + w : w; if (g.measureText(n).width > maxW && cur) { lines.push(cur); cur = w; } else cur = n; } if (cur) lines.push(cur); return lines; }
 function dialog(t, v) {
   const a = ss(seg(t, T.dlgIn, T.dlgIn + .35)) * (1 - ss(seg(t, T.dlgOut - .35, T.dlgOut)));
@@ -64,11 +64,11 @@ function dialog(t, v) {
   g.strokeStyle = 'rgba(214,190,130,.9)'; g.lineWidth = 2; g.strokeRect(x + .5, y + .5, bw - 1, bh - 1);
   g.strokeStyle = 'rgba(214,190,130,.35)'; g.lineWidth = 1; g.strokeRect(x + 7.5, y + 7.5, bw - 15, bh - 15);
   for (const [cx, cy] of [[x, y], [x + bw, y], [x, y + bh], [x + bw, y + bh]]) { g.fillStyle = '#e2c989'; g.beginPath(); g.moveTo(cx, cy - 7); g.lineTo(cx + 7, cy); g.lineTo(cx, cy + 7); g.lineTo(cx - 7, cy); g.fill(); }
-  // 名牌
+  // Name plate
   g.font = '600 34px "Cormorant Garamond"'; const nw = g.measureText(v.who).width + 56;
   g.fillStyle = 'rgba(10,12,24,.95)'; g.fillRect(x + 36, y - 26, nw, 50); g.strokeStyle = 'rgba(214,190,130,.9)'; g.lineWidth = 1.5; g.strokeRect(x + 36.5, y - 25.5, nw - 1, 49);
   g.fillStyle = '#e8d5a4'; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(v.who, x + 64, y - 1);
-  // 正文：按配音时长打字
+  // Body text: typed out over the voice's duration
   g.font = '500 44px "Cormorant Garamond"'; g.fillStyle = '#f4efe4';
   const d = DURS[v.id] || 5, n = v.sub.length, shown = Math.floor(n * clamp((t - v.t + .05) / (d * .92)));
   const lines = wrap(v.sub, bw - 150); let k = shown;
@@ -77,7 +77,7 @@ function dialog(t, v) {
   g.restore();
 }
 
-// —— 字幕 ——
+// —— Subtitles ——
 function subtitle(t, v) {
   const d = DURS[v.id] || 3, a = ss(seg(t, v.t - .15, v.t + .2)) * (1 - ss(seg(t, v.t + d + .45, v.t + d + .8)));
   if (a <= 0) return;
@@ -89,7 +89,7 @@ function subtitle(t, v) {
   g.restore();
 }
 
-// —— 片名 ——
+// —— Title ——
 function title(t) {
   const a = ss(seg(t, 67.4, 68.8)), out = 1 - ss(seg(t, 75.3, 76.4));
   if (a <= 0) return;
@@ -107,7 +107,7 @@ function title(t) {
   g.restore();
 }
 
-// —— 镜头间黑场（换场景时淡出淡入）——
+// —— Black between shots (fade out/in on scene changes) ——
 const FADES = [[5.5, .5, .7], [15.0, .25, .35], [25.5, .35, .5], [35.5, .35, .5], [49.5, .25, .35], [58.0, .3, .6]];
 function blackout(t) {
   let a = 0;

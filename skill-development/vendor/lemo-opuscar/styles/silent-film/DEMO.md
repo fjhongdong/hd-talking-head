@@ -54,11 +54,13 @@ Adapting any topic: find the object that escapes, the person it should end up wi
 
 ## Palette & props
 
-- **House style = tonal painting + Redraw.** Scenes are painted in grey values only (print densities: ink 0.07, dark cloth 0.15–0.3, mid wood 0.45–0.6, skin 0.8, shirts and aprons 0.9–0.95), with soft light gradients and a thin separation line. The **Redraw** pass (WebGL2) then inks the whole frame: difference-of-Gaussians contours on the dark side of every edge, the luminance posterised into five soft wash steps, and 45° hatching (then crossed) in the darks that is re-drawn every two frames like hand-redrawn animation. Real video frames go through the same pass ("redraw mode", see `stills/redraw_v1.jpg`), so footage and drawing share one hand.
+- **House style = tonal painting + Redraw.** Scenes are painted in grey values only (print densities: ink 0.07, dark cloth 0.15–0.3, mid wood 0.45–0.6, skin 0.8, shirts and aprons 0.9–0.95), with soft light gradients and a thin separation line. The **Redraw** pass (WebGL2) then inks the whole frame: difference-of-Gaussians contours on the dark side of every edge, the luminance posterised into five soft wash steps, and 45° hatching (then crossed) in the darks that is re-drawn every two frames like hand-redrawn animation. Real video frames go through the same pass ("redraw mode", see `stills/frame_redraw.jpg`), so footage and drawing share one hand.
 - **Print** (`FilmPost`): silver tone with 0.10–0.36 sepia, print black 0.055 / white 0.93, S-curve, halation on highlights, uneven density, flicker, gate weave with the occasional perforation jump, broken vertical scratches (white = scraped emulsion, dark = dirt on the negative), brown burn creeping from the edges, vignette, two-octave silver grain. Then `damage()` adds dust, a hair in the gate and the rare blotch.
 - **Frame**: 1440×1080 in the centre of 1920×1080, rounded 22 px aperture with a soft dark rim; the sides are the theatre — velvet drapes lit by the screen's spill and by footlights. The curtains part at the start and close at the end.
 - **Characters**: realistic 7.5-head adults and a 5-head child on a 2.5D rig (joints solved in 3D, projected with a yaw), silent-era make-up (pale skin, dark lids and lips). Silhouette marks of the demo hero: a pleated baker's cap, a dark waistcoat over a white shirt, a long white apron.
+  The hero's model sheet, with grey values as print densities, four expressions and key poses: [`demo/stills/modelsheet_v2.jpg`](demo/stills/modelsheet_v2.jpg). A tender-scene style frame through the full pipeline (Redraw, sepia, iris, theatre): [`demo/stills/frame_v2_tender.jpg`](demo/stills/frame_v2_tender.jpg).
 - **Intertitles**: a black painted card with a deco border whose ornament follows the emotion — one heavy rule for a shout (text shakes), a double rule with stepped corners and fans for narration, vines and small flowers for tenderness. Playfair Display SC for titles and shouts, Old Standard TT Italic for narration and dialogue.
+  The four card types side by side: [`demo/stills/frame_cards.jpg`](demo/stills/frame_cards.jpg).
 
 ## Titles, intertitles & end card
 
@@ -92,6 +94,8 @@ styles/silent-film/demo/
   shots.js       one function per section: bakery · chase · market · roll · sil · tender · irisShot (tonal paintings)
   film.js        assembly: shot → Redraw → iris → FilmPost → gate + curtains; per-section look (damage, sepia, sampling fps, crank)
   cardspecs.js   the intertitles        frames.js   model sheet, card sheet, redraw sample, one-colour example
+  sheets.js      rig check scenes, not in the film: ?scene=sheets.test (turnaround + run pose) · heads · redrawFig · armTest · loafTest
+  stage.js       the small scene → FilmPost → gate helper that sheets.js draws through
   music/score.py  photoplay score from timeline.json      mix.py   score + projector
   tools/         cuecheck.py · subs.py · dump_timeline.mjs
 ```

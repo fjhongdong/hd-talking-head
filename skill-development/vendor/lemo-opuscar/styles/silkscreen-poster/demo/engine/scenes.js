@@ -1,37 +1,37 @@
-// scenes.js · 引擎内置场景：lake / waterfall / ridge / forest / coast
-// 每个场景返回按印刷顺序排好的"层"（plane）：{ id, depth, parts:[{ ink, path, knock?, sub }] }
-//   ink = 调色板键（sky1 sky2 far mid near sun），sub = 同一节拍里的第几刮（0 主色，1 点缀色，晚半拍）
-//   depth：视差系数（1 = 纸面；<1 更远；>1 更近），只在"分层视差"镜头里用
-// 另返回 trail：步道折线 [{x,y,plane}]，按所在层分段，虚线由海报层画
-// 坐标：海报单位，画幅 1000×1500，画面区 x 26..974、y 26..1190（其余为纸边和信息带）
+// scenes.js · scenes built into the engine: lake / waterfall / ridge / forest / coast
+// Each scene returns its "layers" (planes) in printing order: { id, depth, parts:[{ ink, path, knock?, sub }] }
+//   ink = palette key (sky1 sky2 far mid near sun), sub = which pull within the same beat (0 main colour, 1 accent colour, half a beat later)
+//   depth: parallax factor (1 = paper surface; <1 farther; >1 nearer), used only in the "layered parallax" shot
+// Also returns trail: the trail polyline [{x,y,plane}], segmented by the layer it lies on; the dashed line is drawn by the poster layer
+// Coordinates: poster units, sheet 1000×1500, picture area x 26..974, y 26..1190 (the rest is paper margin and info band)
 import { mulberry, polyPath, circlePath, ringPath, rectPath, unionPath, ridgeLine, bandSteps, lerp } from './silk.js';
 
 export const PW = 1000, PH = 1500, ART = [26, 26, 948, 1164];
 
-// ---- 形状积木 ----
-function pine(p, x, base, h, w, tiers = 4) {       // 一棵程式化松树：层层下垂的枝盘 + 短树干，一条外轮廓
+// ---- shape building blocks ----
+function pine(p, x, base, h, w, tiers = 4) {       // a stylized pine: tiers of drooping branch layers + a short trunk, one outer outline
   const tw = Math.max(3, w * .06), trunkTop = base - h * .1;
   const R = [[x, base - h]];
   for (let i = 0; i < tiers; i++) {
     const t = (i + 1) / tiers;
-    const yb = base - h * .1 - (h * .9) * (1 - t) * .98;       // 这一盘的下沿
-    const hw = w / 2 * (.28 + .72 * t);                          // 半宽：越往下越宽
-    R.push([x + hw, yb + h * .012]);                             // 下垂的枝梢
-    if (i < tiers - 1) R.push([x + hw * .42, yb - h * .02]);    // 收回到下一盘的起点
+    const yb = base - h * .1 - (h * .9) * (1 - t) * .98;       // lower edge of this tier
+    const hw = w / 2 * (.28 + .72 * t);                          // half-width: wider further down
+    R.push([x + hw, yb + h * .012]);                             // drooping branch tip
+    if (i < tiers - 1) R.push([x + hw * .42, yb - h * .02]);    // pull back in to the start of the next tier
   }
   R.push([x + tw, trunkTop], [x + tw, base + 6]);
   const L = R.slice(1).reverse().map(q => [2 * x - q[0], q[1]]);
   const pts = R.concat(L);
   pts.forEach((q, i) => i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1])); p.closePath();
 }
-function forest(x0, x1, base, hmin, hmax, seed, dense = 1, bottom = 1500) {   // 一排松林 + 实底
+function forest(x0, x1, base, hmin, hmax, seed, dense = 1, bottom = 1500) {   // a row of pines + solid base
   const p = new Path2D(), r = mulberry(seed);
   p.rect(x0 - 40, base, x1 - x0 + 80, bottom - base);
   let x = x0 - 20;
   while (x < x1 + 30) { const h = lerp(hmin, hmax, r()), w = h * (.34 + r() * .12); pine(p, x, base + 4, h, w, 3 + (r() * 3 | 0)); x += w * (.42 + r() * .35) / dense; }
   return p;
 }
-function range(x0, x1, yBase, peaks, seed, rough = 22) {   // 山脉剪影：peaks=[[x,y],...]
+function range(x0, x1, yBase, peaks, seed, rough = 22) {   // mountain-range silhouette: peaks=[[x,y],...]
   const pts = [[x0 - 30, yBase], [x0 - 30, peaks[0][1] + 60]];
   let prev = [x0 - 30, peaks[0][1] + 60];
   for (let i = 0; i < peaks.length; i++) { const seg = ridgeLine(prev, peaks[i], rough, 3, seed + i); pts.push(...seg.slice(1)); prev = peaks[i]; }
@@ -39,7 +39,7 @@ function range(x0, x1, yBase, peaks, seed, rough = 22) {   // 山脉剪影：pea
   pts.push([x1 + 30, yBase]);
   return { path: polyPath(pts), pts };
 }
-// 受光面：每座峰从峰顶沿一侧往下的锯齿块（WPA 的两色山体）
+// Lit faces: a jagged block running down one side of each peak from the summit (WPA-style two-tone mountains)
 function facets(peaks, side, depth, seed, jag = 18) {
   const p = new Path2D(), r = mulberry(seed);
   for (const [x, y] of peaks) {
@@ -62,13 +62,13 @@ function skyPlane(sunKnock, bandTop, bandBot, extraTop = 0) {
   const top = new Path2D(); top.rect(-60, -60 - extraTop, PW + 120, bandTop + 60 + extraTop); top.addPath(bandSteps(-60, PW + 120, bandTop, bandBot, 5, 10));
   return { id: 'sky', depth: .15, parts: [{ ink: 'sky1', path: flood, knock: sunKnock, sub: 0 }, { ink: 'sky2', path: top, sub: 1 }] };
 }
-function wavesPath(x0, x1, y0, y1, n, seed, len = 60) {   // 水面反光：横向短条
+function wavesPath(x0, x1, y0, y1, n, seed, len = 60) {   // water reflections: short horizontal dashes
   const p = new Path2D(), r = mulberry(seed);
   for (let i = 0; i < n; i++) { const y = lerp(y0, y1, Math.pow(r(), 1.3)), l = len * (.4 + r()) * (.4 + (y - y0) / (y1 - y0)), x = lerp(x0, x1, r()), th = 2.5 + (y - y0) / (y1 - y0) * 5; p.rect(x, y, l, th); }
   return p;
 }
 
-// ================= LAKE（湖） =================
+// ================= LAKE =================
 function lake(seed) {
   const sun = sunParts(640, 575, 92, 2);
   const peaks = [[120, 430], [300, 360], [470, 455], [610, 400], [800, 470], [930, 420]];
@@ -79,12 +79,12 @@ function lake(seed) {
   const glints = new Path2D();
   for (let i = 0; i < 12; i++) { const y = 690 + i * 22 + i * i * 1.6, w = 170 - i * 9 + (i % 3) * 18; glints.rect(640 - w / 2 + ((i * 37) % 23) - 11, y, w, 4 + i * .7); }
   const refl = wavesPath(40, 900, 700, 1000, 22, seed + 7, 70);
-  // 近景：左侧大松 + 右侧松 + 前景岸石
+  // near layer: big pine on the left + pine on the right + shore rocks in the foreground
   const near = new Path2D();
   pine(near, 110, 1250, 1080, 330, 7); pine(near, 250, 1260, 760, 250, 6); pine(near, -20, 1250, 900, 300, 6);
   pine(near, 905, 1250, 820, 270, 6); pine(near, 1010, 1250, 1000, 300, 7);
   near.addPath(polyPath([[-60, 1030], [140, 1000], [300, 1022], [420, 1060], [560, 1045], [720, 1070], [860, 1020], [1060, 1000], [1060, 1600], [-60, 1600]]));
-  near.addPath(polyPath([[560, 1045], [610, 990], [690, 975], [760, 1010], [790, 1060]]));   // 岸边大石
+  near.addPath(polyPath([[560, 1045], [610, 990], [690, 975], [760, 1010], [790, 1060]]));   // big shore rock
   const rockLit = polyPath([[610, 990], [690, 975], [705, 1000], [640, 1012]]);
   const trail = [[500, 1200], [470, 1150], [520, 1110], [640, 1090], [780, 1100], [880, 1080], [990, 1060]].map(q => ({ x: q[0], y: q[1], plane: 'near' }));
   return {
@@ -98,12 +98,12 @@ function lake(seed) {
   };
 }
 
-// ================= WATERFALL（瀑布） =================
+// ================= WATERFALL =================
 function waterfall(seed) {
   const sun = sunParts(810, 190, 52, 1);
   const peaks = [[90, 330], [260, 280], [430, 350], [640, 300], [860, 360]];
   const R = range(0, PW, 700, peaks, seed + 3, 20);
-  // 峭壁：左右两块 + 后壁，中间 V 口出水；岩面用三块大切面（WPA 的刻面山石）
+  // cliffs: left and right blocks + back wall, water pouring out of a V notch in the middle; rock faces use three large facets (WPA-style faceted rock)
   const cliff = polyPath([[-60, 430], [120, 398], [260, 412], [380, 440], [452, 478], [470, 520], [530, 520], [550, 476], [640, 452], [780, 424], [900, 440], [1060, 420], [1060, 1300], [-60, 1300]]);
   const fall = polyPath([[470, 516], [530, 516], [538, 600], [552, 760], [578, 950], [422, 950], [448, 760], [462, 600]]);
   const shadows = unionPath([
@@ -136,7 +136,7 @@ function waterfall(seed) {
   };
 }
 
-// ================= RIDGE（山脊，纵深多层，签名镜头用） =================
+// ================= RIDGE (deep, many layers, used for the signature shot) =================
 function ridge(seed) {
   const sun = sunParts(735, 400, 105, 2);
   const farPeaks = [[80, 400], [250, 350], [420, 420], [900, 390]];
@@ -154,7 +154,7 @@ function ridge(seed) {
   const valley = forest(-60, 1060, 1060, 60, 130, seed + 8, 1.2, 1700);
   const near = new Path2D(); pine(near, 60, 1300, 820, 260, 7); pine(near, -40, 1300, 1000, 300, 7); pine(near, 950, 1300, 760, 250, 6); pine(near, 1050, 1300, 980, 300, 7);
   near.addPath(valley);
-  // 步道：从谷底之字形爬到山顶，按所在层分段
+  // trail: zigzags from the valley floor to the summit, segmented by layer
   const T = [[500, 1200, 'near'], [470, 1130, 'near'], [520, 1060, 'near'], [440, 1020, 'spurC'], [360, 960, 'spurC'], [470, 930, 'spurB'], [560, 860, 'spurB'], [640, 800, 'spurB'], [560, 760, 'spurA'], [430, 700, 'spurA'], [330, 650, 'spurA'], [380, 610, 'main'], [440, 540, 'main'], [400, 470, 'main'], [455, 400, 'main'], [430, 330, 'main'], summit.concat('main')];
   const trail = T.map(q => ({ x: q[0], y: q[1], plane: q[2] }));
   return {
@@ -171,7 +171,7 @@ function ridge(seed) {
   };
 }
 
-// ================= FOREST（森林） =================
+// ================= FOREST =================
 function forestScene(seed) {
   const sun = sunParts(300, 300, 70, 1);
   const peaks = [[150, 420], [420, 380], [700, 430], [900, 400]];
@@ -193,7 +193,7 @@ function forestScene(seed) {
   };
 }
 
-// ================= COAST（海岸） =================
+// ================= COAST =================
 function coast(seed) {
   const sun = sunParts(700, 520, 80, 2);
   const sea = rectPath(-60, 600, PW + 120, 1000);

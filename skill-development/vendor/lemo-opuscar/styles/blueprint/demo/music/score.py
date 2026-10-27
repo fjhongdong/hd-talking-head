@@ -1,6 +1,6 @@
-"""Blueprint《The Cloud Catcher》原创配乐：巴洛克二声部创意曲，108 BPM，G 大调。
-运行：.venv/bin/python styles/blueprint/demo/music/score.py
-输出：score.wav（48k 立体声 47.5 s）、stems/*.wav、score.json（关键时间点 + 自检）
+"""Original score for Blueprint "The Cloud Catcher": a Baroque two-part invention, 108 BPM, G major.
+Run: .venv/bin/python styles/blueprint/demo/music/score.py
+Outputs: score.wav (48k stereo, 47.5 s), stems/*.wav, score.json (key time points + self-check)
 """
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
@@ -15,10 +15,10 @@ BPM = 108; BEAT = 60 / BPM; BAR = 4 * BEAT; S16 = BEAT / 4; E8 = BEAT / 2
 DUR = 47.5
 def B(n, beat=0.0): return (n - 1) * BAR + beat * BEAT
 
-HS, BS, ST, HP = [], [], [], []      # harpsichord / bassoon / strings(spic) / harp 事件
-SUS = []                             # 弦乐长音（单独做包络）
+HS, BS, ST, HP = [], [], [], []      # harpsichord / bassoon / strings(spic) / harp events
+SUS = []                             # sustained string notes (enveloped separately)
 
-# ——— 主题：1 小节 16 个十六分音符（齿轮：级进上行 + 分解和弦）———
+# ——— theme: 16 sixteenth notes in 1 bar (gears: stepwise ascent + broken chords)———
 THEME = ['G4', 'A4', 'B4', 'C5', 'D5', 'B4', 'G4', 'B4', 'C5', 'D5', 'E5', 'F#5', 'G5', 'D5', 'B4', 'G4']
 ANSW  = ['D4', 'E4', 'F#4', 'G4', 'A4', 'F#4', 'D4', 'F#4', 'G4', 'A4', 'B4', 'C5', 'D5', 'A4', 'F#4', 'D4']
 def seq(ev, inst, t0, notes, step, vel=.7, pan=0., dur=None, accent=True, g=1.0):
@@ -29,24 +29,24 @@ def seq(ev, inst, t0, notes, step, vel=.7, pan=0., dur=None, accent=True, g=1.0)
 def tr(notes, semis):
     return [None if n is None else S.name(S.midi(n) + semis) for n in notes]
 
-# 小节 1：弱起三个十六分音符
+# Bar 1: three-sixteenth-note pickup
 seq(HS, 'harpsichord', B(2) - 3 * S16, ['D4', 'E4', 'F#4'], S16, vel=.62, pan=.15, accent=False)
-# 小节 2–3：主题独奏
+# Bars 2–3: theme solo
 seq(HS, 'harpsichord', B(2), THEME, S16, vel=.72, pan=.15)
 seq(HS, 'harpsichord', B(3), ANSW, S16, vel=.70, pan=.15)
-# 小节 4–5：巴松模仿（低声部主题），羽管键琴对题（八分音符）
+# Bars 4–5: bassoon imitation (theme in the low voice), harpsichord countersubject (eighth notes)
 seq(BS, 'bassoon_stac', B(4), tr(THEME, -24), S16, vel=.66, pan=-.25)
 seq(HS, 'harpsichord', B(4), ['B4', 'C5', 'D5', 'E5', 'D5', 'C5', 'B4', 'A4'], E8, vel=.66, pan=.15)
 seq(HS, 'harpsichord', B(5), ['D5', 'E5', 'F#5', 'G5', 'A5', 'F#5', 'D5', 'F#5', 'G5', 'A5', 'B5', 'A5', 'G5', 'F#5', 'E5', 'D5'], S16, vel=.72, pan=.15)
 seq(BS, 'bassoon_stac', B(5), ['D3', 'C3', 'B2', 'A2', 'G2', 'A2', 'B2', 'C3'], E8, vel=.66, pan=-.25)
-# 小节 6–7：模进上行 + 低音八度加厚 → 15.556 完全终止
+# Bars 6–7: rising sequence + bass doubled in octaves → perfect cadence at 15.556
 seq(HS, 'harpsichord', B(6), ['E4', 'F#4', 'G4', 'A4', 'B4', 'G4', 'E4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'B4', 'G4', 'E4'], S16, vel=.74, pan=.15)
 seq(BS, 'bassoon_stac', B(6), ['E3', 'D3', 'C3', 'B2', 'A2', 'B2', 'C3', 'D3'], E8, vel=.7, pan=-.25)
 seq(HS, 'harpsichord', B(6), ['E3', 'D3', 'C3', 'B2', 'A2', 'B2', 'C3', 'D3'], E8, vel=.55, pan=-.1, accent=False)
 seq(HS, 'harpsichord', B(7), ['A4', 'B4', 'C5', 'D5', 'E5', 'C5', 'A4', 'C5', 'B4', 'D5', 'G5', 'D5', 'C5', 'A4', 'F#4', 'A4'], S16, vel=.76, pan=.15)
 seq(BS, 'bassoon_stac', B(7), ['C3', 'C3', 'A2', 'A2', 'D3', 'D3', 'D2', 'D2'], E8, vel=.72, pan=-.25)
 seq(HS, 'harpsichord', B(7), ['C3', None, 'A2', None, 'D3', None, 'D2', None], E8, vel=.55, pan=-.1, accent=False)
-# 小节 8：15.556 主和弦延长 → 16.667 起四个八分装配和弦
+# Bar 8: tonic chord held from 15.556 → from 16.667, four eighth-note assembly chords
 T_CAD = B(8)
 for n in ['G2', 'D3', 'G3', 'B3', 'D4', 'G4']: HS.append((T_CAD, 'harpsichord', n, 1.0, .72, .1, 1))
 BS.append((T_CAD, 'bassoon', 'G2', 1.02, .55, -.25, .9))
@@ -58,7 +58,7 @@ for t, ch, b in zip(ASM, ASM_CH, ASM_BS):
     BS.append((t, 'bassoon_stac', b, .2, .72, -.25, 1))
     ST.append((t, 'cellos_spic', b, .2, .72, -.3, .9))
     ST.append((t, 'violins_spic', ch[-1], .2, .66, .35, .8))
-# 小节 9–10：全体。主题 + 跳弓"齿轮咬合" + 巴松持续低音
+# Bars 9–10: tutti. Theme + spiccato "gears meshing" + bassoon pedal
 seq(HS, 'harpsichord', B(9), THEME, S16, vel=.76, pan=.15)
 seq(HS, 'harpsichord', B(10), ANSW, S16, vel=.74, pan=.15)
 BS.append((B(9), 'bassoon', 'G2', 2 * BAR - .15, .5, -.25, .85))
@@ -67,11 +67,11 @@ pulse10 = ['D4', 'F#4', 'A4', 'F#4', 'G4', 'B4', 'A4', 'F#4']
 seq(ST, 'violins_spic', B(9), pulse9, E8, vel=.62, pan=.35, dur=.2, g=.8)
 seq(ST, 'cellos_spic', B(9), ['G2', 'G3', 'G2', 'G3', 'C3', 'C3', 'D3', 'D3'], E8, vel=.66, pan=-.3, dur=.2, g=.9)
 seq(ST, 'cellos_spic', B(10), ['D3', 'D3', 'D3', 'D3', 'G2', 'G2', 'D3', 'D3'], E8, vel=.66, pan=-.3, dur=.2, g=.9)
-# 20.0 起小提琴上行音阶（吊臂抬起）
+# From 20.0, rising violin scale (the boom lifts)
 scale = ['G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F#5', 'G5', 'A5', 'B5', 'C6', 'D6']
 seq(ST, 'violins_spic', B(10), scale, S16, vel=.62, pan=.35, dur=.16, g=.8)
 seq(ST, 'violins_spic', B(10) + 12 * S16, ['D6', 'B5', 'G5', 'D5'], S16, vel=.6, pan=.35, dur=.16, g=.75)
-# 小节 11：逐个掉队 + 渐慢，最后一个巴松低音 ~23.9
+# Bar 11: instruments drop out one by one + ritardando, last bassoon low note ~23.9
 rit = [0, .15, .31, .49, .70, .95, 1.25]
 for k, (dt, n) in enumerate(zip(rit, ['G4', 'A4', 'B4', 'C5', 'B4', 'A4', 'G4'])):
     HS.append((B(11) + dt, 'harpsichord', n, .2, .6 - .05 * k, .15, 1))
@@ -81,18 +81,18 @@ BS.append((B(11) + .2, 'bassoon_stac', 'D3', .2, .55, -.25, 1))
 BS.append((B(11) + .9, 'bassoon_stac', 'B2', .22, .5, -.25, 1))
 T_POOF = 23.9
 BS.append((T_POOF, 'bassoon_stac', 'G2', .3, .62, -.1, 1.1))
-# 小节 12–13：疑问三音
+# Bars 12–13: three-note question
 Q3 = [26.667, 26.944, 27.222]
 for t, n, d in zip(Q3, ['B4', 'D5', 'E5'], [.12, .12, .08]):
     HS.append(dict(t=t, inst='harpsichord', pitch=n, dur=d, vel=.4, pan=.1, release=.08))
-# 小节 14：Dsus4 悬置（弦乐长音 + 羽管键琴滚奏）
+# Bar 14: suspended Dsus4 (sustained strings + harpsichord tremolo)
 T_SUS = B(14)
 for inst, n, pan in [('cellos', 'D3', -.3), ('violas', 'A3', -.05), ('violas', 'D4', -.05), ('violins', 'G4', .25), ('violins', 'A4', .3), ('violins', 'D5', .35)]:
     SUS.append(dict(t=T_SUS, inst=inst, pitch=n, dur=BAR + .05, vel=.62, pan=pan, attack=.35, release=.12))
 for k, n in enumerate(['D3', 'G3', 'A3', 'D4', 'G4', 'A4', 'D5']): HS.append((T_SUS + k * .055, 'harpsichord', n, 1.2, .6, .1, 1))
 for k, n in enumerate(['D3', 'A3', 'D4', 'G4', 'A4', 'D5']): HS.append((B(14, 2) + k * .05, 'harpsichord', n, 1.0, .56, .1, 1))
 BS.append(dict(t=T_SUS, inst='bassoon', pitch='D2', dur=BAR + .05, vel=.45, pan=-.25, attack=.4, release=.12))
-# 小节 15：31.111 解决到 G 大调，全体主题一个小节
+# Bar 15: resolves to G major at 31.111, tutti theme for one bar
 T_RES = B(15)
 seq(HS, 'harpsichord', T_RES, THEME, S16, vel=.8, pan=.15)
 for n in ['G2', 'D3', 'G3', 'B3']: HS.append((T_RES, 'harpsichord', n, .5, .75, -.05, 1))
@@ -101,18 +101,18 @@ for inst, n, pan in [('cellos', 'G2', -.3), ('violas', 'D4', -.05), ('violins', 
     SUS.append(dict(t=T_RES, inst=inst, pitch=n, dur=BAR - .2, vel=.66, pan=pan, attack=.02, release=.4))
 seq(ST, 'violins_spic', T_RES, pulse9, E8, vel=.6, pan=.35, dur=.2, g=.75)
 seq(ST, 'cellos_spic', T_RES, ['G2', 'G3', 'G2', 'G3', 'C3', 'C3', 'D3', 'D3'], E8, vel=.64, pan=-.3, dur=.2, g=.85)
-# 小节 16–18：竖琴 + 羽管键琴柔和分解和弦
+# Bars 16–18: harp + harpsichord gentle arpeggios
 ARP = {'G': ['G2', 'D3', 'G3', 'B3', 'D4', 'B3', 'G3', 'D3'], 'Em': ['E2', 'B2', 'E3', 'G3', 'B3', 'G3', 'E3', 'B2'],
        'C': ['C3', 'G3', 'C4', 'E4'], 'D': ['D3', 'A3', 'D4', 'F#4']}
 seq(HP, 'harp', B(16), ARP['G'], E8, vel=.55, pan=-.15, dur=1.2, accent=False)
 for k, n in enumerate(['B4', 'D5', 'G5', 'D5']): HS.append((B(16, k), 'harpsichord', n, .4, .45, .2, 1))
-# 35.556 竖琴上行琶音顶点（花开）
+# 35.556 peak of the rising harp arpeggio (the flower opens)
 bloom = ['E2', 'B2', 'E3', 'G3', 'B3', 'E4', 'G4', 'B4', 'E5', 'G5', 'B5', 'E6']
 for k, n in enumerate(bloom): HP.append((B(17) + k * (1.44 / 12), 'harp', n, 2.0, .5 + .03 * k, -.15 + .03 * k, 1))
 for k, n in enumerate(['G4', 'B4', 'E5']): HS.append((B(17, 2 + k * .5), 'harpsichord', n, .5, .42, .2, 1))
 seq(HP, 'harp', B(18), ARP['C'] + ARP['D'], E8, vel=.52, pan=-.15, dur=1.2, accent=False)
 for k, n in enumerate(['E5', 'C5', 'F#5', 'D5']): HS.append((B(18, k), 'harpsichord', n, .4, .42, .2, 1))
-# 小节 19：40.0 全体终止和弦（印章同拍），然后羽管键琴单声部
+# Bar 19: tutti final chord at 40.0 (on the same beat as the stamp), then harpsichord alone
 T_STAMP = B(19)
 for n in ['G2', 'D3', 'G3', 'B3', 'D4', 'G4']: HS.append((T_STAMP, 'harpsichord', n, .35, .8, .05, 1))
 BS.append((T_STAMP, 'bassoon_stac', 'G2', .3, .75, -.25, 1.1))
@@ -120,7 +120,7 @@ ST.append((T_STAMP, 'cellos_spic', 'G2', .3, .78, -.3, 1)); ST.append((T_STAMP, 
 ST.append((T_STAMP, 'violins_spic', 'D5', .3, .72, .35, .9)); ST.append((T_STAMP, 'violins_spic', 'B5', .3, .7, .4, .85))
 for n in ['G2', 'D3', 'B3', 'G4']: HP.append((T_STAMP, 'harp', n, 1.2, .62, -.15, 1))
 for k, n in enumerate(['D5', 'C5', 'B4', 'A4', 'G4', 'A4', 'B4']): HS.append((T_STAMP + BEAT * (1.0 + .5 * k), 'harpsichord', n, .3, .42 - .02 * k, .15, 1))
-# 小节 20–21：主题增值（八分音符），落 G 大调主和弦
+# Bars 20–21: theme in augmentation (eighth notes), landing on the G major tonic
 seq(HS, 'harpsichord', B(20), THEME[:12], E8, vel=.55, pan=.15)
 seq(HP, 'harp', B(20), ['G2', None, 'D3', None, 'C3', None, 'D3', None, 'E3', None, 'D3', None], E8, vel=.42, pan=-.15, dur=1.0, accent=False)
 T_END = B(21, 2)
@@ -129,14 +129,14 @@ for n in ['G2', 'D3', 'B3', 'G4', 'D5']: HP.append((T_END, 'harp', n, 2.4, .5, -
 for inst, n, pan in [('cellos', 'G2', -.3), ('violas', 'D4', -.05), ('violins', 'B4', .3), ('violins', 'G5', .35)]:
     SUS.append(dict(t=B(20), inst=inst, pitch=n, dur=B(21, 4) + .3 - B(20), vel=.42, pan=pan, attack=1.2, release=1.0))
 
-# ——— 渲染 ———
+# ——— render ———
 N = int(DUR * SR)
 def rend(ev):
     x = S.render(ev, dur=DUR, master=False).astype(np.float32)
     return x[:N] if len(x) >= N else np.pad(x, ((0, N - len(x)), (0, 0)))
 hs, bs, st, hp, sus = rend(HS), rend(BS), rend(ST), rend(HP), rend(SUS)
 t = np.arange(N) / SR
-# 悬置和弦包络：两次"呼吸" + 渐强，不解决
+# Suspended-chord envelope: two "breaths" + crescendo, unresolved
 env = np.ones(N, np.float32)
 m = (t >= T_SUS) & (t < T_RES)
 tt = t[m] - T_SUS
@@ -146,10 +146,10 @@ env[m] = (breath * cres).astype(np.float32)
 sus *= env[:, None]
 strings = st + sus
 stems = {'harpsichord': hs, 'bassoon': bs * 1.0, 'strings': strings, 'harp': hp}
-# 各声部混响（小厅，巴洛克室内乐）
+# Per-voice reverb (small hall, Baroque chamber music)
 room = {'harpsichord': (.35, .16), 'bassoon': (.35, .15), 'strings': (.45, .2), 'harp': (.5, .22)}
 for k in stems: stems[k] = S.room(stems[k], size=room[k][0], mix=room[k][1]).astype(np.float32)[:N]
-# 静音门（含混响尾巴一起清零）
+# Silence gate (zeroes reverb tails too)
 def gate(a, b, fade=.08):
     g = np.ones(N, np.float32)
     ia, ib = int(a * SR), int(b * SR); fl = int(fade * SR)
@@ -167,7 +167,7 @@ os.makedirs(os.path.join(HERE, 'stems'), exist_ok=True)
 sf.write(os.path.join(HERE, 'score.wav'), mix, SR, subtype='PCM_24')
 for k, v in stems.items(): sf.write(os.path.join(HERE, 'stems', k + '.wav'), v, SR, subtype='PCM_24')
 
-# ——— 自检 ———
+# ——— self-check ———
 def rms_db(a, b, x=mix):
     s = x[int(a * SR):int(b * SR)]; r = np.sqrt(np.mean(s ** 2) + 1e-20); return round(20 * np.log10(r), 1)
 def band(x, lo, hi):

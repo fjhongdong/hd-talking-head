@@ -1,5 +1,5 @@
-"""配乐自检：静音是否真 0、起音对齐、各段能量/亮度/中频占用、stem 求和。结果打印并写 check.txt。
-用法：.venv/bin/python styles/dark-keynote/demo/music/check.py（先跑 score.py）"""
+"""Score self-check: whether the silences are truly 0, onset alignment, per-section energy/brightness/midrange occupancy, stem sum. Prints the results and writes check.txt.
+Usage: .venv/bin/python styles/dark-keynote/demo/music/check.py (run score.py first)"""
 import os, json
 import numpy as np
 import soundfile as sf
@@ -21,7 +21,7 @@ P(f'last nonzero before 15.0 at {np.nonzero(np.abs(mono[:S(15.0)]) > 0)[0][-1] /
 
 
 def onset_at(sig, t, win=.03, thr_db=-20):
-    """t 附近第一次越过局部峰值 -20 dB 的时间（局部峰值取 t+[0,60ms]）"""
+    """Time near t where the signal first crosses the local peak -20 dB (local peak taken over t+[0,60ms])"""
     a = np.abs(sig[S(t - win):S(t + .06)]); pk = np.abs(sig[S(t):S(t + .06)]).max()
     base = np.abs(sig[S(t - win):S(t - .004)]).max() if t - win > 0 else 0
     thr = max(pk * 10 ** (thr_db / 20), base * 1.5)
@@ -53,7 +53,7 @@ for a, b, name in [(4, 6, 'desktop v1'), (6, 8, 'album +v2+pad'), (8, 10, 'inbox
     F = np.abs(np.fft.rfft(seg * np.hanning(len(seg)))) ** 2; f = np.fft.rfftfreq(len(seg), 1 / SR); tot = F.sum()
     mid = F[(f >= 300) & (f < 3000)].sum(); lo = F[f < 300].sum(); hi = F[f >= 3000].sum()
     cen = (F * f).sum() / tot
-    # 300-3k 带内 RMS（时域带通）
+    # RMS in the 300-3k band (time-domain band-pass)
     Z = np.fft.rfft(seg); Zm = Z.copy(); Zm[(f < 300) | (f >= 3000)] = 0; midrms = np.sqrt(np.mean(np.fft.irfft(Zm, len(seg)) ** 2))
     Zh = Z.copy(); Zh[f < 3000] = 0; hirms = np.sqrt(np.mean(np.fft.irfft(Zh, len(seg)) ** 2))
     nps = sum(1 for r in notes if a <= r[0] < b) / (b - a)

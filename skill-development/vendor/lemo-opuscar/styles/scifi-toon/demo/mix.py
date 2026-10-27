@@ -1,5 +1,5 @@
-"""混音：程序化拟音（按 events.json）+ 对白（voices/）+ 配乐（music/score.wav，对白时闪避）+ 每个宇宙的环境声 → mix.wav
-用法：python mix.py（先跑 core/render/events.mjs、voice.py、music/score.py）"""
+"""Mix: procedural foley (from events.json) + dialogue (voices/) + score (music/score.wav, ducked under dialogue) + ambience for each universe → mix.wav
+Usage: python mix.py (run core/render/events.mjs, voice.py, music/score.py first)"""
 import sys, os, json, numpy as np, soundfile as sf
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '../../../core/audio'))
@@ -10,7 +10,7 @@ LINES = {l['id']: l for l in json.load(open(os.path.join(HERE, 'lines.json')))}
 rng = np.random.default_rng(5)
 def brown_(d):
     w = np.cumsum(nz(d)); w -= np.linspace(w[0], w[-1], len(w)); return norm(hp(w, 20))
-def nz(d): return rng.standard_normal(int(d * SR))   # 与 t_() 同长度
+def nz(d): return rng.standard_normal(int(d * SR))   # same length as t_()
 sfxb, vob, amb = np.zeros((N, 2)), np.zeros((N, 2)), np.zeros((N, 2))
 
 def sweep(f0, f1, d, curve=1.0):
@@ -23,7 +23,7 @@ def bpsweep(x, f0, f1, q=.35):
         f = f0 * (f1 / f0) ** (i / n); s = bp(x[max(0, i - 2400):i + 480], f * (1 - q), min(f * (1 + q), 20000)); out[i:i + 480] = s[-len(out[i:i + 480]):]
     return out
 
-# —— 卡通拟音（全部合成）——
+# —— cartoon foley (all synthesized)——
 def plip():
     d = .12; x = np.zeros(int(d * SR)); s = sweep(900, 2600, .05) * env_exp(.05, .02); x[:len(s)] += s; x += bp(nz(d), 2000, 6000) * env_exp(d, .01) * .2; return norm(x)
 def squeak(): d = .09; tt = t_(d); return norm(np.sin(2 * np.pi * (2000 + 500 * np.sin(2 * np.pi * 30 * tt)) * tt) * np.sin(np.pi * tt / d))
@@ -96,7 +96,7 @@ for e in E['ev']:
     elif ty == 'slurp': add(sfxb, slurp(e['d']) * v, t, .35)
     elif ty == 'wheee': add(sfxb, wheee(e['d']) * v, t, .22)
 
-# —— 环境声：每个宇宙一张"底" ——
+# —— ambience: one "bed" per universe ——
 def amb_lab(d):
     tt = t_(d); hum = (np.sin(2 * np.pi * 120 * tt) + .5 * np.sin(2 * np.pi * 240 * tt) + .25 * np.sin(2 * np.pi * 360 * tt)) * .012
     x = hum + lp(brown_(d), 300) * .03; ticks = np.zeros_like(tt)
@@ -109,7 +109,7 @@ def amb_jelly(d):
     return out
 def amb_cafe(d, murmur=.035):
     tt = t_(d); x = np.zeros_like(tt)
-    for k in range(6):   # 人声嘈杂：几条带通噪声 + 随机语音包络
+    for k in range(6):   # crowd walla: several band-passed noises + random speech envelopes
         am = uniform_filter1d((rng.random(len(tt)) > .9995).astype(float), int(.25 * SR)) * 60
         x += bp(nz(d), 300 + k * 90, 900 + k * 150) * np.clip(am, 0, 1)
     x = norm(x) * murmur + lp(brown_(d), 400) * .02
@@ -128,21 +128,21 @@ for e in E['ev']:
     elif w == 'normal': add(amb, fade(amb_cafe(d, .03), .03, .05), t, 1.0)
     elif w in ('teeth', 'pigeon', 'vasks'): add(amb, fade(amb_wind(d), .02, .02), t, .8)
 
-# —— 对白 ——
+# —— dialogue ——
 for e in E['ev']:
     if e['type'] != 'vo': continue
     y, sr = sf.read(os.path.join(HERE, 'voices', e['id'] + '.wav'))
     y = compress(y / np.abs(y).max(), .28, 3.2)
-    y = y / (np.sqrt((y ** 2).mean()) + 1e-9) * .12   # 按 RMS 配平
+    y = y / (np.sqrt((y ** 2).mean()) + 1e-9) * .12   # balance by RMS
     who = LINES[e['id']]['who']; pan = {'VASK': .12, 'GARY': -.12, 'COFFEE': 0}[who]
     add(vob, y, e['t'], {'VASK': 1.0, 'GARY': .92, 'COFFEE': .85}[who], pan)
-# 一点点房间感（短早反射），让人声和画面在同一空间
+# A touch of room (short early reflections) so the voices sit in the same space as the picture
 from scipy.signal import fftconvolve
 er = np.zeros(int(.09 * SR)); er[0] = 1
 for dly, gdb in [(.011, .25), (.019, .18), (.031, .12), (.047, .08), (.067, .05)]: er[int(dly * SR)] += gdb
 vob = np.stack([fftconvolve(vob[:, c], er)[:N] for c in range(2)], 1)
 
-# —— 配乐 + 闪避 ——
+# —— score + ducking ——
 mus, _ = sf.read(os.path.join(HERE, 'music', 'score.wav'))
 mus = mus[:N] if len(mus) >= N else np.pad(mus, ((0, N - len(mus)), (0, 0)))
 act = (np.abs(vob).max(1) > .01).astype(float)

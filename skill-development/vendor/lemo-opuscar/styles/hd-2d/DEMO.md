@@ -2,7 +2,7 @@
 
 One example among many. Don't reuse its story, arc, shots, props or timings.
 
-Demo: *The Lampbearer* (76.5 s, 1920×1080, 60 fps) · `hd-2d.mp4` (the **tilt-shift cut**) · source in [`demo/`](demo/) (local only) · engine: three.js r170 scenes + procedural pixel textures + custom physical DOF / tilt-shift post (`demo/post_ts.js`) + Canvas2D overlay UI, rendered frame-by-frame with `core/render/video.mjs`.
+Demo: *The Lampbearer* (76.5 s, 1920×1080, 60 fps) · `hd-2d.mp4` (the **tilt-shift cut**) · source in [`demo/`](demo/) · engine: three.js r170 scenes + procedural pixel textures + custom physical DOF / tilt-shift post (`demo/post_ts.js`) + Canvas2D overlay UI, rendered frame-by-frame with `core/render/video.mjs`.
 
 
 ## Story & structure
@@ -74,8 +74,7 @@ Motion as built:
 - **Dialogue box** (for a character who speaks on screen, instead of a subtitle): 1180×210 px, bottom-centred, navy gradient `rgba(14,18,34,.86) → rgba(6,8,18,.9)`, 2 px gold border `rgba(214,190,130,.9)` + inner 1 px line, gold diamond corners; name plate (Cormorant 600 34 px) overlapping the top-left edge; body Cormorant 500 44 px, **typed out over 92 % of the voice duration**; blinking gold ▼ caret when done; slides up 14 px on entry. A soft chime marks it.
 - **Chapter card** (0–5.5 s): radial navy background `#11172a → #020308`, `CHAPTER  I` (Cinzel 500 34 px, 10 px tracking, `#d8c28e`) over a gold ornament line with diamond, then the chapter name in Cormorant italic 78 px with a warm glow; one pixel ember drifts across.
 - **Title** (67.4–76.4 s): screen dimmed 50 %, `THE LAMPBEARER` in Cinzel 700 118 px, 14 px tracking, vertical gold gradient `#fff3cf → #e2c27c → #a8803e` with glow; ornament; tagline in Cormorant italic 50 px; music/voice credit at the bottom (24 px, 75 % alpha).
-- **End credit line (library rule)**: every film ends with **"LemoLab × Claude Opus 5.5"**. In the demo it is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it (reproduces the pre-sign-off `hd-2d_v1.mp4`). Draw it the same way in a new film.
-- **End credit line (this library's demo only)**: our demo ends with **"LemoLab × Claude Opus 5.5"**. It is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it (reproduces the pre-sign-off `hd-2d_v1.mp4`). This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card — when you adapt `ui.js`, delete the credit line.
+- **End credit line (this library's demo only)**: our demo ends with **"LemoLab × Claude Opus 5.5"**. It is part of the title card (`ui.js` `title()`, on by default): Cinzel 500 30 px, `#d8c28e` at 85 % alpha, 4 px tracking, centred at y = 668, fading in 70.6–71.6 s, between the tagline and the music credit, which it does not replace. `?nocredit=1` hides it. This sign-off belongs to this library's demo only; a user's film carries no LemoLab credit and no copy of this card — when you adapt `ui.js`, delete the credit line.
 - Export the `.srt` from the same data (`tools/srt.py`: story.js `VO` + `voices/dur.json`, +0.5 s hold, dialogue prefixed `OLD KEEPER:`).
 
 

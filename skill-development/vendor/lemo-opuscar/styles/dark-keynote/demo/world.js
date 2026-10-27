@@ -1,23 +1,23 @@
-// world.js — 混乱世界：按音符表生成几百个 UI 元素（文件 / 照片 / 通知 / 窗口），以及它们的吸附槽位与分类槽位
+// world.js — the chaotic world: generates hundreds of UI elements (files / photos / notifications / windows) from the note tables, plus their snap slots and sorted slots
 import { mulberry, clamp, eo, ei, ss, seg, lerp } from './engine.js';
 import { monotone } from '../../../core/lib.js';
 import { K, voice1, voice2, voice3 } from './timeline.js';
 
-// 世界 = 一块 1920×1080 的"屏幕"（桌面），摄影机在它上面推拉
+// World = one 1920×1080 "screen" (desktop); the camera pushes in and pulls out over it
 export const SCR = { x: 0, y: 0, w: 1920, h: 1080 };
-// 便签窗口与片名文字（世界坐标）
+// Note window and title text (world coordinates)
 export const NOTE = { x: 520, y: 350, w: 800, h: 430 };
 export const TXT = { x: 700, y: 560, px: 30, lh: 44 };
 export const CARET_H = 38;
 
-// ───── 摄影机轨迹（混乱段 0–20 s）─────
+// ───── Camera path (chaos section 0–20 s) ─────
 const Z0 = 5.0;
-export const CAM0 = { x: TXT.x + 103, y: TXT.y - 10 };      // 开场特写：片名居中
-// 对数空间的关键帧（每小节拉远一档，速度连续）
+export const CAM0 = { x: TXT.x + 103, y: TXT.y - 10 };      // opening close-up: title centred
+// Keyframes in log space (pulls back one notch per bar, continuous speed)
 const ZK = monotone([[0, Math.log(Z0 / 1.04)], [3.9, Math.log(Z0)], [6, Math.log(3.1)], [8, Math.log(2.0)], [10, Math.log(1.35)], [12, Math.log(1.0)], [15, Math.log(0.8)]]);
 export function pullZoom(t) { return Math.exp(ZK(Math.min(t, 15))); }
 
-// ───── 元素生成 ─────
+// ───── Element generation ─────
 const FILES = ['final_v2.pdf', 'final_FINAL.pdf', 'final_FINAL_2.pdf', 'Untitled 38.txt', 'notes (copy).txt', 'IMG_4471.jpg', 'Screenshot 09-12.png', 'budget_new_NEW.xlsx', 'deck_v7_real.key', 'todo.txt', 'todo (1).txt', 'scan0003.pdf', 'invoice(3).pdf', 'draft.docx', 'draft-old.docx', 'export.zip', 'Untitled 39.txt', 'recording.m4a', 'IMG_4472.jpg', 'resume_2026.pdf'];
 const EXT = { pdf: ['PDF', '#E0575B'], txt: ['TXT', '#6E7890'], jpg: ['JPG', '#4C9BE8'], png: ['PNG', '#2FB6A6'], xlsx: ['XLS', '#3FA66B'], key: ['KEY', '#5B7CFA'], docx: ['DOC', '#4C7BE8'], zip: ['ZIP', '#9A7B4F'], m4a: ['M4A', '#C55FD0'] };
 const NOTIFS = [['Messages', '3 new messages'], ['Calendar', 'Standup in 5 min'], ['Reminders', 'Pay the invoice'], ['Updates', 'Restart to update'], ['Mail', '12 unread'], ['Photos', 'New memories'], ['Storage', 'Disk almost full'], ['Chat', '@you in #general'], ['Calendar', 'Moved: Team sync'], ['Messages', 'Are you there?'], ['Backup', 'Backup failed'], ['Mail', 'Re: Re: Fwd: deck']];
@@ -42,24 +42,24 @@ let _items = null;
 export function items() {
   if (_items) return _items;
   const R = mulberry(20260926), out = [];
-  const caretW = { x: TXT.x + 8, y: TXT.y + TXT.lh - 11 };      // 第二行 "I" 之后
+  const caretW = { x: TXT.x + 8, y: TXT.y + TXT.lh - 11 };      // after the "I" on the second line
   const visible = t => { const z = pullZoom(t), c = camCenter(t); return [c.x - 960 / z, c.y - 540 / z, c.x + 960 / z, c.y + 540 / z]; };
   const place = (t, w, h, avoidNote) => {
     const [x0, y0, x1, y1] = visible(Math.min(t + 0.4, K.freeze));
     const ox0 = Math.max(x0, -220), oy0 = Math.max(y0, -170), ox1 = Math.min(x1, 2140), oy1 = Math.min(y1, 1250);
     for (let k = 0; k < 40; k++) {
       const x = lerp(ox0 + w * 0.3, ox1 - w * 0.3, R()), y = lerp(oy0 + h * 0.3, oy1 - h * 0.3, R());
-      if (Math.hypot(x - caretW.x, y - caretW.y) < 90 + Math.max(w, h) * 0.45) continue;          // 给光标留一道缝
+      if (Math.hypot(x - caretW.x, y - caretW.y) < 90 + Math.max(w, h) * 0.45) continue;          // leave a gap for the caret
       if (avoidNote && x > TXT.x - 60 && x < TXT.x + 300 && y > TXT.y - 80 && y < TXT.y + 90) continue;
       return [x, y];
     }
     return [lerp(ox0, ox1, R()), lerp(oy0, oy1, R())];
   };
   const add = (it) => { it.id = out.length; out.push(it); return it; };
-  // 1) 三声通知（特写里压住字行）
+  // 1) Three notifications (cover the text line in the close-up)
   const dn = [[TXT.x + 250, TXT.y - 44, 0], [TXT.x + 150, TXT.y + 60, 1], [TXT.x - 40, TXT.y + 128, 2]];
   K.ding.forEach((t, i) => add({ type: 'notif', t0: t, x: dn[i][0], y: dn[i][1], w: 330, h: 74, rot: 0, z: 0, app: [0, 1, 2][i], txt: NOTIFS[[9, 1, 2][i]], seed: i, src: 'ding' }));
-  // 2) 声部 1（在拍上）→ 文件；10 s 后部分 → 照片
+  // 2) Voice 1 (on the beat) → files; after 10 s some → photos
   const mkFile = (t, n) => { const [x, y] = place(t, 70, 86, t < 9); const f = FILES[Math.floor(R() * FILES.length)], e = EXT[f.split('.').pop()] || EXT.txt; return add({ type: 'file', t0: t, x, y, w: 70, h: 86, rot: (R() - 0.5) * 0.28, z: 0, name: f, ext: e[0], tint: e[1], s: 1.05 + R() * 0.25, note: n }); };
   const mkPhoto = (t, n) => { const w = 170 + R() * 70; const [x, y] = place(t, w, w * 0.72, t < 9); return add({ type: 'photo', t0: t, x, y, w, h: w * 0.72, rot: (R() - 0.5) * 0.6, z: 0, seed: Math.floor(R() * 999), dir: R() < 0.5 ? -1 : 1, note: n }); };
   const mkNotif = (t, n, rr = 0.1) => { const [x, y] = place(t, 330, 74, false); return add({ type: 'notif', t0: t, x, y, w: 330, h: 74, rot: (R() - 0.5) * rr, z: 0, app: Math.floor(R() * 7), txt: NOTIFS[Math.floor(R() * NOTIFS.length)], bd: R() < 0.35 ? String(1 + Math.floor(R() * 99)) : null, seed: Math.floor(R() * 999), note: n }); };
@@ -69,23 +69,23 @@ export function items() {
     else if (t < 12) { mkFile(t, n); if (n.i % 3 === 0) mkPhoto(t + 0.001, n); }
     else { mkFile(t, n); mkPhoto(t + 0.001, n); if (n.i % 2 === 0) mkFile(t + 0.002, n); }
   }
-  // 3) 声部 2：6–8 照片；8 s 后错相 → 照片 + 通知
+  // 3) Voice 2: 6–8 photos; after 8 s phasing → photos + notifications
   for (const n of voice2()) {
     const t = n.t;
     if (t < 8) { if (n.i % 2 === 0) mkPhoto(t, n); }
     else { if (n.i % 3 === 0) mkPhoto(t, n); else mkNotif(t, n, t > 12 ? 0.25 : 0.08); if (t > 12) mkNotif(t + 0.001, n, 0.3); }
   }
-  // 4) 声部 3（钟琴）→ 通知
+  // 4) Voice 3 (glockenspiel) → notifications
   for (const n of voice3()) mkNotif(n.t, n, 0.2);
-  // 5) 窗口（小节 / 拍上）
+  // 5) Windows (on bars / beats)
   WINS.forEach((w, i) => add({ type: 'window', t0: w.t, x: w.x + w.w / 2, y: w.y + w.h / 2, w: w.w, h: w.h, rot: (R() - 0.5) * 0.06, z: 0, kind: w.kind, title: w.title, app: i, seed: i + 3 }));
-  // 6) 前景视差卡（贴着镜头掠过，虚化）
+  // 6) Foreground parallax cards (skim past right in front of the lens, blurred)
   [[5.25, 1.8, 0.14], [6.75, -1.6, 0.13], [8.5, 1.5, 0.12], [9.75, -1.4, 0.1], [10.75, 1.3, 0.09], [11.5, -1.2, 0.08]].forEach(([t, side, z], k) => {
     const c = camCenter(t), zz = pullZoom(t), s = 1 / (1 / zz - z);
     const x = c.x + side * 700 / s + side * 40, y = c.y + (k % 2 ? 260 : -300) / s;
     add({ type: 'notif', t0: t, x, y, w: 330, h: 74, rot: 0, z, app: k + 2, txt: NOTIFS[(k * 5) % NOTIFS.length], seed: 50 + k, fg: true });
   });
-  // 数量与分组正好填满吸附网格：Desktop 5 行、Photos 3 行、Inbox 4 行（每行 22 格）
+  // The counts and groups exactly fill the snap grid: Desktop 5 rows, Photos 3 rows, Inbox 4 rows (22 cells per row)
   const TGT = [GC * 5, GC * 3, GC * 4], mk = [mkFile, mkPhoto, (t, n) => mkNotif(t, n, 0.3)];
   const late = i => out[i].t0 > 12 && out[i].type !== 'window' && !out[i].fg && out[i].src !== 'ding';
   const cnt = () => [0, 1, 2].map(gi => out.filter(it => groupOf(it) === gi).length);
@@ -104,7 +104,7 @@ export function camCenter(t) {
   return { x: lerp(CAM0.x, 960, u), y: lerp(CAM0.y, 540, u) };
 }
 
-// ───── 入场动画 & 冻结 ─────
+// ───── Entrance animation & freeze ─────
 export function poseAt(it, t) {
   const ta = Math.min(t, K.freeze), a = ta - it.t0;
   if (a < 0) return null;
@@ -113,21 +113,21 @@ export function poseAt(it, t) {
   else if (it.type === 'photo') { const p = eo(clamp(a / 0.3)); x -= it.dir * 260 * (1 - p); y -= 120 * (1 - p); rot += it.dir * 0.5 * (1 - p); al = clamp(a / 0.08); }
   else if (it.type === 'notif') { const p = eo(clamp(a / 0.24)); x += 90 * (1 - p); al = clamp(a / 0.1); }
   else if (it.type === 'window') { const p = clamp(a / 0.22); s = 0.94 + 0.06 * (1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2)); al = clamp(a / 0.12); }
-  // 14–15 颤抖（冻结后停住）
+  // 14–15 trembling (stops after the freeze)
   if (ta > 13.8) { const k = Math.floor(ta * 24), m = 2.4 * ss(seg(ta, 13.8, 14.9)); x += (Math.sin(k * 12.9898 + it.id * 78.233) * 43758.5 % 1) * m; y += (Math.sin(k * 39.346 + it.id * 11.135) * 24634.6 % 1) * m; }
   return { x, y, rot, s, al };
 }
 
-// ───── 吸附网格：22 列 × 12 行，按类型分三段（Desktop / Photos / Inbox），段间留缝 ─────
+// ───── Snap grid: 22 columns × 12 rows, split by type into three bands (Desktop / Photos / Inbox), with gaps between bands ─────
 export const TILE = 60, GAP = 14, GC = 22, GR = 12, NSLOT = GC * GR, BAND = 28;
 const PITCH = TILE + GAP, GX0 = (1920 - (GC * PITCH - GAP)) / 2, GY0 = (1080 - (GR * PITCH - GAP + 2 * BAND)) / 2;
-export const ROWS = [[0, 5], [5, 3], [8, 4]];                     // 每组 [起始行, 行数]
+export const ROWS = [[0, 5], [5, 3], [8, 4]];                     // per group [start row, row count]
 const rowY = r => GY0 + r * PITCH + (r >= 5 ? BAND : 0) + (r >= 8 ? BAND : 0) + TILE / 2;
 export const SLOTS = []; for (let j = 0; j < GR; j++) for (let i = 0; i < GC; i++) SLOTS.push({ i, j, x: GX0 + i * PITCH + TILE / 2, y: rowY(j) });
-export const CARET_HOME = { x: GX0 - 30, y: rowY(0) };           // 收拢后光标停在第一行行首
+export const CARET_HOME = { x: GX0 - 30, y: rowY(0) };           // after gathering, the caret rests at the start of the first row
 export const RING = 2600;
 let _snap = null;
-/** 每个元素按类型飞回自己那一段：组内按 y 分行、行内按 x 排，少交叉；起飞时间按离光标的距离错开（一道浪） */
+/** Each element flies back to its own band by type: rows within a group by y, ordered by x within a row, fewer crossings; take-off times staggered by distance from the caret (a wave) */
 export function snap() {
   if (_snap) return _snap;
   const its = items(), pts = its.map(it => poseAt(it, K.freeze));
@@ -145,11 +145,11 @@ export function snap() {
   _snap = res; return res;
 }
 export const groupOf = it => it.type === 'photo' ? 1 : it.type === 'notif' ? 2 : 0;
-// ───── 分类后的槽位（Tidy 窗口内容区，44px 格）─────
+// ───── Sorted slots (Tidy window content area, 44px cells) ─────
 export const TW = { bar: 72, side: 360, status: 56 };
 export const ST = 64, SG = 12, SCOLS = 19, SROWS = 3;
 let _sorted = null;
-/** 分类布局：每组最多 3 行 × 19 列，放不下的飞进本组最后一格的 "+N" 叠卡 */
+/** Sorted layout: at most 3 rows × 19 columns per group; whatever doesn't fit flies into a "+N" stacked card in the group's last cell */
 export function sorted() {
   if (_sorted) return _sorted;
   const its = items(), x0 = TW.side + 44, groups = [[], [], []];

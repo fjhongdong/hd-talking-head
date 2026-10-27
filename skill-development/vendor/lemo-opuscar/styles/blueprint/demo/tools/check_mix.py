@@ -1,4 +1,4 @@
-"""成片旁白可懂度自检：从 mix.wav 按字幕区间切段，whisper 转写对比原文
+"""Narration intelligibility self-check on the final mix: cut mix.wav into segments by subtitle interval, transcribe with Whisper and compare with the script
 .venv/bin/python styles/blueprint/demo/tools/check_mix.py"""
 import os, json, re, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel

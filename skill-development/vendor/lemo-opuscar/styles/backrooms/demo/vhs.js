@@ -1,8 +1,8 @@
-// VHS 摄像机后期（three ShaderPass，最后一道，直接输出到 1920×1080 画布）
-// 顺序：4:3 画幅 → 磁带逐行抖动 / 磁头切换条 / 跟踪撕裂 → 镜头桶形畸变（OSD 不畸变）
-//   → 亮度水平带宽限制 + 锐化振铃 → 色度大幅水平糊开并滞后 → 高光向右拖尾 → 自动白平衡 / 曝光 / AGC 噪点
-//   → 掉磁（白色横线）→ 黑电平抬升 + 高光软削 → 暗角
-// 不做 CRT 扫描线/光栅：这是"被录下来的带子"，不是"在显像管上看"
+// VHS camcorder post-processing (three ShaderPass, the last pass, outputs straight to the 1920×1080 canvas)
+// Order: 4:3 frame → tape per-line jitter / head-switching band / tracking tear → lens barrel distortion (OSD not distorted)
+//   → horizontal luma bandwidth limit + sharpening ringing → chroma heavily smeared horizontally and delayed → highlights smear to the right → auto white balance / exposure / AGC noise
+//   → dropouts (white horizontal lines) → raised black level + soft highlight clip → vignette
+// No CRT scanlines/raster: this is "a tape that was recorded", not "watching it on a picture tube"
 export const VHS = {
   uniforms: {
     tDiffuse: { value: null }, tOSD: { value: null },
@@ -24,7 +24,7 @@ float vn1(float x){ float i = floor(x), f = fract(x); f = f*f*(3.-2.*f); return 
 const mat3 toYIQ = mat3(.299, .596, .211, .587, -.274, -.523, .114, -.322, .312);
 const mat3 toRGB = mat3(1., 1., 1., .956, -.272, -1.106, .621, -.647, 1.703);
 vec2 lens(vec2 q){ vec2 p = q - .5; vec2 pa = p * vec2(1.333, 1.); float r2 = dot(pa, pa); p *= 1. + barrel * r2; p *= 1. - barrel * .3; return p + .5; }
-// 信号 = 画面（经镜头）+ OSD（电子叠加，不经镜头）
+// Signal = picture (through the lens) + OSD (electronic overlay, not through the lens)
 vec3 sig(vec2 q){
   vec2 ql = lens(q);
   vec3 c = texture2D(tDiffuse, ql).rgb;
@@ -37,17 +37,17 @@ void main(){
   if (fc.x < x0 || fc.x > x0 + bw) { gl_FragColor = vec4(0., 0., 0., 1.); return; }
   vec2 uv = vec2((fc.x - x0) / bw, fc.y / res.y);
   float F = floor(frame);
-  // 垂直滚动（开机/撕裂时画面上下滚）
+  // Vertical roll (picture rolls up/down at power-on/during the tear)
   uv.y = fract(uv.y + roll);
-  float line = floor((1. - uv.y) * src.y);          // 磁带行号（自上而下）
+  float line = floor((1. - uv.y) * src.y);          // tape line number (top to bottom)
   float dx = 1. / src.x;
-  // 逐行水平抖动（时基误差）
+  // Per-line horizontal jitter (time-base error)
   float off1 = (h1(line * .37 + F * 1.13) - .5) * jitter * dx;
-  off1 += (vn1(line * .012 + F * .7) - .5) * jitter * .8 * dx;   // 低频摆动（周期 ~80 行，不会把字拧成斜体）
-  // 磁头切换：底部几行横向错开 + 噪声
+  off1 += (vn1(line * .012 + F * .7) - .5) * jitter * .8 * dx;   // low-frequency wobble (period ~80 lines, won't twist the text into italics)
+  // Head switching: the bottom few lines shifted sideways + noise
   float hsw = smoothstep(src.y - 10., src.y - 3., line);
   off1 += hsw * (.012 + .025 * h1(line + F * 3.1));
-  // 跟踪撕裂：一条滚动的噪声带 + 带内大幅错行
+  // Tracking tear: a rolling noise band + large line offsets inside the band
   float band = 0.;
   if (track > 0.) {
     float by = fract(h1(F * .31) * .6 + F * .037);
@@ -57,42 +57,42 @@ void main(){
     uv.y += (h1(F * 1.9) - .5) * .02 * track;
   }
   vec2 q = vec2(uv.x + off1, uv.y);
-  // 亮度：窄高斯 + 宽高斯 → 锐化振铃（VHS 摄像机的"边缘增强"白边）
+  // Luma: narrow Gaussian + wide Gaussian → sharpening ringing (the white "edge enhancement" halo of VHS camcorders)
   float Y = 0., Yw = 0., ws = 0., wws = 0.;
   for (int i = -3; i <= 3; i++) { float fi = float(i); float w = exp(-fi * fi / (2. * lumaW * lumaW)); Y += dot(sig(q + vec2(fi * dx, 0.)), vec3(.299, .587, .114)) * w; ws += w; }
   for (int i = -4; i <= 4; i++) { float fi = float(i) * 1.8; float w = exp(-fi * fi / (2. * 12.)); Yw += dot(sig(q + vec2(fi * dx, 0.)), vec3(.299, .587, .114)) * w; wws += w; }
   Y /= ws; Yw /= wws;
   Y = Y + sharp * (Y - Yw);
-  // 色度：宽窗平均、向右滞后
+  // Chroma: wide-window average, delayed to the right
   vec2 IQ = vec2(0.); float cw = 0.;
   for (int i = -5; i <= 5; i++) { float fi = float(i) * chromaW * .4; float w = exp(-float(i * i) / 12.); IQ += (toYIQ * sig(q + vec2((fi - chromaShift) * dx, 0.))).yz * w; cw += w; }
   IQ /= cw;
-  // 高光向右拖尾（亮灯的"彗尾"）
+  // Highlights smear to the right (the "comet tail" of bright lights)
   float tail = 0.;
   for (int i = 1; i <= 6; i++) { float yy = dot(sig(q - vec2(float(i) * 2.5 * dx, 0.)), vec3(.299, .587, .114)); tail += max(yy - .82, 0.) * (1. - float(i) / 7.); }
   Y += tail * smear;
-  // 色度噪声（低频横向色斑）+ 亮度噪声（横向拉长的颗粒，暗处更明显 = AGC）
+  // Chroma noise (low-frequency horizontal colour blotches) + luma noise (horizontally stretched grain, stronger in the dark = AGC)
   float px = floor((fc.x - x0) / bw * src.x / 1.5);
   float nY = (h2(vec2(px, line) + F * 7.3) - .5) + (h2(vec2(floor(px / 3.), line) + F * 3.1) - .5) * .6;
   Y += nY * gain * (1.3 - Y * .8);
   IQ += (vec2(vn1(uv.x * 38. + line * 3.1 + F * 17.), vn1(uv.x * 31. + line * 1.7 + F * 11.)) - .5) * gain * .5;
   IQ *= sat;
   vec3 c = toRGB * vec3(Y, IQ);
-  // 跟踪带内：雪花 + 丢色
+  // Inside the tracking band: snow + colour loss
   if (track > 0.) { float sn = h2(vec2(floor(fc.x / 3.), line) + F * 31.); c = mix(c, vec3(sn), band * .8 * track); c = mix(c, vec3(dot(c, vec3(.33))), band * track); }
   if (hsw > 0.) c = mix(c, vec3(h2(vec2(px, line + F))), hsw * .35);
-  // 掉磁：每帧 0~2 条短白线
+  // Dropouts: 0~2 short white lines per frame
   if (dropout > 0.) for (int k = 0; k < 3; k++) {
     float fk = float(k); float hk = h1(F * 3.7 + fk * 11.3);
     if (hk > .55) continue;
     float dl = floor(h1(F * 1.3 + fk * 5.1) * src.y), dxs = h1(F * 2.9 + fk * 7.7), dlen = .02 + .1 * h1(F * 4.1 + fk);
     if (abs(line - dl) < .6 && uv.x > dxs && uv.x < dxs + dlen) c = mix(c, vec3(.95), dropout * (1. - (uv.x - dxs) / dlen));
   }
-  // 白平衡 / 曝光 / 黑电平 / 高光软削
+  // White balance / exposure / black level / soft highlight clip
   c *= tint * expo;
   c = c * (1. - black) + black;
-  c = mix(c, (1. - exp(-c * 1.6)) / (1. - exp(-1.6)), smoothstep(.55, 1.2, c));   // 只在高光处软削
-  // 暗角（镜头）
+  c = mix(c, (1. - exp(-c * 1.6)) / (1. - exp(-1.6)), smoothstep(.55, 1.2, c));   // soft clip only in the highlights
+  // Vignette (lens)
   vec2 d = (uv - .5) * vec2(1.25, 1.); c *= 1. - vig * smoothstep(.2, .85, length(d));
   c = mix(c, vec3(0.), off);
   gl_FragColor = vec4(clamp(c, 0., 1.), 1.);

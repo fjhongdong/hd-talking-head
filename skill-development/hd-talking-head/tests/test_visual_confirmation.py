@@ -481,7 +481,7 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertEqual(rows[0]["template"], "素材直用（无动效模板）")
         self.assertEqual(rows[0]["channel"], "Example Stock")
 
-    def test_creative_scene_is_not_presented_as_a_new_fixed_template(self):
+    def test_native_creation_uses_the_registered_template_in_the_list(self):
         from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
         director = artifacts.read_json_artifact(self.fixture.brief)
         segment = director["segments"][0]
@@ -493,7 +493,7 @@ class VisualConfirmationTests(unittest.TestCase):
             "candidate_id": "openfilm-motion-graphics:motion-graphics", "skill_id": "openfilm-motion-graphics",
             "template_id": "openfilm/motion-graphics-scene", "role": "native"}]
         rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
-        self.assertIn("无固定模板", rows[0]["template"])
+        self.assertEqual(rows[0]["template"], "openfilm/motion-graphics-scene")
         self.assertEqual(rows[0]["channel"], "openfilm-motion-graphics")
         segment["visual_strategy"]["components"][0]["kind"] = "ai_generated"
         segment["bindings"]["component-1"] = {"provider": "Lovart", "generation_id": "fixture-generation"}
@@ -501,6 +501,7 @@ class VisualConfirmationTests(unittest.TestCase):
             skill_id="gbro-collage-broll", template_id="gbro-collage-broll/design", role="design")
         rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
+        self.assertEqual(rows[0]["template"], "gbro-collage-broll/design")
         self.assertEqual(rows[0]["generation_channel"], "Lovart")
         treatment["generation_plan"] = {"steps": [{"id":"image", "purpose":"image",
             "segment_id":segment["segment_id"], "component_id":"component-1", "arguments":{}},
@@ -512,7 +513,7 @@ class VisualConfirmationTests(unittest.TestCase):
                 "video":{"provider":"Lovart", "model":"Kling O1"}})
         self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
         self.assertEqual(rows[0]["generation_channel"], "图片：Builtin / image-model；视频：Lovart / Kling O1")
-        self.assertIn("无固定模板", rows[0]["template"])
+        self.assertEqual(rows[0]["template"], "gbro-collage-broll/design")
 
     def test_channel_uses_real_source_instead_of_adapter_alias(self):
         director = {"segments": []}

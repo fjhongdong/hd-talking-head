@@ -1,4 +1,4 @@
-// 剪纸网格：正面=美术，背面=纸色（同一剪影），能投出镂空阴影
+// Paper-cut mesh: front = art, back = paper colour (same silhouette); casts cut-out shadows
 import * as THREE from 'three';
 import { texOf } from './book.js';
 
@@ -14,7 +14,7 @@ export function mats(tex, backCol = '#efe8da') {
   const r = { front, back, depth }; cache.set(k, r); return r;
 }
 
-// item: {c,w,h,ax,ay}；返回 group，原点=锚点
+// item: {c,w,h,ax,ay}; returns a group, origin = anchor
 export function cutMesh(item, o = {}) {
   const tex = o.tex || texOf(item.c), s = o.s ?? 1, w = item.w * s, h = item.h * s;
   const geo = new THREE.PlaneGeometry(w, h); geo.translate(w / 2 - item.ax * w, item.ay * h - h / 2, 0);
@@ -25,7 +25,7 @@ export function cutMesh(item, o = {}) {
   return g;
 }
 
-// 软圆影子贴片
+// Soft round shadow decal
 let blobTex = null;
 export function blobShadow(r, a = .45) {
   if (!blobTex) {
@@ -38,13 +38,13 @@ export function blobShadow(r, a = .45) {
   return m;
 }
 
-// 细线（挂云/星星的线）
+// Thin line (the strings that hold clouds/stars)
 export function thread(len, col = '#6b5a4a') {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(.00018, .00018, len, 5), new THREE.MeshStandardMaterial({ color: col, roughness: .8 }));
   m.geometry.translate(0, len / 2, 0); m.castShadow = true; return m;
 }
 
-// 实例化粒子：fn(i, t) → {x,y,z, rx,ry,rz, s, vis}
+// Instanced particles: fn(i, t) → {x,y,z, rx,ry,rz, s, vis}
 export function particles(geo, mat, n, fn) {
   const im = new THREE.InstancedMesh(geo, mat, n); im.frustumCulled = false;
   const d = new THREE.Object3D();

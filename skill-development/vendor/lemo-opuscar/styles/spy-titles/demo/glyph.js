@@ -1,4 +1,4 @@
-// 剪纸字：用 opentype.js 取 OFL 字体轮廓 → 折线化 → 每个字母"重新剪一遍"（毛边、微旋转、微错位）
+// Paper-cut letters: take OFL font outlines with opentype.js → flatten to polylines → "re-cut" every letter (rough edges, slight rotation, slight offset)
 import { rough, piece, pathPoly, S, g } from './paper.js';
 import { hash } from '/core/lib.js';
 
@@ -17,12 +17,12 @@ function flatten(cmds) {
     else if (c.type === 'Q') { for (let i = 1; i <= seg; i++) { const t = i / seg, u = 1 - t; cur.push([u * u * px + 2 * u * t * c.x1 + t * t * c.x, u * u * py + 2 * u * t * c.y1 + t * t * c.y]); } px = c.x; py = c.y; }
     else if (c.type === 'C') { for (let i = 1; i <= seg; i++) { const t = i / seg, u = 1 - t; cur.push([u * u * u * px + 3 * u * u * t * c.x1 + 3 * u * t * t * c.x2 + t * t * t * c.x, u * u * u * py + 3 * u * u * t * c.y1 + 3 * u * t * t * c.y2 + t * t * t * c.y]); } px = c.x; py = c.y; }
   }
-  // 去掉闭合重复点
+  // drop the duplicate closing point
   for (const k of contours) { const a = k[0], b = k[k.length - 1]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) < .01) k.pop(); }
   return contours;
 }
 
-// 排版一行：返回每个字母 {ch, x, w, polys(局部坐标, 基线原点), cx}；size = 字高（大写高度约 0.75*size 对 League Gothic）
+// Lay out one line: returns {ch, x, w, polys (local coords, baseline origin), cx} per letter; size = type height (cap height ≈ 0.75*size for League Gothic)
 const gcache = new Map();
 export function layout(str, size, opt = {}) {
   const f = FONTS[opt.font || 'gothic'];
@@ -42,7 +42,7 @@ export function layout(str, size, opt = {}) {
   return { letters: out, width: x - track };
 }
 
-// 剪一个字母：种子 = 字符+序号 → 固定剪边；jit = 微旋转/错位强度
+// Cut one letter: seed = character + index → a fixed cut edge; jit = strength of the slight rotation/offset
 export function cutLetter(L, seed, amp = 1.6) {
   const k = 'cut' + seed + L.ch + L.polys.length + amp;
   let r = gcache.get(k);
@@ -50,7 +50,7 @@ export function cutLetter(L, seed, amp = 1.6) {
   return r;
 }
 
-// 画一行剪纸字（原点 = 行首基线）。opt: col, seed, jit(度), gap, shadow, each(L, i) → 额外变换 {dx,dy,rot,s,hide}
+// Draw one line of paper-cut letters (origin = baseline at line start). opt: col, seed, jit (degrees), gap, shadow, each(L, i) → extra transform {dx,dy,rot,s,hide}
 export function drawLine(lay, x, y, opt = {}) {
   const col = opt.col || '#000', seed = opt.seed || 1, jit = opt.jit ?? 1;
   for (const L of lay.letters) {

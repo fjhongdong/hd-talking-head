@@ -1,4 +1,4 @@
-// 字体子集：从 timeline.js 收集画面与字幕用到的字，经 Google Fonts CSS2 API 下载 OFL 字体子集到 fonts/，写 fonts.css
+// Font subsets: collect the characters used on screen and in subtitles from timeline.js, download OFL font subsets via the Google Fonts CSS2 API into fonts/, write fonts.css
 // usage: node tools/fonts.mjs <demo>
 import fs from 'fs'; import path from 'path'; import { pathToFileURL } from 'url'; import { execFileSync } from 'child_process';
 const dir = path.resolve(process.argv[2] || '.');

@@ -1,6 +1,6 @@
 #!/bin/sh
-# core/render/mux.sh 的本地副本：① 很轻的信号噪声（亮度 2，逐帧变化；CRT 本身已有纹理）② 两遍 loudnorm（单遍会偏差 0.5 LU 左右）
-# 用法：tools/mux.sh out/video24.mp4 mix.wav ../cel-anime-80s.mp4 24
+# Local copy of core/render/mux.sh: ① very light signal noise (luma 2, changing per frame; the CRT already has texture of its own) ② two-pass loudnorm (a single pass is off by about 0.5 LU)
+# Usage: tools/mux.sh out/video24.mp4 mix.wav ../cel-anime-80s.mp4 24
 V="$1"; A="$2"; O="$3"; FPS="${4:-24}"
 J=$(ffmpeg -hide_banner -nostats -i "$A" -af loudnorm=I=-14:TP=-1.2:LRA=11:print_format=json -f null - 2>&1 | sed -n '/{/,/}/p')
 g() { echo "$J" | grep "\"$1\"" | sed 's/.*: "\(.*\)".*/\1/'; }

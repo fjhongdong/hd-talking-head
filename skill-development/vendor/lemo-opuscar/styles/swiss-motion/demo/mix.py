@@ -1,6 +1,6 @@
-"""混音：配乐（music/score.wav）+ 旁白（voices/*.wav）+ 程序化拟音（铅字、纸、裁纸刀、钢尺）→ mix.wav
-python styles/swiss-motion/demo/mix.py   （先跑 events.mjs 生成 events.json）
-拟音跟材质走：铅字 = 金属短瞬态 + 3–5 kHz 共振；纸 = 低通噪声 + 纸面摩擦；裁纸刀 = 带通扫频 + 金属 snick；全部干声、不加混响。"""
+"""Mix: score (music/score.wav) + voice-over (voices/*.wav) + procedural foley (metal type, paper, utility knife, steel ruler) → mix.wav
+python styles/swiss-motion/demo/mix.py   (run events.mjs first to generate events.json)
+Foley follows the material: metal type = short metallic transient + 3–5 kHz resonance; paper = low-passed noise + paper-surface friction; utility knife = band-pass sweep + metallic snick; all dry, no reverb."""
 import sys, os, json, numpy as np, soundfile as sf
 from scipy.signal import resample_poly
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -13,9 +13,9 @@ ev = json.load(open(os.path.join(HERE, 'events.json')))
 DUR = ev['dur'] + .5
 N = int(DUR * SR)
 
-# ---------------- 拟音 ----------------
+# ---------------- foley ----------------
 def type_clack(v=1.0, big=False):
-    """铅字落进排字盘：金属瞬态 + 两个高频共振 + 木质托盘低频"""
+    """Metal type dropping into the composing tray: metallic transient + two high-frequency resonances + low end of the wooden tray"""
     d = .12 if big else .07; tt = t_(d); p = .92 + rng.random() * .16
     x = hp(noise(d), 2500) * env_exp(d, .0012) * .9
     x += sum(a * np.sin(2 * np.pi * f * p * tt + rng.random() * 6) * env_exp(d, tau) for f, a, tau in [(3300, .45, .010), (5100, .25, .006), (1250, .35, .016)])
@@ -23,11 +23,11 @@ def type_clack(v=1.0, big=False):
     return norm(x) * v
 
 def rule_line(v=1.0):
-    """钢尺划线：极短、很轻的"嘶" """
+    """Steel-ruler line: a very short, very light "hiss" """
     d = .05; return norm(bp(noise(d), 3000, 9000) * np.sin(np.pi * t_(d) / d) ** 2) * v
 
 def knife(d=.45, v=1.0):
-    """裁纸刀：刀刃滑过（带通扫频上升）+ 结尾金属 snick"""
+    """Utility knife: the blade sliding across (rising band-pass sweep) + a metallic snick at the end"""
     n = noise(d); tt = t_(d); out = np.zeros_like(n); hop = 240
     for i in range(0, len(n), hop):
         f = 1500 + 4500 * (i / len(n)) ** 1.5
@@ -38,27 +38,27 @@ def knife(d=.45, v=1.0):
     return norm(x) * v
 
 def paper(v=1.0):
-    """纸张铺上：空气被压出去的低频 + 纸面啪"""
+    """Paper laid down: low end of the air being pushed out + a slap of the paper surface"""
     d = .25; tt = t_(d)
     x = lp(noise(d), 900) * env_exp(d, .03) + np.sin(2 * np.pi * 110 * tt) * env_exp(d, .04) * .6 + hp(noise(d), 3000) * env_exp(d, .006) * .4
     return norm(x) * v
 
 def thunk(v=1.0):
-    """巨大数字一级一级升起：低沉木质"咚" """
+    """The giant numeral rising step by step: a deep wooden "thud" """
     d = .12; tt = t_(d)
     return norm(np.sin(2 * np.pi * 95 * tt) * env_exp(d, .025) + bp(noise(d), 300, 1500) * env_exp(d, .006) * .6) * v
 
 def slide(v=1.0, d=.2):
-    """纸面滑动"""
+    """Paper sliding"""
     tt = t_(d); return norm(bp(noise(d), 700, 5000) * np.sin(np.pi * tt / d) ** 1.5) * v
 
 def snap(v=1.0):
-    """条块吸附：木质小咔哒"""
+    """Bar block snapping in: a small wooden click"""
     d = .05; tt = t_(d)
     return norm(hp(noise(d), 1500) * env_exp(d, .002) + np.sin(2 * np.pi * 1900 * tt) * env_exp(d, .007) * .6 + np.sin(2 * np.pi * 620 * tt) * env_exp(d, .01) * .4) * v
 
 def thump(v=1.0):
-    """红圆落地：闷、圆"""
+    """Red circle landing: dull, round"""
     d = .45; tt = t_(d)
     return norm(np.sin(2 * np.pi * 58 * tt * (1 - .25 * tt)) * env_exp(d, .09) + lp(noise(d), 250) * env_exp(d, .02) * .4) * v
 
@@ -77,10 +77,10 @@ for e in ev['ev']:
     if e['type'] not in FOLEY: continue
     fn, gain = FOLEY[e['type']]; x = fn(e).astype(np.float64)
     at = e['t']
-    if e['type'] == 'knife' and e['t'] not in (0, 39.0): at -= len(x) / SR - .02      # 短刀：snick 落在拍点上
+    if e['type'] == 'knife' and e['t'] not in (0, 39.0): at -= len(x) / SR - .02      # short cut: the snick lands on the beat
     add(fol, x, at, gain * e.get('g', 1), pan=float(rng.uniform(-.25, .25)))
 
-# ---------------- 旁白 ----------------
+# ---------------- voice-over ----------------
 lines = json.load(open(os.path.join(HERE, 'lines.json')))
 vo = np.zeros((N, 2)); vad = np.zeros(N)
 for L in lines:
@@ -90,12 +90,12 @@ for L in lines:
     y = norm(y, .9)
     add(vo, y, L['t'], .72)
     s = int(L['t'] * SR); vad[s:s + len(y)] = 1
-# 闪避包络：提前 80 ms 压下，释放 250 ms
+# ducking envelope: duck 80 ms early, release 250 ms
 from scipy.ndimage import maximum_filter1d, uniform_filter1d
 vad = maximum_filter1d(vad, size=int(.16 * SR)); vad = uniform_filter1d(vad, size=int(.25 * SR))
 duck = 1 - .68 * vad   # ≈ −10 dB
 
-# ---------------- 配乐 ----------------
+# ---------------- score ----------------
 mus, msr = sf.read(os.path.join(HERE, 'music', 'score.wav'))
 assert msr == SR, msr
 mus = mus[:N] if len(mus) >= N else np.pad(mus, ((0, N - len(mus)), (0, 0)))
@@ -106,7 +106,7 @@ for c in range(2): mix[:, c] = sfx.limit(mix[:, c], .95)
 assert np.isfinite(mix).all()
 sf.write(os.path.join(HERE, 'mix.wav'), mix.astype(np.float32), SR, subtype='FLOAT')
 
-# 电平表：每段 RMS（dBFS）
+# level meter: RMS per section (dBFS)
 def db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
 print('peak %.2f dBFS' % (20 * np.log10(np.abs(mix).max())))
 for L in lines:

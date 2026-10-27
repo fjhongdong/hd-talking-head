@@ -1,4 +1,4 @@
-# whisper 回听：逐条转写 voices/v*.wav，和 tts/lines.json 对照（VOICES=dir 可改目录）
+# whisper listen-back: transcribe each voices/v*.wav and compare with tts/lines.json (VOICES=dir changes the directory)
 from faster_whisper import WhisperModel
 import glob, os
 D = os.path.abspath(os.environ.get('VOICES', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'voices')))

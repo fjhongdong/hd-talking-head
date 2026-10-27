@@ -1,5 +1,5 @@
-"""混音：拟音（纸 / 剪刀 / 烛火 / 爆竹）+ 旁白 + 配乐（旁白下闪避）→ mix.wav
-用法（仓库根）：.venv/bin/python styles/papercut-red/demo/mix.py"""
+"""Mix: foley (paper / scissors / candle / firecrackers) + narration + score (ducked under narration) → mix.wav
+Usage (repo root): .venv/bin/python styles/papercut-red/demo/mix.py"""
 import sys, os, json, numpy as np, soundfile as sf, soxr
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')); sys.path.insert(0, ROOT)
 from core.audio.sfx import SR, t_, env_exp, bp, lp, hp, noise, norm, brown, compress, limit, add
@@ -17,8 +17,8 @@ def room_ir(d=.6, damp=3500):
 def verb(x, ir, mix=.2):
     y = np.stack([fftconvolve(x[:, c], ir[:, c])[:len(x)] for c in range(2)], 1); return x * (1 - mix) + y * mix
 
-# —— 纸与剪刀 ——
-def snip(v=1., big=False):      # 剪刀：刃擦过的金属"嚓" + 纸纤维断的"咔"
+# —— paper and scissors ——
+def snip(v=1., big=False):      # scissors: metallic "chha" of the blades sliding past + "ka" of paper fibres snapping
     d = .22; tt = t_(d)
     sweep = bp(noise(d), 2500, 9000) * np.clip(tt / .06, 0, 1) * np.exp(-np.maximum(0, tt - .06) / .025)
     ring = np.sin(2 * np.pi * 3800 * tt) * env_exp(d, .03) * .25 + np.sin(2 * np.pi * 5600 * tt) * env_exp(d, .02) * .12
@@ -27,18 +27,18 @@ def snip(v=1., big=False):      # 剪刀：刃擦过的金属"嚓" + 纸纤维�
     x = sweep * .8 + ring + crack + body
     if big: x = x + np.sin(2 * np.pi * 140 * tt) * env_exp(d, .03) * .4
     return norm(x) * v
-def swish(d=.4, v=1., lo=700, hi=6000, flutter=0):   # 纸面滑过 / 翻动
+def swish(d=.4, v=1., lo=700, hi=6000, flutter=0):   # paper sliding / flipping
     tt = t_(d); e = np.sin(np.pi * np.clip(tt / d, 0, 1)) ** 1.5
     am = 1 + flutter * np.sin(2 * np.pi * 22 * tt + rng.random() * 6)
     return norm(bp(noise(d), lo, hi) * e * am) * v
-def tap(v=1., f=900):            # 手指压纸 / 贴纸
+def tap(v=1., f=900):            # finger pressing paper / pasting paper
     d = .09; tt = t_(d)
     return norm(bp(noise(d), 300, 3000) * env_exp(d, .01) + np.sin(2 * np.pi * f * .25 * tt) * env_exp(d, .015) * .5) * v
-def snap(v=1.):                  # 展开"啪"
+def snap(v=1.):                  # unfold "pa" (snap)
     d = .3; tt = t_(d)
     x = hp(noise(d), 600) * env_exp(d, .012) * 1.4 + lp(noise(d), 300) * env_exp(d, .04) * .8 + np.sin(2 * np.pi * 90 * tt) * env_exp(d, .05) * .6
     return norm(x) * v
-def peel(d=1.2, v=1.):           # 揭纸：细碎撕拉
+def peel(d=1.2, v=1.):           # peeling paper: fine crackly tearing
     tt = t_(d); x = bp(noise(d), 1200, 7000) * (.4 + .6 * np.sin(np.pi * tt / d))
     g = np.zeros_like(tt)
     for _ in range(int(d * 90)):
@@ -46,8 +46,8 @@ def peel(d=1.2, v=1.):           # 揭纸：细碎撕拉
     return norm(x * .5 + g) * v
 def stamp(v=1.):
     d = .35; tt = t_(d); return norm(np.sin(2 * np.pi * 110 * tt) * env_exp(d, .05) + lp(noise(d), 600) * env_exp(d, .03) * .7) * v
-# —— 年兽 ——
-def thud(v=1.):                  # 厚纸板落地的闷"嘭"
+# —— Nian beast ——
+def thud(v=1.):                  # dull "boom" of thick cardboard hitting the floor
     d = .9; tt = t_(d); f = 55 * (1 + .6 * np.exp(-tt / .04))
     return norm(np.sin(2 * np.pi * np.cumsum(f) / SR) * env_exp(d, .18) + lp(noise(d), 350) * env_exp(d, .06) * .8) * v
 def growl(d=.8, v=1.):
@@ -56,11 +56,11 @@ def growl(d=.8, v=1.):
     return norm(x * np.sin(np.pi * tt / d) ** .7) * v
 def breath(d=1.2, v=1.):
     tt = t_(d); return norm(bp(noise(d), 150, 900) * np.sin(np.pi * tt / d) ** 1.4) * v
-def yelp(v=1.):                  # 憨憨的一声"呜"：下滑 + 鼻音共振峰
+def yelp(v=1.):                  # a goofy "woo": downward glide + nasal formant
     d = .9; tt = t_(d); f0 = 330 * (1 - .45 * np.clip(tt / .7, 0, 1)) * (1 + .02 * np.sin(2 * np.pi * 6 * tt)); ph = 2 * np.pi * np.cumsum(f0) / SR
     x = sum(np.sin(k * ph) / k ** 1.2 for k in range(1, 16)); x = bp(x, 250, 1400) + bp(x, 2000, 3200) * .3
     return norm(x * np.clip(tt / .05, 0, 1) * np.exp(-np.maximum(0, tt - .45) / .15)) * v
-# —— 火与光 ——
+# —— fire and light ——
 def puff(v=1.):
     d = .5; tt = t_(d); return norm(lp(noise(d), 700) * env_exp(d, .05) + hp(noise(d), 4000) * np.clip(tt / .04, 0, 1) * env_exp(d, .15) * .25) * v
 def match_(v=1.):
@@ -73,8 +73,8 @@ def fwoomp(d=.9, v=1., f=900):
 def shimmer(d=1.2, v=1.):
     tt = t_(d); x = sum(np.sin(2 * np.pi * f * tt + rng.random() * 6) * env_exp(d, .3 + rng.random() * .4) for f in [2637, 3136, 3520, 4186, 4699]) / 5
     return norm(x * np.clip(tt / .02, 0, 1)) * v
-# —— 爆竹 / 烟花 ——
-def crackers(d=1.2, v=1.):       # 一串密集噼啪（间隔 20–60 ms，越来越密）+ 远处闷响
+# —— firecrackers / fireworks ——
+def crackers(d=1.2, v=1.):       # a dense string of crackles (20–60 ms apart, getting denser) + distant dull booms
     out = np.zeros(int((d + .4) * SR)); t = 0.
     while t < d:
         s = int(t * SR); k = .006 + rng.random() * .006
@@ -132,10 +132,10 @@ for e in ev:
     elif ty == 'peel': add(fx, peel(1.2), t, G[ty], .4)
     elif ty == 'bird': add(amb, bird(1), t, G[ty], .6)
     elif ty == 'roomtone': add(amb, room(e['dur']), t, .08)
-# 夜里一直有极轻的风雪
+# very faint wind and snow throughout the night
 add(amb, wind(31, 1), 7.0, .06)
 
-# —— 旁白：奶奶讲故事，近、暖、小屋子 ——
+# —— narration: grandma telling a story, close, warm, small room ——
 vo_env = np.zeros(N)
 for e in ev:
     if e['type'] != 'vo': continue
@@ -156,7 +156,7 @@ mus *= (10 ** (-9 * k / 20))[:, None]
 fx = verb(fx, room_ir(.5), .15)
 fx *= (10 ** (-3 * k / 20))[:, None]; amb *= (10 ** (-4 * k / 20))[:, None]
 mix = mus * .9 + fx + amb + vo
-# 静场：17.0–19.5 与 29.5–30.0 只留拟音
+# silent stretches: 17.0–19.5 and 29.5–30.0 keep only foley
 mix = np.stack([limit(mix[:, c], .95) for c in range(2)], 1)[:int(DUR * SR)]
 sf.write(os.path.join(D, 'mix.wav'), mix.astype(np.float32), SR)
 def rms(x, a, b): y = x[int(a * SR):int(b * SR)]; return 20 * np.log10(np.sqrt((y ** 2).mean()) + 1e-9)

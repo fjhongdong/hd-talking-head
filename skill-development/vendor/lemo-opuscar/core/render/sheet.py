@@ -1,4 +1,4 @@
-"""缩略图总览（审片用）：python core/render/sheet.py out.jpg img1 img2 ... [--cols 4] [--w 480]"""
+"""Contact sheet (check many frames in one image): python core/render/sheet.py out.jpg img1 img2 ... [--cols 4] [--w 480]"""
 import sys
 from PIL import Image, ImageDraw
 args = sys.argv[1:]; cols = 4; w = 480

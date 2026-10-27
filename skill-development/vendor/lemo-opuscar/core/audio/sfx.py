@@ -1,4 +1,4 @@
-"""程序化音效与混音工具（numpy/scipy）。所有函数返回单声道 float32 @ SR。"""
+"""Procedural sound effects and mixing tools (numpy/scipy). Every function returns mono float32 @ SR."""
 import numpy as np
 from scipy.signal import butter, sosfilt
 
@@ -6,7 +6,7 @@ SR = 48000
 _rng = np.random.default_rng(7)
 
 
-def t_(d): return np.arange(int(round(d * SR))) / SR   # 与 noise() 同样取整，避免长度差 1 相乘报错
+def t_(d): return np.arange(int(round(d * SR))) / SR   # rounds the same way as noise(), so multiplying them doesn't fail on an off-by-one length
 def env_exp(d, tau): return np.exp(-t_(d) / tau)
 def bp(x, lo, hi, o=2): return sosfilt(butter(o, [lo, hi], 'band', fs=SR, output='sos'), x)
 def lp(x, f, o=2): return sosfilt(butter(o, f, 'low', fs=SR, output='sos'), x)
@@ -19,9 +19,9 @@ def brown(d):
     w = np.cumsum(noise(d)); w -= np.linspace(w[0], w[-1], len(w)); return norm(hp(w, 20))
 
 
-# —— 积木 / 玩具 ——
+# —— Bricks / toys ——
 def click(pitch=1.0, v=1.0):
-    """塑料积木扣合：极短噪声瞬态 + 两个高频共振 + 一点低频"""
+    """Plastic bricks snapping together: very short noise transient + two high resonances + a little low end"""
     d = .06; tt = t_(d)
     tr = hp(noise(d), 2500) * env_exp(d, .0015)
     res = sum(a * np.sin(2 * np.pi * f * pitch * tt + _rng.random() * 6) * env_exp(d, tau)
@@ -31,7 +31,7 @@ def click(pitch=1.0, v=1.0):
 
 
 def clack(pitch=1.0, v=1.0):
-    """积木砸在桌面上：木头的中频 + 塑料的高频"""
+    """Brick dropped on a tabletop: the wood's mids + the plastic's highs"""
     d = .09; tt = t_(d); p = pitch * (.85 + _rng.random() * .3)
     x = hp(noise(d), 1200) * env_exp(d, .004) + sum(a * np.sin(2 * np.pi * f * p * tt) * env_exp(d, tau)
         for f, a, tau in [(1200, .6, .02), (2300, .5, .012), (380, .5, .03)])
@@ -48,8 +48,8 @@ def crash(v=1.0):
 
 def whoosh(d=.35, v=1.0):
     n = noise(d); tt = t_(d); out = np.zeros_like(n)
-    for i in range(0, len(n), 480):   # 扫频带通
-        hi = min(len(n), i + 480)     # 最后一块不足 480 个采样时按实际长度取（d 不是 0.01 s 整数倍也不会崩）
+    for i in range(0, len(n), 480):   # swept bandpass
+        hi = min(len(n), i + 480)     # when the last block is shorter than 480 samples, take its actual length (so it doesn't crash when d isn't a multiple of 0.01 s)
         f = 600 + 2600 * np.sin(np.pi * i / len(n)); seg = bp(n[max(0, i - 2000):hi], f * .7, f * 1.3)[-(hi - i):]; out[i:hi] = seg
     return norm(out * np.sin(np.pi * tt / d) ** 2) * v
 
@@ -107,9 +107,9 @@ def heartbeat(v=1.0):
     return (thump(1, 55) + np.pad(thump(.7, 50), (int(.22 * SR), 0))[:len(thump(1, 55))]) * v
 
 
-# —— 人声 ——
+# —— Voice ——
 def radio(x):
-    """对讲机：带通 + 轻度失真 + 底噪"""
+    """Walkie-talkie: bandpass + light distortion + noise floor"""
     y = bp(x, 380, 2800, 3); y = np.tanh(y * 3) / np.tanh(3)
     return norm(y + bp(_rng.standard_normal(len(y)), 1000, 4000) * .02) * .9
 
@@ -124,7 +124,7 @@ def compress(x, thr=.25, ratio=3.5, att=.004, rel=.08):
 
 
 def limit(x, ceil=.9, look=.005):
-    """1D 前瞻限幅（多声道请逐声道调用）"""
+    """1D look-ahead limiter (for multichannel, call it per channel)"""
     n = int(look * SR); pk = np.abs(x)
     from scipy.ndimage import maximum_filter1d, uniform_filter1d
     m = maximum_filter1d(pk, size=2 * n + 1); g = np.minimum(1, ceil / np.maximum(m, 1e-9)); g = uniform_filter1d(g, size=n)

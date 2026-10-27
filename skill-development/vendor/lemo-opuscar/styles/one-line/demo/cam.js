@@ -1,8 +1,8 @@
-// 镜头：构图关键帧（中心/缩放/转动/跟拍权重）与笔尖跟拍混合；跟拍带延迟与预判的平滑，并保证笔尖在画内
+// Camera: composition keyframes (centre / zoom / rotation / follow weight) blended with following the pen tip; following is smoothed with lag and anticipation, and keeps the pen tip in frame
 import { clamp, lerp } from '/core/lib.js';
 import { headAt, posAt } from './geom.js';
 
-export const BASE = 0.85;   // z=1 时每单位像素（整张脸入画）
+export const BASE = 0.85;   // pixels per unit at z=1 (whole face in frame)
 
 const sm = t => t * t * (3 - 2 * t);
 function keyAt(keys, t) {
@@ -19,7 +19,7 @@ function keyAt(keys, t) {
 
 export function camAt(P, keys, t, W = 1920, H = 1080) {
   const K = keyAt(keys, t);
-  // 跟拍点：t-0.55 … t+0.4 的加权平均（先有延迟，再带一点预判）
+  // follow point: weighted average over t-0.55 … t+0.4 (lag first, then a little anticipation)
   let fx = 0, fy = 0, ws = 0;
   for (let j = -11; j <= 8; j++) {
     const tt = t + j * 0.05, w = Math.exp(-((j + 1.5) * (j + 1.5)) / 40);
@@ -28,14 +28,14 @@ export function camAt(P, keys, t, W = 1920, H = 1080) {
   fx /= ws; fy /= ws;
   let cx = lerp(K.x, fx, K.f), cy = lerp(K.y, fy, K.f);
   const k = BASE * K.z, r = K.r * Math.PI / 180;
-  // 笔尖保持在画面内（软约束）
+  // keep the pen tip inside the frame (soft constraint)
   const pen = posAt(P, headAt(P, t));
   const c = Math.cos(-r), s = Math.sin(-r);
   let px = (pen[0] - cx) * k, py = (pen[1] - cy) * k; let sx = c * px - s * py, sy = s * px + c * py;
   const mx = W * 0.36, my = H * 0.33;
   const soft = (v, m) => { const a = Math.abs(v); if (a <= m) return 0; return Math.sign(v) * (a - m); };
   const ex = soft(sx, mx), ey = soft(sy, my);
-  if (ex || ey) { // 屏幕偏移换回世界
+  if (ex || ey) { // convert the screen offset back to world
     const ic = Math.cos(r), is = Math.sin(r); cx += (ic * ex - is * ey) / k; cy += (is * ex + ic * ey) / k;
   }
   return { cx, cy, k, r, z: K.z };

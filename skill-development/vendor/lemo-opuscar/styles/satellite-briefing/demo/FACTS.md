@@ -1,68 +1,70 @@
-# 事实表：《地图上还写着海》
+# Fact sheet: 《地图上还写着海》 (On the Map It's Still a Sea)
 
-片中每一个数字、年份和事实性说法都在下表里：说法 → 官方出处（URL）→ 原文引用。引文为英文原文。NASA Earth Observatory 的旧域名 earthobservatory.nasa.gov 已 301 跳转到 science.nasa.gov，下面给的是跳转后的地址。核对日期：2026-10-15。
+Every number, year and factual claim in the film is in the tables below: claim → official source (URL) → source wording. Quotations are in the original English. NASA Earth Observatory's old domain earthobservatory.nasa.gov now 301-redirects to science.nasa.gov; the addresses below are the redirect targets. Checked on 2026-10-15.
 
-两类数字要分开看：
+On-screen text and subtitles are Chinese; they are quoted as they appear, with an English gloss.
 
-- **官方数字**：直接来自 NASA、USGS、世界银行的原文（下表 A）。
-- **影像实测**：本片在 USGS Landsat 影像上自己量的（年轮岸线、"还在水下的部分"百分比、莫伊纳克到海边的距离，下表 B）。画面上都标了"Landsat 测算 / 影像实测"，方法和所用景号写在这里，并和官方数字逐一对照。
+Two kinds of number must be kept apart:
 
-## A. 官方数字与说法
+- **Official figures**: taken directly from the wording of NASA, USGS and the World Bank (table A below).
+- **Image measurements**: measured by this film itself on USGS Landsat imagery (the year-ring shorelines, the percentage "still under water", the distance from Moynaq to the sea; table B below). On screen they are all labelled "Landsat 测算 / 影像实测" (Landsat estimate / measured from imagery); the method and the scenes used are given here and compared one by one against the official figures.
 
-| # | 片中说法（画面 / 旁白） | 出处 | 原文 |
+## A. Official figures and claims
+
+| # | Claim in the film (picture / narration) | Source | Wording |
 |---|---|---|---|
-| A1 | 地图标签"咸海"、"地图 · 约 68,000 km²" | USGS EROS Earthshots《Aral Sea, Kazakhstan and Uzbekistan》 https://eros.usgs.gov/earthshots/aral-sea-kazakhstan-and-uzbekistan | "The Aral Sea once covered about 68,000 square kilometers…" |
-| A1′ | 地图图层：蓝色海面、岸线、等深式的岸线晕线、河流（阿姆河、锡尔河） | Natural Earth `ne_10m_lakes_historic`（公有领域），要素 "Aral Sea"，featurecla = "Historic Lake"；河流来自 `ne_10m_rivers_lake_centerlines`（公有领域）。岸线内的晕线是地图的印刷惯例，不代表水深数据 | 多边形面积本片算得 67,501 km²，与 UNEP GEAS 2014 公报 "approximately 66,000 km2 – 67, 500 km2 (depending on source)" 一致 |
-| A2 | 旁白 "On the map, this is still a sea." | Natural Earth 现行湖泊图层 `ne_10m_lakes` 仍以 "North Aral Sea" / "South Aral Sea" 命名这两块水体；地名本身就叫"海" | 修辞句，不含数字 |
-| A3 | 旁白 "Then its rivers went to the cotton fields." | NASA Earth Observatory, World of Change: Shrinking Aral Sea https://science.nasa.gov/earth/earth-observatory/world-of-change/aral-sea | "In the 1960s, the Soviet Union undertook a major water diversion project…" / "…were used to transform the desert into farms for cotton and other crops." |
-| A4 | 旁白 "By 2014, the eastern basin had dried."、字幕"到 2014 年，东边的湖盆干涸了" | NASA Earth Observatory, *The Aral Sea Loses Its Eastern Lobe*（2014-09-26 Image of the Day） https://science.nasa.gov/earth/earth-observatory/the-aral-sea-loses-its-eastern-lobe-84437 | "For the first time in modern history, the eastern basin of the South Aral Sea has completely dried." |
-| A5 | 旁白 "This was a fishing port."、标签"莫伊纳克 · 旧渔港" | NASA MODIS Image Gallery, 2014-05-04 https://modis.gsfc.nasa.gov/gallery/individual.php?db_date=2014-05-04 | "…a vibrant center of the Aral Sea's fishing industry" / "…rusting ship hulks sitting on dry land, far from any water." |
-| A6 | 标签"科卡拉尔大坝 · 2005 年建成 · 长 13 km" | 世界银行 2008 Feature Story https://documents1.worldbank.org/curated/en/888771468089960580/pdf/462360BRI0Box31e0no0FS231Kazakhstan.pdf | "the 13 km Kok-Aral Dike … Completion was in August 2005." |
-| A7 | 读数"北咸海水面 +37% · 2001→2009 · 世界银行"；年轮年份 2001、2009 与之对齐 | 世界银行完工报告 ICR0000874（2011-06-21），SYR DARYA CONTROL AND NORTHERN ARAL SEA PHASE-1 PROJECT（P046045） https://documents1.worldbank.org/curated/en/189171468038051254/pdf/ICR8740P0460450Official0Use0Only090.pdf | "increased by 37% from 2,400 km2 in 2001 to 3,300 km2 in 2009" |
-| A8 | 旁白 "And the water came back." | 同 A7 | "NAS water levels above Baltic Sea Level (BSL) increased from a pre-project low of 38 m to the desired design level of 42 m." |
-| A9 | 旁白 "The sea did not come back on its own. Someone kept it." | 同 A7（项目即"有人"：哈萨克斯坦政府与世界银行的 SYNAS 项目） | 修辞句，不含数字 |
-| A10 | 瞄准框读数"北纬 45° 东经 60°" | Natural Earth 历史湖泊多边形的中心约 45.1°N、59.8°E，取整 | 位置标注 |
-| A11 | 影像署名"影像 Landsat · USGS/NASA  Blue Marble · NASA" | USGS 数据引用页 https://www.usgs.gov/centers/eros/data-citation ；NASA 影像使用说明 https://science.nasa.gov/earth/faq/ | "federally created data and therefore reside in the public domain"；"freely available for re-publication or re-use, including commercial purposes… We ask that NASA be given credit" |
+| A1 | Map label "咸海" (Aral Sea), "地图 · 约 68,000 km²" (map · about 68,000 km²) | USGS EROS Earthshots, "Aral Sea, Kazakhstan and Uzbekistan" https://eros.usgs.gov/earthshots/aral-sea-kazakhstan-and-uzbekistan | "The Aral Sea once covered about 68,000 square kilometers…" |
+| A1′ | Map layers: blue sea surface, shoreline, shoreline hachures drawn like depth contours, rivers (Amu Darya, Syr Darya) | Natural Earth `ne_10m_lakes_historic` (public domain), feature "Aral Sea", featurecla = "Historic Lake"; rivers from `ne_10m_rivers_lake_centerlines` (public domain). The hachures inside the shoreline are a cartographic printing convention and do not represent depth data | Polygon area computed by this film: 67,501 km², consistent with the UNEP GEAS 2014 bulletin "approximately 66,000 km2 – 67, 500 km2 (depending on source)" |
+| A2 | Narration "On the map, this is still a sea." | Natural Earth's current lakes layer `ne_10m_lakes` still names these two bodies of water "North Aral Sea" / "South Aral Sea"; the place name itself says "sea" | Rhetorical line, no figure |
+| A3 | Narration "Then its rivers went to the cotton fields." | NASA Earth Observatory, World of Change: Shrinking Aral Sea https://science.nasa.gov/earth/earth-observatory/world-of-change/aral-sea | "In the 1960s, the Soviet Union undertook a major water diversion project…" / "…were used to transform the desert into farms for cotton and other crops." |
+| A4 | Narration "By 2014, the eastern basin had dried.", subtitle "到 2014 年，东边的湖盆干涸了" (by 2014 the eastern basin had dried) | NASA Earth Observatory, *The Aral Sea Loses Its Eastern Lobe* (2014-09-26 Image of the Day) https://science.nasa.gov/earth/earth-observatory/the-aral-sea-loses-its-eastern-lobe-84437 | "For the first time in modern history, the eastern basin of the South Aral Sea has completely dried." |
+| A5 | Narration "This was a fishing port.", label "莫伊纳克 · 旧渔港" (Moynaq · former fishing port) | NASA MODIS Image Gallery, 2014-05-04 https://modis.gsfc.nasa.gov/gallery/individual.php?db_date=2014-05-04 | "…a vibrant center of the Aral Sea's fishing industry" / "…rusting ship hulks sitting on dry land, far from any water." |
+| A6 | Label "科卡拉尔大坝 · 2005 年建成 · 长 13 km" (Kok-Aral Dam · completed 2005 · 13 km long) | World Bank 2008 Feature Story https://documents1.worldbank.org/curated/en/888771468089960580/pdf/462360BRI0Box31e0no0FS231Kazakhstan.pdf | "the 13 km Kok-Aral Dike … Completion was in August 2005." |
+| A7 | Readout "北咸海水面 +37% · 2001→2009 · 世界银行" (North Aral Sea surface +37% · 2001→2009 · World Bank); the ring years 2001 and 2009 are aligned with it | World Bank Implementation Completion Report ICR0000874 (2011-06-21), SYR DARYA CONTROL AND NORTHERN ARAL SEA PHASE-1 PROJECT (P046045) https://documents1.worldbank.org/curated/en/189171468038051254/pdf/ICR8740P0460450Official0Use0Only090.pdf | "increased by 37% from 2,400 km2 in 2001 to 3,300 km2 in 2009" |
+| A8 | Narration "And the water came back." | Same as A7 | "NAS water levels above Baltic Sea Level (BSL) increased from a pre-project low of 38 m to the desired design level of 42 m." |
+| A9 | Narration "The sea did not come back on its own. Someone kept it." | Same as A7 (the project is the "someone": the SYNAS project of the government of Kazakhstan and the World Bank) | Rhetorical line, no figure |
+| A10 | Targeting-box readout "北纬 45° 东经 60°" (45°N 60°E) | The centre of the Natural Earth historic lake polygon is at about 45.1°N, 59.8°E, rounded | Position label |
+| A11 | Image credit "影像 Landsat · USGS/NASA  Blue Marble · NASA" (imagery Landsat · USGS/NASA, Blue Marble · NASA) | USGS data citation page https://www.usgs.gov/centers/eros/data-citation ; NASA image use guidelines https://science.nasa.gov/earth/faq/ | "federally created data and therefore reside in the public domain"; "freely available for re-publication or re-use, including commercial purposes… We ask that NASA be given credit" |
 
-## B. 影像实测（本片自己量的）
+## B. Image measurements (made by this film)
 
-### B1. 年轮与"还在水下的部分"
+### B1. Year rings and "the part still under water"
 
-方法：每一年用该年 7–10 月无云的 Landsat 场景拼成一张经纬度栅格（每像素 0.0024° 经度 × 0.0017° 纬度，约 190 m）。水体：TM/ETM+/OLI 用 MNDWI（绿 − 短波红外）与 NDWI 联合阈值，MSS 用绿 − 近红外（0.8–1.1 µm）与近红外暗值；只保留落在 Natural Earth 历史海面内、面积 ≥ 25 km² 的水体，填掉 < 3 km² 的小岛。按纬度修正像元面积后求和。岸线 = 水体掩膜 0.5 等值线（marching squares），简化到约 115 m。百分比 = 实测水面 ÷ 68,000 km²（A1）。代码：`tools/fetch_landsat.py`、`tools/plates.py`、`tools/vectors.py`；结果在 `assets/vectors.json` 与 `assets/plates/plates.json`（含每个像元来自哪一景）。
+Method: for each year, cloud-free Landsat scenes from July–October of that year are mosaicked into one latitude/longitude raster (0.0024° longitude × 0.0017° latitude per pixel, about 190 m). Water: for TM/ETM+/OLI a joint threshold on MNDWI (green − shortwave infrared) and NDWI; for MSS green − near infrared (0.8–1.1 µm) plus a dark near-infrared value. Only water bodies that fall inside the Natural Earth historic sea surface and are ≥ 25 km² are kept, and islands < 3 km² are filled in. Pixel areas are corrected for latitude and summed. Shoreline = the 0.5 contour of the water mask (marching squares), simplified to about 115 m. Percentage = measured water area ÷ 68,000 km² (A1). Code: `tools/fetch_landsat.py`, `tools/plates.py`, `tools/vectors.py`; results in `assets/vectors.json` and `assets/plates/plates.json` (including which scene each pixel comes from).
 
-| 年份（画面） | 所用影像 | 实测水面 | 画面读数 |
+| Year (on screen) | Imagery used | Measured water area | On-screen readout |
 |---|---|---|---|
-| 1977 | Landsat 2 MSS，34 景，1977-07-25 至 09-22（含 6 景同年补洞，其中 1 景 L1GS）；扫描线掉线已修补（见 B4） | 54,403 km² | 80% |
-| 1989 | Landsat 4/5 TM，27 景，1989-06-14 至 10-13（排除了 1989-08-16 第 161 轨道：湖面上有一道沙尘羽流，改用 09-17） | 39,860 km² | 59% |
-| 2000 | Landsat 7 ETM+，28 景，2000-07-17 至 09-29 | 26,879 km² | 40% |
-| 2009 | Landsat 5 TM，27 景，2009-07-14 至 09-16 | 14,366 km² | 21% |
-| 2014 | Landsat 8 OLI，28 景，2014-07-03 至 09-16 | 7,061 km² | 10% |
-| 2025 | Landsat 8/9 OLI，28 景，2025-08-18 至 08-31 | 5,079 km² | 7% |
+| 1977 | Landsat 2 MSS, 34 scenes, 1977-07-25 to 09-22 (including 6 same-year scenes to fill holes, 1 of them L1GS); scan-line dropouts repaired (see B4) | 54,403 km² | 80% |
+| 1989 | Landsat 4/5 TM, 27 scenes, 1989-06-14 to 10-13 (path 161 of 1989-08-16 excluded: a dust plume over the lake; 09-17 used instead) | 39,860 km² | 59% |
+| 2000 | Landsat 7 ETM+, 28 scenes, 2000-07-17 to 09-29 | 26,879 km² | 40% |
+| 2009 | Landsat 5 TM, 27 scenes, 2009-07-14 to 09-16 | 14,366 km² | 21% |
+| 2014 | Landsat 8 OLI, 28 scenes, 2014-07-03 to 09-16 | 7,061 km² | 10% |
+| 2025 | Landsat 8/9 OLI, 28 scenes, 2025-08-18 to 08-31 | 5,079 km² | 7% |
 
-与官方数字对照：
+Comparison with the official figures:
 
-- NASA EO 2001（*The Shrinking Aral Sea*，https://science.nasa.gov/earth/earth-observatory/the-shrinking-aral-sea-1396/ ）："In the last 30 years, more than 60 percent of the lake has disappeared." 本片 2000 年实测剩 39.5%，即消失约 60%。一致。
-- 世界银行 2008 新闻稿："Between 1960 and 2004, the sea's surface area shrank almost 70 percent." 2004 年落在本片 2000 年（39.5%）与 2009 年（21.1%）之间，约 30%。一致。
-- USGS Earthshots："It is now only about 10% of the size it was in 1960." NASA EO 2024（https://science.nasa.gov/earth/earth-observatory/dunes-and-desert-replace-the-aral-sea-152887 ）："…has decreased to approximately 10 percent of its original area." 本片 2014 年 10.4%，2025 年 8 月 7.5%（当年夏末偏枯；官方是约数）。画面最后停在实测的 7%，不写"约 10%"，避免两个数字打架。
-- 1977 年读数之前的"100%"是地图上的海（A1），不对应任何一张影像。
+- NASA EO 2001 (*The Shrinking Aral Sea*, https://science.nasa.gov/earth/earth-observatory/the-shrinking-aral-sea-1396/ ): "In the last 30 years, more than 60 percent of the lake has disappeared." This film measures 39.5% remaining in 2000, i.e. about 60% gone. Consistent.
+- World Bank 2008 press release: "Between 1960 and 2004, the sea's surface area shrank almost 70 percent." 2004 falls between this film's 2000 (39.5%) and 2009 (21.1%), about 30%. Consistent.
+- USGS Earthshots: "It is now only about 10% of the size it was in 1960." NASA EO 2024 (https://science.nasa.gov/earth/earth-observatory/dunes-and-desert-replace-the-aral-sea-152887 ): "…has decreased to approximately 10 percent of its original area." This film: 10.4% in 2014, 7.5% in August 2025 (that late summer was on the dry side; the official figure is approximate). The picture ends on the measured 7% and does not write "约 10%" (about 10%), so that the two numbers don't contradict each other.
+- The "100%" before the 1977 readout is the sea on the map (A1) and does not correspond to any image.
 
-### B2. 莫伊纳克旧港到今天的海边：95 km
+### B2. From Moynaq's old port to today's shore: 95 km
 
-- 起点：莫伊纳克海岸边的废船区（旧港岸线），59.030°E、43.785°N。
-- 终点：2025 年 8 月 Landsat 拼接图上南咸海西湖盆（今天仍在的那片海）距起点最近的水体像元，58.323°E、44.467°N。
-- 方法：只在包含西湖盆的连通水体里找最近点，用大圆距离（R = 6371.0088 km）：94.5 km，画面和旁白取 95 km。
-- 对照：ESA 2003 年图片说明（https://www.esa.int/ESA_Multimedia/Images/2003/07/Fishing_town_Muynak_is_now_150_km_from_water ）"Now the town is 150 km away from water."——那是 2003 年、量到当时另一处水体，参考点不同，所以本片不用 150 km，只用自己按公开方法实测的数。
+- Start: the ship graveyard on the Moynaq waterfront (the old port shoreline), 59.030°E, 43.785°N.
+- End: the water pixel nearest the start in the western basin of the South Aral Sea (the part of the sea that still exists) on the August 2025 Landsat mosaic, 58.323°E, 44.467°N.
+- Method: the nearest point is searched only within the connected water body containing the western basin, using great-circle distance (R = 6371.0088 km): 94.5 km; the picture and narration use 95 km.
+- Comparison: the ESA 2003 image caption (https://www.esa.int/ESA_Multimedia/Images/2003/07/Fishing_town_Muynak_is_now_150_km_from_water ) "Now the town is 150 km away from water." That is from 2003 and measured to a different body of water at the time, a different reference point, so this film does not use 150 km, only its own measurement made with a published method.
 
-### B3. 科卡拉尔大坝的位置
+### B3. Position of the Kok-Aral Dam
 
-白线沿 2025 年 Landsat 上可见的坝体描出：西北臂 60.750°E 46.120°N → 拐角 60.788°E 46.087°N → 东臂 60.865°E 46.088°N。肉眼可见的坝体约 10 km；画面上的"长 13 km"用的是世界银行的数字（A6），不是这条白线的长度。
+The white line traces the dam body visible on 2025 Landsat imagery: north-west arm 60.750°E 46.120°N → corner 60.788°E 46.087°N → east arm 60.865°E 46.088°N. The dam body visible to the eye is about 10 km; the on-screen "长 13 km" (13 km long) uses the World Bank figure (A6), not the length of this white line.
 
-### B4. 影像修补（不改变测量）
+### B4. Image repairs (they do not change the measurement)
 
-- 1977 年 Landsat 2 MSS 的扫描线掉线（整行近零）按无效像元处理，由相邻场景补；残留的细条纹（约 12° 方向的长直线、请求分块之间的 1 像素接缝）只在陆地上用跨线中值替换，湖面与岸线不动（岸线就是测量对象）。
-- 1989 年换掉一景带沙尘羽流的场景，同年 09-17 的同一轨道代替。
-- 面积按修补后的影像重新测了一遍（上表）：1977 年比修补前少 0.3%，1989 年因换景少 1.0%，两年的画面读数（80%、59%）都没有变。
+- Scan-line dropouts in the 1977 Landsat 2 MSS imagery (whole rows near zero) are treated as invalid pixels and filled from neighbouring scenes; the remaining thin streaks (long straight lines at about 12°, 1-pixel seams between request tiles) are replaced with a cross-line median on land only; the lake surface and shoreline are left untouched (the shoreline is what is being measured).
+- In 1989 one scene with a dust plume was replaced by the same path on 09-17 of the same year.
+- Areas were measured again on the repaired imagery (table above): 1977 is 0.3% lower than before the repair, 1989 is 1.0% lower because of the scene swap; the on-screen readouts for both years (80%, 59%) did not change.
 
-## C. 终渲前对照
+## C. Check before the final render
 
-终渲前逐句核对了 `timeline.js` 里的 10 句旁白与中英字幕、`film.js` 里的全部画面文字，以及 `cues.json`、`satellite-briefing.srt`：每个数字、年份都能在上表找到出处；没有表外的数字。
+Before the final render, the 10 narration lines and the Chinese and English subtitles in `timeline.js`, all on-screen text in `film.js`, and `cues.json` and `satellite-briefing.srt` were checked line by line: every number and year can be traced to a source in the tables above; there is no number outside the tables.

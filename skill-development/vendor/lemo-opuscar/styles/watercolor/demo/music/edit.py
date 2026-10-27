@@ -1,5 +1,5 @@
-# 配乐跳剪：在 beats[85]（61.23 s）处跳到 beats[437]（265.61 s），砍掉中间 204.4 s，0.18 s 等功率交叉淡化 → score.wav（≈117.8 s）
-# wf48.wav = Wildflowers.mp3 解码为 48 kHz 立体声（见 prep.sh）
+# score jump cut: at beats[85] (61.23 s) jump to beats[437] (265.61 s), cutting the 204.4 s between, 0.18 s equal-power crossfade → score.wav (≈117.8 s)
+# wf48.wav = Wildflowers.mp3 decoded to 48 kHz stereo (see prep.sh)
 import numpy as np, json, soundfile as sf, os
 os.chdir(os.path.dirname(os.path.abspath(__file__))); OUT = os.environ.get('OUT', '.')
 x, sr = sf.read('wf48.wav'); print(sr, x.shape)

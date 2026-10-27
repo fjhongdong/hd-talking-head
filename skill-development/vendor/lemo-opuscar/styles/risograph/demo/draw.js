@@ -1,11 +1,11 @@
-// 分版绘制工具：颜色 = 三版浓度 [蓝, 黄, 粉]（0..1）
-// 普通绘制 = 挖空（覆盖三版）；over() 内绘制 = 只往对应版上加墨（叠印）
+// Plate-separated drawing tools: a colour = ink density on the three plates [blue, yellow, pink] (0..1)
+// Normal drawing = knockout (covers all three plates); drawing inside over() = only adds ink to the given plates (overprint)
 export const W = 1920, H = 1080;
 export const plate = document.createElement('canvas');
 plate.width = W; plate.height = H;
 const G0 = plate.getContext('2d', { alpha: false, willReadFrequently: false });
 export let g = G0;
-// 角色层：先把 fn 画到透明图层，再在分版上压一圈纸白"挖空描边"（halo px），最后盖上图层
+// Character layer: first draw fn onto a transparent layer, then stamp a paper-white "knockout outline" (halo px) onto the plates, then put the layer on top
 const layerC = document.createElement('canvas'); layerC.width = W; layerC.height = H;
 const LG = layerC.getContext('2d');
 export function layer(fn, halo = 5) {
@@ -21,14 +21,14 @@ export function layer(fn, halo = 5) {
   g.restore();
 }
 
-export const S = { mask: [1, 1, 1] };           // 全局版遮罩（设定表"逐版演示"用）
+export const S = { mask: [1, 1, 1] };           // global plate mask (used by the model sheet's "plate by plate" demo)
 const c255 = v => Math.round(Math.max(0, Math.min(1, v)) * 255);
 export const ink = (b = 0, y = 0, p = 0) => `rgb(${c255(b * S.mask[0])},${c255(y * S.mask[1])},${c255(p * S.mask[2])})`;
 export const inkA = a => ink(a[0], a[1], a[2]);
 export const PAPERINK = 'rgb(0,0,0)';
 
 export function clear(c = [0, 0, 0]) { g.globalCompositeOperation = 'source-over'; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = inkA(c); g.fillRect(0, 0, W, H); }
-// 叠印：fn 里的绘制只加墨不挖空
+// Overprint: drawing inside fn only adds ink, never knocks out
 export function over(fn) { const o = g.globalCompositeOperation; g.globalCompositeOperation = 'lighter'; fn(); g.globalCompositeOperation = o; }
 
 export function fill(c) { g.fillStyle = Array.isArray(c) ? inkA(c) : c; g.fill(); }
@@ -37,7 +37,7 @@ export function ellipse(x, y, rx, ry, rot, c) { g.beginPath(); g.ellipse(x, y, M
 export function rect(x, y, w, h, c) { g.fillStyle = Array.isArray(c) ? inkA(c) : c; g.fillRect(x, y, w, h); }
 export function rrect(x, y, w, h, r, c) { g.beginPath(); g.roundRect(x, y, w, h, r); fill(c); }
 export function poly(pts, c) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); fill(c); }
-// 平滑闭合形（二次曲线穿过中点）
+// Smooth closed shape (quadratic curves through the midpoints)
 export function blob(pts, c) {
   const n = pts.length; g.beginPath();
   const m = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -49,20 +49,20 @@ export function line(pts, w, c, cap = 'round') {
   g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
   g.lineWidth = w; g.lineCap = cap; g.lineJoin = 'round'; g.strokeStyle = Array.isArray(c) ? inkA(c) : c; g.stroke();
 }
-export function curve(pts, w, c) {   // 平滑开放曲线
+export function curve(pts, w, c) {   // smooth open curve
   g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
   for (let i = 1; i < pts.length - 1; i++) { const q = [(pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2]; g.quadraticCurveTo(pts[i][0], pts[i][1], q[0], q[1]); }
   const L = pts[pts.length - 1]; g.lineTo(L[0], L[1]);
   g.lineWidth = w; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = Array.isArray(c) ? inkA(c) : c; g.stroke();
 }
 export function ring(x, y, r, w, c) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.lineWidth = w; g.strokeStyle = Array.isArray(c) ? inkA(c) : c; g.stroke(); }
-// 胶囊段 a→b，宽 w；stripes: [颜色A, 颜色B, 条宽] 时画垂直于段的条纹
+// Capsule segment a→b, width w; with stripes: [colourA, colourB, stripe width] draws stripes perpendicular to the segment
 export function limb(a, b, w, c, stripes) {
   if (!stripes) { line([a, b], w, c); return; }
   const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, ang = Math.atan2(dy, dx);
   g.save(); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]);
   g.lineWidth = w; g.lineCap = 'round'; g.strokeStyle = inkA(stripes[0]); g.stroke();
-  // 条纹：在段坐标系里画横条，用段的胶囊形裁剪
+  // Stripes: draw bars in the segment's coordinate frame, clipped by the segment's capsule shape
   g.translate(a[0], a[1]); g.rotate(ang);
   g.beginPath(); g.arc(0, 0, w / 2, Math.PI / 2, Math.PI * 1.5); g.lineTo(L, -w / 2); g.arc(L, 0, w / 2, -Math.PI / 2, Math.PI / 2); g.closePath(); g.clip();
   g.fillStyle = inkA(stripes[1]);
@@ -70,7 +70,7 @@ export function limb(a, b, w, c, stripes) {
   for (let x = -w + off % (sw * 2); x < L + w; x += sw * 2) g.fillRect(x, -w, sw, w * 2);
   g.restore();
 }
-// 2 骨 IK：根 a、目标 t、段长 l1 l2、bend=+1/-1 弯向
+// 2-bone IK: root a, target t, segment lengths l1 l2, bend=+1/-1 bend direction
 export function ik(a, t, l1, l2, bend = 1) {
   const dx = t[0] - a[0], dy = t[1] - a[1]; let d = Math.hypot(dx, dy);
   const dmax = l1 + l2 - 0.01; if (d > dmax) d = dmax;

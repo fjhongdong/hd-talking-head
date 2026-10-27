@@ -1,6 +1,6 @@
-# 从 events.json 的 v:* 打点 + voices/lines*.txt 台词生成 ../game-show.srt
-# 片中只有英文喊词（画面字卡是中文、已烧进画面），srt 只收录喊词；同一句连续重复（间隔 < 0.15 s）合并成一条。
-# 用法：python make_srt.py [out.srt]
+# Builds ../game-show.srt from the v:* hits in events.json + the lines in voices/lines*.txt
+# The film only has English shouted calls (the on-screen title cards are Chinese and burned into the picture), so the srt holds only the calls; the same line repeated back-to-back (gap < 0.15 s) is merged into one entry.
+# Usage: python make_srt.py [out.srt]
 import json, os, sys, wave
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else '../game-show.srt'

@@ -29,7 +29,7 @@ window.render = t => {
   if (Q.has('sheet')) { modelSheet(t, Q); paperFinish(); return; }
   if (Q.has('frame')) { frame(Q.get('frame'), t, Q); paperFinish(); return; }
   renderFilm(t, { nosub: Q.has('nosub') });
-  if (Q.has('poster')) {   // 海报：列车定格那一格 + 天上一行纸白片名
+  if (Q.has('poster')) {   // poster: the frozen train frame + one line of paper-white title in the sky
     const G = titleGeom();
     g.setTransform(1, 0, 0, 1, 0, 0); g.translate(1235, 150); g.scale(.36, .36); g.translate(-(G.x + G.w / 2), -(G.y + G.h / 2));
     drawTitle(G.x, G.y, 250, { split: 0, col: C.paper, holeCol: C.ink });

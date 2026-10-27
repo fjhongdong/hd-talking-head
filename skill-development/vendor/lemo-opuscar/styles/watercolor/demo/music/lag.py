@@ -1,5 +1,5 @@
 import librosa, numpy as np, json, os
-HERE = os.path.dirname(os.path.abspath(__file__)); os.chdir(HERE)  # 原项目读 ../../photo-film/music/Wildflowers.wav，已复制到本目录
+HERE = os.path.dirname(os.path.abspath(__file__)); os.chdir(HERE)  # reads Wildflowers.wav in this directory (made by prep.sh)
 y, sr = librosa.load(os.path.join(HERE, 'Wildflowers.wav'), sr=22050, mono=True)
 d=json.load(open('wf_beats.json')); beats=np.array(d['beats'])
 hop=512

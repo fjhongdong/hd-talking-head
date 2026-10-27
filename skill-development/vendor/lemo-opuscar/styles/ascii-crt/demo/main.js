@@ -1,4 +1,4 @@
-// TRANQUILITY.LOG —— 全片时间线。window.render(t) 画第 t 秒；window.EV 导出拟音 / 旁白事件；window.SUBS 导出字幕。
+// TRANQUILITY.LOG — timeline of the whole film. window.render(t) draws second t; window.EV exports the foley / narration events; window.SUBS exports the subtitles.
 import { W, H, initTerm, glyph, text, inverse, cursor, makeRamp, pick, ATLAS } from './term.js';
 import { makeCRT } from './crt.js';
 import { Art, paintEarthrise, makeCraters, horizonY, earthShade } from './art.js';
@@ -6,7 +6,7 @@ import { Art, paintEarthrise, makeCraters, horizonY, earthShade } from './art.js
 const out = document.getElementById('c');
 const crt = makeCRT(out);
 const scene = document.createElement('canvas'); scene.width = W; scene.height = H;
-const inner = document.createElement('canvas'); inner.width = W; inner.height = H;   // 退出屏幕时"屏幕里的画面"
+const inner = document.createElement('canvas'); inner.width = W; inner.height = H;   // the "picture inside the screen" when pulling out of the screen
 const G0 = scene.getContext('2d'), G1 = inner.getContext('2d');
 let g = G0;
 await initTerm();
@@ -26,14 +26,14 @@ const hsh = (a, b = 0) => { let h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453
 
 function begin(ctx = g) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'lighter'; }
 function blackRect(x, y, w, h) { g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.fillStyle = '#000'; g.fillRect(x, y, w, h); g.globalCompositeOperation = 'lighter'; }
-// 磷光余辉：在 tOff 熄灭后按 τ 衰减（P3 琥珀是慢余辉）
+// Phosphor afterglow: after switching off at tOff it decays with τ (P3 amber is a slow-persistence phosphor)
 const TAU = .12;
 const decay = (t, tOff) => t < tOff ? 1 : Math.exp(-(t - tOff) / TAU);
-// 光标：在 ons 列出的时刻亮 dur 秒，熄灭时带余辉
+// Cursor: on for dur seconds at the times listed in ons, with afterglow when it goes off
 const flash = (t, ons, dur = .3) => { let v = 0; for (const o of ons) if (t >= o) v = Math.max(v, t < o + dur ? 1 : decay(t, o + dur)); return v; };
 const blinkN = (t, t0, t1, period = .6) => { if (t < t0) return 0; const k = Math.floor((Math.min(t, t1) - t0) / period); const o = t0 + k * period; return t > t1 ? decay(t, t1) * 0 : (t - o < period / 2 ? 1 : decay(t, o + period / 2)); };
 
-// ======================= 时间线（100 BPM：1 拍 0.6s，1 小节 2.4s；与 music/score.py 的 cue 对齐） =======================
+// ======================= Timeline (100 BPM: 1 beat 0.6s, 1 bar 2.4s; aligned with the cues in music/score.py) =======================
 const T = {
   on0: .35, on1: 1.05, blinks: [1.2, 1.8, 2.4], title: 3.0, titleDt: .15, sub: 5.4, subDt: .035, zoom0: 7.2, zoom1: 8.4,
   clock0: 10.35, clock1: 11.4, carrier: 16.2, carrierEnd: 17.45, msg: 17.6, msgBlinks: [19.8, 20.4, 21.0],
@@ -44,18 +44,18 @@ const T = {
 };
 const VOT = { l1: 11.6, l2: 21.4, l3: 26.6, l4: 42.2, l5: 52.4 };
 const DUR = T.dur;
-const EV = [];                                   // 拟音 / 旁白事件（events.mjs 导出给 mix.py）
+const EV = [];                                   // foley / narration events (exported by events.mjs for mix.py)
 const ev = (t, type, o = {}) => EV.push({ t: +t.toFixed(4), type, ...o });
 
-// ======================= 布局 =======================
-const V80 = { ox: 120, oy: 64, cw: 21 };          // 80 列终端
-const STRIP = { y: 912, cw: 18, ox: 150 };        // 底部日志栏（字幕）
+// ======================= Layout =======================
+const V80 = { ox: 120, oy: 64, cw: 21 };          // 80-column terminal
+const STRIP = { y: 912, cw: 18, ox: 150 };        // bottom log panel (subtitles)
 
-// ======================= 旁白 / 字幕：随 whisper 逐词时间打出 =======================
+// ======================= Narration / subtitles: typed out following whisper's per-word timings =======================
 const VO = lines.map(L => {
   const txt = L.text.toUpperCase();
   const tw = txt.split(' '), ww = words[L.id] || [];
-  // 每个词在文本中的结束字符位置 → 该词念完的时刻
+  // each word's end character position in the text → the moment that word finishes being spoken
   const marks = []; let pos = 0;
   tw.forEach((w, k) => { pos += w.length + (k ? 1 : 0); const wd = ww[k]; marks.push([wd ? Math.max(0, wd[1]) : k / tw.length * vdur[L.id], wd ? wd[2] : (k + 1) / tw.length * vdur[L.id], pos]); });
   return { id: L.id, t: VOT[L.id], d: vdur[L.id], text: txt, sub: L.text, marks: ww.length === tw.length ? marks : null };
@@ -85,7 +85,7 @@ function strip(t) {
     if (n < cur.text.length) cursor(g, 8 + s.length, 0, v, .9);
     return;
   }
-  if (t >= T.tx0 && t < T.tx1 + .01) {           // 发送进度
+  if (t >= T.tx0 && t < T.tx1 + .01) {           // send progress
     const p = seg(t, T.tx0, T.tx1 - .15), k = Math.floor(p * 20);
     text(g, '> TRANSMIT REPLY.TXT  [' + '#'.repeat(k) + '.'.repeat(20 - k) + ']  ' + String(Math.floor(p * 100)).padStart(3, ' ') + '%', 6, 0, v, 1);
     return;
@@ -95,11 +95,11 @@ function strip(t) {
   cursor(g, 8, 0, v, (Math.floor(t / .5) % 2 === 0 ? 1 : decay(t % .5, 0)) * .7);
 }
 
-// ======================= 打字事件 =======================
+// ======================= Typing events =======================
 function typedN(t, t0, dt, n) { return t < t0 ? 0 : Math.min(n, Math.floor((t - t0) / dt) + 1); }
 function regTyping(str, t0, dt, type = 'key') { for (let k = 0; k < str.length; k++) ev(t0 + k * dt, str[k] === ' ' ? (type === 'key' ? 'space' : type) : type, { ch: str[k] }); }
 
-// ======================= 1. 开机、片名、自检 =======================
+// ======================= 1. Power on, title, self-test =======================
 const TITLE = 'TRANQUILITY.LOG', SUBT = 'UNIT 7 / LUNAR RELAY 7 / MAINTENANCE';
 regTyping(TITLE, T.title, T.titleDt); regTyping(SUBT, T.sub, T.subDt, 'keyLight');
 ev(.22, 'relay'); ev(T.on0, 'degauss');
@@ -161,7 +161,7 @@ function sBoot(t, amp = 1) {
   linkPanel(t, t >= T.carrier ? 1 : 0, amp);
 }
 
-// ======================= 2. 握手：乱码冲刷屏幕 =======================
+// ======================= 2. Handshake: garbage characters wash over the screen =======================
 ev(T.carrier, 'modem', { d: T.carrierEnd - T.carrier + .1 });
 const GARB = '!"#$%&\'()*+,-./0123456789:;<=>?@[\\]^_`{|}~ABCDEFGHJKMNPQRSTUVWXYZ';
 function sCarrier(t) {
@@ -178,9 +178,9 @@ function sCarrier(t) {
   }
 }
 
-// ======================= 3. 消息、屏息、找摄像头 =======================
+// ======================= 3. Message, held breath, looking for the camera =======================
 const MSGIN = 'IS ANYONE THERE?';
-const MSG_T = [0, .14, .3, .62, .74, .86, 1.02, 1.12, 1.24, 1.36, 1.52, 1.62, 1.74, 1.86, 1.98, 2.3].map(x => T.msg + .2 + x * .82);   // 对面是人在打字：停顿、连击
+const MSG_T = [0, .14, .3, .62, .74, .86, 1.02, 1.12, 1.24, 1.36, 1.52, 1.62, 1.74, 1.86, 1.98, 2.3].map(x => T.msg + .2 + x * .82);   // a person is typing at the other end: pauses, bursts
 MSG_T.forEach((x, k) => ev(x, 'remote', { ch: MSGIN[k] }));
 const VMSG = { ox: (W - 16 * 56) / 2, oy: 236, cw: 56 };
 const CMD = '> CAPTURE IMAGE --ALL-CAMERAS';
@@ -206,12 +206,12 @@ function sMsg(t, amp = 1) {
   linkPanel(t, 0, 0);
 }
 
-// ======================= 4. 回信 =======================
+// ======================= 4. The reply =======================
 const MSG = 'I AM STILL HERE.';
 const VREP = { ox: (W - 16 * 80) / 2, oy: 380, cw: 80 };
 regTyping(MSG, T.reply, T.replyDt);
 function sReply(t) {
-  if (t < T.push1 + .4) {                          // 推镜头：上一屏以提示符为中心放大并熄灭
+  if (t < T.push1 + .4) {                          // push-in: the previous screen scales up around the prompt and goes dark
     const k = eio(seg(t, T.push0, T.push1));
     const s = 1 + k * 2.8, ax = V80.ox + 2 * V80.cw, ay = V80.oy + 16 * V80.cw * 2;
     const a = t < T.push0 ? 1 : decay(t, T.push0 + .12);
@@ -224,14 +224,14 @@ function sReply(t) {
   if (t < T.fall0) cursor(g, n, 0, VREP, n < MSG.length ? 1 : flash(t, [T.reply + MSG.length * T.replyDt - .05, ...T.replyBlinks]));
 }
 
-// ======================= 5. 地球升起的底片 =======================
+// ======================= 5. The Earthrise "negative" =======================
 const EW = 8;
 const ECOLS = Math.ceil(W / EW), EROWS = Math.ceil(H / (EW * 2));
 const RAMP_MSG = makeRamp(MSG.replace(/ /g, ''));
 const RAMP_STD = makeRamp(' .:-=+*#%@');
 const PIC = { hy: 600, arc: 240, tilt: -70, ridge: 34, ex: 1180, ey: 360, er: 262, earthMix: 1, spin: 0, lon0: 14 * Math.PI / 180, lat0: 14 * Math.PI / 180, tiltE: -.22, stars: true, bottom: 900, cw: 8 };
 PIC.craters = makeCraters(PIC, 34, 11);
-const EY0 = 424;                                   // 刚拼好时地球的位置（底部藏在地平线后），之后升到 PIC.ey
+const EY0 = 424;                                   // Earth's position when just assembled (bottom hidden behind the horizon); afterwards it rises to PIC.ey
 const artE = new Art(ECOLS, EROWS, 3, 6);
 const cacheE = new Map();
 function earthCells(P) {
@@ -247,7 +247,7 @@ function cellLevel(A, E, i, j, ramp, gam = 1.05) {
   if (m < .05) return ramp[0];
   return pick(ramp, Math.pow(clamp(m * 1.08), gam), i, j, .7);
 }
-// 一个格子最终显示什么：{ch, a, chan}；暗面稀疏点号
+// What a cell finally shows: {ch, a, chan}; sparse dots on the night side
 function cellGlyph(c, i, j) {
   const A = c.A[j * c.cols + i], E = c.E[j * c.cols + i], N = c.N[j * c.cols + i];
   if (N > .5 && Math.max(A, E) < .12) return hsh(i * .913, j * .477) < .5 ? { ch: '.', a: .32, chan: c.em > .5 ? 1 : 0, earth: 1 } : null;
@@ -274,15 +274,15 @@ function picAt(t) {
 }
 function sPicture(t) {
   const c = picAt(t);
-  // 变色那一拍：地球亮一下
+  // on the colour-change beat: Earth flashes brighter
   const fl = t >= T.bloom ? 1 + .6 * Math.exp(-(t - T.bloom) / .25) : 1;
   drawEarthCells(c, { ox: 0, oy: 0, cw: EW }, 1, null);
   if (fl > 1.01) drawEarthCells(c, { ox: 0, oy: 0, cw: EW }, fl - 1, (i, j) => c.E[j * c.cols + i] > .05);
 }
 
-// ======================= 6. 原生招式：字母掉落、分裂、按浓淡落位 =======================
+// ======================= 6. Native move: letters fall, split and land by tone density =======================
 let FALL = null;
-const SRC = [];                                    // 回信里每个字母的位置
+const SRC = [];                                    // position of every letter in the reply
 for (let k = 0; k < MSG.length; k++) if (MSG[k] !== ' ') SRC.push({ k, ch: MSG[k], x: VREP.ox + (k + .5) * VREP.cw, y: VREP.oy + VREP.cw });
 function buildFall() {
   const P = Object.assign({}, PIC, { ey: EY0, earthMix: 0 });
@@ -296,20 +296,20 @@ function buildFall() {
     const s = srcs.reduce((b, o) => Math.abs(o.x - X) + hsh(i, j) * 300 < Math.abs(b.x - X) + hsh(j, i) * 300 ? o : b, srcs[0]);
     const r = hsh(i * 3.1, j * 1.7);
     let arr, fly, kind;
-    if (inEarth(i, j, P) || q.earth) {           // 地球：从句子落到地平线后面，再从地平线升到自己的位置（地球"升起"）
+    if (inEarth(i, j, P) || q.earth) {           // Earth: letters fall from the sentence to behind the horizon, then rise from the horizon to their places (the Earth "rises")
       kind = 1; const up = clamp((P.ey + P.er - Y) / (2 * P.er));
-      arr = 35.35 + up * 1.5 + r * .2; fly = arr - (33.95 + hsh(j * .37, i * .71) * 1.15);   // 先全部落进地平线，再按从下到上的顺序升起
-    } else if (Y > hz - 6) {                       // 月面：从下往上铺
+      arr = 35.35 + up * 1.5 + r * .2; fly = arr - (33.95 + hsh(j * .37, i * .71) * 1.15);   // all fall into the horizon first, then rise in bottom-to-top order
+    } else if (Y > hz - 6) {                       // lunar surface: laid from the bottom up
       kind = 0; const d = clamp((Y - hz) / (P.bottom - hz));
       arr = 34.2 + (1 - d) * 1.35 + r * .28; fly = .62 + r * .2;
-    } else {                                       // 星
+    } else {                                       // stars
       kind = 2; arr = 34.6 + r * 2.2; fly = .8;
     }
     parts.push({ i, j, X, Y, hz, q, s, arr, dep: arr - fly, fly, kind, r });
   }
-  // 每个字母被"用完"的时刻 → 句子里的字母逐渐变暗消失
+  // the moment each letter is "used up" → the letters in the sentence gradually dim and vanish
   for (const s of SRC) { const mine = parts.filter(p => p.s === s).map(p => p.dep).sort((a, b) => a - b); s.deps = mine; }
-  // 落地声：按 1/48s 分箱计数
+  // landing sounds: counted in 1/48s bins
   const bins = new Map();
   parts.forEach(p => { const b = Math.round(p.arr * 48) / 48; bins.set(b, (bins.get(b) || 0) + 1); });
   [...bins.entries()].sort((a, b) => a[0] - b[0]).forEach(([t, n]) => ev(t, 'land', { n }));
@@ -324,13 +324,13 @@ function partPos(p, t) {
     if (t < rs) return [hx, hyB + 100, EW, false];
     const v = clamp((t - rs) / .5); return [hx, lerp(p.hz + 20, p.Y, eo(v)), lerp(10, EW, v), false];
   }
-  const sx0 = p.s.x + (p.r - .5) * 52, sy0 = p.s.y + (hsh(p.j, p.i * .3) - .5) * 70;   // 从字母笔画里的随机一点出发
+  const sx0 = p.s.x + (p.r - .5) * 52, sy0 = p.s.y + (hsh(p.j, p.i * .3) - .5) * 70;   // start from a random point within the letter's strokes
   return [lerp(sx0, p.X, ss(u)), lerp(sy0, p.Y, u * (.6 + .4 * u)), lerp(18, EW, ss(Math.min(1, u * 2.2))), true];
 }
 function sFall(t) {
   if (!FALL) buildFall();
   const split = seg(t, T.fall0, T.fall0 + .45);
-  // 句子里的字母：分裂（抖动 + 向下的残影），随着被"用掉"逐渐变暗
+  // letters in the sentence: split (jitter + downward ghost trails), dimming as they get "used up"
   for (const s of SRC) {
     const left = s.deps.length ? s.deps.filter(d => d > t).length / s.deps.length : 0;
     const lastDep = s.deps.length ? s.deps[s.deps.length - 1] : 35.0;
@@ -341,24 +341,24 @@ function sFall(t) {
   }
   for (const p of FALL.parts) {
     if (t < p.dep) continue;
-    if (t >= p.arr) {                              // 落位：一下亮闪再回到本来的亮度
+    if (t >= p.arr) {                              // landing: one bright flash, then back to its own brightness
       const fl = 1 + .9 * Math.exp(-(t - p.arr) / .12);
       glyph(g, p.q.ch, p.i * EW, p.j * EW * 2, EW, p.q.a * fl, p.q.chan);
       continue;
     }
     p.c = FALL.c;
-    for (const [dt, aa] of [[0, 1], [.035, .3]]) {  // 本体 + 一段余辉拖尾
+    for (const [dt, aa] of [[0, 1], [.035, .3]]) {  // the glyph itself + an afterglow trail
       if (t - dt < p.dep) continue;
       const [x, y, s, fallingPhase] = partPos(p, t - dt);
-      if (p.kind === 1 && !fallingPhase && y > horizonY(x, FALL.c.P) - 4) continue;   // 还在地平线后面
+      if (p.kind === 1 && !fallingPhase && y > horizonY(x, FALL.c.P) - 4) continue;   // still behind the horizon
       if (p.kind === 1 && fallingPhase && y > horizonY(x, FALL.c.P) - 4) continue;
-      const em = clamp((t - dt - p.dep) / .2);    // 从字母里"长出来"，而不是一下子叠在一起
+      const em = clamp((t - dt - p.dep) / .2);    // "grows out" of the letter instead of all appearing stacked at once
       glyph(g, p.q.ch, x - s / 2, y - s, s, Math.max(.3, p.q.a) * .6 * aa * em, p.q.chan);
     }
   }
 }
 
-// ======================= 7. 分形推进：每个字母都是 40 年的日志 =======================
+// ======================= 7. Fractal zoom: every letter is 40 years of logs =======================
 const K = 40;
 const DAY0 = Date.UTC(2051, 5, 15);
 const logCache = new Map();
@@ -379,7 +379,7 @@ function findTarget(c) {
     const q = cellGlyph(c, i, j); if (!q || q.ch !== 'M' || !q.chan) continue;
     const X = (i + .5) * EW, Y = (j + .5) * EW * 2;
     const dx = (X - c.P.ex) / c.P.er, dy = (Y - c.P.ey) / c.P.er;
-    // 选亮面、靠近地球中心偏左、左右邻居也有字的 M
+    // pick an M on the lit side, near and left of Earth's centre, with letters on both neighbours
     const nb = [-1, 1].reduce((a, d) => a + (cellGlyph(c, i + d, j) ? 1 : 0), 0);
     const sc = q.a * 2 - Math.hypot(dx + .25, dy + .05) + nb * .3;
     if (sc > bs) { bs = sc; best = { i, j, q }; }
@@ -403,7 +403,7 @@ function sFractal(t) {
   const m = ss(Math.min(1, k * 2.5));
   const ax = lerp(tx, W / 2, m), ay = lerp(ty, H / 2 - 30, m);
   const ox = ax - (TARGET.i + .5) * cw, oy = ay - (TARGET.j + .5) * cw * 2;
-  const f = ss(seg(cw, 70, 190));                 // 字形 → 日志的交叉淡化
+  const f = ss(seg(cw, 70, 190));                 // cross-fade glyph → log
   if (f < 1) drawEarthCells(c, { ox, oy, cw }, (1 - f) * (t > T.fr4 ? .55 : 1));
   if (f <= 0) return;
   const sw = cw / K;
@@ -421,7 +421,7 @@ function sFractal(t) {
       for (let si = si0; si < si1; si++) {
         const u = Math.floor((si + .5) / K * GW), v = Math.floor((sj + .5) / K * GH);
         const inG = bits[v * GW + u] > 127;
-        // 字形内部满亮，外部压到很暗；邻居字母比目标字母暗一些，让视线落在中间的 M
+        // full brightness inside the glyph, pressed very dark outside it; neighbouring letters a bit darker than the target so the eye lands on the M in the middle
         const a = (inG ? (isT ? 1.15 : .2) : (isT ? .06 : .03)) * f;
         glyph(g, row[(i * K + si) % row.length], bx + si * sw, by + sj * sw * 2, sw, a, q.chan);
       }
@@ -429,7 +429,7 @@ function sFractal(t) {
   }
 }
 
-// ======================= 8. 回信 :) =======================
+// ======================= 8. Reply :) =======================
 const VSM = { ox: 250, oy: 200, cw: 64 };
 ev(T.smile - .12, 'bel'); ev(T.smile, 'remote', { ch: ':' }); ev(T.smile + .16, 'remote', { ch: ')' });
 ev(T.tx0, 'modemUp', { d: T.tx1 - T.tx0 });
@@ -442,10 +442,10 @@ function sSmile(t) {
   }
 }
 
-// ======================= 9. 退出屏幕：基地 =======================
+// ======================= 9. Pull out of the screen: the base =======================
 const BW = 9, BCOLS = Math.ceil(W / BW), BROWS = Math.ceil(H / (BW * 2));
 const artB = new Art(BCOLS, BROWS, 3, 6);
-const SCR = { x: 404, y: 380, w: 448, h: 252 };   // 16:9：退出前屏幕正好铺满画面
+const SCR = { x: 404, y: 380, w: 448, h: 252 };   // 16:9: before pulling out, the screen exactly fills the frame
 const PORT = { x: 1420, y: 440, r: 300 };
 let BASE = null;
 function paintBase() {
@@ -455,14 +455,14 @@ function paintBase() {
   const R = v => `rgb(${Math.round(v * 255)},0,0)`;
   const cx = SCR.x + SCR.w / 2, cy = SCR.y + SCR.h / 2;
   b.fillStyle = '#000'; b.fillRect(0, 0, W, H);
-  // 舷窗：粗外框 + 螺栓
+  // porthole: thick frame + bolts
   const { x: px, y: py, r: pr } = PORT;
   b.fillStyle = R(.26); b.beginPath(); b.arc(px, py, pr + 46, 0, Math.PI * 2); b.fill();
   b.fillStyle = R(.07); b.beginPath(); b.arc(px, py, pr + 16, 0, Math.PI * 2); b.fill();
   b.fillStyle = R(.55); for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; b.beginPath(); b.arc(px + Math.cos(a) * (pr + 31), py + Math.sin(a) * (pr + 31), 6, 0, Math.PI * 2); b.fill(); }
   b.save(); b.beginPath(); b.arc(px, py, pr, 0, Math.PI * 2); b.clip();
   b.fillStyle = '#000'; b.fillRect(px - pr, py - pr, pr * 2, pr * 2);
-  // 窗外月面地平线
+  // lunar horizon outside the window
   const hg = b.createLinearGradient(0, py + 150, 0, py + pr); hg.addColorStop(0, R(.42)); hg.addColorStop(1, R(.12));
   b.fillStyle = hg; b.beginPath(); b.moveTo(px - pr, py + 170);
   for (let x = -pr; x <= pr; x += 10) b.lineTo(px + x, py + 150 + x * x * .0009 - Math.max(0, Math.sin(x * .02 + 1.3)) * 16);
@@ -470,10 +470,10 @@ function paintBase() {
   b.fillStyle = R(.04); b.beginPath(); b.ellipse(px - 90, py + 230, 70, 13, 0, 0, Math.PI * 2); b.fill();
   b.fillStyle = R(.5); [[px - 200, py - 170], [px - 120, py - 240], [px + 190, py - 180], [px - 250, py - 20], [px + 230, py - 40], [px + 60, py - 260]].forEach(([x, y]) => b.fillRect(x, y, 4, 4));
   b.restore();
-  // 桌面（只剩一条被屏幕照亮的边）
+  // desk (only an edge lit by the screen remains)
   const dg = b.createRadialGradient(cx, 730, 30, cx, 730, 560); dg.addColorStop(0, R(.36)); dg.addColorStop(1, R(0));
   b.fillStyle = dg; b.beginPath(); b.moveTo(120, 716); b.lineTo(1080, 716); b.lineTo(1130, 764); b.lineTo(70, 764); b.fill();
-  // 终端
+  // terminal
   const bx = SCR.x - 64, by = SCR.y - 62, bw = SCR.w + 128, bh = SCR.h + 150;
   b.fillStyle = R(.1); b.beginPath(); b.moveTo(bx + 26, by); b.lineTo(bx + bw - 26, by); b.lineTo(bx + bw - 54, by - 36); b.lineTo(bx + 54, by - 36); b.fill();
   const fg = b.createLinearGradient(bx, 0, bx + bw, 0); fg.addColorStop(0, R(.18)); fg.addColorStop(.5, R(.42)); fg.addColorStop(1, R(.22));
@@ -482,22 +482,22 @@ function paintBase() {
   b.strokeStyle = R(.55); b.lineWidth = 5; b.beginPath(); b.roundRect(bx, by, bw, bh, 24); b.stroke();
   b.fillStyle = R(.03); b.beginPath(); b.roundRect(SCR.x - 22, SCR.y - 20, SCR.w + 44, SCR.h + 40, 26); b.fill();
   b.fillStyle = '#000'; b.beginPath(); b.roundRect(SCR.x, SCR.y, SCR.w, SCR.h, 18); b.fill();
-  b.fillStyle = R(.9); b.fillRect(bx + bw - 64, by + bh - 34, 22, 10);          // 电源灯
+  b.fillStyle = R(.9); b.fillRect(bx + bw - 64, by + bh - 34, 22, 10);          // power light
   b.fillStyle = R(.12); b.fillRect(bx + 170, by + bh, bw - 340, 16);
-  // 键盘
+  // keyboard
   b.fillStyle = R(.2); b.beginPath(); b.moveTo(bx + 30, 726); b.lineTo(bx + bw - 30, 726); b.lineTo(bx + bw, 786); b.lineTo(bx, 786); b.fill();
   for (let r = 0; r < 4; r++) for (let k = 0; k < 19; k++) { const y = 732 + r * 14, x = bx + 40 - r * 8 + k * (26 + r * .9); b.fillStyle = R(.58 - r * .08); b.fillRect(x, y, 19, 8); }
-  // 空椅子：剪影 + 一道屏幕光勾边
-  b.fillStyle = R(.11); b.beginPath(); b.roundRect(96, 440, 168, 220, 34); b.fill();                 // 椅背
+  // empty chair: silhouette + a rim of screen light
+  b.fillStyle = R(.11); b.beginPath(); b.roundRect(96, 440, 168, 220, 34); b.fill();                 // backrest
   b.fillStyle = R(.13); b.fillRect(168, 660, 26, 18);
-  b.fillStyle = R(.16); b.beginPath(); b.roundRect(60, 676, 250, 40, 14); b.fill();                   // 坐垫
-  b.fillStyle = R(.12); b.fillRect(172, 716, 18, 86);                                                 // 气杆
-  b.fillStyle = R(.18); b.beginPath(); b.moveTo(80, 812); b.lineTo(282, 812); b.lineTo(262, 800); b.lineTo(100, 800); b.fill();   // 五星脚
-  b.fillStyle = R(.5); b.fillRect(258, 452, 7, 200); b.fillRect(300, 680, 8, 32); b.fillRect(186, 716, 5, 86);   // 屏幕一侧的轮廓光
+  b.fillStyle = R(.16); b.beginPath(); b.roundRect(60, 676, 250, 40, 14); b.fill();                   // seat cushion
+  b.fillStyle = R(.12); b.fillRect(172, 716, 18, 86);                                                 // gas lift
+  b.fillStyle = R(.18); b.beginPath(); b.moveTo(80, 812); b.lineTo(282, 812); b.lineTo(262, 800); b.lineTo(100, 800); b.fill();   // five-star base
+  b.fillStyle = R(.5); b.fillRect(258, 452, 7, 200); b.fillRect(300, 680, 8, 32); b.fillRect(186, 716, 5, 86);   // rim light on the screen side
   b.fillStyle = R(.32); b.fillRect(130, 440, 110, 5); b.fillRect(80, 676, 210, 5);
   b.restore();
   const c = artB.cells();
-  // 地球写进舷窗（用和它画的同一个地球：同样的大陆朝向）
+  // write Earth into the porthole (the same Earth as drawn before: same continent orientation)
   const lx = -.66, ly = -.26, lz = .7, ln = Math.hypot(lx, ly, lz);
   const er = 168, ecx = PORT.x + 20, ecy = PORT.y - 30;
   for (let j = 0; j < c.rows; j++) for (let i = 0; i < c.cols; i++) {
@@ -509,13 +509,13 @@ function paintBase() {
     }
     if (s > 0 || nn > 0) { c.E[j * c.cols + i] = s / 4; c.N[j * c.cols + i] = nn / 4; }
   }
-  // 预先算好每格的字（房间是静止的）
+  // precompute each cell's character (the room is static)
   const G = [];
   for (let j = 0; j < c.rows; j++) for (let i = 0; i < c.cols; i++) {
     const X = (i + .5) * BW, Y = (j + .5) * BW * 2;
     if (X > SCR.x - 6 && X < SCR.x + SCR.w + 6 && Y > SCR.y - 6 && Y < SCR.y + SCR.h + 6) continue;
     const A = c.A[j * c.cols + i], E = c.E[j * c.cols + i], N = c.N[j * c.cols + i];
-    if (E > 0 || N > .5) {                          // 舷窗里的地球：和片中同一套字母表
+    if (E > 0 || N > .5) {                          // Earth in the porthole: same character set as in the rest of the film
       if (N > .5 && E < .12) { if (hsh(i * .7, j * .3) < .5) G.push([i, j, '.', .3, 1]); continue; }
       const lv = cellLevel(0, E, i, j, RAMP_MSG); if (lv.ch !== ' ') G.push([i, j, lv.ch, lv.a, 1]); continue;
     }
@@ -527,7 +527,7 @@ function paintBase() {
   }
   BASE = G;
 }
-// 相机：s = 缩放（s0 时屏幕铺满画面，1 时是完整的基地），amp = 房间亮度
+// Camera: s = scale (at s0 the screen fills the frame, at 1 the whole base), amp = room brightness
 function sBase(s, amp, innerFn) {
   if (!BASE) paintBase();
   const s0 = W / SCR.w;
@@ -543,7 +543,7 @@ function sBase(s, amp, innerFn) {
       glyph(g, ch, x, y, cw, a * amp, chan);
     }
   }
-  // 画中画
+  // picture in picture
   const [x0, y0] = map(SCR.x, SCR.y);
   begin(G1); const keep = g; g = G1; innerFn(); g = keep;
   g.save(); g.beginPath(); g.roundRect(x0, y0, SCR.w * s, SCR.h * s, 18 * s); g.clip();
@@ -562,7 +562,7 @@ function sCard(t) {
   else if (n1 > 0) cursor(g, n1 < CARD1.length ? n1 : n1, 0, n1 < CARD1.length ? v1 : v2, n1 < CARD1.length ? 1 : 0);
 }
 
-// ======================= 字幕（SRT） =======================
+// ======================= Subtitles (SRT) =======================
 const SUBS = VO.map(v => ({ t0: v.t, t1: Math.min(voEnd(v), ...VO.filter(o => o.t > v.t).map(o => o.t)), text: v.sub }));
 SUBS.push({ t0: MSG_T[0], t1: VOT.l2, text: '[SCREEN] IS ANYONE THERE?' });
 SUBS.push({ t0: VOT.l2 + vdur.l2 + .1, t1: VOT.l3, text: '[SCREEN] CAMERA NOT FOUND' });
@@ -570,7 +570,7 @@ SUBS.push({ t0: T.reply, t1: T.fall0 + .6, text: '[SCREEN] I AM STILL HERE.' });
 SUBS.push({ t0: T.smile, t1: VOT.l5, text: '[SCREEN] :)' });
 SUBS.sort((a, b) => a.t0 - b.t0);
 
-// ======================= 总调度 =======================
+// ======================= Main dispatch =======================
 function film(t) {
   begin();
   if (t < T.carrier) sBoot(t);
@@ -591,11 +591,11 @@ function film(t) {
   else if (t >= VOT.l1) strip(t);
   const P = { power: seg(t, T.on0, T.on1), off: seg(t, T.off0, T.off1) };
   if (t > T.off1) P.expo = Math.exp(-(t - T.off1) / .18);
-  if (t < T.on0) P.expo = 0;    // 关机后的亮点慢慢熄灭
+  if (t < T.on0) P.expo = 0;    // after power-off the bright dot slowly fades
   return P;
 }
 
-buildFall();                                       // 落地声事件要在导出前生成
+buildFall();                                       // the landing-sound events must be generated before export
 EV.sort((a, b) => a.t - b.t);
 window.DUR = DUR; window.EV = EV; window.SUBS = SUBS;
 window.render = t => {
@@ -603,7 +603,7 @@ window.render = t => {
   let P = {};
   if (f === 'earth') { begin(); sPicture(38.8); }
   else if (f === 'fractal') { begin(); sFractal(Q.has('t') ? +Q.get('t') : 45); strip(45); }
-  else if (f === 'poster') {                       // 海报：地球升起 + 片名
+  else if (f === 'poster') {                       // poster: Earthrise + title
     begin(); sPicture(40.2);
     text(g, TITLE, 0, 0, { ox: 120, oy: 110, cw: 46 }, 1.1); cursor(g, TITLE.length, 0, { ox: 120, oy: 110, cw: 46 }, 1);
     text(g, 'ASCII / CRT TERMINAL  -  LemoLab \u00d7 Claude Opus 5.5', 0, 0, { ox: 124, oy: 216, cw: 14 }, .7);

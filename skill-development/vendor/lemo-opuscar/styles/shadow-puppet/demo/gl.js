@@ -1,5 +1,5 @@
-// 皮影幕布合成（WebGL2）：画面 = 色调映射( 灯光场 × 驴皮透射率 × 布纹 ) + 前景层 + 辉光
-// 输入：tr（透射率，白 = 全透）、front（预乘 RGBA 前景：舞台木框、观众、幕后场景、字幕）、可选 lmap（灯光图，r×6 = 亮度）
+// Piyingxi (皮影, Chinese shadow puppet) screen compositing (WebGL2): image = tonemap( light field × donkey-hide transmittance × cloth weave ) + foreground layer + glow
+// Inputs: tr (transmittance, white = fully transparent), front (premultiplied RGBA foreground: stage frame, audience, backstage scenes, subtitles), optional lmap (light map, r×6 = brightness)
 const VS = `#version 300 es
 in vec2 p; out vec2 uv; void main(){ uv = p*.5+.5; gl_Position = vec4(p,0,1); }`;
 const SCREEN = `#version 300 es
@@ -12,14 +12,14 @@ float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(h2(i), h2(i+vec2(1,0)), f.x), mix(h2(i+vec2(0,1)), h2(i+vec2(1,1)), f.x), f.y); }
 float fbm(vec2 p){ float a = .5, s = 0.0; for (int i=0;i<4;i++){ s += a*vn(p); p *= 2.03; a *= .5; } return s; }
 void main(){
-  vec2 px = vec2(uv.x, 1.0-uv.y) * res;                 // 视口像素（y 向下）
-  vec2 s = cam.xy + (px - res*.5) / cam.z * vec2(mir, 1.0);   // 幕布坐标（mir = -1：从幕后看）
+  vec2 px = vec2(uv.x, 1.0-uv.y) * res;                 // viewport pixels (y down)
+  vec2 s = cam.xy + (px - res*.5) / cam.z * vec2(mir, 1.0);   // screen coordinates (mir = -1: seen from behind the screen)
   vec4 F = texture(front, uv);
   if (frontOnly > .5) { o = vec4(mix(F.rgb, fadeCol, fade), 1); return; }
-  // 热浪：向上漂的扭曲
+  // Heat haze: distortion drifting upward
   vec2 hz = vec2(vn(s*.018 + vec2(0.0, time*2.6)) - .5, vn(s*.021 + vec2(5.0, time*3.1)) - .5) * haze;
   vec3 T = texture(tr, uv + hz / res * cam.z).rgb * (1.0 - fade * 0.0);
-  // 灯光场
+  // Light field
   vec3 L;
   if (useMap > .5) { L = texture(lmap, uv).rgb * 6.0 * lcol; }
   else {
@@ -28,7 +28,7 @@ void main(){
       Ls += lp.z * exp(-r2/(2.0*sigB*sigB)); Lh += lp.z * lp.w * exp(-r2/(2.0*sigC*sigC)); tot += lp.z; }
     L = (Ls + amb*tot) * lcol + Lh * hotcol;
   }
-  // 布纹：细经纬 + 纤维噪点 + 大尺度疏密
+  // Cloth weave: fine warp and weft + fibre noise + large-scale variation in density
   float th = .5 + .5*sin(s.x*2.6 + vn(s*.35)*2.0) * sin(s.y*2.6 + vn(s.yx*.35)*2.0);
   float cl = 1.0 - cloth*(.05*th + .05*vn(s*1.7) + .09*(fbm(s*.0045) - .5) + .03*(h2(floor(s*1.3)) - .5));
   float ed = smoothstep(0.0, 70.0, s.x-rect.x) * smoothstep(0.0, 70.0, rect.z-s.x) * smoothstep(0.0, 60.0, s.y-rect.y) * smoothstep(0.0, 60.0, rect.w-s.y);
@@ -91,7 +91,7 @@ export function makeGL(cv) {
     f1('mir', o.mir ?? 1); f1('useMap', lmap ? 1 : 0); f1('cloth', o.cloth ?? 1); f1('fade', o.fade ?? 0); f1('frontOnly', o.frontOnly ? 1 : 0);
     gl.uniform3f(U(p, 'lcol'), ...(o.lcol || [1, .77, .46])); gl.uniform3f(U(p, 'hotcol'), ...(o.hotcol || [1, .9, .62])); gl.uniform3f(U(p, 'fadeCol'), ...(o.fadeCol || [0, 0, 0]));
     draw(A);
-    // 辉光
+    // Glow
     let src = A.t;
     for (let i = 0; i < 3; i++) {
       p = P.down; gl.useProgram(p); bindT(p, 'src', src, 0); gl.uniform2f(U(p, 'px'), 1 / D[i].w, 1 / D[i].h); gl.uniform1f(U(p, 'thr'), i === 0 ? (o.thr ?? .72) : 0); draw(D[i]);

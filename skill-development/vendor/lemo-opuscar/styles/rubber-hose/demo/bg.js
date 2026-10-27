@@ -1,11 +1,11 @@
-// bg.js — 灰阶"水彩"背景（只画一次，缓存成大图；背景不 boil，线条更细更灰，比角色低一档对比）
-// 对比度原则（关卡 1 反馈）：墙面用中灰退后，角色的白和墨黑要比背景任何一处都更亮/更黑
+// bg.js — greyscale "watercolour" backgrounds (painted once and cached as a large image; backgrounds do not boil, lines are thinner and greyer, one step lower in contrast than the characters)
+// Contrast rule: walls are mid-grey so they recede; the characters' white and ink black must be brighter/darker than anywhere in the background
 import * as T from './toon.js';
 import { P } from './chars.js';
 import { mulberry } from '/core/lib.js';
 const { shape, stroke, ell, arc, rr, rect, spline, quad } = T;
 
-// 水彩平涂：底色 + 软斑驳 + 边缘积色 + 细灰线
+// Watercolour flat wash: base colour + soft mottling + pigment pooling at the edges + thin grey line
 export function wash(pts, col, o = {}) {
   const g = T.g, Pth = shape(pts, { fill: col, stroke: false, boil: 0 });
   const rnd = mulberry(o.seed ?? 7);
@@ -33,7 +33,7 @@ function withCanvas(bg, fn) {
   T.BASE.splice(0, 6, ...oldB); T.S.lwScale = oldL; T.init(prev.canvas);
 }
 function makeBG(x0, y0, x1, y1, PS) { const cv = document.createElement('canvas'); cv.width = Math.round((x1 - x0) * PS); cv.height = Math.round((y1 - y0) * PS); return { cv, ox: x0, oy: y0, PS, w: x1 - x0, h: y1 - y0 }; }
-// 把背景按镜头画到场景画布：cam = {x,y,z} 世界点映射到画面中心；squash = 整面背景随拍呼吸（绕 pivotY）
+// Draw the background to the scene canvas for a shot: cam = {x,y,z} maps a world point to the frame centre; squash = the whole background breathes with the beat (around pivotY)
 export function drawBG(sg, bg, cam, squash = 0, pivotY = 1220) {
   const z = cam.z, ox = 960 - cam.x * z, oy = 540 - cam.y * z;
   sg.save(); sg.setTransform(z, 0, 0, z, ox, oy);
@@ -42,32 +42,32 @@ export function drawBG(sg, bg, cam, squash = 0, pivotY = 1220) {
 }
 export const camBase = cam => [cam.z, 0, 0, cam.z, 960 - cam.x * cam.z, 540 - cam.y * cam.z];
 
-// —— 厨房台面（宽 2800、从天花板到地板）——
+// —— Kitchen counter (2800 wide, ceiling to floor) ——
 export const COUNTER_Y = 706, FLOOR_Y = 1220, SINK_X = 2660;
 export function paintKitchen() {
   const bg = makeBG(0, -420, 2800, 1500, 1.25), W = 2800;
   withCanvas(bg, (g, raw) => {
-    // 天花板线脚
+    // ceiling moulding
     wash(rect(-10, -430, W + 20, 80), '#3E3D3A', { seed: 21, edge: 0 });
     wash(rect(-10, -352, W + 20, 16), '#5A5853', { seed: 22 });
-    // 墙纸：中灰底 + 淡竖条 + 小菱形花（退后）
+    // wallpaper: mid-grey ground + faint vertical stripes + small diamond flowers (recedes)
     wash(rect(-10, -336, W + 20, 840), '#8C8981', { line: false, seed: 1, edge: 0 });
     raw();
     for (let x = 0; x < W; x += 64) { g.fillStyle = 'rgba(255,253,245,.07)'; g.fillRect(x, -336, 22, 836); }
     for (let x = 32; x < W; x += 128) for (let y = -300; y < 500; y += 96) { g.fillStyle = 'rgba(30,28,24,.2)'; g.beginPath(); g.moveTo(x, y - 8); g.lineTo(x + 6, y); g.lineTo(x, y + 8); g.lineTo(x - 6, y); g.fill(); }
-    // 吊灯（中间）
+    // pendant lamp (centre)
     raw(); g.strokeStyle = '#2A2927'; g.lineWidth = 3; g.beginPath(); g.moveTo(1400, -336); g.lineTo(1400, -210); g.stroke();
     wash(arc(1400, -150, 70, 60, Math.PI, Math.PI * 2, 18), '#5E5C57', { seed: 23 });
-    // 墙上挂画（空画框里画一只茶壶的剪影）
+    // picture on the wall (a teapot silhouette in an empty frame)
     wash(rr(1640, 40, 170, 210, 8), '#5E5C57', { seed: 24 }); wash(rr(1660, 60, 130, 170, 4), '#A9A69E', { seed: 25, edge: .1 });
     wash(spline([[1695, 190], [1690, 150], [1725, 128], [1760, 150], [1756, 190]], true, 5), '#6E6B64', { seed: 26, edge: 0 });
-    // 挡水墙瓷砖
+    // splashback tiles
     wash(rect(-10, 500, W + 20, 206), '#A29F97', { line: false, seed: 2, edge: .08 });
     raw(); g.strokeStyle = 'rgba(40,38,34,.4)'; g.lineWidth = 2;
     for (let y = 500; y < 706; y += 52) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
     for (let x = 0; x < W; x += 52) { g.beginPath(); g.moveTo(x, 500); g.lineTo(x, 706); g.stroke(); }
     wash(rect(-10, 492, W + 20, 14), '#4A4844', { lw: 3, seed: 4 });
-    // 搁板 + 罐子
+    // shelf + jars
     for (const sx of [1020, 2240]) {
       wash(rect(sx, 286, 420, 22), '#4A4844', { seed: sx });
       for (const [dx, h, wd] of [[40, 90, 70], [140, 120, 80], [250, 76, 64], [340, 104, 60]]) {
@@ -75,12 +75,12 @@ export function paintKitchen() {
         wash(rr(sx + dx - 4, 286 - h - 14, wd + 8, 18, 6), '#4A4844', { seed: dx * 3, edge: .1 });
       }
     }
-    // 台面：顶面 + 前沿
+    // counter: top surface + front edge
     wash(rect(-10, COUNTER_Y - 16, W + 20, 34), '#C4C1B8', { seed: 11, edge: .05 });
     wash(rect(-10, COUNTER_Y + 16, W + 20, 30), '#3F3E3A', { seed: 12 });
-    // 水槽（右端，嵌在台面里，只露出前沿的一道凹）
+    // sink (right end, set into the counter; only a dip in the front edge shows)
     wash(rr(SINK_X - 130, COUNTER_Y - 12, 260, 22, 8), '#5E5C57', { seed: 14 });
-    // 橱柜
+    // cabinets
     wash(rect(-10, COUNTER_Y + 46, W + 20, FLOOR_Y - COUNTER_Y - 46), '#66635D', { seed: 13, line: false });
     for (let x = 30; x < W; x += 300) {
       wash(rr(x, COUNTER_Y + 70, 270, 360, 10), '#726F68', { seed: x, edge: .14 });
@@ -88,7 +88,7 @@ export function paintKitchen() {
       wash(ell(x + (x / 300 % 2 ? 36 : 234), COUNTER_Y + 130, 11, 11), '#2A2927', { seed: x + 2, edge: 0 });
     }
     wash(rect(-10, FLOOR_Y - 34, W + 20, 34), '#2E2D2A', { seed: 15 });
-    // 地板：黑白棋盘格（透视压扁）
+    // floor: black-and-white checkerboard (squashed for perspective)
     wash(rect(-10, FLOOR_Y, W + 20, 290), '#8A877F', { seed: 16, line: false, edge: 0 });
     raw();
     const rows = [[FLOOR_Y, 40], [FLOOR_Y + 40, 56], [FLOOR_Y + 96, 76], [FLOOR_Y + 172, 104]];
@@ -97,39 +97,39 @@ export function paintKitchen() {
   return bg;
 }
 
-// —— 橱柜（上）+ 水槽（下，稍俯视）：一张竖长图，下摇镜头 ——
+// —— Cupboard (top) + sink (bottom, slightly from above): one tall image for a downward tilt ——
 export const PLATES = Array.from({ length: 7 }, (_, i) => [330 + i * 105, 1030 - i * 115]);
 export const LADLE = { hook: [1060, 250], bowl: [1300, 760] };
 export const BASIN = { x: 760, y: 1840, rx: 440, ry: 300 };
 export function paintCupboard() {
   const bg = makeBG(0, -200, 1440, 2400, 1.25), W = 1440;
   withCanvas(bg, (g, raw) => {
-    // 墙
+    // wall
     wash(rect(-10, -210, W + 20, 1700), '#8C8981', { line: false, seed: 31, edge: 0 });
     raw(); for (let x = 0; x < W; x += 64) { g.fillStyle = 'rgba(255,253,245,.07)'; g.fillRect(x, -200, 22, 1560); }
-    // 柜体外框
+    // cupboard outer frame
     wash(rr(90, -160, 1260, 1330, 16), '#4A4844', { seed: 32 });
-    // 内壁（深，好让白盘子跳出来）
+    // inner walls (dark, so the white plates pop)
     wash(rr(140, -110, 1160, 1220, 10), '#55534E', { seed: 33, edge: .25 });
     raw(); for (let y = -110; y < 1110; y += 60) { g.strokeStyle = 'rgba(20,18,16,.25)'; g.lineWidth = 2; g.beginPath(); g.moveTo(140, y); g.lineTo(1300, y + 4); g.stroke(); }
-    // 隔板
+    // shelves
     for (const y of [380, 1100]) wash(rect(140, y, 1160, 24), '#8E8B83', { seed: y });
-    // 盘子托架（每只盘子下一个小木托）
+    // plate rests (a small wooden rest under each plate)
     for (const [x, y] of PLATES) wash(rr(x - 22, y + 4, 44, 16, 4), '#3F3E3A', { seed: x });
-    // 挂勺的钩子
+    // hooks for the ladles
     wash(ell(LADLE.hook[0], LADLE.hook[1] - 4, 9, 9), '#2A2927', { seed: 34, edge: 0 });
-    // 两扇打开的柜门（斜的平行四边形）
+    // two open cupboard doors (slanted parallelograms)
     wash([[90, -150], [10, -110], [10, 1130], [90, 1170]], '#6E6B64', { seed: 35 });
     wash([[1350, -150], [1430, -110], [1430, 1130], [1350, 1170]], '#6E6B64', { seed: 36 });
-    // 下方瓷砖墙
+    // tiled wall below
     wash(rect(-10, 1180, W + 20, 330), '#A29F97', { line: false, seed: 37, edge: .06 });
     raw(); g.strokeStyle = 'rgba(40,38,34,.4)'; g.lineWidth = 2;
     for (let y = 1180; y < 1500; y += 52) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
     for (let x = 0; x < W; x += 52) { g.beginPath(); g.moveTo(x, 1180); g.lineTo(x, 1500); g.stroke(); }
-    // 台面（俯视，大面积浅色）
+    // counter (seen from above, large light area)
     wash(rect(-10, 1500, W + 20, 910), '#C4C1B8', { seed: 38, edge: .06 });
     raw(); for (let y = 1530; y < 2400; y += 70) { g.strokeStyle = 'rgba(40,38,34,.12)'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-    // 水槽盆：外沿 + 内壁
+    // sink basin: outer rim + inner walls
     const { x, y, rx, ry } = BASIN;
     wash(ell(x, y, rx + 34, ry + 30, 60), '#8E8B83', { seed: 39 });
     wash(ell(x, y + 10, rx, ry, 60), '#4A4844', { seed: 40, edge: .3 });

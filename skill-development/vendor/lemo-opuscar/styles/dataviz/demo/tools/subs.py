@@ -1,4 +1,4 @@
-# 字幕时间（与 film.js setCaptions 同一公式）→ out/subs.json；断言 停留 ≥ max(1.8, 语音 + 0.6) 且不重叠
+# Subtitle timings (same formula as setCaptions in film.js) → out/subs.json; asserts hold ≥ max(1.8, speech + 0.6) and no overlaps
 import json, os
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 L = json.load(open(os.path.join(D, 'lines.json'))); dur = json.load(open(os.path.join(D, 'voices/dur.json')))

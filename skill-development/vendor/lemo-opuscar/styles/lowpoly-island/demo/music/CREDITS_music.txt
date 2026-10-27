@@ -3,7 +3,8 @@ The Island That Grew — music credits
 
 All music is original and every sound was synthesized from scratch in numpy/scipy by score.py.
 No samples, loops, sample libraries or third-party recordings were used.
-(core/audio/INSTRUMENTS.md does not exist, so the shared sampler was not used.)
+(The library's shared sampler, core/audio/, was not used: at the time this score was made it had no instrument set; it
+now has one, documented in core/audio/INSTRUMENTS.md.)
 
 Instruments (all synthesized):
 - Kalimba: modal synthesis, inharmonic partials 1 / 5.4 / 12.6 with fast upper decay, soft click

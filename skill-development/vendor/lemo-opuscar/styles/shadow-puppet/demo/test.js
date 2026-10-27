@@ -1,4 +1,4 @@
-// 角色设定表：index.html?test=model
+// Character model sheet: index.html?test=model
 import { build, drawHouYi, drawRods, J } from './houyi.js';
 import { POSES } from './poses.js';
 import { drawSun, drawCrow, buildSuns } from './suns.js';
@@ -11,7 +11,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
   fr.setTransform(1, 0, 0, 1, 0, 0); fr.clearRect(0, 0, W, H);
   lm.setTransform(1, 0, 0, 1, 0, 0); lm.fillStyle = '#000'; lm.fillRect(0, 0, W, H);
   const panels = { A: [0, 64, 600, 640], B: [600, 64, 1240, 640], C: [1240, 64, 1920, 640], D: [0, 640, 1240, 1080], E: [1240, 640, 1920, 1080] };
-  // 灯光图：每格一盏灯（中心 1.15 → 边缘 0.7）
+  // Light map: one lamp per cell (centre 1.15 → edge 0.7)
   const lampAt = (x, y, r, I) => { const gr = lm.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(255,255,255,${I / 6})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); lm.fillStyle = gr; lm.fillRect(x - r, y - r, r * 2, r * 2); };
   for (const [k, [x0, y0, x1, y1]] of Object.entries(panels)) {
     lm.save(); lm.beginPath(); lm.rect(x0, y0, x1 - x0, y1 - y0); lm.clip();
@@ -20,7 +20,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
     lm.restore();
   }
   lm.globalCompositeOperation = 'lighter';
-  for (const x of [1350, 1580, 1810]) lampAt(x, 205, 150, 1.4);          // 太阳背后的热点
+  for (const x of [1350, 1580, 1810]) lampAt(x, 205, 150, 1.4);          // hot spots behind the suns
   lm.globalCompositeOperation = 'source-over';
 
   const clip = (g, [x0, y0, x1, y1], fn) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath(); g.rect(x0, y0, x1 - x0, y1 - y0); g.clip(); fn(); g.restore(); };
@@ -28,7 +28,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
   const leader = (x0, y0, x1, y1) => { fr.save(); fr.setTransform(1, 0, 0, 1, 0, 0); fr.strokeStyle = 'rgba(60,30,15,.75)'; fr.lineWidth = 1.2; fr.setLineDash([4, 3]); fr.beginPath(); fr.moveTo(x0, y0); fr.lineTo(x1, y1); fr.stroke(); fr.setLineDash([]); fr.beginPath(); fr.arc(x1, y1, 3, 0, 7); fr.fillStyle = 'rgba(60,30,15,.85)'; fr.fill(); fr.restore(); };
   const marker = (x, y, n) => { fr.save(); fr.setTransform(1, 0, 0, 1, 0, 0); fr.beginPath(); fr.arc(x, y, 9, 0, 7); fr.strokeStyle = '#a3170f'; fr.lineWidth = 2; fr.stroke(); fr.font = '700 15px "Cormorant Garamond"'; fr.fillStyle = '#a3170f'; fr.textAlign = 'center'; fr.fillText(n, x + 17, y - 8); fr.restore(); };
 
-  // —— A：装配完成 + 操纵杆 ——
+  // —— A: fully assembled + control rods ——
   clip(tr, panels.A, () => {
     const k = .8, wx = 290, wy = 385, C = cam(k, wx, wy);
     const r = drawHouYi(tr, C, POSES.rest);
@@ -41,7 +41,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
     leader(92, 440, r.rivets[6][0], r.rivets[6][1]); label(18, 436, 'rivet', 19); label(18, 456, '(thread knot)', 17);
     leader(470, 290, 312, 252); label(478, 286, 'open face', 19); label(478, 306, '(kong lian)', 17); }
 
-  // —— B：分件图 ——
+  // —— B: exploded view of the pieces ——
   const P = build();
   const place = [
     ['head', 690, 225, 1, 'head + helmet', [[6, 0]]], ['chest', 845, 240, 1, 'chest', [[6, -116], [14, -101], [1, -104], [0, 0]]],
@@ -58,7 +58,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
   }
   label(618, 620, 'red rings = rivet holes (joints turn on knotted thread)', 17, '#a3170f');
 
-  // —— C：太阳 ——
+  // —— C: suns ——
   clip(tr, panels.C, () => {
     [[1350, 205, 0, .1], [1580, 205, 1, .5], [1810, 205, 2, .9]].forEach(([x, y, v, rot]) => drawSun(tr, cam(1.12, x, y), { v, rot }));
     drawCrow(tr, cam(1.5, 1345, 470));
@@ -69,23 +69,23 @@ export function modelSheet(tr, fr, lm, v = '1') {
   label(1258, 360, 'each sun has its own oil lamp behind the screen — shoot the sun, the lamp goes out', 17, '#a3170f');
   label(1345, 600, 'hit: the crow drops out', 17, '#2b170d', 'center'); label(1575, 600, 'falls, lifts off → grows, blurs', 17, '#2b170d', 'center'); label(1805, 600, 'gone into the light', 17, '#2b170d', 'center');
 
-  // —— D：关键姿势 ——
+  // —— D: key poses ——
   const poses = [['STRIDE IN', POSES.stride], ['LIANGXIANG · hero freeze', POSES.liang], ['DRAWING THE BOW', POSES.draw], ['THE LAST ARROW · spared', POSES.spare]];
   clip(tr, panels.D, () => {
     poses.forEach(([lab, p], i) => { const k = .56, x = 150 + i * 310, y = 885; const r = drawHouYi(tr, cam(k, x, y), p); drawRods(tr, r.rods, r.rods.map((q, j) => [q[0] - 40 + j * 30, 1100]), 1.8, .55); });
   });
   poses.forEach(([lab], i) => label(150 + i * 310, 1068, lab, 18, '#2b170d', 'center'));
 
-  // —— E：头部特写 + 色板 + 光档 ——
+  // —— E: head close-up + colour swatches + light levels ——
   clip(tr, panels.E, () => {
     tr.globalCompositeOperation = 'multiply'; tr.setTransform(2.25, 0, 0, 2.25, 1395, 1010); drawPiece(tr, P.head); tr.globalCompositeOperation = 'source-over';
   });
-  // 色板
+  // Colour swatches
   const sw = [['vermilion', DYE.red], ['flame', DYE.orange], ['ochre', DYE.yellow], ['malachite', DYE.green], ['jade', DYE.jade], ['indigo', DYE.teal], ['raw hide', DYE.hide], ['ink', DYE.ink]];
   clip(tr, panels.E, () => { tr.globalCompositeOperation = 'multiply'; sw.forEach(([n, c], i) => { tr.fillStyle = c; tr.fillRect(1590 + (i % 4) * 78, 700 + Math.floor(i / 4) * 92, 60, 52); }); tr.globalCompositeOperation = 'source-over'; });
   sw.forEach(([n], i) => label(1620 + (i % 4) * 78, 770 + Math.floor(i / 4) * 92, n, 15, '#2b170d', 'center'));
   label(1590, 690, 'DYES (seen by transmitted light)', 16);
-  // 光档：10 盏灯 → 1 盏
+  // Light levels: 10 lamps → 1
   for (let i = 0; i < 10; i++) {
     const x = 1590 + i * 31.5, y = 915, L = 1 + (9 - i) * .42;
     lm.fillStyle = `rgb(${L / 6 * 255},${L / 6 * 255},${L / 6 * 255})`; lm.fillRect(x, y, 29, 95);
@@ -94,7 +94,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
   }
   label(1590, 905, 'LIGHT STEPS · lamps lit 10 → 1 (colours return)', 16);
 
-  // 表头 + 分隔
+  // Header + dividers
   fr.save(); fr.setTransform(1, 0, 0, 1, 0, 0); fr.fillStyle = '#140c08'; fr.fillRect(0, 0, W, 64);
   for (const [x0, y0, x1] of Object.values(panels)) { fr.fillStyle = 'rgba(20,12,8,.82)'; fr.fillRect(x0, y0, x1 - x0, 34); }
   fr.strokeStyle = '#140c08'; fr.lineWidth = 6; for (const [x0, y0, x1, y1] of Object.values(panels)) fr.strokeRect(x0, y0, x1 - x0, y1 - y0);
@@ -111,7 +111,7 @@ export function modelSheet(tr, fr, lm, v = '1') {
 }
 let A_r = null;
 
-// —— 风格帧：?test=frame&f=ten | one ——
+// —— Style frames: ?test=frame&f=ten | one ——
 import { drawLand, groundY } from './scenery.js';
 import { SUNPOS } from './suns.js';
 import { drawSub } from './hud.js';
@@ -132,13 +132,13 @@ export function styleFrame(tr, fr, f) {
   return { lamps, expo: 1.75 / Math.sqrt(n), amb: .3, sigB: 700, sigC: 120, haze: ten ? 3 : 0, bloom: ten ? .45 : .3, vign: ten ? .7 : .5, sat: 1.1, contrast: .15 };
 }
 
-// —— 手的试画页：?test=hands ——
+// —— Hand test page: ?test=hands ——
 import { silhouette, fistHand, pinchHand, lampBody, flame as lampFlame, smoke } from './backstage.js';
 export function handsTest(fr, t) {
   fr.setTransform(1, 0, 0, 1, 0, 0);
   const gr = fr.createRadialGradient(1300, 380, 50, 1100, 500, 1300); gr.addColorStop(0, '#fff3d2'); gr.addColorStop(.45, '#f0c98a'); gr.addColorStop(1, '#7a4a22');
   fr.fillStyle = gr; fr.fillRect(0, 0, 1920, 1080);
-  // 杆
+  // Rods
   const rods = [];
   silhouette(fr, g => {
     const a = fistHand(g, [1.7, 0, 0, 1.7, 1250, 900]); rods.push([a.grip, [1310, 60], 7]);

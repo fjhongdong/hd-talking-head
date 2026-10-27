@@ -1,4 +1,4 @@
-// 导出声音设计用的 cues.json：世界笔画时间、帽子轨迹（速度/声像）、事件
+// Export cues.json for sound design: world stroke times, hat trajectory (speed/pan), events
 // node styles/urban-sketch/demo/tools/export_cues.mjs
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';

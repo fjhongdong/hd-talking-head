@@ -1,4 +1,4 @@
-"""成片 whisper 自检：逐句在其时间窗内单独转写（成片里有配乐和拟音），和原文比对。python tools/final_asr.py woodcut.mp4"""
+"""whisper self-check of the finished film: transcribe each line on its own within its time window (the film has score and foley under it) and compare with the script. python tools/final_asr.py woodcut.mp4"""
 import sys, os, json, re, subprocess, numpy as np
 from faster_whisper import WhisperModel
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

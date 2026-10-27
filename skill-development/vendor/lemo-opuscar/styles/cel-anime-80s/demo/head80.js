@@ -1,12 +1,12 @@
-// 80 年代人设的头部（返修 v2）：颅骨球体 + 鹅蛋形下颌，三个角度（front / q = 3/4 / side）× 多种表情
-// 局部坐标：颅骨球心 (0,0)，半径 80；头顶 -80，眼睛中心 +22，鼻底 +54，嘴 +74，下巴 +114。脸朝画面右侧。
-// 描线：皮肤 = 细的暖深棕，头发 = 深紫，睫毛近黑，道具近黑（80 年代赛璐璐的彩色描线）
+// Head for an 80s character design: cranium sphere + egg-shaped jaw, three angles (front / q = 3/4 / side) × several expressions
+// Local coordinates: cranium centre (0,0), radius 80; top of head -80, eye centre +22, nose base +54, mouth +74, chin +114. The face looks to screen right.
+// Lines: skin = thin warm dark brown, hair = deep purple, lashes near-black, props near-black (the coloured lines, iro-sen, of 80s cels)
 import { cel, path, poly, ribbon, flutter, line, TAU, rgba, mix, LWK } from './cel.js';
 
-const LW = 1.5;                  // 基础线宽（局部单位）
-const LS = LW * .78, LH = LW * 1.05, LP = LW * 1.25;   // 皮肤 / 头发 / 道具
+const LW = 1.5;                  // base line width (local units)
+const LS = LW * .78, LH = LW * 1.05, LP = LW * 1.25;   // skin / hair / props
 
-// ——— 表情预设 ———  brow: [内端 dy, 外端 dy, 眉弓]（正 = 向下）
+// ——— expression presets ———  brow: [inner-end dy, outer-end dy, arch] (positive = down)
 export const EXPR = {
   neutral: { open: 1, lid: 0, brow: [0, 0, 2], mouth: 'closed' },
   determined: { open: .95, lid: .34, brow: [6, -3, 1], mouth: 'set', look: [.3, 0] },
@@ -18,10 +18,10 @@ export const EXPR = {
   closed: { open: 0, lid: 0, brow: [0, 0, 2], mouth: 'closed' },
 };
 
-// ——— 眼睛 ———
+// ——— eyes ———
 function eye(g, P, cx, cy, w, h, dir, fs, E, detail) {
   const open = Math.max(0, E.open ?? 1), lid = E.lid || 0, W2 = w / 2, lash = P.lash || P.hair.l;
-  const X = u => cx + dir * u * W2;                    // u：-1 内眼角 → +1 外眼角
+  const X = u => cx + dir * u * W2;                    // u: -1 inner corner → +1 outer corner
   const inY = cy + h * .1, outY = cy - h * .08 - (E.smileEyes ? h * .06 : 0);
   const topY = cy - h * .5 * open + lid * h * .32;
   const botY = cy + h * .47 * Math.min(1, open + .25) - (E.smileEyes ? h * .3 : 0);
@@ -29,41 +29,41 @@ function eye(g, P, cx, cy, w, h, dir, fs, E, detail) {
     const WP = path([[X(-1), inY, 1], [X(-.4), topY + h * .05], [X(.3), topY], [X(1), outY, 1], [X(.45), botY], [X(-.4), botY - h * .02]], true);
     g.save(); g.clip(WP);
     g.fillStyle = P.white_eye; g.fill(WP);
-    g.fillStyle = mix(P.white_eye, P.skin.s, .55); g.fillRect(cx - w, topY - 6, w * 2, h * .22 + 6);   // 上眼睑投影
+    g.fillStyle = mix(P.white_eye, P.skin.s, .55); g.fillRect(cx - w, topY - 6, w * 2, h * .22 + 6);   // upper-eyelid cast shadow
     const sc = E.iris || 1, iw = w * .25 * sc * (fs < 1 ? .92 : 1), ih = h * .46 * sc;
     const ix = cx + dir * W2 * .04 + (E.look?.[0] || 0) * w * .15, iy = cy + h * .08 + (E.look?.[1] || 0) * h * .14;
     const IR = new Path2D(); IR.ellipse(ix, iy, iw, ih, 0, 0, TAU);
     g.fillStyle = P.eye.f; g.fill(IR);
     g.save(); g.clip(IR);
-    g.fillStyle = P.eye.s; g.fillRect(ix - iw, iy - ih, iw * 2, ih * .95);                 // 上部暗色
-    g.fillStyle = mix(P.eye.s, lash, .5); g.fillRect(ix - iw, iy - ih, iw * 2, ih * .38);     // 顶部最深的一条带
-    g.fillStyle = mix(P.eye.l, lash, .3); g.beginPath(); g.ellipse(ix, iy - ih * .02, iw * .46, ih * .52, 0, 0, TAU); g.fill();   // 瞳孔
-    g.fillStyle = P.eye.h; g.beginPath(); g.ellipse(ix, iy + ih * .9, iw * 1.05, ih * .52, 0, 0, TAU); g.fill();                    // 底部亮月牙
+    g.fillStyle = P.eye.s; g.fillRect(ix - iw, iy - ih, iw * 2, ih * .95);                 // dark upper part
+    g.fillStyle = mix(P.eye.s, lash, .5); g.fillRect(ix - iw, iy - ih, iw * 2, ih * .38);     // darkest band at the top
+    g.fillStyle = mix(P.eye.l, lash, .3); g.beginPath(); g.ellipse(ix, iy - ih * .02, iw * .46, ih * .52, 0, 0, TAU); g.fill();   // pupil
+    g.fillStyle = P.eye.h; g.beginPath(); g.ellipse(ix, iy + ih * .9, iw * 1.05, ih * .52, 0, 0, TAU); g.fill();                    // bright crescent at the bottom
     g.fillStyle = mix(P.eye.h, '#ffffff', .45); g.beginPath(); g.ellipse(ix, iy + ih * 1.05, iw * .7, ih * .32, 0, 0, TAU); g.fill();
     if (E.reflect) { g.strokeStyle = rgba(E.reflect, .85); g.lineWidth = iw * .18; g.beginPath(); g.arc(ix, iy, ih * .72, .3, 1.3); g.stroke(); }
     g.restore();
     g.strokeStyle = mix(P.eye.l, lash, .5); g.lineWidth = LW * .75 * LWK.k; g.stroke(IR);
-    g.fillStyle = '#ffffff';   // 高光：左上大椭圆 + 右下小圆
+    g.fillStyle = '#ffffff';   // highlights: large ellipse top-left + small circle bottom-right
     g.beginPath(); g.ellipse(ix - dir * iw * .34, iy - ih * .34, iw * .42, ih * .27, -.5 * dir, 0, TAU); g.fill();
     g.beginPath(); g.arc(ix + dir * iw * .42, iy + ih * .34, iw * .2, 0, TAU); g.fill();
     g.restore();
-    // 下眼睑：外侧一小段细线 + 一根淡下睫毛
+    // lower lid: a short thin line on the outer side + one faint lower lash
     line(g, [[X(.95), outY + h * .12], [X(.5), botY + 1], [X(.05), botY + 1.5]], mix(P.skin.l, P.skin.f, .35), LS * .8);
   }
   const t = h * .19;
-  if (open > .08) {   // 粗上睫毛线，外眼角加厚上挑
+  if (open > .08) {   // thick upper lash line, thickened and flicked up at the outer corner
     cel(g, [[X(-1.03), inY + 1, 1], [X(-.4), topY + h * .05 - t * .6], [X(.3), topY - t * .75], [X(.95), outY - t], [X(1.25), outY - t * 2.1, 1],
       [X(1.03), outY + t * .5], [X(.3), topY + t * .45], [X(-.4), topY + h * .05 + t * .35], [X(-.98), inY + t * .6, 1]], { f: lash });
-    for (let k = 0; k < 3; k++) {   // 外眼角挑出的 3 根睫毛
+    for (let k = 0; k < 3; k++) {   // 3 lashes flicking out at the outer corner
       const u = .55 + k * .2, bx = X(u), by = topY + (outY - topY) * ((u - .3) / .7) - t * .5;
       cel(g, [[bx - dir * 2, by, 1], [bx + dir * (4 + k * 3), by - h * (.16 + k * .05), 1], [bx + dir * 3, by + 1, 1]], { f: lash });
     }
-    line(g, [[X(-.25), topY - h * .22], [X(.45), topY - h * .25], [X(1), outY - h * .3]], mix(P.skin.l, P.skin.f, .3), LS * .85);   // 双眼睑
-  } else {   // 闭眼（快速眨眼的那一张）
+    line(g, [[X(-.25), topY - h * .22], [X(.45), topY - h * .25], [X(1), outY - h * .3]], mix(P.skin.l, P.skin.f, .3), LS * .85);   // double eyelid crease
+  } else {   // closed eye (the single drawing of a quick blink)
     cel(g, [[X(-1), inY, 1], [X(0), cy + h * .22], [X(1.05), outY + h * .04], [X(1.22), outY - t, 1], [X(1), outY + t * .8], [X(0), cy + h * .22 + t * .8], [X(-.98), inY + t * .5, 1]], { f: lash });
   }
 }
-function eyeSide(g, P, cx, cy, w, h, E) {   // 正侧面：楔形眼
+function eyeSide(g, P, cx, cy, w, h, E) {   // full profile: wedge-shaped eye
   const open = Math.max(0, E.open ?? 1), lid = E.lid || 0, lash = P.lash || P.hair.l;
   const topY = cy - h * .5 * open + lid * h * .32, front = cx + w * .5, back = cx - w * .5;
   const botY = cy + h * .46 - (E.smileEyes ? h * .26 : 0);
@@ -84,13 +84,13 @@ function eyeSide(g, P, cx, cy, w, h, E) {   // 正侧面：楔形眼
     line(g, [[back + w * .05, topY - h * .12], [cx + w * .2, topY - h * .2]], mix(P.skin.l, P.skin.f, .3), LS * .8);
   } else cel(g, [[back - w * .3, cy - h * .12, 1], [cx, cy + h * .2], [front, cy + h * .08, 1], [cx, cy + h * .28], [back, cy + h * .02, 1]], { f: lash });
 }
-function brow(g, P, ix, iy, ox, oy, B) {   // 细长眉：内端 → 外端，B = [内 dy, 外 dy, 眉弓]
+function brow(g, P, ix, iy, ox, oy, B) {   // long thin brow: inner end → outer end, B = [inner dy, outer dy, arch]
   const a = [ix, iy + B[0]], c = [ox, oy + B[1]], m = [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2 - B[2]];
   const col = P.lash || P.hair.l;
   cel(g, [[a[0], a[1] - 1.4, 1], [m[0], m[1] - 1.6], [c[0], c[1] - .2, 1], [m[0], m[1] + 1.2], [a[0], a[1] + 1.4, 1]], { f: col });
 }
 
-// ——— 嘴（唇形 + 口内色）———
+// ——— mouth (lip shape + inside-of-mouth colour) ———
 function mouth(g, P, cx, cy, w, type, fs = 1) {
   const L = cx - w / 2, R = cx + w / 2 * fs;
   const lc = P.skin.l, lip = rgba(P.mouth, .22);
@@ -118,12 +118,12 @@ function mouth(g, P, cx, cy, w, type, fs = 1) {
   }
 }
 
-// 发束：根部两点 → 尖；bend 弯向一侧
+// hair lock: two root points → tip; bend curves it to one side
 function lock(x0, y0, x1, y1, tx, ty, bend = 0) {
   const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = tx - mx, dy = ty - my, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
   return [[x0, y0], [x0 + dx * .55 + nx * bend, y0 + dy * .55 + ny * bend], [tx, ty, 1], [x1 + dx * .5 + nx * bend * .7, y1 + dy * .5 + ny * bend * .7], [x1, y1]];
 }
-// 天使环：沿颅骨弧度的一整条锯齿高光带（上缘平滑弧线、下缘锯齿）
+// Angel ring (天使の輪, hair sheen): one continuous jagged highlight band following the cranium curve (smooth arc on top, zigzag below)
 function halo(g, P, cx, cy, rx, ry, a0, a1, th, teeth, tilt = 0) {
   const up = [], dn = [];
   for (let i = 0; i <= teeth * 2; i++) {
@@ -137,7 +137,7 @@ function halo(g, P, cx, cy, rx, ry, a0, a1, th, teeth, tilt = 0) {
   g.beginPath(); up.forEach((p, i) => g[i ? 'lineTo' : 'moveTo'](p[0], p[1])); for (let i = dn.length - 1; i >= 0; i--) g.lineTo(dn[i][0], dn[i][1]); g.closePath(); g.fill();
 }
 
-// ——— 各角度轮廓 ———
+// ——— outlines per angle ———
 const VIEWS = {
   front: {
     face: [[-66, -40], [-67, 4], [-64, 36], [-57, 64], [-44, 88], [-24, 105], [0, 114], [24, 105], [44, 88], [57, 64], [64, 36], [67, 4], [66, -40], [36, -64], [-36, -64]],
@@ -177,7 +177,7 @@ const VIEWS = {
   },
 };
 
-// 刘海 / 头发（按角度）：locks = [根x0,根y0,根x1,根y1,尖x,尖y,弯]；前两项是后排
+// fringe / hair (per angle): locks = [rootx0,rooty0,rootx1,rooty1,tipx,tipy,bend]; the first two are the back row
 const HAIR = {
   front: {
     back: [[-80, -20], [-84, 30], [-74, 70], [-40, 84], [40, 84], [74, 70], [84, 30], [80, -20], [0, -60]],
@@ -220,7 +220,7 @@ export function head80(g, P, o = {}) {
   const hairSt = { f: P.hair.f, s: P.hair.s, h: P.hair.h, l: P.hair.l, lw: LH, rim };
   const lx = o.light?.[0] ?? -1, ly = o.light?.[1] ?? -.8;
   const SO = k => [lx * k, ly * k];
-  // 1 马尾 + 后发
+  // 1 ponytail + back hair
   if (o.ponytail !== false) {
     const px = view === 'front' ? 0 : view === 'q' ? -54 : -50, py = view === 'front' ? -40 : -80;
     for (let k = 0; k < 4; k++) {
@@ -233,25 +233,25 @@ export function head80(g, P, o = {}) {
     }
   }
   cel(g, Hh.back, { ...hairSt, f: P.hair.s, so: SO(10), s: mix(P.hair.s, '#000000', .25) });
-  // 2 身体（肩、领、围巾）+ 脖子 + 下巴投影
+  // 2 body (shoulders, collar, scarf) + neck + chin cast shadow
   if (o.body !== false) body(g, P, view, E);
   if (o.neck !== false) cel(g, poly(V.neck.map(([x, y]) => [x, Math.min(y, o.neckEnd ?? 999)])), { f: P.skin.f, s: P.skin.s, l: P.skin.l, lw: LS, sh: [V.chinShadow] });
   if (o.body !== false) scarf(g, P, view, E);
-  // 3 脸
+  // 3 face
   cel(g, V.face, { f: P.skin.f, s: P.skin.s, l: P.skin.l, lw: LS, h: P.skin.h, sh: o.light ? [] : [V.farShade], so: o.light ? SO(12) : null,
     rim: o.skinRim ? { c: o.skinRim, d: [-lx * 2.5, -ly * 2] } : null,
-    clipFn: gg => {   // 刘海在额头的投影（跟着刘海下缘）
+    clipFn: gg => {   // fringe shadow cast on the forehead (follows the fringe's lower edge)
       gg.fillStyle = mix(P.skin.f, P.skin.s, .7);
       for (const L of Hh.locks) { const [x0, y0, x1, y1, tx, ty, b] = L; gg.fill(path(lock(x0 - 4, y0 + 8, x1 + 6, y1 + 8, tx + 3, ty + 9, b))); }
       gg.fillRect(-120, -120, 240, view === 'side' ? 58 : 62);
     } });
   for (const [x, y, rx, ry] of V.blush) { g.fillStyle = rgba(P.blush, (o.blush ?? E.blush ?? .2)); g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill(); }
-  // 4 五官
+  // 4 facial features
   V.nose(P)(g);
   if (V.mouth) mouth(g, P, V.mouth.x, V.mouth.y, V.mouth.w, E.mouth, V.mouth.fs);
   else sideMouth(g, P, E.mouth);
   for (const ey of V.eyes) { if (ey.side) eyeSide(g, P, ey.x, ey.y, ey.w, ey.h, E); else eye(g, P, ey.x, ey.y, ey.w, ey.h, ey.dir, ey.fs, E, o.detail); }
-  // 5 头发：发帽 → 侧发 → 暗色底（发束之间的缝）→ 发束（有厚度、互相叠压）→ 碎发 → 天使环
+  // 5 hair: hair cap → side hair → dark underlayer (gaps between locks) → locks (with thickness, overlapping each other) → stray strands → angel ring
   cel(g, Hh.cap, { ...hairSt, so: SO(10) });
   if (view !== 'front' && o.ponytail !== false) { const px = view === 'q' ? -54 : -50; cel(g, [[px - 14, -92], [px + 6, -96], [px + 12, -72], [px - 8, -66]], { f: P.magenta.f, s: P.magenta.s, so: SO(3), l: P.magenta.l, lw: LS }); }
   if (o.headset !== false) { const [cx, cy] = V.cup; line(g, [[cx + 2, cy - 12], [cx + 8, -64], [cx + 34, -100]], P.phone.f, 5); }
@@ -265,10 +265,10 @@ export function head80(g, P, o = {}) {
   g.save(); const HC = new Path2D(); HC.addPath(path(Hh.cap)); for (const L of Hh.locks) { const [x0, y0, x1, y1, tx, ty, b] = L; HC.addPath(path(lock(x0, y0, x1, y1, tx, ty + lf, b))); }
   g.clip(HC); halo(g, P, hz[0], hz[1], hz[2], hz[3], hz[4], hz[5], hz[6], hz[7]);
   g.restore();
-  // 眉毛画在刘海上面（"透过刘海"的惯例，保证情绪看得见）
+  // brows are drawn over the fringe (the "see-through fringe" convention, so the emotion stays visible)
   for (const b of V.brows) brow(g, P, b[0], b[1], b[2], b[3], E.brow || [0, 0, 2]);
   if (E.sweat) { const sx = view === 'side' ? 40 : view === 'q' ? -58 : -62; cel(g, [[sx, -16, 1], [sx + 7, 0], [sx, 6], [sx - 7, 0]], { f: '#e8f8ff', l: '#4a6a98', lw: LS, h: '#ffffff', hi: [[[sx - 3, -2], [sx - 1, -6], [sx - 4, 2]]] }); }
-  // 6 道具：护目镜、耳机、麦克风（近黑描线）
+  // 6 props: goggles, headphones, microphone (near-black lines)
   for (const [x, y, rw] of Hh.goggles) {
     const L = new Path2D(); L.ellipse(x, y, rw, rw * .66, 0, 0, TAU);
     cel(g, L, { f: P.lens.f, s: P.lens.s, sh: [[[x - rw, y], [x + rw, y - 4], [x + rw, y + rw], [x - rw, y + rw]]], l: '#141420', lw: LP, h: P.lens.h, hi: [[[x - rw * .6, y - rw * .35], [x - rw * .1, y - rw * .5], [x - rw * .4, y]]] });
@@ -291,7 +291,7 @@ function sideMouth(g, P, type) {
   else if (type === 'smile') line(g, [[67, 66], [71, 70], [77, 69]], lc, LS * 1.05);
   else { const MP = path([[69, 67, 1], [78, 66], [76, type === 'pant' ? 79 : 75], [70, 74]], true); g.fillStyle = '#5a1a2a'; g.fill(MP); g.strokeStyle = lc; g.lineWidth = LS * LWK.k; g.stroke(MP); }
 }
-// 肩与立领
+// shoulders and stand-up collar
 function body(g, P, view, E) {
   const dx = view === 'front' ? 0 : view === 'q' ? -14 : -34, dy = E.shoulders || 0;
   cel(g, [[-190 + dx, 330], [-182 + dx, 206 + dy], [-140 + dx, 158 + dy], [-60 + dx, 138 + dy * .5], [50 + dx, 138 + dy * .5], [124 + dx, 156 + dy], [166 + dx, 204 + dy], [176 + dx, 330]], { f: P.jacket.f, s: P.jacket.s, so: [-30, -10], h: P.jacket.h, ho: [8, 6], l: P.jacket.l, lw: LW * 1.1,

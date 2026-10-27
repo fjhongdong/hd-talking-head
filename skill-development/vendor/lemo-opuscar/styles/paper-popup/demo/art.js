@@ -1,11 +1,11 @@
-// 所有纸片美术：角色（可逐帧重画的姿势）+ 场景道具 + 书页
+// All paper-cut art: characters (poses that can be redrawn every frame) + set props + book pages
 import { mulberry, TAU, clamp, lerp } from './lib.js';
 import { cv, finishCut, sh, blob, smoothClosed, smoothOpen, crescent, paperFill, INK, GRAIN, rr } from './paper.js';
 
-const LW = 9;   // 主描边
-const LW2 = 5;  // 细节线
+const LW = 9;   // main outline
+const LW2 = 5;  // detail lines
 
-// ============ 皮普 ============
+// ============ Pip ============
 export const PIP_W = 900, PIP_H = 1120;
 const SKIN = '#ffe2bd', SKIN_S = '#f3c393', LEAF = '#62c24c', LEAF_S = '#3e9a34', LEAF_V = '#2e7a27';
 const TUNIC = '#3fa1de', TUNIC_S = '#2a78b3', BOOT = '#8a5530';
@@ -51,24 +51,24 @@ export function drawPip(x, p = {}) {
   x.clearRect(0, 0, PIP_W, PIP_H);
   const W = cv(PIP_W, PIP_H), a = W.getContext('2d');
   a.save(); a.translate(450, 1050); a.rotate(lean); a.translate(-450, -1050);
-  // 翅膀
+  // wings
   pipWing(a, -1.2 - flap * .4, flap); pipWing(a, 1.2 + flap * .4, flap);
-  // 腿
+  // legs
   const s = Math.sin(walk) * stride;
   pipLeg(a, 412, s * .5, Math.max(0, -Math.sin(walk)) * stride * 16);
   pipLeg(a, 488, -s * .5, Math.max(0, Math.sin(walk)) * stride * 16);
-  // 身体（花瓣裙）
+  // body (petal skirt)
   const tunic = () => { a.beginPath(); a.moveTo(385, 800); a.bezierCurveTo(360, 880, 330, 930, 322, 972); a.quadraticCurveTo(360, 1000, 395, 978); a.quadraticCurveTo(450, 1008, 505, 978); a.quadraticCurveTo(540, 1000, 578, 972); a.bezierCurveTo(570, 930, 540, 880, 515, 800); a.closePath(); };
   crescent(a, tunic, TUNIC_S, 22, 0, TUNIC); tunic(); sh(a, null, LW);
   a.beginPath(); a.moveTo(450, 830); a.lineTo(450, 990); a.lineWidth = LW2; a.strokeStyle = TUNIC_S; a.stroke();
-  // 腰带小叶
+  // little leaf on the belt
   a.beginPath(); a.ellipse(450, 900, 30, 17, 0, 0, TAU); sh(a, LEAF, LW2);
-  // 手臂
+  // arms
   pipArm(a, 372, armL, 1); pipArm(a, 528, -armR, 1);
-  // 头
+  // head
   const head = () => { a.beginPath(); a.ellipse(450, 565, 248, 228, 0, 0, TAU); };
   crescent(a, head, SKIN_S, 34, 26, SKIN); head(); sh(a, null, LW + 1);
-  // 脸（朝右偏）
+  // face (turned to the right)
   const fx = 22;
   a.beginPath(); a.ellipse(450 + fx - 128, 650, 42, 26, 0, 0, TAU); a.fillStyle = 'rgba(255,120,120,.45)'; a.fill();
   a.beginPath(); a.ellipse(450 + fx + 138, 650, 42, 26, 0, 0, TAU); a.fill();
@@ -83,10 +83,10 @@ export function drawPip(x, p = {}) {
   else if (mouth === 'o') { a.beginPath(); a.ellipse(mx, my + 8, 16, 21, 0, 0, TAU); sh(a, '#8a2a2a', 7); }
   else if (mouth === 'worried') { a.beginPath(); a.moveTo(mx - 34, my + 10); a.bezierCurveTo(mx - 16, my - 6, mx - 4, my + 16, mx + 10, my + 2); a.quadraticCurveTo(mx + 24, my - 8, mx + 34, my + 8); a.lineWidth = 8; a.stroke(); }
   else if (mouth === 'determined') { a.beginPath(); a.moveTo(mx - 30, my + 2); a.lineTo(mx + 32, my - 4); a.lineWidth = 9; a.stroke(); }
-  // 叶子帽
+  // leaf cap
   const leaf = () => {
     a.beginPath(); a.moveTo(208, 548);
-    a.bezierCurveTo(150, 520, 110, 470, 70, 392);          // 向后下方的叶尖
+    a.bezierCurveTo(150, 520, 110, 470, 70, 392);          // leaf tip pointing back and down
     a.bezierCurveTo(150, 410, 185, 388, 222, 372);
     a.bezierCurveTo(262, 300, 360, 262, 460, 262);
     a.bezierCurveTo(590, 262, 690, 330, 708, 440);
@@ -96,13 +96,13 @@ export function drawPip(x, p = {}) {
   crescent(a, leaf, LEAF_S, 30, 30, LEAF); leaf(); sh(a, null, LW + 1);
   a.beginPath(); a.moveTo(96, 408); a.bezierCurveTo(260, 420, 440, 330, 650, 450); a.lineWidth = 6; a.strokeStyle = LEAF_V; a.stroke();
   for (const [x0, y0, x1, y1] of [[300, 392, 330, 300], [420, 365, 470, 285], [540, 380, 600, 310], [240, 405, 230, 470], [380, 380, 360, 470], [520, 395, 520, 480]]) { a.beginPath(); a.moveTo(x0, y0); a.quadraticCurveTo((x0 + x1) / 2 + 12, (y0 + y1) / 2, x1, y1); a.lineWidth = 4; a.stroke(); }
-  // 茎
+  // stem
   a.beginPath(); a.moveTo(470, 268); a.bezierCurveTo(470, 220, 500, 185, 548, 190); a.bezierCurveTo(578, 194, 582, 226, 556, 232); a.lineWidth = 15; a.strokeStyle = INK; a.stroke(); a.lineWidth = 7; a.strokeStyle = '#9a6a3a'; a.stroke();
   a.restore();
   x.drawImage(finishCut(W, 16, { grainA: .7 }), 0, 0);
 }
 
-// ============ 皱皱（纸团怪） ============
+// ============ Crumple (crumpled-paper monster) ============
 export const CR_W = 760, CR_H = 760;
 const CRUMPLE_PTS = (() => { const R = mulberry(41), pts = []; for (let i = 0; i < 17; i++) { const a = i / 17 * TAU + (R() - .5) * .18, r = 270 * (.82 + R() * .2); pts.push([380 + Math.cos(a) * r, 400 + Math.sin(a) * r * .92]); } return pts; })();
 export function drawCrumple(x, p = {}) {
@@ -121,12 +121,12 @@ export function drawCrumple(x, p = {}) {
   }
   a.strokeStyle = 'rgba(120,105,90,.55)'; a.lineWidth = 3.5;
   for (let i = 0; i < 16; i++) { const p0 = P[(R() * P.length) | 0], p1 = [C[0] + (R() - .5) * 260, C[1] + (R() - .5) * 260]; a.beginPath(); a.moveTo(p0[0], p0[1]); a.lineTo(lerp(p0[0], p1[0], .5) + (R() - .5) * 40, lerp(p0[1], p1[1], .5) + (R() - .5) * 40); a.lineTo(p1[0], p1[1]); a.stroke(); }
-  // 横线（笔记本纸）
+  // ruled lines (notebook paper)
   a.strokeStyle = 'rgba(110,150,210,.35)'; a.lineWidth = 4;
   for (let k = 0; k < 7; k++) { a.beginPath(); let y = 190 + k * 70; a.moveTo(90, y); for (let xx = 90; xx < 680; xx += 60) a.lineTo(xx, y + Math.sin(xx * .05 + k) * 12); a.stroke(); }
   a.restore();
   body(); sh(a, null, LW + 1);
-  // 脸
+  // face
   const ex = 395, ey = 390;
   if (mood === 'dizzy') {
     for (const dx of [-72, 72]) { a.beginPath(); for (let i = 0; i < 40; i++) { const an = i * .5, r = i * 1.1; a.lineTo(ex + dx + Math.cos(an) * r, ey + Math.sin(an) * r); } a.lineWidth = 8; a.strokeStyle = INK; a.stroke(); }
@@ -149,7 +149,7 @@ export function drawCrumple(x, p = {}) {
   x.drawImage(finishCut(W, 14, { grainA: .5 }), 0, 0);
 }
 
-// ============ 鲸鱼 ============
+// ============ Whale ============
 export function drawWhale(x, p = {}) {
   const w = x.canvas.width, h = x.canvas.height; x.clearRect(0, 0, w, h);
   const W = cv(w, h), a = W.getContext('2d');
@@ -159,21 +159,21 @@ export function drawWhale(x, p = {}) {
   a.strokeStyle = '#9cc4e4'; a.lineWidth = 5; for (let i = 0; i < 6; i++) { a.beginPath(); a.moveTo(260 + i * 110, 540 + Math.sin(i) * 4); a.lineTo(280 + i * 110, 610); a.stroke(); }
   a.restore(); body(); sh(a, null, LW + 2);
   a.beginPath(); a.moveTo(150, 500); a.bezierCurveTo(400, 560, 800, 560, 1080, 470); a.lineWidth = LW2; a.strokeStyle = INK; a.stroke();
-  // 眼、腮红、嘴
+  // eyes, blush, mouth
   if (p.happy) { a.beginPath(); a.moveTo(300, 380); a.quadraticCurveTo(330, 340, 360, 380); a.lineWidth = 11; a.lineCap = 'round'; a.stroke(); }
   else { a.beginPath(); a.ellipse(330, 370, 22, 36, 0, 0, TAU); a.fillStyle = INK; a.fill(); a.beginPath(); a.ellipse(323, 356, 8, 11, 0, 0, TAU); a.fillStyle = '#fff'; a.fill(); }
   a.beginPath(); a.ellipse(300, 440, 40, 22, 0, 0, TAU); a.fillStyle = 'rgba(255,130,150,.55)'; a.fill();
   a.beginPath(); a.moveTo(190, 470); a.quadraticCurveTo(260, 520, 360, 480); a.lineWidth = 9; a.strokeStyle = INK; a.lineCap = 'round'; a.stroke();
-  // 鳍
+  // fin
   a.beginPath(); a.moveTo(560, 520); a.bezierCurveTo(600, 600, 660, 640, 720, 630); a.bezierCurveTo(690, 590, 660, 540, 640, 510); a.closePath(); sh(a, '#3a7cc2', LW2 + 2);
-  // 喷水孔
+  // blowhole
   a.beginPath(); a.ellipse(600, 178, 30, 10, 0, 0, TAU); sh(a, '#2a5a90', LW2);
   x.drawImage(finishCut(W, 16), 0, 0);
 }
 
-// ============ 静态剪纸（一次性生成） ============
-// 每个返回 {c: 画布, w,h: 米（世界尺寸）, ax,ay: 锚点(0..1)}
-const PPM = 5200; // 静态道具的像素/米
+// ============ Static paper cut-outs (generated once) ============
+// each returns {c: canvas, w,h: metres (world size), ax,ay: anchor (0..1)}
+const PPM = 5200; // pixels per metre for static props
 function cut(wm, hm, draw, o = {}) {
   const pad = o.pad ?? 30, w = Math.ceil(wm * PPM) + pad * 2, h = Math.ceil(hm * PPM) + pad * 2;
   const c = cv(w, h), x = c.getContext('2d'); x.translate(pad, pad);
@@ -183,7 +183,7 @@ function cut(wm, hm, draw, o = {}) {
 }
 export { cut, PPM };
 
-// 山丘：宽 wm 高 hm
+// Hill: width wm, height hm
 export function hill(wm, hm, col, shade, seed, o = {}) {
   return cut(wm, hm, (x, W, H) => {
     const R = mulberry(seed), n = o.bumps ?? 3, pts = [[0, H]];
@@ -194,7 +194,7 @@ export function hill(wm, hm, col, shade, seed, o = {}) {
     pts.push([W, H]);
     const path = () => { x.beginPath(); x.moveTo(0, H + 40); x.lineTo(pts[1][0], pts[1][1]); smoothOpen(x, pts.slice(1, -1), false); x.lineTo(W, H + 40); x.closePath(); };
     crescent(x, path, shade, 40, 30, col); path(); sh(x, null, LW);
-    // 草丛纹
+    // grass-tuft pattern
     x.strokeStyle = shade; x.lineWidth = 6; x.lineCap = 'round';
     for (let i = 0; i < (o.tufts ?? 10); i++) { const px = W * (.08 + R() * .84), py = H * (.45 + R() * .45); x.beginPath(); x.moveTo(px - 14, py); x.lineTo(px - 6, py - 22); x.moveTo(px, py); x.lineTo(px + 2, py - 30); x.moveTo(px + 12, py); x.lineTo(px + 12, py - 20); x.stroke(); }
     if (o.dots) { for (let i = 0; i < 14; i++) { x.beginPath(); x.arc(W * (.1 + R() * .8), H * (.5 + R() * .4), 8 + R() * 6, 0, TAU); x.fillStyle = pickc(R, o.dots); x.fill(); } }
@@ -202,7 +202,7 @@ export function hill(wm, hm, col, shade, seed, o = {}) {
 }
 const pickc = (R, a) => a[(R() * a.length) | 0];
 
-// 棒棒糖树（剪纸 + 木棍）
+// Lollipop tree (paper cut-out + wooden stick)
 export function lolliTree(hm, col, shade, seed) {
   return cut(hm * .62, hm, (x, W, H) => {
     const R = mulberry(seed), r = W * .46, cy = r + 6;
@@ -215,7 +215,7 @@ export function lolliTree(hm, col, shade, seed) {
     x.beginPath(); x.ellipse(W / 2 - r * .4, cy - r * .45, r * .22, r * .12, -.6, 0, TAU); x.fillStyle = 'rgba(255,255,255,.35)'; x.fill();
   });
 }
-// 松树：三层三角
+// Pine: three stacked triangles
 export function pine(hm, col, shade, seed, tiers = 3) {
   return cut(hm * .55, hm, (x, W, H) => {
     rr(x, W / 2 - 18, H * .72, 36, H * .28, 6); sh(x, '#7d5230', LW2 + 1);
@@ -226,7 +226,7 @@ export function pine(hm, col, shade, seed, tiers = 3) {
     }
   });
 }
-// 灌木
+// Bush
 export function bush(wm, hm, col, shade, seed, berries) {
   return cut(wm, hm, (x, W, H) => {
     const R = mulberry(seed), n = 4, pts = [];
@@ -241,7 +241,7 @@ export function bush(wm, hm, col, shade, seed, berries) {
     if (berries) for (let i = 0; i < 7; i++) { x.beginPath(); x.arc(W * (.15 + seedR() * .7), H * (.35 + seedR() * .45), 14, 0, TAU); sh(x, berries, 4); }
   });
 }
-// 花
+// Flower
 export function flower(hm, petal, seed) {
   return cut(hm * .5, hm, (x, W, H) => {
     const cy = W * .45;
@@ -251,22 +251,22 @@ export function flower(hm, petal, seed) {
     x.beginPath(); x.arc(W / 2, cy, W * .13, 0, TAU); sh(x, '#ffd23f', 5);
   }, { border: 10 });
 }
-// 蘑菇屋
+// Mushroom house
 export function mushHouse(hm) {
   return cut(hm * 1.0, hm, (x, W, H) => {
-    // 柄
+    // stalk
     const stem = () => { x.beginPath(); x.moveTo(W * .22, H); x.bezierCurveTo(W * .2, H * .72, W * .28, H * .56, W * .3, H * .48); x.lineTo(W * .7, H * .48); x.bezierCurveTo(W * .72, H * .56, W * .8, H * .72, W * .78, H); x.closePath(); };
     crescent(x, stem, '#e2cfa8', 34, 0, '#fbefd3'); stem(); sh(x, null, LW);
-    // 门洞（门另做）
+    // doorway (the door is a separate piece)
     x.beginPath(); x.moveTo(W * .38, H); x.lineTo(W * .38, H * .78); x.arc(W * .5, H * .78, W * .12, Math.PI, 0); x.lineTo(W * .62, H); x.closePath(); sh(x, '#3b2418', LW2);
-    // 窗
+    // window
     x.beginPath(); x.arc(W * .68, H * .7, W * .055, 0, TAU); sh(x, '#6b4a2f', LW2 + 2);
-    // 帽
+    // cap
     const cap = () => { x.beginPath(); x.moveTo(W * .02, H * .52); x.bezierCurveTo(W * .0, H * .1, W * .3, 0, W * .5, 0); x.bezierCurveTo(W * .7, 0, W * 1.0, H * .1, W * .98, H * .52); x.quadraticCurveTo(W * .5, H * .6, W * .02, H * .52); x.closePath(); };
     crescent(x, cap, '#c23a2e', 40, 30, '#ec5140'); cap(); sh(x, null, LW + 1);
     const R = mulberry(5);
     for (const [u, v, r] of [[.2, .3, .07], [.45, .14, .08], [.72, .26, .09], [.34, .42, .05], [.86, .42, .05], [.6, .45, .045]]) { blob(x, W * u, H * v, W * r, W * r * .8, .08, (R() * 99) | 0); sh(x, '#fff7ea', LW2); }
-    // 烟囱
+    // chimney
   });
 }
 export function door(hm) {
@@ -282,7 +282,7 @@ export function windowGlow(rm) {
     x.strokeStyle = '#6b4a2f'; x.lineWidth = 10; x.beginPath(); x.moveTo(W / 2, 0); x.lineTo(W / 2, H); x.moveTo(0, H / 2); x.lineTo(W, H / 2); x.stroke();
   }, { border: 0, grain: false, ay: .5 });
 }
-// 太阳（带木棍）
+// Sun (on a wooden stick)
 export function sunOnStick(rm, stickm) {
   return cut(rm * 2.6, rm * 2.6 + stickm, (x, W, H) => {
     const cx = W / 2, cy = W / 2, r = rm * PPM;
@@ -319,7 +319,7 @@ export function fence(wm, hm) {
     for (let i = 0; i < n; i++) { const px = (i + .5) / n * W, pw = W / n * .5; x.beginPath(); x.moveTo(px - pw / 2, H); x.lineTo(px - pw / 2, H * .12); x.lineTo(px, 0); x.lineTo(px + pw / 2, H * .12); x.lineTo(px + pw / 2, H); x.closePath(); sh(x, '#fffaf0', LW2 + 1); }
   }, { border: 10 });
 }
-// 波浪条：宽 wm，高 hm；顶边扇形浪 + 白浪花
+// Wave strip: width wm, height hm; scalloped waves along the top edge + white foam
 export function waveStrip(wm, hm, col, dark, seed, n = 9) {
   return cut(wm, hm, (x, W, H) => {
     const p = () => { x.beginPath(); x.moveTo(0, H + 30); x.lineTo(0, H * .45); for (let i = 0; i < n; i++) { const x0 = W * i / n, x1 = W * (i + 1) / n; x.bezierCurveTo(x0 + (x1 - x0) * .25, H * .0, x0 + (x1 - x0) * .7, H * .0, x1 - (x1 - x0) * .08, H * .38); x.quadraticCurveTo(x1 - (x1 - x0) * .2, H * .2, x1 - (x1 - x0) * .02, H * .45); } x.lineTo(W, H + 30); x.closePath(); };
@@ -394,7 +394,7 @@ export function fern(hm, seed) {
     }
   });
 }
-// 铅笔草图（最后一页）：白纸 + 灰铅笔线，未上色
+// Pencil sketch (the last page): white paper + grey pencil lines, uncoloured
 export function sketchTree(hm) {
   return cut(hm * .7, hm, (x, W, H) => {
     x.fillStyle = '#fbf6ea'; blob(x, W / 2, W * .4, W * .42, W * .38, .06, 3); x.fill(); rr(x, W / 2 - 16, W * .7, 32, H - W * .7, 6); x.fill();
@@ -416,18 +416,18 @@ export { pencil };
 function shadeOf(hex) { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255, f = .78; return `rgb(${r * f | 0},${g * f | 0},${b * f | 0})`; }
 export { shadeOf };
 
-// 叶子（飘落粒子）
+// Leaf (falling particle)
 export function leafBit(col) {
   return cut(.006, .004, (x, W, H) => { x.beginPath(); x.ellipse(W / 2, H / 2, W / 2, H / 2 * .9, 0, 0, TAU); sh(x, col, 5); x.beginPath(); x.moveTo(4, H / 2); x.lineTo(W - 4, H / 2); x.lineWidth = 3; x.strokeStyle = shadeOf(col); x.stroke(); }, { border: 6, ay: .5, pad: 14 });
 }
-// 感叹号小牌
+// Small exclamation-mark sign
 export function bang() {
   return cut(.012, .016, (x, W, H) => {
     x.font = `900 ${H * 1.05}px "Lilita One"`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 16; x.strokeStyle = INK; x.strokeText('!', W / 2, H * .55); x.fillStyle = '#ff4b3a'; x.fillText('!', W / 2, H * .55);
   }, { border: 12, ay: 1 });
 }
 
-// 皮普背面（从身后看：后脑勺、叶子帽、翅膀在前）
+// Pip from behind (seen from the back: back of the head, leaf cap, wings in front)
 export function drawPipBack(x, p = {}) {
   const { walk = 0, stride = 0, armL = .25, armR = .25, flap = 0 } = p;
   x.clearRect(0, 0, PIP_W, PIP_H);
@@ -440,7 +440,7 @@ export function drawPipBack(x, p = {}) {
   crescent(a, tunic, TUNIC_S, -22, 0, TUNIC); tunic(); sh(a, null, LW);
   const head = () => { a.beginPath(); a.ellipse(450, 565, 248, 228, 0, 0, TAU); };
   crescent(a, head, SKIN_S, -30, 26, SKIN); head(); sh(a, null, LW + 1);
-  // 后脑的一撮头发
+  // tuft of hair at the back of the head
   a.beginPath(); a.moveTo(330, 700); a.quadraticCurveTo(450, 760, 570, 700); a.quadraticCurveTo(450, 730, 330, 700); sh(a, '#f0a24a', 5);
   const leaf = () => {
     a.beginPath(); a.moveTo(200, 600);

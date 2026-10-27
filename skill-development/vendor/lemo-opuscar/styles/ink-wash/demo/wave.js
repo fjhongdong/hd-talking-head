@@ -1,9 +1,9 @@
-// 巨浪：泼墨浪身 + 顺势的水纹线（学宋人水图的线描）+ 含墨卷起的浪头（飞白即浪花）+ 墨点水沫
-// 局部坐标：原点在浪脚水面，y 向上为负。o: {x, y, s, rise(0..1), curl(0..1), t, seed, am}
+// Giant wave: pomo (泼墨, splashed-ink) wave body + water lines following its motion (learned from the line drawing of Song-dynasty water paintings) + ink-loaded curling wave heads (the feibai (飞白, dry-brush streaks) is the spray) + ink-dot foam
+// Local coords: origin at the water surface at the wave's foot, upward y is negative. o: {x, y, s, rise(0..1), curl(0..1), t, seed, am}
 import { mk, draw, mass, blot, TONE } from './ink.js';
 import { mulberry, lerp, clamp, vnoise } from '/core/lib.js';
 
-function cr(pts, n = 8) {   // Catmull-Rom 加密，给水纹线用
+function cr(pts, n = 8) {   // Catmull-Rom densify, for the water lines
   const out = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
@@ -27,10 +27,10 @@ export function wave(L, o) {
   const W = waveShape(o);
   const T = p => [x0 + p[0] * s, y0 + p[1] * s];
   const r = W.r; if (r <= .02) return W;
-  // 浪身：淡墨湿块（浪面上半最浓，往下被水雾吃掉）
+  // Wave body: wet block of pale ink (darkest in the upper half of the wave face, eaten by spray mist further down)
   const body = [...W.face, W.crest, ...W.back.slice(1), [1500, 30], [-460, 30]].map(T);
   mass(L.wet, body, .32 * am, 8 * s, 3, [0, y0 - 650 * r * s, 0, y0 + 20 * s, 1, .15]);
-  // 浪：几笔巨大的含墨笔，从浪脚顺势扫上去、在浪顶卷过来（笔势就是浪势）
+  // Wave: a few huge ink-loaded strokes that sweep up from the wave's foot with its motion and curl over at the crest (the brush motion is the wave's motion)
   const guide = [...W.face, ...W.lip.slice(1)];
   const strokes = [
     { off: [0, 0], w: 130, tone: .85, dry: .42, k: 1 },
@@ -46,18 +46,18 @@ export function wave(L, o) {
     });
     draw(L, mk(cr(pts, 4).map(T), { w: st.w * s, tone: st.tone, darkDir: [-1, -1], side: .9, brWet: true, body: .32, dry: st.dry, wet: .85, prof: 'rise', rough: .2, nb: 56, seed: 300 + i }), 1, am);
   });
-  // 背坡：两笔淡墨
+  // Back slope: two strokes of pale ink
   for (let k = 0; k < 2; k++) {
     const pts = W.back.map(p => [p[0] + 20 + k * 60, p[1] + 30 + k * 70 * r]);
     draw(L, mk(cr(pts, 3).map(T), { w: (70 - k * 20) * s, tone: .4 - k * .12, darkDir: [0, -1], side: .8, brWet: true, body: .3, dry: .55, wet: .9, prof: 'lens', seed: 350 + k }), 1, am);
   }
-  // 几道水纹线（宋人水图的线描），顺浪势
+  // A few water lines (line drawing of Song-dynasty water paintings), following the wave's motion
   for (let k = 0; k < 6; k++) {
     const f = k / 5, off = 60 + f * 380;
     const g = [[-420 + off * .5, -6], [-280 + off * .8, -70 * r * (1 - f * .5)], [-140 + off, -230 * r * (1 - f * .45)], [-50 + off * .9, -440 * r * (1 - f * .4)], [off * .75, -580 * r * (1 - f * .35)]];
     draw(L, mk(cr(g, 3).map(T), { w: 2.6 * s, tone: .8, dry: .6, wet: .2, prof: 'tip', seed: 400 + k }), 1, am * .8);
   }
-  // 水沫：浪头上方的墨点
+  // Foam: ink dots above the wave heads
   const n = Math.round(46 * W.c);
   for (let i = 0; i < n; i++) {
     const a = R() * Math.PI, d = 30 + R() * 160;

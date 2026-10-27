@@ -1,5 +1,5 @@
-"""比较停稳检查：每一组比较（2014 一对、2020/2021 两对）的读数完整入画后，到判定出现之前至少停 2.5 s。
-读 readcheck 的逐帧文字记录不方便，这里直接用 timeline 的时间点（画面代码里读数和判定都由这些时间点驱动）。"""
+"""Comparison hold check: once each comparison's readouts (the 2014 pair, the 2020/2021 pairs) are fully in frame, they must hold at least 2.5 s before the verdict appears.
+Reading readcheck's per-frame text log is awkward, so this uses the timeline's time points directly (in the picture code, readouts and verdicts are driven by these time points)."""
 import json, os, sys
 d = sys.argv[1]; T = json.load(open(os.path.join(d, 'out/timeline.json')))['T']
 ok = True

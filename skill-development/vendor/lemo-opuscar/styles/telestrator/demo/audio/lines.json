@@ -1,0 +1,61 @@
+[
+ {
+  "id": "g1",
+  "text": "Fifty-five. In from the right, Zayits finishes.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb",
+  "asr": "Fifty-five. In from the right, Zayotz finishes."
+ },
+ {
+  "id": "g2",
+  "text": "Sixty-one. Free kick, Saduk heads it in.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb",
+  "asr": "Sixty-one. Free kick, Sadak heads it in."
+ },
+ {
+  "id": "g2b",
+  "text": "VAR checks for a foul. The goal stands.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb"
+ },
+ {
+  "id": "v1",
+  "text": "Watch the clearance. It's only half cleared.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb"
+ },
+ {
+  "id": "v2",
+  "text": "Hasan Ali arrives. Nobody steps out.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb",
+  "asr": "Hassan Ali arrives, nobody steps out."
+ },
+ {
+  "id": "v3",
+  "text": "Under a second to set it, and hit it.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb"
+ },
+ {
+  "id": "v4",
+  "text": "From outside the box. Three, three.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb"
+ },
+ {
+  "id": "map",
+  "text": "Two from close range. The last one, from distance.",
+  "voice": "bm_george",
+  "speed": 1.1,
+  "lang": "en-gb"
+ }
+]

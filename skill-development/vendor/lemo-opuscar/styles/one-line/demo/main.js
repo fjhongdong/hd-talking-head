@@ -30,7 +30,7 @@ function camFor(t) {
   return cam;
 }
 
-// 笔的朝向：老人的手在右下；交接后孩子的手在左下
+// pen direction: the old man's hand is at lower right; after the hand-over the child's hand is at lower left
 function penDir(t) {
   const u = ss((t - HAND.grip) / 0.6);
   const a0 = Math.atan2(0.83, 0.56), a1 = Math.atan2(0.86, -0.42);
@@ -51,11 +51,11 @@ function render(t) {
     const tip = M(...posAt(P, head)), dir = penDir(t), k = cam.k;
     const lift = t < P.T[0] ? clamp((P.T[0] - t) / 0.8) : 0;
     const appear = clamp((t - 0.15) / 0.6);
-    // 手的投影：只在拉远后出现（近景里手在画外）
+    // hand shadow: only appears after zooming out (in close shots the hand is out of frame)
     const oldA = clamp((t - 39.8) / 0.9) * (1 - ss((t - HAND.oldOut[0]) / (HAND.oldOut[1] - HAND.oldOut[0])));
     if (oldA > 0) {
       const away = ss((t - HAND.oldOut[0]) / (HAND.oldOut[1] - HAND.oldOut[0]));
-      const d0 = [0.56, 0.83], L = 270 * k + away * 500, tr = (vnoise(t * 7) - .5) * 3;   // 老人的手微颤
+      const d0 = [0.56, 0.83], L = 270 * k + away * 500, tr = (vnoise(t * 7) - .5) * 3;   // the old man's hand trembles slightly
       handShadow(ctx, tip[0] + d0[0] * L + tr, tip[1] + d0[1] * L + tr * .6, 400 * k, Math.atan2(-d0[1], -d0[0]) - .15, .12 * oldA);
     }
     const kidA = clamp((t - HAND.enter) / 0.9);
@@ -74,7 +74,7 @@ function render(t) {
   }
 }
 
-// 事件：给混音用（笔速轨迹 200Hz、拐角、落笔、停笔、钟声、旁白）
+// events for the mix (pen-speed track at 200Hz, corners, pen down, pen stops, chime, narration)
 function events() {
   const ev = [];
   const track = [];
@@ -85,7 +85,7 @@ function events() {
     track.push([+t.toFixed(3), moving ? Math.round(P.V[i]) : 0, +(p[0] / W).toFixed(3), seg.style, +(P.DRY[i] || 0).toFixed(2)]);
   }
   ev.push({ t: 0, type: 'track', data: track });
-  // 拐角：转角大、速度局部最低的点
+  // corners: points with a large turn and a local speed minimum
   const corners = [];
   for (let i = 8; i < P.N - 8; i += 1) {
     if (P.TURN[i] < 0.5) continue;
@@ -98,7 +98,7 @@ function events() {
   ev.push({ t: HAND.newLine, type: 'chime' });
   ev.push({ t: HAND.grip, type: 'handoff' });
   VO.forEach(v => ev.push({ t: v.t0, type: 'vo', id: v.id }));
-  // 段落起止与标记时刻（配乐 cue 用）
+  // segment start/end and marker times (for score cues)
   P.segs.forEach((s, i) => ev.push({ t: s.t[0], type: 'seg', id: s.id, t1: s.t[1] }));
   return ev;
 }

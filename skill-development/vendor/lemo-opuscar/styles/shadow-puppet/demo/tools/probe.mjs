@@ -1,4 +1,4 @@
-// 调试：逐时间点测 render 耗时
+// Debug: measure render time at each time point
 import { chromium } from 'playwright-core';
 import { serve } from '../../../../core/render/serve.mjs';
 import { EXE, ARGS } from '../../../../core/render/browser.mjs';

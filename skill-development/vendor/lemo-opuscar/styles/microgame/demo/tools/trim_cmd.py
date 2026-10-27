@@ -1,5 +1,5 @@
-"""单词命令：Kokoro 念单个词结尾会带一个元音尾巴（Pump → "Pompey"）。
-做法：生成 "Pump, now!"，按 whisper 词时间戳只留第一个词，末尾 40ms 淡出。python trim_cmd.py lines.json voices"""
+"""One-word commands: when Kokoro reads a single word it adds a vowel tail at the end (Pump → "Pompey").
+Fix: generate "Pump, now!", keep only the first word using whisper word timestamps, 40ms fade-out at the end. python trim_cmd.py lines.json voices"""
 import sys, json, os, numpy as np, soundfile as sf
 from faster_whisper import WhisperModel
 import librosa
@@ -12,7 +12,7 @@ for x in L:
     segs, _ = m.transcribe(np.concatenate([pad, y16, pad]).astype(np.float32), language='en', word_timestamps=True)
     ws = [w for s in segs for w in s.words]
     end = ws[0].end - .6 + .03
-    # 在词尾后找能量最低点（最多往后 80ms）切
+    # cut at the lowest-energy point after the word end (search at most 80ms further)
     n = int(end * sr); win = int(.08 * sr); seg = np.abs(y[n:n + win]); cut = n + (int(np.argmin(np.convolve(seg, np.ones(64) / 64, 'same'))) if len(seg) > 64 else 0)
     y = y[:cut].copy(); fo = int(.04 * sr); y[-fo:] *= np.linspace(1, 0, fo)
     sf.write(f, y, sr); dur[x['id']] = round(len(y) / sr, 3); x['asr'] = x['trim']

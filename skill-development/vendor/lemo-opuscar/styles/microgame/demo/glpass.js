@@ -1,5 +1,5 @@
-// "材料通道"：一张 WebGL2 画布 + 几个片元着色器，把某个画风的中间画布"印/画/显示"出来。
-// 用法：const out = pass('riso', srcCanvas, {u_off:[...]}); g.drawImage(out, 0, 0)
+// "Material pass": one WebGL2 canvas + a few fragment shaders that "print / paint / display" a look's intermediate canvas.
+// Usage: const out = pass('riso', srcCanvas, {u_off:[...]}); g.drawImage(out, 0, 0)
 const W = 1920, H = 1080;
 const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
 const gl = cv.getContext('webgl2', { preserveDrawingBuffer: true, premultipliedAlpha: false, alpha: true });
@@ -13,12 +13,12 @@ float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return
 float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
 float fbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<5;i++){ s+=a*vn(p); p*=2.03; a*=.5; } return s; }
-vec2 px(){ return vec2(uv.x, 1.-uv.y)*R; }                 // 屏幕像素坐标（左上原点）
+vec2 px(){ return vec2(uv.x, 1.-uv.y)*R; }                 // screen pixel coordinates (origin top-left)
 vec4 tex(sampler2D t, vec2 p){ return texture(t, p/R); }
 uniform float layer;
 `;
 const FS = {
-  // 孔版印刷：源画布 R=蓝版 G=黄版 B=粉版 的密度（0 = 无墨）
+  // risograph: source canvas R = blue plate, G = yellow plate, B = pink plate density (0 = no ink)
   riso: `
 uniform vec2 offB; uniform vec2 offY; uniform vec2 offP; uniform float kick;
 float spot(vec2 p, float ang, float per){ float c=cos(ang), s=sin(ang); vec2 q = mat2(c,-s,s,c)*p/per; vec2 f = fract(q)-.5; return 1.-length(f)*1.414; }
@@ -43,7 +43,7 @@ void main(){
   vec3 c = paper * mix(vec3(1), inkB, cB) * mix(vec3(1), inkY, cY) * mix(vec3(1), inkP, cP);
   o = vec4(c, 1);
 }`,
-  // 蜡笔：源画布 RGB = 蜡笔色，A = 压力；纸牙在这里生成，锚在纸（page offset）上
+  // crayon: source canvas RGB = crayon colour, A = pressure; paper tooth is generated here, anchored to the paper (page offset)
   crayon: `
 uniform vec2 pageOff; uniform float pageScale;
 float tooth(vec2 q){ return smoothstep(.16,.86, .5*vn(q/1.35) + .3*vn(q/2.9+7.) + .2*vn(q/6.3+3.) + .12*vn(vec2(q.x/10., q.y/1.9))); }
@@ -56,18 +56,18 @@ void main(){
   vec3 paper = vec3(.957,.937,.890) * (1. - .02*vn(q/90.) - .025*(1.-th));
   vec3 wax = s.rgb * (1. - .1*pr*pr);
   vec3 c = mix(paper, wax, dep*step(.004, pr));
-  // 浮雕：纸牙受左上光
+  // emboss: paper tooth lit from the top-left
   float e = tooth(q - vec2(1.,1.)) - th;
   c *= 1. + e*.10*(1.-dep*.7);
   vec2 v = uv - .5; if (layer < .5) c *= 1. - dot(v,v)*.28;
   o = layer > .5 ? vec4(wax*(1.+e*.1), dep*step(.004, pr)) : vec4(c, 1);
 }`,
-  // 琥珀磷光终端：源画布 R = 亮度（白字黑底）
+  // amber phosphor terminal: source canvas R = brightness (white text on black)
   crt: `
 uniform float on; uniform float uflat;
 void main(){
   vec2 p = px();
-  // 桶形畸变
+  // barrel distortion
   vec2 c = uv - .5; float r2 = dot(c,c); vec2 duv = .5 + c*(1. + .045*r2*4.);
   if (uflat > .5) { duv = uv; r2 = 0.; }
   vec2 q = vec2(duv.x, 1.-duv.y)*R;
@@ -80,15 +80,15 @@ void main(){
   vec3 col = lum < .6 ? mix(vec3(0), mix(dim, mid, lum/.6), smoothstep(0., .6, lum)) : mix(mid, hot, clamp((lum-.6)/.8, 0., 1.));
   float scan = .78 + .22*cos(p.y*3.14159*2./3.);
   col *= mix(scan, 1., clamp(L, 0., 1.)*.5);
-  col += vec3(.035,.024,.016);   // 未发光玻璃
+  col += vec3(.035,.024,.016);   // unlit glass
   col *= 1. + (h21(p+time)-.5)*.05;
-  // 圆角屏幕遮罩 + 暗角
+  // rounded screen mask + vignette
   vec2 m = abs(duv-.5)*2.; float mask = uflat > .5 ? 1. : smoothstep(1., .985, max(m.x, m.y)) ;
   col *= mask * (1. - r2*1.1);
   col *= on;
   o = vec4(col, 1);
 }`,
-  // 水墨：R = 湿墨密度，G = 干墨密度（飞白/焦墨线）
+  // ink wash: R = wet ink density, G = dry ink density (feibai (飞白, dry-brush streaks) / jiaomo (焦墨, scorched dark ink) lines)
   ink: `
 uniform vec2 pageOff;
 void main(){
@@ -100,11 +100,11 @@ void main(){
   for (int i = 0; i < 12; i++) { float a = float(i)*2.3999; float rr = 6. + float(i)*1.4; s2 += tex(T, p+vec2(cos(a), sin(a))*rr).r; }
   s2 /= 12.;
   float wet = max(wet0*.6, s1);
-  float edge = clamp((s1 - s2)*1.6, 0., 1.);            // 边缘积墨
+  float edge = clamp((s1 - s2)*1.6, 0., 1.);            // ink pooling at the edges
   float gran = (fbm(q*.35)-.5)*.18;
   float wd = clamp(wet*(1.+gran) + edge*.45*step(.05, wet), 0., 1.);
   float dry = tex(T, p).g;
-  float dryB = dry * (.75 + .5*vn(q*.6));              // 纸牙让干笔断开
+  float dryB = dry * (.75 + .5*vn(q*.6));              // paper tooth breaks up the dry brush
   float d = 1. - (1.-wd)*(1.-clamp(dryB, 0., 1.));
   vec3 paper = vec3(.95,.925,.87) * (1. + .04*(fbm(q*.012)-.5)) * (1. + .018*vn(vec2(q.x*.02, q.y*.6)));
   vec3 inkc = mix(vec3(.52,.55,.58), vec3(.075,.068,.062), smoothstep(.1, .9, d));
@@ -114,7 +114,7 @@ void main(){
   vec2 v = uv - .5; if (layer < .5) c *= 1. - dot(v,v)*.22;
   o = vec4(c, 1);
 }`,
-  // 蓝图纸（静态，只算一次）
+  // blueprint paper (static, computed once)
   blueprint: `
 void main(){
   vec2 p = px();
@@ -160,9 +160,9 @@ export function pass(name, src, u = {}, src2 = null) {
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   return cv;
 }
-// 离屏 2D 画布工具
+// Offscreen 2D canvas helpers
 export function canvas(w = W, h = H) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: false }); return [c, x]; }
-// 静态纹理缓存（例如蓝图纸）：只算一次拷到 2D 画布
+// Static texture cache (e.g. blueprint paper): computed once and copied to a 2D canvas
 const cache = {};
 export function staticTex(name, u = {}) {
   if (cache[name]) return cache[name];

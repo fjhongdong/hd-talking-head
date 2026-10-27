@@ -1,6 +1,6 @@
 // node shot.mjs page.html out.png [evalExpr]
 import { chromium } from 'playwright-core'; import { serve } from './serve.mjs';
-import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME 或本机 playwright 缓存里最新的 headless shell
+import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME, or the newest headless shell in the local playwright cache
 const { server, port } = await serve(process.cwd());
 const b = await chromium.launch({ executablePath: EXE, args: ['--use-angle=gl', '--enable-gpu', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });

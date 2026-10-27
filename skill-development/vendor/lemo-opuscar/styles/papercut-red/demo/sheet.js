@@ -1,4 +1,4 @@
-// 角色设定表（女孩 / 年兽）：?test=sheet_girl / ?test=sheet_nian
+// Character model sheets (girl / Nian beast): ?test=sheet_girl / ?test=sheet_nian
 import { PAL, fillPaper, piece, fill, cut, trace, canvas, Pl, P, ellipsePoly, curve, cutTaper } from './paper.js';
 import { sawRow, crescentRows, swirl, doubleSwirl, cloudCut, rosette, plum } from './motifs.js';
 import { put, mul, T, S, R } from './rig.js';
@@ -33,7 +33,7 @@ function header(g, title, right) {
   put(g, strip, [1, 0, 0, 1, 0, 2], { shadow: .8 });
   label(g, 26, 44, title, 30, '#fff1d6', 'left', 700);
   label(g, 1894, 42, right, 19, '#fff1d6', 'right', 400, true);
-  // 印章
+  // seal
   g.fillStyle = PAL.red; g.fillRect(26 + measure(g, title, 30, 700) + 18, 12, 40, 40);
   g.font = '400 30px "Ma Shan Zheng"'; g.fillStyle = '#fff1d6'; g.textAlign = 'center'; g.fillText('剪', 26 + measure(g, title, 30, 700) + 38, 43);
   g.restore();
@@ -43,16 +43,16 @@ export function girlSheet(g) {
   const Gp = buildGirl();
   g.setTransform(1, 0, 0, 1, 0, 0); fillPaper(g, 'rice', 0, 0, 1920, 1080);
   header(g, 'THE GIRL — PAPER-CUT MODEL SHEET  v1', 'Nian Comes to Town · one sheet of red paper · 12 fps jointed cut-out');
-  // A 转面
+  // A turnaround
   panel(g, 0, 66, 720, 764, 'TURNAROUND', 'profile acts · front is fold-cut');
   const k = 1.42, by = 742;
   drawGirl(g, [k, 0, 0, k, 130, by], { expr: 'smile', shF: -.15, elF: -.25 });
   put(g, Gp.front, [k, 0, 0, k, 360, by]);
   drawGirl(g, [k, 0, 0, k, 590, by], { flip: true, expr: 'smile', shF: -.15, elF: -.25 });
   label(g, 150, 758, 'profile R (film)', 16, INK, 'center', 500, true); label(g, 360, 758, 'front · half cut, mirrored', 16, INK, 'center', 500, true); label(g, 580, 758, 'profile L (flipped)', 16, INK, 'center', 500, true);
-  // 身高刻度
+  // height scale
   g.save(); g.strokeStyle = 'rgba(58,20,16,.35)'; g.setLineDash([6, 5]); for (const [yy, t] of [[by, '0'], [by - 212 * k, '½'], [by - 424 * k, '1']]) { g.beginPath(); g.moveTo(24, yy); g.lineTo(700, yy); g.stroke(); label(g, 700, yy - 4, t, 14, INK, 'right'); } g.restore();
-  // A2 纸与纹样
+  // A2 paper and motifs
   panel(g, 0, 764, 720, 1080, 'PAPER & PATTERN', 'everything is cut, nothing is painted');
   const chips = [[PAL.red, 'china red', '#d2201f'], [PAL.nian, 'nian red', '#b00f26'], [PAL.far, 'far hills', '#7e1424'], ['#f2e8d0', 'rice paper', '#f2e8d0'], [PAL.indigo, 'night paper', '#1c2446'], [PAL.gold, 'gold foil', 'finale only']];
   chips.forEach(([c, n, v], i) => {
@@ -72,7 +72,7 @@ export function girlSheet(g) {
   });
   { const w = wedgeFlat(1.2); put(g, w, [.26, 0, 0, .26, 590, 926], { shadow: .8 }); label(g, 590, 1034, '1/8 wedge → 团花', 16, INK, 'left', 600); }
 
-  // B 分件
+  // B parts breakdown
   panel(g, 720, 66, 1250, 560, 'PIECES', 'pinned at neck · shoulders · elbows · hips · knees');
   const kb = 1.3;
   const P = (p, x, y, pins, lab, lx, ly) => { put(g, p, [kb, 0, 0, kb, x, y]); for (const [px, py] of pins) rivet(g, x + px * kb, y + py * kb, 7); if (lab) label(g, lx ?? x, ly ?? y + 24, lab, 16, INK, 'center', 500, true); };
@@ -84,14 +84,14 @@ export function girlSheet(g) {
   P(Gp.shF, 890, 410, [[0, 0]], 'shin + tiger shoe', 910, 510);
   { const M = [1.7, 0, 0, 1.7, 1110, 460]; put(g, Gp.bladeA, mul(M, R(-.25))); put(g, Gp.bladeB, mul(M, R(.25))); rivet(g, 1110, 460, 6); label(g, 1110, 510, 'scissors · 2 blades', 16, INK, 'center', 500, true); }
   label(g, 1236, 552, 'blue rings = rivets (joint pins)', 14, '#1d4a8a', 'right', 500, true);
-  // C 脸片
+  // C face pieces
   panel(g, 1250, 66, 1920, 560, 'FACE PIECES', 'swapped whole, never morphed');
   const faces = [['smile', 'smile'], ['surprise', 'surprise'], ['scared', 'scared'], ['determined', 'determined'], ['sleep', 'asleep (dawn)']];
   faces.forEach(([e, n], i) => {
     const col = i < 3 ? i : i - 3, row = i < 3 ? 0 : 1, x = row ? 1440 + col * 260 : 1370 + col * 225, y = row ? 520 : 290, kk = 1.08;
     put(g, Gp.head[e], [kk, 0, 0, kk, x, y]); label(g, x + 10, y + 26, n, 16, INK, 'center', 600);
   });
-  // D 关键姿势
+  // D key poses
   panel(g, 720, 560, 1920, 1080, 'KEY POSES', '12 fps, held on twos');
   const poses = [
     [{ expr: 'smile', shF: -1.05, elF: -1.5, handF: 'fist', scissors: { ang: -.3, open: .45 }, shB: -.6, elB: -1.1, handB: 'fist' }, 'cutting at the window'],
@@ -106,7 +106,7 @@ export function nianSheet(g) {
   const Np = buildNian(), Gp = buildGirl();
   g.setTransform(1, 0, 0, 1, 0, 0); fillPaper(g, 'rice', 0, 0, 1920, 1080);
   header(g, 'NIAN — PAPER-CUT MODEL SHEET  v1', 'deep red paper · big head, round belly, short legs · weight from sheer size');
-  // A 侧面 + 标注
+  // A profile + callouts
   panel(g, 0, 66, 1180, 650, 'NIAN IN PROFILE', 'pinned at 11 rivets · beside the girl at the same scale');
   const k = .45, ox = 640, oy = 624 - NJ.ground * k;
   const r = drawNian(g, [k, 0, 0, k, ox, oy], NPOSE.stand);
@@ -125,14 +125,14 @@ export function nianSheet(g) {
   lab('belly fringe 锯齿', null, 250, 600, pt(r.M.body, [-60, 176]));
   lab('cloud tail', null, 1010, 122, pt(r.M.tail, [10, -240]));
   label(g, 1160, 640, 'blue rings = rivets', 14, '#1d4a8a', 'right', 500, true);
-  // B 眼片
+  // B eye pieces
   panel(g, 1180, 66, 1920, 650, 'EYE PIECES', 'the face never morphs');
   const eyes = [['normal', 'curious'], ['sniff', 'sniffing'], ['fierce', 'roar'], ['squint', 'dazzled by red light'], ['dizzy', 'fleeing']];
   eyes.forEach(([e, n], i) => {
     const col = i < 3 ? i : i - 3, row = i < 3 ? 0 : 1, kk = .3 * HS, cx = row ? 1435 + col * 240 : 1318 + col * 240, cy = row ? 490 : 250;
     put(g, Np.head[e], [kk, 0, 0, kk, cx + 225 * kk, cy + 170 * kk]); label(g, cx, cy + 128, n, 16, INK, 'center', 600);
   });
-  // C 关键姿势
+  // C key poses
   panel(g, 0, 650, 1920, 1080, 'KEY POSES', 'slow and heavy — each footfall shakes the frame 2 px');
   const poses = [[NPOSE.stalk, 'stalks & sniffs the rooftops'], [NPOSE.roar, 'roars'], [NPOSE.flinch, 'flinches from the red light'], [{ ...NPOSE.run, flip: true }, 'runs for the hills']];
   poses.forEach(([p, n], i) => { const kk = .29, x = [290, 740, 1190, 1560][i], y = 1036 - NJ.ground * kk; drawNian(g, [kk, 0, 0, kk, x, y], p, { shadow: 1 }); label(g, x - 20, 1066, n, 17, INK, 'center', 600); });

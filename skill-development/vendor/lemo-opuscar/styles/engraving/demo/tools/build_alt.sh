@@ -13,6 +13,6 @@ $PY $D/music/score.py | tail -3
 $PY $D/mix.py
 $PY $D/tools/cuecheck.py
 $PY $D/tools/subs.py $C && $PY core/render/srt.py $W/subs.json $W/engraving_alt.srt
-G=""   # 整机渲染限流已在 core/render/video.mjs 里
+G=""   # machine-wide render throttling already lives in core/render/video.mjs
 $G node core/render/video.mjs $D --fps 24 --workers 2 --q "content=$C&voices=out/alt/voices/dur.json" --out $W/video.mp4
 sh core/render/mux.sh $W/video.mp4 $W/mix.wav $W/engraving_alt.mp4 24 4

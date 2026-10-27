@@ -23,9 +23,9 @@ build(); buildSuns(); buildScenery(); const STG = buildStage();
 let DURS = {}; try { const r = await fetch('voices/dur.json'); if (r.ok) DURS = await r.json(); } catch (e) { }
 
 const E = (t, a, b) => ss(seg(t, a, b));
-const HX = 560, HY = groundY(HX) - LEGLEN + 10;      // 后羿站位（腰）
+const HX = 560, HY = groundY(HX) - LEGLEN + 10;      // Hou Yi's standing position (waist)
 
-// ================= 灯 =================
+// ================= Lamps =================
 function lampI(k, t) {
   const fl = 1 + .06 * (vnoise(t * 7 + k * 13) - .5) * 2 + .03 * Math.sin(t * 23 + k);
   if (k === 0) {
@@ -41,10 +41,10 @@ function lampI(k, t) {
 }
 const lamps = t => SUNPOS.map(([x, y], k) => [x, y - 10, lampI(k, t), .95]);
 
-// ================= 后羿表演 =================
-const aimAt = (target, pull = 1, extra = {}) => {    // 瞄准某个太阳的开弓姿势
+// ================= Hou Yi's performance =================
+const aimAt = (target, pull = 1, extra = {}) => {    // bow-drawing pose aimed at a given sun
   const sh = [HX + J.shB[0], HY + J.shB[1]], dx = target[0] - sh[0], dy = target[1] - sh[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
-  // 箭在瞄准线上：握点 = 肩 + u·118；拉满时搭箭点 = 握点 − u·(40 + 72·pull)
+  // The arrow lies on the line of aim: grip point = shoulder + u·118; at full draw the nocking point = grip point − u·(40 + 72·pull)
   const grip = [J.shB[0] + ux * 118, J.shB[1] + uy * 118], nock = [grip[0] - ux * (40 + 72 * pull), grip[1] - uy * (40 + 72 * pull)];
   return { ...POSES.draw, bowT: [ux * 118, uy * 118], drawT: [nock[0] - J.shF[0], nock[1] - J.shF[1] + 4], draw: pull, bendF: -1, arrow: true, ...extra };
 };
@@ -66,34 +66,34 @@ function heroPose(t) {
   let p;
   const base = { x: HX, y: HY };
   if (t < T.run0) return null;
-  if (t < T.run1) {                                      // 碎步急上
+  if (t < T.run1) {                                      // quick small running steps on (碎步, suibu)
     const u = (t - T.run0) / (T.run1 - T.run0), ph = (t - T.run0) * 10.5;
     p = { ...POSES.stride, x: lerp(-200, HX - 50, u), y: HY - Math.abs(Math.sin(ph)) * 7, legF: -.12 + .4 * Math.sin(ph), legB: .1 - .4 * Math.sin(ph), rot: .1 + .02 * Math.sin(ph * 2), drawT: [-50 + 18 * Math.sin(ph), 88], bowT: [66, 72 - 8 * Math.sin(ph)] };
-  } else if (t < T.hop + .35) {                          // 小跳
+  } else if (t < T.hop + .35) {                          // small hop
     const u = seg(t, T.run1, T.hop + .35), hgt = Math.sin(u * Math.PI) * 38;
     p = mix({ ...POSES.stride, x: HX - 50, y: HY }, { ...POSES.stride, x: HX - 6, y: HY, legF: -.5, legB: .1, rot: .02 }, u); p.y -= hgt;
-  } else if (t < T.liang) {                              // 落地蹲 → 亮相
+  } else if (t < T.liang) {                              // land in a crouch → liangxiang (亮相, the held showcase pose)
     const u1 = E(t, T.hop + .35, T.hop + .5), u2 = back(seg(t, T.liang - .15, T.liang), 1.4);
     const crouch = { ...READY, x: HX, y: HY + 10, rot: .12, head: .05, bowT: [50, 60], drawT: [0, 90], legF: -.3, legB: .3 };
     p = mix(mix({ ...POSES.stride, x: HX - 6, y: HY }, crouch, u1), { ...POSES.liang, ...base }, u2);
-  } else if (t < 23.6) {                                  // 亮相定住 → 抬头望日
+  } else if (t < 23.6) {                                  // hold the liangxiang → look up at the suns
     p = mix({ ...POSES.liang, ...base }, { ...POSES.liang, ...base, head: -.46 }, E(t, T.lookUp, T.lookUp + .5));
-  } else if (t < T.draw1[0]) {                            // 收成预备
+  } else if (t < T.draw1[0]) {                            // settle into the ready position
     p = mix({ ...POSES.liang, ...base, head: -.46 }, { ...READY, ...base }, E(t, 23.6, 24.6));
-  } else if (t < T.rel[0]) {                              // 第一箭：慢开弓
+  } else if (t < T.rel[0]) {                              // first arrow: slow draw
     const u = E(t, T.draw1[0], T.draw1[1]);
     p = mix({ ...READY, ...base, arrow: true }, { ...aimAt(tgt(0), 1), ...base }, u);
-  } else if (t < T.last0) {                               // 连射
+  } else if (t < T.last0) {                               // rapid volley
     let i = 0; while (i < T.rel.length - 1 && t >= T.rel[i + 1]) i++;
     const r0 = T.rel[i], r1 = T.rel[i + 1] ?? T.last0;
     const loose = { ...LOOSED(), ...base, bowT: aimAt(tgt(i)).bowT };
     if (t < r0 + .1) p = mix({ ...aimAt(tgt(i), 1), ...base }, loose, eo(seg(t, r0, r0 + .1)));
     else { const nxt = i + 1 < T.rel.length ? tgt(i + 1) : SUNPOS[0], gap = r1 - r0; p = mix(loose, { ...aimAt(nxt, 1), ...base }, E(t, r0 + .1 + gap * .15, r1 - .04)); }
-  } else if (t < T.lower0) {                              // 最后一支：搭箭，拉满，停住
+  } else if (t < T.lower0) {                              // last arrow: nock, full draw, hold
     const loose = { ...LOOSED(), ...base, bowT: aimAt(tgt(8)).bowT };
     const nocked = { ...aimAt(SUNPOS[0], .15), ...base };
     p = t < T.lastDraw ? mix(loose, nocked, E(t, T.last0, T.lastDraw)) : mix(nocked, { ...aimAt(SUNPOS[0], 1), ...base }, E(t, T.lastDraw, T.stop));
-  } else if (t < T.lower1 + 2) {                          // 放下弓
+  } else if (t < T.lower1 + 2) {                          // lower the bow
     const spare = { ...POSES.spare, ...base, arrow: false };
     p = mix({ ...aimAt(SUNPOS[0], 1), ...base }, spare, E(t, T.lower0, T.lower1));
     if (t > T.lower1) p = mix(spare, { ...spare, head: -.3 }, E(t, 38.6, 39.8));
@@ -102,13 +102,13 @@ function heroPose(t) {
     p = mix(spare, { ...spare, head: .18 }, E(t, 41.6, 42.8));
     if (t > 46) { const b = E(t, T.bow, T.bow + .5) * (1 - E(t, T.bow + 1.1, T.bow + 1.7)); p = { ...p, rot: p.rot + .2 * b, head: p.head + .22 * b, bowT: lerpA(p.bowT, [50, 90], b) }; }
   }
-  // 手持微颤（皮影的"活气"）+ 张力颤
+  // Slight hand-held tremor (the "liveliness" (活气) of a shadow puppet) + tension tremor
   const tens = t > T.stop && t < T.lower0 ? 1.8 : 1;
   p.x += (vnoise(t * 2.1) - .5) * 3 * tens; p.y += (vnoise(t * 2.7 + 9) - .5) * 2.4 * tens; p.rot += (vnoise(t * 1.7 + 4) - .5) * .018 * tens;
   if (p.draw > 0 && p.drawT) { p.drawT = [p.drawT[0] + (vnoise(t * 9) - .5) * 2 * tens, p.drawT[1] + (vnoise(t * 8 + 3) - .5) * 2 * tens]; }
   return p;
 }
-// —— 翎子与腿的惯性（预模拟，确定性）——
+// —— Inertia of the plumes and legs (pre-simulated, deterministic) ——
 const SIM = (() => {
   const dt = 1 / 120, n = Math.ceil(DUR / dt) + 2, fa = new Float32Array(n), lg = new Float32Array(n);
   let phi = 0, om = 0, psi = 0, ps = 0, pa = null, pv = 0, px = null, vx = 0;
@@ -132,7 +132,7 @@ function heroFull(t) {
   return p;
 }
 
-// ================= 镜头 =================
+// ================= Camera =================
 function camAt(t) { const c = camRaw(t), n = shotAt(t)[2]; if (c[2] >= 1 && !['house', 'truck', 'end'].includes(n)) { c[0] = clamp(c[0], 960 / c[2], 1920 - 960 / c[2]); c[1] = clamp(c[1], 540 / c[2], 1080 - 540 / c[2]); } return c; }
 function camRaw(t) {
   const [t0, t1, name] = shotAt(t), u = (t - t0) / (t1 - t0);
@@ -156,21 +156,21 @@ function camRaw(t) {
 }
 const camM = ([cx, cy, z], mir = 1) => [z * mir, 0, 0, z, 960 - cx * z * mir, 540 - cy * z];
 
-// ================= 字幕区间 =================
+// ================= Subtitle intervals =================
 const SUBS = VO.map((v, i) => { const d = DURS[v.id] || 2.5, nxt = VO[i + 1]; let t1 = v.t + Math.max(1.8, d + .8); if (nxt) t1 = Math.min(t1, nxt.t - .3); else t1 = Math.min(t1, T.clap2 - .15); return { t0: v.t, t1, text: v.text }; });
 window.SUBS = SUBS;
 
-// ================= 画一帧 =================
-function drawScreen(t, C, opt = {}) {      // 幕布上的一切（透射率画布）
+// ================= Draw one frame =================
+function drawScreen(t, C, opt = {}) {      // everything on the screen (transmittance canvas)
   tr.setTransform(1, 0, 0, 1, 0, 0); tr.fillStyle = '#fff'; tr.fillRect(0, 0, W, H);
   const k = Math.hypot(C[0], C[1]);
-  // 景片
+  // Scenery pieces
   const burn = t < T.heal0 ? E(t, T.burn0, T.burn1) : 1 - E(t, T.heal0, T.heal1);
   const flames = t < T.heal0 ? E(t, T.flames, T.flames + 1.2) : 1 - E(t, T.heal0, T.heal0 + .9);
   const river = t < T.heal0 ? 1 - E(t, 11.6, 13.4) : E(t, T.river, T.river + .8);
   const canopy = t < T.heal0 ? 1 - E(t, 14.4, 15.4) : E(t, T.canopy, T.canopy + .9);
   if (t >= 6.9 || opt.land) drawLand(tr, C, { burn, flames, t, river, canopy, canopyLift: 1 - canopy, bare: canopy < .5 ? 1 : 0 });
-  // 太阳
+  // Suns
   for (let s = 0; s < 10; s++) {
     const ta = s === 0 ? T.sun0 : T.flares[s - 1]; if (t < ta) continue;
     const ki = KILL.indexOf(s), h = ki >= 0 ? hitT(ki) : 1e9;
@@ -185,7 +185,7 @@ function drawScreen(t, C, opt = {}) {      // 幕布上的一切（透射率画�
     const rot = t * .05 * (s % 2 ? 1 : -1) + s;
     drawSun(tr, [C[0] * sc, 0, 0, C[3] * sc, C[0] * (x + dx) + C[4], C[3] * (y + dy) + C[5]], { v, rot, blur: bl, alpha: al, noCrow: !crow });
   }
-  // 片名牌
+  // Title plaque
   if (t >= T.titleIn && t < T.titleOut + .9) {
     const up = eo(seg(t, T.titleIn, T.titleSet)), off = seg(t, T.titleOut, T.titleOut + .8);
     const sc = 1.18 * (1 + ei(off) * .7), y = lerp(1300, 500, up) - off * 30, bl = off * 30 * k;
@@ -193,13 +193,13 @@ function drawScreen(t, C, opt = {}) {      // 幕布上的一切（透射率画�
     tr.setTransform(C[0] * sc, 0, 0, C[3] * sc, C[0] * 960 + C[4], C[3] * y + C[5]); tr.drawImage(STG.title.c, STG.title.x0, STG.title.y0, STG.title.w, STG.title.h); tr.restore();
     if (off < .3) { const r = [[-450, 180], [450, 180]].map(([a, b]) => [C[0] * (960 + a) + C[4], C[3] * (y + b) + C[5]]); drawRods(tr, r, r.map(p => [p[0] - 60 * k, p[1] + 900]), 2.4 * k, .6); }
   }
-  // 片尾牌
+  // End plaque
   if (opt.endPlaque) {
     const up = eo(seg(t, T.endIn, T.endIn + 1.0)), y = lerp(1250, 500, up);
     tr.save(); tr.globalCompositeOperation = 'multiply'; tr.setTransform(C[0], 0, 0, C[3], C[0] * 960 + C[4], C[3] * y + C[5]); tr.drawImage(STG.end.c, STG.end.x0, STG.end.y0, STG.end.w, STG.end.h); tr.restore();
     const r = [[-380, 170], [380, 170]].map(([a, b]) => [C[0] * (960 + a) + C[4], C[3] * (y + b) + C[5]]); drawRods(tr, r, r.map(p => [p[0] - 60 * k, p[1] + 900]), 2.4 * k, .6);
   }
-  // 箭（飞行中）
+  // Arrows (in flight)
   for (let i = 0; i < T.rel.length; i++) {
     const r0 = T.rel[i], h = hitT(i); if (t < r0 || t > h) continue;
     const p0 = heroNock(r0 - 1 / 48), p1 = SUNPOS[KILL[i]], u = (t - r0) / (h - r0);
@@ -212,15 +212,15 @@ function drawScreen(t, C, opt = {}) {      // 幕布上的一切（透射率画�
       tr.fillStyle = DYE.red; tr.beginPath(); tr.moveTo(-150, 0); tr.lineTo(-128, -6); tr.lineTo(-122, 0); tr.lineTo(-128, 6); tr.closePath(); tr.fill(); tr.restore();
     }
   }
-  // 后羿
+  // Hou Yi
   const hp = opt.noHero ? null : heroFull(t);
   if (hp) {
-    if (opt.mirror) { /* 幕后：同样的皮影，镜像由 C 负责 */ }
+    if (opt.mirror) { /* backstage: the same puppet; the mirroring is handled by C */ }
     const r = drawHouYi(tr, C, hp);
     opt.rodsOut = r.rods;
     if (!opt.noRods) drawRods(tr, r.rods, r.rods.map((q, j) => [q[0] - (140 - j * 40) * k * Math.sign(C[0]), q[1] + 700 * k]), 2.4 * k, .7);
   }
-  // 坠落的金乌
+  // Falling golden crows
   for (let i = 0; i < KILL.length; i++) {
     const h = hitT(i); if (t < h || t > h + 1.4) continue;
     const [x, y] = SUNPOS[KILL[i]], u = t - h, w = seg(t, h + .15, h + 1.3);
@@ -236,7 +236,7 @@ function render(t) {
   if (testMod) {
     if (TEST === 'model') { const o = testMod.modelSheet(tr, fr, lm, qs.get('v') || '2'); GL.render(trc, frc, o, lmc); return; }
     if (TEST === 'hands') { const o = testMod.handsTest(fr, t); GL.render(trc, frc, o); return; }
-    if (TEST === 'poster') {     // 海报：戏台全景 + 后羿瞄准最后一个太阳 + 台口片名
+    if (TEST === 'poster') {     // poster: wide shot of the stage + Hou Yi aiming at the last sun + title on the stage lip
       const cam = [960, 565, .72], C = camM(cam);
       tr.setTransform(1, 0, 0, 1, 0, 0); tr.fillStyle = '#fff'; tr.fillRect(0, 0, W, H);
       drawLand(tr, C, { burn: 0, flames: 0, river: 1, canopy: 1 });
@@ -253,7 +253,7 @@ function render(t) {
   const [, , name] = shotAt(t);
   const L = lamps(t), nEff = L.reduce((a, l) => a + l[2], 0);
   const base = { lamps: L, sigB: 700, sigC: 120, amb: .3, time: t, vign: .45, sat: 1.1, contrast: .15, bloom: .3 };
-  // 曝光：十盏灯按 √n 压，过曝但不全白
+  // Exposure: ten lamps compressed by √n, overexposed but not blown to full white
   const expoFront = 1.75 / Math.sqrt(Math.max(1, nEff));
   let o;
   if (name === 'back' || (name === 'truck' && t >= T.cutBack)) o = renderBack(t, base);
@@ -277,40 +277,40 @@ function drawSubs(t) {
   for (const s of SUBS) if (t >= s.t0 && t < s.t1) { const a = Math.min(E(t, s.t0, s.t0 + .2), 1 - E(t, s.t1 - .25, s.t1)); drawSub(fr, s.text, a, 1 - eo(seg(t, s.t0, s.t0 + .22))); }
 }
 
-// ================= 幕后 =================
+// ================= Backstage =================
 function renderBack(t, base) {
-  // 视图：从幕后看（镜像），先是横移进入，再缓推向最后一盏灯
+  // View: seen from behind the screen (mirrored), first a lateral move in, then a slow push toward the last lamp
   const tIn = eo(seg(t, T.cutBack, T.truck1 + .6));
   const push = eio(seg(t, T.truck1, 50.6)), dive = ei(seg(t, 50.3, 51.0));
-  const zBase = .83, L0 = [960 - (SUNPOS[0][0] - 970) * zBase + 16, 540 + (SUNPOS[0][1] - 660) * zBase + 52];   // 最后一盏灯（视口）
+  const zBase = .83, L0 = [960 - (SUNPOS[0][0] - 970) * zBase + 16, 540 + (SUNPOS[0][1] - 660) * zBase + 52];   // last lamp (viewport)
   const z = zBase * (1 + push * .1 + dive * 2.4);
-  const sx = (1 - tIn) * 900;                   // 横移残余
+  const sx = (1 - tIn) * 900;                   // remaining lateral offset
   const cx = 970 - sx / zBase, cy = 660;
   const C0 = camM([cx, cy, zBase], -1), sc = z / zBase;
-  // 缓推围绕画面中部；最后的俯冲围绕灯焰（固定点从中部移到灯焰）
+  // The slow push centres on the middle of the frame; the final plunge centres on the lamp flame (the fixed point moves from the middle to the flame)
   const F = [lerp(1000, L0[0], ss(seg(t, 50.0, 50.5))), lerp(600, L0[1], ss(seg(t, 50.0, 50.5)))];
   const C = [C0[0] * sc, 0, 0, C0[3] * sc, F[0] + (C0[4] - F[0]) * sc, F[1] + (C0[5] - F[1]) * sc];
-  const Vt = (x, y, par = 1) => [F[0] + (x - F[0]) * sc - sx * (par - 1) * .6, F[1] + (y - F[1]) * sc];   // 视口物体（有视差）
+  const Vt = (x, y, par = 1) => [F[0] + (x - F[0]) * sc - sx * (par - 1) * .6, F[1] + (y - F[1]) * sc];   // viewport objects (with parallax)
   drawScreen(t, C, { noRods: true });
   const rods = (heroFull(t) ? drawHouYiRodsView(t, C) : []);
-  // 暗场 + 木框（幕后看到的是木框背面）
+  // Dark field + wooden frame (from backstage you see the back of the frame)
   fr.save(); fr.setTransform(1, 0, 0, 1, 0, 0);
-  const sr = [C[0] * 1920 + C[4], C[3] * 0 + C[5], C[4], C[3] * 1080 + C[5]];   // 镜像：x0 > x1
+  const sr = [C[0] * 1920 + C[4], C[3] * 0 + C[5], C[4], C[3] * 1080 + C[5]];   // mirrored: x0 > x1
   fr.fillStyle = '#0d0705';
   fr.beginPath(); fr.rect(0, 0, W, H); fr.rect(sr[0], sr[1], sr[2] - sr[0], sr[3] - sr[1]); fr.fill('evenodd');
   fr.strokeStyle = '#2a120a'; fr.lineWidth = 26 * sc; fr.strokeRect(sr[0], sr[1], sr[2] - sr[0], sr[3] - sr[1]);
-  // 台口横木（幕布下沿），受光
+  // Stage-lip crossbeam (bottom edge of the screen), lit
   fr.fillStyle = '#1c0d08'; fr.fillRect(0, sr[3], W, 60 * sc);
   const gl = fr.createLinearGradient(0, sr[3], 0, sr[3] + 60 * sc); gl.addColorStop(0, 'rgba(255,170,90,.35)'); gl.addColorStop(1, 'rgba(255,170,90,0)'); fr.fillStyle = gl; fr.fillRect(0, sr[3], W, 60 * sc);
   fr.restore();
-  // 吊灯（十盏：0 亮；其余刚熄、冒烟）
+  // Hanging lamps (ten: 0 lit; the rest just put out, smoking)
   const lampV = SUNPOS.map(([x, y], k) => { const v = [C[0] * x + C[4], C[3] * Math.min(y, 300) * .55 + C[5]]; return k === 0 ? [v[0], C[3] * y + C[5] + 60 * sc] : [v[0] + (v[0] - 960) * .06, C[3] * Math.min(y, 420) * .8 + C[5] + 70 * sc + (k % 3) * 16 * sc]; });
   const lit = lampV[0];
   const bright = (x, y) => clamp(1 - Math.hypot(x - lit[0], y - lit[1]) / (520 * sc), 0, 1) ** 1.3;
   silhouette(fr, g => { lampV.forEach(([x, y], k) => lampBody(g, x, y, .85 * sc)); }, { dir: [0, -1], k: 3, rimA: .55, rim: '#ffb766' });
   lampV.forEach(([x, y], k) => { if (k) { const ki = KILL.indexOf(k); smoke(fr, x, y, .85 * sc, t, t - hitT(ki), bright, k * 7 + 1); } });
   lampFlame(fr, lit[0], lit[1], .85 * sc, t, 1);
-  // 艺人的手 + 杆
+  // Puppeteer's hands + rods
   const hb = Vt(1480, 905, 1.4), hp = Vt(1230, 925, 1.4), hs = 1.3 * sc;
   silhouette(fr, g => {
     const bowG = E(t, T.bow, T.bow + .5) * (1 - E(t, T.bow + 1.1, T.bow + 1.7));
@@ -320,15 +320,15 @@ function renderBack(t, base) {
       const grips = [a.grip, b.gripA, b.gripB];
       rods.forEach((p, i) => { const q = grips[i]; g.lineWidth = (i === 0 ? 6 : 4) * sc; g.beginPath(); g.moveTo(q[0] + (q[0] - p[0]) * .18, q[1] + (q[1] - p[1]) * .18); g.lineTo(p[0], p[1]); g.stroke(); });
     }
-    // 过肩：艺人的肩与后脑（大虚前景）
+    // Over-the-shoulder: the puppeteer's shoulder and back of the head (heavily defocused foreground)
   }, { dir: [-.5, -.86], k: 5, rimA: .85 });
   silhouette(fr, g => { const s = Vt(1900, 1160, 1.8); g.beginPath(); g.ellipse(s[0], s[1], 300 * sc, 220 * sc, -.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(s[0] + 60 * sc, s[1] - 300 * sc, 120 * sc, 150 * sc, 0, 0, 7); g.fill(); }, { dir: [-.7, -.7], k: 7, rimA: .6, blur: 10 });
   return { ...base, cam: [(960 - C[4]) / C[0], (540 - C[5]) / C[3], C[3]], mir: -1, expo: .95, lamps: [[SUNPOS[0][0], SUNPOS[0][1] + 40, lampI(0, t) * 1.2, 1.4]], bloom: .38, vign: .55, fade: dive * .92, fadeCol: [1, .82, .55] };
 }
-function drawHouYiRodsView(t, C) {   // 幕后看到的杆锚点（视口坐标）——drawScreen 已经画了后羿
+function drawHouYiRodsView(t, C) {   // rod anchors as seen from backstage (viewport coordinates) — drawScreen has already drawn Hou Yi
   const p = heroFull(t); const k = Math.hypot(C[0], C[1]);
   const S = solve(p), MW = mM(C, S.MW);
-  // 与 houyi.drawHouYi 的锚点保持一致：颈杆在胸上，手杆在两手
+  // Kept consistent with the anchors in houyi.drawHouYi: neck rod on the chest, arm rods at the two hands
   return [ap(MW, ...J.rod), handPt(C, S, 'B'), handPt(C, S, 'F')];
 }
 function handPt(C, S, side) {
@@ -336,7 +336,7 @@ function handPt(C, S, side) {
   const Mu = mM(C, mM(tM(...ap(MW, ...sh)), rM(a1))), Mf = mM(Mu, mM(tM(...J.elbow), rM(a2 - a1))), Mh = mM(Mf, tM(...J.wrist));
   return ap(Mh, 0, 8);
 }
-// ================= 片尾 =================
+// ================= End card =================
 function renderEnd(t, base, expoFront) {
   const cam = [960, 560, lerp(.84, .8, seg(t, T.endIn, T.end))], C = camM(cam);
   drawScreen(t, C, { endPlaque: true, noHero: true });
@@ -345,7 +345,7 @@ function renderEnd(t, base, expoFront) {
   return { ...base, cam, expo: expoFront, lamps: [[SUNPOS[0][0] - 450, SUNPOS[0][1] + 80, lampI(0, t), .8]], fade: 1 - E(t, T.endIn - .1, T.endIn + .5), fadeCol: [1, .82, .55] };
 }
 
-// ================= 音效 / 配乐事件（给 mix.py 与 music/score.py）=================
+// ================= Sound-effect / music events (for mix.py and music/score.py) =================
 function events() {
   const ev = [], add = (type, t, o = {}) => ev.push({ type, t: +t.toFixed(3), ...o });
   add('clap', T.clap); add('match', T.match); add('ignite', T.lampOn);

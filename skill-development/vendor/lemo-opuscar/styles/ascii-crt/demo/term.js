@@ -1,14 +1,14 @@
-// 字符网格引擎：VT323 字形图集 + 按格子贴字。
-// 约定：场景画布用 'lighter' 叠加，R 通道 = 琥珀磷光强度，G 通道 = 地球蓝强度（crt.js 负责上色）。
-// 格子：宽 cw，高 ch = 2cw（VT323 的 advance = 0.4em，字形竖向 0.8em），字号 fs = cw / 0.4。
+// Character-grid engine: VT323 glyph atlas + glyphs stamped cell by cell.
+// Convention: the scene canvas is drawn with 'lighter' (additive); R channel = amber phosphor intensity, G channel = earth-blue intensity (crt.js does the colouring).
+// Cell: width cw, height ch = 2cw (VT323 advance = 0.4em, glyphs 0.8em tall), font size fs = cw / 0.4.
 export const W = 1920, H = 1080;
 export const FONT = 'VT323';
-const GS = 160;                 // 图集字号
-const GW = GS * .4, GH = GS * .8, BASE = GS * .64;   // 图集格 64×128，基线 102.4
-const PAD = 4;                  // 图集格子之间留边，缩放采样不串色
+const GS = 160;                 // atlas font size
+const GW = GS * .4, GH = GS * .8, BASE = GS * .64;   // atlas cell 64×128, baseline 102.4
+const PAD = 4;                  // padding between atlas cells so scaled sampling doesn't bleed between glyphs
 const CHARS = [];
 for (let c = 32; c < 127; c++) CHARS.push(String.fromCharCode(c));
-CHARS.push('\u00d7');   // 片尾卡的 ×
+CHARS.push('\u00d7');   // the × on the end card
 export const COLS_ATLAS = 16;
 
 export let ATLAS = null;        // { red, green, alpha:Uint8 per glyph, cov:{ch:coverage} }
@@ -20,7 +20,7 @@ export async function initTerm() {
   const white = document.createElement('canvas'); white.width = aw; white.height = ah;
   const g = white.getContext('2d', { willReadFrequently: true });
   g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.font = `${GS}px ${FONT}`; g.textBaseline = 'alphabetic';
-  g.lineJoin = 'round'; g.lineWidth = 2.2;      // 电子束的一点点扩散：字形略微变胖、边缘变圆
+  g.lineJoin = 'round'; g.lineWidth = 2.2;      // a little electron-beam spread: glyphs get slightly fatter, edges rounder
   const pos = {};
   CHARS.forEach((ch, i) => {
     const x = (i % COLS_ATLAS) * (GW + PAD * 2) + PAD, y = Math.floor(i / COLS_ATLAS) * (GH + PAD * 2) + PAD;
@@ -29,7 +29,7 @@ export async function initTerm() {
     g.fillText(ch, x, y + BASE); g.strokeText(ch, x, y + BASE);
     g.restore();
   });
-  // 覆盖率 + 每个字形的 alpha 位图（分形推进时在字形内部取样用）
+  // coverage + an alpha bitmap per glyph (sampled inside the glyph during the fractal zoom)
   const cov = {}, bits = {};
   const d = g.getImageData(0, 0, aw, ah).data;
   for (const ch of CHARS) {
@@ -37,7 +37,7 @@ export async function initTerm() {
     for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const a = d[((y + j) * aw + x + i) * 4 + 3]; b[j * GW + i] = a; s += a; }
     cov[ch] = s / 255 / (GW * GH); bits[ch] = b;
   }
-  // 不加描边的细字形位图：分形推进时按它取样，笔画间的空隙更清楚
+  // thin unstroked glyph bitmap: sampled during the fractal zoom so the gaps between strokes stay clearer
   const thin = {};
   { const c2 = document.createElement('canvas'); c2.width = GW; c2.height = GH; const x2 = c2.getContext('2d', { willReadFrequently: true });
     x2.font = `${GS}px ${FONT}`; x2.fillStyle = '#fff';
@@ -48,7 +48,7 @@ export async function initTerm() {
   return ATLAS;
 }
 
-// 贴一个字：左上角 (x,y)，格宽 cw；a = 亮度 0..1+；chan 0 = 琥珀，1 = 地球蓝
+// Stamp one glyph: top-left corner (x,y), cell width cw; a = brightness 0..1+; chan 0 = amber, 1 = earth blue
 export function glyph(g, ch, x, y, cw, a = 1, chan = 0) {
   if (ch === ' ' || a <= 0.004) return;
   const p = ATLAS.pos[ch]; if (!p) return;
@@ -56,42 +56,42 @@ export function glyph(g, ch, x, y, cw, a = 1, chan = 0) {
   g.drawImage(chan ? ATLAS.green : ATLAS.red, p[0], p[1], GW, GH, x, y, cw, cw * 2);
   if (a > 1) { g.globalAlpha = Math.min(1, a - 1); g.drawImage(chan ? ATLAS.green : ATLAS.red, p[0], p[1], GW, GH, x, y, cw, cw * 2); }
 }
-// 一行字（从第 col 列、第 row 行开始），view = {ox, oy, cw}
+// One line of text (starting at column col, row row), view = {ox, oy, cw}
 export function text(g, str, col, row, view, a = 1, chan = 0) {
   const { ox, oy, cw } = view;
   for (let i = 0; i < str.length; i++) glyph(g, str[i], ox + (col + i) * cw, oy + row * cw * 2, cw, a, chan);
 }
-// 反白：实心块 + 挖掉字形
+// Inverse video: solid block + glyph knocked out
 export function inverse(g, str, col, row, view, a = 1, chan = 0) {
   const { ox, oy, cw } = view;
   const x = ox + col * cw, y = oy + row * cw * 2;
   g.globalAlpha = Math.min(1, a); g.fillStyle = chan ? '#00ff00' : '#ff0000';
   g.fillRect(x, y + cw * .1, str.length * cw, cw * 1.8);
-  g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;   // 场景画布是不透明黑底，挖字 = 盖黑字
+  g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;   // the scene canvas is opaque black, so knocking out = drawing the glyph in black
   for (let i = 0; i < str.length; i++) { const p = ATLAS.pos[str[i]]; if (p && str[i] !== ' ') g.drawImage(ATLAS.black, p[0], p[1], GW, GH, x + i * cw, y, cw, cw * 2); }
   g.globalCompositeOperation = 'lighter';
 }
-// 块状光标
+// Block cursor
 export function cursor(g, col, row, view, a = 1, chan = 0) {
   const { ox, oy, cw } = view;
   g.globalAlpha = Math.min(1, a); g.fillStyle = chan ? '#00ff00' : '#ff0000';
   g.fillRect(ox + col * cw + cw * .06, oy + row * cw * 2 + cw * .22, cw * .88, cw * 1.56);
 }
 
-// 密度表：给一组字符按实测墨量排序，乘以亮度属性（dim/normal/bold）→ 级别表
+// Density table: sort a set of characters by measured ink coverage, multiply by the brightness attribute (dim/normal/bold) → table of levels
 export function makeRamp(chars, attrs = [.42, .7, 1]) {
   const set = [...new Set(chars.split(''))].filter(c => c !== ' ');
   const mx = Math.max(...set.map(c => ATLAS.cov[c]));
   const lv = [{ ch: ' ', a: 0, v: 0 }];
   for (const c of set) for (const a of attrs) lv.push({ ch: c, a, v: ATLAS.cov[c] / mx * a });
   lv.sort((p, q) => p.v - q.v);
-  // 去掉亮度几乎重复的级别（保留更"粗"的字）
+  // drop levels with near-duplicate brightness (keep the "bolder" character)
   const out = [lv[0]];
   for (const l of lv.slice(1)) { if (l.v - out[out.length - 1].v > .018) out.push(l); else if (l.a > out[out.length - 1].a) out[out.length - 1] = l; }
   return out;
 }
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16 - .5);
-// 亮度 L(0..1) → 级别（带 4×4 有序抖动）
+// Brightness L (0..1) → level (with 4×4 ordered dithering)
 export function pick(ramp, L, i, j, dither = .6) {
   const n = ramp.length - 1;
   let hsh = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453; hsh -= Math.floor(hsh);
@@ -100,7 +100,7 @@ export function pick(ramp, L, i, j, dither = .6) {
   return ramp[k];
 }
 
-// 图像 → 格子：art 是一张 cols*sx × rows*sy 的画布（R = 琥珀亮度，G = 地球亮度），按格取平均
+// Image → cells: art is a cols*sx × rows*sy canvas (R = amber brightness, G = earth brightness), averaged per cell
 export function cellsFromImage(data, aw, cols, rows, sx, sy) {
   const A = new Float32Array(cols * rows), E = new Float32Array(cols * rows), N = new Float32Array(cols * rows);
   const n = sx * sy * 255;

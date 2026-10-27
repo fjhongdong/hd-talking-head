@@ -1,35 +1,35 @@
-// 引擎层（所有画风之上统一的"游戏 UI"）：引线计时条、命令词、结果章、生命头盔、字幕牌
+// Engine layer (the uniform "game UI" on top of every look): fuse timer bar, command word, result stamp, life helmets, subtitle plate
 import { P, K, part, line, dot, circ, ell, rrect, poly, outlined } from './toon.js';
 import { clamp, seg, eo, back, lerp, hash, mulberry } from '/core/lib.js';
 const TAU = Math.PI * 2;
 
-// ───────── 引线：编织绳 + 每拍一个刻度结；火花从左烧到右端的小冲天炮 ─────────
-// p = 进度 0..1（火花位置），beats = 刻度数，t = 全局时间（火花闪烁用），o.boss = 加粗双股
+// ───────── Fuse: braided cord + one tick knot per beat; the spark burns from the left to a small bottle rocket at the right end ─────────
+// p = progress 0..1 (spark position), beats = number of ticks, t = global time (for spark flicker), o.boss = thicker double strand
 export function fuse(g, p, beats, t, o = {}) {
   const x0 = o.x0 ?? 150, x1 = o.x1 ?? 1700, y = o.y ?? 1022, boss = !!o.boss;
   const th = boss ? 16 : 11;
   const X = u => lerp(x0, x1, u), Y = u => y + Math.sin(u * 22) * 3;
   const sx = X(clamp(p));
   g.save(); K.s = 1;
-  // 已烧过：焦黑残段（虚线）
+  // already burnt: charred remains (dashed line)
   g.lineCap = 'round';
   g.strokeStyle = 'rgba(40,30,50,.55)'; g.lineWidth = th * .5; g.setLineDash([6, 9]);
   g.beginPath(); g.moveTo(x0, y); for (let u = 0; u <= clamp(p); u += .005) g.lineTo(X(u), Y(u)); g.stroke(); g.setLineDash([]);
-  // 未烧：编织绳（墨色底 + 两股扭绳）
+  // unburnt: braided cord (ink base + two twisted strands)
   const path = () => { g.beginPath(); g.moveTo(sx, Y(p)); for (let u = clamp(p); u <= 1.0001; u += .004) g.lineTo(X(u), Y(u)); };
   path(); g.strokeStyle = P.ink; g.lineWidth = th + 8; g.stroke();
   path(); g.strokeStyle = '#e8c17a'; g.lineWidth = th; g.stroke();
-  // 扭纹
+  // twist pattern
   g.strokeStyle = '#a8742e'; g.lineWidth = 3;
   for (let u = clamp(p); u <= 1; u += 14 / (x1 - x0)) { const x = X(u), yy = Y(u); g.beginPath(); g.moveTo(x - 4, yy - th / 2 + 1); g.lineTo(x + 4, yy + th / 2 - 1); g.stroke(); }
-  // 刻度结（每拍）：火花经过时亮一下
+  // tick knots (one per beat): light up briefly as the spark passes
   for (let i = 1; i < beats; i++) {
     const u = i / beats; if (u < p - .002) continue;
     const x = X(u), yy = Y(u);
     g.fillStyle = P.ink; g.beginPath(); g.ellipse(x, yy, th * .75 + 4, th * .75 + 4, 0, 0, TAU); g.fill();
     g.fillStyle = '#c98f3c'; g.beginPath(); g.ellipse(x, yy, th * .75, th * .75, 0, 0, TAU); g.fill();
   }
-  // 末端冲天炮
+  // bottle rocket at the end
   const rx = x1 + 60, ry = y - 6;
   g.save(); g.translate(rx, ry); g.rotate(-.25 - (o.launch || 0) * .1); g.translate(0, -(o.launch || 0) * 400);
   part(rrect(-20, -50, 40, 76, 10), P.red, P.redD, { sh: 5, lw: 6 });
@@ -38,7 +38,7 @@ export function fuse(g, p, beats, t, o = {}) {
   part(poly([[-20, 18], [-36, 38], [-20, 30]]), P.gold, null, { lw: 5 });
   part(poly([[20, 18], [36, 38], [20, 30]]), P.gold, null, { lw: 5 });
   g.restore();
-  // 火花
+  // spark
   if (p > 0 && p < 1) {
     const r = mulberry(Math.floor(t * 24) + 7), yy = Y(p);
     for (let i = 0; i < (boss ? 14 : 9); i++) {
@@ -52,7 +52,7 @@ export function fuse(g, p, beats, t, o = {}) {
   g.restore();
 }
 
-// ───────── 命令词：第一拍"砸"进来（1.6 → 1.0，2 帧过冲），停 hold 秒后缩到左上角成小标签 ─────────
+// ───────── Command word: "slams" in on the first beat (1.6 → 1.0, 2-frame overshoot), holds for hold seconds, then shrinks to a small tag in the top-left corner ─────────
 export function command(g, txt, lt, hold = .75, o = {}) {
   if (lt < 0) return;
   const inT = .12, shrink = .22;
@@ -68,7 +68,7 @@ export function command(g, txt, lt, hold = .75, o = {}) {
   else g.save();
   g.translate(x, y); g.rotate(-.06); g.transform(1, 0, -.12, 1, 0, 0); g.scale(s, s);
   if (!tag) {
-    // 背后一道放射爆炸形（只在大字时）
+    // a radial burst shape behind it (only while the text is big)
     g.save(); g.fillStyle = o.burst || P.gold; g.strokeStyle = P.ink; g.lineWidth = 10; g.beginPath();
     const w = big * txt.length * .36 + 120, h = big * .85;
     for (let i = 0; i <= 28; i++) { const aa = i / 28 * TAU, rr = i % 2 ? .78 : 1.04; g.lineTo(Math.cos(aa) * w * .5 * rr, Math.sin(aa) * h * rr - big * .3); }
@@ -78,7 +78,7 @@ export function command(g, txt, lt, hold = .75, o = {}) {
   g.restore();
 }
 
-// ───────── 结果章：OK!（绿圆）/ OOPS（红叉），pop = 0..1 ─────────
+// ───────── Result stamp: OK! (green circle) / OOPS (red cross), pop = 0..1 ─────────
 export function stamp(g, ok, x, y, lt, s = 1) {
   if (lt < 0) return;
   const k = lt < .1 ? lerp(2.2, .95, eo(lt / .1)) : lt < .18 ? lerp(.95, 1, (lt - .1) / .08) : 1;
@@ -95,7 +95,7 @@ export function stamp(g, ok, x, y, lt, s = 1) {
   g.restore(); K.s = 1;
 }
 
-// ───────── 生命：小头盔图标（crack = 0..1 裂开掉落）─────────
+// ───────── Lives: small helmet icons (crack = 0..1 cracks and falls)─────────
 export function lifeIcon(g, x, y, s, o = {}) {
   const c = o.crack || 0;
   g.save();
@@ -104,7 +104,7 @@ export function lifeIcon(g, x, y, s, o = {}) {
   g.translate(fx, fy); g.rotate(rot); g.scale(s, s); g.globalAlpha = al; K.s = s;
   if (o.blink) { g.globalAlpha *= o.blink; }
   const dead = o.dead;
-  // 天线
+  // antenna
   line([[0, -46], [0, -70]], 5, P.ink); part(circ(0, -74, 11), dead ? P.gray : P.orange, dead ? P.grayD : P.orangeD, { sh: 3, lw: 5 });
   part(circ(0, 0, 48), dead ? '#4a3e6a' : 'rgba(150,230,255,.9)', dead ? '#3a2e58' : '#6ab8e0', { sh: 6, lw: 7 });
   if (!dead) { part(circ(3, 6, 30), P.skin, P.skinD, { sh: 4, lw: 5 }); dot(-8, 4, 4.5, P.ink); dot(12, 4, 4.5, P.ink); g.beginPath(); g.arc(3, 16, 7, .2, Math.PI - .2); g.lineWidth = 4 / s * s; g.strokeStyle = P.ink; g.stroke(); }
@@ -114,7 +114,7 @@ export function lifeIcon(g, x, y, s, o = {}) {
   g.restore(); K.s = 1;
 }
 export function livesBoard(g, n, x, y, o = {}) {
-  // n = 当前生命；o.crack = [index, 0..1]；o.blink = 最后一条命闪烁
+  // n = current lives; o.crack = [index, 0..1]; o.blink = last life blinks
   g.save(); K.s = 1;
   part(rrect(x - 30, y - 70, 3 * 118 + 40, 150, 28), P.deep, P.night, { sh: 8, lw: 7 });
   for (let i = 0; i < 3; i++) {
@@ -132,7 +132,7 @@ export function stageBadge(g, n, x, y) {
   outlined(g, String(n).padStart(2, '0'), x + 130, y + 98, { font: '62px Titan', lw: 9, fill: P.white });
   g.restore();
 }
-// ───────── 字幕牌：金黄圆角牌 + 描边 + 硬投影；icon = 'tick' | 'dot' ─────────
+// ───────── Subtitle plate: golden-yellow rounded plate + outline + hard drop shadow; icon = 'tick' | 'dot' ─────────
 export function subtitle(g, text, lt, dur, o = {}) {
   if (lt < 0 || lt > dur) return;
   const k = lt < 1 / 12 ? .82 : lt < 2 / 12 ? .95 : 1;
@@ -142,7 +142,7 @@ export function subtitle(g, text, lt, dur, o = {}) {
   g.translate(x, y); g.scale(k * out, k * out); K.s = 1;
   part(rrect(-w / 2, -h / 2, w, h, 26), P.gold, P.goldD, { sh: 6, lw: 7 });
   g.fillStyle = P.ink; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(text, -w / 2 + 108, 3);
-  // 图标
+  // icon
   g.save(); g.translate(-w / 2 + 56, 0); K.s = 1;
   if ((o.icon || 'tick') === 'tick') { part(circ(0, 0, 28), P.gold, P.goldD, { sh: 3, lw: 6 }); part(circ(0, 0, 20), P.dial, null, { lw: 3 }); line([[0, 0], [0, -15]], 4, P.red); part(rrect(-7, -40, 14, 10, 3), P.gold, null, { lw: 4 }); }
   else { g.scale(.55, .55); lifeIcon(g, 0, 8, 1); }

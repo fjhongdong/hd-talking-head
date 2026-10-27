@@ -101,7 +101,7 @@ Plant colour sets live in `plants.js` `COL` (straw, mulga, salt, gum, gold, ash,
 - **Beat-locked animation**: keep the score's beat grid (`wf_beats.json`) as the source for `BEAT0`/`BEAT`; if the music edit changes, re-derive them.
 - **CJK subset**: new Chinese subtitle characters render in a fallback font until you re-run `node fetch_fonts.mjs` (it subsets Noto Serif SC to the characters in `scene.js` + `main.js`).
 - **`mix.py` parses `scene.js`** with the regex `\['(v\d\d)', ([\d.]+),` to place the voice lines — keep the `VO` rows in exactly that form.
-- (Import) the original project had a `node_modules` symlink to another project; it is removed — `playwright-core` resolves from the repo root. zsh does not word-split `$TS`; use `${=TS}` when passing many timestamps.
+- `playwright-core` resolves from the repo root (there is no `node_modules` in `demo/`). zsh does not word-split `$TS`; use `${=TS}` when passing many timestamps.
 
 ## Build notes
 

@@ -1,4 +1,4 @@
-"""score.wav / score.json 自检"""
+"""Self-check of score.wav / score.json"""
 import os, json, numpy as np, soundfile as sf
 H = os.path.dirname(os.path.abspath(__file__))
 x, sr = sf.read(os.path.join(H, 'score.wav')); S = json.load(open(os.path.join(H, 'score.json')))

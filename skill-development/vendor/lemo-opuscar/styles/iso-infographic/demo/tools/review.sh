@@ -1,5 +1,5 @@
 #!/bin/bash
-# 审片：bash tools/review.sh <outdir> <cols> t1 t2 ... [-- --q 'k=v']  → <outdir>/sheet.jpg
+# Frame contact sheet: bash tools/review.sh <outdir> <cols> t1 t2 ... [-- --q 'k=v']  → <outdir>/sheet.jpg
 cd "$(dirname "$0")/../../../.."
 D=styles/iso-infographic/demo; OUT=$1; COLS=$2; shift 2
 TS=(); EXTRA=(); while [ $# -gt 0 ]; do if [ "$1" = "--" ]; then shift; EXTRA=("$@"); break; fi; TS+=("$1"); shift; done

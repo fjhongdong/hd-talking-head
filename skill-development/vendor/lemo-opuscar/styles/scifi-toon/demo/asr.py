@@ -1,6 +1,6 @@
-"""whisper 校对（改自 core/tts/asr_check.py）：前后补 0.6s 静音再转写（短句不补会被听成 "R U D calf"），
-并输出逐词时间戳 voices/words.json（用于打断点剪切与口型检查）。
-用法：python asr.py lines.json voices_dir"""
+"""Whisper check (adapted from core/tts/asr_check.py): pads 0.6 s of silence before and after, then transcribes (without padding, short lines get heard as "R U D calf"),
+and writes per-word timestamps to voices/words.json (used for cutting at interruption points and checking lip sync).
+Usage: python asr.py lines.json voices_dir"""
 import sys, json, re, os, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel
 m = WhisperModel('base.en', device='cpu', compute_type='int8')

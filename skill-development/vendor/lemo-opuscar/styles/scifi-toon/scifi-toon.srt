@@ -1,5 +1,5 @@
 1
-00:00:02,750 --> 00:00:07,709
+00:00:02,750 --> 00:00:05,620
 GARY: So, um— the machine's b-b-broken, and the café's closed, and the, uh—
 
 2
@@ -15,7 +15,7 @@ VASK: Get your shoes.
 VASK: One coffee. Black.
 
 5
-00:00:19,250 --> 00:00:20,621
+00:00:19,250 --> 00:00:19,720
 VASK: ...Nope.
 
 6
@@ -23,7 +23,7 @@ VASK: ...Nope.
 GARY: Nope!
 
 7
-00:00:24,350 --> 00:00:27,426
+00:00:24,350 --> 00:00:27,300
 GARY: Wh-wh-why is the mug drinking a GUY?!
 
 8
@@ -51,7 +51,7 @@ GARY: Oh, thank god. It's... normal.
 VASK: Mmm. Finally.
 
 14
-00:00:41,450 --> 00:00:42,526
+00:00:41,450 --> 00:00:42,400
 COFFEE: Hi!
 
 15
@@ -59,7 +59,7 @@ COFFEE: Hi!
 GARY: It's alive! It has a face!
 
 16
-00:00:46,550 --> 00:00:48,450
+00:00:46,550 --> 00:00:48,200
 VASK: ...Are you decaf?
 
 17

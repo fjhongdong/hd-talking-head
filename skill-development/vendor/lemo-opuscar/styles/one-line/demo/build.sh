@@ -1,5 +1,5 @@
 #!/bin/sh
-# 从零重现成片：配音 → whisper 校对 → 事件 → 配乐 → 混音 → 逐帧渲染 → 合成（−14 LUFS，grain 0）→ 字幕 / 海报 / 风格帧
+# rebuild the film from scratch: voice → whisper check → events → score → mix → frame-by-frame render → mux (−14 LUFS, grain 0) → subtitles / poster / style frames
 set -e
 cd "$(dirname "$0")/../../.."
 D=styles/one-line/demo

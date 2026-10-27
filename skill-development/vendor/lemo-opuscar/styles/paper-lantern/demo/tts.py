@@ -1,6 +1,6 @@
-"""edge-tts 中文配音：python tts.py → vo/<id>.wav (48k mono, 去首尾静音) + vo/dur.json"""
+"""edge-tts Chinese voice-over: python tts.py → vo/<id>.wav (48k mono, leading/trailing silence trimmed) + vo/dur.json"""
 import json, subprocess, os, numpy as np, soundfile as sf
-import os as _os; _os.chdir(_os.path.dirname(_os.path.abspath(__file__)))   # 路径相对 demo/
+import os as _os; _os.chdir(_os.path.dirname(_os.path.abspath(__file__)))   # paths relative to demo/
 V, RATE, PITCH = 'zh-CN-XiaoxiaoNeural', '+10%', '-2Hz'
 lines = json.load(open('script.json')); dur = {}
 for L in lines:

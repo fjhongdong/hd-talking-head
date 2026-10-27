@@ -1,0 +1,128 @@
+{
+ "note": "One timeline for the page (captions), the subtitles (.srt) and the mix (voice starts). Times in seconds.",
+ "fps": 30,
+ "dur": 59.5,
+ "bpm": 120,
+ "vo": {
+  "L01": 0.15,
+  "L02": 7.8,
+  "L04": 10.8,
+  "L05": 13.05,
+  "L06": 19.15,
+  "L07": 23.7,
+  "L08": 27.6,
+  "L09": 33.05,
+  "L10": 37.65,
+  "L11": 41.8,
+  "L12": 46.6,
+  "L13": 50.5
+ },
+ "hook": {
+  "t0": 0.13,
+  "t1": 5,
+  "zh": "一年没了 130 万箱蜜蜂",
+  "en": "In one year, American beekeepers lost 1.3 million honey bee colonies."
+ },
+ "caps": [
+  {
+   "t0": 7.6,
+   "t1": 10.5,
+   "zh": "接近|年初总数的|{一半}",
+   "en": "Nearly half of what they started with."
+  },
+  {
+   "t0": 10.6,
+   "t1": 13,
+   "zh": "那美国的蜜蜂|{快没了？}",
+   "en": "So, are America's bees running out?"
+  },
+  {
+   "t0": 13,
+   "t1": 16,
+   "zh": "没有。|1 月 1 日的总数|{涨了 6%}",
+   "en": "No. By January, colonies were up 6%."
+  },
+  {
+   "t0": 16.2,
+   "t1": 19,
+   "zh": "总数|{不降反升}",
+   "en": "Up, not down."
+  },
+  {
+   "t0": 19,
+   "t1": 23.5,
+   "zh": "因为养蜂人|一直在补：|{145 万箱}",
+   "en": "Because beekeepers kept rebuilding: almost 1.5 million new colonies."
+  },
+  {
+   "t0": 23.5,
+   "t1": 27.5,
+   "zh": "补法|有三种",
+   "en": "They raise new ones, buy them whole, or give old ones a new queen."
+  },
+  {
+   "t0": 27.5,
+   "t1": 33,
+   "zh": "2025 年每个季度的|头号威胁：|{瓦螨}",
+   "en": "The top stressor, every quarter of 2025: varroa mites."
+  },
+  {
+   "t0": 33,
+   "t1": 37.5,
+   "zh": "2026 年初，|{超过五分之一}|的蜂群受害",
+   "en": "In early 2026, they affected more than one in five colonies."
+  },
+  {
+   "t0": 37.5,
+   "t1": 41.5,
+   "zh": "这一季最糟：|三个月没了|{16%}",
+   "en": "That quarter was the worst in six: 16% gone in three months."
+  },
+  {
+   "t0": 41.5,
+   "t1": 46.5,
+   "zh": "光加州|就没了|{22 万箱}",
+   "en": "California alone lost 220,000."
+  },
+  {
+   "t0": 46.5,
+   "t1": 50,
+   "zh": "到 6 月，|又补了|{108 万箱}",
+   "en": "And still, by June, they had added over a million more."
+  },
+  {
+   "t0": 50.4,
+   "t1": 52.2,
+   "zh": "蜜蜂|{没有消失}",
+   "en": "The bees aren't vanishing.",
+   "big": 1.25
+  },
+  {
+   "t0": 52.2,
+   "t1": 54.5,
+   "zh": "是养蜂人|在{硬撑}",
+   "en": "Beekeepers are holding the line.",
+   "big": 1.25
+  }
+ ],
+ "music": {
+  "silences": [
+   [
+    10.5,
+    13
+   ],
+   [
+    50,
+    50.5
+   ]
+  ],
+  "hits": {
+   "hook": 0.13,
+   "sting": 5,
+   "turn": 13,
+   "mite": 30.6,
+   "verdict": 50.5,
+   "end": 54.5
+  }
+ }
+}

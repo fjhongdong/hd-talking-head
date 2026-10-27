@@ -15,11 +15,11 @@
 - **现成模板/组件**：使用真实可编辑槽及原生参数，不重画已存在的动作。
 - **已核对的风格创作工具包**：只有具体原生场景或公开组件已经接通时，才依照其完整导演和制作流程调用；父级只提供内容参数、静态放置、公开 props 与 start/end 时钟，不在项目内重写场景动作。历史 Lemo/OneTake 记录不自动构成当前候选。
 - **生成服务**：使用所选 Skill 的提示词与生成工作流，沿用具体上传、模型和费用授权。
-- **OpenFilm 原生创作 Skill（本次明确授权）**：按 [专属接入合同](openfilm-motion-graphics.md)实际读取并执行 `motion-graphics`，产出本句专属、可编辑的原生页面，再调用原生公开导出入口；不是模板库，也不是父级动效引擎。此许可只限 OpenFilm，不改变其他入口仅用原生组件的边界。
+- **完整原生创作 Skill**：OpenFilm、Lemo 等已完成接入的来源，均按各自合同实际读取并执行原生 Skill，产出本句专属、可编辑的原生页面，再调用其原生公开导出入口；不是父级动效引擎。未完成真实接入的来源仍不得仅凭 metadata 或 renderer 声称可用。
 
 不得只借一个 renderer 再自写场景、动作或时序；没有可调用的原生动作时，批准前换候选或保留 A-roll，批准后失败停当前 route 进入 revision。
 
-上句不禁止已明确授权的 OpenFilm 原生创作流程；但只运行它的 renderer、未执行其创作 Skill，仍不能冒称调用完成。不能借这个例外重写现成组件，或把旧样片的手机／放大镜／信封改字套用到所有主题。
+只运行来源 renderer、未执行其创作 Skill，仍不能冒称调用完成。不能借原生创作接入重写现成组件，或把旧样片的手机／放大镜／信封改字套用到所有主题。
 
 ### 候选能力与内容交接
 
@@ -31,7 +31,7 @@
 
 ### Lemo 原生导演交接
 
-以下是历史制作记录，不是新计划的准入许可。当前 Lemo/OneTake 的适配器接收本期自由场景代码，不能仅凭调用 renderer 证明动作来自现成组件；新选型暂排除这两条入口。之后只有具体原生场景或公开组件被接通，才逐条加入，不修改第三方来补齐。
+历史 `history:lemo-free-scene` 与 OneTake 记录不构成新计划准入；Lemo 当前 59 个具体 style 已按 [Lemo 接入说明](lemo-opuscar.md)逐条接通。不能仅凭调用 renderer 证明动作来自原生 Skill，仍须读取所选 STYLE、绑定 workflow 并完成真实画面验收；不修改第三方来补齐。
 
 父级交给 Lemo：本句想让观众理解的关系或变化、当前批准原文和真实词锚、准确帧数/尺寸、同期圆窗及唯一字幕的避让位置、前后镜头的实际视觉语言，以及可核对的视觉质量参照。父级决定“表达什么”，不预先决定“几个同形卡片、几根箭头和一个中心圆”。多来源、比较或监测也不能默认套同一张关系图。
 
@@ -128,11 +128,11 @@ Adu/Hypit 均提供 `create_existing_adapter(project_root, node_executable, brie
 
 `ai-promo-video-maker` 固定核对提交 `279ba5178c3c80d472b84ac2efa36c6fca33bba2`。它是宣传片制作流程，模板的 `Example.tsx` 只有三段示例文字，`anim.ts` 是底层动作工具而非口播场景库；用于本期同样要另写场景。故不登记 B-roll 入口，不借其 renderer 冒充调用，也不扩展为配音或音乐任务。
 
-Lemo/OneTake 的历史共用适配器保留以下固定来源；新的 Adu 只使用上述原生对比组件接口：
+共用适配器使用以下固定来源；Lemo 是当前逐风格入口，OneTake 只保留历史执行能力；新的 Adu 只使用上述原生对比组件接口：
 
 | dependency_id | upstream_commit | 原生入口 |
 | --- | --- | --- |
-| `lemo-opuscar` | `b5e8ef93930b6d828f352055a689320f138237b1` | `node core/render/video.mjs <scene>` |
+| `lemo-opuscar` | `413a6bd6d78ebd3bdd5abaec9538a26867f890df` | `node core/render/video.mjs <scene>` |
 | `onetake` | `415758128aa45cc54340df40d8109363447f582e` | `.venv/bin/python scripts/render.py index.html` |
 
 依赖由 `ensure_visual_broll_skills.py` 在项目本地自动准备，脚本内固定 render 包版本；Skill 新版在环境检查前按[更新规则](dependency-preflight.md#依赖-skill-更新)处理，不在渲染中联网拉取或切换。禁止全局安装和 worktree 共享。Lemo 复用项目 Chrome，不运行自动 reset/setup；OneTake 使用项目 Python 3.12。两套依赖必须同时登记到正式 executor 与 `visual_plan`，运行时不支持即停止，不能只带 Skill 文件声称跨机器可执行。
@@ -145,7 +145,7 @@ create_binding(adapter, brief_bytes, reference_sample)
 create_artifact_probe(ffprobe)
 ```
 
-`dependency_id` 仅允许 `lemo-opuscar` 或 `onetake`；`primary_renderer=HTMLCanvas`；适配器版本为 `1.0.0`。CLI 支持真实 runner 及本地探测：`--probe --project-root ROOT --dependency-id ID`。
+`dependency_id` 仅允许 `lemo-opuscar` 或 `onetake`；`primary_renderer=HTMLCanvas`；适配器版本为 `2.0.0`。CLI 支持真实 runner 及本地探测：`--probe --project-root ROOT --dependency-id ID`。
 
 创建 binding 后登记到 `component_adapters["code_generated"][dependency_id]`，并接入现有 artifact probe/执行链；不得另起旁路渲染器。
 
@@ -171,20 +171,22 @@ create_artifact_probe(ffprobe)
 
 测试 A-roll 必须使用独立的普通文件副本，不使用硬链接或符号链接；复制后核对内容一致且源文件与副本均只有一个硬链接。此前硬链接导致的合成失败日志保留，测试链接已移除，原片内容未改。父级合成失败时先停止并说明原因；获准修正后复用已生成动效，不自动重渲第三方动效，也不改动正式 Job 和已验收成片。
 
-## Lemo/OneTake 的 brief 与 workflow（历史记录）
+## Lemo/OneTake 的 brief 与 workflow
 
-`brief` 固定为 schema 1，字段如下：
+Lemo 当前使用 schema 1 的独立原生风格 brief；完整规则见 [Lemo-Opuscar 接入说明](lemo-opuscar.md)。每个风格以 `lemo-opuscar/<slug>` 作为稳定模板身份，不能把场景名冒充新模板。旧 `history:lemo-free-scene` 仅作历史排除记录，不恢复自由场景或 OneTake。
 
 ```text
 source_binding={aroll_sha256,segment_id,start,end}
-template_request
+template_request={semantic_family,information_units,numeric_values,numeric_scale}
 composition={id,width:1080,height:1920,fps:24,frames}
-dependency_id
+dependency_id="lemo-opuscar"
+style_slug
+creative_handoff={transcript,semantic_goal,required_change,subject,visual_pattern,design_plan,beats,forbidden_outcomes}
 files=[2..8 个冻结 Job 相对文件]
 workflow_media_ref
 ```
 
-每个 file 写 `media_ref/job_path/scene_path/sha256`，并覆盖 `index.html`、`workflow.json`、本期 JS、字体和素材；依赖 core 资源只引用固定 upstream。`workflow.json` 必须锁定 `dependency_id` 和 `upstream_commit`，写出真实选择路径列表、concept、beat_sheet、`upstream_features`（原库路径或 style 函数及说明）以及实际静帧 QA；不能只写“已调用”。沿用这些现有字段记录本期 treatment、具体参照及复用/新增边界，不新增一套时钟、审批链或艺术评分框架。词锚从当前 Scribe 和 timeline-map 映射，旧 treatment 的绝对输出秒数不得当作当前时码。
+每个 file 写 `media_ref/job_path/scene_path/sha256`，Lemo 至少包含 `index.html`、独立 workflow 和本期 `TREATMENT.md`；脚本与素材合计仍不超过 8 个冻结文件。workflow 必须绑定所选 STYLE、五份原生指引哈希（Skill、AGENTS、DIRECTOR、TECHNIQUE、所选 STYLE）、本期 TREATMENT 与完整 `design_plan`。字段必须以 adapter 实际校验为准，不另造字段。词锚从当前 Scribe 和 timeline-map 映射，旧 treatment 的绝对输出秒数不得当作当前时码。
 
 ## 原生 runner 与探针
 

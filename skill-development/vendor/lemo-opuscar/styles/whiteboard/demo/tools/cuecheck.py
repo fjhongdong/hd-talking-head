@@ -1,4 +1,4 @@
-"""卡点核对：列出关键动作，报告它离 120 BPM 网格（T0 起每 0.5s）的偏差；VO 驱动的动作标注所卡的词。"""
+"""Hit-point check: lists the key actions and reports each one's offset from the 120 BPM grid (every 0.5s from T0); actions driven by the VO are labelled with the word they hit."""
 import json, os
 H = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 E = json.load(open(os.path.join(H, 'events.json')))['ev']; C = next(e for e in E if e['type'] == 'cues')

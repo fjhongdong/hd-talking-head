@@ -1,4 +1,4 @@
-"""自检：配乐卡点（music/score.json）↔ 画面事件（events.json）↔ 时间线（timeline.json）逐项对齐。python tools/cuecheck.py"""
+"""Self-check: score hit points (music/score.json) ↔ picture events (events.json) ↔ timeline (timeline.json), item by item. python tools/cuecheck.py"""
 import json, os
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 M = json.load(open(os.path.join(D, 'music/score.json')))['keys']; E = json.load(open(os.path.join(D, 'events.json')))['ev']
@@ -36,7 +36,7 @@ mx = 0; print(f"{'配乐卡点':20s} {'配乐 s':>8s} {'画面 s':>8s} {'偏差 
 for k, i, t, name in pairs:
     m = mk(k, i); d = (t - m) * 1000; mx = max(mx, abs(d))
     print(f"{k + ('' if i is None else f'[{i}]'):20s} {m:8.3f} {t:8.3f} {d:+8.1f}  {name}")
-# 静音段：配乐里不该有任何卡点
+# silences: the score must have no hit points inside them
 for a, b, nm in [(K['clunk'] + .05, K['click'] - .01, '静音 1'), (K['silence2'], K['bell'] - .01, '静音 2')]:
     bad = [(k, v) for k, v in M.items() for x in (v if isinstance(v, list) else [v]) if isinstance(x, (int, float)) and a < x < b and k != 'sr']
     print(f"{nm} {a:.2f}–{b:.2f}: 配乐卡点 {len(bad)} 个 {bad}")

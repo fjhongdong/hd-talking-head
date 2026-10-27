@@ -1,14 +1,14 @@
-// 赛璐璐绘制工具：平滑/折角混合路径、平涂 + 硬边阴影 + 硬边高光 + 彩色描线、飘带、离屏画布
+// Cel drawing tools: paths mixing smooth and sharp corners, flat fill + hard-edged shadow + hard-edged highlight + coloured line (iro-sen), ribbons, offscreen canvases
 export const W = 1920, H = 1080;
 export const TAU = Math.PI * 2;
-export const LWK = { k: 1 };   // 全局描线粗细倍率（大特写时调细）
+export const LWK = { k: 1 };   // global line-weight multiplier (turned down for big close-ups)
 
 export function canvas(w, h) {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d'); return [c, g];
 }
 
-// pts: [[x,y], [x,y,1] (1 = 折角)]；Catmull-Rom → 三次贝塞尔
+// pts: [[x,y], [x,y,1] (1 = sharp corner)]; Catmull-Rom → cubic Bézier
 export function path(pts, closed = true, tension = 1) {
   const p = new Path2D(), n = pts.length;
   if (n < 2) return p;
@@ -29,10 +29,10 @@ export function path(pts, closed = true, tension = 1) {
 }
 export const poly = (pts, closed = true) => path(pts.map(q => [q[0], q[1], 1]), closed);
 
-// 平涂 + 阴影 + 高光 + 描线
-// o = { f: 底色, s: 阴影色, so: [dx,dy] 自动阴影（亮部副本朝光源方向的偏移，剩下的背光月牙就是阴影）,
-//       sh: [pts|Path2D...] 额外阴影形, h: 高光色, ho: [dx,dy] 自动高光（朝背光方向偏移）, hi: [...] 额外高光形,
-//       rim: {c, d:[dx,dy]} 轮廓光, l: 线色, lw }
+// flat fill + shadow + highlight + line
+// o = { f: base colour, s: shadow colour, so: [dx,dy] automatic shadow (a copy of the lit area offset towards the light source; the crescent left on the dark side is the shadow),
+//       sh: [pts|Path2D...] extra shadow shapes, h: highlight colour, ho: [dx,dy] automatic highlight (offset away from the light), hi: [...] extra highlight shapes,
+//       rim: {c, d:[dx,dy]} rim light, l: line colour, lw }
 const crescent = (P, d) => { const Q = new Path2D(); Q.addPath(P); Q.addPath(P, new DOMMatrix().translate(d[0], d[1])); return Q; };
 export function cel(g, pts, o) {
   const P = pts instanceof Path2D ? pts : path(pts);
@@ -57,8 +57,8 @@ export function line(g, pts, col, lw = 2, closed = false) {
   g.strokeStyle = col; g.lineWidth = lw * LWK.k; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke(P);
 }
 
-// 飘带（头发束 / 围巾）：中心线 + 宽度函数 → 闭合形
-// spine: [[x,y]...], width: i/n → 宽度；tip 尖/平
+// Ribbon (hair lock / scarf): centre line + width function → closed shape
+// spine: [[x,y]...], width: i/n → width; tip pointed/flat
 export function ribbon(spine, width) {
   const n = spine.length, L = [], R = [];
   for (let i = 0; i < n; i++) {
@@ -69,7 +69,7 @@ export function ribbon(spine, width) {
   }
   return L.concat(R.reverse());
 }
-// 沿方向飘动的中心线：起点 (x,y)，基本方向 ang，长度 len，段数 n，波动 amp/波长/相位
+// Centre line fluttering along a direction: start (x,y), base direction ang, length len, segment count n, wave amp/wavelength/phase
 export function flutter(x, y, ang, len, n, amp, waves, phase, droop = 0) {
   const pts = [], ca = Math.cos(ang), sa = Math.sin(ang);
   for (let i = 0; i < n; i++) {
@@ -80,16 +80,16 @@ export function flutter(x, y, ang, len, n, amp, waves, phase, droop = 0) {
   return pts;
 }
 
-// 颜色工具
+// colour tools
 export function hex(c) { const n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
 export function mix(a, b, t) { const A = hex(a), B = hex(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
 export function rgba(c, a) { const [r, g, b] = hex(c); return `rgba(${r},${g},${b},${a})`; }
 
-// 确定性随机
+// deterministic random
 export function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 export const hash = n => { n = Math.sin(n * 127.1 + 311.7) * 43758.5453; return n - Math.floor(n); };
 
-// 喷枪：柔边椭圆光斑
+// airbrush: soft-edged elliptical spot
 export function airbrush(g, x, y, rx, ry, col, a = 1, soft = 1) {
   g.save(); g.translate(x, y); g.scale(1, ry / rx);
   const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx);

@@ -1,5 +1,5 @@
-// Night Shift Orientation — Liminal Found Footage 风格 demo
-// three.js 场景（720×540，4:3）→ GTAO + 物理景深（自动对焦找焦）+ 辉光 → VHS 摄像机着色器 → 1920×1080（左右黑边）
+// Night Shift Orientation — Liminal Found Footage style demo
+// three.js scene (720×540, 4:3) → GTAO + physical depth of field (autofocus hunting) + bloom → VHS camcorder shader → 1920×1080 (pillarboxed)
 import * as THREE from 'three';
 import { makePost } from '/core/three/post.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
@@ -43,14 +43,14 @@ const fetchJ = async (p, d) => { try { const r = await fetch(p); return r.ok ? a
 const DURS = await fetchJ('voices/dur.json', {}), WORDS = await fetchJ('voices/words.json', null);
 const CAPS = buildCaps(DURS, WORDS);
 
-// —— 步态：按走过的路程算相位（0.72 m 一步）——
+// —— Gait: phase from distance walked (one step per 0.72 m) ——
 const DT = 1 / 240, NS = Math.ceil(DUR / DT) + 2, DIST = new Float32Array(NS);
 for (let k = 1; k < NS; k++) { const a = POS((k - 1) * DT), b = POS(k * DT); DIST[k] = DIST[k - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]); }
 const distAt = t => { const f = clamp(t / DT, 0, NS - 1.001), i = Math.floor(f); return lerp(DIST[i], DIST[i + 1], f - i); };
 const speedAt = t => (distAt(t + .15) - distAt(t - .15)) / .3;
 const STRIDE = .72;
 
-// —— 全局灯光：三次灯闪 + 头顶掠过的影子 + 撕裂后头顶那盏灭了 ——
+// —— Global lighting: three flickers + the shadow passing overhead + the overhead light dead after the tear ——
 function gLight(t) {
   let g = 1;
   T.flick.forEach((f, i) => {
@@ -62,16 +62,16 @@ function gLight(t) {
 }
 function lightExtra(L, t) {
   let k = 1;
-  // 低头时：有什么东西从头顶经过，灯光一盏盏被挡住（由北向南）
+  // While looking down: something passes overhead, blocking the lights one by one (north to south)
   if (t > TW(29.5) && t < TW(30.9) && Math.abs(L.x - .1) < 2.6) { const zc = lerp(-26, -13, seg(t, TW(29.5), TW(30.9))); k *= 1 - .85 * Math.exp(-((L.z - zc) ** 2) / 1.2); }
-  // 时间跳过 3 小时之后：他头顶那盏灯已经灭了
+  // After the 3-hour time skip: the light above him is already dead
   if (t > T.tear[0] + .3 && Math.abs(L.x - .1) < .5 && Math.abs(L.z + 20.1) < .7) k = 0;
   return k;
 }
-// 自动曝光：画面变暗后的滞后提亮（AGC）
+// Auto exposure: lagging brighten-up after the picture goes dark (AGC)
 function darkMem(t) { let s = 0, w = 0; for (let k = 0; k < 40; k++) { const d = k * .03, e = Math.exp(-d / .45); s += (1 - gLight(t - d)) * e; w += e; } return s / w; }
 
-// —— 手持摄像机 ——
+// —— Handheld camera ——
 const nz = (t, f, s) => vnoise(t * f + s * 17.3) - .5;
 function camPose(t) {
   const [x, z] = POS(t); let yaw = YAW(t), pitch = PITCH(t), roll = 0;
@@ -85,40 +85,40 @@ function camPose(t) {
   yaw += (nz(t, .9, 4) * .018 + nz(t, 3.3, 5) * .005 * (1 + 2 * fear) + .011 * amp * Math.sin(ph)) * hold;
   roll = (nz(t, .6, 6) * .035 + .014 * amp * Math.sin(ph) + nz(t, 7, 7) * .003 * fear) * hold + .012;
   y += br * .006 * hold;
-  // 低头时摄像机更靠近身体、更低
+  // While looking down the camera is closer to the body and lower
   const down = clamp(-pitch - .4, 0, 1);
   const rx = Math.cos(yaw), rz = -Math.sin(yaw);
-  // 低头拍脚：手臂把摄像机往前伸一点
+  // Filming the feet: the arm pushes the camera forward a little
   const fx = -Math.sin(yaw), fz = -Math.cos(yaw), reach = down * .22;
   return { x: x + rx * sway * hold + fx * reach, y: y - down * .16, z: z + rz * sway * hold + fz * reach, yaw, pitch, roll, amp, ph, bx: x, bz: z };
 }
 
-// —— 画面 ——
+// —— Picture ——
 let lastFrame = -1;
 function render(t) {
-  const tv = Math.min(t, T.recOff + .02);           // REC 熄灭后画面冻结
+  const tv = Math.min(t, T.recOff + .02);           // picture freezes after REC goes off
   const cp = camPose(tv);
   camera.position.set(cp.x, cp.y, cp.z); camera.rotation.set(cp.pitch, cp.yaw, cp.roll);
   const hf = FOV(tv) * Math.PI / 180; camera.fov = 2 * Math.atan(Math.tan(hf / 2) / (4 / 3)) * 180 / Math.PI; camera.updateProjectionMatrix();
   camera.updateMatrixWorld();
   legs.pose({ x: cp.bx, z: cp.bz, yaw: cp.yaw - (cp.yaw - YAW(tv)), phase: cp.ph, amp: cp.amp, stance: .02 });
-  // 东西
+  // The Thing
   thing.visible = tv >= T.figOn[0] && tv < T.figOn[1] + .15;
   if (thing.visible) { thing.pose(ss(seg(tv, T.figOn[0] - .3, T.figOn[0] + .5)), tv * Math.PI * 2 / 3.6, .28); thing.rotation.y = Math.atan2(cp.x - thing.position.x, cp.z - thing.position.z); }
-  // 门自己开
+  // Door opens by itself
   props.door.rotation.y = -1.25 * ss(seg(tv, T.door[0], T.door[1])) - .02 * ss(seg(tv, T.door[0] - .4, T.door[0]));
-  // 灯
+  // Lights
   const g = gLight(tv);
   updateLights(tv, g, lightExtra);
   U.uExitI.value = .42 * (0.96 + .04 * Math.sin(tv * 90)) * (g > .5 ? 1 : .6);
   U.uFogG.value = .35 + .65 * g;
-  scene.background.copy(U.uFogCol.value).multiplyScalar(U.uFogG.value * .15);   // 远处尽头：暗，不是一块亮雾
+  scene.background.copy(U.uFogCol.value).multiplyScalar(U.uFogG.value * .15);   // far end: dark, not a bright block of fog
   world.trofMat.uniforms.uEmit.value = 5.0;
-  // 对焦 / 景深
+  // Focus / depth of field
   post.dof.focus = FOCUS(tv); post.dof.aper = APER(tv);
-  // VHS 参数
+  // VHS parameters
   const u = vhs.uniforms, dm = darkMem(tv);
-  const f = Math.floor(t * 30);   // 带子是 30 帧/秒：噪声按 30fps 走
+  const f = Math.floor(t * 30);   // the tape runs at 30 frames/second: noise steps at 30 fps
   u.frame.value = f;
   const awb = ss(seg(t, T.rollIn, T.rollIn + 1.8));
   const exitAWB = ss(seg(tv, TW(44.0), TW(46.5)));
@@ -143,7 +143,7 @@ function render(t) {
   osdTex.needsUpdate = true;
   U.uTime.value = t;
   post.composer.render();
-  // 叠加层：字幕 / 片尾卡
+  // Overlay layer: subtitles / end card
   ox.clearRect(0, 0, W, H);
   if (!NOSUB) drawCaps(ox, CAPS, t);
   if (t >= T.endCard[0]) endCard(t);
@@ -157,12 +157,12 @@ function endCard(t) {
   ox.fillText('LemoLab × Claude Opus 5.5', W / 2, 680); ox.textAlign = 'left'; ox.globalAlpha = 1;
 }
 
-// —— 事件（音效 / 对白 / 字幕）→ events.json ——
+// —— Events (sound effects / dialogue / subtitles) → events.json ——
 const EV = [];
 LINES.forEach(l => EV.push({ t: l.t, type: 'line', id: l.id, who: l.who }));
 CHIMES.forEach(c => EV.push({ t: c, type: 'chime' }));
 T.flick.forEach(f => EV.push({ t: f - .03, type: 'flick' }));
-{ // 脚步
+{ // footsteps
   let last = 0;
   for (let t = 0; t < T.recOff; t += 1 / 120) { const n = Math.floor(distAt(t) / STRIDE); if (n > last) { last = n; EV.push({ t, type: 'step', v: clamp(speedAt(t) / 1.3, .4, 1.1) }); } }
 }
@@ -173,7 +173,7 @@ EV.push({ t: T.door[0], type: 'door', d: T.door[1] - T.door[0] });
 EV.push({ t: TW(29.5), type: 'overhead', d: 1.4 });
 for (const a of [0.8, 16.3, 32.25, 33.95, 34.4, 53.4].map(TW)) EV.push({ t: a, type: 'af' });
 EV.push({ t: T.endCard[0], type: 'end' });
-// 衣服摩擦（转身、低头、蹲下）
+// Clothing rustle (turning, looking down, crouching)
 for (const [t, v] of [[T.pan[0], .7], [T.lookDown1[0], .6], [T.lookDown1[1] - .3, .5], [TW(14.6), .6], [T.notice2[0] + .3, .8], [T.notice2[1], .7], [T.lookDown2[0], 1.0], [T.rise[0], .6], [T.turn[0], .8], [T.hush[1] + .3, .5]]) EV.push({ t, type: 'rustle', v });
 CAPS.forEach(c => EV.push({ t: c.t0, type: 'cap', t1: c.t1, text: c.text }));
 EV.sort((a, b) => a.t - b.t);

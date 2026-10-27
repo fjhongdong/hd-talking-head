@@ -14,17 +14,45 @@ import shutil
 import subprocess
 import sys
 import tempfile
+if __name__ == "__main__" and Path(__file__).name == "<stdin>":
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--skill-root", required=True, type=Path)
+    SKILL = parser.parse_known_args()[0].skill_root.resolve(strict=True)
+else:
+    SKILL = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SKILL / "scripts"))
 from adapter_kit import sha256_file as sha
-
-SKILL = Path(__file__).resolve().parent.parent
 ENTRY = "scripts/upstream_scene_adapter.py"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 ONETAKE_PACKAGES = {"playwright": "1.61.0", "numpy": "2.5.3", "Pillow": "12.3.0",
                     "scipy": "1.18.1", "matplotlib": "3.11.2", "fonttools": "4.66.1", "brotli": "1.2.0"}
 SOURCES = {
-    "lemo-opuscar": ("b5e8ef93930b6d828f352055a689320f138237b1", "core/render/video.mjs"),
+    "lemo-opuscar": ("413a6bd6d78ebd3bdd5abaec9538a26867f890df", "core/render/video.mjs"),
     "onetake": ("415758128aa45cc54340df40d8109363447f582e", "scripts/render.py"),
 }
+
+def lemo_styles(project_root):
+    """Read the vendor's official style catalog; never maintain a second registry."""
+    project = Path(project_root).resolve(strict=True)
+    root = project / "skill-development/vendor/lemo-opuscar"
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("Lemo source must be the project-local vendor checkout")
+    styles = root / "styles"
+    result = {}
+    for directory in sorted(styles.iterdir()):
+        if not directory.is_dir() or directory.name == "_template":
+            continue
+        meta_path, guide = directory / "style.json", directory / "STYLE.md"
+        if not meta_path.is_file() or not guide.is_file():
+            raise ValueError("Lemo style is incomplete: " + directory.name)
+        meta = json.loads(meta_path.read_text())
+        if not isinstance(meta, dict) or meta.get("slug") != directory.name:
+            raise ValueError("Lemo style slug does not match its directory")
+        result[directory.name] = {"slug": directory.name, "style": meta,
+                                  "style_json": str(meta_path), "style_md": str(guide)}
+    if len(result) != 59:
+        raise ValueError("Lemo official style catalog must contain 59 styles")
+    return result
 
 
 
@@ -40,8 +68,10 @@ def relative(value):
 
 def validate_brief(payload):
     b = json.loads(payload)
-    if (type(b) is not dict or set(b) != {"schema_version", "dependency_id", "source_binding",
-            "template_request", "composition", "files", "workflow_media_ref"}
+    base = {"schema_version", "dependency_id", "source_binding", "template_request", "composition", "files", "workflow_media_ref"}
+    if (type(b) is not dict or not base.issubset(b) or
+            (b.get("dependency_id") == "onetake" and set(b) != base) or
+            (b.get("dependency_id") == "lemo-opuscar" and set(b) != base | {"style_slug", "creative_handoff"})
             or b["schema_version"] != 1 or b["dependency_id"] not in SOURCES):
         raise ValueError("Invalid upstream scene brief")
     s, c, request = b["source_binding"], b["composition"], b["template_request"]
@@ -82,6 +112,25 @@ def validate_brief(payload):
             or "index.html" not in {f["scene_path"] for f in files}
             or b["workflow_media_ref"] not in {f["media_ref"] for f in files}):
         raise ValueError("Scene entry and distinct workflow record are required")
+    if b["dependency_id"] == "lemo-opuscar":
+        if "TREATMENT.md" not in {f["scene_path"] for f in files}:
+            raise ValueError("Lemo requires its current TREATMENT.md among the frozen files")
+        if (not isinstance(b["style_slug"], str) or not re.fullmatch(r"[a-z0-9][a-z0-9_-]+", b["style_slug"])
+                or b["style_slug"] not in lemo_styles(SKILL.parents[1])):
+            raise ValueError("Invalid Lemo style slug")
+        h = b["creative_handoff"]
+        if not isinstance(h, dict) or set(h) != {"transcript", "semantic_goal", "required_change", "subject", "visual_pattern", "design_plan", "beats", "forbidden_outcomes"}:
+            raise ValueError("Lemo creative handoff is incomplete")
+        if any(not isinstance(h[k], str) or not h[k].strip() for k in ("transcript", "semantic_goal", "required_change", "subject", "visual_pattern")):
+            raise ValueError("Lemo creative handoff text is required")
+        plan = h["design_plan"]
+        if not isinstance(plan, dict) or set(plan) != {"composition", "typography", "finish", "focus"} or any(not isinstance(v, str) or not v.strip() for v in plan.values()):
+            raise ValueError("Lemo design plan must contain four nonempty parts")
+        duration = b["composition"]["frames"] / 24
+        if not isinstance(h["beats"], list) or not h["beats"] or any(not isinstance(x, dict) or set(x) != {"time", "action"} or not isinstance(x["action"], str) or not x["action"].strip() or type(x["time"]) not in (int, float) or not math.isfinite(x["time"]) or not 0 <= x["time"] < duration for x in h["beats"]):
+            raise ValueError("Lemo beats must use local seconds within the scene")
+        if not isinstance(h["forbidden_outcomes"], list) or any(not isinstance(x, str) or not x.strip() for x in h["forbidden_outcomes"]):
+            raise ValueError("Lemo forbidden outcomes must be text")
     return b
 
 
@@ -158,6 +207,8 @@ def create_adapter(project_root, dependency_id, python_executable, brief_loader)
                 or component["artifact_contract"] != {"width": 1080, "height": 1920, "fps": 24, "alpha": False}
                 or component["render_window"]["start_frame"] != 0 or component["render_window"]["end_frame"] != b["composition"]["frames"]):
             raise ValueError("Upstream scene no longer matches the approved source, request or recipe")
+        if dependency_id == "lemo-opuscar" and component.get("template_id") != "lemo-opuscar/" + b["style_slug"]:
+            raise ValueError("Lemo component template identity does not match the selected style")
         return payload
 
     def media_loader(job, recipe, component, payload):
@@ -171,13 +222,17 @@ def create_adapter(project_root, dependency_id, python_executable, brief_loader)
         renderer_version=runtime["commit"], artifact_media_type="video", launcher=launcher, launcher_sha256=launcher_sha,
         brief_loader=guarded_loader, media_loader=media_loader, self_contained_wrapper=True,
         timeout_seconds=300, argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}",
-            "--media-manifest", "{media_manifest_fd}", "--runtime", base64.b64encode(json.dumps(runtime, sort_keys=True).encode()).decode(), "--output", "{output_path}"))
+            "--media-manifest", "{media_manifest_fd}", "--runtime", base64.b64encode(json.dumps(runtime, sort_keys=True).encode()).decode(),
+            "--skill-root", str(SKILL), "--output", "{output_path}"))
 
 
 def workflow_reference(b):
     f = next(f for f in b["files"] if f["media_ref"] == b["workflow_media_ref"])
-    return {"dependency_id": b["dependency_id"], "upstream_commit": SOURCES[b["dependency_id"]][0],
+    out = {"dependency_id": b["dependency_id"], "upstream_commit": SOURCES[b["dependency_id"]][0],
             "workflow_path": f["job_path"], "workflow_sha256": f["sha256"]}
+    if b["dependency_id"] == "lemo-opuscar":
+        out.update(style_slug=b["style_slug"], template_id="lemo-opuscar/" + b["style_slug"])
+    return out
 
 
 def create_binding(adapter, brief_bytes, reference_sample):
@@ -185,9 +240,11 @@ def create_binding(adapter, brief_bytes, reference_sample):
     if adapter.dependency_id != b["dependency_id"] or adapter.entrypoint_sha256 != sha(SKILL / ENTRY):
         raise ValueError("Upstream scene adapter identity mismatch")
     request = b["template_request"]
-    return {"producer_type": "dependency", "dependency_id": adapter.dependency_id, "entrypoint": ENTRY,
+    template_id = ("lemo-opuscar/" + b["style_slug"] if adapter.dependency_id == "lemo-opuscar"
+                   else adapter.dependency_id + "-reviewed-scene")
+    binding = {"producer_type": "dependency", "dependency_id": adapter.dependency_id, "entrypoint": ENTRY,
         "producer_version": VERSION, "primary_renderer": "HTMLCanvas", "renderer_version": adapter.renderer_version,
-        "template_origin": "custom_fallback", "template_id": adapter.dependency_id + "-reviewed-scene", "template_version": VERSION,
+        "template_origin": "custom_fallback", "template_id": template_id, "template_version": VERSION,
         "verification_id": hashlib.sha256((adapter.entrypoint_sha256 + adapter.renderer_version + hashlib.sha256(brief_bytes).hexdigest()).encode()).hexdigest(),
         "adaptation_level": "structural", "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
         "sample_sha256": sha(reference_sample), "semantic_families": [request["semantic_family"]],
@@ -195,6 +252,11 @@ def create_binding(adapter, brief_bytes, reference_sample):
         "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
         "invocation_record": {"argv": [str(adapter.launcher), ENTRY], "status": "planned", "exit_code": None,
             "template_request": request, "production_evidence": workflow_reference(b)}}
+    if adapter.dependency_id == "lemo-opuscar":
+        if b["style_slug"] not in lemo_styles(SKILL.parents[1]):
+            raise ValueError("Unknown Lemo style")
+        binding["invocation_record"]["style_slug"] = b["style_slug"]
+    return binding
 
 
 def create_artifact_probe(ffprobe_executable):
@@ -208,6 +270,24 @@ def validate_workflow(b, scene, root):
     if (w.get("dependency_id") != b["dependency_id"] or w.get("upstream_commit") != SOURCES[b["dependency_id"]][0]
             or not all(w.get(k) for k in ("instructions", "concept", "beat_sheet", "upstream_features", "qa"))):
         raise ValueError("Actual upstream production workflow is required, not a renderer-only claim")
+    if b["dependency_id"] == "lemo-opuscar":
+        expected = ["plugin/skills/lemo-opuscar/SKILL.md", "AGENTS.md", "DIRECTOR.md", "TECHNIQUE.md", f"styles/{b['style_slug']}/STYLE.md"]
+        if (w.get("style_slug") != b["style_slug"] or w.get("template_id") != "lemo-opuscar/" + b["style_slug"]
+                or not isinstance(w.get("instructions"), list) or len(w["instructions"]) != len(set(w["instructions"]))
+                or set(w["instructions"]) != set(expected)):
+            raise ValueError("Lemo workflow identity or instruction set is invalid")
+        digests = w.get("instruction_sha256")
+        if not isinstance(digests, dict) or set(digests) != set(expected):
+            raise ValueError("Lemo instruction digests are incomplete")
+        for name in expected:
+            if not (root / relative(name)).is_file() or digests[name] != sha(root / name):
+                raise ValueError("Lemo instruction source changed")
+        treatment = w.get("treatment_media_ref")
+        record = next((x for x in b["files"] if x["media_ref"] == treatment and x["scene_path"] == "TREATMENT.md"), None)
+        if not record or not (scene / record["scene_path"]).is_file() or sha(scene / record["scene_path"]) != record["sha256"]:
+            raise ValueError("Lemo treatment file is missing or changed")
+        if w.get("design_plan") != b["creative_handoff"]["design_plan"]:
+            raise ValueError("Lemo workflow must carry the complete creative design plan")
     for name in w["instructions"]:
         if not (root / relative(name)).is_file():
             raise ValueError("Selected upstream instruction is missing")
@@ -303,6 +383,7 @@ with sync_playwright() as p:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--skill-root", type=Path)
     parser.add_argument("--probe", action="store_true")
     parser.add_argument("--project-root", type=Path)
     parser.add_argument("--dependency-id", choices=tuple(SOURCES))

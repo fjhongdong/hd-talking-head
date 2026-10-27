@@ -1,4 +1,4 @@
-// 色指定（color model）：白天标准色 → 按时间带（夜 / 黎明）自动换算，和真实动画的"时间帯別 色指定"一样
+// Colour model (iro shitei, 色指定): standard daytime colours → converted automatically per time of day (night / dawn), the same as real anime's "時間帯別 色指定" (per-time-of-day colour models)
 import { hex } from './cel.js';
 
 export const BASE = {
@@ -31,7 +31,7 @@ export const BASE = {
 
 const mul = (c, m) => { const v = hex(c); return '#' + v.map((x, i) => Math.max(0, Math.min(255, Math.round(x * m[i]))).toString(16).padStart(2, '0')).join(''); };
 
-// 时间带：f/h 用 lit 乘色，s 用 shade 乘色，线色也跟着压暗
+// Time of day: f/h are multiplied by lit, s by shade, and line colours are darkened along with them
 export const LIGHTS = {
   day: { lit: [1, 1, 1], shade: [1, 1, 1], line: [1, 1, 1] },
   night: { lit: [.78, .74, 1.0], shade: [.58, .52, .92], line: [.8, .7, 1.1] },
@@ -49,6 +49,6 @@ export function palette(name) {
   return out;
 }
 export const PAL = { day: palette('day'), night: palette('night'), dawn: palette('dawn'), sil: palette('sil'), backlit: palette('backlit') };
-// 夜景的皮肤单独指定：中性偏冷的亮部 + 冷紫阴影（按乘色换算会整张脸发粉）
+// Night skin is specified by hand: neutral-cool lit area + cool purple shadow (converting by multiplication turns the whole face pink)
 Object.assign(PAL.night.skin, { f: '#e9c9c4', s: '#9b82b4', h: '#fff2f2' });
 PAL.night.blush = '#e0869a';

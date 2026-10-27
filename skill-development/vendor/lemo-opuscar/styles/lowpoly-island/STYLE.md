@@ -69,7 +69,7 @@ Intercut wide and close on beats: wide shows the shape growing, close sells the 
 - **Foley follows material**, all synthesizable: bubble sweep + splash with droplet ticks for rising tiles (bigger = lower); wooden knock plus a quieter bounce knock for floors; ceramic clack for roofs; hollow plank knock; heavy stone thunk; glass tink; a low whump with electric hum for anything switching on.
 - **Beds**: low-passed brown-noise water with swells, birds as downward-gliding FM chirps, creaking wood, crickets or wind at night.
 - **Silence**: drop to a low drone and a bed; a moment of digital zero on the music bus before a big downbeat. Options: thin the ostinato to one voice instead of stopping it; let the world's own events carry the rhythm for a passage.
-- **Voice**: clear and gentle, few short lines; avoid words that collide with the film's subject (a film about notes: "sea" heard as "C").
+- **Voice**: clear and gentle, few short lines; avoid words that collide with the film's subject (a film about baking: "flour" heard as "flower").
 - **Mix**: voice compressed and well above the music, music ducked under it, −14 LUFS; **grain 0** (flat colour shimmers with grain).
 
 ## 8. Native moves

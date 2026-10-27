@@ -28,7 +28,7 @@ def put(dst, x, t, g=1.0, pan=0.0):
 hz = lambda m: 440.0 * 2 ** ((m - 69) / 12)
 tt = lambda d: np.arange(int(round(d * SR))) / SR
 
-# ---------- pitch map (TREATMENT §5) ----------
+# ---------- pitch map: data value → pitch (low values snap to the pentatonic, mid to semitones, high slide freely) ----------
 PENTA = [2, 4, 6, 9, 11]
 def pitch(v):
     m = 62 + (v + .4) * 17

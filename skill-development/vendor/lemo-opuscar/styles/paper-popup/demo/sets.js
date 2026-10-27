@@ -1,4 +1,4 @@
-// 四个跨页：页面美术 + 立体弹出件 + 会动的机关
+// Four spreads: page art + pop-up pieces + moving mechanisms
 import * as THREE from 'three';
 import * as A from './art.js';
 import { cv, paperFill, INK, blob, sh, smoothOpen, GRAIN } from './paper.js';
@@ -10,11 +10,11 @@ import { OPEN, TURNS } from './story.js';
 const PW = 2048, PH = Math.round(2048 * BD / BW);
 const gx = xm => (xm / BW + .5) * PW, gz = zm => zm / BD * PH, sy = ym => (1 - ym / BD) * PH;
 
-// 每个跨页出现 / 收起的时间
+// When each spread appears / folds away
 export const RISE = [OPEN[0] + 1.3, TURNS[0][1] - .9, TURNS[1][1] - .9, TURNS[2][1] - .9];
 export const FOLD = [TURNS[0][0], TURNS[1][0], TURNS[2][0], 1e9];
 
-// ---------- 页面美术 ----------
+// ---------- Page art ----------
 function page(fn, seed) { const c = cv(PW, PH), x = c.getContext('2d'); fn(x); x.save(); x.globalAlpha = .7; x.fillStyle = x.createPattern(GRAIN, 'repeat'); x.fillRect(0, 0, PW, PH); x.restore(); return c; }
 function grad(x, stops) { const g = x.createLinearGradient(0, 0, 0, PH); stops.forEach(([o, c]) => g.addColorStop(o, c)); x.fillStyle = g; x.fillRect(0, 0, PW, PH); }
 function softClouds(x, seed, col = 'rgba(255,255,255,.55)', n = 7, y0 = .1, y1 = .55) {
@@ -77,7 +77,7 @@ export function pages() {
     pen(() => { x.beginPath(); x.arc(PW * .78, PH * .28, 110, -.3, Math.PI * 1.4); });
     pen(() => { x.beginPath(); x.arc(PW * .78, PH * .28, 112, Math.PI * 1.45, Math.PI * 1.6); }, .25);
     for (const [cx, cy, s] of [[.22, .22, 1], [.5, .14, .7]]) pen(() => { x.beginPath(); x.arc(PW * cx - 70 * s, PH * cy + 10, 50 * s, Math.PI, 0); x.arc(PW * cx, PH * cy - 20 * s, 70 * s, Math.PI * 1.1, -.1); x.arc(PW * cx + 80 * s, PH * cy + 10, 45 * s, Math.PI * 1.3, .2); }, .35);
-    // 橡皮擦痕
+    // eraser marks
     x.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 4; i++) { x.save(); x.translate(PW * (.3 + i * .15), PH * (.4 + (i % 2) * .15)); x.rotate(-.3); x.fillRect(-90, -24, 180, 48); x.restore(); }
     x.font = 'italic 46px "IM Fell English"'; x.fillStyle = 'rgba(80,70,60,.55)'; x.textAlign = 'center'; x.fillText('(to be continued…?)', PW * .5, PH * .62);
   }, 8);
@@ -96,8 +96,8 @@ export function pages() {
   return P;
 }
 
-// ---------- 弹出件 ----------
-// dir: -1 向后倒（平躺时正面朝上），+1 向前倒（正面朝下）
+// ---------- Pop-up pieces ----------
+// dir: -1 folds backward (face up when lying flat), +1 folds forward (face down)
 function popper(list, spread, parent, item, x, y, z, o = {}) {
   const g = new THREE.Group(); g.position.set(x, y, z);
   const m = cutMesh(item, o); if (o.flip) m.scale.x = -1; if (o.ry) m.rotation.y = o.ry;
@@ -113,12 +113,12 @@ function riseOf(r, t) {
 }
 
 export function buildSets(book, A2) {
-  const L = [];            // 所有弹出件
+  const L = [];            // all pop-up pieces
   const S = book.stage, K = book.sky;
-  const ex = {};           // 需要单独驱动的部件
+  const ex = {};           // parts that need to be driven individually
 
-  // ===== 跨页 0：纸片谷 =====
-  const s0 = 0, dz = z => (.3 - z) * 1.2;   // 由后往前依次弹起
+  // ===== Spread 0: Papervale =====
+  const s0 = 0, dz = z => (.3 - z) * 1.2;   // pop up one after another, back to front
   popper(L, s0, S, A.hill(.24, .075, '#b5e39a', '#93cc78', 11, { bumps: 2 }), -.12, 0, .014, { d: dz(.014) });
   popper(L, s0, S, A.hill(.26, .085, '#a9dd8c', '#88c46c', 12, { bumps: 3 }), .09, 0, .016, { d: dz(.016) + .05 });
   popper(L, s0, S, A.hill(.2, .05, '#8fd06e', '#6fb553', 13, { bumps: 2, dots: ['#fff', '#ffe066'] }), -.15, 0, .045, { d: dz(.045) });
@@ -127,23 +127,23 @@ export function buildSets(book, A2) {
   popper(L, s0, S, A.lolliTree(.05, '#6fcc55', '#4ea93e', 22), .175, 0, .06, { d: dz(.06), sway: .03 });
   popper(L, s0, S, A.pine(.07, '#3f9f5a', '#2e7c45', 23), -.205, 0, .07, { d: dz(.07), sway: .02 });
   ex.house = popper(L, s0, S, A.mushHouse(.078), -.13, 0, .085, { d: dz(.085) });
-  // 门：左边铰链
+  // door: hinged on the left
   const doorItem = A.door(.0262);
   { const g = new THREE.Group(); const m = cutMesh({ ...doorItem, ax: (doorItem.pad / A.PPM) / doorItem.w }, { backCol: '#8a5a34' }); g.add(m); g.position.set(-.078 * .12, 0, .0006); ex.house.g.add(g); ex.door = g; }
   const win = A.windowGlow(.0045); { const m = new THREE.Mesh(new THREE.PlaneGeometry(win.w, win.h), new THREE.MeshBasicMaterial({ map: texOf(win.c), transparent: true, depthWrite: false, color: new THREE.Color(2.2, 1.7, .9) })); m.position.set(.078 * .18, .078 * .3, .0007); m.material.opacity = 0; ex.house.g.add(m); ex.win = m; }
   popper(L, s0, S, A.fence(.06, .016), -.055, 0, .1, { d: dz(.1) });
   popper(L, s0, S, A.sign(.036, 'Papervale'), -.005, 0, .118, { d: dz(.118) });
-  // 河：三条波浪
+  // river: three wave strips
   ex.river = [];
   for (let k = 0; k < 3; k++) ex.river.push(popper(L, s0, S, A.waveStrip(.19, .014 + k * .002, ['#8fd3f4', '#6cbcea', '#4aa3e0'][k], ['#6cbcea', '#4aa3e0', '#2f86c6'][k], 40 + k, 7), .13, 0, .1 + k * .02, { d: dz(.1 + k * .02), dir: 1 }));
-  // 前景
+  // foreground
   const R0 = mulberry(90);
   for (let i = 0; i < 9; i++) { const x = -.2 + i * .05 + (R0() - .5) * .02; popper(L, s0, S, A.flower(.016 + R0() * .008, ['#ff7aa8', '#ffd23f', '#ffffff', '#b58cff'][i % 4], i), x, 0, .2 + R0() * .05, { d: dz(.22), sway: .08 }); }
   popper(L, s0, S, A.bush(.07, .03, '#4fae4c', '#3a8a3a', 31, '#e8413a'), -.17, 0, .265, { d: dz(.265) });
   popper(L, s0, S, A.bush(.06, .026, '#5cbb52', '#44953e', 32), .15, 0, .27, { d: dz(.27) });
-  // 太阳（插在木棍上，从远山后面升起）
+  // sun (on a wooden stick, rising from behind the far hills)
   { const it = A.sunOnStick(.02, .085); const g = new THREE.Group(); g.add(cutMesh(it)); g.position.set(.06, -.12, .008); S.add(g); ex.sun = g; }
-  // 挂在线上的云（背景页上）
+  // clouds hanging on strings (on the backdrop page)
   ex.clouds = [];
   for (const [x, y, w, sd] of [[-.12, .205, .06, 1], [.13, .225, .05, 2], [-.01, .25, .04, 3]]) {
     const g = new THREE.Group(), it = A.cloud(w, sd); const m = cutMesh(it); g.add(m);
@@ -151,7 +151,7 @@ export function buildSets(book, A2) {
     g.position.set(x, y, .03); K.add(g); ex.clouds.push({ g, y, ph: x * 30 });
   }
 
-  // ===== 跨页 1：窃窃私语森林 =====
+  // ===== Spread 1: the Whispering Woods =====
   const s1 = 1;
   const R1 = mulberry(7);
   for (let i = 0; i < 12; i++) popper(L, s1, S, A.pine(.12 + R1() * .04, '#8cc9a0', '#74b38a', 100 + i), -.23 + i * .042, 0, .012 + (i % 2) * .004, { d: dz(.012), sway: .01 });
@@ -165,23 +165,23 @@ export function buildSets(book, A2) {
   for (const [x, z, h] of [[-.2, .2, .022], [-.11, .215, .018], [.09, .21, .02], [.2, .205, .024]]) popper(L, s1, S, A.fern(h, 140 + Math.round(x * 100)), x, 0, z, { d: dz(z), sway: .05 });
   for (const [x, z] of [[-.16, .125], [.15, .128]]) popper(L, s1, S, A.fern(.02, 160 + Math.round(x * 100)), x, 0, z, { d: dz(z), sway: .04 });
 
-  // ===== 跨页 2：哗啦哗啦海 =====
+  // ===== Spread 2: the Swish-Swash Sea =====
   const s2 = 2;
   popper(L, s2, S, A.island(.07), .15, 0, .016, { d: dz(.016) });
   popper(L, s2, S, A.island(.045), -.17, 0, .014, { d: dz(.014) });
   ex.waves = [];
   const wz = [.03, .075, .115, .175, .235], wc = [['#9ad8f5', '#76c2ec'], ['#79c3ee', '#55aee4'], ['#58ade3', '#3d93d2'], ['#3f95d6', '#2c79bd'], ['#2f7fc4', '#1f62a3']];
   for (let k = 0; k < 5; k++) ex.waves.push(popper(L, s2, S, A.waveStrip(.5, [.03, .026, .022, .016, .012][k], wc[k][0], wc[k][1], 60 + k, 16), 0, 0, wz[k], { d: dz(wz[k]), dir: 1 }));
-  // 翻转天空板（三面翻广告牌）
+  // flipping sky panel (tri-vision billboard)
   ex.slats = [];
   { const day = null; }
-  // 月亮、星星（挂线）
+  // moon, stars (on strings)
   ex.stars = [];
   { const it = A.moon(.018); const g = new THREE.Group(); g.add(cutMesh(it)); const th = thread(.2); th.position.set(.005, 0, -.0004); g.add(th); g.position.set(-.12, .4, .025); K.add(g); ex.moon = g; }
   const R2 = mulberry(55);
   for (let i = 0; i < 9; i++) { const it = A.star(.004 + R2() * .004); const g = new THREE.Group(); g.add(cutMesh(it)); const th = thread(.25); th.position.set(0, 0, -.0004); g.add(th); g.position.set(-.2 + i * .05 + (R2() - .5) * .02, .4, .02 + R2() * .02); K.add(g); ex.stars.push({ g, y: .16 + R2() * .1, d: i * .12 + R2() * .2, ph: R2() * 9 }); }
 
-  // ===== 跨页 3：最后一页 =====
+  // ===== Spread 3: the last page =====
   const s3 = 3;
   popper(L, s3, S, A.sketchTree(.07), -.14, 0, .05, { d: dz(.05) });
   popper(L, s3, S, A.sketchHouse(.05), .13, 0, .06, { d: dz(.06) });
@@ -190,7 +190,7 @@ export function buildSets(book, A2) {
   return { L, ex };
 }
 
-// 三面翻天空板：需要 day/night 两张大图的纹理
+// Tri-vision sky panel: needs textures from the two large day/night images
 export function buildSlats(book, dayTex, nightTex, ex) {
   const n = 4, w = (BW - .006) / n, h = BD - .03;
   for (let i = 0; i < n; i++) {
@@ -205,7 +205,7 @@ export function buildSlats(book, dayTex, nightTex, ex) {
   }
 }
 
-// 每帧：弹出件
+// Per frame: pop-up pieces
 export function updatePops(L, t) {
   for (const r of L) {
     const k = riseOf(r, t);

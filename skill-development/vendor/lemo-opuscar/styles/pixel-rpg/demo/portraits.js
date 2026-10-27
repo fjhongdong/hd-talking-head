@@ -1,4 +1,4 @@
-// portraits.js — 对话框头像（32×32，3/4 侧向右），底图 + 表情叠层（眉眼 x9–25 行 14–19，嘴 x15–23 行 22–24）
+// portraits.js — dialogue-box portraits (32×32, 3/4 view facing right), base image + expression overlays (brows/eyes x9–25 rows 14–19, mouth x15–23 rows 22–24)
 import { C, sprFromRows } from './px.js';
 
 const BASE_A = [
@@ -35,7 +35,7 @@ const BASE_A = [
   '..kkkttkrrrrrrRRRRRRRkkttk......',
   '.kttTTTTkkkkkkkkkkkkkTTTTtk.....',
 ];
-// 眉眼叠层：5 行（y14–18），从 x9 起 17 列；'.' = 保留底图
+// Brow/eye overlays: 5 rows (y14–18), 17 columns from x9; '.' = keep the base image
 const EYES = {
   neutral: [
     '..bbbb.....bbb...',
@@ -97,7 +97,7 @@ export function portraitArlo(expr = 'neutral') {
   const s = sprFromRows(rows, MAP_A); cache.set('a' + expr, s); return s;
 }
 
-// WREN（16-bit，微笑）：短波波头 + 刘海，绿色领口，围巾
+// WREN (16-bit, smiling): short bob + fringe, green collar, scarf
 const BASE_W = [
   '................................',
   '..........kkkkkkkk..............',
@@ -154,7 +154,7 @@ export function portraitWren(expr = 'smile') {
   const s = sprFromRows(rows, MAP_W); cache.set('w' + expr, s); return s;
 }
 
-// WREN 8-bit 头像（24×24，黑底白框对话框用）：4 色 + 透明
+// WREN 8-bit portrait (24×24, for the black-background white-frame dialogue box): 4 colours + transparent
 const W8 = [
   '........................',
   '.......oooooooo.........',

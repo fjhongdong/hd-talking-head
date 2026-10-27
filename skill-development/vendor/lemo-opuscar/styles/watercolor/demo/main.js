@@ -1,9 +1,9 @@
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 
-// ---------- 地图（深时间） ----------
+// ---------- map (deep time) ----------
 const MAPC = { k: 24, cx: 830, cy: 520, lon0: 133.8, lat0: -27.0, c: Math.cos(26 * Math.PI / 180) };
 const mproj = (lon, lat) => [MAPC.cx + (lon - MAPC.lon0) * MAPC.k * MAPC.c, MAPC.cy - (lat - MAPC.lat0) * MAPC.k];
-// 近似多年平均降雨（mm），只用来画示意分带
+// approximate long-term mean rainfall (mm), only used to draw schematic bands
 const STN = [[133.88, -23.7, 285], [130.98, -25.24, 310], [128.3, -25.03, 290], [134.19, -19.65, 450], [132.26, -14.47, 1100], [130.84, -12.46, 1730], [128.74, -15.77, 820], [127.67, -18.23, 570], [122.24, -17.96, 610], [118.6, -20.31, 320], [119.73, -23.36, 330], [116.85, -20.74, 290], [114.13, -21.93, 260], [113.66, -24.88, 230], [114.61, -28.78, 450], [115.86, -31.95, 730], [117.88, -35.02, 930], [121.89, -33.86, 620], [121.47, -30.75, 270], [118.49, -26.6, 240], [126.6, -26.13, 250], [128.88, -31.68, 270], [133.68, -32.13, 290], [134.72, -29.01, 150], [135.45, -27.55, 170], [137.3, -28.4, 125], [139.35, -25.9, 160], [139.9, -22.91, 260], [139.49, -20.73, 460], [141.08, -17.67, 920], [141.87, -12.63, 1950], [145.25, -15.47, 1750], [145.37, -16.46, 2300], [145.77, -16.92, 2000], [146.03, -17.52, 3500], [146.82, -19.26, 1130], [149.19, -21.14, 1600], [150.51, -23.38, 800], [144.25, -23.44, 440], [146.24, -26.4, 490], [153.03, -27.47, 1150], [153.4, -28.0, 1400], [153.11, -30.3, 1650], [152.9, -31.43, 1500], [151.21, -33.87, 1210], [148.6, -32.25, 590], [145.94, -30.09, 350], [141.47, -31.95, 250], [142.16, -34.19, 290], [138.6, -34.93, 550], [137.77, -32.49, 250], [140.78, -37.83, 710], [144.96, -37.81, 650], [149.13, -35.28, 620], [149.84, -36.67, 850], [147.37, -35.12, 570], [147.33, -42.88, 600], [145.33, -42.15, 1600], [147.14, -41.43, 670], [145.55, -42.08, 2400], [145.83, -31.5, 390], [140.5, -20.7, 470], [126.64, -14.3, 1200], [123.63, -17.3, 680], [131.1, -17.5, 650], [133.9, -21.5, 380], [130.9, -31.4, 240], [122.4, -28.6, 230], [119.7, -21.2, 380], [114.2, -27.7, 340], [113.5, -25.9, 220], [143.4, -31.6, 260], [144.8, -34.5, 370], [148.2, -23.5, 630], [148.8, -26.6, 590], [149.8, -29.5, 580], [141.7, -20.7, 480], [143.5, -18.3, 850], [143.2, -13.9, 1250], [136.8, -12.2, 1500], [136.3, -16.1, 900], [133.4, -16.3, 650], [133.1, -14.9, 950], [130.6, -18.3, 500], [130.0, -20.2, 420], [146.5, -38.3, 900], [143.6, -38.7, 1100], [135.9, -34.7, 450], [116.1, -34.3, 1100]];
 const MAP = {};
 let BANDL, BANDC;
@@ -28,7 +28,7 @@ function buildMap() {
   const [hx, hy] = mproj(133.2, -25.3);
   for (let j = 0; j < MAP.ny; j++) for (let i = 0; i < MAP.nx; i++) {
     const x = MAP.x0 + (i + .5) * cell, y = MAP.y0 + (j + .5) * cell, k = j * MAP.nx + i;
-    // 往外多涂一圈，让海岸线笔触下面没有缝
+    // paint one extra ring outward so there is no gap under the coastline strokes
     if (!test.isPointInPath(MAP.path, x, y) && !test.isPointInPath(MAP.path, x + 6, y) && !test.isPointInPath(MAP.path, x - 6, y) && !test.isPointInPath(MAP.path, x, y + 6) && !test.isPointInPath(MAP.path, x, y - 6)) continue;
     let sw = 0, sv = 0; for (const [sx, sy, lv] of st) { const d2 = (x - sx) ** 2 + (y - sy) ** 2 + 30; const w = 1 / (d2 * d2); sw += w; sv += w * lv; }
     MAP.logmm[k] = sv / sw;
@@ -38,13 +38,13 @@ function buildMap() {
   }
   MAP.small = document.createElement('canvas'); MAP.small.width = MAP.nx; MAP.small.height = MAP.ny;
   MAP.sctx = MAP.small.getContext('2d'); MAP.img = MAP.sctx.createImageData(MAP.nx, MAP.ny);
-  // 海岸线笔触
+  // coastline strokes
   MAP.coast = [];
   for (const r of rings) { const step = 26; for (let i = 0; i < r.length - 1; i += step) { const pts = r.slice(i, Math.min(r.length, i + step + 1)); if (pts.length > 1) MAP.coast.push(mk(pts, 3.6, INK, { prof: 'even', nb: 3, a: .85, rough: .35 })); } }
-  // 火点（今天 500–900 mm 带）
+  // fire spots (today's 500–900 mm band)
   MAP.fires = []; let guard = 0;
   while (MAP.fires.length < 26 && guard++ < 5000) { const i = Math.floor(rnd(0, MAP.nx)), j = Math.floor(rnd(0, MAP.ny)), v = MAP.logmm[j * MAP.nx + i]; if (v > Math.log(480) && v < Math.log(950)) MAP.fires.push([MAP.x0 + i * cell, MAP.y0 + j * cell, rnd(0, 6)]); }
-  // 我们走过的路：中心 → 雨林
+  // the route we walked: centre → rainforest
   const [ax, ay] = mproj(131.04, -25.34), [bx, by] = mproj(145.4, -16.2);
   MAP.walk = qcurve(ax, ay, bx, by, -60, 40);
 }
@@ -74,16 +74,16 @@ function drawMap(t) {
   ctx.save(); ctx.translate(0, offY); ctx.globalAlpha = 1;
   const reveal = eio(seg(t, 75.6, 78.2));
   if (reveal > 0) drawMapFill(tau, reveal, .78 * endFade * all);
-  // 海岸线
+  // coastline
   const cp = seg(t, 73.3, 76.4), N = MAP.coast.length;
   for (let i = 0; i < N; i++) drawS(ctx, MAP.coast[i], (cp * N * 1.15 - i), null, endFade * all);
-  // 火
+  // fire
   if (t > 89.2 && t < 95.5) for (let i = 0; i < MAP.fires.length; i++) {
     const [x, y, ph] = MAP.fires[i], I = ss(seg(t, 89.4 + ph * .25, 90 + ph * .25)) * (1 - ss(seg(t, 93.6 + ph * .2, 94.6 + ph * .2)));
     if (I > 0) flame(x, y + 6, 40 * I * (.8 + .2 * Math.sin(t * 8 + ph)), t, 700 + i);
   }
   ctx.restore();
-  // 路线
+  // route
   const wp = seg(t, 76.8, 78.8), wf = 1 - ss(seg(t, 79.0, 79.6));
   if (wp > 0 && wf > 0) {
     ctx.globalAlpha = wf;
@@ -95,10 +95,10 @@ function drawMap(t) {
     const [bx, by] = MAP.walk[MAP.walk.length - 1]; hand('rainforest', bx + 24, by - 4, seg(t, 78.4, 79.1), { size: 26 });
     ctx.globalAlpha = 1;
   }
-  // 漂移
+  // drift
   const df = fade2(t, 86.8, 94.5, .6, .8);
   if (df > 0) { ctx.globalAlpha = df; const x = 1300, y0 = 640 + offY * .5; ctx.strokeStyle = rgba(INK, .75); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 - 110); ctx.moveTo(x - 9, y0 - 98); ctx.lineTo(x, y0 - 112); ctx.lineTo(x + 9, y0 - 98); ctx.stroke(); hand('drifting north', x + 18, y0 - 60, seg(t, 87.2, 88.4), { size: 30 }); ctx.globalAlpha = 1; }
-  // 干心 / 绿边
+  // dry heart / green edge
   const lf = fade2(t, 97.3, 101.4, .3, .6);
   if (lf > 0) {
     ctx.globalAlpha = lf;
@@ -106,7 +106,7 @@ function drawMap(t) {
     const [ex, ey] = mproj(147.6, -20.4); leader(ex + 120, ey - 120, ex + 4, ey - 4, seg(t, 98.6, 99.1), -16); hand('green edge', ex + 70, ey - 146, seg(t, 98.7, 99.5), { size: 42, w: 600 });
     ctx.globalAlpha = 1;
   }
-  // 右栏：时间计数 + 图例
+  // right column: time counter + legend
   const rf = fade2(t, 76.2, 101.4, .8, .7);
   if (rf > 0) {
     ctx.globalAlpha = rf; ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -125,7 +125,7 @@ function drawMap(t) {
   }
 }
 
-// ---------- 雾：把风景洗回白纸 ----------
+// ---------- mist: washing the landscape back to white paper ----------
 function drawMist(t) {
   const c = eio(seg(t, 70.3, 73.6)); if (c <= 0) return;
   for (const [lift, a] of [[120, .55], [0, 1]]) {
@@ -165,7 +165,7 @@ function drawHUD(t) {
   }
 }
 
-// ---------- 字幕 ----------
+// ---------- subtitles ----------
 function wrap(txt, maxW) {
   if (ctx.measureText(txt).width <= maxW) return [txt];
   const words = txt.split(' '); let best = null;
@@ -186,7 +186,7 @@ function drawSubs(t) {
   }
 }
 
-// ---------- 片头 / 片尾 ----------
+// ---------- title / end card ----------
 function titleBlock(t, t0, y, big, alpha) {
   ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.font = `italic 500 ${big}px "Cormorant Garamond"`; const w = ctx.measureText('Follow the Rain').width;
@@ -214,7 +214,7 @@ function drawEnd(t) {
   }
 }
 
-// ---------- 主渲染 ----------
+// ---------- main render ----------
 let PAPER_IMG;
 function render(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.shadowBlur = 0;

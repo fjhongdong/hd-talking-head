@@ -1,4 +1,4 @@
-// 极简静态服务器（ES module 不能走 file://）
+// Minimal static server (ES modules can't load over file://)
 import http from 'http'; import fs from 'fs'; import path from 'path';
 const T = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png', '.hdr': 'application/octet-stream', '.bin': 'application/octet-stream', '.gltf': 'model/gltf+json', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.wav': 'audio/wav' };
 export function serve(root, port = 0) {

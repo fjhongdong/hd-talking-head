@@ -1,4 +1,4 @@
-"""字幕区间（与 film.js 的 LAYOUT 同源规则）→ out/subs.json，供 core/render/srt.py 导出 .srt"""
+"""Subtitle intervals (same rules as LAYOUT in film.js) → out/subs.json, for core/render/srt.py to export the .srt"""
 import json, os
 D = os.path.dirname(os.path.abspath(__file__)) + '/..'
 END = {'l1': 7.8, 'l2': 11.8, 'l3': 15.8, 'l4': 19.85, 'l4b': 22.15, 'l5': 24.5, 'l5b': 27.4, 'l6': 39.95}

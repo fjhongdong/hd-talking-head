@@ -1,5 +1,5 @@
-// 手卷世界（世界坐标，缩放 1 = 屏幕像素）：右端远山与崖松（起点岸），中间大江（留白），左端对岸。
-// 第 1–2 镜：墨滴晕开成山 → 自右向左展卷 → 崖石晕出 → 侠客三笔画出 → 起跳
+// Handscroll world (world coordinates, scale 1 = screen pixels): distant mountains and cliff pine at the right end (starting bank), the great river in the middle (liubai 留白, left blank), the far bank at the left end.
+// Shots 1–2: an ink drop bleeds into mountains → the scroll unrolls from right to left → cliff rocks bleed in → the swordsman is drawn in three strokes → jump
 import { mk, draw, blot } from './ink.js';
 import { hero, POSE, mixPose } from './hero.js';
 import { ridgeFn, mountainLayer, cun, cliff, pine, vn2 } from './land.js';
@@ -8,8 +8,8 @@ import { T } from './story.js';
 import { clamp, lerp, ss, eio, eo, mulberry } from '/core/lib.js';
 
 export const WW = 5600, WH = 1080;
-export const HERO0 = [3680, 800];          // 起点崖上
-export const HERO1 = [960, 812];            // 对岸
+export const HERO0 = [3680, 800];          // on the starting cliff
+export const HERO1 = [960, 812];            // far bank
 const DROP = [4700, 420];
 let LAY = null;
 const cv = (w = WW, h = WH) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -18,36 +18,36 @@ function layer() { const wet = cv(), dry = cv(); return { wet, dry, ink: { wet: 
 export function init() {
   if (LAY) return;
   LAY = { mtn: layer(), cliff: layer(), bank: layer() };
-  // 远山（全卷）
+  // Distant mountains (whole scroll)
   const far = ridgeFn([[5250, 250, 110], [4900, 330, 100], [4550, 270, 120], [4200, 190, 110], [3700, 150, 120], [3000, 110, 150], [2300, 80, 170], [1450, 90, 120], [1575, 115, 85], [860, 150, 95], [990, 115, 120], [380, 140, 130]], 560, 3, 30);
   LAY.mtn.ink.wet.drawImage(mountainLayer({ W: WW, H: WH, ridge: far, depth: 230, tone: .15, rim: .55, rimW: 24, mist: .9, seed: 3 }), 0, 0);
-  // 墨滴长出的中山（右端）
+  // Middle mountains grown from the ink drop (right end)
   const mid = ridgeFn([[4760, 470, 150], [5170, 350, 150], [4390, 300, 130], [3720, 390, 110], [3960, 250, 120], [3430, 200, 110], [5520, 290, 140]], 720, 7, 40);
   LAY.mtn.ink.wet.drawImage(mountainLayer({ W: WW, H: WH, ridge: mid, xmask: x => clamp((x - 3180) / 160), depth: 320, tone: .44, rim: .8, rimW: 14, mist: .7, seed: 7 }), 0, 0);
   cun(LAY.mtn.ink, { x0: 3240, x1: 5560, ridge: mid, tone: .34, cun: 1.4, moss: 1.1, seed: 7 });
   const near = ridgeFn([[4560, 170, 210], [5060, 140, 230], [4150, 110, 170], [5500, 120, 160]], 790, 19, 22);
   LAY.mtn.ink.wet.drawImage(mountainLayer({ W: WW, H: WH, ridge: near, xmask: x => clamp((x - 4000) / 200), depth: 150, tone: .5, rim: .85, rimW: 12, mist: .6, seed: 19 }), 0, 0);
   cun(LAY.mtn.ink, { x0: 4050, x1: 5580, ridge: near, tone: .4, cun: 1.2, moss: 1.4, seed: 19, cunLen: .7 });
-  // 起点崖 + 松
+  // Starting cliff + pine
   cliff(LAY.cliff.ink, 4000, 800, 2.1, 3, -1);
   pine(LAY.cliff.ink, 3850, 804, 1.25, 5, 0, 0, -1);
-  // 对岸：低丘 + 岸石 + 两株远树
+  // Far bank: low hills + bank rocks + two distant trees
   const bank = ridgeFn([[300, 95, 120], [620, 60, 110], [-60, 70, 90], [1150, 40, 90]], 720, 11, 14);
   LAY.bank.ink.wet.drawImage(mountainLayer({ W: WW, H: WH, ridge: bank, xmask: x => clamp((1400 - x) / 200), depth: 100, tone: .4, rim: .8, rimW: 10, mist: .3, seed: 11 }), 0, 0);
   cun(LAY.bank.ink, { x0: 0, x1: 1250, ridge: bank, tone: .3, cun: .8, moss: 1, seed: 11, cunLen: .5 });
   cliff(LAY.bank.ink, 780, 812, 1.35, 9, 1);
-  for (const c of [LAY.bank.ink.wet, LAY.bank.ink.dry]) {   // 岸石下半消失在江雾里（不留硬边）
+  for (const c of [LAY.bank.ink.wet, LAY.bank.ink.dry]) {   // lower half of the bank rocks vanishes into the river mist (no hard edge)
     c.globalCompositeOperation = 'destination-in'; const g = c.createLinearGradient(0, 930, 0, 1075);
     g.addColorStop(0, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, WW, WH); c.globalCompositeOperation = 'source-over';
   }
-  for (let i = 0; i < 3; i++) {       // 岸上远树：一竖 + 一团点叶
+  for (let i = 0; i < 3; i++) {       // distant trees on the bank: one vertical stroke + a clump of dotted leaves
     const x = 380 + i * 170, y = 735 + i * 6;
     draw(LAY.bank.ink, mk([[x, y], [x + 3, y - 50], [x - 2, y - 90]], { w: 3.4, tone: .8, dry: .5, prof: 'tip', seed: 60 + i }));
     const R = mulberry(i + 3); for (let k = 0; k < 16; k++) blot(LAY.bank.ink.wet, x + (R() - .5) * 40, y - 90 + (R() - .5) * 34, 4 + R() * 5, .5, 0, .6, k + i * 20);
   }
 }
 
-// 世界 → 屏幕
+// World → screen
 export const camXf = cam => ({ s: cam.z, tx: 960 - cam.x * cam.z, ty: 540 - cam.y * cam.z });
 export function blit(A, lay, cam, am = 1) {
   const { s, tx, ty } = camXf(cam);
@@ -55,7 +55,7 @@ export function blit(A, lay, cam, am = 1) {
 }
 export const layers = () => LAY;
 
-// 墨晕显现蒙版（低分辨率，世界坐标噪声）：返回 {mask, rim}
+// Ink-bloom reveal mask (low resolution, noise in world coordinates): returns {mask, rim}
 const MW = 480, MH = 270;
 let mk1 = null;
 function revealMasks(cam, center, R) {
@@ -75,7 +75,7 @@ function revealMasks(cam, center, R) {
   cm.putImageData(im, 0, 0); cr.putImageData(ir, 0, 0);
   return mk1;
 }
-// 把一个缓存层按墨晕蒙版贴进 A（前沿加一圈积墨）
+// Paste a cached layer into A through the ink-bloom mask (with a ring of jimo (积墨, pooled ink) at the front)
 function blitReveal(A, TMP, lay, cam, center, R) {
   if (R <= 0) return;
   if (R > 6000) return blit(A, lay, cam);
@@ -88,7 +88,7 @@ function blitReveal(A, TMP, lay, cam, center, R) {
     c.globalCompositeOperation = 'source-over';
     A.ink[k].save(); A.ink[k].setTransform(1, 0, 0, 1, 0, 0); A.ink[k].drawImage(TMP[k], 0, 0); A.ink[k].restore();
   }
-  // 前沿积墨：层的湿墨 × 前沿带
+  // Pooled ink at the front: the layer's wet ink × the front band
   const c = TMP.ink.wet; c.clearRect(0, 0, 1920, 1080);
   c.drawImage(lay.wet, tx, ty, WW * s, WH * s);
   c.globalCompositeOperation = 'destination-in'; c.drawImage(M.r, 0, 0, 1920, 1080); c.globalCompositeOperation = 'source-over';
@@ -99,7 +99,7 @@ export function openCam(t) {
   const u = eio(clamp((t - T.panA) / (T.panB - T.panA)));
   return { x: lerp(4560, 3000, u), y: 540, z: 1 };
 }
-// 侠客在第 1–2 镜的姿势/位置
+// The swordsman's pose/position in shots 1–2
 function heroOpen(t) {
   if (t < T.crouch) return { P: POSE.stand, x: HERO0[0], y: HERO0[1] };
   if (t < T.leap) return { P: mixPose(POSE.stand, POSE.skid, ss((t - T.crouch) / (T.leap - T.crouch)) * .6), x: HERO0[0], y: HERO0[1] };
@@ -110,14 +110,14 @@ export function leapScreen(t) { const h = heroOpen(Math.min(t, T.x3a)), cam = op
 
 export function renderOpen(A, t, TMP) {
   const cam = openCam(t), { s, tx, ty } = camXf(cam), L = A.ink;
-  // 远山、中山：墨滴晕开
+  // Distant and middle mountains: ink drop bleeds
   const R1 = t < T.dropHit ? 0 : 3000 * Math.pow(eo(clamp((t - T.dropHit) / (T.bloomEnd - T.dropHit))), 1.2);
   blitReveal(A, TMP, LAY.mtn, cam, DROP, R1);
-  // 崖与松：第二滴墨晕出
+  // Cliff and pine: a second ink drop bleeds in
   const R2 = t < T.cliffBloom ? 0 : 1100 * eo(clamp((t - T.cliffBloom) / 2.4));
   blitReveal(A, TMP, LAY.cliff, cam, [3720, 790], R2);
   A.xf(s, tx, ty);
-  // 墨滴：落下、落纸成一团、慢慢化进山里
+  // Ink drop: falls, lands as a blot, slowly dissolves into the mountains
   if (t >= T.dropFall && t < T.dropHit) {
     const u = (t - T.dropFall) / (T.dropHit - T.dropFall), y = lerp(-40, DROP[1], u * u);
     A.cw.globalAlpha = .9; A.cw.fillStyle = '#000'; A.cw.beginPath(); A.cw.ellipse(DROP[0], y, 7, 11 + 8 * u, 0, 0, 7); A.cw.fill();
@@ -132,7 +132,7 @@ export function renderOpen(A, t, TMP) {
       blot(A.cd, DROP[0], DROP[1], 5 + 6 * eo(u), .6 * f * (1 - u * .6), .4, .8, 2);
     }
   }
-  // 片名：竖排两行 + 印（写在卷上，随卷移动）
+  // Film title: two vertical lines + seal (written on the scroll, moving with it)
   const ta = Math.min(clamp((t - T.titleIn) / .8), 1 - clamp((t - T.titleOut) / .6));
   if (ta > 0) {
     const wx = 3830, c = A.cd;
@@ -144,7 +144,7 @@ export function renderOpen(A, t, TMP) {
     }
     seal(A.cc, wx - 44, 740, 64, ta * .95, 5);
   }
-  // 侠客：三笔画出（袍、笠、剑）→ 静立 → 蹲 → 起跳
+  // Swordsman: drawn in three strokes (robe, hat, sword) → stands still → crouches → jumps
   if (t >= T.paint[0]) {
     const t12 = Math.floor(t * 12) / 12;
     const pp = t < T.paint[1] ? .45 * eo(clamp((t - T.paint[0]) / .35)) : t < T.paint[2] ? .45 + .35 * eo(clamp((t - T.paint[1]) / .35)) : .8 + .2 * eo(clamp((t - T.paint[2]) / .4));

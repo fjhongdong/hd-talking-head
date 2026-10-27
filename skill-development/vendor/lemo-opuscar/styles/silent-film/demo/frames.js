@@ -1,4 +1,4 @@
-// Gate-1 sheets: model sheet, style frames, redraw sample (?scene=frames.xxx)
+// Sheets: model sheet, style frames, redraw sample (?scene=frames.xxx)
 import { drawFigure, P0, runPose } from './engine/figure.js';
 import { Redraw } from './engine/redraw.js';
 import { FilmPost, damage } from './engine/film.js';

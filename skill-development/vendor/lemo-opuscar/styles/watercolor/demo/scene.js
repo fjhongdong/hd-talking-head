@@ -1,6 +1,6 @@
-// ---------- 时间轴 ----------
+// ---------- timeline ----------
 const DUR = 113.6; window.DUR = DUR;
-const VO = [ // id, 开始, 时长, 英文, 中文
+const VO = [ // id, start, duration, English, Chinese
   ['v01', 3.8, 5.9, 'Australia is the driest inhabited continent. To understand its plants, follow the rain.', '澳大利亚是最干旱的有人居住的大陆。想读懂它的植物，就跟着雨走。'],
   ['v02', 11.8, 4.25, 'At the red centre, less than 250 millimetres falls in a year.', '在红色中心，一年的降雨不到 250 毫米。'],
   ['v03', 17.2, 4.46, 'Spinifex curls into spiky hummocks. They cover about a fifth of the land.', '三齿稃（spinifex）卷成带刺的草丘，覆盖约五分之一的国土。'],
@@ -35,7 +35,7 @@ const FIRE = { x0: 5650, x1: 6900 };
 const fireT0 = x => 41.6 + (x - FIRE.x0) / (FIRE.x1 - FIRE.x0) * 3.0;
 const regrowT0 = x => 47.4 + (x - FIRE.x0) / (FIRE.x1 - FIRE.x0) * 1.6;
 
-// ---------- 世界 ----------
+// ---------- world ----------
 const PL = { far: [], mid: [], main: [], fg: [] };
 const HERO = {};
 function add(lay, wx, gen, sc, o = {}) {
@@ -47,7 +47,7 @@ function add(lay, wx, gen, sc, o = {}) {
   return pl;
 }
 function build() {
-  // 主层：主角先放
+  // main layer: hero plants placed first
   HERO.spin = add('main', 1450, spinifex, 1.7, { dy: 16 });
   HERO.oak1 = add('main', 880, desertOak, 1.25, { dy: 4, sway: .012 });
   HERO.oak2 = add('main', 2230, desertOak, 1.1, { dy: 2, sway: .012 });
@@ -73,14 +73,14 @@ function build() {
       wx += rnd(70, 110);
     }
   }
-  // 火区植物：记下燃烧/萌发状态
+  // fire-zone plants: record burnt/resprouting state
   for (const pl of PL.main) if (pl.wx > FIRE.x0 && pl.wx < FIRE.x1) {
     pl.fire = { ft: fireT0(pl.wx), rg: regrowT0(pl.wx) };
     pl.burnt = sprite(pl.g.woody || pl.st, '#2a2320');
     if (pl.g.shoots) pl.shoots = pl.g.shoots;
     else pl.shoots = tussock(rnd(.6, .8), ['#8fbf5a', '#7fb24f', '#9fcb62'], 10).S;
   }
-  // 中景
+  // midground
   for (let wx = -1300; wx < 12500;) {
     const z = zoneJit(wx, 300);
     if (z === 'desert') { add('mid', wx, rnd() < .25 ? desertOak : spinifex, rnd(.5, .9)); wx += rnd(220, 420); }
@@ -89,7 +89,7 @@ function build() {
     else if (z === 'wet') { if (rnd() < .6) add('mid', wx, ash, rnd(.5, .6)); add('mid', wx + rnd(0, 80), treeFern, rnd(.7, .9)); wx += rnd(110, 170); }
     else { add('mid', wx, rnd() < .8 ? rfTree : fanPalm, rnd(.7, .95), { args: [{ noButt: true }] }); add('mid', wx + rnd(0, 60), shrub, rnd(.8, 1.1)); wx += rnd(60, 100); }
   }
-  // 远景
+  // background
   HERO.uluru = add('far', 2540, uluru, 1, { dy: 0, extra: { alpha: .92, cxFade: [3700, 4700] } });
   for (let wx = 2600; wx < 13000;) {
     const z = zoneJit(wx, 300);
@@ -97,7 +97,7 @@ function build() {
     if (z !== 'desert') add('far', wx, farTree, rnd(.8, 1.2), { args: [cols, z === 'wet' ? 1.8 : 1], dy: rnd(-40, 0) + ridgeFar(wx) });
     wx += z === 'mulga' ? rnd(260, 520) : z === 'wood' ? rnd(160, 300) : rnd(110, 190);
   }
-  // 前景
+  // foreground
   for (let wx = -800; wx < 12500;) {
     const z = zoneJit(wx, 200);
     const gen = z === 'desert' ? spinifex : z === 'mulga' ? saltbush : z === 'wood' ? tussock : z === 'wet' ? groundFern : groundFern;
@@ -105,7 +105,7 @@ function build() {
     wx += z === 'rain' ? rnd(300, 500) : rnd(600, 1000);
   }
   for (const k in PL) PL[k].sort((a, b) => a.dy - b.dy);
-  // 天空的云
+  // clouds in the sky
   for (let wx = 4200; wx < 13000;) {
     const z = zoneOf(wx);
     CLOUDS.push({ wx, xl: wx * .2, y: rnd(130, 360), g: cloud(rnd(.7, 1.2), z === 'rain' || z === 'wet' ? '#9aa9ae' : '#b6c0c0') });
@@ -117,8 +117,8 @@ function build() {
 }
 const CLOUDS = [];
 
-// 远/中景山脊轮廓（相对各自地平线的高度，负值向上）
-function ampAt(wx, table) { // 在区块间平滑过渡
+// far/mid ridge profiles (height relative to each layer's horizon, negative is up)
+function ampAt(wx, table) { // smooth transition between zones
   let v = 0, wsum = 0;
   for (const [name, a, b] of ZONES) { const c = (a + b) / 2, half = (b - a) / 2 + 300; const w = clamp(1 - Math.abs(wx - c) / half) ** 2; v += w * table[name]; wsum += w; }
   return v / (wsum || 1);
@@ -154,29 +154,29 @@ function washPoly(c, pts, fill, a, passes = 3, jit = 5) {
   c.globalAlpha = 1;
 }
 function buildStrips() {
-  // 远景：两层山
+  // background: two layers of hills
   const F = STRIP.far = mkStrip(.25, 150, 1500, -6000), gF = LAY.far.gy;
   for (const [band, dy, a] of [['far2', -40, .5], ['far', 0, .62]]) {
     const pts = []; for (let wx = -6000; wx <= 13000; wx += 16) { pts.push([wx * .25, gF + dy + ridgeFar(wx + (band === 'far2' ? 3000 : 0)) * (band === 'far2' ? 1.3 : 1)]); }
     pts.push([13000 * .25, 1500], [-6000 * .25, 1500]);
     washPoly(F.c, pts, zoneGrad(F.c, .25, ZCOL[band], 0), a);
   }
-  // 中景地面
+  // midground ground
   const M = STRIP.mid = mkStrip(.55, 200, 1500, -4000), gM = LAY.mid.gy;
   { const pts = []; for (let wx = -4000; wx <= 13000; wx += 12) pts.push([wx * .55, gM + ridgeMid(wx)]); pts.push([13000 * .55, 1500], [-4000 * .55, 1500]); washPoly(M.c, pts, zoneGrad(M.c, .55, ZCOL.mid, 0), .5); }
-  // 雨林背后的林墙：层层叠叠的树冠
+  // forest wall behind the rainforest: layer upon layer of canopy
   for (const [col, lift, a] of [['#8fab92', 250, .45], ['#5f8a68', 170, .5]]) {
     const pts = [];
     for (let wx = 7900; wx <= 13000; wx += 14) { const k = ss(seg(wx, 8200, 9000)); pts.push([wx * .55, gM - k * (lift + fbm(wx / 140 + lift) * 90 + Math.abs(Math.sin(wx / 55 + lift)) * 26)]); }
     pts.push([13000 * .55, gM + 10], [7900 * .55, gM + 10]); washPoly(M.c, pts, col, a, 3, 3);
   }
   for (let wx = 8300; wx < 13000; wx += rnd(10, 22)) { const k = ss(seg(wx, 8300, 9000)); if (rnd() > k) continue; const y = gM - rnd(20, 230) * k; drawS(M.c, mk(qcurve(wx * .55, y, wx * .55 + rnd(8, 16), y + rnd(-4, 4), 2, 4), rnd(7, 12), pick(COL.rain), { prof: 'leaf', nb: 0, a: .45 })); }
-  // 主层地面
+  // main-layer ground
   const G = STRIP.ground = mkStrip(1, 735, 1080), gG = LAY.main.gy;
   { const pts = []; for (let wx = -1600; wx <= 13000; wx += 20) pts.push([wx, gG + 2 + Math.sin(wx / 300) * 2]); pts.push([13000, 1080], [-1600, 1080]);
     const grad = zoneGrad(G.c, 1, ZCOL.ground, 0); washPoly(G.c, pts, grad, .5);
     const v = G.c.createLinearGradient(0, gG, 0, 1080); v.addColorStop(0, 'rgba(241,233,218,0)'); v.addColorStop(1, 'rgba(241,233,218,.55)'); G.c.fillStyle = v; G.c.fillRect(-1600, gG, 14600, 1080 - gG); }
-  // 地面纹理：沙纹 / 草 / 落叶
+  // ground texture: sand ripples / grass / leaf litter
   for (let wx = -1500; wx < 12900;) {
     const z = zoneOf(wx), y = rnd(gG + 20, 1060);
     if (z === 'desert') { const L = rnd(80, 220); drawS(G.c, mk(qcurve(wx, y, wx + L, y + rnd(-6, 6), rnd(-10, 10), 10), rnd(2, 3.5), '#c07e57', { prof: 'leaf', nb: 0, a: .45 })); wx += rnd(20, 70); }
@@ -195,12 +195,12 @@ function buildHorizon() {
   }
 }
 
-// ---------- 绘制：风景 ----------
+// ---------- drawing: landscape ----------
 const lx = (l, xl, cx) => 960 + xl - cx * LAY[l].par;
 function drawStripAt(S, cx, cy, reveal) {
   const X = 960 - cx * S.par + S.x0, Y = S.yTop + cy * S.par;
   ctx.save();
-  if (reveal < 1) { // 刷子边缘的揭开
+  if (reveal < 1) { // reveal along the brush edge
     const R = lerp(-150, 2100, reveal); ctx.beginPath(); ctx.moveTo(-10, -10);
     for (let y = -10; y <= 1090; y += 40) ctx.lineTo(R + (vnoise(y * .02) - .5) * 160, y);
     ctx.lineTo(-10, 1090); ctx.closePath(); ctx.clip();
@@ -247,7 +247,7 @@ function drawSky(t, cx, cy) {
     g.addColorStop(0, rgba(PAPER, 0)); g.addColorStop(1, rgba(mixZone(cx, ZCOL.sky), .9 * a));
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, LAY.main.gy + cy);
   }
-  // 朱红太阳：像一方印
+  // vermilion sun: like a seal stamp
   const sa = ss(seg(t, 1.6, 2.1)) * (1 - .75 * ss(seg(cx, 3800, 6000))) * (1 - ss(seg(cx, 6600, 7400)));
   if (sa > 0) {
     const pop = 1 + .12 * (1 - eo(seg(t, 1.6, 2.2)));
@@ -280,7 +280,7 @@ function mistBand(y0, y1, a, col = PAPER) {
   ctx.fillStyle = g; ctx.fillRect(0, y0, W, y1 - y0);
 }
 
-// ---------- 动物 ----------
+// ---------- animals ----------
 const BEAT0 = 11.865, BEAT = .5805;
 function roo(X, Y, s, ph, seed) {
   const air = ph < .62, h = air ? Math.sin(Math.PI * ph / .62) : 0, lift = h * 40 * s;
@@ -305,7 +305,7 @@ function roo(X, Y, s, ph, seed) {
 function cassowary(X, Y, s, t) {
   const ph = t * 2.2;
   withSeed(91, () => {
-    ctx.save(); ctx.translate(X, Y); ctx.scale(-s, s); // 面朝左
+    ctx.save(); ctx.translate(X, Y); ctx.scale(-s, s); // facing left
     const bob = Math.abs(Math.sin(ph)) * 3;
     for (const k of [0, 1]) { const a = Math.sin(ph + k * Math.PI) * .35; drawS(ctx, mk(qcurve(k * 6, -44 - bob, k * 6 + Math.sin(a) * 40, 0, 4, 5), 5, '#5f5a50', { prof: 'even', nb: 0 })); }
     drawS(ctx, mk(qcurve(-34, -58 - bob, 22, -66 - bob, -22, 9), 34, '#1f1b19', { prof: 'leaf', nb: 0 }));
@@ -345,7 +345,7 @@ function budgies(t) {
     ctx.restore();
   }
 }
-// 火焰：几笔渐细的暖色
+// flames: a few tapering warm strokes
 function flame(X, Y, h, t, i) {
   if (h < 2) return;
   withSeed(300 + i, () => {
@@ -359,7 +359,7 @@ function flame(X, Y, h, t, i) {
 function drawFire(t, cx, cy) {
   if (t < 41.4 || t > 49.5) return;
   const gy = LAY.main.gy + cy;
-  // 烟
+  // smoke
   for (let k = 0; k < 26; k++) {
     const x = FIRE.x0 + hash(k) * (FIRE.x1 - FIRE.x0), ft = fireT0(x), age = t - ft - .3; if (age < 0 || age > 6) continue;
     const X = 960 + x - cx + age * 34, Y = gy - 80 - age * (80 + hash(k + 4) * 50), r = 90 + age * 60;
@@ -404,7 +404,7 @@ function drawRain(t, cx) {
   ctx.stroke();
 }
 
-// ---------- 注释（手写） ----------
+// ---------- annotations (handwritten) ----------
 function hand(txt, x, y, p, o = {}) {
   if (p <= 0) return;
   ctx.save(); ctx.font = `${o.w || 500} ${o.size || 30}px Caveat`; ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'middle';
@@ -431,7 +431,7 @@ function note(t, t0, t1, ax, ay, lx_, ly_, txt, o = {}) {
 const scr = (pl, lxx, lyy, t) => [lx(pl.lay, pl.xl, camXf(t)) + lxx, LAY[pl.lay].gy + pl.dy + camYf(t) * LAY[pl.lay].par + lyy];
 
 function drawNotes(t) {
-  // 三齿稃
+  // spinifex
   { const [x, y] = scr(HERO.spin, 20, -70, t); note(t, 18.0, 22.8, x, y, x + 70, y - 150, 'spinifex  ·  Triodia'); }
   { const [x, y] = scr(HERO.uluru, 0, -52, t); note(t, 13.6, 21.0, x, y, x - 30, y - 90, 'Uluru', { size: 26, bend: 8 }); }
   { const [x, y] = scr(HERO.mulga, 40, -150, t); note(t, 27.4, 33.2, x, y, x + 110, y - 150, 'branches up, rain runs down'); }
@@ -439,7 +439,7 @@ function drawNotes(t) {
   { const pl = PL.main.find(p => p.fire && p.g.woody && p.wx > 6050); if (pl) { const [x, y] = scr(pl, pl.g.fork[0] * .5, pl.g.fork[1] * .5, t); note(t, 49.0, 52.2, x, y, x + 90, y - 170, 'epicormic shoots'); } }
   { const [x, y] = scr(HERO.ash, 90, 0, t); note(t, 52.6, 55.0, x + 4, y - 16, x + 70, y - 110, 'a person, for scale', { size: 26 }); }
   { const [x, y] = scr(HERO.ash, 10, -1000, t); note(t, 55.2, 59.0, x + 14, y, x + 150, y - 60, 'mountain ash  ·  Eucalyptus regnans'); }
-  // 雨林分层
+  // rainforest layers
   if (t > 63.6 && t < 70.4) {
     const f = 1 - ss(seg(t, 69.8, 70.4)); ctx.globalAlpha = f;
     const X = 92, lv = [['emergent', 262, 64.0], ['canopy', 410, 64.7], ['understorey', 590, 65.4], ['forest floor', 712, 66.1]];
@@ -447,7 +447,7 @@ function drawNotes(t) {
     for (const [txt, y, t0] of lv) { const q = seg(t, t0, t0 + .5); if (q <= 0) continue; ctx.beginPath(); ctx.moveTo(X - 8, y); ctx.lineTo(X + 8 * eo(q), y); ctx.stroke(); hand(txt, X + 18, y, seg(t, t0, t0 + 1), { size: 30 }); }
     ctx.globalAlpha = 1;
   }
-  // 王桉的尺寸线
+  // dimension line for the mountain ash
   if (t > 54.3 && t < 59.4) {
     const f = 1 - ss(seg(t, 58.9, 59.4)), [x, y] = scr(HERO.ash, 150, 0, t), topY = y + HERO.ash.g.top;
     const drawTo = Math.max(topY, lerp(y, topY, eo(seg(t, 54.3, 57.6))));
@@ -467,12 +467,12 @@ function tinyHuman(X, Y) {
 function mulgaRain(t, pl, X, Y) {
   if (t < 26.4 || t > 34) return;
   const g = pl.g, vis = 1 - ss(seg(t, 33, 34));
-  // 云
+  // cloud
   ctx.save(); ctx.setTransform(1, 0, 0, 1, X, Y);
   const ca = ss(seg(t, 26.4, 27.2)) * (1 - ss(seg(t, 31.5, 33)));
   if (!pl.cloud) pl.cloud = withSeed(12, () => sprite(cloud(.8, '#8fa2aa').S));
   ctx.globalAlpha = ca; ctx.drawImage(pl.cloud.cv, pl.cloud.x0, pl.cloud.y0 - 330); ctx.globalAlpha = 1;
-  // 土壤湿润 + 主根
+  // moist soil + taproot
   const wet = seg(t, 28.2, 32.5);
   if (wet > 0) { ctx.beginPath(); ctx.ellipse(0, 10, 18 + 60 * eo(wet), 8 + 14 * eo(wet), 0, 0, 7); ctx.fillStyle = rgba('#5a8fb0', .22 * vis); ctx.fill(); }
   const rp = seg(t, 29, 31.6);
@@ -507,7 +507,7 @@ function drawLandscape(t) {
     if (pl === HERO.koala && p >= 1 && t > 35 && t < 44) { const [fx, fy] = pl.g.fork; ctx.setTransform(1, 0, sk, 1, X, Y); koala(fx + 6, fy + 22, 1.25, ss(seg(t, 35.2, 36.2)), t); }
     if (pl === HERO.ash) { ctx.setTransform(1, 0, 0, 1, X, Y); tinyHuman(90, 0); }
   });
-  // 袋鼠：落地卡在音乐拍点上
+  // kangaroo: landings hit the music's beats
   if (t > 13.5 && t < 31) {
     const ph = (((t - BEAT0) / (BEAT * 2)) % 1 + 1) % 1;
     for (const [off, s, sd, d] of [[0, 1.3, 5, 0], [-170, .95, 6, .25]]) {
@@ -520,7 +520,7 @@ function drawLandscape(t) {
   budgies(t);
   drawPlants('fg', t, cx, cy);
   drawRain(t, cx);
-  // 火的暖光
+  // warm firelight
   const fl = ss(seg(t, 41.8, 43)) * (1 - ss(seg(t, 45.5, 47.2)));
   if (fl > 0) { ctx.fillStyle = rgba('#e07a3a', .07 * fl); ctx.fillRect(0, 0, W, H); }
 }

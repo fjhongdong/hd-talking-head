@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>兴登堡号：四分钟与三十二秒</title>
+<style>
+@font-face{font-family:SansSC;src:url(fonts/sans400.woff2) format('woff2');font-weight:400}
+@font-face{font-family:SansSC;src:url(fonts/sans500.woff2) format('woff2');font-weight:500}
+@font-face{font-family:SansSC;src:url(fonts/sans700.woff2) format('woff2');font-weight:700}
+@font-face{font-family:SerifSC;src:url(fonts/serif500.woff2) format('woff2');font-weight:500}
+@font-face{font-family:Mono;src:url(fonts/mono400.woff2) format('woff2');font-weight:400}
+@font-face{font-family:Mono;src:url(fonts/mono600.woff2) format('woff2');font-weight:600}
+@font-face{font-family:SerifI;src:url(fonts/serifi.woff2) format('woff2');font-style:italic;font-weight:400}
+html,body{margin:0;background:#0B0C0E;overflow:hidden}canvas{display:block}
+</style></head><body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// ───────── 兴登堡号：四分钟与三十二秒 ("Hindenburg: Four Minutes and Thirty-two Seconds") · Visual Investigation (library demo)─────────
+// Single-page Canvas 2D, drawn deterministically by window.render(t). Timing data is in film.json (shared by the page, the mix and the subtitles).
+const W = 1920, H = 1080;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const C = { bg:'#0B0C0E', panel:'#141619', line:'#2E3238', text:'#ECEAE4', dim:'#8B9097', faint:'#4A4F57', acc:'#FF4A2E' };
+const F = { sans:'SansSC', serif:'SerifSC', mono:'Mono, SansSC', it:'SerifI' };
+let FILM = null, SEC = {}, FR = 0, REC = null;
+
+// ── Utilities ──
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eo = k => 1 - Math.pow(1 - k, 3), eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const lerp = (a, b, k) => a + (b - a) * k;
+function rnd(s) { return function () { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const inS = (t, k) => t >= SEC[k][0] && t < SEC[k][1];
+const loc = (t, k) => t - SEC[k][0];
+
+// ── Assets ──
+const IM = {}, NYC = [], APP = [], FIRE = [], WAVE = {}; let GRAIN = [];
+function load(src) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => { console.warn('missing', src); r(null); }; i.src = src; }); }
+async function boot() {
+  FILM = await (await fetch('film.json')).json(); SEC = FILM.sections; window.DUR = FILM.dur;
+  for (const c of ['c1', 'c2']) WAVE[c] = await (await fetch(`assets/snd/${c}.json`)).json();
+  const L = [];
+  const files = { p13:'assets/fbi_p13.png', p20:'assets/fbi_p20.png', p39:'assets/fbi_p39.png', pasq:'assets/pasq.jpg', nh:'assets/nh.jpg', nara:'assets/nara.jpg',
+    usgs:'assets/usgs.jpg', ff:'assets/freeze_fire.jpg', fi:'assets/freeze_impact.jpg', wreck:'assets/wreck.jpg' };
+  for (const [k, s] of Object.entries(files)) L.push(load(s).then(i => IM[k] = i));
+  const seq = (arr, dir, n) => { for (let i = 1; i <= n; i++) L.push(load(`assets/${dir}/${String(i).padStart(3, '0')}.jpg`).then(im => arr[i - 1] = im)); };
+  seq(NYC, 'nyc', 108); seq(APP, 'app', 236); seq(FIRE, 'fire', 258);
+  for (const f of ['700 40px SansSC', '500 20px SansSC', '400 20px SansSC', '400 20px Mono', '600 20px Mono', 'italic 24px SerifI', '500 24px SerifSC']) L.push(document.fonts.load(f));
+  await Promise.all(L);
+  GRAIN = []; for (let g = 0; g < 6; g++) { const c = document.createElement('canvas'); c.width = c.height = 256; const gx = c.getContext('2d'); const d = gx.createImageData(256, 256); const r = rnd(g * 99 + 7);
+    for (let i = 0; i < d.data.length; i += 4) { const v = 128 + (r() + r() + r() - 1.5) * 120; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } gx.putImageData(d, 0, 0); GRAIN.push(c); }
+  window.READY = true;
+}
+
+// ── Drawing primitives ──
+function txt(s, X, Y, o = {}) {
+  x.save(); x.font = `${o.it ? 'italic ' : ''}${o.w || 400} ${o.s || 24}px ${o.f || F.sans}`; x.fillStyle = o.c || C.text; x.globalAlpha *= (o.a ?? 1);
+  x.textAlign = o.al || 'left'; x.textBaseline = 'alphabetic'; x.letterSpacing = (o.ls || 0) + 'px';
+  if (x.globalAlpha > 0.001) x.fillText(s, X, Y);
+  const w = x.measureText(s).width; x.restore();
+  // key text is registered for readcheck (counts only if it has an id and is more than half visible)
+  if (REC && o.id && (o.a ?? 1) * x.globalAlpha > 0.5) { const sz = o.s || 24, x0 = o.al === 'right' ? X - w : o.al === 'center' ? X - w / 2 : X;
+    REC.push({ id: o.id, text: s, x0, y0: Y - sz * .9, x1: x0 + w, y1: Y + sz * .25 }); }
+  return w;
+}
+function tw(s, o = {}) { x.save(); x.font = `${o.it ? 'italic ' : ''}${o.w || 400} ${o.s || 24}px ${o.f || F.sans}`; x.letterSpacing = (o.ls || 0) + 'px'; const w = x.measureText(s).width; x.restore(); return w; }
+function wrapLines(s, maxW, o) { const toks = /[一-鿿]/.test(s) ? [...s] : s.split(/(?<= )/); const out = []; let line = '';
+  for (const tk of toks) { if (tw(line + tk, o) > maxW && line) { out.push(line.trimEnd()); line = tk.trimStart(); } else line += tk; } if (line) out.push(line); return out; }
+function hair(x0, y0, x1, y1, c = C.line, w = 1, dash) { x.save(); x.strokeStyle = c; x.lineWidth = w; if (dash) x.setLineDash(dash); x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); x.restore(); }
+function rect(X, Y, w, h, c = C.line, lw = 1, dash) { x.save(); x.strokeStyle = c; x.lineWidth = lw; if (dash) x.setLineDash(dash); x.strokeRect(X + .5, Y + .5, w - 1, h - 1); x.restore(); }
+function fill(X, Y, w, h, c) { x.fillStyle = c; x.fillRect(X, Y, w, h); }
+function hatch(X, Y, w, h, c = '#1b1e22', step = 22) { x.save(); x.beginPath(); x.rect(X, Y, w, h); x.clip(); for (let q = X - h; q < X + w; q += step) hair(q, Y + h, q + h, Y, c); x.restore(); }
+// Ring callout: a thin circle drawn clockwise with progress (ease-out); at 60% a leader-line label comes out
+function ring(cx, cy, r, k, label, side = 1, sub, id) {
+  if (k <= 0) return; x.save(); x.strokeStyle = C.acc; x.lineWidth = 2.5;
+  x.beginPath(); x.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * eo(k)); x.stroke(); x.restore();
+  if (label && k > .6) { const a = seg(k, .6, .75); const lx = cx + side * (r * .72), ly = cy - r * .72, ex = lx + side * 40, ey = ly - 30;
+    x.save(); x.globalAlpha *= a; hair(lx, ly, ex, ey, C.acc, 1.5); hair(ex, ey, ex + side * 14, ey, C.acc, 1.5); x.restore();
+    txt(label, ex + side * 20, ey + 7, { s: 21, w: 700, al: side > 0 ? 'left' : 'right', a, id });
+    if (sub) txt(sub, ex + side * 20, ey + 30, { s: 14, f: F.mono, c: C.dim, al: side > 0 ? 'left' : 'right', a }); }
+}
+// Footage cell: unified grade (greyscale, more contrast, darker) + unified grain + thin border; document pages get a separate treatment (white paper pushed down to light grey)
+function plate(img, sx, sy, sw, sh, X, Y, w, h, o = {}) {
+  x.save(); x.globalAlpha *= (o.a ?? 1); fill(X, Y, w, h, '#000');
+  if (img) { x.filter = o.doc ? 'grayscale(1) contrast(1.05) brightness(0.86)' : o.map ? 'grayscale(1) brightness(0.62) contrast(1.1)' : 'grayscale(1) contrast(1.22) brightness(0.94)';
+    x.drawImage(img, sx, sy, sw, sh, X, Y, w, h); x.filter = 'none'; }
+  if (GRAIN.length && !o.map) { x.beginPath(); x.rect(X, Y, w, h); x.clip(); x.globalCompositeOperation = 'overlay'; x.globalAlpha *= o.doc ? .10 : .22;
+    const g = GRAIN[FR % 6]; for (let gy = Y; gy < Y + h; gy += 256) for (let gx = X; gx < X + w; gx += 256) x.drawImage(g, gx, gy); }
+  x.restore();
+  if (o.flash > 0) { x.save(); x.globalAlpha = o.flash * (o.a ?? 1); fill(X, Y, w, h, '#fff'); x.restore(); }
+  if (!o.noborder) rect(X, Y, w, h, o.border || C.line, o.bw || 1);
+}
+// Fill the cell without stretching (centre crop); returns the source-pixel → screen mapping, which ring callouts use for positioning
+function cover(img, X, Y, w, h, o = {}, fx = .5, fy = .5) {
+  if (!img) { plate(null, 0, 0, 1, 1, X, Y, w, h, o); return () => [X, Y]; }
+  const iw = img.width, ih = img.height; let sw = iw, sh = iw * h / w; if (sh > ih) { sh = ih; sw = ih * w / h; }
+  const sx = (iw - sw) * fx, sy = (ih - sh) * fy; plate(img, sx, sy, sw, sh, X, Y, w, h, o); const k = w / sw;
+  return (px, py) => [X + (px - sx) * k, Y + (py - sy) * k];
+}
+const full = (img, X, Y, w, h, o) => cover(img, X, Y, w, h, o);
+// Slow push-in: the source rectangle shrinks by k around the focal point (the push happens inside the picture; the "camera" doesn't move)
+function push(img, X, Y, w, h, k, fx = .5, fy = .5, z = 1.08, o) { if (!img) return; const iw = img.width, ih = img.height, s = 1 / lerp(1, z, k);
+  const sw = iw * s, sh = ih * s; plate(img, (iw - sw) * fx, (ih - sh) * fy, sw, sh, X, Y, w, h, o); }
+function tag(s, X, Y, o = {}) { // source tag: colour chip + small monospaced text (▌type · source · detail)
+  const w = txt(s, X + 14, Y, { s: o.s || 16, f: F.mono, c: o.c || C.text, w: 600, ls: 1, a: o.a ?? 1, id: o.id });
+  x.save(); x.globalAlpha *= o.a ?? 1; fill(X, Y - 11, 6, 12, o.chip || C.text); x.restore(); return w;
+}
+function badge(X, Y, t, at) { // corroboration badge: red box + hand-drawn check mark (no text)
+  const k = seg(t, at, at + .06); if (k <= 0) return; x.save(); x.globalAlpha *= k; const s = 1 + .3 * (1 - seg(t, at, at + .18)); x.translate(X, Y); x.scale(s, s);
+  x.fillStyle = 'rgba(11,12,14,0.85)'; x.fillRect(-15, -15, 30, 30); x.strokeStyle = C.acc; x.lineWidth = 2; x.strokeRect(-15, -15, 30, 30);
+  x.beginPath(); x.moveTo(-8, 0); x.lineTo(-2, 7); x.lineTo(9, -7); x.lineWidth = 3; x.stroke(); x.restore(); }
+function flashRect(t, at, X, Y, w, h, d = .14) { const k = 1 - seg(t, at, at + d); if (t < at || k <= 0) return; x.save(); x.globalAlpha = k; fill(X, Y, w, h, '#fff'); x.restore(); }
+function wave(c, X, Y, w, h, playK, a = 1) { // source-audio waveform bar: played part bright, unplayed part dim
+  const pk = WAVE[c].pk, n = pk.length, bw = w / n; x.save(); x.globalAlpha *= a;
+  for (let i = 0; i < n; i++) { const v = Math.max(.04, pk[i]) * h / 2; x.fillStyle = i / n < playK ? C.text : C.faint; x.fillRect(X + i * bw, Y - v, Math.max(1, bw - 1), v * 2); }
+  if (playK > 0 && playK < 1) hair(X + w * playK, Y - h / 2 - 6, X + w * playK, Y + h / 2 + 6, C.acc, 2);
+  x.restore();
+}
+
+// ── Time: event time = seconds since 1937-05-06 15:00:00 EST ──
+const T0 = 3 * 3600 + 25 * 60, ROPES = T0 - 240, IMPACT = T0 + 32;
+const TG = [ // telegrams (excerpts quoted from the report)
+  { s: 6120, at: 6.35, dir: '航空站 → 飞艇', q: '“…RECOMMEND DELAY LANDING…”', zh: '建议推迟着陆' },
+  { s: 6720, at: 7.0, dir: '飞艇 → 航空站', q: '“WE WILL WAIT…”', zh: '我们等着' },
+  { s: 8520, at: 7.65, dir: '航空站 → 飞艇', q: '“RECOMMEND LANDING NOW.”', zh: '建议现在着陆' },
+  { s: 11280, at: 8.3, dir: '航空站 → 飞艇', q: '“…RECOMMEND EARLIEST POSSIBLE LANDING.”', zh: '建议尽早着陆' } ];
+function clock(s) { if (s < -1) s = 0; const h = 15 + Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = Math.floor(s % 60); return `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`; }
+// Event clock (film time → event time): the waiting section runs in minutes, the 32-second section in seconds; the mix's second hits (audio/mix.py ev_t) use the same mapping
+const PKF = [[0, T0], [6.3, 2400], [6.35, 6120], [7.0, 6720], [7.65, 8520], [8.3, 11280], [12.3, 11640],
+  [31.8, T0], [32.2, T0], [32.8, T0 + 7], [36.5, IMPACT], [99, IMPACT]];
+function playhead(t) { let i = 0; while (i < PKF.length - 1 && t >= PKF[i + 1][0]) i++; const a = PKF[i], b = PKF[i + 1]; if (!b) return a[1];
+  return lerp(a[1], b[1], seg(t, a[0], b[0])); }
+
+// ── Subtitles: one Chinese line and one English line, never wrapped (width measured in the page), sitting at the very bottom of the frame ──
+const SUBY = [984, 1022];
+function subs(t) { for (const [a, b, zh, en] of FILM.subs) if (t >= a && t < b) {
+  x.save(); x.shadowColor = 'rgba(0,0,0,.95)'; x.shadowBlur = 10;
+  txt(zh, W / 2, SUBY[0], { s: 34, w: 700, al: 'center' }); txt(en, W / 2, SUBY[1], { s: 23, w: 500, c: '#D9D6CE', al: 'center' }); x.restore(); } }
+
+// ═════════ Sections (picture area y 60–900, subtitles below it)═════════
+function sOpen(t) { // 0–2.4 cold open: freeze frame slams in → four evidence streams → sync line → rewind
+  const G = [{ X: 60, Y: 60, w: 880, h: 400 }, { X: 980, Y: 60, w: 880, h: 400 }, { X: 60, Y: 500, w: 880, h: 390 }, { X: 980, Y: 500, w: 880, h: 390 }];
+  const big = t < 0.6, rw = seg(t, 2.0, 2.4);
+  const fr = big ? { X: 407, Y: 60, w: 1107, h: 830 } : G[0];
+  let mp; if (t < 2.0) mp = full(IM.ff, fr.X, fr.Y, fr.w, fr.h, { flash: big ? 1 - seg(t, 0, .13) : 1 - seg(t, .6, .7) });
+  else { const i = Math.max(2, 57 - Math.floor(rw * 57)); mp = full(FIRE[i], fr.X, fr.Y, fr.w, fr.h); } // rewind: the fire footage played backwards
+  const rk = big ? seg(t, .1, .5) : 1; const [cx, cy] = mp(330, 380); if (t < 2.0) ring(cx, cy, big ? 90 : 58, rk);
+  txt('18:25:00 EST', fr.X + fr.w - 16, fr.Y + 44, { s: big ? 34 : 22, f: F.mono, w: 600, c: C.acc, al: 'right', a: seg(t, .2, .25) * (1 - rw) });
+  if (!big) {
+    if (t >= .6) { const f = 1 - seg(t, .6, .74), s = 880 / 1330; plate(IM.p39, 150, 400, 1330, 605, G[1].X, G[1].Y, G[1].w, G[1].h, { doc: 1, flash: f, a: 1 - rw });
+      x.save(); x.globalAlpha = 1 - rw; x.globalCompositeOperation = 'multiply'; fill(G[1].X + 545 * s, G[1].Y + 40 * s, 760 * s * seg(t, .8, 1.1), 38 * s, 'rgba(255,74,46,0.6)'); x.restore(); }
+    if (t >= .9) plate(IM.pasq, 0, 250, 2400, 1064, G[2].X, G[2].Y, G[2].w, G[2].h, { flash: 1 - seg(t, .9, 1.04), a: 1 - rw });
+    if (t >= 1.2) { x.save(); x.globalAlpha = 1 - rw; fill(G[3].X, G[3].Y, G[3].w, G[3].h, C.panel); rect(G[3].X, G[3].Y, G[3].w, G[3].h);
+      txt('“…the first open flame… appeared on the top of the ship', G[3].X + 40, G[3].Y + 176, { s: 30, f: F.it, it: 1 });
+      txt('forward of the entering edge of the vertical fin…”', G[3].X + 40, G[3].Y + 222, { s: 30, f: F.it, it: 1 });
+      flashRect(t, 1.2, G[3].X, G[3].Y, G[3].w, G[3].h); x.restore(); }
+    const sw = seg(t, 1.5, 1.8); if (sw > 0 && sw < 1) { const sx = lerp(40, 1880, eo(sw)); hair(sx, 50, sx, 900, C.acc, 2.5); }
+    if (t > 1.8 && t < 2.0) hair(40, 480, 1880, 480, C.acc, 1, [2, 6]);
+  }
+  if (rw > 0) { x.save(); x.globalAlpha = rw * .6; for (let k = 0; k < 7; k++) { const yy = 60 + ((FR * 37 + k * 131) % 830); fill(60, yy, 1800, 2, '#fff'); } x.restore(); }
+}
+
+function sTitle(t) { // 2.4–6.3 title package: aerial over New York + title + lower third
+  const l = loc(t, 'title'); const i = Math.min(107, Math.floor(l * 30));
+  full(NYC[i], 60, 60, 1040, 780, { flash: 1 - seg(l, 0, .12) });
+  const X0 = 1170, k = seg(l, .05, .1);
+  txt('视觉调查', X0, 250, { s: 22, w: 700, c: C.acc, ls: 6, a: k, id: 'kick' });
+  txt('兴登堡号', X0, 382, { s: 108, w: 700, a: k, id: 'title1' });
+  const k3 = seg(l, .1, .15); txt('四分钟与三十二秒', X0, 476, { s: 68, w: 700, a: k3, id: 'title2' });
+  txt('THE HINDENBURG: FOUR MINUTES, 32 SECONDS', X0 + 3, 526, { s: 19, f: F.mono, c: C.dim, ls: 1, a: k, id: 'title3' });
+  hair(X0, 570, lerp(X0, 1860, eo(seg(l, .5, 1.0))), 570, C.line);
+  const k4 = seg(l, .1, .2); x.save(); x.globalAlpha = k4; const lx = lerp(X0 - 40, X0, eo(seg(l, .2, .5)));
+  fill(lx, 650, 6, 74, C.acc); txt('新泽西 · 莱克赫斯特', lx + 24, 686, { s: 36, w: 700, id: 'lt1' }); txt('NAS LAKEHURST', lx + 26, 716, { s: 17, f: F.mono, c: C.dim, ls: 2, id: 'lt2' }); x.restore();
+}
+
+function sWait(t) { // 6.3–12.3 waiting: telegram cards + ground-wind chart (one shared time axis, the playhead moves in minutes)
+  const CX0 = 200, CX1 = 1860, S0 = 2000, S1 = 12600, X = s => CX0 + (s - S0) / (S1 - S0) * (CX1 - CX0);
+  const CY0 = 870, CH = 230, kn = v => CY0 - v / 20 * CH, ka = seg(t, 6.3, 6.4);
+  // chart
+  x.save(); x.globalAlpha = ka;
+  fill(X(2580), CY0 - CH, X(6300) - X(2580), CH, 'rgba(255,74,46,0.10)'); txt('雷暴', X(2580) + 12, CY0 - CH + 28, { s: 20, w: 700, c: C.acc });
+  hatch(X(7200), CY0 - CH, X(10800) - X(7200), CH, '#1c1f23', 14); txt('阵雨', X(7200) + 12, CY0 - CH + 28, { s: 20, w: 700, c: C.dim });
+  txt('地面风 · 节', 60, CY0 - CH - 22, { s: 22, w: 700, id: 'windT' }); txt('据商务部报告', 60 + tw('地面风 · 节', { s: 22, w: 700 }) + 16, CY0 - CH - 22, { s: 15, c: C.faint });
+  [0, 10, 20].forEach(v => { hair(CX0, kn(v), CX1, kn(v), v ? '#1d2025' : C.line); txt(String(v), CX0 - 12, kn(v) + 5, { s: 14, f: F.mono, c: C.faint, al: 'right' }); });
+  [3600, 7200, 10800].forEach(s => { hair(X(s), CY0, X(s), CY0 + 8, C.dim); txt(clock(s).slice(0, 5), X(s), CY0 + 30, { s: 15, f: F.mono, c: C.dim, al: 'center' }); });
+  const pts = [[7920, 8, '17:12 · 8 节', 7.4], [10800, 4, '18:00 · 4 节', 8.0], [11880, 1, '≈ 着陆 · 1 节', 9.4]];
+  let prev = null; pts.forEach(([s, v, lab, at]) => { const k = seg(t, at, at + .15); if (k <= 0) return; const px = X(s), py = kn(v);
+    if (prev) hair(prev[0], prev[1], lerp(prev[0], px, k), lerp(prev[1], py, k), C.text, 2.5);
+    x.fillStyle = C.text; x.beginPath(); x.arc(px, py, 6, 0, 7); x.fill(); txt(lab, px + (s > 11000 ? -12 : 12), py + (s > 11000 ? 30 : -16), { s: 18, w: 700, al: s > 11000 ? 'right' : 'left', a: k }); prev = [px, py]; });
+  // playhead: event clock
+  const ph = playhead(t), px = X(ph); hair(px, CY0 - CH - 4, px, CY0, C.acc, 2); txt(clock(ph).slice(0, 5), px, CY0 - CH - 12, { s: 16, f: F.mono, w: 600, c: C.acc, al: 'center' });
+  x.restore();
+  // telegram cards: drop in at their times (white flash + typewriter), a red leader line lands on that time in the chart
+  const pos = [[60, 60], [990, 60], [60, 300], [990, 300]], cw = 870, chh = 210;
+  TG.forEach((g, i) => { if (t < g.at) return; const [cx, cy] = pos[i]; x.save(); x.globalAlpha = .55; hair(cx + cw / 2, cy + chh, X(g.s), CY0, C.acc, 1, [3, 4]); x.restore();
+    x.fillStyle = C.acc; x.beginPath(); x.moveTo(X(g.s), CY0 - 7); x.lineTo(X(g.s) + 6, CY0); x.lineTo(X(g.s), CY0 + 7); x.lineTo(X(g.s) - 6, CY0); x.fill(); });
+  TG.forEach((g, i) => { const k = seg(t, g.at, g.at + .04); if (k <= 0) return; const [cx, cy] = pos[i];
+    x.save(); x.globalAlpha = k; fill(cx, cy, cw, chh, '#E4E0D4'); x.restore();
+    x.save(); x.globalAlpha = .1; x.globalCompositeOperation = 'multiply'; x.drawImage(GRAIN[(FR + i) % 6], cx, cy, cw, chh); x.restore();
+    rect(cx, cy, cw, chh, '#bdb8aa');
+    const ink = '#1d1d1b'; txt(g.dir, cx + 28, cy + 46, { s: 18, w: 500, c: '#55524a' });
+    txt(clock(g.s).slice(0, 5), cx + cw - 28, cy + 48, { s: 30, f: F.mono, w: 600, c: C.acc, al: 'right', id: 'tgt' + i });
+    hair(cx + 28, cy + 68, cx + cw - 28, cy + 68, '#bdb8aa');
+    const n = Math.floor(seg(t, g.at, g.at + .45) * g.q.length); txt(g.q.slice(0, n), cx + 28, cy + 124, { s: 30, f: F.mono, w: 600, c: ink });
+    if (REC) REC.push({ id: 'tgq' + i, text: g.q, x0: cx + 28, y0: cy + 96, x1: cx + 28 + tw(g.q, { s: 30, f: F.mono, w: 600 }), y1: cy + 132 });
+    txt(g.zh, cx + 28, cy + 180, { s: 30, w: 700, c: ink, id: 'tgz' + i });
+    flashRect(t, g.at, cx, cy, cw, chh, .12); });
+  const ku = eo(seg(t, 9.8, 10.3)); if (ku > 0) { const [cx, cy] = pos[3]; const s0 = '“…RECOMMEND '.length, s1 = '“…RECOMMEND EARLIEST POSSIBLE'.length;
+    const a = cx + 28 + tw(TG[3].q.slice(0, s0), { s: 30, f: F.mono, w: 600 }), b = cx + 28 + tw(TG[3].q.slice(0, s1), { s: 30, f: F.mono, w: 600 }); hair(a, cy + 134, lerp(a, b, ku), cy + 134, C.acc, 3); }
+}
+
+function sPos(t) { // 12.3–18.6 position: USGS map → plan view (schematic) + mooring-mast reference photo + ring callout on the approach footage
+  const P = { x: 60, y: 92, w: 1000, h: 800 };
+  if (t < 14.8) { // map: slow push toward the air station
+    const k = eio(seg(t, 12.3, 14.8)), s = lerp(1.3, 2.1, k); const sw = 2400 / s, sh = sw * P.h / P.w;
+    const fx = lerp(1200, 1080, k), fy = lerp(750, 760, k); plate(IM.usgs, fx - sw / 2, fy - sh / 2, sw, sh, P.x, P.y, P.w, P.h, { map: 1, flash: 1 - seg(t, 12.3, 12.42) });
+    const sc = P.w / sw;
+    const rx = P.x + (820 - (fx - sw / 2)) * sc, ry = P.y + (560 - (fy - sh / 2)) * sc; const rk = eo(seg(t, 12.35, 12.6));
+    if (rk > 0) { x.save(); x.beginPath(); x.rect(P.x, P.y, P.w, P.h); x.clip(); rect(rx, ry, 760 * sc * rk, 520 * sc * rk, C.acc, 2); x.restore();
+      const la = seg(rk, .8, 1); x.save(); x.globalAlpha = la; fill(rx, ry - 44, tw('航空站', { s: 24, w: 700 }) + 24, 38, C.acc); x.restore();
+      txt('航空站', rx + 12, ry - 16, { s: 24, w: 700, c: '#0B0C0E', a: la, id: 'nas' }); }
+    const bl = 150 * sc; hair(P.x + P.w - 40 - bl, P.y + P.h - 36, P.x + P.w - 40, P.y + P.h - 36, C.text, 2); // true scale bar: 1,000 ft = 150 source px
+    txt('1,000 ft', P.x + P.w - 40, P.y + P.h - 48, { s: 15, f: F.mono, c: C.text, al: 'right' });
+    tag('USGS 1947', P.x, 76, { id: 'mapTag' });
+  } else planPanel(t, P, 1);
+  // top-right: mooring-mast reference photo (an earlier docking, NARA 518856; cropped to the bow and the mast only)
+  const R1 = { x: 1100, y: 92, w: 760, h: 380 }; const k1 = seg(t, 13.0, 13.04);
+  if (k1 > 0) { x.save(); x.beginPath(); x.rect(R1.x, R1.y, R1.w, R1.h); x.clip(); fill(R1.x, R1.y, R1.w, R1.h, C.bg);
+    const sx = 1150, sw = 1250, sh = sw * R1.h / R1.w, sy = 1180 - sh / 2, z = lerp(1, 1.06, seg(t, 13, 18.6));
+    plate(IM.nara, sx + sw * (1 - 1 / z) / 2, sy + sh * (1 - 1 / z) / 2, sw / z, sh / z, R1.x, R1.y, R1.w, R1.h, { flash: 1 - seg(t, 13.0, 13.14) }); x.restore();
+    ring(R1.x + (2130 - sx) / sw * R1.w, R1.y + (1170 - sy) / sh * R1.h, 60, seg(t, 13.4, 13.9));
+    tag('系泊塔 · 此前一次停靠', R1.x, 76, { id: 'naraTag' }); }
+  // bottom-right: approach footage (from 01:03 in the source), ring around the mooring mast on the horizon
+  const R2 = { x: 1100, y: 530, w: 760, h: 362 }; const k2 = seg(t, 14.6, 14.64);
+  if (k2 > 0) { const fi = 120 + Math.floor((t - 14.6) * 30); const mp = cover(APP[Math.min(235, fi)], R2.x, R2.y, R2.w, R2.h, { flash: 1 - seg(t, 14.6, 14.74) }, .5, .38);
+    const [mx, my] = mp(299, 519); ring(mx, my, 34, seg(t, 15.0, 15.4)); tag('新闻片 · 进场', R2.x, 514, { id: 'appTag' }); }
+}
+// Plan view (schematic, origin at the mooring mast): 700 ft circle, 30° bearing, where the ropes were dropped, the photo's view cone
+function planPanel(t, P, full_) {
+  const mini = !full_; fill(P.x, P.y, P.w, P.h, C.panel); x.save(); x.beginPath(); x.rect(P.x, P.y, P.w, P.h); x.clip();
+  const sc = mini ? .2 : .34, M = mini ? { x: P.x + P.w * .5, y: P.y + P.h * .62 } : { x: P.x + 440, y: P.y + 500 };
+  const T = mini ? 99 : t;
+  for (let g = -2400; g <= 2400; g += 100) { hair(M.x + g * sc, P.y, M.x + g * sc, P.y + P.h, 'rgba(255,255,255,0.035)'); hair(P.x, M.y + g * sc, P.x + P.w, M.y + g * sc, 'rgba(255,255,255,0.035)'); }
+  flashRect(T, 14.8, P.x, P.y, P.w, P.h, .12);
+  const k1 = eo(seg(T, 14.9, 15.5)); x.save(); x.strokeStyle = C.dim; x.setLineDash([6, 6]); x.lineWidth = 1.2; x.beginPath(); x.arc(M.x, M.y, 700 * sc, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k1); x.stroke(); x.restore();
+  if (mini) txt('700 ft', M.x - 700 * sc * .71 - 8, M.y - 700 * sc * .71 - 6, { s: 13, f: F.mono, c: C.dim, al: 'right' });
+  x.save(); x.strokeStyle = C.text; x.lineWidth = 2; x.beginPath(); x.moveTo(M.x - 9, M.y + 8); x.lineTo(M.x, M.y - 10); x.lineTo(M.x + 9, M.y + 8); x.closePath(); x.stroke(); x.restore();
+  txt('系泊塔', M.x + 16, M.y + 24, { s: mini ? 15 : 20, w: 700, id: mini ? null : 'mast' });
+  const kb = eo(seg(T, 15.1, 15.7)), ang = 30 * Math.PI / 180, Lh = 950 * sc;
+  hair(M.x, M.y, M.x, M.y - Lh * kb, C.faint, 1, [3, 5]); hair(M.x, M.y, M.x + Math.sin(ang) * Lh * kb, M.y - Math.cos(ang) * Lh * kb, C.acc, 1.8);
+  if (kb > .5 && !mini) { x.save(); x.strokeStyle = C.acc; x.lineWidth = 1.2; x.beginPath(); x.arc(M.x, M.y, 70, -Math.PI / 2, -Math.PI / 2 + ang * eo(seg(kb, .5, 1))); x.stroke(); x.restore();
+    txt('30°', M.x + 22, M.y - 82, { s: 22, f: F.mono, w: 600, c: C.acc, a: seg(kb, .6, 1) }); }
+  const ks = seg(T, 15.6, 15.7), sx = M.x + Math.sin(ang) * 780 * sc, sy = M.y - Math.cos(ang) * 780 * sc;
+  if (ks > 0) { x.save(); x.globalAlpha = ks; x.fillStyle = C.acc; x.beginPath(); x.arc(sx, sy, mini ? 6 : 10, 0, 7); x.fill();
+    if (!mini) { x.strokeStyle = C.acc; x.globalAlpha = ks * (1 - seg(T, 15.6, 16.3)); x.beginPath(); x.arc(sx, sy, 10 + 18 * seg(T, 15.6, 16.3), 0, 7); x.stroke(); } x.restore();
+    if (!mini) txt('18:21 放绳处', sx + 18, sy + 8, { s: 24, w: 700, id: 'ropeLbl' }); }
+  if (!mini) { // photo view cone (inferred)
+    const kc = eo(seg(T, 15.9, 16.5)), ab = 200 * Math.PI / 180, ax = M.x + Math.sin(ab) * 480 * sc, ay = M.y - Math.cos(ab) * 480 * sc;
+    if (kc > 0) { const dir = Math.atan2(sy - ay, sx - ax), half = 12 * Math.PI / 180, R = 600 * kc;
+      x.save(); x.fillStyle = 'rgba(236,234,228,0.07)'; x.strokeStyle = C.dim; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(ax, ay);
+      x.lineTo(ax + Math.cos(dir - half) * R, ay + Math.sin(dir - half) * R); x.lineTo(ax + Math.cos(dir + half) * R, ay + Math.sin(dir + half) * R); x.closePath(); x.fill(); x.stroke(); x.restore();
+      fill(ax - 6, ay - 6, 12, 12, C.text); txt('照片机位 · 推断', ax - 14, ay + 7, { s: 19, w: 700, al: 'right', a: kc }); }
+    const I = { x: P.x + P.w - 270, y: P.y + 20, w: 250, h: 156 }; plate(IM.usgs, 300, 160, 1600, 1000, I.x, I.y, I.w, I.h, { map: 1 }); rect(I.x + (820 - 300) / 1600 * I.w, I.y + (560 - 160) / 1000 * I.h, 760 / 1600 * I.w, 520 / 1000 * I.h, C.acc, 1.5);
+    hair(P.x + 40, P.y + P.h - 40, P.x + 40 + 500 * sc, P.y + P.h - 40, C.dim, 2); txt('500 ft', P.x + 40 + 500 * sc + 10, P.y + P.h - 34, { s: 14, f: F.mono, c: C.dim });
+    txt('N', P.x + P.w - 50, P.y + 226, { s: 18, f: F.mono, w: 600, c: C.dim, al: 'center' }); hair(P.x + P.w - 50, P.y + 236, P.x + P.w - 50, P.y + 286, C.dim, 1.5);
+    txt('≥ 700 ft', P.x + 36, P.y + 84, { s: 56, f: F.mono, w: 600, a: seg(T, 15.0, 15.05), id: 'p700' });
+  }
+  x.restore(); rect(P.x, P.y, P.w, P.h);
+  if (!mini) tag('平面图 · 示意', P.x, 76, { c: C.dim, chip: C.dim, id: 'planTag' });
+}
+
+// Side-view schematic: 16 gas cells (numbered from 1 at the stern), tail fins, highlightable sections
+function hullPath(L0, L1, cy, hh) { const len = L1 - L0; x.beginPath(); x.moveTo(L0, cy); x.bezierCurveTo(L0, cy - hh * 1.05, L0 + len * .2, cy - hh, L0 + len * .45, cy - hh); x.lineTo(L0 + len * .62, cy - hh);
+  x.bezierCurveTo(L0 + len * .85, cy - hh, L1 - 20, cy - hh * .3, L1, cy); x.bezierCurveTo(L1 - 20, cy + hh * .3, L0 + len * .85, cy + hh, L0 + len * .62, cy + hh);
+  x.lineTo(L0 + len * .45, cy + hh); x.bezierCurveTo(L0 + len * .2, cy + hh, L0, cy + hh * 1.05, L0, cy); }
+function cellX(L0, L1, n) { return L1 - 30 - n * (L1 - L0 - 60) / 16; } // n-th divider (from the stern)
+function schematic(t, L0, L1, cy, hh, o = {}) {
+  const kd = o.k ?? 1; x.save(); x.beginPath(); x.rect(L0 - 20, cy - hh * 2, (L1 - L0 + 40) * kd, hh * 4); x.clip();
+  x.save(); hullPath(L0, L1, cy, hh); x.clip();
+  for (let i = 1; i < 16; i++) { const px = cellX(L0, L1, i); hair(px, cy - hh - 4, px, cy + hh + 4, '#3a3f46'); }
+  if (o.nums) for (let i = 0; i < 16; i++) { const px = (cellX(L0, L1, i) + cellX(L0, L1, i + 1)) / 2; txt(String(i + 1), px, cy + 6, { s: o.numS || 14, f: F.mono, c: i === 3 || i === 4 ? C.text : C.faint, al: 'center' }); }
+  if (o.zone > 0) { const zx0 = cellX(L0, L1, 5), zx1 = cellX(L0, L1, 3); x.fillStyle = `rgba(255,74,46,${0.5 * o.zone})`; x.fillRect(zx0, cy - hh - 4, zx1 - zx0, hh * .9); }
+  if (o.flutter > 0) { const zx0 = cellX(L0, L1, 5.3), zx1 = cellX(L0, L1, 4.1); x.fillStyle = `rgba(236,234,228,${0.10 * o.flutter})`; x.fillRect(zx0, cy - hh - 4, zx1 - zx0, hh * .7); }
+  x.restore();
+  x.save(); x.strokeStyle = C.text; x.lineWidth = 1.6; hullPath(L0, L1, cy, hh); x.stroke();
+  x.beginPath(); x.moveTo(L1 - 150 * (hh / 72), cy - hh * .72); x.lineTo(L1 - 70 * (hh / 72), cy - hh * 1.5); x.lineTo(L1 - 30 * (hh / 72), cy - hh * 1.5); x.lineTo(L1 - 40 * (hh / 72), cy - hh * .3); x.stroke();
+  x.beginPath(); x.moveTo(L1 - 150 * (hh / 72), cy + hh * .72); x.lineTo(L1 - 70 * (hh / 72), cy + hh * 1.5); x.lineTo(L1 - 30 * (hh / 72), cy + hh * 1.5); x.lineTo(L1 - 40 * (hh / 72), cy + hh * .3); x.stroke();
+  x.strokeRect(L0 + (L1 - L0) * .14, cy + hh - 2, 46 * hh / 72, 16 * hh / 72); x.restore();
+  if (o.flutter > 0) { // outer-cover flutter: ripples along the top outline
+    const zx0 = cellX(L0, L1, 5.3), zx1 = cellX(L0, L1, 4.1); x.save(); x.strokeStyle = C.text; x.lineWidth = 2; x.globalAlpha = o.flutter; x.beginPath();
+    for (let px = zx0; px <= zx1; px += 3) { const yy = cy - hh - 6 - 5 * Math.sin((px - zx0) / 9 + t * 22) * Math.sin(Math.PI * (px - zx0) / (zx1 - zx0)); px === zx0 ? x.moveTo(px, yy) : x.lineTo(px, yy); } x.stroke(); x.restore(); }
+  x.restore();
+  return { zx: (cellX(L0, L1, 5) + cellX(L0, L1, 3)) / 2, zy: cy - hh };
+}
+
+function sFour(t) { // 18.6–23.8 four minutes: between the rope drop → ignition; Ward sees the outer cover fluttering
+  txt('放绳后', 60, 150, { s: 34, w: 700, c: C.dim, a: seg(t, 18.6, 18.65), id: 'f4a' });
+  txt('4 分钟', 60, 270, { s: 124, w: 700, a: seg(t, 18.65, 18.7), id: 'f4b' });
+  txt('18:21 → 18:25', 64, 316, { s: 22, f: F.mono, c: C.dim, a: seg(t, 18.7, 18.75), id: 'f4c' });
+  const kq = seg(t, 18.95, 19.0); if (kq > 0) { x.save(); x.globalAlpha = kq; fill(700, 76, 6, 200, C.acc);
+    tag('证词 · R. H. Ward', 730, 104, { id: 'wardTag' });
+    txt('“a noticeable fluttering of the outer cover”', 730, 180, { s: 42, f: F.it, it: 1, id: 'wardQ' });
+    txt('外蒙皮明显抖动', 730, 244, { s: 32, f: F.serif, w: 500, c: C.dim, id: 'wardZ' }); x.restore();
+    flashRect(t, 18.95, 700, 70, 1160, 220, .1); }
+  const kd = eo(seg(t, 19.6, 20.6)); const L0 = 220, L1 = 1700, cy = 650, hh = 165;
+  if (kd > 0) { const fl = seg(t, 20.7, 21.0) * (1 - seg(t, 23.6, 23.8));
+    schematic(t, L0, L1, cy, hh, { k: kd, nums: 1, numS: 20, flutter: fl });
+    txt('船头', L0 - 22, cy + 8, { s: 22, w: 700, c: C.dim, al: 'right', a: kd }); txt('船尾', L1 + 22, cy + 8, { s: 22, w: 700, c: C.dim, a: seg(kd, .9, 1) });
+    tag('示意图', L0, 410, { c: C.dim, chip: C.dim, a: kd });
+    if (fl > 0) { const zx = (cellX(L0, L1, 5.3) + cellX(L0, L1, 4.1)) / 2; x.save(); x.globalAlpha = fl; hair(zx, cy - hh - 16, zx - 60, cy - hh - 70, C.acc, 1.5); hair(zx - 60, cy - hh - 70, zx - 80, cy - hh - 70, C.acc, 1.5); x.restore();
+      txt('抖动 · 5 号气囊', zx - 88, cy - hh - 62, { s: 26, w: 700, al: 'right', a: fl, id: 'flut' }); } }
+}
+
+function sOrigin(t) { // 23.8–31.8 point of ignition: five sources point to gas cells 4–5
+  // ① testimony page (FBI p.39, Lt. Tyler): original text highlighted + Chinese
+  const a1 = seg(t, 24.0, 24.05); if (a1 > 0) { x.save(); x.globalAlpha = a1; const P = { x: 60, y: 92, w: 840, h: 120 }, s = P.w / 1330;
+    tag('证词 · Lt. Tyler', P.x, 76, { id: 'tyTag' }); plate(IM.p39, 150, 410, 1330, 190, P.x, P.y, P.w, P.h, { doc: 1, flash: 1 - seg(t, 24.0, 24.12) });
+    const hk = eo(seg(t, 24.2, 24.8)); x.save(); x.globalCompositeOperation = 'multiply'; x.fillStyle = 'rgba(255,74,46,0.6)'; x.fillRect(P.x + 545 * s, P.y + 30 * s, 760 * s * hk, 38 * s); x.restore();
+    txt('左侧尾翼正前方蹿起一团火', P.x, P.y + P.h + 42, { s: 24, f: F.serif, w: 500, c: C.dim, id: 'tyZ' });
+    badge(P.x + P.w - 16, 66, t, 30.0); x.restore(); }
+  // ② newsreel freeze frame + magnifier
+  const a2 = seg(t, 24.4, 24.45); if (a2 > 0) { const P = { x: 940, y: 92, w: 440, h: 330 };
+    tag('新闻片定格', P.x, 76, { id: 'ffTag' }); full(IM.ff, P.x, P.y, P.w, P.h, { flash: 1 - seg(t, 24.4, 24.55) });
+    const cx = P.x + 330 * P.w / 960, cy = P.y + 380 * P.h / 720; ring(cx, cy, 52, seg(t, 24.6, 25.0), '火在船体上缘', 1, null, 'ffRing');
+    const kz = eo(seg(t, 25.2, 25.5)); if (kz > 0) { const Z = { x: P.x + 250, y: P.y + 150, w: 180 * kz, h: 170 * kz }; const ssz = 190;
+      plate(IM.ff, 300 - ssz / 2, 400 - ssz / 2 * 170 / 180, ssz, ssz * 170 / 180, Z.x, Z.y, Z.w, Z.h, { border: C.acc, bw: 2 });
+      hair(cx + 30, cy + 40, Z.x, Z.y + 20, C.acc, 1, [3, 3]); }
+    badge(P.x + P.w - 26, P.y + 26, t, 30.12); }
+  // ③ photo (U.S. Navy · Pasquarella)
+  const a3 = seg(t, 24.8, 24.85); if (a3 > 0) { const P = { x: 1420, y: 92, w: 440, h: 330 }, s = P.w / 2280;
+    tag('照片 · Pasquarella', P.x, 76, { id: 'pqTag' }); plate(IM.pasq, 60, 60, 2280, 1710, P.x, P.y, P.w, P.h, { flash: 1 - seg(t, 24.8, 24.95) });
+    ring(P.x + 1270 * s, P.y + 590 * s, 50, seg(t, 25.1, 25.5), '船尾上方', -1, null, 'sternTop');
+    badge(P.x + P.w - 26, P.y + 26, t, 30.24); }
+  // ④ source audio (newsreel commentary, 1937-05-10): waveform + words lighting up one by one
+  const c1 = FILM.clips.c1[0]; const a4 = seg(t, c1 - .2, c1 - .15); if (a4 > 0) { x.save(); x.globalAlpha = a4; const P = { x: 60, y: 310, w: 840, h: 250 };
+    fill(P.x, P.y, P.w, P.h, C.panel); rect(P.x, P.y, P.w, P.h); tag('原声 · 1937 新闻片', P.x + 20, P.y + 38, { id: 'c1Tag' });
+    const pk = seg(t, c1, c1 + WAVE.c1.dur); wave('c1', P.x + 20, P.y + 112, P.w - 40, 72, pk);
+    const words = ['a', 'roar', 'and', 'a', 'burst', 'of', 'flame', 'near', 'the', 'big', 'tail', 'fins'], wt = [0, .18, .46, .82, .96, 1.18, 1.42, 1.86, 2.36, 2.54, 2.76, 3.12];
+    const q = '“' + words.join(' ') + '”'; txt(q, P.x + 20, P.y + 206, { s: 28, f: F.it, it: 1, c: C.faint, id: 'c1Q' });
+    let lit = '“'; words.forEach((w, i) => { if (t >= c1 + wt[i]) lit += (i ? ' ' : '') + w; }); if (t >= c1 + 3.3) lit += '”';
+    txt(lit, P.x + 20, P.y + 206, { s: 28, f: F.it, it: 1 }); badge(P.x + P.w - 30, P.y + 32, t, 30.36); x.restore(); }
+  // ⑤ report quotation
+  const a5 = seg(t, 25.8, 25.85); if (a5 > 0) { x.save(); x.globalAlpha = a5; const P = { x: 60, y: 636 };
+    tag('报告 · 商务部 1937', P.x, P.y, { id: 'rpTag' });
+    txt('“…on the top of the ship forward of the entering', P.x, P.y + 60, { s: 32, f: F.it, it: 1, id: 'rpQ1' });
+    txt('edge of the vertical fin over Cells 4 and 5.”', P.x, P.y + 108, { s: 32, f: F.it, it: 1, id: 'rpQ2' });
+    badge(884, P.y - 6, t, 30.48); flashRect(t, 25.8, 56, P.y - 30, 860, 166, .1); x.restore(); }
+  // side-view schematic + converging lines
+  const kd = eo(seg(t, 26.4, 27.3)); if (kd > 0) { const L0 = 990, L1 = 1830, cy = 730, hh = 100;
+    const kz = seg(t, 28.2, 28.6); const z = schematic(t, L0, L1, cy, hh, { k: kd, nums: 1, numS: 13, zone: kz });
+    if (kz > 0) { x.save(); x.globalAlpha = kz; hair(z.zx, z.zy - 6, z.zx - 40, z.zy - 46, C.acc, 1.5); x.restore(); txt('4–5 号气囊', z.zx - 48, z.zy - 52, { s: 24, w: 700, al: 'right', a: kz, id: 'zone' }); }
+    const kl = eo(seg(t, 29.0, 29.8)); if (kl > 0) { const src = [[900, 152], [940 + 330 * 440 / 960 + 30, 92 + 380 * 330 / 720 + 44], [1420 + 1270 * 440 / 2280, 92 + 590 * 440 / 2280 + 50], [900, 435], [900, 720]];
+      src.forEach(([fx, fy]) => hair(fx, fy, lerp(fx, z.zx, kl), lerp(fy, z.zy, kl), C.acc, 1.2, [3, 4])); } }
+}
+
+function sRun(t) { // 31.8–38.6 32 seconds: three-column sync grid, lighting up left to right in the order each source starts (report → photo ≈T+2 → newsreel), sharing one stopwatch, aligned on ground impact
+  const T = playhead(t) - T0; const frozen = t >= 36.5; const Y = 92, w = 580, h = 520, cols = [60, 670, 1280];
+  // report column
+  const R = cols[0]; tag('报告', R, 76, { id: 'col0' }); fill(R, Y, w, h, C.panel); rect(R, Y, w, h); flashRect(t, 31.8, R, Y, w, h, .12);
+  const rq = ['“…the interval between', 'the first glimpse of flame', 'and the impact… was', '32 seconds.”'];
+  rq.forEach((s, i) => txt(s, R + 36, Y + 150 + i * 62, { s: 36, f: F.it, it: 1, c: i === 3 && frozen ? C.acc : C.text, id: 'rq' + i }));
+  // photo column: pops in at ≈T+2 s, switches to NH 57973 at T+26 s
+  const P = cols[1]; if (T >= 2) { tag(T < 26 ? '照片 · ≈ T+2 s' : '照片 · ≈ T+26 s', P, 76, { id: T < 26 ? 'col1a' : 'col1b' });
+    if (T < 26) cover(IM.pasq, P, Y, w, h, { flash: 1 - seg(T, 2, 2.6) });
+    else cover(IM.nh, P, Y, w, h, { flash: 1 - seg(T, 26, 26.6) }); }
+  // newsreel column: lights up late (≈T+7 s) since filming started late; freezes at ground impact
+  const V = cols[2]; if (T >= 7) { tag('新闻片', V, 76, { id: 'col2' });
+    if (!frozen) { const i = Math.max(2, Math.min(257, Math.round((T - 7) * 10))); cover(FIRE[i], V, Y, w, h, { flash: T < 7.6 ? 1 - seg(T, 7, 7.6) : 0 }); }
+    else { cover(IM.fi, V, Y, w, h, { flash: 1 - seg(t, 36.5, 36.62), border: C.acc, bw: 2 }); txt('触地', V + w - 16, Y + 44, { s: 28, w: 700, c: C.acc, al: 'right', id: 'impact' }); } }
+  // stopwatch
+  if (!frozen) { txt(`T+${T.toFixed(1).padStart(4, '0')}`, 60, 800, { s: 150, f: F.mono, w: 600 }); txt('s', 690, 800, { s: 52, f: F.mono, c: C.dim }); }
+  else { const k = eo(seg(t, 36.5, 36.75)); txt('32 秒', 60, 806, { s: lerp(150, 170, k), w: 700, c: C.acc, id: 'b32' }); }
+  if (frozen) { const k = seg(t, 36.5, 36.6); x.save(); x.globalAlpha = k; hair(656, Y + h / 2, 1880, Y + h / 2, C.acc, 1.5, [6, 5]); x.restore(); }
+}
+
+function sInquiry(t) { // 38.6–45.6 inquiry: FBI teletype close-up → established / not determined
+  const S = { x: 60, y: 92, w: 1800, h: 273 }; // source x 230–1680, y 1385–1605
+  tag('FBI 电传 · 1937-05-08', S.x, 76, { id: 'ttTag' });
+  plate(IM.p13, 230, 1385, 1450, 220, S.x, S.y, S.w, S.h, { doc: 1, flash: 1 - seg(t, 38.6, 38.72) });
+  const sc = S.w / 1450; const hl = [[1170, 1402, 470, 36, 38.9], [255, 1472, 1370, 36, 39.2], [255, 1542, 305, 36, 39.6]];
+  x.save(); x.globalCompositeOperation = 'multiply'; hl.forEach(([hx, hy, hw, hh, at]) => { const k = eo(seg(t, at, at + .35)); if (k > 0) { x.fillStyle = 'rgba(255,74,46,0.6)'; x.fillRect(S.x + (hx - 230) * sc, S.y + (hy - 1385) * sc, hw * sc * k, hh * sc); } }); x.restore();
+  txt('商务部周一上午十点开公开调查', S.x, 416, { s: 28, w: 700, c: C.dim, id: 'ttZ' });
+  const cols = [{ x: 60, zh: '已确定', c: C.text, items: [['起火：船顶，4–5 号气囊上方', 40.0], ['首见火光到触地：32 秒', 40.25], ['原因：泄漏的氢气被点燃', 40.5]] },
+    { x: 980, zh: '未查明', c: C.acc, items: [['氢气怎么漏出来', 40.75], ['火源：刷形放电，仅称“最可能”', 41.0], ['蓄意破坏：查无证据', 41.25]] }];
+  cols.forEach((c, ci) => { const k = seg(t, 39.0, 39.05); if (k <= 0) return; x.save(); x.globalAlpha = k;
+    txt(c.zh, c.x, 500, { s: 36, w: 700, c: c.c, id: 'colh' + ci }); hair(c.x, 520, c.x + 880, 520, ci ? C.acc : C.text, 1.5); x.restore();
+    c.items.forEach(([zh, at], i) => { const ka = seg(t, at, at + .05); if (ka <= 0) return; const yy = 590 + i * 106;
+      x.save(); x.globalAlpha = ka; fill(c.x, yy - 40, 880, 86, i % 2 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)');
+      if (ci) { x.strokeStyle = C.acc; x.lineWidth = 2; x.setLineDash([4, 3]); x.strokeRect(c.x + 18, yy - 12, 24, 24); }
+      else { x.strokeStyle = C.text; x.lineWidth = 2.5; x.beginPath(); x.moveTo(c.x + 20, yy); x.lineTo(c.x + 28, yy + 9); x.lineTo(c.x + 42, yy - 10); x.stroke(); }
+      x.restore(); txt(zh, c.x + 64, yy + 12, { s: 32, w: 700, a: ka, id: `it${ci}${i}` });
+      flashRect(t, at, c.x, yy - 40, 880, 86, .1); }); });
+}
+
+function sPeople(t) { // 45.6–52.4 people: source audio → fact check → dot grid
+  const c2 = FILM.clips.c2[0];
+  const P = { x: 60, y: 60, w: 900, h: 380 }; fill(P.x, P.y, P.w, P.h, C.panel); rect(P.x, P.y, P.w, P.h); flashRect(t, 45.6, P.x, P.y, P.w, P.h, .12);
+  tag('原声 · 1937 新闻片', P.x + 24, P.y + 44, { id: 'c2Tag' });
+  wave('c2', P.x + 24, P.y + 150, P.w - 48, 72, seg(t, c2, c2 + WAVE.c2.dur));
+  const Q1 = '“taking the lives of almost half', Q2 = 'its 99 passengers and crew”', qo = { s: 34, f: F.it, it: 1 };
+  txt(Q1, P.x + 24, P.y + 276, { ...qo, id: 'c2q1' }); txt(Q2, P.x + 24, P.y + 324, { ...qo, id: 'c2q2' });
+  const kf = seg(t, 47.6, 47.65); if (kf > 0) { x.save(); x.globalAlpha = kf; const Y = 490;
+    fill(60, Y, 900, 270, 'rgba(255,74,46,0.08)'); rect(60, Y, 900, 270, C.acc, 1.5);
+    txt('核对', 88, Y + 48, { s: 22, w: 700, c: C.acc, ls: 4, id: 'fcT' });
+    txt('机上 97 人 · 遇难 35', 88, Y + 136, { s: 48, w: 700, id: 'fc1' });
+    txt('另有地勤 1 人遇难', 88, Y + 204, { s: 32, w: 700, c: C.dim, id: 'fc2' });
+    txt('据商务部报告', 936, Y + 248, { s: 16, c: C.dim, al: 'right' }); x.restore();
+    // strike-through over the numbers in the source audio ("half", "99")
+    const ks = eo(seg(t, 47.9, 48.3)); const a1 = P.x + 24 + tw('“taking the lives of almost ', qo), w1 = tw('half', qo); hair(a1, P.y + 264, a1 + w1 * ks, P.y + 264, C.acc, 3);
+    const a2 = P.x + 24 + tw('its ', qo), w2 = tw('99', qo); hair(a2, P.y + 312, a2 + w2 * ks, P.y + 312, C.acc, 3); }
+  // dot grid: 36 passengers (13 died), 61 crew (22 died), 1 ground crew (died)
+  const k0 = seg(t, 46.2, 46.3); x.save(); x.globalAlpha = k0; const DX = 1040, G = 44, R = 13;
+  const dot = (X, Y, died, at) => { const k = seg(t, at, at + .25); x.save(); if (!died || k <= 0) { x.fillStyle = C.text; x.beginPath(); x.arc(X, Y, R, 0, 7); x.fill(); }
+      else { x.fillStyle = `rgba(236,234,228,${1 - k})`; x.beginPath(); x.arc(X, Y, R, 0, 7); x.fill(); x.strokeStyle = C.acc; x.lineWidth = 1.8; x.globalAlpha *= k; x.beginPath(); x.arc(X, Y, R, 0, 7); x.stroke(); } x.restore(); };
+  txt('乘客 36', DX, 92, { s: 20, w: 700, c: C.dim, id: 'pp1' });
+  for (let i = 0; i < 36; i++) dot(DX + 14 + (i % 18) * G, 132 + Math.floor(i / 18) * G, i < 13, 48.6 + i * .03);
+  txt('机组 61', DX, 260, { s: 20, w: 700, c: C.dim, id: 'pp2' });
+  for (let i = 0; i < 61; i++) dot(DX + 14 + (i % 18) * G, 300 + Math.floor(i / 18) * G, i < 22, 49.0 + i * .03);
+  txt('地勤 1', DX, 518, { s: 20, w: 700, c: C.dim, id: 'pp3' }); dot(DX + 14, 558, true, 49.8);
+  x.restore();
+  const kt = seg(t, 49.8, 49.85); txt('36 人遇难', DX, 760, { s: 124, w: 700, a: kt, id: 'd36' });
+  txt('● 生还   ○ 遇难', DX + 6, 820, { s: 18, f: F.mono, c: C.dim, a: kt, id: 'leg' });
+}
+
+function sMap(t) { // 52.4–55.6 summary map: the evidence gathered into one chart (plan view + time + side view + evidence index)
+  flashRect(t, 52.4, 0, 0, W, H, .12); x.save(); x.translate(0, 64); // no subtitles: shift the whole layout down to centre it
+  txt('证据汇总', 60, 104, { s: 36, w: 700, id: 'mapH' });
+  planPanel(99, { x: 60, y: 140, w: 520, h: 480 }, 0);
+  // mini timeline (broken axis: 4 minutes ‖ 32 seconds)
+  const TY = 740, ax = s => s <= T0 ? 80 + (s - ROPES) / 240 * 320 : 440 + (s - T0) / 32 * 140;
+  hair(80, TY, 400, TY, C.line, 1.5); hair(440, TY, 580, TY, C.line, 1.5); hair(410, TY + 8, 418, TY - 8, C.dim, 1.5); hair(422, TY + 8, 430, TY - 8, C.dim, 1.5);
+  [[ROPES, '放绳', C.text, 0], [T0, '起火', C.acc, 1], [IMPACT, '触地', C.text, 2]].forEach(([s, lab, c, i]) => { const k2 = seg(t, 52.6 + i * .12, 52.7 + i * .12);
+    const px = i === 1 ? 440 : ax(s); x.save(); x.globalAlpha = k2; x.fillStyle = c; x.beginPath(); x.moveTo(px, TY - 9); x.lineTo(px + 7, TY); x.lineTo(px, TY + 9); x.lineTo(px - 7, TY); x.fill(); x.restore();
+    txt(lab, px, TY + 42, { s: 22, w: 700, c, al: i === 2 ? 'right' : i === 1 ? 'center' : 'left', a: k2, id: 'mt' + i }); });
+  txt('4 分钟', 240, TY - 22, { s: 22, w: 700, c: C.dim, al: 'center', id: 'mt4' }); txt('32 秒', 510, TY - 22, { s: 22, w: 700, c: C.dim, al: 'center', id: 'mt5' });
+  // side view + zone
+  const L0 = 660, L1 = 1840, cy = 330, hh = 128; const z = schematic(t, L0, L1, cy, hh, { nums: 1, numS: 16, zone: 1 });
+  txt('4–5 号气囊上方', z.zx - 60, z.zy - 34, { s: 28, w: 700, al: 'right', id: 'mz' }); hair(z.zx, z.zy - 4, z.zx - 52, z.zy - 28, C.acc, 1.5);
+  // evidence thumbnails → lines to the zone
+  const th = [[d => plate(IM.p39, 150, 380, 1400, 1336, d.x, d.y, d.w, d.h, { doc: 1 }), '证词'], [d => full(IM.ff, d.x, d.y, d.w, d.h), '定格'], [d => full(IM.pasq, d.x, d.y, d.w, d.h), '照片'],
+    [d => { fill(d.x, d.y, d.w, d.h, C.panel); rect(d.x, d.y, d.w, d.h); wave('c1', d.x + 12, d.y + d.h / 2, d.w - 24, 80, 1); }, '原声'], [d => { fill(d.x, d.y, d.w, d.h, C.panel); rect(d.x, d.y, d.w, d.h);
+      txt('“…over', d.x + 18, d.y + 90, { s: 28, f: F.it, it: 1 }); txt('Cells 4 and 5.”', d.x + 18, d.y + 132, { s: 28, f: F.it, it: 1 }); }, '报告']];
+  th.forEach(([draw, lab], i) => { const at = 52.5 + i * .1; if (t < at) return; const d = { x: 660 + i * 240, y: 590, w: 220, h: 210 }; draw(d); flashRect(t, at, d.x, d.y, d.w, d.h, .12);
+    txt(lab, d.x, d.y + d.h + 36, { s: 22, w: 700, id: 'mth' + i });
+    const kl = eo(seg(t, at + .2, at + .7)); hair(d.x + d.w / 2, d.y, lerp(d.x + d.w / 2, z.zx, kl), lerp(d.y, z.zy + 40, kl), C.acc, 1.2, [3, 4]); });
+  x.restore();
+}
+
+function sEnd(t) { // 55.6–60.0 end card: title / hairline / style name / credit / sources
+  const k = seg(t, 55.6, 55.7);
+  txt('兴登堡号：四分钟与三十二秒', 120, 380, { s: 84, w: 700, a: k, id: 'e1' });
+  txt('THE HINDENBURG: FOUR MINUTES, 32 SECONDS', 124, 436, { s: 24, f: F.mono, c: C.dim, ls: 1, a: k, id: 'e2' });
+  x.save(); x.globalAlpha = k; hair(124, 480, lerp(124, 1000, eo(seg(t, 55.6, 56.1))), 480, C.dim, 1); x.restore();
+  const k2 = seg(t, 55.8, 55.9); txt('视觉调查 · Visual Investigation', 124, 546, { s: 34, w: 500, a: k2, id: 'e3' });
+  txt('LemoLab × Claude Opus 5.5', 124, 600, { s: 24, f: F.mono, w: 600, c: C.text, a: k2, id: 'e4' });
+  const k3 = seg(t, 55.9, 56.0); const cr = [
+    '影像 / 原声  Universal Newsreel 特别版，1937-05-10（美国国家档案馆收藏，公有领域）',
+    '照片  U.S. Navy · Gus Pasquarella；NHHC NH 57973；NARA 518856（美国联邦政府作品，公有领域）',
+    '文件  FBI 兴登堡号档案（1937）；美国商务部《兴登堡号事故调查报告》，Air Commerce Bulletin 1937-08-15（公有领域）',
+    '地图  USGS Lakehurst 1:24,000 图幅，1947（公有领域）',
+    '非官方作品。照片时刻、机位与影像对齐为本片推断，片中已标“≈ / 推断 / 示意”。' ];
+  cr.forEach((s, i) => txt(s, 124, 790 + i * 34, { s: 20, c: i === 4 ? C.dim : '#B9B6AE', a: k3 }));
+  const ka = seg(t, 56.0, 56.1); x.save(); x.globalAlpha = ka;
+  [d => full(IM.ff, d.x, d.y, d.w, d.h), d => plate(IM.p39, 150, 380, 1400, 1037, d.x, d.y, d.w, d.h, { doc: 1 }), d => full(IM.pasq, d.x, d.y, d.w, d.h), d => plate(IM.usgs, 700, 300, 1200, 889, d.x, d.y, d.w, d.h, { map: 1 })]
+    .forEach((dr, i) => dr({ x: 1300 + (i % 2) * 290, y: 230 + Math.floor(i / 2) * 230, w: 270, h: 200 }));
+  x.restore();
+}
+
+window.render = function (t) {
+  FR = Math.floor(t * 30); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; fill(0, 0, W, H, C.bg);
+  if (inS(t, 'open')) sOpen(t); else if (inS(t, 'title')) sTitle(t); else if (inS(t, 'wait')) sWait(t); else if (inS(t, 'pos')) sPos(t);
+  else if (inS(t, 'four')) sFour(t); else if (inS(t, 'origin')) sOrigin(t); else if (inS(t, 'run')) sRun(t); else if (inS(t, 'inquiry')) sInquiry(t);
+  else if (inS(t, 'people')) sPeople(t); else if (inS(t, 'map')) sMap(t); else sEnd(t);
+  if (t < 55.6) subs(t);
+};
+window.TEXTS = function (t) { REC = []; window.render(t); const r = REC; REC = null; return r; }; // subtitles not reported: their hold time is checked through the .srt
+// Subtitle check: the Chinese and English lines are each measured in the burned-in font and must be narrower than the 1500 px safe width (never wrapped)
+window.SUBCHECK = function () { return FILM.subs.map(([a, b, zh, en], i) => { const wz = Math.round(tw(zh, { s: 34, w: 700 })), we = Math.round(tw(en, { s: 23, w: 500 }));
+  return { i, zh, en, wz, we, safe: 1500, ok: wz <= 1500 && we <= 1500 }; }); };
+window.EV = [];
+boot();
+</script></body></html>

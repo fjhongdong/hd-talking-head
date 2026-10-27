@@ -1,15 +1,15 @@
-// 纸片工具：画布、白边剪纸、纸纹、描边形状
+// Paper helpers: canvases, white-bordered cut-outs, paper texture, outlined shapes
 import { mulberry, TAU } from './lib.js';
 export const INK = '#3a2a24';
 
 export function cv(w, h) { const c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h); return c; }
 
-// 纸纤维纹理（灰度 + alpha），叠在剪纸上
+// Paper-fibre texture (greyscale + alpha), laid over the cut-outs
 function makeGrain(n, seed) {
   const c = cv(n, n), x = c.getContext('2d'), R = mulberry(seed), img = x.createImageData(n, n), d = img.data;
   for (let i = 0; i < n * n; i++) { const v = R(); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v < .5 ? 0 : 255; d[i * 4 + 3] = Math.abs(v - .5) * 34; }
   x.putImageData(img, 0, 0);
-  // 纤维
+  // fibres
   x.lineCap = 'round';
   for (let i = 0; i < n * 1.2; i++) {
     const px = R() * n, py = R() * n, a = R() * TAU, l = 4 + R() * 18;
@@ -20,7 +20,7 @@ function makeGrain(n, seed) {
 }
 export const GRAIN = makeGrain(512, 7);
 
-// 大面积纸张（书页、天空）：颜色 + 斑驳 + 纤维
+// Large paper areas (pages, sky): colour + mottling + fibres
 export function paperFill(x, w, h, col, seed = 1, mott = .06) {
   x.fillStyle = col; x.fillRect(0, 0, w, h);
   const R = mulberry(seed);
@@ -32,7 +32,7 @@ export function paperFill(x, w, h, col, seed = 1, mott = .06) {
   x.save(); x.globalAlpha = .9; x.fillStyle = x.createPattern(GRAIN, 'repeat'); x.fillRect(0, 0, w, h); x.restore();
 }
 
-// 把 art 画布加工成剪纸：外扩白边 + 纸板灰边 + 纸纹
+// Turn an art canvas into a cut-out: expanded white border + grey cardboard edge + paper texture
 export function finishCut(art, border = 14, o = {}) {
   const w = art.width, h = art.height, out = cv(w, h), x = out.getContext('2d');
   const dil = (r, col) => {
@@ -49,12 +49,12 @@ export function finishCut(art, border = 14, o = {}) {
   return out;
 }
 
-// 画布描边帮手
+// Canvas stroke helpers
 export function sh(x, fill, lw = 6, stroke = INK) {
   if (fill) { x.fillStyle = fill; x.fill(); }
   if (lw > 0) { x.lineWidth = lw; x.strokeStyle = stroke; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke(); }
 }
-// 抖动椭圆路径
+// Wobbly ellipse path
 export function blob(x, cx, cy, rx, ry, wob = .04, seed = 1, n = 28, rot = 0) {
   const R = mulberry(seed), ph = [R() * TAU, R() * TAU, R() * TAU];
   x.beginPath();
@@ -66,7 +66,7 @@ export function blob(x, cx, cy, rx, ry, wob = .04, seed = 1, n = 28, rot = 0) {
   }
   smoothClosed(x, pts);
 }
-// 过点的平滑闭合曲线（中点二次曲线）
+// Smooth closed curve through points (midpoint quadratics)
 export function smoothClosed(x, pts) {
   const n = pts.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   let m = mid(pts[n - 1], pts[0]); x.moveTo(m[0], m[1]);
@@ -78,7 +78,7 @@ export function smoothOpen(x, pts, move = true) {
   for (let i = 1; i < n - 1; i++) { const p = pts[i], q = pts[i + 1]; x.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2); }
   x.lineTo(pts[n - 1][0], pts[n - 1][1]);
 }
-// 月牙阴影：在 pathFn 形状内，把偏移后形状以外的部分涂 shade
+// Crescent shading: inside the pathFn shape, paint `shade` on the part outside the offset copy of the shape
 export function crescent(x, pathFn, shade, dx, dy, base) {
   x.save(); pathFn(); x.clip();
   x.fillStyle = shade; x.fillRect(-9999, -9999, 30000, 30000);

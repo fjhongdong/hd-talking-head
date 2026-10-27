@@ -1,10 +1,10 @@
-// 用法：node shot.mjs 1.0 6.8 20.1 ...  → stills/t_*.jpg ；加 --sheet 拼成一张
+// Usage: node shot.mjs 1.0 6.8 20.1 ...  → stills/t_*.jpg ; add --sheet to tile them into one image
 import { chromium } from 'playwright-core';
 import path from 'path';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import { EXE } from '../../../core/render/browser.mjs';
-// 语言：LANGQ=ej（默认，英日版）/ LANGQ=zh（中文版）。在 demo/ 目录下运行。
+// Language: LANGQ=ej (default, English/Japanese version) / LANGQ=zh (Chinese version). Run from the demo/ folder.
 const LANGQ = process.env.LANGQ || 'ej';
 const PY = fs.existsSync('../../../.venv/bin/python') ? '../../../.venv/bin/python' : '/usr/bin/python3';
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));

@@ -1,4 +1,4 @@
-// 全片时间线：表演、镜头、字幕、音效事件。时间全部来自 story.js
+// Whole-film timeline: performance, camera, subtitles, sound events. All times come from story.js
 import { g, gMain, C, S, W, H, clear, piece, rough, roughC, rectP, circP, label, setG, silhouette } from './paper.js';
 import { layout, drawLine } from './glyph.js';
 import { agentSide, agentFront, courierSide, key, keyholeP, runPose, walkPose, coRunPose, AGENT_POSE, COURIER_POSE } from './chars.js';
@@ -13,15 +13,15 @@ export { DUR };
 const tw = t => Math.floor(t * 12 + 1e-6) / 12;       // on twos
 const mix = (a, b, u) => a + (b - a) * u;
 const blendPose = (a, b, u) => { const o = { ...a }; for (const k in b) if (typeof b[k] === 'number' && typeof a[k] === 'number') o[k] = mix(a[k], b[k], u); else if (u > .5) o[k] = b[k]; return o; };
-const STEP = BEAT * 2;   // 一个跑步循环 = 2 拍（每步 1 拍）
+const STEP = BEAT * 2;   // one run cycle = 2 beats (1 beat per step)
 
-// ── 旁白字幕 ──
+// ── narration subtitles ──
 let LINES = [], DURS = {};
 export function setLines(l, d) { LINES = l; DURS = d; }
 export function subs() {
   return LINES.map(L => { const d = DURS[L.id]; return { t0: L.t, t1: L.t + Math.max(1.8, d + .6), text: L.text, id: L.id }; });
 }
-const DARK_SUB = { l2: true, l6: true };   // 纸白底场景用墨黑纸条
+const DARK_SUB = { l2: true, l6: true };   // scenes with a paper-white ground use an ink-black strip
 function drawSubs(t) {
   for (const s of subs()) {
     if (t < s.t0 || t >= s.t1) continue;
@@ -30,9 +30,9 @@ function drawSubs(t) {
   }
 }
 
-// ═══════════════ 分场 ═══════════════
+// ═══════════════ Scenes ═══════════════
 function sOpen(t) {
-  // 0 – split：黑底红钥匙孔（剪开 = 从一条缝长开）
+  // 0 – split: red keyhole on black (cut open = grows out of a single slit)
   const u = tw(t);
   const grow = back(seg(u, .08, .5), 1.3);
   clear(C.ink); cam();
@@ -44,7 +44,7 @@ function sOpen(t) {
 function drawGridScene(t) {
   const u = clamp((t - HIT.split) / (BEAT * 2.2));
   SC.gridField(u);
-  // A LEMOLAB PICTURE 沿 B 族线滑入，落在拍点
+  // A LEMOLAB PICTURE slides in along family-B lines, landing on the beats
   const words = [['A', 120, -3, 430], ['LEMOLAB', 230, -1, 560], ['PICTURE', 230, 1, 800]];
   words.forEach(([w, size, j, x], i) => {
     const tl = T.words[i], p = eo(seg(t, tl - .22, tl));
@@ -55,7 +55,7 @@ function drawGridScene(t) {
   });
 }
 function sSplit(t) {
-  // 劈开：黑场 + 钥匙孔沿 30° 切线分成两半、向法线两侧飞走，露出红色网格
+  // split: black frame + keyhole splits in two along the 30° cut line, the halves fly off to either side along the normal, revealing the red grid
   drawGridScene(t);
   const u = ei(seg(t, HIT.split, HIT.split + .32));
   if (u >= 1) return;
@@ -74,19 +74,19 @@ function sSplit(t) {
   }
 }
 function sVelvet(t) {
-  // 百叶翻开（T.blinds 起）→ 丝绒钥匙 → HIT.snatch 手套抓走 → T.wipe 信使风衣划像
+  // blinds flip open (from T.blinds) → velvet key → glove snatches it at HIT.snatch → courier trench-coat wipe at T.wipe
   const u = tw(t);
   const snatched = u >= HIT.snatch;
   cam();
   SC.velvet({ key: !snatched, dent: snatched });
-  // 手套：沿斜线从右上进来
+  // glove: enters from upper right along the diagonal
   const gin = eo(seg(u, HIT.snatch - .3, HIT.snatch)), gout = ei(seg(u, HIT.snatch + .12, HIT.snatch + .45));
   if (gin > 0 && gout < 1) {
     const d = (1 - gin) * 1100 + gout * 1300;
     const hx = 940 + DIR[0] * d + 40, hy = 600 + DIR[1] * d;
     glove(hx, hy, 3.4, CUT_ANG + Math.PI, snatched);
   }
-  // 百叶：网格场景按竖条翻走
+  // blinds: the grid scene flips away in vertical strips
   if (t < T.blinds + .5) {
     const n = 12, sw = W / n;
     for (let i = 0; i < n; i++) {
@@ -100,7 +100,7 @@ function sVelvet(t) {
   }
 }
 function glove(x, y, s, rot, fist) {
-  // 黑手套 + 袖子（信使）
+  // black glove + sleeve (courier)
   import_sil(() => {
     g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
     piece(rough([[-26, -400], [26, -400], [22, -10], [-22, -10]], 1300, 1.2, 10), C.ink);
@@ -124,7 +124,7 @@ function sIntro(t) {
   agentSide(x, 880, 1.0, pose);
 }
 
-// ── 机场 ──
+// ── airport ──
 function airCam(t) {
   const lay = SC.airLayout(), Ix = SC.airIx();
   const wide = { cx: lay.width / 2 + 60, cy: 560, s: 1920 / (lay.width + 260) };
@@ -132,7 +132,7 @@ function airCam(t) {
   if (t < T.pushIn) return wide;
   if (t < T.hide) { const p = eio(seg(t, T.pushIn, T.hide - .05)); return { cx: mix(wide.cx, close.cx, p), cy: mix(wide.cy, close.cy, p), s: mix(wide.s, close.s, p) }; }
   if (t < T.walkOn + .2) return close;
-  // 跟着信使往右
+  // follow the courier to the right
   const cx = Math.max(close.cx, courierAirX(t) - 250);
   return { cx: close.cx + (cx - close.cx) * ss(seg(t, T.walkOn + .2, T.walkOn + .9)), cy: 540, s: 1 };
 }
@@ -161,7 +161,7 @@ function sAirport(t) {
       if (u < T.planeUp - .1) return;
       const p = seg(u, T.planeUp, T.train);
       const x0 = SC.airIx() + 200, px = x0 + p * 2300, py = 150 - p * 700 * p - p * 150;
-      // 航迹（纸白长条）
+      // contrail (long paper-white strip)
       piece(rough([[x0 - 400, 330], [px - 90, py + 6], [px - 90, py + 18], [x0 - 400, 346]], 1400, 1, 30), C.paper, { gap: 0, shadow: false });
       SC.plane(px, py, 1.6, -.22 - p * .1);
     },
@@ -176,12 +176,12 @@ function sAirport(t) {
   });
 }
 
-// ── 列车 ──
+// ── train ──
 function trainCars() { return SC.trainLayout().cars; }
 function warp(t) { return t < HIT.freeze ? t : t < T.resume ? HIT.freeze : t - (T.resume - HIT.freeze); }   // stop-time
 function agentTrain(te) {
   const cars = trainCars(), top = SC.trainLayout().top;
-  const j = [  // [起跳, 落地, 起点x, 落点x]
+  const j = [  // [take-off, landing, start x, landing x]
     [T.jump1 - .34, T.jump1, cars[0].x1 - 30, cars[1].x + 40],
     [T.jump2 - .34, T.jump2, cars[1].x1 - 20, cars[2].x + 40],
     [T.jump3, warp(T.land3), cars[2].x1 - 30, cars[3].x + 60],
@@ -195,7 +195,7 @@ function sTrain(t) {
   const u = tw(t), te = warp(u), tc = warp(t);
   const cars = trainCars(), L = SC.trainLayout();
   const a = agentTrain(te);
-  // 镜头：先全景读完整行字幕，再推到特工身上跟拍
+  // camera: wide first so the full credit line can be read, then push in on the agent and track him
   const wide = { cx: L.len / 2 + 120, cy: 560, s: .6 };
   const a2 = agentTrain(tc);
   const follow = { cx: a2.x + 260, cy: 520, s: .95 };
@@ -219,12 +219,12 @@ function sCasino(t) {
   SC.casino({
     spin, ball, ballR,
     front: () => {
-      // 信使的手套把钥匙押在一格上
+      // the courier's glove puts the key down as a bet on one square
       const kIn = eo(seg(u, T.keyBet - .35, T.keyBet)), kOut = ei(seg(u, T.keyBet + .25, T.keyBet + .6));
       const kx = 1180, ky = 880;
       if (u >= T.keyBet) key(kx, ky, 1.2, .4);
       if (kIn > 0 && kOut < 1) glove(kx + 20, ky - 60 - (1 - kIn) * 700 - kOut * 800, 2.2, Math.PI, u < T.keyBet);
-      // 特工的手从画左边伸进来
+      // the agent's hand reaches in from frame left
       const ah = eo(seg(u, T.keyBet + .45, HIT.pupil - .05));
       if (ah > 0) agentHand(-300 + ah * 1200, 900, 2.4, -Math.PI / 2 - .12);
     },
@@ -244,7 +244,7 @@ function sPupil(t) {
   cam();
   SC.pupilShot(mix(84, 34, eo(seg(u, HIT.pupil + .04, HIT.pupil + .3))));
 }
-// ── 屋顶 ──
+// ── rooftops ──
 const RF_CO = (t) => Math.min(SC.RF.end - 60, 700 + 640 * (t - HIT.moon));
 const RF_AG = (t) => Math.min(2080, 260 + 620 * (t - HIT.moon));
 function rfCam(t) {
@@ -261,7 +261,7 @@ function sRoof(t) {
     moonR, moonY, moonX: 960,
     front: () => {
       const ly = SC.RF.ledge + 2;
-      // 信使
+      // courier
       if (u < T.toss + .3) {
         let pose, x = RF_CO(u);
         if (u < T.edge) pose = coRunPose(((u - HIT.moon) / STEP * 1.3) % 1);
@@ -270,11 +270,11 @@ function sRoof(t) {
         else pose = { ...COURIER_POSE.lookBack, shF: 2.6, elF: .2, noKey: true };
         courierSide(x, ly, .8, pose, { noKey: u >= T.toss });
       } else if (u < T.leap + .3) {
-        // 他从破折号尽头跳下去（风衣张开）
+        // he jumps off the end of the dash (coat spread open)
         const p = seg(u, T.toss + .3, T.leap + .3);
         courierSide(SC.RF.end - 30 + p * 160, ly + p * p * 700, .8, { ...coRunPose(.2), flare: 1 }, { noKey: true });
       }
-      // 特工
+      // agent
       let apose, ax = RF_AG(u), ay = ly;
       if (u < T.leap) apose = u < T.cornered ? runPose(((u - HIT.moon) / STEP * 1.4) % 1) : blendPose(runPose(.25), AGENT_POSE.stand, seg(u, T.cornered, T.cornered + .3));
       else {
@@ -284,7 +284,7 @@ function sRoof(t) {
         apose = { ...AGENT_POSE.reach, tph: u * 8 };
       }
       const r = agentSide(ax, ay, .8, apose);
-      // 钥匙
+      // key
       if (u >= T.toss && u < T.catch) {
         const p = seg(u, T.toss, T.catch), kx = mix(SC.RF.end - 10, r.wrist[0], p), ky = mix(ly - 420, r.wrist[1], p) - Math.sin(p * Math.PI) * 150;
         key(kx, ky, .75, p * 9);
@@ -292,7 +292,7 @@ function sRoof(t) {
     },
   });
 }
-// ── 碎片飞回 → 片名 ──
+// ── fragments fly back → title ──
 let roofSnap = null;
 function snapRoof() {
   if (roofSnap) return roofSnap;
@@ -305,7 +305,7 @@ function letterLand(i) { return T.shatter + BEAT * .75 + i * (BAR - BEAT * .9) /
 function sShatter(t) {
   const G = SC.titleGeom();
   cam(); SC.titleBG();
-  // 片名字母沿斜线飞来，落在十六分音符上（落定 = 分开的两半状态）
+  // title letters fly in along the diagonal, landing on sixteenth notes (settled = still in the split-into-halves state)
   drawTitle(G.x, G.y, SC.TT.H, {
     split: 40, cutX: G.cutX, cutY: G.cutY,
     each: (ll) => {
@@ -316,7 +316,7 @@ function sShatter(t) {
       return { x: ll.x + DIR[0] * d, y: ll.y + DIR[1] * d, rot: ll.rot + (1 - p) * sd * 1.2 };
     },
   });
-  // 屋顶画面沿平行于切线的长条滑走（North by Northwest 的网格散开）
+  // the rooftop image slides away in long strips parallel to the cut line (the North by Northwest grid coming apart)
   const snap = snapRoof(), p0 = t - T.shatter;
   const n = 11, wS = 260;
   for (let k = -n; k <= n; k++) {
@@ -333,7 +333,7 @@ function sShatter(t) {
     g.translate(DIR[0] * d, DIR[1] * d); g.clip(); g.drawImage(snap, 0, 0);
     g.restore();
   }
-  // 特工带着钥匙飘落到片名右侧
+  // the agent drifts down with the key to the right of the title
   const q = ss(seg(t, T.shatter, T.title)), c = rfCam(T.shatter);
   const sx0 = (2190 + 12 - c.cx) * c.s + 960, sy0 = (SC.RF.ledge - 150 + 20 - c.cy) * c.s + 540;
   const bx = G.x + G.w + 100, by = G.y + G.h;
@@ -349,23 +349,23 @@ function titleWorld(t, o = {}) {
 }
 function sTitle(t) {
   const u = tw(t), G = SC.titleGeom();
-  // 33.18 片名落定 → 35.0 推近钥匙孔（推到和开场一样的构图）
-  const kEnd = KH_SCREEN.h / (154 * G.kh);      // 钥匙孔 560px 高
+  // 33.18 title settles → 35.0 push in on the keyhole (to the same composition as the opening)
+  const kEnd = KH_SCREEN.h / (154 * G.kh);      // keyhole 560px tall
   const p = eio(seg(t, T.pushKey, T.keyIn + .35));
-  // 相机：让钥匙孔中心落在 KH_SCREEN
+  // camera: put the keyhole centre on KH_SCREEN
   const s = mix(1, kEnd, p);
   const cxEnd = G.khx - (KH_SCREEN.x - 960) / kEnd, cyEnd = G.khy - (KH_SCREEN.y - 540) / kEnd;
   cam(mix(960, cxEnd, p), mix(540, cyEnd, p), s);
   const closeP = u >= T.click ? 1 : 0;
   const split = 40 * (1 - (u >= T.click ? eo(seg(t, T.click, T.click + .08)) : 0));
   titleWorld(t, { split });
-  // 特工（全景时在右边举着钥匙）
+  // agent (in the wide shot, on the right holding up the key)
   if (t < T.keyIn - .2) {
     const bx = G.x + G.w + 100, by = G.y + G.h;
     const r = agentSide(bx, by, .62, { ...AGENT_POSE.stand, shF: 2.75, elF: .15, head: -.3, eye: 'open' });
     if (t < T.pushKey + .6) key(r.wrist[0] + 3, r.wrist[1] - 6, .62, Math.PI + .1);
   }
-  // 近景：一只手把钥匙竖着放进钥匙孔（36.818 与缝合拢同时对准）
+  // close-up: a hand inserts the key upright into the keyhole (lined up at 36.818, exactly as the split closes)
   if (t >= T.pushKey + .6) {
     const a = T.pushKey + .6, b = T.click;
     const q = u >= b ? 1 : eo(seg(u, a, b));
@@ -391,13 +391,13 @@ function sEnd(t) {
   const u = tw(t);
   cam(); clear(C.paper);
   const p = eo(seg(t, T.endCard, T.endCard + .4));
-  // 小片名
+  // small title
   const G = SC.titleGeom();
   g.save(); g.translate(960, 330); g.scale(.46, .46); g.translate(-(G.x + G.w / 2), -(G.y + G.h / 2));
   drawTitle(G.x, G.y, SC.TT.H, { split: 0 });
   key(G.khx, G.khy, G.kh, 0, { line: 1.2 });
   g.restore();
-  // 红斜线
+  // red diagonal
   piece(rough([[0, 640], [1920, 610], [1920, 618], [0, 648]], 1500, .8, 30), C.red, { gap: 0, shadow: false });
   const L1 = layout('60s SPY TITLE SEQUENCE', 96, { track: .08 });
   drawLine(L1, 960 - L1.width / 2 + (1 - p) * 300, 770, { col: C.ink, seed: 91, jit: .8, amp: 1.3 });
@@ -406,13 +406,13 @@ function sEnd(t) {
   agentSide(1610, 940, .36, { ...AGENT_POSE.stand, shF: 2.9, elF: 1.9, eye: 'open' });
 }
 
-// ═══════════════ 总调度 ═══════════════
+// ═══════════════ Dispatcher ═══════════════
 export function renderFilm(t, opt = {}) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   if (t < HIT.split) sOpen(t);
   else if (t < T.blinds) { cam(); sSplit(t); }
   else if (t < T.wipe) sVelvet(t);
-  else if (t < T.agentIn + .12) {   // 风衣划像：左边是新场景
+  else if (t < T.agentIn + .12) {   // trench-coat wipe: the new scene is on the left
     const p = seg(t, T.wipe, T.agentIn + .12), wx = mix(-500, 2600, p);
     sIntro(t);
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath(); g.rect(wx, 0, W, H); g.clip(); sVelvet(t); g.restore();
@@ -433,7 +433,7 @@ export function renderFilm(t, opt = {}) {
   if (!opt.nosub) drawSubs(t);
 }
 
-// ═══════════════ 音效事件（给 mix.py） ═══════════════
+// ═══════════════ Sound events (for mix.py) ═══════════════
 export function events() {
   const E = [];
   const add = (t, type, o = {}) => E.push({ t: +t.toFixed(4), type, ...o });
@@ -446,17 +446,17 @@ export function events() {
   for (let t = T.agentIn; t < T.skid; t += BEAT / 1.5) add(t, 'step', { g: .5 });
   add(T.skid, 'skid'); add(T.lookBack, 'paper_flip', { g: .5 }); add(T.toCam, 'paper_flip', { g: .5 });
   for (let t = T.dash; t < T.dash + .4; t += BEAT / 1.5) add(t, 'step', { g: .5 });
-  // 机场
+  // airport
   for (let t = T.airport; t < T.hide; t += BEAT) add(t, 'step', { g: .35 });
   add(T.hide, 'card_slap', { g: .8 }); add(T.hide + .02, 'key_jingle', { g: .4 });
   for (let t = T.walkOn; t < T.train; t += BEAT) add(t, 'step', { g: .3 });
   add(T.planeUp, 'jet');
-  // 列车
+  // train
   add(T.jump1 - .34, 'paper_whoosh', { g: .4 }); add(T.jump1, 'land'); add(T.jump2 - .34, 'paper_whoosh', { g: .4 }); add(T.jump2, 'land');
   add(T.jump3, 'paper_whoosh', { g: .4 }); add(T.land3, 'land');
   add(T.train, 'train_bed', { d: HIT.freeze - T.train + .05 }); add(T.resume, 'train_bed', { d: T.roulette - T.resume });
   add(T.wheel, 'wheel_clank');
-  // 赌场
+  // casino
   add(T.roulette, 'roulette', { d: HIT.pupil - T.roulette });
   add(T.keyBet, 'key_drop'); add(T.keyBet - .35, 'paper_whoosh', { g: .4 });
   add(HIT.pupil, 'pupil'); add(HIT.moon, 'wind', { d: T.shatter - HIT.moon });

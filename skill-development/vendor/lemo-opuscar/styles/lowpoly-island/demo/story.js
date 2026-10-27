@@ -1,31 +1,31 @@
-// 时间线：96 BPM；律动从第一块地升起（6.25s）开始计小节。所有剪辑点、生长事件都对齐这个网格。
+// Timeline: 96 BPM; bars of the groove are counted from when the first tile rises (6.25s). Every cut and growth event aligns to this grid.
 export const DUR = 53.0;
 export const BPM = 96, BEAT = 60 / BPM, BAR = BEAT * 4;   // 0.625 / 2.5
-export const G0 = 6.25;                                    // 律动第 0 小节
+export const G0 = 6.25;                                    // groove bar 0
 export const bar = n => G0 + n * BAR;
 export const beat = n => G0 + n * BEAT;
 
 export const T = {
   bell1: 0.25, bell2: 2.9,
   title: [0.6, 3.6],
-  first: bar(0),            // 6.25 第一块地
+  first: bar(0),            // 6.25 first tile
   tiles: bar(1),            // 8.75
   trees: bar(3),            // 13.75
   houses: bar(4),           // 16.25
   details: bar(5),          // 18.75
-  day: bar(6),              // 21.25 切：白天延时
-  dock: bar(7),             // 23.75 切：码头，小船出海
-  dusk: bar(8),             // 26.25 切：黄昏大全景，窗户逐盏亮
-  night0: bar(9),           // 28.75 天色退成夜
-  night: bar(10),           // 31.25 切：夜，负空间
-  rise: bar(11),            // 33.75 灯塔四环
-  ignite: bar(12),          // 36.25 点亮（全片最强拍）
-  found: bar(13) + 0.625,   // 39.375 光束扫到小船（第 5 拍 = 旋律里的休止）
-  home: bar(14),            // 41.25 回港 + 开始拉远
-  docked: bar(14) + 1.25,   // 42.5 靠岸
+  day: bar(6),              // 21.25 cut: daytime time-lapse
+  dock: bar(7),             // 23.75 cut: the dock, the boat heads out to sea
+  dusk: bar(8),             // 26.25 cut: dusk wide shot, windows light up one by one
+  night0: bar(9),           // 28.75 the sky fades into night
+  night: bar(10),           // 31.25 cut: night, negative space
+  rise: bar(11),            // 33.75 the lighthouse's four rings
+  ignite: bar(12),          // 36.25 ignition (the strongest beat of the film)
+  found: bar(13) + 0.625,   // 39.375 the beam finds the boat (beat 5 = the rest in the melody)
+  home: bar(14),            // 41.25 return to harbour + pull-back begins
+  docked: bar(14) + 1.25,   // 42.5 docked
   far: bar(15),             // 43.75
-  bellFar: 47.5,            // 远处浮标钟（开场同一个音）
-  end: bar(17),             // 48.75 片尾卡
+  bellFar: 47.5,            // distant buoy bell (same note as the opening)
+  end: bar(17),             // 48.75 end card
 };
 
 export const VO = [
@@ -36,18 +36,18 @@ export const VO = [
   { id: 'v5', t: 44.0, text: 'Far away, another island hears its first note.' },
 ];
 
-// 和声（按律动小节），给事件取音高；配乐脚本读同一份
+// harmony (per groove bar), used to pick pitches for events; the score script reads the same data
 export const CHORDS = ['D', 'Bm', 'G', 'A', 'D', 'Bm', 'G', 'D', 'D', 'Bm', 'D', 'A', 'D', 'Bm', 'G', 'D', 'D', 'D'];
 const CT = { D: [62, 66, 69], Bm: [59, 62, 66], G: [55, 59, 62], A: [57, 61, 64] };
 export const chordAt = t => CHORDS[Math.max(0, Math.min(CHORDS.length - 1, Math.floor((t - G0) / BAR)))];
-// 取 t 时刻和弦里、落在 [lo,hi] 内的第 k 个音（k 为 0..1 的轮廓值）
+// take the k-th note of the chord at time t that falls within [lo,hi] (k is a contour value in 0..1)
 export function noteAt(t, k, lo = 60, hi = 84) {
   const pcs = CT[chordAt(t)], ns = [];
   for (let m = lo; m <= hi; m++) if (pcs.some(p => (m - p) % 12 === 0)) ns.push(m);
   return ns[Math.max(0, Math.min(ns.length - 1, Math.round(k * (ns.length - 1))))];
 }
 
-// 天色关键帧：[t, 天顶, 地平线/远海雾, 海深, 海浅, 太阳色, 太阳强度, 环境天光, 环境地光, 环境强度, 太阳高度角°, 太阳方位角°, 夜值]
+// sky keyframes: [t, zenith, horizon / far-sea fog, deep sea, shallow sea, sun colour, sun intensity, ambient sky light, ambient ground light, ambient intensity, sun elevation°, sun azimuth°, night amount]
 export const SKY = [
   [0.0, '#9fb6cf', '#f3d2c4', '#4f8ea3', '#8fc9c4', '#ffd9bf', 1.3, '#dfe6f2', '#b89a8a', 1.05, 12, 200, 0],
   [6.0, '#a9c4dc', '#f6dccd', '#4f93a8', '#93d0c8', '#ffe2c8', 1.7, '#e3ecf6', '#bfa590', 1.1, 22, 190, 0],
@@ -61,20 +61,20 @@ export const SKY = [
   [53.0, '#11153a', '#4a4478', '#22254a', '#353965', '#a9b0e8', .9, '#5c5ea8', '#2a2640', .55, 30, 300, 1],
 ];
 
-// 镜头段：[起, 止, 名]
+// camera segments: [start, end, name]
 export const SHOTS = [
-  [0, beat(7), 'grow'],        // 开场空海 → 第一块地 → 地块铺开（转盘，缓慢拉远）
-  [beat(7), bar(2) + BAR / 2, 'rock'],   // 10.625 切近景：中心礁石冲出水面（水花）
-  [bar(2) + BAR / 2, T.trees, 'grow2'],   // 12.5 回到全岛（转盘继续）
-  [T.trees, T.houses, 'trees'],           // 13.75 中景：树"啵"地长出
-  [T.houses, T.details, 'houses'],        // 16.25 近景：楼层一层层弹性落定
-  [T.details, T.day, 'details'],          // 18.75 近景：风车、码头木板、小船落水
+  [0, beat(7), 'grow'],        // opening empty sea → first tile → tiles spread out (turntable, slow pull-back)
+  [beat(7), bar(2) + BAR / 2, 'rock'],   // 10.625 cut to close-up: the central rock bursts out of the water (splash)
+  [bar(2) + BAR / 2, T.trees, 'grow2'],   // 12.5 back to the whole island (turntable continues)
+  [T.trees, T.houses, 'trees'],           // 13.75 medium shot: trees "pop" up
+  [T.houses, T.details, 'houses'],        // 16.25 close-up: storeys settle one by one with a springy bounce
+  [T.details, T.day, 'details'],          // 18.75 close-up: windmill, dock planks, the boat drops into the water
   [T.day, T.dock, 'square'],
   [T.dock, T.dusk, 'dock'],
   [T.dusk, T.night, 'dusk'],
   [T.night, T.rise, 'lost'],
   [T.rise, T.ignite, 'tower'],
-  [T.ignite, DUR, 'beam'],     // 点亮 → 拉远 → 片尾
+  [T.ignite, DUR, 'beam'],     // ignition → pull-back → end card
 ];
 export const shotAt = t => SHOTS.find(s => t >= s[0] && t < s[1]) || SHOTS[SHOTS.length - 1];
 

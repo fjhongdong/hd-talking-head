@@ -1,6 +1,6 @@
-"""whisper 自检：python core/tts/asr_check.py lines.json voices_dir
-逐句对比原文与转写；前后补 0.6s 静音再转写（短句不补容易听错）；输出逐词时间戳 voices_dir/words.json（口型、断句用）
-lines.json 里可加 "asr" 字段覆盖期望文本（专有名词、拟声词）"""
+"""whisper self-check: python core/tts/asr_check.py lines.json voices_dir
+Compares each line's source text with its transcript; pads 0.6s of silence before and after before transcribing (short lines are easily misheard without it); writes per-word timestamps to voices_dir/words.json (for lip sync and line breaks)
+An "asr" field in lines.json overrides the expected text (proper nouns, onomatopoeia)"""
 import sys, json, re, os, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel
 m = WhisperModel(os.environ.get('WM','base.en'), device='cpu', compute_type='int8')

@@ -22,14 +22,14 @@ canvas { display:block; }
 <script src="poses/asia.js"></script>
 <script src="scenes.js"></script>
 <script>
-// 4:3 封面 2880×2160：上面 8×4 方格（象形图 + 核心图形纹样 + 红日），下面墨色标题区
-// cover.html?lang=ej → 英日版；默认中文版
+// 4:3 cover, 2880×2160: an 8×4 grid on top (pictograms + core-graphic patterns + red sun), ink-coloured title area below
+// cover.html?lang=ej → English/Japanese version; Chinese version by default
 const EJ = new URLSearchParams(location.search).get('lang') === 'ej';
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const CW = 2880, CH = 2160, S = 360, COLS = 8, ROWS = 4;
 const { PAL, mix, rgba, F } = G;
 
-// 格子：p = 象形图（姿势名 + 色系），m = 纹样格，sun = 红日
+// Cells: p = pictogram (pose name + palette), m = pattern cell, sun = red sun
 const T = [
   ['p', 'sprint', 'red'],   ['m', 4, 'purple'], ['p', 'free', 'purple'],     ['p', 'football', 'gold'],   ['m', 8, 'ochre'],   ['p', 'judo', 'ochre'],       ['p', 'taekwondo', 'ochre'], ['m', 3, 'green'],
   ['m', 11, 'gold'],        ['p', 'highjump', 'red'], ['p', 'basketball', 'gold'], ['sun'],                   ['sun2'],            ['p', 'archery', 'ink'],      ['m', 5, 'red'],             ['p', 'surfing', 'green'],
@@ -59,7 +59,7 @@ function tile(i, j, t) {
 function draw() {
   ctx.fillStyle = PAL.ink.t[0]; ctx.fillRect(0, 0, CW, CH);
   for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) tile(i, j, T[j * COLS + i]);
-  // 中间 2×2 合成一个大红日格：红底 + 米白日轮 + 五色环
+  // The middle 2×2 merges into one big red-sun cell: red ground + off-white sun disc + five-colour rings
   const sx = 3 * S, sy = 1 * S;
   ctx.fillStyle = PAL.red.t[2]; ctx.fillRect(sx, sy, 2 * S, 2 * S);
   const cx = sx + S, cy = sy + S;
@@ -70,8 +70,8 @@ function draw() {
   ctx.font = F.en(900, 96); ctx.letterSpacing = '-3px'; ctx.textAlign = 'center'; ctx.fillStyle = G.CREAM;
   ctx.fillText('43', cx, cy + 34);
 
-  // 整行错位：把第 1 行和第 4 行轻轻错开（官方核心图形的标志）
-  // 错开后露出的半格补一个纹样格，不做循环（否则两端会出现同一个人）
+  // Whole-row offset: shift row 1 and row 4 slightly out of line (the signature of the official core graphic)
+  // The half cell exposed by the shift is filled with a pattern cell, not wrapped around (otherwise the same person would appear at both ends)
   const shift = (j, dx, kind, pk) => {
     const tmp = G.canvas(CW, S); tmp.getContext('2d').drawImage(cv, 0, j * S, CW, S, 0, 0, CW, S);
     const gx = dx < 0 ? CW + dx : 0;
@@ -83,10 +83,10 @@ function draw() {
   };
   shift(0, -S / 2, 1, 'gold'); shift(3, S / 2, 0, 'red');
 
-  // 标题区
+  // Title area
   const ty = ROWS * S; // 1440
   ctx.fillStyle = PAL.ink.t[0]; ctx.fillRect(0, ty, CW, CH - ty);
-  // 五色条
+  // Five-colour bar
   cols.forEach((k, n) => { ctx.fillStyle = PAL[k].t[2]; ctx.fillRect(n * CW / 5, ty, CW / 5, 18); });
   const L = 150;
   ctx.textAlign = 'left';
@@ -94,7 +94,7 @@ function draw() {
   ctx.fillText('THE 20TH ASIAN GAMES  ·  2026.9.19 — 10.4', L, ty + 120);
   ctx.font = F.en(900, 250); ctx.letterSpacing = '-7px'; ctx.fillStyle = G.CREAM;
   ctx.fillText('AICHI-NAGOYA 2026', L - 8, ty + 370);
-  // 第二行：语言版本
+  // Second line: language version
   if (EJ) {
     ctx.font = F.en(800, 104); ctx.letterSpacing = '-1px'; ctx.fillStyle = G.CREAM;
     ctx.fillText('ALL 43 SPORTS', L, ty + 560);
@@ -108,7 +108,7 @@ function draw() {
     ctx.fillStyle = PAL.gold.t[2];
     ctx.fillText('一口气看完', L + w + 50, ty + 560);
   }
-  // 右下角小红日
+  // Small red sun in the bottom-right corner
   G.disc(ctx, CW - 230, ty + 460, 72, PAL.red.t[2]);
   ctx.font = F.mono(30); ctx.letterSpacing = '8px'; ctx.fillStyle = rgba(G.CREAM, 0.6); ctx.textAlign = 'right';
   ctx.fillText('IMAGINE ONE ASIA', CW - 150, ty + 640);

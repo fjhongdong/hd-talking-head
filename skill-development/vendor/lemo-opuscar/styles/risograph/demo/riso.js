@@ -1,9 +1,9 @@
-// Riso 印刷合成器（WebGL2）
-// 输入：一张"分版画布"——R = 蓝版浓度，G = 黄版浓度，B = 荧光粉版浓度（0 = 不上墨，255 = 实地）
-//   用普通 source-over 绘制 = 自动"挖空"（后画的形状在三个版上都盖住先画的）；
-//   用 'lighter' 只往某个通道加 = "叠印"（例如粉色太阳叠在蓝天上 → 紫）。
-// 输出：纸白底上三块专色 multiply 叠印，每版独立的：套色错位（位移+微旋转）、网点半调（各自网角）、
-//   墨粒（实地里的漏白点）、墨色不均（沿走纸方向的条纹 + 大块浓淡）、版边粗糙、上版开关与"滚筒刷墨"揭示。
+// Riso print compositor (WebGL2)
+// Input: one "separation canvas" — R = blue plate density, G = yellow plate density, B = fluorescent pink plate density (0 = no ink, 255 = solid)
+//   drawing with plain source-over = automatic "knockout" (later shapes cover earlier ones on all three plates);
+//   using 'lighter' to add only to one channel = "overprint" (e.g. pink sun over blue sky → purple).
+// Output: three spot colours multiplied over a paper-white base, each plate with its own: misregistration (offset + slight rotation), halftone dots (own screen angle),
+//   ink grain (white pinholes in solids), uneven ink (streaks along the paper-feed direction + large density patches), rough plate edges, plate on/off gate and the "drum inking" reveal.
 export const INK = {
   blue: [0, 120, 191],        // Riso Blue
   yellow: [255, 232, 0],      // Riso Yellow
@@ -18,24 +18,24 @@ const FS = `#version 300 es
 precision highp float;
 uniform sampler2D uTex;
 uniform vec2 uRes;
-uniform vec2 uOff[3];      // 每版位移（px）
-uniform float uRot[3];     // 每版微旋转（rad，绕画面中心）
-uniform float uAng[3];     // 网角
+uniform vec2 uOff[3];      // per-plate offset (px)
+uniform float uRot[3];     // per-plate slight rotation (rad, about the frame centre)
+uniform float uAng[3];     // screen angle
 uniform vec3 uInk[3];
 uniform vec3 uPaper;
-uniform float uSeed;       // 每"印一张"变一次（12fps 步进 = 墨粒沸腾）
-uniform float uBoil;       // 墨粒沸腾比例 0..1
-uniform float uSheet;      // 纸张级变化（墨色条纹/浓淡）：只在换镜头时变，避免满屏闪
-uniform float uPeriod;     // 网点周期 px
-uniform float uGate[3];    // 该版是否已上机 0..1
-uniform float uSweep[3];   // 刷墨揭示：该版从右往左推进到的 x（px）；>= uRes.x+200 表示全开
-uniform float uGrain;      // 墨粒强度
-uniform float uWaterY;     // 水面（px，画布坐标）；<0 表示无水
-uniform float uWaterAmp;   // 倒影摆幅（px）
+uniform float uSeed;       // changes once per "printed sheet" (12fps steps = boiling ink grain)
+uniform float uBoil;       // share of ink grain that boils 0..1
+uniform float uSheet;      // sheet-level variation (ink streaks / density): changes only on shot cuts, to avoid full-screen flicker
+uniform float uPeriod;     // halftone dot period px
+uniform float uGate[3];    // whether this plate is on the machine yet 0..1
+uniform float uSweep[3];   // inking reveal: the x (px) this plate has advanced to from right to left; >= uRes.x+200 means fully revealed
+uniform float uGrain;      // ink grain strength
+uniform float uWaterY;     // water line (px, canvas coordinates); <0 means no water
+uniform float uWaterAmp;   // reflection sway amplitude (px)
 uniform float uWaterT;
-uniform float uWaterSep;   // 倒影里的分版错位（0..1）
-uniform float uRefl;       // 倒影强度
-uniform float uWaterB;     // 水面下边界（px）
+uniform float uWaterSep;   // plate misregistration inside the reflection (0..1)
+uniform float uRefl;       // reflection strength
+uniform float uWaterB;     // lower edge of the water (px)
 out vec4 o;
 
 float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -51,7 +51,7 @@ float dens(int i, vec2 px){
   vec2 q = rot(px - uRes * .5, uRot[i]) + uRes * .5 - uOff[i];
   float d = texture(uTex, q / uRes)[i];
   if (uWaterY > 0. && q.y > uWaterY && q.y < uWaterB) {
-    // 倒影：以水面为轴翻转，每版用不同相位的正弦摆动 → 倒影里套色散开
+    // reflection: flip about the water line, each plate sways on a sine with a different phase → the colours separate in the reflection
     float fi = float(i);
     float yy = 2. * uWaterY - q.y;
     float depth = (q.y - uWaterY);
@@ -59,7 +59,7 @@ float dens(int i, vec2 px){
     float sep = uWaterSep * (fi - 1.) * 14.;
     vec2 rq = vec2(q.x + w * uWaterAmp + sep, yy);
     float r = rq.y > 0. ? texture(uTex, rq / uRes)[i] : 0.;
-    // 水面横向断裂（波纹里的纸白细缝）
+    // horizontal breaks in the water (thin paper-white gaps in the ripples)
     float gap = step(.72, vn(vec2(q.x * .012, q.y * .35) + uWaterT * vec2(.8, 0), 3.));
     r *= uRefl * (1. - gap * .85);
     d = 1. - (1. - d) * (1. - r);
@@ -69,33 +69,33 @@ float dens(int i, vec2 px){
 
 void main(){
   vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
-  // 纸：暖白 + 纤维
+  // paper: warm white + fibres
   float fib = vn(px * vec2(.9, .25), 7.) * .5 + vn(px * .05, 9.) * .5;
   vec3 col = uPaper * (.975 + .03 * fib);
   for (int i = 0; i < 3; i++) {
     if (uGate[i] <= 0.001) continue;
     vec2 q = rot(px - uRes * .5, uRot[i]) + uRes * .5 - uOff[i];
     float d = dens(i, px);
-    // 刷墨揭示：从右往左推进，边缘有一道偏浓的墨带
-    // 刷墨揭示：已刷区域 = x < uSweep（从左往右推进），推进边缘有一道偏浓的墨带
+    // inking reveal: advances from right to left, with a slightly denser ink band at the edge
+    // inking reveal: inked area = x < uSweep (advances from left to right), with a slightly denser ink band at the advancing edge
     float reveal = 1. - smoothstep(-5., 5., px.x - uSweep[i]);
     float band = exp(-pow((px.x - uSweep[i]) / 22., 2.));
     if (d < .002 && band < .01) continue;
-    // 网点：沿本版坐标（随套色一起错位）
+    // halftone dots: in this plate's coordinates (shift together with the misregistration)
     vec2 g = rot(q, uAng[i]) / uPeriod;
     float spot = 1. - (cos(6.2831853 * g.x) + cos(6.2831853 * g.y) + 2.) * .25; // 0..1
-    // 墨粒与版边粗糙
-    // 墨粒：静态部分跟着纸走（每个镜头一张纸），沸腾部分每印一张变一次、幅度小（uBoil）
+    // ink grain and rough plate edges
+    // ink grain: the static part follows the paper (one sheet per shot), the boiling part changes once per printed sheet, with a small amplitude (uBoil)
     float n1 = mix(h21s(floor(q * .9), uSheet + float(i) * 3.1), h21s(floor(q * .9), uSeed + float(i) * 3.1), uBoil);
     float n2 = vn(q * .33, uSheet * .7 + float(i));
     float thr = spot + (n1 - .5) * .16 * uGrain + (n2 - .5) * .12;
     float dd = d * 1.06;
     float cov = smoothstep(thr - .07, thr + .07, dd);
-    cov = max(cov, smoothstep(.9, 1., d) * .96);   // 实地
-    // 漏白点（实地里纸色透出）
+    cov = max(cov, smoothstep(.9, 1., d) * .96);   // solid
+    // white pinholes (paper showing through solids)
     float sp = h21s(floor(q * .55), uSheet * 1.3 + float(i) * 7.7 + floor(uSeed * uBoil * 2.) * 0.);
     cov *= 1. - step(.955 - .03 * uGrain, sp) * .75 * smoothstep(.4, 1., d);
-    // 墨色不均：沿走纸方向（竖向）的条纹 + 大块浓淡 + 每张纸的整体浓度
+    // uneven ink: streaks along the paper-feed direction (vertical) + large density patches + an overall density per sheet
     float streak = vn(vec2(q.x * .025, q.y * .0022), 11. + float(i) + uSheet * .37);
     float blot = vn(q * .004, 5. + float(i) * 2. + uSheet * .13);
     float k = .80 + .14 * streak + .08 * blot;

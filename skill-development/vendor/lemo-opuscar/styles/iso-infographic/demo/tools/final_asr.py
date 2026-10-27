@@ -1,4 +1,4 @@
-"""成片 whisper 抽查：逐句在各自时间窗内单独转写（成片里有配乐和拟音），与期望文本比对。python tools/final_asr.py iso-infographic.mp4"""
+"""whisper spot-check of the finished film: transcribes each line separately within its own time window (the film has score and foley under it) and compares with the expected text. python tools/final_asr.py iso-infographic.mp4"""
 import sys, os, json, re, subprocess, numpy as np
 from faster_whisper import WhisperModel
 D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -1,4 +1,4 @@
-// 时间线唯一真值：120 BPM，2/4 拍（1 拍 = 0.5 s，1 小节 = 1 s）
+// Single source of truth for the timeline: 120 BPM, 2/4 time (1 beat = 0.5 s, 1 bar = 1 s)
 export const DUR = 49;
 export const BEAT = .5;
 export const T = {
@@ -11,7 +11,7 @@ export const T = {
   nianClose: 34.0, flinch: 34.25, flee: 35.3, fireworks: [35.5, 36.25, 37.0], phraseEnd: 37.5,
   dawn: 38.0, sunUp: 39.0, asleep: 40.8, reveal: 42.5, cadence: 44.0, end: 46.0, endTicks: [46.5, 47.0]
 };
-// 旁白起点（秒）
+// narration start times (seconds)
 export const VO = [
   { id: 'L1', t: 7.6, text: 'Every New Year’s Eve, the monster Nian came down from the mountains.' },
   { id: 'L2', t: 13.6, text: 'One by one, the village put out its lights.' },
@@ -19,7 +19,7 @@ export const VO = [
   { id: 'L4', t: 35.2, text: 'Crackle, bang! And away ran Nian.' },
   { id: 'L5', t: 38.6, text: 'That is why, every New Year, we still paste red paper on our windows.' },
 ];
-// 镜头表 [起, 止, 名]
+// shot list [start, end, name]
 export const SHOTS = [
   [0, 2.9, 'macro'], [2.9, 7.1, 'title'], [7.0, 12.0, 'village'], [12.0, 17.0, 'rise'], [17.0, 19.5, 'eye'],
   [19.5, 24.0, 'decide'], [24.0, 31.25, 'fold'], [31.25, 32.0, 'paste'], [32.0, 34.0, 'glow'], [34.0, 35.3, 'nianClose'],

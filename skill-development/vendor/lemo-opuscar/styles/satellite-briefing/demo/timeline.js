@@ -6,7 +6,7 @@ export const b = n => +(n * BEAT).toFixed(4);          // beat number -> seconds
 
 export const T = {
   lock: b(1),          // 0.6  reticle locks on the Aral
-  mapOn: b(2),         // 1.2  map layer on: blue fill + 咸海
+  mapOn: b(2),         // 1.2  map layer on: blue fill + 咸海 (Aral Sea)
   dive0: b(3),         // 1.8  the dive starts
   grey0: b(6),         // 3.6  colour starts to drain
   touch: b(9),         // 5.4  touchdown, map blue drains away; silence 1
@@ -33,7 +33,7 @@ export const T = {
   n2001: b(42),        // 25.2  ring 2001
   n2009: b(44),        // 26.4  ring 2009, water regains colour
   pull: b(48),         // 28.8  pull back to orbit
-  relabel: b(51),      // 30.6  咸海 label moves to the north sea (pins one beat later)
+  relabel: b(51),      // 30.6  咸海 (Aral Sea) label moves to the north sea (pins one beat later)
   end: b(57),          // 34.2  end card
   dur: 37.8,
 };

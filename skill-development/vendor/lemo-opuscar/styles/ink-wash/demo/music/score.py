@@ -1,8 +1,8 @@
-"""《The Swordsman and the River》原创配乐（48.0 s）。
-运行：.venv/bin/python styles/ink-wash/demo/music/score.py  （在仓库根）
-古琴 = core/audio/pluck.py guqin（散音/按音滑音/吟猱/泛音/扫弦）；箫 = 采样长笛低音区 + 低通 + 气声噪声；
-大鼓 = gran_cassa + timpani；盖印 = gong2 small；过江脚步 = frame_drum 轻点。F 宫五声（F G A C D），旋律原创。
-输出 score.wav（48k 立体声，峰值 ≤ -1 dBFS）、stems/*.wav、score.json。"""
+"""Original score for "The Swordsman and the River" (48.0 s).
+Run: .venv/bin/python styles/ink-wash/demo/music/score.py  (from the repo root)
+Guqin = core/audio/pluck.py guqin (sanyin 散音 open-string tones / anyin 按音 stopped tones with slides / yin-nao 吟猱 vibrato ornaments / harmonics / strummed sweep); xiao (箫, end-blown bamboo flute) = sampled flute low register + low-pass + breath noise;
+Big drum = gran_cassa + timpani; seal stamp = gong2 small; footsteps crossing the river = light frame_drum taps. F gong (宫) pentatonic (F G A C D), original melody.
+Output score.wav (48k stereo, peak ≤ -1 dBFS), stems/*.wav, score.json."""
 import sys, os, json
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
 sys.path.insert(0, ROOT)
@@ -20,12 +20,12 @@ st = {k: np.zeros((N, 2), np.float32) for k in ('guqin', 'xiao', 'drums', 'pad')
 def G(t, pitch, dur=None, vel=.7, pan=0., gain=1., **kw):
     add(st['guqin'], P.pluck('guqin', pitch, dur, vel, **kw), t, gain, pan)
 
-def H(t, pitch, vel=.55, pan=0., gain=1., dur=1.2, **kw):   # 泛音
+def H(t, pitch, vel=.55, pan=0., gain=1., dur=1.2, **kw):   # harmonic
     G(t, pitch, dur, vel, pan, gain, harmonic=True, **kw)
 
 rng = np.random.default_rng(11)
 def xiao(t, pitch, dur, vel=.55, pan=-.15, gain=1., att=.5):
-    """箫：长笛采样低音区（低于 C4 的音向下移调）+ 3 kHz 低通去亮 + 气声噪声（带通 800–3k，跟音量包络），弱起"""
+    """Xiao: flute samples, low register (notes below C4 transposed down) + 3 kHz low-pass to remove brightness + breath noise (band-pass 800–3k, following the amplitude envelope), soft attack"""
     x = S.note('flute', pitch, dur, vel, release=.6, attack=att).astype(np.float64)
     x = sosfilt(butter(2, 2600, 'low', fs=SR, output='sos'), x)
     env = np.abs(x); env = np.convolve(env, np.ones(960) / 960, 'same')
@@ -41,49 +41,49 @@ def D(t, inst, var, vel=.8, gain=1., pan=0., dur=None, env=None):
 marks = {}
 def mark(k, t): marks[k] = t
 
-# ---------------- A 虚白 0–7.0 散板 ----------------
+# ---------------- A Xubai (虚白, empty white) 0–7.0 sanban (散板, free unmetered tempo) ----------------
 mark('A_drop', .90)
-G(.90, 'F2', None, .92, 0, 1.25)                      # 墨滴落纸：低 F 散音，长余韵
-xiao(2.6, 'C4', 3.6, .5, -.2, .8, att=1.4)            # 箫长音弱起
+G(.90, 'F2', None, .92, 0, 1.25)                      # ink drop on paper: low F open-string tone, long decay
+xiao(2.6, 'C4', 3.6, .5, -.2, .8, att=1.4)            # xiao long note, soft attack
 for tt, p, pan in [(3.4, 'C5', .25), (4.0, 'F5', -.1), (4.6, 'A5', .15)]:
     H(tt, p, .5, pan, .9); mark(f'A_harm_{tt}', tt)
-G(6.0, 'D3', 1.0, .55, .1, .9, bend=[(0, 0), (.25, 0), (1.0, -2)])   # 下行滑音引入
+G(6.0, 'D3', 1.0, .55, .1, .9, bend=[(0, 0), (.25, 0), (1.0, -2)])   # descending slide as lead-in
 mark('A_slide', 6.0)
 
-# ---------------- B 江岸 7.0–14.5，60 BPM ----------------
-G(7.0, 'A3', 1.4, .62, .05, 1., bend=[(0, -2), (.25, 0)])            # 按音上滑入
-G(8.0, 'C4', .8, .5, .1, .85, vib=(4.5, .18, .3))                   # 吟
-for tt, p in [(8.8, 'F3'), (9.4, 'A3'), (10.0, 'C4')]:              # 侠客三笔
+# ---------------- B River Bank 7.0–14.5, 60 BPM ----------------
+G(7.0, 'A3', 1.4, .62, .05, 1., bend=[(0, -2), (.25, 0)])            # stopped tone sliding up into the note
+G(8.0, 'C4', .8, .5, .1, .85, vib=(4.5, .18, .3))                   # yin (吟, vibrato)
+for tt, p in [(8.8, 'F3'), (9.4, 'A3'), (10.0, 'C4')]:              # the swordsman's three strokes
     G(tt, p, .55, .75, 0, 1.1); mark(f'B_stroke_{tt}', tt)
-H(10.3, 'F6', .5, .3, .85); mark('B_tassel', 10.3)                  # 剑穗点红
-# 旁白 10.6–14.1：只留低音和极稀的音
+H(10.3, 'F6', .5, .3, .85); mark('B_tassel', 10.3)                  # red dot of the sword tassel
+# Narration 10.6–14.1: keep only low notes and very sparse notes
 G(11.2, 'D3', 1.8, .42, -.1, .8, bend=[(0, 0), (.9, 0), (1.6, -2)])
 G(12.8, 'G2', 1.2, .4, .1, .75)
 H(13.6, 'C5', .3, -.2, .55)
 G(14.1, 'A2', .5, .5, 0, .8)
 
-# ---------------- C 过江 14.5–21.3，90 BPM ----------------
+# ---------------- C Crossing the River 14.5–21.3, 90 BPM ----------------
 b = 60 / 90
-# 轮指 ostinato（低、轻）
+# Rolled-finger (轮指) ostinato (low, light)
 seq = ['F2', 'C3', 'F3', 'C3', 'G2', 'D3', 'G3', 'D3']
 tt, i = 14.5, 0
 while tt < 20.9:
     fade = 1 - max(0, (tt - 20.0) / 1.0) * .7
     G(tt, seq[i % 8], .32, .34 * fade, (-.3 if i % 2 else .3) * .4, .7 * fade)
     tt += b / 2; i += 1
-# 脚步点：清脆短音 + 手鼓轻点
+# Footstep hits: crisp short notes + light hand-drum taps
 stepP = ['C4', 'D4', 'F4', 'D4', 'C4', 'A3', 'C4', 'D4', 'F4']
 for k in range(9):
     t0 = 15.3333 + k * b
     G(t0, stepP[k], .22, .62, .15 * (1 if k % 2 else -1), .75, pos=.12)
     D(t0, 'frame_drum', 'small_muted', .45, .5, .1)
     mark(f'C_step_{k}', round(t0, 4))
-# 箫旋律（旁白期间轻）
+# Xiao melody (soft during narration)
 for t0, p, d, g in [(15.0, 'A4', 1.33, .55), (16.33, 'C5', 1.33, .5), (17.67, 'D5', .67, .5), (18.33, 'C5', .67, .5), (19.0, 'A4', 1.33, .62), (20.33, 'G4', 1.0, .55)]:
     xiao(t0, p, d, .5, -.2, g, att=.25)
-G(20.2, 'F2', 1.2, .5, 0, .9, bend=[(0, 0), (.4, 0), (1.1, -1)])  # 低音下沉
+G(20.2, 'F2', 1.2, .5, 0, .9, bend=[(0, 0), (.4, 0), (1.1, -1)])  # bass sinking
 
-# ---------------- D 浪起 21.3–26.8 ----------------
+# ---------------- D The Wave Rises 21.3–26.8 ----------------
 mark('D_hit', 21.30)
 D(21.30, 'gran_cassa', 'hit', .95, 1.1)
 D(21.30, 'timpani', 'drum2', .85, .9)
@@ -97,7 +97,7 @@ D(23.0, 'gran_cassa', 'roll', .8, 1.3, 0, env=ramp)
 D(24.6, 'timpani', 'drum2', .5, .45, -.2)
 D(25.9, 'timpani', 'drum2', .7, .6, .2)
 
-# —— 26.80 硬切：A–D 段单独加混响，再把 26.80 之后（含混响尾巴、长采样余音）全部清零 ——
+# —— 26.80 hard cut: sections A–D get their own reverb, then everything after 26.80 (including reverb tails and long sample decays) is zeroed ——
 def verb(d):
     d['guqin'] = S.room(d['guqin'], size=.5, mix=.2); d['xiao'] = S.room(d['xiao'], size=.62, mix=.3)
     d['drums'] = S.room(d['drums'], size=.55, mix=.16); d['pad'] = S.room(d['pad'], size=.5, mix=.15)
@@ -109,11 +109,11 @@ pre = verb(st)
 for k in pre: cut_after(pre[k], 26.80)
 st = {k: np.zeros((N, 2), np.float32) for k in pre}
 
-# ---------------- E 静 26.8–32.4 ----------------
+# ---------------- E Stillness 26.8–32.4 ----------------
 for tt, p in [(28.50, 'G5'), (29.20, 'C6'), (29.95, 'D6')]:
     H(tt, p, .55, (tt - 29.2) * .5, .95, dur=.35, release=.35); mark(f'E_harm_{tt}', tt)
 
-# ---------------- F 断流 32.40 ----------------
+# ---------------- F Cutting the Current 32.40 ----------------
 mark('F_cut', 32.40)
 D(32.40, 'gran_cassa', 'hit', 1.0, 1.4)
 D(32.40, 'timpani', 'drum2', 1.0, 1.1)
@@ -122,7 +122,7 @@ G(32.40, 'F2', 3.0, .7, 0, .8)
 lowF = S.note('contrabass', 'F1', 2.6, .55, release=.6, attack=.05).astype(np.float64)
 add(st['pad'], lowF.astype(np.float32), 32.42, .55, 0)
 
-# ---------------- G 过江 35.4–42.6，60 BPM ----------------
+# ---------------- G Crossing the River 35.4–42.6, 60 BPM ----------------
 G(35.4, 'A3', 1.5, .6, .05, .9, bend=[(0, -2), (.35, 0)])
 G(36.4, 'C4', 1.0, .5, .1, .75, vib=(4.2, .2, .3))
 G(37.4, 'D4', .8, .45, -.05, .7)
@@ -134,7 +134,7 @@ G(41.30, 'F3', 2.0, .72, 0, 1.0); H(41.30, 'F5', .45, .2, .6); mark('G_bow_caden
 for t0, p, d, g in [(36.0, 'C5', 2.0, .42), (38.2, 'A4', 1.5, .42), (39.8, 'G4', 1.4, .4), (41.3, 'F4', 1.6, .5)]:
     xiao(t0, p, d, .48, -.25, g, att=.4)
 
-# ---------------- H 收卷 42.6–48.0 ----------------
+# ---------------- H Rolling Up the Scroll 42.6–48.0 ----------------
 G(42.8, 'C3', 1.0, .42, .1, .75)
 G(43.6, 'A2', 1.0, .45, -.1, .75, bend=[(0, 0), (.4, 0), (.9, -2)])
 mark('H_seal', 44.60)
@@ -142,19 +142,19 @@ H(44.60, 'F3', .6, 0, 1.0, dur=3.2, release=1.2)
 G(44.60, 'F2', None, .5, 0, .8)
 D(44.60, 'gong2', 'small', .35, .35, .1)
 
-# ---------------- 混响 + 静音段 + 总线 ----------------
+# ---------------- Reverb + silent stretches + bus ----------------
 st = verb(st)
 st = {k: st[k] + pre[k] for k in st}
 
 def gate_zero(x, a, b2, fade=.02):
-    """[a, b2) 强制数字 0；a 前 fade 秒淡出，b2 后不淡入（后面的事件自己起音）"""
+    """[a, b2) forced to digital 0; fade out for `fade` seconds before a, no fade-in after b2 (later events bring their own attack)"""
     ia, ib, nf = int(a * SR), int(b2 * SR), int(fade * SR)
     x[ia - nf:ia] *= np.linspace(1, 0, nf, dtype=np.float32)[:, None]
     x[ia:ib] = 0
 zones = [(26.80, 28.50), (30.50, 32.40)]
 for k in st:
     for a, b2 in zones: gate_zero(st[k], a, b2)
-    # 泛音在 30.50 前淡尽（30.2→30.5）
+    # harmonics fully faded before 30.50 (30.2→30.5)
     i0, i1 = int(30.2 * SR), int(30.5 * SR); st[k][i0:i1] *= np.linspace(1, 0, i1 - i0, dtype=np.float32)[:, None] ** 2
     st[k][-int(.3 * SR):] *= np.linspace(1, 0, int(.3 * SR), dtype=np.float32)[:, None]
 
@@ -168,11 +168,11 @@ for k, g in [('guqin', 1.0), ('xiao', 2.1), ('drums', .9), ('pad', .7)]:
     sf.write(os.path.join(HERE, 'stems', f'{k}.wav'), (st[k] * g * sc).astype(np.float32), SR, subtype='FLOAT')
 sf.write(os.path.join(HERE, 'score.wav'), mix.astype(np.float32), SR, subtype='FLOAT')
 
-# ---------------- 自检 ----------------
+# ---------------- Self-check ----------------
 def rms_db(a, b2):
     s = mix[int(a * SR):int(b2 * SR)]; return round(float(20 * np.log10(np.sqrt(np.mean(s ** 2)) + 1e-12)), 1)
 def onset(t, win=.08):
-    """能量上升点：2.5 ms 窗 RMS 的最大增量所在（在 t±win 内），比阈值法不受前一音余韵干扰"""
+    """Energy-rise point: where the 2.5 ms-window RMS has its largest increase (within t±win); unlike a threshold method, not thrown off by the previous note's decay"""
     h = int(.0025 * SR); a0 = int((t - win) * SR)
     seg = mix[a0:int((t + win) * SR)].mean(1)
     e = np.sqrt(np.convolve(seg ** 2, np.ones(h) / h, 'same') + 1e-12)

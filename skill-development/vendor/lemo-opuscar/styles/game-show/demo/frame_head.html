@@ -15,7 +15,7 @@
 <body>
 <svg id="stage" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- 线条抖动（逐 0.1s 换种子）+ 油墨颗粒 -->
+    <!-- Line boil (new seed every 0.1 s) + ink grain -->
     <filter id="boil" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence id="boilT" type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="1" result="w"/>
       <feDisplacementMap in="SourceGraphic" in2="w" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/>
@@ -50,7 +50,7 @@
 
 <script>
 // ============================================================
-// 基础工具
+// Basic utilities
 // ============================================================
 const NS = 'http://www.w3.org/2000/svg';
 const C = {
@@ -93,7 +93,7 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 const mctx = document.createElement('canvas').getContext('2d');
 function measure(str, size, family, weight = 900) { mctx.font = `${weight} ${size}px ${family}`; return mctx.measureText(str).width; }
 
-// 逐字文字（可做逐字弹入），可选错版阴影
+// Per-character text (can pop in one character at a time), optional misregistered (错版) offset shadow
 function chars(parent, str, o) {
   const { x, y, size, family, weight = 900, fill = C.navy, anchor = 'start', ls = 0, shadow, stroke, sw = 0 } = o;
   const g = el('g', {}, parent);
@@ -114,7 +114,7 @@ function chars(parent, str, o) {
   });
   return { g, items, total };
 }
-// 逐字动画：弹入（从下方挤压回弹）
+// Per-character animation: pop in (rises from below with squash and spring-back)
 function charsPop(c, t, t0, stagger = 0.05, d = 0.38, from = 60) {
   c.items.forEach((it, i) => {
     const s = t0 + i * stagger;
@@ -131,7 +131,7 @@ function charsIdle(c, t, amp = 4, spd = 3) {
   c.items.forEach((it, i) => tf(it.g, it.x, it.y + Math.sin(t * spd + i * 0.8) * amp));
 }
 
-// 半调网点：f(x,y) → 0..1 网点大小
+// Halftone dots: f(x,y) → 0..1 dot size
 function halftone(parent, { x0 = 0, y0 = 0, w = 1920, h = 1080, step = 22, angle = 15, color, f, maxK = 0.62 }) {
   const a = angle * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
   const n = Math.ceil(Math.hypot(w, h) / step / 2) + 2;
@@ -151,7 +151,7 @@ const edge = (R = 900, pw = 1.6) => (x, y) => Math.pow(clamp(Math.hypot(x - 960,
 
 function bg(parent, color) { return el('rect', { width: 1920, height: 1080, fill: color }, parent); }
 
-// 字幕条
+// Subtitle bar
 function caption(parent, parts, { x = 960, y = 980, size = 46 } = {}) {
   const g = el('g', {}, parent);
   const inner = el('g', {}, g);
@@ -170,7 +170,7 @@ function captionAnim(c, t, t0) {
   tf(c.g, c.x, c.y + 40 * (1 - E.out(p)), lerp(0.8, 1, E.back(p)), -1.2 * (1 - p) - 0.6);
 }
 
-// 印章
+// Stamp
 function stampEl(parent, str, { size = 200, color = C.red, family = F.sans, padX = 50, padY = 26, border = 12 } = {}) {
   const g = el('g', {}, parent);
   const inner = el('g', { filter: 'url(#stampInk)' }, g);

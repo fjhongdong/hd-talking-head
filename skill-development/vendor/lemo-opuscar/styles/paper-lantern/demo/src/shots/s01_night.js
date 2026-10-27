@@ -1,4 +1,4 @@
-// S1 · 中秋夜（开灯 → 片名）：月亮、祥云、群山、临水村落、桂花树、灯笼
+// S1 · Mid-Autumn night (lights on → title): moon, auspicious clouds, mountain range, waterside village, osmanthus tree, lanterns
 import { sheet, skyPanel, moon, setMoon, vtext, text } from '../paper.js';
 import { karst, ridge, xiangyun, waves, waterTop, osmanthus, reeds, jiangnanHouse, pavilion, lantern, FONT } from '../art.js';
 import { stage, aim } from '../stage.js';
@@ -75,7 +75,7 @@ export async function build(E) {
       lant.rotation.z = .03 * Math.sin(t * .9) + .012 * Math.sin(t * 2.3);
       clouds.position.x = t * .0005;
       R.spill.intensity = 7 * ss(seg(t, .8, 4.5)) * (1 + .03 * Math.sin(t * 5.3));
-      // 镜头：屋里远景看灯箱 → 推进框内 → 缓推
+      // Camera: wide shot of the lightbox from inside the room → push into the frame → slow push
       const a = eio(seg(t, 2.6, 9.6)), b = eio(seg(t, 9.6, E.dur + 1));
       const z = lerp(lerp(1.3, .56, a), .5, b);
       aim(S.cam, [lerp(.0, .005, a) - .01 * b, lerp(.12, -.004, a) + .008 * b, lerp(1.45, z, a > 0 ? 1 : 0) * 0 + (a > 0 ? z : lerp(1.45, 1.3, seg(t, 0, 2.6))), lerp(-.01, -.004, a) - .01 * b, lerp(-.04, .002, a) + .012 * b, -.07], t);

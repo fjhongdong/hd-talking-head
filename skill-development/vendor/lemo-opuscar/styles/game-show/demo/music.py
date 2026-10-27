@@ -1,4 +1,4 @@
-# 《AI 进化节拍 v2》配乐：150 BPM，王道进行 Fmaj7–G7–Em7–Am7；音效与人声读取 events.json
+# Score for "AI 进化节拍" (AI Evolution Beat), second cut: 150 BPM, royal road progression (王道进行) Fmaj7–G7–Em7–Am7; SFX and voices read from events.json
 import json, os, sys
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'music.wav'   # python music.py [out.wav]
@@ -11,7 +11,7 @@ at = lambda bar, beat=0: (bar * 4 + beat) * BEAT
 EVJ = json.load(open('events.json'))
 TOTAL = EVJ['dur']
 
-# 人声/音效总线（用于给音乐做闪避）
+# Voice/SFX bus (used to duck the music)
 VL = np.zeros(S.N); VR = np.zeros(S.N)
 def addv(sig, t0, gain=1.0, pan=0.0):
     i = int(t0 * SR)
@@ -28,7 +28,7 @@ VO = {n: load(n) for n in ['title', 'count1', 'count2', 'count3', 'count4', 'che
                            'question', 'final', 'mask', 'paint', 'action', 'cut', 'done', 'hi',
                            'physical', 'robots', 'tokens', 'gemini', 'sonnet', 'march', 'v4', 'liftoff']}
 
-# ---------------- 乐器 ----------------
+# ---------------- Instruments ----------------
 def square_lead(m, dur=0.2, vib=0.004):
     n = int(dur * SR); t = np.arange(n) / SR
     f = mtof(m) * (1 + vib * np.sin(2 * np.pi * 6 * t))
@@ -44,7 +44,7 @@ def brass_stab(ms, dur=0.16):
             ph = np.cumsum(np.full(n, mtof(m) * (1 + d / 100))) / SR
             s += 2 * (ph % 1) - 1
     s /= len(ms) * 2
-    # 滤波包络：开头亮，迅速变暗
+    # Filter envelope: bright at the start, darkens quickly
     bright = lp(s, 4000); dark = lp(s, 900)
     k = np.exp(-t * 25)
     out = bright * k + dark * (1 - k)
@@ -109,7 +109,7 @@ def fanfare(t0):
     add(brass_stab([72, 76, 79, 84], 1.2), t0 + BEAT * 4 / 3, 0.7)
     add(crash(2.0), t0, 0.8)
 
-# ---------------- 编曲 ----------------
+# ---------------- Arrangement ----------------
 CH = [('F', 41, [65, 69, 72, 76]), ('G', 43, [67, 71, 74, 77]), ('Em', 40, [64, 67, 71, 74]), ('Am', 45, [60, 64, 67, 69])]
 MA = [[72, 0, 74, 76, 0, 79, 76, 74], [74, 0, 76, 79, 0, 81, 79, 76], [76, 0, 79, 83, 81, 79, 76, 0], [81, 79, 76, 74, 76, 0, 72, 0]]
 MB = [[84, 0, 81, 84, 0, 88, 86, 84], [86, 0, 83, 86, 0, 91, 88, 86], [88, 86, 83, 79, 83, 0, 86, 88], [84, 0, 81, 0, 79, 76, 79, 81]]
@@ -140,7 +140,7 @@ def melody(t0, pat, inst='lead', g=1.0, octave=0):
         elif inst == 'bell': add(bell(m, 0.8), t0 + k * BEAT / 2, 0.22 * g, 0.3)
 
 def jingle(t0):
-    # 关卡卡片（1 小节）：铜管琶音 + 镲 + 末拍军鼓过门
+    # Level card (1 bar): brass arpeggio + crash + snare fill on the last beat
     add(crash(), t0, 0.7); add(kick(), t0, 0.9)
     for k, m in enumerate([72, 76, 79, 84]): add(brass_stab([m, m - 5], 0.14), t0 + k * BEAT / 2, 0.55)
     add(brass_stab([72, 76, 79, 84], 0.35), t0 + 2 * BEAT, 0.6)
@@ -217,7 +217,7 @@ for bar, mode in PLAN.items():
         add(kick(0.6), t0, 0.5)
         for k in range(4): add(hat(), t0 + k * BEAT + BEAT / 2, 0.2, 0.3)
     elif mode in ('future', 'futureBig'):
-        # 升 2 个半音：唱响 2026
+        # Up 2 semitones: sing out 2026
         TR = 2; ch2 = [c + TR for c in ch]; rt = root + TR
         if bar == 68: add(crash(), t0, 0.9)
         drums(t0, g=1.12 if mode == 'future' else 1.2, kick_pat=(0, 1, 2, 3) if mode == 'futureBig' else (0, 2))
@@ -262,7 +262,7 @@ for bar, mode in PLAN.items():
         for k, m in enumerate([60, 64, 67, 72, 76, 79]): add(bell(m + 12, 3.0), t0 + k * 0.05, 0.2, -0.5 + 0.2 * k)
         add(pad([60, 64, 67, 72], 3.4), t0, 0.16); add(crash(2.4), t0, 0.5)
 
-# ---------------- 事件 → 音效 / 人声 ----------------
+# ---------------- Events → SFX / voices ----------------
 HEYS = ['hey_b', 'hey_c', 'hey_d', 'hey_e', 'hey_f']
 for e in EVJ['ev']:
     t, s = e['t'], e['s']
@@ -317,7 +317,7 @@ for e in EVJ['ev']:
     elif s == 'fanfare': pass
     elif s == 'blip': addv(pop(f), t, 0.15)
 
-# ---------------- 混音：人声闪避音乐 ----------------
+# ---------------- Mix: voices duck the music ----------------
 vmono = np.abs(VL) + np.abs(VR)
 env = lp(vmono, 12, order=1)
 env = env / (np.max(env) + 1e-9)

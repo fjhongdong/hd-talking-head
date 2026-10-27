@@ -1,5 +1,5 @@
-// 制图引擎：纸面坐标 → 斜二测投影 → 镜头 → 屏幕；所有几何都是折线，便于"按长度画出"。
-// ink 画布：白 = 曝光的线，黑 = 纸（黑色填充 = 消隐）。fx 画布：R 投影 / G 水渍 / B 印章（lighter 叠加）。
+// Drafting engine: paper coordinates → cabinet oblique projection → camera → screen; all geometry is polylines so it can be "drawn on by length".
+// ink canvas: white = exposed line, black = paper (black fill = hidden-line removal). fx canvas: R cast shadow / G water stain / B stamp (lighter blending).
 export const W = 1920, H = 1080;
 export const inkC = document.createElement('canvas'); inkC.width = W; inkC.height = H;
 export const fxC = document.createElement('canvas'); fxC.width = W; fxC.height = H;
@@ -19,19 +19,19 @@ export function clear() {
   f.fillStyle = '#000'; f.fillRect(0, 0, W, H);
   ov.setTransform(1, 0, 0, 1, 0, 0); ov.clearRect(0, 0, W, H);
 }
-// 纸面点（含深度）→ 屏幕
+// Paper point (with depth) → screen
 export function S(x, y, d = 0) {
   if (d) { x += d * proj.k * Math.cos(proj.a); y -= d * proj.k * Math.sin(proj.a); }
   const dx = x - cam.x, dy = y - cam.y, c = Math.cos(cam.r), s = Math.sin(cam.r);
   return [(c * dx - s * dy) * cam.z + W / 2, (s * dx + c * dy) * cam.z + H / 2];
 }
-// 镜头矩阵（给文字 / 裁剪用）
+// Camera matrix (for text / clipping)
 export function camMatrix(ctx, x = 0, y = 0, rot = 0, d = 0) {
   const [sx, sy] = S(x, y, d), c = Math.cos(cam.r + rot) * cam.z, s = Math.sin(cam.r + rot) * cam.z;
   ctx.setTransform(c, s, -s, c, sx, sy);
 }
 export function plen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
-// 截取折线前 u（0–1）部分，返回 [折线, 笔尖点]
+// Take the first u (0–1) of a polyline, returns [polyline, pen-tip point]
 export function trunc(p, u) {
   if (u >= 1) return [p, null]; if (u <= 0) return [[], null];
   const L = plen(p) * u; let acc = 0; const out = [p[0]];
@@ -48,8 +48,8 @@ function pathScreen(ctx, pts, d, closed) {
   for (let i = 0; i < pts.length; i++) { const [x, y] = S(pts[i][0], pts[i][1], d); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
   if (closed) ctx.closePath();
 }
-export const NIBS = [];   // 本帧正在画的笔尖（发光点）
-// 描线：o = {w, dash, closed, u (0-1 画出进度), d (深度), v (亮度), cap}
+export const NIBS = [];   // pen tips drawing in this frame (glowing points)
+// Stroke a line: o = {w, dash, closed, u (0-1 draw-on progress), d (depth), v (brightness), cap}
 export function line(pts, o = {}) {
   if (!pts || pts.length < 2) return;
   const u = o.u ?? 1; if (u <= 0) return;
@@ -63,12 +63,12 @@ export function line(pts, o = {}) {
   if (o.dash) { g.setLineDash((DASH[o.dash] || o.dash).map(x => x * cam.z)); g.lineDashOffset = (o.dashOff || 0) * cam.z; } else g.setLineDash([]);
   pathScreen(g, P, o.d || 0, closed); g.stroke(); g.setLineDash([]);
 }
-// 消隐填充（纸色）
+// Hidden-line fill (paper colour)
 export function knock(pts, d = 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#000'; pathScreen(g, pts, d, true); g.fill(); }
 export function fillV(pts, v, d = 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgb(${v * 255 | 0},${v * 255 | 0},${v * 255 | 0})`; pathScreen(g, pts, d, true); g.fill(); }
-// 点在多边形内
+// Point in polygon
 export function inPoly(pt, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > pt[1]) !== (b[1] > pt[1]) && pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
-// 实体：闭合轮廓 + 厚度（斜二测挤出，自动消隐）。o = {d0, th, w, u, conn, v}
+// Solid: closed outline + thickness (oblique extrusion, automatic hidden-line removal). o = {d0, th, w, u, conn, v}
 export function solid(pts, o = {}) {
   const d0 = o.d0 || 0, th = o.th || 0, w = o.w ?? LW.out, u = o.u ?? 1;
   if (u <= 0) return;
@@ -79,7 +79,7 @@ export function solid(pts, o = {}) {
     for (let i = N; i >= 0; i--) { pathScreen(g, pts, d0 + th * i / N, true); g.stroke(); }
     g.fillStyle = '#000';
     for (let i = N; i >= 0; i--) { pathScreen(g, pts, d0 + th * i / N, true); g.fill(); }
-    // 前后面交界的可见棱（顶点连线：从顶点沿深度方向离开多边形 → 可见）
+    // visible edges where front and back faces meet (vertex connectors: visible if leaving the vertex along the depth direction exits the polygon)
     if (o.conn !== false) {
       const dx = Math.cos(proj.a), dy = -Math.sin(proj.a);
       for (const p of pts) {
@@ -95,7 +95,7 @@ function line2(p, da, db, w) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.strokeStyle = '#fff'; g.lineWidth = lw(w); g.setLineDash([]);
   g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
 }
-// 剖面线（细线阴影法）：在多边形内画 45° 平行线
+// Section hatching (fine-line hatching): 45° parallel lines inside the polygon
 export function hatch(pts, o = {}) {
   const sp = o.sp ?? 14, ang = o.ang ?? Math.PI / 4, d = o.d || 0, u = o.u ?? 1;
   if (u <= 0) return;
@@ -112,12 +112,12 @@ export function hatch(pts, o = {}) {
   }
   g.stroke(); g.restore(); g.lineCap = 'round';
 }
-// 几何工具
+// Geometry helpers
 export const circ = (cx, cy, r, n = 64, a0 = 0, a1 = TAU) => { const p = []; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; p.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return p; };
 export const ell = (cx, cy, rx, ry, rot = 0, n = 64, a0 = 0, a1 = TAU) => { const p = [], c = Math.cos(rot), s = Math.sin(rot); for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n, x = Math.cos(a) * rx, y = Math.sin(a) * ry; p.push([cx + c * x - s * y, cy + s * x + c * y]); } return p; };
 export const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
 export const xf = (pts, tx, ty, rot = 0, sc = 1) => { const c = Math.cos(rot) * sc, s = Math.sin(rot) * sc; return pts.map(([x, y]) => [tx + c * x - s * y, ty + s * x + c * y]); };
-export function gearPts(cx, cy, T, m, rot = 0) {   // 渐开线近似：梯形齿
+export function gearPts(cx, cy, T, m, rot = 0) {   // involute approximation: trapezoidal teeth
   const r = m * T / 2, ra = r + m, rf = r - 1.25 * m, p = [];
   for (let i = 0; i < T; i++) {
     const a = rot + i * TAU / T, h = TAU / T;
@@ -127,7 +127,7 @@ export function gearPts(cx, cy, T, m, rot = 0) {   // 渐开线近似：梯形�
   }
   return p;
 }
-// 文字（纸面单位字号）；u = 写出进度（从左到右揭示）
+// Text (font size in paper units); u = writing progress (revealed left to right)
 export const FONT = { hand: 'Architects', tech: 'B612', mono: 'B612Mono', sign: 'Allura' };
 export function text(str, x, y, o = {}) {
   const size = o.size ?? 28, u = o.u ?? 1; if (u <= 0 || !str) return 0;
@@ -142,7 +142,7 @@ export function text(str, x, y, o = {}) {
     const x0 = o.align === 'center' ? -wdt / 2 : o.align === 'right' ? -wdt : 0;
     ctx.save(); ctx.beginPath(); ctx.rect(x0 - 4, -size * 1.4, wdt * u + 4, size * 2.2); ctx.clip();
     ctx.fillText(str, 0, 0); ctx.restore();
-    // 笔尖
+    // pen tip
     const nx = x0 + wdt * u, ny = -size * .35, c = Math.cos(o.rot || 0), s = Math.sin(o.rot || 0);
     if (o.nib !== false) NIBS.push([x + c * nx - s * ny, y + s * nx + c * ny, o.d || 0]);
   } else ctx.fillText(str, 0, 0);
@@ -150,7 +150,7 @@ export function text(str, x, y, o = {}) {
   return wdt;
 }
 export function textW(str, size, font = FONT.hand, ls = 0) { g.font = `400 ${size}px ${font}`; g.letterSpacing = ls + 'px'; const w = g.measureText(str).width; g.letterSpacing = '0px'; return w; }
-// 尺寸线：p1-p2，偏移 off（法线方向），文字 label
+// Dimension line: p1-p2, offset off (along the normal), text label
 export function dim(p1, p2, off, label, o = {}) {
   const u = o.u ?? 1; if (u <= 0) return;
   const dx = p2[0] - p1[0], dy = p2[1] - p1[1], L = Math.hypot(dx, dy) || 1, tx = dx / L, ty = dy / L, nx = -ty, ny = tx;
@@ -170,7 +170,7 @@ export function dim(p1, p2, off, label, o = {}) {
     let ang = Math.atan2(ty, tx); if (ang > Math.PI / 2 + .01) ang -= Math.PI; if (ang < -Math.PI / 2 - .01) ang += Math.PI;
     const tsz = o.size ?? 24;
     const lx = mid[0] + nx * 6 * sg * 0 , ly = mid[1];
-    // 文字放在尺寸线外侧（上方）
+    // text goes outside the dimension line (above it)
     const up = [Math.sin(ang), -Math.cos(ang)];
     text(label, lx + up[0] * 8, ly + up[1] * 8, { size: tsz, align: 'center', rot: ang, font: o.font || FONT.hand, d, u: Math.min(1, (u - .6) / .4), nib: false });
   }
@@ -179,7 +179,7 @@ export function arrow(p, dir, d = 0, len = 16, wid = 4.5) {
   const [tx, ty] = dir, nx = -ty, ny = tx;
   fillV([p, [p[0] + tx * len + nx * wid, p[1] + ty * len + ny * wid], [p[0] + tx * len - nx * wid, p[1] + ty * len - ny * wid]], 1, d);
 }
-// 零件号：引线 + 圆圈
+// Part balloon: leader line + circle
 export function balloon(from, to, num, o = {}) {
   const u = o.u ?? 1; if (u <= 0) return;
   const r = o.r ?? 22, d = o.d || 0, dd = o.dt ?? d;
@@ -194,14 +194,14 @@ export function balloon(from, to, num, o = {}) {
     if (uu > .5) text(String(num), to[0], to[1] + r * .36, { size: r * 1.05, align: 'center', font: FONT.hand, d: dd });
   }
 }
-// 笔尖光点（正在画的地方）
+// Pen-tip glow (where drawing is happening)
 export function nibs(a = 1) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   for (const [x, y, d] of NIBS) { const [sx, sy] = S(x, y, d); const gr = g.createRadialGradient(sx, sy, 0, sx, sy, 16 * zp); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(.25, `rgba(255,255,255,${.45 * a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(sx - 20 * zp, sy - 20 * zp, 40 * zp, 40 * zp); }
   NIBS.length = 0;
 }
-// fx：投影 / 水渍 / 印章
+// fx: cast shadow / water stain / stamp
 export function fxShadow(pts, a, blur, d = 0) { f.setTransform(1, 0, 0, 1, 0, 0); f.globalCompositeOperation = 'lighter'; f.filter = blur ? `blur(${blur * cam.z}px)` : 'none'; f.fillStyle = `rgba(255,0,0,${a})`; pathScreen(f, pts, d, true); f.fill(); f.filter = 'none'; }
 export function fxWet(x, y, r, a) { const [sx, sy] = S(x, y); const R = r * cam.z; f.setTransform(1, 0, 0, 1, 0, 0); f.globalCompositeOperation = 'lighter'; const gr = f.createRadialGradient(sx, sy, 0, sx, sy, R); gr.addColorStop(0, `rgba(0,255,0,${a})`); gr.addColorStop(.72, `rgba(0,255,0,${a * .92})`); gr.addColorStop(1, 'rgba(0,255,0,0)'); f.fillStyle = gr; f.beginPath(); f.arc(sx, sy, R, 0, TAU); f.fill(); }
-// 投影裁掉（物体本身不被自己的影子压暗）：R 通道清零
+// Cut the cast shadow out (an object isn't darkened by its own shadow): clear the R channel
 export function fxUnshadow(pts, d = 0) { f.setTransform(1, 0, 0, 1, 0, 0); f.globalCompositeOperation = 'multiply'; f.filter = 'none'; f.fillStyle = 'rgb(0,255,255)'; pathScreen(f, pts, d, true); f.fill(); f.globalCompositeOperation = 'lighter'; }

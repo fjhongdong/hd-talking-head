@@ -1,12 +1,12 @@
-// 景片：全部是刻出来的驴皮件，幕布大部分留白（只是被灯照亮的布）
-// 山（左右两片，山纹地层 + 云头镂空）、地面条（刻纹，焦土时裂纹逐渐烧穿）、河（可揭下的靛青水纹条）、树（叶冠一片 + 干一片 / 枯枝）、茅屋、火焰纹皮件（杆上抖动）
+// Scenery pieces: all carved donkey-hide pieces; most of the screen is left blank (just cloth lit by the lamps)
+// Mountains (two pieces, left and right; mountain-pattern strata + cloud-head cut-outs), ground strip (carved pattern; when scorched, cracks gradually burn through), river (an indigo water-ripple strip that can be peeled off), trees (one canopy piece + one trunk piece / dead branches), thatched hut, flame-pattern pieces (shaking on rods)
 import { piece, drawPiece, fill, cut, cutLine, ink, within, smooth, poly, cloud, beads, beadLine, plum, lattice, coin, strata, meander, flameTongue, cutTaper, DYE, canvas, hideTexture, SS } from './carve.js';
 import { mulberry } from '/core/lib.js';
 
 export const groundY = x => 905 + 10 * Math.sin(x / 260) + 6 * Math.sin(x / 97 + 1);
-const GB = 975;      // 地面条下缘
+const GB = 975;      // bottom edge of the ground strip
 
-// —— 山：一整片皮件，山纹地层（宽缝）+ 峰顶云头孔 ——
+// —— Mountain: one whole piece of hide, mountain-pattern strata (wide slits) + cloud-head holes at the peaks ——
 function mountain(pk, col, seed) {
   const xs = pk.map(p => p[0]), x0 = Math.min(...xs) - 10, x1 = Math.max(...xs) + 10, y0 = Math.min(...pk.map(p => p[1])) - 10;
   const top = x => { for (let i = 0; i < pk.length - 1; i++) if (x >= pk[i][0] && x <= pk[i + 1][0]) { const u = (x - pk[i][0]) / (pk[i + 1][0] - pk[i][0]); return pk[i][1] + (pk[i + 1][1] - pk[i][1]) * (u * u * (3 - 2 * u)); } return 930; };
@@ -22,7 +22,7 @@ function mountain(pk, col, seed) {
     ink(g, 2.4, m);
   }, { ss: 1.4, seed });
 }
-// —— 地面条：刻纹；焦土时裂纹由细变宽、由短变长（逐渐烧穿）——
+// —— Ground strip: carved pattern; when scorched, the cracks go from thin to wide and from short to long (gradually burning through) ——
 const CRACKS = (() => { const r = mulberry(17), out = []; for (let k = 0; k < 34; k++) { let x = 30 + r() * 1860, y = groundY(x) + 12 + r() * 14; const pts = [[x, y]]; const n = 4 + Math.floor(r() * 4); for (let j = 0; j < n; j++) { x += (r() - .5) * 44; y += 6 + r() * 11; pts.push([x, Math.min(GB - 6, y)]); } out.push({ pts, d: r() }); } return out; })();
 function groundBase(scorched) {
   const top = []; for (let x = -10; x <= 1930; x += 16) top.push([x, groundY(x)]);
@@ -30,11 +30,11 @@ function groundBase(scorched) {
   return [gp, top, (g) => {
     fill(g, scorched ? '#9a5a2c' : '#8a5e30', gp);
     within(g, gp, () => {
-      // 下缘回纹带（留皮）+ 一排古钱孔
+      // Fret-pattern band along the bottom edge (left as hide) + a row of ancient-coin holes
       g.fillStyle = scorched ? '#6a3216' : DYE.brown; g.fillRect(-10, GB - 22, 1940, 30);
       meander(g, 0, GB - 7, 1920, 6, 1.8);
       for (let x = 20; x < 1920; x += 38) coin(g, x, GB - 34, 5.5);
-      if (!scorched) {   // 青草：刻出来的绿草叶
+      if (!scorched) {   // green grass: carved green blades
         const rr = mulberry(2);
         for (let x = 8; x < 1910; x += 16 + rr() * 16) { const y = groundY(x) + 3, h = 12 + rr() * 12; fill(g, DYE.green, q => poly(q, [[x - 6, y + 6], [x - 3, y - h], [x, y + 2], [x + 4, y - h * .8], [x + 7, y + 6]])); }
         for (let x = 30; x < 1900; x += 64) cloud(g, x, groundY(x) + 30, 6.5, x * .03, 1.6, (x / 64) % 2 ? 1 : -1);
@@ -46,7 +46,7 @@ function groundBase(scorched) {
   }];
 }
 const GCACHE = new Map();
-function groundPiece(burn) {       // burn 0..1 量化缓存
+function groundPiece(burn) {       // burn 0..1, quantised and cached
   const key = Math.round(burn * 24);
   if (GCACHE.has(key)) return GCACHE.get(key);
   const b = key / 24, [gp, top, draw] = groundBase(b > 0);
@@ -56,7 +56,7 @@ function groundPiece(burn) {       // burn 0..1 量化缓存
   }, { ss: 1.5, seed: 12 });
   GCACHE.set(key, p); return p;
 }
-// —— 河：靛青水纹条，横在地面中段（可以揭下 / 按回）——
+// —— River: an indigo water-ripple strip lying across the middle of the ground (can be peeled off / pressed back) ——
 function river() {
   return piece([960, 880, 1480, 960], g => {
     const rv = q => { const pts = []; for (let x = 970; x <= 1470; x += 20) pts.push([x, groundY(x) + 6 + 3 * Math.sin(x / 30)]); for (let x = 1470; x >= 970; x -= 20) pts.push([x, groundY(x) + 44 + 4 * Math.sin(x / 45 + 1)]); smooth(q, pts); };
@@ -65,7 +65,7 @@ function river() {
     ink(g, 2, rv);
   }, { ss: 2, seed: 15 });
 }
-// —— 树：叶冠（一整片蕾丝）+ 干；枯树 = 干 + 焦枝 ——
+// —— Tree: canopy (one whole piece of lace-like cut-outs) + trunk; dead tree = trunk + charred branches ——
 function canopy() {
   return piece([-200, -480, 200, -170], g => {
     const lobes = [[-170, -300], [-140, -380], [-70, -440], [10, -462], [90, -430], [160, -370], [180, -290], [120, -220], [40, -200], [-40, -205], [-120, -225]];
@@ -73,7 +73,7 @@ function canopy() {
     fill(g, DYE.green, cp);
     within(g, cp, () => {
       const r = mulberry(8);
-      for (let k = 0; k < 90; k++) {   // 叶形孔
+      for (let k = 0; k < 90; k++) {   // leaf-shaped holes
         const a = r() * 6.28, rad = Math.sqrt(r()) * 150, x = Math.cos(a) * rad * 1.15, y = -320 + Math.sin(a) * rad * .85, ang = r() * 6.28, L = 12 + r() * 6;
         cut(g, q => { q.moveTo(x - Math.cos(ang) * L, y - Math.sin(ang) * L); q.quadraticCurveTo(x - Math.sin(ang) * 5, y + Math.cos(ang) * 5, x + Math.cos(ang) * L, y + Math.sin(ang) * L); q.quadraticCurveTo(x + Math.sin(ang) * 5, y - Math.cos(ang) * 5, x - Math.cos(ang) * L, y - Math.sin(ang) * L); });
       }
@@ -114,7 +114,7 @@ function hut() {
     fill(g, '#3a1c10', q => poly(q, [[-136, -78], [136, -78], [132, -72], [-132, -72]]));
   }, { ss: 2, seed: 14 });
 }
-// —— 火焰纹皮件：三到四条 S 形火舌，舌根卷云，舌内刻平行弧缝；红外黄内 ——
+// —— Flame-pattern piece: three to four S-shaped flame tongues, cloud curls at the tongue roots, parallel arc slits carved inside the tongues; red outside, yellow inside ——
 function flame(v) {
   return piece([-70, -190, 70, 10], g => {
     const r = mulberry(20 + v);
@@ -141,7 +141,7 @@ export function buildScenery() {
   return S;
 }
 const M_ = (C, x, y, s = 1, r = 0) => { const c = Math.cos(r) * s, sn = Math.sin(r) * s; return [C[0] * c, C[3] * sn, -C[0] * sn, C[3] * c, C[0] * x + C[4], C[3] * y + C[5]]; };
-// 画大地：st = {burn 0..1（焦土前沿从右往左）, flames 0..1, t, river 0..1（1 = 贴在布上）, riverLift, canopy 0..1, canopyLift}
+// Draw the land: st = {burn 0..1 (the scorched front moves right to left), flames 0..1, t, river 0..1 (1 = pressed onto the cloth), riverLift, canopy 0..1, canopyLift}
 export function drawLand(g, Cam, st = {}) {
   const S = buildScenery(), burn = st.burn || 0;
   g.save(); g.globalCompositeOperation = 'multiply';
@@ -154,17 +154,17 @@ export function drawLand(g, Cam, st = {}) {
   };
   wipe(S.mtnL[0], S.mtnL[1]); wipe(S.mtnR[0], S.mtnR[1]);
   g.setTransform(...M_(Cam, 1640, 908)); drawPiece(g, S.hut);
-  // 树
+  // Trees
   const tb = (st.bare ?? (burn > .8 ? 1 : 0));
   g.setTransform(...M_(Cam, 250, 912)); drawPiece(g, S.trunk[tb]);
   const cv = st.canopy ?? (burn > .8 ? 0 : 1);
   if (cv > 0) { const lift = st.canopyLift || 0; g.save(); g.globalAlpha = cv; if (lift > 0) g.filter = `blur(${lift * 14 * Cam[0]}px)`; g.setTransform(...M_(Cam, 250 - lift * 30, 912 - lift * 40, 1 + lift * .5)); drawPiece(g, S.canopy); g.restore(); }
-  // 地面条（焦土裂纹随 burn 逐渐烧穿）
+  // Ground strip (scorch cracks gradually burn through with burn)
   g.setTransform(Cam[0], 0, 0, Cam[3], Cam[4], Cam[5]); drawPiece(g, groundPiece(burn));
-  // 河
+  // River
   const rv = st.river ?? (1 - Math.min(1, burn * 2));
   if (rv > 0) { const lift = 1 - rv; g.save(); g.globalAlpha = Math.min(1, rv * 1.4); if (lift > 0) g.filter = `blur(${lift * 16 * Cam[0]}px)`; const sc = 1 + lift * .3, cx = 1220, cy = 920; g.setTransform(Cam[0] * sc, 0, 0, Cam[3] * sc, Cam[4] + Cam[0] * (cx - cx * sc + lift * 40), Cam[5] + Cam[3] * (cy - cy * sc - lift * 50)); drawPiece(g, S.river); g.restore(); }
-  // 火焰纹皮件：插在杆上，12 fps 抖动
+  // Flame-pattern pieces: mounted on rods, shaking at 12 fps
   if (st.flames > 0) {
     const fr = Math.floor((st.t || 0) * 12);
     [[360, 1], [1180, .85], [1560, 1.1], [820, .75], [1790, .95]].forEach(([x, s], i) => {

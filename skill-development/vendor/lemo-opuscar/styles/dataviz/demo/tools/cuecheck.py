@@ -1,4 +1,4 @@
-# 配乐卡点 ↔ 画面事件对齐表：music/score.json keys vs events.json（画面事件），并报告 24fps 取整误差
+# Alignment table of score hit points ↔ picture events: music/score.json keys vs events.json (picture events); also reports the 24 fps frame-rounding error
 import json, os
 D = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 S = json.load(open(os.path.join(D, 'music/score.json')))['keys']; EV = json.load(open(os.path.join(D, 'events.json')))['ev']

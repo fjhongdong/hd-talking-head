@@ -18,6 +18,6 @@ for a in range(W, n - W):
         out.append((s + .5 * t, s, t, a, b, tot))
 out.sort(reverse=True)
 for c in out[:10]: print(f"a={beats[c[3]]:.2f} b={beats[c[4]]:.2f} tot={c[5]:.2f} chroma={c[1]:.3f} timbre={c[2]:.3f} beats={c[4]-c[3]}")
-# 整曲的自相似：看段落结构
+# self-similarity of the whole track: to see its section structure
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 plt.figure(figsize=(8, 8)); plt.imshow(S + .5 * T, origin='lower', extent=[beats[1], beats[-1], beats[1], beats[-1]]); plt.colorbar(); plt.savefig('jg_ssm.png', dpi=70)

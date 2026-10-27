@@ -91,7 +91,7 @@ Or simply `sh styles/rubber-hose/demo/build.sh`.
 Pitfalls tied to this demo:
 - **Kokoro heard "bitter" as "better"** after an ellipsis (`is... bitter!`). "And boy, is this coffee bitter!" passes. Check every line with whisper; also check the final mp4 (whisper writes "7am" / "they're": normalise before comparing).
 - The cube read as a tall box in pure front view: elevation ~0.26 and a slight 3/4 turn for expressions.
-- A far shot of the plate-xylophone and of the dance climax (reviewer note) killed both gags; both were reshot as medium / medium-full.
+- A far shot of the plate-xylophone and of the dance climax kills both gags: shoot them medium / medium-full.
 - A kicking leg drawn behind the mug body was hidden by the handle: kick outward past the silhouette.
 - A pot "grew" out of the mug's head at one camera position: check every shot's final frame.
 - A leap arc that was too high left the frame; keep arcs inside the gate at the camera's zoom.

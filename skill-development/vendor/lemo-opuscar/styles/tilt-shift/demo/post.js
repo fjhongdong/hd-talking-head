@@ -1,7 +1,7 @@
-// 移轴后期（由 core/three/post.js 复制改写）
-// 场景以 ssaa 倍分辨率渲染（MSAA + 深度）→ [GTAO] → CoC 计算并 2×2 降采样到输出分辨率
-// → 移轴景深 gather（物理 CoC 与屏幕空间"上下虚化带"混合，逐像素旋转采样盘）→ 辉光 → 调色（高饱和/对比/暗角）→ 色调映射
-// 相比 core 的改动：① DOF 在 1× 分辨率做（半径大、采样多、快）；② 加入 band 虚化带；③ 调色加 lift/tint；④ 逐像素随机旋转去除螺旋纹
+// Tilt-shift post-processing (copied and adapted from core/three/post.js)
+// Scene rendered at ssaa× resolution (MSAA + depth) → [GTAO] → CoC computed and 2×2-downsampled to output resolution
+// → tilt-shift depth-of-field gather (physical CoC mixed with a screen-space "upper/lower blur band", per-pixel rotated sample disc) → bloom → grade (high saturation/contrast/vignette) → tone mapping
+// Changes from core: ① DOF done at 1× resolution (large radius, many samples, fast); ② band blur added; ③ grade adds lift/tint; ④ per-pixel random rotation removes spiral patterns
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
@@ -32,12 +32,12 @@ const cocShader = {
     void main(){
       vec2 h = .5 / srcRes;
       float cp = .25 * (cocAt(vUv + vec2(-h.x,-h.y)) + cocAt(vUv + vec2(h.x,-h.y)) + cocAt(vUv + vec2(-h.x,h.y)) + cocAt(vUv + vec2(h.x,h.y)));
-      // 屏幕空间虚化带：清晰带中心 bandY（可倾斜），带外按距离增长；上方算远景（正），下方算近景（负）
+      // Screen-space blur band: sharp band centred at bandY (can be tilted), grows with distance outside the band; above counts as background (positive), below as foreground (negative)
       float y = vUv.y + bandTilt * (vUv.x - .5);
       float dy = y - bandY;
       float cb = sign(dy) * bandAmp * pow(max(0., abs(dy) - bandW) / .5, bandPow);
       float c = clamp(mix(cp, cb, bandMix), -maxCoc, maxCoc);
-      vec3 col = texture2D(tColor, vUv).rgb;   // 线性过滤 = 2×2 盒式降采样
+      vec3 col = texture2D(tColor, vUv).rgb;   // linear filtering = 2×2 box downsample
       if (aoAmt > 0.) col *= mix(1., pow(texture2D(tAO, vUv).r, 1.5), aoAmt);
       gl_FragColor = vec4(col, c);
     }`
@@ -52,7 +52,7 @@ const gatherShader = {
     void main(){
       vec4 c0 = texture2D(tIn, vUv); float a0 = abs(c0.a);
       if (maxCoc < .5) { gl_FragColor = vec4(c0.rgb, 1.); return; }
-      // 本像素周围最大模糊（近景要能糊到清晰物体上）
+      // Maximum blur around this pixel (the foreground must be able to blur over sharp objects)
       vec3 acc = c0.rgb / (a0*a0 + 1.); float wsum = 1. / (a0*a0 + 1.);
       float rot = h12(gl_FragCoord.xy) * 6.2832;
       const int N = 128;
@@ -62,7 +62,7 @@ const gatherShader = {
         vec2 off = vec2(cos(th), sin(th)) * r / res;
         vec4 s = texture2D(tIn, vUv + off);
         float sa = abs(s.a);
-        if (s.a > c0.a) sa = min(sa, max(a0, 0.));   // 更远的样本不能糊到更近的清晰物体上
+        if (s.a > c0.a) sa = min(sa, max(a0, 0.));   // farther samples must not blur over nearer sharp objects
         float w = smoothstep(r - 1.5, r + .5, sa) / (sa*sa + 1.);
         acc += s.rgb * w; wsum += w;
       }

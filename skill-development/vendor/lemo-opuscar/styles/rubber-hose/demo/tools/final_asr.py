@@ -1,4 +1,4 @@
-"""成片 whisper 自检：python tools/final_asr.py <成片.mp4>；按 events.json 的旁白时间逐句截取转写并比对"""
+"""Whisper self-check on the finished film: python tools/final_asr.py <film.mp4>; cuts each narration line at its events.json time, transcribes it and compares"""
 import sys, os, json, re, subprocess, numpy as np
 from faster_whisper import WhisperModel
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,7 +8,7 @@ y = np.frombuffer(raw, np.float32)
 ev = json.load(open(os.path.join(HERE, 'events.json')))['ev']
 lines = {L['id']: L for L in json.load(open(os.path.join(HERE, 'lines.json')))}
 m = WhisperModel('small.en', device='cpu', compute_type='int8')
-def norm(s):   # 口语等价：7am = 7 a.m.，they're = they are
+def norm(s):   # spoken equivalents: 7am = 7 a.m., they're = they are
     s = s.lower().replace("they're", 'they are').replace('a.m.', 'am').replace('7am', '7 am').replace("'", '').replace('-', ' ')
     return re.sub(r'[^a-z0-9 ]', '', s).split()
 bad = 0

@@ -1,5 +1,5 @@
-"""混音：材质拟音（和纸 / 木 / 水 / 玻璃，全部合成）+ 旁白 + 原创配乐（对白处闪避）+ 各幅画的环境声 → mix.wav
-用法：.venv/bin/python styles/ukiyoe/demo/mix.py（先跑 core/render/events.mjs、tts、music/score.py）"""
+"""Mix: material foley (washi / wood / water / glass, all synthesised) + narration + original score (ducked under dialogue) + per-picture ambience → mix.wav
+Usage: .venv/bin/python styles/ukiyoe/demo/mix.py (run core/render/events.mjs, tts and music/score.py first)"""
 import sys, os, json, numpy as np, soundfile as sf
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '../../../core/audio'))
@@ -19,29 +19,29 @@ def fade(x, a=.005, r=.02):
     return x
 def sines(fs, d, taus, amps):
     tt = t_(d); return sum(a * np.sin(2 * np.pi * f * tt) * np.exp(-tt / tau) for f, tau, a in zip(fs, taus, amps))
-def slow(d, rate, depth, seed=0):   # 缓慢起伏的包络
+def slow(d, rate, depth, seed=0):   # slowly undulating envelope
     k = max(2, int(d * rate) + 3); r = np.random.default_rng(seed).random(k)
     return 1 - depth + depth * np.interp(np.linspace(0, k - 1, int(round(d * SR))), np.arange(k), r)
 
-# —— 纸 ——
-def baren(d=.36, v=1):   # 馬連在纸背上打圈摩擦：带通噪声 + 约 9 Hz 的圈状调制
+# —— Paper ——
+def baren(d=.36, v=1):   # baren (馬連, hand rubbing pad) circling on the back of the paper: band-passed noise + roughly 9 Hz circular modulation
     tt = t_(d); m = .55 + .45 * np.abs(np.sin(2 * np.pi * 4.6 * tt)); e = np.sin(np.pi * tt / d) ** .7
     return norm(bp(nz(d), 700, 5200) * m * e + lp(nz(d), 500) * e * .3) * v
-def slip(v=1):   # 纸签落下 / 揭起
+def slip(v=1):   # paper slip dropping / peeling off
     d = .28; tt = t_(d); return norm(hp(nz(d), 1800) * np.sin(np.pi * tt / d) ** 2 * (1 - tt / d * .5)) * v
-def seal(v=1):   # 朱印按在纸上：闷响 + 印泥粘开的细响
+def seal(v=1):   # vermilion seal pressed on paper: dull thud + fine tack of the seal paste pulling away
     d = .35; x = sines([88, 180], d, [.07, .03], [1, .4]); x[:int(.012 * SR)] += bp(nz(.012), 200, 1500) * .9
     y = np.zeros(int(.45 * SR)); y[:len(x)] += x; k = int(.22 * SR); c = hp(nz(.08), 3000) * env_exp(.08, .02) * .15; y[k:k + len(c)] += c
     return norm(lp(y, 2500)) * v
-def scroll(d, v=1):   # 手卷平移：长的纸面滑动 + 细碎纸响
+def scroll(d, v=1):   # handscroll pan: long paper slide + small crinkles
     tt = t_(d); e = np.sin(np.pi * np.minimum(tt / d, 1)) ** 1.2
     f = np.interp(tt, [0, d], [1200, 3200]); x = np.zeros_like(tt); blk = 2400
     src = nz(d)
     for i in range(0, len(tt), blk): x[i:i + blk] = bp(src[max(0, i - 4800):i + blk], f[i] * .6, f[i] * 1.6)[-len(x[i:i + blk]):]
     cr = hp(nz(d), 4000) * (rng.random(len(tt)) > .9985) * 3
     return norm(x * e + lp(cr, 9000) * e * .4) * v
-# —— 木 ——
-def block(v=1):   # 版木放上台面
+# —— Wood ——
+def block(v=1):   # woodblock set down on the bench
     d = .2; x = sines([180, 410, 960], d, [.05, .03, .015], [1, .6, .3]); x[:int(.004 * SR)] += nz(.004) * .5; return norm(lp(x, 3000)) * v
 def step(m='dirt', v=1):
     if m == 'wood':
@@ -49,11 +49,11 @@ def step(m='dirt', v=1):
     d = .11; tt = t_(d); return norm(bp(nz(d), 300, 2600) * np.exp(-tt / .03) * (1 + .5 * np.sin(2 * np.pi * 60 * tt))) * v * .7
 def cup(v=1):
     d = .5; x = sines([2780, 4120, 6400, 180], d, [.25, .15, .08, .03], [.6, .4, .2, .8]); x[:int(.003 * SR)] += nz(.003) * .4; return norm(x) * v
-# —— 玻璃 / 金属 ——
-def chime(v=1):   # 风铃：玻璃钟 + 舌片轻击
+# —— Glass / metal ——
+def chime(v=1):   # wind chime: glass bell + light strikes of the clapper
     d = 2.2; x = sines([2360, 5150, 7980, 2372], d, [.8, .4, .2, .8], [1, .45, .2, .5]); x[:int(.002 * SR)] += nz(.002) * .3
     y = np.zeros(int(2.6 * SR)); y[:len(x)] += x; k = int(.33 * SR); x2 = sines([2360, 5150], 1.8, [.6, .3], [.5, .2]); y[k:k + len(x2)] += x2; return norm(y) * v
-# —— 生物 ——
+# —— Creatures ——
 def lark(v=1):
     out = np.zeros(int(1.2 * SR)); t0 = 0
     for i in range(7):
@@ -68,7 +68,7 @@ def geese(v=1):
         s = (2 * (ph % 1) - 1) * np.sin(np.pi * tt / d) ** .5; s = bp(s, 500, 2200)
         k = int(t0 * SR); out[k:k + len(s)] += s * (1 - i * .15)
     return norm(lp(out, 2500)) * v
-def kite(v=1):   # 鸢鸣 pii-hyoro：长下滑 + 颤音尾
+def kite(v=1):   # kite (bird) call pii-hyoro: long downward glide + trill tail
     d1, d2 = .55, .7; t1 = t_(d1); f1 = np.interp(t1, [0, .1, d1], [2100, 2600, 2150])
     s1 = np.sin(2 * np.pi * np.cumsum(f1) / SR) * np.minimum(1, t1 / .05) * np.exp(-t1 / .8)
     t2 = t_(d2); f2 = 1900 + 250 * np.sin(2 * np.pi * 9 * t2) - 300 * t2 / d2
@@ -76,14 +76,14 @@ def kite(v=1):   # 鸢鸣 pii-hyoro：长下滑 + 颤音尾
     y = np.zeros(int(1.5 * SR)); y[:len(s1)] += s1; k = int(.62 * SR); y[k:k + len(s2)] += s2; return norm(y) * v
 def sip(v=1):
     d = .35; tt = t_(d); return norm(bp(nz(d), 900, 3500) * np.sin(np.pi * tt / d) ** 3 * (.6 + .4 * np.sin(2 * np.pi * 14 * tt))) * v
-def hat(v=1):   # 斗笠（草编）摩擦
+def hat(v=1):   # kasa hat (woven straw) rustle
     d = .5; tt = t_(d); return norm(bp(nz(d), 1500, 7000) * np.sin(np.pi * tt / d) ** 2 * (rng.random(len(tt)) > .5)) * v
-# —— 风与水 ——
+# —— Wind and water ——
 def wind(d, v=1, lo=150, hi=900, seed=1):
     return norm(bp(brown(d) + nz(d) * .02, lo, hi) * slow(d, .6, .6, seed)) * v
 def gust(v=1):
     d = 2.2; tt = t_(d); return norm(bp(nz(d), 300, 1800) * np.sin(np.pi * tt / d) ** 2) * v
-def rise(d, v=1):   # 浪立起的低频轰鸣，越来越满
+def rise(d, v=1):   # low rumble of the wave standing up, growing fuller
     tt = t_(d); e = (tt / d) ** 1.6
     return norm(lp(brown(d), 380) * e + bp(nz(d), 600, 3000) * e ** 2 * .35 + np.sin(2 * np.pi * 42 * tt) * e * .25) * v
 def crash_(v=1):
@@ -137,10 +137,10 @@ for e in E['ev']:
     elif ty == 'amb':
         a = amb(e['w'], e['d']); a = fade(a, .4, .4); add(ab, a, t, .22 if e['w'] != 'sea' else .3, 0)
 
-# 旁白：轻压缩 + 很淡的房间感
+# Narration: light compression + a very faint room sound
 vm = compress(vo[:, 0] * 1.414, .2, 3, .004, .1); vo = np.stack([vm, vm], 1) / 1.414
 room = np.zeros_like(vo); dl = int(.023 * SR); room[dl:] = vo[:-dl] * .12; vo = vo + lp(room, 3000)
-# 配乐：score + 拍子木再抬 3.5 dB；对白处闪避（L5 更深）
+# Score: score + hyoshigi (拍子木, wooden clappers) raised another 3.5 dB; ducked under dialogue (deeper for L5)
 mu, msr = sf.read(os.path.join(HERE, 'music/score.wav')); hy, _ = sf.read(os.path.join(HERE, 'music/stems/hyoshigi.wav'))
 if mu.ndim == 1: mu = np.stack([mu, mu], 1)
 if hy.ndim == 1: hy = np.stack([hy, hy], 1)
@@ -153,14 +153,14 @@ for id_, (t0, d) in VOICE.items():
 duck = uniform_filter1d(duck, int(.25 * SR))
 mu *= duck[:, None]; ab *= np.sqrt(duck)[:, None]
 MIX = mu * 1.0 + vo * 1.25 + fx * 1.0 + ab * 1.0
-# 間：30.40 起 60 ms 淡出，之后到 32.2 完全静音（连混响尾巴）
+# ma (間, pause): 60 ms fade-out from 30.40, then total silence until 32.2 (reverb tails included)
 a, b, c = int(30.40 * SR), int(30.46 * SR), int(32.2 * SR)
 MIX[a:b] *= np.linspace(1, 0, b - a)[:, None]; MIX[b:c] = 0
-# 结尾 43.4 起淡出
+# fade out from 43.4 at the end
 k = int(43.4 * SR); MIX[k:] *= np.linspace(1, 0, N - k)[:, None]
 MIX = limit(MIX, .92)
 sf.write(os.path.join(HERE, 'mix.wav'), MIX.astype(np.float32), SR)
-# 电平表
+# level meter
 def db(x): return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
 for name, (a, b) in {'印刷': (0, 2.9), '序': (2.9, 10.5), '雨': (10.5, 17.3), '茶屋': (17.3, 22.9), '急': (22.9, 30.4), '間': (30.46, 32.2), '回响': (32.2, 38.8), '尾': (38.8, 44)}.items():
     s = slice(int(a * SR), int(b * SR)); print(f'{name:4s} mix {db(MIX[s]):6.1f}  vo {db(vo[s] * 1.25):6.1f}  mu {db(mu[s]):6.1f}  fx {db(fx[s]):6.1f}  amb {db(ab[s]):6.1f}')

@@ -11,10 +11,10 @@ C = librosa.util.sync(chroma, bf0, aggregate=np.median)[:, 1:]; C = C / (np.lina
 M = librosa.util.sync(mf, bf0)[:, 1:]; M = (M - M.mean(1, keepdims=True)) / (M.std(1, keepdims=True) + 1e-9); M = M / (np.linalg.norm(M, axis=0) + 1e-9)
 S = C.T @ C; T = M.T @ M; n = S.shape[0]; W = 8
 rms = librosa.feature.rms(y=y, hop_length=hop)[0]
-# 音乐结尾（最后一个响度>阈值的点）
+# end of the music (last point whose loudness > threshold)
 db = 20*np.log10(rms+1e-6); endt = librosa.frames_to_time(np.where(db > db.max()-30)[0][-1], sr=sr, hop_length=hop)
 print('music end ~', endt)
-TARGET = 104.28 - 15.0   # 需要的时长（开头到结尾）
+TARGET = 104.28 - 15.0   # required duration (start to end)
 cands = []
 for a in range(W, n - W):
     for b in range(a + 16, n - W):

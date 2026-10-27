@@ -1,5 +1,5 @@
 #!/bin/sh
-# 从零一键重现《The Swordsman and the River》：在仓库根目录运行 sh styles/ink-wash/demo/build.sh
+# Rebuild "The Swordsman and the River" from scratch in one go: from the repo root run sh styles/ink-wash/demo/build.sh
 set -e
 cd "$(dirname "$0")/../../.."
 D=styles/ink-wash/demo

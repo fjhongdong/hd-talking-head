@@ -1,4 +1,4 @@
-// 像素画风（向 pixel-rpg 学：索引色帧缓冲、整数像素、最近邻放大、1px 墨色外轮廓、Bayer 抖动）——自写简化版
+// Pixel look (learned from pixel-rpg: indexed-colour framebuffer, integer pixels, nearest-neighbour upscaling, 1px ink outer outline, Bayer dithering) — a simplified version written from scratch
 import { canvas } from './glpass.js';
 import { mulberry, clamp, seg } from '/core/lib.js';
 export const PW = 240, PH = 135, SC = 8;
@@ -13,7 +13,7 @@ export function pset(x, y, c) { x |= 0; y |= 0; if (x >= 0 && y >= 0 && x < PW &
 export function fill(c) { fb.fill(c); }
 export function rect(x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) pset(x + i, y + j, c); }
 export function disc(cx, cy, r, c) { for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) if ((x - cx + .5) ** 2 + (y - cy + .5) ** 2 <= r * r) pset(x, y, c); }
-// 精灵层：先画进 spr（-1 = 空），再自动加 1px 墨色外轮廓，合进 fb
+// Sprite layer: draw into spr first (-1 = empty), then a 1px ink outer outline is added automatically, merged into fb
 function sclear() { spr.fill(-1); }
 function sset(x, y, c) { x |= 0; y |= 0; if (x >= 0 && y >= 0 && x < PW && y < PH) spr[y * PW + x] = c; }
 function srect(x, y, w, h, c) { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) sset(x + i, y + j, c); }
@@ -32,13 +32,13 @@ export function present(g, x = 0, y = 0, s = SC, key = -1) {
   g.save(); g.imageSmoothingEnabled = false; g.drawImage(pc, x, y, PW * s, PH * s); g.restore();
 }
 
-// ───────── 像素版 Dot（约 22×30）：pose = 'stand' | 'run0' | 'run1' | 'jump' | 'win'；(x,y) = 脚底中心 ─────────
+// ───────── Pixel Dot (about 22×30): pose = 'stand' | 'run0' | 'run1' | 'jump' | 'win'; (x,y) = centre of the feet ─────────
 export function cadetPix(x, y, pose = 'stand', o = {}) {
   sclear(); x |= 0; y |= 0;
   const jump = pose === 'jump', win = pose === 'win';
-  // 背包
+  // backpack
   srect(x - 10, y - 20, 4, 9, C.org); srect(x - 10, y - 12, 4, 1, C.orgD);
-  // 腿 / 靴
+  // legs / boots
   const lf = pose === 'run0' ? [-1, 2] : pose === 'run1' ? [2, -1] : [0, 0];
   if (jump) { srect(x - 5, y - 9, 4, 3, C.suit); srect(x + 1, y - 10, 4, 3, C.suit); srect(x - 6, y - 7, 5, 3, C.org); srect(x + 1, y - 8, 5, 3, C.org); }
   else {
@@ -46,28 +46,28 @@ export function cadetPix(x, y, pose = 'stand', o = {}) {
     srect(x - 6 + lf[0], y - 3, 5, 3, C.org); srect(x + 1 + lf[1], y - 3, 6, 3, C.org);
     srect(x - 6 + lf[0], y - 1, 5, 1, C.orgD); srect(x + 1 + lf[1], y - 1, 6, 1, C.orgD);
   }
-  // 身体
+  // body
   srect(x - 6, y - 19, 13, 11, C.suit); srect(x + 5, y - 18, 2, 9, C.suitD); srect(x - 6, y - 10, 13, 2, C.gray);
   srect(x - 3, y - 17, 5, 4, C.org); sset(x - 2, y - 16, C.white); sset(x, y - 16, C.white); sset(x - 2, y - 15, C.white); sset(x, y - 15, C.white);
-  // 手臂
+  // arms
   if (jump || win) { srect(x - 9, y - 26, 3, 7, C.suit); srect(x + 7, y - 26, 3, 7, C.suit); srect(x - 10, y - 28, 4, 3, C.org); srect(x + 7, y - 28, 4, 3, C.org); }
   else { const sw = pose === 'run0' ? 1 : pose === 'run1' ? -1 : 0; srect(x - 8 + sw, y - 18, 3, 6, C.suit); srect(x + 6 - sw, y - 18, 3, 6, C.suit); srect(x - 9 + sw, y - 13, 4, 3, C.org); srect(x + 6 - sw, y - 13, 4, 3, C.org); }
-  // 领圈
+  // neck ring
   srect(x - 6, y - 21, 13, 2, C.cyan);
-  // 头盔（玻璃）+ 脸
+  // helmet (glass) + face
   const hx = x + .5, hy = y - 29;
   sdisc(hx, hy, 8.6, C.deep);
   sdisc(hx + 1, hy + 1, 6.2, C.skin);
   srect(x - 5, hy - 6, 10, 3, C.hair); srect(x - 6, hy - 4, 3, 3, C.hair); srect(x - 1, hy - 8, 4, 2, C.hair);
-  // 眼（面向右）
+  // eyes (facing right)
   const blink = o.blink;
   if (win) { sset(x + 1, hy, C.ink); sset(x + 2, hy - 1, C.ink); sset(x + 3, hy, C.ink); sset(x + 5, hy, C.ink); sset(x + 6, hy - 1, C.ink); }
   else { srect(x + 2, hy - 1, 1, blink ? 1 : 2, C.ink); srect(x + 5, hy - 1, 1, blink ? 1 : 2, C.ink); }
   sset(x + 1, hy + 2, C.red); sset(x + 6, hy + 2, C.red);
   sset(x + 3, hy + 3, C.ink); sset(x + 4, hy + 3, C.ink);
-  // 玻璃高光
+  // glass highlight
   sset(x - 4, hy - 4, C.white); sset(x - 5, hy - 3, C.white); sset(x - 5, hy - 2, C.white);
-  // 天线
+  // antenna
   const aw = o.ant || 0;
   sset(x, hy - 9, C.gray); sset(x, hy - 10, C.gray); sset(x + (aw > .5 ? 1 : aw < -.5 ? -1 : 0), hy - 11, C.gray); sset(x + (aw > .5 ? 1 : aw < -.5 ? -1 : 0), hy - 12, C.gray);
   const bx = x + (aw > .5 ? 2 : aw < -.5 ? -2 : 0);
@@ -75,10 +75,10 @@ export function cadetPix(x, y, pose = 'stand', o = {}) {
   sflush();
   return { ball: [bx, hy - 14] };
 }
-// 陨石：带火尾
+// Meteor: with a fiery tail
 export function meteor(x, y, r, t) {
   sclear();
-  for (let i = 0; i < 26; i++) {   // 尾巴（右侧，因为陨石向左飞）
+  for (let i = 0; i < 26; i++) {   // tail (on the right, because the meteor flies left)
     const tx = x + r + i * 1.6, spread = r * (1 - i / 26);
     for (let j = -spread; j <= spread; j++) { const b = bayer(tx | 0, (y + j) | 0); const heat = 1 - i / 26 - Math.abs(j) / (spread + 1) * .6; if (heat > b * .9) pset(tx, y + j + Math.sin(t * 30 + i) * .5, heat > .7 ? C.yel : heat > .45 ? C.org : C.red); }
   }
@@ -110,11 +110,11 @@ function ground(scroll) {
       pset(x, y, dy === 0 ? C.suitD : dy < 3 ? C.gray : (dy < 8 && b < .5) ? C.gray : C.grayD);
     }
   }
-  // 陨石坑
+  // craters
   for (let k = 0; k < 6; k++) { const cx = ((k * 67 - scroll) % (PW + 60) + PW + 60) % (PW + 60) - 30, cy = top + 10 + (k % 3) * 4; for (let x = -7; x <= 7; x++) { pset(cx + x, cy, C.grayD); if (Math.abs(x) < 6) pset(cx + x, cy + 1, C.space); } pset(cx - 8, cy - 1, C.suitD); pset(cx + 8, cy - 1, C.suitD); }
 }
 
-// ───────── G5 DODGE!（本地 lt，0..2.571s，140 BPM，12fps）─────────
+// ───────── G5 DODGE! (local lt, 0..2.571s, 140 BPM, 12fps)─────────
 const BEAT = 60 / 140;
 export const DODGE_HITS = [2, 3.5, 5].map(b => b * BEAT);
 export function sceneDodge(g, lt, o = {}) {
@@ -124,25 +124,25 @@ export function sceneDodge(g, lt, o = {}) {
   stars(scroll, 1, 90, C.indigo, .2); stars(scroll, 2, 40, C.lav, .45); stars(scroll, 3, 14, C.white, .8);
   planet(182, 36, 22);
   ground(scroll);
-  // 跳跃：以每颗陨石到达时刻为中心
+  // jumps: centred on the moment each meteor arrives
   const X = 62, gy = PH - 26;
   let jy = 0, pose = Math.floor(T * 8) % 2 ? 'run0' : 'run1';
   for (const h of DODGE_HITS) { const u = (T - (h - .2)) / .4; if (u >= 0 && u <= 1) { jy = Math.round(4 * u * (1 - u) * 30); pose = 'jump'; } }
   const won = T >= DODGE_HITS[2] + .25;
   if (won) { pose = 'win'; jy = Math.round(Math.abs(Math.sin((T - 2.4) * 9)) * 6); }
-  // 陨石（从右飞来，在到达时刻越过 Dot 的 x）
+  // meteors (fly in from the right, crossing Dot's x at their arrival time)
   DODGE_HITS.forEach((h, i) => {
     const mx = X + (h - T) * 260, my = gy - 8;
     if (mx > -40 && mx < PW + 40) meteor(mx, my, i === 1 ? 8 : 6, T);
   });
   const ant = T > DODGE_HITS[2] && T < DODGE_HITS[2] + .4 ? Math.sin((T - DODGE_HITS[2]) * 40) : 0;
   const d = cadetPix(X, gy - jy + (pose === 'jump' ? 0 : 1), pose, { ant });
-  // 第三颗擦过天线球：火花
+  // the third one grazes the antenna ball: sparks
   if (Math.abs(T - DODGE_HITS[2]) < .09) { const bx = X, by = gy - jy - 2; for (let k = 0; k < 6; k++) pset(bx + [3, 5, 2, 4, 6, 1][k], by + [-3, 0, -5, 3, -2, 2][k], k % 2 ? C.yel : C.white); }
   present(g);
 }
 
-// 海鸥（像素，给 Boss 关客串）
+// Seagull (pixel, for a cameo in the Boss level)
 export function gull(x, y, f) {
   sclear(); x |= 0; y |= 0;
   const up = f % 2 === 0;

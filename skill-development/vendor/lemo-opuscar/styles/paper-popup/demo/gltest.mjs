@@ -1,5 +1,5 @@
 import { chromium } from 'playwright-core'; import { serve } from './serve.mjs';
-import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME 或本机 playwright 缓存里最新的 headless shell
+import { EXE } from '../../../core/render/browser.mjs';   // PLAYWRIGHT_CHROME, or the newest headless shell in the local playwright cache
 const { server, port } = await serve(process.cwd());
 const flagsets = { default: [], metal: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'], gl: ['--use-angle=gl', '--enable-gpu', '--ignore-gpu-blocklist'] };
 for (const [name, fl] of Object.entries(flagsets)) {

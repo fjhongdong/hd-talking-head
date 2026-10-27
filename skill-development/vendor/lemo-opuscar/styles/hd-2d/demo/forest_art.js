@@ -1,21 +1,21 @@
-// 夜林像素美术：树皮、树冠团簇、蕨、草丛、蘑菇、林地地面
+// Night-forest pixel art: bark, canopy clumps, ferns, grass tufts, mushrooms, forest floor
 import { PX, ramp, hex, h2, fbm, mulberry } from './px.js';
 
-export const pathZ = x => Math.sin(x * .23) * .55 + Math.sin(x * .07 + 1) * .4;   // 小径中线（世界 z）
+export const pathZ = x => Math.sin(x * .23) * .55 + Math.sin(x * .07 + 1) * .4;   // path centre line (world z)
 
 export function bark(w = 48, h = 96, seed = 3) {
   const P = new PX(w, h), R = ramp(['#0a0808', '#171210', '#241c17', '#33291f', '#463829', '#5a4a36'], .35);
   P.fill((x, y) => {
     const n = fbm(x * .35, y * .045, seed, 4), groove = Math.abs(Math.sin(x * .9 + fbm(x * .1, y * .03, seed + 2) * 5));
     let v = .25 + n * .55 - (groove < .18 ? .25 : 0) + (groove > .9 ? .08 : 0);
-    const kx = (x - w * .5), ky = (y - h * .4); if (kx * kx / 9 + ky * ky / 25 < 1) v -= .3;   // 树疤
-    if (fbm(x * .2, y * .2, seed + 5) > .66) return ramp(['#0e1a12', '#1a2e1c', '#28442a'], .3)(n, x, y);   // 苔
+    const kx = (x - w * .5), ky = (y - h * .4); if (kx * kx / 9 + ky * ky / 25 < 1) v -= .3;   // bark scar
+    if (fbm(x * .2, y * .2, seed + 5) > .66) return ramp(['#0e1a12', '#1a2e1c', '#28442a'], .3)(n, x, y);   // moss
     return R(v, x, y);
   });
   return P.done();
 }
 
-// 树冠团簇：若干圆团叠加，左上受光，边缘锯齿叶片
+// Canopy clumps: several overlapping round blobs, lit from the upper left, jagged leaf edges
 export function canopy(w, h, seed = 1, o = {}) {
   const P = new PX(w, h), R = mulberry(seed), G = ramp(o.cols ?? ['#03070a', '#081210', '#0e1f19', '#163024', '#21432f', '#2f5a3c'], .3);
   const blobs = [];
@@ -64,7 +64,7 @@ export function grassTuft(w = 18, h = 12, seed = 4) {
   return P.done();
 }
 
-// 蘑菇：返回 {c, e}（颜色 + 发光层）
+// Mushroom: returns {c, e} (colour + emissive layer)
 export function mushroom(seed = 5) {
   const w = 14, h = 12, P = new PX(w, h), E = new PX(w, h), R = mulberry(seed);
   const caps = [[4, 6, 3.2], [9, 7, 2.4], [11.5, 9, 1.6]];
@@ -78,7 +78,7 @@ export function mushroom(seed = 5) {
   return { c: P.done(), e: E.done() };
 }
 
-// 地面：小径（泥土、落叶）+ 两侧苔草地 + 月光下的碎石
+// Ground: path (dirt, fallen leaves) + mossy grass on both sides + gravel under moonlight
 export function forestGround(w, h, toWorld, seed = 21) {
   const P = new PX(w, h);
   const G = ramp(['#060b09', '#0c1712', '#13241a', '#1c3322', '#284530', '#355a3a'], .3);
@@ -89,7 +89,7 @@ export function forestGround(w, h, toWorld, seed = 21) {
     const d = Math.abs(wz - pathZ(wx)), edge = .95 + (fbm(wx * .8, wz * .8, seed) - .5) * .7;
     const n = fbm(x * .22, y * .22, seed + 2);
     if (d < edge) {
-      if (h2(x, y, seed + 7) > .985 || (fbm(x * .5, y * .5, seed + 8) > .7 && h2(x, y, seed) > .6)) return L(h2(x >> 1, y >> 1, 3), x, y);   // 落叶
+      if (h2(x, y, seed + 7) > .985 || (fbm(x * .5, y * .5, seed + 8) > .7 && h2(x, y, seed) > .6)) return L(h2(x >> 1, y >> 1, 3), x, y);   // fallen leaves
       let v = .35 + n * .45 - (d / edge) * .15; if (h2(x, y, seed + 1) > .97) v += .35; return D(v, x, y);
     }
     let v = .25 + n * .6 + (fbm(x * .06, y * .06, seed + 4) - .5) * .4; if (h2(x, y, seed + 3) > .94) v += .2;
@@ -98,7 +98,7 @@ export function forestGround(w, h, toWorld, seed = 21) {
   return P.done();
 }
 
-// 远景树林剪影（一排暗色树冠 + 树干）
+// Distant forest silhouette (a row of dark canopies + trunks)
 export function treeline(w, h, seed = 8) {
   const P = new PX(w, h), c1 = hex('#07100f'), c2 = hex('#0b1715');
   for (let x = 0; x < w; x++) {

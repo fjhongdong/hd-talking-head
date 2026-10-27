@@ -1,8 +1,8 @@
-// 用法（可在任意目录运行，路径都相对本脚本所在的 demo/）：
-//   node render.mjs stills 1.9 3.1 ... [--dir stills]  → <dir>/t_<秒>.png（默认 stills/）
-//   node render.mjs video [workers]                   → out/seg_*.mp4 + out/video_noaudio.mp4（CRF 12 母版）
-//   node render.mjs mux [输出.mp4]                    → 母版重编码 CRF 16 + music.wav(-1.6 dB, AAC 256k/48k)
-//                                                        默认输出 ../halftone-dossier.mp4（会覆盖成片！）
+// usage (runs from any directory; all paths are relative to demo/, where this script lives):
+//   node render.mjs stills 1.9 3.1 ... [--dir stills]  → <dir>/t_<seconds>.png (default stills/)
+//   node render.mjs video [workers]                   → out/seg_*.mp4 + out/video_noaudio.mp4(CRF 12 master)
+//   node render.mjs mux [output.mp4]                  → master re-encoded at CRF 16 + music.wav(-1.6 dB, AAC 256k/48k)
+//                                                        default output ../halftone-dossier.mp4 (overwrites the finished film!)
 import { chromium } from 'playwright-core';
 import { spawn, spawnSync } from 'child_process';
 import fs from 'fs';
@@ -10,7 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const P = (...a) => path.join(DIR, ...a);
-// 优先用本机 Playwright 缓存里的 headless shell；找不到就让 playwright-core 自己找（需 npx playwright install chromium-headless-shell）
+// prefer the headless shell in the local Playwright cache; if not found, let playwright-core find one itself (needs npx playwright install chromium-headless-shell)
 const CACHED = `${process.env.HOME}/Library/Caches/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell`;
 const EXE = process.env.CHROME_PATH || (fs.existsSync(CACHED) ? CACHED : undefined);
 const URL = 'file://' + P('index.html');

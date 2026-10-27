@@ -7,6 +7,8 @@ Demo: *一个月饼的相思 · A Mooncake's Longing* (121.8 s) · `paper-lanter
 
 **The demo narration is Mandarin Chinese** (edge-tts `zh-CN-XiaoxiaoNeural`) with Chinese subtitles. The library default is English with Kokoro (`core/tts/`); "Score structure" and "Engine reference" show how to switch. The demo runs 2 minutes; 45–120 s all work in this style.
 
+**Voice licence exception.** The demo's narration was generated with Microsoft's Edge neural TTS (via the open-source `edge-tts` client), whose terms for redistributing the audio are unclear, so the voice track of `paper-lantern.mp4` is **not covered by the library's CC BY 4.0 licence** for demo films. We plan to re-voice it with Kokoro. In your own film, use Kokoro (`core/tts/`) or a voice you have the right to use; keep `tts.py` only as a timing sketch.
+
 ## Story & structure
 
 The film opens on the real lightbox on a table and pushes into it. The box cavity is **0.56 × 0.33 m, 0.16 m deep**. The film is bookended by the **real world**: a walnut table in a dark room, the lit lightbox in a wooden frame, a tea set and a plate of real mooncakes lit by the box's spill light. The first shot pushes from the room into the box; the last pulls back out.
@@ -54,7 +56,7 @@ Motion as built in the demo:
 
 **Voice (English, library default):** write `lines.json` with `{id, text, voice, speed}`, run `core/tts/tts.py` (Kokoro, e.g. `bf_emma` / `af_heart`, speed ≈ .9) into `demo/vo/`, then `core/tts/asr_check.py` which writes `vo/dur.json` and a compatible `vo/words.json` (English word indices). Put the same ids/text into `script.json`. See "Switching to English" under Engine reference for the subtitle-split change.
 
-**Music:** Kevin MacLeod — **"Ripples"** (guzheng, 0 → ~37 s) handing over to **"Nu Flute"** (dizi + strings) with a 4.5 s crossfade; both CC BY 4.0 (incompetech.com). The handover is solved backwards so Nu Flute's own 70 s swell lands on the poem: `T_FLU = C.L23.at − 70 + .3`. Nu Flute −3.3 dB relative. 2 s fade in, 3 s fade out. Why these: pentatonic, no drums (percussive energy < 0.02) — see `demo/music/MUSIC.md` for the librosa analysis and the rejected candidates.
+**Music:** Kevin MacLeod — **"Ripples"** (guzheng, 0 → ~37 s) handing over to **"Nu Flute"** (dizi + strings) with a 4.5 s crossfade; both CC BY 4.0 (incompetech.com). The handover is solved backwards so Nu Flute's own 70 s swell lands on the poem: `T_FLU = C.L23.at − 70 + .3`. Nu Flute −3.3 dB relative. 2 s fade in, 3 s fade out. Why these: pentatonic, no drums (percussive energy < 0.02) — the librosa numbers are in `demo/music/analysis.json`.
 
 **Mix (`demo/mix.py`):** voice → downsampled-envelope compressor (−22 dB, 3:1) → HP 70 Hz → RMS −18 dB; music RMS −27.5 dB with **5.5 dB ducking** under speech (0.25 s smoothed envelope); procedural foley at −24…−34 dB: switch click + rising shimmer (lamp on), wooden-mould thud + puff, chimes on reveals, paper rustles, lid thud, train bed (rumble + 0.62 s "clack-clack"), whoosh for the passing train and cloud curtain, city hum, a bite crunch. Everything is placed from `out/timeline.json` (line starts) and `vo/words.json`. Peak-limited to −1 dBFS; the final mux normalises to **−14 LUFS** (two-pass loudnorm in `core/render/mux.sh`).
 
@@ -104,7 +106,7 @@ Rule: **back layers bright + translucent, front layers dark + opaque**. Interior
 - **Additive glows**: a transparent radial-gradient `CanvasTexture` shows a visible square edge. Use the analytic `ShaderMaterial` falloff (`burst()` in `paper.js`) for light spilling out of an opened box.
 - **Near-plane cloud curtain**: compute the closing position so the two curtains' **front edges** touch (`±.035` offset in `s16_mutual.js`), otherwise a slit of the old shot shows through.
 - **Layers bigger than the cavity** poke through the wooden frame in room shots — keep full-bleed sheets ≤ `.558 × .328`.
-- **Grade uniforms were sticky (fixed 2026-09-26)**: v1 of `Pipe.final()` only wrote `lift`/`gain` when a shot's `grade()` returned them, so a shot without them inherited the previous shot's values and the result depended on which frame a render worker started on — the first release (`paper-lantern_v1.mp4`) had visible grade pops at the worker boundaries 60.9 s (S09) and 101.5 s (S16). Now every missing grade key falls back to `GRADE0` (`post.js`: lift `[0, .005, .018]` cool night default, gain `[1.03, 1, .95]`), so renders are identical for any worker count. Night exteriors rely on the defaults; interiors must return their warm `lift` explicitly (S08 was fixed this way).
+- **Grade uniforms must not be sticky**: if `Pipe.final()` writes `lift`/`gain` only when a shot's `grade()` returns them, a shot without them inherits the previous shot's values and the result depends on which frame a render worker started on (visible grade pops at worker boundaries, e.g. 60.9 s / S09 and 101.5 s / S16). So every missing grade key falls back to `GRADE0` (`post.js`: lift `[0, .005, .018]` cool night default, gain `[1.03, 1, .95]`), and renders are identical for any worker count. Night exteriors rely on the defaults; interiors must return their warm `lift` explicitly (as S08 does).
 - Whisper medium mishears Chinese homophones (八月 → 8月, 她 → 他, 婵娟 → 禅绢); judge DIFFs by ear, not by string match.
 - Headless Chrome must run with GPU flags (`--use-angle=gl --enable-gpu --ignore-gpu-blocklist`, `render/browser.mjs`); SwiftShader is ~6× slower.
 
@@ -121,10 +123,10 @@ styles/paper-lantern/demo/
   src/paper.js stage.js post.js room.js art.js people.js props.js lib.js   engine (see Engine reference)
   render/still.mjs video.mjs cues.mjs   stills, parallel video render, export out/timeline.json
   mix.py            voice + music + foley → out/mix.wav
-  music/            candidate tracks + MUSIC.md (only km_Ripples.mp3 and km_Nu_Flute.mp3 are used)
+  music/            analysis.json (librosa numbers); km_Ripples.mp3 + km_Nu_Flute.mp3 (incompetech, git-ignored)
 ```
 
-All commands from the repo root (`Lemo-Opuscar/`). Python = `.venv/bin/python`; `edge-tts` must be on `PATH` (user-level `pip install edge-tts`; it is not in `.venv`).
+All commands from the repo root (`lemo-opuscar/`). Python = `.venv/bin/python`; `edge-tts` must be on `PATH` (user-level `pip install edge-tts`; it is not in `.venv`).
 
 ```sh
 D=styles/paper-lantern/demo

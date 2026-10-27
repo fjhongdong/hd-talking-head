@@ -126,10 +126,9 @@ styles/halftone-dossier/demo/
   music.py          score + SFX + master → music.wav (seeded, deterministic)
   fetch_fonts.mjs   downloads the 5 Google Fonts families → fonts/*.woff2 + fonts.css
   fonts/ fonts.css  local font slices (OFL)       CREDITS   licences
-  stills/           review stills + styleframe.jpg   out/     intermediates (gitignored)
-  PRODUCTION_LOG.md production log (local, not published)
+  stills/           styleframe.jpg                   out/     intermediates (gitignored)
 ```
-Run from the repo root (`Lemo-Opuscar/`); all paths inside the scripts are relative to `demo/`.
+Run from the repo root (`lemo-opuscar/`); all paths inside the scripts are relative to `demo/`.
 
 1. (Only when changing fonts) `cd styles/halftone-dossier/demo && node fetch_fonts.mjs` — needs network; rewrites `fonts/` + `fonts.css`.
 2. Voice/TTS: none in this style (skip). If you add narration, time scenes to it first.
@@ -147,7 +146,6 @@ Run from the repo root (`Lemo-Opuscar/`); all paths inside the scripts are relat
 - Scenes are shown/hidden by time window; a scene's update only runs while it is on, so any element that must be invisible before its cue needs an explicit `op(…, 0)` for `t < t0` (see `charsPop`, `stampAnim`).
 - The dot wipe must reach full coverage (r 62 on an 80 px grid) at the cut time, otherwise the hard scene switch shows through.
 - A 100 % white flash reads as a dropped frame; the verdict flash is capped at 0.5.
-- `demo/stills/t_*.png` from the original project partly predate the paper texture (0.5–7.1 s look flat); the film and a fresh render match each other, not those early stills.
 - Unused leftovers in `index.html`: `#ink` filter, `charsIdle()`, `E.elastic` — defined, never called.
 
 ## Engine reference

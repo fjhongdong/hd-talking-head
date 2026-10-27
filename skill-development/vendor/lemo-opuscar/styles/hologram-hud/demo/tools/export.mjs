@@ -1,5 +1,5 @@
-// 导出 events.json（音效事件）、timeline.json（配乐网格）、out/srt.json（字幕）
-// 用法（仓库根）：node styles/hologram-hud/demo/tools/export.mjs [content.json] [工作目录，默认 demo/]
+// Exports events.json (sound events), timeline.json (score grid), out/srt.json (subtitles)
+// Usage (repo root): node styles/hologram-hud/demo/tools/export.mjs [content.json] [work dir, default demo/]
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 const D = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT = path.resolve(D, '../../..');

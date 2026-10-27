@@ -12,7 +12,7 @@ words.__dur = await (await fetch('voices/dur.json')).json();
 FM.build(words);
 window.DUR = FM.DUR;
 window.EV = FM.EV.slice().sort((a, b) => a.t - b.t);
-window.SUBS = FM.SUBS.map(s => ({ t0: s.t0, t1: s.t1, text: s.text.replace(/[{}]/g, '') }))    // 片尾两句画面上已有大字，不烧录，但进 .srt
+window.SUBS = FM.SUBS.map(s => ({ t0: s.t0, t1: s.t1, text: s.text.replace(/[{}]/g, '') }))    // the last two lines already appear as large on-screen text, so they are not burned in, but they go into the .srt
   .concat([['v16', 'Claude Code.'], ['v17', 'Say it. Plan it. Review it. Ship it.']].map(([id, text]) => ({ t0: FM.VO[id] - .05, t1: FM.VO[id] + words.__dur[id] + .3, text })));
 window.T = FM.T;
 
@@ -24,17 +24,17 @@ function render(t) {
   base.innerHTML = html; base.style.display = ''; base.style.clipPath = ''; base.style.zIndex = 1;
   if (over) { over.innerHTML = html; over.style.display = ''; over.style.zIndex = 2; } else (base === wL ? wD : wL).style.display = 'none';
   for (const el of [wL, wD, spr]) el.style.transform = tf(F.cam);
-  // 锚点：元素上一点的世界坐标
+  // anchor: world coords of a point on an element
   const cache = {};
   const A = (key, fx = .5, fy = 0) => { const el = cache[key] !== undefined ? cache[key] : (cache[key] = base.querySelector(`[data-a="${key}"]`));
     if (!el) return null; const r = el.getBoundingClientRect(); return { x: (r.left + r.width * fx - 960) / z + cx, y: (r.top + r.height * fy - 540) / z + cy, w: r.width / z, h: r.height / z }; };
   if (over) { const c = A(D.at, .5, D.at === 'toggle' ? .5 : .6) || { x: 960, y: 540 }; over.style.clipPath = `circle(${D.r}px at ${c.x}px ${c.y}px)`; }
-  // 动态模糊：镜头速度 → 各向异性高斯（录屏软件的甩镜感）
+  // motion blur: camera velocity → anisotropic Gaussian (the whip-pan feel of screen-recorder software)
   const [px, py, pz] = FM.camAt(t - 1 / 24), vx = (cx - px) * z, vy = (cy - py) * z, vz = Math.abs(Math.log(z / pz)) * 900;
-  const bx = Math.min(36, Math.max(0, Math.abs(vx) - 30) * .3), by = Math.min(36, Math.max(0, Math.abs(vy) - 30) * .3);   // 慢推保持清晰，只有甩镜才拖影
+  const bx = Math.min(36, Math.max(0, Math.abs(vx) - 30) * .3), by = Math.min(36, Math.max(0, Math.abs(vy) - 30) * .3);   // slow pushes stay sharp; only whip pans smear
   const mb = bx > .6 || by > .6; mbg.setAttribute('stdDeviation', `${bx.toFixed(2)} ${by.toFixed(2)}`);
   mbw.style.filter = mb ? 'url(#mb)' : ''; window.DBG = { bx, by, vx, vy, vz, cam: F.cam };
-  // 精灵层
+  // sprite layer
   spr.innerHTML = sprites(F, t, A, z) + F.fx.map(f => f(A)).join('');
   hud(F, t, A, z, cx, cy);
 }
@@ -46,12 +46,12 @@ function sprites(F, t, A, z) {
     const s = act.seg(t);
     if (s && s.pencil) h += CW.PENCIL(c.flip ? c.x - 9 * c.px - 6 * c.px : c.x + 6 * c.px, c.y - 7 * c.px, c.px);
     if (s && s.dash) h += CW.speedlines(c.x, c.y, 1, seg(t, s.t0, s.t1) * .8 + .1, 4);
-    // 落地尘土
+    // landing dust
     for (const j of act.jumps) if (t >= j.t1 && t < j.t1 + .4) { const L = act.eval(j.t1 + .001, A, F); if (L) h += CW.dust(L.x, L.y, seg(t, j.t1, j.t1 + .4), Math.max(3, L.px * .7), 6, j.t1 * 10); }
     return c;
   };
   const c1 = draw(F.actors[0]), c2 = draw(F.actors[1]);
-  // 表演附件
+  // performance attachments
   if (c1) {
     const top = c1.y - c1.px * 10;
     if (t > T.land0 && t < T.land0 + .7) h += CW.BANG(c1.x - 3 * c1.px + 60, top - 70, 5, 1 - seg(t, T.land0 + .5, T.land0 + .7));
@@ -64,12 +64,12 @@ function sprites(F, t, A, z) {
     if (t > T.merged && t < T.merged + .8) h += CW.SPARK(c1.x + 50, top - 30 - seg(t, T.merged, T.merged + .8) * 30, 5, '#F2C14E', 1 - seg(t, T.merged + .4, T.merged + .8));
     if (t > T.light && t < T.light + .8) { const k = seg(t, T.light, T.light + .8); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; h += CW.SPARK(c1.x + Math.cos(a) * (40 + k * 110), c1.y - 30 + Math.sin(a) * (30 + k * 80), 6, i % 2 ? '#F2C14E' : CW.CLAY, 1 - k); } }
   }
-  // 分裂 / 合体的像素爆散
+  // pixel burst for split / merge
   const burst = (x, y, k, n = 14) => { let s = ''; for (let i = 0; i < n; i++) { const a = hash(i * 2.3) * Math.PI * 2, r = (20 + hash(i * 7.7) * 70) * eo(k), sz = 7 * (1 - k * .6);
     s += `<div style="position:absolute;left:${x + Math.cos(a) * r}px;top:${y + Math.sin(a) * r * .7}px;width:${sz}px;height:${sz}px;background:${i % 3 ? CW.CLAY : '#F2C14E'};opacity:${1 - k}"></div>`; } return s; };
   if (t > T.split + .15 && t < T.split + .6 && c1) h += burst(c1.x, c1.y - 30, seg(t, T.split + .15, T.split + .6));
   if (t > T.meet && t < T.meet + .6) h += burst(960, 440, seg(t, T.meet, T.meet + .6), 22);
-  // 光标（带运动残影）
+  // cursor (with motion trail)
   const cu = F.cursor.eval(t, A);
   if (cu) {
     if (cu.sp > 900) for (let i = 1; i <= 4; i++) { const g = F.cursor.eval(t - i * .012, A); if (g) h += cursorSvg(g.x, g.y, 1, cu.op * .16 * (5 - i) / 4, z); }
@@ -78,7 +78,7 @@ function sprites(F, t, A, z) {
   }
   return h;
 }
-// 光标按屏幕尺寸恒定（1.6 倍系统大小，录屏软件常用）
+// cursor stays constant in screen size (1.6× system size, common in screen-recorder software)
 const cursorSvg = (x, y, sc, op, z) => { const s = 1.6 * sc / z;
   return `<svg style="position:absolute;left:${x - 2 * s}px;top:${y - 2 * s}px;opacity:${op};filter:drop-shadow(0 ${2 / z}px ${3 / z}px rgba(0,0,0,.3))" width="${22 * s}" height="${30 * s}" viewBox="0 0 22 30"><path d="M2 2 L2 24 L7.5 18.5 L11 27 L15 25.2 L11.6 17 L19 17 Z" fill="#000" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`; };
 
@@ -98,7 +98,7 @@ function hud(F, t, A, z, cx, cy) {
   if (t < .5) h += `<div class="fade" style="opacity:${1 - eo(t / .5)}"></div>`;
   hudEl.innerHTML = h;
 }
-// 章节转场：像素块从左下扫到右上盖满 → 标题 → 同向揭开；中间一只奶油色小 Clawd 跑过
+// chapter transition: pixel blocks sweep from bottom-left to top-right until covered → title → revealed in the same direction; a small cream-coloured Clawd runs across in the middle
 function wipe(W, t) {
   const S = 60, cols = 32, rows = 18, p = W.p; let s = '<div class="wipe">';
   const pal = ['#D97757', '#CF6E4E', '#E08A6B'];

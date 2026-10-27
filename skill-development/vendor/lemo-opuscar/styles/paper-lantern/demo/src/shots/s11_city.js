@@ -1,10 +1,10 @@
-// S11 · 小满的城市：高楼一层层升起，灯很亮，月亮很远很淡
+// S11 · Xiaoman's city: high-rises rising layer by layer, lights very bright, the moon far away and faint
 import * as THREE from 'three';
 import { sheet, skyPanel, moon, setMoon } from '../paper.js';
 import { stage, aim } from '../stage.js';
 import { seg, ss, eio, eo, back, lerp, clamp, mulberry, TAU } from '../lib.js';
 
-// 一排楼：随机高度、平顶/尖顶/阶梯顶；窗格（glow 版只画亮着的窗）
+// A row of buildings: random heights, flat/spire/stepped tops; window grid (the glow version draws only the lit windows)
 export function towers(x, g, o) {
   const R = mulberry(o.seed || 1), c = x || g;
   let px = o.x0;
@@ -34,7 +34,7 @@ export function build(E) {
   const { U } = S;
   S.add(skyPanel({ w: .7, h: .5, y: .03, z: -.15, stops: [[0, '#150f2e'], [.5, '#2a2152'], [.85, '#4a3a6e'], [1, '#6a4a70']], stars: 25 }));
   const mn = S.add(moon({ x: MN[0], y: MN[1], z: MN[2], r: .013, gain: .9, halo: 3, haloGain: .12, core: '#f4ecdc', mid: '#e8dcc8', edge: '#d8c8b0' }));
-  // 雾霾带
+  // Smog band
   const haze = S.add(sheet({ U, w: .7, h: .4, z: -.13, trans: .9, shadow: false, recv: false, finish: { rim: 0, under: 0 }, draw: x => { const gr = x.createLinearGradient(0, .04, 0, -.06); gr.addColorStop(0, 'rgba(160,130,190,0)'); gr.addColorStop(.6, 'rgba(160,130,190,.35)'); gr.addColorStop(1, 'rgba(160,130,190,.1)'); x.fillStyle = gr; x.fillRect(-.35, -.2, .7, .4); } }));
   haze.material.transparent = true; haze.material.alphaToCoverage = false; haze.material.alphaTest = .005; haze.material.depthWrite = false;
   const rows = [
@@ -45,13 +45,13 @@ export function build(E) {
   ];
   const layers = rows.map((r, i) => S.add(sheet({ U, w: .7, h: .4, z: r.z, trans: r.trans, glow: r.glow, glowCol: '#ffd08a', ppm: 4400,
     draw: x => towers(x, null, { ...r, x0: -.35, x1: .35, by: -.07 - i * .012, gap: .006 }), glowDraw: g => towers(null, g, { ...r, x0: -.35, x1: .35, by: -.07 - i * .012, gap: .006 }), glowRes: .8 })));
-  // 高架桥与车流光带
+  // Elevated road and light streaks of traffic
   const road = S.add(sheet({ U, w: .7, h: .4, z: -.04, trans: .1, glow: 2.5, glowCol: '#ffffff', draw: x => { x.fillStyle = '#0c0a1e'; x.fillRect(-.35, -.2, .7, .1); x.fillRect(-.35, -.1, .7, .006); for (let i = 0; i < 10; i++) x.fillRect(-.33 + i * .075, -.2, .008, .1); },
     glowDraw: g => { const R = mulberry(2); for (let i = 0; i < 40; i++) { const px = -.35 + R() * .7, w = .01 + R() * .03; g.fillStyle = R() < .5 ? '#ff6040' : '#fff4d0'; g.fillRect(px, -.093 + (R() < .5 ? 0 : .002), w, .0012); } } }));
   return {
     S,
     update(t) {
-      // 楼群从下往上依次升起（立体书弹出的感觉）
+      // the buildings rise in turn from bottom to top (feel of a pop-up book)
       layers.forEach((m, i) => { const k = back(seg(t, .1 + i * .28, .9 + i * .28), 1.2); m.position.y = -.16 * (1 - k); });
       road.material.emissiveMap.wrapS = THREE.RepeatWrapping; road.material.emissiveMap.offset.x = -t * .05;
       setMoon(mn, .9 + .1 * Math.sin(t * .7));

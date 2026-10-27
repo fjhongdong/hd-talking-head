@@ -1,4 +1,4 @@
-// S6 · 装盒：月饼放进礼盒 → 压上字条 → 写好地址 → 合盖（“于是，我出发了”）
+// S6 · Packing: mooncake goes into the gift box → note slip laid on top → address written → lid closed (“于是，我出发了” "And so, I set off")
 import * as THREE from 'three';
 import { sheet, skyPanel, text, vtext } from '../paper.js';
 import { osmanthus, FONT } from '../art.js';
@@ -8,11 +8,11 @@ import { cakeFace } from './s03_press.js';
 import { stage, aim } from '../stage.js';
 import { seg, ss, eio, eo, ei, lerp, clamp, back, TAU } from '../lib.js';
 
-export function giftBox(S, E, o = {}) {   // 返回 {inner, front, lid}；盒子中心 cx，底 by，宽 w，前脸高 h
+export function giftBox(S, E, o = {}) {   // returns {inner, front, lid}; box centre cx, bottom by, width w, front-face height h
   const { U } = S, { cx = 0, by = -.06, w = .17, h = .07, z = -.06, col = '#9e2a20', dark = '#5e1510', gold = '#d9a441', to = '小满 收' } = o;
   const inner = S.add(sheet({ U, w: w + .02, h: h + .06, x: cx, y: by + h / 2 + .02, z: z - .012, trans: .2, draw: x => {
     x.fillStyle = dark; x.fillRect(-w / 2, -h / 2 - .02, w, h + .03);
-    x.fillStyle = '#c99a4a'; x.fillRect(-w / 2 + .004, -h / 2 - .02, w - .008, h * .15);   // 金色衬纸
+    x.fillStyle = '#c99a4a'; x.fillRect(-w / 2 + .004, -h / 2 - .02, w - .008, h * .15);   // gold lining paper
   } }));
   const front = S.add(sheet({ U, w: w + .02, h: h + .02, x: cx, y: by + h / 2, z, trans: .2, draw: x => {
     boxFront(x, 0, -h / 2, w, h, col, gold);
@@ -49,20 +49,20 @@ export function build(E) {
   return {
     S,
     update(t) {
-      // 双手把月饼放进盒子
+      // Both hands put the mooncake into the box
       const dn = eio(seg(t, .1, 1.5)), out = eio(seg(t, 1.5, 2.1));
       const cy = lerp(.06, -.03, dn);
       cake.position.set(0, cy, -.0655);
       handL.position.set(-.036 - out * .08, cy - .005 + out * .05, 0); handR.position.set(.036 + out * .08, cy - .005 + out * .05, 0);
       handL.position.z = handR.position.z = -.064;
-      // 字条
+      // Note slip
       const nt = eio(seg(t, tNote - .7, tNote)), no = eio(seg(t, tNote + .1, tNote + .7));
       note.position.set(lerp(.1, .0, nt), lerp(.08, .012, nt), -.063); note.rotation.z = lerp(.4, 0, nt); note.visible = t > tNote - .75;
       hand3.position.set(lerp(.1, .0, nt) + no * .1, lerp(.08, .012, nt) + no * .06, -.062); hand3.visible = note.visible && no < .99;
-      // 合盖
+      // Lid closing
       const ld = ei(seg(t, tLid - .5, tLid));
       B.lid.position.y = lerp(.16, -.06 + .07 + .004, ld);
-      // 镜头：中景 → 推近面单 → 合盖后推向盖子上的“中秋”并压暗
+      // Camera: medium shot → push in on the label → after the lid closes, push toward “中秋” (Mid-Autumn) on the lid and darken
       const toLabel = eio(seg(t, tLabel - .3, tLabel + .9)), toLid = eio(seg(t, tLid, tEnd));
       const px = lerp(lerp(0, .036, toLabel), 0, toLid), py = lerp(lerp(.0, -.03, toLabel), .012, toLid), z = lerp(lerp(.3, .2, toLabel), .15, toLid);
       const shake = t > tLid ? .0012 * Math.exp(-(t - tLid) * 10) * Math.sin((t - tLid) * 60) : 0;

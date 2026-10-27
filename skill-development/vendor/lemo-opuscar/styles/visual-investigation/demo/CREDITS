@@ -1,0 +1,49 @@
+Visual Investigation — "The Hindenburg: Four Minutes, 32 Seconds" (library demo; an unofficial film)
+Every third-party asset in the film, with its source and licence. All archival material is in the public domain;
+no CC BY material is used. build.sh downloads each file again into raw/ (SOURCES.jsonl keeps the licence trail).
+
+MOVING IMAGE AND ARCHIVAL SOUND
+- "Special Release - Zeppelin Explodes Scores Dead", Universal Newsreel, 1937-05-10. Universal Newsreels collection,
+  donated to the U.S. National Archives and placed in the public domain; Internet Archive copy:
+  https://archive.org/details/1937-05-10_Special_Release_Zeppelin_Explodes
+  Used: the flight over New York, the approach, the fire shot, three frozen frames; two short pieces of the original
+  narration (src 78.10–81.56 s and 40.38–44.72 s), band-passed. The release's own title cards are not used.
+  Changes: deinterlaced, black borders cropped, deblocked, upscaled 1.6× (lanczos), lightly sharpened, greyscale, grain.
+
+PHOTOGRAPHS (public domain, U.S. federal government works)
+- "Hindenburg burning, 1937", Gus Pasquarella, U.S. Navy, NAS Lakehurst, 1937-05-06.
+  https://commons.wikimedia.org/wiki/File:Hindenburg_burning,_1937.jpg
+- NH 57973 "Airship HINDENBURG Disaster, 6 May 1937", U.S. Navy / Naval History and Heritage Command.
+  https://commons.wikimedia.org/wiki/File:NH_57973_Airship_HINDENBURG_Disaster,_6_May_1937.png
+- "German airship 'Hindenburg' at Lakehurst, New Jersey", U.S. Navy; U.S. National Archives NAID 518856.
+  https://commons.wikimedia.org/wiki/File:German_airship_%22Hindenburg%22_at_Lakehurst,_New_Jersey._-_NARA_-_518856.jpg
+  Changes: only the bow and the mooring mast are shown (cropped); greyscale grade and grain on all three.
+
+DOCUMENTS
+- FBI file "Hindenburg", part 1 (1937), pages 13 and 39, Federal Bureau of Investigation (public domain);
+  Internet Archive copy: https://archive.org/details/HindenburgFBI
+- U.S. Department of Commerce, "Report of Airship 'Hindenburg' Accident Investigation", Air Commerce Bulletin
+  vol. 9 no. 2, 1937-08-15 (public domain). Quoted and re-typeset from the transcription at
+  https://www.airships.net/?p=2041 ; the radiograms on screen are typeset from this text, not scans.
+
+MAP
+- U.S. Geological Survey, Lakehurst, NJ 1:24,000 quadrangle, 1947 (public domain), via The National Map:
+  https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/NJ/24000/NJ_Lakehurst_254519_1947_24000_geo.pdf
+  Changes: cropped to the Naval Air Station, greyscale, inverted.
+
+The plan, the side schematic, the wind chart, the dot matrix and every label are drawn in code.
+No image is generated; nothing is coloured or restored.
+
+FONTS (SIL Open Font License 1.1; subsets from Google Fonts, fetched by tools/fonts.py)
+- Noto Sans SC, Noto Serif SC (Google / Adobe)
+- IBM Plex Mono (IBM)
+- Source Serif 4 (Adobe)
+
+VOICE
+- Narration: Kokoro-82M text-to-speech (Apache-2.0), voice am_michael, run offline with kokoro-onnx (MIT).
+- Speech check: faster-whisper (MIT).
+
+MUSIC AND SOUND
+- Original score and procedural sound design written for this film (audio/mix.py).
+- Samples (CC0 1.0): VS Chamber Orchestra: Community Edition and Versilian Community Sample Library (Versilian Studios)
+  (cellos, violas, violins, contrabass, harp, timpani, gran cassa, suspended cymbal, woodblock, glockenspiel, vibraphone).

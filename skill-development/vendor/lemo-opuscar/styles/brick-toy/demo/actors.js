@@ -1,4 +1,4 @@
-// 积木宇航员：纯积木拼成的可动人偶（腿/臂绕髋/肩转动，头可转）
+// Brick astronaut: a poseable figure built purely from bricks (legs/arms rotate about hips/shoulders, head turns)
 import * as THREE from 'three';
 import { COL, BRICK, PLATE, brick, plate, mesh, roundGeo, plastic } from './bricks.js';
 
@@ -19,7 +19,7 @@ export function makeAstro() {
   for (const [c, dx] of [[COL.red, -.45], [COL.yellow, 0], [COL.blue, .45]]) {
     const b = new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .1, 20), plastic(c)); b.rotation.x = Math.PI / 2; b.position.set(dx, HIP + PLATE + BRICK * 1.45, 1.03); body.add(b);
   }
-  const pack = brick(2, 1, COL.lgray); pack.position.set(0, HIP + PLATE + .2, -1.5); body.add(pack);   // 背包
+  const pack = brick(2, 1, COL.lgray); pack.position.set(0, HIP + PLATE + .2, -1.5); body.add(pack);   // backpack
   const arms = [-1.5, 1.5].map(x => {
     const g = new THREE.Group(); g.position.set(x, SHOULDER - .1, 0); body.add(g);
     for (let i = 0; i < 3; i++) { const b = mesh(roundGeo(.5), COL.white); b.position.y = -ARM_L + i * BRICK; g.add(b); }
@@ -38,7 +38,7 @@ export function makeAstro() {
   const tip = new THREE.Mesh(new THREE.SphereGeometry(.18, 16, 12), new THREE.MeshStandardMaterial({ color: '#ff3b30', emissive: '#ff2a1a', emissiveIntensity: 2 })); tip.position.set(1.7, BRICK * 1.9 + .62, -.2); head.add(tip);
   root.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
 
-  // pose：所有角度单位弧度；arm = [前后 x, 侧抬 z]；legs = [左, 右] 前后摆；sit 0..1
+  // pose: all angles in radians; arm = [forward/back x, side raise z]; legs = [left, right] forward/back swing; sit 0..1
   function pose(p) {
     root.position.set(p.x, p.y ?? 0, p.z); root.rotation.y = p.ry ?? 0;
     const sit = p.sit ?? 0;
@@ -54,7 +54,7 @@ export function makeAstro() {
   return { root, body, arms, head, legs, pose };
 }
 
-// 走路：φ 为步伐相位
+// walking: φ is the stride phase
 export function walkPose(phi, amp = .55) {
   const s = Math.sin(phi);
   return { legs: [s * amp, -s * amp], armL: [-s * amp * .6, .06], armR: [s * amp * .6, .06], bob: Math.abs(Math.cos(phi)) * .18 };

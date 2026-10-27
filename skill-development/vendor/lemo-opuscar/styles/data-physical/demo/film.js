@@ -1,5 +1,5 @@
-// 《两条螺旋》Two Spirals — Data Physicalization 数据实物化 demo
-// render(t)：相机关键帧 → 叠片 → 景深 → 2D 叠层（读数、判定、计数器、字幕、落版）；EV 给混音；TEXTS 给 readcheck；SUBCHECK 给字幕单行检查
+// 《两条螺旋》Two Spirals — Data Physicalization (数据实物化) demo
+// render(t): camera keyframes → stacked sheets → depth of field → 2D overlay (readouts, verdicts, counter, subtitles, end card); EV feeds the mix; TEXTS feeds readcheck; SUBCHECK feeds the one-line subtitle check
 import * as THREE from 'three';
 import { makePost } from '/core/three/post.js';
 import { clamp, seg, eo, eio, ss, lerp, track } from '/core/lib.js';
@@ -26,32 +26,32 @@ post.bloom.strength = .08; post.bloom.threshold = 1.6;
 post.vig.uniforms.amt.value = .28; post.vig.uniforms.warm.value = .22; post.vig.uniforms.contrast.value = .18;
 const set = await buildSet(scene, renderer);
 
-// ———————————————————— 镜头：一镜到底（柱面坐标关键帧） ————————————————————
-// [相机方位, 半径, 高度, 目标方位, 目标半径, 目标高度, 焦点方位, 焦点半径, 焦点高度, 光圈]
+// ———————————————————— Camera: one continuous take (keyframes in cylindrical coordinates) ————————————————————
+// [camera azimuth, radius, height, target azimuth, target radius, target height, focus azimuth, focus radius, focus height, aperture]
 const P = PAIRS, mid = (a, b) => (a + b) / 2;
 const top = (i, k = 'sol') => topY(P[i][k]);
 const H24 = DISC_H + P[10].sol.n * TH;
 const CAMK = [
-  // S1 2014 一对：从侧面看风电与太阳能并排；慢慢绕
+  // S1 the 2014 pair: wind and solar side by side, seen from the side; slow orbit
   [0.0, [th(0) + .56, 2.95, .42, th(0) + .06, 2.05, .22, th(0), 2.15, .2, 24]],
   [q(1, 0), [th(0) + .74, 3.6, .74, th(0) + .10, 2.0, .30, th(0), 2.15, .3, 18]],
   [q(2, 2), [th(0) + .66, 3.65, .78, th(0) + .08, 2.05, .30, th(0), 2.15, .3, 18]],
-  // S2 推近太阳能一摞的侧边：一片 = 10 GW，黄铜 = 100 GW
+  // S2 push in on the side of the solar stack: one sheet = 10 GW, brass = 100 GW
   [q(3, 1), [th(0) + .30, 2.95, .34, th(0) - .05, 2.3, .2, th(0), 2.25, .22, 28]],
   [q(3, 3), [th(0) + .26, 2.92, .31, th(0) - .06, 2.3, .2, th(0), 2.25, .22, 28]],
-  // S3 沿螺旋横移：2015 → 2020 一对一对叠起
+  // S3 track along the spiral: 2015 → 2020 stack up pair by pair
   [q(4, 1), [th(1) + .05, 4.0, .95, th(1) - .45, 2.0, .45, th(1), 2.2, .5, 18]],
   [q(5, 2), [th(3) + .05, 4.2, 1.15, th(3) - .45, 2.0, .6, th(3), 2.2, .65, 18]],
   [q(6, 3), [th(5) + .02, 4.35, 1.35, th(5) - .45, 2.0, .75, th(5), 2.2, .8, 17]],
-  // S4 交汇：2020、2021 两对完整同框，停稳再判定
+  // S4 the crossover: the 2020 and 2021 pairs fully in frame together, hold steady, then the verdict
   [q(7, 2), [mid(th(6), th(7)) - .03, 6.6, 3.1, mid(th(6), th(7)), 1.95, .78, mid(th(6), th(7)), 2.1, .7, 10]],
   [q(9, 0), [mid(th(6), th(7)) + .03, 6.5, 3.05, mid(th(6), th(7)) + .02, 1.95, .78, mid(th(6), th(7)), 2.1, .7, 10]],
-  // 快速沿螺旋追到 2025（2022–2024 在途中叠起）
+  // fast chase along the spiral to 2025 (2022–2024 stack up on the way)
   [q(9, 3), [th(9) + .05, 4.6, 2.4, th(9) + .45, 2.4, 1.6, th(10), 2.5, 1.8, 16]],
-  // S5 2025：当年新增从画外一片片落下，机位跟着摞顶升高
+  // S5 2025: that year's additions drop in sheet by sheet from out of frame; the camera rises with the top of the stack
   [q(10, 1), [th(11) - .36, 4.35, H24 + .42, th(11) + .17, rS(11), H24 - .2, th(11), rS(11), H24, 22]],
   [q(11, 3), [th(11) - .42, 4.6, top(11) + .48, th(11) + .17, rS(11), top(11) - .16, th(11), rS(11), top(11), 22]],
-  // S6 摇臂拉远到近顶视：两圈合成一张表盘，圆片落在中心
+  // S6 crane out to a near-top view: the two rings merge into one dial, the puck lands in the centre
   [q(13, 2), [.15, 6.6, 19.6, .15 - 1.571, 2.05, .2, 0, 0, .2, 6]],
   [DUR, [.02, 6.8, 20.0, .02 - 1.571, 2.05, .2, 0, 0, .2, 6]],
 ];
@@ -68,7 +68,7 @@ function setCamera(t) {
 const proj = v => { const p = v.clone().project(camera); return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H, p.z]; };
 const stackTop = (s, t) => new THREE.Vector3(s.x, DISC_H + landed(s, t) * TH, s.z);
 
-// ———————————————————— 2D 叠层 ————————————————————
+// ———————————————————— 2D overlay ————————————————————
 const ov = document.getElementById('ov'), g = ov.getContext('2d');
 let TXT = [], REPORT = true;
 function text(id, s, x, y, font, color, a = 1, align = 'left', report = s) {
@@ -86,7 +86,7 @@ function plate(x, y, w, h, a) { if (a <= .01) return; g.globalAlpha = a * .84; g
 function verdict(id, s, a) { if (a <= .01) return; const x = 120, y = 232, w = width(s, '500 46px NotoSC'); plate(x - 24, y - 64, w + 48, 96, a); line([[x, y + 18], [x + w * eo(a), y + 18]], a, ACC, 2); text(id, s, x, y, '500 46px NotoSC', ACC, a); }
 function swatch(x, y, kind, a) { if (a <= .01) return; g.globalAlpha = a; g.fillStyle = kind === 'sol' ? '#a9adb2' : '#eef3f5'; g.strokeStyle = INK; g.lineWidth = 1; g.fillRect(x, y - 15, 15, 15); g.strokeRect(x + .5, y - 14.5, 14, 14); g.globalAlpha = 1; }
 
-// 一对的两个读数：排成一列（数值大的在上），引线各自连回摞顶
+// the two readouts of a pair: stacked in one column (larger value on top), each leader line runs back to its stack top
 function pairLabels(p, t, a, side, id, minY = 430) {
   const fV = '300 50px Inter', fU = '500 22px JBMono', k = eo(a);
   const items = [p.wind, p.sol].map(s => { const [ax, ay] = proj(stackTop(s, t)); return { s, ax, ay, val: fmt(s.v) }; }).sort((u, v) => v.s.v - u.s.v);
@@ -104,7 +104,7 @@ function pairLabels(p, t, a, side, id, minY = 430) {
     text(id + it.s.kind + 't', `${p.year} ${it.s.kind === 'sol' ? LABELS.solar : LABELS.wind}`, cx + 24, ey - 72, '500 24px NotoSC', INK2, a);
   });
 }
-// 一摞的读数：圆点钉在摞顶，引线向 side（-1 左 / +1 右）上方伸出
+// readout for one stack: dot pinned to the stack top, leader line goes up and out towards side (-1 left / +1 right)
 function stackLabel(s, t, a, side, lift = 96, id = '') {
   const [ax, ay] = proj(stackTop(s, t)); const k = eo(a);
   const tag = s.kind === 'sol' ? LABELS.solar : LABELS.wind, val = fmt(s.v);
@@ -145,7 +145,7 @@ window.SUBCHECK = (() => { const cues = CUES.map(c => { const wz = Math.round(wi
 
 function overlay(t) {
   g.clearRect(0, 0, W, H); TXT = [];
-  // ① 2014：风电、太阳能两个读数并排停稳，再给判定
+  // ① 2014: the wind and solar readouts hold side by side, then the verdict
   {
     const a = seg(t, T.hold14[0], T.hold14[0] + .35) * (1 - seg(t, q(3, 0) - .3, q(3, 0)));
     if (a > .01) {
@@ -153,7 +153,7 @@ function overlay(t) {
     }
     verdict('v14', LABELS.verdict14, seg(t, T.verdict14, T.verdict14 + .3) * (1 - seg(t, q(3, 1) + .3, q(3, 1) + .55)));
   }
-  // ② 推近：一片 = 10 GW，黄铜 = 100 GW（方括号卡在片的侧边上）
+  // ② push in: one sheet = 10 GW, brass = 100 GW (the square brackets clamp onto the sheets' edge)
   {
     const a = seg(t, T.unit[0] + .1, T.unit[0] + .25) * (1 - seg(t, T.unit[1] + .1, T.unit[1] + .3));
     if (a > .01) {
@@ -170,7 +170,7 @@ function overlay(t) {
       br(5, 6, LABELS.unit1, 'u1', 40); br(9, 10, LABELS.unit2, 'u2', -50);
     }
   }
-  // ③ 交汇：2020 与 2021 两对、四个读数同框停稳 ≥ 2.5 s，然后判定
+  // ③ crossover: the 2020 and 2021 pairs, all four readouts in frame together, hold ≥ 2.5 s, then the verdict
   {
     const a = seg(t, T.hold21[0], T.hold21[0] + .35) * (1 - seg(t, q(9, 0) + .2, q(9, 0) + .5));
     if (a > .01) {
@@ -179,7 +179,7 @@ function overlay(t) {
     const v = seg(t, T.verdict21, T.verdict21 + .3) * (1 - seg(t, q(10, 0) + .45, q(10, 0) + .7));
     verdict('v21', LABELS.verdict21, v);
   }
-  // ④ 2025：计数器按落下的片数滚动；报告给 readcheck 的是落定值
+  // ④ 2025: the counter rolls with the number of sheets dropped; readcheck is given the settled value
   {
     const a = seg(t, q(10, 0) + .85, q(10, 0) + 1.15) * (1 - seg(t, T.crane - .2, T.crane + .12));
     if (a > .01) {
@@ -197,7 +197,7 @@ function overlay(t) {
       text('d25', LABELS.add25, bx, by + 46, '500 28px NotoSC', INK2, a * seg(t, T.drop25 + .3, T.drop25 + .7));
     }
   }
-  // ⑤ 表盘：圆片落定后的说明（数字刻在圆片上）；出处一直挂在右下
+  // ⑤ dial: the caption after the puck settles (the number is engraved on the puck); the source stays bottom right throughout
   {
     const a = seg(t, T.puck + .15, T.puck + .5);
     if (a > .01) {
@@ -209,7 +209,7 @@ function overlay(t) {
     const sa = seg(t, T.crane + .6, T.crane + 1);
     text('src', LABELS.source, W - 90, 78, '400 21px NotoSC', INK2, sa, 'right');
   }
-  // ⑥ 落版卡
+  // ⑥ end card
   {
     const a = seg(t, T.end - 1.45, T.end - 1.1), b = seg(t, T.end - 1.3, T.end - .95), c = seg(t, T.end - 1.0, T.end - .65);
     const x = 120, y = 560, r = v => 16 * (1 - eo(v));
@@ -222,7 +222,7 @@ function overlay(t) {
   subtitles(t);
 }
 
-// ———————————————————— 帧 ————————————————————
+// ———————————————————— Frame ————————————————————
 const PUCK_YAW = Math.PI / 2 + .30;
 window.DUR = DUR;
 window.render = t => {
@@ -232,7 +232,7 @@ window.render = t => {
   overlay(t);
 };
 window.TEXTS = t => { window.render(t); return TXT; };
-// 声音事件：叠片、黄铜刻度、落片、判定、抽空、圆片、落版、镜头大动作
+// sound events: sheets stacking, brass ticks, falling sheets, verdicts, drop-outs, the puck, end card, big camera moves
 const EV = [...EVENTS,
   { t: T.verdict14, type: 'verdict', v: .7 }, { t: T.suck, type: 'suck', d: T.verdict21 - T.suck }, { t: T.verdict21, type: 'turn' },
   { t: T.suck2, type: 'suck', d: T.puck - T.suck2 }, { t: T.puck, type: 'puck' }, { t: T.end - 1.25, type: 'end' },

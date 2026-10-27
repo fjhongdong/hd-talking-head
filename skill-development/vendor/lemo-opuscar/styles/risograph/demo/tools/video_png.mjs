@@ -1,6 +1,6 @@
-// core/render/video.mjs 的副本：PNG 截图（JPEG 4:2:0 会吃掉粉/蓝网点的颜色），中间片 yuv444 crf10
-// 多个片子并行制作时 workers 用 3（默认），单独渲染可开到 6
-// 每个 worker 独立浏览器，JPEG 截图经管道交给 ffmpeg；最后无损拼接
+// Copy of core/render/video.mjs: PNG screenshots (JPEG 4:2:0 eats the colour of the pink/blue halftone dots), intermediate in yuv444 crf10
+// Use 3 workers (default) when several films are being made in parallel; up to 6 when rendering alone
+// Each worker has its own browser, screenshots are piped to ffmpeg as JPEG; segments are joined losslessly at the end
 import fs from 'fs'; import path from 'path'; import { spawn, execFileSync } from 'child_process';
 import { openDemo, closeServer } from '../../../../core/render/page.mjs';
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };

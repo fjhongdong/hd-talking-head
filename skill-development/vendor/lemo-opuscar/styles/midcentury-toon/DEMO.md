@@ -76,6 +76,7 @@ Timeline (built from content): hook 4 bars, each step ≥ 3 bars (from its voice
 - **Ornaments:** 4-point atomic sparkles, 8–18-point starbursts, sunburst rays (30 wedges, 55 % alpha), boomerang and kidney shapes, polka dots.
 - **Type:** Oleo Script Bold for the kicker ("Meet Pip."); Alfa Slab One for titles, numerals and step headers (ink with a cream or colour plate offset 4–7 px); Jost 500/600 for body, details, labels and captions (letter-spaced caps for small labels).
 - **Grain:** light (mux grain 4) plus the paper overlay; the look is print, not film.
+- **Model sheet:** [`demo/stills/modelsheet_v2.jpg`](demo/stills/modelsheet_v2.jpg) (`?test=sheet`): June's turnaround, five expressions, key poses and hands, and the product in its off / on / plan-view / dock states.
 
 Demo numbers behind the STYLE.md rules: register offset `(6, 4)` px re-rolled at 12 fps ±1.6 px; walls in plans 6–7 px broken; hands one 6 px outline and 2.4 px finger separations; drop shadow offset (12, 12); sunburst 30 wedges at 55 % alpha; mux grain 4; walls `tint(col, .45)`, floors `shade(col, .16)`; pop-ins 0.24–0.3 s with overshoot 1.9; hand anticipation 20–60 px, recoil 6–10 px; kneel drops the hips 150 units (`kneel: true`, `kneelPose()`); caption card Jost 500 42 px, 60 px above the bottom, fade 0.16 s with a 10 px rise, colour cel offset 5 px, coral 8-point stars; step title Alfa Slab 64 px; detail tags Jost 36 px.
 
@@ -89,21 +90,24 @@ After the lockup, inside the iris circle: film title, style name, `Lemo-Opuscar`
 
 1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `python3 demo/tools/lines.py` turns it into `lines.json`.
 2. Kokoro (`core/tts/tts.py`) → `voices/` + `dur.json`; `asr_check.py` until every line is OK (step numbers are compared as digits).
-3. The timeline is built from content (see Shots).
+3. The timeline is built from content (see Shots): hook 4 bars, each step ≥ 3 bars (from its voice length), the last step 2 bars, then payoff 3, tip 2, lockup 3 and end 2 bars at 132 BPM. Three steps = 22 bars = 40.0 s.
 4. The score (`music/score.py`, forked to a sub-agent with the cue map) → `score.wav`, stems and `hits.json`.
-5. `core/render/events.mjs` exports the same event times the pictures use. `tools/cuecheck.py` checks every hit against the half-beat grid and the score. `mix.py` builds foley, voice, ducking and the three silences.
+5. `core/render/events.mjs` exports the same event times the pictures use. `tools/cuecheck.py` checks every hit against the half-beat grid and the score (0 off in the demo). `mix.py` builds foley, voice, ducking and the three silences.
 6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers, through `core/render/slot.mjs`); `mux.sh … 24 4`.
 7. `sh demo/build.sh` does all of it; `sh demo/build.sh stills` renders the content-swap test.
 
-Pitfalls tied to this demo's props:
+Pitfalls tied to this demo's props (the general rules are in STYLE.md):
 
-1. `demo/content.json` holds every word, number, colour, the voice and the payoff plan. `python3 demo/tools/lines.py` turns it into `lines.json`.
-2. Kokoro (`core/tts/tts.py`) → `voices/` + `dur.json`; `asr_check.py` until every line is OK (step numbers are compared as digits).
-3. The timeline is built from content: hook 4 bars, each step ≥ 3 bars (from its voice length), the last step 2 bars, then payoff 3, tip 2, lockup 3 and end 2 bars at 132 BPM. Three steps = 22 bars = 40.0 s.
-4. The score (`music/score.py`, forked to a sub-agent with the cue map) → `score.wav`, stems and `hits.json`.
-5. `core/render/events.mjs` exports the same event times the pictures use. `tools/cuecheck.py` checks every hit against the half-beat grid and the score (0 off in the demo). `mix.py` builds foley, voice, ducking and the three silences.
-6. `tools/cues.mjs` → `.srt`; render with `core/render/video.mjs` (960 frames ≈ 30 s with 2 workers); `mux.sh … 24 4`.
-7. `sh demo/build.sh` does all of it; `sh demo/build.sh stills` renders the content-swap test.
+1. **The route must obey the product.** Our first payoff looped over the sofa. Fix: wall-follow first, then lanes that bend around furniture as **potential-flow streamlines** (`laneY()`): lanes never cross and never enter an obstacle ellipse (furniture + 30 px). Keep obstacles away from walls; a streamline squeezed against a wall piles lanes on top of each other.
+2. **Don't lay the whole pattern at once.** Draw it room by room, one room per beat, with the camera pulling back. Then return home on a dotted line that also avoids furniture.
+3. **Nose inside the outline.** A nose drawn as a separate wedge looks like a paper cone glued on. Build the head as one open spline from the bridge round the skull to under the nose, then close it at the nose tip (`chain + tip`). In 3/4 view, place the far eye left of the bridge so it shows.
+4. **Arms from the shoulders.** Shoulders sit at the torso corners (±40–46, −384). Draw sleeves as a thick ink ribbon with a coral ribbon on top. Thin ink arms read as sticks coming out of the neck.
+5. **Glove hands need gaps.** Drawing the fingers as fat blobs turns the hand into a cloud. Stroke every part first and fill every part second (one union outline), with slender fingers (rx 12–13, ry 5) and separation lines.
+6. **Floor reach.** A standing figure's hands stop about 190 units under the shoulder. Kneel and solve the arms with IK instead of stretching them.
+7. **Line weight in close-ups.** Zooming the world camera 3× triples the ink. Put close-ups in a call-out circle drawn at native scale.
+8. **Detail text needs its reading time.** "Against a wall, 50 cm clear each side" did not fit its 3 s window. The data moved into `detail` ("50 cm clear on each side") and the wall into the title and the line.
+9. **The payoff route + a caption arrow can collide with labels.** Put room labels *under* the plan and the caption in the top margin.
+10. **Iris content at negative local time.** When a transition draws the next scene before its start, clamp `t` to just past the start (otherwise poses and pop-ins are undefined).
 
 ## content.json fields
 

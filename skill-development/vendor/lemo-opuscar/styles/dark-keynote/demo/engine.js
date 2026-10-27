@@ -1,5 +1,5 @@
-// engine.js — Dark Tech Keynote 绘制引擎（可复用：场景只调用这里的函数）
-// 暗色近黑渐变底 + 细线网格 + 柔光 + 圆角 UI 面板 + 唯一强调色；光扫揭幕、乱码滚数字、吸附飞行、条带透视、2.5D 摄影机。
+// engine.js — Dark Tech Keynote drawing engine (reusable: scenes only call functions from here)
+// Dark near-black gradient ground + thin-line grid + soft light + rounded UI panels + a single accent colour; light-sweep reveal, scrambled rolling digits, snap flight, strip perspective, 2.5D camera.
 import { clamp, lerp, seg, ss, eo, ei, eio, back, spring, mulberry, hash, TAU } from '../../../core/lib.js';
 export { clamp, lerp, seg, ss, eo, ei, eio, back, spring, mulberry, hash, TAU };
 
@@ -11,7 +11,7 @@ export const PAL = {
   accent: '#B7F34A', red: '#FF5A5F', cool: '#3B4CCA',
 };
 export const FONT = { ui: 'Inter', disp: 'InterTight', mono: 'JBMono' };
-/** 换品牌强调色（唯一彩色）。例：setAccent('#D97757') */
+/** Swap the brand accent colour (the only colour). Example: setAccent('#D97757') */
 export function setAccent(hex) { PAL.accent = hex; }
 export const font = (px, wt = 500, fam = 'ui') => `${wt} ${px}px ${FONT[fam] || fam}`;
 export function rgba(hex, a) {
@@ -24,9 +24,9 @@ export function mix(h1, h2, t) {
   return `rgb(${c(16)},${c(8)},${c(0)})`;
 }
 
-// ───────────────────────── 画布工具 ─────────────────────────
+// ───────────────────────── Canvas tools ─────────────────────────
 const _pool = {};
-/** 取一张离屏画布（按名字复用） */
+/** Get an offscreen canvas (reused by name) */
 export function buf(name, w = W, h = H) {
   let c = _pool[name];
   if (!c || c.width !== w || c.height !== h) { c = _pool[name] = document.createElement('canvas'); c.width = w; c.height = h; }
@@ -35,8 +35,8 @@ export function buf(name, w = W, h = H) {
 }
 export function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, Math.max(0, Math.min(r, w / 2, h / 2))); }
 
-// ───────────────────────── 背景 / 网格 / 光晕 ─────────────────────────
-/** 近黑渐变底 + 冷光斑 + 暗角。o.lift 顶部提亮，o.cool 冷光强度，o.dark 整体压暗 0..1 */
+// ───────────────────────── Background / grid / glow ─────────────────────────
+/** Near-black gradient ground + cool light patch + vignette. o.lift brightens the top, o.cool cool-light strength, o.dark overall darkening 0..1 */
 export function bg(g, o = {}) {
   const { lift = 1, cool = 1, dark = 0, cx = W * 0.5, cy = H * 0.34 } = o;
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
@@ -48,14 +48,14 @@ export function bg(g, o = {}) {
   if (dark > 0) { g.fillStyle = `rgba(4,5,7,${dark})`; g.fillRect(0, 0, W, H); }
   g.restore();
 }
-/** 柔和径向光晕 */
+/** Soft radial glow */
 export function glow(g, x, y, r, color, a) {
   if (a <= 0 || r <= 0) return;
   const gr = g.createRadialGradient(x, y, 0, x, y, r);
   gr.addColorStop(0, rgba(color, a)); gr.addColorStop(0.45, rgba(color, a * 0.35)); gr.addColorStop(1, rgba(color, 0));
   g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
 }
-/** 细线网格：屏幕空间，ox/oy/scale 让它跟着摄影机走。module 世界单位 */
+/** Thin-line grid: screen space, ox/oy/scale make it follow the camera. module in world units */
 export function grid(g, o = {}) {
   const { ox = 0, oy = 0, scale = 1, module = 48, alpha = 1, major = 4, rect = [0, 0, W, H], color = '255,255,255' } = o;
   const step = module * scale; if (step < 4 || alpha <= 0) return;
@@ -77,8 +77,8 @@ export function vignette(g, a = 0.55) {
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
 }
 
-// ───────────────────────── 面板 / 任意形状 ─────────────────────────
-/** 圆角 UI 面板：柔影 + 顶亮渐变 + 1px 描边 + 顶边内高光。o.cheap 用廉价阴影（大量元素时） */
+// ───────────────────────── Panels / arbitrary shapes ─────────────────────────
+/** Rounded UI panel: soft shadow + top-lit gradient + 1px stroke + inner highlight on the top edge. o.cheap uses a cheap shadow (for large numbers of elements) */
 export function panel(g, x, y, w, h, o = {}) {
   const { r = 14, fill = PAL.surf, fill2 = null, stroke = PAL.line, shadow = 1, cheap = false, hi = 1, alpha = 1 } = o;
   g.save(); g.globalAlpha *= alpha;
@@ -94,8 +94,8 @@ export function panel(g, x, y, w, h, o = {}) {
   g.restore();
 }
 /**
- * 用本风格画任意形状（Path2D）：外发光 + 顶亮渐变填充 + 1px 边缘光 + 可选光扫高光。
- * o.accent=true → 强调色实心发光（"唯一彩色"）；o.color 指定别的颜色；o.sweep 0..1 光带位置；o.glow 发光半径
+ * Draw any shape (Path2D) in this style: outer glow + top-lit gradient fill + 1px edge light + optional light-sweep highlight.
+ * o.accent=true → solid glowing accent colour ("the only colour"); o.color sets another colour; o.sweep 0..1 light-band position; o.glow glow radius
  */
 export function litShape(g, path, o = {}) {
   const { accent = false, color = null, glowR = accent ? 28 : 0, alpha = 1, sweep = null, bbox = [0, 0, W, H], stroke = true } = o;
@@ -121,7 +121,7 @@ export function litShape(g, path, o = {}) {
   }
   g.restore();
 }
-/** 四角光点（四角星）路径：r 外半径，k 腰部收缩 0..1 */
+/** Four-point sparkle (four-pointed star) path: r outer radius, k waist pinch 0..1 */
 export function sparklePath(cx, cy, r, k = 0.18, rot = 0) {
   const p = new Path2D();
   for (let i = 0; i < 4; i++) {
@@ -133,7 +133,7 @@ export function sparklePath(cx, cy, r, k = 0.18, rot = 0) {
   }
   p.closePath(); return p;
 }
-/** 光标尾巴：沿一串点画渐隐的光带，末端可接一根光标。pts=[[x,y],...] 从旧到新 */
+/** Caret trail: draws a fading light band along a series of points, optionally ending in a caret. pts=[[x,y],...] oldest to newest */
 export function trail(g, pts, o = {}) {
   const { color = PAL.accent, width = 6, alpha = 1, caretH = 0 } = o;
   if (pts.length < 2) return;
@@ -148,8 +148,8 @@ export function trail(g, pts, o = {}) {
   if (caretH > 0) { const [x, y] = pts[pts.length - 1]; caret(g, x, y, caretH, { color, alpha }); }
 }
 
-// ───────────────────────── 光标 / 品牌 ─────────────────────────
-/** 光标：中心锚点。o.sx/o.sy 挤压拉伸，o.on 亮度（眨眼），o.glow 光晕倍率 */
+// ───────────────────────── Caret / brand ─────────────────────────
+/** Caret: centre anchor. o.sx/o.sy squash and stretch, o.on brightness (blink), o.glow glow multiplier */
 export function caret(g, x, y, h, o = {}) {
   const { sx = 1, sy = 1, on = 1, glow: gl = 1, color = PAL.accent, alpha = 1, wr = 1 / 14 } = o;
   if (on <= 0.001 || alpha <= 0) return;
@@ -159,7 +159,7 @@ export function caret(g, x, y, h, o = {}) {
   g.fillStyle = color; rr(g, x - w / 2, y - hh / 2, w, hh, Math.min(w / 2, 4 + h * 0.01)); g.fill();
   g.shadowColor = 'transparent'; g.restore();
 }
-/** Tidy 标志：圆角方块 + 一根强调色光标 */
+/** Tidy logo: rounded square + one accent-colour caret */
 export function tidyMark(g, x, y, s, o = {}) {
   const { alpha = 1, on = 1 } = o;
   g.save(); g.globalAlpha *= alpha;
@@ -167,7 +167,7 @@ export function tidyMark(g, x, y, s, o = {}) {
   caret(g, x, y, s * 0.52, { on, glow: 0.6, wr: 1 / 6.5 });
   g.restore();
 }
-/** 文字标 "Tidy" + 光标，(x,y) 为基线起点；返回宽度 */
+/** Wordmark "Tidy" + caret, (x,y) is the baseline start; returns the width */
 export function wordmark(g, x, y, px, o = {}) {
   const { alpha = 1, on = 1, color = PAL.text } = o;
   g.save(); g.globalAlpha *= alpha; g.font = font(px, 600); g.fillStyle = color; g.textBaseline = 'alphabetic';
@@ -178,7 +178,7 @@ export function wordmark(g, x, y, px, o = {}) {
   g.restore(); return w + px * 0.2;
 }
 
-// ───────────────────────── UI 元件（混乱段的素材） ─────────────────────────
+// ───────────────────────── UI elements (material for the chaos section) ─────────────────────────
 const APPS = [
   { c: '#5B7CFA', g: 'bubble' }, { c: '#8C6CF0', g: 'cal' }, { c: '#2FB6A6', g: 'bell' }, { c: '#E0A33A', g: 'star' },
   { c: '#4C9BE8', g: 'mail' }, { c: '#D0668A', g: 'heart' }, { c: '#6E7890', g: 'gear' },
@@ -200,13 +200,13 @@ export function appIcon(g, x, y, s, k) {
     default: g.arc(cx, cy, u, 0, TAU); g.stroke(); g.beginPath(); g.arc(cx, cy, u * 0.35, 0, TAU); g.fill();
   }
 }
-/** 红色计数角标（中心锚点） */
+/** Red count badge (centre anchor) */
 export function badge(g, x, y, text, s = 1) {
   g.save(); g.font = font(13 * s, 700); const w = Math.max(20 * s, g.measureText(text).width + 12 * s), h = 20 * s;
   g.fillStyle = PAL.red; g.shadowColor = rgba(PAL.red, 0.5); g.shadowBlur = 8 * s; rr(g, x - w / 2, y - h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent';
   g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y + 0.5 * s); g.restore();
 }
-/** 通知卡（左上锚点） */
+/** Notification card (top-left anchor) */
 export function notif(g, x, y, w, h, o = {}) {
   const { app = 0, title = 'Reminder', body = 'You have 3 unread messages', time = 'now', cheap = true, badge: bd = null, alpha = 1 } = o;
   g.save(); g.globalAlpha *= alpha;
@@ -219,7 +219,7 @@ export function notif(g, x, y, w, h, o = {}) {
   if (bd) badge(g, x + h * 0.22 + s, y + (h - s) / 2, bd, h / 76);
   g.restore();
 }
-/** 文件图标（中心锚点，s = 1 时 44×56 + 文件名） */
+/** File icon (centre anchor, at s = 1: 44×56 + file name) */
 export function fileIcon(g, x, y, s, o = {}) {
   const { name = 'Untitled.txt', ext = 'TXT', tint = '#8A90A0', cheap = true, label = true } = o;
   const w = 44 * s, h = 56 * s, x0 = x - w / 2, y0 = y - h / 2 - 8 * s, f = 12 * s;
@@ -235,7 +235,7 @@ export function fileIcon(g, x, y, s, o = {}) {
   if (label) { g.font = font(9 * s, 500, 'mono'); g.fillStyle = PAL.text; g.textBaseline = 'top'; g.fillText(name.length > 16 ? name.slice(0, 15) + '…' : name, x, y0 + h + 5 * s); }
   g.restore();
 }
-/** 程序化风景照片（左上锚点） */
+/** Procedural landscape photo (top-left anchor) */
 const SKY = [['#F7B267', '#F4845F', '#7D4E88'], ['#8EC5FC', '#A7C7E7', '#E0C3FC'], ['#2B3A67', '#496A81', '#F2A65A'], ['#9BE3DE', '#BEEBE9', '#F4DADA'], ['#FFD194', '#D1913C', '#5C3D2E'], ['#3A1C71', '#D76D77', '#FFAF7B']];
 export function photo(g, x, y, w, h, seed = 1, o = {}) {
   const { border = true, cheap = true, r = Math.min(w, h) * 0.06 } = o;
@@ -255,7 +255,7 @@ export function photo(g, x, y, w, h, seed = 1, o = {}) {
   g.restore();
   if (border) { g.save(); g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; rr(g, x + 0.5, y + 0.5, w - 1, h - 1, r); g.stroke(); g.restore(); }
 }
-/** 窗口（左上锚点）：标题栏 40px（小图标 + 标题，无系统按钮），返回内容区矩形 */
+/** Window (top-left anchor): 40px title bar (small icon + title, no system buttons), returns the content-area rectangle */
 export function windowBox(g, x, y, w, h, o = {}) {
   const { title = 'Untitled', app = 6, cheap = false, alpha = 1, r = 14, bar = 40 } = o;
   g.save(); g.globalAlpha *= alpha;
@@ -267,7 +267,7 @@ export function windowBox(g, x, y, w, h, o = {}) {
   g.restore();
   return [x, y + bar + 1, w, h - bar - 1];
 }
-/** 窗口内容：kind = note | inbox | browser | sheet | chat | viewer | code */
+/** Window content: kind = note | inbox | browser | sheet | chat | viewer | code */
 export function windowContent(g, rect, kind, o = {}) {
   const [x, y, w, h] = rect, { seed = 1, n = 6, scroll = 0, text = '', tabs = 6, unread = 0 } = o;
   const R = mulberry(seed * 131 + 7);
@@ -311,7 +311,7 @@ export function windowContent(g, rect, kind, o = {}) {
   }
   g.restore();
 }
-/** 存储条 */
+/** Storage bar */
 export function storageBar(g, x, y, w, h, p, o = {}) {
   const { label = 'Storage almost full', value = '' } = o;
   g.save();
@@ -324,13 +324,13 @@ export function storageBar(g, x, y, w, h, p, o = {}) {
   g.restore();
 }
 
-// ───────────────────────── 吸附网格 · 飞行 · 运动模糊 ─────────────────────────
-/** 吸附网格槽位：cols×rows，tile 边长，gap 间距，原点 (x0,y0) */
+// ───────────────────────── Snap grid · flight · motion blur ─────────────────────────
+/** Snap-grid slots: cols×rows, tile side length, gap spacing, origin (x0,y0) */
 export function snapGrid(cols, rows, tile, gap, x0, y0) {
   const out = []; for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) out.push({ i, j, x: x0 + i * (tile + gap) + tile / 2, y: y0 + j * (tile + gap) + tile / 2 });
   return out;
 }
-/** 贪心就近分配：items[{x,y}] → slots，返回 slot 下标数组（每个元素去最近的空位 = "吸附"） */
+/** Greedy nearest assignment: items[{x,y}] → slots, returns an array of slot indices (each element goes to the nearest free slot = "snap") */
 export function assignSlots(items, slots) {
   const pairs = [];
   items.forEach((a, i) => slots.forEach((s, j) => pairs.push([(a.x - s.x) ** 2 + (a.y - s.y) ** 2, i, j])));
@@ -339,31 +339,31 @@ export function assignSlots(items, slots) {
   for (const [, i, j] of pairs) { if (res[i] >= 0 || used.has(j)) continue; res[i] = j; used.add(j); if (--left === 0) break; }
   return res;
 }
-/** 吸附飞行：from/to = {x,y,rot,s}，p 0..1 → 位置带弹性过冲、旋转弹簧归零、morph 形态过渡 */
+/** Snap flight: from/to = {x,y,rot,s}, p 0..1 → position with elastic overshoot, rotation springs back to zero, morph shape transition */
 export function flyPose(from, to, p, o = {}) {
   const { over = 1.35 } = o; const q = back(p, over), r = spring(p * 1.2, 9, 0.42);
   return { x: lerp(from.x, to.x, q), y: lerp(from.y, to.y, q), rot: lerp(from.rot || 0, to.rot || 0, clamp(r)), s: lerp(from.s ?? 1, to.s ?? 1, eo(p)), morph: ss(seg(p, 0.15, 0.7)) };
 }
-/** 运动模糊：在 [p-span, p] 之间取 n 个样本各画一次（越旧越淡），draw(pSample, alpha) */
+/** Motion blur: take n samples over [p-span, p] and draw each once (older ones fainter), draw(pSample, alpha) */
 export function motionBlur(p, span, n, draw) {
   if (span <= 0 || n <= 1) { draw(p, 1); return; }
   for (let k = n - 1; k >= 0; k--) { const pk = p - span * k / (n - 1); const a = k === 0 ? 1 : 0.5 * (1 - k / n) / (n - 1) * 2.2; draw(pk, Math.min(1, a)); }
 }
 
-// ───────────────────────── 光扫揭幕 / 条带透视 ─────────────────────────
+// ───────────────────────── Light-sweep reveal / strip perspective ─────────────────────────
 /**
- * 光扫揭幕：把 src 画到 (dx,dy,dw,dh)。p 0..1 光带位置：光扫过的地方亮起并保持，前沿一道窄高光，未扫到的地方只剩 base 亮度。
- * angle 光带方向（弧度，默认左上→右下），soft 前沿软度（像素）
+ * Light-sweep reveal: draws src into (dx,dy,dw,dh). p 0..1 light-band position: where the light has swept lights up and stays lit, a narrow highlight at the leading edge, unswept areas keep only the base brightness.
+ * angle light-band direction (radians, default top-left → bottom-right), soft leading-edge softness (pixels)
  */
 export function lightReveal(g, src, dx, dy, dw, dh, p, o = {}) {
   const { base = 0.07, angle = 0.62, soft = 260, band = 90, glint = 0.5, keep = 1 } = o;
   const [c, t] = buf('reveal', Math.ceil(dw), Math.ceil(dh));
   const ca = Math.cos(angle), sa = Math.sin(angle);
-  const L = Math.abs(dw * ca) + Math.abs(dh * sa);   // 沿光带法向的总长
+  const L = Math.abs(dw * ca) + Math.abs(dh * sa);   // total length along the light band's normal
   const front = -soft + p * (L + soft * 2);
   const cx = dw / 2, cy = dh / 2;
   const p0 = [cx - ca * L / 2, cy - sa * L / 2], at = d => [p0[0] + ca * d, p0[1] + sa * d];
-  // 亮版：src × 遮罩（front 之前亮）
+  // Lit version: src × mask (lit before front)
   t.drawImage(src, 0, 0, dw, dh);
   t.globalCompositeOperation = 'destination-in';
   const A = at(front - soft), B = at(front);
@@ -371,7 +371,7 @@ export function lightReveal(g, src, dx, dy, dw, dh, p, o = {}) {
   gr.addColorStop(0, `rgba(0,0,0,${keep})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
   t.fillStyle = gr; t.fillRect(0, 0, dw, dh);
   g.save(); g.globalAlpha = base; g.drawImage(src, dx, dy, dw, dh); g.globalAlpha = 1; g.drawImage(c, dx, dy); g.restore();
-  // 前沿高光：只在 src 有像素的地方
+  // Leading-edge highlight: only where src has pixels
   if (glint > 0 && p > 0 && p < 1) {
     const [c2, t2] = buf('reveal2', Math.ceil(dw), Math.ceil(dh));
     t2.drawImage(src, 0, 0, dw, dh); t2.globalCompositeOperation = 'source-in';
@@ -383,8 +383,8 @@ export function lightReveal(g, src, dx, dy, dw, dh, p, o = {}) {
   }
 }
 /**
- * 条带透视（绕 Y 轴转）：把 src 当成一块平板，中心在 (cx,cy)，屏幕尺寸 w×h，rotY 弧度（正 = 右边转远）。
- * 返回 map(u,v) → 屏幕坐标（u,v ∈ 0..1），方便在透视面上放高光 / 推镜头
+ * Strip perspective (rotating about the Y axis): treats src as a flat slab centred at (cx,cy), screen size w×h, rotY in radians (positive = right side turns away).
+ * Returns map(u,v) → screen coordinates (u,v ∈ 0..1), handy for placing highlights / pushing in on the perspective plane
  */
 export function perspective(g, src, cx, cy, w, h, rotY, o = {}) {
   const { slices = 96, dist = 2.2, alpha = 1 } = o;
@@ -402,11 +402,11 @@ export function perspective(g, src, cx, cy, w, h, rotY, o = {}) {
   return map;
 }
 
-// ───────────────────────── 乱码滚数字 ─────────────────────────
+// ───────────────────────── Scrambled rolling digits ─────────────────────────
 const GLYPH = '0123456789#%/*+=<>?$&@ABCDEFXZ';
 /**
- * 乱码滚成答案：text 每个字符有自己的锁定时间 locks[i]（秒）。锁定前按 24fps 乱跳（带竖向运动模糊），锁定时向下落定（弹簧）。
- * (x,y) 为基线左端；o.align='center' 居中；o.colorOf(i) 每字颜色
+ * Scramble that rolls into the answer: each character of text has its own lock time locks[i] (seconds). Before locking it jumps randomly at 24fps (with vertical motion blur); on locking it drops into place (spring).
+ * (x,y) is the left end of the baseline; o.align='center' centres it; o.colorOf(i) per-character colour
  */
 export function scramble(g, text, x, y, t, locks, o = {}) {
   const { px = 200, wt = 600, fam = 'disp', color = PAL.text, colorOf = null, align = 'left', tracking = -0.04, start = -1e9, fps = 24 } = o;
@@ -435,8 +435,8 @@ export function scramble(g, text, x, y, t, locks, o = {}) {
   return total;
 }
 
-// ───────────────────────── 字幕气泡（toast） ─────────────────────────
-/** UI 说明气泡：底部居中胶囊 + 青柠说话点。a 0..1 进出场，o.dense 混乱段加深 */
+// ───────────────────────── Caption bubble (toast) ─────────────────────────
+/** UI caption bubble: bottom-centred pill + lime speaking dot. a 0..1 in/out, o.dense deepens it in the chaos section */
 export function toast(g, text, a, o = {}) {
   if (a <= 0) return;
   const { y = H - 72, px = 40, dense = 0 } = o;
@@ -451,10 +451,10 @@ export function toast(g, text, a, o = {}) {
   g.restore();
 }
 
-// ───────────────────────── 2.5D 摄影机 ─────────────────────────
+// ───────────────────────── 2.5D camera ─────────────────────────
 /**
- * 摄影机：看向世界点 (x,y)，zoom = 桌面平面（z=0）的放大倍数，rot 荷兰角，shake 抖动像素。
- * 世界点高度 z（离桌面朝镜头）→ 透视缩放 s = 1/(1/zoom − z)，越靠近镜头越大、移动越快（视差）。
+ * Camera: looks at world point (x,y), zoom = magnification of the desktop plane (z=0), rot Dutch angle, shake jitter in pixels.
+ * A world point's height z (off the desktop toward the lens) → perspective scale s = 1/(1/zoom − z): the closer to the lens, the larger and the faster it moves (parallax).
  */
 export function camera(c) {
   const { x = W / 2, y = H / 2, zoom = 1, rot = 0, sx = 0, sy = 0 } = c;
@@ -465,7 +465,7 @@ export function camera(c) {
     const cr = Math.cos(rot), sr = Math.sin(rot);
     return { x: W / 2 + X * cr - Y * sr + sx, y: H / 2 + X * sr + Y * cr + sy, s };
   };
-  /** 把 ctx 变换到深度 z 的平面（之后按世界坐标画） */
+  /** Transform ctx to the plane at depth z (then draw in world coordinates) */
   const apply = (g, z = 0) => {
     const d = inv - z, s = 1 / Math.max(d, 0.02);
     g.setTransform(1, 0, 0, 1, 0, 0); g.translate(W / 2 + sx, H / 2 + sy); g.rotate(rot); g.scale(s, s); g.translate(-x, -y);

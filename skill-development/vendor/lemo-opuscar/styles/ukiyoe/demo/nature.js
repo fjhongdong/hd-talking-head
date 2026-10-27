@@ -1,8 +1,8 @@
-// 自然元素：山、松、岩、海浪、雨、雁
+// Nature elements: mountain, pine, rock, sea waves, rain, wild geese
 import { clamp, lerp, mulberry, hash, vnoise, TAU } from '/core/lib.js';
 import { PAL, smooth, poly, carve, wob, line, fillPath, rgba, mix } from './print.js';
 
-// —— 山（原创轮廓：两坡不对称，顶上一个缺口）——
+// —— Mountain (original silhouette: two asymmetric slopes, a notch at the top) ——
 export function mtnPts(cx, by, w, h) {
   const p = [];
   const L = 18;
@@ -11,7 +11,7 @@ export function mtnPts(cx, by, w, h) {
   for (let i = 1; i <= L; i++) { const s = 1 - i / L; p.push([cx + w * .5 - w * .44 * s + (i === L ? 0 : 0), by - h * Math.pow(s, 1.8) * .99]); }
   return p;
 }
-// 雪线：顶部约 frac 高度以上；下缘是一条略起伏的线，沿沟壑垂下长短不一、收尖的雪指
+// Snow line: above roughly frac of the height from the top; the lower edge is a slightly undulating line, with tapered snow fingers of uneven length hanging down the gullies
 export function snowPts(cx, by, w, h, frac = .32, seed = 3) {
   const all = mtnPts(cx, by, w, h), yl = by - h * (1 - frac);
   const sl = Math.pow((by - yl) / (h * .985), 1 / 1.55), sr = Math.pow((by - yl) / (h * .99), 1 / 1.8);
@@ -48,7 +48,7 @@ export function mountain(x, cx, by, w, h, o = {}) {
     if (o.grad) { const g = x.createLinearGradient(0, by - h, 0, by); o.grad.forEach(([s, c]) => g.addColorStop(s, c)); x.fillStyle = g; }
     else x.fillStyle = o.body;
     x.fillRect(cx - w, by - h - 10, w * 2, h + 20);
-    if (o.shade) { // 右坡阴面
+    if (o.shade) { // shaded side of the right slope
       x.fillStyle = o.shade; x.beginPath(); x.moveTo(cx + w * .02, by - h * .97);
       for (let i = 0; i <= 10; i++) { const s = i / 10; x.lineTo(cx + w * (.02 + .16 * s) + Math.sin(s * 9) * w * .01, by - h * (.97 - .97 * s)); }
       x.lineTo(cx + w, by); x.lineTo(cx + w, by - h); x.closePath(); x.fill();
@@ -56,7 +56,7 @@ export function mountain(x, cx, by, w, h, o = {}) {
     x.restore();
   }
   if (o.snow) { x.fillStyle = o.snow; x.beginPath(); snowPath(x, cx, by, w, h, o.frac, o.seed); x.fill(); }
-  if (o.glow) { // 雪上的淡红晕
+  if (o.glow) { // faint red glow on the snow
     x.save(); x.beginPath(); snowPath(x, cx, by, w, h, o.frac, o.seed); x.clip();
     const g = x.createLinearGradient(cx - w * .1, 0, cx + w * .25, 0); g.addColorStop(0, rgba(o.glow, 0)); g.addColorStop(1, rgba(o.glow, .75));
     x.fillStyle = g; x.fillRect(cx - w, by - h - 10, w * 2, h); x.restore();
@@ -71,7 +71,7 @@ export function mountain(x, cx, by, w, h, o = {}) {
   return pts;
 }
 
-// —— 松：弯曲树干 + 平顶的针叶"云团"（上缘扇形针束，下缘平）——
+// —— Pine: bent trunk + flat-topped needle "clouds" (fan-shaped needle tufts on the upper edge, flat lower edge) ——
 function pinePad(x, cx, cy, r, o, R, lw) {
   const n = Math.max(3, Math.round(r / 16)), top = [], wdt = r * 1.35, ht = r * .42;
   for (let i = 0; i <= n; i++) { const u = i / n, X = cx - wdt + u * 2 * wdt; top.push([X, cy - ht * Math.pow(Math.sin(u * Math.PI), .7) * (.8 + R() * .3)]); }
@@ -98,7 +98,7 @@ export function pine(x, bx, by, sc, o = {}) {
   const th = i => (15 - i * 1.5) * sc;
   const tl = trunk.map(([a, b], i) => [a - th(i), b]), tr = trunk.map(([a, b], i) => [a + th(i), b]);
   if (o.fills !== false) { x.fillStyle = o.bark || PAL.woodD; x.beginPath(); poly(x, tl.concat(tr.slice().reverse())); x.fill(); }
-  // 枝
+  // branches
   const pads = [];
   trunk.forEach(([a, b], i) => {
     if (i < (o.minI || 2)) return; const side = (i + (o.seed || 0)) % 2 ? 1 : -1, len = (60 + R() * 70) * sc, ex = a + side * len, ey = b - (10 + R() * 25) * sc;
@@ -112,13 +112,13 @@ export function pine(x, bx, by, sc, o = {}) {
   if (o.lines !== false) {
     x.fillStyle = PAL.sumi;
     carve(x, tl, lw * 1.2, { taper: [0, .3], seed: 8 }); carve(x, tr, lw * 1.2, { taper: [0, .3], seed: 9 });
-    // 树皮鳞纹
+    // bark scale pattern
     x.strokeStyle = PAL.sumi; x.lineWidth = lw * .45;
     for (let i = 0; i < 7; i++) for (let k = 0; k < 3; k++) { const a = trunk[i], b = trunk[i + 1], u = (k + .5) / 3, px = lerp(a[0], b[0], u) + (R() - .5) * th(i), py = lerp(a[1], b[1], u); x.beginPath(); x.arc(px, py, 4 * sc, Math.PI * .1, Math.PI * .9); x.stroke(); }
   }
 }
 
-// —— 岩（块面 + 皴线）——
+// —— Rock (faceted planes + cun (皴, texture strokes)) ——
 export function rock(x, pts, o = {}) {
   const lw = o.lw || 2.6;
   if (o.fill) { x.fillStyle = o.fill; x.beginPath(); poly(x, pts); x.fill(); }
@@ -129,7 +129,7 @@ export function rock(x, pts, o = {}) {
   }
 }
 
-// —— 雨线（两组角度，12fps 换位）——
+// —— Rain lines (two sets of angles, repositioned at 12fps) ——
 export function rain(x, t, rect, o = {}) {
   const k = Math.floor(t * 12), R = mulberry(1000 + k), [x0, y0, x1, y1] = rect;
   const sets = o.sets || [[-1.34, 260, 2.1, PAL.sumi, .55], [-1.22, 140, 1.4, PAL.greyD, .45]];
@@ -146,7 +146,7 @@ export function rain(x, t, rect, o = {}) {
   x.restore();
 }
 
-// —— 雁（小 V 形）——
+// —— Wild geese (small V shapes) ——
 export function goose(x, px, py, s, flap) {
   x.fillStyle = PAL.sumi; x.beginPath();
   const f = flap * 5 * s;
@@ -155,7 +155,7 @@ export function goose(x, px, py, s, flap) {
   x.beginPath(); x.moveTo(px, py + 1); x.lineTo(px - 4.5 * s, py + 1.6 * s); x.lineWidth = 1.4 * s; x.strokeStyle = PAL.sumi; x.stroke();
 }
 
-// —— 浪爪：一根弯钩状的"手指"（白填 + 普鲁士蓝描边），可带小分爪 ——
+// —— Wave claw: one hooked "finger" (white fill + Prussian blue outline), optionally with small sub-claws ——
 export function claw(x, bx, by, ang, len, wid, curl, o = {}) {
   const n = 16, sp = [[bx, by]]; let a = ang, px = bx, py = by;
   for (let i = 1; i <= n; i++) { const s = i / n; a = ang + curl * Math.pow(s, 2.6) * 3.4; px += Math.cos(a) * len / n; py += Math.sin(a) * len / n; sp.push([px, py]); }
@@ -169,12 +169,12 @@ export function claw(x, bx, by, ang, len, wid, curl, o = {}) {
   const outline = Lp.concat(Rp.reverse());
   x.fillStyle = o.fill || PAL.white; x.beginPath(); poly(x, outline); x.fill();
   x.strokeStyle = o.ink || PAL.prusD; x.lineWidth = o.lw || 2.2; x.lineJoin = 'round'; x.beginPath(); poly(x, outline); x.stroke();
-  // 爪尖分叉：末端再长出 2 个小钩
+  // forked claw tip: 2 more small hooks grow from the end
   if (o.sub && len > 40) {
     const tipI = Math.round(n * .62), q = sp[tipI], aT = ang + curl * Math.pow(.62, 2.6) * 3.4;
     claw(x, q[0], q[1], aT - (curl > 0 ? .7 : -.7), len * .3, wid * .42, curl * 1.5, { ...o, sub: 0 });
   }
-  // 小分爪（从外侧长出）
+  // small sub-claws (growing from the outer side)
   if (o.sub) {
     for (let k = 0; k < o.sub; k++) {
       const s = .35 + k * .22, i = Math.round(s * n), q = Rp[Rp.length - 1 - i] || Rp[0];

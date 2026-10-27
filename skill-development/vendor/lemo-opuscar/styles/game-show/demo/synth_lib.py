@@ -1,4 +1,4 @@
-# 合成器库：乐器 + 音效（抽自胖橘案卷 music.py）
+# Synth library: instruments + SFX (taken from the music.py of the 胖橘案卷 (Fat Orange Dossier) film)
 import numpy as np
 from scipy.signal import lfilter, butter
 import wave
@@ -35,7 +35,7 @@ def hp(x, fc, order=2):
 def bp(x, lo, hi, order=2):
     b, a = butter(order, [lo / (SR / 2), hi / (SR / 2)], 'band'); return lfilter(b, a, x)
 
-# ---------- 乐器 ----------
+# ---------- Instruments ----------
 def kick(g=1.0):
     n = int(0.35 * SR); t = np.arange(n) / SR
     f = 48 + 110 * np.exp(-t * 28)
@@ -65,7 +65,7 @@ def hat(open_=False):
     return hp(rng.standard_normal(n), 7000) * np.exp(-t * (18 if open_ else 90)) * 0.35
 
 def pluck(m, dur=0.35, bright=1.0):
-    # 木琴/马林巴感：基频 + 4 倍泛音快速衰减
+    # Xylophone/marimba feel: fundamental + 4× overtone, fast decay
     n = int(dur * SR); t = np.arange(n) / SR; f = mtof(m)
     s = (np.sin(2 * np.pi * f * t) * np.exp(-t * 7)
          + 0.35 * bright * np.sin(2 * np.pi * f * 3.99 * t) * np.exp(-t * 30)
@@ -73,7 +73,7 @@ def pluck(m, dur=0.35, bright=1.0):
     return s * np.minimum(1, t / 0.002)
 
 def bell(m, dur=1.6):
-    # 八音盒
+    # Music box
     n = int(dur * SR); t = np.arange(n) / SR; f = mtof(m)
     s = (np.sin(2 * np.pi * f * t) * np.exp(-t * 2.6)
          + 0.4 * np.sin(2 * np.pi * f * 2.76 * t) * np.exp(-t * 6)
@@ -98,12 +98,12 @@ def pad(ms, dur):
         f = mtof(m)
         for det in (-0.12, 0.12):
             ph = 2 * np.pi * f * (1 + det / 100) * t
-            s += 2 / np.pi * np.arcsin(np.sin(ph))  # 三角波
+            s += 2 / np.pi * np.arcsin(np.sin(ph))  # triangle wave
     s = lp(s / (len(ms) * 2), 2200)
     a = np.minimum(1, t / 0.08); r = np.minimum(1, (dur - t) / 0.15)
     return s * a * np.clip(r, 0, 1)
 
-# ---------- 音效 ----------
+# ---------- SFX ----------
 def stamp(big=False):
     n = int(0.9 * SR); t = np.arange(n) / SR
     f = 40 + 90 * np.exp(-t * 18)
@@ -175,7 +175,7 @@ def meow(dur=0.5, f0=640, gain=0.6):
     n = int(dur * SR); t = np.arange(n) / SR; p = t / dur
     f = f0 * (0.9 + 0.45 * np.sin(np.pi * np.clip(p * 1.25, 0, 1)) - 0.25 * p) * (1 + 0.012 * np.sin(2 * np.pi * 6 * t))
     ph = 2 * np.pi * np.cumsum(f) / SR
-    # 共振峰从 /i/ → /a/ → /u/ 滑动
+    # Formants glide /i/ → /a/ → /u/
     F1 = np.interp(p, [0, .35, 1], [350, 850, 400]); F2 = np.interp(p, [0, .35, 1], [2300, 1400, 900])
     s = np.zeros(n)
     for h in range(1, 16):
@@ -187,7 +187,7 @@ def meow(dur=0.5, f0=640, gain=0.6):
     return s / 6 * e * gain
 
 def roll(t0, t1):
-    # 军鼓滚奏，渐快 + 渐强
+    # Snare roll, accelerating + crescendo
     t = t0
     while t < t1:
         p = (t - t0) / (t1 - t0)

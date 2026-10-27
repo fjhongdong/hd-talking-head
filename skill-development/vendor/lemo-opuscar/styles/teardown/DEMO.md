@@ -4,7 +4,7 @@ One example among many. Don't reuse its story, arc, shots, props or timings.
 
 Demo: *21 Keys, Opened* 《二十一键》 (38.75 s) · `teardown.mp4` · source in [`demo/`](demo/)
 
-One half of the open-source Corne v4 split keyboard (foostan/crkbd, CC BY 4.0 / MIT), built from the project's own KiCad board, switch-plate file, case STEP, bill of materials and build guide. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English below). Every number on screen and in the voice is in [`demo/FACTS.md`](demo/FACTS.md). The project's name and logo are not shown in the picture (only in the end-card credit line); the chip and part numbers are component designations from the BOM, and no package top carries a marking.
+One half of the open-source Corne v4 split keyboard (foostan/crkbd, CC BY 4.0 / MIT), built from the project's own KiCad board, switch-plate file, case STEP, bill of materials and build guide. Chinese on screen, English narration, bilingual subtitles (Chinese line above, English below). Every number on screen and in the voice is in [`demo/FACTS.md`](demo/FACTS.md). The project's name and logo are not shown in the picture (only in the end-card credit line); the chip and part numbers are component designations from the BOM, and no package top carries a marking. This is an unofficial film made from the project's published files; the Corne project and its author (foostan) did not make or endorse it.
 
 ## Story & structure
 
@@ -76,7 +76,7 @@ demo/
   tools/            extract_pcb.py, kicad_geom.py, sexp.py, step2mesh.mjs, fetch_cad.sh (data); fetch_fonts.py;
                     export.mjs (voice lines, cues, timeline.json); subcheck.mjs, motioncheck.py (checks)
   data/             pcb.json (left half, extracted), case.bin (case mesh)
-  FACTS.md, CREDITS, TREATMENT.md, PRODUCTION_LOG.md, stills/styleframe.jpg
+  FACTS.md, CREDITS, stills/styleframe.jpg
 ```
 
 - `sh demo/build.sh` takes about 3 minutes on Apple silicon (picture about 60 s with 4 workers). In a clean clone it first rebuilds what git does not carry: `data/case.bin` and `data/pcb.json` from the CAD at the pinned commit (network, and npm for a temporary occt-import-js), the fonts from Google Fonts, and any missing library pack (HDRI, Kokoro, the vcsl / freepats / vsco2ce samples). `FETCH=1` forces the CAD and fonts.

@@ -1,18 +1,18 @@
-// 静态世界：整页公园速写（5120×2880 世界坐标 = 最后拉远时的整页）
-// 画进四张画布：color（淡彩）、inkA/timeA（开场扩散的线稿）、inkB/timeB（天际线，按笔顺）
+// Static world: a full-page park sketch (5120×2880 world coordinates = the whole page at the final pull-out)
+// Drawn into four canvases: color (washes), inkA/timeA (the line drawing that spreads in the opening), inkB/timeB (skyline, in stroke order)
 import { rng, fbm, n2, hex, mix3, lerp, clamp, ellipse, spline, penStroke, rasterPen, wash, reserve, dab, foliage, crownDepth, figure, drawPrims, TAU, LEAF } from './engine.js';
 
 export const W = 5120, H = 2880;
 export const WIN_A = [0, 5.0], WIN_B = [15.3, 3.9];
-export const depthS = Y => .3 + (Y - 1600) / 900 * .78;          // 深度比例（1 = 前景）
-export const FIG_H = 480;                                          // 前景人物身高（像素）
-export const ORIGIN = [2950, 2250];                                // 线稿从这里向外长
+export const depthS = Y => .3 + (Y - 1600) / 900 * .78;          // depth scale (1 = foreground)
+export const FIG_H = 480;                                          // foreground figure height (pixels)
+export const ORIGIN = [2950, 2250];                                // the line drawing grows outward from here
 export const LAMP = { x: 1120, y: 2200, top: 1440 };
 export const PATH = [[-80, 2335], [400, 2262], [900, 2165], [1350, 2045], [1750, 1912], [2100, 1797], [2420, 1724], [2620, 1690]];
 export const POND = [[3780, 2800], [3830, 2660], [3990, 2600], [4250, 2572], [4600, 2562], [4950, 2572], [5160, 2600], [5160, 2900], [3760, 2900]];
 export const BRIDGE = { x0: 4300, x1: 4980, deck: 2462, rail: 2418, a0: 4420, a1: 4860, apex: 2505, water: 2645 };
 export const BLANKET = [[2690, 2478], [3240, 2484], [3196, 2362], [2728, 2356]];
-export const CROWNS = {};   // 命名的树冠（节拍树、前景大树），供到达场和遮挡用
+export const CROWNS = {};   // named tree crowns (the beat trees, the big foreground tree), for the arrival field and occlusion
 
 const C = {
   sky: hex('#9fbcd6'), skyDeep: hex('#86a6c8'), cloud: hex('#b7b3c9'),
@@ -25,7 +25,7 @@ const C = {
 
 function cv(w, h, fill) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true }); if (fill) { x.fillStyle = fill; x.fillRect(0, 0, w, h); } return [c, x]; }
 
-// 页面边缘：左、下、右下碎成色点溶进纸；左下角留出写片名的空白
+// Page edges: left, bottom and bottom-right break into dabs and dissolve into the paper; the bottom-left corner is left blank for the title
 export function pageMask(x, y) {
   const n = (fbm(x * .004, y * .004, 5, 3) - .5) * 160 + (n2(x * .03, y * .03, 8) - .5) * 40;
   const dl = x - 60 + n, db = H - 70 - y + n, dr = W - 20 - x + n * .5;
@@ -40,7 +40,7 @@ export function buildWorld() {
   const [inkAC, ia] = cv(W, H), [timeAC, ta] = cv(W, H, '#fff'), [inkBC, ib] = cv(W, H), [timeBC, tb] = cv(W, H, '#fff');
   ta.globalCompositeOperation = 'darken'; tb.globalCompositeOperation = 'darken';
   const R = rng(4242);
-  // 开场线稿：离情侣越远越晚出现
+  // opening line drawing: the farther from the couple, the later it appears
   const strokes = [];
   const penA = (pts, o = {}, t0) => {
     const st = penStroke(pts, o); if (st.P.length < 2) return st;
@@ -49,11 +49,11 @@ export function buildWorld() {
     rasterPen(ia, ta, st, t, du, WIN_A); strokes.push([+t.toFixed(3), +du.toFixed(3), Math.round(st.L), 0]); return st;
   };
   const penB = (pts, o, t0, dur) => { const st = penStroke(pts, o); rasterPen(ib, tb, st, t0, dur, WIN_B); strokes.push([+t0.toFixed(3), +dur.toFixed(3), Math.round(st.L), 1]); return st; };
-  const lw = Y => 1.3 + 2.1 * depthS(Y);      // 远细近粗
+  const lw = Y => 1.3 + 2.1 * depthS(Y);      // thin when far, thick when near
 
-  // ============ 天空 ============
-  // 天际线后面一片灰蓝，越往上越淡、越碎；云是留白
-  // 大片湿画法：几层大块灰蓝，边缘软、互相融；越往上越淡
+  // ============ Sky ============
+  // a grey-blue field behind the skyline, paler and more broken toward the top; clouds are reserved paper
+  // large wet-in-wet: several big layers of grey-blue with soft edges merging into each other; paler toward the top
   for (let i = 0; i < 70; i++) {
     const x = 900 + R() * 3500, y = 250 + R() * 1150;
     const core = Math.exp(-(((x - 2750) / 1500) ** 2)) * clamp((y - 150) / 800);
@@ -71,11 +71,11 @@ export function buildWorld() {
   }
   cx.globalCompositeOperation = 'source-over';
 
-  // ============ 天际线（inkB 按笔顺；颜色按楼）============
+  // ============ Skyline (inkB in stroke order; colour per building)============
   const B = [];
   const bld = (x, hw, tiers, col, o = {}) => B.push({ x, hw, tiers, col, ...o });
-  // tiers: [[顶 y, 半宽], ...] 从下往上；base 1500 藏在树后
-  // 远处的矮楼（偏蓝灰，大气透视）
+  // tiers: [[top y, half-width], ...] bottom to top; base 1500 is hidden behind the trees
+  // low buildings in the distance (bluish grey, aerial perspective)
   for (let i = 0; i < 16; i++) { const x = 1250 + i * 190 + R() * 80, hw = 60 + R() * 60, top = 960 + R() * 200; if (Math.abs(x - 2650) < 150) continue; bld(x, hw, [[top, hw]], mix3(R() < .5 ? C.stone : C.glass, C.haze, .5), { far: 1, seed: i }); }
   bld(1720, 95, [[700, 95], [600, 70], [600, 70]], C.ochre, { pyramid: [600, 470], seed: 31 });
   bld(2160, 120, [[900, 120], [820, 92]], C.lime, { seed: 32 });
@@ -86,41 +86,41 @@ export function buildWorld() {
   bld(1420, 80, [[820, 80]], C.stone, { seed: 37 });
   bld(2380, 70, [[980, 70]], C.brick, { seed: 38 });
   bld(4050, 90, [[900, 90]], C.lime, { seed: 39 });
-  // 主角：阶梯式尖顶塔（帽子最后停在它旁边）
+  // the hero: a stepped spire tower (the hat ends up beside it)
   bld(2650, 150, [[980, 150], [760, 118], [600, 88], [470, 60], [405, 36]], C.lime, { spire: [405, 238], hero: 1, seed: 40 });
   B.sort((a, b) => (b.far ?? 0) - (a.far ?? 0) || (a.hero ?? 0) - (b.hero ?? 0) || a.tiers[0][0] - b.tiers[0][0]);
   const BASE = 1500;
-  // 颜色
+  // colour
   for (const b of B) {
     let yb = BASE;
     for (const [top, hw] of b.tiers) {
       const poly = [[b.x - hw, yb], [b.x - hw, top], [b.x + hw, top], [b.x + hw, yb]];
       reserve(cx, poly, .6, 3, b.seed);
       wash(cx, poly, b.col, { a: b.far ? .32 : .5, j: 4, layers: 2, edge: .35, seed: b.seed * 7 + top });
-      const sh = [[b.x + hw * .35, yb], [b.x + hw * .35, top], [b.x + hw, top], [b.x + hw, yb]];     // 背光面
+      const sh = [[b.x + hw * .35, yb], [b.x + hw * .35, top], [b.x + hw, top], [b.x + hw, yb]];     // shadow side
       wash(cx, sh, mix3(b.col, [90, 95, 130], .45), { a: b.far ? .15 : .3, j: 3, layers: 2, edge: 0, seed: b.seed * 9 + top });
       if (b.glassy) for (let k = 0; k < 5; k++) wash(cx, [[b.x - hw + 8, top + 30 + k * 190], [b.x + hw - 8, top + 10 + k * 190], [b.x + hw - 8, top + 90 + k * 190], [b.x - hw + 8, top + 110 + k * 190]], hex('#dfe8ef'), { a: .0, j: 2, edge: 0 });
       yb = top;
     }
     if (b.pyramid) wash(cx, [[b.x - 70, b.pyramid[0]], [b.x, b.pyramid[1]], [b.x + 70, b.pyramid[0]]], hex('#8aa39a'), { a: .5, j: 3, edge: .3, seed: 77 });
     if (b.spire) wash(cx, [[b.x - 14, b.spire[0]], [b.x, b.spire[1]], [b.x + 14, b.spire[0]]], hex('#b9b6ae'), { a: .5, j: 1, edge: .2, seed: 78 });
-    if (b.glassy) { // 玻璃楼：天空的倒影（竖向留白条）
+    if (b.glassy) { // glass building: reflection of the sky (vertical reserved-white strips)
       const t = b.tiers[0][0]; reserve(cx, [[b.x - b.hw * .6, BASE], [b.x - b.hw * .6, t + 60], [b.x - b.hw * .25, t + 20], [b.x - b.hw * .25, BASE]], .35, 2, b.seed);
     }
   }
-  // 墨线：主塔跟着帽子往上画（15.6→18.9），其余楼从中间向两边
-  const tierOutline = b => {  // 左边线自下而上 + 顶 + 右边线，按 tier
+  // ink lines: the main tower is drawn upward following the hat (15.6→18.9); other buildings from the middle outward
+  const tierOutline = b => {  // left edge bottom to top + top + right edge, tier by tier
     const L = [], Rr = []; let yb = BASE;
     for (const [top, hw] of b.tiers) { L.push([b.x - hw, yb], [b.x - hw, top]); Rr.push([b.x + hw, yb], [b.x + hw, top]); yb = top; }
     return { L, R: Rr, top: yb };
   };
   for (const b of B) {
-    // 近的楼挡住远的楼的线
+    // nearer buildings hide the lines of farther ones
     ib.save(); ib.globalCompositeOperation = 'destination-out'; { let yb = BASE; for (const [top, hw] of b.tiers) { ib.fillRect(b.x - hw + 2, top + 2, hw * 2 - 4, yb - top); yb = top; } } ib.restore();
     const o = tierOutline(b); const w = b.far ? 1.5 : 2.2;
     let t0, span;
     if (b.hero) { t0 = 15.55; span = 3.2; } else { t0 = 15.7 + Math.abs(b.x - 2650) / 1400 * 1.7 + (b.far ? .5 : 0) + R() * .2; span = .9; }
-    // 边线：一格一格（台阶）画上去
+    // edges: drawn up step by step (the tiers)
     const stepL = [], stepR = []; let yb = BASE;
     for (const [top, hw] of b.tiers) { stepL.push([[b.x - hw, yb], [b.x - hw, top]]); stepR.push([[b.x + hw, yb], [b.x + hw, top]]); yb = top; }
     const nT = b.tiers.length;
@@ -131,7 +131,7 @@ export function buildWorld() {
       const nextHw = b.tiers[k + 1]?.[1] ?? 0;
       penB([[b.x - hw - 4, top], [b.x - nextHw, top]], { w, wob: .7, over: 3, seed: b.seed * 19 + k, smooth: false }, ts + d * .7, d * .3);
       penB([[b.x + nextHw, top], [b.x + hw + 4, top]], { w, wob: .7, over: 3, seed: b.seed * 23 + k, smooth: false }, ts + d * .75, d * .3);
-      // 窗：一小片一小片，不画满（速写的"暗示"）
+      // windows: small patches here and there, not filled in everywhere (the sketch's "suggestion")
       const rows = Math.floor(((b.tiers[k - 1]?.[0] ?? BASE) - top) / 34), Rw = rng(b.seed * 31 + k);
       for (let r = 1; r < rows; r++) {
         const y = top + r * 34; if (y > 1420) break;
@@ -145,8 +145,8 @@ export function buildWorld() {
     if (b.tank) { const t = b.tiers[0][0], ts = t0 + span; penB([[b.x + 20, t], [b.x + 24, t - 50], [b.x + 70, t - 50], [b.x + 74, t]], { w, wob: .6, seed: 93, smooth: false }, ts, .25); penB([[b.x + 18, t - 50], [b.x + 47, t - 76], [b.x + 76, t - 50]], { w, wob: .5, seed: 94 }, ts + .2, .15); }
     b.inkEnd = t0 + span + .2;
   }
-  // 楼的颜色到达：画完线才上色
-  // 楼的真实轮廓（按台阶），给颜色到达的遮罩用
+  // colour arrival for buildings: colour only after the lines are done
+  // the buildings' true outlines (by tier), used as the mask for colour arrival
   const inB = (b, x, y, pad = 14) => { if (y > BASE + pad) return false; let yb = BASE; for (const [top, hw] of b.tiers) { if (y <= yb + pad && y >= top - pad && Math.abs(x - b.x) <= hw + pad) return true; yb = top; }
     if (b.pyramid && y >= b.pyramid[1] - pad && y <= b.pyramid[0] && Math.abs(x - b.x) <= 70 * (y - b.pyramid[1]) / (b.pyramid[0] - b.pyramid[1]) + pad) return true;
     if (b.spire && y >= b.spire[1] - pad && y <= b.spire[0] && Math.abs(x - b.x) <= 14 + pad) return true;
@@ -154,16 +154,16 @@ export function buildWorld() {
   const bSources = B.map(b => { const top = b.spire ? b.spire[1] : b.pyramid ? b.pyramid[1] : b.tiers[b.tiers.length - 1][0]; return { x: b.x, y: (top + BASE) / 2, t: b.inkEnd - .1, v: 800, R: Math.max(b.hw * 1.3, (BASE - top) * .7), mask: (x, y) => inB(b, x, y), sy: .6 }; });
   const insideBuilding = (x, y) => B.some(b => inB(b, x, y, 6));
 
-  // ============ 草坪 ============
+  // ============ Lawn ============
   const lawnTop = x => 1715 + Math.sin(x * .002) * 25 + (fbm(x * .004, 3, 3) - .5) * 40;
   const lawn = [[-20, lawnTop(-20)]]; for (let x = 0; x <= W + 20; x += 80) lawn.push([x, lawnTop(x)]); lawn.push([W + 20, H + 20], [-20, H + 20]);
   wash(cx, lawn, C.lawnFar, { a: .42, j: 20, layers: 2, edge: 0, seed: 501 });
-  // 近处更黄更亮：一层层横向带
+  // yellower and brighter nearby: layered horizontal bands
   for (let k = 0; k < 7; k++) { const y0 = 1850 + k * 150; const band = [[-20, y0 + (R() - .5) * 60], [W * .35, y0 - 30], [W * .7, y0 + 20], [W + 20, y0 - 10], [W + 20, H + 20], [-20, H + 20]]; wash(cx, band, k % 2 ? C.lawn : C.lawnLit, { a: .1, j: 40, layers: 2, edge: 0, seed: 510 + k }); }
-  // 光斑和暗块
+  // dappled light and dark patches
   for (let i = 0; i < 140; i++) { const x = R() * W, y = 1760 + R() * 1100; if (!inPage(x, y, 50)) continue; const s = depthS(y); dab(cx, x, y, (60 + R() * 120) * s, R() * .4 - .2, R() < .45 ? C.lawnShade : C.lawnLit, .1 + R() * .1, 700 + i); }
 
-  // 树：远排 + 中排 + 节拍树 + 草坪上的树 + 右前景大树
+  // trees: far row + middle row + beat trees + trees on the lawn + the big tree in the right foreground
   const trees = [];
   const tree = (x, gy, crown, o = {}) => trees.push({ x, gy, crown, ...o });
   for (let i = 0; i < 22; i++) { const x = -80 + i * 245 + R() * 90, y = 1450 + R() * 90, r = 150 + R() * 70; tree(x, 1740, [{ x, y, r }, { x: x - r * .6, y: y + r * .3, r: r * .7 }, { x: x + r * .55, y: y + r * .25, r: r * .72 }], { far: 1, seed: 900 + i }); }
@@ -176,33 +176,33 @@ export function buildWorld() {
   const bigCrown = [{ x: 4650, y: 330, r: 420 }, { x: 4250, y: 230, r: 300 }, { x: 4980, y: 640, r: 430 }, { x: 4600, y: 820, r: 330 }, { x: 4330, y: 600, r: 250 }, { x: 5050, y: 1050, r: 330 }, { x: 4800, y: 1180, r: 220 }, { x: 3960, y: 280, r: 190 }];
   CROWNS.big = { crown: bigCrown };
   tree(4960, 2560, bigCrown, { seed: 999, big: 1 });
-  // 树下阴影
+  // shadows under the trees
   for (const t of trees) { if (t.big) continue; const s = depthS(t.gy), r = t.crown[0].r; wash(cx, ellipse(t.x + r * .25, t.gy + 14 * s, r * 1.05, 34 * s + 10, 18), C.shadow, { a: t.far ? .18 : .3, j: 8, edge: 0, seed: t.seed + 3 }); }
-  // 从远到近画
+  // draw from far to near
   trees.sort((a, b) => (b.far ?? 0) - (a.far ?? 0) || a.gy - b.gy);
   for (const t of trees) {
     const s = t.big ? 1.15 : depthS(t.gy), top = Math.min(...t.crown.map(c => c.y - c.r)), cyb = Math.max(...t.crown.map(c => c.y + c.r * .5));
-    // 树干
+    // trunk
     const tw = t.big ? 46 : (t.far ? 9 : 14) * (0.6 + s * .7);
     const trunk = t.big ? [[t.x - 78, t.gy], [t.x - 58, 2100], [t.x - 62, 1700], [t.x - 96, 1350], [t.x - 150, 1120], [t.x - 30, 1110], [t.x + 22, 1380], [t.x + 44, 1750], [t.x + 52, 2150], [t.x + 84, t.gy]]
       : [[t.x - tw, t.gy], [t.x - tw * .7, cyb - 30], [t.x + tw * .7, cyb - 30], [t.x + tw, t.gy]];
     reserve(cx, trunk, .7, 2, t.seed);
     wash(cx, trunk, C.bark, { a: .45, j: 3, edge: .3, seed: t.seed + 1 });
     wash(cx, trunk.slice(Math.floor(trunk.length / 2)).concat([[t.x, t.gy]]), C.barkD, { a: .35, j: 2, edge: 0, seed: t.seed + 2 });
-    // 树冠：先留白再点叶（前面的树盖住后面的楼和树）
+    // crown: reserve white first, then dab leaves (nearer trees cover the buildings and trees behind)
     for (const c of t.crown) reserve(cx, ellipse(c.x, c.y, c.r * .8, c.r * .76, 20), t.far ? .45 : .75, c.r * .12, t.seed + c.x);
     foliage(cx, t.crown, { seed: t.seed, scale: t.big ? 1.5 : t.far ? .75 : (0.8 + s * .4), dens: t.far ? .8 : 1.05, pal: t.far ? farLeaf : LEAF, base: t.far ? .8 : 1 });
-    // 墨线：树干 + 几根枝 + 树冠边缘的零碎"m"形叶簇
+    // ink lines: trunk + a few branches + scattered "m"-shaped leaf clusters along the crown's edge
     const wl = t.big ? 3.2 : lw(t.gy) * (t.far ? .75 : 1);
     if (t.big) { penA(trunk.slice(0, 5), { w: wl, wob: 2, seed: t.seed + 5 }); penA(trunk.slice(5), { w: wl, wob: 2, seed: t.seed + 6 });
-      // 枝：从树干分叉，弯、渐细，只露出树冠下半部分
+      // branches: fork from the trunk, curved and tapering, showing only in the lower half of the crown
       const br = (x, y, a, L, d, sd) => { if (d > 2 || L < 60) return; const pts = [[x, y]]; let px = x, py = y, aa = a; for (let m = 0; m < 4; m++) { aa += (n2(sd, m) - .5) * .5; px += Math.cos(aa) * L / 4; py += Math.sin(aa) * L / 4; pts.push([px, py]); } penA(spline(pts, 4), { w: wl * (.8 - d * .2), wob: 1.5, seed: sd, gap: .3 }); br(px, py, aa - .5, L * .6, d + 1, sd * 3 + 1); br(pts[2][0], pts[2][1], aa + .6, L * .5, d + 1, sd * 3 + 2); };
       br(t.x - 90, 1130, -2.2, 420, 0, 11); br(t.x - 60, 1180, -1.3, 380, 0, 12); br(t.x - 40, 1400, -2.7, 300, 1, 13); br(t.x - 20, 1300, -.6, 260, 1, 14); for (let k = 0; k < 18; k++) { const y = 1300 + k * 70 + R() * 40; penA([[t.x - 30 + R() * 50, y], [t.x - 20 + R() * 40, y + 30 + R() * 30]], { w: wl * .6, wob: 1, seed: t.seed + 50 + k }); } }
     else {
       penA([[t.x - tw, t.gy], [t.x - tw * .6, cyb - 20]], { w: wl, wob: 1.2, seed: t.seed + 5 }); penA([[t.x + tw, t.gy], [t.x + tw * .6, cyb - 10]], { w: wl, wob: 1.2, seed: t.seed + 6 });
       if (!t.far) for (let k = 0; k < 3; k++) { const a = -Math.PI / 2 + (k - 1) * .6, L = t.crown[0].r * (.5 + R() * .3); penA(spline([[t.x, cyb - 30], [t.x + Math.cos(a) * L * .5, cyb - 30 + Math.sin(a) * L * .5 - 20], [t.x + Math.cos(a) * L, cyb - 30 + Math.sin(a) * L]], 4), { w: wl * .75, wob: 1.2, seed: t.seed + 10 + k, gap: .5 }); }
     }
-    // 树冠外缘：断断续续的扇贝线（线稿阶段也读得出是树）
+    // crown outline: a broken scalloped line (reads as a tree even at the line-drawing stage)
     { const Rs = rng(t.seed * 7 + 1), pts = [];
       for (const c of t.crown) for (let k = 0; k < 64; k++) { const a = k / 64 * TAU, px = c.x + Math.cos(a) * c.r * .9, py = c.y + Math.sin(a) * c.r * .86; if (crownDepth(t.crown, px, py) <= .105 && py < cyb + 10) pts.push({ a, c, px, py }); }
       let run = [];
@@ -217,12 +217,12 @@ export function buildWorld() {
     }
     t.top = top;
   }
-  // 天际线墨线被前面的树冠挡住：擦掉 inkB 里树冠范围
+  // skyline ink lines are hidden by the crowns in front: erase the crown areas from inkB
   ib.save(); ib.globalCompositeOperation = 'destination-out';
   for (const t of trees) for (const c of t.crown) { ib.beginPath(); ib.ellipse(c.x, c.y, c.r * .86, c.r * .82, 0, 0, TAU); ib.fill(); }
   ib.restore();
 
-  // ============ 小路 ============
+  // ============ Paths ============
   const pw = Y => 200 * depthS(Y) + 20;
   const pathC = spline(PATH, 10);
   const edge = s => pathC.map((p, i) => { const a = pathC[Math.max(0, i - 1)], b = pathC[Math.min(pathC.length - 1, i + 1)]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const l = Math.hypot(nx, ny); return [p[0] + nx / l * pw(p[1]) / 2 * s, p[1] + ny / l * pw(p[1]) / 2 * s]; });
@@ -234,7 +234,7 @@ export function buildWorld() {
   const cutPath = (pts, seed) => { for (let k = 0; k < pts.length - 6; k += 6 + ((R() * 5) | 0)) { const seg = pts.slice(k, k + 5 + ((R() * 6) | 0)); if (seg.length > 1) penA(seg, { w: lw(seg[0][1]), wob: 1.3, seed: seed + k, over: 4 }); } };
   cutPath(eU.filter(p => inPage(p[0], p[1], 20)), 3000); cutPath(eD.filter(p => inPage(p[0], p[1], 20)), 4000);
 
-  // ============ 路灯 ============
+  // ============ Street lamps ============
   { const { x, y, top } = LAMP;
     const shaft = [[x - 14, y], [x - 8, top + 150], [x + 8, top + 150], [x + 14, y]];
     wash(cx, shaft, C.lamp, { a: .75, j: 1.5, edge: .3, seed: 71 });
@@ -251,16 +251,16 @@ export function buildWorld() {
     penA([[x - 22, top + 60], [x - 10, top + 150], [x + 10, top + 150], [x + 22, top + 60]], { w: Lw, wob: .5, seed: 87, smooth: false });
     for (let k = 0; k < 7; k++) penA([[x + 2 + k * 1.5, y - 60 - k * 160], [x + 6 + k * 1.2, y - 110 - k * 160]], { w: 1.4, wob: .3, seed: 88 + k }); }
 
-  // ============ 池塘 + 石桥 ============
+  // ============ Pond + stone bridge ============
   { const pond = spline(POND.slice(0, 7), 6).concat(POND.slice(7));
     reserve(cx, pond, .8, 6, 301);
     wash(cx, pond, C.water, { a: .5, j: 8, layers: 3, edge: .4, seed: 302 });
     const { x0, x1, deck, rail, a0, a1, apex, water } = BRIDGE;
-    // 桥洞倒影
+    // reflection of the arch
     const refl = [...Array(17)].map((_, i) => { const u = i / 16, x = lerp(a0, a1, u); return [x, water + (water - apex) * Math.sin(u * Math.PI) * .9]; });
     wash(cx, [[a0, water], ...refl, [a1, water]], C.waterD, { a: .55, j: 4, edge: .2, seed: 303 });
     wash(cx, [[x0 - 40, water + 4], [x1, water + 4], [x1, water + 60], [x0 - 20, water + 50]], C.waterD, { a: .25, j: 10, edge: 0, seed: 304 });
-    // 桥身：拱桥，桥面中间微微拱起
+    // bridge body: an arched bridge, deck rising slightly in the middle
     const hump = x => -22 * Math.sin(clamp((x - x0) / (x1 - x0)) * Math.PI);
     const arch = [...Array(19)].map((_, i) => { const u = i / 18, x = lerp(a0, a1, u); return [x, water - (water - apex) * Math.pow(Math.sin(u * Math.PI), .8)]; });
     const topL = [...Array(13)].map((_, i) => { const x = lerp(x0, x1, i / 12); return [x, rail - 6 + hump(x)]; });
@@ -276,12 +276,12 @@ export function buildWorld() {
     for (let x = x0 + 16; x < x1 - 6; x += 22) { const h = hump(x); penA([[x, rail + 10 + h], [x + 1, rail + 40 + h]], { w: 1.5, wob: .3, seed: 320 + x, over: 1 }); }
     for (let k = 1; k < 18; k++) { const p = arch[k], cx0 = (a0 + a1) / 2, dx = p[0] - cx0, dy = p[1] - water, l = Math.hypot(dx, dy) || 1; if (k % 2) penA([[p[0], p[1]], [p[0] + dx / l * 26, p[1] + dy / l * 26]], { w: 1.5, wob: .3, seed: 400 + k, over: 0 }); }
     for (let k = 0; k < 10; k++) { const x = x0 + 30 + ((k * 71) % (x1 - x0 - 60)), y = rail + 70 + (k % 3) * 40; if (y < water - (water - apex) * Math.pow(Math.sin(clamp((x - a0) / (a1 - a0)) * Math.PI), .8) - 20 || x < a0 || x > a1) penA([[x, y], [x + 34, y + 1]], { w: 1.3, wob: .4, seed: 430 + k, over: 1 }); }
-    // 水纹
+    // water ripples
     for (let i = 0; i < 40; i++) { const x = 3900 + R() * 1200, y = 2610 + R() * 250; if (!inPage(x, y, 30)) continue; penA([[x, y], [x + 30 + R() * 50, y + (R() - .5) * 3]], { w: 1.5, wob: .5, seed: 500 + i, over: 2 }); }
     penA(spline(POND.slice(0, 7), 6).filter(p => inPage(p[0], p[1], 20)), { w: 2.4, wob: 1.5, seed: 330, gap: .6 });
   }
 
-  // ============ 野餐布 + 篮子（开场 0.9–1.8 秒画出来）============
+  // ============ Picnic blanket + basket (drawn in the opening at 0.9–1.8 s)============
   { const [a, b, c, d] = BLANKET;
     reserve(cx, BLANKET, .9, 2, 601);
     wash(cx, BLANKET, C.plaid, { a: .5, j: 3, edge: .3, seed: 602 });
@@ -290,7 +290,7 @@ export function buildWorld() {
     wash(cx, [[a[0] + 20, a[1] + 4], [b[0] + 30, b[1] + 6], [b[0] + 80, b[1] + 26], [a[0] + 60, a[1] + 24]], C.shadow, { a: .35, j: 6, edge: 0, seed: 630 });
     penA([a, b], { w: 2.8, wob: 1.2, seed: 640 }, 1.0); penA([b, c], { w: 2.8, wob: 1.2, seed: 641 }, 1.15); penA([c, d], { w: 2.6, wob: 1.2, seed: 642, gap: .6 }, 1.25); penA([d, a], { w: 2.8, wob: 1.2, seed: 643 }, 1.35);
     for (let k = 1; k < 7; k += 2) { const u = k / 7; penA([[lerp(a[0], b[0], u), lerp(a[1], b[1], u)], [lerp(d[0], c[0], u), lerp(d[1], c[1], u)]], { w: 1.4, wob: .8, seed: 650 + k, gap: .6 }, 1.45 + k * .02); }
-    // 篮子
+    // basket
     const bx = 2770, by = 2392, basket = [[bx - 70, by], [bx - 80, by - 70], [bx + 80, by - 70], [bx + 70, by]];
     reserve(cx, basket, .95, 1, 660); wash(cx, basket, C.wicker, { a: .6, j: 2, edge: .4, seed: 661 });
     wash(cx, [[bx + 20, by], [bx + 30, by - 70], [bx + 80, by - 70], [bx + 70, by]], mix3(C.wicker, [80, 60, 60], .4), { a: .35, j: 1, edge: 0, seed: 662 });
@@ -300,12 +300,12 @@ export function buildWorld() {
     for (let k = 0; k < 9; k++) penA([[bx - 64 + k * 16, by - 66], [bx - 60 + k * 15, by - 4]], { w: 1, wob: .5, seed: 680 + k }, 1.72 + k * .01);
   }
 
-  // ============ 远处的小人（静态）：速写里的"胡萝卜人"——一块衣服色、两条腿、一个头点 ============
+  // ============ Small distant people (static): the sketcher's "carrot people" — a patch of clothing colour, two legs, a dot for a head ============
   const Rp = rng(777);
   const TOPS = ['#8ea6c4', '#d9d2c2', '#c9796a', '#e2c46a', '#7fa084', '#b58fb0', '#f0ece0', '#5f6f8f'].map(hex);
   const SKIN = ['#e2b394', '#c89274', '#e8c0a0', '#9c6a50'].map(hex), HAIR = ['#4a3a30', '#2e2622', '#8a5a3a', '#231c1a'].map(hex);
   const crowd = [];
-  for (let g = 0; g < 16; g++) {   // 成群出现，不均匀
+  for (let g = 0; g < 16; g++) {   // appear in groups, unevenly
     const gx = 150 + Rp() * 4800, gy = 1735 + Rp() * 90, n = 1 + ((Rp() * 4) | 0);
     if (Math.abs(gx - 2650) < 80 || !inPage(gx, gy, 150)) continue;
     for (let k = 0; k < n; k++) crowd.push([gx + (k - n / 2) * 26 + Rp() * 14, gy + Rp() * 16]);
@@ -329,7 +329,7 @@ export function buildWorld() {
     rasterPen(ia, ta, penStroke([body[4], body[5]], { w: 1.4, wob: .3, over: 1, seed: x * 5 | 0, smooth: false }), t0, .06, WIN_A);
   }
 
-  // ============ 草的笔触 ============
+  // ============ Grass strokes ============
   for (let i = 0; i < 2200; i++) {
     const x = R() * W, y = 1760 + Math.pow(R(), .7) * 1100; if (!inPage(x, y, 60)) continue;
     const s = depthS(y); if (inPoly(pathPoly, x, y) || inPoly(POND, x, y) || inPoly(BLANKET, x, y - 10)) continue;
@@ -338,23 +338,23 @@ export function buildWorld() {
     for (let k = 0; k < n; k++) { const bx = x + k * 6 * s, lean = (R() - .3) * .5; penA([[bx, y], [bx + lean * h, y - h * (0.7 + R() * .5)]], { w: lw(y) * .55, wob: .3, over: 0, seed: 8000 + i * 5 + k, smooth: false }); }
   }
 
-  // ============ 页面边缘：碎成色点，溶进纸 ============
+  // ============ Page edges: break into dabs and dissolve into the paper ============
   { const [mc, mx] = cv(W, H);
     mx.fillStyle = '#fff';
     for (let y = 0; y < H; y += 4) for (let x = 0; x < W; x += 4) { const m = pageMask(x, y); if (m < 0) mx.fillRect(x, y, 4, 4); }
-    // 边界处用色点打碎
+    // break up the boundary with dabs
     const Rm = rng(31);
     for (let i = 0; i < 30000; i++) { const x = Rm() * W, y = 1300 + Rm() * (H - 1300), m = pageMask(x, y); if (m > 0 && m < 70 && Rm() < (1 - m / 70) * .45) dab(mx, x, y, 3 + Rm() * 7, Rm() * TAU, [255, 255, 255], .95, i); }
     cx.globalCompositeOperation = 'source-over'; cx.drawImage(mc, 0, 0);
-    // 边缘外的墨线也去掉
+    // remove ink lines outside the edge too
     for (const c of [ia, ib]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.drawImage(mc, 0, 0); c.restore(); }
-    // 边缘内侧留一圈零星色点（颜料飞溅）
+    // leave a ring of scattered dabs just inside the edge (paint spatter)
     cx.globalCompositeOperation = 'multiply';
     for (let i = 0; i < 9000; i++) { const x = Rm() * W, y = 1650 + Rm() * (H - 1650), m = pageMask(x, y); if (m < 0 && m > -70 && Rm() < (1 + m / 70) * .7) { const k = Rm(); dab(cx, x, y, 5 + Rm() * 12, Rm() * TAU, k < .35 ? LEAF.light : k < .7 ? C.lawn : LEAF.mid, .3 + Rm() * .3, 40000 + i); } }
     cx.globalCompositeOperation = 'source-over';
   }
 
-  // ============ 打包成纹理数据 ============
+  // ============ Pack into texture data ============
   const pack = (r, g) => {
     const out = new Uint8Array(W * H * 4);
     const A = r.getImageData(0, 0, W, H).data; for (let i = 0, n = W * H; i < n; i++) out[i * 4] = A[i * 4 + 3];

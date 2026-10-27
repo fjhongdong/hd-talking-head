@@ -1,4 +1,4 @@
-// Style frames for gate 1 (same renderer as the film).
+// Style frames (same renderer as the film).
 import { POSE } from './knight.js';
 import { DPOSE } from './dragon.js';
 import { LX } from './window.js';

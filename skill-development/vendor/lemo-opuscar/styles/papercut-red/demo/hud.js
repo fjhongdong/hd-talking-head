@@ -1,9 +1,9 @@
-// 字幕（红纸横批）、片名剪字、片尾对联
+// Subtitles (red-paper hengpi (横批, horizontal banner over a door)), paper-cut title lettering, end-card couplets
 import { PAL, canvas, piece, fill, trace, finishPaper, Pl, rnd } from './paper.js';
 import { rosette } from './motifs.js';
 import { put } from './rig.js';
 
-// 文字剪纸片：把文字填成红纸（阳刻），加纹理刀口
+// paper-cut text piece: fill the text as red paper (yangke (阳刻, relief cut: the shape stays as paper)), add texture and cut edges
 const TXT = {};
 export function textPiece(s, size, wt = 800, col = PAL.red, font = 'Fraunces', seed = 3, ls = 0) {
   const key = [s, size, wt, col, font, ls].join('|'); if (TXT[key]) return TXT[key];
@@ -14,7 +14,7 @@ export function textPiece(s, size, wt = 800, col = PAL.red, font = 'Fraunces', s
   finishPaper(c, g, { seed, edge: 1.4 });
   return TXT[key] = { c, x0: 0, y0: 0, w, h, K };
 }
-// 字幕条：深红纸横批，两端燕尾锯齿，洒金点
+// subtitle strip: dark-red paper banner, swallowtail sawtooth at both ends, scattered gold flecks
 const SUBS = {};
 function subStrip(text) {
   if (SUBS[text]) return SUBS[text];
@@ -22,11 +22,11 @@ function subStrip(text) {
   const tw = mg.measureText(text).width, w = Math.ceil(tw + 150), h = 74, K = 1.5;
   const [c, g] = canvas(w * K, h * K); g.scale(K, K);
   const pts = [[0, 4], [w, 4], [w - 22, h / 2], [w, h - 4], [0, h - 4], [22, h / 2]];
-  // 上下锯齿边
+  // top and bottom sawtooth edges
   const poly = []; for (let x = 0; x <= w; x += 10) poly.push([x, 4 + (x / 10 % 2) * 3]);
   poly.push([w - 22, h / 2]); for (let x = w; x >= 0; x -= 10) poly.push([x, h - 4 - (x / 10 % 2) * 3]); poly.push([22, h / 2]);
   g.beginPath(); trace(g, Pl(poly, true, .3, 5)); g.fillStyle = PAL.sub; g.fill();
-  // 洒金
+  // gold flecks
   for (let k = 0; k < 40; k++) { g.fillStyle = `rgba(222,178,84,${.25 + rnd(k, 3) * .35})`; g.beginPath(); g.arc(30 + rnd(k, 1) * (w - 60), 10 + rnd(k, 2) * (h - 20), .8 + rnd(k, 4) * 1.4, 0, 7); g.fill(); }
   rosette(g, 50, h / 2, 13, 6, 0, .25);
   finishPaper(c, g, { seed: 9, edge: 1 });
@@ -34,7 +34,7 @@ function subStrip(text) {
   g.fillText(text, 80, h / 2 + 2);
   return SUBS[text] = { c, w, h };
 }
-// 字幕：cues = [{t0,t1,text}]；贴春联一样从上方落下（12 fps 两步）
+// subtitles: cues = [{t0,t1,text}]; drop in from above like pasting up spring couplets (12 fps, two steps)
 export function drawSubs(g, t, cues) {
   for (const q of cues) {
     if (t < q.t0 || t > q.t1) continue;

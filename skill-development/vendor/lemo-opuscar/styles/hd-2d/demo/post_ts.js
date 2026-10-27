@@ -1,6 +1,6 @@
-// 本地副本（移轴版）：在物理景深上叠加按屏幕高度计算的移轴模糊。tiltAmt=0 时与 core/three/post.js 完全一致
-// 后期：场景 → (MSAA+深度) → [GTAO 环境光遮蔽] → 物理景深（CoC∝|1/f−1/z|，螺旋采样）→ 辉光 → 调色/暗角 → 色调映射
-// makePost(renderer, scene, camera, w, h, { ssaa: 2, ao: true })：ssaa 为内部超采样倍数（画布按 CSS 尺寸显示，截图时由浏览器缩小）
+// Local copy (tilt-shift version): adds a tilt-shift blur computed from screen height on top of the physical depth of field. With tiltAmt=0 it is identical to core/three/post.js
+// Post: scene → (MSAA + depth) → [GTAO ambient occlusion] → physical depth of field (CoC∝|1/f−1/z|, spiral sampling) → bloom → grade/vignette → tone mapping
+// makePost(renderer, scene, camera, w, h, { ssaa: 2, ao: true }): ssaa is the internal supersampling factor (the canvas is shown at CSS size; the browser downscales it when capturing)
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { Pass, FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
@@ -18,8 +18,8 @@ const cocShader = {
     void main(){
       float d = texture2D(tDepth, vUv).x;
       float z = -perspectiveDepthToViewZ(d, near, far);
-      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // 负=近景，正=远景（像素）
-      // 移轴：清晰带以外按离带距离加模糊；上方记为远景、下方记为近景（沿用 gather 的前后遮挡规则）
+      float c = clamp(aper * (1.0/focus - 1.0/z), -maxCoc, maxCoc);   // negative = foreground, positive = background (pixels)
+      // Tilt-shift: outside the sharp band, blur grows with distance from the band; above counts as background, below as foreground (reuses gather's front/back occlusion rules)
       float dy = vUv.y - tiltC, tc = min(maxCoc, tiltAmt * smoothstep(tiltW, tiltW + tiltF, abs(dy)));
       if (tc > abs(c)) c = dy > 0. ? tc : -tc;
       vec3 col = texture2D(tColor, vUv).rgb;
@@ -44,7 +44,7 @@ const gatherShader = {
         vec2 off = vec2(cos(th), sin(th)) * r / res;
         vec4 s = texture2D(tIn, vUv + off);
         float sa = abs(s.a);
-        // 比中心更远的样本，扩散半径不超过中心自己的（防止背景糊到清晰前景上）
+        // samples farther than the centre spread no wider than the centre's own radius (stops the background from blurring over a sharp foreground)
         if (s.a > c0.a) sa = min(sa, max(a0, 0.));
         float w = smoothstep(r - 1.5, r + .5, sa) / (sa*sa + 1.);
         acc += s.rgb * w; wsum += w;
@@ -91,7 +91,7 @@ const vignetteShader = {
     void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5; d.x *= 1.25; float v = 1. - amt * smoothstep(.25, .85, length(d));
       c.rgb *= v * fade; c.rgb *= mix(vec3(1.), vec3(1.06, 1., .9), warm);
       float l = dot(c.rgb, vec3(.2126, .7152, .0722)); c.rgb = mix(vec3(l), c.rgb, sat);
-      c.rgb = c.rgb * (1. + contrast) / (1. + contrast * c.rgb / (c.rgb + .6));   // 线性域里的柔和对比
+      c.rgb = c.rgb * (1. + contrast) / (1. + contrast * c.rgb / (c.rgb + .6));   // gentle contrast in linear space
       gl_FragColor = c; }`
 };
 

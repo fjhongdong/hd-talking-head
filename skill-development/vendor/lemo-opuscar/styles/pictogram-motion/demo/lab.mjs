@@ -1,9 +1,9 @@
-// 用法：node lab.mjs out.png "p=sprint,hurdles&n=8&beats=4"
-//       node lab.mjs out.png "pattern=1"   （图案检查）
+// Usage: node lab.mjs out.png "p=sprint,hurdles&n=8&beats=4"
+//       node lab.mjs out.png "pattern=1"   (pattern check)
 import { chromium } from 'playwright-core';
 import path from 'path';
 import { EXE } from '../../../core/render/browser.mjs';
-// 封面：node lab.mjs stills/cover_ej.png "lang=ej" cover.html   （cover34.html = 3:4 竖版）
+// Cover: node lab.mjs stills/cover_ej.png "lang=ej" cover.html   (cover34.html = 3:4 portrait)
 const [out, qs = '', page_ = 'lab.html'] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: EXE, args: ['--allow-file-access-from-files'] });
 const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });

@@ -1,4 +1,4 @@
-// Toward the Mountain · 山へ五景 — Ukiyo-e 风格 demo
+// Toward the Mountain · 山へ五景 — Ukiyo-e style demo
 import { clamp, lerp, seg, ss, eio, eo, ei, hash, mulberry, TAU } from '/core/lib.js';
 import { W, H, FR, PAL, TX, mk, buildTextures, inkify, stampLayer, stampFn, drawSeal, cartouche, sealCanvas, rgba, poly, vtext } from './print.js';
 import { VIEWS } from './views.js';
@@ -17,11 +17,11 @@ await document.fonts.load('400 40px Yuji', '山へ五景旅一二三四田毎の
 await document.fonts.load('600 40px ShipporiK', '山へ五景'); await document.fonts.load('500 40px Shippori', 'Aa'); await document.fonts.load('700 40px Shippori', 'Aa');
 buildTextures();
 
-// —— 字幕（题签式）——
+// —— Subtitles (title-slip style) ——
 export const SUBS = Object.entries(VO).map(([id, t0]) => { const d = DURS[id] ?? (LINE[id]?.text.length || 30) * .065; return { id, t0, t1: t0 + Math.max(1.8, d + .75), text: LINE[id]?.sub || LINE[id]?.text || '' }; });
 SUBS.forEach((s, i) => { if (SUBS[i + 1] && s.t1 > SUBS[i + 1].t0 - .1) s.t1 = SUBS[i + 1].t0 - .1; });
 
-// —— 色版缓存 ——
+// —— Colour block cache ——
 const REG = [[0, 0], [2.2, -1.3], [-1.8, 1.9], [1.5, 2.2]];
 const SHIFT = [[4, -5], [-6, 4], [5, 5], [-5, -4]];
 const cache = new Map();
@@ -31,14 +31,14 @@ function layer(v, name) {
   d.draw(x); const hk = hash(k.length * 7.3 + k.charCodeAt(0)); inkify(c, { speck: d.speck ?? .3, grain: (d.grain || 0) * 1.7, gx: hk * 400 - 200, baren: d.baren ?? (d.g ? .38 : .12), bx: (hk - .5) * 300, by: (hash(hk) - .5) * 200 });
   cache.set(k, c); return c;
 }
-// 各版的吃墨进度
+// ink-take progress of each block
 function revFor(i, g, t) {
   const list = i === 0 ? T.print1 : i === 4 ? T.print5 : null;
   if (!list) return 1;
   return clamp((t - list[g]) / REVEAL_DUR);
 }
 
-// —— 题签配置（每幅画的位置）——
+// —— Title slip config (position in each picture) ——
 const CART = [
   { x: 1800, y: 74, title: '一 田毎の朝', seal: [1800, 0, '旅'] },
   { x: 120, y: 74, title: '二 雨の橋', seal: [120, 0, '旅'] },
@@ -48,12 +48,12 @@ const CART = [
 ];
 const CART_T = [T.cart.v1, T.cart.v2, T.cart.v3, null, T.cart.v5];
 
-// —— 画一张纸（第 i 幅）——
+// —— Draw one sheet (picture i) ——
 function drawSheet(i, t, M) {
   const v = VIEWS[i];
   ctx.save(); ctx.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
-  // 纸
+  // paper
   if (i % 2) { ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(TX.paper, 0, 0); ctx.restore(); } else ctx.drawImage(TX.paper, 0, 0);
   const blank = i === 4 && t < T.print5[0];
   let borderDone = false;
@@ -73,7 +73,7 @@ function drawSheet(i, t, M) {
     v.paint(ctx, t, R);
     ctx.restore();
     border();
-    // 题签 + 印章
+    // title slip + seal
     const ct = CART_T[i], C = CART[i];
     if (ct && t > ct[0] || (ct && QS.has('cart'))) {
       const p = QS.has('cart') ? 1 : clamp((t - ct[0]) / .35), sp = QS.has('cart') ? 1 : clamp((t - ct[1]) / .3);
@@ -86,14 +86,14 @@ function drawSheet(i, t, M) {
   ctx.restore(); ctx.restore();
 }
 
-// —— 片名（压在第一幅上的纸签，之后被揭起）——
+// —— Film title (a paper slip laid over the first picture, peeled off later) ——
 function titleCard(t) {
   if (!QS.has('title') && (t < T.title[0] || t > T.title[1] + .6)) return;
   const a = QS.has('title') ? 1 : clamp((t - T.title[0]) / .3), out = QS.has('title') ? 0 : ss(seg(t, T.title[1], T.title[1] + .6));
   ctx.save(); ctx.globalAlpha = 1 - out; ctx.translate(0, -out * 30);
   stampFn(ctx, x => {
     const b = cartouche(x, 170, 100, '山へ五景', { series: '', w: 104, size: 70, fill: '#f3e7c6' });
-    // 横题签
+    // horizontal title slip
     const x0 = 250, y0 = 100, w = 720, h = 150;
     x.fillStyle = '#f3e7c6'; x.fillRect(x0, y0, w, h); x.fillStyle = PAL.beniL; x.fillRect(x0, y0 + h - 40, w, 40);
     x.strokeStyle = PAL.sumi; x.lineWidth = 3; x.strokeRect(x0, y0, w, h); x.lineWidth = 1.2; x.strokeRect(x0 + 6, y0 + 6, w - 12, h - 12);
@@ -105,10 +105,10 @@ function titleCard(t) {
   ctx.restore();
 }
 
-// —— 镜头（世界坐标 = 手卷坐标）——
+// —— Camera (world coordinates = handscroll coordinates) ——
 const C = i => [SLOT(i) + 960, 540];
 const TOTAL = SLOT(0) + W;
-const REP = [10.4, 16.3, 22.2, 28.1];   // 拉远时各幅画定格的代表时刻
+const REP = [10.4, 16.3, 22.2, 28.1];   // representative time each picture freezes at when pulling back
 function camera(t) {
   let cx, cy, z = 1, rot = 0;
   const pan = (a, b, t0, t1) => { const u = eio(seg(t, t0, t1)); return [lerp(a[0], b[0], u), lerp(a[1], b[1], u)]; };
@@ -139,18 +139,18 @@ function camMatrix(cam) {
   return [c, s, -s, c, W / 2 - (c * cam.cx - s * cam.cy), H / 2 - (s * cam.cx + c * cam.cy)];
 }
 
-// —— 手卷裱纸与背景 ——
+// —— Handscroll mounting paper and background ——
 const BAND = [-430, 1510];
 function drawScroll(M, t) {
   ctx.save(); ctx.setTransform(M[0], M[1], M[2], M[3], M[4], M[5]);
   ctx.fillStyle = PAL.mount; ctx.fillRect(-60, BAND[0], TOTAL + 120, BAND[1] - BAND[0]);
-  // 裱纸纹理：平铺和纸（压暗）
+  // mounting texture: tiled washi (darkened)
   ctx.globalAlpha = .55; ctx.globalCompositeOperation = 'multiply';
   for (let X = -60; X < TOTAL + 60; X += W) for (let Y = BAND[0]; Y < BAND[1]; Y += H) ctx.drawImage(TX.paper, X, Y);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-  // 上下的细边
+  // thin borders top and bottom
   ctx.fillStyle = PAL.mountD; ctx.fillRect(-60, BAND[0], TOTAL + 120, 34); ctx.fillRect(-60, BAND[1] - 34, TOTAL + 120, 34);
-  // 左端卷轴（未展开的部分卷在左边）
+  // roller at the left end (the unrolled part is wound on the left)
   const rx = -160, rw = 150;
   const g = ctx.createLinearGradient(rx, 0, rx + rw, 0); g.addColorStop(0, '#8f7a55'); g.addColorStop(.35, '#d8c69c'); g.addColorStop(1, '#8a744e');
   ctx.fillStyle = g; ctx.fillRect(rx, BAND[0] - 30, rw, BAND[1] - BAND[0] + 60);
@@ -158,7 +158,7 @@ function drawScroll(M, t) {
   ctx.restore();
 }
 
-// —— 字幕（屏幕空间，横式题签）——
+// —— Subtitles (screen space, horizontal title slip) ——
 function subtitle(t) {
   const s = SUBS.find(s => t >= s.t0 - .05 && t < s.t1); if (!s) return;
   const a = clamp((t - s.t0 + .05) / .22), fo = 1 - clamp((t - (s.t1 - .25)) / .25);
@@ -174,7 +174,7 @@ function subtitle(t) {
   ctx.restore();
 }
 
-// —— 碎浪白屏：浪爪从浪头炸开、铺满全屏，白就是纸 ——
+// —— Breaking-wave white-out: claws burst from the lip and fill the screen; the white is the paper ——
 function whiteout(t, M) {
   const c = seg(t, T.crash[0] - .15, T.crash[1]); if (c <= 0 || t >= T.ma[0]) return;
   const G = waveGeo(1, Math.pow(seg(t, T.fall[0], T.crash[1]), 1.5)), wx = SLOT(3) + G.tip[0] - 60, wy = G.tip[1] + 40;
@@ -191,7 +191,7 @@ function whiteout(t, M) {
   ctx.restore();
 }
 
-// —— 片尾卡 ——
+// —— End card ——
 function endCard(t) {
   const a = ss(seg(t, T.endcard, T.endcard + .8)); if (a <= 0) return;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = a;
@@ -205,7 +205,7 @@ function endCard(t) {
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); drawSeal(ctx, '山旅', W / 2 + 402, 250, 64, clamp((t - T.endcard - .5) / .3), { seed: 31, normal: true }); ctx.restore();
 }
 
-// —— 角色测试页 ——
+// —— Character test page ——
 function testTrav(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(TX.paper, 0, 0);
   const poses = [['walk', 0], ['walk', .25], ['walk', .5], ['walk', .75]];
@@ -216,7 +216,7 @@ function testTrav(t) {
   traveler(ctx, 1000, 1040, 420, { mode: 'back', t: 0, hatOff: 0 }); traveler(ctx, 1400, 1040, 420, { mode: 'back', t: 0, hatOff: 1 });
   ctx.drawImage(TX.fiber, 0, 0);
 }
-// —— 海报：巨浪冲出画框 + 片名题签 ——
+// —— Poster: great wave breaking out of the frame + film title slip ——
 function poster() {
   renderFrame(28.1, true);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -229,7 +229,7 @@ function poster() {
   ctx.restore();
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); drawSeal(ctx, '山旅', 260, 570, 80, 1, { seed: 9 }); ctx.restore();
 }
-// —— 主渲染 ——
+// —— Main render ——
 function render(t) {
   if (QS.get('test') === 'trav') return testTrav(t);
   if (QS.has('poster')) return poster();
@@ -240,7 +240,7 @@ function renderFrame(t, nosub) {
   ctx.fillStyle = '#161a22'; ctx.fillRect(0, 0, W, H);
   const cam = camera(t), M = camMatrix(cam);
   drawScroll(M, t);
-  // 可见的纸（粗略剔除）
+  // visible sheets (coarse culling)
   const half = (W / 2) / cam.z * 1.6;
   for (let i = 0; i < 5; i++) {
     const x0 = SLOT(i); if (x0 + W < cam.cx - half || x0 > cam.cx + half) continue;
@@ -252,24 +252,24 @@ function renderFrame(t, nosub) {
   endCard(t);
 }
 
-// —— 事件（拟音 / 对白 / 配乐 cue）——
+// —— Events (foley / dialogue / music cues) ——
 function events() {
   const ev = [], add = (type, t, o = {}) => ev.push({ t: +t.toFixed(3), type, ...o });
   for (const [id, t0] of Object.entries(VO)) add('vo', t0, { id });
-  // 印刷：放版的木头轻响 + 馬連摩擦
+  // printing: soft wooden knock of the block being set down + baren (馬連, hand rubbing pad) friction
   T.print1.forEach((t, i) => { add('block', t - .12, { v: .5 + i * .1 }); add('baren', t, { d: .36, v: .7 }); });
   T.print5.forEach((t, i) => { add('block', t - .1, { v: .7 }); add('baren', t, { d: .34, v: .85 }); });
   add('slip', T.title[0] - .05, { v: .6 }); add('seal', T.title[0] + .45, { v: .8 }); add('slip', T.title[1], { v: .4 });
   for (const k of ['v1', 'v2', 'v3', 'v5']) { add('slip', T.cart[k][0], { v: .45 }); add('seal', T.cart[k][1], { v: k === 'v5' ? 1.1 : .85 }); }
   add('seal', T.endcard + .5, { v: .7 });
-  // 手卷平移
+  // handscroll pan
   add('scroll', T.pan12[0], { d: T.pan12[1] - T.pan12[0], v: .7 }); add('scroll', T.pan23[0], { d: T.pan23[1] - T.pan23[0], v: .75 }); add('scroll', T.pan34[0], { d: T.pan34[1] - T.pan34[0], v: .95 });
   add('scroll', T.pull[0], { d: T.pull[1] - T.pull[0] + .4, v: .45 });
-  // 环境
+  // ambience
   add('amb', 0.25, { w: 'field', d: T.pan12[1] - .25 }); add('amb', T.pan12[0] + .3, { w: 'rain', d: T.pan23[1] - T.pan12[0] - .3 });
   add('amb', T.pan23[0] + .3, { w: 'tea', d: T.pan34[1] - T.pan23[0] - .3 }); add('amb', T.pan34[0] + .2, { w: 'sea', d: T.ma[0] - T.pan34[0] - .2 });
   add('amb', T.print5[0], { w: 'high', d: DUR - T.print5[0] });
-  // 脚步
+  // footsteps
   for (let t = 3.35; t < 10.4; t += 1 / (2 * 1.05)) add('step', t, { m: 'dirt', v: .5 });
   for (let t = 11.8; t < 16.35; t += 1 / (2 * .9)) add('step', t, { m: 'wood', v: .6 });
   add('geese', 5.2); add('lark', 1.4); add('lark', 7.6);

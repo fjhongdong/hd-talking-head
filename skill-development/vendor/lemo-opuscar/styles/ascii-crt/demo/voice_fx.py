@@ -1,5 +1,5 @@
-"""AI 声线处理：voices_raw/*.wav → voices/*.wav
-轻度环调制（52Hz，湿 16%）+ 6ms 梳状共振（金属腔体感）+ 带通 140–7000Hz + 轻微饱和。whisper 不稳就降低 RING/COMB。"""
+"""AI voice treatment:voices_raw/*.wav → voices/*.wav
+Light ring modulation (52Hz, 16% wet) + 6ms comb resonance (metallic cavity feel) + band-pass 140–7000Hz + slight saturation. If whisper becomes unreliable, lower RING/COMB."""
 import json, os, sys, numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt
 D = os.path.dirname(os.path.abspath(__file__))

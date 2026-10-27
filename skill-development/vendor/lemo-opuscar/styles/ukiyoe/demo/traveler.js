@@ -1,5 +1,5 @@
-// 旅人：斗笠、藍色旅装（下摆掖起）、深色绑腿、草鞋、背后包袱、手杖；雨天披蓑衣
-// 局部坐标：脚底 (0,0)，身高约 100 单位（含斗笠），面朝左（-x）。s = 像素身高。
+// Traveller: kasa (斗笠, conical straw hat), indigo travel clothes (hem tucked up), dark leggings, straw sandals, bundle on the back, walking staff; mino (蓑衣, straw rain cape) in rain
+// Local coordinates: soles at (0,0), height about 100 units (including the hat), facing left (-x). s = height in pixels.
 import { clamp, lerp, TAU } from '/core/lib.js';
 import { PAL, smooth, poly } from './print.js';
 
@@ -9,7 +9,7 @@ function shape(x, pts, fill, lw, closed = true, sm = true) {
   if (fill) { x.fillStyle = fill; x.fill(); }
   if (lw) { x.lineWidth = lw; x.strokeStyle = INK; x.stroke(); }
 }
-// 变宽肢体（折线 + 各点宽度）→ 多边形
+// Variable-width limb (polyline + per-point width) → polygon
 function limbPoly(pts, ws) {
   const L = [], R = [];
   for (let i = 0; i < pts.length; i++) {
@@ -23,15 +23,15 @@ const lp = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
 function leg(x, hip, knee, ankle, lw, far, toe = -1) {
   const skin = far ? '#dcc39c' : PAL.skin, gait = far ? '#141f33' : GAITER;
   shape(x, limbPoly([hip, knee, ankle], [6.4, 5, 3.4]), skin, lw, true, false);
-  // 绑腿（膝下到踝上）
+  // leggings (below the knee to above the ankle)
   const g0 = lp(knee, ankle, .12), gm = lp(knee, ankle, .45), g1 = lp(knee, ankle, .93);
   shape(x, limbPoly([g0, gm, g1], [5.8, 5.9, 4]), gait, lw * .8, true, false);
-  // 草鞋 + 脚
+  // straw sandal + foot
   const f = ankle;
   shape(x, [[f[0] - 1.5, f[1] - 2.2], [f[0] + toe * 5.2, f[1] - .8], [f[0] + toe * 5.6, f[1] + .4], [f[0] + 2.2, f[1] + .4], [f[0] + 2, f[1] - 2]], skin, lw * .7, true, false);
   x.fillStyle = PAL.straw; x.fillRect(Math.min(f[0] + toe * 6, f[0] + 2.6), f[1] + .2, 8.6, 1.5);
 }
-// 斗笠（侧视：低矮的圆锥，笠沿略翘）
+// Kasa (side view: a low cone, brim slightly upturned)
 export function kasa(x, cx, cy, tilt, lw, scale = 1, under = true) {
   x.save(); x.translate(cx, cy); x.rotate(tilt); x.scale(scale, scale);
   const Wd = 27, Hh = 11.5;
@@ -42,19 +42,19 @@ export function kasa(x, cx, cy, tilt, lw, scale = 1, under = true) {
   x.lineWidth = lw * .5; x.beginPath(); x.moveTo(-Wd + 2, -.8); x.quadraticCurveTo(0, 2.6, Wd - 2, -.8); x.stroke();
   x.restore();
 }
-// 侧脸（摘斗笠时）：月代（剃青的前额）+ 发髻
+// Profile (when the hat is off): sakayaki (月代, shaved forehead) + topknot
 function headSide(x, lw) {
   shape(x, [[-7.5, -86], [-6.5, -91], [-2, -94.5], [4, -95], [7.5, -91], [8, -85], [5.5, -79.5], [1, -77.6], [-3.5, -77.8], [-5.2, -80], [-7.4, -81.2], [-6.4, -83.2], [-8.2, -85]], PAL.skin, lw * .8, true, false);
-  // 月代（浅青灰）+ 鬓发（黑）
+  // sakayaki (pale blue-grey) + side hair (black)
   shape(x, [[-6.4, -90.8], [-2, -94.4], [3, -94.9], [1.5, -91.5], [-3.5, -89.4]], PATE, 0, true, true);
   shape(x, [[3, -95.1], [7.6, -91.2], [8.2, -85], [6, -80.5], [3.6, -84], [4.2, -88], [1.5, -91.5]], INK, 0, true, true);
-  // 发髻（向前折在头顶）
+  // topknot (folded forward on top of the head)
   shape(x, [[5.5, -95], [1, -97.6], [-3.4, -97.2], [-3.2, -96], [1, -96], [4.6, -93.6]], INK, 0, true, false);
   x.lineWidth = lw * .45; x.strokeStyle = INK;
-  x.beginPath(); x.moveTo(-5.6, -88.4); x.quadraticCurveTo(-4, -89.2, -2.2, -88.6); x.stroke();        // 眉
-  x.beginPath(); x.moveTo(-5.4, -86.3); x.lineTo(-2.8, -86.5); x.stroke();                               // 眼
-  x.beginPath(); x.moveTo(-5.6, -80.7); x.lineTo(-3.6, -80.9); x.stroke();                               // 口
-  x.beginPath(); x.moveTo(3.2, -86.5); x.quadraticCurveTo(1.6, -85, 2.8, -83.6); x.stroke();             // 耳
+  x.beginPath(); x.moveTo(-5.6, -88.4); x.quadraticCurveTo(-4, -89.2, -2.2, -88.6); x.stroke();        // brow
+  x.beginPath(); x.moveTo(-5.4, -86.3); x.lineTo(-2.8, -86.5); x.stroke();                               // eye
+  x.beginPath(); x.moveTo(-5.6, -80.7); x.lineTo(-3.6, -80.9); x.stroke();                               // mouth
+  x.beginPath(); x.moveTo(3.2, -86.5); x.quadraticCurveTo(1.6, -85, 2.8, -83.6); x.stroke();             // ear
 }
 export function traveler(x, px, py, s, o = {}) {
   const u = s / 100, lw = clamp(s / 60, 1.1, 2.6) / u;
@@ -67,7 +67,7 @@ function side(x, lw, o) {
   const walk = o.mode === 'walk', ph = (o.ph || 0) * TAU, tw = o.t || 0;
   const bob = walk ? -Math.abs(Math.sin(ph)) * 1.4 + .7 : 0, lean = walk ? -.1 : (o.lean || 0);
   const hip = [1.5, -40 + bob];
-  // 步态：两腿反相
+  // gait: legs in antiphase
   const gait = p => {
     const sw = Math.sin(p), lift = Math.max(0, Math.cos(p));
     const th = walk ? .44 * sw : .05, kn = walk ? .05 + lift * .75 : .03;
@@ -77,31 +77,31 @@ function side(x, lw, o) {
   };
   const [kF, aF] = gait(ph), [kB, aB] = gait(ph + Math.PI);
   const wind = o.wind || 0;
-  // 帽绳（背风向右飘）
+  // hat cord (blowing right, downwind)
   if (wind) { x.lineWidth = lw * .45; x.strokeStyle = INK; const fl = Math.sin(tw * 9) * 2.5; x.beginPath(); x.moveTo(-1, -78); x.quadraticCurveTo(9, -79 + fl, 18 + wind * 5, -82 + fl * 1.5); x.stroke(); x.beginPath(); x.moveTo(0, -78); x.quadraticCurveTo(8, -75 - fl, 15 + wind * 4, -74 - fl * 1.2); x.stroke(); }
   leg(x, hip, kB, aB, lw, true);
   x.save(); x.translate(hip[0], hip[1]); x.rotate(lean); x.translate(-hip[0], -hip[1]);
-  // 手杖
+  // walking staff
   const st = walk ? Math.sin(ph) * .07 : 0;
   if (!o.noStaff) { x.save(); x.translate(-13.5, -58); x.rotate(-.1 + st); shape(x, [[-1.3, -28], [1.3, -28], [1.3, 58], [-1.3, 58]], PAL.woodL, lw * .8, true, false); x.restore(); }
-  // 包袱（斜背，结在胸前）
+  // bundle (slung diagonally, knotted at the chest)
   shape(x, [[3, -75], [13, -77.5], [19, -70], [18.5, -60], [12, -54], [4, -57]], BUNDLE, lw);
   x.strokeStyle = '#6f7a58'; x.lineWidth = lw * .5; [[9, -70], [14, -64], [11, -59]].forEach(([a, b]) => { x.beginPath(); x.arc(a, b, 2, .3, 5.4); x.stroke(); });
-  // 后襟掖进腰带的尖角
+  // pointed corner of the back panel tucked into the sash
   shape(x, [[5, -49], [10.5, -47], [11.5, -36], [7, -38.5]], KIMONO_D, lw, true, false);
-  // 上身 + 下摆
+  // upper body + hem
   shape(x, [[-7.5, -74.5], [3.5, -76.5], [8, -66], [9, -50], [8.5, -36], [2, -33.5], [-4, -34.5], [-9, -31], [-9.5, -44], [-8.8, -60]], KIMONO, lw);
-  // 前襟与衣纹
+  // front panel and garment folds
   x.strokeStyle = INK; x.lineWidth = lw * .55;
   x.beginPath(); x.moveTo(-5.5, -74); x.quadraticCurveTo(-3, -62, -8.6, -50); x.stroke();
   x.beginPath(); x.moveTo(-2, -47); x.quadraticCurveTo(-3, -40, -4.5, -34.5); x.moveTo(4, -47); x.quadraticCurveTo(4, -41, 3.5, -34.5); x.stroke();
-  // 衣上的井桁絣（小白十字）
+  // igeta-gasuri (井桁絣, small white cross ikat pattern) on the garment
   x.strokeStyle = 'rgba(236,228,206,.85)'; x.lineWidth = lw * .35;
   [[-4, -68], [2, -65], [5, -58], [-3, -58], [1, -43], [-6, -40], [6, -40]].forEach(([a, b]) => { x.beginPath(); x.moveTo(a - 1.2, b); x.lineTo(a + 1.2, b); x.moveTo(a, b - 1.2); x.lineTo(a, b + 1.2); x.stroke(); });
-  shape(x, [[-7, -75], [-3.5, -76], [-5.6, -69.5]], PAL.white, lw * .5, true, false);   // 白衬领
-  shape(x, [[-9.2, -53], [9, -54], [9.2, -49], [-9.3, -48]], PAL.ochre, lw * .7, true, false); // 腰带
-  shape(x, [[-8, -71], [-4.4, -72], [-5.4, -67.4], [-8.6, -67.2]], BUNDLE, lw * .5, true, false); // 包袱结
-  // 蓑衣
+  shape(x, [[-7, -75], [-3.5, -76], [-5.6, -69.5]], PAL.white, lw * .5, true, false);   // white under-collar
+  shape(x, [[-9.2, -53], [9, -54], [9.2, -49], [-9.3, -48]], PAL.ochre, lw * .7, true, false); // sash
+  shape(x, [[-8, -71], [-4.4, -72], [-5.4, -67.4], [-8.6, -67.2]], BUNDLE, lw * .5, true, false); // bundle knot
+  // mino
   if (o.mino) {
     const mp = [[-10, -79], [4, -81], [14, -74], [19, -54], [17, -38], [5, -36], [-6, -37], [-12, -41], [-12, -62]];
     shape(x, mp, '#a38650', lw);
@@ -109,12 +109,12 @@ function side(x, lw, o) {
     for (let i = 0; i < 18; i++) { const a = -11 + i * 1.7; x.beginPath(); x.moveTo(a + 1, -76 + Math.abs(i - 8) * .4); x.lineTo(a + 1.8 + (i - 9) * .3, -38 - (i % 3) * 1.4); x.stroke(); }
     x.beginPath(); x.moveTo(-12, -40); for (let i = 0; i < 12; i++) x.lineTo(-12 + i * 2.6, -37 + (i % 2) * 2.6); x.stroke();
   }
-  // 前袖与手
+  // front sleeve and hand
   const hold = o.holdHat, sw = walk ? Math.sin(ph) * 1.5 : 0;
   if (hold) shape(x, [[-4, -74], [-10, -80], [-16, -86], [-19, -84], [-15, -78], [-8, -68], [0, -66]], KIMONO, lw);
   else shape(x, [[-4, -74], [-11, -65 + sw * .3], [-14, -56 + sw], [-15, -50 + sw], [-8, -49.5 + sw], [-4, -56], [1, -66]], KIMONO, lw);
   x.fillStyle = PAL.skin; x.beginPath(); hold ? x.arc(-18.5, -86.5, 2.2, 0, TAU) : x.arc(-13.5, -52 + sw * .6, 2.3, 0, TAU); x.fill(); x.lineWidth = lw * .55; x.strokeStyle = INK; x.stroke();
-  // 头：斗笠下只露下半张脸
+  // head: only the lower half of the face shows under the hat
   const tilt = o.tilt ?? 0;
   if (o.hatOff) headSide(x, lw);
   else {
@@ -127,11 +127,11 @@ function side(x, lw, o) {
 }
 
 function sit(x, lw, o) {
-  // 坐在凳上：凳面高度 = y -40；面朝左
+  // seated on a bench: seat height = y -40; facing left
   const breath = Math.sin((o.t || 0) * 2.2) * .5;
   leg(x, [2, -40], [-15, -41.5], [-14, -2], lw, true, -1);
   leg(x, [-2, -38.5], [-19, -39.5], [-19.5, -1.5], lw, false, -1);
-  // 下摆盖住大腿
+  // hem covers the thighs
   shape(x, [[-6, -53], [10, -53], [12, -38], [4, -35], [-22, -35.5], [-23.5, -43], [-10, -47]], KIMONO, lw);
   x.strokeStyle = INK; x.lineWidth = lw * .5; x.beginPath(); x.moveTo(-8, -46); x.quadraticCurveTo(-14, -41, -21, -38); x.stroke();
   x.save(); x.translate(0, breath);
@@ -140,13 +140,13 @@ function sit(x, lw, o) {
   [[-2, -70], [4, -66], [6, -58], [-3, -59], [-12, -40], [0, -41]].forEach(([a, b]) => { x.beginPath(); x.moveTo(a - 1.2, b); x.lineTo(a + 1.2, b); x.moveTo(a, b - 1.2); x.lineTo(a, b + 1.2); x.stroke(); });
   shape(x, [[-7, -54], [11, -55], [11, -50], [-6.5, -49.5]], PAL.ochre, lw * .7, true, false);
   shape(x, [[-5.5, -78.5], [-1.8, -79.5], [-4.2, -72]], PAL.white, lw * .5, true, false);
-  // 双手捧茶碗
+  // both hands holding the tea bowl
   const lift = o.cup ?? 0, cy = lerp(-56, -74, lift), cx = lerp(-15, -11.5, lift);
   shape(x, [[-2, -77], [-10, -68], [cx - 3, cy + 5], [cx + 4, cy + 7.5], [0, -63], [5, -73]], KIMONO, lw);
   x.fillStyle = PAL.skin; x.beginPath(); x.arc(cx + .5, cy + 2.4, 2.4, 0, TAU); x.fill(); x.lineWidth = lw * .55; x.strokeStyle = INK; x.stroke();
   shape(x, [[cx - 5.5, cy - 4.4], [cx + 3.5, cy - 4.4], [cx + 2.4, cy + 1.2], [cx - 4.4, cy + 1.2]], '#6b5a42', lw * .6, true, false);
   x.fillStyle = PAL.white; x.fillRect(cx - 4.6, cy - 4.2, 7.6, 1.1);
-  // 头：喝茶时微仰
+  // head: tilted back slightly while drinking
   x.save(); x.translate(0, -78); x.rotate(lerp(0, -.14, lift)); x.translate(0, 78);
   headSide(x, lw);
   x.restore();
@@ -154,7 +154,7 @@ function sit(x, lw, o) {
 }
 
 function back(x, lw, o) {
-  // 背影，面朝画内（山）
+  // seen from behind, facing into the picture (the mountain)
   leg(x, [-3.5, -40], [-4.2, -21], [-4.8, 0], lw, false, 0);
   leg(x, [3.5, -40], [4.2, -21], [4.8, 0], lw, false, 0);
   if (!o.noStaff) shape(x, [[14, -86], [16.4, -86], [18.6, 1], [16.2, 1]], PAL.woodL, lw * .8, true, false);
@@ -162,14 +162,14 @@ function back(x, lw, o) {
   shape(x, [[-10.5, -76], [10.5, -76], [12.5, -63], [11, -51], [-11, -51], [-12.5, -63]], KIMONO, lw);
   shape(x, [[-11, -55], [11, -55], [11, -50], [-11, -50]], PAL.ochre, lw * .7, true, false);
   x.strokeStyle = INK; x.lineWidth = lw * .5; x.beginPath(); x.moveTo(0, -49); x.lineTo(0, -31); x.stroke();
-  // 包袱
+  // bundle
   shape(x, [[-8.5, -75.5], [8.5, -75.5], [10.5, -64], [7, -57], [-7, -57], [-10.5, -64]], BUNDLE, lw);
   x.strokeStyle = '#6f7a58'; x.lineWidth = lw * .5; [[-4, -69], [4, -66], [-1, -61]].forEach(([a, b]) => { x.beginPath(); x.arc(a, b, 2, .3, 5.4); x.stroke(); });
   const off = o.hatOff || 0;
   shape(x, [[-10.5, -75], [-14.5, -62], [-14, -51], [-9.5, -52], [-9, -68]], KIMONO, lw);
   if (off > 0) shape(x, [[10.5, -75], [14.5, -62], [15, -52], [10.5, -52], [9, -68]], KIMONO, lw);
   else shape(x, [[10.5, -75], [15.5, -76], [15.5, -84], [11.5, -82], [9, -71]], KIMONO, lw);
-  // 后脑：黑发 + 发髻
+  // back of the head: black hair + topknot
   shape(x, [[-5.8, -85], [-5, -91], [0, -93.5], [5, -91], [5.8, -85], [4, -78.5], [-4, -78.5]], INK, 0);
   shape(x, [[-1.5, -93], [1.5, -93], [1.2, -98], [-1.2, -98]], INK, 0, true, false);
   if (off > 0) {

@@ -1,4 +1,4 @@
-// 从页面读 window.SUBS 导出 subs.json（srt 与烧录字幕同一份数据）
+// Read window.SUBS from the page and export subs.json (the srt and the burned-in subtitles share the same data)
 import { chromium } from 'playwright-core'; import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../../../..');
 const { serve } = await import(path.join(ROOT, 'core/render/serve.mjs')); const { EXE, ARGS } = await import(path.join(ROOT, 'core/render/browser.mjs'));

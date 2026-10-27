@@ -1,6 +1,6 @@
-// 单色磷光 CRT 后期（WebGL2）。改写自 core/post/crt.js：去掉录像带色度渗色和 RGB 光栅（单色显示器没有荫罩），
-// 改成 P3 琥珀磷光的强度 → 颜色映射 + 第二通道（地球蓝）+ 曲面屏桶形畸变 + 圆角屏幕 + 玻璃反光 + 开 / 关机。
-// 输入：场景画布 R = 琥珀强度，G = 地球蓝强度（可 >1 的部分靠叠加两次表达，饱和在 1）。
+// Monochrome-phosphor CRT post-process (WebGL2). Adapted from core/post/crt.js: removes the videotape chroma bleed and the RGB raster (a monochrome monitor has no shadow mask),
+// replaced by an intensity → colour mapping for P3 amber phosphor + a second channel (earth blue) + curved-screen barrel distortion + rounded screen corners + glass reflection + power on / off.
+// Input: scene canvas R = amber intensity, G = earth-blue intensity (values >1 are expressed by drawing twice additively; saturates at 1).
 const VS = `#version 300 es
 in vec2 p; out vec2 uv; void main(){ uv = p*.5+.5; gl_Position = vec4(p,0,1); }`;
 const PRE = `#version 300 es
@@ -21,22 +21,22 @@ uniform vec3 amber, amberLo, amberHi, earth, glass;
 float h1(float n){ return fract(sin(n*127.1+311.7)*43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
 float sdRound(vec2 p, vec2 b, float r){ vec2 q = abs(p)-b+r; return length(max(q,0.0)) + min(max(q.x,q.y),0.0) - r; }
-vec3 phos(float a){                       // 琥珀磷光：暗处偏橙，过曝处偏白
+vec3 phos(float a){                       // amber phosphor: orange in the darks, white where overexposed
   vec3 c = mix(amberLo, amber, smoothstep(.0, .55, a)) * a;
   c += amberHi * smoothstep(.62, 1.25, a) * .55;
   return c; }
 vec3 phosE(float e){ vec3 c = earth * e; c += vec3(.92,.97,1.0) * smoothstep(.65, 1.3, e) * .45; return c; }
 void main(){
-  // 曲面屏：桶形畸变
+  // curved screen: barrel distortion
   vec2 cc = (uv - .5) * 2.0;
   vec2 d = cc; d.x *= 1.0 + curv * d.y * d.y * .9; d.y *= 1.0 + curv * 1.25 * d.x * d.x;
   d /= zoom;
-  // 开机：亮点 → 横线 → 全屏；关机：全屏 → 横线 → 亮点
+  // power on: bright dot → horizontal line → full screen; power off: full screen → horizontal line → bright dot
   float sx = 1.0, sy = 1.0, boost = 0.0;
   if (power < 1.0) { sx = smoothstep(0.0, .35, power); sy = max(.004, smoothstep(.35, 1.0, power)); boost = pow(1.0 - sy, 3.0) * 1.4; }
   if (off > 0.0) { sy = max(.004, 1.0 - smoothstep(0.0, .45, off)); sx = max(.002, 1.0 - smoothstep(.45, .85, off)); boost = max(boost, pow(1.0 - sy, 2.0) * 1.2); }
   vec2 q = vec2(d.x / max(sx, .001), d.y / sy) * .5 + .5;
-  // 电子束：横向一点点糊（扫描方向）
+  // electron beam: a slight horizontal smear (scan direction)
   vec2 s = 1.0 / res;
   vec3 sc = texture(scene, q).rgb * .6 + (texture(scene, q + s*vec2(beam,0)).rgb + texture(scene, q - s*vec2(beam,0)).rgb) * .2;
   float a = sc.r * expo, e = sc.g * expo;
@@ -44,27 +44,27 @@ void main(){
   vec3 Hh = texture(b3,q).rgb*.6 + texture(b4,q).rgb;
   vec3 c = phos(a) + phosE(e) * earthSat;
   c += (amber * B.r + earth * B.g) * glow + (amberLo * Hh.r + earth * .8 * Hh.g) * halo;
-  // 扫描线：3px 周期，亮处暗缝变窄
+  // scanlines: 3px period, the dark gaps narrow where bright
   vec2 P = uv * res;
   float L = clamp(max(a, e), 0.0, 1.0);
   float ph = .5 - .5 * cos(6.2831853 * (q.y * res.y) / 3.0);
   c *= 1.0 - scan * ph * (1.0 - .55 * L);
-  // 屏幕玻璃底色（未激发的磷光粉不是纯黑）+ 信号噪声 + 高压闪烁
+  // screen-glass base colour (unexcited phosphor isn't pure black) + signal noise + high-voltage flicker
   float inside = 1.0 - smoothstep(-.004, .004, sdRound(d, vec2(1.0), .09));
   vec2 dd = d; float vig = 1.0 - corner * (.35 * dot(dd, dd) + .9 * dd.x*dd.x*dd.y*dd.y);
   c += glass * vig;
   c += (h2(P + frame * 17.0) - .5) * noiseA * (.5 + L);
   c *= 1.0 + (h1(frame * .73) - .5) * flick;
   c *= vig;
-  // 玻璃反光：左上一大块很淡的斜向高光 + 屏幕边缘一圈暗
+  // glass reflection: a large, very faint diagonal highlight top left + a dark ring round the screen edge
   float r = smoothstep(.9, .0, length(dd - vec2(-.55, .6))) * refl;
   c += vec3(1.0, .93, .85) * r * .03;
   c *= inside;
-  // 屏幕外：机身塑料边框，屏幕的辉光打在内沿上
+  // outside the screen: the plastic bezel of the case, with the screen's glow falling on its inner edge
   float edge = sdRound(d, vec2(1.0), .09);
   vec3 bezel = vec3(.018, .015, .013) + (amber * B.r + earth * B.g) * .22 * smoothstep(.12, .0, edge);
   c = mix(bezel, c, inside);
-  // 开 / 关机：中心亮线
+  // power on / off: bright centre line
   c = c * (1.0 + boost) + min(expo, 1.0) * boost * vec3(1.0, .82, .55) * smoothstep(.012, 0.0, abs(uv.y - .5)) * step(abs(uv.x - .5), max(sx, .004) * .5) * inside;
   o = vec4(clamp(c, 0., 1.), 1);
 }`;

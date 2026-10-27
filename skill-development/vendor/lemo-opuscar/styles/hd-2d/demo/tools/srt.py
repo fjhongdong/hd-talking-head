@@ -1,5 +1,5 @@
-# 从 story.js 的 VO 表 + voices/dur.json 导出 SRT
-# 用法：.venv/bin/python styles/hd-2d/demo/tools/srt.py [out.srt]（默认写库交付物 styles/hd-2d/hd-2d.srt）
+# Export SRT from story.js's VO table + voices/dur.json
+# Usage: .venv/bin/python styles/hd-2d/demo/tools/srt.py [out.srt] (writes the library deliverable styles/hd-2d/hd-2d.srt by default)
 import sys
 import re, json, os
 H = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')

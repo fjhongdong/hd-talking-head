@@ -1,16 +1,16 @@
-// 球类 16 项（足篮排手曲橄棒板高 + 持拍 6 项 + 泰克球）
+// Ball games, 16 events (football, basketball, volleyball, handball, hockey, rugby, baseball, cricket, golf + 6 racket sports + teqball)
 (function () {
   const G = window.G, P = G.P, POSES = window.POSES, D2R = G.D2R;
 
-  // ── 小工具 ──
-  const ang = (a, b) => Math.atan2(b[0] - a[0], b[1] - a[1]) / D2R; // 世界角：0 下，90 前
+  // ── Helpers ──
+  const ang = (a, b) => Math.atan2(b[0] - a[0], b[1] - a[1]) / D2R; // world angle: 0 down, 90 forward
   const along = (p, deg, d) => [p[0] + Math.sin(deg * D2R) * d, p[1] + Math.cos(deg * D2R) * d];
   const off = (p, dx, dy) => [p[0] + dx, p[1] + dy];
   const poseAt = (def, u) => (def.pose ? def.pose(u) : G.keyPose(def.keys, u, def.loop));
   const jAt = (def, u) => G.joints(poseAt(def, u));
   const memo = (f) => { let v; return () => (v === undefined ? (v = f()) : v); };
   const ph = (u, L) => ((u % L) + L) % L;
-  // 分段飞行：segs = [[u0, u1, from, to, 弧高, 缓动?]]，返回位置或 null
+  // Segmented flight: segs = [[u0, u1, from, to, arc height, easing?]], returns a position or null
   const fly = (u, segs) => {
     for (const s of segs) {
       if (u >= s[0] && u < s[1]) {
@@ -21,7 +21,7 @@
     }
     return null;
   };
-  // 拖尾：沿飞行方向画几条渐隐短线
+  // Trail: a few fading short lines along the flight direction
   const trail = (ctx, u, segs, C, n = 5, du = 0.035, r = 0.03) => {
     for (let i = n; i >= 1; i--) {
       const p = fly(u - i * du, segs);
@@ -35,7 +35,7 @@
   const farHand = (J) => J.aL[2];
   const foreAng = (J) => ang(J.aR[1], J.aR[2]);
 
-  // 羽毛球：球托 + 锥形羽毛，dir = 飞行方向（世界角）
+  // Shuttlecock: base + conical feathers, dir = flight direction (world angle)
   const shuttle = (ctx, p, dir, C) => {
     const d = [Math.sin(dir * D2R), Math.cos(dir * D2R)], n = [-d[1], d[0]];
     const b0 = [p[0] - d[0] * 0.012, p[1] - d[1] * 0.012];
@@ -45,7 +45,7 @@
   };
   const dirOf = (u, segs) => { const a = fly(u - 0.02, segs), b = fly(u + 0.02, segs); return a && b ? ang(a, b) : 90; };
 
-  // 球门（足球：纯线 + 网格）
+  // Goal (football: plain lines + net grid)
   const goal = (ctx, x, top, C, net = true) => {
     ctx.fillStyle = C.line;
     ctx.fillRect(x, top, 0.022, 0.46 - top);
@@ -58,7 +58,7 @@
     }
   };
 
-  // ───────── 足球：射门 ─────────
+  // ───────── Football: shot ─────────
   const FB = POSES.football = {
     loop: 2, iconU: 1.05,
     keys: [
@@ -81,7 +81,7 @@
     if (p) P.ball(ctx, p[0], p[1], 0.06, C);
   };
 
-  // ───────── 篮球：跳投 ─────────
+  // ───────── Basketball: jump shot ─────────
   const BK = POSES.basketball = {
     iconU: 2.05, fig: { x: -0.28 },
     keys: [
@@ -103,7 +103,7 @@
   ];
   BK.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
-    // 篮板 + 篮筐 + 网
+    // Backboard + rim + net
     ctx.fillStyle = C.line; ctx.fillRect(1.2, -0.92, 0.03, 0.42);
     G.seg(ctx, [1.2, -0.62], [1.1, -0.62], 0.02, C.line);
     ctx.save(); ctx.globalAlpha *= 0.6;
@@ -113,17 +113,17 @@
   BK.front = (ctx, J, u, C) => {
     const r = 0.058;
     let p = null;
-    if (u < 1) { // 运球
+    if (u < 1) { // dribble
       const h = hand(J); const k = Math.abs(Math.sin(Math.PI * u * 2));
       p = [h[0] + 0.02, G.lerp(0.46 - r, h[1] + r * 0.6, k)];
     } else if (u < 2) p = off(hand(J), 0.02, -0.07);
     else { trail(ctx, u, bkSegs, C, 5, 0.04, r); p = fly(u, bkSegs); }
     if (p) P.ball(ctx, p[0], p[1], r, C);
-    // 篮筐画在球前面
+    // Rim drawn in front of the ball
     G.seg(ctx, [RIM[0] - 0.09, RIM[1]], [RIM[0] + 0.09, RIM[1]], 0.024, C.fg);
   };
 
-  // ───────── 排球：扣球 ─────────
+  // ───────── Volleyball: spike ─────────
   const VB = POSES.volleyball = {
     loop: 4, iconU: 2, fig: { s: 0.92, x: -0.2, y: 0.08 },
     keys: [
@@ -143,8 +143,8 @@
   VB.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
     const x = 0.44;
-    ctx.fillStyle = C.line; ctx.fillRect(x, -0.62, 0.02, 1.08); // 网柱
-    // 网面：一条竖向网带（侧视）+ 网格
+    ctx.fillStyle = C.line; ctx.fillRect(x, -0.62, 0.02, 1.08); // net post
+    // Net: one vertical net band (side view) + grid
     ctx.save(); ctx.globalAlpha *= 0.35; ctx.fillStyle = C.fg; ctx.fillRect(x - 0.03, -0.62, 0.08, 0.36); ctx.restore();
     ctx.save(); ctx.globalAlpha *= 0.6; ctx.fillStyle = C.line;
     for (let j = 0; j < 8; j++) ctx.fillRect(x - 0.03, -0.6 + j * 0.045, 0.08, 0.007);
@@ -158,7 +158,7 @@
     if (p) P.ball(ctx, p[0], p[1], 0.062, C);
   };
 
-  // ───────── 手球：跳起射门（抬膝）─────────
+  // ───────── Handball: jump shot (knee raised) ─────────
   const HB = POSES.handball = {
     iconU: 1.7, fig: { x: -0.25 },
     keys: [
@@ -174,7 +174,7 @@
   const hbSegs = [[2, 2.35, hbRel, [1.5, 0.25], 0]];
   HB.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
-    // 红白相间的门柱
+    // Red-and-white striped goalposts
     const x = 1.05, top = -0.2;
     for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? C.fg : C.acc; ctx.fillRect(x, top + i * (0.66 / 6), 0.035, 0.66 / 6 + 0.001); }
     for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? C.fg : C.acc; ctx.fillRect(x + i * 0.12, top, 0.12, 0.035); }
@@ -186,7 +186,7 @@
     if (p) P.ball(ctx, p[0], p[1], 0.045, C);
   };
 
-  // ───────── 曲棍球：推击 ─────────
+  // ───────── Hockey: push pass ─────────
   const HK = POSES.hockey = {
     loop: 2, iconU: 0.6,
     keys: [
@@ -206,7 +206,7 @@
   HK.front = (ctx, J, u, C) => {
     const s = stick(J);
     G.seg(ctx, s.top, s.tip, 0.026, C.fg);
-    // J 形弯头
+    // J-shaped hook
     const n = along(s.tip, s.a + 90, 0.07);
     G.seg(ctx, s.tip, n, 0.03, C.fg);
     const q = ph(u, 2), b = hkTip();
@@ -215,7 +215,7 @@
     G.disc(ctx, p[0], p[1], 0.035, C.acc);
   };
 
-  // ───────── 七人制橄榄球：带球冲刺 → 鱼跃达阵 ─────────
+  // ───────── Rugby sevens: sprint with the ball → diving try ─────────
   const RG = POSES.rugby = {
     iconU: 2.6, fig: { x: -0.3 },
     pose: (u) => {
@@ -230,8 +230,8 @@
   };
   RG.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
-    ctx.fillStyle = C.fg; ctx.fillRect(0.95, 0.4, 0.035, 0.07); // 达阵线
-    // H 形球门
+    ctx.fillStyle = C.fg; ctx.fillRect(0.95, 0.4, 0.035, 0.07); // try line
+    // H-shaped posts
     ctx.fillStyle = C.line;
     ctx.fillRect(1.25, -0.95, 0.022, 1.41); ctx.fillRect(1.55, -0.95, 0.022, 1.41); ctx.fillRect(1.25, -0.2, 0.32, 0.022);
     if (u < 1.8) P.speed(ctx, -0.35, -0.05, 0.8, 5, C, 0.8);
@@ -245,7 +245,7 @@
     ctx.restore();
   };
 
-  // ───────── 棒垒球：挥棒击球 ─────────
+  // ───────── Baseball / softball: swing and hit ─────────
   const BB = POSES.baseball = {
     iconU: 2.05,
     keys: [
@@ -272,7 +272,7 @@
     if (p) P.ball(ctx, p[0], p[1], 0.033, C);
   };
 
-  // ───────── 板球：直线驱球 + 三柱门 ─────────
+  // ───────── Cricket: straight drive + wicket ─────────
   const CK = POSES.cricket = {
     iconU: 2.1, fig: { x: 0.1 },
     keys: [
@@ -292,7 +292,7 @@
   ];
   CK.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.6);
-    // 三柱门 + 横木
+    // Stumps + bails
     for (let i = 0; i < 3; i++) G.seg(ctx, [-0.52 + i * 0.05, 0.46], [-0.52 + i * 0.05, 0.14], 0.018, C.line);
     G.seg(ctx, [-0.535, 0.13], [-0.415, 0.13], 0.016, C.line);
   };
@@ -305,7 +305,7 @@
     if (p) P.ball(ctx, p[0], p[1], 0.033, C, { seam: false });
   };
 
-  // ───────── 高尔夫：开球 ─────────
+  // ───────── Golf: tee shot ─────────
   const GF = POSES.golf = {
     iconU: 2.9, fig: { x: -0.15 },
     keys: [
@@ -320,10 +320,10 @@
   const gfSegs = [[2, 2.6, gfBall, [1.7, -0.8], 0.15, G.E.o2]];
   GF.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
-    // 远处旗杆
+    // Distant flagstick
     G.seg(ctx, [1.35, 0.46], [1.35, 0.05], 0.012, C.line);
     G.poly(ctx, [[1.35, 0.05], [1.48, 0.1], [1.35, 0.15]], C.acc);
-    ctx.fillStyle = C.line; ctx.fillRect(gfBall[0] - 0.005, 0.44, 0.01, 0.02); // 球座
+    ctx.fillStyle = C.line; ctx.fillRect(gfBall[0] - 0.005, 0.44, 0.01, 0.02); // tee
   };
   GF.front = (ctx, J, u, C) => {
     const a = G.keyPose(GF.keys, u).club, h = hand(J);
@@ -334,9 +334,9 @@
     else { trail(ctx, u, gfSegs, C, 5, 0.03, 0.024); const p = fly(u, gfSegs); if (p) G.disc(ctx, p[0], p[1], 0.024, C.acc); }
   };
 
-  // ═══════ 持拍类（2 拍一格，击球落在第 1 拍）═══════
+  // ═══════ Racket sports (2 beats per cell, the hit falls on beat 1) ═══════
 
-  // ───────── 羽毛球：跳杀 ─────────
+  // ───────── Badminton: jump smash ─────────
   const BM = POSES.badminton = {
     loop: 2, iconU: 0.95, fig: { s: 0.94, y: 0.1 },
     keys: [
@@ -355,7 +355,7 @@
   };
   BM.back = (ctx, J, u, C) => P.ground(ctx, 0.46, C, -1.6, 1.6);
 
-  // ───────── 乒乓球：正手拉球 ─────────
+  // ───────── Table tennis: forehand loop ─────────
   const TT = POSES.tabletennis = {
     loop: 2, iconU: 1.05, fig: { x: -0.3 },
     keys: [
@@ -371,7 +371,7 @@
   TT.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
     ctx.fillStyle = C.line; ctx.fillRect(0.42, TABLE_Y, 1.4, 0.035); ctx.fillRect(0.55, TABLE_Y, 0.03, 0.41);
-    ctx.fillStyle = C.fg; ctx.fillRect(1.25, TABLE_Y - 0.08, 0.015, 0.08); // 球网
+    ctx.fillStyle = C.fg; ctx.fillRect(1.25, TABLE_Y - 0.08, 0.015, 0.08); // net
   };
   TT.front = (ctx, J, u, C) => {
     P.racket(ctx, hand(J), foreAng(J), 0.05, 0.06, C, { solid: true });
@@ -379,8 +379,8 @@
     const p = fly(q, ttSegs); if (p) G.disc(ctx, p[0], p[1], 0.022, C.acc);
   };
 
-  // ───────── 网球：发球 ─────────
-  // 发球是整圈挥臂：关键帧写成连续角度（-50 → -410），不用 loop 插值，按 2 拍取模
+  // ───────── Tennis: serve ─────────
+  // The serve is a full-circle arm swing: keyframes are written as continuous angles (-50 → -410), not interpolated with loop, taken modulo 2 beats
   const tnKeys = [
     { b: 0, torso: -5, lR1: 15, lR2: 0, lL1: -15, lL2: -20, aR1: -50, aR2: -80, aL1: 165, aL2: 175 },
     { b: 0.6, torso: -22, y: 0.03, lR1: 28, lR2: -18, lL1: -8, lL2: -32, aR1: -160, aR2: -25, aL1: 170, aL2: 175 },
@@ -406,7 +406,7 @@
     const p = fly(q, tnSegs); if (p) P.ball(ctx, p[0], p[1], 0.032, C);
   };
 
-  // ───────── 软式网球：正手上旋挑高（软球 = 空心浅色）─────────
+  // ───────── Soft tennis: forehand topspin lob (soft ball = hollow, light colour) ─────────
   const ST = POSES.softtennis = {
     loop: 2, iconU: 1.4, fig: { x: -0.2 },
     keys: [
@@ -429,7 +429,7 @@
     if (p) softBall(ctx, p, C);
   };
 
-  // ───────── 壁球：弓步低截击 + 前墙 ─────────
+  // ───────── Squash: low lunging volley + front wall ─────────
   const SQ = POSES.squash = {
     loop: 2, iconU: 1.05, fig: { x: -0.25 },
     keys: [
@@ -445,7 +445,7 @@
   SQ.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, WALL);
     ctx.fillStyle = C.line; ctx.fillRect(WALL, -1.0, 0.03, 1.47);
-    ctx.fillStyle = C.fg; ctx.fillRect(WALL - 0.02, 0.33, 0.05, 0.03); ctx.fillRect(WALL - 0.02, -0.45, 0.05, 0.02); // 底板线 / 发球线
+    ctx.fillStyle = C.fg; ctx.fillRect(WALL - 0.02, 0.33, 0.05, 0.03); ctx.fillRect(WALL - 0.02, -0.45, 0.05, 0.02); // tin line / service line
   };
   SQ.front = (ctx, J, u, C) => {
     P.racket(ctx, hand(J), foreAng(J), 0.16, 0.07, C);
@@ -453,7 +453,7 @@
     const p = fly(q, sqSegs); if (p) G.disc(ctx, p[0], p[1], 0.025, C.fg);
   };
 
-  // ───────── 板式网球：后玻璃反弹后回击（实心打孔拍）─────────
+  // ───────── Padel: return after the ball bounces off the back glass (solid perforated paddle) ─────────
   const PD = POSES.padel = {
     loop: 2, iconU: 1.05, fig: { x: 0.1 },
     keys: [
@@ -468,15 +468,15 @@
   const pdSegs = [[0, 0.25, [1.5, -0.3], [0.15, 0.43], 0], [0.25, 0.55, [0.15, 0.43], [GLASS + 0.03, -0.05], 0.1], [0.55, 1, [GLASS + 0.03, -0.05], pdHit, 0.05], [1, 1.4, pdHit, [1.6, -0.05], 0.1]];
   PD.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, GLASS, 1.6);
-    // 后玻璃：半透明面板 + 框
+    // Back glass: semi-transparent panel + frame
     ctx.save(); ctx.globalAlpha *= 0.18; ctx.fillStyle = C.fg; ctx.fillRect(GLASS - 0.25, -0.75, 0.25, 1.21); ctx.restore();
     ctx.fillStyle = C.line; ctx.fillRect(GLASS - 0.012, -0.75, 0.024, 1.21); ctx.fillRect(GLASS - 0.25, -0.75, 0.25, 0.018);
-    // 玻璃反光斜线
+    // Diagonal glass reflection lines
     ctx.save(); ctx.globalAlpha *= 0.35; G.seg(ctx, [GLASS - 0.2, -0.3], [GLASS - 0.06, -0.55], 0.012, C.fg); G.seg(ctx, [GLASS - 0.2, -0.15], [GLASS - 0.1, -0.3], 0.012, C.fg); ctx.restore();
   };
   PD.front = (ctx, J, u, C) => {
     const hc = P.racket(ctx, hand(J), foreAng(J), 0.06, 0.075, C, { solid: true });
-    // 打孔
+    // Perforations
     ctx.save(); ctx.translate(hc[0], hc[1]); ctx.rotate(-foreAng(J) * D2R);
     for (let j = -2; j <= 2; j++) for (let i = -1; i <= 1; i++) G.disc(ctx, i * 0.022 + (j % 2 ? 0.011 : 0), j * 0.022, 0.006, C.bg);
     ctx.restore();
@@ -484,7 +484,7 @@
     const p = fly(q, pdSegs); if (p) P.ball(ctx, p[0], p[1], 0.03, C);
   };
 
-  // ───────── 泰克球：抬膝颠球 → 头球过网落在弧形台面 ─────────
+  // ───────── Teqball: knee juggle → header over the net onto the curved table ─────────
   const TQ = POSES.teqball = {
     iconU: 2, fig: { x: -0.4 },
     keys: [
@@ -507,7 +507,7 @@
   ];
   TQ.back = (ctx, J, u, C) => {
     P.ground(ctx, 0.46, C, -1.6, 1.8);
-    // 弧形台面 + 中间网 + 支柱
+    // Curved tabletop + centre net + supports
     ctx.strokeStyle = C.line; ctx.lineWidth = 0.04; ctx.lineCap = 'round'; ctx.beginPath();
     for (let i = 0; i <= 30; i++) { const x = 0.42 + (1.16 * i) / 30; i ? ctx.lineTo(x, tabY(x)) : ctx.moveTo(x, tabY(x)); }
     ctx.stroke();

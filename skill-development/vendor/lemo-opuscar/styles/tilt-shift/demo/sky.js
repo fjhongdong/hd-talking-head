@@ -1,4 +1,4 @@
-// 天空与时刻：城市时钟（6:00 起的秒数）→ 太阳高度/方位、天空渐变、雾、光照、夜间系数；环境贴图按太阳高度量化缓存
+// Sky and time of day: city clock (seconds since 6:00) → sun elevation/azimuth, sky gradient, fog, lighting, night factor; environment map cached, quantised by sun elevation
 import * as THREE from 'three';
 import { U } from './city.js';
 import { clamp, lerp } from '/core/lib.js';
@@ -19,7 +19,7 @@ const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
 });
 
-// 关键帧（太阳高度°）
+// Keyframes (sun elevation °)
 const K = [
   { e: -6, zen: '#0b1633', horS: '#51466e', horA: '#1e2c52', sun: '#ff7a3c', sunI: 0, hemS: '#4a64a8', hemG: '#23252e', hemI: 1.0, night: 1, fog: '#2c3a64', expo: 1.5, glow: .3 },
   { e: -3.5, zen: '#23386e', horS: '#f0a08a', horA: '#4e5f94', sun: '#ff8a60', sunI: 0, hemS: '#5d74b4', hemG: '#2c2e38', hemI: 1.05, night: .8, fog: '#56628e', expo: 1.42, glow: .8 },
@@ -32,7 +32,7 @@ const K = [
 const _a = new THREE.Color(), _b = new THREE.Color();
 const cl = (k0, k1, u, f) => _a.set(k0[f]).lerp(_b.set(k1[f]), u).clone();
 
-export const sunElev = clock => -3.5 + clock / 3600 * 13.5;     // 6:00 ≈ -3.5°（蓝调+粉橙晨光），6:15 ≈ 0°，8:00 ≈ 23.5°
+export const sunElev = clock => -3.5 + clock / 3600 * 13.5;     // 6:00 ≈ -3.5° (blue hour + pink-orange dawn light), 6:15 ≈ 0°, 8:00 ≈ 23.5°
 export const sunAz = clock => (72 + clock / 3600 * 12) * Math.PI / 180;
 
 export function skyState(clock, azDeg) {
@@ -54,10 +54,10 @@ export function makeSky(scene, renderer) {
   sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -.0003; sun.shadow.normalBias = .4; sun.shadow.radius = 2;
   scene.add(sun, sun.target);
   const hemi = new THREE.HemisphereLight('#9cbce6', '#6b6356', .9); scene.add(hemi);
-  // 黎明的天光：从东边低角度打来的粉橙色辅光（无阴影），让楼顶和东立面的边缘带一点晨光
+  // Dawn skylight: pink-orange fill from low in the east (no shadows), giving rooftops and east facades a rim of morning light
   const glow = new THREE.DirectionalLight('#ffb48c', 0); scene.add(glow, glow.target);
   scene.fog = new THREE.FogExp2('#c8d4e2', .00022);
-  // 环境贴图：只放天空的小场景
+  // Environment map: a small scene containing only the sky
   const envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), skyMat));
   const pm = new THREE.PMREMGenerator(renderer); const cache = new Map();
   function env(e) {

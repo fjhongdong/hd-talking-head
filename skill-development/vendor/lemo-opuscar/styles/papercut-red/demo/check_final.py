@@ -1,4 +1,4 @@
-"""成片复核：从 mp4 音轨按旁白时间段切片 → whisper 转写；blackdetect；ebur128 由 mux.sh 打印"""
+"""Final check: slice the mp4 audio track by narration time spans → whisper transcription; blackdetect; ebur128 is printed by mux.sh"""
 import sys, os, json, re, subprocess, numpy as np, soundfile as sf, librosa
 from faster_whisper import WhisperModel
 D = os.path.dirname(os.path.abspath(__file__)); mp4 = os.path.join(D, '..', 'papercut-red.mp4'); tmp = os.path.join(D, 'out', 'final.wav')
