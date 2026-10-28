@@ -31,6 +31,90 @@ def _retry_worker(job, plan, config, approval, start, results):
 
 
 class GenerationQueueTests(unittest.TestCase):
+    def _generated_upload(self, *, metadata_bytes=3_200_000, padding="", noise=False):
+        from PIL import Image, PngImagePlugin
+        import random
+        source = self.job / "generated.png"
+        image = (Image.frombytes("RGB", (1100, 1100), random.Random(7).randbytes(1100 * 1100 * 3))
+                 if noise else Image.new("RGB", (32, 32), "#4a718c"))
+        info = PngImagePlugin.PngInfo()
+        info.add_text("Description", "x" * metadata_bytes)
+        image.save(source, pnginfo=info, compress_level=0)
+        ref = {"path": source.name, "sha256": artifacts.sha256_file(source), "bytes": source.stat().st_size}
+        bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+        bindings["video"].update(reference_mode="upload", upload={
+            "tool": "mcp__lovart__upload_asset", "result_path": ["url"],
+            "arguments": {"data_base64": {"$input": "base64"}, "filename": {"$input": "filename"},
+                          "project_id": "synthetic-project", "padding": padding}})
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+        request = self.request("upload-video", "video")
+        request["arguments"]["first_frame"] = str(source)
+        request["input_files"] = [ref]
+        self.add(self.request("source-image"), request)
+        claim = queue.claim(self.job, "source-image")
+        queue.record(self.job, "source-image", claim["claim_token"], {"status": "completed", "artifacts": [
+            {"type": "image", "path": str(source), "sha256": ref["sha256"], "bytes": ref["bytes"]}]})
+        return source, request, bindings["video"], ref
+
+    def test_lovart_upload_preflights_full_json_and_keeps_png_pixels(self):
+        import base64
+        from PIL import Image
+        from edit.hd.tools import generation_inputs as inputs
+        source, request, binding, ref = self._generated_upload(metadata_bytes=2_900_000, padding="p" * 330_000)
+        original = source.read_bytes()
+        self.assertLess(len(base64.b64encode(original)), 4 * 1024 * 1024)
+        action = inputs.next_action(self.job, request)
+        self.assertLess(len(json.dumps(action["arguments"], ensure_ascii=True).encode()) + 64 * 1024, 4 * 1024 * 1024)
+        path, saved = inputs._state(self.job, request, binding)
+        transport = saved["uploads"][artifacts.sha256_json(ref)]["transport"]
+        copy_path = self.job / transport["path"]
+        self.assertEqual(base64.b64decode(action["arguments"]["data_base64"]), copy_path.read_bytes())
+        with Image.open(source) as a, Image.open(copy_path) as b:
+            self.assertEqual((a.mode, a.size, a.tobytes()), (b.mode, b.size, b.tobytes()))
+        self.assertEqual(source.read_bytes(), original)
+        self.assertEqual(transport["source_sha256"], ref["sha256"])
+
+    def test_public_upload_413_record_preserves_action_and_recovers_once(self):
+        import base64
+        from edit.hd.tools import generation_inputs as inputs, generation_channels as channels
+        source, request, binding, ref = self._generated_upload()
+        original_request = copy.deepcopy(request)
+        # A concrete action issued before the preflight fix, as in the captured incident.
+        action = {"action": "upload", "purpose": "video", "request_id": request["id"],
+                  "binding_id": artifacts.sha256_json(ref), "claim_token": "synthetic-original",
+                  "tool": "mcp__lovart__upload_asset", "arguments": {
+                      "data_base64": base64.b64encode(source.read_bytes()).decode(),
+                      "filename": source.name, "project_id": "synthetic-project", "padding": ""}}
+        path, saved = inputs._state(self.job, request, binding)
+        saved["uploads"][action["binding_id"]] = {"source": ref, "action": action}
+        artifacts.write_json_artifact(path, saved)
+        response = {"isError": True, "content": [{"type": "text", "text":
+            "tool call error: unexpected server response: HTTP 413: request body exceeds 4194304 bytes"}]}
+        result = channels.record_result(SimpleNamespace(job_dir=self.job), action, response)
+        self.assertEqual(result["status"], "input_upload_rejected_413")
+        retry = inputs.next_action(self.job, request)
+        self.assertNotEqual(retry["arguments"], action["arguments"])
+        history = artifacts.read_json_artifact(path)["uploads"][action["binding_id"]]["rejected_uploads"]
+        self.assertEqual(history, [{"action": action, "response": response}])
+        self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        with self.assertRaisesRegex(ValueError, "remote media reference"):
+            channels.record_result(SimpleNamespace(job_dir=self.job), retry,
+                {"isError": True, "content": [{"type": "text", "text": "HTTP 500 unknown result"}]})
+        self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        channels.record_result(SimpleNamespace(job_dir=self.job), retry, {"url": "https://example.test/actual.png"})
+        self.assertEqual(inputs.resolve_request(self.job, request)["arguments"]["first_frame"], "https://example.test/actual.png")
+        self.assertEqual(queue.status(self.job)["items"][request["id"]]["request"], original_request)
+
+    def test_lovart_upload_stops_when_lossless_png_cannot_fit(self):
+        from edit.hd.tools import generation_inputs as inputs
+        source, request, binding, ref = self._generated_upload(metadata_bytes=0, noise=True)
+        original = source.read_bytes()
+        with self.assertRaisesRegex(ValueError, "lossless.*limit"):
+            inputs.next_action(self.job, request)
+        self.assertEqual(source.read_bytes(), original)
+        _, saved = inputs._state(self.job, request, binding)
+        self.assertFalse(saved["uploads"])
+
     def test_reference_upload_encodes_frozen_bytes_for_lovart(self):
         import base64
         from edit.hd.tools import generation_inputs

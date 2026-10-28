@@ -4,7 +4,7 @@
 
 原生动效的可读性区域和阅读窗口须对照真实画面确认。文字随布局移动时，区域应覆盖实际字区的运动范围；稳定窗口不包括尚未显字、模糊入场和淡出。出现 `text_not_proven` 时先核对配置与实际呈现，不能把错误检查框当成识别失败直接签收，也不能扩大框或缩短窗口来掩盖小字、裁切或不足的可读停留。
 
-稳定阅读窗还须对照头像入退场的真实占用范围，不能只看最终圆窗位置。过渡遮挡与稳定期分别观察，保留足够的无遮挡停留；短镜头若没有足够时间读完新增标签，先调整实际出现时机，再更新检查窗口。演示点击时，光标尖端落在按钮留白处，箭头主体不得长期盖住按钮文字；须检查点击前、点击中和结果态，不能把光标遮字帧人工签成无遮挡。
+稳定阅读窗还须对照头像入退场的真实占用范围，不能只看最终圆窗位置。B-roll 阅读窗必须位于已规范化头像入场完成帧与退出开始帧之间；源动效仍有字不代表父级退出回真人后仍可读。过渡遮挡与稳定期分别观察，保留足够的无遮挡停留；短镜头若没有足够时间读完新增标签，先调整实际出现时机，再更新检查窗口。演示点击时，光标尖端落在按钮留白处，箭头主体不得长期盖住按钮文字；须检查点击前、点击中和结果态，不能把光标遮字帧人工签成无遮挡。
 
 ## 画布、帧率与资源
 
@@ -79,6 +79,8 @@
 
 OpenFilm 原生创作同样执行以上标准，具体交接见 [OpenFilm 合同](openfilm-motion-graphics.md)。检查主体真正操作、探索或改变，而不是仅让卡片和文字入场；放大区域须对应实际原物，动作前后状态、词锚和连续过程可读。先按语义选择主体、构图和视觉语言，不能把已通过样片的道具和样式批量换字复用。
 
+未来可能或假设性案例可以用观众可辨认的概念示意形式演示原话动作；示意不等于实测证据，不能为避免事实越界而一律禁止主体操作、只剩物件和连接线。隐喻可结合本句原声理解，但不应还需额外解释无名称、无语境的任意符号代表什么。具体隐喻、构图和镜头由完整原生 Skill 设计；父级只传必要语义、真实素材、规格和事实边界，并验收核心含义是否清楚，不预先限制成单一几何机制。
+
 ### 痛点场景与人物感受
 
 先从本句判断视觉任务：痛点表现负担，操作表现具体过程，对比表现差异，数据表现真实数值；再选适合的 Skill 和场景。不把所有内容都套成人物受挫，也不因已有卡片入口易用就把痛点缩成卡片展示。
@@ -125,7 +127,11 @@ Riso 被选实例的硬时长从当前适配器唯一 `MIN_SECONDS` 动态读取
 
 正式草稿在 `treatment.semantic_lists` 保存 `overlay` 与 `broll` 两份列表。每个 row 包含 `row_id`、`start_word`、`end_word`（左闭右开）、`quote`、`semantic`、`visual_task` 和 `components`；组件引用为 `{segment_id, component_id}`。一个逻辑 row 可以跨多个 segment，但只计一次，并由同一 `semantic_row_id` 贯穿物理组件。`motion_queries` 仍按物理组件保存 tags；同一逻辑 row 的组件共享 tags。
 
-全库匹配使用 `select_motion_capabilities.py match --project-root <P> --director-brief <director> --treatment <treatment>`，结果写入 `treatment.motion_matches`，绑定原话、语义标签、类型和能力目录身份。未变化的逻辑 row 不重复 search；只有这些字段变化或新增 row 才更新对应缓存。
+先按可独立成立的命题划分，不按名词、逗号或秒数机械拆分。对象、待决问题不同的独立案例，以及可独立成立的处置事件，分别建语义行并匹配，不能因共用场景或某个模板能容纳就预先合并。例如临期货取舍、冷柜故障和排队分流分别匹配；改价、调货和安抚客户也分别匹配。同一完整因果命题中的劳动列举，或同一试班安排中的日期、数量与班次，可以保留一行，但必须逐拍表达各项，不能以一张通用画面带过。共同呈现只能在独立语义与候选比较清楚后决定，不能提前锁定渠道。
+
+全库匹配使用 `select_motion_capabilities.py match --project-root <P> --director-brief <director> --treatment <treatment>`，结果写入 `treatment.motion_matches`，绑定原话、语义标签、类型、能力目录身份及明确的 `matching_policy_version`。这些身份未变化的逻辑 row 不重复 search；字段、目录或匹配策略版本变化及新增 row 才更新对应草稿缓存。旧策略结果不能冒充当前结果，也不回写旧批准 Job。
+
+召回与缓存核验共用同一判定。完整创作范围由 profile 的 `content_scope={mode,evidence_ref}` 及当前原生说明确认，不按 `creative_skill` 名称一律放行。`full_scene` 可在没有美术制作关键词时以 `recall_basis=full_scene_authoring` 进入待评审池；其真实字面命中维度保持原样，未命中动作仍为 `has_motion_basis=false`。`fixed_action` 继续要求动作或关系命中。召回不是语义、素材、输出、时长、费用或动作验收通过；全部候选仍按下列字段逐项复核，不因完整创作范围而免检或自动适合。
 
 `skill_selection` schema 仍为 1。`beats` 保持 B-roll，新增 `overlay_beats`；两组每个物理 beat 都填写 `semantic_row_id`、`start`、`end`、`transcript`、`semantic_goal`、`required_change`、`intent_statement`、`component_brief` 和 `binding_snapshot`。`candidates` 必须覆盖缓存命中的全集，每项填写 `fit`（`preferred`、`equivalent`、`unsuitable` 或 `needs_adapter`）与 `reason`；`unsuitable` 另填 `rejection_basis`（`semantic`、`quality`、`capacity`、`output`、`timing`、`qualification` 或 `authorization`）。素材待准备不能作为淘汰理由，`preferred` 不能裁剪 `equivalent`。
 
@@ -144,6 +150,10 @@ Riso 被选实例的硬时长从当前适配器唯一 `MIN_SECONDS` 动态读取
 分配结果携带所选 `design_plan`，随原 treatment/assignment 冻结，制作与实看以它为对照。OpenFilm 的新 brief 在现有 `creative_handoff.style_reason` 中逐项包含这四段原设计说明；可按“构图／字级／完成度／焦点”连接成同一字符串，不新增 brief 字段或改旧媒体。正式入口检查设计说明确实传入已绑定的 brief。实际画面仍须通过当前媒体的审美检查。
 
 统一调用 `select_broll_skills.py assign --director-brief <director> --treatment <treatment>`，共同求解 B-roll 与贴片，分别写回 `assignments` 和 `overlay_assignments`。`fixed_context` 只记录真实固定资料或直接 AI，不把原生贴片整体伪装成固定资料；`check` 复核缓存、两组 assignments 和绑定，不重新匹配。确认前冻结两份语义列表、缓存、两组 assignments 和编号，确认后不得偷换。
+
+计划态仅允许已选、完整评审的 `full_scene` 组件以自身合法生成步骤保留待准备输入；无步骤、错目标、错路线、无真实渠道配置或损坏的已有 brief 均不能借此跳过检查。固定动作、贴片和已有输入照常全检；该计划态不证明实际画面通过，确认后须用本组件的真实 brief、素材及完成记录重新通过原生与语义、输出、时长门。
+
+已有原生场景输入须在整表确认前用所选原生入口输出真实完整静帧，并查看动作前、中、后关键状态；按当前口播检查人物、操作对象、朝向、接触关系和构图。接口可调用、DOM／图层齐全、风格名一致或字号通过，均不等于完整创作已经完成。尚未存在且需批准生成的素材可延后实看，不要求提前付费生成；制作后仍按现有媒体 QA 检查实际过程与合成画面。复用现有截图、播放与阶段记录，不另建评分器或验收框架。
 
 现有完整清单同时按贴片、B-roll 分别列出真实渠道的逻辑项次数和累计可见时长，以及相邻同渠道／同构图动作的已有选择原因。一项跨多个物理段只计一次；时长取同类同渠道实际区间并集，各渠道时间不能相加冒充视频总长。局部返修后重新看全片分布，渠道集中上升时回原缓存复核；有合法合格替代就重选，否则写清保留依据。此汇总不重跑匹配、不引入渠道配额，也不把同一接法中的自创场景冒充多个固定模板。
 

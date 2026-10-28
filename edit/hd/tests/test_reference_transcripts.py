@@ -83,10 +83,14 @@ class ReferenceTranscriptTests(unittest.TestCase):
             @contextlib.contextmanager
             def request(*args, **kwargs):
                 yield identity, [None, None, None], recheck
+            raw_source = b'{"fixture": "Hello"}'
+            def recognition(*args, raw_output_callback, **kwargs):
+                raw_output_callback(raw_source)
+                return {"cues": [{"text": "Hello", "start": 0.1, "end": 0.5}],
+                        "raw_output_sha256": hashlib.sha256(raw_source).hexdigest()}
             with mock.patch.object(state, "load_job", return_value=job), \
                  mock.patch.object(reference_asr, "_approved_material_request", side_effect=request), \
-                 mock.patch.object(reference_asr, "_recognize_pinned_reference", return_value={
-                     "cues": [{"text": "Hello", "start": 0.1, "end": 0.5}], "raw_output_sha256": "b" * 64}) as recognize:
+                 mock.patch.object(reference_asr, "_recognize_pinned_reference", side_effect=recognition) as recognize:
                 with self.assertRaises(FileNotFoundError):
                     refs.read_reference_transcript(job_dir, "material-0001", tracks=[], language="en")
                 recognize.assert_not_called()
@@ -107,6 +111,23 @@ class ReferenceTranscriptTests(unittest.TestCase):
                 self.assertEqual(report["method"], "local_whisper_cpp")
                 self.assertEqual(report["source_approval"], "not_asserted")
                 self.assertEqual(report["precision"], "word")
+                raw_path = report_path.parent / (report["raw_output_sha256"] + ".json")
+                raw_path.write_bytes(b"corrupt")
+                with self.assertRaisesRegex(ValueError, "raw reference output checksum differs"):
+                    refs.cache_reference_transcript(job_dir, "material-0001", tracks=[], language="en")
+                recognize.assert_called_once()
+                raw_path.unlink()
+                with self.assertRaisesRegex(ValueError, "raw reference output is missing"):
+                    refs.read_reference_transcript(job_dir, "material-0001", tracks=[], language="en")
+                raw_path.write_bytes(raw_source)
+                raw_binding_path = next(report_path.parent.glob("raw-request-*.json"))
+                raw_binding_source = raw_binding_path.read_bytes()
+                raw_binding = json.loads(raw_binding_source)
+                raw_binding["extra"] = True
+                raw_binding_path.write_text(json.dumps(raw_binding))
+                with self.assertRaisesRegex(ValueError, "raw reference request identity is invalid"):
+                    refs.read_reference_transcript(job_dir, "material-0001", tracks=[], language="en")
+                raw_binding_path.write_bytes(raw_binding_source)
                 pointer_path = next(report_path.parent.glob("request-*.json"))
                 original_pointer = pointer_path.read_bytes()
                 for mutation in ("missing", "extra", "invalid"):
@@ -154,10 +175,14 @@ class ReferenceTranscriptTests(unittest.TestCase):
             def request(*args, **kwargs):
                 barrier.wait(timeout=5)
                 yield identity, [None, None, None], lambda: None
+            raw_source = b'{"fixture": "Hello"}'
+            def recognition(*args, raw_output_callback, **kwargs):
+                raw_output_callback(raw_source)
+                return {"cues": [{"text": "Hello", "start": 0.1, "end": 0.5}],
+                        "raw_output_sha256": hashlib.sha256(raw_source).hexdigest()}
             with mock.patch.object(state, "load_job", return_value=job), \
                  mock.patch.object(reference_asr, "_approved_material_request", side_effect=request), \
-                 mock.patch.object(reference_asr, "_recognize_pinned_reference", return_value={
-                     "cues": [{"text": "Hello", "start": 0.1, "end": 0.5}], "raw_output_sha256": "b" * 64}) as recognize:
+                 mock.patch.object(reference_asr, "_recognize_pinned_reference", side_effect=recognition) as recognize:
                 with ThreadPoolExecutor(max_workers=2) as pool:
                     futures = [pool.submit(refs.cache_reference_transcript, job_dir, "material-0001",
                                            tracks=[], language="en") for _ in range(2)]
@@ -172,7 +197,7 @@ class ReferenceTranscriptTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "engine failed"):
                     refs.cache_reference_transcript(job_dir, "material-0001", tracks=[], language="zh")
                 self.assertEqual(set(partition.glob("*.json")), before)
-                recognize.side_effect = None
+                recognize.side_effect = recognition
                 with mock.patch.object(refs, "REFERENCE_REPORT_LIMIT", 32):
                     with self.assertRaisesRegex(ValueError, "exceeds limit"):
                         refs.cache_reference_transcript(job_dir, "material-0001", tracks=[], language="zh")

@@ -651,7 +651,10 @@ def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bind
             raise ValueError("fixed material cannot invent a channel or a reusable template")
 
 
-def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *, job_dir=None) -> dict:
+def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *, job_dir=None,
+                       phase="completed") -> dict:
+    if phase not in {"planning", "completed"}:
+        raise ValueError("unknown visual selection phase")
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
@@ -681,6 +684,9 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
     validate_fixed_materials(draft, selection, job_dir=job_dir)
     from .motion_capabilities import overlay_candidates
     pool = {row["candidate_id"]: row for row in [*discover_candidates(project_root), *overlay_candidates(project_root)]}
+    from .visual_confirmation import planned_generation_targets
+    planned = (planned_generation_targets(project_root, draft, treatment, job_dir=job_dir)
+               if phase == "planning" else set())
     all_beats, all_expected = {**beats, **overlay_beats}, {**expected, **overlay_expected}
     for assignment in [*computed["assignments"], *computed["overlay_assignments"]]:
         key = (assignment["segment_id"], assignment["component_id"])
@@ -693,6 +699,8 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
         binding = segment["bindings"].get(component["component_id"])
         if not isinstance(binding, dict) or beat.get("binding_snapshot") != binding:
             raise ValueError("B-roll complete binding drifted from the selected inputs")
+        if key in planned:
+            continue  # Exact route/config/steps checked; actual inputs remain mandatory at publication.
         if candidate["role"] == "design":
             if (component["kind"] != "ai_generated"
                     or binding.get("execution_mode") not in {"reuse_completed_generated_media", "reuse_completed_lovart_video"}
@@ -710,7 +718,7 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
               or any(binding.get(field) != candidate[field] for field in
                      ("dependency_id", "entrypoint", "template_id", "producer_version"))):
             raise ValueError("B-roll binding does not execute the selected native candidate")
-    return {"status": "pass", "assignments": computed["assignments"],
+    return {"status": "pass", "planned_inputs": sorted(planned), "assignments": computed["assignments"],
             "overlay_assignments": computed["overlay_assignments"],
             "history_note": selection["history_note"],
             "recent_context": selection.get("recent_context", [])}

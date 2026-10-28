@@ -38,7 +38,7 @@
 
 调用记录沿用真实进程的 `entrypoint`、`exit_code`、源视频和结果摘要。没有记录就说明缺口，不拼造成功、不重新收费识别。只完成转写时可先不传 `--cleanup-plan`；随后在同一阶段传入清理方案，继续复用转写。已完成清理提案要修改时先明确修订。`edit_structure` 单独执行，不在转写入口里顺带剪辑。
 
-视觉计划先接收已完成内部语义检查的草稿，从启用组件的 bindings 读取本次依赖，完成所选能力准备及实际入口绑定检查后，才发布待用户确认的完整视觉路由表。准备失败保留原资料，当前新列表不会进入待确认状态。若包含生图或生视频，入口先在独立 `07-visual-confirmation/rN-id/` 冻结 proposal 和 `generation_plan.steps`，再发布整表；不得先生成媒体再补报审：
+视觉计划先接收已完成内部语义检查的草稿，从启用组件的 bindings 读取本次依赖，完成所选能力准备及实际入口绑定检查后，才发布待用户确认的完整视觉路由表。仅已完整评审且选中的 `full_scene` 路线，可按精确组件的合法 `generation_plan.steps` 将尚未具备的原生输入标为待准备；入口仍核验路线身份、真实渠道配置、必要图片或视频步骤、实际引用和依赖关系，不把它算作原生输入或输出已验收。已有 brief、固定动作和贴片继续完整检查，准备失败保留原资料，当前新列表不会进入待确认状态。若包含生图或生视频，入口先在独立 `07-visual-confirmation/rN-id/` 冻结 proposal 和 `generation_plan.steps`，再发布整表；不得先生成媒体再补报审：
 
 ```bash
 <python> <skill>/scripts/run_stage.py --job-context <ctx> --stage visual_direction \
@@ -77,7 +77,7 @@
 }
 ```
 
-原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。
+原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。续做时全部组件重走实际原生输入、语义、输出与时长检查；每份生成结果须被本组件的真实输入或明确依赖它的已批准生成步骤消费，其他组件中出现同一摘要不能充当本项绑定。
 
 修订某枚原生 brief 后，须同步该组件的实际 binding、`skill_selection.beats[].binding_snapshot`、场景路径、引用摘要及源码摘录，并在重新发布提案前调用已有 `broll_skill_selection.validate_selection`。源输入已经具备时，还须调用 `motion_capabilities.check_offline_plan` 检查当前源码证据与语义引用，不能把摘录仍指旧代码的提案留到正式编译才发现。不得只改 director 的 brief 摘要，等用户确认后才发现选型快照仍指旧输入；也不得放宽完整绑定比对。未改动组件保留原绑定与媒体。
 
@@ -152,6 +152,8 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 `add --plan-json <requests文件> --plan-sha256 <摘要> --user-confirmation <本次真实确认>` 登记封面等已确认批次。`next --request-id <id> [--account-limit <当前账号并发上限>]` 返回 submit/query/wait 或 upload action；宿主执行真实工具，将原 action 与规范结果分别保存，再用 `record --action-json <原action> --response-json <真实结果>` 回传。规范结果包含 `status`，异步结果包含真实 `task_ids`，完成结果包含 `artifacts: [{"type":"image|video","path":"<真实文件>"}]` 或真实媒体 URL。源文件保留，结果复制到 Job。视觉表内的步骤直接由 `run_stage.py` 登记和续做，不走再次确认的 `add`。
 
 上传绑定按真实工具参数选用 `{"$input":"path"}` 或 `{"$input":"base64"}`，文件名使用 `{"$input":"filename"}`。例如 Lovart MCP 的 `upload_asset` 使用 `data_base64` 与 `filename`，不能把本地路径当作公网 URL 或直接传入 `ref_images`。入口核对冻结文件字节后编码，保存真实上传响应，再以返回 URL 替换参考图路径；不能因上传缺项跳过参考图或重复生成。
+
+当前 `mcp__lovart__upload_asset` 实际 JSON body 上限为 4 MiB；父入口计算完整参数（含 base64），另留 64 KiB 结构余量，不以工具说明的文件大小替代传输预算。超限时，仅本 Job 队列已完成且来源身份一致的静态 8-bit RGB/RGBA PNG 可在既有 generation-inputs 目录生成独立无损传输副本；必须逐像素、透明度、色彩与方向一致，原图及已批准请求不变。无损后仍超限即停止，不擅自有损、缩放或裁切。已实际返回明确 `HTTP 413: request body exceeds 4194304 bytes` 的动作，须先沿原 `record` 入口保存原 action 与真实响应，再取严格更小的无损上传动作；一般错误或结果不明仍保持 pending，不自动重试。此限制仅针对该 Lovart MCP 入口。
 
 技术修订造成 proposal 身份变化时，同一逻辑步骤且完整请求负载（除内部 ID 外）完全相同，继续使用原已授权请求及上传状态。入口先验证原确认和当前请求一致，保留原授权、任务及结果；不重新登记、不重签确认、不重复生成。多个匹配明确停止，内容改变仍按新清单办理。
 

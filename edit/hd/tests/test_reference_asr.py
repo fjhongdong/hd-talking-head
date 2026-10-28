@@ -1,6 +1,7 @@
 """Reference ASR configuration tests; never approve or transcribe user media."""
 
 import hashlib
+import copy
 import json
 from pathlib import Path
 import tempfile
@@ -92,13 +93,20 @@ class ReferenceASRConfigTests(unittest.TestCase):
                 stream.setframerate(16000)
                 stream.writeframes(b"\0\0" * 16000)
             executable = root / "whisper-cli"
-            payload = {"transcription": [{"tokens": [
+            payload = {"result": {"language": "en"}, "transcription": [
+                {"text": "Hello", "offsets": {"from": 100, "to": 500}, "tokens": [
                 {"text": "Hello", "offsets": {"from": 100, "to": 500}}]}]}
             executable.write_text(f'#!{sys.executable}\nimport sys,json\nfrom pathlib import Path\n'
-                'args=sys.argv[1:]\nassert args[args.index("-l")+1]=="en"\n'
+                'args=sys.argv[1:]\nlanguage=args[args.index("-l")+1]\n'
+                'if language=="ja": sys.exit(1)\n'
+                'if language=="es": sys.exit(0)\n'
                 'assert Path(args[args.index("-m")+1]).read_bytes()==b"model"\n'
                 'assert Path(args[args.index("-f")+1]).read_bytes()[:4]==b"RIFF"\n'
-                f'Path(args[args.index("-of")+1]+".json").write_text({json.dumps(json.dumps(payload))})\n')
+                f'payload=json.loads({json.dumps(json.dumps(payload))})\n'
+                'if language=="zh":\n'
+                ' payload["result"]["language"]="zh"\n'
+                ' payload["transcription"][0]["tokens"][0]["offsets"]={"from":500,"to":100}\n'
+                'Path(args[args.index("-of")+1]+".json").write_text(json.dumps(payload))\n')
             executable.chmod(0o700)
             model = root / "ggml-test.bin"
             model.write_bytes(b"model")
@@ -152,12 +160,50 @@ class ReferenceASRConfigTests(unittest.TestCase):
                         self.assertEqual(cli.main(command), 0)
                     saved = Path(json.loads(output.getvalue())["path"])
                     self.assertEqual(json.loads(saved.read_text())["cues"], report["cues"])
+                    raw_saved = saved.parent / (report["raw_output_sha256"] + ".json")
+                    self.assertTrue(raw_saved.is_file(), "native Whisper JSON must survive temporary cleanup")
+                    self.assertEqual(raw_saved.read_bytes(), json.dumps(payload).encode())
+                    raw_binding = json.loads(next(saved.parent.glob("raw-request-*.json")).read_text())
+                    self.assertEqual(raw_binding["raw_output_sha256"], report["raw_output_sha256"])
+                    self.assertEqual(raw_binding["material"]["sha256"], material["sha256"])
                     inode = saved.stat().st_ino
                     with mock.patch.object(reference_asr, "_recognize_pinned_reference",
                                            side_effect=AssertionError("cache should reuse recognition")):
                         with contextlib.redirect_stdout(io.StringIO()):
                             self.assertEqual(cli.main(command), 0)
                     self.assertEqual(saved.stat().st_ino, inode)
+                    failed_command = [*command[:-1], "zh"]
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        self.assertEqual(cli.main(failed_command), 2)
+                    failed_binding_path = next(path for path in saved.parent.glob("raw-request-*.json")
+                                               if json.loads(path.read_text())["language"] == "zh")
+                    failed_binding = json.loads(failed_binding_path.read_text())
+                    failed_raw = saved.parent / (failed_binding["raw_output_sha256"] + ".json")
+                    failed_payload = copy.deepcopy(payload)
+                    failed_payload["result"]["language"] = "zh"
+                    failed_payload["transcription"][0]["tokens"][0]["offsets"] = {"from": 500, "to": 100}
+                    self.assertEqual(failed_raw.read_bytes(), json.dumps(failed_payload).encode())
+                    self.assertFalse((saved.parent / failed_binding_path.name.removeprefix("raw-")).exists())
+                    raw_inode = failed_raw.stat().st_ino
+                    from edit.hd.tools import reference_transcripts
+                    with mock.patch.object(reference_asr, "_recognize_pinned_reference",
+                                           side_effect=AssertionError("saved raw result must not rerun recognition")):
+                        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                            self.assertEqual(cli.main(failed_command), 2)
+                        imported_report = reference_transcripts.import_saved_reference_segments(
+                            job.job_dir, "material-0001", raw_result=failed_raw,
+                            expected_sha256=failed_binding["raw_output_sha256"], language="zh")
+                    imported_data = json.loads(Path(imported_report["path"]).read_text())
+                    self.assertEqual(imported_data["precision"], "segment")
+                    self.assertEqual(imported_data["cues"], report["cues"])
+                    self.assertEqual(failed_raw.stat().st_ino, raw_inode)
+                    before_failure = {path.name: path.read_bytes() for path in saved.parent.glob("*.json")}
+                    for empty_language in ("ja", "es"):
+                        with self.subTest(empty_language=empty_language), \
+                             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                            self.assertEqual(cli.main([*command[:-1], empty_language]), 2)
+                        self.assertEqual(before_failure,
+                                         {path.name: path.read_bytes() for path in saved.parent.glob("*.json")})
                     search_command = ["search-reference", *command[1:], "--query", "Hello"]
                     output = io.StringIO()
                     with contextlib.redirect_stdout(output):

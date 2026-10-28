@@ -475,6 +475,13 @@ def normalize_native_output(native_path, output_path, *, ffmpeg, ffprobe, expect
         for key, wanted in (("sample_aspect_ratio", "1:1"), ("display_aspect_ratio", "9:16")):
             if stream.get(key) != wanted and (not allow_missing_aspect or stream.get(key) is not None):
                 raise ValueError("Huashu native output aspect ratio mismatch")
+        if not allow_missing_aspect:
+            try:
+                stream_duration = float(stream["duration"])
+            except (KeyError, TypeError, ValueError):
+                raise ValueError("Huashu normalized output frame duration missing")
+            if not math.isfinite(stream_duration) or abs(stream_duration - expected_frames / 24) > 1e-6:
+                raise ValueError("Huashu normalized output frame clock mismatch")
         rotations = [str(stream.get("tags", {}).get("rotate", "0"))]
         rotations.extend(str(item.get("rotation")) for item in stream.get("side_data_list", [])
                          if item.get("rotation") is not None)
@@ -490,6 +497,7 @@ def normalize_native_output(native_path, output_path, *, ffmpeg, ffprobe, expect
             subprocess.run(
                 [str(ffmpeg), "-y", "-i", str(native_path), "-map", "0:v:0", "-c:v", "copy",
                  "-bsf:v", "h264_metadata=sample_aspect_ratio=1/1", "-aspect", "9:16",
+                 "-video_track_timescale", "24", "-movie_timescale", "24",
                  "-an", str(normalized)],
                 check=True, capture_output=True, text=True, timeout=60,
             )
@@ -499,6 +507,22 @@ def normalize_native_output(native_path, output_path, *, ffmpeg, ffprobe, expect
         validate(probe(normalized), allow_missing_aspect=False)
         shutil.copyfile(normalized, output_path)
     return output_path
+
+
+def materialize_frozen_media(directory, assets, records):
+    """Keep approved image bytes and their MIME-selecting filename suffix."""
+    paths = {}
+    for asset in assets:
+        record = records[asset["media_ref"]]
+        if type(record.get("fd")) is not int or record["fd"] < 0:
+            raise ValueError("Huashu requires the frozen media descriptor")
+        data = Path("/dev/fd/" + str(record["fd"])).read_bytes()
+        if record["sha256"] != asset["sha256"] or hashlib.sha256(data).hexdigest() != asset["sha256"] or len(data) != record["byte_length"]:
+            raise ValueError("Huashu media bytes differ from the approved asset")
+        target = Path(directory) / (asset["media_ref"] + Path(asset["job_path"]).suffix)
+        target.write_bytes(data)
+        paths[asset["media_ref"]] = str(target)
+    return paths
 
 
 def render(args):
@@ -539,18 +563,8 @@ def render(args):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         spec = native_spec(b)
-        paths = {}
         _FAILURE_STAGE = "preflight.media"
-        for asset in b["assets"]:
-            record = records[asset["media_ref"]]
-            if type(record.get("fd")) is not int or record["fd"] < 0:
-                raise ValueError("Huashu requires the frozen media descriptor")
-            data = Path("/dev/fd/" + str(record["fd"])).read_bytes()
-            if record["sha256"] != asset["sha256"] or hashlib.sha256(data).hexdigest() != asset["sha256"] or len(data) != record["byte_length"]:
-                raise ValueError("Huashu media bytes differ from the approved asset")
-            target = tmp / (asset["media_ref"] + ".png")
-            target.write_bytes(data)
-            paths[asset["media_ref"]] = str(target)
+        paths = materialize_frozen_media(tmp, b["assets"], records)
         for cue in spec["cues"]:
             if "image" in cue:
                 cue["image"] = paths[cue["image"]]

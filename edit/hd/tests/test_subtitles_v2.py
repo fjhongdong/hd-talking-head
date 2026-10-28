@@ -380,6 +380,26 @@ class FormalSubtitleContractTests(unittest.TestCase):
         self.assertTrue(all(cue["box"]["y"] + cue["box"]["height"] <= cue["safe_zones"]["subtitle"]["y"] + cue["safe_zones"]["subtitle"]["height"] for cue in broll_cues))
         self.assertTrue(all(cue["placement"] == "above_avatar" for cue in renderer_cues if cue["cue_id"] in {item["id"] for item in broll_cues}))
 
+    def test_right_avatar_uses_two_line_card_in_its_actual_left_space(self) -> None:
+        plan = copy.deepcopy(self.visual_plan)
+        avatar = plan["segments"][1]["shot_recipe"]["composition"]["avatar"]
+        avatar["position"] = {"x":672, "y":1372}
+        avatar["profile"] = {"diameter":320, "border_width":4}
+        rendered = []
+        result = subtitles_v2.build_render_plan(records=self.records, words=self.words,
+            timeline=self.timeline, visual_plan=plan, keyword_index=self.keywords,
+            renderer_cues=rendered)
+        broll = [cue for cue in result["cues"] if cue["segment_id"] == "seg-002"]
+        self.assertTrue(broll)
+        self.assertTrue(all(cue["box"] == {"x":80,"y":1462,"width":584,"height":230}
+                            for cue in broll))
+        self.assertTrue(all(cue["box"]["x"] + cue["box"]["width"] + 8 <= 672 for cue in broll))
+        ids = {cue["id"] for cue in broll}
+        self.assertTrue(all(cue["width"] == 584 and cue["bottom"] == 228
+                            for cue in rendered if cue["cue_id"] in ids))
+        self.assertEqual("".join(cue["text"] for cue in result["cues"]),
+                         "".join(cue["text"] for cue in self._plan()["cues"]))
+
     def test_center_avatar_moves_broll_subtitle_below_outer_ring(self) -> None:
         plan = copy.deepcopy(self.visual_plan)
         avatar = plan["segments"][1]["shot_recipe"]["composition"]["avatar"]

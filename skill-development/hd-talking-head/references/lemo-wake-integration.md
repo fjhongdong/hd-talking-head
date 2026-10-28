@@ -42,6 +42,8 @@ Wake 不再固定占用新 Job 首镜；新制作默认静态封面见[封面入
 
 原生子任务用 `initialize_project` 在本 Job 内调用原始 `new_project.py`。父级先验证批准原图，再自动记录原生建项命令和本次生成的规范化 source；后续不能替换该 source，不接受给已有项目补填来源证明。子任务随后按完整原生 Skill 创建 DIRECTOR 和可读动画。默认示例缓推不是最终制作。完成静帧检查后，使用原生 `render.mjs`、`encode.py`、`qa.py`。`single_pass` 表示非循环输出，不限制制作过程中渲染次数；不运行 reset 或回环；编码 `--fps 24 --no-gif --no-webp --no-sticker`，QA `--no-loop --json <Job内报告> --src <原生src> --encode <原生encode.json>`。QA JSON 和编码输出放在 `src` 外。
 
+初始化只产生工程骨架。最终渲染前沿 `project_files` 核对全部作者输入可冻结，包括模板起初为空的 `fonts.css`：本 Job 实际需要的展示规则应写入所引用样式表，不能以无意义填字节或放宽文件身份校验通过。源输入在 render/encode/QA 之间保持不变；需要改作者输入时，保留前轮产物，实际重走三步及 capture，不修改旧调用回执。
+
 自有薄桥仅记录原生命令和接收结果，不实现创作、渲染或编码：
 
 ```python

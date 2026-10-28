@@ -97,7 +97,8 @@ def _executable_snapshot(executable):
         yield snapshot
 
 
-def _recognize_pinned_reference(source, executable, model, *, language: str) -> dict[str, Any]:
+def _recognize_pinned_reference(source, executable, model, *, language: str,
+                                raw_output_callback=None) -> dict[str, Any]:
     """Internal execution core; caller must hold current Job approval and pins."""
     if not isinstance(language, str) or re.fullmatch(r"[a-z]{2,3}", language) is None:
         raise ValueError("explicit whisper language code is required")
@@ -109,10 +110,18 @@ def _recognize_pinned_reference(source, executable, model, *, language: str) -> 
         root = Path(directory).resolve()
         wav, raw = root / "audio.wav", root / "whisper.json"
         transcribe._extract_pcm16k_pinned(source, wav)
+        def preserve_raw(data):
+            for item in (source, executable, model):
+                transcribe._verify_pinned(item)
+            raw_output_callback(data)
+            for item in (source, executable, model):
+                transcribe._verify_pinned(item)
+
         with _executable_snapshot(executable) as snapshot:
             words = transcribe.transcribe_words(
                 transcribe.WhisperRuntime(snapshot, model.path), wav, raw,
                 model_input=model, language=language,
+                raw_output_callback=preserve_raw if raw_output_callback is not None else None,
             )
         cues = _checked_cues([{"text": word.text, "start": word.start, "end": word.end}
                               for word in words])

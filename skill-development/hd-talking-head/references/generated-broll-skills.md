@@ -129,9 +129,15 @@ node <skill>/scripts/render_doudou.mjs --project-root <project> --entry <Job内e
 
 动画阶段只使用启动时确认且当前可调用的视频渠道：先检查该渠道当前模型的首帧/参考图、9:16、时长和分辨率能力，确定本 Job 的精确模型和费用；上传已冻结静帧后保存真实资产引用，再把该引用作为真实视频请求的首帧或参考图。仅传入当前镜头所需图像，不上传原片或真人素材，除非本次任务另获授权。一次提交后保存真实 project/task ID，结果不明先查询，不自动重复付费。每次以当前渠道的实时模型说明为准，不能用模型标称的 9:16/1080p 代替实际像素探测。模型成片比口播时窗长时，保留原始全长文件，由父级按已批准时窗取前段；主体动作必须在实际使用的时窗内完成，不能只在未使用的尾段出现。
 
+Lovart MCP 图片上传先核对完整 JSON 传输预算（实际 4 MiB，留结构余量）。父级可为本 Job 已完成生成的静态 RGB/RGBA PNG 保存逐像素和色彩一致的独立无损传输副本，保留原图与来源链；仍超限则停，不自行降质。确定的 413 须以原 action/真实响应走现有 record 后才能重取更小上传动作；未知结果不得清空或重试。此过程只准备参考图上传，不重新生成或改写已确认创作请求。
+
 输出后分别记录“Flat/GBRO 静帧设计”和“视频渠道动态生成”，不把视频产物冒充上游原生视频。观察动画前、中、后主体动作、角色稳定性、文字和圆窗避让；纯推拉、擦除或显色不算通过。保留原始视频和真实请求/完成记录，调用与该渠道匹配的原字节复用适配器；若实际文件不是无声 H.264/yuv420p、SAR 1:1、24fps 的 720×1280 或 1080×1920 竖屏 MP4，先停在媒体处理与来源绑定，不靠修改记录或重命名绕过。父级合成后仍验收 1080×1920 的手机播放画质。
 
 供应商原始文件和原始响应先单独保存。格式处理只能另存同宽高比的 24fps、静音、H.264/yuv420p 规范文件，不能覆盖原件、变速或乱裁切；规范文件填入 `artifacts.path`，来源记录的 `artifact.source` 说明原始文件和处理链。原始供应商响应、规范处理记录和最终生成记录分开保存；已合格原件直接使用。
+
+供应商竖屏输出仅有整数舍入的微小尺寸偏差时，在本 Job 已明确授权完成制作的范围内，可用最近边缘像素延展到规范尺寸：总尺寸偏差须≤0.5%，任一边延展须≤4px，全部主体与原像素保持，不缩放、裁切、拉伸或变速。保留原片、真实处理链和处理前后实测画幅；这是派生格式修正，不声称供应商原生规格已达标。超界、横屏或任意构图补边仍停止，走正常修订；不新增生成或费用，也不改变下文旧素材适配器的单资产许可协议。
+
+承载动作的重复小物件出现增减、变形或接触不成立时，当前段须判失败并回到本行已选原生 Skill 重新设计，不能以宽泛协作意象放行；复用其余合格资产，新增费用与调用次数按实际授权登记。
 
 已有 Lovart 已完成素材的视觉配方编译前先调用下文的 `lovart_existing_video_adapter.prepare_existing_binding(job, record, ffprobe路径)`，把返回值放入该组件的 `compile_context.bindings`；不要手写 executor 或把 720p 源片声明成 1080p。编译器保持 `kind=ai_generated`、`provider=Lovart` 及真实任务身份，选择 `lovart_existing_video` 并写入实测源尺寸；正常批准后由 `create_adapter(job, record)` 与 `create_artifact_probe(ffprobe路径)` 接入公共执行器，再次核验实际文件。它只复用原字节，重复执行不会向 Lovart 再次付费提交。此前 1080×1916 的单条补边许可仍只适用于那一个已确认资产，不扩展到新片。离线适配测试不是 Lovart 本次出片、语义或最终成片验收。
 
@@ -148,6 +154,8 @@ node <skill>/scripts/render_doudou.mjs --project-root <project> --entry <Job内e
 完整记录消费入口同时检查 `semantic_brief.observed_scene` 和精确的 `{aroll_sha256,start,end}` 来源结构；不能从 QA 或生成提示词自动补写语义观察。此处的 `segment_id` 已在记录顶层，不把原生 adapter brief 中带 segment_id 的 source_binding 原样搬入。缺少观察、错误时钟或额外字段须先修当前记录，不能等到渲染后再补造来源。
 
 在新 realization treatment 的 `scenes` 登记 `{ "segment_id":..., "component_id":..., "brief_path":"<完成记录相对路径>", "completed_record": {"job_path":"<同路径>","sha256":"<文件摘要>","byte_count":123} }`，并补实际 `semantic_assessments`；引用完成记录 `/semantic_brief/observed_scene` 作为当前画面的依据。直接 AI B-roll 没有第三方模板时，`skill_selection.fixed_context` 明确记录该来源，不假冒库模板；其 `semantic_assessments.candidate_id` 使用 `ai-generated/direct`，仍保留该行 `motion_queries` 的语义标签。模板需要生成图片时，将图片实际路径及身份写入模板原生 brief。最终 execution mapping 保存显式完成记录，包内工厂用 `generated_media.create_job_adapter` 接入公共执行器，不扫描目录猜结果。已有 Lovart 完成记录继续使用其原有适配器，不重生成、不换身份。
+
+整表确认前，已选完整创作路线用该组件的 `generation_plan.steps` 登记必要图片、视频和依赖；未来输入仅用现有 `$step` 引用，不伪造路径、摘要或 completed 身份。设计路线保留真实所选视频渠道的 provider/model/endpoint_id，原生路线保留实际执行身份；真实结果具备后经 `prepare_template_inputs` 进入原生作者或完成记录流程，再发布 realization，不要求先生成才能报审。
 
 ### GBRO 调用约束与拼贴验收
 

@@ -21,7 +21,7 @@ const validate = (input) => {
   if (!Array.isArray(input.cues)) fail('cues must be an array');
   let previousEnd = 0;
   for (const cue of input.cues) {
-    if (!keys(cue, ['bottom', 'cue_id', 'emphasis', 'end', 'placement', 'start', 'text', 'words']) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || !Number.isInteger(cue.bottom) || cue.bottom < 0 || cue.bottom >= 1920 || (cue.placement === 'standard' && cue.bottom !== 350) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or layout is invalid');
+    if (!keys(cue, ['bottom', 'cue_id', 'emphasis', 'end', 'placement', 'start', 'text', 'words', ...(cue.placement === 'above_avatar' ? ['width'] : [])]) || (cue.placement === 'above_avatar' && (!Number.isInteger(cue.width) || cue.width < 436 || cue.width > 640)) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || !Number.isInteger(cue.bottom) || cue.bottom < 0 || cue.bottom >= 1920 || (cue.placement === 'standard' && cue.bottom !== 350) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or layout is invalid');
     previousEnd = cue.end;
     if (!Array.isArray(cue.words)) fail(`words invalid for ${cue.cue_id}`);
     let previousWordEnd = cue.start;

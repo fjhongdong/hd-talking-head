@@ -2543,7 +2543,7 @@ def _publish(
     if (
         had_target
         and job.version == 2
-        and job.stages["cover"]["status"] == "pending"
+        and job.stages["cover"]["status"] in {"pending", "needs_revision"}
         and job.stages["cover"].get("lineage", []) == []
     ):
         try:

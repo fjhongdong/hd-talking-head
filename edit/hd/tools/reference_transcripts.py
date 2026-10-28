@@ -58,9 +58,7 @@ def _open_reference_directory(job, material_id, *, create=True):
         raise
 
 
-def _read_reference_json(directory, name, limit):
-    from . import contract_artifacts
-
+def _read_reference_bytes(directory, name, limit):
     fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
     with os.fdopen(fd, "rb") as stream:
         info = os.fstat(fd)
@@ -69,8 +67,42 @@ def _read_reference_json(directory, name, limit):
         data = stream.read(limit + 1)
     if len(data) > limit:
         raise ValueError("reference cache exceeds limit")
+    return data, hashlib.sha256(data).hexdigest()
+
+
+def _read_reference_json(directory, name, limit):
+    from . import contract_artifacts
+
+    data, digest = _read_reference_bytes(directory, name, limit)
     return json.loads(data, object_pairs_hook=contract_artifacts._strict_object,
-                      parse_constant=contract_artifacts._reject_nonfinite), hashlib.sha256(data).hexdigest()
+                      parse_constant=contract_artifacts._reject_nonfinite), digest
+
+
+def _save_raw_reference(job, material_id, identity, key, data, recheck):
+    recheck()
+    saved = _publish_reference_report(job, material_id, data)
+    recheck()
+    _publish_reference_report(job, material_id,
+                              {**identity, "raw_output_sha256": saved["sha256"]},
+                              filename="raw-request-" + key + ".json")
+    recheck()
+
+
+def _read_raw_reference(directory, key, identity):
+    binding, _ = _read_reference_json(directory, "raw-request-" + key + ".json", REFERENCE_REPORT_LIMIT)
+    if (not isinstance(binding, dict) or set(binding) != set(identity) | {"raw_output_sha256"}
+            or any(binding.get(k) != v for k, v in identity.items())
+            or not isinstance(binding.get("raw_output_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", binding["raw_output_sha256"]) is None):
+        raise ValueError("raw reference request identity is invalid")
+    digest = binding["raw_output_sha256"]
+    try:
+        _, actual = _read_reference_bytes(directory, digest + ".json", REFERENCE_REPORT_LIMIT)
+    except FileNotFoundError as exc:
+        raise ValueError("raw reference output is missing") from exc
+    if actual != digest:
+        raise ValueError("raw reference output checksum differs")
+    return digest
 
 
 def cache_reference_transcript(job_dir: Path, material_id: str, *, tracks: list[dict[str, Any]], language: str) -> dict[str, str]:
@@ -111,11 +143,24 @@ def cache_reference_transcript(job_dir: Path, material_id: str, *, tracks: list[
                 report, digest = _read_asr_report(directory, pointer, key, identity)
                 recheck()
                 return {"path": str(target / (digest + ".json")), "sha256": digest}
-            recognition = reference_asr._recognize_pinned_reference(*pins, language=language)
+            try:
+                raw_digest = _read_raw_reference(directory, key, identity)
+            except FileNotFoundError:
+                raw_digest = None
+            if raw_digest is not None:
+                recheck()
+                raise ValueError(f"saved native reference result requires explicit import_saved_reference_segments: "
+                                 f"{target / (raw_digest + '.json')} (SHA-256 {raw_digest})")
+            recognition = reference_asr._recognize_pinned_reference(
+                *pins, language=language,
+                raw_output_callback=lambda data: _save_raw_reference(job, material_id, identity, key, data, recheck),
+            )
             report = {**identity, **recognition, "method": "local_whisper_cpp", "precision": "word",
                       "source_approval": "not_asserted"}
             _validate_asr_report(report, identity)
             recheck()
+            if _read_raw_reference(directory, key, identity) != report["raw_output_sha256"]:
+                raise ValueError("reference transcript raw output differs")
             saved = _publish_reference_report(job, material_id, report)
             recheck()
             _publish_reference_report(job, material_id, {"version": 1, "request_sha256": key,
@@ -217,6 +262,9 @@ def import_saved_reference_segments(
                         raise ValueError("existing reference cache conflicts with imported result")
                     recheck_inputs()
                     return {"path": str(target / (digest + ".json")), "sha256": digest}
+                _save_raw_reference(job, material_id, identity, key,
+                                    transcribe._read_descriptor_text(raw_pin.descriptor).encode("utf-8"),
+                                    recheck_inputs)
                 report = {**identity, "cues": cues, "raw_output_sha256": expected_sha256,
                           "method": "local_whisper_cpp", "precision": "segment",
                           "source_approval": "not_asserted"}
@@ -247,6 +295,8 @@ def _read_asr_report(directory, pointer, key, identity):
     if actual != digest:
         raise ValueError("reference transcript cache identity is invalid")
     _validate_asr_report(report, identity)
+    if _read_raw_reference(directory, key, identity) != report["raw_output_sha256"]:
+        raise ValueError("reference transcript raw output differs")
     return report, digest
 
 
@@ -291,7 +341,7 @@ def cache_material_captions(
 
 
 def _publish_reference_report(job, material_id, report, *, filename=None):
-    if filename is not None and re.fullmatch(r"request-[0-9a-f]{64}\.json", filename) is None:
+    if filename is not None and re.fullmatch(r"(?:raw-)?request-[0-9a-f]{64}\.json", filename) is None:
         raise ValueError("invalid reference pointer filename")
     directory, target_dir = _open_reference_directory(job, material_id)
     temporary = None
@@ -300,20 +350,25 @@ def _publish_reference_report(job, material_id, report, *, filename=None):
         fd = os.open(candidate_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
         temporary = candidate_name
         checksum = hashlib.sha256()
-        written = 1  # Include the terminating newline in the read limit.
-        limit = 4096 if filename is not None else REFERENCE_REPORT_LIMIT
+        raw = isinstance(report, bytes)
+        written = 0 if raw else 1  # Include the terminating newline for reports.
+        limit = 4096 if filename is not None and not filename.startswith("raw-") else REFERENCE_REPORT_LIMIT
         with os.fdopen(fd, "wb") as stream:
             encoder = json.JSONEncoder(ensure_ascii=False, sort_keys=True, allow_nan=False)
-            for piece in encoder.iterencode(report):
+            pieces = (report,) if raw else encoder.iterencode(report)
+            for piece in pieces:
                 for offset in range(0, len(piece), 16384):
-                    chunk = piece[offset:offset + 16384].encode("utf-8")
+                    chunk = piece[offset:offset + 16384]
+                    if not raw:
+                        chunk = chunk.encode("utf-8")
                     written += len(chunk)
                     if written > limit:
                         raise ValueError("reference cache exceeds limit")
                     stream.write(chunk)
                     checksum.update(chunk)
-            stream.write(b"\n")
-            checksum.update(b"\n")
+            if not raw:
+                stream.write(b"\n")
+                checksum.update(b"\n")
             stream.flush()
             os.fsync(stream.fileno())
         digest = checksum.hexdigest()

@@ -208,6 +208,22 @@ def validate_direction_contract(job, director, treatment):
                 for s in director['segments']]
     validate_targets(segments, treatment.get('motion_readability', []),
                      _required_refs(treatment), root=job.job_dir)
+    for segment in director['segments']:
+        composition = segment['visual_strategy']['composition']
+        if composition.get('presenter_mode') != 'bottom_window':
+            continue
+        avatar = composition['avatar']
+        frames = round((segment['end'] - segment['start']) * 24)
+        visible_start = avatar.get('entrance', {}).get('frames', 0) / 24
+        visible_end = (frames - avatar.get('exit', {}).get('frames', 0)) / 24
+        for record in treatment.get('motion_readability', []):
+            if record['segment_id'] != segment['segment_id']:
+                continue
+            for target in record.get('targets', []):
+                if any(w['start'] < visible_start - 1e-6 or w['end'] > visible_end + 1e-6
+                       for w in target['windows']):
+                    raise ValueError('B-roll reading window overlaps avatar transition: '
+                                     + segment['segment_id'])
 
 
 def _current_inputs(job):

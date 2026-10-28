@@ -3,13 +3,58 @@ from __future__ import annotations
 import unittest
 import copy
 import json
+import os
 import subprocess
+import tempfile
 from unittest.mock import patch
 
 from edit.hd.tools import subtitles_v2, talkcraft_subtitles
 
 
 class TalkCraftSubtitleAdapterTests(unittest.TestCase):
+    @unittest.skipUnless(os.environ.get("HD_SUBTITLE_METADATA_TEST") == "1", "explicit metadata browser check")
+    def test_metadata_checks_real_unbroken_word_width_before_rendering(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            script = f"""
+              import {{createRequire}} from 'node:module';
+              const require = createRequire({json.dumps(str(talkcraft_subtitles.ROOT / 'runtime/package.json'))});
+              const {{bundle}} = require('@remotion/bundler');
+              const {{selectComposition}} = require('@remotion/renderer');
+              const serveUrl = await bundle({{
+                entryPoint: {json.dumps(str(talkcraft_subtitles.ADAPTER / 'entry.tsx'))},
+                rootDir: {json.dumps(str(talkcraft_subtitles.ADAPTER))},
+                outDir: {json.dumps(directory)}, onProgress: () => {{}},
+                webpackOverride: (config) => ({{...config, resolve: {{...config.resolve,
+                  modules: [{json.dumps(str(talkcraft_subtitles.ROOT / 'runtime/node_modules'))}, ...(config.resolve?.modules ?? [])]}}}}),
+              }});
+              const results = [];
+              for (const text of ['项目材料', 'iiiiiiiiiiii', '中华人民共和国国家安全法', 'WWWWWWWWWWWW']) {{
+                const inputProps = {{schema_version: 2,
+                  canvas: {{width:1080,height:1920,fps:24,frames:48}}, cues: [{{
+                    cue_id:'cue-capacity',start:0.1,end:1.9,text,
+                    words:[{{start:0.1,end:1.9,text_start:0,text_end:text.length}}],
+                    emphasis:{{text_start:0,text_end:text.length,start:0.1,end:1.9}},
+                    placement:'above_avatar',bottom:228,width:584,
+                  }}]}};
+                try {{
+                  const composition = await selectComposition({{serveUrl,id:'TalkCraftSubtitles',inputProps}});
+                  results.push({{accepted:true,frames:composition.durationInFrames}});
+                }} catch (error) {{
+                  results.push({{accepted:false,error:String(error)}});
+                }}
+              }}
+              console.log(JSON.stringify(results));
+            """
+            result = json.loads(subprocess.check_output(
+                ["node", "--input-type=module", "-e", script], text=True,
+                cwd=talkcraft_subtitles.ROOT / "runtime", timeout=120))
+        self.assertEqual([item["accepted"] for item in result], [True, True, False, False])
+        self.assertEqual([item["frames"] for item in result[:2]], [48, 48])
+        for item in result[2:]:
+            self.assertIn("cue-capacity", item["error"])
+            self.assertIn("complete word", item["error"])
+            self.assertIn("does not fit", item["error"])
+
     def test_narrow_lines_keep_words_keywords_and_punctuation_together(self) -> None:
         module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
         script = f"""
@@ -71,6 +116,29 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
             tampered["renderer_input"]["cues"][0]["bottom"] = 349
             with self.assertRaises(talkcraft_subtitles.TalkCraftSubtitleError):
                 talkcraft_subtitles.validate_binding(tampered)
+
+    def test_renderer_binding_requires_the_actual_broll_card_width(self) -> None:
+        cue = {"id":"cue-1", "start":0.0, "end":0.5, "text":"测试",
+               "emphasis_words":[], "safe_zones":{"face":{"x":672,"y":1372,"width":328,"height":328}},
+               "box":{"x":80,"y":1462,"width":584,"height":230}, "bottom":228}
+        rendered = talkcraft_subtitles.cue_input(cue, [{"text":"测试","start":0.0,"end":0.5}],
+                                                placement="above_avatar")
+        self.assertEqual(rendered["width"], 584)
+        plan = {"canvas":{"width":1080,"height":1920,"fps":24,"frames":24}, "cues":[cue]}
+        identity = {"id":"renderer"}
+        payload = {"schema_version":4, "render_plan":plan,
+                   "renderer_input":talkcraft_subtitles.renderer_input(plan,[rendered]), "renderer":identity}
+        with patch.object(talkcraft_subtitles, "identity", return_value=identity):
+            talkcraft_subtitles.validate_binding(payload)
+            for width in (640, 583, True, None):
+                changed = copy.deepcopy(payload)
+                if width is None:
+                    changed["renderer_input"]["cues"][0].pop("width")
+                else:
+                    changed["renderer_input"]["cues"][0]["width"] = width
+                with self.subTest(width=width), self.assertRaisesRegex(
+                        talkcraft_subtitles.TalkCraftSubtitleError, "width changed"):
+                    talkcraft_subtitles.validate_binding(changed)
 
     def test_four_approved_emphasis_cues_are_allowed(self) -> None:
         terms = ("认知", "流程", "效率", "价值")

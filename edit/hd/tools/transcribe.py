@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .inspect_inputs import (
     GenerationRecoveryError,
@@ -735,12 +735,14 @@ def transcribe_words(
     *, model_input: _PinnedInput | None = None,
     source_media_duration: float | None = None,
     language: str = "zh",
+    raw_output_callback: Callable[[bytes], None] | None = None,
 ) -> list[Word]:
     """Run whisper.cpp once in the explicit engine language; never translate.
 
     Existing A-roll callers retain Chinese. Reference callers must supply their
     selected engine code; no locale normalization or automatic language fallback.
     The installed engine remains responsible for supported-code validation.
+    An explicit callback can retain verified native bytes before word parsing.
     """
     if not isinstance(language, str) or re.fullmatch(r"[a-z]{2,3}", language) is None:
         raise _fail("explicit whisper language code is required")
@@ -793,6 +795,16 @@ def transcribe_words(
         _verify_pinned(wav_input)
         if not _output_matches(generated_output, generated):
             raise _fail("invalid whisper JSON")
+        if raw_output_callback is not None:
+            os.lseek(generated_output.descriptor, 0, os.SEEK_SET)
+            with os.fdopen(os.dup(generated_output.descriptor), "rb") as stream:
+                raw_source = stream.read()
+            if raw_source:
+                raw_output_callback(raw_source)
+            _verify_pinned(model_input)
+            _verify_pinned(wav_input)
+            if not _output_matches(generated_output, generated):
+                raise _fail("invalid whisper JSON")
         source = _read_descriptor_text(generated_output.descriptor)
         words = parse_words_json(source, media_duration=parse_duration)
         os.fsync(generated_output.descriptor)

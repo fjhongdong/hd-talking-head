@@ -21,6 +21,7 @@ from . import contract_artifacts
 INDEX = "skill-development/hd-talking-head/references/motion-capability-index.json"
 TAG_FIELDS = ("subjects", "actions", "relations", "feelings", "styles", "patterns")
 USES = {"aroll_overlay", "broll", "component", "design"}
+MATCHING_POLICY_VERSION = 2
 _OVERLAY_MODULES = {
     "grid-card-assemble": "hyperframes_native_adapter",
     "notification-stack": "hyperframes_native_adapter",
@@ -44,13 +45,14 @@ def _strings(value, label, *, nonempty=False):
 def load_profiles(project_root: Path) -> dict[str, dict]:
     project = Path(project_root).resolve(strict=True)
     data = contract_artifacts.read_json_artifact(project / INDEX)
-    if data.get("schema_version") != 2 or not isinstance(data.get("profiles"), list):
-        raise ValueError("Motion capability index requires schema_version=2 and profiles")
+    if data.get("schema_version") != 3 or not isinstance(data.get("profiles"), list):
+        raise ValueError("Motion capability index requires schema_version=3 and profiles")
     profiles = {}
     source_hashes = {}
     for profile in data["profiles"]:
         required = {"candidate_id", "uses", "capability_type", "reviewed_version", "title",
-                    "summary", "tags", "editable_content", "limitations", "evidence", "reviewed_sources"}
+                    "summary", "tags", "editable_content", "limitations", "evidence", "reviewed_sources",
+                    "content_scope"}
         if not isinstance(profile, dict) or set(profile) != required:
             raise ValueError("Motion capability profile fields are incomplete")
         for name in ("candidate_id", "reviewed_version", "title", "summary"):
@@ -71,6 +73,15 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
             _strings(profile["tags"][name], name)
         for name in ("editable_content", "limitations", "evidence"):
             _strings(profile[name], name, nonempty=name in {"limitations", "evidence"})
+        scope = profile["content_scope"]
+        if (not isinstance(scope, dict) or set(scope) != {"mode", "evidence_ref"}
+                or scope["mode"] not in {"full_scene", "fixed_action"}
+                or scope["evidence_ref"] not in profile["evidence"]):
+            raise ValueError(f"Motion capability content scope is invalid: {cid}")
+        if scope["mode"] == "full_scene" and (
+                profile["capability_type"] not in {"creative_skill", "design_source"}
+                or not set(profile["uses"]) <= {"broll", "design"}):
+            raise ValueError(f"Full-scene authoring scope is invalid for this use: {cid}")
         reviewed = profile["reviewed_sources"]
         if not isinstance(reviewed, dict) or set(reviewed) != set(profile["evidence"]):
             raise ValueError(f"Motion capability reviewed sources are incomplete: {cid}")
@@ -188,6 +199,14 @@ def _match_evidence(profile: Mapping, query: str) -> dict:
             "semantic_review_required": True}
 
 
+def _recall_evidence(profile: Mapping, query: str) -> dict:
+    """Dispatch reviewed authors without claiming an unobserved native action."""
+    evidence = _match_evidence(profile, query)
+    basis = ("semantic_motion" if evidence["has_motion_basis"] else
+             "full_scene_authoring" if profile["content_scope"]["mode"] == "full_scene" else None)
+    return {**evidence, "recall_basis": basis}
+
+
 def search_capabilities(project_root: Path, query: str, *, use: str | None = None,
                         catalog: list[dict] | None = None) -> list[dict]:
     """Recall candidates, not choose meanings: the host reviews full clauses next."""
@@ -201,8 +220,8 @@ def search_capabilities(project_root: Path, query: str, *, use: str | None = Non
         uses = profile["uses"]
         if use is not None and use not in uses and not (use == "broll" and "design" in uses):
             continue
-        evidence = _match_evidence(profile, query)
-        if not evidence["has_motion_basis"]:
+        evidence = _recall_evidence(profile, query)
+        if evidence["recall_basis"] is None:
             continue
         dimensions = evidence["matched_dimensions"]
         score = sum(len(values) * (4 if name in {"actions", "relations"} else 1)
@@ -755,7 +774,8 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "semantic_word_windows", "reason": str(error)}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}
-    broll = broll_skill_selection.validate_selection(project_root, draft, treatment, job_dir=job_dir)
+    broll = broll_skill_selection.validate_selection(project_root, draft, treatment, job_dir=job_dir, phase=phase)
+    planned = set(broll.get("planned_inputs", ()))
     spoken_segments = {
         segment["segment_id"]: "" if speech is None else "".join(str(word["text"]) for word in speech
             if word["start"] < segment["end"] and word["end"] > segment["start"])
@@ -818,6 +838,17 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         if not spoken:
             not_verified.append({"segment_id": key[0], "component_id": component,
                                  "check": "approved_spoken_text"})
+        if key in planned:
+            pending = {"status": "planned", "scope": "planning_inputs",
+                       "reason": "Selected full-scene creation has validated future generation steps; native inputs and output are not yet verified"}
+            checks.append({"segment_id": key[0], "component_id": component, "use": use,
+                           "selected": cid, "template_title": row["capability"]["title"],
+                           "spoken_text": spoken, "retrieval": retrieval,
+                           "query_tags": query_tags, "matched_dimensions": matched_dimensions,
+                           "semantic": dict(pending), "native_input": dict(pending)})
+            not_verified.append({"segment_id": key[0], "component_id": component,
+                                 "check": "future_native_inputs_and_output"})
+            continue
         brief = briefs.get(key) if use == "aroll_overlay" else _bound_brief(job_dir, treatment, segment, component)
         if (cid.startswith("lemo-wake:") and
                 not (isinstance(brief, dict) and isinstance(brief.get("native_result"), dict)

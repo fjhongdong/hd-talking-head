@@ -50,6 +50,7 @@ class VisualRetrievalTests(unittest.TestCase):
         """Exercise tag retrieval while isolating already-tested native inputs."""
         from edit.hd.tools import motion_match_cache, overlay_selection
         profile = {'title': '逐项通知', 'uses': ['aroll_overlay'],
+                   'content_scope': {'mode': 'fixed_action', 'evidence_ref': 'fixture'},
                    'tags': {name: [] for name in motion_capabilities.TAG_FIELDS}}
         profile['tags']['actions'] = ['层叠出现']
         profile['tags']['relations'] = ['并列要点']

@@ -120,6 +120,46 @@ class CoverDirectionTests(unittest.TestCase):
         return preview
 
     def test_punk_full_preview_publishes_exact_pixels_and_never_calls_provider(self):
+        self._assert_punk_full_preview_publication()
+
+    def test_rejected_candidate_can_publish_first_punk_preview_into_initial_empty_directory(self):
+        self._assert_punk_full_preview_publication(rejected_candidate=True)
+
+    def test_first_cover_revision_preserves_unknown_or_symlink_targets(self):
+        self._prepare()
+        state.approve(self.job, "cover_direction")
+        state.revise(self.job, "cover", "候选未采用")
+        target = self.job.job_dir / "04-cover"
+        external = self.root / "external-cover"
+        external.mkdir()
+        (external / "owner.txt").write_bytes(b"external-owner")
+        for target_kind in ("file", "nonempty-directory", "symlink"):
+            with self.subTest(target_kind=target_kind):
+                if target_kind == "file":
+                    target.write_bytes(b"external-owner")
+                elif target_kind == "nonempty-directory":
+                    target.mkdir()
+                    (target / "owner.txt").write_bytes(b"external-owner")
+                else:
+                    target.symlink_to(external, target_is_directory=True)
+                workflow_before = (self.job.job_dir / "workflow.json").read_bytes()
+                with self.assertRaises(cover.CoverError):
+                    cover._publish(self.job, self.job.job_dir / "unused-stage", [])
+                self.assertEqual((self.job.job_dir / "workflow.json").read_bytes(), workflow_before)
+                if target_kind == "file":
+                    self.assertEqual(target.read_bytes(), b"external-owner")
+                    target.unlink()
+                else:
+                    self.assertEqual((target / "owner.txt").read_bytes(), b"external-owner")
+                    if target_kind == "symlink":
+                        self.assertTrue(target.is_symlink())
+                        target.unlink()
+                    else:
+                        (target / "owner.txt").unlink()
+                        target.rmdir()
+        self.assertEqual((external / "owner.txt").read_bytes(), b"external-owner")
+
+    def _assert_punk_full_preview_publication(self, *, rejected_candidate=False):
         direction = self._punk_material()
         preview = self._punk_direction_preview()
         with mock.patch.object(
@@ -134,6 +174,11 @@ class CoverDirectionTests(unittest.TestCase):
             "interleaved-title-editorial-poster",
         )
         state.approve(self.job, "cover_direction")
+        if rejected_candidate:
+            (self.job.job_dir / "04-cover").mkdir()
+            state.revise(self.job, "cover", "候选未采用，等待用户确认完整封面")
+            self.assertEqual(self.job.stages["cover"]["status"], "needs_revision")
+            self.assertEqual(self.job.stages["cover"]["lineage"], [])
         approved = self.job.job_dir / "punk-assets" / "punk-cover" / "make-your-own" / "cover-source-normalized-1080x1920.png"
         approved.parent.mkdir(parents=True, exist_ok=True)
         Image.new("RGB", (1080, 1920), "#D97832").save(approved, format="PNG")

@@ -30,6 +30,7 @@ def _items(root, director, treatment):
 def _identity(row, typ, tags):
     payload={k:row[k] for k in ("row_id","quote","start_word","end_word","semantic","visual_task")}
     payload["type"]=typ; payload["tags"]=tags
+    payload["matching_policy_version"]=motion_capabilities.MATCHING_POLICY_VERSION
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
 
 def match_once(project_root, director, treatment):
@@ -39,12 +40,13 @@ def match_once(project_root, director, treatment):
         rid=row["row_id"]; use="aroll_overlay" if typ=="贴片" else "broll"
         sid=_identity(row,typ,tags)
         old=cache.get(rid)
-        if isinstance(old,dict) and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
+        if isinstance(old,dict) and old.get("matching_policy_version")==motion_capabilities.MATCHING_POLICY_VERSION and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
             _validate_entry(old, rows, use, tags)
             new[rid]=old; continue
         matches=motion_capabilities.search_capabilities(Path(project_root), " ".join(tags), use=use, catalog=rows)
-        frozen = [{k:m.get(k) for k in ("candidate_id","matched_dimensions","retrieval_score")} for m in matches]
+        frozen = [{k:m.get(k) for k in ("candidate_id","matched_dimensions","retrieval_score","recall_basis")} for m in matches]
         new[rid]={"catalog_sha256":csha,"semantic_sha256":sid,"use":use,"tags":tags,
+                  "matching_policy_version":motion_capabilities.MATCHING_POLICY_VERSION,
                   "matches":frozen,"matches_sha256":contract_artifacts.sha256_json(frozen)}
     out["motion_matches"]=new; return out
 
@@ -55,7 +57,7 @@ def validate_matches(project_root,director,treatment):
     out={}
     for row,typ,tags in items:
         rid=row["row_id"]; e=cache[rid]; use="aroll_overlay" if typ=="贴片" else "broll"
-        if e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
+        if e.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
         _validate_entry(e, rows, use, tags)
         raw=[]
         for m in e.get("matches",[]):
@@ -183,13 +185,15 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
     if value is None or value == "":
         raise ValueError("constraint capability reference must belong to the current candidate")
 
-def validate_design_handoffs(director, treatment, job_dir):
+def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()):
     """Pass the selected design unchanged to the native creation Skill."""
     selection = treatment.get("skill_selection", {})
     for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
         if assignment.get("skill_id") not in {"openfilm-motion-graphics", "lemo-opuscar"}:
             continue
         design = _design_plan(assignment)
+        if (assignment["segment_id"], assignment["component_id"]) in planned_targets:
+            continue  # The validated proposal freezes design; realization must bind its actual native scene.
         segment = next(s for s in director["segments"] if s["segment_id"] == assignment["segment_id"])
         brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, assignment["component_id"])
         handoff = brief.get("creative_handoff", {}) if isinstance(brief, dict) else {}
@@ -233,19 +237,21 @@ def validate_design_handoffs(director, treatment, job_dir):
             raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")
 
 def _validate_entry(entry, rows, use, tags):
-    if not isinstance(entry, dict) or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")
+    if not isinstance(entry, dict) or entry.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")
     if entry.get("matches_sha256") != contract_artifacts.sha256_json(entry["matches"]):
         raise ValueError("complete motion match cache changed")
     catalog={r.get("candidate_id"):r for r in rows}; seen=set()
     for evidence in entry["matches"]:
-        if not isinstance(evidence, dict) or set(evidence)-{"candidate_id","matched_dimensions","retrieval_score"}: raise ValueError("invalid cached match evidence")
+        if not isinstance(evidence, dict) or set(evidence)!={"candidate_id","matched_dimensions","retrieval_score","recall_basis"}: raise ValueError("invalid cached match evidence")
         cid=evidence.get("candidate_id")
         if not isinstance(cid,str) or cid in seen or cid not in catalog: raise ValueError("cached candidate is missing or duplicated")
         seen.add(cid); profile=catalog[cid].get("capability",{}); uses=profile.get("uses",[])
         if use not in uses and not (use=="broll" and "design" in uses): raise ValueError("cached candidate use is invalid")
-        expected=motion_capabilities._match_evidence(profile," ".join(tags))
-        if not expected["has_motion_basis"]:
-            raise ValueError("cached candidate has no semantic motion match")
+        expected=motion_capabilities._recall_evidence(profile," ".join(tags))
+        if expected["recall_basis"] is None:
+            raise ValueError("cached candidate has no reviewed recall basis")
+        if evidence["recall_basis"]!=expected["recall_basis"]:
+            raise ValueError("cached recall basis changed")
         if evidence.get("matched_dimensions") != expected.get("matched_dimensions"):
             raise ValueError("cached matched dimensions changed")
         score=sum(len(v)*(4 if k in {"actions","relations"} else 1) for k,v in expected["matched_dimensions"].items())

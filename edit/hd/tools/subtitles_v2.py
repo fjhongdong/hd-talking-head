@@ -247,9 +247,15 @@ def subtitle_layout(shot_mode: str, composition: Mapping[str, Any]) -> tuple[dic
                         or face["x"] + face["width"] <= legacy["x"]
                         or legacy["y"] + legacy["height"] <= face["y"]
                         or face["y"] + face["height"] <= legacy["y"])
+        # A 14-glyph cue needs two seven-glyph lines at 48px plus 2px
+        # tracking and the actual card's 84px padding / 2px border.
+        left_width = min(640, face["x"] - 80 - 8)
+        left_fits = left_width >= 7 * (48 + 2) + 84 + 2
         zones = {
             "face": face,
-            "subtitle": ({"x": 80, "y": face["y"] + face["height"] + 8 - 32,
+            "subtitle": ({"x": 80, "y": 1430, "width": left_width, "height": 270}
+                         if overlaps and left_fits else
+                         {"x": 80, "y": face["y"] + face["height"] + 8 - 32,
                            "width": 640,
                            "height": 1784 - (face["y"] + face["height"] + 8) + 40}
                          if overlaps else {"x": 80, "y": 1430, "width": 640, "height": 270}),

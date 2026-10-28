@@ -304,7 +304,7 @@ class SelectedPreparationTests(unittest.TestCase):
             pp.preparation_selection(manifest, {'typo'})
 
     def test_draft_binding_prepares_before_table_and_failure_does_not_publish(self):
-        draft = {'segments': [{'visual_strategy': {'components': [
+        draft = {'segments': [{'segment_id': 'seg-001', 'visual_strategy': {'components': [
             {'kind': 'code_generated', 'component_id': 'v'}]},
             'bindings': {'v': {'dependency_id': 'doudou-remotion-whiteboard', 'entrypoint': 'scripts/render_doudou.mjs',
                                'producer_version': '2.0.0', 'primary_renderer': 'Remotion'}}}]}

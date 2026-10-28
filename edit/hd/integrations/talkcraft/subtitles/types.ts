@@ -19,9 +19,8 @@ export type SubtitleCue = {
   text: string;
   words: SubtitleWord[];
   emphasis: SubtitleEmphasis | null;
-  placement: 'standard' | 'above_avatar';
   bottom: number;
-};
+} & ({placement: 'standard'} | {placement: 'above_avatar'; width: number});
 
 export type SubtitleInput = {
   schema_version: 2;

@@ -23,6 +23,29 @@ class MotionReadabilityTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[target]}],[],root=root)
 
+    def test_direction_reading_window_excludes_avatar_transition_frames(self):
+        import hashlib, json
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); (root / "job-context.json").write_text("{}")
+            source = root / "x.json"; source.write_text(json.dumps({"text":"小字"}))
+            ref = {**self.ref, "sha256":hashlib.sha256(source.read_bytes()).hexdigest()}
+            job = SimpleNamespace(root=root, job_dir=root)
+            director = {"segments":[{"segment_id":"s", "start":17.041666666666668,
+                "end":25.75, "visual_strategy":{"components":[{"component_id":"c"}],
+                "composition":{"presenter_mode":"bottom_window", "avatar":{
+                    "entrance":{"kind":"aroll_to_avatar", "frames":12},
+                    "exit":{"kind":"avatar_to_aroll", "frames":8}}}}}]}
+            target = {**self.target, "content_ref":ref,
+                      "windows":[{"start":7.25, "end":208/24}]}
+            treatment = {"motion_readability":[{"segment_id":"s", "component_id":"c", "targets":[target]}]}
+            with self.assertRaisesRegex(ValueError, "avatar transition"):
+                m.validate_direction_contract(job, director, treatment)
+            target["windows"][0]["end"] = 201/24
+            m.validate_direction_contract(job, director, treatment)
+            target["windows"] = [{"start":0, "end":1.75}]
+            with self.assertRaisesRegex(ValueError, "avatar transition"):
+                m.validate_direction_contract(job, director, treatment)
+
     def test_times_and_small_vs_large(self):
         out=validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[self.target]}],[])
         self.assertGreaterEqual(len(sample_times(out[0])),3)

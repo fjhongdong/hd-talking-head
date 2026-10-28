@@ -34,6 +34,93 @@ class CacheTests(unittest.TestCase):
             "semantic": text, "visual_task": text, "components": [{"segment_id": sid, "component_id": "c"}]})
         self.treatment["motion_queries"].append({"segment_id": sid, "component_id": "c", "tags": tags})
 
+    def test_business_questions_recall_complete_authors_without_art_keywords(self):
+        catalog = motion.load_catalog(ROOT)
+        expected = {"gbro-collage-broll:gbro-collage-broll/design",
+                    "paper-collage-hyperframes:paper-collage-ad/hyperframes",
+                    "lemo-opuscar:lemo-opuscar/midcentury-toon",
+                    "openfilm-motion-graphics:motion-graphics",
+                    "muyang-flat-animation:muyang-flat-animation/design"}
+        fixed = {"whiteboard-video:whiteboard-svg-blocks",
+                 "doudou-remotion-whiteboard:doudou-reviewed-scene",
+                 "paper-collage-ad:paper-collage-layer-animation",
+                 "video-talkcraft:line-chart-story-draw"}
+        for quote in ("临期货先撤哪排？", "冷柜不制冷先保哪批？", "收银堵了怎么分流？"):
+            with self.subTest(quote=quote):
+                matches = motion.search_capabilities(ROOT, quote, use="broll", catalog=catalog)
+                ids = {r["candidate_id"] for r in matches}
+                self.assertTrue(expected <= ids, sorted(expected - ids))
+                self.assertFalse(fixed & ids)
+                for row in matches:
+                    self.assertEqual(row["recall_basis"], "full_scene_authoring")
+                    self.assertFalse(row["has_motion_basis"])
+                    self.assertTrue(row["semantic_review_required"])
+
+    def test_authoring_recall_and_cache_use_the_same_evidence(self):
+        self.director = {"segments": []}
+        self.treatment = {"semantic_lists": {"overlay": [], "broll": []}, "motion_queries": []}
+        self.add_item("broll", "冷柜不制冷先保哪批？", ["冷柜", "失冷", "待决问题"])
+        direct = motion.search_capabilities(ROOT, "冷柜 失冷 待决问题", use="broll")
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        context = cache.validate_matches(ROOT, self.director, first)
+        evidence = context[("s0", "c")]["matches"]
+        fields = ("candidate_id", "matched_dimensions", "retrieval_score", "recall_basis")
+        self.assertEqual([m["evidence"] for m in evidence],
+                         [{k: row[k] for k in fields} for row in direct])
+        self.assertTrue(evidence)
+        altered = copy.deepcopy(first)
+        altered["motion_matches"]["r0"]["matches"][0]["recall_basis"] = "semantic_motion"
+        altered["motion_matches"]["r0"]["matches_sha256"] = motion.contract_artifacts.sha256_json(
+            altered["motion_matches"]["r0"]["matches"])
+        with self.assertRaisesRegex(ValueError, "recall basis"):
+            cache.validate_matches(ROOT, self.director, altered)
+
+    def test_matching_policy_change_invalidates_old_draft_cache(self):
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        original = copy.deepcopy(first)
+        version = first["motion_matches"]["r0"]["matching_policy_version"]
+        with patch.object(motion, "MATCHING_POLICY_VERSION", version + 1), \
+             patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
+            with self.assertRaisesRegex(ValueError, "identity changed"):
+                cache.validate_matches(ROOT, self.director, first)
+            updated = cache.match_once(ROOT, self.director, first)
+            self.assertEqual(search.call_count, 2)
+            cache.validate_matches(ROOT, self.director, updated)
+            self.assertTrue(all(e["matching_policy_version"] == version + 1
+                                for e in updated["motion_matches"].values()))
+        self.assertEqual(first, original)
+
+    def test_content_scope_requires_current_evidence_and_preserves_fixed_boundaries(self):
+        index = motion.contract_artifacts.read_json_artifact(ROOT / motion.INDEX)
+        read = motion.contract_artifacts.read_json_artifact
+        for case in ("mode", "evidence", "fixed_component", "alpha_use"):
+            altered = copy.deepcopy(index)
+            target = next(r for r in altered["profiles"]
+                          if r["candidate_id"] == ("overlay:pin-board" if case == "fixed_component"
+                                                  else "openfilm-motion-graphics:motion-graphics"))
+            if case == "mode":
+                target["content_scope"]["mode"] = "anything"
+            elif case == "evidence":
+                target["content_scope"]["evidence_ref"] = "unreviewed.md"
+            elif case == "fixed_component":
+                target["content_scope"]["mode"] = "full_scene"
+            else:
+                target["uses"].append("aroll_overlay")
+            with self.subTest(case=case), patch.object(motion.contract_artifacts, "read_json_artifact",
+                    side_effect=lambda path: altered if Path(path) == ROOT / motion.INDEX else read(path)):
+                with self.assertRaisesRegex(ValueError, "scope"):
+                    motion.load_profiles(ROOT)
+        profiles = motion.load_profiles(ROOT)
+        self.assertEqual(sum(cid.startswith("lemo-opuscar:") and
+                             p["content_scope"]["mode"] == "full_scene" for cid, p in profiles.items()), 59)
+        for cid in ("whiteboard-video:whiteboard-svg-blocks",
+                    "doudou-remotion-whiteboard:doudou-reviewed-scene",
+                    "paper-collage-ad:paper-collage-layer-animation",
+                    "video-talkcraft:line-chart-story-draw"):
+            self.assertEqual(profiles[cid]["content_scope"]["mode"], "fixed_action")
+        self.assertTrue(any("真实本地纸素材" in v for v in
+                            profiles["paper-collage-hyperframes:paper-collage-ad/hyperframes"]["limitations"]))
+
     def test_unchanged_and_new_items_match_only_once(self):
         before = copy.deepcopy(self.treatment)
         with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
@@ -224,7 +311,7 @@ class CacheTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 cache._constraint_refs(review,semantic,candidate,beat,job_dir=root)
 
-    def test_explicit_wake_opening_still_requires_semantic_motion_match(self):
+    def test_explicit_wake_opening_does_not_forge_motion_evidence(self):
         wake = "lemo-wake:wake"
         self.treatment["skill_selection"] = {"opening": {
             "segment_id": "s1", "component_id": "c", "candidate_id": wake}}
@@ -233,7 +320,9 @@ class CacheTests(unittest.TestCase):
             first = cache.match_once(ROOT, self.director, self.treatment)
             self.assertEqual(search.call_count, 2)
         matches = first["motion_matches"]["r1"]["matches"]
-        self.assertNotIn(wake, [m["candidate_id"] for m in matches])
+        wake_match = next(m for m in matches if m["candidate_id"] == wake)
+        self.assertEqual(wake_match["recall_basis"], "full_scene_authoring")
+        self.assertEqual(wake_match["matched_dimensions"]["actions"], [])
         cache.validate_matches(ROOT, self.director, first)
         self.assertEqual(cache.match_once(ROOT, self.director, first), first)
 
@@ -243,7 +332,10 @@ class CacheTests(unittest.TestCase):
         with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
             updated = cache.match_once(ROOT, self.director, first)
             self.assertEqual(search.call_count, 1)
-        self.assertEqual([m["candidate_id"] for m in updated["motion_matches"]["r1"]["matches"]], [wake])
+        wake_match = next(m for m in updated["motion_matches"]["r1"]["matches"]
+                          if m["candidate_id"] == wake)
+        self.assertEqual(wake_match["recall_basis"], "semantic_motion")
+        self.assertEqual(wake_match["matched_dimensions"]["actions"], ["唤醒"])
         cache.validate_matches(ROOT, self.director, updated)
         self.assertEqual(updated["motion_matches"]["r0"], first["motion_matches"]["r0"])
 

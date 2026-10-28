@@ -9,6 +9,14 @@ const GOLD = C.gold;
 const BORDER = C.line;
 const CARD = 'rgba(7, 11, 20, 0.72)';
 
+export const SUBTITLE_TEXT_STYLE = {
+  fontFamily: FONT.cn,
+  fontSize: 48,
+  fontWeight: 600,
+  letterSpacing: 2,
+};
+export const SUBTITLE_CARD_METRICS = {paddingX: 42, borderWidth: 1};
+
 const utf16Slice = (text: string, start: number, end: number) => text.slice(start, end);
 
 const emphasisRange = (cue: SubtitleCue): SubtitleEmphasis | null => cue.emphasis;
@@ -22,6 +30,7 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
 
   const emphasis = emphasisRange(cue);
   const narrow = cue.placement === 'above_avatar';
+  const cardWidth = cue.placement === 'above_avatar' ? cue.width : undefined;
   const units: {start: number; end: number}[] = narrow
     ? lineUnits(cue.text, emphasis)
     : [{start: 0, end: cue.text.length}];
@@ -41,16 +50,13 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
         marginBottom: cue.bottom,
         marginLeft: cue.placement === 'above_avatar' ? 80 : 0,
         boxSizing: 'border-box',
-        width: cue.placement === 'above_avatar' ? 640 : undefined,
-        padding: '14px 42px',
+        width: cardWidth,
+        padding: `14px ${SUBTITLE_CARD_METRICS.paddingX}px`,
         borderRadius: 14,
         background: CARD,
-        border: `1px solid ${BORDER}`,
-        fontFamily: FONT.cn,
-        fontSize: 48,
-        fontWeight: 600,
-        letterSpacing: 2,
-        maxWidth: cue.placement === 'above_avatar' ? 640 : '90%',
+        border: `${SUBTITLE_CARD_METRICS.borderWidth}px solid ${BORDER}`,
+        ...SUBTITLE_TEXT_STYLE,
+        maxWidth: narrow ? cardWidth : '90%',
         textAlign: 'center',
         textWrap: cue.placement === 'above_avatar' ? 'balance' : undefined,
         color: TEXT,

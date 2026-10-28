@@ -68,7 +68,11 @@ def cue_input(cue: Mapping[str, Any], chunk: list[dict[str, object]], *, placeme
     else:
         if "box" not in cue or "bottom" not in cue:
             raise TalkCraftSubtitleError("B-roll subtitle box is required")
+        width = cue["box"].get("width")
+        if type(width) is not int or not 436 <= width <= 640:
+            raise TalkCraftSubtitleError("B-roll subtitle width is invalid")
         result["bottom"] = cue["bottom"]
+        result["width"] = width
     return result
 
 
@@ -139,6 +143,12 @@ def validate_binding(payload: Mapping[str, Any]) -> None:
             expected_bottom = 1920 - (cue["box"]["y"] + cue["box"]["height"])
         if rendered.get("bottom") != expected_bottom:
             raise TalkCraftSubtitleError("TalkCraft subtitle bottom changed")
+        if expected_placement == "above_avatar":
+            width = rendered.get("width")
+            if type(width) is not int or not 436 <= width <= 640 or width != cue["box"]["width"]:
+                raise TalkCraftSubtitleError("TalkCraft subtitle width changed")
+        elif "width" in rendered:
+            raise TalkCraftSubtitleError("TalkCraft standard subtitle width changed")
 
 
 def render(data: Mapping[str, Any], descriptor: int) -> None:

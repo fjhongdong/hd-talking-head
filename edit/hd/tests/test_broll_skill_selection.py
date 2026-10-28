@@ -238,10 +238,11 @@ class BrollSkillSelectionTest(unittest.TestCase):
         from edit.hd.tools import motion_capabilities as motion
 
         catalog = motion.load_catalog(ROOT)
+        fixed = [r for r in catalog if r["capability"]["content_scope"]["mode"] == "fixed_action"]
         self.assertEqual(motion.search_capabilities(ROOT,
-            "完全不相关的海边日落宠物散步", use="broll", catalog=catalog), [])
+            "完全不相关的海边日落宠物散步", use="broll", catalog=fixed), [])
         self.assertEqual(motion.search_capabilities(ROOT,
-            "精致 浅暖色 人物", use="broll", catalog=catalog), [])
+            "精致 浅暖色 人物", use="broll", catalog=fixed), [])
         matches = motion.search_capabilities(ROOT, "来源 汇聚 多到一", use="broll", catalog=catalog)
         converge = next(row for row in matches if row["candidate_id"].endswith("/source-converge.tsx"))
         self.assertIn("汇聚", converge["matched_dimensions"]["actions"])

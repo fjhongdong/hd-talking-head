@@ -27,6 +27,8 @@ python3 scripts/paper_hyperframes_adapter.py \
 
 同名 Python 接口为 `authoring_context(project_root, *, output_directory, source_binding, composition, template_request, transcript, semantic_goal, assets, speech, word_anchors, authorization, parent_subtitle_layout=None)`。它返回可执行的 `execute_native_skill` 动作、完整 `SKILL.md` 路径、适用原生参考文件与摘要、原生 preflight 命令、Route B 和必要输入。当前宿主读取并执行这个动作。创意、构图、纸片编排和 GSAP 由完整原生 Skill 自主决定；父级不提供模板化动画代码，不规定额外的导演字段。
 
+本行必要位图尚待生成时，先用父级既有 `generation_plan.steps` 和真实 Route B 执行身份报整表，不提前构造假 assets 或 brief。整表确认并取得本行真实位图后，按 `prepare_template_inputs` 把实际路径交给此 `authoring_context`；它仍完整核验位图、原话、时钟与授权，完成的真实 brief 和输出再走原有验收。
+
 上游自身的脚本、故事板、风格等确认门沿用既有用户批准，不重复请求同一批准。新语义或新事实仍走正常确认。短时无声 B-roll 的时长和画幅来自批准片段。有父级口播时，原生作者读取本段真实音频、局部词时码和正式字幕区域，按原话与词锚创作；交付仍为 silent 视频，原口播、唯一字幕及整片混音由父级合成，原生任务不生成新声音。独立无声样片的 `speech:null / word_anchors:[] / parent_subtitle_layout:null` 不证明有声 Job 能力。
 
 ## 结果冻结与执行

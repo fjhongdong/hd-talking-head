@@ -327,6 +327,199 @@ class VisualConfirmationTests(unittest.TestCase):
     def test_uploaded_image_and_normalized_video_reach_realized_template(self):
         self._selected_generation_flow("upload")
 
+    def _review_creator(self, segment, treatment, candidate_id):
+        """Synthetic creative judgement; matching and assignment remain real."""
+        from edit.hd.tools import motion_match_cache, motion_capabilities, broll_skill_selection
+        director = {"schema_version": 3, "segments": [segment]}
+        treatment["skill_selection"]["fixed_context"] = []
+        treatment = motion_match_cache.match_once(_env.PROJECT, director, treatment)
+        catalog = {r["candidate_id"]: r for r in motion_capabilities.load_catalog(_env.PROJECT)}
+        row = treatment["semantic_lists"]["broll"][0]
+        candidates = []
+        for match in treatment["motion_matches"][row["row_id"]]["matches"]:
+            cid = match["candidate_id"]
+            candidates.append({"candidate_id": cid, "fit": "preferred" if cid == candidate_id else "equivalent",
+                "reason": "Synthetic candidate review for the phase-boundary fixture",
+                "visual_pattern": "blue-scene", "design_plan": dict.fromkeys(
+                    ("composition", "typography", "finish", "focus"), "Synthetic blue scene design")})
+        eligible = {catalog[c["candidate_id"]]["skill_id"] for c in candidates}
+        beat = {"segment_id": segment["segment_id"], "component_id": "component-1",
+            "semantic_row_id": row["row_id"], "start": segment["start"], "end": segment["end"],
+            "transcript": row["quote"], "semantic_goal": row["semantic"], "required_change": row["visual_task"],
+            "intent_statement": segment["visual_intent"]["statement"],
+            "component_brief": segment["visual_strategy"]["components"][0]["brief"],
+            "binding_snapshot": copy.deepcopy(segment["bindings"]["component-1"]), "candidates": candidates,
+            "skill_reviews": {sid: {"fit": "equivalent" if sid in eligible else "unsuitable",
+                "reason": "Synthetic full-pool judgement for this fixture"}
+                for sid in {r["skill_id"] for r in broll_skill_selection.discover_candidates(_env.PROJECT)}}}
+        treatment["skill_selection"]["beats"] = [beat]
+        treatment["skill_selection"] = broll_skill_selection.assign_skills(_env.PROJECT, treatment["skill_selection"])
+        self.assertEqual(treatment["skill_selection"]["assignments"][0]["candidate_id"], candidate_id)
+        return treatment
+
+    def test_design_final_video_requires_its_own_image_input(self):
+        config = {"schema_version": 1, "generation_enabled": True, "max_concurrency": 1,
+            "providers": [{"purpose": purpose, "provider": "fixture", "model": purpose + "-model",
+                "endpoint_id": "fixture." + purpose, "connection_status": "verified",
+                "quota_status": "available", "reference_images": True, "native_9_16": True,
+                "silent_output": True} for purpose in ("image", "video")]}
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/provider-config.json", config)
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/generation-channels.json",
+            {"schema_version": 1, **{purpose: {"model_binding": {"mode": "fixed"},
+                "reference_mode": "local_path"} for purpose in ("image", "video")}})
+        segment = avatar_profile.plan_avatar_policy([fixture_api.draft_segment(("ai_generated",))])["segments"][0]
+        segment["bindings"]["component-1"] = {"provider": "fixture", "model": "video-model", "endpoint_id": "fixture.video"}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["motion_queries"][0]["tags"] = ["蓝色场景"]
+        treatment = self._review_creator(segment, treatment,
+            "muyang-flat-animation:muyang-flat-animation/design")
+        director = {"schema_version": 3, "segments": [segment]}
+        def step(sid, purpose, arguments, depends_on=()):
+            return {"id": sid, "purpose": purpose, "segment_id": "seg-001", "component_id": "component-1",
+                    "arguments": arguments, "depends_on": list(depends_on)}
+        image = step("image", "image", {"prompt": "a blue scene"})
+        earlier = step("earlier-video", "video", {"reference": {"$step": "image"}}, ["image"])
+        frozen = self.job.job_dir / "frozen.png"
+        frozen.write_bytes(b"synthetic frozen image input")
+        frozen_ref = vc._record(self.job.job_dir, frozen)
+        for case in ("unrelated_local_image", "ordering_only", "video_ancestor"):
+            first = copy.deepcopy(earlier)
+            final = step("final-video", "video", {"prompt": "text-only final"}, ["earlier-video"])
+            if case == "unrelated_local_image":
+                first = step("earlier-video", "video", {"reference": str(frozen)})
+                first["input_files"] = [frozen_ref]
+            elif case == "video_ancestor":
+                final["arguments"]["reference"] = {"$step": "earlier-video"}
+            treatment["generation_plan"] = {"steps": [image, first, final]}
+            with self.subTest(case=case), self.assertRaisesRegex(ValueError, "needs its image input"):
+                vc.planned_generation_targets(_env.PROJECT, director, treatment, job_dir=self.job.job_dir)
+        for final in (step("video", "video", {"reference": {"$step": "image"}}, ["image"]),
+                      {**step("video", "video", {"reference": str(frozen)}), "input_files": [frozen_ref]}):
+            treatment["generation_plan"] = {"steps": [image, final]}
+            self.assertEqual(vc.planned_generation_targets(_env.PROJECT, director, treatment,
+                job_dir=self.job.job_dir), {("seg-001", "component-1")})
+
+    def test_native_paper_future_image_is_confirmed_before_authoring(self):
+        from edit.hd.tools import motion_capabilities
+        config = {"schema_version": 1, "generation_enabled": True, "max_concurrency": 1,
+            "providers": [{"purpose": "image", "provider": "fixture", "model": "image-model",
+                "endpoint_id": "fixture.image", "connection_status": "verified", "quota_status": "available",
+                "reference_images": True, "native_9_16": True, "silent_output": True}]}
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/provider-config.json", config)
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/generation-channels.json",
+            {"schema_version": 1, "image": {"model_binding": {"mode": "fixed"}, "reference_mode": "local_path"}})
+        segment = avatar_profile.plan_avatar_policy([fixture_api.draft_segment(("code_generated",))])["segments"][0]
+        cid = "paper-collage-hyperframes:paper-collage-ad/hyperframes"
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT) if r["candidate_id"] == cid)
+        segment["bindings"]["component-1"] = {**{k: candidate[k] for k in
+            ("dependency_id", "entrypoint", "producer_version", "template_id")},
+            "producer_type": "dependency", "primary_renderer": "HyperFrames"}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["motion_queries"][0]["tags"] = ["蓝色场景"]
+        treatment["generation_plan"] = {"steps": [{"id": "paper-image", "purpose": "image",
+            "segment_id": "seg-001", "component_id": "component-1", "arguments": {"prompt": "blue paper assets"}}]}
+        treatment["motion_readability"] = [{"segment_id": "seg-001", "component_id": "component-1",
+            "targets": [], "no_critical_text_reason": "Synthetic scene has no critical text"}]
+        treatment = self._review_creator(segment, treatment, cid)
+        self.fixture._write_brief(segment)
+        artifacts.write_json_artifact(self.treatment, treatment)
+        director = {"schema_version": 3, "segments": [segment]}
+        for case in ("missing_step", "wrong_target", "wrong_route", "invented_image", "unfrozen_reference", "fixed_action"):
+            invalid = copy.deepcopy(treatment)
+            changed = copy.deepcopy(director)
+            if case == "missing_step": invalid["generation_plan"]["steps"] = []
+            elif case == "wrong_target": invalid["generation_plan"]["steps"][0]["component_id"] = "missing"
+            elif case == "wrong_route": changed["segments"][0]["bindings"]["component-1"]["template_id"] = "wrong"
+            elif case == "invented_image": invalid["scenes"] = [{"segment_id": "seg-001", "component_id": "component-1", "brief_path": "missing.png"}]
+            elif case == "unfrozen_reference": invalid["generation_plan"]["steps"][0]["arguments"]["referenced_image_paths"] = ["/missing.png"]
+            else: invalid["skill_selection"]["assignments"][0]["candidate_id"] = "eian-riso-broll:focus"
+            with self.subTest(case=case):
+                if case == "missing_step":
+                    self.assertEqual(vc.planned_generation_targets(_env.PROJECT, changed, invalid, job_dir=self.job.job_dir), set())
+                    with self.assertRaisesRegex(ValueError, "missing its scene brief"):
+                        run_stage._validate_prepared_native_inputs(self.job, _env.PROJECT, changed, invalid)
+                else:
+                    with self.assertRaises(ValueError):
+                        vc.planned_generation_targets(_env.PROJECT, changed, invalid, job_dir=self.job.job_dir)
+        unconfigured = copy.deepcopy(config)
+        unconfigured["generation_enabled"] = False
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/provider-config.json", unconfigured)
+        with self.assertRaisesRegex(ValueError, "selected channel"):
+            vc.planned_generation_targets(_env.PROJECT, director, treatment, job_dir=self.job.job_dir)
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/provider-config.json", config)
+        damaged = copy.deepcopy(director)
+        damaged["segments"][0]["bindings"]["component-1"]["brief_sha256"] = "b" * 64
+        damaged_treatment = copy.deepcopy(treatment)
+        path = self.job.job_dir / "damaged-native.json"
+        path.write_text("{}")
+        damaged_treatment["scenes"] = [{"segment_id": "seg-001", "component_id": "component-1", "brief_path": path.name}]
+        self.assertEqual(vc.planned_generation_targets(_env.PROJECT, damaged, damaged_treatment, job_dir=self.job.job_dir), set())
+        with self.assertRaisesRegex(ValueError, "brief differs"):
+            run_stage._validate_prepared_native_inputs(self.job, _env.PROJECT, damaged, damaged_treatment)
+        unrelated = copy.deepcopy(director)
+        neighbor = copy.deepcopy(segment)
+        neighbor["segment_id"] = "seg-002"
+        unrelated["segments"].append(neighbor)
+        with self.assertRaisesRegex(ValueError, "missing its scene brief"):
+            run_stage._validate_prepared_native_inputs(self.job, _env.PROJECT, unrelated, treatment,
+                planned={("seg-001", "component-1")})
+        with mock.patch("edit.hd.tools.motion_capabilities._approved_speech",
+                return_value=[{"text": "实际剪后口播", "start": 0.0, "end": 3.0}]), \
+             mock.patch.object(run_stage, "prepare_visual_dependencies"):
+            result = run_stage.run_visual_direction(self.job.job_dir, _env.PROJECT,
+                self.fixture.brief, self.treatment)
+        self.job = state.load_job(self.job.job_dir)
+        self.assertIn("confirmation_source", result)
+        self.assertFalse((self.job.job_dir / "generated-media").exists())
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "not been confirmed"):
+            vc.generation_actions(self.job)
+        self.confirm()
+        from edit.hd.tools import generation_channels, generation_queue
+        from PIL import Image
+        import paper_hyperframes_adapter as paper
+        image = self.job.job_dir / "actual-paper.png"
+        Image.new("RGB", (128, 128), "blue").save(image)
+        with mock.patch.object(generation_queue, "_approved", return_value=(self.job.job_id, "fixture-config", config)):
+            action = vc.generation_actions(self.job)[0]
+            generation_channels.record_result(self.job.job_dir, action, {"status": "completed", "artifacts": [{"type": "image", "path": str(image)}]})
+            pending = run_stage.resume_visual_direction(self.job, _env.PROJECT)
+        self.assertEqual(pending["actions"][0]["action"], "prepare_template_inputs")
+        output = pending["actions"][0]["completed_generations"][0]["completion_response"]["artifacts"][0]
+        local = Path(output["path"])
+        local = local if local.is_absolute() else self.job.job_dir / local
+        action = paper.authoring_context(_env.PROJECT, output_directory=self.job.job_dir / "paper-authoring",
+            source_binding={"aroll_sha256": artifacts.sha256_file(self.job.job_dir / "06-edit-structure/edited-aroll.mp4"),
+                "segment_id": "seg-001", "start": 0.0, "end": 3.0},
+            composition={"width":1080,"height":1920,"fps":24,"frames":72,"alpha":False},
+            template_request={"semantic_family":"explanation","information_units":1,"numeric_values":[],"numeric_scale":"not_applicable"},
+            transcript="实际剪后口播", semantic_goal="资料解释", assets=[local], speech=None, word_anchors=[],
+            authorization={"paid_generation":False}, parent_subtitle_layout=None)
+        self.assertEqual(action["requirements"]["assets"], [{"path": str(local.resolve()), "sha256": artifacts.sha256_file(local)}])
+        with self.assertRaisesRegex(ValueError, "missing its scene brief"):
+            run_stage.resume_visual_direction(self.job, _env.PROJECT, {"realization": {
+                "director_brief": str(self.fixture.brief), "treatment": str(self.treatment),
+                "host_qa_note": "Image exists; native scene is deliberately not prepared"}})
+
+    def test_generated_image_consumption_belongs_to_its_native_component(self):
+        from PIL import Image
+        root = self.job.job_dir
+        image = root / "actual-generated.png"
+        Image.new("RGB", (64, 64), "blue").save(image)
+        digest = artifacts.sha256_file(image)
+        brief = root / "native-inputs/actual-native-brief.json"
+        artifacts.write_json_artifact(brief, {"assets": [{"job_path": image.name, "sha256": digest}]})
+        director = {"segments": [{"segment_id": "seg-001", "bindings": {"component-1": {}}},
+                                 {"segment_id": "seg-002", "bindings": {"component-1": {}}}]}
+        native = {"segment_id": "seg-002", "component_id": "component-1", "artifact": vc._record(root, brief)}
+        hashes = vc._realized_media_hashes(root, director, [], [native])
+        self.assertNotIn(digest, hashes[("seg-001", "component-1")])
+        self.assertIn(digest, hashes[("seg-002", "component-1")])
+        native["segment_id"] = "seg-001"
+        self.assertIn(digest, vc._realized_media_hashes(root, director, [], [native])[("seg-001", "component-1")])
+        brief.write_text("{}")
+        with self.assertRaisesRegex(vc.VisualConfirmationError, "evidence changed"):
+            vc._realized_media_hashes(root, director, [], [native])
+
     def _selected_generation_flow(self, reference_mode):
         from edit.hd.tools import generation_channels as channel, generation_queue as queue, startup
         import generated_media
@@ -365,9 +558,8 @@ class VisualConfirmationTests(unittest.TestCase):
             {"id": "video", "purpose": "video", "segment_id": "seg-001", "component_id": "component-1",
              "arguments": {"prompt": "animate blue scene", "reference": {"$step": "image", "output": 0}}, "depends_on": ["image"]}]}
         artifacts.write_json_artifact(self.treatment, treatment)
-        from edit.hd.tools import motion_match_cache
-        treatment = motion_match_cache.match_once(
-            _env.PROJECT, artifacts.read_json_artifact(self.fixture.brief), treatment)
+        treatment = self._review_creator(segment, treatment,
+            "muyang-flat-animation:muyang-flat-animation/design")
         artifacts.write_json_artifact(self.treatment, treatment)
         if reference_mode == "upload":
             missing_snapshot = copy.deepcopy(treatment)
@@ -380,13 +572,21 @@ class VisualConfirmationTests(unittest.TestCase):
             planned = artifacts.read_json_artifact(self.fixture.brief)
             planned["segments"][0]["bindings"]["component-1"]["generation_id"] = "video"
             artifacts.write_json_artifact(self.fixture.brief, planned)
+            invalid_identity = copy.deepcopy(treatment)
+            invalid_identity["skill_selection"]["beats"][0]["binding_snapshot"] = copy.deepcopy(
+                planned["segments"][0]["bindings"]["component-1"])
+            artifacts.write_json_artifact(self.treatment, invalid_identity)
             with self.assertRaisesRegex(vc.VisualConfirmationError, "omit completed generation identity"):
                 self.prepare()
             self.assertFalse(list((self.job.job_dir / vc.DIRECTORY).glob("*/proposal.json")))
             del planned["segments"][0]["bindings"]["component-1"]["generation_id"]
             artifacts.write_json_artifact(self.fixture.brief, planned)
             artifacts.write_json_artifact(self.treatment, treatment)
-        self.prepare(); self.confirm()
+        with mock.patch("edit.hd.tools.motion_capabilities._approved_speech",
+                return_value=[{"text": "实际剪后口播", "start": 0.0, "end": 3.0}]):
+            run_stage.run_visual_direction(self.job.job_dir, _env.PROJECT, self.fixture.brief, self.treatment)
+        self.job = state.load_job(self.job.job_dir)
+        self.confirm()
         image = self.job.job_dir / "source-image.png"
         from PIL import Image
         Image.new("RGB", (1080, 1920), "blue").save(image)
@@ -482,6 +682,7 @@ class VisualConfirmationTests(unittest.TestCase):
                 generated_media.record_from_queue(self.job, rid, segment_id="wrong-row", component_id="component-1",
                     source_binding={}, qa={}, semantic_brief={}, ffprobe_executable="ffprobe")
             segment["bindings"]["component-1"] = generated_media.prepare_binding(record)
+            treatment["skill_selection"]["beats"][0]["binding_snapshot"] = copy.deepcopy(segment["bindings"]["component-1"])
             realized_director = self.job.job_dir / "native-inputs/realized-director.json"
             artifacts.write_json_artifact(realized_director, {"schema_version": 3, "segments": [segment]})
             ref = vc._record(self.job.job_dir, record_path)

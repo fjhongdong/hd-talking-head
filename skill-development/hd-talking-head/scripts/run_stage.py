@@ -204,23 +204,22 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
         contract_artifacts.write_json_artifact(normalized, director)
         director_brief = normalized
     treatment_payload = _json(_path(job, treatment))
-    from lemo_wake_adapter import validate_selected_inputs
-    validate_selected_inputs(job, director, treatment_payload)
-    from talkcraft_skill_adapter import validate_selected_inputs as validate_talkcraft_inputs
-    validate_talkcraft_inputs(job, director, treatment_payload)
+    planned = visual_confirmation.planned_generation_targets(
+        project, director, treatment_payload, job_dir=job.job_dir)
     prepare_visual_dependencies(project, director)
-    _validate_selected_native_sources(job, director, treatment_payload)
-    _validate_selected_lemo_workflows(job, project, director, treatment_payload)
-    _validate_selected_native_parent_layouts(job, director, treatment_payload)
-    _validate_selected_hw_word_anchors(job, director, treatment_payload)
+    _validate_prepared_native_inputs(job, project, director, treatment_payload, planned=planned)
     from edit.hd.tools.motion_capabilities import check_offline_plan
     native_keys = {(s['segment_id'], cid) for s in director.get('segments', [])
                    for cid, b in s.get('bindings', {}).items() if b.get('producer_type') == 'dependency'}
-    if native_keys:
+    if native_keys or treatment_payload.get('skill_selection', {}).get('beats'):
         native_review = check_offline_plan(project, director, treatment_payload, job_dir=job.job_dir, phase="planning")
+        if native_review['failures']:
+            raise ValueError('selected native planning check failed: ' + str(native_review['failures']))
         for item in native_review['checks']:
-            if ((item['segment_id'], item['component_id']) in native_keys
-                    and item['semantic']['status'] != 'pass'):
+            key = (item['segment_id'], item['component_id'])
+            if (key in native_keys and key not in planned
+                    and (item['semantic']['status'] != 'pass'
+                         or item['native_input']['status'] != 'pass')):
                 raise ValueError('selected native semantic evidence is stale or incomplete: '
                                  + item['segment_id'] + '/' + item['component_id'])
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
@@ -228,6 +227,22 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     result = _summary(state.load_job(job_dir), 'visual_direction')
     result['confirmation_source'] = str(source.relative_to(job.job_dir))
     return result
+
+
+def _validate_prepared_native_inputs(job, project, director, treatment, *, planned=()):
+    # Only exact future-input bindings are absent from this view. Prepared
+    # bindings, even broken ones next to a planned item, retain every gate.
+    prepared = {**director, 'segments': [{**segment, 'bindings': {
+        cid: binding for cid, binding in segment.get('bindings', {}).items()
+        if (segment['segment_id'], cid) not in planned}} for segment in director['segments']]}
+    from lemo_wake_adapter import validate_selected_inputs
+    from talkcraft_skill_adapter import validate_selected_inputs as validate_talkcraft_inputs
+    validate_selected_inputs(job, prepared, treatment)
+    validate_talkcraft_inputs(job, prepared, treatment)
+    _validate_selected_native_sources(job, prepared, treatment)
+    _validate_selected_lemo_workflows(job, project, prepared, treatment)
+    _validate_selected_native_parent_layouts(job, prepared, treatment)
+    _validate_selected_hw_word_anchors(job, prepared, treatment)
 
 
 def _validate_selected_native_sources(job, director: dict, treatment: dict) -> None:
@@ -408,6 +423,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     if not isinstance(note, str) or not note.strip():
         raise ValueError('Actual generated content needs a host semantic QA note')
     confirmation.validate_realization_draft(job, _json(director), _json(treatment))
+    _validate_prepared_native_inputs(job, project, _json(director), _json(treatment))
     native_actions = pending_native_actions(job, _json(director), _json(treatment))
     if native_actions:
         return _summary(job, 'visual_direction', actions=native_actions,

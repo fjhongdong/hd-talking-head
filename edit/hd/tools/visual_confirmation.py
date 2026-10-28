@@ -142,6 +142,132 @@ def _steps(treatment):
         seen.add(step["id"])
     return steps
 
+
+def planned_generation_targets(project_root, director, treatment, *, job_dir):
+    """Validate missing inputs for exact, selected full-scene creation targets.
+
+    This is a proposal contract, never a native-input or media acceptance.
+    Prepared inputs cannot opt out by also listing generation steps.
+    """
+    steps = _steps(treatment)
+    if not steps:
+        return set()
+    from . import motion_capabilities, generation_model, generation_inputs, generation_queue, startup
+    components = {(s["segment_id"], c["component_id"]): (s, c)
+                  for s in director["segments"] for c in s["visual_strategy"]["components"]}
+    by_step = {step["id"]: step for step in steps}
+    referenced_steps = {step["id"]: set() for step in steps}
+    def references(value, step):
+        if isinstance(value, dict):
+            if "$step" in value:
+                dependency = by_step.get(value["$step"])
+                if (set(value) - {"$step", "output"} or dependency is None
+                        or dependency["id"] not in step.get("depends_on", [])
+                        or type(value.get("output", 0)) is not int or value.get("output", 0) < 0):
+                    raise VisualConfirmationError("future input must name a valid approved dependency output")
+                referenced_steps[step["id"]].add(dependency["id"])
+            else:
+                for child in value.values(): references(child, step)
+        elif isinstance(value, list):
+            for child in value: references(child, step)
+    for step in steps:
+        if (step.get("segment_id"), step.get("component_id")) not in components:
+            raise VisualConfirmationError("generation step has no visual row")
+        references(step["arguments"], step)
+    selection = treatment.get("skill_selection", {})
+    assignments = selection.get("assignments", [])
+    if not assignments:
+        return set()  # Direct generation already has its existing proposal contract.
+    catalog = {r["candidate_id"]: r for r in motion_capabilities.load_catalog(Path(project_root))}
+    scenes = {(r.get("segment_id"), r.get("component_id")): r for r in treatment.get("scenes", [])}
+    planned = set()
+    config = channels = None
+    for assignment in assignments:
+        key = (assignment["segment_id"], assignment["component_id"])
+        own_steps = [s for s in steps if (s["segment_id"], s["component_id"]) == key]
+        if not own_steps:
+            continue
+        segment, component = components[key]
+        binding = segment.get("bindings", {}).get(key[1], {})
+        if "brief_sha256" in binding or "execution_mode" in binding:
+            continue  # Existing bytes and completion identities must still pass the normal gates.
+        candidate = catalog.get(assignment.get("candidate_id"))
+        if (candidate is None or candidate["capability"]["content_scope"]["mode"] != "full_scene"
+                or candidate["status"] != "supported"
+                or component.get("kind") != ("ai_generated" if candidate["role"] == "design" else "code_generated")):
+            raise VisualConfirmationError("planned generation requires this component's selected full-scene route")
+        if any(assignment.get(k) != candidate[k] for k in ("skill_id", "template_id", "entrypoint")):
+            raise VisualConfirmationError("planned generation route differs from the selected candidate")
+        beat = next((b for b in selection.get("beats", [])
+                     if (b.get("segment_id"), b.get("component_id")) == key), None)
+        review = next((r for r in (beat or {}).get("candidates", [])
+                       if r.get("candidate_id") == candidate["candidate_id"]), None)
+        if (beat is None or beat.get("binding_snapshot") != binding or review is None
+                or review.get("fit") not in {"preferred", "equivalent"}
+                or key in scenes and set(scenes[key]) != {"segment_id", "component_id"}):
+            raise VisualConfirmationError("planned inputs need the current reviewed target, not an existing or invented brief")
+        if job_dir is None:
+            raise VisualConfirmationError("planned generation needs the current Job configuration")
+        if config is None:
+            config_path, _ = startup._config(SimpleNamespace(job_dir=Path(job_dir)))
+            config = _read(config_path)
+            channels = startup.selected_channels(config)
+        image_inputs = {}
+        for step in own_steps:
+            channel = channels.get(step["purpose"])
+            if channel is None:
+                raise VisualConfirmationError("planned generation has no selected channel for its purpose")
+            arguments = generation_model.prepare_arguments(
+                job_dir, {**channel, "purpose": step["purpose"]}, step["arguments"])
+            generation_model.request_identity(job_dir, {"purpose": step["purpose"],
+                "tool": channel["endpoint_id"], "arguments": arguments}, config)
+            generation_inputs._binding(job_dir, step["purpose"])
+            for ref in step.get("input_files", []):
+                _exact(Path(job_dir), ref)
+            local_arguments = dict(arguments)
+            if "referenced_image_paths" in arguments:
+                refs = arguments["referenced_image_paths"]
+                if not isinstance(refs, list):
+                    raise VisualConfirmationError("reference image paths must be a list")
+                # Dependency objects were checked above; actual paths retain
+                # the queue's frozen-file contract before proposal publication.
+                local_arguments["referenced_image_paths"] = [
+                    ref for ref in refs if not isinstance(ref, dict) or "$step" not in ref]
+            generation_queue._inputs(Path(job_dir), {
+                "arguments": local_arguments, "input_files": step.get("input_files", [])})
+            actual_refs = generation_inputs._references(Path(job_dir), {
+                "arguments": arguments, "input_files": step.get("input_files", [])})
+            image_inputs[step["id"]] = any(
+                Path(path).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+                for path, _ in actual_refs)
+        purposes = {s["purpose"] for s in own_steps}
+        if candidate["role"] == "design":
+            if any(k in binding for k in ("generation_id", "prompt_sha256", "sha256")):
+                raise VisualConfirmationError("planned AI binding must omit completed generation identity")
+            final = own_steps[-1]
+            # Only arguments explicitly referenced by this request reach it;
+            # depends_on and an earlier video's image inputs do not transfer images.
+            image_reference = image_inputs[final["id"]] or any(
+                by_step[dep]["purpose"] == "image" for dep in referenced_steps[final["id"]])
+            if (final["purpose"] != "video"
+                    or not image_reference):
+                raise VisualConfirmationError("planned design needs its image input and final video step")
+            expected = channels["video"]
+            if set(binding) != {"provider", "model", "endpoint_id"} or any(
+                    binding.get(k) != expected[k] for k in expected):
+                raise VisualConfirmationError("planned design binding differs from the selected video channel")
+        else:
+            fields = {"producer_type", "dependency_id", "entrypoint", "producer_version", "template_id", "primary_renderer"}
+            if (set(binding) != fields or binding.get("producer_type") != "dependency"
+                    or not isinstance(binding.get("primary_renderer"), str) or not binding["primary_renderer"]
+                    or any(binding.get(k) != candidate[k] for k in
+                           ("dependency_id", "entrypoint", "producer_version", "template_id"))):
+                raise VisualConfirmationError("planned native binding must retain only its real execution identity")
+            if candidate["dependency_id"] in {"lemo-wake", "paper-collage-hyperframes"} and "image" not in purposes:
+                raise VisualConfirmationError("this planned native route needs its own image step")
+        planned.add(key)
+    return planned
+
 def _semantic_tags(query):
     """Return the explicit semantic retrieval labels authored for this row."""
     tags = query.get("tags", []) if isinstance(query, dict) else []
@@ -410,7 +536,8 @@ def _validate_template_choices(job, director, treatment):
                     segment["bindings"][cid].get(field) != native[field]
                     for field in ("dependency_id", "entrypoint", "producer_version", "template_id")):
                 raise VisualConfirmationError("proposed binding differs from the selected native template")
-    motion_match_cache.validate_design_handoffs(director, treatment, job.job_dir)
+    planned = planned_generation_targets(project, director, treatment, job_dir=job.job_dir)
+    motion_match_cache.validate_design_handoffs(director, treatment, job.job_dir, planned_targets=planned)
 
 def _validate_beat_sheet(treatment, director, speech):
     from .semantic_visual_plan import component_use, require_interval_coverage
@@ -703,6 +830,27 @@ def _validate_source(root, receipt_ref, *, job_id=None):
         raise VisualConfirmationError("selected generation channels changed after confirmation")
     return receipt, proposal
 
+def _realized_media_hashes(root, director, completed_records, native_inputs):
+    """Collect consumption by component, never by mere occurrence elsewhere."""
+    result = {}
+    def collect(value, hashes):
+        if isinstance(value, dict):
+            if isinstance(value.get("sha256"), str): hashes.add(value["sha256"])
+            for child in value.values(): collect(child, hashes)
+        elif isinstance(value, list):
+            for child in value: collect(child, hashes)
+    for segment in director["segments"]:
+        for cid, binding in segment.get("bindings", {}).items():
+            collect(binding, result.setdefault((segment["segment_id"], cid), set()))
+    for record in completed_records:
+        payload = _read(_exact(root, record))
+        collect(payload, result.setdefault((payload["segment_id"], payload["component_id"]), set()))
+    for native in native_inputs:
+        collect(_read(_exact(root, native["artifact"])),
+                result.setdefault((native["segment_id"], native["component_id"]), set()))
+    return result
+
+
 def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor, *, job_id=None):
     """Read-only shared check; imports neither state nor media engines."""
     root = Path(job_dir)
@@ -744,28 +892,14 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
         raise VisualConfirmationError("realization does not cover every approved generation step")
     for ref in mapping.get("completed_records", []):
         _exact(root, ref)
-    used_hashes = set()
-    def collect(value):
-        if isinstance(value, dict):
-            if isinstance(value.get("sha256"), str):
-                used_hashes.add(value["sha256"])
-            for nested in value.values():
-                collect(nested)
-        elif isinstance(value, list):
-            for nested in value:
-                collect(nested)
     _validate_native_results(root, mapping, realized["director"], realized["treatment"])
-    collect(realized)
-    for record in mapping.get("completed_records", []):
-        collect(_read(_exact(root, record)))
-    for native in mapping.get("native_inputs", []):
-        collect(_read(_exact(root, native["artifact"])))
+    hashes_by_target = _realized_media_hashes(root, realized["director"],
+        mapping.get("completed_records", []), mapping.get("native_inputs", []))
     # Generated image intermediates are consumed by later approved requests;
     # final images/videos are consumed by the native input or component binding.
     for generation in generations:
         for ref in generation["request"].get("input_files", []):
             _exact(root, ref)
-            used_hashes.add(ref["sha256"])
     record_payloads = [_read(_exact(root, ref)) for ref in mapping.get("completed_records", [])]
     for generation in generations:
         step = next(step for step in proposal["generation_steps"] if step["id"] == generation["step_id"])
@@ -775,8 +909,13 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
                 raise VisualConfirmationError("completed generation belongs to another approved visual row")
         for media in generation["media"]:
             _exact(root, media)
-            if media["sha256"] not in used_hashes:
-                raise VisualConfirmationError("a generated output is not bound to the realized template")
+            consumed_by_dependency = any(
+                step["id"] in dependent.get("depends_on", [])
+                and any(ref["sha256"] == media["sha256"] for ref in consumer["request"].get("input_files", []))
+                for consumer in generations
+                for dependent in proposal["generation_steps"] if dependent["id"] == consumer["step_id"])
+            if media["sha256"] not in hashes_by_target.get(target, set()) and not consumed_by_dependency:
+                raise VisualConfirmationError("a generated output is not bound to its realized component or approved dependency")
             targets = [(record["segment_id"], record["component_id"]) for record in record_payloads
                        if record.get("media", {}).get("sha256") == media["sha256"]]
             if targets and target not in targets:

@@ -1,8 +1,13 @@
 """Checks the real Huashu input seam without rendering or provider calls."""
 import importlib.util
+import base64
 import json
+import hashlib
+import mimetypes
+import os
 from pathlib import Path
 import socketserver
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -53,6 +58,55 @@ class HuashuInputTests(unittest.TestCase):
             self.assertEqual(report["path0"], str(entry.resolve().parent))
             self.assertEqual(report["queue"], 64)
             self.assertEqual(socketserver.TCPServer.request_queue_size, parent_queue)
+
+    def test_frozen_svg_and_png_keep_media_type_and_exact_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "native"
+            target.mkdir()
+            svg = b'<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2"/></svg>'
+            png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aP1sAAAAASUVORK5CYII=")
+            assets, records, descriptors = [], {}, []
+            try:
+                for ref, suffix, data in (("excerpt", ".svg", svg), ("photo", ".png", png)):
+                    source = root / (ref + suffix)
+                    source.write_bytes(data)
+                    descriptor = os.open(source, os.O_RDONLY)
+                    descriptors.append(descriptor)
+                    digest = hashlib.sha256(data).hexdigest()
+                    assets.append({"media_ref": ref, "job_path": "inputs/" + source.name, "sha256": digest})
+                    records[ref] = {"fd": descriptor, "sha256": digest, "byte_length": len(data)}
+                paths = h.materialize_frozen_media(target, assets, records)
+                self.assertEqual(mimetypes.guess_type(paths["excerpt"])[0], "image/svg+xml")
+                self.assertEqual(mimetypes.guess_type(paths["photo"])[0], "image/png")
+                self.assertEqual(Path(paths["excerpt"]).read_bytes(), svg)
+                self.assertEqual(Path(paths["photo"]).read_bytes(), png)
+                records["excerpt"]["sha256"] = "0" * 64
+                with self.assertRaisesRegex(ValueError, "media bytes differ"):
+                    h.materialize_frozen_media(target, assets, records)
+            finally:
+                for descriptor in descriptors:
+                    os.close(descriptor)
+
+    def test_odd_frame_native_output_has_exact_24fps_duration(self):
+        ffmpeg, ffprobe = shutil.which("ffmpeg"), shutil.which("ffprobe")
+        self.assertIsNotNone(ffmpeg)
+        self.assertIsNotNone(ffprobe)
+        with tempfile.TemporaryDirectory() as temp:
+            source, output = Path(temp) / "native.mp4", Path(temp) / "normalized.mp4"
+            subprocess.run([ffmpeg, "-v", "error", "-f", "lavfi", "-i",
+                "color=c=white:s=1080x1920:r=24", "-frames:v", "209", "-an",
+                "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+                "-video_track_timescale", "12288", "-movie_timescale", "1000", str(source)],
+                check=True, capture_output=True, timeout=30)
+            h.normalize_native_output(source, output, ffmpeg=ffmpeg, ffprobe=ffprobe,
+                                      expected_frames=209)
+            stream = json.loads(subprocess.check_output([ffprobe, "-v", "error",
+                "-show_streams", "-of", "json", str(output)], timeout=30))["streams"][0]
+            self.assertEqual(stream["nb_frames"], "209")
+            self.assertEqual(stream["avg_frame_rate"], "24/1")
+            self.assertEqual(stream["time_base"], "1/24")
+            self.assertLessEqual(abs(float(stream["duration"]) - 209 / 24), 1e-6)
 
     def test_native_point_and_unique_frame_clock(self):
         b = brief()

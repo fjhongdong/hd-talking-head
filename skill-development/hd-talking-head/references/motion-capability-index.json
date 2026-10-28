@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "profiles": [
     {
       "candidate_id": "adu-motion-video:adu-motion-video/native-compare",
@@ -74,6 +74,10 @@
         "skill-development/vendor/adu-motion-video/template/main.js": "584da71b2dbaa634d29f75185c7f96070186444ae821c8b51f373a9ceae72a10",
         "skill-development/vendor/adu-motion-video/template/templates.js": "ec3d34057c963a28b500a8cbebdd4c8ca8ae24e3c9a1629126f89ef46bfec79e",
         "skill-development/hd-talking-head/scripts/adu_text_geometry.mjs": "9bd9231e80a9107d3ad74ccfb14f93ecf6aa3d19bffbc558119d0cefb7322fb9"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/open-source-adapter-matrix.md"
       }
     },
     {
@@ -150,6 +154,10 @@
         "skill-development/vendor/doudou-remotion-whiteboard/index.ts": "4729f9b2365ecf7073e3b088fae731aac9d443c83a5cf50f9caf77715e20f5bb",
         "skill-development/vendor/doudou-remotion-whiteboard/recipes/01-pencil-sketch.tsx": "398d1390a1bc7a3c765225deafbc1712e0dcba7a05d9bb952e8e9e777110cb59",
         "skill-development/vendor/doudou-remotion-whiteboard/recipes/index.ts": "4d2c55a765586d6f29cb2b4357a77b2dcabe7ca14365535929419d2f91b47435"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/upstream-scene-skills.md"
       }
     },
     {
@@ -198,6 +206,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/compare.html": "f51e17e2a00535b05ecf145e9a77eeb9581016d24acc9c0de4c35b0bfd84a6a3",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/compare.html"
       }
     },
     {
@@ -246,6 +258,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/converge.html": "6fef0bd99b4edc57c010694cd9366e7c76505719332c051d08d077078e10787f",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/converge.html"
       }
     },
     {
@@ -292,6 +308,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/focus.html": "8fec7f85a7881a204f201e5cbe267ae92549901be8bbe5b7f93939949e95f504",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/focus.html"
       }
     },
     {
@@ -342,6 +362,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/network.html": "2609ec4de2215ebfd16dd2d18cfafa6bd58a3f944db6b26ed029555844975300",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/network.html"
       }
     },
     {
@@ -389,6 +413,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/number.html": "794740630ad2ac29bdb51cdbef4cfb9378d6b07ae15025ac955c21e76fda7cfd",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/number.html"
       }
     },
     {
@@ -435,6 +463,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/quote.html": "b5a651d579756d09b6ca6d213b922614b972967a11bb1debb21471cdab97a8bd",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/quote.html"
       }
     },
     {
@@ -482,6 +514,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/shot.html": "50e6e45ed3909c8c2a79393fae8cc355996b5f72c24f5e3645ea2c6a934f7ec3",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/shot.html"
       }
     },
     {
@@ -528,6 +564,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/steps.html": "09a6b3dfdbd407db0512548db9ea0f342bdb4f53ae35998f9d3129ebd94833f4",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/steps.html"
       }
     },
     {
@@ -574,6 +614,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/title.html": "295d99b481e7ad89d18d7bbd0527e699689d31d66387639209bab3a07305335b",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/title.html"
       }
     },
     {
@@ -621,6 +665,10 @@
       "reviewed_sources": {
         "skill-development/vendor/eian-riso-broll/templates/versus.html": "cd684cf04cffe924ef962536bf6bb57f01b5637aeba47e236d4fe1d362615507",
         "skill-development/vendor/eian-riso-broll/assets/riso.js": "99caeb3f9eaf2a3675be7c03a4f29900529282ad4650986f5a352cc8156ec147"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/vendor/eian-riso-broll/templates/versus.html"
       }
     },
     {
@@ -674,11 +722,15 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py": "fefe290e28212d642bc333ce9591e0b6e474efab451695dcd628cd99535cf064"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/gbro-collage-broll/SKILL.md"
       }
     },
     {
@@ -739,6 +791,10 @@
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
         "skill-development/hd-talking-head/scripts/data_rollup_adapter.py": "7cdfa3835d956bce2a3b469c870792fc9faa8047bb555d569058af37a88f2850",
         "skill-development/hd-talking-head/scripts/render_data_rollup.cjs": "f29bcface7b956728086714d9977867de93664fa29a870f8fc1f114f6071800a"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx"
       }
     },
     {
@@ -809,8 +865,8 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
-        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a66cf697bee2b7962425e3dbb4eba1be326d4324d952cf62990d8625577befdb",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
+        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a34879242795d7d3c3f68a4d477d373041ef43cff9b232a912cf1f11b05cab35",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "1d42ecb90035e1972d1be42dc6db1682da97ed9a95e283e001e9d8fc2e5526a6",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -821,6 +877,10 @@
         "skill-development/vendor/huashu-art-motion/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/vendor/huashu-art-motion/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/vendor/huashu-art-motion/scripts/qa.py": "b243900f0b91c246a297b81509b801c35b2b83c6f9a62b7adb68e3b217c34ee0"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/t2_keynote_ui/execution-v7/qualification/native-source/scripts/engine/clip.html"
       }
     },
     {
@@ -894,8 +954,8 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
-        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a66cf697bee2b7962425e3dbb4eba1be326d4324d952cf62990d8625577befdb",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
+        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a34879242795d7d3c3f68a4d477d373041ef43cff9b232a912cf1f11b05cab35",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "1d42ecb90035e1972d1be42dc6db1682da97ed9a95e283e001e9d8fc2e5526a6",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -906,6 +966,10 @@
         "skill-development/vendor/huashu-art-motion/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/vendor/huashu-art-motion/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/vendor/huashu-art-motion/scripts/qa.py": "b243900f0b91c246a297b81509b801c35b2b83c6f9a62b7adb68e3b217c34ee0"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y1_kurzgesagt/execution-v7/qualification/native-source/scripts/engine/clip.html"
       }
     },
     {
@@ -976,8 +1040,8 @@
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/huashu_motion_adapter.py": "67700153cbc84195875c1f72bb57406e3c4ba6e05523c5d839a5543b16aa0e90",
-        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a66cf697bee2b7962425e3dbb4eba1be326d4324d952cf62990d8625577befdb",
-        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "b8f6840c63fc1afe89d79caf0cd2eca4c947c0f1c1fa03d0b304a454bf366742",
+        "skill-development/hd-talking-head/references/huashu-native-motion.md": "a34879242795d7d3c3f68a4d477d373041ef43cff9b232a912cf1f11b05cab35",
+        "skill-development/hd-talking-head/scripts/huashu_motion_adapter.py": "1d42ecb90035e1972d1be42dc6db1682da97ed9a95e283e001e9d8fc2e5526a6",
         "skill-development/vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.html": "15b9ab6f7e3e29dddf8a0f8a181239f94f60c7b1c2e3defc05bdd57f0705dfd3",
         "skill-development/vendor/huashu-art-motion/scripts/engine/clip.js": "4be7a02d636b1e6ebf864822fec54c8e925ce415be2e2f1be1098ffb7a7b8799",
@@ -988,6 +1052,10 @@
         "skill-development/vendor/huashu-art-motion/scripts/engine/render.py": "1519ab458d4f0461c3ea028a6d8c8d632a69a6e4cf517f291abbc008ec3056b6",
         "skill-development/vendor/huashu-art-motion/scripts/engine/spec_assets.py": "d963a9fa80a7c71ed4ff20f4bf5ff692b17d53aa49e8b9b234c4a1a671f60d41",
         "skill-development/vendor/huashu-art-motion/scripts/qa.py": "b243900f0b91c246a297b81509b801c35b2b83c6f9a62b7adb68e3b217c34ee0"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/verified-templates/huashu-art-motion/y2_vox/execution-v7/qualification/native-source/scripts/engine/clip.html"
       }
     },
     {
@@ -1040,6 +1108,10 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md": "636a3d1a266f7b633deb7b5c5a87198010125680c1b2473cf98c8592edbcc7a9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/beat-timeline/beat-timeline.html": "19c6528e970766422978e26d5ac483bfe2c711b7fdcaf1f8a28805a4a53f584c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/broll-capability-router.md"
       }
     },
     {
@@ -1093,6 +1165,10 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md": "636a3d1a266f7b633deb7b5c5a87198010125680c1b2473cf98c8592edbcc7a9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/chat-message/chat-message.html": "fe9b9e0dd4c886843713116811688565c6fea3995cbb52f8c2e044106072715a"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/broll-capability-router.md"
       }
     },
     {
@@ -1147,6 +1223,10 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md": "636a3d1a266f7b633deb7b5c5a87198010125680c1b2473cf98c8592edbcc7a9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/macos-notification/macos-notification.html": "bd6547f25f1c80c0d7dbdef0344627e92d57ace5e31237610928700b0a664d85"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/broll-capability-router.md"
       }
     },
     {
@@ -1201,6 +1281,10 @@
         "skill-development/hd-talking-head/references/broll-capability-router.md": "636a3d1a266f7b633deb7b5c5a87198010125680c1b2473cf98c8592edbcc7a9",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/screen-flow-carousel/screen-flow-carousel.html": "db49f679a66fb4505e07d395bff8188ae568fbfac36a50c94f1e58fcd925e11a"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/broll-capability-router.md"
       }
     },
     {
@@ -1263,6 +1347,10 @@
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
         "skill-development/hd-talking-head/scripts/hyperframes_notification_adapter.py": "ec505e92f4262f521db1ad7507387d89f0559a37c1a5ee011f0963254776dcaa",
         "skill-development/hd-talking-head/scripts/render_hyperframes_notification.cjs": "85467b880392cac08734a1a7e0337b0c58a34c2b273b3f614d500f4342d83884"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/TEMPLATE.md"
       }
     },
     {
@@ -1328,6 +1416,10 @@
         "skill-development/research/hypit-source/package.json": "76507e8592fb12f65f55931903c1fdcb166201b71fa63f56c47e1e0776799d60",
         "skill-development/research/hypit-source/pnpm-lock.yaml": "5211ee00b5d05b68aae1afefdb0a15a76b13a94365d9484da182ea4ea745a08c",
         "skill-development/research/hypit-source/skills/hypit/SKILL.md": "4525dddfb6acd7d5e3b642f783c0b806605a9465d555175d0cb4148a387ba6c8"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/upstream-scene-skills.md"
       }
     },
     {
@@ -1393,6 +1485,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1458,6 +1554,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1523,6 +1623,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1587,6 +1691,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1652,6 +1760,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1717,6 +1829,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1782,6 +1898,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1847,6 +1967,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1912,6 +2036,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -1977,6 +2105,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2042,6 +2174,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2107,6 +2243,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2172,6 +2312,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2237,6 +2381,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2302,6 +2450,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2367,6 +2519,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2432,6 +2588,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2497,6 +2657,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2562,6 +2726,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2627,6 +2795,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2692,6 +2864,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2757,6 +2933,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2822,6 +3002,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2887,6 +3071,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -2952,6 +3140,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3017,6 +3209,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3082,6 +3278,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3147,6 +3347,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3212,6 +3416,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3277,6 +3485,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3342,6 +3554,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3407,6 +3623,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3472,6 +3692,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3537,6 +3761,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3602,6 +3830,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3667,6 +3899,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3732,6 +3968,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3797,6 +4037,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3862,6 +4106,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3927,6 +4175,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -3992,6 +4244,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4058,6 +4314,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4123,6 +4383,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4188,6 +4452,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4253,6 +4521,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4318,6 +4590,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4383,6 +4659,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4448,6 +4728,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4513,6 +4797,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4578,6 +4866,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4644,6 +4936,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4709,6 +5005,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4774,6 +5074,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4839,6 +5143,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4905,6 +5213,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -4970,6 +5282,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -5035,6 +5351,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -5100,6 +5420,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -5165,6 +5489,10 @@
         "skill-development/vendor/lemo-opuscar/TECHNIQUE.md": "8790803f846846032cba16c11c6f1c477625460e9df74f32d1c650717ea8526b",
         "skill-development/vendor/lemo-opuscar/core/render/video.mjs": "502bfe4fd9f5e2d9ff14d5930927dc7e2b03fb55b2b3d17f201064a766bb87b3",
         "skill-development/hd-talking-head/scripts/upstream_scene_adapter.py": "430d381f578541b165086ea5b19a47654739597a7b7510444ab80b636ff1f84e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-opuscar/DIRECTOR.md"
       }
     },
     {
@@ -5243,6 +5571,10 @@
         "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "300eacaf5c57d016ddc20d6a4bb42c33072decca22d62826fb2898d5df864da7",
         "skill-development/hd-talking-head/references/cover-opening-bgm.md": "005da9c818545f240560e4502de7d2e365cbd6c66b2bc8b9ff7aa5dc69f573f5",
         "edit/hd/tools/dependency_contracts.py": "fac47cabaa432e2548e24e86baff4f0f1541f6df13f990017c2051a51b646341"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/lemo-wake/skills/wake/SKILL.md"
       }
     },
     {
@@ -5295,10 +5627,14 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md"
       }
     },
     {
@@ -5365,6 +5701,10 @@
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/skills/motion-graphics/SKILL.md": "64ec633fc49c0e8f1e572d3dfae1b7d0854c4fb89e86706ce915bc818da406aa",
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/film-doc.mjs": "d58b7acfc85951449a81997f47cf9d2331513ec73b2930741c69a3c2e68a644d",
         "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/src/render.mjs": "d849d09c9ae05037f95c2ecad75a4436f15bf1636a2640b078bc02c6ee6cad90"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/hd-talking-head/assets/capability-sources/openfilm-0.2.4/openfilm/skills/motion-graphics/SKILL.md"
       }
     },
     {
@@ -5420,6 +5760,10 @@
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html": "c04e8bf1bfbcec71d0921a03a786cc09e660732428aa04bf79036a30b7755e09"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5476,6 +5820,10 @@
         "skill-development/hd-talking-head/scripts/motion_graphics_adapter.py": "25072ab0e545744e897f75181b5f740ee172482aa9f680d650489d713f06d198",
         "skill-development/hd-talking-head/scripts/render_motion_graphics.cjs": "7f20f47330428ef320f0a638045673b5b36abd0f024832bdbc21625db457e8a2",
         "skill-development/hd-talking-head/scripts/probe_motion_graphics.cjs": "7343f59cd3b2c206dcdbe881128a982f6dcf4aa7be4d528ea47dcb35f2d559e3"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/motion-graphics-native.md"
       }
     },
     {
@@ -5529,6 +5877,10 @@
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html": "8713fc92043a353732f4d9bd8832e0023a2019472d3a9cfffc566ff6fd194042"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5611,6 +5963,10 @@
         "skill-development/vendor/huashu-motion/templates/blank/vendor/gsap.min.js": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
         "skill-development/vendor/huashu-motion/templates/talking-head/index.html": "6c18af543ed5c6da008c9a0c5f50300940cae94e6bc6fa79f3ae26b127878539",
         "skill-development/vendor/huashu-motion/templates/talking-head/template.json": "3372be9f0992e96118c23fbe06e60f629ec44d9fa9eecfa368a2d53a81348bae"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/huashu-stat-overlay.md"
       }
     },
     {
@@ -5667,6 +6023,10 @@
         "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "7b615cbfa747972751685a5628d79001420321200395305b02a28a3a2c524b1e",
         "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "21c759d07d3ab682e40ac0ac3d1678fa067b385fd9daa87d34e800c9c1c3c248",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5721,6 +6081,10 @@
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html": "dfe78474314169e66fb3cb6fa26d3e09755873248a1ff72dc4b472edacbb2771"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5777,6 +6141,10 @@
         "skill-development/hd-talking-head/references/overlay-studio-pinboard.md": "32ada94518947f33f48311ce8a6561d0c9623999ec23979700b57372156d5862",
         "skill-development/hd-talking-head/scripts/overlay_studio_adapter.py": "547a3fcb9de79736ff5e15e299e6e6888f052d8ee8bc14f59cbcf8967eaa9d22",
         "skill-development/vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx": "5073d9168bab4a77fa6464a8fb18cbd1f0849aacd42c73ac7795971d0ed31cb5"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5831,6 +6199,10 @@
         "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/toggle-flip/toggle-flip.html": "f73cefb798fe3cd1a5ac503c6feb494a644c17d53d8b2e1cf313973940f0161d"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/aroll-overlay-contract.md"
       }
     },
     {
@@ -5884,10 +6256,14 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "4d8656fda75687ae0027e74376a5bbb5a1589e2a6292e49d48ed82c8079fd690",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/generated-broll-skills.md"
       }
     },
     {
@@ -5941,6 +6317,10 @@
         "skill-development/vendor/paper-collage-ad-codex/references/hyperframes-route.md": "255e9d5d87c3d2ad491c8f6e1d808e6d03f93f36f0efee95a584584a1e41366d",
         "skill-development/vendor/paper-collage-ad-codex/SKILL.md": "e7877c0f57e964d3e05179ade69e92a15ad1d2ec285563d4e3d238852dd6df39",
         "skill-development/hd-talking-head/scripts/paper_motion_guard.py": "020b220ef35ade39bf09f87776da57c882f3f603e98208503d482348fd15c918"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/paper-collage-ad-codex/references/hyperframes-route.md"
       }
     },
     {
@@ -5993,6 +6373,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/info-term-card.tsx": "40bb632b621afca9b27ee2ee653bc1f92cd0006c10a7f9e2452f743e94b391b6",
         "skill-development/hd-talking-head/scripts/render_talkcraft_native.mjs": "229a35f19cccb60760679337bcc460e2a6115653e919594d53376925147b0616",
         "skill-development/hd-talking-head/scripts/talkcraft_native_adapter.py": "e0464d2ca838515609bedd2711955ff6e465173701d8ca250e12e928be2acd0c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "edit/hd/integrations/talkcraft/upstream/template/cards/info-term-card.tsx"
       }
     },
     {
@@ -6046,6 +6430,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/number-counter.tsx": "34a00653402a52d6925c5ef06da3988cf82f200f6ea9bb9f2d1ea5e5a93609a3",
         "skill-development/hd-talking-head/scripts/render_talkcraft_native.mjs": "229a35f19cccb60760679337bcc460e2a6115653e919594d53376925147b0616",
         "skill-development/hd-talking-head/scripts/talkcraft_native_adapter.py": "e0464d2ca838515609bedd2711955ff6e465173701d8ca250e12e928be2acd0c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "edit/hd/integrations/talkcraft/upstream/template/cards/number-counter.tsx"
       }
     },
     {
@@ -6100,6 +6488,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/numbered-step-stack.tsx": "cb16806443f00085f3b2b3334c4fa97f1fe87494ce6c7906c1be1caea5ca2dfe",
         "skill-development/hd-talking-head/scripts/render_talkcraft_native.mjs": "229a35f19cccb60760679337bcc460e2a6115653e919594d53376925147b0616",
         "skill-development/hd-talking-head/scripts/talkcraft_native_adapter.py": "e0464d2ca838515609bedd2711955ff6e465173701d8ca250e12e928be2acd0c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "edit/hd/integrations/talkcraft/upstream/template/cards/numbered-step-stack.tsx"
       }
     },
     {
@@ -6154,6 +6546,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/source-converge.tsx": "a00163db942ec12861a243ad46e6b980804e8dd245cdcf5359b9bf06c5260673",
         "skill-development/hd-talking-head/scripts/render_talkcraft_native.mjs": "229a35f19cccb60760679337bcc460e2a6115653e919594d53376925147b0616",
         "skill-development/hd-talking-head/scripts/talkcraft_native_adapter.py": "e0464d2ca838515609bedd2711955ff6e465173701d8ca250e12e928be2acd0c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "edit/hd/integrations/talkcraft/upstream/template/cards/source-converge.tsx"
       }
     },
     {
@@ -6204,6 +6600,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/alt-block-lines.tsx": "9676728d2d7176abf7b3e214adec83a30ddb31ec78e962ee665355d291933265",
         "edit/hd/integrations/talkcraft/upstream/references/cards/alt-block-lines.md": "fc2880336d1d0c8a9e56bf09f7dc6cd0a3ecadb0ddcbd12e9e201d326120242f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6253,6 +6653,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/bar-chart-growth.tsx": "3c9ca039d3f7eea3327028e633c5c80c4d2c919b1f062c584707a073b132df4f",
         "edit/hd/integrations/talkcraft/upstream/references/cards/bar-chart-growth.md": "21b9fc3943e0783061a2fb9c97e9a62442182b7f214b681a0a0de0a507e5137e",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6300,6 +6704,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/bed-echo-blur.tsx": "bdae9cbb330d3870ce39cb34db429eac7db85d7e3abdb0731df99260a137aa5a",
         "edit/hd/integrations/talkcraft/upstream/references/cards/bed-echo-blur.md": "58bf3a7d8b090262a7bebcaae118722b2b9fb457aa3985c4e3257a3393ace7f7",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6347,6 +6755,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/behind-text-title.tsx": "dedbcae9399eda679507e3f5451bb32df702bad44a92aa2b3ded66dc84e44d87",
         "edit/hd/integrations/talkcraft/upstream/references/cards/behind-text-title.md": "c10ba921a8d5426bf40d273cbc08591526b00be3f4fc8b5e53123a68fd011f27",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6392,6 +6804,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/black-slam-transition.tsx": "35e06a31af863fe9edbfa4f002660dca2289cbd13419758f04a4f2549e90d6b3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/black-slam-transition.md": "20561b474a493055994c7130f283522b938958aa244ddb9f667b15f8dcc49219",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6442,6 +6858,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/callout-line-label.tsx": "58d29fcd73a8f41ae13e9cad9a281b50d817c57b2fe0b82d788e8f0e6175a314",
         "edit/hd/integrations/talkcraft/upstream/references/cards/callout-line-label.md": "e1bcd21edf0b10a24112c97eff58d8f6c4d2cb6a6eee0024970d8faaa2ca6712",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6489,6 +6909,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/caret-wipe-transition.tsx": "40be04725ff8381fed5b952345a45873ae617ff274c0adfdc589fc5ea69dad3f",
         "edit/hd/integrations/talkcraft/upstream/references/cards/caret-wipe-transition.md": "90ad88469c787f4b370da0bde7c86a20a3fbc8532cf4dde8eecf62aa2be2b355",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6537,6 +6961,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chapter-progress-list.tsx": "16c5457e98671023f0a0dfc361caff0f8a9619118665fb30aef93b3b974a4560",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chapter-progress-list.md": "5a6af927697b679cea95906d34e6f13c8c7f8fa4bd08dbe3cc74035f57be462b",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6586,6 +7014,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chapter-title-card.tsx": "f30ac52ebb7095b61aa9515de4eac911edd658e5244a0e6209f45c9246662c50",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chapter-title-card.md": "d9c42ac1a732776f17011b3c4194c3e69a180962a116e7435d228a2b55d87aa9",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6638,6 +7070,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chart-grow.tsx": "3026616f4d18dfd4dfe35e972fb357f49f1d04f7ed4121591fb7e276c6c9c7f8",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chart-grow.md": "1381ae8cd0d2cdd658ac0a7ea68786ba30f07b0f0a390d3f13705ed0c205e7ee",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6689,6 +7125,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chat-gpt.tsx": "019843122d6b61447c72e635d90e8fa0138eab17c7596341d45caab4917ee862",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chat-gpt.md": "5a5d7786c5bdfbb678db480ab877abf8d2e9d12846fc46f35537be9f7591a27c",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6736,6 +7176,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chat-message-flow.tsx": "c841669eefc46253286cc37a3545db7e5eed45dbfb22f9e82c411fda18c6a0df",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chat-message-flow.md": "78618bdd0b46bba92b669650ea50a037eded9ca1948b0799004f82b508158280",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6785,6 +7229,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chevron-lower-third.tsx": "6eb05135628410f79495d9134f50a5a6e5600ba5b6ebd6a8b6d9c9dece8a9535",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chevron-lower-third.md": "c4fc680fc9085a8b47f0b597051d0e00df5646e9aeed0e2a3f251ccb990b4829",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6830,6 +7278,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/chip-grid-single-select.tsx": "432460135c0ac2d1007a7824f0f24f675aac7f6c3e17aeac557cc3aa6e403586",
         "edit/hd/integrations/talkcraft/upstream/references/cards/chip-grid-single-select.md": "fda01d4aac90710f7208629fcb460b1a56c52cef66369db4c394d3c210c13649",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6880,6 +7332,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/claude-code.tsx": "b2cfc9ddb2c110164839e3f99ab5843fac0dcece628838c9c77ce0070fd16707",
         "edit/hd/integrations/talkcraft/upstream/references/cards/claude-code.md": "41df83e793c74e3fa78438cc128cac19c8bfd3ac1f008e0d58a5e206440fc6da",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6927,6 +7383,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/color-slam-beat-card.tsx": "9e61532bb89bcf3ad1e0f02833d805d7da75ccc1de9057fd4af07e9e76971323",
         "edit/hd/integrations/talkcraft/upstream/references/cards/color-slam-beat-card.md": "e7f4284a4238f6a53787a9dacad566825138ebc56ebcf1fc66b3594eb786ed1e",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -6975,6 +7435,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/converging-arrows.tsx": "429f963d636c31e9ce9a9aa2ae9cfe2ea11f8cc4999c358a2ef8bd57097aa4ce",
         "edit/hd/integrations/talkcraft/upstream/references/cards/converging-arrows.md": "0b1fbd517c9aa5abcd2d669680ffe21514ad3f114bd4926b3c40dcbe67094978",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7022,6 +7486,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/corner-bracket-frame.tsx": "4c39c67354ce057edb7050891367d0300ab9b4e407e2c107ef67701bb3c6deb0",
         "edit/hd/integrations/talkcraft/upstream/references/cards/corner-bracket-frame.md": "ca5df750c7cb127ff1abe826a077a37e6691b228b76aace861b7b2d7db49c380",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7071,6 +7539,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/count-badge-title.tsx": "ba43d69ea8f2378cccd3aaa9587311928f9faf75a5a4a192294a6b82ccbf0836",
         "edit/hd/integrations/talkcraft/upstream/references/cards/count-badge-title.md": "a8d0884ea67f78cb479fdc0191df5426eb64dd858475b0522f51b135311c9e36",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7120,6 +7592,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/countdown-arc-scatter.tsx": "33650e5dcf308e0badf6832a2c02a5c3a738e86908ef240e9baf20c74eb85fac",
         "edit/hd/integrations/talkcraft/upstream/references/cards/countdown-arc-scatter.md": "598173bebfc7e5e224ccc8cf0fc8b9eed58c17b0b248741facc70d3d250938d3",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7168,6 +7644,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/crash-zoom-punch.tsx": "3e4bc7d7ad3eb4fcfe52de07a9e2976d90b69dc01de460eab82dae389ff05a69",
         "edit/hd/integrations/talkcraft/upstream/references/cards/crash-zoom-punch.md": "0708f0993404f79eb08700459e3d4d4015e8d2c932275918df3ad94ddbef0a1b",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7215,6 +7695,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/cursor-actor-demo.tsx": "411baf57cd319fe5b72a089fe876501f4b5bef3592ce273a23aaa18587340f2d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/cursor-actor-demo.md": "a948564b9672a81cb7ef3449c5f8f6416620a1d708bcd51097ce4d1864b7596d",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7262,6 +7746,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/cursor-locked-zoom.tsx": "0e4a042428cd14457c3de5475b82da27208e24a46cbf4eef4fe73fd74cf7a57d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/cursor-locked-zoom.md": "d85902daeab2b240948d991d8835fc7aaf83b0990d7176ec083b065cc2bf4af8",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7309,6 +7797,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/danmu-bubble-praise.tsx": "b87a28ce6b1d16b8b4a8591ad7448aff565d7028c52f9af287f1cff0174cd37a",
         "edit/hd/integrations/talkcraft/upstream/references/cards/danmu-bubble-praise.md": "4b316e1f3f291e4ae0bdfe4def01dce1156962669b0fa912a8dad81546909970",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7361,6 +7853,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/doc-park-left-pill-deal.tsx": "874d90c93efd1a9334970629d0a29f67fdb2f8900135174b2c6a882ec0d7a74b",
         "edit/hd/integrations/talkcraft/upstream/references/cards/doc-park-left-pill-deal.md": "ee2b016dd8552f5aa5cd1580fd96b3a25065dd8f3f5aeae1529fcbb26e3282e1",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7410,6 +7906,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/douyin-follow-card.tsx": "f94ef9efca1ab2db43d49ac56c016c5db5a93a3a14fcf48b034283aa038461cb",
         "edit/hd/integrations/talkcraft/upstream/references/cards/douyin-follow-card.md": "7307143c2fb98924afd1ecbe0dda7a384166388448edc20b687502dc5178eac4",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7455,6 +7955,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/error-retype.tsx": "a1d8f1898808bb37c1978c834b186d0be231370318be99b22ac1b7c6d074bcfc",
         "edit/hd/integrations/talkcraft/upstream/references/cards/error-retype.md": "4dacb7057d7adea2db0bedf267dff3110b5e8b1805370baeed3f96acfdfb6886",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7505,6 +8009,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/evidence-scroll-tour.tsx": "b29eac867833599bad85f43798f52cc98f9d1682f167ca8b7c2636d52fda34b2",
         "edit/hd/integrations/talkcraft/upstream/references/cards/evidence-scroll-tour.md": "5b8e15b0ca90ba7d5b4a4446a89aac541e62996f0f34d9154971dd957cf04dbf",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7552,6 +8060,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/filmstrip-conveyor.tsx": "ffc4ff9ae7fe18120f081b32b69268528e245b0b2386a2aa2aa38f9cac2e479d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/filmstrip-conveyor.md": "5435477c415a33294346e1756164fb5947a9283ed44c5b1e9163b92f774805ff",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7599,6 +8111,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/flying-words.tsx": "9b4c7e727b18b78931cc053757132fd4be734a9f5206cc853288182c0de31166",
         "edit/hd/integrations/talkcraft/upstream/references/cards/flying-words.md": "209a033f862bfd49c295d7f93f14b82699c3f113acc47ae83a879d48dd4db661",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7651,6 +8167,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/focus-dim-spotlight.tsx": "d1d5e488a783639ccbd9078119b4ccba8a809603cdb1f8c63a331da527fd0d09",
         "edit/hd/integrations/talkcraft/upstream/references/cards/focus-dim-spotlight.md": "101aeb30dc8ede2a295fff7a2f9f40972a22ddb1c2adf1c41392e5b90c66c810",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7699,6 +8219,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/gallery-wall-dolly.tsx": "2b4d214d058d26c10655763e826336e376edd200e03a70b2e427d94f99a7410f",
         "edit/hd/integrations/talkcraft/upstream/references/cards/gallery-wall-dolly.md": "a8ee392b81cd06a85eac937aa4589a45c0ccb8a73d66911b3f76324e680c6e2a",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7746,6 +8270,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/glass-code-walk.tsx": "af01ece4a25974caf914475ac5e6b513ea805a9a53f8a91cb929ae827ec5c232",
         "edit/hd/integrations/talkcraft/upstream/references/cards/glass-code-walk.md": "cefe3391bda76b702008db99379bd44588f98d1d00541927884705fd20f1b855",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7793,6 +8321,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/gooey-morph.tsx": "3a573f5da6643f46629a18e2615d64be570cb42360db788a8818f82d42684889",
         "edit/hd/integrations/talkcraft/upstream/references/cards/gooey-morph.md": "a005ba6d88b6cdb39b5332fced4c101dd98f807a1676d041cca39575821ecc71",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7840,6 +8372,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/grid-to-hero.tsx": "e9e550223301f791e46e0afc60c5d1ab171fc777c81ca130b56ef2951cf389f4",
         "edit/hd/integrations/talkcraft/upstream/references/cards/grid-to-hero.md": "c88ec167f7f04877f8ea70752999b1a6eba7cef5db5e3a66139b14d923489195",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7885,6 +8421,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/hand-drawn-ellipse.tsx": "31b3c51a9a2201795e0192ce7d8b5219cf59dbcf3d9134b006106c636721c961",
         "edit/hd/integrations/talkcraft/upstream/references/cards/hand-drawn-ellipse.md": "6f6e0b10f41b35fd0268541116b8e96bd028364976f594c607f61f2320faf57b",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7934,6 +8474,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/highlighter-sweep.tsx": "f04a519c5c0167b1da4b54b5a7082893e89f10ccf526ea080732cadc769893b6",
         "edit/hd/integrations/talkcraft/upstream/references/cards/highlighter-sweep.md": "d3a73939540580da44548689ad3d6b924bf4912b89d167765f905f265a85874a",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -7986,6 +8530,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/host-card-glass-board.tsx": "23389c67e5daa18ace4caac08fcaf5645f2ef44fc70a0873bea055655491a22e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/host-card-glass-board.md": "64efe72429af200f91878fbd95d338b14d1eb1ab39ec1ab4c4cc291b22bff5be",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8033,6 +8581,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/host-shrink-to-chip.tsx": "84ca07795d6f7a228a478e7e2345f2d5fecf153fdfa666889cd02b05532a8a49",
         "edit/hd/integrations/talkcraft/upstream/references/cards/host-shrink-to-chip.md": "a8285de51ff13de15360ff8e62983d6727c172aa1dccc79bbb2a6cf1841bf2e7",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8080,6 +8632,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/impact-open-title.tsx": "127581f5a1cdccfbe9e332d271beb2ccb8168c29196c7a8533b0b968929e0084",
         "edit/hd/integrations/talkcraft/upstream/references/cards/impact-open-title.md": "0d74e5ae3753ddc743b83822c65e338abdd024b85ec89553f09a801aeb41832f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8129,6 +8685,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/info-card-assemble.tsx": "c6fe0ace4d61c6ed9c53a66334230aa0a1ef8ef19d45904f9f03d5f28befeb65",
         "edit/hd/integrations/talkcraft/upstream/references/cards/info-card-assemble.md": "e5e0e2d16c322cc30f03b3f8b3da2928eb7ee5dde1094e6dfcfee1979c785dd6",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8179,6 +8739,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/info-term-card.tsx": "40bb632b621afca9b27ee2ee653bc1f92cd0006c10a7f9e2452f743e94b391b6",
         "edit/hd/integrations/talkcraft/upstream/references/cards/info-term-card.md": "d7da2bbec3d62ead55f4bae43953adf0db4faa0d83c37248288d271ef73ce354",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8227,6 +8791,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/ink-underline.tsx": "e1d692b1fb5560ed64d97f31559650bc10c3f6daacca0e313fdb0769276e19a0",
         "edit/hd/integrations/talkcraft/upstream/references/cards/ink-underline.md": "d253fd4a4abff2ed1678a88a55bd3c7175a770ae008823b4a0fd2b36ae096007",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8274,6 +8842,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/keyword-pop-highlight.tsx": "0ff812e4fef3dc1e9b91575063737ac61848eb47e818c4f969a611e3758b9306",
         "edit/hd/integrations/talkcraft/upstream/references/cards/keyword-pop-highlight.md": "b348394e96910e1c35faa15b46643de093165cb4af54b3a6dae8418b06a86c55",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8323,6 +8895,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/lead-word-zoom-assemble.tsx": "fc3c59b8a4834f436da9143b7677d1223e5ee85cd1d3dfa752594170b120f84e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/lead-word-zoom-assemble.md": "80978584ba59ecf73dec2f4cf2887226bea9d40b82575f817daafb4d641ad940",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8371,6 +8947,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/line-by-line-slide.tsx": "41cf138ce7ba628dc5d83f00b891898dfb2726041e127b6f679d0ffec65c2aa3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/line-by-line-slide.md": "5e7124f285f0dc3d3a09c9a25176acb97503a736e3cb1f10b1280d6f54c27c6b",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8421,6 +9001,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/line-carry-transition.tsx": "9e380f85c1f72d220c1b02bf8a88d9c6795921e3c4115c2b6c52fbb806523b22",
         "edit/hd/integrations/talkcraft/upstream/references/cards/line-carry-transition.md": "125be907205eda5b8b73d5d79cb5c7ea917ccf86603c181d6f9be2ae35e18666",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8469,6 +9053,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/line-chart-story-draw.tsx": "937320d2bf1ed2e3f09b5c7abf8085eb42b086b386d0dd58fb1fb05807edebb3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/line-chart-story-draw.md": "ad7b836750a22e98be726fedfb4c008766e1f1bb9536bac7838b4c67acbe328a",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8514,6 +9102,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/logo-enter.tsx": "4489e6dda20b6e1eb444e6f3efe53a275e594c1a64039ece515d5697db8628da",
         "edit/hd/integrations/talkcraft/upstream/references/cards/logo-enter.md": "e7dfb8a68a32e0567a7785ed082ef4c93576aedb011af21a1a3578ce70b7c8b2",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8559,6 +9151,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/long-take-world.tsx": "70e059a6ec67097d2d097d0ea52acb61ed6066f7e8f44f97ca7e23afc8ea1a32",
         "edit/hd/integrations/talkcraft/upstream/references/cards/long-take-world.md": "81ba577f4b58bc7098b99677d21540d23151631a1ea3bae06a4db3b1dabbb468",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8610,6 +9206,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/lower-third-nameplate.tsx": "a22273f51010dd153b089341e80deba9097965f3b702e04e4956bbb33af7d91c",
         "edit/hd/integrations/talkcraft/upstream/references/cards/lower-third-nameplate.md": "bacf7d259106085cee44d6de04da628fb26eeda72fde540c54af4ad48246ede6",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8662,6 +9262,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/magnifier-detail.tsx": "59ca146586bf0f56826dd80e33edfb29c10a7da8cb31aa23a72bc28e49f1544b",
         "edit/hd/integrations/talkcraft/upstream/references/cards/magnifier-detail.md": "9dcd553c886ecfd4cc738b796dd79cd87967e74b915cc16069650b6028e8a8a0",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8709,6 +9313,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/map-route-pin.tsx": "fec5d18b99286f1306eb9378db59b756085a4083700c147a971926b397858ef3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/map-route-pin.md": "e23adc91e1568d40d433b76eed1a9f6408eee8c3a6dbdbcca61f5daf73cdb6b5",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8756,6 +9364,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/media-pop-in.tsx": "7156764244dd7ac4840e19b12c15ccbe72f4c38e4d5d9b168882a9f577494552",
         "edit/hd/integrations/talkcraft/upstream/references/cards/media-pop-in.md": "00f3b159ecc57bd1feb50e03aedf98e6249342833eb9c0f81798fd7a27b3b509",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8807,6 +9419,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/metric-with-sparkline.tsx": "8568f46f620ccec15e4f1fe7258d2f0be8c500f01f05ccfa4dd2cb1c607d69e8",
         "edit/hd/integrations/talkcraft/upstream/references/cards/metric-with-sparkline.md": "4909616a4872e75480c3610edb16b1ad80ec5e07331944a6b08d6bb40b49e816",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8857,6 +9473,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/motion-blur-slam-in.tsx": "52b833847f1da7e7cd47b3cbf03cc6de27e868c14510ae772c0ff9ce85f3812b",
         "edit/hd/integrations/talkcraft/upstream/references/cards/motion-blur-slam-in.md": "6ccb03c623fde4767889f11b82cb86395bcd0e591b74cebd7db62df6e0d8696a",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8907,6 +9527,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/news-card-desk.tsx": "76adedbbeb839241fee88d56f1eac188527fef918aa04837ede799644586a2b3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/news-card-desk.md": "bb76c74782f0c61bd523b43a69c9e2bc03e0adc4f4b2ac90f83417320a942100",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -8960,6 +9584,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/number-counter.tsx": "34a00653402a52d6925c5ef06da3988cf82f200f6ea9bb9f2d1ea5e5a93609a3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/number-counter.md": "79d217fe9c6814ef7c37e991b785489ab84dfa7ebba06dd070b662ba206ff14d",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9010,6 +9638,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/number-slab-pop.tsx": "26facbd762315fb5f5d196d7b1d439470c29f0e2ad7265d34185dbe4fb6df806",
         "edit/hd/integrations/talkcraft/upstream/references/cards/number-slab-pop.md": "a1c5910ddc70bbb519b9a486908cf444f7fa55ba4948fc5848baec5b9ff8c390",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9055,6 +9687,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/numbered-step-stack.tsx": "cb16806443f00085f3b2b3334c4fa97f1fe87494ce6c7906c1be1caea5ca2dfe",
         "edit/hd/integrations/talkcraft/upstream/references/cards/numbered-step-stack.md": "5a6d71321266f1dc00353dce22e9329ff8302d494f599ee7e37564b87a49e331",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9102,6 +9738,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/orbit-drift.tsx": "1039d20ad1d033d195be51cac7ae8e1c7dc07870d938da22e5ea7bedf2d89c7d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/orbit-drift.md": "875c7d9aadcfc773fd122337b6b0675c1bcdb2902142d6d18b524a2ca713f4e9",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9152,6 +9792,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/outline-box-title.tsx": "4984e614edd2e10c58140f91f0771f2ab9cd08437e5f3db502ae9c35115a003c",
         "edit/hd/integrations/talkcraft/upstream/references/cards/outline-box-title.md": "3d8b8e0bb4600ed89db049737a058ca4de3842c4d0d26f7c659863fc95a16b1f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9199,6 +9843,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/overexpose-flip-transition.tsx": "b032936e3e9615460ef3329abc5b15b0de0a05750f70329e472edca7658af575",
         "edit/hd/integrations/talkcraft/upstream/references/cards/overexpose-flip-transition.md": "0e40368df25a4237c38e55015d0324410c04f25cabfa31cbeebbb396f02dc79f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9251,6 +9899,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/parallel-items-with-host.tsx": "162290efbb146397a49d39efa13cd529236d7baf4a8088c3af9b05d725fcb27e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/parallel-items-with-host.md": "f5d095d83a2a14f393819bc0397d0e201efead18e1743a8121f7d6553fb52d4f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9298,6 +9950,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/particle-weld-transition.tsx": "99190675adbd6bf30f120c69d2b1e494a897f2de597d298a9d77a0ba24043739",
         "edit/hd/integrations/talkcraft/upstream/references/cards/particle-weld-transition.md": "0a830e3b5fc2519a6a8afea913e35ac5365fb2724760f6977a0b0552102c88c5",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9347,6 +10003,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/pencil-sketch-draw.tsx": "4e648e11ec75364b8111cdff92dbdd3fa8998cadc4b93b18e5e2766a849b41e3",
         "edit/hd/integrations/talkcraft/upstream/references/cards/pencil-sketch-draw.md": "bda7c8a4f91ca8931971d4a944440812db4bc26172e908cf65c4fbcf1137ba27",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9396,6 +10056,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/per-character-rise.tsx": "ddcdfd303810b22051f754295ff11034980a08219db88620279877a2ec19a027",
         "edit/hd/integrations/talkcraft/upstream/references/cards/per-character-rise.md": "03ea4b56f3fee5b5671f5acfea39a68197485cc3f4efcec5740b7da9509f14cb",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9446,6 +10110,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/pip-zoom-box.tsx": "3162d14b5c15e60fbf7cb2f13cd38151c089c1569c4adf59f433aa23c5ca1df2",
         "edit/hd/integrations/talkcraft/upstream/references/cards/pip-zoom-box.md": "119fbc7509a34d696a3251ca650746dbaa0cac964bd947add1b5fa2f90e2cf84",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9491,6 +10159,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/pullback-cool-transition.tsx": "766065471f36cd8a6087bf5c07f1df642f29a22f71b49bcc291eb9b9ca76d232",
         "edit/hd/integrations/talkcraft/upstream/references/cards/pullback-cool-transition.md": "d173ce8faf16bb8db42fe651f4bc1bffd8e29524a9b4f581b69f74c61c0f9066",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9536,6 +10208,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/push-through-transition.tsx": "1edc6f745d4c8ed6f674735f5d9bac1ce8883e66a588fd7e172f618bd110411f",
         "edit/hd/integrations/talkcraft/upstream/references/cards/push-through-transition.md": "c5c091fafdeeec86e330105ff0dfae88b939b7079b2371c6bdb1d33bbb5530f5",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9583,6 +10259,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/quote-bracket-pull.tsx": "5235dfe8b864fdb197fc6624ed5731084329c80b753b9e22170e96f672649e9c",
         "edit/hd/integrations/talkcraft/upstream/references/cards/quote-bracket-pull.md": "c0798b53612c8cad46be24104edd5fa4d4b29d93fce3ce8590df1f11139064fa",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9633,6 +10313,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/quote-card.tsx": "3e8f1233c31453f4492eb4076fed680fc029be0056dd8c6eeb6914bdbcc0e18e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/quote-card.md": "95f65e3f6b11f61a16abaf8d456fe84dca6007fb3ae11c193b45ff6f202b0467",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9683,6 +10367,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/quote-hold-arrow.tsx": "9b3cbd6a29ec4580ac0d53b54d8ef82bfa5d7c00100562e370dee2f57b30daef",
         "edit/hd/integrations/talkcraft/upstream/references/cards/quote-hold-arrow.md": "72a976cfb24d5f01967fefa54563102f2bd05a73851a37c272509e5d0ce2c7e6",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9730,6 +10418,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/rack-focus-pair.tsx": "79e8f4009f111c7cb698f0e59543e02a73e8afb1ffa747b81a31c8093351f123",
         "edit/hd/integrations/talkcraft/upstream/references/cards/rack-focus-pair.md": "76068c58c154410f2a6951d41ed5dc45bf89b64f7ede4a2339abd20c19c9e57b",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9779,6 +10471,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/reticle-lock-on.tsx": "267372d5e16401608fa30557ace5b078121e5a4ba347ac7f1d9a4ecfcc7209e6",
         "edit/hd/integrations/talkcraft/upstream/references/cards/reticle-lock-on.md": "f5243de04944061d8e7e6264a782b7132f32bfcb390891a4252c94dac2f20cb2",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9829,6 +10525,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/scanline-annotate.tsx": "d51fb08a3cb1ef8648e57cbcbac31a4e94a3518fa72736088c840915cbe6de94",
         "edit/hd/integrations/talkcraft/upstream/references/cards/scanline-annotate.md": "bc59304f668d73fa36ade547bd459aff7125b779546173ccae21e6c5871f1638",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9876,6 +10576,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/scribble-annotation.tsx": "373f659948a7c7997590afa935a26a635fdbf195195633ed628992f536305786",
         "edit/hd/integrations/talkcraft/upstream/references/cards/scribble-annotation.md": "978307af4567d45ad34cc87fcd3d909a8872685f69e0fc9065456d5f189792eb",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9921,6 +10625,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/shape-wipe-transition.tsx": "7df7c971a89d47e9054e17483b2367f78538c66060a45bf0217a5883faa033ea",
         "edit/hd/integrations/talkcraft/upstream/references/cards/shape-wipe-transition.md": "85567a591f45f1f55e73ffe3ac0efe444585f2fac2b5ec745cff964fb11f8443",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -9968,6 +10676,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/slab-punch-title.tsx": "4c527c14b83de154076bc3a7d8a0fe84679754f572fe6b039df132456c9fee4d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/slab-punch-title.md": "c10718d8867f3a9647f70a43e39fb17f41961bab882a757ecd44a96f232cf818",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10015,6 +10727,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/slow-pull-reveal.tsx": "79438baa13340fb21800720cedd387ea4ec228620d0c87e4da2388c30c8fe263",
         "edit/hd/integrations/talkcraft/upstream/references/cards/slow-pull-reveal.md": "ac5727636bc4ea98f5d0a9cc8c24a73bb8179c9d44681c605d55ee56ecf8c545",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10066,6 +10782,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/slow-push-in.tsx": "ec3a24f96e52320e3036c8584d591d63c927e64b067e8843a80f0ba49579534e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/slow-push-in.md": "ea8d4d58f55bcced7625e4558e82fff4f1a630557925cfad195026c6e80dd9b8",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10116,6 +10836,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/soft-blur-in.tsx": "72cfd018a6d1ce18226ae9b77a7fe5c0b08887d740bfdad4a9239332784ed307",
         "edit/hd/integrations/talkcraft/upstream/references/cards/soft-blur-in.md": "436817f0599eebc19b2c0503cc2479486d985f59034b1e3b523e998549ddd87f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10170,6 +10894,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/source-converge.tsx": "a00163db942ec12861a243ad46e6b980804e8dd245cdcf5359b9bf06c5260673",
         "edit/hd/integrations/talkcraft/upstream/references/cards/source-converge.md": "51564e78d627b8a47aea1291c182b267eae2293ba51a28282a5d0a61433111c7",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10215,6 +10943,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/speed-slab-title.tsx": "58c74373a2662539447665192ed45e695da4b85cac29639f43d8e4191f839290",
         "edit/hd/integrations/talkcraft/upstream/references/cards/speed-slab-title.md": "e079329f6b0161da829894df864438a6b0e8186dfdb7b7d6ea953e5430115b5e",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10263,6 +10995,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/split-60-40-story.tsx": "1ce1395ea3fb54df8a83e98252d45e85866c1cbf7dcfd7ed4379ebf765edb1dc",
         "edit/hd/integrations/talkcraft/upstream/references/cards/split-60-40-story.md": "b70f08da992c82d66740f26f74caa4cfa9a85d23a348830b55b55c68a1e980c5",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10312,6 +11048,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/split-compare-slider.tsx": "0fe6c944cc9b8144229a35576ff49c7482bc39a1de2e67001b82019e8992f475",
         "edit/hd/integrations/talkcraft/upstream/references/cards/split-compare-slider.md": "90e0fde2e1f1ff886ffb602570d32b2cba021a74add83554a6d48f81b7bbe227",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10360,6 +11100,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/split-text-stagger.tsx": "9c9c4d9aaa1c001a0d69bd013cedd864431f9be175cbb70242e072f6b329072e",
         "edit/hd/integrations/talkcraft/upstream/references/cards/split-text-stagger.md": "c095b87cf35e46fa5f377b8626fe2dc22675b7faf71248b6cb641f111fbc2f83",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10408,6 +11152,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/stack-fan-out.tsx": "f4eafd9935f0ad3c14713d3036967927a389c3820a8a4467063b0048d1370146",
         "edit/hd/integrations/talkcraft/upstream/references/cards/stack-fan-out.md": "7ae775fcbac09e53ca4e10455e3999b1afcbb9b7fa79e48f2bbe287b2ed6a492",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10453,6 +11201,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/stage-keyframe-tour.tsx": "155ac1ffc5a442d85307a128495f878fe4a33f5cb6a1ed3a753e1b28967be9d7",
         "edit/hd/integrations/talkcraft/upstream/references/cards/stage-keyframe-tour.md": "852e4a51bd1ca48aedf36eb0ada8043e2c3d5b48c5a882ef9cf7cd1f3ff05999",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10502,6 +11254,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/step-timeline-vertical.tsx": "023f0cba47caaede7b1de3e194010d7d8294ce2a7319b8b737b09e6efaa2eebf",
         "edit/hd/integrations/talkcraft/upstream/references/cards/step-timeline-vertical.md": "0fbe1d7141f8f2f3d92f9bd2ecf789646815c5a7c048892c8dedf6c4ab5b95d1",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10550,6 +11306,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/still-layout-relay.tsx": "acf431e96eefbe478be5b82ae8cfeb11cccc734580367667a8f3fd3210c602dc",
         "edit/hd/integrations/talkcraft/upstream/references/cards/still-layout-relay.md": "cec156bdfec69d90dd470ad9f408e921c26a0c8c13cd0a8b33585cc5c544a66c",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10598,6 +11358,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/strike-and-replace.tsx": "75e994e167cd94f6d118f4cd1ff2b1e794be443b4e705fbf01031a605013269d",
         "edit/hd/integrations/talkcraft/upstream/references/cards/strike-and-replace.md": "0e51a681e4224cf9dd8def35e3a465ad58f269b40c2c6807b1ab1c11bd61a6fa",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10647,6 +11411,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/subscribe-cta.tsx": "87c3b952819317432f25e1ec40b9b6561c00cdaf8819c404a146d092cc0dda32",
         "edit/hd/integrations/talkcraft/upstream/references/cards/subscribe-cta.md": "3d417222995223157cf33eb919c3ea779396dfc43ad06ff3f43e10e84431aec5",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10692,6 +11460,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/sway-parallax.tsx": "4fa9cca75dd02ab13b7163b8a33bd7e0a7e5cb1ab2f703f501de2631d0c07231",
         "edit/hd/integrations/talkcraft/upstream/references/cards/sway-parallax.md": "2bc30b8db042fb36d21583a47e98b100e009da617ca3fcb1299f551bad28f368",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10740,6 +11512,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/terminal-typing-log.tsx": "337090493417804c462f5905ddea89d30dbf90d9badc243b4e808113953ecfaa",
         "edit/hd/integrations/talkcraft/upstream/references/cards/terminal-typing-log.md": "31bc4ee80e6692feb41d0d9936f87ced1dcccef33b39555ce8339aa91d074ca0",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10785,6 +11561,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/tilt-3d-page.tsx": "6abd2141e995365190923694201154d01adf0610482c20b1b868ef57f8343a6c",
         "edit/hd/integrations/talkcraft/upstream/references/cards/tilt-3d-page.md": "4116a9197e53524b5aa8126701db76547c7d5f0e25685e5cbdf826f7a540a7ae",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10832,6 +11612,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/timeline-photo-strip.tsx": "ddcaa579f3210fd751cc350776f6561d0f4a7156cb3cb8a5896ab7b76c484f05",
         "edit/hd/integrations/talkcraft/upstream/references/cards/timeline-photo-strip.md": "c7aa7b859a4b1ec9642ef8e686f285e45591e5badfcc44785b818e316fa6dd1f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10879,6 +11663,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/title-demote-to-label.tsx": "9bdb8c8f826a274cb76bf6959302ee9eddf1bb7a9b466cefc7dbbb1a3f865d91",
         "edit/hd/integrations/talkcraft/upstream/references/cards/title-demote-to-label.md": "a7f54fb9e77e64980a510eff3eebbf71ebdbe435cfa55a958970915fda0d4ad0",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10926,6 +11714,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/tracking-in.tsx": "b45ee0b45164a5286c31d9b75b1673a798cbc1f9fe75397eb2873094f073b21a",
         "edit/hd/integrations/talkcraft/upstream/references/cards/tracking-in.md": "e9712df5e3a55d5aa2931a87a4e3f674cc49ba19d2b55151dea0eefb6e2c81a4",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -10974,6 +11766,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/type-contrast-emphasis.tsx": "a32939c7f34212449ede31eab9e49a7e096b3f48231723b80043f65cc3bdcad6",
         "edit/hd/integrations/talkcraft/upstream/references/cards/type-contrast-emphasis.md": "052964706ad767120d459072c8698e3144555c7e94bf7f8883215bf23cfa4cf1",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11022,6 +11818,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/typewriter-reveal.tsx": "778a4cbc833c2d52e852a3afffd535d9f94bd49f049b3fe7042fc56ce12c9dba",
         "edit/hd/integrations/talkcraft/upstream/references/cards/typewriter-reveal.md": "867e9398e4c9e74dc6126ce22dd3dd6d0520cc1751cadec05e8817d2bc3aebe3",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11071,6 +11871,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/ui-flow-theater.tsx": "05d1aa1e495221f067ab5b8c9bb186275fe4450c59b2fb84f12276ab30c135de",
         "edit/hd/integrations/talkcraft/upstream/references/cards/ui-flow-theater.md": "8dffe27464976086171dbec7f99c1dc559e155f40f8194f2c31b602dab0ac729",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11118,6 +11922,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/ui-prop-theater.tsx": "f85f9c49ecbc1cf170ce977bed5536eacdf7aacddfc9f3051c4f7d7c627bd08b",
         "edit/hd/integrations/talkcraft/upstream/references/cards/ui-prop-theater.md": "f52db65c0f09e26806fb4fd6e10d75420558fc76a860649dbb550a0aff2a566f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11169,6 +11977,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/unit-grid-proportion.tsx": "b06dc875caf9745ad1f48ae72b3b760cfca9c586badde5b212a05796eb12d465",
         "edit/hd/integrations/talkcraft/upstream/references/cards/unit-grid-proportion.md": "e3e3fc153d5db37ce6910bd30f825d644b16122cdb05d4acc13bf8896c1ddd18",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11216,6 +12028,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/whip-pan-transition.tsx": "735e00f3e7173b0a63a0bde557ffdf9bbdd10f542eff8e908d1783dbc2a46551",
         "edit/hd/integrations/talkcraft/upstream/references/cards/whip-pan-transition.md": "1f825921d7d575cbff3287a04660f994577a18d59e5a0ecc62bb44b0ed2180a9",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11266,6 +12082,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/word-relay-filmstrip.tsx": "07ce275988732be32ddddc9e9d6f38221201b2a369b469553bf112874f462635",
         "edit/hd/integrations/talkcraft/upstream/references/cards/word-relay-filmstrip.md": "45cc851fef5064f4b1c85918dd32cafcbd6c96df09dd9684b411f21476ce17ef",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11311,6 +12131,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/word-slot-cycle.tsx": "71be5941fff1635cdbe14ab62bdd318b46fa8203dc21e60daa0f0b923ad389a7",
         "edit/hd/integrations/talkcraft/upstream/references/cards/word-slot-cycle.md": "83e81e34670c11b36f50488244fede732f8bbe198e3ea921d7d13ac3dea15183",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11361,6 +12185,10 @@
         "edit/hd/integrations/talkcraft/upstream/template/cards/x-follow-card.tsx": "a555ec01a8330af0e13447173673f9a5f3d09f491ca52d9cee5e79f92ca9d2ac",
         "edit/hd/integrations/talkcraft/upstream/references/cards/x-follow-card.md": "b314f9988ebd03d5815e26f3f33a05ff1f64ad4bd05839c56d4400651926994f",
         "skill-development/hd-talking-head/scripts/prepare_talkcraft_native.py": "8980d6294cb5ac8a5af28ba2e56ac30be9e3928c7c189388122a893e29a1a99c"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
       }
     },
     {
@@ -11438,7 +12266,7 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
         "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
         "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",
@@ -11468,6 +12296,10 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/styles.py": "4a54daf290aff273f78724b65811d56aefd3448eebb551575d556038e1eb16b2",
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/tts.py": "dfa305f8662e6301fdab02a6ca3f5d5e609dd0f2211ce60dd3e0e51934f0d3b2",
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py": "39a34932e7e11afdd034cf537c3f270344189d0679fd6b495fc06d14382ede25"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/references/generated-broll-skills.md"
       }
     },
     {
@@ -11542,6 +12374,10 @@
         "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/ASSET-MANIFEST.json": "d9b8b7dba2fbd338e470d7508ee262f28226d73f8e42fe1594c22c33e7d85f02",
         "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/dist/index.mjs": "acf43a614b53cc4dfe5ccbdc0cb901cc83c6552927a907d16d11cb77baf7df68",
         "skill-development/hd-talking-head/assets/capability-sources/wise-motion-0.1.21/wise-motion/package.json": "54636eed46d7917b4e22e6ddd2f1f5ad1362931ce9e7afd1451dc9320231adab"
+      },
+      "content_scope": {
+        "mode": "fixed_action",
+        "evidence_ref": "skill-development/hd-talking-head/assets/wise-motion-runtime/index.jsx"
       }
     }
   ]
