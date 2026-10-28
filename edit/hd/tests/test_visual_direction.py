@@ -421,9 +421,11 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         )
         self.assertEqual(receipt["references"], [])
 
-    def test_declares_exact_local_material_reference_and_requires_wake_opening(self) -> None:
+    def test_declares_exact_local_material_reference_without_mandatory_wake(self) -> None:
         self._install_local_material_index()
-        self._write_brief(draft_segment(("local_material",)))
+        from edit.hd.tools import avatar_profile
+        self._write_brief(*avatar_profile.plan_avatar_policy(
+            [draft_segment(("local_material",))])["segments"])
         segment = contract_artifacts.read_json_artifact(self.brief)["segments"][0]
         contract_artifacts.write_json_artifact(self.job.job_dir / "manifests/confirmed-content.json", {
             "schema_version": 1, "job_id": self.job.job_id,
@@ -453,11 +455,9 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         treatment_path.parent.mkdir(parents=True, exist_ok=True)
         contract_artifacts.write_json_artifact(treatment_path, treatment)
         from edit.hd.tools import visual_confirmation
-        # Managed jobs must reject this old material-first draft.  Check the
-        # material declaration at its own public boundary; a valid Wake Job's
-        # publication/readback is covered by the native business smoke.
-        with self.assertRaisesRegex(ValueError, "fixed lemo-wake/wake opening declaration"):
-            visual_confirmation.prepare_visual_confirmation(self.job, self.brief, treatment_path)
+        # A managed Job may select a semantic material item without declaring
+        # a Wake first shot. This boundary still validates the full plan.
+        visual_confirmation.prepare_visual_confirmation(self.job, self.brief, treatment_path)
         published = ["07-visual-direction/visual-plan.json", "07-visual-direction/visual-routing.md"]
         references = material_usage.visual_segment_references(director["segments"],
             consumer_kind="visual_segment", artifact_paths_by_segment={"seg-001": published})

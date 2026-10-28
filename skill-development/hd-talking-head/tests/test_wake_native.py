@@ -96,7 +96,7 @@ class WakeNativeTests(unittest.TestCase):
         treatment={'numbering_scope_id':'wake-v2-development','scenes':[{'segment_id':'seg-001','component_id':cid,'brief_path':'native-inputs/brief.json'}],
             'semantic_lists':{'overlay':[],'broll':[{'row_id':'opening-semantic','start_word':0,'end_word':1,'quote':script,'semantic':'按语义选择模板','visual_task':'批准封面整屏入场并展示三种对应关系','components':[{'segment_id':'seg-001','component_id':cid}]}]},
             'beat_sheet':[{'start_word':0,'end_word':1,'quote':script,'decision':'broll','visual':'三行关系依次连接','components':[{'segment_id':'seg-001','component_id':cid}],'reason':'开场语义由已批准封面原生动作演示'}],
-            'motion_queries':[{'segment_id':'seg-001','component_id':cid,'tags':['展示已批准封面']}],
+            'motion_queries':[{'segment_id':'seg-001','component_id':cid,'tags':['唤醒']}],
             'skill_selection':selection,'overlay_selection':[],'generation_plan':{'steps':[]},
             'semantic_assessments':[{'segment_id':'seg-001','component_id':cid,'candidate_id':'lemo-wake:wake','verdict':'pass','reason':'原图三行与口播语义对应，完整可读',
                 'transcript_refs':[{'start_word':0,'end_word':1,'quote':script,'basis':'current_clause'}],
@@ -141,6 +141,7 @@ class WakeNativeTests(unittest.TestCase):
         adapters=run_stage.native_component_adapters(PROJECT,self.job)
         from edit.hd.tools import visual_canary
         plan=visual_canary.load_approved_visual_plan(self.job)
+        self.assertEqual(confirmation.approved_body_opening(self.job), treatment['skill_selection']['opening'])
         from edit.hd.tools import material_usage
         receipt=material_usage.load_current_receipt(self.job,'visual_direction')
         self.assertEqual(receipt['references'],[])
@@ -276,7 +277,7 @@ class WakeNativeTests(unittest.TestCase):
         self.job.stages['cover']['status']='pending'
         with self.assertRaises(visual_plan.VisualPlanError):wake_opening.validate(self.job,director,treatment)
         (self.job.root/'job-context.json').write_text('{}')
-        with self.assertRaises(ValueError):wake_opening.validate(self.job,director,{'skill_selection':{}})
+        self.assertIsNone(wake_opening.validate(self.job,director,{'skill_selection':{}}))
 
     def test_semantic_evidence_requires_actual_image_then_actual_project(self):
         director,treatment=self.draft();segment=director['segments'][0]
@@ -337,8 +338,7 @@ class WakeNativeTests(unittest.TestCase):
         b=copy.deepcopy(self.brief);b['source_binding']['segment_id']='seg-opening'
         with self.assertRaisesRegex(ValueError,'source clock'):wake.validate_brief(json.dumps(b))
 
-    def test_preview_stage_passes_no_prefix_and_rejects_override(self):
-        _,_,recipe,segment=self.setup_component()
+    def test_preview_stage_defaults_to_static_cover_and_respects_explicit_override(self):
         self.job.stages={'preview':{'status':'pending'}}
         with mock.patch('edit.hd.tools.state.load_job',return_value=self.job), \
              mock.patch('edit.hd.tools.state.current_stage',return_value='preview'), \
@@ -347,12 +347,29 @@ class WakeNativeTests(unittest.TestCase):
              mock.patch.object(run_stage,'_summary',return_value={}), \
              mock.patch('edit.hd.tools.state.require_runnable'), \
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
-             mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan',return_value={'segments':[segment]}), \
+             mock.patch('edit.hd.tools.visual_confirmation.approved_body_opening', return_value=None) as approved_opening, \
              mock.patch('edit.hd.tools.preview_v2.prepare_preview_v2') as preview:
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
+            options=preview.call_args.kwargs['opening']
+            self.assertEqual(options['hold_frames'],12)
+            self.assertEqual(options['transition_frames'],0)
+            self.assertIn('默认', options['user_confirmation'])
+            preview.assert_called_once_with(self.job,opening=options,music=None)
+            preview.reset_mock()
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':None})
             preview.assert_called_once_with(self.job,opening=None,music=None)
-            with self.assertRaisesRegex(ValueError,'static opening prefix'):
-                run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':{'hold_frames':6}})
+            preview.reset_mock()
+            explicit={'hold_frames':6,'transition_frames':0,'user_confirmation':'用户明确指定6帧'}
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':explicit})
+            preview.assert_called_once_with(self.job,opening=explicit,music=None)
+            preview.reset_mock()
+            approved_opening.return_value={'segment_id':'seg-001','component_id':'code','candidate_id':'lemo-wake:wake'}
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
+            preview.assert_called_once_with(self.job,opening=None,music=None)
+            preview.reset_mock()
+            self.job.stages['preview']['status']='ready_for_review'
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
+            preview.assert_not_called()
 
     def test_selected_preflight_uses_original_runtime_and_exact_bridge(self):
         from dependency_preflight import _load_manifest, _check_binding_probe

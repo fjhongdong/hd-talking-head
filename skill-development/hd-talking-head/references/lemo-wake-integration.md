@@ -6,9 +6,9 @@
 
 现阶段正文仅支持确认前已有、可校验的图片；本期确认后新生图再接 Wake 不属于已接通能力，缺图应在发布清单前停止准备。
 
-首镜使用本 Job 已批准 `04-cover/cover-delivery-raster.png`；正文 B-roll 必须有真实、可用、哈希绑定的图。没有图时列明缺口，先沿既有生成渠道准备，不能把 Wake 当作生图 API。父级交接语义、时钟、字幕安全区和验收要求；真实字幕预留区由正式字幕渲染的同一布局函数生成并随原生任务传入，关键动作不得落在字幕遮盖区。原生 Skill 自己选择读图方法、拆层、DIRECTOR 和主体动作。父级不预设内部 FX、模型或生成代码。Wake 原生流程禁止生图、调用 API 服务或其他 Skill，保持该限制。
+Wake 不再固定占用新 Job 首镜；新制作默认静态封面见[封面入场合同](cover-opening-bgm.md)。正文 Wake B-roll 必须有真实、可用、哈希绑定的图，已批准封面也可作为语义合适的来源。没有图时列明缺口，先沿既有生成渠道准备，不能把 Wake 当作生图 API。父级交接语义、时钟、字幕安全区和验收要求；真实字幕预留区由正式字幕渲染的同一布局函数生成并随原生任务传入，关键动作不得落在字幕遮盖区。原生 Skill 自己选择读图方法、拆层、DIRECTOR 和主体动作。父级不预设内部 FX、模型或生成代码。Wake 原生流程禁止生图、调用 API 服务或其他 Skill，保持该限制。
 
-`treatment.skill_selection.opening` 唯一声明 `{segment_id, component_id, candidate_id}`。首段从 t=0 开始，使用单一整屏 Wake 组件，隐藏 presenter，不带 avatar。首镜纳入 B-roll 列表、计数和一次完整清单确认。正文 Wake 项也参与同一次匹配和全片渠道/模板联合选择，不占用额外模板身份。
+默认新规划不填写 `treatment.skill_selection.opening` 来指定 Wake。Wake 与其他正文 B-roll 一样参与一次语义匹配、全片渠道/模板联合选择、计数和一次完整清单确认。只有用户明确选择 Wake 正文首镜时，才用 `treatment.skill_selection.opening={segment_id, component_id, candidate_id}` 声明；该段从正文相对时钟 t=0 开始，使用单一整屏 Wake 组件，隐藏 presenter，不带 avatar。明确批准的 Wake 首镜默认不额外叠加静态封面；本次显式指定前缀时，才按其时长统一偏移。不将静态封面登记为该原生组件，也不占用额外模板身份。
 
 每项在 `native-inputs/` 写不可变计划 brief，由 `lemo_wake_adapter.validate_brief` 校验。字段为：
 
@@ -18,7 +18,7 @@
 - `template_request={semantic_family,information_units,numeric_values:[],numeric_scale:not_applicable}`。
 - `result_record_path`：该项将来写入的 Job 内 `native-inputs/*.json` 完成记录路径。
 
-来源图片、语义和时钟在确认前冻结；不要求提前完成动画。固定首镜按政策构建唯一 Wake 候选，不走普通标签淘汰；正文继续按语义匹配一次。固定项计入渠道和模板统计，再联合选择并最后校验时间。清单确认后，阶段入口返回 `execute_native_skill`，附上已批准的当前原话和局部词锚。原生子任务读取完整 Skill 后执行，不再要求用户确认。宿主只在所选渠道准备其依赖；缺本地模型时遵循原生同意流程，不代替用户同意下载。
+来源图片、语义和时钟在确认前冻结；不要求提前完成动画。Wake 候选须通过本句真实语义匹配，不再因默认首镜政策绕过标签检索或语义评审。所选正文项计入渠道和模板统计，再联合选择并最后校验时间。清单确认后，阶段入口返回 `execute_native_skill`，附上已批准的当前原话和局部词锚。原生子任务读取完整 Skill 后执行，不再要求用户确认。宿主只在所选渠道准备其依赖；缺本地模型时遵循原生同意流程，不代替用户同意下载。
 
 ## 返修准备
 
@@ -63,6 +63,6 @@ result = publish_completed(job_dir, brief_path, project_src, video, native_qa, c
 
 `write_realization_mapping` 先将同一次读取的结果字节与该组件审核引用的 SHA 比较，再写入现有 `native_inputs[].result_record`（path/sha256/bytes），由原有阶段批准冻结。生产通过 `native_result_descriptor` 取得这份批准身份，`load_result(..., expected_record=...)` 先验同次读取字节的 SHA 再解析；缺失、重复、归属不明、版本变化均停止，不退回按路径接受当前文件。审核阶段使用 `inspect_result`，不能用它替代生产入口。该链不回调 approved-plan loader，不新增审批或回执系统。
 
-封面 PNG 仍作为平台封面。正式预览 `opening=None`，不开静态前贴；编号 1、原声和唯一字幕轨均从正文第 0 帧开始。现有成片与旧 Job 不迁移、不重签、不重做。
+封面 PNG 同时可作平台封面和默认 12 帧静态前缀。正式预览的正文画面、原声、字幕、事件音效与编号按[封面入场合同](cover-opening-bgm.md)统一后移；静态封面不属于 Wake、不显示动效编号。已有明确批准的 Wake 正文首镜保留原选择，不因默认变化自动叠加前缀。现有成片与旧 Job 不迁移、不重签、不重做。
 
-验收从真实 director 编译入口开始，覆盖固定项构建、准备、原生 init/render/encode/QA、审核结果冻结及正式消费；至少一条独立开发样本。边界检查覆盖结果变更、初始化 source 变更和运行目录。历史样本保留原身份，不补签、不以旧协议降级；现有用户成片不重做。
+验收从真实 director 编译入口开始，覆盖语义候选、准备、原生 init/render/encode/QA、审核结果冻结及正式消费；新接入或原生执行变更至少一条独立开发样本，单纯修改封面编排不重复生成 Wake。边界检查覆盖结果变更、初始化 source 变更和运行目录。历史样本保留原身份，不补签、不以旧协议降级；现有用户成片不重做。

@@ -241,6 +241,12 @@ def approved_numbered_rows(job):
     proposal = validate_visual_authorization(job)["source"]
     return number_visual_rows(proposal["rows"], proposal.get("numbering"))
 
+def approved_body_opening(job):
+    """Read an explicit body opening from the already confirmed treatment."""
+    proposal = validate_visual_authorization(job)["source"]
+    treatment = _read(_exact(job.job_dir, proposal["inputs"]["treatment"]))
+    return treatment.get("skill_selection", {}).get("opening")
+
 def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None, *, job_dir=None):
     from .broll_skill_selection import source_channel
     from .semantic_visual_plan import component_use
@@ -587,7 +593,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         if row["type"] == "B-roll":
             lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
     lines += ["", f"语义清单摘要：贴片{semantic_plan['overlay_count']}处 / B-roll{semantic_plan['broll_count']}项 / 合计{len(semantic_plan['items'])}", "",
-             "时间为剪后正文时间，Wake 首镜从第 0 帧开始。整表确认后按表制作并直接交付。", "",
+             "时间为剪后正文时间，最终成片按封面时长统一偏移。整表确认后按表制作并直接交付。", "",
              "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源渠道 | 生成渠道／模型 | 素材来源 | 匹配动效模板 | 生成步骤 |",
              "|---|---|---|---|---|---|---|---|---|---|---|"]
     display_rows = {}

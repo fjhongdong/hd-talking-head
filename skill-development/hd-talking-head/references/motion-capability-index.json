@@ -674,7 +674,7 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "1c8d82fc1cba648d64c2499f68922ad38047e8b929455b5bc50dcb2f9e33c1a0",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
@@ -5175,7 +5175,7 @@
       "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "Lemo Wake 原生整屏动画",
-      "summary": "调用完整 Lemo Wake 原生 Skill，将一张已批准图片按当前语义编排为竖屏无声 B-roll；同一身份也固定用于新 Job 首镜。",
+      "summary": "调用完整 Lemo Wake 原生 Skill，将一张已批准图片按当前语义编排为竖屏无声 B-roll；按当前正文语义参与候选匹配。",
       "tags": {
         "subjects": [
           "人物",
@@ -5205,7 +5205,7 @@
         "styles": [
           "原生动态图形",
           "语义场景",
-          "封面首镜"
+          "图片动画"
         ],
         "patterns": [
           "semantic_scene",
@@ -5241,7 +5241,7 @@
         "skill-development/vendor/lemo-wake/skills/wake/scripts/encode.py": "8b6e642fcb3a05be75463f609cebd9809bc7856ef747986e5490295e412c5bda",
         "skill-development/vendor/lemo-wake/skills/wake/scripts/qa.py": "f6324c57c5c833ea13bd7a0ca6c3d07262b98ac30d8d42e3e4fb4f208dbffa64",
         "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "300eacaf5c57d016ddc20d6a4bb42c33072decca22d62826fb2898d5df864da7",
-        "skill-development/hd-talking-head/references/cover-opening-bgm.md": "17e5dc2fe58bc0122741acbf14c08b88df4503e7073638396bf1fa821bb10fc6",
+        "skill-development/hd-talking-head/references/cover-opening-bgm.md": "005da9c818545f240560e4502de7d2e365cbd6c66b2bc8b9ff7aa5dc69f573f5",
         "edit/hd/tools/dependency_contracts.py": "fac47cabaa432e2548e24e86baff4f0f1541f6df13f990017c2051a51b646341"
       }
     },
@@ -5295,7 +5295,7 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "1c8d82fc1cba648d64c2499f68922ad38047e8b929455b5bc50dcb2f9e33c1a0",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
@@ -5884,7 +5884,7 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "1c8d82fc1cba648d64c2499f68922ad38047e8b929455b5bc50dcb2f9e33c1a0",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "4d8656fda75687ae0027e74376a5bbb5a1589e2a6292e49d48ed82c8079fd690",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
@@ -11438,7 +11438,7 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "1c8d82fc1cba648d64c2499f68922ad38047e8b929455b5bc50dcb2f9e33c1a0",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "7534f36506ca32272d678279ab045c1a68bbb311455ad974046052943fedd20b",
         "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
         "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",

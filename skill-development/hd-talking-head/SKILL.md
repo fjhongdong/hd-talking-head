@@ -11,7 +11,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 本 Skill 的职责是编排和验收，不重新实现已有 Skill 的媒体能力。每个阶段先按依赖清单确定能力提供方，再读取该 Skill 的原始说明并实际调用其入口，最后核对本次输入身份、调用记录、真实产物及阶段质量门。`发现/安装`、`configured`、`connected`、`callable`、`bound` 是[依赖预检合同](references/dependency-preflight.md)定义的五个递进状态，产物另经阶段质量门验收，不得混用；不得用阅读说明、借用参数或运行无关 helper 冒充该阶段由第三方 Skill 完成。现有 Skill 覆盖不了的 Job 状态、素材绑定及项目专属 QA，才由本包和 `edit/hd` 执行；新制作不得新增动效算法、关键帧、曲线或替代时间线。没有适合的已接通能力时在批准前换原生候选或保留 A-roll，批准后失败停当前 route 进入 revision，不能悄悄切回自写实现。
 
-所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md)、[Lemo Opuscar](references/lemo-opuscar.md) 和 [Lemo Wake](references/lemo-wake-integration.md) 在同一候选池中选择。Lemo Wake 的调用、首镜固定、图片来源和已审结果绑定统一遵守[原生交接合同](references/lemo-wake-integration.md)。正文仅使用已有可校验图片；缺图在清单确认前处理。Lemo Wake 只有一个完整原生模板身份 `lemo-wake/wake`，不把其内部风格、图层或重置目录拆成多个模板。选中后完整执行该 Skill 的原生流程，调用其制作入口：有原生渲染器的使用原生渲染器，通过生成服务制作的使用本 Job 已批准的图片、视频渠道；不因上游默认模型自动更换服务或增加费用。主题场景沿用所选模板身份，不以父级自写动效替代原生能力；来源和适配资格如实记录，历史停用入口不因此恢复。
+所有新来源都完整接入其原生 Skill 或原生组件，统一按“渠道→模板→标签”管理；第三方文件保持原样，不提取源码重写引擎。已接通的 [OpenFilm](references/openfilm-motion-graphics.md)、[Lemo Opuscar](references/lemo-opuscar.md) 和 [Lemo Wake](references/lemo-wake-integration.md) 在同一候选池中选择。Lemo Wake 的原生调用、图片来源和已审结果绑定统一遵守[原生交接合同](references/lemo-wake-integration.md)，不再固定占用新 Job 首镜。正文仅使用已有可校验图片；缺图在清单确认前处理。Lemo Wake 只有一个完整原生模板身份 `lemo-wake/wake`，不把其内部风格、图层或重置目录拆成多个模板。选中后完整执行该 Skill 的原生流程，调用其制作入口：有原生渲染器的使用原生渲染器，通过生成服务制作的使用本 Job 已批准的图片、视频渠道；不因上游默认模型自动更换服务或增加费用。主题场景沿用所选模板身份，不以父级自写动效替代原生能力；来源和适配资格如实记录，历史停用入口不因此恢复。
 
 完整 TalkCraft 创作选中后，读取 [TalkCraft 原生调用](references/talkcraft-native-skill.md)，把真实文稿、词时钟、素材和所选原生配方交给完整 Skill；不把本地派生卡当作原生调用。Paper 的 HTML/GSAP 纸拼贴由 [Paper 原生 Route B](references/paper-native-route-b.md)完整创作，确认前先准备真实工程，再沿已有绑定冻结。两者均只调用、编排和验收，不向第三方补写创作规则。
 
@@ -95,9 +95,9 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 
 ## 已验收默认规格
 
-每个新 Job 先读取 [默认制作配置](references/production-defaults.json)，将其作为本项目后续口播的默认起点：1080×1920／24fps、新 Job 首镜固定使用 `lemo-wake:wake` 并从第 0 帧开始、无背景音乐，以及浅暖色／深墨字／清晰大主字的 A-roll 贴片。已批准封面 PNG 另作平台封面；首镜隐藏 presenter，不传 avatar。现有成片保持不变。统一的是配色、字体层级与可读性，不是卡片形状。`card_family` 只供实际卡片组件参考，不覆盖所有原生组件的尺寸、圆角、背景或构图；主字 64px 是阅读起点，不把说明文字和图形全部改成同一字号与字重。默认值不从旧 Job 的 HTML、文案或人物坐标反推。用户本次明确提出不同要求时才覆盖相应选项；新任务的授权、封面和制作完成核查仍须绑定本次实际记录。
+每个新 Job 先读取 [默认制作配置](references/production-defaults.json)，将其作为本项目后续口播的默认起点：1080×1920／24fps、已批准静态封面停留 0.5 秒（12 帧）后进入真人口播、无开屏音效和背景音乐，以及浅暖色／深墨字／清晰大主字的 A-roll 贴片。封面同时可作平台封面，不计入正文动效数量或编号。现有成片保持不变。统一的是配色、字体层级与可读性，不是卡片形状。`card_family` 只供实际卡片组件参考，不覆盖所有原生组件的尺寸、圆角、背景或构图；主字 64px 是阅读起点，不把说明文字和图形全部改成同一字号与字重。默认值不从旧 Job 的 HTML、文案或人物坐标反推。用户本次明确提出不同要求时才覆盖相应选项；新任务的授权、封面和制作完成核查仍须绑定本次实际记录。
 
-这是宿主编排输入，不是新的动效模板或第三方 props。主控读取配置后，按现成组件公开槽位和自有静态版式传入贴片样式；按[封面入场合同](references/cover-opening-bgm.md#正式封面入场接口)把 Wake 编排为正文首镜，预览显式传 `opening=None`。新 Job 的 Wake 首镜从第 0 帧开始，原声、字幕和编号 1 保持同一时钟；不叠加旧的 6 帧静态封面前贴。不迁移或重签旧 Job。不将整个配置塞进 provider、ShotRecipe 或上游 brief 的未知字段，不修改第三方，不新增渲染器。首次预览漏传既定开场策略是编排缺项。
+这是宿主编排输入，不是新的动效模板或第三方 props。主控读取配置后，按现成组件公开槽位和自有静态版式传入贴片样式；正式预览按[封面入场合同](references/cover-opening-bgm.md#正式封面入场接口)构造静态封面前缀。正文画面、原声、SRT、动效与编号统一后移 12 帧；封面期间静音，结束时音画同步开始。规划默认先保留真人开头，正文候选按实际语义选择，不强制 Wake。用户取消动态首镜时保留静态封面，只有明确取消静态封面才关闭前贴。不迁移或重签旧 Job，不覆盖已就绪预览。不将整个配置塞进 provider、ShotRecipe 或上游 brief 的未知字段，不修改第三方，不新增渲染器。
 
 字幕继续使用[唯一字幕样式](references/subtitle-style-contract.md)，B-roll 保持圆形人物小窗、语义优先的动态画面与多样性，按[视觉质量合同](references/visual-quality-contract.md)安排密度；首次清理即处理自然停顿。`speech_cleanup` 自动检查实际保留的长间隔及中断重说；宿主消费返回的 `cleanup_checks`，核听并剪除口误，必要强调或呼吸按当前候选逐项记录保留理由，再继续成片，不新增用户确认门。默认值一并放入本 Job 的常规配置说明，不逐项新增确认门；不复制历史批准或为采用默认值重做已验收视频。
 
@@ -140,7 +140,7 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 - [Huashu 原生数值贴片](references/huashu-stat-overlay.md)（口播包含一个确切数值、适合计数强调时；不是同名 Huashu Art B-roll）
 - [权威素材使用回执与变更事务](references/material-usage-contract.md)（新增、替换或撤回用户资料时）
 
-默认封面入场与可选 BGM 使用正式 `preview_v2.prepare_preview_v2(job, opening=..., music=...)`，参数、统一时间偏移、许可和审计附件以封面入场合同为准。每个新 Job 均加载该合同；只有用户本次明确取消封面入场，才省略 `opening`。默认无 BGM；启用时仍需本次选择和真实试听批准。其他机器缺少运行时时读取 [运行时部署](references/runtime-deployment.md)，先导出、校验、安装兼容代码，再执行依赖预检；不复制多个活动 Skill，不迁移旧 Job。
+默认封面入场与可选 BGM 使用正式 `preview_v2.prepare_preview_v2(job, opening=..., music=...)`，参数、统一时间偏移、许可和审计附件以封面入场合同为准。每个新 Job 均加载该合同；阶段入口缺省使用静态封面。明确批准的 Wake 正文首镜沿批准时间轴执行，不自动追加默认静态封面；其余新方案只有用户明确取消静态封面才传 `opening:null`。默认无 BGM；启用时仍需本次选择和真实试听批准。其他机器缺少运行时时读取 [运行时部署](references/runtime-deployment.md)，先导出、校验、安装兼容代码，再执行依赖预检；不复制多个活动 Skill，不迁移旧 Job。
 
 ## 1. 新 Job 的连接检查与唯一目录
 
@@ -346,6 +346,6 @@ Preview 使用剪辑后 A-roll 的口播音频主时钟，默认不加背景音�
 
 交付后用 `scripts/audit_job_completion.py --workspace <workspace> --json` 做只读审计。它只能返回 `formal_complete`、`legacy_external_approval`、`incomplete` 或 `inconsistent` 四态，并展示已验证/未证明边界；不修改 workflow、回执或文件。新 Job 只有当前十二阶段、交付媒体与 manifest、人工整表确认来源及宿主 `plan_authorized` 交付回执一致，才能返回 `formal_complete`，表示已制作交付。历史人工成片确认仍按原语义核验，不重签为新类型。
 
-新制作的首镜固定为已批准封面经完整 Lemo Wake 制作的正文片段，随后按原话衔接真人和语义画面。原声、字幕、编号从第 0 帧开始，不再前贴 6 帧静态封面。首镜与正文候选均按[Wake 交接合同](references/lemo-wake-integration.md)调用和验收。
+新制作默认先显示 12 帧已批准静态封面，再进入真人口播；正文原声、字幕、画面与编号保持同一时钟并统一后移。封面不显示字幕、头像或动效编号，不新增动画或音效。Wake 仅在正文语义选中或用户明确指定时按[原生交接合同](references/lemo-wake-integration.md)调用，不再作为新 Job 的固定首镜。
 
 未明确要求时不上传 ChatCut 或其他外部编辑器，不自动发布或发消息。保持 1 个主控，最多 3 路独立准备；生成名额不能由子 Skill 各自领取一套。本地重渲染、正式组装、回执和批准仍串行；并发不增加获准的生成次数，不重做已验收成片。

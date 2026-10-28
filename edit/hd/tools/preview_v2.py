@@ -34,6 +34,7 @@ class PreviewV2Error(RuntimeError):
     """Raised when the approved visual/audio tracks cannot form an exact preview."""
 
 
+_TALKCRAFT_RUNTIME_ROOT = Path(__file__).resolve().parents[1] / "integrations/talkcraft/runtime"
 _SOURCE_MANIFEST_BLOCKED = "BROLL_SOURCE_MANIFEST_BLOCKED"
 _SHA256_CHARACTERS = frozenset("0123456789abcdef")
 _SOURCE_MANIFEST_KEYS = {
@@ -129,13 +130,13 @@ def _approved_event_audio_plan(
     if not declared:
         return event_audio.build_default_plan(
             event_plan,
-            runtime_root=job.root.parents[1] / "edit/hd/integrations/talkcraft/runtime",
+            runtime_root=_TALKCRAFT_RUNTIME_ROOT,
             job_id=job.job_id,
             total_frames=frames,
         )
     audio_path = _approved(job, "visual_direction", "07-visual-direction/audio-event-plan.json")
     audio_plan = contract_artifacts.read_json_artifact(audio_path)
-    runtime_root = job.root.parents[1] / "edit/hd/integrations/talkcraft/runtime"
+    runtime_root = _TALKCRAFT_RUNTIME_ROOT
     return event_audio.validate_plan(
         audio_plan,
         event_plan,
@@ -1906,7 +1907,8 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             if music_plan is not None:
                 raise PreviewV2Error("event audio and background music require a combined mix plan")
             event_audio_mix = event_audio.prepare_stage_audio(
-                event_audio_plan, arroll, stage / "event-audio.m4a"
+                event_audio_plan, arroll, stage / "event-audio.m4a",
+                body_offset_frames=0 if opening_plan is None else opening_plan["body_offset_frames"],
             )
         mixed_audio = (
             event_audio_mix

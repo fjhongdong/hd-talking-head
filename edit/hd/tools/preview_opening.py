@@ -126,7 +126,7 @@ def extract_evidence(video: Path, directory: Path, plan: Mapping[str, Any]) -> l
         try:
             subprocess.run([
                 "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error",
-                "-threads", "1", "-i", str(video), "-vf",
+                "-threads", "1", "-reinit_filter", "0", "-i", str(video), "-vf",
                 f"select=eq(n\\,{frame})",
                 "-frames:v", "1", "-threads", "1", "-y", str(path),
             ], check=True, capture_output=True, timeout=180)

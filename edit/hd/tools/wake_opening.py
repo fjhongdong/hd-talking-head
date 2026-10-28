@@ -7,20 +7,15 @@ from . import contract_artifacts
 WAKE_CANDIDATE = 'lemo-wake:wake'
 
 
-def managed(job):
-    return ((Path(job.root) / 'job-context.json').exists()
-            or (Path(job.root) / '00-user-provided').exists())
-
-
 def validate(job, director, treatment):
     opening = treatment.get('skill_selection', {}).get('opening')
-    has_wake = any(b.get('dependency_id') == 'lemo-wake' for s in director.get('segments', [])
-                   for b in s.get('bindings', {}).values())
-    if opening is None and not managed(job) and not has_wake:
+    # Wake is an ordinary semantic route. Only an explicitly selected Wake
+    # opening needs the additional approved-cover identity checks below.
+    if opening is None:
         return None
     if (not isinstance(opening, dict) or set(opening) != {'segment_id', 'component_id', 'candidate_id'}
             or opening['candidate_id'] != WAKE_CANDIDATE):
-        raise ValueError('New Skill jobs require the fixed lemo-wake/wake opening declaration')
+        raise ValueError('Explicit Wake opening requires its lemo-wake/wake declaration')
     segment = director['segments'][0]
     if segment['segment_id'] != opening['segment_id'] or segment['start'] != 0:
         raise ValueError('Wake opening must be the first segment at t0')

@@ -721,16 +721,27 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
     elif stage == 'preview':
         from edit.hd.tools import preview_v2
         coverage = _coverage_gate(job, treatment)
-        # The opening is a body component. Never prepend or shift its audio/SRT.
-        from edit.hd.tools import visual_canary
-        plan = visual_canary.load_approved_visual_plan(job)
-        first = plan['segments'][0]
-        if (first['start'] != 0 or not any(c.get('dependency_id') == 'lemo-wake'
-                for c in first['shot_recipe']['components'])):
-            raise ValueError('Current Skill preview requires the approved Wake first shot')
-        if data.get('opening') is not None:
-            raise ValueError('Wake first shot cannot be combined with a static opening prefix')
-        opening = None
+        # Opening belongs to the final timeline; all semantic items retain the body clock.
+        if 'opening' in data:
+            opening = data['opening']
+        else:
+            from edit.hd.tools import visual_confirmation
+            body_opening = visual_confirmation.approved_body_opening(job)
+            defaults = _json(SKILL / 'references/production-defaults.json')['opening']
+            if (defaults.get('policy') != 'static_cover_prefix'
+                    or type(defaults.get('hold_frames')) is not int
+                    or defaults['hold_frames'] != 12
+                    or type(defaults.get('transition_frames')) is not int
+                    or defaults['transition_frames'] != 0):
+                raise ValueError('Current Skill requires a static approved-cover opening default')
+            opening = {key: defaults[key] for key in ('hold_frames', 'transition_frames')}
+            opening['user_confirmation'] = 'Skill 默认：保留已批准封面静态0.5秒，随后正文画面与原声同步开始'
+            if body_opening is not None:
+                # Preserve the specifically approved native Wake body opening.
+                # Ordinary semantic Wake items have no such declaration.
+                if body_opening.get('candidate_id') != 'lemo-wake:wake':
+                    raise ValueError('Approved body opening declaration is invalid')
+                opening = None
         preview_v2.prepare_preview_v2(job, opening=opening, music=data.get('music'))
         return _summary(state.load_job(job_dir), stage, needs_review_items=coverage.get('needs_review_items', []))
     elif stage == 'delivery':

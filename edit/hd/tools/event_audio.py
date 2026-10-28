@@ -144,8 +144,12 @@ def prepare_stage_audio(
     plan: Mapping[str, object],
     voice: Path,
     output: Path,
+    *,
+    body_offset_frames: int = 0,
 ) -> Path:
-    """Mix voice and event cues without changing the approved frame clock."""
+    """Mix on the body clock, then shift the complete mix for a cover prefix."""
+    if type(body_offset_frames) is not int or body_offset_frames < 0:
+        _fail("event audio body offset must be non-negative integer frames")
     checked_voice = _regular_file(voice)
     cues = plan["cues"]
     frames = int(plan["total_frames"])
@@ -168,6 +172,10 @@ def prepare_stage_audio(
         + f"amix=inputs={len(mix_labels)}:duration=first:normalize=0,"
         "aresample=48000,asetpts=PTS-STARTPTS[out]"
     )
+    if body_offset_frames:
+        filters[-1] = filters[-1].removesuffix("[out]") + (
+            f",adelay={body_offset_frames * 2000}S:all=1[out]"
+        )
     command = [
         "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error", "-y",
     ]
@@ -176,7 +184,7 @@ def prepare_stage_audio(
     command += [
         "-filter_complex", ";".join(filters), "-map", "[out]",
         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-        "-t", f"{duration:.9f}", str(output),
+        "-t", f"{duration + body_offset_frames / 24:.9f}", str(output),
     ]
     try:
         output.parent.mkdir(parents=True, exist_ok=True)

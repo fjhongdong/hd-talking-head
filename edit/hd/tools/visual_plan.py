@@ -1005,13 +1005,18 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
                  skill_selection: dict[str, object] | None = None,
                  overlay_alignment_report: list[dict] | None = None,
                  overlay_selection_report: list[dict] | None = None,
-                 numbering: dict[str, int] | None = None) -> str:
+                 numbering: dict[str, int] | None = None,
+                 semantic_summary: dict[str, int] | None = None) -> str:
     lines = [
         "# 本视频贴片与 B-roll 总表",
         "",
-        "时间统一为剪后正文时间，Wake 首镜从第 0 帧开始。确认整张表后，按表制作并直接交付成片。",
+        "时间统一为剪后正文时间；最终成片按封面时长统一偏移。按已确认整表执行，检查通过后直接交付成片。",
         "",
     ]
+    if semantic_summary is not None:
+        overlays = semantic_summary["overlay_count"]
+        broll = semantic_summary["broll_count"]
+        lines.extend([f"语义清单摘要：贴片{overlays}处 / B-roll{broll}项 / 合计{overlays + broll}", ""])
     if skill_selection is not None:
         def cell(value):
             return str(value).replace("|", "／").replace("\n", "<br>")
@@ -1729,12 +1734,14 @@ def _publish_plan_generation(
         stage = job.job_dir / f".visual-direction-v3.stage-{generation_id}"
         plan_payload = contract_artifacts.canonical_json_bytes(plan)
         numbering = None
+        semantic_summary = None
         if (job.root / "job-context.json").exists() or (job.root / "00-user-provided").exists():
-            from .visual_confirmation import approved_numbered_rows
+            from .visual_confirmation import approved_numbered_rows, validate_visual_authorization
             numbering = {row["row_id"]: row["number"] for row in approved_numbered_rows(job)}
+            semantic_summary = validate_visual_authorization(job)["source"]["semantic_summary"]
         review_payload = _review_text(plan, reviewed_visual_text, skill_selection,
                                       overlay_alignment_report,
-                                      overlay_selection_report, numbering).encode("utf-8")
+                                      overlay_selection_report, numbering, semantic_summary).encode("utf-8")
         published_payload_paths = (
             "07-visual-direction/visual-plan.json",
             "07-visual-direction/visual-routing.md",

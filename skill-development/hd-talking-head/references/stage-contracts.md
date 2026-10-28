@@ -35,7 +35,7 @@
 | `visual_canary` | `edit.hd.tools.visual_canary.prepare_visual_canary(job, ...)` | `08-visual-canary/visual-canary.mp4`, `canary-manifest.json`, `segments/` | 不超 30 秒的真实长片段落；只执行已批准配方 |
 | `visual_assets` | `edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2(job, ...)` | `09-visual-assets/asset-manifest.json`, `visual-track.mp4`, `segments/` | 已批准 canary 字节哈希完全一致；严格执行剩余已冻结配方 |
 | `subtitles` | `edit.hd.tools.subtitles_v2.prepare_subtitles_v2(job)` | `10-subtitles/subtitle-plan.json`, `subtitles.webm`, `subtitles.srt` | A-roll 与有口播的 B-roll 共用唯一常规字幕轨；艺术字只能是精确已批准关键词 |
-| `preview` | `edit.hd.tools.preview_v2.prepare_preview_v2(job, opening=...)`；默认值见封面入场合同 | `11-preview/review.mp4`, `qa-report.json`, `keyframes/` | 1080×1920/24fps、Wake 正文首镜且零时间偏移、一视频一主音轨、默认无背景音乐、来源/字幕/安全区/转场 QA |
+| `preview` | `edit.hd.tools.preview_v2.prepare_preview_v2(job, opening=...)`；默认值见封面入场合同 | `11-preview/review.mp4`, `qa-report.json`, `keyframes/` | 1080×1920/24fps、默认 12 帧静态封面且正文音画统一偏移、一视频一主音轨、默认无开屏音效和背景音乐、来源/字幕/安全区/转场 QA |
 | `delivery` | `edit.hd.tools.qa_delivery_v2.prepare_delivery_v2(job)` | `12-delivery/final.mp4`, 封面、字幕、plans、qa、用户资料索引、`delivery-manifest.json` | 交付与已批准 preview 同哈希；视觉清单已确认且宿主 QA 通过后完成 |
 
 上表每个阶段进入 `ready_for_review` 时都额外发布同目录 `material-usage.json`，并将它加入该阶段正式 artifact 集。回执必须是 `complete_reference_declaration=true`；没有使用用户资料的阶段发布空 `references`，不得省略声明。完整字段、校验和变更规则见 [权威素材使用回执与变更事务](material-usage-contract.md)。
@@ -223,7 +223,7 @@ A-roll 透明贴片另按[贴片合同](aroll-overlay-contract.md#必须验收)�
 
 **验收**：只确认视觉路由和镜头设计，不重问重点关键词。命名 CEO/研究者必须绑定第一方人物图片或官方视频及职务。
 
-开场按 [封面首镜合同](cover-opening-bgm.md) 安排：首镜固定使用已批准封面调用完整 Lemo Wake，原声、字幕和编号从第 0 帧开始；首镜结束后按语义衔接 A-roll 和正文 B-roll。清单确认后执行原生子任务，不追加用户确认。
+开场按 [封面入场合同](cover-opening-bgm.md) 安排：已批准静态封面默认停留 12 帧，然后进入真人口播；它不计入贴片/B-roll 数量、渠道/模板统计或编号。正文按各自语义列表安排贴片和 B-roll，Wake 仅按语义选用，不固定占用第一项。清单确认后执行已选原生子任务，不追加用户确认。
 
 ### 8. `visual_canary`
 
@@ -274,9 +274,9 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli review-subtitles --job "<jo
 
 **输入**：已批准视觉资产、字幕和剪辑后 A-roll 音频。
 
-**执行**：读取[默认制作配置](production-defaults.json)和[封面首镜合同](cover-opening-bgm.md)，确认首镜已在批准正文中调用 Wake；预览显式使用 `preview_v2.prepare_preview_v2(job, opening=None)`，不加静态前贴。原声、字幕和动效均从第 0 帧开始。以 A-roll 口播音频为主时钟，默认无背景音乐，不产生第二个口播音轨。检查实际首帧、首镜边界、画幅、转场、字幕和音画同步。
+**执行**：读取[默认制作配置](production-defaults.json)和[封面入场合同](cover-opening-bgm.md)，通过正式预览入口构造 12 帧静态封面前缀。默认封面期间静音；以 A-roll 口播音频为正文主时钟，正文画面、原声、事件音效、字幕与动效编号统一延后 12 帧，不产生第二个口播音轨。检查实际前 12 帧、封面结束边界、画幅、转场、字幕和音画同步。
 
-Wake 首镜属于正文，原声和导出 SRT 均不平移；不修改已批准正文结构。用户要求配乐时才向同一入口传 `music=...`；参数变化先修订 `preview`，重复调用不重渲染。音乐由正式预览混成单音轨，不单独修改最终 MP4。默认值不会改变或重渲已批准的历史 Job。
+固定封面不修改已批准正文结构，只改变最终时间轴偏移；用户明确取消静态封面时偏移为 0，取消动态首镜不能据此关闭固定封面。用户要求配乐时才向同一入口传 `music=...`；参数变化先修订 `preview`，重复调用不重渲染。音乐由正式预览混成单音轨，不单独修改最终 MP4。默认值不会改变或重渲已批准的历史 Job及已就绪预览，旧批准 Wake 开头也不自动叠加封面。
 
 **产物**：`11-preview/review.mp4`、`qa-report.json`、`keyframes/`。关键帧保留视频原尺寸作为内部 QA，不缩小或拼成联系表，交付不复制缩略图。启用封面时还登记 `opening-manifest.json` 和偏移后的 `subtitles.srt`，缺任一项停止复用或交付。
 
