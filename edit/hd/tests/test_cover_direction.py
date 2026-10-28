@@ -654,6 +654,53 @@ class CoverDirectionTests(unittest.TestCase):
                 )
             self.assertFalse(stage.exists())
 
+    def test_reviewed_title_paraphrase_publishes_and_revalidates_sources(self) -> None:
+        direction = copy.deepcopy(VALID_DIRECTION)
+        direction["title"] = "判断标准改变"
+        direction["title_review"] = {
+            "analysis_sha256": self.analysis["analysis_sha256"],
+            "source_refs": ["idea-01"],
+            "reason": "概括原文标准变了，不增加事实或效果承诺。",
+        }
+        record = cover_direction.prepare_cover_direction(
+            self.job, direction, frame_reader=lambda *_args: _png()
+        )
+        state.approve(self.job, "cover_direction")
+        loaded = cover_direction.load_approved_cover_direction(self.job)
+        self.assertEqual(loaded["direction"]["title_review"], direction["title_review"])
+        self.assertEqual(loaded["direction"]["title"], direction["title"])
+        self.assertEqual(record["content_analysis_sha256"], self.analysis["analysis_sha256"])
+        record["direction"]["title_review"]["analysis_sha256"] = "0" * 64
+        path = self.job.job_dir / "03-cover-direction/cover-direction.json"
+        path.write_text(json.dumps(record), encoding="utf-8")
+        with self.assertRaisesRegex(cover_direction.CoverDirectionError, "analysis identity"):
+            cover_direction.load_approved_cover_direction(self.job)
+
+    def test_title_review_rejects_missing_stale_or_ineligible_sources(self) -> None:
+        valid = {
+            "analysis_sha256": self.analysis["analysis_sha256"],
+            "source_refs": ["idea-01"], "reason": "忠实概括当前原文。",
+        }
+        for change in (
+            {"analysis_sha256": "0" * 64}, {"source_refs": []},
+            {"source_refs": ["unknown"]}, {"source_refs": ["idea-01", "idea-01"]},
+            {"reason": " "}, {"approved": True},
+        ):
+            with self.subTest(change=change):
+                direction = copy.deepcopy(VALID_DIRECTION)
+                direction["title_review"] = {**valid, **change}
+                with self.assertRaises(cover_direction.CoverDirectionError):
+                    cover_direction.prepare_cover_direction(
+                        self.job, direction, frame_reader=lambda *_args: _png()
+                    )
+        for review in (None, {}):
+            direction = copy.deepcopy(VALID_DIRECTION)
+            direction.update(title="判断标准改变", title_review=review)
+            with self.assertRaises(cover_direction.CoverDirectionError):
+                cover_direction.prepare_cover_direction(
+                    self.job, direction, frame_reader=lambda *_args: _png()
+                )
+
     def test_untraceable_title_is_rejected(self) -> None:
         invalid = copy.deepcopy(VALID_DIRECTION)
         invalid["title"] = "随机无关标题"

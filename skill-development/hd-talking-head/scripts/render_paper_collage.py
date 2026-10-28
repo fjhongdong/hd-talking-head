@@ -215,10 +215,12 @@ def render(args) -> dict:
         if len(streams) != 1:
             raise ValueError("Paper output must not contain audio")
         video = streams[0]
-        if video.get("sample_aspect_ratio") != "1:1":
+        if (video.get("sample_aspect_ratio") != "1:1"
+                or abs(float(video["duration"]) - manifest["duration"]) > .00001):
             square_output = temp / "scene-square.mp4"
             _run([args.ffmpeg, "-v", "error", "-i", str(output), "-map", "0:v:0",
                   "-c:v", "copy", "-bsf:v", "h264_metadata=sample_aspect_ratio=1/1",
+                  "-video_track_timescale", str(manifest["fps"]),
                   str(square_output)])
             output = square_output
             streams = json.loads(_run([args.ffprobe, "-v", "error", "-show_streams", "-of", "json", str(output)]).stdout)["streams"]
@@ -246,7 +248,7 @@ def render(args) -> dict:
                 "exit_code": result.returncode, "output_sha256": sha(output_bytes),
                 "frames": frames, "original_images": original_sizes,
                 "motion_guard": motion_evidence,
-                "normalization": "full-canvas images scale to 1080x1920 when needed; cropped cutouts keep native pixels and coordinates; H.264 SAR marked 1:1 without re-encoding; not native image generation"}
+                "normalization": "full-canvas images scale to 1080x1920 when needed; cropped cutouts keep native pixels and coordinates; H.264 SAR and frame-clock metadata normalized without re-encoding; not native image generation"}
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@
 ### 先识别能力类型，再交给上游制作
 
 - **现成模板/组件**：使用真实可编辑槽及原生参数，不重画已存在的动作。
-- **已核对的风格创作工具包**：只有具体原生场景或公开组件已经接通时，才依照其完整导演和制作流程调用；父级只提供内容参数、静态放置、公开 props 与 start/end 时钟，不在项目内重写场景动作。历史 Lemo/OneTake 记录不自动构成当前候选。
+- **已核对的风格创作工具包**：完整创作 Skill 已接通时按其完整导演和制作流程调用；公开组件按实际接口传入内容参数、静态放置、公开 props 与 start/end 时钟，不在项目内重写场景动作。历史 Lemo/OneTake 记录不自动构成当前候选。
 - **生成服务**：使用所选 Skill 的提示词与生成工作流，沿用具体上传、模型和费用授权。
 - **完整原生创作 Skill**：OpenFilm、Lemo 等已完成接入的来源，均按各自合同实际读取并执行原生 Skill，产出本句专属、可编辑的原生页面，再调用其原生公开导出入口；不是父级动效引擎。未完成真实接入的来源仍不得仅凭 metadata 或 renderer 声称可用。
 
@@ -55,9 +55,9 @@
 
 ## 本地依赖与固定来源
 
-### TalkCraft 资格卡误拦修复
+### TalkCraft 完整原生调用
 
-新选型读取实际 `edit/hd/tools/talkcraft_matcher` 绑定的当前资格库。108 张资格卡的 `.tsx` 入口并非自由场景：只有卡片 ID、版本、资格 ID、源码入口、源码哈希与参考样片哈希全部匹配时放行，执行依赖必须是 `hd-talking-head-talkcraft`。未知卡、错哈希和借用其他依赖身份仍拒绝；旧自由场景与贴片路线没有恢复。当前真实资格卡已通过排名与 ShotRecipe 编译检查，不重渲已确认样片。
+新制作使用 [TalkCraft 完整原生调用](talkcraft-native-skill.md)；由完整原生 Skill 创作和调用原生渲染脚本。旧派生资格卡与 matcher 不作为新的原生入口，保留原历史身份。四个已有原生组件不删除、不重做。Paper 完整创作及 HyperFrames Route B 见 [Paper 原生调用](paper-native-route-b.md)。
 
 ### Adu 原生对比组件
 
@@ -186,7 +186,7 @@ files=[实际冻结 Job 相对文件；含入口与 workflow，Lemo 另含 TREAT
 workflow_media_ref
 ```
 
-每个 file 写 `media_ref/job_path/scene_path/sha256`，Lemo 至少包含 `index.html`、独立 workflow 和本期 `TREATMENT.md`；脚本与素材合计仍不超过 8 个冻结文件。workflow 必须绑定所选 STYLE、五份原生指引哈希（Skill、AGENTS、DIRECTOR、TECHNIQUE、所选 STYLE）、本期 TREATMENT 与完整 `design_plan`。字段必须以 adapter 实际校验为准，不另造字段。词锚从当前 Scribe 和 timeline-map 映射，旧 treatment 的绝对输出秒数不得当作当前时码。
+每个 file 写 `media_ref/job_path/scene_path/sha256`，Lemo 至少包含 `index.html`、独立 workflow 和本期 `TREATMENT.md`；文件及资源预算按 [Lemo 合同](lemo-opuscar.md) 执行。workflow 必须绑定所选 STYLE、五份原生指引哈希（Skill、AGENTS、DIRECTOR、TECHNIQUE、所选 STYLE）、本期 TREATMENT 与完整 `design_plan`。字段必须以 adapter 实际校验为准，不另造字段。词锚从当前 Scribe 和 timeline-map 映射，旧 treatment 的绝对输出秒数不得当作当前时码。
 
 ## 原生 runner 与探针
 

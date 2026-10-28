@@ -35,39 +35,42 @@ def _exact(root, record):
         raise VisualConfirmationError("confirmed visual evidence changed: " + record["path"])
     return path
 
-def _wake_adapter():
+NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter'}
+
+def _native_result_adapter(dependency):
     import importlib.util
-    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py"
-    spec = importlib.util.spec_from_file_location("_wake_mapping_adapter", path)
+    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts" / (NATIVE_RESULT_MODULES[dependency] + '.py')
+    spec = importlib.util.spec_from_file_location("_native_mapping_" + dependency.replace('-', '_'), path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-def _wake_review_reference(treatment, segment_id, component_id, result_path):
+def _native_review_reference(treatment, segment_id, component_id, result_path, candidate_id):
     assessments = [item for item in treatment.get("semantic_assessments", [])
                    if item.get("segment_id") == segment_id and item.get("component_id") == component_id]
     if (len(assessments) != 1 or assessments[0].get("verdict") != "pass"
-            or assessments[0].get("candidate_id") != "lemo-wake:wake"):
-        raise VisualConfirmationError("Wake needs one passing content assessment for this component")
+            or assessments[0].get("candidate_id") != candidate_id):
+        raise VisualConfirmationError("Native Skill needs one passing content assessment for this component")
     refs = [ref for ref in assessments[0].get("content_refs", []) if ref.get("path") == result_path]
     if (len(refs) != 1 or refs[0].get("pointer") != "/status" or refs[0].get("value") != "completed"
             or not isinstance(refs[0].get("sha256"), str)):
-        raise VisualConfirmationError("Wake assessment must identify the reviewed completed result")
+        raise VisualConfirmationError("Native Skill assessment must identify the reviewed completed result")
     return refs[0]
 
 
-def _freeze_reviewed_wake_result(root, treatment, segment_id, component_id, brief_payload):
+def _freeze_reviewed_native_result(root, treatment, segment_id, component_id, brief_payload, dependency):
     """Bind the bytes that were reviewed; never bless the current path implicitly."""
     import json
     brief = json.loads(brief_payload)
     relative = brief["result_record_path"]
-    reviewed = _wake_review_reference(treatment, segment_id, component_id, relative)
+    candidate = 'lemo-wake:wake' if dependency == 'lemo-wake' else 'video-talkcraft:' + brief['card_id']
+    reviewed = _native_review_reference(treatment, segment_id, component_id, relative, candidate)
     data = _path(root, relative).read_bytes()
     digest = hashlib.sha256(data).hexdigest()
     if digest != reviewed["sha256"]:
-        raise VisualConfirmationError("Wake result differs from the content the host reviewed")
-    _wake_adapter().inspect_result(root, brief_payload, record_bytes=data)
+        raise VisualConfirmationError("Native Skill result differs from the content the host reviewed")
+    _native_result_adapter(dependency).inspect_result(root, brief_payload, record_bytes=data)
     return {"path": relative, "sha256": digest, "bytes": len(data)}
 
 
@@ -75,7 +78,8 @@ def _validate_native_results(root, mapping, director, treatment):
     """Validate frozen native results without calling an approved-plan loader."""
     for segment in director["segments"]:
         for cid, binding in segment.get("bindings", {}).items():
-            if binding.get("dependency_id") != "lemo-wake":
+            dependency = binding.get("dependency_id")
+            if dependency not in NATIVE_RESULT_MODULES:
                 continue
             matches = [item for item in mapping.get("native_inputs", [])
                        if item.get("segment_id") == segment["segment_id"] and item.get("component_id") == cid]
@@ -86,10 +90,14 @@ def _validate_native_results(root, mapping, director, treatment):
                 raise VisualConfirmationError("Wake reviewed result is missing from the frozen mapping")
             payload = _exact(root, native["artifact"]).read_bytes()
             expected = native["result_record"]
-            reviewed = _wake_review_reference(treatment, segment["segment_id"], cid, expected["path"])
+            import json
+            brief = json.loads(payload)
+            candidate = 'lemo-wake:wake' if dependency == 'lemo-wake' else 'video-talkcraft:' + brief['card_id']
+            reviewed = _native_review_reference(treatment, segment["segment_id"], cid, expected["path"], candidate)
             if reviewed["sha256"] != expected["sha256"]:
                 raise VisualConfirmationError("Wake mapping differs from the host's reviewed result")
-            _wake_adapter().load_result(root, payload, expected_record=expected)
+            options = {'expected_renderer_version': binding['renderer_version']} if dependency == 'video-talkcraft' else {}
+            _native_result_adapter(dependency).load_result(root, payload, expected_record=expected, **options)
 
 
 def native_result_descriptor(job, segment_id, component_id, brief_sha256):
@@ -360,8 +368,14 @@ def _routing_distribution(rows, treatment):
 def _validate_template_choices(job, director, treatment):
     from . import broll_skill_selection, motion_match_cache, overlay_selection
     project = Path(__file__).resolve().parents[3]
-    cached = motion_match_cache.validate_reviews(project, director, treatment, job_dir=job.job_dir)
     selection = treatment.get("skill_selection", {})
+    bindings = {(s["segment_id"], cid): value for s in director["segments"]
+                for cid, value in s.get("bindings", {}).items()}
+    for beat in [*selection.get("beats", []), *selection.get("overlay_beats", [])]:
+        key = (beat.get("segment_id"), beat.get("component_id"))
+        if not isinstance(bindings.get(key), dict) or beat.get("binding_snapshot") != bindings[key]:
+            raise VisualConfirmationError("joint selected binding snapshot is missing or stale: " + str(key))
+    cached = motion_match_cache.validate_reviews(project, director, treatment, job_dir=job.job_dir)
     if selection:
         chosen = broll_skill_selection.assign_skills(project, selection, job_dir=job.job_dir)
         broll_skill_selection.validate_fixed_materials(director, selection, job_dir=job.job_dir)
@@ -520,11 +534,22 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             raise VisualConfirmationError("generation step has no visual row")
         for ref in step.get("input_files", []):
             _exact(job.job_dir, ref)
+        from . import generation_model
+        channel = {**channels[step["purpose"]], "purpose": step["purpose"]}
+        generation_model.request_identity(job.job_dir, {
+            "purpose": step["purpose"], "tool": channel["endpoint_id"],
+            "arguments": generation_model.prepare_arguments(job.job_dir, channel, step["arguments"]),
+        }, config)
     if steps:
         for segment in director["segments"]:
             for cid, binding in segment.get("bindings", {}).items():
                 direct = any(c["component_id"] == cid and c["kind"] == "ai_generated" for c in segment["visual_strategy"]["components"])
                 if direct and any((step["segment_id"], step["component_id"]) == (segment["segment_id"], cid) for step in steps):
+                    if (any(key in binding for key in ("generation_id", "prompt_sha256", "sha256"))
+                            and binding.get("execution_mode") not in {
+                                "reuse_completed_generated_media", "reuse_completed_lovart_video"}):
+                        raise VisualConfirmationError(
+                            "planned AI binding must omit completed generation identity; use generation step IDs until the real result exists")
                     final_step = [step for step in steps if (step["segment_id"], step["component_id"]) == (segment["segment_id"], cid)][-1]
                     chosen = channels[final_step["purpose"]]
                     if any(key in binding and binding[key] != chosen[key] for key in ("provider", "model", "endpoint_id")):
@@ -949,9 +974,10 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
             if bindings.get(key, {}).get("brief_sha256") != ref["sha256"]:
                 raise VisualConfirmationError("template brief differs from its actual binding")
             item = {"segment_id": key[0], "component_id": key[1], "artifact": ref}
-            if bindings[key].get("dependency_id") == "lemo-wake":
-                item["result_record"] = _freeze_reviewed_wake_result(
-                    job.job_dir, treatment, key[0], key[1], _exact(job.job_dir, ref).read_bytes())
+            if bindings[key].get("dependency_id") in NATIVE_RESULT_MODULES:
+                item["result_record"] = _freeze_reviewed_native_result(
+                    job.job_dir, treatment, key[0], key[1], _exact(job.job_dir, ref).read_bytes(),
+                    bindings[key]["dependency_id"])
             native_inputs.append(item)
     payload = {"schema_version": 1, "source_approval": authorized["artifact"],
                "proposal": authorized["payload"]["source"], "final_v3": final,

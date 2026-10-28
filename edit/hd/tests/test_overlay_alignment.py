@@ -108,7 +108,7 @@ class OverlayAlignmentTest(unittest.TestCase):
             entry_sha = write("native-inputs/index.html", entry.encode())
             brief_sha = write("native-inputs/brief.json", {
                 "source_binding": {"aroll_sha256": ar, "segment_id": "seg-001", "start": 0, "end": 2},
-                "entry": {"job_path": "native-inputs/index.html", "sha256": entry_sha},
+                "entry": {"job_path": "native-inputs/index.html", "scene_path": "index.html", "sha256": entry_sha},
                 "composition": {"alpha": True, "fps": 24}, "upstream_route": "hyperframes/grid-card-assemble",
                 "source_pins": {"sha256": source_sha},
                 "assets": [{"scene_path": "native.html", "job_path": "native-inputs/native.html", "sha256": native_sha}]})
@@ -128,6 +128,8 @@ class OverlayAlignmentTest(unittest.TestCase):
             write("treatment.json", {"overlay_alignment": [record]})
             result = validate_treatment(job, draft, treatment)
             self.assertAlmostEqual(result[0]["events"][0]["anchor_time"], 1.3)
+            self.assertEqual({item["scene_path"] for item in _assembly.call_args.args[0][0]["files"]},
+                             {"index.html", "native.html"})
             # A future recap cannot be admitted just because it has an anchor.
             event["basis"] = "recap"
             native = entry.replace('"1.3"', '"0.1"')

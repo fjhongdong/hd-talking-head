@@ -2783,6 +2783,16 @@ def generate_corrected_cleanup_proposal(
             rebased_plan,
             media_duration=_finite_number(old_estimate["source_seconds"]),
         )
+        if job.version == 2:
+            from . import speech_edit_v2
+
+            source_seconds = _finite_number(old_estimate["source_seconds"])
+            intervals = speech_edit_v2._video_use_intervals(
+                rebased_plan, source_seconds,
+            )
+            proposal["estimated_duration"]["seconds"] = round(
+                sum(end - start for start, end in intervals), 6,
+            )
         proposal["diff_summary"]["transcript_corrections"] = {
             "version": 1,
             "runs": [

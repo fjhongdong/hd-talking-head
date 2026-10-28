@@ -237,8 +237,8 @@ def create_adapter(project_root, python_executable, brief_loader, *, execution_m
         argv_template=("{launcher}","{entrypoint}","--skill-root",str(SKILL),"--project-root",str(project),
                        "--mode",execution_mode,"--brief","{brief_path}","--media-manifest","{media_manifest_fd}",
                        "--output","{output_path}","--runtime-identity",runtime["identity"],
-                       "--node",runtime.get("node",""),"--ffmpeg",runtime["ffmpeg"],
-                       "--ffprobe",runtime["ffprobe"],"--chrome",runtime.get("chrome","")))
+                       *(argument for key in ("node", "ffmpeg", "ffprobe", "chrome") if key in runtime
+                         for argument in ("--" + key, runtime[key]))))
 
 
 def create_binding(adapter, brief_bytes, reference_sample):

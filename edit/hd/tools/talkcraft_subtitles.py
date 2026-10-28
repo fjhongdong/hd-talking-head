@@ -1,4 +1,4 @@
-"""Thin timing/identity adapter for the approved video-talkcraft subtitle component."""
+"""Parent subtitle renderer using the approved timing and locked TalkCraft theme."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ UPSTREAM_SHA256 = "fee88ad65d35422220fddf56c9de9efeeee85a9c28a2ca6122dcc0bfadf42
 
 
 class TalkCraftSubtitleError(ValueError):
-    """An upstream call or its source/clock binding is invalid."""
+    """The local renderer or its source/clock binding is invalid."""
 
 
 def _utf16_length(text: str) -> int:
@@ -60,13 +60,20 @@ def cue_input(cue: Mapping[str, Any], chunk: list[dict[str, object]], *, placeme
             raise TalkCraftSubtitleError("approved emphasis has no source word timing")
         emphasis = {"text_start": left, "text_end": right,
                     "start": hits[0]["start"], "end": hits[-1]["end"]}
-    return {"cue_id": cue["id"], "start": cue["start"], "end": cue["end"],
+    result = {"cue_id": cue["id"], "start": cue["start"], "end": cue["end"],
             "text": text, "words": words, "emphasis": emphasis,
             "placement": placement}
+    if placement == "standard":
+        result["bottom"] = 350
+    else:
+        if "box" not in cue or "bottom" not in cue:
+            raise TalkCraftSubtitleError("B-roll subtitle box is required")
+        result["bottom"] = cue["bottom"]
+    return result
 
 
 def renderer_input(plan: Mapping[str, Any], cues: list[dict[str, Any]]) -> dict[str, Any]:
-    return {"schema_version": 1,
+    return {"schema_version": 2,
             "canvas": {key: plan["canvas"][key] for key in ("width", "height", "fps", "frames")},
             "cues": cues}
 
@@ -78,6 +85,8 @@ def identity(render_input: Mapping[str, Any], plan: Mapping[str, Any]) -> dict[s
         from ..integrations.talkcraft.check_runtime import check_runtime
     except ImportError as exc:
         raise TalkCraftSubtitleError("project TalkCraft runtime is unavailable") from exc
+    # This pins the style reference, not proof that its Subtitles component runs.
+    # The actual renderer is ADAPTER/Subtitles.tsx and imports the upstream theme.
     if contract_artifacts.sha256_file(UPSTREAM) != UPSTREAM_SHA256:
         raise TalkCraftSubtitleError("locked TalkCraft subtitle component changed")
     health = check_runtime(ROOT)
@@ -122,6 +131,14 @@ def validate_binding(payload: Mapping[str, Any]) -> None:
         expected_placement = "above_avatar" if cue["safe_zones"]["face"] is not None else "standard"
         if rendered.get("placement") != expected_placement:
             raise TalkCraftSubtitleError("TalkCraft subtitle placement changed")
+        if expected_placement == "standard":
+            expected_bottom = 350
+        else:
+            if "box" not in cue:
+                raise TalkCraftSubtitleError("B-roll subtitle box is missing")
+            expected_bottom = 1920 - (cue["box"]["y"] + cue["box"]["height"])
+        if rendered.get("bottom") != expected_bottom:
+            raise TalkCraftSubtitleError("TalkCraft subtitle bottom changed")
 
 
 def render(data: Mapping[str, Any], descriptor: int) -> None:

@@ -8,7 +8,7 @@ Lemo 使用官方 vendor `lemo-opuscar@413a6bd6d78ebd3bdd5abaec9538a26867f890df`
 标签：来自所选 STYLE.md 的 subjects/actions/relations/feelings/styles/patterns
 ```
 
-完整读取 `plugin/skills/lemo-opuscar/SKILL.md`、`AGENTS.md`、`DIRECTOR.md`、`TECHNIQUE.md` 和所选 `styles/<style_slug>/STYLE.md`。先写本期 TREATMENT，再按所选 STYLE 的原生动作制作本期场景（demo 只作技术参考）；第三方文件不改，不拆源码，不重写引擎。输出固定为 1080×1920、24fps、无声整屏 B-roll。登记 59 条不代表每个主题都已完成成片验收，仍须对当前主题、真实输入和最终像素逐项检查；纪实风格必须先匹配用户提供或合法授权的真实材料，不得用假数据代替。
+完整读取 `plugin/skills/lemo-opuscar/SKILL.md`、`AGENTS.md`、`DIRECTOR.md`、`TECHNIQUE.md` 和所选 `styles/<style_slug>/STYLE.md`。由原生规划产生本期 TREATMENT、`design_plan` 和 `beats`，制作前可冻结这些结果，再按所选 STYLE 的原生动作制作本期场景（demo 只作技术参考）；第三方文件不改，不拆源码，不重写引擎。输出固定为 1080×1920、24fps、无声整屏 B-roll。登记 59 条不代表每个主题都已完成成片验收，仍须对当前主题、真实输入和最终像素逐项检查；纪实风格必须先匹配用户提供或合法授权的真实材料，不得用假数据代替。
 
 ## brief
 
@@ -53,7 +53,7 @@ Lemo 使用官方 vendor `lemo-opuscar@413a6bd6d78ebd3bdd5abaec9538a26867f890df`
 
 Lemo 的 `files` 按本期实际输入冻结，入口、workflow、TREATMENT 分别记录，可加入脚本、字体和原生要求的真实素材，不再限制为 8 个。公共传输保留单文件 512 MiB 检查，并检查 4 GiB 总量及当前可用文件句柄；资源不足明确停止，不自动提高系统限制。workflow 记录所选 style、TREATMENT、完整 `design_plan` 和五份原生指引的哈希。调用前后核对 style、输入文件、帧数、无声状态和真实画面；brief 或 renderer 通过不能代替成片验收。
 
-`transcript / semantic_goal / required_change` 分别取已确认语义项的原话、语义、画面任务；引用同一语义项，不另写另一主题。`visual_pattern` 和 `design_plan` 沿用所选设计。交接核对语义列表、选型和 brief，生产入口再核对冻结绑定。主体等自由创作字段由现有独立语义及像素 QA 验收，不伪造权威默认值。
+`transcript / semantic_goal / required_change` 分别取已确认语义项的原话、语义、画面任务；引用同一语义项，不另写另一主题。`visual_pattern` 和 `design_plan` 沿用原生规划产生的所选设计，父级不预先填写完整设计。交接核对语义列表、选型和 brief，生产入口再核对冻结绑定。主体等自由创作字段由现有独立语义及像素 QA 验收，不伪造权威默认值。
 
 候选复核逐项核对 profile 的具体 `limitations`：例如 countdown 需同一事件的多路视频、文档、照片及同步点，档案、比赛、调查等按各自 STYLE 核对真实资料。缺素材不能靠标签命中入选。竖屏布局、24fps 和无声表现先交原生流程按本 Job 规格设计，不把 demo 的画幅帧率一律判为硬不兼容；只有明确不可调整的冲突才排除。
 

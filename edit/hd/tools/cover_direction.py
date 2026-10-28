@@ -248,9 +248,12 @@ def _read_direction_preview(
     return data
 
 
-def _traceable_title(title: str, analysis: Mapping[str, Any]) -> None:
+def _traceable_title(
+    title: str, analysis: Mapping[str, Any], title_review: Any = None,
+) -> Dict[str, Any] | None:
     semantic = analysis["analysis"]
     sources = [semantic["thesis"], semantic["hook"]]
+    eligible = {}
     for item in semantic["items"]:
         if (
             item["priority"] in {"critical", "high"}
@@ -258,10 +261,27 @@ def _traceable_title(title: str, analysis: Mapping[str, Any]) -> None:
         ):
             sources.append(item["source_text"])
             sources.extend(item["keywords"])
-    if not any(title in source for source in sources):
+            eligible[item["id"]] = item["source_text"]
+    reviewed = None
+    if title_review is not None:
+        review = _object(
+            title_review, {"analysis_sha256", "source_refs", "reason"}, "title_review"
+        )
+        if review["analysis_sha256"] != analysis["analysis_sha256"]:
+            raise CoverDirectionError("title review analysis identity changed")
+        refs = _text_list(review["source_refs"], "title review source_refs", allow_empty=False)
+        if any(ref not in eligible or not eligible[ref].strip() for ref in refs):
+            raise CoverDirectionError("title review source is not approved or eligible")
+        reviewed = {
+            "analysis_sha256": review["analysis_sha256"],
+            "source_refs": refs,
+            "reason": _text(review["reason"], "title review reason"),
+        }
+    if not any(title in source for source in sources) and reviewed is None:
         raise CoverDirectionError(
             "cover title must be traceable to the approved content analysis"
         )
+    return reviewed
 
 
 def _is_han(character: str) -> bool:
@@ -278,7 +298,7 @@ def _normalize_direction(
     reference: Mapping[str, Any],
 ) -> Dict[str, Any]:
     if not isinstance(raw, Mapping) or not REQUIRED_DIRECTION_KEYS.issubset(raw) or (
-        set(raw) - REQUIRED_DIRECTION_KEYS - {"support_line"}
+        set(raw) - REQUIRED_DIRECTION_KEYS - {"support_line", "title_review"}
     ):
         raise CoverDirectionError("cover direction schema is invalid")
     value = dict(raw)
@@ -290,7 +310,9 @@ def _normalize_direction(
     title = _text(value["title"], "title")
     if not 4 <= len(title) <= 8 or any(not _is_han(character) for character in title):
         raise CoverDirectionError("title must contain four to eight Han characters")
-    _traceable_title(title, analysis)
+    if "title_review" in value and not isinstance(value["title_review"], Mapping):
+        raise CoverDirectionError("title_review schema is invalid")
+    title_review = _traceable_title(title, analysis, value.get("title_review"))
     subtitle = _text(value["subtitle"], "subtitle", allow_empty=True)
     person = _person_input(value["person_reference"])
     if person["source"] != reference["source"]:
@@ -371,6 +393,8 @@ def _normalize_direction(
     }
     if support_line is not None:
         normalized["support_line"] = support_line
+    if title_review is not None:
+        normalized["title_review"] = title_review
     return normalized
 
 

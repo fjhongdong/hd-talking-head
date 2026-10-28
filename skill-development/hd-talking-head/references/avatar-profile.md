@@ -8,9 +8,9 @@
 
 1. 复用本 Job 已批准的 `edited-aroll`、剪辑映射、内容分析和视觉方向，不重新确认封面、文案或关键词。
 2. 从当前 A-roll 每个拟用 B-roll 区间取首、中、尾帧；测量头顶、脸框、下巴、颈部及左右肩线。测量可以人工或通过已确认的检测工具完成，必须保留原帧与测量结果，不能用示例数值假装检测。`scripts/calibrate_avatars.py` 的 Haar 人脸框和裁切建议仅写入独立的 `avatar-calibration-candidates.json`，供人工参考；它会以 `manual_required` 非成功退出，绝不生成或覆盖正式 `avatar-calibration.json`。
-3. 本 Job 统一头像内径、边框宽度与颜色。每段按主视觉避让选择位置，按人物真实构图选择裁切方框；居中、偏侧和移动不能共用旧视频的固定坐标。
+3. 本 Job 统一头像内径、边框宽度与颜色。新草稿的 bottom-window 头像统一放在右下角：外径为 `diameter + 2 * border_width`，位置为 `x = 1080 - 80 - outer`、`y = 1700 - outer`；按人物真实构图选择裁切方框。旧已批准计划仍按其冻结坐标读取，不由新策略回写。
 4. 位置变化使用裁切关键帧，同一镜头裁切尺寸固定，避免忽大忽小。人物转头、走动或遮挡时加密采样；线性插值只是执行测量轨迹，不是自动跟踪或所有中间帧合格的证明。
-5. 将参数同时冻结在该段 `visual_strategy.composition.avatar` 和 `shot_recipe.composition.avatar`，随现有视觉方向/真实 canary 一起审核，不增加第二套头像批准状态。
+5. 将参数同时冻结在该段 `visual_strategy.composition.avatar` 和 `shot_recipe.composition.avatar`，随现有视觉方向/真实 canary 一起审核，不增加第二套头像批准状态。`plan_avatar_policy` 只对新草稿归一化位置；`validate_avatar_plan_policy` 拒绝非右下角的新草稿。
 
 ## 字段与单位
 
@@ -18,7 +18,7 @@
 
 | 对象 | 字段 | 约束 |
 | --- | --- | --- |
-| `profile` | `schema_version`, `framing` | `1`、`head-shoulders` |
+| `profile` | `schema_version`, `framing` | `1`、默认 `head-shoulders`；用户明确允许时可用 `head-neck` |
 | `profile` | `source_sha256` | 当前归一 A-roll 的真实 SHA-256，不能填头像图片或旧成片的哈希 |
 | `profile` | `diameter`, `border_width`, `border_color` | 内径 128–384 px，边框 0–24 px，RGB 十六进制颜色；同一计划全部 B-roll 完全一致 |
 | `position` | `x`, `y` | 圆形外框左上角整数坐标；外径 = 内径 + 2 × 边框；不能超出宽 1080 和 soft-safe 底边 1700 |
@@ -27,11 +27,11 @@
 | 每个 anchor | `frame`, `x`, `y` | 当前 B-roll 的局部帧号及裁切框左上角，不是全片帧号；框必须留在原画面内 |
 | `landmarks` | `head_top`, `chin`, `neck` | 原画面像素坐标 `[x, y]` |
 | `landmarks` | `face_box` | `[x, y, width, height]`，原画面坐标 |
-| `landmarks` | `shoulders` | `[左肩点, 右肩点]`；允许肩线倾斜，不可只测颈部冒充肩线 |
+| `landmarks` | `shoulders` | `head-shoulders` 必填：`[左肩点, 右肩点]`；允许肩线倾斜，不可只测颈部冒充肩线。`head-neck` 不要求此字段 |
 
 所有测量数值必须有限且不能是布尔值。内径范围是输入校验边界，不是鼓励同一视频随意改变头像尺寸；实际值以本 Job 批准结果为准。当前共享合成器不加阴影，各镜头不得自行叠加不一致阴影。
 
-比例均以裁切方框为基准：脸宽 0.38–0.52、肩宽至少 0.68、头顶留白 0.06–0.11。头、脸框四角、下巴、颈部和两个肩点还必须落在最终圆形遮罩内，不能仅靠方框包含判定通过。取不到完整头肩时停止并报告具体区间，不自动生成头部特写，也不擅自改成隐藏头像。
+比例均以裁切方框为基准：`head-shoulders` 脸宽 0.38–0.52、肩宽至少 0.68；`head-neck` 建议脸宽 0.38–0.60；两者头顶留白均为 0.06–0.11。头、脸框四角、下巴、颈部必须落在最终圆形遮罩内；`head-shoulders` 另须包含两个肩点，不能仅靠方框包含判定通过。用户明确允许后才可使用 `head-neck`，允许肩部自然截取；默认仍为 `head-shoulders`。若原片无法自然容纳，不为过门改头形，也不自动选择另一种头像类型。
 
 ## 先连组，再安排进出
 

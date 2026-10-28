@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import importlib.util
 import math
 from collections import defaultdict
 from pathlib import Path
@@ -29,6 +30,25 @@ _REGISTRY_DEPENDENT = {
     "huashu_motion_adapter", "data_rollup_adapter",
     "hyperframes_notification_adapter", "hyperframes_chatgpt_exchange_adapter",
 }
+
+
+def talkcraft_candidates(project_root: Path) -> list[dict]:
+    """Read original callable recipes and retain their actual native role."""
+    source = Path(project_root) / 'skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py'
+    spec = importlib.util.spec_from_file_location('_talkcraft_native_catalog', source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return [{"candidate_id": module.DEPENDENCY_ID + ':' + card['card_id'],
+             "skill_id": module.DEPENDENCY_ID, "dependency_id": module.DEPENDENCY_ID,
+             "entrypoint": module.ENTRY, "template_id": module.DEPENDENCY_ID + '/' + card['card_id'],
+             "producer_version": module.VERSION, "source_route": card['card_id'],
+             "role": "native" if card['native_role'] == 'scene' else "component",
+             "native_role": card['native_role'], "status": "supported",
+             "adapter_module": "talkcraft_skill_adapter", "capacity": None,
+             "semantic_families": [], "limitations": [
+                 "Complete original TalkCraft Skill and recipe; opaque scene output only",
+                 "Transitions, camera moves and annotations are components, not standalone B-roll or transparent overlays"]}
+            for card in module.load_card_catalog(project_root)]
 
 
 def _declarations(path):
@@ -156,6 +176,11 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                 add(dep, entry, template, version, families=families,
                     capacity=templates[template]["capacity"],
                     limitations=("Only the registered grammar; review source media and reading time",))
+        elif module == "paper_hyperframes_adapter":
+            add(dep, entry, 'paper-collage-ad-hyperframes-portrait-adaptation', version,
+                route=values['ROUTE'], limitations=(
+                    "Complete Paper Collage Ad Skill, original Route B authoring and HyperFrames export",
+                    "Real paper assets and existing source/clock validation are required",))
         elif module == "talkcraft_native_adapter":
             function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "check_runtime")
             original_files = next(ast.literal_eval(n.value) for n in ast.walk(function)
@@ -164,11 +189,9 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                 add(dep, entry, _literal_field(tree, "template_id"), version,
                     route="template/cards/" + filename,
                     limitations=("Use this original native card; only static layout, public props and clock adaptation",))
-        elif module == "paper_hyperframes_adapter":
-            route = values["ROUTE"]
-            add(dep, entry, route.replace("/", "-") + "-portrait-adaptation",
-                version, route=route, status="needs_adapter",
-                limitations=("Renderer/document route is not a reusable native scene; no new GSAP scene in this workflow",))
+                if filename == "source-converge.tsx":
+                    # Native centering ends at 4.4s and requires a >=1.2s hold.
+                    found[-1]["min_duration_seconds"] = 5.6
         else:
             template = values.get("TEMPLATE_ID") or _literal_field(tree, "template_id")
             if not isinstance(template, str):
@@ -183,26 +206,13 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
             add(dep, entry, template, version, families=families,
                 capacity=record.get("capacity") or _literal_field(tree, "capacity"),
                 limitations=("Use current adapter validation and native components; not a generic scene API",))
+            if module == "data_rollup_adapter":
+                # render_data_rollup.cjs requires a complete 3-second, 24fps clock.
+                found[-1]["min_duration_seconds"] = 3.0
         for row in found[first:]:
             row["adapter_module"] = module
             if module in {"adu_native_adapter", "hypit_native_adapter"}:
                 row["min_duration_seconds"] = _native_frame_floor(tree)
-
-    from .talkcraft_matcher import load_card_catalog
-    from .talkcraft_contract import DEPENDENCY_ID as talkcraft_dependency
-    runtime = project / "edit/hd/integrations/talkcraft/runtime"
-    for card in load_card_catalog(runtime / "card-registry.json",
-                                  index_path=runtime / "card-semantic-index.json"):
-        if "base" not in card["layer_roles"]:
-            continue
-        production = card["production"]
-        add(talkcraft_dependency, production["derived_entrypoint"],
-            "hd-talking-head/talkcraft/" + card["card_id"], production["adapter_version"],
-            families=card["semantic_families"], capacity={"min_units": 1, "max_units": 8},
-            status="needs_adapter",
-            limitations=(card["suitable_for"], "Required media: " + ", ".join(card["required_media"]),
-                         "Qualification retained; the current package has no TalkCraft production adapter"))
-        found[-1]["summary"] = card["summary"]
 
     for dep, relative in (
         ("muyang-flat-animation", "muyang-flat-animation/muyang-flat-animation/SKILL.md"),
@@ -213,6 +223,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
             raise ValueError(f"B-roll design Skill is unavailable: {dep}")
         add(dep, str(source.relative_to(project)), dep + "/design", "source",
             role="design", limitations=("Design/image source; execute through this Job selected generation channels after complete-list approval",))
+    found.extend(row for row in talkcraft_candidates(project) if row['native_role'] == 'scene')
     ids = [row["candidate_id"] for row in found]
     if len(ids) != len(set(ids)):
         raise ValueError("B-roll discovery returned duplicate identities")
@@ -239,8 +250,10 @@ def _duration(row):
 
 
 def source_channel(skill_id):
-    """Return the real production channel, including the one known alias."""
-    return "hyperframes" if skill_id in {"hyperframes", "hyperframes-native-adaptation"} else skill_id
+    """Count native routes and component adapters under their actual source."""
+    return {"hyperframes-native-adaptation": "hyperframes",
+            "talkcraft-native-adaptation": "video-talkcraft",
+            "paper-collage-hyperframes": "paper-collage-ad"}.get(skill_id, skill_id)
 
 
 def _template_identity(row):
@@ -331,7 +344,8 @@ def fixed_identity(row, *, job_dir=None):
     return identity
 
 
-def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> dict:
+def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
+                        temporarily_disabled=()) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
@@ -394,7 +408,9 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
                 if pool[cid]["status"] != "supported" or (not is_overlay and reviews[pool[cid]["skill_id"]]["fit"] in {"unsuitable", "needs_adapter"}):
                     raise ValueError("B-roll candidate is not callable or contradicts the Skill review")
                 _text(candidate.get("visual_pattern"), "shared visual pattern")
-                eligible.append(candidate)
+                identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+                if (identity, cid) not in temporarily_disabled:
+                    eligible.append(candidate)
         if first is not None and (beat["segment_id"], beat["component_id"]) == (first["segment_id"], first["component_id"]):
             if beat["start"] != 0:
                 raise ValueError("opening must start at 0")
@@ -404,7 +420,9 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
                 raise ValueError("opening candidate is missing or not suitable")
         domain = eligible
         if not domain:
-            raise ValueError("B-roll has no suitable supported candidate; retain A-roll or resolve the declared gap")
+            frames = round(_duration(beat) * 24)
+            raise ValueError(f"{beat['segment_id']}:{beat['component_id']} has no timing-feasible candidate "
+                             f"for {frames} frames ({beat['start']:.3f}-{beat['end']:.3f}s)")
         domains.append(sorted(domain, key=lambda c: c["candidate_id"]))
 
     recent = selection.get("recent_context", [])
@@ -546,6 +564,47 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
     result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]
     result["overlay_assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) in overlay_keys]
     return result
+
+
+def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> dict:
+    """Assign reviewed routes, retrying only with draft-local timing exclusions."""
+    from .motion_capabilities import overlay_candidates
+
+    catalog = {row["candidate_id"]: row for row in
+               [*discover_candidates(project_root), *overlay_candidates(project_root)]}
+    disabled = set()
+    while True:
+        result = _assign_skills_once(project_root, selection, job_dir=job_dir,
+                                     temporarily_disabled=disabled)
+        failures = []
+        for assignment in [*result["assignments"], *result.get("overlay_assignments", [])]:
+            row = catalog[assignment["candidate_id"]]
+            beat = next(b for b in [*selection["beats"], *selection.get("overlay_beats", [])]
+                        if (b["segment_id"], b["component_id"]) ==
+                        (assignment["segment_id"], assignment["component_id"]))
+            reason = timing_failure(row, beat)
+            if reason:
+                identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+                failures.append(((identity, row["candidate_id"]), reason))
+        if not failures:
+            return result
+        before = len(disabled)
+        disabled.update(key for key, _ in failures)
+        if len(disabled) == before:
+            raise ValueError("B-roll timing assignment exhausted: " + "; ".join(reason for _, reason in failures))
+
+
+def timing_failure(row: Mapping, beat: Mapping) -> str | None:
+    """Return the native 24fps duration conflict, if any, without changing state."""
+    minimum = row.get("min_duration_seconds")
+    if minimum is None:
+        return None
+    seconds = _duration(beat)
+    frames = round(seconds * 24)
+    if frames < minimum * 24 or abs(seconds * 24 - frames) > 1e-6:
+        return (f"{beat['segment_id']}: {row['candidate_id']} has {seconds:.3f}s but needs "
+                f"at least {minimum}s on an exact 24fps clock")
+    return None
 
 
 def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bindings=True, job_dir=None) -> None:

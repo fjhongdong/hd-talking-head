@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import hashlib
 import json
 import os
 import re
@@ -240,11 +241,28 @@ def _assembled_clocks(entries):
     from .relation_browser_watchdog import _process_start_identity
     budgets, timeout = _clock_budgets(entries)
     with tempfile.TemporaryDirectory(prefix='hf-clock-') as temporary:
-        directory = Path(temporary)
+        root = Path(temporary)
+        directory = root / 'check'
+        directory.mkdir()
+        prepared = []
+        for index, (entry, budget) in enumerate(zip(entries, budgets)):
+            scene = root / f'source-{index}'
+            scene.mkdir()
+            for item in entry['files']:
+                source = Path(item['source'])
+                data = source.read_bytes()
+                if hashlib.sha256(data).hexdigest() != item['sha256']:
+                    raise ValueError('assembled native input changed before clock check')
+                target = scene / item['scene_path']
+                if not target.resolve().is_relative_to(scene.resolve()):
+                    raise ValueError('assembled native input leaves its scene directory')
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+            prepared.append({**{k: v for k, v in entry.items() if k not in {'files', 'entry_directory'}},
+                             'entry_directory': str(scene), 'timeout_ms': round(budget * 1000)})
         request = {'project_root': str(project), 'work_directory': str(directory),
                    'python_executable': sys.executable,
-                   'entries': [{**entry, 'timeout_ms': round(budget * 1000)}
-                               for entry, budget in zip(entries, budgets)]}
+                   'entries': prepared}
         process = subprocess.Popen([shutil.which('node'), str(checker)],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, start_new_session=True,
@@ -506,6 +524,9 @@ def validate_treatment(job, draft, treatment_path) -> list[dict]:
             _path(job.job_dir, assets[0]["job_path"]).read_bytes(), route, _number(mount["data-duration"]))
         actual, exit_time = _native_events(route, mount, fps, native_duration)
         assembled_inputs.append({"entry_directory": str(entry.parent), "route": route,
+            "files": [{"source": str(_path(job.job_dir, item["job_path"])),
+                       "scene_path": item["scene_path"], "sha256": item["sha256"]}
+                      for item in [brief["entry"], *brief["assets"]]],
             "duration": native_duration, "start": _number(mount.get("data-start", 0)),
             "events": [{"slot": slot, "kind": kind, "text": text, "time": time}
                        for slot, kind, text, time in actual]})

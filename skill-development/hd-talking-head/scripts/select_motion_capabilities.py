@@ -13,7 +13,6 @@ def main() -> None:
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--query")
     parser.add_argument("--use", choices=("aroll_overlay", "broll", "component", "design"))
-    parser.add_argument("--include-history", action="store_true")
     parser.add_argument("--treatment", type=Path)
     parser.add_argument("--director-brief", type=Path)
     parser.add_argument("--job-dir", type=Path, help="read existing approved speech and referenced native briefs only")
@@ -35,8 +34,7 @@ def main() -> None:
         elif args.action == "search":
             if not args.query:
                 parser.error("search requires --query after the host has analyzed the full clause")
-            result = motion.search_capabilities(project, args.query, use=args.use,
-                                                include_history=args.include_history)
+            result = motion.search_capabilities(project, args.query, use=args.use)
         elif args.action == "match":
             if args.treatment is None or args.director_brief is None:
                 parser.error("match requires --treatment and --director-brief")

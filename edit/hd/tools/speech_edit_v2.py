@@ -513,6 +513,18 @@ def prepare_transcription(
         wav = stage / "speech-16k.wav"
         raw = stage / "scribe.json"
         transcribe.extract_pcm16k(video, wav)
+        rate, samples = _pacing_audio(wav)
+        words, edge_adjustments = _derive_pcm_edge_trimmed_words(words, rate, samples)
+        runtime = {
+            **runtime,
+            "word_edge_silence_adjustments": edge_adjustments,
+            "word_edge_silence_policy": {
+                "minimum_quiet_seconds": 0.8,
+                "edge_padding_seconds": 0.08,
+                "source": "derived_from_existing_pcm",
+                "raw_scribe_unchanged": True,
+            },
+        }
         shutil.copy2(video_use_result, raw)
         if contract_artifacts.sha256_file(raw) != invocation["result_sha256"]:
             raise SpeechEditV2Error("video-use result changed during staging")
@@ -724,6 +736,59 @@ def _quiet_ranges(rate: int, samples: array, start: float, end: float) -> list[t
     return runs
 
 
+def _derive_pcm_edge_trimmed_words(
+    words: list[transcribe.Word], rate: int, samples: array,
+) -> tuple[list[transcribe.Word], list[dict[str, Any]]]:
+    """Derive conservative word bounds from PCM without changing Scribe."""
+    threshold = 0.8
+    padding = 0.08
+    derived: list[transcribe.Word] = []
+    adjustments: list[dict[str, Any]] = []
+    for index, word in enumerate(words):
+        original_start, original_end = float(word.start), float(word.end)
+        quiet = _quiet_ranges(rate, samples, original_start, original_end)
+        # A fully quiet word has no safe speech boundary. Keep it intact.
+        if any(
+            run[0] <= original_start + 1 / rate
+            and run[1] >= original_end - 1 / rate
+            for run in quiet
+        ):
+            derived.append(word)
+            continue
+        start, end = original_start, original_end
+        leading = next((run for run in quiet
+                        if run[0] <= original_start + 1 / rate
+                        and run[1] - run[0] >= threshold), None)
+        trailing = next((run for run in reversed(quiet)
+                         if run[1] >= original_end - 1 / rate
+                         and run[1] - run[0] >= threshold), None)
+        if leading is not None:
+            candidate = max(original_start, leading[1] - padding)
+            if candidate < end and candidate > start:
+                start = candidate
+        if trailing is not None:
+            candidate = min(original_end, trailing[0] + padding)
+            if candidate > start and candidate < end:
+                end = candidate
+        if start != original_start or end != original_end:
+            adjustments.append({
+                "word_index": index,
+                "text": word.text,
+                "original": {"start": original_start, "end": original_end},
+                "derived": {"start": start, "end": end},
+                "quiet_ranges": [
+                    {"start": a, "end": b} for a, b in quiet
+                    if b - a >= threshold and (
+                        a <= original_start + 1 / rate or b >= original_end - 1 / rate
+                    )
+                ],
+                "threshold_seconds": threshold,
+                "padding_seconds": padding,
+            })
+        derived.append(transcribe.Word(word.text, start, end))
+    return derived, adjustments
+
+
 def _output_word_gaps(plan: dict[str, Any], words: list[dict[str, Any]], duration: float):
     intervals = _video_use_intervals(plan, duration)
     def position(value):
@@ -740,6 +805,40 @@ def _output_word_gaps(plan: dict[str, Any], words: list[dict[str, Any]], duratio
     for left, right in zip(kept, kept[1:]):
         gap = position(float(words[right]["start"])) - position(float(words[left]["end"]))
         yield left, right, max(0.0, gap)
+
+
+def _internal_word_silence_candidates(
+    words: list[dict[str, Any]], plan: dict[str, Any], rate: int,
+    samples: array, duration: float,
+) -> list[dict[str, Any]]:
+    candidates = []
+    kept_intervals = _video_use_intervals(plan, duration)
+    for index, word in enumerate(words):
+        word_start, word_end = float(word["start"]), float(word["end"])
+        for quiet_start, quiet_end in _quiet_ranges(rate, samples, word_start, word_end):
+            if quiet_end - quiet_start < 0.8:
+                continue
+            retained = sum(
+                max(0.0, min(quiet_end, end) - max(quiet_start, start))
+                for start, end in kept_intervals
+            )
+            if retained < 0.8:
+                continue
+            identity = contract_artifacts.sha256_json({
+                "kind": "retained_word_silence", "word": index,
+                "start": quiet_start, "end": quiet_end,
+            })[:16]
+            candidates.append({
+                "candidate_id": "retained-word-silence-" + identity,
+                "kind": "retained_word_silence", "word_start": index,
+                "word_end": index + 1, "source_start": quiet_start,
+                "source_end": quiet_end, "output_gap_seconds": round(retained, 6),
+                "context": "".join(w["text"] for w in words[max(0, index - 2):index + 3]),
+                "evidence": "retained_word_internal_silence_requires_audio_review",
+                "audition_range": {"source_start": max(0.0, word_start - 0.35),
+                                   "source_end": min(duration, word_end + 0.35)},
+            })
+    return candidates
 
 
 def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, Any]:
@@ -832,6 +931,11 @@ def cleanup_check_candidates(job: state.JobState) -> list[dict[str, Any]]:
             "audition_range": {"source_start": max(0.0, float(words[left]["start"]) - 0.35),
                                "source_end": min(duration, float(words[right]["end"]) + 0.35)},
         })
+    # A long silent island inside one retained word is not visible as an
+    # inter-word gap. Report it only when the current EDL still retains it.
+    candidates.extend(_internal_word_silence_candidates(
+        words, plan, rate, samples, duration,
+    ))
     return sorted(candidates, key=lambda c: (c["source_start"], c["candidate_id"]))
 
 

@@ -1,88 +1,67 @@
-from __future__ import annotations
+"""Current native Skill adapter contracts, replacing the retired derived-card bridge.
 
+The FD/hash/symlink protections remain unchanged; native request and reviewed
+result identities replace the former derived registry/qualification protocol.
+"""
+from __future__ import annotations
 import hashlib
 import importlib.util
 import json
 import os
+import sys
 import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock, patch
-
-from edit.hd.tests.test_render_span import v4_plan
-from edit.hd.tests.test_talkcraft_contract import brief
-from edit.hd.tests.test_broll_component_executor import _Job
-from edit.hd.tools import broll_component_executor as executor
-from edit.hd.tools import talkcraft_contract
-
+from edit.hd.tests.test_broll_component_executor import _Job, _code_component, _recipe
+from edit.hd.tools import broll_component_executor as executor, visual_canary, visual_confirmation
 
 ROOT = Path(__file__).parents[3].resolve()
-ADAPTER_PATH = ROOT / "skill-development/hd-talking-head/scripts/talkcraft_adapter.py"
+ADAPTER_PATH = ROOT / "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
 
 
 def _load_adapter_module():
-    spec = importlib.util.spec_from_file_location("hd_talkcraft_adapter", ADAPTER_PATH)
-    if spec is None or spec.loader is None:
-        raise AssertionError("TalkCraft adapter is unavailable")
+    spec = importlib.util.spec_from_file_location("hd_talkcraft_skill_adapter", ADAPTER_PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-class TalkCraftAdapterTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.directory = Path(self.temporary.name).resolve()
-        self.paths = {}
-        self.hashes = {}
-        for name in ("node", "playwright", "browser", "ffmpeg", "ffprobe"):
-            path = self.directory / name
-            path.write_bytes(name.encode("ascii"))
-            path.chmod(0o700)
-            self.paths[name] = path
-            self.hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
-        self.contracts = {
-            name: {
-                "kind": "file_snapshot", "path": str(self.paths[name]),
-                "sha256": self.hashes[name], "version": "test",
-                "library_discovery": "mach_o_static_v1", "libraries": [],
-            }
-            for name in ("node", "ffmpeg", "ffprobe")
-        }
-        for name in ("playwright", "browser"):
-            self.contracts[name] = {
-                "kind": "directory_tree", "path": str(self.paths[name]),
-                "version": "test",
-                "roots": [{"path": str(self.directory), "sha256": "a" * 64}],
-            }
+def brief():
+    return {"schema_version":1,"job_id":"job-001",
+        "source_binding":{"aroll_sha256":"a"*64,"segment_id":"seg-001","start":0,"end":2},
+        "composition":{"width":1080,"height":1920,"fps":24,"frames":48},
+        "template_request":{"semantic_family":"source_convergence","information_units":3,"numeric_values":[],"numeric_scale":"not_applicable"},
+        "card_id":"source-converge","semantic_goal":"真实资料汇聚","transcript":"合同年报项目材料",
+        "word_anchors":[{"text":"合同年报项目材料","start":0,"end":2}],
+        "speech":{"job_path":"voice.wav","sha256":hashlib.sha256(b"voice").hexdigest(),"byte_count":5},
+        "materials":[],"authorization":{"paid_generation":False},
+        "project_directory":"native-projects/native-test","result_record_path":"native-inputs/native-test/result.json"}
 
-    def tearDown(self) -> None:
+
+class TalkCraftAdapterTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary=tempfile.TemporaryDirectory()
+        self.directory=Path(self.temporary.name).resolve()
+
+    def tearDown(self):
         self.temporary.cleanup()
 
     def _adapter(self):
-        module = _load_adapter_module()
-        payload = json.dumps(brief(), ensure_ascii=False, sort_keys=True).encode("utf-8")
-        with patch("edit.hd.tools.runtime_contracts.verify_contracts", side_effect=lambda value: value):
-            return module.create_adapter(
-                project_root=ROOT,
-                tools=self.paths,
-                tool_hashes=self.hashes,
-                brief_loader=lambda *_args: payload,
-                runtime_contracts=self.contracts,
-            )
+        module=_load_adapter_module()
+        return module.create_adapter(ROOT,sys.executable,lambda *_:json.dumps(brief()).encode())
 
-    def test_factory_binds_entrypoint_registry_closure_and_stdin_protocol(self) -> None:
-        adapter = self._adapter()
-        self.assertEqual(adapter.dependency_id, talkcraft_contract.DEPENDENCY_ID)
-        self.assertEqual(adapter.entrypoint, "edit/hd/integrations/talkcraft/runtime/render.mjs")
-        self.assertEqual(adapter.qualification_registry_path,
-                         "edit/hd/integrations/talkcraft/runtime/card-registry.json")
-        self.assertEqual(adapter.argv_template[:3],
-                         ("{launcher}", "--input-type=module", "{entrypoint}"))
-        self.assertIn("--runtime-contracts", adapter.argv_template)
-        self.assertIn("--media-manifest", adapter.argv_template)
-        self.assertIn("{media_manifest_fd}", adapter.argv_template)
+    def test_factory_binds_native_entrypoint_and_reviewed_result_stdin_protocol(self):
+        adapter=self._adapter()
+        self.assertEqual(adapter.dependency_id,"video-talkcraft")
+        self.assertEqual(adapter.entrypoint,"scripts/talkcraft_skill_adapter.py")
+        self.assertIsNone(adapter.qualification_registry_path)
+        self.assertEqual(adapter.renderer_version,"4.0.519")
+        self.assertEqual(adapter.argv_template[:2],("{launcher}","{entrypoint}"))
+        self.assertIn("--skill-root",adapter.argv_template)
+        self.assertIn("--media-manifest",adapter.argv_template)
+        self.assertIn("{media_manifest_fd}",adapter.argv_template)
         self.assertTrue(callable(adapter.media_loader))
 
     def test_reference_media_is_hash_bound_and_frozen_before_process(self) -> None:
@@ -171,101 +150,60 @@ class TalkCraftAdapterTests(unittest.TestCase):
         finally:
             pinned.close()
 
-    def test_factory_rejects_symlinked_project_root(self) -> None:
-        module = _load_adapter_module()
-        linked = self.directory / "linked-project"
-        linked.symlink_to(ROOT, target_is_directory=True)
-        with self.assertRaisesRegex(ValueError, "canonical and nonsymlinked"):
-            module.create_adapter(
-                project_root=linked,
-                tools=self.paths,
-                tool_hashes=self.hashes,
-                brief_loader=lambda *_args: b"{}",
-                runtime_contracts=self.contracts,
-            )
+    def test_factory_rejects_symlinked_project_root(self):
+        module=_load_adapter_module()
+        linked=self.directory/"linked-project"
+        linked.symlink_to(ROOT,target_is_directory=True)
+        with self.assertRaisesRegex(ValueError,"canonical and nonsymlinked"):
+            module.create_adapter(linked,sys.executable,lambda *_:b"{}")
 
-    def test_registry_path_is_rejected_before_any_out_of_root_read(self) -> None:
-        base = self._adapter()
-        card_id = talkcraft_contract.load_card_registry()["cards"][0]["card_id"]
-        component = v4_plan(card_id)["segments"][0]["shot_recipe"]["components"][0]
-        component.update(
-            entrypoint=base.entrypoint,
-            producer_version=base.producer_version,
-            primary_renderer=base.primary_renderer,
-            renderer_version=base.renderer_version,
-        )
-        for invalid in ("/tmp/registry.json", "../registry.json"):
-            adapter = replace(base, qualification_registry_path=invalid)
-            with (
-                patch("edit.hd.tools.visual_plan._load_router_module", return_value=Mock()),
-                patch.object(Path, "read_bytes", side_effect=AssertionError("must not read")),
-                self.assertRaises(executor.BrollComponentExecutionError),
-            ):
-                executor._validate_code_adapter(adapter, component)
+    def test_result_path_is_rejected_before_any_out_of_root_read(self):
+        module=_load_adapter_module()
+        for invalid in ("/tmp/result.json","../result.json"):
+            payload=brief();payload["result_record_path"]=invalid
+            with patch.object(Path,"read_bytes",side_effect=AssertionError("must not read")):
+                with self.assertRaises(ValueError):
+                    module.load_result(self.directory,json.dumps(payload),
+                        expected_record={"path":invalid,"sha256":"a"*64,"bytes":2},
+                        expected_renderer_version="4.0.519")
 
-    def test_pending_card_is_rejected_before_policy_or_process(self) -> None:
-        adapter = self._adapter()
-        card_id = talkcraft_contract.load_card_registry()["cards"][0]["card_id"]
-        recipe = v4_plan(card_id)["segments"][0]["shot_recipe"]
-        component = recipe["components"][0]
-        component.update(
-            entrypoint=adapter.entrypoint,
-            producer_version=adapter.producer_version,
-            primary_renderer=adapter.primary_renderer,
-            renderer_version=adapter.renderer_version,
-        )
-        policy = Mock()
-        process = Mock(side_effect=AssertionError("renderer must not start"))
-        request = executor.ComponentExecutionRequest(
-            recipe=recipe, component_id=component["component_id"]
-        )
-        with (
-            patch.object(executor, "_bound_runtime_contract", return_value=self.contracts),
-            patch("edit.hd.tools.visual_plan._load_router_module", return_value=policy),
-            patch.object(executor.subprocess, "Popen", process),
-            self.assertRaises(executor.BrollComponentExecutionError) as caught,
-        ):
-            executor.execute_component(
-                _Job(self.directory),
-                request,
-                adapters={
-                    "code_generated": {talkcraft_contract.DEPENDENCY_ID: adapter},
-                    "artifact_probe": executor.ArtifactProbe(
-                        probe_id="unused", probe_version="1", probe=lambda *_args: {}
-                    ),
-                },
-            )
-        self.assertEqual(caught.exception.error_code, "BROLL_DEPENDENCY_UNBOUND")
-        policy.validate_template_binding.assert_not_called()
+    def test_pending_native_result_is_rejected_before_component_process(self):
+        module=_load_adapter_module()
+        payload=json.dumps(brief()).encode()
+        adapter=module.create_adapter(ROOT,sys.executable,lambda *_:payload)
+        reference=self.directory/"reference.mp4";reference.write_bytes(b"reference identity fixture")
+        component=_code_component(payload,dependency_id="video-talkcraft")
+        component.update(module.create_binding(adapter,payload,reference))
+        component["executor"]="reference_adapter";component["artifact_contract"]["alpha"]=False
+        recipe=_recipe([component]);segment={"segment_id":"seg-001","start":0,"end":2,"shot_recipe":recipe}
+        process=Mock(side_effect=AssertionError("component process must not start"))
+        policy=Mock()
+        with patch("edit.hd.tools.visual_plan._load_router_module",return_value=policy), \
+             patch.object(visual_canary,"load_approved_visual_plan",return_value={"segments":[segment]}), \
+             patch.object(visual_canary,"approved_aroll_record",return_value={"sha256":"a"*64}), \
+             patch.object(module,"_inputs"), \
+             patch.object(visual_confirmation,"native_result_descriptor",return_value={"path":brief()["result_record_path"],"sha256":"a"*64,"bytes":2}), \
+             patch.object(executor.subprocess,"Popen",process):
+            with self.assertRaises(executor.BrollComponentExecutionError):
+                executor.execute_component(_Job(self.directory),
+                    executor.ComponentExecutionRequest(recipe=recipe,component_id="code"),
+                    adapters={"code_generated":{"video-talkcraft":adapter},
+                              "artifact_probe":executor.ArtifactProbe("unused","1",lambda *_:{})})
         process.assert_not_called()
 
-    def test_qualified_card_binds_card_module_to_runtime_adapter(self) -> None:
-        adapter = self._adapter()
-        registry = talkcraft_contract.load_card_registry()
-        card = next(
-            item for item in registry["cards"]
-            if item["card_id"] == "parallel-items-with-host"
-        )
-        production = card["production"]
-        component = v4_plan(card["card_id"])["segments"][0]["shot_recipe"]["components"][0]
-        component.update(
-            executor=adapter.approved_executor,
-            entrypoint=production["derived_entrypoint"],
-            source_entrypoint=production["derived_entrypoint"],
-            source_sha256=production["implementation_sha256"],
-            producer_version=production["adapter_version"],
-            verification_id=production["qualification_id"],
-            primary_renderer=adapter.primary_renderer,
-            renderer_version=adapter.renderer_version,
-        )
-        policy = Mock()
-        with (
-            patch.object(executor, "_bound_runtime_contract", return_value=self.contracts),
-            patch("edit.hd.tools.visual_plan._load_router_module", return_value=policy),
-        ):
-            self.assertIs(executor._validate_code_adapter(adapter, component), adapter)
+    def test_original_recipe_binds_to_one_native_runtime_adapter(self):
+        module=_load_adapter_module();adapter=self._adapter();payload=json.dumps(brief()).encode()
+        reference=self.directory/"reference.mp4";reference.write_bytes(b"reference identity fixture")
+        binding=module.create_binding(adapter,payload,reference)
+        self.assertEqual(binding["template_id"],"video-talkcraft/source-converge")
+        self.assertEqual(binding["source_entrypoint"],"scripts/talkcraft_skill_adapter.py")
+        self.assertEqual(binding["source_sha256"],module.sha(ADAPTER_PATH))
+        component=_code_component(payload,dependency_id="video-talkcraft");component.update(binding)
+        component["executor"]="reference_adapter";component["artifact_contract"]["alpha"]=False
+        policy=Mock()
+        with patch("edit.hd.tools.visual_plan._load_router_module",return_value=policy):
+            self.assertIs(executor._validate_code_adapter(adapter,component),adapter)
         policy.validate_template_binding.assert_called_once_with(component)
 
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__=="__main__":unittest.main()

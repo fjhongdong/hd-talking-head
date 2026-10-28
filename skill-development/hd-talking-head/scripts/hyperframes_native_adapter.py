@@ -48,7 +48,7 @@ def validate_brief(payload):
     if b['upstream_route'] not in ROUTES:raise ValueError('Unknown upstream route')
     pins=b['source_pins']
     if set(pins)!={'route','sha256'} or pins['route']!=b['upstream_route'] or not re.fullmatch('[a-f0-9]{64}',pins['sha256']):raise ValueError('Invalid native source pin')
-    if len(b['assets'])>4:raise ValueError('Too many scene assets')
+    if b['upstream_route'] != 'paper-collage-ad/hyperframes' and len(b['assets'])>4:raise ValueError('Too many scene assets')
     records=[b['entry'],*b['assets']]
     if len({r['media_ref'] for r in records})!=len(records):raise ValueError('Repeated media')
     for record in records:

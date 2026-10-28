@@ -726,6 +726,80 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         )
         self.assertEqual(len(audible["segments"]), 1)
 
+    def test_pcm_edge_silence_is_trimmed_without_changing_word_identity(self) -> None:
+        rate = 16000
+        wav = array("h", (
+            0 if index < int(1.2 * rate) else 6000
+            for index in range(int(2.0 * rate))
+        ))
+        words = [speech_edit_v2.transcribe.Word("。Kimi ", 0.0, 2.0)]
+        derived, adjustments = speech_edit_v2._derive_pcm_edge_trimmed_words(
+            words, rate, wav
+        )
+        self.assertEqual([(word.text, word.start, word.end) for word in words],
+                         [("。Kimi ", 0.0, 2.0)])
+        self.assertEqual(derived[0].text, words[0].text)
+        self.assertAlmostEqual(derived[0].start, 1.12, delta=1 / rate)
+        self.assertEqual(derived[0].end, 2.0)
+        self.assertEqual(adjustments[0]["word_index"], 0)
+
+        both_edges = array("h", (
+            0 if index < int(0.9 * rate) or index >= int(1.5 * rate) else 6000
+            for index in range(int(2.4 * rate))
+        ))
+        two_sided, two_sided_adjustments = speech_edit_v2._derive_pcm_edge_trimmed_words(
+            [speech_edit_v2.transcribe.Word("两侧", 0.0, 2.4)], rate, both_edges
+        )
+        self.assertGreater(two_sided[0].start, 0.0)
+        self.assertLess(two_sided[0].end, 2.4)
+        self.assertEqual(len(two_sided_adjustments), 1)
+
+    def test_pcm_all_silent_word_is_not_trimmed_to_zero(self) -> None:
+        words = [speech_edit_v2.transcribe.Word("静音", 0.0, 1.0)]
+        samples = array("h", [0] * 16000)
+        derived, adjustments = speech_edit_v2._derive_pcm_edge_trimmed_words(
+            words, 16000, samples
+        )
+        self.assertEqual(derived, words)
+        self.assertEqual(adjustments, [])
+        plan = {"version": 1, "segments": [
+            {"action": "delete", "word_start": 0, "word_end": 1,
+             "source_start": 0.0, "source_end": 1.0,
+             "original_sentence": "静音", "cleaned_sentence": "静音",
+             "reason": "删除无声段"},
+            {"action": "keep", "word_start": 1, "word_end": 2,
+             "source_start": 1.0, "source_end": 2.0,
+             "original_sentence": "有声", "cleaned_sentence": "有声",
+             "reason": "保留", "breathing_padding": {"before": 0.0, "after": 0.0}},
+        ]}
+        words_with_audible_tail = [
+            {"text": "静音", "start": 0.0, "end": 1.0},
+            {"text": "有声", "start": 1.0, "end": 2.0},
+        ]
+        self.assertEqual(speech_edit_v2._internal_word_silence_candidates(
+            words_with_audible_tail, plan, 16000,
+            array("h", [0] * 16000 + [6000] * 16000), 2.0
+        ), [])
+
+    def test_cleanup_reports_retained_internal_word_silence(self) -> None:
+        words = [{"text": "长词", "start": 0.1, "end": 1.9}]
+        rate = 16000
+        wav = array("h", (
+            int(6000 * math.sin(2 * math.pi * 220 * index / rate))
+            if index < int(0.5 * rate) or index >= int(1.3 * rate) else 0
+            for index in range(int(2.0 * rate))
+        ))
+        plan = {"version": 1, "segments": [{
+            "action": "keep", "word_start": 0, "word_end": 1,
+            "source_start": 0.1, "source_end": 1.9,
+            "original_sentence": "长词", "cleaned_sentence": "长词",
+            "reason": "保留", "breathing_padding": {"before": 0.0, "after": 0.0},
+        }]}
+        candidates = speech_edit_v2._internal_word_silence_candidates(
+            words, plan, rate, wav, 2.0
+        )
+        self.assertTrue(any(c["kind"] == "retained_word_silence" for c in candidates))
+
     def test_residual_cleanup_requires_exact_host_audio_review(self) -> None:
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
         candidates = [{"candidate_id": "repeat-one"}]

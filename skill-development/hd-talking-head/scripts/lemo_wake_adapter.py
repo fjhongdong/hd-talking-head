@@ -76,8 +76,9 @@ def exact(root, d):
 
 def validate_brief(payload):
     b = json.loads(payload)
-    if (not isinstance(b, dict) or set(b) != {'schema_version', 'job_id', 'source_binding',
-            'image', 'purpose', 'composition', 'semantic_goal', 'template_request', 'result_record_path'}
+    required = {'schema_version', 'job_id', 'source_binding', 'image', 'purpose', 'composition',
+                'semantic_goal', 'template_request', 'result_record_path'}
+    if (not isinstance(b, dict) or set(b) not in (required, required | {'revision'})
             or type(b['schema_version']) is not int or b['schema_version'] != 1
             or not isinstance(b['job_id'], str) or not b['job_id'].strip()
             or b['purpose'] not in {'opening', 'body'}
@@ -104,7 +105,67 @@ def validate_brief(payload):
     result = relative(b['result_record_path'])
     if result.parts[0] != 'native-inputs' or result.suffix != '.json' or str(result) == b['image']['job_path']:
         raise ValueError('Wake result must be a distinct native-inputs JSON record')
+    if 'revision' in b:
+        revision = b['revision']
+        if (not isinstance(revision, dict) or set(revision) != {
+                'reason', 'previous_brief', 'previous_result', 'previous_media', 'project_parent'}
+                or not isinstance(revision['reason'], str) or not revision['reason'].strip()):
+            raise ValueError('Wake revision needs the previous work and an actual issue')
+        for name in ('previous_brief', 'previous_result', 'previous_media'):
+            check_descriptor(revision[name])
+        parent = relative(revision['project_parent'])
+        if (parent.parts[0] != 'native-projects' or len(parent.parts) != 2
+                or result == Path(revision['previous_result']['job_path'])):
+            raise ValueError('Wake revision requires new native project and result paths')
     return b
+
+
+def _revision_inputs(root, brief):
+    if 'revision' in brief:
+        for name in ('previous_brief', 'previous_result', 'previous_media'):
+            exact(root, brief['revision'][name])
+
+
+def prepare_revision(job_dir, brief_path, *, reason):
+    """Preserve completed work and prepare a new request through state.revise.
+
+    This returns rebind inputs only. The new visual plan must pass the existing
+    confirmation flow before pending_native_actions may dispatch it.
+    """
+    from edit.hd.tools import state
+    root = Path(job_dir).resolve(strict=True)
+    previous_brief = Path(brief_path).resolve(strict=True)
+    previous_brief.relative_to(root)
+    payload = previous_brief.read_bytes()
+    brief = validate_brief(payload)
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError('Wake revision needs an actual issue')
+    job = state.load_job(root)
+    if brief['job_id'] != job.job_id:
+        raise ValueError('Wake revision belongs to another Job')
+    completed = inspect_result(root, payload)
+    token = 'wake-revision-' + uuid.uuid4().hex
+    destination = path(root, 'native-inputs/' + token)
+    project_parent = 'native-projects/' + token
+    revised = {**brief, 'result_record_path': 'native-inputs/' + token + '/result.json',
+               'revision': {'reason': reason.strip(),
+                            'previous_brief': descriptor(root, previous_brief),
+                            'previous_result': descriptor(root, path(root, brief['result_record_path'])),
+                            'previous_media': completed['media'], 'project_parent': project_parent}}
+    validate_brief(json.dumps(revised))
+    destination.mkdir(parents=True, exist_ok=False)
+    target = destination / 'brief.json'
+    artifacts.write_json_artifact(target, revised)
+    state.revise(job, 'visual_direction', reason.strip(),
+                 artifact_scope=(brief['source_binding']['segment_id'],))
+    return {'action': 'rebind_native_revision', 'job_id': job.job_id, 'revision': job.revision,
+            'stage': 'visual_direction', 'status': job.stages['visual_direction']['status'],
+            'segment_id': brief['source_binding']['segment_id'],
+            'previous_brief_path': previous_brief.relative_to(root).as_posix(),
+            'brief_path': target.relative_to(root).as_posix(), 'brief_sha256': sha(target),
+            'result_record_path': revised['result_record_path'], 'project_parent': project_parent,
+            'revision_context': revised['revision'],
+            'next': 'Bind the new brief in a new director/treatment draft and use the existing visual confirmation flow. Preserve previous files; do not dispatch native work before the new plan is authorized.'}
 
 
 def validate_selected_inputs(job, director, treatment):
@@ -186,16 +247,20 @@ def _write_call(root, b, step, record):
     return target
 
 
-def initialize_project(job_dir, brief_path, *, slug, parent='native-projects'):
+def initialize_project(job_dir, brief_path, *, slug, parent=None):
     """Run the original new_project program with the frozen input and public options."""
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
     b = validate_brief(brief_path.read_bytes())
     image = exact(root, b['image'])
+    _revision_inputs(root, b)
     if not isinstance(slug, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', slug):
         raise ValueError('Native project slug must be a lowercase project name')
-    destination = path(root, parent)
+    required_parent = b.get('revision', {}).get('project_parent')
+    if required_parent and parent is not None and parent != required_parent:
+        raise ValueError('Wake revision must use its new native project directory')
+    destination = path(root, parent or required_parent or 'native-projects')
     src = destination / (slug + '-alive') / 'src'
     if src.parent.exists():
         raise ValueError('Native project already exists; preserve it and inspect its init record')
@@ -251,6 +316,7 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
     brief_path.relative_to(root)
     b = validate_brief(brief_path.read_bytes())
     exact(root, b['image'])
+    _revision_inputs(root, b)
     if step not in {'render', 'encode', 'qa'}:
         raise ValueError('Use initialize_project for the original native init step')
     native = source_root() / 'skills/wake/scripts' / STEPS[step]
@@ -259,6 +325,18 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
             or set(argv[:argv.index(str(native))]) & {'-c', '-e', '--eval'}):
         raise ValueError('Capture must execute the original native command directly')
     src = str(Path(project_src).resolve(strict=True))
+    if 'revision' in b:
+        destination = path(root, b['revision']['project_parent']).resolve()
+        if not Path(src).is_relative_to(destination):
+            raise ValueError('Wake revision must execute its new native project')
+        if step == 'encode':
+            output = argv[argv.index(str(native)) + 2]
+            if not Path(output).is_absolute() or not Path(output).resolve().is_relative_to(destination):
+                raise ValueError('Wake revision encode must preserve previous output files')
+        if step == 'qa':
+            if ('--json' not in argv or not Path(argv[argv.index('--json') + 1]).is_absolute()
+                    or not Path(argv[argv.index('--json') + 1]).resolve().is_relative_to(destination)):
+                raise ValueError('Wake revision QA must preserve previous output files')
     if step == 'render' and (argv[argv.index(str(native)) + 1:][:2] != [src, 'frames']):
         raise ValueError('Native render must use this project and single-pass frames')
     if step in {'encode', 'qa'} and argv[argv.index(str(native)) + 1] != str(Path(src) / 'frames'):
@@ -295,7 +373,9 @@ def check_result(b, request_sha, record, read):
     if (not files or not any(f['job_path'].endswith('/index.html') for f in files)
             or not any(f['job_path'].endswith('/DIRECTOR.md') for f in files) or len(calls) != 4):
         raise ValueError('Wake requires native project source and all four actual commands')
-    for d in [b['image'], record['media'], record['native_qa'], *files, *calls]:
+    previous = ([b['revision'][name] for name in ('previous_brief', 'previous_result', 'previous_media')]
+                if 'revision' in b else [])
+    for d in [b['image'], record['media'], record['native_qa'], *files, *calls, *previous]:
         check_descriptor(d)
         content = read(d['job_path'])
         if len(content) != d['byte_count'] or hashlib.sha256(content).hexdigest() != d['sha256']:
@@ -324,6 +404,11 @@ def check_result(b, request_sha, record, read):
         raise ValueError('Native commands belong to different Wake projects')
     src = sources.pop()
     relative(src)
+    if 'revision' in b and not Path(src).is_relative_to(Path(b['revision']['project_parent'])):
+        raise ValueError('Wake revised result must come from its new native project')
+    if 'revision' in b and any(not Path(record[name]['job_path']).is_relative_to(
+            Path(b['revision']['project_parent'])) for name in ('media', 'native_qa')):
+        raise ValueError('Wake revised output must use its new native project directory')
     for step, call in steps.items():
         if step == 'init':
             continue
@@ -369,6 +454,7 @@ def _read_result(job_dir, payload, data):
     b = validate_brief(payload)
     root = Path(job_dir).resolve(strict=True)
     exact(root, b['image'])
+    _revision_inputs(root, b)
     record = json.loads(data)
     checked = check_result(b, hashlib.sha256(payload).hexdigest(), record, lambda name: path(root, name).read_bytes())
     if probe(exact(root, checked['media'])) != checked['media_probe']:
@@ -420,6 +506,7 @@ def native_task(job, recipe, component, brief_path):
     payload = Path(brief_path).read_bytes()
     b = validate_brief(payload)
     exact(job.job_dir, b['image'])
+    _revision_inputs(job.job_dir, b)
     if sha(brief_path) != component['brief_sha256'] or b['job_id'] != job.job_id:
         raise ValueError('Wake handoff differs from the confirmed component')
     from edit.hd.tools.motion_capabilities import _approved_speech
@@ -432,6 +519,10 @@ def native_task(job, recipe, component, brief_path):
             'brief_path': str(brief_path), 'brief_sha256': component['brief_sha256'],
             'source_image': str(path(job.job_dir, b['image']['job_path'])),
             'working_directory': str(job.job_dir),
+            'project_parent': b.get('revision', {}).get('project_parent', 'native-projects'),
+            **({'revision_context': b['revision'],
+                'output_directory': str(path(job.job_dir, b['revision']['project_parent']))}
+               if 'revision' in b else {}),
             'environment': {'LEMO_WAKE_MODELS': runtime_environment()['LEMO_WAKE_MODELS']},
             'history_path': str(Path(job.job_dir) / 'lemo-wake-history.jsonl'),
             'segment_id': recipe['segment_id'], 'component_id': component['component_id'],
@@ -440,9 +531,9 @@ def native_task(job, recipe, component, brief_path):
                              'word_anchors': [{'text': word['text'],
                                  'start': max(0, word['start'] - b['source_binding']['start']),
                                  'end': min(b['source_binding']['end'], word['end']) - b['source_binding']['start']} for word in spoken],
-                             'silent': True, 'single_pass': True, 'complete_source_first_frame': True},
+                             'silent': True, 'single_pass': True},
             'result_record_path': b['result_record_path'],
-            'next': 'Read and execute the complete native Skill in a native subtask. Use initialize_project to record the original new_project call and source derivation. Author its project, capture its original render/encode/qa (--no-loop --json) commands with this bridge, inspect frames and motion, then publish. Do not edit the approved brief, vendor code or user movie.'}
+            'next': 'Read and execute the complete native Skill in a native subtask. Use initialize_project with project_parent to record the original new_project call and source derivation. When output_directory is provided, save encoded media and QA there. The native Skill plans the complete scene, layers and motion. single_pass means non-looping playback; it does not limit render or QA iterations. Capture original render/encode/qa (--no-loop --json) commands with this bridge, inspect frames and motion, then publish. Preserve previous revision work, the approved brief, vendor code and user movie.'}
 
 
 def create_adapter(project_root, python_executable, brief_loader):
@@ -476,6 +567,8 @@ def create_adapter(project_root, python_executable, brief_loader):
         b, result = validate_brief(payload), load_result(job.job_dir, payload, expected_record=expected)
         descriptors = [b['image'], {'job_path': expected['path'], 'sha256': expected['sha256'], 'byte_count': expected['bytes']},
                        result['media'], result['native_qa'], *result['project_files'], *result['calls']]
+        if 'revision' in b:
+            descriptors.extend(b['revision'][name] for name in ('previous_brief', 'previous_result', 'previous_media'))
         distinct = {d['job_path']: d for d in descriptors}
         return tuple(ReferenceProcessMedia('wake-' + hashlib.sha256(d['job_path'].encode()).hexdigest()[:32], d['job_path'], d['sha256']) for d in distinct.values())
 
@@ -518,8 +611,10 @@ def main():
     p.add_argument('--job-dir', type=Path)
     p.add_argument('--capture', choices=('render', 'encode', 'qa'))
     p.add_argument('--initialize', action='store_true')
+    p.add_argument('--revise', action='store_true')
+    p.add_argument('--revision-reason')
     p.add_argument('--slug')
-    p.add_argument('--parent', default='native-projects')
+    p.add_argument('--parent')
     p.add_argument('--argv-json')
     p.add_argument('--project-src', type=Path)
     p.add_argument('--publish', action='store_true')
@@ -539,7 +634,9 @@ def main():
         return
     if a.brief is None:
         p.error('--brief is required for native execution and reuse')
-    if a.initialize:
+    if a.revise:
+        print(json.dumps(prepare_revision(a.job_dir, a.brief, reason=a.revision_reason)))
+    elif a.initialize:
         print(json.dumps(initialize_project(a.job_dir, a.brief, slug=a.slug, parent=a.parent)))
     elif a.capture:
         print(capture_call(a.job_dir, a.brief, a.capture, json.loads(a.argv_json), a.project_src))

@@ -483,17 +483,28 @@ def main() -> int:
                 # over the face). Only card/text tokens get the warm palette.
                 palette = ("--bg:transparent;--fg:#242a2d;--surface:#fff8e8;--border:#e5dcc8;"
                            "--muted:#8a8273;--brand:#c79a36;--accent:#c79a36;--accent-2:#c79a36;")
+                mount_style = (f"position:absolute;top:0;left:0;width:1080px;height:1920px;"
+                               f"transform:translate({lay['dx']}px,{lay['dy']}px) scale({lay['scale']});"
+                               f"transform-origin:top left;{palette}")
+                type_style = ""
+                if route == "before-after-wipe":
+                    mount_style = f"position:absolute;top:66px;left:40px;width:1000px;height:360px;{palette}"
+                    type_style = '<style>.baw-chip{font-size:56px!important;}</style>'
                 entry_html = (
-                    '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
-                    f'<div class="stage" data-duration="{duration_beat}">'
+                    '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+                    '<script src="vendor/gsap.min.js"></script>'
+                    f'{type_style}</head><body>'
+                    f'<div class="stage" data-composition-id="{sid}-host" data-no-timeline '
+                    f'data-duration="{duration_beat}" data-width="1080" data-height="1920">'
                     f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
                     f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
                     f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
                     f'data-width="1080" data-height="1920" '
-                    f'style="position:absolute;top:0;left:0;width:1080px;height:1920px;'
-                    f'transform:translate({lay["dx"]}px,{lay["dy"]}px) scale({lay["scale"]});'
-                    f'transform-origin:top left;{palette}"></div></div>')
+                    f'style="{mount_style}"></div></div></body></html>')
                 (folder / "index.html").write_text(entry_html, encoding="utf-8")
+                gsap_path = folder / "vendor/gsap.min.js"
+                gsap_path.parent.mkdir(exist_ok=True)
+                gsap_path.write_bytes(Path(hyper.check_runtime(project)[0]["gsap"]).read_bytes())
                 brief = {
                     "schema_version": 2,
                     "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
@@ -507,7 +518,10 @@ def main() -> int:
                     "assets": [{"media_ref": "native-source",
                                  "job_path": str((folder / "native.html").relative_to(job_dir)),
                                  "scene_path": "native.html",
-                                 "sha256": hashlib.sha256(native_bytes).hexdigest()}],
+                                 "sha256": hashlib.sha256(native_bytes).hexdigest()},
+                                {"media_ref": "gsap-local", "job_path": str(gsap_path.relative_to(job_dir)),
+                                 "scene_path": "vendor/gsap.min.js",
+                                 "sha256": hashlib.sha256(gsap_path.read_bytes()).hexdigest()}],
                     "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": frames,
                                      "alpha": True},
                     "upstream_route": upstream_route,
@@ -637,13 +651,20 @@ def main() -> int:
                 native_bytes = native_text.encode("utf-8")
                 (folder / "native.html").write_bytes(native_bytes)
                 entry_html = (
-                    '<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>'
-                    f'<div class="stage" data-duration="{duration_beat}">'
+                    '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+                    '<script src="vendor/gsap.min.js"></script>'
+                    '</head><body>'
+                    f'<div class="stage" data-composition-id="{sid}-host" data-no-timeline '
+                    f'data-duration="{duration_beat}" data-width="1080" data-height="1920">'
                     f'<div class="mount" data-composition-id="{route}" data-composition-src="native.html" '
                     f"data-variable-values='{json.dumps(values, ensure_ascii=False)}' "
                     f'data-start="0" data-duration="{duration_beat}" data-track-index="1" '
-                    f'data-width="1080" data-height="1920"></div></div>')
+                    f'data-width="1080" data-height="1920" '
+                    f'style="position:absolute;inset:0;width:1080px;height:1920px;"></div></div></body></html>')
                 (folder / "index.html").write_text(entry_html, encoding="utf-8")
+                gsap_path = folder / "vendor/gsap.min.js"
+                gsap_path.parent.mkdir(exist_ok=True)
+                gsap_path.write_bytes(Path(hyper.check_runtime(project)[0]["gsap"]).read_bytes())
                 brief = {
                     "schema_version": 2,
                     "source_binding": {"aroll_sha256": arroll_sha, "segment_id": sid,
@@ -659,7 +680,10 @@ def main() -> int:
                     "assets": [{"media_ref": "native-source",
                                  "job_path": str((folder / "native.html").relative_to(job_dir)),
                                  "scene_path": "native.html",
-                                 "sha256": hashlib.sha256(native_bytes).hexdigest()}],
+                                 "sha256": hashlib.sha256(native_bytes).hexdigest()},
+                                {"media_ref": "gsap-local", "job_path": str(gsap_path.relative_to(job_dir)),
+                                 "scene_path": "vendor/gsap.min.js",
+                                 "sha256": hashlib.sha256(gsap_path.read_bytes()).hexdigest()}],
                     "composition": {"width": 1080, "height": 1920, "fps": 24,
                                      "frames": frames, "alpha": False},
                     "upstream_route": "hyperframes/" + route,

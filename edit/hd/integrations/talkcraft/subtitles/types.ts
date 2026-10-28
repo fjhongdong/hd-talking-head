@@ -20,10 +20,11 @@ export type SubtitleCue = {
   words: SubtitleWord[];
   emphasis: SubtitleEmphasis | null;
   placement: 'standard' | 'above_avatar';
+  bottom: number;
 };
 
 export type SubtitleInput = {
-  schema_version: 1;
+  schema_version: 2;
   canvas: {width: number; height: number; fps: number; frames: number};
   cues: SubtitleCue[];
 };

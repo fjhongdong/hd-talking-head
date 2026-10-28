@@ -68,7 +68,7 @@ VisualIntent 只表达内容意图，不预设来源。正式字段以 `validate
 
 ## 5. 候选评估与记录
 
-先按[统一动效能力库](motion-capability-library.md)理解具体入口并检索，不提前指定熟悉的 Skill。`discover` 的 `capability` 是我们自己的语义／动作／视觉档案，带证据与已审阅版本；它不改变原有 `status` 或模板资格。贴片与 B-roll 可在同一库中比较表现方式，但最终仍分流到各自用途和校验，不因关键词、画风或标签命中就放行。相关未接通项保留为缺口，不假装可执行。
+先按[统一动效能力库](motion-capability-library.md)理解具体入口并检索，不提前指定熟悉的 Skill。`discover` 的 `capability` 是我们自己的语义／动作／视觉档案，带证据与已审阅版本；它不改变原有 `status` 或模板资格。贴片与 B-roll 可在同一库中比较表现方式，但最终仍分流到各自用途和校验，不因关键词、画风或标签命中就放行。未接通源码只作来源参考，不进入候选池或匹配计数。
 
 五类候选可并行准备，但最终只由语义决策。每个候选记录 `asset_id`、`kind`、`semantic_match_score`、`quality_score` 和内容真实性、原生竖屏、画质可读性、来源记录等检查结果。缺少必需字段时返回明确停止状态，不由脚本补猜。
 
@@ -136,7 +136,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 | --- | --- | --- |
 | `html-video` | 内容图与 HTML 视频编排 | 把结构化信息和时间片转为可组合场景 |
 | `erduo-broll-loop-engineering` | 内容真实性/创意分流与 canary 闭环 | 复用事实/创意分流、代表样片和迭代门 |
-| `video-use` | 音频主时钟、FFmpeg 合成与边界 QA | 负责帧级时长、无缝出入、音画同步和媒体验证 |
+| `video-use` | 原生转写与 EDL helper | 父级负责 FFmpeg 最终合成、音画同步和媒体验证 |
 | `video-autopilot-kit` | 素材评分、疲劳控制与语义 QA | 对候选素材、重复度和信息密度评分 |
 | `HyperFrames` | HTML/GSAP/D3/Three 动态信息视觉 | 透明贴片、图表、关系图、时间线和轻量 3D |
 | `Remotion` | React 帧级组合与 2.5D/UI 动画 | 多层海报、界面演示、程序化排版和可重复渲染 |
@@ -150,7 +150,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 
 先分别完成贴片语义列表和 B-roll 语义列表，再对每项做一次完整候选匹配；所有合格候选保留到统一分配阶段。每项统一记录渠道、渠道内模板和标签。整片联合分配先精确最大化真实来源渠道数量，再在该前提下最大化具体模板数量；同一来源的不同 adapter 或别名只算一个渠道，临时内容沿用所选模板身份。`preferred` 只记录局部优势，不能删除合格 `equivalent`；缺素材、待准备或待授权是执行状态，不是语义 `unsuitable`。时间覆盖和可读性放到分配完成后校验，不能先按时长定条数；整片分工冻结后才生成 ShotRecipe。
 
-冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、第一轮列出的上游 Skill/具体入口候选、第二轮确定的整片分工、画面家族、主体动作，以及可执行/待适配/待费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表在整片协调完成前是制作草案；协调结果冻结后才生成已执行的 ShotRecipe。
+冻结全片计划前，先在当前 Job 保存逐镜分配表：时窗、当前原声所表达的变化、第一轮列出的上游 Skill/具体入口候选、第二轮确定的整片分工、画面家族、主体动作，以及已接通入口及其费用授权状态。同时盘点将复用的旧镜头；不能只比较本轮重做镜头，忽略它们与前后已批准素材的重复。分配表在整片协调完成前是制作草案；协调结果冻结后才生成已执行的 ShotRecipe。
 
 ### 唯一选型入口与记录
 
@@ -162,7 +162,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 
 - `schema_version: 1`；`history_note` 如实说明最近两条成片可查到什么，缺历史时不得填成“没有重复”。
 - `beats` 每条对应一个代码/AI B-roll 的 `segment_id/component_id/start/end`，包含 `transcript`、`semantic_goal`、`required_change`。新增与复用镜头均在同一表。
-- 每条 `skill_reviews` 按 `discover` 的全部 `skill_id` 记录 `fit/reason`。`fit` 为 `preferred/equivalent/unsuitable/needs_adapter`。先看完整能力池，不逐个复制所有卡片，也不拿“没有适配器”冒充语义不合适。
+- 每条 `skill_reviews` 按 `discover` 的全部 `skill_id` 记录 `fit/reason`。`fit` 使用 `preferred/equivalent/unsuitable`。先看完整能力池，不逐个复制所有卡片；没有接通的源码不进入候选评审。
 - 每条 `candidates` 只列相关的具体 `candidate_id/fit/reason/visual_pattern`。主控先审阅语义、中文容量、原生动作、画幅、时长与美观；只有确实相当的方案才放入同档组。`visual_pattern` 使用主控统一的主体组织、构图和动作标签，例如“资料分组后汇聚”，不能以 Skill 名、色板或模板编号命名；换道具、换色或换 Skill 而动作相同，仍用同一标签，不能靠不同字符串假装不同画面。
 - `preferred` 表示有明确理由优先的一档，但不能裁剪合格 `equivalent`。`assign` 必须在完整候选池中统一协调，先最大化真实渠道，再最大化具体模板；没有合格替代时才保留唯一候选。别名去重，自创场景不冒充新增模板；语义和质量合格才进入比较，不强求不适用来源出现。
 - `recent_context` 保存最近两条成片的 `video_id/source_ref/skill_id/visual_pattern/start/end`；依据实际制作记录和画面填写，不凭旧 Job 名称猜测。`fixed_context` 用同样的模式信息记录本期已选资料类 B-roll，另含 `segment_id/component_id`，让这些画面也参与整片协调。资料来源的 `skill_id` 可记实际资料类型，不伪称动画 Skill。
@@ -170,7 +170,7 @@ Huashu 功能卡只匹配 `product_features` 的恰好三项，不泛化为截�
 
 正式 `prepare_visual_direction(..., treatment_path=...)` 在任何冻结器和发布动作之前重新发现、复算、核对当前草案；编译后继续检查冻结绑定和实际配方没有偏离。记录与结果一起写入已有 `visual-routing.md`，下游仍只执行冻结配方。A-roll 贴片仍走自身合同，不混算为 B-roll；已完成产物不读取新选型记录、不迁移旧 Job。
 
-Flat/GBRO 的完整创作流程各自是渠道，已有工作流入口各自是模板；设计、静帧、动画生成和 QA 按原生流程完成。Lovart 等实际生成服务保留在底层执行绑定中，不替代创作渠道，也不额外计渠道，不将生成结果冒充本地代码渲染。Paper 的通用 HyperFrames 文档路线没有可直接调用的完整原生场景时，标为待适配，不能借 renderer 自写动效后声称原生接通。
+Flat/GBRO 的完整创作流程各自是渠道，已有工作流入口各自是模板；设计、静帧、动画生成和 QA 按原生流程完成。Lovart 等实际生成服务保留在底层执行绑定中，不替代创作渠道，也不额外计渠道，不将生成结果冒充本地代码渲染。Paper 的通用 HyperFrames 文档路线没有可直接调用的完整原生场景时，仅作源码参考，不进入候选；不能借 renderer 自写动效后声称原生接通。
 
 充分利用是按适用场景展开候选池，而不是每个 Skill 强制用一次：数值变化匹配数字/图表卡，时间跨度匹配时间线，对照匹配分屏或状态切换，真实操作匹配资料或界面演示，具体对象的组装/替换匹配 Paper 或拼贴，分类/层级才匹配导图，人物行为匹配真实视频或获批 Lovart 动态。Flat、GBRO 的静帧方案与实际动画生成分别记账；不能用显现动效代替人物动作。
 

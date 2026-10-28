@@ -64,7 +64,7 @@ export const SAMPLE = async (entry, fps) => {
   const hostTotal = player.getDuration();
   const tolerance = 1 / fps;
   if (Math.abs(total - entry.duration) > tolerance || hostTotal < entry.start + total - tolerance) {
-    throw new Error('native duration differs from the declared clock');
+    throw new Error('native duration differs from the declared clock: ' + JSON.stringify({native_duration: total, requested_duration: entry.duration, host_duration: hostTotal, mount_start: entry.start}));
   }
   const intersect = (a, b) => ({left: Math.max(a.left, b.left), right: Math.min(a.right, b.right),
     top: Math.max(a.top, b.top), bottom: Math.min(a.bottom, b.bottom)});

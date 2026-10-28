@@ -12,9 +12,11 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -204,13 +206,139 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     treatment_payload = _json(_path(job, treatment))
     from lemo_wake_adapter import validate_selected_inputs
     validate_selected_inputs(job, director, treatment_payload)
+    from talkcraft_skill_adapter import validate_selected_inputs as validate_talkcraft_inputs
+    validate_talkcraft_inputs(job, director, treatment_payload)
     prepare_visual_dependencies(project, director)
+    _validate_selected_native_sources(job, director, treatment_payload)
+    _validate_selected_lemo_workflows(job, project, director, treatment_payload)
+    _validate_selected_native_parent_layouts(job, director, treatment_payload)
     _validate_selected_hw_word_anchors(job, director, treatment_payload)
+    from edit.hd.tools.motion_capabilities import check_offline_plan
+    native_keys = {(s['segment_id'], cid) for s in director.get('segments', [])
+                   for cid, b in s.get('bindings', {}).items() if b.get('producer_type') == 'dependency'}
+    if native_keys:
+        native_review = check_offline_plan(project, director, treatment_payload, job_dir=job.job_dir, phase="planning")
+        for item in native_review['checks']:
+            if ((item['segment_id'], item['component_id']) in native_keys
+                    and item['semantic']['status'] != 'pass'):
+                raise ValueError('selected native semantic evidence is stale or incomplete: '
+                                 + item['segment_id'] + '/' + item['component_id'])
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
         _path(job, treatment), reviewed_visual_text=reviewed)
     result = _summary(state.load_job(job_dir), 'visual_direction')
     result['confirmation_source'] = str(source.relative_to(job.job_dir))
     return result
+
+
+def _validate_selected_native_sources(job, director: dict, treatment: dict) -> None:
+    """Catch missing or changed native inputs before approving their execution."""
+    scenes = {(s.get('segment_id'), s.get('component_id')): s
+              for s in treatment.get('scenes', [])}
+    for segment in director.get('segments', []):
+        for cid, binding in segment.get('bindings', {}).items():
+            if binding.get('producer_type') != 'dependency':
+                continue
+            scene = scenes.get((segment['segment_id'], cid))
+            if not scene or not isinstance(scene.get('brief_path'), str):
+                raise ValueError('selected native input is missing its scene brief')
+            payload = _path(job, scene['brief_path']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                raise ValueError('selected native input brief differs from its binding')
+            brief = json.loads(payload)
+            inputs = brief.get('assets', []) + brief.get('files', [])
+            if isinstance(brief.get('entry'), dict):
+                inputs.append(brief['entry'])
+            for item in inputs:
+                records = [(item.get('job_path'), item.get('sha256'))]
+                provenance = item.get('provenance', {})
+                if 'record_path' in provenance:
+                    records.append((provenance['record_path'], provenance.get('record_sha256')))
+                for name, digest in records:
+                    if name is None:
+                        continue
+                    source = _path(job, name)
+                    if (source.is_symlink() or not source.resolve().is_relative_to(job.job_dir.resolve())
+                            or hashlib.sha256(source.read_bytes()).hexdigest() != digest):
+                        raise ValueError(f'selected native source changed: {segment["segment_id"]}/{cid}: {name}')
+            if (binding.get('dependency_id') == 'hyperframes-native-adaptation'
+                    and binding.get('entrypoint') == 'scripts/hyperframes_native_adapter.py'):
+                from hyperframes_native_adapter import check_runtime, sha
+                runtime, _ = check_runtime(SKILL.parents[1])
+                if sha(runtime['route_sources'][brief['upstream_route']]) != brief['source_pins']['sha256']:
+                    raise ValueError('selected HyperFrames original source pin differs from the actual registered route')
+                text = _path(job, brief['entry']['job_path']).read_text()
+                if not (re.search(r'<head(?:\s|>)', text, re.I) and re.search(r'<body(?:\s|>)', text, re.I)):
+                    raise ValueError('selected HyperFrames scene needs an explicit head and body to retain mounted styles')
+                if re.search(r'<template(?:\s|>)', text, re.I) and 'data-composition-src' not in text:
+                    raise ValueError('selected HyperFrames mountable template needs a full scene host')
+                urls = re.findall(r'''(?:src|url)\s*(?:=|\()\s*["']?([^"')\s>]+)''', text)
+                allowed = {'vendor/gsap.min.js', *(a['scene_path'] for a in brief['assets'])}
+                if (any(url not in allowed for url in urls)
+                        or re.search(r'fetch\s*\(|https?://|<audio|<video|@import',
+                                     text.replace('http://www.w3.org/2000/svg', ''))):
+                    raise ValueError('selected HyperFrames entry differs from its frozen local assets')
+
+
+def _validate_selected_lemo_workflows(job, project: Path, director: dict, treatment: dict) -> None:
+    """Read the actual native workflow before freezing or paying for a plan."""
+    from upstream_scene_adapter import validate_brief, validate_workflow
+    scenes = {(s.get('segment_id'), s.get('component_id')): s
+              for s in treatment.get('scenes', [])}
+    for segment in director.get('segments', []):
+        for cid, binding in segment.get('bindings', {}).items():
+            if binding.get('dependency_id') != 'lemo-opuscar':
+                continue
+            scene = scenes.get((segment['segment_id'], cid))
+            if not scene or not isinstance(scene.get('brief_path'), str):
+                raise ValueError('selected Lemo workflow is missing its scene brief')
+            payload = _path(job, scene['brief_path']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                raise ValueError('selected Lemo workflow brief differs from its binding')
+            brief = validate_brief(payload)
+            with tempfile.TemporaryDirectory(prefix='.lemo-input-check-', dir=job.job_dir) as directory:
+                root = Path(directory)
+                for item in brief['files']:
+                    source = _path(job, item['job_path'])
+                    if source.is_symlink() or not source.resolve().is_relative_to(job.job_dir.resolve()):
+                        raise ValueError('selected Lemo source must belong to this Job')
+                    data = source.read_bytes()
+                    if hashlib.sha256(data).hexdigest() != item['sha256']:
+                        raise ValueError('selected Lemo workflow source changed')
+                    target = root / item['scene_path']
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(data)
+                validate_workflow(brief, root, project / 'skill-development/vendor/lemo-opuscar')
+
+
+def _validate_selected_native_parent_layouts(job, director: dict, treatment: dict) -> None:
+    """Check selected native parent geometry against the real compiler."""
+    from edit.hd.tools import visual_plan
+    from overlay_studio_adapter import validate_brief, validate_parent_layout
+    from huashu_stat_adapter import validate_brief as validate_stat_brief
+    scenes = {(s.get('segment_id'), s.get('component_id')): s
+              for s in treatment.get('scenes', [])}
+    for segment in director.get('segments', []):
+        selected = {cid: b for cid, b in segment.get('bindings', {}).items()
+                    if b.get('dependency_id') == 'overlay-studio-native'
+                    or (b.get('dependency_id') == 'huashu-motion-native'
+                        and b.get('template_id') == 'huashu-motion/talking-head-stat')}
+        if not selected:
+            continue
+        compiled = visual_plan._freeze_and_compile_segment(segment,
+            candidate_freezers={}, binding_freezers={},
+            strategy_compiler=visual_plan._load_router_module().compile_strategy)
+        components = {c['component_id']: c for c in compiled['shot_recipe']['components']}
+        for cid, binding in selected.items():
+            scene = scenes.get((segment['segment_id'], cid))
+            if not scene or not isinstance(scene.get('brief_path'), str):
+                raise ValueError('selected native parent layout is missing its scene brief')
+            payload = _path(job, scene['brief_path']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                raise ValueError('selected native parent layout brief differs from its binding')
+            if binding['dependency_id'] == 'overlay-studio-native':
+                validate_parent_layout(validate_brief(payload), components[cid])
+            elif validate_stat_brief(payload)['parent_safe_zone'] != components[cid]['render_window']['safe_zone']:
+                raise ValueError('selected Stat parent safe zone differs from the compiled layout')
 
 
 def _validate_selected_hw_word_anchors(job, director: dict, treatment: dict) -> None:
@@ -295,26 +423,33 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
 
 def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
-    from lemo_wake_adapter import native_task, inspect_result, validate_brief
+    native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter'}
+    from edit.hd.tools.subtitles_v2 import subtitle_layout
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
     for segment in director['segments']:
         for component in segment['visual_strategy']['components']:
             cid = component['component_id']
             binding = segment.get('bindings', {}).get(cid, {})
-            if binding.get('dependency_id') != 'lemo-wake':
+            dependency = binding.get('dependency_id')
+            if dependency not in native_modules:
                 continue
+            module = _module(native_modules[dependency])
             scene = scenes.get((segment['segment_id'], cid), {})
             brief_path = _path(job, scene['brief_path'])
             payload = brief_path.read_bytes()
             if hashlib.sha256(payload).hexdigest() != binding['brief_sha256']:
-                raise ValueError('Wake brief changed after visual approval')
-            brief = validate_brief(payload)
+                raise ValueError('Native Skill brief changed after visual approval')
+            brief = module.validate_brief(payload)
             if not _path(job, brief['result_record_path']).exists():
-                actions.append(native_task(job, {'segment_id': segment['segment_id']},
-                    {**binding, 'component_id': cid}, brief_path))
+                composition = segment['visual_strategy'].get('composition', {})
+                zones, placement = subtitle_layout('single', composition)
+                action = module.native_task(job, {'segment_id': segment['segment_id']},
+                    {**binding, 'component_id': cid}, brief_path)
+                action['requirements']['parent_subtitle_layout'] = {'safe_zones': zones, 'placement': placement}
+                actions.append(action)
             else:
-                inspect_result(job.job_dir, payload)
+                module.inspect_result(job.job_dir, payload)
     return actions
 
 
@@ -327,6 +462,7 @@ def _module(name: str):
 
 # Default constructor bindings; selection and preparation use these same IDs.
 _NATIVE_MODULES = {
+    'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
     'huashu-art-motion': ('huashu_motion_adapter', 'python'),
@@ -435,6 +571,22 @@ def native_component_adapters(project: Path, job) -> dict:
             adapters[dependency] = _module('whiteboard_adapter').create_adapter(
                 vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
                 engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
+        elif dependency == 'video-talkcraft':
+            module = _module('talkcraft_skill_adapter')
+            adapters[dependency] = {
+                (segment['segment_id'], component['component_id']): module.create_adapter(
+                    project, sys.executable, brief_loader, renderer_version=component['renderer_version'])
+                for segment in plan['segments'] for component in segment['shot_recipe']['components']
+                if component.get('dependency_id') == dependency}
+        elif dependency == 'huashu-motion-native':
+            module = _module('huashu_stat_adapter')
+            adapters[dependency] = {
+                (segment['segment_id'], component['component_id']): module.create_adapter(
+                    project, sys.executable, brief_loader,
+                    execution_mode=module.validate_brief(brief_loader(
+                        job, segment['shot_recipe'], component))['execution_mode'])
+                for segment in plan['segments'] for component in segment['shot_recipe']['components']
+                if component.get('dependency_id') == dependency}
         else:
             name, launcher_kind = _NATIVE_MODULES[dependency]
             launcher = sys.executable if launcher_kind == 'python' else shutil.which('node')

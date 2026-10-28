@@ -18,6 +18,17 @@ class BrollSkillSelectionTest(unittest.TestCase):
         for source in ('adu-motion-video','hypit-native-chat'):
             row=next(c for c in candidates if c['skill_id']==source)
             self.assertEqual(row['min_duration_seconds'],5)
+        rollup = next(c for c in candidates if c['candidate_id'] == 'html-video:html-video/frame-data-rollup')
+        adu = next(c for c in candidates if c['skill_id'] == 'adu-motion-video')
+        self.assertEqual(rollup['min_duration_seconds'], 3)
+        converge = next(c for c in candidates if c['candidate_id'] ==
+                        'talkcraft-native-adaptation:template/cards/source-converge.tsx')
+        self.assertEqual(converge['min_duration_seconds'], 5.6)
+        for row, before, minimum in ((rollup, 71, 72), (adu, 119, 120), (converge, 134, 135)):
+            beat = {'segment_id': 'seg-check', 'start': 0, 'end': before / 24}
+            self.assertIsNotNone(selection.timing_failure(row, beat))
+            beat['end'] = minimum / 24
+            self.assertIsNone(selection.timing_failure(row, beat))
 
     def complete_overlay_cache(self, draft, treatment):
         from edit.hd.tools import motion_match_cache, overlay_selection
@@ -231,10 +242,16 @@ class BrollSkillSelectionTest(unittest.TestCase):
             "完全不相关的海边日落宠物散步", use="broll", catalog=catalog), [])
         self.assertEqual(motion.search_capabilities(ROOT,
             "精致 浅暖色 人物", use="broll", catalog=catalog), [])
-        matches = motion.search_capabilities(ROOT, "方格逐格染色 比例", use="broll", catalog=catalog)
-        grid = next(row for row in matches if row["candidate_id"].endswith("/unit-grid-proportion"))
-        self.assertIn("方格逐格染色", grid["matched_dimensions"]["actions"])
-        stage = next(row for row in catalog if row["candidate_id"].endswith("/stage-keyframe-tour"))
+        matches = motion.search_capabilities(ROOT, "来源 汇聚 多到一", use="broll", catalog=catalog)
+        converge = next(row for row in matches if row["candidate_id"].endswith("/source-converge.tsx"))
+        self.assertIn("汇聚", converge["matched_dimensions"]["actions"])
+        # Archived card qualification still validates its own public fields;
+        # it does not make this card a callable production capability.
+        cases = motion.contract_artifacts.read_json_artifact(ROOT /
+            "edit/hd/integrations/talkcraft/runtime/qualification-cases/stage-keyframe-tour.json")["cases"]
+        stage = {"template_id": "hd-talking-head/talkcraft/stage-keyframe-tour",
+                 "native_contract": {"qualified_raw_field_sets": [list(keys) for keys in
+                 sorted({tuple(sorted(case["raw"])) for case in cases})]}}
         self.assertEqual(stage["native_contract"]["qualified_raw_field_sets"], [["accent", "subtitle", "title"]])
         brief = {"card_id": "stage-keyframe-tour", "events": [{"payload": {"raw": {
             "title": "实际资料", "subtitle": "长报表", "accent": "#123456", "screenshot": "report.png"}}}]}
@@ -299,10 +316,24 @@ class BrollSkillSelectionTest(unittest.TestCase):
 
         catalog = motion.load_catalog(ROOT)
         by_id = {row["candidate_id"]: row for row in catalog}
-        self.assertEqual(len([cid for cid in by_id if cid.startswith("hd-talking-head-talkcraft:")]), 108)
+        self.assertFalse(any(cid.startswith("hd-talking-head-talkcraft:") for cid in by_id))
+        self.assertEqual(len([cid for cid in by_id if cid.startswith("talkcraft-native-adaptation:")]), 4)
         self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 8)
-        self.assertEqual(by_id["history:local-canonical/process-relations"]["status"], "excluded")
-        self.assertEqual(by_id["unconnected:hyperframes/strikethrough-replace"]["status"], "needs_adapter")
+        self.assertFalse(any(cid.startswith(("history:", "unconnected:"))
+                             for cid in by_id))
+        self.assertEqual({row['status'] for row in catalog}, {'supported'})
+        self.assertIn('paper-collage-hyperframes:paper-collage-ad/hyperframes', by_id)
+        native = [row for row in catalog if row['skill_id'] == 'video-talkcraft']
+        self.assertEqual(len(native), 108)
+        self.assertEqual(sum(row['native_role'] == 'scene' for row in native), 51)
+        self.assertEqual(selection.source_channel('paper-collage-ad'),
+                         selection.source_channel('paper-collage-hyperframes'))
+        self.assertEqual(selection.source_channel('video-talkcraft'),
+                         selection.source_channel('talkcraft-native-adaptation'))
+        self.assertEqual(motion.catalog_summary(catalog)['total'], len(by_id))
+        unavailable = copy.deepcopy(by_id["overlay:pin-board"])
+        unavailable['status'] = 'needs_adapter'
+        self.assertEqual(motion.search_capabilities(ROOT, "并列 要点 累积", catalog=[unavailable]), [])
         overlays = motion.search_capabilities(ROOT, "并列 要点 累积", use="aroll_overlay", catalog=catalog)
         self.assertIn("overlay:pin-board", {row["candidate_id"] for row in overlays})
         self.assertFalse(any(row["candidate_id"].startswith("hd-talking-head-talkcraft:") for row in overlays))
@@ -778,11 +809,8 @@ class PlanningOnlyChecksTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for seconds in (3, 3.99):
-                draft, treatment = self.make_plan(root, seconds)
-                self.assertNotIn("min_duration_seconds", treatment["motion_matches"]["number"]["matches"][0])
-                result = motion.check_planning_only(ROOT, draft, treatment, job_dir=root)
-                self.assertEqual(result["status"], "fail", result)
-                self.assertIn("needs at least 4", result["failures"][0]["reason"])
+                with self.assertRaisesRegex(ValueError, "no timing-feasible candidate"):
+                    self.make_plan(root, seconds)
             draft, treatment = self.make_plan(root, 4)
             result = motion.check_planning_only(ROOT, draft, treatment, job_dir=root)
             self.assertEqual(result["status"], "pass", result)  # Unselected versus needs 6.5 seconds.

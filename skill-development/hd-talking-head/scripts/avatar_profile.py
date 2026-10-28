@@ -49,8 +49,8 @@ def validate_avatar(avatar, *, frames=None):
     ), "profile")
     if type(profile["schema_version"]) is not int or profile["schema_version"] != 1:
         raise ValueError("avatar profile version must be one")
-    if profile["framing"] != "head-shoulders":
-        raise ValueError("avatar framing must be head-shoulders")
+    if profile["framing"] not in ("head-shoulders", "head-neck"):
+        raise ValueError("avatar framing is invalid")
     if type(profile["source_sha256"]) is not str or not re.fullmatch(r"[0-9a-f]{64}", profile["source_sha256"]):
         raise ValueError("avatar source SHA-256 is invalid")
     diameter = _integer(profile["diameter"], 128, 384, "diameter")
@@ -76,9 +76,11 @@ def validate_avatar(avatar, *, frames=None):
         x, y = _number(anchor["x"], "crop x"), _number(anchor["y"], "crop y")
         if not (0 <= x <= 1080 - size and 0 <= y <= 1920 - size):
             raise ValueError("avatar crop exceeds the normalized source")
-        landmarks = _object(anchor["landmarks"], (
-            "head_top", "face_box", "chin", "neck", "shoulders"
-        ), "landmarks")
+        framing = profile["framing"]
+        landmark_keys = ("head_top", "face_box", "chin", "neck", "shoulders")
+        if framing == "head-neck":
+            landmark_keys = landmark_keys[:-1]
+        landmarks = _object(anchor["landmarks"], landmark_keys, "landmarks")
         radius = .5 - 2 / diameter
         head = _point(landmarks["head_top"], anchor, size, radius, "head top")
         chin = _point(landmarks["chin"], anchor, size, radius, "chin")
@@ -87,20 +89,26 @@ def validate_avatar(avatar, *, frames=None):
         if type(face) is not list or len(face) != 4:
             raise ValueError("avatar face_box must be measured x/y/width/height")
         fx, fy, fw, fh = [_number(n, "face box") for n in face]
-        if not .38 <= fw / size <= .52 or fh <= 0:
-            raise ValueError("avatar face width must be 0.38–0.52 of crop")
+        face_width = fw / size
+        if not (.38 <= face_width <= (.60 if framing == "head-neck" else .52)) or fh <= 0:
+            maximum = .60 if framing == "head-neck" else .52
+            raise ValueError(f"avatar face width must be 0.38–{maximum:.2f} of crop")
         for px, py in ((fx, fy), (fx + fw, fy), (fx, fy + fh), (fx + fw, fy + fh)):
             _point([px, py], anchor, size, radius, "face box")
-        shoulders = landmarks["shoulders"]
-        if type(shoulders) is not list or len(shoulders) != 2:
-            raise ValueError("avatar requires measured left and right shoulders")
-        left, right = [_point(p, anchor, size, radius, "shoulder") for p in shoulders]
-        if right[0] - left[0] < .68 - 1e-9:
-            raise ValueError("avatar shoulder width must be at least 0.68 of crop")
         if not .06 - 1e-9 <= head[1] <= .11 + 1e-9:
             raise ValueError("avatar headroom must be 0.06–0.11 of crop")
         face_top, face_bottom = (fy - y) / size, (fy + fh - y) / size
-        if not head[1] < face_top < face_bottom <= chin[1] < neck[1] <= max(left[1], right[1]):
+        if framing == "head-shoulders":
+            shoulders = landmarks["shoulders"]
+            if type(shoulders) is not list or len(shoulders) != 2:
+                raise ValueError("avatar requires measured left and right shoulders")
+            left, right = [_point(p, anchor, size, radius, "shoulder") for p in shoulders]
+            if right[0] - left[0] < .68 - 1e-9:
+                raise ValueError("avatar shoulder width must be at least 0.68 of crop")
+            valid_order = head[1] < face_top < face_bottom <= chin[1] < neck[1] <= max(left[1], right[1])
+        else:
+            valid_order = head[1] < face_top < face_bottom <= chin[1] < neck[1]
+        if not valid_order:
             raise ValueError("avatar must preserve head, chin, neck and shoulder order")
     actual_frames = anchors[-1]["frame"] + 1
     frames = actual_frames if frames is None else _integer(frames, 3, 10_000_001, "frames")
@@ -183,6 +191,16 @@ def _avatar_composition(segment):
     return segment.get("visual_strategy", {}).get("composition", {})
 
 
+def _bottom_window_position(avatar):
+    profile = avatar.get("profile") if isinstance(avatar, dict) else None
+    if not isinstance(profile, dict):
+        raise ValueError("avatar profile is required for bottom_window policy")
+    diameter = _integer(profile.get("diameter"), 128, 384, "diameter")
+    border = _integer(profile.get("border_width"), 0, 24, "border width")
+    outer = diameter + border * 2
+    return {"x": 1080 - 80 - outer, "y": 1700 - outer}
+
+
 def validate_avatar_plan_policy(segments):
     """Validate the new-job transition policy without relying on optional fields.
 
@@ -196,6 +214,8 @@ def validate_avatar_plan_policy(segments):
         if composition.get("presenter_mode") != "bottom_window":
             continue
         avatar = composition.get("avatar") or {}
+        if avatar.get("position") != _bottom_window_position(avatar):
+            errors.append(f"segment {i}: bottom_window avatar must use the right-bottom policy position")
         before = _avatar_composition(segments[i - 1]) if i else {}
         after = _avatar_composition(segments[i + 1]) if i + 1 < len(segments) else {}
         has_before = (before.get("presenter_mode") == "full_frame"
@@ -224,7 +244,8 @@ def validate_avatar_plan_policy(segments):
 def plan_avatar_policy(segments):
     """Return a normalized copy and preparation actions for a new proposal.
 
-    Geometry is copied verbatim.  Short native A-roll gaps are actions, not
+    Measured crop/profile geometry is copied verbatim; bottom-window placement
+    is normalized to the right-bottom policy. Short native A-roll gaps are actions, not
     silently shortened timestamps, because their host inputs must be rebuilt.
     """
     planned = copy.deepcopy(segments)
@@ -234,6 +255,7 @@ def plan_avatar_policy(segments):
         if composition.get("presenter_mode") != "bottom_window" or "avatar" not in composition:
             continue
         avatar = composition["avatar"]
+        avatar["position"] = _bottom_window_position(avatar)
         before = _avatar_composition(planned[i - 1]) if i else {}
         after = _avatar_composition(planned[i + 1]) if i + 1 < len(planned) else {}
         has_before = (before.get("presenter_mode") == "full_frame" and

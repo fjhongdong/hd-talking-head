@@ -148,72 +148,24 @@ def validate_overlay_capability(route: str, binding: Mapping, *, registered: Map
 
 
 def load_catalog(project_root: Path) -> list[dict]:
-    from .broll_skill_selection import _discover_native_candidates
-    from .talkcraft_matcher import load_card_catalog
+    from .broll_skill_selection import _discover_native_candidates, talkcraft_candidates
 
     project = Path(project_root).resolve(strict=True)
     profiles = load_profiles(project)
     raw = _discover_native_candidates(project)
     rows = {row["candidate_id"]: row for row in describe_candidates(project, raw, use="broll", profiles=profiles)}
-    runtime = project / "edit/hd/integrations/talkcraft/runtime"
-    for card in load_card_catalog(runtime / "card-registry.json", index_path=runtime / "card-semantic-index.json"):
-        production = card["production"]
-        cid = "hd-talking-head-talkcraft:hd-talking-head/talkcraft/" + card["card_id"]
-        if cid not in rows:
-            item = {"candidate_id": cid, "skill_id": "hd-talking-head-talkcraft",
-                    "dependency_id": "hd-talking-head-talkcraft", "entrypoint": production["derived_entrypoint"],
-                    "producer_version": production["adapter_version"], "template_id": "hd-talking-head/talkcraft/" + card["card_id"],
-                    "source_route": card["card_id"], "role": "component", "status": "needs_adapter"}
-            rows[cid] = describe_candidates(project, [item], use="component", profiles=profiles)[0]
-        cases_path = runtime / "qualification-cases" / (card["card_id"] + ".json")
-        cases = contract_artifacts.read_json_artifact(cases_path)["cases"]
-        rows[cid]["native_contract"] = {
-            "production_role": card["production_role"], "layer_roles": card["layer_roles"],
-            "required_media": card["required_media"], "allowed_media": card["allowed_media"],
-            "motion_description": profiles[cid]["summary"],
-            "qualified_raw_field_sets": [list(keys) for keys in
-                sorted({tuple(sorted(case["raw"])) for case in cases})],
-            "qualified_frame_counts": sorted({case["duration_frames"] for case in cases}),
-            "qualification_ref": "edit/hd/integrations/talkcraft/runtime/card-registry.json",
-            "event_capability_ref": "edit/hd/integrations/talkcraft/runtime/card-event-capabilities.json",
-        }
+    components = [row for row in talkcraft_candidates(project) if row['native_role'] != 'scene']
+    rows.update((row['candidate_id'], row) for row in describe_candidates(
+        project, components, use='component', profiles=profiles))
     for row in overlay_candidates(project, profiles=profiles):
         rows[row["candidate_id"]] = row
-
-    # Keep archived identities visible without restoring their old execution route.
-    registry = contract_artifacts.read_json_artifact(project / "skill-development/hd-talking-head/references/verified-template-registry.json")
-    active_templates = {row["template_id"] for row in raw}
-    for record in registry["templates"]:
-        if record["template_id"] in active_templates:
-            continue
-        cid = "history:" + record["template_id"]
-        rows[cid] = {"candidate_id": cid, "role": "historical", "status": "excluded",
-                     "template_id": record["template_id"], "producer_version": record["template_version"],
-                     "capability": {"candidate_id": cid, "title": record["template_id"],
-                         "summary": "保留原资格证据供追溯，当前制作政策不恢复此入口。",
-                         "uses": ["component"], "capability_type": "historical",
-                         "reviewed_version": record["template_version"],
-                         "tags": {name: (record.get("semantic_families", []) if name == "relations" else []) for name in TAG_FIELDS},
-                         "editable_content": [], "limitations": ["不进入新选型，不重签旧资格。"],
-                         "evidence": ["skill-development/hd-talking-head/references/verified-template-registry.json"]}}
-    for cid, profile in profiles.items():
-        if cid in rows:
-            continue
-        if cid.startswith(("history:", "unconnected:")):
-            rows[cid] = {"candidate_id": cid, "role": "historical" if cid.startswith("history:") else "component",
-                         "status": "excluded" if cid.startswith("history:") else "needs_adapter",
-                         "capability": profile}
-        elif profile["capability_type"] != "historical":
-            # A removed qualification is not resurrected by an old metadata row.
-            rows[cid] = {"candidate_id": cid, "role": "unavailable", "status": "not_registered",
-                         "capability": profile}
     return sorted(rows.values(), key=lambda row: row["candidate_id"])
 
 
 def catalog_summary(catalog: list[dict]) -> dict:
     return {"total": len(catalog), "execution_status": dict(Counter(row["status"] for row in catalog)),
             "uses": dict(Counter(use for row in catalog for use in row["capability"]["uses"])),
-            "note": "登记与标签不证明当前环境、词锚、语义或实播画面通过。"}
+            "note": "仅含有执行入口的生产能力；当前环境、词锚、语义和实播画面仍须检查。"}
 
 
 def _phrase_in(phrase: str, text: str) -> bool:
@@ -237,14 +189,14 @@ def _match_evidence(profile: Mapping, query: str) -> dict:
 
 
 def search_capabilities(project_root: Path, query: str, *, use: str | None = None,
-                        include_history: bool = False, catalog: list[dict] | None = None) -> list[dict]:
+                        catalog: list[dict] | None = None) -> list[dict]:
     """Recall candidates, not choose meanings: the host reviews full clauses next."""
     if not isinstance(query, str) or not query.strip() or (use is not None and use not in USES):
         raise ValueError("Motion search requires text and a known use")
     matches = []
     for row in catalog if catalog is not None else load_catalog(project_root):
         profile = row["capability"]
-        if row["status"] == "excluded" and not include_history:
+        if row["status"] != "supported":
             continue
         uses = profile["uses"]
         if use is not None and use not in uses and not (use == "broll" and "design" in uses):
@@ -396,6 +348,30 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     "record": {"job_path": record_path, "sha256": hashlib.sha256(result_bytes).hexdigest(), "byte_count": len(result_bytes)}}}
         finally:
             sys.path[:] = previous
+    if segment["bindings"][component].get("dependency_id") == "video-talkcraft":
+        scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+        previous = sys.path[:]
+        try:
+            sys.path.insert(0, str(scripts))
+            module = importlib.import_module("talkcraft_skill_adapter")
+            module.validate_brief(path.read_bytes())
+            record_path = brief["result_record_path"]
+            if (root / record_path).is_file():
+                data = (root / record_path).read_bytes()
+                result = module.inspect_result(root, path.read_bytes(), record_bytes=data)
+                if result["renderer_version"] != segment["bindings"][component]["renderer_version"]:
+                    raise ValueError("TalkCraft result renderer differs from the selected binding")
+                call = contract_artifacts.read_json_artifact(module.exact(root, result["render_call"]))
+                files = call["project_files"]
+                shotbook = next(f for f in files if f["job_path"].endswith("/SHOTBOOK.md"))
+                sources = [f for f in files if "/remotion/src/" in f["job_path"]
+                           and Path(f["job_path"]).suffix in {".tsx", ".ts", ".jsx", ".js"}]
+                if not sources:
+                    raise ValueError("TalkCraft completed scene has no frozen project source")
+                brief = {**brief, "native_result": {**result, "shotbook": shotbook, "scene_sources": sources,
+                    "record": {"job_path": record_path, "sha256": hashlib.sha256(data).hexdigest(), "byte_count": len(data)}}}
+        finally:
+            sys.path[:] = previous
     return brief
 
 
@@ -468,7 +444,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                     raise ValueError("native validator module belongs to another project")
                 payload = contract_artifacts.canonical_json_bytes(
                     {k: v for k, v in brief.items() if k != "native_result"}
-                    if row.get("dependency_id") == "lemo-wake" else brief)
+                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft"} else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
@@ -523,7 +499,7 @@ def _json_pointer(value, pointer: str):
     return value
 
 
-def _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief):
+def _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief, *, phase="completed"):
     """Validate the host's cited judgement, not infer meaning from tag hits."""
     result = {"status": "needs_review", "judged_by": "host", "binding_verified": False}
     records = treatment.get("semantic_assessments", [])
@@ -599,8 +575,27 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                             native_result["record"]["job_path"]}
                 if None in required or not required.issubset(paths):
                     raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
+        talkcraft_required = set()
+        talkcraft_planning = row.get("dependency_id") == "video-talkcraft" and phase == "planning" and not brief.get("native_result")
+        if row.get("dependency_id") == "video-talkcraft":
+            native_result = brief.get("native_result")
+            if not talkcraft_planning:
+                if not isinstance(native_result, dict) or native_result.get("status") != "completed":
+                    raise ValueError("TalkCraft completed scene evidence is required for final acceptance")
+                talkcraft_required = {native_result["shotbook"]["job_path"],
+                                     *(item["job_path"] for item in native_result["scene_sources"])}
+                cited_sources = {ref.get("path") for ref in refs if isinstance(ref, dict) and "quote" in ref}
+                records = [ref for ref in refs if isinstance(ref, dict) and ref.get("path") == native_result["record"]["job_path"]]
+                if (not talkcraft_required.issubset(cited_sources) or len(records) != 1
+                        or records[0].get("pointer") != "/status" or records[0].get("value") != "completed"):
+                    raise ValueError("completed TalkCraft result must cite actual SHOTBOOK, project sources and completed record")
+            else:
+                planning = {ref.get("pointer") for ref in refs if isinstance(ref, dict) and ref.get("path") == relative}
+                if not {"/transcript", "/semantic_goal", "/card_id"}.issubset(planning):
+                    raise ValueError("TalkCraft planning must cite approved transcript, semantic goal and native recipe")
         from .overlay_alignment import _path
-        entry_cited = row["capability"]["capability_type"] != "creative_skill"
+        entry_cited = (row["capability"]["capability_type"] != "creative_skill"
+                       or talkcraft_planning or bool(talkcraft_required))
         if row.get("dependency_id") == "lemo-wake":
             image_cited = any(ref.get("path") == brief["image"]["job_path"] and ref.get("image") is True
                               for ref in refs if isinstance(ref, dict))
@@ -633,7 +628,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     picture.verify()
             elif "pointer" in ref:
                 value = _json_pointer(contract_artifacts.read_json_artifact(file), ref["pointer"])
-                if path == relative and ref["pointer"].split("/")[1] in {
+                if path == relative and not talkcraft_planning and ref["pointer"].split("/")[1] in {
                     "source_binding", "template_request", "creative_handoff", "upstream",
                     "composition", "canvas", "assets", "entry", "semantic_goal",
                 }:
@@ -654,7 +649,8 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
         if not entry_cited:
             raise ValueError("creative Skill requires evidence from its actual frozen scene")
         return {"status": assessment["verdict"], "judged_by": "host", "binding_verified": True,
-                "reason": assessment["reason"]}
+                "reason": assessment["reason"],
+                **({"scope": "planning_inputs"} if talkcraft_planning else {})}
     except (ValueError, KeyError, TypeError, IndexError, OSError, ImportError) as error:
         return {**result, "reason": str(error)}
 
@@ -693,12 +689,10 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
         current = {r["candidate_id"]: r for r in broll_skill_selection.discover_candidates(project_root)}
         for assignment in computed["assignments"]:
             row = current[assignment["candidate_id"]]
-            minimum = row.get("min_duration_seconds")
             segment = segments[assignment["segment_id"]]
-            seconds = segment["end"] - segment["start"]
-            frames = round(seconds * 24)
-            if minimum is not None and (frames < minimum * 24 or abs(seconds * 24 - frames) > 1e-6):
-                raise ValueError(f"{segment['segment_id']}: {row['candidate_id']} has {seconds:.3f}s but needs at least {minimum}s on an exact 24fps clock; review timing and reassign from the existing cache")
+            reason = broll_skill_selection.timing_failure(row, segment)
+            if reason:
+                raise ValueError(reason + "; review timing and reassign from the existing cache")
         if speech is not None:
             timeline = contract_artifacts.read_json_artifact(Path(job_dir) / "06-edit-structure/timeline-map.json")
             duration = max(c["timeline_end"] for c in timeline["segments"])
@@ -720,10 +714,12 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
 
 
 def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *,
-                       job_dir: Path | None = None) -> dict:
+                       job_dir: Path | None = None, phase: str = "completed") -> dict:
     """Check real read-only inputs, distinguishing missing evidence from a pass."""
     from . import broll_skill_selection, overlay_selection
 
+    if phase not in {"planning", "completed"}:
+        raise ValueError("Unknown native semantic evidence phase")
     catalog = load_catalog(project_root)
     by_id = {row["candidate_id"]: row for row in catalog}
     motion_queries = treatment.get("motion_queries")
@@ -828,7 +824,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                      and brief["native_result"].get("status") == "completed")):
             not_verified.append({"segment_id": key[0], "component_id": component,
                                  "check": "completed_wake_native_result"})
-        semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief)
+        semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief, phase=phase)
         native = _native_input_check(project_root, row, brief, job_dir=job_dir)
         for name, result in (("semantic_fit", semantic), ("native_input_constraints", native)):
             item = {"segment_id": key[0], "component_id": component,

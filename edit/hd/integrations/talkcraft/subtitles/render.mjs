@@ -16,12 +16,12 @@ const keys = (v, expected) => v && typeof v === 'object' && !Array.isArray(v) &&
 const validUtf16Boundary = (text, offset) => offset >= 0 && offset <= text.length && !(offset > 0 && offset < text.length && text.charCodeAt(offset - 1) >= 0xd800 && text.charCodeAt(offset - 1) <= 0xdbff && text.charCodeAt(offset) >= 0xdc00 && text.charCodeAt(offset) <= 0xdfff);
 
 const validate = (input) => {
-  if (!keys(input, ['canvas', 'cues', 'schema_version']) || input.schema_version !== 1) fail('schema_version or top-level keys');
+  if (!keys(input, ['canvas', 'cues', 'schema_version']) || input.schema_version !== 2) fail('schema_version or top-level keys');
   if (!keys(input.canvas, ['fps', 'frames', 'height', 'width']) || input.canvas.width !== 1080 || input.canvas.height !== 1920 || input.canvas.fps !== 24 || !Number.isInteger(input.canvas.frames) || input.canvas.frames <= 0) fail('canvas must be 1080x1920 at 24fps');
   if (!Array.isArray(input.cues)) fail('cues must be an array');
   let previousEnd = 0;
   for (const cue of input.cues) {
-    if (!keys(cue, ['cue_id', 'emphasis', 'end', 'placement', 'start', 'text', 'words']) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or keys are invalid');
+    if (!keys(cue, ['bottom', 'cue_id', 'emphasis', 'end', 'placement', 'start', 'text', 'words']) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || !Number.isInteger(cue.bottom) || cue.bottom < 0 || cue.bottom >= 1920 || (cue.placement === 'standard' && cue.bottom !== 350) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or layout is invalid');
     previousEnd = cue.end;
     if (!Array.isArray(cue.words)) fail(`words invalid for ${cue.cue_id}`);
     let previousWordEnd = cue.start;

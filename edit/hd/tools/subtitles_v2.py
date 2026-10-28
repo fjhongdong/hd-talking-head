@@ -225,6 +225,41 @@ def _corrected_phrases(job) -> tuple[str, ...]:
                  if 1 < subtitles._visible_glyph_count([{"text": phrase}]) <= subtitles._CUE_TARGET_MAX))
 
 
+def subtitle_layout(shot_mode: str, composition: Mapping[str, Any]) -> tuple[dict, str]:
+    """Return the same parent subtitle reservation for planning and rendering."""
+    if shot_mode == "none" or composition.get("presenter_mode") == "hidden":
+        zones = {
+            "face": None,
+            "subtitle": {"x": 80, "y": 1430, "width": 920, "height": 230},
+            "source": None,
+            "chart": None,
+        }
+        placement = "standard"
+    else:
+        avatar = composition["avatar"]
+        position = avatar["position"]
+        diameter = avatar["profile"]["diameter"]
+        outer = diameter + 2 * avatar["profile"]["border_width"]
+        face = {"x": position["x"], "y": position["y"],
+                "width": outer, "height": outer}
+        legacy = {"x": 80, "y": 1462, "width": 640, "height": 230}
+        overlaps = not (legacy["x"] + legacy["width"] <= face["x"]
+                        or face["x"] + face["width"] <= legacy["x"]
+                        or legacy["y"] + legacy["height"] <= face["y"]
+                        or face["y"] + face["height"] <= legacy["y"])
+        zones = {
+            "face": face,
+            "subtitle": ({"x": 80, "y": face["y"] + face["height"] + 8 - 32,
+                           "width": 640,
+                           "height": 1784 - (face["y"] + face["height"] + 8) + 40}
+                         if overlaps else {"x": 80, "y": 1430, "width": 640, "height": 270}),
+            "source": None,
+            "chart": None,
+        }
+        placement = "above_avatar"
+    return zones, placement
+
+
 def build_render_plan(
     *,
     records: dict[str, dict[str, object]],
@@ -247,27 +282,7 @@ def build_render_plan(
     )
     emphasis_times: dict[str, float] = {}
     for segment in visual_plan["segments"]:
-        shot_mode = _shot_mode(segment)
-        if shot_mode == "none":
-            zones = {
-                "face": None,
-                "subtitle": {"x": 80, "y": 1430, "width": 920, "height": 230},
-                "source": None,
-                "chart": None,
-            }
-            placement = "standard"
-        else:
-            avatar = segment["shot_recipe"]["composition"]["avatar"]
-            position = avatar["position"]
-            diameter = avatar["profile"]["diameter"]
-            zones = {
-                "face": {"x": position["x"], "y": position["y"],
-                         "width": diameter, "height": diameter},
-                "subtitle": {"x": 80, "y": 1430, "width": 640, "height": 270},
-                "source": None,
-                "chart": None,
-            }
-            placement = "above_avatar"
+        zones, placement = subtitle_layout(_shot_mode(segment), segment["shot_recipe"].get("composition", {}))
         segment_start = float(segment["start"])
         segment_end = float(segment["end"])
         indices = [
@@ -294,6 +309,9 @@ def build_render_plan(
             # Match the TalkCraft card's 32px footer-clearance shift without
             # widening its bounds or changing the reserved subtitle safe zone.
             box = {**box, "y": int(box["y"]) + 32}
+        bottom = 350 if placement == "standard" else 1920 - (box["y"] + box["height"])
+        if placement == "above_avatar" and box["height"] < 168:
+            raise SubtitlesV2Error("subtitle safe area cannot fit two lines below avatar")
         layout_cache: dict[tuple[object, ...], bool] = {}
         chunks = subtitles._split_words_for_box(
             selected, box, font_path, cue_type, layout_cache
@@ -344,12 +362,13 @@ def build_render_plan(
                 "safe_zones": zones,
                 "box": box,
             }
+            render_cue = {**cue, "bottom": bottom}
             candidates = []
             for keyword in keywords:
                 if keyword not in text:
                     continue
                 rendered = talkcraft_subtitles.cue_input(
-                    {**cue, "emphasis_words": [keyword]}, chunk, placement=placement)
+                    {**render_cue, "emphasis_words": [keyword]}, chunk, placement=placement)
                 word_start = float(rendered["emphasis"]["start"])
                 if (word_start - last_keyword_time.get(keyword, float("-inf"))
                         >= _SAME_KEYWORD_COOLDOWN_SECONDS
@@ -363,7 +382,8 @@ def build_render_plan(
                 last_keyword_time[keyword] = word_start
                 last_emphasis_time = word_start
             else:
-                rendered = talkcraft_subtitles.cue_input(cue, chunk, placement=placement)
+                rendered = talkcraft_subtitles.cue_input(render_cue, chunk, placement=placement)
+            rendered["bottom"] = bottom
             if event_ids_by_segment is not None:
                 event_id = event_ids_by_segment.get(str(segment["segment_id"]))
                 if event_id is not None:

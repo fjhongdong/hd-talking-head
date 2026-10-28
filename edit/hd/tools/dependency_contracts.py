@@ -28,6 +28,7 @@ DEPENDENCY_CONTRACTS = {
     'huashu-motion-native': {"executor": 'reference_adapter', "renderer": 'HuashuMotion', "output": 'alpha_video'},
     'motion-graphics-native': {"executor": 'reference_adapter', "renderer": 'HyperFrames', "output": 'alpha_video'},
     'lemo-wake': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
+    'video-talkcraft': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
 }
 
 PRIMARY_RENDERERS = {key: value["renderer"] for key, value in DEPENDENCY_CONTRACTS.items()}

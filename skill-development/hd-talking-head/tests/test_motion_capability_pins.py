@@ -25,7 +25,7 @@ except ImportError:
 class MotionCapabilityPinTests(unittest.TestCase):
     def test_pinned_capability_sources_match_disk(self):
         profiles = motion_capabilities.load_profiles(PROJECT)
-        self.assertGreaterEqual(len(profiles), 150)
+        self.assertEqual(set(profiles), {row['candidate_id'] for row in motion_capabilities.load_catalog(PROJECT)})
         for candidate_id in (
             "adu-motion-video:adu-motion-video/native-compare",
             "hypit-native-chat:hypit/native-plan-change-chat",
@@ -34,15 +34,15 @@ class MotionCapabilityPinTests(unittest.TestCase):
             self.assertIn(candidate_id, profiles)
 
     def test_unconnected_and_historical_candidates_are_refused(self):
-        profiles = motion_capabilities.load_profiles(PROJECT)
-        unconnected = next(cid for cid in profiles if cid.startswith("unconnected:"))
-        historical = next(cid for cid in profiles if cid.startswith("history:"))
-        for cid in (unconnected, historical):
-            profile = profiles[cid]
+        profiles = {}
+        for cid in ('unconnected:example', 'history:example'):
+            profile = {'uses': ['broll'], 'capability_type': 'historical' if cid.startswith('history:') else 'native_component',
+                       'reviewed_version': 'source'}
+            profiles[cid] = profile
             candidate = {"candidate_id": cid, "role": "broll",
                          "producer_version": profile["reviewed_version"]}
             with self.assertRaisesRegex(ValueError, "not reviewed"):
-                motion_capabilities.describe_candidates(PROJECT, [candidate], use="broll")
+                motion_capabilities.describe_candidates(PROJECT, [candidate], use="broll", profiles=profiles)
 
 
 class VisualRetrievalTests(unittest.TestCase):

@@ -167,6 +167,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 stack.enter_context(mock.patch.object(subtitles_v2.content_analysis, "load_approved_content_analysis",
                                                      return_value={"analysis_sha256": "a" * 64}))
                 stack.enter_context(mock.patch.object(subtitles_v2, "approved_keyword_index", return_value=self.keywords))
+                stack.enter_context(mock.patch.object(subtitles_v2, "_corrected_phrases", return_value=[]))
                 stack.enter_context(mock.patch.object(subtitles_v2, "_load_inputs",
                                                      return_value=({}, {}, {"visual_plan_sha256": "b" * 64}, self.records)))
                 stack.enter_context(mock.patch.object(subtitles_v2.subtitles, "_validate_words", return_value=self.words))
@@ -325,7 +326,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
                     "end": 4.0,
                     "content_item_ids": ["idea-02"],
                     "shot_recipe": {"mode": "single", "composition": {"avatar": {
-                        "position": {"x": 735, "y": 1390}, "profile": {"diameter": 284},
+                        "position": {"x": 735, "y": 1390}, "profile": {"diameter": 284, "border_width": 0},
                     }}},
                 },
             ],
@@ -374,8 +375,35 @@ class FormalSubtitleContractTests(unittest.TestCase):
         self.assertTrue(all(cue["box"]["x"] + cue["box"]["width"] <= 735 for cue in broll_cues))
         self.assertTrue(all(cue["box"]["y"] >= 1390 for cue in broll_cues))
         self.assertTrue(all(cue["box"]["y"] == 1462 and cue["box"]["height"] == 230 for cue in broll_cues))
+        self.assertTrue(all(cue["bottom"] == 228 for cue in renderer_cues if cue["cue_id"] in {item["id"] for item in broll_cues}))
+        self.assertTrue(all(cue["bottom"] == 350 for cue in renderer_cues if cue["cue_id"] not in {item["id"] for item in broll_cues}))
         self.assertTrue(all(cue["box"]["y"] + cue["box"]["height"] <= cue["safe_zones"]["subtitle"]["y"] + cue["safe_zones"]["subtitle"]["height"] for cue in broll_cues))
         self.assertTrue(all(cue["placement"] == "above_avatar" for cue in renderer_cues if cue["cue_id"] in {item["id"] for item in broll_cues}))
+
+    def test_center_avatar_moves_broll_subtitle_below_outer_ring(self) -> None:
+        plan = copy.deepcopy(self.visual_plan)
+        avatar = plan["segments"][1]["shot_recipe"]["composition"]["avatar"]
+        avatar["position"] = {"x": 406, "y": 1336}
+        avatar["profile"]["diameter"] = 256
+        avatar["profile"]["border_width"] = 6
+        renderer_cues = []
+        subtitles_v2.build_render_plan(records=self.records, words=self.words,
+            timeline=self.timeline, visual_plan=plan, keyword_index=self.keywords,
+            renderer_cues=renderer_cues)
+        broll = [c for c in renderer_cues if c["placement"] == "above_avatar"]
+        self.assertTrue(broll)
+        self.assertTrue(all(c["bottom"] == 136 for c in broll))
+        self.assertTrue(all(c["bottom"] == 350 for c in renderer_cues if c["placement"] == "standard"))
+
+    def test_avatar_too_low_is_rejected_before_render(self) -> None:
+        plan = copy.deepcopy(self.visual_plan)
+        avatar = plan["segments"][1]["shot_recipe"]["composition"]["avatar"]
+        avatar["position"] = {"x": 406, "y": 1420}
+        avatar["profile"]["diameter"] = 256
+        avatar["profile"]["border_width"] = 6
+        with self.assertRaisesRegex(subtitles_v2.SubtitlesV2Error, "cannot fit two lines"):
+            subtitles_v2.build_render_plan(records=self.records, words=self.words,
+                timeline=self.timeline, visual_plan=plan, keyword_index=self.keywords)
 
     def test_unapproved_emphasis_is_rejected(self) -> None:
         plan = self._plan()
@@ -531,6 +559,26 @@ class FormalSubtitleContractTests(unittest.TestCase):
         protected = ("调整自己", "评判标准")
         self.assertEqual(cues(11, 0.5, protected), cues(keywords=protected))
         self.assertTrue(any("调整自己" in cue for cue in cues(11, 0.5, protected)))
+
+    def test_hidden_presenter_broll_keeps_regular_subtitles_without_avatar(self) -> None:
+        visual_plan = copy.deepcopy(self.visual_plan)
+        visual_plan["segments"][0]["shot_recipe"] = {
+            "mode": "single", "composition": {"presenter_mode": "hidden"}
+        }
+        renderer_cues = []
+        plan = subtitles_v2.build_render_plan(
+            records=self.records, words=self.words, timeline=self.timeline,
+            visual_plan=visual_plan, keyword_index=self.keywords,
+            renderer_cues=renderer_cues,
+        )
+        opening = [cue for cue in plan["cues"] if cue["segment_id"] == "seg-001"]
+        self.assertTrue(opening)
+        self.assertTrue(all(cue["safe_zones"]["face"] is None for cue in opening))
+        ids = {cue["id"] for cue in opening}
+        self.assertTrue(all(cue["bottom"] == 350 for cue in renderer_cues
+                            if cue["cue_id"] in ids))
+        self.assertTrue(all(cue["safe_zones"]["face"] is not None
+                            for cue in plan["cues"] if cue["segment_id"] == "seg-002"))
 
     def test_single_and_hybrid_recipes_receive_regular_subtitles(self) -> None:
         visual_plan = copy.deepcopy(self.visual_plan)

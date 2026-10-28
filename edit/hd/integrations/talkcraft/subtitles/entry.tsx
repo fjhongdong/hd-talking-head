@@ -9,7 +9,7 @@ export const RemotionRoot: React.FC = () => (
   <Composition<any, SubtitleInput>
     id="TalkCraftSubtitles"
     component={Root}
-    defaultProps={{schema_version: 1, canvas: {width: 1080, height: 1920, fps: 24, frames: 1}, cues: []}}
+    defaultProps={{schema_version: 2, canvas: {width: 1080, height: 1920, fps: 24, frames: 1}, cues: []}}
     durationInFrames={1}
     fps={24}
     width={1080}

@@ -23,6 +23,8 @@ python3 <skill>/scripts/verify_broll_template.py
 恢复同一视频时，先读它的 `job-context.json` 和 workflow，不重新新建 Job。对照保存的 release 身份及当前完整性报告。旧任务没有 release 字段或包版本已变时，应明确列出差异，决定继续旧包还是执行受控迁移；不得借升级绕过已有人工门或悄悄重做已批准资产。
 本项目内开发时如需继续同一 Job，先用正式 `revise` 将受影响阶段退回 `needs_revision`，再以 `scripts/migrate_job_context.py --job-context <workspace>/job-context.json --expected-context-sha256 <旧文件哈希> --expected-revision <当前revision> --allowed-module <唯一改动模块> --reason <原因> --dry-run` 审核差异；无运行时改动时省略 `--allowed-module`。旧 Job 接入当前完整包时，必须额外显式传入 `--project-root <当前项目根> --user-confirmation <用户原文确认>`；跨根只允许 `delivery` 的 `ready_for_review` 且前序阶段全为 `approved`，或原 Job 已处于 `needs_revision`。当前包根由迁移脚本自身确定并校验归属，不接受手填 Skill 根。去掉 `--dry-run` 后只更新项目根、运行时模块和 release 身份并留下完整 before/after 审计，保留 Python、compositor、contract、provider 配置、workflow、批准媒体及原 setup-approval 原文；随后刷新本 Job 预检。缺显式授权、阶段状态不符、模块超出 `--allowed-module` 或哈希/revision 改变时停止，不手改上下文解锁。
 
+同根、已授权维护后的续做：当本期用户已明确授权局部修复后继续，且配置、渠道、精确模型与生成输入绑定均未改变，先按上述受控迁移核对发布差异；如有运行时代码变化，其模块集合须与已授权修复范围及 `--allowed-module` 精确一致。迁移并刷新正式预检后，使用现有 `confirm_job_setup.py` 和本期真实确认原文刷新启动绑定，再执行正常阶段。保留原话及其授权范围，不手改审批 JSON，也不宣称用户作出了新回复；技术登记时间更新不增加授权次数。已使用的转写和生成授权仍按实际调用累计，直接复用真实结果，不重复收费。旧任务或授权范围发生变化时不适用此续做步骤。
+
 运行时绑定合成器 contract、实际 Python 及 `edit/hd/tools` 下 Python 源码哈希。不同工作树即使都叫 full-v2，也不能视为同一实现。长驻进程已导入另一项目时改用新进程，不删除 `sys.modules` 后混用旧对象。记录版本不等于证明全部视觉要求已满足，正式 canary 仍须验收。缺 `runtime`/启动批准的旧 Job 没有自动迁移器，先保留旧包与批准资产，明确处理差异，不重签上下文假装无变化。
 
 `initialization.json` 保留创建时的身份，不随上下文迁移改写。资料入口在项目和 runtime 均未改变时，按正式迁移审计的上下文摘要链证明 release-only 变化；连续迁移也逐步核验，不按时间或版本名称猜测。首个上下文的摘要使用初始化器的精确写入格式，其余使用迁移器的统一格式。断链、歧义、非本 Job 或未经证明的 runtime 变化仍停止。

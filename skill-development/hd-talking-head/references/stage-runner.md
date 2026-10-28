@@ -9,7 +9,7 @@
   <skill>/scripts/run_stage.py --job-context <workspace>/job-context.json
 ```
 
-省略 `--stage` 时读取最早未完成阶段；显式指定时仍须满足现有依赖。已批准阶段无新输入时核验并复用；要改变输入，先用现有 `state.revise` 明确修订，再执行。`needs_revision` 可以继续调用原 runner；`blocked` 保留当前原因，按原恢复入口处理。`ready_for_review` 返回已有候选和当前 revision，不重新生成。
+省略 `--stage` 时读取最早未完成阶段；显式指定时仍须满足现有依赖。已批准阶段无新输入时核验并复用；要改变输入，先用现有 `state.revise` 明确修订，再执行。返修须沿 `state.revise` 创建新请求，以新项目输出和新结果重新绑定正常计划后执行；不得仅凭反馈复用旧 `completed`，旧产物保留。`needs_revision` 可以继续调用原 runner；`blocked` 保留当前原因，按原恢复入口处理。`ready_for_review` 返回已有候选和当前 revision，不重新生成。
 
 配置和运行时身份沿用当前 Job。只有预检过期或尚未绑定新批准视觉计划时自动复检，不重写配置批准；模型、费用、项目或源码身份变化仍走原确认或迁移入口。所有阶段只处理本期 Job，不迁移其他视频。
 

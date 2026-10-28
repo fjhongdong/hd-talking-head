@@ -67,7 +67,7 @@ def main() -> int:
         "--expected-revision", str(workflow_revision(job_dir)),
         "--reason", args.reason,
     ])
-    run("刷新预检", [
+    preflight = [
         sys.executable, str(SKILL / "scripts/project_python.py"),
         "--project-root", str(project_root), "--",
         str(SKILL / "scripts/dependency_preflight.py"),
@@ -76,7 +76,12 @@ def main() -> int:
         "--job-context", str(context_path),
         "--output", str(job_dir / "manifests/dependency-preflight.json"),
         "--summary-only",
-    ])
+    ]
+    visual_plan = job_dir / "07-visual-direction/visual-plan.json"
+    workflow = json.loads((job_dir / "workflow.json").read_text(encoding="utf-8"))
+    if visual_plan.is_file() and workflow["stages"]["visual_direction"]["status"] == "approved":
+        preflight += ["--visual-plan", str(visual_plan)]
+    run("刷新预检", preflight)
     run("刷新配置批准", [
         sys.executable, str(SKILL / "scripts/project_python.py"),
         "--project-root", str(project_root), "--",

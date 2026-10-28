@@ -219,7 +219,7 @@ def _load_manifest(path: Path) -> dict[str, Any]:
                 or set(entry) - {"id", "script", "arguments", "node_tool", "dependency_ids"}
                 or entry["id"] not in seen or entry["id"] in preparation_ids
                 or not isinstance(entry["script"], str)
-                or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py", "scripts/prepare_talkcraft.py", "scripts/whiteboard_adapter.py"}
+                or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py", "scripts/prepare_talkcraft.py", "scripts/prepare_talkcraft_native.py", "scripts/whiteboard_adapter.py"}
                 or not isinstance(entry["arguments"], list)
                 or any(not isinstance(value, str) for value in entry["arguments"])):
             raise PreflightError("invalid project preparation entry")

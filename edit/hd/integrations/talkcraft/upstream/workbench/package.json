@@ -1,0 +1,36 @@
+{
+  "name": "talkcraft-workbench",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "gen": "node scripts/gen-index.mjs",
+    "prepare": "node scripts/gen-index.mjs",
+    "predev": "node scripts/gen-index.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/gen-index.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "prestudio": "node scripts/gen-index.mjs",
+    "studio": "remotion studio src/remotion/index.ts",
+    "render": "remotion render src/remotion/index.ts Main exports/render.mp4"
+  },
+  "dependencies": {
+    "@remotion/player": "4.0.519",
+    "@remotion/zod-types": "4.0.519",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.519",
+    "zod": "4.4.3",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.519",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "4.7.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3"
+  },
+  "talkcraftRuntime": "../runtime"
+}

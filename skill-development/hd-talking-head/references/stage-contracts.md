@@ -118,6 +118,8 @@
 
 **执行**：先核对本次原声上传/额度许可和凭据，从本 Job 预检绑定的 `video-use-runtime.resolved_path` 解析并实际调用 `helpers/transcribe.py <源视频> --edit-dir <本Job工作区/edit>`。进程工作目录使用同一预检报告中的 `video-use-skill.resolved_path`，以便 helper 读取已安装 Skill 的私有 `.env`；若凭据由进程环境安全注入则无需改工作目录，不把密钥复制到项目或回执。确认输出路径不会命中其他源素材的同名缓存；保留原始 JSON，记录 `invocation={"entrypoint":入口绝对路径,"exit_code":0,"source_sha256":本Job视频哈希,"result_sha256":原始JSON哈希}`。调用 `transcribe.transcribe_job(job, video_use_result=原始JSON路径, invocation=invocation)`；适配器核对入口绑定、原片身份、响应、字级时码顺序/范围和文案覆盖率，原始 JSON 发布为 `scribe.json`。Scribe 的纯句读（包括省略号和破折号）和空白只保留文本，不独立占用发声时段，也不扩大实词起止时间；零时长实词仅在与前一有效词的结束时间重合时合并文本，分离时停止并保留证据，不猜发音区间。合并零时长事件不能延长前词，原始响应不改写。验收通过后，`speech_edit_v2.prepare_cleanup_proposal` 只提议删除口误、明显重复和非语义停顿。不修改观点，不生成 B-roll。单纯运行 `timeline_view.py` 或 `pack_transcripts.py` 不能代替转写调用；本地 Whisper 不能让此阶段通过。
 
+原始 ASR 可能把长静音包进一个词，含句读与英文混合的词也不能只看词间距。提取当前 PCM 后，用同一静音阈值核对规范词的首尾；仅对直接接触边界、连续不少于0.8秒的静音向内收紧，并保留0.08秒边缘。原始 Scribe 不改，词文本、数量和索引不变；在现有转写报告记录原边界、新边界、静音区间和参数。新边界是保守保留范围，不冒充精确起音。清理计划、字幕和视觉词锚都使用同一份派生词，旧计划须重建，不能拿旧时码吸附到别的词。声音—长静音—声音、整词静音或不能安全收紧的情况保留音频并列入当前清理候选，不猜时码、不删字，也不借人工语音裁切字段删除静音。
+
 不得只信单次 ASR。在报审前必须对全片做第二次独立转写，优先使用已绑定本地大模型的 Whisper DTW 词级对齐，并与首次转写、原稿及用户反馈交叉对照。要覆盖三类漏项：词内口吃（如“分—分享”）、相邻重复词、未完成后整句重说。ASR 合并了口吃或整句时，使用 v2 提案的 `reviewed_cut_ranges` 记录精确源时间、原因和证据，不伪造转写词边界。这些切点必须生成局部核听样片，宿主核听确认切点后才能渲染正式 A-roll；存在歧义或用户要求核听时才报审。
 
 二次 ASR 的时间戳不得直接当作原片绝对时间；它只用于发现可疑文本。对每个候选切点，都要从原片音轨单独抽取局部片段，用唯一左右文重新定位绝对时间。同词多次出现时，禁止按第一个命中项猜测；必须证明选中的是用户指出的那次。`prepare_cleanup_proposal` 还必须验证 `reviewed_cut_ranges` 命中有效语音，不能基本是静音；核听片必须使用同一正式 renderer 和原片绝对 EDL 生成。审核样片应取一段连续口播并保留剪点前后语境，若展示给用户则在画面标明剪点；不得把相隔很远的剪点短片串成一条“卡顿合集”要求用户找问题。输出 ASR 可以辅助核对上下文，但它会归一化口吃，不能单独证明重字已被删除。
@@ -191,7 +193,7 @@
 
 索引从 0 开始，区间为 `[word_start, word_end)`；多项按索引递增且不重叠。`expected_words` 和 `replacement_texts` 长度都必须等于区间词数；原词文字和时码逐项精确匹配，替换文字非空。只允许上述字段，不能附加疑点报告字段；不能借空字符串删词、合并词或猜测哈希。需改变词边界或真实剪点时，使用原清理提案流程，不强塞进文字更正 manifest。
 
-执行 `PYTHONPATH="<project>" <python> -m edit.hd.tools.cli apply-cleanup-corrections --job "<job-dir>" --corrections "<absolute-manifest>"`。入口验证源身份并发布一套完整清理提案，保留更正审计历史；不会自行批准。成功后重新加载并报审 `speech_cleanup`，不直接跳回字幕。失败保留现场并核对身份／状态，不修改旧哈希让它通过。
+执行 `PYTHONPATH="<project>" <python> -m edit.hd.tools.cli apply-cleanup-corrections --job "<job-dir>" --corrections "<absolute-manifest>"`。入口验证源身份并发布一套完整清理提案，保留更正审计历史；不会自行批准。full-v2 更正后的预估时长使用正式 renderer 的同一保留区间计算，不能把已经剪掉的片头或片尾计回；纯文字更正不改声音、剪点或时码。成功后重新加载并报审 `speech_cleanup`，不直接跳回字幕。失败保留现场并核对身份／状态，不修改旧哈希让它通过。
 
 ### 6. `edit_structure`
 

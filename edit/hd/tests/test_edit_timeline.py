@@ -2945,7 +2945,7 @@ class TranscriptCorrectionTests(unittest.TestCase):
     def test_full_v2_correction_rebuilds_current_generation_after_explicit_revision(
         self,
     ) -> None:
-        from edit.hd.tools import content_analysis
+        from edit.hd.tools import content_analysis, speech_edit_v2
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
@@ -2995,6 +2995,20 @@ class TranscriptCorrectionTests(unittest.TestCase):
                     "analysis_sha256"
                 ],
             )
+            estimate = json.loads(
+                (output.parent / "estimated-duration.json").read_text(encoding="utf-8")
+            )
+            corrected_plan = json.loads(
+                (output.parent / "cleanup-proposal.json").read_text(encoding="utf-8")
+            )
+            expected_intervals = speech_edit_v2._video_use_intervals(
+                corrected_plan, estimate["source_seconds"],
+            )
+            self.assertAlmostEqual(
+                estimate["seconds"],
+                sum(end - start for start, end in expected_intervals),
+            )
+            self.assertGreater(expected_intervals[0][0], 0.4)
 
     def test_full_v2_correction_after_content_keywords_expand(self) -> None:
         from edit.hd.tools import content_analysis

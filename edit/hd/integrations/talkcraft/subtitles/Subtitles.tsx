@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {SubtitleCue, SubtitleEmphasis} from './types';
 import {C, FONT} from '../upstream/template/motion-systems/theme';
+import {lineUnits} from './line-units.mjs';
 
 const TEXT = C.text;
 const GOLD = C.gold;
@@ -20,9 +21,10 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
   if (!cue) return null;
 
   const emphasis = emphasisRange(cue);
-  const before = emphasis ? utf16Slice(cue.text, 0, emphasis.text_start) : cue.text;
-  const marked = emphasis ? utf16Slice(cue.text, emphasis.text_start, emphasis.text_end) : '';
-  const after = emphasis ? utf16Slice(cue.text, emphasis.text_end, cue.text.length) : '';
+  const narrow = cue.placement === 'above_avatar';
+  const units: {start: number; end: number}[] = narrow
+    ? lineUnits(cue.text, emphasis)
+    : [{start: 0, end: cue.text.length}];
   const popped = Boolean(emphasis && t >= emphasis.start);
   const since = emphasis ? Math.max(0, t - emphasis.start) : 0;
   const lift = popped
@@ -36,7 +38,7 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
   return (
     <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: cue.placement === 'above_avatar' ? 'flex-start' : 'center', pointerEvents: 'none'}}>
       <div style={{
-        marginBottom: cue.placement === 'above_avatar' ? 228 : 350,
+        marginBottom: cue.bottom,
         marginLeft: cue.placement === 'above_avatar' ? 80 : 0,
         boxSizing: 'border-box',
         width: cue.placement === 'above_avatar' ? 640 : undefined,
@@ -53,11 +55,19 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
         textWrap: cue.placement === 'above_avatar' ? 'balance' : undefined,
         color: TEXT,
       }}>
-        {emphasis ? <>
-          <span>{before}</span>
-          <span style={{display: 'inline-block', color: popped ? GOLD : TEXT, fontWeight: 600, transform: lift ? `translateY(${lift}px)` : undefined, textShadow: popped ? '0 0 12px rgba(255, 201, 77, 0.38)' : undefined}}>{marked}</span>
-          <span>{after}</span>
-        </> : cue.text}
+        {units.map((unit) => {
+          const marked = emphasis && unit.start <= emphasis.text_start && unit.end >= emphasis.text_end;
+          return <React.Fragment key={unit.start}>
+            <span style={narrow ? {whiteSpace: 'nowrap'} : undefined}>
+              {marked && emphasis ? <>
+                {utf16Slice(cue.text, unit.start, emphasis.text_start)}
+                <span style={{display: 'inline-block', color: popped ? GOLD : TEXT, fontWeight: 600, transform: lift ? `translateY(${lift}px)` : undefined, textShadow: popped ? '0 0 12px rgba(255, 201, 77, 0.38)' : undefined}}>{utf16Slice(cue.text, emphasis.text_start, emphasis.text_end)}</span>
+                {utf16Slice(cue.text, emphasis.text_end, unit.end)}
+              </> : utf16Slice(cue.text, unit.start, unit.end)}
+            </span>
+            {narrow && unit.end < cue.text.length ? <wbr /> : null}
+          </React.Fragment>;
+        })}
       </div>
     </AbsoluteFill>
   );

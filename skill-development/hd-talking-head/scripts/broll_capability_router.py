@@ -119,6 +119,20 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
+    if candidate.get('dependency_id') == 'paper-collage-hyperframes':
+        return (candidate.get('template_origin') == 'custom_fallback'
+                and candidate.get('adaptation_level') == 'structural'
+                and candidate.get('source_entrypoint') == 'scripts/paper_hyperframes_adapter.py'
+                and candidate.get('producer_version') == '2.0.0'
+                and template_id == 'paper-collage-ad-hyperframes-portrait-adaptation')
+    if candidate.get('dependency_id') == 'video-talkcraft':
+        from talkcraft_skill_adapter import load_card_catalog
+        root = Path(__file__).resolve().parents[3]
+        return (candidate.get('template_origin') == 'custom_fallback'
+                and candidate.get('adaptation_level') == 'structural'
+                and candidate.get('source_entrypoint') == 'scripts/talkcraft_skill_adapter.py'
+                and candidate.get('producer_version') == '1.0.0'
+                and template_id in {'video-talkcraft/' + card['card_id'] for card in load_card_catalog(root)})
     if candidate.get("dependency_id") == "lemo-wake":
         return (candidate.get("template_origin") == "custom_fallback"
                 and candidate.get("adaptation_level") == "structural"

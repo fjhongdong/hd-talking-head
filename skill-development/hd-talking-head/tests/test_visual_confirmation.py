@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env
 import run_stage
 from edit.hd.tests import test_visual_direction as fixture_api
-from edit.hd.tools import contract_artifacts as artifacts, state, visual_confirmation as vc
+from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
     def test_routing_distribution_separates_logical_counts_channels_and_repeats(self):
@@ -66,7 +66,8 @@ class VisualConfirmationTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.tearDown)
         self.job = self.fixture.job
-        self.fixture._write_brief(fixture_api.draft_segment(("external_stock",)))
+        self.fixture._write_brief(*avatar_profile.plan_avatar_policy(
+            [fixture_api.draft_segment(("external_stock",))])["segments"])
         config = self.job.job_dir / "manifests/provider-config.json"
         config.parent.mkdir(exist_ok=True)
         artifacts.write_json_artifact(config, {"schema_version": 1, "providers": [],
@@ -293,6 +294,36 @@ class VisualConfirmationTests(unittest.TestCase):
     def test_selected_image_to_video_channel_reaches_realized_template(self):
         self._selected_generation_flow("local_path")
 
+    def test_lovart_project_is_checked_before_freeze_with_future_image(self):
+        config = {"schema_version": 1, "generation_enabled": True, "max_concurrency": 2,
+                  "providers": [
+                      {"purpose": "image", "provider": "fixture", "model": "image-model", "endpoint_id": "fixture.image"},
+                      {"purpose": "video", "provider": "Lovart", "model": "kling/kling-video-o1", "endpoint_id": "mcp__lovart__generate_video"}]}
+        for provider in config["providers"]:
+            provider.update(connection_status="verified", quota_status="available", reference_images=True,
+                            native_9_16=True, silent_output=True)
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/provider-config.json", config)
+        artifacts.write_json_artifact(self.job.job_dir / "manifests/generation-channels.json", {
+            "schema_version": 1, "image": {"model_binding": {"mode": "fixed"}},
+            "video": {"model_binding": {"mode": "argument", "parameter": "model"}}})
+        treatment = artifacts.read_json_artifact(self.treatment)
+        future = {"$step": "image", "output": 0}
+        steps = [
+            {"id": "image", "purpose": "image", "segment_id": "seg-001", "component_id": "component-1",
+             "arguments": {"prompt": "fixture image"}, "depends_on": []},
+            {"id": "video", "purpose": "video", "segment_id": "seg-001", "component_id": "component-1",
+             "arguments": {"prompt": "fixture video", "first_frame": future}, "depends_on": ["image"]}]
+        treatment["generation_plan"] = {"steps": steps}
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with self.assertRaisesRegex(ValueError, "real project_id"):
+            self.prepare()
+        self.assertFalse(list((self.job.job_dir / vc.DIRECTORY).glob("*/proposal.json")))
+        steps[1]["arguments"]["project_id"] = "synthetic-project"
+        artifacts.write_json_artifact(self.treatment, treatment)
+        proposal = artifacts.read_json_artifact(self.prepare())
+        self.assertEqual(proposal["generation_steps"][1]["arguments"]["first_frame"], future)
+        self.assertFalse((self.job.job_dir / "generated-media").exists())
+
     def test_uploaded_image_and_normalized_video_reach_realized_template(self):
         self._selected_generation_flow("upload")
 
@@ -315,6 +346,7 @@ class VisualConfirmationTests(unittest.TestCase):
                        "query": {"tool": "fixture.query", "arguments": {}, "task_ids_parameter": "task_ids"}}})
         segment = fixture_api.draft_segment(("ai_generated",))
         segment["bindings"]["component-1"] = {"provider": "fixture", "model": "video-model", "endpoint_id": "fixture.video"}
+        segment = avatar_profile.plan_avatar_policy([segment])["segments"][0]
         self.fixture._write_brief(segment)
         arguments_path = self.job.job_dir / "channel-arguments.json"
         artifacts.write_json_artifact(arguments_path, {"prompt": "fixture request"})
@@ -337,6 +369,23 @@ class VisualConfirmationTests(unittest.TestCase):
         treatment = motion_match_cache.match_once(
             _env.PROJECT, artifacts.read_json_artifact(self.fixture.brief), treatment)
         artifacts.write_json_artifact(self.treatment, treatment)
+        if reference_mode == "upload":
+            missing_snapshot = copy.deepcopy(treatment)
+            missing_snapshot["skill_selection"]["overlay_beats"] = [
+                {"segment_id": "seg-001", "component_id": "component-1"}]
+            artifacts.write_json_artifact(self.treatment, missing_snapshot)
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "binding snapshot is missing or stale"):
+                self.prepare()
+            artifacts.write_json_artifact(self.treatment, treatment)
+            planned = artifacts.read_json_artifact(self.fixture.brief)
+            planned["segments"][0]["bindings"]["component-1"]["generation_id"] = "video"
+            artifacts.write_json_artifact(self.fixture.brief, planned)
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "omit completed generation identity"):
+                self.prepare()
+            self.assertFalse(list((self.job.job_dir / vc.DIRECTORY).glob("*/proposal.json")))
+            del planned["segments"][0]["bindings"]["component-1"]["generation_id"]
+            artifacts.write_json_artifact(self.fixture.brief, planned)
+            artifacts.write_json_artifact(self.treatment, treatment)
         self.prepare(); self.confirm()
         image = self.job.job_dir / "source-image.png"
         from PIL import Image

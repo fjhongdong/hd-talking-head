@@ -129,6 +129,12 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         video = next(stream for stream in streams if stream["codec_type"] == "video")
         if video["codec_name"] != "h264" or video["pix_fmt"] != "yuv420p" or video["r_frame_rate"] not in {"24/1", "48/2"} or any(s["codec_type"] == "audio" for s in streams):
             raise ValueError("prepare actual silent H264/yuv420p 24fps media before binding")
+        try:
+            frames, duration = int(video["nb_frames"]), float(video["duration"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("generated video needs a measured frame count and duration before binding") from exc
+        if frames <= 0 or not math.isfinite(duration) or abs(duration - frames / 24) > 1e-6:
+            raise ValueError("generated video frame clock differs; stream-copy remux to video_track_timescale=24 before binding")
         width, height = video["width"], video["height"]
     identity = item.get("channel_identity")
     if not isinstance(identity, dict):

@@ -1735,7 +1735,7 @@
       "binding_probes": [
         {
           "entrypoint": "scripts/paper_hyperframes_adapter.py",
-          "producer_version": "1.1.0",
+          "producer_version": "2.0.0",
           "adapter_identity": {
             "adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter",
@@ -1970,6 +1970,46 @@
         "equals": "motion-graphics-native",
         "required_level": "callable"
       }
+    },
+    {
+      "id": "video-talkcraft",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/talkcraft_skill_adapter.py",
+        "scripts/prepare_talkcraft_native.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/talkcraft_skill_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/talkcraft_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "video-talkcraft",
+        "required_level": "bound"
+      }
     }
   ],
   "preparation": [
@@ -2148,6 +2188,14 @@
       "dependency_ids": [
         "whiteboard-video"
       ]
+    },
+    {
+      "id": "video-talkcraft",
+      "script": "scripts/prepare_talkcraft_native.py",
+      "arguments": [],
+      "dependency_ids": [
+        "video-talkcraft"
+      ]
     }
   ],
   "runtime_checks": [
@@ -2169,7 +2217,8 @@
     "hyperframes-adapter",
     "paper-collage-hyperframes-adapter",
     "paper-collage-adapter",
-    "whiteboard-video-adapter"
+    "whiteboard-video-adapter",
+    "video-talkcraft"
   ],
   "dynamic_checks": [
     {

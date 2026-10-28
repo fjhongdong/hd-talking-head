@@ -18,7 +18,8 @@ else:
     PIL_AVAILABLE = True
 
 
-def avatar_fixture(frames=24, source_sha256="d" * 64, *, x=180, y=400, size=720):
+def avatar_fixture(frames=24, source_sha256="d" * 64, *, x=180, y=400, size=720,
+                   framing="head-shoulders"):
     def point(u, v):
         return [x + u * size, y + v * size]
     landmarks = {
@@ -27,8 +28,10 @@ def avatar_fixture(frames=24, source_sha256="d" * 64, *, x=180, y=400, size=720)
         "chin": point(.5, .54), "neck": point(.5, .63),
         "shoulders": [point(.12, .76), point(.88, .76)],
     }
+    if framing == "head-neck":
+        landmarks.pop("shoulders")
     return {
-        "profile": {"schema_version": 1, "framing": "head-shoulders",
+        "profile": {"schema_version": 1, "framing": framing,
                     "source_sha256": source_sha256, "diameter": 256,
                     "border_width": 8, "border_color": "#FFFFFF"},
         "position": {"x": 768, "y": 1400},
@@ -86,6 +89,16 @@ class AvatarProfileTests(unittest.TestCase):
             anchor["landmarks"]["shoulders"][1][1] = anchor["y"] + .60 * value["crop"]["size"]
         self.assertEqual(self.module.validate_avatar(value, frames=24), value)
 
+    def test_head_neck_accepts_measured_circle_geometry_without_shoulders(self):
+        value = avatar_fixture(framing="head-neck")
+        self.assertEqual(self.module.validate_avatar(value, frames=24), value)
+
+    def test_head_neck_still_rejects_landmark_outside_circle(self):
+        value = avatar_fixture(framing="head-neck")
+        value["crop"]["anchors"][1]["landmarks"]["chin"][0] = value["crop"]["anchors"][1]["x"]
+        with self.assertRaises(ValueError):
+            self.module.validate_avatar(value, frames=24)
+
     def test_rejects_invalid_geometry_clock_and_numeric_types(self):
         for branch, key, bad in (
             ("profile", "diameter", True), ("profile", "border_width", -1),
@@ -122,6 +135,35 @@ class AvatarProfileTests(unittest.TestCase):
             changed[1]["visual_strategy"]["composition"]["avatar"]["profile"][field] = bad
             with self.assertRaises(ValueError):
                 self.module.validate_plan_avatars(changed, source_sha256="d" * 64)
+
+    def test_new_avatar_policy_normalizes_bottom_window_to_right_bottom(self):
+        segment = {"start": 0, "end": 1, "segment_id": "s1",
+                   "visual_strategy": {"composition": {
+                       "presenter_mode": "bottom_window",
+                       "avatar": avatar_fixture()}}}
+        original = copy.deepcopy(segment)
+        planned = self.module.plan_avatar_policy([segment])["segments"][0]
+        avatar = planned["visual_strategy"]["composition"]["avatar"]
+        self.assertEqual(avatar["position"], {"x": 728, "y": 1428})
+        self.assertEqual(avatar["profile"], original["visual_strategy"]["composition"]["avatar"]["profile"])
+        self.assertEqual(avatar["crop"], original["visual_strategy"]["composition"]["avatar"]["crop"])
+        self.assertEqual(segment, original)
+
+    def test_avatar_policy_rejects_center_position_but_low_level_reader_still_accepts_it(self):
+        avatar = avatar_fixture()
+        self.assertEqual(self.module.validate_avatar(avatar, frames=24), avatar)
+        segment = {"start": 0, "end": 1, "segment_id": "s1",
+                   "visual_strategy": {"composition": {
+                       "presenter_mode": "bottom_window", "avatar": avatar}}}
+        with self.assertRaisesRegex(ValueError, "right-bottom policy"):
+            self.module.validate_avatar_plan_policy([segment])
+
+    def test_avatar_policy_rejects_missing_bottom_window_avatar(self):
+        segment = {"start": 0, "end": 1, "segment_id": "s1",
+                   "visual_strategy": {"composition": {
+                       "presenter_mode": "bottom_window"}}}
+        with self.assertRaisesRegex(ValueError, "avatar profile is required"):
+            self.module.validate_avatar_plan_policy([segment])
 
     def test_hidden_cannot_keep_unused_avatar_and_missing_bottom_is_rejected(self):
         for composition in ({"presenter_mode": "bottom_window"},

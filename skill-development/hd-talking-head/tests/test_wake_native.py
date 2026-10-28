@@ -104,6 +104,12 @@ class WakeNativeTests(unittest.TestCase):
         treatment=motion_match_cache.match_once(PROJECT,director,treatment)
         treatment['skill_selection']=broll_skill_selection.assign_skills(PROJECT,treatment['skill_selection'],job_dir=self.job.job_dir)
         native=wake.inspect_result(self.job.job_dir,self.payload)
+        for item in native['project_files']:
+            if item['job_path'].endswith(('/index.html','/DIRECTOR.md')):
+                treatment['semantic_assessments'][0]['content_refs'].append({'path':item['job_path'],'sha256':item['sha256'],
+                    'quote':(self.job.job_dir/item['job_path']).read_text().splitlines()[0]})
+        treatment['semantic_assessments'][0]['content_refs'].append({'path':self.brief['result_record_path'],
+            'sha256':wake.sha(self.job.job_dir/self.brief['result_record_path']),'pointer':'/status','value':'completed'})
         entry=next(f for f in native['project_files'] if f['job_path'].endswith('/index.html'))
         text=(self.job.job_dir/entry['job_path']).read_text();start=text.index('本地')
         treatment['motion_readability']=[{'segment_id':'seg-001','component_id':cid,'targets':[{'target_id':'wake-local-label',
@@ -129,12 +135,6 @@ class WakeNativeTests(unittest.TestCase):
         run_stage._review(self.job,'visual_direction',review)
         self.job=state.load_job(self.job.job_dir)
         result=wake.inspect_result(self.job.job_dir,self.payload)
-        for item in result['project_files']:
-            if item['job_path'].endswith(('/index.html','/DIRECTOR.md')):
-                treatment['semantic_assessments'][0]['content_refs'].append({'path':item['job_path'],'sha256':item['sha256'],
-                    'quote':(self.job.job_dir/item['job_path']).read_text().splitlines()[0]})
-        treatment['semantic_assessments'][0]['content_refs'].append({'path':self.brief['result_record_path'],
-            'sha256':wake.sha(self.job.job_dir/self.brief['result_record_path']),'pointer':'/status','value':'completed'})
         artifacts.write_json_artifact(tpath,treatment)
         run_stage.resume_visual_direction(self.job,PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json','host_qa_note':'开发测试已检查本次原生动画首中尾，文字完整、动作匹配'}})
         self.job=state.load_job(self.job.job_dir)
@@ -193,7 +193,70 @@ class WakeNativeTests(unittest.TestCase):
         self.assertTrue(Path(action['skill_path']).is_file())
         self.assertEqual(action['requirements']['frames'], 144)
         self.assertTrue(action['requirements']['silent'])
+        self.assertEqual(action['requirements']['parent_subtitle_layout']['safe_zones']['subtitle'],
+                         {'x':80,'y':1430,'width':920,'height':230})
         self.assertEqual(action['requirements']['transcript'],'先按语义')
+        self.assertNotIn('complete_source_first_frame', action['requirements'])
+        self.assertTrue(action['requirements']['single_pass'])
+
+    def test_revision_preserves_completed_work_and_dispatches_only_new_request(self):
+        director, treatment = self.draft()
+        old_brief = self.job.job_dir / 'native-inputs/brief.json'
+        old_result = self.job.job_dir / self.brief['result_record_path']
+        completed = wake.inspect_result(self.job.job_dir, self.payload)
+        preserved = {item['job_path']: (self.job.job_dir / item['job_path']).read_bytes()
+                     for item in completed['project_files']}
+        preserved.update({str(p.relative_to(self.job.job_dir)): p.read_bytes()
+                          for p in (old_brief, old_result, self.job.job_dir / completed['media']['job_path'])})
+        result = wake.prepare_revision(self.job.job_dir, old_brief, reason='开场整幅不动，需要原生重新规划完整运动')
+        self.assertEqual(result['action'], 'rebind_native_revision')
+        self.assertNotIn('skill_path', result)
+        self.assertEqual(state.load_job(self.job.job_dir).stages['visual_direction']['status'], 'needs_revision')
+        new_brief = self.job.job_dir / result['brief_path']
+        revised = wake.validate_brief(new_brief.read_bytes())
+        self.assertEqual(revised['revision']['previous_media'], completed['media'])
+        self.assertNotEqual(revised['result_record_path'], self.brief['result_record_path'])
+        self.assertFalse((self.job.job_dir / revised['result_record_path']).exists())
+        self.assertFalse((self.job.job_dir / result['project_parent']).exists())
+        self.assertEqual(run_stage.pending_native_actions(self.job, director, treatment), [])
+        treatment['scenes'][0]['brief_path'] = result['brief_path']
+        binding = director['segments'][0]['bindings']['code']
+        binding['brief_sha256'] = result['brief_sha256']
+        with mock.patch('edit.hd.tools.motion_capabilities._approved_speech', return_value=[{'text':'先按语义','start':0,'end':6}]):
+            action, = run_stage.pending_native_actions(self.job, director, treatment)
+        self.assertEqual(action['result_record_path'], result['result_record_path'])
+        self.assertEqual(action['project_parent'], result['project_parent'])
+        self.assertEqual(action['revision_context']['reason'], revised['revision']['reason'])
+        old_src = (self.job.job_dir / next(item['job_path'] for item in completed['project_files']
+                                          if item['job_path'].endswith('/index.html'))).parent
+        native_root = wake.source_root()
+        native_render = str(native_root / 'skills/wake/scripts/render.mjs')
+        with mock.patch.object(wake, 'source_root', return_value=native_root), \
+             mock.patch.object(wake.subprocess, 'run') as call:
+            with self.assertRaisesRegex(ValueError, 'new native project'):
+                wake.capture_call(self.job.job_dir, new_brief, 'render',
+                                  ['node', native_render, str(old_src), 'frames'], old_src)
+            call.assert_not_called()
+        new_result = self.job.job_dir / result['result_record_path']
+        new_result.write_bytes(old_result.read_bytes())
+        with self.assertRaisesRegex(ValueError, 'approved request or clock'):
+            run_stage.pending_native_actions(self.job, director, treatment)
+        for relative, data in preserved.items():
+            self.assertEqual((self.job.job_dir / relative).read_bytes(), data)
+
+    def test_revision_failure_does_not_advance_state_or_report_success(self):
+        old_brief = self.job.job_dir / 'native-inputs/brief.json'
+        previous_revision = self.job.revision
+        with mock.patch.object(wake.artifacts, 'write_json_artifact', side_effect=OSError('write failed')), \
+             mock.patch.object(state, 'revise') as revise:
+            with self.assertRaisesRegex(OSError, 'write failed'):
+                wake.prepare_revision(self.job.job_dir, old_brief, reason='调整完整运动')
+            revise.assert_not_called()
+        self.assertEqual(state.load_job(self.job.job_dir).revision, previous_revision)
+        with mock.patch.object(state, 'revise', side_effect=state.WorkflowError('revision failed')):
+            with self.assertRaisesRegex(state.WorkflowError, 'revision failed'):
+                wake.prepare_revision(self.job.job_dir, old_brief, reason='调整完整运动')
+        self.assertEqual(state.load_job(self.job.job_dir).revision, previous_revision)
 
     def test_approved_cover_and_first_clock_are_mandatory(self):
         director, treatment = self.draft()
@@ -253,11 +316,11 @@ class WakeNativeTests(unittest.TestCase):
         treatment={'semantic_assessments':[{'segment_id':'seg-001','component_id':'code',
             'candidate_id':'lemo-wake:wake','verdict':'pass','content_refs':[{
                 'path':self.brief['result_record_path'],'sha256':reviewed,'pointer':'/status','value':'completed'}]}]}
-        frozen=confirmation._freeze_reviewed_wake_result(self.job.job_dir,treatment,'seg-001','code',self.payload)
+        frozen=confirmation._freeze_reviewed_native_result(self.job.job_dir,treatment,'seg-001','code',self.payload,'lemo-wake')
         self.assertEqual(frozen['sha256'],reviewed)
         data=result_path.read_bytes();result_path.write_bytes(data+b'\n')
         with self.assertRaisesRegex(ValueError,'host reviewed'):
-            confirmation._freeze_reviewed_wake_result(self.job.job_dir,treatment,'seg-001','code',self.payload)
+            confirmation._freeze_reviewed_native_result(self.job.job_dir,treatment,'seg-001','code',self.payload,'lemo-wake')
         result_path.write_bytes(data)
         native=wake.inspect_result(self.job.job_dir,self.payload)
         source=next(f for f in native['project_files'] if '/assets/source.' in f['job_path'])
