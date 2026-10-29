@@ -29,7 +29,7 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
    在现有语义行的 `semantic/visual_task` 或 `beat_sheet.visual` 写明必须看见的对象、动作/关系、状态变化、允许结果和不能提前出现的后文结果，不另建平行字段。标签命中只负责召回；候选须再核对原生内容槽、动作、真实输入和输出容量。仅换标签、颜色或相同小卡不算状态变化。
 3. **一次整表确认**：`visual_direction` 先根据草稿实际 bindings 准备并检查所选模板的执行入口，成功后才输出完整 `visual-routing.md` 与确认前方案清单，列全每个视觉组件及其匹配模板，并从 1 起编号。编号绑定本期冻结清单中的 `row_id`；局部返修继续用原编号，不按修改后的稿件重新排序。用户只在这里确认整张表；确认前保持待审，不能自动批准或生成正式视觉资产。确认后由宿主生成并绑定视觉资产，再编译正式计划，随后内部完成 canary、字幕、预览 QA 和交付，不再请求用户确认样片、字幕、预览或成片。
 
-所有动效在整表确认前先按[实际文字检查](references/motion-text-readability.md)冻结文字目标；正式制作通过共享检查器读取最终像素。仅看手机缩略图、源字号或某一张好帧不够，识别不确定时也由宿主主动逐项量框处理。
+所有已有动效在整表确认前先按[实际文字检查](references/motion-text-readability.md)冻结文字目标。Barty / Bang 尚未创作的完整原生项标明 `pending_native:true`，确认后创作并在现有 realization 补齐实际文字、区域与阅读窗，再审核冻结；不预写原生布局。正式制作通过共享检查器读取最终像素。仅看手机缩略图、源字号或某一张好帧不够，识别不确定时也由宿主主动逐项量框处理。
 
 语义与设计可实现性共同决定候选准入；具体淘汰依据、单一渠道复核及 `design_plan` 交接见[候选与设计合同](references/visual-quality-contract.md#语义列表匹配缓存与确认字段)。所选设计随 assignment 冻结并传到制作，OpenFilm 沿用原 brief 字段。新proposal使用 `visual-review-v2`，实际画面还须在原阶段回执中通过构图、字级、完成度和动作焦点观察；文字合格不代替美观。没有具体依据时先补评审，不以提前限定表现方案换取单一渠道，也不为渠道数降低质量。
 
@@ -120,6 +120,7 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
+- [Barty / Bang 统一原生调用](references/native-motion-call-contract.md)（同一批准任务、原生自主创作、产物后文字验收和当前项返修）
 - [Barty 完整原生动效](references/barty-motion-integration.md)（连续形态透明贴片与三类 explainer；先调用原生创作，再接收真实结果）
 - [Bang Motion 完整原生动效](references/bang-motion-integration.md)（10 种风格、6 类 explainer、19 种 opener 概念；正文按语义选择，不改变静态封面政策）
 - [Lemo 原生 Skill 的 59 种风格模板](references/lemo-opuscar.md)（选中 Lemo 后读取，按具体 STYLE 制作当前主题）

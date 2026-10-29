@@ -241,14 +241,26 @@ def _validate_entry(entry, rows, use, tags):
     if entry.get("matches_sha256") != contract_artifacts.sha256_json(entry["matches"]):
         raise ValueError("complete motion match cache changed")
     catalog={r.get("candidate_id"):r for r in rows}; seen=set()
+    # Recheck deterministic recall completeness against this same frozen catalog.
+    # This does not rerun search or ask the host to judge candidates again.
+    recalled = {}
+    query = " ".join(tags)
+    for cid, candidate in catalog.items():
+        profile = candidate.get("capability", {})
+        uses = profile.get("uses", [])
+        if candidate.get("status") != "supported" or (use not in uses and not (use == "broll" and "design" in uses)):
+            continue
+        expected = motion_capabilities._recall_evidence(profile, query)
+        if expected["recall_basis"] is not None:
+            recalled[cid] = expected
     for evidence in entry["matches"]:
         if not isinstance(evidence, dict) or set(evidence)!={"candidate_id","matched_dimensions","retrieval_score","recall_basis"}: raise ValueError("invalid cached match evidence")
         cid=evidence.get("candidate_id")
         if not isinstance(cid,str) or cid in seen or cid not in catalog: raise ValueError("cached candidate is missing or duplicated")
         seen.add(cid); profile=catalog[cid].get("capability",{}); uses=profile.get("uses",[])
         if use not in uses and not (use=="broll" and "design" in uses): raise ValueError("cached candidate use is invalid")
-        expected=motion_capabilities._recall_evidence(profile," ".join(tags))
-        if expected["recall_basis"] is None:
+        expected = recalled.get(cid)
+        if expected is None:
             raise ValueError("cached candidate has no reviewed recall basis")
         if evidence["recall_basis"]!=expected["recall_basis"]:
             raise ValueError("cached recall basis changed")
@@ -256,3 +268,5 @@ def _validate_entry(entry, rows, use, tags):
             raise ValueError("cached matched dimensions changed")
         score=sum(len(v)*(4 if k in {"actions","relations"} else 1) for k,v in expected["matched_dimensions"].items())
         if evidence.get("retrieval_score") != score: raise ValueError("cached retrieval score changed")
+    if seen != set(recalled):
+        raise ValueError("motion match cache must retain the complete recalled candidate set")

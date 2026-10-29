@@ -1,9 +1,11 @@
 """Prepare only the dependencies used by unmodified native motion renderers."""
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -27,22 +29,87 @@ def runtime_root(project, *, dependency_id='barty-motion-graphics'):
     return root
 
 
-def check(project, *, dependency_id='barty-motion-graphics'):
+def _minimum_node(project, dependency_id):
+    name = PACKAGES[dependency_id][0]
+    lock = json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes())
+    requirement = lock['packages']['node_modules/' + name]['engines']['node']
+    if not re.fullmatch(r'>=\d+(?:\.\d+){0,2}', requirement):
+        raise ValueError('Unsupported locked Node requirement: ' + requirement)
+    parts = tuple(int(part) for part in requirement[2:].split('.'))
+    return requirement, parts + (0,) * (3 - len(parts))
+
+
+def _validate_node_version(project, dependency_id, version):
+    requirement, minimum = _minimum_node(project, dependency_id)
+    match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:[-+][\w.-]+)?', version)
+    if not match or tuple(map(int, match.groups())) < minimum:
+        raise ValueError(dependency_id + ' requires Node ' + requirement + '; found ' + version
+                         + '. Install a supported Node version before preparing native motion.')
+
+
+def _tool_version(executable, name):
+    result = subprocess.run([executable, '--version' if name == 'node' else '-version'],
+                            check=True, capture_output=True, text=True, timeout=15)
+    lines = result.stdout.strip().splitlines()
+    if not lines or not lines[0].strip():
+        raise ValueError('Cannot read native motion tool version: ' + name)
+    return lines[0].strip()
+
+
+def _node_preflight(project, dependency_id):
+    node = shutil.which('node')
+    if not node:
+        raise ValueError('Node is required for native motion preparation and rendering')
+    version = _tool_version(node, 'node')
+    _validate_node_version(project, dependency_id, version)
+    return node, version
+
+
+def validate_runtime_identity(project, identity, *, dependency_id):
+    """Validate a frozen generation identity without requiring its old tools."""
     name, version = PACKAGES[dependency_id]
+    if (not isinstance(identity, dict)
+            or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', 'lock_sha256', 'tools', 'browser'}
+            or identity['schema_version'] != 1 or identity['dependency_id'] != dependency_id
+            or identity['renderer_version'] != name + '-' + version
+            or identity['lock_sha256'] != hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest()
+            or not isinstance(identity['tools'], dict) or set(identity['tools']) != {'node', 'ffmpeg', 'ffprobe'}):
+        raise ValueError('Frozen native motion runtime identity differs from its locked dependency')
+    for item in [*identity['tools'].values(), identity['browser']]:
+        if (not isinstance(item, dict) or set(item) != {'path', 'version'}
+                or not isinstance(item['path'], str) or not Path(item['path']).is_absolute()
+                or not isinstance(item['version'], str) or not item['version'].strip()):
+            raise ValueError('Frozen native motion runtime requires actual tool and browser versions')
+    _validate_node_version(project, dependency_id, identity['tools']['node']['version'])
+    return identity
+
+
+def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
+    name, version = PACKAGES[dependency_id]
+    if mode not in {'render', 'reuse'}:
+        raise ValueError('Unknown native motion runtime check mode')
+    if mode == 'reuse':
+        ffprobe = shutil.which('ffprobe')
+        if not ffprobe:
+            raise ValueError('Frozen native motion media inspection requires FFprobe')
+        return {'status': 'ready', 'tools': {'ffprobe': ffprobe},
+                'tool_versions': {'ffprobe': _tool_version(ffprobe, 'ffprobe')}}
+    node, node_version = _node_preflight(project, dependency_id)
     root = runtime_root(project, dependency_id=dependency_id)
     if json.loads((root / 'package.json').read_bytes()) != package_for(dependency_id):
         raise ValueError('Motion runtime package identity changed')
     lock = json.loads((root / 'package-lock.json').read_bytes())
     if lock != json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes()):
         raise ValueError('Motion runtime lock differs from the bundled source')
-    for name in (('playwright', 'playwright-core') if dependency_id == 'barty-motion-graphics' else ('puppeteer', 'puppeteer-core')):
-        package = root / 'node_modules' / name / 'package.json'
+    for package_name in (('playwright', 'playwright-core') if dependency_id == 'barty-motion-graphics' else ('puppeteer', 'puppeteer-core')):
+        package = root / 'node_modules' / package_name / 'package.json'
         if (json.loads(package.read_bytes())['version'] != version
-                or lock['packages']['node_modules/' + name]['version'] != version):
-            raise ValueError('Motion runtime dependency identity changed: ' + name)
-    tools = {name: shutil.which(name) for name in ('node', 'ffmpeg', 'ffprobe')}
+                or lock['packages']['node_modules/' + package_name]['version'] != version):
+            raise ValueError('Motion runtime dependency identity changed: ' + package_name)
+    tools = {'node': node, **{tool: shutil.which(tool) for tool in ('ffmpeg', 'ffprobe')}}
     if not all(tools.values()):
         raise ValueError('Native motion rendering requires Node, FFmpeg and FFprobe')
+    versions = {'node': node_version, **{tool: _tool_version(tools[tool], tool) for tool in ('ffmpeg', 'ffprobe')}}
     # Launch the same browser entry used by the original renderer. No shim or
     # replacement browser driver is injected into third-party code.
     script = "const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();console.log(JSON.stringify({browser:chromium.executablePath(),version:b.version()}));await b.close()})().catch(e=>{console.error(e.message);process.exit(1)})"
@@ -59,13 +126,21 @@ def check(project, *, dependency_id='barty-motion-graphics'):
     result = subprocess.run([tools['node'], '-e', script], cwd=root, check=True,
                             capture_output=True, text=True, timeout=30, env={**os.environ, **environment})
     browser = json.loads(result.stdout)
+    identity = {'schema_version': 1, 'dependency_id': dependency_id,
+                'renderer_version': name + '-' + version,
+                'lock_sha256': hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest(),
+                'tools': {tool: {'path': executable, 'version': versions[tool]} for tool, executable in tools.items()},
+                'browser': {'path': browser['browser'], 'version': browser['version']}}
+    validate_runtime_identity(project, identity, dependency_id=dependency_id)
     return {'status': 'ready', 'runtime_root': str(root), 'node_modules': str(root / 'node_modules'),
             'renderer_version': PACKAGES[dependency_id][0] + '-' + version, 'browser': browser['browser'],
-            'browser_version': browser['version'], 'environment': environment, 'tools': tools}
+            'browser_version': browser['version'], 'environment': environment, 'tools': tools,
+            'tool_versions': versions, 'runtime_identity': identity}
 
 
 def prepare(project, *, dependency_id='barty-motion-graphics'):
     name, version = PACKAGES[dependency_id]
+    node, _ = _node_preflight(project, dependency_id)
     root = runtime_root(project, dependency_id=dependency_id)
     root.mkdir(parents=True, exist_ok=True)
     package = root / 'package.json'
@@ -85,9 +160,6 @@ def prepare(project, *, dependency_id='barty-motion-graphics'):
                        check=True, capture_output=True, text=True, timeout=600,
                        env={**os.environ, 'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD': '1', 'PUPPETEER_SKIP_DOWNLOAD': '1', 'npm_config_update_notifier': 'false'})
     if dependency_id == 'barty-motion-graphics':
-        node = shutil.which('node')
-        if not node:
-            raise ValueError('Node is required for native motion preparation')
         environment = dict(os.environ)
         if (root / 'browsers').is_dir():
             environment['PLAYWRIGHT_BROWSERS_PATH'] = str(root / 'browsers')

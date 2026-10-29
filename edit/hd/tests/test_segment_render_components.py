@@ -2401,5 +2401,32 @@ class SegmentRenderComponentTests(unittest.TestCase):
         self.assertEqual(streams, ["video"])
 
 
+class NativeProresProbeTests(unittest.TestCase):
+    def test_native_12_bit_alpha_passes_both_consumers_without_hiding_pixel_format(self):
+        import sys
+        from types import SimpleNamespace
+        from edit.hd.tools import material_adapter
+        stream={'codec_name':'prores','pix_fmt':'yuva444p12le','width':1080,'height':1920,
+                'avg_frame_rate':'24/1','r_frame_rate':'24/1','nb_frames':'55','duration':'2.291667'}
+        data={'streams':[stream],'format':{'format_name':'mov,mp4,m4a,3gp,3g2,mj2'}}
+        probe=material_adapter.create_artifact_probe(ffprobe_executable=sys.executable)
+        contract={'width':1080,'height':1920,'fps':24,'alpha':True}
+        with mock.patch.object(material_adapter,'_video_info',return_value=(data,stream)):
+            record=probe.probe(Path('native.mov'),'video',contract)
+        self.assertEqual((record['container'],record['codec'],record['pixel_format'],record['alpha']),
+                         ('mov','prores_ks','yuva444p12le',True))
+        broll_component_executor._validate_probe_record(record,'video',contract,'BROLL_RENDER_FAILED')
+        artifact=SimpleNamespace(media_probe=record,artifact_contract=contract,media_type='video',artifact_media_type='video')
+        segment_render._validate_probe_record(artifact)
+        for change in ({'alpha':False},{'codec':'h264'},{'pixel_format':'yuv444p12le'}):
+            rejected={**record,**change}
+            with self.subTest(change=change):
+                with self.assertRaises(broll_component_executor.BrollComponentExecutionError):
+                    broll_component_executor._validate_probe_record(rejected,'video',contract,'BROLL_RENDER_FAILED')
+                with self.assertRaises(segment_render.SegmentRenderError):
+                    segment_render._validate_probe_record(SimpleNamespace(media_probe=rejected,artifact_contract=contract,
+                        media_type='video',artifact_media_type='video'))
+
+
 if __name__ == "__main__":
     unittest.main()

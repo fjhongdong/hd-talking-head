@@ -98,10 +98,10 @@ def create_artifact_probe(*, ffprobe_executable):
             raise ValueError('Visual artifact must have a constant frame rate')
         formats = data['format']['format_name'].split(',')
         codec, pixel = stream['codec_name'], stream['pix_fmt']
-        alpha = pixel in {'yuva444p10le', 'argb'}
+        alpha = pixel in {'yuva444p10le', 'yuva444p12le', 'argb'}
         container = 'mov' if alpha and 'mov' in formats else ('mp4' if 'mp4' in formats else formats[0])
         # ffprobe reports the ProRes codec name, while our renderer contract names its encoder.
-        if codec == 'prores' and pixel == 'yuva444p10le':
+        if codec == 'prores' and pixel in {'yuva444p10le', 'yuva444p12le'}:
             codec = 'prores_ks'
         frames = int(stream['nb_frames'])
         if (stream.get('sample_aspect_ratio', '1:1') not in {'1:1', 'N/A'}

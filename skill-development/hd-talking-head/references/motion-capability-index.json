@@ -12386,7 +12386,7 @@
         "aroll_overlay"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Barty 连续形态透明贴片",
       "summary": "随口播词句设计单一形态连续变化，可做全画幅或透明面板。",
       "tags": {
@@ -12443,7 +12443,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Barty 连续形态口播配画面",
       "summary": "随口播词句设计单一形态连续变化，可做全画幅或透明面板。",
       "tags": {
@@ -12500,7 +12500,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Barty 清爽产品演示",
       "summary": "以镜头推拉和重建产品界面讲解功能，适合完整产品演示。",
       "tags": {
@@ -12551,7 +12551,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Barty 一镜到底流程故事",
       "summary": "一个主体穿过多个工作流站点，最后展示全貌并无缝循环。",
       "tags": {
@@ -12602,7 +12602,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Barty 高能产品短片",
       "summary": "节奏驱动的文字、图形与产品动作，以形状贯穿场景。",
       "tags": {
@@ -12653,7 +12653,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 暗色电影感",
       "summary": "按本期主题制作暗色电影感视觉方向。",
       "tags": {
@@ -12707,7 +12707,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 海报色块",
       "summary": "按本期主题制作海报色块视觉方向。",
       "tags": {
@@ -12760,7 +12760,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 明亮编辑风",
       "summary": "按本期主题制作明亮编辑风视觉方向。",
       "tags": {
@@ -12814,7 +12814,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 纸张印刷",
       "summary": "按本期主题制作纸张印刷视觉方向。",
       "tags": {
@@ -12868,7 +12868,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 复古模拟",
       "summary": "按本期主题制作复古模拟视觉方向。",
       "tags": {
@@ -12922,7 +12922,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 黑白粗野主义",
       "summary": "按本期主题制作黑白粗野主义视觉方向。",
       "tags": {
@@ -12975,7 +12975,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 明快粉彩",
       "summary": "按本期主题制作明快粉彩视觉方向。",
       "tags": {
@@ -13029,7 +13029,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 暗色奢华",
       "summary": "按本期主题制作暗色奢华视觉方向。",
       "tags": {
@@ -13083,7 +13083,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 照片平面波普",
       "summary": "按本期主题制作照片平面波普视觉方向。",
       "tags": {
@@ -13137,7 +13137,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 颗粒渐变",
       "summary": "按本期主题制作颗粒渐变视觉方向。",
       "tags": {
@@ -13191,7 +13191,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 卡通拼贴",
       "summary": "原生讲解风格工作流，适合轻松科普、儿童教育。",
       "tags": {
@@ -13246,7 +13246,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 视觉新闻",
       "summary": "原生讲解风格工作流，适合新闻、社会议题。",
       "tags": {
@@ -13300,7 +13300,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 白色产品图录",
       "summary": "原生讲解风格工作流，适合产品、品牌、公司介绍。",
       "tags": {
@@ -13356,7 +13356,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 复古素描",
       "summary": "原生讲解风格工作流，适合历史、人物、发明。",
       "tags": {
@@ -13412,7 +13412,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 连续动作矢量",
       "summary": "原生讲解风格工作流，适合速度、路线、交通、过程。",
       "tags": {
@@ -13468,7 +13468,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 卡通舞台",
       "summary": "原生讲解风格工作流，适合角色教育、过程与影响。",
       "tags": {
@@ -13523,7 +13523,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 单镜头连续空间",
       "summary": "原生开场叙事概念：单镜头连续空间。",
       "tags": {
@@ -13576,7 +13576,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 纯动态文字",
       "summary": "原生开场叙事概念：纯动态文字。",
       "tags": {
@@ -13629,7 +13629,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 问题消失",
       "summary": "原生开场叙事概念：问题消失。",
       "tags": {
@@ -13681,7 +13681,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 前后对照",
       "summary": "原生开场叙事概念：前后对照。",
       "tags": {
@@ -13734,7 +13734,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 界面内旅程",
       "summary": "原生开场叙事概念：界面内旅程。",
       "tags": {
@@ -13787,7 +13787,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 产品微距",
       "summary": "原生开场叙事概念：产品微距。",
       "tags": {
@@ -13840,7 +13840,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 物件隐喻",
       "summary": "原生开场叙事概念：物件隐喻。",
       "tags": {
@@ -13892,7 +13892,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 数字叙事",
       "summary": "原生开场叙事概念：数字叙事。",
       "tags": {
@@ -13945,7 +13945,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 单功能演示",
       "summary": "原生开场叙事概念：单功能演示。",
       "tags": {
@@ -13998,7 +13998,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 世界内提问回答",
       "summary": "原生开场叙事概念：世界内提问回答。",
       "tags": {
@@ -14051,7 +14051,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 节奏拼贴",
       "summary": "原生开场叙事概念：节奏拼贴。",
       "tags": {
@@ -14104,7 +14104,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 标志构成舞台",
       "summary": "原生开场叙事概念：标志构成舞台。",
       "tags": {
@@ -14157,7 +14157,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 物件接力",
       "summary": "原生开场叙事概念：物件接力。",
       "tags": {
@@ -14210,7 +14210,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 品牌体系展示",
       "summary": "原生开场叙事概念：品牌体系展示。",
       "tags": {
@@ -14263,7 +14263,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 主张过程结果",
       "summary": "原生开场叙事概念：主张过程结果。",
       "tags": {
@@ -14316,7 +14316,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 动态界面生态",
       "summary": "原生开场叙事概念：动态界面生态。",
       "tags": {
@@ -14369,7 +14369,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 平面波普人物",
       "summary": "原生开场叙事概念：平面波普人物。",
       "tags": {
@@ -14422,7 +14422,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 渐变形状穿越",
       "summary": "原生开场叙事概念：渐变形状穿越。",
       "tags": {
@@ -14475,7 +14475,7 @@
         "broll"
       ],
       "capability_type": "creative_skill",
-      "reviewed_version": "1.0.0",
+      "reviewed_version": "2.0.0",
       "title": "Bang 产品导览与主张",
       "summary": "原生开场叙事概念：产品导览与主张。",
       "tags": {

@@ -20,7 +20,7 @@ description: 完整口播视频制作 Skill。用户提供原始视频和文案�
 
 基础准备只处理全流程必需环境。可选模板在选型后由阶段入口按需准备，不因未选模板缺失而阻塞启动。直接素材同样填写语义标签，模板栏写“素材直用（无动效模板）”。
 
-Barty 与 Bang Motion 已按独立渠道接入；分别读取[Barty 原生合同](skill-development/hd-talking-head/references/barty-motion-integration.md)和[Bang 原生合同](skill-development/hd-talking-head/references/bang-motion-integration.md)。二者完整保留原生创作流程，父级只传任务、素材、时钟、用途及授权，接收并审核真实输出；共用浏览器不合并渠道，组合参数不虚增模板。
+Barty 与 Bang Motion 已按独立渠道接入；分别读取[Barty 原生合同](skill-development/hd-talking-head/references/barty-motion-integration.md)和[Bang 原生合同](skill-development/hd-talking-head/references/bang-motion-integration.md)。二者完整保留原生创作流程，按[统一原生调用合同](skill-development/hd-talking-head/references/native-motion-call-contract.md)从同一批准清单交接任务，在原生制作后绑定实际文字与阅读窗，审核冻结后消费真实输出；共用浏览器不合并渠道，组合参数不虚增模板。
 
 TalkCraft 完整原生调用见[专属合同](skill-development/hd-talking-head/references/talkcraft-native-skill.md)，Paper 完整创作与 Route B 见[专属合同](skill-development/hd-talking-head/references/paper-native-route-b.md)。配方按实际用途参与匹配，内部 renderer 和子路线不重复算渠道。
 

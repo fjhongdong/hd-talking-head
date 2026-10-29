@@ -83,6 +83,10 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
                 or not set(profile["uses"]) <= {"aroll_overlay", "broll", "design"}
                 or ("aroll_overlay" in profile["uses"] and profile["capability_type"] != "creative_skill")):
             raise ValueError(f"Full-scene authoring scope is invalid for this use: {cid}")
+        if scope['mode'] == 'full_scene' and 'aroll_overlay' in profile['uses']:
+            from .overlay_selection import _ROUTE_BY_TEMPLATE
+            if cid not in {'overlay:' + route for route in _ROUTE_BY_TEMPLATE.values()}:
+                raise ValueError(f'Full-scene authoring scope has no real alpha overlay entry: {cid}')
         reviewed = profile["reviewed_sources"]
         if not isinstance(reviewed, dict) or set(reviewed) != set(profile["evidence"]):
             raise ValueError(f"Motion capability reviewed sources are incomplete: {cid}")
@@ -404,6 +408,8 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
             sys.path.insert(0, str(scripts))
             module = importlib.import_module('motion_native_skill_adapter')
             module.validate_brief(path.read_bytes())
+            if brief['task_source'] != module.task_source({'segments': [segment]}, treatment, segment['segment_id'], component):
+                raise ValueError('Native motion task differs from its parent semantic row')
             record_path = brief['result_record_path']
             if (root / record_path).is_file():
                 data = (root / record_path).read_bytes()
@@ -635,8 +641,8 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
         if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
             if motion_planning:
                 planning = {ref.get('pointer') for ref in refs if isinstance(ref, dict) and ref.get('path') == relative}
-                if not {'/transcript', '/semantic_goal', '/template_id'}.issubset(planning):
-                    raise ValueError('Native motion planning must cite transcript, semantic goal and original template')
+                if not {'/transcript', '/task_source/quote', '/task_source/semantic', '/template_id', '/native_options'}.issubset(planning):
+                    raise ValueError('Native motion planning must cite parent quote, semantics, transcript and selected native options')
             else:
                 result = brief.get('native_result')
                 if not isinstance(result, dict) or result.get('status') != 'completed':

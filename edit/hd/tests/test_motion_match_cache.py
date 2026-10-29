@@ -175,6 +175,18 @@ class CacheTests(unittest.TestCase):
             with self.subTest(case=case), self.assertRaises(ValueError):
                 cache.validate_matches(ROOT, self.director, altered)
 
+    def test_trimmed_cache_is_rejected_even_with_a_recomputed_digest(self):
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        entry = first['motion_matches']['r1']
+        self.assertGreater(len(entry['matches']), 1)
+        entry['matches'] = entry['matches'][:1]
+        entry['matches_sha256'] = motion.contract_artifacts.sha256_json(entry['matches'])
+        with patch.object(motion, 'search_capabilities', side_effect=AssertionError('must not search again')):
+            with self.assertRaisesRegex(ValueError, 'complete recalled candidate set'):
+                cache.validate_matches(ROOT, self.director, first)
+            with self.assertRaisesRegex(ValueError, 'complete recalled candidate set'):
+                cache.match_once(ROOT, self.director, first)
+
     def test_every_matched_candidate_requires_a_concrete_review(self):
         first = cache.match_once(ROOT, self.director, self.treatment)
         context = cache.validate_matches(ROOT, self.director, first)
@@ -228,22 +240,27 @@ class CacheTests(unittest.TestCase):
                 cache.validate_reviews(ROOT, self.director, first)
 
     def test_single_source_requires_an_explicit_completed_review(self):
+        from edit.hd.tools.broll_skill_selection import source_channel
         self.treatment = {'semantic_lists': {'overlay': [], 'broll': []}, 'motion_queries': []}
         self.director = {'segments': []}
         self.add_item('overlay', '想法经过AI继续推进', ['三步顺序', '连续协作'])
-        first = cache.match_once(ROOT, self.director, self.treatment)
-        item = next(iter(cache.validate_matches(ROOT, self.director, first).values()))
-        beat = {'segment_id': 's0', 'component_id': 'c', 'semantic_row_id': 'r0',
-            'candidates': [{'candidate_id': m['candidate']['candidate_id'], 'fit': 'equivalent',
-                'reason': '保留原生三步连线能力。', 'design_plan': copy.deepcopy(DESIGN)} for m in item['matches']]}
-        first['skill_selection'] = {'beats': [], 'overlay_beats': [beat]}
-        with self.assertRaisesRegex(ValueError, 'single_source_review'):
+        # This scenario intentionally has one channel; new authoring channels
+        # in the production catalog must not change that fixture assumption.
+        catalog = [row for row in motion.load_catalog(ROOT) if source_channel(row['skill_id']) == 'hyperframes']
+        with patch.object(motion, 'load_catalog', return_value=catalog):
+            first = cache.match_once(ROOT, self.director, self.treatment)
+            item = next(iter(cache.validate_matches(ROOT, self.director, first).values()))
+            beat = {'segment_id': 's0', 'component_id': 'c', 'semantic_row_id': 'r0',
+                'candidates': [{'candidate_id': m['candidate']['candidate_id'], 'fit': 'equivalent',
+                    'reason': '保留原生三步连线能力。', 'design_plan': copy.deepcopy(DESIGN)} for m in item['matches']]}
+            first['skill_selection'] = {'beats': [], 'overlay_beats': [beat]}
+            with self.assertRaisesRegex(ValueError, 'single_source_review'):
+                cache.validate_reviews(ROOT, self.director, first)
+            beat['single_source_review'] = {'decision': 'revise', 'reason': '还需核对候选排除条件。'}
+            with self.assertRaisesRegex(ValueError, 'single_source_review'):
+                cache.validate_reviews(ROOT, self.director, first)
+            beat['single_source_review']['decision'] = 'keep'
             cache.validate_reviews(ROOT, self.director, first)
-        beat['single_source_review'] = {'decision': 'revise', 'reason': '还需核对候选排除条件。'}
-        with self.assertRaisesRegex(ValueError, 'single_source_review'):
-            cache.validate_reviews(ROOT, self.director, first)
-        beat['single_source_review']['decision'] = 'keep'
-        cache.validate_reviews(ROOT, self.director, first)
 
     def test_selected_openfilm_design_reaches_existing_brief(self):
         with tempfile.TemporaryDirectory() as directory:

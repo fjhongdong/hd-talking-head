@@ -30,7 +30,7 @@ from adapter_kit import sha256_file as sha, validate_source_binding
 from edit.hd.tools import contract_artifacts as artifacts
 
 ENTRY = 'scripts/motion_native_skill_adapter.py'
-VERSION = '1.0.0'
+VERSION = '2.0.0'
 SOURCES = {
     'barty-motion-graphics': ('barty-motion', '3d83d987d658601d8a1269eb691622bdcd427335',
                               '159fdeb7a278c355e2df10a356de32d48e582efa69122c73b3552147bc20e9ef'),
@@ -112,6 +112,13 @@ def _template(brief, project=PROJECT):
         raise ValueError('Unknown original native motion template')
     if dependency == 'barty-motion-graphics' and brief['template_id'] not in BARTY_TEMPLATES:
         raise ValueError('Unknown original Barty workflow')
+    groups = {row['candidate_id'].split('/')[-1]: row.get('native_template_group') for row in rows}
+    if any(option not in groups for option in brief['native_options']):
+        raise ValueError('Unknown original native motion option')
+    narrative = [identity for identity in [brief['template_id'], *brief['native_options']]
+                 if groups[identity] in {'opener', 'explainer'}]
+    if narrative and brief['template_id'] != narrative[0]:
+        raise ValueError('The selected native narrative workflow must remain the primary template')
     return source_root(project, dependency_id=dependency)
 
 
@@ -119,14 +126,25 @@ def validate_brief(payload, *, dependency_id=None):
     brief = json.loads(payload)
     required = {'schema_version', 'dependency_id', 'job_id', 'source_binding', 'composition', 'alpha',
                 'canvas_transport', 'template_request', 'template_id', 'semantic_goal', 'transcript', 'word_anchors',
-                'speech', 'materials', 'authorization', 'project_directory', 'result_record_path'}
-    if (not isinstance(brief, dict) or set(brief) != required or brief['schema_version'] != 1
+                'speech', 'materials', 'authorization', 'project_directory', 'result_record_path',
+                'task_source', 'native_options'}
+    if (not isinstance(brief, dict) or set(brief) != required or brief['schema_version'] != 2
             or brief['dependency_id'] not in SOURCES
             or (dependency_id is not None and brief['dependency_id'] != dependency_id)
             or any(not isinstance(brief[k], str) or not brief[k].strip()
                    for k in ('job_id', 'template_id', 'semantic_goal', 'transcript'))
             or not re.fullmatch('[a-z][a-z0-9-]{0,63}', brief['template_id'])):
         raise ValueError('Invalid native motion task brief')
+    task = brief['task_source']
+    if (not isinstance(task, dict) or set(task) != {'semantic_row_id', 'quote', 'semantic', 'required_change', 'component_brief'}
+            or any(not isinstance(value, str) or not value.strip() for value in task.values())
+            or brief['semantic_goal'] != task['semantic']):
+        raise ValueError('Native motion requires its approved semantic task source')
+    options = brief['native_options']
+    if (not isinstance(options, list) or any(not isinstance(v, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', v) for v in options)
+            or len(options) != len(set(options)) or brief['template_id'] in options
+            or (brief['dependency_id'] != 'bang-motion' and options)):
+        raise ValueError('Invalid original native motion options')
     if brief['canvas_transport'] != ('quarter_turn_cw' if brief['dependency_id'] == 'bang-motion' else 'identity'):
         raise ValueError('Invalid native canvas transport')
     validate_source_binding(brief['source_binding'], 'Invalid native motion source clock')
@@ -164,6 +182,30 @@ def validate_brief(payload, *, dependency_id=None):
     return brief
 
 
+def task_source(director, treatment, segment_id, component_id):
+    """Derive the task from the parent semantic row, never from a self-certified brief."""
+    key = {'segment_id': segment_id, 'component_id': component_id}
+    rows = [row for group in ('overlay', 'broll') for row in treatment.get('semantic_lists', {}).get(group, [])
+            if key in row.get('components', [])]
+    beats = [beat for group in ('beats', 'overlay_beats')
+             for beat in treatment.get('skill_selection', {}).get(group, [])
+             if (beat.get('segment_id'), beat.get('component_id')) == (segment_id, component_id)]
+    components = [component for segment in director['segments'] if segment['segment_id'] == segment_id
+                  for component in segment['visual_strategy']['components'] if component['component_id'] == component_id]
+    if len(rows) != 1 or len(beats) != 1 or len(components) != 1:
+        raise ValueError('Native motion requires one actual parent semantic row and beat')
+    row, beat, component = rows[0], beats[0], components[0]
+    if beat.get('semantic_row_id') != row['row_id'] or beat.get('component_brief') != component['brief']:
+        raise ValueError('Native motion task differs from the selected parent component')
+    return {'semantic_row_id': row['row_id'], 'quote': row['quote'], 'semantic': row['semantic'],
+            'required_change': beat['required_change'], 'component_brief': component['brief']}
+
+
+def approved_task(brief):
+    """Execution locations may change before result approval; the creative request may not."""
+    return {key: value for key, value in brief.items() if key not in {'project_directory', 'result_record_path'}}
+
+
 def _inputs(root, brief):
     for record in [brief['speech'], *brief['materials']]:
         exact(root, record)
@@ -187,6 +229,12 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
                 raise ValueError('Selected native motion requires its existing task brief')
             payload = path(job.job_dir, scene['brief_path']).read_bytes()
             brief = validate_brief(payload, dependency_id=dependency)
+            expected_task = task_source(director, treatment, segment['segment_id'], cid)
+            beats = [beat for group in ('beats', 'overlay_beats')
+                     for beat in treatment['skill_selection'].get(group, [])
+                     if (beat['segment_id'], beat['component_id']) == (segment['segment_id'], cid)]
+            if brief['task_source'] != expected_task or brief['transcript'] != beats[0]['transcript']:
+                raise ValueError('Native motion task must derive from the approved parent semantic row')
             approved = sha(_approved_artifact(job, 'edit_structure', '06-edit-structure/edited-aroll.mp4'))
             if (hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256') or brief['job_id'] != job.job_id
                     or brief['source_binding'] != {'aroll_sha256': approved, 'segment_id': segment['segment_id'],
@@ -197,13 +245,14 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
             _inputs(job.job_dir, brief)
 
 
-def native_task(job, recipe, component, brief_path):
+def native_task(job, recipe, component, brief_path, *, approved_task_source):
     brief_path = Path(brief_path)
     brief = validate_brief(brief_path.read_bytes())
     root = _template(brief)
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
-    if brief['job_id'] != job.job_id or sha(brief_path) != component['brief_sha256']:
+    if (brief['job_id'] != job.job_id or sha(brief_path) != component['brief_sha256']
+            or brief['task_source'] != approved_task_source):
         raise ValueError('Native motion task differs from confirmed binding')
     _inputs(job.job_dir, brief)
     original_skill = root / 'skills' / brief['template_id'] / 'SKILL.md'
@@ -215,6 +264,7 @@ def native_task(job, recipe, component, brief_path):
                     if row['candidate_id'] == brief['dependency_id'] + ':' + brief['dependency_id'] + '/' + brief['template_id'])
     return {'action': 'execute_native_skill', 'dependency_id': brief['dependency_id'],
             'native_template': selected,
+            'native_options': brief['native_options'], 'task_source': brief['task_source'],
             'template_id': brief['dependency_id'] + '/' + brief['template_id'],
             'skill_path': str(original_skill), 'job_dir': str(job.job_dir), 'brief_path': str(brief_path),
             'brief_sha256': component['brief_sha256'], 'project_directory': str(path(job.job_dir, brief['project_directory'])),
@@ -227,7 +277,7 @@ def native_task(job, recipe, component, brief_path):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, r['job_path'])) for r in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': 'Read and execute the complete original Skill. It owns creative planning, layout, scene code, native build and QA. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. This is pending work, not a completed result.'}
+            'next': 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
 
 
 def probe(video, *, alpha=False, native_range=False):
@@ -256,17 +306,19 @@ def project_files(root, directory):
     # Output files are recorded separately. Native authored HTML/fragments and
     # their local assets remain bound; installed modules never belong to Job.
     return [descriptor(root, p) for p in sorted(directory.rglob('*')) if p.is_file()
-            and not set(p.relative_to(directory).parts) & {'node_modules', '.git', 'out'}]
+            and p.relative_to(directory).parts[0] != 'out'
+            and not set(p.relative_to(directory).parts) & {'node_modules', '.git'}]
 
 
-def _render_command(root, brief, argv, runtime):
+def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
     native = _template(brief)
     directory = path(root, brief['project_directory'])
     bang = brief['dependency_id'] == 'bang-motion'
     if (not isinstance(argv, list) or len(argv) < (4 if bang else 5) or argv[0] != runtime['tools']['node']
             or (not bang and argv[4] != '24')):
         raise ValueError('Capture requires a direct original native renderer call at 24fps')
-    script = Path(argv[1]).resolve(strict=True)
+    script = Path(argv[1]); script = script if script.is_absolute() else directory / script
+    script = script.resolve(strict=True)
     html = Path(argv[2]); html = html if html.is_absolute() else directory / html
     html = html.resolve(strict=True); html.relative_to(directory.resolve())
     if 'out' in html.relative_to(directory.resolve()).parts:
@@ -279,7 +331,7 @@ def _render_command(root, brief, argv, runtime):
     if bang:
         if (len(argv) != 4 or script != directory.resolve() / 'export-frames.mjs'
                 or script.read_bytes() != (native / 'scripts/export-frames.mjs').read_bytes()
-                or (directory / 'node_modules').resolve(strict=True) != Path(runtime['node_modules']).resolve(strict=True)):
+                or (check_runtime_links and (directory / 'node_modules').resolve(strict=True) != Path(runtime['node_modules']).resolve(strict=True))):
             raise ValueError('Bang must execute its verbatim original exporter with the prepared native runtime')
     elif brief['template_id'] == 'motion-broll':
         if script != native / 'skills/motion-broll/engine/render.js' or len(argv) != 5:
@@ -289,7 +341,7 @@ def _render_command(root, brief, argv, runtime):
                 or script.read_bytes() != embedded_renderer(native / 'skills' / brief['template_id'] / 'SKILL.md')
                 or not 5 <= len(argv) <= 7 or any(not v.isdigit() or int(v) < 1 for v in argv[5:])):
             raise ValueError('Explainer must execute its verbatim original embedded renderer')
-        if (directory / 'node_modules').resolve(strict=True) != Path(runtime['node_modules']).resolve(strict=True):
+        if check_runtime_links and (directory / 'node_modules').resolve(strict=True) != Path(runtime['node_modules']).resolve(strict=True):
             raise ValueError('Explainer must use the separately prepared native runtime')
         # The original explainer always creates this silent file, even when
         # optional audio is authored. The parent consumes that native output.
@@ -367,7 +419,9 @@ def capture_render(job_dir, brief_path, argv):
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
     directory, script, output = _render_command(root, brief, argv, runtime)
-    call_path = path(root, str(Path(brief['result_record_path']).parent / 'render-call.json'))
+    argv = [argv[0], str(script), *argv[2:]]
+    result_path = Path(brief['result_record_path'])
+    call_path = path(root, result_path.with_name(result_path.stem + '.render-call.json').as_posix())
     if output.exists() or call_path.exists() or (directory / argv[3]).exists():
         raise ValueError('Preserve existing native output and use a new revision directory')
     before = project_files(root, directory)
@@ -383,6 +437,8 @@ def capture_render(job_dir, brief_path, argv):
               'request_sha256': sha(brief_path), 'upstream_commit': SOURCES[brief['dependency_id']][1],
               'native_script_sha256': sha(script), 'argv': argv,
               'project_files': before, 'renderer_version': runtime['renderer_version'],
+              'runtime_identity': runtime['runtime_identity'],
+              'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version')},
               'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
     if transport is not None:
         record['canvas_transport'] = transport
@@ -407,9 +463,14 @@ def capture_render(job_dir, brief_path, argv):
 
 
 def _verify_call(root, brief, payload, call):
-    from motion_native_runtime import check
-    runtime = check(PROJECT, dependency_id=brief['dependency_id'])
-    _, script, output = _render_command(root, brief, call['argv'], runtime)
+    from motion_native_runtime import check, validate_runtime_identity
+    check(PROJECT, dependency_id=brief['dependency_id'], mode='reuse')
+    validate_runtime_identity(PROJECT, call['runtime_identity'], dependency_id=brief['dependency_id'])
+    runtime = call['execution_runtime']
+    if (runtime['renderer_version'] != call['runtime_identity']['renderer_version']
+            or runtime['tools'] != {name: record['path'] for name, record in call['runtime_identity']['tools'].items()}):
+        raise ValueError('Native execution runtime differs from its recorded identity')
+    _, script, output = _render_command(root, brief, call['argv'], runtime, check_runtime_links=False)
     if brief['dependency_id'] == 'barty-motion-graphics' and brief['template_id'] != 'motion-broll':
         original = output
         output = original.with_name(original.stem + '_delivery.mp4')
@@ -496,9 +557,9 @@ def create_adapter(project_root, python_executable, brief_loader, *, dependency_
     if requested != project:
         raise ValueError('Native motion project root must be canonical and nonsymlinked')
     source_root(project, dependency_id=dependency_id)
-    from motion_native_runtime import check
-    runtime = check(project, dependency_id=dependency_id)
-    renderer_version = renderer_version or runtime['renderer_version']
+    from motion_native_runtime import check, PACKAGES
+    check(project, dependency_id=dependency_id, mode='reuse')
+    renderer_version = renderer_version or '-'.join(PACKAGES[dependency_id])
     entry_sha = sha(SKILL / ENTRY); launcher = Path(python_executable).resolve(strict=True)
 
     def guarded_loader(job, recipe, component):

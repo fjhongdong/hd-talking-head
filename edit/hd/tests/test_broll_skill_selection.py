@@ -666,6 +666,44 @@ class BrollSkillSelectionTest(unittest.TestCase):
                     self.assertEqual(selection.assign_skills(ROOT, source)["assignments"][1]
                                      ["candidate_id"], "b")
 
+    def test_talkcraft_aliases_do_not_reward_repeating_the_same_native_card(self):
+        cards = ('info-term-card', 'number-counter', 'numbered-step-stack', 'source-converge')
+        for card in cards:
+            old = {'skill_id': 'talkcraft-native-adaptation', 'template_id': 'talkcraft-native-reviewed-scene',
+                   'source_route': 'template/cards/' + card + '.tsx'}
+            native = {'skill_id': 'video-talkcraft', 'template_id': 'video-talkcraft/' + card,
+                      'source_route': card}
+            before = copy.deepcopy(old)
+            self.assertEqual(selection._template_identity(old), selection._template_identity(native))
+            self.assertEqual(selection._template_identity({k: v for k, v in native.items() if k != 'source_route'}),
+                             selection._template_identity(native))
+            self.assertEqual(old, before)
+
+        def candidate(cid, skill, template, route):
+            return {'candidate_id': cid, 'skill_id': skill, 'template_id': template, 'source_route': route,
+                    'role': 'native', 'status': 'supported', 'entrypoint': 'native-entry',
+                    'producer_version': '1', 'limitations': []}
+        pool = [candidate('legacy-info', 'talkcraft-native-adaptation', 'talkcraft-native-reviewed-scene',
+                          'template/cards/info-term-card.tsx'),
+                candidate('native-info', 'video-talkcraft', 'video-talkcraft/info-term-card', 'info-term-card'),
+                candidate('native-number', 'video-talkcraft', 'video-talkcraft/number-counter', 'number-counter')]
+        def beat(index, ids):
+            return {'segment_id': 's' + str(index), 'component_id': 'scene', 'start': index * 3,
+                    'end': index * 3 + 2, 'transcript': '说明当前项目', 'semantic_goal': '说明当前项目',
+                    'required_change': '展示', 'skill_reviews': {row['skill_id']: {
+                        'fit': 'equivalent', 'reason': '本夹具已审阅的原生入口'} for row in pool},
+                    'candidates': [{'candidate_id': cid, 'fit': 'equivalent', 'reason': '语义可用',
+                                    'visual_pattern': 'same'} for cid in ids]}
+        source = {'schema_version': 1, 'history_note': '仅检查真实模板身份的离线夹具',
+                  'beats': [beat(0, ['legacy-info']), beat(1, ['native-info', 'native-number'])]}
+        from edit.hd.tools import motion_capabilities
+        with patch.object(selection, 'discover_candidates', return_value=pool), \
+             patch.object(motion_capabilities, 'overlay_candidates', return_value=[]):
+            assigned = selection.assign_skills(ROOT, source)['assignments']
+        self.assertEqual([row['candidate_id'] for row in assigned], ['legacy-info', 'native-number'])
+        self.assertEqual(assigned[0]['source_route'], 'template/cards/info-term-card.tsx')
+        self.assertEqual(assigned[0]['template_id'], 'talkcraft-native-reviewed-scene')
+
     def test_assignment_channel_and_template_diversity_offline(self):
         def candidate(cid, skill, template):
             return {"candidate_id": cid, "skill_id": skill, "template_id": template,

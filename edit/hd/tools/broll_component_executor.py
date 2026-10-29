@@ -1237,7 +1237,7 @@ def _validate_probe_record(
             _raise(code)
         return record
     expected = (
-        {("mov", "prores_ks", "yuva444p10le"), ("mov", "qtrle", "argb")}
+        {("mov", "prores_ks", "yuva444p10le"), ("mov", "prores_ks", "yuva444p12le"), ("mov", "qtrle", "argb")}
         if contract["alpha"]
         else {("mp4", "h264", "yuv420p")}
     )

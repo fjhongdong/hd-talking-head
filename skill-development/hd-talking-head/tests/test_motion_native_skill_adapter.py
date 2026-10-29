@@ -10,12 +10,15 @@ import motion_native_skill_adapter as native
 
 
 def brief(dependency='barty-motion-graphics', template='motion-broll', alpha=False):
-    return {'schema_version':1,'dependency_id':dependency,'job_id':'native-test',
+    return {'schema_version':2,'dependency_id':dependency,'job_id':'native-test',
             'source_binding':{'aroll_sha256':'a'*64,'segment_id':'seg-001','start':0,'end':2},
             'composition':{'width':1080,'height':1920,'fps':24,'frames':48},'alpha':alpha,
             'canvas_transport':'quarter_turn_cw' if dependency=='bang-motion' else 'identity',
             'template_request':{'semantic_family':'comparison','information_units':2,'numeric_values':[],'numeric_scale':'not_applicable'},
             'template_id':template,'semantic_goal':'比较两种结果','transcript':'先看输入，再看输出。',
+            'native_options':[],
+            'task_source':{'semantic_row_id':'semantic-1','quote':'先看输入，再看输出。','semantic':'比较两种结果',
+                           'required_change':'对照输入与输出','component_brief':'表达输入与输出之间的变化'},
             'word_anchors':[{'text':'先看输入，再看输出。','start':0,'end':2}],
             'speech':{'job_path':'voice.wav','sha256':hashlib.sha256(b'voice').hexdigest(),'byte_count':5},
             'materials':[],'authorization':{'paid_generation':False},
@@ -49,11 +52,17 @@ class NativeMotionTests(unittest.TestCase):
             root=Path(directory);p=root/'brief.json';p.write_text(json.dumps(brief()))
             job=SimpleNamespace(job_dir=root,job_id='native-test')
             with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
-                action=native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p)
+                action=native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p,
+                    approved_task_source=brief()['task_source'])
             self.assertEqual(action['action'],'execute_native_skill')
             self.assertEqual(action['requirements']['transcript'],brief()['transcript'])
             self.assertFalse(set(action['requirements']) & {'beats','layers','design_plan','keyframes','layout'})
             self.assertTrue(action['skill_path'].endswith('/skills/motion-broll/SKILL.md'))
+            self.assertEqual(action['task_source'],brief()['task_source'])
+            with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
+                with self.assertRaisesRegex(ValueError,'confirmed binding'):
+                    native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p,
+                        approved_task_source={**brief()['task_source'],'semantic':'另一件事'})
 
     def test_capture_requires_exact_original_embedded_renderer(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -62,6 +71,31 @@ class NativeMotionTests(unittest.TestCase):
             runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(root/'modules')}
             with self.assertRaisesRegex(ValueError,'verbatim original'):
                 native._render_command(root,b,['/usr/bin/node',str(project/'render.mjs'),'page.html','out/native.mp4','24'],runtime)
+
+    def test_pending_alpha_overlay_uses_standard_parent_subtitles_without_avatar(self):
+        from types import SimpleNamespace
+        import run_stage
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();b=brief(alpha=True)
+            request=root/'brief.json';request.write_text(json.dumps(b));cid='overlay'
+            composition={'family':'aroll_with_overlay','presenter_mode':'full_frame'}
+            director={'segments':[{'segment_id':'seg-001',
+                'visual_strategy':{'mode':'none','composition':composition,
+                    'components':[{'component_id':cid,'brief':b['task_source']['component_brief']}]},
+                'bindings':{cid:{'dependency_id':b['dependency_id'],'brief_sha256':native.sha(request)}}}]}
+            treatment={'scenes':[{'segment_id':'seg-001','component_id':cid,'brief_path':'brief.json'}],
+                'semantic_lists':{'overlay':[{'row_id':'semantic-1','quote':b['task_source']['quote'],
+                    'semantic':b['task_source']['semantic'],'components':[{'segment_id':'seg-001','component_id':cid}]}]},
+                'skill_selection':{'overlay_beats':[{'segment_id':'seg-001','component_id':cid,'semantic_row_id':'semantic-1',
+                    'required_change':b['task_source']['required_change'],'component_brief':b['task_source']['component_brief']}]}}
+            with mock.patch.object(run_stage,'_module',return_value=native),mock.patch.object(native,'_inputs'), \
+                 mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
+                actions=run_stage.pending_native_actions(SimpleNamespace(job_dir=root,job_id=b['job_id']),director,treatment)
+            layout=actions[0]['requirements']['parent_subtitle_layout']
+            self.assertEqual(layout['placement'],'standard')
+            self.assertIsNone(layout['safe_zones']['face'])
+            self.assertEqual(layout['safe_zones']['subtitle'],{'x':80,'y':1430,'width':920,'height':230})
+            self.assertNotIn('avatar',composition)
 
     def test_native_video_inputs_are_frozen_separately_from_render_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -72,6 +106,58 @@ class NativeMotionTests(unittest.TestCase):
             self.assertEqual([r['job_path'] for r in files],['native-projects/scene/assets/source.mp4'])
             source.write_bytes(b'changed input footage')
             with self.assertRaisesRegex(ValueError,'changed'):native.exact(root,files[0])
+
+    def test_nested_asset_out_is_an_input_not_the_root_output_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();project=root/'native-projects/scene'
+            (project/'assets/out').mkdir(parents=True);asset=project/'assets/out/picture.svg';asset.write_text('<svg/>')
+            (project/'out').mkdir();(project/'out/render.mp4').write_bytes(b'output')
+            files=native.project_files(root,project)
+            self.assertEqual([r['job_path'] for r in files],['native-projects/scene/assets/out/picture.svg'])
+            asset.write_text('<svg>changed</svg>')
+            with self.assertRaisesRegex(ValueError,'changed'):native.exact(root,files[0])
+
+    def test_relative_original_renderer_uses_project_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();b=brief(template='explainer-default');project=root/b['project_directory'];project.mkdir(parents=True)
+            (project/'page.html').write_text('<html/>');modules=root/'modules';modules.mkdir()
+            (project/'node_modules').symlink_to(modules,target_is_directory=True)
+            (project/'render.mjs').write_bytes(native.embedded_renderer(native.source_root(dependency_id=b['dependency_id'])/'skills/explainer-default/SKILL.md'))
+            runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(modules)}
+            _,script,_=native._render_command(root,b,['/usr/bin/node','render.mjs','page.html','out/native.mp4','24'],runtime)
+            self.assertEqual(script,project/'render.mjs')
+
+    def test_native_options_keep_the_narrative_primary_and_do_not_change_task_identity(self):
+        b=brief('bang-motion','explainer-continuous-action');b['native_options']=['style-paper-print']
+        native.validate_brief(json.dumps(b));native._template(b)
+        revision={**b,'project_directory':'native-projects/revision','result_record_path':'native-inputs/revision.json'}
+        self.assertEqual(native.approved_task(b),native.approved_task(revision))
+        combined=brief('bang-motion','opener-object-relay');combined['native_options']=['opener-continuous-shot','style-paper-print']
+        native.validate_brief(json.dumps(combined));native._template(combined)
+        b['template_id']='style-paper-print';b['native_options']=['explainer-continuous-action']
+        with self.assertRaisesRegex(ValueError,'primary'):native._template(b)
+        b['native_options']=['style-paper-print']
+        with self.assertRaisesRegex(ValueError,'options'):native.validate_brief(json.dumps(b))
+
+    def test_each_result_in_one_input_directory_gets_its_own_call_record(self):
+        runtime={'tools':{'node':'/usr/bin/node'},'node_modules':'/unused',
+                 'renderer_version':'playwright-1.64.0','runtime_identity':{},'environment':{}}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();calls=[]
+            for name in ('first','second'):
+                b=brief();b.update(project_directory='native-projects/'+name,result_record_path='native-inputs/'+name+'.json')
+                project=root/b['project_directory'];(project/'out').mkdir(parents=True)
+                (project/'page.html').write_text('<html/>');request=root/(name+'.json');request.write_text(json.dumps(b))
+                script=native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/render.js'
+                argv=['/usr/bin/node',str(script),'page.html','out/render.mp4','24']
+                def render(*args,**kwargs):
+                    (project/'out/render.mp4').write_bytes(b'fixture video')
+                    return mock.Mock(returncode=0,stdout='',stderr='')
+                with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
+                     mock.patch.object(native.subprocess,'run',side_effect=render),mock.patch.object(native,'probe',return_value=b['composition']):
+                    calls.append(native.capture_render(root,request,argv))
+            self.assertEqual([p.name for p in calls],['first.render-call.json','second.render-call.json'])
+            self.assertTrue(all(p.is_file() for p in calls))
 
     def test_reviewed_record_and_actual_media_must_both_match(self):
         with tempfile.TemporaryDirectory() as directory:

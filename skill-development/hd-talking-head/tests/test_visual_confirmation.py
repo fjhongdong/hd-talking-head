@@ -785,5 +785,163 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertEqual([r["channel"] for r in rows], ["hyperframes", "hyperframes"])
         self.assertEqual([r["template"] for r in rows], ["template-0", "template-1"])
 
+class MotionRealizationBoundaryTests(unittest.TestCase):
+    """A native result may reveal text, without changing its approved task."""
+    def setUp(self):
+        import tempfile
+        from test_motion_native_skill_adapter import brief
+        import motion_native_skill_adapter as native
+        self.native = native
+        temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        segment = fixture_api.draft_segment(('code_generated',), end=2)
+        cid = 'component-1'
+        self.director = {'schema_version': 3, 'segments': [segment]}
+        request = brief()
+        request['task_source']['component_brief'] = segment['visual_strategy']['components'][0]['brief']
+        self.treatment = {'numbering_scope_id': 'native-test', 'scenes': [],
+            'semantic_lists': {'overlay': [], 'broll': [{'row_id': 'semantic-1', 'quote': request['transcript'],
+                'semantic': request['semantic_goal'], 'visual_task': '可替换的参考构图',
+                'components': [{'segment_id': 'seg-001', 'component_id': cid}]}]},
+            'skill_selection': {'beats': [{'segment_id': 'seg-001', 'component_id': cid, 'semantic_row_id': 'semantic-1',
+                'required_change': request['task_source']['required_change'], 'transcript': request['transcript'],
+                'component_brief': segment['visual_strategy']['components'][0]['brief']}], 'overlay_beats': []},
+            'semantic_assessments': [{'segment_id': 'seg-001', 'component_id': cid,
+                'candidate_id': 'barty-motion-graphics:barty-motion-graphics/motion-broll', 'verdict': 'pass',
+                'reason': '批准语义', 'transcript_refs': [], 'content_refs': []}],
+            'motion_readability': [{'segment_id': 'seg-001', 'component_id': cid, 'targets': [], 'pending_native': True}]}
+        path = self.root / 'native-inputs/approved.json'; artifacts.write_json_artifact(path, request)
+        digest = native.sha(path)
+        binding = {'dependency_id': 'barty-motion-graphics', 'template_id': 'barty-motion-graphics/motion-broll',
+                   'source_sha256': 'a' * 64, 'brief_sha256': digest,
+                   'verification_id': __import__('hashlib').sha256(('a' * 64 + digest).encode()).hexdigest()}
+        segment['bindings'] = {cid: binding}
+        self.treatment['skill_selection']['beats'][0]['binding_snapshot'] = copy.deepcopy(binding)
+        self.treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': cid, 'brief_path': 'native-inputs/approved.json'}]
+        dpath = self.root / 'approved-director.json'; tpath = self.root / 'approved-treatment.json'
+        artifacts.write_json_artifact(dpath, self.director); artifacts.write_json_artifact(tpath, self.treatment)
+        self.proposal = {'inputs': {'director': vc._record(self.root, dpath), 'treatment': vc._record(self.root, tpath)}}
+        source = self.root / 'native-projects/native-test/index.html'
+        source.parent.mkdir(parents=True); source.write_text('<html>输入</html>')
+        call = self.root / 'native-inputs/call.json'
+        artifacts.write_json_artifact(call, {'project_files': [native.descriptor(self.root, source)]})
+        self.result = {'render_call': native.descriptor(self.root, call)}
+        ref = {'path': source.relative_to(self.root).as_posix(), 'sha256': native.sha(source),
+               'pointer': 'text:6:8', 'value': '输入'}
+        self.target = {'target_id': 'native-input', 'content_ref': ref, 'span': [0, 2], 'role': 'title',
+                       'region': {'x': 100, 'y': 200, 'width': 600, 'height': 100},
+                       'windows': [{'start': .5, 'end': 1.5}]}
+
+    def realized(self):
+        director, treatment = copy.deepcopy(self.director), copy.deepcopy(self.treatment)
+        director['segments'][0]['visible_text'] = ['输入']
+        treatment['motion_readability'][0] = {'segment_id': 'seg-001', 'component_id': 'component-1', 'targets': [copy.deepcopy(self.target)]}
+        return director, treatment
+
+    def validate(self, director, treatment):
+        with mock.patch.object(vc, '_native_result_adapter', return_value=self.native), \
+             mock.patch.object(self.native, 'inspect_result', return_value=self.result):
+            vc._validate_draft_against_source(self.root, self.proposal, director, treatment)
+
+    def test_actual_native_text_can_be_added_but_semantics_time_and_numbering_cannot_change(self):
+        director, treatment = self.realized(); self.validate(director, treatment)
+        for change in ('semantic', 'time', 'template', 'numbering'):
+            changed, altered = copy.deepcopy(director), copy.deepcopy(treatment)
+            if change == 'semantic': altered['semantic_lists']['broll'][0]['semantic'] = '另一种意思'
+            if change == 'time': changed['segments'][0]['end'] = 3
+            if change == 'template': changed['segments'][0]['bindings']['component-1']['template_id'] = 'another-template'
+            if change == 'numbering': altered['numbering_scope_id'] = 'another-scope'
+            with self.subTest(change=change), self.assertRaises(ValueError): self.validate(changed, altered)
+
+    def test_execution_revision_preserves_task_and_needs_current_binding_snapshot(self):
+        director, treatment = self.realized()
+        old = self.native.validate_brief((self.root / 'native-inputs/approved.json').read_bytes())
+        revision = {**old, 'project_directory': 'native-projects/revision-2', 'result_record_path': 'native-inputs/revision-2.json'}
+        path = self.root / 'native-inputs/revision-2-brief.json'; artifacts.write_json_artifact(path, revision)
+        binding = director['segments'][0]['bindings']['component-1']; binding['brief_sha256'] = self.native.sha(path)
+        binding['verification_id'] = __import__('hashlib').sha256((binding['source_sha256'] + binding['brief_sha256']).encode()).hexdigest()
+        treatment['scenes'][0]['brief_path'] = 'native-inputs/revision-2-brief.json'
+        with self.assertRaisesRegex(ValueError, 'failure reason'): self.validate(director, treatment)
+        treatment['scenes'][0]['native_revision_reason'] = '首次实看发现文字遮挡，仅修订该项原生排版'
+        with self.assertRaisesRegex(ValueError, 'snapshot'): self.validate(director, treatment)
+        treatment['skill_selection']['beats'][0]['binding_snapshot'] = copy.deepcopy(binding)
+        self.validate(director, treatment)
+        revision['authorization'] = {'paid_generation': True}; artifacts.write_json_artifact(path, revision)
+        binding['brief_sha256'] = self.native.sha(path)
+        with self.assertRaisesRegex(ValueError, 'approved semantic task'): self.validate(director, treatment)
+
+    def test_readability_rejects_foreign_source_and_preserves_user_confirmed_text(self):
+        director, treatment = self.realized()
+        treatment['motion_readability'][0]['targets'][0]['content_ref']['path'] = 'foreign.html'
+        with self.assertRaisesRegex(ValueError, 'actual rendered project'): self.validate(director, treatment)
+        director, treatment = self.realized()
+        artifacts.write_json_artifact(self.root / 'manifests/confirmed-content.json',
+            {'visuals': [{'component_id': 'component-1', 'visible_text': ['用户指定']}]})
+        with self.assertRaisesRegex(ValueError, 'retain confirmed text'): self.validate(director, treatment)
+
+    def test_sequential_native_revisions_preserve_earlier_completed_references(self):
+        second=copy.deepcopy(self.director['segments'][0]);second['segment_id']='seg-002'
+        second['start']=2;second['end']=4;self.director['segments'].append(second)
+        request=self.native.validate_brief((self.root/'native-inputs/approved.json').read_bytes())
+        request['source_binding'].update(segment_id='seg-002',start=2,end=4)
+        request['task_source']['semantic_row_id']='semantic-2'
+        request.update(project_directory='native-projects/second',result_record_path='native-inputs/second.json')
+        path=self.root/'native-inputs/second-brief.json';artifacts.write_json_artifact(path,request)
+        binding=second['bindings']['component-1'];binding['brief_sha256']=self.native.sha(path)
+        binding['verification_id']=__import__('hashlib').sha256((binding['source_sha256']+binding['brief_sha256']).encode()).hexdigest()
+        row=copy.deepcopy(self.treatment['semantic_lists']['broll'][0]);row['row_id']='semantic-2'
+        row['components'][0]['segment_id']='seg-002';self.treatment['semantic_lists']['broll'].append(row)
+        beat=copy.deepcopy(self.treatment['skill_selection']['beats'][0]);beat.update(segment_id='seg-002',semantic_row_id='semantic-2',binding_snapshot=copy.deepcopy(binding))
+        self.treatment['skill_selection']['beats'].append(beat)
+        for field in ('scenes','semantic_assessments','motion_readability'):
+            item=copy.deepcopy(self.treatment[field][0]);item['segment_id']='seg-002'
+            if field=='scenes':item['brief_path']='native-inputs/second-brief.json'
+            self.treatment[field].append(item)
+        for name,value in [('director',self.director),('treatment',self.treatment)]:
+            path=self.root/('approved-'+name+'.json');artifacts.write_json_artifact(path,value)
+            self.proposal['inputs'][name]=vc._record(self.root,path)
+        director,treatment=copy.deepcopy(self.director),copy.deepcopy(self.treatment)
+        first_revision=None
+        for index,scene in enumerate(treatment['scenes']):
+            revision=self.native.validate_brief((self.root/scene['brief_path']).read_bytes())
+            revision.update(project_directory=f'native-projects/revision-{index}',result_record_path=f'native-inputs/revision-{index}.json')
+            path=self.root/f'native-inputs/revision-{index}-brief.json';artifacts.write_json_artifact(path,revision)
+            scene.update(brief_path=path.relative_to(self.root).as_posix(),native_revision_reason='当前画面需修订')
+            binding=director['segments'][index]['bindings']['component-1'];binding['brief_sha256']=self.native.sha(path)
+            binding['verification_id']=__import__('hashlib').sha256((binding['source_sha256']+binding['brief_sha256']).encode()).hexdigest()
+            treatment['skill_selection']['beats'][index]['binding_snapshot']=copy.deepcopy(binding)
+            self.validate(director,treatment)
+            if index==0:first_revision=copy.deepcopy(director['segments'][0])
+            else:self.assertEqual(director['segments'][0],first_revision)
+
+    def test_pending_native_text_is_only_a_planning_state(self):
+        from edit.hd.tools import motion_readability
+        segment = self.director['segments'][0]
+        segments = [{**segment, 'shot_recipe': {'components': segment['visual_strategy']['components']}}]
+        records = self.treatment['motion_readability']
+        self.assertEqual(motion_readability.validate_targets(segments, records, [],
+            pending_components={('seg-001', 'component-1')})[0]['status'], 'pending_native')
+        with self.assertRaisesRegex(ValueError, 'only allowed'):
+            motion_readability.validate_targets(segments, records, [])
+
+    def test_approved_visible_text_cannot_be_removed_even_with_an_existing_target(self):
+        self.director['segments'][0]['visible_text']=['输入']
+        self.treatment['motion_readability'][0]={'segment_id':'seg-001','component_id':'component-1','targets':[self.target]}
+        for name,value in [('director',self.director),('treatment',self.treatment)]:
+            path=self.root/('approved-'+name+'.json');artifacts.write_json_artifact(path,value)
+            self.proposal['inputs'][name]=vc._record(self.root,path)
+        director,treatment=copy.deepcopy(self.director),copy.deepcopy(self.treatment)
+        director['segments'][0]['visible_text']=[]
+        treatment['motion_readability'][0]={'segment_id':'seg-001','component_id':'component-1','targets':[],
+                                          'no_critical_text_reason':'不能以无字理由删除已批准文字'}
+        with self.assertRaisesRegex(ValueError,'retain confirmed text'):self.validate(director,treatment)
+
+    def test_frozen_realization_cannot_be_overwritten_before_stage_revision(self):
+        from types import SimpleNamespace
+        job=SimpleNamespace(stages={'visual_direction':{'status':'approved','artifacts':[]}})
+        with self.assertRaisesRegex(ValueError,'frozen'):
+            vc.write_realization_mapping(job,host_qa_note='不能覆盖已审结果',director_path=None,treatment_path=None)
+
+
 if __name__ == "__main__":
     unittest.main()

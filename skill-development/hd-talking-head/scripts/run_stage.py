@@ -430,6 +430,10 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     if native_actions:
         return _summary(job, 'visual_direction', actions=native_actions,
             next='宿主执行完整原生 Skill；产物完成后核对真实画面并更新 treatment 的实际语义引用，回传 realization 后继续。无需用户再次确认。')
+    if any(b.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+           for s in _json(director)['segments'] for b in s.get('bindings', {}).values()):
+        from edit.hd.tools import motion_readability
+        motion_readability.validate_direction_contract(job, _json(director), _json(treatment))
     visual_plan.prepare_visual_direction(job, director, job.job_dir / 'official-previews',
         treatment_path=treatment, reviewed_visual_text=_json(_path(job, reviewed)) if reviewed else None)
     job = state.load_job(job.job_dir)
@@ -462,9 +466,11 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
             brief = module.validate_brief(payload)
             if not _path(job, brief['result_record_path']).exists():
                 composition = segment['visual_strategy'].get('composition', {})
-                zones, placement = subtitle_layout('single', composition)
+                zones, placement = subtitle_layout(segment['visual_strategy']['mode'], composition)
+                options = ({'approved_task_source': module.task_source(director, treatment, segment['segment_id'], cid)}
+                           if dependency in {'barty-motion-graphics', 'bang-motion'} else {})
                 action = module.native_task(job, {'segment_id': segment['segment_id']},
-                    {**binding, 'component_id': cid}, brief_path)
+                    {**binding, 'component_id': cid}, brief_path, **options)
                 action['requirements']['parent_subtitle_layout'] = {'safe_zones': zones, 'placement': placement}
                 actions.append(action)
             else:

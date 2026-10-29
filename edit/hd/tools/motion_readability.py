@@ -47,10 +47,10 @@ def _inside(root, ref):
         obj = obj[int(part)] if isinstance(obj, list) else obj[part]
     if obj != ref["value"]: raise ValueError("content_ref pointer mismatch")
 
-def validate_targets(segments, records, required_refs, *, root=None):
+def validate_targets(segments, records, required_refs, *, root=None, pending_components=()):
     sm = {s["segment_id"]: s for s in segments}; rm = {}; out = []; ids = set()
     for r in records:
-        if type(r) is not dict or set(r) - {"segment_id", "component_id", "targets", "no_critical_text_reason"}:
+        if type(r) is not dict or set(r) - {"segment_id", "component_id", "targets", "no_critical_text_reason", "pending_native"}:
             raise ValueError("unknown readability record fields")
         key = (r["segment_id"], r["component_id"])
         if key in rm: raise ValueError("duplicate motion_readability record")
@@ -64,6 +64,12 @@ def validate_targets(segments, records, required_refs, *, root=None):
             cid = c.get("component_id") or c.get("id")
             r = rm.get((sid, cid))
             if r is None: raise ValueError(f"missing readability record: {sid}/{cid}")
+            if 'pending_native' in r:
+                if (r['pending_native'] is not True or (sid, cid) not in pending_components
+                        or r.get('targets') or r.get('no_critical_text_reason')):
+                    raise ValueError('pending readability is only allowed for an uncreated native scene during planning')
+                out.append({'segment_id': sid, 'component_id': cid, 'status': 'pending_native'})
+                continue
             ts = r.get("targets") or []
             if not ts:
                 if req.get((sid,cid)) is not None or len(str(r.get("no_critical_text_reason", ""))) < 6: raise ValueError("missing targets")
@@ -201,13 +207,30 @@ def _required_refs(treatment):
     return result
 
 
-def validate_direction_contract(job, director, treatment):
+def validate_direction_contract(job, director, treatment, *, phase='completed'):
     if not _managed(job):
         return
     segments = [{**s, 'shot_recipe': {'components': s['visual_strategy']['components']}}
                 for s in director['segments']]
+    pending = set()
+    if phase == 'planning':
+        from .visual_confirmation import _native_result_adapter
+        for segment in director['segments']:
+            for cid, binding in segment.get('bindings', {}).items():
+                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion'}:
+                    continue
+                scenes = [s for s in treatment.get('scenes', [])
+                          if (s.get('segment_id'), s.get('component_id')) == (segment['segment_id'], cid)]
+                if len(scenes) != 1:
+                    raise ValueError('pending native readability requires one bound scene')
+                adapter = _native_result_adapter(binding['dependency_id'])
+                brief = adapter.validate_brief((job.job_dir / scenes[0]['brief_path']).read_bytes())
+                if not (job.job_dir / brief['result_record_path']).exists():
+                    pending.add((segment['segment_id'], cid))
+    elif phase != 'completed':
+        raise ValueError('unknown motion readability phase')
     validate_targets(segments, treatment.get('motion_readability', []),
-                     _required_refs(treatment), root=job.job_dir)
+                     _required_refs(treatment), root=job.job_dir, pending_components=pending)
     for segment in director['segments']:
         composition = segment['visual_strategy']['composition']
         if composition.get('presenter_mode') != 'bottom_window':

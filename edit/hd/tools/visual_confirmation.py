@@ -85,6 +85,12 @@ def _freeze_reviewed_native_result(root, treatment, segment_id, component_id, br
 
 def _validate_native_results(root, mapping, director, treatment):
     """Validate frozen native results without calling an approved-plan loader."""
+    if any(binding.get('dependency_id') in MOTION_CREATION for s in director['segments']
+           for binding in s.get('bindings', {}).values()):
+        from . import motion_readability
+        motion_readability.validate_targets(
+            [{**s, 'shot_recipe': {'components': s['visual_strategy']['components']}} for s in director['segments']],
+            treatment.get('motion_readability', []), motion_readability._required_refs(treatment), root=root)
     for segment in director["segments"]:
         for cid, binding in segment.get("bindings", {}).items():
             dependency = binding.get("dependency_id")
@@ -651,7 +657,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     from . import overlay_alignment
     overlay_alignment.validate_treatment(job, director, Path(treatment_path), phase='planning')
     from . import motion_readability
-    motion_readability.validate_direction_contract(job, director, treatment)
+    motion_readability.validate_direction_contract(job, director, treatment, phase='planning')
     from . import avatar_profile, visual_review
     avatar_profile.validate_avatar_plan_policy(director["segments"])
     speech = motion_capabilities._approved_speech(job.job_dir)
@@ -878,15 +884,14 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
     for record in final_records:
         _exact(root, record)
     final = _read(_exact(root, mapping["final_v3"]))
-    director = _read(_exact(root, proposal["inputs"]["director"]))
-    if _core(final) != _core(director):
-        raise VisualConfirmationError("realized timing, meaning or template composition changed")
     if mapping.get("rows") != proposal["rows"]:
         raise VisualConfirmationError("realized visual rows changed")
     if receipt["revision"] >= revision:
         raise VisualConfirmationError("visual approval revision is not committed")
     realized = {key: _read(_exact(root, ref)) for key, ref in mapping["realization_inputs"].items()}
     _validate_draft_against_source(root, proposal, realized["director"], realized["treatment"])
+    if _core(final) != _core(realized['director']):
+        raise VisualConfirmationError('compiled plan differs from its reviewed realization')
     compiled = {(seg["segment_id"], c["component_id"]): c
                 for seg in final["segments"] for c in seg["shot_recipe"]["components"]}
     for seg in realized["director"]["segments"]:
@@ -1056,9 +1061,140 @@ def generation_actions(job, *, account_limit=None):
         actions.append(action)
     return actions
 
+MOTION_CREATION = {'barty-motion-graphics', 'bang-motion'}
+
+
+def _motion_brief(root, director, treatment, key):
+    segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
+    binding = segment['bindings'][key[1]]
+    scenes = [scene for scene in treatment.get('scenes', [])
+              if (scene.get('segment_id'), scene.get('component_id')) == key]
+    if len(scenes) != 1:
+        raise VisualConfirmationError('native creation must retain one scene per approved component')
+    payload = _path(root, scenes[0]['brief_path']).read_bytes()
+    if hashlib.sha256(payload).hexdigest() != binding['brief_sha256']:
+        raise VisualConfirmationError('native execution brief differs from its binding')
+    adapter = _native_result_adapter(binding['dependency_id'])
+    brief = adapter.validate_brief(payload, dependency_id=binding['dependency_id'])
+    if brief['task_source'] != adapter.task_source(director, treatment, *key):
+        raise VisualConfirmationError('native creation task differs from its approved parent semantics')
+    return binding, adapter, brief, payload
+
+
+def _readability_texts(records, keys):
+    return {target['content_ref']['value'][slice(*target['span'])]
+            for record in records if (record['segment_id'], record['component_id']) in keys
+            for target in record.get('targets', [])}
+
+
+def _validate_motion_realization(root, frozen, frozen_treatment, director, treatment):
+    """Permit only result-derived edits of approved complete native creations.
+
+    Compare a normalized copy with the original proposal. The actual reviewed
+    copy is never rewritten and is frozen by the existing execution mapping.
+    """
+    keys = {(s['segment_id'], cid) for s in frozen['segments']
+            for cid, binding in s.get('bindings', {}).items()
+            if binding.get('dependency_id') in MOTION_CREATION}
+    current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
+    if not keys:
+        return current, actual
+    old_records = {(r['segment_id'], r['component_id']): r for r in frozen_treatment.get('motion_readability', [])}
+    new_records = {(r['segment_id'], r['component_id']): r for r in treatment.get('motion_readability', [])}
+    if len(new_records) != len(treatment.get('motion_readability', [])) or set(new_records) != set(old_records):
+        raise VisualConfirmationError('realization changed the readability component inventory')
+    for key in keys:
+        before, adapter, approved, _ = _motion_brief(root, frozen, frozen_treatment, key)
+        after, _, brief, payload = _motion_brief(root, director, treatment, key)
+        if adapter.approved_task(brief) != adapter.approved_task(approved):
+            raise VisualConfirmationError('native revision changed its approved semantic task, template, inputs or authorization')
+        if ({k: v for k, v in before.items() if k not in {'brief_sha256', 'verification_id'}}
+                != {k: v for k, v in after.items() if k not in {'brief_sha256', 'verification_id'}}
+                or after.get('verification_id') != hashlib.sha256(
+                    (after['source_sha256'] + after['brief_sha256']).encode()).hexdigest()):
+            raise VisualConfirmationError('native revision replaced an approved template or source')
+        scene = next(s for s in actual['scenes'] if (s.get('segment_id'), s.get('component_id')) == key)
+        original_scene = next(s for s in frozen_treatment['scenes'] if (s.get('segment_id'), s.get('component_id')) == key)
+        if any(brief[field] != approved[field] for field in ('project_directory', 'result_record_path')):
+            if not isinstance(scene.get('native_revision_reason'), str) or not scene['native_revision_reason'].strip():
+                raise VisualConfirmationError('native execution revision needs its diagnosed failure reason')
+            scene.pop('native_revision_reason')
+        scene['brief_path'] = original_scene['brief_path']
+        if scene != original_scene:
+            raise VisualConfirmationError('native revision changed its approved scene fields')
+        segment = next(s for s in current['segments'] if s['segment_id'] == key[0])
+        segment['bindings'][key[1]] = copy.deepcopy(before)
+        for group in ('beats', 'overlay_beats'):
+            for beat in actual.get('skill_selection', {}).get(group, []):
+                if (beat['segment_id'], beat['component_id']) == key:
+                    if beat.get('binding_snapshot') != after:
+                        raise VisualConfirmationError('native revision binding snapshot is stale')
+                    beat['binding_snapshot'] = copy.deepcopy(before)
+                    original_beats = [b for b in frozen_treatment.get('skill_selection', {}).get(group, [])
+                                      if (b['segment_id'], b['component_id']) == key]
+                    if len(original_beats) != 1 or beat != original_beats[0]:
+                        raise VisualConfirmationError('native realization changed its approved semantic beat')
+        for alignment in actual.get('overlay_alignment', []):
+            if (alignment.get('segment_id'), alignment.get('component_id')) == key:
+                if alignment.get('brief_path') != next(s['brief_path'] for s in treatment['scenes']
+                        if (s.get('segment_id'), s.get('component_id')) == key):
+                    raise VisualConfirmationError('native overlay revision uses another input')
+                alignment['brief_path'] = original_scene['brief_path']
+                original_alignment = [a for a in frozen_treatment.get('overlay_alignment', [])
+                    if (a.get('segment_id'), a.get('component_id')) == key]
+                if len(original_alignment) != 1 or alignment != original_alignment[0]:
+                    raise VisualConfirmationError('native overlay revision changed its approved alignment')
+        changed = new_records[key] != old_records[key]
+        old_segment = next(s for s in frozen['segments'] if s['segment_id'] == key[0])
+        actual_segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
+        changed |= (actual_segment['visible_text'] != old_segment['visible_text']
+                    and _path(root, brief['result_record_path']).is_file())
+        if changed:
+            result = adapter.inspect_result(root, payload)
+            call = _read(adapter.exact(root, result['render_call']))
+            sources = {item['job_path']: item for item in call['project_files']}
+            for target in new_records[key].get('targets', []):
+                ref = target['content_ref']
+                if (ref['path'] not in sources or ref['sha256'] != sources[ref['path']]['sha256']
+                        or not ref['pointer'].startswith('text:')):
+                    raise VisualConfirmationError('native readability must cite the actual rendered project source')
+            from . import motion_readability
+            scoped = {**actual_segment, 'shot_recipe': {'components': [c for c in actual_segment['visual_strategy']['components']
+                       if c['component_id'] == key[1]]}}
+            motion_readability.validate_targets([scoped], [new_records[key]],
+                motion_readability._required_refs({'motion_readability': [new_records[key]]}), root=root)
+        old_assessments = [a for a in frozen_treatment.get('semantic_assessments', [])
+                           if (a.get('segment_id'), a.get('component_id')) == key]
+        new_assessments = [a for a in treatment.get('semantic_assessments', [])
+                           if (a.get('segment_id'), a.get('component_id')) == key]
+        if len(old_assessments) != 1 or len(new_assessments) != 1 or any(
+                new_assessments[0].get(field) != value for field, value in old_assessments[0].items()
+                if field not in {'content_refs', 'reason', 'verdict'}):
+            raise VisualConfirmationError('native result changed the approved semantic assessment identity')
+    for segment in current['segments']:
+        scoped = {key for key in keys if key[0] == segment['segment_id']}
+        if not scoped:
+            continue
+        before = next(s for s in frozen['segments'] if s['segment_id'] == segment['segment_id'])
+        required = set(before['visible_text'])
+        confirmed = Path(root) / 'manifests/confirmed-content.json'
+        if confirmed.is_file():
+            required.update(text for item in _read(confirmed).get('visuals', [])
+                            if any(item.get('component_id') == key[1] for key in scoped) for text in item.get('visible_text', []))
+        visible = set(segment['visible_text'])
+        actual_text = _readability_texts(treatment.get('motion_readability', []), scoped)
+        if not required <= visible or not (visible - set(before['visible_text'])) <= actual_text:
+            raise VisualConfirmationError('native visible text must retain confirmed text and cite its actual readability inventory')
+        segment['visible_text'] = copy.deepcopy(before['visible_text'])
+    actual['motion_readability'] = [copy.deepcopy(old_records[(r['segment_id'], r['component_id'])])
+        if (r['segment_id'], r['component_id']) in keys else r for r in actual.get('motion_readability', [])]
+    return current, actual
+
+
 def _validate_draft_against_source(root, proposal, director, treatment):
     frozen = _read(_exact(root, proposal["inputs"]["director"]))
     frozen_treatment = _read(_exact(root, proposal["inputs"]["treatment"]))
+    director, treatment = _validate_motion_realization(root, frozen, frozen_treatment, director, treatment)
     if treatment.get("motion_readability", []) != frozen_treatment.get("motion_readability", []):
         raise VisualConfirmationError("readability targets changed after visual approval")
     if (_core(director) != _core(frozen)
@@ -1071,6 +1207,8 @@ def _validate_draft_against_source(root, proposal, director, treatment):
             or treatment.get("skill_selection", {}).get("opening") != frozen_treatment.get("skill_selection", {}).get("opening")
             or treatment.get("generation_plan", {}) != frozen_treatment.get("generation_plan", {})):
         raise VisualConfirmationError("realization changed approved timing, meaning, tags or template")
+    if any(treatment.get(field) != frozen_treatment.get(field) for field in ('numbering_scope_id', 'beat_sheet', 'overlay_selection')):
+        raise VisualConfirmationError('realization changed approved rows, numbering, scene inputs or overlay use')
     for segment, original in zip(director["segments"], frozen["segments"]):
         for cid, binding in original.get("bindings", {}).items():
             new = segment.get("bindings", {}).get(cid, {})
@@ -1086,6 +1224,9 @@ def validate_realization_draft(job, director, treatment):
 
 def write_realization_mapping(job, *, host_qa_note, director_path, treatment_path):
     from . import generation_queue, state
+    if (job.stages['visual_direction']['status'] == 'approved'
+            or any(ref['path'].endswith('/' + MAPPING) for ref in job.stages['visual_direction']['artifacts'])):
+        raise VisualConfirmationError('the reviewed realization is frozen; use the existing stage revision entry')
     authorized = validate_visual_authorization(job)
     proposal = authorized["source"]
     queue = generation_queue.status(job.job_dir)

@@ -19,7 +19,7 @@ NODE_PATH="$RUNTIME/node_modules" node "$SKILL/engine/beats.js" "$JOB/dist/clip.
 NODE_PATH="$RUNTIME/node_modules" node "$SKILL/engine/render.js" "$JOB/dist/clip.html" "$JOB/clip.mp4" 24
 ```
 
-渲染器从场景读尺寸、时长和透明状态，fps 接受数字或分数，默认 30000/1001，固定四个子帧。非透明为 H.264/yuv420p，透明为 ProRes 4444/yuva444p10le，应使用 `.mov`。检查关键静帧、过渡帧、最终真实画面及文字；无需生成旧视频来验证。上游另提供 `inspect_video.py`、`words.py`、`composite.py` 和 `make_pages.py`，需要时按其原生合同在 Job 内调用。
+渲染器从场景读尺寸、时长和透明状态，fps 接受数字或分数，默认 30000/1001，固定四个子帧。非透明为 H.264/yuv420p；透明以 `yuva444p10le` 编码参数生成 ProRes 4444，应使用 `.mov`。FFprobe 可将实际解码格式报告为 `yuva444p12le`；探针和两级消费检查如实接受这两种精确透明格式，不将 12 位伪报为 10 位，也不重编码原生素材。检查关键静帧、过渡帧、最终真实画面及文字；无需生成旧视频来验证。上游另提供 `inspect_video.py`、`words.py`、`composite.py` 和 `make_pages.py`，需要时按其原生合同在 Job 内调用。
 
 ## Explainer 原生调用
 
@@ -27,20 +27,10 @@ NODE_PATH="$RUNTIME/node_modules" node "$SKILL/engine/render.js" "$JOB/dist/clip
 
 ## 依赖与最小样片建议
 
-Node 18+、Python 3、ffmpeg/ffprobe、Playwright 和 Chromium；motion-broll 视频检查还需 numpy，透明面板需要 ffmpeg `prores_ks`。将 Node 依赖安装到包内指定运行时，将 Python 依赖放隔离环境；原生 `setup.sh` 包含 `pip install --user` / `--break-system-packages`，不应直接运行以免改动用户环境。Playwright 浏览器也应使用受控路径。Explainer 的 Playwright、Chromium、ffmpeg 同理，不需调用收费服务。
+本接入锁定的 Playwright 需要 Node ≥20，另需 Python 3、ffmpeg/ffprobe、Playwright 和 Chromium；motion-broll 视频检查还需 numpy，透明面板需要 ffmpeg `prores_ks`。将 Node 依赖安装到包内指定运行时，将 Python 依赖放隔离环境；原生 `setup.sh` 包含 `pip install --user` / `--break-system-packages`，不应直接运行以免改动用户环境。Playwright 浏览器也应使用受控路径。Explainer 的 Playwright、Chromium、ffmpeg 同理，不需调用收费服务。
 
 推荐本地无付费样片：在独立临时 Job 使用 `examples/opus-aoe2/01-opus-drop.html` 经原生 build、beats 和 render 执行一次，检查实际画面、时长、画幅和编码。示例内容仅用于试运行，不得作为当前任务真实事实或修改已有视频。普通制作仍需检查本期实际语义、完整动作、中文和最终画面，不复用开发样片的内容结论。
 
 ## 父级正式调用
 
-运行环境只在所选渠道需要时，通过唯一依赖清单调用 `scripts/motion_native_runtime.py --project-root <包根> --dependency-id <渠道>` 准备；精确依赖锁随包提供，不在 vendor 或全局安装。缺失的 Playwright 浏览器仅由准备步骤调用官方工具安装到项目运行时，普通检查不下载。Bang 使用已准备的本地 Chrome。来源缺失或改变时停止，不在线换版本。
-
-每项在本 Job 的 `native-inputs` 写计划 brief。`scripts/motion_native_skill_adapter.py` 校验以下字段：`schema_version=1`、`dependency_id`、`job_id`、`template_id`（渠道内原生标识）、`source_binding={aroll_sha256,segment_id,start,end}`、`composition={width:1080,height:1920,fps:24,frames}`、`alpha`、`canvas_transport`、`template_request`、`semantic_goal`、`transcript`、局部 `word_anchors`、`speech`、`materials`、`authorization`、`project_directory` 和 `result_record_path`。文件描述为 `{job_path,sha256,byte_count}`；工程写到 `native-projects`，结果记录写到 `native-inputs`。渲染媒体统一写入工程的 `out/`，实际输入素材置于该目录之外并逐一冻结，包括图片、字体、音频与视频。Barty 使用 `canvas_transport=identity`，Bang 使用 `quarter_turn_cw`。只有 Barty 的 `motion-broll` 可以声明 `alpha=true`。
-
-整表确认前只检查真实输入和匹配；确认后 `run_stage` 返回 `execute_native_skill`，附完整原生入口、所选模板、材料、局部原话/词锚、输出规格及已授权服务。原生 Skill 负责完整创作、选读其参考、必要资产请求、工程代码与原生 QA。新增收费步骤须沿父级已有授权流程，不因接入默认批准。不同候选的风格组合只是当前模板的原生公开选项，不增加模板身份；不开新的用户审批门。
-
-原生制作完成后，使用薄桥的 `capture_render(job_dir, brief_path, argv)` 实际执行原生命令并记录工程和视频；随后正常速度检查真实画面，再用 `publish_completed(..., qa_note=...)` 回传。Barty explainer 的内嵌 `render.mjs` 和 Bang 的 `export-frames.mjs` 均逐字复制到 Job，桥执行前和验收时与固定原文比较。父级不改写渲染时钟、动作或第三方源码。Barty explainer 的原始视频保留；如原生编码标为全范围像素，交付副本仅整理为正式链要求的有限范围 yuv420p，不改画幅、帧数或播放速度。
-
-宿主将实际 HTML 源内容与 `completed` 结果记录加入现有 `semantic_assessments.content_refs`，按真实画面填写现有文字可读性及视觉检查，再回传 realization。既有批准映射冻结审核时的结果字节；正式适配器只消费该结果与对应视频，不再次创作。结果、源码、运行时、语义、alpha 或时钟改变时停止，不替换、不重试、不用路径当前内容冒充已审版本。透明贴片还沿 `overlay_selection` 与 `overlay_alignment` 检查实际模板、词锚和真人叠加用途；规划检查不要求尚未制作的结果，最终检查必须有真实原生产物。
-
-接入验证只使用单独开发样片。现有视频、旧 Job 与已批准素材保持原样。
+两渠道共用[完整原生调用合同](native-motion-call-contract.md)。该页是当前任务交接、原生选项、制作后文字验收、当前项返修、环境与正式消费的唯一共同说明；本页保留该渠道的原生用法和输出边界。

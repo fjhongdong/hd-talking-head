@@ -6,7 +6,7 @@ Lemo 当前以一个渠道、59 个独立风格模板参与统一选型，具体
 
 本库统一现有 A-roll 贴片、B-roll、可组合组件和设计／原生创作能力的理解与检索，不增加渲染器，也不合并它们的执行资格。维护数据为本包 `motion-capability-index.json`；入口为 `scripts/select_motion_capabilities.py`，项目接法为 `edit.hd.tools.motion_capabilities`。视觉规划先从剪后语义生成 tags，再用 tags 检索并匹配具体模板；tags 是语义检索字段，不等同于最终屏显 labels。
 
-现有字段映射为：`skill_id` 经 `source_channel` 得到渠道，`source_route` 或 `template_id` 得到稳定的渠道内模板，`profile.tags` 提供标签。`capability_type` 描述执行证据类型，不推断内容创作范围。索引 schema 3 的必填 `content_scope={mode,evidence_ref}` 明确区分 `full_scene` 与 `fixed_action`；`evidence_ref` 必须指向本 profile 已核验摘要的原生说明。两类仍进入同一候选池，不新增渠道或模板。
+渠道与模板统一由 `canonical_identity` 计算，`profile.tags` 提供标签。有同一原生来源证据的别名只计一次，实际 candidate、route 和来源绑定仍保留执行身份。`capability_type` 描述执行证据类型，不推断内容创作范围。索引 schema 3 的必填 `content_scope={mode,evidence_ref}` 明确区分 `full_scene` 与 `fixed_action`；`evidence_ref` 必须指向本 profile 已核验摘要的原生说明。两类仍进入同一候选池，不新增渠道或模板。
 
 > 本页与 `motion-capability-index.json` 中的 evidence 路径以**完整 Skill 包根**为基准（如 `skill-development/...`、`edit/hd/...`）。全部固定资源随包迁移；`skill-development/runtime/` 中的依赖由包内锁文件准备，不读取原开发项目。
 
@@ -34,7 +34,7 @@ Barty Motion Graphics 是一个渠道，包含 `motion-broll`、`explainer-defau
 
 Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 工作流和 19 种 opener 概念按 35 个模板选项管理。可组合选择，但不将组合相乘计数，不将渲染工具或新主题登记成模板。opener 是创作形式，不强制替换口播默认静态封面。
 
-两渠道共增加 39 个模板。标签只在本页指定的统一索引维护；各自 `*-template-catalog.json` 只保存原生入口与模板定位。完整 Skill 自主完成设计、动作与工程，父级不预写逐层编舞。调用、整表确认、实际结果审核与冻结消费沿已有阶段入口进行；不能把待执行的原生任务当成已完成动画。具体入口和边界见 [Barty](barty-motion-integration.md) 与 [Bang](bang-motion-integration.md)。
+两渠道共增加 39 个模板。标签只在本页指定的统一索引维护；各自 `*-template-catalog.json` 只保存原生入口与模板定位。完整 Skill 自主完成设计、动作与工程，父级不预写逐层编舞。确认前绑定任务，创作后补齐真实文字与阅读目标，再审核冻结并正式消费；不能把待执行的原生任务当成已完成动画。共用规则见[完整原生调用](native-motion-call-contract.md)，具体入口见 [Barty](barty-motion-integration.md) 与 [Bang](bang-motion-integration.md)。
 
 完整创作流程也可承担透明贴片，但仅限已具备真实 alpha 调用路径的用途；`full_scene` 的语义召回不能授予透明资格。Bang 当前仅作为不透明 B-roll，不能因原生文档提到 lower third 就声称可导出透明视频。
 
@@ -44,7 +44,7 @@ Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 
 2. 从全库查询候选。`fixed_action` 仍须命中完整动作或关系短语；中文单字、普通文字碎片、人物素材、情绪或配色不能使固定配方越界。经原生说明核验的 `full_scene` 完整创作入口可按本期内容进入待评审池，不要求先猜中拼贴、显影、分层等美术制作词。`recall_basis` 区分 `semantic_motion` 与 `full_scene_authoring`；`matched_dimensions` 只记录真实字面命中，后者没有动作命中时仍保持 `has_motion_basis=false`，不能冒称语义或动作已通过。完整工作流的资料、素材、对象动作、输出、时长、费用和授权限制继续逐项评审；Lemo 资料型风格不因此免除真实来源要求。Doudou 已审场景、Whiteboard SVG、Paper 分层 helper 与 TalkCraft 具体配方保持固定动作范围。宿主先理解原话，再用既有 `semantic_goal / required_change` 表达预期变化，不为召回而塞入风格词。`search` 不是语义模型，不推断否定、条件、隐喻或实际画面，也不自动判定候选合格。
 3. 比较候选能否完整表达本句。并列不画成流程，“无需”不自动画成关开关，推测不画成事实，人物痛点不靠卡片移动代替。擦入比较可表达有原文依据的做法、方案或状态对照，不限于时间前后；它不能凭空增加因果或状态切换。美观、多样性比较真实构图与动作，不只看颜色或 Skill 名。
 4. 把宿主先从剪后语义得到的检索短语存入现有 treatment 的 `motion_queries`，每个代码/生成型组件一条 `{segment_id, component_id, tags}`，不使用屏显 labels。正式检查按 tags 和用途查询，要求选中的具体模板实际命中；检查结果保存 query_tags、匹配依据、剪后原话及模板身份。B-roll 继续使用 `skill_selection` 的 `discover → assign → check`，贴片使用 `overlay_selection`、`overlay_alignment`。完整表从当前计划和这些检查结果派生，不另建最终计划 schema；未知或版本变化的元数据先复核。
-5. 先将贴片与 B-roll 分别形成语义列表，再将每项一次匹配到全库并保留全部合格候选。每项统一记录渠道、渠道内模板和标签；整片联合分配时先精确最大化真实渠道数量，再在此前提下最大化具体模板数量；`preferred` 不能裁掉合格 `equivalent`，别名去重，临时内容沿用所选模板身份。只有分配完成后才校验时长、覆盖、可读性与间隔；缺口回到对应语义列表补有原话依据的新项，不能用时间倒推初始数量。
+5. 先将贴片与 B-roll 分别形成语义列表，再将每项一次匹配到全库并缓存完整命中集合，随后评审全部候选。检查按同一目录及确定性召回条件核对集合完整性，裁掉候选后重算摘要也不能通过；不重新搜索或重复语义评审。每项统一记录渠道、渠道内模板和标签；整片联合分配时先精确最大化真实渠道数量，再在此前提下最大化具体模板数量；`preferred` 不能裁掉合格 `equivalent`，别名去重，临时内容沿用所选模板身份。只有分配完成后才校验时长、覆盖、可读性与间隔；缺口回到对应语义列表补有原话依据的新项，不能用时间倒推初始数量。
 
 统一入口均经项目现有 Python 入口运行，不加 `--prepare`。下列 `catalog/search/check` 命令只读，不安装、访问生成服务或渲染；`match` 只更新当前草稿的匹配缓存，不发布计划、不执行生成，字段见[语义列表与一次匹配](visual-quality-contract.md)。
 

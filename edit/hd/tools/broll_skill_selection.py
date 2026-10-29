@@ -271,19 +271,37 @@ def _duration(row):
     return end - start
 
 
+_CHANNEL_ALIASES = {"hyperframes-native-adaptation": "hyperframes",
+                    "talkcraft-native-adaptation": "video-talkcraft",
+                    "paper-collage-hyperframes": "paper-collage-ad"}
+_TALKCRAFT_TEMPLATE_ALIASES = {
+    alias: card
+    for card in ("info-term-card", "number-counter", "numbered-step-stack", "source-converge")
+    for alias in ("template/cards/" + card + ".tsx", "video-talkcraft/" + card)
+}
+
+
+def canonical_identity(row: Mapping) -> tuple[str, str | None]:
+    """Resolve reviewed source/template aliases without changing execution IDs."""
+    skill = row["skill_id"]
+    channel = _CHANNEL_ALIASES.get(skill, skill)
+    if not row.get("template_id"):
+        return channel, None
+    template = row.get("source_route") or row["template_id"]
+    if channel == "video-talkcraft":
+        template = _TALKCRAFT_TEMPLATE_ALIASES.get(template, template)
+    return channel, template
+
+
 def source_channel(skill_id):
     """Count native routes and component adapters under their actual source."""
-    return {"hyperframes-native-adaptation": "hyperframes",
-            "talkcraft-native-adaptation": "video-talkcraft",
-            "paper-collage-hyperframes": "paper-collage-ad"}.get(skill_id, skill_id)
+    return canonical_identity({"skill_id": skill_id})[0]
 
 
 def _template_identity(row):
     """Count a registered template equally, including native creation styles."""
-    template = row.get("template_id")
-    if not template:
-        return None
-    return (source_channel(row["skill_id"]), row.get("source_route") or template)
+    identity = canonical_identity(row)
+    return identity if identity[1] is not None else None
 
 
 def approved_creative_identity(job, generation, *, segment_id, component_id):
