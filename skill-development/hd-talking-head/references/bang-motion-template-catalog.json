@@ -1,0 +1,253 @@
+{
+  "schema_version": 3,
+  "channel": "bang-motion",
+  "repository_commit": "c1aa65e921c970d858705fcb4a53a8294d1a4131",
+  "counting_rule": "10 styles + 6 explainer workflows + 19 opener concepts; do not multiply combinations or count render tools as templates",
+  "native_paths": [
+    {
+      "candidate_id": "bang-motion:bang-motion/style-cinematic-dark",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-poster-color-block",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-bright-editorial",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-paper-print",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-retro-analog",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-brutalist-mono",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-cheerful-pastel",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-dark-luxury",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-flat-pop-photo",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-grainy-gradient",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "style"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-cartoon-collage",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer-kartun.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-visual-journalism",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer-jurnalisme.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-white-catalog",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer-katalog.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-vintage-sketch",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer-sketsa.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-continuous-action",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-cartoon-stage",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-explainer-panggung.html",
+      "native_template_group": "explainer"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-continuous-shot",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-pure-typography",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-problem-disappears",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-before-after",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-ui-journey",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-product-macro",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-object-metaphor",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-living-number",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-single-feature-demo",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-question-answer",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-rhythmic-collage",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-logo-stage",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-object-relay",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-brand-system",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-claim-how-result",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-living-ui-ecosystem",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-flat-pop-people",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-gradient-shape-tunnel",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-product-tour-claims",
+      "skill_path": "skill-development/vendor/bang-motion/SKILL.md",
+      "render_script": "skill-development/vendor/bang-motion/scripts/export-frames.mjs",
+      "native_starter": "skill-development/vendor/bang-motion/assets/starter-opener.html",
+      "native_template_group": "opener"
+    }
+  ]
+}

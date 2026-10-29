@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "channel_id": "barty-motion-graphics",
+  "source_commit": "3d83d987d658601d8a1269eb691622bdcd427335",
+  "execution": {
+    "barty-motion-graphics:barty-motion-graphics/motion-broll": {
+      "skill_path": "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md",
+      "render_script": "skill-development/vendor/barty-motion-graphics/skills/motion-broll/engine/render.js"
+    },
+    "barty-motion-graphics:barty-motion-graphics/explainer-default": {
+      "skill_path": "skill-development/vendor/barty-motion-graphics/skills/explainer-default/SKILL.md",
+      "inline_render_source": "skill-development/vendor/barty-motion-graphics/skills/explainer-default/SKILL.md#render.mjs"
+    },
+    "barty-motion-graphics:barty-motion-graphics/explainer-engaging": {
+      "skill_path": "skill-development/vendor/barty-motion-graphics/skills/explainer-engaging/SKILL.md",
+      "inline_render_source": "skill-development/vendor/barty-motion-graphics/skills/explainer-engaging/SKILL.md#render.mjs"
+    },
+    "barty-motion-graphics:barty-motion-graphics/explainer-high-energy": {
+      "skill_path": "skill-development/vendor/barty-motion-graphics/skills/explainer-high-energy/SKILL.md",
+      "inline_render_source": "skill-development/vendor/barty-motion-graphics/skills/explainer-high-energy/SKILL.md#render.mjs"
+    }
+  }
+}

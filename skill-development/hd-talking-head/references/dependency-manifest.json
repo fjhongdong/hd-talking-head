@@ -2010,6 +2010,90 @@
         "equals": "video-talkcraft",
         "required_level": "bound"
       }
+    },
+    {
+      "id": "barty-motion-graphics",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_native_skill_adapter.py",
+        "scripts/motion_native_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_native_skill_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_native_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "barty-motion-graphics"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "barty-motion-graphics",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "bang-motion",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_native_skill_adapter.py",
+        "scripts/motion_native_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_native_skill_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_native_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "bang-motion"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "bang-motion",
+        "required_level": "bound"
+      }
     }
   ],
   "preparation": [
@@ -2196,6 +2280,28 @@
       "dependency_ids": [
         "video-talkcraft"
       ]
+    },
+    {
+      "id": "barty-motion-graphics",
+      "script": "scripts/motion_native_runtime.py",
+      "arguments": [
+        "--dependency-id",
+        "barty-motion-graphics"
+      ],
+      "dependency_ids": [
+        "barty-motion-graphics"
+      ]
+    },
+    {
+      "id": "bang-motion",
+      "script": "scripts/motion_native_runtime.py",
+      "arguments": [
+        "--dependency-id",
+        "bang-motion"
+      ],
+      "dependency_ids": [
+        "bang-motion"
+      ]
     }
   ],
   "runtime_checks": [
@@ -2218,7 +2324,9 @@
     "paper-collage-hyperframes-adapter",
     "paper-collage-adapter",
     "whiteboard-video-adapter",
-    "video-talkcraft"
+    "video-talkcraft",
+    "barty-motion-graphics",
+    "bang-motion"
   ],
   "dynamic_checks": [
     {

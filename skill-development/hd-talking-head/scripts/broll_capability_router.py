@@ -119,6 +119,15 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
+    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+        from motion_native_skill_adapter import ENTRY, VERSION, load_template_catalog
+        dependency = candidate['dependency_id']
+        rows = load_template_catalog(Path(__file__).resolve().parents[3], dependency_id=dependency)
+        return (candidate.get('template_origin') == 'custom_fallback'
+                and candidate.get('adaptation_level') == 'structural'
+                and candidate.get('source_entrypoint') == ENTRY
+                and candidate.get('producer_version') == VERSION
+                and dependency + ':' + str(template_id) in {row['candidate_id'] for row in rows})
     if candidate.get('dependency_id') == 'paper-collage-hyperframes':
         return (candidate.get('template_origin') == 'custom_fallback'
                 and candidate.get('adaptation_level') == 'structural'
@@ -604,6 +613,15 @@ def _validate_code_cross_fields(
         raise RouterError("invocation_record.argv must be an array")
     if argv.count(entrypoint) != 1:
         raise RouterError("invocation_record.argv must bind entrypoint exactly once")
+    if dependency_id in {'barty-motion-graphics', 'bang-motion'}:
+        from motion_native_skill_adapter import ENTRY, VERSION
+        from motion_native_runtime import PACKAGES
+        package, version = PACKAGES[dependency_id]
+        if (not _native_selection(component) or entrypoint != ENTRY
+                or primary_renderer != 'HTMLCanvas'
+                or component.get('template_version') != VERSION
+                or component.get('renderer_version') != package + '-' + version):
+            raise RouterError('Native motion requires its complete pinned workflow and actual renderer')
     if dependency_id == "adu-motion-video":
         if component.get("semantic_role") == "evidence":
             raise RouterError("Adu explanatory animation is not factual evidence")

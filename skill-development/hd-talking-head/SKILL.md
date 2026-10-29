@@ -120,6 +120,8 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
+- [Barty 完整原生动效](references/barty-motion-integration.md)（连续形态透明贴片与三类 explainer；先调用原生创作，再接收真实结果）
+- [Bang Motion 完整原生动效](references/bang-motion-integration.md)（10 种风格、6 类 explainer、19 种 opener 概念；正文按语义选择，不改变静态封面政策）
 - [Lemo 原生 Skill 的 59 种风格模板](references/lemo-opuscar.md)（选中 Lemo 后读取，按具体 STYLE 制作当前主题）
 - [OpenFilm 原生 motion-graphics 创作与验收](references/openfilm-motion-graphics.md)（选择主题专属主体动作、物件操作或信息探索场景时）
 - [生成型 B-roll 的子 Skill 编排](references/generated-broll-skills.md)（白板、拼贴、手绘动画进入候选时；区分真实调用测试与正式准入）

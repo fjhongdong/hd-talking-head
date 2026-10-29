@@ -80,7 +80,8 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
             raise ValueError(f"Motion capability content scope is invalid: {cid}")
         if scope["mode"] == "full_scene" and (
                 profile["capability_type"] not in {"creative_skill", "design_source"}
-                or not set(profile["uses"]) <= {"broll", "design"}):
+                or not set(profile["uses"]) <= {"aroll_overlay", "broll", "design"}
+                or ("aroll_overlay" in profile["uses"] and profile["capability_type"] != "creative_skill")):
             raise ValueError(f"Full-scene authoring scope is invalid for this use: {cid}")
         reviewed = profile["reviewed_sources"]
         if not isinstance(reviewed, dict) or set(reviewed) != set(profile["evidence"]):
@@ -130,6 +131,11 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
     skill = project / "skill-development/hd-talking-head"
     rows = []
     for template, route in _ROUTE_BY_TEMPLATE.items():
+        if template == 'barty-motion-graphics/motion-broll':
+            from .broll_skill_selection import motion_native_candidates
+            native = next(row for row in motion_native_candidates(project) if row['template_id'] == template)
+            rows.append({**native, 'candidate_id': 'overlay:' + route, 'role': 'aroll_overlay'})
+            continue
         values, _ = _declarations(skill / "scripts" / (_OVERLAY_MODULES[route] + ".py"))
         entry = values["ENTRY"]
         if not (skill / entry).is_file():
@@ -391,10 +397,34 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     "record": {"job_path": record_path, "sha256": hashlib.sha256(data).hexdigest(), "byte_count": len(data)}}}
         finally:
             sys.path[:] = previous
+    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+        scripts = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts'
+        previous = sys.path[:]
+        try:
+            sys.path.insert(0, str(scripts))
+            module = importlib.import_module('motion_native_skill_adapter')
+            module.validate_brief(path.read_bytes())
+            record_path = brief['result_record_path']
+            if (root / record_path).is_file():
+                data = (root / record_path).read_bytes()
+                result = module.inspect_result(root, path.read_bytes(), record_bytes=data)
+                if result['renderer_version'] != segment['bindings'][component]['renderer_version']:
+                    raise ValueError('Native motion result renderer differs from the selected binding')
+                call = contract_artifacts.read_json_artifact(module.exact(root, result['render_call']))
+                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix == '.html']
+                if not sources:
+                    raise ValueError('Native motion result has no frozen authored scene')
+                brief = {**brief, 'native_result': {**result, 'scene_sources': sources,
+                    'record': {'job_path': record_path, 'sha256': hashlib.sha256(data).hexdigest(), 'byte_count': len(data)}}}
+        finally:
+            sys.path[:] = previous
     return brief
 
 
 def _brief_overlay_route(brief: Mapping) -> str | None:
+    if (brief.get('dependency_id') == 'barty-motion-graphics' and brief.get('template_id') == 'motion-broll'
+            and brief.get('alpha') is True):
+        return 'barty-motion-graphics/motion-broll'
     route = brief.get("upstream_route")
     if isinstance(route, str):
         return route.removeprefix("hyperframes/")
@@ -463,10 +493,15 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                     raise ValueError("native validator module belongs to another project")
                 payload = contract_artifacts.canonical_json_bytes(
                     {k: v for k, v in brief.items() if k != "native_result"}
-                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft"} else brief)
+                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion"} else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
+                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'} and (
+                            checked['dependency_id'] != row['dependency_id']
+                            or row['template_id'] != checked['dependency_id'] + '/' + checked['template_id']
+                            or checked['alpha'] != (row['role'] == 'aroll_overlay')):
+                        raise ValueError('Native motion task differs from the selected template or output use')
                     if row.get("dependency_id") == "lemo-opuscar" and (
                             checked.get("dependency_id") != "lemo-opuscar"
                             or row["template_id"] != "lemo-opuscar/" + checked["style_slug"]):
@@ -594,6 +629,24 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                             native_result["record"]["job_path"]}
                 if None in required or not required.issubset(paths):
                     raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
+        motion_required = set()
+        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+                           and phase == 'planning' and not brief.get('native_result'))
+        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+            if motion_planning:
+                planning = {ref.get('pointer') for ref in refs if isinstance(ref, dict) and ref.get('path') == relative}
+                if not {'/transcript', '/semantic_goal', '/template_id'}.issubset(planning):
+                    raise ValueError('Native motion planning must cite transcript, semantic goal and original template')
+            else:
+                result = brief.get('native_result')
+                if not isinstance(result, dict) or result.get('status') != 'completed':
+                    raise ValueError('Native motion needs its actual completed scene for final acceptance')
+                motion_required = {item['job_path'] for item in result['scene_sources']}
+                cited = {ref.get('path') for ref in refs if isinstance(ref, dict) and 'quote' in ref}
+                records = [ref for ref in refs if isinstance(ref, dict) and ref.get('path') == result['record']['job_path']]
+                if (not motion_required.issubset(cited) or len(records) != 1
+                        or records[0].get('pointer') != '/status' or records[0].get('value') != 'completed'):
+                    raise ValueError('Native motion must cite its actual authored HTML and completed result')
         talkcraft_required = set()
         talkcraft_planning = row.get("dependency_id") == "video-talkcraft" and phase == "planning" and not brief.get("native_result")
         if row.get("dependency_id") == "video-talkcraft":
@@ -614,7 +667,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     raise ValueError("TalkCraft planning must cite approved transcript, semantic goal and native recipe")
         from .overlay_alignment import _path
         entry_cited = (row["capability"]["capability_type"] != "creative_skill"
-                       or talkcraft_planning or bool(talkcraft_required))
+                       or talkcraft_planning or motion_planning or bool(talkcraft_required) or bool(motion_required))
         if row.get("dependency_id") == "lemo-wake":
             image_cited = any(ref.get("path") == brief["image"]["job_path"] and ref.get("image") is True
                               for ref in refs if isinstance(ref, dict))
@@ -647,7 +700,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                     picture.verify()
             elif "pointer" in ref:
                 value = _json_pointer(contract_artifacts.read_json_artifact(file), ref["pointer"])
-                if path == relative and not talkcraft_planning and ref["pointer"].split("/")[1] in {
+                if path == relative and not (talkcraft_planning or motion_planning) and ref["pointer"].split("/")[1] in {
                     "source_binding", "template_request", "creative_handoff", "upstream",
                     "composition", "canvas", "assets", "entry", "semantic_goal",
                 }:
@@ -669,7 +722,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
             raise ValueError("creative Skill requires evidence from its actual frozen scene")
         return {"status": assessment["verdict"], "judged_by": "host", "binding_verified": True,
                 "reason": assessment["reason"],
-                **({"scope": "planning_inputs"} if talkcraft_planning else {})}
+                **({"scope": "planning_inputs"} if talkcraft_planning or motion_planning else {})}
     except (ValueError, KeyError, TypeError, IndexError, OSError, ImportError) as error:
         return {**result, "reason": str(error)}
 

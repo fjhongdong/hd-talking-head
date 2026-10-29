@@ -28,6 +28,16 @@ Riso 的草稿预检与正式组装共用 `riso_output_contract`：`layer_role=b
 
 Riso 的输入绑定引用本包中本次实际模板的原生源码，不依赖旧开发 Job 的测试视频。该源码摘要只标识本次引用，不代表本期已渲染或通过视觉验收。
 
+## Barty 与 Bang Motion
+
+Barty Motion Graphics 是一个渠道，包含 `motion-broll`、`explainer-default`、`explainer-engaging` 和 `explainer-high-energy` 四套完整原生创作流程。`motion-broll` 的透明贴片与整屏画面共享同一模板身份；用途条目分开校验，不额外增加模板数。对象分离和音效是辅助流程，不单独算视觉模板。
+
+Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 工作流和 19 种 opener 概念按 35 个模板选项管理。可组合选择，但不将组合相乘计数，不将渲染工具或新主题登记成模板。opener 是创作形式，不强制替换口播默认静态封面。
+
+两渠道共增加 39 个模板。标签只在本页指定的统一索引维护；各自 `*-template-catalog.json` 只保存原生入口与模板定位。完整 Skill 自主完成设计、动作与工程，父级不预写逐层编舞。调用、整表确认、实际结果审核与冻结消费沿已有阶段入口进行；不能把待执行的原生任务当成已完成动画。具体入口和边界见 [Barty](barty-motion-integration.md) 与 [Bang](bang-motion-integration.md)。
+
+完整创作流程也可承担透明贴片，但仅限已具备真实 alpha 调用路径的用途；`full_scene` 的语义召回不能授予透明资格。Bang 当前仅作为不透明 B-roll，不能因原生文档提到 lower third 就声称可导出透明视频。
+
 ## 每条视频怎么用
 
 1. 先理解整篇口播与真实时码，拆出每段的主体、动作、变化、关系、人物负担，以及否定、条件和不能提前展示的后续结果。先提出表现方式，再根据具体候选修正；不预先锁死某个 Skill 或模板。

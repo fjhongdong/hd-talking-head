@@ -35,7 +35,16 @@ def _exact(root, record):
         raise VisualConfirmationError("confirmed visual evidence changed: " + record["path"])
     return path
 
-NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter'}
+NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
+                         'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter'}
+
+def native_candidate_id(dependency, brief):
+    if dependency == 'lemo-wake':
+        return 'lemo-wake:wake'
+    if dependency == 'video-talkcraft':
+        return 'video-talkcraft:' + brief['card_id']
+    template = dependency + '/' + brief['template_id']
+    return ('overlay:' if brief['alpha'] else dependency + ':') + template
 
 def _native_result_adapter(dependency):
     import importlib.util
@@ -64,7 +73,7 @@ def _freeze_reviewed_native_result(root, treatment, segment_id, component_id, br
     import json
     brief = json.loads(brief_payload)
     relative = brief["result_record_path"]
-    candidate = 'lemo-wake:wake' if dependency == 'lemo-wake' else 'video-talkcraft:' + brief['card_id']
+    candidate = native_candidate_id(dependency, brief)
     reviewed = _native_review_reference(treatment, segment_id, component_id, relative, candidate)
     data = _path(root, relative).read_bytes()
     digest = hashlib.sha256(data).hexdigest()
@@ -92,11 +101,11 @@ def _validate_native_results(root, mapping, director, treatment):
             expected = native["result_record"]
             import json
             brief = json.loads(payload)
-            candidate = 'lemo-wake:wake' if dependency == 'lemo-wake' else 'video-talkcraft:' + brief['card_id']
+            candidate = native_candidate_id(dependency, brief)
             reviewed = _native_review_reference(treatment, segment["segment_id"], cid, expected["path"], candidate)
             if reviewed["sha256"] != expected["sha256"]:
                 raise VisualConfirmationError("Wake mapping differs from the host's reviewed result")
-            options = {'expected_renderer_version': binding['renderer_version']} if dependency == 'video-talkcraft' else {}
+            options = {'expected_renderer_version': binding['renderer_version']} if dependency != 'lemo-wake' else {}
             _native_result_adapter(dependency).load_result(root, payload, expected_record=expected, **options)
 
 
@@ -640,7 +649,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     except ValueError as error:
         raise VisualConfirmationError("visual selection: " + str(error)) from error
     from . import overlay_alignment
-    overlay_alignment.validate_treatment(job, director, Path(treatment_path))
+    overlay_alignment.validate_treatment(job, director, Path(treatment_path), phase='planning')
     from . import motion_readability
     motion_readability.validate_direction_contract(job, director, treatment)
     from . import avatar_profile, visual_review

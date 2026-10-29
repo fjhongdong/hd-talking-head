@@ -319,7 +319,12 @@ class BrollSkillSelectionTest(unittest.TestCase):
         by_id = {row["candidate_id"]: row for row in catalog}
         self.assertFalse(any(cid.startswith("hd-talking-head-talkcraft:") for cid in by_id))
         self.assertEqual(len([cid for cid in by_id if cid.startswith("talkcraft-native-adaptation:")]), 4)
-        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 8)
+        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 9)
+        added = [row for row in catalog if row['skill_id'] in {'barty-motion-graphics', 'bang-motion'}]
+        self.assertEqual(len({selection._template_identity(row) for row in added}), 39)
+        self.assertEqual({row['skill_id'] for row in added}, {'barty-motion-graphics', 'bang-motion'})
+        self.assertEqual(selection._template_identity(by_id['overlay:barty-motion-graphics/motion-broll']),
+                         selection._template_identity(by_id['barty-motion-graphics:barty-motion-graphics/motion-broll']))
         self.assertFalse(any(cid.startswith(("history:", "unconnected:"))
                              for cid in by_id))
         self.assertEqual({row['status'] for row in catalog}, {'supported'})

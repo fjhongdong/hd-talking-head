@@ -59,7 +59,7 @@
         "skill-development/vendor/adu-motion-video/template/templates.js"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "55e3687dec6790eadef92a06d17a604860e6b41df5e1975e21897c35580e8f2f",
         "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "79ca69b8a7ea42fd56b97dfb9001babd82542fcf4b09e40381dab687dbf7577e",
         "skill-development/hd-talking-head/scripts/render_adu_native.mjs": "96dcc1b15e98e4353b21b733dbe9c925e6b6c9099e67d14175a0cd0706813c07",
         "skill-development/vendor/adu-motion-video/SKILL.md": "6554f247f5503b3fdd0f3afb64760e16c85437eefd0aeaf99399309a39a4779c",
@@ -788,7 +788,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/DataRollup.tsx": "af3bea37764c04e571bdf158748e3442b9cc788dbc7e94226c6519586d752e15",
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/Root.tsx": "613d7be4f5fe24f2f15280791af69fe871ac9a365ff68ff5d4a46b6e9a0d5b15",
         "skill-development/hd-talking-head/assets/verified-templates/html-video/frame-data-rollup/source/entry.ts": "a70203d7cd74c6bf063461f10a968e4ceb796dd8f181f27416c8469687c92268",
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "55e3687dec6790eadef92a06d17a604860e6b41df5e1975e21897c35580e8f2f",
         "skill-development/hd-talking-head/scripts/data_rollup_adapter.py": "7cdfa3835d956bce2a3b469c870792fc9faa8047bb555d569058af37a88f2850",
         "skill-development/hd-talking-head/scripts/render_data_rollup.cjs": "f29bcface7b956728086714d9977867de93664fa29a870f8fc1f114f6071800a"
       },
@@ -1344,7 +1344,7 @@
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/assets/hyperframes-logo-white.svg": "f9f942c43b465616c3af2fb8b07daf1cc05a4776903bbb27beb2bb608060e6c7",
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/notification-cascade.html": "9bb3a62e358ff2b66c2afa6b9bd6110bfc3e834c8ff4c543c52cfc368c0db1d9",
         "skill-development/hd-talking-head/assets/verified-templates/hyperframes/notification-cascade/execution-v2/qualification/source/registry-item.json": "1208c8514e7cbd6cfd7a3832d4c7b22d8e64e35d3f6c432e3fb1bf3f4e245507",
-        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "0b7d64344cf21ca643a2c5232a654ac539ad6d1ebecc606fcd19cc0f20f619ac",
+        "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "55e3687dec6790eadef92a06d17a604860e6b41df5e1975e21897c35580e8f2f",
         "skill-development/hd-talking-head/scripts/hyperframes_notification_adapter.py": "ec505e92f4262f521db1ad7507387d89f0559a37c1a5ee011f0963254776dcaa",
         "skill-development/hd-talking-head/scripts/render_hyperframes_notification.cjs": "85467b880392cac08734a1a7e0337b0c58a34c2b273b3f614d500f4342d83884"
       },
@@ -5570,7 +5570,7 @@
         "skill-development/vendor/lemo-wake/skills/wake/scripts/qa.py": "f6324c57c5c833ea13bd7a0ca6c3d07262b98ac30d8d42e3e4fb4f208dbffa64",
         "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "300eacaf5c57d016ddc20d6a4bb42c33072decca22d62826fb2898d5df864da7",
         "skill-development/hd-talking-head/references/cover-opening-bgm.md": "005da9c818545f240560e4502de7d2e365cbd6c66b2bc8b9ff7aa5dc69f573f5",
-        "edit/hd/tools/dependency_contracts.py": "fac47cabaa432e2548e24e86baff4f0f1541f6df13f990017c2051a51b646341"
+        "edit/hd/tools/dependency_contracts.py": "38b5d4ea2f234652361aefe48ce0a05eab44df54c1cc409dc8a37cb78a5640a8"
       },
       "content_scope": {
         "mode": "full_scene",
@@ -12378,6 +12378,2148 @@
       "content_scope": {
         "mode": "fixed_action",
         "evidence_ref": "skill-development/hd-talking-head/assets/wise-motion-runtime/index.jsx"
+      }
+    },
+    {
+      "candidate_id": "overlay:barty-motion-graphics/motion-broll",
+      "uses": [
+        "aroll_overlay"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Barty 连续形态透明贴片",
+      "summary": "随口播词句设计单一形态连续变化，可做全画幅或透明面板。",
+      "tags": {
+        "subjects": [
+          "产品",
+          "流程",
+          "数据",
+          "概念"
+        ],
+        "actions": [
+          "变形",
+          "点击",
+          "拖动",
+          "输入",
+          "对比"
+        ],
+        "relations": [
+          "过程",
+          "前后",
+          "组成"
+        ],
+        "feelings": [],
+        "styles": [
+          "界面",
+          "连续变形"
+        ],
+        "patterns": [
+          "continuous_shape",
+          "process",
+          "comparison"
+        ]
+      },
+      "editable_content": [
+        "逐句创作、尺寸、时长、背景、关键帧及内容"
+      ],
+      "limitations": [
+        "需按原生流程编写片段；样例是参考，不是额外模板。",
+        "透明面板 bg:null 使用 ProRes 4444 MOV；画面与素材帧率匹配。"
+      ],
+      "evidence": [
+        "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md": "78e7d064aba37b8b10ea39973c61200e3c16e325fa20074f97ab29e1df1866d2"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md"
+      }
+    },
+    {
+      "candidate_id": "barty-motion-graphics:barty-motion-graphics/motion-broll",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Barty 连续形态口播配画面",
+      "summary": "随口播词句设计单一形态连续变化，可做全画幅或透明面板。",
+      "tags": {
+        "subjects": [
+          "产品",
+          "流程",
+          "数据",
+          "概念"
+        ],
+        "actions": [
+          "变形",
+          "点击",
+          "拖动",
+          "输入",
+          "对比"
+        ],
+        "relations": [
+          "过程",
+          "前后",
+          "组成"
+        ],
+        "feelings": [],
+        "styles": [
+          "界面",
+          "连续变形"
+        ],
+        "patterns": [
+          "continuous_shape",
+          "process",
+          "comparison"
+        ]
+      },
+      "editable_content": [
+        "逐句创作、尺寸、时长、背景、关键帧及内容"
+      ],
+      "limitations": [
+        "需按原生流程编写片段；样例是参考，不是额外模板。",
+        "透明面板 bg:null 使用 ProRes 4444 MOV；画面与素材帧率匹配。"
+      ],
+      "evidence": [
+        "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md": "78e7d064aba37b8b10ea39973c61200e3c16e325fa20074f97ab29e1df1866d2"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/barty-motion-graphics/skills/motion-broll/SKILL.md"
+      }
+    },
+    {
+      "candidate_id": "barty-motion-graphics:barty-motion-graphics/explainer-default",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Barty 清爽产品演示",
+      "summary": "以镜头推拉和重建产品界面讲解功能，适合完整产品演示。",
+      "tags": {
+        "subjects": [
+          "软件",
+          "产品",
+          "界面"
+        ],
+        "actions": [
+          "展示",
+          "输入",
+          "操作"
+        ],
+        "relations": [
+          "功能",
+          "流程"
+        ],
+        "feelings": [],
+        "styles": [
+          "简洁",
+          "产品演示"
+        ],
+        "patterns": [
+          "product_demo"
+        ]
+      },
+      "editable_content": [
+        "品牌、内容、横竖画幅、45–90 秒及生成 HTML"
+      ],
+      "limitations": [
+        "原生建议 45–90 秒，默认 60 秒；时长是创作建议而非渲染器硬限制。",
+        "原生 H.264 MP4 不提供透明输出。"
+      ],
+      "evidence": [
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-default/SKILL.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-default/SKILL.md": "3dc4247d1e916cc070c432afbff4fb211e224ad463b4ca10c90c617abf68162e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/barty-motion-graphics/skills/explainer-default/SKILL.md"
+      }
+    },
+    {
+      "candidate_id": "barty-motion-graphics:barty-motion-graphics/explainer-engaging",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Barty 一镜到底流程故事",
+      "summary": "一个主体穿过多个工作流站点，最后展示全貌并无缝循环。",
+      "tags": {
+        "subjects": [
+          "产品",
+          "流程",
+          "概念"
+        ],
+        "actions": [
+          "移动",
+          "交互",
+          "循环"
+        ],
+        "relations": [
+          "步骤",
+          "过程"
+        ],
+        "feelings": [],
+        "styles": [
+          "连续镜头",
+          "叙事"
+        ],
+        "patterns": [
+          "workflow_journey"
+        ]
+      },
+      "editable_content": [
+        "主体、站点、镜头、画幅、10–30 秒及生成 HTML"
+      ],
+      "limitations": [
+        "原生建议 10–30 秒，默认 12 秒；时长是创作建议而非渲染器硬限制。",
+        "原生 H.264 MP4 不提供透明输出。"
+      ],
+      "evidence": [
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-engaging/SKILL.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-engaging/SKILL.md": "969a4114a2396cd62bc381da6c8ffe61b68e471d3e4f16206d74d7574340d656"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/barty-motion-graphics/skills/explainer-engaging/SKILL.md"
+      }
+    },
+    {
+      "candidate_id": "barty-motion-graphics:barty-motion-graphics/explainer-high-energy",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Barty 高能产品短片",
+      "summary": "节奏驱动的文字、图形与产品动作，以形状贯穿场景。",
+      "tags": {
+        "subjects": [
+          "产品",
+          "品牌",
+          "概念"
+        ],
+        "actions": [
+          "强调",
+          "切换",
+          "展示"
+        ],
+        "relations": [
+          "节奏",
+          "转场"
+        ],
+        "feelings": [],
+        "styles": [
+          "高能",
+          "动感文字"
+        ],
+        "patterns": [
+          "kinetic_promo"
+        ]
+      },
+      "editable_content": [
+        "场景、品牌、画幅、12–20 秒及生成 HTML"
+      ],
+      "limitations": [
+        "原生建议 12–20 秒，默认 15 秒；时长是创作建议而非渲染器硬限制。",
+        "原生 H.264 MP4 不提供透明输出；小字需按本项目最终画面要求复核。"
+      ],
+      "evidence": [
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-high-energy/SKILL.md"
+      ],
+      "reviewed_sources": {
+        "skill-development/vendor/barty-motion-graphics/skills/explainer-high-energy/SKILL.md": "4aafa6ddae8bc81e4e621d2852d2d0675d421bbba318eb81334f4dac1556fdec"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/barty-motion-graphics/skills/explainer-high-energy/SKILL.md"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-cinematic-dark",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 暗色电影感",
+      "summary": "按本期主题制作暗色电影感视觉方向。",
+      "tags": {
+        "subjects": [
+          "创意工具",
+          "游戏",
+          "科技"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "暗色",
+          "光影",
+          "推镜"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-poster-color-block",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 海报色块",
+      "summary": "按本期主题制作海报色块视觉方向。",
+      "tags": {
+        "subjects": [
+          "消费应用",
+          "音乐",
+          "活动"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "巨型字体",
+          "色块擦入"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-bright-editorial",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 明亮编辑风",
+      "summary": "按本期主题制作明亮编辑风视觉方向。",
+      "tags": {
+        "subjects": [
+          "效率",
+          "金融",
+          "SaaS"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "留白",
+          "衬线",
+          "细线"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-paper-print",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 纸张印刷",
+      "summary": "按本期主题制作纸张印刷视觉方向。",
+      "tags": {
+        "subjects": [
+          "教育",
+          "社区",
+          "美食"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "纸质",
+          "拼贴",
+          "印章"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-retro-analog",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 复古模拟",
+      "summary": "按本期主题制作复古模拟视觉方向。",
+      "tags": {
+        "subjects": [
+          "怀旧",
+          "音乐",
+          "娱乐"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "颗粒",
+          "模拟",
+          "闪切"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-brutalist-mono",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 黑白粗野主义",
+      "summary": "按本期主题制作黑白粗野主义视觉方向。",
+      "tags": {
+        "subjects": [
+          "开发工具",
+          "技术"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "黑白",
+          "网格",
+          "硬切"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-cheerful-pastel",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 明快粉彩",
+      "summary": "按本期主题制作明快粉彩视觉方向。",
+      "tags": {
+        "subjects": [
+          "儿童",
+          "健康",
+          "生活方式"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "粉彩",
+          "圆形",
+          "弹跳"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-dark-luxury",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 暗色奢华",
+      "summary": "按本期主题制作暗色奢华视觉方向。",
+      "tags": {
+        "subjects": [
+          "时尚",
+          "汽车",
+          "房产"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "金属",
+          "暗色",
+          "慢速光影"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-flat-pop-photo",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 照片平面波普",
+      "summary": "按本期主题制作照片平面波普视觉方向。",
+      "tags": {
+        "subjects": [
+          "消费应用",
+          "金融",
+          "电商"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "人物照片",
+          "贴纸",
+          "色场"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/style-grainy-gradient",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 颗粒渐变",
+      "summary": "按本期主题制作颗粒渐变视觉方向。",
+      "tags": {
+        "subjects": [
+          "科技",
+          "AI",
+          "音乐"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "渐变",
+          "颗粒",
+          "层叠"
+        ],
+        "patterns": [
+          "style"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/references/techniques.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/SKILL.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/references/techniques.md": "9a0c7a9716fea74421aa02a48f4e63edd837b7b308bfd425d5c3578e5e0144fc",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-cartoon-collage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 卡通拼贴",
+      "summary": "原生讲解风格工作流，适合轻松科普、儿童教育。",
+      "tags": {
+        "subjects": [
+          "轻松科普",
+          "儿童教育"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "插画",
+          "纸张",
+          "拼贴"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-kartun.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-kartun.html": "edd457165a8d0ab5b3bf4b5a46fde2681dc99503402b0b1ebf7030b123e8cd53",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-visual-journalism",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 视觉新闻",
+      "summary": "原生讲解风格工作流，适合新闻、社会议题。",
+      "tags": {
+        "subjects": [
+          "新闻",
+          "社会议题"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "真实照片",
+          "来源标注"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-jurnalisme.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-jurnalisme.html": "6ce2fbbce85f532a30ba7c0ff217857c0481b44827b889ed13adbcca9a6bd16b",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-white-catalog",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 白色产品图录",
+      "summary": "原生讲解风格工作流，适合产品、品牌、公司介绍。",
+      "tags": {
+        "subjects": [
+          "产品",
+          "品牌",
+          "公司介绍"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "照片",
+          "白底",
+          "注释"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-katalog.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-katalog.html": "75803f02b0837919cd3ca44fc4af4cdd4db5cdc1ef4ccdb4714485a0bfe40b64",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-vintage-sketch",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 复古素描",
+      "summary": "原生讲解风格工作流，适合历史、人物、发明。",
+      "tags": {
+        "subjects": [
+          "历史",
+          "人物",
+          "发明"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "蚀刻",
+          "旧纸",
+          "注释"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-sketsa.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-sketsa.html": "e6d06197b2f3ee217e6e0b9b99f58a05e23a1f28967b1cc2182478d4b53412bd",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-continuous-action",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 连续动作矢量",
+      "summary": "原生讲解风格工作流，适合速度、路线、交通、过程。",
+      "tags": {
+        "subjects": [
+          "速度",
+          "路线",
+          "交通",
+          "过程"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "矢量",
+          "连续动作"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer.html": "ca7837f0a8c2aabc60aece8a15b92893137c60add84b3206f8fafc45a0c9fd51",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/explainer-cartoon-stage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 卡通舞台",
+      "summary": "原生讲解风格工作流，适合角色教育、过程与影响。",
+      "tags": {
+        "subjects": [
+          "角色教育",
+          "过程与影响"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "角色",
+          "分场景",
+          "关节动作"
+        ],
+        "patterns": [
+          "explainer"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/explainer.md",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-panggung.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/explainer.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/explainer.md": "6470b6c70e588fd8debb48765eb825f5d0784c82fa0c5861ad5be801639bf19f",
+        "skill-development/vendor/bang-motion/assets/starter-explainer-panggung.html": "cb623389cb50eab7a8d3e64905eb82b844986f649585aef5dd494e917f13af92",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-continuous-shot",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 单镜头连续空间",
+      "summary": "原生开场叙事概念：单镜头连续空间。",
+      "tags": {
+        "subjects": [
+          "空间",
+          "硬件"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "单镜头连续空间"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-pure-typography",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 纯动态文字",
+      "summary": "原生开场叙事概念：纯动态文字。",
+      "tags": {
+        "subjects": [
+          "观点",
+          "标语"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "纯动态文字"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-problem-disappears",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 问题消失",
+      "summary": "原生开场叙事概念：问题消失。",
+      "tags": {
+        "subjects": [
+          "问题与解决"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "问题消失"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-before-after",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 前后对照",
+      "summary": "原生开场叙事概念：前后对照。",
+      "tags": {
+        "subjects": [
+          "变化",
+          "对比"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "前后对照"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-ui-journey",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 界面内旅程",
+      "summary": "原生开场叙事概念：界面内旅程。",
+      "tags": {
+        "subjects": [
+          "应用",
+          "界面"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "界面内旅程"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-product-macro",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 产品微距",
+      "summary": "原生开场叙事概念：产品微距。",
+      "tags": {
+        "subjects": [
+          "硬件",
+          "包装"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "产品微距"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-object-metaphor",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 物件隐喻",
+      "summary": "原生开场叙事概念：物件隐喻。",
+      "tags": {
+        "subjects": [
+          "抽象服务"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "物件隐喻"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-living-number",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 数字叙事",
+      "summary": "原生开场叙事概念：数字叙事。",
+      "tags": {
+        "subjects": [
+          "数据",
+          "成果"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "数字叙事"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-single-feature-demo",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 单功能演示",
+      "summary": "原生开场叙事概念：单功能演示。",
+      "tags": {
+        "subjects": [
+          "功能",
+          "过程"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "单功能演示"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-question-answer",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 世界内提问回答",
+      "summary": "原生开场叙事概念：世界内提问回答。",
+      "tags": {
+        "subjects": [
+          "问题",
+          "答案"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "世界内提问回答"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-rhythmic-collage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 节奏拼贴",
+      "summary": "原生开场叙事概念：节奏拼贴。",
+      "tags": {
+        "subjects": [
+          "音乐",
+          "活动"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "节奏拼贴"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-logo-stage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 标志构成舞台",
+      "summary": "原生开场叙事概念：标志构成舞台。",
+      "tags": {
+        "subjects": [
+          "品牌",
+          "标志"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "标志构成舞台"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-object-relay",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 物件接力",
+      "summary": "原生开场叙事概念：物件接力。",
+      "tags": {
+        "subjects": [
+          "流程",
+          "传递"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "物件接力"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-brand-system",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 品牌体系展示",
+      "summary": "原生开场叙事概念：品牌体系展示。",
+      "tags": {
+        "subjects": [
+          "品牌",
+          "视觉资产"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "品牌体系展示"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-claim-how-result",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 主张过程结果",
+      "summary": "原生开场叙事概念：主张过程结果。",
+      "tags": {
+        "subjects": [
+          "功能",
+          "结果"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "主张过程结果"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-living-ui-ecosystem",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 动态界面生态",
+      "summary": "原生开场叙事概念：动态界面生态。",
+      "tags": {
+        "subjects": [
+          "协作",
+          "工作流"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "动态界面生态"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-flat-pop-people",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 平面波普人物",
+      "summary": "原生开场叙事概念：平面波普人物。",
+      "tags": {
+        "subjects": [
+          "人物",
+          "消费品牌"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "平面波普人物"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-gradient-shape-tunnel",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 渐变形状穿越",
+      "summary": "原生开场叙事概念：渐变形状穿越。",
+      "tags": {
+        "subjects": [
+          "科技",
+          "发布"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "渐变形状穿越"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
+      }
+    },
+    {
+      "candidate_id": "bang-motion:bang-motion/opener-product-tour-claims",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "1.0.0",
+      "title": "Bang 产品导览与主张",
+      "summary": "原生开场叙事概念：产品导览与主张。",
+      "tags": {
+        "subjects": [
+          "界面",
+          "产品功能"
+        ],
+        "actions": [
+          "创作",
+          "演示"
+        ],
+        "relations": [],
+        "feelings": [],
+        "styles": [
+          "产品导览与主张"
+        ],
+        "patterns": [
+          "opener"
+        ]
+      },
+      "editable_content": [
+        "本次真实文稿、画面任务、素材和设计方案",
+        "尺寸、时长及内容按原生工作流创作"
+      ],
+      "limitations": [
+        "完整创作流程，非填词即可渲染的组件；先完成本期设计和工程。",
+        "竖屏使用原生逐帧导出与整板 90° 回正，不缩放、不裁切、不变速；本期实际画面仍须验收。",
+        "透明视频导出未由上游脚本证明；不作为透明贴片候选。"
+      ],
+      "evidence": [
+        "skill-development/vendor/bang-motion/references/opener-konsep.md",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html",
+        "skill-development/vendor/bang-motion/SKILL.md",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs"
+      ],
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "skill-development/vendor/bang-motion/references/opener-konsep.md"
+      },
+      "reviewed_sources": {
+        "skill-development/vendor/bang-motion/references/opener-konsep.md": "a9818da8561d43b168188abb6a0f8642e0e9296a7b0be5728df1e15fddf3ce3c",
+        "skill-development/vendor/bang-motion/assets/starter-opener.html": "bbe560bb885032b9f20e4e2618d47bbbf2617061a3bf670485eebecb4e1b618e",
+        "skill-development/vendor/bang-motion/SKILL.md": "c4782d6002ed2fda3d4dd0acf82a925f7aaf78a11bbb9c6e981763c587cd36de",
+        "skill-development/vendor/bang-motion/scripts/export-frames.mjs": "b71506aa35794d34dcba9a83e1807eedf2a3c22ca15254ef6bc02d4fd694ea64"
       }
     }
   ]

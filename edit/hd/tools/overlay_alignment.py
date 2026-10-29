@@ -393,14 +393,14 @@ def _native_events(route, mount, fps, native_duration):
     return events, start + duration
 
 
-def validate_treatment(job, draft, treatment_path) -> list[dict]:
+def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list[dict]:
     """Read actual HTML inputs, not duplicated intended trigger times."""
     targets = []
     for segment in draft["segments"]:
         if segment["visual_strategy"]["composition"]["family"] != "aroll_with_overlay":
             continue
         for cid, binding in segment["bindings"].items():
-            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native"}:
+            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics"}:
                 targets.append((segment, cid, binding))
     if not targets:
         return []
@@ -433,10 +433,34 @@ def validate_treatment(job, draft, treatment_path) -> list[dict]:
         brief = artifacts.read_json_artifact(brief_path)
         expected_source = {"aroll_sha256": arroll_sha, "segment_id": sid,
                            "start": segment["start"], "end": segment["end"]}
-        if brief.get("source_binding") != expected_source or brief.get("composition", {}).get("alpha") is not True:
+        alpha = brief.get('alpha') if binding.get('dependency_id') == 'barty-motion-graphics' else brief.get('composition', {}).get('alpha')
+        if brief.get("source_binding") != expected_source or alpha is not True:
             raise ValueError(f"overlay source or alpha contract changed: {sid}")
         if brief["composition"]["fps"] != fps:
             raise ValueError("native overlay requires the approved 24 fps clock")
+        if binding.get('dependency_id') == 'barty-motion-graphics':
+            from . import motion_capabilities
+            from .subtitles import _map_words
+            from importlib import import_module
+            native = import_module('motion_native_skill_adapter')
+            native.validate_brief(brief_path.read_bytes(), dependency_id='barty-motion-graphics')
+            route = 'barty-motion-graphics/motion-broll'
+            motion_capabilities.validate_overlay_capability(route, binding)
+            mapped = _map_words(words, {'segments': cuts})
+            anchors = [{'text': word['text'], 'start': max(word['start'], segment['start']) - segment['start'],
+                        'end': min(word['end'], segment['end']) - segment['start']}
+                       for word in mapped if word['start'] < segment['end'] and word['end'] > segment['start']]
+            if brief['word_anchors'] != anchors:
+                raise ValueError('Barty overlay word anchors differ from the approved edited speech')
+            if phase not in {'planning', 'completed'}:
+                raise ValueError('Unknown native overlay verification phase')
+            result = native.inspect_result(job.job_dir, brief_path.read_bytes()) if phase == 'completed' else None
+            report.append({'segment_id': sid, 'component_id': cid, 'route': route,
+                           'brief_path': record['brief_path'], 'brief_sha256': binding['brief_sha256'],
+                           'word_anchors': anchors, 'phase': phase,
+                           **({'native_media_sha256': result['media']['sha256']} if result else {}),
+                           'note': 'Native Skill owns motion; actual visibility and readability are checked on its rendered result'})
+            continue
         if binding.get("dependency_id") == pinboard_alignment.DEPENDENCY_ID:
             checked = pinboard_alignment.validate_brief(
                 brief,

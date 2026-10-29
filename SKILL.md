@@ -20,6 +20,8 @@ description: 完整口播视频制作 Skill。用户提供原始视频和文案�
 
 基础准备只处理全流程必需环境。可选模板在选型后由阶段入口按需准备，不因未选模板缺失而阻塞启动。直接素材同样填写语义标签，模板栏写“素材直用（无动效模板）”。
 
+Barty 与 Bang Motion 已按独立渠道接入；分别读取[Barty 原生合同](skill-development/hd-talking-head/references/barty-motion-integration.md)和[Bang 原生合同](skill-development/hd-talking-head/references/bang-motion-integration.md)。二者完整保留原生创作流程，父级只传任务、素材、时钟、用途及授权，接收并审核真实输出；共用浏览器不合并渠道，组合参数不虚增模板。
+
 TalkCraft 完整原生调用见[专属合同](skill-development/hd-talking-head/references/talkcraft-native-skill.md)，Paper 完整创作与 Route B 见[专属合同](skill-development/hd-talking-head/references/paper-native-route-b.md)。配方按实际用途参与匹配，内部 renderer 和子路线不重复算渠道。
 
 能力库与候选只包含真实可执行的接入；未接入源码只作来源参考，不参与匹配或计数。父级传递任务、真实素材、原生入口或模板、必要公开参数及交付规格和授权；完整创作 Skill 按原生流程自行设计、导演、拆层、编排动作和制作代码。调用组件公开 props 是实际组件调用，不冒称调用完整创作 Skill。渠道指完整创作流程，可直接渲染，也可设计后调用本 Job 已批准的图片、视频服务。GBRO、Flat 共用 Lovart 仍是两个渠道，底层服务不额外计渠道。渠道内已有的原生风格、配方或完整工作流就是模板，设计与直接渲染的模板同等计数；更换主题、文案或底层模型不新增模板。选型、生成与复用引用同一已批准记录，详见[创作身份与复用](skill-development/hd-talking-head/references/visual-quality-contract.md#创作身份与生成结果复用)。

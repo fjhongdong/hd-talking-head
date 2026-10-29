@@ -237,8 +237,10 @@ def _validate_prepared_native_inputs(job, project, director, treatment, *, plann
         if (segment['segment_id'], cid) not in planned}} for segment in director['segments']]}
     from lemo_wake_adapter import validate_selected_inputs
     from talkcraft_skill_adapter import validate_selected_inputs as validate_talkcraft_inputs
+    from motion_native_skill_adapter import validate_selected_inputs as validate_motion_inputs
     validate_selected_inputs(job, prepared, treatment)
     validate_talkcraft_inputs(job, prepared, treatment)
+    validate_motion_inputs(job, prepared, treatment)
     _validate_selected_native_sources(job, prepared, treatment)
     _validate_selected_lemo_workflows(job, project, prepared, treatment)
     _validate_selected_native_parent_layouts(job, prepared, treatment)
@@ -439,7 +441,8 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
 
 def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
-    native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter'}
+    native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
+                      'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter'}
     from edit.hd.tools.subtitles_v2 import subtitle_layout
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
@@ -478,6 +481,8 @@ def _module(name: str):
 
 # Default constructor bindings; selection and preparation use these same IDs.
 _NATIVE_MODULES = {
+    'barty-motion-graphics': ('motion_native_skill_adapter', 'python'),
+    'bang-motion': ('motion_native_skill_adapter', 'python'),
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
@@ -587,11 +592,12 @@ def native_component_adapters(project: Path, job) -> dict:
             adapters[dependency] = _module('whiteboard_adapter').create_adapter(
                 vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
                 engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
-        elif dependency == 'video-talkcraft':
-            module = _module('talkcraft_skill_adapter')
+        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion'}:
+            module = _module('talkcraft_skill_adapter' if dependency == 'video-talkcraft' else 'motion_native_skill_adapter')
+            options = {} if dependency == 'video-talkcraft' else {'dependency_id': dependency}
             adapters[dependency] = {
                 (segment['segment_id'], component['component_id']): module.create_adapter(
-                    project, sys.executable, brief_loader, renderer_version=component['renderer_version'])
+                    project, sys.executable, brief_loader, renderer_version=component['renderer_version'], **options)
                 for segment in plan['segments'] for component in segment['shot_recipe']['components']
                 if component.get('dependency_id') == dependency}
         elif dependency == 'huashu-motion-native':

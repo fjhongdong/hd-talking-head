@@ -15,6 +15,7 @@ _ROUTE_BY_TEMPLATE = {
     "overlay-studio/pin-board": "pin-board",
     "huashu-motion/talking-head-stat": "huashu-stat",
     "motion-graphics-native/callout_pin": "callout-pin",
+    "barty-motion-graphics/motion-broll": "barty-motion-graphics/motion-broll",
 }
 _DEPENDENCY = "hyperframes-native-adaptation"
 _PINBOARD_DEPENDENCY = "overlay-studio-native"
@@ -25,6 +26,7 @@ _STRUCTURE["callout-pin"] = "target-callout"
 _ACTION = {"grid-card-assemble": "staggered_card_reveal", "notification-stack": "notification_stack", "toggle-flip": "state_toggle", "before-after-wipe": "moving_split_reveal", "hw-pipeline": "three_node_process", "pin-board": "cumulative_pin_drop"}
 _ACTION["huashu-stat"] = "native_count_up"
 _ACTION["callout-pin"] = "ring_and_label_target"
+_BARTY_ROUTE = 'barty-motion-graphics/motion-broll'
 _REQUIRED = {"segment_id", "component_id", "intent_relation", "native_route", "visible_action", "visual_structure", "selection_reason"}
 
 def _route(binding: Mapping) -> str:
@@ -47,6 +49,8 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
                           (_PINBOARD_DEPENDENCY if route == "pin-board" else
                            (_MOTION_GRAPHICS_DEPENDENCY if route == "callout-pin" else
                             ("huashu-motion-native" if route == "huashu-stat" else _DEPENDENCY))))
+            if route == _BARTY_ROUTE:
+                dependency = 'barty-motion-graphics'
             if binding.get("dependency_id") != dependency:
                 raise ValueError("A-roll overlay dependency does not match the native adapter")
             from .motion_capabilities import overlay_candidates, validate_overlay_capability
@@ -57,7 +61,7 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
             key = (segment["segment_id"], component_id)
             if route != "hw-pipeline" and native_routes.get(key) != route:
                 raise ValueError("A-roll template differs from the checked native brief route")
-            expected[key] = (segment, route, _STRUCTURE[route])
+            expected[key] = (segment, route, _STRUCTURE.get(route))
     if not expected:
         if isinstance(treatment, Mapping) and (treatment.get("overlay_selection") or treatment.get("repeat_review")):
             raise ValueError("overlay_selection is not allowed without A-roll overlays")
@@ -76,6 +80,13 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
         if key in seen or key not in expected:
             raise ValueError("overlay_selection target is missing or duplicated")
         _segment, route, structure = expected[key]
+        if route == _BARTY_ROUTE:
+            if row['native_route'] != route or any(not isinstance(row.get(k), str) or not row[k].strip()
+                    for k in ('intent_relation', 'visible_action', 'visual_structure', 'selection_reason')):
+                raise ValueError('Barty overlay needs its actual native action and semantic structure')
+            seen.add(key)
+            rows.append(dict(row))
+            continue
         if row["native_route"] != route or row["visible_action"] != _ACTION[route] or row["visual_structure"] != structure:
             raise ValueError("overlay_selection does not match the native binding structure")
         allowed_relation = {"grid-card-assemble": "parallel", "notification-stack": "reminder", "toggle-flip": "state_change", "before-after-wipe": "compare", "hw-pipeline": "process", "pin-board": "parallel", "huashu-stat": "numeric_emphasis", "callout-pin": "callout"}[route]

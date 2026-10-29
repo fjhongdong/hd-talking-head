@@ -51,6 +51,27 @@ def talkcraft_candidates(project_root: Path) -> list[dict]:
             for card in module.load_card_catalog(project_root)]
 
 
+def motion_native_candidates(project_root: Path) -> list[dict]:
+    """Whole creative workflows; their shared browser is not a source channel."""
+    source = Path(project_root) / 'skill-development/hd-talking-head/scripts/motion_native_skill_adapter.py'
+    spec = importlib.util.spec_from_file_location('_motion_native_catalog', source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    rows = []
+    for dependency in module.SOURCES:
+        for template in module.load_template_catalog(project_root, dependency_id=dependency):
+            identity = template['candidate_id']
+            native_id = identity.split(':', 1)[1]
+            rows.append({'candidate_id': identity, 'skill_id': dependency, 'dependency_id': dependency,
+                'entrypoint': module.ENTRY, 'template_id': native_id, 'producer_version': module.VERSION,
+                'source_route': native_id, 'role': 'native', 'status': 'supported',
+                'adapter_module': 'motion_native_skill_adapter', 'capacity': None,
+                'semantic_families': [], 'limitations': [
+                    'Invoke the complete pinned native Skill; its workflow owns design and motion',
+                    'Review this scene and freeze its actual native result before production']})
+    return rows
+
+
 def _declarations(path):
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     values = {}
@@ -224,6 +245,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         add(dep, str(source.relative_to(project)), dep + "/design", "source",
             role="design", limitations=("Design/image source; execute through this Job selected generation channels after complete-list approval",))
     found.extend(row for row in talkcraft_candidates(project) if row['native_role'] == 'scene')
+    found.extend(motion_native_candidates(project))
     ids = [row["candidate_id"] for row in found]
     if len(ids) != len(set(ids)):
         raise ValueError("B-roll discovery returned duplicate identities")

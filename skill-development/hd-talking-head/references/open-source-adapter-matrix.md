@@ -4,6 +4,8 @@
 
 默认根目录：`<project>/参考项目/B-roll开源方案`。目录可由环境适配层改写，但仓库名、入口身份和导入规则不得静默改变。
 
+新增的完整创作渠道见 [Barty Motion Graphics](barty-motion-integration.md) 与 [Bang Motion](bang-motion-integration.md)。二者按独立渠道、原生模板和语义标签参与统一能力库；不因共用浏览器合并，不把本文的历史参考项目数当作当前渠道数。
+
 ## 精确适配
 
 | 能力 | 源码入口 | 本 Skill 采用 | 禁止做法 |
