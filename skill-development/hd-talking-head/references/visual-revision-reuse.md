@@ -48,6 +48,7 @@ Barty / Bang 完整原生项在 realization 审核冻结前，可在任务、授
   "job_id": "<当前Job ID>",
   "source_words": [{"index": 0, "text": "<指定保留的原转写词>"}],
   "visuals": [{
+    "segment_id": "<稳定镜头ID>",
     "component_id": "<稳定组件ID>",
     "composition_family": "aroll_with_overlay",
     "visible_text": ["<已确定可见文案>"],
@@ -56,7 +57,9 @@ Barty / Bang 完整原生项在 realization 审核冻结前，可在任务、授
 }
 ```
 
-`source_words` 绑定源转写词，不绑定易变化的剪后秒数；`visuals` 绑定组件 ID、构图家族、文案及需要保持的来源字段。代码组件可冻结入口、模板与源码身份；已完成 AI 视频可冻结 provider、模型、generation ID 和媒体 SHA。不冻结整个 brief、A-roll SHA、策略 revision 或起止时间，使合法的时钟重绑定仍能通过。
+`source_words` 绑定源转写词，不绑定易变化的剪后秒数；新 `visuals` 记录用 `segment_id` 与 `component_id` 共同定位，再绑定构图家族、文案及需要保持的来源字段。不同镜头可合法使用同名组件；不能把已认可样片匹配到其他镜头。既有未写 `segment_id` 的记录仍要求组件 ID 在整片唯一，歧义即停止，不自动猜测或改写旧批准。代码组件可冻结入口、模板与源码身份；已完成 AI 视频可冻结 provider、模型、generation ID 和媒体 SHA。不冻结整个 brief、A-roll SHA、策略 revision 或起止时间，使合法的时钟重绑定仍能通过。单独样片认可只保护该样片对应内容，不代表视觉整表、收费生成或最终合成获批。
+
+用户认可某条具体 Wake 视频时，该镜头的 `visuals` 项另加 `completed_media: {"path": "<实际Job相对视频路径>", "sha256": "<真实视频SHA256>", "bytes": 123}`，字节数必须取真实文件值；同时保留真实组件类型和 Wake 模板绑定。此字段当前仅用于已有完成结果的 Wake，不能用技术基线的 `sample_sha256` 代替。确认前和正式发布时传入当前 treatment，沿该镜头/组件的真实 `brief_path`、绑定摘要及 `result_record_path`，调用既有原生结果核验；正式预览沿已批准 execution mapping 取得真正消费的结果。保护门比较结果中的媒体路径、字节数、SHA，并核验同一真实文件，缺失、替换或内容变化均停止。它不冻结整份 brief，不能靠把素材身份写进未校验的备注来宣称保护。未指定 `completed_media` 的既有保留项保持原有检查。
 
 `edit.hd.tools.confirmed_content.check_confirmed_content` 在正式视觉发布前及正式预览入口检查缺失组件、文案/来源变化和指定词被删除。Skill 管理的 Job 缺少这份记录也停止；检查不重新生成资产、不替代现有配方/媒体核验。用户明确要求删除或替换某项时，才依据这次真实修改同步更新对应保留项，再走正式修订；不能为通过检查清空清单。该检查保障内容不漏项，真实动画、美观与时机仍须检查实际成片。
 

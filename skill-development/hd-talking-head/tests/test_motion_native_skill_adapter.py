@@ -26,6 +26,71 @@ def brief(dependency='barty-motion-graphics', template='motion-broll', alpha=Fal
 
 
 class NativeMotionTests(unittest.TestCase):
+    def test_broll_native_alpha_requires_a_valid_hybrid_annotation(self):
+        import copy
+        from edit.hd.tools import motion_capabilities as motion
+        from edit.hd.tests.test_visual_strategy import valid_intent, valid_strategy, strategy_component
+        row = next(item for item in motion.load_catalog(_env.PROJECT)
+                   if item['candidate_id'] == 'barty-motion-graphics:barty-motion-graphics/motion-broll')
+        base = strategy_component('base', 'ai_generated', media_type='video')
+        action = strategy_component('action', 'code_generated', layer_role='annotation',
+                                    layout_slot='annotation', media_type='animation')
+        segment = {'visual_intent': valid_intent(), 'visual_strategy': valid_strategy([base, action])}
+        transparent = brief(alpha=True)
+        check = lambda b, s, cid='action': motion._native_input_check(
+            _env.PROJECT, row, b, segment=s, component_id=cid, use='broll')
+        self.assertEqual(check(transparent, segment)['status'], 'pass')
+        self.assertEqual(check(brief(alpha=False), segment)['status'], 'fail')
+        self.assertEqual(check(transparent, segment, 'base')['status'], 'fail')
+        invalid = copy.deepcopy(segment)
+        invalid['visual_strategy']['composition']['component_dependencies'] = []
+        self.assertEqual(check(transparent, invalid)['status'], 'fail')
+        invalid = copy.deepcopy(segment)
+        invalid['visual_strategy']['components'][0]['semantic_role'] = 'evidence'
+        self.assertEqual(check(transparent, invalid)['status'], 'fail')
+        self.assertEqual(motion._native_input_check(_env.PROJECT, row, transparent)['status'], 'fail')
+        overlay_row = {**row, 'role': 'aroll_overlay'}
+        self.assertEqual(motion._native_input_check(_env.PROJECT, overlay_row, transparent)['status'], 'pass')
+        self.assertEqual(motion._native_input_check(_env.PROJECT, overlay_row, brief(alpha=False))['status'], 'fail')
+
+    def test_semantic_planning_task_cannot_turn_into_completed_evidence(self):
+        from edit.hd.tools import motion_capabilities
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); path = root / 'brief.json'
+            for dependency in ('barty-motion-graphics', 'bang-motion'):
+                request = brief(dependency)
+                words = [{'text': request['transcript'], 'start': 0, 'end': 2}]
+                segment = {'segment_id': 'seg-001', 'start': 0, 'end': 2, 'bindings': {'scene': {}}}
+                row = {'candidate_id': 'selected-native', 'dependency_id': dependency,
+                       'capability': {'capability_type': 'creative_skill'}}
+                assessment = {'segment_id': 'seg-001', 'component_id': 'scene', 'candidate_id': row['candidate_id'],
+                    'verdict': 'pass', 'reason': 'Only the approved native task, not an actual produced animation.',
+                    'transcript_refs': [{'start_word': 0, 'end_word': 1, 'quote': request['transcript'],
+                                         'basis': 'current_clause'}], 'content_refs': []}
+                treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'scene', 'brief_path': path.name}],
+                             'semantic_assessments': [assessment]}
+                def write():
+                    path.write_text(json.dumps(request)); digest = native.sha(path)
+                    segment['bindings']['scene']['brief_sha256'] = digest
+                    assessment['content_refs'] = [{'path': path.name, 'sha256': digest, 'pointer': '/' + key,
+                        'value': request[key]} for key in ('transcript', 'template_id', 'native_options')]
+                    assessment['content_refs'] += [{'path': path.name, 'sha256': digest,
+                        'pointer': '/task_source/' + key, 'value': request['task_source'][key]} for key in ('quote', 'semantic')]
+                write()
+                planning = motion_capabilities._semantic_assessment(root, treatment, segment, 'scene', row,
+                                                                     words, request, phase='planning')
+                self.assertEqual(planning['status'], 'pass')
+                self.assertEqual(planning['scope'], 'planning_inputs')
+                for result in ('missing', None, {'status': 'pending'},
+                               {'status': 'completed', 'scene_sources': [], 'record': {'job_path': 'result.json'}}):
+                    if result != 'missing': request['native_result'] = result
+                    write()
+                    with self.subTest(dependency=dependency, result=result):
+                        completed = motion_capabilities._semantic_assessment(root, treatment, segment, 'scene', row,
+                                                                            words, request, phase='completed')
+                        self.assertEqual(completed['status'], 'needs_review')
+                        self.assertFalse(completed['binding_verified'])
+
     def test_complete_original_sources_and_native_workflow_paths(self):
         for dependency, count in [('barty-motion-graphics',4),('bang-motion',35)]:
             source = native.source_root(_env.PROJECT, dependency_id=dependency)

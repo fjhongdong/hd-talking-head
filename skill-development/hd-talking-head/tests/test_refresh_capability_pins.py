@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -136,6 +137,22 @@ class RefreshCapabilityPinsTests(unittest.TestCase):
         stale = module.collect_stale(self.skill, index)
         self.assertEqual([item["candidate_id"] for item in stale], ["a:alpha"])
         self.assertEqual(stale[0]["current"], self.current)
+
+    def test_release_refuses_stale_pins_without_rewriting_manifest(self):
+        for name in ("make_release_manifest.py", "verify_skill_release.py", "refresh_capability_pins.py"):
+            shutil.copy2(SKILL / "scripts" / name, self.skill / "scripts" / name)
+        manifest = self.skill / "release-manifest.json"
+        manifest.write_text("unchanged", encoding="utf-8")
+        result = subprocess.run(
+            [sys.executable, str(self.skill / "scripts/make_release_manifest.py"), "--release-id", "test"],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("capability source pins are stale", result.stderr)
+        self.assertEqual(manifest.read_text(encoding="utf-8"), "unchanged")
+        index = json.loads((self.skill / "references/motion-capability-index.json").read_text())
+        self.assertEqual(index["profiles"][0]["reviewed_sources"]
+                         ["skill-development/hd-talking-head/scripts/alpha_adapter.py"], self.stale)
 
 
 if __name__ == "__main__":

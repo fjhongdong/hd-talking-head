@@ -1128,8 +1128,8 @@ class ShotRecipeV2Tests(unittest.TestCase):
             ):
                 visual_strategy.validate_shot_recipe_v2(invalid)
 
-    def test_code_annotation_depends_only_on_real_material_bases(self) -> None:
-        for kind in ("local_material", "official_material", "external_stock"):
+    def test_code_annotation_accepts_material_and_illustrative_ai_bases(self) -> None:
+        for kind in ("local_material", "official_material", "external_stock", "ai_generated"):
             with self.subTest(real_base=kind):
                 base = recipe_component("base", kind)
                 annotation = recipe_component(
@@ -1140,7 +1140,7 @@ class ShotRecipeV2Tests(unittest.TestCase):
                 )
                 visual_strategy.validate_shot_recipe_v2(valid_recipe([base, annotation]))
 
-        for kind in ("code_generated", "ai_generated"):
+        for kind in ("code_generated",):
             with self.subTest(non_material_base=kind):
                 base = recipe_component("base", kind)
                 annotation = recipe_component(
@@ -1153,6 +1153,41 @@ class ShotRecipeV2Tests(unittest.TestCase):
                     visual_strategy.validate_shot_recipe_v2(
                         valid_recipe([base, annotation])
                     )
+
+    def test_ai_annotation_hybrid_cannot_present_either_layer_as_evidence(self) -> None:
+        for evidence_id in (None, "base", "annotation"):
+            base = strategy_component("base", "ai_generated", media_type="image")
+            annotation = strategy_component(
+                "annotation", "code_generated", layer_role="annotation",
+                layout_slot="annotation", media_type="animation",
+            )
+            strategy = valid_strategy([base, annotation])
+            recipe = valid_recipe([
+                recipe_component("base", "ai_generated"),
+                recipe_component(
+                    "annotation", "code_generated", layer_role="annotation",
+                    render_window=render_window(z_index=10, layout_slot="annotation"),
+                ),
+            ])
+            if evidence_id is not None:
+                for item in (strategy, recipe):
+                    component = next(
+                        c for c in item["components"] if c["component_id"] == evidence_id
+                    )
+                    component["semantic_role"] = "evidence"
+            with self.subTest(evidence_id=evidence_id):
+                if evidence_id is None:
+                    self.assertEqual(
+                        visual_strategy.validate_visual_strategy(valid_intent(), strategy),
+                        strategy,
+                    )
+                    self.assertEqual(visual_strategy.validate_shot_recipe_v2(recipe), recipe)
+                else:
+                    with self.assertRaises(visual_strategy.VisualStrategyError):
+                        visual_strategy.validate_visual_strategy(valid_intent(), strategy)
+                    with self.assertRaises(visual_strategy.VisualStrategyError):
+                        visual_strategy.validate_shot_recipe_v2(recipe)
+
     def test_accepts_five_discriminated_component_bindings(self) -> None:
         for kind in SOURCE_KINDS:
             with self.subTest(kind=kind):

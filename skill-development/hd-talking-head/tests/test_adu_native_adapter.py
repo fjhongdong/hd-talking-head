@@ -65,6 +65,26 @@ class AduNativeBriefTests(unittest.TestCase):
         self.assertEqual(checked["composition"]["frames"], 240)
         self.assertEqual(checked["typography"], {"title_px": 64, "body_px": 56})
 
+    def test_empty_stamp_disables_optional_native_stamp(self):
+        payload = brief()
+        payload["stamp"] = ""
+        payload["right"]["title"] = "转向能力优先"
+        self.assertEqual(adapter.validate_brief(json.dumps(payload)), payload)
+
+    def test_optional_stamp_keeps_text_validation(self):
+        for value in (None, False, 0, " ", "转向转向转", "<章>", "转\n向"):
+            with self.subTest(value=value):
+                self.check(lambda b: b.__setitem__("stamp", value), "Invalid Adu stamp")
+        for field in ("title", "left", "right"):
+            payload = brief()
+            payload["stamp"] = ""
+            if field == "title":
+                payload[field] = ""
+            else:
+                payload[field]["title"] = ""
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                adapter.validate_brief(json.dumps(payload))
+
     def test_portrait_typography_accepts_four_character_labels(self):
         payload = brief()
         payload["typography"] = {"title_px": 64, "body_px": 56}

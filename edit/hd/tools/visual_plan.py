@@ -340,7 +340,7 @@ def _prevalidate_draft_bindings(
                     "z_index": index * 10,
                     "layout_slot": component["layout_slot"],
                     "opacity": 1.0,
-                    "safe_zone": {
+                    "safe_zone": {side: 0 for side in ("top", "bottom", "left", "right")} if component['layer_role'] == 'base' and component['layout_slot'] == 'full_frame' else {
                         "top": 64 if strategy["composition"]["family"] == "aroll_with_overlay" else 120,
                         "bottom": 320,
                         "left": 40,
@@ -351,7 +351,7 @@ def _prevalidate_draft_bindings(
                     "width": 1080,
                     "height": 1920,
                     "fps": 24,
-                    "alpha": output_alpha(kind, binding.get("dependency_id"), strategy["composition"]["family"]),
+                    "alpha": output_alpha(kind, binding.get("dependency_id"), strategy["composition"]["family"], component["layer_role"]),
                 },
                 **binding,
             }
@@ -883,7 +883,9 @@ def _validate_reviewed_visual_text(
     *,
     analysis_record: Mapping[str, object],
     segments: list[dict[str, object]],
-) -> list[dict[str, str]]:
+    approved_words=None,
+    job_dir=None,
+) -> list[dict[str, object]]:
     if value is None:
         return []
     if type(value) is not dict or set(value) != {"content_analysis_sha256", "entries"}:
@@ -898,8 +900,100 @@ def _validate_reviewed_visual_text(
     thesis = analysis_record["analysis"]["thesis"]
     checked: list[dict[str, str]] = []
     seen: set[tuple[str, str, str]] = set()
+    ordinal_groups = {}
+
+    def word_ref(ref):
+        if (not approved_words or type(ref) is not dict
+                or set(ref) != {"start_word", "end_word", "quote"}
+                or type(ref["start_word"]) is not int or type(ref["end_word"]) is not int
+                or not 0 <= ref["start_word"] < ref["end_word"] <= len(approved_words)):
+            raise _fail("visual text grounding requires the approved word clock")
+        words = approved_words[ref["start_word"]:ref["end_word"]]
+        if ref["quote"] != "".join(w["text"] for w in words):
+            raise _fail("visual text grounding quote differs from the approved word clock")
+        return words[0]["start"], words[-1]["end"]
+
+    def grounding(entry, segment, item):
+        proof = entry["grounding"]
+        if (job_dir is None or type(proof) is not dict
+                or proof.get("component_id") not in segment.get("bindings", {})):
+            raise _fail("visual text grounding needs its actual component")
+        binding = segment["bindings"][proof["component_id"]]
+        from . import motion_readability
+        root = Path(job_dir).resolve()
+        if proof.get("kind") == "object_ordinal":
+            path = Path(proof.get("brief_path", ""))
+            actual = (root / path).resolve()
+            if (path.is_absolute() or root not in actual.parents or not actual.is_file()
+                    or contract_artifacts.sha256_file(actual) != binding.get("brief_sha256")):
+                raise _fail("visual text grounding brief differs from its binding")
+            brief = contract_artifacts.read_json_artifact(actual)
+            files = brief.get("files", [brief.get("entry", {}), *brief.get("assets", [])])
+            sources = {f.get("job_path"): f.get("sha256") for f in files}
+
+        def source(ref, text):
+            if (type(ref) is not dict or ref.get("value") != text
+                    or sources.get(ref.get("path")) != ref.get("sha256")
+                    or not str(ref.get("pointer", "")).startswith("text:")):
+                raise _fail("visual text grounding must cite its frozen rendered source")
+            motion_readability._inside(root, ref)
+
+        common = {"kind", "component_id"}
+        if proof.get("kind") == "spoken_entity_alias":
+            if set(proof) != common | {"alias_anchor", "entity_anchor", "entity", "claim_id"}:
+                raise _fail("invalid spoken entity grounding")
+            if entry["text"] != "AI":
+                raise _fail("spoken AI grounding cannot introduce another entity, number or claim")
+            for field in ("alias_anchor", "entity_anchor"):
+                if word_ref(proof[field])[1] > segment["start"] + 1e-6:
+                    raise _fail("an entity alias cannot cite future speech")
+            if entry["text"] not in re.findall(r"[A-Za-z]+", proof["alias_anchor"]["quote"]):
+                raise _fail("entity alias was not spoken")
+            norm = lambda text: "".join(re.findall(r"[A-Za-z0-9\u3400-\u9fff]+", text)).lower()
+            claims = [c for c in analysis_record["analysis"].get("claims", [])
+                      if c.get("id") == proof["claim_id"]]
+            if (len(claims) != 1 or item is None
+                    or claims[0].get("evidence_status") != "supported"
+                    or proof["entity"] not in claims[0].get("entities", [])
+                    or norm(proof["entity_anchor"]["quote"]) != norm(proof["entity"])
+                    or not (claims[0]["source_span"][0] <= item["source_span"][0]
+                            < item["source_span"][1] <= claims[0]["source_span"][1])):
+                raise _fail("entity alias lacks this item's supported entity relationship")
+        elif proof.get("kind") == "object_ordinal":
+            if (set(proof) != common | {"brief_path", "objects"} or item is None
+                    or not re.fullmatch(r"[1-9][0-9]*", entry["text"])):
+                raise _fail("invalid object ordinal grounding")
+            objects = proof["objects"]
+            count = binding.get("invocation_record", {}).get("template_request", {}).get("information_units")
+            if (type(objects) is not list or type(count) is not int or not 2 <= count == len(objects)
+                    or binding.get("capacity") != {"min_units": count, "max_units": count}
+                    or int(entry["text"]) > count):
+                raise _fail("object ordinals must match the bound semantic unit count")
+            labels, previous = set(), segment["start"]
+            for index, obj in enumerate(objects, 1):
+                if type(obj) is not dict or set(obj) != {"label", "word_ref", "label_ref", "ordinal_ref"}:
+                    raise _fail("object ordinal requires each actual label and word anchor")
+                label = obj["label"]
+                if label not in segment["visible_text"] or label in labels:
+                    raise _fail("object ordinal labels must be distinct current visible objects")
+                labels.add(label)
+                start, end = word_ref(obj["word_ref"])
+                if start < previous - 1e-6 or end > segment["end"] + 1e-6:
+                    raise _fail("object ordinal anchors must follow this segment's approved speech")
+                previous = end
+                source(obj["label_ref"], label)
+                source(obj["ordinal_ref"], str(index))
+            key = (segment["segment_id"], proof["component_id"], entry["source_ref"])
+            group = ordinal_groups.setdefault(key, (proof, set()))
+            if group[0] != proof:
+                raise _fail("object ordinal group changed between labels")
+            group[1].add(entry["text"])
+        else:
+            raise _fail("unknown visual text grounding kind")
+
     for entry in entries:
-        if type(entry) is not dict or set(entry) != {"segment_id", "text", "source_ref", "source_quote", "reason"}:
+        fields = {"segment_id", "text", "source_ref", "source_quote", "reason"}
+        if type(entry) is not dict or set(entry) not in (fields, fields | {"grounding"}):
             raise _fail("reviewed visual text entry is invalid")
         segment_id = _identifier(entry["segment_id"], "reviewed segment_id")
         text = _text(entry["text"], "reviewed text")
@@ -907,6 +1001,7 @@ def _validate_reviewed_visual_text(
         source_quote = _text(entry["source_quote"], "reviewed source_quote")
         reason = _text(entry["reason"], "reviewed reason")
         segment = by_segment.get(segment_id)
+        item = None
         if segment is None or text not in segment["visible_text"]:
             raise _fail("reviewed text is not visible in its segment")
         if source_ref == "thesis":
@@ -916,17 +1011,23 @@ def _validate_reviewed_visual_text(
             if item_id not in segment["content_item_ids"]:
                 raise _fail("reviewed source item is not selected by its segment")
             expected_quote = items[item_id]["source_text"]
+            item = items[item_id]
         else:
             raise _fail("reviewed source_ref is unknown")
         if source_quote != expected_quote:
             raise _fail("reviewed source_quote does not match approved content")
-        if set(re.findall(r"[A-Za-z0-9]+", text)) - set(re.findall(r"[A-Za-z0-9]+", source_quote)):
+        if "grounding" in entry:
+            grounding(entry, segment, item)
+        elif set(re.findall(r"[A-Za-z0-9]+", text)) - set(re.findall(r"[A-Za-z0-9]+", source_quote)):
             raise _fail("reviewed text introduces unapproved foreign text or numbers")
         key = (segment_id, text, source_ref)
         if key in seen:
             raise _fail("reviewed visual text entry is duplicated")
         seen.add(key)
-        checked.append({key: entry[key] for key in ("segment_id", "text", "source_ref", "source_quote", "reason")})
+        checked.append(copy.deepcopy(entry))
+    for proof, ordinals in ordinal_groups.values():
+        if ordinals != {str(i) for i in range(1, len(proof["objects"]) + 1)}:
+            raise _fail("object ordinal review must include the complete consecutive sequence")
     return checked
 
 
@@ -967,6 +1068,10 @@ def _validate_job_context(
         item["id"]: item
         for item in analysis_record["analysis"]["items"]
     }
+    from . import motion_capabilities
+    approved_words = (motion_capabilities._approved_speech(job.job_dir)
+                      if reviewed_visual_text and any("grounding" in e for e in reviewed_visual_text.get("entries", []))
+                      else None)
     previous_end = 0.0
     for segment in draft["segments"]:
         if abs(segment["start"] - previous_end) > 1e-6:
@@ -988,7 +1093,8 @@ def _validate_job_context(
             for text in segment["visible_text"]
         ):
             reviewed = _validate_reviewed_visual_text(
-                reviewed_visual_text, analysis_record=analysis_record, segments=draft["segments"]
+                reviewed_visual_text, analysis_record=analysis_record, segments=draft["segments"],
+                approved_words=approved_words, job_dir=job.job_dir,
             )
             reviewed_text = {entry["text"] for entry in reviewed if entry["segment_id"] == segment["segment_id"]}
             if any(text not in reviewed_text for text in segment["visible_text"] if text not in allowed_text and not any(text in item["source_text"] for item in selected_items)):
@@ -996,7 +1102,8 @@ def _validate_job_context(
     if abs(previous_end - duration) > 1e-6:
         raise _fail("segments must cover the complete edited duration")
     reviewed = _validate_reviewed_visual_text(
-        reviewed_visual_text, analysis_record=analysis_record, segments=draft["segments"]
+        reviewed_visual_text, analysis_record=analysis_record, segments=draft["segments"],
+        approved_words=approved_words, job_dir=job.job_dir,
     )
     return analysis_record, edit_path, timeline_path, edited_path, canvas, duration, reviewed
 
@@ -1884,7 +1991,15 @@ def _skill_selection_for_publication(
         treatment = contract_artifacts.read_json_artifact(path)
         from .motion_match_cache import validate_reviews, validate_design_handoffs
         validate_reviews(Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir)
-        validate_design_handoffs(draft, treatment, job.job_dir)
+        handoff_draft, handoff_treatment = draft, treatment
+        if any('native_typography_revision' in scene for scene in treatment.get('scenes', [])):
+            from . import visual_confirmation
+            proposal = visual_confirmation.validate_visual_authorization(job)['source']
+            original = visual_confirmation._read(visual_confirmation._exact(job.job_dir, proposal['inputs']['director']))
+            original_treatment = visual_confirmation._read(visual_confirmation._exact(job.job_dir, proposal['inputs']['treatment']))
+            handoff_draft, handoff_treatment = visual_confirmation._normalize_lemo_typography(
+                job.job_dir, original, original_treatment, draft, treatment)
+        validate_design_handoffs(handoff_draft, handoff_treatment, job.job_dir)
         selection = broll_skill_selection.validate_selection(
             Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir,
         )
@@ -1916,7 +2031,7 @@ def _check_selected_recipe_bindings(draft, frozen_segments, selection):
         # These two preparation fields are consumed by the existing Lovart
         # compiler into its artifact dimensions, not emitted as recipe fields.
         consumed = ({"execution_mode", "source_dimensions"} if binding.get("execution_mode") == "reuse_completed_lovart_video"
-                    else {"execution_mode", "media_type", "source_dimensions"} if binding.get("execution_mode") == "reuse_completed_generated_media" else set())
+                    else {"execution_mode", "media_type", "source_dimensions", "parent_static_labels"} if binding.get("execution_mode") == "reuse_completed_generated_media" else set())
         if any(compiled.get(k) != v for k, v in binding.items() if k not in consumed):
             raise _fail("compiled recipe changed the selected Skill inputs")
         if "source_dimensions" in consumed and any(compiled["artifact_contract"][k] != v for k, v in binding["source_dimensions"].items()):
@@ -2015,7 +2130,7 @@ def prepare_visual_direction(
         except (contract_artifacts.ContractArtifactError, ValueError, OSError, KeyError, TypeError) as error:
             raise _fail(f"overlay selection: {error}") from None
         try:
-            confirmed_content.check_confirmed_content(job, {"segments": draft["segments"]})
+            confirmed_content.check_confirmed_content(job, {"segments": draft["segments"]}, treatment=treatment_payload)
         except confirmed_content.ConfirmedContentError as error:
             raise _fail(str(error)) from None
         if strategy_compiler is None:

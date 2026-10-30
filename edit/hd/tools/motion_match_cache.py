@@ -1,12 +1,32 @@
 """Persistent, identity-bound semantic motion matching cache."""
 from __future__ import annotations
-import copy, hashlib, json
+import ast, copy, hashlib, json, re
 from pathlib import Path
 from . import contract_artifacts, motion_capabilities, semantic_visual_plan
 
+def _catalog_projection(rows):
+    projected = copy.deepcopy(rows)
+    for row in projected:
+        del row['capability']['reviewed_sources']
+    return projected
+
+def _policy_identity():
+    # Bind the actual matching/input/completeness rules, not unrelated rendering
+    # or source-review code. AST identity ignores comments and formatting only.
+    rules = []
+    for path, names in ((Path(motion_capabilities.__file__),
+            {'_phrase_in', '_match_evidence', '_recall_evidence', 'search_capabilities'}),
+            (Path(__file__), {'_catalog_projection', '_items', '_identity',
+                             'match_once', 'validate_matches', '_validate_entry'})):
+        nodes = {node.name: node for node in ast.parse(path.read_text()).body
+                 if isinstance(node, ast.FunctionDef)}
+        rules.extend((name, ast.dump(nodes[name], include_attributes=False)) for name in sorted(names))
+    return contract_artifacts.sha256_json({'version': motion_capabilities.MATCHING_POLICY_VERSION,
+        'tag_fields': motion_capabilities.TAG_FIELDS, 'uses': sorted(motion_capabilities.USES), 'rules': rules})
+
 def _catalog(root):
-    rows = motion_capabilities.load_catalog(Path(root))
-    return rows, contract_artifacts.sha256_json(rows)
+    rows = motion_capabilities.load_catalog(Path(root))  # Always verify real source bytes first.
+    return rows, contract_artifacts.sha256_json(_catalog_projection(rows))
 
 def _items(root, director, treatment):
     plan = semantic_visual_plan.validate_semantic_lists(treatment, director)
@@ -35,18 +55,23 @@ def _identity(row, typ, tags):
 
 def match_once(project_root, director, treatment):
     out=copy.deepcopy(treatment); rows,csha=_catalog(project_root); items=_items(project_root,director,out)
+    policy = _policy_identity()
     cache=out.get("motion_matches",{}); new={}
     for row,typ,tags in items:
         rid=row["row_id"]; use="aroll_overlay" if typ=="贴片" else "broll"
         sid=_identity(row,typ,tags)
         old=cache.get(rid)
-        if isinstance(old,dict) and old.get("matching_policy_version")==motion_capabilities.MATCHING_POLICY_VERSION and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
+        if rid in cache and (not isinstance(old, dict)
+                or not isinstance(old.get('matching_policy_sha256'), str)
+                or re.fullmatch('[0-9a-f]{64}', old['matching_policy_sha256']) is None):
+            raise ValueError('missing or malformed motion cache policy requires explicit reviewed-source rebinding evidence')
+        if isinstance(old,dict) and old.get("matching_policy_sha256")==policy and old.get("matching_policy_version")==motion_capabilities.MATCHING_POLICY_VERSION and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
             _validate_entry(old, rows, use, tags)
             new[rid]=old; continue
         matches=motion_capabilities.search_capabilities(Path(project_root), " ".join(tags), use=use, catalog=rows)
         frozen = [{k:m.get(k) for k in ("candidate_id","matched_dimensions","retrieval_score","recall_basis")} for m in matches]
         new[rid]={"catalog_sha256":csha,"semantic_sha256":sid,"use":use,"tags":tags,
-                  "matching_policy_version":motion_capabilities.MATCHING_POLICY_VERSION,
+                  "matching_policy_version":motion_capabilities.MATCHING_POLICY_VERSION,"matching_policy_sha256":policy,
                   "matches":frozen,"matches_sha256":contract_artifacts.sha256_json(frozen)}
     out["motion_matches"]=new; return out
 
@@ -54,10 +79,10 @@ def validate_matches(project_root,director,treatment):
     rows,csha=_catalog(project_root); catalog={r.get("candidate_id"):r for r in rows}; items=_items(project_root,director,treatment); cache=treatment.get("motion_matches")
     if not isinstance(cache,dict): raise ValueError("motion_matches cache is required")
     if set(cache)!={r["row_id"] for r,_,_ in items}: raise ValueError("motion_matches keys do not match semantic rows")
-    out={}
+    out={}; policy=_policy_identity()
     for row,typ,tags in items:
         rid=row["row_id"]; e=cache[rid]; use="aroll_overlay" if typ=="贴片" else "broll"
-        if e.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
+        if e.get("matching_policy_sha256")!=policy or e.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
         _validate_entry(e, rows, use, tags)
         raw=[]
         for m in e.get("matches",[]):
@@ -77,7 +102,7 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
     catalog, _ = _catalog(project_root); by_id = {r.get("candidate_id"): r for r in catalog}
     selection = treatment.get("skill_selection", {})
     beats = list(selection.get("beats", [])) + list(selection.get("overlay_beats", []))
-    allowed = {"preferred", "equivalent", "unsuitable", "needs_adapter"}
+    allowed = {"preferred", "equivalent", "unsuitable", "needs_adapter", "unreviewed"}
     basis = {"semantic", "quality", "capacity", "output", "timing", "qualification", "authorization"}
     covered = set()
     for beat in beats:
@@ -104,7 +129,7 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
             if fit == "unsuitable" and candidate.get("rejection_basis") not in basis: raise ValueError("unsuitable review needs a controlled rejection basis")
             if fit in {"preferred", "equivalent"}:
                 _design_plan(candidate)
-            elif row.get("status") == "supported":
+            elif fit != "unreviewed" and row.get("status") == "supported":
                 _constraint_refs(candidate, matched[key]["semantic"], row, beat, job_dir=job_dir)
         eligible = [c for c in candidates if c["fit"] in {"preferred", "equivalent"}]
         from .broll_skill_selection import source_channel
@@ -119,6 +144,9 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
         if key not in covered:
             seg, cid = key; comp = next((c for s in director.get("segments", []) if s.get("segment_id") == seg for c in s.get("visual_strategy", {}).get("components", []) if c.get("component_id") == cid), {})
             if comp.get("kind") == "code_generated": raise ValueError("code component is missing a review beat")
+    if any(c.get("fit") == "unreviewed" for b in beats for c in b["candidates"]):
+        from .broll_skill_selection import assign_skills
+        assign_skills(project_root, selection, job_dir=job_dir, director=director, treatment=treatment)
     return matched
 
 DESIGN_FIELDS = ("composition", "typography", "finish", "focus")
@@ -225,6 +253,33 @@ def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()
                         or handoff.get("required_change") != row.get("visual_task")
                         or beat.get("semantic_row_id") != row.get("row_id")):
                     raise ValueError("selected Lemo semantic handoff is not bound to the approved semantic row")
+            if handoff.get("design_plan") != design:
+                # Retain a previously verified numeric-label correction when
+                # another row is revised.  Reuse its full evidence verifier;
+                # never accept a changed handoff on the presence of a flag.
+                scene = next((s for s in treatment.get("scenes", [])
+                    if (s.get("segment_id"), s.get("component_id")) ==
+                       (assignment["segment_id"], assignment["component_id"])), {})
+                revision = selection.get("revision_locks", {})
+                if scene.get("native_typography_revision") and revision.get("previous_receipt"):
+                    from . import visual_confirmation as confirmation
+                    root = Path(job_dir)
+                    workflow = confirmation._read(root / "workflow.json")
+                    receipt = revision["previous_receipt"]
+                    seen = set()
+                    while receipt and receipt["sha256"] not in seen and handoff.get("design_plan") != design:
+                        seen.add(receipt["sha256"])
+                        _, proposal = confirmation._validate_source(root, receipt, job_id=workflow["job_id"])
+                        frozen = confirmation._read(confirmation._exact(root, proposal["inputs"]["director"]))
+                        frozen_treatment = confirmation._read(confirmation._exact(root, proposal["inputs"]["treatment"]))
+                        normalized, normalized_treatment = confirmation._normalize_lemo_typography(
+                            root, frozen, frozen_treatment, director, treatment)
+                        normalized_segment = next(s for s in normalized["segments"]
+                            if s["segment_id"] == assignment["segment_id"])
+                        original = motion_capabilities._bound_brief(root, normalized_treatment,
+                            normalized_segment, assignment["component_id"])
+                        handoff = original.get("creative_handoff", {})
+                        receipt = frozen_treatment.get("skill_selection", {}).get("revision_locks", {}).get("previous_receipt")
             if (any(handoff.get(field) != beat.get(field)
                     for field in ("transcript", "semantic_goal", "required_change"))
                     or handoff.get("visual_pattern") != assignment.get("visual_pattern")

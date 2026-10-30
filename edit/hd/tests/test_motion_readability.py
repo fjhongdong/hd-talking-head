@@ -23,6 +23,16 @@ class MotionReadabilityTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[target]}],[],root=root)
 
+    def test_pending_generation_requires_its_exact_planning_target(self):
+        row = {'segment_id': 's', 'component_id': 'c', 'pending_generation': True}
+        self.assertEqual(validate_targets(self.seg, [row], [],
+            pending_generation_components={('s', 'c')})[0]['status'], 'pending_generation')
+        for changes in ({}, {'pending_generation': False}, {'targets': [self.target]},
+                        {'no_critical_text_reason': '不能假装无字'}, {'pending_native': True}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                validate_targets(self.seg, [{**row, **changes}], [],
+                    pending_generation_components=() if not changes else {('s', 'c')})
+
     def test_direction_reading_window_excludes_avatar_transition_frames(self):
         import hashlib, json
         with tempfile.TemporaryDirectory() as folder:
@@ -57,6 +67,15 @@ class MotionReadabilityTest(unittest.TestCase):
         out=validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[self.target]}],[])[0]
         ss=[{"time":x,"frame_sha256":str(i),"frame_path":"p","width":1080,"height":1920,"observations":[{"text":"小字","confidence":.9,"bbox":[110,110,100,40 if i else 20]}]} for i,x in enumerate(sample_times(out))]
         self.assertEqual(assess_target(out,ss)["status"],"fail")
+    def test_symbol_inflated_line_cannot_prove_target_glyph_height(self):
+        target = {**self.target, "text": "小字", "segment_id": "s", "component_id": "c"}
+        for text in ("→ 小字", "• 小字"):
+            samples = [{"time": t, "frame_sha256": "h", "frame_path": "p", "width": 1080,
+                        "height": 1920, "observations": [{"text": text, "confidence": .99,
+                        "bbox": [110, 110, 100, 45]}]} for t in sample_times(target)]
+            result = assess_target(target, samples)
+            self.assertEqual(result["status"], "needs_review")
+            self.assertTrue(all(s["reason"] == "aggregate_non_target_text" for s in result["samples"]))
     def test_duplicate_ids_and_missing_ocr_review(self):
         with self.assertRaises(ValueError): validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[self.target,self.target]}],[])
         out=validate_targets(self.seg,[{"segment_id":"s","component_id":"c","targets":[self.target]}],[])[0]

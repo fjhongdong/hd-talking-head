@@ -87,6 +87,71 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
         self.assertEqual([(item["text_start"], item["text_end"]) for item in result["words"]], [(0, 3), (3, 4)])
         self.assertEqual(result["emphasis"], {"text_start": 1, "text_end": 4, "start": 1.0, "end": 1.8})
 
+    def test_quantity_phrases_share_cue_and_visual_line_boundaries(self) -> None:
+        cases = (
+            ("不如先练两件事，把话说明白，", "两件事"),
+            ("按三个步骤完成", "三个步骤"),
+            ("先问一个问题", "一个问题"),
+            ("准备两份材料", "两份材料"),
+            ("先做第一件事", "第一件事"),
+            ("读完12份合同", "12份合同"),
+            ("解决二十一件事情", "二十一件事情"),
+            ("把这件事写清楚", "这件事"),
+        )
+        module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
+        script = f"""
+          import {{lineUnits}} from {json.dumps(module)};
+          const cases = {json.dumps(cases)};
+          console.log(JSON.stringify(cases.map(([text]) =>
+            lineUnits(text).map((unit) => text.slice(unit.start, unit.end)))));
+        """
+        results = json.loads(subprocess.check_output(
+            ["node", "--input-type=module", "-e", script], text=True))
+        for (text, phrase), units in zip(cases, results):
+            with self.subTest(text=text):
+                self.assertEqual("".join(units), text)
+                self.assertTrue(any(phrase in unit for unit in units), units)
+                self.assertIn(phrase, subtitles_v2._chinese_word_phrases(text))
+
+    def test_quantity_protection_stops_at_punctuation_and_preserves_utf16(self) -> None:
+        module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
+        script = f"""
+          import {{lineUnits}} from {json.dumps(module)};
+          const text = '😀先做两件事，再读三份合同。';
+          const units = lineUnits(text, {{text_start: 9, text_end: 14}});
+          console.log(JSON.stringify(units.map((u) => text.slice(u.start, u.end))));
+        """
+        units = json.loads(subprocess.check_output(
+            ["node", "--input-type=module", "-e", script], text=True))
+        self.assertEqual("".join(units), "😀先做两件事，再读三份合同。")
+        self.assertIn("😀", units)
+        self.assertIn("两件事，", units)
+        self.assertIn("再读三份合同。", units)
+
+    def test_quantity_extension_does_not_consume_connectors_or_modifiers(self) -> None:
+        cases = (
+            ("一次又一次尝试", "一次", "一次又"),
+            ("两个很好用的方法", "两个", "两个很好"),
+            ("两件都要处理", "两件", "两件都"),
+            ("一个一个检查", "一个", "一个一个"),
+        )
+        module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
+        script = f"""
+          import {{lineUnits}} from {json.dumps(module)};
+          console.log(JSON.stringify({json.dumps(cases)}.map(([text]) =>
+            lineUnits(text).map((unit) => text.slice(unit.start, unit.end)))));
+        """
+        results = json.loads(subprocess.check_output(
+            ["node", "--input-type=module", "-e", script], text=True))
+        for (text, quantity, forbidden), units in zip(cases, results):
+            with self.subTest(text=text):
+                self.assertEqual("".join(units), text)
+                self.assertIn(quantity, units)
+                self.assertFalse(any(forbidden in unit for unit in units), units)
+                cue_phrases = subtitles_v2._chinese_word_phrases(text)
+                self.assertIn(quantity, cue_phrases)
+                self.assertFalse(any(forbidden in phrase for phrase in cue_phrases), cue_phrases)
+
     def test_renderer_binding_rejects_missing_or_tampered_renderer(self) -> None:
         plan = {"canvas": {"width": 1080, "height": 1920, "fps": 24, "frames": 24}, "cues": []}
         renderer_input = talkcraft_subtitles.renderer_input(plan, [])

@@ -47,10 +47,11 @@ def _inside(root, ref):
         obj = obj[int(part)] if isinstance(obj, list) else obj[part]
     if obj != ref["value"]: raise ValueError("content_ref pointer mismatch")
 
-def validate_targets(segments, records, required_refs, *, root=None, pending_components=()):
+def validate_targets(segments, records, required_refs, *, root=None, pending_components=(),
+                     pending_generation_components=()):
     sm = {s["segment_id"]: s for s in segments}; rm = {}; out = []; ids = set()
     for r in records:
-        if type(r) is not dict or set(r) - {"segment_id", "component_id", "targets", "no_critical_text_reason", "pending_native"}:
+        if type(r) is not dict or set(r) - {"segment_id", "component_id", "targets", "no_critical_text_reason", "pending_native", "pending_generation"}:
             raise ValueError("unknown readability record fields")
         key = (r["segment_id"], r["component_id"])
         if key in rm: raise ValueError("duplicate motion_readability record")
@@ -64,6 +65,12 @@ def validate_targets(segments, records, required_refs, *, root=None, pending_com
             cid = c.get("component_id") or c.get("id")
             r = rm.get((sid, cid))
             if r is None: raise ValueError(f"missing readability record: {sid}/{cid}")
+            if 'pending_generation' in r:
+                if (r['pending_generation'] is not True or (sid, cid) not in pending_generation_components
+                        or r.get('targets') or r.get('no_critical_text_reason') or 'pending_native' in r):
+                    raise ValueError('pending generation readability requires an uncreated approved generation target')
+                out.append({'segment_id': sid, 'component_id': cid, 'status': 'pending_generation'})
+                continue
             if 'pending_native' in r:
                 if (r['pending_native'] is not True or (sid, cid) not in pending_components
                         or r.get('targets') or r.get('no_critical_text_reason')):
@@ -143,6 +150,7 @@ def assess_target(target, samples, *, excluded_regions=(), min_heights=None, min
         bb=o["bbox"]; h=float(bb[3]); reason=""
         if float(o.get("confidence",0)) < min_confidence: reason="low_confidence"
         elif "\n" in str(o.get("text", "")) or o.get("line_count", 1) > 1: reason="aggregate_multiline"
+        elif str(o.get("text", "")).strip() != str(target["text"]).strip(): reason="aggregate_non_target_text"
         elif bb[0] < 0 or bb[1] < 0 or bb[0]+bb[2] > s.get("width",1080) or bb[1]+bb[3] > s.get("height",1920): reason="clipped"
         elif h < threshold[target["role"]]: bad=True; reason="line_box_below_baseline"
         st="fail" if bad and reason=="line_box_below_baseline" else ("needs_review" if reason else "pass")
@@ -213,6 +221,7 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
     segments = [{**s, 'shot_recipe': {'components': s['visual_strategy']['components']}}
                 for s in director['segments']]
     pending = set()
+    pending_generation = set()
     if phase == 'planning':
         from .visual_confirmation import _native_result_adapter
         for segment in director['segments']:
@@ -227,10 +236,14 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
                 brief = adapter.validate_brief((job.job_dir / scenes[0]['brief_path']).read_bytes())
                 if not (job.job_dir / brief['result_record_path']).exists():
                     pending.add((segment['segment_id'], cid))
+        from .visual_confirmation import planned_generation_targets
+        pending_generation = planned_generation_targets(Path(__file__).resolve().parents[3],
+            director, treatment, job_dir=job.job_dir)
     elif phase != 'completed':
         raise ValueError('unknown motion readability phase')
     validate_targets(segments, treatment.get('motion_readability', []),
-                     _required_refs(treatment), root=job.job_dir, pending_components=pending)
+                     _required_refs(treatment), root=job.job_dir, pending_components=pending,
+                     pending_generation_components=pending_generation)
     for segment in director['segments']:
         composition = segment['visual_strategy']['composition']
         if composition.get('presenter_mode') != 'bottom_window':

@@ -59,7 +59,9 @@ def validate_brief(payload):
             or r["numeric_scale"] != "not_applicable"):
         raise ValueError("Invalid Adu template request")
     _text(b["title"], "title", 14)
-    _text(b["stamp"], "stamp", 4)
+    # TPL.compare omits the stamp when its text is empty.
+    if b["stamp"] != "":
+        _text(b["stamp"], "stamp", 4)
     for name in ("left", "right"):
         side = b[name]
         if type(side) is not dict or set(side) != {"title", "items"}:

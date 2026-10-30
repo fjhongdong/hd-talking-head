@@ -10,6 +10,22 @@ from edit.hd.tools import visual_review
 
 
 class VisualReviewPlanIdentityTests(unittest.TestCase):
+    def test_explicit_user_final_review_preserves_unchecked_state(self):
+        expected = {"status": "required", "policy_version": "visual-review-v2",
+                    "stage": "preview", "plan_ref": {"sha256": "current"},
+                    "observations": [{"row_id": "seg-001:visual"}]}
+        pending = {"status": "pending", "user_instruction": "先继续合成完整视频，完成后发给我，我来检查画面和声音",
+                   "full_playback_reviewed": False, "audio_listened": False,
+                   "expected_media": expected}
+        with patch.object(visual_review, "expected_observations", return_value=expected):
+            result = visual_review.validate_stage_review(None, "preview", {"user_final_review": pending})
+            self.assertEqual(result["status"], "user_review_pending")
+            visual_review.validate_stage_review(None, "preview", {"user_final_review": pending,
+                                                                 "visual_review": result})
+            for changed in ({"audio_listened": True}, {"expected_media": {}}, {"user_instruction": ""}):
+                with self.assertRaises(ValueError):
+                    visual_review.validate_stage_review(None, "preview", {"user_final_review": {**pending, **changed}})
+
     def test_manifest_uses_content_identity_while_files_stay_hash_bound(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

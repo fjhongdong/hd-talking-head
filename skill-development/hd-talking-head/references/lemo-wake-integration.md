@@ -40,9 +40,9 @@ Wake 不再固定占用新 Job 首镜；新制作默认静态封面见[封面入
 
 父级传入同一绝对 `LEMO_WAKE_MODELS=<包根>/skill-development/runtime/lemo-wake/models`，贯穿环境准备及每次原生调用。原生历史放在本 Job 的 `lemo-wake-history.jsonl`，工作目录为本 Job；不写入 vendor 目录，不将运行数据重签到发布包。下载同意机制仍由原生处理。
 
-原生子任务用 `initialize_project` 在本 Job 内调用原始 `new_project.py`。父级先验证批准原图，再自动记录原生建项命令和本次生成的规范化 source；后续不能替换该 source，不接受给已有项目补填来源证明。子任务随后按完整原生 Skill 创建 DIRECTOR 和可读动画。默认示例缓推不是最终制作。完成静帧检查后，使用原生 `render.mjs`、`encode.py`、`qa.py`。`single_pass` 表示非循环输出，不限制制作过程中渲染次数；不运行 reset 或回环；编码 `--fps 24 --no-gif --no-webp --no-sticker`，QA `--no-loop --json <Job内报告> --src <原生src> --encode <原生encode.json>`。QA JSON 和编码输出放在 `src` 外。
+原生子任务用 `initialize_project` 在本 Job 内调用原始 `new_project.py`。父级先验证批准原图，再自动记录原生建项命令和本次生成的规范化 source；后续不能替换该 source，不接受给已有项目补填来源证明。子任务随后按完整原生 Skill 创建 DIRECTOR 和可读动画。默认示例缓推不是最终制作。完成静帧检查后，使用原生 `render.mjs`、`encode.py`、`qa.py`。`single_pass` 表示非循环输出，不限制制作过程中渲染次数；不运行 reset 或回环；编码 `--fps 24 --no-gif --no-webp --no-sticker`，QA `--fps 24 --no-loop --json <Job内报告> --src <原生src> --encode <原生encode.json>`。QA JSON 和编码输出放在 `src` 外。QA 与 `sheet.py` 联系表须显式使用当前 composition、CFG 和实际输出一致的帧率；本流程为 24fps，不能沿用脚本默认的 30fps。编码命令的帧率不会自动传给这些独立调用；发现时间注记错误时保留旧报告，仅按正确帧率重做检查，不重渲媒体。
 
-初始化只产生工程骨架。最终渲染前沿 `project_files` 核对全部作者输入可冻结，包括模板起初为空的 `fonts.css`：本 Job 实际需要的展示规则应写入所引用样式表，不能以无意义填字节或放宽文件身份校验通过。源输入在 render/encode/QA 之间保持不变；需要改作者输入时，保留前轮产物，实际重走三步及 capture，不修改旧调用回执。
+初始化只产生工程骨架。最终渲染前沿 `project_files` 核对全部作者输入可冻结。原生初始化会创建可选的空 `src/fonts.css`；未使用时保留原字节，只允许四步调用共同记录的实际工程根下这个文件为零字节，仍逐项核对路径、SHA 和字节数。其他源码、图片、输出、QA 与调用证据继续要求非空，不添加无意义注释绕过登记。源输入在 render/encode/QA 之间保持不变；需要改作者输入时，保留前轮产物，实际重走三步及 capture，不修改旧调用回执。
 
 自有薄桥仅记录原生命令和接收结果，不实现创作、渲染或编码：
 

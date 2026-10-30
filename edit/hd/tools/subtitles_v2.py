@@ -45,18 +45,18 @@ _SAME_KEYWORD_COOLDOWN_SECONDS = 15.0
 
 
 def _chinese_word_phrases(text: str) -> list[str]:
-    """Keep ICU-identified Chinese words intact when balancing cue lengths."""
+    """Use the renderer's word/quantity phrase boundaries when splitting cues."""
     script = (
-        "const fs=require('fs');"
+        "import fs from 'node:fs';"
+        f"import {{wordUnits}} from {json.dumps((talkcraft_subtitles.ADAPTER / 'line-units.mjs').as_uri())};"
         "const text=fs.readFileSync(0,'utf8');"
-        "const words=[...new Intl.Segmenter('zh',{granularity:'word'}).segment(text)]"
-        ".filter(part=>part.isWordLike && [...part.segment].length>1)"
-        ".map(part=>part.segment);"
+        "const words=wordUnits(text).map(part=>text.slice(part.start,part.end))"
+        ".filter(part=>[...part].length>1 && /[\\p{L}\\p{N}]/u.test(part));"
         "process.stdout.write(JSON.stringify(words));"
     )
     try:
         result = subprocess.run(
-            ["node", "-e", script], input=text, text=True,
+            ["node", "--input-type=module", "-e", script], input=text, text=True,
             capture_output=True, check=True,
         )
         phrases = json.loads(result.stdout)

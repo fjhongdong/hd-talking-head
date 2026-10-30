@@ -220,8 +220,8 @@ class BrollSystemTests(unittest.TestCase):
                 )
                 self.assertEqual(checked.family, "single_full_frame")
 
-    def test_code_annotation_hybrid_uses_a_bound_real_material_base(self) -> None:
-        for kind in ("local_material", "official_material", "external_stock"):
+    def test_code_annotation_hybrid_preserves_bound_material_sources(self) -> None:
+        for kind in ("local_material", "official_material", "external_stock", "ai_generated"):
             with self.subTest(kind=kind):
                 base = _component("base", kind)
                 annotation = _component(
@@ -235,8 +235,9 @@ class BrollSystemTests(unittest.TestCase):
                     ),
                 )
                 self.assertEqual(checked.family, "evidence_with_data_overlay")
+                self.assertEqual(checked.component_ids, ("base", "annotation"))
 
-        for kind in ("code_generated", "ai_generated"):
+        for kind in ("code_generated",):
             with self.subTest(non_material_base=kind):
                 base = _component("base", kind)
                 annotation = _component(

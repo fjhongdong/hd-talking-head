@@ -149,6 +149,15 @@ class CleanupRiskTests(unittest.TestCase):
         }]}
         self.assertEqual(edit_timeline.assess_cleanup_risk(words, plan, media_duration=3.0)["retained_repetitions"], [])
 
+    def test_short_parallel_opening_requires_listening_despite_asr_final_difference(self):
+        report = self.report(["自己点，", "自己填。"], ["keep", "keep"])
+        found = report["retained_repetitions"]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["evidence"], "shared_short_opening_requires_audio_review")
+        self.assertEqual((found[0]["word_start"], found[0]["word_end"]), (0, 2))
+        deleted = self.report(["自己点，", "自己填。"], ["delete", "keep"])
+        self.assertEqual(deleted["retained_repetitions"], [])
+
     def test_adjacent_long_complete_sentence_repeat_is_reported(self):
         sentence = "这是一段超过十四个字但完整重复的句子内容"
         words = [

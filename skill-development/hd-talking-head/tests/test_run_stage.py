@@ -21,6 +21,25 @@ class ExecuteStageTests(unittest.TestCase):
         job = SimpleNamespace(job_dir=self.root, stages=stages, inputs={}, root=self.root)
         return job
 
+    def test_native_brief_uses_approved_mapping_path_and_identity(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        path = self.root / 'tmp' / 'approved-brief.json'
+        path.parent.mkdir(); path.write_bytes(b'approved')
+        record = confirmation._record(self.root, path)
+        item = {'segment_id': 'seg-1', 'component_id': 'scene', 'artifact': record}
+        job = SimpleNamespace(job_dir=self.root)
+        recipe = {'segment_id': 'seg-1'}
+        component = {'component_id': 'scene', 'brief_sha256': record['sha256']}
+        with mock.patch.object(confirmation, 'validate_visual_authorization', return_value={'mapping': {'native_inputs': [item]}}):
+            self.assertEqual(run_stage._approved_native_brief(job, recipe, component), b'approved')
+            with self.assertRaises(ValueError):
+                run_stage._approved_native_brief(job, recipe, {**component, 'brief_sha256': '0' * 64})
+            with self.assertRaises(ValueError):
+                run_stage._approved_native_brief(job, recipe, {**component, 'component_id': 'other'})
+            path.write_bytes(b'changed')
+            with self.assertRaises(ValueError):
+                run_stage._approved_native_brief(job, recipe, component)
+
     def invoke(self, job, stage, **kwargs):
         with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
              mock.patch("edit.hd.tools.state.current_stage", return_value=stage), \
@@ -183,18 +202,26 @@ class ReviewAndDispatchTests(unittest.TestCase):
         self.assertEqual(adapters['official_material'][('seg-001', 'image')].approved_executor, 'official-media')
 
     def test_explicit_image_factory_reaches_existing_runner(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+
         factory = self.root / 'image_factory.py'
         factory.write_text("def create_adapters(job, project):\n    return {'official_material': 'image-adapter'}\n")
+        treatment = self.root / 'treatment.json'
+        treatment.write_text(json.dumps({'skill_selection': {}}))
+        authorized = {'source': {'inputs': {'treatment': confirmation._record(self.root, treatment)}}}
         job = SimpleNamespace(job_dir=self.root, root=self.root,
-                              stages={'visual_canary': {'status': 'pending'}})
+                              stages={'visual_direction': {'status': 'approved', 'artifact_scope': []},
+                                      'visual_canary': {'status': 'pending', 'artifact_scope': []}})
         with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
              mock.patch('edit.hd.tools.state.current_stage', return_value='visual_canary'), \
              mock.patch('edit.hd.tools.state.require_runnable'), \
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
+             mock.patch.object(confirmation, 'validate_visual_authorization', return_value=authorized) as authorize, \
              mock.patch.object(run_stage, '_startup'), \
              mock.patch.object(run_stage, '_summary', return_value={}), \
              mock.patch('edit.hd.tools.visual_canary.prepare_visual_canary') as prepare:
             run_stage.execute_stage(self.root, PROJECT, adapter_factory=factory)
+        authorize.assert_called_once_with(job)
         prepare.assert_called_once_with(job, component_adapters={'official_material': 'image-adapter'})
 
     def test_visual_repair_canary_only_requests_affected_segments(self):

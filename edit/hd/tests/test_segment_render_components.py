@@ -616,6 +616,27 @@ class SegmentRenderComponentTests(unittest.TestCase):
         self.assertNotIn("[component_1_source]crop=", graph)
         self.assertLess(graph.index("component_0"), graph.index("component_1"))
 
+    def test_registered_canvas_annotation_retains_coordinates_and_media_identity(self):
+        segment, artifacts = self._hybrid_fixture()
+        recipe = copy.deepcopy(segment['shot_recipe'])
+        base, layer = recipe['components']
+        base['render_window']['safe_zone'] = {'top': 0, 'bottom': 0, 'left': 0, 'right': 0}
+        base_artifact = replace(artifacts[0], render_window=base['render_window'], safe_zone=base['render_window']['safe_zone'])
+        layer['invocation_record']['canvas_alignment'] = {'mode': 'identity', 'base_component_id': 'base',
+            'base_sha256': base_artifact.output_sha256, 'layer_sha256': artifacts[1].output_sha256}
+        visual_strategy.validate_shot_recipe_v2(recipe)
+        graph = segment_render.build_filter_graph(recipe, (base_artifact, artifacts[1]), frames=24)
+        self.assertIn('[component_1_input]colorchannelmixer=', graph)
+        self.assertNotIn('[component_1_source]scale=', graph)
+        with self.assertRaises(segment_render.SegmentRenderError):
+            segment_render.build_filter_graph(recipe, (base_artifact, replace(artifacts[1], output_sha256='0' * 64)), frames=24)
+        for mutation in ('opaque', 'size', 'base_size'):
+            invalid = copy.deepcopy(recipe)
+            target = invalid['components'][0 if mutation == 'base_size' else 1]['artifact_contract']
+            target['alpha' if mutation == 'opaque' else 'width'] = False if mutation == 'opaque' else 720
+            with self.subTest(mutation=mutation), self.assertRaises(visual_strategy.VisualStrategyError):
+                visual_strategy.validate_shot_recipe_v2(invalid)
+
     def test_renderer_matches_strategy_components_by_approved_reading_order(self) -> None:
         segment, artifacts = self._hybrid_fixture()
         segment["visual_strategy"]["components"] = list(
@@ -2064,7 +2085,8 @@ class SegmentRenderComponentTests(unittest.TestCase):
             arroll_source=self.arroll,
         )
         probe = segment_render._default_probe(Path(rendered.video_path))
-        self.assertTrue(segment_render._probe_matches(probe, 147))
+        self.assertEqual(rendered.frames, 24)
+        self.assertTrue(segment_render._probe_matches(probe, 24))
 
         def pixel(
             timestamp: float,
@@ -2399,6 +2421,93 @@ class SegmentRenderComponentTests(unittest.TestCase):
             text=True,
         ).stdout.splitlines()
         self.assertEqual(streams, ["video"])
+
+
+class ParentStaticLabelTests(unittest.TestCase):
+    def fixture(self, root):
+        from edit.hd.tools import cover, parent_static_labels as labels
+        source = root / 'actual-raster-input.json'
+        source.write_text(json.dumps({'label': '聊天'}, ensure_ascii=False))
+        image = Image.new('RGBA', (240, 96), (0, 0, 0, 0))
+        ImageDraw.Draw(image).text((12, 6), json.loads(source.read_text())['label'], font=cover._font(56), fill='white')
+        png = root / 'actual-label.png'; image.save(png)
+        def descriptor(path):
+            return {'job_path': path.name, 'sha256': _sha256_file(path), 'byte_count': path.stat().st_size}
+        content = {'path': source.name, 'sha256': _sha256_file(source), 'pointer': '/label', 'value': '聊天'}
+        label = {'content_ref': content, 'image': descriptor(png), 'x': 120, 'y': 180,
+                 'start_frame': 6, 'end_frame': 18}
+        manifest = root / 'labels.json'
+        manifest.write_text(json.dumps({'schema_version': 1, 'segment_id': 'seg-label',
+            'component_id': 'visual-1', 'labels': [label]}, ensure_ascii=False))
+        segment = {'segment_id': 'seg-label', 'start': 0, 'end': 1, 'visible_text': ['聊天'],
+            'bindings': {'visual-1': {'execution_mode': 'reuse_completed_generated_media',
+                                     labels.FIELD: descriptor(manifest)}}}
+        return segment, label, png
+
+    def test_actual_label_inputs_targets_and_fixed_window_are_bound(self):
+        from edit.hd.tools import parent_static_labels as labels
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            segment, label, png = self.fixture(root)
+            actual = labels.load(root, segment, 'visual-1')
+            target = {'content_ref': label['content_ref'], 'region': {'x': 120, 'y': 180, 'width': 240, 'height': 96},
+                      'windows': [{'start': .25, 'end': .75}]}
+            labels.validate_targets(actual, [target])
+            wrong = copy.deepcopy(target); wrong['windows'][0]['end'] = .8
+            with self.assertRaisesRegex(ValueError, 'window'):
+                labels.validate_targets(actual, [wrong])
+            segment['visible_text'] = ['表格']
+            with self.assertRaisesRegex(ValueError, 'approved visible text'):
+                labels.load(root, segment, 'visual-1')
+            segment['visible_text'] = ['聊天']
+            png.write_bytes(b'changed file')
+            with self.assertRaisesRegex(ValueError, 'identity changed'):
+                labels.load(root, segment, 'visual-1')
+
+    @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg required')
+    def test_existing_png_overlay_route_renders_only_approved_frames(self):
+        from edit.hd.tools import parent_static_labels as labels
+        with tempfile.TemporaryDirectory() as directory:
+            job = _Job(Path(directory).resolve()); root = job.job_dir
+            label_segment, label, png = self.fixture(root)
+            manifest_path = root / 'labels.json'
+            manifest = json.loads(manifest_path.read_text()); manifest['segment_id'] = 'seg-001'
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False))
+            binding = label_segment['bindings']['visual-1']
+            binding[labels.FIELD].update(sha256=_sha256_file(manifest_path), byte_count=manifest_path.stat().st_size)
+            source = root / 'source.png'; Image.new('RGB', (1080, 1920), 'blue').save(source)
+            arroll = root / 'arroll.mp4'
+            subprocess.run(('ffmpeg', '-hide_banner', '-nostdin', '-v', 'error', '-f', 'lavfi', '-i',
+                'color=c=blue:s=1080x1920:r=24:d=1', '-frames:v', '24', '-an', '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p', '-y', str(arroll)), check=True, capture_output=True, timeout=60)
+            component = _component('visual-1', 'ai_generated', _sha256_file(source),
+                window=_window(start=0, end=24, z_index=0, slot='full_frame'), alpha=False)
+            recipe = _recipe([component], source_sha256=_sha256_file(arroll))
+            recipe['composition']['presenter_mode'] = 'hidden'; recipe['composition'].pop('avatar')
+            segment = _segment(recipe)
+            segment.update(visible_text=['聊天'], bindings={'visual-1': binding})
+            artifacts = (_artifact(job, recipe, component, source, alpha=False),)
+            source_sha = _sha256_file(source)
+            rendered = segment_render.render_segment_video(job, segment, artifacts,
+                output_dir=root / 'rendered', visual_plan_sha256='a' * 64, arroll_source=arroll,
+                arroll_sha256=_sha256_file(arroll), arroll_bytes=arroll.stat().st_size)
+            output = Path(rendered.video_path)
+            self.assertEqual(_sha256_file(source), source_sha)
+            self.assertEqual(rendered.frames, 24)
+            plain = copy.deepcopy(segment)
+            del plain['bindings']['visual-1'][labels.FIELD]
+            arroll_record = segment_render._ApprovedArroll('arroll.mp4', _sha256_file(arroll), arroll.stat().st_size)
+            plain_identity = segment_render.generation_identity(job, plain, 'a' * 64, artifacts, arroll_record)
+            self.assertNotEqual(rendered.generation_identity, plain_identity)
+            differences = []
+            for frame in (2, 12, 22):
+                sample = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-i', str(output),
+                    '-vf', f'select=eq(n\\,{frame}),crop=240:96:120:180', '-frames:v', '1',
+                    '-f', 'image2pipe', '-vcodec', 'png', '-'], check=True, capture_output=True, timeout=30)
+                image = Image.open(io.BytesIO(sample.stdout)).convert('RGB')
+                differences.append(sum(1 for r, g, b in image.getdata() if r > 150 and g > 150))
+            self.assertEqual((differences[0], differences[2]), (0, 0))
+            self.assertGreater(differences[1], 300)
 
 
 class NativeProresProbeTests(unittest.TestCase):

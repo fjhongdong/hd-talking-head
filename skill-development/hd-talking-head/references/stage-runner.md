@@ -79,9 +79,21 @@
 
 原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。续做时全部组件重走实际原生输入、语义、输出与时长检查；每份生成结果须被本组件的真实输入或明确依赖它的已批准生成步骤消费，其他组件中出现同一摘要不能充当本项绑定。
 
+每次实现映射按当前发布 revision 和映射内容身份写入独立目录；旧映射及其 lineage 保留原路径和原内容。读取只接受当前阶段唯一的映射，并核对其真实确认、计划、媒体和输入；同一内容重试可复用原文件，已有文件内容不符时停止，不能覆盖。
+
+原确认中 Paper Route B 仍等待已批准图片时，实际生成完成后可补齐原生 brief、binding 和同组件的 beat 快照，不改变原渠道、模板、语义、时窗或其他镜头。素材板裁成切片时，同一 `scenes` 项增加 `asset_provenance={"job_path":"<本Job内现有来源记录>","sha256":"<真实摘要>","byte_count":<字节数>}`，并保留实际 `source_images / crops` 记录；执行映射冻结该描述。验收检查源图属于本行已批准结果、裁片属于原生 brief 且被实际场景引用，并逐像素核对裁切坐标和输出。只记录一个文件摘要或无关组件引用，不能证明已消费生成图。
+
 修订某枚原生 brief 后，须同步该组件的实际 binding、`skill_selection.beats[].binding_snapshot`、场景路径、引用摘要及源码摘录，并在重新发布提案前调用已有 `broll_skill_selection.validate_selection`。源输入已经具备时，还须调用 `motion_capabilities.check_offline_plan` 检查当前源码证据与语义引用，不能把摘录仍指旧代码的提案留到正式编译才发现。不得只改 director 的 brief 摘要，等用户确认后才发现选型快照仍指旧输入；也不得放宽完整绑定比对。未改动组件保留原绑定与媒体。
 
-默认执行器按已确认的 brief 内容摘要读取 Job 内 JSON，不要求文件必须名为 `brief.json`。自定义名称与分版本目录同样须精确匹配摘要，并通过适配器原有的结构、时窗和来源检查；不能按相近文件名替代缺失输入。
+已确认 Lemo 原生场景若因编号实际太小仅调整编号字号及基线，可在同一 scene 的 `native_typography_revision` 显式提供 `sample`、`call`、`manifest`、`qa`、`composite`、`measurements`、`composite_call`、`composite_inputs` 八项真实 Job 文件描述 `{path,sha256,bytes}`。同步真实 brief、binding、beat 快照及可读性引用；校验旧新场景源码只能变更同一编号绘制的两个数值，字号说明、原生 workflow、样片调用、项目素材和像素复核须一致。独立合成须绑定实际样片和 A-roll；测量帧必须与实际合成视频对应帧逐像素一致。原用户确认、语义、时钟、模板和其他镜头保持锁定；不支持的源码形态或其它变化须停止。独立样片不代替正式合成后的逐项实看和文字验收。
+
+上述已证实的 Lemo 字号修正，或已证实的同画布动作层坐标修正，若改变已有正式 recipe，realization 草稿为对应镜头递增 `strategy_revision`，须高于原批准值及旧 canary 的实际版本；其他镜头不改。确认和局部锁只在原生输入、源码、素材及修正证据全部通过后于比较副本归一版本，正式 recipe 保留新版本；无对应修正证据不得单独递增。保留旧结果，不以相同版本覆盖。
+
+默认执行器从已批准的执行映射按镜头、组件及内容摘要读取 Job 内冻结 brief，不按目录扫描或相近文件名猜测。文件不要求必须名为 `brief.json`，自定义名称与目录同样须精确匹配映射和摘要，并通过适配器原有的结构、时窗和来源检查。
+
+Wake 原生项目允许其已验收结果中记录的空 `fonts.css` 作为项目依赖，执行器仍冻结并核对路径、零字节长度及真实摘要；该例外不适用于视频、图片或其他文件，也不改变已冻结的 Wake 原生适配器。
+
+已确认的混合 B-roll 如果真实透明动作层与完整底图必须逐像素配准，在该原生组件 `invocation_record.canvas_alignment` 填写 `{"mode":"identity","base_component_id":"<底层组件>","base_sha256":"<底图实际输出摘要>","layer_sha256":"<透明层实际输出摘要>"}`，并同步同一组件的 beat `binding_snapshot`。只在已确认的同镜混合关系内填写；实际 brief 必须为 1080×1920 透明输出，底图记录必须绑定此动作组件及 1080×1920 真实底图，摘要须分别与原生结果和底图文件一致。成片合成对两项输出再次核对摘要，再以原尺寸和原点叠加，不裁剪或缩放；未声明的普通标注继续按安全区适配。实看仍须检查画面、字幕和头像避让，尺寸和摘要不证明画面已对齐。
 
 未来图输入使用 `{"$step":"image-step","output":0}`，不得填写不存在的未来文件摘要。宿主实际完成生成后才写入真实媒体和哈希，再构造后续视频请求；模板内部生图、生视频与直接 B-roll 共用启动时确认的渠道。没有生成步骤的已确认素材直接沿原编译入口执行。
 
@@ -99,17 +111,21 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 
 `visual_canary`、`visual_assets` 只为实际选中的依赖组装适配器。原生代码组件、用户素材、官方资料、素材库及完成记录中的 AI 图片/视频使用包内默认工厂；图片与视频按各自组件绑定，混用时不会共用错误的媒体类型。直用素材保留原件和原尺寸，另存 PNG 或无声规范视频；按已确认时窗合成，不重复获取或生成素材。未知执行绑定在整表发布前报告缺口。
 
-局部视觉返修时，canary 自动采用本次 `artifact_scope` 中的受影响镜头，避免重做未变样段；也可通过 `input-json.segment_ids` 指定本次待检查镜头。正式资产仍按逐段输入身份复用其余媒体。
+局部视觉返修时，canary 自动采用本次 `artifact_scope` 中的受影响镜头；发布已清空该临时字段时，从当前真实确认 proposal 的 `revision_locks.changes` 读取同一范围，避免重做未变样段。也可通过 `input-json.segment_ids` 指定本次待检查镜头，显式范围优先。正式资产仍按逐段输入身份复用其余媒体。
 
 清单和成片编号共用 `visual_confirmation.approved_numbered_rows(job)`，按本期已确认 proposal 的冻结行序定位 `row_id`，不从当前稿件各自排序。最终合成在对应帧窗右下角叠小编号，时间统一加 `opening.body_offset_frames`；封面与空档不显示。编号图集和时窗随现有 preview 产物、报告与哈希登记，交付直接沿用带编号的正式预览。
 
 待审 proposal 的反复修订须保留上一代 `07-visual-direction` 的发布 lineage。proposal 文件不能代替正式目录的覆盖依据；也不能将旧正式目录放进会在原子交换时失效的 ACTIVE 引用后直接发布。恢复现存 Job 时，先核对引擎保留快照与旧目录，再用现有状态 API 将旧发布身份移入 lineage，并保留原 proposal 与真实用户批准，不重签确认。
+
+realization 已发布 `visual-plan`，但执行映射写入失败或中断时，保留当前正式目录、媒体和回执；不要凭最新回执猜测本次输入，也不要直接重复发布。先核对当前发布身份、原真实确认回执、proposal 和实际 realization 输入及文件；无法证明对应关系就停止。证据齐全时通过现有 `state.revise` 将当前发布记录移入 lineage，按已有受控迁移检查恢复原确认与实际输入，再用 `mark_visual_ready` 恢复原确认的 proposal 引用，随后从原实际输入继续正常流程。不修改、覆盖或伪造原确认及回执；恢复不构成新的用户批准。
 
 宿主已有专用适配器仍可显式传入 `execute_stage(..., component_adapters=...)`，或通过 `--adapter-factory <当前Job工厂.py>` 提供 `create_adapters(job, project)`。正常支持的来源无需另写工厂；工厂只组装已接通入口，不替换来源、不批准阶段。
 
 提交视觉清单前，另行汇总贴片与 B-roll 的数量、覆盖时长和未使用的真人重点；贴片重点须对应提问、原因、转折、对照或结尾语义，未做贴片的重点写明保留真人理由。该汇总用于检查两类画面是否分别覆盖，不设固定贴片配额，也不能用 B-roll 比例替代贴片检查。
 
 ## 宿主审阅后推进
+
+用户明确要求先合成完整视频并由自己检查画面和声音时，允许完成制作交付后保留最终人工检查待定。视觉阶段的同一 QA JSON 使用 `user_final_review`，字段为 `status="pending"`、`user_instruction`（用户真实原话）、`full_playback_reviewed=false`、`audio_listened=false`、`expected_media`（当前入口返回的完整 `visual_review`）。不得同时填写声称已播放通过的观察。回执写入 `visual_review.status=user_review_pending`，表明仅制作继续，不代表动态或声音已验收。文字硬检查和实际媒体身份检查照常执行；该显式安排不能用于跳过已发现的小字、裁切或遮挡。没有用户本轮明确指示时仍走默认宿主审阅。
 
 每次执行返回 `job_id`、`job_dir`、`stage`、`status`、`revision` 和实际 `artifacts`（包含路径、文件摘要和字节数）。机器校验后，宿主仍检查这些实际产物的画面、原声、字幕及语义。通过后，将刚审阅候选返回的 `job_id`、`job_dir`、`stage`、`revision`、完整 `artifacts` 原样放入本次 QA JSON，再补充检查结果：
 
@@ -154,6 +170,8 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 上传绑定按真实工具参数选用 `{"$input":"path"}` 或 `{"$input":"base64"}`，文件名使用 `{"$input":"filename"}`。例如 Lovart MCP 的 `upload_asset` 使用 `data_base64` 与 `filename`，不能把本地路径当作公网 URL 或直接传入 `ref_images`。入口核对冻结文件字节后编码，保存真实上传响应，再以返回 URL 替换参考图路径；不能因上传缺项跳过参考图或重复生成。
 
 当前 `mcp__lovart__upload_asset` 实际 JSON body 上限为 4 MiB；父入口计算完整参数（含 base64），另留 64 KiB 结构余量，不以工具说明的文件大小替代传输预算。超限时，仅本 Job 队列已完成且来源身份一致的静态 8-bit RGB/RGBA PNG 可在既有 generation-inputs 目录生成独立无损传输副本；必须逐像素、透明度、色彩与方向一致，原图及已批准请求不变。无损后仍超限即停止，不擅自有损、缩放或裁切。已实际返回明确 `HTTP 413: request body exceeds 4194304 bytes` 的动作，须先沿原 `record` 入口保存原 action 与真实响应，再取严格更小的无损上传动作；一般错误或结果不明仍保持 pending，不自动重试。此限制仅针对该 Lovart MCP 入口。
+
+宿主必须直接使用完整原 `action.tool` 和 `action.arguments` 执行，不从原文件、`input_files` 或生成提示词重新构造上传参数。特别是 `data_base64` 已可能来自无损传输副本，不能换回原图编码；参数过长时应程序化转交，不能依照截断输出重建。回传响应前核对实际发送的工具及完整参数确属该 action；发生参数误用时先保留真实发送和返回证据，不能把响应登记到未执行的 action，也不能清空或重新申领来掩盖差异。
 
 技术修订造成 proposal 身份变化时，同一逻辑步骤且完整请求负载（除内部 ID 外）完全相同，继续使用原已授权请求及上传状态。入口先验证原确认和当前请求一致，保留原授权、任务及结果；不重新登记、不重签确认、不重复生成。多个匹配明确停止，内容改变仍按新清单办理。
 

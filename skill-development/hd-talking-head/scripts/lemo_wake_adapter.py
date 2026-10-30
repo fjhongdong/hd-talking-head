@@ -58,10 +58,11 @@ def descriptor(root, item):
             'sha256': sha(file), 'byte_count': file.stat().st_size}
 
 
-def check_descriptor(d):
+def check_descriptor(d, *, project_src=None):
+    minimum = 0 if isinstance(d, dict) and project_src is not None and d.get('job_path') == project_src + '/fonts.css' else 1
     if (not isinstance(d, dict) or set(d) != {'job_path', 'sha256', 'byte_count'}
             or not isinstance(d['sha256'], str) or not re.fullmatch('[a-f0-9]{64}', d['sha256'])
-            or type(d['byte_count']) is not int or d['byte_count'] < 1):
+            or type(d['byte_count']) is not int or d['byte_count'] < minimum):
         raise ValueError('Invalid Wake file descriptor')
     relative(d['job_path'])
 
@@ -375,7 +376,7 @@ def check_result(b, request_sha, record, read):
         raise ValueError('Wake requires native project source and all four actual commands')
     previous = ([b['revision'][name] for name in ('previous_brief', 'previous_result', 'previous_media')]
                 if 'revision' in b else [])
-    for d in [b['image'], record['media'], record['native_qa'], *files, *calls, *previous]:
+    for d in [b['image'], record['media'], record['native_qa'], *calls, *previous]:
         check_descriptor(d)
         content = read(d['job_path'])
         if len(content) != d['byte_count'] or hashlib.sha256(content).hexdigest() != d['sha256']:
@@ -404,6 +405,12 @@ def check_result(b, request_sha, record, read):
         raise ValueError('Native commands belong to different Wake projects')
     src = sources.pop()
     relative(src)
+    for d in files:
+        # new_project.py creates this optional stylesheet empty. Freeze its original bytes.
+        check_descriptor(d, project_src=src)
+        content = read(d['job_path'])
+        if len(content) != d['byte_count'] or hashlib.sha256(content).hexdigest() != d['sha256']:
+            raise ValueError('Frozen Wake evidence differs: ' + d['job_path'])
     if 'revision' in b and not Path(src).is_relative_to(Path(b['revision']['project_parent'])):
         raise ValueError('Wake revised result must come from its new native project')
     if 'revision' in b and any(not Path(record[name]['job_path']).is_relative_to(

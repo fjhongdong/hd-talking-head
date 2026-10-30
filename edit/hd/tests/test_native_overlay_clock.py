@@ -68,6 +68,60 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
                                           for entry, budget in zip(entries, budgets)]}),
             capture_output=True, text=True, timeout=60)
 
+    def grid_entry(self, name, *, exit='none', duration=116 / 24, early=False):
+        directory = self.directory / name
+        (directory / 'vendor').mkdir(parents=True)
+        shutil.copyfile(SOURCE / 'skills/talking-head-recut/assets/vendor/gsap.min.js', directory / 'vendor/gsap.min.js')
+        route = 'hyperframes/grid-card-assemble'
+        source = (SOURCE / 'registry/components/grid-card-assemble/grid-card-assemble.html').read_bytes()
+        native = bind_native_clock(source, route, duration)
+        if early:
+            # Fault injection only in this temporary fixture, never the registry.
+            before, after = ((b'duration: TILE,', b'duration: 0.1,') if exit == 'none' else
+                             (b'duration: OUT, ease:', b'duration: 0.1, ease:'))
+            self.assertIn(before, native)
+            native = native.replace(before, after)
+        (directory / 'native.html').write_bytes(native)
+        values = {'items': '半小时,忙到下班,正经活少', 'layout': 'grid', 'columns': 3,
+                  'cues': '1.0416666666666667,2.25,3.375', 'exit': exit}
+        (directory / 'index.html').write_text('<script src="vendor/gsap.min.js"></script><style>' +
+            'html,body{margin:0;width:1080px;height:1920px}.stage{width:1080px;height:1920px}' +
+            '.mount{position:absolute;left:60px;top:70px;width:960px;height:300px;overflow:hidden}' +
+            '.gca-stage{width:960px!important;grid-auto-rows:230px!important;gap:14px!important}' +
+            '.gca-label{font:800 64px/1.25 "PingFang SC",sans-serif!important;letter-spacing:0!important}' +
+            '</style><div class="stage" data-composition-id="grid-host-' + name +
+            '" data-no-timeline data-width="1080" data-height="1920" data-duration="' + str(duration) + '">' +
+            '<div id="grid-mount" class="mount" data-composition-id="grid-card-assemble" data-composition-src="native.html" ' +
+            'data-start="0" data-duration="' + str(duration) + '" data-track-index="0" ' +
+            "data-variable-values='" + json.dumps(values, ensure_ascii=False) + "'></div></div>")
+        events, _ = _native_events(route, {'data-start': '0', 'data-variable-values': json.dumps(values)}, 24, duration)
+        return {'entry_directory': str(directory), 'route': route, 'duration': duration, 'start': 0,
+                'events': [{'slot': s, 'kind': k, 'text': text, 'time': t} for s, k, text, t in events]}
+
+    def test_grid_native_hold_has_actual_stable_frames_and_preserves_fade_and_other_routes(self):
+        result = self.run_check([self.grid_entry('hold'), self.grid_entry('fade', exit='fade'), self.entry('wipe')])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        hold, fade, wipe = json.loads(result.stdout)['entries']
+        self.assertAlmostEqual(hold['timeline_duration'], 4.025)
+        self.assertAlmostEqual(hold['requested_duration'], 116 / 24)
+        evidence = hold['hold_check']
+        self.assertGreaterEqual(evidence['frames_checked'], 12)
+        self.assertEqual(len(evidence['pixel_samples']), 3)
+        self.assertEqual(len({sample['sha256'] for sample in evidence['pixel_samples']}), 1)
+        self.assertGreaterEqual(evidence['samples'][-1] - evidence['samples'][0], .5)
+        for row, duration in ((fade, 116 / 24), (wipe, 4)):
+            self.assertIsNone(row['hold_check'])
+            self.assertAlmostEqual(row['timeline_duration'], duration)
+
+    def test_grid_hold_does_not_accept_early_actions_short_reading_or_short_fade(self):
+        for name, kwargs in [('early', {'early': True}), ('short-reading', {'duration': 4.4}),
+                             ('short-fade', {'exit': 'fade', 'early': True})]:
+            with self.subTest(name=name):
+                result = self.run_check([self.grid_entry(name, **kwargs)])
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('complete action and reading window' if name != 'short-fade'
+                              else 'native duration differs', result.stderr)
+
     def test_actual_runtime_authors_each_entry_and_preserves_native_clock(self):
         rows = overlay_alignment._assembled_clocks([self.entry('first'), self.entry('second')])
         self.assertEqual(len(rows), 2)

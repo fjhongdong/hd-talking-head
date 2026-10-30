@@ -20,6 +20,7 @@ import {spawn} from "node:child_process";
 import { createRequire } from "node:module";
 import {fileURLToPath} from 'node:url';
 import {once} from 'node:events';
+import {createHash} from 'node:crypto';
 
 const GSAP_CANDIDATES = [
   "参考项目/B-roll开源方案/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js",
@@ -63,7 +64,37 @@ export const SAMPLE = async (entry, fps) => {
   const total = timeline.duration();
   const hostTotal = player.getDuration();
   const tolerance = 1 / fps;
-  if (Math.abs(total - entry.duration) > tolerance || hostTotal < entry.start + total - tolerance) {
+  let hold = null;
+  if (Number.isFinite(total) && total > 0 && total < entry.duration - tolerance
+      && route === 'grid-card-assemble') {
+    const values = JSON.parse(mount.getAttribute('data-variable-values') || '{}');
+    const events = entry.events.filter(event => event.kind === 'reveal');
+    const labels = [...root.querySelectorAll('.gca-label')];
+    // The pinned primitive's public exit=none intentionally has no OUT tween.
+    // Its standard mount duration, not an empty tween, owns the still tail.
+    if ((values.exit ?? 'none') === 'none' && events.length && labels.length === events.length
+        && labels.every((label, i) => label.textContent.trim() === events[i].text)) {
+      const tile = Math.min(.65, Math.max(.2, entry.duration - .15));
+      const lastLanding = Math.max(...events.map(event => event.time - entry.start)) + tile;
+      const first = Math.ceil((entry.start + lastLanding) * fps - 1e-6);
+      const last = Math.ceil((entry.start + entry.duration) * fps - 1e-6) - 1;
+      // The pinned assembler moves authored mount timing to its standard
+      // data-hf-authored-* attributes; the native root handoff is temporary.
+      const mountDuration = mount.getAttribute('data-duration') ?? mount.getAttribute('data-hf-authored-duration');
+      if (Math.abs(total - lastLanding) > 1e-6 || last - first + 1 < Math.ceil(.5 * fps)
+          || mountDuration === null || !Number.isFinite(Number(mountDuration))
+          || Math.abs(Number(mountDuration) - entry.duration) > 1e-6) {
+        throw new Error('native grid hold does not follow its complete action and reading window: ' +
+          JSON.stringify({total, lastLanding, first, last, mount_duration: mount.getAttribute('data-duration'),
+            authored_duration: mount.getAttribute('data-hf-authored-duration')}));
+      }
+      hold = {first_frame: first, last_frame: last, frames_checked: 0, labels,
+        samples: [...new Set([first, Math.floor((first + last) / 2), last])].map(frame => frame / fps)};
+    }
+  }
+  if (!Number.isFinite(total) || !Number.isFinite(hostTotal) || total <= 0
+      || (!hold && Math.abs(total - entry.duration) > tolerance)
+      || hostTotal < entry.start + entry.duration - tolerance) {
     throw new Error('native duration differs from the declared clock: ' + JSON.stringify({native_duration: total, requested_duration: entry.duration, host_duration: hostTotal, mount_start: entry.start}));
   }
   const intersect = (a, b) => ({left: Math.max(a.left, b.left), right: Math.min(a.right, b.right),
@@ -115,19 +146,44 @@ export const SAMPLE = async (entry, fps) => {
   // Keep global player coordinates, but inspect only this mount and one frame
   // on either side. A long host must not multiply unrelated seek work.
   const firstFrame = Math.max(0, Math.floor(entry.start * fps) - 1);
-  const lastFrame = Math.min(Math.ceil(hostTotal * fps), Math.ceil((entry.start + total) * fps) + 1);
+  const lastFrame = Math.min(Math.ceil(hostTotal * fps), Math.ceil((entry.start + entry.duration) * fps) + 1);
   let sampledFrames = 0;
+  let heldState;
   for (let frame = firstFrame; frame <= lastFrame; frame++) {
     const time = Math.min(frame / fps, hostTotal);
     await seek(time);
     const count = texts(root).filter(item => visible(item.element, item.rect)).length;
     if (count) {entryFrame ??= frame; exitFrame = frame; peak = Math.max(peak, count);}
+    if (hold && frame >= hold.first_frame && frame <= hold.last_frame) {
+      for (const label of hold.labels) {
+        const range = document.createRange(); range.selectNodeContents(label);
+        if (!visible(label, range.getBoundingClientRect())) throw new Error('native grid hold hides a required label');
+      }
+      const state = JSON.stringify([...root.querySelectorAll('.gca-card,.gca-icon path')].map(element => {
+        const style = getComputedStyle(element), rect = element.getBoundingClientRect();
+        return [rect.x, rect.y, rect.width, rect.height, style.opacity, style.transform, style.filter,
+          style.clipPath, element.getAttribute('stroke-dashoffset')];
+      }));
+      heldState ??= state;
+      if (heldState !== state) throw new Error('native grid final state changes during its hold');
+      hold.frames_checked++;
+    }
     sampledFrames++;
     if (window.__hdClockProgress && (sampledFrames === 1 || sampledFrames % fps === 0)) {
       await window.__hdClockProgress({checked_frames: sampledFrames, frame});
     }
   }
   if (!peak) throw new Error('native content is never visible');
+  let holdCheck = null;
+  if (hold) {
+    if (hold.frames_checked !== hold.last_frame - hold.first_frame + 1) throw new Error('native grid hold sampling is incomplete');
+    const rect = mount.getBoundingClientRect();
+    const clip = {x: rect.left, y: rect.top, width: rect.width, height: rect.height};
+    if (clip.x < 0 || clip.y < 0 || clip.width <= 0 || clip.height <= 0
+        || clip.x + clip.width > 1080 || clip.y + clip.height > 1920) throw new Error('native grid hold mount is outside its canvas');
+    holdCheck = {first_frame: hold.first_frame, last_frame: hold.last_frame,
+      frames_checked: hold.frames_checked, samples: hold.samples, clip};
+  }
   const visibilityChecks = [];
   if (route === 'before-after-wipe') {
     const land = entry.events.find(event => event.kind === 'wipe_land');
@@ -157,6 +213,7 @@ export const SAMPLE = async (entry, fps) => {
     temporary_duration_removed: !root.hasAttribute('data-duration'),
     host_duration: stage?.getAttribute('data-duration'), host_start: mount.getAttribute('data-start'),
     authored_root_id: root.getAttribute('data-hf-authored-id'), visibility_checks: visibilityChecks,
+    hold_check: holdCheck,
     sampled_frames: sampledFrames, sampling_window: {first_frame: firstFrame, last_frame: lastFrame}};
 };
 
@@ -317,6 +374,21 @@ export async function runCheck(request) {
         update('sampling');
         const observed = await page.evaluate(async ({sample, entry, fps}) => (0, eval)('(' + sample + ')')(entry, fps),
           {sample: SAMPLE.toString(), entry, fps: FPS});
+        if (observed.hold_check) {
+          let first;
+          const hashes = [];
+          for (const time of observed.hold_check.samples) {
+            await page.evaluate(async time => {
+              await window.__player.renderSeek(time, {exact: true});
+              if (window.__hfWaitForSeekCompletion) await window.__hfWaitForSeekCompletion();
+            }, time);
+            const actual = await page.screenshot({clip: observed.hold_check.clip, omitBackground: true});
+            first ??= actual;
+            if (!first.equals(actual)) throw new Error('native grid held pixels differ between actual frames');
+            hashes.push({time, sha256: createHash('sha256').update(actual).digest('hex')});
+          }
+          observed.hold_check.pixel_samples = hashes;
+        }
         checkpoint();
         entries.push({...observed, requested_duration: entry.duration, mount_start: entry.start, declared_events: entry.events});
         update('entry_complete', {checked_frames: observed.sampled_frames});

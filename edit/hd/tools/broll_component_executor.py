@@ -2267,6 +2267,21 @@ def _load_brief(
     return brief
 
 
+def _wake_empty_project_files(adapter, job, recipe, component, brief):
+    """Wake's verified project contract permits its optional empty stylesheet."""
+    if (getattr(adapter, 'dependency_id', None) != 'lemo-wake'
+            or getattr(adapter, 'adapter_id', None) != 'wake-native-v1'):
+        return set()
+    from . import visual_confirmation as confirmation
+    expected = confirmation.native_result_descriptor(
+        job, recipe['segment_id'], component['component_id'], hashlib.sha256(brief).hexdigest())
+    record = confirmation._read(confirmation._exact(job.job_dir, expected))
+    empty_sha = hashlib.sha256(b'').hexdigest()
+    return {(d['job_path'], d['sha256']) for d in record['project_files']
+            if d.get('byte_count') == 0 and d.get('sha256') == empty_sha
+            and d.get('job_path', '').endswith('/fonts.css')}
+
+
 def _freeze_reference_media(
     *,
     adapter: ReferenceProcessAdapter,
@@ -2292,6 +2307,11 @@ def _freeze_reference_media(
         or any(type(item) is not ReferenceProcessMedia for item in requested)
         or len({item.media_ref for item in requested}) != len(requested)
     ):
+        _raise("BROLL_RENDER_FAILED")
+
+    try:
+        empty_projects = _wake_empty_project_files(adapter, job, recipe, component, brief)
+    except (ValueError, KeyError, TypeError, OSError):
         _raise("BROLL_RENDER_FAILED")
 
     media_fds: list[int] = []
@@ -2322,7 +2342,7 @@ def _freeze_reference_media(
             )
             try:
                 size = os.fstat(source_fd).st_size
-                if not 0 < size <= _MAX_REFERENCE_MEDIA_BYTES:
+                if size > _MAX_REFERENCE_MEDIA_BYTES or (size == 0 and (item.job_path, item.sha256) not in empty_projects):
                     _raise("BROLL_RENDER_FAILED")
                 sizes.append(size)
             finally:
@@ -2342,7 +2362,8 @@ def _freeze_reference_media(
             destination_fd: int | None = None
             try:
                 source_before = os.fstat(source_fd)
-                if not 0 < source_before.st_size <= _MAX_REFERENCE_MEDIA_BYTES:
+                if (source_before.st_size > _MAX_REFERENCE_MEDIA_BYTES or
+                        (source_before.st_size == 0 and (item.job_path, item.sha256) not in empty_projects)):
                     _raise("BROLL_RENDER_FAILED")
                 name = f"reference-media-{index}.snapshot"
                 destination_fd = os.open(
@@ -4518,10 +4539,6 @@ def _replay_transaction(
     transaction: _Transaction, code: str
 ) -> ComponentArtifact | None:
     state = transaction.record["state"]
-    if (transaction.record.get("input_sha256") is not None
-            and transaction.record.get("input_sha256") != transaction.input_sha256):
-        # a recomposed plan rewrote the brief; nothing here is reusable
-        return None
     if state not in {"published", "complete", "publishing"}:
         # A crashed or failed earlier render owns nothing worth replaying;
         # the chain lock is held by this execution, so re-render from scratch
@@ -4705,6 +4722,7 @@ def _begin_transaction(
         replay = _replay_transaction(transaction, code)
         if replay is not None:
             return transaction, replay
+        _final_absent(transaction, code)
         stale_journal = (
             record.get("input_sha256") != input_sha256
             or record.get("recipe_sha256") != _sha256_bytes(_canonical_bytes(recipe))
@@ -4718,7 +4736,6 @@ def _begin_transaction(
             transaction.record = record
         else:
             _validate_transaction_record(transaction, transaction.record, code)
-            _final_absent(transaction, code)
         if record["state"] in {"planned", "running"}:
             _cleanup_recorded_nonce(transaction, code)
             transaction.record = _new_planned_record(

@@ -481,13 +481,20 @@ def validate_composition_contract(
             )
         ):
             raise _error(f"{label} component dependency is invalid")
-        if by_id[component_id].get("kind") == "code_generated" and any(
-            by_id[target].get("kind") not in _REAL_MATERIAL_KINDS
-            for target in targets
-        ):
-            raise _error(
-                f"{label} code annotation must depend on real material bases"
-            )
+        if by_id[component_id].get("kind") == "code_generated":
+            for target in targets:
+                base = by_id[target]
+                if base.get("kind") in _REAL_MATERIAL_KINDS:
+                    continue
+                if (
+                    base.get("kind") == "ai_generated"
+                    and base.get("semantic_role") != "evidence"
+                    and by_id[component_id].get("semantic_role") != "evidence"
+                ):
+                    continue
+                raise _error(
+                    f"{label} code annotation requires real material or non-evidence AI bases"
+                )
         dependent_window = by_id[component_id].get("render_window")
         target_windows = [by_id[target].get("render_window") for target in targets]
         if type(dependent_window) is dict and all(
@@ -1041,6 +1048,23 @@ def validate_shot_recipe_v2(recipe: object) -> dict:
         mode,
         label="shot recipe composition",
     )
+    by_id = {c['component_id']: c for c in components}
+    for component in components:
+        alignment = component.get('invocation_record', {}).get('canvas_alignment')
+        if alignment is None:
+            continue
+        if (not isinstance(alignment, dict) or set(alignment) != {'mode', 'base_component_id', 'base_sha256', 'layer_sha256'}
+                or alignment['mode'] != 'identity' or family_hint != 'evidence_with_data_overlay'
+                or component['kind'] != 'code_generated' or component['layer_role'] != 'annotation'
+                or component['artifact_contract'] != {'width': 1080, 'height': 1920, 'fps': 24, 'alpha': True}):
+            raise _error('canvas alignment needs a transparent full-canvas hybrid annotation')
+        base = by_id.get(alignment['base_component_id'])
+        if (not base or base['layer_role'] != 'base' or base['render_window']['layout_slot'] != 'full_frame'
+                or base['artifact_contract'] != {'width': 1080, 'height': 1920, 'fps': 24, 'alpha': False}
+                or any(base['render_window']['safe_zone'].values())):
+            raise _error('canvas alignment needs a matching full-canvas opaque base')
+        _sha256(alignment['base_sha256'], label='canvas alignment base_sha256')
+        _sha256(alignment['layer_sha256'], label='canvas alignment layer_sha256')
     result = _copy(checked, label="shot recipe v2")
     for component in result["components"]:
         window = component["render_window"]

@@ -95,6 +95,20 @@ def validate_stage_review(job, stage, review):
     expected = expected_observations(job, stage)
     if expected["status"] == "not_applicable":
         return expected
+    pending = review.get("user_final_review")
+    if pending is not None:
+        if (not isinstance(pending, dict)
+                or pending.get("status") != "pending"
+                or not isinstance(pending.get("user_instruction"), str)
+                or not pending["user_instruction"].strip()
+                or pending.get("full_playback_reviewed") is not False
+                or pending.get("audio_listened") is not False
+                or pending.get("expected_media") != expected):
+            raise ValueError("user final review must remain pending and bind the current media")
+        if "visual_review" in review and review["visual_review"] != {
+                **pending, "status": "user_review_pending"}:
+            raise ValueError("pending user review cannot also claim host playback approval")
+        return {**pending, "status": "user_review_pending"}
     if (expected["policy_version"] == "visual-review-v1"
             and job.stages[stage].get("status") != "approved"):
         raise ValueError("frozen v1 visual review is read-only; new approval requires v2")

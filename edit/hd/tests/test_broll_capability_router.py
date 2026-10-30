@@ -176,6 +176,20 @@ def _template_candidate(
     return value
 
 
+def _native_template_candidate(**overrides: object) -> dict[str, object]:
+    """Real native route identity; sample/scores are structure-only test data."""
+    entry = "scripts/hyperframes_native_adapter.py"
+    value = _template_candidate(
+        "hyperframes-screen-flow-carousel-portrait-adaptation", "custom_fallback",
+        template_version="1.3.0", adaptation_level="structural",
+        source_entrypoint=entry,
+        source_sha256=hashlib.sha256((ROUTER_PATH.parents[1] / entry).read_bytes()).hexdigest(),
+        semantic_families=["screen_sequence"], capacity={"min_units": 2, "max_units": 5},
+    )
+    value.update(overrides)
+    return value
+
+
 def _binding(kind: str, asset_id: str) -> dict[str, object]:
     bindings: dict[str, dict[str, object]] = {
         "local_material": {
@@ -245,14 +259,27 @@ def _compile_context(
         if kind not in {"code_generated", "ai_generated"}:
             snapshots[component_id] = [_candidate(f"asset-{component_id}", kind)]
         if kind == "code_generated":
+            candidate = _native_template_candidate()
+            if component["layer_role"] == "annotation":
+                candidate = _native_template_candidate(
+                    template_id="hyperframes-mk-specs-list-portrait-adaptation",
+                    semantic_families=["feature_list"],
+                )
             template_candidates[component_id] = {
-                "semantic_family": "comparison",
+                "semantic_family": candidate["semantic_families"][0],
                 "information_units": 5,
-                "candidates": [
-                    _template_candidate("fixture-default", "custom_fallback")
-                ],
+                "candidates": [candidate],
             }
         bindings[component_id] = _binding(kind, f"asset-{component_id}")
+        if kind == "code_generated":
+            binding = bindings[component_id]
+            binding.update(
+                dependency_id="hyperframes-native-adaptation",
+                entrypoint=candidate["source_entrypoint"], producer_version="1.3.0",
+                renderer_version="0.8.167",
+            )
+            binding["invocation_record"]["argv"] = ["python3", binding["entrypoint"]]
+            binding["invocation_record"]["template_request"]["semantic_family"] = candidate["semantic_families"][0]
     if candidate_overrides:
         snapshots.update(candidate_overrides)
     if binding_overrides:
@@ -277,21 +304,32 @@ class BrollCapabilityRouterTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.router = _load_router()
 
+    def test_composition_alpha_distinguishes_hybrid_annotation_and_base(self):
+        from edit.hd.tools.dependency_contracts import output_alpha
+        self.assertTrue(output_alpha('code_generated', 'barty-motion-graphics', 'evidence_with_data_overlay', 'annotation'))
+        self.assertFalse(output_alpha('code_generated', 'barty-motion-graphics', 'evidence_with_data_overlay', 'base'))
+        self.assertTrue(output_alpha('code_generated', 'barty-motion-graphics', 'aroll_with_overlay', 'annotation'))
+        self.assertFalse(output_alpha('code_generated', 'barty-motion-graphics', 'single_full_frame', 'base'))
+        self.assertFalse(output_alpha('ai_generated', None, 'evidence_with_data_overlay', 'base'))
+
     def test_adu_compiles_opaque_reference_adapter_and_rejects_evidence(self) -> None:
         component = _strategy_component("adu", "code_generated", layout_slot="full_frame")
         binding = _binding("code_generated", "asset-adu")
         binding.update(dependency_id="adu-motion-video", primary_renderer="HTMLCanvas",
-                       entrypoint="scripts/adu_motion_adapter.py", producer_version="1.0.0")
-        binding["invocation_record"]["argv"] = ["python3", binding["entrypoint"]]
+                       entrypoint="scripts/render_adu_native.mjs", producer_version="2.3.0",
+                       renderer_version="2.3.0")
+        binding["invocation_record"]["argv"] = ["node", binding["entrypoint"]]
         binding["invocation_record"]["template_request"] = {
-            "semantic_family": "decomposition_consolidation", "information_units": 3,
+            "semantic_family": "old_new_comparison", "information_units": 3,
             "numeric_values": [], "numeric_scale": "not_applicable"}
-        context = _compile_context([component], segment_frames=432,
+        context = _compile_context([component], segment_frames=144,
             binding_overrides={"adu": binding}, template_overrides={"adu": {
-                "semantic_family": "decomposition_consolidation", "information_units": 3,
-                "candidates": [_template_candidate("adu-portrait", "custom_fallback",
-                    adaptation_level="structural", semantic_families=["decomposition_consolidation"],
-                    capacity={"min_units": 3, "max_units": 3})]}})
+                "semantic_family": "old_new_comparison", "information_units": 3,
+                "candidates": [_template_candidate("adu-motion-video/native-compare", "custom_fallback",
+                    template_version="2.3.0", source_entrypoint=binding["entrypoint"],
+                    source_sha256=hashlib.sha256((ROUTER_PATH.parents[1] / binding["entrypoint"]).read_bytes()).hexdigest(),
+                    adaptation_level="structural", semantic_families=["old_new_comparison"],
+                    capacity={"min_units": 2, "max_units": 6})]}})
         result = self.router.compile_strategy(_visual_strategy([component]), context)
         compiled = result["components"][0]
         self.assertEqual(compiled["executor"], "reference_adapter")
@@ -309,6 +347,7 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         binding = context["bindings"]["code"]
         for field in self.router._TEMPLATE_PROVENANCE_FIELDS:
             binding[field] = copy.deepcopy(record[field])
+        binding["dependency_id"] = record["upstream"]["project"]
         binding["primary_renderer"] = "Remotion"
         # Contract fixture only; this does not attest a runnable Remotion adapter.
         binding["entrypoint"] = "fixtures/render-remotion.mjs"
@@ -362,7 +401,7 @@ class BrollCapabilityRouterTests(unittest.TestCase):
 
     def test_qualification_snapshot_is_explicit_and_does_not_become_production_registry(self) -> None:
         relative = (
-            "assets/verified-templates/hyperframes/notification-cascade/"
+            "assets/verified-templates/hyperframes/notification-cascade/execution-v2/"
             "qualification/source-registry.json"
         )
         path = ROUTER_PATH.parents[1] / relative
@@ -452,49 +491,47 @@ class BrollCapabilityRouterTests(unittest.TestCase):
     def test_semantic_match_precedes_template_qualification(self) -> None:
         ranked = self.router.rank_code_templates(
             [
-                _template_candidate(
-                    "custom",
-                    "custom_fallback",
-                    semantic_match_score=1.0,
-                ),
+                _native_template_candidate(semantic_match_score=1.0),
                 _template_candidate(
                     "local",
                     "verified_local_canonical",
                     semantic_match_score=1.0,
+                    semantic_families=["screen_sequence"],
                 ),
-                _template_candidate("third-party", "verified_third_party"),
+                _template_candidate("third-party", "verified_third_party",
+                                    semantic_families=["screen_sequence"]),
             ],
-            semantic_family="comparison",
+            semantic_family="screen_sequence",
             information_units=5,
         )
-        self.assertEqual(ranked[0]["template_id"], "local")
+        self.assertEqual(ranked[0]["template_id"], "hyperframes-screen-flow-carousel-portrait-adaptation")
+        self.assertNotIn("local", [item["template_id"] for item in ranked])
 
-    def test_local_canonical_precedes_custom_when_third_party_is_ineligible(self) -> None:
-        ranked = self.router.rank_code_templates(
-            [
-                _template_candidate(
-                    "third-party", "verified_third_party",
-                    semantic_families=["timeline"],
-                ),
-                _template_candidate("custom", "custom_fallback"),
-                _template_candidate("local", "verified_local_canonical"),
-            ],
-            semantic_family="comparison",
-            information_units=5,
-        )
-        self.assertEqual(
-            [item["template_id"] for item in ranked], ["local", "custom"]
-        )
+    def test_retired_local_and_unregistered_custom_cannot_replace_ineligible_native(self) -> None:
+        with self.assertRaisesRegex(self.router.RouterError, "no eligible"):
+            self.router.rank_code_templates(
+                [
+                    _template_candidate(
+                        "third-party", "verified_third_party",
+                        semantic_families=["timeline"],
+                    ),
+                    _template_candidate("custom", "custom_fallback"),
+                    _template_candidate("local", "verified_local_canonical"),
+                ],
+                semantic_family="comparison",
+                information_units=5,
+            )
 
-    def test_registered_local_record_can_enter_router_and_validate_binding(self) -> None:
+    def test_registered_local_record_validates_history_but_cannot_enter_new_production(self) -> None:
         record = self.local_registered_record()
         with mock.patch.object(self.router, "_registered_template", return_value=record):
             candidate = self.router.candidate_from_verified_template_record(
                 record, semantic_match_score=.95, quality_score=.93, reuse_gap=9,
             )
-            ranked = self.router.rank_code_templates(
-                [candidate], semantic_family="bar_chart", information_units=3,
-            )
+            with self.assertRaisesRegex(self.router.RouterError, "no eligible"):
+                self.router.rank_code_templates(
+                    [candidate], semantic_family="bar_chart", information_units=3,
+                )
             binding = {
                 **{field: copy.deepcopy(record[field])
                    for field in self.router._TEMPLATE_PROVENANCE_FIELDS},
@@ -512,7 +549,11 @@ class BrollCapabilityRouterTests(unittest.TestCase):
                 },
             }
             self.router.validate_template_binding(binding)
-        self.assertEqual(ranked[0]["template_origin"], "verified_local_canonical")
+            component = _strategy_component("code", "code_generated")
+            context = _compile_context([component], binding_overrides={"code": binding})
+            context.pop("template_candidates")
+            with self.assertRaisesRegex(self.router.RouterError, "new production requires a native"):
+                self.router.compile_strategy(_visual_strategy([component]), context)
 
     def test_local_registered_identity_cannot_be_forged(self) -> None:
         registered = self.local_registered_record()
@@ -537,18 +578,21 @@ class BrollCapabilityRouterTests(unittest.TestCase):
                     "structural",
                     "verified_third_party",
                     adaptation_level="structural",
+                    semantic_families=["screen_sequence"],
                 ),
                 _template_candidate(
                     "too-small",
                     "verified_third_party",
                     capacity={"min_units": 1, "max_units": 2},
+                    semantic_families=["screen_sequence"],
                 ),
-                _template_candidate("local", "verified_local_canonical"),
+                _native_template_candidate(),
             ],
-            semantic_family="comparison",
+            semantic_family="screen_sequence",
             information_units=5,
         )
-        self.assertEqual([item["template_id"] for item in ranked], ["local"])
+        self.assertEqual([item["template_id"] for item in ranked],
+                         ["hyperframes-screen-flow-carousel-portrait-adaptation"])
 
     def test_template_router_is_input_order_independent(self) -> None:
         candidates = [
@@ -570,11 +614,12 @@ class BrollCapabilityRouterTests(unittest.TestCase):
 
     def test_unused_template_does_not_override_semantic_eligibility(self) -> None:
         ranked = self.router.rank_code_templates([
-            _template_candidate("unused", "verified_local_canonical",
-                                semantic_families=["timeline"], reuse_gap=999),
-            _template_candidate("already-used", "custom_fallback", reuse_gap=0),
-        ], semantic_family="comparison", information_units=5)
-        self.assertEqual([value["template_id"] for value in ranked], ["already-used"])
+            _native_template_candidate(template_id="hyperframes-beat-timeline-portrait-adaptation",
+                                       semantic_families=["timeline"], reuse_gap=999),
+            _native_template_candidate(reuse_gap=0),
+        ], semantic_family="screen_sequence", information_units=5)
+        self.assertEqual([value["template_id"] for value in ranked],
+                         ["hyperframes-screen-flow-carousel-portrait-adaptation"])
 
     def test_verified_registry_record_can_enter_template_router(self) -> None:
         registry_path = ROUTER_PATH.parents[1] / "references/verified-template-registry.json"
@@ -593,39 +638,22 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         self.assertEqual(ranked[0]["template_id"], "html-video/frame-data-rollup")
         self.assertEqual(ranked[0]["template_origin"], "verified_third_party")
 
-    def test_chatgpt_exchange_only_routes_for_its_verified_four_unit_semantics(self) -> None:
+    def test_retired_chatgpt_exchange_cannot_reenter_from_historical_qualification(self) -> None:
         registry_path = ROUTER_PATH.parents[1] / "references/verified-template-registry.json"
         records = {
             item["template_id"]: item
             for item in json.loads(registry_path.read_text(encoding="utf-8"))["templates"]
         }
-        candidate = self.router.candidate_from_verified_template_record(
-            records["hyperframes/chatgpt-exchange"],
-            semantic_match_score=0.96,
-            quality_score=0.94,
-            reuse_gap=20,
+        self.assertNotIn("hyperframes/chatgpt-exchange", records)
+        historical_path = ROUTER_PATH.parents[1] / (
+            "assets/verified-templates/hyperframes/chatgpt-exchange/"
+            "execution-v2/qualification/source-registry.json"
         )
-
-        for family in (
-            "ai_dialogue_comparison",
-            "four_factor_comparison",
-            "prompt_to_table",
-        ):
-            with self.subTest(family=family):
-                ranked = self.router.rank_code_templates(
-                    [candidate], semantic_family=family, information_units=4
-                )
-                self.assertEqual(
-                    [item["template_id"] for item in ranked],
-                    ["hyperframes/chatgpt-exchange"],
-                )
-        with self.assertRaisesRegex(self.router.RouterError, "no eligible"):
-            self.router.rank_code_templates(
-                [candidate], semantic_family="bar_chart", information_units=4
-            )
-        with self.assertRaisesRegex(self.router.RouterError, "no eligible"):
-            self.router.rank_code_templates(
-                [candidate], semantic_family="prompt_to_table", information_units=3
+        historical = json.loads(historical_path.read_text(encoding="utf-8"))["templates"][0]
+        self.assertEqual(historical["template_id"], "hyperframes/chatgpt-exchange")
+        with self.assertRaisesRegex(self.router.RouterError, "registered"):
+            self.router.candidate_from_verified_template_record(
+                historical, semantic_match_score=0.96, quality_score=0.94, reuse_gap=20,
             )
 
     def test_template_router_rejects_invalid_contract_fields(self) -> None:
@@ -1183,7 +1211,7 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         self.assertEqual(recipe["canvas"], {"width": 1080, "height": 1920, "fps": 24})
         self.assertEqual(compiled["primary_renderer"], "HyperFrames")
         self.assertEqual(compiled["executor"], "reference_adapter")
-        self.assertTrue(compiled["artifact_contract"]["alpha"])
+        self.assertFalse(compiled["artifact_contract"]["alpha"])
         self.assertNotIn("status", recipe)
 
         self.assertEqual(
@@ -1205,12 +1233,24 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         doudou_binding.update(
             dependency_id="doudou-remotion-whiteboard",
             primary_renderer="Remotion",
+            entrypoint="scripts/render_doudou.mjs", producer_version="2.0.0",
+            renderer_version="4.0.520",
+        )
+        doudou_binding["invocation_record"]["argv"] = ["node", doudou_binding["entrypoint"]]
+        doudou_binding["invocation_record"]["template_request"]["semantic_family"] = "process_flow"
+        doudou_candidate = _template_candidate(
+            "doudou-reviewed-scene", "custom_fallback", template_version="2.0.0",
+            adaptation_level="structural", source_entrypoint=doudou_binding["entrypoint"],
+            source_sha256=hashlib.sha256((ROUTER_PATH.parents[1] / doudou_binding["entrypoint"]).read_bytes()).hexdigest(),
+            semantic_families=["process_flow"], capacity={"min_units": 5, "max_units": 5},
         )
         doudou = self.router.compile_strategy(
             _visual_strategy([component]),
             _compile_context(
                 [component],
                 binding_overrides={"code": doudou_binding},
+                template_overrides={"code": {"semantic_family": "process_flow", "information_units": 5,
+                                               "candidates": [doudou_candidate]}},
             ),
         )["components"][0]
         self.assertEqual(doudou["executor"], "reference_adapter")

@@ -90,6 +90,76 @@ class CacheTests(unittest.TestCase):
                                 for e in updated["motion_matches"].values()))
         self.assertEqual(first, original)
 
+    def test_reviewed_source_only_update_reuses_cache_but_unreviewed_source_is_refused(self):
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        index = motion.contract_artifacts.read_json_artifact(ROOT / motion.INDEX)
+        ref = 'skill-development/hd-talking-head/scripts/lemo_wake_adapter.py'
+        target = next(p for p in index['profiles'] if p['candidate_id'] == 'lemo-wake:wake')
+        target['reviewed_sources'][ref] = 'a' * 64
+        read = motion.contract_artifacts.read_json_artifact
+        digest = motion.contract_artifacts.sha256_file
+        with patch.object(motion.contract_artifacts, 'read_json_artifact',
+                side_effect=lambda path: index if Path(path) == ROOT / motion.INDEX else read(path)):
+            for operation in (cache.match_once, cache.validate_matches):
+                with self.subTest(operation=operation.__name__), self.assertRaisesRegex(ValueError, 'source changed'):
+                    operation(ROOT, self.director, first)
+            with patch.object(motion.contract_artifacts, 'sha256_file',
+                    side_effect=lambda path: 'a' * 64 if Path(path) == ROOT / ref else digest(path)), \
+                 patch.object(motion, 'search_capabilities', side_effect=AssertionError('must reuse')):
+                self.assertEqual(cache.match_once(ROOT, self.director, first), first)
+                context = cache.validate_matches(ROOT, self.director, first)
+                wake = next(m['candidate'] for m in context[('s1', 'c')]['matches']
+                            if m['candidate']['candidate_id'] == 'lemo-wake:wake')
+                self.assertEqual(wake['capability']['reviewed_sources'][ref], 'a' * 64)
+
+    def test_all_other_catalog_fields_and_actual_matching_rules_invalidate_cache(self):
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        rows = motion.load_catalog(ROOT)
+        for field in ('tags', 'status', 'uses', 'template_id', 'summary', 'content_scope', 'producer_version'):
+            altered = copy.deepcopy(rows)
+            row = next(r for r in altered if r['candidate_id'] == 'lemo-wake:wake')
+            if field == 'tags': row['capability']['tags']['actions'].append('新动作')
+            elif field == 'uses': row['capability']['uses'].append('design')
+            elif field == 'summary': row['capability']['summary'] += '新限制'
+            elif field == 'content_scope': row['capability']['content_scope']['mode'] = 'fixed_action'
+            else: row[field] += '-changed'
+            with self.subTest(field=field), patch.object(motion, 'load_catalog', return_value=altered):
+                with self.assertRaisesRegex(ValueError, 'identity changed'):
+                    cache.validate_matches(ROOT, self.director, first)
+        read = Path.read_text
+        def changed_rules(path, *args, **kwargs):
+            text = read(path, *args, **kwargs)
+            return text.replace('score = sum(', 'score = 2 * sum(', 1) if path == Path(motion.__file__) else text
+        with patch.object(Path, 'read_text', autospec=True, side_effect=changed_rules):
+            self.assertNotEqual(cache._policy_identity(), first['motion_matches']['r0']['matching_policy_sha256'])
+            with self.assertRaisesRegex(ValueError, 'identity changed'):
+                cache.validate_matches(ROOT, self.director, first)
+
+    def test_legacy_cache_requires_evidence_instead_of_automatic_rebinding_or_search(self):
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        previous = motion.load_catalog(ROOT)
+        legacy = copy.deepcopy(first)
+        for entry in legacy['motion_matches'].values():
+            entry.pop('matching_policy_sha256')
+            entry['catalog_sha256'] = motion.contract_artifacts.sha256_json(previous)
+        original = copy.deepcopy(legacy)
+        with patch.object(motion, 'search_capabilities', side_effect=AssertionError('must not search')):
+            with self.assertRaisesRegex(ValueError, 'explicit.*rebinding'):
+                cache.match_once(ROOT, self.director, legacy)
+            with self.assertRaisesRegex(ValueError, 'identity changed'):
+                cache.validate_matches(ROOT, self.director, legacy)
+            for value in (None, '', 17, 'A' * 64, 'a' * 63, 'g' * 64):
+                damaged = copy.deepcopy(first)
+                damaged['motion_matches']['r0']['matching_policy_sha256'] = value
+                with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'explicit.*rebinding'):
+                    cache.match_once(ROOT, self.director, damaged)
+        self.assertEqual(legacy, original)
+        changed = copy.deepcopy(first)
+        changed['motion_matches']['r0']['matching_policy_sha256'] = '0' * 64
+        with patch.object(motion, 'search_capabilities', wraps=motion.search_capabilities) as search:
+            self.assertEqual(cache.match_once(ROOT, self.director, changed), first)
+            self.assertEqual(search.call_count, 1)
+
     def test_content_scope_requires_current_evidence_and_preserves_fixed_boundaries(self):
         index = motion.contract_artifacts.read_json_artifact(ROOT / motion.INDEX)
         read = motion.contract_artifacts.read_json_artifact
@@ -203,6 +273,41 @@ class CacheTests(unittest.TestCase):
         cache.validate_reviews(ROOT, self.director, first)
         first["skill_selection"]["overlay_beats"][0]["candidates"].pop()
         with self.assertRaisesRegex(ValueError, "every cached match"):
+            cache.validate_reviews(ROOT, self.director, first)
+
+    def test_unreviewed_cache_stays_complete_and_requires_current_joint_proof(self):
+        from edit.hd.tools import broll_skill_selection as selection
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        context = cache.validate_matches(ROOT, self.director, first)
+        skills = {c['skill_id'] for c in selection.discover_candidates(ROOT)}
+        first['skill_selection'] = {'schema_version': 1, 'history_note': '独立缓存回归',
+                                    'beats': [], 'overlay_beats': []}
+        for index, ((sid, cid), item) in enumerate(context.items()):
+            segment = next(s for s in self.director['segments'] if s['segment_id'] == sid)
+            segment.update(start=index * 4, end=index * 4 + 4)
+            overlay = item['semantic']['type'] == '贴片'
+            chosen = ('overlay:grid-card-assemble' if overlay else
+                      'openfilm-motion-graphics:motion-graphics')
+            beat = {'segment_id': sid, 'component_id': cid, 'semantic_row_id': item['row_id'],
+                    'start': segment['start'], 'end': segment['end'], 'window_status': 'resolved',
+                    'transcript': item['semantic']['quote'], 'semantic_goal': item['semantic']['semantic'],
+                    'required_change': item['semantic']['visual_task'],
+                    'skill_reviews': {skill: {'fit': 'unreviewed', 'reason': '保留尚未评审的渠道'}
+                                      for skill in skills},
+                    'single_source_review': {'decision': 'keep', 'reason': '保留所有候选；联合上下界相等。'},
+                    'candidates': [{'candidate_id': m['candidate']['candidate_id'],
+                                    'fit': 'equivalent' if m['candidate']['candidate_id'] == chosen else 'unreviewed',
+                                    'reason': '本次逐项结论，未知项没有伪装通过。',
+                                    **({'design_plan': copy.deepcopy(DESIGN), 'visual_pattern': chosen}
+                                       if m['candidate']['candidate_id'] == chosen else {})}
+                                   for m in item['matches']]}
+            first['skill_selection']['overlay_beats' if overlay else 'beats'].append(beat)
+        before = copy.deepcopy(first)
+        with patch.object(motion, 'search_capabilities', side_effect=AssertionError('must not rematch')):
+            cache.validate_reviews(ROOT, self.director, first)
+        self.assertEqual(first, before)
+        first['skill_selection']['beats'][0]['candidates'].pop()
+        with self.assertRaisesRegex(ValueError, 'every cached match'):
             cache.validate_reviews(ROOT, self.director, first)
 
     def test_design_and_exclusion_evidence_gate_does_not_rematch(self):

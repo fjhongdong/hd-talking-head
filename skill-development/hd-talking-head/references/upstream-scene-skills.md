@@ -59,11 +59,19 @@
 
 新制作使用 [TalkCraft 完整原生调用](talkcraft-native-skill.md)；由完整原生 Skill 创作和调用原生渲染脚本。旧派生资格卡与 matcher 不作为新的原生入口，保留原历史身份。四个已有原生组件不删除、不重做。Paper 完整创作及 HyperFrames Route B 见 [Paper 原生调用](paper-native-route-b.md)。
 
+### 用户指定动作的局部返修
+
+用户明确要求保留的可见动作（例如红线、盖章）须保留，不得只为通过字形检查而关闭动作。线条、章字和正文须各自清楚可读；原生模板公开参数无法满足时，按当前授权修订该项并选已接通的完整原生流程，不改第三方源码或自写替代引擎。实际竖屏须检查构图、空白、必要文字和原生调试信息，字号通过不能替代美观。语义同时核对程度与关系：例如“与其练手速，不如先练两件事”是训练重点的取舍，不是否定所有练习；两项并列能力不使用顺序箭头表达。保留未受影响的批准资产和原成片，返修另存。
+
 ### Adu 原生对比组件
 
 新调用唯一使用 `scripts/adu_native_adapter.py` 和 `scripts/render_adu_native.mjs`，版本 `2.3.0`。新生成时桥接层复制固定提交 `4a52ae2cff542cfb0bfcf6e93e5120c55d0110cf` 的完整原生 template，按公开参数调用 `TPL.compare`。关闭人物、品牌、口播字幕及进度线；在自有 `ENTRY.html` 同目录写入公开的 `output-signature.json`（`schema='adu-output-signature/1', enabled=false`），关闭新增装饰时码和 Logo。不修改原生源码、内部布局、划线、盖章、相机震动和退出过程。新版原生色彩检查要求 FFmpeg 9；只绑定项目 `skill-development/runtime/ffmpeg-9.0.2/bin/`，不替换系统 FFmpeg。由当前所选 Python 运行原生 `color_management.py --export-plan` 并检查通过后才允许生成；未准备时停止，不绕过门禁。
 
-此入口只表达 `old_new_comparison`：两侧各 1–3 项，总计 2–6 项，5–10 秒。brief 包含 `source_binding / template_request / composition`、短 `title`、`left/right={title,items}`、整数 `left_frame/right_frame/strike_frame` 及短 `stamp`。公开入口的盖章固定发生于 `strikeAt + .35s`，不得另造盖章时钟。没有真实前后对比、内容过长、动作与词锚不相容时换候选，不改原生过程。
+实际正常播放及划线出现、盖章落定和稳定状态的编码关键帧都要核对：固定划线与章字笔画须在最终合成画面中清楚分离，不能连成同色字形或让 OCR 把线识作文字。字框、字号通过不能代替逐像素和播放复核。若粘连影响理解，只用上游公开参数或允许的本期输入调整，并重新检查；无法通过公开能力解决时停下分析，不修改第三方源码、内置布局或划线机制。
+
+此入口只表达 `old_new_comparison`：两侧各 1–3 项，总计 2–6 项，5–10 秒。brief 包含 `source_binding / template_request / composition`、短 `title`、`left/right={title,items}`、整数 `left_frame/right_frame/strike_frame` 及 `stamp`。`stamp: ""` 使用原生可选能力关闭印章及其盖章音效，保留双卡与划线；有章时仍为最多 4 字的有效文字，盖章固定发生于 `strikeAt + .35s`，不得另造盖章时钟。其他文字字段仍须非空，不使用空格撑宽章框规避碰撞。没有真实前后对比、内容过长、动作与词锚不相容时换候选，不改原生过程。
+
+无章方案仍须完整表达已批准的转折含义。将章字融入标题或列表时，按现有局部修订同步准确文案、真实字源、目标区域及阅读窗，不把合并文字冒充未变的批准清单。标题长度通过不代表画面可用；通过实际原生字形几何检查，再核对真实编码帧和最终合成中的完整文字、清晰度及划线/头像/字幕避让，不缩小字号或裁小文字框绕过原门。
 
 原生画板固定 1920×1080；父层仅将整板等比放进竖屏，不裁切、不伸展、不修改内部字号。因此它是局部对比组件，不是原生竖屏整屏模板；不得仅因输出 1080×1920 而自动用于需要饱满主体演出的整屏 B-roll。它仍为 `custom_fallback / structural`，不是已验收的通用第三方模板。
 

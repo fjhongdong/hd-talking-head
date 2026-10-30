@@ -37,6 +37,207 @@ def _sha(path: Path) -> str:
 def _canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
 
+def _queue_media(job, request_id, output_index=0):
+    from edit.hd.tools import generation_queue
+    item = generation_queue.status(job.job_dir)["items"][request_id]
+    if item.get("status") != "completed":
+        raise ValueError("composition base requires a completed generation")
+    output = item["completion_response"]["artifacts"][output_index]
+    path = Path(output["path"])
+    if not path.is_absolute():
+        path = job.job_dir / path
+    if path.resolve() != path.absolute() or not path.is_relative_to(job.job_dir):
+        raise ValueError("composition base must be the original Job-local output")
+    media = {"job_path": path.relative_to(job.job_dir).as_posix(), "sha256": output["sha256"],
+             "byte_count": output["bytes"], "media_type": output["type"]}
+    if media["media_type"] != "video":
+        raise ValueError("composition base normalization accepts video only")
+    with _pinned_media(path, media):
+        pass
+    return media
+
+def _validate_base_queue_identity(job, record):
+    from edit.hd.tools import generation_queue, contract_artifacts as artifacts
+    generation = record['generation']
+    queue = generation_queue.status(job.job_dir)['items']
+    item = queue[generation['request_id']]
+    original_id = item.get('plan_request_id', generation['request_id'])
+    original = queue[original_id]
+    expected = {'request_id': record['generation_id'], 'task_ids': item.get('task_ids', []),
+                'channel_identity': item['channel_identity'], 'submitted_request': item['submitted_request']}
+    if original.get('authorization'):
+        expected.update(approved_plan=original['authorization'], approved_request_id=original_id,
+                        approved_request=original['request'])
+    if (any(generation.get(key) != value for key, value in expected.items())
+            or any(record[key] != item['channel_identity'][key] for key in ('provider', 'model', 'endpoint_id'))
+            or record['prompt_sha256'] != artifacts.sha256_json(item['submitted_request']['arguments'])):
+        raise ValueError('composition base generation identity differs from the completed queue')
+
+def _base_probe(path, ffprobe):
+    from lovart_existing_video_adapter import _metadata_probe
+    inherited = (int(path.name),) if path.parent == Path('/dev/fd') else ()
+    result = subprocess.run([str(ffprobe), '-v', 'error', '-show_streams', '-of', 'json', str(path)],
+                            pass_fds=inherited, capture_output=True, text=True, check=True, timeout=30)
+    streams = json.loads(result.stdout)['streams']
+    if len(streams) != 1 or streams[0].get('codec_type') != 'video':
+        raise ValueError('composition base needs one silent video stream')
+    stream = streams[0]
+    if stream.get('sample_aspect_ratio') not in (None, '1:1'):
+        raise ValueError('composition base cannot repair a non-square SAR')
+    # The existing probe also checks codec, both frame rates, rotation and MP4.
+    probe = _metadata_probe(ffprobe, path, {'width': stream['width'], 'height': stream['height'],
+                                          'sar': stream.get('sample_aspect_ratio')})
+    if abs(probe['duration'] - probe['frames'] / 24) > 1e-6:
+        raise ValueError('composition base frame clock differs')
+    return json.loads(_canonical(probe))
+
+def _base_pixels(path, ffmpeg, crop=None):
+    command = [str(ffmpeg), '-v', 'error', '-i', str(path), '-map', '0:v:0']
+    if crop is not None:
+        command += ['-vf', 'crop=' + ':'.join(str(v) for v in crop)]
+    command += ['-f', 'framemd5', '-']
+    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=60)
+    rows = [line.strip() for line in result.stdout.splitlines() if line and not line.startswith('#')]
+    if not rows:
+        raise ValueError('composition base has no decoded pixels')
+    return rows
+
+def _base_transform(probe):
+    width, height = probe['width'], probe['height']
+    for target_width, target_height in ((720, 1280), (1080, 1920)):
+        dx, dy = target_width - width, target_height - height
+        if (min(dx, dy) < 0 or width % 2 or height % 2
+                or dx / target_width + dy / target_height > .005):
+            continue
+        left, top = dx // 4 * 2, dy // 4 * 2
+        padding = {'left': left, 'right': dx - left, 'top': top, 'bottom': dy - top}
+        if max(padding.values()) <= 4:
+            return {'width': target_width, 'height': target_height, 'padding': padding,
+                    'codec': 'libx264' if dx or dy else 'copy', 'sar': '1:1'}
+    raise ValueError('composition base exceeds the approved tiny portrait rounding allowance')
+
+def _base_normalization_command(source, output, transform, ffmpeg):
+    command = [str(ffmpeg), '-hide_banner', '-nostdin', '-v', 'error',
+               '-i', str(source), '-map', '0:v:0', '-an']
+    pad = transform['padding']
+    if transform['codec'] == 'copy':
+        command += ['-c:v', 'copy', '-bsf:v', 'h264_metadata=sample_aspect_ratio=1/1']
+    else:
+        graph = (f"pad={transform['width']}:{transform['height']}:{pad['left']}:{pad['top']},"
+                 f"fillborders=left={pad['left']}:right={pad['right']}:top={pad['top']}:bottom={pad['bottom']}:mode=smear,setsar=1")
+        command += ['-vf', graph, '-c:v', 'libx264', '-qp', '0', '-pix_fmt', 'yuv420p', '-fps_mode', 'passthrough']
+    return command + ['-video_track_timescale', '24', '-n', str(output)]
+
+def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
+    required = {'schema_version', 'source', 'output', 'source_probe', 'output_probe',
+                'transform', 'frame_md5_sha256', 'command'}
+    if (not isinstance(normalization, dict) or set(normalization) != required
+            or normalization['schema_version'] != 1):
+        raise ValueError('composition base normalization evidence is invalid')
+    source, output = normalization['source'], normalization['output']
+    for media in (source, output):
+        if (not isinstance(media, dict) or set(media) != {'job_path', 'sha256', 'byte_count', 'media_type'}
+                or media.get('media_type') != 'video'):
+            raise ValueError('composition base normalization media evidence is invalid')
+        path = Path(job.job_dir) / media['job_path']
+        if path.resolve() != path.absolute() or not path.is_relative_to(job.job_dir):
+            raise ValueError('composition base normalization path is outside Job')
+        with _pinned_media(path, media):
+            pass
+    source_path, output_path = (Path(job.job_dir) / media['job_path'] for media in (source, output))
+    before, after = _base_probe(source_path, ffprobe), _base_probe(output_path, ffprobe)
+    transform = _base_transform(before)
+    command = normalization['command']
+    if (before != normalization['source_probe'] or after != normalization['output_probe']
+            or transform != normalization['transform'] or after['sar'] != '1:1'
+            or not isinstance(command, list) or not command
+            or command[1:] != _base_normalization_command(source_path, output_path, transform, ffmpeg)[1:]
+            or (after['width'], after['height']) != (transform['width'], transform['height'])
+            or any(before[key] != after[key] for key in ('fps', 'frames', 'duration', 'color'))):
+        raise ValueError('composition base normalization changed geometry, color or frame clock')
+    pad = transform['padding']
+    crop = [before['width'], before['height'], pad['left'], pad['top']]
+    rows = _base_pixels(source_path, ffmpeg)
+    if (rows != _base_pixels(output_path, ffmpeg, crop)
+            or hashlib.sha256('\n'.join(rows).encode()).hexdigest() != normalization['frame_md5_sha256']):
+        raise ValueError('composition base normalization changed original pixels or timestamps')
+    # Check the padding pixels too, by reproducing only the approved transform.
+    if any(pad.values()):
+        graph = (f"pad={transform['width']}:{transform['height']}:{pad['left']}:{pad['top']},"
+                 f"fillborders=left={pad['left']}:right={pad['right']}:top={pad['top']}:bottom={pad['bottom']}:mode=smear,setsar=1")
+        result = subprocess.run([str(ffmpeg), '-v', 'error', '-i', str(source_path),
+                                 '-vf', graph, '-f', 'framemd5', '-'],
+                                capture_output=True, text=True, check=True, timeout=60)
+        expected = [line.strip() for line in result.stdout.splitlines() if line and not line.startswith('#')]
+        if expected != _base_pixels(output_path, ffmpeg):
+            raise ValueError('composition base padding is not the original nearest edge pixels')
+    for media in (source, output):
+        with _pinned_media(Path(job.job_dir) / media['job_path'], media):
+            pass
+
+def normalize_composition_base(job, request_id, *, output_path, ffprobe_executable,
+                               ffmpeg_executable, output_index=0):
+    """Create a lossless, separately recorded format derivative; never touch the queue."""
+    source = _queue_media(job, request_id, output_index)
+    source_path = Path(job.job_dir) / source['job_path']
+    output = Path(output_path)
+    if not output.is_absolute():
+        output = Path(job.job_dir) / output
+    if (output.resolve() != output.absolute() or not output.is_relative_to(job.job_dir)
+            or output.exists() or output.suffix != '.mp4'):
+        raise ValueError('composition base normalization requires a new Job-local MP4')
+    before = _base_probe(source_path, ffprobe_executable)
+    transform = _base_transform(before)
+    if transform['codec'] == 'copy' and before['sar'] == '1:1':
+        raise ValueError('composition base already meets the native contract; use the original')
+    output.parent.mkdir(parents=True, exist_ok=True)
+    command = _base_normalization_command(source_path, output, transform, ffmpeg_executable)
+    subprocess.run(command, check=True, capture_output=True, timeout=120)
+    evidence = {'schema_version': 1, 'source': source,
+                'output': {'job_path': output.relative_to(job.job_dir).as_posix(),
+                           'sha256': _sha(output), 'byte_count': output.stat().st_size, 'media_type': 'video'},
+                'source_probe': before, 'output_probe': _base_probe(output, ffprobe_executable),
+                'transform': transform, 'command': command,
+                'frame_md5_sha256': hashlib.sha256('\n'.join(_base_pixels(source_path, ffmpeg_executable)).encode()).hexdigest()}
+    _verify_base_normalization(job, evidence, ffprobe_executable, ffmpeg_executable)
+    return evidence
+
+def _composition_base_scope(record):
+    scope = record.get('composition_base')
+    if scope is None:
+        if record.get('qa', {}).get('scope') == 'composition_base' or 'normalization' in record:
+            raise ValueError('composition base scope is missing')
+        return
+    if (not isinstance(scope, dict) or set(scope) != {'source_qa', 'action_component_id'}
+            or not isinstance(scope['action_component_id'], str) or not scope['action_component_id'].strip()
+            or scope['action_component_id'] == record['component_id']
+            or not isinstance(scope['source_qa'], dict) or scope['source_qa'].get('passed') is not False
+            or not isinstance(scope['source_qa'].get('observed_scene'), str)
+            or not scope['source_qa']['observed_scene'].strip()
+            or record.get('qa', {}).get('scope') != 'composition_base'
+            or record['media']['media_type'] != 'video'):
+        raise ValueError('composition base requires explicit failed original-effect QA and separate base QA')
+
+def validate_composition_base(record, recipe):
+    """A limited-use base cannot be consumed as a standalone successful effect."""
+    _composition_base_scope(record)
+    if 'composition_base' not in record:
+        return
+    from edit.hd.tools import visual_strategy
+    recipe = visual_strategy.validate_shot_recipe_v2(_plain_json(recipe))
+    by_id = {c['component_id']: c for c in recipe['components']}
+    base = by_id.get(record['component_id'], {})
+    action_id = record['composition_base']['action_component_id']
+    action = by_id.get(action_id, {})
+    if (recipe['mode'] != 'hybrid' or recipe['composition']['family'] != 'evidence_with_data_overlay'
+            or base.get('kind') != 'ai_generated' or base.get('layer_role') != 'base'
+            or base.get('semantic_role') == 'evidence' or action.get('kind') != 'code_generated'
+            or action.get('layer_role') != 'annotation' or action.get('semantic_role') == 'evidence'
+            or action.get('producer_type') != 'dependency' or action.get('artifact_contract', {}).get('alpha') is not True
+            or not any(d['component_id'] == action_id and record['component_id'] in d['depends_on']
+                       for d in recipe['composition']['component_dependencies'])):
+        raise ValueError('composition base requires an approved non-evidence hybrid with its independent native alpha action')
+
 def _approved_generation_request(job, generation, record):
     """Re-check a queue result against its frozen visual proposal when present."""
     authorization = generation.get("approved_plan")
@@ -83,6 +284,20 @@ def validate_record(record: dict, job) -> dict:
         _approved_generation_request(job, record["generation"], record)
     if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
         raise ValueError("generated media requires host QA and observed scene evidence")
+    _composition_base_scope(record)
+    if 'composition_base' in record:
+        generation = record['generation']
+        _validate_base_queue_identity(job, record)
+        original = _queue_media(job, generation['request_id'], generation.get('output_index', 0))
+        normalization = record.get('normalization')
+        if normalization is not None:
+            if (not isinstance(normalization, dict)
+                    or normalization.get('source') != original or normalization.get('output') != record['media']
+                    or normalization.get('output_probe', {}).get('sar') != '1:1'
+                    or {key: normalization['output_probe'].get(key) for key in ('width', 'height')} != record['source_dimensions']):
+                raise ValueError('composition base derivative differs from its original queue media')
+        elif record['media'] != original:
+            raise ValueError('composition base differs from its original queue media')
     _validate_observation_and_source(record)
     return json.loads(_canonical(record))
 
@@ -100,7 +315,8 @@ def record_from_completed_output(*, job_id, segment_id, component_id, provider, 
             "semantic_brief": semantic_brief}
 
 def record_from_queue(job, request_id, *, segment_id, component_id, source_binding,
-                      qa, semantic_brief, ffprobe_executable, output_index=0):
+                      qa, semantic_brief, ffprobe_executable, output_index=0,
+                      composition_base=None, normalization=None, ffmpeg_executable=None):
     """Bind the actual queue output and observed content to one speech window."""
     from edit.hd.tools import generation_queue, generation_inputs, contract_artifacts as artifacts
     item = generation_queue.status(job.job_dir)["items"][request_id]
@@ -118,6 +334,17 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
     path = Path(output["path"])
     if not path.is_absolute():
         path = job.job_dir / path
+    if normalization is not None:
+        if composition_base is None or ffmpeg_executable is None:
+            raise ValueError('normalization requires scoped composition base use and actual FFmpeg verification')
+        if normalization.get('source') != _queue_media(job, request_id, output_index):
+            raise ValueError('normalization does not belong to the original queue output')
+        _verify_base_normalization(job, normalization, ffprobe_executable, ffmpeg_executable)
+        path = Path(job.job_dir) / normalization['output']['job_path']
+    elif composition_base is not None:
+        measured = _base_probe(path, ffprobe_executable)
+        if (measured['width'], measured['height']) not in {(720, 1280), (1080, 1920)} or measured['sar'] != '1:1':
+            raise ValueError('composition base requires a separately verified normalization first')
     if output["type"] == "image":
         from PIL import Image
         with Image.open(path) as picture:
@@ -157,6 +384,11 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         qa=qa, semantic_brief=semantic_brief)
     record["source_binding"] = source_binding
     record["source_dimensions"] = {"width": width, "height": height}
+    if composition_base is not None:
+        record['composition_base'] = composition_base
+        record['generation']['output_index'] = output_index
+        if normalization is not None:
+            record['normalization'] = normalization
     prepare_binding(record)
     return validate_record(record, job)
 
@@ -164,6 +396,7 @@ def prepare_binding(record: dict, *, execution_mode="reuse_completed_generated_m
     if not isinstance(record, dict) or record.get("status") != "completed":
         raise ValueError("generated media binding requires a completed record")
     _validate_observation_and_source(record)
+    _composition_base_scope(record)
     media = record.get("media")
     if not isinstance(media, dict) or not media.get("sha256") or media.get("media_type") not in {"image", "video"}:
         raise ValueError("generated media binding requires real media identity")
@@ -215,6 +448,11 @@ def _pinned_media(source, media):
 
 def create_adapter(job, record: dict):
     bound = validate_record(record, job)
+    if 'normalization' in bound:
+        ffprobe, ffmpeg = shutil.which('ffprobe'), shutil.which('ffmpeg')
+        if not ffprobe or not ffmpeg:
+            raise ValueError('composition base normalization needs actual FFprobe and FFmpeg')
+        _verify_base_normalization(job, bound['normalization'], ffprobe, ffmpeg)
     media = bound["media"]
     source = Path(job.job_dir) / media["job_path"]
     with _pinned_media(source, media):
@@ -237,11 +475,18 @@ def create_adapter(job, record: dict):
                 'start': segment['start'], 'end': segment['end']}
                 or _plain_json(context.recipe) != segment['shot_recipe']):
             raise ValueError('generated media approved source window mismatch')
+        validate_composition_base(bound, context.recipe)
+        if 'composition_base' in bound:
+            # Recheck the immutable provider output as well as the derivative.
+            validate_record(bound, job)
         with _pinned_media(source, media) as pinned:
             with os.fdopen(os.dup(pinned.descriptor), 'rb') as src, context.staging_path.open('wb') as dst:
                 shutil.copyfileobj(src, dst)
         return AdapterResult(invocation_evidence={"record_sha256": record_hash, "provider_request_reused": True,
-            "external_requests": 0, "generation_id": bound["generation_id"], "provider": bound["provider"]},
+            "external_requests": 0, "generation_id": bound["generation_id"], "provider": bound["provider"],
+            **({'composition_base': bound['composition_base'],
+                'normalization_sha256': hashlib.sha256(_canonical(bound.get('normalization'))).hexdigest()}
+               if 'composition_base' in bound else {})},
             qa={"passed": True, "checks": ["completed generation record and media identity matched"]})
     return KindAdapter(kind="ai_generated", approved_executor=EXECUTOR, adapter_id="generated-media-v1",
         adapter_version=record_hash, artifact_media_type=media["media_type"], invoke=invoke,

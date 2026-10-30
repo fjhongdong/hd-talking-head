@@ -249,6 +249,31 @@ def replace_component_id(plan: dict[str, object], value: str) -> None:
 
 
 class VisualPlanSchemaV3Tests(unittest.TestCase):
+    def test_typography_handoff_uses_verified_copy_but_selection_uses_actual_inputs(self):
+        import tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from edit.hd.tools import visual_confirmation, motion_match_cache, broll_skill_selection
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); path = root / 'treatment.json'; path.write_text('{}')
+            job = SimpleNamespace(root=root, job_dir=root)
+            draft = {'segments': ['actual']}
+            treatment = {'scenes': [{'native_typography_revision': {}}]}
+            normalized = {'segments': ['original']}; normalized_treatment = {'scenes': []}
+            proposal = {'inputs': {'director': {}, 'treatment': {}}}
+            with mock.patch.object(contract_artifacts, 'read_json_artifact', return_value=treatment), \
+                 mock.patch.object(visual_confirmation, 'validate_visual_authorization', return_value={'source': proposal}), \
+                 mock.patch.object(visual_confirmation, '_exact', return_value=path), \
+                 mock.patch.object(visual_confirmation, '_read', return_value={}), \
+                 mock.patch.object(visual_confirmation, '_normalize_lemo_typography', return_value=(normalized, normalized_treatment)), \
+                 mock.patch.object(motion_match_cache, 'validate_reviews'), \
+                 mock.patch.object(motion_match_cache, 'validate_design_handoffs') as handoff, \
+                 mock.patch.object(broll_skill_selection, 'validate_selection', return_value={}) as selection:
+                visual_plan._skill_selection_for_publication(job, draft, path)
+            handoff.assert_called_once_with(normalized, normalized_treatment, root)
+            self.assertIs(selection.call_args.args[1], draft)
+            self.assertIs(selection.call_args.args[2], treatment)
+
     def test_review_text_builds_one_sorted_table_from_plan_and_checks(self):
         def seg(sid, start, kind, source, layer):
             return {"segment_id": sid, "start": start, "end": start + 1.0,
@@ -543,6 +568,67 @@ class VisualPlanSchemaV3Tests(unittest.TestCase):
         alias["entries"][0]["source_ref"] = "confirmed-content:idea-01"
         with self.assertRaises(VisualPlanError):
             visual_plan._validate_reviewed_visual_text(alias, analysis_record=analysis, segments=segments)
+
+    def test_spoken_entity_and_object_ordinals_require_exact_current_evidence(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = '<svg>AI Google 来源 1 目标列 2 存放位置 3</svg>'
+            (root / 'scene.html').write_text(source)
+            digest = contract_artifacts.sha256_file(root / 'scene.html')
+            def ref(text):
+                start = source.index(text)
+                return dict(path='scene.html', sha256=digest,
+                    pointer=f'text:{start}:{start + len(text)}', value=text)
+            brief = {'files': [{'job_path': 'scene.html', 'sha256': digest}]}
+            contract_artifacts.write_json_artifact(root / 'brief.json', brief)
+            quote = '从软件找，填目标列，放文件夹。'
+            analysis = {'analysis_sha256': 'a' * 64, 'analysis': {'thesis': quote,
+                'items': [{'id': 'i5', 'source_text': quote, 'source_span': [0, 20]}],
+                'claims': [{'id': 'c2', 'evidence_status': 'supported',
+                    'entities': ['GPT-6.1 Terra'], 'source_span': [0, 20]}]}}
+            words = [dict(text=t, start=a, end=b) for t, a, b in
+                [('学AI与Google，', 0, .2), ('GPT-6.1 Terra', .3, .6),
+                 ('从软件找，', 1, 1.3), ('填目标列，', 1.4, 1.7), ('放文件夹。', 1.8, 2.2)]]
+            def word(index):
+                return dict(start_word=index, end_word=index + 1, quote=words[index]['text'])
+            segment = dict(segment_id='seg-010', start=1, end=3, content_item_ids=['i5'],
+                visible_text=['AI', '来源', '目标列', '存放位置', '1', '2', '3'], bindings={'scene': {
+                    'brief_sha256': contract_artifacts.sha256_file(root / 'brief.json'),
+                    'capacity': {'min_units': 3, 'max_units': 3},
+                    'invocation_record': {'template_request': {'information_units': 3}}}})
+            common = dict(component_id='scene')
+            entity = dict(common, kind='spoken_entity_alias', alias_anchor=word(0),
+                          entity_anchor=word(1), entity='GPT-6.1 Terra', claim_id='c2')
+            ordinal = dict(common, kind='object_ordinal', brief_path='brief.json', objects=[
+                dict(label=label, word_ref=word(i + 2), label_ref=ref(label), ordinal_ref=ref(str(i + 1)))
+                for i, label in enumerate(['来源', '目标列', '存放位置'])])
+            entries = [dict(segment_id='seg-010', text=text, source_ref='item:i5', source_quote=quote,
+                reason='已批准实体及三项对象的真实序号，不是新增数量统计。', grounding=copy.deepcopy(proof))
+                for text, proof in [('AI', entity), ('1', ordinal), ('2', ordinal), ('3', ordinal)]]
+            reviewed = dict(content_analysis_sha256='a' * 64, entries=entries)
+            def validate(value, approved=words):
+                return visual_plan._validate_reviewed_visual_text(value, analysis_record=analysis,
+                    segments=[segment], approved_words=approved, job_dir=root)
+            self.assertEqual(validate(reviewed), entries)
+            for change in ('no_clock', 'wrong_quote', 'unknown_entity', 'foreign_source',
+                           'missing_ordinal', 'wrong_object', 'reordered_anchors', 'statistic', 'wrong_alias'):
+                bad = copy.deepcopy(reviewed)
+                if change == 'no_clock':
+                    with self.assertRaises(VisualPlanError): validate(bad, None)
+                    continue
+                if change == 'wrong_quote': bad['entries'][0]['grounding']['alias_anchor']['quote'] = '假AI'
+                elif change == 'unknown_entity': bad['entries'][0]['grounding']['entity'] = '未知产品'
+                elif change == 'foreign_source': bad['entries'][1]['grounding']['objects'][0]['label_ref']['path'] = 'other.html'
+                elif change == 'missing_ordinal': bad['entries'].pop(2)
+                elif change == 'wrong_object': bad['entries'][1]['grounding']['objects'][0]['label'] = '新统计'
+                elif change == 'reordered_anchors': bad['entries'][1]['grounding']['objects'][0]['word_ref'] = word(4)
+                elif change == 'statistic': bad['entries'][1]['text'] = '2026'; segment['visible_text'].append('2026')
+                else:
+                    bad['entries'][0]['text'] = 'Google'; segment['visible_text'].append('Google')
+                with self.subTest(change=change), self.assertRaises((VisualPlanError, ValueError)):
+                    validate(bad)
 
 
 if __name__ == "__main__":

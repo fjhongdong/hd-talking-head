@@ -123,7 +123,9 @@ def record_result(job, action, response, *, queried_task_ids=None):
                     raise ValueError("generation output needs a real local path or media URL")
                 if not target.exists():
                     temporary = target.with_suffix(target.suffix + ".part")
-                    with urllib.request.urlopen(url, timeout=120) as incoming, temporary.open("wb") as outgoing:
+                    request = urllib.request.Request(url, headers={
+                        'User-Agent': 'HD-Talking-Head/1.0 (authorized artifact retrieval)'})
+                    with urllib.request.urlopen(request, timeout=120) as incoming, temporary.open("wb") as outgoing:
                         shutil.copyfileobj(incoming, outgoing)
                     temporary.rename(target)
             media = {"type": output["type"], "path": str(target),

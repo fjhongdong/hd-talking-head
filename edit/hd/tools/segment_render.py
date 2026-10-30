@@ -24,6 +24,7 @@ from . import (
     broll_media,
     broll_systems,
     contract_artifacts,
+    parent_static_labels,
     state,
     visual_strategy,
 )
@@ -499,6 +500,8 @@ def _prepare_render(
             broll_systems.validate_composition(recipe, checked)
         except broll_systems.BrollSystemError:
             raise SegmentRenderError("approved component composition is invalid") from None
+    for component in recipe['components']:
+        parent_static_labels.load(job.job_dir, segment, component['component_id'])
     return _PreparedRender(recipe=recipe, family=family, artifacts=checked, frames=frames)
 
 
@@ -613,6 +616,7 @@ def build_filter_graph(
     ordered = sorted(
         enumerate(artifacts), key=lambda item: (item[1].z_index, item[0])
     )
+    artifacts_by_id = {artifact.component_id: artifact for artifact in artifacts}
     canvas_index = 0
     for input_position, artifact in ordered:
         if type(artifact) is not broll_component_executor.ComponentArtifact:
@@ -639,6 +643,17 @@ def build_filter_graph(
             f"[{source}:v]fps=24,trim=start_frame=0:end_frame={duration},"
             f"setpts=PTS-STARTPTS+{start}/24/TB,format=rgba[component_{input_position}_input]"
         )
+        alignment = component.get('invocation_record', {}).get('canvas_alignment')
+        if alignment is not None:
+            base = artifacts_by_id.get(alignment['base_component_id'])
+            if (base is None or base.output_sha256 != alignment['base_sha256']
+                    or artifact.output_sha256 != alignment['layer_sha256']):
+                raise SegmentRenderError('canvas alignment media identities differ')
+            filters.append(f"[component_{input_position}_input]colorchannelmixer=aa={artifact.opacity:.6f}[component_{input_position}]")
+            next_canvas = canvas_index + 1
+            filters.append(f"[canvas_{canvas_index}][component_{input_position}]overlay=0:0:eof_action=pass:shortest=0:enable='between(n,{start},{end - 1})'[canvas_{next_canvas}]")
+            canvas_index = next_canvas
+            continue
         if composition.get("family") == "aroll_with_overlay":
             # These are full-canvas transparent layers, already laid out in
             # source pixels. Do not shrink the approved graphic into a B-roll box.
@@ -1783,6 +1798,8 @@ def _render_segment_video(
     allow_no_broll: bool,
 ) -> RenderedSegment:
     prepared = _prepare_render(job, segment, artifacts)
+    labels = [label for component in prepared.recipe['components']
+              for label in parent_static_labels.load(job.job_dir, segment, component['component_id'])]
     if (prepared.recipe["mode"] == "none") is not allow_no_broll:
         raise SegmentRenderError("segment renderer does not match the approved mode")
     arroll = _approve_aroll(job, Path(arroll_source), arroll_sha256, arroll_bytes)
@@ -1858,6 +1875,19 @@ def _render_segment_video(
                 float(segment["start"]),
                 prepared.frames,
             )
+            label_snapshots = []
+            if labels:
+                pinned = broll_media._PinnedJob.open(job)
+                try:
+                    for index, label in enumerate(labels):
+                        path = stage / 'inputs' / f'parent-label-{index:03d}.png'
+                        ref = label['image']
+                        _snapshot_job_file(pinned, ref['job_path'], ref['sha256'],
+                                           ref['byte_count'], path, label='parent static label')
+                        label_snapshots.append(path)
+                finally:
+                    pinned.close()
+                command = parent_static_labels.compose(command, label_snapshots, labels)
             try:
                 (ffmpeg_runner or _default_ffmpeg_runner)(
                     command, max(240.0, prepared.frames * 1.25)

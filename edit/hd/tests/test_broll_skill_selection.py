@@ -764,6 +764,189 @@ class BrollSkillSelectionTest(unittest.TestCase):
             self.assertEqual([a["skill_id"] for a in result["assignments"]], ["C", "A", "B"])
             self.assertEqual(selection.assign_skills(ROOT, result), result)
 
+    def test_local_revision_keeps_confirmed_routes_and_explicit_changes(self):
+        from edit.hd.tools import visual_confirmation as confirmation, contract_artifacts
+        from edit.hd.tools import motion_capabilities
+        with tempfile.TemporaryDirectory() as directory:
+            job = Path(directory).resolve()
+            (job / "manifests").mkdir()
+            def write(name, value):
+                path = job / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                contract_artifacts.write_json_artifact(path, value)
+                return confirmation._record(job, path)
+            write("workflow.json", {"job_id": "revision-job"})
+            config = write("manifests/provider-config.json", {"providers": []})
+            pool = [{"candidate_id": key, "skill_id": key, "template_id": key + "/template",
+                     "role": "native", "status": "supported", "entrypoint": "native-entry",
+                     "producer_version": "1", "limitations": []} for key in ("a", "b")]
+            def beat(index):
+                return {"segment_id": "s" + str(index), "component_id": "scene",
+                        "semantic_row_id": "r" + str(index), "start": index * 3, "end": index * 3 + 2,
+                        "transcript": "原话", "semantic_goal": "当前任务", "required_change": "具体动作",
+                        "intent_statement": "当前任务", "component_brief": "具体动作",
+                        "skill_reviews": {k: {"fit": "equivalent", "reason": "已审"} for k in ("a", "b")},
+                        "candidates": [{"candidate_id": k, "fit": "equivalent", "reason": "已审",
+                                        "visual_pattern": k} for k in ("a", "b")]}
+            old = {"schema_version": 1, "beats": [beat(0), beat(1)], "overlay_beats": [],
+                   "assignments": [{"segment_id": "s0", "component_id": "scene", "candidate_id": "a"},
+                                   {"segment_id": "s1", "component_id": "scene", "candidate_id": "b"}],
+                   "overlay_assignments": [], "history_note": "真实确认后的局部修订"}
+            fixed = {"segment_id": "s2", "component_id": "scene", "start": 6, "end": 8,
+                     "source_ref": "本地素材", "visual_pattern": "静态", "skill_id": "local_material"}
+            old["fixed_context"] = [fixed]
+            director = {"segments": [{"segment_id": "s" + str(i), "start": i * 3, "end": i * 3 + 2,
+                         "bindings": {"scene": {"source": "same"}}, "visible_text": ["原文字"],
+                         "visual_strategy": {"components": [
+                             {"component_id": "scene", "kind": "local_material" if i == 2 else "code_generated"}],
+                             "composition": {"family": "single_full_frame", "presenter_mode": "bottom_window",
+                                             "avatar": {"position": "right"}}}}
+                        for i in range(3)]}
+            lists = {"broll": [{"row_id": "r" + str(i), "components": [
+                {"segment_id": "s" + str(i), "component_id": "scene"}], "semantic": "原语义"}
+                for i in range(3)], "overlay": []}
+            old_treatment = {"skill_selection": old, "semantic_lists": lists, "numbering_scope_id": "scope"}
+            treatment_ref = write("old/treatment.json", old_treatment)
+            director_ref = write("old/director.json", director)
+            proposal = write("old/proposal.json", {"kind": confirmation.SCHEMA, "job_id": "revision-job",
+                "inputs": {"treatment": treatment_ref, "director": director_ref},
+                "numbering_scope_id": "scope", "numbering": {"r0": 1, "r1": 2, "r2": 3},
+                "provider_config_sha256": config["sha256"],
+                "rows": [{"semantic_row_id": "r" + str(i), "segment_id": "s" + str(i),
+                          "component_id": "scene"} for i in range(3)]})
+            receipt = write("manifests/local-qa-visual_direction-r1.json", {"source_schema": confirmation.SCHEMA,
+                "job_id": "revision-job", "job_dir": str(job), "stage": "visual_direction",
+                "passed": True, "reviewed_by": "human", "approval_scope": "visual_plan_and_delivery",
+                "revision": 1, "note": "已确认", "user_confirmation": "确认", "source": proposal, "artifacts": [proposal]})
+            current = copy.deepcopy(old)
+            current["revision_locks"] = {"previous_receipt": receipt, "user_confirmation": "采用修正，继续制作",
+                "changes": [{"semantic_row_id": "r1", "segment_id": "s1", "component_id": "scene",
+                             "candidate_id": "a"}]}
+            with patch.object(selection, "discover_candidates", return_value=pool), \
+                 patch.object(motion_capabilities, "overlay_candidates", return_value=[]):
+                current_treatment = {**copy.deepcopy(old_treatment), "skill_selection": current}
+                result = selection.assign_skills(ROOT, current, job_dir=job, director=director, treatment=current_treatment)
+                # A global diversity solve would select a/b; the approved revision is a/a.
+                self.assertEqual([a["candidate_id"] for a in result["assignments"]], ["a", "a"])
+                changed = copy.deepcopy(current)
+                changed["beats"][0]["required_change"] = "修改了无关项"
+                with self.assertRaisesRegex(ValueError, "unaffected"):
+                    selection.assign_skills(ROOT, changed, job_dir=job, director=director,
+                                            treatment={**current_treatment, "skill_selection": changed})
+                changed = copy.deepcopy(current)
+                changed["revision_locks"]["changes"][0]["candidate_id"] = "missing"
+                with self.assertRaisesRegex(ValueError, "not reviewed and feasible"):
+                    selection.assign_skills(ROOT, changed, job_dir=job, director=director,
+                                            treatment={**current_treatment, "skill_selection": changed})
+                changed = copy.deepcopy(current)
+                changed["beats"][0]["binding_snapshot"] = {"source": "不同的绑定"}
+                with self.assertRaisesRegex(ValueError, "unaffected"):
+                    selection.assign_skills(ROOT, changed, job_dir=job, director=director,
+                                            treatment={**current_treatment, "skill_selection": changed})
+                changed = copy.deepcopy(current)
+                changed["fixed_context"][0]["source_ref"] = "另一个素材"
+                with self.assertRaisesRegex(ValueError, "fixed material"):
+                    selection.assign_skills(ROOT, changed, job_dir=job, director=director,
+                                            treatment={**current_treatment, "skill_selection": changed})
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][0]["bindings"]["scene"] = {"source": "另一个绑定"}
+                with self.assertRaisesRegex(ValueError, "component or binding"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                for field, value in (("start", 3 + 1 / 24), ("end", 5 + 1 / 24),
+                                     ("visual_intent", {"statement": "另一个意思"})):
+                    altered_director = copy.deepcopy(director)
+                    altered_director["segments"][1][field] = value
+                    with self.subTest(changed_row_field=field), self.assertRaisesRegex(
+                            ValueError, "confirmed time or semantic intent"):
+                        selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                                treatment=current_treatment)
+                altered_treatment = copy.deepcopy(current_treatment)
+                altered_treatment["semantic_lists"]["broll"][1]["components"][0]["segment_id"] = "s0"
+                with self.assertRaisesRegex(ValueError, "confirmed row's segments"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=director,
+                                            treatment=altered_treatment)
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][1]["visible_text"] = ["不同文字"]
+                with self.assertRaisesRegex(ValueError, "unapproved segment field"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                # Explicit text edits keep their exact target and increment the
+                # actual segment input version; other edits remain locked.
+                director["segments"][1]["strategy_revision"] = 1
+                write("old/director.json", director)
+                director_ref = confirmation._record(job, job / "old/director.json")
+                source = confirmation._read(job / "old/proposal.json")
+                source["inputs"]["director"] = director_ref
+                proposal = write("old/proposal.json", source)
+                source_receipt = confirmation._read(job / receipt["path"])
+                source_receipt.update(source=proposal, artifacts=[proposal])
+                receipt = write(receipt["path"], source_receipt)
+                current["revision_locks"]["previous_receipt"] = receipt
+                revised = copy.deepcopy(director)
+                revised["segments"][1].update(visible_text=["转向能力优先"], strategy_revision=2)
+                scoped = copy.deepcopy(current)
+                scoped["revision_locks"]["changes"][0]["segment_changes"] = {
+                    "visible_text": ["转向能力优先"], "strategy_revision": 2}
+                scoped_treatment = {**current_treatment, "skill_selection": scoped}
+                self.assertEqual([a["candidate_id"] for a in selection.assign_skills(
+                    ROOT, scoped, job_dir=job, director=revised, treatment=scoped_treatment)["assignments"]], ["a", "a"])
+                revised["segments"][1]["visible_text"] = ["未获确认的文字"]
+                with self.assertRaisesRegex(ValueError, "explicit text and strategy"):
+                    selection.assign_skills(ROOT, scoped, job_dir=job, director=revised,
+                                            treatment=scoped_treatment)
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][1]["visual_strategy"]["composition"]["avatar"]["position"] = "center"
+                with self.assertRaisesRegex(ValueError, "unapproved presentation or avatar"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][1]["visual_strategy"]["components"].append(
+                    {"component_id": "rogue", "kind": "code_generated"})
+                with self.assertRaisesRegex(ValueError, "unapproved visual component"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][1]["visual_strategy"]["composition"]["family"] = "hybrid"
+                with self.assertRaisesRegex(ValueError, "unapproved composition"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                altered_director = copy.deepcopy(director)
+                altered_director["segments"][1]["visual_strategy"]["rationale"] = "偷换创作意图"
+                with self.assertRaisesRegex(ValueError, "unapproved visual strategy field"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=altered_director,
+                                            treatment=current_treatment)
+                with self.assertRaisesRegex(ValueError, "numbering scope"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=director,
+                                            treatment={**current_treatment, "numbering_scope_id": "new"})
+                changed_treatment = copy.deepcopy(current_treatment)
+                changed_treatment["semantic_lists"]["overlay"].append(
+                    changed_treatment["semantic_lists"]["broll"].pop(0))
+                with self.assertRaisesRegex(ValueError, "semantic rows or numbering"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=director,
+                                            treatment=changed_treatment)
+                new_treatment = write("new/treatment.json", current_treatment)
+                new_proposal = write("new/proposal.json", {"kind": confirmation.SCHEMA, "job_id": "revision-job",
+                    "inputs": {"treatment": new_treatment, "director": director_ref},
+                    "numbering_scope_id": "scope", "numbering": {"r0": 1, "r1": 2, "r2": 3},
+                    "provider_config_sha256": config["sha256"],
+                    "rows": [{"semantic_row_id": "r" + str(i), "segment_id": "s" + str(i),
+                              "component_id": "scene"} for i in range(3)]})
+                new_receipt = {"source_schema": confirmation.SCHEMA, "job_id": "revision-job", "job_dir": str(job),
+                    "stage": "visual_direction", "passed": True, "reviewed_by": "human",
+                    "approval_scope": "visual_plan_and_delivery", "revision": 2, "note": "已确认",
+                    "user_confirmation": "另一个决定", "source": new_proposal, "artifacts": [new_proposal]}
+                write("manifests/local-qa-visual_direction-r2.json", new_receipt)
+                with self.assertRaisesRegex(ValueError, "latest visual confirmation"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=director, treatment=current_treatment)
+                new_receipt["user_confirmation"] = "采用修正，继续制作"
+                write("manifests/local-qa-visual_direction-r2.json", new_receipt)
+                self.assertEqual([a["candidate_id"] for a in selection.assign_skills(
+                    ROOT, current, job_dir=job, director=director, treatment=current_treatment)["assignments"]], ["a", "a"])
+                (job / "old/proposal.json").write_text("{}")
+                with self.assertRaisesRegex(ValueError, "confirmed visual evidence changed"):
+                    selection.assign_skills(ROOT, current, job_dir=job, director=director, treatment=current_treatment)
+
 
 
 class PlanningOnlyChecksTest(unittest.TestCase):
@@ -873,6 +1056,161 @@ class PlanningOnlyChecksTest(unittest.TestCase):
                 self.assertEqual(result["status"], "fail", result)
                 self.assertIn("number", result["failures"][0]["reason"])
                 self.assertIn("word span", result["failures"][0]["reason"])
+
+
+class PartialCandidateReviewTest(unittest.TestCase):
+    """Use the real joint solver; pending candidates never become approvals."""
+
+    def fixture(self, *, second_channel="B", pending_channel="C", pending_minimum=None):
+        def native(cid, channel, template, **extra):
+            return {"candidate_id": cid, "skill_id": channel, "template_id": template,
+                    "role": "native", "status": "supported", "entrypoint": "entry",
+                    "adapter_module": "motion_native_skill_adapter", "limitations": [], **extra}
+        self.pool = [native("a", "A", "one"), native("b", second_channel, "two"),
+                     native("pending", pending_channel, "three",
+                            min_duration_seconds=pending_minimum)]
+        design = {key: "具体主体、内容和本句动作" for key in
+                  ("composition", "typography", "finish", "focus")}
+        def beat(sid, start, choices):
+            return {"segment_id": sid, "component_id": "scene", "semantic_row_id": sid,
+                    "start": start, "end": start + 2, "window_status": "resolved",
+                    "transcript": "本句", "semantic_goal": "说明", "required_change": "变化",
+                    "skill_reviews": {c["skill_id"]: {"fit": "unreviewed", "reason": "保留待评渠道"}
+                                      for c in self.pool},
+                    "candidates": [{"candidate_id": cid, "fit": fit, "reason": "本次具体结论",
+                                    **({"visual_pattern": cid, "design_plan": copy.deepcopy(design)}
+                                       if fit == "equivalent" else {})} for cid, fit in choices]}
+        source = {"schema_version": 1, "history_note": "独立离线样本", "beats": [
+            beat("s0", 0, [("a", "equivalent")]),
+            beat("s1", 2, [("b", "equivalent"), ("pending", "unreviewed")])],
+            "overlay_beats": []}
+        director = {"segments": [{"segment_id": b["segment_id"], "start": b["start"], "end": b["end"],
+            "visual_strategy": {"composition": {"family": "single_full_frame"},
+                                "components": [{"component_id": "scene"}]}} for b in source["beats"]]}
+        return source, director
+
+    def assign(self, source, director):
+        with patch.object(selection, "discover_candidates", return_value=self.pool), \
+             patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=[]):
+            return selection.assign_skills(ROOT, source, director=director)
+
+    def test_equal_bounds_keep_unreviewed_and_never_select_it(self):
+        source, director = self.fixture()
+        before = copy.deepcopy(source)
+        result = self.assign(source, director)
+        self.assertEqual([c["candidate_id"] for c in result["assignments"]], ["a", "b"])
+        self.assertEqual(result["beats"], before["beats"])
+        self.assertEqual(source, before)
+        self.assertEqual(result["diversity_review"]["reviewed_optimum"], [2, 2])
+        self.assertEqual(result["diversity_review"]["optimistic_upper_bound"], [2, 2])
+        source["beats"][1]["candidates"][0].pop("design_plan")
+        with self.assertRaisesRegex(ValueError, "design_plan"):
+            self.assign(source, director)
+
+    def test_channel_and_template_gaps_both_stop_assignment(self):
+        for second_channel, template in (("A", "one"), ("A", "two")):
+            source, director = self.fixture(second_channel=second_channel,
+                                           pending_channel="C" if template == "one" else "A")
+            self.pool[1]["template_id"] = "one"
+            self.pool[2]["template_id"] = template
+            with self.subTest(template=template), self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
+                self.assign(source, director)
+
+    def test_current_windows_filter_both_bounds_and_are_recomputed(self):
+        source, director = self.fixture(second_channel="A", pending_minimum=3)
+        self.pool[1]["template_id"] = "one"
+        result = self.assign(source, director)
+        self.assertEqual(result["diversity_review"]["optimistic_upper_bound"], [1, 1])
+        source["beats"][1]["end"] = director["segments"][1]["end"] = 5
+        # A previously successful proof cannot authorize a changed window.
+        source["diversity_review"] = result["diversity_review"]
+        with self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
+            self.assign(source, director)
+
+    def test_unresolved_mismatched_fractional_and_overlapping_windows_stop(self):
+        for case in ("unresolved", "director", "mismatch", "fractional", "overlap"):
+            source, director = self.fixture()
+            if case == "unresolved":
+                source["beats"][0].pop("window_status")
+            elif case == "director":
+                director = None
+            elif case == "mismatch":
+                director["segments"][0]["end"] = 1
+            elif case == "fractional":
+                source["beats"][0]["end"] = director["segments"][0]["end"] = 1.01
+            else:
+                source["beats"][1]["start"] = director["segments"][1]["start"] = 1
+            with self.subTest(case=case), self.assertRaisesRegex(ValueError, "window|director|overlap|24fps"):
+                self.assign(source, director)
+
+    def test_overlays_participate_and_real_native_clock_limits_apply(self):
+        source, director = self.fixture(second_channel="A", pending_channel="B")
+        self.pool[1]["template_id"] = "one"
+        overlay = {**self.pool[1], "candidate_id": "overlay:known", "skill_id": "B",
+                   "template_id": "overlay-template", "role": "aroll_overlay"}
+        self.pool[2]["template_id"] = "overlay-template"
+        beat = copy.deepcopy(source["beats"][0])
+        beat.update(segment_id="o", semantic_row_id="o", start=4, end=6,
+                    candidates=[{**beat["candidates"][0], "candidate_id": overlay["candidate_id"]}])
+        source["overlay_beats"] = [beat]
+        director["segments"].append({"segment_id": "o", "start": 4, "end": 6,
+            "visual_strategy": {"composition": {"family": "aroll_with_overlay"},
+                                "components": [{"component_id": "scene"}]}})
+        # Unknown B cannot add a channel once a real overlay already supplies B.
+        with patch.object(selection, "discover_candidates", return_value=self.pool), \
+             patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=[overlay]):
+            result = selection.assign_skills(ROOT, source, director=director)
+        self.assertEqual(result["diversity_review"]["reviewed_optimum"], [2, 2])
+        from edit.hd.tools.motion_capabilities import overlay_candidates
+        hw = next(c for c in overlay_candidates(ROOT) if c["candidate_id"] == "overlay:hw-pipeline")
+        self.assertIsNotNone(selection.timing_failure(hw, {"segment_id": "o", "start": 0, "end": 2}))
+        self.assertIsNone(selection.timing_failure(hw, {"segment_id": "o", "start": 0, "end": 3}))
+
+    def test_actual_native_minimum_maximum_and_fixed_clocks(self):
+        from edit.hd.tools.motion_capabilities import load_catalog
+        catalog = load_catalog(ROOT)
+        for module, minimum, maximum in (
+                ("huashu_motion_adapter", 2, 20), ("riso_native_adapter", None, 20),
+                ("lemo_wake_adapter", 1 / 24, 60), ("upstream_scene_adapter", 1 / 24, 60),
+                ("doudou_adapter", 1 / 24, 60), ("talkcraft_native_adapter", 1 / 24, 60),
+                ("whiteboard_adapter", 1 / 24, 60), ("paper_collage_adapter", 1 / 24, 60),
+                ("hyperframes_notification_adapter", 14, 14), ("huashu_stat_adapter", 41 / 24, None)):
+            row = next(c for c in catalog if c.get("adapter_module") == module)
+            def failure(seconds):
+                return selection.timing_failure(row, {"segment_id": "s", "start": 0, "end": seconds}, strict=True)
+            with self.subTest(module=module):
+                if minimum is not None:
+                    if minimum > 1 / 24:
+                        self.assertIsNotNone(failure(minimum - 1 / 24))
+                    self.assertIsNone(failure(max(minimum, row.get("min_duration_seconds") or 0)))
+                if maximum is not None:
+                    self.assertIsNone(failure(maximum))
+                    self.assertIsNotNone(failure(maximum + 1 / 24))
+        row = next(c for c in catalog if c.get("adapter_module") == "lemo_wake_adapter")
+        broken = copy.deepcopy(row)
+        broken['adapter_module'] = 'unknown_clock_adapter'
+        with self.assertRaisesRegex(ValueError, 'timing|clock'):
+            selection.timing_failure(broken, {"segment_id": "s", "start": 0, "end": 3}, strict=True)
+        broken.pop('adapter_module')
+        with self.assertRaisesRegex(ValueError, 'timing|clock'):
+            selection.timing_failure(broken, {"segment_id": "s", "start": 0, "end": 3}, strict=True)
+
+    def test_complete_list_confirmation_passes_the_current_director(self):
+        from edit.hd.tools import motion_match_cache, motion_capabilities, visual_confirmation
+        source, director = self.fixture()
+        source = self.assign(source, director)
+        for beat, segment in zip(source['beats'], director['segments']):
+            beat['binding_snapshot'] = {}
+            segment['bindings'] = {'scene': {}}
+            segment['visual_strategy']['components'][0]['kind'] = 'ai_generated'
+        cached = {(b['segment_id'], 'scene'): {'matches': [{'candidate': c} for c in self.pool]}
+                  for b in source['beats']}
+        with patch.object(selection, 'discover_candidates', return_value=self.pool), \
+             patch.object(motion_capabilities, 'overlay_candidates', return_value=[]), \
+             patch.object(motion_match_cache, 'validate_reviews', return_value=cached), \
+             patch.object(visual_confirmation, 'planned_generation_targets', return_value=set()):
+            visual_confirmation._validate_template_choices(SimpleNamespace(job_dir=ROOT), director,
+                                                           {'skill_selection': source})
 
 
 if __name__ == "__main__":

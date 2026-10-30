@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Mapping
+import hashlib
+import json
+import re
 from . import contract_artifacts
 
 
@@ -21,7 +24,59 @@ def _json(path: Path):
         _fail("confirmed content is unreadable")
 
 
-def check_confirmed_content(job, plan: Mapping[str, object]) -> None:
+def matches_visual(item: Mapping[str, object], segment_id: str, component_id: str) -> bool:
+    return (item.get("component_id") == component_id
+            and ("segment_id" not in item or item["segment_id"] == segment_id))
+
+
+def _check_completed_media(job, segment, component, wanted, treatment) -> None:
+    """Protect the reviewed Wake bytes through the same input used by production."""
+    from . import visual_confirmation as confirmation, motion_capabilities
+    expected = wanted['completed_media']
+    if (not isinstance(expected, dict) or set(expected) != {'path', 'sha256', 'bytes'}
+            or not isinstance(expected['path'], str) or not expected['path']
+            or not isinstance(expected['sha256'], str) or not re.fullmatch('[a-f0-9]{64}', expected['sha256'])
+            or type(expected['bytes']) is not int or expected['bytes'] <= 0
+            or 'segment_id' not in wanted or component.get('dependency_id') != 'lemo-wake'):
+        _fail('confirmed completed media identity is invalid')
+    root, sid, cid = Path(job.job_dir), segment['segment_id'], component['component_id']
+    try:
+        if treatment is not None:
+            relative = motion_capabilities._brief_relative(treatment, segment, cid)
+            if not relative:
+                _fail('confirmed completed media needs its actual scene brief')
+            payload = confirmation._path(root, relative).read_bytes()
+            result_ref = None
+        else:
+            # Preview consumes the already-reviewed mapping, never a folder scan.
+            mapping = confirmation.validate_visual_authorization(job, require_realized=True)['mapping']
+            matches = [item for item in mapping['native_inputs']
+                       if (item['segment_id'], item['component_id']) == (sid, cid)]
+            if len(matches) != 1:
+                _fail('confirmed completed media mapping is missing or ambiguous')
+            payload = confirmation._exact(root, matches[0]['artifact']).read_bytes()
+            result_ref = matches[0]['result_record']
+        if hashlib.sha256(payload).hexdigest() != component.get('brief_sha256'):
+            _fail('confirmed completed media brief differs from the component')
+        brief = json.loads(payload)
+        source = brief.get('source_binding', {})
+        if brief.get('job_id') != job.job_id or any(source.get(key) != value for key, value in {
+                'segment_id': sid, 'start': segment['start'], 'end': segment['end']}.items()):
+            _fail('confirmed completed media belongs to another source window')
+        if treatment is not None:
+            result_ref = confirmation._freeze_reviewed_native_result(root, treatment, sid, cid, payload, 'lemo-wake')
+        elif result_ref['path'] != brief['result_record_path']:
+            _fail('confirmed completed media differs from the consumed result')
+        result = _json(confirmation._exact(root, result_ref))
+        media = result['media']
+        if expected != {'path': media['job_path'], 'sha256': media['sha256'], 'bytes': media['byte_count']}:
+            _fail('confirmed completed media was replaced')
+        confirmation._exact(root, expected)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        _fail('confirmed completed media verification failed: ' + str(error))
+
+
+def check_confirmed_content(job, plan: Mapping[str, object], *, treatment=None) -> None:
     root = Path(getattr(job, "root", getattr(job, "job_dir", ".")))
     job_dir = Path(getattr(job, "job_dir", root))
     context = root / "job-context.json"
@@ -54,9 +109,13 @@ def check_confirmed_content(job, plan: Mapping[str, object]) -> None:
             not isinstance(text, str) or not text.strip() for text in item["visible_text"]
         ):
             _fail("confirmed visual text or identity is invalid")
-        if cid in ids:
+        sid = item.get("segment_id")
+        if "segment_id" in item and (not isinstance(sid, str) or not sid.strip()):
+            _fail("confirmed visual segment identity is invalid")
+        key = (sid, cid)
+        if key in ids:
             _fail("confirmed visuals contain duplicate component ids")
-        ids.add(cid)
+        ids.add(key)
         required.append(item)
 
     components = []
@@ -69,7 +128,8 @@ def check_confirmed_content(job, plan: Mapping[str, object]) -> None:
             if isinstance(component, dict):
                 components.append((component, family, segment))
     for wanted in required:
-        matches = [(c, family, seg) for c, family, seg in components if c.get("component_id") == wanted["component_id"]]
+        matches = [(c, family, seg) for c, family, seg in components
+                   if matches_visual(wanted, seg.get("segment_id"), c.get("component_id"))]
         if len(matches) != 1:
             _fail(f"confirmed visual {wanted['component_id']} is missing or ambiguous")
         component, family, segment = matches[0]
@@ -87,6 +147,8 @@ def check_confirmed_content(job, plan: Mapping[str, object]) -> None:
             component.update(actual_binding)
         if any(component.get(key) != expected for key, expected in binding.items()):
             _fail(f"confirmed visual binding changed for {wanted['component_id']}")
+        if 'completed_media' in wanted:
+            _check_completed_media(job, segment, component, wanted, treatment)
 
     timeline = job_dir / "06-edit-structure" / "timeline-map.json"
     if source_words and not timeline.is_file():

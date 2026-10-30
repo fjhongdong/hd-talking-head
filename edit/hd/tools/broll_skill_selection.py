@@ -9,6 +9,7 @@ import ast
 import copy
 import importlib.util
 import math
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Mapping
@@ -111,19 +112,48 @@ def _literal_field(tree, name):
 
 def _native_frame_floor(tree):
     """Read the two existing chained frame-clock guards without importing runtimes."""
+    return _native_frame_bounds(tree)[0]
+
+
+def _native_frame_bounds(tree, *, minimum=None):
     floors = []
     for node in ast.walk(tree):
         if (isinstance(node, ast.Compare) and len(node.ops) == 2
                 and all(isinstance(op, ast.LtE) for op in node.ops)
-                and isinstance(node.left, ast.Constant) and type(node.left.value) is int
-                and isinstance(node.comparators[0], ast.Subscript)
-                and isinstance(node.comparators[0].slice, ast.Constant)
-                and node.comparators[0].slice.value == "frames"
-                and isinstance(node.comparators[1], ast.Constant)):
-            floors.append(node.left.value / 24)
+                and ((isinstance(node.comparators[0], ast.Subscript)
+                      and isinstance(node.comparators[0].slice, ast.Constant)
+                      and node.comparators[0].slice.value == "frames")
+                     or isinstance(node.comparators[0], ast.Name) and node.comparators[0].id == "frames")
+                and isinstance(node.comparators[1], ast.Constant)
+                and type(node.comparators[1].value) is int):
+            if isinstance(node.left, ast.Constant) and type(node.left.value) is int:
+                floor = node.left.value / 24
+            elif (minimum is not None and isinstance(node.left, ast.BinOp)
+                  and isinstance(node.left.op, ast.Mult)
+                  and isinstance(node.left.left, ast.Subscript)
+                  and isinstance(node.left.left.value, ast.Name)
+                  and node.left.left.value.id == "MIN_SECONDS"
+                  and isinstance(node.left.right, ast.Constant) and node.left.right.value == 24):
+                floor = minimum
+            else:
+                raise ValueError("Native frame-clock lower bound changed")
+            floors.append((floor, node.comparators[1].value / 24))
     if len(floors) != 1:
         raise ValueError("Native frame-clock declaration changed; review its duration limit")
     return floors[0]
+
+
+def _native_seconds_ceiling(tree):
+    limits = [node.comparators[1].value for node in ast.walk(tree)
+              if isinstance(node, ast.Compare) and len(node.ops) == 2
+              and isinstance(node.ops[0], ast.Lt) and isinstance(node.ops[1], ast.LtE)
+              and isinstance(node.left, ast.Constant) and node.left.value == 0
+              and isinstance(node.comparators[0], ast.Name) and node.comparators[0].id == "duration"
+              and isinstance(node.comparators[1], ast.Constant)
+              and type(node.comparators[1].value) in (int, float)]
+    if len(limits) != 1:
+        raise ValueError("Native duration limit changed; review its clock")
+    return limits[0]
 
 
 def _discover_native_candidates(project_root: Path) -> list[dict]:
@@ -384,8 +414,246 @@ def fixed_identity(row, *, job_dir=None):
     return identity
 
 
+def _revision_selection_locks(selection, beats, job_dir, director, treatment):
+    """Keep confirmed choices outside an explicitly requested local revision."""
+    revision = selection.get("revision_locks")
+    if revision is None:
+        return {}
+    if (job_dir is None or not isinstance(director, dict) or not isinstance(treatment, dict)
+            or not isinstance(revision, dict)
+            or set(revision) != {"previous_receipt", "user_confirmation", "changes"}
+            or not isinstance(revision["user_confirmation"], str)
+            or not revision["user_confirmation"].strip()
+            or not isinstance(revision["changes"], list) or not revision["changes"]):
+        raise ValueError("local revision needs the previous confirmation and actual user change")
+    if treatment.get("skill_selection") != selection:
+        raise ValueError("local revision selection differs from the current treatment")
+    from . import visual_confirmation as confirmation
+    root = Path(job_dir).resolve(strict=True)
+    workflow = contract_artifacts.read_json_artifact(root / "workflow.json")
+    _, proposal = confirmation._validate_source(root, revision["previous_receipt"],
+                                                  job_id=workflow.get("job_id"))
+    previous = confirmation._read(confirmation._exact(root, proposal["inputs"]["treatment"]))
+    previous_director = confirmation._read(confirmation._exact(root, proposal["inputs"]["director"]))
+    # A later local edit starts from the verified published realization.  The
+    # proposal may still contain pre-render inputs for earlier accepted repairs.
+    stage = workflow.get("stages", {}).get("visual_direction", {})
+    realized = []
+    for inventory in (stage.get("artifacts", []), stage.get("lineage", [])):
+        records = [{k: item[k] for k in ("path", "sha256", "bytes")} for item in inventory]
+        for ref in records:
+            if not ref["path"].endswith("/" + confirmation.MAPPING):
+                continue
+            mapping = confirmation._read(confirmation._exact(root, ref))
+            if mapping.get("source_approval") != revision["previous_receipt"]:
+                continue
+            evidence = confirmation.validate_realization_evidence(root,
+                {"visual_direction": {"artifacts": records}}, workflow["revision"],
+                revision["previous_receipt"], job_id=workflow.get("job_id"))
+            if evidence["mapping"] not in realized:
+                realized.append(evidence["mapping"])
+        if realized:
+            break
+    if len(realized) > 1:
+        raise ValueError("local revision realized baseline is ambiguous")
+    if realized:
+        inputs = realized[0]["realization_inputs"]
+        previous_director = confirmation._read(confirmation._exact(root, inputs["director"]))
+        previous = confirmation._read(confirmation._exact(root, inputs["treatment"]))
+    # Once this revision is confirmed, its own receipt becomes the latest.
+    # It must carry the same actual decision and the frozen revision record.
+    approved = []
+    for path in (root / "manifests").glob("local-qa-visual_direction-r*.json"):
+        payload = confirmation._read(path)
+        if (payload.get("source_schema") != confirmation.SCHEMA
+                or payload.get("job_id") != workflow.get("job_id")
+                or payload.get("passed") is not True or payload.get("reviewed_by") != "human"):
+            continue
+        checked, source = confirmation._validate_source(root, confirmation._record(root, path),
+                                                         job_id=workflow.get("job_id"))
+        if type(checked.get("revision")) is not int:
+            raise ValueError("confirmed revision has no valid workflow revision")
+        approved.append((checked["revision"], confirmation._record(root, path), checked, source))
+    if not approved:
+        raise ValueError("local revision needs the latest confirmed visual source")
+    latest_revision = max(item[0] for item in approved)
+    latest = [item for item in approved if item[0] == latest_revision]
+    if len(latest) != 1:
+        raise ValueError("latest visual confirmation is ambiguous")
+    _, latest_ref, latest_receipt, latest_proposal = latest[0]
+    compared_director, compared_treatment = director, treatment
+    if latest_ref != revision["previous_receipt"]:
+        frozen_treatment = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["treatment"]))
+        if (frozen_treatment.get("skill_selection", {}).get("revision_locks") != revision
+                or latest_receipt.get("user_confirmation") != revision["user_confirmation"]
+                or latest_proposal.get("numbering") != proposal.get("numbering")
+                or latest_proposal.get("numbering_scope_id") != proposal.get("numbering_scope_id")):
+            raise ValueError("local revision does not reference the latest visual confirmation")
+        frozen_director = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["director"]))
+        compared_director, compared_treatment = confirmation._validate_motion_realization(
+            root, frozen_director, frozen_treatment, director, treatment)
+        compared_director, compared_treatment = confirmation._normalize_lemo_typography(
+            root, frozen_director, frozen_treatment, compared_director, compared_treatment)
+        compared_director = confirmation._normalize_verified_technical_revisions(
+            frozen_director, frozen_treatment, director, treatment, compared_director)
+    if (treatment.get("numbering_scope_id") != previous.get("numbering_scope_id")
+            or proposal.get("numbering_scope_id") != previous.get("numbering_scope_id")):
+        raise ValueError("local revision changed the confirmed numbering scope")
+    compared_director, compared_treatment = confirmation._normalize_prepared_paper(
+        root, proposal, previous_director, previous, compared_director, compared_treatment)
+    old = previous["skill_selection"]
+    old_beats = {(b["segment_id"], b["component_id"]): b for b in
+                 [*old.get("beats", []), *old.get("overlay_beats", [])]}
+    old_choices = {(a["segment_id"], a["component_id"]): a["candidate_id"] for a in
+                   [*old.get("assignments", []), *old.get("overlay_assignments", [])]}
+    previous_rows = {row["semantic_row_id"] for row in proposal["rows"]}
+    changes, changed_rows = {}, set()
+    for change in revision["changes"]:
+        if (not isinstance(change, dict)
+                or set(change) - {"semantic_row_id", "segment_id", "component_id", "candidate_id", "segment_changes"}
+                or not {"semantic_row_id", "segment_id", "component_id", "candidate_id"} <= set(change)
+                or any(not isinstance(change[k], str) or not change[k].strip()
+                       for k in ("semantic_row_id", "segment_id", "component_id", "candidate_id"))
+                or change["semantic_row_id"] not in previous_rows):
+            raise ValueError("local revision change must identify an existing visual row and candidate")
+        key = (change["segment_id"], change["component_id"])
+        if key in changes:
+            raise ValueError("local revision change is duplicated")
+        changes[key] = change
+        changed_rows.add(change["semantic_row_id"])
+    checked_selection = compared_treatment.get("skill_selection", {})
+    checked_beats = [*checked_selection.get("beats", []), *checked_selection.get("overlay_beats", [])]
+    current = {(b["segment_id"], b["component_id"]): b for b in checked_beats}
+    if len(current) != len(checked_beats) or set(current) != {(b["segment_id"], b["component_id"]) for b in beats}:
+        raise ValueError("local revision selection differs from the current treatment")
+    if any(key not in current or current[key].get("semantic_row_id") != change["semantic_row_id"]
+           for key, change in changes.items()):
+        raise ValueError("local revision change is not an actual matching semantic beat")
+    if any(b.get("semantic_row_id") not in previous_rows for b in beats):
+        raise ValueError("local revision cannot add an unconfirmed semantic row")
+    untouched_old = {key for key, beat in old_beats.items()
+                     if beat.get("semantic_row_id") not in changed_rows}
+    untouched_new = {key for key, beat in current.items()
+                     if beat.get("semantic_row_id") not in changed_rows}
+    if untouched_old != untouched_new or not untouched_old.issubset(old_choices):
+        raise ValueError("local revision changed an unaffected visual selection")
+    semantic_fields = ("semantic_row_id", "start", "end", "transcript", "semantic_goal",
+                       "required_change", "intent_statement", "component_brief", "candidates", "skill_reviews",
+                       "binding_snapshot")
+    if any(any(current[key].get(field) != old_beats[key].get(field) for field in semantic_fields)
+           for key in untouched_old):
+        raise ValueError("local revision changed an unaffected semantic beat or candidate review")
+    if any(key not in changes for key, beat in current.items()
+           if beat.get("semantic_row_id") in changed_rows):
+        raise ValueError("every changed adjustable component needs the user's selected candidate")
+    old_items = [(kind, row) for kind in ("broll", "overlay")
+                 for row in previous.get("semantic_lists", {}).get(kind, [])]
+    new_items = [(kind, row) for kind in ("broll", "overlay")
+                 for row in compared_treatment.get("semantic_lists", {}).get(kind, [])]
+    old_rows = {row["row_id"]: row for _, row in old_items}
+    new_rows = {row["row_id"]: row for _, row in new_items}
+    if (len(old_rows) != len(old_items) or len(new_rows) != len(new_items)
+            or {row["row_id"]: kind for kind, row in old_items} != {
+                row["row_id"]: kind for kind, row in new_items}
+            or set(old_rows) != set(new_rows) or set(old_rows) != previous_rows):
+        raise ValueError("local revision changed confirmed semantic rows or numbering")
+    for row_id, old_row in old_rows.items():
+        after = new_rows[row_id]
+        if row_id in changed_rows:
+            if {k: v for k, v in old_row.items() if k != "components"} != {
+                    k: v for k, v in after.items() if k != "components"}:
+                raise ValueError("local revision changed the confirmed row meaning")
+            if ({item["segment_id"] for item in old_row["components"]} !=
+                    {item["segment_id"] for item in after["components"]}):
+                raise ValueError("local revision changed the confirmed row's segments")
+        elif after != old_row:
+            raise ValueError("local revision changed an unaffected semantic row")
+    old_segments = {segment["segment_id"]: segment for segment in previous_director["segments"]}
+    new_segments = {segment["segment_id"]: segment for segment in compared_director["segments"]}
+    changed_segments = {r["segment_id"] for r in proposal["rows"] if r["semantic_row_id"] in changed_rows}
+    if set(old_segments) != set(new_segments) or any(old_segments[sid] != new_segments[sid]
+            for sid in old_segments if sid not in changed_segments):
+        raise ValueError("local revision changed an unaffected component or binding")
+    if any(any(old_segments[sid].get(field) != new_segments[sid].get(field)
+               for field in ("start", "end", "content_item_ids", "visual_intent"))
+           for sid in changed_segments):
+        raise ValueError("local revision changed the confirmed time or semantic intent")
+    for sid in changed_segments:
+        before, after = old_segments[sid], new_segments[sid]
+        updates = [c["segment_changes"] for c in changes.values()
+                   if c["segment_id"] == sid and "segment_changes" in c]
+        allowed = {"bindings", "visual_strategy"}
+        if updates:
+            update = updates[0]
+            if (any(item != update for item in updates) or not isinstance(update, dict)
+                    or set(update) != {"visible_text", "strategy_revision"}
+                    or not isinstance(update["visible_text"], list)
+                    or any(not isinstance(text, str) or not text.strip() for text in update["visible_text"])
+                    or type(update["strategy_revision"]) is not int
+                    or type(before.get("strategy_revision")) is not int
+                    or update["strategy_revision"] != before["strategy_revision"] + 1
+                    or any(after.get(k) != value for k, value in update.items())):
+                raise ValueError("local revision differs from its explicit text and strategy change")
+            allowed.update(update)
+        if ({k: v for k, v in before.items() if k not in allowed}
+                != {k: v for k, v in after.items() if k not in allowed}):
+            raise ValueError("local revision changed an unapproved segment field")
+        old_strategy, new_strategy = before["visual_strategy"], after["visual_strategy"]
+        if ({k: v for k, v in old_strategy.items() if k not in {"mode", "components", "composition"}}
+                != {k: v for k, v in new_strategy.items() if k not in {"mode", "components", "composition"}}):
+            raise ValueError("local revision changed an unapproved visual strategy field")
+        old_composition, new_composition = old_strategy.get("composition", {}), new_strategy.get("composition", {})
+        old_components = {c["component_id"]: c for c in old_strategy["components"]}
+        new_components = {c["component_id"]: c for c in new_strategy["components"]}
+        added = set(new_components) - set(old_components)
+        if (len(old_components) != len(old_strategy["components"])
+                or len(new_components) != len(new_strategy["components"])
+                or set(old_components) - set(new_components)
+                or any((sid, cid) not in changes for cid in added)):
+            raise ValueError("local revision changed an unapproved visual component")
+        for cid, component in old_components.items():
+            if (sid, cid) in changes:
+                continue
+            old_binding = before.get("bindings", {}).get(cid, {})
+            new_binding = after.get("bindings", {}).get(cid, {})
+            if (new_components[cid] != component or not isinstance(new_binding, dict)
+                    or any(new_binding.get(key) != value for key, value in old_binding.items())):
+                raise ValueError("local revision changed an unapproved visual component")
+        permitted = {"family", "reading_order", "component_dependencies"}
+        if ({k: v for k, v in old_composition.items() if k not in permitted}
+                != {k: v for k, v in new_composition.items() if k not in permitted}):
+            raise ValueError("local revision changed an unapproved presentation or avatar")
+        if not added and old_composition != new_composition:
+            raise ValueError("local revision changed an unapproved composition")
+    old_component_rows = {(r["segment_id"], r["component_id"]): r["semantic_row_id"] for r in proposal["rows"]}
+    for (sid, cid), row_id in old_component_rows.items():
+        if row_id in changed_rows:
+            continue
+        before, after = old_segments[sid], new_segments[sid]
+        original = [c for c in before["visual_strategy"]["components"] if c["component_id"] == cid]
+        current_component = [c for c in after["visual_strategy"]["components"] if c["component_id"] == cid]
+        if (len(original) != 1 or current_component != original
+                or before.get("bindings", {}).get(cid) != after.get("bindings", {}).get(cid)):
+            raise ValueError("local revision changed an unaffected component or binding")
+    old_fixed = {(r["segment_id"], r["component_id"]): r for r in old.get("fixed_context", [])}
+    new_fixed = {(r["segment_id"], r["component_id"]): r for r in checked_selection.get("fixed_context", [])}
+    if (any(key not in old_component_rows for key in old_fixed)
+            or {k: v for k, v in old_fixed.items() if old_component_rows[k] not in changed_rows}
+            != {k: v for k, v in new_fixed.items() if k in old_component_rows
+                and old_component_rows[k] not in changed_rows}):
+        raise ValueError("local revision changed an unaffected fixed material")
+    new_component_rows = {(ref["segment_id"], ref["component_id"]): row_id
+                          for row_id, row in new_rows.items() for ref in row["components"]}
+    if any(key not in new_component_rows or (new_component_rows[key] not in changed_rows and key not in old_fixed)
+           for key in new_fixed):
+        raise ValueError("local revision added an unaffected fixed material")
+    locks = {key: old_choices[key] for key in untouched_old}
+    locks.update({key: change["candidate_id"] for key, change in changes.items()})
+    return locks
+
+
 def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
-                        temporarily_disabled=()) -> dict:
+                        temporarily_disabled=(), director=None, treatment=None) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
@@ -404,6 +672,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     keys = [(b["segment_id"], b["component_id"]) for b in beats]
     if len(keys) != len(set(keys)):
         raise ValueError("B-roll semantic component is duplicated")
+    revision_locks = _revision_selection_locks(selection, beats, job_dir, director, treatment)
     # The treatment's existing first-beat/opening declaration narrows only the
     # first body item.  It does not remove Wake (or any other reviewed route)
     # from the candidate pool for later semantic items.
@@ -417,7 +686,8 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
             raise ValueError("opening must use the registered lemo-wake/wake candidate")
     if first is not None and (first["segment_id"], first["component_id"]) not in keys:
         raise ValueError("opening declaration has no B-roll semantic beat")
-    domains = []
+    partial = any(c.get("fit") == "unreviewed" for b in beats for c in b.get("candidates", []))
+    domains, optimistic_domains = [], []
     for beat in beats:
         _duration(beat)
         for field in ("transcript", "semantic_goal", "required_change"):
@@ -427,43 +697,59 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
         if not is_overlay and set(reviews) != skills:
             raise ValueError("B-roll must review the full discovered Skill pool, not only favorite sources")
         for review in reviews.values():
-            if review.get("fit") not in {"preferred", "equivalent", "unsuitable", "needs_adapter"}:
+            if review.get("fit") not in {"preferred", "equivalent", "unsuitable", "needs_adapter", "unreviewed"}:
                 raise ValueError("B-roll Skill review status is invalid")
             _text(review.get("reason"), "Skill review reason")
         candidates = beat.get("candidates", [])
         if not isinstance(candidates, list) or len({c.get("candidate_id") for c in candidates}) != len(candidates):
             raise ValueError("B-roll concrete candidate reviews are invalid")
-        eligible = []
+        eligible, optimistic = [], []
         for candidate in candidates:
             cid = candidate.get("candidate_id")
             if cid not in pool:
                 raise ValueError(f"B-roll candidate was not discovered: {cid}")
             fit = candidate.get("fit")
-            if fit not in {"preferred", "equivalent", "unsuitable", "needs_adapter"}:
+            if fit not in {"preferred", "equivalent", "unsuitable", "needs_adapter", "unreviewed"}:
                 raise ValueError("B-roll candidate fit is invalid")
             _text(candidate.get("reason"), "candidate reason")
-            if fit in {"preferred", "equivalent"}:
+            if fit in {"preferred", "equivalent", "unreviewed"}:
                 if (cid.startswith("overlay:")) != is_overlay:
                     raise ValueError("visual candidate does not support the semantic item's use")
                 if pool[cid]["status"] != "supported" or (not is_overlay and reviews[pool[cid]["skill_id"]]["fit"] in {"unsuitable", "needs_adapter"}):
                     raise ValueError("B-roll candidate is not callable or contradicts the Skill review")
-                _text(candidate.get("visual_pattern"), "shared visual pattern")
+                if fit != "unreviewed":
+                    _text(candidate.get("visual_pattern"), "shared visual pattern")
+                    if partial:
+                        from .motion_match_cache import _design_plan
+                        _design_plan(candidate)
                 identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
-                if (identity, cid) not in temporarily_disabled:
-                    eligible.append(candidate)
+                if ((identity, cid) not in temporarily_disabled
+                        and (not partial or timing_failure(pool[cid], beat, strict=True) is None)):
+                    optimistic.append(candidate)
+                    if fit != "unreviewed":
+                        eligible.append(candidate)
         if first is not None and (beat["segment_id"], beat["component_id"]) == (first["segment_id"], first["component_id"]):
             if beat["start"] != 0:
                 raise ValueError("opening must start at 0")
             eligible = [candidate for candidate in eligible
                         if candidate["candidate_id"] == first["candidate_id"]]
+            optimistic = [candidate for candidate in optimistic
+                          if candidate["candidate_id"] == first["candidate_id"]]
             if not eligible:
                 raise ValueError("opening candidate is missing or not suitable")
+        locked = revision_locks.get((beat["segment_id"], beat["component_id"]))
+        if locked is not None:
+            eligible = [candidate for candidate in eligible if candidate["candidate_id"] == locked]
+            optimistic = [candidate for candidate in optimistic if candidate["candidate_id"] == locked]
+            if not eligible:
+                raise ValueError("confirmed revision candidate is not reviewed and feasible")
         domain = eligible
         if not domain:
             frames = round(_duration(beat) * 24)
             raise ValueError(f"{beat['segment_id']}:{beat['component_id']} has no timing-feasible candidate "
                              f"for {frames} frames ({beat['start']:.3f}-{beat['end']:.3f}s)")
         domains.append(sorted(domain, key=lambda c: c["candidate_id"]))
+        optimistic_domains.append(sorted(optimistic, key=lambda c: c["candidate_id"]))
 
     recent = selection.get("recent_context", [])
     if not isinstance(recent, list):
@@ -485,27 +771,39 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     fixed_routes = [(row, fixed_identity(row, job_dir=job_dir)) for row in fixed]
     # A logical item may span several physical segments. It still receives one
     # native route, one matching operation and one source/template reward.
-    grouped, group_order = {}, []
-    for beat, domain in zip(beats, domains):
+    grouped, optimistic_grouped, group_order = {}, {}, []
+    for beat, domain, optimistic in zip(beats, domains, optimistic_domains):
         identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
         if identity not in grouped:
             grouped[identity] = domain
+            optimistic_grouped[identity] = optimistic
             group_order.append(identity)
-        elif grouped[identity] != domain:
+        elif grouped[identity] != domain or optimistic_grouped[identity] != optimistic:
             raise ValueError("parts of one semantic visual item must share the same candidate reviews")
-    normalized = []
-    for identity in group_order:
-        choices = []
-        for choice in grouped[identity]:
-            candidate = pool[choice["candidate_id"]]
-            template = _template_identity(candidate)
-            choices.append({**choice, "channel": source_channel(candidate["skill_id"]),
-                            "template_id": template[1] if template else None})
-        normalized.append(choices)
+    def normalize(groups):
+        return [[{**choice, "channel": source_channel(pool[choice["candidate_id"]]["skill_id"]),
+                  "template_id": canonical_identity(pool[choice["candidate_id"]])[1]}
+                 for choice in groups[identity]] for identity in group_order]
+    normalized = normalize(grouped)
+    fixed_channels = tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity})
+    fixed_templates = tuple({_template_identity(identity) for _, identity in fixed_routes
+                            if identity and _template_identity(identity)})
     exact = assign_candidates(normalized,
-        fixed_channels=tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity}),
-        fixed_templates=tuple({_template_identity(identity) for _, identity in fixed_routes
-                               if identity and _template_identity(identity)}))
+        fixed_channels=fixed_channels, fixed_templates=fixed_templates)
+    diversity_review = None
+    if partial:
+        optimistic = assign_candidates(normalize(optimistic_grouped),
+            fixed_channels=fixed_channels, fixed_templates=fixed_templates)
+        def score(choices):
+            return (len(set(fixed_channels) | {c["channel"] for c in choices}),
+                    len(set(fixed_templates) | {(c["channel"], c["template_id"]) for c in choices
+                                                if c["template_id"] is not None}))
+        lower, upper = score(exact), score(optimistic)
+        if lower != upper:
+            raise ValueError(f"unreviewed candidates may increase the joint maximum: {lower} < {upper}; "
+                             "review the relevant candidates before assigning")
+        diversity_review = {"reviewed_optimum": list(lower), "optimistic_upper_bound": list(upper),
+                            "scope": "joint_broll_and_overlay_current_windows"}
     exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
     chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
         beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])])
@@ -590,6 +888,9 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
             chosen[left], chosen[right] = first, second
             improved = True
     result = copy.deepcopy(dict(selection))
+    result.pop("diversity_review", None)
+    if diversity_review is not None:
+        result["diversity_review"] = diversity_review
     assignments = [
         {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
          "candidate_id": choice["candidate_id"],
@@ -606,16 +907,64 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     return result
 
 
-def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> dict:
+def _validate_partial_windows(selection, director):
+    """A count proof cannot settle draft windows or competing presentations."""
+    if not isinstance(director, Mapping) or not isinstance(director.get("segments"), list):
+        raise ValueError("unreviewed candidates require the current director and resolved windows")
+    segments = {}
+    windows = []
+    for segment in director["segments"]:
+        sid = segment["segment_id"]
+        if sid in segments:
+            raise ValueError("director contains duplicate segment windows")
+        _duration(segment)
+        if any(abs(segment[k] * 24 - round(segment[k] * 24)) > 1e-6 for k in ("start", "end")):
+            raise ValueError("partial review requires exact 24fps director windows")
+        segments[sid] = segment
+        windows.append((segment["start"], segment["end"]))
+    windows.sort()
+    if any(current[0] < previous[1] - 1e-8 for previous, current in zip(windows, windows[1:])):
+        raise ValueError("director windows overlap; resolve B-roll and overlay presentation first")
+    for group in ("beats", "overlay_beats"):
+        for beat in selection.get(group, []):
+            segment = segments.get(beat.get("segment_id"))
+            if beat.get("window_status") != "resolved" or segment is None:
+                raise ValueError("partial review requires every candidate window to be resolved")
+            if any(beat[k] != segment[k] for k in ("start", "end")):
+                raise ValueError("candidate window differs from the current director")
+            strategy = segment["visual_strategy"]
+            if (group == "overlay_beats") != (strategy["composition"]["family"] == "aroll_with_overlay"):
+                raise ValueError("candidate window type differs from the director presentation")
+            if beat["component_id"] not in {c["component_id"] for c in strategy["components"]}:
+                raise ValueError("candidate window component is absent from the director")
+    for row in selection.get("fixed_context", []):
+        segment = segments.get(row.get("segment_id"))
+        if segment is None or any(row[k] != segment[k] for k in ("start", "end")):
+            raise ValueError("fixed material window differs from the current director")
+
+
+def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, director=None, treatment=None) -> dict:
     """Assign reviewed routes, retrying only with draft-local timing exclusions."""
     from .motion_capabilities import overlay_candidates
 
+    beats = [*selection.get("beats", []), *selection.get("overlay_beats", [])]
+    partial = any(c.get("fit") == "unreviewed" for b in beats for c in b.get("candidates", []))
+    if partial:
+        _validate_partial_windows(selection, director)
     catalog = {row["candidate_id"]: row for row in
                [*discover_candidates(project_root), *overlay_candidates(project_root)]}
     disabled = set()
+    if partial:
+        # A route must fit every physical part of its one logical item.
+        for beat in beats:
+            identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+            for candidate in beat.get("candidates", []):
+                cid = candidate.get("candidate_id")
+                if cid in catalog and timing_failure(catalog[cid], beat, strict=True):
+                    disabled.add((identity, cid))
     while True:
         result = _assign_skills_once(project_root, selection, job_dir=job_dir,
-                                     temporarily_disabled=disabled)
+                                     temporarily_disabled=disabled, director=director, treatment=treatment)
         failures = []
         for assignment in [*result["assignments"], *result.get("overlay_assignments", [])]:
             row = catalog[assignment["candidate_id"]]
@@ -634,16 +983,68 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None) -> di
             raise ValueError("B-roll timing assignment exhausted: " + "; ".join(reason for _, reason in failures))
 
 
-def timing_failure(row: Mapping, beat: Mapping) -> str | None:
+def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
     """Return the native 24fps duration conflict, if any, without changing state."""
     minimum = row.get("min_duration_seconds")
-    if minimum is None:
+    maximum = row.get("max_duration_seconds")
+    module = row.get("adapter_module")
+    scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+    if module in {"adu_native_adapter", "hypit_native_adapter", "motion_graphics_adapter",
+                  "huashu_motion_adapter", "lemo_wake_adapter", "upstream_scene_adapter",
+                  "talkcraft_native_adapter", "doudou_adapter", "riso_native_adapter"}:
+        values, tree = _declarations(scripts / (module + ".py"))
+        native_minimum = (values["MIN_SECONDS"][row["source_route"]]
+                          if module == "riso_native_adapter" else None)
+        lower, upper = _native_frame_bounds(tree, minimum=native_minimum)
+        minimum = max(minimum or 0, lower)
+        maximum = min(maximum, upper) if maximum is not None else upper
+    elif module in {"whiteboard_adapter", "paper_collage_adapter"}:
+        _, tree = _declarations(scripts / row["entrypoint"].split("/")[-1])
+        upper = _native_seconds_ceiling(tree)
+        maximum = min(maximum, upper) if maximum is not None else upper
+    elif module == "hyperframes_hw_pipeline_adapter":
+        source = (scripts / "render_hyperframes_hw_pipeline.cjs").read_text()
+        bounds = re.search(r"b\.canvas\.frames\s*>=\s*(\d+)\s*&&\s*b\.canvas\.frames\s*<=\s*(\d+)", source)
+        if bounds is None:
+            raise ValueError("Native overlay frame-clock declaration changed")
+        minimum, maximum = (int(v) / 24 for v in bounds.groups())
+    elif module in {"hyperframes_notification_adapter", "hyperframes_chatgpt_exchange_adapter"}:
+        source = (scripts / row["entrypoint"].split("/")[-1]).read_text()
+        frames = re.findall(r"b\.canvas\.duration_in_frames\s*===\s*(\d+)", source)
+        if len(frames) != 1:
+            raise ValueError("Native fixed frame-clock declaration changed")
+        minimum = maximum = int(frames[0]) / 24
+    elif module == "data_rollup_adapter":
+        source = (scripts / row["entrypoint"].split("/")[-1]).read_text()
+        frames = re.findall(r"c\.duration_in_frames\s*>=\s*(\d+)", source)
+        if len(frames) != 1:
+            raise ValueError("Native rollup frame-clock declaration changed")
+        minimum = max(minimum or 0, int(frames[0]) / 24)
+    elif module == "huashu_stat_adapter":
+        source = (scripts / "huashu_stat_adapter.py").read_text()
+        target = re.findall(r'm\["target_frame"\]\s*<\s*(\d+)', source)
+        hold = re.findall(r'm\["hold_frames"\]\s*<\s*(\d+)', source)
+        tail = re.findall(r'm\["target_frame"\]\s*\+\s*m\["hold_frames"\]\s*>\s*c\["frames"\]\s*-\s*(\d+)', source)
+        if any(len(values) != 1 for values in (target, hold, tail)):
+            raise ValueError("Native stat timing declaration changed")
+        minimum = max(minimum or 0, sum(int(values[0]) for values in (target, hold, tail)) / 24)
+    elif strict and module is None and row.get("role") != "design":
+        raise ValueError("Native timing contract is missing its adapter")
+    elif strict and module not in {None, "hyperframes_native_adapter", "motion_native_skill_adapter",
+                                   "openfilm_motion_adapter", "overlay_studio_adapter",
+                                   "paper_hyperframes_adapter", "talkcraft_skill_adapter", "wise_motion_adapter"}:
+        raise ValueError("Native timing contract is unknown: " + str(module))
+    if minimum is None and maximum is None and not strict:
         return None
     seconds = _duration(beat)
     frames = round(seconds * 24)
-    if frames < minimum * 24 or abs(seconds * 24 - frames) > 1e-6:
+    if abs(seconds * 24 - frames) > 1e-6:
+        return f"{beat['segment_id']}: {row['candidate_id']} needs an exact 24fps window"
+    if minimum is not None and frames < minimum * 24:
         return (f"{beat['segment_id']}: {row['candidate_id']} has {seconds:.3f}s but needs "
                 f"at least {minimum}s on an exact 24fps clock")
+    if maximum is not None and frames > maximum * 24:
+        return f"{beat['segment_id']}: {row['candidate_id']} exceeds its native {maximum}s maximum"
     return None
 
 
@@ -698,7 +1099,7 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
-    computed = assign_skills(project_root, selection, job_dir=job_dir)
+    computed = assign_skills(project_root, selection, job_dir=job_dir, director=draft, treatment=treatment)
     if (computed["assignments"] != selection.get("assignments")
             or computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
         raise ValueError("B-roll assignment changed; run assign before building bindings")

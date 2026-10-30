@@ -15,6 +15,44 @@ from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
+    def test_paper_crop_consumption_requires_approved_source_and_exact_bound_pixels(self):
+        from PIL import Image
+        root = self.job.job_dir
+        source, cropped, provenance, entry = (root / name for name in ('paper-source.png', 'paper-crop.png', 'paper-provenance.json', 'paper-scene.html'))
+        image = Image.new('RGBA', (8, 8), (10, 20, 30, 128))
+        image.putpixel((3, 3), (200, 2, 4, 255))
+        image.save(source)
+        image.crop((2, 2, 6, 6)).save(cropped)
+        original = vc._record(root, source)
+        output_sha = artifacts.sha256_file(cropped)
+        entry.write_text('<html><body><img src="paper-crop.png"></body></html>', encoding='utf-8')
+        brief = {'entry': {'job_path': entry.name, 'sha256': artifacts.sha256_file(entry)},
+                 'assets': [{'job_path': cropped.name, 'scene_path': cropped.name, 'sha256': output_sha}]}
+        proof = {'source_images': {'cutouts': {'path': source.name, 'sha256': original['sha256']}},
+                 'crops': [{'source': source.name, 'source_sha256': original['sha256'],
+                            'crop': [2, 2, 6, 6], 'output': cropped.name, 'output_sha256': output_sha}]}
+        def check(data, assets=None, approved=None):
+            artifacts.write_json_artifact(provenance, data)
+            return vc._paper_crop_sources(root, assets or brief, vc._record(root, provenance),
+                                          approved if approved is not None else [original])
+        self.assertEqual(check(proof), {original['sha256']})
+        with self.assertRaisesRegex(ValueError, 'approved generated image'):
+            check(proof, approved=[])
+        with self.assertRaisesRegex(ValueError, 'consumed asset'):
+            check(proof, assets={**brief, 'assets': []})
+        not_used = copy.deepcopy(brief); not_used['assets'][0]['scene_path'] = 'not-used.png'
+        with self.assertRaisesRegex(ValueError, 'consumed asset'):
+            check(proof, assets=not_used)
+        wrong = copy.deepcopy(proof); wrong['crops'][0]['crop'] = [1, 1, 5, 5]
+        with self.assertRaisesRegex(ValueError, 'pixels differ'):
+            check(wrong)
+        wrong = copy.deepcopy(proof); wrong['crops'][0]['crop'] = [0, 0, 9, 9]
+        with self.assertRaisesRegex(ValueError, 'bounds exceed'):
+            check(wrong)
+        wrong = copy.deepcopy(proof); wrong['crops'][0]['output_sha256'] = 'a' * 64
+        with self.assertRaisesRegex(ValueError, 'consumed asset'):
+            check(wrong)
+
     def test_routing_distribution_separates_logical_counts_channels_and_repeats(self):
         rows = [
             {"row_id": "a:1", "semantic_row_id": "logical-a", "segment_id": "a", "component_id": "1",
@@ -424,6 +462,14 @@ class VisualConfirmationTests(unittest.TestCase):
         self.fixture._write_brief(segment)
         artifacts.write_json_artifact(self.treatment, treatment)
         director = {"schema_version": 3, "segments": [segment]}
+        deferred = copy.deepcopy(treatment)
+        deferred['motion_readability'] = [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                                           'pending_generation': True}]
+        from edit.hd.tools import motion_readability
+        with mock.patch.object(motion_readability, '_managed', return_value=True):
+            motion_readability.validate_direction_contract(self.job, director, deferred, phase='planning')
+            with self.assertRaisesRegex(ValueError, 'uncreated approved generation'):
+                motion_readability.validate_direction_contract(self.job, director, deferred, phase='completed')
         for case in ("missing_step", "wrong_target", "wrong_route", "invented_image", "unfrozen_reference", "fixed_action"):
             invalid = copy.deepcopy(treatment)
             changed = copy.deepcopy(director)
@@ -787,6 +833,55 @@ class VisualConfirmationTests(unittest.TestCase):
 
 class MotionRealizationBoundaryTests(unittest.TestCase):
     """A native result may reveal text, without changing its approved task."""
+    def test_technical_revision_requires_scoped_verified_implementation_change(self):
+        base = {'segments': [{'segment_id': 'seg-1', 'strategy_revision': 1, 'bindings': {
+            'action': {'dependency_id': 'barty-motion-graphics', 'invocation_record': {}}}}]}
+        actual = copy.deepcopy(base); actual['segments'][0]['strategy_revision'] = 2
+        with self.assertRaisesRegex(ValueError, 'verified implementation'):
+            vc._normalize_verified_technical_revisions(base, {}, actual, {}, actual)
+        actual['segments'][0]['bindings']['action']['invocation_record']['canvas_alignment'] = {'mode': 'identity'}
+        normalized = vc._normalize_verified_technical_revisions(base, {}, actual, {}, actual)
+        self.assertEqual(normalized['segments'][0]['strategy_revision'], 1)
+        self.assertEqual(actual['segments'][0]['strategy_revision'], 2)
+        actual['segments'][0]['strategy_revision'] = 0
+        with self.assertRaisesRegex(ValueError, 'must increase'):
+            vc._normalize_verified_technical_revisions(base, {}, actual, {}, actual)
+
+    def test_lemo_number_size_change_does_not_allow_other_source_edits(self):
+        old = "before; paint(String(step),px,py+10,30,color,'center','Font');after"
+        new = "before; paint(String(step),px,py+12,36,color,'center','Font');after"
+        self.assertEqual(vc._lemo_number_change(old, new), (30, 36))
+        for changed in (new.replace('after', 'different'), new.replace('color', 'other'),
+                        new.replace('py+12', 'py+90'), new.replace(',36,', ',20,')):
+            with self.assertRaises(ValueError):
+                vc._lemo_number_change(old, changed)
+
+    def test_lemo_measurement_must_match_decoded_composite_pixels(self):
+        from PIL import Image
+        frame = self.root / 'frame.png'
+        Image.new('RGB', (1080, 1920), 'white').save(frame)
+        measured = {'samples': [{'frame': 0, 'time': 0, 'frame_path': 'frame.png',
+            'frame_sha256': artifacts.sha256_file(frame), 'digits': [{'measurements': [
+                {'bbox': [10, 10, 10, 36], 'height': 36, 'method': 'bright_core'}]}]}]}
+        rgb = bytes([255]) * (1080 * 1920 * 3)
+        with mock.patch.object(vc.subprocess, 'check_output', return_value=rgb):
+            vc._verify_lemo_measured_frames(self.root, self.root / 'video.mp4', measured, 1)
+        with mock.patch.object(vc.subprocess, 'check_output', return_value=bytes(len(rgb))):
+            with self.assertRaisesRegex(ValueError, 'not from the composite'):
+                vc._verify_lemo_measured_frames(self.root, self.root / 'video.mp4', measured, 1)
+
+    def test_transparency_does_not_change_the_actual_component_use(self):
+        brief = {'template_id': 'motion-broll', 'alpha': True}
+        component = {'component_id': 'scene', 'layer_role': 'annotation'}
+        segment = {'visual_strategy': {'composition': {'family': 'broll_with_avatar'}, 'components': [component]}}
+        candidate = vc.native_candidate_id('barty-motion-graphics', brief, segment, 'scene')
+        self.assertEqual(candidate, 'barty-motion-graphics:barty-motion-graphics/motion-broll')
+        segment['visual_strategy']['composition']['family'] = 'aroll_with_overlay'
+        self.assertEqual(vc.native_candidate_id('barty-motion-graphics', brief, segment, 'scene'),
+                         'overlay:barty-motion-graphics/motion-broll')
+        with self.assertRaises(vc.VisualConfirmationError):
+            vc.native_candidate_id('barty-motion-graphics', brief, segment, 'wrong')
+
     def setUp(self):
         import tempfile
         from test_motion_native_skill_adapter import brief
@@ -876,6 +971,14 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'actual rendered project'): self.validate(director, treatment)
         director, treatment = self.realized()
         artifacts.write_json_artifact(self.root / 'manifests/confirmed-content.json',
+            {'visuals': [{'segment_id': 'seg-002', 'component_id': 'component-1',
+                         'visible_text': ['其他镜头指定']}]})
+        self.validate(director, treatment)
+        artifacts.write_json_artifact(self.root / 'manifests/confirmed-content.json',
+            {'visuals': [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                         'visible_text': ['用户指定']}]})
+        with self.assertRaisesRegex(ValueError, 'retain confirmed text'): self.validate(director, treatment)
+        artifacts.write_json_artifact(self.root / 'manifests/confirmed-content.json',
             {'visuals': [{'component_id': 'component-1', 'visible_text': ['用户指定']}]})
         with self.assertRaisesRegex(ValueError, 'retain confirmed text'): self.validate(director, treatment)
 
@@ -924,6 +1027,57 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'only allowed'):
             motion_readability.validate_targets(segments, records, [])
 
+    def test_generated_text_completion_preserves_approval_and_requires_actual_sources(self):
+        frozen = copy.deepcopy(self.director)
+        segment = frozen['segments'][0]
+        segment['visible_text'] = ['输入']
+        segment['bindings'] = {'component-1': {'dependency_id': 'paper-collage-ad', 'template_id': 'paper'}}
+        old = copy.deepcopy(self.treatment)
+        old['motion_readability'] = [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                                     'pending_generation': True}]
+        step = {'id': 'image', 'purpose': 'image', 'segment_id': 'seg-001', 'component_id': 'component-1',
+                'arguments': {'prompt': 'approved paper'}, 'depends_on': []}
+        old['generation_plan'] = {'steps': [step], 'cost_note': 'one approved image'}
+        for name, data in [('director', frozen), ('treatment', old)]:
+            path = self.root / ('approved-' + name + '.json'); artifacts.write_json_artifact(path, data)
+            self.proposal['inputs'][name] = vc._record(self.root, path)
+        self.proposal['generation_steps'] = [step]
+        director, treatment = copy.deepcopy(frozen), copy.deepcopy(old)
+        payload = {'source_binding': {'segment_id': 'seg-001', 'start': segment['start'], 'end': segment['end']},
+                   'entry': {'job_path': self.target['content_ref']['path'], 'sha256': self.target['content_ref']['sha256']}}
+        path = self.root / 'actual-brief.json'; artifacts.write_json_artifact(path, payload)
+        director['segments'][0]['bindings']['component-1']['brief_sha256'] = artifacts.sha256_file(path)
+        treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'brief_path': path.name}]
+        treatment['motion_readability'] = [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                                            'targets': [copy.deepcopy(self.target)]}]
+        output = self.root / 'generated-output.bin'; output.write_bytes(b'fixture completed output')
+        evidence = [{'step_id': 'image', 'media': [vc._record(self.root, output)]}]
+        def validate(director, treatment, evidence=evidence, eligible={('seg-001', 'component-1')}):
+            with mock.patch.object(vc, 'planned_generation_targets', return_value=eligible):
+                vc._validate_draft_against_source(self.root, self.proposal, director, treatment,
+                                                  generation_evidence=evidence)
+        validate(director, treatment)
+        for change in ('no_completion', 'not_eligible', 'wording', 'step_count', 'channel', 'cost',
+                       'time', 'template', 'semantic', 'foreign_source', 'pending'):
+            changed, altered = copy.deepcopy(director), copy.deepcopy(treatment)
+            if change == 'no_completion':
+                with self.assertRaisesRegex(ValueError, 'completed generation'): validate(changed, altered, [])
+                continue
+            if change == 'not_eligible':
+                with self.assertRaisesRegex(ValueError, 'uncreated approved'): validate(changed, altered, eligible=set())
+                continue
+            if change == 'wording': changed['segments'][0]['visible_text'] = ['新文案']
+            elif change == 'step_count': altered['generation_plan']['steps'].append({**step, 'id': 'extra'})
+            elif change == 'channel': altered['generation_plan']['steps'][0]['arguments']['model'] = 'unapproved'
+            elif change == 'cost': altered['generation_plan']['cost_note'] = 'two paid images'
+            elif change == 'time': changed['segments'][0]['end'] += 1
+            elif change == 'template': changed['segments'][0]['bindings']['component-1']['template_id'] = 'other'
+            elif change == 'semantic': altered['semantic_lists']['broll'][0]['semantic'] = 'new fact'
+            elif change == 'pending': altered['motion_readability'][0]['pending_generation'] = True
+            else: altered['motion_readability'][0]['targets'][0]['content_ref']['path'] = 'foreign.html'
+            with self.subTest(change=change), self.assertRaises((ValueError, OSError)):
+                validate(changed, altered)
+
     def test_approved_visible_text_cannot_be_removed_even_with_an_existing_target(self):
         self.director['segments'][0]['visible_text']=['输入']
         self.treatment['motion_readability'][0]={'segment_id':'seg-001','component_id':'component-1','targets':[self.target]}
@@ -936,11 +1090,126 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
                                           'no_critical_text_reason':'不能以无字理由删除已批准文字'}
         with self.assertRaisesRegex(ValueError,'retain confirmed text'):self.validate(director,treatment)
 
+    def test_deferred_generation_can_bind_real_parent_static_labels_without_replanning(self):
+        from edit.hd.tests.test_segment_render_components import ParentStaticLabelTests
+        from edit.hd.tools import motion_capabilities
+        segment, label, png = ParentStaticLabelTests().fixture(self.root)
+        segment.update(segment_id='seg-001', end=2)
+        segment['bindings']['component-1'] = segment['bindings'].pop('visual-1')
+        binding = segment['bindings']['component-1']
+        manifest_path = self.root / binding['parent_static_labels']['job_path']
+        manifest = artifacts.read_json_artifact(manifest_path)
+        manifest.update(segment_id='seg-001', component_id='component-1')
+        artifacts.write_json_artifact(manifest_path, manifest)
+        binding['parent_static_labels'].update(sha256=artifacts.sha256_file(manifest_path),
+                                               byte_count=manifest_path.stat().st_size)
+        frozen = copy.deepcopy(self.director)
+        frozen['segments'][0]['visible_text'] = ['聊天']
+        frozen['segments'][0]['visual_strategy']['components'][0]['kind'] = 'ai_generated'
+        frozen['segments'][0]['bindings'] = {'component-1': {'provider': 'fixture', 'model': 'fixture', 'endpoint_id': 'fixture'}}
+        old = copy.deepcopy(self.treatment)
+        old['motion_readability'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'pending_generation': True}]
+        step = {'id': 'image', 'purpose': 'image', 'segment_id': 'seg-001', 'component_id': 'component-1',
+                'arguments': {'prompt': 'approved scene with parent labels'}, 'depends_on': []}
+        old['generation_plan'] = {'steps': [step], 'cost_note': 'one image'}
+        self.proposal['generation_steps'] = [step]
+        for name, value in [('director', frozen), ('treatment', old)]:
+            path = self.root / ('approved-' + name + '.json'); artifacts.write_json_artifact(path, value)
+            self.proposal['inputs'][name] = vc._record(self.root, path)
+        director, treatment = copy.deepcopy(frozen), copy.deepcopy(old)
+        director['segments'][0]['bindings']['component-1'].update(binding)
+        target = {'target_id': 'parent-chat-label', 'content_ref': label['content_ref'], 'span': [0, 2], 'role': 'body',
+                  'region': {'x': 120, 'y': 180, 'width': 240, 'height': 96}, 'windows': [{'start': .25, 'end': .75}]}
+        treatment['motion_readability'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'targets': [target]}]
+        evidence = [{'step_id': 'image', 'media': [vc._record(self.root, png)]}]
+        with mock.patch.object(vc, 'planned_generation_targets', return_value={('seg-001', 'component-1')}), \
+             mock.patch.object(motion_capabilities, '_ai_brief_evidence',
+                               return_value=({'observed_scene': 'fixture'}, {'job_path': 'completed.json', 'sha256': 'a' * 64})):
+            vc._validate_draft_against_source(self.root, self.proposal, director, treatment, generation_evidence=evidence)
+            # Exercise the final persisted mapping consumer, not just its draft gate.
+            director['segments'][0]['bindings']['component-1']['sha256'] = artifacts.sha256_file(png)
+            config = self.root / 'manifests/provider-config.json'; artifacts.write_json_artifact(config, {})
+            self.proposal.update(job_id='job', kind=vc.SCHEMA, rows=[], provider_config_sha256=artifacts.sha256_file(config))
+            proposal_path = self.root / 'proposal.json'; artifacts.write_json_artifact(proposal_path, self.proposal)
+            receipt = {'source_schema': vc.SCHEMA, 'job_id': 'job', 'job_dir': str(self.root),
+                'stage': 'visual_direction', 'passed': True, 'reviewed_by': 'human', 'revision': 1,
+                'approval_scope': 'visual_plan_and_delivery', 'note': 'synthetic test',
+                'user_confirmation': 'fixture approval', 'artifacts': [], 'source': vc._record(self.root, proposal_path)}
+            receipt_path = self.root / 'receipt.json'; artifacts.write_json_artifact(receipt_path, receipt)
+            receipt_ref = vc._record(self.root, receipt_path)
+            realized = {}
+            for name, value in [('director', director), ('treatment', treatment)]:
+                path = self.root / ('realized-' + name + '.json'); artifacts.write_json_artifact(path, value)
+                realized[name] = vc._record(self.root, path)
+            final = copy.deepcopy(director)
+            compiled = {k: v for k, v in director['segments'][0]['bindings']['component-1'].items()
+                        if k not in {'execution_mode', 'media_type', 'source_dimensions', 'parent_static_labels'}}
+            final['segments'][0]['shot_recipe'] = {'components': [{'component_id': 'component-1', **compiled}]}
+            final_path = self.root / 'final.json'
+            def consume():
+                artifacts.write_json_artifact(final_path, final)
+                final_ref = vc._record(self.root, final_path)
+                mapping = {'source_approval': receipt_ref, 'proposal': receipt['source'], 'host_qa_note': 'fixture',
+                    'artifacts': [final_ref], 'final_v3': final_ref, 'rows': [], 'realization_inputs': realized,
+                    'generations': [{**evidence[0], 'request_id': 'fixture-image', 'request': {'input_files': []}}]}
+                path = self.root / '07-visual-direction' / vc.MAPPING; artifacts.write_json_artifact(path, mapping)
+                stages = {'visual_direction': {'artifacts': [final_ref, vc._record(self.root, path)]}}
+                return vc.validate_realization_evidence(self.root, stages, 2, receipt_ref, job_id='job')
+            self.assertIn('mapping', consume())
+            final['segments'][0]['shot_recipe']['components'][0]['provider'] = 'unapproved-provider'
+            with self.assertRaisesRegex(ValueError, 'compiled template differs'):
+                consume()
+            director['segments'][0]['start'] += .25
+            with self.assertRaisesRegex(ValueError, 'timing, meaning'):
+                vc._validate_draft_against_source(self.root, self.proposal, director, treatment, generation_evidence=evidence)
+
     def test_frozen_realization_cannot_be_overwritten_before_stage_revision(self):
         from types import SimpleNamespace
         job=SimpleNamespace(stages={'visual_direction':{'status':'approved','artifacts':[]}})
         with self.assertRaisesRegex(ValueError,'frozen'):
             vc.write_realization_mapping(job,host_qa_note='不能覆盖已审结果',director_path=None,treatment_path=None)
+
+    def test_realization_mappings_are_immutable_and_unique_per_revision(self):
+        old = self.root / '07-visual-confirmation' / 'r26-approved' / vc.MAPPING
+        artifacts.write_json_artifact(old, {'original': True})
+        old_bytes = old.read_bytes()
+        first = vc._write_unique_mapping(self.root, 33, {'approval': 'same', 'plan': 'first'})
+        again = vc._write_unique_mapping(self.root, 33, {'approval': 'same', 'plan': 'first'})
+        later = vc._write_unique_mapping(self.root, 35, {'approval': 'same', 'plan': 'second'})
+        self.assertEqual(first, again)
+        self.assertNotEqual(first, later)
+        self.assertEqual(old.read_bytes(), old_bytes)
+        first.write_bytes(b'not the approved mapping')
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            vc._write_unique_mapping(self.root, 33, {'approval': 'same', 'plan': 'first'})
+        self.assertEqual(first.read_bytes(), b'not the approved mapping')
+
+    def test_realization_writer_retains_old_mapping_and_source_approval(self):
+        from edit.hd.tools import state
+        from types import SimpleNamespace
+        old = self.root / '07-visual-confirmation' / 'r26-approved' / vc.MAPPING
+        artifacts.write_json_artifact(old, {'original': True}); old_bytes = old.read_bytes()
+        plan = self.root / '07-visual-direction' / 'visual-plan.json'
+        artifacts.write_json_artifact(plan, {'segments': []})
+        director = self.root / 'director.json'; treatment = self.root / 'treatment.json'
+        artifacts.write_json_artifact(director, {'segments': []})
+        artifacts.write_json_artifact(treatment, {'scenes': []})
+        approval = {'path': 'manifests/user-confirmation.json', 'sha256': 'a' * 64, 'bytes': 1}
+        source = {'path': '07-visual-confirmation/r26-approved/proposal.json', 'sha256': 'b' * 64, 'bytes': 1}
+        job = SimpleNamespace(job_dir=self.root, revision=35, stages={'visual_direction': {
+            'status': 'ready_for_review', 'artifacts': [vc._record(self.root, plan)]}})
+        with mock.patch.object(vc, 'validate_visual_authorization', return_value={
+                'artifact': approval, 'payload': {'source': source}, 'source': {'rows': []}}), \
+             mock.patch.object(vc, '_completed_generations', return_value=[]), \
+             mock.patch.object(state, 'mark_visual_ready') as ready:
+            path = vc.write_realization_mapping(job, host_qa_note='已核验', director_path=director, treatment_path=treatment)
+        self.assertNotEqual(path, old)
+        self.assertEqual(old.read_bytes(), old_bytes)
+        mapping = vc._read(path)
+        self.assertEqual(mapping['source_approval'], approval)
+        self.assertEqual(mapping['proposal'], source)
+        self.assertEqual(mapping['final_v3'], vc._record(self.root, plan))
+        ready.assert_called_once()
 
 
 if __name__ == "__main__":

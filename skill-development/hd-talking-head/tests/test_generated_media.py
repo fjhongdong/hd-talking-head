@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import copy
+import json
 import shutil
 import subprocess
 import tempfile
@@ -95,6 +97,17 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
     def test_prepare_binding_accepts_observed_scene_and_source_binding(self):
         binding = generated_media.prepare_binding(self._binding_record())
         self.assertEqual(binding["source_dimensions"], {"width": 1080, "height": 1920})
+
+    def test_compiler_retains_media_identity_with_parent_static_labels(self):
+        binding = generated_media.prepare_binding(self._binding_record())
+        binding['parent_static_labels'] = {'job_path': 'labels.json', 'sha256': 'd' * 64, 'byte_count': 100}
+        component = _strategy_component('ai', 'ai_generated', layout_slot='full_frame')
+        component['media_type'] = 'video'
+        recipe = router.compile_strategy(_visual_strategy([component], segment_id='seg-router'),
+            _compile_context([component], segment_frames=48, binding_overrides={'ai': binding}))
+        self.assertNotIn('parent_static_labels', recipe['components'][0])
+        self.assertEqual(recipe['components'][0]['sha256'], self._binding_record()['media']['sha256'])
+        self.assertEqual(recipe['components'][0]['executor'], 'generated_media')
 
     def test_validate_record_preserves_approved_request_reference(self):
         from edit.hd.tools import visual_confirmation as vc, broll_skill_selection as selection
@@ -236,6 +249,171 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
             self.assertEqual(artifact.media_probe["width"], 1080)
             self.assertEqual(artifact.media_probe["height"], 1920)
             self.assertEqual(artifact.invocation_evidence["adapter_record"]["external_requests"], 0)
+
+
+@unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'FFmpeg required')
+class CompositionBaseReuseTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+        self.job = _Job(self.root)
+        self.manifests = self.job.job_dir / 'manifests'
+        self.manifests.mkdir()
+        (self.manifests / 'generation-channels.json').write_text(json.dumps({'video': {'reference_mode': 'local_path'}}))
+        self.source_binding = {'aroll_sha256': 'a' * 64, 'start': 0, 'end': 1}
+
+    def source(self, height):
+        from edit.hd.tools import generation_queue
+        path = self.job.job_dir / 'original.mp4'
+        subprocess.run(['ffmpeg', '-hide_banner', '-nostdin', '-v', 'error', '-f', 'lavfi',
+            '-i', f'testsrc2=s=1080x{height}:r=24:d=1', '-an', '-vf', 'setsar=0', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+            '-bsf:v', 'h264_metadata=sample_aspect_ratio=0/1', '-n', str(path)], check=True, capture_output=True)
+        request = {'id': 'generated', 'purpose': 'video', 'arguments': {'prompt': 'synthetic test only'}, 'input_files': []}
+        item = {'status': 'completed', 'request': request, 'submitted_request': request,
+            'fingerprint': generation_queue._fingerprint(request), 'task_ids': ['actual-fixture-task'],
+            'channel_identity': {'provider': 'fixture', 'model': 'model', 'endpoint_id': 'endpoint'},
+            'completion_response': {'status': 'completed', 'artifacts': [{'type': 'video', 'path': str(path),
+                'sha256': generated_media._sha(path), 'bytes': path.stat().st_size}]}}
+        queue = {'schema_version': 1, 'job_dir': str(self.job.job_dir), 'items': {'generated': item}}
+        self.queue_path = self.manifests / 'generation-queue.json'
+        self.queue_path.write_text(json.dumps(queue))
+        self.queue_bytes = self.queue_path.read_bytes()
+        self.assertIsNone(generated_media._base_probe(path, 'ffprobe')['sar'])
+        return path
+
+    def normalized_record(self):
+        normalization = generated_media.normalize_composition_base(self.job, 'generated',
+            output_path='normalized.mp4', ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
+        record = generated_media.record_from_queue(self.job, 'generated', segment_id='seg-001', component_id='ai',
+            source_binding=self.source_binding,
+            qa={'scope': 'composition_base', 'passed': True, 'observed_scene': 'Usable illustrative background only.'},
+            semantic_brief={'observed_scene': 'Original action failed; background only; separate native action required.'},
+            composition_base={'source_qa': {'passed': False, 'observed_scene': 'The required original action is incomplete.'},
+                              'action_component_id': 'action'}, normalization=normalization,
+            ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
+        return record
+
+    def recipe(self, record):
+        from edit.hd.tests.test_broll_component_executor import _code_component
+        from edit.hd.tests import test_segment_render_components as media_fixture
+        base = media_fixture._component('ai', 'ai_generated', record['media']['sha256'],
+            window=media_fixture._window(start=0, end=24, z_index=0, slot='full_frame'), alpha=False)
+        base['media_type'] = 'video'
+        binding = generated_media.prepare_binding(record)
+        base.update({k: v for k, v in binding.items() if k not in {'execution_mode', 'source_dimensions'}})
+        base['executor'] = generated_media.EXECUTOR
+        action = _code_component(b'actual fixture dependency input', component_id='action')
+        action['layer_role'] = 'annotation'
+        action['render_window'] = media_fixture._window(start=0, end=24, z_index=10, slot='annotation')
+        recipe = media_fixture._recipe([base, action])
+        recipe['composition']['presenter_mode'] = 'hidden'
+        recipe['composition'].pop('avatar')
+        return recipe
+
+    def test_scoped_base_normalizes_only_tiny_rounding_or_missing_sar(self):
+        for height in (1916, 1920):
+            with self.subTest(height=height):
+                # Each case has independent immutable queue and source files.
+                original = self.source(height)
+                before = original.read_bytes()
+                record = self.normalized_record()
+                transform = record['normalization']['transform']
+                self.assertEqual(transform['codec'], 'libx264' if height == 1916 else 'copy')
+                self.assertEqual(record['source_dimensions'], {'width': 1080, 'height': 1920})
+                self.assertFalse(record['composition_base']['source_qa']['passed'])
+                self.assertEqual(original.read_bytes(), before)
+                self.assertEqual(self.queue_path.read_bytes(), self.queue_bytes)
+                for altered_height in (1900, 1930):
+                    with self.assertRaisesRegex(ValueError, 'rounding'):
+                        generated_media._base_transform({'width': 1080, 'height': altered_height})
+                # Prepare the second independent case without retaining temporary test outputs.
+                if height == 1916:
+                    (self.job.job_dir / 'normalized.mp4').unlink()
+                    original.unlink()
+
+    def test_scoped_base_rejects_standalone_evidence_wrong_dependency_and_changed_pixels(self):
+        self.source(1916)
+        record = self.normalized_record()
+        recipe = self.recipe(record)
+        generated_media.validate_composition_base(record, recipe)
+        for change in ('standalone', 'evidence', 'dependency', 'opaque', 'source_qa'):
+            altered, bound = copy.deepcopy(recipe), copy.deepcopy(record)
+            if change == 'standalone':
+                altered.update(mode='single', components=altered['components'][:1])
+                altered['composition'].update(family='single_full_frame', reading_order=['ai'], component_dependencies=[])
+            elif change == 'evidence': altered['components'][0]['semantic_role'] = 'evidence'
+            elif change == 'dependency': altered['composition']['component_dependencies'] = []
+            elif change == 'opaque': altered['components'][1]['artifact_contract']['alpha'] = False
+            else: bound['composition_base']['source_qa']['passed'] = True
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                generated_media.validate_composition_base(bound, altered)
+        wrong = copy.deepcopy(record['normalization'])
+        wrong['frame_md5_sha256'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'pixels or timestamps'):
+            generated_media._verify_base_normalization(self.job, wrong, 'ffprobe', 'ffmpeg')
+        wrong = copy.deepcopy(record)
+        wrong['model'] = 'a different generation model'
+        with self.assertRaisesRegex(ValueError, 'generation identity'):
+            generated_media.validate_record(wrong, self.job)
+        altered_path = self.job.job_dir / 'altered-pixels.mp4'
+        subprocess.run(['ffmpeg', '-v', 'error', '-i', str(self.job.job_dir / 'normalized.mp4'),
+            '-vf', 'drawbox=x=100:y=100:w=20:h=20:color=red:t=fill', '-c:v', 'libx264', '-qp', '0',
+            '-pix_fmt', 'yuv420p', '-an', '-n', str(altered_path)], check=True, capture_output=True)
+        wrong = copy.deepcopy(record['normalization'])
+        wrong['output'].update(job_path=altered_path.name, sha256=generated_media._sha(altered_path),
+                               byte_count=altered_path.stat().st_size)
+        wrong['output_probe'] = generated_media._base_probe(altered_path, 'ffprobe')
+        wrong['command'][-1] = str(altered_path)
+        with self.assertRaisesRegex(ValueError, 'pixels or timestamps'):
+            generated_media._verify_base_normalization(self.job, wrong, 'ffprobe', 'ffmpeg')
+        (self.job.job_dir / 'original.mp4').write_bytes(b'changed provider output')
+        with self.assertRaisesRegex(ValueError, 'path or bytes'):
+            generated_media.validate_record(record, self.job)
+
+    def test_scoped_base_runs_actual_component_and_composition_without_external_calls(self):
+        from PIL import Image, ImageDraw
+        from edit.hd.tests import test_segment_render_components as media_fixture
+        from edit.hd.tests.test_broll_component_executor import ComponentExecutorDispatchTests, _artifact_probe
+        from edit.hd.tools import segment_render
+        self.source(1916)
+        record = self.normalized_record()
+        recipe = self.recipe(record)
+        segment = media_fixture._segment(recipe)
+        source = self.job.job_dir / 'aroll.mp4'
+        shutil.copyfile(self.job.job_dir / 'normalized.mp4', source)
+        # This is an explicitly synthetic native-process fixture, not production choreography.
+        overlay = self.job.job_dir / 'overlay.png'
+        picture = Image.new('RGBA', (1080, 1920))
+        ImageDraw.Draw(picture).rectangle((100, 200, 400, 400), fill=(255, 0, 0, 255))
+        picture.save(overlay)
+        fixture = ComponentExecutorDispatchTests()
+        fixture.root = self.root
+        native = fixture._working_code_adapter(b'actual fixture dependency input', overlay.read_bytes())
+        from dataclasses import replace
+        native = replace(native, artifact_media_type='image')
+        adapter = generated_media.create_adapter(self.job, record)
+        with patch.object(visual_canary, 'load_approved_visual_plan', return_value={'segments': [segment]}), \
+             patch.object(visual_canary, 'approved_aroll_record', return_value={'sha256': 'a' * 64}):
+            base = executor.execute_component(self.job, executor.ComponentExecutionRequest(recipe, 'ai'),
+                adapters={'ai_generated': adapter, 'artifact_probe': create_artifact_probe(shutil.which('ffprobe'))})
+            action = executor.execute_component(self.job, executor.ComponentExecutionRequest(recipe, 'action'),
+                adapters={'code_generated': {'html-video': native}, 'artifact_probe': _artifact_probe()})
+        rendered = segment_render.render_segment_video(self.job, segment, (base, action),
+            output_dir=self.job.job_dir / 'composition', visual_plan_sha256='b' * 64,
+            arroll_source=source, arroll_sha256=generated_media._sha(source), arroll_bytes=source.stat().st_size)
+        self.assertEqual(rendered.frames, 24)
+        self.assertEqual(base.output_sha256, record['media']['sha256'])
+        self.assertEqual(base.invocation_evidence['adapter_record']['external_requests'], 0)
+        self.assertFalse(base.invocation_evidence['adapter_record']['composition_base']['source_qa']['passed'])
+        self.assertEqual(self.queue_path.read_bytes(), self.queue_bytes)
+        still = subprocess.run(['ffmpeg', '-v', 'error', '-i', rendered.video_path,
+            '-frames:v', '1', '-f', 'image2pipe', '-vcodec', 'png', '-'], capture_output=True, check=True).stdout
+        import io
+        with Image.open(io.BytesIO(still)) as final:
+            red, green, blue = final.convert('RGB').getpixel((250, 300))
+            self.assertGreater(red, 200)
+            self.assertLess(green + blue, 40)
 
 
 if __name__ == "__main__":

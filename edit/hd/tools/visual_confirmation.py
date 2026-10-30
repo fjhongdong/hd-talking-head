@@ -2,6 +2,11 @@
 from __future__ import annotations
 import copy
 import hashlib
+import os
+import re
+import subprocess
+import shutil
+import tempfile
 from types import SimpleNamespace
 from pathlib import Path
 from . import contract_artifacts as artifacts
@@ -38,13 +43,17 @@ def _exact(root, record):
 NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                          'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter'}
 
-def native_candidate_id(dependency, brief):
+def native_candidate_id(dependency, brief, segment=None, component_id=None):
     if dependency == 'lemo-wake':
         return 'lemo-wake:wake'
     if dependency == 'video-talkcraft':
         return 'video-talkcraft:' + brief['card_id']
     template = dependency + '/' + brief['template_id']
-    return ('overlay:' if brief['alpha'] else dependency + ':') + template
+    from .semantic_visual_plan import component_use
+    components = [c for c in segment['visual_strategy']['components'] if c.get('component_id') == component_id]
+    if len(components) != 1:
+        raise VisualConfirmationError('native result must identify one actual component')
+    return ('overlay:' if component_use(segment, components[0]) == 'overlay' else dependency + ':') + template
 
 def _native_result_adapter(dependency):
     import importlib.util
@@ -68,12 +77,12 @@ def _native_review_reference(treatment, segment_id, component_id, result_path, c
     return refs[0]
 
 
-def _freeze_reviewed_native_result(root, treatment, segment_id, component_id, brief_payload, dependency):
+def _freeze_reviewed_native_result(root, treatment, segment_id, component_id, brief_payload, dependency, segment=None):
     """Bind the bytes that were reviewed; never bless the current path implicitly."""
     import json
     brief = json.loads(brief_payload)
     relative = brief["result_record_path"]
-    candidate = native_candidate_id(dependency, brief)
+    candidate = native_candidate_id(dependency, brief, segment, component_id)
     reviewed = _native_review_reference(treatment, segment_id, component_id, relative, candidate)
     data = _path(root, relative).read_bytes()
     digest = hashlib.sha256(data).hexdigest()
@@ -107,7 +116,7 @@ def _validate_native_results(root, mapping, director, treatment):
             expected = native["result_record"]
             import json
             brief = json.loads(payload)
-            candidate = native_candidate_id(dependency, brief)
+            candidate = native_candidate_id(dependency, brief, segment, cid)
             reviewed = _native_review_reference(treatment, segment["segment_id"], cid, expected["path"], candidate)
             if reviewed["sha256"] != expected["sha256"]:
                 raise VisualConfirmationError("Wake mapping differs from the host's reviewed result")
@@ -524,7 +533,8 @@ def _validate_template_choices(job, director, treatment):
             raise VisualConfirmationError("joint selected binding snapshot is missing or stale: " + str(key))
     cached = motion_match_cache.validate_reviews(project, director, treatment, job_dir=job.job_dir)
     if selection:
-        chosen = broll_skill_selection.assign_skills(project, selection, job_dir=job.job_dir)
+        chosen = broll_skill_selection.assign_skills(project, selection, job_dir=job.job_dir,
+                                                       director=director, treatment=treatment)
         broll_skill_selection.validate_fixed_materials(director, selection, job_dir=job.job_dir)
         if (chosen["assignments"] != selection.get("assignments")
                 or chosen["overlay_assignments"] != selection.get("overlay_assignments", [])):
@@ -648,7 +658,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
     from . import wake_opening
     wake_opening.validate(job, director, treatment)
-    confirmed_content.check_confirmed_content(job, director)
+    confirmed_content.check_confirmed_content(job, director, treatment=treatment)
     steps = _steps(treatment)
     try:
         _validate_template_choices(job, director, treatment)
@@ -792,9 +802,11 @@ def _source_from_stage(job):
                      and r["path"].endswith("/proposal.json")), None)
     if proposal:
         return proposal
-    mapping = next((r for r in records if r["path"].endswith("/" + MAPPING)), None)
-    if mapping:
-        return _read(_exact(job.job_dir, mapping))["proposal"]
+    mappings = [r for r in records if r["path"].endswith("/" + MAPPING)]
+    if len(mappings) > 1:
+        raise VisualConfirmationError("the realized visual mapping is ambiguous")
+    if mappings:
+        return _read(_exact(job.job_dir, mappings[0]))["proposal"]
     # During publication, final V3 exists but the mapping is not registered yet.
     candidates = []
     for path in (job.job_dir / "manifests").glob("local-qa-visual_direction-r*.json"):
@@ -845,7 +857,201 @@ def _validate_source(root, receipt_ref, *, job_id=None):
         raise VisualConfirmationError("selected generation channels changed after confirmation")
     return receipt, proposal
 
-def _realized_media_hashes(root, director, completed_records, native_inputs):
+def _paper_referenced_assets(root, brief):
+    """Resolve bound Paper assets actually referenced by its frozen scene entry."""
+    from html.parser import HTMLParser
+    import re
+    assets = {item['job_path']: item for item in brief.get('assets', [])}
+    if len(assets) != len(brief.get('assets', [])):
+        raise VisualConfirmationError('Paper brief asset paths are duplicated')
+    entry = brief.get('entry', {})
+    entry_path = _path(root, entry['job_path'])
+    if artifacts.sha256_file(entry_path) != entry.get('sha256'):
+        raise VisualConfirmationError('Paper scene entry changed')
+    class AssetReferences(HTMLParser):
+        def __init__(self):
+            super().__init__(); self.paths = set(); self.in_style = False
+        def css(self, text):
+            self.paths.update(re.findall(r'''url\(\s*["']?([^"')\s]+)''', text))
+        def handle_starttag(self, tag, attrs):
+            self.in_style |= tag.lower() == 'style'
+            for name, value in attrs:
+                if value is not None and name.lower() in {'src', 'href'}:
+                    self.paths.add(value)
+                if value is not None and name.lower() == 'style':
+                    self.css(value)
+        def handle_endtag(self, tag):
+            if tag.lower() == 'style': self.in_style = False
+        def handle_data(self, data):
+            if self.in_style: self.css(data)
+    references = AssetReferences()
+    references.feed(entry_path.read_text(encoding='utf-8'))
+    used = {path: asset for path, asset in assets.items() if asset.get('scene_path') in references.paths}
+    for path, asset in used.items():
+        if artifacts.sha256_file(_path(root, path)) != asset.get('sha256'):
+            raise VisualConfirmationError('Paper referenced asset changed')
+    return used
+
+def _paper_crop_sources(root, brief, provenance_ref, approved_media):
+    """Prove that consumed Paper assets are exact crops of approved source images."""
+    from PIL import Image
+    provenance = _read(_exact(root, provenance_ref))
+    if not isinstance(provenance, dict) or not isinstance(provenance.get('crops'), list):
+        raise VisualConfirmationError('Paper crop provenance is invalid')
+    sources = provenance.get('source_images')
+    if not isinstance(sources, dict) or not sources:
+        raise VisualConfirmationError('Paper crop provenance has no source images')
+    approved = {(m['path'], m['sha256']) for m in approved_media}
+    declared = set()
+    for source in sources.values():
+        if not isinstance(source, dict) or set(source) != {'path', 'sha256'}:
+            raise VisualConfirmationError('Paper source identity is invalid')
+        path = _path(root, source['path'])
+        if artifacts.sha256_file(path) != source['sha256'] or (source['path'], source['sha256']) not in approved:
+            raise VisualConfirmationError('Paper source is not the approved generated image')
+        declared.add((source['path'], source['sha256']))
+    assets = _paper_referenced_assets(root, brief)
+    consumed, outputs = set(), set()
+    for crop in provenance['crops']:
+        if (not isinstance(crop, dict) or set(crop) != {'source', 'source_sha256', 'crop', 'output', 'output_sha256'}
+                or (crop['source'], crop['source_sha256']) not in declared
+                or crop['output'] in outputs or crop['output'] not in assets
+                or assets[crop['output']].get('sha256') != crop['output_sha256']):
+            raise VisualConfirmationError('Paper crop does not identify an approved source and consumed asset')
+        outputs.add(crop['output'])
+        box = crop['crop']
+        if not isinstance(box, list) or len(box) != 4 or any(type(v) is not int for v in box):
+            raise VisualConfirmationError('Paper crop bounds are invalid')
+        source, output = _path(root, crop['source']), _path(root, crop['output'])
+        if artifacts.sha256_file(output) != crop['output_sha256']:
+            raise VisualConfirmationError('Paper crop output changed')
+        with Image.open(source) as image, Image.open(output) as actual:
+            if not (0 <= box[0] < box[2] <= image.width and 0 <= box[1] < box[3] <= image.height):
+                raise VisualConfirmationError('Paper crop bounds exceed the source')
+            expected = image.crop(tuple(box))
+            if actual.mode != expected.mode or actual.size != expected.size or actual.tobytes() != expected.tobytes():
+                raise VisualConfirmationError('Paper crop pixels differ from the approved source')
+        consumed.add(crop['source_sha256'])
+    return consumed
+
+def _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director, treatment):
+    """Compare a completed, originally deferred Paper input as its approved plan."""
+    from . import generation_queue, motion_capabilities
+    from . import state
+    root = Path(root)
+    project = Path(__file__).resolve().parents[3]
+    eligible = planned_generation_targets(project, frozen, frozen_treatment, job_dir=root)
+    current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
+    previous_segments = {s['segment_id']: s for s in frozen['segments']}
+    current_segments = {s['segment_id']: s for s in current['segments']}
+    eligible = {key for key in eligible
+                if previous_segments[key[0]]['bindings'][key[1]].get('dependency_id') == 'paper-collage-hyperframes'
+                and key[0] in current_segments
+                and current_segments[key[0]]['bindings'].get(key[1], {}) != previous_segments[key[0]]['bindings'][key[1]]}
+    if not eligible:
+        return current, actual
+    old_selection, new_selection = frozen_treatment.get('skill_selection', {}), actual.get('skill_selection', {})
+    job = state.load_job(root)
+    queue = generation_queue.status(root)
+    for key in eligible:
+        before = previous_segments[key[0]]['bindings'][key[1]]
+        after = current_segments[key[0]]['bindings'].get(key[1], {})
+        if any(after.get(k) != v for k, v in before.items()):
+            raise VisualConfirmationError('prepared Paper binding changed its approved native route')
+        old_components = [c for c in previous_segments[key[0]]['visual_strategy']['components'] if c['component_id'] == key[1]]
+        new_components = [c for c in current_segments[key[0]]['visual_strategy']['components'] if c['component_id'] == key[1]]
+        if len(old_components) != 1 or new_components != old_components:
+            raise VisualConfirmationError('prepared Paper changed the approved visual component')
+        scenes = [s for s in actual.get('scenes', []) if (s.get('segment_id'), s.get('component_id')) == key]
+        old_scenes = [s for s in frozen_treatment.get('scenes', []) if (s.get('segment_id'), s.get('component_id')) == key]
+        if (len(scenes) != 1 or len(old_scenes) != 1 or set(old_scenes[0]) != {'segment_id', 'component_id'}
+                or set(scenes[0]) != {'segment_id', 'component_id', 'brief_path', 'asset_provenance'}):
+            raise VisualConfirmationError('prepared Paper requires its bound brief and explicit crop provenance')
+        scene = scenes[0]
+        brief_path = _path(root, scene['brief_path'])
+        if artifacts.sha256_file(brief_path) != after.get('brief_sha256'):
+            raise VisualConfirmationError('prepared Paper brief differs from its binding')
+        brief = motion_capabilities._bound_brief(root, actual, current_segments[key[0]], key[1])
+        if not isinstance(brief, dict):
+            raise VisualConfirmationError('prepared Paper native brief is missing')
+        candidate = next((r for r in motion_capabilities.load_catalog(project)
+                          if r.get('dependency_id') == 'paper-collage-hyperframes'
+                          and r.get('template_id') == before['template_id']), None)
+        if not candidate or motion_capabilities._native_input_check(project, candidate, brief, job_dir=root)['status'] != 'pass':
+            raise VisualConfirmationError('prepared Paper native inputs are invalid')
+        entrypoint = project / 'skill-development/hd-talking-head' / before['entrypoint']
+        source_sha = artifacts.sha256_file(entrypoint)
+        route_path = project / 'skill-development/vendor/paper-collage-ad-codex/references/hyperframes-route.md'
+        if (brief.get('source_pins', {}).get('route') != 'paper-collage-ad/hyperframes'
+                or brief['source_pins'].get('sha256') != artifacts.sha256_file(route_path)):
+            raise VisualConfirmationError('prepared Paper original route pin changed')
+        expected_verification = hashlib.sha256((source_sha + brief['entry']['sha256']).encode()).hexdigest()
+        expected_binding = {'source_entrypoint': before['entrypoint'], 'source_sha256': source_sha,
+                            'template_version': before['producer_version'], 'template_origin': 'custom_fallback',
+                            'adaptation_level': 'structural', 'verification_id': expected_verification,
+                            'semantic_families': [brief['template_request']['semantic_family']],
+                            'capacity': {'min_units': brief['template_request']['information_units'],
+                                         'max_units': brief['template_request']['information_units']}}
+        call = after.get('invocation_record', {})
+        if (any(after.get(k) != v for k, v in expected_binding.items())
+                or not isinstance(after.get('sample_sha256'), str) or len(after['sample_sha256']) != 64
+                or any(ch not in '0123456789abcdef' for ch in after['sample_sha256'])
+                or not isinstance(call, dict) or call.get('status') != 'planned' or call.get('exit_code') is not None
+                or call.get('template_request') != brief['template_request']
+                or not isinstance(call.get('argv'), list) or len(call['argv']) != 2
+                or call['argv'][1] != before['entrypoint']):
+            raise VisualConfirmationError('prepared Paper binding differs from the original native adapter')
+        original_segment = previous_segments[key[0]]
+        source = brief.get('source_binding', {})
+        stage = job.stages.get('edit_structure', {})
+        arroll = [r for r in stage.get('artifacts', []) if r['path'] == '06-edit-structure/edited-aroll.mp4']
+        if stage.get('status') != 'approved' or len(arroll) != 1:
+            raise VisualConfirmationError('prepared Paper needs the approved edited A-roll')
+        _exact(root, arroll[0])
+        if (source.get('segment_id') != key[0] or source.get('start') != original_segment['start']
+                or source.get('end') != original_segment['end'] or source.get('aroll_sha256') != arroll[0]['sha256']):
+            raise VisualConfirmationError('prepared Paper source clock or A-roll differs')
+        own_steps = [step for step in proposal['generation_steps']
+                     if (step['segment_id'], step['component_id']) == key]
+        approved = []
+        for step in own_steps:
+            rid, item = generation_item(queue, proposal, step, job)
+            if not item or item.get('status') != 'completed':
+                raise VisualConfirmationError('prepared Paper needs the approved completed generation')
+            origin = queue['items'][item.get('plan_request_id', rid)]
+            auth = origin.get('authorization')
+            if not auth or validate_generation_request(job, auth, origin['request'])['step']['id'] != step['id']:
+                raise VisualConfirmationError('prepared Paper generation differs from its approval')
+            for media in item['completion_response']['artifacts']:
+                path = Path(media['path'])
+                ref = _record(root, path if path.is_absolute() else root / path)
+                if (ref['sha256'], ref['bytes']) != (media['sha256'], media['bytes']):
+                    raise VisualConfirmationError('prepared Paper generated media changed')
+                approved.append(ref)
+        if not own_steps or any(s['purpose'] != 'image' for s in own_steps):
+            raise VisualConfirmationError('prepared Paper needs its approved image steps')
+        provenance = scene['asset_provenance']
+        if not isinstance(provenance, dict) or set(provenance) != {'job_path', 'sha256', 'byte_count'}:
+            raise VisualConfirmationError('prepared Paper crop provenance is invalid')
+        pref = {'path': provenance['job_path'], 'sha256': provenance['sha256'], 'bytes': provenance['byte_count']}
+        consumed = _paper_crop_sources(root, brief, pref, approved)
+        for asset in _paper_referenced_assets(root, brief).values():
+            consumed.add(asset['sha256'])
+        if not {item['sha256'] for item in approved} <= consumed:
+            raise VisualConfirmationError('prepared Paper did not consume every approved source image')
+        for group in ('beats', 'overlay_beats'):
+            old = [b for b in old_selection.get(group, []) if (b['segment_id'], b['component_id']) == key]
+            new = [b for b in new_selection.get(group, []) if (b['segment_id'], b['component_id']) == key]
+            if old or new:
+                if (len(old) != 1 or len(new) != 1 or new[0].get('binding_snapshot') != after
+                        or {k: v for k, v in old[0].items() if k != 'binding_snapshot'} !=
+                           {k: v for k, v in new[0].items() if k != 'binding_snapshot'}):
+                    raise VisualConfirmationError('prepared Paper changed its approved semantic beat')
+                new[0]['binding_snapshot'] = copy.deepcopy(old[0]['binding_snapshot'])
+        current_segments[key[0]]['bindings'][key[1]] = copy.deepcopy(before)
+    return current, actual
+
+def _realized_media_hashes(root, director, completed_records, native_inputs, generations=(), proposal=None, treatment=None):
     """Collect consumption by component, never by mere occurrence elsewhere."""
     result = {}
     def collect(value, hashes):
@@ -861,8 +1067,29 @@ def _realized_media_hashes(root, director, completed_records, native_inputs):
         payload = _read(_exact(root, record))
         collect(payload, result.setdefault((payload["segment_id"], payload["component_id"]), set()))
     for native in native_inputs:
-        collect(_read(_exact(root, native["artifact"])),
-                result.setdefault((native["segment_id"], native["component_id"]), set()))
+        key = (native["segment_id"], native["component_id"])
+        brief = _read(_exact(root, native["artifact"]))
+        if native.get('asset_provenance') is not None:
+            segment = next((s for s in director['segments'] if s['segment_id'] == key[0]), None)
+            if (segment is None or segment.get('bindings', {}).get(key[1], {}).get('dependency_id') != 'paper-collage-hyperframes'
+                    or segment['bindings'][key[1]].get('brief_sha256') != native['artifact']['sha256']
+                    or not isinstance(proposal, dict) or not isinstance(treatment, dict)):
+                raise VisualConfirmationError('crop provenance belongs only to a selected Paper component')
+            scenes = [s for s in treatment.get('scenes', [])
+                      if (s.get('segment_id'), s.get('component_id')) == key]
+            if len(scenes) != 1 or scenes[0].get('asset_provenance') != {
+                    'job_path': native['asset_provenance']['path'],
+                    'sha256': native['asset_provenance']['sha256'],
+                    'byte_count': native['asset_provenance']['bytes']}:
+                raise VisualConfirmationError('Paper crop provenance differs from the realized scene')
+            steps = {s['id'] for s in proposal['generation_steps']
+                     if (s['segment_id'], s['component_id']) == key and s['purpose'] == 'image'}
+            approved = [media for generation in generations if generation['step_id'] in steps
+                        for media in generation['media']]
+            result[key] = {a['sha256'] for a in _paper_referenced_assets(root, brief).values()}
+            result[key].update(_paper_crop_sources(root, brief, native['asset_provenance'], approved))
+        else:
+            collect(brief, result.setdefault(key, set()))
     return result
 
 
@@ -871,9 +1098,10 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
     root = Path(job_dir)
     receipt, proposal = _validate_source(root, receipt_descriptor, job_id=job_id)
     stage = stages["visual_direction"]
-    map_ref = next((r for r in stage["artifacts"] if r["path"].endswith("/" + MAPPING)), None)
-    if map_ref is None:
-        raise VisualConfirmationError("the realized visual mapping is missing")
+    mappings = [r for r in stage["artifacts"] if r["path"].endswith("/" + MAPPING)]
+    if len(mappings) != 1:
+        raise VisualConfirmationError("the realized visual mapping is missing or ambiguous")
+    map_ref = mappings[0]
     mapping = _read(_exact(root, map_ref))
     if (mapping.get("source_approval") != receipt_descriptor or mapping.get("proposal") != receipt["source"]
             or not mapping.get("host_qa_note", "").strip()):
@@ -889,7 +1117,8 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
     if receipt["revision"] >= revision:
         raise VisualConfirmationError("visual approval revision is not committed")
     realized = {key: _read(_exact(root, ref)) for key, ref in mapping["realization_inputs"].items()}
-    _validate_draft_against_source(root, proposal, realized["director"], realized["treatment"])
+    _validate_draft_against_source(root, proposal, realized["director"], realized["treatment"],
+                                 generation_evidence=mapping.get("generations", []))
     if _core(final) != _core(realized['director']):
         raise VisualConfirmationError('compiled plan differs from its reviewed realization')
     compiled = {(seg["segment_id"], c["component_id"]): c
@@ -897,6 +1126,8 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
     for seg in realized["director"]["segments"]:
         for cid, binding in seg.get("bindings", {}).items():
             consumed = {"execution_mode", "media_type", "source_dimensions"}
+            if binding.get('execution_mode') == 'reuse_completed_generated_media':
+                consumed.add('parent_static_labels')
             if any(compiled[(seg["segment_id"], cid)].get(k) != value
                    for k, value in binding.items() if k not in consumed):
                 raise VisualConfirmationError("compiled template differs from the realized inputs")
@@ -908,7 +1139,8 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
         _exact(root, ref)
     _validate_native_results(root, mapping, realized["director"], realized["treatment"])
     hashes_by_target = _realized_media_hashes(root, realized["director"],
-        mapping.get("completed_records", []), mapping.get("native_inputs", []))
+        mapping.get("completed_records", []), mapping.get("native_inputs", []), generations, proposal,
+        realized['treatment'])
     # Generated image intermediates are consumed by later approved requests;
     # final images/videos are consumed by the native input or component binding.
     for generation in generations:
@@ -1064,6 +1296,235 @@ def generation_actions(job, *, account_limit=None):
 MOTION_CREATION = {'barty-motion-graphics', 'bang-motion'}
 
 
+def _lemo_number_change(old_text, new_text):
+    pattern = re.compile(r"\b[A-Za-z_$][\w$]*\(String\([A-Za-z_$][\w$]*\),[A-Za-z_$][\w$]*,[A-Za-z_$][\w$]*\+(\d+),(\d+),[^,\n]+,\s*['\"]center['\"],\s*['\"][^'\"]+['\"]\)")
+    old, new = list(pattern.finditer(old_text)), list(pattern.finditer(new_text))
+    if (len(old) != 1 or len(new) != 1
+            or old_text[:old[0].start(1)] + new[0].group(1) + old_text[old[0].end(1):old[0].start(2)]
+               + new[0].group(2) + old_text[old[0].end(2):] != new_text):
+        raise VisualConfirmationError('Lemo source has changes beyond number size and baseline')
+    old_y, old_size = map(int, old[0].groups()); new_y, new_size = map(int, new[0].groups())
+    if not (0 < old_size < new_size <= 256 and abs(new_y-old_y) <= new_size-old_size):
+        raise VisualConfirmationError('Lemo typography values are not a scoped readability correction')
+    return old_size, new_size
+
+
+def _verify_lemo_measured_frames(root, video, measured, frames):
+    from PIL import Image
+    rows = measured.get('samples', [])
+    indices = [row.get('frame') for row in rows]
+    if (not indices or any(type(n) is not int or not 0 <= n < frames for n in indices)
+            or indices != sorted(set(indices))):
+        raise VisualConfirmationError('Lemo measured frame indices are invalid')
+    selector = '+'.join(f'eq(n\\,{n})' for n in indices)
+    data = subprocess.check_output([shutil.which('ffmpeg') or 'ffmpeg', '-v','error','-i',str(video),
+        '-vf','select='+selector,'-vsync','0','-f','rawvideo','-pix_fmt','rgb24','-'], timeout=60)
+    stride = 1080 * 1920 * 3
+    if len(data) != stride * len(rows):
+        raise VisualConfirmationError('Lemo measured frames cannot be decoded')
+    for index, row in enumerate(rows):
+        path = _path(root, row['frame_path'])
+        if artifacts.sha256_file(path) != row.get('frame_sha256') or abs(row.get('time', -1) - indices[index] / 24) > 1e-6:
+            raise VisualConfirmationError('Lemo measured frame identity or time differs')
+        with Image.open(path) as image:
+            if image.size != (1080, 1920):
+                raise VisualConfirmationError('Lemo measured frame dimensions differ')
+            rgb = image.convert('RGB')
+            if rgb.tobytes() != data[index * stride:(index + 1) * stride]:
+                raise VisualConfirmationError('Lemo measured frame is not from the composite')
+            for digit in row['digits']:
+                for measurement in digit['measurements']:
+                    bbox = measurement.get('bbox')
+                    if (not isinstance(bbox, list) or len(bbox) != 4 or any(type(v) is not int for v in bbox)):
+                        raise VisualConfirmationError('Lemo measured glyph bounds are invalid')
+                    x,y,w,h = bbox
+                    if not (0 <= x < x+w <= 1080 and 0 <= y < y+h <= 1920 and w > 0 and h >= 36 and measurement.get('height') == h):
+                        raise VisualConfirmationError('Lemo measured glyph is too small or outside the frame')
+                    if measurement.get('method') == 'bright_core':
+                        pixels = rgb.load()
+                        if any(max(min(pixels[xx, yy]) for xx in range(x,x+w)) < 200 for yy in range(y,y+h)):
+                            raise VisualConfirmationError('Lemo measured glyph pixels do not support its height')
+
+
+def _normalize_lemo_typography(root, frozen, frozen_treatment, director, treatment):
+    """Compare a reviewed number-only Lemo correction without replacing approval."""
+    import importlib.util
+    import json
+    current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
+    script = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts/upstream_scene_adapter.py'
+    spec = importlib.util.spec_from_file_location('_lemo_typography_adapter', script)
+    adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
+    old_segments = {s['segment_id']: s for s in frozen['segments']}
+    for segment in current['segments']:
+        old_segment = old_segments.get(segment['segment_id'])
+        if old_segment is None:
+            continue
+        for cid, after in segment.get('bindings', {}).items():
+            before = old_segment.get('bindings', {}).get(cid, {})
+            if before.get('dependency_id') != 'lemo-opuscar' or before == after:
+                continue
+            key = (segment['segment_id'], cid)
+            scenes = [s for s in actual.get('scenes', []) if (s.get('segment_id'), s.get('component_id')) == key]
+            old_scenes = [s for s in frozen_treatment.get('scenes', []) if (s.get('segment_id'), s.get('component_id')) == key]
+            if len(scenes) != 1 or len(old_scenes) != 1:
+                raise VisualConfirmationError('Lemo typography revision needs its original scene')
+            scene, old_scene = scenes[0], old_scenes[0]
+            evidence = scene.pop('native_typography_revision', None)
+            if not isinstance(evidence, dict) or set(evidence) != {'sample', 'call', 'manifest', 'qa', 'composite', 'measurements', 'composite_call', 'composite_inputs'}:
+                raise VisualConfirmationError('Lemo typography revision needs real sample, call, composite and measured review')
+            paths = {name: _exact(root, ref) for name, ref in evidence.items()}
+            old_path, new_path = _path(root, old_scene['brief_path']), _path(root, scene['brief_path'])
+            old_data, new_data = old_path.read_bytes(), new_path.read_bytes()
+            if (hashlib.sha256(old_data).hexdigest() != before['brief_sha256'] or
+                    hashlib.sha256(new_data).hexdigest() != after['brief_sha256']):
+                raise VisualConfirmationError('Lemo typography brief identity changed')
+            old, new = adapter.validate_brief(old_data), adapter.validate_brief(new_data)
+            if any(old[k] != new[k] for k in old if k not in {'files', 'creative_handoff'}):
+                raise VisualConfirmationError('Lemo typography changed template, source or clock')
+            old_files = {f['scene_path']: f for f in old['files']}; new_files = {f['scene_path']: f for f in new['files']}
+            if set(old_files) != set(new_files) or len(old_files) != len(old['files']) or len(new_files) != len(new['files']):
+                raise VisualConfirmationError('Lemo typography changed project inventory')
+            if any(old_files[name]['media_ref'] != new_files[name]['media_ref'] for name in old_files):
+                raise VisualConfirmationError('Lemo typography changed project file identities')
+            for files in (old_files, new_files):
+                for f in files.values():
+                    if artifacts.sha256_file(_path(root, f['job_path'])) != f['sha256']:
+                        raise VisualConfirmationError('Lemo frozen project file changed')
+            changed = {name for name in old_files if old_files[name]['sha256'] != new_files[name]['sha256']}
+            old_work = old_files[next(f['scene_path'] for f in old['files'] if f['media_ref'] == old['workflow_media_ref'])]
+            new_work = new_files[old_work['scene_path']]
+            code_names = changed - {old_work['scene_path']}
+            if len(code_names) != 1 or not next(iter(code_names)).endswith(('.js', '.mjs')):
+                raise VisualConfirmationError('Lemo typography may change only one numeric-label source')
+            name = next(iter(code_names))
+            old_text = _path(root, old_files[name]['job_path']).read_text(); new_text = _path(root, new_files[name]['job_path']).read_text()
+            old_size, new_size = _lemo_number_change(old_text, new_text)
+            old_h, new_h = copy.deepcopy(old['creative_handoff']), copy.deepcopy(new['creative_handoff'])
+            text = old_h['design_plan']['typography']; target = f'{old_size}px'
+            if text.count(target) != 1 or new_h['design_plan']['typography'] != text.replace(target, f'{new_size}px'):
+                raise VisualConfirmationError('Lemo typography description differs from the source change')
+            new_h['design_plan']['typography'] = text
+            if old_h != new_h:
+                raise VisualConfirmationError('Lemo typography changed creative semantics')
+            ow, nw = _read(_path(root, old_work['job_path'])), _read(_path(root, new_work['job_path']))
+            if ({k:v for k,v in ow.items() if k not in {'design_plan','qa'}} != {k:v for k,v in nw.items() if k not in {'design_plan','qa'}}
+                    or ow.get('design_plan') != old['creative_handoff']['design_plan']
+                    or nw.get('design_plan') != new['creative_handoff']['design_plan']):
+                raise VisualConfirmationError('Lemo workflow changed beyond typography and review')
+            call, manifest, qa = (_read(paths[k]) for k in ('call','manifest','qa'))
+            argv = call.get('argv', []); result = json.loads(call.get('stdout', '{}'))
+            def argument(flag):
+                if argv.count(flag) != 1 or argv.index(flag) + 1 >= len(argv):
+                    raise VisualConfirmationError('Lemo typography call is incomplete')
+                return Path(argv[argv.index(flag)+1]).resolve()
+            upstream = Path(__file__).resolve().parents[3] / 'skill-development/vendor/lemo-opuscar'
+            if upstream.is_symlink():
+                raise VisualConfirmationError('Lemo upstream checkout cannot be a symlink')
+            if (call.get('exit_code') != 0 or len(argv) < 2 or Path(argv[1]).resolve() != script.resolve()
+                    or artifacts.sha256_file(script) != after['source_sha256']
+                    or argument('--brief') != new_path.resolve()
+                    or argument('--media-manifest') != paths['manifest'].resolve() or argument('--output') != paths['sample'].resolve()
+                    or manifest.get('brief_sha256') != after['brief_sha256']
+                    or {(x['media_ref'], x['sha256']) for x in manifest.get('media', [])} != {(f['media_ref'], f['sha256']) for f in new['files']}
+                    or len(manifest.get('media', [])) != len(new['files'])
+                    or result.get('status') != 'rendered' or result.get('frames') != new['composition']['frames']
+                    or result.get('dependency_id') != 'lemo-opuscar' or result.get('upstream_commit') != adapter.SOURCES['lemo-opuscar'][0]
+                    or result.get('native_entry_sha256') != artifacts.sha256_file(upstream / adapter.SOURCES['lemo-opuscar'][1])
+                    or result.get('production_evidence') != adapter.workflow_reference(new)
+                    or evidence['sample']['sha256'] != after['sample_sha256']
+                    or qa.get('status') != 'independent_native_and_composite_review_pass'
+                    or (qa.get('segment_id'), qa.get('component_id')) != key
+                    or qa.get('native_media') != {'path': evidence['sample']['path'], 'sha256': evidence['sample']['sha256']}
+                    or qa.get('actual_composite_media') != {'path': evidence['composite']['path'], 'sha256': evidence['composite']['sha256']}
+                    or qa.get('actual_digit_measurements') != paths['measurements'].name):
+                raise VisualConfirmationError('Lemo sample and native call do not match the reviewed revision')
+            sizes = {f['media_ref']: _path(root, f['job_path']).stat().st_size for f in new['files']}
+            if any(x.get('byte_length') != sizes[x['media_ref']] for x in manifest['media']):
+                raise VisualConfirmationError('Lemo native call file lengths differ')
+            measured = _read(paths['measurements'])
+            composite_call, composite_inputs = _read(paths['composite_call']), _read(paths['composite_inputs'])
+            cargv = composite_call.get('argv', [])
+            input_paths = [Path(cargv[i+1]).resolve() for i, value in enumerate(cargv[:-1]) if value == '-i']
+            source = composite_inputs.get('aroll_input', {})
+            source_path = _path(root, source.get('path', ''))
+            if (composite_call.get('exit_code') != 0 or len(input_paths) != 2
+                    or input_paths != [source_path.resolve(), paths['sample'].resolve()]
+                    or not cargv or Path(cargv[-1]).resolve() != paths['composite'].resolve()
+                    or cargv.count('-filter_complex') != 1
+                    or cargv[cargv.index('-filter_complex')+1] != composite_inputs.get('graph')
+                    or composite_inputs.get('actual_new_video_input') != {'path': evidence['sample']['path'], 'sha256': evidence['sample']['sha256']}
+                    or source.get('sha256') != new['source_binding']['aroll_sha256']
+                    or artifacts.sha256_file(source_path) != source.get('sha256')):
+                raise VisualConfirmationError('Lemo composite does not match its real source and call')
+            sample_rows = measured.get('samples', [])
+            if (not sample_rows or measured.get('minimum_required_height', 0) < 36
+                    or any(not item.get('human_review') or any(m.get('height', 0) < 36 for m in item.get('measurements', []))
+                           or len(item.get('measurements', [])) < 2 for row in sample_rows for item in row.get('digits', []))
+                    or any(not row.get('digits') for row in sample_rows)
+                    or not all(qa.get('human_pixel_review', {}).get(k) is True for k in ('unclipped','unobstructed','no_other_text_or_avatar_overlap'))):
+                raise VisualConfirmationError('Lemo typography actual pixel review is incomplete')
+            _verify_lemo_measured_frames(root, paths['composite'], measured, new['composition']['frames'])
+            probe = json.loads(subprocess.check_output([shutil.which('ffprobe') or 'ffprobe','-v','error','-count_frames','-show_streams','-of','json',str(paths['sample'])], timeout=30))
+            streams = probe.get('streams', [])
+            if (len(streams) != 1 or streams[0].get('codec_type') != 'video'
+                    or streams[0].get('avg_frame_rate') != '24/1'
+                    or (streams[0].get('width'), streams[0].get('height'), int(streams[0].get('nb_read_frames', 0))) != (1080, 1920, new['composition']['frames'])):
+                raise VisualConfirmationError('Lemo reviewed sample clock or dimensions differ')
+            comparable = copy.deepcopy(after)
+            for field in ('brief_sha256','sample_sha256','verification_id'):
+                comparable[field] = before[field]
+            comparable['invocation_record'] = copy.deepcopy(before['invocation_record'])
+            if comparable != before or after['verification_id'] != hashlib.sha256((after['source_sha256']+after['renderer_version']+after['brief_sha256']).encode()).hexdigest():
+                raise VisualConfirmationError('Lemo typography changed the approved source binding')
+            expected_invocation = copy.deepcopy(before['invocation_record'])
+            expected_invocation['production_evidence'] = adapter.workflow_reference(new)
+            expected_invocation['creative_handoff'] = {k:new['creative_handoff'][k] for k in ('transcript','semantic_goal','required_change','subject','visual_pattern','design_plan')}
+            if after['invocation_record'] != expected_invocation:
+                raise VisualConfirmationError('Lemo typography changed unapproved invocation fields')
+            if after['invocation_record'].get('production_evidence') != adapter.workflow_reference(new):
+                raise VisualConfirmationError('Lemo typography workflow binding differs')
+            for field in ('argv','status','exit_code','template_request','style_slug'):
+                if after['invocation_record'].get(field) != before['invocation_record'].get(field):
+                    raise VisualConfirmationError('Lemo typography invocation changed')
+            if after['invocation_record'].get('creative_handoff') != {k:new['creative_handoff'][k] for k in ('transcript','semantic_goal','required_change','subject','visual_pattern','design_plan')}:
+                raise VisualConfirmationError('Lemo typography invocation handoff differs')
+            scene['brief_path'] = old_scene['brief_path']
+            if scene != old_scene:
+                raise VisualConfirmationError('Lemo typography changed other scene fields')
+            segment['bindings'][cid] = copy.deepcopy(before)
+            for group in ('beats','overlay_beats'):
+                matches = [b for b in actual.get('skill_selection', {}).get(group, []) if (b.get('segment_id'), b.get('component_id')) == key]
+                for beat in matches:
+                    if beat.get('binding_snapshot') != after:
+                        raise VisualConfirmationError('Lemo typography binding snapshot is stale')
+                    beat['binding_snapshot'] = copy.deepcopy(before)
+            old_read = [x for x in frozen_treatment.get('motion_readability', []) if (x.get('segment_id'),x.get('component_id')) == key]
+            new_read = [x for x in actual.get('motion_readability', []) if (x.get('segment_id'),x.get('component_id')) == key]
+            if len(old_read) != 1 or len(new_read) != 1:
+                raise VisualConfirmationError('Lemo typography needs current readability targets')
+            old_targets = {x['target_id']: x for x in old_read[0]['targets']}
+            new_targets = {x['target_id']: x for x in new_read[0]['targets']}
+            if (len(old_targets) != len(old_read[0]['targets']) or len(new_targets) != len(new_read[0]['targets'])
+                    or set(old_targets) != set(new_targets)):
+                raise VisualConfirmationError('Lemo typography changed text target inventory')
+            old_paths = {f['job_path']: name for name, f in old_files.items()}
+            new_paths = {f['job_path']: name for name, f in new_files.items()}
+            for target_id, original in old_targets.items():
+                revised = new_targets[target_id]
+                if ({k:v for k,v in original.items() if k != 'content_ref'} != {k:v for k,v in revised.items() if k != 'content_ref'}
+                        or original['content_ref'].get('value') != revised['content_ref'].get('value')
+                        or old_paths.get(original['content_ref'].get('path')) is None
+                        or old_paths.get(original['content_ref'].get('path')) != new_paths.get(revised['content_ref'].get('path'))):
+                    raise VisualConfirmationError('Lemo typography changed approved text content or layout targets')
+            from . import motion_readability
+            original_segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
+            scoped = {**original_segment, 'shot_recipe': {'components': [c for c in original_segment['visual_strategy']['components'] if c['component_id'] == cid]}}
+            motion_readability.validate_targets([scoped], new_read,
+                motion_readability._required_refs({'motion_readability': new_read}), root=root)
+            actual['motion_readability'][actual['motion_readability'].index(new_read[0])] = copy.deepcopy(old_read[0])
+    return current, actual
+
+
 def _motion_brief(root, director, treatment, key):
     segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
     binding = segment['bindings'][key[1]]
@@ -1087,6 +1548,47 @@ def _readability_texts(records, keys):
             for target in record.get('targets', [])}
 
 
+def _validate_canvas_alignment(root, director, treatment, key, adapter, brief, payload, alignment):
+    if not isinstance(alignment, dict) or set(alignment) != {'mode', 'base_component_id', 'base_sha256', 'layer_sha256'} or alignment['mode'] != 'identity':
+        raise VisualConfirmationError('invalid canvas alignment declaration')
+    segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
+    strategy = segment['visual_strategy']
+    components = {c['component_id']: c for c in strategy['components']}
+    base_id = alignment['base_component_id']
+    base = components.get(base_id, {})
+    overlay = components.get(key[1], {})
+    if (strategy['mode'] != 'hybrid' or strategy['composition']['family'] != 'evidence_with_data_overlay'
+            or base.get('kind') != 'ai_generated' or base.get('layer_role') != 'base'
+            or base.get('layout_slot') != 'full_frame' or overlay.get('layer_role') != 'annotation'
+            or brief.get('alpha') is not True or brief.get('composition', {}).get('width') != 1080
+            or brief.get('composition', {}).get('height') != 1920
+            or not any(d['component_id'] == key[1] and base_id in d['depends_on']
+                       for d in strategy['composition']['component_dependencies'])):
+        raise VisualConfirmationError('canvas alignment is not an approved full-canvas hybrid')
+    scenes = [s for s in treatment.get('scenes', []) if (s.get('segment_id'), s.get('component_id')) == (key[0], base_id)]
+    if len(scenes) != 1 or not isinstance(scenes[0].get('completed_record'), dict):
+        raise VisualConfirmationError('canvas alignment needs its approved base record')
+    ref = scenes[0]['completed_record']
+    path = _path(root, ref['job_path'])
+    if (artifacts.sha256_file(path), path.stat().st_size) != (ref['sha256'], ref['byte_count']):
+        raise VisualConfirmationError('canvas alignment base record changed')
+    record = _read(path)
+    media = record.get('media', {})
+    if (record.get('job_id') != brief.get('job_id') or record.get('status') != 'completed'
+            or record.get('segment_id') != key[0] or record.get('component_id') != base_id
+            or record.get('composition_base', {}).get('action_component_id') != key[1]
+            or record.get('source_dimensions') != {'width': 1080, 'height': 1920}
+            or media.get('sha256') != alignment['base_sha256']
+            or segment['bindings'][base_id].get('sha256') != alignment['base_sha256']):
+        raise VisualConfirmationError('canvas alignment base identity differs')
+    base_path = _path(root, media['job_path'])
+    if (artifacts.sha256_file(base_path), base_path.stat().st_size) != (media['sha256'], media['byte_count']):
+        raise VisualConfirmationError('canvas alignment base media changed')
+    result = adapter.inspect_result(root, payload)
+    if result['media']['sha256'] != alignment['layer_sha256']:
+        raise VisualConfirmationError('canvas alignment action media differs')
+
+
 def _validate_motion_realization(root, frozen, frozen_treatment, director, treatment):
     """Permit only result-derived edits of approved complete native creations.
 
@@ -1106,10 +1608,16 @@ def _validate_motion_realization(root, frozen, frozen_treatment, director, treat
     for key in keys:
         before, adapter, approved, _ = _motion_brief(root, frozen, frozen_treatment, key)
         after, _, brief, payload = _motion_brief(root, director, treatment, key)
+        comparable_after = copy.deepcopy(after)
+        alignment = comparable_after.get('invocation_record', {}).get('canvas_alignment')
+        if alignment is not None:
+            _validate_canvas_alignment(root, director, treatment, key, adapter, brief, payload, alignment)
+            if 'canvas_alignment' not in before.get('invocation_record', {}):
+                del comparable_after['invocation_record']['canvas_alignment']
         if adapter.approved_task(brief) != adapter.approved_task(approved):
             raise VisualConfirmationError('native revision changed its approved semantic task, template, inputs or authorization')
         if ({k: v for k, v in before.items() if k not in {'brief_sha256', 'verification_id'}}
-                != {k: v for k, v in after.items() if k not in {'brief_sha256', 'verification_id'}}
+                != {k: v for k, v in comparable_after.items() if k not in {'brief_sha256', 'verification_id'}}
                 or after.get('verification_id') != hashlib.sha256(
                     (after['source_sha256'] + after['brief_sha256']).encode()).hexdigest()):
             raise VisualConfirmationError('native revision replaced an approved template or source')
@@ -1179,8 +1687,10 @@ def _validate_motion_realization(root, frozen, frozen_treatment, director, treat
         required = set(before['visible_text'])
         confirmed = Path(root) / 'manifests/confirmed-content.json'
         if confirmed.is_file():
+            from . import confirmed_content
             required.update(text for item in _read(confirmed).get('visuals', [])
-                            if any(item.get('component_id') == key[1] for key in scoped) for text in item.get('visible_text', []))
+                            if any(confirmed_content.matches_visual(item, *key) for key in scoped)
+                            for text in item.get('visible_text', []))
         visible = set(segment['visible_text'])
         actual_text = _readability_texts(treatment.get('motion_readability', []), scoped)
         if not required <= visible or not (visible - set(before['visible_text'])) <= actual_text:
@@ -1191,10 +1701,95 @@ def _validate_motion_realization(root, frozen, frozen_treatment, director, treat
     return current, actual
 
 
-def _validate_draft_against_source(root, proposal, director, treatment):
+def _validate_generated_readability(root, proposal, frozen, frozen_treatment, director, treatment, evidence):
+    """Resolve only explicitly deferred text, using existing completed inputs."""
+    from . import motion_readability, motion_capabilities
+    old = {(r['segment_id'], r['component_id']): r for r in frozen_treatment.get('motion_readability', [])}
+    keys = {key for key, row in old.items() if row.get('pending_generation') is True}
+    if not keys:
+        return treatment
+    project = Path(__file__).resolve().parents[3]
+    eligible = planned_generation_targets(project, frozen, frozen_treatment, job_dir=root)
+    if not keys <= eligible:
+        raise VisualConfirmationError('deferred text is not an uncreated approved generation target')
+    actual = copy.deepcopy(treatment)
+    records = {(r['segment_id'], r['component_id']): r for r in actual.get('motion_readability', [])}
+    if len(records) != len(actual.get('motion_readability', [])) or set(records) != set(old):
+        raise VisualConfirmationError('generation realization changed the text component inventory')
+    completed = {e['step_id']: e for e in evidence}
+    if len(completed) != len(evidence):
+        raise VisualConfirmationError('generation completion evidence is duplicated')
+    segments = {s['segment_id']: s for s in director['segments']}
+    originals = {s['segment_id']: s for s in frozen['segments']}
+    for key in keys:
+        record = records[key]
+        if record == old[key]:
+            continue  # Still pending; the existing completed-phase gate rejects it.
+        steps = [s for s in _steps(frozen_treatment) if (s['segment_id'], s['component_id']) == key]
+        if not steps or any(s not in proposal.get('generation_steps', []) for s in steps):
+            raise VisualConfirmationError('deferred text has no unchanged approved generation steps')
+        for step in steps:
+            done = completed.get(step['id'])
+            if not done or not done.get('media'):
+                raise VisualConfirmationError('deferred text needs actual completed generation evidence')
+            for media in done['media']:
+                _exact(root, media)
+        segment = segments[key[0]]
+        if segment['visible_text'] != originals[key[0]]['visible_text']:
+            raise VisualConfirmationError('generation text cannot change the approved wording')
+        scoped = {**segment, 'shot_recipe': {'components': [c for c in segment['visual_strategy']['components']
+                    if c['component_id'] == key[1]]}}
+        motion_readability.validate_targets([scoped], [record],
+            motion_readability._required_refs({'motion_readability': [record]}), root=root)
+        if {t['content_ref']['value'] for t in record.get('targets', [])} != set(segment['visible_text']):
+            raise VisualConfirmationError('generation text targets must retain the exact approved text inventory')
+        binding = segment['bindings'][key[1]]
+        if binding.get('execution_mode') in {'reuse_completed_lovart_video', 'reuse_completed_generated_media'}:
+            brief, ref = motion_capabilities._ai_brief_evidence(root, actual, segment, key[1])
+            allowed = {ref['job_path']: ref['sha256']}
+        else:
+            brief = motion_capabilities._bound_brief(root, actual, segment, key[1])
+            relative = motion_capabilities._brief_relative(actual, segment, key[1])
+            allowed = {relative: binding.get('brief_sha256')}
+        if brief is None:
+            raise VisualConfirmationError('generation text requires its actual bound production input')
+        from . import parent_static_labels
+        labels = parent_static_labels.load(root, segment, key[1])
+        if labels:
+            parent_static_labels.validate_targets(labels, record.get('targets', []))
+            for label in labels:
+                ref = label['content_ref']
+                allowed[ref['path']] = ref['sha256']
+        def collect(value):
+            if isinstance(value, dict):
+                if {'job_path', 'sha256'} <= set(value):
+                    allowed[value['job_path']] = value['sha256']
+                for child in value.values(): collect(child)
+            elif isinstance(value, list):
+                for child in value: collect(child)
+        collect(brief)
+        for target in record.get('targets', []):
+            ref = target['content_ref']
+            if (allowed.get(ref['path']) != ref['sha256']
+                    or any(ref['pointer'].startswith('/' + field) for field in
+                        ('prompt', 'template_request', 'creative_handoff', 'source_binding', 'composition',
+                         'transcript', 'semantic_goal', 'required_change', 'authorization'))):
+                raise VisualConfirmationError('generation text must cite actual bound content, not a production promise')
+        records[key] = copy.deepcopy(old[key])
+    actual['motion_readability'] = [records[(r['segment_id'], r['component_id'])]
+                                    for r in actual.get('motion_readability', [])]
+    return actual
+
+
+def _validate_draft_against_source(root, proposal, director, treatment, *, generation_evidence=()):
     frozen = _read(_exact(root, proposal["inputs"]["director"]))
     frozen_treatment = _read(_exact(root, proposal["inputs"]["treatment"]))
+    actual_director, actual_treatment = director, treatment
     director, treatment = _validate_motion_realization(root, frozen, frozen_treatment, director, treatment)
+    director, treatment = _normalize_lemo_typography(root, frozen, frozen_treatment, director, treatment)
+    director = _normalize_verified_technical_revisions(frozen, frozen_treatment, actual_director, actual_treatment, director)
+    treatment = _validate_generated_readability(root, proposal, frozen, frozen_treatment,
+                                               director, treatment, generation_evidence)
     if treatment.get("motion_readability", []) != frozen_treatment.get("motion_readability", []):
         raise VisualConfirmationError("readability targets changed after visual approval")
     if (_core(director) != _core(frozen)
@@ -1216,19 +1811,53 @@ def _validate_draft_against_source(root, proposal, director, treatment):
                 raise VisualConfirmationError("realization replaced an approved template or source")
 
 
+def _normalize_verified_technical_revisions(frozen, frozen_treatment, actual, treatment, normalized):
+    """Only after the two real-input verifiers, hide their revision in comparisons."""
+    result = copy.deepcopy(normalized)
+    old = {s['segment_id']: s for s in frozen['segments']}
+    originals = {s['segment_id']: s for s in actual['segments']}
+    old_scenes = {(s.get('segment_id'), s.get('component_id')): s for s in frozen_treatment.get('scenes', [])}
+    scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
+    for segment in result['segments']:
+        sid = segment['segment_id']
+        before, submitted = old.get(sid), originals.get(sid)
+        if before is None or submitted is None:
+            continue
+        old_revision, new_revision = before.get('strategy_revision'), submitted.get('strategy_revision')
+        if old_revision == new_revision:
+            continue
+        if (type(old_revision) is not int or type(new_revision) is not int or new_revision <= old_revision):
+            raise VisualConfirmationError('technical strategy revision must increase')
+        proof = False
+        for cid, binding in submitted.get('bindings', {}).items():
+            prior = before.get('bindings', {}).get(cid, {})
+            alignment = binding.get('invocation_record', {}).get('canvas_alignment')
+            old_alignment = prior.get('invocation_record', {}).get('canvas_alignment')
+            typography = scenes.get((sid, cid), {}).get('native_typography_revision')
+            previous_typography = old_scenes.get((sid, cid), {}).get('native_typography_revision')
+            if ((binding.get('dependency_id') in MOTION_CREATION and prior.get('dependency_id') == binding.get('dependency_id')
+                 and alignment is not None and alignment != old_alignment)
+                    or (binding.get('dependency_id') == 'lemo-opuscar' and prior.get('dependency_id') == 'lemo-opuscar'
+                        and typography is not None and typography != previous_typography and binding != prior)):
+                proof = True
+        if not proof:
+            raise VisualConfirmationError('technical strategy revision needs a verified implementation change')
+        segment['strategy_revision'] = old_revision
+    return result
+
+
 def validate_realization_draft(job, director, treatment):
     authorized = validate_visual_authorization(job)
-    _validate_draft_against_source(job.job_dir, authorized["source"], director, treatment)
+    frozen = _read(_exact(job.job_dir, authorized['source']['inputs']['treatment']))
+    deferred = any(r.get('pending_generation') is True for r in frozen.get('motion_readability', []))
+    evidence = _completed_generations(job, authorized['source']) if deferred else []
+    _validate_draft_against_source(job.job_dir, authorized["source"], director, treatment,
+                                 generation_evidence=evidence)
     return authorized
 
 
-def write_realization_mapping(job, *, host_qa_note, director_path, treatment_path):
-    from . import generation_queue, state
-    if (job.stages['visual_direction']['status'] == 'approved'
-            or any(ref['path'].endswith('/' + MAPPING) for ref in job.stages['visual_direction']['artifacts'])):
-        raise VisualConfirmationError('the reviewed realization is frozen; use the existing stage revision entry')
-    authorized = validate_visual_authorization(job)
-    proposal = authorized["source"]
+def _completed_generations(job, proposal):
+    from . import generation_queue
     queue = generation_queue.status(job.job_dir)
     generations = []
     for step in proposal["generation_steps"]:
@@ -1243,6 +1872,39 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
             media.append(_record(job.job_dir, path if path.is_absolute() else job.job_dir / path))
         generations.append({"step_id": step["id"], "request_id": rid,
                             "request": item["request"], "media": media})
+    return generations
+
+
+def _write_unique_mapping(root, revision, payload):
+    data = artifacts.canonical_json_bytes(payload)
+    digest = hashlib.sha256(data).hexdigest()
+    directory = Path(root) / DIRECTORY / f'realization-r{revision}-{digest}'
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / MAPPING
+    fd, temp_name = tempfile.mkstemp(prefix='.mapping-', dir=directory)
+    try:
+        with os.fdopen(fd, 'wb') as out:
+            out.write(data)
+            out.flush()
+            os.fsync(out.fileno())
+        try:
+            os.link(temp_name, path, follow_symlinks=False)
+        except FileExistsError:
+            if path.is_symlink() or path.read_bytes() != data:
+                raise VisualConfirmationError('existing realization mapping differs')
+    finally:
+        os.unlink(temp_name)
+    return path
+
+
+def write_realization_mapping(job, *, host_qa_note, director_path, treatment_path):
+    from . import state
+    if (job.stages['visual_direction']['status'] == 'approved'
+            or any(ref['path'].endswith('/' + MAPPING) for ref in job.stages['visual_direction']['artifacts'])):
+        raise VisualConfirmationError('the reviewed realization is frozen; use the existing stage revision entry')
+    authorized = validate_visual_authorization(job)
+    proposal = authorized["source"]
+    generations = _completed_generations(job, proposal)
     final_records = copy.deepcopy(job.stages["visual_direction"]["artifacts"])
     final = next(r for r in final_records if r["path"] == "07-visual-direction/visual-plan.json")
     treatment = _read(treatment_path)
@@ -1254,6 +1916,8 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
     for scene in treatment.get("scenes", []):
         ref = scene.get("completed_record")
         if ref:
+            if scene.get('asset_provenance') is not None:
+                raise VisualConfirmationError('Paper crop provenance requires its bound native brief')
             record = _record(job.job_dir, _path(job.job_dir, ref["job_path"]))
             if (record["sha256"], record["bytes"]) != (ref["sha256"], ref["byte_count"]):
                 raise VisualConfirmationError("completed template input changed")
@@ -1269,11 +1933,23 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
             if bindings.get(key, {}).get("brief_sha256") != ref["sha256"]:
                 raise VisualConfirmationError("template brief differs from its actual binding")
             item = {"segment_id": key[0], "component_id": key[1], "artifact": ref}
+            provenance = scene.get('asset_provenance')
+            if provenance is not None:
+                if (bindings[key].get('dependency_id') != 'paper-collage-hyperframes'
+                        or not isinstance(provenance, dict)
+                        or set(provenance) != {'job_path', 'sha256', 'byte_count'}):
+                    raise VisualConfirmationError('invalid Paper scene crop provenance')
+                evidence = _record(job.job_dir, _path(job.job_dir, provenance['job_path']))
+                if (evidence['sha256'], evidence['bytes']) != (provenance['sha256'], provenance['byte_count']):
+                    raise VisualConfirmationError('Paper crop provenance changed')
+                item['asset_provenance'] = evidence
             if bindings[key].get("dependency_id") in NATIVE_RESULT_MODULES:
                 item["result_record"] = _freeze_reviewed_native_result(
                     job.job_dir, treatment, key[0], key[1], _exact(job.job_dir, ref).read_bytes(),
-                    bindings[key]["dependency_id"])
+                    bindings[key]["dependency_id"], next(s for s in realized_director['segments'] if s['segment_id'] == key[0]))
             native_inputs.append(item)
+        elif scene.get('asset_provenance') is not None:
+            raise VisualConfirmationError('Paper crop provenance requires its bound native brief')
     payload = {"schema_version": 1, "source_approval": authorized["artifact"],
                "proposal": authorized["payload"]["source"], "final_v3": final,
                "artifacts": final_records, "rows": proposal["rows"],
@@ -1281,7 +1957,6 @@ def write_realization_mapping(job, *, host_qa_note, director_path, treatment_pat
                "realization_inputs": {"director": _record(job.job_dir, director_path),
                                       "treatment": _record(job.job_dir, treatment_path)},
                "host_qa_note": host_qa_note}
-    path = _path(job.job_dir, authorized["payload"]["source"]["path"]).parent / MAPPING
-    artifacts.write_json_artifact(path, payload)
+    path = _write_unique_mapping(job.job_dir, job.revision, payload)
     state.mark_visual_ready(job, [*(_path(job.job_dir, r["path"]) for r in final_records), path])
     return path

@@ -112,6 +112,28 @@ def _summary(job, stage: str, **extra) -> dict:
     return result
 
 
+def canary_segment_scope(job, data: dict):
+    scope = (data.get('segment_ids') or job.stages['visual_canary'].get('artifact_scope')
+             or job.stages.get('visual_direction', {}).get('artifact_scope'))
+    if scope:
+        return scope
+    # Publishing clears transient invalidation fields.  The current confirmed
+    # proposal retains the precise local change after that state transition.
+    from edit.hd.tools import visual_confirmation as confirmation
+    authorized = confirmation.validate_visual_authorization(job)
+    proposal = authorized['source']
+    treatment = confirmation._read(confirmation._exact(job.job_dir, proposal['inputs']['treatment']))
+    revision = treatment.get('skill_selection', {}).get('revision_locks')
+    if revision is None:
+        return None
+    if revision.get('user_confirmation') != authorized['payload'].get('user_confirmation'):
+        raise ValueError('Canary scope differs from the current local confirmation')
+    scope = sorted({change['segment_id'] for change in revision['changes']})
+    if not scope or not set(scope) <= {row['segment_id'] for row in proposal['rows']}:
+        raise ValueError('Canary scope must belong to the current confirmed visual rows')
+    return scope
+
+
 def _review(job, stage: str, review: dict) -> dict:
     from edit.hd.tools import contract_artifacts, delivery_approval, state
     if (review.get('stage') != stage or review.get('revision') != job.revision
@@ -552,6 +574,18 @@ def prepare_visual_dependencies(project: Path, director: dict) -> None:
                             {binding['dependency_id'] for binding in bindings}, bindings)
 
 
+def _approved_native_brief(current, recipe, component):
+    from edit.hd.tools import visual_confirmation as confirmation
+    mapping = confirmation.validate_visual_authorization(current, require_realized=True)['mapping']
+    matches = [item for item in mapping['native_inputs']
+               if item.get('segment_id') == recipe['segment_id']
+               and item.get('component_id') == component['component_id']
+               and item.get('artifact', {}).get('sha256') == component['brief_sha256']]
+    if len(matches) != 1:
+        raise ValueError('Approved native brief is missing or ambiguous')
+    return confirmation._exact(current.job_dir, matches[0]['artifact']).read_bytes()
+
+
 def native_component_adapters(project: Path, job) -> dict:
     """Prepare only native dependencies selected by this Job."""
     from edit.hd.tools import visual_canary
@@ -560,12 +594,7 @@ def native_component_adapters(project: Path, job) -> dict:
     noncode = [c for c in selected if c['kind'] != 'code_generated']
     dependencies = {c['dependency_id'] for c in selected if c['kind'] == 'code_generated'}
 
-    def brief_loader(current, recipe, component):
-        for candidate in (current.job_dir / 'native-inputs').rglob('*.json'):
-            payload = candidate.read_bytes()
-            if hashlib.sha256(payload).hexdigest() == component['brief_sha256']:
-                return payload
-        raise ValueError('Frozen native brief is missing: ' + component['brief_sha256'])
+    brief_loader = _approved_native_brief
 
     adapters = {}
     for dependency in sorted(dependencies):
@@ -736,8 +765,7 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
         adapters = component_adapters if component_adapters is not None else native_component_adapters(project, job)
         if stage == 'visual_canary':
             from edit.hd.tools import visual_canary
-            scope = (data.get('segment_ids') or job.stages[stage].get('artifact_scope')
-                     or job.stages.get('visual_direction', {}).get('artifact_scope'))
+            scope = canary_segment_scope(job, data)
             options = {'segment_ids': scope} if scope else {}
             visual_canary.prepare_visual_canary(job, component_adapters=adapters, **options)
         else:

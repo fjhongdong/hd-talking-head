@@ -73,6 +73,40 @@ def _overlay_segment(identifier: str = "seg-001") -> dict[str, object]:
 
 
 class ArollOverlayPipelineTests(unittest.TestCase):
+    def test_confirmed_visual_uses_segment_and_component_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = SimpleNamespace(root=root, job_dir=root / 'job', job_id='scoped-confirmed')
+            contract_artifacts.write_json_artifact(root / 'job-context.json', {})
+            first, second = _overlay_segment('seg-001'), _overlay_segment('seg-002')
+            first['visible_text'], second['visible_text'] = ['首镜'], ['已认可']
+            wanted = {'segment_id': 'seg-002', 'component_id': 'caption-overlay',
+                'composition_family': 'aroll_with_overlay', 'visible_text': ['已认可'],
+                'binding': {'dependency_id': 'custom-talkcraft-overlay'}}
+            record = {'schema_version': 1, 'job_id': job.job_id,
+                'source_words': [], 'visuals': [wanted]}
+            path = job.job_dir / 'manifests/confirmed-content.json'
+            contract_artifacts.write_json_artifact(path, record)
+            plan = {'segments': [first, second]}
+            confirmed_content.check_confirmed_content(job, plan)
+            for change in ('missing', 'replacement', 'text', 'family'):
+                changed = copy.deepcopy(plan)
+                if change == 'missing': changed['segments'].pop()
+                elif change == 'replacement':
+                    changed['segments'][1]['shot_recipe']['components'][0]['dependency_id'] = 'another'
+                elif change == 'text': changed['segments'][1]['visible_text'] = ['首镜']
+                else: changed['segments'][1]['shot_recipe']['composition']['family'] = 'single_full_frame'
+                with self.subTest(change=change), self.assertRaises(confirmed_content.ConfirmedContentError):
+                    confirmed_content.check_confirmed_content(job, changed)
+            record['visuals'].append({**wanted, 'segment_id': 'seg-001', 'visible_text': ['首镜']})
+            contract_artifacts.write_json_artifact(path, record)
+            confirmed_content.check_confirmed_content(job, plan)
+            # Existing unscoped approvals retain their original unique-component meaning.
+            record['visuals'] = [{k: v for k, v in wanted.items() if k != 'segment_id'}]
+            contract_artifacts.write_json_artifact(path, record)
+            with self.assertRaisesRegex(confirmed_content.ConfirmedContentError, 'ambiguous'):
+                confirmed_content.check_confirmed_content(job, plan)
+
     def test_confirmed_overlay_and_opening_survive_unrelated_clock_revision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

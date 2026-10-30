@@ -741,7 +741,11 @@ def validate_invocation_evidence(
 ) -> Dict[str, Any]:
     """Validate code-binding schema consistency without executing the component."""
 
-    checked = _as_dict(evidence, "invocation evidence")
+    checked = _copy(_as_dict(evidence, "invocation evidence"), "invocation evidence")
+    # The synthetic one-component probe has no real composition to validate.
+    # The actual recipe checks alignment after all components are assembled.
+    if isinstance(checked.get('invocation_record'), dict):
+        checked['invocation_record'].pop('canvas_alignment', None)
     reserved = set(checked) & _RESERVED_BINDING_FIELDS
     if reserved:
         raise RouterError(
@@ -922,6 +926,12 @@ def _consume_completed_generated_binding(kind: str, media_type: str, binding: Di
         raise RouterError("completed generated media needs its actual source dimensions")
     binding.pop("execution_mode", None)
     binding.pop("media_type", None)
+    if 'parent_static_labels' in binding:
+        from edit.hd.tools.parent_static_labels import validate_descriptor
+        try:
+            validate_descriptor(binding.pop('parent_static_labels'))
+        except ValueError as error:
+            raise RouterError(str(error)) from None
     return {**dimensions, "fps": 24, "alpha": False}
 
 
@@ -1074,7 +1084,7 @@ def _compile_shot_recipe(
                 "height": 1920,
                 "fps": 24,
                 "alpha": output_alpha(
-                    kind, binding.get("dependency_id"), approved["composition"]["family"]
+                    kind, binding.get("dependency_id"), approved["composition"]["family"], approved_component["layer_role"]
                 ),
             },
         }

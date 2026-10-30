@@ -471,7 +471,9 @@ def _check_talkcraft_fields(row: Mapping, brief: Mapping) -> bool:
     return all(bool(raw) and set(raw) in combinations for raw in payloads)
 
 
-def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None, *, job_dir: Path | None = None) -> dict:
+def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None, *, job_dir: Path | None = None,
+                        segment: Mapping | None = None, component_id: str | None = None,
+                        use: str | None = None) -> dict:
     """Reuse reviewed input validators only; never prepare or render a scene."""
     if row["role"] == "design":
         return {"status": "not_applicable", "reason": "design source; provider binding and output checks remain separate"}
@@ -503,10 +505,25 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
+                    expected_alpha = row['role'] == 'aroll_overlay'
+                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+                            and use == 'broll' and segment is not None):
+                        strategy = segment['visual_strategy']
+                        components = [c for c in strategy['components'] if c.get('component_id') == component_id]
+                        if len(components) != 1:
+                            raise ValueError('Native motion target is absent or duplicated')
+                        if components[0].get('layer_role') == 'annotation':
+                            from .visual_strategy import validate_visual_strategy
+                            validate_visual_strategy(segment['visual_intent'], strategy)
+                            if (strategy['mode'] != 'hybrid'
+                                    or strategy['composition']['family'] != 'evidence_with_data_overlay'
+                                    or components[0].get('kind') != 'code_generated'):
+                                raise ValueError('Native B-roll annotation needs a valid hybrid composition')
+                            expected_alpha = True
                     if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'} and (
                             checked['dependency_id'] != row['dependency_id']
                             or row['template_id'] != checked['dependency_id'] + '/' + checked['template_id']
-                            or checked['alpha'] != (row['role'] == 'aroll_overlay')):
+                            or checked['alpha'] != expected_alpha):
                         raise ValueError('Native motion task differs from the selected template or output use')
                     if row.get("dependency_id") == "lemo-opuscar" and (
                             checked.get("dependency_id") != "lemo-opuscar"
@@ -644,12 +661,12 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 if not {'/transcript', '/task_source/quote', '/task_source/semantic', '/template_id', '/native_options'}.issubset(planning):
                     raise ValueError('Native motion planning must cite parent quote, semantics, transcript and selected native options')
             else:
-                result = brief.get('native_result')
-                if not isinstance(result, dict) or result.get('status') != 'completed':
+                motion_result = brief.get('native_result')
+                if not isinstance(motion_result, dict) or motion_result.get('status') != 'completed':
                     raise ValueError('Native motion needs its actual completed scene for final acceptance')
-                motion_required = {item['job_path'] for item in result['scene_sources']}
+                motion_required = {item['job_path'] for item in motion_result['scene_sources']}
                 cited = {ref.get('path') for ref in refs if isinstance(ref, dict) and 'quote' in ref}
-                records = [ref for ref in refs if isinstance(ref, dict) and ref.get('path') == result['record']['job_path']]
+                records = [ref for ref in refs if isinstance(ref, dict) and ref.get('path') == motion_result['record']['job_path']]
                 if (not motion_required.issubset(cited) or len(records) != 1
                         or records[0].get('pointer') != '/status' or records[0].get('value') != 'completed'):
                     raise ValueError('Native motion must cite its actual authored HTML and completed result')
@@ -754,7 +771,8 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
             visual_confirmation._validate_beat_sheet(treatment, draft, speech)
         motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
         selection = treatment.get("skill_selection", {})
-        computed = broll_skill_selection.assign_skills(project_root, selection, job_dir=job_dir)
+        computed = broll_skill_selection.assign_skills(project_root, selection, job_dir=job_dir,
+                                                     director=draft, treatment=treatment)
         if (computed["assignments"] != selection.get("assignments") or
                 computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
             raise ValueError("planning assignments changed; assign again using the existing match cache")
@@ -915,7 +933,8 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
             not_verified.append({"segment_id": key[0], "component_id": component,
                                  "check": "completed_wake_native_result"})
         semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief, phase=phase)
-        native = _native_input_check(project_root, row, brief, job_dir=job_dir)
+        native = _native_input_check(project_root, row, brief, job_dir=job_dir,
+                                     segment=segment, component_id=component, use=use)
         for name, result in (("semantic_fit", semantic), ("native_input_constraints", native)):
             item = {"segment_id": key[0], "component_id": component,
                     "check": name, "reason": result.get("reason", "")}

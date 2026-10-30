@@ -58,10 +58,11 @@ def executor_for(kind: str, binding: Mapping[str, Any]) -> str:
     return f"ai-provider:{provider}:{model}"
 
 
-def output_alpha(kind: str, dependency_id: Any, family: Any) -> bool:
+def output_alpha(kind: str, dependency_id: Any, family: Any, layer_role: Any) -> bool:
     if kind != "code_generated":
         return False
     mode = _contract(dependency_id)["output"]
     if mode == "by_composition":
-        return family == "aroll_with_overlay"
+        return (family == "aroll_with_overlay" or
+                (family == "evidence_with_data_overlay" and layer_role == "annotation"))
     return mode == "alpha_video"

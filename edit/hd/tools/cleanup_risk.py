@@ -91,7 +91,18 @@ def retained_repetitions(
                 and bool(_SENTENCE_END.search(right_text))
                 and clean_left == re.sub(r"[。！？!?；;]+$", "", clean_right)
             )
-            if not interrupted and not prefix and not full_sentence_repeat:
+            # ASR may normalize a misspoken final character to the intended
+            # parallel wording (e.g. 自己点 / 自己填). A shared short opening
+            # therefore needs listening even when the transcript differs.
+            # This remains advisory: deliberate parallel clauses are kept.
+            right_unit = re.sub(r"[。！？!?；;]+$", "", clean_right)
+            shared_short_opening = (
+                3 <= len(clean_left) <= 6
+                and 3 <= len(right_unit) <= 6
+                and clean_left[:2] == right_unit[:2]
+                and clean_left != right_unit
+            )
+            if not interrupted and not prefix and not full_sentence_repeat and not shared_short_opening:
                 continue
             if len(clean_left) < 2 or (len(left_text) > 14 and not full_sentence_repeat):
                 continue
@@ -109,7 +120,9 @@ def retained_repetitions(
                 "source_start": source_start,
                 "source_end": source_end,
                 "context": context,
-                "evidence": "interruption_restart" if interrupted else "repeated_prefix_after_boundary",
+                "evidence": ("interruption_restart" if interrupted
+                             else "shared_short_opening_requires_audio_review" if shared_short_opening
+                             else "repeated_prefix_after_boundary"),
                 "audition_range": {
                     "source_start": max(0.0, source_start - 0.35),
                     "source_end": min(float(media_duration), source_end + 0.35),

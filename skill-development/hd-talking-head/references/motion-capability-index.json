@@ -60,7 +60,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/references/open-source-adapter-matrix.md": "55e3687dec6790eadef92a06d17a604860e6b41df5e1975e21897c35580e8f2f",
-        "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "79ca69b8a7ea42fd56b97dfb9001babd82542fcf4b09e40381dab687dbf7577e",
+        "skill-development/hd-talking-head/scripts/adu_native_adapter.py": "56247d7513a0e70f2cabf31081859d245e0ac7638e25fde9f6ec5e10aabb6e22",
         "skill-development/hd-talking-head/scripts/render_adu_native.mjs": "96dcc1b15e98e4353b21b733dbe9c925e6b6c9099e67d14175a0cd0706813c07",
         "skill-development/vendor/adu-motion-video/SKILL.md": "6554f247f5503b3fdd0f3afb64760e16c85437eefd0aeaf99399309a39a4779c",
         "skill-development/vendor/adu-motion-video/package-lock.json": "a91ed888d1ea16625f5ad8c06dded81c320902c257040a91ca0b8cbeeda1bf1e",
@@ -140,7 +140,7 @@
         "skill-development/vendor/doudou-remotion-whiteboard/recipes/index.ts"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "09db22bbb4482c166bc2da35c42ba9bf540527bdb9d62a50d539d47e1bfbb4b9",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "3c460594a5c412ff04a794651e6d70185b5bde7990b7c0eded4d7d30f6323132",
         "skill-development/hd-talking-head/scripts/doudou_adapter.py": "1da42da726eb3149295bd4c560442c5885dbb55d75a9483160e006da75d36c9f",
         "skill-development/hd-talking-head/scripts/render_doudou.mjs": "018966e9d4d5db2aae2a5761baa022384323fb2c6f487fb362d876fbd034fbd2",
         "skill-development/vendor/doudou-remotion-whiteboard/SKILL.md": "e889984ec9166ca3248066475738cc7de51c56261d1eb9a2ccd9057f9d71926a",
@@ -722,7 +722,7 @@
         "skill-development/vendor/gbro-collage-broll/scripts/upload_file.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "db7c412367d8fccfc73cd59e3df91562ba855a7340cc2f2fa76c213ce9aa095f",
         "skill-development/vendor/gbro-collage-broll/SKILL.md": "af96b4f419df9659ecf278851e0d7ab44746123b6f0cf03b374281b666e84dbc",
         "skill-development/vendor/gbro-collage-broll/scripts/check_setup.sh": "b618ac07656383b84b08d2fe0516baa9cc9c3b24edc0a44180201745a47e8293",
         "skill-development/vendor/gbro-collage-broll/scripts/generate_video.py": "65a0df986570871c69aab9634141b0a788bcb484b35cbd23f7806d20a1b0bd73",
@@ -1407,7 +1407,7 @@
         "skill-development/research/hypit-source/skills/hypit/SKILL.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "09db22bbb4482c166bc2da35c42ba9bf540527bdb9d62a50d539d47e1bfbb4b9",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "3c460594a5c412ff04a794651e6d70185b5bde7990b7c0eded4d7d30f6323132",
         "skill-development/hd-talking-head/scripts/hypit_native_adapter.py": "96414dcbe38eb7a1eba52db30365a864b88725da265f77752ffab465d9640eb8",
         "skill-development/hd-talking-head/scripts/render_hypit_native.mjs": "930077c15b5737ffb9cd329b69bffe9a3f40da37657757dbca8267289e84fbab",
         "skill-development/research/hypit-source/bin/hypit.mjs": "07c2b67e3af3bfdcb18b5042889aaa5cd46111358303c090dc2b978603b7be96",
@@ -5568,9 +5568,9 @@
         "skill-development/vendor/lemo-wake/skills/wake/scripts/render.mjs": "cd9ed9f7348a9eed80d1fe135a61800cb80f79e4b324c78a93789cf39ba98ec1",
         "skill-development/vendor/lemo-wake/skills/wake/scripts/encode.py": "8b6e642fcb3a05be75463f609cebd9809bc7856ef747986e5490295e412c5bda",
         "skill-development/vendor/lemo-wake/skills/wake/scripts/qa.py": "f6324c57c5c833ea13bd7a0ca6c3d07262b98ac30d8d42e3e4fb4f208dbffa64",
-        "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "300eacaf5c57d016ddc20d6a4bb42c33072decca22d62826fb2898d5df864da7",
+        "skill-development/hd-talking-head/scripts/lemo_wake_adapter.py": "b81f6b66476fba579797b19c1e3c78cad5e5d7c59812a52dddb475b82a93ebe5",
         "skill-development/hd-talking-head/references/cover-opening-bgm.md": "005da9c818545f240560e4502de7d2e365cbd6c66b2bc8b9ff7aa5dc69f573f5",
-        "edit/hd/tools/dependency_contracts.py": "38b5d4ea2f234652361aefe48ce0a05eab44df54c1cc409dc8a37cb78a5640a8"
+        "edit/hd/tools/dependency_contracts.py": "e994e5fdab672d5f4deacf29fce30c75fb9d28899cfc2fdf786787e8fa76bad0"
       },
       "content_scope": {
         "mode": "full_scene",
@@ -5627,7 +5627,7 @@
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "db7c412367d8fccfc73cd59e3df91562ba855a7340cc2f2fa76c213ce9aa095f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/SKILL.md": "470ff1050943735c3ab35536c6b23dc8c63015597ae6f02ad4a562a992461b1f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/motion-grammar.md": "4c6162d6bbd953f7cdbc78d276f08aad9cdcf1d0759cf0d5596e0c8884fedb7f",
         "skill-development/vendor/muyang-flat-animation/muyang-flat-animation/references/style-guide.md": "e0555d0da69d88da014b66591ff92186ebd699b9ff66a870ae71eaed9d053b20"
@@ -5757,7 +5757,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html": "c04e8bf1bfbcec71d0921a03a786cc09e660732428aa04bf79036a30b7755e09"
       },
@@ -5874,7 +5874,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html": "8713fc92043a353732f4d9bd8832e0023a2019472d3a9cfffc566ff6fd194042"
       },
@@ -6019,7 +6019,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/scripts/hyperframes_hw_pipeline_adapter.py": "7b615cbfa747972751685a5628d79001420321200395305b02a28a3a2c524b1e",
         "skill-development/hd-talking-head/scripts/render_hyperframes_hw_pipeline.cjs": "21c759d07d3ab682e40ac0ac3d1678fa067b385fd9daa87d34e800c9c1c3c248",
         "参考项目/B-roll开源方案/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
@@ -6078,7 +6078,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html": "dfe78474314169e66fb3cb6fa26d3e09755873248a1ff72dc4b472edacbb2771"
       },
@@ -6137,7 +6137,7 @@
         "skill-development/vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/references/overlay-studio-pinboard.md": "32ada94518947f33f48311ce8a6561d0c9623999ec23979700b57372156d5862",
         "skill-development/hd-talking-head/scripts/overlay_studio_adapter.py": "547a3fcb9de79736ff5e15e299e6e6888f052d8ee8bc14f59cbcf8967eaa9d22",
         "skill-development/vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx": "5073d9168bab4a77fa6464a8fb18cbd1f0849aacd42c73ac7795971d0ed31cb5"
@@ -6196,7 +6196,7 @@
         "参考项目/B-roll开源方案/hyperframes/registry/components/toggle-flip/toggle-flip.html"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "4064d00d789a9e01124a98cf7f07de7eb8f0cd8499bcabf1176e45a517c7272c",
+        "skill-development/hd-talking-head/references/aroll-overlay-contract.md": "5ef57ea60793f640a6d18bb0c7fc17a9eca6edc09bd93c7698acc09dd7dbda96",
         "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py": "881645ecf51092e9cf2f429ba268c001d1ca106b88a01f0074e240c41a408f44",
         "参考项目/B-roll开源方案/hyperframes/registry/components/toggle-flip/toggle-flip.html": "f73cefb798fe3cd1a5ac503c6feb494a644c17d53d8b2e1cf313973940f0161d"
       },
@@ -6256,7 +6256,7 @@
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "db7c412367d8fccfc73cd59e3df91562ba855a7340cc2f2fa76c213ce9aa095f",
         "skill-development/hd-talking-head/scripts/paper_collage_adapter.py": "d3e6018bdc9ad8d75e254ad68628444bdea002e682eb5afef187bd5f70ec9962",
         "skill-development/hd-talking-head/scripts/render_paper_collage.py": "4d8656fda75687ae0027e74376a5bbb5a1589e2a6292e49d48ed82c8079fd690",
         "skill-development/vendor/paper-collage-ad-codex/scripts/layer-animate.mjs": "fa1dbdc9676ff5e69f63a5dd012401cfcda3317ef15581d52515ad5a5dd18e98"
@@ -12266,7 +12266,7 @@
         "skill-development/vendor/whiteboard-video-engine/src/whiteboard_skill/whiteboard.py"
       ],
       "reviewed_sources": {
-        "skill-development/hd-talking-head/references/generated-broll-skills.md": "e691bd4d8399a1721b5642519385c3de1d7ca104bcfb14056cd97bef527b0c1e",
+        "skill-development/hd-talking-head/references/generated-broll-skills.md": "db7c412367d8fccfc73cd59e3df91562ba855a7340cc2f2fa76c213ce9aa095f",
         "skill-development/hd-talking-head/scripts/render_whiteboard.py": "d79dc42ea91c2b580f712ece6ef3c5be0fef43e3ba8a4c767d967fb50b7dedf8",
         "skill-development/hd-talking-head/scripts/whiteboard_adapter.py": "349c6a504df5454b3a1a912d61e6770cbed4790dc6e5578c9ae069f314ad2e95",
         "skill-development/vendor/codex-whiteboard-video-skill/scripts/whiteboard_cli.py": "523424e0b69fe74da8d6a7dc31c178a56cc52fad8d82b3f0607b767fa0bd417e",
@@ -12363,7 +12363,7 @@
       ],
       "reviewed_sources": {
         "skill-development/hd-talking-head/assets/wise-motion-runtime/index.jsx": "47bab320baa93daf59debca477b9c2e892f600c1b1179707548eb91cbb520a7c",
-        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "09db22bbb4482c166bc2da35c42ba9bf540527bdb9d62a50d539d47e1bfbb4b9",
+        "skill-development/hd-talking-head/references/upstream-scene-skills.md": "3c460594a5c412ff04a794651e6d70185b5bde7990b7c0eded4d7d30f6323132",
         "skill-development/hd-talking-head/scripts/render_wise_motion.mjs": "d3e5c42f272d9fa3359139574a032a3333459a5cf63fa4adef61ae5d948a0946",
         "skill-development/hd-talking-head/scripts/wise_motion_adapter.py": "11b9027ca0046dfacf99295b52a74fdca169b78a2a603548b996b70a9d8177a8",
         "skill-development/vendor/wise-motion/REMOTION.md": "3a55aa7ccaee1fd380a8823e7bf3c2c7b250317c01367563245b0a34a0358dee",

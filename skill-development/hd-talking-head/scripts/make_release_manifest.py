@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 from verify_skill_release import MANIFEST, REQUIRED, file_hash, package_files
+from refresh_capability_pins import INDEX, collect_stale
 
 
 def main() -> int:
@@ -16,6 +17,11 @@ def main() -> int:
                         help="new unique release id, e.g. 2026-01-01-topic-v145")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
+    index = json.loads((root / INDEX).read_text(encoding="utf-8"))
+    stale = collect_stale(root, index)
+    if stale:
+        parser.error("capability source pins are stale; review and refresh before release: "
+                     + ", ".join(item["candidate_id"] for item in stale))
     files = package_files(root)
     missing = REQUIRED - set(files)
     if missing:

@@ -133,7 +133,11 @@ Lovart MCP 图片上传先核对完整 JSON 传输预算（实际 4 MiB，留结
 
 输出后分别记录“Flat/GBRO 静帧设计”和“视频渠道动态生成”，不把视频产物冒充上游原生视频。观察动画前、中、后主体动作、角色稳定性、文字和圆窗避让；纯推拉、擦除或显色不算通过。保留原始视频和真实请求/完成记录，调用与该渠道匹配的原字节复用适配器；若实际文件不是无声 H.264/yuv420p、SAR 1:1、24fps 的 720×1280 或 1080×1920 竖屏 MP4，先停在媒体处理与来源绑定，不靠修改记录或重命名绕过。父级合成后仍验收 1080×1920 的手机播放画质。
 
+本镜任务涉及跨软件操作时，按[实际媒体复核](visual-quality-contract.md#实际媒体复核)检查采用时段内的同一操作主体、两个可区分窗口、先后操作与目标响应。静态双窗口、单窗口光标移动或 AI 标签不替代这条动作链；缺失就保留原片并停止该镜，不自动重新生成。
+
 供应商原始文件和原始响应先单独保存。格式处理只能另存同宽高比的 24fps、静音、H.264/yuv420p 规范文件，不能覆盖原件、变速或乱裁切；规范文件填入 `artifacts.path`，来源记录的 `artifact.source` 说明原始文件和处理链。原始供应商响应、规范处理记录和最终生成记录分开保存；已合格原件直接使用。
+
+下载官方完成回执中的 artifact URL 时，使用真实的 `HD-Talking-Head` 应用 User-Agent，不冒充浏览器或另加凭据。Cloudflare 1010 可能拒绝默认 Python urllib 客户端；[官方排查说明](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)允许使用描述性的真实应用标识。仍有权限拒绝、鉴权要求或访问挑战时停止，不更换身份或绕过限制。下载失败不等于生成失败：保留真实完成回执、原 task ID 和 claim，文件取得并验收后沿原 `record_result` 登记，不重新生成。
 
 供应商竖屏输出仅有整数舍入的微小尺寸偏差时，在本 Job 已明确授权完成制作的范围内，可用最近边缘像素延展到规范尺寸：总尺寸偏差须≤0.5%，任一边延展须≤4px，全部主体与原像素保持，不缩放、裁切、拉伸或变速。保留原片、真实处理链和处理前后实测画幅；这是派生格式修正，不声称供应商原生规格已达标。超界、横屏或任意构图补边仍停止，走正常修订；不新增生成或费用，也不改变下文旧素材适配器的单资产许可协议。
 
@@ -151,6 +155,10 @@ Lovart MCP 图片上传先核对完整 JSON 传输预算（实际 4 MiB，留结
 
 新生成使用 `scripts/generated_media.py`。宿主观察真实媒体后，调用 `record_from_queue(job, request_id, segment_id=..., component_id=..., source_binding={"aroll_sha256":...,"start":...,"end":...}, qa={"passed":true,"observed_scene":"实际画面"}, semantic_brief={"observed_scene":"实际画面"}, ffprobe_executable=...)`；保存返回 JSON，再用 `prepare_binding(record)` 取得真实 provider、model、endpoint、任务身份、媒体摘要与实测尺寸。实际媒体不合格式时先按已确认内容处理媒体，不修改记录冒充符合。图片和视频都保持真实源类型。
 
+原视频关键动作失败、经视觉修订明确只用作非证据底层时，不得填写整项效果通过。给同一 `record_from_queue` 增加 `composition_base={"source_qa":{"passed":false,"observed_scene":"原片实际失败动作"},"action_component_id":"独立原生动作组件ID"}`，并将 `qa` 写成 `{"scope":"composition_base","passed":true,"observed_scene":"仅底层实际合格内容及限制"}`；`semantic_brief` 同样按真实分工描述，不删除原片失败事实。复用记录独立保存，不更改已完成队列、原完成回执或原片。消费时只接受当前真正批准的非证据 `hybrid` 配方；指定的动作组件必须是依赖该 AI 底层的独立 `code_generated` 原生透明层，继续经过原有实际依赖调用检查。单层使用、证据用途、原生层缺失或不透明均拒绝。底层通过不能代替合成段及最终预览的完整动作验收。
+
+此底层用途需要格式修正时，先调用 `normalize_composition_base(job, request_id, output_path="<本Job内全新.mp4路径>", ffprobe_executable=..., ffmpeg_executable=...)`，将返回的真实规范处理记录传入上述 `record_from_queue(..., normalization=处理记录, ffmpeg_executable=...)`。该入口直接核对原队列的文件摘要与字节数，仅允许缺失 SAR 补为1:1，或按上文总偏差≤0.5%、每边≤4px的最近边缘像素延展；后者无损编码，保留全部帧和时钟，不缩放、裁切主体、变速或改色。完整原像素逐帧对账，新增边缘也按原边缘像素验证；处理链、原件与派生文件各自摘要一同保存。输入已合格时直接用原件，不创建无意义派生。处理失败保留原件及诊断，不重报队列完成、不自动重试。此能力不改变旧 Lovart 单资产许可接口，也不代表本期新增动作层已经获批或合成效果已经通过。
+
 完整记录消费入口同时检查 `semantic_brief.observed_scene` 和精确的 `{aroll_sha256,start,end}` 来源结构；不能从 QA 或生成提示词自动补写语义观察。此处的 `segment_id` 已在记录顶层，不把原生 adapter brief 中带 segment_id 的 source_binding 原样搬入。缺少观察、错误时钟或额外字段须先修当前记录，不能等到渲染后再补造来源。
 
 在新 realization treatment 的 `scenes` 登记 `{ "segment_id":..., "component_id":..., "brief_path":"<完成记录相对路径>", "completed_record": {"job_path":"<同路径>","sha256":"<文件摘要>","byte_count":123} }`，并补实际 `semantic_assessments`；引用完成记录 `/semantic_brief/observed_scene` 作为当前画面的依据。直接 AI B-roll 没有第三方模板时，`skill_selection.fixed_context` 明确记录该来源，不假冒库模板；其 `semantic_assessments.candidate_id` 使用 `ai-generated/direct`，仍保留该行 `motion_queries` 的语义标签。模板需要生成图片时，将图片实际路径及身份写入模板原生 brief。最终 execution mapping 保存显式完成记录，包内工厂用 `generated_media.create_job_adapter` 接入公共执行器，不扫描目录猜结果。已有 Lovart 完成记录继续使用其原有适配器，不重生成、不换身份。
@@ -163,13 +171,48 @@ Lovart MCP 图片上传先核对完整 JSON 传输预算（实际 4 MiB，留结
 
 这是一条明确的父级约束调用：图片与视频生成均使用 Job 启动时由用户确认的渠道，不因上游文档自动启用 Gemini、Lovart 或其他固定服务；只有该渠道的真实 action、连接和模型检查通过，才登记为可执行。隐喻及静帧仍分两步验收，遵循父级结果确认策略：已批准方向不重复询问，宿主记录实际内部 QA；语义或审美方向有实质变化时才请用户裁决。本次整表已经明确图片、视频步骤及费用范围时按表执行；增加未列出的收费步骤或改变模型、费用范围时才需要用户决定。
 
-保留上游的精致编辑风：强烈而平坦的纸面底色、黑白半调照片剪贴、少量彩色卡纸、清楚的奶油白切边、轻柔一致的投影和细纸纹。每条约 3–6 个可分离的大物件形成清晰焦点，按本句选择底色与点色，不把全部镜头统一成蓝底或散乱小纸片。不生成可读文字、数字、UI、logo 或口播字幕；标签确有必要时由父级可靠文字层负责。构图提前避开实际圆窗和统一字幕区。
+保留上游的精致编辑风：强烈而平坦的纸面底色、黑白半调照片剪贴、少量彩色卡纸、清楚的奶油白切边、轻柔一致的投影和细纸纹。每条约 3–6 个可分离的大物件形成清晰焦点，按本句选择底色与点色，不把全部镜头统一成蓝底或散乱小纸片。不生成可读文字、数字、UI、logo 或口播字幕；标签确有必要时由父级可靠文字层负责，执行见[父级固定标签](#父级固定标签)。构图提前避开实际圆窗和统一字幕区。
+
+## 父级固定标签
+
+仅处理清单已经批准的准确 `visible_text`、生成要求明确交给父级的固定非动效标签。沿用 [video-use 静态文字层与 FFmpeg 合成](official-video-acquisition.md#竖屏静态标题合成)，不另写动画或绘字引擎，不增加镜头编号、视觉组件、渠道或模板。先实看当前真实视频，选择固定标签确实能成立的字区及阅读窗；目标需要移动跟随而当前原生路径不能实现时停止该镜头，不能用静态 AI 标签冒充随光标移动。
+
+宿主完整读取包内 `skills/video-use/SKILL.md`，按其 PIL 路线使用真实中文字体，将实际 JSON 文字输入栅格化为透明 PNG。保留实际输入、字体身份、执行源码或入口、完整参数、真实退出码和输出身份；在现有阶段制作记录中登记，不新增用户审批。输入 JSON 是真实栅格化输入，不能事后造同名文字清单。PNG 的实际文字、位置、对比度及完整阅读窗仍经原尺寸实看与现有 OCR 门检查。
+
+将下列 manifest 的精确 `{job_path,sha256,byte_count}` 描述放入该组件已完成绑定的 `parent_static_labels`。原 `generated_media.prepare_binding(record)` 所得 provider/model/endpoint/generation/media SHA/尺寸不变；原队列产物仍由 adapter 原样消费。编译器仅将该父级字段留在 segment binding，现有 `segment_render` 将 PNG 叠到该镜头的最终 1080×1920 画面。原图、原视频及收费调用记录不改写。
+
+```json
+{
+  "schema_version": 1,
+  "segment_id": "seg-example",
+  "component_id": "visual-1",
+  "labels": [{
+    "content_ref": {
+      "path": "native-inputs/actual-raster-input.json",
+      "sha256": "实际输入文件SHA256",
+      "pointer": "/labels/0/text",
+      "value": "已批准准确标签"
+    },
+    "image": {"job_path": "native-output/actual-label.png", "sha256": "实际PNG的SHA256", "byte_count": 1234},
+    "x": 120,
+    "y": 180,
+    "start_frame": 12,
+    "end_frame": 60
+  }]
+}
+```
+
+坐标固定在最终画布中；帧号属于本镜局部 24fps，窗口为左闭右开，至少 12 帧且避开头像整组进出。PNG 必须有真实透明通道，整个标签框位于 x=40…1040、y=120…1380 的父级文字保留区。清单覆盖该镜全部批准文字，不接受轨迹、自定义表达式或新增文案。窗口、字区与实际画面冲突时修正当前内部准备；不能改变已批准原声时窗、语义或生成计划来容纳它。
+
+在现有 realization 中补实际 `motion_readability.targets`，其 `content_ref` 精确引用同一栅格化输入；目标字区必须位于对应 PNG 内，阅读窗必须完整位于该 PNG 的显示窗。对生成素材的语义取证，completed record 的 `semantic_brief` 同时保留实际标签 manifest、PNG、栅格化输入的文件描述，供现有 `content_refs` 引用。完成原生成证据、语义评审、实际文字扫描和最终合成检查后才冻结现有 mapping；仅有 PNG、manifest 或编译通过均不算画面验收。
 
 GBRO 优先用于能由少量具体纸面对象直观表达的组装、替换或关系连接；精确人物行为优先真实视频或对应动态能力，官方界面及必须准确读取的数据优先资料或可靠图形组件。其隐喻、visual spec、静帧、动画生成和视频 QA 构成完整创作渠道；已有 `gbro-collage-broll/design` 是稳定工作流模板，不因调用外部生成服务而漏计。沿用现有 brief/spec/QA 及批准请求记录工作流、提交版本、真实 action 和产物；临时隐喻和每条生成结果不另造模板，也不冒充本地代码渲染。
 
 动画采用上游的“空色场 → 结构 → 主体/卡片 → 连接或动作 → 完成态”组装设计；逐件滑入、卡位和连接要表达当前口播的具体关系，不能只是整张图淡入或慢推拉。图片步骤按 `generation_plan.steps` 准备两张同底色、同纸纹、同 9:16 画布的图：首帧只有空纸面，尾帧是已验收的完整拼贴，不能拿完成图当首帧；步骤之间用 `{"$step":"image-step","output":0}` 引用真实前一步输出，不预写未来文件摘要。图片完成后，按用户已确认的视频渠道及其真实 action 构造图生视频请求，参数以该渠道当前模型说明为准；不静默换模型或自行补造动画。
 
 实际验收空场/起始状态、逐件组装过程和最终落位，核对隐喻能直接看懂、纸片边缘与质感清楚、动作发生在所用原速区间、无多余声音和第二份字幕。完成静帧不等于动态视频完成；接入所选视频渠道的原字节适配器后，由父级合成同源圆形人物小窗、原声和唯一字幕轨，展示可播放视频及必要原尺寸帧，不制作缩略图或联系表。某条素材未通过只淘汰该条，不永久排除 GBRO，也不强行替换效果更好的原 B-roll。
+
+若本镜表达逐条复制或填写，另按[实际媒体复核](visual-quality-contract.md#实际媒体复核)逐项检查内容身份、完整落位及批准的先后顺序。第一条尚不完整而第二条先完成时，不能因纸片有运动或末态有两行内容就判通过；保留原片并记录具体失败，不自动重试生成。
 
 ## 调用前交接
 

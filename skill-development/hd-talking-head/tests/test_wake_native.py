@@ -19,11 +19,53 @@ from edit.hd.tools import broll_skill_selection, motion_capabilities, wake_openi
 from edit.hd.tests.test_visual_strategy import valid_intent, valid_strategy, strategy_component
 from edit.hd.tests import test_broll_component_executor as fixture
 from edit.hd.tools import broll_component_executor as executor
-from edit.hd.tools import state, content_analysis, contract_artifacts as artifacts, visual_confirmation as confirmation, motion_match_cache
+from edit.hd.tools import state, content_analysis, contract_artifacts as artifacts, visual_confirmation as confirmation, motion_match_cache, confirmed_content
 from edit.hd.tests.test_startup import approve_fixture_setup
 from edit.hd.tests.test_visual_direction import draft_segment
 
 SAMPLE = SKILL / 'assets/wake-native-v2-smoke'
+
+class WakeSourceDescriptorTests(unittest.TestCase):
+    def test_only_actual_project_fonts_css_may_be_empty(self):
+        payload = (SAMPLE / 'native-inputs/brief.json').read_bytes()
+        brief = wake.validate_brief(payload)
+        original = wake.inspect_result(SAMPLE, payload)
+        src = json.loads((SAMPLE / original['calls'][0]['job_path']).read_bytes())['project_src']
+        for name in ('fonts.css', 'index.html', 'assets/fonts.css'):
+            with self.subTest(name=name):
+                record = copy.deepcopy(original)
+                empty = {'job_path': src + '/' + name, 'sha256': hashlib.sha256(b'').hexdigest(), 'byte_count': 0}
+                files = record['project_files']
+                files[:] = [f for f in files if f['job_path'] != empty['job_path']] + [empty]
+                contents = {empty['job_path']: b''}
+                for d in record['calls']:
+                    call = json.loads((SAMPLE / d['job_path']).read_bytes())
+                    if call['step'] != 'init':
+                        call['project_files'] = files
+                    data = json.dumps(call).encode()
+                    contents[d['job_path']] = data
+                    d.update(sha256=hashlib.sha256(data).hexdigest(), byte_count=len(data))
+                def read(path):
+                    return contents[path] if path in contents else (SAMPLE / path).read_bytes()
+                if name != 'fonts.css':
+                    with self.assertRaisesRegex(ValueError, 'Invalid Wake file descriptor'):
+                        wake.check_result(brief, hashlib.sha256(payload).hexdigest(), record, read)
+                    continue
+                self.assertEqual(wake.check_result(brief, hashlib.sha256(payload).hexdigest(), record, read), record)
+                # An empty optional stylesheet still retains its exact path, bytes and hash.
+                for change in ({'sha256': '0' * 64}, {'byte_count': 1}):
+                    bad = copy.deepcopy(record)
+                    next(f for f in bad['project_files'] if f['job_path'] == empty['job_path']).update(change)
+                    with self.assertRaises(ValueError):
+                        wake.check_result(brief, hashlib.sha256(payload).hexdigest(), bad, read)
+                with self.assertRaisesRegex(ValueError, 'Frozen Wake evidence differs'):
+                    wake.check_result(brief, hashlib.sha256(payload).hexdigest(), record,
+                                      lambda path: b'changed' if path == empty['job_path'] else read(path))
+
+    def test_non_source_fonts_css_is_not_an_empty_file_exception(self):
+        for path in ('images/fonts.css', 'outputs/fonts.css', 'calls/fonts.css'):
+            with self.subTest(path=path), self.assertRaisesRegex(ValueError, 'Invalid Wake file descriptor'):
+                wake.check_descriptor({'job_path': path, 'sha256': hashlib.sha256(b'').hexdigest(), 'byte_count': 0})
 
 class WakeNativeTests(unittest.TestCase):
     def setUp(self):
@@ -70,6 +112,64 @@ class WakeNativeTests(unittest.TestCase):
         segment = {'segment_id': 'seg-001', 'start': 0, 'end': 6, 'shot_recipe': recipe}
         return adapter, c, recipe, segment
 
+    def test_confirmed_media_follows_actual_wake_result(self):
+        _, component, recipe, segment = self.setup_component()
+        (self.root / 'job-context.json').write_text('{}')
+        result = wake.inspect_result(self.job.job_dir, self.payload)
+        media = result['media']
+        descriptor = {'path': media['job_path'], 'sha256': media['sha256'], 'bytes': media['byte_count']}
+        wanted = {'segment_id': 'seg-001', 'component_id': component['component_id'],
+            'composition_family': recipe['composition']['family'], 'visible_text': [],
+            'binding': {'dependency_id': 'lemo-wake', 'kind': 'code_generated'},
+            'completed_media': descriptor}
+        record = {'schema_version': 1, 'job_id': self.job.job_id, 'source_words': [], 'visuals': [wanted]}
+        target = self.job.job_dir / 'manifests/confirmed-content.json'
+        treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': component['component_id'],
+                                'brief_path': 'native-inputs/brief.json'}],
+            'semantic_assessments': [{'segment_id': 'seg-001', 'component_id': component['component_id'],
+                'candidate_id': 'lemo-wake:wake', 'verdict': 'pass', 'content_refs': [{
+                    'path': self.brief['result_record_path'], 'sha256': wake.sha(self.job.job_dir / self.brief['result_record_path']),
+                    'pointer': '/status', 'value': 'completed'}]}]}
+        plan = {'segments': [segment]}
+        artifacts.write_json_artifact(target, record)
+        confirmed_content.check_confirmed_content(self.job, plan, treatment=treatment)
+        shutil.copyfile(self.job.job_dir / descriptor['path'], self.job.job_dir / 'other-sample.mp4')
+        for change in ({'path': 'other-sample.mp4'}, {'sha256': '0' * 64}, {'bytes': descriptor['bytes'] + 1}):
+            artifacts.write_json_artifact(target, {**record, 'visuals': [{**wanted,
+                'completed_media': {**descriptor, **change}}]})
+            with self.subTest(change=change), self.assertRaises(confirmed_content.ConfirmedContentError):
+                confirmed_content.check_confirmed_content(self.job, plan, treatment=treatment)
+        artifacts.write_json_artifact(target, record)
+        for change in ('brief', 'review', 'scene'):
+            altered, altered_plan = copy.deepcopy(treatment), copy.deepcopy(plan)
+            if change == 'brief': altered_plan['segments'][0]['shot_recipe']['components'][0]['brief_sha256'] = '0' * 64
+            elif change == 'review': altered['semantic_assessments'][0]['content_refs'][0]['sha256'] = '0' * 64
+            else: altered['scenes'][0]['component_id'] = 'other'
+            with self.subTest(change=change), self.assertRaises(confirmed_content.ConfirmedContentError):
+                confirmed_content.check_confirmed_content(self.job, altered_plan, treatment=altered)
+        media_path = self.job.job_dir / descriptor['path']
+        original = media_path.read_bytes()
+        try:
+            media_path.write_bytes(original + b'changed')
+            with self.assertRaises(confirmed_content.ConfirmedContentError):
+                confirmed_content.check_confirmed_content(self.job, plan, treatment=treatment)
+        finally:
+            media_path.write_bytes(original)
+        # The compiled consumer resolves this same brief/result through its frozen mapping.
+        mapping = {'native_inputs': [{'segment_id': 'seg-001', 'component_id': component['component_id'],
+            'artifact': confirmation._record(self.job.job_dir, self.job.job_dir / 'native-inputs/brief.json'),
+            'result_record': confirmation._record(self.job.job_dir, self.job.job_dir / self.brief['result_record_path'])}]}
+        with mock.patch.object(confirmation, 'validate_visual_authorization', return_value={'mapping': mapping}) as auth:
+            confirmed_content.check_confirmed_content(self.job, plan)
+            auth.assert_called_once_with(self.job, require_realized=True)
+            mapping['native_inputs'][0]['result_record']['path'] = 'native-inputs/not-consumed.json'
+            with self.assertRaises(confirmed_content.ConfirmedContentError):
+                confirmed_content.check_confirmed_content(self.job, plan)
+        # Existing records without the optional media lock invoke no native result lookup.
+        artifacts.write_json_artifact(target, {**record, 'visuals': [{k: v for k, v in wanted.items() if k != 'completed_media'}]})
+        with mock.patch.object(confirmation, 'validate_visual_authorization', side_effect=AssertionError('unexpected lookup')):
+            confirmed_content.check_confirmed_content(self.job, plan)
+
     def flow_draft(self):
         adapter=wake.create_adapter(PROJECT,sys.executable,lambda *_:self.payload)
         segment=draft_segment(('code_generated',),segment_id='seg-001',end=6)
@@ -88,8 +188,9 @@ class WakeNativeTests(unittest.TestCase):
             'beats':[{'segment_id':'seg-001','component_id':cid,'semantic_row_id':'opening-semantic','start':0,'end':6,
                 'transcript':script,'semantic_goal':'按语义选择模板','required_change':'原图关系依次运动连接',
                 'intent_statement':segment['visual_intent']['statement'],'component_brief':segment['visual_strategy']['components'][0]['brief'],
+                'window_status':'resolved',
                 'binding_snapshot':copy.deepcopy(segment['bindings'][cid]),
-                'skill_reviews':{skill:{'fit':'preferred' if skill=='lemo-wake' else 'unsuitable','reason':'该开场项按已确定首镜政策执行'} for skill in skills},
+                'skill_reviews':{skill:{'fit':'preferred' if skill=='lemo-wake' else 'unreviewed','reason':'该fixture按显式Wake开场约束执行；其他来源未作语义判断'} for skill in skills},
                 'single_source_review':{'decision':'keep','reason':'已批准封面首镜固定使用完整原生Wake'},
                 'candidates':[{'candidate_id':'lemo-wake:wake','fit':'preferred','reason':'按固定首镜政策演示原图关系','visual_pattern':'source_image_actor','design_plan':design}]}],
             'overlay_beats':[],'history_note':'独立开发样本，无历史视频','fixed_context':[],'recent_context':[]}
@@ -102,7 +203,15 @@ class WakeNativeTests(unittest.TestCase):
                 'transcript_refs':[{'start_word':0,'end_word':1,'quote':script,'basis':'current_clause'}],
                 'content_refs':[{'path':self.brief['image']['job_path'],'sha256':self.brief['image']['sha256'],'image':True}]}]}
         treatment=motion_match_cache.match_once(PROJECT,director,treatment)
-        treatment['skill_selection']=broll_skill_selection.assign_skills(PROJECT,treatment['skill_selection'],job_dir=self.job.job_dir)
+        beat = treatment['skill_selection']['beats'][0]
+        wake_review = beat['candidates'][0]
+        # Preserve the full recall; the explicit opening constraint chooses Wake,
+        # without pretending that every other author is semantically unsuitable.
+        beat['candidates'] = [wake_review if item['candidate_id'] == 'lemo-wake:wake' else
+            {'candidate_id': item['candidate_id'], 'fit': 'unreviewed',
+             'reason': '该fixture未评此候选；保留全集并由显式Wake开场约束计算上下界。'}
+            for item in treatment['motion_matches']['opening-semantic']['matches']]
+        treatment['skill_selection']=broll_skill_selection.assign_skills(PROJECT,treatment['skill_selection'],job_dir=self.job.job_dir,director=director)
         native=wake.inspect_result(self.job.job_dir,self.payload)
         for item in native['project_files']:
             if item['job_path'].endswith(('/index.html','/DIRECTOR.md')):

@@ -782,7 +782,8 @@ def main() -> int:
                 "reason": beat_record["required_change"],
                 "visual_pattern": chosen.split("/")[-1]}]
         treatment["skill_selection"]["assignments"] = assign_skills(
-            project, treatment["skill_selection"], job_dir=job_dir)["assignments"]
+            project, treatment["skill_selection"], job_dir=job_dir,
+            director={"segments": plan_segments})["assignments"]
 
     # Validate host-derived retrieval tags against the reviewed capability
     # catalog. Tags are never copied from the selected template metadata.

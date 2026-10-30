@@ -1531,21 +1531,68 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
             },
         )
         final = self.job.job_dir / artifact.job_path
+        receipt = final.with_name('.ai-r7.transaction.json')
+        baseline = json.loads(receipt.read_text())
         changed = copy.deepcopy(component)
         changed["generation_id"] = "generation-002"
-        second = _RecordingKindAdapter(b"second")
-        with self.assertRaises(executor.BrollComponentExecutionError) as caught:
-            executor.execute_component(
-                self.job,
-                _request(changed),
-                adapters={
-                    "ai_generated": second.binding("ai_generated", "ai"),
-                    "artifact_probe": _artifact_probe(),
-                },
-            )
-        self.assertEqual(caught.exception.error_code, "BROLL_GENERATION_FAILED")
-        self.assertEqual(second.calls, [])
-        self.assertEqual(final.read_bytes(), first_output)
+        for state in ('published', 'publishing', 'complete'):
+            with self.subTest(state=state):
+                record = copy.deepcopy(baseline)
+                record['state'] = state
+                if state == 'complete':
+                    record['output_identity'] = None
+                raw = _canonical(record) + b'\n'
+                receipt.write_bytes(raw)
+                second = _RecordingKindAdapter(b"second")
+                with self.assertRaises(executor.BrollComponentExecutionError) as caught:
+                    executor.execute_component(
+                        self.job,
+                        _request(changed),
+                        adapters={
+                            "ai_generated": second.binding("ai_generated", "ai"),
+                            "artifact_probe": _artifact_probe(),
+                        },
+                    )
+                self.assertEqual(caught.exception.error_code, "BROLL_GENERATION_FAILED")
+                self.assertEqual(second.calls, [])
+                self.assertEqual(receipt.read_bytes(), raw)
+                self.assertEqual(final.read_bytes(), first_output)
+
+    def test_stale_unfinished_transaction_rebuild_requires_absent_final(self) -> None:
+        for state in ('planned', 'running'):
+            for existing_output in (False, True):
+                with self.subTest(state=state, existing_output=existing_output):
+                    output = b'approved-output'
+                    component_id = f'stale-{state}-{existing_output}'
+                    component = _ai_component(output, component_id=component_id)
+                    artifact = executor.execute_component(self.job, _request(component),
+                        adapters=_kind_registry({'ai_generated': _RecordingKindAdapter(output)}))
+                    final = self.job.job_dir / artifact.job_path
+                    receipt = final.with_name(f'.{component_id}-r7.transaction.json')
+                    record = json.loads(receipt.read_text())
+                    record.update(state=state, output_sha256=None, byte_count=None,
+                                  output_identity=None, artifact=None)
+                    if state == 'planned':
+                        record['nonce_identity'] = None
+                    raw = _canonical(record) + b'\n'
+                    receipt.write_bytes(raw)
+                    if not existing_output:
+                        final.unlink()
+                    changed = copy.deepcopy(component)
+                    changed['generation_id'] = 'generation-002'
+                    adapter = _RecordingKindAdapter(output)
+                    adapters = _kind_registry({'ai_generated': adapter})
+                    if existing_output:
+                        with self.assertRaises(executor.BrollComponentExecutionError):
+                            executor.execute_component(self.job, _request(changed), adapters=adapters)
+                        self.assertEqual(adapter.calls, [])
+                        self.assertEqual(receipt.read_bytes(), raw)
+                    else:
+                        rebuilt = executor.execute_component(self.job, _request(changed), adapters=adapters)
+                        self.assertEqual(len(adapter.calls), 1)
+                        self.assertNotEqual(rebuilt.input_sha256, artifact.input_sha256)
+                        self.assertEqual(json.loads(receipt.read_text())['state'], 'published')
+                    self.assertEqual(final.read_bytes(), output)
 
     def test_published_receipt_is_canonical_durable_and_cross_bound(self) -> None:
         output = b"generated"
@@ -1773,7 +1820,8 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
             with self.subTest(name=name):
                 record = copy.deepcopy(baseline)
                 mutate(record)
-                receipt.write_bytes(_canonical(record) + b"\n")
+                raw = _canonical(record) + b"\n"
+                receipt.write_bytes(raw)
                 adapter = _RecordingKindAdapter(
                     output, failure=AssertionError("must not invoke")
                 )
@@ -1794,6 +1842,7 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                     caught.exception.error_code, "BROLL_GENERATION_FAILED"
                 )
                 self.assertEqual(adapter.calls, [])
+                self.assertEqual(receipt.read_bytes(), raw)
                 self.assertEqual(
                     (self.job.job_dir / artifact.job_path).read_bytes(), output
                 )
@@ -4553,6 +4602,36 @@ class ReferenceMediaBudgetTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.directory = Path(self.temporary.name).resolve()
         self.addCleanup(self.temporary.cleanup)
+
+    def test_empty_verified_project_file_is_frozen_but_empty_media_is_rejected(self):
+        from types import SimpleNamespace
+        job = _Job(self.directory)
+        path = job.job_dir / 'fonts.css'; path.write_bytes(b'')
+        digest = hashlib.sha256(b'').hexdigest()
+        item = executor.ReferenceProcessMedia('source', path.name, digest)
+        adapter = SimpleNamespace(media_loader=lambda *_: (item,))
+        pinned = executor._job_context(job)
+        try:
+            for allowed, should_pass in ((set(), False), ({(path.name, digest)}, True),
+                                         ({(path.name, '0' * 64)}, False)):
+                with tempfile.TemporaryDirectory() as tmp:
+                    nonce_fd = os.open(tmp, os.O_RDONLY | os.O_DIRECTORY)
+                    try:
+                        with mock.patch.object(executor, '_wake_empty_project_files', return_value=allowed):
+                            if should_pass:
+                                manifest_fd, media_fds = executor._freeze_reference_media(
+                                    adapter=adapter, job=job, pinned_job=pinned, recipe={},
+                                    component={}, brief=b'{}', nonce_fd=nonce_fd)
+                                self.assertEqual(os.fstat(media_fds[0]).st_size, 0)
+                                for fd in (manifest_fd, *media_fds): os.close(fd)
+                            else:
+                                with self.assertRaises(executor.BrollComponentExecutionError):
+                                    executor._freeze_reference_media(adapter=adapter, job=job,
+                                        pinned_job=pinned, recipe={}, component={}, brief=b'{}', nonce_fd=nonce_fd)
+                    finally:
+                        os.close(nonce_fd)
+        finally:
+            pinned.close()
 
     def test_reference_media_freezes_more_than_eight_and_closes_on_budget_or_fd_failure(self) -> None:
         job = _Job(self.directory)

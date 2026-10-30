@@ -143,6 +143,49 @@ class GenerationQueueTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "reference changed"):
             generation_inputs.resolve_request(self.job, request)
 
+    def test_completed_artifact_download_identifies_our_client_without_browser_spoofing(self):
+        import urllib.request
+        from edit.hd.tools import generation_channels as channels
+        request = self.request('download-video', 'video'); self.add(request)
+        claim = queue.claim(self.job, request['id'], 10)
+        action = {'action': 'submit', 'purpose': 'video', 'request_id': request['id'],
+                  'claim_token': claim['claim_token']}
+        url = 'https://a.lovart.ai/artifacts/generator/fixture.mp4'
+        def fetch(actual, *, timeout):
+            self.assertIsInstance(actual, urllib.request.Request)
+            self.assertEqual(actual.full_url, url)
+            self.assertEqual(actual.get_header('User-agent'), 'HD-Talking-Head/1.0 (authorized artifact retrieval)')
+            self.assertIsNone(actual.get_header('Cookie'))
+            self.assertIsNone(actual.get_header('Authorization'))
+            self.assertEqual(timeout, 120)
+            return io.BytesIO(b'synthetic provider media bytes')
+        with mock.patch.object(channels.urllib.request, 'urlopen', side_effect=fetch) as download:
+            result = channels.record_result(SimpleNamespace(job_dir=self.job), action,
+                {'status': 'completed', 'artifacts': [{'type': 'video', 'url': url}]})
+        self.assertEqual(download.call_count, 1)
+        self.assertEqual(result['status'], 'completed')
+        self.assertEqual(Path(result['artifacts'][0]['path']).read_bytes(), b'synthetic provider media bytes')
+        self.assertEqual(queue.status(self.job)['items'][request['id']]['request'], request)
+
+    def test_artifact_access_denial_preserves_pending_generation_without_retry(self):
+        import urllib.error
+        from edit.hd.tools import generation_channels as channels
+        request = self.request('denied-video', 'video'); self.add(request)
+        claim = queue.claim(self.job, request['id'], 10)
+        queue.record(self.job, request['id'], claim['claim_token'], {'status': 'pending', 'task_ids': ['provider-task']})
+        before = queue.status(self.job)['items'][request['id']]
+        action = {'action': 'query', 'purpose': 'video', 'request_id': request['id'],
+                  'claim_token': claim['claim_token'], 'task_ids': ['provider-task']}
+        url = 'https://a.lovart.ai/artifacts/generator/denied.mp4'
+        denied = urllib.error.HTTPError(url, 403, 'Forbidden', {}, io.BytesIO(b'Access denied'))
+        with mock.patch.object(channels.urllib.request, 'urlopen', side_effect=denied) as download:
+            with self.assertRaises(urllib.error.HTTPError):
+                channels.record_result(SimpleNamespace(job_dir=self.job), action,
+                    {'status': 'completed', 'artifacts': [{'type': 'video', 'url': url}]})
+        self.assertEqual(download.call_count, 1)
+        self.assertEqual(queue.status(self.job)['items'][request['id']], before)
+        self.assertFalse((self.job / 'generated-media' / request['id'] / '0.mp4').exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
