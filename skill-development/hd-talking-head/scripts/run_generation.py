@@ -32,6 +32,13 @@ def main():
     record = commands.add_parser("record")
     record.add_argument("--action-json", type=Path, required=True)
     record.add_argument("--response-json", type=Path, required=True)
+    replace = commands.add_parser("replace-unsent-upload")
+    replace.add_argument("--action-json", type=Path, required=True)
+    replace.add_argument("--evidence-json", type=Path, required=True)
+    edit = commands.add_parser("edit-completed-image")
+    edit.add_argument("--plan-json", type=Path, required=True)
+    edit.add_argument("--plan-sha256", required=True)
+    edit.add_argument("--user-confirmation", required=True)
     args = parser.parse_args()
     sys.path.insert(0, str(args.project_root.resolve()))
     from edit.hd.tools import generation_channels, generation_queue
@@ -43,8 +50,12 @@ def main():
         result = generation_queue.add(args.job, _read(args.plan_json), args.user_confirmation, args.plan_sha256)
     elif args.command == "next":
         result = generation_channels.next_action(args.job, args.request_id, account_limit=args.account_limit)
-    else:
+    elif args.command == "record":
         result = generation_channels.record_result(args.job, _read(args.action_json), _read(args.response_json))
+    elif args.command == "replace-unsent-upload":
+        result = generation_channels.replace_unsent_upload(args.job, _read(args.action_json), _read(args.evidence_json))
+    else:
+        result = generation_queue.edit_completed_image(args.job, _read(args.plan_json), args.user_confirmation, args.plan_sha256)
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

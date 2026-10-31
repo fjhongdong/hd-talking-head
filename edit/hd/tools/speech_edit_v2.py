@@ -54,6 +54,13 @@ _PROPOSAL_NAMES = {
     "estimated-duration.json",
 }
 _EDIT_NAMES = {"edit-plan.json", "edited-aroll.mp4", "timeline-map.json"}
+_SENTENCE_PUNCTUATION = frozenset(
+    ",.!?;:'\"，。！？；：、‘’“”「」『』（）()［］[]《》〈〉【】…—"
+)
+
+
+def _punctuation_or_space(text: str) -> bool:
+    return all(char.isspace() or char in _SENTENCE_PUNCTUATION for char in text)
 
 
 def _input(job: state.JobState, name: str) -> Path:
@@ -399,15 +406,36 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
     normalized: list[dict[str, Any]] = []
     prefix = ""
     merged = 0
+    consumed_next = False
 
-    sentence_punctuation = frozenset(
-        ",.!?;:'\"，。！？；：、‘’“”「」『』（）()［］[]《》〈〉【】…—"
-    )
+    def short_bounded_group(index: int) -> bool:
+        if index == 0 or index + 1 >= len(events):
+            return False
+        neighbors = events[index - 1:index + 2]
+        for item in neighbors:
+            if (type(item) is not dict or item.get("type") != "word"
+                    or type(item.get("text")) is not str or not item["text"].isalpha()
+                    or type(item.get("speaker_id")) is not str or not item["speaker_id"]
+                    or any(type(item.get(key)) not in (int, float)
+                           or not math.isfinite(item[key]) for key in ("start", "end"))):
+                return False
+        before, zero, after = neighbors
+        # Preserve one indivisible, short phrase within real timed anchors.
+        # This is not a guessed timestamp for the missing syllable. Keeping
+        # the whole group below 0.8s also excludes automatic long-word trims.
+        return (
+            before["speaker_id"] == zero["speaker_id"] == after["speaker_id"]
+            and 0 <= before["start"] < before["end"] <= zero["start"]
+            <= after["start"] < after["end"] <= duration + 0.2
+            and normalized[-1] == {"text": before["text"], "start": before["start"], "end": before["end"]}
+            and after["start"] - before["end"] < VIDEO_USE_PACING_PROFILE["silence_threshold_seconds"]
+            and after["end"] - before["start"] < 0.8
+        )
 
-    def is_punctuation_or_space(text: str) -> bool:
-        return all(char.isspace() or char in sentence_punctuation for char in text)
-
-    for event in events:
+    for index, event in enumerate(events):
+        if consumed_next:
+            consumed_next = False
+            continue
         if type(event) is not dict:
             raise SpeechEditV2Error("video-use transcription event is invalid")
         kind = event.get("type")
@@ -430,7 +458,7 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
             or start < 0 or end < start or end > duration + 0.2
         ):
             raise SpeechEditV2Error("video-use word timestamp is invalid")
-        punctuation_only = is_punctuation_or_space(event["text"])
+        punctuation_only = _punctuation_or_space(event["text"])
         if punctuation_only and start != end:
             if normalized:
                 if start < normalized[-1]["end"]:
@@ -446,6 +474,12 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
                 if start < previous["end"]:
                     raise SpeechEditV2Error("video-use words overlap")
                 if not punctuation_only and start > previous["end"]:
+                    if short_bounded_group(index):
+                        following = events[index + 1]
+                        previous["text"] += event["text"] + following["text"]
+                        previous["end"] = following["end"]
+                        consumed_next = True
+                        continue
                     raise SpeechEditV2Error("video-use zero-duration word is separated")
                 previous["text"] += event["text"]
             else:
@@ -906,6 +940,46 @@ def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, 
     return edit_timeline.validate_edit_plan(paced, checked_words)
 
 
+def _zero_duration_lexical_candidates(
+    payload: Any, plan: dict[str, Any], duration: float,
+) -> list[dict[str, Any]]:
+    """Require listening around missing lexical timing, including endpoint merges.
+
+    The raw event point is not an established audio end. Review uses the
+    surrounding timed words and the actual EDL, including any within-word cuts.
+    """
+    events = payload.get("words", [])
+    intervals = _video_use_intervals(plan, duration)
+    candidates = []
+    for index, event in enumerate(events):
+        if (event.get("type") != "word" or event.get("start") != event.get("end")
+                or _punctuation_or_space(event["text"])):
+            continue
+        before = next((item for item in reversed(events[:index])
+                       if item.get("type") == "word" and item["start"] < item["end"]
+                       and not _punctuation_or_space(item["text"])), None)
+        after = next((item for item in events[index + 1:]
+                      if item.get("type") == "word" and item["start"] < item["end"]
+                      and not _punctuation_or_space(item["text"])), None)
+        start = float(before["start"] if before else event["start"])
+        end = float(after["end"] if after else duration)
+        if not any(min(end, right) > max(start, left) for left, right in intervals):
+            continue
+        identity = contract_artifacts.sha256_json({"event_index": index, "event": event})[:16]
+        candidates.append({
+            "candidate_id": "zero-duration-lexical-" + identity,
+            "kind": "zero_duration_lexical", "text": event["text"],
+            "source_start": start, "source_end": end,
+            "raw_event_time": event["start"],
+            "context": "".join(item.get("text", "") for item in events[max(0, index - 2):index + 3]),
+            "evidence": "zero_duration_lexical_event_has_unknown_audio_boundary",
+            "review_requirement": "核听相邻完整原音和当前切点；原零点不是已确认音尾，不得按它直接截断。",
+            "audition_range": {"source_start": max(0.0, start - 0.35),
+                               "source_end": min(duration, end + 0.35)},
+        })
+    return candidates
+
+
 def cleanup_check_candidates(job: state.JobState) -> list[dict[str, Any]]:
     """Recheck the current retained output, including pauses across keep cuts."""
     from .cleanup_risk import retained_repetitions
@@ -936,6 +1010,9 @@ def cleanup_check_candidates(job: state.JobState) -> list[dict[str, Any]]:
     candidates.extend(_internal_word_silence_candidates(
         words, plan, rate, samples, duration,
     ))
+    candidates.extend(_zero_duration_lexical_candidates(
+        contract_artifacts.read_json_artifact(speech / "scribe.json"), plan, duration,
+    ))
     return sorted(candidates, key=lambda c: (c["source_start"], c["candidate_id"]))
 
 
@@ -951,11 +1028,220 @@ def _validate_cleanup_resolutions(candidates: list[dict[str, Any]], resolutions:
             raise SpeechEditV2Error("retained cleanup candidate needs a specific keep reason after listening")
         identifiers.append(item["candidate_id"])
     if len(identifiers) != len(set(identifiers)) or set(identifiers) != {c["candidate_id"] for c in candidates}:
-        raise SpeechEditV2Error("unresolved retained pauses or repetitions; revise the plan or review each candidate")
+        raise SpeechEditV2Error("unresolved cleanup candidates; revise the plan or review each candidate")
+
+
+def cleanup_user_audio_binding(job: state.JobState, audition: str | Path) -> dict[str, Any]:
+    """Bind an existing, fully listened PCM draft to the current source cuts.
+
+    This checks bytes, not listening. It neither creates audio nor approves a Job.
+    The final renderer adds less than one video frame of silence per cut and
+    resamples/encodes the source; a draft review is not final-track acceptance.
+    """
+    speech = job.job_dir / "05-speech-cleanup"
+    required = {"speech-16k.wav", "cleanup-proposal.json", "word-transcript.json", "scribe.json"}
+    records = job.stages["speech_cleanup"]["artifacts"]
+    for name in required:
+        path = speech / name
+        matches = [record for record in records
+                   if record.get("path") == path.relative_to(job.job_dir).as_posix()]
+        if (len(matches) != 1 or not path.is_file()
+                or matches[0].get("bytes") != path.stat().st_size
+                or matches[0].get("sha256") != contract_artifacts.sha256_file(path)):
+            raise SpeechEditV2Error("current cleanup audio/plan/transcript artifact changed")
+    _input(job, "video")
+    audition = Path(audition).resolve(strict=True)
+    if not audition.is_relative_to(job.root.resolve()):
+        raise SpeechEditV2Error("user audition must be an existing file in this workspace")
+    rate, source = _pacing_audio(speech / "speech-16k.wav")
+    words = edit_timeline._validate_words(contract_artifacts.read_json_artifact(
+        speech / "word-transcript.json")["words"])
+    plan = edit_timeline.validate_edit_plan(contract_artifacts.read_json_artifact(
+        speech / "cleanup-proposal.json"), words)
+    intervals = _video_use_intervals(plan, len(source) / rate)
+    formal_source_duration = float(_inspect(job)["video"]["duration"])
+    if intervals != _video_use_intervals(plan, formal_source_duration):
+        raise SpeechEditV2Error("audition source clock changes the formal retained intervals")
+    if (len(intervals) == 1 and abs(intervals[0][0]) <= 1e-9
+            and abs(intervals[0][1] - formal_source_duration) <= 1e-6):
+        raise SpeechEditV2Error("this audition binding requires edited cuts; uncut audio uses the original track")
+    try:
+        with wave.open(str(audition), "rb") as audio:
+            if (audio.getnchannels() != 1 or audio.getsampwidth() != 2
+                    or audio.getframerate() != rate or audio.getcomptype() != "NONE"):
+                raise SpeechEditV2Error("user audition must match the source PCM format")
+            heard = array("h", audio.readframes(audio.getnframes()))
+    except (EOFError, OSError, wave.Error) as exc:
+        raise SpeechEditV2Error("invalid user audition WAV") from exc
+    cursor = 0
+    fade = round(rate * 0.03)
+    clock = []
+    formal, formal_duration = _frame_aligned_timeline(intervals, fps=24)
+    for (start, end), rendered in zip(intervals, formal):
+        clip = source[round(start * rate):round(end * rate)]
+        if len(clip) < fade * 2:
+            raise SpeechEditV2Error("user audition cuts are too short for the declared edge fades")
+        for index in range(fade):
+            clip[index] = round(clip[index] * index / fade)
+            clip[-1 - index] = round(clip[-1 - index] * index / fade)
+        if heard[cursor:cursor + len(clip)] != clip:
+            raise SpeechEditV2Error("user audition does not match the current retained source PCM and fades")
+        clock.append({**rendered, "audition_start": cursor / rate,
+                      "audition_end": (cursor + len(clip)) / rate})
+        cursor += len(clip)
+    if cursor != len(heard):
+        raise SpeechEditV2Error("user audition contains extra or missing source audio")
+    return {
+        "audition": {"path": str(audition), "bytes": audition.stat().st_size,
+                     "sha256": contract_artifacts.sha256_file(audition)},
+        "cleanup_artifacts": [copy.deepcopy(record) for record in records
+                              if record["path"] in {"05-speech-cleanup/" + name for name in required}],
+        "candidates_sha256": contract_artifacts.sha256_json(cleanup_check_candidates(job)),
+        "scope": "retained_source_intervals_and_cuts",
+        "pcm_policy": "source-mono-s16-round-sample-cuts-30ms-round-linear-edge-fades",
+        "clock": clock,
+        "audition_duration": cursor / rate,
+        "formal_duration": formal_duration,
+        "formal_difference": {
+            "padding_per_cut_less_than_seconds": 1 / 24,
+            "cut_rounding_at_most_seconds": 1 / rate,
+            "audio": "original-source-48k-resampling-30ms-edge-fades-AAC-192k",
+            "final_track_listened": False,
+        },
+    }
 
 
 def validate_cleanup_review(job: state.JobState, review: dict[str, Any]) -> None:
     _validate_cleanup_resolutions(cleanup_check_candidates(job), review.get("speech_cleanup_resolutions", []))
+    reviewer = review.get("reviewed_by", "host")
+    if reviewer not in {"host", "user"}:
+        raise SpeechEditV2Error("cleanup audio reviewer must be host or user")
+    if reviewer == "user":
+        if (review.get("audio_listened") is not True
+                or type(review.get("user_confirmation")) is not str
+                or not review["user_confirmation"].strip()):
+            raise SpeechEditV2Error("user cleanup review requires actual listening and the user's confirmation")
+        binding = review.get("speech_cleanup_audio_review")
+        if type(binding) is not dict or type(binding.get("audition")) is not dict:
+            raise SpeechEditV2Error("user cleanup review requires the current audition binding")
+        path = binding["audition"].get("path")
+        if type(path) is not str or not path:
+            raise SpeechEditV2Error("user cleanup review requires the actual audition path")
+        if binding != cleanup_user_audio_binding(job, path):
+            raise SpeechEditV2Error("user cleanup review is stale or belongs to different audio/cuts")
+
+
+def edit_user_audio_binding(job: state.JobState) -> dict[str, Any]:
+    """Verify actual edit audio against the user-approved cuts; never claim listening.
+
+    Audio-only AAC hashes are computed in memory. No media, Job or receipt is written.
+    Exact encoder/clock equality is required; a different encoder is not guessed safe.
+    """
+    if job.stages["speech_cleanup"]["status"] != "approved":
+        raise SpeechEditV2Error("speech_cleanup must be approved")
+    sources = []
+    for path in (job.job_dir / "manifests").glob("local-qa-speech_cleanup-r*.json"):
+        receipt = contract_artifacts.read_json_artifact(path)
+        if (receipt.get("job_id") != job.job_id or receipt.get("job_dir") != str(job.job_dir)
+                or receipt.get("stage") != "speech_cleanup" or receipt.get("passed") is not True
+                or receipt.get("reviewed_by") != "user"
+                or receipt.get("artifacts") != job.stages["speech_cleanup"]["artifacts"]):
+            continue
+        validate_cleanup_review(job, receipt)
+        sources.append((path, receipt))
+    if len(sources) != 1:
+        raise SpeechEditV2Error("edit requires one current bound user cleanup review")
+    review_path, receipt = sources[0]
+    binding = receipt["speech_cleanup_audio_review"]
+    clock = binding["clock"]
+    intervals = [(s["source_start"], s["source_end"]) for s in clock]
+    segments, duration = _frame_aligned_timeline(intervals, fps=24)
+    records = job.stages["edit_structure"]["artifacts"]
+    for name in _EDIT_NAMES:
+        path = job.job_dir / "06-edit-structure" / name
+        matches = [r for r in records if r["path"] == path.relative_to(job.job_dir).as_posix()]
+        if (len(matches) != 1 or not path.is_file()
+                or matches[0]["bytes"] != path.stat().st_size
+                or matches[0]["sha256"] != contract_artifacts.sha256_file(path)):
+            raise SpeechEditV2Error("current edit artifact changed")
+    edit = contract_artifacts.read_json_artifact(job.job_dir / "06-edit-structure/edit-plan.json")
+    timeline = contract_artifacts.read_json_artifact(job.job_dir / "06-edit-structure/timeline-map.json")
+    cleanup = contract_artifacts.read_json_artifact(job.job_dir / "05-speech-cleanup/cleanup-proposal.json")
+    if (edit.get("cleanup_proposal") != cleanup
+            or edit.get("canvas") != {"width": 1080, "height": 1920, "fps": 24}
+            or edit.get("audio_policy") != "video-use-audio-clock-30ms-edge-fades"
+            or timeline.get("segments") != segments
+            or timeline.get("output_duration") != duration):
+        raise SpeechEditV2Error("formal edit differs from the user-reviewed cuts/clock")
+    media = job.job_dir / "06-edit-structure/edited-aroll.mp4"
+    base = ["ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error"]
+    filters = ["[0:a]aresample=48000,asplit=" + str(len(intervals)) + "".join(
+        f"[sourcea{i}]" for i in range(len(intervals)))]
+    for i, (start, end) in enumerate(intervals):
+        length = end - start
+        samples = math.ceil(length * 24 - 1e-9) * 2000
+        filters.append(
+            f"[sourcea{i}]atrim=start={start:.9f}:end={end:.9f},asetpts=PTS-STARTPTS,"
+            "afade=t=in:st=0:d=0.03,"
+            f"afade=t=out:st={max(0.0, length - 0.03):.9f}:d=0.03,"
+            f"apad=whole_len={samples},atrim=end_sample={samples},asetpts=N/SR/TB[a{i}]")
+    filters.append("".join(f"[a{i}]" for i in range(len(intervals)))
+                   + f"concat=n={len(intervals)}:v=0:a=1[outa]")
+    suffix = ["-f", "framehash", "-hash", "sha256", "pipe:1"]
+    def run(command: list[str]) -> str:
+        return subprocess.run(command, check=True, capture_output=True, text=True,
+                              timeout=max(60, int(duration * 4))).stdout
+    expected = run(base + ["-threads", "1", "-i", str(_input(job, "video")),
+        "-filter_complex_threads", "1", "-filter_complex", ";".join(filters),
+        "-map", "[outa]", "-c:a", "aac", "-b:a", "192k", "-ar", "48000"] + suffix)
+    actual = run(base + ["-i", str(media), "-map", "0:a:0", "-c:a", "copy"] + suffix)
+    def packets(value: str) -> list[list[str]]:
+        # MP4 adds skip-samples side data after column six; check priming below.
+        return [[v.strip() for v in row.split(",")[:6]] for row in value.splitlines()
+                if row and not row.startswith("#")]
+    expected_packets, actual_packets = packets(expected), packets(actual)
+    def audio_header(value: str) -> list[str]:
+        return [row for row in value.splitlines() if row.startswith((
+            "#extradata", "#tb", "#media_type", "#codec_id", "#sample_rate", "#channel_layout"))]
+    if (not expected_packets or actual_packets != expected_packets
+            or audio_header(actual) != audio_header(expected)):
+        raise SpeechEditV2Error("actual AAC payloads or packet clocks differ from approved source cuts")
+    probe = json.loads(run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(media)]))
+    videos = [s for s in probe["streams"] if s["codec_type"] == "video"]
+    audios = [s for s in probe["streams"] if s["codec_type"] == "audio"]
+    if len(videos) != 1 or len(audios) != 1:
+        raise SpeechEditV2Error("formal edit must have one video and one audio stream")
+    video, audio = videos[0], audios[0]
+    if (video.get("width") != 1080 or video.get("height") != 1920
+            or video.get("avg_frame_rate") != "24/1" or video.get("start_pts") != 0
+            or int(video.get("nb_frames", -1)) != round(duration * 24)
+            or float(video.get("duration", -1)) != round(duration, 6)
+            or audio.get("codec_name") != "aac" or audio.get("sample_rate") != "48000"
+            or audio.get("time_base") != "1/48000" or audio.get("start_pts") != 0
+            or audio.get("duration_ts") != round(duration * 48000)):
+        raise SpeechEditV2Error("actual media duration/frame/audio clock differs from approved timeline")
+    first = json.loads(run(["ffprobe", "-v", "error", "-select_streams", "a:0",
+        "-read_intervals", "%+#1", "-show_packets", "-of", "json", str(media)]))["packets"][0]
+    skips = [s for s in first.get("side_data_list", []) if s.get("side_data_type") == "Skip Samples"]
+    if (len(skips) != 1 or skips[0].get("skip_samples") != 1024
+            or skips[0].get("discard_padding") != 0):
+        raise SpeechEditV2Error("actual AAC priming does not match the production encoder clock")
+    return {"cleanup_review": {"path": review_path.relative_to(job.job_dir).as_posix(),
+                "sha256": contract_artifacts.sha256_file(review_path), "bytes": review_path.stat().st_size},
+            "audio_packets_sha256": contract_artifacts.sha256_json(actual_packets),
+            "audio_packet_count": len(actual_packets), "formal_duration": duration,
+            "scope": "user_reviewed_cuts_verified_against_actual_AAC_and_clock",
+            "final_track_listened": False, "final_audio_review": "pending"}
+
+
+def validate_edit_review(job: state.JobState, review: dict[str, Any]) -> None:
+    reviewer = review.get("reviewed_by", "host")
+    if reviewer == "host":
+        return
+    if reviewer != "user" or review.get("audio_listened") is not False:
+        raise SpeechEditV2Error("inherited user edit review must not claim formal audio listening")
+    if review.get("edit_structure_audio_review") != edit_user_audio_binding(job):
+        raise SpeechEditV2Error("edit review requires current verified user audio binding")
 
 
 def _require_cleanup_review(job: state.JobState) -> None:
@@ -966,15 +1252,15 @@ def _require_cleanup_review(job: state.JobState) -> None:
         receipt = contract_artifacts.read_json_artifact(path)
         if (receipt.get("job_id") != job.job_id or receipt.get("job_dir") != str(job.job_dir)
                 or receipt.get("stage") != "speech_cleanup" or receipt.get("passed") is not True
-                or receipt.get("reviewed_by") != "host"
+                or receipt.get("reviewed_by") not in {"host", "user"}
                 or receipt.get("artifacts") != job.stages["speech_cleanup"]["artifacts"]):
             continue
         try:
-            _validate_cleanup_resolutions(candidates, receipt.get("speech_cleanup_resolutions", []))
+            validate_cleanup_review(job, receipt)
             return
-        except SpeechEditV2Error:
+        except (SpeechEditV2Error, OSError):
             continue
-    raise SpeechEditV2Error("retained pauses or repetitions have no bound host audio review")
+    raise SpeechEditV2Error("cleanup candidates have no bound host or user audio review")
 
 
 def _video_use_intervals(

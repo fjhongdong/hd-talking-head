@@ -13,3 +13,7 @@ skill-development/runtime/
 *.tsbuildinfo
 .visual-broll-install.lock
 .punk-cover-install.lock
+
+# Expanded complete upstream snapshots are restored from source-repositories.
+/skill-development/vendor/mg-styles-15/
+/skill-development/vendor/video-shotcraft/

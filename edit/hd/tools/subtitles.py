@@ -1357,6 +1357,7 @@ def _protected_word_boundaries(
     phrases: list[str],
 ) -> set[int]:
     text = "".join(str(word["text"]) for word in words)
+    compact = "".join(char for char in text if not char.isspace())
     word_boundaries = []
     offset = 0
     for index, word in enumerate(words[:-1], 1):
@@ -1364,14 +1365,17 @@ def _protected_word_boundaries(
         word_boundaries.append((index, offset))
     protected = set()
     for phrase in phrases:
-        occurrence = text.find(phrase)
+        phrase = "".join(char for char in phrase if not char.isspace())
+        if not phrase:
+            continue
+        occurrence = compact.find(phrase)
         while occurrence >= 0:
             end = occurrence + len(phrase)
             protected.update(
                 index for index, boundary in word_boundaries
-                if occurrence < boundary < end
+                if occurrence < len("".join(char for char in text[:boundary] if not char.isspace())) < end
             )
-            occurrence = text.find(phrase, occurrence + 1)
+            occurrence = compact.find(phrase, occurrence + 1)
     return protected
 
 
@@ -1395,6 +1399,7 @@ def _partition_subtitle_words(
     duration: float,
     protected_boundaries: set[int],
     layout_cache: dict[tuple[object, ...], bool],
+    long_keyword_intervals: set[tuple[int, int]] | None = None,
 ) -> list[list[dict[str, object]]]:
     def has_sample(chunk: list[dict[str, object]]) -> bool:
         return _chunk_has_sample_frame(
@@ -1413,11 +1418,15 @@ def _partition_subtitle_words(
     for word in words:
         glyph_prefix.append(glyph_prefix[-1] + _visible_glyph_count([word]))
     eligible_ends: list[list[tuple[int, int, bool]]] = [[] for _ in range(word_count)]
+    long_keyword_intervals = long_keyword_intervals or set()
     for left in range(word_count):
         for right in range(left + 1, word_count + 1):
             glyph_count = glyph_prefix[right] - glyph_prefix[left]
             if glyph_count > _CUE_TARGET_MAX:
-                break
+                if (left, right) not in long_keyword_intervals:
+                    if any(start == left and end > right for start, end in long_keyword_intervals):
+                        continue
+                    break
             if _word_interval_fits(
                 words, left, right, box, font_path, cue_type, layout_cache,
             ):
@@ -1425,8 +1434,6 @@ def _partition_subtitle_words(
                 eligible_ends[left].append((
                     right, glyph_count, has_sample(candidate),
                 ))
-        if not eligible_ends[left]:
-            raise _fail()
 
     nodes: list[tuple[int, int]] = [(0, 0)]
     current: dict[int, tuple[tuple[int, int, int, int], int, int]] = {

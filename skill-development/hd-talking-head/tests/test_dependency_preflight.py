@@ -411,6 +411,37 @@ class DependencyPreflightTests(unittest.TestCase):
         self.assertEqual(record["detail"], "Hypit requires pnpm 10.33.0")
         self.assertNotIn("API_KEY", json.dumps(record))
 
+    def test_python_smoke_keeps_timeout_and_os_error_distinct_without_changing_deadline(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import dependency_preflight
+        cases = [(subprocess.TimeoutExpired([sys.executable], 20),
+                  {"error_type": "TimeoutExpired", "timeout_seconds": 20}),
+                 (FileNotFoundError(2, "interpreter missing"),
+                  {"error_type": "FileNotFoundError", "errno": 2})]
+        for error, detail in cases:
+            with self.subTest(error=type(error).__name__), \
+                    mock.patch.object(dependency_preflight.subprocess, "run", side_effect=error) as run:
+                checked = dependency_preflight._check_python_module({"id": "opencv", "target": "cv2"})
+            self.assertEqual(checked, {"status": "smoke_failed", "module": "cv2", **detail})
+            self.assertEqual(run.call_args.kwargs["timeout"], 20)
+            run.assert_called_once()
+
+    def test_post_install_import_failure_keeps_actual_probe_details_without_retry(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import project_python
+        manifest = {"dependencies": [{"id": "opencv", "kind": "python_module", "required": True,
+            "target": "cv2", "install": {"package": "opencv-python-headless", "version": "4.12.0.88"}}]}
+        failed = {"status": "smoke_failed", "module": "cv2", "error_type": "TimeoutExpired", "timeout_seconds": 20}
+        with tempfile.TemporaryDirectory() as temporary, \
+                mock.patch.object(project_python, "_check_python_module", side_effect=[{"status": "missing"}, failed]) as probe, \
+                mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as install:
+            with self.assertRaises(RuntimeError) as raised:
+                project_python.prepare_packages(manifest, {}, Path(temporary) / "packages")
+            self.assertIn(json.dumps(failed), str(raised.exception))
+            self.assertIn("no automatic retry", str(raised.exception))
+            self.assertEqual(probe.call_count, 2)
+            install.assert_called_once()
+
     def test_importable_path_with_broken_dependency_is_not_callable(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))
         import dependency_preflight

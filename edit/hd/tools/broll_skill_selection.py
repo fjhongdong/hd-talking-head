@@ -63,13 +63,21 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
         for template in module.load_template_catalog(project_root, dependency_id=dependency):
             identity = template['candidate_id']
             native_id = identity.split(':', 1)[1]
+            # Barty/Bang expose complete creation workflows. The broader
+            # recipe catalogs explicitly distinguish scenes from components.
+            native_role = ('scene' if dependency in {'barty-motion-graphics', 'bang-motion'}
+                           else template['native_role'])
             rows.append({'candidate_id': identity, 'skill_id': dependency, 'dependency_id': dependency,
                 'entrypoint': module.ENTRY, 'template_id': native_id, 'producer_version': module.VERSION,
-                'source_route': native_id, 'role': 'native', 'status': 'supported',
+                'source_route': native_id,
+                'role': 'native' if native_role in {'scene', 'product_promo'} else 'component',
+                'native_role': native_role, 'status': 'supported',
                 'adapter_module': 'motion_native_skill_adapter', 'capacity': None,
                 'semantic_families': [], 'limitations': [
                     'Invoke the complete pinned native Skill; its workflow owns design and motion',
                     'Review this scene and freeze its actual native result before production']})
+            rows[-1].update({field: template[field] for field in
+                             ('min_duration_seconds', 'max_duration_seconds') if field in template})
     return rows
 
 
@@ -275,7 +283,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         add(dep, str(source.relative_to(project)), dep + "/design", "source",
             role="design", limitations=("Design/image source; execute through this Job selected generation channels after complete-list approval",))
     found.extend(row for row in talkcraft_candidates(project) if row['native_role'] == 'scene')
-    found.extend(motion_native_candidates(project))
+    found.extend(row for row in motion_native_candidates(project) if row['role'] == 'native')
     ids = [row["candidate_id"] for row in found]
     if len(ids) != len(set(ids)):
         raise ValueError("B-roll discovery returned duplicate identities")
@@ -652,8 +660,52 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
     return locks
 
 
+def _verified_supplement_routes(job_dir, director, treatment):
+    """Separate execution choices only after the existing realization proof.
+
+    The semantic row and numbering remain shared. Its approved primary choices
+    stay locked; a supplement is not another opportunity to reroute the table.
+    """
+    if not isinstance(treatment, Mapping) or not treatment.get('native_supplements'):
+        return set(), {}
+    if job_dir is None or not isinstance(director, Mapping):
+        raise ValueError('native supplement selection requires its actual approved Job and director')
+    from . import state, visual_confirmation as confirmation
+    root = Path(job_dir)
+    authorized = confirmation.validate_visual_authorization(state.load_job(root))
+    proposal = authorized['source']
+    frozen = confirmation._read(confirmation._exact(root, proposal['inputs']['director']))
+    previous = confirmation._read(confirmation._exact(root, proposal['inputs']['treatment']))
+    confirmation._normalize_native_supplements(root, proposal, frozen, previous, director, treatment)
+    originals = {s['segment_id']:s for s in frozen['segments']}
+    current = {s['segment_id']:s for s in director['segments']}
+    keys = set()
+    locks = {(a['segment_id'],a['component_id']):a['candidate_id']
+             for group in ('assignments','overlay_assignments')
+             for a in previous.get('skill_selection', {}).get(group, [])}
+    for revision in treatment['native_supplements']:
+        sid, base, action = (revision[k] for k in ('segment_id','base_component_id','action_component_id'))
+        key = (sid,action)
+        before, after = originals[sid], current[sid]
+        if (key in keys or any(before.get(k) != after.get(k) for k in
+                ('start','end','content_item_ids','visual_intent','strategy_revision'))
+                or any(after.get('bindings', {}).get(base, {}).get(k) != value
+                       for k,value in before.get('bindings', {}).get(base, {}).items())):
+            raise ValueError('native supplement selection changed the approved source, clock or row identity')
+        keys.add(key)
+        locks[key] = 'barty-motion-graphics:barty-motion-graphics/motion-broll'
+    return keys, locks
+
+
+def _execution_identity(beat, supplements):
+    key = (beat['segment_id'],beat['component_id'])
+    return (('native_supplement', *key) if key in supplements else
+            beat.get('semantic_row_id') or (beat['segment_id'] + ':' + beat['component_id']))
+
+
 def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
-                        temporarily_disabled=(), director=None, treatment=None) -> dict:
+                        temporarily_disabled=(), director=None, treatment=None,
+                        verified_supplements=None) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
@@ -673,6 +725,11 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     if len(keys) != len(set(keys)):
         raise ValueError("B-roll semantic component is duplicated")
     revision_locks = _revision_selection_locks(selection, beats, job_dir, director, treatment)
+    supplements, source_locks = (verified_supplements if verified_supplements is not None else
+                                _verified_supplement_routes(job_dir, director, treatment))
+    if any(key in revision_locks and revision_locks[key] != value for key,value in source_locks.items()):
+        raise ValueError('native supplement selection conflicts with an approved route lock')
+    revision_locks.update(source_locks)
     # The treatment's existing first-beat/opening declaration narrows only the
     # first body item.  It does not remove Wake (or any other reviewed route)
     # from the candidate pool for later semantic items.
@@ -722,7 +779,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
                     if partial:
                         from .motion_match_cache import _design_plan
                         _design_plan(candidate)
-                identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+                identity = _execution_identity(beat, supplements)
                 if ((identity, cid) not in temporarily_disabled
                         and (not partial or timing_failure(pool[cid], beat, strict=True) is None)):
                     optimistic.append(candidate)
@@ -773,7 +830,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     # native route, one matching operation and one source/template reward.
     grouped, optimistic_grouped, group_order = {}, {}, []
     for beat, domain, optimistic in zip(beats, domains, optimistic_domains):
-        identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+        identity = _execution_identity(beat, supplements)
         if identity not in grouped:
             grouped[identity] = domain
             optimistic_grouped[identity] = optimistic
@@ -806,7 +863,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
                             "scope": "joint_broll_and_overlay_current_windows"}
     exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
     chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
-        beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])])
+        _execution_identity(beat, supplements)])
         for beat, domain in zip(beats, domains)]
 
     def cost(choices):
@@ -850,13 +907,13 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
 
     # The exact maxima cannot be traded away for timing/adjacency preferences.
     # A multi-part item stays on its jointly selected route during refinement.
-    repeated_items = {b.get("semantic_row_id") for b in beats if b.get("semantic_row_id")
-                      and sum(other.get("semantic_row_id") == b["semantic_row_id"] for other in beats) > 1}
+    identities = [_execution_identity(b, supplements) for b in beats]
+    repeated_items = {identity for identity in identities if identities.count(identity) > 1}
     improved = True
     while improved:
         improved = False
         for index, domain in enumerate(domains):
-            if beats[index].get("semantic_row_id") in repeated_items:
+            if identities[index] in repeated_items:
                 continue
             current_cost, best = cost(chosen), chosen[index]
             for candidate in domain:
@@ -874,7 +931,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
         best_pair, best_cost = None, cost(chosen)
         for left in range(len(domains)):
             for right in range(left + 1, len(domains)):
-                if any(beats[i].get("semantic_row_id") in repeated_items for i in (left, right)):
+                if any(identities[i] in repeated_items for i in (left, right)):
                     continue
                 for first in domains[left]:
                     for second in domains[right]:
@@ -948,6 +1005,8 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
     from .motion_capabilities import overlay_candidates
 
     beats = [*selection.get("beats", []), *selection.get("overlay_beats", [])]
+    verified = _verified_supplement_routes(job_dir, director, treatment)
+    supplements, _ = verified
     partial = any(c.get("fit") == "unreviewed" for b in beats for c in b.get("candidates", []))
     if partial:
         _validate_partial_windows(selection, director)
@@ -957,14 +1016,15 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
     if partial:
         # A route must fit every physical part of its one logical item.
         for beat in beats:
-            identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+            identity = _execution_identity(beat, supplements)
             for candidate in beat.get("candidates", []):
                 cid = candidate.get("candidate_id")
                 if cid in catalog and timing_failure(catalog[cid], beat, strict=True):
                     disabled.add((identity, cid))
     while True:
         result = _assign_skills_once(project_root, selection, job_dir=job_dir,
-                                     temporarily_disabled=disabled, director=director, treatment=treatment)
+                                     temporarily_disabled=disabled, director=director, treatment=treatment,
+                                     verified_supplements=verified)
         failures = []
         for assignment in [*result["assignments"], *result.get("overlay_assignments", [])]:
             row = catalog[assignment["candidate_id"]]
@@ -973,7 +1033,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
                         (assignment["segment_id"], assignment["component_id"]))
             reason = timing_failure(row, beat)
             if reason:
-                identity = beat.get("semantic_row_id") or (beat["segment_id"] + ":" + beat["component_id"])
+                identity = _execution_identity(beat, supplements)
                 failures.append(((identity, row["candidate_id"]), reason))
         if not failures:
             return result

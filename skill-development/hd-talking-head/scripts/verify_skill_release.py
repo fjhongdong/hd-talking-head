@@ -33,11 +33,27 @@ def file_hash(path: Path) -> str:
 def package_files(root: Path) -> dict[str, Path]:
     package_root = root.resolve().parents[1]
     files = {}
+    restored_sources = set()
+    source_index = package_root / "source-repositories/index.json"
+    if source_index.is_file():
+        index = json.loads(source_index.read_text())
+        for entry in index.get("repositories", []):
+            name = entry.get("path")
+            if name not in {"skill-development/vendor/mg-styles-15", "skill-development/vendor/video-shotcraft"}:
+                continue
+            if not (isinstance(entry.get("files"), dict) and entry["files"]
+                    and isinstance(entry.get("archives"), list) and entry["archives"]):
+                continue
+            source = (package_root / name).resolve()
+            if not source.is_relative_to(package_root / "skill-development/vendor"):
+                raise ValueError("restored source must stay inside the bundled vendor directory")
+            restored_sources.add(name)
     excluded = {".git", "node_modules", ".venv", ".cache", ".remotion", "__pycache__"}
     for directory, directories, names in os.walk(package_root):
         base = Path(directory)
         relative = base.relative_to(package_root).as_posix()
         directories[:] = [name for name in directories if name not in excluded and not name.endswith(".egg-info")
+            and (base / name).relative_to(package_root).as_posix() not in restored_sources
             and not (relative == "skill-development" and name == "runtime")
             and not (relative.startswith("skill-development/research/hypit-source") and name == "dist")]
         for name in names:

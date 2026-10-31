@@ -183,6 +183,18 @@ def _binding(job_dir, purpose):
     return validate_binding(artifacts.read_json_artifact(path).get(purpose))
 
 
+def _lovart_video_project(request, upload):
+    if request.get("tool") != "mcp__lovart__generate_video" or upload.get("tool") != _LOVART_UPLOAD:
+        return None
+    project = request.get("arguments", {}).get("project_id")
+    if not isinstance(project, str) or not project:
+        raise ValueError("Lovart upload requires the approved video project_id")
+    configured = upload["arguments"].get("project_id", project)
+    if configured != project:
+        raise ValueError("Lovart upload project_id conflicts with the approved video request")
+    return project
+
+
 def _replace(value, replacements):
     if isinstance(value, str):
         return replacements.get(value, value)
@@ -242,7 +254,10 @@ def next_action(job_dir, request):
             if not saved.get("rejected_body_limit"):
                 return {"action": "blocked", "status": "input_upload_pending", "request_id": request["id"],
                         "binding_id": key, "next": "回传已发出的原 upload action 与真实结果后继续。"}
-        upload = binding["upload"]
+        upload = copy.deepcopy(binding["upload"])
+        project = _lovart_video_project(request, upload)
+        if project is not None:
+            upload["arguments"]["project_id"] = project
         arguments, transport = _prepare_upload(job_dir, path, upload, local, ref,
             rejected=saved["action"]["arguments"] if saved else None)
         action = {"action": "upload", "purpose": request["purpose"], "request_id": request["id"],
@@ -295,6 +310,53 @@ def record_result(job_dir, request, action, response):
     return {"request_id": request["id"], "status": "input_bound", "binding_id": action["binding_id"]}
 
 
+def replace_unsent_lovart_upload(job_dir, request, action, evidence):
+    """Replace only a confirmed-unsent, project-less action; retain the original."""
+    if (not isinstance(evidence, dict) or set(evidence) != {"status", "evidence"}
+            or evidence["status"] != "not_sent" or not isinstance(evidence["evidence"], str)
+            or not evidence["evidence"].strip()):
+        raise ValueError("replacement requires concrete evidence that the original action was not sent")
+    binding = _binding(job_dir, request["purpose"])
+    if binding["reference_mode"] != "upload":
+        raise ValueError("replacement requires an upload binding")
+    upload = binding["upload"]
+    project = _lovart_video_project(request, upload)
+    if project is None or "project_id" in upload["arguments"]:
+        raise ValueError("replacement is limited to the project-less Lovart video upload defect")
+    path, state = _state(job_dir, request, binding)
+    actual = {key: value for key, value in action.items() if key != "step_id"} if isinstance(action, dict) else {}
+    saved = state["uploads"].get(actual.get("binding_id"))
+    if (not saved or saved.get("action") != actual or actual.get("action") != "upload"
+            or actual.get("tool") != _LOVART_UPLOAD or actual.get("request_id") != request["id"]
+            or actual.get("purpose") != request["purpose"] or not actual.get("claim_token")
+            or any(key in saved for key in ("reference", "response", "rejected_body_limit", "rejected_uploads", "superseded_uploads"))):
+        raise ValueError("replacement requires the original pending upload without any recorded result")
+    refs = {artifacts.sha256_json(ref): (local, ref) for local, ref in _references(job_dir, request)}
+    if actual["binding_id"] not in refs or saved.get("source") != refs[actual["binding_id"]][1]:
+        raise ValueError("original upload source does not match the approved request")
+    local, ref = refs[actual["binding_id"]]
+    transport = saved.get("transport")
+    if transport:
+        _verify_transport(job_dir, ref, transport)
+        source = Path(job_dir) / transport["path"]
+        data = _source_bytes(source, transport)
+    else:
+        source = Path(local)
+        data = _source_bytes(source, ref)
+    expected = _upload_arguments(upload, source, data, Path(local).name)
+    if actual.get("arguments") != expected:
+        raise ValueError("original upload arguments differ from the frozen binding")
+    replacement = copy.deepcopy(actual)
+    replacement["claim_token"] = secrets.token_urlsafe(24)
+    replacement["arguments"]["project_id"] = project
+    if _upload_body_bytes(replacement["arguments"]) > _LOVART_BODY_LIMIT:
+        raise ValueError("corrected upload exceeds the Lovart JSON body limit")
+    saved["superseded_uploads"] = [{"action": copy.deepcopy(actual), "evidence": copy.deepcopy(evidence)}]
+    saved["action"] = replacement
+    artifacts.write_json_artifact(path, state)
+    return replacement
+
+
 def resolve_request(job_dir, request):
     """Materialize submission arguments without changing the approved request."""
     binding = _binding(job_dir, request["purpose"])
@@ -307,6 +369,9 @@ def resolve_request(job_dir, request):
         saved = state["uploads"].get(artifacts.sha256_json(ref), {})
         if not saved.get("reference"):
             raise ValueError("upload the approved reference before submitting generation")
+        project = _lovart_video_project(request, binding["upload"])
+        if project is not None and saved.get("action", {}).get("arguments", {}).get("project_id") != project:
+            raise ValueError("recorded Lovart upload project_id does not match the approved video request")
         if saved.get("transport"):
             _verify_transport(job_dir, ref, saved["transport"])
         replacements[local] = saved["reference"]

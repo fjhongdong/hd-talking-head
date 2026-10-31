@@ -9,7 +9,7 @@
   <skill>/scripts/run_stage.py --job-context <workspace>/job-context.json
 ```
 
-省略 `--stage` 时读取最早未完成阶段；显式指定时仍须满足现有依赖。已批准阶段无新输入时核验并复用；要改变输入，先用现有 `state.revise` 明确修订，再执行。返修须沿 `state.revise` 创建新请求，以新项目输出和新结果重新绑定正常计划后执行；不得仅凭反馈复用旧 `completed`，旧产物保留。`needs_revision` 可以继续调用原 runner；`blocked` 保留当前原因，按原恢复入口处理。`ready_for_review` 返回已有候选和当前 revision，不重新生成。
+省略 `--stage` 时读取最早未完成阶段；显式指定时也只能执行该阶段，并满足现有依赖。已批准阶段无新输入时核验并复用；要改变输入，先用现有 `state.revise` 明确修订，再执行。返修须沿 `state.revise` 创建新请求，以新项目输出和新结果重新绑定正常计划后执行；不得仅凭反馈复用旧 `completed`，旧产物保留。`needs_revision` 可以继续调用原 runner；`blocked` 保留当前原因，按原恢复入口处理。`ready_for_review` 返回已有候选和当前 revision，不重新生成。
 
 配置和运行时身份沿用当前 Job。只有预检过期或尚未绑定新批准视觉计划时自动复检，不重写配置批准；模型、费用、项目或源码身份变化仍走原确认或迁移入口。所有阶段只处理本期 Job，不迁移其他视频。
 
@@ -27,6 +27,18 @@
 | `preview` | 缺省从默认配置构造 12 帧静态 `opening`；已明确批准的 Wake 正文首镜沿批准时间轴，不自动追加默认封面；其余方案只有明确取消静态封面才传 `opening:null`，按本期批准配乐选择传 `music` |
 
 `inspect`、`edit_structure`、`subtitles`、`delivery` 直接消费此前批准的正式产物。
+
+### 原生转写调用前检查
+
+在发起 Scribe 上传或收费请求前，先运行只读检查：
+
+```bash
+<python> <包根>/run.py run_stage --job-context <ctx> --stage speech_cleanup --check-only
+```
+
+该入口重新加载 Job，直接复用正式执行的 `state.require_runnable`，检查当前阶段、状态、依赖及启动绑定；只返回是否可执行，不自动刷新预检、不运行转写、不写 Job。只有退出码为 0 且返回 `runnable:true`，才在已有上传与额度许可内调用预检绑定的原生 helper。检查通过不替代付费授权；阶段不是 `speech_cleanup`、等待审查、已批准或环境绑定失效时先处理当前步骤，不发请求。`FULL_V2_DEPENDENCIES` 用于依赖和修订级联，不能单凭其中的 `inspect` 依赖提前转写。各镜头的独立方案和只读准备仍可按现有规则并行，正式阶段与原声上传由主控按产品顺序执行。
+
+若本期已经有成功的原始转写和真实调用记录，保留它们，等 `speech_cleanup` 可执行后直接用下面的参数导入；不重跑 helper、不重新收费、不补造成功记录，也不改写原始响应或摘要。检查失败不能通过修改 workflow 或重签旧 Job 身份绕过。
 
 口播清理先绑定真实转写：
 
@@ -61,6 +73,8 @@
 }
 ```
 
+明确标为“任务示意”的非证据原生组件，可用 `source_ref="component:<component_id>"` 引用整表已确认的同一组件 `brief` 原文，核对其中已经批准的中性示例文字和数字。当前画面仍须有真实“任务示意”文字；不能据此新增示例值、品牌、成绩或实测主张，原组件说明及语义保持锁定。
+
 正式记录只使用上述字段，不复制草稿的待审状态或候选来源列表，不由脚本预填“已审通过”。已有原文及关键词的直接引用可由现有内容检查确认。视觉方向阶段向用户展示并确认整张 `visual-routing.md`；这一次确认覆盖整片贴片、B-roll、tags、具体模板、图片/视频渠道和生成步骤，不再增加逐条确认或后续成片确认。确认后的同一次 `visual_direction` 续做只返回具体宿主 tool actions，输入可包含：
 
 ```json
@@ -79,6 +93,8 @@
 
 原确认目录中的 proposal、director 和 treatment 保持原样；实际媒体绑定写入新的 realization 文件。`prepare_template_inputs` 是宿主内部工作，不是用户确认步骤。宿主按已选模板的原生准备入口，将真实图片或视频写入 brief；直接 AI B-roll 使用 `generated_media.record_from_queue` 保存实际观察、当前口播时窗和源片摘要，并用 `prepare_binding` 生成绑定。续做时全部组件重走实际原生输入、语义、输出与时长检查；每份生成结果须被本组件的真实输入或明确依赖它的已批准生成步骤消费，其他组件中出现同一摘要不能充当本项绑定。
 
+同一已确认官方静态截图可在真实源绑定中增加 `portrait_crop={source_sha256,source_width,source_height,x,y,width,height}`。原截图、URL、发布者、摘要及 `native_vertical=false` 保持真实不变；裁区必须位于原图内且严格9:16，由原素材适配器另存1080×1920的等比取景画布，不重画、不拉伸。此字段只接受静态官方图片；来源身份或文字改变仍停止。兑现比较只允许映射同一批文字目标的区域，阅读窗和文字来源不变；正式文字与全画幅检查照常执行。
+
 每次实现映射按当前发布 revision 和映射内容身份写入独立目录；旧映射及其 lineage 保留原路径和原内容。读取只接受当前阶段唯一的映射，并核对其真实确认、计划、媒体和输入；同一内容重试可复用原文件，已有文件内容不符时停止，不能覆盖。
 
 原确认中 Paper Route B 仍等待已批准图片时，实际生成完成后可补齐原生 brief、binding 和同组件的 beat 快照，不改变原渠道、模板、语义、时窗或其他镜头。素材板裁成切片时，同一 `scenes` 项增加 `asset_provenance={"job_path":"<本Job内现有来源记录>","sha256":"<真实摘要>","byte_count":<字节数>}`，并保留实际 `source_images / crops` 记录；执行映射冻结该描述。验收检查源图属于本行已批准结果、裁片属于原生 brief 且被实际场景引用，并逐像素核对裁切坐标和输出。只记录一个文件摘要或无关组件引用，不能证明已消费生成图。
@@ -94,6 +110,16 @@
 Wake 原生项目允许其已验收结果中记录的空 `fonts.css` 作为项目依赖，执行器仍冻结并核对路径、零字节长度及真实摘要；该例外不适用于视频、图片或其他文件，也不改变已冻结的 Wake 原生适配器。
 
 已确认的混合 B-roll 如果真实透明动作层与完整底图必须逐像素配准，在该原生组件 `invocation_record.canvas_alignment` 填写 `{"mode":"identity","base_component_id":"<底层组件>","base_sha256":"<底图实际输出摘要>","layer_sha256":"<透明层实际输出摘要>"}`，并同步同一组件的 beat `binding_snapshot`。只在已确认的同镜混合关系内填写；实际 brief 必须为 1080×1920 透明输出，底图记录必须绑定此动作组件及 1080×1920 真实底图，摘要须分别与原生结果和底图文件一致。成片合成对两项输出再次核对摘要，再以原尺寸和原点叠加，不裁剪或缩放；未声明的普通标注继续按安全区适配。实看仍须检查画面、字幕和头像避让，尺寸和摘要不证明画面已对齐。
+
+生成视频未完整表达原已确认动作时，可在同次 realization 的 `native_supplements` 显式列出 `{segment_id,base_component_id,action_component_id,reason}`，仅补一层已有 Barty `motion-broll` 透明动作。原单源须是非证据用途的全屏视频；原组件、生成请求与渠道、语义任务、台词、时窗、头像及其他镜头保持不变。底片由现有 `record_from_queue(...,composition_base=...)` 登记真实原效果失败与仅作底片的 QA，不把它标成独立效果通过；微小画幅归一仍使用原像素校验。补足层继承原语义行、相同 `task_source` 和局部声音时钟，`authorization.paid_generation=false`，材料须包含实际底片。新行不编号，也不增加语义行；实际策略为现有 hybrid，新增组件、beat/assignment、相同 tags、scene、可读性和并用原因均真实登记。完成后填上述 identity 对齐、原生结果及实际文字来源；未完成时只可填 `pending_native`，正式发布仍要求原生调用、真实 QA 与全部文字检查。比较器只在这些证据通过后归一比较副本，不重签原用户确认，不允许换源、改意或增加收费生成；局部样片不能替代正式输入及最终合成检查。
+
+只有上述补足证据通过后，选型器才为补足层建立独立的内部执行选择；原语义行、tags、编号及主来源选择不变。当前原确认中的所有既有组件路线保持锁定，补足层仍接受真实候选召回、资格、时间与费用检查；没有真实 Job/原确认/原片/原生输入证据时，同语义行的普通分段仍须使用相同候选，不可用一个标记绕过选型。
+
+尚未发布正式 recipe、execution mapping 或 canary 的首次兑现保留原 `strategy_revision`，不为新增补足层虚增版本。已有正式实现的变更仍走现有阶段修订与输入失效规则；本入口不提供任意递增版本的例外。
+
+原生成视频只缺原确认语义内的构图重心时，使用 `generated_media.record_from_queue(...,camera_source={"source_qa":{"passed":false,"observed_scene":"<真实原效果问题>"},"framing":<Job文件描述>})`，另以 `qa.scope="framing_source"` 登记仅作取景源的 QA。1080×1916 等微小尺寸差可先调用现有 `normalize_composition_base`，传真实 normalization 与固定 FFmpeg/FFprobe；仍逐像素核验原区，仅复制最近边缘像素补齐，不伪装供应商原件。`prepare_binding` 自动返回 `parent_camera_framing`，原生成ID、渠道和原片摘要保存在原完成记录及 normalization 中，binding 的素材摘要只指实际规范底片。
+
+相机清单字段固定为 `{schema_version:1,segment_id,component_id,source_binding,source_media,normalized_media,source_frames:[0,N],path:[{frame,x,y,width,height}],reason}`。两个 media 是真实 `{job_path,sha256,byte_count,media_type:"video"}`；`source_binding` 与完成记录相同。`path` 恰好 N 项逐帧对应原视频，坐标基于规范1080×1920底片，只允许源区内9:16等比取景，不支持旋转、变速、补洞、复制区域或新事项。首次 realization 核对当前原确认、原视频队列及实际清单；父合成器快照该清单，以现有 FFmpeg zoompan 每输入帧仅出一帧，然后沿用原头像和唯一字幕轨。此能力不制造任务完成，也不把原声字幕头像已烘焙的样片当底片。检查仍须看实际完整镜头：主体完整、重点变化直观、裁框平滑、必要画面及文字不被字幕头像遮挡。失败仍停止当前路线，不新增收费生成。
 
 未来图输入使用 `{"$step":"image-step","output":0}`，不得填写不存在的未来文件摘要。宿主实际完成生成后才写入真实媒体和哈希，再构造后续视频请求；模板内部生图、生视频与直接 B-roll 共用启动时确认的渠道。没有生成步骤的已确认素材直接沿原编译入口执行。
 
@@ -112,6 +138,8 @@ B-roll 校准必须对应最终量化窗口，按校准器输出的三位小数�
 `visual_canary`、`visual_assets` 只为实际选中的依赖组装适配器。原生代码组件、用户素材、官方资料、素材库及完成记录中的 AI 图片/视频使用包内默认工厂；图片与视频按各自组件绑定，混用时不会共用错误的媒体类型。直用素材保留原件和原尺寸，另存 PNG 或无声规范视频；按已确认时窗合成，不重复获取或生成素材。未知执行绑定在整表发布前报告缺口。
 
 局部视觉返修时，canary 自动采用本次 `artifact_scope` 中的受影响镜头；发布已清空该临时字段时，从当前真实确认 proposal 的 `revision_locks.changes` 读取同一范围，避免重做未变样段。也可通过 `input-json.segment_ids` 指定本次待检查镜头，显式范围优先。正式资产仍按逐段输入身份复用其余媒体。
+
+OpenFilm 自有场景的纯字号返修沿现有 realization 进行：另存页面与 brief，用 `scene.native_revision_from` 绑定已登记的上一份 execution-mapping，并写明真实原因。只允许原 `<style>` 内已有数字 `font-size:…px` 增大；其余 HTML、词句、脚本、资产、上游、动作和时钟逐字不变。entry 使用新页面的真实路径与 SHA，strategy revision 随改变的输入递增一次。原文字目标保留身份、词句和完整阅读窗，引用新页面并按真实布局校正区域；正式 canary 再测最终字形。不换素材、不改动画、不缩短存在时间。
 
 清单和成片编号共用 `visual_confirmation.approved_numbered_rows(job)`，按本期已确认 proposal 的冻结行序定位 `row_id`，不从当前稿件各自排序。最终合成在对应帧窗右下角叠小编号，时间统一加 `opening.body_offset_frames`；封面与空档不显示。编号图集和时窗随现有 preview 产物、报告与哈希登记，交付直接沿用带编号的正式预览。
 
@@ -148,6 +176,12 @@ realization 已发布 `visual-plan`，但执行映射写入失败或中断时，
 
 `speech_cleanup` 的返回还包含实时 `cleanup_checks`。宿主核听后剪除口误并重建提案；残留的必要强调或呼吸，在同一 review JSON 填 `speech_cleanup_resolutions: [{"candidate_id":"返回的实际ID","decision":"keep","reason":"核听后的具体保留原因"}]`。必须覆盖每一剩余候选；无候选则省略。不增加用户逐项确认。
 
+宿主无法听音、用户已亲自听过当前实际剪辑试听并明确同意继续时，沿用上述 QA JSON，填写 `reviewed_by="user"`、`audio_listened=true`、真实 `user_confirmation` 原话和完整逐项保留理由。先调用 `speech_edit_v2.cleanup_user_audio_binding(job, 实际试听WAV路径)`，将返回值原样放入 `speech_cleanup_audio_review`。该只读函数不生成音频、不批准 Job；逐样本核对已存在的单声道16位原PCM切片及30ms线性淡化，并绑定当前源音频、计划、词表、ASR、候选和两套时钟。只支持确有剪辑的当前草稿；不匹配、漏项、文件或计划改变均拒绝。不得仅因用户要求继续便假定已听，也不得代写新的确认原话。真实型号等字音仍按原有文稿核对要求处理。
+
+这类用户确认只验收保留内容及剪口。正式音轨仍从相同原视频区间读取，48k重采样、30ms淡化、AAC编码；每段尾部为24fps对齐补不足一帧静音，试听切点取整误差最多一个原PCM样本。绑定记录逐段源区间、试听与正式时钟、总时长及 `final_track_listened=false`；不得将试听秒数直接作正式字幕时钟，也不得声称用户或宿主听过最终编码音轨。正式制作后仍须核对实际总时长、保留语音和异常停顿；这是草稿内容确认，不替代最终音轨检查。默认宿主审阅路径保持不变。
+
+`edit_structure` 可沿用同一份已批准的真实用户试听审阅，不再次要求用户确认：调用只读 `speech_edit_v2.edit_user_audio_binding(job)`，将返回值原样放入同一 QA JSON 的 `edit_structure_audio_review`，同时填写 `reviewed_by="user"`、`audio_listened=false`。函数重新验证原用户回执、试听、当前清理计划及正式产物，逐包核对实际 AAC 与相同源区间的生产变换结果（48k、30ms淡化、每段24fps补齐），并检查起点、帧数、总时长和AAC编码延迟。全部音频包内容和时码必须精确相等；不同、缺失或当前编码器无法重现时停止，不用相似度或旧结果放行。这只沿用用户对内容与剪口的确认；保留 `final_track_listened=false`、`final_audio_review="pending"`，明确正式输出未听过，最终声音仍待验。画面、字幕和音画检查仍按实际产物执行；默认宿主审阅不变。
+
 视觉 canary、assets、preview 的返回含 `motion_readability`。`fail` 先修对应镜头；`needs_review` 由宿主按[实际文字检查](motion-text-readability.md)填写 `motion_readability_resolutions` 的真实帧和文字框，不靠自由 QA note 放行。该检查覆盖全部实际动效，最终交付会再次拒绝未决项。
 
 示例中的占位符、revision 和字节数都不能照抄。入口先核对被审任务、revision 和完整产物身份，再保存本地 QA 并调用原阶段批准；不为旧记录补上当前任务身份。`cover_direction`、`cover`、`visual_direction` 在同一 JSON 提供本次真实 `user_confirmation`。整表确认时使用 `--stage visual_direction --review-json <整表确认.json>`；入口自动记录 `approval_scope=visual_plan_and_delivery`，保存在 `manifests/local-qa-visual_direction-r<revision>.json`。随后宿主继续内部制作，不向用户逐阶段重复提问。
@@ -173,7 +207,11 @@ realization 已发布 `visual-plan`，但执行映射写入失败或中断时，
 
 宿主必须直接使用完整原 `action.tool` 和 `action.arguments` 执行，不从原文件、`input_files` 或生成提示词重新构造上传参数。特别是 `data_base64` 已可能来自无损传输副本，不能换回原图编码；参数过长时应程序化转交，不能依照截断输出重建。回传响应前核对实际发送的工具及完整参数确属该 action；发生参数误用时先保留真实发送和返回证据，不能把响应登记到未执行的 action，也不能清空或重新申领来掩盖差异。
 
+仅针对旧 Lovart 视频首帧上传动作遗漏 `project_id`，宿主核实该动作确实从未发送，且能提供具体调用记录证据时，可用 `run_generation.py ... replace-unsent-upload --action-json <完整原动作文件> --evidence-json <证据文件>` 受控替换。证据文件为 `{"status":"not_sent","evidence":"具体未发送证据"}`。入口保留原动作及证据并返回带新令牌和已批准视频项目 ID 的新动作；只执行返回的新动作，再以该新动作登记真实响应。发送情况或结果不明时必须停止，不可声称未发送或重领。此入口不验证宿主证据的真实性，宿主须先核实并确保旧动作不会再被执行。进程中断时先查看已保存的上传记录，不重复替换或发送。
+
 技术修订造成 proposal 身份变化时，同一逻辑步骤且完整请求负载（除内部 ID 外）完全相同，继续使用原已授权请求及上传状态。入口先验证原确认和当前请求一致，保留原授权、任务及结果；不重新登记、不重签确认、不重复生成。多个匹配明确停止，内容改变仍按新清单办理。
+
+已完成的视觉图片经实际检查不合格、用户明确追加一次原图编辑许可时，使用 `run_generation.py ... edit-completed-image --plan-json <冻结计划> --plan-sha256 <计划摘要> --user-confirmation <真实原话>`，计划字段为 `from_id`、`request`、`issue`、`count=1`。`issue` 必须与原图片完成回执中实际视觉检查的 `conclusion` 一致；`request` 使用原已批准图片渠道，且 `referenced_image_paths` 和 `input_files` 必须精确绑定原图路径、SHA 和字节数。入口验证原视觉确认并以唯一后继保存追加授权，不更改原图或其他步骤；重复登记同一计划只返回同一后继，不能自动重复生成。按原 `next` 和 `record` 执行一次真实编辑并实看结果，既有视觉步骤通过后继引用新结果。编辑结果不自动通过画面、动画或成片验收；授权、原图或结果不明时停止。
 
 动态生成完成后重新检查整个画幅，包含预留字幕区、圆窗区和无内容页边；静帧无字不代表视频无字。模型可能新增乱码、虚假计时或水印样文字，不能把它们列为“无关键文字”后忽略，也不能靠最终字幕遮住。发现后先暂停该素材，区分模型杂字与真实来源署名。杂字仅位于无信息页边、且常规清理已在本期授权内时，可用现有本地视频工具局部清理；保留原片、真实供应商响应和实际处理链，不裁主体、不变速、不改语义、不覆盖真实署名。复核动作前中后、完整使用时窗及清理边界后再接入。主体内容或来源身份受影响时走原修订边界，不自动重生或追加费用。
 

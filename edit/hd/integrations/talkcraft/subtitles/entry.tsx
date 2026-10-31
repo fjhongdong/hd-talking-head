@@ -1,12 +1,11 @@
 import React from 'react';
 import {Composition, registerRoot} from 'remotion';
-import {Subtitles, SUBTITLE_CARD_METRICS, SUBTITLE_TEXT_STYLE} from './Subtitles';
+import {Subtitles, SUBTITLE_CARD_METRICS, SUBTITLE_TEXT_STYLE, subtitleFontSize} from './Subtitles';
 import type {SubtitleInput} from './types';
 import {lineUnits} from './line-units.mjs';
 
 const validateNarrowWords = async (cues: SubtitleInput['cues']) => {
-  const narrow = cues.filter((cue) => cue.placement === 'above_avatar');
-  if (!narrow.length) return;
+  if (!cues.length) return;
   const probe = document.createElement('span');
   Object.assign(probe.style, {
     position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap',
@@ -18,9 +17,17 @@ const validateNarrowWords = async (cues: SubtitleInput['cues']) => {
   document.body.appendChild(probe);
   try {
     await document.fonts.ready;
-    for (const cue of narrow) {
+    for (const cue of cues) {
+      const available = (cue.placement === 'above_avatar' ? cue.width : 1080 * 0.9)
+        - 2 * (SUBTITLE_CARD_METRICS.paddingX + SUBTITLE_CARD_METRICS.borderWidth);
+      probe.style.fontSize = `${subtitleFontSize(cue.text)}px`;
+      if (subtitleFontSize(cue.text) !== SUBTITLE_TEXT_STYLE.fontSize) {
+        probe.textContent = cue.text;
+        if (probe.getBoundingClientRect().width > available + 0.01) {
+          throw new Error(`[TALKCRAFT_SUBTITLES_INVALID] ${cue.cue_id}: complete long keyword does not fit subtitle content width`);
+        }
+      }
       if (cue.placement !== 'above_avatar') continue;
-      const available = cue.width - 2 * (SUBTITLE_CARD_METRICS.paddingX + SUBTITLE_CARD_METRICS.borderWidth);
       for (const unit of lineUnits(cue.text, cue.emphasis)) {
         probe.textContent = cue.text.slice(unit.start, unit.end);
         if (probe.getBoundingClientRect().width > available + 0.01) {

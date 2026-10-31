@@ -301,6 +301,143 @@ def retry(job, plan, user_confirmation, expected_plan_sha256):
         return {"id": rid, "retry_of": plan["from_id"], "plan_request_id": root_id, "idempotent": False}
 
 
+def _validate_followup_image_evidence(job, parent, plan, approved):
+    """Bind a human-observed Paper sample failure to the approved image and clock."""
+    from . import visual_confirmation as visual
+    proof = plan.get('followup_evidence')
+    names = {'brief', 'crop_provenance', 'render_evidence', 'media_manifest', 'review', 'preview'}
+    if not isinstance(proof, dict) or set(proof) != names:
+        raise GenerationQueueError('follow-up image edit requires complete sample evidence')
+    root = Path(job.job_dir)
+    try:
+        paths = {key: visual._exact(root, proof[key]) for key in names}
+        brief = artifacts.read_json_artifact(paths['brief'])
+        review = artifacts.read_json_artifact(paths['review'])
+        render = artifacts.read_json_artifact(paths['render_evidence'])
+        manifest = artifacts.read_json_artifact(paths['media_manifest'])
+        outputs = parent['completion_response']['artifacts']
+        if len(outputs) != 1 or outputs[0].get('type') != 'image':
+            raise GenerationQueueError('follow-up needs one completed original image')
+        image = Path(outputs[0]['path'])
+        if not image.is_absolute(): image = root / image
+        original = visual._record(root, image)
+        if (original['sha256'], original['bytes']) != (outputs[0]['sha256'], outputs[0]['bytes']):
+            raise GenerationQueueError('follow-up original image changed')
+        _, proposal = visual._validate_source(root, parent['authorization']['source'], job_id=job.job_id)
+        director = artifacts.read_json_artifact(visual._exact(root, proposal['inputs']['director']))
+        step = approved['step']
+        segment = next(s for s in director['segments'] if s['segment_id'] == step['segment_id'])
+        if (step.get('purpose') != 'image' or segment['bindings'][step['component_id']].get('dependency_id') != 'paper-collage-hyperframes'):
+            raise GenerationQueueError('follow-up sample is not the approved Paper image row')
+        arroll = [r for r in job.stages['edit_structure']['artifacts']
+                  if r['path'] == '06-edit-structure/edited-aroll.mp4']
+        if job.stages['edit_structure']['status'] != 'approved' or len(arroll) != 1:
+            raise GenerationQueueError('follow-up needs the approved speech clock')
+        visual._exact(root, arroll[0])
+        expected = {'aroll_sha256': arroll[0]['sha256'], 'segment_id': step['segment_id'],
+                    'start': segment['start'], 'end': segment['end']}
+        frames = round((segment['end'] - segment['start']) * 24)
+        if (brief.get('source_binding') != expected or brief.get('upstream_route') != 'paper-collage-ad/hyperframes'
+                or brief.get('composition') != {'width': 1080, 'height': 1920, 'fps': 24, 'frames': frames, 'alpha': False}):
+            raise GenerationQueueError('follow-up sample differs from the approved row or clock')
+        from . import segment_render
+        if not segment_render._probe_matches(segment_render._default_probe(paths['preview']), frames):
+            raise GenerationQueueError('follow-up preview is not the actual approved-clock video')
+        if original['sha256'] not in visual._paper_crop_sources(root, brief, proof['crop_provenance'], [original]):
+            raise GenerationQueueError('follow-up sample does not consume the approved image')
+        expected_media = {x['media_ref']: x for x in [brief['entry'], *brief['assets']]}
+        rows = manifest.get('media')
+        if (manifest.get('schema_version') != 'reference-process-media/v1'
+                or manifest.get('brief_sha256') != proof['brief']['sha256'] or not isinstance(rows, list)
+                or len(rows) != len(expected_media) or {x.get('media_ref') for x in rows} != set(expected_media)):
+            raise GenerationQueueError('follow-up sample input manifest differs from its brief')
+        for row in rows:
+            source = expected_media[row['media_ref']]
+            actual = visual._record(root, visual._path(root, source['job_path']))
+            if (row.get('sha256'), row.get('byte_length')) != (actual['sha256'], actual['bytes']) or actual['sha256'] != source['sha256']:
+                raise GenerationQueueError('follow-up sample input changed')
+        if (render.get('exit_code') != 0 or render.get('external_requests') != 0
+                or render.get('upstream_route') != brief['upstream_route'] or render.get('frames') != frames
+                or render.get('output_sha256') != proof['preview']['sha256']
+                or review.get('status') != 'needs_revision' or review.get('preview') != proof['preview']
+                or plan['issue'] not in review.get('observations', [])
+                or not isinstance(review.get('method'), str) or not review['method'].strip()
+                or not isinstance(review.get('inspected_times_seconds'), list) or not review['inspected_times_seconds']
+                or any(type(t) not in (int, float) or not math.isfinite(t) or not 0 <= t < frames / 24
+                       for t in review['inspected_times_seconds'])):
+            raise GenerationQueueError('follow-up sample or human observation does not match')
+    except (KeyError, TypeError, OSError, StopIteration) as exc:
+        raise GenerationQueueError('follow-up sample evidence is invalid') from exc
+
+
+def edit_completed_image(job, plan, user_confirmation, expected_plan_sha256):
+    """Register one explicitly approved edit of an unusable completed visual image."""
+    if (not isinstance(plan, dict) or set(plan) not in ({"from_id", "request", "issue", "count"},
+                                                       {"from_id", "request", "issue", "count", "followup_evidence"})
+            or not isinstance(plan["from_id"], str) or not plan["from_id"]
+            or not isinstance(plan["issue"], str) or not plan["issue"].strip()
+            or type(plan["count"]) is not int or plan["count"] != 1
+            or not isinstance(user_confirmation, str) or not user_confirmation.strip()
+            or artifacts.sha256_json(plan) != expected_plan_sha256):
+        raise GenerationQueueError("image edit needs one exact plan, observed issue and explicit permission")
+    _json_safe(plan)
+    snapshot = status(job)
+    parent = snapshot["items"].get(plan["from_id"])
+    if not parent or parent.get("status") != "completed" or parent["request"]["purpose"] != "image":
+        raise GenerationQueueError("image edit requires a completed visual image")
+    if 'followup_evidence' not in plan and parent.get("completion_response", {}).get("conclusion") != plan["issue"]:
+        raise GenerationQueueError("image edit issue must match the original recorded visual review")
+    from . import visual_confirmation
+    actual_job = state.load_job(Path(job))
+    approved = visual_confirmation.validate_generation_request(actual_job, parent.get("authorization", {}), parent["request"])
+    with _locked(job) as (j, path, q):
+        if q["items"].get(plan["from_id"]) != parent:
+            raise GenerationQueueError("original image changed before edit registration")
+        if 'followup_evidence' in plan:
+            _validate_followup_image_evidence(actual_job, parent, plan, approved)
+        existing = [(rid, item) for rid, item in q["items"].items() if item.get("retry_of") == plan["from_id"]]
+        if existing:
+            rid, item = existing[0]
+            if (len(existing) != 1 or item.get("image_edit_plan") != plan
+                    or item.get("user_confirmation") != user_confirmation):
+                raise GenerationQueueError("original image already has a different successor")
+            return {"id": rid, "plan_request_id": item["plan_request_id"], "idempotent": True}
+        jid, digest, config = _approved(j)
+        if jid != q["job_id"] or digest != parent["config_sha256"]:
+            raise GenerationQueueError("image edit configuration changed")
+        outputs = parent.get("completion_response", {}).get("artifacts", [])
+        if len(outputs) != 1 or outputs[0].get("type") != "image":
+            raise GenerationQueueError("image edit requires exactly one original image")
+        output = outputs[0]
+        source = Path(output["path"])
+        if not source.is_absolute(): source = j / source
+        try:
+            relative = source.relative_to(j).as_posix()
+        except ValueError as exc:
+            raise GenerationQueueError("original image must belong to this Job") from exc
+        ref = {"path": relative, "sha256": output["sha256"], "bytes": output["bytes"]}
+        request = plan["request"]
+        if (not isinstance(request, dict) or request.get("purpose") != "image"
+                or request.get("tool") != parent["request"]["tool"]
+                or request.get("input_files") != [ref]
+                or request.get("arguments", {}).get("referenced_image_paths") != [str(source)]):
+            raise GenerationQueueError("image edit must use the exact original image and approved channel")
+        identity = _request(j, request, config)
+        if identity != parent["channel_identity"]:
+            raise GenerationQueueError("image edit channel identity changed")
+        rid, fingerprint = request["id"], _fingerprint(request)
+        if rid in q["items"] or any(x["fingerprint"] == fingerprint for x in q["items"].values()):
+            raise GenerationQueueError("image edit request is already registered")
+        root_id = parent.get("plan_request_id", plan["from_id"])
+        q["items"][rid] = {"request": request, "fingerprint": fingerprint, "status": "ready",
+                           "retry_of": plan["from_id"], "plan_request_id": root_id,
+                           "image_edit_plan": plan, "channel_identity": identity,
+                           "config_sha256": digest, "approved_plan_sha256": expected_plan_sha256,
+                           "user_confirmation": user_confirmation}
+        artifacts.write_json_artifact(path, q)
+        return {"id": rid, "plan_request_id": root_id, "idempotent": False}
+
+
 def claim(job, request_id, account_limit=None):
     with _locked(job) as (j, path, q):
         item = q["items"].get(request_id)
@@ -314,6 +451,19 @@ def claim(job, request_id, account_limit=None):
         identity = _request(j, item["request"], config)
         if identity != item.get("channel_identity"):
             raise GenerationQueueError("generation channel identity changed; obtain approval before new submissions")
+        edit_plan = item.get('image_edit_plan')
+        if isinstance(edit_plan, dict) and 'followup_evidence' in edit_plan:
+            parent = q['items'].get(item.get('retry_of'))
+            if (not parent or parent.get('status') != 'completed'
+                    or edit_plan.get('from_id') != item.get('retry_of')
+                    or edit_plan.get('request') != item['request']
+                    or artifacts.sha256_json(edit_plan) != item.get('approved_plan_sha256')
+                    or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()):
+                raise GenerationQueueError('follow-up edit authorization changed')
+            from . import visual_confirmation
+            actual_job = state.load_job(j)
+            approved = visual_confirmation.validate_generation_request(actual_job, parent['authorization'], parent['request'], queue=q)
+            _validate_followup_image_evidence(actual_job, parent, edit_plan, approved)
         active = [x for x in q["items"].values() if x["status"] in ACTIVE]
         if q["paused"] or len(active) >= config["max_concurrency"]:
             return {"action": "wait", "id": request_id}

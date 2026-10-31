@@ -15,6 +15,94 @@ from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
+    def test_deferred_wake_binds_only_authorized_completed_image(self):
+        from types import SimpleNamespace
+        import hashlib
+        import json
+        from edit.hd.tools import generation_queue
+        root = self.job.job_dir
+        original = root / 'wake-original.png'; original.write_bytes(b'original')
+        edited = root / 'wake-edited.png'; edited.write_bytes(b'edited')
+        aroll = root / '06-edit-structure/edited-aroll.mp4'; aroll.parent.mkdir(exist_ok=True); aroll.write_bytes(b'aroll')
+        original_ref = vc._record(root, original); edited_ref = vc._record(root, edited); aroll_ref = vc._record(root, aroll)
+        key = ('seg-001', 'component-1')
+        base = {'producer_type':'dependency', 'dependency_id':'lemo-wake', 'entrypoint':'scripts/lemo_wake_adapter.py',
+                'producer_version':'2.0.0', 'template_id':'lemo-wake/wake', 'primary_renderer':'HTMLCanvas'}
+        segment = {'segment_id':key[0], 'start':0, 'end':1, 'visual_strategy':{'components':[{'component_id':key[1]}]},
+                   'bindings':{key[1]:base}}
+        frozen = {'segments':[segment]}
+        beat = {'segment_id':key[0], 'component_id':key[1], 'binding_snapshot':base, 'semantic_goal':'approved beat'}
+        treatment = {'scenes':[{'segment_id':key[0], 'component_id':key[1]}],
+                     'skill_selection':{'assignments':[{'segment_id':key[0], 'component_id':key[1],
+                       'candidate_id':'lemo-wake:wake', 'design_plan':{'focus':'approved focus'}}], 'beats':[beat]}}
+        brief = {'schema_version':1, 'job_id':self.job.job_id,
+                 'source_binding':{'aroll_sha256':aroll_ref['sha256'], 'segment_id':key[0], 'start':0, 'end':1},
+                 'image':{'job_path':edited_ref['path'],'sha256':edited_ref['sha256'],'byte_count':edited_ref['bytes']},
+                 'purpose':'body', 'composition':{'width':1080,'height':1920,'fps':24,'frames':24},
+                 'semantic_goal':'approved focus', 'template_request':{'semantic_family':'image-led',
+                 'information_units':1,'numeric_values':[],'numeric_scale':'not_applicable'},
+                 'result_record_path':'native-inputs/wake-result.json'}
+        path = root / 'native-inputs/wake-brief.json'; path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps(brief), encoding='utf-8')
+        digest = artifacts.sha256_file(path)
+        source_sha = artifacts.sha256_file(_env.PROJECT / 'skill-development/hd-talking-head/scripts/lemo_wake_adapter.py')
+        module = vc._native_result_adapter('lemo-wake')
+        bound = {**base, 'renderer_version':module.UPSTREAM_COMMIT, 'template_version':'2.0.0',
+                 'template_origin':'custom_fallback','adaptation_level':'structural','source_entrypoint':base['entrypoint'],
+                 'source_sha256':source_sha,'sample_sha256':'a'*64,'brief_sha256':digest,
+                 'verification_id':hashlib.sha256((source_sha+digest).encode()).hexdigest(),
+                 'semantic_families':['image-led'],'capacity':{'min_units':1,'max_units':1},
+                 'invocation_record':{'argv':['python',base['entrypoint']],'status':'planned','exit_code':None,
+                                      'template_request':brief['template_request']}}
+        director = copy.deepcopy(frozen); director['segments'][0]['bindings'][key[1]] = bound
+        actual = copy.deepcopy(treatment); actual['scenes'][0]['brief_path']='native-inputs/wake-brief.json'
+        actual['skill_selection']['beats'][0]['binding_snapshot']=bound
+        step = {'id':'image-step','segment_id':key[0],'component_id':key[1],'purpose':'image'}
+        proposal = {'generation_steps':[step]}
+        request = {'id':'edit','purpose':'image','tool':'image.tool','arguments':{'referenced_image_paths':[str(original)]},
+                   'input_files':[original_ref]}
+        plan = {'from_id':'original','request':request,'issue':'cropped','count':1}
+        identity = {'provider':'fixture'}
+        origin = {'status':'completed','request':{'id':'original','tool':'image.tool'},'authorization':{'source':'approved'},
+                  'channel_identity':identity,'config_sha256':'config','completion_response':{'conclusion':'cropped',
+                  'artifacts':[{'type':'image','path':str(original),'sha256':original_ref['sha256'],'bytes':original_ref['bytes']}]}}
+        item = {'request':request,'status':'completed','retry_of':'original','plan_request_id':'original',
+                'image_edit_plan':plan,'user_confirmation':'one approved edit','channel_identity':identity,'config_sha256':'config',
+                'approved_plan_sha256':artifacts.sha256_json(plan),'completion_response':{'artifacts':[
+                    {'type':'image','path':str(edited),'sha256':edited_ref['sha256'],'bytes':edited_ref['bytes']}]}}
+        job = SimpleNamespace(job_id=self.job.job_id, stages={'edit_structure':{'status':'approved','artifacts':[aroll_ref]}})
+        with mock.patch.object(vc,'planned_generation_targets',return_value={key}), \
+             mock.patch.object(state,'load_job',return_value=job), \
+             mock.patch.object(vc,'validate_visual_authorization',return_value={'source':proposal}), \
+             mock.patch.object(generation_queue,'status',return_value={'items':{'original':origin}}), \
+             mock.patch.object(vc,'generation_item',return_value=('edit',item)), \
+             mock.patch.object(vc,'validate_generation_request',return_value={'step':step}):
+            normalized, normalized_treatment = vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
+            self.assertEqual(normalized,frozen)
+            self.assertEqual(normalized_treatment,treatment)
+            for field, value in [('status','pending'),('user_confirmation',''),('approved_plan_sha256','0'*64)]:
+                with self.subTest(field=field):
+                    changed = {**item,field:value}
+                    with mock.patch.object(vc,'generation_item',return_value=('edit',changed)):
+                        with self.assertRaises(ValueError):
+                            vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
+            changed = copy.deepcopy(actual); changed['skill_selection']['beats'][0]['semantic_goal'] = 'different'
+            with self.assertRaisesRegex(ValueError,'semantic beat'):
+                vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,changed)
+            for field, value, message in [('semantic_goal','different','semantic goal'),
+                    ('source_binding',{**brief['source_binding'],'end':2},'source clock')]:
+                modified = {**brief,field:value}
+                if field == 'source_binding': modified['composition'] = {**brief['composition'], 'frames':48}
+                path.write_text(json.dumps(modified),encoding='utf-8')
+                changed_director = copy.deepcopy(director)
+                changed_director['segments'][0]['bindings'][key[1]]['brief_sha256'] = artifacts.sha256_file(path)
+                with self.subTest(field=field), self.assertRaisesRegex(ValueError,message):
+                    vc._normalize_prepared_wake(root,proposal,frozen,treatment,changed_director,actual)
+            path.write_text(json.dumps(brief),encoding='utf-8')
+            edited.write_bytes(b'changed')
+            with self.assertRaisesRegex(ValueError,'completed image'):
+                vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
+
     def test_paper_crop_consumption_requires_approved_source_and_exact_bound_pixels(self):
         from PIL import Image
         root = self.job.job_dir
@@ -831,8 +919,233 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertEqual([r["channel"] for r in rows], ["hyperframes", "hyperframes"])
         self.assertEqual([r["template"] for r in rows], ["template-0", "template-1"])
 
+class NativeSupplementBoundaryTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile, json, hashlib
+        from test_motion_native_skill_adapter import brief
+        import motion_native_skill_adapter as native
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        self.root=Path(temporary.name).resolve();self.native=native
+        base=fixture_api.draft_segment(('ai_generated',),end=2)
+        base['visual_strategy']['components'][0].update(media_type='video',layout_slot='full_frame')
+        sid=base['segment_id'];cid=base['visual_strategy']['components'][0]['component_id'];aid='advice'
+        self.sid,self.cid,self.aid=sid,cid,aid
+        request=brief();self.request=request
+        source_task={'semantic_row_id':'task','quote':request['transcript'],'semantic':request['semantic_goal'],
+                     'required_change':request['task_source']['required_change'],
+                     'component_brief':base['visual_strategy']['components'][0]['brief']}
+        request['task_source']=source_task
+        base['bindings']={cid:{'provider':'Lovart','model':'approved-model','endpoint_id':'approved-video'}}
+        self.old={'schema_version':3,'segments':[base]}
+        row={'row_id':'task','quote':request['transcript'],'semantic':request['semantic_goal'],
+             'components':[{'segment_id':sid,'component_id':cid}]}
+        beat={'segment_id':sid,'component_id':cid,'semantic_row_id':'task','transcript':request['transcript'],
+              'required_change':source_task['required_change'],'component_brief':source_task['component_brief']}
+        self.old_t={'semantic_lists':{'broll':[row],'overlay':[]},'scenes':[],
+                    'skill_selection':{'beats':[beat],'assignments':[]},'motion_readability':[],
+                    'motion_queries':[],'beat_sheet':[{'components':[{'segment_id':sid,'component_id':cid}]}]}
+        self.director=copy.deepcopy(self.old);self.treatment=copy.deepcopy(self.old_t)
+        new=self.director['segments'][0];strategy=new['visual_strategy'];strategy['mode']='hybrid'
+        action={**strategy['components'][0],'component_id':aid,'kind':'code_generated',
+                'layer_role':'annotation','layout_slot':'annotation','media_type':'animation'}
+        strategy['components'].append(action)
+        strategy['composition'].update(family='evidence_with_data_overlay',reading_order=[cid,aid],
+            component_dependencies=[{'component_id':aid,'depends_on':[cid]}])
+        media=self.root/'base.mp4';media.write_bytes(b'actual registered provider bytes')
+        ref=native.descriptor(self.root,media)
+        self.record={'job_id':request['job_id'],'status':'completed','segment_id':sid,'component_id':cid,
+            'source_binding':{k:request['source_binding'][k] for k in ('aroll_sha256','start','end')},
+            'media':{**ref,'media_type':'video'},'source_dimensions':{'width':1080,'height':1920},
+            'composition_base':{'action_component_id':aid,'source_qa':{'passed':False,'observed_scene':'Missing advice'}},
+            'qa':{'passed':True,'scope':'composition_base','observed_scene':'Usable task base only'},
+            'generation':{'approved_request_id':'request','approved_request':{'id':'request'},
+                          'approved_plan':{'source':{'fixture':'existing receipt'},'steps':{'request':'video-step'}}}}
+        request['materials']=[ref]
+        request['alpha']=True
+        self.path=self.root/'native-inputs/alpha-brief.json';self.path.parent.mkdir()
+        artifacts.write_json_artifact(self.path,request)
+        new['bindings'][aid]={'dependency_id':'barty-motion-graphics',
+            'brief_sha256':hashlib.sha256(self.path.read_bytes()).hexdigest()}
+        new['bindings'][cid].update(execution_mode='reuse_completed_generated_media',sha256=ref['sha256'])
+        record_path=self.root/'base-record.json';artifacts.write_json_artifact(record_path,self.record)
+        self.treatment['scenes']=[{'segment_id':sid,'component_id':cid,'completed_record':native.descriptor(self.root,record_path)},
+            {'segment_id':sid,'component_id':aid,'brief_path':'native-inputs/alpha-brief.json'}]
+        self.treatment['semantic_lists']['broll'][0]['components'].append({'segment_id':sid,'component_id':aid})
+        self.treatment['beat_sheet'][0]['components'].append({'segment_id':sid,'component_id':aid})
+        self.treatment['beat_sheet'][0]['merge_reason']='Native advice belongs to the same original task'
+        self.treatment['skill_selection']['beats'].append({**beat,'component_id':aid})
+        self.treatment['motion_readability']=[{'segment_id':sid,'component_id':aid,'targets':[],'pending_native':True}]
+        self.treatment['native_supplements']=[{'segment_id':sid,'base_component_id':cid,'action_component_id':aid,
+                                            'reason':'Actual source misses the approved advice action'}]
+        d=self.root/'original-director.json';t=self.root/'original-treatment.json'
+        artifacts.write_json_artifact(d,self.old);artifacts.write_json_artifact(t,self.old_t)
+        self.proposal={'inputs':{'director':vc._record(self.root,d),'treatment':vc._record(self.root,t)},
+                      'generation_steps':[{'id':'video-step','segment_id':sid,'component_id':cid,'purpose':'video'}]}
+
+    def validate(self,director=None,treatment=None):
+        from edit.hd.tools import motion_capabilities
+        with mock.patch.object(vc,'_native_result_adapter',return_value=self.native), \
+             mock.patch.object(motion_capabilities,'_ai_brief_evidence',return_value=(self.record,{})), \
+             mock.patch.object(vc,'_validate_source',return_value=({},self.proposal)):
+            vc._validate_draft_against_source(self.root,self.proposal,director or self.director,treatment or self.treatment)
+
+    def test_pending_supplement_retains_original_plan_and_rejects_source_task_or_clock_drift(self):
+        from edit.hd.tools import visual_strategy
+        segment=self.director['segments'][0]
+        visual_strategy.validate_visual_strategy(segment['visual_intent'],segment['visual_strategy'])
+        self.validate()
+        for field in ('time','meaning','avatar','base','paid','queue','unrelated'):
+            d,t=copy.deepcopy(self.director),copy.deepcopy(self.treatment)
+            if field=='time':d['segments'][0]['end']=3
+            if field=='meaning':t['semantic_lists']['broll'][0]['semantic']='another meaning'
+            if field=='avatar':d['segments'][0]['visual_strategy']['composition']['presenter_mode']='hidden'
+            if field=='base':d['segments'][0]['visual_strategy']['components'][0]['brief']='another task'
+            if field=='paid':t['generation_plan']={'steps':[{'new':'paid request'}]}
+            if field=='queue':
+                self.record['generation']['approved_plan']['steps']['request']='wrong-step'
+            if field=='unrelated':d['segments'].append(copy.deepcopy(d['segments'][0]))
+            with self.subTest(field=field),self.assertRaises(ValueError):self.validate(d,t)
+            self.record['generation']['approved_plan']['steps']['request']='video-step'
+        self.assertEqual(self.old['segments'][0]['visual_strategy']['mode'],'single')
+        self.assertEqual(self.director['segments'][0]['visual_strategy']['mode'],'hybrid')
+        self.assertEqual(self.old['segments'][0]['strategy_revision'],self.director['segments'][0]['strategy_revision'])
+        changed=copy.deepcopy(self.director);changed['segments'][0]['strategy_revision']+=1
+        with self.assertRaisesRegex(ValueError,'technical strategy revision needs'):
+            self.validate(director=changed)
+
+    def test_completed_supplement_requires_real_native_result_alignment_and_text(self):
+        result=self.root.joinpath(self.request['result_record_path']);result.parent.mkdir(parents=True,exist_ok=True)
+        result.write_text('{}')
+        with self.assertRaisesRegex(ValueError,'alignment'):
+            self.validate()
+        self.root.joinpath(self.request['result_record_path']).unlink()
+        changed=copy.deepcopy(self.treatment)
+        changed['motion_readability'][0].pop('pending_native')
+        with self.assertRaisesRegex(ValueError,'unfinished'):
+            self.validate(treatment=changed)
+
+    def test_completed_supplement_reuses_hybrid_checks_and_exact_rendered_text(self):
+        source=self.root/'source.html';source.write_text('<p>建议</p>')
+        call=self.root/'call.json';artifacts.write_json_artifact(call,{'project_files':[self.native.descriptor(self.root,source)]})
+        alpha=self.root/'alpha.mov';alpha.write_bytes(b'isolated native output fixture')
+        result={'status':'completed','media':self.native.descriptor(self.root,alpha),
+                'render_call':self.native.descriptor(self.root,call)}
+        result_path=self.root/self.request['result_record_path'];result_path.parent.mkdir(parents=True)
+        artifacts.write_json_artifact(result_path,result)
+        binding=self.director['segments'][0]['bindings'][self.aid]
+        binding['invocation_record']={'canvas_alignment':{'mode':'identity','base_component_id':self.cid,
+            'base_sha256':self.record['media']['sha256'],'layer_sha256':result['media']['sha256']}}
+        self.director['segments'][0]['visible_text']=['建议']
+        target={'target_id':'advice','content_ref':{'path':'source.html','sha256':self.native.sha(source),
+                'pointer':'text:3:5','value':'建议'},'span':[0,2],'role':'title',
+                'region':{'x':100,'y':200,'width':400,'height':100},'windows':[{'start':.5,'end':1.5}]}
+        self.treatment['motion_readability'][0]={'segment_id':self.sid,'component_id':self.aid,'targets':[target]}
+        self.treatment['semantic_assessments']=[{'segment_id':self.sid,'component_id':self.aid,
+            'candidate_id':'barty-motion-graphics:barty-motion-graphics/motion-broll','verdict':'pass',
+            'content_refs':[{'path':self.request['result_record_path'],'sha256':self.native.sha(result_path),
+                             'pointer':'/status','value':'completed'}]}]
+        with mock.patch.object(self.native,'inspect_result',return_value=result):
+            self.validate()
+            changed=copy.deepcopy(self.director)
+            changed['segments'][0]['bindings'][self.aid]['invocation_record']['canvas_alignment']['layer_sha256']='f'*64
+            with self.assertRaisesRegex(ValueError,'action media differs'):self.validate(director=changed)
+            changed=copy.deepcopy(self.treatment)
+            changed['motion_readability'][0]['targets'][0]['content_ref']['sha256']='f'*64
+            with self.assertRaisesRegex(ValueError,'actual rendered native source'):self.validate(treatment=changed)
+
+    def test_camera_realization_requires_the_same_original_proposal_and_queue_pixels(self):
+        import generated_media
+        from edit.hd.tools import parent_camera_framing as camera, motion_capabilities
+        from types import SimpleNamespace
+        record=copy.deepcopy(self.record);record.pop('composition_base')
+        record['qa']['scope']='framing_source';record['generation']['request_id']='request'
+        data={'schema_version':1,'segment_id':self.sid,'component_id':self.cid,
+              'source_binding':record['source_binding'],'source_media':record['media'],
+              'normalized_media':record['media'],'source_frames':[0,48],
+              'path':[{'frame':n,'x':0,'y':0,'width':1080,'height':1920} for n in range(48)],
+              'reason':'Focus the original checked calendar without replacing its content'}
+        path=self.root/'camera.json';artifacts.write_json_artifact(path,data)
+        ref=self.native.descriptor(self.root,path)
+        record['camera_source']={'source_qa':{'passed':False,'observed_scene':'Original focus is wrong'},'framing':ref}
+        director=copy.deepcopy(self.old);treatment=copy.deepcopy(self.old_t)
+        director['segments'][0]['bindings'][self.cid].update(execution_mode='reuse_completed_generated_media',
+            sha256=record['media']['sha256'],**{camera.FIELD:ref})
+        job=SimpleNamespace(job_dir=self.root,job_id=record['job_id'])
+        with mock.patch.object(motion_capabilities,'_ai_brief_evidence',return_value=(record,{})), \
+             mock.patch.object(state,'load_job',return_value=job), \
+             mock.patch.object(generated_media,'_queue_media',return_value=record['media']), \
+             mock.patch.object(vc,'_validate_source',return_value=({},self.proposal)):
+            vc._validate_draft_against_source(self.root,self.proposal,director,treatment)
+            with mock.patch.object(vc,'_validate_source',return_value=({},{'another':'proposal'})):
+                with self.assertRaisesRegex(ValueError,'another approved visual proposal'):
+                    vc._validate_draft_against_source(self.root,self.proposal,director,treatment)
+            with mock.patch.object(generated_media,'_queue_media',return_value={**record['media'],'sha256':'e'*64}):
+                with self.assertRaisesRegex(ValueError,'original generation'):
+                    vc._validate_draft_against_source(self.root,self.proposal,director,treatment)
+
+    def test_selector_supplement_scope_reuses_actual_realization_proof_and_source_locks(self):
+        from edit.hd.tools import broll_skill_selection as selection, motion_capabilities
+        from types import SimpleNamespace
+        job=SimpleNamespace(job_dir=self.root,job_id=self.request['job_id'])
+        with mock.patch.object(state,'load_job',return_value=job), \
+             mock.patch.object(vc,'validate_visual_authorization',return_value={'source':self.proposal}), \
+             mock.patch.object(vc,'_validate_source',return_value=({},self.proposal)), \
+             mock.patch.object(vc,'_native_result_adapter',return_value=self.native), \
+             mock.patch.object(motion_capabilities,'_ai_brief_evidence',return_value=(self.record,{})):
+            keys,locks=selection._verified_supplement_routes(self.root,self.director,self.treatment)
+            self.assertEqual(keys,{(self.sid,self.aid)})
+            self.assertEqual(locks[(self.sid,self.aid)],'barty-motion-graphics:barty-motion-graphics/motion-broll')
+            altered=copy.deepcopy(self.director)
+            altered['segments'][0]['bindings'][self.cid]['provider']='another source'
+            with self.assertRaisesRegex(ValueError,'approved source'):
+                selection._verified_supplement_routes(self.root,altered,self.treatment)
+            self.record['composition_base']['source_qa']['passed']=True
+            with self.assertRaisesRegex(ValueError,'failed-effect scope'):
+                selection._verified_supplement_routes(self.root,self.director,self.treatment)
+
+
 class MotionRealizationBoundaryTests(unittest.TestCase):
     """A native result may reveal text, without changing its approved task."""
+    def test_native_repair_binds_registered_prior_mapping_and_next_real_revision(self):
+        import tempfile
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            old = {'segments': [{'segment_id': 'seg-001', 'strategy_revision': 1, 'bindings': {
+                'native': {'dependency_id': 'bang-motion', 'brief_sha256': 'a' * 64}}}]}
+            def write(name, value):
+                path = root / name; path.parent.mkdir(parents=True, exist_ok=True)
+                artifacts.write_json_artifact(path, value)
+                return vc._record(root, path)
+            director = write('director.json', old)
+            treatment = write('treatment.json', {'scenes': [
+                {'segment_id': 'seg-001', 'component_id': 'native'}]})
+            config = write('manifests/provider-config.json', {})
+            write('workflow.json', {'job_id': 'job'})
+            proposal = write('proposal.json', {'job_id': 'job', 'kind': vc.SCHEMA,
+                'provider_config_sha256': config['sha256'], 'inputs': {'director': director}})
+            approval = write('receipt.json', {'source_schema': vc.SCHEMA, 'job_id': 'job',
+                'job_dir': str(root), 'stage': 'visual_direction', 'passed': True,
+                'reviewed_by': 'human', 'approval_scope': 'visual_plan_and_delivery',
+                'note': 'fixture', 'user_confirmation': 'approved', 'artifacts': [], 'source': proposal})
+            previous = write('prior/execution-mapping.json', {'proposal': proposal, 'source_approval': approval,
+                'realization_inputs': {'director': director, 'treatment': treatment}})
+            scene = {'native_revision_from': previous, 'native_revision_reason': '实际光标遮字，修原生自有输入'}
+            current = copy.deepcopy(old['segments'][0]); current['strategy_revision'] = 2
+            current['bindings']['native']['brief_sha256'] = 'b' * 64
+            job = SimpleNamespace(stages={'visual_direction': {'artifacts': [previous], 'lineage': []}})
+            with mock.patch.object(state, 'load_job', return_value=job):
+                vc._verify_native_revision_origin(root, old, ('seg-001', 'native'), current, scene)
+                vc._verify_native_revision_origin(root, old, ('seg-001', 'native'), old['segments'][0], scene)
+                for mutation in ('skip_revision', 'same_input', 'meaning', 'unregistered'):
+                    changed = copy.deepcopy(current)
+                    if mutation == 'skip_revision': changed['strategy_revision'] = 3
+                    elif mutation == 'same_input': changed['bindings']['native']['brief_sha256'] = 'a' * 64
+                    elif mutation == 'meaning': changed['visual_intent'] = {'statement': '另一件事'}
+                    else: job.stages['visual_direction']['artifacts'] = []
+                    with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                        vc._verify_native_revision_origin(root, old, ('seg-001', 'native'), changed, scene)
+
     def test_technical_revision_requires_scoped_verified_implementation_change(self):
         base = {'segments': [{'segment_id': 'seg-1', 'strategy_revision': 1, 'bindings': {
             'action': {'dependency_id': 'barty-motion-graphics', 'invocation_record': {}}}}]}
@@ -1090,6 +1403,58 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
                                           'no_critical_text_reason':'不能以无字理由删除已批准文字'}
         with self.assertRaisesRegex(ValueError,'retain confirmed text'):self.validate(director,treatment)
 
+    def test_generated_image_text_requires_scoped_real_image_and_human_review(self):
+        from PIL import Image
+        from edit.hd.tools import motion_capabilities
+        image = self.root / 'actual-image.png'
+        Image.new('RGB', (10, 10), 'white').save(image)
+        image_ref = vc._record(self.root, image)
+        brief = '报销单缺附件时停下，人的手补入附件。'
+        component = {'component_id': 'component-1', 'kind': 'code_generated', 'brief': brief}
+        original = {'segment_id': 'seg-001', 'start': 0, 'end': 2, 'visible_text': [],
+                    'visual_strategy': {'components': [component]},
+                    'bindings': {'component-1': {'brief_sha256': 'a' * 64}}}
+        frozen = {'segments': [original]}
+        step = {'id': 'image', 'purpose': 'image', 'segment_id': 'seg-001', 'component_id': 'component-1',
+                'arguments': {}, 'depends_on': []}
+        old = {'motion_readability': [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                                      'pending_generation': True, 'targets': []}],
+               'generation_plan': {'steps': [step]}}
+        target = {'target_id': 'actual-image-title', 'content_ref': {
+            'path': image_ref['path'], 'sha256': image_ref['sha256'], 'pointer': 'image-text', 'value': '费用报销单'},
+            'span': [0, 5], 'role': 'body', 'region': {'x': 10, 'y': 10, 'width': 300, 'height': 80},
+            'windows': [{'start': 0, 'end': 1}]}
+        review = {'segment_id': 'seg-001', 'component_id': 'component-1', 'text': '费用报销单',
+                  'source_quote': brief, 'source_image': image_ref, 'verdict': 'pass',
+                  'reason': '宿主审阅：费用报销单是原确认报销单对象的标题。'}
+        director = copy.deepcopy(frozen); director['segments'][0]['visible_text'] = ['费用报销单']
+        treatment = copy.deepcopy(old); treatment['motion_readability'][0] = {
+            'segment_id': 'seg-001', 'component_id': 'component-1', 'targets': [target]}
+        treatment['reviewed_generated_text'] = [review]
+        evidence = [{'step_id': 'image', 'media': [image_ref]}]
+        def validate(d, t, *, comparison_director=None, comparison_treatment=None):
+            with mock.patch.object(vc, 'planned_generation_targets', return_value={('seg-001', 'component-1')}), \
+                 mock.patch.object(motion_capabilities, '_bound_brief', return_value={}) as bound, \
+                 mock.patch.object(motion_capabilities, '_brief_relative', return_value='brief.json'):
+                result = vc._validate_generated_readability(self.root, {'generation_steps': [step]},
+                    frozen, old, comparison_director or d, comparison_treatment or t, evidence,
+                    production_director=d, production_treatment=t)
+                bound.assert_called_once_with(self.root, t, d['segments'][0], 'component-1')
+                return result
+        validate(copy.deepcopy(director), copy.deepcopy(treatment))
+        # Deferred native routes lose their real bindings only in the comparison copy.
+        comparison = copy.deepcopy(director)
+        comparison['segments'][0]['bindings']['component-1'].pop('brief_sha256')
+        validate(copy.deepcopy(director), copy.deepcopy(treatment), comparison_director=comparison)
+        for mutation in ('missing_review', 'wrong_quote', 'wrong_image', 'unreviewed_new_fact', 'rejected_review'):
+            d, t = copy.deepcopy(director), copy.deepcopy(treatment)
+            if mutation == 'missing_review': t['reviewed_generated_text'] = []
+            elif mutation == 'wrong_quote': t['reviewed_generated_text'][0]['source_quote'] = '无来源的另一项任务'
+            elif mutation == 'wrong_image': t['reviewed_generated_text'][0]['source_image']['sha256'] = 'b' * 64
+            elif mutation == 'rejected_review': t['reviewed_generated_text'][0]['verdict'] = 'fail'
+            else: d['segments'][0]['visible_text'].append('报销已完成')
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError): validate(d, t)
+
     def test_deferred_generation_can_bind_real_parent_static_labels_without_replanning(self):
         from edit.hd.tests.test_segment_render_components import ParentStaticLabelTests
         from edit.hd.tools import motion_capabilities
@@ -1210,6 +1575,112 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         self.assertEqual(mapping['proposal'], source)
         self.assertEqual(mapping['final_v3'], vc._record(self.root, plan))
         ready.assert_called_once()
+
+
+class OfficialPortraitCropTests(unittest.TestCase):
+    def test_supplement_keeps_one_original_routing_number(self):
+        from edit.hd.tools import visual_plan
+        segment = {'segment_id': 'seg-001', 'start': 0, 'end': 2,
+            'visual_intent': {'statement': '原任务'}, 'visual_strategy': {'mode': 'hybrid', 'components': [
+                {'component_id': 'base', 'kind': 'ai_generated', 'layer_role': 'base'},
+                {'component_id': 'action', 'kind': 'code_generated', 'layer_role': 'annotation'}]},
+            'bindings': {'base': {'template_id': 'original/design'}, 'action': {'template_id': 'barty/motion-broll'}}}
+        selection = {'native_supplements': [{'segment_id': 'seg-001',
+            'base_component_id': 'base', 'action_component_id': 'action'}]}
+        text = visual_plan._review_text({'segments': [segment]}, skill_selection=selection,
+                                       numbering={'seg-001:base': 2})
+        self.assertEqual(text.count('| 2 |'), 1)
+        self.assertIn('original/design + barty/motion-broll（同项补足层）', text)
+        self.assertNotIn('| 3 |', text)
+
+    def test_approved_task_example_cannot_add_numbers_or_claim_evidence(self):
+        from edit.hd.tools import visual_plan
+        quote = '示意邮件包含项目沟通，周五15:00；持续标注任务示意。'
+        component = {'component_id': 'native', 'kind': 'code_generated',
+                     'semantic_role': 'explanation', 'brief': quote}
+        segment = {'segment_id': 'seg-001', 'visible_text': ['任务示意', '周五 15:00'],
+                   'visual_strategy': {'components': [component]}}
+        analysis = {'analysis_sha256': 'a' * 64, 'analysis': {'thesis': '整理日程', 'items': []}}
+        record = {'content_analysis_sha256': 'a' * 64, 'entries': [{
+            'segment_id': 'seg-001', 'text': '周五 15:00', 'source_ref': 'component:native',
+            'source_quote': quote, 'reason': '沿已确认示例保留同一时间，不声称真实执行。'}]}
+        visual_plan._validate_reviewed_visual_text(record, analysis_record=analysis, segments=[segment])
+        for change in ('number', 'evidence', 'unmarked'):
+            actual, review = copy.deepcopy(segment), copy.deepcopy(record)
+            if change == 'number':
+                actual['visible_text'][1] = review['entries'][0]['text'] = '周五 16:00'
+            elif change == 'evidence': actual['visual_strategy']['components'][0]['semantic_role'] = 'evidence'
+            else: actual['visible_text'].remove('任务示意')
+            with self.subTest(change=change), self.assertRaises(visual_plan.VisualPlanError):
+                visual_plan._validate_reviewed_visual_text(review, analysis_record=analysis, segments=[actual])
+
+    def test_same_source_crop_renders_exact_portrait_without_changing_native_gate(self):
+        import tempfile
+        import shutil
+        from types import SimpleNamespace
+        from PIL import Image
+        from edit.hd.tools import broll_component_executor, material_adapter, visual_strategy
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / 'official.png'
+            original = Image.new('RGB', (320, 160), 'blue')
+            original.paste('red', (0, 0, 90, 160)); original.save(source)
+            digest = artifacts.sha256_file(source)
+            binding = {'source_id': 'official', 'sha256': digest, 'snapshot_path': 'official.png',
+                'portrait_crop': {'source_sha256': digest, 'source_width': 320, 'source_height': 160,
+                                  'x': 0, 'y': 0, 'width': 90, 'height': 160}}
+            candidate = {'asset_id': 'official', 'kind': 'official_material', 'quality_score': 1,
+                'semantic_match_score': 1, 'hard_gates': {'native_vertical': False,
+                'semantic_match': True, 'quality_readability': True, 'factual_reliability': True}}
+            with self.assertRaises(ValueError):
+                visual_strategy.stable_same_kind_candidates([candidate], 'official_material')
+            ranked = visual_strategy.stable_same_kind_candidates([candidate], 'official_material', framing_binding=binding)
+            self.assertFalse(ranked[0]['hard_gates']['native_vertical'])
+            component = {**binding, 'artifact_contract': {'width': 1080, 'height': 1920, 'fps': 24, 'alpha': False}}
+            output = root / 'portrait.png'
+            context = SimpleNamespace(source_path=source, source_sha256=digest,
+                                      component=broll_component_executor._freeze(component), staging_path=output)
+            adapter = material_adapter.create_adapter('official_material', 'image', shutil.which('ffmpeg'), shutil.which('ffprobe'))
+            result = adapter.invoke(context)
+            broll_component_executor._validate_adapter_result(result, 'BROLL_COMPOSITE_FAILED',
+                                                               job_dir=root, request_only_values=())
+            with Image.open(output) as actual:
+                self.assertEqual(actual.size, (1080, 1920))
+                self.assertEqual(actual.tobytes(), original.crop((0, 0, 90, 160)).resize((1080, 1920), Image.Resampling.LANCZOS).tobytes())
+            self.assertEqual(artifacts.sha256_file(source), digest)
+            self.assertEqual(result.invocation_evidence['portrait_crop'], binding['portrait_crop'])
+            for change in ('outside', 'source', 'quality'):
+                bad_binding, bad_candidate = copy.deepcopy(binding), copy.deepcopy(candidate)
+                if change == 'outside': bad_binding['portrait_crop']['x'] = 300
+                elif change == 'source': bad_binding['portrait_crop']['source_sha256'] = 'b' * 64
+                else: bad_candidate['hard_gates']['quality_readability'] = False
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    visual_strategy.stable_same_kind_candidates([bad_candidate], 'official_material', framing_binding=bad_binding)
+            old_binding = {k: v for k, v in binding.items() if k != 'portrait_crop'}
+            segment = {'segment_id': 'seg-001', 'visual_strategy': {'components': [
+                {'component_id': 'image', 'kind': 'official_material', 'media_type': 'image'}]}, 'bindings': {'image': old_binding}}
+            frozen = {'segments': [segment]}; director = copy.deepcopy(frozen)
+            director['segments'][0]['bindings']['image'] = binding
+            before = {'motion_readability': [{'segment_id': 'seg-001', 'component_id': 'image', 'targets': [
+                {'target_id': 'model', 'content_ref': {'value': 'model'}, 'region': {'x': 0, 'y': 0, 'width': 100, 'height': 100}}]}]}
+            after = copy.deepcopy(before); after['motion_readability'][0]['targets'][0]['region']['width'] = 200
+            self.assertEqual(vc._normalize_official_crop_text(root, frozen, before, director, after, after), before)
+            after['motion_readability'][0]['targets'][0]['content_ref']['value'] = 'different model'
+            with self.assertRaises(ValueError):
+                vc._normalize_official_crop_text(root, frozen, before, director, after, after)
+
+
+class OpenfilmTypographyTests(unittest.TestCase):
+    def test_only_existing_css_font_sizes_can_increase(self):
+        from edit.hd.tools import visual_confirmation as vc
+        source = '<style>.label{font-size:36px}.row{font-size:37px}</style><p>原字</p><script>frame(1)</script>'
+        revised = source.replace('36px','42px').replace('37px','44px')
+        vc._validate_css_font_growth(source,revised)
+        for invalid in (source, source.replace('36px','32px'), revised.replace('原字','新字'),
+                        revised.replace('frame(1)','frame(2)'), revised.replace('44px','144px'),
+                        revised.replace('.row{','.row{display:none;')):
+            with self.subTest(invalid=invalid), self.assertRaises(vc.VisualConfirmationError):
+                vc._validate_css_font_growth(source,invalid)
 
 
 if __name__ == "__main__":

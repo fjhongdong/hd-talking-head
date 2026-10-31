@@ -124,7 +124,7 @@ class GenerationQueueTests(unittest.TestCase):
         bindings["video"].update(reference_mode="upload", upload={
             "tool": "mcp__lovart__upload_asset",
             "arguments": {"data_base64": {"$input": "base64"},
-                          "filename": {"$input": "filename"}, "project_id": "synthetic-project"},
+                          "filename": {"$input": "filename"}},
             "result_path": ["url"],
         })
         artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
@@ -135,13 +135,244 @@ class GenerationQueueTests(unittest.TestCase):
         action = generation_inputs.next_action(self.job, request)
         self.assertEqual(base64.b64decode(action["arguments"]["data_base64"]), source.read_bytes())
         self.assertEqual(action["arguments"]["filename"], source.name)
+        self.assertEqual(action["arguments"]["project_id"], request["arguments"]["project_id"])
         self.assertEqual(generation_inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        wrong_action = copy.deepcopy(action)
+        wrong_action["arguments"]["project_id"] = "another-project"
+        with self.assertRaisesRegex(ValueError, "original action"):
+            generation_inputs.record_result(self.job, request, wrong_action, {"url": "https://example.test/reference.png"})
         generation_inputs.record_result(self.job, request, action, {"url": "https://example.test/reference.png"})
         self.assertEqual(generation_inputs.resolve_request(self.job, request)["arguments"]["ref_images"],
                          ["https://example.test/reference.png"])
         source.write_bytes(b"changed reference")
         with self.assertRaisesRegex(ValueError, "reference changed"):
             generation_inputs.resolve_request(self.job, request)
+
+    def test_lovart_upload_rejects_conflicting_config_and_old_wrong_project_receipt(self):
+        from edit.hd.tools import generation_inputs as inputs
+        source, request, binding, ref = self._generated_upload(metadata_bytes=0)
+        bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+        bindings["video"]["upload"]["arguments"]["project_id"] = "another-project"
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+        with self.assertRaisesRegex(ValueError, "conflicts"):
+            inputs.next_action(self.job, request)
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", {**bindings, "video": binding})
+        path, saved = inputs._state(self.job, request, binding)
+        key = artifacts.sha256_json(ref)
+        saved["uploads"][key] = {"source": ref, "action": {"arguments": {}}, "reference": "https://example.test/old.png"}
+        artifacts.write_json_artifact(path, saved)
+        with self.assertRaisesRegex(ValueError, "recorded Lovart upload project_id"):
+            inputs.resolve_request(self.job, request)
+
+    def test_lovart_query_uses_approved_project_with_explicit_binding(self):
+        from edit.hd.tools import generation_channels as channels
+        request = self.request("query-video", "video")
+        self.add(request)
+        claimed = queue.claim(self.job, request["id"], 10)
+        queue.record(self.job, request["id"], claimed["claim_token"],
+                     {"status": "pending", "task_ids": ["synthetic-task"]})
+        path = self.job / "manifests/generation-channels.json"
+        bindings = artifacts.read_json_artifact(path)
+        bindings["video"]["query"] = {"tool": "mcp__lovart__get_task_status", "arguments": {},
+                                      "task_ids_parameter": "task_ids"}
+        artifacts.write_json_artifact(path, bindings)
+        with mock.patch.object(channels.time, "time", return_value=10**12):
+            action = channels.next_action(SimpleNamespace(job_dir=self.job), request["id"])
+        self.assertEqual(action["arguments"], {"project_id": "synthetic-project", "task_ids": ["synthetic-task"]})
+        self.assertEqual(artifacts.read_json_artifact(path), bindings)
+        bindings["video"]["query"]["arguments"]["project_id"] = "different-project"
+        artifacts.write_json_artifact(path, bindings)
+        with mock.patch.object(channels.time, "time", return_value=10**12):
+            with self.assertRaisesRegex(ValueError, "project_id conflicts"):
+                channels.next_action(SimpleNamespace(job_dir=self.job), request["id"])
+
+    def test_completed_visual_image_edit_is_unique_and_uses_original_bytes(self):
+        from edit.hd.tools import visual_confirmation as visual
+        original = self.request("image")
+        self.add(original)
+        claim = queue.claim(self.job, "image")
+        source = self.job / "original.png"
+        source.write_bytes(b"original image")
+        ref = {"path": source.name, "sha256": artifacts.sha256_file(source), "bytes": source.stat().st_size}
+        queue.record(self.job, "image", claim["claim_token"], {"status": "completed", "conclusion": "subject cropped", "artifacts": [
+            {"type": "image", "path": str(source), "sha256": ref["sha256"], "bytes": ref["bytes"]}]})
+        before = copy.deepcopy(queue.status(self.job)["items"]["image"])
+        request = self.request("edit-image")
+        request["arguments"]["referenced_image_paths"] = [str(source)]
+        request["input_files"] = [ref]
+        plan = {"from_id": "image", "request": request, "issue": "subject cropped", "count": 1}
+        digest = artifacts.sha256_json(plan)
+        with mock.patch.object(queue.state, "load_job", return_value=SimpleNamespace(job_dir=self.job)), \
+             mock.patch.object(visual, "validate_generation_request") as validate:
+            with self.assertRaisesRegex(queue.GenerationQueueError, "explicit permission"):
+                queue.edit_completed_image(self.job, plan, "", digest)
+            bad = copy.deepcopy(plan)
+            bad["request"]["arguments"]["referenced_image_paths"] = [str(self.job / "other.png")]
+            with self.assertRaisesRegex(queue.GenerationQueueError, "exact original"):
+                queue.edit_completed_image(self.job, bad, "one edit", artifacts.sha256_json(bad))
+            first = queue.edit_completed_image(self.job, plan, "one edit", digest)
+            self.assertFalse(first["idempotent"])
+            self.assertTrue(queue.edit_completed_image(self.job, plan, "one edit", digest)["idempotent"])
+            with self.assertRaisesRegex(queue.GenerationQueueError, "different successor"):
+                queue.edit_completed_image(self.job, plan, "another approval", digest)
+            self.assertTrue(validate.called)
+        items = queue.status(self.job)["items"]
+        self.assertEqual(items["image"], before)
+        self.assertEqual(items["edit-image"]["retry_of"], "image")
+        self.assertEqual(items["edit-image"]["image_edit_plan"], plan)
+        with mock.patch.object(visual, "_request_id", return_value="image"):
+            rid, item = visual.generation_item({"items": items}, {}, {})
+        self.assertEqual((rid, item["status"]), ("edit-image", "ready"))
+        edited = self.job / "edited.png"
+        edited.write_bytes(b"edited image")
+        claimed = queue.claim(self.job, "edit-image")
+        queue.record(self.job, "edit-image", claimed["claim_token"], {"status": "completed", "artifacts": [
+            {"type": "image", "path": str(edited), "sha256": artifacts.sha256_file(edited), "bytes": edited.stat().st_size}]})
+        with mock.patch.object(visual, "_request_id", return_value="image"):
+            rid, item = visual.generation_item({"items": queue.status(self.job)["items"]}, {}, {})
+        self.assertEqual((rid, item["status"]), ("edit-image", "completed"))
+        self.assertEqual(queue.status(self.job)["items"]["image"], before)
+
+    def test_followup_paper_sample_evidence_binds_actual_source_and_review(self):
+        from PIL import Image
+        from edit.hd.tools import visual_confirmation as visual, segment_render
+        root = self.job
+        def write(name, value):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            artifacts.write_json_artifact(path, value)
+            return visual._record(root, path)
+        source = root / 'source.png'
+        Image.new('RGB', (20, 20), 'white').save(source)
+        original = visual._record(root, source)
+        crop = root / 'crop.png'
+        with Image.open(source) as im: im.crop((0, 0, 10, 10)).save(crop)
+        crop_ref = visual._record(root, crop)
+        entry = root / 'index.html'
+        entry.write_text('<img src="crop.png">', encoding='utf-8')
+        entry_ref = visual._record(root, entry)
+        arroll = root / '06-edit-structure/edited-aroll.mp4'
+        arroll.parent.mkdir(parents=True)
+        arroll.write_bytes(b'approved audio clock')
+        arroll_ref = visual._record(root, arroll)
+        preview = root / 'preview.mp4'
+        preview.write_bytes(b'captured sample')
+        preview_ref = visual._record(root, preview)
+        director = write('director.json', {'segments': [{'segment_id': 'seg-009', 'start': 0, 'end': 2,
+                           'bindings': {'visual': {'dependency_id': 'paper-collage-hyperframes'}}}]})
+        brief = {'source_binding': {'aroll_sha256': arroll_ref['sha256'], 'segment_id': 'seg-009', 'start': 0, 'end': 2},
+                 'upstream_route': 'paper-collage-ad/hyperframes',
+                 'composition': {'width': 1080, 'height': 1920, 'fps': 24, 'frames': 48, 'alpha': False},
+                 'entry': {'job_path': 'index.html', 'media_ref': 'entry', 'sha256': entry_ref['sha256']},
+                 'assets': [{'job_path': 'crop.png', 'scene_path': 'crop.png', 'media_ref': 'crop', 'sha256': crop_ref['sha256']}]}
+        proof = {'brief': write('brief.json', brief), 'preview': preview_ref}
+        proof['crop_provenance'] = write('crop.json', {'source_images': {'source': {'path': 'source.png', 'sha256': original['sha256']}},
+            'crops': [{'source': 'source.png', 'source_sha256': original['sha256'], 'crop': [0, 0, 10, 10], 'output': 'crop.png', 'output_sha256': crop_ref['sha256']}]})
+        proof['media_manifest'] = write('media.json', {'schema_version': 'reference-process-media/v1', 'brief_sha256': proof['brief']['sha256'],
+            'media': [{'media_ref': 'entry', 'sha256': entry_ref['sha256'], 'byte_length': entry_ref['bytes']},
+                      {'media_ref': 'crop', 'sha256': crop_ref['sha256'], 'byte_length': crop_ref['bytes']}]})
+        proof['render_evidence'] = write('render.json', {'exit_code': 0, 'external_requests': 0, 'upstream_route': brief['upstream_route'],
+                                                           'frames': 48, 'output_sha256': preview_ref['sha256']})
+        proof['review'] = write('review.json', {'status': 'needs_revision', 'preview': preview_ref,
+            'observations': ['纸纹网格不自然'], 'method': '实看关键帧', 'inspected_times_seconds': [0.5]})
+        plan = {'issue': '纸纹网格不自然', 'followup_evidence': proof}
+        unapproved = {'from_id': 'image', 'request': self.request('edit-image'), 'count': 1, **plan}
+        with self.assertRaisesRegex(queue.GenerationQueueError, 'explicit permission'):
+            queue.edit_completed_image(root, unapproved, '', artifacts.sha256_json(unapproved))
+        parent = {'authorization': {'source': {}}, 'completion_response': {'artifacts': [
+            {'type': 'image', 'path': str(source), 'sha256': original['sha256'], 'bytes': original['bytes']}]}}
+        job = SimpleNamespace(job_dir=root, job_id='synthetic', stages={'edit_structure': {'status': 'approved', 'artifacts': [arroll_ref]}})
+        approved = {'step': {'segment_id': 'seg-009', 'component_id': 'visual', 'purpose': 'image'}}
+        with mock.patch.object(visual, '_validate_source', return_value=(None, {'inputs': {'director': director}})), \
+             mock.patch.object(segment_render, '_default_probe', return_value={}), \
+             mock.patch.object(segment_render, '_probe_matches', return_value=True):
+            queue._validate_followup_image_evidence(job, parent, plan, approved)
+            for change in ('missing', 'path', 'issue', 'source'):
+                bad = copy.deepcopy(plan)
+                if change == 'missing': del bad['followup_evidence']['crop_provenance']
+                if change == 'path': bad['followup_evidence']['preview']['path'] = 'index.html'
+                if change == 'issue': bad['issue'] = '未经记录的问题'
+                if change == 'source':
+                    forged = {'source_images': {'source': {'path': 'source.png', 'sha256': original['sha256']}}, 'crops': []}
+                    bad['followup_evidence']['crop_provenance'] = write('forged.json', forged)
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    queue._validate_followup_image_evidence(job, parent, bad, approved)
+            preview.write_bytes(b'tampered sample')
+            with self.assertRaises(ValueError):
+                queue._validate_followup_image_evidence(job, parent, plan, approved)
+
+    def test_followup_edit_claim_reuses_locked_queue_and_keeps_unique_original(self):
+        from edit.hd.tools import visual_confirmation as visual, generation_channels
+        original = self.request('image')
+        self.add(original)
+        first = queue.claim(self.job, 'image')
+        source = self.job / 'original.png'
+        source.write_bytes(b'original image')
+        ref = visual._record(self.job, source)
+        queue.record(self.job, 'image', first['claim_token'], {'status': 'completed', 'artifacts': [
+            {'type': 'image', 'path': str(source), 'sha256': ref['sha256'], 'bytes': ref['bytes']}]})
+        queue_path = self.job / 'manifests/generation-queue.json'
+        saved = artifacts.read_json_artifact(queue_path)
+        saved['items']['image']['authorization'] = {'source': {}, 'steps': {'image': 'step'}}
+        artifacts.write_json_artifact(queue_path, saved)
+        job = SimpleNamespace(job_dir=self.job, job_id='synthetic')
+        step = {'id': 'step', 'purpose': 'image', 'arguments': original['arguments'], 'input_files': []}
+        proposal = {'generation_steps': [step]}
+        request = self.request('edit-image')
+        request['arguments']['referenced_image_paths'] = [str(source)]
+        request['input_files'] = [ref]
+        plan = {'from_id': 'image', 'request': request, 'issue': 'sample issue', 'count': 1, 'followup_evidence': {}}
+        digest = artifacts.sha256_json(plan)
+        with mock.patch.object(queue.state, 'load_job', return_value=job), \
+             mock.patch.object(visual, '_validate_source', return_value=(None, proposal)), \
+             mock.patch.object(visual, '_request_id', return_value='image'), \
+             mock.patch.object(generation_channels, 'prepare_request', return_value=original), \
+             mock.patch.object(queue, '_validate_followup_image_evidence'):
+            parent_before = copy.deepcopy(queue.status(self.job)['items']['image'])
+            result = queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)
+            self.assertFalse(result['idempotent'])
+            self.assertTrue(queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)['idempotent'])
+            # A nested status() would deadlock on the real flock. Fail immediately instead.
+            with mock.patch.object(queue, 'status', side_effect=AssertionError('nested queue lock')):
+                action = queue.claim(self.job, 'edit-image')
+            self.assertEqual(action['action'], 'generate')
+            self.assertEqual(action['tool'], request['tool'])
+            self.assertEqual(action['arguments'], request['arguments'])
+            self.assertEqual(queue.claim(self.job, 'edit-image')['status'], 'submitting')
+            items = queue.status(self.job)['items']
+            self.assertEqual(items['image'], parent_before)
+            self.assertEqual([key for key, value in items.items() if value.get('retry_of') == 'image'], ['edit-image'])
+
+    def test_replace_only_proven_unsent_projectless_action_and_keep_evidence(self):
+        from edit.hd.tools import generation_inputs as inputs, generation_channels as channels
+        source, request, binding, ref = self._generated_upload(metadata_bytes=0)
+        binding["upload"]["arguments"].pop("project_id")
+        bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+        bindings["video"] = binding
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+        old = inputs.next_action(self.job, request)
+        del old["arguments"]["project_id"]
+        path, state = inputs._state(self.job, request, binding)
+        state["uploads"][old["binding_id"]]["action"] = copy.deepcopy(old)
+        artifacts.write_json_artifact(path, state)
+        job = SimpleNamespace(job_dir=self.job)
+        unknown = {"status": "unknown", "evidence": "no response"}
+        proven = {"status": "not_sent", "evidence": "host invocation log shows no tool call"}
+        with self.assertRaisesRegex(ValueError, "not sent"):
+            channels.replace_unsent_upload(job, old, unknown)
+        self.assertEqual(artifacts.read_json_artifact(path), state)
+        new = channels.replace_unsent_upload(job, old, proven)
+        self.assertEqual(new["arguments"]["project_id"], request["arguments"]["project_id"])
+        self.assertNotEqual(new["claim_token"], old["claim_token"])
+        saved = artifacts.read_json_artifact(path)["uploads"][old["binding_id"]]
+        self.assertEqual(saved["superseded_uploads"], [{"action": old, "evidence": proven}])
+        self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        with self.assertRaisesRegex(ValueError, "original action"):
+            channels.record_result(job, old, {"url": "https://example.test/old.png"})
+        with self.assertRaisesRegex(ValueError, "original pending"):
+            channels.replace_unsent_upload(job, old, proven)
+        channels.record_result(job, new, {"url": "https://example.test/new.png"})
+        self.assertEqual(inputs.resolve_request(self.job, request)["arguments"]["first_frame"], "https://example.test/new.png")
 
     def test_completed_artifact_download_identifies_our_client_without_browser_spoofing(self):
         import urllib.request

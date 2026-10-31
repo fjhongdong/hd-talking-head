@@ -643,8 +643,12 @@ def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = N
              target, item.get("install", {}).get("package", "")],
             capture_output=True, text=True, timeout=20, check=False, env=env,
         )
-    except (OSError, subprocess.TimeoutExpired):
-        return {"status": "smoke_failed", "module": target}
+    except subprocess.TimeoutExpired as error:
+        return {"status": "smoke_failed", "module": target,
+                "error_type": "TimeoutExpired", "timeout_seconds": error.timeout}
+    except OSError as error:
+        return {"status": "smoke_failed", "module": target,
+                "error_type": type(error).__name__, "errno": error.errno}
     if result.returncode:
         failure = _probe_failure(result)
         return {"status": "missing" if failure.get("missing_module") == target else "smoke_failed",

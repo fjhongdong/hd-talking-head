@@ -27,6 +27,88 @@ from edit.hd.tools import visual_canary
 
 
 class GeneratedMediaPublicSmoke(unittest.TestCase):
+    def _camera_fixture(self, root):
+        from edit.hd.tests.test_visual_direction import draft_segment
+        from edit.hd.tools import contract_artifacts as a
+        media=root/'source.mp4';media.write_bytes(b'original source fixture')
+        record=self._complete_record(root,media.name,media.read_bytes())
+        segment=draft_segment(('ai_generated',),segment_id='seg',start=0,end=2)
+        component=segment['visual_strategy']['components'][0]
+        component.update(component_id='ai',media_type='video',layout_slot='full_frame')
+        segment['visual_strategy']['composition']['reading_order']=['ai']
+        original=copy.deepcopy(record['media'])
+        data={'schema_version':1,'segment_id':'seg','component_id':'ai','source_binding':record['source_binding'],
+            'source_media':original,'normalized_media':original,'source_frames':[0,48],
+            'path':[{'frame':n,'x':0,'y':0,'width':1080,'height':1920} for n in range(48)],
+            'reason':'Keep the existing calendar as the focus without changing its pixels'}
+        path=root/'framing.json';a.write_json_artifact(path,data)
+        descriptor={'job_path':path.name,'sha256':a.sha256_file(path),'byte_count':path.stat().st_size}
+        record['qa']['scope']='framing_source'
+        record['camera_source']={'source_qa':{'passed':False,'observed_scene':'Original focus remains on the mouth'},'framing':descriptor}
+        record['generation']['request_id']='generation'
+        segment['bindings']={'ai':generated_media.prepare_binding(record)}
+        return segment,record,data,original
+
+    def test_camera_scope_preserves_provider_identity_and_rejects_missing_parent_framing(self):
+        from edit.hd.tools import parent_camera_framing as camera
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();segment,record,data,original=self._camera_fixture(root)
+            job=SimpleNamespace(job_dir=root,job_id='job')
+            with patch.object(generated_media,'_queue_media',return_value=original), \
+                 patch.object(generated_media,'_validate_base_queue_identity'):
+                generated_media.validate_record(record,job)
+                generated_media.validate_camera_source(job,record,segment)
+                self.assertEqual(camera.load(root,segment,'ai'),data)
+                binding=segment['bindings']['ai']
+                self.assertEqual(binding['sha256'],record['media']['sha256'])
+                self.assertEqual(binding['generation_id'],'generation')
+                del segment['bindings']['ai'][camera.FIELD]
+                with self.assertRaisesRegex(ValueError,'mandatory parent framing'):
+                    generated_media.validate_camera_source(job,record,segment)
+            record['qa'].pop('scope')
+            with self.assertRaisesRegex(ValueError,'separately bound parent framing'):
+                generated_media.prepare_binding(record)
+
+    def test_camera_rectangles_cannot_change_clock_fill_outside_source_or_distort(self):
+        from edit.hd.tools import parent_camera_framing as camera
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();segment,record,data,_=self._camera_fixture(root)
+            for change in ('clock','order','outside','shape','nan'):
+                wrong=copy.deepcopy(data)
+                if change=='clock':wrong['source_frames']=[1,49]
+                if change=='order':wrong['path'][0]['frame']=1
+                if change=='outside':wrong['path'][0]['x']=1
+                if change=='shape':wrong['path'][0]['height']=1800
+                if change=='nan':wrong['path'][0]['width']=float('nan')
+                with self.subTest(change=change),self.assertRaises(ValueError):
+                    camera.validate_manifest(wrong,segment,'ai',media_sha256=record['media']['sha256'])
+            graph=camera.filter_chain(data)
+            self.assertIn(':d=1:s=1080x1920:fps=24',graph)
+            self.assertNotIn('pad',graph);self.assertNotIn('tpad',graph)
+            (root/'source.mp4').write_bytes(b'changed source')
+            with self.assertRaises(ValueError):camera.load(root,segment,'ai')
+
+    def test_camera_expression_renders_longer_than_libavutil_linear_nesting_limit(self):
+        from edit.hd.tools import parent_camera_framing as camera
+        data = {'path': [{'x': 0, 'y': 0, 'width': 1080 - frame, 'height': (1080 - frame) * 16 / 9}
+                         for frame in range(104)]}
+        graph = camera.filter_chain(data).replace('s=1080x1920', 's=16x16')
+        result = subprocess.run(['ffmpeg', '-hide_banner', '-v', 'error', '-f', 'lavfi',
+                                 '-i', 'color=s=16x16:r=24', '-vf', graph, '-frames:v', '104',
+                                 '-f', 'framehash', '-'], capture_output=True, check=True)
+        frames = [line for line in result.stdout.decode().splitlines() if not line.startswith('#')]
+        self.assertEqual(len(frames), 104)
+
+    def test_compiler_consumes_camera_descriptor_without_replacing_media_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();segment,record,_,_=self._camera_fixture(root)
+            component=_strategy_component('ai','ai_generated',layout_slot='full_frame');component['media_type']='video'
+            recipe=router.compile_strategy(_visual_strategy([component],segment_id='seg-router'),
+                _compile_context([component],segment_frames=48,binding_overrides={'ai':segment['bindings']['ai']}))
+            self.assertNotIn('parent_camera_framing',recipe['components'][0])
+            self.assertEqual(recipe['components'][0]['sha256'],record['media']['sha256'])
+            self.assertEqual(recipe['components'][0]['generation_id'],'generation')
+
     def test_symlink_cannot_bind_media_outside_job(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

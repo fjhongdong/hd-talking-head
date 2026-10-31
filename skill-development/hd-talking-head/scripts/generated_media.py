@@ -205,7 +205,8 @@ def normalize_composition_base(job, request_id, *, output_path, ffprobe_executab
 def _composition_base_scope(record):
     scope = record.get('composition_base')
     if scope is None:
-        if record.get('qa', {}).get('scope') == 'composition_base' or 'normalization' in record:
+        if (record.get('qa', {}).get('scope') == 'composition_base'
+                or 'normalization' in record and 'camera_source' not in record):
             raise ValueError('composition base scope is missing')
         return
     if (not isinstance(scope, dict) or set(scope) != {'source_qa', 'action_component_id'}
@@ -237,6 +238,38 @@ def validate_composition_base(record, recipe):
             or not any(d['component_id'] == action_id and record['component_id'] in d['depends_on']
                        for d in recipe['composition']['component_dependencies'])):
         raise ValueError('composition base requires an approved non-evidence hybrid with its independent native alpha action')
+
+def _camera_source_scope(record):
+    scope = record.get('camera_source')
+    if scope is None:
+        if record.get('qa', {}).get('scope') == 'framing_source':
+            raise ValueError('camera source scope is missing')
+        return
+    from edit.hd.tools import parent_camera_framing
+    if (not isinstance(scope, dict) or set(scope) != {'source_qa','framing'}
+            or 'composition_base' in record or record['media']['media_type'] != 'video'
+            or record.get('qa', {}).get('scope') != 'framing_source'
+            or not isinstance(scope['source_qa'], dict) or scope['source_qa'].get('passed') is not False
+            or not isinstance(scope['source_qa'].get('observed_scene'), str)
+            or not scope['source_qa']['observed_scene'].strip()):
+        raise ValueError('camera source needs its failed original-effect QA and separately bound parent framing')
+    parent_camera_framing.validate_descriptor(scope['framing'])
+
+def validate_camera_source(job, record, segment):
+    """A framing-only source cannot stand in for a completed camera effect."""
+    _camera_source_scope(record)
+    if 'camera_source' not in record:
+        return
+    from edit.hd.tools import parent_camera_framing
+    cid = record['component_id']
+    if segment.get('bindings', {}).get(cid, {}).get(parent_camera_framing.FIELD) != record['camera_source']['framing']:
+        raise ValueError('camera source is missing its mandatory parent framing')
+    data = parent_camera_framing.load(job.job_dir, segment, cid, media_sha256=record['media']['sha256'])
+    generation = record['generation']
+    original = _queue_media(job, generation['request_id'], generation.get('output_index', 0))
+    if (data['source_binding'] != record['source_binding'] or data['source_media'] != original
+            or data['normalized_media'] != record['media']):
+        raise ValueError('camera framing changed the original generation, normalized pixels or speech clock')
 
 def _approved_generation_request(job, generation, record):
     """Re-check a queue result against its frozen visual proposal when present."""
@@ -285,7 +318,8 @@ def validate_record(record: dict, job) -> dict:
     if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
         raise ValueError("generated media requires host QA and observed scene evidence")
     _composition_base_scope(record)
-    if 'composition_base' in record:
+    _camera_source_scope(record)
+    if 'composition_base' in record or 'camera_source' in record:
         generation = record['generation']
         _validate_base_queue_identity(job, record)
         original = _queue_media(job, generation['request_id'], generation.get('output_index', 0))
@@ -316,7 +350,7 @@ def record_from_completed_output(*, job_id, segment_id, component_id, provider, 
 
 def record_from_queue(job, request_id, *, segment_id, component_id, source_binding,
                       qa, semantic_brief, ffprobe_executable, output_index=0,
-                      composition_base=None, normalization=None, ffmpeg_executable=None):
+                      composition_base=None, camera_source=None, normalization=None, ffmpeg_executable=None):
     """Bind the actual queue output and observed content to one speech window."""
     from edit.hd.tools import generation_queue, generation_inputs, contract_artifacts as artifacts
     item = generation_queue.status(job.job_dir)["items"][request_id]
@@ -335,13 +369,13 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
     if not path.is_absolute():
         path = job.job_dir / path
     if normalization is not None:
-        if composition_base is None or ffmpeg_executable is None:
+        if (composition_base is None and camera_source is None) or ffmpeg_executable is None:
             raise ValueError('normalization requires scoped composition base use and actual FFmpeg verification')
         if normalization.get('source') != _queue_media(job, request_id, output_index):
             raise ValueError('normalization does not belong to the original queue output')
         _verify_base_normalization(job, normalization, ffprobe_executable, ffmpeg_executable)
         path = Path(job.job_dir) / normalization['output']['job_path']
-    elif composition_base is not None:
+    elif composition_base is not None or camera_source is not None:
         measured = _base_probe(path, ffprobe_executable)
         if (measured['width'], measured['height']) not in {(720, 1280), (1080, 1920)} or measured['sar'] != '1:1':
             raise ValueError('composition base requires a separately verified normalization first')
@@ -384,8 +418,11 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         qa=qa, semantic_brief=semantic_brief)
     record["source_binding"] = source_binding
     record["source_dimensions"] = {"width": width, "height": height}
-    if composition_base is not None:
-        record['composition_base'] = composition_base
+    if composition_base is not None or camera_source is not None:
+        if composition_base is not None:
+            record['composition_base'] = composition_base
+        if camera_source is not None:
+            record['camera_source'] = camera_source
         record['generation']['output_index'] = output_index
         if normalization is not None:
             record['normalization'] = normalization
@@ -397,6 +434,7 @@ def prepare_binding(record: dict, *, execution_mode="reuse_completed_generated_m
         raise ValueError("generated media binding requires a completed record")
     _validate_observation_and_source(record)
     _composition_base_scope(record)
+    _camera_source_scope(record)
     media = record.get("media")
     if not isinstance(media, dict) or not media.get("sha256") or media.get("media_type") not in {"image", "video"}:
         raise ValueError("generated media binding requires real media identity")
@@ -406,7 +444,8 @@ def prepare_binding(record: dict, *, execution_mode="reuse_completed_generated_m
     return {"execution_mode": execution_mode, "provider": record["provider"], "model": record["model"],
             "endpoint_id": record["endpoint_id"], "generation_id": record["generation_id"],
             "prompt_sha256": record["prompt_sha256"], "sha256": record["media"]["sha256"],
-            "source_dimensions": dimensions}
+            "source_dimensions": dimensions,
+            **({'parent_camera_framing':record['camera_source']['framing']} if 'camera_source' in record else {})}
 
 def create_job_adapter(job, records):
     """Build a dispatcher from explicit completed_record descriptors.
@@ -464,7 +503,7 @@ def create_adapter(job, record: dict):
             raise ValueError("generated media target binding mismatch")
         if context.component.get("kind") != "ai_generated" or any(
                 context.component.get(key) != value for key, value in expected.items()
-                if key not in {"execution_mode", "media_type", "source_dimensions"}):
+                if key not in {"execution_mode", "media_type", "source_dimensions", "parent_camera_framing"}):
             raise ValueError("generated media generation identity mismatch")
         from edit.hd.tools import visual_canary
         plan = visual_canary.load_approved_visual_plan(job)
@@ -476,7 +515,8 @@ def create_adapter(job, record: dict):
                 or _plain_json(context.recipe) != segment['shot_recipe']):
             raise ValueError('generated media approved source window mismatch')
         validate_composition_base(bound, context.recipe)
-        if 'composition_base' in bound:
+        validate_camera_source(job, bound, segment)
+        if 'composition_base' in bound or 'camera_source' in bound:
             # Recheck the immutable provider output as well as the derivative.
             validate_record(bound, job)
         with _pinned_media(source, media) as pinned:
@@ -486,7 +526,10 @@ def create_adapter(job, record: dict):
             "external_requests": 0, "generation_id": bound["generation_id"], "provider": bound["provider"],
             **({'composition_base': bound['composition_base'],
                 'normalization_sha256': hashlib.sha256(_canonical(bound.get('normalization'))).hexdigest()}
-               if 'composition_base' in bound else {})},
+               if 'composition_base' in bound else {}),
+            **({'camera_source':bound['camera_source'],
+                'normalization_sha256':hashlib.sha256(_canonical(bound.get('normalization'))).hexdigest()}
+               if 'camera_source' in bound else {})},
             qa={"passed": True, "checks": ["completed generation record and media identity matched"]})
     return KindAdapter(kind="ai_generated", approved_executor=EXECUTOR, adapter_id="generated-media-v1",
         adapter_version=record_hash, artifact_media_type=media["media_type"], invoke=invoke,

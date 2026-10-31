@@ -13,6 +13,45 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
+    def test_native_catalog_duration_bounds_reach_ink_press_timing_check(self):
+        path = ROOT / 'skill-development/hd-talking-head/references/video-shotcraft-template-catalog.json'
+        templates = json.loads(path.read_text())['native_paths']
+        module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
+                                 load_template_catalog=lambda *_args, **_kwargs: templates)
+        spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
+        with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
+             patch.object(selection.importlib.util, 'module_from_spec', return_value=module):
+            rows = selection.motion_native_candidates(ROOT)
+        for row, template in zip(rows, templates):
+            self.assertEqual({key: row[key] for key in ('min_duration_seconds', 'max_duration_seconds')
+                              if key in row},
+                             {key: template[key] for key in ('min_duration_seconds', 'max_duration_seconds')
+                              if key in template})
+        ink_press = next(row for row in rows if row['candidate_id'].endswith('/ink-press'))
+        self.assertEqual(ink_press['min_duration_seconds'], 1085 / 30)
+        self.assertIn('at least', selection.timing_failure(ink_press,
+                      {'segment_id': 's', 'start': 0, 'end': 6}))
+        self.assertIsNone(selection.timing_failure(ink_press,
+                          {'segment_id': 's', 'start': 0, 'end': 868 / 24}))
+
+    def test_native_recipe_roles_keep_components_out_of_broll(self):
+        templates = [{'candidate_id': 'video-shotcraft:video-shotcraft/' + role,
+                      'native_role': role}
+                     for role in ('scene', 'product_promo', 'camera', 'transition', 'rhythm', 'component')]
+        module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
+                                 load_template_catalog=lambda *_args, **_kwargs: templates)
+        spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
+        with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
+             patch.object(selection.importlib.util, 'module_from_spec', return_value=module):
+            rows = selection.motion_native_candidates(ROOT)
+        self.assertEqual([row['native_role'] for row in rows], [t['native_role'] for t in templates])
+        self.assertEqual([row['role'] for row in rows], ['native', 'native'] + ['component'] * 4)
+        with patch.object(selection, 'motion_native_candidates', return_value=rows), \
+             patch.object(selection, 'talkcraft_candidates', return_value=[]):
+            discovered = selection._discover_native_candidates(ROOT)
+        self.assertEqual({row['native_role'] for row in discovered if row['skill_id'] == 'video-shotcraft'},
+                         {'scene', 'product_promo'})
+
     def test_native_timing_evidence_reads_existing_adapter_frame_limits(self):
         candidates=selection.discover_candidates(ROOT)
         for source in ('adu-motion-video','hypit-native-chat'):
@@ -1093,6 +1132,28 @@ class PartialCandidateReviewTest(unittest.TestCase):
         with patch.object(selection, "discover_candidates", return_value=self.pool), \
              patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=[]):
             return selection.assign_skills(ROOT, source, director=director)
+
+    def test_verified_same_row_supplement_has_its_own_route_without_reassigning_primary(self):
+        source,director=self.fixture()
+        source['beats'][0]['semantic_row_id']='shared-original'
+        helper=copy.deepcopy(source['beats'][1])
+        helper.update(segment_id='s0',component_id='advice',semantic_row_id='shared-original',start=0,end=2)
+        helper['candidates']=[copy.deepcopy(helper['candidates'][0])]
+        source['beats'].append(helper)
+        director['segments'][0]['visual_strategy']['components'].append({'component_id':'advice'})
+        before=copy.deepcopy(source)
+        with patch.object(selection,'_verified_supplement_routes',return_value=(
+                {('s0','advice')},{('s0','scene'):'a',('s1','scene'):'b',('s0','advice'):'b'})):
+            result=self.assign(source,director)
+        choices={(a['segment_id'],a['component_id']):a['candidate_id'] for a in result['assignments']}
+        self.assertEqual(choices,{('s0','scene'):'a',('s1','scene'):'b',('s0','advice'):'b'})
+        self.assertEqual(result['beats'],before['beats'])
+        self.assertEqual(source,before)
+        # Ordinary parts of the same semantic item still need one common route.
+        with self.assertRaisesRegex(ValueError,'same candidate reviews'):
+            self.assign(source,director)
+        with self.assertRaisesRegex(ValueError,'actual approved Job'):
+            selection._verified_supplement_routes(None,director,{'native_supplements':[{}]})
 
     def test_equal_bounds_keep_unreviewed_and_never_select_it(self):
         source, director = self.fixture()

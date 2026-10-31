@@ -169,13 +169,14 @@ def validate_overlay_capability(route: str, binding: Mapping, *, registered: Map
 
 
 def load_catalog(project_root: Path) -> list[dict]:
-    from .broll_skill_selection import _discover_native_candidates, talkcraft_candidates
+    from .broll_skill_selection import _discover_native_candidates, talkcraft_candidates, motion_native_candidates
 
     project = Path(project_root).resolve(strict=True)
     profiles = load_profiles(project)
     raw = _discover_native_candidates(project)
     rows = {row["candidate_id"]: row for row in describe_candidates(project, raw, use="broll", profiles=profiles)}
     components = [row for row in talkcraft_candidates(project) if row['native_role'] != 'scene']
+    components.extend(row for row in motion_native_candidates(project) if row.get('role') == 'component')
     rows.update((row['candidate_id'], row) for row in describe_candidates(
         project, components, use='component', profiles=profiles))
     for row in overlay_candidates(project, profiles=profiles):
@@ -401,7 +402,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     "record": {"job_path": record_path, "sha256": hashlib.sha256(data).hexdigest(), "byte_count": len(data)}}}
         finally:
             sys.path[:] = previous
-    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
         scripts = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts'
         previous = sys.path[:]
         try:
@@ -417,7 +418,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                 if result['renderer_version'] != segment['bindings'][component]['renderer_version']:
                     raise ValueError('Native motion result renderer differs from the selected binding')
                 call = contract_artifacts.read_json_artifact(module.exact(root, result['render_call']))
-                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix == '.html']
+                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else {'.html'})]
                 if not sources:
                     raise ValueError('Native motion result has no frozen authored scene')
                 brief = {**brief, 'native_result': {**result, 'scene_sources': sources,
@@ -501,12 +502,12 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                     raise ValueError("native validator module belongs to another project")
                 payload = contract_artifacts.canonical_json_bytes(
                     {k: v for k, v in brief.items() if k != "native_result"}
-                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion"} else brief)
+                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion", "mg-styles-15", "video-shotcraft"} else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
                     expected_alpha = row['role'] == 'aroll_overlay'
-                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
                             and use == 'broll' and segment is not None):
                         strategy = segment['visual_strategy']
                         components = [c for c in strategy['components'] if c.get('component_id') == component_id]
@@ -520,7 +521,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                                     or components[0].get('kind') != 'code_generated'):
                                 raise ValueError('Native B-roll annotation needs a valid hybrid composition')
                             expected_alpha = True
-                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'} and (
+                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'} and (
                             checked['dependency_id'] != row['dependency_id']
                             or row['template_id'] != checked['dependency_id'] + '/' + checked['template_id']
                             or checked['alpha'] != expected_alpha):
@@ -653,9 +654,9 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 if None in required or not required.issubset(paths):
                     raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
         motion_required = set()
-        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
                            and phase == 'planning' and not brief.get('native_result'))
-        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
             if motion_planning:
                 planning = {ref.get('pointer') for ref in refs if isinstance(ref, dict) and ref.get('path') == relative}
                 if not {'/transcript', '/task_source/quote', '/task_source/semantic', '/template_id', '/native_options'}.issubset(planning):
@@ -669,7 +670,7 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 records = [ref for ref in refs if isinstance(ref, dict) and ref.get('path') == motion_result['record']['job_path']]
                 if (not motion_required.issubset(cited) or len(records) != 1
                         or records[0].get('pointer') != '/status' or records[0].get('value') != 'completed'):
-                    raise ValueError('Native motion must cite its actual authored HTML and completed result')
+                    raise ValueError('Native motion must cite its actual authored scene and completed result')
         talkcraft_required = set()
         talkcraft_planning = row.get("dependency_id") == "video-talkcraft" and phase == "planning" and not brief.get("native_result")
         if row.get("dependency_id") == "video-talkcraft":

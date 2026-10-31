@@ -123,8 +123,10 @@ def prepare_packages(manifest: dict, environment: dict[str, str], packages: Path
             ], environment=environment, record=record, timeout=300)
         # Refresh in new processes. Do not mistake pip's exit code for usable imports.
         for item in dependencies:
-            if _check_python_module(item, env=environment)["status"] != "callable":
-                raise RuntimeError(f"post-install import failed: {item['target']}; no automatic retry")
+            checked = _check_python_module(item, env=environment)
+            if checked["status"] != "callable":
+                raise RuntimeError(f"post-install import failed: {item['target']}: "
+                                   + json.dumps(checked) + "; no automatic retry")
         return {"status": "ready", "installed": missing, "package_directory": str(packages)}
     return {"status": "ready", "installed": [], "package_directory": str(packages)}
 

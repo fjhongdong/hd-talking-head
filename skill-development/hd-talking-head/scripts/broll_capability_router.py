@@ -119,7 +119,7 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
-    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}:
+    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
         from motion_native_skill_adapter import ENTRY, VERSION, load_template_catalog
         dependency = candidate['dependency_id']
         rows = load_template_catalog(Path(__file__).resolve().parents[3], dependency_id=dependency)
@@ -527,9 +527,9 @@ def _kind(value: Any, name: str = "kind") -> str:
     return value
 
 
-def _authority(callable_object: Any, *args: Any) -> Any:
+def _authority(callable_object: Any, *args: Any, **kwargs: Any) -> Any:
     try:
-        return callable_object(*args)
+        return callable_object(*args, **kwargs)
     except VisualStrategyError as error:
         raise RouterError(str(error)) from None
 
@@ -537,12 +537,13 @@ def _authority(callable_object: Any, *args: Any) -> Any:
 def freeze_candidate(
     expected_kind: str,
     candidates: Iterable[Mapping[str, Any]],
+    *, framing_binding=None,
 ) -> Dict[str, Any]:
     """Freeze one candidate through the authoritative same-kind ranker."""
 
     approved_kind = _kind(expected_kind, "approved kind")
     candidate_list = [_as_dict(item, "candidate") for item in candidates]
-    ranked = _authority(stable_same_kind_candidates, candidate_list, approved_kind)
+    ranked = _authority(stable_same_kind_candidates, candidate_list, approved_kind, framing_binding=framing_binding)
     return _copy(ranked[0], "frozen candidate")
 
 
@@ -613,12 +614,12 @@ def _validate_code_cross_fields(
         raise RouterError("invocation_record.argv must be an array")
     if argv.count(entrypoint) != 1:
         raise RouterError("invocation_record.argv must bind entrypoint exactly once")
-    if dependency_id in {'barty-motion-graphics', 'bang-motion'}:
-        from motion_native_skill_adapter import ENTRY, VERSION
+    if dependency_id in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+        from motion_native_skill_adapter import ENTRY, VERSION, primary_renderer as native_renderer
         from motion_native_runtime import PACKAGES
         package, version = PACKAGES[dependency_id]
         if (not _native_selection(component) or entrypoint != ENTRY
-                or primary_renderer != 'HTMLCanvas'
+                or primary_renderer != native_renderer(dependency_id)
                 or component.get('template_version') != VERSION
                 or component.get('renderer_version') != package + '-' + version):
             raise RouterError('Native motion requires its complete pinned workflow and actual renderer')
@@ -832,12 +833,12 @@ def validate_strategy(
 
 
 def _canonical_snapshot(
-    candidates: Any, expected_kind: str, component_id: str
+    candidates: Any, expected_kind: str, component_id: str, binding: Mapping,
 ) -> Dict[str, Any]:
     if not isinstance(candidates, list):
         raise RouterError(f"candidate snapshot for {component_id} must be an array")
     candidate_list = [_as_dict(item, "candidate") for item in candidates]
-    ranked = _authority(stable_same_kind_candidates, candidate_list, expected_kind)
+    ranked = _authority(stable_same_kind_candidates, candidate_list, expected_kind, framing_binding=binding)
     return ranked[0]
 
 
@@ -930,6 +931,12 @@ def _consume_completed_generated_binding(kind: str, media_type: str, binding: Di
         from edit.hd.tools.parent_static_labels import validate_descriptor
         try:
             validate_descriptor(binding.pop('parent_static_labels'))
+        except ValueError as error:
+            raise RouterError(str(error)) from None
+    if 'parent_camera_framing' in binding:
+        from edit.hd.tools.parent_camera_framing import validate_descriptor
+        try:
+            validate_descriptor(binding.pop('parent_camera_framing'))
         except ValueError as error:
             raise RouterError(str(error)) from None
     return {**dimensions, "fps": 24, "alpha": False}
@@ -1049,7 +1056,7 @@ def _compile_shot_recipe(
                     raise RouterError("template candidate request differs from frozen template_request")
         if component_id in snapshots:
             selected_candidates[component_id] = _canonical_snapshot(
-                snapshots[component_id], kind, component_id
+                snapshots[component_id], kind, component_id, binding
             )
         elif kind not in {"code_generated", "ai_generated"}:
             raise RouterError(f"candidate snapshot for {component_id} is missing")

@@ -15,7 +15,9 @@ import motion_native_runtime as runtime
 class MotionNativeRuntimeTests(unittest.TestCase):
     def test_unsupported_node_stops_before_installation_or_runtime_writes(self):
         for dependency, version, minimum in [('barty-motion-graphics', 'v18.20.0', '>=20'),
-                                               ('bang-motion', 'v22.11.0', '>=22.12.0')]:
+                                               ('bang-motion', 'v22.11.0', '>=22.12.0'),
+                                               ('mg-styles-15', 'v22.11.0', '>=22.12.0'),
+                                               ('video-shotcraft', 'v22.11.0', '>=22.12.0')]:
             with self.subTest(dependency=dependency), \
                     mock.patch.object(runtime.shutil, 'which', return_value='/tools/node'), \
                     mock.patch.object(runtime.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, version)) as run, \
@@ -24,6 +26,34 @@ class MotionNativeRuntimeTests(unittest.TestCase):
                     runtime.prepare(_env.PROJECT, dependency_id=dependency)
                 root.assert_not_called()
                 self.assertEqual([call.args[0] for call in run.call_args_list], [['/tools/node', '--version']])
+
+    def test_selected_3d_style_blocks_before_confirmation_but_not_other_styles_or_reviewed_reuse(self):
+        from types import SimpleNamespace
+        import run_stage
+        import motion_native_skill_adapter as native
+        from test_motion_native_skill_adapter import brief
+        with mock.patch.object(runtime.shutil,'which',side_effect=AssertionError('unselected/reused templates must not probe Blender')):
+            for dependency,template,mode in [('mg-styles-15','flat-vector','render'),
+                                              ('video-shotcraft','spotlight-hero-card','render'),
+                                              ('mg-styles-15','3d-render','reuse')]:
+                self.assertEqual(runtime.check_template_dependencies(_env.PROJECT,dependency_id=dependency,
+                    template_id=template,mode=mode),{'status':'not_required'})
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();job=SimpleNamespace(job_dir=root)
+            binding={'dependency_id':'mg-styles-15','template_id':'mg-styles-15/3d-render'}
+            director={'segments':[{'segment_id':'seg-001','bindings':{'scene':binding}}]}
+            with mock.patch.object(runtime.shutil,'which',return_value=None), \
+                 mock.patch.object(runtime.Path,'is_file',return_value=False):
+                with self.assertRaisesRegex(ValueError,'Blender 5.1.*before visual confirmation'):
+                    run_stage._validate_prepared_native_inputs(job,_env.PROJECT,director,{'scenes':[]})
+            request=root/'brief.json';request.write_text(json.dumps(brief('mg-styles-15','3d-render')))
+            binding['brief_sha256']=native.sha(request)
+            result=root/'native-inputs/native-test/result.json';result.parent.mkdir(parents=True);result.write_text('{}')
+            treatment={'scenes':[{'segment_id':'seg-001','component_id':'scene','brief_path':'brief.json'}]}
+            with mock.patch.object(runtime.shutil,'which',side_effect=AssertionError('reviewed reuse must stay offline')), \
+                 mock.patch.object(native,'inspect_result',return_value={'status':'completed'}) as inspect:
+                native.check_selected_template_dependencies(job,director,treatment)
+            inspect.assert_called_once_with(root,request.read_bytes())
 
     def test_reuse_only_requires_current_ffprobe(self):
         with mock.patch.object(runtime.shutil, 'which', return_value='/tools/ffprobe') as which, \

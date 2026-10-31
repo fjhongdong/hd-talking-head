@@ -9,7 +9,8 @@ import re
 import shutil
 import subprocess
 
-PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0')}
+PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0'),
+            'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
 
 def locked_files(project, dependency_id):
     name = PACKAGES[dependency_id][0]
@@ -18,6 +19,8 @@ def locked_files(project, dependency_id):
 
 def package_for(dependency_id):
     name, version = PACKAGES[dependency_id]
+    if dependency_id in {'mg-styles-15', 'video-shotcraft'}:
+        return json.loads(locked_files(Path(__file__).resolve().parents[3], dependency_id)['package.json'].read_bytes())
     return {'private': True, 'dependencies': {name: version}}
 
 
@@ -32,7 +35,8 @@ def runtime_root(project, *, dependency_id='barty-motion-graphics'):
 def _minimum_node(project, dependency_id):
     name = PACKAGES[dependency_id][0]
     lock = json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes())
-    requirement = lock['packages']['node_modules/' + name]['engines']['node']
+    requirement = (lock['packages']['']['engines']['node'] if dependency_id in {'mg-styles-15', 'video-shotcraft'}
+                   else lock['packages']['node_modules/' + name]['engines']['node'])
     if not re.fullmatch(r'>=\d+(?:\.\d+){0,2}', requirement):
         raise ValueError('Unsupported locked Node requirement: ' + requirement)
     parts = tuple(int(part) for part in requirement[2:].split('.'))
@@ -101,10 +105,14 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
     lock = json.loads((root / 'package-lock.json').read_bytes())
     if lock != json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes()):
         raise ValueError('Motion runtime lock differs from the bundled source')
-    for package_name in (('playwright', 'playwright-core') if dependency_id == 'barty-motion-graphics' else ('puppeteer', 'puppeteer-core')):
+    packages = (('playwright', 'playwright-core') if dependency_id == 'barty-motion-graphics' else
+                ('puppeteer', 'puppeteer-core') if dependency_id == 'bang-motion' else
+                tuple(package_for(dependency_id)['dependencies']))
+    for package_name in packages:
+        expected_version = package_for(dependency_id)['dependencies'].get(package_name, version)
         package = root / 'node_modules' / package_name / 'package.json'
-        if (json.loads(package.read_bytes())['version'] != version
-                or lock['packages']['node_modules/' + package_name]['version'] != version):
+        if (json.loads(package.read_bytes())['version'] != expected_version
+                or lock['packages']['node_modules/' + package_name]['version'] != expected_version):
             raise ValueError('Motion runtime dependency identity changed: ' + package_name)
     tools = {'node': node, **{tool: shutil.which(tool) for tool in ('ffmpeg', 'ffprobe')}}
     if not all(tools.values()):
@@ -116,13 +124,19 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
     environment = {}
     if dependency_id == 'barty-motion-graphics' and (root / 'browsers').is_dir():
         environment['PLAYWRIGHT_BROWSERS_PATH'] = str(root / 'browsers')
-    if dependency_id == 'bang-motion':
+    if dependency_id in {'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
         from adapter_kit import browser_candidates
         browsers = browser_candidates(project)
         if not browsers:
-            raise ValueError('Bang native rendering needs a prepared local Chrome browser')
+            raise ValueError('Native motion rendering needs a prepared local Chrome browser')
         environment['PUPPETEER_EXECUTABLE_PATH'] = str(browsers[0].resolve(strict=True))
-        script = "const p=require('puppeteer');(async()=>{const b=await p.launch({headless:'new'});console.log(JSON.stringify({browser:process.env.PUPPETEER_EXECUTABLE_PATH,version:await b.version()}));await b.close()})().catch(e=>{console.error(e.message);process.exit(1)})"
+        module = 'puppeteer-core' if dependency_id == 'mg-styles-15' else 'puppeteer'
+        script = "const p=require('NATIVE_BROWSER_DRIVER');(async()=>{const b=await p.launch({headless:'new',executablePath:process.env.PUPPETEER_EXECUTABLE_PATH});console.log(JSON.stringify({browser:process.env.PUPPETEER_EXECUTABLE_PATH,version:await b.version()}));await b.close()})().catch(e=>{console.error(e.message);process.exit(1)})".replace('NATIVE_BROWSER_DRIVER', module)
+        if dependency_id == 'mg-styles-15':
+            environment['MG_CHROME'] = environment['PUPPETEER_EXECUTABLE_PATH']
+            environment['MG_RENDER_SLOTS'] = '1'
+        if dependency_id == 'video-shotcraft':
+            script = "const {execFileSync}=require('node:child_process');const p=process.env.PUPPETEER_EXECUTABLE_PATH;require('@remotion/cli/package.json');console.log(JSON.stringify({browser:p,version:execFileSync(p,['--version'],{encoding:'utf8'}).trim()}))"
     result = subprocess.run([tools['node'], '-e', script], cwd=root, check=True,
                             capture_output=True, text=True, timeout=30, env={**os.environ, **environment})
     browser = json.loads(result.stdout)
@@ -136,6 +150,32 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
             'renderer_version': PACKAGES[dependency_id][0] + '-' + version, 'browser': browser['browser'],
             'browser_version': browser['version'], 'environment': environment, 'tools': tools,
             'tool_versions': versions, 'runtime_identity': identity}
+
+
+def check_template_dependencies(project, *, dependency_id, template_id, mode='render'):
+    """Check Blender only for new creation with the selected original 3D style."""
+    if mode not in {'render', 'reuse'}:
+        raise ValueError('Unknown native template dependency check mode')
+    if mode == 'reuse' or (dependency_id, template_id) != ('mg-styles-15', '3d-render'):
+        return {'status': 'not_required'}
+    executable = shutil.which('blender')
+    application = Path('/Applications/Blender.app/Contents/MacOS/Blender')
+    if executable is None and application.is_file():
+        executable = str(application)
+    if executable is None:
+        raise ValueError('MG 3d-render requires Blender 5.1 with Cycles before visual confirmation; '
+                         'Blender is not installed. Preserve this template and stop its preparation.')
+    expression = ("import bpy,json; print('HD_MG_BLENDER=' + json.dumps({'version':list(bpy.app.version),"
+                  "'cycles':bool(bpy.app.build_options.cycles)}))")
+    result = subprocess.run([executable, '--background', '--factory-startup', '--python-expr', expression],
+                            capture_output=True, text=True, check=True, timeout=30)
+    records = [line[len('HD_MG_BLENDER='):] for line in result.stdout.splitlines()
+               if line.startswith('HD_MG_BLENDER=')]
+    identity = json.loads(records[0]) if len(records) == 1 else {}
+    if (not isinstance(identity.get('version'), list) or identity['version'][:2] != [5, 1]
+            or identity.get('cycles') is not True):
+        raise ValueError('MG 3d-render requires the original Blender 5.1/Cycles environment')
+    return {'status': 'ready', 'blender': str(Path(executable).resolve(strict=True)), **identity}
 
 
 def prepare(project, *, dependency_id='barty-motion-graphics'):

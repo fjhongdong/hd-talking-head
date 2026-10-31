@@ -93,7 +93,7 @@ def _summary(job, stage: str, **extra) -> dict:
             from edit.hd.tools import speech_edit_v2
             result['cleanup_checks'] = speech_edit_v2.cleanup_check_candidates(job)
             if result['cleanup_checks']:
-                result['next'] = '宿主逐项核听；口误重说按原流程剪除后重建提案，必要强调/呼吸保留并在speech_cleanup_resolutions逐项写明理由。无需用户逐项确认。'
+                result['next'] = '宿主逐项核听；无法听音且用户已亲自核听当前试听时，可按阶段合同登记真实user审阅。口误重说先修提案，保留项仍在speech_cleanup_resolutions逐项写具体理由。'
         if stage == 'visual_direction':
             table = next((r['path'] for r in result['artifacts']
                           if r['path'].startswith('07-visual-confirmation/')
@@ -154,7 +154,11 @@ def _review(job, stage: str, review: dict) -> dict:
     if stage == 'speech_cleanup':
         from edit.hd.tools import speech_edit_v2
         speech_edit_v2.validate_cleanup_review(job, review)
-    receipt = {**review, 'reviewed_by': 'human' if human else 'host'}
+    if stage == 'edit_structure':
+        from edit.hd.tools import speech_edit_v2
+        speech_edit_v2.validate_edit_review(job, review)
+    reviewer = review.get('reviewed_by', 'host') if stage in {'speech_cleanup', 'edit_structure'} else ('human' if human else 'host')
+    receipt = {**review, 'reviewed_by': reviewer}
     if stage in {'visual_canary', 'visual_assets', 'preview'}:
         from edit.hd.tools import visual_review
         receipt['visual_review'] = visual_review.validate_stage_review(job, stage, review)
@@ -252,6 +256,8 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
 
 
 def _validate_prepared_native_inputs(job, project, director, treatment, *, planned=()):
+    from motion_native_skill_adapter import check_selected_template_dependencies
+    check_selected_template_dependencies(job, director, treatment)
     # Only exact future-input bindings are absent from this view. Prepared
     # bindings, even broken ones next to a planned item, retain every gate.
     prepared = {**director, 'segments': [{**segment, 'bindings': {
@@ -452,7 +458,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     if native_actions:
         return _summary(job, 'visual_direction', actions=native_actions,
             next='宿主执行完整原生 Skill；产物完成后核对真实画面并更新 treatment 的实际语义引用，回传 realization 后继续。无需用户再次确认。')
-    if any(b.get('dependency_id') in {'barty-motion-graphics', 'bang-motion'}
+    if any(b.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
            for s in _json(director)['segments'] for b in s.get('bindings', {}).values()):
         from edit.hd.tools import motion_readability
         motion_readability.validate_direction_contract(job, _json(director), _json(treatment))
@@ -468,7 +474,8 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
 def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
     native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
-                      'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter'}
+                      'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
+                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter'}
     from edit.hd.tools.subtitles_v2 import subtitle_layout
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
@@ -490,9 +497,18 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
                 composition = segment['visual_strategy'].get('composition', {})
                 zones, placement = subtitle_layout(segment['visual_strategy']['mode'], composition)
                 options = ({'approved_task_source': module.task_source(director, treatment, segment['segment_id'], cid)}
-                           if dependency in {'barty-motion-graphics', 'bang-motion'} else {})
+                           if dependency in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'} else {})
                 action = module.native_task(job, {'segment_id': segment['segment_id']},
                     {**binding, 'component_id': cid}, brief_path, **options)
+                if dependency == 'barty-motion-graphics':
+                    directory = _path(job, brief['project_directory'])
+                    output = directory / 'out'
+                    if (not directory.absolute().is_relative_to(job.job_dir / 'native-projects')
+                            or output.resolve() != output.absolute()):
+                        raise ValueError('Native output directory must remain in this Job project')
+                    output.mkdir(parents=True, exist_ok=True)
+                    action['output_directory'] = str(output)
+                    action['next'] += ' The parent has prepared output_directory. Write the native media directly into it; prepare any authored subdirectory before capture_render.'
                 action['requirements']['parent_subtitle_layout'] = {'safe_zones': zones, 'placement': placement}
                 actions.append(action)
             else:
@@ -511,6 +527,8 @@ def _module(name: str):
 _NATIVE_MODULES = {
     'barty-motion-graphics': ('motion_native_skill_adapter', 'python'),
     'bang-motion': ('motion_native_skill_adapter', 'python'),
+    'mg-styles-15': ('motion_native_skill_adapter', 'python'),
+    'video-shotcraft': ('motion_native_skill_adapter', 'python'),
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
@@ -627,7 +645,7 @@ def native_component_adapters(project: Path, job) -> dict:
             adapters[dependency] = _module('whiteboard_adapter').create_adapter(
                 vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
                 engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
-        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion'}:
+        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
             module = _module('talkcraft_skill_adapter' if dependency == 'video-talkcraft' else 'motion_native_skill_adapter')
             options = {} if dependency == 'video-talkcraft' else {'dependency_id': dependency}
             adapters[dependency] = {
@@ -807,10 +825,29 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, *, pay
     return _summary(state.load_job(job_dir), stage)
 
 
+def check_stage(job_dir: Path, stage: str | None = None) -> dict:
+    """Read the same runnable gate before invoking an external stage tool."""
+    from edit.hd.tools import state
+    job = state.load_job(job_dir)
+    current = state.current_stage(job)
+    stage = stage or current
+    if stage is None:
+        raise ValueError('No unfinished stage to execute')
+    try:
+        state.require_runnable(job, stage)
+    except state.WorkflowError as error:
+        error.add_note(f'Current unfinished stage is {current}; requested {stage}')
+        raise
+    return {'job_id': job.job_id, 'job_dir': str(job.job_dir), 'stage': stage,
+            'status': job.stages[stage]['status'], 'revision': job.revision, 'runnable': True}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job-context', required=True, type=Path)
     parser.add_argument('--stage', help='Omit to use the current unfinished stage')
+    parser.add_argument('--check-only', action='store_true',
+                        help='Read-only runnable check; do not refresh preflight or execute tools')
     parser.add_argument('--project-root', type=Path)
     for option in ('input-json', 'review-json', 'video-use-result', 'invocation-json', 'cleanup-plan',
                    'director-brief', 'treatment', 'reviewed-visual-text', 'adapter-factory'):
@@ -819,12 +856,19 @@ def main() -> int:
     try:
         context = _json(args.job_context)
         project = setup_paths(args.project_root or context['project_root'])
-        result = execute_stage(Path(context['job_dir']), project, args.stage,
-            payload=_json(args.input_json) if args.input_json else None,
-            review=_json(args.review_json) if args.review_json else None,
-            video_use_result=args.video_use_result, invocation_path=args.invocation_json,
-            cleanup_plan=args.cleanup_plan, director_brief=args.director_brief, treatment=args.treatment,
-            reviewed_visual_text=args.reviewed_visual_text, adapter_factory=args.adapter_factory)
+        if args.check_only:
+            if any(getattr(args, key) is not None for key in ('input_json', 'review_json',
+                    'video_use_result', 'invocation_json', 'cleanup_plan', 'director_brief',
+                    'treatment', 'reviewed_visual_text', 'adapter_factory')):
+                raise ValueError('--check-only does not consume stage inputs')
+            result = check_stage(Path(context['job_dir']), args.stage)
+        else:
+            result = execute_stage(Path(context['job_dir']), project, args.stage,
+                payload=_json(args.input_json) if args.input_json else None,
+                review=_json(args.review_json) if args.review_json else None,
+                video_use_result=args.video_use_result, invocation_path=args.invocation_json,
+                cleanup_plan=args.cleanup_plan, director_brief=args.director_brief, treatment=args.treatment,
+                reviewed_visual_text=args.reviewed_visual_text, adapter_factory=args.adapter_factory)
     except (OSError, ValueError, KeyError, RuntimeError) as error:
         result = {'error': str(error)}
         if getattr(error, '__notes__', None):

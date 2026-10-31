@@ -36,18 +36,28 @@ def _query_binding(job, item):
     if query is None and item["request"]["tool"] == "mcp__lovart__generate_video":
         query = {"tool": "mcp__lovart__get_task_status", "task_ids_parameter": "task_ids",
                  "arguments": {"project_id": item["request"]["arguments"]["project_id"]}}
+    if (isinstance(query, dict) and query.get("tool") == "mcp__lovart__get_task_status"
+            and item["request"]["tool"] == "mcp__lovart__generate_video"):
+        query = copy.deepcopy(query)
+        project = item["request"]["arguments"].get("project_id")
+        args = query.setdefault("arguments", {})
+        if (not isinstance(project, str) or not project or not isinstance(args, dict)
+                or args.get("project_id", project) != project
+                or query.get("task_ids_parameter", "task_ids") == "project_id"):
+            raise ValueError("Lovart query project_id conflicts with the approved video request")
+        args["project_id"] = project
     return query
 
 def next_action(job, request_id, *, account_limit=None):
     job = _job(job)
-    queue = generation_queue.status(job.job_dir)
-    item = queue["items"].get(request_id)
-    if item and item["status"] == "ready" and not queue["paused"]:
-        _, _, config = generation_queue._approved(job.job_dir)
-        generation_queue._request(job.job_dir, item["request"], config)
-        upload = generation_inputs.next_action(job.job_dir, item["request"])
-        if upload is not None:
-            return upload
+    with generation_queue._locked(job.job_dir) as (j, _, queue):
+        item = queue["items"].get(request_id)
+        if item and item["status"] == "ready" and not queue["paused"]:
+            _, _, config = generation_queue._approved(j)
+            generation_queue._request(j, item["request"], config)
+            upload = generation_inputs.next_action(j, item["request"])
+            if upload is not None:
+                return upload
     result = generation_queue.claim(job.job_dir, request_id, account_limit)
     if result.get("action") == "blocked" and result.get("status") in {"pending", "unknown"}:
         item = generation_queue.status(job.job_dir)["items"][request_id]
@@ -75,11 +85,13 @@ def record_result(job, action, response, *, queried_task_ids=None):
     job = _job(job)
     if not isinstance(action, dict) or not action.get("request_id") or not action.get("claim_token"):
         raise ValueError("record_result requires the original concrete host action")
-    item = generation_queue.status(job.job_dir)["items"].get(action["request_id"], {})
     if action.get("action") == "upload":
-        if item.get("status") != "ready":
-            raise ValueError("reference upload belongs to a pending generation request")
-        return generation_inputs.record_result(job.job_dir, item["request"], action, response)
+        with generation_queue._locked(job.job_dir) as (j, _, queue):
+            item = queue["items"].get(action["request_id"], {})
+            if item.get("status") != "ready":
+                raise ValueError("reference upload belongs to a pending generation request")
+            return generation_inputs.record_result(j, item["request"], action, response)
+    item = generation_queue.status(job.job_dir)["items"].get(action["request_id"], {})
     raw = response.get("structuredContent", response) if isinstance(response, dict) else response
     if not isinstance(raw, dict):
         raise ValueError("record the real structured provider response")
@@ -162,3 +174,18 @@ def record_result(job, action, response, *, queried_task_ids=None):
     if raw.get("provider_response") is not None:
         artifacts.write_json_artifact(evidence / ("provider-" + response_name), raw["provider_response"])
     return {**result, "artifacts": payload.get("artifacts", [])}
+
+
+def replace_unsent_upload(job, action, evidence):
+    job = _job(job)
+    if not isinstance(action, dict) or not action.get("request_id"):
+        raise ValueError("replacement requires the original concrete action")
+    with generation_queue._locked(job.job_dir) as (j, _, queue):
+        item = queue["items"].get(action["request_id"], {})
+        if item.get("status") != "ready" or queue["paused"]:
+            raise ValueError("replacement requires an unpaused ready request")
+        jid, digest, config = generation_queue._approved(j)
+        identity = generation_queue._request(j, item["request"], config)
+        if jid != queue["job_id"] or digest != item["config_sha256"] or identity != item["channel_identity"]:
+            raise ValueError("replacement requires the original approved generation identity")
+        return generation_inputs.replace_unsent_lovart_upload(j, item["request"], action, evidence)

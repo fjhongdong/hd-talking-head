@@ -2094,6 +2094,90 @@
         "equals": "bang-motion",
         "required_level": "bound"
       }
+    },
+    {
+      "id": "mg-styles-15",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_native_skill_adapter.py",
+        "scripts/motion_native_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_native_skill_adapter.py",
+          "producer_version": "2.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_native_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "mg-styles-15"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "mg-styles-15",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "video-shotcraft",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": "skill-development/hd-talking-head",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_native_skill_adapter.py",
+        "scripts/motion_native_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_native_skill_adapter.py",
+          "producer_version": "2.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_native_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "video-shotcraft"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "video-shotcraft",
+        "required_level": "bound"
+      }
     }
   ],
   "preparation": [
@@ -2302,6 +2386,28 @@
       "dependency_ids": [
         "bang-motion"
       ]
+    },
+    {
+      "id": "mg-styles-15",
+      "script": "scripts/motion_native_runtime.py",
+      "arguments": [
+        "--dependency-id",
+        "mg-styles-15"
+      ],
+      "dependency_ids": [
+        "mg-styles-15"
+      ]
+    },
+    {
+      "id": "video-shotcraft",
+      "script": "scripts/motion_native_runtime.py",
+      "arguments": [
+        "--dependency-id",
+        "video-shotcraft"
+      ],
+      "dependency_ids": [
+        "video-shotcraft"
+      ]
     }
   ],
   "runtime_checks": [
@@ -2326,7 +2432,9 @@
     "whiteboard-video-adapter",
     "video-talkcraft",
     "barty-motion-graphics",
-    "bang-motion"
+    "bang-motion",
+    "mg-styles-15",
+    "video-shotcraft"
   ],
   "dynamic_checks": [
     {

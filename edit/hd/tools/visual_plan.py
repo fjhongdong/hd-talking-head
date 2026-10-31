@@ -240,6 +240,7 @@ def _component_index(strategy: dict[str, object]) -> dict[str, dict[str, object]
 def _validate_candidate_snapshots(
     value: object,
     components: dict[str, dict[str, object]],
+    bindings: dict[str, dict[str, object]],
 ) -> dict[str, list[dict[str, object]]]:
     if type(value) is not dict:
         raise _fail("candidate_snapshots must be an object")
@@ -254,7 +255,7 @@ def _validate_candidate_snapshots(
     for component_id, candidates in value.items():
         kind = components[component_id]["kind"]
         try:
-            result[component_id] = stable_same_kind_candidates(candidates, kind)
+            result[component_id] = stable_same_kind_candidates(candidates, kind, framing_binding=bindings.get(component_id))
         except VisualStrategyError as error:
             raise _fail(str(error)) from None
     return result
@@ -455,7 +456,7 @@ def _validate_semantic_segment(
         raise _fail("semantic contracts must match their visual segment")
     components = _component_index(strategy)
     candidate_snapshots = _validate_candidate_snapshots(
-        segment["candidate_snapshots"], components
+        segment["candidate_snapshots"], components, segment['bindings']
     )
     bindings = _validate_bindings(segment["bindings"], components)
     _validate_cross_binding_identity(strategy, bindings, candidate_snapshots, segment_id=segment_id, qualification_context=qualification_context)
@@ -744,10 +745,10 @@ def _load_router_module():
 
 
 def _canonical_freeze_candidate(
-    kind: str, candidates: list[dict[str, object]]
+    kind: str, candidates: list[dict[str, object]], *, framing_binding=None,
 ) -> dict[str, object]:
     try:
-        return _load_router_module().freeze_candidate(kind, candidates)
+        return _load_router_module().freeze_candidate(kind, candidates, framing_binding=framing_binding)
     except BaseException as failure:
         if isinstance(failure, (KeyboardInterrupt, SystemExit)):
             raise
@@ -833,7 +834,9 @@ def _freeze_and_compile_segment(
         if kind in _MATERIAL_KINDS:
             ranked = segment["candidate_snapshots"][component_id]
             freezer = candidate_freezers.get(kind, _canonical_freeze_candidate)
-            selected = freezer(kind, _deepcopy(ranked, "candidate snapshot"))
+            crop_arguments = ({'framing_binding': segment['bindings'][component_id]}
+                             if freezer is _canonical_freeze_candidate else {})
+            selected = freezer(kind, _deepcopy(ranked, "candidate snapshot"), **crop_arguments)
             if type(selected) is not dict or selected != ranked[0]:
                 raise _fail("candidate freezer changed the canonical same-kind selection")
             frozen_snapshots[component_id] = _deepcopy(ranked, "candidate snapshot")
@@ -1012,6 +1015,15 @@ def _validate_reviewed_visual_text(
                 raise _fail("reviewed source item is not selected by its segment")
             expected_quote = items[item_id]["source_text"]
             item = items[item_id]
+        elif source_ref.startswith('component:'):
+            components = [c for c in segment['visual_strategy']['components']
+                          if c['component_id'] == source_ref[len('component:'):]]
+            if (len(components) != 1 or components[0]['kind'] != 'code_generated'
+                    or components[0]['semantic_role'] not in {'explanation', 'demonstration'}
+                    or '任务示意' not in components[0].get('brief', '')
+                    or '任务示意' not in segment['visible_text']):
+                raise _fail('component text requires its approved non-evidence task illustration')
+            expected_quote = components[0]['brief']
         else:
             raise _fail("reviewed source_ref is unknown")
         if source_quote != expected_quote:
@@ -1133,6 +1145,8 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
         motion_review = skill_selection.get("motion_review") or {}
         checks = {(c.get("segment_id"), c.get("component_id")): c
                   for c in motion_review.get("checks", [])}
+        supplements = {(r['segment_id'], r['action_component_id']): r['base_component_id']
+                       for r in skill_selection.get('native_supplements', [])}
         ordered = sorted(plan["segments"], key=lambda s: (s["start"], s["segment_id"]))
         if numbering is None:
             from .visual_confirmation import number_visual_rows
@@ -1143,6 +1157,11 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
         for segment in ordered:
             for component in segment["visual_strategy"]["components"]:
                 key = (segment["segment_id"], component["component_id"])
+                if key in supplements:
+                    base_row = segment['segment_id'] + ':' + supplements[key]
+                    if base_row not in numbering:
+                        raise _fail('native supplement has no original numbered row')
+                    continue
                 query, check = queries.get(key, {}), checks.get(key, {})
                 binding = segment.get("bindings", {}).get(component["component_id"], {})
                 template = (binding.get("template_id") or check.get("selected")
@@ -1151,6 +1170,9 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
                             or binding.get("job_path") or component["kind"])
                 if check.get("template_title"):
                     template = check["template_title"] + " · " + template
+                for (sid, action), base in supplements.items():
+                    if (sid, base) == key:
+                        template += ' + ' + segment['bindings'][action]['template_id'] + '（同项补足层）'
                 tags = query.get("tags", [])
                 kind = "贴片" if component.get("layer_role") == "annotation" else "B-roll"
                 lines.append("| {number} | {start:.3f}–{end:.3f}s | {kind} | {spoken} | {semantic} | {tags} | `{template}` |".format(
@@ -2004,6 +2026,7 @@ def _skill_selection_for_publication(
             Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir,
         )
         selection["motion_queries"] = treatment.get("motion_queries", [])
+        selection['native_supplements'] = treatment.get('native_supplements', [])
         if managed:
             from .motion_capabilities import check_offline_plan
             review = check_offline_plan(Path(__file__).resolve().parents[3], draft,
@@ -2031,7 +2054,7 @@ def _check_selected_recipe_bindings(draft, frozen_segments, selection):
         # These two preparation fields are consumed by the existing Lovart
         # compiler into its artifact dimensions, not emitted as recipe fields.
         consumed = ({"execution_mode", "source_dimensions"} if binding.get("execution_mode") == "reuse_completed_lovart_video"
-                    else {"execution_mode", "media_type", "source_dimensions", "parent_static_labels"} if binding.get("execution_mode") == "reuse_completed_generated_media" else set())
+                    else {"execution_mode", "media_type", "source_dimensions", "parent_static_labels", "parent_camera_framing"} if binding.get("execution_mode") == "reuse_completed_generated_media" else set())
         if any(compiled.get(k) != v for k, v in binding.items() if k not in consumed):
             raise _fail("compiled recipe changed the selected Skill inputs")
         if "source_dimensions" in consumed and any(compiled["artifact_contract"][k] != v for k, v in binding["source_dimensions"].items()):

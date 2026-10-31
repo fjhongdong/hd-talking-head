@@ -42,10 +42,19 @@ def create_adapter(kind, media_type, ffmpeg_executable, ffprobe_executable):
             raise ValueError('Approved material bytes changed')
         contract = context.component['artifact_contract']
         size = (contract['width'], contract['height'])
+        applied_crop = None
         if media_type == 'image':
             from PIL import Image
+            from .visual_strategy import official_portrait_crop
             with Image.open(source) as image:
-                if image.size != size:
+                crop = official_portrait_crop(context.component) if kind == 'official_material' else None
+                if crop:
+                    if image.size != (crop['source_width'], crop['source_height']) or size != (1080, 1920):
+                        raise ValueError('Official crop source dimensions or portrait output differ')
+                    image = image.crop((crop['x'], crop['y'], crop['x'] + crop['width'], crop['y'] + crop['height']))
+                    image = image.resize(size, Image.Resampling.LANCZOS)
+                    applied_crop = crop
+                elif image.size != size:
                     raise ValueError('Material binding must use its actual source dimensions')
                 image.convert('RGBA' if contract['alpha'] else 'RGB').save(context.staging_path, format='PNG')
         else:
@@ -68,8 +77,9 @@ def create_adapter(kind, media_type, ffmpeg_executable, ffprobe_executable):
                 with output.open('rb') as src, context.staging_path.open('wb') as dst:
                     shutil.copyfileobj(src, dst)
         return AdapterResult(invocation_evidence={'source_sha256': context.source_sha256,
-            'external_requests': 0, 'source_preserved': True},
-            qa={'passed': True, 'checks': ['approved source identity checked; original dimensions and duration retained']})
+            'external_requests': 0, 'source_preserved': True,
+            **({'portrait_crop': applied_crop, 'output_canvas': list(size)} if applied_crop else {})},
+            qa={'passed': True, 'checks': ['approved source identity checked; explicit official crop or original dimensions retained']})
 
     identity = sha256_file(Path(__file__)) + ':' + sha256_file(ffmpeg)
     return KindAdapter(kind=kind, approved_executor=_EXECUTORS[kind],

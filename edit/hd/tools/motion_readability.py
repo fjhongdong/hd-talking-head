@@ -30,6 +30,15 @@ def _inside(root, ref):
     f = (Path(root) / p).resolve(); base = Path(root).resolve()
     if base not in f.parents: raise ValueError("content_ref escapes root")
     if hashlib.sha256(f.read_bytes()).hexdigest() != ref["sha256"]: raise ValueError("content_ref sha256 mismatch")
+    if ref["pointer"] == "image-text":
+        # The bound image establishes provenance, not that its pixels contain
+        # the reviewed words. The actual output frames still need inspection.
+        from PIL import Image
+        if f.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
+            raise ValueError("image text requires an actual image source")
+        with Image.open(f) as im:
+            im.verify()
+        return
     source = f.read_text()
     if ref["pointer"].startswith("text:"):
         if f.suffix.lower() not in {".html", ".htm", ".tsx", ".jsx", ".js", ".mjs", ".cjs", ".ts", ".svg"}:
@@ -226,7 +235,7 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
         from .visual_confirmation import _native_result_adapter
         for segment in director['segments']:
             for cid, binding in segment.get('bindings', {}).items():
-                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion'}:
+                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
                     continue
                 scenes = [s for s in treatment.get('scenes', [])
                           if (s.get('segment_id'), s.get('component_id')) == (segment['segment_id'], cid)]

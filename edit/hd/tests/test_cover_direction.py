@@ -122,6 +122,9 @@ class CoverDirectionTests(unittest.TestCase):
     def test_punk_full_preview_publishes_exact_pixels_and_never_calls_provider(self):
         self._assert_punk_full_preview_publication()
 
+    def test_confirmed_mixed_title_survives_direction_and_full_image_publication(self):
+        self._assert_punk_full_preview_publication(title="AI聊得挺好，事却没干")
+
     def test_rejected_candidate_can_publish_first_punk_preview_into_initial_empty_directory(self):
         self._assert_punk_full_preview_publication(rejected_candidate=True)
 
@@ -159,8 +162,17 @@ class CoverDirectionTests(unittest.TestCase):
                         target.rmdir()
         self.assertEqual((external / "owner.txt").read_bytes(), b"external-owner")
 
-    def _assert_punk_full_preview_publication(self, *, rejected_candidate=False):
+    def _assert_punk_full_preview_publication(self, *, rejected_candidate=False, title=None):
         direction = self._punk_material()
+        if title is not None:
+            direction.update({
+                "title": title, "subtitle": "拿一件真事试试它",
+                "title_review": {
+                    "analysis_sha256": self.analysis["analysis_sha256"],
+                    "source_refs": ["idea-01"],
+                    "reason": "用真实工作结果检验 AI，而不只判断聊天表现。",
+                },
+            })
         preview = self._punk_direction_preview()
         with mock.patch.object(
             cover_direction, "_render_direction_preview",
@@ -174,6 +186,9 @@ class CoverDirectionTests(unittest.TestCase):
             "interleaved-title-editorial-poster",
         )
         state.approve(self.job, "cover_direction")
+        loaded = cover_direction.load_approved_cover_direction(self.job)
+        self.assertEqual(loaded["direction"]["title"], direction["title"])
+        self.assertEqual(loaded["direction"]["subtitle"], direction["subtitle"])
         if rejected_candidate:
             (self.job.job_dir / "04-cover").mkdir()
             state.revise(self.job, "cover", "候选未采用，等待用户确认完整封面")
@@ -196,6 +211,9 @@ class CoverDirectionTests(unittest.TestCase):
         report = json.loads((output.parent / "cover-report.json").read_text())
         self.assertEqual(report["mode"], "approved-full-image")
         self.assertEqual(report["generator"], "punk-cover")
+        brief = json.loads((output.parent / "cover-brief.json").read_text())
+        self.assertEqual(brief["title"], direction["title"])
+        self.assertEqual(brief["subtitle"], direction["subtitle"])
         self.assertEqual(cover.review_cover(self.job)["images"]["final"]["sha256"],
                          hashlib.sha256(approved_bytes).hexdigest())
 

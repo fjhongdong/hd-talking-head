@@ -602,6 +602,24 @@ class SegmentRenderComponentTests(unittest.TestCase):
             )
         runner.assert_not_called()
 
+    def test_camera_framing_uses_native_crop_before_avatar_and_keeps_one_source_frame(self):
+        source=self.job.job_dir/'source/provider.mp4';source.write_bytes(b'provider fixture')
+        window=_window(start=0,end=24,z_index=0,slot='full_frame')
+        window['safe_zone']={side:0 for side in ('top','bottom','left','right')}
+        component=_component('video','ai_generated',_sha256_file(source),window=window,alpha=False)
+        component['media_type']='video'
+        recipe=_recipe([component]);artifact=_artifact(self.job,recipe,component,source,alpha=False)
+        framing={'normalized_media':{'sha256':artifact.output_sha256},
+            'path':[{'frame':n,'x':90,'y':160,'width':900,'height':1600} for n in range(24)]}
+        graph=segment_render.build_filter_graph(recipe,(artifact,),frames=24,camera_framings={'video':framing})
+        self.assertIn('zoompan=',graph)
+        self.assertIn(':d=1:s=1080x1920:fps=24',graph)
+        self.assertLess(graph.index('zoompan='),graph.index('[presenter]'))
+        self.assertNotIn('zoompan=',segment_render.build_filter_graph(recipe,(artifact,),frames=24))
+        wrong=copy.deepcopy(framing);wrong['normalized_media']['sha256']='0'*64
+        with self.assertRaisesRegex(segment_render.SegmentRenderError,'actual full-window source'):
+            segment_render.build_filter_graph(recipe,(artifact,),frames=24,camera_framings={'video':wrong})
+
     def test_filter_graph_uses_exact_windows_stable_layers_and_contained_layout(self) -> None:
         segment, artifacts = self._hybrid_fixture()
         graph = segment_render.build_filter_graph(

@@ -10,6 +10,83 @@ from _env import PROJECT, SKILL  # noqa: F401
 sys.path.insert(0, str(SKILL / "scripts"))
 import run_stage
 
+class CheckOnlyStageTests(unittest.TestCase):
+    def test_pending_barty_prepares_output_after_binding_without_touching_existing_media(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            job = SimpleNamespace(job_dir=root, job_id='fixture')
+            brief = {'project_directory':'native-projects/one', 'result_record_path':'native-inputs/result.json'}
+            request = root/'native-inputs/brief.json'; request.parent.mkdir()
+            request.write_text(json.dumps(brief)); payload=request.read_bytes()
+            binding = {'dependency_id':'barty-motion-graphics', 'brief_sha256':hashlib.sha256(payload).hexdigest()}
+            director = {'segments':[{'segment_id':'seg-001', 'bindings':{'native':binding},
+                'visual_strategy':{'mode':'single', 'composition':{}, 'components':[{'component_id':'native'}]}}]}
+            treatment = {'scenes':[{'segment_id':'seg-001','component_id':'native','brief_path':'native-inputs/brief.json'}]}
+            module = SimpleNamespace(validate_brief=mock.Mock(return_value=brief), task_source=mock.Mock(return_value={}),
+                native_task=mock.Mock(side_effect=lambda *a,**k:{'requirements':{},'next':'Actual native task.'}),
+                inspect_result=mock.Mock())
+            with mock.patch.object(run_stage,'_module',return_value=module), \
+                 mock.patch('edit.hd.tools.subtitles_v2.subtitle_layout',return_value=({},'left')):
+                actions=run_stage.pending_native_actions(job,director,treatment)
+                output=root/'native-projects/one/out'
+                self.assertTrue(output.is_dir())
+                self.assertEqual(actions[0]['output_directory'],str(output))
+                media=output/'retained.mp4';media.write_bytes(b'existing native media')
+                run_stage.pending_native_actions(job,director,treatment)
+                self.assertEqual(media.read_bytes(),b'existing native media')
+                binding['brief_sha256']='0'*64
+                with self.assertRaisesRegex(ValueError,'brief changed'):
+                    run_stage.pending_native_actions(job,director,treatment)
+                binding['brief_sha256']=hashlib.sha256(payload).hexdigest()
+                # A project symlink may not create the output outside this Job.
+                second=root/'native-projects/two';second.symlink_to(root/'outside',target_is_directory=True)
+                brief['project_directory']='native-projects/two'
+                with self.assertRaisesRegex(ValueError,'remain in this Job'):
+                    run_stage.pending_native_actions(job,director,treatment)
+                self.assertFalse((root/'outside').exists())
+
+    def test_scribe_check_obeys_review_order_without_running_or_writing(self):
+        from edit.hd.tools import state
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            video = root / 'source.mp4'; video.write_bytes(b'video')
+            script = root / 'script.txt'; script.write_text('原稿')
+            job = state.create_job(root, video, script, profile='full-v2')
+
+            def approve(stage):
+                artifact = job.job_dir / (stage + '.txt'); artifact.write_text(stage)
+                state.mark_ready(job, stage, [artifact]); state.approve(job, stage)
+
+            approve('inspect')
+            context = root / 'check-context.json'
+            context.write_text(json.dumps({'job_dir': str(job.job_dir), 'project_root': str(PROJECT)}))
+
+            def check():
+                before = (job.job_dir / 'workflow.json').read_bytes()
+                output = io.StringIO()
+                with mock.patch.object(sys, 'argv', ['run_stage.py', '--job-context', str(context),
+                        '--stage', 'speech_cleanup', '--check-only']), \
+                     mock.patch.object(run_stage, 'execute_stage') as execute, \
+                     mock.patch.object(run_stage, '_startup') as refresh, \
+                     mock.patch('subprocess.run') as process, \
+                     mock.patch('socket.socket.connect', side_effect=AssertionError('network forbidden')), \
+                     contextlib.redirect_stdout(output):
+                    code = run_stage.main()
+                execute.assert_not_called(); refresh.assert_not_called(); process.assert_not_called()
+                self.assertEqual((job.job_dir / 'workflow.json').read_bytes(), before)
+                return code, json.loads(output.getvalue())
+
+            code, result = check()
+            self.assertEqual(code, 1)
+            self.assertIn('not the current review stage', result['error'])
+            self.assertIn('Current unfinished stage is content_analysis', result['diagnostics'][0])
+            for stage in ('content_analysis', 'cover_direction', 'cover'):
+                approve(stage)
+            code, result = check()
+            self.assertEqual(code, 0)
+            self.assertTrue(result['runnable'])
+            self.assertEqual(result['stage'], 'speech_cleanup')
+
 class ExecuteStageTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)

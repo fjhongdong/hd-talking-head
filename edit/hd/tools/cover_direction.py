@@ -53,6 +53,7 @@ _BACKGROUND = re.compile(r"[a-z]+(?:-[a-z]+)*\Z")
 _COLOR = re.compile(r"#[0-9A-Fa-f]{6}\Z")
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _OUTPUT_ASPECT_RATIOS = {"16:9", "9:16", "3:4", "1:1"}
+_TITLE_PUNCTUATION = frozenset(" ，。！？：；、（）《》〈〉【】「」『』“”‘’…—·,.!?:;()[]'\"-+/%&")
 _PREVIEW_SIZES = {
     "16:9": (1920, 1080),
     "9:16": (1080, 1920),
@@ -292,6 +293,23 @@ def _is_han(character: str) -> bool:
     ))
 
 
+def validate_cover_title(value: Any) -> str:
+    """Preserve approved display copy; layout readability is checked on the image."""
+    title = _text(value, "title")
+    if len(title) > 32:
+        raise CoverDirectionError("title must contain at most 32 characters")
+    content = [
+        _is_han(character) or character.isascii() and character.isalnum()
+        for character in title
+    ]
+    if not any(content) or any(
+        not is_content and character not in _TITLE_PUNCTUATION
+        for character, is_content in zip(title, content)
+    ):
+        raise CoverDirectionError("title must use Han, English, digits, and natural punctuation")
+    return title
+
+
 def _normalize_direction(
     raw: Mapping[str, Any],
     analysis: Mapping[str, Any],
@@ -307,9 +325,7 @@ def _normalize_direction(
     )
     if output_aspect_ratio not in _OUTPUT_ASPECT_RATIOS:
         raise CoverDirectionError("output_aspect_ratio is invalid")
-    title = _text(value["title"], "title")
-    if not 4 <= len(title) <= 8 or any(not _is_han(character) for character in title):
-        raise CoverDirectionError("title must contain four to eight Han characters")
+    title = validate_cover_title(value["title"])
     if "title_review" in value and not isinstance(value["title_review"], Mapping):
         raise CoverDirectionError("title_review schema is invalid")
     title_review = _traceable_title(title, analysis, value.get("title_review"))

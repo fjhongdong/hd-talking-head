@@ -45,6 +45,34 @@ class PreparationContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "source file changed"):
                 bundled_source_revision(package, source)
 
+    def test_complete_source_archive_is_verified_before_cold_restore(self):
+        import tarfile
+        from prepare_sources import prepare_sources
+        from verify_skill_release import package_files
+        with tempfile.TemporaryDirectory() as name:
+            package=Path(name).resolve();skill=package/'skill-development/hd-talking-head';skill.mkdir(parents=True)
+            seed=package/'seed';seed.mkdir();original=seed/'README.md';original.write_text('complete original source')
+            (seed/'workbench').mkdir();(seed/'workbench/source').symlink_to('../README.md')
+            archives=package/'source-repositories';archives.mkdir();archive=archives/'native.source.part-000'
+            with tarfile.open(archive,'w:gz',dereference=False) as bundle:
+                bundle.add(original,arcname='README.md');bundle.add(seed/'workbench/source',arcname='workbench/source')
+            entry={'path':'skill-development/vendor/video-shotcraft','commit':'a'*40,
+                'archives':['source-repositories/native.source.part-000'],
+                'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
+                'files':{'README.md':hashlib.sha256(original.read_bytes()).hexdigest()},
+                'symlinks':{'workbench/source':'../README.md'}}
+            (archives/'index.json').write_text(json.dumps({'schema_version':1,'repositories':[entry]}))
+            before=set(package_files(skill));source=package/entry['path'];self.assertFalse(source.exists())
+            self.assertEqual(prepare_sources(package),[{'path':entry['path'],'commit':'a'*40,'status':'ready'}])
+            self.assertEqual((source/'README.md').read_bytes(),original.read_bytes())
+            self.assertEqual(str((source/'workbench/source').readlink()),'../README.md')
+            self.assertEqual(before,set(package_files(skill)))
+            self.assertIn('source-repositories/native.source.part-000',before)
+            (source/'README.md').write_text('unrelated local edit')
+            with self.assertRaisesRegex(ValueError,'source file changed'):
+                prepare_sources(package)
+            self.assertEqual((source/'README.md').read_text(),'unrelated local edit')
+
     def test_runner_shaped_argv_is_accepted_by_every_preparation_script(self):
         entries = json.loads(MANIFEST.read_text(encoding="utf-8"))["preparation"]
         checked = 0

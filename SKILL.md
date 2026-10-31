@@ -14,7 +14,7 @@ description: 完整口播视频制作 Skill。用户提供原始视频和文案�
 未选候选可明确保留 `unreviewed`。只有当前整片时窗已定且无未解决重叠，并由同一求解器证明已核实池与全部未评也可行的上界具有相同渠道／模板最大值时，才允许从已核实池分配；时窗变化重算，所选项仍完成全部设计和制作检查。
 
 1. 检查本地环境，按本期需要让用户选择图片、视频或两类生成渠道、精确模型及账号授权。已选渠道同时服务直接生成和模板内部调用；只用官方素材及本地动效时，不强制启用视频生成。未选用途在实际请求时停止，不自动启用或替换渠道。
-2. 导入原视频与文案，保留原件，完成封面、口播转写、口播清理和剪辑；自动收紧安全静音中段，并由宿主核听处理残留长停顿及重复起头后再继续。
+2. 导入原视频与文案，保留原件，完成封面、口播转写、口播清理和剪辑；自动收紧安全静音中段，并由宿主核听处理残留长停顿及重复起头后再继续。宿主无法听音时，仅可按[阶段入口的真实用户试听审阅](skill-development/hd-talking-head/references/stage-runner.md#宿主审阅后推进)登记用户对当前实际试听的明确确认；正式剪辑可在同一源区间、实际AAC与生产时钟精确核对通过后沿用确认继续制作。正式输出未听过时保留最终声音待验，不冒称宿主已核听。
 3. 统一按“渠道→模板→标签”理解和选择动效。理解剪后语义，先产出两份独立列表：贴片语义列表和 B-roll 语义列表。每项记录剪后原话、独立语义和画面任务；两类初始数量分别由各自语义项决定，不先定总数拆分，也不由时间倒推。随后为每项做一次完整能力匹配并保留全部合格候选；再在全片联合选择中先最大化真实渠道数量，再最大化具体模板数量。最后才校验时间覆盖、可读时长与间隔；发现覆盖缺口时回到对应语义列表补充有原话依据的新项，新项重新匹配一次，旧候选缓存复用并全片重选。规划细节、候选边界与验收分工见[视觉质量合同](skill-development/hd-talking-head/references/visual-quality-contract.md)。
 新制作默认先显示已批准静态封面 0.5 秒（24fps 的 12 帧），随后进入真人口播；封面期间静音，不加开屏音效。正文画面、原声、字幕和编号统一后移 12 帧，封面不计入动效数量或编号。取消动态首镜不等于取消固定封面。明确批准的 Wake 正文首镜沿批准时间轴执行，不自动追加默认静态封面；其余新方案只有明确取消静态封面才关闭前贴。参数、修订与检查见[封面入场合同](skill-development/hd-talking-head/references/cover-opening-bgm.md)。[Lemo Wake](skill-development/hd-talking-head/references/lemo-wake-integration.md)继续按正文语义匹配，不再固定占用首镜；正式合成只接收已审核并冻结的原生结果。
 
@@ -25,6 +25,10 @@ description: 完整口播视频制作 Skill。用户提供原始视频和文案�
 Barty 与 Bang Motion 已按独立渠道接入；分别读取[Barty 原生合同](skill-development/hd-talking-head/references/barty-motion-integration.md)和[Bang 原生合同](skill-development/hd-talking-head/references/bang-motion-integration.md)。二者完整保留原生创作流程，按[统一原生调用合同](skill-development/hd-talking-head/references/native-motion-call-contract.md)从同一批准清单交接任务，在原生制作后绑定实际文字与阅读窗，审核冻结后消费真实输出；共用浏览器不合并渠道，组合参数不虚增模板。
 
 TalkCraft 完整原生调用见[专属合同](skill-development/hd-talking-head/references/talkcraft-native-skill.md)，Paper 完整创作与 Route B 见[专属合同](skill-development/hd-talking-head/references/paper-native-route-b.md)。配方按实际用途参与匹配，内部 renderer 和子路线不重复算渠道。
+
+MG Styles 和 Video Shotcraft 的完整创作入口分别见[MG 原生合同](skill-development/hd-talking-head/references/mg-styles-integration.md)与[Shotcraft 原生合同](skill-development/hd-talking-head/references/video-shotcraft-integration.md)。保留原生模板目录和设计语言；运镜、转场等配方按原用途参与工程，不充作独立 B-roll。两者仅按已实现的不透明输出使用，不凭中文花字或 lower third 名称授予透明贴片资格。
+
+选择新增第三方动效库时，以实际公开作品的美观度为主要评估，核对排版、配色、材质、动作与整体完成度。这个原则用于决定接入哪些来源，不改变剪辑时语义和质量合格后的渠道／模板最大化顺序，也不新增候选审美分档或评分。
 
 能力库与候选只包含真实可执行的接入；未接入源码只作来源参考，不参与匹配或计数。父级传递任务、真实素材、原生入口或模板、必要公开参数及交付规格和授权；完整创作 Skill 按原生流程自行设计、导演、拆层、编排动作和制作代码。调用组件公开 props 是实际组件调用，不冒称调用完整创作 Skill。渠道指完整创作流程，可直接渲染，也可设计后调用本 Job 已批准的图片、视频服务。GBRO、Flat 共用 Lovart 仍是两个渠道，底层服务不额外计渠道。渠道内已有的原生风格、配方或完整工作流就是模板，设计与直接渲染的模板同等计数；更换主题、文案或底层模型不新增模板。选型、生成与复用引用同一已批准记录，详见[创作身份与复用](skill-development/hd-talking-head/references/visual-quality-contract.md#创作身份与生成结果复用)。
 

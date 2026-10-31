@@ -24,6 +24,7 @@ from . import (
     broll_media,
     broll_systems,
     contract_artifacts,
+    parent_camera_framing,
     parent_static_labels,
     state,
     visual_strategy,
@@ -502,6 +503,7 @@ def _prepare_render(
             raise SegmentRenderError("approved component composition is invalid") from None
     for component in recipe['components']:
         parent_static_labels.load(job.job_dir, segment, component['component_id'])
+        parent_camera_framing.load(job.job_dir, segment, component['component_id'])
     return _PreparedRender(recipe=recipe, family=family, artifacts=checked, frames=frames)
 
 
@@ -547,6 +549,7 @@ def build_filter_graph(
     artifacts: tuple[broll_component_executor.ComponentArtifact, ...],
     *,
     frames: int,
+    camera_framings: Mapping[str, dict] | None = None,
 ) -> str:
     """Build the sole frame-level composition graph for approved artifacts."""
 
@@ -643,6 +646,18 @@ def build_filter_graph(
             f"[{source}:v]fps=24,trim=start_frame=0:end_frame={duration},"
             f"setpts=PTS-STARTPTS+{start}/24/TB,format=rgba[component_{input_position}_input]"
         )
+        framing = (camera_framings or {}).get(artifact.component_id)
+        if framing is not None:
+            if (len(components) != 1 or component.get('kind') != 'ai_generated'
+                    or component.get('layer_role') != 'base' or start != 0 or end != frames
+                    or component.get('media_type') != 'video' or any(artifact.safe_zone.values())
+                    or artifact.artifact_contract != {'width':1080,'height':1920,'fps':24,'alpha':False}
+                    or framing.get('normalized_media', {}).get('sha256') != artifact.output_sha256
+                    or len(framing.get('path', [])) != frames):
+                raise SegmentRenderError('camera framing differs from its actual full-window source')
+            filters[-1] = filters[-1].replace(f'[component_{input_position}_input]', f'[component_{input_position}_camera_source]')
+            filters.append(f"[component_{input_position}_camera_source]"
+                           f"{parent_camera_framing.filter_chain(framing)}[component_{input_position}_input]")
         alignment = component.get('invocation_record', {}).get('canvas_alignment')
         if alignment is not None:
             base = artifacts_by_id.get(alignment['base_component_id'])
@@ -1800,6 +1815,9 @@ def _render_segment_video(
     prepared = _prepare_render(job, segment, artifacts)
     labels = [label for component in prepared.recipe['components']
               for label in parent_static_labels.load(job.job_dir, segment, component['component_id'])]
+    cameras = {artifact.component_id: data for artifact in artifacts
+               if (data := parent_camera_framing.load(job.job_dir, segment, artifact.component_id,
+                                                     media_sha256=artifact.output_sha256)) is not None}
     if (prepared.recipe["mode"] == "none") is not allow_no_broll:
         raise SegmentRenderError("segment renderer does not match the approved mode")
     arroll = _approve_aroll(job, Path(arroll_source), arroll_sha256, arroll_bytes)
@@ -1863,7 +1881,7 @@ def _render_segment_video(
                 job, artifacts, stage, arroll
             )
             graph = build_filter_graph(
-                prepared.recipe, prepared.artifacts, frames=prepared.frames
+                prepared.recipe, prepared.artifacts, frames=prepared.frames, camera_framings=cameras
             )
             stage_video = stage / "segment.mp4"
             command = _ffmpeg_command(
@@ -1876,6 +1894,15 @@ def _render_segment_video(
                 prepared.frames,
             )
             label_snapshots = []
+            if cameras:
+                pinned = broll_media._PinnedJob.open(job)
+                try:
+                    for cid in cameras:
+                        ref = segment['bindings'][cid][parent_camera_framing.FIELD]
+                        _snapshot_job_file(pinned, ref['job_path'], ref['sha256'], ref['byte_count'],
+                                           stage / 'inputs' / 'parent-camera-framing.json', label='parent camera framing')
+                finally:
+                    pinned.close()
             if labels:
                 pinned = broll_media._PinnedJob.open(job)
                 try:

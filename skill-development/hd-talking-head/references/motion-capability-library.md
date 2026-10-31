@@ -6,6 +6,8 @@ Lemo 当前以一个渠道、59 个独立风格模板参与统一选型，具体
 
 本库统一现有 A-roll 贴片、B-roll、可组合组件和设计／原生创作能力的理解与检索，不增加渲染器，也不合并它们的执行资格。维护数据为本包 `motion-capability-index.json`；入口为 `scripts/select_motion_capabilities.py`，项目接法为 `edit.hd.tools.motion_capabilities`。视觉规划先从剪后语义生成 tags，再用 tags 检索并匹配具体模板；tags 是语义检索字段，不等同于最终屏显 labels。
 
+新增第三方来源时，优先比较实际公开作品的排版、配色、材质、动作与整体完成度，再核对完整调用是否适合本库。美观优先只用于选择接入来源；剪辑仍在语义与质量合格的完整候选中先最大化渠道、再最大化模板，最后校验时间，不新增候选审美分档或改变检索缓存。
+
 渠道与模板统一由 `canonical_identity` 计算，`profile.tags` 提供标签。有同一原生来源证据的别名只计一次，实际 candidate、route 和来源绑定仍保留执行身份。`capability_type` 描述执行证据类型，不推断内容创作范围。索引 schema 3 的必填 `content_scope={mode,evidence_ref}` 明确区分 `full_scene` 与 `fixed_action`；`evidence_ref` 必须指向本 profile 已核验摘要的原生说明。两类仍进入同一候选池，不新增渠道或模板。
 
 > 本页与 `motion-capability-index.json` 中的 evidence 路径以**完整 Skill 包根**为基准（如 `skill-development/...`、`edit/hd/...`）。全部固定资源随包迁移；`skill-development/runtime/` 中的依赖由包内锁文件准备，不读取原开发项目。
@@ -37,6 +39,14 @@ Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 
 两渠道共增加 39 个模板。标签只在本页指定的统一索引维护；各自 `*-template-catalog.json` 只保存原生入口与模板定位。完整 Skill 自主完成设计、动作与工程，父级不预写逐层编舞。确认前绑定任务，创作后补齐真实文字与阅读目标，再审核冻结并正式消费；不能把待执行的原生任务当成已完成动画。共用规则见[完整原生调用](native-motion-call-contract.md)，具体入口见 [Barty](barty-motion-integration.md) 与 [Bang](bang-motion-integration.md)。
 
 完整创作流程也可承担透明贴片，但仅限已具备真实 alpha 调用路径的用途；`full_scene` 的语义召回不能授予透明资格。Bang 当前仅作为不透明 B-roll，不能因原生文档提到 lower third 就声称可导出透明视频。
+
+## MG Styles 与 Video Shotcraft
+
+MG Styles 是一个完整原生创作渠道，保留全部 15 个风格模板及 README、完整提示词、示范工程、rubric 和原生 harness。Paperclip 的对象解释、Morph 的连续形变与花字各有独立模板身份，不能把其原片素材或当前主题另算模板。具体流程见[MG 原生接入](mg-styles-integration.md)。
+
+Video Shotcraft 是另一个完整原生渠道，保留 124 张配方卡和一个 Ink Press 完整模板，共 125 个原生身份；150 段示范是卡内变体，不增加模板数。场景与完整宣传片按实际用途进入 B-roll 候选；运镜、转场、节奏和视觉效果保留工程组件用途，不独立凑 B-roll 数量。选中具体卡后完整读取其原生说明、准确参考实现与素材要求，由原生工作流创作当前工程。具体流程见[Shotcraft 原生接入](video-shotcraft-integration.md)。
+
+两者保留完整第三方源码，只在当前 Job 工程创作，父级不预写编舞或把不同模板统一成同一套卡片、配色。原生输出目前均为不透明视频，不授予透明贴片资格。公开作品仅是接入选择的审美依据；每次新主题仍需验收真实画面，一条开发样片不代表全部模板的视觉已通过。独立样片及用户素材保存包外，现有成片不因接入更新而重做。
 
 ## 每条视频怎么用
 

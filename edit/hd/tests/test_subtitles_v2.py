@@ -353,6 +353,40 @@ class FormalSubtitleContractTests(unittest.TestCase):
             keyword_index=self.keywords,
         )
 
+    def test_long_keyword_and_spaced_date_keep_real_word_boundaries(self):
+        words = [
+            {"text": text, "start": 0.1 + index * 0.4, "end": 0.4 + index * 0.4}
+            for index, text in enumerate(("10", "月", "28", "日", "开源，", "Ling-", "3.1-flash-1019。"))
+        ]
+        visual = {"duration": 4.0, "segments": [{
+            "segment_id": "seg-001", "start": 0.0, "end": 4.0,
+            "content_item_ids": ["idea-01"],
+            "shot_recipe": {"mode": "single", "composition": {"avatar": {
+                "position": {"x": 672, "y": 1372},
+                "profile": {"diameter": 320, "border_width": 4},
+            }}},
+        }]}
+        plan = subtitles_v2.build_render_plan(
+            records=self.records, words=words, timeline=self.timeline,
+            visual_plan=visual,
+            keyword_index={"idea-01": ("10 月 28 日", "Ling-3.1-flash-1019")},
+        )
+        texts = [cue["text"] for cue in plan["cues"]]
+        self.assertTrue(any("10月28日" in text for text in texts))
+        self.assertIn("Ling-3.1-flash-1019。", texts)
+        self.assertEqual("".join(texts), "10月28日开源，Ling-3.1-flash-1019。")
+
+    def test_long_keyword_that_cannot_fit_is_rejected(self):
+        words = [{"text": "L" * 80, "start": 0.1, "end": 1.0}]
+        visual = {"duration": 4.0, "segments": [{
+            "segment_id": "seg-001", "start": 0.0, "end": 4.0,
+            "content_item_ids": ["idea-01"], "shot_recipe": {"mode": "none"},
+        }]}
+        with self.assertRaises((subtitles_v2.SubtitlesV2Error, subtitles.SubtitleError)):
+            subtitles_v2.build_render_plan(records=self.records, words=words,
+                timeline=self.timeline, visual_plan=visual,
+                keyword_index={"idea-01": ("L" * 80,)})
+
     def test_aroll_and_broll_share_one_timed_subtitle_track(self) -> None:
         renderer_cues = []
         plan = subtitles_v2.build_render_plan(

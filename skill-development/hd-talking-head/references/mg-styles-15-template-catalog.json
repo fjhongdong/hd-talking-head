@@ -1,0 +1,263 @@
+{
+  "schema_version": 3,
+  "channel": "mg-styles-15",
+  "repository_commit": "49052d80bfaf9fa8412cc9710530e5e95a3b8d8c",
+  "counting_rule": "15 complete original style workflows; each prompt retains its signature features and original rendering workflow.",
+  "native_paths": [
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/flat-vector",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/01-flat-vector.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/01-flat-vector.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/01-flat-vector",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "扁平矢量动画 Flat / Vector 2D Motion Graphics",
+      "signature_features": "MG 动画最主流的基本盘风格，源自 Google Material/企业解释视频（explainer）传统。纯色几何化的人物与场景、无描边或极简描边、大色块撞色，一切元素都是矢量形状。常见于 SaaS 产品宣传、科普解说、企业年报视频。\n视觉特征 纯色大色块, 几何化角色, 无渐变或极少渐变, 干净留白, 高饱和品牌色板, 元素弹性入退场\n关键技法 AE Shape Layer + 父子级 null 控制层级，人物四肢用锚点旋转做 rig\n弹性缓动是灵魂：overshoot 用 cubic-bezier(0.34,1.56,0.64,1) 或 AE 里 70~85% influence 的贝塞尔手柄；入场'预备-冲出-回弹'三段式\n元素错峰入场（stagger 2~4 帧），同一时刻只让一个主体动\n30fps 居多；位移动画带 10% 左右 squash&stretch 增加弹性\n转场常用色块擦除（shape wipe）或元素飞出带动整场切换",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/line-art",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/02-line-art.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/02-line-art.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/02-line-art",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "线条动画 Line Art / Line Animation",
+      "signature_features": "以单色细线为唯一造型语言，线条自我描绘（draw-on）、延伸、转折并变形为下一个图形，一笔连成整支片子。极简高级感强，常见于奢侈品、金融、建筑类品牌片和 logo 动画。\n视觉特征 等宽细线, 单色或双色, 大量负空间, 线条连续生长, 线面转换瞬间\n关键技法 核心是 stroke 描绘：AE 用 Trim Paths 0→100%，Web 端用 SVG stroke-dasharray/dashoffset\n线宽全片恒定（2~4px），转角处让描绘速度略减速，用 easeInOut cubic-bezier(0.65,0,0.35,1)\n'一笔画'叙事：上一图形的尾线即下一图形的起线，路径提前在 Illustrator 里连好\n线转面：描完轮廓后用同路径的 fill 从锚点扩展填充\n配合微小的端点圆头（round cap）与路径抖动可增加手绘感",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/isometric",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/03-isometric.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/03-isometric.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/03-isometric",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "等轴 2.5D Isometric / 2.5D",
+      "signature_features": "以 30° 等轴测投影展示微缩世界：小城市、办公室切片、数据机房，无灭点、处处等比。信息密度高又不失可爱，是科技公司架构图动画和 App 功能演示的标配。School of Motion 有专门的 isometric mograph 教程系列。\n视觉特征 30°等角投影, 无透视灭点, 微缩场景, 楼房生长动画, 平行滑轨式运镜\n关键技法 SSR 公式造等轴面：Scale 纵向 86.6% → Shear/skew ±30° → Rotate ∓30°，三个面分别做后拼合\n假 3D 靠图层排序：Z 序=画面 y 坐标，物体沿等轴网格移动时保持 2:1 像素斜率\n楼房'生长'：底面先落位，立面用 scaleY 从 0 拉起 + 顶面延迟 2~3 帧盖上\n运镜是整组平移（无旋转），配合前中后景 1:0.8:0.6 的视差速度\nAE 里可用真 3D 图层+正交相机（无透视）偷懒，Motion Design School 的 Isometric Camera 技巧即此路",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/3d-render",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/04-3d-render.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/04-3d-render.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/04-3d-render",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "3D 渲染系（C4D/Blender 质感） 3D Render / CGI Motion Design",
+      "signature_features": "Cinema 4D + Redshift/Octane 或 Blender 渲染的实体质感动画：软胶、玻璃、金属、布料，配合克隆阵列和物理模拟。是高端产品片（手机、饮料、球鞋）和品牌 ident 的主流，Maxon 官方 Demo Reel 就是该风格的年度风向标。\n视觉特征 PBR真实材质, 浅景深, 柔和棚拍布光, 克隆器阵列, 软体碰撞, 糖果色软胶质感\n关键技法 MoGraph 核心：Cloner 克隆器 + Random/Plain Effector 做群体波浪式动画\n质感三件套：SSS 次表面散射（软胶感）+ AO + HDRI 三点布光\n运动多用长尾 ease：位移曲线前 20% 完成 80% 路程，收尾极慢，配 motion blur\n24/25fps 电影帧率 + 浅景深（f/1.8 感）区别于 2D 系的 30fps 利落感\n常见结构：产品为轴心，粒子/流体/布料围绕它做物理模拟编排",
+      "blender_required": true
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/cel-boil",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/05-cel-boil.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/05-cel-boil.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/05-cel-boil",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "逐帧手绘 / 线条沸腾 Cel Animation / Frame-by-Frame & Line Boil",
+      "signature_features": "手绘逐帧或在矢量动画上叠加逐帧质感，标志性特征是 line boil——线条每隔几帧轻微抖动，仿佛画面在'呼吸'。Giant Ant、Buck 等工作室大量使用 cel 元素（烟、水花、速度线）点缀主动画，反数字精致感的核心手段。\n视觉特征 线条持续微抖(boil), 一拍二/一拍三节奏, smear拖影帧, 手绘烟火水花点缀, 纸纹底\n关键技法 打帧节奏：24fps 下'一拍二'（实际12fps）为主，快动作切'一拍一'，静止镜头'一拍三'\nline boil 伪造法：AE 用 Turbulent Displace（数量2~5、大小50）+ 每 2 帧随机化 evolution + Posterize Time 12fps；真 boil 则画 3~4 张微差线稿循环\nsmear frame：快速位移的中间帧把物体拉长 150%~300% 只保留 1 帧\ncel FX 点缀层：烟/水花/闪电用纯手绘逐帧叠在矢量主体上（Buck 式 hybrid）\n整体叠纸纹（multiply 10~15%）统一手作气质",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/collage",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/06-collage.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/06-collage.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/06-collage",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "拼贴剪贴 Collage / Cutout Animation",
+      "signature_features": "把老照片、报纸、手撕纸片剪出来重新拼装的复古超现实风格，源头是 Monty Python 和苏联构成主义海报。人物头身比例失衡、嘴巴单独开合、半调网点纹理是标志。近年与'杂志风'合流，成为音乐类、街头潮流类短视频的高频风格。\n视觉特征 照片剪影白描边, 半调网点, 报纸纹理, 比例失衡的超现实拼装, 定格式抽帧运动\n关键技法 素材处理：人物/物件抠图后加 2~4px 白描边（剪刀剪出来的感觉）+ 半调 halftone 滤镜\n关节动画：锚点设在肩/肘/颌，做 puppet 式分段旋转，嘴巴用两三张替换帧开合\n刻意降帧：主体运动 12fps 甚至 6fps（stop-motion 感），位置加 ±2px 随机抖动模拟手摆\n图层结构：背景纸纹 → 大形色块 → 照片剪影 → 手写涂鸦/胶带贴纸 → 颗粒调整层\n转场用'手把元素拍上来'或整页翻纸",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/liquid",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/07-liquid.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/07-liquid.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/07-liquid",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "液态流动 Liquid Motion",
+      "signature_features": "图形像液体一样流动、拉丝、滴落、融合：转场是一泼颜料漫过屏幕，logo 从一滴液体聚合成形。有机、解压、高能量，广泛用于音乐视频、食品饮料广告和转场包装。\n视觉特征 波浪边缘转场, 拉丝与滴落, metaball融合, 次级液滴跟随, 有机曲线永不直线\n关键技法 液态转场：遮罩路径手 K 波浪形前沿扫过画面，前沿加 3~5 个错相位的凸起\nmetaball 融合的通用伪造法：高斯模糊(20px+) → 提高对比度阈值（AE 用 Levels 收紧、Web 用 feColorMatrix alpha 阈值），两球靠近即自动'粘连'\n拉丝-断裂-回弹：主形离开时留一条细颈，断裂瞬间两端各回弹 2~3 帧\n缓动前快后慢 cubic-bezier(0.22,1,0.36,1)，液体只会被'甩'出去不会匀速\n次级液滴延迟主体 2~3 帧跟随（follow-through），落地做扁平化 squash",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/morph",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/08-morph.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/08-morph.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/08-morph",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "形变动画 Morphing / Shape Morph",
+      "signature_features": "一个图形丝滑连续地变成另一个图形：手机变成地图钉、咖啡杯变成落日。是图形叙事（visual storytelling）的核心语法，苹果发布会动效和高端 explainer 里最见功力的部分。\n视觉特征 轮廓连续过渡无跳变, 中介形状桥接, 形变伴随位移旋转, 变形瞬间的挤压拉伸\n关键技法 路径对齐是前提：两形状顶点数一致、首顶点方位对应（AE 里重设 first vertex），否则会打结\n复杂 A→B 不直接变：先收敛为中介简形（圆/胶囊）再展开，'A→圆→B'两段各 8~12 帧\n形变全程叠加 10~15% squash & stretch 与轻微旋转，掩盖插值的机械感\n速度曲线中段最快 cubic-bezier(0.7,0,0.3,1)：起止各留 3 帧缓冲\nWeb 端用 flubber/polymorph 库做最优顶点匹配插值，效果远好于朴素 SMIL",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/bauhaus",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/09-bauhaus.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/09-bauhaus.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/09-bauhaus",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "几何构成 / 包豪斯 Geometric / Bauhaus Motion",
+      "signature_features": "圆、三角、矩形在严格网格上做精确的平移、旋转、缩放，三原色+黑白的限定色板，机械理性的秩序美。源自包豪斯与瑞士国际主义平面传统（Adobe 曾与 Bauhaus 档案馆合作 Hidden Treasures 项目），也是动态海报（kinetic poster）的主流语言，与音乐节拍天然合拍。\n视觉特征 基础几何形, 红黄蓝黑限定色, 严格网格对齐, 旋转以几何中心为轴, 节拍驱动的模块化运动\n关键技法 一切运动锚定网格：位移距离=网格模数整数倍，落点必在网格线上\n缓动克制：easeInOutQuad 或干脆匀速，禁用 overshoot——机械感是特征不是缺陷\n节拍驱动：每个几何元素在节拍点瞬时出现/翻转，一拍一个动作，类似我们已做的卡点逻辑\n旋转轴心玩法：绕自身中心、绕边缘顶点、绕画面中心三种交替制造韵律\n生成式变体：Processing/p5.js 用三角函数相位差批量驱动几何阵列（国内动态海报圈主流做法）",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/synthwave",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/10-synthwave.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/10-synthwave.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/10-synthwave",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "复古系（80s Synthwave / Y2K 千禧） Retro: 80s Synthwave / VHS / Y2K",
+      "signature_features": "对特定年代媒介美学的整体引用：80s synthwave 是霓虹网格+日落渐变+镀铬字；VHS 是扫描线+色偏+磁带噪声；Y2K 千禧风是液态镀铬金属、酸性绿紫、拟物系统窗口和低保真 3D。近两年 Y2K 在音乐视频与潮流品牌片中强势回潮，B站模板市场大量供应'酸性镀铬'素材。\n视觉特征 霓虹辉光, 透视网格地平线, 扫描线与RGB色偏, 镀铬金属字, 酸性配色, 拟物窗口UI\n关键技法 synthwave 三件套：透视网格滚动（一点透视 grid + 纵向位移循环）、日落多层渐变球、双层辉光（内层紧 4px 高亮+外层散 30px 低透明）\nVHS 做旧链：RGB split（红蓝通道各偏 1~2px）→ 扫描线（2px 间隔 10% 黑条）→ 波浪扭曲抖动（每秒 1~2 次随机 glitch 抽帧）→ 4:3 圆角遮罩\nY2K 镀铬字：极高对比的多段金属渐变 + bevel 高光 + 环境映射感反光，配 lens flare\nY2K 运动语言：弹窗式 pop 出现、光标点击、窗口拖拽，界面拟物即动画叙事\n帧率故意不稳：关键段落抽帧到 15fps 或倒放 2 帧制造磁带卡顿",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/aurora-glass",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/12-aurora-glass.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/12-aurora-glass.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/12-aurora-glass",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "弥散渐变 / 玻璃拟态 Gradient Blur (Aurora) & Glassmorphism",
+      "signature_features": "大面积高斯模糊的彩色光斑（aurora/mesh gradient）缓慢漂移作底，磨砂半透明玻璃卡片浮在其上。苹果 iOS 26 Liquid Glass 与各家 AI 产品发布把这一风格推成 2024-2026 科技品牌片的默认视觉，气质是'慢、透、高级'。\n视觉特征 大色斑高斯模糊漂移, 磨砂玻璃卡片, 1px高光描边, 邻近色低对比配色, 缓慢呼吸感节奏\n关键技法 底层 aurora：3~5 个纯色大圆 blur 80~150px，各自沿贝塞尔路径 20~40 秒漂移循环，彼此 blend 出 mesh gradient 感\n玻璃卡片配方：backdrop-filter blur(20~40px) + 白色 5~10% 填充 + 1px 白色 30% 内描边 + 大半径圆角\n配色用邻近色 2~3 色（紫蓝青/橙粉红），撞色会脏；暗底亮斑比亮底更出效果\n全局叠 3~5% 噪点防 banding（与颗粒质感技法交叉）\n缓动接近 linear 或 sine 呼吸曲线，一切都慢——快动作会立刻破坏气质；文字入场也只用 opacity+8px 位移",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/hanazi",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/18-hanazi.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/18-hanazi.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/18-hanazi",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "综艺花字 Variety Show Kinetic Captions (Hanazi)",
+      "signature_features": "源自电视综艺后期的情绪化装饰字幕：多层描边圆体字带弹性入场，跟随人物情绪变色变形，配打击音效。现已下沉为 vlog、萌宠、访谈、搞笑二创的通用包装语言，剪映内置大量花字模板，B 站也有免费花字样式包流通。\n视觉特征 多层描边圆体/胖体字, 高饱和撞色+白边+投影, 弹性 pop 入场, 配合音效出现, 手绘装饰符号（爆炸框/汗滴/闪光）\n关键技法 字体三层结构：填充色+粗白描边+彩色外描边/投影（CSS 可用多层 text-shadow 或 SVG stroke 模拟）\n入场 overshoot：scale 0→1.15→1.0（约 8 帧），或逐字弹跳错帧 2 帧\n情绪匹配：吐槽用歪斜手写体、惊讶用放射线爆炸框、尴尬用汗滴符号\n出现时机对齐笑点/音效，比语音晚 2~3 帧更自然\n长时间驻留花字加轻微 wiggle 保持活性",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/paperclip",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/19-paperclip.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/19-paperclip.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/19-paperclip",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "粗描边贴纸人科普 MG（回形针/林超风格） Bold-outline Sticker Explainer MG (PaperClip / Lin Chao style)",
+      "signature_features": "回形针 PaperClip 带火的知识区标准包装：实拍图片抠图后加粗白描边变成『贴纸』，与扁平图标、数据图表一起铺在大画布上，镜头平移缩放串联信息点；林超等财经/跨学科 UP 主将其与手写板书、公式卡片结合。至今仍是硬核科普、财经知识区、企业宣传片的主流范式。\n视觉特征 照片贴纸化（粗白描边）, 蓝灰/米白冷静底色, 扁平图标+精确数据图表, 大画布镜头平移缩放, 信息密度极高的节拍化叙事\n关键技法 素材照片抠图 + 8~12px 白描边统一质感，消除图片来源差异\n超宽大画布布局，摄像机层做平移/缩放（ease 长曲线），一镜串多个信息点\n图表动效：柱状图生长、数字滚动计数、路径描边生长\n解说词逐句驱动画面元素入场，语速快、每句必有新视觉元素\n克制配色（2~3 色）+ 等线字体，保持『严肃感』",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/pixel",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/20-pixel.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/20-pixel.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/20-pixel",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "像素风 Pixel Art / 8-bit",
+      "signature_features": "低分辨率大颗粒像素 + 有限色板 + 低帧率精灵动画的复古游戏美学，在 B 站游戏区（MC、泰拉瑞亚、独立游戏）、8-bit 音乐 MV 和品牌怀旧营销中常见；Aseprite 教程在 B 站有 10 万+ 播放的稳定学习生态。\n视觉特征 大颗粒像素与硬边缘, 有限色板(8~32色), 8~12fps 精灵帧动画, 抖动渐变 dithering, CRT 扫描线滤镜\n关键技法 Aseprite 绘制精灵表（sprite sheet）+ 序列帧循环（走路 6~8 帧、呼吸 2~4 帧）\n缩放必须最近邻插值（CSS image-rendering: pixelated），杜绝抗锯齿糊边\n动画用 steps() 阶梯时序而非平滑缓动，保持逐帧感\n视差卷轴背景：远中近三层不同速度整像素平移\n可选 CRT 后处理：扫描线+桶形畸变+磷光辉光",
+      "blender_required": false
+    },
+    {
+      "candidate_id": "mg-styles-15:mg-styles-15/hud",
+      "skill_path": "skill-development/vendor/mg-styles-15/README.md",
+      "native_instructions": [
+        "skill-development/vendor/mg-styles-15/README.md",
+        "skill-development/vendor/mg-styles-15/prompts/22-hud.md",
+        "skill-development/vendor/mg-styles-15/rubric.md"
+      ],
+      "native_source": "skill-development/vendor/mg-styles-15/prompts/22-hud.md",
+      "native_starter": "skill-development/vendor/mg-styles-15/demos/22-hud",
+      "render_script": "skill-development/vendor/mg-styles-15/harness/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "赛博朋克 HUD / FUI Cyberpunk HUD / FUI (Fictional UI)",
+      "signature_features": "模拟科幻电影/游戏界面的抬头显示包装：青橙霓虹线框、目标锁定框、雷达扫描、数据流小字。在科技数码测评、游戏剪辑（赛博朋克2077、EVA 二创）、军事航天科普和 AI 产品演示中作为『科技感』的默认皮肤，B 站 AE HUD 案例教程播放量达 20 万。\n视觉特征 青色/橙色霓虹线框, 目标锁定框与十字准星, 雷达/环形扫描 loop, 等宽小字数据流与打字机文字, 六边形网格与辉光\n关键技法 线框生长：SVG stroke-dasharray/dashoffset 描边动画，元素按层级错帧展开\n环形雷达：conic-gradient 扫描扇区旋转 loop + 目标点闪烁\n数字滚动：随机数快速跳变 3~5 帧后落定真实值；文字打字机 + 光标闪烁\n锁定框：四角括号从大到小收缩吸附目标（scale 1.4→1.0 + 快出缓入）\n全局外发光（glow）+ 轻微色差 + 扫描线叠加统一质感",
+      "blender_required": false
+    }
+  ]
+}

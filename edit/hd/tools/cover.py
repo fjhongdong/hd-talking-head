@@ -634,10 +634,12 @@ def _color(value: object) -> str:
 
 
 def _title(value: object) -> str:
-    checked = _text(value)
-    if not 4 <= len(checked) <= 8 or any(not _is_han(char) for char in checked):
-        raise _fail()
-    return checked
+    from .cover_direction import CoverDirectionError, validate_cover_title
+
+    try:
+        return validate_cover_title(value)
+    except CoverDirectionError as exc:
+        raise _fail() from exc
 
 
 def _headline_text(value: object) -> str:
@@ -680,14 +682,6 @@ def _reference_scene(value: object) -> dict[str, object]:
     if type(checked["bytes"]) is not int or checked["bytes"] <= 0:
         raise _fail()
     return checked
-
-
-def _is_han(character: str) -> bool:
-    codepoint = ord(character)
-    return any(low <= codepoint <= high for low, high in (
-        (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF),
-        (0x20000, 0x2EBEF), (0x2F800, 0x2FA1F), (0x30000, 0x323AF),
-    ))
 
 
 def _scene_prompt(details: dict[str, object]) -> str:
@@ -742,7 +736,7 @@ def validate_cover_brief(
     subtitle = _text(root["subtitle"], nonempty=False)
     if style_id == "style-01":
         headline = _dict(root.get("headline"), _HEADLINE_KEYS)
-        if _headline_text(headline["primary"]) != title:
+        if _title(headline["primary"]) != title:
             raise _fail()
         highlight_lines = _headline_lines(headline["highlight"])
         if len(highlight_lines) > 1 and root.get("output_aspect_ratio") != "9:16":

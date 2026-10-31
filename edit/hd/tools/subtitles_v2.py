@@ -323,14 +323,25 @@ def build_render_plan(
             selected, box, font_path, cue_type, layout_cache
         )
         selected_text = "".join(str(word["text"]) for word in selected)
-        if any(
-            keyword
-            and keyword in selected_text
-            and subtitles._visible_glyph_count([{"text": keyword}])
-            > subtitles._CUE_TARGET_MAX
-            for keyword in keywords
-        ):
-            raise SubtitlesV2Error("approved subtitle keyword is too long")
+        long_intervals: set[tuple[int, int]] = set()
+        for keyword in keywords:
+            if subtitles._visible_glyph_count([{"text": keyword}]) <= subtitles._CUE_TARGET_MAX:
+                continue
+            compact = lambda value: "".join(c for c in value if not c.isspace())
+            if compact(keyword) not in compact(selected_text):
+                continue
+            matches = set()
+            for left in range(len(selected)):
+                for right in range(left + 1, len(selected) + 1):
+                    text = "".join(str(word["text"]) for word in selected[left:right]).strip(" ，,、。；;：:！？!?")
+                    if compact(text) == compact(keyword):
+                        visible = "".join(str(word["text"]) for word in selected[left:right]).lstrip("，,、。；;：:！？!?")
+                        width = subtitles._font_text_width(str(font_path), 42, visible) + 2 * len(visible)
+                        if width <= box["width"] - 86:
+                            matches.add((left, right))
+            if not matches:
+                raise SubtitlesV2Error("approved long subtitle keyword cannot fit intact")
+            long_intervals.update(matches)
         chunks = subtitles._partition_subtitle_words(
             selected,
             chunks,
@@ -344,6 +355,7 @@ def build_render_plan(
                 selected, [*keywords, *protected_phrases, *_chinese_word_phrases(selected_text)]
             ),
             layout_cache=layout_cache,
+            long_keyword_intervals=long_intervals,
         )
         for chunk in chunks:
             text = "".join(str(word["text"]) for word in chunk).lstrip(

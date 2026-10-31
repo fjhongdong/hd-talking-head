@@ -92,7 +92,7 @@ class NativeMotionTests(unittest.TestCase):
                         self.assertFalse(completed['binding_verified'])
 
     def test_complete_original_sources_and_native_workflow_paths(self):
-        for dependency, count in [('barty-motion-graphics',4),('bang-motion',35)]:
+        for dependency, count in [('barty-motion-graphics',4),('bang-motion',35),('mg-styles-15',15),('video-shotcraft',125)]:
             source = native.source_root(_env.PROJECT, dependency_id=dependency)
             rows = native.load_template_catalog(_env.PROJECT, dependency_id=dependency)
             self.assertEqual(len(rows),count)
@@ -101,6 +101,75 @@ class NativeMotionTests(unittest.TestCase):
             renderer=native.embedded_renderer(native.source_root(dependency_id='barty-motion-graphics')/'skills'/template/'SKILL.md')
             self.assertTrue(renderer.startswith(b'// render.mjs:'))
             self.assertIn(b"from 'playwright'",renderer)
+
+    def test_new_native_channels_keep_full_sources_roles_and_alpha_boundary(self):
+        for dependency, template in [('mg-styles-15', 'flat-vector'), ('video-shotcraft', 'blur-slide')]:
+            request = brief(dependency, template)
+            native.validate_brief(json.dumps(request)); native._template(request)
+            request['alpha'] = True
+            with self.assertRaisesRegex(ValueError, 'transparent'):
+                native.validate_brief(json.dumps(request))
+        rows = native.load_template_catalog(_env.PROJECT, dependency_id='video-shotcraft')
+        self.assertEqual(sum(len(row.get('styles', [])) for row in rows), 150)
+        for row in rows:
+            if row['native_template_group'] in {'camera', 'transition', 'rhythm'}:
+                self.assertNotEqual(row['native_role'], 'scene')
+            if row['native_template_group'] != 'template':
+                self.assertTrue(row['native_demos'])
+                self.assertTrue(all((_env.PROJECT / p).is_file() for p in row['native_demos']))
+        request = brief('video-shotcraft', 'blur-slide');request['native_options'] = ['not-an-original-variant']
+        with self.assertRaisesRegex(ValueError, 'variant'):
+            native._template(request)
+
+    def test_only_explicit_original_template_duration_limits_are_enforced(self):
+        b=brief('video-shotcraft','ink-press')
+        def clock(frames):
+            b['composition']['frames']=frames;b['source_binding']['end']=frames/24
+            b['word_anchors'][0]['end']=frames/24
+            native.validate_brief(json.dumps(b))
+        clock(144)
+        with self.assertRaisesRegex(ValueError,'original template duration'):
+            native._template(b)
+        clock(868);native._template(b)
+        b['template_id']='spotlight-hero-card';clock(144);native._template(b)
+
+    def test_mg_capture_requires_verbatim_harness_and_exact_clock(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();request=brief('mg-styles-15','flat-vector')
+            project=root/request['project_directory'];(project/'harness').mkdir(parents=True)
+            (project/'scene').mkdir();(project/'scene/index.html').write_text('<html/>')
+            source=native.source_root(dependency_id='mg-styles-15')
+            shutil.copyfile(source/'harness/render.mjs',project/'harness/render.mjs')
+            modules=root/'modules';modules.mkdir();(project/'node_modules').symlink_to(modules,target_is_directory=True)
+            runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(modules)}
+            argv=['/usr/bin/node','harness/render.mjs','scene','--out','out/native.mp4',
+                  '--w','1080','--h','1920','--fps','24','--duration','2.0','--workers','1','--noaudio']
+            _,_,output=native._render_command(root,request,argv,runtime)
+            self.assertEqual(output,project/'out/native.mp4')
+            wrong=argv[:];wrong[12]='3.0'
+            with self.assertRaisesRegex(ValueError,'clock'):
+                native._render_command(root,request,wrong,runtime)
+            (project/'harness/render.mjs').write_text('// replacement renderer')
+            with self.assertRaisesRegex(ValueError,'verbatim'):
+                native._render_command(root,request,argv,runtime)
+
+    def test_shotcraft_capture_runs_the_real_cli_with_checked_browser(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();request=brief('video-shotcraft','blur-slide')
+            project=root/request['project_directory'];(project/'src').mkdir(parents=True)
+            (project/'src/index.ts').write_text('// authored current-task entry')
+            modules=root/'modules';(modules/'@remotion/cli').mkdir(parents=True)
+            cli=modules/'@remotion/cli/remotion-cli.js';cli.write_text('// pinned runtime cli fixture')
+            (project/'node_modules').symlink_to(modules,target_is_directory=True)
+            runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(modules),'browser':'/native/chrome'}
+            argv=['/usr/bin/node',str(cli),'render','src/index.ts','NativeScene','out/native.mp4',
+                  '--codec=h264','--pixel-format=yuv420p','--color-space=bt709','--image-format=png','--muted','--concurrency=1','--browser-executable=/native/chrome']
+            _,script,output=native._render_command(root,request,argv,runtime)
+            self.assertEqual(script,cli);self.assertEqual(output,project/'out/native.mp4')
+            argv[-1]='--browser-executable=/other/chrome'
+            with self.assertRaisesRegex(ValueError,'browser'):
+                native._render_command(root,request,argv,runtime)
 
     def test_exact_clock_alpha_and_whole_board_transport(self):
         b=brief();self.assertEqual(native.validate_brief(json.dumps(b)),b)
@@ -129,6 +198,21 @@ class NativeMotionTests(unittest.TestCase):
                     native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p,
                         approved_task_source={**brief()['task_source'],'semantic':'另一件事'})
 
+    def test_new_native_tasks_receive_only_their_own_workflow(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);request=root/'brief.json'
+            for dependency,template in [('mg-styles-15','flat-vector'),('video-shotcraft','spotlight-hero-card')]:
+                b=brief(dependency,template);request.write_text(json.dumps(b))
+                with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
+                    action=native.native_task(SimpleNamespace(job_dir=root,job_id=b['job_id']),
+                        {'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(request)},request,
+                        approved_task_source=b['task_source'])
+                self.assertNotIn('engine/build.py',action['next'])
+                self.assertNotIn('quarter_turn_cw',action['next'])
+                self.assertNotIn('export-frames.mjs',action['next'])
+                self.assertIn('harness/render.mjs' if dependency=='mg-styles-15' else '@remotion/cli',action['next'])
+
     def test_capture_requires_exact_original_embedded_renderer(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);b=brief(template='explainer-default');project=root/b['project_directory'];project.mkdir(parents=True)
@@ -136,6 +220,26 @@ class NativeMotionTests(unittest.TestCase):
             runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(root/'modules')}
             with self.assertRaisesRegex(ValueError,'verbatim original'):
                 native._render_command(root,b,['/usr/bin/node',str(project/'render.mjs'),'page.html','out/native.mp4','24'],runtime)
+
+    def test_barty_explainer_preserves_existing_original_before_silent_output(self):
+        runtime={'tools':{'node':'/usr/bin/node'},'node_modules':None,'environment':{}}
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief(template='explainer-default');project=root/b['project_directory']
+            (project/'out').mkdir(parents=True);(project/'page.html').write_text('<html/>')
+            original=project/'out/native.mp4';original.write_bytes(b'earlier accepted original media')
+            modules=root/'modules';modules.mkdir();runtime['node_modules']=str(modules)
+            (project/'node_modules').symlink_to(modules,target_is_directory=True)
+            (project/'render.mjs').write_bytes(native.embedded_renderer(
+                native.source_root(dependency_id=b['dependency_id'])/'skills/explainer-default/SKILL.md'))
+            request=root/'brief.json';request.write_text(json.dumps(b))
+            argv=['/usr/bin/node','render.mjs','page.html','out/native.mp4','24']
+            with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
+                 mock.patch.object(native.subprocess,'run') as run:
+                with self.assertRaisesRegex(ValueError,'Preserve existing native output'):
+                    native.capture_render(root,request,argv)
+            run.assert_not_called()
+            self.assertEqual(original.read_bytes(),b'earlier accepted original media')
+            self.assertFalse((project/'out/native_silent.mp4').exists())
 
     def test_pending_alpha_overlay_uses_standard_parent_subtitles_without_avatar(self):
         from types import SimpleNamespace
@@ -211,7 +315,8 @@ class NativeMotionTests(unittest.TestCase):
             root=Path(directory).resolve();calls=[]
             for name in ('first','second'):
                 b=brief();b.update(project_directory='native-projects/'+name,result_record_path='native-inputs/'+name+'.json')
-                project=root/b['project_directory'];(project/'out').mkdir(parents=True)
+                project=root/b['project_directory'];project.mkdir(parents=True)
+                (project/'out').mkdir()
                 (project/'page.html').write_text('<html/>');request=root/(name+'.json');request.write_text(json.dumps(b))
                 script=native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/render.js'
                 argv=['/usr/bin/node',str(script),'page.html','out/render.mp4','24']
@@ -223,6 +328,28 @@ class NativeMotionTests(unittest.TestCase):
                     calls.append(native.capture_render(root,request,argv))
             self.assertEqual([p.name for p in calls],['first.render-call.json','second.render-call.json'])
             self.assertTrue(all(p.is_file() for p in calls))
+
+    def test_failed_output_inspection_retains_actual_native_call(self):
+        runtime={'tools':{'node':'/usr/bin/node'},'node_modules':'/unused',
+                 'renderer_version':'playwright-1.64.0','runtime_identity':{},'environment':{}}
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief();project=root/b['project_directory'];project.mkdir(parents=True)
+            (project/'page.html').write_text('<html/>');request=root/'brief.json';request.write_text(json.dumps(b))
+            script=native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/render.js'
+            argv=['/usr/bin/node',str(script),'page.html','out/native.mp4','24']
+            def render(*args,**kwargs):
+                (project/'out/native.mp4').write_bytes(b'actual but rejected native output')
+                return mock.Mock(returncode=0,stdout='original renderer stdout',stderr='')
+            with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
+                 mock.patch.object(native.subprocess,'run',side_effect=render), \
+                 mock.patch.object(native,'probe',side_effect=ValueError('wrong output pixel format')):
+                with self.assertRaisesRegex(ValueError,'pixel format'):
+                    native.capture_render(root,request,argv)
+            call=json.loads((root/'native-inputs/native-test/result.render-call.json').read_bytes())
+            self.assertEqual(call['stdout'],'original renderer stdout')
+            self.assertEqual(call['exit_code'],0)
+            self.assertEqual(call['artifact_check_error'],'wrong output pixel format')
+            self.assertNotIn('media',call)
 
     def test_reviewed_record_and_actual_media_must_both_match(self):
         with tempfile.TemporaryDirectory() as directory:

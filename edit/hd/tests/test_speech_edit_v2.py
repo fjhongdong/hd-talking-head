@@ -825,6 +825,104 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
                 speech_edit_v2._require_cleanup_review(self.job)
 
+    def test_user_review_binds_actual_audition_cuts_and_preserves_reviewer(self) -> None:
+        import importlib.util
+        speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
+        speech = self.job.job_dir / "05-speech-cleanup"
+        rate, source = speech_edit_v2._pacing_audio(speech / "speech-16k.wav")
+        plan = json.loads((speech / "cleanup-proposal.json").read_text())
+        heard = array("h")
+        for start, end in speech_edit_v2._video_use_intervals(plan, len(source) / rate):
+            clip = source[round(start * rate):round(end * rate)]
+            fade = round(rate * 0.03)
+            for i in range(fade):
+                clip[i] = round(clip[i] * i / fade)
+                clip[-1 - i] = round(clip[-1 - i] * i / fade)
+            heard.extend(clip)
+        audition = self.root / "actual-audition.wav"
+        with wave.open(str(audition), "wb") as audio:
+            audio.setparams((1, 2, rate, 0, "NONE", "not compressed"))
+            audio.writeframes(heard.tobytes())
+        candidates = [{"candidate_id": "lexical-one", "kind": "zero_duration_lexical"}]
+        with mock.patch.object(speech_edit_v2, "cleanup_check_candidates", return_value=candidates):
+            binding = speech_edit_v2.cleanup_user_audio_binding(self.job, audition)
+            self.assertFalse(binding["formal_difference"]["final_track_listened"])
+            self.assertGreaterEqual(binding["formal_duration"], binding["audition_duration"])
+            review = {
+                "job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
+                "stage": "speech_cleanup", "revision": self.job.revision,
+                "artifacts": self.job.stages["speech_cleanup"]["artifacts"],
+                "passed": True, "note": "用户已听实际草稿；未冒称已听正式编码音轨",
+                "reviewed_by": "user", "audio_listened": True,
+                "user_confirmation": "已听，顺畅，继续制作",
+                "speech_cleanup_audio_review": binding,
+                "speech_cleanup_resolutions": [{"candidate_id": "lexical-one",
+                    "decision": "keep", "reason": "用户听过该字及剪口，确认顺畅并保留原音"}],
+            }
+            for invalid in (
+                {"user_confirmation": ""}, {"audio_listened": False},
+                {"speech_cleanup_resolutions": []}, {"reviewed_by": "automatic"},
+                {"speech_cleanup_audio_review": {**binding, "formal_duration": 100}},
+            ):
+                with self.subTest(invalid=invalid), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2.validate_cleanup_review(self.job, {**review, **invalid})
+            # Exercise the real existing QA writer: user must not be rewritten to host.
+            script = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/run_stage.py"
+            spec = importlib.util.spec_from_file_location("speech_user_run_stage", script)
+            runner = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(runner)
+            runner._review(self.job, "speech_cleanup", review)
+            receipt = contract_artifacts.read_json_artifact(
+                self.job.job_dir / f"manifests/local-qa-speech_cleanup-r{review['revision']}.json")
+            self.assertEqual(receipt["reviewed_by"], "user")
+            speech_edit_v2._require_cleanup_review(self.job)
+            with mock.patch.object(speech_edit_v2, "cleanup_check_candidates", return_value=[
+                    {**candidates[0], "source_start": 0.25}]):
+                with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2._require_cleanup_review(self.job)
+            # Same size, different content: stale source plans and audio are rejected.
+            original = (speech / "cleanup-proposal.json").read_bytes()
+            (speech / "cleanup-proposal.json").write_bytes(original.replace(b'"version":1', b'"version":2'))
+            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2._require_cleanup_review(self.job)
+            (speech / "cleanup-proposal.json").write_bytes(original)
+            audition.write_bytes(audition.read_bytes()[:-2] + b"\x01\x01")
+            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                speech_edit_v2._require_cleanup_review(self.job)
+
+    def test_inherited_edit_review_preserves_pending_listening_and_rejects_stale_binding(self) -> None:
+        import importlib.util
+        speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
+        state.approve(self.job, "speech_cleanup")
+        artifact = self.job.job_dir / "06-edit-structure/edited-aroll.mp4"
+        artifact.parent.mkdir()
+        artifact.write_bytes(b"current formal media")
+        state.mark_ready(self.job, "edit_structure", [artifact])
+        binding = {"scope": "user_reviewed_cuts_verified_against_actual_AAC_and_clock",
+                   "final_track_listened": False, "final_audio_review": "pending"}
+        review = {"job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
+                  "stage": "edit_structure", "revision": self.job.revision,
+                  "artifacts": self.job.stages["edit_structure"]["artifacts"],
+                  "passed": True, "note": "沿用用户已听剪口；实际AAC和时钟核对通过，正式声音待验",
+                  "reviewed_by": "user", "audio_listened": False,
+                  "edit_structure_audio_review": binding}
+        with mock.patch.object(speech_edit_v2, "edit_user_audio_binding", return_value=binding):
+            for invalid in ({"audio_listened": True}, {"audio_listened": None},
+                            {"reviewed_by": "automatic"},
+                            {"edit_structure_audio_review": {**binding, "final_audio_review": "pass"}}):
+                with self.subTest(invalid=invalid), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2.validate_edit_review(self.job, {**review, **invalid})
+            script = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/run_stage.py"
+            spec = importlib.util.spec_from_file_location("edit_user_run_stage", script)
+            runner = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(runner)
+            runner._review(self.job, "edit_structure", review)
+        receipt = contract_artifacts.read_json_artifact(
+            self.job.job_dir / f"manifests/local-qa-edit_structure-r{review['revision']}.json")
+        self.assertEqual(receipt["reviewed_by"], "user")
+        self.assertFalse(receipt["audio_listened"])
+        self.assertEqual(receipt["edit_structure_audio_review"]["final_audio_review"], "pending")
+
     def test_pacing_finds_quiet_middle_after_audible_word_tail(self) -> None:
         words = [
             {"text": "第二。", "start": 0.1, "end": 0.4},
@@ -1025,6 +1123,83 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertEqual([(word.text, word.start, word.end) for word in words], [
             ("前图", 0.10, 0.30),
         ])
+
+    def test_video_use_separated_zero_duration_forms_one_bounded_word_group(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "自", "start": 63.36, "end": 63.52, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "己", "start": 63.54, "end": 63.54, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "走", "start": 63.70, "end": 63.86, "speaker_id": "speaker_0"},
+        ]}
+        original = copy.deepcopy(payload)
+        words, merged = speech_edit_v2._normalize_video_use_words(payload, 102.0)
+        self.assertEqual([(w.text, w.start, w.end) for w in words], [("自己走", 63.36, 63.86)])
+        self.assertEqual(merged, 1)
+        self.assertEqual(payload, original)
+        # This short, indivisible group cannot enter the >=0.8s edge trim.
+        rate = 16000
+        samples = array("h", [0] * (rate * 65))
+        derived, changes = speech_edit_v2._derive_pcm_edge_trimmed_words(words, rate, samples)
+        self.assertEqual(derived, words)
+        self.assertEqual(changes, [])
+
+    def test_video_use_separated_zero_duration_rejects_unsafe_neighbors(self) -> None:
+        base = {"words": [
+            {"type": "word", "text": "自", "start": 0.10, "end": 0.25, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "己", "start": 0.27, "end": 0.27, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "走", "start": 0.40, "end": 0.55, "speaker_id": "speaker_0"},
+        ]}
+        cases = []
+        for index, updates in (
+            (0, {"text": "自，"}), (2, {"text": "，"}),
+            (1, {"speaker_id": "speaker_1"}), (2, {"speaker_id": "speaker_1"}),
+            (2, {"start": 0.40, "end": 0.40}),
+            (2, {"start": 0.70, "end": 0.80}),
+            (2, {"start": 0.40, "end": 0.95}),
+            (2, {"start": 0.26}), (2, {"end": float("nan")}),
+        ):
+            case = copy.deepcopy(base)
+            case["words"][index].update(updates)
+            cases.append(case)
+        cases.append({"words": base["words"][:2]})
+        case = copy.deepcopy(base)
+        for event in case["words"]:
+            event.pop("speaker_id")
+        cases.append(case)
+        for payload in cases:
+            with self.subTest(payload=payload):
+                with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2._normalize_video_use_words(payload, 2.0)
+
+    def test_zero_duration_lexical_events_require_audio_review_even_with_internal_cuts(self) -> None:
+        raw = {"words": [
+            {"type": "word", "text": "热", "start": 21.74, "end": 21.90},
+            {"type": "word", "text": "闹", "start": 21.90, "end": 21.90},
+            {"type": "word", "text": "，", "start": 22.02, "end": 22.50},
+            {"type": "word", "text": "事", "start": 22.50, "end": 22.70},
+            {"type": "word", "text": "AI", "start": 43.94, "end": 44.26},
+            {"type": "word", "text": "啊", "start": 44.26, "end": 44.26},
+            {"type": "word", "text": "，", "start": 44.50, "end": 44.50},
+            {"type": "word", "text": "别", "start": 47.20, "end": 47.42},
+            {"type": "word", "text": "自", "start": 63.36, "end": 63.52, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "己", "start": 63.54, "end": 63.54, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "走", "start": 63.70, "end": 63.86, "speaker_id": "speaker_0"},
+        ]}
+        original = copy.deepcopy(raw)
+        words, _ = speech_edit_v2._normalize_video_use_words(raw, 70.0)
+        words = [vars(word) for word in words]
+        plan = {"segments": [{"action": "keep", "word_start": 0, "word_end": len(words),
+                              "source_start": 21.74, "source_end": 63.86,
+                              "original_sentence": "".join(word["text"] for word in words),
+                              "breathing_padding": {"before": 0, "after": 0}}],
+                "reviewed_cut_ranges": [{"source_start": 63.53, "source_end": 63.69}]}
+        candidates = speech_edit_v2._zero_duration_lexical_candidates(raw, plan, 70.0)
+        self.assertEqual([c["text"] for c in candidates], ["闹", "啊", "己"])
+        self.assertAlmostEqual(candidates[0]["audition_range"]["source_start"], 21.39)
+        self.assertAlmostEqual(candidates[0]["audition_range"]["source_end"], 23.05)
+        self.assertTrue(all(c["evidence"] == "zero_duration_lexical_event_has_unknown_audio_boundary" for c in candidates))
+        with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+            speech_edit_v2._validate_cleanup_resolutions(candidates, [])
+        self.assertEqual(raw, original)
 
 
 if __name__ == "__main__":

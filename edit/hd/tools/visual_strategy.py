@@ -6,6 +6,7 @@ import copy
 import math
 import re
 from pathlib import PurePosixPath
+from typing import Mapping
 from urllib.parse import urlsplit
 
 from . import avatar_profile
@@ -886,12 +887,17 @@ def relation_motion_exit_window(component: object) -> tuple[int, int] | None:
 def _validate_binding(component: dict, *, index: int) -> None:
     kind = component["kind"]
     binding_keys = _BINDING_KEYS[kind]
+    if kind == 'official_material' and 'portrait_crop' in component:
+        if component.get('media_type') != 'image':
+            raise _error('official portrait crop supports static images only')
+        binding_keys = binding_keys | {'portrait_crop'}
+        official_portrait_crop(component)
     _exact_dict(
         component,
         _RECIPE_COMMON_KEYS | binding_keys,
         label=f"components[{index}] binding",
     )
-    structured_fields = {"invocation_record", "semantic_families", "capacity"}
+    structured_fields = {"invocation_record", "semantic_families", "capacity", "portrait_crop"}
     for field in binding_keys - structured_fields:
         _text(component[field], label=f"components[{index}].{field}")
     for field in binding_keys:
@@ -1074,7 +1080,25 @@ def validate_shot_recipe_v2(recipe: object) -> dict:
     return result
 
 
-def stable_same_kind_candidates(candidates: object, expected_kind: str) -> list[dict]:
+def official_portrait_crop(binding: Mapping) -> dict | None:
+    """Describe an in-bounds 9:16 crop without changing the original source identity."""
+    crop = binding.get('portrait_crop')
+    if crop is None:
+        return None
+    keys = {'source_sha256', 'source_width', 'source_height', 'x', 'y', 'width', 'height'}
+    if (not isinstance(crop, dict) or set(crop) != keys
+            or crop['source_sha256'] != binding.get('sha256')
+            or any(type(crop[k]) is not int for k in keys - {'source_sha256'})
+            or min(crop['source_width'], crop['source_height'], crop['width'], crop['height']) <= 0
+            or min(crop['x'], crop['y']) < 0
+            or crop['x'] + crop['width'] > crop['source_width']
+            or crop['y'] + crop['height'] > crop['source_height']
+            or crop['width'] * 16 != crop['height'] * 9):
+        raise _error('official portrait crop must bind the same source and an in-bounds 9:16 rectangle')
+    return dict(crop)
+
+
+def stable_same_kind_candidates(candidates: object, expected_kind: str, *, framing_binding=None) -> list[dict]:
     """Filter hard gates and deterministically rank candidates of one kind."""
     if type(expected_kind) is not str or expected_kind not in SOURCE_KINDS:
         raise _error("expected_kind is invalid")
@@ -1104,7 +1128,11 @@ def stable_same_kind_candidates(candidates: object, expected_kind: str) -> list[
             raise _error(f"candidates[{index}].hard_gates values must be bool")
         validated.append(candidate)
 
-    eligible = [candidate for candidate in validated if all(candidate["hard_gates"].values())]
+    crop = official_portrait_crop(framing_binding) if expected_kind == 'official_material' and framing_binding else None
+    eligible = [candidate for candidate in validated if all(
+        passed or (gate == 'native_vertical' and crop is not None
+                   and candidate['asset_id'] == framing_binding.get('source_id'))
+        for gate, passed in candidate['hard_gates'].items())]
     if not eligible:
         raise _error("no same-kind candidate passed every hard gate")
     eligible.sort(

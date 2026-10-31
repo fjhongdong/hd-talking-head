@@ -12,6 +12,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -311,16 +312,24 @@ class CoverBriefContractTests(unittest.TestCase):
                 expected_face_timestamp=0.750001,
             )
 
-    def test_title_is_four_to_eight_unicode_han_characters_only(self) -> None:
+    def test_title_preserves_display_copy_and_rejects_invalid_input(self) -> None:
         from edit.hd.tools import cover
 
-        for title in ("三个字", "1234", "AI工作流", "九个中文字真的超长了"):
+        for title in (
+            "", " ", "，！？", "字" * 33, "AI\n工作流", "AI\x00工作流",
+            "AI\u202e工作流", "<script>alert(1)</script>", "$(touch /tmp/title)",
+            "AI`whoami`", " AI工作流", "AI工作流 ",
+        ):
             payload = copy.deepcopy(_brief())
             payload["title"] = title
             payload["rounds"]["style_and_title"]["title"] = title
             with self.subTest(title=title), self.assertRaises(cover.CoverError):
                 cover.validate_cover_brief(payload)
-        for title in ("四字标题", "八个中文字刚刚好", "𠀀𠀁𠀂𠀃"):
+        for title in (
+            "四字标题", "八个中文字刚刚好", "𠀀𠀁𠀂𠀃", "三个字", "1234",
+            "AI工作流", "AI聊得挺好，事却没干", "GPT-5：真能干活？",
+            "用 AI 做 3 件事", "AI says 'done'!", "字" * 32,
+        ):
             payload = copy.deepcopy(_brief())
             payload["title"] = title
             payload["rounds"]["style_and_title"]["title"] = title
@@ -1331,7 +1340,7 @@ class CoverStageTests(unittest.TestCase):
                     "person_mask_provider=_person_mask,api_key='secret',"
                     "base_url='https://openlux.invalid',provider=lambda *a,**k:_provider_response())"
                 )
-                result = subprocess.run(["python3", "-c", command], env=environment)
+                result = subprocess.run([sys.executable, "-c", command], env=environment)
                 self.assertEqual(result.returncode, 86)
                 recovered = state.load_job(job.job_dir)
                 source, candidates = _face_setup()
@@ -1370,7 +1379,7 @@ class CoverStageTests(unittest.TestCase):
                 "person_mask_provider=_person_mask,api_key='secret',"
                 "base_url='https://openlux.invalid',provider=lambda *a,**k:_provider_response())"
             )
-            result = subprocess.run(["python3", "-c", command], env=environment)
+            result = subprocess.run([sys.executable, "-c", command], env=environment)
             self.assertEqual(result.returncode, 86)
             recovered = state.load_job(job.job_dir)
             source, candidates = _face_setup()
@@ -1410,7 +1419,7 @@ class CoverStageTests(unittest.TestCase):
                     "person_mask_provider=_person_mask,api_key='secret',"
                     "base_url='https://openlux.invalid',provider=lambda *a,**k:_provider_response())"
                 )
-                result = subprocess.run(["python3", "-c", command], env=environment)
+                result = subprocess.run([sys.executable, "-c", command], env=environment)
                 self.assertEqual(result.returncode, 86)
                 recovered = state.load_job(job.job_dir)
                 source, candidates = _face_setup()
@@ -1467,7 +1476,7 @@ class CoverStageTests(unittest.TestCase):
                 "person_mask_provider=_person_mask,api_key='secret',"
                 "base_url='https://openlux.invalid',provider=lambda *a,**k:_provider_response())"
             )
-            result = subprocess.run(["python3", "-c", command], env=environment)
+            result = subprocess.run([sys.executable, "-c", command], env=environment)
             self.assertEqual(result.returncode, 86)
             recovered = state.load_job(job.job_dir)
             state.revise(recovered, "cover", "外部工作流修订")
