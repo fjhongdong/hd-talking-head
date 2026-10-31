@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
-    def test_native_catalog_duration_bounds_reach_ink_press_timing_check(self):
+    def test_original_phase_budgets_reach_selection_without_freezing_demo_length(self):
         path = ROOT / 'skill-development/hd-talking-head/references/video-shotcraft-template-catalog.json'
         templates = json.loads(path.read_text())['native_paths']
         module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
@@ -28,11 +28,48 @@ class BrollSkillSelectionTest(unittest.TestCase):
                              {key: template[key] for key in ('min_duration_seconds', 'max_duration_seconds')
                               if key in template})
         ink_press = next(row for row in rows if row['candidate_id'].endswith('/ink-press'))
-        self.assertEqual(ink_press['min_duration_seconds'], 1085 / 30)
-        self.assertIn('at least', selection.timing_failure(ink_press,
-                      {'segment_id': 's', 'start': 0, 'end': 6}))
+        self.assertNotIn('min_duration_seconds', ink_press)
         self.assertIsNone(selection.timing_failure(ink_press,
-                          {'segment_id': 's', 'start': 0, 'end': 868 / 24}))
+                          {'segment_id': 's', 'start': 0, 'end': 30}))
+        chart = next(row for row in rows if row['candidate_id'].endswith('/chart-live-moves'))
+        self.assertEqual(chart['min_duration_seconds'], 36 / 30)
+        self.assertIn('at least', selection.timing_failure(chart,
+                      {'segment_id': 's', 'start': 0, 'end': 0.5}))
+        slam = next(row for row in templates if row['candidate_id'].endswith('/slam-entrance-moves'))
+        self.assertEqual(selection.native_timing_minimum(slam), 45 / 30)
+        self.assertEqual(selection.native_timing_minimum(slam,
+                         variant_keys=['impact-burst-kit']), (15 + 45) / 30)
+        altered = copy.deepcopy(slam)
+        altered['timing_requirements'][0]['source_fps'] = 24
+        with self.assertRaisesRegex(ValueError, 'original fps'):
+            selection.native_timing_minimum(altered)
+
+    def test_shotcraft_original_motion_recall_keeps_variant_and_role_boundaries(self):
+        from edit.hd.tools import motion_capabilities as motion
+
+        catalog = motion.load_catalog(ROOT)
+        rows = {r['source_route'].split('/')[-1]: r for r in catalog
+                if r['skill_id'] == 'video-shotcraft'}
+        self.assertEqual(len(rows), 125)
+        for row in rows.values():
+            if row['capability']['content_scope']['mode'] == 'fixed_action':
+                self.assertTrue(row['capability']['tags']['actions']
+                                or row['capability']['tags']['relations'])
+        for query, slug in [('卡片堆叠后展开', 'card-stack'),
+                            ('实时写入数据并爆表重标', 'chart-live-moves'),
+                            ('翻面后同时连接中枢并输送', 'integration-hub-map'),
+                            ('仪表扫针后回落报数', 'gauge-readout-moves')]:
+            recalled = motion.search_capabilities(ROOT, query, use='broll', catalog=list(rows.values()))
+            self.assertIn(slug, {r['source_route'].split('/')[-1] for r in recalled})
+        variants = rows['chart-live-moves']['variant_capabilities']
+        self.assertIn('重标', variants['axis-rescale-shock']['actions'])
+        self.assertNotIn('重标', variants['unit-dot-swarm-regroup']['actions'])
+        self.assertEqual(rows['card-flip-reveal']['role'], 'native')
+        self.assertEqual(rows['terminal-3d']['role'], 'native')
+        self.assertEqual(rows['flying-words']['role'], 'component')
+        self.assertEqual(rows['shot-transitions']['role'], 'component')
+        for row in rows.values():
+            self.assertNotIn('aroll_overlay', row['capability']['uses'])
 
     def test_native_recipe_roles_keep_components_out_of_broll(self):
         templates = [{'candidate_id': 'video-shotcraft:video-shotcraft/' + role,

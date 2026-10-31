@@ -16,6 +16,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import _env  # noqa: F401
 
@@ -25,6 +26,45 @@ MANIFEST = SKILL / "references/dependency-manifest.json"
 
 
 class PreparationContractTests(unittest.TestCase):
+    def test_source_root_and_parent_symlinks_are_rejected_without_changing_originals(self):
+        from prepare_sources import prepare_sources
+        for linked_part in ("vendor", "vendor/source"):
+            with self.subTest(linked_part=linked_part), tempfile.TemporaryDirectory() as name:
+                package = Path(name).resolve()
+                original = package / "original"
+                original.mkdir()
+                payload = original / "README.md"
+                payload.write_text("preserve original source")
+                index = package / "source-repositories/index.json"
+                index.parent.mkdir()
+                index.write_text(json.dumps({"repositories": [{
+                    "path": "vendor/source", "commit": "a" * 40,
+                    "files": {"README.md": hashlib.sha256(payload.read_bytes()).hexdigest()},
+                }]}))
+                link = package / linked_part
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(original, target_is_directory=True)
+                with self.assertRaisesRegex(ValueError, "must not contain symlinks"):
+                    prepare_sources(package)
+                self.assertTrue(link.is_symlink())
+                self.assertEqual(payload.read_text(), "preserve original source")
+
+    def test_preparation_never_marks_a_missing_or_different_revision_ready(self):
+        import prepare_sources
+        with tempfile.TemporaryDirectory() as name:
+            package = Path(name).resolve()
+            (package / "source").mkdir()
+            index = package / "source-repositories/index.json"
+            index.parent.mkdir()
+            index.write_text(json.dumps({"repositories": [{
+                "path": "source", "commit": "a" * 40, "files": {"README.md": "b" * 64},
+            }]}))
+            for revision in (None, "c" * 40):
+                with self.subTest(revision=revision), mock.patch.object(
+                        prepare_sources, "bundled_source_revision", return_value=revision):
+                    with self.assertRaisesRegex(ValueError, "source revision differs"):
+                        prepare_sources.prepare_sources(package)
+
     def test_bundled_source_subset_checks_actual_files_without_git_history(self):
         from prepare_sources import bundled_source_revision
         with tempfile.TemporaryDirectory() as directory:

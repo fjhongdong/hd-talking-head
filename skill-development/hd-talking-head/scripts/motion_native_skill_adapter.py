@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -135,6 +136,7 @@ def _template(brief, project=PROJECT):
     if dependency == 'video-shotcraft':
         if any(option not in {style['key'] for style in selected.get('styles', [])} for option in brief['native_options']):
             raise ValueError('Unknown selected native Shotcraft style variant')
+        _check_native_timing(selected, brief['native_options'], duration)
         return source_root(project, dependency_id=dependency)
     if any(option not in groups for option in brief['native_options']):
         raise ValueError('Unknown original native motion option')
@@ -143,6 +145,13 @@ def _template(brief, project=PROJECT):
     if narrative and brief['template_id'] != narrative[0]:
         raise ValueError('The selected native narrative workflow must remain the primary template')
     return source_root(project, dependency_id=dependency)
+
+
+def _check_native_timing(selected, variants, duration):
+    from edit.hd.tools.broll_skill_selection import native_timing_minimum
+    minimum = native_timing_minimum(selected, variant_keys=variants or None)
+    if duration + 1e-6 < minimum:
+        raise ValueError('Native motion clock cannot fit the original required action and hold budget')
 
 
 def validate_brief(payload, *, dependency_id=None):
@@ -165,7 +174,8 @@ def validate_brief(payload, *, dependency_id=None):
         raise ValueError('Native motion requires its approved semantic task source')
     options = brief['native_options']
     if (not isinstance(options, list) or any(not isinstance(v, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', v) for v in options)
-            or len(options) != len(set(options)) or brief['template_id'] in options
+            or len(options) != len(set(options))
+            or (brief['dependency_id'] != 'video-shotcraft' and brief['template_id'] in options)
             or (brief['dependency_id'] not in {'bang-motion', 'video-shotcraft'} and options)):
         raise ValueError('Invalid original native motion options')
     if brief['canvas_transport'] != ('quarter_turn_cw' if brief['dependency_id'] == 'bang-motion' else 'identity'):
@@ -322,6 +332,11 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
             'result_record_path': brief['result_record_path'],
             'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
 
+    if brief['dependency_id'] == 'video-shotcraft':
+        action['native_catalog'] = load_template_catalog(dependency_id='video-shotcraft')
+        action['native_usage_contract'] = {'card_id': 'original card slug, or ink-press',
+            'variant': 'original Gallery key; null only for ink-press', 'purpose': 'actual use in this task',
+            'implementation_refs': 'descriptors of actual implementation files frozen in the render call'}
     return action
 
 def native_workflow_instructions(brief):
@@ -329,7 +344,7 @@ def native_workflow_instructions(brief):
     if brief['dependency_id'] == 'mg-styles-15':
         return shared + ('MG has no SKILL.md: read README.md, the full selected prompts/*.md, its native source demo and rubric.md. Follow treatment → cue sheet → key-frame inspection → native motion → final render → honest critique. Replace creative seed and output specifications for this task; retain every selected signature feature. Omit soundtrack because this parent requires silent B-roll. Copy harness/render.mjs verbatim into project_directory/harness/render.mjs; link project_directory/node_modules to runtime.node_modules. Author scene/index.html with window.DEMO={width:1080,height:1920,fps:24,duration:<approved seconds>}, deterministic window.renderAt(t), window.__ready=true. For the 3d-render style follow its full Blender source workflow and render assets before the native browser compositor; missing Blender stops that selected style. Call capture_render with [node,harness/render.mjs,scene,--out,out/native.mp4,--w,1080,--h,1920,--fps,24,--duration,<seconds>,--workers,1,--noaudio]. Do not substitute an unrelated helper or copy an old film.')
     if brief['dependency_id'] == 'video-shotcraft':
-        return shared + ('Read SKILL.md, selected recipe card (or template/TEMPLATE.md for ink-press), gallery/api/library.json and the exact demo TSX specified by the recipe. Use native single-shot mode for a selected card; use the full original multi-shot workflow for ink-press. Preserve the recipe purpose and tuned motion; camera, transition and rhythm components require their intended source scenes and are not independent semantic B-roll or transparent overlays. Follow native requirements for authentic materials, visual direction, frame inspection and final review. Build the current task Remotion project with src/index.ts, a NativeScene composition at 1080x1920, 24fps and the approved frame count. Link node_modules to runtime.node_modules. Render via the original @remotion/cli/remotion-cli.js render src/index.ts NativeScene out/native.mp4 --codec=h264 --pixel-format=yuv420p --color-space=bt709 --image-format=png --muted --concurrency=1 --browser-executable=<runtime.browser>; pass this exact argv to capture_render. Do not count the 150 sample variants as templates or substitute an unchanged demo for current-task creation.')
+        return shared + ('Read SKILL.md, selected recipe card (or template/TEMPLATE.md for ink-press), gallery/api/library.json and the exact demo TSX specified by the recipe. The complete native_catalog is available: the native workflow may select complementary cards, camera, transition and rhythm components for this task, preserving the approved primary template and native_options. Read every actually used card and its exact demo; preserve tuned motion and explicit action/hold budgets at their original fps. Use native single-shot mode for a selected card; use the full original multi-shot workflow for ink-press. Follow native requirements for authentic materials, visual direction, frame inspection and final review. Build the current task Remotion project with src/index.ts, a NativeScene composition at 1080x1920, 24fps and the approved frame count. Link node_modules to runtime.node_modules. Render via the original @remotion/cli/remotion-cli.js render src/index.ts NativeScene out/native.mp4 --codec=h264 --pixel-format=yuv420p --color-space=bt709 --image-format=png --muted --concurrency=1 --browser-executable=<runtime.browser> --bundle-cache=false; pass this exact argv to capture_render. Disable the original optional bundle cache so build products never enter the frozen authored project. In publish_completed native_usage list every actual original card/variant, its purpose and frozen implementation_refs; only the selected primary template counts in parent selection. Do not count sample variants or complementary cards as extra templates or substitute an unchanged demo for current-task creation.')
     return ''
 
 
@@ -412,7 +427,7 @@ def _new_native_render_command(root, brief, argv, runtime, directory, native, *,
     if check_runtime_links and (directory / 'node_modules').resolve(strict=True) != Path(runtime['node_modules']).resolve(strict=True):
         raise ValueError('Native project must use its separately prepared pinned runtime')
     script = Path(argv[1]); script = script if script.is_absolute() else directory / script
-    script = script.resolve(strict=True)
+    script = script.resolve(strict=True) if check_runtime_links or brief['dependency_id'] == 'mg-styles-15' else script.absolute()
     if brief['dependency_id'] == 'mg-styles-15':
         if script != directory.resolve() / 'harness/render.mjs' or script.read_bytes() != (native / 'harness/render.mjs').read_bytes():
             raise ValueError('MG must execute its verbatim original harness renderer')
@@ -423,7 +438,11 @@ def _new_native_render_command(root, brief, argv, runtime, directory, native, *,
         output = Path(argv[4])
     else:
         expected = Path(runtime['node_modules']) / '@remotion/cli/remotion-cli.js'
-        if script != expected.resolve(strict=True) or len(argv) != 13 or argv[2:5] != ['render','src/index.ts','NativeScene'] or argv[6:12] != ['--codec=h264','--pixel-format=yuv420p','--color-space=bt709','--image-format=png','--muted','--concurrency=1']:
+        expected = expected.resolve(strict=True) if check_runtime_links else expected.absolute()
+        if (script != expected or len(argv) not in ({14} if check_runtime_links else {13,14})
+                or (len(argv) == 14 and argv[13] != '--bundle-cache=false')
+                or argv[2:5] != ['render','src/index.ts','NativeScene']
+                or argv[6:12] != ['--codec=h264','--pixel-format=yuv420p','--color-space=bt709','--image-format=png','--muted','--concurrency=1']):
             raise ValueError('Shotcraft must execute the original pinned Remotion CLI for the authored composition')
         browser = (runtime.get('browser') or runtime.get('runtime_identity', {}).get('browser', {}).get('path'))
         if browser and argv[12] != '--browser-executable=' + browser:
@@ -467,14 +486,14 @@ def _capture_bang(root, directory, argv, output, brief, runtime, environment):
     # OPENER.seek/seekFrame and frame sampling.
     script = """const p=require('puppeteer');(async()=>{const b=await p.launch({headless:'new'});const page=await b.newPage();await page.setViewport({width:1920,height:1080});await page.goto(process.argv[1]);const v=await page.evaluate(()=>{const e=document.querySelector('[data-native-canvas-transport="quarter_turn_cw"]');if(!e)return null;const s=getComputedStyle(e),r=e.getBoundingClientRect(),m=new DOMMatrix(s.transform);return {w:e.offsetWidth,h:e.offsetHeight,origin:s.transformOrigin,matrix:[m.a,m.b,m.c,m.d,m.e,m.f],bounds:[r.x,r.y,r.width,r.height]}});console.log(JSON.stringify(v));await b.close()})().catch(e=>{console.error(e.message);process.exit(1)})"""
     try:
-        check = subprocess.run([runtime['tools']['node'], '-e', script, url], cwd=directory,
-                               env=environment, check=True, capture_output=True, text=True, timeout=30)
+        check = _run_native_process([runtime['tools']['node'], '-e', script, url], cwd=directory,
+                                    env=environment, check=True, timeout=30)
         geometry = json.loads(check.stdout)
         if geometry != {'w':1080,'h':1920,'origin':'0px 0px','matrix':[0,1,-1,0,1920,0],'bounds':[0,0,1920,1080]}:
             raise ValueError('Bang requires the complete portrait board rotated once without scaling or cropping')
-        result = subprocess.run(argv, cwd=directory,
+        result = _run_native_process(argv, cwd=directory,
             env={**environment, 'URL':url, 'FPS':'24', 'OUT':str(frames), 'SCALE':'1'},
-            capture_output=True, text=True, timeout=1200)
+            timeout=1200)
     finally:
         server.shutdown(); server.server_close(); thread.join(timeout=5)
     transport = {'mode':'quarter_turn_cw','encoding_filter':'transpose=2','geometry':geometry,
@@ -487,7 +506,7 @@ def _capture_bang(root, directory, argv, output, brief, runtime, environment):
                 raise ValueError('Bang original frame sequence is incomplete')
         output.parent.mkdir(parents=True, exist_ok=True)
         command = _bang_encoding_command(runtime, frames, output)
-        encoding = subprocess.run(command, capture_output=True, text=True, timeout=1200)
+        encoding = _run_native_process(command)
         transport['encode_argv'] = command
         transport['encode_exit_code'] = encoding.returncode
         if encoding.returncode:
@@ -499,6 +518,56 @@ def _normalization_command(runtime, source, output):
     return [runtime['tools']['ffmpeg'], '-v', 'error', '-n', '-i', str(source),
             '-vf', 'scale=in_range=auto:out_range=tv', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
             '-color_range', 'tv', '-crf', '16', '-an', '-video_track_timescale', '24', str(output)]
+
+
+def _run_native_process(argv, *, cwd=None, env=None, timeout=1200, check=False):
+    """Own this invocation and its children; a timeout never starts a retry."""
+    process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True, start_new_session=True)
+    try:
+        stdout, stderr = process.communicate(timeout=timeout)
+    except BaseException as error:
+        # Chrome may create a separate process group. Snapshot descendants
+        # before stopping Node so detached browser/encoder children stay owned.
+        descendants = {}
+        try:
+            table = subprocess.check_output(['ps', '-axo', 'pid=,ppid=,lstart='], text=True, timeout=5)
+            rows = {int(parts[0]): (int(parts[1]), ' '.join(parts[2:]))
+                    for line in table.splitlines() if len(parts := line.split()) >= 7}
+            parents = {process.pid}
+            while new := {pid for pid, (ppid, _) in rows.items() if ppid in parents} - parents:
+                parents.update(new)
+            descendants = {pid: rows[pid][1] for pid in parents - {process.pid}}
+        except (OSError, ValueError, subprocess.SubprocessError):
+            pass
+        def stop(sig):
+            try:
+                os.killpg(process.pid, sig)
+            except ProcessLookupError:
+                pass
+            for pid, started in descendants.items():
+                try:
+                    actual = ' '.join(subprocess.check_output(
+                        ['ps', '-p', str(pid), '-o', 'lstart='], text=True, timeout=2).split())
+                    if actual == started:
+                        os.kill(pid, sig)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+        stop(signal.SIGTERM)
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            stop(signal.SIGKILL)
+            stdout, stderr = process.communicate(timeout=5)
+        # A detached child can survive after the parent's pipes are closed.
+        stop(signal.SIGKILL)
+        if isinstance(error, subprocess.TimeoutExpired):
+            error.stdout, error.stderr = stdout, stderr
+        raise
+    result = subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+    if check:
+        result.check_returncode()
+    return result
 
 
 def capture_render(job_dir, brief_path, argv):
@@ -520,47 +589,60 @@ def capture_render(job_dir, brief_path, argv):
     output.parent.mkdir(parents=True, exist_ok=True)
     before = project_files(root, directory)
     environment = {**os.environ, **runtime['environment'], 'NODE_PATH': runtime['node_modules']}
-    if brief['dependency_id'] == 'bang-motion':
-        result, transport = _capture_bang(root, directory, argv, output, brief, runtime, environment)
-    else:
-        result = subprocess.run(argv, cwd=directory, env=environment, capture_output=True, text=True, timeout=1200)
-        transport = None
-    if before != project_files(root, directory):
-        raise ValueError('Native project source changed during rendering')
     record = {'schema_version': 1, 'dependency_id': brief['dependency_id'],
               'request_sha256': sha(brief_path), 'upstream_commit': SOURCES[brief['dependency_id']][1],
               'native_script_sha256': sha(script), 'argv': argv,
               'project_files': before, 'renderer_version': runtime['renderer_version'],
               'runtime_identity': runtime['runtime_identity'],
               'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version')},
-              'exit_code': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
-    if transport is not None:
-        record['canvas_transport'] = transport
-    # Retain the actual native call even when later codec/clock inspection fails.
+              'status': 'running', 'exit_code': None, 'stdout': '', 'stderr': ''}
     call_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts.write_json_artifact(call_path, record)
     try:
+        if brief['dependency_id'] == 'bang-motion':
+            result, transport = _capture_bang(root, directory, argv, output, brief, runtime, environment)
+            record['canvas_transport'] = transport
+        else:
+            result = _run_native_process(argv, cwd=directory, env=environment)
+        record.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
+        after = project_files(root, directory)
+        if before != after:
+            original = {item['job_path']: item for item in before}
+            current = {item['job_path']: item for item in after}
+            record['project_files_after'] = after
+            record['source_changes'] = {
+                'added': [current[key] for key in sorted(current.keys() - original.keys())],
+                'removed': [original[key] for key in sorted(original.keys() - current.keys())],
+                'changed': [{'before': original[key], 'after': current[key]}
+                            for key in sorted(original.keys() & current.keys()) if original[key] != current[key]]}
+            raise ValueError('Native project source changed during rendering')
+        if result.returncode:
+            raise ValueError('Original native motion render failed: ' + result.stderr[-1500:])
         if not result.returncode and brief['dependency_id'] == 'barty-motion-graphics' and brief['template_id'] != 'motion-broll':
             if probe(output, native_range=True) != brief['composition']:
                 raise ValueError('Original native renderer differs from the approved clock')
             raw = output
             output = raw.with_name(raw.stem + '_delivery.mp4')
             command = _normalization_command(runtime, raw, output)
-            subprocess.run(command, check=True, capture_output=True, text=True, timeout=1200)
+            _run_native_process(command, check=True)
             record['normalization'] = {'source': descriptor(root, raw), 'argv': command, 'exit_code': 0}
         if not result.returncode:
             if probe(output, alpha=brief['alpha']) != brief['composition']:
                 raise ValueError('Native output differs from the exact approved clock')
             record['media'] = descriptor(root, output)
-    except (ValueError, OSError, subprocess.SubprocessError) as error:
+        _template(brief)
+        record['status'] = 'completed'
+    except BaseException as error:
+        record['status'] = 'failed'
+        record['error_type'] = type(error).__name__
         record['artifact_check_error'] = str(error)
-        artifacts.write_json_artifact(call_path, record)
+        for key in ('stdout', 'stderr'):
+            value = getattr(error, key, None)
+            if value is not None:
+                record[key] = value.decode(errors='replace') if isinstance(value, bytes) else value
         raise
-    call_path.parent.mkdir(parents=True, exist_ok=True)
-    artifacts.write_json_artifact(call_path, record)
-    if result.returncode:
-        raise ValueError('Original native motion render failed: ' + result.stderr[-1500:])
-    _template(brief)
+    finally:
+        artifacts.write_json_artifact(call_path, record)
     return call_path
 
 
@@ -581,10 +663,13 @@ def _verify_call(root, brief, payload, call):
                 or normalization.get('exit_code') != 0 or exact(root, normalization['source']) != original.resolve(strict=True)
                 or probe(original, native_range=True) != brief['composition']):
             raise ValueError('Native normalization differs from its original output')
-    if (call['exit_code'] != 0 or call['dependency_id'] != brief['dependency_id']
+    if (call['exit_code'] != 0 or ('status' in call and call['status'] != 'completed')
+            or call['dependency_id'] != brief['dependency_id']
             or call['request_sha256'] != hashlib.sha256(payload).hexdigest()
             or call['upstream_commit'] != SOURCES[brief['dependency_id']][1]
-            or call['native_script_sha256'] != sha(script) or call['renderer_version'] != runtime['renderer_version']
+            or not re.fullmatch('[a-f0-9]{64}', str(call['native_script_sha256']))
+            or (brief['dependency_id'] != 'video-shotcraft' and call['native_script_sha256'] != sha(script))
+            or call['renderer_version'] != runtime['renderer_version']
             or exact(root, call['media']) != output.resolve(strict=True)):
         raise ValueError('Native execution does not match the current request, source or output')
     if brief['dependency_id'] == 'bang-motion':
@@ -605,7 +690,48 @@ def _verify_call(root, brief, payload, call):
         raise ValueError('Native motion media differs from approved clock')
 
 
-def publish_completed(job_dir, brief_path, call_path, *, qa_note):
+def _validate_native_usage(root, brief, call, usage):
+    """Record native choices against their actual frozen implementation files."""
+    if not isinstance(usage, list) or not usage:
+        raise ValueError('Shotcraft requires its actual native card and component usage')
+    rows = {row['candidate_id'].rsplit('/', 1)[-1]: row
+            for row in load_template_catalog(dependency_id='video-shotcraft')}
+    frozen = {item['job_path']: item for item in call['project_files']}
+    seen = set()
+    primary = set()
+    duration = brief['composition']['frames'] / 24
+    for item in usage:
+        if (not isinstance(item, dict)
+                or set(item) != {'card_id', 'variant', 'purpose', 'implementation_refs'}
+                or not isinstance(item.get('card_id'), str) or item['card_id'] not in rows
+                or not (item.get('variant') is None or isinstance(item['variant'], str))
+                or not isinstance(item.get('purpose'), str)
+                or not item['purpose'].strip() or not isinstance(item['implementation_refs'], list)
+                or not item['implementation_refs']):
+            raise ValueError('Invalid actual Shotcraft native usage')
+        card, variant = item['card_id'], item['variant']
+        if ((card == 'ink-press' and variant is not None)
+                or (card != 'ink-press' and variant not in {v['key'] for v in rows[card].get('styles', [])})
+                or (card, variant) in seen):
+            raise ValueError('Shotcraft usage requires unique original card and Gallery variant identities')
+        seen.add((card, variant))
+        if card == brief['template_id']:
+            primary.add(variant)
+        minimum = rows[card].get('min_duration_seconds')
+        if minimum is not None and duration + 1e-6 < minimum:
+            raise ValueError('Shotcraft usage cannot fit its original required action or hold')
+        _check_native_timing(rows[card], [variant] if variant is not None else [], duration)
+        for ref in item['implementation_refs']:
+            actual = exact(root, ref)
+            if (ref != frozen.get(ref['job_path'])
+                    or actual.suffix not in {'.tsx', '.ts', '.jsx', '.js', '.mjs', '.html'}):
+                raise ValueError('Shotcraft usage must cite actual implementation in the frozen native project')
+    if not primary or not set(brief['native_options']).issubset(primary):
+        raise ValueError('Shotcraft usage must retain the approved primary template and native options')
+    return usage
+
+
+def publish_completed(job_dir, brief_path, call_path, *, qa_note, native_usage=None):
     root = Path(job_dir).resolve(strict=True)
     payload = Path(brief_path).read_bytes(); brief = validate_brief(payload); _inputs(root, brief)
     if not isinstance(qa_note, str) or not qa_note.strip():
@@ -614,11 +740,18 @@ def publish_completed(job_dir, brief_path, call_path, *, qa_note):
     target = path(root, brief['result_record_path'])
     if target.exists():
         raise ValueError('Preserve the completed native result and use a new revision')
-    result = {'schema_version': 1, 'status': 'completed', 'dependency_id': brief['dependency_id'],
+    shotcraft = brief['dependency_id'] == 'video-shotcraft'
+    if shotcraft:
+        _validate_native_usage(root, brief, call, native_usage)
+    elif native_usage is not None:
+        raise ValueError('Native card usage belongs to the Shotcraft workflow')
+    result = {'schema_version': 2 if shotcraft else 1, 'status': 'completed', 'dependency_id': brief['dependency_id'],
               'job_id': brief['job_id'], 'template_id': brief['template_id'],
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'media': call['media'],
               'media_probe': brief['composition'], 'alpha': brief['alpha'],
               'renderer_version': call['renderer_version'], 'render_call': descriptor(root, call_path), 'qa_note': qa_note}
+    if shotcraft:
+        result['native_usage'] = native_usage
     artifacts.write_json_artifact(target, result)
     return target
 
@@ -627,13 +760,20 @@ def inspect_result(job_dir, payload, *, record_bytes=None):
     brief = validate_brief(payload); _inputs(job_dir, brief); _template(brief)
     data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
     result = json.loads(data)
-    expected = {'schema_version': 1, 'status': 'completed', 'dependency_id': brief['dependency_id'],
+    schema = result.get('schema_version')
+    if schema != 1 and not (schema == 2 and brief['dependency_id'] == 'video-shotcraft'):
+        raise ValueError('Unknown native motion result schema')
+    expected = {'status': 'completed', 'dependency_id': brief['dependency_id'],
                 'job_id': brief['job_id'], 'template_id': brief['template_id'],
                 'request_sha256': hashlib.sha256(payload).hexdigest(), 'media_probe': brief['composition'], 'alpha': brief['alpha']}
     if any(result.get(k) != v for k, v in expected.items()) or not str(result.get('qa_note', '')).strip():
         raise ValueError('Native motion result differs from its request or lacks QA')
     call = json.loads(exact(job_dir, result['render_call']).read_bytes())
     _verify_call(job_dir, brief, payload, call)
+    if schema == 2:
+        _validate_native_usage(job_dir, brief, call, result.get('native_usage'))
+    elif 'native_usage' in result:
+        raise ValueError('Native usage requires the current Shotcraft result schema')
     if result['media'] != call['media'] or result['renderer_version'] != call['renderer_version']:
         raise ValueError('Native result differs from actual execution')
     return result
@@ -731,6 +871,7 @@ def main():
     parser.add_argument('--brief', type=Path); parser.add_argument('--job-dir', type=Path)
     parser.add_argument('--capture-render', action='store_true'); parser.add_argument('--argv-json')
     parser.add_argument('--publish', action='store_true'); parser.add_argument('--call', type=Path)
+    parser.add_argument('--native-usage', type=Path, help='Actual Shotcraft card usage JSON array')
     parser.add_argument('--qa-note'); parser.add_argument('--media-manifest', type=Path); parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.probe:
@@ -743,7 +884,8 @@ def main():
     elif args.capture_render:
         print(capture_render(args.job_dir, args.brief, json.loads(args.argv_json)))
     elif args.publish:
-        print(publish_completed(args.job_dir, args.brief, args.call, qa_note=args.qa_note))
+        print(publish_completed(args.job_dir, args.brief, args.call, qa_note=args.qa_note,
+              native_usage=json.loads(args.native_usage.read_bytes()) if args.native_usage else None))
     else:
         payload = args.brief.read_bytes(); brief = validate_brief(payload, dependency_id=args.dependency_id)
         manifest = json.loads(args.media_manifest.read_bytes())

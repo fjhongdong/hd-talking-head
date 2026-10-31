@@ -161,7 +161,9 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 
 先选定一个 Python，用唯一准备入口 `<python> <skill>/scripts/project_python.py --project-root <project> --prepare`：先校验完整 Skill 包，再按依赖清单准备缺失的基础环境；本次选型后只准备并检查所选组件。主环境必需 Pillow、requests、NumPy、OpenCV；缺包按清单兼容版本装入本项目 `skill-development/runtime/talking-head-python<major><minor>`，已有可用包不重装或升级。第三方专用环境调用已有准备入口，并清除主包路径的注入。安装或复检失败即停止，不循环修复。随后项目主流程统一使用 `<python> <skill>/scripts/project_python.py --project-root <project> -- <正式脚本及参数>`，保持同一解释器及调用者工作目录。不另写临时复检脚本，不改全局 Python 或 shell。
 
-准备入口直接编排 `ensure_punk_cover.py`、`ensure_visual_broll_skills.py` 和已有原生运行时准备函数。唯一清单的 `preparation` 登记可执行准备，条目的 `dependency_ids` 关联实际所选组件；没有该字段的必需条目用于基础准备。`runtime_checks` 只检查本次所选组件；不遍历研究目录，不把账号或生成服务当作安装项。没有准备入口的缺失环境明确停止，不现场另造安装器。运行时探针通过只证明可调用；具体镜头仍在选型后检查实际配方绑定。
+准备入口直接编排 `ensure_punk_cover.py`、`ensure_visual_broll_skills.py` 和已有原生运行时准备函数。唯一清单的 `preparation` 登记可执行准备，条目的 `dependency_ids` 关联实际所选组件；没有该字段的必需条目用于基础准备。`runtime_checks` 只检查本次所选组件；不遍历研究目录，不把账号或生成服务当作安装项。已审核原生结果先核验冻结任务、工程、素材和媒体，只有待新制作的项准备 Node／浏览器等制作环境；损坏结果停止，不自动重做。没有准备入口的缺失环境明确停止，不现场另造安装器。运行时探针通过只证明可调用；具体镜头仍在选型后检查实际配方绑定。
+
+源码准备按声明路径核对固定提交，拒绝源码根或其父级路径被软链替换，保留原仓库内部合法软链。导入探针超时保留实际模块路径、耗时和有界堆栈，失败即停止；后续重入成功只说明当前可用，不能反推首次启动根因已解决，也不自动扩大超时或重装。
 
 原生入口需要固定工具版本时，由清单 `preparation.node_tool` 在项目 runtime 准备，并通过统一入口传给子进程，不降级全局工具。Hypit 的 pnpm 与源码声明保持一致；失败记录包含命令和安全错误原因，保留旧记录后停止，不自动重跑。
 

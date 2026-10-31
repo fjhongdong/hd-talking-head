@@ -15380,9 +15380,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/assemble-then-type-flyin",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "assemble-then-type-flyin",
       "summary": "空的暗底网格上，无文字的组件骨架先从四面八方飞入贴合；随后各处文字逐字从 3D 空间旋转着飞来落位，先大标题后小标注，全部落位后页面成形",
@@ -15396,9 +15396,14 @@
         ],
         "actions": [
           "飞入",
-          "旋转"
+          "旋转",
+          "组装",
+          "逐字落位"
         ],
-        "relations": [],
+        "relations": [
+          "先骨架后文字",
+          "从骨架到成稿"
+        ],
         "feelings": [],
         "styles": [
           "effects"
@@ -15413,7 +15418,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "页面从骨架到文字成稿的完整两段叙事；保持该固定动作，不作为任意场景创作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/assemble-then-type-flyin.md",
@@ -15445,9 +15450,13 @@
           "品牌"
         ],
         "actions": [
-          "切换"
+          "底色反转",
+          "换句",
+          "压暗"
         ],
-        "relations": [],
+        "relations": [
+          "叙事转折"
+        ],
         "feelings": [],
         "styles": [
           "effects"
@@ -15495,13 +15504,15 @@
           "产品"
         ],
         "actions": [
-          "归位",
-          "弹簧",
+          "调节间距",
+          "推开",
           "回弹",
-          "跳动",
-          "描边"
+          "归位"
         ],
-        "relations": [],
+        "relations": [
+          "参数驱动布局",
+          "同帧响应"
+        ],
         "feelings": [],
         "styles": [
           "interaction"
@@ -15548,12 +15559,12 @@
         ],
         "actions": [
           "轮换",
-          "切换",
           "放大",
-          "缩小",
-          "模糊"
+          "缩小"
         ],
-        "relations": [],
+        "relations": [
+          "同一位置多种角色"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -15598,9 +15609,13 @@
           "卡片"
         ],
         "actions": [
-          "旋转"
+          "飞行对齐",
+          "旋转",
+          "拉远"
         ],
-        "relations": [],
+        "relations": [
+          "空间巡览"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -15647,10 +15662,13 @@
           "信息"
         ],
         "actions": [
+          "硬切",
+          "闪白",
           "定格"
         ],
         "relations": [
-          "同一"
+          "同一画面不同裁切",
+          "切点渐紧"
         ],
         "feelings": [],
         "styles": [
@@ -15699,9 +15717,13 @@
           "列表",
           "胶囊"
         ],
-        "actions": [],
+        "actions": [
+          "逐拍上移",
+          "换色"
+        ],
         "relations": [
-          "同一"
+          "三通道同拍",
+          "多主题轮换"
         ],
         "feelings": [],
         "styles": [
@@ -15747,13 +15769,13 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "处理",
-          "对比"
+          "对比",
+          "揭示",
+          "扫过"
         ],
         "relations": [
-          "前后",
-          "对比",
-          "两版"
+          "处理前后",
+          "同画面两版"
         ],
         "feelings": [],
         "styles": [
@@ -15804,19 +15826,14 @@
           "路径"
         ],
         "actions": [
+          "连线",
           "汇聚",
-          "聚合",
-          "擦除",
           "缩小",
-          "消失"
+          "擦除"
         ],
         "relations": [
-          "汇聚",
-          "来源",
-          "同一",
-          "单一",
-          "统一",
-          "加速"
+          "多源整合",
+          "多到一"
         ],
         "feelings": [],
         "styles": [
@@ -15865,11 +15882,11 @@
           "产品"
         ],
         "actions": [
-          "收敛",
-          "出现"
+          "逐词入场",
+          "解糊"
         ],
         "relations": [
-          "同一"
+          "标题副标题错峰"
         ],
         "feelings": [],
         "styles": [
@@ -15916,10 +15933,13 @@
           "内容"
         ],
         "actions": [
-          "翻页",
-          "切换"
+          "上推",
+          "换章",
+          "顶出"
         ],
-        "relations": [],
+        "relations": [
+          "新章顶出旧章"
+        ],
         "feelings": [],
         "styles": [
           "transition"
@@ -15967,11 +15987,13 @@
           "产品"
         ],
         "actions": [
+          "弹开",
           "揭示",
-          "放大",
-          "出现"
+          "放大"
         ],
-        "relations": [],
+        "relations": [
+          "括号拉开文字"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -16019,10 +16041,13 @@
           "内容"
         ],
         "actions": [
+          "描框",
+          "翻色",
           "切换"
         ],
         "relations": [
-          "状态"
+          "模式切换",
+          "画框与内容同帧"
         ],
         "feelings": [
           "真实"
@@ -16074,9 +16099,13 @@
         ],
         "actions": [
           "描画",
-          "打字"
+          "压印",
+          "打字",
+          "消散"
         ],
-        "relations": [],
+        "relations": [
+          "先品牌后产品"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -16124,14 +16153,19 @@
         ],
         "actions": [
           "飞出",
-          "生长",
-          "弹出",
           "变形",
           "生成",
+          "连线",
+          "落位",
           "打字",
-          "连线"
+          "逐层生成"
         ],
-        "relations": [],
+        "relations": [
+          "跨容器迁移",
+          "逐层生成",
+          "列表行迁移为画布卡",
+          "一句话生成结构树"
+        ],
         "feelings": [],
         "styles": [
           "interaction",
@@ -16146,7 +16180,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/interaction/canvas-materialize-moves.md",
@@ -16166,9 +16201,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/card-flip-reveal",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "card-flip-reveal",
       "summary": "功能卡 3D 翻面揭示——卡片沿 Y 轴翻 180°，正面 UI 翻到侧棱最薄处掠过一道随角度移动的受光，背面揭出大号结论数字，逐张错峰扫过整排",
@@ -16180,11 +16215,14 @@
           "元素"
         ],
         "actions": [
+          "翻面",
           "揭示",
-          "移动",
-          "扫过"
+          "错峰"
         ],
-        "relations": [],
+        "relations": [
+          "功能到成果",
+          "正反语义配对"
+        ],
         "feelings": [],
         "styles": [
           "transition",
@@ -16200,7 +16238,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "功能界面与成果数字必须正反语义成对；这是完整成果论证，不是任意两镜转场。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/transition/card-flip-reveal.md",
@@ -16231,9 +16269,14 @@
           "品牌",
           "页面"
         ],
-        "actions": [],
+        "actions": [
+          "翻飞",
+          "旋转",
+          "吸入",
+          "扩散"
+        ],
         "relations": [
-          "连续"
+          "多页面收束为口号"
         ],
         "feelings": [],
         "styles": [
@@ -16281,8 +16324,15 @@
           "产品",
           "列表"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "弹入",
+          "堆叠",
+          "展开",
+          "抽出"
+        ],
+        "relations": [
+          "先整体后个体"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -16326,9 +16376,13 @@
         "subjects": [
           "字幕"
         ],
-        "actions": [],
+        "actions": [
+          "公转",
+          "轮换",
+          "点亮"
+        ],
         "relations": [
-          "循环"
+          "循环展示"
         ],
         "feelings": [],
         "styles": [
@@ -16375,8 +16429,27 @@
           "数据",
           "图表"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "实时写入",
+          "重组",
+          "聚合",
+          "爆表",
+          "重标",
+          "左移",
+          "尖峰",
+          "刹停",
+          "聚簇",
+          "拼成数字",
+          "压扁",
+          "回落"
+        ],
+        "relations": [
+          "实时数据",
+          "同一批点重组",
+          "增长超出坐标轴",
+          "实时数据事件",
+          "同一批点改变构成"
+        ],
         "feelings": [],
         "styles": [
           "data"
@@ -16390,7 +16463,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/data/chart-live-moves.md",
@@ -16421,12 +16495,15 @@
           "文字"
         ],
         "actions": [
-          "回弹",
-          "选择"
+          "选择",
+          "按压",
+          "反黑",
+          "收窄",
+          "结算"
         ],
         "relations": [
-          "因果",
-          "逐个"
+          "单选后结算",
+          "选择到结果"
         ],
         "feelings": [],
         "styles": [
@@ -16476,9 +16553,13 @@
           "元素",
           "图标"
         ],
-        "actions": [],
+        "actions": [
+          "扩张",
+          "换景"
+        ],
         "relations": [
-          "同一"
+          "圆形匹配",
+          "同圆心衔接"
         ],
         "feelings": [],
         "styles": [
@@ -16523,11 +16604,14 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "处理"
+          "克隆",
+          "复制",
+          "排开",
+          "合一"
         ],
         "relations": [
-          "批量",
-          "加速"
+          "一到多再合一",
+          "同一内容多副本"
         ],
         "feelings": [],
         "styles": [
@@ -16572,9 +16656,12 @@
         "subjects": [],
         "actions": [
           "飞入",
-          "打字"
+          "打字",
+          "聚拢"
         ],
-        "relations": [],
+        "relations": [
+          "多人协作"
+        ],
         "feelings": [],
         "styles": [
           "interaction"
@@ -16622,11 +16709,12 @@
           "数据"
         ],
         "actions": [
-          "扫过",
-          "模糊"
+          "扫动",
+          "散开",
+          "落位"
         ],
         "relations": [
-          "减速"
+          "倒数落成标题"
         ],
         "feelings": [],
         "styles": [
@@ -16672,10 +16760,12 @@
           "数据"
         ],
         "actions": [
+          "升起",
+          "拉远",
           "揭示"
         ],
         "relations": [
-          "减速"
+          "细节到全貌"
         ],
         "feelings": [],
         "styles": [
@@ -16721,10 +16811,12 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "回弹"
+          "急推",
+          "放大",
+          "急停"
         ],
         "relations": [
-          "目标"
+          "全景到特写"
         ],
         "feelings": [],
         "styles": [
@@ -16761,9 +16853,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/cursor-flyover",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "cursor-flyover",
       "summary": "整页俯瞰后，相机依次飞到四个功能区 zoom-in 特写，SVG 光标先一步到位指点、点击留下涟漪并触发界面响应，最后拉回俯瞰",
@@ -16772,8 +16864,16 @@
           "界面",
           "产品"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "俯瞰",
+          "推近",
+          "指点",
+          "点击",
+          "拉远"
+        ],
+        "relations": [
+          "功能区巡览"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -16788,7 +16888,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "原卡完整定义整页功能巡览与光标点击触发UI响应；保留这些固定交互。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/camera/cursor-flyover.md",
@@ -16823,9 +16923,12 @@
         ],
         "actions": [
           "汇入",
-          "连线"
+          "连线",
+          "飞越"
         ],
-        "relations": [],
+        "relations": [
+          "支流汇入主干"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -16877,12 +16980,12 @@
           "网格"
         ],
         "actions": [
-          "汇入",
-          "环绕",
-          "定格"
+          "发牌",
+          "飞入",
+          "归位"
         ],
         "relations": [
-          "加速"
+          "卡片落入网格"
         ],
         "feelings": [],
         "styles": [
@@ -16927,8 +17030,13 @@
         "subjects": [
           "列表"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "横移",
+          "浮起"
+        ],
+        "relations": [
+          "多层视差"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -16975,10 +17083,14 @@
           "产品"
         ],
         "actions": [
+          "左移",
           "滚动",
-          "描边"
+          "发牌",
+          "逐词加深"
         ],
-        "relations": [],
+        "relations": [
+          "文档与要点并列"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -17024,9 +17136,15 @@
           "窗口",
           "信息"
         ],
-        "actions": [],
+        "actions": [
+          "打字",
+          "写出",
+          "落入",
+          "后撤"
+        ],
         "relations": [
-          "逐个"
+          "文档生成",
+          "正文与历史条目跟进"
         ],
         "feelings": [],
         "styles": [
@@ -17078,11 +17196,13 @@
           "轮廓"
         ],
         "actions": [
-          "描线",
-          "生长",
-          "描边"
+          "描边",
+          "描画",
+          "生长"
         ],
-        "relations": [],
+        "relations": [
+          "轮廓到内容"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance",
@@ -17130,9 +17250,12 @@
           "纸片"
         ],
         "actions": [
-          "放大"
+          "抬升",
+          "放大阴影"
         ],
-        "relations": [],
+        "relations": [
+          "离面与接触阴影联动"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -17166,9 +17289,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/flying-words",
       "uses": [
-        "broll"
+        "component"
       ],
-      "capability_type": "creative_skill",
+      "capability_type": "native_component",
       "reviewed_version": "2.0.0",
       "title": "flying-words",
       "summary": "22 个关键词按黄金角铺在扁椭圆截面上，沿 z 轴从远处飞到相机前擦身而过，透明度走 [0,1,0.5,0.2,0] 生命曲线，跑满 2 整圈首尾无缝",
@@ -17176,8 +17299,15 @@
         "subjects": [
           "信息"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "飞越",
+          "穿过",
+          "循环"
+        ],
+        "relations": [
+          "关键词背景",
+          "背景让位前景"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -17191,7 +17321,9 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "原卡明确只做关键词背景层，依赖前景主体，不独立承担语义B-roll。",
+        "附属背景组件；不能独立冒充有语义的整屏B-roll。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/typography/flying-words.md",
@@ -17222,13 +17354,13 @@
           "品牌"
         ],
         "actions": [
-          "飞出",
           "聚合",
           "揭示",
-          "旋转"
+          "旋转",
+          "飞出"
         ],
         "relations": [
-          "加速"
+          "碎片到整体再散开"
         ],
         "feelings": [],
         "styles": [
@@ -17273,10 +17405,11 @@
         "subjects": [],
         "actions": [
           "飞入",
-          "回弹"
+          "回弹",
+          "锁定"
         ],
         "relations": [
-          "目标"
+          "取景框锁定目标"
         ],
         "feelings": [],
         "styles": [
@@ -17323,8 +17456,19 @@
         "subjects": [
           "指标"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "扫针",
+          "回落",
+          "滚动刻度",
+          "刹停",
+          "报数",
+          "冲刺"
+        ],
+        "relations": [
+          "自检后报数",
+          "刻度动指针不动",
+          "先自检再报真值"
+        ],
         "feelings": [],
         "styles": [
           "data"
@@ -17338,7 +17482,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/data/gauge-readout-moves.md",
@@ -17370,11 +17515,12 @@
         ],
         "actions": [
           "弹出",
-          "输入",
-          "打字"
+          "听写",
+          "打字",
+          "退光"
         ],
         "relations": [
-          "输入"
+          "语音到文字"
         ],
         "feelings": [
           "高能"
@@ -17420,13 +17566,12 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "切换"
+          "轮播",
+          "乱码切换",
+          "抖动"
         ],
         "relations": [
-          "状态",
-          "过程",
-          "同一",
-          "循环"
+          "状态短语轮换"
         ],
         "feelings": [
           "干净"
@@ -17473,9 +17618,20 @@
         "subjects": [
           "数据"
         ],
-        "actions": [],
+        "actions": [
+          "漂移",
+          "连接",
+          "输送",
+          "收敛",
+          "连线",
+          "生长",
+          "涨亮"
+        ],
         "relations": [
-          "连接"
+          "节点连接",
+          "光斑与飞线共振",
+          "环境光背景",
+          "光斑与飞线同帧共振"
         ],
         "feelings": [],
         "styles": [
@@ -17492,7 +17648,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/glow-flyline-moves.md",
@@ -17520,9 +17677,12 @@
       "summary": "背景在 linear、radial、conic 三类 CSS 渐变间平滑过渡——角度、色标、中心、半径逐参数插值，段间交叉淡化换类型",
       "tags": {
         "subjects": [],
-        "actions": [],
+        "actions": [
+          "渐变过渡",
+          "交叉淡化"
+        ],
         "relations": [
-          "连续"
+          "渐变类型切换"
         ],
         "feelings": [],
         "styles": [
@@ -17570,9 +17730,13 @@
           "品牌"
         ],
         "actions": [
-          "扫过"
+          "扫过",
+          "填色",
+          "充能"
         ],
-        "relations": [],
+        "relations": [
+          "关键词强调"
+        ],
         "feelings": [],
         "styles": [
           "typography",
@@ -17619,11 +17783,13 @@
           "信息"
         ],
         "actions": [
-          "聚合",
-          "压缩",
+          "爆裂",
+          "凝聚",
           "定格"
         ],
-        "relations": [],
+        "relations": [
+          "长句凝聚为短字标"
+        ],
         "feelings": [],
         "styles": [
           "outro"
@@ -17672,9 +17838,12 @@
           "列表",
           "内容"
         ],
-        "actions": [],
+        "actions": [
+          "贴面掠过",
+          "贴落"
+        ],
         "relations": [
-          "加速"
+          "镜头巡览与组件落位"
         ],
         "feelings": [],
         "styles": [
@@ -17723,15 +17892,13 @@
           "胶囊"
         ],
         "actions": [
-          "聚合",
+          "打字",
+          "变形",
           "归位",
-          "揭示",
-          "缩小",
-          "输入",
-          "打字"
+          "揭示"
         ],
         "relations": [
-          "输入"
+          "输入到标签到成品页"
         ],
         "feelings": [],
         "styles": [
@@ -17779,8 +17946,15 @@
           "产品",
           "图标"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "浮现",
+          "铺满",
+          "扫色",
+          "点亮"
+        ],
+        "relations": [
+          "灰阶全景到品牌色"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -17826,9 +18000,12 @@
         "subjects": [
           "图标"
         ],
-        "actions": [],
+        "actions": [
+          "弹跳",
+          "压扁"
+        ],
         "relations": [
-          "递增"
+          "图标吸引注意"
         ],
         "feelings": [],
         "styles": [
@@ -17877,9 +18054,18 @@
           "元素"
         ],
         "actions": [
-          "计数"
+          "顿帧",
+          "计数",
+          "闪白",
+          "色散",
+          "跳字",
+          "反色"
         ],
-        "relations": [],
+        "relations": [
+          "命中到反馈",
+          "连续命中反馈",
+          "单次撞停打击帧"
+        ],
         "feelings": [],
         "styles": [
           "effects"
@@ -17894,7 +18080,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/impact-feedback.md",
@@ -17926,8 +18113,17 @@
           "产品",
           "图标"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "翻面",
+          "弹现",
+          "连接",
+          "输送"
+        ],
+        "relations": [
+          "旧页到新中枢",
+          "同时接入",
+          "多源到中枢"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance",
@@ -17974,11 +18170,13 @@
           "产品"
         ],
         "actions": [
+          "推近",
+          "缩小",
           "归位",
-          "推近"
+          "拼成整行"
         ],
         "relations": [
-          "同一"
+          "首词带出整句"
         ],
         "feelings": [],
         "styles": [
@@ -18026,11 +18224,11 @@
         ],
         "actions": [
           "描画",
-          "生长"
+          "生长",
+          "结晶"
         ],
         "relations": [
-          "并行",
-          "连续"
+          "全字符并行成词"
         ],
         "feelings": [],
         "styles": [
@@ -18078,10 +18276,16 @@
           "标题"
         ],
         "actions": [
-          "揭示",
-          "聚光"
+          "聚光",
+          "扫字",
+          "扫光",
+          "揭示"
         ],
-        "relations": [],
+        "relations": [
+          "光效强调目标",
+          "光到文字显形",
+          "静止主角卡强调"
+        ],
         "feelings": [],
         "styles": [
           "effects",
@@ -18097,7 +18301,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/light-play-moves.md",
@@ -18129,9 +18334,13 @@
           "线条"
         ],
         "actions": [
-          "移动"
+          "延伸",
+          "横移",
+          "围框"
         ],
-        "relations": [],
+        "relations": [
+          "线条连接两场景"
+        ],
         "feelings": [],
         "styles": [
           "transition",
@@ -18178,9 +18387,13 @@
           "界面",
           "列表"
         ],
-        "actions": [],
+        "actions": [
+          "逐项入场",
+          "上移",
+          "落定"
+        ],
         "relations": [
-          "整体"
+          "列表错峰"
         ],
         "feelings": [],
         "styles": [
@@ -18226,9 +18439,14 @@
           "列表"
         ],
         "actions": [
+          "飞入",
+          "堆叠",
+          "压弹",
           "计数"
         ],
-        "relations": [],
+        "relations": [
+          "落卡与计数同步"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -18274,9 +18492,13 @@
           "标志",
           "图标"
         ],
-        "actions": [],
+        "actions": [
+          "收缩",
+          "左移",
+          "逐字滑入"
+        ],
         "relations": [
-          "逐个"
+          "图标与字标组合"
         ],
         "feelings": [],
         "styles": [
@@ -18324,11 +18546,14 @@
           "产品"
         ],
         "actions": [
-          "揭示",
-          "旋转",
-          "定格"
+          "弹射",
+          "自旋",
+          "定格",
+          "揭示"
         ],
-        "relations": [],
+        "relations": [
+          "卡片登场后文案揭示"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -18377,9 +18602,11 @@
         ],
         "actions": [
           "描画",
-          "跟随"
+          "划线"
         ],
-        "relations": [],
+        "relations": [
+          "关键词强调"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -18426,11 +18653,11 @@
           "网格"
         ],
         "actions": [
+          "重排",
           "变形"
         ],
         "relations": [
-          "同一",
-          "连续"
+          "同一组内容换布局"
         ],
         "feelings": [],
         "styles": [
@@ -18479,8 +18706,14 @@
           "页面",
           "内容"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "描框",
+          "点亮",
+          "贴落"
+        ],
+        "relations": [
+          "先立框后安放页面"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance",
@@ -18527,11 +18760,12 @@
           "页面"
         ],
         "actions": [
-          "收敛",
-          "旋转"
+          "描框",
+          "环绕",
+          "贴落"
         ],
         "relations": [
-          "整体"
+          "全部组件同帧落位"
         ],
         "feelings": [],
         "styles": [
@@ -18576,8 +18810,15 @@
       "summary": "三行对向霓虹跑马灯 recap——三连词空心霓虹灯管巨字上中下排满一面斜拍的砖墙，奇偶行反向匀速无限横滚，三行按 1/3 相位轮流点亮，结尾逐行断电",
       "tags": {
         "subjects": [],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "滚动",
+          "轮流点亮",
+          "断电"
+        ],
+        "relations": [
+          "三行反向滚动",
+          "主题词回顾"
+        ],
         "feelings": [],
         "styles": [
           "outro",
@@ -18625,9 +18866,13 @@
           "内容"
         ],
         "actions": [
-          "扫过"
+          "公转",
+          "解糊",
+          "扫色"
         ],
-        "relations": [],
+        "relations": [
+          "内容环绕标题"
+        ],
         "feelings": [
           "真实"
         ],
@@ -18676,10 +18921,13 @@
         ],
         "actions": [
           "收缩",
-          "定格",
-          "描边"
+          "描边",
+          "填充",
+          "点亮"
         ],
-        "relations": [],
+        "relations": [
+          "空心到实心"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -18725,8 +18973,15 @@
           "产品",
           "元素"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "飞入",
+          "围拢",
+          "压印"
+        ],
+        "relations": [
+          "功能元素合影",
+          "元素归属同一品牌"
+        ],
         "feelings": [],
         "styles": [
           "outro"
@@ -18769,9 +19024,19 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "揭示"
+          "俯仰抬正",
+          "横滑",
+          "俯冲",
+          "俯仰",
+          "抬正",
+          "揭示",
+          "降落"
         ],
-        "relations": [],
+        "relations": [
+          "俯拍到主角",
+          "单主体从平躺到正面",
+          "多页巡视后择一"
+        ],
         "feelings": [],
         "styles": [
           "camera",
@@ -18788,7 +19053,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/camera/overhead-camera-moves.md",
@@ -18818,8 +19084,14 @@
         "subjects": [
           "页面"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "裂开",
+          "滑出",
+          "换页"
+        ],
+        "relations": [
+          "旧页让位新页"
+        ],
         "feelings": [],
         "styles": [
           "transition"
@@ -18867,9 +19139,12 @@
           "内容"
         ],
         "actions": [
-          "滚动"
+          "滚动",
+          "缓推"
         ],
-        "relations": [],
+        "relations": [
+          "多页面差速反向展示"
+        ],
         "feelings": [
           "真实"
         ],
@@ -18914,10 +19189,12 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "定格"
+          "分格",
+          "定格",
+          "扩张"
         ],
         "relations": [
-          "同一"
+          "同一主体三个机位"
         ],
         "feelings": [],
         "styles": [
@@ -18962,8 +19239,13 @@
       "summary": "一句话逐词压印上纸、一个词标强调色斜体、短划线收束",
       "tags": {
         "subjects": [],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "逐词压印",
+          "划线"
+        ],
+        "relations": [
+          "价值主张字卡"
+        ],
         "feelings": [],
         "styles": [
           "typography",
@@ -19012,12 +19294,13 @@
           "内容"
         ],
         "actions": [
-          "移动",
+          "轮换",
+          "减速",
+          "吸附",
           "选择"
         ],
         "relations": [
-          "逐个",
-          "减速"
+          "内容穿过固定焦点"
         ],
         "feelings": [],
         "styles": [
@@ -19065,9 +19348,13 @@
           "胶囊"
         ],
         "actions": [
-          "轮换"
+          "轮换",
+          "伸缩",
+          "挤开"
         ],
-        "relations": [],
+        "relations": [
+          "胶囊宽度随词变化"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -19115,10 +19402,10 @@
         "actions": [
           "滚动",
           "轮换",
-          "模糊"
+          "落定"
         ],
         "relations": [
-          "加速"
+          "固定句干逐词列举"
         ],
         "feelings": [],
         "styles": [
@@ -19162,9 +19449,12 @@
       "tags": {
         "subjects": [],
         "actions": [
+          "洇开",
           "揭示"
         ],
-        "relations": [],
+        "relations": [
+          "新景替换旧景"
+        ],
         "feelings": [],
         "styles": [
           "transition"
@@ -19212,10 +19502,15 @@
           "按钮"
         ],
         "actions": [
+          "逐字段生成",
+          "降价",
           "揭示",
-          "出现"
+          "点亮"
         ],
-        "relations": [],
+        "relations": [
+          "原价到新价",
+          "字段逐步成卡"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -19260,10 +19555,14 @@
           "信息"
         ],
         "actions": [
-          "打字"
+          "分屏",
+          "打字",
+          "推近",
+          "交互"
         ],
         "relations": [
-          "并行"
+          "四象限并行",
+          "关键节拍错开"
         ],
         "feelings": [],
         "styles": [
@@ -19299,9 +19598,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/radial-ripple-phone-chips",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "radial-ripple-phone-chips",
       "summary": "暖沙底四层同心圆错相呼吸如水波，中央手机 mockup 屏内 feed 自动缓滚，两侧白色 chip 先后 spring pop 入场并悬浮",
@@ -19310,10 +19609,14 @@
           "产品"
         ],
         "actions": [
-          "移动",
-          "定格"
+          "同心圆呼吸",
+          "滚动",
+          "弹入",
+          "悬浮"
         ],
-        "relations": [],
+        "relations": [
+          "手机与功能标签展示"
+        ],
         "feelings": [],
         "styles": [
           "effects"
@@ -19328,7 +19631,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "原卡提供完整手机产品全景、屏内feed与功能标签，收尾形成产品海报。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/radial-ripple-phone-chips.md",
@@ -19362,8 +19665,15 @@
           "地图",
           "网格"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "点亮",
+          "扩散",
+          "收拢"
+        ],
+        "relations": [
+          "中心到全体",
+          "向外通电向内回应"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -19410,12 +19720,12 @@
         ],
         "actions": [
           "飞入",
-          "压缩",
-          "处理",
-          "模糊"
+          "叠压",
+          "滚动"
         ],
         "relations": [
-          "递增"
+          "卡片层叠",
+          "顶层清晰底层退暗"
         ],
         "feelings": [],
         "styles": [
@@ -19459,12 +19769,12 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "放大",
-          "推近"
+          "跳切",
+          "推近",
+          "定格"
         ],
         "relations": [
-          "目标",
-          "连续"
+          "三级逼近同一目标"
         ],
         "feelings": [],
         "styles": [
@@ -19511,8 +19821,14 @@
           "标题",
           "卡片"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "裂版",
+          "抖动",
+          "套准"
+        ],
+        "relations": [
+          "撞停到套印反馈"
+        ],
         "feelings": [],
         "styles": [
           "effects",
@@ -19562,9 +19878,13 @@
           "列表",
           "内容"
         ],
-        "actions": [],
+        "actions": [
+          "降下",
+          "收平",
+          "嵌入"
+        ],
         "relations": [
-          "批量"
+          "内容行落入真实槽位"
         ],
         "feelings": [],
         "styles": [
@@ -19612,10 +19932,13 @@
           "元素"
         ],
         "actions": [
-          "移动",
-          "爆发"
+          "顿挫移动",
+          "冲刺",
+          "换拍"
         ],
-        "relations": [],
+        "relations": [
+          "逐三帧到逐帧"
+        ],
         "feelings": [],
         "styles": [
           "rhythm",
@@ -19662,9 +19985,12 @@
           "产品",
           "内容"
         ],
-        "actions": [],
+        "actions": [
+          "扫描",
+          "往复扫过"
+        ],
         "relations": [
-          "过程"
+          "静止文档被读取"
         ],
         "feelings": [],
         "styles": [
@@ -19700,9 +20026,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/scanline-annotate-focus",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "scanline-annotate-focus",
       "summary": "一条扫描线自上而下匀速掠过已存在的页面，越过哪块区块的下缘，哪块就被四角取景框从外扩处弹簧收拢对准（一次过冲），随后贴出一枚逐字打出的机器标签，顶部状态行同步计数 00/06→06/06",
@@ -19713,13 +20039,14 @@
           "产品"
         ],
         "actions": [
-          "描线",
-          "弹簧",
-          "拆解",
+          "扫描",
+          "锁定",
+          "标注",
+          "打字",
           "计数"
         ],
         "relations": [
-          "状态"
+          "扫到区块后识别标注"
         ],
         "feelings": [],
         "styles": [
@@ -19735,7 +20062,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "页面扫描后逐区识别并标注，原卡明确用于AI分析页面的能力镜头。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/scanline-annotate-focus.md",
@@ -19755,9 +20082,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/scanline-assemble-flyin",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "scanline-assemble-flyin",
       "summary": "页面开场是一张只有网格与虚线槽位的蓝图画板，一条亮扫描线自上而下掠过；扫到每个槽位，该处组件就从画外飞入过冲贴合，带方向性残影模糊与落位咬合角标——扫完整页恰好装配完成",
@@ -19768,12 +20095,14 @@
           "网格"
         ],
         "actions": [
+          "扫描",
           "飞入",
-          "描线",
-          "生成",
-          "模糊"
+          "组装",
+          "生成"
         ],
-        "relations": [],
+        "relations": [
+          "空白蓝图到成品页面"
+        ],
         "feelings": [],
         "styles": [
           "effects"
@@ -19788,7 +20117,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "扫描槽位并装配成完整页面，原卡明确用于从空白到成品的能力叙事。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/scanline-assemble-flyin.md",
@@ -19818,10 +20147,16 @@
         "subjects": [
           "列表"
         ],
-        "actions": [],
+        "actions": [
+          "滚动",
+          "急刹",
+          "抬升",
+          "锁定",
+          "回弹"
+        ],
         "relations": [
-          "目标",
-          "减速"
+          "长卷停在目标",
+          "急刹与准星同帧咬合"
         ],
         "feelings": [],
         "styles": [
@@ -19837,7 +20172,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/data/scroll-brake-moves.md",
@@ -19869,12 +20205,14 @@
           "图标"
         ],
         "actions": [
+          "点击",
+          "滑动",
           "切换",
-          "弹出",
-          "弹簧",
-          "描边"
+          "弹出"
         ],
-        "relations": [],
+        "relations": [
+          "控件选择到新态"
+        ],
         "feelings": [],
         "styles": [
           "interaction"
@@ -19916,9 +20254,21 @@
       "summary": "镜头交棒三式——推进流白、whip-pan 甩镜（急刹款）、mask-wipe 穿窗（纵深款），按能量落差与接缝语义选型",
       "tags": {
         "subjects": [],
-        "actions": [],
+        "actions": [
+          "推进",
+          "闪白",
+          "甩镜",
+          "穿窗",
+          "换页",
+          "急刹",
+          "放大",
+          "揭示"
+        ],
         "relations": [
-          "逐个"
+          "两镜衔接",
+          "能量相近两镜交接",
+          "横向两景衔接",
+          "功能总览到详情"
         ],
         "feelings": [],
         "styles": [
@@ -19934,7 +20284,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/transition/shot-transitions.md",
@@ -19962,8 +20313,24 @@
       "summary": "高能砸入三式——kanada-perspective-snap 金田透视急停、score-slam 比分砸落、impact-burst-kit 落点冲击套件（波及邻卡）",
       "tags": {
         "subjects": [],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "砸入",
+          "急停",
+          "冲击",
+          "推开",
+          "甩入",
+          "弹平",
+          "砸落",
+          "扩散",
+          "震屏",
+          "回弹"
+        ],
+        "relations": [
+          "落点冲击传导到邻卡",
+          "单卡透视入场",
+          "重磅数字登场",
+          "冲击传导到邻卡"
+        ],
         "feelings": [
           "高能"
         ],
@@ -19981,7 +20348,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/slam-entrance-moves.md",
@@ -20011,8 +20379,20 @@
         "subjects": [
           "页面"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "拆解",
+          "合体",
+          "俯冲",
+          "悬停",
+          "降落",
+          "减速"
+        ],
+        "relations": [
+          "构件分解再合体",
+          "全景到焦点",
+          "展示构件组成",
+          "全局到单点"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -20027,7 +20407,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/camera/space-camera-moves.md",
@@ -20058,9 +20439,13 @@
           "卡片"
         ],
         "actions": [
-          "定格"
+          "定格",
+          "圈注",
+          "解冻"
         ],
-        "relations": [],
+        "relations": [
+          "同一镜头变速"
+        ],
         "feelings": [],
         "styles": [
           "rhythm"
@@ -20109,11 +20494,13 @@
           "轮廓"
         ],
         "actions": [
-          "扫过",
-          "聚光"
+          "聚光",
+          "锁定",
+          "抬升",
+          "归位"
         ],
         "relations": [
-          "单一"
+          "从页面突出主角卡"
         ],
         "feelings": [],
         "styles": [
@@ -20162,11 +20549,19 @@
           "界面"
         ],
         "actions": [
+          "聚光",
           "扫过",
-          "聚光"
+          "显影",
+          "点亮",
+          "熄灭",
+          "横滑",
+          "扩张"
         ],
         "relations": [
-          "逐个"
+          "光到即亮光走即暗",
+          "角落到全屏",
+          "面板醒来再沉暗",
+          "宽面板逐段巡览"
         ],
         "feelings": [],
         "styles": [
@@ -20184,7 +20579,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/effects/spotlight-sweep-moves.md",
@@ -20216,8 +20612,14 @@
           "页面",
           "内容"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "侧立",
+          "横滑",
+          "贴落"
+        ],
+        "relations": [
+          "页面动镜头不动"
+        ],
         "feelings": [],
         "styles": [
           "camera",
@@ -20266,10 +20668,12 @@
           "产品"
         ],
         "actions": [
-          "描画",
+          "逐段点亮",
           "组装"
         ],
-        "relations": [],
+        "relations": [
+          "断笔到完整文字"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -20315,8 +20719,15 @@
           "数字",
           "页面"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "撕裂",
+          "错位",
+          "抖动",
+          "硬切"
+        ],
+        "relations": [
+          "故障换页"
+        ],
         "feelings": [
           "高能"
         ],
@@ -20363,10 +20774,16 @@
       "tags": {
         "subjects": [],
         "actions": [
+          "冻结",
+          "环绕",
           "拉远",
-          "环绕"
+          "恢复",
+          "熄灭"
         ],
-        "relations": [],
+        "relations": [
+          "内容冻结相机移动",
+          "主角孤立"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -20381,7 +20798,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/camera/tension-camera-moves.md",
@@ -20401,9 +20819,9 @@
     {
       "candidate_id": "video-shotcraft:video-shotcraft/terminal-3d",
       "uses": [
-        "component"
+        "broll"
       ],
-      "capability_type": "native_component",
+      "capability_type": "creative_skill",
       "reviewed_version": "2.0.0",
       "title": "terminal-3d",
       "summary": "三个终端窗散布 3D 空间，相机窗间飞行、途中正弦拉远，每到一窗打字机敲命令、结果逐行滑出——命令执行的空间叙事流",
@@ -20412,10 +20830,14 @@
           "产品"
         ],
         "actions": [
-          "拉远",
-          "打字"
+          "飞行",
+          "对齐",
+          "打字",
+          "拉远"
         ],
-        "relations": [],
+        "relations": [
+          "终端窗口空间巡览"
+        ],
         "feelings": [],
         "styles": [
           "camera"
@@ -20430,7 +20852,7 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "原卡完整定义三站命令→输出→READY的CLI工作流叙事，不是仅提供通用相机轨迹。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/camera/terminal-3d.md",
@@ -20464,9 +20886,13 @@
           "产品"
         ],
         "actions": [
-          "放大"
+          "放大",
+          "穿越",
+          "揭示"
         ],
-        "relations": [],
+        "relations": [
+          "字形作为内容窗口"
+        ],
         "feelings": [],
         "styles": [
           "opening",
@@ -20514,9 +20940,12 @@
         ],
         "actions": [
           "轮换",
-          "收缩"
+          "收缩",
+          "合拢"
         ],
-        "relations": [],
+        "relations": [
+          "最后一词后整句揭晓"
+        ],
         "feelings": [],
         "styles": [
           "typography",
@@ -20560,12 +20989,16 @@
       "tags": {
         "subjects": [],
         "actions": [
-          "切换",
+          "换肤",
+          "扫过",
           "收缩",
-          "扫过"
+          "扩散",
+          "打字"
         ],
         "relations": [
-          "同一"
+          "同一界面主题切换",
+          "命令引发换肤",
+          "命令引发主题切换"
         ],
         "feelings": [],
         "styles": [
@@ -20580,7 +21013,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/interaction/theme-switch-moves.md",
@@ -20612,10 +21046,13 @@
           "列表"
         ],
         "actions": [
+          "横移",
+          "掠过",
+          "急停",
           "推近"
         ],
         "relations": [
-          "加速"
+          "历史刻度到当前版本"
         ],
         "feelings": [],
         "styles": [
@@ -20665,12 +21102,14 @@
           "内容"
         ],
         "actions": [
-          "生长",
-          "缩小"
+          "显影",
+          "缩小",
+          "平移",
+          "生长"
         ],
         "relations": [
-          "连续",
-          "交接"
+          "标题降格为标签",
+          "标题让位内容"
         ],
         "feelings": [],
         "styles": [
@@ -20716,8 +21155,14 @@
         "subjects": [
           "标题"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "速剪",
+          "黑场",
+          "揭示"
+        ],
+        "relations": [
+          "前置钩子到正式开场"
+        ],
         "feelings": [],
         "styles": [
           "rhythm",
@@ -20762,8 +21207,21 @@
       "summary": "藏切点转场三式——前景遮挡隐形切、对撞开屏、暖色漏光，硬切藏进遮挡/撞击/光峰的 1-3 帧里，观众看不见剪刀",
       "tags": {
         "subjects": [],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "遮挡",
+          "对撞",
+          "漏光",
+          "硬切",
+          "横扫",
+          "闪白",
+          "盖章",
+          "扫过"
+        ],
+        "relations": [
+          "隐藏切点",
+          "双方案对阵",
+          "暖光隐藏切点"
+        ],
         "feelings": [],
         "styles": [
           "transition"
@@ -20778,7 +21236,8 @@
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
         "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
-        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。"
+        "这是运镜、转场、节奏或视觉组件；不能独立冒充有语义的整屏B-roll。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/transition/transition-hidden-cut.md",
@@ -20809,9 +21268,13 @@
           "标题",
           "元素"
         ],
-        "actions": [],
+        "actions": [
+          "推近",
+          "穿越",
+          "换景"
+        ],
         "relations": [
-          "前后"
+          "后景嵌套前景"
         ],
         "feelings": [],
         "styles": [
@@ -20859,10 +21322,15 @@
           "网格"
         ],
         "actions": [
-          "收敛",
-          "打字"
+          "打字",
+          "搜索",
+          "筛选",
+          "点击",
+          "进入详情"
         ],
-        "relations": [],
+        "relations": [
+          "输入到列表收敛到详情"
+        ],
         "feelings": [
           "真实"
         ],
@@ -20909,8 +21377,23 @@
           "文字",
           "标题"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "上升",
+          "汇聚",
+          "合拢",
+          "沿线流入",
+          "逐字上升",
+          "落位",
+          "漂入",
+          "归位",
+          "摆正"
+        ],
+        "relations": [
+          "字符集结成标题",
+          "字符裁切线内入场",
+          "散字集结成品牌名",
+          "文字沿语义曲线入场"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -20924,7 +21407,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/typography/type-assembly-moves.md",
@@ -20956,10 +21440,13 @@
           "标题"
         ],
         "actions": [
-          "归位",
-          "打字"
+          "坠落",
+          "弹跳",
+          "归位"
         ],
-        "relations": [],
+        "relations": [
+          "字符从散乱到立正"
+        ],
         "feelings": [],
         "styles": [
           "typography"
@@ -21004,9 +21491,15 @@
           "文字",
           "标题"
         ],
-        "actions": [],
+        "actions": [
+          "字重脉冲",
+          "填色",
+          "逐词点亮",
+          "回弹"
+        ],
         "relations": [
-          "逐个"
+          "字重跟随鼓点",
+          "填色跟随旁白"
         ],
         "feelings": [],
         "styles": [
@@ -21022,7 +21515,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/typography/type-rhythm-sync.md",
@@ -21054,9 +21548,13 @@
           "文案"
         ],
         "actions": [
-          "打字"
+          "打字",
+          "退格",
+          "重打"
         ],
-        "relations": [],
+        "relations": [
+          "否定旧词改口新词"
+        ],
         "feelings": [],
         "styles": [
           "typography",
@@ -21103,10 +21601,14 @@
           "按钮"
         ],
         "actions": [
+          "点击",
+          "蒸发",
           "放大",
-          "消失"
+          "退场"
         ],
-        "relations": [],
+        "relations": [
+          "复杂界面消失只留发布按钮"
+        ],
         "feelings": [],
         "styles": [
           "outro"
@@ -21153,11 +21655,17 @@
           "图标"
         ],
         "actions": [
+          "翻转",
+          "变形",
           "收缩",
-          "输入"
+          "拼装",
+          "撑开",
+          "发送"
         ],
         "relations": [
-          "输入"
+          "产品UI变成品牌标志",
+          "图标变成品牌标志",
+          "输入框变成品牌标志"
         ],
         "feelings": [],
         "styles": [
@@ -21172,7 +21680,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/outro/ui-to-brand-morph.md",
@@ -21204,9 +21713,14 @@
           "界面"
         ],
         "actions": [
-          "模糊"
+          "错峰",
+          "铺开",
+          "脉冲"
         ],
-        "relations": [],
+        "relations": [
+          "同一配方改变参数",
+          "首位梯度到中心梯度"
+        ],
         "feelings": [],
         "styles": [
           "ui-entrance"
@@ -21250,8 +21764,15 @@
         "subjects": [
           "品牌"
         ],
-        "actions": [],
-        "relations": [],
+        "actions": [
+          "滚动",
+          "轮换",
+          "染色",
+          "落定"
+        ],
+        "relations": [
+          "句干固定受众轮换"
+        ],
         "feelings": [
           "干净"
         ],
@@ -21300,12 +21821,14 @@
           "波形"
         ],
         "actions": [
+          "起伏",
           "滚动",
-          "输入",
-          "塌缩"
+          "塌缩",
+          "提交"
         ],
         "relations": [
-          "输入"
+          "说话到声纹",
+          "说停对齐"
         ],
         "feelings": [],
         "styles": [
@@ -21353,13 +21876,17 @@
           "内容"
         ],
         "actions": [
-          "飞入",
+          "点亮",
+          "描线",
           "显形",
-          "描线"
+          "描边",
+          "上浮",
+          "实体化"
         ],
         "relations": [
-          "整体",
-          "批量"
+          "内容原位批量显形",
+          "内容墙原位亮起",
+          "蓝图到真实界面"
         ],
         "feelings": [],
         "styles": [
@@ -21374,7 +21901,8 @@
       ],
       "limitations": [
         "原生H264无透明通道；不作为透明A-roll贴片。",
-        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。"
+        "父级仅提供必要任务和交付规格；完整创作、编舞及逐帧检查按原生工作流执行。",
+        "卡内变体的动作和适用关系分别见 variant_capabilities；并集标签只召回原卡，不代表每个变体都具备全部动作。"
       ],
       "evidence": [
         "skill-development/vendor/video-shotcraft/references/shots/ui-entrance/wall-reveal-moves.md",
@@ -21405,11 +21933,12 @@
           "品牌"
         ],
         "actions": [
-          "切换",
-          "闪白"
+          "流光",
+          "闪白",
+          "简化"
         ],
         "relations": [
-          "同一"
+          "同一字标质感降维"
         ],
         "feelings": [
           "干净"
@@ -21459,11 +21988,12 @@
           "元素"
         ],
         "actions": [
+          "翻面",
           "擦除",
-          "扫过"
+          "换页"
         ],
         "relations": [
-          "交接"
+          "两页静止几何边界交接"
         ],
         "feelings": [],
         "styles": [
@@ -21511,10 +22041,12 @@
           "产品"
         ],
         "actions": [
-          "滚动",
+          "步进滚动",
           "轮换"
         ],
-        "relations": [],
+        "relations": [
+          "论点换词与画面证据同步"
+        ],
         "feelings": [],
         "styles": [
           "typography",
@@ -21561,13 +22093,13 @@
           "几何"
         ],
         "actions": [
-          "揭示",
+          "旋转",
           "生长",
-          "扫过",
-          "描边"
+          "收拢",
+          "扫光"
         ],
         "relations": [
-          "减速"
+          "三利益词几何接力"
         ],
         "feelings": [],
         "styles": [

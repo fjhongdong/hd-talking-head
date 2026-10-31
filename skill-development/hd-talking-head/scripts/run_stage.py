@@ -232,7 +232,7 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     treatment_payload = _json(_path(job, treatment))
     planned = visual_confirmation.planned_generation_targets(
         project, director, treatment_payload, job_dir=job.job_dir)
-    prepare_visual_dependencies(project, director)
+    prepare_visual_dependencies(project, director, job=job, treatment=treatment_payload, planned=planned)
     _validate_prepared_native_inputs(job, project, director, treatment_payload, planned=planned)
     from edit.hd.tools.motion_capabilities import check_offline_plan
     native_keys = {(s['segment_id'], cid) for s in director.get('segments', [])
@@ -568,9 +568,36 @@ def _check_default_binding(binding):
         raise ValueError('Selected motion graphics route has no default execution binding; use the connected callout-pin route')
 
 
-def prepare_visual_dependencies(project: Path, director: dict) -> None:
+def _validate_previous_native_result(job, module, payload, segment_id, component_id, binding):
+    """A completed file must still match any registered reviewed version."""
+    from edit.hd.tools import visual_confirmation as confirmation
+    stage = job.stages['visual_direction']
+    for record in [*stage.get('artifacts', []), *stage.get('lineage', [])]:
+        if not record.get('path', '').endswith('/execution-mapping.json'):
+            continue
+        mapping = confirmation._read(confirmation._exact(job.job_dir, record))
+        matches = [item for item in mapping.get('native_inputs', [])
+                   if (item.get('segment_id'), item.get('component_id')) == (segment_id, component_id)
+                   and item.get('artifact', {}).get('sha256') == binding.get('brief_sha256')]
+        if len(matches) > 1:
+            raise ValueError('Previous native result mapping is ambiguous')
+        if not matches:
+            continue
+        receipt, _ = confirmation._validate_source(job.job_dir, mapping['source_approval'], job_id=job.job_id)
+        if mapping.get('proposal') != receipt['source']:
+            raise ValueError('Previous native result differs from its approved proposal')
+        if confirmation._exact(job.job_dir, matches[0]['artifact']).read_bytes() != payload:
+            raise ValueError('Native reuse differs from its previously reviewed brief')
+        module.load_result(job.job_dir, payload, expected_record=matches[0]['result_record'],
+                           expected_renderer_version=binding['renderer_version'])
+
+
+def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment: dict, planned=()) -> None:
     """Prepare the selected draft bindings before publishing any user candidate."""
     router = _module('broll_capability_router')
+    scenes = {(scene.get('segment_id'), scene.get('component_id')): scene
+              for scene in treatment.get('scenes', [])}
+    motion = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
     bindings = []
     for segment in director['segments']:
         for component in segment['visual_strategy']['components']:
@@ -581,6 +608,23 @@ def prepare_visual_dependencies(project: Path, director: dict) -> None:
             fields = ('dependency_id', 'entrypoint', 'producer_version', 'primary_renderer')
             if any(not isinstance(binding.get(key), str) or not binding[key] for key in fields):
                 raise ValueError('Selected template needs its actual execution binding before confirmation')
+            key = (segment['segment_id'], component['component_id'])
+            if binding['dependency_id'] in motion and key not in planned:
+                scene = scenes.get(key, {})
+                if not isinstance(scene.get('brief_path'), str):
+                    raise ValueError('Selected native motion requires its existing task brief')
+                payload = _path(job, scene['brief_path']).read_bytes()
+                if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
+                    raise ValueError('Native brief differs from its selected binding')
+                module = _module('motion_native_skill_adapter')
+                brief = module.validate_brief(payload, dependency_id=binding['dependency_id'])
+                if brief['job_id'] != job.job_id:
+                    raise ValueError('Native brief belongs to another Job')
+                result = _path(job, brief['result_record_path'])
+                if result.exists() or result.is_symlink():
+                    module.inspect_result(job.job_dir, payload)
+                    _validate_previous_native_result(job, module, payload, *key, binding)
+                    continue
             selected = {key: binding[key] for key in fields}
             selected.update(executor=router._executor(component['kind'], binding))
             if selected not in bindings:

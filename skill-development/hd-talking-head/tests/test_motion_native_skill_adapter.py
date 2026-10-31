@@ -3,6 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 import unittest
 from unittest import mock
 import _env
@@ -112,7 +114,7 @@ class NativeMotionTests(unittest.TestCase):
         rows = native.load_template_catalog(_env.PROJECT, dependency_id='video-shotcraft')
         self.assertEqual(sum(len(row.get('styles', [])) for row in rows), 150)
         for row in rows:
-            if row['native_template_group'] in {'camera', 'transition', 'rhythm'}:
+            if row['candidate_id'].rsplit('/',1)[-1] in {'space-camera-moves','shot-transitions','beat-cut-moves'}:
                 self.assertNotEqual(row['native_role'], 'scene')
             if row['native_template_group'] != 'template':
                 self.assertTrue(row['native_demos'])
@@ -121,17 +123,19 @@ class NativeMotionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'variant'):
             native._template(request)
 
-    def test_only_explicit_original_template_duration_limits_are_enforced(self):
+    def test_only_explicit_original_action_budgets_are_enforced(self):
         b=brief('video-shotcraft','ink-press')
         def clock(frames):
             b['composition']['frames']=frames;b['source_binding']['end']=frames/24
             b['word_anchors'][0]['end']=frames/24
             native.validate_brief(json.dumps(b))
         clock(144)
-        with self.assertRaisesRegex(ValueError,'original template duration'):
-            native._template(b)
-        clock(868);native._template(b)
+        native._template(b)  # The full-template demo duration is not a hard minimum.
         b['template_id']='spotlight-hero-card';clock(144);native._template(b)
+        b['template_id']='chart-live-moves';clock(24)
+        with self.assertRaisesRegex(ValueError,'duration|budget'):
+            native._template(b)
+        clock(29);native._template(b)
 
     def test_mg_capture_requires_verbatim_harness_and_exact_clock(self):
         import shutil
@@ -164,10 +168,12 @@ class NativeMotionTests(unittest.TestCase):
             (project/'node_modules').symlink_to(modules,target_is_directory=True)
             runtime={'tools':{'node':'/usr/bin/node'},'node_modules':str(modules),'browser':'/native/chrome'}
             argv=['/usr/bin/node',str(cli),'render','src/index.ts','NativeScene','out/native.mp4',
-                  '--codec=h264','--pixel-format=yuv420p','--color-space=bt709','--image-format=png','--muted','--concurrency=1','--browser-executable=/native/chrome']
+                  '--codec=h264','--pixel-format=yuv420p','--color-space=bt709','--image-format=png','--muted','--concurrency=1','--browser-executable=/native/chrome','--bundle-cache=false']
             _,script,output=native._render_command(root,request,argv,runtime)
             self.assertEqual(script,cli);self.assertEqual(output,project/'out/native.mp4')
-            argv[-1]='--browser-executable=/other/chrome'
+            with self.assertRaisesRegex(ValueError,'pinned Remotion'):
+                native._render_command(root,request,argv[:-1],runtime)
+            argv[12]='--browser-executable=/other/chrome'
             with self.assertRaisesRegex(ValueError,'browser'):
                 native._render_command(root,request,argv,runtime)
 
@@ -212,6 +218,9 @@ class NativeMotionTests(unittest.TestCase):
                 self.assertNotIn('quarter_turn_cw',action['next'])
                 self.assertNotIn('export-frames.mjs',action['next'])
                 self.assertIn('harness/render.mjs' if dependency=='mg-styles-15' else '@remotion/cli',action['next'])
+                if dependency == 'video-shotcraft':
+                    self.assertEqual(len(action['native_catalog']),125)
+                    self.assertIn('complementary cards',action['next'])
 
     def test_capture_requires_exact_original_embedded_renderer(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -324,7 +333,7 @@ class NativeMotionTests(unittest.TestCase):
                     (project/'out/render.mp4').write_bytes(b'fixture video')
                     return mock.Mock(returncode=0,stdout='',stderr='')
                 with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
-                     mock.patch.object(native.subprocess,'run',side_effect=render),mock.patch.object(native,'probe',return_value=b['composition']):
+                     mock.patch.object(native,'_run_native_process',side_effect=render),mock.patch.object(native,'probe',return_value=b['composition']):
                     calls.append(native.capture_render(root,request,argv))
             self.assertEqual([p.name for p in calls],['first.render-call.json','second.render-call.json'])
             self.assertTrue(all(p.is_file() for p in calls))
@@ -341,7 +350,7 @@ class NativeMotionTests(unittest.TestCase):
                 (project/'out/native.mp4').write_bytes(b'actual but rejected native output')
                 return mock.Mock(returncode=0,stdout='original renderer stdout',stderr='')
             with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
-                 mock.patch.object(native.subprocess,'run',side_effect=render), \
+                 mock.patch.object(native,'_run_native_process',side_effect=render), \
                  mock.patch.object(native,'probe',side_effect=ValueError('wrong output pixel format')):
                 with self.assertRaisesRegex(ValueError,'pixel format'):
                     native.capture_render(root,request,argv)
@@ -350,6 +359,125 @@ class NativeMotionTests(unittest.TestCase):
             self.assertEqual(call['exit_code'],0)
             self.assertEqual(call['artifact_check_error'],'wrong output pixel format')
             self.assertNotIn('media',call)
+
+    def test_start_failure_timeout_and_source_change_retain_the_started_call(self):
+        runtime={'tools':{'node':'/usr/bin/node'},'node_modules':'/unused',
+                 'renderer_version':'playwright-1.64.0','runtime_identity':{},'environment':{}}
+        for failure in ('start', 'timeout', 'source', 'cache'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as name:
+                root=Path(name).resolve();b=brief();project=root/b['project_directory'];project.mkdir(parents=True)
+                html=project/'page.html';html.write_text('<html/>')
+                request=root/'brief.json';request.write_text(json.dumps(b))
+                script=native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/render.js'
+                record=root/'native-inputs/native-test/result.render-call.json'
+                def render(*args,**kwargs):
+                    self.assertEqual(json.loads(record.read_bytes())['status'],'running')
+                    if failure=='start': raise OSError('cannot start native renderer')
+                    if failure=='timeout':
+                        raise subprocess.TimeoutExpired(args[0],1200,output=b'partial stdout',stderr=b'partial stderr')
+                    if failure=='source':
+                        html.write_text('<html>changed during native execution</html>')
+                    else:
+                        cache=project/'.cache/webpack/probe.pack';cache.parent.mkdir(parents=True)
+                        cache.write_bytes(b'generated build cache')
+                    return subprocess.CompletedProcess(args[0],0,'render stdout','render stderr')
+                with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
+                     mock.patch.object(native,'_run_native_process',side_effect=render) as execute:
+                    with self.assertRaises((OSError,subprocess.TimeoutExpired,ValueError)):
+                        native.capture_render(root,request,['/usr/bin/node',str(script),'page.html','out/native.mp4','24'])
+                self.assertEqual(execute.call_count,1)
+                saved=json.loads(record.read_bytes());self.assertEqual(saved['status'],'failed')
+                self.assertIn('error_type',saved);self.assertNotIn('media',saved)
+                if failure=='timeout':
+                    self.assertEqual(saved['stdout'],'partial stdout');self.assertEqual(saved['stderr'],'partial stderr')
+                if failure=='source':
+                    self.assertEqual(saved['source_changes']['changed'][0]['after']['job_path'],
+                                     'native-projects/native-test/page.html')
+                if failure=='cache':
+                    self.assertEqual(saved['source_changes']['added'][0]['job_path'],
+                                     'native-projects/native-test/.cache/webpack/probe.pack')
+                    self.assertIn('project_files_after',saved)
+
+    def test_timeout_stops_native_parent_and_detached_child_without_retry(self):
+        command = [sys.executable, '-c',
+            "import subprocess,sys,time; p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)'],"
+            "start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL);"
+            "print('child='+str(p.pid),flush=True);time.sleep(30)"]
+        with self.assertRaises(subprocess.TimeoutExpired) as raised:
+            native._run_native_process(command,timeout=.5)
+        self.assertIn('child=',raised.exception.stdout)
+        pid=raised.exception.stdout.strip().split('child=')[1]
+        status=subprocess.run(['ps','-p',pid,'-o','stat='],capture_output=True,text=True)
+        self.assertTrue(status.returncode or status.stdout.strip().startswith('Z'),status.stdout)
+
+    def test_shotcraft_reuse_keeps_frozen_sources_without_the_old_runtime(self):
+        import motion_native_runtime as runtime_module
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief('video-shotcraft','spotlight-hero-card')
+            project=root/b['project_directory'];(project/'src').mkdir(parents=True)
+            (project/'src/index.ts').write_text('// current task composition')
+            (project/'node_modules').symlink_to('/historical/missing/runtime',target_is_directory=True)
+            output=project/'out/native.mp4';output.parent.mkdir();output.write_bytes(b'reviewed video')
+            tools={'node':'/historical/node','ffmpeg':'/historical/ffmpeg','ffprobe':'/historical/ffprobe'}
+            versions={'node':'v22.12.0','ffmpeg':'ffmpeg old recorded version','ffprobe':'ffprobe old recorded version'}
+            runtime={'tools':tools,'node_modules':'/historical/missing/runtime','renderer_version':'remotion-4.0.484'}
+            identity={'schema_version':1,'dependency_id':'video-shotcraft','renderer_version':runtime['renderer_version'],
+                'lock_sha256':native.sha(runtime_module.locked_files(_env.PROJECT,'video-shotcraft')['package-lock.json']),
+                'tools':{key:{'path':value,'version':versions[key]} for key,value in tools.items()},
+                'browser':{'path':'/historical/missing/chrome','version':'recorded Chrome version'}}
+            argv=[tools['node'],runtime['node_modules']+'/@remotion/cli/remotion-cli.js','render','src/index.ts',
+                'NativeScene','out/native.mp4','--codec=h264','--pixel-format=yuv420p','--color-space=bt709',
+                '--image-format=png','--muted','--concurrency=1','--browser-executable='+identity['browser']['path']]
+            payload=json.dumps(b).encode()
+            call={'exit_code':0,'dependency_id':b['dependency_id'],'request_sha256':hashlib.sha256(payload).hexdigest(),
+                'upstream_commit':native.SOURCES[b['dependency_id']][1],'native_script_sha256':'b'*64,
+                'argv':argv,'renderer_version':runtime['renderer_version'],'runtime_identity':identity,
+                'execution_runtime':runtime,'media':native.descriptor(root,output),
+                'project_files':native.project_files(root,project)}
+            with mock.patch('motion_native_runtime.check',return_value={}) as check, \
+                 mock.patch.object(native,'probe',return_value=b['composition']):
+                native._verify_call(root,b,payload,call)
+                check.assert_called_once_with(_env.PROJECT,dependency_id='video-shotcraft',mode='reuse')
+                call['status']='failed'
+                with self.assertRaisesRegex(ValueError,'does not match'):
+                    native._verify_call(root,b,payload,call)
+                call['status']='completed'
+                (project/'src/index.ts').write_text('// changed source')
+                with self.assertRaisesRegex(ValueError,'changed'):
+                    native._verify_call(root,b,payload,call)
+
+    def test_shotcraft_publication_freezes_actual_native_components_and_required_primary(self):
+        rows=native.load_template_catalog(dependency_id='video-shotcraft')
+        main=next(row for row in rows if row['candidate_id'].endswith('/spotlight-hero-card'))
+        component=next(row for row in rows if row['native_template_group']=='camera')
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief('video-shotcraft','spotlight-hero-card')
+            b['composition']['frames']=720;b['source_binding']['end']=30
+            b['native_options']=[main['styles'][0]['key']]
+            project=root/b['project_directory'];(project/'src').mkdir(parents=True)
+            source=project/'src/Scene.tsx';source.write_text('// actual current-task implementation')
+            call={'project_files':native.project_files(root,project),'renderer_version':'remotion-4.0.484',
+                  'media':{'job_path':'native-projects/native-test/out/native.mp4','sha256':'c'*64,'byte_count':1}}
+            callpath=root/'render-call.json';callpath.write_text(json.dumps(call))
+            request=root/'brief.json';request.write_text(json.dumps(b))
+            usage=[{'card_id':row['candidate_id'].rsplit('/',1)[-1],'variant':row['styles'][0]['key'],
+                    'purpose':'本期原生制作中的实际主镜头或辅助运镜','implementation_refs':[native.descriptor(root,source)]}
+                   for row in (main,component)]
+            with mock.patch.object(native,'_inputs'),mock.patch.object(native,'_verify_call'):
+                with self.assertRaisesRegex(ValueError,'actual native'):
+                    native.publish_completed(root,request,callpath,qa_note='实际画面审核通过')
+                result=native.publish_completed(root,request,callpath,qa_note='实际画面审核通过',native_usage=usage)
+                saved=json.loads(result.read_bytes());self.assertEqual(saved['schema_version'],2)
+                self.assertEqual(saved['native_usage'],usage)
+                self.assertEqual(native.inspect_result(root,request.read_bytes())['native_usage'],usage)
+                with self.assertRaisesRegex(ValueError,'primary'):
+                    native._validate_native_usage(root,b,call,usage[1:])
+                invalid=[{**usage[0],'variant':'invented-variant'}]
+                with self.assertRaisesRegex(ValueError,'original card'):
+                    native._validate_native_usage(root,b,call,invalid)
+                source.write_text('// later replacement')
+                with self.assertRaisesRegex(ValueError,'changed'):
+                    native.inspect_result(root,request.read_bytes())
 
     def test_reviewed_record_and_actual_media_must_both_match(self):
         with tempfile.TemporaryDirectory() as directory:

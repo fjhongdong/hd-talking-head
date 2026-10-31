@@ -312,6 +312,72 @@ class DependencyPreflightTests(unittest.TestCase):
         self.assertEqual(supplied["PYTHONPATH"], "/example/main-packages")
         self.assertEqual(dependency_preflight._binding_probe_environment("wise-motion", REPO_ROOT, supplied), supplied)
 
+    def test_native_reuse_is_derived_only_from_a_real_approved_frozen_job(self) -> None:
+        import dependency_preflight
+        from types import SimpleNamespace
+        from edit.hd.tools import state, visual_canary, visual_confirmation
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace=Path(temporary).resolve();job_dir=workspace/'edit/hd/jobs/current'
+            plan_path=job_dir/'07-visual-direction/visual-plan.json';plan_path.parent.mkdir(parents=True)
+            plan_path.write_text('{}')
+            identity={'job_context':{'workspace':str(workspace),'job_id':'current'}}
+            job=SimpleNamespace(job_id='current',job_dir=job_dir,stages={'visual_direction':{'status':'approved'}})
+            plan={'segments':[{'shot_recipe':{'components':[
+                {'kind':'code_generated','dependency_id':'video-shotcraft'},
+                {'kind':'code_generated','dependency_id':'mg-styles-15'}]}}]}
+            with mock.patch.object(state,'load_job',return_value=job) as load, \
+                 mock.patch.object(visual_canary,'load_approved_visual_plan',return_value=plan) as approved, \
+                 mock.patch.object(visual_canary,'approved_aroll_record') as aroll, \
+                 mock.patch.object(visual_confirmation,'validate_visual_authorization',return_value={}) as frozen:
+                self.assertEqual(dependency_preflight._reviewed_native_dependencies(REPO_ROOT,{},plan_path),set())
+                load.assert_not_called()
+                self.assertEqual(dependency_preflight._reviewed_native_dependencies(REPO_ROOT,identity,plan_path),
+                                 {'video-shotcraft','mg-styles-15'})
+                frozen.assert_called_once_with(job,require_realized=True)
+                approved.assert_called_once_with(job);aroll.assert_called_once_with(job,plan)
+                frozen.side_effect=ValueError('frozen native media changed')
+                with self.assertRaisesRegex(dependency_preflight.PreflightError,'frozen native media changed'):
+                    dependency_preflight._reviewed_native_dependencies(REPO_ROOT,identity,plan_path)
+                frozen.reset_mock();job.stages['visual_direction']['status']='needs_revision'
+                self.assertEqual(dependency_preflight._reviewed_native_dependencies(REPO_ROOT,identity,plan_path),set())
+                frozen.assert_not_called()
+
+    def test_reviewed_native_probe_keeps_source_identity_without_running_old_tools(self) -> None:
+        import dependency_preflight
+        manifest=json.loads((SKILL_ROOT/'references/dependency-manifest.json').read_bytes())
+        item=next(item for item in manifest['dependencies'] if item['id']=='video-shotcraft')
+        selected={'entrypoint':'scripts/motion_native_skill_adapter.py','producer_version':'2.0.0',
+            'dependency_id':'video-shotcraft','executor':'reference_adapter','primary_renderer':'Remotion'}
+        with mock.patch.object(dependency_preflight.subprocess,'run',side_effect=AssertionError('old native runtime must not execute')):
+            result=dependency_preflight._check_binding_probe(item,selected,project_root=REPO_ROOT,
+                reference_root=REPO_ROOT,dependency_root=SKILL_ROOT,reviewed_native=True)
+        self.assertEqual(result['status'],'bound')
+        self.assertEqual(result['binding_probe']['mode'],'reviewed_media')
+
+    def test_preflight_only_drops_node_preparation_requirements_for_verified_native_reuse(self) -> None:
+        import dependency_preflight
+        manifest=json.loads((SKILL_ROOT/'references/dependency-manifest.json').read_bytes())
+        minimal={'schema_version':1,'dependencies':[item for item in manifest['dependencies']
+            if item['id'] in {'node-runtime','npm','video-shotcraft'}]}
+        native={'component_kind':'code_generated','dependency_id':'video-shotcraft',
+            'entrypoint':'scripts/motion_native_skill_adapter.py','producer_version':'2.0.0',
+            'executor':'reference_adapter','primary_renderer':'Remotion'}
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest_path=Path(temporary)/'manifest.json';manifest_path.write_text(json.dumps(minimal))
+            for reviewed,other in ((True,False),(False,False),(True,True)):
+                with self.subTest(reviewed=reviewed,other=other):
+                    bindings=[native]+([{**native,'dependency_id':'html-video'}] if other else [])
+                    with mock.patch.object(dependency_preflight,'_job_report_identity',return_value={'job_context':None}), \
+                         mock.patch.object(dependency_preflight,'_load_recipe_bindings',return_value=bindings), \
+                         mock.patch.object(dependency_preflight,'_reviewed_native_dependencies',return_value={'video-shotcraft'} if reviewed else set()), \
+                         mock.patch.object(dependency_preflight,'_check_command',side_effect=lambda *_:{'status':'missing'}), \
+                         mock.patch.object(dependency_preflight,'_check_binding_probe',return_value={'status':'bound'}) as probe:
+                        report=dependency_preflight.build_report(manifest_path,REPO_ROOT,REPO_ROOT,[])
+                    results={item['id']:item for item in report['dependencies']}
+                    self.assertEqual(results['node-runtime']['required'],not reviewed or other)
+                    self.assertEqual(results['npm']['required'],not reviewed or other)
+                    self.assertEqual(probe.call_args.kwargs['reviewed_native'],reviewed)
+
     def test_native_probe_keeps_registered_command_and_uses_clean_environment(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))
         import dependency_preflight
@@ -422,9 +488,29 @@ class DependencyPreflightTests(unittest.TestCase):
             with self.subTest(error=type(error).__name__), \
                     mock.patch.object(dependency_preflight.subprocess, "run", side_effect=error) as run:
                 checked = dependency_preflight._check_python_module({"id": "opencv", "target": "cv2"})
-            self.assertEqual(checked, {"status": "smoke_failed", "module": "cv2", **detail})
+            self.assertEqual({key: checked[key] for key in ("status", "module", *detail)},
+                             {"status": "smoke_failed", "module": "cv2", **detail})
+            self.assertEqual(checked["python_executable"], sys.executable)
+            self.assertGreaterEqual(checked["probe_elapsed_seconds"], 0)
             self.assertEqual(run.call_args.kwargs["timeout"], 20)
             run.assert_called_once()
+
+    def test_timeout_keeps_module_path_and_bounded_stack_without_arbitrary_stderr(self) -> None:
+        sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+        import dependency_preflight
+        stderr = ('HD_IMPORT_PROBE="/local/packages/cv2/__init__.py"\n'
+                  'Timeout (0:00:15)!\nThread 123:\n'
+                  '  File "/local/packages/cv2/__init__.py", line 153 in bootstrap\n'
+                  'API_KEY=do-not-save\n')
+        error = subprocess.TimeoutExpired([sys.executable], 20, stderr=stderr.encode())
+        with mock.patch.object(dependency_preflight.subprocess, "run", side_effect=error) as run:
+            checked = dependency_preflight._check_python_module({"target": "cv2"})
+        self.assertEqual(checked["probe_module_path"], "/local/packages/cv2/__init__.py")
+        self.assertEqual(checked["probe_stack"], [
+            '  File "/local/packages/cv2/__init__.py", line 153 in bootstrap'])
+        self.assertNotIn("API_KEY", json.dumps(checked))
+        self.assertEqual(run.call_args.kwargs["timeout"], 20)
+        run.assert_called_once()
 
     def test_post_install_import_failure_keeps_actual_probe_details_without_retry(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))

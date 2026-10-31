@@ -89,7 +89,14 @@ def prepare_sources(package: Path) -> list[dict]:
     index = json.loads((package / "source-repositories/index.json").read_text())
     results = []
     for entry in index["repositories"]:
-        source = (package / entry["path"]).resolve()
+        relative = Path(entry["path"])
+        if relative.is_absolute() or ".." in relative.parts or relative.as_posix() != entry["path"]:
+            raise ValueError("bundled source path must be a canonical relative path")
+        source = package / relative
+        if any(package.joinpath(*relative.parts[:index]).is_symlink()
+               for index in range(1, len(relative.parts) + 1)):
+            raise ValueError("bundled source path must not contain symlinks: " + entry["path"])
+        source = source.resolve()
         if not source.is_relative_to(package):
             raise ValueError("bundled source path must stay inside the Skill")
         if "files" in entry and "archives" in entry and not source.exists():
@@ -98,6 +105,8 @@ def prepare_sources(package: Path) -> list[dict]:
             raise ValueError("bundled source directory is missing: " + entry["path"])
         if "files" in entry:
             revision = bundled_source_revision(package, source)
+            if revision != entry["commit"]:
+                raise ValueError("bundled source revision differs: " + entry["path"])
             results.append({"path": entry["path"], "commit": revision, "status": "ready"})
             continue
         if not (source / ".git").exists():

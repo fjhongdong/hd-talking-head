@@ -13,7 +13,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "effects",
-      "native_role": "visual_effect",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/effects/assemble-then-type-flyin.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/effects/assemble-then-type-flyin/AssembleThenTypeFlyin.tsx"
@@ -34,7 +34,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "页面从骨架到文字成稿的完整两段叙事；保持该固定动作，不作为任意场景创作。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/aurora-bloom-bg-flip",
@@ -98,7 +99,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "peak_hold",
+          "minimum_seconds": 0.4,
+          "evidence_quote": "<12f 读不到峰值",
+          "source_frames": 12,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.4
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/avatar-bracket-carousel",
@@ -162,7 +173,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "reading_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/beat-cut-moves",
@@ -229,7 +250,24 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "前 30f 静置",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "末拍后 hold ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 2.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/before-after-slider-scrub",
@@ -262,7 +300,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "末 ≥40f",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.3333333333333333
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/bezier-source-converge-merge",
@@ -423,7 +471,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "establishing_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "窗口落定后 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/brand-ink-open",
@@ -456,7 +514,15 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "brand_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "lockup 完整静止满 1 秒"
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/canvas-materialize-moves",
@@ -501,7 +567,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "panel-to-canvas": {
+          "actions": [
+            "飞出",
+            "变形",
+            "落位"
+          ],
+          "relations": [
+            "列表行迁移为画布卡"
+          ]
+        },
+        "diagram-cascade": {
+          "actions": [
+            "打字",
+            "连线",
+            "逐层生成"
+          ],
+          "relations": [
+            "一句话生成结构树"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/card-flip-reveal",
@@ -512,7 +600,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "transition",
-      "native_role": "transition",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/transition/card-flip-reveal.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/transition/card-flip-reveal/CardFlipReveal.tsx"
@@ -534,7 +622,18 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "功能界面与成果数字必须正反语义成对；这是完整成果论证，不是任意两镜转场。",
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "末卡落定真静止 ≥40f",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.3333333333333333
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/card-flock-tumble",
@@ -685,7 +784,52 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "oscilloscope-stream": {
+          "actions": [
+            "实时写入",
+            "左移",
+            "尖峰",
+            "刹停"
+          ],
+          "relations": [
+            "实时数据事件"
+          ]
+        },
+        "unit-dot-swarm-regroup": {
+          "actions": [
+            "重组",
+            "聚簇",
+            "聚合",
+            "拼成数字"
+          ],
+          "relations": [
+            "同一批点改变构成"
+          ]
+        },
+        "axis-rescale-shock": {
+          "actions": [
+            "爆表",
+            "重标",
+            "压扁",
+            "回落"
+          ],
+          "relations": [
+            "增长超出坐标轴"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.2,
+          "evidence_quote": "三式都要 ≥36f 真静止",
+          "source_frames": 36,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.2
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/chip-grid-single-select-blackout",
@@ -717,7 +861,15 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "selected_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "1.5s 是让观众看清选中态的最短驻留"
+        }
+      ],
+      "min_duration_seconds": 1.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/circle-match-iris",
@@ -846,7 +998,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "minimum_total",
+          "minimum_seconds": 1.1,
+          "evidence_quote": "最短可压到 33f 单拍",
+          "source_frames": 33,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.1
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/crane-rise-reveal",
@@ -880,7 +1042,24 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "hold ≥20f",
+          "source_frames": 20,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "静止 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.6666666666666665
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/crash-zoom-punch",
@@ -914,7 +1093,24 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "前 hold ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "后 hold ≥45f",
+          "source_frames": 45,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 2.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/cursor-flyover",
@@ -925,7 +1121,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "camera",
-      "native_role": "camera_motion",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/camera/cursor-flyover.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/camera/cursor-flyover/CursorFlyover.tsx"
@@ -946,7 +1142,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "原卡完整定义整页功能巡览与光标点击触发UI响应；保留这些固定交互。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/dataviz-landscape-open",
@@ -980,7 +1177,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "hold ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/deck-deal-flyin",
@@ -1186,7 +1393,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "typography",
-      "native_role": "scene",
+      "native_role": "visual_effect",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/typography/flying-words.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/typography/flying-words/FlyingWords.tsx"
@@ -1207,7 +1414,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "原卡明确只做关键词背景层，依赖前景主体，不独立承担语义B-roll。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/fracture",
@@ -1317,7 +1525,39 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "needle-sweep-selftest": {
+          "actions": [
+            "扫针",
+            "回落",
+            "报数"
+          ],
+          "relations": [
+            "先自检再报真值"
+          ]
+        },
+        "tape-scroll-fixed-pointer": {
+          "actions": [
+            "滚动刻度",
+            "冲刺",
+            "刹停"
+          ],
+          "relations": [
+            "刻度动指针不动"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "停位后 ≥30f 全锁死",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/glass-pill-dictation-typing",
@@ -1437,7 +1677,38 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "glow-orb-ambient": {
+          "actions": [
+            "漂移",
+            "收敛"
+          ],
+          "relations": [
+            "环境光背景"
+          ]
+        },
+        "flyline-arc": {
+          "actions": [
+            "连线",
+            "生长",
+            "输送"
+          ],
+          "relations": [
+            "节点连接"
+          ]
+        },
+        "orb-flyline-relay": {
+          "actions": [
+            "连接",
+            "输送",
+            "涨亮"
+          ],
+          "relations": [
+            "光斑与飞线同帧共振"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/gradient-transition",
@@ -1712,7 +1983,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "hit-counter": {
+          "actions": [
+            "顿帧",
+            "计数",
+            "跳字"
+          ],
+          "relations": [
+            "连续命中反馈"
+          ]
+        },
+        "anime-impact": {
+          "actions": [
+            "反色",
+            "色散",
+            "闪白"
+          ],
+          "relations": [
+            "单次撞停打击帧"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/integration-hub-map",
@@ -1745,7 +2038,22 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "connected_breathing",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "输送呼吸 ≥1.5s"
+        },
+        {
+          "phase": "flip_action",
+          "minimum_seconds": 0.8,
+          "evidence_quote": "<24f 读不出双面",
+          "source_frames": 24,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 2.3
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/lead-word-zoom-assemble",
@@ -1812,7 +2120,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "| 终态静置 | ≥30f |",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/light-play-moves",
@@ -1857,7 +2175,27 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "spotlight-sweep": {
+          "actions": [
+            "聚光",
+            "扫字",
+            "揭示"
+          ],
+          "relations": [
+            "光到文字显形"
+          ]
+        },
+        "sheen-sweep": {
+          "actions": [
+            "扫光"
+          ],
+          "relations": [
+            "静止主角卡强调"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/line-carry-transition",
@@ -1890,7 +2228,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.8,
+          "evidence_quote": "海报长完后 ≥24f 真静止",
+          "source_frames": 24,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.8
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/list-reveal",
@@ -1922,7 +2270,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "要给收尾留 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/list-stack-press",
@@ -2249,7 +2607,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "点亮后 <20f 观众来不及读副行与读数",
+          "source_frames": 20,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.6666666666666666
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/outro-group-photo-launch",
@@ -2281,7 +2649,15 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "brand_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "字标落定 hold 满 1 秒"
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/overhead-camera-moves",
@@ -2327,7 +2703,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "tilt-reveal": {
+          "actions": [
+            "俯仰",
+            "抬正",
+            "揭示"
+          ],
+          "relations": [
+            "单主体从平躺到正面"
+          ]
+        },
+        "overhead-tabletop-drop": {
+          "actions": [
+            "横滑",
+            "俯冲",
+            "降落"
+          ],
+          "relations": [
+            "多页巡视后择一"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/page-turn-transitions",
@@ -2360,7 +2758,24 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "转场前后两页都要有 ≥30f 静止建立/收尾",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "转场前后两页都要有 ≥30f 静止建立/收尾",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 2.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/page-waterfall-wall",
@@ -2557,7 +2972,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "完整句静置 ≥45f",
+          "source_frames": 45,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/print-texture-transitions",
@@ -2590,7 +3015,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "新景就位后真静止 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/product-card-progressive-assemble",
@@ -2665,7 +3100,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "effects",
-      "native_role": "visual_effect",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/effects/radial-ripple-phone-chips.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/effects/radial-ripple-phone-chips/RadialRipplePhoneChips.tsx"
@@ -2686,7 +3121,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "原卡提供完整手机产品全景、屏内feed与功能标签，收尾形成产品海报。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/radial-wave",
@@ -2783,7 +3219,31 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "first_hold",
+          "minimum_seconds": 1.1666666666666667,
+          "evidence_quote": "各 hold ≥35f",
+          "source_frames": 35,
+          "source_fps": 30
+        },
+        {
+          "phase": "second_hold",
+          "minimum_seconds": 1.1666666666666667,
+          "evidence_quote": "各 hold ≥35f",
+          "source_frames": 35,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "末挡 ≥45f 真静止",
+          "source_frames": 45,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 3.8333333333333335
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/riso-print-hits",
@@ -2817,7 +3277,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "套准后 ≥40f 真静止",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.3333333333333333
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/row-embed",
@@ -2925,7 +3395,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "effects",
-      "native_role": "visual_effect",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/effects/scanline-annotate-focus.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/effects/scanline-annotate-focus/ScanlineAnnotateFocus.tsx"
@@ -2946,7 +3416,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "页面扫描后逐区识别并标注，原卡明确用于AI分析页面的能力镜头。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/scanline-assemble-flyin",
@@ -2957,7 +3428,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "effects",
-      "native_role": "visual_effect",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/effects/scanline-assemble-flyin.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/effects/scanline-assemble-flyin/ScanlineAssembleFlyin.tsx"
@@ -2978,7 +3449,8 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "扫描槽位并装配成完整页面，原卡明确用于从空白到成品的能力叙事。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/scroll-brake-moves",
@@ -3023,7 +3495,30 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "changelog-scroll-brake": {
+          "actions": [
+            "滚动",
+            "急刹",
+            "抬升"
+          ],
+          "relations": [
+            "长卷停在目标"
+          ]
+        },
+        "brake-reticle-lock": {
+          "actions": [
+            "滚动",
+            "急刹",
+            "回弹",
+            "锁定"
+          ],
+          "relations": [
+            "急刹与准星同帧咬合"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/segmented-thumb-hero",
@@ -3055,7 +3550,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "新态静置 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/shot-transitions",
@@ -3109,7 +3614,62 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "flash-cut": {
+          "actions": [
+            "推进",
+            "闪白",
+            "换页"
+          ],
+          "relations": [
+            "能量相近两镜交接"
+          ]
+        },
+        "whip-pan": {
+          "actions": [
+            "甩镜",
+            "急刹",
+            "换页"
+          ],
+          "relations": [
+            "横向两景衔接"
+          ]
+        },
+        "mask-wipe": {
+          "actions": [
+            "放大",
+            "穿窗",
+            "揭示"
+          ],
+          "relations": [
+            "功能总览到详情"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "起点 hold ≥20f",
+          "source_frames": 20,
+          "source_fps": 30,
+          "variant_keys": [
+            "whip-pan"
+          ]
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "静止 ≥30f 读清新景",
+          "source_frames": 30,
+          "source_fps": 30,
+          "variant_keys": [
+            "mask-wipe"
+          ]
+        }
+      ],
+      "min_duration_seconds": 0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/slam-entrance-moves",
@@ -3165,7 +3725,60 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "kanada-perspective-snap": {
+          "actions": [
+            "甩入",
+            "急停",
+            "弹平"
+          ],
+          "relations": [
+            "单卡透视入场"
+          ]
+        },
+        "score-slam": {
+          "actions": [
+            "砸落",
+            "扩散",
+            "震屏"
+          ],
+          "relations": [
+            "重磅数字登场"
+          ]
+        },
+        "impact-burst-kit": {
+          "actions": [
+            "砸落",
+            "冲击",
+            "推开",
+            "回弹"
+          ],
+          "relations": [
+            "冲击传导到邻卡"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "全部余波归零后真静止 ≥45f",
+          "source_frames": 45,
+          "source_fps": 30
+        },
+        {
+          "phase": "neighbor_establishing_hold",
+          "minimum_seconds": 0.5,
+          "evidence_quote": "邻卡必须先驻场稳定 ≥15f",
+          "source_frames": 15,
+          "source_fps": 30,
+          "variant_keys": [
+            "impact-burst-kit"
+          ]
+        }
+      ],
+      "min_duration_seconds": 1.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/space-camera-moves",
@@ -3209,7 +3822,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "exploded-view": {
+          "actions": [
+            "拆解",
+            "悬停",
+            "合体"
+          ],
+          "relations": [
+            "展示构件组成"
+          ]
+        },
+        "drone-dive-landing": {
+          "actions": [
+            "俯冲",
+            "降落",
+            "减速"
+          ],
+          "relations": [
+            "全局到单点"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/speed-ramp-freeze",
@@ -3241,7 +3876,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "freeze_hold",
+          "minimum_seconds": 1.5,
+          "evidence_quote": "| 定格时长 | ≥45f |",
+          "source_frames": 45,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/spotlight-hero-card",
@@ -3332,7 +3977,39 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "glow-wake-sleep-panel": {
+          "actions": [
+            "扫过",
+            "点亮",
+            "熄灭"
+          ],
+          "relations": [
+            "面板醒来再沉暗"
+          ]
+        },
+        "slide-spotlight-pan": {
+          "actions": [
+            "横滑",
+            "扫过",
+            "显影"
+          ],
+          "relations": [
+            "宽面板逐段巡览"
+          ]
+        },
+        "corner-spotlight-reveal": {
+          "actions": [
+            "扩张",
+            "显影",
+            "点亮"
+          ],
+          "relations": [
+            "角落到全屏"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/steep-tilt-glide",
@@ -3432,7 +4109,31 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "前态 ≥40f",
+          "source_frames": 40,
+          "source_fps": 30
+        },
+        {
+          "phase": "transition_action",
+          "minimum_seconds": 0.5333333333333333,
+          "evidence_quote": "撕裂 16–24f",
+          "source_frames": 16,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "收尾 ≥40f",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 3.2
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/tension-camera-moves",
@@ -3476,7 +4177,38 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "bullet-time-freeze-orbit": {
+          "actions": [
+            "冻结",
+            "环绕",
+            "恢复"
+          ],
+          "relations": [
+            "内容冻结相机移动"
+          ]
+        },
+        "pull-back-isolation": {
+          "actions": [
+            "拉远",
+            "熄灭"
+          ],
+          "relations": [
+            "主角孤立"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "两式动作完毕 hold ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/terminal-3d",
@@ -3487,7 +4219,7 @@
         "skill-development/vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "camera",
-      "native_role": "camera_motion",
+      "native_role": "scene",
       "native_source": "skill-development/vendor/video-shotcraft/references/shots/camera/terminal-3d.md",
       "native_demos": [
         "skill-development/vendor/video-shotcraft/demos/camera/terminal-3d/Terminal3D.tsx"
@@ -3508,7 +4240,18 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "role_evidence": "原卡完整定义三站命令→输出→READY的CLI工作流叙事，不是仅提供通用相机轨迹。",
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.8,
+          "evidence_quote": "之后至少留 ~24f hold",
+          "source_frames": 24,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.8
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/text-as-mask",
@@ -3541,7 +4284,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "接管后 hold ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/text-column-converge",
@@ -3618,7 +4371,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "theme-sweep-toggle": {
+          "actions": [
+            "扫过",
+            "换肤"
+          ],
+          "relations": [
+            "同一界面主题切换"
+          ]
+        },
+        "palette-theme-ripple": {
+          "actions": [
+            "打字",
+            "收缩",
+            "扩散",
+            "换肤"
+          ],
+          "relations": [
+            "命令引发主题切换"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/timeline-travel",
@@ -3651,7 +4426,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "接静止 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/title-demote-to-label",
@@ -3684,7 +4469,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 0.6,
+          "evidence_quote": "显影后 ≥18f 静置",
+          "source_frames": 18,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.6
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/trailer-grammar-moves",
@@ -3719,7 +4514,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "A 静止 77f（≥40f）",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.3333333333333333
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/transition-hidden-cut",
@@ -3774,7 +4579,39 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "invisible-cut": {
+          "actions": [
+            "遮挡",
+            "横扫",
+            "硬切"
+          ],
+          "relations": [
+            "隐藏切点"
+          ]
+        },
+        "versus-slam": {
+          "actions": [
+            "对撞",
+            "闪白",
+            "盖章"
+          ],
+          "relations": [
+            "双方案对阵"
+          ]
+        },
+        "light-leak-burn": {
+          "actions": [
+            "漏光",
+            "扫过",
+            "硬切"
+          ],
+          "relations": [
+            "暖光隐藏切点"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/transition-travel",
@@ -3895,7 +4732,47 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "split-text-stagger": {
+          "actions": [
+            "逐字上升",
+            "落位"
+          ],
+          "relations": [
+            "字符裁切线内入场"
+          ]
+        },
+        "drift-assembly": {
+          "actions": [
+            "漂入",
+            "合拢",
+            "归位"
+          ],
+          "relations": [
+            "散字集结成品牌名"
+          ]
+        },
+        "text-on-path": {
+          "actions": [
+            "沿线流入",
+            "摆正"
+          ],
+          "relations": [
+            "文字沿语义曲线入场"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "全员落定真静止 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/type-entrance-moves",
@@ -3928,7 +4805,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "动作完毕真静止 ≥20f",
+          "source_frames": 20,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.6666666666666666
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/type-rhythm-sync",
@@ -3973,7 +4860,37 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "font-weight-pump": {
+          "actions": [
+            "字重脉冲",
+            "回弹"
+          ],
+          "relations": [
+            "字重跟随鼓点"
+          ]
+        },
+        "karaoke-fill-sync": {
+          "actions": [
+            "填色",
+            "逐词点亮"
+          ],
+          "relations": [
+            "填色跟随旁白"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "B 末词填完后真静止 ≥20f",
+          "source_frames": 20,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.6666666666666666
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/typewriter-moves",
@@ -4007,7 +4924,17 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.6666666666666667,
+          "evidence_quote": "静止 ≥50f",
+          "source_frames": 50,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 1.6666666666666667
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/ui-strip-away-outro",
@@ -4039,7 +4966,15 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "brand_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "字标 hold ≥1s"
+        }
+      ],
+      "min_duration_seconds": 1.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/ui-to-brand-morph",
@@ -4083,7 +5018,29 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "icon-flip-bloom": {
+          "actions": [
+            "翻转",
+            "撑开",
+            "变形"
+          ],
+          "relations": [
+            "图标变成品牌标志"
+          ]
+        },
+        "input-morph-assemble": {
+          "actions": [
+            "发送",
+            "收缩",
+            "拼装"
+          ],
+          "relations": [
+            "输入框变成品牌标志"
+          ]
+        }
+      }
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/value-stagger-gradient",
@@ -4223,7 +5180,39 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "variant_capabilities": {
+        "bento-light-up": {
+          "actions": [
+            "描边",
+            "点亮",
+            "上浮"
+          ],
+          "relations": [
+            "内容墙原位亮起"
+          ]
+        },
+        "wireframe-draw-on": {
+          "actions": [
+            "描线",
+            "显形",
+            "实体化"
+          ],
+          "relations": [
+            "蓝图到真实界面"
+          ]
+        }
+      },
+      "timing_requirements": [
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 0.5,
+          "evidence_quote": "两式动作全部落定后真静止 ≥15f",
+          "source_frames": 15,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 0.5
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/white-flash-logo-simplify-cut",
@@ -4288,7 +5277,24 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "opening_hold",
+          "minimum_seconds": 0.6666666666666666,
+          "evidence_quote": "前态 ≥20f",
+          "source_frames": 20,
+          "source_fps": 30
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.3333333333333333,
+          "evidence_quote": "≥40f；刊头细线重画一遍",
+          "source_frames": 40,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 2.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/word-relay-filmstrip",
@@ -4367,14 +5373,13 @@
       "native_demos": [],
       "summary": "Ink Press 完整产品宣传片模板",
       "use": "保留原生多镜头结构并替换真实产品页面与品牌",
-      "duration": "按原生完整模板，不压成任意短镜头",
+      "duration": "原示范1085f@30fps；按原生允许的增删镜头调整结构，保留各镜动作、阅读与hold预算。",
       "tags": [
         "product",
         "brand",
         "multi-scene"
       ],
-      "styles": [],
-      "min_duration_seconds": 36.166666666666664
+      "styles": []
     }
   ]
 }

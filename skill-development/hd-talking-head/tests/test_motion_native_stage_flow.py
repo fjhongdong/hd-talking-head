@@ -50,6 +50,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         root = self.job.job_dir
         duration=self.case['duration_frames']/24
         script=(self.root/'script.md').read_text().strip()
+        keywords=self.case.get('keywords',['补货','理架','收银','肯熬','手快','不出错'])
         def approve(stage,items):
             paths=[]
             for relative,value in items:
@@ -60,10 +61,10 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             state.mark_ready(self.job,stage,paths);state.approve(self.job,stage)
         approve('inspect',[('01-inspect/report.json',{'development_fixture':True,'source':'real lecturer clip'})])
         from edit.hd.tools import content_analysis
-        content_analysis.prepare_content_analysis(self.job,{'thesis':script,'hook':'门店日常工作',
-            'sections':[{'id':'s1','title':'工作与疲劳','source_span':[0,len(script)]}],
+        content_analysis.prepare_content_analysis(self.job,{'thesis':script,'hook':script,
+            'sections':[{'id':'s1','title':'真实口播样片','source_span':[0,len(script)]}],
             'items':[{'id':'idea-01','source_text':script,'source_span':[0,len(script)],'priority':'critical',
-                'keywords':['补货','理架','收银','肯熬','手快','不出错'],'semantic_type':'contrast',
+                'keywords':keywords,'semantic_type':'contrast',
                 'evidence_status':'supported','broll_priority':'high'}],'claims':[]})
         state.approve(self.job,'content_analysis')
         approve('cover_direction',[('03-cover-direction/cover-direction.json',{'development_fixture':True})])
@@ -109,6 +110,10 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 component.update(layer_role='annotation',layout_slot='main_overlay')
             else:
                 component['layout_slot']='full_frame'
+                if 'avatar' in case:
+                    composition.update(presenter_mode='bottom_window',avatar=copy.deepcopy(case['avatar']))
+                    composition['avatar']['profile']['source_sha256']=native.sha(arroll)
+                    segment['visual_intent']['presenter_presence']='required'
             segment['candidate_snapshots']={};segment['bindings']={}
             b=native_brief(dependency,template,overlay);b.update(job_id=self.job.job_id,transcript=quote,
                 semantic_goal=case['semantic'],
@@ -119,6 +124,8 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             b['task_source']={'semantic_row_id':rowid,'quote':quote,'semantic':b['semantic_goal'],
                 'required_change':case['required_change'],'component_brief':component['brief']}
             b['native_options']=case['native_options']
+            if dependency in {'mg-styles-15','video-shotcraft'}:
+                b['template_request'].update(semantic_family='process',information_units=2)
             b['source_binding']={'aroll_sha256':native.sha(arroll),'segment_id':sid,'start':start,'end':end}
             voice=root/('voice-'+sid+'.wav')
             subprocess.run([shutil.which('ffmpeg'),'-v','error','-n','-ss',str(start),'-i',str(arroll),
@@ -135,7 +142,8 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'quote':quote,'semantic':b['semantic_goal'],'visual_task':case['required_change'],'components':refs})
             treatment['beat_sheet'].append({'start_word':first,'end_word':last,'quote':quote,'decision':'overlay' if overlay else 'broll',
                 'visual':case['required_change'],'components':refs,'reason':'独立开发样片的明确语义任务'})
-            treatment['motion_queries'].append({'segment_id':sid,'component_id':cid,'tags':['并列','过程'] if overlay else ['疲劳','过程']})
+            treatment['motion_queries'].append({'segment_id':sid,'component_id':cid,
+                'tags':case.get('query_tags',['并列','过程'] if overlay else ['疲劳','过程'])})
             treatment['semantic_assessments'].append({'segment_id':sid,'component_id':cid,
                 'candidate_id':('overlay:' if overlay else dependency+':')+dependency+'/'+template,'verdict':'pass','reason':'隔离fixture前提，不代表实际内容评价',
                 'transcript_refs':[{'start_word':first,'end_word':last,'quote':quote,'basis':'current_clause'}],
@@ -168,8 +176,10 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'reason':'隔离fixture选择真实准备的原生工程','visual_pattern':'native-'+beat['segment_id'],
                 'design_plan':design} for item in cached[key]['matches']]
         treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root)
-        self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['assignments']],['bang-motion'])
-        self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['overlay_assignments']],['barty-motion-graphics'])
+        self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['assignments']],
+            [c['dependency_id'] for c in self.case['segments'] if c['dependency_id']!='barty-motion-graphics'])
+        self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['overlay_assignments']],
+            [c['dependency_id'] for c in self.case['segments'] if c['dependency_id']=='barty-motion-graphics'])
         return director,treatment
 
     def _render(self, action):
@@ -185,14 +195,34 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             subprocess.run([sys.executable,str(builder),str(html.parent),fragment],cwd=directory,check=True,capture_output=True)
             output=directory/'out/native.mov';output.parent.mkdir()
             argv=[runtime['tools']['node'],str(native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/render.js'),str(html),str(output),'24']
-        else:
+        elif b['dependency_id']=='bang-motion':
             shutil.copyfile(native.source_root(dependency_id=b['dependency_id'])/'scripts/export-frames.mjs',directory/'export-frames.mjs')
             argv=[runtime['tools']['node'],'export-frames.mjs',case['entry_html'],'out/native.mp4']
+        elif b['dependency_id']=='mg-styles-15':
+            (directory/'harness').mkdir(exist_ok=True)
+            shutil.copyfile(native.source_root(dependency_id=b['dependency_id'])/'harness/render.mjs',directory/'harness/render.mjs')
+            argv=[runtime['tools']['node'],'harness/render.mjs','scene','--out','out/native.mp4',
+                  '--w','1080','--h','1920','--fps','24','--duration',str(b['composition']['frames']/24),
+                  '--workers','1','--noaudio']
+        elif b['dependency_id']=='video-shotcraft':
+            argv=[runtime['tools']['node'],str(Path(runtime['node_modules'])/'@remotion/cli/remotion-cli.js'),
+                  'render','src/index.ts','NativeScene','out/native.mp4','--codec=h264','--pixel-format=yuv420p',
+                  '--color-space=bt709','--image-format=png','--muted','--concurrency=1',
+                  '--browser-executable='+runtime['browser'],'--bundle-cache=false']
+        else:
+            raise ValueError('Unsupported native smoke dependency')
         call=native.capture_render(root,request,argv)
-        native.publish_completed(root,request,call,qa_note='开发Smoke完成原生工程与媒体回传；最终像素、透明叠加和创意质量仍由宿主检查，不能冒充正式用户交付。')
+        options={}
+        if b['dependency_id']=='video-shotcraft':
+            options['native_usage']=[{**usage,'implementation_refs':[
+                native.descriptor(root,directory/relative) for relative in usage['implementation_paths']]}
+                for usage in case['native_usage']]
+            for usage in options['native_usage']:
+                usage.pop('implementation_paths')
+        native.publish_completed(root,request,call,qa_note='开发Smoke完成原生工程与媒体回传；最终像素、透明叠加和创意质量仍由宿主检查，不能冒充正式用户交付。',**options)
         return native.inspect_result(root,request.read_bytes())
 
-    def test_barty_and_bang_from_complete_list_to_native_executor(self):
+    def test_native_motion_from_complete_list_to_native_executor(self):
         script,arroll=self._edited_fixture();director,treatment=self._draft(script,arroll)
         root=self.job.job_dir
         artifacts.write_json_artifact(root/'manifests/confirmed-content.json',{'schema_version':1,'job_id':self.job.job_id,
@@ -210,32 +240,36 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                       user_confirmation='显式隔离fixture授权，不得用于正式用户视频')
         run_stage._review(self.job,'visual_direction',review);self.job=state.load_job(root)
         pending=run_stage.resume_visual_direction(self.job,_env.PROJECT,{})
-        self.assertEqual([a['dependency_id'] for a in pending['actions']],['barty-motion-graphics','bang-motion'])
+        self.assertEqual([a['dependency_id'] for a in pending['actions']],
+                         [c['dependency_id'] for c in self.case['segments']])
         self.assertTrue(all(a['action']=='execute_native_skill' for a in pending['actions']))
         for action in pending['actions']:
             result=self._render(action)
             assessment=next(a for a in treatment['semantic_assessments']
                             if (a['segment_id'],a['component_id'])==(action['segment_id'],action['component_id']))
             call=json.loads(native.exact(root,result['render_call']).read_bytes())
+            case=next(c for c in self.case['segments'] if c['segment_id']==action['segment_id'])
+            source=next(f for f in call['project_files'] if f['job_path'].endswith('/'+case.get('entry_source',case.get('entry_html',''))))
+            source_text=(root/source['job_path']).read_text()
+            suffixes={'.ts','.tsx'} if result['dependency_id']=='video-shotcraft' else {'.html'}
             assessment['content_refs']=[{'path':f['job_path'],'sha256':f['sha256'],
-                'quote':'M.scene({' if result['alpha'] else 'window.OPENER'}
-                for f in call['project_files'] if Path(f['job_path']).suffix=='.html']
+                'quote':case.get('source_quotes',{}).get(
+                    Path(f['job_path']).relative_to(Path(action['project_directory']).relative_to(root)).as_posix(),
+                    case.get('source_evidence','M.scene({' if result['alpha'] else 'window.OPENER'))}
+                for f in call['project_files'] if Path(f['job_path']).suffix in suffixes]
             record=root/action['result_record_path']
             assessment['content_refs'].append({'path':action['result_record_path'],'sha256':native.sha(record),
                 'pointer':'/status','value':'completed'})
-            case=next(c for c in self.case['segments'] if c['segment_id']==action['segment_id'])
-            source=next(f for f in call['project_files'] if f['job_path'].endswith('/'+case['entry_html']))
-            source_text=(root/source['job_path']).read_text()
             targets=[]
             for index,target in enumerate(case['text_targets']):
                 text=target['text']
-                offset=source_text.index('>'+text+'<')+1
+                offset=source_text.index(text)
                 targets.append({'target_id':action['segment_id']+'-'+str(index),
                     'content_ref':{'path':source['job_path'],'sha256':source['sha256'],'pointer':f'text:{offset}:{offset+len(text)}','value':text},
                     'span':[0,len(text)],'role':target['role'],'region':target['region'],'windows':target['windows']})
             readability=next(r for r in treatment['motion_readability'] if r['segment_id']==action['segment_id'])
             readability.clear();readability.update(segment_id=action['segment_id'],component_id=action['component_id'],targets=targets)
-            next(s for s in director['segments'] if s['segment_id']==action['segment_id'])['visible_text']=[target['text'] for target in case['text_targets']]
+            next(s for s in director['segments'] if s['segment_id']==action['segment_id'])['visible_text']=list(dict.fromkeys(target['text'] for target in case['text_targets']))
         artifacts.write_json_artifact(dpath,director)
         artifacts.write_json_artifact(tpath,treatment)
         from edit.hd.tools import content_analysis
@@ -275,7 +309,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         cues=[]
         render_plan=subtitles_v2.build_render_plan(records={name:confirmation._record(root,path) for name,path in paths.items()},
             words=self.case['words'],timeline=json.loads(paths['timeline_map'].read_bytes()),visual_plan=plan,
-            keyword_index={'idea-01':('补货','理架','收银','肯熬','手快','不出错')},renderer_cues=cues)
+            keyword_index={'idea-01':tuple(self.case.get('keywords',['补货','理架','收银','肯熬','手快','不出错']))},renderer_cues=cues)
         subtitle_input=talkcraft_subtitles.renderer_input(render_plan,cues)
         artifacts.write_json_artifact(outputs/'subtitle-plan.json',render_plan)
         subtitles=outputs/'subtitles.webm'

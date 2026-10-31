@@ -52,6 +52,55 @@ def talkcraft_candidates(project_root: Path) -> list[dict]:
             for card in module.load_card_catalog(project_root)]
 
 
+def native_timing_minimum(template: Mapping, *, variant_keys=None) -> float:
+    """Necessary native phase budget in seconds; never a demo's total length.
+
+    Different named phases are sequential; repeated constraints on one phase
+    share its maximum. With no selected variant, retain the least demanding
+    native choice. This is a lower bound, not proof that choreography fits.
+    """
+    requirements = template.get('timing_requirements', [])
+    if not isinstance(requirements, list):
+        raise ValueError('Native timing requirements must be a list')
+    variants = {style['key'] for style in template.get('styles', [])}
+    if variant_keys is not None:
+        if (not isinstance(variant_keys, (list, tuple)) or not variant_keys
+                or any(key not in variants for key in variant_keys)):
+            raise ValueError('Native timing requires known selected variants')
+        choices = list(variant_keys)
+    else:
+        choices = sorted(variants) or [None]
+    budgets = []
+    for choice in choices:
+        phases = {}
+        for requirement in requirements:
+            required = {'phase', 'minimum_seconds', 'evidence_quote'}
+            optional = {'source_frames', 'source_fps', 'variant_keys'}
+            if (not isinstance(requirement, dict) or not required <= set(requirement)
+                    or set(requirement) - required - optional
+                    or any(not isinstance(requirement[k], str) or not requirement[k].strip()
+                           for k in ('phase', 'evidence_quote'))):
+                raise ValueError('Native timing requirement is incomplete')
+            seconds = requirement['minimum_seconds']
+            if type(seconds) not in (int, float) or not math.isfinite(seconds) or seconds <= 0:
+                raise ValueError('Native timing budget must be positive seconds')
+            if ('source_frames' in requirement) != ('source_fps' in requirement):
+                raise ValueError('Native frame budget requires its original fps')
+            if 'source_frames' in requirement:
+                frames, fps = requirement['source_frames'], requirement['source_fps']
+                if (any(type(v) not in (int, float) or not math.isfinite(v) or v <= 0
+                        for v in (frames, fps)) or abs(frames / fps - seconds) > 1e-9):
+                    raise ValueError('Native frame budget differs from its original fps')
+            keys = requirement.get('variant_keys')
+            if keys is not None and (not isinstance(keys, list) or not keys
+                    or len(set(keys)) != len(keys) or any(key not in variants for key in keys)):
+                raise ValueError('Native timing budget names an unknown variant')
+            if keys is None or choice in keys:
+                phases[requirement['phase']] = max(phases.get(requirement['phase'], 0), seconds)
+        budgets.append(sum(phases.values()))
+    return (max(budgets) if variant_keys is not None else min(budgets)) if budgets else 0.0
+
+
 def motion_native_candidates(project_root: Path) -> list[dict]:
     """Whole creative workflows; their shared browser is not a source channel."""
     source = Path(project_root) / 'skill-development/hd-talking-head/scripts/motion_native_skill_adapter.py'
@@ -77,7 +126,16 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                     'Invoke the complete pinned native Skill; its workflow owns design and motion',
                     'Review this scene and freeze its actual native result before production']})
             rows[-1].update({field: template[field] for field in
-                             ('min_duration_seconds', 'max_duration_seconds') if field in template})
+                             ('min_duration_seconds', 'max_duration_seconds', 'timing_requirements',
+                              'variant_capabilities', 'styles') if field in template})
+            if template.get('timing_requirements'):
+                source_text = (Path(project_root) / template['native_source']).read_text(encoding='utf-8')
+                if any(requirement['evidence_quote'] not in source_text
+                       for requirement in template['timing_requirements']):
+                    raise ValueError('Native timing budget lacks its original source evidence')
+                minimum = native_timing_minimum(template)
+                rows[-1]['min_duration_seconds'] = max(
+                    rows[-1].get('min_duration_seconds', 0), minimum)
     return rows
 
 
@@ -1048,6 +1106,8 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
     minimum = row.get("min_duration_seconds")
     maximum = row.get("max_duration_seconds")
     module = row.get("adapter_module")
+    if module == 'motion_native_skill_adapter' and row.get('timing_requirements'):
+        minimum = max(minimum or 0, native_timing_minimum(row))
     scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
     if module in {"adu_native_adapter", "hypit_native_adapter", "motion_graphics_adapter",
                   "huashu_motion_adapter", "lemo_wake_adapter", "upstream_scene_adapter",

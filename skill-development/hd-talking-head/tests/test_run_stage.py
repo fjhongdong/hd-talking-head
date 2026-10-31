@@ -11,6 +11,53 @@ sys.path.insert(0, str(SKILL / "scripts"))
 import run_stage
 
 class CheckOnlyStageTests(unittest.TestCase):
+    def test_native_preparation_uses_completed_results_and_only_prepares_unmade_items(self):
+        from test_motion_native_skill_adapter import brief
+        from edit.hd.tools import visual_confirmation as confirmation
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();b=brief('video-shotcraft','spotlight-hero-card')
+            request=root/'native-inputs/brief.json';request.parent.mkdir();request.write_text(json.dumps(b))
+            result=root/b['result_record_path'];result.parent.mkdir();result.write_text('{}')
+            job=SimpleNamespace(job_dir=root,job_id=b['job_id'],stages={'visual_direction':{'artifacts':[],'lineage':[]}})
+            binding={'dependency_id':b['dependency_id'],'entrypoint':'scripts/motion_native_skill_adapter.py',
+                'producer_version':'2.0.0','primary_renderer':'Remotion','brief_sha256':hashlib.sha256(request.read_bytes()).hexdigest(),
+                'renderer_version':'remotion-4.0.484'}
+            director={'segments':[{'segment_id':'seg-001','bindings':{'native':binding},
+                'visual_strategy':{'components':[{'component_id':'native','kind':'code_generated'}]}}]}
+            treatment={'scenes':[{'segment_id':'seg-001','component_id':'native','brief_path':'native-inputs/brief.json'}]}
+            adapter=SimpleNamespace(validate_brief=mock.Mock(return_value=b),inspect_result=mock.Mock(return_value={}),
+                                    load_result=mock.Mock(return_value={}))
+            router=SimpleNamespace(_executor=lambda *args:'reference_adapter')
+            def module(name):return router if name=='broll_capability_router' else adapter
+            with mock.patch.object(run_stage,'_module',side_effect=module), \
+                 mock.patch('project_python.project_environment',return_value=({},root/'packages')), \
+                 mock.patch('project_python.prepare_environment') as prepare:
+                run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                adapter.inspect_result.assert_called_once();prepare.assert_not_called()
+                adapter.inspect_result.side_effect=ValueError('completed media changed')
+                with self.assertRaisesRegex(ValueError,'media changed'):
+                    run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                prepare.assert_not_called();adapter.inspect_result.side_effect=None
+                # A registered review is checked even when the current files
+                # could otherwise present a self-consistent completed result.
+                previous=root/'07-visual-confirmation/prior/execution-mapping.json';previous.parent.mkdir(parents=True)
+                proposal={'path':'prior-proposal.json','sha256':'a'*64,'bytes':1}
+                expected={'path':b['result_record_path'],'sha256':'b'*64,'bytes':2}
+                previous.write_text(json.dumps({'source_approval':{},'proposal':proposal,'native_inputs':[
+                    {'segment_id':'seg-001','component_id':'native','artifact':confirmation._record(root,request),
+                     'result_record':expected}]}))
+                job.stages['visual_direction']['lineage']=[confirmation._record(root,previous)]
+                adapter.load_result.side_effect=ValueError('result differs from reviewed version')
+                with mock.patch.object(confirmation,'_validate_source',return_value=({'source':proposal},{})):
+                    with self.assertRaisesRegex(ValueError,'reviewed version'):
+                        run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                adapter.load_result.assert_called_once_with(root,request.read_bytes(),expected_record=expected,
+                    expected_renderer_version='remotion-4.0.484')
+                prepare.assert_not_called()
+                job.stages['visual_direction']['lineage']=[];result.unlink()
+                run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                self.assertEqual(prepare.call_args.args[3],{'video-shotcraft'})
+
     def test_pending_barty_prepares_output_after_binding_without_touching_existing_media(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

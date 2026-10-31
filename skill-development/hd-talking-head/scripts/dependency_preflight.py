@@ -7,6 +7,7 @@ import argparse
 import dataclasses
 import hashlib
 import importlib
+import importlib.util
 import json
 import math
 import os
@@ -15,6 +16,7 @@ import secrets
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -623,14 +625,37 @@ def _check_environment_any(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _python_probe_diagnostics(stderr: str | bytes | None, started: float) -> dict[str, Any]:
+    """Keep only our path marker and bounded faulthandler frames, never raw stderr."""
+    output = stderr.decode("utf-8", errors="replace") if isinstance(stderr, bytes) else (stderr or "")
+    detail: dict[str, Any] = {"probe_elapsed_seconds": round(time.monotonic() - started, 3)}
+    for line in output.splitlines():
+        if line.startswith("HD_IMPORT_PROBE="):
+            try:
+                path = json.loads(line[len("HD_IMPORT_PROBE="):])
+            except ValueError:
+                continue
+            if path is None or isinstance(path, str):
+                detail["probe_module_path"] = path
+            break
+    frames = re.findall(r'^  File "[^"\n]{1,1024}", line \d+,? in [^\n]{1,128}$', output, re.MULTILINE)
+    if frames:
+        detail["probe_stack"] = frames[:12]
+    return detail
+
+
 def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = None) -> dict[str, Any]:
     target = item["target"]
     if not isinstance(target, str) or not target:
         raise PreflightError(f"python_module target must be a string: {item['id']}")
+    started = time.monotonic()
     try:
         result = subprocess.run(
             [sys.executable, "-c",
-             "import importlib,importlib.metadata,json,sys\n"
+             "import faulthandler,importlib,importlib.metadata,importlib.util,json,sys\n"
+             "spec=importlib.util.find_spec(sys.argv[1])\n"
+             "print('HD_IMPORT_PROBE='+json.dumps(spec.origin if spec else None),file=sys.stderr,flush=True)\n"
+             "faulthandler.dump_traceback_later(15,repeat=False)\n"
              "m=importlib.import_module(sys.argv[1])\n"
              "distribution=sys.argv[2] or None\n"
              "try:\n"
@@ -638,6 +663,7 @@ def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = N
              "except importlib.metadata.PackageNotFoundError:\n"
              " distribution=next(iter(importlib.metadata.packages_distributions().get(sys.argv[1].split('.')[0],[])),None)\n"
              " version=importlib.metadata.version(distribution) if distribution else None\n"
+             "faulthandler.cancel_dump_traceback_later()\n"
              "print(json.dumps({'version':getattr(m,'__version__',None), 'resolved_path':getattr(m,'__file__',None), "
              "'distribution':distribution, 'distribution_version':version}))",
              target, item.get("install", {}).get("package", "")],
@@ -645,14 +671,19 @@ def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = N
         )
     except subprocess.TimeoutExpired as error:
         return {"status": "smoke_failed", "module": target,
-                "error_type": "TimeoutExpired", "timeout_seconds": error.timeout}
+                "python_executable": sys.executable,
+                "error_type": "TimeoutExpired", "timeout_seconds": error.timeout,
+                **_python_probe_diagnostics(error.stderr, started)}
     except OSError as error:
         return {"status": "smoke_failed", "module": target,
-                "error_type": type(error).__name__, "errno": error.errno}
+                "python_executable": sys.executable,
+                "error_type": type(error).__name__, "errno": error.errno,
+                **_python_probe_diagnostics(None, started)}
     if result.returncode:
         failure = _probe_failure(result)
         return {"status": "missing" if failure.get("missing_module") == target else "smoke_failed",
-                "module": target, "python_executable": sys.executable, **failure}
+                "module": target, "python_executable": sys.executable, **failure,
+                **_python_probe_diagnostics(result.stderr, started)}
     return {"status": "callable", "module": target, "python_executable": sys.executable,
             **json.loads(result.stdout)}
 
@@ -893,6 +924,7 @@ def _check_binding_probe(
     reference_root: Path,
     dependency_root: Path,
     env: dict[str, str] | None = None,
+    reviewed_native: bool = False,
 ) -> dict[str, Any]:
     entrypoint = selected_binding["entrypoint"]
     producer_version = selected_binding["producer_version"]
@@ -911,6 +943,22 @@ def _check_binding_probe(
         or identity["primary_renderer"] != selected_binding["primary_renderer"]
     ):
         return {"status": "binding_probe_mismatch"}
+    if reviewed_native:
+        # This mode is derived only from the real Job's verified frozen
+        # realization below. It is deliberately not a CLI/manifest switch.
+        source = dependency_root / 'scripts/motion_native_skill_adapter.py'
+        spec = importlib.util.spec_from_file_location('_preflight_reviewed_native', source)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        dependency = selected_binding['dependency_id']
+        expected_identity = {'adapter_type': 'ReferenceProcessAdapter',
+            'approved_executor': 'reference_adapter', 'primary_renderer': module.primary_renderer(dependency)}
+        if (dependency not in module.SOURCES or entrypoint != module.ENTRY
+                or producer_version != module.VERSION or identity != expected_identity):
+            return {'status': 'binding_probe_mismatch'}
+        module.source_root(project_root, dependency_id=dependency)
+        return {'status': 'bound', 'adapter_identity': expected_identity,
+                'binding_probe': {'status': 'bound', 'mode': 'reviewed_media'}}
     command = _probe_command(
         spec,
         project_root=project_root,
@@ -1267,6 +1315,36 @@ def _check_reference_asr(project_root: Path, identity: dict[str, Any]) -> dict[s
         raise PreflightError("reference ASR probe could not be verified") from exc
 
 
+def _reviewed_native_dependencies(project_root: Path, identity: dict, visual_plan_path: Path | None) -> set[str]:
+    """Reuse is evidence from an approved Job, never a caller's assertion."""
+    context = identity.get('job_context')
+    if not context or visual_plan_path is None:
+        return set()
+    _assert_project_modules(project_root)
+    from edit.hd.tools import state, visual_canary, visual_confirmation
+    job_dir = Path(context['workspace']) / 'edit/hd/jobs' / context['job_id']
+    try:
+        job = state.load_job(job_dir)
+        if job.job_id != context['job_id']:
+            raise PreflightError('native reuse belongs to another Job')
+        if job.stages['visual_direction']['status'] != 'approved':
+            return set()
+        canonical = job.job_dir / '07-visual-direction/visual-plan.json'
+        if visual_plan_path.resolve(strict=True) != canonical.resolve(strict=True):
+            return set()
+        plan = visual_canary.load_approved_visual_plan(job)
+        # This existing verifier covers approval, legitimate ancestry, task,
+        # source projects, materials, completed results and real media bytes.
+        visual_confirmation.validate_visual_authorization(job, require_realized=True)
+        visual_canary.approved_aroll_record(job, plan)
+    except (OSError, ValueError, KeyError, TypeError, state.WorkflowError, visual_canary.VisualCanaryError) as error:
+        raise PreflightError('reviewed native realization is invalid: ' + str(error)) from error
+    native = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+    return {component['dependency_id'] for segment in plan['segments']
+            for component in segment['shot_recipe']['components']
+            if component.get('kind') == 'code_generated' and component.get('dependency_id') in native}
+
+
 def build_report(
     manifest_path: Path,
     project_root: Path,
@@ -1282,6 +1360,7 @@ def build_report(
         visual_plan_path.expanduser().resolve() if visual_plan_path is not None else None
     )
     recipe_bindings = _load_recipe_bindings(resolved_visual_plan, project_root)
+    reviewed_native = _reviewed_native_dependencies(project_root, identity, resolved_visual_plan)
     local_official_media = []
     if identity["job_context"]:
         job = identity["job_context"]
@@ -1296,7 +1375,9 @@ def build_report(
     results: list[dict[str, Any]] = []
     for item in manifest["dependencies"]:
         selection = item.get("selection")
-        selected_binding = _selected_recipe_binding(item, recipe_bindings)
+        selection_bindings = (recipe_bindings if item['id'] not in {'node-runtime', 'npm'} else
+            [binding for binding in recipe_bindings if binding.get('dependency_id') not in reviewed_native])
+        selected_binding = _selected_recipe_binding(item, selection_bindings)
         config_selected = (item.get("config_selection") == "reference_asr"
                            and identity.get("reference_asr_selection") is not None)
         selected = bool(item.get("required", False)) or selected_binding is not None or config_selected
@@ -1416,6 +1497,7 @@ def build_report(
                 project_root=project_root,
                 reference_root=reference_root,
                 dependency_root=Path(resolved_path),
+                reviewed_native=selected_binding['dependency_id'] in reviewed_native,
             )
             checked.update(probe_check)
             if probe_check["status"] == "bound":
