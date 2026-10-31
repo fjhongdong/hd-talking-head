@@ -211,7 +211,15 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                   '--browser-executable='+runtime['browser'],'--bundle-cache=false']
         else:
             raise ValueError('Unsupported native smoke dependency')
-        call=native.capture_render(root,request,argv)
+        preparations=None
+        if b['dependency_id']=='mg-styles-15' and b['template_id']=='3d-render':
+            preparations=[{'argv':[action['native_preparation_runtime']['blender'],
+                '--background','--factory-startup','--python','blender/scene.py'],
+                'inputs':[(Path(b['project_directory'])/name).as_posix()
+                          for name in case['native_preparation_inputs']],
+                'outputs':[(Path(b['project_directory'])/name).as_posix()
+                           for name in case['native_preparation_outputs']]}]
+        call=native.capture_render(root,request,argv,native_preparations=preparations)
         options={}
         if b['dependency_id']=='video-shotcraft':
             options['native_usage']=[{**usage,'implementation_refs':[
@@ -251,7 +259,8 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             case=next(c for c in self.case['segments'] if c['segment_id']==action['segment_id'])
             source=next(f for f in call['project_files'] if f['job_path'].endswith('/'+case.get('entry_source',case.get('entry_html',''))))
             source_text=(root/source['job_path']).read_text()
-            suffixes={'.ts','.tsx'} if result['dependency_id']=='video-shotcraft' else {'.html'}
+            suffixes={'.ts','.tsx'} if result['dependency_id']=='video-shotcraft' else (
+                {'.html','.py'} if case['template_id']=='3d-render' else {'.html'})
             assessment['content_refs']=[{'path':f['job_path'],'sha256':f['sha256'],
                 'quote':case.get('source_quotes',{}).get(
                     Path(f['job_path']).relative_to(Path(action['project_directory']).relative_to(root)).as_posix(),

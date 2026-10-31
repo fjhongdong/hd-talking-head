@@ -1,6 +1,7 @@
 """Native task and reviewed media contracts; no paid calls or permanent Jobs."""
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import tempfile
 import subprocess
@@ -409,6 +410,90 @@ class NativeMotionTests(unittest.TestCase):
         pid=raised.exception.stdout.strip().split('child=')[1]
         status=subprocess.run(['ps','-p',pid,'-o','stat='],capture_output=True,text=True)
         self.assertTrue(status.returncode or status.stdout.strip().startswith('Z'),status.stdout)
+
+    def test_3d_preparation_freezes_real_declared_assets_and_rejects_other_source_changes(self):
+        from PIL import Image
+        for scenario in ('complete','undeclared','missing'):
+            with self.subTest(scenario=scenario),tempfile.TemporaryDirectory() as name:
+                root=Path(name).resolve();b=brief('mg-styles-15','3d-render')
+                b['composition']['frames']=2;b['source_binding']['end']=2/24;b['word_anchors'][0]['end']=2/24
+                project=root/b['project_directory'];(project/'blender').mkdir(parents=True)
+                (project/'scene').mkdir();(project/'harness').mkdir();(project/'assets').mkdir()
+                source=project/'blender/scene.py';source.write_text('# actual current task Blender scene')
+                (project/'scene/index.html').write_text('<img src="/assets/frames/0000.png">')
+                shutil.copyfile(native.source_root(dependency_id='mg-styles-15')/'harness/render.mjs',project/'harness/render.mjs')
+                modules=root/'modules';modules.mkdir();(project/'node_modules').symlink_to(modules,target_is_directory=True)
+                runtime={'tools':{'node':'/tools/node'},'node_modules':str(modules),'renderer_version':'puppeteer-core-25.12.0',
+                         'runtime_identity':{},'environment':{}}
+                blender={'status':'ready','blender':'/missing/historical/blender','version':[5,1,2],
+                         'cycles':True,'executable_sha256':'b'*64}
+                outputs=[project/'assets/scene.blend',project/'assets/0000.png',project/'assets/0001.png']
+                preparation={'argv':[blender['blender'],'--background','--factory-startup','--python','blender/scene.py'],
+                    'inputs':[source.relative_to(root).as_posix()],
+                    'outputs':[item.relative_to(root).as_posix() for item in outputs]}
+                request=root/'brief.json';request.write_text(json.dumps(b))
+                argv=['/tools/node','harness/render.mjs','scene','--out','out/native.mp4','--w','1080','--h','1920',
+                      '--fps','24','--duration',str(2/24),'--workers','1','--noaudio']
+                def execute(command,**kwargs):
+                    if command[0]==blender['blender']:
+                        outputs[0].write_bytes(b'actual generated blend scene')
+                        for output in outputs[1:]:Image.new('RGB',(1080,1920),'pink').save(output)
+                        if scenario=='undeclared':(project/'unexpected.py').write_text('# changed native inputs')
+                    else:(project/'out/native.mp4').write_bytes(b'actual native final output')
+                    return subprocess.CompletedProcess(command,0,'native real execution stdout','')
+                with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value=runtime), \
+                     mock.patch('motion_native_runtime.check_template_dependencies',return_value=blender), \
+                     mock.patch.object(native,'_run_native_process',side_effect=execute) as process, \
+                     mock.patch.object(native,'probe',return_value=b['composition']):
+                    if scenario=='complete':
+                        call=native.capture_render(root,request,argv,native_preparations=[preparation])
+                        record=json.loads(call.read_bytes());self.assertEqual(process.call_count,2)
+                        self.assertEqual(record['native_preparations'][0]['status'],'completed')
+                        native._verify_native_preparations(root,b,record)  # The old Blender path does not exist.
+                        outputs[1].write_bytes(b'later replacement')
+                        with self.assertRaisesRegex(ValueError,'changed'):
+                            native._verify_native_preparations(root,b,record)
+                    else:
+                        with self.assertRaisesRegex(ValueError,'undeclared|actual recorded Blender'):
+                            native.capture_render(root,request,argv,native_preparations=None if scenario=='missing' else [preparation])
+                        record=json.loads((root/b['result_record_path']).with_suffix('.render-call.json').read_bytes())
+                        self.assertEqual(record['status'],'failed');self.assertNotIn('media',record)
+                        self.assertEqual(process.call_count,1 if scenario=='undeclared' else 0)
+
+    def test_frozen_3d_inputs_verify_in_an_isolated_python_without_pillow(self):
+        import struct
+        import zlib
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief('mg-styles-15','3d-render');b['composition']['frames']=1
+            project=root/b['project_directory'];(project/'blender').mkdir(parents=True);(project/'assets').mkdir()
+            source=project/'blender/scene.py';source.write_text('# frozen current-task Blender script')
+            authored=native.project_files(root,project)
+            blend=project/'assets/scene.blend';blend.write_bytes(b'frozen generated scene')
+            frame=project/'assets/0000.png'
+            def chunk(kind,data):
+                return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data))
+            pixels=(b'\x00'+b'\xcc\xba\xda'*1080)*1920
+            frame.write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',1080,1920,8,2,0,0,0))
+                +chunk(b'IDAT',zlib.compress(pixels))+chunk(b'IEND',b''))
+            outputs=[native.descriptor(root,item) for item in (blend,frame)]
+            record={'authored_project_files':authored,'project_files':native.project_files(root,project),
+                'native_preparations':[{'status':'completed','exit_code':0,
+                    'argv':['/missing/historical/blender','--background','--python','blender/scene.py'],
+                    'runtime_identity':{'blender':'/missing/historical/blender','version':[5,1,2],
+                        'cycles':True,'executable_sha256':'b'*64},
+                    'inputs':[native.descriptor(root,source)],'outputs':outputs,
+                    'expected_outputs':[item['job_path'] for item in outputs]}]}
+            request=root/'brief.json';request.write_text(json.dumps(b))
+            call=root/'call.json';call.write_text(json.dumps(record))
+            program=("import sys,json,importlib.util;from pathlib import Path;"
+                "sys.path[:0]=sys.argv[1:3];assert importlib.util.find_spec('PIL') is None;"
+                "import motion_native_skill_adapter as n;r=Path(sys.argv[3]);"
+                "n._verify_native_preparations(r,json.loads((r/'brief.json').read_bytes()),"
+                "json.loads((r/'call.json').read_bytes()));print('verified without Pillow')")
+            result=subprocess.run([sys.executable,'-I','-S','-c',program,str(_env.PROJECT),str(_env.SKILL/'scripts'),str(root)],
+                capture_output=True,text=True,timeout=15,env={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'})
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertIn('verified without Pillow',result.stdout)
 
     def test_shotcraft_reuse_keeps_frozen_sources_without_the_old_runtime(self):
         import motion_native_runtime as runtime_module

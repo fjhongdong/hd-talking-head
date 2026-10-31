@@ -440,10 +440,13 @@ def require_preview_review(job):
     for path in (job.job_dir / 'manifests').glob('local-qa-preview-r*.json'):
         receipt = artifacts.read_json_artifact(path)
         if (receipt.get('job_id') != job.job_id or receipt.get('job_dir') != str(job.job_dir)
-                or receipt.get('stage') != 'preview' or receipt.get('reviewed_by') != 'host'
+                or receipt.get('stage') != 'preview' or receipt.get('reviewed_by') not in {'host', 'user'}
                 or receipt.get('passed') is not True or receipt.get('artifacts') != job.stages['preview']['artifacts']
                 or receipt.get('motion_readability') != report):
             continue
+        if receipt.get('reviewed_by') == 'user':
+            from . import visual_review
+            visual_review.validate_stage_review(job, 'preview', receipt)
         validate_resolutions(report, receipt.get('motion_readability_resolutions', []))
         return
-    raise ValueError('motion text readability has unresolved targets or no current bound host review')
+    raise ValueError('motion text readability has unresolved targets or no current bound host or user review')

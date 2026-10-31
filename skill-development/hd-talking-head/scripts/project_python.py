@@ -107,6 +107,9 @@ def prepare_packages(manifest: dict, environment: dict[str, str], packages: Path
         raise RuntimeError("installed package cannot import; no reinstall: " + json.dumps(failures))
     missing = [item["install"]["package"] + "==" + item["install"]["version"]
                for item, check in zip(dependencies, checks) if check["status"] == "missing"]
+    first_opencv_install = any(item['target'] == 'cv2'
+        and item.get('install', {}).get('package') == 'opencv-python-headless' and check['status'] == 'missing'
+        for item, check in zip(dependencies, checks))
     if missing:
         constraints = [check["distribution"] + "==" + check["distribution_version"]
                        for check in checks if check["status"] == "callable" and check.get("distribution_version")]
@@ -122,13 +125,22 @@ def prepare_packages(manifest: dict, environment: dict[str, str], packages: Path
                 "--target", str(packages), *missing,
             ], environment=environment, record=record, timeout=300)
         # Refresh in new processes. Do not mistake pip's exit code for usable imports.
+        checks = []
         for item in dependencies:
-            checked = _check_python_module(item, env=environment)
+            checked = _check_python_module(item, env=environment,
+                initial_install=first_opencv_install and item['target'] == 'cv2'
+                    and item.get('install', {}).get('package') == 'opencv-python-headless')
             if checked["status"] != "callable":
                 raise RuntimeError(f"post-install import failed: {item['target']}: "
                                    + json.dumps(checked) + "; no automatic retry")
-        return {"status": "ready", "installed": missing, "package_directory": str(packages)}
-    return {"status": "ready", "installed": [], "package_directory": str(packages)}
+            checks.append(checked)
+    safe_fields = {"status", "module", "python_executable", "version", "resolved_path",
+                   "distribution", "distribution_version", "probe_stage", "probe_stage_seconds",
+                   "probe_candidate_path", "probe_loaded_path", "probe_elapsed_seconds",
+                   "probe_context", "probe_timeout_seconds"}
+    return {"status": "ready", "installed": missing, "package_directory": str(packages),
+            "checks": [{key: value for key, value in checked.items() if key in safe_fields}
+                       for checked in checks]}
 
 
 def preparation_selection(manifest: dict, selected_dependencies: set[str]) -> tuple[list[dict], list[dict]]:

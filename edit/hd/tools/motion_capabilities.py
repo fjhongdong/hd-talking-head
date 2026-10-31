@@ -419,6 +419,11 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     raise ValueError('Native motion result renderer differs from the selected binding')
                 call = contract_artifacts.read_json_artifact(module.exact(root, result['render_call']))
                 sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else {'.html'})]
+                if brief['dependency_id'] == 'mg-styles-15' and brief['template_id'] == '3d-render':
+                    for step in call['native_preparations']:
+                        for authored in step['inputs']:
+                            if Path(authored['job_path']).suffix == '.py' and authored not in sources:
+                                sources.append(authored)
                 if not sources:
                     raise ValueError('Native motion result has no frozen authored scene')
                 brief = {**brief, 'native_result': {**result, 'scene_sources': sources,

@@ -13,6 +13,13 @@ import motion_native_runtime as runtime
 
 
 class MotionNativeRuntimeTests(unittest.TestCase):
+    def test_blender_embedded_python_does_not_inherit_the_parent_python_environment(self):
+        with mock.patch.dict(runtime.os.environ,{'PYTHONPATH':'/parent/packages','PYTHONHOME':'/parent/python'}):
+            environment=runtime.blender_environment(_env.PROJECT)
+            self.assertNotIn('PYTHONPATH',environment);self.assertNotIn('PYTHONHOME',environment)
+            self.assertEqual(runtime.os.environ['PYTHONPATH'],'/parent/packages')
+            self.assertTrue(environment['BLENDER_USER_RESOURCES'].startswith(str(runtime.blender_runtime_root(_env.PROJECT))))
+
     def test_unsupported_node_stops_before_installation_or_runtime_writes(self):
         for dependency, version, minimum in [('barty-motion-graphics', 'v18.20.0', '>=20'),
                                                ('bang-motion', 'v22.11.0', '>=22.12.0'),
@@ -43,9 +50,13 @@ class MotionNativeRuntimeTests(unittest.TestCase):
             binding={'dependency_id':'mg-styles-15','template_id':'mg-styles-15/3d-render'}
             director={'segments':[{'segment_id':'seg-001','bindings':{'scene':binding}}]}
             with mock.patch.object(runtime.shutil,'which',return_value=None), \
-                 mock.patch.object(runtime.Path,'is_file',return_value=False):
+                 mock.patch.object(runtime.Path,'is_file',return_value=False), \
+                 mock.patch.object(runtime,'blender_runtime_root',return_value=root/'missing-blender'):
                 with self.assertRaisesRegex(ValueError,'Blender 5.1.*before visual confirmation'):
-                    run_stage._validate_prepared_native_inputs(job,_env.PROJECT,director,{'scenes':[]})
+                    runtime.check_template_dependencies(_env.PROJECT,dependency_id='mg-styles-15',template_id='3d-render')
+            with mock.patch.object(runtime,'prepare_template_dependencies',return_value={'status':'ready'}) as prepare:
+                native.check_selected_template_dependencies(job,director,{'scenes':[]})
+            prepare.assert_called_once_with(_env.PROJECT,dependency_id='mg-styles-15',template_id='3d-render')
             request=root/'brief.json';request.write_text(json.dumps(brief('mg-styles-15','3d-render')))
             binding['brief_sha256']=native.sha(request)
             result=root/'native-inputs/native-test/result.json';result.parent.mkdir(parents=True);result.write_text('{}')
@@ -54,6 +65,26 @@ class MotionNativeRuntimeTests(unittest.TestCase):
                  mock.patch.object(native,'inspect_result',return_value={'status':'completed'}) as inspect:
                 native.check_selected_template_dependencies(job,director,treatment)
             inspect.assert_called_once_with(root,request.read_bytes())
+
+    def test_selected_blender_installation_refuses_a_changed_official_archive(self):
+        with tempfile.TemporaryDirectory() as name:
+            project=Path(name).resolve();root=runtime.blender_runtime_root(project)
+            distribution=runtime._blender_distribution()
+            downloads=root.parent/('motion-native-blender-'+runtime.BLENDER_VERSION+'-downloads')
+            downloads.mkdir(parents=True);archive=downloads/distribution['filename']
+            archive.write_bytes(b'incomplete or changed official download')
+            with mock.patch.object(runtime.subprocess,'run',side_effect=AssertionError('bad download must not install')):
+                with self.assertRaisesRegex(ValueError,'official pinned SHA256'):
+                    runtime.prepare_template_dependencies(project,dependency_id='mg-styles-15',template_id='3d-render')
+            self.assertFalse(root.exists());self.assertTrue(archive.exists())
+
+    def test_existing_local_blender_reuses_its_checked_installation_without_download(self):
+        with tempfile.TemporaryDirectory() as name:
+            project=Path(name).resolve();root=runtime.blender_runtime_root(project);root.mkdir(parents=True)
+            with mock.patch.object(runtime,'check_template_dependencies',return_value={'status':'ready'}) as check, \
+                 mock.patch.object(runtime.subprocess,'run',side_effect=AssertionError('no repeated installation')):
+                runtime.prepare_template_dependencies(project,dependency_id='mg-styles-15',template_id='3d-render')
+            check.assert_called_once_with(project,dependency_id='mg-styles-15',template_id='3d-render')
 
     def test_reuse_only_requires_current_ffprobe(self):
         with mock.patch.object(runtime.shutil, 'which', return_value='/tools/ffprobe') as which, \

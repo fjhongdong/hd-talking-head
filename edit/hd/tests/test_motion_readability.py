@@ -130,4 +130,36 @@ class MotionReadabilityTest(unittest.TestCase):
             with mock.patch.object(m,"inspect_job",return_value=report):
                 with self.assertRaises(ValueError): m.require_preview_review(job)
 
+    def test_user_preview_still_requires_current_readability_and_visual_evidence(self):
+        import json
+        from edit.hd.tools import visual_review
+        from edit.hd.tests.test_visual_review import VisualReviewPlanIdentityTests
+        expected, review = VisualReviewPlanIdentityTests().user_preview()
+        target = {'target_id': 't', 'text': '小字', 'status': 'needs_review',
+                  'region': self.target['region'], 'minimum_required_height_px': 36,
+                  'samples': [{'time': 0, 'status': 'needs_review', 'frame_sha256': 'a' * 64}]}
+        report = {'binding': {'media': 'current'}, 'targets': [target]}
+        resolution = {'target_id': 't', 'time': 0, 'frame_sha256': 'a' * 64,
+                      'text': '小字', 'bbox': [110, 110, 100, 40],
+                      'reason': '当前原尺寸帧内文字完整且清楚', 'unclipped': True,
+                      'unobstructed': True, 'contrast_clear': True, 'window_reviewed': True}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); (root / 'manifests').mkdir()
+            records = [expected['observations'][0]['media_ref']]
+            job = SimpleNamespace(job_dir=root, job_id='job',
+                                  stages={'preview': {'status': 'approved', 'artifacts': records}})
+            receipt = {**review, 'job_id': 'job', 'job_dir': str(root), 'stage': 'preview',
+                       'passed': True, 'artifacts': records, 'motion_readability': report,
+                       'motion_readability_resolutions': [resolution]}
+            path = root / 'manifests/local-qa-preview-r1.json'
+            with mock.patch.object(m, '_managed', return_value=True), \
+                 mock.patch.object(m, 'inspect_job', return_value=report), \
+                 mock.patch.object(visual_review, 'expected_observations', return_value=expected):
+                path.write_text(json.dumps(receipt)); m.require_preview_review(job)
+                for changes in ({'audio_listened': False}, {'motion_readability_resolutions': []},
+                                {'motion_readability': {'binding': {'media': 'stale'}, 'targets': []}}):
+                    path.write_text(json.dumps({**receipt, **changes}))
+                    with self.subTest(changes=changes), self.assertRaises(ValueError):
+                        m.require_preview_review(job)
+
 if __name__ == '__main__': unittest.main()

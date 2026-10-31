@@ -625,67 +625,118 @@ def _check_environment_any(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_PYTHON_MODULE_PROBE = """import faulthandler,sys,time
+faulthandler.dump_traceback_later(15,repeat=False)
+import json
+phase_seconds={}
+phase=None
+phase_started=time.monotonic()
+candidate_path=loaded_path=None
+def checkpoint(next_phase):
+ global phase,phase_started
+ now=time.monotonic()
+ if phase is not None:
+  phase_seconds[phase]=round(now-phase_started,6)
+ phase,phase_started=next_phase,now
+ print('HD_IMPORT_PROBE='+json.dumps({'stage':phase,'started_monotonic':phase_started,
+       'phase_seconds':phase_seconds,'candidate_path':candidate_path,'loaded_path':loaded_path}),
+       file=sys.stderr,flush=True)
+checkpoint('probe_imports')
+import importlib,importlib.metadata,importlib.util
+checkpoint('find_spec')
+spec=importlib.util.find_spec(sys.argv[1])
+candidate_path=spec.origin if spec else None
+checkpoint('module_import')
+m=importlib.import_module(sys.argv[1])
+loaded_path=getattr(m,'__file__',None)
+checkpoint('metadata_version')
+distribution=sys.argv[2] or None
+try:
+ version=importlib.metadata.version(distribution) if distribution else None
+except importlib.metadata.PackageNotFoundError:
+ checkpoint('metadata_discovery')
+ distribution=next(iter(importlib.metadata.packages_distributions().get(sys.argv[1].split('.')[0],[])),None)
+ checkpoint('metadata_version_retry')
+ version=importlib.metadata.version(distribution) if distribution else None
+checkpoint('completed')
+faulthandler.cancel_dump_traceback_later()
+print(json.dumps({'version':getattr(m,'__version__',None),'resolved_path':loaded_path,
+                  'distribution':distribution,'distribution_version':version}))
+"""
+
+
 def _python_probe_diagnostics(stderr: str | bytes | None, started: float) -> dict[str, Any]:
-    """Keep only our path marker and bounded faulthandler frames, never raw stderr."""
+    """Keep known probe stages and bounded frames, never arbitrary stderr."""
     output = stderr.decode("utf-8", errors="replace") if isinstance(stderr, bytes) else (stderr or "")
-    detail: dict[str, Any] = {"probe_elapsed_seconds": round(time.monotonic() - started, 3)}
+    now = time.monotonic()
+    detail: dict[str, Any] = {"probe_elapsed_seconds": round(now - started, 3),
+                              "probe_stage": "interpreter_or_probe_startup"}
+    stages = {"probe_imports", "find_spec", "module_import", "metadata_version",
+              "metadata_discovery", "metadata_version_retry", "completed"}
     for line in output.splitlines():
-        if line.startswith("HD_IMPORT_PROBE="):
-            try:
-                path = json.loads(line[len("HD_IMPORT_PROBE="):])
-            except ValueError:
-                continue
+        if not line.startswith("HD_IMPORT_PROBE="):
+            continue
+        try:
+            snapshot = json.loads(line[len("HD_IMPORT_PROBE="):])
+        except ValueError:
+            continue
+        if not isinstance(snapshot, dict) or snapshot.get('stage') not in stages:
+            continue
+        detail['probe_stage'] = snapshot['stage']
+        timings = snapshot.get('phase_seconds', {})
+        if isinstance(timings, dict):
+            detail['probe_stage_seconds'] = {key: value for key, value in timings.items()
+                if key in stages and type(value) in (int, float) and math.isfinite(value) and value >= 0}
+        for field in ('candidate_path', 'loaded_path'):
+            path = snapshot.get(field)
             if path is None or isinstance(path, str):
-                detail["probe_module_path"] = path
-            break
+                detail['probe_' + field] = path
+        phase_started = snapshot.get('started_monotonic')
+        if (type(phase_started) in (int, float) and math.isfinite(phase_started)
+                and started <= phase_started <= now and snapshot['stage'] != 'completed'):
+            detail['probe_active_stage_elapsed_seconds'] = round(now - phase_started, 3)
+        else:
+            detail.pop('probe_active_stage_elapsed_seconds', None)
     frames = re.findall(r'^  File "[^"\n]{1,1024}", line \d+,? in [^\n]{1,128}$', output, re.MULTILINE)
     if frames:
         detail["probe_stack"] = frames[:12]
     return detail
 
 
-def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = None) -> dict[str, Any]:
+def _check_python_module(item: dict[str, Any], *, env: dict[str, str] | None = None,
+                         initial_install: bool = False) -> dict[str, Any]:
     target = item["target"]
     if not isinstance(target, str) or not target:
         raise PreflightError(f"python_module target must be a string: {item['id']}")
+    if initial_install and (target != 'cv2' or item.get('install', {}).get('package') != 'opencv-python-headless'):
+        raise PreflightError('First-install native initialization is only for the newly installed OpenCV package')
+    timeout = 60 if initial_install else 20
+    context = {'probe_context': 'initial_install' if initial_install else 'health_check',
+               'probe_timeout_seconds': timeout}
     started = time.monotonic()
     try:
         result = subprocess.run(
-            [sys.executable, "-c",
-             "import faulthandler,importlib,importlib.metadata,importlib.util,json,sys\n"
-             "spec=importlib.util.find_spec(sys.argv[1])\n"
-             "print('HD_IMPORT_PROBE='+json.dumps(spec.origin if spec else None),file=sys.stderr,flush=True)\n"
-             "faulthandler.dump_traceback_later(15,repeat=False)\n"
-             "m=importlib.import_module(sys.argv[1])\n"
-             "distribution=sys.argv[2] or None\n"
-             "try:\n"
-             " version=importlib.metadata.version(distribution) if distribution else None\n"
-             "except importlib.metadata.PackageNotFoundError:\n"
-             " distribution=next(iter(importlib.metadata.packages_distributions().get(sys.argv[1].split('.')[0],[])),None)\n"
-             " version=importlib.metadata.version(distribution) if distribution else None\n"
-             "faulthandler.cancel_dump_traceback_later()\n"
-             "print(json.dumps({'version':getattr(m,'__version__',None), 'resolved_path':getattr(m,'__file__',None), "
-             "'distribution':distribution, 'distribution_version':version}))",
+            [sys.executable, "-c", _PYTHON_MODULE_PROBE,
              target, item.get("install", {}).get("package", "")],
-            capture_output=True, text=True, timeout=20, check=False, env=env,
+            capture_output=True, text=True, timeout=timeout, check=False, env=env,
         )
     except subprocess.TimeoutExpired as error:
         return {"status": "smoke_failed", "module": target,
                 "python_executable": sys.executable,
                 "error_type": "TimeoutExpired", "timeout_seconds": error.timeout,
-                **_python_probe_diagnostics(error.stderr, started)}
+                **_python_probe_diagnostics(error.stderr, started), **context}
     except OSError as error:
         return {"status": "smoke_failed", "module": target,
                 "python_executable": sys.executable,
                 "error_type": type(error).__name__, "errno": error.errno,
-                **_python_probe_diagnostics(None, started)}
+                **_python_probe_diagnostics(None, started), **context}
     if result.returncode:
         failure = _probe_failure(result)
         return {"status": "missing" if failure.get("missing_module") == target else "smoke_failed",
                 "module": target, "python_executable": sys.executable, **failure,
-                **_python_probe_diagnostics(result.stderr, started)}
+                **_python_probe_diagnostics(result.stderr, started), **context}
     return {"status": "callable", "module": target, "python_executable": sys.executable,
-            **json.loads(result.stdout)}
+            **json.loads(result.stdout), **_python_probe_diagnostics(result.stderr, started), **context}
 
 
 def _check_availability_any(

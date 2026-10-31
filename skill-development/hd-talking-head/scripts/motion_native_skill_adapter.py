@@ -251,7 +251,7 @@ def _inputs(root, brief):
 
 def check_selected_template_dependencies(job, director, treatment):
     """Run selected-only preparation gates even for planned future inputs."""
-    from motion_native_runtime import check_template_dependencies
+    from motion_native_runtime import prepare_template_dependencies
     scenes = {(row.get('segment_id'), row.get('component_id')): row for row in treatment.get('scenes', [])}
     for segment in director.get('segments', []):
         for cid, binding in segment.get('bindings', {}).items():
@@ -267,7 +267,7 @@ def check_selected_template_dependencies(job, director, treatment):
                 if path(job.job_dir, brief['result_record_path']).is_file():
                     inspect_result(job.job_dir, payload)
                     continue
-            check_template_dependencies(PROJECT, dependency_id='mg-styles-15', template_id='3d-render')
+            prepare_template_dependencies(PROJECT, dependency_id='mg-styles-15', template_id='3d-render')
 
 
 def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
@@ -306,7 +306,7 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
     from motion_native_runtime import check_template_dependencies
-    check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
+    preparation_runtime = check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
     if (brief['job_id'] != job.job_id or sha(brief_path) != component['brief_sha256']
             or brief['task_source'] != approved_task_source):
         raise ValueError('Native motion task differs from confirmed binding')
@@ -337,6 +337,11 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
         action['native_usage_contract'] = {'card_id': 'original card slug, or ink-press',
             'variant': 'original Gallery key; null only for ink-press', 'purpose': 'actual use in this task',
             'implementation_refs': 'descriptors of actual implementation files frozen in the render call'}
+    if preparation_runtime.get('status') == 'ready':
+        action['native_preparation_runtime'] = preparation_runtime
+        action['next'] += (' For 3d-render pass native_preparations to capture_render: each step has the actual Blender argv, '
+            'inputs and outputs as Job-relative paths. Declare the generated blend and every final PNG frame outside the project out/ directory. '
+            'The bridge records the real Blender execution, then freezes those generated assets as inputs to the unchanged native harness.')
     return action
 
 def native_workflow_instructions(brief):
@@ -570,14 +575,136 @@ def _run_native_process(argv, *, cwd=None, env=None, timeout=1200, check=False):
     return result
 
 
-def capture_render(job_dir, brief_path, argv):
+def _source_changes(record, before, after):
+    original = {item['job_path']: item for item in before}
+    current = {item['job_path']: item for item in after}
+    record['project_files_after'] = after
+    record['source_changes'] = {
+        'added': [current[key] for key in sorted(current.keys() - original.keys())],
+        'removed': [original[key] for key in sorted(original.keys() - current.keys())],
+        'changed': [{'before': original[key], 'after': current[key]}
+                    for key in sorted(original.keys() & current.keys()) if original[key] != current[key]]}
+
+
+def _run_native_preparations(root, directory, brief, specifications, blender, record, save):
+    if not isinstance(specifications, list) or not specifications:
+        raise ValueError('MG 3d-render requires actual recorded Blender preparation before the native compositor')
+    from motion_native_runtime import blender_environment
+    record['authored_project_files'] = record['project_files']
+    record['native_preparations'] = []
+    for specification in specifications:
+        if (not isinstance(specification, dict) or set(specification) != {'argv', 'inputs', 'outputs'}
+                or not isinstance(specification['argv'], list) or not specification['argv']
+                or not all(isinstance(value, str) for value in specification['argv'])
+                or specification['argv'][0] != blender['blender']
+                or not isinstance(specification['inputs'], list) or not specification['inputs']
+                or not isinstance(specification['outputs'], list) or not specification['outputs']
+                or len(specification['outputs']) != len(set(specification['outputs']))):
+            raise ValueError('Invalid native Blender preparation inputs, outputs or executable')
+        command = specification['argv']
+        flags = [index for index, value in enumerate(command[:-1]) if value in {'--python', '-P'}]
+        if len(flags) != 1:
+            raise ValueError('Native Blender preparation must name its frozen authored Python scene or renderer')
+        script = Path(command[flags[0] + 1]); script = script if script.is_absolute() else directory / script
+        script = script.resolve(strict=True); script.relative_to(directory)
+        inputs = [descriptor(root, path(root, name)) for name in specification['inputs']]
+        if script.suffix != '.py' or descriptor(root, script) not in inputs:
+            raise ValueError('Native Blender script must be one of the actual frozen preparation inputs')
+        outputs = [path(root, name) for name in specification['outputs']]
+        for output in outputs:
+            relative_output = output.relative_to(directory)
+            if (relative_output.parts[0] in {'out', 'node_modules', '.git'} or output.exists() or output.is_symlink()):
+                raise ValueError('Preserve native Blender assets and declare new frozen input paths outside out/')
+        step = {'argv': command, 'runtime_identity': blender, 'inputs': inputs, 'outputs': [],
+                'expected_outputs': specification['outputs'], 'status': 'running',
+                'exit_code': None, 'stdout': '', 'stderr': ''}
+        record['native_preparations'].append(step); save()
+        before = project_files(root, directory)
+        try:
+            completed = _run_native_process(command, cwd=directory, env=blender_environment(PROJECT))
+            step.update(exit_code=completed.returncode, stdout=completed.stdout, stderr=completed.stderr)
+            if completed.returncode:
+                raise ValueError('Original Blender preparation failed: ' + completed.stderr[-1500:])
+            step['outputs'] = [descriptor(root, output) for output in outputs]
+            expected = sorted([*before, *step['outputs']], key=lambda item: item['job_path'])
+            after = project_files(root, directory)
+            if after != expected:
+                _source_changes(step, expected, after)
+                raise ValueError('Native Blender preparation changed undeclared project inputs or outputs')
+            record['project_files'] = after
+            step['status'] = 'completed'
+        except BaseException as error:
+            step.update(status='failed', error_type=type(error).__name__, error=str(error))
+            for key in ('stdout', 'stderr'):
+                value = getattr(error, key, None)
+                if value is not None:
+                    step[key] = value.decode(errors='replace') if isinstance(value, bytes) else value
+            raise
+        finally:
+            save()
+    _verify_native_preparations(root, brief, record)
+
+
+def _verify_native_preparations(root, brief, record):
+    steps = record.get('native_preparations')
+    if not isinstance(steps, list) or not steps:
+        raise ValueError('MG 3d-render is missing its actual Blender execution and generated assets')
+    frozen = {item['job_path']: item for item in record['project_files']}
+    generated = {}
+    for step in steps:
+        identity = step.get('runtime_identity', {})
+        command = step.get('argv', [])
+        if (step.get('status') != 'completed' or step.get('exit_code') != 0
+                or not command or command[0] != identity.get('blender')
+                or not Path(identity.get('blender', '')).is_absolute()
+                or identity.get('version', [])[:2] != [5, 1] or identity.get('cycles') is not True
+                or not re.fullmatch('[a-f0-9]{64}', str(identity.get('executable_sha256')))
+                or not step.get('inputs') or not step.get('outputs')
+                or [item['job_path'] for item in step['outputs']] != step.get('expected_outputs')):
+            raise ValueError('Frozen Blender preparation differs from its completed native execution')
+        flags = [index for index, value in enumerate(command[:-1]) if value in {'--python', '-P'}]
+        if len(flags) != 1:
+            raise ValueError('Frozen Blender execution has no unique native script')
+        script = Path(command[flags[0] + 1])
+        if not script.is_absolute():
+            script = path(root, brief['project_directory']) / script
+        if descriptor(root, script) not in step['inputs']:
+            raise ValueError('Frozen Blender script differs from its actual preparation inputs')
+        for item in [*step['inputs'], *step['outputs']]:
+            if item != frozen.get(item['job_path']):
+                raise ValueError('Native Blender asset or source differs from its frozen project')
+            exact(root, item)
+        generated.update({item['job_path']: item for item in step['outputs']})
+    authored = record.get('authored_project_files')
+    if not isinstance(authored, list) or not authored:
+        raise ValueError('Native Blender preparation lost its original authored project')
+    for item in authored:
+        if item != frozen.get(item['job_path']):
+            raise ValueError('Native Blender changed its original authored inputs')
+    if set(frozen) != {item['job_path'] for item in authored} | set(generated):
+        raise ValueError('Native Blender project contains undeclared generated inputs')
+    frames = [item for name, item in generated.items() if Path(name).suffix.lower() == '.png']
+    if (len(frames) != brief['composition']['frames']
+            or not any(Path(name).suffix == '.blend' for name in generated)):
+        raise ValueError('Native Blender must generate its real scene and the exact complete portrait frame sequence')
+    for item in frames:
+        # Only verify the PNG container identity/dimensions here. The original
+        # compositor decodes the real sequence; this is not a full PNG decode.
+        with path(root, item['job_path']).open('rb') as stream:
+            header = stream.read(24)
+        if (len(header) != 24 or header[:16] != b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
+                or (int.from_bytes(header[16:20], 'big'), int.from_bytes(header[20:24], 'big')) != (1080, 1920)):
+            raise ValueError('Native Blender PNG header differs from the approved portrait input dimensions')
+
+
+def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
     brief = validate_brief(brief_path.read_bytes()); _inputs(root, brief)
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
     from motion_native_runtime import check_template_dependencies
-    check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
+    preparation_runtime = check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
     directory, script, output = _render_command(root, brief, argv, runtime)
     argv = [argv[0], str(script), *argv[2:]]
     result_path = Path(brief['result_record_path'])
@@ -599,6 +726,12 @@ def capture_render(job_dir, brief_path, argv):
     call_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts.write_json_artifact(call_path, record)
     try:
+        if preparation_runtime.get('status') == 'ready':
+            _run_native_preparations(root, directory, brief, native_preparations, preparation_runtime, record,
+                lambda: artifacts.write_json_artifact(call_path, record))
+            before = record['project_files']
+        elif native_preparations is not None:
+            raise ValueError('Native Blender preparation belongs only to the selected MG 3d-render workflow')
         if brief['dependency_id'] == 'bang-motion':
             result, transport = _capture_bang(root, directory, argv, output, brief, runtime, environment)
             record['canvas_transport'] = transport
@@ -607,14 +740,7 @@ def capture_render(job_dir, brief_path, argv):
         record.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
         after = project_files(root, directory)
         if before != after:
-            original = {item['job_path']: item for item in before}
-            current = {item['job_path']: item for item in after}
-            record['project_files_after'] = after
-            record['source_changes'] = {
-                'added': [current[key] for key in sorted(current.keys() - original.keys())],
-                'removed': [original[key] for key in sorted(original.keys() - current.keys())],
-                'changed': [{'before': original[key], 'after': current[key]}
-                            for key in sorted(original.keys() & current.keys()) if original[key] != current[key]]}
+            _source_changes(record, before, after)
             raise ValueError('Native project source changed during rendering')
         if result.returncode:
             raise ValueError('Original native motion render failed: ' + result.stderr[-1500:])
@@ -682,6 +808,8 @@ def _verify_call(root, brief, payload, call):
                 or len(transport['frames']) != brief['composition']['frames']
                 or _frame_descriptors(root, frames) != transport['frames']):
             raise ValueError('Bang original exported frames changed')
+    if (brief['dependency_id'], brief['template_id']) == ('mg-styles-15', '3d-render'):
+        _verify_native_preparations(root, brief, call)
     for item in call['project_files']:
         exact(root, item)
     if project_files(root, path(root, brief['project_directory'])) != call['project_files']:
@@ -870,6 +998,7 @@ def main():
     parser.add_argument('--probe', action='store_true')
     parser.add_argument('--brief', type=Path); parser.add_argument('--job-dir', type=Path)
     parser.add_argument('--capture-render', action='store_true'); parser.add_argument('--argv-json')
+    parser.add_argument('--native-preparations-json', help='Selected MG 3D native Blender steps')
     parser.add_argument('--publish', action='store_true'); parser.add_argument('--call', type=Path)
     parser.add_argument('--native-usage', type=Path, help='Actual Shotcraft card usage JSON array')
     parser.add_argument('--qa-note'); parser.add_argument('--media-manifest', type=Path); parser.add_argument('--output', type=Path)
@@ -882,7 +1011,8 @@ def main():
               'producer_version': VERSION, 'adapter_identity': {'adapter_type': 'ReferenceProcessAdapter',
               'approved_executor': 'reference_adapter', 'primary_renderer': primary_renderer(args.dependency_id)}}))
     elif args.capture_render:
-        print(capture_render(args.job_dir, args.brief, json.loads(args.argv_json)))
+        print(capture_render(args.job_dir, args.brief, json.loads(args.argv_json),
+              native_preparations=json.loads(args.native_preparations_json) if args.native_preparations_json else None))
     elif args.publish:
         print(publish_completed(args.job_dir, args.brief, args.call, qa_note=args.qa_note,
               native_usage=json.loads(args.native_usage.read_bytes()) if args.native_usage else None))

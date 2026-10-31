@@ -157,7 +157,7 @@ def _review(job, stage: str, review: dict) -> dict:
     if stage == 'edit_structure':
         from edit.hd.tools import speech_edit_v2
         speech_edit_v2.validate_edit_review(job, review)
-    reviewer = review.get('reviewed_by', 'host') if stage in {'speech_cleanup', 'edit_structure'} else ('human' if human else 'host')
+    reviewer = review.get('reviewed_by', 'host') if stage in {'speech_cleanup', 'edit_structure', 'preview'} else ('human' if human else 'host')
     receipt = {**review, 'reviewed_by': reviewer}
     if stage in {'visual_canary', 'visual_assets', 'preview'}:
         from edit.hd.tools import visual_review

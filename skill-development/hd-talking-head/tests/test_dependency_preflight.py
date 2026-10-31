@@ -412,9 +412,17 @@ class DependencyPreflightTests(unittest.TestCase):
         ready = {"status": "callable", "distribution": "Pillow", "distribution_version": "12.3.0"}
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary) / "packages"
-            with mock.patch.object(project_python, "_check_python_module", side_effect=[ready, {"status": "missing"}, ready, {"status": "callable"}]), mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as install:
+            final = {"status": "callable", "probe_stage": "completed", "probe_stage_seconds": {"module_import": 0.1},
+                     "probe_candidate_path": "/current/numpy/__init__.py", "probe_loaded_path": "/current/numpy/__init__.py",
+                     "probe_context": "health_check", "probe_timeout_seconds": 20,
+                     "unexpected_stderr": "API_KEY=do-not-save"}
+            with mock.patch.object(project_python, "_check_python_module", side_effect=[ready, {"status": "missing"}, ready, final]) as probes, mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as install:
                 result = project_python.prepare_packages(manifest, {}, target)
             self.assertEqual(result["installed"], ["numpy==2.2.6"])
+            self.assertEqual(result['checks'], [ready, {key: value for key, value in final.items()
+                                                     if key != 'unexpected_stderr'}])
+            self.assertEqual(probes.call_count, 4)
+            self.assertNotIn('API_KEY', json.dumps(result))
             install.assert_called_once()
             command = install.call_args.args[0]
             self.assertEqual(command[command.index("--target") + 1], str(target))
@@ -491,33 +499,123 @@ class DependencyPreflightTests(unittest.TestCase):
             self.assertEqual({key: checked[key] for key in ("status", "module", *detail)},
                              {"status": "smoke_failed", "module": "cv2", **detail})
             self.assertEqual(checked["python_executable"], sys.executable)
+            self.assertEqual(checked['probe_context'], 'health_check')
+            self.assertEqual(checked['probe_timeout_seconds'], 20)
             self.assertGreaterEqual(checked["probe_elapsed_seconds"], 0)
             self.assertEqual(run.call_args.kwargs["timeout"], 20)
             run.assert_called_once()
 
-    def test_timeout_keeps_module_path_and_bounded_stack_without_arbitrary_stderr(self) -> None:
+    def test_new_opencv_initialization_has_a_fixed_budget_without_retry(self) -> None:
+        import dependency_preflight
+        item = {'target': 'cv2', 'install': {'package': 'opencv-python-headless'}}
+        with mock.patch.object(dependency_preflight.subprocess, 'run',
+                side_effect=subprocess.TimeoutExpired([sys.executable], 60)) as run:
+            checked = dependency_preflight._check_python_module(item, initial_install=True)
+        self.assertEqual(checked['status'], 'smoke_failed')
+        self.assertEqual(checked['probe_context'], 'initial_install')
+        self.assertEqual(checked['probe_timeout_seconds'], 60)
+        self.assertEqual(checked['timeout_seconds'], 60)
+        self.assertEqual(run.call_args.kwargs['timeout'], 60)
+        run.assert_called_once()
+        for target, package in [('requests', 'requests'), ('PIL', 'Pillow')]:
+            with self.subTest(target=target), mock.patch.object(dependency_preflight.subprocess, 'run') as run:
+                with self.assertRaisesRegex(dependency_preflight.PreflightError, 'only for the newly installed OpenCV'):
+                    dependency_preflight._check_python_module(
+                        {'target': target, 'install': {'package': package}}, initial_install=True)
+                run.assert_not_called()
+
+    def test_preparation_reserves_initialization_for_newly_installed_opencv(self) -> None:
+        import project_python
+        manifest = {'dependencies': [
+            {'id': 'opencv', 'kind': 'python_module', 'required': True, 'target': 'cv2',
+             'install': {'package': 'opencv-python-headless', 'version': '4.12.0.88'}},
+            {'id': 'requests', 'kind': 'python_module', 'required': True, 'target': 'requests',
+             'install': {'package': 'requests', 'version': '2.34.2'}}]}
+        for initial_status in ('callable', 'missing', 'smoke_failed'):
+            with self.subTest(initial_status=initial_status), tempfile.TemporaryDirectory() as temporary, \
+                    mock.patch.object(project_python, '_check_python_module', side_effect=[
+                        {'status': initial_status}, {'status': 'missing'},
+                        {'status': 'callable'}, {'status': 'callable'}]) as probes, \
+                    mock.patch.object(project_python.subprocess, 'run',
+                        return_value=subprocess.CompletedProcess([], 0, '', '')) as install:
+                if initial_status == 'smoke_failed':
+                    with self.assertRaisesRegex(RuntimeError, 'no reinstall'):
+                        project_python.prepare_packages(manifest, {}, Path(temporary) / 'packages')
+                    install.assert_not_called()
+                    self.assertEqual(probes.call_count, 2)
+                else:
+                    project_python.prepare_packages(manifest, {}, Path(temporary) / 'packages')
+                    self.assertEqual(probes.call_count, 4)
+                    self.assertEqual(probes.call_args_list[2].kwargs['initial_install'], initial_status == 'missing')
+                    self.assertFalse(probes.call_args_list[3].kwargs['initial_install'])
+                    install.assert_called_once()
+                self.assertTrue(all(not call.kwargs.get('initial_install') for call in probes.call_args_list[:2]))
+
+    def test_timeout_keeps_probe_stage_paths_and_bounded_stack_without_arbitrary_stderr(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))
         import dependency_preflight
-        stderr = ('HD_IMPORT_PROBE="/local/packages/cv2/__init__.py"\n'
+        snapshot = {'stage': 'module_import', 'started_monotonic': 12,
+                    'phase_seconds': {'probe_imports': 0.01, 'find_spec': 0.001},
+                    'candidate_path': '/local/packages/cv2/__init__.py', 'loaded_path': None}
+        stderr = ('HD_IMPORT_PROBE=' + json.dumps(snapshot) + '\n'
                   'Timeout (0:00:15)!\nThread 123:\n'
                   '  File "/local/packages/cv2/__init__.py", line 153 in bootstrap\n'
                   'API_KEY=do-not-save\n')
         error = subprocess.TimeoutExpired([sys.executable], 20, stderr=stderr.encode())
-        with mock.patch.object(dependency_preflight.subprocess, "run", side_effect=error) as run:
+        with mock.patch.object(dependency_preflight.subprocess, "run", side_effect=error) as run, \
+                mock.patch.object(dependency_preflight.time, 'monotonic', side_effect=[10, 30]):
             checked = dependency_preflight._check_python_module({"target": "cv2"})
-        self.assertEqual(checked["probe_module_path"], "/local/packages/cv2/__init__.py")
+        self.assertEqual(checked['probe_stage'], 'module_import')
+        self.assertEqual(checked['probe_candidate_path'], '/local/packages/cv2/__init__.py')
+        self.assertIsNone(checked['probe_loaded_path'])
+        self.assertEqual(checked['probe_stage_seconds'], snapshot['phase_seconds'])
+        self.assertEqual(checked['probe_active_stage_elapsed_seconds'], 18)
         self.assertEqual(checked["probe_stack"], [
             '  File "/local/packages/cv2/__init__.py", line 153 in bootstrap'])
         self.assertNotIn("API_KEY", json.dumps(checked))
         self.assertEqual(run.call_args.kwargs["timeout"], 20)
         run.assert_called_once()
 
+    def test_completed_python_probe_reports_distinct_paths_and_phase_durations(self) -> None:
+        import dependency_preflight
+        checked = dependency_preflight._check_python_module({
+            'target': 'json', 'install': {'package': 'hd_missing_probe_distribution'}})
+        self.assertEqual(checked['status'], 'callable')
+        self.assertEqual(checked['probe_stage'], 'completed')
+        self.assertEqual(checked['probe_candidate_path'], checked['resolved_path'])
+        self.assertEqual(checked['probe_loaded_path'], checked['resolved_path'])
+        self.assertEqual(set(checked['probe_stage_seconds']), {
+            'probe_imports', 'find_spec', 'module_import', 'metadata_version',
+            'metadata_discovery', 'metadata_version_retry'})
+        self.assertTrue(all(value >= 0 for value in checked['probe_stage_seconds'].values()))
+        self.assertNotIn('probe_active_stage_elapsed_seconds', checked)
+
+    def test_metadata_failure_is_distinguished_from_target_import_failure(self) -> None:
+        import dependency_preflight
+        with tempfile.TemporaryDirectory() as temporary:
+            module = Path(temporary) / 'hd_metadata_failure.py'
+            module.write_text('import importlib.metadata\n'
+                              'def fail(*args):\n'
+                              '    raise RuntimeError("API_KEY=do-not-save")\n'
+                              'importlib.metadata.version=fail\n')
+            checked = dependency_preflight._check_python_module({
+                'target': 'hd_metadata_failure', 'install': {'package': 'fixture'}},
+                env={**os.environ, 'PYTHONPATH': temporary})
+            self.assertEqual(checked['status'], 'smoke_failed')
+            self.assertEqual(checked['error_type'], 'RuntimeError')
+            self.assertEqual(checked['probe_stage'], 'metadata_version')
+            self.assertEqual(checked['probe_candidate_path'], str(module))
+            self.assertEqual(checked['probe_loaded_path'], str(module))
+            self.assertIn('module_import', checked['probe_stage_seconds'])
+            self.assertNotIn('API_KEY', json.dumps(checked))
+
     def test_post_install_import_failure_keeps_actual_probe_details_without_retry(self) -> None:
         sys.path.insert(0, str(SKILL_ROOT / "scripts"))
         import project_python
         manifest = {"dependencies": [{"id": "opencv", "kind": "python_module", "required": True,
             "target": "cv2", "install": {"package": "opencv-python-headless", "version": "4.12.0.88"}}]}
-        failed = {"status": "smoke_failed", "module": "cv2", "error_type": "TimeoutExpired", "timeout_seconds": 20}
+        failed = {"status": "smoke_failed", "module": "cv2", "error_type": "TimeoutExpired", "timeout_seconds": 60,
+                  "probe_context": "initial_install", "probe_timeout_seconds": 60}
         with tempfile.TemporaryDirectory() as temporary, \
                 mock.patch.object(project_python, "_check_python_module", side_effect=[{"status": "missing"}, failed]) as probe, \
                 mock.patch.object(project_python.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as install:
@@ -526,6 +624,7 @@ class DependencyPreflightTests(unittest.TestCase):
             self.assertIn(json.dumps(failed), str(raised.exception))
             self.assertIn("no automatic retry", str(raised.exception))
             self.assertEqual(probe.call_count, 2)
+            self.assertTrue(probe.call_args.kwargs['initial_install'])
             install.assert_called_once()
 
     def test_importable_path_with_broken_dependency_is_not_callable(self) -> None:

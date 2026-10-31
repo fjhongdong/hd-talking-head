@@ -1,4 +1,4 @@
-"""Bind host observations to actual media in the existing stage receipt.
+"""Bind host or explicitly confirmed user observations to current stage media.
 
 This validates playback declarations and their scope, not human perception.
 """
@@ -93,6 +93,10 @@ def expected_observations(job, stage):
 
 def validate_stage_review(job, stage, review):
     expected = expected_observations(job, stage)
+    if stage == 'preview':
+        reviewer = validate_preview_reviewer(review)
+        if reviewer == 'user' and expected['status'] == 'not_applicable':
+            raise ValueError('user preview review requires the current bound visual media')
     if expected["status"] == "not_applicable":
         return expected
     pending = review.get("user_final_review")
@@ -151,6 +155,26 @@ def validate_stage_review(job, stage, review):
     return payload
 
 
+def validate_preview_reviewer(review):
+    """Check explicit declarations; only the real reply can authorize true flags.
+
+    Do not infer completed viewing/listening from permission to continue, or
+    infer perception from text patterns. Existing host and pending-user paths
+    retain their original contracts.
+    """
+    reviewer = review.get('reviewed_by', 'host')
+    if reviewer not in {'host', 'user'}:
+        raise ValueError('preview reviewer must be host or user')
+    if reviewer == 'user':
+        if (review.get('full_playback_reviewed') is not True
+                or review.get('audio_listened') is not True
+                or not isinstance(review.get('user_confirmation'), str)
+                or not review['user_confirmation'].strip()
+                or review.get('user_final_review') is not None):
+            raise ValueError('user preview review requires actual full playback, listening and the user reply')
+    return reviewer
+
+
 def require_preview_review(job):
     """Repeat the gate at delivery, including consumers of raw-approve callers."""
     expected = expected_observations(job, "preview")
@@ -159,10 +183,10 @@ def require_preview_review(job):
     for path in (job.job_dir / "manifests").glob("local-qa-preview-r*.json"):
         receipt = artifacts.read_json_artifact(path)
         if (receipt.get("job_id") != job.job_id or receipt.get("job_dir") != str(job.job_dir)
-                or receipt.get("stage") != "preview" or receipt.get("reviewed_by") != "host"
+                or receipt.get("stage") != "preview" or receipt.get("reviewed_by") not in {'host', 'user'}
                 or receipt.get("passed") is not True
                 or receipt.get("artifacts") != job.stages["preview"]["artifacts"]):
             continue
         validate_stage_review(job, "preview", receipt)
         return
-    raise ValueError("current preview has no bound host visual review")
+    raise ValueError("current preview has no bound host or user visual review")

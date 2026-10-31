@@ -412,6 +412,29 @@ class ReviewAndDispatchTests(unittest.TestCase):
                 run_stage.execute_stage(self.root, PROJECT)
         prepare.assert_not_called()
 
+    def test_preview_records_the_actual_user_reviewer(self):
+        from edit.hd.tests.test_visual_review import VisualReviewPlanIdentityTests
+        expected, details = VisualReviewPlanIdentityTests().user_preview()
+        records = [expected['observations'][0]['media_ref']]
+        job = SimpleNamespace(job_id='preview-job', job_dir=self.root, revision=19,
+                              stages={'preview': {'status': 'ready_for_review', 'artifacts': records}})
+        review = {**details, 'job_id': job.job_id, 'job_dir': str(self.root), 'stage': 'preview',
+                  'revision': 19, 'artifacts': records, 'passed': True, 'note': details['user_confirmation']}
+        with mock.patch('edit.hd.tools.visual_review.expected_observations', return_value=expected), \
+             mock.patch('edit.hd.tools.motion_readability._managed', return_value=False), \
+             mock.patch('edit.hd.tools.state.approve') as approve, \
+             mock.patch('edit.hd.tools.state.load_job', return_value=job):
+            run_stage._review(job, 'preview', review)
+            receipt = json.loads((self.root / 'manifests/local-qa-preview-r19.json').read_text())
+            self.assertEqual(receipt['reviewed_by'], 'user')
+            self.assertEqual(receipt['user_confirmation'], details['user_confirmation'])
+            self.assertIs(receipt['audio_listened'], True)
+            approve.assert_called_once_with(job, 'preview')
+            approve.reset_mock()
+            with self.assertRaises(ValueError):
+                run_stage._review(job, 'preview', {**review, 'audio_listened': False})
+            approve.assert_not_called()
+
     def test_delivery_uses_host_qa_without_final_user_confirmation(self):
         records = [{'path': '12-delivery/final.mp4', 'sha256': 'b'*64, 'bytes': 12}]
         job = SimpleNamespace(job_id='this-job', job_dir=self.root, revision=19,

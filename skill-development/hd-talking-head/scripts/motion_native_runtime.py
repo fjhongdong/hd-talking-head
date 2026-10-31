@@ -4,13 +4,80 @@ import argparse
 import hashlib
 import json
 import os
+import platform
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import tempfile
+from adapter_kit import sha256_file
 
 PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0'),
             'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
+
+BLENDER_VERSION = '5.1.2'
+BLENDER_ARCHIVES = {
+    ('Darwin', 'arm64'): ('blender-5.1.2-macos-arm64.dmg',
+        'f104ffee2ba6aee32328e5c203b7e4608d8a1745f7bbcf2766f3b9777e8fbe17',
+        'Blender.app/Contents/MacOS/Blender'),
+}
+
+
+def _blender_distribution():
+    try:
+        filename, digest, executable = BLENDER_ARCHIVES[(platform.system(), platform.machine())]
+    except KeyError as error:
+        raise ValueError('Project-local Blender preparation requires this package target: macOS arm64') from error
+    return {'filename': filename, 'sha256': digest, 'executable': executable,
+            'url': 'https://download.blender.org/release/Blender5.1/' + filename}
+
+
+def blender_runtime_root(project):
+    root = Path(project).resolve(strict=True) / ('skill-development/runtime/motion-native-blender-' + BLENDER_VERSION)
+    if root.resolve() != root.absolute():
+        raise ValueError('Blender must stay in the separate project runtime directory')
+    return root
+
+
+def blender_environment(project):
+    root = blender_runtime_root(project)
+    inherited = {key: value for key, value in os.environ.items() if key not in {'PYTHONPATH', 'PYTHONHOME'}}
+    return {**inherited, 'BLENDER_USER_RESOURCES': str(root / 'user-resources'),
+            'XDG_CACHE_HOME': str(root / 'cache'), 'PYTHONDONTWRITEBYTECODE': '1'}
+
+
+def prepare_template_dependencies(project, *, dependency_id, template_id):
+    if (dependency_id, template_id) != ('mg-styles-15', '3d-render'):
+        return {'status': 'not_required'}
+    root = blender_runtime_root(project)
+    distribution = _blender_distribution()
+    if root.exists():
+        return check_template_dependencies(project, dependency_id=dependency_id, template_id=template_id)
+    root.parent.mkdir(parents=True, exist_ok=True)
+    downloads = root.parent / ('motion-native-blender-' + BLENDER_VERSION + '-downloads')
+    downloads.mkdir(exist_ok=True)
+    archive = downloads / distribution['filename']
+    if not archive.exists():
+        subprocess.run(['curl', '--fail', '--location', '--output', str(archive), distribution['url']],
+                       check=True, capture_output=True, text=True, timeout=600)
+    archive_sha = sha256_file(archive)
+    if archive_sha != distribution['sha256']:
+        raise ValueError('Blender archive differs from its official pinned SHA256; preserve it and stop')
+    with tempfile.TemporaryDirectory(prefix='.blender-install-', dir=root.parent) as temporary:
+        stage = Path(temporary); installed = stage / 'installed'; installed.mkdir()
+        mount = stage / 'mount'; mount.mkdir()
+        subprocess.run(['hdiutil', 'attach', str(archive), '-readonly', '-nobrowse', '-mountpoint', str(mount)],
+                       check=True, capture_output=True, text=True, timeout=60)
+        try:
+            shutil.copytree(mount / 'Blender.app', installed / 'Blender.app', symlinks=True)
+        finally:
+            subprocess.run(['hdiutil', 'detach', str(mount)], check=True, capture_output=True, text=True, timeout=60)
+        executable = installed / distribution['executable']
+        executable_sha = sha256_file(executable)
+        (installed / 'source.json').write_text(json.dumps({**distribution, 'version': BLENDER_VERSION,
+            'executable_sha256': executable_sha}, indent=2) + '\n')
+        installed.rename(root)
+    return check_template_dependencies(project, dependency_id=dependency_id, template_id=template_id)
 
 def locked_files(project, dependency_id):
     name = PACKAGES[dependency_id][0]
@@ -158,24 +225,38 @@ def check_template_dependencies(project, *, dependency_id, template_id, mode='re
         raise ValueError('Unknown native template dependency check mode')
     if mode == 'reuse' or (dependency_id, template_id) != ('mg-styles-15', '3d-render'):
         return {'status': 'not_required'}
-    executable = shutil.which('blender')
+    root = blender_runtime_root(project)
+    distribution = _blender_distribution()
+    local = root / distribution['executable']
+    if root.exists() and not local.is_file():
+        raise ValueError('Project-local Blender installation is incomplete; preserve it and stop')
+    executable = str(local) if local.is_file() else shutil.which('blender')
     application = Path('/Applications/Blender.app/Contents/MacOS/Blender')
     if executable is None and application.is_file():
         executable = str(application)
     if executable is None:
         raise ValueError('MG 3d-render requires Blender 5.1 with Cycles before visual confirmation; '
                          'Blender is not installed. Preserve this template and stop its preparation.')
+    if executable == str(local):
+        metadata = json.loads((root / 'source.json').read_bytes())
+        if metadata.get('version') != BLENDER_VERSION or any(metadata.get(key) != value for key, value in distribution.items()):
+            raise ValueError('Project-local Blender source identity changed')
+        digest = sha256_file(local)
+        if digest != metadata.get('executable_sha256'):
+            raise ValueError('Project-local Blender executable changed')
     expression = ("import bpy,json; print('HD_MG_BLENDER=' + json.dumps({'version':list(bpy.app.version),"
                   "'cycles':bool(bpy.app.build_options.cycles)}))")
     result = subprocess.run([executable, '--background', '--factory-startup', '--python-expr', expression],
-                            capture_output=True, text=True, check=True, timeout=30)
+                            capture_output=True, text=True, check=True, timeout=30, env=blender_environment(project))
     records = [line[len('HD_MG_BLENDER='):] for line in result.stdout.splitlines()
                if line.startswith('HD_MG_BLENDER=')]
     identity = json.loads(records[0]) if len(records) == 1 else {}
     if (not isinstance(identity.get('version'), list) or identity['version'][:2] != [5, 1]
             or identity.get('cycles') is not True):
         raise ValueError('MG 3d-render requires the original Blender 5.1/Cycles environment')
-    return {'status': 'ready', 'blender': str(Path(executable).resolve(strict=True)), **identity}
+    binary_sha = sha256_file(executable)
+    return {'status': 'ready', 'blender': str(Path(executable).resolve(strict=True)),
+            'executable_sha256': binary_sha, **identity}
 
 
 def prepare(project, *, dependency_id='barty-motion-graphics'):
@@ -216,6 +297,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project-root', type=Path, required=True)
     parser.add_argument('--dependency-id', default='barty-motion-graphics')
+    parser.add_argument('--template-id', help='Prepare/check this selected native template only')
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    print(json.dumps((check if args.check else prepare)(args.project_root, dependency_id=args.dependency_id)))
+    if args.template_id:
+        action = check_template_dependencies if args.check else prepare_template_dependencies
+        print(json.dumps(action(args.project_root, dependency_id=args.dependency_id, template_id=args.template_id)))
+    else:
+        print(json.dumps((check if args.check else prepare)(args.project_root, dependency_id=args.dependency_id)))

@@ -22,4 +22,12 @@ python3.12 <skill>/scripts/motion_native_runtime.py --project-root <project> --d
 
 完整源码的发布正本为包根 source-repositories/index.json 对应的 mg-styles-15.source.part-* 归档，展开 vendor 树不重复进入 release-manifest。run.py prepare 先校验包内 index/归档，再由 prepare_sources 从缺失目录恢复完整源码，逐文件及原始内部软链复核；已有目录不会被覆盖。普通 Job 不联网抓源码、不全局安装，原生 adapter 仍在每次调用时验证完整固定树。
 
-整表确认前，现有准备入口只对已选 3d-render 探测真实 Blender 5.1/Cycles；缺失或版本不符即停止该项准备，不安装到全局，也不换成HTML假3D。其他14风格和普通启动不检查Blender；原生已完成且已审结果经原有验证消费时不要求Blender。当前接入不等于本机15风格均已渲染，实际样片仅代表所选风格。
+整表确认前，只对本次待制作且已选 `3d-render` 准备项目内固定 Blender 5.1.2/Cycles：从官方固定包及 SHA256 恢复到 `skill-development/runtime/motion-native-blender-5.1.2/`，核对实际可执行文件和 Cycles；不覆盖全局安装。其他14风格和普通启动不准备或探测 Blender，已审核媒体复用也不要求 Blender 实物。独立入口为：
+
+```bash
+python3.12 <skill>/scripts/motion_native_runtime.py --project-root <project> --dependency-id mg-styles-15 --template-id 3d-render
+```
+
+3D 制作完整执行原生 README、提示词和 Blender 工作流：先由真实 Blender 生成场景及序列帧，再由原生 HTML 文字／颗粒与 harness 合成最终视频。前置 Blender 命令、真实输入、生成资产和最终合成记录在同一原生调用中；序列帧作为后续合成的真实输入冻结，不能只检查 Blender 版本就宣称完整制作通过。作者代码及未声明资产的变化仍停止；失败与早期产物保留，不能覆盖或倒签。
+
+代表样片须经过真实 3D 渲染、原生合成、正式组件消费与已审核结果复用，检查竖屏、中文、材质、动作与阅读时间。当前验证仅代表实际所选风格及环境，不声称15风格的所有新主题均已视觉通过。
