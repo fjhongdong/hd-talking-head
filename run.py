@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
-PACKAGE_ROOT = Path(__file__).resolve().parent
-SKILL_ROOT = PACKAGE_ROOT / "skill-development" / "hd-talking-head"
-SCRIPTS = SKILL_ROOT / "scripts"
+_path_module = Path(__file__).resolve().parent / "scripts/package_paths.py"
+if not _path_module.is_file():
+    print("Skill 包不完整，缺少启动文件：scripts/package_paths.py；已停止，请恢复同版本完整包。",
+          file=sys.stderr)
+    raise SystemExit(2)
+
+from scripts.package_paths import PACKAGE_ROOT, SCRIPTS
 
 COMMANDS = {
     "initialize_video_job": "initialize_video_job.py",

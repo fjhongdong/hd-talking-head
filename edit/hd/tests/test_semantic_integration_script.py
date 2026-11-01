@@ -11,7 +11,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = (
-    ROOT / "skill-development/hd-talking-head/tests"
+    ROOT / "tests"
     / "render_semantic_state_integration.py"
 )
 RENDERER = Path(__file__).resolve().parents[1] / "tools/semantic_state_renderer.cjs"

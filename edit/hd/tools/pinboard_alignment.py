@@ -1,5 +1,6 @@
 """Own validation for Overlay Studio's native pin-board adapter."""
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 import importlib.util
 import math
 from pathlib import Path
@@ -13,7 +14,7 @@ def _segment_word_time(word: Mapping, cuts: Sequence[Mapping]) -> float:
     return float(positions[0])
 def execution_contract():
     """Load our current pure input contract without preparing the native runtime."""
-    entry = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/overlay_studio_adapter.py"
+    entry = PACKAGE_ROOT / "scripts/overlay_studio_adapter.py"
     spec = importlib.util.spec_from_file_location("_pinboard_execution_contract", entry)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

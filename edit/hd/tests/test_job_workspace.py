@@ -12,14 +12,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_PATH = (
     ROOT
-    / "skill-development/hd-talking-head"
+    / "."
     / "scripts"
     / "create_job_workspace.py"
 )
 INITIALIZER_PATH = SCRIPT_PATH.with_name("initialize_video_job.py")
 CONTRACT_PATH = (
     ROOT
-    / "skill-development/hd-talking-head"
+    / "."
     / "references"
     / "job-workspace-contract.md"
 )

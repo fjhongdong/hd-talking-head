@@ -1,6 +1,7 @@
 """Render and verify the native 9:16 five-shot B-roll canary reel."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import argparse
 import os
@@ -25,10 +26,6 @@ SHOT_COUNT = 5
 SHOT_DURATION = 6
 TOTAL_DURATION = SHOT_COUNT * SHOT_DURATION
 HYPERFRAMES_VERSION = "0.7.104"
-DEFAULT_HYPERFRAMES = Path(
-    "/Users/Abner/Library/Application Support/erduo-hyperframes-broll/"
-    "runtime/node_modules/.bin/hyperframes"
-)
 ROUTES = {"code", "official", "ai"}
 AVATAR_POSITIONS = {"bottom-left", "bottom-right"}
 BANNED_FILLER = {
@@ -149,7 +146,7 @@ def load_spec(path: Path) -> dict[str, Any]:
     return validate_spec(payload)
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = PACKAGE_ROOT
 CANARY_TEMPLATE = ROOT / "edit/hd/canary/index.template.html"
 
 
@@ -750,7 +747,7 @@ def render_canary(
     official_source: Path,
     ai_source: Path,
     output_dir: Path,
-    runtime: Path = DEFAULT_HYPERFRAMES,
+    runtime: Path,
 ) -> dict[str, Any]:
     spec = load_spec(spec_path)
     avatar = _require_source(avatar_source, "avatar")
@@ -850,7 +847,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--official-source", type=Path, required=True)
     parser.add_argument("--ai-source", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--runtime", type=Path, default=DEFAULT_HYPERFRAMES)
+    parser.add_argument("--runtime", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         result = render_canary(

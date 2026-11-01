@@ -1,6 +1,7 @@
 """Strict gbro-cover-design rendering primitives for the HD workflow."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import copy
 import base64
@@ -22,7 +23,7 @@ from typing import Callable, Iterable
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
-from edit.v5.tools import openlux_images
+from edit.hd.tools import openlux_images
 from edit.hd.tools import material_usage, state
 
 __all__ = [
@@ -64,7 +65,7 @@ _FONT_PATHS = (
     Path("/System/Library/Fonts/Hiragino Sans GB.ttc"),
     Path("/Library/Fonts/Arial Unicode.ttf"),
     Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
-    Path(__file__).resolve().parents[3] / "skill-development/vendor/adu-motion-video/assets/fonts/NotoSansSC.ttf",
+    PACKAGE_ROOT / "vendor/adu-motion-video/assets/fonts/NotoSansSC.ttf",
 )
 _ASPECT_OUTPUTS = {
     "16:9": ("cover-16x9.png", (1920, 1080)),

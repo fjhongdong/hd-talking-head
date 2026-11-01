@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Composition, registerRoot, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Sketch, Panel, Plate, Connector, Node, Label, DrawPath, inOut2} from '../upstream/template/motion-systems/schematic';
+import {Sketch, Panel, Plate, Connector, Node, Label, DrawPath, inOut2} from '../../../../../vendor/talkcraft/template/motion-systems/schematic';
 import type {ArollOverlayInput, RelationOverlayInput, ThresholdOverlayInput} from './types';
 
 const ink = '#f3f6fb';

@@ -12,7 +12,7 @@ from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
-PATH = ROOT / 'skill-development/hd-talking-head/scripts/semantic_state_adapter.py'
+PATH = ROOT / 'scripts/semantic_state_adapter.py'
 
 
 class SemanticSkillAdapterTests(unittest.TestCase):

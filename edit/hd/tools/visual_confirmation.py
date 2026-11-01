@@ -1,5 +1,6 @@
 """Immutable visual proposal, source approval, and realized production evidence."""
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 import copy
 import hashlib
 import os
@@ -58,7 +59,7 @@ def native_candidate_id(dependency, brief, segment=None, component_id=None):
 
 def _native_result_adapter(dependency):
     import importlib.util
-    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts" / (NATIVE_RESULT_MODULES[dependency] + '.py')
+    path = PACKAGE_ROOT / "scripts" / (NATIVE_RESULT_MODULES[dependency] + '.py')
     spec = importlib.util.spec_from_file_location("_native_mapping_" + dependency.replace('-', '_'), path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -524,7 +525,7 @@ def _routing_distribution(rows, treatment):
 
 def _validate_template_choices(job, director, treatment):
     from . import broll_skill_selection, motion_match_cache, overlay_selection
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     selection = treatment.get("skill_selection", {})
     bindings = {(s["segment_id"], cid): value for s in director["segments"]
                 for cid, value in s.get("bindings", {}).items()}
@@ -940,7 +941,7 @@ def _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director
     from . import generation_queue, motion_capabilities
     from . import state
     root = Path(root)
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     eligible = planned_generation_targets(project, frozen, frozen_treatment, job_dir=root)
     current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
     previous_segments = {s['segment_id']: s for s in frozen['segments']}
@@ -980,9 +981,9 @@ def _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director
                           and r.get('template_id') == before['template_id']), None)
         if not candidate or motion_capabilities._native_input_check(project, candidate, brief, job_dir=root)['status'] != 'pass':
             raise VisualConfirmationError('prepared Paper native inputs are invalid')
-        entrypoint = project / 'skill-development/hd-talking-head' / before['entrypoint']
+        entrypoint = project / before['entrypoint']
         source_sha = artifacts.sha256_file(entrypoint)
-        route_path = project / 'skill-development/vendor/paper-collage-ad-codex/references/hyperframes-route.md'
+        route_path = project / 'vendor/paper-collage-ad-codex/references/hyperframes-route.md'
         if (brief.get('source_pins', {}).get('route') != 'paper-collage-ad/hyperframes'
                 or brief['source_pins'].get('sha256') != artifacts.sha256_file(route_path)):
             raise VisualConfirmationError('prepared Paper original route pin changed')
@@ -1059,7 +1060,7 @@ def _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director,
     """Bind an approved deferred Wake image to its original native route."""
     from . import generation_queue, state
     root = Path(root)
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
     old_segments = {s['segment_id']: s for s in frozen['segments']}
     new_segments = {s['segment_id']: s for s in current['segments']}
@@ -1132,7 +1133,7 @@ def _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director,
         if ((ref['sha256'], ref['bytes']) != (outputs[0]['sha256'], outputs[0]['bytes'])
                 or brief['image'] != {'job_path': ref['path'], 'sha256': ref['sha256'], 'byte_count': ref['bytes']}):
             raise VisualConfirmationError('prepared Wake brief does not bind the completed image')
-        source_sha = artifacts.sha256_file(project / 'skill-development/hd-talking-head' / before['entrypoint'])
+        source_sha = artifacts.sha256_file(project / before['entrypoint'])
         expected = {'source_entrypoint': before['entrypoint'], 'source_sha256': source_sha,
                     'renderer_version': adapter.UPSTREAM_COMMIT, 'template_version': before['producer_version'],
                     'template_origin': 'custom_fallback', 'adaptation_level': 'structural',
@@ -1469,7 +1470,7 @@ def _normalize_lemo_typography(root, frozen, frozen_treatment, director, treatme
     import importlib.util
     import json
     current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
-    script = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts/upstream_scene_adapter.py'
+    script = PACKAGE_ROOT / 'scripts/upstream_scene_adapter.py'
     spec = importlib.util.spec_from_file_location('_lemo_typography_adapter', script)
     adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
     old_segments = {s['segment_id']: s for s in frozen['segments']}
@@ -1535,7 +1536,7 @@ def _normalize_lemo_typography(root, frozen, frozen_treatment, director, treatme
                 if argv.count(flag) != 1 or argv.index(flag) + 1 >= len(argv):
                     raise VisualConfirmationError('Lemo typography call is incomplete')
                 return Path(argv[argv.index(flag)+1]).resolve()
-            upstream = Path(__file__).resolve().parents[3] / 'skill-development/vendor/lemo-opuscar'
+            upstream = PACKAGE_ROOT / 'vendor/lemo-opuscar'
             if upstream.is_symlink():
                 raise VisualConfirmationError('Lemo upstream checkout cannot be a symlink')
             if (call.get('exit_code') != 0 or len(argv) < 2 or Path(argv[1]).resolve() != script.resolve()
@@ -1903,8 +1904,8 @@ def _normalize_hyperframes_revisions(root, frozen, frozen_treatment, director, t
     """Verify a registered native overlay repair before normalizing its comparison copy."""
     from . import motion_readability, overlay_alignment
     import importlib.util
-    project = Path(__file__).resolve().parents[3]
-    entry = project / 'skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py'
+    project = PACKAGE_ROOT
+    entry = project / 'scripts/hyperframes_native_adapter.py'
     spec = importlib.util.spec_from_file_location('_hyperframes_revision', entry)
     native = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(native)
@@ -1960,7 +1961,7 @@ def _normalize_hyperframes_revisions(root, frozen, frozen_treatment, director, t
                     for ref in records[0])):
                 raise VisualConfirmationError('HyperFrames repair changed its native asset inventory')
             route = new['upstream_route']
-            source = project / '参考项目/B-roll开源方案/hyperframes' / native.ROUTES[route]
+            source = project / 'vendor/hyperframes' / native.ROUTES[route]
             if artifacts.sha256_file(source) != new['source_pins']['sha256']:
                 raise VisualConfirmationError('HyperFrames repair changed its original native source')
             if any(mounts[0].get(k) != mounts[1].get(k) for k in
@@ -2067,7 +2068,7 @@ def _validate_hyperframes_host_revision(before, after, project):
     old, new = Host(before), Host(after)
     if (old.scripts, old.events, old.links) != (new.scripts, new.events, new.links):
         raise VisualConfirmationError('HyperFrames repair changed parent scripts, events or stylesheet sources')
-    parser = project / 'skill-development/runtime/hyperframes-0.8.167/node_modules/css-tree'
+    parser = project / 'runtime/hyperframes-0.8.167/node_modules/css-tree'
     node = shutil.which('node')
     if not node or not (parser / 'package.json').is_file():
         raise VisualConfirmationError('HyperFrames repair needs Node and css-tree from its prepared HyperFrames runtime')
@@ -2324,7 +2325,7 @@ def _validate_generated_readability(root, proposal, frozen, frozen_treatment, di
     keys = {key for key, row in old.items() if row.get('pending_generation') is True}
     if not keys:
         return treatment
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     eligible = planned_generation_targets(project, frozen, frozen_treatment, job_dir=root)
     if not keys <= eligible:
         raise VisualConfirmationError('deferred text is not an uncreated approved generation target')

@@ -1,10 +1,11 @@
 """Load the one maintained avatar contract; do not vendor another Skill copy."""
+from scripts.package_paths import PACKAGE_ROOT
 import importlib.util
 from pathlib import Path
 
 
 def _load():
-    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/avatar_profile.py"
+    path = PACKAGE_ROOT / "scripts/avatar_profile.py"
     spec = importlib.util.spec_from_file_location("hd_shared_avatar_profile", path)
     if spec is None or spec.loader is None:
         raise ValueError("avatar profile Skill entrypoint is unavailable")

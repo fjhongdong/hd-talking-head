@@ -1494,7 +1494,7 @@ class SubtitleContractTests(unittest.TestCase):
 
     def test_long_layout_uses_bounded_font_width_measurements(self) -> None:
         from edit.hd.tools import subtitles
-        from edit.v5.tools import bold_subtitles
+        from edit.hd.tools import bold_subtitles
 
         text = "字幕性能验证" * 7 + "字幕"
         self.assertEqual(len(text), 44)
@@ -2157,7 +2157,7 @@ class SubtitleRenderTests(unittest.TestCase):
 
     def test_cross_line_emphasis_becomes_one_complete_art_word_group(self) -> None:
         from edit.hd.tools import subtitles
-        from edit.v5.tools import bold_subtitles
+        from edit.hd.tools import bold_subtitles
 
         text = "AI 模型 正在 改变 工作"
         emphasis = "正在 改变"
@@ -2241,7 +2241,7 @@ class SubtitleRenderTests(unittest.TestCase):
 
     def test_layout_never_exceeds_two_lines(self) -> None:
         from edit.hd.tools import subtitles
-        from edit.v5.tools import bold_subtitles
+        from edit.hd.tools import bold_subtitles
 
         text = "这是用于验证字幕两行限制的完整中文句子"
         font_path = bold_subtitles.find_cjk_font(text)
@@ -2343,7 +2343,7 @@ class SubtitleRenderTests(unittest.TestCase):
 
     def test_public_v5_encoder_produces_real_complete_vp9_alpha(self) -> None:
         from edit.hd.tools import subtitles
-        from edit.v5.tools import bold_subtitles
+        from edit.hd.tools import bold_subtitles
 
         plan = _plan()
         for index, cue in enumerate(plan["cues"]):
@@ -2907,7 +2907,7 @@ class SubtitleStageTests(unittest.TestCase):
 
     def test_v3_broll_uses_real_transparent_media_and_exact_sidecars(self) -> None:
         from edit.hd.tools import contract_artifacts, subtitles
-        from edit.v5.tools import bold_subtitles
+        from edit.hd.tools import bold_subtitles
 
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             job, _track = _ready_v2_job(

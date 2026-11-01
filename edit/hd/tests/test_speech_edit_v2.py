@@ -867,7 +867,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
                 with self.subTest(invalid=invalid), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
                     speech_edit_v2.validate_cleanup_review(self.job, {**review, **invalid})
             # Exercise the real existing QA writer: user must not be rewritten to host.
-            script = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/run_stage.py"
+            script = Path(__file__).resolve().parents[3] / "scripts/run_stage.py"
             spec = importlib.util.spec_from_file_location("speech_user_run_stage", script)
             runner = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(runner)
@@ -912,7 +912,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
                             {"edit_structure_audio_review": {**binding, "final_audio_review": "pass"}}):
                 with self.subTest(invalid=invalid), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
                     speech_edit_v2.validate_edit_review(self.job, {**review, **invalid})
-            script = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/run_stage.py"
+            script = Path(__file__).resolve().parents[3] / "scripts/run_stage.py"
             spec = importlib.util.spec_from_file_location("edit_user_run_stage", script)
             runner = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(runner)

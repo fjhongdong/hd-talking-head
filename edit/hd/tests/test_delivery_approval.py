@@ -17,7 +17,7 @@ from edit.hd.tests.test_startup import approve_fixture_setup
 from edit.hd.tools import cli, contract_artifacts, delivery_approval, qa_delivery_v2, state
 
 
-SKILL = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head"
+SKILL = Path(__file__).resolve().parents[3] / "."
 
 
 class DeliveryApprovalTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """Strict contracts for the HD TalkCraft card registry and render briefs."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import copy
 import hashlib
@@ -17,7 +18,7 @@ class TalkCraftContractError(ValueError):
     """Raised before rendering when a TalkCraft identity or brief is invalid."""
 
 
-INTEGRATION_ROOT = Path(__file__).parents[1] / "integrations" / "talkcraft"
+INTEGRATION_ROOT = PACKAGE_ROOT / "edit/hd/integrations/talkcraft"
 DEFAULT_UPSTREAM_MANIFEST = INTEGRATION_ROOT / "upstream-manifest.json"
 DEFAULT_CARD_REGISTRY = INTEGRATION_ROOT / "runtime" / "card-registry.json"
 DEPENDENCY_ID = "hd-talking-head-talkcraft"

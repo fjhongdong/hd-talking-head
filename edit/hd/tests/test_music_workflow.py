@@ -141,7 +141,7 @@ class MusicWorkflowTests(unittest.TestCase):
         receipt = material_usage.load_current_receipt(self.job, "preview")
         self.assertEqual(len(receipt["references"]), 2)
         spec = importlib.util.spec_from_file_location("music_material_change",
-            Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/manage_user_materials.py")
+            Path(__file__).resolve().parents[3] / "scripts/manage_user_materials.py")
         change = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(change)
         earliest, affected, scope = change._invalidation_plan(self.job, state,
@@ -163,7 +163,7 @@ class MusicWorkflowTests(unittest.TestCase):
             delivery_sha256=delivery.manifest["final_sha256"],
             user_confirmation="测试夹具：确认混音成片，不是生产试听批准")
         spec = importlib.util.spec_from_file_location("music_workflow_audit",
-            Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/audit_job_completion.py")
+            Path(__file__).resolve().parents[3] / "scripts/audit_job_completion.py")
         audit = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(audit)
         with mock.patch.object(audit, "_probe_media", return_value={

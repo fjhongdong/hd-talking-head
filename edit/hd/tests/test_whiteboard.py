@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "skill-development/hd-talking-head/scripts"))
+sys.path.insert(0, str(ROOT / "scripts"))
 import dependency_preflight as preflight
 import whiteboard_adapter as whiteboard
 import render_whiteboard as wrapper
@@ -32,7 +32,7 @@ def brief_fixture():
 
 
 def make_adapter(loader):
-    vendor = ROOT / "skill-development/vendor"
+    vendor = ROOT / "vendor"
     engine = vendor / "whiteboard-video-engine"
     return whiteboard.create_adapter(vendor / "codex-whiteboard-video-skill", engine, sys.executable,
                                      engine / ".venv/bin/python", shutil.which("ffmpeg"), shutil.which("ffprobe"), loader)
@@ -47,7 +47,7 @@ class WhiteboardContracts(unittest.TestCase):
                    "executor": "reference_adapter", "primary_renderer": "Whiteboard"}
         self.assertEqual(preflight._selected_recipe_binding(item, [binding]), binding)
         result = preflight._check_binding_probe(item, binding, project_root=ROOT,
-            reference_root=ROOT / "参考项目/B-roll开源方案", dependency_root=whiteboard.SKILL)
+            reference_root=ROOT / "vendor", dependency_root=whiteboard.SKILL)
         self.assertEqual(result["status"], "bound", result)
 
     def test_only_bounded_silent_svg_settings_are_accepted(self):
@@ -86,7 +86,7 @@ class WhiteboardContracts(unittest.TestCase):
                 brief["source_binding"][key] = original
 
     def test_changed_upstream_is_rejected_without_rendering(self):
-        engine = ROOT / "skill-development/vendor/whiteboard-video-engine"
+        engine = ROOT / "vendor/whiteboard-video-engine"
         with tempfile.TemporaryDirectory(prefix="whiteboard-test-") as directory:
             upstream = Path(directory) / "whiteboard_cli.py"
             upstream.write_text("raise RuntimeError('must not execute')\n")

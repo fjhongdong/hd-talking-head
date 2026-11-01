@@ -9,7 +9,7 @@ from unittest.mock import patch
 from edit.hd.tools.overlay_alignment import validate_treatment, _native_events, bind_native_clock, bind_native_slots, _native_clock
 from edit.hd.tools.overlay_selection import validate_selection
 
-SOURCE_ROOT = Path(__file__).resolve().parents[3] / "参考项目/B-roll开源方案/hyperframes/registry/components"
+SOURCE_ROOT = Path(__file__).resolve().parents[3] / "vendor/hyperframes/registry/components"
 
 
 class OverlayAlignmentTest(unittest.TestCase):

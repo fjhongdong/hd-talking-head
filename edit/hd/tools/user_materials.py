@@ -1,11 +1,12 @@
 """Bridge runtime callers to the one canonical material lifecycle contract."""
+from scripts.package_paths import PACKAGE_ROOT
 import importlib.util
 import os
 from pathlib import Path
 import sys
 
 
-_CANONICAL_SCRIPTS = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+_CANONICAL_SCRIPTS = PACKAGE_ROOT / "scripts"
 
 
 def _workspace(job_or_workspace):

@@ -9,11 +9,16 @@ import json
 import re
 import stat
 from pathlib import Path, PurePosixPath
+import sys
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+from scripts.package_paths import PACKAGE_ROOT
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = PACKAGE_ROOT / "edit/hd/integrations/talkcraft"
 PRODUCTION = ROOT / "runtime"
-UPSTREAM = ROOT / "upstream"
+UPSTREAM = PACKAGE_ROOT / "vendor/talkcraft"
 
 
 class RuntimeCheckError(ValueError):
@@ -118,9 +123,8 @@ def _check_identity(root: Path, production: Path) -> None:
             raise RuntimeCheckError(f"TalkCraft {name} differs from the qualified registry")
 
 
-def check_runtime(root: Path = ROOT) -> dict[str, object]:
+def check_runtime(root: Path = ROOT, *, upstream: Path = UPSTREAM) -> dict[str, object]:
     production = root / "runtime"
-    upstream = root / "upstream"
     package = _json(production / "package.json")
     requested = {
         **package.get("dependencies", {}),

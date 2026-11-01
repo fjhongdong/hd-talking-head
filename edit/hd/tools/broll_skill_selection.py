@@ -4,6 +4,7 @@ The host judges meaning, visual quality and shared visual patterns. Discovery
 is not runtime readiness: existing preflight and adapter validators still apply.
 """
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import ast
 import copy
@@ -37,7 +38,7 @@ _REGISTRY_DEPENDENT = {
 
 def talkcraft_candidates(project_root: Path) -> list[dict]:
     """Read original callable recipes and retain their actual native role."""
-    source = Path(project_root) / 'skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py'
+    source = Path(project_root) / 'scripts/talkcraft_skill_adapter.py'
     spec = importlib.util.spec_from_file_location('_talkcraft_native_catalog', source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -105,7 +106,7 @@ def native_timing_minimum(template: Mapping, *, variant_keys=None) -> float:
 
 def motion_native_candidates(project_root: Path) -> list[dict]:
     """Whole creative workflows; their shared browser is not a source channel."""
-    source = Path(project_root) / 'skill-development/hd-talking-head/scripts/motion_native_skill_adapter.py'
+    source = Path(project_root) / 'scripts/motion_native_skill_adapter.py'
     spec = importlib.util.spec_from_file_location('_motion_native_catalog', source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -227,7 +228,7 @@ def _native_seconds_ceiling(tree):
 def _discover_native_candidates(project_root: Path) -> list[dict]:
     """Read actual bridge routes and qualified cards, not caller favorites."""
     project = Path(project_root).resolve(strict=True)
-    skill = project / "skill-development/hd-talking-head"
+    skill = project
     registry = contract_artifacts.read_json_artifact(
         skill / "references/verified-template-registry.json")
     templates = {t["template_id"]: t for t in registry["templates"]
@@ -252,7 +253,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         if not isinstance(dep, str) or not (skill / entry).is_file():
             raise ValueError(f"B-roll discovery entry is incomplete: {module}")
         if module == "upstream_scene_adapter":
-            styles = project / "skill-development/vendor/lemo-opuscar/styles"
+            styles = project / "vendor/lemo-opuscar/styles"
             entries = sorted(p for p in styles.glob("*/style.json") if p.parent.name != "_template")
             if len(entries) != 59:
                 raise ValueError("Lemo discovery requires the complete official 59-style catalog")
@@ -337,7 +338,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         ("muyang-flat-animation", "muyang-flat-animation/muyang-flat-animation/SKILL.md"),
         ("gbro-collage-broll", "gbro-collage-broll/SKILL.md"),
     ):
-        source = project / "skill-development/vendor" / relative
+        source = project / "vendor" / relative
         if not source.is_file():
             raise ValueError(f"B-roll design Skill is unavailable: {dep}")
         add(dep, str(source.relative_to(project)), dep + "/design", "source",
@@ -1235,7 +1236,7 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
     module = row.get("adapter_module")
     if module == 'motion_native_skill_adapter' and row.get('timing_requirements'):
         minimum = max(minimum or 0, native_timing_minimum(row))
-    scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+    scripts = PACKAGE_ROOT / "scripts"
     if module in {"adu_native_adapter", "hypit_native_adapter", "motion_graphics_adapter",
                   "huashu_motion_adapter", "lemo_wake_adapter", "upstream_scene_adapter",
                   "talkcraft_native_adapter", "doudou_adapter", "riso_native_adapter"}:

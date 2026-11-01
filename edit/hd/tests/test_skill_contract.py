@@ -8,7 +8,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SKILL_ROOT = ROOT / "skill-development/hd-talking-head"
+SKILL_ROOT = ROOT / "."
 SKILL_PATH = SKILL_ROOT / "SKILL.md"
 REFERENCE_ROOT = SKILL_ROOT / "references"
 REFERENCE_PATHS = (

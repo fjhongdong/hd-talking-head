@@ -1,5 +1,6 @@
 """Check native overlay text and effective timing before visual publication."""
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import math
 import hashlib
@@ -243,8 +244,8 @@ def _stop_clock_check(process, identity, directory):
 
 def _assembled_clocks(entries):
     """Execute the actual installed compiler and native timelines, without export."""
-    project = Path(__file__).resolve().parents[3]
-    checker = project / "skill-development/hd-talking-head/scripts/check_native_overlay_clock.mjs"
+    project = PACKAGE_ROOT
+    checker = project / "scripts/check_native_overlay_clock.mjs"
     from .relation_browser_watchdog import _process_start_identity
     budgets, timeout = _clock_budgets(entries)
     with tempfile.TemporaryDirectory(prefix='hf-clock-') as temporary:
@@ -357,8 +358,8 @@ def _grid_tile_seconds(source, duration):
 
 def grid_input_clock(root, brief):
     """Read hash-bound public Grid inputs without preparing a runtime or claiming rendered QA."""
-    project = Path(__file__).resolve().parents[3]
-    entry = project / "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py"
+    project = PACKAGE_ROOT
+    entry = project / "scripts/hyperframes_native_adapter.py"
     spec = importlib.util.spec_from_file_location("_grid_execution_contract", entry)
     native = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(native)
@@ -384,7 +385,7 @@ def grid_input_clock(root, brief):
     duration = brief["composition"]["frames"] / 24
     if abs(_number(mount["data-duration"]) - duration) > 1e-6:
         raise ValueError("Grid mount differs from the exact candidate window")
-    source = (project / "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
+    source = (project / "vendor/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
     if hashlib.sha256(source).hexdigest() != brief["source_pins"]["sha256"]:
         raise ValueError("Grid original native source checksum differs")
     target = mount.get("data-composition-src")
@@ -620,7 +621,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list
             entry = _path(job.job_dir, brief["entry"]["job_path"])
             if artifacts.sha256_file(entry) != brief["entry"]["sha256"]:
                 raise ValueError(f"overlay HTML changed: {sid}")
-            observed = motion.inspect_native_clock(Path(__file__).resolve().parents[3], entry, brief)
+            observed = motion.inspect_native_clock(PACKAGE_ROOT, entry, brief)
             events = record.get("events")
             if (not isinstance(events, list) or len(events) != 1
                     or events[0].get("slot") != 0 or events[0].get("kind") != "reveal"
@@ -669,7 +670,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list
                 or len(assets) != 1
                 or artifacts.sha256_file(_path(job.job_dir, assets[0]["job_path"])) != assets[0]["sha256"]):
             raise ValueError(f"mounted native source differs from the declared route: {sid}")
-        source_path = (Path(__file__).resolve().parents[3] / "参考项目/B-roll开源方案/hyperframes"
+        source_path = (PACKAGE_ROOT / "vendor/hyperframes"
                        / "registry/components" / name / (name + ".html"))
         if artifacts.sha256_file(source_path) != brief["source_pins"]["sha256"]:
             raise ValueError(f"original native source changed: {sid}")

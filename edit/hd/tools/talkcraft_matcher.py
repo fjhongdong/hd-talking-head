@@ -1,6 +1,7 @@
 """Deterministically match approved speech intent to qualified TalkCraft cards."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import hashlib
 import json
@@ -25,7 +26,7 @@ class TalkCraftMatchError(ValueError):
     pass
 
 
-_CARDS_ROOT = DEFAULT_CARD_REGISTRY.parents[1] / "upstream" / "references" / "cards"
+_CARDS_ROOT = PACKAGE_ROOT / "vendor/talkcraft/references/cards"
 DEFAULT_SEMANTIC_INDEX = DEFAULT_CARD_REGISTRY.with_name("card-semantic-index.json")
 DEFAULT_EVENT_CAPABILITIES = DEFAULT_CARD_REGISTRY.with_name("card-event-capabilities.json")
 EXPECTED_SEMANTIC_INDEX_SHA256 = "316dd5ff9f101fe20c16af8d62dddf57a39f5064862f2ef2361550a7cacd1889"

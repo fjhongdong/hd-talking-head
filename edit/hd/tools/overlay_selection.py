@@ -1,6 +1,7 @@
 """Explicit semantic review for native A-roll overlays."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 from collections import Counter
 from pathlib import Path
@@ -56,7 +57,7 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
             from .motion_capabilities import overlay_candidates, validate_overlay_capability
             if capabilities is None:
                 capabilities = {item["source_route"]: item for item in
-                                overlay_candidates(Path(__file__).resolve().parents[3])}
+                                overlay_candidates(PACKAGE_ROOT)}
             validate_overlay_capability(route, binding, registered=capabilities)
             key = (segment["segment_id"], component_id)
             if route != "hw-pipeline" and native_routes.get(key) != route:

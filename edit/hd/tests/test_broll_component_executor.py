@@ -3338,7 +3338,7 @@ class CodeDependencyExecutionTests(unittest.TestCase):
         from dataclasses import replace
         brief = b"{}"
         component = _code_component(brief)
-        record = json.loads((ROOT / "skill-development/hd-talking-head/references/verified-template-registry.json").read_text())["templates"][0]
+        record = json.loads((ROOT / "references/verified-template-registry.json").read_text())["templates"][0]
         for field in ("template_origin", "template_id", "template_version", "verification_id",
                       "adaptation_level", "source_entrypoint", "source_sha256", "sample_sha256",
                       "semantic_families", "capacity"):

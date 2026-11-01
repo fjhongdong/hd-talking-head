@@ -44,8 +44,8 @@ const projectRoot = path.resolve(adapterRoot, '../../../../../');
 const sourceFiles = [
   ...['entry.tsx', 'types.ts', 'render.mjs'].map((name) => path.join(adapterRoot, name)),
   ...['package.json', 'package-lock.json'].map((name) => path.join(adapterRoot, name)),
-  path.join(adapterRoot, '../upstream/template/motion-systems/schematic.tsx'),
-  path.join(adapterRoot, '../upstream/template/motion-systems/icons.ts'),
+  path.join(projectRoot, 'vendor/talkcraft/template/motion-systems/schematic.tsx'),
+  path.join(projectRoot, 'vendor/talkcraft/template/motion-systems/icons.ts'),
   path.join(runtime, 'package.json'),
   path.join(runtime, 'package-lock.json'),
 ];

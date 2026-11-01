@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 INTEGRATION = ROOT / "edit" / "hd" / "integrations" / "talkcraft"
-UPSTREAM = INTEGRATION / "upstream"
+UPSTREAM = ROOT / "vendor/talkcraft"
 MANIFEST_PATH = INTEGRATION / "upstream-manifest.json"
 PINNED_COMMIT = "ccb8a571f4bd620b5588bef4b264b5120f5042fc"
 SKILL_SHA256 = "146b31e1869d2e89e1286cd6b28629b6b8b3bd662bda845510c9dbfbb6cb0a1c"

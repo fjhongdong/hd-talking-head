@@ -1,4 +1,5 @@
 """Pure validation for readable text in motion overlays."""
+from scripts.package_paths import PACKAGE_ROOT
 import hashlib, json, re, math
 from pathlib import Path
 
@@ -246,7 +247,7 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
                 if not (job.job_dir / brief['result_record_path']).exists():
                     pending.add((segment['segment_id'], cid))
         from .visual_confirmation import planned_generation_targets
-        pending_generation = planned_generation_targets(Path(__file__).resolve().parents[3],
+        pending_generation = planned_generation_targets(PACKAGE_ROOT,
             director, treatment, job_dir=job.job_dir)
     elif phase != 'completed':
         raise ValueError('unknown motion readability phase')
@@ -298,14 +299,14 @@ def _published(job, stage, relative):
 
 
 def _policy():
-    root = Path(__file__).resolve().parents[3]
-    path = root / 'skill-development/hd-talking-head/references/production-defaults.json'
+    root = PACKAGE_ROOT
+    path = root / 'references/production-defaults.json'
     return json.loads(path.read_text())['motion_text'], path
 
 
 def _ocr(paths):
     import subprocess
-    script = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts/recognize_frame_text.swift'
+    script = PACKAGE_ROOT / 'scripts/recognize_frame_text.swift'
     result = subprocess.run(['/usr/bin/swift', str(script), *map(str, paths)], capture_output=True, text=True, timeout=max(60, len(paths) * 15))
     try:
         payload = json.loads(result.stdout)
@@ -340,7 +341,7 @@ def inspect_job(job, stage):
     plan, treatment, binding = _current_inputs(job)
     policy, policy_path = _policy()
     rules = Path(__file__).resolve()
-    swift = rules.parents[3] / 'skill-development/hd-talking-head/scripts/recognize_frame_text.swift'
+    swift = PACKAGE_ROOT / 'scripts/recognize_frame_text.swift'
     binding.update(stage=stage, artifacts=job.stages[stage]['artifacts'],
                    rules_sha256=artifacts.sha256_file(rules), engine_sha256=artifacts.sha256_file(swift),
                    policy_sha256=artifacts.sha256_file(policy_path))

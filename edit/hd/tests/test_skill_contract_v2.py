@@ -7,9 +7,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SKILL_ROOT = ROOT / "skill-development/hd-talking-head"
+SKILL_ROOT = ROOT / "."
 CHECKOUT_ROOT = ROOT.parent.parent if ROOT.parent.name == ".worktrees" else ROOT
-REFERENCE_ROOT = CHECKOUT_ROOT / "参考项目" / "B-roll开源方案"
+REFERENCE_ROOT = CHECKOUT_ROOT / "vendor"
 SOURCE_KINDS = {
     "local_material",
     "official_material",
@@ -40,7 +40,7 @@ def _load_router():
 
 
 class FullV2SourcePolicyTests(unittest.TestCase):
-    def test_authoritative_documents_share_one_exact_policy_block(self) -> None:
+    def test_authoritative_documents_link_one_exact_policy_block(self) -> None:
         expected_rules = {
             *(f"- `{kind}`" for kind in SOURCE_KINDS),
             "kind_priority: none",
@@ -52,6 +52,14 @@ class FullV2SourcePolicyTests(unittest.TestCase):
         for path in SOURCE_POLICY_PATHS:
             source = path.read_text(encoding="utf-8")
             blocks = [match.group("body") for match in SOURCE_POLICY_BLOCK.finditer(source)]
+            if path.name != "broll-capability-router.md":
+                with self.subTest(path=path.name, rule="policy-link"):
+                    self.assertEqual(blocks, [])
+                    self.assertRegex(
+                        source,
+                        r"\]\((?:references/)?broll-capability-router\.md(?:#[^)]+)?\)",
+                    )
+                continue
             with self.subTest(path=path.name, rule="single-policy-block"):
                 self.assertEqual(len(blocks), 1)
             if len(blocks) != 1:
@@ -68,16 +76,16 @@ class FullV2SourcePolicyTests(unittest.TestCase):
             "VisualPlan schema v3",
             "ShotRecipe v2",
             "不兼容旧 visual Job",
-            "旧 visual Job 重新执行 `visual_direction`",
+            "旧目录原有 Job 放弃，不迁移或重签",
         ):
             self.assertIn(phrase, combined)
 
 
 class FullV2DependencyAndAdapterTests(unittest.TestCase):
-    def test_all_ten_reference_adapters_have_existing_local_entrypoints(self) -> None:
+    def test_bundled_reference_adapters_have_existing_local_entrypoints(self) -> None:
         router = _load_router()
-        self.assertEqual(len(router.CAPABILITY_REGISTRY), 10)
-        for name, capability in router.CAPABILITY_REGISTRY.items():
+        for name in ("html-video", "HyperFrames", "video-use"):
+            capability = router.CAPABILITY_REGISTRY[name]
             repository = REFERENCE_ROOT / capability["directory"]
             self.assertTrue(repository.is_dir(), f"missing repository for {name}")
             for entrypoint in capability["entrypoints"]:

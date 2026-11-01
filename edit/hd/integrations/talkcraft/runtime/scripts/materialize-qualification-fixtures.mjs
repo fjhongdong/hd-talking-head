@@ -5,7 +5,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 
 const runtimeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const upstreamRoot = path.resolve(runtimeRoot, "..", "upstream");
+const upstreamRoot = path.resolve(runtimeRoot, "../../../../../vendor/talkcraft");
 const outputRoot = path.join(runtimeRoot, "qualification-fixtures");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 

@@ -9,11 +9,11 @@ edit/**/node_modules/
 node_modules/
 .venv/
 .cache/
-skill-development/runtime/
+/runtime/
 *.tsbuildinfo
 .visual-broll-install.lock
 .punk-cover-install.lock
 
-# Expanded complete upstream snapshots are restored from source-repositories.
-/skill-development/vendor/mg-styles-15/
-/skill-development/vendor/video-shotcraft/
+# Expanded complete upstream snapshots are restored from archives/sources.
+/vendor/mg-styles-15/
+/vendor/video-shotcraft/

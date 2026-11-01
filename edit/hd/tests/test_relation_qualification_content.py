@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
-PATH = ROOT / 'skill-development/hd-talking-head/scripts/verify_broll_template.py'
+PATH = ROOT / 'scripts/verify_broll_template.py'
 spec = importlib.util.spec_from_file_location('relation_qualification_content', PATH)
 verifier = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verifier)

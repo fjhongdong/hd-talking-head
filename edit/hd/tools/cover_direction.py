@@ -1,6 +1,7 @@
 """Approved cover direction bound to one content map and one person reference."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import hashlib
 import html
@@ -64,7 +65,7 @@ _FONT_PATHS = (
     Path("/System/Library/Fonts/PingFang.ttc"),
     Path("/System/Library/Fonts/Hiragino Sans GB.ttc"),
     Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
-    Path(__file__).resolve().parents[3] / "skill-development/vendor/adu-motion-video/assets/fonts/NotoSansSC.ttf",
+    PACKAGE_ROOT / "vendor/adu-motion-video/assets/fonts/NotoSansSC.ttf",
 )
 
 

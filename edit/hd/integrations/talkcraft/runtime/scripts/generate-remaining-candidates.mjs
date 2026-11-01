@@ -25,7 +25,7 @@ const labels={
   "tilt-3d-page":["页面倾转","空间展示"],"whip-pan-transition":["快速甩动","自然接景"],"word-relay-filmstrip":["关键词接力","形成叙事"],"x-follow-card":["关注动态","建立连接"]
 };
 for(const id of remaining){
-  const upstream=path.join(integration,"upstream/template/cards",`${id}.tsx`);
+  const upstream=path.resolve(integration,"../../../../vendor/talkcraft/template/cards",`${id}.tsx`);
   let source=fs.readFileSync(upstream,"utf8");
   const match=source.match(/export const meta = \{ width: \d+, height: \d+, fps: 30, durationInFrames: (\d+) \}/);
   const duration=Math.round(Number(match?.[1]??180)*24/30);

@@ -15,7 +15,7 @@ from edit.hd.tests.test_job_workspace import ROOT
 
 
 def preflight():
-    path = ROOT / "skill-development/hd-talking-head/scripts/dependency_preflight.py"
+    path = ROOT / "scripts/dependency_preflight.py"
     spec = importlib.util.spec_from_file_location("truthful_preflight", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -243,7 +243,7 @@ class LocalOfficialVideoTests(unittest.TestCase):
 
     def test_bound_job_report_skips_acquisition_only_while_local_video_is_valid(self):
         from edit.hd.tests.test_job_workspace import _load_initializer_module
-        fixture_path = ROOT / "skill-development/hd-talking-head/tests/test_dependency_preflight.py"
+        fixture_path = ROOT / "tests/test_dependency_preflight.py"
         spec = importlib.util.spec_from_file_location("plan_fixture", fixture_path)
         fixture = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(fixture)

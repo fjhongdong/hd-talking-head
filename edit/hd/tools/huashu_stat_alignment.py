@@ -1,5 +1,6 @@
 """Speech and timing checks for the Huashu native single-metric overlay."""
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import importlib.util
 import json
@@ -14,7 +15,7 @@ FPS = 24
 
 
 def _adapter():
-    path = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/huashu_stat_adapter.py"
+    path = PACKAGE_ROOT / "scripts/huashu_stat_adapter.py"
     spec = importlib.util.spec_from_file_location("_huashu_stat_execution_contract", path)
     if spec is None or spec.loader is None:
         raise ValueError("Huashu stat adapter is unavailable")

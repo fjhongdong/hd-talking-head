@@ -20,7 +20,7 @@ from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
 
-from edit.v5.tools import bold_subtitles
+from edit.hd.tools import bold_subtitles
 from edit.hd.tools import state, visual_plan as visual_plan_module
 
 

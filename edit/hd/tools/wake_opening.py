@@ -1,5 +1,6 @@
 """Validate the cover-driven first body shot without moving its audio clock."""
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 import hashlib
 from pathlib import Path
 from . import contract_artifacts
@@ -44,7 +45,7 @@ def validate(job, director, treatment):
         raise ValueError('Wake opening brief changed')
     # Reuse the public validator; importing it does not install or render.
     import sys
-    scripts = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts'
+    scripts = PACKAGE_ROOT / 'scripts'
     previous = sys.path[:]
     try:
         sys.path.insert(0, str(scripts))

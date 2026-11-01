@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-ADAPTER = ROOT / "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py"
+ADAPTER = ROOT / "scripts/hyperframes_native_adapter.py"
 
 
 def load_adapter():
@@ -25,7 +25,7 @@ class HyperFramesNativeAdapterTest(unittest.TestCase):
         manifest = json.loads((ADAPTER.parents[1] / "references/dependency-manifest.json").read_text())
         registered = next(item for item in manifest["dependencies"] if item["id"] == adapter.DEPENDENCY_ID)
         self.assertEqual(registered["binding_probes"][0]["producer_version"], created.producer_version)
-        source = ROOT / "参考项目/B-roll开源方案/hyperframes/registry/components/notification-stack/notification-stack.html"
+        source = ROOT / "vendor/hyperframes/registry/components/notification-stack/notification-stack.html"
         record = {"media_ref": "entry", "job_path": "entry.html", "scene_path": "index.html", "sha256": "0" * 64}
         brief = {
             "schema_version": 2,
@@ -44,7 +44,7 @@ class HyperFramesNativeAdapterTest(unittest.TestCase):
             ("hyperframes/chat-message", "components/chat-message/chat-message.html"),
             ("hyperframes/screen-flow-carousel", "components/screen-flow-carousel/screen-flow-carousel.html"),
         ):
-            source = ROOT / "参考项目/B-roll开源方案/hyperframes/registry" / relative
+            source = ROOT / "vendor/hyperframes/registry" / relative
             brief["upstream_route"] = route
             brief["source_pins"] = {"route": route, "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
             self.assertEqual(adapter.validate_brief(json.dumps(brief))["upstream_route"], route)

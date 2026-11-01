@@ -25,7 +25,7 @@ def approve_fixture_setup(job):
     Never call this helper for a user Job or a provider request.
     """
     from edit.hd.tools import startup
-    skill = ROOT / "skill-development/hd-talking-head"
+    skill = ROOT / "."
     release_path = skill / "release-manifest.json"
     context = {
         "workspace": str(job.root), "job_dir": str(job.job_dir), "job_id": job.job_id,
@@ -322,7 +322,7 @@ class StartupTests(unittest.TestCase):
             state.require_runnable(job, "inspect")
 
     def test_confirmation_cli_works_from_another_directory(self):
-        cli = ROOT / "skill-development/hd-talking-head/scripts/confirm_job_setup.py"
+        cli = ROOT / "scripts/confirm_job_setup.py"
         self.assertTrue(cli.is_file(), "portable configuration confirmation CLI is missing")
         job, _, _, _ = self.prepared()
         result = subprocess.run([sys.executable, str(cli), "--job-context", str(job.root / "job-context.json"),
@@ -342,7 +342,7 @@ class StartupTests(unittest.TestCase):
         job, context, config, report_path = self.prepared()
         skill = Path(context["skill_release"]["root"])
         module = preflight()
-        references = Path(os.environ.get("HD_TEST_REFERENCE_ROOT", str(ROOT / "参考项目/B-roll开源方案")))
+        references = Path(os.environ.get("HD_TEST_REFERENCE_ROOT", str(ROOT / "vendor")))
         report = module.build_report(skill / "references/dependency-manifest.json", ROOT,
                                      references, module._default_skill_roots(),
                                      job_context_path=job.root / "job-context.json")

@@ -1,6 +1,7 @@
 """Validate and publish schema-v3 semantic visual direction plans."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import copy
 import fcntl
@@ -11,6 +12,7 @@ import math
 import os
 import secrets
 import stat
+import sys
 import re
 from pathlib import Path
 from typing import Callable, Mapping
@@ -726,9 +728,11 @@ def _approved_artifact(job: JobState, stage_id: str, relative: str) -> Path:
 
 def _load_router_module():
     router_path = (
-        Path(__file__).resolve().parents[3]
-        / "skill-development/hd-talking-head/scripts/broll_capability_router.py"
+        PACKAGE_ROOT
+        / "scripts/broll_capability_router.py"
     )
+    if str(router_path.parent) not in sys.path:
+        sys.path.insert(0, str(router_path.parent))
     specification = importlib.util.spec_from_file_location(
         "hd_talking_head_broll_capability_router", router_path
     )
@@ -2012,7 +2016,7 @@ def _skill_selection_for_publication(
     try:
         treatment = contract_artifacts.read_json_artifact(path)
         from .motion_match_cache import validate_reviews, validate_design_handoffs
-        validate_reviews(Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir)
+        validate_reviews(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
         handoff_draft, handoff_treatment = draft, treatment
         if any('native_typography_revision' in scene for scene in treatment.get('scenes', [])):
             from . import visual_confirmation
@@ -2023,13 +2027,13 @@ def _skill_selection_for_publication(
                 job.job_dir, original, original_treatment, draft, treatment)
         validate_design_handoffs(handoff_draft, handoff_treatment, job.job_dir)
         selection = broll_skill_selection.validate_selection(
-            Path(__file__).resolve().parents[3], draft, treatment, job_dir=job.job_dir,
+            PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir,
         )
         selection["motion_queries"] = treatment.get("motion_queries", [])
         selection['native_supplements'] = treatment.get('native_supplements', [])
         if managed:
             from .motion_capabilities import check_offline_plan
-            review = check_offline_plan(Path(__file__).resolve().parents[3], draft,
+            review = check_offline_plan(PACKAGE_ROOT, draft,
                                         treatment, job_dir=job.job_dir)
             if review["status"] != "pass":
                 raise ValueError("motion semantic/native input check is " + review["status"]

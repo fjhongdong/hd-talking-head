@@ -1,6 +1,7 @@
 """Native 9:16 preview and evidence builder for the full-v2 workflow."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import copy
 import fcntl
@@ -34,7 +35,7 @@ class PreviewV2Error(RuntimeError):
     """Raised when the approved visual/audio tracks cannot form an exact preview."""
 
 
-_TALKCRAFT_RUNTIME_ROOT = Path(__file__).resolve().parents[1] / "integrations/talkcraft/runtime"
+_TALKCRAFT_RUNTIME_ROOT = PACKAGE_ROOT / "edit/hd/integrations/talkcraft/runtime"
 _SOURCE_MANIFEST_BLOCKED = "BROLL_SOURCE_MANIFEST_BLOCKED"
 _SHA256_CHARACTERS = frozenset("0123456789abcdef")
 _SOURCE_MANIFEST_KEYS = {

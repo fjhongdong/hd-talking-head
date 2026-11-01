@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 class BrollSkillSelectionTest(unittest.TestCase):
     def test_original_phase_budgets_reach_selection_without_freezing_demo_length(self):
-        path = ROOT / 'skill-development/hd-talking-head/references/video-shotcraft-template-catalog.json'
+        path = ROOT / 'references/video-shotcraft-template-catalog.json'
         templates = json.loads(path.read_text())['native_paths']
         module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
                                  load_template_catalog=lambda *_args, **_kwargs: templates)
@@ -269,7 +269,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 "safe": {"top": 100, "bottom": 300}, "cues": [
                     {"at": index, "kind": "point", "text": label}
                     for index, label in enumerate(("取材料", "交给模型", "写回文档"), 1)]}}, "assets": []}
-        values, _ = selection._declarations(ROOT / "skill-development/hd-talking-head/scripts/openfilm_runtime.py")
+        values, _ = selection._declarations(ROOT / "scripts/openfilm_runtime.py")
         openfilm = {"schema_version": 1, "source_binding": source,
             "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": 144, "alpha": False},
             "template_request": {**request, "semantic_family": "subject_action", "information_units": 1},
@@ -1592,7 +1592,7 @@ class PinBoardInputClockTest(unittest.TestCase):
         self.selection["overlay_beats"][1]["candidates"].append(choice)
         end = 4.625 + frames / 24
         self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
-        source = (ROOT / "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
+        source = (ROOT / "vendor/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
         self.grid_values = {"items": "快递,外卖,面试,家里", "cues": cues, "exit": "none"}
         entry = ('<div data-composition-id="grid-card-assemble" data-composition-src="native.html" '
                  f'data-start="0" data-duration="{frames / 24}" data-variable-values=\'{json.dumps(self.grid_values, ensure_ascii=False)}\'></div>')

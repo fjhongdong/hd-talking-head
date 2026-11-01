@@ -21,7 +21,7 @@ from edit.hd.tools import contract_artifacts, event_audio, preview_opening, prev
 OPTIONS = {"hold_frames": 12, "transition_frames": 6,
            "user_confirmation": "测试夹具：使用已批准封面，停留12帧，淡出6帧"}
 SRT = "1\n00:00:00,042 --> 00:00:00,750\n分享观点\n\n"
-SKILL = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head"
+SKILL = Path(__file__).resolve().parents[3] / "."
 
 
 def opening_job(root):

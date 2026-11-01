@@ -1,13 +1,11 @@
-# HD Talking Head
+# hd-talking-head
 
-复制整个目录即可取得完整 Skill，包括剪辑运行代码、字幕、贴片、B-roll 模板、子 Skill、来源信息和固定资源。
+完整的口播视频制作 Skill。执行规则与操作流程见 [SKILL.md](SKILL.md)。用户素材和 Job 输出放在包外。
 
-入口是 [SKILL.md](SKILL.md) 和 `run.py`。原实现位于 `skill-development/hd-talking-head/`，保持模板相对路径；它是本包内部目录，无需另一个项目。
+首次使用时，在包根运行 `python3.12 run.py prepare`，再按 Skill 的流程启动任务并确认所需渠道。
 
-```bash
-python3.12 /absolute/path/hd-talking-head/run.py verify
-python3.12 /absolute/path/hd-talking-head/run.py prepare
-python3.12 /absolute/path/hd-talking-head/run.py --help
-```
-
-当前完整运行环境为 macOS arm64，需 Python 3.12、Node 和 FFmpeg。TalkCraft 的固定运行依赖随包提供，首次启动恢复；其余依赖在本次选中模板后按包内锁定版本安装，并在完整列表确认前检查。开始任务时确认生图、生视频渠道，素材和成片保存到独立 Job 目录。详见[发布与调用说明](skill-development/hd-talking-head/references/release-contract.md)。
+- `scripts/`、`edit/`：制作脚本与剪辑运行代码。
+- `references/`、`assets/`：流程说明、模板与证据。
+- `vendor/`：第三方源码和子 Skill。
+- `archives/`：源码和运行依赖归档。
+- `runtime/`：本机准备的运行环境。

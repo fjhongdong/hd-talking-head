@@ -9,7 +9,7 @@ from edit.hd.tools import segment_render
 _spec = importlib.util.spec_from_file_location(
     "avatar_test_fixtures",
     Path(__file__).resolve().parents[3]
-    / "skill-development/hd-talking-head/tests/test_avatar_profile.py",
+    / "tests/test_avatar_profile.py",
 )
 _fixtures = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_fixtures)

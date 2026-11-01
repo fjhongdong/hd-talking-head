@@ -17,8 +17,8 @@ from edit.hd.tools.relation_browser_watchdog import _group_has_live_members, _pr
 from edit.hd.tools.overlay_alignment import bind_native_clock, bind_native_slots, _native_events, _clock_budgets
 
 ROOT = Path(__file__).resolve().parents[3]
-SOURCE = ROOT / '参考项目/B-roll开源方案/hyperframes'
-CHECKER = ROOT / 'skill-development/hd-talking-head/scripts/check_native_overlay_clock.mjs'
+SOURCE = ROOT / 'vendor/hyperframes'
+CHECKER = ROOT / 'scripts/check_native_overlay_clock.mjs'
 
 
 class NativeOverlayRuntimeTests(unittest.TestCase):
@@ -273,7 +273,7 @@ console.log(JSON.stringify([await measure(10),await measure(120)]));
                         # Fault injection: Chrome really starts, but the SDK
                         # never hands BrowserServer back to the checker.
                         script = 'import {createRequire} from "node:module";import {runCheck} from ' + json.dumps(CHECKER.as_uri()) + ';' + \
-                            'const require=createRequire(import.meta.url);const {chromium}=require(' + json.dumps(str(ROOT / 'skill-development/runtime/adu-native/node_modules/playwright-core')) + ');' + \
+                            'const require=createRequire(import.meta.url);const {chromium}=require(' + json.dumps(str(ROOT / 'runtime/adu-native/node_modules/playwright-core')) + ');' + \
                             'const launch=chromium.launchServer.bind(chromium);chromium.launchServer=async options=>{await launch(options);return new Promise(()=>{});};' + \
                             'let data="";for await(const chunk of process.stdin)data+=chunk;await runCheck(JSON.parse(data));'
                         command = [command[0], '--input-type=module', '-e', script]

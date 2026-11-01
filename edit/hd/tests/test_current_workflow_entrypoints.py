@@ -13,7 +13,7 @@ from edit.hd.tools import cli, state
 
 
 PROJECT = Path(__file__).resolve().parents[3]
-SKILL = PROJECT / "skill-development/hd-talking-head"
+SKILL = PROJECT / "."
 
 
 class CurrentWorkflowEntrypointTests(unittest.TestCase):

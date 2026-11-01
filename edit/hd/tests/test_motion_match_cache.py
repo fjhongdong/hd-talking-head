@@ -93,7 +93,7 @@ class CacheTests(unittest.TestCase):
     def test_reviewed_source_only_update_reuses_cache_but_unreviewed_source_is_refused(self):
         first = cache.match_once(ROOT, self.director, self.treatment)
         index = motion.contract_artifacts.read_json_artifact(ROOT / motion.INDEX)
-        ref = 'skill-development/hd-talking-head/scripts/lemo_wake_adapter.py'
+        ref = 'scripts/lemo_wake_adapter.py'
         target = next(p for p in index['profiles'] if p['candidate_id'] == 'lemo-wake:wake')
         target['reviewed_sources'][ref] = 'a' * 64
         read = motion.contract_artifacts.read_json_artifact

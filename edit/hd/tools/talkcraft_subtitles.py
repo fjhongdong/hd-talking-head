@@ -1,6 +1,7 @@
 """Parent subtitle renderer using the approved timing and locked TalkCraft theme."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import math
 import os
@@ -13,9 +14,9 @@ from typing import Any, Mapping
 from . import contract_artifacts, subtitles
 
 
-ROOT = Path(__file__).resolve().parents[1] / "integrations" / "talkcraft"
+ROOT = PACKAGE_ROOT / "edit/hd/integrations/talkcraft"
 ADAPTER = ROOT / "subtitles"
-UPSTREAM = ROOT / "upstream/template/motion-systems/Subtitles.tsx"
+UPSTREAM = PACKAGE_ROOT / "vendor/talkcraft/template/motion-systems/Subtitles.tsx"
 UPSTREAM_SHA256 = "fee88ad65d35422220fddf56c9de9efeeee85a9c28a2ca6122dcc0bfadf42390"
 
 
@@ -99,7 +100,7 @@ def identity(render_input: Mapping[str, Any], plan: Mapping[str, Any]) -> dict[s
         raise TalkCraftSubtitleError("TalkCraft subtitle adapter is unavailable")
     hashes = {path.name: contract_artifacts.sha256_file(path) for path in files}
     hashes["python-adapter"] = contract_artifacts.sha256_file(Path(__file__))
-    theme = ROOT / "upstream/template/motion-systems/theme.ts"
+    theme = PACKAGE_ROOT / "vendor/talkcraft/template/motion-systems/theme.ts"
     hashes["upstream-theme"] = contract_artifacts.sha256_file(theme)
     react = contract_artifacts.read_json_artifact(ROOT / "runtime/node_modules/react/package.json")
     return {"id": "video-talkcraft-subtitles-adapter/v1", "upstream_sha256": UPSTREAM_SHA256,
@@ -158,7 +159,7 @@ def render(data: Mapping[str, Any], descriptor: int) -> None:
         contract_artifacts.write_json_artifact(source, data)
         try:
             subprocess.run(["node", str(ADAPTER / "render.mjs"), "--input", str(source),
-                            "--output", str(output)], cwd=ROOT.parents[3],
+                            "--output", str(output)], cwd=PACKAGE_ROOT,
                            check=True, capture_output=True, text=True,
                            timeout=max(180, int(data["canvas"]["frames"]) * 2))
         except (OSError, subprocess.SubprocessError) as exc:

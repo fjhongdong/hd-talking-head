@@ -604,7 +604,7 @@ class GenerationQueueTests(unittest.TestCase):
 
     def test_independent_cli_transmits_video_account_limit(self):
         import importlib.util
-        entry = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/run_generation.py"
+        entry = Path(__file__).resolve().parents[3] / "scripts/run_generation.py"
         spec = importlib.util.spec_from_file_location("run_generation_cli_test", entry)
         cli = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cli)

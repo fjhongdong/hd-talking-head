@@ -4,6 +4,7 @@ This is a custom layout, not one of TalkCraft's qualified full-screen cards.
 The existing component executor owns process isolation and artifact publication.
 """
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import hashlib
 import json
@@ -14,7 +15,7 @@ import subprocess
 
 from . import broll_component_executor as executor, contract_artifacts
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = PACKAGE_ROOT
 ENTRY = "edit/hd/integrations/talkcraft/aroll-overlay/render.mjs"
 ADAPTER = ROOT / Path(ENTRY).parent
 DEPENDENCY_ID = "hd-talking-head-talkcraft-overlay"
@@ -29,7 +30,7 @@ def source_identity() -> str:
     files = sorted(path for path in ADAPTER.iterdir() if path.suffix in {".ts", ".tsx", ".mjs"})
     files.extend(ADAPTER / name for name in ("package.json", "package-lock.json"))
     for name, digest in UPSTREAM.items():
-        path = ADAPTER.parent / "upstream/template/motion-systems" / name
+        path = PACKAGE_ROOT / "vendor/talkcraft/template/motion-systems" / name
         if contract_artifacts.sha256_file(path) != digest:
             raise ValueError("TalkCraft schematic upstream changed")
         files.append(path)

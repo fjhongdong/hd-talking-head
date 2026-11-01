@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {SubtitleCue, SubtitleEmphasis} from './types';
-import {C, FONT} from '../upstream/template/motion-systems/theme';
+import {C, FONT} from '../../../../../vendor/talkcraft/template/motion-systems/theme';
 import {lineUnits} from './line-units.mjs';
 
 const TEXT = C.text;

@@ -1,6 +1,7 @@
 """Bind Skill-managed jobs to their approved setup, without running media jobs."""
 
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import ast
 import json
@@ -74,7 +75,7 @@ def _context(job) -> dict:
     expected = {"workspace": str(job.root), "job_dir": str(job.job_dir), "job_id": job.job_id}
     if any(context.get(key) != value for key, value in expected.items()):
         raise WorkflowError("startup context belongs to another Job")
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     assert_project_origin(project)
     if context.get("project_root") != str(project) or context.get("runtime") != runtime_identity(project):
         raise WorkflowError("startup runtime changed; review the runtime difference before resuming")

@@ -4,6 +4,7 @@ This module reads metadata and existing registrations only. It never prepares an
 environment, changes a Job, invokes a renderer, or approves semantic/visual QA.
 """
 from __future__ import annotations
+from scripts.package_paths import PACKAGE_ROOT
 
 import copy
 import hashlib
@@ -18,7 +19,7 @@ from typing import Mapping
 
 from . import contract_artifacts
 
-INDEX = "skill-development/hd-talking-head/references/motion-capability-index.json"
+INDEX = "references/motion-capability-index.json"
 TAG_FIELDS = ("subjects", "actions", "relations", "feelings", "styles", "patterns")
 USES = {"aroll_overlay", "broll", "component", "design"}
 MATCHING_POLICY_VERSION = 2
@@ -132,7 +133,7 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
     from .overlay_selection import _ROUTE_BY_TEMPLATE
 
     project = Path(project_root).resolve(strict=True)
-    skill = project / "skill-development/hd-talking-head"
+    skill = project
     rows = []
     for template, route in _ROUTE_BY_TEMPLATE.items():
         if template == 'barty-motion-graphics/motion-broll':
@@ -158,7 +159,7 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
 
 def validate_overlay_capability(route: str, binding: Mapping, *, registered: Mapping | None = None) -> dict:
     """A metadata review never grants transparent output or timing qualification."""
-    project = Path(__file__).resolve().parents[3]
+    project = PACKAGE_ROOT
     rows = ({row["source_route"]: row for row in overlay_candidates(project)}
             if registered is None else registered)
     row = rows.get(route)
@@ -297,7 +298,7 @@ def _ai_brief_evidence(job_dir, treatment, segment, component):
     path = _path(root, ref["job_path"])
     if path.stat().st_size != ref["byte_count"] or contract_artifacts.sha256_file(path) != ref["sha256"]:
         raise ValueError("AI completed record changed")
-    scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+    scripts = PACKAGE_ROOT / "scripts"
     previous = sys.path[:]
     try:
         sys.path.insert(0, str(scripts))
@@ -362,7 +363,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
     if source is not None and any(source.get(k) != segment[k] for k in ("segment_id", "start", "end")):
         raise ValueError("Motion check native brief belongs to another segment")
     if segment["bindings"][component].get("dependency_id") == "lemo-wake":
-        scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+        scripts = PACKAGE_ROOT / "scripts"
         previous = sys.path[:]
         try:
             sys.path.insert(0, str(scripts))
@@ -379,7 +380,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
         finally:
             sys.path[:] = previous
     if segment["bindings"][component].get("dependency_id") == "video-talkcraft":
-        scripts = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts"
+        scripts = PACKAGE_ROOT / "scripts"
         previous = sys.path[:]
         try:
             sys.path.insert(0, str(scripts))
@@ -403,7 +404,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
         finally:
             sys.path[:] = previous
     if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
-        scripts = Path(__file__).resolve().parents[3] / 'skill-development/hd-talking-head/scripts'
+        scripts = PACKAGE_ROOT / 'scripts'
         previous = sys.path[:]
         try:
             sys.path.insert(0, str(scripts))
@@ -498,7 +499,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
             name = row.get("adapter_module")
             if name is None:
                 return {"status": "needs_review", "reason": "no registered native input validator"}
-            scripts = Path(project_root) / "skill-development/hd-talking-head/scripts"
+            scripts = Path(project_root) / "scripts"
             previous = sys.path[:]
             try:
                 sys.path.insert(0, str(scripts))

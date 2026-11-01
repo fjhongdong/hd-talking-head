@@ -11,6 +11,6 @@ class SkillMasterLocationTests(unittest.TestCase):
         router = visual_plan._load_router_module()
         expected = (
             Path(__file__).resolve().parents[3]
-            / "skill-development/hd-talking-head/scripts/broll_capability_router.py"
+            / "scripts/broll_capability_router.py"
         )
         self.assertEqual(Path(router.__file__).resolve(), expected.resolve())

@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from edit.hd.integrations.talkcraft.check_runtime import (
-    ROOT,
+    ROOT, UPSTREAM,
     RuntimeCheckError,
     _check_closure_files,
     _check_identity,
@@ -62,7 +62,7 @@ class TalkCraftRuntimeHealthTests(unittest.TestCase):
                 json.dumps({"dependencies": {"remotion": "1.0.0"}}), encoding="utf-8"
             )
             with self.assertRaisesRegex(RuntimeCheckError, "installed missing"):
-                check_runtime(root)
+                check_runtime(root, upstream=root / "upstream")
 
     def test_missing_workbench_entrypoint_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -72,9 +72,9 @@ class TalkCraftRuntimeHealthTests(unittest.TestCase):
             shutil.copy2(ROOT / "upstream-manifest.json", root / "upstream-manifest.json")
             upstream_runtime = root / "upstream/runtime"
             upstream_runtime.mkdir(parents=True)
-            shutil.copy2(ROOT / "upstream/runtime/package.json", upstream_runtime / "package.json")
+            shutil.copy2(UPSTREAM / "runtime/package.json", upstream_runtime / "package.json")
             with self.assertRaisesRegex(RuntimeCheckError, "workbench"):
-                check_runtime(root)
+                check_runtime(root, upstream=root / "upstream")
 
     def test_changed_render_core_fails_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

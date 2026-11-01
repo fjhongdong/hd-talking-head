@@ -2,13 +2,14 @@ import importlib.util
 import json
 import copy
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-SCRIPT = ROOT / "skill-development/hd-talking-head/scripts/openfilm_motion_adapter.py"
+SCRIPT = ROOT / "scripts/openfilm_motion_adapter.py"
 
 
 def load_module():
@@ -34,7 +35,7 @@ def brief(module):
 class OpenFilmMotionAdapterTest(unittest.TestCase):
     def test_frozen_gsap_library_and_real_external_references(self):
         module = load_module()
-        library = ROOT / "参考项目/B-roll开源方案/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js"
+        library = ROOT / "vendor/hyperframes/skills/talking-head-recut/assets/vendor/gsap.min.js"
         value = brief(module)
         value["assets"] = [{"media_ref": "gsap", "job_path": "assets/gsap.min.js",
                             "scene_path": "vendor/gsap.min.js", "sha256": module.sha(library)}]
@@ -68,11 +69,11 @@ class OpenFilmMotionAdapterTest(unittest.TestCase):
                 bad["assets"] = [{**bad["entry"], "media_ref": "duplicate"}]
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 module.validate_brief(json.dumps(bad))
-        # Read the approved native page, never alter it or render another video.
-        source = ROOT / "skill-development/test-output/openfilm-evidence-20261018/evidence-v2.html"
+        # This minimal page checks only the native API/resource input contract.
+        entry = "<script>window.film={width:1080,height:1920,duration:2,frame(t){}};</script>"
         with tempfile.TemporaryDirectory() as directory:
             scene = Path(directory)
-            shutil.copyfile(source, scene / "index.html")
+            (scene / "index.html").write_text(entry, encoding="utf-8")
             module._check_scene(scene, value)
             with self.assertRaisesRegex(ValueError, "different native instructions"):
                 module._check_upstream(value, module.check_runtime(ROOT))
@@ -88,7 +89,17 @@ class OpenFilmMotionAdapterTest(unittest.TestCase):
         value["upstream"] = {"package_version": module.PACKAGE_VERSION,
                              "skill_sha256": module.sha(Path(runtime["skill"])),
                              "manual_sha256": module.sha(Path(runtime["manual"]))}
-        sample = ROOT / "skill-development/test-output/openfilm-evidence-20261018/openfilm-visual-v2.mp4"
+        directory = tempfile.TemporaryDirectory(prefix="openfilm-format-only-")
+        self.addCleanup(directory.cleanup)
+        sample = Path(directory.name) / "format-only-24fps.mp4"
+        # Plain encoded frames supply a real SHA for binding, not visual qualification.
+        subprocess.run(
+            [runtime["ffmpeg"], "-v", "error", "-nostdin", "-n", "-f", "lavfi",
+             "-i", "color=c=black:s=1080x1920:r=24", "-frames:v", "48",
+             "-vf", "setsar=1", "-an", "-c:v", "libx264", "-preset", "ultrafast",
+             "-threads", "1", "-pix_fmt", "yuv420p", str(sample)],
+            check=True, capture_output=True, timeout=60,
+        )
         payload = json.dumps(value, ensure_ascii=False).encode()
         binding = module.create_binding(adapter, payload, sample)
         self.assertEqual(broll_component_executor._DEPENDENCY_CONTRACTS[module.DEPENDENCY_ID],

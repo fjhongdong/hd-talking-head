@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "skill-development/hd-talking-head/scripts"))
+sys.path.insert(0, str(ROOT / "scripts"))
 import paper_collage_adapter as paper
 import dependency_preflight as preflight
 from render_paper_collage import validate_brief
@@ -43,7 +43,7 @@ class PaperContracts(unittest.TestCase):
                    "executor": "reference_adapter", "primary_renderer": "PaperCollage"}
         self.assertEqual(preflight._selected_recipe_binding(item, [binding]), binding)
         result = preflight._check_binding_probe(item, binding, project_root=ROOT,
-            reference_root=ROOT / "参考项目/B-roll开源方案", dependency_root=paper.SKILL)
+            reference_root=ROOT / "vendor", dependency_root=paper.SKILL)
         self.assertEqual(result["status"], "bound")
 
     def test_negative_preroll_and_separate_image_provenance(self):
@@ -66,7 +66,7 @@ class PaperContracts(unittest.TestCase):
         brief = brief_fixture()
         payload = json.dumps(brief).encode()
         adapter = paper.create_adapter(
-            upstream_root=ROOT / "skill-development/vendor/paper-collage-ad-codex",
+            upstream_root=ROOT / "vendor/paper-collage-ad-codex",
             python_executable=sys.executable, node_executable=shutil.which("node"),
             ffmpeg_executable=shutil.which("ffmpeg"), ffprobe_executable=shutil.which("ffprobe"),
             brief_loader=lambda *_: json.dumps(brief).encode())

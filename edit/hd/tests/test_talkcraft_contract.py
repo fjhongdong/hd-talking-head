@@ -159,7 +159,7 @@ class TalkCraftContractTests(unittest.TestCase):
         ).encode("utf-8")
         qualification_id = hashlib.sha256(identity_bytes).hexdigest()
         self.assertEqual(record["qualification_id"], qualification_id)
-        adapter_path = ROOT / "skill-development/hd-talking-head/scripts/talkcraft_adapter.py"
+        adapter_path = ROOT / "scripts/talkcraft_adapter.py"
         self.assertEqual(
             record["identity"]["adapter_sha256"],
             hashlib.sha256(adapter_path.read_bytes()).hexdigest(),

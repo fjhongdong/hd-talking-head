@@ -18,7 +18,7 @@ from edit.hd.tests.test_avatar_contract import avatar_fixture
 
 
 ROOT = Path(__file__).resolve().parents[3]
-ROUTER_PATH = ROOT / "skill-development/hd-talking-head/scripts/broll_capability_router.py"
+ROUTER_PATH = ROOT / "scripts/broll_capability_router.py"
 SOURCE_KINDS = (
     "local_material",
     "official_material",

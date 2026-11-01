@@ -18,7 +18,7 @@ from edit.hd.tests.test_broll_component_executor import _Job, _code_component, _
 from edit.hd.tools import broll_component_executor as executor, visual_canary, visual_confirmation
 
 ROOT = Path(__file__).parents[3].resolve()
-ADAPTER_PATH = ROOT / "skill-development/hd-talking-head/scripts/talkcraft_skill_adapter.py"
+ADAPTER_PATH = ROOT / "scripts/talkcraft_skill_adapter.py"
 
 
 def _load_adapter_module():
