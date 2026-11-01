@@ -45,6 +45,8 @@ SOURCES.update({
                      '0bc6d7c15629618efe41f41e84ca4962fa129d9405cfc539a9e34e79f1c6a775'),
     'video-shotcraft': ('video-shotcraft', '1266a3ec4831289c4d893d42dd5102723658039a',
                         '9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2'),
+    'bb-video': ('bb-video', 'a21025a19d382b066ff354d877919be9d6863f97',
+                 '677750498dfb7d1f3ef7b297f4904da1fe230ef24087b88df0f1ef5d0ca4e1b9'),
 })
 
 def primary_renderer(dependency_id):
@@ -135,6 +137,12 @@ def _template(brief, project=PROJECT):
     if dependency == 'barty-motion-graphics' and brief['template_id'] not in BARTY_TEMPLATES:
         raise ValueError('Unknown original Barty workflow')
     groups = {row['candidate_id'].split('/')[-1]: row.get('native_template_group') for row in rows}
+    if dependency == 'bb-video':
+        if any(option not in selected['native_option_ids'] for option in brief['native_options']):
+            raise ValueError('Unknown original BB Video workflow option')
+        if len(brief['native_options']) > 1:
+            raise ValueError('BB Video requires one native workflow for the selected style')
+        return source_root(project, dependency_id=dependency)
     if dependency == 'video-shotcraft':
         if any(option not in {style['key'] for style in selected.get('styles', [])} for option in brief['native_options']):
             raise ValueError('Unknown selected native Shotcraft style variant')
@@ -178,7 +186,7 @@ def validate_brief(payload, *, dependency_id=None):
     if (not isinstance(options, list) or any(not isinstance(v, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', v) for v in options)
             or len(options) != len(set(options))
             or (brief['dependency_id'] != 'video-shotcraft' and brief['template_id'] in options)
-            or (brief['dependency_id'] not in {'bang-motion', 'video-shotcraft'} and options)):
+            or (brief['dependency_id'] not in {'bang-motion', 'video-shotcraft', 'bb-video'} and options)):
         raise ValueError('Invalid original native motion options')
     if brief['canvas_transport'] != ('quarter_turn_cw' if brief['dependency_id'] == 'bang-motion' else 'identity'):
         raise ValueError('Invalid native canvas transport')
@@ -332,7 +340,7 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, r['job_path'])) for r in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
+            'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft', 'bb-video'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
 
     if brief['dependency_id'] == 'video-shotcraft':
         action['native_catalog'] = load_template_catalog(dependency_id='video-shotcraft')
@@ -348,6 +356,8 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
 
 def native_workflow_instructions(brief):
     shared = ('Execute the complete pinned native workflow and selected native instructions. The approved task_source, transcript, real materials and output specifications are inputs; the native workflow owns treatment, look, layout, choreography and scene code. Preserve every vendor file. Author this Job project only. Keep voice, ordinary subtitles and final composition in the parent. Render the exact portrait 24fps clock without audio or alpha. Inspect the actual result and publish_completed through the existing reviewed-result contract. Stop and diagnose failure; never retry automatically. This handoff is pending creative work, not completed evidence. ')
+    if brief['dependency_id'] == 'bb-video':
+        return shared + ('Read the complete skills/bb-video/SKILL.md, selected styles/<style>/STYLE.md, the appropriate explainer/GUIDE.md or promo/GUIDE.md and every referenced instruction needed for this task. The style is the primary template; explainer/promo, quick and hand-written authoring are internal workflow choices, never additional templates. Follow the complete native research, fact sheet, storyboard, creation and self-review workflow. Use the original explainer/scripts/new.mjs or promo/scripts/new.mjs with --style <approved style> to create the current Job project and copy its original runtime and starter files; do not modify vendor or replace creation with a renderer-only call. Reuse the approved speech and exact local word anchors instead of synthesizing replacement narration. Keep all original lib runtime files unchanged. Honor requirements.parent_subtitle_layout from the parent, including its actual avatar and subtitle safe zones; the native workflow chooses the composition. Disable all internal captions, chapter chrome and ending holds using existing public APIs. For native whiteboard/riso/ink boards use WB/RISO/INK.board({T:<approved local timeline>,captions:false,chapters:false}); for an appropriate native compose use duration:<approved seconds>,tail:0,captions:false,chapters:false. PROMO.film quick has a default four-second tail and does not forward captions/tail; a voiced board kit forces internal captions, so choose a native public route that actually disables them, rather than assuming outer compose switches disable a nested board. Do not force every style into quick mode or compress parable below its original 15–45 second narrative range. Run native checks and inspect real full-size frames before final rendering. Fonts and optional Three.js CDN assets require actual availability checks; this zero-npm runtime does not imply offline rendering. Never use --force, --draft or --allow-font-fallback to bypass final checks. Pass capture_render the direct original explainer/scripts/render.mjs or promo/scripts/render.mjs argv: [node,<original render.mjs>,<absolute project_directory>,--aspect,9:16,--fps,24,--from,0,--to,<approved frames/24>,--no-audio,--no-bgm,--workers,1,--out,native.mp4]. --out accepts a filename; the native media is project_directory/out/native.mp4. Explicit from/to preserve authored review inputs while native lint, font and final frame checks still run. Use capture_render and publish_completed for the actual output, preserving the original source, command, tool versions and honest QA.')
     if brief['dependency_id'] == 'mg-styles-15':
         return shared + ('MG has no SKILL.md: read README.md, the full selected prompts/*.md, its native source demo and rubric.md. Follow treatment → cue sheet → key-frame inspection → native motion → final render → honest critique. Replace creative seed and output specifications for this task; retain every selected signature feature. Omit soundtrack because this parent requires silent B-roll. Copy harness/render.mjs verbatim into project_directory/harness/render.mjs; link project_directory/node_modules to runtime.node_modules. Author scene/index.html with window.DEMO={width:1080,height:1920,fps:24,duration:<approved seconds>}, deterministic window.renderAt(t), window.__ready=true. For the 3d-render style follow its full Blender source workflow and render assets before the native browser compositor; missing Blender stops that selected style. Call capture_render with [node,harness/render.mjs,scene,--out,out/native.mp4,--w,1080,--h,1920,--fps,24,--duration,<seconds>,--workers,1,--noaudio]. Do not substitute an unrelated helper or copy an old film.')
     if brief['dependency_id'] == 'video-shotcraft':
@@ -388,6 +398,8 @@ def project_files(root, directory):
 def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
     native = _template(brief)
     directory = path(root, brief['project_directory'])
+    if brief['dependency_id'] == 'bb-video':
+        return _bb_render_command(brief, argv, runtime, directory, native)
     if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft'}:
         return _new_native_render_command(root, brief, argv, runtime, directory, native, check_runtime_links=check_runtime_links)
     bang = brief['dependency_id'] == 'bang-motion'
@@ -426,6 +438,55 @@ def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
     if output.suffix != ('.mov' if brief['alpha'] else '.mp4'):
         raise ValueError('Native motion output extension differs from requested alpha')
     return directory, script, output
+
+
+def _bb_render_command(brief, argv, runtime, directory, native):
+    """Both public BB entrypoints forward to the pinned zero-dependency core."""
+    seconds = str(brief['composition']['frames'] / 24)
+    if (not isinstance(argv, list) or not all(isinstance(value, str) for value in argv)
+            or len(argv) != 17 or argv[0] != runtime['tools']['node']
+            or argv[3:] != ['--aspect', '9:16', '--fps', '24', '--from', '0', '--to', seconds,
+                             '--no-audio', '--no-bgm', '--workers', '1', '--out', argv[-1]]):
+        raise ValueError('BB Video capture requires its exact approved portrait clock, one worker and silent final render')
+    script = Path(argv[1]); script = script if script.is_absolute() else directory / script
+    script = script.resolve(strict=True)
+    entries = {native / 'skills/bb-video' / workflow / 'scripts/render.mjs' for workflow in ('explainer', 'promo')}
+    if script not in entries:
+        raise ValueError('BB Video must execute an original pinned public render.mjs entrypoint')
+    if Path(argv[2]).resolve(strict=True) != directory.resolve(strict=True):
+        raise ValueError('BB Video renderer must receive the current Job project')
+    name = relative(argv[-1])
+    if len(name.parts) != 1 or name.suffix != '.mp4':
+        raise ValueError('BB Video --out requires a separate MP4 filename, not a path')
+    scene = directory / 'index.html'
+    if not scene.is_file() or not scene.resolve(strict=True).is_relative_to(directory.resolve()):
+        raise ValueError('BB Video requires its authored index.html inside this Job project')
+    _bb_runtime_sources(directory, native, brief['template_id'])
+    output = directory / 'out' / name
+    if not output.resolve().is_relative_to(directory.resolve() / 'out'):
+        raise ValueError('BB Video output must stay in the current project out directory')
+    return directory, script, output
+
+
+def _bb_runtime_sources(directory, native, style):
+    """Original runtimes copied by new.mjs stay original; task code is frozen separately."""
+    skill = native / 'skills/bb-video'
+    core = directory / 'lib/core.js'
+    if not core.is_file() or core.read_bytes() != (skill / 'core/runtime/core.js').read_bytes():
+        raise ValueError('BB Video must retain the original new.mjs core runtime in this Job project')
+    roots = [skill / channel / 'runtime' for channel in ('core', 'promo', 'explainer')]
+    fonts = {'whiteboard': 'fonts.css', 'riso': 'fonts-riso.css', 'ink': 'fonts-ink.css'}
+    for item in (directory / 'lib').rglob('*'):
+        if not item.is_file():
+            continue
+        relative_name = item.relative_to(directory / 'lib')
+        originals = [base / relative_name for base in roots if (base / relative_name).is_file()]
+        if relative_name.as_posix() == 'fonts.css' and style in fonts:
+            originals = [skill / 'explainer/runtime' / fonts[style]]
+        if originals and all(item.read_bytes() != original.read_bytes() for original in originals):
+            raise ValueError('BB Video copied native runtime changed: ' + relative_name.as_posix())
+        if not item.resolve(strict=True).is_relative_to(directory.resolve()):
+            raise ValueError('BB Video runtime inputs must stay inside the current Job project')
 
 
 def _new_native_render_command(root, brief, argv, runtime, directory, native, *, check_runtime_links):
@@ -717,13 +778,15 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
         raise ValueError('Preserve existing native output and use a new revision directory')
     output.parent.mkdir(parents=True, exist_ok=True)
     before = project_files(root, directory)
-    environment = {**os.environ, **runtime['environment'], 'NODE_PATH': runtime['node_modules']}
+    environment = {**os.environ, **runtime['environment']}
+    if 'node_modules' in runtime:
+        environment['NODE_PATH'] = runtime['node_modules']
     record = {'schema_version': 1, 'dependency_id': brief['dependency_id'],
               'request_sha256': sha(brief_path), 'upstream_commit': SOURCES[brief['dependency_id']][1],
               'native_script_sha256': sha(script), 'argv': argv,
               'project_files': before, 'renderer_version': runtime['renderer_version'],
               'runtime_identity': runtime['runtime_identity'],
-              'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version')},
+              'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version') if key in runtime},
               'status': 'running', 'exit_code': None, 'stdout': '', 'stderr': ''}
     call_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts.write_json_artifact(call_path, record)
@@ -929,9 +992,9 @@ def create_adapter(project_root, python_executable, brief_loader, *, dependency_
     if requested != project:
         raise ValueError('Native motion project root must be canonical and nonsymlinked')
     source_root(project, dependency_id=dependency_id)
-    from motion_native_runtime import check, PACKAGES
+    from motion_native_runtime import check, renderer_version as runtime_renderer_version
     check(project, dependency_id=dependency_id, mode='reuse')
-    renderer_version = renderer_version or '-'.join(PACKAGES[dependency_id])
+    renderer_version = renderer_version or runtime_renderer_version(dependency_id)
     entry_sha = sha(SKILL / ENTRY); launcher = Path(python_executable).resolve(strict=True)
 
     def guarded_loader(job, recipe, component):

@@ -124,7 +124,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             b['task_source']={'semantic_row_id':rowid,'quote':quote,'semantic':b['semantic_goal'],
                 'required_change':case['required_change'],'component_brief':component['brief']}
             b['native_options']=case['native_options']
-            if dependency in {'mg-styles-15','video-shotcraft'}:
+            if dependency in {'mg-styles-15','video-shotcraft','bb-video'}:
                 b['template_request'].update(semantic_family='process',information_units=2)
             b['source_binding']={'aroll_sha256':native.sha(arroll),'segment_id':sid,'start':start,'end':end}
             voice=root/('voice-'+sid+'.wav')
@@ -188,7 +188,9 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         source=self.samples/'source-case'/case['source_project']
         if not source.is_dir():raise ValueError('Prepare the complete native authored project first: '+str(source))
         directory=Path(action['project_directory']);shutil.copytree(source,directory)
-        runtime=action['runtime'];(directory/'node_modules').symlink_to(runtime['node_modules'],target_is_directory=True)
+        runtime=action['runtime']
+        if 'node_modules' in runtime:
+            (directory/'node_modules').symlink_to(runtime['node_modules'],target_is_directory=True)
         if b['dependency_id']=='barty-motion-graphics':
             builder=native.source_root(dependency_id=b['dependency_id'])/'skills/motion-broll/engine/build.py'
             fragment=case['fragment_html'];html=directory/case['entry_html']
@@ -209,6 +211,12 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                   'render','src/index.ts','NativeScene','out/native.mp4','--codec=h264','--pixel-format=yuv420p',
                   '--color-space=bt709','--image-format=png','--muted','--concurrency=1',
                   '--browser-executable='+runtime['browser'],'--bundle-cache=false']
+        elif b['dependency_id']=='bb-video':
+            workflow=case.get('native_workflow', 'promo')
+            argv=[runtime['tools']['node'],str(native.source_root(dependency_id='bb-video')/
+                  'skills/bb-video'/workflow/'scripts/render.mjs'),str(directory),
+                  '--aspect','9:16','--fps','24','--from','0','--to',str(b['composition']['frames']/24),
+                  '--no-audio','--no-bgm','--workers','1','--out','native.mp4']
         else:
             raise ValueError('Unsupported native smoke dependency')
         preparations=None
@@ -247,6 +255,9 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         review.update(passed=True,note='显式隔离fixture批准，仅验证流程，不是实际用户确认',
                       user_confirmation='显式隔离fixture授权，不得用于正式用户视频')
         run_stage._review(self.job,'visual_direction',review);self.job=state.load_job(root)
+        approved=confirmation.validate_visual_authorization(self.job)['source']
+        director=artifacts.read_json_artifact(confirmation._exact(root,approved['inputs']['director']))
+        treatment=artifacts.read_json_artifact(confirmation._exact(root,approved['inputs']['treatment']))
         pending=run_stage.resume_visual_direction(self.job,_env.PROJECT,{})
         self.assertEqual([a['dependency_id'] for a in pending['actions']],
                          [c['dependency_id'] for c in self.case['segments']])

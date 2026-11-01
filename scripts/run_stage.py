@@ -460,7 +460,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     if native_actions:
         return _summary(job, 'visual_direction', actions=native_actions,
             next='宿主执行完整原生 Skill；产物完成后核对真实画面并更新 treatment 的实际语义引用，回传 realization 后继续。无需用户再次确认。')
-    if any(b.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+    if any(b.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
            for s in _json(director)['segments'] for b in s.get('bindings', {}).values()):
         from edit.hd.tools import motion_readability
         motion_readability.validate_direction_contract(job, _json(director), _json(treatment))
@@ -477,7 +477,7 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
     native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                       'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
-                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter'}
+                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter'}
     from edit.hd.tools.subtitles_v2 import subtitle_layout
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
@@ -499,7 +499,7 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
                 composition = segment['visual_strategy'].get('composition', {})
                 zones, placement = subtitle_layout(segment['visual_strategy']['mode'], composition)
                 options = ({'approved_task_source': module.task_source(director, treatment, segment['segment_id'], cid)}
-                           if dependency in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'} else {})
+                           if dependency in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'} else {})
                 action = module.native_task(job, {'segment_id': segment['segment_id']},
                     {**binding, 'component_id': cid}, brief_path, **options)
                 if dependency == 'barty-motion-graphics':
@@ -531,6 +531,7 @@ _NATIVE_MODULES = {
     'bang-motion': ('motion_native_skill_adapter', 'python'),
     'mg-styles-15': ('motion_native_skill_adapter', 'python'),
     'video-shotcraft': ('motion_native_skill_adapter', 'python'),
+    'bb-video': ('motion_native_skill_adapter', 'python'),
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
@@ -599,7 +600,7 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
     router = _module('broll_capability_router')
     scenes = {(scene.get('segment_id'), scene.get('component_id')): scene
               for scene in treatment.get('scenes', [])}
-    motion = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+    motion = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
     bindings = []
     for segment in director['segments']:
         for component in segment['visual_strategy']['components']:
@@ -721,7 +722,7 @@ def native_component_adapters(project: Path, job) -> dict:
             adapters[dependency] = _module('whiteboard_adapter').create_adapter(
                 vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
                 engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
-        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
             module = _module('talkcraft_skill_adapter' if dependency == 'video-talkcraft' else 'motion_native_skill_adapter')
             options = {} if dependency == 'video-talkcraft' else {'dependency_id': dependency}
             adapters[dependency] = {

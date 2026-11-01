@@ -1,0 +1,1053 @@
+{
+  "schema_version": 3,
+  "channel": "bb-video",
+  "repository_commit": "a21025a19d382b066ff354d877919be9d6863f97",
+  "counting_rule": "30 complete original styles under one BB Video channel. Explainer/promo workflows, quick/handwritten modes, kit verbs, topics and projects are internal choices, never extra templates.",
+  "native_option_ids": [
+    "explainer",
+    "promo"
+  ],
+  "native_paths": [
+    {
+      "candidate_id": "bb-video:bb-video/ascii",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/ascii/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/ascii/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/ascii",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "ASCII字符画",
+      "signature_features": "Everything drawn in monospace characters: product images decode out of glyph noise, sharpen as the camera pushes in, then scan into the real photo; typed lines, box-drawing frames",
+      "best_for": "Developer tools, hardware and product lineups, anything \"precise\"; tech launches with good product images",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/ascii.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/ascii/index.html"
+      ],
+      "limitations": [
+        "产品图应为真实素材；不适合以人物肖像或温暖手工质感为主的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/bauhaus",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/bauhaus/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/bauhaus/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/bauhaus",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "包豪斯构成",
+      "signature_features": "Red and black on printed cream paper with Bauhaus yellow and blue; big circles, thick bars and wedges on diagonals; heavy slogans set at an angle and stamped in letter by letter; things assembled from circles, squares and triangles; a red wedge sweeps across between scenes",
+      "best_for": "Manifestos and launches, how something is built from parts, processes and comparisons, design / architecture / industrial history, tools and productivity",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/bauhaus.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/bauhaus/index.html"
+      ],
+      "limitations": [
+        "没有角色表演；不适合依赖真人故事或大量实景照片的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/blueprint",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/blueprint/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/blueprint/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/blueprint",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "蓝图工程图",
+      "signature_features": "One big drawing sheet in cyanotype blue (paper grain, fine grid) with white line work to draughting convention: lines drafted in by a plotter pen (construction lines first), hidden lines dashed, centre lines dash-dot, dimensions with arrowheads, leaders with numbered balloons, a parts list, hatched sections, detail circles, a title block; mechanisms that really work (gear trains with real tooth counts meshing at the right ratios, an escapement locking and releasing, a balance and hairspring, springs, levers, cams, racks) on one mechanism clock shown in slow motion or time-lapse; the camera travels across the sheet into detail views; one red pencil as the accent",
+      "best_for": "How things work: machines and mechanisms (a watch, a lock, a cistern, an elevator, a shutter), systems and specs with numbers and ratios; hardware and engineering promos, an architecture drawn as an assembly",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/blueprint.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/blueprint/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/blueprint/index.html"
+      ],
+      "limitations": [
+        "机构运动、齿数和比例须有真实依据；不适合人物情绪或以UI为主的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/chat",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/chat/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/chat/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/chat",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "聊天记录",
+      "signature_features": "The story or the information happens in a messaging app: someone is typing, messages pop up and push the thread up, quote cards with their sources, a poem lighting up line by line, a relay checklist, a poll, a route on a map, \"X joined the group\", a recalled message; the camera pushes into one message while the rest dims. Landscape: a large chat window with a side column; portrait: the app fills the width",
+      "best_for": "Allusions and small history stories told as dialogue, \"who said what\" explainers with many quoted sources, AI assistants, support and collaboration products",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/chat.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/chat/index.html"
+      ],
+      "limitations": [
+        "不适合流程剖面或复杂空间结构；引用需要来源。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/collage",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/collage/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/collage/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/collage",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "纸艺拼贴新闻",
+      "signature_features": "One take over a table covered in torn paper, seen in 2.5D with depth of field: halftone black-and-white photos with a white torn fringe (credited on the source line), faded protest-poster layers, red rubber stamps, a typewriter quote typing on under a highlighter, masking tape and push pins; information told with paper props — paper dolls turning red, a red thread pinned through the years with tickets and photos, index cards with redaction bars, cut-paper bars on notebook paper, a ladder and a podium with country cut-outs, a line chart on graph paper with flags riding the lines, a big serif character printed on a certificate; the camera floats, pushes and travels piece to piece (far moves lift and land, never a cut), a red title sheet, a spotlight; fixed chrome: channel / chapter, date and place, source line",
+      "best_for": "News explainers with history behind them (protests, debt, prices, elections, policies), stories told with archive photos, quotes, numbers, a timeline and rankings",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/collage.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/collage/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/collage/index.html"
+      ],
+      "limitations": [
+        "档案照片和引用须提供可用来源；不适合角色表演、UI导览或机械原理。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/cutout",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/cutout/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/cutout/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/cutout",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "马蒂斯剪纸",
+      "signature_features": "Gouache paper shapes cut with scissors and pasted on cream paper; whole sheets cover and tear",
+      "best_for": "Creation, learning, community, education, lifestyle",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/cutout.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/cutout/index.html"
+      ],
+      "limitations": [
+        "不适合要求冷硬精密感的数据库、安全或金融交易主题。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/dossier",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/dossier/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/dossier/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/dossier",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "剪报解说",
+      "signature_features": "Modern finance / news commentary made of paper: newspaper clippings on grey newsprint (a heavy headline with a yellow-green highlighter stroke, real short reports written from the facts, halftone photos) and real source documents (press releases, filings, central-bank statements) re-typeset under an invented masthead; the camera pushes from the page into the quoted line, where a red / blue translation bar, a tag or a marker lands on those words; sheets fly in over pictures, an ink-brush smear between shots, thumbnail-style title cards, data callouts; a chapter bar on top, bold outlined captions, grain and a vignette",
+      "best_for": "Earnings, markets, policy and filings explained, news commentary with documents as evidence, \"what this announcement really says\"",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/dossier.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/dossier/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/dossier/index.html"
+      ],
+      "limitations": [
+        "核心是实际文件与原文依据；不适合角色故事、系统流程或UI导览。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/filmroom",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/filmroom/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/filmroom/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/filmroom",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "录像分析",
+      "signature_features": "Real footage (licence-clean, credited) on a dark broadcast set: the analyst stops the tape and draws on the frozen frame — a ring under a player's feet, the run she is about to make, the passing lane, the gap, a spotlight — then rewinds, replays it in blended slow motion with a ring tracking her, and pushes in on the detail; a top-down tactics board calibrated from the footage; shot charts from game data",
+      "best_for": "Sports breakdowns (one possession, one lesson: off-ball movement, spacing, footwork), any footage where position matters, product walkthroughs on a screen recording",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/filmroom.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/filmroom/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/filmroom/index.html"
+      ],
+      "limitations": [
+        "必须有经授权且可核实的真实录像；无素材时不能用重建动画替代。只讲画面支持的事实。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/grain",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/grain/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/grain/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/grain",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "扁平颗粒插画",
+      "signature_features": "A flat vector illustration on warm off-white paper in two spot colours and their tints (coral and navy by default): no outlines, volume and light made with seeded stipple grain (a colour breaks into dots as it fades into its tint or the paper); simple figures with round heads and block bodies on a thin ground line; information drawn into the picture — circular inset close-ups, a small diagram card, ticking readouts (a dial, a price sign, a clock wedge), rows of repeated things for quantity, columns rising from the ground line, a timeline ruler with the year ticking over; each chapter is one stage where the scene grows and turns into the next era in place, the camera holds, breathes and pushes in, chapters open through an iris from a detail, one full-colour spotlight beat",
+      "best_for": "History of a technology or habit era by era, how a city or system grows, before / after, explainers where the picture carries the numbers; warm consumer and civic products (mobility, energy, home, travel)",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/grain.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/grain/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/grain/index.html"
+      ],
+      "limitations": [
+        "人物是匿名形象；不适合具体人物戏剧、UI导览或密集数据面板。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/ink",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/ink/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/ink/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/explainer/templates/ink",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "水墨长卷",
+      "signature_features": "One long handscroll on rice paper: calligraphy stroke by stroke, landscapes, figures, seals",
+      "best_for": "Chinese history and allusions, classical poetry, idioms, culture, nature",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/explainer/runtime/ink.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/ink/index.html"
+      ],
+      "limitations": [
+        "不支持公式密集推导；不适合密集数据或繁忙现代科技界面。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/isometric",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/isometric/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/isometric/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/isometric",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "等距微缩世界",
+      "signature_features": "A whole little world from a fixed 45° isometric view: tiles on thick plinths with gaps between them, low-poly rounded buildings, belts, shelves, vans and little people that move on their own; one thing is followed through the system (handed from person to belt to truck), its route painted on the ground leg by leg, a clock card planted on each stage, streams of parcels for volume; the stage being talked about lifts while the rest fades; one continuous camera pans, pushes in and pulls back; night falls on the long haul",
+      "best_for": "Processes and systems (logistics, supply chains, how a city / a grid / a payment / the internet works), \"follow one thing through the system\", products whose value is a system",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/isometric.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/isometric/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/isometric/index.html"
+      ],
+      "limitations": [
+        "适合多环节系统；不适合单物体细节或以情绪角色戏剧为主的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/launch",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/launch/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/launch/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/promo/templates/project",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "发布会动效",
+      "signature_features": "`node explainer/scripts/new.mjs <dir> --style …` — creates a narration-paced project (voiceover + captions; cues timed to the narration, `promo/references/kit.md`, \"Following the voiceover\"",
+      "best_for": "native: `node promo/scripts/new.mjs <dir> --style …` — the style's full component set",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/promo.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/promo/templates/project/index.html",
+        "vendor/bb-video/skills/bb-video/promo/templates/formats/explain.html"
+      ],
+      "limitations": [
+        "产品界面须使用真实截图或录屏；不适合以温暖手工艺术感为主的产品。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/lumen",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/lumen/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/lumen/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/lumen",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "暗调励志动画",
+      "signature_features": "A stylized room drawn in code, nearly all black, lit by one motivated light (a phone screen on a face, a red alarm clock, a desk lamp, moonlight through blinds, dawn at a window) with rim light, a giant cast shadow, haze, bloom and grain; one minimal original protagonist (soft square head, a mood cowlick, an oversized hoodie, no outlines) acts everything with eyes and brows — scrolling in bed from above, dragged up by the alarm, slumped at a desk, putting the phone outside the door, at the window at dawn; slow push-ins that hold on the face; a low second-person voice; facts told in light (a clock racing, gauges, a line of the night, an x-ray of the head); white thumbnail-style title cards with a dark stroke; music that presses down and then releases",
+      "best_for": "Habits and self-improvement told to \"you\": sleep and late-night scrolling, procrastination, discipline, focus, burnout, starting the gym or studying; promos for wellbeing, focus and sleep apps",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/lumen.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/lumen/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/lumen/index.html"
+      ],
+      "limitations": [
+        "单一主角的内心变化；不适合多人历史故事、密集教程或长时间UI展示。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/manga",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/manga/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/manga/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/manga",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "日漫分镜",
+      "signature_features": "Black-and-white manga pages (white paper, ink line, dot and gradient screentone) cut into panels with gutters, slanted and bleeding panels, figures breaking the frame; speed and focus lines, drawn sound effects (ドン / ゴゴゴ / 轰) as part of the art, round / shout / thought balloons and narration boxes, vertical lettering; the camera reads panel by panel (right to left), punches into the key panel and shakes on impacts, panels ink in, pages turn or are slashed open, a full-page splash for the climax; code-drawn original characters (expressions, eye close-ups, fists, silhouettes, chibi reactions), battle-manga intro boxes, inked charts",
+      "best_for": "Science and concepts told as a fight or a contest (a molecule vs a receptor, a bug vs the fix), stories with a twist, character-driven promos for young audiences",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/manga.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/manga/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/manga/index.html"
+      ],
+      "limitations": [
+        "不适合密集财经数据、沉重病痛悲伤、多环节系统或中国历史纪实。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/map",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/map/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/map/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/map",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "地图动画",
+      "signature_features": "A designed, printed map drawn from real geodata (paper land, engraved water lines along the coast, parks, street texture, cartographic labels): routes draw on stroke by stroke, a tram / train / plane travels a line and reaches each stop on the word, stations pop in, areas spread like ink, printed callout cards pinned to places, a year counter, a locator globe; one camera turns the globe, dives to the street, flies between places, tilts and follows a vehicle; the subject stays lit while the rest dims",
+      "best_for": "Places and how they connect: transit and cities, history campaigns and journeys, trade and migration routes, the spread of something, \"where is it\" openers, before / after with a year",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/map.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/map/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/map/index.html"
+      ],
+      "limitations": [
+        "地理须来自真实地理数据；无地理关系的内容、单物体细节或室内流程另选风格。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/mystery",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/mystery/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/mystery/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/mystery",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "悬疑探秘",
+      "signature_features": "A deadpan mock-science programme on an old 4:3 TV in saturated blue (tube vignette, scratches, a station mark, a crawling \"fiction, for fun\" line): an outlined white title with its key words in red, numbered \"symptoms\" in brush script, each acted out by rubber-hose cartoon stickers (a brain, a light-bulb person in white gloves, a phone, an alarm clock, a battery at 19 %), a full-screen chat with green bubbles, a storm of big pale words — and the signal cut to a test card. A second look (`look: 'case'`) plays a case file instead: fog, struck-out guesses, teal reconstructions, an evidence board with red string, surveillance, then a sourced answer in daylight",
+      "best_for": "\"How to tell if your friend is …\" checklists of everyday habits, relatable mock-science, myth-busting and \"why does …\" mysteries, playful promos",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/mystery.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/mystery/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/mystery/index.html"
+      ],
+      "limitations": [
+        "TV分支原生建议30–45秒；case分支按本题编排。禁用真实疾病、悲剧和犯罪作玩笑，不适合密集教程。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/newsreel",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/newsreel/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/newsreel/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/newsreel",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "老新闻片",
+      "signature_features": "A 1930s cinema newsreel in a 1.37:1 gate on black: licence-clean archive photos pushed slowly with dated source tags, supers printed on the film, rubber stamps, intertitles between double rules, a tear-off calendar, a stopwatch, a printed price list, a seen / not-seen verdict, and a drafting-grid \"animated diagram\" (tagged as a reconstruction) for what no footage shows; grain, scratches, gate weave, flicker; a brisk announcer through an optical sound track over a brass march. A fictional newsreel brand opens and closes it",
+      "best_for": "News and events retold (launches, records, claims checked), history with archive photos, retro product launches when real photos exist",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/newsreel.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/newsreel/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/newsreel/index.html"
+      ],
+      "limitations": [
+        "需要授权干净的档案照片或真实产品照片；黑白不适合颜色关键产品，重建图须明确标记。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/op",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/op/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/op/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/op",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "欧普艺术",
+      "signature_features": "Black-and-white stripes, rings, checkerboards and spirals bulging around \"lenses\"; blinds reveals",
+      "best_for": "Tech, AI, developer tools, music; \"precise\", \"parallel\", hypnotic",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/op.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/op/index.html"
+      ],
+      "limitations": [
+        "黑白光学图案；不适合温暖手工感或大量照片占据画面的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/origami",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/origami/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/origami/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/origami",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "折纸工艺",
+      "signature_features": "Paper with light and creases: unfolding reveals, cards dropping on a desk, pop-up books, page turns, paper cranes",
+      "best_for": "Warm consumer products, creation, education, documents and content",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/origami.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/origami/index.html"
+      ],
+      "limitations": [
+        "展开与落定需要时间；不适合高速硬核科技感和密集快切。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/parable",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/parable/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/parable/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/parable",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "3D火柴人寓言",
+      "signature_features": "A pure black void with a glossy floor that mirrors everything, soft contact shadows and a faint glow: thick white pictogram stick figures (round head, rounded limbs, dark outline) with a small monospace caps label over each, one prop set that grows over time (3D beige bricks laid course by course, steps, a pile, coins), and one red object that carries the meaning (a spirit level, the brick still growing); one fixed wide camera with no cuts, a fade at the end; the story told only by contrasted action — one figure measures, the other builds; one rushes and naps, the other compounds — with a counter for time passing and one closing line; music only by default (a narrated or subtitled version is possible)",
+      "best_for": "One-idea shorts of 15–45 s told as a contrast: habits and compounding, perfectionism vs action, practice, saving, starting vs waiting; promos with one point (the product as \"the way that works\")",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/parable.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/parable/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/parable/index.html"
+      ],
+      "limitations": [
+        "原生15–45秒短寓言；固定宽景、少量道具和两个人物。不适合密集多步解释、真实UI或多人故事。"
+      ],
+      "min_duration_seconds": 15,
+      "max_duration_seconds": 45
+    },
+    {
+      "candidate_id": "bb-video:bb-video/pixel",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/pixel/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/pixel/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/pixel",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "像素游戏",
+      "signature_features": "A low-resolution game screen blown up to full size: dithered sky bands, parallax hills and cities stepping back one pixel at a time; outlined sprite characters walk, jump, talk and fight; information told through game UI — dialogue boxes typed letter by letter, menus with a ▶ cursor, HP bars filling cell by cell, score counters, a level map; block-dissolve and iris transitions; chiptune music",
+      "best_for": "Games, developer and productivity tools, AI products, step-by-step flows and choices, small stories with characters, tech and gaming history, explainers for kids",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/pixel.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/pixel/index.html"
+      ],
+      "limitations": [
+        "不适合奢侈品、依赖真实照片质感的内容或死亡灾难等沉重主题。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/pop",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/pop/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/pop/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/pop",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "波普漫画",
+      "signature_features": "1960s comic: thick outlines, Ben-Day dots, panels, speech bubbles, burst sound words, Warhol repeats",
+      "best_for": "Young, playful, social, AI assistants and chat (dialogue becomes comic speech)",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/pop.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/pop/index.html"
+      ],
+      "limitations": [
+        "适合角色对话；不适合严肃金融医疗安全或只有数据没有角色的内容。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/riso",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/riso/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/riso/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/explainer/templates/riso",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "孔版印刷",
+      "signature_features": "Magazine pages with spot-color overprint, halftone, misregistration; page turns by drum roll",
+      "best_for": "Everyday trivia, psychology, news, finance, data, food, vocabulary",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/explainer/runtime/riso.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/riso/index.html"
+      ],
+      "limitations": [
+        "原生当前无角色表演；不适合沉重题材、公式密集推导或角色演绎为主的故事。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/shadow",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/shadow/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/shadow/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/shadow",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "皮影戏",
+      "signature_features": "A lamp-lit cloth screen in a wooden stage frame; carved, translucent leather puppets in profile with jointed limbs and control rods walk on, talk, bow, ride horses, fall; red paper placards hang down with names and dates; scene changes are the lamp dipping",
+      "best_for": "Chinese history and stories with characters and conflict (who did what to whom), folk culture, a founder's story",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/shadow.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/shadow/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/shadow/index.html"
+      ],
+      "limitations": [
+        "依靠角色演绎；不适合纯数据UI、快速科技发布或没有人物的抽象概念。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/storybook",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/storybook/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/storybook/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/storybook",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "手绘绘本吉祥物",
+      "signature_features": "A picture book about an invisible process: warm light-grey paper with fibres, ink outlines with a slight hand wobble, flat fills shaded with coloured-pencil hatching and a soft rim; a project's own cast of original cute characters (bean / round / blob / gem / star / capsule / pillar bodies, dot or ^ ^ eyes, a sprout or antenna) in one accent colour, the other side in a second colour, props in cream, beige and wood; the cast acts the process out with tangible props on little stages along one ground line — filing cabinets with tab labels, an easel sheet with a line struck or marked, a monitor with log lines and ✓ lines, a big push button, stacking blocks, signpost cards, paper planes, cards flipping to ✓; small dark monospace tags float above characters with a ✓ result line; one character splits into clones that each carry a task card, each acts its task out, they merge back into one; squash and stretch, blinks, hops; the camera travels along the ground line and pushes in",
+      "best_for": "How a process works told as a team at work (the immune system, digestion, how search or a compiler works, a package's journey), science for children and families, parallel work and division of labour; friendly promos for tools that do several jobs at once (assistants, automation, dev tools)",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/storybook.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/storybook/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/storybook/index.html"
+      ],
+      "limitations": [
+        "使用原创可爱角色；不适合真实人物历史、数据新闻、暗调成人主题或UI导览。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/swiss",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/swiss/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/swiss/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/swiss",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "瑞士动态排版",
+      "signature_features": "A Swiss International Typographic Style poster in motion: huge grotesk type is the picture, set tight and cropped by the frame edge, on off-white grid paper with black and one accent from the brand; letters rise one by one out of their line, digits roll; micro meta labels (`.1 .2`, a date), big arrows →, hairline rules; information told typographically — numbered lists, check-chip card grids, giant numerals, flat bar charts, old / new side by side, real screenshots and charts placed as poster elements with accent marks; the poster pulls out into a wall of its colour variants, a text-pattern wall, an extruded glyph turning in orbit rings, nested frames; grounds flip paper / black / accent between scenes",
+      "best_for": "Launches and announcements with strong numbers (benchmarks, reports, versions), feature sets, rankings and prices, before / after, design and developer products, brands with one strong colour",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/swiss.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/swiss/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/swiss/index.html"
+      ],
+      "limitations": [
+        "以文字和数字表达结构；没有角色，不适合手工暖感或具体人物故事。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/tapestry",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/tapestry/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/tapestry/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/tapestry",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "贝叶挂毯",
+      "signature_features": "One long strip of undyed linen with a visible weave, lit warm in the middle; everything embroidered in a few wool colours (terracotta, ochre, olive, sage, blue-green, grey-blue, dark blue): stem-stitch outlines, laid-and-couched fills with couching ticks, faces left as bare linen; upper and lower borders of birds and beasts between diagonal bars, a green ground line, hem stripes; flat side-on figures (tunics, cloaks, cross-gartered legs) with big gestures, a project cast told apart by clothes and headwear; stylised trees divide the scenes; each part opens under a branch arch with its title; running captions in stitched letters (此处，…) with a date line, years stitched into the border; modern machines in the same stitched idiom; the next scene is drafted in pencil ahead, then stitches itself on (the needle runs the outline, threads are laid and couched); the camera scrolls along the cloth without stopping and pushes in until single threads read; a pull-back shows the whole cloth",
+      "best_for": "History told as a chronicle (how the book, the clock or the wheel came to be, a voyage, the history of a craft or a city), a sequence of ages where each step is people doing something; warm, crafted \"the story so far\" promos",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/tapestry.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/tapestry/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/tapestry/index.html"
+      ],
+      "limitations": [
+        "长卷连续滚动；不适合密集数据、UI导览、机器体内细节或快节奏发布。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/toy3d",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/toy3d/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/toy3d/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/toy3d",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "玩具三维",
+      "signature_features": "A dark warm desk with the product's real screens as physical slabs (screenshots printed on them) and a matte vinyl toy — the brand mark extruded from its SVG, a mascot, or the characters of a problem — that operates the UI with its body: landing is a click, hopping along a row types, carrying is a drag; keys rise out of the slab and sink under it; keycaps spell numbers and equations. Separate low, long-lens shots with very shallow focus, hard-cut on the beat with the toy mid-air across each cut; glow only on what is being shown. Toys are built in Blender when the machine has it (seamless vinyl), otherwise in three.js from the same part list",
+      "best_for": "Software with a real UI and a step-by-step flow (editors, boards, IDEs, apps), brands with a mark or mascot; explainers where the things themselves act (counting, grouping, swapping)",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/toy3d.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/toy3d/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/toy3d/index.html"
+      ],
+      "limitations": [
+        "需要真实UI或能具体化为玩具的对象；不适合纯抽象概念、纯数据、沉重题材或长文字。Blender为原生建模选项，不统一强制。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/trailer",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/trailer/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/trailer/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/styles/trailer",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "电影预告片",
+      "signature_features": "A Hollywood trailer in a 2.39:1 letterbox: code-painted cinematic shots in depth layers (space, planets, ridges, corridors, screens, people as rim-lit silhouettes) under a teal-orange grade, grain and a vignette, with slow pushes, parallax and rack focus; black cards with one phrase in wide metallic type; a lone piano ping, a ticking clock, then BRAAMs and taiko while the cuts speed up, flash frames, a smash cut, a beat of total silence, the title slam, the release date, the condensed billing block and a button. Cards only, sparse dialogue (a line can have its own voice colour, e.g. a radio) or the deep trailer voice. An invented studio ident; never a real studio's or film's trade dress",
+      "best_for": "Story trailers (a fictional film, a book, a game, a history episode), launches told as drama (the world before → until… → what changes → the name and the date)",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "promo",
+      "render_script": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/promo/runtime/trailer.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/trailer/explain.html",
+        "vendor/bb-video/skills/bb-video/styles/trailer/index.html"
+      ],
+      "limitations": [
+        "使用虚构片厂和原创人物剪影；不仿真电影标识。不适合密集教程、功能清单或长时间真实UI。"
+      ]
+    },
+    {
+      "candidate_id": "bb-video:bb-video/whiteboard",
+      "skill_path": "vendor/bb-video/skills/bb-video/SKILL.md",
+      "native_instructions": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/whiteboard/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/GUIDE.md",
+        "vendor/bb-video/skills/bb-video/promo/GUIDE.md"
+      ],
+      "native_source": "vendor/bb-video/skills/bb-video/styles/whiteboard/STYLE.md",
+      "native_starter": "vendor/bb-video/skills/bb-video/explainer/templates/whiteboard",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "手绘白板",
+      "signature_features": "native: `node explainer/scripts/new.mjs <dir> --style …` — full board API, characters, formulas",
+      "best_for": "`node promo/scripts/new.mjs <dir> --style … [--quick]` — the board runs inside a promo film: scenes are board regions / pages / scroll sections, transitions are pans / page changes / scroll moves",
+      "native_option_ids": [
+        "explainer",
+        "promo"
+      ],
+      "default_workflow": "explainer",
+      "render_script": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+      "render_scripts": {
+        "explainer": "vendor/bb-video/skills/bb-video/explainer/scripts/render.mjs",
+        "promo": "vendor/bb-video/skills/bb-video/promo/scripts/render.mjs"
+      },
+      "native_runtime": "vendor/bb-video/skills/bb-video/explainer/runtime/whiteboard.js",
+      "native_starters": [
+        "vendor/bb-video/skills/bb-video/styles/whiteboard/index.html"
+      ],
+      "limitations": [
+        "线条手绘为主，不使用真实照片、截图或表情符号；不适合新闻、密集数据或无需图解的诗词文化题。"
+      ]
+    }
+  ]
+}

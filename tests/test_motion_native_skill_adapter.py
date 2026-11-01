@@ -95,7 +95,7 @@ class NativeMotionTests(unittest.TestCase):
                         self.assertFalse(completed['binding_verified'])
 
     def test_complete_original_sources_and_native_workflow_paths(self):
-        for dependency, count in [('barty-motion-graphics',4),('bang-motion',35),('mg-styles-15',15),('video-shotcraft',125)]:
+        for dependency, count in [('barty-motion-graphics',4),('bang-motion',35),('mg-styles-15',15),('video-shotcraft',125),('bb-video',30)]:
             source = native.source_root(_env.PROJECT, dependency_id=dependency)
             rows = native.load_template_catalog(_env.PROJECT, dependency_id=dependency)
             self.assertEqual(len(rows),count)
@@ -106,7 +106,7 @@ class NativeMotionTests(unittest.TestCase):
             self.assertIn(b"from 'playwright'",renderer)
 
     def test_new_native_channels_keep_full_sources_roles_and_alpha_boundary(self):
-        for dependency, template in [('mg-styles-15', 'flat-vector'), ('video-shotcraft', 'blur-slide')]:
+        for dependency, template in [('mg-styles-15', 'flat-vector'), ('video-shotcraft', 'blur-slide'), ('bb-video', 'whiteboard')]:
             request = brief(dependency, template)
             native.validate_brief(json.dumps(request)); native._template(request)
             request['alpha'] = True
@@ -123,6 +123,86 @@ class NativeMotionTests(unittest.TestCase):
         request = brief('video-shotcraft', 'blur-slide');request['native_options'] = ['not-an-original-variant']
         with self.assertRaisesRegex(ValueError, 'variant'):
             native._template(request)
+
+    def test_bb_workflow_options_are_internal_and_original_narrative_budget_stays_real(self):
+        b=brief('bb-video','whiteboard')
+        for options in ([],['explainer'],['promo']):
+            b['native_options']=options;native.validate_brief(json.dumps(b));native._template(b)
+        for options in (['quick'],['explainer','promo']):
+            b['native_options']=options
+            with self.assertRaisesRegex(ValueError,'workflow'):
+                native._template(b)
+        b=brief('bb-video','parable')
+        with self.assertRaisesRegex(ValueError,'duration'):
+            native._template(b)
+        b['composition']['frames']=360;b['source_binding']['end']=15
+        native._template(b)
+
+    def test_bb_capture_requires_real_public_entry_exact_clock_and_original_runtime(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief('bb-video','whiteboard')
+            project=root/b['project_directory'];(project/'lib').mkdir(parents=True)
+            (project/'index.html').write_text('<html/>')
+            source=native.source_root(dependency_id='bb-video')/'skills/bb-video'
+            shutil.copyfile(source/'core/runtime/core.js',project/'lib/core.js')
+            shutil.copyfile(source/'explainer/runtime/whiteboard.js',project/'lib/whiteboard.js')
+            runtime={'tools':{'node':'/tools/node'}}
+            argv=['/tools/node',str(source/'explainer/scripts/render.mjs'),str(project),
+                  '--aspect','9:16','--fps','24','--from','0','--to','2.0','--no-audio','--no-bgm',
+                  '--workers','1','--out','native.mp4']
+            for workflow in ('explainer','promo'):
+                argv[1]=str(source/workflow/'scripts/render.mjs')
+                _,script,output=native._render_command(root,b,argv,runtime)
+                self.assertEqual(script,Path(argv[1]));self.assertEqual(output,project/'out/native.mp4')
+            for wrong in (argv+['--force'],argv+['--draft'],argv+['--allow-font-fallback'],
+                          argv[:10]+['3.0']+argv[11:],argv[:-1]+['out/native.mp4'],argv[:-1]+['../native.mp4']):
+                with self.assertRaises(ValueError):native._render_command(root,b,wrong,runtime)
+            copied=project/'render.mjs';shutil.copyfile(Path(argv[1]),copied)
+            with self.assertRaisesRegex(ValueError,'pinned public'):
+                native._render_command(root,b,[argv[0],str(copied),*argv[2:]],runtime)
+            (project/'lib/whiteboard.js').write_text('// modified original runtime')
+            with self.assertRaisesRegex(ValueError,'runtime changed'):
+                native._render_command(root,b,argv,runtime)
+
+    def test_bb_capture_publish_and_reuse_bind_real_command_without_npm_or_historical_tools(self):
+        import motion_native_runtime as runtime_module
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();b=brief('bb-video','whiteboard')
+            project=root/b['project_directory'];(project/'lib').mkdir(parents=True)
+            (project/'index.html').write_text('<html>actual current-task scene</html>')
+            source=native.source_root(dependency_id='bb-video')/'skills/bb-video'
+            shutil.copyfile(source/'core/runtime/core.js',project/'lib/core.js')
+            request=root/'brief.json';request.write_text(json.dumps(b))
+            tools={key:'/historical/missing/'+key for key in ('node','ffmpeg','ffprobe')}
+            renderer=runtime_module.renderer_version('bb-video')
+            identity={'schema_version':1,'dependency_id':'bb-video','renderer_version':renderer,
+                'source_sha256':native.sha(_env.PROJECT/'references/bb-video-native-source.json'),
+                'tools':{key:{'path':value,'version':'v26.10.0' if key=='node' else key+' version 8'} for key,value in tools.items()},
+                'browser':{'path':'/historical/missing/chrome','version':'Chrome 140'}}
+            runtime={'tools':tools,'renderer_version':renderer,'runtime_identity':identity,
+                     'environment':{'CHROME_PATH':identity['browser']['path']}}
+            argv=[tools['node'],str(source/'explainer/scripts/render.mjs'),str(project),
+                  '--aspect','9:16','--fps','24','--from','0','--to','2.0','--no-audio','--no-bgm',
+                  '--workers','1','--out','native.mp4']
+            def execute(command,**kwargs):
+                self.assertEqual(command,argv)
+                self.assertEqual(kwargs['env']['CHROME_PATH'],identity['browser']['path'])
+                (project/'out/native.mp4').write_bytes(b'real recorded native output fixture')
+                return subprocess.CompletedProcess(command,0,'native lint and font checks\nactual renderer output','')
+            with mock.patch.object(native,'_inputs'),mock.patch.object(runtime_module,'check',return_value=runtime), \
+                 mock.patch.object(native,'_run_native_process',side_effect=execute) as process, \
+                 mock.patch.object(native,'probe',return_value=b['composition']):
+                callpath=native.capture_render(root,request,argv)
+                call=json.loads(callpath.read_bytes())
+                self.assertNotIn('node_modules',call['execution_runtime'])
+                self.assertEqual(call['native_script_sha256'],native.sha(Path(argv[1])))
+                self.assertEqual(call['status'],'completed');self.assertEqual(process.call_count,1)
+                result=native.publish_completed(root,request,callpath,qa_note='开发夹具，仅验证真实调用记录与完成结果合同。')
+                self.assertEqual(native.inspect_result(root,request.read_bytes())['media'],call['media'])
+                self.assertEqual(json.loads(result.read_bytes())['status'],'completed')
+                (project/'index.html').write_text('later changed scene')
+                with self.assertRaisesRegex(ValueError,'changed'):
+                    native.inspect_result(root,request.read_bytes())
 
     def test_only_explicit_original_action_budgets_are_enforced(self):
         b=brief('video-shotcraft','ink-press')
@@ -209,7 +289,7 @@ class NativeMotionTests(unittest.TestCase):
         from types import SimpleNamespace
         with tempfile.TemporaryDirectory() as name:
             root=Path(name);request=root/'brief.json'
-            for dependency,template in [('mg-styles-15','flat-vector'),('video-shotcraft','spotlight-hero-card')]:
+            for dependency,template in [('mg-styles-15','flat-vector'),('video-shotcraft','spotlight-hero-card'),('bb-video','whiteboard')]:
                 b=brief(dependency,template);request.write_text(json.dumps(b))
                 with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
                     action=native.native_task(SimpleNamespace(job_dir=root,job_id=b['job_id']),
@@ -218,7 +298,8 @@ class NativeMotionTests(unittest.TestCase):
                 self.assertNotIn('engine/build.py',action['next'])
                 self.assertNotIn('quarter_turn_cw',action['next'])
                 self.assertNotIn('export-frames.mjs',action['next'])
-                self.assertIn('harness/render.mjs' if dependency=='mg-styles-15' else '@remotion/cli',action['next'])
+                self.assertIn({'mg-styles-15':'harness/render.mjs','video-shotcraft':'@remotion/cli',
+                               'bb-video':'explainer/scripts/render.mjs'}[dependency],action['next'])
                 if dependency == 'video-shotcraft':
                     self.assertEqual(len(action['native_catalog']),125)
                     self.assertIn('complementary cards',action['next'])

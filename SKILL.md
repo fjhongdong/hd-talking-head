@@ -37,6 +37,8 @@ description: Use when 用户提供原始口播视频和文案，希望完成封�
 
 MG Styles 与 Video Shotcraft 均完整交给原生工作流创作，分别读取[MG 原生合同](references/mg-styles-integration.md)与[Shotcraft 原生合同](references/video-shotcraft-integration.md)。本期语义和素材决定具体模板；字体、配色、材质、构图与动作保留原生设计空间。公开样片只作审美参考，不代表新主题同样好看。原生目录中的运镜和转场保留工程用途，不能独立凑 B-roll 数量；不透明输出不能作为透明贴片。
 
+BB Video 按[完整原生接入](references/bb-video-integration.md)调用，一个渠道包含 30 个原生风格模板；explainer／promo 是内部工作流，不增加模板数。原生 Skill 负责本句场景创作，父级只交语义、素材、真实词锚、规格和安全区；使用公开入口输出无声、不透明 B-roll，普通字幕与原口播由父级保留。选库时美观优先不改变一次匹配、渠道和模板联合最大化、最后校时的顺序。
+
 新增第三方来源的接入评估以实际作品美观度为主，不能以模板数量或技术可运行代替。该原则只决定接入来源，不改变实际剪辑在语义和质量合格候选中先最大化渠道、再最大化模板的选型顺序，不新增候选审美排名。
 
 成片在每项动效的实际时窗内，于右下角显示对应的小编号，避开字幕和人物小窗；封面和没有动效的空档不显示。编号只在最终合成层加入，不重做原生动效。清单和画面共用已确认 proposal 的冻结行序与 `row_id` 映射，沿用正文帧窗并加正式封面偏移；检查编号、时间和可读性后直接交付。
@@ -128,7 +130,7 @@ HyperFrames 的主入口必须是含显式 `<head>`、UTF-8 元数据和 `<body>
 - [语义动效规划接口与执行边界](references/semantic-motion.md)（关系图或五类状态动效进入候选时）
 - [B-roll 开源能力适配矩阵](references/open-source-adapter-matrix.md)
 - [上游场景 Skill 与本地渲染合同](references/upstream-scene-skills.md)
-- [Barty / Bang 统一原生调用](references/native-motion-call-contract.md)（同一批准任务、原生自主创作、产物后文字验收和当前项返修）
+- [完整原生动效调用](references/native-motion-call-contract.md)（同一批准任务、原生自主创作、产物后文字验收和当前项返修）
 - [Barty 完整原生动效](references/barty-motion-integration.md)（连续形态透明贴片与三类 explainer；先调用原生创作，再接收真实结果）
 - [Bang Motion 完整原生动效](references/bang-motion-integration.md)（10 种风格、6 类 explainer、19 种 opener 概念；正文按语义选择，不改变静态封面政策）
 - [Lemo 原生 Skill 的 59 种风格模板](references/lemo-opuscar.md)（选中 Lemo 后读取，按具体 STYLE 制作当前主题）

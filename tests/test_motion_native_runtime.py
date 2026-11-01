@@ -24,7 +24,8 @@ class MotionNativeRuntimeTests(unittest.TestCase):
         for dependency, version, minimum in [('barty-motion-graphics', 'v18.20.0', '>=20'),
                                                ('bang-motion', 'v22.11.0', '>=22.12.0'),
                                                ('mg-styles-15', 'v22.11.0', '>=22.12.0'),
-                                               ('video-shotcraft', 'v22.11.0', '>=22.12.0')]:
+                                               ('video-shotcraft', 'v22.11.0', '>=22.12.0'),
+                                               ('bb-video', 'v22.3.0', '>=22.4.0')]:
             with self.subTest(dependency=dependency), \
                     mock.patch.object(runtime.shutil, 'which', return_value='/tools/node'), \
                     mock.patch.object(runtime.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, version)) as run, \
@@ -33,6 +34,35 @@ class MotionNativeRuntimeTests(unittest.TestCase):
                     runtime.prepare(_env.PROJECT, dependency_id=dependency)
                 root.assert_not_called()
                 self.assertEqual([call.args[0] for call in run.call_args_list], [['/tools/node', '--version']])
+
+    def test_bb_zero_npm_tools_and_source_identity_are_real_and_reuse_is_offline(self):
+        with tempfile.TemporaryDirectory() as name:
+            browser=Path(name).resolve()/'chrome';browser.write_text('local browser fixture');browser.chmod(0o755)
+            outputs={'/tools/node':'v26.10.0','/tools/ffmpeg':'ffmpeg version 8.0\nbuild',
+                     '/tools/ffprobe':'ffprobe version 8.0\nbuild',str(browser):'Chrome 140.0.1'}
+            def version(argv,**kwargs):
+                return subprocess.CompletedProcess(argv,0,outputs[argv[0]])
+            with mock.patch.object(runtime.shutil,'which',side_effect=lambda value:'/tools/'+value), \
+                 mock.patch.dict(runtime.os.environ,{'CHROME_PATH':str(browser)}), \
+                 mock.patch.object(runtime.subprocess,'run',side_effect=version) as run, \
+                 mock.patch.object(runtime,'runtime_root',side_effect=AssertionError('BB must not install npm runtime')):
+                checked=runtime.prepare(_env.PROJECT,dependency_id='bb-video')
+            self.assertNotIn('bb-video',runtime.PACKAGES)
+            self.assertNotIn('node_modules',checked);self.assertNotIn('runtime_root',checked)
+            self.assertEqual(checked['environment'],{'CHROME_PATH':str(browser)})
+            self.assertEqual([call.args[0] for call in run.call_args_list],
+                [['/tools/node','--version'],[str(browser),'--version'],
+                 ['/tools/ffmpeg','-version'],['/tools/ffprobe','-version']])
+            identity=checked['runtime_identity'];self.assertNotIn('lock_sha256',identity)
+            self.assertEqual(identity['source_sha256'],runtime.sha256_file(_env.PROJECT/'references/bb-video-native-source.json'))
+            self.assertEqual(identity['tools']['node']['version'],'v26.10.0')
+            self.assertEqual(identity['renderer_version'],runtime.renderer_version('bb-video'))
+            browser.unlink()
+            with mock.patch.object(runtime.subprocess,'run',side_effect=AssertionError('frozen runtime verification must stay offline')):
+                runtime.validate_runtime_identity(_env.PROJECT,identity,dependency_id='bb-video')
+                changed=copy.deepcopy(identity);changed['source_sha256']='0'*64
+                with self.assertRaisesRegex(ValueError,'locked dependency'):
+                    runtime.validate_runtime_identity(_env.PROJECT,changed,dependency_id='bb-video')
 
     def test_selected_3d_style_blocks_before_confirmation_but_not_other_styles_or_reviewed_reuse(self):
         from types import SimpleNamespace

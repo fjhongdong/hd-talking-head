@@ -43,7 +43,7 @@ def _exact(root, record):
 
 NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                          'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
-                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter'}
+                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter'}
 
 def native_candidate_id(dependency, brief, segment=None, component_id=None):
     if dependency == 'lemo-wake':
@@ -1412,7 +1412,7 @@ def generation_actions(job, *, account_limit=None):
         actions.append(action)
     return actions
 
-MOTION_CREATION = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+MOTION_CREATION = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
 
 
 def _lemo_number_change(old_text, new_text):

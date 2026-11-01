@@ -1,6 +1,6 @@
 # 完整原生动效调用
 
-Barty、Bang、MG Styles 和 Video Shotcraft 保持完整原生 Skill／创作指引、参考、模板和渲染脚本。我们的接入层负责任务交接、环境准备、结果审核和正式消费。原生工作流决定设计、拆层、构图、动作和工程；父级传入必要语义、素材、输出规格和实际安全区，不预写编舞或统一改成卡片加箭头。MG 的原生完整提示词与 README 是创作入口，不因没有 SKILL.md 改为只调用渲染器。各自入口见[MG](mg-styles-integration.md)、[Shotcraft](video-shotcraft-integration.md)、[Barty](barty-motion-integration.md)、[Bang](bang-motion-integration.md)。
+Barty、Bang、MG Styles、Video Shotcraft 和 BB Video 保持完整原生 Skill／创作指引、参考、模板和渲染脚本。我们的接入层负责任务交接、环境准备、结果审核和正式消费。原生工作流决定设计、拆层、构图、动作和工程；父级传入必要语义、素材、输出规格和实际安全区，不预写编舞或统一改成卡片加箭头。MG 的原生完整提示词与 README 是创作入口，不因没有 SKILL.md 改为只调用渲染器。各自入口见[MG](mg-styles-integration.md)、[Shotcraft](video-shotcraft-integration.md)、[Barty](barty-motion-integration.md)、[Bang](bang-motion-integration.md)、[BB Video](bb-video-integration.md)。
 
 ## 身份与一次匹配
 

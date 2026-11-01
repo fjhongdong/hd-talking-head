@@ -236,7 +236,7 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
         from .visual_confirmation import _native_result_adapter
         for segment in director['segments']:
             for cid, binding in segment.get('bindings', {}).items():
-                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
                     continue
                 scenes = [s for s in treatment.get('scenes', [])
                           if (s.get('segment_id'), s.get('component_id')) == (segment['segment_id'], cid)]

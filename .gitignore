@@ -17,3 +17,4 @@ node_modules/
 # Expanded complete upstream snapshots are restored from archives/sources.
 /vendor/mg-styles-15/
 /vendor/video-shotcraft/
+/vendor/bb-video/

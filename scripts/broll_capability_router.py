@@ -120,7 +120,7 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
-    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
         from motion_native_skill_adapter import ENTRY, VERSION, load_template_catalog
         dependency = candidate['dependency_id']
         rows = load_template_catalog(PACKAGE_ROOT, dependency_id=dependency)
@@ -615,14 +615,13 @@ def _validate_code_cross_fields(
         raise RouterError("invocation_record.argv must be an array")
     if argv.count(entrypoint) != 1:
         raise RouterError("invocation_record.argv must bind entrypoint exactly once")
-    if dependency_id in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+    if dependency_id in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
         from motion_native_skill_adapter import ENTRY, VERSION, primary_renderer as native_renderer
-        from motion_native_runtime import PACKAGES
-        package, version = PACKAGES[dependency_id]
+        from motion_native_runtime import renderer_version as native_renderer_version
         if (not _native_selection(component) or entrypoint != ENTRY
                 or primary_renderer != native_renderer(dependency_id)
                 or component.get('template_version') != VERSION
-                or component.get('renderer_version') != package + '-' + version):
+                or component.get('renderer_version') != native_renderer_version(dependency_id)):
             raise RouterError('Native motion requires its complete pinned workflow and actual renderer')
     if dependency_id == "adu-motion-video":
         if component.get("semantic_role") == "evidence":

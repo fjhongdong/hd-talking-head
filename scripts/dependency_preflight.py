@@ -1391,7 +1391,7 @@ def _reviewed_native_dependencies(project_root: Path, identity: dict, visual_pla
         visual_canary.approved_aroll_record(job, plan)
     except (OSError, ValueError, KeyError, TypeError, state.WorkflowError, visual_canary.VisualCanaryError) as error:
         raise PreflightError('reviewed native realization is invalid: ' + str(error)) from error
-    native = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+    native = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
     return {component['dependency_id'] for segment in plan['segments']
             for component in segment['shot_recipe']['components']
             if component.get('kind') == 'code_generated' and component.get('dependency_id') in native}
@@ -1428,7 +1428,8 @@ def build_report(
     for item in manifest["dependencies"]:
         selection = item.get("selection")
         selection_bindings = (recipe_bindings if item['id'] not in {'node-runtime', 'npm'} else
-            [binding for binding in recipe_bindings if binding.get('dependency_id') not in reviewed_native])
+            [binding for binding in recipe_bindings if binding.get('dependency_id') not in reviewed_native
+             and not (item['id'] == 'npm' and binding.get('dependency_id') == 'bb-video')])
         selected_binding = _selected_recipe_binding(item, selection_bindings)
         config_selected = (item.get("config_selection") == "reference_asr"
                            and identity.get("reference_asr_selection") is not None)

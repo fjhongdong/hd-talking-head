@@ -16,6 +16,12 @@ from adapter_kit import sha256_file
 PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0'),
             'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
 
+
+def renderer_version(dependency_id):
+    if dependency_id == 'bb-video':
+        return 'bb-video-a21025a19d382b066ff354d877919be9d6863f97'
+    return '-'.join(PACKAGES[dependency_id])
+
 BLENDER_VERSION = '5.1.2'
 BLENDER_ARCHIVES = {
     ('Darwin', 'arm64'): ('blender-5.1.2-macos-arm64.dmg',
@@ -101,6 +107,8 @@ def runtime_root(project, *, dependency_id='barty-motion-graphics'):
 
 
 def _minimum_node(project, dependency_id):
+    if dependency_id == 'bb-video':
+        return '>=22.4.0', (22, 4, 0)
     name = PACKAGES[dependency_id][0]
     lock = json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes())
     requirement = (lock['packages']['']['engines']['node'] if dependency_id in {'mg-styles-15', 'video-shotcraft'}
@@ -139,12 +147,14 @@ def _node_preflight(project, dependency_id):
 
 def validate_runtime_identity(project, identity, *, dependency_id):
     """Validate a frozen generation identity without requiring its old tools."""
-    name, version = PACKAGES[dependency_id]
+    source_key = 'source_sha256' if dependency_id == 'bb-video' else 'lock_sha256'
+    source_digest = (_bb_source_digest(project) if dependency_id == 'bb-video' else
+                     hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest())
     if (not isinstance(identity, dict)
-            or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', 'lock_sha256', 'tools', 'browser'}
+            or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', source_key, 'tools', 'browser'}
             or identity['schema_version'] != 1 or identity['dependency_id'] != dependency_id
-            or identity['renderer_version'] != name + '-' + version
-            or identity['lock_sha256'] != hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest()
+            or identity['renderer_version'] != renderer_version(dependency_id)
+            or identity[source_key] != source_digest
             or not isinstance(identity['tools'], dict) or set(identity['tools']) != {'node', 'ffmpeg', 'ffprobe'}):
         raise ValueError('Frozen native motion runtime identity differs from its locked dependency')
     for item in [*identity['tools'].values(), identity['browser']]:
@@ -156,8 +166,42 @@ def validate_runtime_identity(project, identity, *, dependency_id):
     return identity
 
 
+def _bb_source_digest(project):
+    from motion_native_skill_adapter import source_root
+    source_root(project, dependency_id='bb-video')
+    return sha256_file(Path(project) / 'references/bb-video-native-source.json')
+
+
+def _check_bb_tools(project):
+    """BB uses Node's built-in CDP client, Chrome and FFmpeg; no npm runtime."""
+    digest = _bb_source_digest(project)
+    node, node_version = _node_preflight(project, 'bb-video')
+    tools = {'node': node, **{tool: shutil.which(tool) for tool in ('ffmpeg', 'ffprobe')}}
+    if not all(tools.values()):
+        raise ValueError('BB Video rendering requires Node, FFmpeg and FFprobe')
+    from adapter_kit import browser_candidates
+    configured = os.environ.get('CHROME_PATH')
+    browsers = [Path(configured)] if configured else browser_candidates(project)
+    if not browsers or not browsers[0].is_file() or not os.access(browsers[0], os.X_OK):
+        raise ValueError('BB Video requires an existing executable Chrome browser; set CHROME_PATH')
+    browser = str(browsers[0].resolve(strict=True))
+    result = subprocess.run([browser, '--version'], check=True, capture_output=True, text=True, timeout=15)
+    browser_version = result.stdout.strip()
+    if not browser_version:
+        raise ValueError('Cannot read BB Video Chrome version')
+    versions = {'node': node_version, **{tool: _tool_version(tools[tool], tool) for tool in ('ffmpeg', 'ffprobe')}}
+    renderer = renderer_version('bb-video')
+    identity = {'schema_version': 1, 'dependency_id': 'bb-video', 'renderer_version': renderer,
+                'source_sha256': digest,
+                'tools': {key: {'path': value, 'version': versions[key]} for key, value in tools.items()},
+                'browser': {'path': browser, 'version': browser_version}}
+    validate_runtime_identity(project, identity, dependency_id='bb-video')
+    return {'status': 'ready', 'renderer_version': renderer, 'browser': browser,
+            'browser_version': browser_version, 'environment': {'CHROME_PATH': browser},
+            'tools': tools, 'tool_versions': versions, 'runtime_identity': identity}
+
+
 def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
-    name, version = PACKAGES[dependency_id]
     if mode not in {'render', 'reuse'}:
         raise ValueError('Unknown native motion runtime check mode')
     if mode == 'reuse':
@@ -166,6 +210,9 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
             raise ValueError('Frozen native motion media inspection requires FFprobe')
         return {'status': 'ready', 'tools': {'ffprobe': ffprobe},
                 'tool_versions': {'ffprobe': _tool_version(ffprobe, 'ffprobe')}}
+    if dependency_id == 'bb-video':
+        return _check_bb_tools(project)
+    name, version = PACKAGES[dependency_id]
     node, node_version = _node_preflight(project, dependency_id)
     root = runtime_root(project, dependency_id=dependency_id)
     if json.loads((root / 'package.json').read_bytes()) != package_for(dependency_id):
@@ -261,6 +308,8 @@ def check_template_dependencies(project, *, dependency_id, template_id, mode='re
 
 
 def prepare(project, *, dependency_id='barty-motion-graphics'):
+    if dependency_id == 'bb-video':
+        return check(project, dependency_id=dependency_id)
     name, version = PACKAGES[dependency_id]
     node, _ = _node_preflight(project, dependency_id)
     root = runtime_root(project, dependency_id=dependency_id)

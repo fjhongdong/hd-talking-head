@@ -5570,7 +5570,7 @@
         "vendor/lemo-wake/skills/wake/scripts/qa.py": "f6324c57c5c833ea13bd7a0ca6c3d07262b98ac30d8d42e3e4fb4f208dbffa64",
         "scripts/lemo_wake_adapter.py": "a45fbb462c139d6255b1c695a3eba01648268acc478695af15f7d4bd8596fec6",
         "references/cover-opening-bgm.md": "005da9c818545f240560e4502de7d2e365cbd6c66b2bc8b9ff7aa5dc69f573f5",
-        "edit/hd/tools/dependency_contracts.py": "273d43440eba24c880fba2141452fafd15d42847a78b9680c12431828aa25949"
+        "edit/hd/tools/dependency_contracts.py": "888904a709cc1d7c2e022def09197b0a08c269e9da847d9ec17e90f362be56e0"
       },
       "content_scope": {
         "mode": "full_scene",
@@ -22179,6 +22179,1896 @@
       "content_scope": {
         "mode": "full_scene",
         "evidence_ref": "vendor/video-shotcraft/template/TEMPLATE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/ascii",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "ASCII字符画",
+      "summary": "ASCII字符画。Everything drawn in monospace characters: product images decode out of glyph noise, sharpen as the camera pushes in, then scan into the real photo; typed lines, box-drawing frames Best for: Developer tools, hardware and product lineups, anything \"precise\"; tech launches with good product images",
+      "tags": {
+        "subjects": [
+          "开发工具",
+          "硬件",
+          "产品图",
+          "数据",
+          "AI"
+        ],
+        "actions": [
+          "解码",
+          "打字",
+          "扫描",
+          "推进"
+        ],
+        "relations": [
+          "精确",
+          "呈现"
+        ],
+        "feelings": [
+          "冷静"
+        ],
+        "styles": [
+          "ASCII字符画",
+          "ascii"
+        ],
+        "patterns": [
+          "ascii"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "产品图应为真实素材；不适合以人物肖像或温暖手工质感为主的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/ascii/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/ascii.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/ascii/STYLE.md": "6a1712f422d3f18d15cae2dfdf4aeacad330f459b0898f73ba159b03dd3078cc",
+        "vendor/bb-video/skills/bb-video/promo/runtime/ascii.js": "08c85f2a408ceb819832720302ae570b7ad6e11f7e5e219cec5deb7a528a59c2"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/ascii/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/bauhaus",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "包豪斯构成",
+      "summary": "包豪斯构成。Red and black on printed cream paper with Bauhaus yellow and blue; big circles, thick bars and wedges on diagonals; heavy slogans set at an angle and stamped in letter by letter; things assembled from circles, squares and triangles; a red wedge sweeps across between scenes Best for: Manifestos and launches, how something is built from parts, processes and comparisons, design / architecture / industrial history, tools and productivity",
+      "tags": {
+        "subjects": [
+          "结构",
+          "组成",
+          "零件",
+          "设计",
+          "建筑",
+          "工业"
+        ],
+        "actions": [
+          "组装",
+          "盖印",
+          "扫过"
+        ],
+        "relations": [
+          "组成",
+          "流程",
+          "比较"
+        ],
+        "feelings": [
+          "有力"
+        ],
+        "styles": [
+          "包豪斯构成",
+          "bauhaus"
+        ],
+        "patterns": [
+          "bauhaus"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "没有角色表演；不适合依赖真人故事或大量实景照片的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/bauhaus/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/bauhaus.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/bauhaus/STYLE.md": "00ba833bf77f88330e9c695fb0000d29f9fb9130368340ba1f09c142e87ac149",
+        "vendor/bb-video/skills/bb-video/promo/runtime/bauhaus.js": "eca94d2753ad1e7d366600e28bc46f439f95594d60a9d179a0604637200c9d06"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/bauhaus/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/blueprint",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "蓝图工程图",
+      "summary": "蓝图工程图。One big drawing sheet in cyanotype blue (paper grain, fine grid) with white line work to draughting convention: lines drafted in by a plotter pen (construction lines first), hidden lines dashed, centre lines dash-dot, dimensions with arrowheads, leaders with numbered balloons, a parts list, hatched sections, detail circles, a title block; mechanisms that really work (gear trains with real tooth counts meshing at the right ratios, an escapement locking and releasing, a balance and hairspring, springs, levers, cams, racks) on one mechanism clock shown in slow motion or time-lapse; the camera travels across the sheet into detail views; one red pencil as the accent Best for: How things work: machines and mechanisms (a watch, a lock, a cistern, an elevator, a shutter), systems and specs with numbers and ratios; hardware and engineering promos, an architecture drawn as an assembly",
+      "tags": {
+        "subjects": [
+          "机械",
+          "齿轮",
+          "机器",
+          "零件",
+          "规格",
+          "架构"
+        ],
+        "actions": [
+          "绘制",
+          "啮合",
+          "转动",
+          "装配"
+        ],
+        "relations": [
+          "比例",
+          "结构",
+          "数据流"
+        ],
+        "feelings": [
+          "精确"
+        ],
+        "styles": [
+          "蓝图工程图",
+          "blueprint"
+        ],
+        "patterns": [
+          "blueprint"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "机构运动、齿数和比例须有真实依据；不适合人物情绪或以UI为主的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/blueprint/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/blueprint.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/blueprint/STYLE.md": "17951bec471d7c7e5f044ae158fb919c66bac7786204aed55aac734d454b0f6c",
+        "vendor/bb-video/skills/bb-video/promo/runtime/blueprint.js": "3da1c6b6a2b8093fcb55694904e3ba60ff735c72123931c1467bd02e4d8e9421"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/blueprint/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/chat",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "聊天记录",
+      "summary": "聊天记录。The story or the information happens in a messaging app: someone is typing, messages pop up and push the thread up, quote cards with their sources, a poem lighting up line by line, a relay checklist, a poll, a route on a map, \"X joined the group\", a recalled message; the camera pushes into one message while the rest dims. Landscape: a large chat window with a side column; portrait: the app fills the width Best for: Allusions and small history stories told as dialogue, \"who said what\" explainers with many quoted sources, AI assistants, support and collaboration products",
+      "tags": {
+        "subjects": [
+          "对话",
+          "引用",
+          "AI助手",
+          "客服",
+          "协作",
+          "投票"
+        ],
+        "actions": [
+          "输入",
+          "弹出",
+          "回复",
+          "引用",
+          "撤回"
+        ],
+        "relations": [
+          "问答",
+          "步骤",
+          "引用"
+        ],
+        "feelings": [
+          "亲切"
+        ],
+        "styles": [
+          "聊天记录",
+          "chat"
+        ],
+        "patterns": [
+          "chat"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "不适合流程剖面或复杂空间结构；引用需要来源。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/chat/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/chat.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/chat/STYLE.md": "23e8ea232289885a37909d431554843c442a5ede158d22cdc958badb545606b5",
+        "vendor/bb-video/skills/bb-video/promo/runtime/chat.js": "cf32bd7a1db322e0f8de3b835f7c84e12ebb825df714a88ea502a119441db2b0"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/chat/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/collage",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "纸艺拼贴新闻",
+      "summary": "纸艺拼贴新闻。One take over a table covered in torn paper, seen in 2.5D with depth of field: halftone black-and-white photos with a white torn fringe (credited on the source line), faded protest-poster layers, red rubber stamps, a typewriter quote typing on under a highlighter, masking tape and push pins; information told with paper props — paper dolls turning red, a red thread pinned through the years with tickets and photos, index cards with redaction bars, cut-paper bars on notebook paper, a ladder and a podium with country cut-outs, a line chart on graph paper with flags riding the lines, a big serif character printed on a certificate; the camera floats, pushes and travels piece to piece (far moves lift and land, never a cut), a red title sheet, a spotlight; fixed chrome: channel / chapter, date and place, source line Best for: News explainers with history behind them (protests, debt, prices, elections, policies), stories told with archive photos, quotes, numbers, a timeline and rankings",
+      "tags": {
+        "subjects": [
+          "新闻",
+          "历史",
+          "照片",
+          "政策",
+          "时间线",
+          "排名"
+        ],
+        "actions": [
+          "拼贴",
+          "标记",
+          "移动",
+          "打字"
+        ],
+        "relations": [
+          "因果",
+          "时间线",
+          "排名"
+        ],
+        "feelings": [
+          "质感"
+        ],
+        "styles": [
+          "纸艺拼贴新闻",
+          "collage"
+        ],
+        "patterns": [
+          "collage"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "档案照片和引用须提供可用来源；不适合角色表演、UI导览或机械原理。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/collage/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/collage.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/collage/STYLE.md": "a4f0c5c5bcc2932d9a332208c3d75a159a24420f7d6e901c7053e1cb557c4a3a",
+        "vendor/bb-video/skills/bb-video/promo/runtime/collage.js": "cca3f938a2fa631f89f176210974596f2098bb4530c4bc524503f3a58263fc50"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/collage/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/cutout",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "马蒂斯剪纸",
+      "summary": "马蒂斯剪纸。Gouache paper shapes cut with scissors and pasted on cream paper; whole sheets cover and tear Best for: Creation, learning, community, education, lifestyle",
+      "tags": {
+        "subjects": [
+          "创作",
+          "学习",
+          "社区",
+          "教育",
+          "生活",
+          "内容"
+        ],
+        "actions": [
+          "剪纸",
+          "组装",
+          "覆盖",
+          "撕开"
+        ],
+        "relations": [
+          "组成",
+          "逐步"
+        ],
+        "feelings": [
+          "温暖"
+        ],
+        "styles": [
+          "马蒂斯剪纸",
+          "cutout"
+        ],
+        "patterns": [
+          "cutout"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "不适合要求冷硬精密感的数据库、安全或金融交易主题。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/cutout/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/cutout.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/cutout/STYLE.md": "8e08ee9afb65ef34d42911a5f5ca92184110bc2825baa7e5685c77f00185155e",
+        "vendor/bb-video/skills/bb-video/promo/runtime/cutout.js": "136f5f599df6d52f453aed35df8da5d5fa10800baf92fd935ee07f5d8a7ee086"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/cutout/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/dossier",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "剪报解说",
+      "summary": "剪报解说。Modern finance / news commentary made of paper: newspaper clippings on grey newsprint (a heavy headline with a yellow-green highlighter stroke, real short reports written from the facts, halftone photos) and real source documents (press releases, filings, central-bank statements) re-typeset under an invented masthead; the camera pushes from the page into the quoted line, where a red / blue translation bar, a tag or a marker lands on those words; sheets fly in over pictures, an ink-brush smear between shots, thumbnail-style title cards, data callouts; a chapter bar on top, bold outlined captions, grain and a vignette Best for: Earnings, markets, policy and filings explained, news commentary with documents as evidence, \"what this announcement really says\"",
+      "tags": {
+        "subjects": [
+          "新闻",
+          "财经",
+          "财报",
+          "政策",
+          "文件",
+          "公告"
+        ],
+        "actions": [
+          "引用",
+          "高亮",
+          "推进",
+          "盖印"
+        ],
+        "relations": [
+          "证据",
+          "解读"
+        ],
+        "feelings": [
+          "克制"
+        ],
+        "styles": [
+          "剪报解说",
+          "dossier"
+        ],
+        "patterns": [
+          "dossier"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "核心是实际文件与原文依据；不适合角色故事、系统流程或UI导览。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/dossier/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/dossier.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/dossier/STYLE.md": "1cc23ddfede3ebf002279509713ab1a79bd0ac85989aa330a4528646c4044c80",
+        "vendor/bb-video/skills/bb-video/promo/runtime/dossier.js": "568ac4c4ffa994dd3aa364638d01430c3071f475514fd90613b51ecf7a862afa"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/dossier/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/filmroom",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "录像分析",
+      "summary": "录像分析。Real footage (licence-clean, credited) on a dark broadcast set: the analyst stops the tape and draws on the frozen frame — a ring under a player's feet, the run she is about to make, the passing lane, the gap, a spotlight — then rewinds, replays it in blended slow motion with a ring tracking her, and pushes in on the detail; a top-down tactics board calibrated from the footage; shot charts from game data Best for: Sports breakdowns (one possession, one lesson: off-ball movement, spacing, footwork), any footage where position matters, product walkthroughs on a screen recording",
+      "tags": {
+        "subjects": [
+          "比赛",
+          "录像",
+          "体育",
+          "录屏",
+          "球员",
+          "位置"
+        ],
+        "actions": [
+          "冻结",
+          "回放",
+          "倒带",
+          "慢放",
+          "跟踪"
+        ],
+        "relations": [
+          "空间",
+          "路径",
+          "因果"
+        ],
+        "feelings": [
+          "分析"
+        ],
+        "styles": [
+          "录像分析",
+          "filmroom"
+        ],
+        "patterns": [
+          "filmroom"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "必须有经授权且可核实的真实录像；无素材时不能用重建动画替代。只讲画面支持的事实。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/filmroom/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/filmroom.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/filmroom/STYLE.md": "ba62622483f8b221ec90ffab7cdd8bf40abd891ca57056fe81826ad17d282a7e",
+        "vendor/bb-video/skills/bb-video/promo/runtime/filmroom.js": "1cd65bbac6922a1fef02a6d14676ed74403d23b59d8f726e82f70e5eeaf3620d"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/filmroom/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/grain",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "扁平颗粒插画",
+      "summary": "扁平颗粒插画。A flat vector illustration on warm off-white paper in two spot colours and their tints (coral and navy by default): no outlines, volume and light made with seeded stipple grain (a colour breaks into dots as it fades into its tint or the paper); simple figures with round heads and block bodies on a thin ground line; information drawn into the picture — circular inset close-ups, a small diagram card, ticking readouts (a dial, a price sign, a clock wedge), rows of repeated things for quantity, columns rising from the ground line, a timeline ruler with the year ticking over; each chapter is one stage where the scene grows and turns into the next era in place, the camera holds, breathes and pushes in, chapters open through an iris from a detail, one full-colour spotlight beat Best for: History of a technology or habit era by era, how a city or system grows, before / after, explainers where the picture carries the numbers; warm consumer and civic products (mobility, energy, home, travel)",
+      "tags": {
+        "subjects": [
+          "技术",
+          "历史",
+          "城市",
+          "系统",
+          "数量",
+          "能源"
+        ],
+        "actions": [
+          "生长",
+          "演变",
+          "计数",
+          "推进"
+        ],
+        "relations": [
+          "前后",
+          "年代",
+          "数量"
+        ],
+        "feelings": [
+          "温暖"
+        ],
+        "styles": [
+          "扁平颗粒插画",
+          "grain"
+        ],
+        "patterns": [
+          "grain"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "人物是匿名形象；不适合具体人物戏剧、UI导览或密集数据面板。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/grain/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/grain.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/grain/STYLE.md": "4ab6b3ce26dbb074b78d28ca3e056ea30fd1bd7b2335428b5e99a1209efeedc8",
+        "vendor/bb-video/skills/bb-video/promo/runtime/grain.js": "3497b277f53ce5e22dd6cb21d19dabe25756015bc4b530df1e24bfb401928a42"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/grain/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/ink",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "水墨长卷",
+      "summary": "水墨长卷。One long handscroll on rice paper: calligraphy stroke by stroke, landscapes, figures, seals Best for: Chinese history and allusions, classical poetry, idioms, culture, nature",
+      "tags": {
+        "subjects": [
+          "历史",
+          "诗词",
+          "成语",
+          "文化",
+          "哲学",
+          "自然"
+        ],
+        "actions": [
+          "书写",
+          "展卷",
+          "生长",
+          "盖章"
+        ],
+        "relations": [
+          "典故",
+          "概念"
+        ],
+        "feelings": [
+          "宁静"
+        ],
+        "styles": [
+          "水墨长卷",
+          "ink"
+        ],
+        "patterns": [
+          "ink"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "不支持公式密集推导；不适合密集数据或繁忙现代科技界面。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/ink/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/ink.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/ink/STYLE.md": "db3b701c79f4189acdf5b51a529a8ec4267ebd82db353f51306d379b470373e7",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/ink.js": "a18ac6ae64b43cc404a787cb2978c2d2d44ce9c9b91ff01035db8acc1f6e58b7"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/ink/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/isometric",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "等距微缩世界",
+      "summary": "等距微缩世界。A whole little world from a fixed 45° isometric view: tiles on thick plinths with gaps between them, low-poly rounded buildings, belts, shelves, vans and little people that move on their own; one thing is followed through the system (handed from person to belt to truck), its route painted on the ground leg by leg, a clock card planted on each stage, streams of parcels for volume; the stage being talked about lifts while the rest fades; one continuous camera pans, pushes in and pulls back; night falls on the long haul Best for: Processes and systems (logistics, supply chains, how a city / a grid / a payment / the internet works), \"follow one thing through the system\", products whose value is a system",
+      "tags": {
+        "subjects": [
+          "物流",
+          "供应链",
+          "城市",
+          "工厂",
+          "电网",
+          "互联网",
+          "支付",
+          "包裹"
+        ],
+        "actions": [
+          "传递",
+          "运输",
+          "跟随",
+          "输送"
+        ],
+        "relations": [
+          "流程",
+          "系统",
+          "连接",
+          "前后"
+        ],
+        "feelings": [
+          "清楚"
+        ],
+        "styles": [
+          "等距微缩世界",
+          "isometric"
+        ],
+        "patterns": [
+          "isometric"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "适合多环节系统；不适合单物体细节或以情绪角色戏剧为主的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/isometric/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/isometric.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/isometric/STYLE.md": "a7e4d113a8326df95f3a310da1dd8ec67739e0e97d23e47533b9e05ad5829694",
+        "vendor/bb-video/skills/bb-video/promo/runtime/isometric.js": "0076780c3e41fb0380f4a49ee727453a308a36be7cb023cc0602fc2713442380"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/isometric/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/launch",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "发布会动效",
+      "summary": "发布会动效。`node explainer/scripts/new.mjs <dir> --style …` — creates a narration-paced project (voiceover + captions; cues timed to the narration, `promo/references/kit.md`, \"Following the voiceover\" Best for: native: `node promo/scripts/new.mjs <dir> --style …` — the style's full component set",
+      "tags": {
+        "subjects": [
+          "软件",
+          "SaaS",
+          "AI",
+          "产品",
+          "界面",
+          "网站"
+        ],
+        "actions": [
+          "点击",
+          "打字",
+          "推进",
+          "揭示"
+        ],
+        "relations": [
+          "步骤",
+          "对比"
+        ],
+        "feelings": [
+          "明快"
+        ],
+        "styles": [
+          "发布会动效",
+          "launch"
+        ],
+        "patterns": [
+          "launch"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "产品界面须使用真实截图或录屏；不适合以温暖手工艺术感为主的产品。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/launch/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/promo.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/launch/STYLE.md": "ba0dd7e372068c083665ec3cd6bc291fea1159d68cbdd614d309170f3090ba2c",
+        "vendor/bb-video/skills/bb-video/promo/runtime/promo.js": "d9923b7ee6161cc72cf573cab26789a621a882b6d0c49bbdf751743c7574faa3"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/launch/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/lumen",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "暗调励志动画",
+      "summary": "暗调励志动画。A stylized room drawn in code, nearly all black, lit by one motivated light (a phone screen on a face, a red alarm clock, a desk lamp, moonlight through blinds, dawn at a window) with rim light, a giant cast shadow, haze, bloom and grain; one minimal original protagonist (soft square head, a mood cowlick, an oversized hoodie, no outlines) acts everything with eyes and brows — scrolling in bed from above, dragged up by the alarm, slumped at a desk, putting the phone outside the door, at the window at dawn; slow push-ins that hold on the face; a low second-person voice; facts told in light (a clock racing, gauges, a line of the night, an x-ray of the head); white thumbnail-style title cards with a dark stroke; music that presses down and then releases Best for: Habits and self-improvement told to \"you\": sleep and late-night scrolling, procrastination, discipline, focus, burnout, starting the gym or studying; promos for wellbeing, focus and sleep apps",
+      "tags": {
+        "subjects": [
+          "习惯",
+          "睡眠",
+          "拖延",
+          "专注",
+          "自律",
+          "学习"
+        ],
+        "actions": [
+          "起身",
+          "放下",
+          "凝视",
+          "决定"
+        ],
+        "relations": [
+          "困境",
+          "转折"
+        ],
+        "feelings": [
+          "压抑",
+          "释然"
+        ],
+        "styles": [
+          "暗调励志动画",
+          "lumen"
+        ],
+        "patterns": [
+          "lumen"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "单一主角的内心变化；不适合多人历史故事、密集教程或长时间UI展示。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/lumen/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/lumen.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/lumen/STYLE.md": "19b027c46e3ed472ef86f12fa554ddd14d45e17e31d7e239073c349a136617a7",
+        "vendor/bb-video/skills/bb-video/promo/runtime/lumen.js": "ea874471ae95be32f3613c56fdca4047405c99f2e2b038a3013fba4928d10f8e"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/lumen/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/manga",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "日漫分镜",
+      "summary": "日漫分镜。Black-and-white manga pages (white paper, ink line, dot and gradient screentone) cut into panels with gutters, slanted and bleeding panels, figures breaking the frame; speed and focus lines, drawn sound effects (ドン / ゴゴゴ / 轰) as part of the art, round / shout / thought balloons and narration boxes, vertical lettering; the camera reads panel by panel (right to left), punches into the key panel and shakes on impacts, panels ink in, pages turn or are slashed open, a full-page splash for the climax; code-drawn original characters (expressions, eye close-ups, fists, silhouettes, chibi reactions), battle-manga intro boxes, inked charts Best for: Science and concepts told as a fight or a contest (a molecule vs a receptor, a bug vs the fix), stories with a twist, character-driven promos for young audiences",
+      "tags": {
+        "subjects": [
+          "科学",
+          "概念",
+          "人物",
+          "算法",
+          "对手",
+          "故事"
+        ],
+        "actions": [
+          "对抗",
+          "揭示",
+          "冲击",
+          "翻页"
+        ],
+        "relations": [
+          "竞争",
+          "反转"
+        ],
+        "feelings": [
+          "戏剧"
+        ],
+        "styles": [
+          "日漫分镜",
+          "manga"
+        ],
+        "patterns": [
+          "manga"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "不适合密集财经数据、沉重病痛悲伤、多环节系统或中国历史纪实。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/manga/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/manga.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/manga/STYLE.md": "445cc564f3df6e5e37fb2ef418817b7600ff32f1869607e81a4dfd168398a81d",
+        "vendor/bb-video/skills/bb-video/promo/runtime/manga.js": "14181255497492bd054591ecc4772625840f43ed57002d6f4a2ee44473197575"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/manga/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/map",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "地图动画",
+      "summary": "地图动画。A designed, printed map drawn from real geodata (paper land, engraved water lines along the coast, parks, street texture, cartographic labels): routes draw on stroke by stroke, a tram / train / plane travels a line and reaches each stop on the word, stations pop in, areas spread like ink, printed callout cards pinned to places, a year counter, a locator globe; one camera turns the globe, dives to the street, flies between places, tilts and follows a vehicle; the subject stays lit while the rest dims Best for: Places and how they connect: transit and cities, history campaigns and journeys, trade and migration routes, the spread of something, \"where is it\" openers, before / after with a year",
+      "tags": {
+        "subjects": [
+          "地点",
+          "交通",
+          "城市",
+          "地理",
+          "路线",
+          "迁移"
+        ],
+        "actions": [
+          "绘制",
+          "旅行",
+          "扩散",
+          "到达"
+        ],
+        "relations": [
+          "连接",
+          "地理",
+          "前后"
+        ],
+        "feelings": [
+          "清楚"
+        ],
+        "styles": [
+          "地图动画",
+          "map"
+        ],
+        "patterns": [
+          "map"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "地理须来自真实地理数据；无地理关系的内容、单物体细节或室内流程另选风格。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/map/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/map.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/map/STYLE.md": "e304060004fa5b2431495f650b71c247d13b9783377a0b268a74ebba7ed35f12",
+        "vendor/bb-video/skills/bb-video/promo/runtime/map.js": "a3d7a52b0e5efbc529cc545ac2d4f3b5bc2c2304fac99703e12f4654de7aaac2"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/map/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/mystery",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "悬疑探秘",
+      "summary": "悬疑探秘。A deadpan mock-science programme on an old 4:3 TV in saturated blue (tube vignette, scratches, a station mark, a crawling \"fiction, for fun\" line): an outlined white title with its key words in red, numbered \"symptoms\" in brush script, each acted out by rubber-hose cartoon stickers (a brain, a light-bulb person in white gloves, a phone, an alarm clock, a battery at 19 %), a full-screen chat with green bubbles, a storm of big pale words — and the signal cut to a test card. A second look (`look: 'case'`) plays a case file instead: fog, struck-out guesses, teal reconstructions, an evidence board with red string, surveillance, then a sourced answer in daylight Best for: \"How to tell if your friend is …\" checklists of everyday habits, relatable mock-science, myth-busting and \"why does …\" mysteries, playful promos",
+      "tags": {
+        "subjects": [
+          "现象",
+          "习惯",
+          "谣言",
+          "案例",
+          "线索"
+        ],
+        "actions": [
+          "排除",
+          "揭示",
+          "连线",
+          "检查"
+        ],
+        "relations": [
+          "谜题",
+          "证据",
+          "答案"
+        ],
+        "feelings": [
+          "悬疑"
+        ],
+        "styles": [
+          "悬疑探秘",
+          "mystery"
+        ],
+        "patterns": [
+          "mystery"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "TV分支原生建议30–45秒；case分支按本题编排。禁用真实疾病、悲剧和犯罪作玩笑，不适合密集教程。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/mystery/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/mystery.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/mystery/STYLE.md": "6e3d3c2e2b3f916403a7b5389f01e020bfdb37fd6a4b729fbd30909770f6da1a",
+        "vendor/bb-video/skills/bb-video/promo/runtime/mystery.js": "0147dfc1eed8c614f1ded8fbbf02377281579db19791b99a11de8fba85389d02"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/mystery/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/newsreel",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "老新闻片",
+      "summary": "老新闻片。A 1930s cinema newsreel in a 1.37:1 gate on black: licence-clean archive photos pushed slowly with dated source tags, supers printed on the film, rubber stamps, intertitles between double rules, a tear-off calendar, a stopwatch, a printed price list, a seen / not-seen verdict, and a drafting-grid \"animated diagram\" (tagged as a reconstruction) for what no footage shows; grain, scratches, gate weave, flicker; a brisk announcer through an optical sound track over a brass march. A fictional newsreel brand opens and closes it Best for: News and events retold (launches, records, claims checked), history with archive photos, retro product launches when real photos exist",
+      "tags": {
+        "subjects": [
+          "历史",
+          "新闻",
+          "事件",
+          "档案",
+          "照片",
+          "公告"
+        ],
+        "actions": [
+          "推进",
+          "盖印",
+          "翻页",
+          "核对"
+        ],
+        "relations": [
+          "前后",
+          "证据"
+        ],
+        "feelings": [
+          "复古"
+        ],
+        "styles": [
+          "老新闻片",
+          "newsreel"
+        ],
+        "patterns": [
+          "newsreel"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "需要授权干净的档案照片或真实产品照片；黑白不适合颜色关键产品，重建图须明确标记。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/newsreel/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/newsreel.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/newsreel/STYLE.md": "f208b03696beef1f6a1e5893f12f627bf080092c82827d89da8de920b83871a5",
+        "vendor/bb-video/skills/bb-video/promo/runtime/newsreel.js": "4a8512dafbc82b8583b71ad20a07d069bdfacd7058b926400cd57709b4e5e57a"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/newsreel/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/op",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "欧普艺术",
+      "summary": "欧普艺术。Black-and-white stripes, rings, checkerboards and spirals bulging around \"lenses\"; blinds reveals Best for: Tech, AI, developer tools, music; \"precise\", \"parallel\", hypnotic",
+      "tags": {
+        "subjects": [
+          "科技",
+          "AI",
+          "开发",
+          "数据",
+          "基础设施",
+          "音乐"
+        ],
+        "actions": [
+          "分裂",
+          "传递",
+          "膨胀",
+          "揭示"
+        ],
+        "relations": [
+          "并行",
+          "层层",
+          "筛选"
+        ],
+        "feelings": [
+          "精确"
+        ],
+        "styles": [
+          "欧普艺术",
+          "op"
+        ],
+        "patterns": [
+          "op"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "黑白光学图案；不适合温暖手工感或大量照片占据画面的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/op/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/op.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/op/STYLE.md": "df8ff4dfc7537fafe1144df5127556468ae53d575f9b9e217782b8a74e23d7ef",
+        "vendor/bb-video/skills/bb-video/promo/runtime/op.js": "76640403fb7c85dc58105a4c32d36960259a11ff254c026c8d396b70c28a4baf"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/op/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/origami",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "折纸工艺",
+      "summary": "折纸工艺。Paper with light and creases: unfolding reveals, cards dropping on a desk, pop-up books, page turns, paper cranes Best for: Warm consumer products, creation, education, documents and content",
+      "tags": {
+        "subjects": [
+          "文档",
+          "笔记",
+          "地图",
+          "日历",
+          "相册",
+          "教育"
+        ],
+        "actions": [
+          "展开",
+          "折叠",
+          "翻页",
+          "堆叠",
+          "落下"
+        ],
+        "relations": [
+          "逐步",
+          "整理"
+        ],
+        "feelings": [
+          "温暖"
+        ],
+        "styles": [
+          "折纸工艺",
+          "origami"
+        ],
+        "patterns": [
+          "origami"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "展开与落定需要时间；不适合高速硬核科技感和密集快切。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/origami/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/origami.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/origami/STYLE.md": "977e07328bc7e7980167b744cc3613f7db4b21c3854c5627ebafd704c820d704",
+        "vendor/bb-video/skills/bb-video/promo/runtime/origami.js": "9cf870734b4851957cad3bd885c61b9a4dcf377dee9be3a1ecb53194b8e22472"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/origami/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/parable",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "3D火柴人寓言",
+      "summary": "3D火柴人寓言。A pure black void with a glossy floor that mirrors everything, soft contact shadows and a faint glow: thick white pictogram stick figures (round head, rounded limbs, dark outline) with a small monospace caps label over each, one prop set that grows over time (3D beige bricks laid course by course, steps, a pile, coins), and one red object that carries the meaning (a spirit level, the brick still growing); one fixed wide camera with no cuts, a fade at the end; the story told only by contrasted action — one figure measures, the other builds; one rushes and naps, the other compounds — with a counter for time passing and one closing line; music only by default (a narrated or subtitled version is possible) Best for: One-idea shorts of 15–45 s told as a contrast: habits and compounding, perfectionism vs action, practice, saving, starting vs waiting; promos with one point (the product as \"the way that works\")",
+      "tags": {
+        "subjects": [
+          "习惯",
+          "生产力",
+          "学习",
+          "储蓄",
+          "创造",
+          "团队"
+        ],
+        "actions": [
+          "建造",
+          "堆叠",
+          "等待",
+          "坚持"
+        ],
+        "relations": [
+          "两种方式",
+          "对比",
+          "复利"
+        ],
+        "feelings": [
+          "克制"
+        ],
+        "styles": [
+          "3D火柴人寓言",
+          "parable"
+        ],
+        "patterns": [
+          "parable"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "原生15–45秒短寓言；固定宽景、少量道具和两个人物。不适合密集多步解释、真实UI或多人故事。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/parable/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/parable.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/parable/STYLE.md": "f200d92c512fe54d7bdbd99536bdd7afcba1919c0cab10aaf4fb098b5eb1b0e6",
+        "vendor/bb-video/skills/bb-video/promo/runtime/parable.js": "70800a36ac2f17916a0ff731ccd7bf885ffc673b12b9014908e7c7523949d118"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/parable/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/pixel",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "像素游戏",
+      "summary": "像素游戏。A low-resolution game screen blown up to full size: dithered sky bands, parallax hills and cities stepping back one pixel at a time; outlined sprite characters walk, jump, talk and fight; information told through game UI — dialogue boxes typed letter by letter, menus with a ▶ cursor, HP bars filling cell by cell, score counters, a level map; block-dissolve and iris transitions; chiptune music Best for: Games, developer and productivity tools, AI products, step-by-step flows and choices, small stories with characters, tech and gaming history, explainers for kids",
+      "tags": {
+        "subjects": [
+          "游戏",
+          "开发",
+          "效率",
+          "AI",
+          "角色",
+          "科技史"
+        ],
+        "actions": [
+          "行走",
+          "跳跃",
+          "解锁",
+          "选择"
+        ],
+        "relations": [
+          "步骤",
+          "对抗"
+        ],
+        "feelings": [
+          "活泼"
+        ],
+        "styles": [
+          "像素游戏",
+          "pixel"
+        ],
+        "patterns": [
+          "pixel"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "不适合奢侈品、依赖真实照片质感的内容或死亡灾难等沉重主题。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/pixel/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/pixel.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/pixel/STYLE.md": "ca84697cb46ddc2b278f6ba0162de075a88715d1ef7fc1830a1d9ad737e92b6a",
+        "vendor/bb-video/skills/bb-video/promo/runtime/pixel.js": "8e77901a2825358c9c14cae080fc527ea1470bdaf3f319079dbe3ec0327d2da1"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/pixel/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/pop",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "波普漫画",
+      "summary": "波普漫画。1960s comic: thick outlines, Ben-Day dots, panels, speech bubbles, burst sound words, Warhol repeats Best for: Young, playful, social, AI assistants and chat (dialogue becomes comic speech)",
+      "tags": {
+        "subjects": [
+          "社交",
+          "游戏",
+          "AI助手",
+          "对话",
+          "吉祥物"
+        ],
+        "actions": [
+          "弹出",
+          "对话",
+          "重复",
+          "切换"
+        ],
+        "relations": [
+          "问答",
+          "请求",
+          "完成"
+        ],
+        "feelings": [
+          "活泼"
+        ],
+        "styles": [
+          "波普漫画",
+          "pop"
+        ],
+        "patterns": [
+          "pop"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "适合角色对话；不适合严肃金融医疗安全或只有数据没有角色的内容。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/pop/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/pop.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/pop/STYLE.md": "83f738f86f2c0f2b0960ba0fe1f08b2ba85562284bcb5b28307194843e21b36f",
+        "vendor/bb-video/skills/bb-video/promo/runtime/pop.js": "70fe898d26e89479e69aa349696d7b051a3d9948f8a824b9acee86f4eaf4b41c"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/pop/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/riso",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "孔版印刷",
+      "summary": "孔版印刷。Magazine pages with spot-color overprint, halftone, misregistration; page turns by drum roll Best for: Everyday trivia, psychology, news, finance, data, food, vocabulary",
+      "tags": {
+        "subjects": [
+          "日常",
+          "科普",
+          "心理",
+          "新闻",
+          "财经",
+          "数字",
+          "食物",
+          "词汇"
+        ],
+        "actions": [
+          "翻页",
+          "推进",
+          "叠印",
+          "比较"
+        ],
+        "relations": [
+          "比较",
+          "数据"
+        ],
+        "feelings": [
+          "轻快"
+        ],
+        "styles": [
+          "孔版印刷",
+          "riso"
+        ],
+        "patterns": [
+          "riso"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "原生当前无角色表演；不适合沉重题材、公式密集推导或角色演绎为主的故事。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/riso/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/riso.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/riso/STYLE.md": "b32a0e2859a81d8a0284cf5f135d666216e3c4231bf37b98805cc9375c6f3743",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/riso.js": "0f5fbba9210dcc0d0b6ed246476cbded8a5ec1534be43780352722fcb3f21a30"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/riso/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/shadow",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "皮影戏",
+      "summary": "皮影戏。A lamp-lit cloth screen in a wooden stage frame; carved, translucent leather puppets in profile with jointed limbs and control rods walk on, talk, bow, ride horses, fall; red paper placards hang down with names and dates; scene changes are the lamp dipping Best for: Chinese history and stories with characters and conflict (who did what to whom), folk culture, a founder's story",
+      "tags": {
+        "subjects": [
+          "历史",
+          "人物",
+          "故事",
+          "文化",
+          "节日",
+          "民俗"
+        ],
+        "actions": [
+          "行走",
+          "对话",
+          "鞠躬",
+          "骑马",
+          "跌倒"
+        ],
+        "relations": [
+          "冲突",
+          "转折",
+          "阵营"
+        ],
+        "feelings": [
+          "戏剧"
+        ],
+        "styles": [
+          "皮影戏",
+          "shadow"
+        ],
+        "patterns": [
+          "shadow"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "依靠角色演绎；不适合纯数据UI、快速科技发布或没有人物的抽象概念。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/shadow/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/shadow.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/shadow/STYLE.md": "3b72aba73c11fe0751f3728c6b941c570e570f184bb5ba5d97c7b5a703d2ae14",
+        "vendor/bb-video/skills/bb-video/promo/runtime/shadow.js": "9bcf44d296260e86bb576068189311a4efd4aa4e162500672d0837e52fbe1133"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/shadow/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/storybook",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "手绘绘本吉祥物",
+      "summary": "手绘绘本吉祥物。A picture book about an invisible process: warm light-grey paper with fibres, ink outlines with a slight hand wobble, flat fills shaded with coloured-pencil hatching and a soft rim; a project's own cast of original cute characters (bean / round / blob / gem / star / capsule / pillar bodies, dot or ^ ^ eyes, a sprout or antenna) in one accent colour, the other side in a second colour, props in cream, beige and wood; the cast acts the process out with tangible props on little stages along one ground line — filing cabinets with tab labels, an easel sheet with a line struck or marked, a monitor with log lines and ✓ lines, a big push button, stacking blocks, signpost cards, paper planes, cards flipping to ✓; small dark monospace tags float above characters with a ✓ result line; one character splits into clones that each carry a task card, each acts its task out, they merge back into one; squash and stretch, blinks, hops; the camera travels along the ground line and pushes in Best for: How a process works told as a team at work (the immune system, digestion, how search or a compiler works, a package's journey), science for children and families, parallel work and division of labour; friendly promos for tools that do several jobs at once (assistants, automation, dev tools)",
+      "tags": {
+        "subjects": [
+          "流程",
+          "团队",
+          "分工",
+          "科学",
+          "免疫",
+          "编译",
+          "搜索",
+          "邮件"
+        ],
+        "actions": [
+          "分裂",
+          "协作",
+          "搬运",
+          "合并",
+          "翻转"
+        ],
+        "relations": [
+          "并行",
+          "分工",
+          "汇合"
+        ],
+        "feelings": [
+          "亲切"
+        ],
+        "styles": [
+          "手绘绘本吉祥物",
+          "storybook"
+        ],
+        "patterns": [
+          "storybook"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "使用原创可爱角色；不适合真实人物历史、数据新闻、暗调成人主题或UI导览。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/storybook/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/storybook.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/storybook/STYLE.md": "8add973acc194ff162b7e1b61a96bfd532987a4c7de77853ff9ecb11acd412a9",
+        "vendor/bb-video/skills/bb-video/promo/runtime/storybook.js": "7096a7100faa97642d78f1baba9a67de2d3403a0f7f221fc55ec4b4d859e91ae"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/storybook/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/swiss",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "瑞士动态排版",
+      "summary": "瑞士动态排版。A Swiss International Typographic Style poster in motion: huge grotesk type is the picture, set tight and cropped by the frame edge, on off-white grid paper with black and one accent from the brand; letters rise one by one out of their line, digits roll; micro meta labels (`.1 .2`, a date), big arrows →, hairline rules; information told typographically — numbered lists, check-chip card grids, giant numerals, flat bar charts, old / new side by side, real screenshots and charts placed as poster elements with accent marks; the poster pulls out into a wall of its colour variants, a text-pattern wall, an extruded glyph turning in orbit rings, nested frames; grounds flip paper / black / accent between scenes Best for: Launches and announcements with strong numbers (benchmarks, reports, versions), feature sets, rankings and prices, before / after, design and developer products, brands with one strong colour",
+      "tags": {
+        "subjects": [
+          "数字",
+          "榜单",
+          "价格",
+          "版本",
+          "发布",
+          "规则",
+          "组成"
+        ],
+        "actions": [
+          "滚动",
+          "上升",
+          "排列",
+          "翻转"
+        ],
+        "relations": [
+          "前后",
+          "组成",
+          "排名"
+        ],
+        "feelings": [
+          "清楚"
+        ],
+        "styles": [
+          "瑞士动态排版",
+          "swiss"
+        ],
+        "patterns": [
+          "swiss"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "以文字和数字表达结构；没有角色，不适合手工暖感或具体人物故事。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/swiss/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/swiss.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/swiss/STYLE.md": "816dd23e9e3c167f1de3c54d8fa86c7b81661a8b53d3df5843ccf1b838a77109",
+        "vendor/bb-video/skills/bb-video/promo/runtime/swiss.js": "45fb4fc8f26507779669e288badd863bf84a0fd767ed0e056da39d54e9d1f386"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/swiss/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/tapestry",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "贝叶挂毯",
+      "summary": "贝叶挂毯。One long strip of undyed linen with a visible weave, lit warm in the middle; everything embroidered in a few wool colours (terracotta, ochre, olive, sage, blue-green, grey-blue, dark blue): stem-stitch outlines, laid-and-couched fills with couching ticks, faces left as bare linen; upper and lower borders of birds and beasts between diagonal bars, a green ground line, hem stripes; flat side-on figures (tunics, cloaks, cross-gartered legs) with big gestures, a project cast told apart by clothes and headwear; stylised trees divide the scenes; each part opens under a branch arch with its title; running captions in stitched letters (此处，…) with a date line, years stitched into the border; modern machines in the same stitched idiom; the next scene is drafted in pencil ahead, then stitches itself on (the needle runs the outline, threads are laid and couched); the camera scrolls along the cloth without stopping and pushes in until single threads read; a pull-back shows the whole cloth Best for: History told as a chronicle (how the book, the clock or the wheel came to be, a voyage, the history of a craft or a city), a sequence of ages where each step is people doing something; warm, crafted \"the story so far\" promos",
+      "tags": {
+        "subjects": [
+          "历史",
+          "年代",
+          "航行",
+          "工艺",
+          "城市",
+          "故事"
+        ],
+        "actions": [
+          "刺绣",
+          "滚动",
+          "生长",
+          "行走"
+        ],
+        "relations": [
+          "时序",
+          "步骤"
+        ],
+        "feelings": [
+          "温暖"
+        ],
+        "styles": [
+          "贝叶挂毯",
+          "tapestry"
+        ],
+        "patterns": [
+          "tapestry"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "长卷连续滚动；不适合密集数据、UI导览、机器体内细节或快节奏发布。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/tapestry/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/tapestry.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/tapestry/STYLE.md": "0c35877bbe88f30a9db5ef3cabc8ff4a798e36f60d84bceff6457f92ccf3a3ff",
+        "vendor/bb-video/skills/bb-video/promo/runtime/tapestry.js": "4088ba8047470d3389011c82298b4d5e7638fdadadacc2374c7668ce24457141"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/tapestry/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/toy3d",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "玩具三维",
+      "summary": "玩具三维。A dark warm desk with the product's real screens as physical slabs (screenshots printed on them) and a matte vinyl toy — the brand mark extruded from its SVG, a mascot, or the characters of a problem — that operates the UI with its body: landing is a click, hopping along a row types, carrying is a drag; keys rise out of the slab and sink under it; keycaps spell numbers and equations. Separate low, long-lens shots with very shallow focus, hard-cut on the beat with the toy mid-air across each cut; glow only on what is being shown. Toys are built in Blender when the machine has it (seamless vinyl), otherwise in three.js from the same part list Best for: Software with a real UI and a step-by-step flow (editors, boards, IDEs, apps), brands with a mark or mascot; explainers where the things themselves act (counting, grouping, swapping)",
+      "tags": {
+        "subjects": [
+          "界面",
+          "软件",
+          "吉祥物",
+          "编辑器",
+          "计数",
+          "物体"
+        ],
+        "actions": [
+          "点击",
+          "打字",
+          "拖动",
+          "跳跃",
+          "分组",
+          "交换"
+        ],
+        "relations": [
+          "步骤",
+          "分组"
+        ],
+        "feelings": [
+          "精致",
+          "友好"
+        ],
+        "styles": [
+          "玩具三维",
+          "toy3d"
+        ],
+        "patterns": [
+          "toy3d"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "需要真实UI或能具体化为玩具的对象；不适合纯抽象概念、纯数据、沉重题材或长文字。Blender为原生建模选项，不统一强制。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/toy3d/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/toy3d.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/toy3d/STYLE.md": "4d6d25f678e18e04c61cd0a29579f8c41c7888036789c2c61d56473c35c913e5",
+        "vendor/bb-video/skills/bb-video/promo/runtime/toy3d.js": "0c235b38142591f9ea5e7bcecce8abcd06e03e12528f0aefa0a9701808c06e89"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/toy3d/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/trailer",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "电影预告片",
+      "summary": "电影预告片。A Hollywood trailer in a 2.39:1 letterbox: code-painted cinematic shots in depth layers (space, planets, ridges, corridors, screens, people as rim-lit silhouettes) under a teal-orange grade, grain and a vignette, with slow pushes, parallax and rack focus; black cards with one phrase in wide metallic type; a lone piano ping, a ticking clock, then BRAAMs and taiko while the cuts speed up, flash frames, a smash cut, a beat of total silence, the title slam, the release date, the condensed billing block and a button. Cards only, sparse dialogue (a line can have its own voice colour, e.g. a radio) or the deep trailer voice. An invented studio ident; never a real studio's or film's trade dress Best for: Story trailers (a fictional film, a book, a game, a history episode), launches told as drama (the world before → until… → what changes → the name and the date)",
+      "tags": {
+        "subjects": [
+          "故事",
+          "图书",
+          "游戏",
+          "发布",
+          "日期",
+          "问题"
+        ],
+        "actions": [
+          "推进",
+          "揭示",
+          "冲击",
+          "切换"
+        ],
+        "relations": [
+          "困境",
+          "转折"
+        ],
+        "feelings": [
+          "戏剧"
+        ],
+        "styles": [
+          "电影预告片",
+          "trailer"
+        ],
+        "patterns": [
+          "trailer"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "使用虚构片厂和原创人物剪影；不仿真电影标识。不适合密集教程、功能清单或长时间真实UI。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/trailer/STYLE.md",
+        "vendor/bb-video/skills/bb-video/promo/runtime/trailer.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/trailer/STYLE.md": "0dc2a0e2daec2b466a1bdb471cec6738ee083030ec603dd72866002436fa43d7",
+        "vendor/bb-video/skills/bb-video/promo/runtime/trailer.js": "99ff509427d970eb5e600bcda93eb36986f189e498920d23bd3c77aa616eab70"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/trailer/STYLE.md"
+      }
+    },
+    {
+      "candidate_id": "bb-video:bb-video/whiteboard",
+      "uses": [
+        "broll"
+      ],
+      "capability_type": "creative_skill",
+      "reviewed_version": "2.0.0",
+      "title": "手绘白板",
+      "summary": "手绘白板。native: `node explainer/scripts/new.mjs <dir> --style …` — full board API, characters, formulas Best for: `node promo/scripts/new.mjs <dir> --style … [--quick]` — the board runs inside a promo film: scenes are board regions / pages / scroll sections, transitions are pans / page changes / scroll moves",
+      "tags": {
+        "subjects": [
+          "推导",
+          "数学",
+          "物理",
+          "化学",
+          "公式",
+          "科普",
+          "教程",
+          "示意图"
+        ],
+        "actions": [
+          "绘制",
+          "书写",
+          "跟随",
+          "推导"
+        ],
+        "relations": [
+          "步骤",
+          "因果"
+        ],
+        "feelings": [
+          "清楚"
+        ],
+        "styles": [
+          "手绘白板",
+          "whiteboard"
+        ],
+        "patterns": [
+          "whiteboard"
+        ]
+      },
+      "editable_content": [
+        "按本期真实原话、词锚和授权素材完成所选原生风格；保留STYLE.md的独有造型、动作和用途。"
+      ],
+      "limitations": [
+        "仅不透明B-roll；不作为透明A-roll贴片。",
+        "完整原生创作后仍需审核本期实际画面；此目录登记不代表30种风格都已完成视觉验收。",
+        "线条手绘为主，不使用真实照片、截图或表情符号；不适合新闻、密集数据或无需图解的诗词文化题。"
+      ],
+      "evidence": [
+        "vendor/bb-video/skills/bb-video/SKILL.md",
+        "vendor/bb-video/skills/bb-video/styles/whiteboard/STYLE.md",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/whiteboard.js"
+      ],
+      "reviewed_sources": {
+        "vendor/bb-video/skills/bb-video/SKILL.md": "cc9e8f60166b8becbe8e8e396e05fb9bbc8849b4c469d965c6015801ddb10eef",
+        "vendor/bb-video/skills/bb-video/styles/whiteboard/STYLE.md": "ff28c07e76266c90da430677251dbff4c31309193e2fadedab26a6e16d72ba09",
+        "vendor/bb-video/skills/bb-video/explainer/runtime/whiteboard.js": "1d17edea73da89bb25766e958e84af3a079ec814d2165cfc3beef85ce1d186e6"
+      },
+      "content_scope": {
+        "mode": "full_scene",
+        "evidence_ref": "vendor/bb-video/skills/bb-video/styles/whiteboard/STYLE.md"
       }
     }
   ]

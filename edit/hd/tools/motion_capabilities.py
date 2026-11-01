@@ -403,7 +403,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     "record": {"job_path": record_path, "sha256": hashlib.sha256(data).hexdigest(), "byte_count": len(data)}}}
         finally:
             sys.path[:] = previous
-    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
         scripts = PACKAGE_ROOT / 'scripts'
         previous = sys.path[:]
         try:
@@ -508,12 +508,12 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                     raise ValueError("native validator module belongs to another project")
                 payload = contract_artifacts.canonical_json_bytes(
                     {k: v for k, v in brief.items() if k != "native_result"}
-                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion", "mg-styles-15", "video-shotcraft"} else brief)
+                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion", "mg-styles-15", "video-shotcraft", "bb-video"} else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
                     expected_alpha = row['role'] == 'aroll_overlay'
-                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
                             and use == 'broll' and segment is not None):
                         strategy = segment['visual_strategy']
                         components = [c for c in strategy['components'] if c.get('component_id') == component_id]
@@ -527,7 +527,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                                     or components[0].get('kind') != 'code_generated'):
                                 raise ValueError('Native B-roll annotation needs a valid hybrid composition')
                             expected_alpha = True
-                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'} and (
+                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'} and (
                             checked['dependency_id'] != row['dependency_id']
                             or row['template_id'] != checked['dependency_id'] + '/' + checked['template_id']
                             or checked['alpha'] != expected_alpha):
@@ -660,9 +660,9 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 if None in required or not required.issubset(paths):
                     raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
         motion_required = set()
-        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}
+        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
                            and phase == 'planning' and not brief.get('native_result'))
-        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft'}:
+        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
             if motion_planning:
                 planning = {ref.get('pointer') for ref in refs if isinstance(ref, dict) and ref.get('path') == relative}
                 if not {'/transcript', '/task_source/quote', '/task_source/semantic', '/template_id', '/native_options'}.issubset(planning):

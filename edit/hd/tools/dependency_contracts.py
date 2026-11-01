@@ -32,6 +32,7 @@ DEPENDENCY_CONTRACTS = {
     'barty-motion-graphics': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
     'mg-styles-15': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'video-shotcraft': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
+    'bb-video': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'bang-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
 }
 
