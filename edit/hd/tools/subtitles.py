@@ -1417,6 +1417,21 @@ def _partition_subtitle_words(
     glyph_prefix = [0]
     for word in words:
         glyph_prefix.append(glyph_prefix[-1] + _visible_glyph_count([word]))
+    sentence_stops = [0, *[
+        index for index in range(1, word_count)
+        if str(words[index - 1]['text']).rstrip(" \t\r\n\"'”’）)】》」』").endswith(tuple("。！？!?"))
+    ], word_count]
+    # Prefer complete sentences before target card length. Keep the existing
+    # four-glyph floor and valid-frame gate so tiny ASR fragments do not force cards.
+    sentence_boundaries = {
+        boundary for left, boundary, right in zip(sentence_stops, sentence_stops[1:], sentence_stops[2:])
+        if min(glyph_prefix[boundary] - glyph_prefix[left],
+               glyph_prefix[right] - glyph_prefix[boundary]) >= (_CUE_TARGET_MIN + 1) // 2
+        and has_sample(words[left:boundary]) and has_sample(words[boundary:right])
+    }
+    sentence_prefix = [0]
+    for index in range(1, word_count + 1):
+        sentence_prefix.append(sentence_prefix[-1] + int(index in sentence_boundaries))
     eligible_ends: list[list[tuple[int, int, bool]]] = [[] for _ in range(word_count)]
     long_keyword_intervals = long_keyword_intervals or set()
     for left in range(word_count):
@@ -1436,10 +1451,10 @@ def _partition_subtitle_words(
                 ))
 
     nodes: list[tuple[int, int]] = [(0, 0)]
-    current: dict[int, tuple[tuple[int, int, int, int], int, int]] = {
-        0: ((0, 0, 0, 0), 0, 0),
+    current: dict[int, tuple[tuple[int, int, int, int, int], int, int]] = {
+        0: ((0, 0, 0, 0, 0), 0, 0),
     }
-    solution_score: tuple[int, int, int, int] | None = None
+    solution_score: tuple[int, int, int, int, int] | None = None
     solution_node = 0
     solution_chunk_count = 0
 
@@ -1451,21 +1466,22 @@ def _partition_subtitle_words(
         return tuple(reversed(result))
 
     for chunk_count in range(1, word_count + 1):
-        next_candidates: dict[int, tuple[tuple[int, int, int, int], int, int]] = {}
+        next_candidates: dict[int, tuple[tuple[int, int, int, int, int], int, int]] = {}
         for left, (score, node_id, rank) in current.items():
             for right, glyph_count, sample_ok in eligible_ends[left]:
                 if right < word_count and right in protected_boundaries:
                     continue
                 if not sample_ok:
                     continue
-                out_of_range = score[0] + int(
+                sentence_crossings = score[0] + sentence_prefix[right - 1] - sentence_prefix[left]
+                out_of_range = score[1] + int(
                     glyph_count < _CUE_TARGET_MIN or glyph_count > _CUE_TARGET_MAX
                 )
-                range_penalty = score[1] + max(0, _CUE_TARGET_MIN - glyph_count) + max(
+                range_penalty = score[2] + max(0, _CUE_TARGET_MIN - glyph_count) + max(
                     0, glyph_count - _CUE_TARGET_MAX
                 )
-                center_distance = score[2] + abs(glyph_count - _CUE_TARGET_CENTER)
-                boundary_shift = score[3]
+                center_distance = score[3] + abs(glyph_count - _CUE_TARGET_CENTER)
+                boundary_shift = score[4]
                 if right < word_count:
                     boundary_index = chunk_count - 1
                     if boundary_index < len(original_boundaries):
@@ -1477,6 +1493,7 @@ def _partition_subtitle_words(
                             abs(right - original) for original in original_boundaries
                         )
                 next_score = (
+                    sentence_crossings,
                     out_of_range,
                     range_penalty,
                     center_distance,
@@ -1519,6 +1536,8 @@ def _partition_subtitle_words(
     # cues or treating timing gaps as a Chinese word-segmentation guarantee.
     for index in range(1, len(cuts) - 1):
         left, original, right = cuts[index - 1:index + 2]
+        if original in sentence_boundaries:
+            continue
         best = None
         for boundary in range(left + 1, right):
             gap_ms = round(1000 * (
@@ -1539,6 +1558,7 @@ def _partition_subtitle_words(
             ):
                 continue
             candidate_score = (
+                int(boundary not in sentence_boundaries),
                 -gap_ms,
                 sum(count < _CUE_TARGET_MIN for count in counts),
                 sum(max(0, _CUE_TARGET_MIN - count) for count in counts),

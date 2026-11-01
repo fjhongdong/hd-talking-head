@@ -252,7 +252,52 @@ def _retry_gate(j, q, item):
     _request(j, item["request"], config)
 
 
-def prepare_retry(job, request_id):
+def _revised_image_request(parent, request):
+    original = parent['request']
+    if (not isinstance(request, dict) or original.get('purpose') != 'image'
+            or set(request) != set(original)
+            or {k: v for k, v in request.items() if k not in {'id', 'arguments'}} !=
+               {k: v for k, v in original.items() if k not in {'id', 'arguments'}}
+            or not isinstance(request.get('id'), str) or not request['id'].strip()
+            or not isinstance(request.get('arguments'), dict)
+            or not isinstance(request['arguments'].get('prompt'), str) or not request['arguments']['prompt'].strip()
+            or {k: v for k, v in request['arguments'].items() if k != 'prompt'} !=
+               {k: v for k, v in original['arguments'].items() if k != 'prompt'}):
+        raise GenerationQueueError('revised retry may change only an image prompt and request id')
+
+
+def _validate_retry_successor(job, q, request_id):
+    """Recheck the same failed-attempt authorization at admission and consumption."""
+    item = q['items'][request_id]
+    plan = item.get('retry_plan', {})
+    parent = q['items'].get(item.get('retry_of'))
+    names = {'job_id', 'from_id', 'failure_response_sha256', 'request_fingerprint',
+             'config_sha256', 'input_files', 'count'}
+    if (not isinstance(plan, dict) or set(plan) not in (names, names | {'request'})
+            or not parent or plan.get('from_id') != item.get('retry_of')
+            or type(plan.get('count')) is not int or plan['count'] != 1
+            or {k: v for k, v in plan.items() if k != 'request'} != _retry_plan(q, plan['from_id'])
+            or artifacts.sha256_json(plan) != item.get('approved_plan_sha256')
+            or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()
+            or item.get('plan_request_id') != parent.get('plan_request_id', plan['from_id'])
+            or item.get('channel_identity') != parent.get('channel_identity')
+            or item.get('config_sha256') != parent.get('config_sha256')
+            or [rid for rid, row in q['items'].items() if row.get('retry_of') == plan['from_id']] != [request_id]):
+        raise GenerationQueueError('retry successor authorization changed')
+    expected = {**parent['request'], 'id': 'retry-' + item['approved_plan_sha256']}
+    if 'request' in plan:
+        expected = plan['request']
+        _revised_image_request(parent, expected)
+        from . import visual_confirmation
+        origin = q['items'][item['plan_request_id']]
+        visual_confirmation.validate_generation_request(job, origin.get('authorization', {}), origin['request'], queue=q)
+    if (item['request'] != expected or item['request'].get('id') != request_id
+            or item.get('fingerprint') != _fingerprint(expected)):
+        raise GenerationQueueError('retry successor request changed')
+    _inputs(Path(job.job_dir), expected)
+
+
+def prepare_retry(job, request_id, request=None):
     """Freeze one failed attempt for a new human decision; submit nothing."""
     with _locked(job) as (j, _, q):
         plan = _retry_plan(q, request_id)
@@ -260,14 +305,17 @@ def prepare_retry(job, request_id):
             raise GenerationQueueError("request already has a retry; inspect that exact successor")
         item = q["items"][request_id]
         _retry_gate(j, q, item)
+        if request is not None:
+            _revised_image_request(item, request)
+            plan['request'] = request
         return {"plan": plan, "plan_sha256": artifacts.sha256_json(plan),
-                "request": item["request"], "plan_request_id": item.get("plan_request_id", request_id)}
+                "request": plan.get('request', item["request"]), "plan_request_id": item.get("plan_request_id", request_id)}
 
 
 def retry(job, plan, user_confirmation, expected_plan_sha256):
     """Consume permission for exactly one successor, never reset the predecessor."""
-    if (not isinstance(plan, dict) or set(plan) != {"job_id", "from_id", "failure_response_sha256",
-                                                   "request_fingerprint", "config_sha256", "input_files", "count"}
+    names = {"job_id", "from_id", "failure_response_sha256", "request_fingerprint", "config_sha256", "input_files", "count"}
+    if (not isinstance(plan, dict) or set(plan) not in (names, names | {'request'})
             or type(plan["count"]) is not int or plan["count"] != 1
             or not isinstance(plan["from_id"], str) or not plan["from_id"]
             or artifacts.sha256_json(plan) != expected_plan_sha256
@@ -280,31 +328,71 @@ def retry(job, plan, user_confirmation, expected_plan_sha256):
             rid, item = existing[0]
             if len(existing) != 1 or item.get("retry_plan") != plan:
                 raise GenerationQueueError("failed request already has a different retry")
+            if 'request' in plan:
+                if item.get('user_confirmation') != user_confirmation:
+                    raise GenerationQueueError('revised retry approval changed')
+                _retry_gate(j, q, q['items'][plan['from_id']])
+                _validate_retry_successor(state.load_job(j), q, rid)
             return {"id": rid, "retry_of": plan["from_id"],
                     "plan_request_id": item["plan_request_id"], "idempotent": True}
-        if _retry_plan(q, plan["from_id"]) != plan:
+        if _retry_plan(q, plan["from_id"]) != {k: v for k, v in plan.items() if k != 'request'}:
             raise GenerationQueueError("retry snapshot changed; obtain a new decision")
         parent = q["items"][plan["from_id"]]
         _retry_gate(j, q, parent)
-        rid = "retry-" + expected_plan_sha256
+        request = json.loads(json.dumps(plan.get('request', parent['request'])))
+        rid = request['id'] if 'request' in plan else "retry-" + expected_plan_sha256
         if rid in q["items"]:
             raise GenerationQueueError("retry id already registered")
-        request = json.loads(json.dumps(parent["request"]))
         request["id"] = rid
+        if 'request' in plan:
+            _revised_image_request(parent, request)
+            _, _, config = _approved(j)
+            if _request(j, request, config) != parent['channel_identity']:
+                raise GenerationQueueError('revised image retry channel changed')
+            if any(row['fingerprint'] == _fingerprint(request) for row in q['items'].values()):
+                raise GenerationQueueError('revised image retry is already registered')
         root_id = parent.get("plan_request_id", plan["from_id"])
-        q["items"][rid] = {"request": request, "fingerprint": parent["fingerprint"], "status": "ready",
+        q["items"][rid] = {"request": request, "fingerprint": _fingerprint(request), "status": "ready",
                            "retry_of": plan["from_id"], "plan_request_id": root_id, "retry_plan": plan,
                            "channel_identity": parent["channel_identity"],
                            "config_sha256": parent["config_sha256"], "approved_plan_sha256": expected_plan_sha256,
                            "user_confirmation": user_confirmation}
+        if 'request' in plan:
+            _validate_retry_successor(state.load_job(j), q, rid)
         artifacts.write_json_artifact(path, q)
         return {"id": rid, "retry_of": plan["from_id"], "plan_request_id": root_id, "idempotent": False}
 
 
 def _validate_followup_image_evidence(job, parent, plan, approved):
-    """Bind a human-observed Paper sample failure to the approved image and clock."""
+    """Bind direct image observation or a complete Paper sample to its source."""
     from . import visual_confirmation as visual
     proof = plan.get('followup_evidence')
+    if isinstance(proof, dict) and set(proof) == {'image', 'review'}:
+        root = Path(job.job_dir)
+        try:
+            image = visual._exact(root, proof['image'])
+            review = artifacts.read_json_artifact(visual._exact(root, proof['review']))
+            outputs = parent['completion_response']['artifacts']
+            if len(outputs) != 1 or outputs[0].get('type') != 'image':
+                raise GenerationQueueError('image observation needs one original image')
+            source = Path(outputs[0]['path'])
+            if not source.is_absolute(): source = root / source
+            if (visual._record(root, source) != proof['image'] or source != image
+                    or (outputs[0]['sha256'], outputs[0]['bytes']) != (proof['image']['sha256'], proof['image']['bytes'])
+                    or parent['request']['id'] != plan['from_id'] or review.get('from_id') != plan['from_id']
+                    or review.get('preview') != proof['image'] or review.get('status') != 'needs_revision'
+                    or not isinstance(review.get('method'), str) or not review['method'].strip()
+                    or not isinstance(review.get('observations'), list) or plan['issue'] not in review['observations']
+                    or approved['step'].get('purpose') != 'image'):
+                raise GenerationQueueError('image observation differs from its original image or issue')
+            from PIL import Image
+            with Image.open(image) as picture:
+                if picture.format != 'PNG':
+                    raise GenerationQueueError('direct image observation requires an actual PNG')
+                picture.verify()
+        except (KeyError, TypeError, OSError) as exc:
+            raise GenerationQueueError('direct image observation evidence is invalid') from exc
+        return
     names = {'brief', 'crop_provenance', 'render_evidence', 'media_manifest', 'review', 'preview'}
     if not isinstance(proof, dict) or set(proof) != names:
         raise GenerationQueueError('follow-up image edit requires complete sample evidence')
@@ -438,6 +526,48 @@ def edit_completed_image(job, plan, user_confirmation, expected_plan_sha256):
         return {"id": rid, "plan_request_id": root_id, "idempotent": False}
 
 
+def _validate_image_successor(job, q, request_id, approved=None):
+    """Validate the correction actually consumed by the approved visual row."""
+    item = q['items'][request_id]
+    if 'retry_plan' in item:
+        _validate_retry_successor(job, q, request_id)
+        return
+    plan = item.get('image_edit_plan', {})
+    parent = q['items'].get(item.get('retry_of'))
+    names = {'from_id', 'request', 'issue', 'count'}
+    if (not isinstance(plan, dict) or set(plan) not in (names, names | {'followup_evidence'})
+            or not parent or parent.get('status') != 'completed'
+            or plan.get('from_id') != item.get('retry_of') or item.get('plan_request_id') != plan['from_id']
+            or type(plan.get('count')) is not int or plan['count'] != 1
+            or not isinstance(plan.get('issue'), str) or not plan['issue'].strip()
+            or plan.get('request') != item.get('request') or item['request'].get('id') != request_id
+            or item['request'].get('purpose') != 'image' or item['request'].get('tool') != parent['request']['tool']
+            or item.get('channel_identity') != parent.get('channel_identity')
+            or item.get('config_sha256') != parent.get('config_sha256')
+            or item.get('approved_plan_sha256') != artifacts.sha256_json(plan)
+            or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()
+            or [rid for rid, row in q['items'].items() if row.get('retry_of') == plan['from_id']] != [request_id]):
+        raise GenerationQueueError('image edit successor authorization changed')
+    outputs = parent.get('completion_response', {}).get('artifacts', [])
+    if len(outputs) != 1 or outputs[0].get('type') != 'image':
+        raise GenerationQueueError('image edit original is ambiguous')
+    from . import visual_confirmation as visual
+    root = Path(job.job_dir)
+    source = Path(outputs[0]['path'])
+    if not source.is_absolute(): source = root / source
+    ref = visual._record(root, source)
+    if ((ref['sha256'], ref['bytes']) != (outputs[0]['sha256'], outputs[0]['bytes'])
+            or item['request'].get('input_files') != [ref]
+            or item['request'].get('arguments', {}).get('referenced_image_paths') != [str(source)]):
+        raise GenerationQueueError('image edit original bytes or references changed')
+    if 'followup_evidence' in plan:
+        if approved is None:
+            approved = visual.validate_generation_request(job, parent.get('authorization', {}), parent['request'], queue=q)
+        _validate_followup_image_evidence(job, parent, plan, approved)
+    elif plan['issue'] != parent.get('completion_response', {}).get('conclusion'):
+        raise GenerationQueueError('image edit original visual review changed')
+
+
 def claim(job, request_id, account_limit=None):
     with _locked(job) as (j, path, q):
         item = q["items"].get(request_id)
@@ -451,19 +581,12 @@ def claim(job, request_id, account_limit=None):
         identity = _request(j, item["request"], config)
         if identity != item.get("channel_identity"):
             raise GenerationQueueError("generation channel identity changed; obtain approval before new submissions")
+        retry_plan = item.get('retry_plan')
+        if isinstance(retry_plan, dict) and 'request' in retry_plan:
+            _validate_retry_successor(state.load_job(j), q, request_id)
         edit_plan = item.get('image_edit_plan')
         if isinstance(edit_plan, dict) and 'followup_evidence' in edit_plan:
-            parent = q['items'].get(item.get('retry_of'))
-            if (not parent or parent.get('status') != 'completed'
-                    or edit_plan.get('from_id') != item.get('retry_of')
-                    or edit_plan.get('request') != item['request']
-                    or artifacts.sha256_json(edit_plan) != item.get('approved_plan_sha256')
-                    or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()):
-                raise GenerationQueueError('follow-up edit authorization changed')
-            from . import visual_confirmation
-            actual_job = state.load_job(j)
-            approved = visual_confirmation.validate_generation_request(actual_job, parent['authorization'], parent['request'], queue=q)
-            _validate_followup_image_evidence(actual_job, parent, edit_plan, approved)
+            _validate_image_successor(state.load_job(j), q, request_id)
         active = [x for x in q["items"].values() if x["status"] in ACTIVE]
         if q["paused"] or len(active) >= config["max_concurrency"]:
             return {"action": "wait", "id": request_id}

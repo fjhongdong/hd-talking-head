@@ -1,5 +1,6 @@
 """Offline selection smoke; no render, provider call, or historical Job write."""
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
@@ -1309,6 +1310,353 @@ class PartialCandidateReviewTest(unittest.TestCase):
              patch.object(visual_confirmation, 'planned_generation_targets', return_value=set()):
             visual_confirmation._validate_template_choices(SimpleNamespace(job_dir=ROOT), director,
                                                            {'skill_selection': source})
+
+    def test_existing_optimal_ids_stay_while_all_assignment_metadata_is_refreshed(self):
+        source, director = self.fixture()
+        source['beats'][1]['candidates'][1] = {
+            **copy.deepcopy(source['beats'][1]['candidates'][0]),
+            'candidate_id': 'pending', 'visual_pattern': 'pending'}
+        self.pool.append({**self.pool[-1], 'candidate_id': 'unknown-yet', 'skill_id': 'D', 'template_id': 'four'})
+        for beat in source['beats']:
+            beat['skill_reviews']['D'] = {'fit': 'unreviewed', 'reason': '保留完整未评候选'}
+            for candidate in beat['candidates']:
+                candidate['reason'] = '当前原话的新评审：' + candidate['candidate_id']
+                candidate['design_plan']['finish'] = '本次已更新的材质与完成度'
+        source['beats'][1]['candidates'].append({'candidate_id': 'unknown-yet', 'fit': 'unreviewed', 'reason': '尚未核实'})
+        for row in self.pool:
+            row.update(entrypoint='current-entry', source_route='current/' + row['candidate_id'], limitations=['当前限制'])
+        fresh = self.assign(source, director)
+        self.assertEqual([a['candidate_id'] for a in fresh['assignments']], ['a', 'b'])
+        source['assignments'] = [{'segment_id': 's' + str(i), 'component_id': 'scene', 'candidate_id': cid,
+            'skill_id': '过期渠道', 'template_id': '过期模板', 'entrypoint': '过期入口',
+            'reason': '过期理由', 'design_plan': {}, 'obsolete': True} for i, cid in enumerate(('a', 'pending'))]
+        before = copy.deepcopy(source)
+        with patch.object(selection, 'discover_candidates', return_value=self.pool), \
+             patch('edit.hd.tools.motion_capabilities.overlay_candidates', return_value=[]):
+            with self.assertRaisesRegex(ValueError, 'assignment changed'):
+                selection.validate_selection(ROOT, director, {'skill_selection': source})
+        result = self.assign(source, director)
+        self.assertEqual([a['candidate_id'] for a in result['assignments']], ['a', 'pending'])
+        self.assertEqual(result['diversity_review']['reviewed_optimum'], [2, 2])
+        self.assertEqual(result['diversity_review']['optimistic_upper_bound'], [2, 2])
+        for row, beat in zip(result['assignments'], source['beats']):
+            current = next(p for p in self.pool if p['candidate_id'] == row['candidate_id'])
+            review = next(c for c in beat['candidates'] if c['candidate_id'] == row['candidate_id'])
+            for field in ('skill_id', 'template_id', 'entrypoint', 'role', 'limitations', 'source_route'):
+                self.assertEqual(row[field], current[field])
+            for field in ('reason', 'visual_pattern', 'design_plan'):
+                self.assertEqual(row[field], review[field])
+            self.assertNotIn('obsolete', row)
+        self.assertEqual(source, before)
+        self.assertEqual(self.assign(result, director), result)
+
+    def test_existing_ids_cannot_reduce_either_channel_or_template_maximum(self):
+        for case in ('channels', 'templates'):
+            source, director = self.fixture(second_channel='A', pending_channel='C' if case == 'channels' else 'A')
+            source['beats'][1]['candidates'][1] = {
+                **copy.deepcopy(source['beats'][1]['candidates'][0]),
+                'candidate_id': 'pending', 'visual_pattern': 'pending'}
+            if case == 'templates':
+                self.pool[1]['template_id'] = 'one'
+            source['assignments'] = [{'segment_id': 's' + str(i), 'component_id': 'scene', 'candidate_id': cid}
+                                     for i, cid in enumerate(('a', 'b'))]
+            with self.subTest(case=case):
+                result = self.assign(source, director)
+                self.assertEqual([a['candidate_id'] for a in result['assignments']], ['a', 'pending'])
+
+    def test_unknown_ineligible_incomplete_or_timing_failed_old_ids_are_not_trusted(self):
+        for case in ('unknown', 'unreviewed', 'timing', 'missing', 'duplicate', 'wrong_group'):
+            source, director = self.fixture()
+            if case != 'unreviewed':
+                source['beats'][1]['candidates'][1] = {
+                    **copy.deepcopy(source['beats'][1]['candidates'][0]),
+                    'candidate_id': 'pending', 'visual_pattern': 'pending'}
+            source['assignments'] = [{'segment_id': 's' + str(i), 'component_id': 'scene', 'candidate_id': cid}
+                                     for i, cid in enumerate(('a', 'pending'))]
+            if case == 'unknown':
+                source['assignments'][1]['candidate_id'] = 'not-a-current-candidate'
+            elif case == 'timing':
+                self.pool[2]['min_duration_seconds'] = 3
+            elif case == 'missing':
+                source['assignments'].pop()
+            elif case == 'duplicate':
+                source['assignments'].append(copy.deepcopy(source['assignments'][0]))
+            elif case == 'wrong_group':
+                source['overlay_assignments'] = [source['assignments'].pop()]
+            with self.subTest(case=case):
+                result = self.assign(source, director)
+                self.assertEqual([a['candidate_id'] for a in result['assignments']], ['a', 'b'])
+
+    def test_old_ids_cannot_split_one_logical_item_across_native_routes(self):
+        source, director = self.fixture(second_channel='A', pending_channel='A')
+        self.pool[1]['template_id'] = self.pool[2]['template_id'] = 'one'
+        choices = [copy.deepcopy(source['beats'][1]['candidates'][0]),
+                   {**copy.deepcopy(source['beats'][1]['candidates'][0]), 'candidate_id': 'pending'}]
+        for beat in source['beats']:
+            beat.update(semantic_row_id='shared-item', candidates=copy.deepcopy(choices))
+        source['assignments'] = [{'segment_id': 's' + str(i), 'component_id': 'scene', 'candidate_id': cid}
+                                 for i, cid in enumerate(('b', 'pending'))]
+        result = self.assign(source, director)
+        self.assertEqual([a['candidate_id'] for a in result['assignments']], ['b', 'b'])
+
+
+class PinBoardInputClockTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.words = [{"text": text, "start": start, "end": start + 0.15}
+                      for text, start in (("前段", 0), ("快递", 7.865), ("外卖", 8.505),
+                                          ("面试", 9.125), ("家里", 9.965))]
+        workflow = {"stages": {"speech_cleanup": {"status": "approved", "artifacts": []},
+                               "edit_structure": {"status": "approved", "artifacts": []}}}
+        for stage, relative, data in (
+                ("speech_cleanup", "05-speech-cleanup/word-transcript.json", json.dumps({"words": self.words}).encode()),
+                ("edit_structure", "06-edit-structure/timeline-map.json", json.dumps({"segments": [
+                    {"source_start": 0, "source_end": 20, "timeline_start": 0}]}).encode()),
+                ("edit_structure", "06-edit-structure/edited-aroll.mp4", b"approved A-roll input")):
+            path = self.root / relative
+            path.parent.mkdir(exist_ok=True)
+            path.write_bytes(data)
+            workflow["stages"][stage]["artifacts"].append({
+                "path": relative, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)})
+        (self.root / "workflow.json").write_text(json.dumps(workflow))
+        aroll_sha = workflow["stages"]["edit_structure"]["artifacts"][-1]["sha256"]
+        self.brief = {"schema_version": 1,
+            "source_binding": {"aroll_sha256": aroll_sha, "segment_id": "seg-002", "start": 4.625, "end": 4.625 + 142 / 24},
+            "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": 142, "alpha": True},
+            "doc": {"version": 1, "theme": "light", "cards": [{"id": "card-1", "kind": "pin-board",
+                "start": 0, "end": 142 / 24, "params": {"items": "快递|外卖|面试|家里",
+                    "times": "3.24|3.88|4.5|5.34", "theme": "light", "position": "top-left", "accent": "orange", "sfx": "none"}}]},
+            "layout": {}, "parent_safe_zone": {}, "template_request": {}, "assets": [],
+            "upstream": {"source_revision": "e35e1aff9dae3b3addc21f68f3bcd51f95bdc1a8", "runtime_identity": None}, "execution_mode": "native_export"}
+        self.pool = [{"candidate_id": cid, "skill_id": skill, "template_id": template,
+                      "entrypoint": "entry", "role": "aroll_overlay", "status": "supported",
+                      "limitations": [], "adapter_module": adapter}
+                     for cid, skill, template, adapter in (
+                         ("overlay:grid-card-assemble", "hyperframes-native-adaptation", "grid", "hyperframes_native_adapter"),
+                         ("overlay:pin-board", "overlay-studio-native", "pin-board", "overlay_studio_adapter"))]
+        design = {k: "当前原话的并列来电用途" for k in ("composition", "typography", "finish", "focus")}
+        self.selection = {"schema_version": 1, "history_note": "独立时钟回归", "beats": [], "overlay_beats": []}
+        self.director = {"segments": []}
+        self.treatment = {"semantic_lists": {"overlay": [], "broll": []}}
+        for index, (sid, start, end) in enumerate((("seg-001", 0, 4.625), ("seg-002", 4.625, 4.625 + 142 / 24))):
+            self.selection["overlay_beats"].append({"segment_id": sid, "component_id": "scene", "semantic_row_id": sid,
+                "start": start, "end": end, "window_status": "resolved", "transcript": "来电用途", "semantic_goal": "并列", "required_change": "呈现用途",
+                "candidates": [{"candidate_id": row["candidate_id"], "fit": "equivalent", "reason": "真实并列项",
+                    "visual_pattern": "并列标签", "design_plan": copy.deepcopy(design)} for row in self.pool[:index + 1]]})
+            self.director["segments"].append({"segment_id": sid, "start": start, "end": end,
+                "visual_strategy": {"composition": {"family": "aroll_with_overlay"}, "components": [{"component_id": "scene"}]}})
+            self.treatment["semantic_lists"]["overlay"].append({"row_id": sid,
+                "components": [{"segment_id": sid, "component_id": "scene"}]})
+        self.review = self.selection["overlay_beats"][1]["candidates"][1]
+        self.review["native_input_clock"] = {"brief": {}, "events": [
+            {"slot": i, "kind": "pin_drop", "text": self.words[i + 1]["text"],
+             "anchor": {"index": i + 1, "text": self.words[i + 1]["text"]}, "basis": "current_clause"} for i in range(4)]}
+        self.save_brief()
+
+    def save_brief(self):
+        path = self.root / "failed-clock.json"
+        path.write_text(json.dumps(self.brief))
+        data = path.read_bytes()
+        self.review["native_input_clock"]["brief"] = {"path": path.name,
+            "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+
+    def assign(self):
+        with patch.object(selection, "discover_candidates", return_value=[]), \
+             patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=self.pool):
+            return selection.assign_skills(ROOT, self.selection, job_dir=self.root,
+                                           director=self.director, treatment=self.treatment)
+
+    def test_real_clock_filters_reviewed_and_unreviewed_domains_without_changing_reviews(self):
+        for fit in ("equivalent", "unreviewed"):
+            self.review["fit"] = fit
+            before = copy.deepcopy(self.selection)
+            result = self.assign()
+            self.assertEqual([r["candidate_id"] for r in result["overlay_assignments"]],
+                             ["overlay:grid-card-assemble"] * 2)
+            self.assertEqual(self.selection, before)
+            if fit == "unreviewed":
+                self.assertEqual(result["diversity_review"]["reviewed_optimum"], [1, 1])
+                self.assertEqual(result["diversity_review"]["optimistic_upper_bound"], [1, 1])
+        self.review.pop("native_input_clock")
+        with self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
+            self.assign()
+
+    def test_shared_semantic_parts_keep_independent_real_clocks_and_one_route(self):
+        end = 4.625 + 148 / 24
+        self.brief["source_binding"]["end"] = end
+        self.brief["composition"]["frames"] = 148
+        self.brief["doc"]["cards"][0]["end"] = 148 / 24
+        self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
+        self.save_brief()
+        first_review = copy.deepcopy(self.review)
+        first_brief = copy.deepcopy(self.brief)
+        first_brief["source_binding"].update(segment_id="seg-001", start=0, end=4.625)
+        first_brief["composition"]["frames"] = 111
+        first_card = first_brief["doc"]["cards"][0]
+        first_card["end"] = 4.625
+        first_card["params"].update(items="前段", times="0")
+        data = json.dumps(first_brief).encode()
+        (self.root / "first-clock.json").write_bytes(data)
+        first_review["native_input_clock"] = {
+            "brief": {"path": "first-clock.json", "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)},
+            "events": [{"slot": 0, "kind": "pin_drop", "text": "前段",
+                        "anchor": {"index": 0, "text": "前段"}, "basis": "current_clause"}]}
+        self.selection["overlay_beats"][0]["candidates"] = [first_review]
+        self.selection["overlay_beats"][1]["candidates"] = [self.review]
+        for beat in self.selection["overlay_beats"]:
+            beat["semantic_row_id"] = "shared-item"
+        self.treatment["semantic_lists"]["overlay"] = [{"row_id": "shared-item", "components": [
+            {"segment_id": beat["segment_id"], "component_id": beat["component_id"]}
+            for beat in self.selection["overlay_beats"]]}]
+        before = copy.deepcopy(self.selection)
+        result = self.assign()
+        self.assertEqual([row["candidate_id"] for row in result["overlay_assignments"]],
+                         ["overlay:pin-board"] * 2)
+        self.assertEqual(self.selection, before)
+        for review in (first_review, self.review):
+            digest = review["native_input_clock"]["brief"]["sha256"]
+            review["native_input_clock"]["brief"]["sha256"] = "0" * 64
+            with self.subTest(segment_clock=review["native_input_clock"]["brief"]["path"]), \
+                 self.assertRaisesRegex(ValueError, "checksum"):
+                self.assign()
+            review["native_input_clock"]["brief"]["sha256"] = digest
+        first_review["reason"] = "另一个语义评审"
+        with self.assertRaisesRegex(ValueError, "same candidate reviews"):
+            self.assign()
+        first_review["reason"] = self.review["reason"]
+        grid_review = {key: copy.deepcopy(value) for key, value in self.review.items()
+                       if key != "native_input_clock"}
+        grid_review["candidate_id"] = "overlay:grid-card-assemble"
+        for beat in self.selection["overlay_beats"]:
+            beat["candidates"].append(copy.deepcopy(grid_review))
+        end = 4.625 + 142 / 24
+        self.brief["source_binding"]["end"] = end
+        self.brief["composition"]["frames"] = 142
+        self.brief["doc"]["cards"][0]["end"] = 142 / 24
+        self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
+        self.save_brief()
+        self.assertEqual([row["candidate_id"] for row in self.assign()["overlay_assignments"]],
+                         ["overlay:grid-card-assemble"] * 2)
+
+    def test_changed_or_malformed_clock_evidence_stops_instead_of_excluding(self):
+        original = copy.deepcopy((self.brief, self.director, self.selection))
+        for case in ("checksum", "window", "source", "native-source", "anchor", "row", "times"):
+            self.brief, self.director, self.selection = copy.deepcopy(original)
+            self.review = self.selection["overlay_beats"][1]["candidates"][1]
+            self.save_brief()
+            if case == "checksum":
+                self.review["native_input_clock"]["brief"]["sha256"] = "0" * 64
+            elif case == "window":
+                self.director["segments"][1]["end"] += 1 / 24
+                self.selection["overlay_beats"][1]["end"] = self.director["segments"][1]["end"]
+            elif case == "source":
+                self.brief["source_binding"]["aroll_sha256"] = "0" * 64
+                self.save_brief()
+            elif case == "native-source":
+                self.brief["upstream"]["source_revision"] = "0" * 40
+                self.save_brief()
+            elif case == "anchor":
+                self.review["native_input_clock"]["events"][-1]["anchor"]["text"] = "伪词"
+            elif case == "row":
+                self.selection["overlay_beats"][1]["semantic_row_id"] = "another-row"
+            else:
+                self.brief["doc"]["cards"][0]["params"]["times"] = "3.24|3.88|4.5|NaN"
+                self.save_brief()
+            expected = {"checksum": "checksum", "window": "source binding", "source": "source binding",
+                        "native-source": "source revision", "anchor": "approved transcript", "row": "semantic row", "times": "Each item"}
+            with self.subTest(case=case), self.assertRaisesRegex(ValueError, expected[case]):
+                self.assign()
+
+    def test_avoidable_late_cue_does_not_exclude_the_native_candidate(self):
+        end = 4.625 + 148 / 24
+        self.brief["source_binding"]["end"] = end
+        self.brief["composition"]["frames"] = 148
+        self.brief["doc"]["cards"][0]["end"] = 148 / 24
+        self.brief["doc"]["cards"][0]["params"]["times"] = "3.24|3.88|4.5|5.7"
+        self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
+        self.save_brief()
+        with self.assertRaisesRegex(ValueError, "can fit earlier"):
+            self.assign()
+        self.brief["doc"]["cards"][0]["params"]["times"] = "3.24|3.88|4.5|5.34"
+        self.save_brief()
+        self.assertEqual(self.assign()["overlay_assignments"][1]["candidate_id"], "overlay:pin-board")
+
+    def add_grid_clock(self, *, frames=142, cues="3.24,3.88,4.5,5.34"):
+        from edit.hd.tools.overlay_alignment import bind_native_clock
+        fallback = {**self.pool[0], "candidate_id": "overlay:toggle-flip", "skill_id": "other-reviewed-channel", "template_id": "toggle"}
+        self.pool.append(fallback)
+        choice = {**copy.deepcopy(self.selection["overlay_beats"][1]["candidates"][0]), "candidate_id": fallback["candidate_id"]}
+        self.selection["overlay_beats"][0]["candidates"] = [copy.deepcopy(choice)]
+        self.selection["overlay_beats"][1]["candidates"].append(choice)
+        end = 4.625 + frames / 24
+        self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
+        source = (ROOT / "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
+        self.grid_values = {"items": "快递,外卖,面试,家里", "cues": cues, "exit": "none"}
+        entry = ('<div data-composition-id="grid-card-assemble" data-composition-src="native.html" '
+                 f'data-start="0" data-duration="{frames / 24}" data-variable-values=\'{json.dumps(self.grid_values, ensure_ascii=False)}\'></div>')
+        def write(relative, data, scene):
+            (self.root / relative).write_bytes(data)
+            return {"media_ref": scene, "job_path": relative, "scene_path": scene, "sha256": hashlib.sha256(data).hexdigest()}
+        self.grid_brief = {"schema_version": 2,
+            "source_binding": {**self.brief["source_binding"], "end": end},
+            "composition": {**self.brief["composition"], "frames": frames},
+            "upstream_route": "hyperframes/grid-card-assemble",
+            "source_pins": {"route": "hyperframes/grid-card-assemble", "sha256": hashlib.sha256(source).hexdigest()},
+            "template_request": {"semantic_family": "parallel", "information_units": 4, "numeric_values": [], "numeric_scale": "not_applicable"},
+            "entry": write("grid-index.html", entry.encode(), "index.html"),
+            "assets": [write("grid-native.html", bind_native_clock(source, "hyperframes/grid-card-assemble", frames / 24), "native.html")]}
+        self.grid_review = self.selection["overlay_beats"][1]["candidates"][0]
+        self.grid_review["native_input_clock"] = {"brief": {}, "events": [
+            {**copy.deepcopy(event), "kind": "reveal"} for event in self.review["native_input_clock"]["events"]]}
+        self.save_grid_brief()
+
+    def save_grid_brief(self):
+        data = json.dumps(self.grid_brief).encode()
+        (self.root / "grid-brief.json").write_bytes(data)
+        self.grid_review["native_input_clock"]["brief"] = {"path": "grid-brief.json", "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+
+    def test_pinboard_and_grid_clocks_filter_both_bounds_together(self):
+        self.add_grid_clock()
+        for fit in ("equivalent", "unreviewed"):
+            self.review["fit"] = self.grid_review["fit"] = fit
+            before = copy.deepcopy(self.selection)
+            result = self.assign()
+            self.assertEqual([r["candidate_id"] for r in result["overlay_assignments"]], ["overlay:toggle-flip"] * 2)
+            self.assertEqual(self.selection, before)
+            if fit == "unreviewed":
+                self.assertEqual(result["diversity_review"]["reviewed_optimum"], [1, 1])
+                self.assertEqual(result["diversity_review"]["optimistic_upper_bound"], [1, 1])
+        self.grid_review.pop("native_input_clock")
+        with self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
+            self.assign()
+
+    def test_grid_avoidable_late_cue_stops_until_the_real_input_is_fixed(self):
+        self.add_grid_clock(frames=156, cues="3.24,3.88,4.5,5.6")
+        self.selection["overlay_beats"][1]["candidates"].remove(self.review)
+        with self.assertRaisesRegex(ValueError, "Grid clock can fit earlier"):
+            self.assign()
+
+    def test_grid_file_word_and_native_source_errors_are_not_clock_exclusions(self):
+        self.add_grid_clock()
+        index = self.root / "grid-index.html"
+        data = index.read_bytes()
+        index.write_bytes(data + b" ")
+        with self.assertRaisesRegex(ValueError, "file checksum"):
+            self.assign()
+        index.write_bytes(data)
+        anchor = self.grid_review["native_input_clock"]["events"][-1]["anchor"]
+        anchor["text"] = "伪词"
+        with self.assertRaisesRegex(ValueError, "approved transcript"):
+            self.assign()
+        anchor["text"] = self.words[-1]["text"]
+        native = self.root / "grid-native.html"
+        native.write_bytes(native.read_bytes().replace(b'TILE_BASE = 0.65', b'TILE_BASE = 0.1'))
+        self.grid_brief["assets"][0]["sha256"] = hashlib.sha256(native.read_bytes()).hexdigest()
+        self.save_grid_brief()
+        with self.assertRaisesRegex(ValueError, "duration parameters"):
+            self.assign()
 
 
 if __name__ == "__main__":

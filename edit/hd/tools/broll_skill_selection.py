@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import importlib.util
+import json
 import math
 import re
 from collections import defaultdict
@@ -886,6 +888,11 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     fixed_routes = [(row, fixed_identity(row, job_dir=job_dir)) for row in fixed]
     # A logical item may span several physical segments. It still receives one
     # native route, one matching operation and one source/template reward.
+    def semantic_reviews(domain):
+        # Native clock proofs belong to physical parts, not the shared review.
+        return [{key: value for key, value in candidate.items() if key != "native_input_clock"}
+                for candidate in domain]
+
     grouped, optimistic_grouped, group_order = {}, {}, []
     for beat, domain, optimistic in zip(beats, domains, optimistic_domains):
         identity = _execution_identity(beat, supplements)
@@ -893,7 +900,8 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
             grouped[identity] = domain
             optimistic_grouped[identity] = optimistic
             group_order.append(identity)
-        elif grouped[identity] != domain or optimistic_grouped[identity] != optimistic:
+        elif (semantic_reviews(grouped[identity]) != semantic_reviews(domain)
+              or semantic_reviews(optimistic_grouped[identity]) != semantic_reviews(optimistic)):
             raise ValueError("parts of one semantic visual item must share the same candidate reviews")
     def normalize(groups):
         return [[{**choice, "channel": source_channel(pool[choice["candidate_id"]]["skill_id"]),
@@ -1002,6 +1010,25 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
             left, first, right, second = best_pair
             chosen[left], chosen[right] = first, second
             improved = True
+    # Existing IDs are a preference only after proving the current maxima.
+    # Rebuild their choices from today's feasible domains, never old metadata.
+    old_groups = [selection.get("assignments", []), selection.get("overlay_assignments", [])]
+    if all(isinstance(rows, list) for rows in old_groups):
+        previous = [(row, is_overlay) for rows, is_overlay in zip(old_groups, (False, True)) for row in rows]
+        if all(isinstance(row, Mapping)
+               and all(isinstance(row.get(field), str) for field in ("segment_id", "component_id", "candidate_id"))
+               and (((row["segment_id"], row["component_id"]) in overlay_keys) == is_overlay)
+               for row, is_overlay in previous):
+            previous_ids = {(row["segment_id"], row["component_id"]): row["candidate_id"] for row, _ in previous}
+            if len(previous_ids) == len(previous) == len(beats) and set(previous_ids) == set(keys):
+                retained = [next((c for c in domain if c["candidate_id"] == previous_ids[key]), None)
+                            for key, domain in zip(keys, domains)]
+                if all(c is not None for c in retained):
+                    grouped_ids = defaultdict(set)
+                    for identity, candidate in zip(identities, retained):
+                        grouped_ids[identity].add(candidate["candidate_id"])
+                    if all(len(ids) == 1 for ids in grouped_ids.values()) and cost(retained)[:2] == cost(chosen)[:2]:
+                        chosen = retained
     result = copy.deepcopy(dict(selection))
     result.pop("diversity_review", None)
     if diversity_review is not None:
@@ -1071,6 +1098,16 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
     catalog = {row["candidate_id"]: row for row in
                [*discover_candidates(project_root), *overlay_candidates(project_root)]}
     disabled = set()
+    for beat in beats:
+        for candidate in beat.get("candidates", []):
+            if "native_input_clock" not in candidate:
+                continue
+            cid = candidate.get("candidate_id")
+            if cid not in catalog:
+                raise ValueError("Native input clock candidate was not discovered")
+            if _native_input_clock_failure(catalog[cid], beat, candidate,
+                    job_dir=job_dir, director=director, treatment=treatment):
+                disabled.add((_execution_identity(beat, supplements), cid))
     if partial:
         # A route must fit every physical part of its one logical item.
         for beat in beats:
@@ -1099,6 +1136,96 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
         disabled.update(key for key, _ in failures)
         if len(disabled) == before:
             raise ValueError("B-roll timing assignment exhausted: " + "; ".join(reason for _, reason in failures))
+
+
+def _native_input_clock_failure(row, beat, review, *, job_dir, director, treatment):
+    """Recheck one candidate's real clock; never turn arbitrary input errors into exclusions."""
+    from types import SimpleNamespace
+    from . import overlay_alignment, pinboard_alignment
+
+    if (row.get("candidate_id"), row.get("adapter_module")) not in {
+            ("overlay:pin-board", "overlay_studio_adapter"),
+            ("overlay:grid-card-assemble", "hyperframes_native_adapter")}:
+        raise ValueError("Native input clock evidence is only supported for PinBoard or Grid")
+    evidence = review["native_input_clock"]
+    if (not isinstance(evidence, dict) or set(evidence) != {"brief", "events"}
+            or not isinstance(evidence["events"], list) or not evidence["events"]):
+        raise ValueError("Native input clock needs its brief and actual anchor events")
+    ref = evidence["brief"]
+    if (not isinstance(ref, dict) or set(ref) != {"path", "sha256", "bytes"}
+            or not isinstance(ref["sha256"], str) or not re.fullmatch("[a-f0-9]{64}", ref["sha256"])
+            or type(ref["bytes"]) is not int or ref["bytes"] <= 0):
+        raise ValueError("Native input clock brief identity is invalid")
+    if job_dir is None or not isinstance(director, Mapping) or not isinstance(treatment, Mapping):
+        raise ValueError("Native input clock needs the current Job, director and treatment")
+    segments = [s for s in director.get("segments", []) if s.get("segment_id") == beat["segment_id"]]
+    if (len(segments) != 1 or any(segments[0].get(k) != beat.get(k) for k in ("start", "end"))
+            or segments[0]["visual_strategy"]["composition"]["family"] != "aroll_with_overlay"
+            or beat["component_id"] not in {c["component_id"] for c in segments[0]["visual_strategy"]["components"]}):
+        raise ValueError("Native input clock window or component differs from the current director")
+    semantic = [s for s in treatment.get("semantic_lists", {}).get("overlay", [])
+                if s.get("row_id") == beat.get("semantic_row_id") and
+                {"segment_id": beat["segment_id"], "component_id": beat["component_id"]} in s.get("components", [])]
+    if len(semantic) != 1:
+        raise ValueError("Native input clock belongs to another semantic row")
+    root = Path(job_dir).resolve(strict=True)
+    data = overlay_alignment._path(root, ref["path"]).read_bytes()
+    if len(data) != ref["bytes"] or hashlib.sha256(data).hexdigest() != ref["sha256"]:
+        raise ValueError("Native input clock brief checksum differs")
+    brief = json.loads(data, object_pairs_hook=contract_artifacts._strict_object,
+                       parse_constant=contract_artifacts._reject_nonfinite)
+    workflow = contract_artifacts.read_json_artifact(overlay_alignment._path(root, "workflow.json"))
+    job = SimpleNamespace(job_dir=root, stages=workflow["stages"])
+    transcript, _ = overlay_alignment._approved(job, "speech_cleanup", "05-speech-cleanup/word-transcript.json")
+    timeline, _ = overlay_alignment._approved(job, "edit_structure", "06-edit-structure/timeline-map.json")
+    _, aroll_sha = overlay_alignment._approved(job, "edit_structure", "06-edit-structure/edited-aroll.mp4")
+    expected = {"aroll_sha256": aroll_sha, **{k: segments[0][k] for k in ("segment_id", "start", "end")}}
+    if not isinstance(brief, dict) or brief.get("source_binding") != expected:
+        raise ValueError("Native input clock source binding differs from the approved A-roll segment")
+    words = contract_artifacts.read_json_artifact(transcript)["words"]
+    cuts = contract_artifacts.read_json_artifact(timeline)["segments"]
+    if row["candidate_id"] == "overlay:grid-card-assemble":
+        actual, source, duration = overlay_alignment.grid_input_clock(root, brief)
+        events = overlay_alignment.validate_native_events(actual,
+            segment={**segments[0], "visible_text": [e[2] for e in actual]},
+            words=words, cuts=cuts, events=evidence["events"])
+        try:
+            overlay_alignment.validate_grid_clock(actual, source, duration)
+        except overlay_alignment.GridClockConflict as error:
+            if any(e["basis"] != "current_clause" for e in events):
+                raise ValueError("Native clock exclusion needs current-clause word anchors")
+            earliest = [(e["slot"], e["kind"], e["text"], max(0, e["anchor_time"] - beat["start"] - 1 / 24))
+                        for e in events]
+            try:
+                overlay_alignment.validate_grid_clock(earliest, source, duration)
+            except overlay_alignment.GridClockConflict:
+                return str(error)
+            raise ValueError("Grid clock can fit earlier word anchors; revise the native input instead of excluding it")
+        return None
+    native = pinboard_alignment.execution_contract()
+    conflict = None
+    try:
+        native.validate_input_clock(brief)
+    except native.ClockConflict as error:
+        conflict = str(error)
+    items = brief["doc"]["cards"][0]["params"]["items"].split("|")
+    events = pinboard_alignment.validate_anchors(brief,
+        segment={**segments[0], "aroll_sha256": aroll_sha, "visible_text": items},
+        words=words, cuts=cuts, events=evidence["events"])
+    if conflict is not None:
+        # A late authoring choice must not masquerade as an unavoidable native budget.
+        if any(e["basis"] != "current_clause" for e in events):
+            raise ValueError("Native clock exclusion needs current-clause word anchors")
+        earliest = copy.deepcopy(brief)
+        card = earliest["doc"]["cards"][0]
+        card.update(start=0, end=brief["composition"]["frames"] / 24)
+        card["params"]["times"] = "|".join(str(max(0, e["anchor_time"] - beat["start"] - 1 / 24)) for e in events)
+        try:
+            native.validate_input_clock(earliest)
+        except native.ClockConflict:
+            return conflict
+        raise ValueError("PinBoard clock can fit earlier word anchors; revise the native input instead of excluding it")
+    return None
 
 
 def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:

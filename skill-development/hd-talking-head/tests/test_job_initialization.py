@@ -116,9 +116,40 @@ class JobInitializationTests(unittest.TestCase):
         job, _ = self.resume(workspace)
         self.assertEqual(job.revision, 1)
         self.assertEqual((workflow.read_bytes(), workflow.stat().st_mtime_ns), before)
+        self.assertFalse((job.job_dir / "manifests/confirmed-content.json").exists(),
+                         "resuming an already committed workflow must not fill a missing guard")
+
+    def test_resume_initial_workflow_after_interruption_creates_baseline(self):
+        original = state.create_job
+
+        def commit_then_fail(*args, **kwargs):
+            original(*args, **kwargs)
+            raise OSError("injected before baseline")
+
+        with mock.patch.object(state, "create_job", side_effect=commit_then_fail):
+            with self.assertRaises(initializer.InitializeJobError):
+                self.create()
+        workspace = next(self.jobs.iterdir())
+        self.assertFalse((workspace / "job-context.json").exists())
+        job, _ = self.resume(workspace)
+        self.assertEqual(job.revision, 0)
+        self.assertEqual(json.loads((job.job_dir / "manifests/confirmed-content.json").read_text()), {
+            "schema_version": 1, "job_id": job.job_id, "source_words": [], "visuals": []})
+
+    def test_new_job_initializes_only_an_empty_confirmed_content_baseline(self):
+        from edit.hd.tools import confirmed_content
+        job, _ = self.create()
+        guard = job.job_dir / "manifests/confirmed-content.json"
+        self.assertEqual(json.loads(guard.read_text()), {
+            "schema_version": 1, "job_id": job.job_id, "source_words": [], "visuals": []})
+        confirmed_content.check_confirmed_content(job, {"segments": []})
 
     def test_ready_resume_is_idempotent_and_does_not_reset_approval_state(self):
         job, context = self.create()
+        guard = job.job_dir / "manifests/confirmed-content.json"
+        guard.write_text(json.dumps({"schema_version": 1, "job_id": job.job_id,
+            "source_words": [{"index": 0, "text": "指定保留"}], "visuals": []}))
+        guard_before = (guard.read_bytes(), guard.stat().st_mtime_ns)
         state.revise(job, "inspect", "fixture state")
         context_path = Path(context["workspace"]) / "job-context.json"
         before = (context_path.read_bytes(), context_path.stat().st_mtime_ns)
@@ -126,6 +157,13 @@ class JobInitializationTests(unittest.TestCase):
         self.assertEqual(resumed.revision, job.revision)
         self.assertEqual(same, context)
         self.assertEqual((context_path.read_bytes(), context_path.stat().st_mtime_ns), before)
+        self.assertEqual((guard.read_bytes(), guard.stat().st_mtime_ns), guard_before)
+        guard.unlink()
+        resumed, _ = self.resume(job.root)
+        self.assertFalse(guard.exists(), "resume must not replace a deleted protection record with an empty one")
+        from edit.hd.tools import confirmed_content
+        with self.assertRaisesRegex(confirmed_content.ConfirmedContentError, "confirmed-content.json is required"):
+            confirmed_content.check_confirmed_content(resumed, {"segments": []})
 
     def test_inline_script_is_utf8_and_only_stored_inside_workspace(self):
         self.assertIn("script_text", inspect.signature(initializer.initialize_video_job).parameters,
@@ -315,6 +353,7 @@ class JobInitializationTests(unittest.TestCase):
         job, _ = self.resume(workspace)
         self.assertEqual(job.job_dir, empty)
         self.assertTrue((empty / "workflow.json").is_file())
+        self.assertTrue((empty / "manifests/confirmed-content.json").is_file())
 
     def test_nonempty_partial_state_is_preserved_and_refused(self):
         with mock.patch.object(state, "save_job", side_effect=OSError("injected save failure")):

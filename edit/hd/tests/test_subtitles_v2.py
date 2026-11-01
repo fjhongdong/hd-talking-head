@@ -589,6 +589,39 @@ class FormalSubtitleContractTests(unittest.TestCase):
         self.assertTrue(any("大促" in cue["text"] for cue in plan["cues"]))
         self.assertTrue(all(cue["emphasis_words"] == [] for cue in plan["cues"]))
 
+    def test_sentence_end_precedes_length_balancing_and_keeps_next_object_together(self) -> None:
+        for first, rest in (("这个月六号前免费。", "删自己的信息本来就是你说了算。"),
+                            ("只替你跑腿。", "查、写、填，它来；发不发，你定。"),
+                            ("请先核对。", "确认后发送。")):
+            text = first + rest
+            tokens = []
+            for char in text:
+                if char in "。！？!?，、；":
+                    tokens[-1] += char
+                else:
+                    tokens.append(char)
+            words = [{"text": char, "start": round(.14 + i * .15, 3),
+                      "end": round(.27 + i * .15, 3)} for i, char in enumerate(tokens)]
+            duration = round((len(text) * .15 + 1) * 24) / 24
+            timeline = {**self.timeline, "source_duration": duration, "output_duration": duration,
+                        "segments": [{"source_start": 0., "source_end": duration,
+                                      "timeline_start": 0., "timeline_end": duration}]}
+            visual = {"duration": duration, "segments": [{"segment_id": "seg-001",
+                      "start": 0., "end": duration, "content_item_ids": ["idea-01"],
+                      "shot_recipe": {"mode": "none"}}]}
+            renderer = []
+            with self.subTest(text=text):
+                plan = subtitles_v2.build_render_plan(records=self.records, words=words,
+                    timeline=timeline, visual_plan=visual, keyword_index={}, renderer_cues=renderer)
+                cues = plan["cues"]
+                self.assertEqual(cues[0]["text"], first)
+                self.assertEqual("".join(cue["text"] for cue in cues), text)
+                if rest.startswith("删自己的信息"):
+                    self.assertTrue(any("删自己的信息" in cue["text"] for cue in cues))
+                self.assertEqual([(word["start"], word["end"]) for cue in renderer for word in cue["words"]],
+                                 [(word["start"], word["end"]) for word in words])
+                self.assertTrue(all(len(cue["text"]) <= 14 for cue in cues))
+
     def test_pause_hint_does_not_create_fragments_or_split_protected_phrases(self) -> None:
         text = "只是我们一直在主动调整自己的评判标准"
         visual = {"duration": 4.0, "segments": [{"segment_id": "seg-001",

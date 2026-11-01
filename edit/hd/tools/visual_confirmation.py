@@ -1024,29 +1024,8 @@ def _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director
             if not auth or validate_generation_request(job, auth, origin['request'])['step']['id'] != step['id']:
                 raise VisualConfirmationError('prepared Paper generation differs from its approval')
             if rid != item.get('plan_request_id', rid):
-                plan = item.get('image_edit_plan', {})
-                if (origin.get('status') != 'completed' or item.get('retry_of') != item.get('plan_request_id') or plan.get('from_id') != item.get('retry_of')
-                        or plan.get('request') != item.get('request') or type(plan.get('count')) is not int or plan['count'] != 1
-                        or item.get('channel_identity') != origin.get('channel_identity') or item.get('config_sha256') != origin.get('config_sha256')
-                        or item.get('request', {}).get('tool') != origin['request']['tool'] or item['request'].get('purpose') != 'image'
-                        or artifacts.sha256_json(plan) != item.get('approved_plan_sha256')
-                        or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()):
-                    raise VisualConfirmationError('prepared Paper image edit authorization changed')
-                originals = origin.get('completion_response', {}).get('artifacts', [])
-                if len(originals) != 1 or originals[0].get('type') != 'image':
-                    raise VisualConfirmationError('prepared Paper image edit original is ambiguous')
-                source_path = Path(originals[0]['path'])
-                if not source_path.is_absolute(): source_path = root / source_path
-                original_ref = _record(root, source_path)
-                if ((original_ref['sha256'], original_ref['bytes']) != (originals[0]['sha256'], originals[0]['bytes'])
-                        or item['request'].get('input_files') != [original_ref]
-                        or item['request'].get('arguments', {}).get('referenced_image_paths') != [str(source_path)]):
-                    raise VisualConfirmationError('prepared Paper edit original image changed')
-                if 'followup_evidence' in plan:
-                    approved_step = validate_generation_request(job, auth, origin['request'])
-                    generation_queue._validate_followup_image_evidence(job, origin, plan, approved_step)
-                elif plan.get('issue') != origin.get('completion_response', {}).get('conclusion'):
-                    raise VisualConfirmationError('prepared Paper image edit visual review changed')
+                approved_step = validate_generation_request(job, auth, origin['request'])
+                generation_queue._validate_image_successor(job, queue, rid, approved_step)
             for media in item['completion_response']['artifacts']:
                 path = Path(media['path'])
                 ref = _record(root, path if path.is_absolute() else root / path)
@@ -1142,27 +1121,8 @@ def _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director,
         if not origin.get('authorization') or validate_generation_request(job, origin['authorization'], origin['request'])['step']['id'] != own[0]['id']:
             raise VisualConfirmationError('prepared Wake image differs from its approved step')
         if rid != origin_id:
-            plan = item.get('image_edit_plan', {})
-            if (origin.get('status') != 'completed' or set(plan) != {'from_id', 'request', 'issue', 'count'}
-                    or item.get('retry_of') != origin_id or plan.get('from_id') != origin_id or type(plan.get('count')) is not int or plan['count'] != 1
-                    or plan.get('request') != item.get('request') or plan.get('issue') != origin.get('completion_response', {}).get('conclusion')
-                    or not isinstance(plan.get('issue'), str) or not plan['issue'].strip()
-                    or item.get('channel_identity') != origin.get('channel_identity') or item.get('config_sha256') != origin.get('config_sha256')
-                    or item.get('request', {}).get('tool') != origin['request']['tool'] or item['request'].get('purpose') != 'image'
-                    or not isinstance(item.get('user_confirmation'), str) or not item['user_confirmation'].strip()
-                    or item.get('approved_plan_sha256') != artifacts.sha256_json(plan)):
-                raise VisualConfirmationError('prepared Wake image edit has no exact additional authorization')
-            original = origin.get('completion_response', {}).get('artifacts', [])
-            if len(original) != 1:
-                raise VisualConfirmationError('prepared Wake image edit original is ambiguous')
-            source = Path(original[0]['path'])
-            if not source.is_absolute(): source = root / source
-            original_ref = _record(root, source)
-            if (original_ref['sha256'], original_ref['bytes']) != (original[0]['sha256'], original[0]['bytes']):
-                raise VisualConfirmationError('prepared Wake original image changed')
-            if (item['request']['input_files'] != [original_ref]
-                    or item['request']['arguments'].get('referenced_image_paths') != [str(source)]):
-                raise VisualConfirmationError('prepared Wake edit does not reference its original image')
+            approved_step = validate_generation_request(job, origin['authorization'], origin['request'])
+            generation_queue._validate_image_successor(job, queue, rid, approved_step)
         outputs = item.get('completion_response', {}).get('artifacts', [])
         if len(outputs) != 1 or outputs[0].get('type') != 'image':
             raise VisualConfirmationError('prepared Wake needs one completed image output')
@@ -1374,6 +1334,11 @@ def generation_item(queue, proposal, step, job=None):
         if len(successors) != 1:
             raise VisualConfirmationError("generation retry has ambiguous successors")
         rid, item = successors[0]
+        retry_plan = item.get('retry_plan', {})
+        edit_plan = item.get('image_edit_plan', {})
+        if job is not None and ('request' in retry_plan or 'followup_evidence' in edit_plan):
+            from . import generation_queue
+            generation_queue._validate_image_successor(job, queue, rid)
     return rid, item
 
 def _build_generation_request(job, proposal, step, *, queue=None):
@@ -1934,6 +1899,218 @@ def _verify_native_revision_origin(root, frozen, key, submitted, scene):
         raise VisualConfirmationError('native implementation must reuse its registered version or advance a changed input exactly once')
 
 
+def _normalize_hyperframes_revisions(root, frozen, frozen_treatment, director, treatment):
+    """Verify a registered native overlay repair before normalizing its comparison copy."""
+    from . import motion_readability, overlay_alignment
+    import importlib.util
+    project = Path(__file__).resolve().parents[3]
+    entry = project / 'skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py'
+    spec = importlib.util.spec_from_file_location('_hyperframes_revision', entry)
+    native = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(native)
+    current, actual = copy.deepcopy(director), copy.deepcopy(treatment)
+    originals = {s['segment_id']: s for s in frozen['segments']}
+    def row(value, field, key):
+        matches = [r for r in value.get(field, [])
+                   if (r.get('segment_id'), r.get('component_id')) == key]
+        if len(matches) != 1:
+            raise VisualConfirmationError('HyperFrames repair needs one ' + field + ' record')
+        return matches[0]
+    for segment in current['segments']:
+        original = originals[segment['segment_id']]
+        for cid, binding in list(segment.get('bindings', {}).items()):
+            prior = original.get('bindings', {}).get(cid, {})
+            if binding.get('dependency_id') != 'hyperframes-native-adaptation' or binding == prior:
+                continue
+            key = segment['segment_id'], cid
+            scene, old_scene = row(actual, 'scenes', key), row(frozen_treatment, 'scenes', key)
+            _verify_native_revision_origin(root, frozen, key, segment, scene)
+            briefs, files, mounts = [], [], []
+            for record, bound in ((old_scene, prior), (scene, binding)):
+                payload = _path(root, record['brief_path']).read_bytes()
+                if hashlib.sha256(payload).hexdigest() != bound.get('brief_sha256'):
+                    raise VisualConfirmationError('HyperFrames repair brief differs from its binding')
+                brief = native.validate_brief(payload)
+                content = {}
+                for asset in [brief['entry'], *brief['assets']]:
+                    if asset['scene_path'] in content:
+                        raise VisualConfirmationError('HyperFrames repair has duplicate scene paths')
+                    path = _path(root, asset['job_path'])
+                    if artifacts.sha256_file(path) != asset['sha256']:
+                        raise VisualConfirmationError('HyperFrames repair input changed')
+                    content[asset['scene_path']] = path.read_bytes()
+                parser = overlay_alignment._Mounts()
+                parser.feed(content['index.html'].decode('utf-8'))
+                if len(parser.mounts) != 1:
+                    raise VisualConfirmationError('HyperFrames repair needs one native mount')
+                briefs.append(brief); files.append(content); mounts.append(parser.mounts[0])
+            old, new = briefs
+            if ({k:v for k,v in old.items() if k not in {'entry','assets'}} !=
+                    {k:v for k,v in new.items() if k not in {'entry','assets'}}
+                    or new['composition']['alpha'] is not True
+                    or not new['upstream_route'].startswith('hyperframes/')
+                    or binding.get('source_sha256') != artifacts.sha256_file(entry)
+                    or binding.get('verification_id') != hashlib.sha256(
+                        (binding['source_sha256'] + new['entry']['sha256']).encode()).hexdigest()):
+                raise VisualConfirmationError('HyperFrames repair changed its source, template, task or clock')
+            records = [{r['media_ref']: r for r in [b['entry'], *b['assets']]} for b in briefs]
+            if (set(records[0]) != set(records[1]) or any(
+                    {k:v for k,v in records[0][ref].items() if k not in {'job_path','sha256'}} !=
+                    {k:v for k,v in records[1][ref].items() if k not in {'job_path','sha256'}}
+                    for ref in records[0])):
+                raise VisualConfirmationError('HyperFrames repair changed its native asset inventory')
+            route = new['upstream_route']
+            source = project / '参考项目/B-roll开源方案/hyperframes' / native.ROUTES[route]
+            if artifacts.sha256_file(source) != new['source_pins']['sha256']:
+                raise VisualConfirmationError('HyperFrames repair changed its original native source')
+            if any(mounts[0].get(k) != mounts[1].get(k) for k in
+                   ('data-composition-id','data-composition-src','data-start','data-duration')):
+                raise VisualConfirmationError('HyperFrames repair changed its native mount clock or route')
+            target = mounts[1].get('data-composition-src')
+            if mounts[1].get('data-composition-id') != route.removeprefix('hyperframes/') or target not in files[1]:
+                raise VisualConfirmationError('HyperFrames repair mounted another native route')
+            for ref in records[0]:
+                if records[0][ref]['scene_path'] not in {'index.html', target} and records[0][ref]['sha256'] != records[1][ref]['sha256']:
+                    raise VisualConfirmationError('HyperFrames repair replaced an approved media asset')
+            events = []
+            for content, mount in zip(files, mounts):
+                duration = overlay_alignment._native_clock(source.read_bytes(), content[target], route,
+                    overlay_alignment._number(mount['data-duration']))
+                events.append(overlay_alignment._native_events(route, mount, 24, duration))
+            if events[0] != events[1]:
+                raise VisualConfirmationError('HyperFrames repair changed its approved label or word clock')
+            _validate_hyperframes_host_revision(files[0]['index.html'], files[1]['index.html'], project)
+            before_read, revised = row(frozen_treatment, 'motion_readability', key), row(actual, 'motion_readability', key)
+            old_targets = {t['target_id']:t for t in before_read.get('targets', [])}
+            targets = {t['target_id']:t for t in revised.get('targets', [])}
+            if (not targets or len(targets) != len(revised['targets']) or set(targets) != set(old_targets)
+                    or {k:v for k,v in revised.items() if k != 'targets'} !=
+                       {k:v for k,v in before_read.items() if k != 'targets'}):
+                raise VisualConfirmationError('HyperFrames repair changed its approved text targets')
+            sources = {r['job_path']:r['sha256'] for r in records[1].values()}
+            for tid, target in targets.items():
+                before = old_targets[tid]
+                if ({k:v for k,v in target.items() if k not in {'content_ref','region','windows'}} !=
+                        {k:v for k,v in before.items() if k not in {'content_ref','region','windows'}}
+                        or target['content_ref']['value'] != before['content_ref']['value']
+                        or sources.get(target['content_ref']['path']) != target['content_ref']['sha256']
+                        or not target['content_ref']['pointer'].startswith('text:')):
+                    raise VisualConfirmationError('HyperFrames repair text must retain its identity and actual source')
+            scoped = {**segment, 'shot_recipe': {'components': [c for c in segment['visual_strategy']['components']
+                       if c['component_id'] == cid]}}
+            motion_readability.validate_targets([scoped], [revised],
+                motion_readability._required_refs({'motion_readability':[revised]}), root=root)
+            before_review, review = row(frozen_treatment, 'semantic_assessments', key), row(actual, 'semantic_assessments', key)
+            if any(review.get(k) != v for k,v in before_review.items() if k not in {'content_refs','reason','verdict'}):
+                raise VisualConfirmationError('HyperFrames repair changed its approved semantic assessment')
+            if {k:v for k,v in scene.items() if k not in {'brief_path','native_revision_from','native_revision_reason'}} != {
+                    k:v for k,v in old_scene.items() if k not in {'brief_path','native_revision_from','native_revision_reason'}}:
+                raise VisualConfirmationError('HyperFrames repair changed other scene fields')
+            for group in ('beats','overlay_beats'):
+                for beat in actual.get('skill_selection', {}).get(group, []):
+                    if (beat.get('segment_id'),beat.get('component_id')) != key:
+                        continue
+                    if beat.get('binding_snapshot') != binding:
+                        raise VisualConfirmationError('HyperFrames repair binding snapshot is stale')
+                    beat['binding_snapshot'] = copy.deepcopy(prior)
+                    if beat != row(frozen_treatment.get('skill_selection', {}), group, key):
+                        raise VisualConfirmationError('HyperFrames repair changed its approved semantic beat')
+            alignment = row(actual, 'overlay_alignment', key)
+            if alignment.get('brief_path') != scene['brief_path']:
+                raise VisualConfirmationError('HyperFrames repair alignment uses another input')
+            alignment['brief_path'] = old_scene['brief_path']
+            if alignment != row(frozen_treatment, 'overlay_alignment', key):
+                raise VisualConfirmationError('HyperFrames repair changed its approved word anchors')
+            segment['bindings'][cid] = copy.deepcopy(prior)
+            # Only this fully verified comparison path normalizes the revision.
+            # The generic technical-revision gate still rejects an unverified HF origin.
+            segment['strategy_revision'] = original['strategy_revision']
+            scene.clear(); scene.update(copy.deepcopy(old_scene))
+            revised.clear(); revised.update(copy.deepcopy(before_read))
+    return current, actual
+
+
+def _validate_hyperframes_host_revision(before, after, project):
+    """Keep new native repairs static; reuse the prepared HF CSS parser offline."""
+    from html.parser import HTMLParser
+    class Host(HTMLParser):
+        def __init__(self, source):
+            super().__init__()
+            self.scripts, self.events, self.styles, self.links = [], [], [], []
+            self.capture = None
+            self.feed(source.decode('utf-8'))
+            self.close()
+            if self.capture is not None:
+                raise VisualConfirmationError('HyperFrames repair parent script or style is unclosed')
+        def handle_starttag(self, tag, attrs):
+            values = dict(attrs)
+            events = sorted((k, v) for k, v in attrs if k.startswith('on'))
+            if events:
+                self.events.append((tag, values.get('id'), events))
+            if tag == 'script':
+                self.scripts.append({'attrs': sorted(attrs), 'text': ''})
+                self.capture = self.scripts[-1]
+            elif tag == 'style':
+                self.styles.append({'context': ['sheet', sorted(attrs)], 'text': ''})
+                self.capture = self.styles[-1]
+            if 'style' in values:
+                self.styles.append({'context': ['inline', tag, values.get('id'), values.get('class')],
+                                    'text': values['style'] or ''})
+            if tag == 'link' and 'stylesheet' in (values.get('rel') or '').lower().split():
+                self.links.append(sorted(attrs))
+        def handle_data(self, data):
+            if self.capture is not None:
+                self.capture['text'] += data
+        def handle_endtag(self, tag):
+            if tag in {'script', 'style'}:
+                self.capture = None
+    old, new = Host(before), Host(after)
+    if (old.scripts, old.events, old.links) != (new.scripts, new.events, new.links):
+        raise VisualConfirmationError('HyperFrames repair changed parent scripts, events or stylesheet sources')
+    parser = project / 'skill-development/runtime/hyperframes-0.8.167/node_modules/css-tree'
+    node = shutil.which('node')
+    if not node or not (parser / 'package.json').is_file():
+        raise VisualConfirmationError('HyperFrames repair needs Node and css-tree from its prepared HyperFrames runtime')
+    script = r'''
+const fs = require('node:fs'), css = require(process.argv[1]);
+const inputs = JSON.parse(fs.readFileSync(0, 'utf8'));
+const fingerprint = sheets => {
+  const result = [];
+  for (const sheet of sheets) {
+    const scopes = [sheet.context];
+    const ast = css.parse(sheet.text, {context: sheet.context[0] === 'inline' ? 'declarationList' : 'stylesheet',
+      onParseError(error) { throw error; }});
+    css.walk(ast, {
+      enter(n) {
+        if (n.type === 'Rule') scopes.push(['rule', css.generate(n.prelude)]);
+        if (n.type === 'Atrule') {
+          const name = css.ident.decode(n.name).toLowerCase();
+          scopes.push(['at', name, n.prelude ? css.generate(n.prelude) : '']);
+          if (name === 'import' || /^(?:-\w+-)?keyframes$/.test(name)) result.push([scopes.slice(), css.generate(n)]);
+        }
+        if (n.type === 'Declaration') {
+          const name = css.ident.decode(n.property).toLowerCase().replace(/^-(?:webkit|moz|ms|o)-/, '');
+          if (/^(?:animation|transition)(?:-|$)/.test(name)) {
+            result.push([scopes.slice(), name, css.generate(n.value), !!n.important]);
+          }
+        }
+      },
+      leave(n) { if (n.type === 'Rule' || n.type === 'Atrule') scopes.pop(); }
+    });
+  }
+  return result;
+};
+if (JSON.stringify(fingerprint(inputs[0])) !== JSON.stringify(fingerprint(inputs[1]))) process.exit(2);
+'''
+    try:
+        result = subprocess.run([node, '-e', script, str(parser)],
+            input=artifacts.canonical_json_bytes([old.styles, new.styles]), capture_output=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise VisualConfirmationError('HyperFrames repair CSS verification could not run') from error
+    if result.returncode:
+        raise VisualConfirmationError('HyperFrames repair changed parent CSS motion or contains unparseable CSS')
+
+
 def _validate_css_font_growth(before, after):
     """Allow only increased numeric CSS font sizes in the same authored page."""
     pattern = re.compile(r'font-size\s*:\s*(\d+(?:\.\d+)?)px\b')
@@ -2257,11 +2434,13 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, gener
     frozen_treatment = _read(_exact(root, proposal["inputs"]["treatment"]))
     _validate_parent_camera_framing(root, proposal, frozen, director, treatment)
     actual_director, actual_treatment = director, treatment
+    director, treatment = _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director, treatment)
     director, treatment = _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director, treatment)
     director, treatment = _normalize_native_supplements(root, proposal, frozen, frozen_treatment, director, treatment)
     director, treatment = _validate_motion_realization(root, frozen, frozen_treatment, director, treatment)
     director, treatment = _normalize_lemo_typography(root, frozen, frozen_treatment, director, treatment)
     director, treatment = _normalize_openfilm_typography(root, frozen, frozen_treatment, director, treatment)
+    director, treatment = _normalize_hyperframes_revisions(root, frozen, frozen_treatment, director, treatment)
     director = _normalize_verified_technical_revisions(frozen, frozen_treatment, actual_director, actual_treatment, director)
     treatment = _normalize_official_crop_text(root, frozen, frozen_treatment, actual_director, actual_treatment, treatment)
     treatment = _validate_generated_readability(root, proposal, frozen, frozen_treatment,

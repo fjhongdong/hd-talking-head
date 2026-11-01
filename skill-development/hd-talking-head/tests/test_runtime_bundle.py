@@ -9,12 +9,39 @@ import unittest
 import warnings
 import zipfile
 import hashlib
+import io
+from contextlib import redirect_stderr
+from unittest import mock
 
 import _env
 from verify_skill_release import REQUIRED, MANIFEST, package_files
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/runtime_bundle.py'
+
+
+class PackageEntrypointTests(unittest.TestCase):
+    def test_reports_missing_startup_without_launching(self):
+        spec = importlib.util.spec_from_file_location('hd_package_entrypoint', _env.PROJECT / 'run.py')
+        entry = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(entry)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            scripts = root / 'scripts'
+            scripts.mkdir()
+            for missing in ('project_python.py', 'run_stage.py'):
+                with self.subTest(missing=missing):
+                    for name in ('project_python.py', 'run_stage.py'):
+                        (scripts / name).write_text('# startup fixture\n')
+                    (scripts / missing).unlink()
+                    output = io.StringIO()
+                    with mock.patch.object(entry, 'PACKAGE_ROOT', root), \
+                            mock.patch.object(entry, 'SCRIPTS', scripts), \
+                            mock.patch.object(entry.subprocess, 'run') as launch, redirect_stderr(output):
+                        self.assertEqual(entry.main(['run_stage']), 2)
+                    launch.assert_not_called()
+                    self.assertIn('Skill 包不完整', output.getvalue())
+                    self.assertIn(missing, output.getvalue())
 
 
 class RuntimeBundleTests(unittest.TestCase):

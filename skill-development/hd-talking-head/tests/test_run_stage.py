@@ -145,24 +145,76 @@ class ExecuteStageTests(unittest.TestCase):
         job = SimpleNamespace(job_dir=self.root, stages=stages, inputs={}, root=self.root)
         return job
 
-    def test_native_brief_uses_approved_mapping_path_and_identity(self):
+    def native_loader_fixture(self):
         from edit.hd.tools import visual_confirmation as confirmation
-        path = self.root / 'tmp' / 'approved-brief.json'
-        path.parent.mkdir(); path.write_bytes(b'approved')
-        record = confirmation._record(self.root, path)
-        item = {'segment_id': 'seg-1', 'component_id': 'scene', 'artifact': record}
-        job = SimpleNamespace(job_dir=self.root)
-        recipe = {'segment_id': 'seg-1'}
-        component = {'component_id': 'scene', 'brief_sha256': record['sha256']}
-        with mock.patch.object(confirmation, 'validate_visual_authorization', return_value={'mapping': {'native_inputs': [item]}}):
-            self.assertEqual(run_stage._approved_native_brief(job, recipe, component), b'approved')
-            with self.assertRaises(ValueError):
-                run_stage._approved_native_brief(job, recipe, {**component, 'brief_sha256': '0' * 64})
-            with self.assertRaises(ValueError):
-                run_stage._approved_native_brief(job, recipe, {**component, 'component_id': 'other'})
-            path.write_bytes(b'changed')
-            with self.assertRaises(ValueError):
-                run_stage._approved_native_brief(job, recipe, component)
+        approval = self.root / 'approval.json'; approval.write_text('{"approved":true}')
+        evidence = {'artifact': confirmation._record(self.root, approval), 'mapping': {'native_inputs': []}}
+        evidence['mapping']['source_approval'] = evidence['artifact']
+        components = []
+        for index in range(2):
+            path = self.root / f'brief-{index}.json'; path.write_bytes(f'approved-{index}'.encode())
+            record = confirmation._record(self.root, path)
+            component = {'component_id': f'scene-{index}', 'kind': 'code_generated',
+                         'dependency_id': 'lemo-opuscar', 'brief_sha256': record['sha256']}
+            components.append(component)
+            evidence['mapping']['native_inputs'].append({'segment_id': 'seg-1',
+                'component_id': component['component_id'], 'artifact': record})
+        mapping = self.root / 'execution-mapping.json'; mapping.write_text(json.dumps(evidence['mapping']))
+        # Production mappings live below a confirmation revision directory.
+        nested = self.root / 'confirmed' / mapping.name; nested.parent.mkdir(); mapping.rename(nested)
+        stages = {'visual_direction': {'status': 'approved', 'artifacts': [confirmation._record(self.root, nested)]},
+                  'visual_canary': {'status': 'pending'}, 'visual_assets': {'status': 'pending'}}
+        workflow = self.root / 'workflow.json'; workflow.write_text(json.dumps({'revision': 7, 'stages': stages}))
+        frozen = confirmation._record(self.root, workflow)
+        job = SimpleNamespace(job_dir=self.root, job_id='fixture', revision=7, stages=stages,
+                              expected_sha256=frozen['sha256'], expected_bytes=frozen['bytes'])
+        return job, evidence, {'segment_id': 'seg-1', 'components': components}
+
+    def test_native_factory_checks_realization_once_for_multiple_brief_loads(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        job, evidence, recipe = self.native_loader_fixture()
+        plan = {'segments': [{'shot_recipe': recipe}]}
+        module = SimpleNamespace(create_adapter=lambda *args: args[-1])
+        with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan), \
+             mock.patch.object(confirmation, 'validate_visual_authorization', return_value=evidence) as validate, \
+             mock.patch.object(run_stage, '_module', return_value=module):
+            loader = run_stage.native_component_adapters(PROJECT, job)['code_generated']['lemo-opuscar']
+            for index, component in enumerate(recipe['components']):
+                self.assertEqual(loader(job, recipe, component), f'approved-{index}'.encode())
+            validate.assert_called_once_with(job, require_realized=True)
+
+    def test_native_brief_loader_rejects_changed_scope_approval_mapping_and_bytes(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        job, evidence, recipe = self.native_loader_fixture()
+        loader = run_stage._approved_native_brief(job, evidence)
+        component = recipe['components'][0]
+        self.assertEqual(loader(job, recipe, component), b'approved-0')
+        for altered in ({**component, 'brief_sha256': '0' * 64}, {**component, 'component_id': 'other'}):
+            with self.subTest(component=altered), self.assertRaises(ValueError):
+                loader(job, recipe, altered)
+        for relative in ('brief-0.json', 'confirmed/execution-mapping.json', 'approval.json', 'workflow.json'):
+            path = self.root / relative; original = path.read_bytes(); path.write_bytes(original + b' ')
+            with self.subTest(changed_file=relative), self.assertRaises(ValueError):
+                loader(job, recipe, component)
+            path.write_bytes(original)
+        for mutate in (lambda j: setattr(j, 'revision', 8),
+                       lambda j: j.stages['visual_canary'].update(status='approved'),
+                       lambda j: j.stages['visual_direction']['artifacts'][0].update(sha256='0' * 64)):
+            changed = copy.deepcopy(job); mutate(changed)
+            with self.assertRaises(ValueError): loader(changed, recipe, component)
+        wrong = copy.deepcopy(evidence); wrong['artifact']['sha256'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'verified confirmation'):
+            run_stage._approved_native_brief(job, wrong)
+        duplicate = copy.deepcopy(evidence)
+        duplicate['mapping']['native_inputs'].append(copy.deepcopy(duplicate['mapping']['native_inputs'][0]))
+        mapping = self.root / 'confirmed/execution-mapping.json'; mapping.write_text(json.dumps(duplicate['mapping']))
+        job.stages['visual_direction']['artifacts'] = [confirmation._record(self.root, mapping)]
+        workflow = self.root / 'workflow.json'; workflow.write_text(json.dumps({'revision': 7, 'stages': job.stages}))
+        frozen = confirmation._record(self.root, workflow)
+        job.expected_sha256, job.expected_bytes = frozen['sha256'], frozen['bytes']
+        duplicate_loader = run_stage._approved_native_brief(job, duplicate)
+        with self.assertRaisesRegex(ValueError, 'missing or ambiguous'):
+            duplicate_loader(job, recipe, component)
 
     def invoke(self, job, stage, **kwargs):
         with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
@@ -512,6 +564,8 @@ class SelectedPreparationTests(unittest.TestCase):
             factory = mock.create_autospec(module.create_adapter, return_value='bound')
             plan = {'segments': [{'shot_recipe': {'components': [{'kind': 'code_generated', 'dependency_id': dependency}]}}]}
             with mock.patch('edit.hd.tools.visual_canary.load_approved_visual_plan', return_value=plan), \
+                 mock.patch('edit.hd.tools.visual_confirmation.validate_visual_authorization', return_value={}), \
+                 mock.patch.object(run_stage, '_approved_native_brief', return_value=mock.Mock()), \
                  mock.patch.object(run_stage, '_module', return_value=SimpleNamespace(create_adapter=factory)):
                 result = run_stage.native_component_adapters(PROJECT, object())
             args = factory.call_args.args

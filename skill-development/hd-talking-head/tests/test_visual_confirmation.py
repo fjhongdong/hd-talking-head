@@ -20,8 +20,9 @@ class VisualConfirmationTests(unittest.TestCase):
         import hashlib
         import json
         from edit.hd.tools import generation_queue
+        from PIL import Image
         root = self.job.job_dir
-        original = root / 'wake-original.png'; original.write_bytes(b'original')
+        original = root / 'wake-original.png'; Image.new('RGB', (16, 16), 'orange').save(original)
         edited = root / 'wake-edited.png'; edited.write_bytes(b'edited')
         aroll = root / '06-edit-structure/edited-aroll.mp4'; aroll.parent.mkdir(exist_ok=True); aroll.write_bytes(b'aroll')
         original_ref = vc._record(root, original); edited_ref = vc._record(root, edited); aroll_ref = vc._record(root, aroll)
@@ -62,19 +63,23 @@ class VisualConfirmationTests(unittest.TestCase):
         request = {'id':'edit','purpose':'image','tool':'image.tool','arguments':{'referenced_image_paths':[str(original)]},
                    'input_files':[original_ref]}
         plan = {'from_id':'original','request':request,'issue':'cropped','count':1}
+        review = root / 'wake-review.json'
+        artifacts.write_json_artifact(review, {'from_id':'original', 'preview':original_ref,
+            'status':'needs_revision', 'method':'host image inspection', 'observations':['cropped']})
+        plan['followup_evidence'] = {'image':original_ref, 'review':vc._record(root, review)}
         identity = {'provider':'fixture'}
         origin = {'status':'completed','request':{'id':'original','tool':'image.tool'},'authorization':{'source':'approved'},
-                  'channel_identity':identity,'config_sha256':'config','completion_response':{'conclusion':'cropped',
+                  'channel_identity':identity,'config_sha256':'config','completion_response':{
                   'artifacts':[{'type':'image','path':str(original),'sha256':original_ref['sha256'],'bytes':original_ref['bytes']}]}}
         item = {'request':request,'status':'completed','retry_of':'original','plan_request_id':'original',
                 'image_edit_plan':plan,'user_confirmation':'one approved edit','channel_identity':identity,'config_sha256':'config',
                 'approved_plan_sha256':artifacts.sha256_json(plan),'completion_response':{'artifacts':[
                     {'type':'image','path':str(edited),'sha256':edited_ref['sha256'],'bytes':edited_ref['bytes']}]}}
-        job = SimpleNamespace(job_id=self.job.job_id, stages={'edit_structure':{'status':'approved','artifacts':[aroll_ref]}})
+        job = SimpleNamespace(job_dir=root, job_id=self.job.job_id, stages={'edit_structure':{'status':'approved','artifacts':[aroll_ref]}})
         with mock.patch.object(vc,'planned_generation_targets',return_value={key}), \
              mock.patch.object(state,'load_job',return_value=job), \
              mock.patch.object(vc,'validate_visual_authorization',return_value={'source':proposal}), \
-             mock.patch.object(generation_queue,'status',return_value={'items':{'original':origin}}), \
+             mock.patch.object(generation_queue,'status',return_value={'items':{'original':origin, 'edit':item}}), \
              mock.patch.object(vc,'generation_item',return_value=('edit',item)), \
              mock.patch.object(vc,'validate_generation_request',return_value={'step':step}):
             normalized, normalized_treatment = vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
@@ -83,7 +88,8 @@ class VisualConfirmationTests(unittest.TestCase):
             for field, value in [('status','pending'),('user_confirmation',''),('approved_plan_sha256','0'*64)]:
                 with self.subTest(field=field):
                     changed = {**item,field:value}
-                    with mock.patch.object(vc,'generation_item',return_value=('edit',changed)):
+                    with mock.patch.object(vc,'generation_item',return_value=('edit',changed)), \
+                         mock.patch.object(generation_queue,'status',return_value={'items':{'original':origin,'edit':changed}}):
                         with self.assertRaises(ValueError):
                             vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
             changed = copy.deepcopy(actual); changed['skill_selection']['beats'][0]['semantic_goal'] = 'different'
@@ -102,6 +108,29 @@ class VisualConfirmationTests(unittest.TestCase):
             edited.write_bytes(b'changed')
             with self.assertRaisesRegex(ValueError,'completed image'):
                 vc._normalize_prepared_wake(root,proposal,frozen,treatment,director,actual)
+
+    def test_realization_rejects_deferred_paper_without_crop_provenance_before_publish(self):
+        from edit.hd.tools import generation_queue
+        root = self.job.job_dir
+        key = ('seg-001', 'component-1')
+        binding = {'dependency_id': 'paper-collage-hyperframes'}
+        frozen = {'segments': [{'segment_id': key[0], 'bindings': {key[1]: binding},
+                   'visual_strategy': {'components': [{'component_id': key[1]}]}}]}
+        old_treatment = {'scenes': [{'segment_id': key[0], 'component_id': key[1]}]}
+        source_director, source_treatment = root / 'paper-plan.json', root / 'paper-plan-treatment.json'
+        artifacts.write_json_artifact(source_director, frozen)
+        artifacts.write_json_artifact(source_treatment, old_treatment)
+        proposal = {'inputs': {'director': vc._record(root, source_director),
+                              'treatment': vc._record(root, source_treatment)}}
+        director, treatment = copy.deepcopy(frozen), copy.deepcopy(old_treatment)
+        director['segments'][0]['bindings'][key[1]] = {**binding, 'brief_sha256': 'a' * 64}
+        treatment['scenes'][0]['brief_path'] = 'paper-actual-brief.json'
+        with mock.patch.object(vc, '_validate_parent_camera_framing'), \
+             mock.patch.object(vc, 'planned_generation_targets', return_value={key}), \
+             mock.patch.object(state, 'load_job', return_value=self.job), \
+             mock.patch.object(generation_queue, 'status', return_value={}), \
+             self.assertRaisesRegex(ValueError, 'bound brief and explicit crop provenance'):
+            vc._validate_draft_against_source(root, proposal, director, treatment)
 
     def test_paper_crop_consumption_requires_approved_source_and_exact_bound_pixels(self):
         from PIL import Image
@@ -615,7 +644,18 @@ class VisualConfirmationTests(unittest.TestCase):
         Image.new("RGB", (128, 128), "blue").save(image)
         with mock.patch.object(generation_queue, "_approved", return_value=(self.job.job_id, "fixture-config", config)):
             action = vc.generation_actions(self.job)[0]
+            generation_channels.record_result(self.job.job_dir, action, {'status':'failed',
+                'error':{'code':'moderation_blocked'}})
+            predecessor = copy.deepcopy(generation_queue.status(self.job.job_dir)['items'][action['request_id']])
+            corrected = copy.deepcopy(predecessor['request'])
+            corrected['id'] = 'corrected-paper-image'
+            corrected['arguments']['prompt'] = 'blue paper assets, fully clothed adult actors'
+            retry = generation_queue.prepare_retry(self.job.job_dir, action['request_id'], corrected)
+            generation_queue.retry(self.job.job_dir, retry['plan'], '允许这两次图片调用，继续', retry['plan_sha256'])
+            action = vc.generation_actions(self.job)[0]
+            self.assertEqual(action['request_id'], corrected['id'])
             generation_channels.record_result(self.job.job_dir, action, {"status": "completed", "artifacts": [{"type": "image", "path": str(image)}]})
+            self.assertEqual(generation_queue.status(self.job.job_dir)['items'][predecessor['request']['id']], predecessor)
             pending = run_stage.resume_visual_direction(self.job, _env.PROJECT)
         self.assertEqual(pending["actions"][0]["action"], "prepare_template_inputs")
         output = pending["actions"][0]["completed_generations"][0]["completion_response"]["artifacts"][0]
@@ -1106,6 +1146,139 @@ class NativeSupplementBoundaryTests(unittest.TestCase):
 
 class MotionRealizationBoundaryTests(unittest.TestCase):
     """A native result may reveal text, without changing its approved task."""
+    def test_hyperframes_repair_verifies_registered_origin_envelope_and_actual_text(self):
+        import hashlib, json, tempfile
+        from types import SimpleNamespace
+        import hyperframes_native_adapter as native
+        from edit.hd.tools import overlay_alignment
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            def write(name, value):
+                path = root / name; path.parent.mkdir(parents=True, exist_ok=True)
+                if isinstance(value, bytes): path.write_bytes(value)
+                else: artifacts.write_json_artifact(path, value)
+                return vc._record(root, path)
+            source = _env.PROJECT / '参考项目/B-roll开源方案/hyperframes/registry/components/before-after-wipe/before-after-wipe.html'
+            source_sha = artifacts.sha256_file(_env.SKILL / native.ENTRY)
+            adapter = SimpleNamespace(entrypoint_sha256=source_sha, launcher=Path(sys.executable))
+            sample = root / 'sample.html'; sample.write_text('the unchanged qualification sample')
+            def prepare(name, split, exit):
+                props = {'label_a':'陌生号','label_b':'贷款','rest_split':split,'wipe_at':1,'exit':exit}
+                width = 960 if name == 'old' else 520
+                html = ('<html><head><script>window.hostReady=true;</script><style>.layout{width:' + str(width) +
+                        'px;height:300px}</style></head><body><div class="layout" style="left:60px" data-composition-id="before-after-wipe" data-composition-src="native.html" data-start="0" data-duration="4" data-variable-values=\'' + json.dumps(props, ensure_ascii=False) + '\'></div></body></html>')
+                entry = write(name + '/index.html', html.encode())
+                clock = overlay_alignment.bind_native_clock(source.read_bytes(), 'hyperframes/before-after-wipe', 4)
+                slots = {'before':'<svg><circle cx="5" cy="5" r="4"/></svg>',
+                         'after':'<svg><rect x="1" y="1" width="8" height="8"/></svg>'}
+                mounted = write(name + '/native.html', overlay_alignment.bind_native_slots(clock, slots))
+                def asset(ref, record, scene):
+                    return {'media_ref':ref,'job_path':record['path'],'sha256':record['sha256'],'scene_path':scene}
+                brief = {'schema_version':2,'source_binding':{'aroll_sha256':'a'*64,'segment_id':'seg-001','start':0,'end':4},
+                    'template_request':{'semantic_family':'state_comparison','information_units':2,'numeric_values':[],'numeric_scale':'not_applicable'},
+                    'entry':asset('entry', entry, 'index.html'),'assets':[asset('native', mounted, 'native.html')],
+                    'composition':{'width':1080,'height':1920,'fps':24,'frames':96,'alpha':True},
+                    'upstream_route':'hyperframes/before-after-wipe',
+                    'source_pins':{'route':'hyperframes/before-after-wipe','sha256':artifacts.sha256_file(source)}}
+                ref = write(name + '/brief.json', brief)
+                payload = (root/ref['path']).read_bytes()
+                return brief, ref['path'], native.create_binding(adapter, payload, sample)
+            old, old_path, binding = prepare('old', 65, 'fade')
+            new, new_path, revised = prepare('new', 100, 'none')
+            segment = {'segment_id':'seg-001','start':0,'end':4,'strategy_revision':1,
+                'visible_text':['陌生号','贷款'],'visual_intent':{'statement':'接听后揭示来电身份'},
+                'visual_strategy':{'components':[{'component_id':'scene','kind':'code_generated'}]},'bindings':{'scene':binding}}
+            frozen = {'segments':[segment, {'segment_id':'seg-002','start':4,'end':5,'strategy_revision':1,
+                'visual_strategy':{'components':[]},'bindings':{}}]}
+            def targets(brief):
+                text = (root/brief['entry']['job_path']).read_text()
+                result = []
+                for i, word in enumerate(segment['visible_text']):
+                    at = text.index(word)
+                    result.append({'target_id':'label-'+str(i),'role':'title','span':[0,len(word)],
+                        'content_ref':{'path':brief['entry']['job_path'],'sha256':brief['entry']['sha256'],
+                            'pointer':f'text:{at}:{at+len(word)}','value':word},
+                        'region':{'x':100,'y':100,'width':400,'height':100},'windows':[{'start':.5+i*2,'end':1.5+i*2}]})
+                return result
+            treatment = {'scenes':[{'segment_id':'seg-001','component_id':'scene','brief_path':old_path}],
+                'skill_selection':{'overlay_beats':[{'segment_id':'seg-001','component_id':'scene','binding_snapshot':binding,'transcript':'原话'}]},
+                'motion_readability':[{'segment_id':'seg-001','component_id':'scene','targets':targets(old)}],
+                'overlay_alignment':[{'segment_id':'seg-001','component_id':'scene','brief_path':old_path,'events':['same source words']}],
+                'semantic_assessments':[{'segment_id':'seg-001','component_id':'scene','candidate_id':'overlay:before-after-wipe',
+                    'transcript_refs':['same source words'],'content_refs':[],'verdict':'pass','reason':'approved'}]}
+            dref, tref = write('director.json', frozen), write('treatment.json', treatment)
+            config = write('manifests/provider-config.json', {})
+            write('workflow.json', {'job_id':'job'})
+            proposal = {'job_id':'job','kind':vc.SCHEMA,'inputs':{'director':dref,'treatment':tref},'provider_config_sha256':config['sha256']}
+            pref = write('proposal.json', proposal)
+            approval = write('receipt.json', {'source_schema':vc.SCHEMA,'job_id':'job','job_dir':str(root),
+                'stage':'visual_direction','passed':True,'reviewed_by':'human','approval_scope':'visual_plan_and_delivery',
+                'note':'fixture','user_confirmation':'approved','artifacts':[],'source':pref})
+            origin = write('prior/execution-mapping.json', {'proposal':pref,'source_approval':approval,
+                'realization_inputs':{'director':dref,'treatment':tref}})
+            director, actual = copy.deepcopy(frozen), copy.deepcopy(treatment)
+            director['segments'][0].update(strategy_revision=2,bindings={'scene':revised})
+            actual['scenes'][0].update(brief_path=new_path,native_revision_from=origin,native_revision_reason='真实终态与留白问题')
+            actual['overlay_alignment'][0]['brief_path']=new_path
+            actual['skill_selection']['overlay_beats'][0]['binding_snapshot']=copy.deepcopy(revised)
+            actual['motion_readability'][0]['targets']=targets(new)
+            job = SimpleNamespace(stages={'visual_direction':{'artifacts':[origin],'lineage':[]}})
+            with mock.patch.object(state,'load_job',return_value=job):
+                vc._validate_draft_against_source(root,proposal,director,actual)
+                self.assertEqual(director['segments'][0]['strategy_revision'],2)
+                self.assertEqual(actual['scenes'][0]['brief_path'],new_path)
+                with mock.patch.object(vc.shutil, 'which', return_value=None):
+                    vc._normalize_hyperframes_revisions(root, frozen, treatment, frozen, treatment)
+                    with self.assertRaisesRegex(ValueError, 'prepared HyperFrames runtime'):
+                        vc._validate_draft_against_source(root, proposal, director, actual)
+                html = (root / new['entry']['job_path']).read_text()
+                changed_hosts = {
+                    'new_script': html.replace('</head>', '<script>window.addedMotion=true;</script></head>'),
+                    'changed_script': html.replace('hostReady=true', 'hostReady=false'),
+                    'event': html.replace('<body>', '<body onload="startMotion()">'),
+                    'animation': html.replace('</style>', '.layout{animation:blink 1s}</style>'),
+                    'transition': html.replace('left:60px', 'left:60px;transition:all 1s'),
+                    'keyframes': html.replace('</style>', '@keyframes blink{to{opacity:0}}</style>'),
+                    'nested_animation': html.replace('</style>', '@media(min-width:1px){.layout{animation-name:blink}}</style>'),
+                    'escaped_animation': html.replace('</style>', r'.layout{anim\61tion:blink 1s}</style>'),
+                }
+                for label, changed_html in changed_hosts.items():
+                    changed, altered = copy.deepcopy(director), copy.deepcopy(actual)
+                    brief = copy.deepcopy(new)
+                    entry_ref = write(label + '/index.html', changed_html.encode())
+                    brief['entry'].update(job_path=entry_ref['path'], sha256=entry_ref['sha256'])
+                    ref = write(label + '/brief.json', brief)
+                    changed_binding = native.create_binding(adapter, (root / ref['path']).read_bytes(), sample)
+                    changed['segments'][0]['bindings']['scene'] = changed_binding
+                    altered['scenes'][0]['brief_path'] = ref['path']
+                    altered['overlay_alignment'][0]['brief_path'] = ref['path']
+                    altered['skill_selection']['overlay_beats'][0]['binding_snapshot'] = copy.deepcopy(changed_binding)
+                    altered['motion_readability'][0]['targets'] = targets(brief)
+                    with self.subTest(host_change=label), self.assertRaisesRegex(ValueError, 'parent'):
+                        vc._validate_draft_against_source(root, proposal, changed, altered)
+                for mutation in ('source','template','timing','origin','revision','text','window','other_row','word_anchor'):
+                    changed, altered = copy.deepcopy(director), copy.deepcopy(actual)
+                    if mutation in {'source','timing'}:
+                        brief=copy.deepcopy(new)
+                        if mutation=='source':brief['source_binding']['aroll_sha256']='b'*64
+                        else:brief['source_binding']['end']=4.5;brief['composition']['frames']=108
+                        ref=write(mutation+'/brief.json',brief)
+                        changed['segments'][0]['bindings']['scene']=native.create_binding(adapter,(root/ref['path']).read_bytes(),sample)
+                        altered['scenes'][0]['brief_path']=ref['path']
+                        altered['overlay_alignment'][0]['brief_path']=ref['path']
+                        altered['skill_selection']['overlay_beats'][0]['binding_snapshot']=copy.deepcopy(changed['segments'][0]['bindings']['scene'])
+                    elif mutation=='template':changed['segments'][0]['bindings']['scene']['template_id']='another-template'
+                    elif mutation=='origin':altered['scenes'][0]['native_revision_from']={**origin,'path':'unregistered/execution-mapping.json'}
+                    elif mutation=='revision':changed['segments'][0]['strategy_revision']=3
+                    elif mutation=='text':altered['motion_readability'][0]['targets'][0]['content_ref']['value']='另一词'
+                    elif mutation=='window':altered['motion_readability'][0]['targets'][0]['windows']=[{'start':3.8,'end':4}]
+                    elif mutation=='other_row':changed['segments'][1]['end']=6
+                    else:altered['overlay_alignment'][0]['events']=['different source words']
+                    with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                        vc._validate_draft_against_source(root,proposal,changed,altered)
+                with self.assertRaisesRegex(ValueError,'verified implementation'):
+                    vc._normalize_verified_technical_revisions(frozen,treatment,director,actual,director)
+
     def test_native_repair_binds_registered_prior_mapping_and_next_real_revision(self):
         import tempfile
         from types import SimpleNamespace

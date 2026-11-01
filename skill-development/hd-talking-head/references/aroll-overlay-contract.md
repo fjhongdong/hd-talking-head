@@ -77,7 +77,7 @@ brief 包含 `schema_version=1`、`source_binding` 与 `renderer_input`：
 
 每项字段为 `segment_id / component_id / intent_relation / native_route / visible_action / visual_structure / selection_reason`。当前对应关系为：`parallel / grid-card-assemble / staggered_card_reveal / grid-list`；`reminder / notification-stack / notification_stack / notification-stack`；`state_change / toggle-flip / state_toggle / toggle-rail`；`compare / before-after-wipe / moving_split_reveal / before-after-split`；`process / hw-pipeline / three_node_process / process-chain`。`native_route` 不含 `hyperframes/` 前缀；正式入口还将它与词锚检查实际读取的 brief 路由核对，不能只按模板名字放行。`repeat_review` 是 `{native_route, visual_structure, reason}` 列表，理由非空并覆盖实际重复结构；它不授权文案与台词不符的组件。
 
-`before-after-wipe` 通过公开 `label_a / label_b / wipe_at / rest_split / exit` 绑定内容与时钟；用 `bind_native_slots` 只填原生 before/after 的静态内容槽。当前槽内仅放无文字的静态图形，文案统一走已检查的两处原生标签，不隐藏额外小字绕过词锚检查。保留上游文件及原生脚本、样式；`_native_clock` 用原始母版、公开槽内容和明确时长交接重建预期字节，不能忽略所有 HTML 差异。擦入开始和落定分别对应 `wipe_start / wipe_land`，实际浏览器读取原生时间线，不能把开始擦入当作全文已经可读。父画布透明，带底色的比较区域只静态放置在真人安全区，不覆盖整个原画面。
+`before-after-wipe` 通过公开 `label_a / label_b / wipe_at / rest_split / exit` 绑定内容与时钟；用 `bind_native_slots` 只填原生 before/after 的静态内容槽。当前槽内仅放无文字的静态图形，文案统一走已检查的两处原生标签，不隐藏额外小字绕过词锚检查。保留上游文件及原生脚本、样式；`_native_clock` 用原始母版、公开槽内容和明确时长交接重建预期字节，不能忽略所有 HTML 差异。擦入开始和落定分别对应 `wipe_start / wipe_land`，实际浏览器读取原生时间线，不能把开始擦入当作全文已经可读。父画布透明，带底色的比较区域只静态放置在真人安全区，不覆盖整个原画面。公开 `rest_split=100` 可完整揭示并独占保持后态；它表示身份或状态揭示，不自动证明接听等业务动作，仍须核对实际图形、词锚与完整后态停留。
 
 装配后核对实际消费的样式，不只检查输入 CSS：原生 scoped 样式可能覆盖父级静态字号。此比较组件的真实主标签须达到默认阅读基线并完整容纳于各自半幅；必要时仅在自有父级 CSS 对字号、颜色、间距等静态属性加明确覆盖，不改透明度、transform、clip-path 或原生动作。原生 root 的 `--bg` 保持透明，由公开内容槽的底色随原生 stage 共同淡出，不能让 root 的不透明底板留在真人上。既有浏览器时钟检查同时读取计算后字号、标签容量和 root 透明度；中段与退场仍看实际输出。
 
@@ -89,7 +89,7 @@ brief 包含 `schema_version=1`、`source_binding` 与 `renderer_input`：
 
 `source_pins.sha256` 核对未改的上游源文件，`assets.sha256` 核对实际渲染副本，两者用途不同，不要求数值相同。正式门禁以原始字节执行相同的精确属性绑定及两个确定的参数片段，要求产物逐字节等于 Job 副本；其他差异直接拒绝。随后实际调用已安装的 HyperFrames 装配器和本地浏览器执行完整装配结果，不导出媒体、不访问外网，读取原生时间线的真实入场与退场时间，核对临时时长已移除、clip 零起点及 host 延时。只读取输入属性、复算公式或检查总帧数不能代替实际消费检查；结果随原有 visual-routing 发布，样片实际首、中、尾仍须验收。
 
-`grid-card-assemble` 的公开 `exit=none` 在原生落位动作后自然保持末态；其 `HOLD` 是静止段，不是额外方法或空动画。宿主仍以原生 mount 时长持有该画面，装配后核对实际 `data-hf-authored-duration` 与播放器时钟，不伸长子时间线、不补帧或改第三方。仅此路线/公开选项允许原生动作时间线短于整窗：结束必须精确对上已批准末 cue 加原生落位时长，剩余实际可见持时至少12个24fps帧。检查整窗每帧的标签可见性及卡片/图形末态，再比较持时头、中、尾实际区域像素一致；标签缺失、末态变化、动作提前截断、持时不足或宿主时钟错误均拒绝。`fade/up` 和其他组件继续执行原严格总时长门；该持时证明不替代实际字形、阅读和最终合成验收。
+`grid-card-assemble` 的公开 `exit=none` 在原生落位动作后自然保持末态；其 `HOLD` 是静止段，不是额外方法或空动画。宿主仍以原生 mount 时长持有该画面，装配后核对实际 `data-hf-authored-duration` 与播放器时钟，不伸长子时间线、不补帧或改第三方。此路线/公开选项允许原生动作时间线短于整窗：结束必须精确对上已批准末 cue 加原生落位时长，剩余实际可见持时至少12个24fps帧。检查整窗每帧的标签可见性及卡片/图形末态，再比较持时头、中、尾实际区域像素一致；标签缺失、末态变化、动作提前截断、持时不足或宿主时钟错误均拒绝。`before-after-wipe` 的公开 `exit=none` 同样可由声明时窗保持末态，其动作终点、分割终态和前态覆盖按[原生调用合同](native-motion-call-contract.md)检查。`fade/up` 及未明确支持 HOLD 的其他组件继续执行原严格总时长门；持时证明不替代实际字形、阅读和最终合成验收。
 
 贴片须用短句或短标签表达补充关系，不整句重复字幕。不制造台词没有说过的错误主张再划掉；否定句从第一帧可读文字起就保留“不”等限定。
 

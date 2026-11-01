@@ -13,6 +13,23 @@ SOURCE_ROOT = Path(__file__).resolve().parents[3] / "参考项目/B-roll开源�
 
 
 class OverlayAlignmentTest(unittest.TestCase):
+    def test_grid_clock_reads_native_settle_and_keeps_parent_hold_separate(self):
+        from edit.hd.tools.overlay_alignment import _grid_tile_seconds, validate_grid_clock, GridClockConflict
+        source = (SOURCE_ROOT / "grid-card-assemble/grid-card-assemble.html").read_bytes()
+        self.assertEqual(_grid_tile_seconds(source, 142 / 24), 0.65)
+        self.assertEqual(_grid_tile_seconds(source, 0.3), 0.2)
+        self.assertEqual(_grid_tile_seconds(source.replace(b'TILE_BASE = 0.65', b'TILE_BASE = 0.9'), 6), 0.9)
+        cue = [(0, "reveal", "家里", 5.34)]
+        with self.assertRaises(GridClockConflict):
+            validate_grid_clock(cue, source, 142 / 24)
+        # Native landing alone fits, but the parent's 12 reading frames do not.
+        with self.assertRaises(GridClockConflict):
+            validate_grid_clock(cue, source, 6.0)
+        validate_grid_clock(cue, source, 156 / 24)
+        with self.assertRaises(ValueError) as error:
+            validate_grid_clock(cue, source.replace(b'avail - BASE_START', b'avail'), 6.5)
+        self.assertNotIsInstance(error.exception, GridClockConflict)
+
     def test_comparison_slots_preserve_native_motion_and_anchor_both_states(self):
         route = "hyperframes/before-after-wipe"
         source = (SOURCE_ROOT / "before-after-wipe/before-after-wipe.html").read_bytes()
@@ -34,6 +51,17 @@ class OverlayAlignmentTest(unittest.TestCase):
         self.assertAlmostEqual(end, 10.75)
         with self.assertRaisesRegex(ValueError, "clamped"):
             _native_events(route, mount, 24, 1)
+        values = json.loads(mount["data-variable-values"])
+        for split in (65, 100):
+            with self.subTest(rest_split=split):
+                mount["data-variable-values"] = json.dumps({**values, "rest_split": split, "exit": "none"})
+                full_events, full_end = _native_events(route, mount, 24, 10.375)
+                self.assertEqual(full_events, events)
+                self.assertEqual(full_end, end)
+        for split in (0, 100.1):
+            with self.subTest(rest_split=split), self.assertRaisesRegex(ValueError, "public range"):
+                mount["data-variable-values"] = json.dumps({**values, "rest_split": split})
+                _native_events(route, mount, 24, 10.375)
 
     def test_overlay_selection_records_native_action_and_rejects_missing_route(self):
         from edit.hd.tools.motion_capabilities import overlay_candidates

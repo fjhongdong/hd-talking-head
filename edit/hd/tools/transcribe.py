@@ -672,18 +672,16 @@ def parse_words_json(source: str, *, media_duration: float) -> list[Word]:
                 or end_ms < previous_end_ms
             ):
                 raise _fail("invalid whisper word timestamps")
-            if tail_started:
-                if not text and start_ms != end_ms:
-                    raise _fail("empty whisper word")
-                previous_start_ms, previous_end_ms = start_ms, end_ms
-                continue
             if not text:
+                if not token["text"] or (start_ms != end_ms and start >= end):
+                    raise _fail("empty whisper word")
                 if end_ms > boundary_ms + 50:
                     raise _fail("invalid whisper word timestamps")
-                if start_ms == end_ms:
-                    previous_start_ms, previous_end_ms = start_ms, end_ms
-                    continue
-                raise _fail("empty whisper word")
+                previous_start_ms, previous_end_ms = start_ms, end_ms
+                continue
+            if tail_started:
+                previous_start_ms, previous_end_ms = start_ms, end_ms
+                continue
             if start >= end:
                 if start_ms == end_ms == boundary_token_ms:
                     if pending_text:

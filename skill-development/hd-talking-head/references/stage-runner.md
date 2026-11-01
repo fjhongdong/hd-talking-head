@@ -13,6 +13,8 @@
 
 配置和运行时身份沿用当前 Job。只有预检过期或尚未绑定新批准视觉计划时自动复检，不重写配置批准；模型、费用、项目或源码身份变化仍走原确认或迁移入口。所有阶段只处理本期 Job，不迁移其他视频。
 
+每次组装原生组件 adapter 时，factory 自行完整核验一次已批准的视觉实现，不假定此前已运行阶段门禁。同一组 adapter 的后续 brief 加载只复核本次 workflow 的精确摘要、修订和阶段身份、批准 mapping 的描述符与 source_approval、唯一组件及其 brief 的精确字节，不再逐组件重复核验无关全片。adapter 原有的本组件输入、结果、来源和媒体核验保持执行。推进阶段、改变修订、批准身份或 mapping 后必须重新组装；不使用跨调用的全局缓存。
+
 `visual_direction` 的 treatment 还须包含当前剪后口播的 `beat_sheet`。字段与真实词引用见[确认前的逐句盘点](visual-quality-contract.md#确认前的逐句盘点)；准备 helper 不自动代替该设计工作。确认入口检查完整性并在原路由表显示合并依据，不能只凭 B-roll 占比提交长镜头清单。
 
 ## 显式输入
@@ -58,7 +60,9 @@
   --reviewed-visual-text <reviewed-visual-text.json>
 ```
 
-原生代码组件可用 `compose_visual_plan.py` 准备；它输出 `native-inputs/draft-<id>/` 内的 Job 相对路径。`visual-routing.md` 必须覆盖剪后时间线上的全部贴片和 B-roll，每行包含开始/结束、类型、剪后原话与语义、tags、具体模板及实际来源。先由语义生成 tags，再由能力库检索模板；不得用屏显 labels 代替 tags。`visual_text_draft` 指向 `visual-text-draft.json`，状态为 `pending_review`，只列出待审屏显和候选原文依据。它不能作为 `--reviewed-visual-text` 输入。宿主对照当前 director 草稿和已批准内容逐条检查；删除越义文字或完成合理转述的语义复核后，另存正式记录：
+`compose_visual_plan.py` 的旧 CLI 已停用，不再生成视觉计划。完整语义列表、一次全库匹配、候选评审和联合分配只走现有 `select_motion_capabilities.py match` 与 `select_broll_skills.py assign/check`；分配确定后，直接通过所选原生 adapter 在当前 Job 的独立输入目录准备 brief 与 binding。原生输入或待审草稿不代表选型、语义或正式校验通过，仍须通过本阶段入口。
+
+`visual-routing.md` 必须覆盖剪后时间线上的全部贴片和 B-roll，每行包含开始/结束、类型、剪后原话与语义、tags、具体模板及实际来源。先由语义生成 tags，再由能力库检索模板；不得用屏显 labels 代替 tags。`visual_text_draft` 指向 `visual-text-draft.json`，状态为 `pending_review`，只列出待审屏显和候选原文依据。它不能作为 `--reviewed-visual-text` 输入。宿主对照当前 director 草稿和已批准内容逐条检查；删除越义文字或完成合理转述的语义复核后，另存正式记录：
 
 ```json
 {
@@ -98,6 +102,7 @@
 每次实现映射按当前发布 revision 和映射内容身份写入独立目录；旧映射及其 lineage 保留原路径和原内容。读取只接受当前阶段唯一的映射，并核对其真实确认、计划、媒体和输入；同一内容重试可复用原文件，已有文件内容不符时停止，不能覆盖。
 
 原确认中 Paper Route B 仍等待已批准图片时，实际生成完成后可补齐原生 brief、binding 和同组件的 beat 快照，不改变原渠道、模板、语义、时窗或其他镜头。素材板裁成切片时，同一 `scenes` 项增加 `asset_provenance={"job_path":"<本Job内现有来源记录>","sha256":"<真实摘要>","byte_count":<字节数>}`，并保留实际 `source_images / crops` 记录；执行映射冻结该描述。验收检查源图属于本行已批准结果、裁片属于原生 brief 且被实际场景引用，并逐像素核对裁切坐标和输出。只记录一个文件摘要或无关组件引用，不能证明已消费生成图。
+该来源检查必须在 realization 草稿与原确认比较时执行，先于正式编译和发布；`crops` 只登记实际逐像素一致的矩形裁片，抠图、羽化等处理保留真实作者来源记录，不冒充原样裁片。
 
 修订某枚原生 brief 后，须同步该组件的实际 binding、`skill_selection.beats[].binding_snapshot`、场景路径、引用摘要及源码摘录，并在重新发布提案前调用已有 `broll_skill_selection.validate_selection`。源输入已经具备时，还须调用 `motion_capabilities.check_offline_plan` 检查当前源码证据与语义引用，不能把摘录仍指旧代码的提案留到正式编译才发现。不得只改 director 的 brief 摘要，等用户确认后才发现选型快照仍指旧输入；也不得放宽完整绑定比对。未改动组件保留原绑定与媒体。
 
@@ -122,6 +127,10 @@ Wake 原生项目允许其已验收结果中记录的空 `fonts.css` 作为项�
 相机清单字段固定为 `{schema_version:1,segment_id,component_id,source_binding,source_media,normalized_media,source_frames:[0,N],path:[{frame,x,y,width,height}],reason}`。两个 media 是真实 `{job_path,sha256,byte_count,media_type:"video"}`；`source_binding` 与完成记录相同。`path` 恰好 N 项逐帧对应原视频，坐标基于规范1080×1920底片，只允许源区内9:16等比取景，不支持旋转、变速、补洞、复制区域或新事项。首次 realization 核对当前原确认、原视频队列及实际清单；父合成器快照该清单，以现有 FFmpeg zoompan 每输入帧仅出一帧，然后沿用原头像和唯一字幕轨。此能力不制造任务完成，也不把原声字幕头像已烘焙的样片当底片。检查仍须看实际完整镜头：主体完整、重点变化直观、裁框平滑、必要画面及文字不被字幕头像遮挡。失败仍停止当前路线，不新增收费生成。
 
 未来图输入使用 `{"$step":"image-step","output":0}`，不得填写不存在的未来文件摘要。宿主实际完成生成后才写入真实媒体和哈希，再构造后续视频请求；模板内部生图、生视频与直接 B-roll 共用启动时确认的渠道。没有生成步骤的已确认素材直接沿原编译入口执行。
+
+并行提交生成时，每项返回即独立保存真实响应与产物，再汇总全部成功或失败结果；不能因一项异常而丢弃另一项已完成的返回。结果不明时先核对实际产物和调用身份，不直接重发；恢复结果须明确记录实际取证和未捕获的原始响应，不能伪造供应商回执。平台拒绝同样保留真实失败原因，追加或改写收费请求仍沿既有授权规则。
+
+用户明确批准一次图片修正后，沿现有队列修正入口登记，不改前驱或整表：确已失败且无产物的图片，可在 `retry_plan` 附精确新 `request`，只改变提示词及请求 ID，其余渠道、用途、输入和参数保持原值，仍绑定原失败证据、方案 SHA 与一次追加授权。已完成图片的实际问题在生成后才被看出时，使用 `image_edit_plan.followup_evidence={image,review}` 绑定实际图像和观察文件描述；观察记录绑定原请求、同一 `preview`、`status=needs_revision`、真实方法及包含本次 issue 的 observations。不能给不可变供应商响应补造 `conclusion`。已有六件 Paper 样片证据保持完整检查，不以直接图像观察替代样片观察；后继消费继续核对同一语义行、来源、唯一修正和实际产物。
 
 自动 `treatment.json` 同样是候选资料：`semantic_assessments` 初始为 `needs_review`，Skill 比较和 assignments 只是待审选型。宿主检查引用原声、实际场景和候选比较理由，修正不实或通用填充理由后，才将实际通过的组件记为 `pass`。未审语义由现有正式发布检查阻断；不把离线输出 `needs_review` 当作审阅完成。
 
@@ -152,6 +161,8 @@ realization 已发布 `visual-plan`，但执行映射写入失败或中断时，
 提交视觉清单前，另行汇总贴片与 B-roll 的数量、覆盖时长和未使用的真人重点；贴片重点须对应提问、原因、转折、对照或结尾语义，未做贴片的重点写明保留真人理由。该汇总用于检查两类画面是否分别覆盖，不设固定贴片配额，也不能用 B-roll 比例替代贴片检查。
 
 ## 宿主审阅后推进
+
+首次初始化新 Job 时创建 `manifests/confirmed-content.json` 的空基线：`schema_version=1`、真实 `job_id`、`source_words=[]`、`visuals=[]`。初始化中断恢复仍属同次创建时，仅在 `phase=imported`、上下文尚未发布且 workflow 修订仍为0时，原子补建缺失基线；已有基线不覆盖。只把用户实际认可要保留的原转写词索引／文本和正文组件登记到对应列表，待确认或待生成的画面不能提前登记。复用已有 Job 不覆盖这份记录；发现缺失时核对该 Job 的真实批准内容再显式补齐，检查入口不能自动补空来放行。
 
 用户明确要求先合成完整视频并由自己检查画面和声音时，允许完成制作交付后保留最终人工检查待定。视觉阶段的同一 QA JSON 使用 `user_final_review`，字段为 `status="pending"`、`user_instruction`（用户真实原话）、`full_playback_reviewed=false`、`audio_listened=false`、`expected_media`（当前入口返回的完整 `visual_review`）。不得同时填写声称已播放通过的观察。回执写入 `visual_review.status=user_review_pending`，表明仅制作继续，不代表动态或声音已验收。文字硬检查和实际媒体身份检查照常执行；该显式安排不能用于跳过已发现的小字、裁切或遮挡。没有用户本轮明确指示时仍走默认宿主审阅。
 
@@ -220,6 +231,8 @@ realization 已发布 `visual-plan`，但执行映射写入失败或中断时，
 视频宿主先保存供应商原始文件和原始响应。需要格式处理时另存同宽高比的规范文件；不覆盖原件、不变速、不随意裁切。规范文件路径、来源和处理链见下方统一示例。
 
 规范响应的处理后视频示例：`{"type":"video","path":"artifacts/normalized.mp4","source":{"path":"artifacts/provider-original.mp4"},"processing":"24fps silent H.264 yuv420p; aspect ratio preserved"}`。`record` 入口分别复制并保存原片与规范片，`source` 落盘为含 `path`、`sha256`、`bytes` 的身份；completed record 保留 `generation.source_media` 与 `generation.processing` 的关系。原片已合格时只写其 `path`，不添加虚假的处理来源。可选顶层 `provider_response` 仅保存真实供应商返回，provider 原始响应仍单独保存，规范 response 不得冒称 raw response。`upload` action 发出后，下一次 `next` 返回 `blocked` 与 `input_upload_pending`，等待宿主用原 upload action 和原上传 response 走现有 `record/generation_results` 回传，避免重复上传。
+
+已完成的生成视频需要自然源选段时，使用同一 `generated_media.record_from_queue(..., source_window={"source_frames":[起帧,止帧],"output_path":"<Job内全新.mp4>"}, ffmpeg_executable=..., ffprobe_executable=...)`。帧号为整数左闭右开，选段帧数必须精确对应当前批准口播窗的24fps时长；先核对实际动作起终点，不靠剪掉未完动作声称完成。入口复用现有无损选段函数，只选帧、时间归零及缺失SAR补为1:1，不变速、不缩放、不改色或合成；派生解码帧必须与原选帧逐一相同。独立完成记录保留原生成ID、批准行及队列原件的摘要和字节数，将实际选帧、命令和像素核验登记在既有 `normalization` 与 `generation.source_media/processing` 中；不覆盖不可变队列完成回执。消费时重查完整源链。此变体不能放宽旧composition-base/camera-source规范处理的用途限制，也不代表连续动作或最终声音已验收。
 
 实际文字复核时，检测框按原尺寸独立字形定位，不能把序号、标点、卡片或相邻行合框。先用实际帧区分文字不清与检测框偏移，框错按原修订更新目标，OCR低置信按真实字形逐帧量框。稳定阅读窗还须避开最终头像进出覆盖的帧；不能把整个段落末尾都当作可读，不能靠缩成单个好帧放行。原生公开动作完成后读字不足时，先调整公开 cue 或版式，再保留至少0.5秒的完整阅读窗；不重写原生动画、不新增付费。默认进度等辅助小字也要在最终画面检查大小和对比，必要时用公开位移避开头发、衣服等干扰背景。
 

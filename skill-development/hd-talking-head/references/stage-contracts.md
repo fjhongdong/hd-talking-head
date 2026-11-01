@@ -130,6 +130,8 @@
 
 第二次独立识别已有本 Job 内保存的真实 Whisper JSON 时，复用该结果，不因词级缓存读入失败再次运行模型。原生句段可用于对照文字；零时长词不代表识别进程没有完成，也不允许跨段拼词、均分时长或放宽通用词级检查。
 
+Whisper 的非空纯空白 token 不作为词发布，即使它有正时长；仍核对它的时间顺序与音轨边界。空字符串不等于合法空白，继续拒绝。解析失败不代表识别未完成，修复解析器后仍复用已保存的真实结果，不重跑识别或改写原始 JSON。
+
 本地识别在解析词级结果前，将原生 JSON 原字节保存在本 Job 的 `cache/reference-transcripts/<素材ID>/<原始SHA256>.json`，并绑定本次素材、模型和运行时请求。词级解析失败仍保留原始文件及请求绑定，不发布成功报告；同一请求已有原始结果时停止识别，提示明确使用下方离线入口。读取缓存时核对原始文件与摘要，文件缺失或被改动时停止，不重新识别补齐。
 
 明确选择离线按句复用后，经项目统一 Python 入口调用 `edit.hd.tools.reference_transcripts.import_saved_reference_segments(job_dir, material_id, raw_result=原始JSON绝对路径, expected_sha256=实际原始摘要, language=本次语言)`。入口核对当前 Job、素材、运行时、原始文件及语言，逐段保留 `transcription[].text` 和 `offsets`，发布 `precision=segment` 的辅助参考；正常词级入口仍保持原规则，不在失败后自动切换。已有不同结果或词级报告时停止，不覆盖。没有真实原始结果时报告缺口，不新增识别。

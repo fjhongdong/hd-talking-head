@@ -9,6 +9,7 @@ handled by their existing maintenance commands, outside this entrypoint.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import importlib.util
 import json
@@ -636,16 +637,42 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
                             {binding['dependency_id'] for binding in bindings}, bindings)
 
 
-def _approved_native_brief(current, recipe, component):
+def _approved_native_brief(job, evidence):
+    """Bind a loader to one fully checked factory call and persisted workflow."""
     from edit.hd.tools import visual_confirmation as confirmation
-    mapping = confirmation.validate_visual_authorization(current, require_realized=True)['mapping']
-    matches = [item for item in mapping['native_inputs']
-               if item.get('segment_id') == recipe['segment_id']
-               and item.get('component_id') == component['component_id']
-               and item.get('artifact', {}).get('sha256') == component['brief_sha256']]
-    if len(matches) != 1:
-        raise ValueError('Approved native brief is missing or ambiguous')
-    return confirmation._exact(current.job_dir, matches[0]['artifact']).read_bytes()
+    fields = ('job_dir', 'job_id', 'revision', 'expected_sha256', 'expected_bytes')
+    identity = tuple(getattr(job, field) for field in fields)
+    workflow = {'path': 'workflow.json', 'sha256': job.expected_sha256, 'bytes': job.expected_bytes}
+    statuses = {name: stage['status'] for name, stage in job.stages.items()}
+    visual_stage = copy.deepcopy(job.stages['visual_direction'])
+    mappings = [r for r in visual_stage['artifacts'] if r['path'].endswith('/' + confirmation.MAPPING)]
+    if visual_stage['status'] != 'approved' or len(mappings) != 1:
+        raise ValueError('Approved native mapping is missing or ambiguous')
+    mapping_ref, approval_ref = mappings[0], copy.deepcopy(evidence['artifact'])
+    mapping = confirmation._read(confirmation._exact(job.job_dir, mapping_ref))
+    if mapping != evidence['mapping'] or mapping.get('source_approval') != approval_ref:
+        raise ValueError('Approved native mapping differs from its verified confirmation')
+    confirmation._exact(job.job_dir, workflow)
+    confirmation._exact(job.job_dir, approval_ref)
+
+    def load(current, recipe, component):
+        if (tuple(getattr(current, field) for field in fields) != identity
+                or {name: stage['status'] for name, stage in current.stages.items()} != statuses
+                or current.stages['visual_direction'] != visual_stage):
+            raise ValueError('Native adapters belong to another workflow revision or stage')
+        confirmation._exact(current.job_dir, workflow)
+        confirmation._exact(current.job_dir, approval_ref)
+        mapping = confirmation._read(confirmation._exact(current.job_dir, mapping_ref))
+        if mapping.get('source_approval') != approval_ref:
+            raise ValueError('Approved native mapping differs from its verified confirmation')
+        matches = [item for item in mapping['native_inputs']
+                   if item.get('segment_id') == recipe['segment_id']
+                   and item.get('component_id') == component['component_id']]
+        if len(matches) != 1 or matches[0].get('artifact', {}).get('sha256') != component['brief_sha256']:
+            raise ValueError('Approved native brief is missing or ambiguous')
+        return confirmation._exact(current.job_dir, matches[0]['artifact']).read_bytes()
+
+    return load
 
 
 def native_component_adapters(project: Path, job) -> dict:
@@ -655,14 +682,18 @@ def native_component_adapters(project: Path, job) -> dict:
     selected = [c for s in plan['segments'] for c in s['shot_recipe']['components']]
     noncode = [c for c in selected if c['kind'] != 'code_generated']
     dependencies = {c['dependency_id'] for c in selected if c['kind'] == 'code_generated'}
+    for component in selected:
+        if component['kind'] == 'code_generated':
+            _check_default_binding(component)
 
-    brief_loader = _approved_native_brief
+    evidence = None
+    if dependencies or any(c['kind'] == 'ai_generated' for c in noncode):
+        from edit.hd.tools import visual_confirmation as confirmation
+        evidence = confirmation.validate_visual_authorization(job, require_realized=True)
+    brief_loader = _approved_native_brief(job, evidence) if dependencies else None
 
     adapters = {}
     for dependency in sorted(dependencies):
-        components = [c for c in selected if c['kind'] == 'code_generated' and c['dependency_id'] == dependency]
-        for component in components:
-            _check_default_binding(component)
         if dependency == 'hyperframes':
             runtime = _module('hyperframes_runtime').resolve_runtime(
                 project / 'skill-development/runtime/hyperframes-0.8.167')['root']
@@ -715,8 +746,6 @@ def native_component_adapters(project: Path, job) -> dict:
                                     else module.create_adapter(project, launcher, brief_loader))
     result = {'code_generated': adapters}
     if any(c['kind'] == 'ai_generated' for c in noncode):
-        from edit.hd.tools import visual_confirmation as confirmation
-        evidence = confirmation.validate_visual_authorization(job, require_realized=True)
         records = [_json(confirmation._exact(job.job_dir, ref))
                    for ref in evidence['mapping']['completed_records']]
         generic_targets = {(seg['segment_id'], c['component_id']) for seg in plan['segments']

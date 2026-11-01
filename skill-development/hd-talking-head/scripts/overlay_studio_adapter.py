@@ -43,13 +43,18 @@ def _text(value, *, empty=False):
             and len(value) <= 1000 and not any(ord(c) < 32 for c in value))
 
 
-def validate_brief(payload):
+class ClockConflict(ValueError):
+    """Valid native item times leave no complete landing and exit window."""
+
+
+def validate_input_clock(payload):
+    """Check the native clock only; runtime, layout and assets remain unverified."""
     b = json.loads(payload) if isinstance(payload, (str, bytes, bytearray)) else payload
     fields = {"schema_version", "source_binding", "composition", "doc", "layout", "parent_safe_zone",
               "template_request", "assets", "upstream", "execution_mode"}
     if type(b) is not dict or set(b) != fields or type(b["schema_version"]) is not int or b["schema_version"] != 1:
         raise ValueError("Invalid Overlay Studio pin-board brief")
-    s, c, doc, layout = (b[k] for k in ("source_binding", "composition", "doc", "layout"))
+    s, c, doc = (b[k] for k in ("source_binding", "composition", "doc"))
     if (type(s) is not dict or set(s) != {"aroll_sha256", "segment_id", "start", "end"}
             or not re.fullmatch(r"[a-f0-9]{64}", str(s["aroll_sha256"]))
             or not re.fullmatch(r"seg-[A-Za-z0-9_-]+", str(s["segment_id"]))
@@ -103,9 +108,20 @@ def validate_brief(payload):
     except ValueError:
         raise ValueError("Invalid native times") from None
     if (len(times) != len(items) or any(not math.isfinite(t) or t < 0 for t in times)
-            or any(a >= z for a, z in zip(times, times[1:]))
-            or times[-1] + 0.34 > card["end"] - card["start"] - 0.45 + 1e-8):
+            or any(a >= z for a, z in zip(times, times[1:]))):
         raise ValueError("Each item needs its own time and a complete native landing/exit")
+    if (type(b["upstream"]) is not dict or set(b["upstream"]) != {"source_revision", "runtime_identity"}
+            or b["upstream"]["source_revision"] != SOURCE_PIN):
+        raise ValueError("PinBoard native clock source revision changed")
+    if times[-1] + 0.34 > card["end"] - card["start"] - 0.45 + 1e-8:
+        raise ClockConflict("Each item needs its own time and a complete native landing/exit")
+    return b
+
+
+def validate_brief(payload):
+    b = validate_input_clock(payload)
+    c, layout = b["composition"], b["layout"]
+    items = b["doc"]["cards"][0]["params"]["items"].split("|")
     if type(layout) is not dict or set(layout) != {"crop", "placement"}:
         raise ValueError("PinBoard needs one fixed crop and placement")
     crop, place = layout["crop"], layout["placement"]

@@ -11,13 +11,20 @@ def _segment_word_time(word: Mapping, cuts: Sequence[Mapping]) -> float:
     positions = [word["start"] + p["timeline_start"] - p["source_start"] for p in cuts if p["source_start"] <= word["start"] < p["source_end"]]
     if len(positions) != 1: raise ValueError("pin-board anchor is not in edited speech")
     return float(positions[0])
-def validate_brief(brief: Mapping, *, segment: Mapping, words: Sequence[Mapping], cuts: Sequence[Mapping], events: Sequence[Mapping]) -> list[dict]:
-    # The adapter owns the execution schema; this module only adds speech checks.
+def execution_contract():
+    """Load our current pure input contract without preparing the native runtime."""
     entry = Path(__file__).resolve().parents[3] / "skill-development/hd-talking-head/scripts/overlay_studio_adapter.py"
     spec = importlib.util.spec_from_file_location("_pinboard_execution_contract", entry)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return module
+def validate_brief(brief: Mapping, *, segment: Mapping, words: Sequence[Mapping], cuts: Sequence[Mapping], events: Sequence[Mapping]) -> list[dict]:
+    # The adapter owns the execution schema; this module only adds speech checks.
+    module = execution_contract()
     brief = module.validate_brief(brief)
+    return validate_anchors(brief, segment=segment, words=words, cuts=cuts, events=events)
+def validate_anchors(brief: Mapping, *, segment: Mapping, words: Sequence[Mapping], cuts: Sequence[Mapping], events: Sequence[Mapping]) -> list[dict]:
+    """Check speech anchors after clock-schema validation, without asserting runtime readiness."""
     source = brief.get("source_binding"); expected = {"aroll_sha256": segment.get("aroll_sha256"), "segment_id": segment.get("segment_id"), "start": segment.get("start"), "end": segment.get("end")}
     if not isinstance(source, Mapping) or set(source) != set(expected) or any(source.get(k) != v for k,v in expected.items()): raise ValueError("pin-board source binding differs from approved A-roll segment")
     comp = brief.get("composition")

@@ -128,6 +128,52 @@ def _base_normalization_command(source, output, transform, ffmpeg):
         command += ['-vf', graph, '-c:v', 'libx264', '-qp', '0', '-pix_fmt', 'yuv420p', '-fps_mode', 'passthrough']
     return command + ['-video_track_timescale', '24', '-n', str(output)]
 
+def _source_window(record):
+    normalization = record.get('normalization')
+    return (isinstance(normalization, dict) and isinstance(normalization.get('transform'), dict)
+            and 'source_frames' in normalization['transform'])
+
+def _source_window_command(source, output, frames, ffmpeg):
+    # The exact command used by the existing lossless source-window helper.
+    return [str(ffmpeg), '-hide_banner', '-nostdin', '-v', 'error', '-i', str(source),
+            '-map', '0:v:0', '-an', '-vf',
+            f'trim=start_frame={frames[0]}:end_frame={frames[1]},setpts=PTS-STARTPTS,setsar=1',
+            '-c:v', 'libx264', '-qp', '0', '-pix_fmt', 'yuv420p', '-fps_mode', 'passthrough', '-n', str(output)]
+
+def _window_frames(frames, count):
+    if (not isinstance(frames, list) or len(frames) != 2
+            or any(type(n) is not int for n in frames) or not 0 <= frames[0] < frames[1] <= count):
+        raise ValueError('source window requires actual in-range integer source frames')
+    return frames
+
+def _normalize_source_window(job, request_id, window, ffprobe, ffmpeg, output_index):
+    from lovart_existing_video_adapter import normalize_lossless_source_window, _framemd5
+    if not isinstance(window, dict) or set(window) != {'source_frames', 'output_path'}:
+        raise ValueError('source window requires source_frames and a new output_path')
+    source = _queue_media(job, request_id, output_index)
+    source_path = Path(job.job_dir) / source['job_path']
+    before = _base_probe(source_path, ffprobe)
+    frames = _window_frames(window['source_frames'], before['frames'])
+    output = Path(window['output_path'])
+    if not output.is_absolute():
+        output = Path(job.job_dir) / output
+    if (output.resolve() != output.absolute() or not output.is_relative_to(job.job_dir)
+            or output.exists() or output.suffix != '.mp4'):
+        raise ValueError('source window requires a new Job-local MP4')
+    output.parent.mkdir(parents=True, exist_ok=True)
+    normalize_lossless_source_window(source_path, output, *frames, ffmpeg)
+    return {'schema_version': 1, 'source': source,
+            'output': {'job_path': output.relative_to(job.job_dir).as_posix(),
+                       'sha256': _sha(output), 'byte_count': output.stat().st_size, 'media_type': 'video'},
+            'source_probe': before, 'output_probe': _base_probe(output, ffprobe),
+            'transform': {'source_frames': frames, 'codec': 'libx264', 'sar': '1:1'},
+            'frame_md5_sha256': hashlib.sha256('\n'.join(_framemd5(ffmpeg, source_path, *frames)).encode()).hexdigest(),
+            'command': _source_window_command(source_path, output, frames, ffmpeg)}
+
+def _source_window_processing(normalization):
+    return {'source_frames': normalization['transform']['source_frames'], 'speed': 1,
+            'command': normalization['command'], 'frame_md5_sha256': normalization['frame_md5_sha256']}
+
 def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
     required = {'schema_version', 'source', 'output', 'source_probe', 'output_probe',
                 'transform', 'frame_md5_sha256', 'command'}
@@ -146,6 +192,24 @@ def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
             pass
     source_path, output_path = (Path(job.job_dir) / media['job_path'] for media in (source, output))
     before, after = _base_probe(source_path, ffprobe), _base_probe(output_path, ffprobe)
+    if 'source_frames' in normalization['transform']:
+        from lovart_existing_video_adapter import _framemd5
+        frames = _window_frames(normalization['transform']['source_frames'], before['frames'])
+        if (source_path == output_path
+                or normalization['transform'] != {'source_frames': frames, 'codec': 'libx264', 'sar': '1:1'}
+                or before != normalization['source_probe'] or after != normalization['output_probe']
+                or any(before[k] != after[k] for k in ('width', 'height', 'fps', 'color'))
+                or after['sar'] != '1:1' or after['frames'] != frames[1] - frames[0]
+                or normalization['command'][1:] != _source_window_command(source_path, output_path, frames, ffmpeg)[1:]):
+            raise ValueError('source window changed geometry, color, speed or its recorded command')
+        rows = _framemd5(ffmpeg, source_path, *frames)
+        if (rows != _framemd5(ffmpeg, output_path)
+                or hashlib.sha256('\n'.join(rows).encode()).hexdigest() != normalization['frame_md5_sha256']):
+            raise ValueError('source window changed selected pixels or timestamps')
+        for media in (source, output):
+            with _pinned_media(Path(job.job_dir) / media['job_path'], media):
+                pass
+        return
     transform = _base_transform(before)
     command = normalization['command']
     if (before != normalization['source_probe'] or after != normalization['output_probe']
@@ -206,7 +270,7 @@ def _composition_base_scope(record):
     scope = record.get('composition_base')
     if scope is None:
         if (record.get('qa', {}).get('scope') == 'composition_base'
-                or 'normalization' in record and 'camera_source' not in record):
+                or 'normalization' in record and 'camera_source' not in record and not _source_window(record)):
             raise ValueError('composition base scope is missing')
         return
     if (not isinstance(scope, dict) or set(scope) != {'source_qa', 'action_component_id'}
@@ -317,9 +381,11 @@ def validate_record(record: dict, job) -> dict:
         _approved_generation_request(job, record["generation"], record)
     if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
         raise ValueError("generated media requires host QA and observed scene evidence")
+    _validate_observation_and_source(record)
     _composition_base_scope(record)
     _camera_source_scope(record)
-    if 'composition_base' in record or 'camera_source' in record:
+    window = _source_window(record)
+    if 'composition_base' in record or 'camera_source' in record or window:
         generation = record['generation']
         _validate_base_queue_identity(job, record)
         original = _queue_media(job, generation['request_id'], generation.get('output_index', 0))
@@ -332,7 +398,17 @@ def validate_record(record: dict, job) -> dict:
                 raise ValueError('composition base derivative differs from its original queue media')
         elif record['media'] != original:
             raise ValueError('composition base differs from its original queue media')
-    _validate_observation_and_source(record)
+        if window:
+            if ('composition_base' in record or 'camera_source' in record
+                    or generation.get('source_media') != original
+                    or generation.get('processing') != _source_window_processing(normalization)
+                    or abs(normalization['output_probe']['frames'] -
+                           (record['source_binding']['end'] - record['source_binding']['start']) * 24) > 1e-6):
+                raise ValueError('source window differs from its source chain or approved spoken duration')
+            ffprobe, ffmpeg = shutil.which('ffprobe'), shutil.which('ffmpeg')
+            if not ffprobe or not ffmpeg:
+                raise ValueError('source window verification needs actual FFprobe and FFmpeg')
+            _verify_base_normalization(job, normalization, ffprobe, ffmpeg)
     return json.loads(_canonical(record))
 
 def record_from_completed_output(*, job_id, segment_id, component_id, provider, model,
@@ -350,7 +426,8 @@ def record_from_completed_output(*, job_id, segment_id, component_id, provider, 
 
 def record_from_queue(job, request_id, *, segment_id, component_id, source_binding,
                       qa, semantic_brief, ffprobe_executable, output_index=0,
-                      composition_base=None, camera_source=None, normalization=None, ffmpeg_executable=None):
+                      composition_base=None, camera_source=None, normalization=None, ffmpeg_executable=None,
+                      source_window=None):
     """Bind the actual queue output and observed content to one speech window."""
     from edit.hd.tools import generation_queue, generation_inputs, contract_artifacts as artifacts
     item = generation_queue.status(job.job_dir)["items"][request_id]
@@ -365,15 +442,23 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         if (checked["step"]["segment_id"], checked["step"]["component_id"]) != (segment_id, component_id):
             raise ValueError("completed generation belongs to another approved visual row")
     output = item["completion_response"]["artifacts"][output_index]
+    if source_window is not None:
+        if (normalization is not None or composition_base is not None or camera_source is not None
+                or ffmpeg_executable is None):
+            raise ValueError('source window needs FFmpeg and cannot combine separate media normalizations')
+        normalization = _normalize_source_window(job, request_id, source_window,
+                                                 ffprobe_executable, ffmpeg_executable, output_index)
+    window = normalization is not None and 'source_frames' in normalization.get('transform', {})
     path = Path(output["path"])
     if not path.is_absolute():
         path = job.job_dir / path
     if normalization is not None:
-        if (composition_base is None and camera_source is None) or ffmpeg_executable is None:
+        if (composition_base is None and camera_source is None and not window) or ffmpeg_executable is None:
             raise ValueError('normalization requires scoped composition base use and actual FFmpeg verification')
         if normalization.get('source') != _queue_media(job, request_id, output_index):
             raise ValueError('normalization does not belong to the original queue output')
-        _verify_base_normalization(job, normalization, ffprobe_executable, ffmpeg_executable)
+        if not window:
+            _verify_base_normalization(job, normalization, ffprobe_executable, ffmpeg_executable)
         path = Path(job.job_dir) / normalization['output']['job_path']
     elif composition_base is not None or camera_source is not None:
         measured = _base_probe(path, ffprobe_executable)
@@ -418,7 +503,7 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         qa=qa, semantic_brief=semantic_brief)
     record["source_binding"] = source_binding
     record["source_dimensions"] = {"width": width, "height": height}
-    if composition_base is not None or camera_source is not None:
+    if composition_base is not None or camera_source is not None or window:
         if composition_base is not None:
             record['composition_base'] = composition_base
         if camera_source is not None:
@@ -426,6 +511,9 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
         record['generation']['output_index'] = output_index
         if normalization is not None:
             record['normalization'] = normalization
+        if window:
+            record['generation'].update(source_media=normalization['source'],
+                                        processing=_source_window_processing(normalization))
     prepare_binding(record)
     return validate_record(record, job)
 
@@ -487,7 +575,7 @@ def _pinned_media(source, media):
 
 def create_adapter(job, record: dict):
     bound = validate_record(record, job)
-    if 'normalization' in bound:
+    if 'normalization' in bound and not _source_window(bound):
         ffprobe, ffmpeg = shutil.which('ffprobe'), shutil.which('ffmpeg')
         if not ffprobe or not ffmpeg:
             raise ValueError('composition base normalization needs actual FFprobe and FFmpeg')
@@ -516,7 +604,7 @@ def create_adapter(job, record: dict):
             raise ValueError('generated media approved source window mismatch')
         validate_composition_base(bound, context.recipe)
         validate_camera_source(job, bound, segment)
-        if 'composition_base' in bound or 'camera_source' in bound:
+        if 'composition_base' in bound or 'camera_source' in bound or _source_window(bound):
             # Recheck the immutable provider output as well as the derivative.
             validate_record(bound, job)
         with _pinned_media(source, media) as pinned:

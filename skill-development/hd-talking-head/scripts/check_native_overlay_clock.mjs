@@ -92,6 +92,35 @@ export const SAMPLE = async (entry, fps) => {
         samples: [...new Set([first, Math.floor((first + last) / 2), last])].map(frame => frame / fps)};
     }
   }
+  if (Number.isFinite(total) && total > 0 && total < entry.duration - tolerance
+      && route === 'before-after-wipe') {
+    const values = JSON.parse(mount.getAttribute('data-variable-values') || '{}');
+    if ((values.exit ?? 'none') === 'none') {
+      // The unchanged primitive ends its GSAP action at wipe-land. Its authored
+      // child/mount window owns HOLD, just as the grid primitive does above.
+      const lands = entry.events.filter(event => event.kind === 'wipe_land');
+      const labels = [...root.querySelectorAll('.baw-chip-b')];
+      const mountDuration = mount.getAttribute('data-duration') ?? mount.getAttribute('data-hf-authored-duration');
+      const clip = root.querySelector('.baw-clip');
+      const childDuration = clip?.getAttribute('data-duration') ?? clip?.getAttribute('data-hf-authored-duration');
+      const split = Number(values.rest_split ?? 50);
+      const first = Math.ceil((lands[0]?.time ?? NaN) * fps - 1e-6);
+      const last = Math.ceil((entry.start + entry.duration) * fps - 1e-6) - 1;
+      if (lands.length !== 1 || !Number.isFinite(split) || split <= 0 || split > 100
+          || Math.abs(total - (lands[0].time - entry.start)) > 1e-6
+          || last - first + 1 < Math.ceil(.5 * fps)
+          || labels.length !== 1 || labels[0].textContent.trim() !== lands[0].text
+          || mountDuration === null || childDuration == null
+          || !Number.isFinite(Number(mountDuration)) || !Number.isFinite(Number(childDuration))
+          || Math.abs(Number(mountDuration) - entry.duration) > 1e-6
+          || Math.abs(Number(childDuration) - entry.duration) > 1e-6
+          || hostTotal < entry.start + entry.duration - 1e-6) {
+        throw new Error('native before/after hold does not follow its complete action and reading window');
+      }
+      hold = {first_frame: first, last_frame: last, frames_checked: 0, labels, split,
+        samples: [...new Set([first, Math.floor((first + last) / 2), last])].map(frame => frame / fps)};
+    }
+  }
   if (!Number.isFinite(total) || !Number.isFinite(hostTotal) || total <= 0
       || (!hold && Math.abs(total - entry.duration) > tolerance)
       || hostTotal < entry.start + entry.duration - tolerance) {
@@ -157,15 +186,23 @@ export const SAMPLE = async (entry, fps) => {
     if (hold && frame >= hold.first_frame && frame <= hold.last_frame) {
       for (const label of hold.labels) {
         const range = document.createRange(); range.selectNodeContents(label);
-        if (!visible(label, range.getBoundingClientRect())) throw new Error('native grid hold hides a required label');
+        if (!visible(label, range.getBoundingClientRect())) throw new Error('native hold hides a required label');
       }
-      const state = JSON.stringify([...root.querySelectorAll('.gca-card,.gca-icon path')].map(element => {
+      if (route === 'before-after-wipe') {
+        const split = Number(getComputedStyle(root.querySelector('.baw-stage')).getPropertyValue('--baw-split'));
+        if (!Number.isFinite(split) || Math.abs(split - hold.split) > 1e-6) {
+          throw new Error('native before/after hold has not reached its public resting split');
+        }
+      }
+      const selector = route === 'before-after-wipe'
+        ? '.baw-stage,.baw-panel,.baw-slot svg,.baw-chip' : '.gca-card,.gca-icon path';
+      const state = JSON.stringify([...root.querySelectorAll(selector)].map(element => {
         const style = getComputedStyle(element), rect = element.getBoundingClientRect();
         return [rect.x, rect.y, rect.width, rect.height, style.opacity, style.transform, style.filter,
           style.clipPath, element.getAttribute('stroke-dashoffset')];
       }));
       heldState ??= state;
-      if (heldState !== state) throw new Error('native grid final state changes during its hold');
+      if (heldState !== state) throw new Error('native final state changes during its hold');
       hold.frames_checked++;
     }
     sampledFrames++;
@@ -176,20 +213,21 @@ export const SAMPLE = async (entry, fps) => {
   if (!peak) throw new Error('native content is never visible');
   let holdCheck = null;
   if (hold) {
-    if (hold.frames_checked !== hold.last_frame - hold.first_frame + 1) throw new Error('native grid hold sampling is incomplete');
+    if (hold.frames_checked !== hold.last_frame - hold.first_frame + 1) throw new Error('native hold sampling is incomplete');
     const rect = mount.getBoundingClientRect();
     const clip = {x: rect.left, y: rect.top, width: rect.width, height: rect.height};
     if (clip.x < 0 || clip.y < 0 || clip.width <= 0 || clip.height <= 0
-        || clip.x + clip.width > 1080 || clip.y + clip.height > 1920) throw new Error('native grid hold mount is outside its canvas');
+        || clip.x + clip.width > 1080 || clip.y + clip.height > 1920) throw new Error('native hold mount is outside its canvas');
     holdCheck = {first_frame: hold.first_frame, last_frame: hold.last_frame,
-      frames_checked: hold.frames_checked, samples: hold.samples, clip};
+      frames_checked: hold.frames_checked, samples: hold.samples, clip,
+      complete_after: route === 'before-after-wipe' && hold.split === 100};
   }
   const visibilityChecks = [];
   if (route === 'before-after-wipe') {
     const land = entry.events.find(event => event.kind === 'wipe_land');
     if (!land) throw new Error('before/after stable event is missing');
     const time = land.time + 1 / fps;
-    if (time < entry.start || time >= entry.start + total) throw new Error('before/after stable event is outside the native window');
+    if (time < entry.start || time >= entry.start + entry.duration) throw new Error('before/after stable event is outside the native window');
     await seek(time);
     const after = root.querySelector('.baw-after');
     const slot = after?.querySelector('[data-slot="after"]');
@@ -381,10 +419,42 @@ export async function runCheck(request) {
             await page.evaluate(async time => {
               await window.__player.renderSeek(time, {exact: true});
               if (window.__hfWaitForSeekCompletion) await window.__hfWaitForSeekCompletion();
+              // Seeking settles timeline values before Chrome has necessarily
+              // painted/composited them. Capture the completed frame, not that gap.
+              await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             }, time);
             const actual = await page.screenshot({clip: observed.hold_check.clip, omitBackground: true});
+            if (observed.hold_check.complete_after) {
+              try {
+                await page.evaluate(async () => {
+                  const before = document.querySelector('[data-composition-id="before-after-wipe"][data-composition-src] [data-hf-authored-id="root"] .baw-before');
+                  if (!before) throw new Error('native before content is missing');
+                  // Keep the backdrop: removing it also changes otherwise
+                  // legitimate rounded-edge antialiasing under the after panel.
+                  const foreground = [...before.querySelectorAll('.baw-chip,svg,img,canvas,[data-hd-critical]')];
+                  window.__hdBeforeVisibility = [...new Set(foreground.flatMap(element =>
+                    [element, ...element.querySelectorAll('*')]))].map(element => {
+                    const style = element.getAttribute('style');
+                    element.style.setProperty('visibility', 'hidden', 'important');
+                    return {element, style};
+                  });
+                  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                });
+                const withoutBefore = await page.screenshot({clip: observed.hold_check.clip, omitBackground: true});
+                if (!actual.equals(withoutBefore)) throw new Error('native complete after hold leaves previous content visible');
+              } finally {
+                await page.evaluate(async () => {
+                  for (const {element, style} of window.__hdBeforeVisibility || []) {
+                    if (style === null) element.removeAttribute('style');
+                    else element.setAttribute('style', style);
+                  }
+                  delete window.__hdBeforeVisibility;
+                  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                });
+              }
+            }
             first ??= actual;
-            if (!first.equals(actual)) throw new Error('native grid held pixels differ between actual frames');
+            if (!first.equals(actual)) throw new Error('native held pixels differ between actual frames');
             hashes.push({time, sha256: createHash('sha256').update(actual).digest('hex')});
           }
           observed.hold_check.pixel_samples = hashes;

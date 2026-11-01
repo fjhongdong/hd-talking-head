@@ -303,11 +303,12 @@ class GenerationQueueTests(unittest.TestCase):
 
     def test_followup_edit_claim_reuses_locked_queue_and_keeps_unique_original(self):
         from edit.hd.tools import visual_confirmation as visual, generation_channels
+        from PIL import Image
         original = self.request('image')
         self.add(original)
         first = queue.claim(self.job, 'image')
         source = self.job / 'original.png'
-        source.write_bytes(b'original image')
+        Image.new('RGB', (32, 32), 'orange').save(source)
         ref = visual._record(self.job, source)
         queue.record(self.job, 'image', first['claim_token'], {'status': 'completed', 'artifacts': [
             {'type': 'image', 'path': str(source), 'sha256': ref['sha256'], 'bytes': ref['bytes']}]})
@@ -321,14 +322,27 @@ class GenerationQueueTests(unittest.TestCase):
         request = self.request('edit-image')
         request['arguments']['referenced_image_paths'] = [str(source)]
         request['input_files'] = [ref]
-        plan = {'from_id': 'image', 'request': request, 'issue': 'sample issue', 'count': 1, 'followup_evidence': {}}
+        review = {'from_id': 'image', 'preview': ref, 'status': 'needs_revision',
+                  'method': 'host image inspection', 'observations': ['sample issue']}
+        review_path = self.job / 'review.json'
+        artifacts.write_json_artifact(review_path, review)
+        plan = {'from_id': 'image', 'request': request, 'issue': 'sample issue', 'count': 1,
+                'followup_evidence': {'image': ref, 'review': visual._record(self.job, review_path)}}
         digest = artifacts.sha256_json(plan)
         with mock.patch.object(queue.state, 'load_job', return_value=job), \
              mock.patch.object(visual, '_validate_source', return_value=(None, proposal)), \
              mock.patch.object(visual, '_request_id', return_value='image'), \
-             mock.patch.object(generation_channels, 'prepare_request', return_value=original), \
-             mock.patch.object(queue, '_validate_followup_image_evidence'):
+             mock.patch.object(generation_channels, 'prepare_request', return_value=original):
             parent_before = copy.deepcopy(queue.status(self.job)['items']['image'])
+            for field, value in [('from_id', 'other'), ('preview', {**ref, 'sha256': '0'*64}),
+                                 ('status', 'pass'), ('method', ''), ('observations', ['other issue'])]:
+                with self.subTest(field=field):
+                    artifacts.write_json_artifact(review_path, {**review, field: value})
+                    bad = copy.deepcopy(plan)
+                    bad['followup_evidence']['review'] = visual._record(self.job, review_path)
+                    with self.assertRaisesRegex(ValueError, 'image observation'):
+                        queue.edit_completed_image(self.job, bad, 'one edit', artifacts.sha256_json(bad))
+            artifacts.write_json_artifact(review_path, review)
             result = queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)
             self.assertFalse(result['idempotent'])
             self.assertTrue(queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)['idempotent'])
@@ -342,6 +356,59 @@ class GenerationQueueTests(unittest.TestCase):
             items = queue.status(self.job)['items']
             self.assertEqual(items['image'], parent_before)
             self.assertEqual([key for key, value in items.items() if value.get('retry_of') == 'image'], ['edit-image'])
+
+    def test_revised_failed_image_keeps_failure_and_only_changes_approved_prompt(self):
+        from edit.hd.tools import visual_confirmation as visual
+        original = self.request('image')
+        self.add(original)
+        action = queue.claim(self.job, 'image')
+        queue.record(self.job, 'image', action['claim_token'], {'status': 'failed',
+                     'error': {'code': 'moderation_blocked'}})
+        before = copy.deepcopy(queue.status(self.job)['items']['image'])
+        request = {**original, 'id': 'revised-image', 'arguments': {'prompt': 'Adult actors in ordinary clothing'}}
+        job = SimpleNamespace(job_dir=self.job, job_id='synthetic')
+        with mock.patch.object(queue.state, 'load_job', return_value=job), \
+             mock.patch.object(visual, 'validate_generation_request', return_value={'step': {'purpose': 'image'}}):
+            for change in ('tool', 'purpose', 'inputs', 'argument'):
+                bad = copy.deepcopy(request)
+                if change == 'tool': bad['tool'] = 'other.channel'
+                elif change == 'purpose': bad['purpose'] = 'video'
+                elif change == 'inputs': bad['input_files'] = [{'path': 'other'}]
+                else: bad['arguments']['transparent_background'] = True
+                with self.subTest(change=change), self.assertRaisesRegex(ValueError, 'only an image prompt'):
+                    queue.prepare_retry(self.job, 'image', bad)
+            prepared = queue.prepare_retry(self.job, 'image', request)
+            self.assertEqual(prepared['request'], request)
+            plan, digest = prepared['plan'], prepared['plan_sha256']
+            for field, value in [('failure_response_sha256', '0'*64), ('count', 2)]:
+                bad = {**plan, field: value}
+                with self.subTest(field=field), self.assertRaises(ValueError):
+                    queue.retry(self.job, bad, 'one corrected image', artifacts.sha256_json(bad))
+            for approval, sha in [('', digest), ('one corrected image', '0'*64)]:
+                with self.assertRaises(ValueError): queue.retry(self.job, plan, approval, sha)
+            with mock.patch.object(queue, '_approved', return_value=('synthetic', 'changed', self.config)):
+                with self.assertRaisesRegex(ValueError, 'configuration changed'):
+                    queue.retry(self.job, plan, 'one corrected image', digest)
+            result = queue.retry(self.job, plan, 'one corrected image', digest)
+            self.assertEqual(result['plan_request_id'], 'image')
+            self.assertTrue(queue.retry(self.job, plan, 'one corrected image', digest)['idempotent'])
+            different = copy.deepcopy(plan); different['request']['id'] = 'second-image'
+            with self.assertRaisesRegex(ValueError, 'different retry'):
+                queue.retry(self.job, different, 'another image', artifacts.sha256_json(different))
+            claimed = queue.claim(self.job, result['id'])
+            self.assertEqual(claimed['arguments'], request['arguments'])
+            self.assertEqual(queue.claim(self.job, result['id'])['action'], 'blocked')
+            queue.record(self.job, result['id'], claimed['claim_token'], {'status':'completed',
+                'artifacts':[{'type':'image', 'url':'https://example.invalid/corrected.png'}]})
+            current = queue.status(self.job)
+            with mock.patch.object(visual, '_request_id', return_value='image'), \
+                 mock.patch.object(visual, '_build_generation_request', return_value=original):
+                self.assertEqual(visual.generation_item(current, {}, {'id':'image-step'})[0], result['id'])
+            self.assertEqual(current['items']['image'], before)
+            corrupted = copy.deepcopy(current)
+            corrupted['items'][result['id']]['approved_plan_sha256'] = '0'*64
+            with self.assertRaisesRegex(ValueError, 'authorization changed'):
+                queue._validate_image_successor(job, corrupted, result['id'])
 
     def test_replace_only_proven_unsent_projectless_action_and_keep_evidence(self):
         from edit.hd.tools import generation_inputs as inputs, generation_channels as channels

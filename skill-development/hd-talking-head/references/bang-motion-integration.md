@@ -9,6 +9,7 @@
 ## 入口、准备与限制
 
 - 静态 HTML 可通过现代浏览器打开；starter 通过 CDN 加载 GSAP、字体等，可能需要联网。复制所选 starter 到独立 Job 并按原生流程创作；源代码保留原样。预览参数 `?debug=1` 开启调试面板，`?clean=1` 禁止自动播放供导出。
+- 本期作者工程的 GSAP 初态设置须显式位于时间 `0`；在已排好时长的 `tl` 后调用 `tl.set(...)` 而不传位置，会把隐藏或初态排到片尾，造成主体提前显示。用原生 `seek` 检查词锚前后，不改第三方时间线实现。
 - 上游提供 `scripts/serve.py` 作为本地服务、`scripts/snap.mjs` 拍摄指定时间点、`scripts/export-frames.mjs` 渲染 PNG 序列。Node、Puppeteer 和浏览器仅在使用自动截图/导出时需要，FFmpeg 仅在编码时需要。Puppeteer 是脚本的 ESM 依赖，必须由脚本实际位置可解析；在 Job 的隔离运行目录准备依赖并放置原样脚本副本，或通过现有已验证的包运行时提供依赖，不要只设置 `NODE_PATH` 假定 ESM 可解析。准备过程不得修改 vendor 源码、全局安装或自动发起收费请求。
 - 如 `URL="file:///绝对路径/index.html?clean=1" node <原样snap.mjs> <输出目录> 1 3 5`；页面需公开 `window.OPENER.ready`、`W/H`、`seek`，视频素材则还需 `seekFrame` / `clipsReady`。`snap.mjs` 按 `OPENER.W/H` 截指定静帧，不能证明输出视频已接通。
 - 上游导出范例为 `URL=http://127.0.0.1:5178/index.html?clean=1 FPS=24 OUT=<帧目录> node <原样export-frames.mjs>`，再用 `ffmpeg -framerate 24 -i <帧目录>/f%05d.png -c:v libx264 -pix_fmt yuv420p <输出.mp4>`。源脚本默认 60 fps，环境变量 `FPS` 可调整；截图视口和裁切硬编码为 1920×1080，`SCALE` 只是设备缩放，不接受 W/H。虽然上游有 1080×1920 的创作说明及动态尺寸静帧工具，原生导出器不能直接输出 1080×1920。约定在 Job HTML 最外层把原生 1080×1920 画布整体静态顺时针旋转 90°，放进 1920×1080 画板；通过原生脚本逐帧导出后，再用 FFmpeg `transpose=2` 将整幅逆时针转回 1080×1920。此方式不缩放、不裁切、不改变时钟，也不修改第三方源码；仍需实际样片验证输出尺寸、完整画面和动作，不能仅凭约定视为通过。

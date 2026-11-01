@@ -1,4 +1,5 @@
 """Real pinned HyperFrames runtime regression; no video export or service call."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -26,7 +27,7 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.directory = Path(self.temp.name)
 
-    def entry(self, name, *, bad_clip=False, old_selector=False, hidden=False):
+    def entry(self, name, *, bad_clip=False, old_selector=False, hidden=False, exit='fade', split=50, early=False):
         directory = self.directory / name
         (directory / 'vendor').mkdir(parents=True)
         shutil.copyfile(SOURCE / 'skills/talking-head-recut/assets/vendor/gsap.min.js', directory / 'vendor/gsap.min.js')
@@ -35,6 +36,10 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
         native = bind_native_slots(bind_native_clock(source, route, 4), {
             key: f'<div class="art {key}"><svg width="420" height="160"><rect width="410" height="150" fill="red"/></svg></div>'
             for key in ('before', 'after')})
+        if early:
+            # Fault injection in this temporary fixture only.
+            native = (native.replace(b'var WIPE_DURATION_BASE = 1.05;', b'var WIPE_DURATION_BASE = 0.1;')
+                      if exit == 'none' else native.replace(b'duration: OUT,', b'duration: 0.1,'))
         (directory / 'native.html').write_bytes(native)
         css = '''.baw-clip{inset:auto!important;left:60px!important;top:70px!important;width:960px!important;height:280px!important}
 .baw-chip{top:12px!important;bottom:auto!important;font-size:72px!important;padding:0!important}
@@ -47,14 +52,23 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
             css += '#root .baw-chip{font-size:72px}'
         if hidden:
             css += '.stage{opacity:0!important}'
-        values = {'label_a': '只有提示词', 'label_b': '完整材料', 'wipe_at': .5, 'rest_split': 50, 'exit': 'fade'}
+        if exit == 'none':
+            css += '.baw-before{z-index:1}.baw-after{background:#eee}'
+        values = {'label_a': '只有提示词', 'label_b': '完整材料', 'wipe_at': .5, 'rest_split': split, 'exit': exit}
+        # A distinct host identity preserves the mounted native timeline key,
+        # matching production rather than a mount acting as the root scene.
+        host = (' data-composition-id="wipe-host-' + name + '" data-no-timeline data-width="1080" data-height="1920"'
+                if exit == 'none' or early else '')
         (directory / 'index.html').write_text('<script src="vendor/gsap.min.js"></script><style>' + css +
-            '</style><div class="stage" data-duration="4"><div class="mount" data-composition-id="before-after-wipe" ' +
+            '</style><div class="stage" data-duration="4"' + host + '><div class="mount" data-composition-id="before-after-wipe" ' +
             'data-composition-src="native.html" data-start="0" data-duration="4" data-track-index="1" data-width="1080" data-height="1920" ' +
             "data-variable-values='" + json.dumps(values, ensure_ascii=False) + "' " +
             'style="position:absolute;width:1080px;height:1920px;top:0;left:0"></div></div>')
         events, _ = _native_events(route, {'data-start': '0', 'data-variable-values': json.dumps(values)}, 24, 4)
         return {'entry_directory': str(directory), 'route': route, 'duration': 4, 'start': 0,
+                'files': [{'source': str(path), 'scene_path': path.relative_to(directory).as_posix(),
+                           'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                          for path in sorted(directory.rglob('*')) if path.is_file()],
                 'events': [{'slot': slot, 'kind': kind, 'text': text, 'time': time} for slot, kind, text, time in events]}
 
     def run_check(self, entries):
@@ -112,6 +126,61 @@ class NativeOverlayRuntimeTests(unittest.TestCase):
         for row, duration in ((fade, 116 / 24), (wipe, 4)):
             self.assertIsNone(row['hold_check'])
             self.assertAlmostEqual(row['timeline_duration'], duration)
+
+    def test_wipe_none_holds_its_public_comparison_or_complete_after_state(self):
+        default = self.entry('default-hold', exit='none', split=100)
+        host = Path(default['entry_directory']) / 'index.html'
+        host.write_text(host.read_text().replace(', "exit": "none"', ''))
+        result = self.run_check([self.entry('complete-hold', exit='none', split=100),
+                                 self.entry('comparison-hold', exit='none', split=65), default])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for row in json.loads(result.stdout)['entries']:
+            self.assertAlmostEqual(row['timeline_duration'], 1.55)
+            self.assertEqual(row['requested_duration'], 4)
+            hold = row['hold_check']
+            self.assertGreaterEqual(hold['frames_checked'], 12)
+            self.assertEqual(len({sample['sha256'] for sample in hold['pixel_samples']}), 1)
+            self.assertEqual(row['visibility_checks'][0]['text_count'], 1)
+
+    def test_wipe_hold_rejects_early_land_and_fade_short_timeline(self):
+        for exit in ('none', 'fade'):
+            with self.subTest(exit=exit):
+                result = self.run_check([self.entry('early-' + exit, exit=exit, split=100, early=True)])
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('complete action and reading window' if exit == 'none'
+                              else 'native duration differs', result.stderr)
+
+    def test_wipe_complete_after_requires_pixels_to_cover_before(self):
+        leaking = self.entry('transparent-after', exit='none', split=100)
+        host = Path(leaking['entry_directory']) / 'index.html'
+        host.write_text(host.read_text().replace('.baw-after{background:#eee}',
+                                                '.baw-after{background:transparent}'))
+        result = self.run_check([leaking])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('complete after hold leaves previous content visible', result.stderr)
+
+        covered = self.entry('opaque-child-after', exit='none', split=100)
+        host = Path(covered['entry_directory']) / 'index.html'
+        host.write_text(host.read_text().replace('.baw-after{background:#eee}',
+            '.baw-after{background:transparent}.baw-after .baw-slot{background:#eee}'))
+        result = self.run_check([covered])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['entries'][0]['hold_check']['complete_after'])
+
+        rounded = self.entry('rounded-paper-after', exit='none', split=100)
+        host = Path(rounded['entry_directory']) / 'index.html'
+        host.write_text(host.read_text().replace('.baw-after{background:#eee}',
+            '.baw-after{background:transparent}.baw-before .baw-slot{background:#fff7e9}'
+            '.baw-after .baw-slot{background:#f3e0c2}'
+            '[data-hf-authored-id="root"],[data-hf-inner-root]{border-radius:28px;overflow:hidden}')
+            .replace('width:1080px;height:1920px;top:0;left:0',
+                     'width:520px;height:300px;top:100px;left:280px')
+            .replace('left:60px!important;top:70px!important;width:960px!important;height:280px!important',
+                     'left:0!important;top:0!important;width:520px!important;height:300px!important')
+            .replace('font-size:72px!important', 'font-size:36px!important'))
+        result = self.run_check([rounded])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['entries'][0]['hold_check']['complete_after'])
 
     def test_grid_hold_does_not_accept_early_actions_short_reading_or_short_fade(self):
         for name, kwargs in [('early', {'early': True}), ('short-reading', {'duration': 4.4}),
@@ -185,6 +254,7 @@ console.log(JSON.stringify([await measure(10),await measure(120)]));
                 entry = self.entry('stall-' + mode)
                 index = Path(entry['entry_directory']) / 'index.html'
                 index.write_text(index.read_text() + '<script>Object.defineProperty(document.fonts,"ready",{get:()=>new Promise(()=>{})})</script>')
+                next(item for item in entry['files'] if item['scene_path'] == 'index.html')['sha256'] = hashlib.sha256(index.read_bytes()).hexdigest()
                 created, snapshots, failures = [], {}, []
                 done = threading.Event()
                 def capture(*args, **kwargs):
@@ -220,7 +290,7 @@ console.log(JSON.stringify([await measure(10),await measure(120)]));
                             continue
                         for name in ('browser', 'progress'):
                             try:
-                                snapshots[name] = json.loads((created[0] / (name + '.json')).read_text())
+                                snapshots[name] = json.loads((created[0] / 'check' / (name + '.json')).read_text())
                             except (OSError, ValueError):
                                 pass
                     worker.join(timeout=1)

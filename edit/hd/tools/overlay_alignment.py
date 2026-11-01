@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -16,6 +17,12 @@ from pathlib import Path
 from . import contract_artifacts as artifacts
 from . import pinboard_alignment
 from . import huashu_stat_alignment
+
+GRID_STABLE_HOLD_FRAMES = 12  # Parent readability contract, not upstream animation duration.
+
+
+class GridClockConflict(ValueError):
+    """A valid Grid input cannot finish landing and retain its stable reading window."""
 
 
 class _Mounts(HTMLParser):
@@ -327,6 +334,84 @@ def _split(value):
     return [v.strip() for v in value.split(",")]
 
 
+def _grid_tile_seconds(source, duration):
+    """Read the actual native settle rule; reject unknown source expressions."""
+    text = source.decode("utf-8")
+    constants = {}
+    for name in ("BASE_START", "TILE_BASE"):
+        matches = re.findall(r"\bvar\s+" + name + r"\s*=\s*([0-9]+(?:\.[0-9]+)?)\s*;", text)
+        if len(matches) != 1 or _number(matches[0]) <= 0:
+            raise ValueError("Grid native timing declaration changed: " + name)
+        constants[name] = _number(matches[0])
+    floor = re.findall(r"var\s+TILE\s*=\s*Math\.min\(TILE_BASE,\s*Math\.max\(([0-9]+(?:\.[0-9]+)?),\s*avail\s*-\s*BASE_START\)\)\s*;", text)
+    for expression in (r'var\s+OUT\s*=\s*exit\s*===\s*"none"\s*\?\s*0\s*:',
+                       r'var\s+avail\s*=\s*duration\s*-\s*OUT\s*;',
+                       r'var\s+latestStart\s*=\s*Math\.max\(0,\s*avail\s*-\s*TILE\)\s*;',
+                       r'return\s+Math\.max\(0,\s*Math\.min\(start,\s*latestStart\)\)\s*;'):
+        if len(re.findall(expression, text)) != 1:
+            raise ValueError("Grid native clock expression changed")
+    if len(floor) != 1 or _number(floor[0]) <= 0:
+        raise ValueError("Grid native compression expression changed")
+    return min(constants["TILE_BASE"], max(_number(floor[0]), duration - constants["BASE_START"]))
+
+
+def grid_input_clock(root, brief):
+    """Read hash-bound public Grid inputs without preparing a runtime or claiming rendered QA."""
+    project = Path(__file__).resolve().parents[3]
+    entry = project / "skill-development/hd-talking-head/scripts/hyperframes_native_adapter.py"
+    spec = importlib.util.spec_from_file_location("_grid_execution_contract", entry)
+    native = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(native)
+    native.validate_brief(artifacts.canonical_json_bytes(brief))
+    if brief["upstream_route"] != "hyperframes/grid-card-assemble" or brief["composition"]["alpha"] is not True:
+        raise ValueError("Grid clock evidence must name the transparent native Grid route")
+    records = [brief["entry"], *brief["assets"]]
+    if len({r["scene_path"] for r in records}) != len(records):
+        raise ValueError("Grid input contains duplicate scene files")
+    data = {}
+    for record in records:
+        value = _path(root, record["job_path"]).read_bytes()
+        if hashlib.sha256(value).hexdigest() != record["sha256"]:
+            raise ValueError("Grid native input file checksum differs")
+        data[record["scene_path"]] = value
+    parser = _Mounts()
+    parser.feed(data["index.html"].decode("utf-8"))
+    if len(parser.mounts) != 1:
+        raise ValueError("Grid input needs exactly one native mount")
+    mount = parser.mounts[0]
+    if mount.get("data-composition-id") != "grid-card-assemble" or _number(mount.get("data-start", 0)) != 0:
+        raise ValueError("Grid clock evidence needs the native full-window mount")
+    duration = brief["composition"]["frames"] / 24
+    if abs(_number(mount["data-duration"]) - duration) > 1e-6:
+        raise ValueError("Grid mount differs from the exact candidate window")
+    source = (project / "参考项目/B-roll开源方案/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html").read_bytes()
+    if hashlib.sha256(source).hexdigest() != brief["source_pins"]["sha256"]:
+        raise ValueError("Grid original native source checksum differs")
+    target = mount.get("data-composition-src")
+    if target not in data or target == "index.html":
+        raise ValueError("Grid mounted source is missing or ambiguous")
+    _native_clock(source, data[target], brief["upstream_route"], duration)
+    values = json.loads(mount["data-variable-values"], object_pairs_hook=artifacts._strict_object,
+                        parse_constant=artifacts._reject_nonfinite)
+    if not isinstance(values, dict) or values.get("exit") != "none":
+        raise ValueError("Grid clock evidence currently requires explicit exit=none")
+    labels, cues = _split(values.get("items")), _split(values.get("cues"))
+    if (not 1 <= len(labels) <= 12 or any(not label or ":" in label or "：" in label for label in labels)
+            or len(cues) != len(labels) or any(not cue for cue in cues)):
+        raise ValueError("Grid clock needs complete explicit items and cues without body-text fallback")
+    times = [_number(cue) for cue in cues]
+    if any(not 0 <= time < duration for time in times):
+        raise ValueError("Grid declared cue is outside the candidate window")
+    return [(i, "reveal", label, time) for i, (label, time) in enumerate(zip(labels, times, strict=True))], source, duration
+
+
+def validate_grid_clock(events, source, duration):
+    """Keep native settle and the parent's stable reading budget separate."""
+    tile = _grid_tile_seconds(source, duration)
+    if max(e[3] for e in events) + tile + GRID_STABLE_HOLD_FRAMES / 24 > duration + 1e-8:
+        raise GridClockConflict("Grid needs its native landing plus 12 stable reading frames in the current window")
+
+
 def _native_events(route, mount, fps, native_duration):
     values = json.loads(mount["data-variable-values"])
     start, duration = _number(mount.get("data-start", 0)), _number(native_duration)
@@ -339,7 +424,7 @@ def _native_events(route, mount, fps, native_duration):
             raise ValueError("comparison overlay requires both public labels")
         split = _number(values.get("rest_split", 50))
         raw = _number(values.get("wipe_at", 0.25))
-        if not 0 < split < 100 or not 0 <= raw <= 8:
+        if not 0 < split <= 100 or not 0 <= raw <= 8:
             raise ValueError("comparison split or wipe time is outside the native public range")
         out = 0 if values.get("exit", "none") == "none" else 0.5
         scale = min(1, duration / (raw + 1.05 + out))
@@ -391,6 +476,50 @@ def _native_events(route, mount, fps, native_duration):
         starts.append(effective)
         events.append((i, "reveal", label, start + effective))
     return events, start + duration
+
+
+def validate_native_events(actual, *, segment, words, cuts, events):
+    """Check the same truthful word anchors for published overlays and candidate clocks."""
+    sid, fps = segment["segment_id"], 24
+    if list(dict.fromkeys(e[2] for e in actual)) != segment["visible_text"]:
+        raise ValueError(f"reviewed labels differ from actual native labels: {sid}")
+    event_keys = [(e["slot"], e["kind"]) for e in events]
+    if len(event_keys) != len(set(event_keys)) or set(event_keys) != {(e[0], e[1]) for e in actual}:
+        raise ValueError(f"each native label and action needs exactly one anchor: {sid}")
+    checked = []
+    for slot, kind, text, local_time in actual:
+        event = events[event_keys.index((slot, kind))]
+        if event["text"] != text or text not in segment["visible_text"]:
+            raise ValueError(f"native visible text differs from reviewed text: {sid}")
+        anchor = event["anchor"]
+        index = anchor["index"]
+        if type(index) is not int or not 0 <= index < len(words) or words[index]["text"] != anchor["text"]:
+            raise ValueError(f"overlay source word differs from the approved transcript: {sid}")
+        word = words[index]
+        if word["end"] <= word["start"]:
+            raise ValueError("zero-duration ASR noise cannot anchor a label")
+        positions = [word["start"] + part["timeline_start"] - part["source_start"] for part in cuts
+                     if part["source_start"] <= word["start"] < part["source_end"]]
+        if len(positions) != 1:
+            raise ValueError("overlay anchor is not in the edited speech")
+        anchor_time = positions[0]
+        effective_time = segment["start"] + local_time
+        if not segment["start"] <= effective_time < segment["end"]:
+            raise ValueError(f"overlay event is outside this shot: {sid}")
+        basis = event["basis"]
+        if basis == "current_clause":
+            if not segment["start"] <= anchor_time < segment["end"]:
+                raise ValueError(f"current-clause anchor is outside this shot: {sid}")
+            if effective_time < anchor_time - 1 / fps or effective_time > anchor_time + 0.8:
+                raise ValueError(f"overlay reveal is not aligned with the spoken clause: {sid}")
+        elif basis == "recap":
+            if effective_time < anchor_time:
+                raise ValueError(f"recap refers to speech that has not happened: {sid}")
+        else:
+            raise ValueError("overlay anchor basis must be current_clause or recap")
+        checked.append({"slot": slot, "kind": kind, "text": text, "basis": basis,
+                        "anchor": anchor, "anchor_time": anchor_time, "effective_time": effective_time})
+    return checked
 
 
 def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list[dict]:
@@ -557,45 +686,8 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list
         duration = segment["end"] - segment["start"]
         if exit_time > duration + 1e-6:
             raise ValueError(f"overlay exits after the next shot: {sid}")
-        if list(dict.fromkeys(e[2] for e in actual)) != segment["visible_text"]:
-            raise ValueError(f"reviewed labels differ from actual native labels: {sid}")
-        events = record["events"]
-        event_keys = [(e["slot"], e["kind"]) for e in events]
-        if len(event_keys) != len(set(event_keys)) or set(event_keys) != {(e[0], e[1]) for e in actual}:
-            raise ValueError(f"each native label and action needs exactly one anchor: {sid}")
-        checked = []
-        for slot, kind, text, local_time in actual:
-            event = events[event_keys.index((slot, kind))]
-            if event["text"] != text or text not in segment["visible_text"]:
-                raise ValueError(f"native visible text differs from reviewed text: {sid}")
-            anchor = event["anchor"]
-            index = anchor["index"]
-            if type(index) is not int or not 0 <= index < len(words) or words[index]["text"] != anchor["text"]:
-                raise ValueError(f"overlay source word differs from the approved transcript: {sid}")
-            word = words[index]
-            if word["end"] <= word["start"]:
-                raise ValueError("zero-duration ASR noise cannot anchor a label")
-            positions = [word["start"] + part["timeline_start"] - part["source_start"] for part in cuts
-                         if part["source_start"] <= word["start"] < part["source_end"]]
-            if len(positions) != 1:
-                raise ValueError("overlay anchor is not in the edited speech")
-            anchor_time = positions[0]
-            effective_time = segment["start"] + local_time
-            if not segment["start"] <= effective_time < segment["end"]:
-                raise ValueError(f"overlay event is outside this shot: {sid}")
-            basis = event["basis"]
-            if basis == "current_clause":
-                if not segment["start"] <= anchor_time < segment["end"]:
-                    raise ValueError(f"current-clause anchor is outside this shot: {sid}")
-                if effective_time < anchor_time - 1 / fps or effective_time > anchor_time + 0.8:
-                    raise ValueError(f"overlay reveal is not aligned with the spoken clause: {sid}")
-            elif basis == "recap":
-                if effective_time < anchor_time:
-                    raise ValueError(f"recap refers to speech that has not happened: {sid}")
-            else:
-                raise ValueError("overlay anchor basis must be current_clause or recap")
-            checked.append({"slot": slot, "kind": kind, "text": text, "basis": basis,
-                            "anchor": anchor, "anchor_time": anchor_time, "effective_time": effective_time})
+        checked = validate_native_events(actual, segment=segment, words=words,
+                                         cuts=cuts, events=record["events"])
         report.append({"segment_id": sid, "component_id": cid, "route": brief["upstream_route"],
                        "brief_path": record["brief_path"], "brief_sha256": binding["brief_sha256"],
                        "entry_sha256": entry_sha, "native_duration": native_duration,

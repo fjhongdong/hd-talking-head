@@ -10,7 +10,6 @@ PROJECT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(PROJECT))
 import compose_visual_plan as compose
-import run_stage
 from edit.hd.tools import visual_plan
 
 
@@ -89,51 +88,28 @@ class ComposeVisualPlanTests(unittest.TestCase):
         self.assertEqual(len(visual_plan._validate_reviewed_visual_text(
             reviewed, analysis_record=analysis, segments=segments)), 1)
 
-    def test_existing_native_inputs_are_left_in_place(self):
+    def test_retired_cli_stops_before_job_io_or_adapter_imports(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            job = root / "job"
-            root_inputs = job / "native-inputs"
-            root_inputs.mkdir(parents=True)
-            old = root_inputs / "old-draft"
-            old.mkdir()
-            marker = old / "brief.json"
-            marker.write_text(json.dumps({"kept": True}))
-            (job / "05-speech-cleanup").mkdir(parents=True)
-            (job / "06-edit-structure").mkdir()
-            (job / "02-content-analysis").mkdir()
-            (job / "workflow.json").write_text(json.dumps({"title": "t"}))
-            (job / "06-edit-structure/edited-aroll.mp4").write_bytes(b"a")
-            (job / "06-edit-structure/timeline-map.json").write_text(json.dumps({
-                "output_duration": 4.0,
-                "segments": [{"timeline_start": 0, "timeline_end": 4,
-                              "source_start": 0, "source_end": 4}],
-            }))
-            (job / "02-content-analysis/content-analysis.json").write_text(json.dumps({
-                "analysis_sha256": "x", "analysis": {"items": [{
-                    "id": "i1", "source_text": "hello"
-                }]}
-            }))
-            ctx = root / "ctx.json"
-            ctx.write_text(json.dumps({"job_dir": str(job)}))
-            beats = root / "beats.json"
-            beats.write_text(json.dumps([{
-                "kind": "overlay", "route": "notification-stack",
-                "anchors": [0, 0], "content_item_ids": ["i1"],
-                "labels": ["hello"], "statement": "hello", "reason": "test"
-            }]))
-            words = [{"text": "hello", "cut": 0.2, "cut_end": 3.3}]
-            fake_riso = type("Riso", (), {"MIN_SECONDS": {},})
-            fake_hyper = type("Hyper", (), {
-                "create_adapter": staticmethod(lambda *a, **k: (_ for _ in ()).throw(RuntimeError("stop")))
-            })
-            with mock.patch.object(compose, "_word_cut_times", return_value=words), \
-                 mock.patch.object(run_stage, "verify_skill_package"), \
-                 mock.patch.object(compose, "_module", side_effect=lambda name: fake_riso if name == "riso_native_adapter" else fake_hyper), \
-                 mock.patch.object(sys, "argv", ["compose_visual_plan.py", "--job-context", str(ctx), "--beats", str(beats), "--project-root", str(root)]):
-                with self.assertRaises(RuntimeError):
+            marker = root / "existing-input.json"
+            marker.write_text('{"kept": true}')
+            with mock.patch.object(Path, "open", side_effect=AssertionError("unexpected Job IO")) as path_io, \
+                 mock.patch("builtins.open", side_effect=AssertionError("unexpected file IO")) as file_io, \
+                 mock.patch.object(Path, "mkdir", side_effect=AssertionError("unexpected directory creation")) as mkdir, \
+                 mock.patch("builtins.__import__", side_effect=AssertionError("unexpected adapter import")) as imports, \
+                 mock.patch.object(sys, "argv", ["compose_visual_plan.py", "--job-context", str(root / "missing-context.json"),
+                                                "--beats", str(root / "missing-beats.json"), "--project-root", str(root)]):
+                with self.assertRaises(SystemExit) as stopped:
                     compose.main()
-            self.assertTrue(marker.is_file())
+                path_io.assert_not_called()
+                file_io.assert_not_called()
+                mkdir.assert_not_called()
+                imports.assert_not_called()
+            self.assertIn("CLI 已停用", str(stopped.exception))
+            self.assertIn("select_motion_capabilities.py match", str(stopped.exception))
+            self.assertIn("select_broll_skills.py assign/check", str(stopped.exception))
+            self.assertEqual(marker.read_text(), '{"kept": true}')
+            self.assertEqual(list(root.iterdir()), [marker])
 
 
 if __name__ == "__main__":

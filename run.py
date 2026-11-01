@@ -30,6 +30,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     forwarded = args.arguments
     script = SCRIPTS / COMMANDS[args.command]
+    required = {script}
+    if args.command != "verify":
+        required.add(SCRIPTS / "project_python.py")
+    missing = sorted(path for path in required if not path.is_file())
+    if missing:
+        print("Skill 包不完整，缺少启动文件："
+              + "、".join(str(path.relative_to(PACKAGE_ROOT)) for path in missing)
+              + "；已停止，请恢复同版本完整包。", file=sys.stderr)
+        return 2
     command = [sys.executable, str(SCRIPTS / "project_python.py"),
                "--project-root", str(PACKAGE_ROOT)]
     if args.command == "prepare":

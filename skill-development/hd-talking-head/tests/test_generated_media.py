@@ -180,6 +180,12 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
         binding = generated_media.prepare_binding(self._binding_record())
         self.assertEqual(binding["source_dimensions"], {"width": 1080, "height": 1920})
 
+    def test_source_window_does_not_open_unscoped_legacy_normalization(self):
+        record = self._binding_record()
+        record['normalization'] = {'transform': {'padding': {'left': 0}}}
+        with self.assertRaisesRegex(ValueError, 'composition base scope is missing'):
+            generated_media.prepare_binding(record)
+
     def test_compiler_retains_media_identity_with_parent_static_labels(self):
         binding = generated_media.prepare_binding(self._binding_record())
         binding['parent_static_labels'] = {'job_path': 'labels.json', 'sha256': 'd' * 64, 'byte_count': 100}
@@ -392,6 +398,42 @@ class CompositionBaseReuseTests(unittest.TestCase):
         recipe['composition']['presenter_mode'] = 'hidden'
         recipe['composition'].pop('avatar')
         return recipe
+
+    def test_source_window_preserves_queue_pixels_identity_and_rechecks_adapter(self):
+        original = self.source(1920)
+        before = original.read_bytes()
+        self.source_binding['end'] = .5
+        record = generated_media.record_from_queue(self.job, 'generated', segment_id='seg-001', component_id='ai',
+            source_binding=self.source_binding, qa={'scope': 'static_technical', 'passed': True,
+                'observed_scene': 'Synthetic selected frames; no claim of continuous viewing.'},
+            semantic_brief={'observed_scene': 'Synthetic local test only.'},
+            source_window={'source_frames': [6, 18], 'output_path': 'selected.mp4'},
+            ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
+        self.assertEqual(record['normalization']['output_probe']['frames'], 12)
+        self.assertEqual(record['generation']['source_media']['sha256'], generated_media._sha(original))
+        self.assertEqual(generated_media.prepare_binding(record)['generation_id'], 'generated')
+        generated_media.create_adapter(self.job, record)
+        self.assertEqual(original.read_bytes(), before)
+        self.assertEqual(self.queue_path.read_bytes(), self.queue_bytes)
+        for change in ('frames', 'duration', 'model', 'pixels', 'processing'):
+            wrong = copy.deepcopy(record)
+            if change == 'frames': wrong['normalization']['transform']['source_frames'] = [6, 19]
+            elif change == 'duration': wrong['source_binding']['end'] = .49
+            elif change == 'model': wrong['model'] = 'different model'
+            elif change == 'pixels':
+                wrong['normalization']['frame_md5_sha256'] = '0' * 64
+                wrong['generation']['processing'] = generated_media._source_window_processing(wrong['normalization'])
+            else: wrong['generation']['processing']['speed'] = 2
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                generated_media.validate_record(wrong, self.job)
+        original.write_bytes(b'changed provider source')
+        with self.assertRaisesRegex(ValueError, 'path or bytes'):
+            generated_media.create_adapter(self.job, record)
+
+    def test_source_window_rejects_fractional_boolean_or_out_of_range_frames(self):
+        for frames in ([False, 12], [0, 12.0], [-1, 12], [4, 4], [0, 25]):
+            with self.subTest(frames=frames), self.assertRaisesRegex(ValueError, 'integer source frames'):
+                generated_media._window_frames(frames, 24)
 
     def test_scoped_base_normalizes_only_tiny_rounding_or_missing_sar(self):
         for height in (1916, 1920):

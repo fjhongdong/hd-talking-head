@@ -6,7 +6,7 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
-from overlay_studio_adapter import validate_brief, validate_parent_layout, validate_visible_bounds
+from overlay_studio_adapter import ClockConflict, validate_input_clock, validate_brief, validate_parent_layout, validate_visible_bounds
 
 
 class PinBoardContractTest(unittest.TestCase):
@@ -35,6 +35,30 @@ class PinBoardContractTest(unittest.TestCase):
         self.brief["doc"]["cards"][0]["end"] = 172
         with self.assertRaises(ValueError):
             validate_brief(self.brief)
+
+    def test_real_142_frame_clock_conflict_is_separate_from_runtime_and_format(self):
+        brief = copy.deepcopy(self.brief)
+        brief['source_binding'].update(start=4.625, end=4.625 + 142 / 24)
+        brief['composition']['frames'] = 142
+        card = brief['doc']['cards'][0]
+        card['end'] = 142 / 24
+        card['params'].update(items='快递|外卖|面试|家里', times='3.24|3.88|4.5|5.34')
+        brief['template_request']['information_units'] = 4
+        brief['upstream']['runtime_identity'] = None
+        with self.assertRaises(ClockConflict):
+            validate_input_clock(brief)
+        for times in ('3.24|3.88|4.5', '3.24|4.5|3.88|5.34', '3.24|3.88|4.5|NaN'):
+            broken = copy.deepcopy(brief)
+            broken['doc']['cards'][0]['params']['times'] = times
+            with self.subTest(times=times), self.assertRaises(ValueError) as error:
+                validate_input_clock(broken)
+            self.assertNotIsInstance(error.exception, ClockConflict)
+        brief['source_binding']['end'] = 4.625 + 148 / 24
+        brief['composition']['frames'] = 148
+        card['end'] = 148 / 24
+        self.assertEqual(validate_input_clock(brief), brief)
+        with self.assertRaisesRegex(ValueError, 'upstream identity'):
+            validate_brief(brief)
 
     def test_rejects_silent_native_fallback_and_unknown_parameters(self):
         for key, value in (("times", "3.458333333"), ("fontSize", 64)):

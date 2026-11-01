@@ -219,20 +219,32 @@ class TranscribeTests(unittest.TestCase):
 
         self.assertEqual([Word("你", 0.0, 0.3)], words)
 
-    def test_parser_ignores_zero_duration_whitespace_markers(self) -> None:
-        source = json.dumps({
-            "transcription": [{
-                "tokens": [
-                    {"text": "你", "offsets": {"from": 100, "to": 300}},
-                    {"text": " ", "offsets": {"from": 300, "to": 300}},
-                    {"text": "好", "offsets": {"from": 300, "to": 600}},
-                ]
-            }]
-        }, ensure_ascii=False)
-
-        words = parse_words_json(source, media_duration=3.0)
-
-        self.assertEqual([Word("你", 0.1, 0.3), Word("好", 0.3, 0.6)], words)
+    def test_parser_ignores_valid_whitespace_but_rejects_empty_or_invalid_tokens(self) -> None:
+        cases = (
+            (" ", 70470, 70470, True),
+            (" ", 70470, 70480, True),
+            ("", 70470, 70470, False),
+            ("", 70470, 70480, False),
+            (" ", True, 70480, False),
+            (" ", 70480, 70470, False),
+            (" ", 69810, 70480, False),
+            (" ", 70470, 72500, False),
+        )
+        for text, start, end, valid in cases:
+            source = json.dumps({"transcription": [{"tokens": [
+                {"text": "查", "offsets": {"from": 69820, "to": 70440}},
+                {"text": text, "offsets": {"from": start, "to": end}},
+                {"text": "写", "offsets": {"from": 70480, "to": 71080}},
+            ]}]}, ensure_ascii=False)
+            with self.subTest(text=text, start=start, end=end):
+                if valid:
+                    self.assertEqual(
+                        [Word("查", 69.82, 70.44), Word("写", 70.48, 71.08)],
+                        parse_words_json(source, media_duration=72.42),
+                    )
+                else:
+                    with self.assertRaises(TranscriptionError):
+                        parse_words_json(source, media_duration=72.42)
 
     def test_parser_validates_zero_duration_whitespace_marker_timeline(self) -> None:
         invalid_tokens = (

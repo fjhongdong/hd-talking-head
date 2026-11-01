@@ -262,6 +262,11 @@ def _finish_initialization(workspace, record, state, identity):
         raise InitializeJobError("workflow inputs/profile/identity differ; context not published")
     for relative in JOB_DIRS:
         _local_path(workspace, f"edit/hd/jobs/{job_id}/{relative}").mkdir(parents=True, exist_ok=True)
+    guard = job_dir / "manifests/confirmed-content.json"
+    if (record["phase"] == "imported" and not context_path.exists() and job.revision == 0
+            and not guard.exists() and not guard.is_symlink()):
+        baseline = {"schema_version": 1, "job_id": job.job_id, "source_words": [], "visuals": []}
+        _write_json_atomic(guard, baseline)
     if not context_path.exists():
         _write_json_atomic(context_path, context)
     if record["phase"] != "ready":
