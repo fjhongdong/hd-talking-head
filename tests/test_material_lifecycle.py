@@ -117,7 +117,7 @@ class MaterialLifecycleTests(unittest.TestCase):
                     ),
                     references=[],
                 )
-                state.approve(self.job, stage_id)
+                state.complete(self.job, stage_id)
 
         target = self.index()["materials"][2]
         artifact = self.job.job_dir / "07-visual-direction/visual-plan.json"
@@ -148,7 +148,7 @@ class MaterialLifecycleTests(unittest.TestCase):
                 ),
                 references=references,
             )
-            state.approve(self.job, "visual_direction")
+            state.complete(self.job, "visual_direction")
 
     def test_append_preserves_workflow_and_originals(self):
         before = {p: (p.read_bytes(), p.stat().st_mtime_ns)
@@ -191,6 +191,35 @@ class MaterialLifecycleTests(unittest.TestCase):
             with self.assertRaisesRegex(self.api().MaterialChangeError, "audit missing"):
                 self.plan(source=self.image)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
+
+    def test_append_after_runtime_migration_preserves_initialization_and_checks_delta(self):
+        migration = importlib.import_module("migrate_job_context")
+        context_path = self.job.root / "job-context.json"
+        marker = self.job.root / "initialization.json"
+        marker_before = marker.read_bytes()
+        context = json.loads(context_path.read_bytes())
+        runtime = json.loads(json.dumps(context["runtime"]))
+        module = "edit/hd/tools/segment_render.py"
+        runtime["modules"][module] = "f" * 64
+        release = {"status": "pass", "failures": [], **context["skill_release"],
+                   "release_id": "test-runtime-release", "manifest_sha256": "e" * 64}
+        state.revise(self.job, "inspect", "Test explicit runtime change")
+        with mock.patch("edit.hd.tools.startup.runtime_identity", return_value=runtime), \
+                mock.patch.object(migration, "verify_release", return_value=release), \
+                mock.patch.object(initializer, "verify_release", return_value=release):
+            result = migration.migrate(context_path,
+                expected_context_sha256=hashlib.sha256(context_path.read_bytes()).hexdigest(),
+                expected_revision=self.job.revision, allowed_module=[module],
+                reason="Test explicit runtime migration", dry_run=False)
+            plan = self.plan(source=self.image)
+            self.assertEqual(plan["workflow_action"], "preserve")
+            audit_path = Path(result["audit"])
+            audit = json.loads(audit_path.read_bytes())
+            audit["runtime_module_changes"][module]["after"] = "d" * 64
+            audit_path.write_text(json.dumps(audit))
+            with self.assertRaisesRegex(self.api().MaterialChangeError, "runtime migration audit"):
+                self.plan(source=self.image)
+        self.assertEqual(marker.read_bytes(), marker_before)
 
     def test_replace_keeps_old_bytes_and_allocates_new_id(self):
         replacement = self.root / "新图.png"
@@ -346,7 +375,7 @@ class MaterialLifecycleTests(unittest.TestCase):
         artifact.write_text("{}\n")
         with mock.patch("edit.hd.tools.startup.require_startup"):
             state.mark_ready(self.job, "inspect", (artifact,))
-            state.approve(self.job, "inspect")
+            state.complete(self.job, "inspect")
         plan = self.plan("withdraw", material_id="material-0003")
         self.assertEqual(plan["direct_references"], [])
         self.assertEqual(plan["unverified_stages"], ["inspect"])
@@ -372,12 +401,12 @@ class MaterialLifecycleTests(unittest.TestCase):
                 path = self.job.job_dir / directory / "fixture.json"
                 path.write_text('{"fixture": "state-only"}')
                 state.mark_ready(self.job, stage, [path])
-                state.approve(self.job, stage)
+                state.complete(self.job, stage)
         before = self.workflow.read_bytes()
         self.apply(self.plan(source=self.image))
         loaded = state.load_job(self.job.job_dir)
-        self.assertEqual(loaded.stages["cover"]["status"], "approved")
-        self.assertEqual(loaded.stages["content_analysis"]["status"], "approved")
+        self.assertEqual(loaded.stages["cover"]["status"], "completed")
+        self.assertEqual(loaded.stages["content_analysis"]["status"], "completed")
         self.assertEqual(loaded.revision, self.job.revision)
         self.assertEqual(self.workflow.read_bytes(), before)
 

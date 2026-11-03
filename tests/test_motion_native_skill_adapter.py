@@ -29,6 +29,27 @@ def brief(dependency='barty-motion-graphics', template='motion-broll', alpha=Fal
 
 
 class NativeMotionTests(unittest.TestCase):
+    def setUp(self):
+        # These contract fixtures have no workflow; the real identity gate is
+        # exercised separately below, before any native runner or artifact I/O.
+        from types import SimpleNamespace
+        gate = mock.patch.object(native, '_execution_job', return_value=SimpleNamespace(job_id='native-test'))
+        gate.start()
+        self.addCleanup(gate.stop)
+
+    def test_planned_binding_needs_current_brief_without_a_reference_sample(self):
+        from types import SimpleNamespace
+        for dependency in native.SOURCES:
+            adapter = SimpleNamespace(dependency_id=dependency, renderer_version='test-runtime',
+                entrypoint_sha256=native.sha(_env.PROJECT / native.ENTRY), launcher=Path(sys.executable))
+            payload = json.dumps(brief(dependency)).encode()
+            with self.subTest(dependency=dependency):
+                binding = native.create_binding(adapter, payload)
+                self.assertNotIn('sample_sha256', binding)
+                self.assertEqual(binding['brief_sha256'], hashlib.sha256(payload).hexdigest())
+                self.assertEqual(binding['invocation_record']['status'], 'planned')
+                self.assertIsNone(binding['invocation_record']['exit_code'])
+
     def test_broll_native_alpha_requires_a_valid_hybrid_annotation(self):
         import copy
         from edit.hd.tools import motion_capabilities as motion
@@ -197,9 +218,10 @@ class NativeMotionTests(unittest.TestCase):
                 self.assertNotIn('node_modules',call['execution_runtime'])
                 self.assertEqual(call['native_script_sha256'],native.sha(Path(argv[1])))
                 self.assertEqual(call['status'],'completed');self.assertEqual(process.call_count,1)
-                result=native.publish_completed(root,request,callpath,qa_note='开发夹具，仅验证真实调用记录与完成结果合同。')
+                result=native.publish_completed(root,request,callpath)
                 self.assertEqual(native.inspect_result(root,request.read_bytes())['media'],call['media'])
                 self.assertEqual(json.loads(result.read_bytes())['status'],'completed')
+                self.assertNotIn('qa_note', json.loads(result.read_bytes()))
                 (project/'index.html').write_text('later changed scene')
                 with self.assertRaisesRegex(ValueError,'changed'):
                     native.inspect_result(root,request.read_bytes())
@@ -631,9 +653,9 @@ class NativeMotionTests(unittest.TestCase):
                    for row in (main,component)]
             with mock.patch.object(native,'_inputs'),mock.patch.object(native,'_verify_call'):
                 with self.assertRaisesRegex(ValueError,'actual native'):
-                    native.publish_completed(root,request,callpath,qa_note='实际画面审核通过')
-                result=native.publish_completed(root,request,callpath,qa_note='实际画面审核通过',native_usage=usage)
-                saved=json.loads(result.read_bytes());self.assertEqual(saved['schema_version'],2)
+                    native.publish_completed(root,request,callpath)
+                result=native.publish_completed(root,request,callpath,native_usage=usage)
+                saved=json.loads(result.read_bytes());self.assertEqual(saved['schema_version'],3)
                 self.assertEqual(saved['native_usage'],usage)
                 self.assertEqual(native.inspect_result(root,request.read_bytes())['native_usage'],usage)
                 with self.assertRaisesRegex(ValueError,'primary'):
@@ -648,7 +670,7 @@ class NativeMotionTests(unittest.TestCase):
     def test_reviewed_record_and_actual_media_must_both_match(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);p=root/brief()['result_record_path'];p.parent.mkdir(parents=True);p.write_bytes(b'{}')
-            with self.assertRaisesRegex(ValueError,'reviewed version'):
+            with self.assertRaisesRegex(ValueError,'frozen version'):
                 native.load_result(root,json.dumps(brief()),expected_record={'path':brief()['result_record_path'],'sha256':'a'*64,'bytes':2},expected_renderer_version='playwright-1.64.0')
             media=root/'media.mp4';media.write_bytes(b'reviewed video');record=native.descriptor(root,media)
             media.write_bytes(b'replaced video')
@@ -677,6 +699,102 @@ class NativeMotionTests(unittest.TestCase):
                 self.assertEqual(result[0]['phase'],'planning');inspect.assert_not_called()
                 with self.assertRaises(FileNotFoundError):
                     overlay_alignment.validate_treatment(SimpleNamespace(job_dir=root),draft,treatment)
+
+
+class NativeExecutionIdentityTests(unittest.TestCase):
+    def test_all_four_factories_keep_the_absolute_python_alias(self):
+        import talkcraft_skill_adapter as talkcraft
+        import lemo_wake_adapter as wake
+        import upstream_scene_adapter as upstream
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve(); bin_dir = root / 'bin'; bin_dir.mkdir()
+            alias = bin_dir / 'python'; alias.symlink_to(Path(sys.executable).resolve())
+            parent_alias = root / 'linked-bin'; parent_alias.symlink_to(bin_dir, target_is_directory=True)
+            supplied = parent_alias / 'python'
+            with mock.patch.object(native, 'source_root'), \
+                 mock.patch('motion_native_runtime.check', return_value={}), \
+                 mock.patch.object(talkcraft, 'source_root'), \
+                 mock.patch('prepare_talkcraft_native.check', return_value={'renderer_version': 'fixture'}), \
+                 mock.patch.object(wake, 'source_root'), \
+                 mock.patch.object(upstream, 'check_runtime', return_value={'commit': upstream.SOURCES['onetake'][0]}):
+                adapters = [native.create_adapter(_env.PROJECT, supplied, lambda *_: b'{}', dependency_id='bb-video', renderer_version='fixture'),
+                            talkcraft.create_adapter(_env.PROJECT, supplied, lambda *_: b'{}'),
+                            wake.create_adapter(_env.PROJECT, supplied, lambda *_: b'{}'),
+                            upstream.create_adapter(_env.PROJECT, 'onetake', supplied, lambda *_: b'{}')]
+            for adapter in adapters:
+                with self.subTest(adapter=adapter.adapter_id):
+                    self.assertEqual(adapter.launcher, alias)
+                    self.assertNotEqual(adapter.launcher, alias.resolve())
+                    self.assertEqual(adapter.launcher_sha256, native.sha(alias.resolve()))
+
+    def test_api_and_cli_reject_wrong_parent_python_before_native_or_file_work(self):
+        from edit.hd.tools import startup, state
+        import talkcraft_skill_adapter as talkcraft
+        import lemo_wake_adapter as wake
+        import upstream_scene_adapter as upstream
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            video = root / 'source.mp4'; video.write_bytes(b'video')
+            script = root / 'script.txt'; script.write_text('script')
+            job = state.create_job(root, video, script, profile='full-v2')
+            runtime = startup.runtime_identity(_env.PROJECT)
+            runtime['python']['version'] = '0.0.0'
+            context = {'workspace': str(root), 'job_dir': str(job.job_dir), 'job_id': job.job_id,
+                       'project_root': str(_env.PROJECT), 'runtime': runtime}
+            (root / 'job-context.json').write_text(json.dumps(context))
+            before = sorted(path.relative_to(root).as_posix() for path in root.rglob('*'))
+            with mock.patch.object(native, '_inputs') as inputs, \
+                 mock.patch.object(native, '_run_native_process') as render, \
+                 mock.patch.object(native.artifacts, 'write_json_artifact') as write:
+                for operation in (
+                    lambda: native.capture_render(job.job_dir, root / 'missing.json', []),
+                    lambda: native.publish_completed(job.job_dir, root / 'missing.json', root / 'missing-call.json'),
+                    lambda: talkcraft.capture_render(job.job_dir, root / 'missing.json', []),
+                    lambda: talkcraft.publish_completed(job.job_dir, root / 'missing.json', root / 'missing-call.json'),
+                    lambda: wake.initialize_project(job.job_dir, root / 'missing.json', slug='fixture'),
+                    lambda: wake.capture_call(job.job_dir, root / 'missing.json', 'render', [], root),
+                    lambda: wake.publish_completed(job.job_dir, root / 'missing.json', root, root / 'missing.mp4', root / 'qa.json', []),
+                    lambda: wake.prepare_revision(job.job_dir, root / 'missing.json', reason='fixture'),
+                    lambda: upstream.run_native({}, root, {}, job_dir=job.job_dir),
+                ):
+                    with self.assertRaisesRegex(state.WorkflowError, 'runtime changed'):
+                        operation()
+                inputs.assert_not_called(); render.assert_not_called(); write.assert_not_called()
+            for action in ('--capture-render', '--publish'):
+                result = subprocess.run([sys.executable, str(_env.PROJECT / native.ENTRY),
+                    '--dependency-id', 'bb-video', '--job-dir', str(job.job_dir), action,
+                    '--brief', str(root / 'missing.json'), '--argv-json', '[]'], capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('runtime changed', result.stderr)
+            for module, actions in ((talkcraft, ('--capture-render', '--publish')),
+                                    (wake, ('--initialize', '--publish')),
+                                    (upstream, ('--output',))):
+                for action in actions:
+                    arguments = [action, str(root / 'missing-output.mp4')] if action == '--output' else [action]
+                    result = subprocess.run([sys.executable, str(_env.PROJECT / module.ENTRY),
+                        '--job-dir', str(job.job_dir), '--brief', str(root / 'missing.json'), *arguments,
+                        *(['--argv-json', '[]'] if action == '--capture-render' else [])], capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('runtime changed', result.stderr)
+            self.assertEqual(sorted(path.relative_to(root).as_posix() for path in root.rglob('*')), before)
+
+    def test_missing_job_and_other_job_brief_cannot_render_or_publish(self):
+        from edit.hd.tools import state
+        from types import SimpleNamespace
+        with self.assertRaisesRegex(state.WorkflowError, 'requires a Job'):
+            native.capture_render(None, None, [])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve(); request = root / 'brief.json'
+            request.write_text(json.dumps(brief()))
+            with mock.patch.object(native, '_execution_job', return_value=SimpleNamespace(job_id='other-job')), \
+                 mock.patch.object(native, '_inputs') as inputs:
+                for operation in (
+                    lambda: native.capture_render(root, request, []),
+                    lambda: native.publish_completed(root, request, root / 'missing-call'),
+                ):
+                    with self.assertRaisesRegex(ValueError, 'another Job'):
+                        operation()
+                inputs.assert_not_called()
 
 
 if __name__=='__main__':unittest.main()

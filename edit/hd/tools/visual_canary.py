@@ -408,7 +408,7 @@ def load_approved_visual_plan(
 ) -> dict[str, Any]:
     if job.version != 2 or "visual_direction" not in job.stages:
         raise VisualCanaryError("formal visual plan is unavailable")
-    if job.stages["visual_direction"]["status"] != "approved":
+    if job.stages["visual_direction"]["status"] != "completed":
         raise VisualCanaryError("visual_direction must be approved")
     path = job.job_dir / "07-visual-direction" / "visual-plan.json"
     try:
@@ -443,7 +443,7 @@ def approved_aroll_record(
     """Return the approved edited A-roll identity used by every segment."""
 
     stage = job.stages.get("edit_structure")
-    if not isinstance(stage, Mapping) or stage.get("status") != "approved":
+    if not isinstance(stage, Mapping) or stage.get("status") != "completed":
         raise VisualCanaryError("edited A-roll must be approved")
     matches = [
         record
@@ -622,8 +622,8 @@ def _load_reusable(
     probe: Callable[[Path], Mapping[str, object]] | None = None,
 ) -> dict[str, Any] | None:
     if job.stages["visual_canary"]["status"] not in {
-        "ready_for_review",
-        "approved",
+        "ready",
+        "completed",
     }:
         return None
     root = job.job_dir / "08-visual-canary"
@@ -704,7 +704,7 @@ def load_approved_visual_canary(
 ) -> dict[str, Any]:
     if job.version != 2 or "visual_canary" not in job.stages:
         raise VisualCanaryError("formal visual canary is unavailable")
-    if job.stages["visual_canary"]["status"] != "approved":
+    if job.stages["visual_canary"]["status"] != "completed":
         raise VisualCanaryError("visual_canary must be approved")
     plan = load_approved_visual_plan(job)
     manifest = _load_reusable(job, plan, probe=probe)

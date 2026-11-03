@@ -57,9 +57,15 @@ def _directory(job):
 
 
 @contextmanager
-def _locked(job):
-    j = _directory(job)
-    path = j / "manifests/generation-queue.json"
+def mutation_lock(job):
+    """Serialize workflow commits and new external actions with the existing lock."""
+    j = Path(job).expanduser().absolute()
+    if j.resolve() != j or not j.is_dir():
+        raise GenerationQueueError("use an existing, local Job directory")
+    manifests = j / "manifests"
+    manifests.mkdir(exist_ok=True)
+    if manifests.resolve() != manifests or not manifests.is_dir():
+        raise GenerationQueueError("manifests cannot be a symlink")
     lock = j / "manifests/generation-queue.lock"
     fd = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
@@ -67,6 +73,20 @@ def _locked(job):
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             raise GenerationQueueError("invalid generation queue lock")
         fcntl.flock(fd, fcntl.LOCK_EX)
+        named = os.lstat(lock)
+        if (info.st_dev, info.st_ino) != (named.st_dev, named.st_ino):
+            raise GenerationQueueError("generation queue lock changed")
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
+
+
+@contextmanager
+def _locked(job):
+    j = _directory(job)
+    path = j / "manifests/generation-queue.json"
+    with mutation_lock(j):
         if os.path.lexists(path):
             _regular(path)
             q = artifacts.read_json_artifact(path)
@@ -82,9 +102,6 @@ def _locked(job):
             q = {"schema_version": 1, "job_dir": str(j), "job_id": None,
                  "max_concurrency": None, "paused": False, "items": {}}
         yield j, path, q
-    finally:
-        fcntl.flock(fd, fcntl.LOCK_UN)
-        os.close(fd)
 
 
 def _approved(j):
@@ -162,6 +179,11 @@ def _add(job, plan, user_confirmation, expected_plan_sha256, authorization=None)
         if q["job_id"] not in {None, jid}:
             raise GenerationQueueError("queue belongs to another Job")
         requests = plan["requests"]
+        if authorization is not None:
+            from . import visual_confirmation
+            current_job = state.load_job(j)
+            for req in requests:
+                visual_confirmation.current_generation_authorization(current_job, authorization, req, queue=q)
         identities = {req["id"]: _request(j, req, config) for req in requests}
         if len({r["id"] for r in requests}) != len(requests):
             raise GenerationQueueError("duplicate request id")
@@ -188,6 +210,7 @@ def _add(job, plan, user_confirmation, expected_plan_sha256, authorization=None)
                                     "channel_identity": identities[rid]}
             if q["items"][rid]["status"] == "ready" and "retry_of" not in q["items"][rid]:
                 q["items"][rid].update(config_sha256=config_sha, approved_plan_sha256=expected_plan_sha256,
+                                      approved_request_sha256=artifacts.sha256_json(req),
                                       **({"user_confirmation": user_confirmation} if user_confirmation is not None else {}),
                                       **({"authorization": authorization} if authorization is not None else {}))
         q.update(job_id=jid, max_concurrency=config["max_concurrency"])
@@ -198,6 +221,8 @@ def _add(job, plan, user_confirmation, expected_plan_sha256, authorization=None)
 def add(job, plan, user_confirmation, expected_plan_sha256):
     if not isinstance(user_confirmation, str) or not user_confirmation.strip():
         raise GenerationQueueError("capture explicit setup confirmation")
+    if any(str(req.get("id", "")).startswith("visual-") for req in plan.get("requests", [])):
+        raise GenerationQueueError("visual requests require their current complete-list authorization")
     return _add(job, plan, user_confirmation, expected_plan_sha256)
 
 
@@ -419,7 +444,7 @@ def _validate_followup_image_evidence(job, parent, plan, approved):
             raise GenerationQueueError('follow-up sample is not the approved Paper image row')
         arroll = [r for r in job.stages['edit_structure']['artifacts']
                   if r['path'] == '06-edit-structure/edited-aroll.mp4']
-        if job.stages['edit_structure']['status'] != 'approved' or len(arroll) != 1:
+        if job.stages['edit_structure']['status'] != 'completed' or len(arroll) != 1:
             raise GenerationQueueError('follow-up needs the approved speech clock')
         visual._exact(root, arroll[0])
         expected = {'aroll_sha256': arroll[0]['sha256'], 'segment_id': step['segment_id'],
@@ -568,6 +593,34 @@ def _validate_image_successor(job, q, request_id, approved=None):
         raise GenerationQueueError('image edit original visual review changed')
 
 
+def validate_submission_authorization(j, q, request_id):
+    """Called under the mutation lock before any new upload or submission."""
+    item = q["items"][request_id]
+    if item.get("authorization") is not None:
+        from . import visual_confirmation
+        current = visual_confirmation.current_generation_authorization(
+            state.load_job(j), item["authorization"], item["request"], queue=q)
+        if item["status"] == "ready":
+            item["authorization"] = current
+        return
+    if item.get("retry_of") is not None:
+        from types import SimpleNamespace
+        job = (state.load_job(j) if item.get("retry_plan", {}).get("request") is not None
+               or "followup_evidence" in item.get("image_edit_plan", {}) else SimpleNamespace(job_dir=j))
+        if item.get("image_edit_plan"):
+            _validate_image_successor(job, q, request_id)
+        else:
+            _validate_retry_successor(job, q, request_id)
+        validate_submission_authorization(j, q, item["retry_of"])
+        return
+    if (str(request_id).startswith("visual-")
+            or not isinstance(item.get("user_confirmation"), str) or not item["user_confirmation"].strip()
+            or not isinstance(item.get("approved_plan_sha256"), str)
+            or len(item["approved_plan_sha256"]) != 64
+            or item.get("approved_request_sha256") != artifacts.sha256_json(item["request"])):
+        raise GenerationQueueError("request has no exact current generation authorization")
+
+
 def claim(job, request_id, account_limit=None):
     with _locked(job) as (j, path, q):
         item = q["items"].get(request_id)
@@ -581,12 +634,7 @@ def claim(job, request_id, account_limit=None):
         identity = _request(j, item["request"], config)
         if identity != item.get("channel_identity"):
             raise GenerationQueueError("generation channel identity changed; obtain approval before new submissions")
-        retry_plan = item.get('retry_plan')
-        if isinstance(retry_plan, dict) and 'request' in retry_plan:
-            _validate_retry_successor(state.load_job(j), q, request_id)
-        edit_plan = item.get('image_edit_plan')
-        if isinstance(edit_plan, dict) and 'followup_evidence' in edit_plan:
-            _validate_image_successor(state.load_job(j), q, request_id)
+        validate_submission_authorization(j, q, request_id)
         active = [x for x in q["items"].values() if x["status"] in ACTIVE]
         if q["paused"] or len(active) >= config["max_concurrency"]:
             return {"action": "wait", "id": request_id}

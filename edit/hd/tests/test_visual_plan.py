@@ -249,6 +249,56 @@ def replace_component_id(plan: dict[str, object], value: str) -> None:
 
 
 class VisualPlanSchemaV3Tests(unittest.TestCase):
+    def test_unsupported_speech_allows_only_aroll_or_non_evidence_task_illustrations(self):
+        from pathlib import Path
+        from types import SimpleNamespace
+
+        quote = "定闹钟，明天下午。"
+        analysis = {"analysis_sha256": "a" * 64, "analysis": {
+            "thesis": quote, "items": [{"id": "idea-01", "source_text": quote,
+                "source_span": [0, len(quote)], "keywords": [], "evidence_status": "unsupported"}]}}
+        plain = valid_plan(())["segments"][0]
+        illustration = valid_plan(("code_generated",))["segments"][0]
+        component = illustration["visual_strategy"]["components"][0]
+        component["brief"] = "一句话定闹钟，不作为产品实测或事实证据。"
+        illustration["visible_text"] = ["一句话定闹钟", "定闹钟"]
+        reviewed = {"content_analysis_sha256": "a" * 64, "entries": [{
+            "segment_id": "seg-001", "text": "一句话定闹钟", "source_ref": "component:component-1",
+            "source_quote": component["brief"], "reason": "中性主题标题，不证明原声判断。"}]}
+
+        def check(segment):
+            with mock.patch.object(visual_plan, "_require_visual_preparation"), \
+                 mock.patch.object(visual_plan.content_analysis, "load_approved_content_analysis", return_value=analysis), \
+                 mock.patch.object(visual_plan, "_approved_artifact", return_value=Path("artifact")), \
+                 mock.patch.object(contract_artifacts, "read_json_artifact", side_effect=[
+                     {"canvas": {"width": 1080, "height": 1920, "fps": 24}}, {"output_duration": 3.0}]):
+                return visual_plan._validate_job_context(SimpleNamespace(job_dir=Path(".")),
+                    {"segments": [segment]}, reviewed if segment["visual_strategy"]["components"] else None)
+
+        for role in (None, "explanation", "demonstration"):
+            segment = copy.deepcopy(plain if role is None else illustration)
+            if role:
+                segment["visual_strategy"]["components"][0]["semantic_role"] = role
+            with self.subTest(accepted=role):
+                self.assertEqual(check(segment)[0], analysis)
+
+        for defect in (*SOURCE_KINDS[:2], "external_stock", "ai_generated", "evidence_role",
+                       "protected_fact", "evidence_goal",
+                       "real_product_ui", "aroll_text", "hidden_presenter"):
+            segment = copy.deepcopy(plain if defect in {"aroll_text", "hidden_presenter"} else illustration)
+            strategy = segment["visual_strategy"]
+            if defect in SOURCE_KINDS:
+                strategy["components"][0]["kind"] = defect
+            elif defect == "evidence_role": strategy["components"][0]["semantic_role"] = "evidence"
+            elif defect == "protected_fact": segment["visual_intent"]["claims"][0]["type"] = "fact"
+            elif defect == "evidence_goal": segment["visual_intent"]["semantic_goals"] = ["evidence"]
+            elif defect == "real_product_ui": segment["visual_intent"]["entities"] = [{"type": "real_product_ui"}]
+            elif defect == "aroll_text": segment["visible_text"] = ["定闹钟"]
+            elif defect == "hidden_presenter": strategy["composition"]["presenter_mode"] = "hidden"
+            with self.subTest(rejected=defect), self.assertRaisesRegex(VisualPlanError,
+                    r"unsupported content.*seg-001.*idea-01"):
+                check(segment)
+
     def test_typography_handoff_uses_verified_copy_but_selection_uses_actual_inputs(self):
         import tempfile
         from pathlib import Path
@@ -526,6 +576,36 @@ class VisualPlanSchemaV3Tests(unittest.TestCase):
         source = inspect.getsource(visual_plan)
         for forbidden in ("_V2_ROUTES", "selected_" + "material_id", "legacy visual", "schema_version == 2", "subprocess"):
             self.assertNotIn(forbidden, source)
+
+    def test_reviewed_visual_text_can_cite_approved_supported_claim_source(self) -> None:
+        quote = "Apple 2026-10-31 官方新闻稿，部分功能接入。"
+        analysis = {"analysis_sha256": "a" * 64, "analysis": {
+            "thesis": "部分功能接入", "items": [{"id": "idea-01",
+                "source_text": "昨天官宣", "source_span": [0, 4]}],
+            "claims": [{"id": "claim-01", "source_text": "昨天官宣",
+                "source_span": [0, 4], "evidence_status": "supported",
+                "source_requirements": [quote]}]}}
+        segments = [{"segment_id": "seg-001", "content_item_ids": ["idea-01"],
+                     "visible_text": ["10月31日"]}]
+        value = {"content_analysis_sha256": "a" * 64, "entries": [{
+            "segment_id": "seg-001", "text": "10月31日",
+            "source_ref": "claim-source:claim-01:0", "source_quote": quote,
+            "reason": "引用已批准且与本句关联的事实依据，将相对日期明确为绝对日期。"}]}
+        self.assertEqual(visual_plan._validate_reviewed_visual_text(value,
+            analysis_record=analysis, segments=segments), value["entries"])
+        for defect in ("unsupported", "unrelated", "wrong_quote", "missing_claim", "missing_source", "new_number"):
+            bad = copy.deepcopy(value); record = copy.deepcopy(analysis)
+            current_segments = copy.deepcopy(segments)
+            if defect == "unsupported": record["analysis"]["claims"][0]["evidence_status"] = "unsupported"
+            elif defect == "unrelated": record["analysis"]["items"][0]["source_span"] = [5, 9]
+            elif defect == "wrong_quote": bad["entries"][0]["source_quote"] = "自行补写的日期"
+            elif defect == "missing_claim": bad["entries"][0]["source_ref"] = "claim-source:other:0"
+            elif defect == "missing_source": bad["entries"][0]["source_ref"] = "claim-source:claim-01:1"
+            elif defect == "new_number":
+                bad["entries"][0]["text"] = "10月30日"
+                current_segments[0]["visible_text"] = ["10月30日"]
+            with self.subTest(defect=defect), self.assertRaises(VisualPlanError):
+                visual_plan._validate_reviewed_visual_text(bad, analysis_record=record, segments=current_segments)
 
     def test_reviewed_visual_text_gate_rejects_aliases_and_unapproved_tokens(self) -> None:
         analysis = {

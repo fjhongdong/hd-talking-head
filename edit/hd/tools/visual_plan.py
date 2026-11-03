@@ -34,6 +34,7 @@ from .state import JobState, block as _state_block, mark_ready, require_runnable
 from .visual_strategy import (
     SOURCE_KINDS,
     VisualStrategyError,
+    _intent_signals,
     stable_same_kind_candidates,
     validate_shot_recipe_v2,
     validate_visual_intent,
@@ -705,7 +706,7 @@ def block_visual_direction(job: JobState, reason: str) -> None:
 
 def _approved_artifact(job: JobState, stage_id: str, relative: str) -> Path:
     stage = job.stages.get(stage_id)
-    if type(stage) is not dict or stage.get("status") != "approved":
+    if type(stage) is not dict or stage.get("status") != "completed":
         raise _fail(f"{stage_id} must be approved")
     records = [
         record
@@ -885,6 +886,13 @@ def _freeze_and_compile_segment(
     }
 
 
+def _is_task_illustration(component, segment):
+    return (component["kind"] == "code_generated"
+            and component["semantic_role"] in {"explanation", "demonstration"}
+            and "evidence" not in segment["visual_intent"]["semantic_goals"]
+            and not any(_intent_signals(segment["visual_intent"])))
+
+
 def _validate_reviewed_visual_text(
     value: Mapping[str, object] | None,
     *,
@@ -1019,13 +1027,27 @@ def _validate_reviewed_visual_text(
                 raise _fail("reviewed source item is not selected by its segment")
             expected_quote = items[item_id]["source_text"]
             item = items[item_id]
+        elif source_ref.startswith("claim-source:"):
+            parts = source_ref.split(":")
+            claims = [c for c in analysis_record["analysis"].get("claims", [])
+                      if len(parts) == 3 and c.get("id") == parts[1]
+                      and c.get("evidence_status") == "supported"]
+            index = int(parts[2]) if len(parts) == 3 and parts[2].isascii() and parts[2].isdigit() else -1
+            if (len(claims) != 1 or index < 0 or str(index) != parts[2]
+                    or index >= len(claims[0].get("source_requirements", []))
+                    or "grounding" in entry):
+                raise _fail("reviewed claim source must be an approved supported source")
+            claim = claims[0]
+            span = claim.get("source_span", [])
+            selected = [items[i].get("source_span", []) for i in segment["content_item_ids"] if i in items]
+            if (len(span) != 2 or not any(len(s) == 2 and max(s[0], span[0]) < min(s[1], span[1])
+                                         for s in selected)):
+                raise _fail("reviewed claim source is unrelated to the selected content")
+            expected_quote = claim["source_requirements"][index]
         elif source_ref.startswith('component:'):
             components = [c for c in segment['visual_strategy']['components']
                           if c['component_id'] == source_ref[len('component:'):]]
-            if (len(components) != 1 or components[0]['kind'] != 'code_generated'
-                    or components[0]['semantic_role'] not in {'explanation', 'demonstration'}
-                    or '任务示意' not in components[0].get('brief', '')
-                    or '任务示意' not in segment['visible_text']):
+            if len(components) != 1 or not _is_task_illustration(components[0], segment):
                 raise _fail('component text requires its approved non-evidence task illustration')
             expected_quote = components[0]['brief']
         else:
@@ -1048,7 +1070,7 @@ def _validate_reviewed_visual_text(
 
 
 def _require_visual_preparation(job):
-    if job.stages["visual_direction"]["status"] == "ready_for_review":
+    if job.stages["visual_direction"]["status"] == "ready":
         from .visual_confirmation import validate_visual_authorization
         validate_visual_authorization(job)
     else:
@@ -1096,8 +1118,17 @@ def _validate_job_context(
         if any(item_id not in items for item_id in segment["content_item_ids"]):
             raise _fail("segment references an unknown content item")
         selected_items = [items[item_id] for item_id in segment["content_item_ids"]]
-        if any(item["evidence_status"] == "unsupported" for item in selected_items):
-            raise _fail("segment references unsupported content")
+        unsupported = [item["id"] for item in selected_items if item["evidence_status"] == "unsupported"]
+        if unsupported:
+            strategy = segment["visual_strategy"]
+            components = strategy["components"]
+            plain_aroll = (not components and not segment["visible_text"]
+                           and strategy["composition"]["family"] == "no_broll"
+                           and strategy["composition"]["presenter_mode"] == "full_frame")
+            illustration = (bool(components)
+                            and all(_is_task_illustration(component, segment) for component in components))
+            if not (plain_aroll or illustration):
+                raise _fail(f"segment references unsupported content: {segment['segment_id']} items={','.join(unsupported)}")
         allowed_text = {
             text
             for item in selected_items
@@ -1839,6 +1870,12 @@ def _publish_plan_generation(
             raise _fail("workflow changed before this visual publication")
         persisted = _exact_persisted_job(job)
         _require_visual_preparation(job)
+        authorization_paths = ()
+        if (job.root / "job-context.json").exists() or (job.root / "00-user-provided").exists():
+            from .visual_confirmation import validate_visual_authorization
+            authorized = validate_visual_authorization(job)
+            authorization_paths = tuple(job.job_dir / r["path"] for r in
+                                        (authorized["payload"]["source"], authorized["artifact"]))
         target = job.job_dir / "07-visual-direction"
         previous_manifest = None
         if _entry_exists(target):
@@ -1954,7 +1991,7 @@ def _publish_plan_generation(
                 tuple(
                     job.job_dir / str(record["path"])
                     for record in _generation_artifacts(manifest)
-                ),
+                ) + authorization_paths,
             )
         except BaseException as failure:
             writer_failure = failure
@@ -2036,8 +2073,8 @@ def _skill_selection_for_publication(
             review = check_offline_plan(PACKAGE_ROOT, draft,
                                         treatment, job_dir=job.job_dir)
             if review["status"] != "pass":
-                raise ValueError("motion semantic/native input check is " + review["status"]
-                                 + "; complete cited treatment assessments before publication")
+                raise ValueError("motion planning/native input check is " + review["status"]
+                                 + "; complete the required production inputs")
             selection["motion_review"] = review
         return selection
     except (contract_artifacts.ContractArtifactError, ValueError, KeyError, TypeError) as error:
@@ -2110,7 +2147,7 @@ def prepare_visual_direction(
     # The destructive schema gate and all pure contract checks precede every
     # injected freezer, compiler, artifact write, and workflow-state transition.
     draft = _validate_draft(brief)
-    if (job.stages["visual_direction"]["status"] == "ready_for_review"
+    if (job.stages["visual_direction"]["status"] == "ready"
             and any(r["path"].startswith("07-visual-confirmation/") for r in job.stages["visual_direction"]["artifacts"])):
         from .visual_confirmation import validate_realization_draft
         validate_realization_draft(job, draft, contract_artifacts.read_json_artifact(treatment_path))
@@ -2216,7 +2253,7 @@ def prepare_visual_direction(
             )
         writer = state_writer or (
             (lambda current, _stage, paths: workflow_state.mark_visual_ready(current, paths))
-            if job.stages["visual_direction"]["status"] == "ready_for_review" else mark_ready
+            if job.stages["visual_direction"]["status"] == "ready" else mark_ready
         )
         return _publish_plan_generation(job, plan, semantic_events_payload, writer,
                                         reviewed_entries, skill_selection, overlay_report,

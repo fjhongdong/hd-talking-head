@@ -39,6 +39,21 @@ def make_adapter(loader):
 
 
 class WhiteboardContracts(unittest.TestCase):
+    def test_prepare_ignores_parent_pythonpath_for_venv_and_pip(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(whiteboard.subprocess, "run") as run, \
+                patch.object(whiteboard, "_wrapper") as load_wrapper:
+            project = Path(directory).resolve()
+            load_wrapper.return_value.check_runtime.return_value = {"status": "ready"}
+            result = whiteboard.prepare_runtime(project)
+        self.assertTrue(result["installed"])
+        self.assertEqual(len(run.call_args_list), 2)
+        for call in run.call_args_list:
+            self.assertEqual(call.args[0][1], "-I")
+        self.assertEqual(run.call_args_list[0].args[0][2:5],
+                         ["-m", "venv", str(project / "vendor/whiteboard-video-engine/.venv")])
+        self.assertEqual(run.call_args_list[1].args[0][2:5], ["-m", "pip", "install"])
+
     def test_selected_dependency_has_actual_runtime_binding(self):
         manifest = preflight._load_manifest(whiteboard.SKILL / "references/dependency-manifest.json")
         item = next(item for item in manifest["dependencies"] if item["id"] == "whiteboard-video-adapter")
@@ -68,7 +83,10 @@ class WhiteboardContracts(unittest.TestCase):
         payload = json.dumps(brief).encode()
         adapter = make_adapter(lambda *_: json.dumps(brief).encode())
         component = _code_component(payload, dependency_id=whiteboard.DEPENDENCY_ID)
-        component.update(whiteboard.create_binding(adapter, payload, whiteboard.SKILL / whiteboard.ENTRY))
+        binding = whiteboard.create_binding(adapter, payload)
+        self.assertNotIn("sample_sha256", binding)
+        component.pop("sample_sha256")
+        component.update(binding)
         component["artifact_contract"]["alpha"] = False
         component["render_window"]["end_frame"] = 75
         recipe = _recipe([component])

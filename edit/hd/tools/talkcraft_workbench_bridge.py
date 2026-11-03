@@ -166,7 +166,7 @@ def apply_visual_direction_revision(
     return {
         "schema_version": "talkcraft-workbench-revision-result/v1",
         "job_id": current.job_id,
-        "outcome": "ready_for_review",
+        "outcome": "ready",
         "draft_sha256": draft_sha256,
         "base_checkpoint": {
             "revision": base_revision,

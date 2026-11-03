@@ -1,4 +1,4 @@
-"""Formal visual-assets builder for approved ShotRecipe v2 generations."""
+"""Direct visual-assets builder for ShotRecipe v2 generations."""
 
 from __future__ import annotations
 
@@ -17,13 +17,12 @@ from . import (
     material_usage,
     segment_render,
     state,
-    variant_matrix,
     visual_canary,
 )
 
 
 class VisualAssetsV2Error(RuntimeError):
-    """Raised when approved segment generations cannot be assembled exactly."""
+    """Raised when rendered segment generations cannot be assembled exactly."""
 
 
 PUBLICATION_JOURNAL_NAME = ".09-visual-assets.publication-journal.json"
@@ -184,8 +183,8 @@ def _publication_committed(
     paths: list[Path],
 ) -> bool:
     if job.stages["visual_assets"]["status"] not in {
-        "ready_for_review",
-        "approved",
+        "ready",
+        "completed",
     } or job.stages["visual_assets"].get("artifacts") != records:
         return False
     try:
@@ -375,18 +374,7 @@ def _relocate(
     rendered: segment_render.RenderedSegment,
     destination: Path,
 ) -> segment_render.RenderedSegment:
-    keyframes = {
-        name: {
-            **record,
-            "path": str(destination / "keyframes" / f"{name}.png"),
-        }
-        for name, record in rendered.keyframes.items()
-    }
-    return replace(
-        rendered,
-        video_path=str(destination / "segment.mp4"),
-        keyframes=keyframes,
-    )
+    return replace(rendered, video_path=str(destination / "segment.mp4"), keyframes={})
 
 
 def _materialize_reused(
@@ -399,31 +387,16 @@ def _materialize_reused(
         or contract_artifacts.sha256_file(source_video) != rendered.video_sha256
         or source_video.stat().st_size != rendered.video_bytes
     ):
-        raise VisualAssetsV2Error("approved segment bytes changed")
+        raise VisualAssetsV2Error("rendered segment bytes changed")
     destination.mkdir(parents=True, exist_ok=False)
     _copy_exact(source_video, destination / "segment.mp4")
-    for name, record in rendered.keyframes.items():
-        source = Path(str(record["path"]))
-        if (
-            not source.is_file()
-            or contract_artifacts.sha256_file(source) != record["sha256"]
-            or source.stat().st_size != record["bytes"]
-        ):
-            raise VisualAssetsV2Error("approved segment keyframe bytes changed")
-        copied = destination / "keyframes" / f"{name}.png"
-        _copy_exact(source, copied)
-        if (
-            contract_artifacts.sha256_file(copied) != record["sha256"]
-            or copied.stat().st_size != record["bytes"]
-        ):
-            raise VisualAssetsV2Error("approved segment keyframe copy is incomplete")
     relocated = _relocate(rendered, destination)
     if (
         contract_artifacts.sha256_file(destination / "segment.mp4")
         != rendered.video_sha256
         or (destination / "segment.mp4").stat().st_size != rendered.video_bytes
     ):
-        raise VisualAssetsV2Error("approved segment copy is incomplete")
+        raise VisualAssetsV2Error("rendered segment copy is incomplete")
     contract_artifacts.write_json_artifact(
         destination / "segment-manifest.json",
         asdict(relocated),
@@ -452,7 +425,6 @@ def _manifest(
     segments: list[segment_render.RenderedSegment],
     track_source: Path,
     track_path: Path,
-    reused_canary_ids: list[str],
     reused_formal_ids: list[str],
 ) -> dict[str, Any]:
     base = {
@@ -462,7 +434,6 @@ def _manifest(
         "visual_plan_sha256": plan["visual_plan_sha256"],
         "canvas": {"width": 1080, "height": 1920, "fps": 24},
         "duration": sum(item.frames for item in segments) / 24,
-        "reused_canary_segment_ids": reused_canary_ids,
         "reused_formal_segment_ids": reused_formal_ids,
         "segment_input_identities": {
             item["segment_id"]: _segment_input_identity(plan, item)
@@ -476,50 +447,6 @@ def _manifest(
         },
     }
     return {**base, "asset_manifest_sha256": contract_artifacts.sha256_json(base)}
-
-
-def _variant_matrix(
-    job: state.JobState,
-    plan: Mapping[str, Any],
-    segments: list[segment_render.RenderedSegment],
-) -> dict[str, Any]:
-    """Publish one explicit visual candidate per segment for safe local reuse."""
-    revision = str(plan["visual_plan_sha256"])
-    targets: list[dict[str, object]] = []
-    candidates: list[dict[str, object]] = []
-    for item in segments:
-        segment_id = str(item.segment_id)
-        target_id = f"segment-{segment_id}"
-        candidate_id = f"candidate-{segment_id}-visual"
-        targets.append({
-            "target_id": target_id,
-            "candidates": {"visual": candidate_id},
-        })
-        candidates.append({
-            "candidate_id": candidate_id,
-            "target_id": target_id,
-            "slot": "visual",
-            "status": "ready_for_review",
-            "input_fingerprint": _segment_input_identity(
-                plan,
-                next(segment for segment in plan["segments"] if str(segment["segment_id"]) == segment_id),
-            ),
-            "artifact_sha256": item.video_sha256,
-            "source_revision": revision,
-            "reuse_from": None,
-            "affected_scope": [segment_id],
-            "approval": {
-                "status": "ready_for_review",
-                "stage": "visual_assets",
-                "revision": revision,
-                "receipt_sha256": None,
-            },
-        })
-    return variant_matrix.build_variant_matrix(
-        job_revision=revision,
-        targets=targets,
-        candidates=candidates,
-    )
 
 
 def _validate_manifest_identity(payload: Mapping[str, Any]) -> None:
@@ -587,7 +514,6 @@ def _load_segments(
     *,
     require_manifest: bool,
     probe: Callable[[Path], Mapping[str, object]] | None = None,
-    canary_segment_ids: frozenset[str] = frozenset(),
 ) -> dict[str, segment_render.RenderedSegment]:
     manifest_path = target / "asset-manifest.json"
     if not manifest_path.is_file():
@@ -614,16 +540,7 @@ def _load_segments(
         if changed_plan and require_manifest:
             raise VisualAssetsV2Error("visual-assets manifest does not match the plan")
         if changed_plan and _current_generation_records(job) is None:
-            raise VisualAssetsV2Error("previous visual-assets approval evidence changed")
-        variant_path = target / "variant-matrix.json"
-        if variant_path.is_file() and not changed_plan:
-            try:
-                variant_matrix.validate_variant_matrix(
-                contract_artifacts.read_json_artifact(variant_path),
-                    expected_job_revision=str(plan["visual_plan_sha256"]),
-                )
-            except (variant_matrix.VariantMatrixError, contract_artifacts.ContractArtifactError):
-                raise VisualAssetsV2Error("visual-assets variant matrix is invalid") from None
+            raise VisualAssetsV2Error("previous visual-assets generation changed")
         identities = payload.get("segment_input_identities")
         if type(identities) is not dict:
             raise VisualAssetsV2Error("visual-assets segment input identities are missing")
@@ -640,10 +557,7 @@ def _load_segments(
                 raise VisualAssetsV2Error("visual-assets segment list is invalid")
             seen.add(identifier)
             if changed_plan and (
-                # A canary approved for the NEW plan supersedes older formal
-                # bytes, even when this segment's declared recipe is unchanged.
-                identifier in canary_segment_ids
-                or identifier not in plan_segments
+                identifier not in plan_segments
                 or identities[identifier] != _segment_input_identity(plan, plan_segments[identifier])
             ):
                 continue
@@ -676,16 +590,10 @@ def _load_segments(
             raise VisualAssetsV2Error("visual track bytes changed")
         if require_manifest:
             formal_paths = [manifest_path, track]
-            if variant_path.is_file():
-                formal_paths.append(variant_path)
             for item in results.values():
                 directory = Path(item.video_path).parent
                 formal_paths.extend(
                     (directory / "segment-manifest.json", Path(item.video_path))
-                )
-                formal_paths.extend(
-                    Path(str(record["path"]))
-                    for record in item.keyframes.values()
                 )
             _confirm_formal_artifact_records(job, formal_paths)
         return results
@@ -701,42 +609,9 @@ def _load_segments(
         raise VisualAssetsV2Error("visual-assets generation is invalid") from None
 
 
-def _approved_canary_segments(
-    job: state.JobState,
-    plan: Mapping[str, Any],
-    *,
-    probe: Callable[[Path], Mapping[str, object]] | None = None,
-) -> dict[str, segment_render.RenderedSegment]:
-    manifest = visual_canary.load_approved_visual_canary(job, probe=probe)
-    plan_segments = {
-        str(segment["segment_id"]): segment for segment in plan["segments"]
-    }
-    results: dict[str, segment_render.RenderedSegment] = {}
-    for value in manifest["segments"]:
-        identifier = str(value.get("segment_id"))
-        segment = plan_segments.get(identifier)
-        if segment is None or identifier in results:
-            raise VisualAssetsV2Error("approved canary does not match the visual plan")
-        try:
-            results[identifier] = visual_canary.validate_rendered_segment(
-                job,
-                plan,
-                segment,
-                value,
-                root=job.job_dir / "08-visual-canary/segments",
-                probe=probe,
-            )
-        except visual_canary.VisualCanaryError:
-            raise VisualAssetsV2Error(
-                "approved canary does not match the visual plan"
-            ) from None
-    return results
-
-
 def _prepare_visual_assets_v2_locked(
     job: state.JobState,
     plan: Mapping[str, Any],
-    canary: Mapping[str, segment_render.RenderedSegment],
     *,
     component_adapters: Mapping[str, object],
     ffmpeg_runner: Callable[[tuple[str, ...], float], None] | None = None,
@@ -746,7 +621,7 @@ def _prepare_visual_assets_v2_locked(
 ) -> Path:
     target = job.job_dir / "09-visual-assets"
     status = job.stages["visual_assets"]["status"]
-    if status in {"ready_for_review", "approved"}:
+    if status in {"ready", "completed"}:
         _load_segments(job, plan, target, require_manifest=True, probe=probe)
         return target / "visual-track.mp4"
 
@@ -766,7 +641,6 @@ def _prepare_visual_assets_v2_locked(
         target,
         require_manifest=False,
         probe=probe,
-        canary_segment_ids=frozenset(canary),
     )
     arroll = visual_canary.approved_aroll_record(job, plan)
 
@@ -774,7 +648,6 @@ def _prepare_visual_assets_v2_locked(
     stage_segments = stage / "segments"
     stage_segments.mkdir(parents=True)
     rendered: list[segment_render.RenderedSegment] = []
-    reused_canary_ids: list[str] = []
     reused_formal_ids: list[str] = []
     try:
         for segment in plan["segments"]:
@@ -783,10 +656,6 @@ def _prepare_visual_assets_v2_locked(
             if identifier not in scope and identifier in old:
                 rendered.append(_materialize_reused(old[identifier], destination))
                 reused_formal_ids.append(identifier)
-                continue
-            if identifier not in scope and identifier in canary:
-                rendered.append(_materialize_reused(canary[identifier], destination))
-                reused_canary_ids.append(identifier)
                 continue
             recipe = segment["shot_recipe"]
             render_args = {
@@ -846,28 +715,17 @@ def _prepare_visual_assets_v2_locked(
             final_segments,
             track,
             final_track,
-            reused_canary_ids,
             reused_formal_ids,
         )
         contract_artifacts.write_json_artifact(stage / "asset-manifest.json", payload)
-        contract_artifacts.write_json_artifact(
-            stage / "variant-matrix.json",
-            _variant_matrix(job, plan, final_segments),
-        )
-
         manifest_path = target / "asset-manifest.json"
-        variant_path = target / "variant-matrix.json"
-        artifacts = [manifest_path, variant_path, final_track]
+        artifacts = [manifest_path, final_track]
         artifact_paths_by_segment: dict[str, list[str]] = {}
         for item in final_segments:
             directory = target / "segments" / item.segment_id
             segment_artifacts = [
                 directory / "segment-manifest.json",
                 directory / "segment.mp4",
-                *(
-                directory / "keyframes" / f"{name}.png"
-                for name in item.keyframes
-                ),
             ]
             artifacts.extend(segment_artifacts)
             artifact_paths_by_segment[item.segment_id] = [
@@ -944,15 +802,14 @@ def _preflight_visual_assets_v2(
     job: state.JobState,
     *,
     probe: Callable[[Path], Mapping[str, object]] | None,
-) -> tuple[dict[str, Any], dict[str, segment_render.RenderedSegment]]:
+) -> dict[str, Any]:
     if job.version != 2:
         raise VisualAssetsV2Error("formal visual-assets builder requires full-v2")
     try:
         plan = visual_canary.load_approved_visual_plan(job)
-        canary = _approved_canary_segments(job, plan, probe=probe)
     except visual_canary.VisualCanaryError as error:
         raise VisualAssetsV2Error(str(error)) from None
-    return plan, canary
+    return plan
 
 
 def prepare_visual_assets_v2(
@@ -964,18 +821,17 @@ def prepare_visual_assets_v2(
     frame_extractor: Callable[[Path, float, Path], None] | None = None,
     assembler: Callable[[list[Path], Path], None] | None = None,
 ) -> Path:
-    """Reuse approved canary bytes and execute only non-canary recipes."""
+    """Render the full plan, reusing this Job's segments with identical input."""
 
-    plan, canary = _preflight_visual_assets_v2(job, probe=probe)
+    plan = _preflight_visual_assets_v2(job, probe=probe)
     with _visual_assets_writer(job):
         requested_job = job
         current_job = state.load_job(requested_job.job_dir)
-        plan, canary = _preflight_visual_assets_v2(current_job, probe=probe)
+        plan = _preflight_visual_assets_v2(current_job, probe=probe)
         _recover_publication(current_job)
         result = _prepare_visual_assets_v2_locked(
             current_job,
             plan,
-            canary,
             component_adapters=component_adapters,
             ffmpeg_runner=ffmpeg_runner,
             probe=probe,

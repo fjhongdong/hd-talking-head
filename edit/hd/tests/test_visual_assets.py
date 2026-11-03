@@ -77,7 +77,9 @@ class VisualAssetsSchemaEntryTests(unittest.TestCase):
             entrypoint.assert_not_called()
 
     def test_old_job_is_rejected_before_any_visual_assets_operation(self) -> None:
-        job = state.create_job(self.root, self.video, self.script, profile="legacy-v1")
+        job = state.create_job(self.root, self.video, self.script, profile="full-v2")
+        job = copy.copy(job)
+        job.version = 1  # Invalid caller input only; no legacy workflow is created.
         self._assert_rejected_without_mutation(job)
 
     def test_old_visual_plan_schema_is_rejected_before_v2_builder(self) -> None:
@@ -108,6 +110,20 @@ class VisualAssetsSchemaEntryTests(unittest.TestCase):
         )
         self._assert_rejected_without_mutation(job)
 
+    def test_direct_preflight_loads_the_plan_without_loading_a_canary(self) -> None:
+        job = state.create_job(self.root, self.video, self.script, profile="full-v2")
+        plan = {"visual_plan_sha256": "a" * 64}
+        with mock.patch.object(
+            visual_assets_v2.visual_canary, "load_approved_visual_plan", return_value=plan,
+        ) as load_plan, mock.patch.object(
+            visual_assets_v2.visual_canary, "load_approved_visual_canary",
+            side_effect=AssertionError("direct production must not load canary"),
+        ) as load_canary:
+            self.assertIs(plan, visual_assets_v2._preflight_visual_assets_v2(job, probe=None))
+        load_plan.assert_called_once_with(job)
+        load_canary.assert_not_called()
+        self.assertNotIn("visual_canary", job.stages)
+
     def test_public_entry_has_no_old_job_runner_parameters(self) -> None:
         parameters = inspect.signature(visual_assets.prepare_visual_assets).parameters
         for removed in (
@@ -124,7 +140,9 @@ class VisualAssetsSchemaEntryTests(unittest.TestCase):
         self.assertIn("segment_ffmpeg_runner", parameters)
 
     def test_direct_v2_entry_rejects_old_job_before_lock_or_recovery(self) -> None:
-        job = state.create_job(self.root, self.video, self.script, profile="legacy-v1")
+        job = state.create_job(self.root, self.video, self.script, profile="full-v2")
+        job = copy.copy(job)
+        job.version = 1  # Invalid caller input only; no legacy workflow is created.
         before = (job.job_dir / "workflow.json").read_bytes()
         recover = mock.Mock(side_effect=AssertionError("recovery must not run"))
         writer = mock.Mock(side_effect=AssertionError("writer lock must not open"))

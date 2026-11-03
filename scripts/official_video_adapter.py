@@ -41,7 +41,7 @@ def create_adapter(ffmpeg_executable):
             invocation_evidence={"source_id": context.component["source_id"],
                 "source_sha256": context.source_sha256,
                 "upstream": "video-download and video-use", "external_requests": 0},
-            qa={"passed": True, "checks": ["encoded video preserved; native audio removed"]})
+            qa={"passed": True, "checks": ["technical: encoded video preserved; native audio removed"]})
 
     return KindAdapter(kind="official_material", approved_executor="official-media",
         adapter_id="official-video-snapshot", artifact_media_type="video",

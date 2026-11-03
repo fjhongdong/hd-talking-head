@@ -9,6 +9,7 @@ from scripts.package_paths import PACKAGE_ROOT
 import copy
 import hashlib
 import importlib
+import os
 import re
 import shutil
 import subprocess
@@ -169,7 +170,63 @@ def validate_overlay_capability(route: str, binding: Mapping, *, registered: Map
     return row["capability"]
 
 
+def _catalog_sources(project: Path, *, previous: tuple | None = None) -> tuple:
+    """Track native sources also restored from, and excluded by, the release archive."""
+    if previous is None:
+        from scripts.motion_native_skill_adapter import SOURCES
+        paths = set()
+        for name, _, _ in SOURCES.values():
+            record_path = project / 'references' / (name + '-native-source.json')
+            record = contract_artifacts.read_json_artifact(record_path)
+            root = project / record['source_root']
+            if not root.resolve(strict=True).is_relative_to(project / 'vendor'):
+                raise ValueError('Motion capability native source escapes vendor')
+            paths.update((record_path, root))
+            for name in (*record['files'], *record.get('symlinks', {})):
+                relative = Path(name)
+                if relative.is_absolute() or '..' in relative.parts:
+                    raise ValueError('Motion capability native source path is invalid')
+                paths.add(root / relative)
+            # source_root checks the complete native inventory, including
+            # directories that the portable release verifier may exclude.
+            for directory, children, _ in os.walk(root):
+                paths.add(Path(directory))
+                paths.update(Path(directory) / name for name in children)
+    else:
+        paths = {Path(row[0]) for row in previous}
+    return tuple((str(path), stat.st_dev, stat.st_ino, stat.st_mode, stat.st_size,
+                  stat.st_mtime_ns, stat.st_ctime_ns)
+                 for path in sorted(paths) for stat in (path.lstat(),))
+
+
 def load_catalog(project_root: Path) -> list[dict]:
+    from .startup import _operation_cache
+
+    project = Path(project_root).resolve(strict=True)
+    memo = _operation_cache(project)
+    key = ('motion_catalog', str(project))
+    if memo is not None and key in memo:
+        cached = memo[key]
+        try:
+            unchanged = _catalog_sources(project, previous=cached['sources']) == cached['sources']
+        except (OSError, ValueError):
+            unchanged = False
+        if unchanged:
+            return copy.deepcopy(cached['rows'])
+        del memo[key]
+    sources = _catalog_sources(project) if memo is not None else None
+    rows = _load_catalog(project)
+    # A loader may run long enough for an external source change. Only retain
+    # its result if the same verified operation inventory is still current.
+    if memo is not None:
+        if (_operation_cache(project) is not memo
+                or _catalog_sources(project, previous=sources) != sources):
+            raise ValueError('Motion capability sources changed during this operation')
+        memo[key] = {'rows': copy.deepcopy(rows), 'sources': sources}
+    return rows
+
+
+def _load_catalog(project_root: Path) -> list[dict]:
     from .broll_skill_selection import _discover_native_candidates, talkcraft_candidates, motion_native_candidates
 
     project = Path(project_root).resolve(strict=True)
@@ -259,7 +316,7 @@ def _approved_speech(job_dir: Path | None) -> list[dict] | None:
                             ("edit_structure", "06-edit-structure/timeline-map.json")):
         approved = workflow["stages"][stage]
         records = [row for row in approved["artifacts"] if row["path"] == relative]
-        if approved["status"] != "approved" or len(records) != 1:
+        if approved["status"] != "completed" or len(records) != 1:
             return None
         path = _path(root, relative)
         if (contract_artifacts.sha256_file(path) != records[0]["sha256"]
@@ -314,8 +371,6 @@ def _ai_brief_evidence(job_dir, treatment, segment, component):
                 raise ValueError("generated media binding differs from its real completion record")
             if (record.get("segment_id"), record.get("component_id")) != (segment["segment_id"], component):
                 raise ValueError("generated media record belongs to another visual target")
-            if not record.get("semantic_brief", {}).get("observed_scene", "").strip():
-                raise ValueError("generated media needs an observation of its actual scene")
             source = record.get("source_binding")
             job = state.load_job(root)
             aroll = next(r for r in job.stages["edit_structure"]["artifacts"]
@@ -939,10 +994,10 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                      and brief["native_result"].get("status") == "completed")):
             not_verified.append({"segment_id": key[0], "component_id": component,
                                  "check": "completed_wake_native_result"})
-        semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief, phase=phase)
+        semantic = {"status": "not_reviewed", "reason": "Human review follows delivery"}
         native = _native_input_check(project_root, row, brief, job_dir=job_dir,
                                      segment=segment, component_id=component, use=use)
-        for name, result in (("semantic_fit", semantic), ("native_input_constraints", native)):
+        for name, result in (("native_input_constraints", native),):
             item = {"segment_id": key[0], "component_id": component,
                     "check": name, "reason": result.get("reason", "")}
             if result["status"] == "fail":
@@ -963,20 +1018,12 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         key = (segment["segment_id"], component)
         brief = _bound_brief(job_dir, treatment, segment, component)
         row = {"candidate_id": "ai-generated/direct", "capability": {"capability_type": "generated_scene"}}
-        semantic = _semantic_assessment(job_dir, treatment, segment, component, row, speech, brief)
+        semantic = {"status": "not_reviewed", "reason": "Human review follows delivery"}
         checks.append({"segment_id": key[0], "component_id": component, "use": "broll",
                        "selected": "ai-generated/direct", "query_tags": query_by_key[key].get("tags", []),
                        "semantic": semantic, "native_input": {"status": "pass", "reason": "completed media binding checked"}})
-        if semantic["status"] != "pass":
-            (failures if semantic["status"] == "fail" else not_verified).append(
-                {"segment_id": key[0], "component_id": component, "check": "semantic_fit", "reason": semantic.get("reason", "")})
-    declared = treatment.get("semantic_assessments", [])
-    expected = selected_targets | {(segment["segment_id"], component) for segment, component in direct}
-    if isinstance(declared, list) and any(not isinstance(item, dict) or
-            (item.get("segment_id"), item.get("component_id")) not in expected for item in declared):
-        failures.append({"check": "semantic_assessment_target", "reason": "assessment has an unknown target"})
     return {"status": "fail" if failures else ("needs_review" if not_verified else "pass"),
-            "scope": "offline_orchestration_only", "semantic_authority": "host_judgement_with_bound_sources",
+            "scope": "offline_orchestration_only", "semantic_authority": "candidate_matching_then_human_final_review",
             "catalog": catalog_summary(catalog), "broll_components": len(broll["assignments"]),
             "overlay_components": len(overlays), "checks": checks, "not_verified": not_verified,
             "spoken_segments": spoken_segments,

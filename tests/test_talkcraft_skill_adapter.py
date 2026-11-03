@@ -31,7 +31,7 @@ class TalkCraftSkillTests(unittest.TestCase):
         self.assertEqual(len(rows),108)
         self.assertEqual(sum(row['native_role']=='scene' for row in rows),51)
         self.assertEqual({row['native_role'] for row in rows},{'scene','overlay','annotation','transition','camera'})
-        self.assertTrue(all('/upstream/template/cards/' in row['source'] for row in rows))
+        self.assertTrue(all(Path(row['source']).parent == root / 'template/cards' for row in rows))
 
     def test_native_task_passes_inputs_and_output_spec_without_parent_direction(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -76,7 +76,7 @@ class TalkCraftSkillTests(unittest.TestCase):
             root=Path(directory);p=root/'native-inputs/native-test/result.json';p.parent.mkdir(parents=True);p.write_bytes(b'{}')
             with self.assertRaisesRegex(ValueError,'descriptor'):
                 native.load_result(root,json.dumps(brief()),expected_record={'path':'wrong.json','sha256':'a'*64,'bytes':2},expected_renderer_version='4.0.519')
-            with self.assertRaisesRegex(ValueError,'reviewed version'):
+            with self.assertRaisesRegex(ValueError,'frozen version'):
                 native.load_result(root,json.dumps(brief()),expected_record={'path':brief()['result_record_path'],'sha256':'a'*64,'bytes':2},expected_renderer_version='4.0.519')
 
     def test_original_locked_runtime_is_ready_outside_native_source(self):
@@ -96,7 +96,8 @@ class TalkCraftSkillTests(unittest.TestCase):
                     reference_root=_env.PROJECT, dependency_root=_env.SKILL)
         self.assertEqual(result['status'], 'bound', result)
 
-    def test_capture_rejects_cached_segments_and_foreign_segment_directory_before_launch(self):
+    @mock.patch.object(native, 'require_job_directory_identity', return_value=SimpleNamespace(job_id='native-test'))
+    def test_capture_rejects_cached_segments_and_foreign_segment_directory_before_launch(self, _identity):
         from prepare_talkcraft_native import check
         runtime = check(_env.PROJECT)
         with tempfile.TemporaryDirectory() as directory:
@@ -113,6 +114,32 @@ class TalkCraftSkillTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'current native project'):
                     native.capture_render(root, request, argv + ['--all', '--seg-dir', str(root / 'old-segments')])
                 launch.assert_not_called()
+
+    @mock.patch.object(native, 'require_job_directory_identity', return_value=SimpleNamespace(job_id='native-test'))
+    def test_capture_requires_tsconfig_in_native_remotion_root_before_launch(self, _identity):
+        from prepare_talkcraft_native import check
+        runtime = check(_env.PROJECT)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            payload = brief()
+            request = root / 'brief.json'; request.write_text(json.dumps(payload))
+            project = root / payload['project_directory']; remotion = project / 'remotion'
+            remotion.mkdir(parents=True)
+            (project / 'SHOTBOOK.md').write_text('Current native project')
+            (project / 'tsconfig.json').write_text('{}')
+            (remotion / 'remotion.config.ts').write_text('export {};')
+            (remotion / 'node_modules').symlink_to(runtime['node_modules'], target_is_directory=True)
+            argv = [runtime['tools']['node'], str(native.source_root() / native.NATIVE_RENDER),
+                    '--all', '--concat', 'out/new.mp4']
+            with mock.patch.object(native, '_inputs'), mock.patch('prepare_talkcraft_native.check', return_value=runtime), \
+                    mock.patch.object(native.subprocess, 'run', side_effect=AssertionError('native renderer launched without its tsconfig')) as launch:
+                with self.assertRaisesRegex(ValueError, 'missing.*remotion/tsconfig.json'):
+                    native.capture_render(root, request, argv)
+                launch.assert_not_called()
+                (remotion / 'tsconfig.json').write_text('{}')
+                with self.assertRaisesRegex(AssertionError, 'native renderer launched'):
+                    native.capture_render(root, request, argv)
+                launch.assert_called_once()
 
     def test_frozen_producer_version_cannot_be_relabelled_by_consumer(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -216,7 +243,7 @@ class TalkCraftStageFlowTests(unittest.TestCase):
         review['candidates']=[{'candidate_id':m['candidate']['candidate_id'],'fit':'preferred' if m['candidate']['candidate_id']=='video-talkcraft:source-converge' else 'equivalent',
             'reason':'临时流程fixture语义评审','visual_pattern':'source-convergence','design_plan':design} for m in cached['matches']]
         treatment['skill_selection']['beats'].append(review)
-        treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root)
+        treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root,director=director)
         selected=treatment['skill_selection']['assignments'][-1]
         self.assertEqual(selected['candidate_id'],'video-talkcraft:source-converge')
         treatment['motion_readability'].append({'segment_id':'seg-002','component_id':'component-2','targets':[],
@@ -250,9 +277,13 @@ class TalkCraftStageFlowTests(unittest.TestCase):
             'working_directory':payload['project_directory']+'/remotion','project_files':native.project_files(root,project),'output':output.relative_to(root).as_posix(),
             'renderer_version':runtime['renderer_version'],'renderer_package':native.descriptor(root,package),'exit_code':0,'stdout':'isolated completion fixture, existing media','stderr':''}
         artifacts.write_json_artifact(call_path,call)
-        native.publish_completed(root,request,call_path,qa_note='隔离阶段fixture，复用既有媒体，不执行原生渲染')
-        with self.assertRaisesRegex(visual_plan.VisualPlanError,'motion semantic/native input check'):
-            visual_plan._skill_selection_for_publication(self.job,director,tpath)
+        native.publish_completed(root,request,call_path)
+        self.assertEqual(visual_plan._skill_selection_for_publication(self.job,director,tpath)['motion_review']['status'], 'pass')
+        original_media = output.read_bytes()
+        output.write_bytes(original_media + b'changed')
+        with self.assertRaisesRegex(ValueError, 'changed'):
+            native.inspect_result(root, raw)
+        output.write_bytes(original_media)
         completed=motion._bound_brief(root,treatment,segment,'component-2')['native_result']
         assessment['content_refs']=[]
         for item in [completed['shotbook'],*completed['scene_sources']]:
@@ -262,7 +293,7 @@ class TalkCraftStageFlowTests(unittest.TestCase):
         treatment['semantic_assessments'][-1]=assessment
         artifacts.write_json_artifact(tpath,treatment)
         self.assertEqual(visual_plan._skill_selection_for_publication(self.job,director,tpath)['motion_review']['status'],'pass')
-        run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json','host_qa_note':'隔离fixture完成后真实工程引用核对'}})
+        run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json'}})
         self.job=state.load_job(root);confirmation.validate_visual_authorization(self.job,require_realized=True)
         plan=visual_canary.load_approved_visual_plan(self.job);recipe=plan['segments'][1]['shot_recipe']
         result=executor.execute_component(self.job,executor.ComponentExecutionRequest(recipe=recipe,component_id='component-2'),adapters=run_stage.native_component_adapters(_env.PROJECT,self.job))

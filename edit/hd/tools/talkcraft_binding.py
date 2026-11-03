@@ -163,7 +163,7 @@ def bind_approved_brief_bundle(
         or current.expected_bytes != job.expected_bytes
     ):
         _fail("Job revision changed before TalkCraft binding")
-    if current.stages["visual_direction"].get("status") != "approved":
+    if current.stages["visual_direction"].get("status") != "completed":
         _fail("visual_direction must be currently approved")
     try:
         approved_plan_value, plan_artifact_sha256 = _approved_json_artifact(

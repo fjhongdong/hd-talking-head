@@ -12,12 +12,10 @@ from edit.hd.tools.broll_component_executor import AdapterResult, KindAdapter, _
 
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 EXECUTOR = "generated_media"
+_NORMALIZATION_FIELDS = {'schema_version', 'source', 'output', 'source_probe', 'output_probe',
+                         'transform', 'frame_md5_sha256', 'command'}
 
-def _validate_observation_and_source(record: dict) -> None:
-    brief = record.get("semantic_brief")
-    observed = brief.get("observed_scene") if isinstance(brief, dict) else None
-    if not isinstance(observed, str) or not observed.strip():
-        raise ValueError("generated media semantic brief requires observed scene evidence")
+def _validate_source(record: dict) -> None:
     source = record.get("source_binding")
     if not isinstance(source, dict) or set(source) != {"aroll_sha256", "start", "end"}:
         raise ValueError("generated media source binding is invalid")
@@ -175,9 +173,7 @@ def _source_window_processing(normalization):
             'command': normalization['command'], 'frame_md5_sha256': normalization['frame_md5_sha256']}
 
 def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
-    required = {'schema_version', 'source', 'output', 'source_probe', 'output_probe',
-                'transform', 'frame_md5_sha256', 'command'}
-    if (not isinstance(normalization, dict) or set(normalization) != required
+    if (not isinstance(normalization, dict) or set(normalization) != _NORMALIZATION_FIELDS
             or normalization['schema_version'] != 1):
         raise ValueError('composition base normalization evidence is invalid')
     source, output = normalization['source'], normalization['output']
@@ -191,6 +187,14 @@ def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
         with _pinned_media(path, media):
             pass
     source_path, output_path = (Path(job.job_dir) / media['job_path'] for media in (source, output))
+    from edit.hd.tools.startup import current_operation
+    operation = current_operation()
+    cache_key = ('generated-media-normalization', str(Path(job.job_dir).resolve()),
+                 hashlib.sha256(_canonical(normalization)).hexdigest(), str(ffprobe), str(ffmpeg),
+                 tuple((item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns, item.st_ctime_ns)
+                       for path in (source_path, output_path) for item in (path.stat(),)))
+    if operation is not None and cache_key in operation.memo:
+        return
     before, after = _base_probe(source_path, ffprobe), _base_probe(output_path, ffprobe)
     if 'source_frames' in normalization['transform']:
         from lovart_existing_video_adapter import _framemd5
@@ -209,6 +213,8 @@ def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
         for media in (source, output):
             with _pinned_media(Path(job.job_dir) / media['job_path'], media):
                 pass
+        if operation is not None:
+            operation.memo[cache_key] = True
         return
     transform = _base_transform(before)
     command = normalization['command']
@@ -238,6 +244,8 @@ def _verify_base_normalization(job, normalization, ffprobe, ffmpeg):
     for media in (source, output):
         with _pinned_media(Path(job.job_dir) / media['job_path'], media):
             pass
+    if operation is not None:
+        operation.memo[cache_key] = True
 
 def normalize_composition_base(job, request_id, *, output_path, ffprobe_executable,
                                ffmpeg_executable, output_index=0):
@@ -267,21 +275,17 @@ def normalize_composition_base(job, request_id, *, output_path, ffprobe_executab
     return evidence
 
 def _composition_base_scope(record):
+    if 'normalization' in record and (not isinstance(record['normalization'], dict)
+                                     or set(record['normalization']) != _NORMALIZATION_FIELDS):
+        raise ValueError('generated media normalization evidence is invalid')
     scope = record.get('composition_base')
     if scope is None:
-        if (record.get('qa', {}).get('scope') == 'composition_base'
-                or 'normalization' in record and 'camera_source' not in record and not _source_window(record)):
-            raise ValueError('composition base scope is missing')
         return
-    if (not isinstance(scope, dict) or set(scope) != {'source_qa', 'action_component_id'}
+    if (not isinstance(scope, dict) or set(scope) != {'action_component_id'}
             or not isinstance(scope['action_component_id'], str) or not scope['action_component_id'].strip()
             or scope['action_component_id'] == record['component_id']
-            or not isinstance(scope['source_qa'], dict) or scope['source_qa'].get('passed') is not False
-            or not isinstance(scope['source_qa'].get('observed_scene'), str)
-            or not scope['source_qa']['observed_scene'].strip()
-            or record.get('qa', {}).get('scope') != 'composition_base'
             or record['media']['media_type'] != 'video'):
-        raise ValueError('composition base requires explicit failed original-effect QA and separate base QA')
+        raise ValueError('composition base requires a separate action component and video source')
 
 def validate_composition_base(record, recipe):
     """A limited-use base cannot be consumed as a standalone successful effect."""
@@ -306,17 +310,11 @@ def validate_composition_base(record, recipe):
 def _camera_source_scope(record):
     scope = record.get('camera_source')
     if scope is None:
-        if record.get('qa', {}).get('scope') == 'framing_source':
-            raise ValueError('camera source scope is missing')
         return
     from edit.hd.tools import parent_camera_framing
-    if (not isinstance(scope, dict) or set(scope) != {'source_qa','framing'}
-            or 'composition_base' in record or record['media']['media_type'] != 'video'
-            or record.get('qa', {}).get('scope') != 'framing_source'
-            or not isinstance(scope['source_qa'], dict) or scope['source_qa'].get('passed') is not False
-            or not isinstance(scope['source_qa'].get('observed_scene'), str)
-            or not scope['source_qa']['observed_scene'].strip()):
-        raise ValueError('camera source needs its failed original-effect QA and separately bound parent framing')
+    if (not isinstance(scope, dict) or set(scope) != {'framing'}
+            or 'composition_base' in record or record['media']['media_type'] != 'video'):
+        raise ValueError('camera source needs separately bound parent framing')
     parent_camera_framing.validate_descriptor(scope['framing'])
 
 def validate_camera_source(job, record, segment):
@@ -356,7 +354,7 @@ def _approved_generation_request(job, generation, record):
     return identity
 
 def validate_record(record: dict, job) -> dict:
-    if not isinstance(record, dict) or record.get("schema_version") not in (1, 2):
+    if not isinstance(record, dict) or record.get("schema_version") != 3:
         raise ValueError("generated media record schema is invalid")
     if record.get("status") != "completed" or record.get("job_id") != job.job_id:
         raise ValueError("generated media record is not a completed record for this Job")
@@ -372,20 +370,18 @@ def validate_record(record: dict, job) -> dict:
     if not _HEX.fullmatch(str(media["sha256"])) or not isinstance(media["byte_count"], int) or media["byte_count"] <= 0:
         raise ValueError("generated media identity is invalid")
     if media["media_type"] not in {"image", "video"}: raise ValueError("generated media type is invalid")
-    for key in ("generation", "qa", "semantic_brief"):
+    for key in ("generation", "semantic_brief"):
         if not isinstance(record.get(key), dict): raise ValueError(f"generated media {key} evidence is missing")
     approved_request_id = record["generation"].get("approved_request_id")
     if approved_request_id is not None and (not isinstance(approved_request_id, str) or not approved_request_id):
         raise ValueError("generated media approved request identity is invalid")
     if ("approved_plan" in record["generation"] or "approved_request" in record["generation"]):
         _approved_generation_request(job, record["generation"], record)
-    if record["qa"].get("passed") is not True or not record["qa"].get("observed_scene"):
-        raise ValueError("generated media requires host QA and observed scene evidence")
-    _validate_observation_and_source(record)
+    _validate_source(record)
     _composition_base_scope(record)
     _camera_source_scope(record)
     window = _source_window(record)
-    if 'composition_base' in record or 'camera_source' in record or window:
+    if 'composition_base' in record or 'camera_source' in record or 'normalization' in record:
         generation = record['generation']
         _validate_base_queue_identity(job, record)
         original = _queue_media(job, generation['request_id'], generation.get('output_index', 0))
@@ -405,30 +401,29 @@ def validate_record(record: dict, job) -> dict:
                     or abs(normalization['output_probe']['frames'] -
                            (record['source_binding']['end'] - record['source_binding']['start']) * 24) > 1e-6):
                 raise ValueError('source window differs from its source chain or approved spoken duration')
+        if normalization is not None:
             ffprobe, ffmpeg = shutil.which('ffprobe'), shutil.which('ffmpeg')
             if not ffprobe or not ffmpeg:
-                raise ValueError('source window verification needs actual FFprobe and FFmpeg')
+                raise ValueError('normalization verification needs actual FFprobe and FFmpeg')
             _verify_base_normalization(job, normalization, ffprobe, ffmpeg)
     return json.loads(_canonical(record))
 
 def record_from_completed_output(*, job_id, segment_id, component_id, provider, model,
                                  endpoint_id, generation_id, prompt_sha256, media,
-                                 generation, qa, semantic_brief):
-    """Normalize one queue completion; requires observed host QA, never fabricates it."""
-    if not isinstance(qa, dict) or qa.get("passed") is not True or not qa.get("observed_scene"):
-        raise ValueError("queue completion must include passed host QA and observed_scene")
-    return {"schema_version": 1, "status": "completed", "job_id": job_id,
+                                 generation, semantic_brief):
+    """Normalize actual queue execution evidence without asserting visual quality."""
+    return {"schema_version": 3, "status": "completed", "job_id": job_id,
             "segment_id": segment_id, "component_id": component_id,
             "provider": provider, "model": model, "endpoint_id": endpoint_id,
             "generation_id": generation_id, "prompt_sha256": prompt_sha256,
-            "media": media, "generation": generation, "qa": qa,
+            "media": media, "generation": generation,
             "semantic_brief": semantic_brief}
 
 def record_from_queue(job, request_id, *, segment_id, component_id, source_binding,
-                      qa, semantic_brief, ffprobe_executable, output_index=0,
+                      semantic_brief, ffprobe_executable, output_index=0,
                       composition_base=None, camera_source=None, normalization=None, ffmpeg_executable=None,
                       source_window=None):
-    """Bind the actual queue output and observed content to one speech window."""
+    """Bind the actual queue output and task content to one speech window."""
     from edit.hd.tools import generation_queue, generation_inputs, contract_artifacts as artifacts
     item = generation_queue.status(job.job_dir)["items"][request_id]
     if item["status"] != "completed":
@@ -453,8 +448,8 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
     if not path.is_absolute():
         path = job.job_dir / path
     if normalization is not None:
-        if (composition_base is None and camera_source is None and not window) or ffmpeg_executable is None:
-            raise ValueError('normalization requires scoped composition base use and actual FFmpeg verification')
+        if ffmpeg_executable is None:
+            raise ValueError('normalization requires actual FFmpeg verification')
         if normalization.get('source') != _queue_media(job, request_id, output_index):
             raise ValueError('normalization does not belong to the original queue output')
         if not window:
@@ -500,10 +495,10 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
                     **({"source_media": output["source"], "processing": output["processing"]}
                        if output.get("source") else {}),
                     "submitted_request": item["submitted_request"]},
-        qa=qa, semantic_brief=semantic_brief)
+        semantic_brief=semantic_brief)
     record["source_binding"] = source_binding
     record["source_dimensions"] = {"width": width, "height": height}
-    if composition_base is not None or camera_source is not None or window:
+    if composition_base is not None or camera_source is not None or normalization is not None:
         if composition_base is not None:
             record['composition_base'] = composition_base
         if camera_source is not None:
@@ -520,7 +515,7 @@ def record_from_queue(job, request_id, *, segment_id, component_id, source_bindi
 def prepare_binding(record: dict, *, execution_mode="reuse_completed_generated_media") -> dict:
     if not isinstance(record, dict) or record.get("status") != "completed":
         raise ValueError("generated media binding requires a completed record")
-    _validate_observation_and_source(record)
+    _validate_source(record)
     _composition_base_scope(record)
     _camera_source_scope(record)
     media = record.get("media")
@@ -575,11 +570,6 @@ def _pinned_media(source, media):
 
 def create_adapter(job, record: dict):
     bound = validate_record(record, job)
-    if 'normalization' in bound and not _source_window(bound):
-        ffprobe, ffmpeg = shutil.which('ffprobe'), shutil.which('ffmpeg')
-        if not ffprobe or not ffmpeg:
-            raise ValueError('composition base normalization needs actual FFprobe and FFmpeg')
-        _verify_base_normalization(job, bound['normalization'], ffprobe, ffmpeg)
     media = bound["media"]
     source = Path(job.job_dir) / media["job_path"]
     with _pinned_media(source, media):
@@ -604,7 +594,7 @@ def create_adapter(job, record: dict):
             raise ValueError('generated media approved source window mismatch')
         validate_composition_base(bound, context.recipe)
         validate_camera_source(job, bound, segment)
-        if 'composition_base' in bound or 'camera_source' in bound or _source_window(bound):
+        if 'composition_base' in bound or 'camera_source' in bound or 'normalization' in bound:
             # Recheck the immutable provider output as well as the derivative.
             validate_record(bound, job)
         with _pinned_media(source, media) as pinned:
@@ -618,7 +608,7 @@ def create_adapter(job, record: dict):
             **({'camera_source':bound['camera_source'],
                 'normalization_sha256':hashlib.sha256(_canonical(bound.get('normalization'))).hexdigest()}
                if 'camera_source' in bound else {})},
-            qa={"passed": True, "checks": ["completed generation record and media identity matched"]})
+            qa={"passed": True, "checks": ["technical: completed generation record and media identity matched"]})
     return KindAdapter(kind="ai_generated", approved_executor=EXECUTOR, adapter_id="generated-media-v1",
         adapter_version=record_hash, artifact_media_type=media["media_type"], invoke=invoke,
         provider=bound["provider"], model=bound["model"], endpoint_id=bound["endpoint_id"])

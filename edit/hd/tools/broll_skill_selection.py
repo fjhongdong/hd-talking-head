@@ -468,9 +468,6 @@ def fixed_identity(row, *, job_dir=None):
         raise ValueError("fixed creation record belongs to another Job or is incomplete")
     if (record.get("segment_id"), record.get("component_id")) != (row.get("segment_id"), row.get("component_id")):
         raise ValueError("fixed creation record belongs to another visual item")
-    if (not isinstance(record.get("qa"), dict) or record["qa"].get("passed") is not True
-            or not isinstance(record.get("semantic_brief"), dict) or not record["semantic_brief"].get("observed_scene")):
-        raise ValueError("fixed creation record needs its completed visual QA")
     media = record["media"]
     path = confirmation._path(root, media["job_path"])
     if (contract_artifacts.sha256_file(path) != media["sha256"]
@@ -504,6 +501,59 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
                                                   job_id=workflow.get("job_id"))
     previous = confirmation._read(confirmation._exact(root, proposal["inputs"]["treatment"]))
     previous_director = confirmation._read(confirmation._exact(root, proposal["inputs"]["director"]))
+    # Once this revision is confirmed, its own receipt becomes the latest.
+    # It must carry the same actual decision and the frozen revision record.
+    approved = []
+    for path in (root / "manifests").glob("visual-authorization-r*.json"):
+        payload = confirmation._read(path)
+        if (payload.get("source_schema") != confirmation.SCHEMA
+                or payload.get("job_id") != workflow.get("job_id")
+                or payload.get("authorized_by") != "user"
+                or payload.get("authorization_scope") != "visual_plan_and_generation"
+                or not str(payload.get("user_confirmation", "")).strip()):
+            continue
+        checked, source = confirmation._validate_source(root, confirmation._record(root, path),
+                                                         job_id=workflow.get("job_id"))
+        if type(checked.get("revision")) is not int:
+            raise ValueError("confirmed revision has no valid workflow revision")
+        approved.append((checked["revision"], confirmation._record(root, path), checked, source))
+    if not approved:
+        raise ValueError("local revision needs the latest confirmed visual source")
+    latest_revision = max(item[0] for item in approved)
+    latest = [item for item in approved if item[0] == latest_revision]
+    if len(latest) != 1:
+        raise ValueError("latest visual confirmation is ambiguous")
+    _, latest_ref, latest_receipt, latest_proposal = latest[0]
+    compared_director, compared_treatment = director, treatment
+    if latest_ref != revision["previous_receipt"]:
+        frozen_treatment = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["treatment"]))
+        previous_numbering = proposal.get("numbering", {})
+        latest_numbering = latest_proposal.get("numbering", {})
+        current_rows = {row["row_id"] for rows in treatment.get("semantic_lists", {}).values() for row in rows}
+        if (frozen_treatment.get("skill_selection", {}).get("revision_locks") != revision
+                or latest_receipt.get("user_confirmation") != revision["user_confirmation"]
+                or any(latest_numbering.get(key) != value for key, value in previous_numbering.items())
+                or set(latest_numbering) != set(previous_numbering) | current_rows
+                or latest_proposal.get("numbering_scope_id") != proposal.get("numbering_scope_id")):
+            raise ValueError("local revision does not reference the latest visual confirmation")
+        frozen_director = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["director"]))
+        compared_director, compared_treatment = confirmation._validate_motion_realization(
+            root, frozen_director, frozen_treatment, director, treatment)
+        compared_director, compared_treatment = confirmation._normalize_lemo_typography(
+            root, frozen_director, frozen_treatment, compared_director, compared_treatment)
+        compared_director = confirmation._normalize_verified_technical_revisions(
+            frozen_director, frozen_treatment, director, treatment, compared_director)
+        # The local request is already confirmed. Technical realization must
+        # match that frozen selection, not replay its earlier semantic edit.
+        fields = ('semantic_lists', 'motion_queries', 'motion_matches', 'skill_selection',
+                  'numbering_scope_id', 'beat_sheet', 'generation_plan', 'overlay_selection')
+        if (compared_director != frozen_director
+                or any(compared_treatment.get(field) != frozen_treatment.get(field) for field in fields)):
+            raise ValueError('technical realization changed the confirmed visual selection')
+        choices = {(a['segment_id'], a['component_id']):a['candidate_id'] for a in
+                   [*selection.get('assignments', []), *selection.get('overlay_assignments', [])]}
+        choices.update({(c['segment_id'],c['component_id']):c['candidate_id'] for c in revision['changes']})
+        return choices
     # A later local edit starts from the verified published realization.  The
     # proposal may still contain pre-render inputs for earlier accepted repairs.
     stage = workflow.get("stages", {}).get("visual_direction", {})
@@ -529,42 +579,6 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
         inputs = realized[0]["realization_inputs"]
         previous_director = confirmation._read(confirmation._exact(root, inputs["director"]))
         previous = confirmation._read(confirmation._exact(root, inputs["treatment"]))
-    # Once this revision is confirmed, its own receipt becomes the latest.
-    # It must carry the same actual decision and the frozen revision record.
-    approved = []
-    for path in (root / "manifests").glob("local-qa-visual_direction-r*.json"):
-        payload = confirmation._read(path)
-        if (payload.get("source_schema") != confirmation.SCHEMA
-                or payload.get("job_id") != workflow.get("job_id")
-                or payload.get("passed") is not True or payload.get("reviewed_by") != "human"):
-            continue
-        checked, source = confirmation._validate_source(root, confirmation._record(root, path),
-                                                         job_id=workflow.get("job_id"))
-        if type(checked.get("revision")) is not int:
-            raise ValueError("confirmed revision has no valid workflow revision")
-        approved.append((checked["revision"], confirmation._record(root, path), checked, source))
-    if not approved:
-        raise ValueError("local revision needs the latest confirmed visual source")
-    latest_revision = max(item[0] for item in approved)
-    latest = [item for item in approved if item[0] == latest_revision]
-    if len(latest) != 1:
-        raise ValueError("latest visual confirmation is ambiguous")
-    _, latest_ref, latest_receipt, latest_proposal = latest[0]
-    compared_director, compared_treatment = director, treatment
-    if latest_ref != revision["previous_receipt"]:
-        frozen_treatment = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["treatment"]))
-        if (frozen_treatment.get("skill_selection", {}).get("revision_locks") != revision
-                or latest_receipt.get("user_confirmation") != revision["user_confirmation"]
-                or latest_proposal.get("numbering") != proposal.get("numbering")
-                or latest_proposal.get("numbering_scope_id") != proposal.get("numbering_scope_id")):
-            raise ValueError("local revision does not reference the latest visual confirmation")
-        frozen_director = confirmation._read(confirmation._exact(root, latest_proposal["inputs"]["director"]))
-        compared_director, compared_treatment = confirmation._validate_motion_realization(
-            root, frozen_director, frozen_treatment, director, treatment)
-        compared_director, compared_treatment = confirmation._normalize_lemo_typography(
-            root, frozen_director, frozen_treatment, compared_director, compared_treatment)
-        compared_director = confirmation._normalize_verified_technical_revisions(
-            frozen_director, frozen_treatment, director, treatment, compared_director)
     if (treatment.get("numbering_scope_id") != previous.get("numbering_scope_id")
             or proposal.get("numbering_scope_id") != previous.get("numbering_scope_id")):
         raise ValueError("local revision changed the confirmed numbering scope")
@@ -576,6 +590,21 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
     old_choices = {(a["segment_id"], a["component_id"]): a["candidate_id"] for a in
                    [*old.get("assignments", []), *old.get("overlay_assignments", [])]}
     previous_rows = {row["semantic_row_id"] for row in proposal["rows"]}
+    old_items = [(kind, row) for kind in ("broll", "overlay")
+                 for row in previous.get("semantic_lists", {}).get(kind, [])]
+    new_items = [(kind, row) for kind in ("broll", "overlay")
+                 for row in compared_treatment.get("semantic_lists", {}).get(kind, [])]
+    old_rows = {row["row_id"]: row for _, row in old_items}
+    new_rows = {row["row_id"]: row for _, row in new_items}
+    if (len(old_rows) != len(old_items) or len(new_rows) != len(new_items)
+            or set(old_rows) != previous_rows or not set(old_rows) <= set(new_rows)):
+        raise ValueError("local revision changed confirmed semantic rows or numbering")
+    old_kinds = {row["row_id"]: kind for kind, row in old_items}
+    new_kinds = {row["row_id"]: kind for kind, row in new_items}
+    if any(new_kinds[key] != kind for key, kind in old_kinds.items()):
+        raise ValueError("local revision changed confirmed semantic rows or numbering")
+    added_rows = set(new_rows) - previous_rows
+    old_segments = {segment["segment_id"]: segment for segment in previous_director["segments"]}
     changes, changed_rows = {}, set()
     for change in revision["changes"]:
         if (not isinstance(change, dict)
@@ -583,9 +612,18 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
                 or not {"semantic_row_id", "segment_id", "component_id", "candidate_id"} <= set(change)
                 or any(not isinstance(change[k], str) or not change[k].strip()
                        for k in ("semantic_row_id", "segment_id", "component_id", "candidate_id"))
-                or change["semantic_row_id"] not in previous_rows):
-            raise ValueError("local revision change must identify an existing visual row and candidate")
+                or change["semantic_row_id"] not in new_rows):
+            raise ValueError("local revision change must identify a visual row and candidate")
         key = (change["segment_id"], change["component_id"])
+        if change["semantic_row_id"] in added_rows:
+            before = old_segments.get(change["segment_id"], {})
+            strategy = before.get("visual_strategy", {})
+            composition = strategy.get("composition", {})
+            if (strategy.get("components") != [] or before.get("visible_text") != []
+                    or composition.get("family") != "no_broll"
+                    or composition.get("presenter_mode") != "full_frame"
+                    or new_kinds[change["semantic_row_id"]] != "overlay"):
+                raise ValueError("local revision can add a semantic row only on existing plain A-roll")
         if key in changes:
             raise ValueError("local revision change is duplicated")
         changes[key] = change
@@ -598,8 +636,8 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
     if any(key not in current or current[key].get("semantic_row_id") != change["semantic_row_id"]
            for key, change in changes.items()):
         raise ValueError("local revision change is not an actual matching semantic beat")
-    if any(b.get("semantic_row_id") not in previous_rows for b in beats):
-        raise ValueError("local revision cannot add an unconfirmed semantic row")
+    if not added_rows <= changed_rows or any(b.get("semantic_row_id") not in new_rows for b in beats):
+        raise ValueError("local revision cannot add an unrequested semantic row")
     untouched_old = {key for key, beat in old_beats.items()
                      if beat.get("semantic_row_id") not in changed_rows}
     untouched_new = {key for key, beat in current.items()
@@ -615,31 +653,25 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
     if any(key not in changes for key, beat in current.items()
            if beat.get("semantic_row_id") in changed_rows):
         raise ValueError("every changed adjustable component needs the user's selected candidate")
-    old_items = [(kind, row) for kind in ("broll", "overlay")
-                 for row in previous.get("semantic_lists", {}).get(kind, [])]
-    new_items = [(kind, row) for kind in ("broll", "overlay")
-                 for row in compared_treatment.get("semantic_lists", {}).get(kind, [])]
-    old_rows = {row["row_id"]: row for _, row in old_items}
-    new_rows = {row["row_id"]: row for _, row in new_items}
-    if (len(old_rows) != len(old_items) or len(new_rows) != len(new_items)
-            or {row["row_id"]: kind for kind, row in old_items} != {
-                row["row_id"]: kind for kind, row in new_items}
-            or set(old_rows) != set(new_rows) or set(old_rows) != previous_rows):
-        raise ValueError("local revision changed confirmed semantic rows or numbering")
     for row_id, old_row in old_rows.items():
         after = new_rows[row_id]
         if row_id in changed_rows:
-            if {k: v for k, v in old_row.items() if k != "components"} != {
-                    k: v for k, v in after.items() if k != "components"}:
+            if {k: v for k, v in old_row.items() if k not in {"components", "visual_task"}} != {
+                    k: v for k, v in after.items() if k not in {"components", "visual_task"}}:
                 raise ValueError("local revision changed the confirmed row meaning")
             if ({item["segment_id"] for item in old_row["components"]} !=
                     {item["segment_id"] for item in after["components"]}):
                 raise ValueError("local revision changed the confirmed row's segments")
         elif after != old_row:
             raise ValueError("local revision changed an unaffected semantic row")
-    old_segments = {segment["segment_id"]: segment for segment in previous_director["segments"]}
+    for row_id in added_rows:
+        refs = new_rows[row_id].get("components", [])
+        if (not refs or any((ref["segment_id"], ref["component_id"]) not in changes
+                or changes[(ref["segment_id"], ref["component_id"])]["semantic_row_id"] != row_id
+                for ref in refs)):
+            raise ValueError("local revision added an unrequested semantic component")
     new_segments = {segment["segment_id"]: segment for segment in compared_director["segments"]}
-    changed_segments = {r["segment_id"] for r in proposal["rows"] if r["semantic_row_id"] in changed_rows}
+    changed_segments = {change["segment_id"] for change in changes.values()}
     if set(old_segments) != set(new_segments) or any(old_segments[sid] != new_segments[sid]
             for sid in old_segments if sid not in changed_segments):
         raise ValueError("local revision changed an unaffected component or binding")

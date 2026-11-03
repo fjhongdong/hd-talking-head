@@ -314,7 +314,7 @@ def _path(root, relative):
 def _approved(job, stage_id, relative):
     stage = job.stages[stage_id]
     records = [r for r in stage["artifacts"] if r["path"] == relative]
-    if stage["status"] != "approved" or len(records) != 1:
+    if stage["status"] != "completed" or len(records) != 1:
         raise ValueError(f"{relative} must belong to an approved stage")
     path = _path(job.job_dir, relative)
     if artifacts.sha256_file(path) != records[0]["sha256"] or path.stat().st_size != records[0]["bytes"]:

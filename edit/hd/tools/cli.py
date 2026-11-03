@@ -11,12 +11,9 @@ from typing import Any
 from .edit_timeline import EditTimelineError, generate_corrected_cleanup_proposal
 from .state import (
     WorkflowError,
-    approve,
     block,
-    create_job,
     current_stage,
     load_job,
-    mark_ready,
     revise,
 )
 
@@ -40,27 +37,13 @@ def _non_negative_int(value: str) -> int:
     return result
 
 
-def _repository_root() -> Path:
-    current = Path.cwd()
-    for candidate in (current, *current.parents):
-        marker = candidate / ".git"
-        if marker.is_dir() or marker.is_file():
-            return candidate
-    raise WorkflowError("repository root is unavailable")
-
-
-def _absolute_input(value: str) -> Path:
-    path = Path(value)
-    if not path.is_absolute():
-        raise WorkflowError("workflow input must be absolute")
-    return path
-
-
 def _current_stage(job: Any) -> str | None:
     return current_stage(job)
 
 
 def _summary(job: Any) -> dict[str, Any]:
+    from .delivery_approval import current_delivery_status
+
     return {
         "version": job.version,
         "job_id": job.job_id,
@@ -74,23 +57,12 @@ def _summary(job: Any) -> dict[str, Any]:
             }
             for stage_id, stage in job.stages.items()
         },
+        **current_delivery_status(job),
     }
 
 
 def _emit(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
-
-
-def _init(args: argparse.Namespace) -> dict[str, Any]:
-    root = Path(args.root) if args.root else _repository_root()
-    job = create_job(
-        root,
-        _absolute_input(args.video),
-        _absolute_input(args.script),
-        profile=args.profile,
-    )
-    return {"job_id": job.job_id, "job": job.job_dir.relative_to(job.root).as_posix(),
-            "status": "created"}
 
 
 def _status(args: argparse.Namespace) -> dict[str, Any]:
@@ -141,38 +113,15 @@ def _cache_reference(args: argparse.Namespace) -> dict[str, Any]:
         raise WorkflowError("reference transcript cache is unavailable") from exc
 
 
-def _approve(args: argparse.Namespace) -> dict[str, Any]:
-    job = load_job(Path(args.job))
-    if job.version == 2 and args.stage == "delivery":
-        from .delivery_approval import approve_delivery
-        approve_delivery(
-            job, expected_revision=args.expected_revision,
-            delivery_sha256=args.delivery_sha256, user_confirmation=args.user_confirmation,
-        )
-    else:
-        if any(value is not None for value in (
-            args.expected_revision, args.delivery_sha256, args.user_confirmation,
-        )):
-            raise WorkflowError("final confirmation parameters apply only to full-v2 delivery")
-        approve(job, args.stage)
-    return _summary(job)
-
-
 def _revise(args: argparse.Namespace) -> dict[str, Any]:
     job = load_job(Path(args.job))
-    revise(job, args.stage, args.reason)
+    revise(job, args.stage, args.reason, artifact_scope=tuple(args.artifact_scope))
     return _summary(job)
 
 
 def _block(args: argparse.Namespace) -> dict[str, Any]:
     job = load_job(Path(args.job))
     block(job, args.stage, args.reason, args.ai_attempts)
-    return _summary(job)
-
-
-def _ready(args: argparse.Namespace) -> dict[str, Any]:
-    job = load_job(Path(args.job))
-    mark_ready(job, args.stage, [Path(artifact) for artifact in args.artifact])
     return _summary(job)
 
 
@@ -183,7 +132,7 @@ def _apply_cleanup_corrections(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = _SafeArgumentParser(prog="python3 -m edit.hd.tools.cli")
+    parser = _SafeArgumentParser(prog="run.py job")
     commands = parser.add_subparsers(dest="command", required=True)
 
     reference = commands.add_parser("search-reference")
@@ -203,15 +152,6 @@ def _parser() -> argparse.ArgumentParser:
     cache_reference.add_argument("--language", required=True)
     cache_reference.set_defaults(handler=_cache_reference)
 
-    init = commands.add_parser("init")
-    init.add_argument("--video", required=True)
-    init.add_argument("--script", required=True)
-    init.add_argument("--root")
-    init.add_argument(
-        "--profile", choices=("full-v2",), default="full-v2"
-    )
-    init.set_defaults(handler=_init)
-
     corrections = commands.add_parser("apply-cleanup-corrections")
     corrections.add_argument("--job", required=True)
     corrections.add_argument("--corrections", required=True)
@@ -225,8 +165,7 @@ def _parser() -> argparse.ArgumentParser:
     cover_review.add_argument("--job", required=True)
     cover_review.set_defaults(handler=_review_cover)
 
-    for name, handler in (("status", _status), ("approve", _approve),
-                          ("revise", _revise), ("block", _block), ("ready", _ready)):
+    for name, handler in (("status", _status), ("revise", _revise), ("block", _block)):
         command = commands.add_parser(name)
         command.add_argument("--job", required=True)
         if name != "status":
@@ -235,12 +174,8 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--reason", required=True)
         if name == "block":
             command.add_argument("--ai-attempts", required=True, type=_non_negative_int)
-        if name == "ready":
-            command.add_argument("--artifact", action="append", required=True)
-        if name == "approve":
-            command.add_argument("--expected-revision", type=_non_negative_int)
-            command.add_argument("--delivery-sha256")
-            command.add_argument("--user-confirmation")
+        if name == "revise":
+            command.add_argument("--artifact-scope", action="append", default=[])
         command.set_defaults(handler=handler)
     return parser
 

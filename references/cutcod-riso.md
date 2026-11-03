@@ -23,6 +23,8 @@ CutCod 只用于发现来源。已有 OpenFilm、Huashu、HyperFrames 等来源�
 
 输入为 `schema_version=1, source_binding, composition, template_request, template, data, assets`。`template` 为上述原生名字；`data` 完整使用对应模板公开 DATA 字段，不接受 CSS、JS、时间轴或自由场景。`composition={id,width:1080,height:1920,fps:24,frames}`，时窗和 DATA.duration 一致。每个模板保留固定原生动作所需最短时长，不能剪断动作凑时窗。
 
+`title.index` 是原生文本槽，可用1–2位英文字母或数字呈现短主题，不要求填章节号。`mast` 两项可留空；`title` 支持最多两行、每行6字符，沿用原生换行和排版。不要把制作清单编号填入这些槽。
+
 草稿预检与正式组装共同调用我们路由器的 `riso_output_contract`：`layer_role=base`、`layout_slot=full_frame`，`composition.family` 只能为 `single_full_frame` 或 `evidence_with_data_overlay`，输出固定 `1080×1920 / 24fps / alpha=false`。执行适配器独立复核用途，拒绝 `no_broll`、`aroll_with_overlay`、非整屏布局及透明贴片输出。不新增输入字段，也不改变其他来源的输出规则。
 
 `template_request` 的语义、信息单元和数字必须与 DATA 一致。数字模板登记可见数值和 `linear`；步骤登记实际步数；其他非量化画面为 `numeric_values=[] / numeric_scale=not_applicable`。`focus.verdict` 或汇聚数字标签仍需宿主引用原文逐项核对，解析检查不代替语义证明。

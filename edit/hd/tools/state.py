@@ -18,15 +18,12 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-LEGACY_V1_STAGE_IDS = (
-    "inspect", "speech_cleanup", "edit_structure", "visual_direction",
-    "visual_assets", "subtitles", "cover", "preview", "delivery",
-)
-FULL_V2_STAGE_IDS = (
+STAGE_IDS = (
     "inspect", "content_analysis", "cover_direction", "cover",
-    "speech_cleanup", "edit_structure", "visual_direction", "visual_canary",
+    "speech_cleanup", "edit_structure", "visual_direction",
     "visual_assets", "subtitles", "preview", "delivery",
 )
+FULL_V2_STAGE_IDS = STAGE_IDS
 FULL_V2_DEPENDENCIES = {
     "inspect": (),
     "content_analysis": ("inspect",),
@@ -35,19 +32,13 @@ FULL_V2_DEPENDENCIES = {
     "speech_cleanup": ("inspect",),
     "edit_structure": ("speech_cleanup",),
     "visual_direction": ("content_analysis", "edit_structure"),
-    "visual_canary": ("visual_direction",),
-    "visual_assets": ("visual_direction", "visual_canary"),
+    "visual_assets": ("visual_direction",),
     "subtitles": ("content_analysis", "edit_structure", "visual_assets"),
     "preview": ("cover", "edit_structure", "visual_assets", "subtitles"),
     "delivery": ("preview",),
 }
-# Compatibility alias for existing callers and legacy fixtures. New Skill jobs
-# request ``profile="full-v2"`` explicitly instead of silently migrating v1.
-STAGE_IDS = LEGACY_V1_STAGE_IDS
-_ALL_STAGE_IDS = tuple(dict.fromkeys((*LEGACY_V1_STAGE_IDS, *FULL_V2_STAGE_IDS)))
-STAGE_STATUSES = (
-    "pending", "ready_for_review", "approved", "needs_revision", "blocked",
-)
+_ALL_STAGE_IDS = STAGE_IDS
+STAGE_STATUSES = ("pending", "ready", "completed", "needs_revision", "blocked")
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 _WORKFLOW_FILE = "workflow.json"
 _TRANSACTION_PREFIX = ".workflow."
@@ -115,16 +106,14 @@ class JobState:
     expected_revision: int | None = None
     expected_sha256: str | None = None
     expected_bytes: int | None = None
-    version: int = 1
+    version: int = 2
 
 
 def _stage_ids_for_version(version: int) -> tuple[str, ...]:
     if type(version) is not int:
         raise _error()
-    if version == 1:
-        return LEGACY_V1_STAGE_IDS
     if version == 2:
-        return FULL_V2_STAGE_IDS
+        return STAGE_IDS
     raise _error()
 
 
@@ -143,11 +132,6 @@ def dependencies_for(job: JobState, stage_id: str) -> tuple[str, ...]:
 
 def _dependencies_for_version(version: int) -> dict[str, tuple[str, ...]]:
     stage_ids = _stage_ids_for_version(version)
-    if version == 1:
-        return {
-            stage_id: stage_ids[:index]
-            for index, stage_id in enumerate(stage_ids)
-        }
     return FULL_V2_DEPENDENCIES
 
 
@@ -155,8 +139,6 @@ def _transitive_dependents(version: int, trigger_stage: str) -> tuple[str, ...]:
     stage_ids = _stage_ids_for_version(version)
     if trigger_stage not in stage_ids:
         raise _error()
-    if version == 1:
-        return stage_ids[stage_ids.index(trigger_stage):]
     affected = {trigger_stage}
     changed = True
     while changed:
@@ -174,7 +156,7 @@ def current_stage(job: JobState) -> str | None:
         (
             stage_id
             for stage_id in stage_ids_for(job)
-            if job.stages[stage_id]["status"] != "approved"
+            if job.stages[stage_id]["status"] != "completed"
         ),
         None,
     )
@@ -314,7 +296,7 @@ def _is_transaction_name(name: str) -> bool:
 
 def _retained_payload_is_valid(payload: Any) -> bool:
     if (type(payload) is not dict or type(payload.get("version")) is not int
-            or payload["version"] not in {1, 2}
+            or payload["version"] != 2
             or not isinstance(payload.get("job_id"), str)
             or not _SHA256_RE.fullmatch(payload["job_id"])
             or type(payload.get("revision")) is not int or payload["revision"] < 0
@@ -551,7 +533,7 @@ def _verify_pins(pins: Iterable[_PinnedFile]) -> None:
             raise _error()
 
 
-def _stage_record(version: int = 1) -> dict[str, Any]:
+def _stage_record(version: int = 2) -> dict[str, Any]:
     record = {
         "status": "pending", "reason": None, "artifacts": [],
         "ai_attempts": 0, "lineage": [],
@@ -562,16 +544,16 @@ def _stage_record(version: int = 1) -> dict[str, Any]:
 
 
 def _validate_stage_topology(
-    stages: dict[str, dict[str, Any]], version: int = 1,
+    stages: dict[str, dict[str, Any]], version: int = 2,
 ) -> None:
-    """Validate a legacy prefix or the approved dependencies of a v2 DAG."""
+    """Require completed dependencies before a stage can produce artifacts."""
 
     stage_ids = _stage_ids_for_version(version)
     dependencies = _dependencies_for_version(version)
     for stage_id in stage_ids:
         status = stages[stage_id]["status"]
         if status != "pending" and any(
-            stages[dependency]["status"] != "approved"
+            stages[dependency]["status"] != "completed"
             for dependency in dependencies[stage_id]
         ):
             raise _error()
@@ -606,9 +588,9 @@ def _prepare_job_directory(root: Path, job_id: str) -> Path:
 def create_job(
     root: Path, video: Path, script: Path, *, profile: str = "full-v2",
 ) -> JobState:
-    if profile not in {"legacy-v1", "full-v2"}:
+    if profile != "full-v2":
         raise WorkflowError("unsupported workflow profile")
-    version = 1 if profile == "legacy-v1" else 2
+    version = 2
     stage_ids = _stage_ids_for_version(version)
     root = _absolute_path(root)
     _assert_directory(root)
@@ -772,26 +754,16 @@ def _read_payload(workflow: Path) -> dict[str, Any]:
         "version", "job_id", "inputs", "revision", "stages"
     }:
         raise _error()
-    if type(payload["version"]) is not int or payload["version"] not in {1, 2}:
+    if type(payload["version"]) is not int or payload["version"] != 2:
         raise _error()
     return payload
 
 
-def _normalize_stage_schema(stages: object, version: int = 1) -> None:
+def _normalize_stage_schema(stages: object, version: int = 2) -> None:
     if type(stages) is not dict:
         return
-    legacy = {"status", "reason", "artifacts", "ai_attempts"}
-    current = legacy | {"lineage"}
-    if version == 2:
-        current.add("artifact_scope")
-    shapes = [
-        set(stage) if type(stage) is dict else set()
-        for stage in stages.values()
-    ]
-    if version == 1 and shapes and all(shape == legacy for shape in shapes):
-        for stage in stages.values():
-            stage["lineage"] = []
-    elif any(shape != current for shape in shapes):
+    current = {"status", "reason", "artifacts", "ai_attempts", "lineage", "artifact_scope"}
+    if version != 2 or any(type(stage) is not dict or set(stage) != current for stage in stages.values()):
         raise _error()
 
 
@@ -1694,7 +1666,7 @@ def _validate_cascade_transition(
         or type(resolution) is not tuple
         or len(resolution) != 2
         or resolution[0] not in stage_ids
-        or resolution[1] not in {"mark_ready", "visual_ready", "approve", "block"}
+        or resolution[1] not in {"mark_ready", "visual_ready", "complete", "block"}
         or job.revision != persisted["revision"] + 1
         or any(
             job.stages[stage_id] != persisted["stages"][stage_id]
@@ -1708,7 +1680,7 @@ def _validate_cascade_transition(
     if operation == "mark_ready":
         valid = (
             before["status"] in {"pending", "needs_revision"}
-            and after["status"] == "ready_for_review"
+            and after["status"] == "ready"
             and after["reason"] is None
             and after["lineage"] == []
             and after["ai_attempts"] == before["ai_attempts"]
@@ -1717,17 +1689,17 @@ def _validate_cascade_transition(
     elif operation == "visual_ready":
         valid = (
             stage_id == "visual_direction"
-            and before["status"] in {"pending", "needs_revision", "ready_for_review"}
-            and after["status"] == "ready_for_review"
+            and before["status"] in {"pending", "needs_revision", "ready"}
+            and after["status"] == "ready"
             and after["reason"] is None
             and after["lineage"] == before["lineage"]
             and after["ai_attempts"] == before["ai_attempts"]
             and (job.version == 1 or after["artifact_scope"] == [])
         )
-    elif operation == "approve":
+    elif operation == "complete":
         valid = (
-            before["status"] == "ready_for_review"
-            and after["status"] == "approved"
+            before["status"] == "ready"
+            and after["status"] == "completed"
             and after["reason"] is None
             and after["artifacts"] == before["artifacts"]
             and after["ai_attempts"] == before["ai_attempts"]
@@ -1754,6 +1726,21 @@ def _validate_cascade_transition(
 
 
 def save_job(
+    job: JobState,
+    *,
+    pins: list[_PinnedFile] | None = None,
+    _cascade_transition: tuple[str, int] | None = None,
+    _cascade_resolution: tuple[str, str] | None = None,
+) -> None:
+    from .generation_queue import mutation_lock
+    # Visual publication already holds its own outer lock. Queue consumers
+    # only load workflow state while holding this shared mutation lock.
+    with mutation_lock(job.job_dir):
+        _save_job(job, pins=pins, _cascade_transition=_cascade_transition,
+                  _cascade_resolution=_cascade_resolution)
+
+
+def _save_job(
     job: JobState,
     *,
     pins: list[_PinnedFile] | None = None,
@@ -1953,13 +1940,13 @@ def require_runnable(job: JobState, stage_id: str) -> None:
     if stage["status"] not in {"pending", "needs_revision"}:
         raise WorkflowError("workflow stage is not runnable")
     if current_stage(job) != stage_id:
-        raise WorkflowError("workflow stage is not the current review stage")
+        raise WorkflowError("workflow stage is not the current stage")
     dependencies = _dependencies_for_version(job.version)[stage_id]
     if any(
-        job.stages[dependency]["status"] != "approved"
+        job.stages[dependency]["status"] != "completed"
         for dependency in dependencies
     ):
-        raise WorkflowError("workflow stage prerequisites are not approved")
+        raise WorkflowError("workflow stage prerequisites are not completed")
 
 
 def _artifact_record(job: JobState, path: Path) -> dict[str, Any]:
@@ -1974,7 +1961,7 @@ def mark_ready(job: JobState, stage_id: str, artifacts: Iterable[Path]) -> None:
     previous_stages = copy.deepcopy(job.stages)
     previous_revision = job.revision
     updates = {
-        "status": "ready_for_review",
+        "status": "ready",
         "reason": None,
         "lineage": [],
         "artifacts": [_artifact_record(job, path) for path in artifacts],
@@ -1996,14 +1983,14 @@ def mark_ready(job: JobState, stage_id: str, artifacts: Iterable[Path]) -> None:
 def mark_visual_ready(job: JobState, artifacts: Iterable[Path]) -> None:
     """Replace the visual candidate after proposal approval, preserving lineage."""
     stage = _stage(job, "visual_direction")
-    if stage["status"] == "ready_for_review":
+    if stage["status"] == "ready":
         if current_stage(job) != "visual_direction":
             raise WorkflowError("visual direction is not the current stage")
     else:
         require_runnable(job, "visual_direction")
     previous_stages = copy.deepcopy(job.stages)
     previous_revision = job.revision
-    stage.update(status="ready_for_review", reason=None,
+    stage.update(status="ready", reason=None,
                  artifacts=[_artifact_record(job, path) for path in artifacts], artifact_scope=[])
     job.revision += 1
     try:
@@ -2016,23 +2003,23 @@ def mark_visual_ready(job: JobState, artifacts: Iterable[Path]) -> None:
         raise
 
 
-def approve(job: JobState, stage_id: str) -> None:
+def complete(job: JobState, stage_id: str) -> None:
     pins = _validate_job(job, pin_files=True)
     try:
         stage = _stage(job, stage_id)
-        if stage["status"] != "ready_for_review":
-            raise WorkflowError("only a ready stage can be approved")
+        if stage["status"] != "ready":
+            raise WorkflowError("only a ready stage can be completed")
     except BaseException:
         _close_pins(pins)
         raise
     previous_stage = stage.copy()
     previous_revision = job.revision
-    stage.update(status="approved", reason=None)
+    stage.update(status="completed", reason=None)
     job.revision += 1
     try:
         save_job(
             job, pins=pins,
-            _cascade_resolution=(stage_id, "approve"),
+            _cascade_resolution=(stage_id, "complete"),
         )
     except _CommittedWorkflowError:
         _synchronize_committed_job(job)

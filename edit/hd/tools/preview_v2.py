@@ -1,4 +1,4 @@
-"""Native 9:16 preview and evidence builder for the full-v2 workflow."""
+"""Native 9:16 full-film compositor for the direct-production workflow."""
 
 from __future__ import annotations
 from scripts.package_paths import PACKAGE_ROOT
@@ -588,38 +588,21 @@ def _validate_rendered_asset_manifest(
         "visual_track",
         "asset_manifest_sha256",
     }
-    reuse_keys = {
-        "reused_canary_segment_ids",
-        "reused_formal_segment_ids",
-        "segment_input_identities",
-    }
-    legacy_canary_only = (
-        type(asset_manifest) is dict
-        and set(asset_manifest) == expected_keys | {"reused_canary_segment_ids"}
-        and asset_manifest.get("reused_canary_segment_ids") == []
-    )
-    if type(asset_manifest) is not dict or set(asset_manifest) not in (
-        expected_keys, expected_keys | reuse_keys
-    ) and not legacy_canary_only:
+    expected_keys.update({"reused_formal_segment_ids", "segment_input_identities"})
+    if type(asset_manifest) is not dict or set(asset_manifest) != expected_keys:
         raise _blocked()
-    if reuse_keys.issubset(asset_manifest):
-        from . import visual_assets_v2
+    from . import visual_assets_v2
 
-        expected_identities = {
-            segment["segment_id"]: visual_assets_v2._segment_input_identity(checked_plan, segment)
-            for segment in checked_plan["segments"]
-        }
-        if asset_manifest["segment_input_identities"] != expected_identities:
-            raise _blocked()
-        reuse_lists = [asset_manifest[key] for key in (
-        "reused_canary_segment_ids", "reused_formal_segment_ids"
-        )]
-        for ids in reuse_lists:
-            if (type(ids) is not list or any(type(item) is not str for item in ids)
-                    or len(set(ids)) != len(ids) or not set(ids).issubset(expected_identities)):
-                raise _blocked()
-        if set(reuse_lists[0]) & set(reuse_lists[1]):
-            raise _blocked()
+    expected_identities = {
+        segment["segment_id"]: visual_assets_v2._segment_input_identity(checked_plan, segment)
+        for segment in checked_plan["segments"]
+    }
+    if asset_manifest["segment_input_identities"] != expected_identities:
+        raise _blocked()
+    reused = asset_manifest["reused_formal_segment_ids"]
+    if (type(reused) is not list or any(type(item) is not str for item in reused)
+            or len(set(reused)) != len(reused) or not set(reused).issubset(expected_identities)):
+        raise _blocked()
     asset_base = {
         key: value
         for key, value in asset_manifest.items()
@@ -1233,7 +1216,7 @@ def build_preview_command_v2(
 
 def _approved(job: state.JobState, stage_id: str, relative: str) -> Path:
     stage = job.stages[stage_id]
-    if stage["status"] != "approved":
+    if stage["status"] != "completed":
         raise PreviewV2Error(f"{stage_id} must be approved")
     matches = [record for record in stage["artifacts"] if record.get("path") == relative]
     path = job.job_dir / relative
@@ -1249,7 +1232,7 @@ def _approved(job: state.JobState, stage_id: str, relative: str) -> Path:
 
 def _published_preview(job: state.JobState, relative: str) -> Path:
     stage = job.stages["preview"]
-    if stage["status"] not in {"ready_for_review", "approved"}:
+    if stage["status"] not in {"ready", "completed"}:
         raise PreviewV2Error("preview output is not published")
     matches = [record for record in stage["artifacts"] if record.get("path") == relative]
     path = job.job_dir / relative
@@ -1276,26 +1259,15 @@ def _validate_published_preview_inventory(
         or report["qa_report_sha256"]
         != contract_artifacts.sha256_json(report_base)
         or type(evidence) is not list
-        or not evidence
+        or evidence
+        or report.get("status") != "completed"
+        or report.get("scope") != "technical"
     ):
         raise PreviewV2Error("preview report is incomplete")
-    evidence_paths: list[str] = []
-    for record in evidence:
-        if (
-            type(record) is not dict
-            or set(record) != {"path", "sha256"}
-            or type(record.get("path")) is not str
-            or not record["path"].startswith("keyframes/")
-            or not _valid_sha256(record.get("sha256"))
-            or record["path"] in evidence_paths
-        ):
-            raise PreviewV2Error("preview evidence record is incomplete")
-        evidence_paths.append(record["path"])
     expected = {
         "11-preview/review.mp4",
         "11-preview/qa-report.json",
         "11-preview/source-manifest.json",
-        *(f"11-preview/{path}" for path in evidence_paths),
     }
     if "opening_manifest_sha256" in report:
         expected.update({"11-preview/opening-manifest.json", "11-preview/subtitles.srt"})
@@ -1320,15 +1292,7 @@ def _validate_published_preview_inventory(
     if len(artifact_paths) != len(expected) or set(artifact_paths) != expected:
         raise PreviewV2Error("preview artifact inventory is incomplete")
     for relative in expected:
-        path = _published_preview(job, relative)
-        if relative.startswith("11-preview/keyframes/"):
-            record = next(
-                item
-                for item in evidence
-                if f"11-preview/{item['path']}" == relative
-            )
-            if contract_artifacts.sha256_file(path) != record["sha256"]:
-                raise PreviewV2Error("preview evidence bytes changed")
+        _published_preview(job, relative)
     target = Path(job.job_dir) / "11-preview"
     actual = {
         f"11-preview/{path.relative_to(target).as_posix()}"
@@ -1485,6 +1449,8 @@ def _validate_media(path: Path, *, frames: int, duration: float,
         or video[0].get("r_frame_rate") != "24/1"
         or int(video[0].get("nb_read_frames", 0)) != frames
         or abs(float(payload["format"]["duration"]) - duration) > 1 / 24 + 0.01
+        or any(abs(float(stream.get("duration", 0)) - duration) > 1 / 24 + 0.01
+               for stream in (video[0], audio[0]))
     ):
         raise PreviewV2Error("preview is not one native video plus one synced audio track")
     if require_opening_contract:
@@ -1496,13 +1462,6 @@ def _validate_media(path: Path, *, frames: int, duration: float,
                        for stream in (video[0], audio[0]))
                 or any(float(side.get("rotation", 0)) != 0 for side in video[0].get("side_data_list", []))):
             raise PreviewV2Error("opening output has invalid pixel geometry or audio/video timing")
-        try:
-            subprocess.run([
-                "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error", "-threads", "1",
-                "-i", str(path), "-map", "0:v:0", "-map", "0:a:0", "-f", "null", "-",
-            ], check=True, capture_output=True, timeout=max(180, int(duration * 5)))
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise PreviewV2Error("opening output full decode failed") from exc
     return {
         "width": 1080,
         "height": 1920,
@@ -1512,27 +1471,6 @@ def _validate_media(path: Path, *, frames: int, duration: float,
         "video_streams": 1,
         "audio_streams": 1,
     }
-
-
-def _extract_frames(video: Path, output: Path, duration: float) -> list[Path]:
-    output.mkdir()
-    frames = []
-    for index, ratio in enumerate((0.1, 0.25, 0.5, 0.75, 0.9), start=1):
-        frame = output / f"frame-{index:02d}.png"
-        try:
-            subprocess.run(
-                [
-                    "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error",
-                    "-ss", f"{duration * ratio:.6f}", "-i", str(video),
-                    "-frames:v", "1",
-                    "-y", str(frame),
-                ],
-                check=True, capture_output=True, timeout=120,
-            )
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise PreviewV2Error("preview evidence extraction failed") from exc
-        frames.append(frame)
-    return frames
 
 
 def _fsync_directory(path: Path) -> None:
@@ -1669,8 +1607,8 @@ def _recover_preview_publication(job: state.JobState) -> None:
     if backup_digest not in {None, old_digest}:
         raise PreviewV2Error("preview recovery backup changed")
     committed = job.stages["preview"]["status"] in {
-        "ready_for_review",
-        "approved",
+        "ready",
+        "completed",
     }
     if committed:
         if target_digest != new_digest:
@@ -1786,7 +1724,7 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
     target = job.job_dir / "11-preview"
     review = target / "review.mp4"
     report_path = target / "qa-report.json"
-    if job.stages["preview"]["status"] in {"ready_for_review", "approved"}:
+    if job.stages["preview"]["status"] in {"ready", "completed"}:
         review = _published_preview(job, "11-preview/review.mp4")
         report_path = _published_preview(job, "11-preview/qa-report.json")
         report = contract_artifacts.read_json_artifact(report_path)
@@ -1939,14 +1877,13 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
         media = _validate_media(output, frames=output_frames, duration=output_duration,
                                 **({"require_opening_contract": True} if opening_plan is not None or music_plan is not None else {}))
         music_manifest = None if music_plan is None else preview_music.publish_metadata(job, stage, music_plan, arroll)
-        evidence = _extract_frames(output, stage / "keyframes", output_duration)
         opening_manifest = None
         if opening_plan is not None:
             opening_manifest = preview_opening.publish_metadata(job, stage, opening_plan)
-            evidence += preview_opening.extract_evidence(output, stage / "keyframes", opening_plan)
         report_base = {
             "schema_version": 2,
-            "status": "PASS",
+            "status": "completed",
+            "scope": "technical",
             "preview_sha256": contract_artifacts.sha256_file(output),
             "visual_plan_sha256": manifest["visual_plan_sha256"],
             "source_manifest_sha256": source_manifest["source_manifest_sha256"],
@@ -1987,17 +1924,10 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
                 "audio_uses_edited_aroll_clock": True,
                 "audio_event_ids_bound": event_audio_plan is not None,
                 "broll_subtitles_use_single_talkcraft_track": True,
-                "approved_keyword_only": True,
-                "approved_canary_reused": bool(manifest.get("reused_canary_segment_ids", [])),
+                "subtitle_keyword_plan_bound": True,
                 "source_manifest_complete": True,
             },
-            "evidence": [
-                {
-                    "path": f"keyframes/{path.name}",
-                    "sha256": contract_artifacts.sha256_file(path),
-                }
-                for path in evidence
-            ],
+            "evidence": [],
         }
         contract_artifacts.write_json_artifact(
             stage / "source-manifest.json", source_manifest
@@ -2020,7 +1950,6 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             artifact_paths.append("number-badges.png")
         if event_audio_plan is not None:
             artifact_paths.extend(["event-audio-plan.json", "event-audio.m4a"])
-        artifact_paths.extend(f"keyframes/{path.name}" for path in evidence)
         references = []
         if music_manifest is not None:
             artifact_paths.extend(preview_music.ATTACHMENTS)

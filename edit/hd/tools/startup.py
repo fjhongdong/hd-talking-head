@@ -4,10 +4,14 @@ from __future__ import annotations
 from scripts.package_paths import PACKAGE_ROOT
 
 import ast
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 import json
 import re
 import subprocess
 import sys
+from time import perf_counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,15 +24,110 @@ PREFLIGHT_MAX_AGE_SECONDS = 86400
 MAX_GENERATION_CONCURRENCY = 2
 
 
+@dataclass
+class _Operation:
+    started: float = field(default_factory=perf_counter)
+    release_checks: int = 0
+    release_reuses: int = 0
+    release_seconds: float = 0.0
+    releases: dict = field(default_factory=dict)
+    memo: dict = field(default_factory=dict)
+
+    def metrics(self) -> dict:
+        return {"elapsed_seconds": round(perf_counter() - self.started, 6),
+                "full_release_check_seconds": round(self.release_seconds, 6),
+                "full_release_checks": self.release_checks,
+                "full_release_reuses": self.release_reuses}
+
+
+_ACTIVE_OPERATION: ContextVar[_Operation | None] = ContextVar("hd_operation", default=None)
+
+
+def current_operation():
+    """Return the current in-process operation, never a cross-process approval."""
+    return _ACTIVE_OPERATION.get()
+
+
+@contextmanager
+def operation_scope():
+    active = current_operation()
+    if active is not None:
+        yield active
+        return
+    active = _Operation()
+    token = _ACTIVE_OPERATION.set(active)
+    bytecode = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        yield active
+    finally:
+        active.releases.clear()
+        active.memo.clear()
+        _ACTIVE_OPERATION.reset(token)
+        sys.dont_write_bytecode = bytecode
+
+
+def _release_snapshot(root: Path, manifest: dict, *, previous: tuple | None = None) -> tuple:
+    """Detect changed assets and inventory through files and ancestor directories."""
+    names = manifest.get("files")
+    if not isinstance(names, dict):
+        raise WorkflowError("startup Skill release file inventory is missing")
+    if previous is None:
+        from scripts.verify_skill_release import package_files
+        paths = {root, root / "release-manifest.json"}
+        for name in names:
+            relative = Path(name)
+            if relative.is_absolute() or ".." in relative.parts or relative.as_posix() != name:
+                raise WorkflowError("startup Skill release file inventory is invalid")
+            paths.update(root.joinpath(*relative.parts[:index]) for index in range(1, len(relative.parts) + 1))
+        # The verifier owns exclusions. Include even empty directories so later
+        # unregistered files cannot hide below an otherwise unchanged ancestor.
+        package_files(root, _directories=paths)
+    else:
+        paths = {Path(record[0]) for record in previous}
+    try:
+        return tuple((str(path), item.st_dev, item.st_ino, item.st_mode,
+                      item.st_size, item.st_mtime_ns, item.st_ctime_ns)
+                     for path in sorted(paths) for item in (path.lstat(),))
+    except OSError as exc:
+        raise WorkflowError("startup Skill release inventory changed") from exc
+
+
+def _operation_cache(project_root: Path):
+    """Share read-only derived data only under the current verified inventory."""
+    operation = current_operation()
+    if operation is None:
+        return None
+    project = Path(project_root).resolve()
+    for key, checked in operation.releases.items():
+        if key[0] != str(project):
+            continue
+        try:
+            unchanged = _release_snapshot(project, checked["manifest"], previous=checked["snapshot"]) == checked["snapshot"]
+        except WorkflowError:
+            unchanged = False
+        if unchanged:
+            return operation.memo
+        break
+    operation.memo.clear()
+    operation.releases.clear()
+    return None
+
+
 def assert_project_origin(project_root: Path) -> None:
     """Never evict live modules and leave callers holding two runtime versions."""
     project_root = project_root.resolve()
+    native_scripts = {"motion_native_skill_adapter.py", "upstream_scene_adapter.py",
+                      "talkcraft_skill_adapter.py", "lemo_wake_adapter.py"}
     for name, module in tuple(sys.modules.items()):
-        if name != "edit" and not name.startswith("edit."):
-            continue
         filename = getattr(module, "__file__", None)
+        native_entry = filename is not None and Path(filename).name in native_scripts
+        if (not native_entry and name not in {"edit", "scripts", "package_paths"}
+                and not name.startswith(("edit.", "scripts."))):
+            continue
         paths = [Path(filename)] if filename else [Path(p) for p in getattr(module, "__path__", ())]
-        if any(not path.resolve().is_relative_to(project_root / "edit") for path in paths):
+        source = project_root / ("edit" if name == "edit" or name.startswith("edit.") else "scripts")
+        if any(str(path) != "<stdin>" and not path.resolve().is_relative_to(source) for path in paths):
             raise WorkflowError("startup cached module origin differs from selected project; use a fresh Python process")
 
 
@@ -70,14 +169,26 @@ def _read(path: Path, label: str) -> dict:
         raise WorkflowError(f"startup {label} is invalid") from exc
 
 
-def _context(job) -> dict:
+def require_job_identity(job, *, project_root: Path = PACKAGE_ROOT) -> dict:
+    """Check only Job, package and actual parent Python identity; never prepare or execute a stage."""
+    if Path(project_root).resolve() != PACKAGE_ROOT:
+        raise WorkflowError("startup project differs from the selected Skill package")
     context = _read(job.root / "job-context.json", "context")
     expected = {"workspace": str(job.root), "job_dir": str(job.job_dir), "job_id": job.job_id}
     if any(context.get(key) != value for key, value in expected.items()):
         raise WorkflowError("startup context belongs to another Job")
     project = PACKAGE_ROOT
     assert_project_origin(project)
-    if context.get("project_root") != str(project) or context.get("runtime") != runtime_identity(project):
+    recorded = context.get("runtime")
+    current = runtime_identity(project)
+    # Adapter launchers resolve symlinks; compare the actual executable while
+    # retaining the original recorded spelling and every other runtime field.
+    if (isinstance(recorded, dict) and isinstance(recorded.get("python"), dict)
+            and isinstance(recorded["python"].get("executable"), str)):
+        recorded = {**recorded, "python": {**recorded["python"],
+                    "executable": str(Path(recorded["python"]["executable"]).resolve())}}
+    current["python"]["executable"] = str(Path(current["python"]["executable"]).resolve())
+    if context.get("project_root") != str(project) or recorded != current:
         raise WorkflowError("startup runtime changed; review the runtime difference before resuming")
     release = context.get("skill_release")
     if not isinstance(release, dict) or not isinstance(release.get("root"), str):
@@ -88,18 +199,49 @@ def _context(job) -> dict:
     if (manifest.get("release_id") != release.get("release_id")
             or artifacts.sha256_file(manifest_path) != release.get("manifest_sha256")):
         raise WorkflowError("startup Skill release changed; explicit migration is required")
+    operation = current_operation()
+    key = (str(root), release["manifest_sha256"], artifacts.sha256_json(current))
+    previous = operation.releases.get(key, {}).get("snapshot") if operation is not None else None
+    snapshot = _release_snapshot(root, manifest, previous=previous) if operation is not None else None
+    if operation is not None and operation.releases.get(key, {}).get("snapshot") == snapshot:
+        operation.release_reuses += 1
+        return context
+    if previous is not None:
+        snapshot = _release_snapshot(root, manifest)
+    started = perf_counter()
+    if operation is not None:
+        operation.releases.clear()
+        operation.memo.clear()
+        operation.release_checks += 1
     # Read-only verification in an isolated process also avoids cached verifier modules.
     try:
         checked = subprocess.run(
-            [sys.executable, str(root / "scripts/verify_skill_release.py")],
+            [sys.executable, "-B", str(root / "scripts/verify_skill_release.py")],
             capture_output=True, text=True, timeout=15, check=False,
         )
         result = json.loads(checked.stdout)
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
         raise WorkflowError("startup Skill release verification failed") from exc
+    finally:
+        if operation is not None:
+            operation.release_seconds += perf_counter() - started
     if checked.returncode or result.get("status") != "pass" or result.get("manifest_sha256") != release["manifest_sha256"]:
         raise WorkflowError("startup Skill release integrity check failed")
+    if operation is not None:
+        if _release_snapshot(root, manifest, previous=snapshot) != snapshot:
+            raise WorkflowError("startup Skill release inventory changed during verification")
+        operation.releases[key] = {"snapshot": snapshot, "manifest": manifest}
     return context
+
+
+def require_job_directory_identity(job_dir: Path, *, project_root: Path = PACKAGE_ROOT):
+    """Load a production Job read-only, including callers outside the stage runner."""
+    from .state import load_job
+    if job_dir is None:
+        raise WorkflowError("startup production execution requires a Job directory")
+    job = load_job(Path(job_dir))
+    require_job_identity(job, project_root=project_root)
+    return job
 
 
 def _config(job) -> tuple[Path, str]:
@@ -232,7 +374,7 @@ def _report(job, context: dict, config_sha256: str) -> None:
                     or (level != "installed" and result.get(level) is not True)):
                 raise WorkflowError("startup preflight dependency is not satisfied: " + item["id"])
     plan = job.job_dir / "07-visual-direction/visual-plan.json"
-    if plan.is_file() and job.stages["visual_direction"]["status"] == "approved":
+    if plan.is_file() and job.stages["visual_direction"]["status"] == "completed":
         if report.get("visual_plan") != {"path": str(plan), "sha256": artifacts.sha256_file(plan)}:
             raise WorkflowError("startup preflight does not match the approved visual plan")
 
@@ -277,7 +419,7 @@ def confirm_setup(job, config_path: Path, *, user_confirmation: str,
     """Record a real current-user approval; never infer it from a successful probe."""
     if not isinstance(user_confirmation, str) or not user_confirmation.strip():
         raise WorkflowError("startup requires explicit user confirmation")
-    context = _context(job)
+    context = require_job_identity(job)
     config, digest = _config(job)
     if config_path.resolve() != config:
         raise WorkflowError("startup config must be the current Job provider-config.json")
@@ -310,7 +452,7 @@ def require_startup(job) -> None:
     # recognisable even if their context was accidentally lost during bootstrap.
     if not ((job.root / "job-context.json").exists() or (job.root / "00-user-provided").exists()):
         return
-    context = _context(job)
+    context = require_job_identity(job)
     config, digest = _config(job)
     _report(job, context, digest)
     approval = _read(job.job_dir / "manifests/setup-approval.json", "setup confirmation")

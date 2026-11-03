@@ -60,6 +60,10 @@ OpenFilm 只在本次选中后执行这两份清单的对应项：按 [原生创
 
 所有主流程 Python 入口，包括初始化、预检、配置确认、迁移和项目 runner，统一在上述入口后用 `-- <脚本及参数>` 执行。它沿用调用者的解释器和工作目录，传递项目、Skill scripts 和本地包路径；不从 PATH 换 Python、不改用户 shell。第三方专用准备进程清除 `PYTHONPATH/PYTHONHOME`。统一 `_check_binding_probe` 对 Huashu、OneTake 的注册路线重建仅含项目和 Skill scripts 的导入路径，移除 `PYTHONHOME`；准备检查和正式预检共用此边界，不改已验收适配器、原生版本锁或注册命令。公共组件执行器继续使用原有离线环境。完整预检仍检查必需目录、系统命令、真实登记入口与实际阶段 binding。入口 help、初始化或准备通过都不能替代 Job 绑定预检；其他未配置项不能借此记为通过，未选 optional 来源不要求落盘。
 
+`project_python.py` 不会修正调用者选错的解释器。生产完整原生动效、上游场景、TalkCraft 和 Wake 的执行及成果写入入口共用 `startup.require_job_identity`，先核对本 Job 绑定的实际解释器、前缀、版本、项目及 Skill 来源，再写文件或启动执行。解释器路径只在比较时解析软链，不改持久化身份；失败不自动换环境或重试。合法原生专用子环境仍沿已绑定命令使用，探测、准备和独立资格样片沿各自原有边界，不冒充生产 Job 通过。
+
+虚拟环境执行保留其解释器入口，不能改成全局 Python 的真实路径而丢失环境前缀。Reference 内部冻结入口指向的真实普通文件，执行前后同时核对入口指向、目标文件身份及摘要；入口仍用于启动，不放宽原生脚本和目录边界。
+
 GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_visual_broll_skills.py --project-root <project> --skill gbro-collage-broll` 检查固定提交，缺失时仅在项目 vendor 准备，再由清单核对原始说明和入口文件。这里的 `installed` 只证明来源已准备，不证明静帧或动态成片通过。图片与视频渠道不在本条固定；由本 Job 的 provider 预检及请求前检查确认，模板内部调用沿用同一渠道配置。
 
 ```bash
@@ -155,6 +159,8 @@ GBRO 半调纸拼贴的原始 Skill 是启动必需源码项：先用 `ensure_vi
 `model` 是精确模型标识，不是路径，也不带 `.bin`；本机模型文件名必须为该标识加 `.bin`。`reference_asr: null` 表示不启用，schema 1 保持不启用。现有生成 provider 配置原样保留，不因为选择本地转写而关闭用户已选的生图或生视频能力。
 
 选中本地对照识别后，预检前先定位本机实际程序和对应模型；已存在模型不重复下载或复制。非默认位置必须同时显式传入 `HD_WHISPER_CLI=<程序的真实绝对路径>` 与 `HD_WHISPER_MODEL=<模型绝对路径>`；程序路径先解析符号链接，不能只传其中一项，也不能把配置中的模型名当作文件路径。两项均未设置时，发现器才检查 PATH 中的 `whisper-cli` 和当前用户的 `~/.cache/hd-talking-head/models/ggml-large-v3-turbo.bin`，不会扫描原开发项目或自动继承上期环境。
+
+本地运行时探针失败时，正式报告提供上述路径和模型名的固定排查提示，不回显环境值或原始错误输出；提示是排查方向，不是已确定的失败原因。先核对实际路径与文件，再纠正本次调用，不放宽符号链接检查、不重装已有模型，也不把启动检查失败计为一次转写。
 
 本期后续预检及实际本地识别子进程沿用这组显式路径，并与本 Job 预检中的 `reference_asr_probe.executable / model_file` 核对；不从旧 Job 复制探针或批准记录，不修改用户全局环境。即使用最外层 `run.py preflight`，也显式指定 `--output <当前job>/manifests/dependency-preflight.json` 保存正式报告；不把仅有终端摘要当作已登记预检。缺路径先修本期启动绑定，保留原选模型、文件身份检查和本地上传禁令。
 

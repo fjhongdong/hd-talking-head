@@ -6,6 +6,8 @@ import io
 import json
 from pathlib import Path
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -26,45 +28,68 @@ class CurrentWorkflowEntrypointTests(unittest.TestCase):
         self.video.write_bytes(b"fixture-video")
         self.script.write_text("fixture-script", encoding="utf-8")
 
-    def invoke(self, *extra):
+    def invoke(self, *arguments):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            result = cli.main([
-                "init", "--root", str(self.root), "--video", str(self.video),
-                "--script", str(self.script), *extra,
-            ])
+            result = cli.main(list(arguments))
         return result, stdout.getvalue(), stderr.getvalue()
 
-    def test_default_cli_creation_uses_twelve_stages(self):
-        result, stdout, stderr = self.invoke()
-        self.assertEqual(result, 0, stderr)
-        job = state.load_job(self.root / json.loads(stdout)["job"])
-        self.assertEqual(job.version, 2)
-        self.assertEqual(state.stage_ids_for(job), state.FULL_V2_STAGE_IDS)
+    def run_job(self, *arguments):
+        return subprocess.run(
+            [sys.executable, str(SKILL / "run.py"), "job", *arguments],
+            cwd=self.root, capture_output=True, text=True, check=False,
+        )
 
-    def test_cli_cannot_create_retired_profile(self):
-        result, stdout, _ = self.invoke("--profile", "legacy-v1")
-        self.assertEqual(result, 2)
-        self.assertEqual(stdout, "")
+    def test_canonical_job_status_is_read_only_from_another_directory(self):
+        job = state.create_job(self.root, self.video, self.script)
+        workflow = job.job_dir / "workflow.json"
+        before = workflow.read_bytes()
+        manifests = job.job_dir / "manifests"
+        previous_records = sorted(path.name for path in manifests.iterdir())
+        result = self.run_job("status", "--job", str(job.job_dir))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        summary = json.loads(result.stdout)
+        self.assertEqual(summary["current_stage"], "inspect")
+        self.assertEqual(summary["delivery_status"], "pending")
+        self.assertEqual(tuple(summary["stages"]), tuple(sorted(state.STAGE_IDS)))
+        self.assertEqual(workflow.read_bytes(), before)
+        self.assertEqual(sorted(path.name for path in manifests.iterdir()), previous_records)
+
+    def test_job_cli_does_not_expose_machine_completion_or_old_initialization(self):
+        for command in ("init", "approve", "ready", "complete"):
+            with self.subTest(command=command):
+                result, stdout, _ = self.invoke(command)
+                self.assertEqual(result, 2)
+                self.assertEqual(stdout, "")
         self.assertFalse((self.root / "edit").exists())
 
     def test_python_creation_never_defaults_to_retired_profile(self):
         job = state.create_job(self.root, self.video, self.script)
         self.assertEqual(job.version, 2)
 
-    def test_old_job_remains_readable_without_migration(self):
-        job = state.create_job(self.root, self.video, self.script, profile="legacy-v1")
-        workflow = job.job_dir / "workflow.json"
-        before = workflow.read_bytes()
-        loaded = state.load_job(job.job_dir)
-        self.assertEqual(loaded.version, 1)
-        self.assertEqual(workflow.read_bytes(), before)
+    def test_retired_profile_is_not_created(self):
+        with self.assertRaises(state.WorkflowError):
+            state.create_job(self.root, self.video, self.script, profile="legacy-v1")
 
-    def test_project_guide_only_points_to_the_single_skill(self):
-        guide = (PROJECT / "docs/workflows/hd-talking-head.md").read_text(encoding="utf-8")
-        targets = re.findall(r"\]\(([^)]+)\)", guide)
-        self.assertIn(str(SKILL / "SKILL.md"), targets)
-        self.assertLessEqual(len(guide.splitlines()), 12)
+    def test_canonical_job_revision_preserves_requested_artifact_scope(self):
+        job = state.create_job(self.root, self.video, self.script)
+        for stage in state.STAGE_IDS:
+            state.mark_ready(job, stage, [])
+            state.complete(job, stage)
+            if stage == "visual_assets":
+                break
+        result = self.run_job(
+            "revise", "--job", str(job.job_dir), "--stage", "visual_assets",
+            "--reason", "调整第1、3处动效", "--artifact-scope", "seg-001",
+            "--artifact-scope", "seg-003",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        current = state.load_job(job.job_dir)
+        self.assertEqual(current.stages["visual_assets"]["status"], "needs_revision")
+        self.assertEqual(current.stages["visual_assets"]["artifact_scope"], ["seg-001", "seg-003"])
+        self.assertEqual(current.stages["visual_direction"]["status"], "completed")
+        self.assertEqual(current.stages["subtitles"]["status"], "pending")
+        self.assertEqual(json.loads(result.stdout)["delivery_status"], "pending")
 
     def test_documented_composition_symbols_exist(self):
         source = (SKILL / "references/production-bindings.md").read_text(encoding="utf-8")

@@ -54,10 +54,10 @@ def migrate(
         current_stage = state.current_stage(job)
         if current_stage == "delivery":
             ids = list(state.stage_ids_for(job))
-            if job.stages[current_stage]["status"] != "ready_for_review" or any(
-                job.stages[item]["status"] != "approved" for item in ids[:-1]
+            if job.stages[current_stage]["status"] != "ready" or any(
+                job.stages[item]["status"] != "completed" for item in ids[:-1]
             ):
-                raise ValueError("cross-root migration requires a paused delivery review with approved prior stages")
+                raise ValueError("cross-root migration requires a ready delivery stage with completed prior stages")
         elif job.stages.get(current_stage, {}).get("status") != "needs_revision":
             raise ValueError("cross-root migration is allowed only for delivery review or needs_revision")
         target_identity = startup.runtime_identity(target_project)

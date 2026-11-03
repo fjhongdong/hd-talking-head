@@ -71,11 +71,11 @@ class CoverDirectionTests(unittest.TestCase):
         report.parent.mkdir(parents=True)
         report.write_text("{}\n", encoding="utf-8")
         state.mark_ready(self.job, "inspect", [report])
-        state.approve(self.job, "inspect")
+        state.complete(self.job, "inspect")
         self.analysis = content_analysis.prepare_content_analysis(
             self.job, VALID_ANALYSIS
         )
-        state.approve(self.job, "content_analysis")
+        state.complete(self.job, "content_analysis")
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -122,6 +122,9 @@ class CoverDirectionTests(unittest.TestCase):
     def test_punk_full_preview_publishes_exact_pixels_and_never_calls_provider(self):
         self._assert_punk_full_preview_publication()
 
+    def test_punk_full_preview_preserves_prompt_whitespace(self):
+        self._assert_punk_full_preview_publication(prompt=" \n实际生成提示词\n ")
+
     def test_confirmed_mixed_title_survives_direction_and_full_image_publication(self):
         self._assert_punk_full_preview_publication(title="AI聊得挺好，事却没干")
 
@@ -130,7 +133,7 @@ class CoverDirectionTests(unittest.TestCase):
 
     def test_first_cover_revision_preserves_unknown_or_symlink_targets(self):
         self._prepare()
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         state.revise(self.job, "cover", "候选未采用")
         target = self.job.job_dir / "04-cover"
         external = self.root / "external-cover"
@@ -162,7 +165,8 @@ class CoverDirectionTests(unittest.TestCase):
                         target.rmdir()
         self.assertEqual((external / "owner.txt").read_bytes(), b"external-owner")
 
-    def _assert_punk_full_preview_publication(self, *, rejected_candidate=False, title=None):
+    def _assert_punk_full_preview_publication(self, *, rejected_candidate=False, title=None,
+                                              prompt="Punk full cover prompt with exact approved Chinese title."):
         direction = self._punk_material()
         if title is not None:
             direction.update({
@@ -185,7 +189,7 @@ class CoverDirectionTests(unittest.TestCase):
             record["direction"]["composition"]["style_id"],
             "interleaved-title-editorial-poster",
         )
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         loaded = cover_direction.load_approved_cover_direction(self.job)
         self.assertEqual(loaded["direction"]["title"], direction["title"])
         self.assertEqual(loaded["direction"]["subtitle"], direction["subtitle"])
@@ -201,7 +205,7 @@ class CoverDirectionTests(unittest.TestCase):
         output = cover.prepare_cover(
             self.job, approved_preview=approved,
             approved_preview_sha256=hashlib.sha256(approved_bytes).hexdigest(),
-            approved_preview_prompt="Punk full cover prompt with exact approved Chinese title.",
+            approved_preview_prompt=prompt,
             provider=lambda *_args, **_kwargs: (_ for _ in ()).throw(
                 AssertionError("Punk approved preview must not call provider")
             ),
@@ -212,16 +216,34 @@ class CoverDirectionTests(unittest.TestCase):
         self.assertEqual(report["mode"], "approved-full-image")
         self.assertEqual(report["generator"], "punk-cover")
         brief = json.loads((output.parent / "cover-brief.json").read_text())
+        self.assertEqual(brief["base_prompt"], prompt)
         self.assertEqual(brief["title"], direction["title"])
         self.assertEqual(brief["subtitle"], direction["subtitle"])
         self.assertEqual(cover.review_cover(self.job)["images"]["final"]["sha256"],
                          hashlib.sha256(approved_bytes).hexdigest())
 
-    def test_punk_direction_requires_explicit_preview_before_writing(self):
+    def test_punk_direction_defaults_without_preview_and_validates_supplied_source(self):
         direction = self._punk_material()
-        with self.assertRaises(cover_direction.CoverDirectionError):
-            cover_direction.prepare_cover_direction(self.job, direction)
-        self.assertFalse((self.job.job_dir / "03-cover-direction" / "cover-direction.json").exists())
+        record = cover_direction.prepare_cover_direction(self.job, direction)
+        output = self.job.job_dir / "03-cover-direction"
+        self.assertEqual(self.job.stages["cover_direction"]["status"], "ready")
+        self.assertEqual(record["direction"]["person_reference"]["source"], "user-material")
+        self.assertTrue((output / "direction-preview.png").is_file())
+
+        state.revise(self.job, "cover_direction", "核对可选设计预览的真实来源")
+        before = {path.name: path.read_bytes() for path in output.iterdir()}
+        outside = self.root / "outside-job-preview.png"
+        Image.new("RGB", (1080, 1920), "#F3EBDD").save(outside, format="PNG")
+        with self.assertRaisesRegex(cover_direction.CoverDirectionError, "preview path"):
+            cover_direction.prepare_cover_direction(self.job, direction, direction_preview=outside)
+        self.assertEqual(before, {path.name: path.read_bytes() for path in output.iterdir()})
+
+        preview = self._punk_direction_preview()
+        supplied = preview.read_bytes()
+        updated = cover_direction.prepare_cover_direction(self.job, direction, direction_preview=preview)
+        self.assertEqual(updated["direction"]["person_reference"], record["direction"]["person_reference"])
+        self.assertEqual((output / "direction-preview.png").read_bytes(), supplied)
+        self.assertEqual(preview.read_bytes(), supplied)
 
     def test_punk_full_preview_requires_nonempty_prompt_and_rejects_old_routes(self):
         direction = self._punk_material()
@@ -229,11 +251,11 @@ class CoverDirectionTests(unittest.TestCase):
         record = cover_direction.prepare_cover_direction(
             self.job, direction, direction_preview=preview
         )
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         approved = self.job.job_dir / "approved.png"
         Image.new("RGB", (1080, 1920), "#D97832").save(approved, format="PNG")
         digest = hashlib.sha256(approved.read_bytes()).hexdigest()
-        for prompt in (None, "", "   "):
+        for prompt in (None, "", "   ", 42, "x" * 16_001):
             with self.subTest(prompt=repr(prompt)):
                 with self.assertRaises(cover.CoverError):
                     cover.prepare_cover(
@@ -278,7 +300,7 @@ class CoverDirectionTests(unittest.TestCase):
         self.assertEqual(reference["path"], "03-cover-direction/person-reference.png")
         self.assertTrue((self.job.job_dir / reference["path"]).is_file())
         self.assertEqual(
-            self.job.stages["cover_direction"]["status"], "ready_for_review"
+            self.job.stages["cover_direction"]["status"], "ready"
         )
 
     def test_style_seven_direction_preserves_approved_support_line(self) -> None:
@@ -395,7 +417,7 @@ class CoverDirectionTests(unittest.TestCase):
             "material_id": "material-0003",
         }
         prepared = cover_direction.prepare_cover_direction(self.job, direction)
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         scene_source = _png()
         scene = self.root / "generated-cover-scene.png"
         scene.write_bytes(scene_source)
@@ -440,7 +462,7 @@ class CoverDirectionTests(unittest.TestCase):
             "generated-reference-person",
         )
         self.assertNotIn("frame_timestamp", report["person_composite"])
-        self.assertEqual(self.job.stages["cover"]["status"], "ready_for_review")
+        self.assertEqual(self.job.stages["cover"]["status"], "ready")
         self.assertEqual(
             {path.name for path in output.parent.iterdir()},
             {
@@ -485,7 +507,7 @@ class CoverDirectionTests(unittest.TestCase):
             "safe_zones": {"safe_margin_ratio": 0.04},
         })
         cover_direction.prepare_cover_direction(self.job, direction)
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         scene = self.root / "scene-no-text.png"
         scene.write_bytes(_png())
         preview = self.root / "approved-cover-preview.png"
@@ -520,7 +542,7 @@ class CoverDirectionTests(unittest.TestCase):
 
     def test_aroll_approved_visual_preview_keeps_exact_pixels(self) -> None:
         self._prepare()
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         base = self.root / "scene-no-text.png"
         preview = self.root / "approved-cover-preview.png"
         Image.new("RGB", (1080, 1440), "#122235").save(base)
@@ -572,7 +594,7 @@ class CoverDirectionTests(unittest.TestCase):
             "safe_zones": {"safe_margin_ratio": 0.05},
         })
         cover_direction.prepare_cover_direction(self.job, direction)
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         preview = self.root / "complete-cover.png"
         Image.new("RGB", (1080, 1920), "#122235").save(preview)
         source_bytes = preview.read_bytes()
@@ -728,7 +750,7 @@ class CoverDirectionTests(unittest.TestCase):
         record = cover_direction.prepare_cover_direction(
             self.job, direction, frame_reader=lambda *_args: _png()
         )
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         loaded = cover_direction.load_approved_cover_direction(self.job)
         self.assertEqual(loaded["direction"]["title_review"], direction["title_review"])
         self.assertEqual(loaded["direction"]["title"], direction["title"])
@@ -777,7 +799,7 @@ class CoverDirectionTests(unittest.TestCase):
 
     def test_approved_record_reloads_and_detects_reference_change(self) -> None:
         first = self._prepare()
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         loaded = cover_direction.load_approved_cover_direction(self.job)
         self.assertEqual(loaded["direction_sha256"], first["direction_sha256"])
 
@@ -834,7 +856,7 @@ class CoverDirectionTests(unittest.TestCase):
         cover_direction.prepare_cover_direction(
             self.job, direction, frame_reader=lambda *_args: _png()
         )
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         calls = []
 
         with self.assertRaises(cover.CoverError):
@@ -861,7 +883,7 @@ class CoverDirectionTests(unittest.TestCase):
             self.job, direction,
             frame_reader=lambda *_args: wide_reference.getvalue(),
         )
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         calls = []
 
         def provider(*_args, **_kwargs):
@@ -880,7 +902,7 @@ class CoverDirectionTests(unittest.TestCase):
         self.assertTrue((first.parent / "cover-base.png").is_file())
         original_final = first.read_bytes()
         original_base = (first.parent / "cover-base.png").read_bytes()
-        state.approve(self.job, "cover")
+        state.complete(self.job, "cover")
         state.revise(self.job, "cover", "只调整标题分行")
 
         second = cover.prepare_cover(
@@ -904,7 +926,7 @@ class CoverDirectionTests(unittest.TestCase):
         self.assertFalse((second.parent / "cover-thumbnail-200.png").exists())
         from edit.hd.tools import qa_delivery_v2
 
-        state.approve(self.job, "cover")
+        state.complete(self.job, "cover")
         sources = qa_delivery_v2._cover_sources(state.load_job(self.job.job_dir))
         self.assertEqual(sources["cover/cover-9x16.png"], second.parent / "cover-9x16.png")
         with Image.open(second) as image:
@@ -913,7 +935,7 @@ class CoverDirectionTests(unittest.TestCase):
 
     def test_approved_direction_generates_native_full_v2_cover_once(self) -> None:
         direction = self._prepare()
-        state.approve(self.job, "cover_direction")
+        state.complete(self.job, "cover_direction")
         calls = []
 
         def provider(prompt, **kwargs):
@@ -958,7 +980,7 @@ class CoverDirectionTests(unittest.TestCase):
         )
         with Image.open(output.parent / "cover-3x4.png") as image:
             self.assertEqual(image.size, (1080, 1440))
-        self.assertEqual(self.job.stages["cover"]["status"], "ready_for_review")
+        self.assertEqual(self.job.stages["cover"]["status"], "ready")
         from edit.hd.tools import qa_delivery_v2
 
         workflow_before = (self.job.job_dir / "workflow.json").read_bytes()
@@ -995,7 +1017,7 @@ class CoverDirectionTests(unittest.TestCase):
 
         # Test-only approval: consume the actual publisher output and receipt,
         # not a hand-built delivery report or mocked artifact inventory.
-        state.approve(self.job, "cover")
+        state.complete(self.job, "cover")
         reloaded = state.load_job(self.job.job_dir)
         before = {path.name: path.read_bytes() for path in output.parent.iterdir()}
         sources = qa_delivery_v2._cover_sources(reloaded)
@@ -1020,3 +1042,26 @@ class CoverDirectionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DirectCoverDirectionTests(unittest.TestCase):
+    def test_punk_plan_can_prepare_without_a_separately_approved_image(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
+            root = Path(directory).resolve()
+            video, script = root / 'source.mp4', root / 'script.md'
+            video.write_bytes(b'video'); script.write_text(SCRIPT, encoding='utf-8')
+            job = state.create_job(root, video, script)
+            report = job.job_dir / '01-inspect/report.json'
+            report.parent.mkdir(); report.write_text('{}')
+            state.mark_ready(job,'inspect',[report]); state.complete(job,'inspect')
+            content_analysis.prepare_content_analysis(job,VALID_ANALYSIS)
+            state.complete(job,'content_analysis')
+            direction = copy.deepcopy(VALID_DIRECTION)
+            direction.update({'output_aspect_ratio':'9:16',
+                'composition':{'style_id':'interleaved-title-editorial-poster','person_side':'right',
+                    'person_width_ratio':0.60,'blank_width_ratio':0.35},
+                'safe_zones':{'safe_margin_ratio':0.05}})
+            record = cover_direction.prepare_cover_direction(job,direction,frame_reader=lambda *_:_png())
+            self.assertEqual(record['direction']['composition']['style_id'],'interleaved-title-editorial-poster')
+            self.assertEqual(job.stages['cover_direction']['status'],'ready')
+            self.assertTrue((job.job_dir / '03-cover-direction/direction-preview.png').is_file())

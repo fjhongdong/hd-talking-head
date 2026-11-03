@@ -34,8 +34,8 @@ def prepare_runtime(project_root):
         source_python = sys.executable if sys.version_info[:2] == (3, 12) else shutil.which("python3.12")
         if not source_python:
             raise RuntimeError("Python 3.12 is unavailable; Whiteboard runtime not installed")
-        commands = ([source_python, "-m", "venv", str(venv)],
-                    [str(python), "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
+        commands = ([source_python, "-I", "-m", "venv", str(venv)],
+                    [str(python), "-I", "-m", "pip", "install", "--disable-pip-version-check", "--no-input",
                      *PINNED_PACKAGES, "--editable", str(engine)])
         for command in commands:
             subprocess.run(command, cwd=project, check=True, timeout=300)
@@ -136,18 +136,17 @@ def create_adapter(upstream_root, engine_root, python_executable, engine_python,
         argv_template=argv, qualification_registry_path=None, qualification_registry_sha256=None)
 
 
-def create_binding(adapter, brief_bytes, reference_sample):
+def create_binding(adapter, brief_bytes):
     wrapper = _wrapper()
     brief = wrapper.validate_brief(brief_bytes)
     if (adapter.dependency_id != DEPENDENCY_ID or adapter.entrypoint != ENTRY
             or adapter.entrypoint_sha256 != _sha(SKILL / ENTRY)):
         raise ValueError("Whiteboard adapter identity changed")
-    sample = Path(reference_sample).resolve(strict=True)
     identity = adapter.entrypoint_sha256 + wrapper.UPSTREAM_SHA256 + wrapper.ENGINE_SHA256
     return {
         "template_origin": "custom_fallback", "template_id": "whiteboard-svg-blocks", "template_version": VERSION,
         "verification_id": hashlib.sha256(identity.encode()).hexdigest(), "adaptation_level": "structural",
-        "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256, "sample_sha256": _sha(sample),
+        "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
         "semantic_families": [brief["template_request"]["semantic_family"]],
         "capacity": {"min_units": brief["template_request"]["information_units"],
                      "max_units": brief["template_request"]["information_units"]},

@@ -26,6 +26,15 @@ from edit.hd.tests.test_visual_direction import draft_segment
 SAMPLE = SKILL / 'assets/wake-native-v2-smoke'
 
 class WakeSourceDescriptorTests(unittest.TestCase):
+    def test_planned_binding_freezes_current_image_brief_without_a_sample(self):
+        payload = (SAMPLE / 'native-inputs/brief.json').read_bytes()
+        adapter = SimpleNamespace(entrypoint_sha256=wake.sha(SKILL / wake.ENTRY),
+                                  launcher=Path(sys.executable))
+        binding = wake.create_binding(adapter, payload)
+        self.assertNotIn('sample_sha256', binding)
+        self.assertEqual(binding['brief_sha256'], hashlib.sha256(payload).hexdigest())
+        self.assertEqual(binding['invocation_record']['status'], 'planned')
+
     def test_only_actual_project_fonts_css_may_be_empty(self):
         payload = (SAMPLE / 'native-inputs/brief.json').read_bytes()
         brief = wake.validate_brief(payload)
@@ -62,6 +71,17 @@ class WakeSourceDescriptorTests(unittest.TestCase):
                     wake.check_result(brief, hashlib.sha256(payload).hexdigest(), record,
                                       lambda path: b'changed' if path == empty['job_path'] else read(path))
 
+    def test_native_qa_failure_is_execution_failure(self):
+        payload = (SAMPLE / 'native-inputs/brief.json').read_bytes()
+        brief = wake.validate_brief(payload)
+        record = copy.deepcopy(wake.inspect_result(SAMPLE, payload))
+        qa = json.dumps([{'level': 'FAIL', 'message': 'Original native check failed'}]).encode()
+        descriptor = record['native_qa']
+        descriptor.update(sha256=hashlib.sha256(qa).hexdigest(), byte_count=len(qa))
+        with self.assertRaisesRegex(ValueError, 'Original Wake QA.*failure'):
+            wake.check_result(brief, hashlib.sha256(payload).hexdigest(), record,
+                lambda name: qa if name == descriptor['job_path'] else (SAMPLE / name).read_bytes())
+
     def test_non_source_fonts_css_is_not_an_empty_file_exception(self):
         for path in ('images/fonts.css', 'outputs/fonts.css', 'calls/fonts.css'):
             with self.subTest(path=path), self.assertRaisesRegex(ValueError, 'Invalid Wake file descriptor'):
@@ -86,12 +106,12 @@ class WakeNativeTests(unittest.TestCase):
                 f=self.job.job_dir/rel;f.parent.mkdir(parents=True,exist_ok=True)
                 if data is not None:f.write_bytes(data)
                 paths.append(f)
-            state.mark_ready(self.job,stage,paths);state.approve(self.job,stage)
+            state.mark_ready(self.job,stage,paths);state.complete(self.job,stage)
         approve('inspect',[('01-inspect/report.json',b'{"development_fixture":true}')])
         analysis={'thesis':script,'hook':'先按语义','sections':[{'id':'s1','title':'语义与模板','source_span':[0,len(script)]}],
             'items':[{'id':'idea-01','source_text':script,'source_span':[0,len(script)],'priority':'critical','keywords':['语义','模板'],
                       'semantic_type':'contrast','evidence_status':'supported','broll_priority':'high'}],'claims':[]}
-        content_analysis.prepare_content_analysis(self.job,analysis);state.approve(self.job,'content_analysis')
+        content_analysis.prepare_content_analysis(self.job,analysis);state.complete(self.job,'content_analysis')
         approve('cover_direction',[('03-cover-direction/cover-direction.json',b'{"development_fixture":true}')])
         approve('cover',[('04-cover/cover-report.json',b'{"development_fixture":true}'),('04-cover/cover-delivery-raster.png',None)])
         approve('speech_cleanup',[('05-speech-cleanup/word-transcript.json',json.dumps({'version':1,'words':[{'text':script,'start':0,'end':6}]}).encode())])
@@ -101,8 +121,10 @@ class WakeNativeTests(unittest.TestCase):
 
     def setup_component(self):
         adapter = wake.create_adapter(PROJECT, sys.executable, lambda *_: self.payload)
-        binding = wake.create_binding(adapter, self.payload, SAMPLE / 'native-sample.mp4')
+        binding = wake.create_binding(adapter, self.payload)
+        self.assertNotIn('sample_sha256', binding)
         c = fixture._code_component(self.payload, dependency_id='lemo-wake')
+        c.pop('sample_sha256')
         c.update(binding)
         c['executor']='reference_adapter'
         c['render_window']['end_frame'] = 144
@@ -140,10 +162,10 @@ class WakeNativeTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(confirmed_content.ConfirmedContentError):
                 confirmed_content.check_confirmed_content(self.job, plan, treatment=treatment)
         artifacts.write_json_artifact(target, record)
-        for change in ('brief', 'review', 'scene'):
+        for change in ('brief', 'source_window', 'scene'):
             altered, altered_plan = copy.deepcopy(treatment), copy.deepcopy(plan)
             if change == 'brief': altered_plan['segments'][0]['shot_recipe']['components'][0]['brief_sha256'] = '0' * 64
-            elif change == 'review': altered['semantic_assessments'][0]['content_refs'][0]['sha256'] = '0' * 64
+            elif change == 'source_window': altered_plan['segments'][0]['start'] = .5
             else: altered['scenes'][0]['component_id'] = 'other'
             with self.subTest(change=change), self.assertRaises(confirmed_content.ConfirmedContentError):
                 confirmed_content.check_confirmed_content(self.job, altered_plan, treatment=altered)
@@ -179,7 +201,7 @@ class WakeNativeTests(unittest.TestCase):
         segment['visual_strategy']['composition'].pop('avatar',None)
         segment['visual_strategy']['components'][0]['media_type']='animation'
         cid='component-1'
-        segment['bindings'][cid]=wake.create_binding(adapter,self.payload,SAMPLE/'native-sample.mp4')
+        segment['bindings'][cid]=wake.create_binding(adapter,self.payload)
         director={'schema_version':3,'segments':[segment]}
         script=(self.root/'script.md').read_text()
         design={'composition':'原图整屏三行关系','typography':'保持原图中文完整','finish':'暖白纸面橙色轨迹','focus':'三行语义依次连接模板'}
@@ -245,7 +267,7 @@ class WakeNativeTests(unittest.TestCase):
         self.job=state.load_job(self.job.job_dir)
         result=wake.inspect_result(self.job.job_dir,self.payload)
         artifacts.write_json_artifact(tpath,treatment)
-        run_stage.resume_visual_direction(self.job,PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json','host_qa_note':'开发测试已检查本次原生动画首中尾，文字完整、动作匹配'}})
+        run_stage.resume_visual_direction(self.job,PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json'}})
         self.job=state.load_job(self.job.job_dir)
         adapters=run_stage.native_component_adapters(PROJECT,self.job)
         from edit.hd.tools import visual_canary
@@ -275,7 +297,7 @@ class WakeNativeTests(unittest.TestCase):
         result_path=self.job.job_dir/expected['path']
         current=json.loads(result_path.read_bytes());current['unreviewed_note']='changed after review'
         result_path.write_text(json.dumps(current))
-        with self.assertRaisesRegex(ValueError,'reviewed version'):
+        with self.assertRaisesRegex(ValueError,'frozen version'):
             wake.load_result(self.job.job_dir,self.payload,expected_record=expected)
 
 
@@ -286,7 +308,7 @@ class WakeNativeTests(unittest.TestCase):
         intent=valid_intent(segment_id='seg-001',presenter_presence='hidden')
         visual_strategy.validate_visual_strategy(intent,strategy)
         segment.update(visual_intent=intent, visual_strategy=strategy,
-            bindings={c['component_id']: wake.create_binding(adapter, self.payload, SAMPLE / 'native-sample.mp4')})
+            bindings={c['component_id']: wake.create_binding(adapter, self.payload)})
         treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': c['component_id'],
                                'brief_path': 'native-inputs/brief.json'}],
                      'skill_selection': {'opening': {'segment_id': 'seg-001',
@@ -310,6 +332,7 @@ class WakeNativeTests(unittest.TestCase):
         self.assertTrue(action['requirements']['single_pass'])
 
     def test_revision_preserves_completed_work_and_dispatches_only_new_request(self):
+        approve_fixture_setup(self.job)
         director, treatment = self.draft()
         old_brief = self.job.job_dir / 'native-inputs/brief.json'
         old_result = self.job.job_dir / self.brief['result_record_path']
@@ -341,12 +364,18 @@ class WakeNativeTests(unittest.TestCase):
                                           if item['job_path'].endswith('/index.html'))).parent
         native_root = wake.source_root()
         native_render = str(native_root / 'skills/wake/scripts/render.mjs')
+        real_run = wake.subprocess.run
+        native_call = mock.Mock(side_effect=AssertionError('native renderer must not run'))
+        def run(command, *args, **kwargs):
+            if native_render in [str(value) for value in command]:
+                return native_call(command, *args, **kwargs)
+            return real_run(command, *args, **kwargs)
         with mock.patch.object(wake, 'source_root', return_value=native_root), \
-             mock.patch.object(wake.subprocess, 'run') as call:
+             mock.patch.object(wake.subprocess, 'run', side_effect=run):
             with self.assertRaisesRegex(ValueError, 'new native project'):
                 wake.capture_call(self.job.job_dir, new_brief, 'render',
                                   ['node', native_render, str(old_src), 'frames'], old_src)
-            call.assert_not_called()
+            native_call.assert_not_called()
         new_result = self.job.job_dir / result['result_record_path']
         new_result.write_bytes(old_result.read_bytes())
         with self.assertRaisesRegex(ValueError, 'approved request or clock'):
@@ -355,6 +384,7 @@ class WakeNativeTests(unittest.TestCase):
             self.assertEqual((self.job.job_dir / relative).read_bytes(), data)
 
     def test_revision_failure_does_not_advance_state_or_report_success(self):
+        approve_fixture_setup(self.job)
         old_brief = self.job.job_dir / 'native-inputs/brief.json'
         previous_revision = self.job.revision
         with mock.patch.object(wake.artifacts, 'write_json_artifact', side_effect=OSError('write failed')), \
@@ -375,7 +405,7 @@ class WakeNativeTests(unittest.TestCase):
         b = copy.deepcopy(self.brief);b['image'] = wake.descriptor(self.job.job_dir, cover)
         raw = json.dumps(b).encode();brief_path=self.job.job_dir/'native-inputs/brief.json';brief_path.write_bytes(raw)
         binding=director['segments'][0]['bindings']['code'];binding['brief_sha256']=hashlib.sha256(raw).hexdigest()
-        self.job.stages={'cover': {'status':'approved','artifacts':[{'path':str(cover.relative_to(self.job.job_dir)),
+        self.job.stages={'cover': {'status':'completed','artifacts':[{'path':str(cover.relative_to(self.job.job_dir)),
             'sha256':wake.sha(cover),'bytes':cover.stat().st_size}]}}
         self.assertEqual(wake_opening.validate(self.job,director,treatment)['candidate_id'],'lemo-wake:wake')
         for mutate in (lambda d: d['segments'][0].update(start=.5),
@@ -429,8 +459,8 @@ class WakeNativeTests(unittest.TestCase):
         frozen=confirmation._freeze_reviewed_native_result(self.job.job_dir,treatment,'seg-001','code',self.payload,'lemo-wake')
         self.assertEqual(frozen['sha256'],reviewed)
         data=result_path.read_bytes();result_path.write_bytes(data+b'\n')
-        with self.assertRaisesRegex(ValueError,'host reviewed'):
-            confirmation._freeze_reviewed_native_result(self.job.job_dir,treatment,'seg-001','code',self.payload,'lemo-wake')
+        with self.assertRaisesRegex(ValueError,'frozen version'):
+            wake.load_result(self.job.job_dir,self.payload,expected_record=frozen)
         result_path.write_bytes(data)
         native=wake.inspect_result(self.job.job_dir,self.payload)
         source=next(f for f in native['project_files'] if '/assets/source.' in f['job_path'])
@@ -440,11 +470,16 @@ class WakeNativeTests(unittest.TestCase):
     def test_selected_inputs_and_runtime_directory_are_checked_before_confirmation(self):
         director,treatment=self.draft()
         wake.validate_selected_inputs(self.job,director,treatment)
-        environment=wake.runtime_environment()
+        with mock.patch.dict(wake.os.environ, {'PYTHONPATH': 'host-python312', 'WAKE_TEST_VALUE': 'retained'}):
+            environment=wake.runtime_environment()
+            self.assertNotIn('PYTHONPATH',environment)
+            self.assertEqual(environment['WAKE_TEST_VALUE'],'retained')
+            self.assertTrue(environment['PATH'].endswith(wake.os.environ['PATH']))
+            self.assertEqual(wake.os.environ['PYTHONPATH'],'host-python312')
         self.assertEqual(environment['LEMO_WAKE_MODELS'],str(PROJECT/'runtime/lemo-wake/models'))
         (self.job.job_dir/self.brief['image']['job_path']).unlink()
         with self.assertRaises(FileNotFoundError):wake.validate_selected_inputs(self.job,director,treatment)
-        b=copy.deepcopy(self.brief);b['source_binding']['segment_id']='seg-opening'
+        b=copy.deepcopy(self.brief);b['source_binding']['segment_id']='seg/../opening'
         with self.assertRaisesRegex(ValueError,'source clock'):wake.validate_brief(json.dumps(b))
 
     def test_preview_stage_defaults_to_static_cover_and_respects_explicit_override(self):
@@ -452,17 +487,18 @@ class WakeNativeTests(unittest.TestCase):
         with mock.patch('edit.hd.tools.state.load_job',return_value=self.job), \
              mock.patch('edit.hd.tools.state.current_stage',return_value='preview'), \
              mock.patch.object(run_stage,'_startup'), \
-             mock.patch.object(run_stage,'_coverage_gate',return_value={}), \
              mock.patch.object(run_stage,'_summary',return_value={}), \
              mock.patch('edit.hd.tools.state.require_runnable'), \
+             mock.patch('edit.hd.tools.state.complete', side_effect=lambda j, stage: j.stages[stage].update(status='completed')), \
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
+             mock.patch('edit.hd.tools.visual_confirmation.validate_visual_authorization', return_value={'payload': {'user_confirmation': '确认本期清单及封面费用'}}), \
              mock.patch('edit.hd.tools.visual_confirmation.approved_body_opening', return_value=None) as approved_opening, \
              mock.patch('edit.hd.tools.preview_v2.prepare_preview_v2') as preview:
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
             options=preview.call_args.kwargs['opening']
             self.assertEqual(options['hold_frames'],12)
             self.assertEqual(options['transition_frames'],0)
-            self.assertIn('默认', options['user_confirmation'])
+            self.assertEqual(options['user_confirmation'], '确认本期清单及封面费用')
             preview.assert_called_once_with(self.job,opening=options,music=None)
             preview.reset_mock()
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':None})
@@ -476,7 +512,7 @@ class WakeNativeTests(unittest.TestCase):
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
             preview.assert_called_once_with(self.job,opening=None,music=None)
             preview.reset_mock()
-            self.job.stages['preview']['status']='ready_for_review'
+            self.job.stages['preview']['status']='ready'
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
             preview.assert_not_called()
 

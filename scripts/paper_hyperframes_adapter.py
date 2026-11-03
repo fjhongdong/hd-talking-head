@@ -12,7 +12,7 @@ if __file__ != '<stdin>':
  from package_paths import PACKAGE_ROOT
 hf=None; check_motion=None; ENTRY_PATH=None; SKILL=PACKAGE_ROOT if __file__!='<stdin>' else None
 ENTRY='scripts/paper_hyperframes_adapter.py'; DEPENDENCY_ID='paper-collage-hyperframes'; VERSION='2.0.0'; ROUTE='paper-collage-ad/hyperframes'
-SHARED_SHA='8fd7e03829279dbcf40f58591253b51157789771a9d79ae2749aa72e4dbf80bc'
+SHARED_SHA='f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26'
 UPSTREAM_COMMIT='a69c9f56eec57ca19d1c02f6bdcffe573b4324a8'
 READ_FILES=('SKILL.md','references/hyperframes-route.md','references/collage-dimensions.md','references/prompt-patterns.md','references/production-workflow.md','references/dependencies.md','examples/hyperframes-logo-composition.html')
 def _ensure(project,skill_root=None):
@@ -191,10 +191,10 @@ def create_artifact_probe(ffprobe_executable):
  if hf is None: _ensure(SKILL,SKILL)
  return hf.create_artifact_probe(ffprobe_executable)
 
-def create_binding(adapter,payload,sample):
+def create_binding(adapter,payload):
  b=validate_brief(payload)
  if b['upstream_route']!=ROUTE or b['composition']['alpha']: raise ValueError('Paper HyperFrames requires the non-alpha paper route')
- out=hf.create_binding(adapter,payload,sample); out.update(dependency_id=DEPENDENCY_ID,entrypoint=ENTRY,producer_version=VERSION,source_entrypoint=ENTRY,source_sha256=adapter.entrypoint_sha256); out['template_version']=VERSION; out['invocation_record']['argv']=[str(adapter.launcher),ENTRY]; return out
+ out=hf.create_binding(adapter,payload); out.update(dependency_id=DEPENDENCY_ID,entrypoint=ENTRY,producer_version=VERSION,source_entrypoint=ENTRY,source_sha256=adapter.entrypoint_sha256); out['template_version']=VERSION; out['invocation_record']['argv']=[str(adapter.launcher),ENTRY]; return out
 def render(args):
  _ensure(Path(args.project_root),args.skill_root); source_root(args.project_root)
  with tempfile.TemporaryDirectory(prefix='paper-hf-') as d:

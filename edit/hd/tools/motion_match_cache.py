@@ -20,7 +20,14 @@ def _policy_identity():
                              'match_once', 'validate_matches', '_validate_entry'})):
         nodes = {node.name: node for node in ast.parse(path.read_text()).body
                  if isinstance(node, ast.FunctionDef)}
-        rules.extend((name, ast.dump(nodes[name], include_attributes=False)) for name in sorted(names))
+        for name in sorted(names):
+            node = nodes[name]
+            # Python 3.12 adds empty type_params to ordinary function nodes.
+            # Interpreter metadata must not invalidate unchanged matching rules.
+            for child in ast.walk(node):
+                if getattr(child, 'type_params', None) == []:
+                    child._fields = tuple(field for field in child._fields if field != 'type_params')
+            rules.append((name, ast.dump(node, include_attributes=False)))
     return contract_artifacts.sha256_json({'version': motion_capabilities.MATCHING_POLICY_VERSION,
         'tag_fields': motion_capabilities.TAG_FIELDS, 'uses': sorted(motion_capabilities.USES), 'rules': rules})
 
@@ -52,6 +59,97 @@ def _identity(row, typ, tags):
     payload["type"]=typ; payload["tags"]=tags
     payload["matching_policy_version"]=motion_capabilities.MATCHING_POLICY_VERSION
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
+
+def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
+    """Explicitly rebind task wording to the current approved cache; never search.
+
+    Return a new treatment and the row IDs whose semantic digest changed. The
+    caller saves only its new draft and records the actual local instruction.
+    """
+    from . import visual_confirmation as confirmation
+    revision = treatment.get("skill_selection", {}).get("revision_locks")
+    if (not isinstance(revision, dict)
+            or set(revision) != {"previous_receipt", "user_confirmation", "changes"}
+            or not isinstance(revision["user_confirmation"], str)
+            or not revision["user_confirmation"].strip()
+            or not isinstance(revision["changes"], list) or not revision["changes"]):
+        raise ValueError("visual task rebinding needs an explicit local revision instruction")
+    root = Path(job_dir).resolve(strict=True)
+    workflow = contract_artifacts.read_json_artifact(root / "workflow.json")
+    stage = workflow.get("stages", {}).get("visual_direction", {})
+    if stage.get("status") != "needs_revision":
+        raise ValueError("visual task rebinding requires the current visual revision")
+    receipt, proposal = confirmation._validate_source(
+        root, revision["previous_receipt"], job_id=workflow.get("job_id"))
+    # Follow the registered current realization, including its actual rebound
+    # cache. Do not scan receipts or fall back to an older proposal's inputs.
+    mappings = []
+    for inventory in (stage.get("artifacts", []), stage.get("lineage", [])):
+        mappings = [item for item in inventory if item["path"].endswith("/" + confirmation.MAPPING)]
+        if mappings:
+            break
+    if len(mappings) != 1:
+        raise ValueError("visual task rebinding needs one registered current realization")
+    descriptor = {key: mappings[0][key] for key in ("path", "sha256", "bytes")}
+    mapping = confirmation._read(confirmation._exact(root, descriptor))
+    if (mapping.get("source_approval") != revision["previous_receipt"]
+            or mapping.get("proposal") != receipt["source"]
+            or proposal.get("job_id") != workflow.get("job_id")):
+        raise ValueError("visual task rebinding differs from the current approved source")
+    baseline = mapping["realization_inputs"]
+    previous_director = confirmation._read(confirmation._exact(root, baseline["director"]))
+    previous = confirmation._read(confirmation._exact(root, baseline["treatment"]))
+    old_items = {row["row_id"]: (row, typ, tags)
+                 for row, typ, tags in _items(project_root, previous_director, previous)}
+    current = {row["row_id"]: (row, typ, tags)
+               for row, typ, tags in _items(project_root, director, treatment)}
+    old_cache, supplied = previous.get("motion_matches"), treatment.get("motion_matches")
+    if (not isinstance(old_cache, dict) or set(old_cache) != set(old_items)
+            or not isinstance(supplied, dict) or not set(old_items) <= set(current)
+            or not set(old_items) <= set(supplied) or not set(supplied) <= set(current)
+            or any(supplied[key] != old_cache[key] for key in old_items)):
+        raise ValueError("visual task rebinding requires the exact trusted source cache")
+    changes = set()
+    for change in revision["changes"]:
+        if (not isinstance(change, dict) or any(not isinstance(change.get(key), str)
+                or not change[key].strip() for key in
+                ("semantic_row_id", "segment_id", "component_id", "candidate_id"))):
+            raise ValueError("visual task rebinding needs explicit component changes")
+        key = (change["semantic_row_id"], change["segment_id"], change["component_id"])
+        if key in changes:
+            raise ValueError("visual task rebinding change is duplicated")
+        changes.add(key)
+    old_segments = {s["segment_id"]: s for s in previous_director["segments"]}
+    segments = {s["segment_id"]: s for s in director["segments"]}
+    catalog, catalog_sha = _catalog(project_root)
+    policy = _policy_identity()
+    out, rebound = copy.deepcopy(treatment), []
+    if treatment.get("source_clock") != previous.get("source_clock"):
+        raise ValueError("visual task rebinding cannot change the approved word clock")
+    for row_id, (before, typ, tags) in old_items.items():
+        after, current_type, current_tags = current[row_id]
+        if (typ != current_type or tags != current_tags
+                or {k: v for k, v in before.items() if k != "visual_task"}
+                    != {k: v for k, v in after.items() if k != "visual_task"}):
+            raise ValueError("visual task rebinding cannot change row meaning, clock, components or tags")
+        for ref in before["components"]:
+            old, new = old_segments[ref["segment_id"]], segments[ref["segment_id"]]
+            if any(old.get(key) != new.get(key) for key in ("start", "end", "content_item_ids")):
+                raise ValueError("visual task rebinding cannot change the approved word clock or content")
+        entry = old_cache[row_id]
+        use = "aroll_overlay" if typ == "贴片" else "broll"
+        if (entry.get("semantic_sha256") != _identity(before, typ, tags)
+                or entry.get("catalog_sha256") != catalog_sha or entry.get("use") != use
+                or entry.get("tags") != tags or entry.get("matching_policy_sha256") != policy):
+            raise ValueError("visual task rebinding source cache identity changed")
+        _validate_entry(entry, catalog, use, tags)
+        if before["visual_task"] != after["visual_task"]:
+            if any((row_id, ref["segment_id"], ref["component_id"]) not in changes
+                   for ref in before["components"]):
+                raise ValueError("visual task rebinding changed an unrequested row")
+            out["motion_matches"][row_id]["semantic_sha256"] = _identity(after, typ, tags)
+            rebound.append(row_id)
+    return out, sorted(rebound)
 
 def match_once(project_root, director, treatment):
     out=copy.deepcopy(treatment); rows,csha=_catalog(project_root); items=_items(project_root,director,out)

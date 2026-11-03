@@ -1481,6 +1481,16 @@ class ShotRecipeV2Tests(unittest.TestCase):
                 with self.assertRaises(visual_strategy.VisualStrategyError):
                     visual_strategy.validate_shot_recipe_v2(valid_recipe([component]))
 
+    def test_only_custom_bindings_can_omit_the_qualification_sample(self) -> None:
+        code = recipe_component("component-1", "code_generated")
+        del code["sample_sha256"]
+        code.update(template_origin="custom_fallback", adaptation_level="structural")
+        visual_strategy.validate_shot_recipe_v2(valid_recipe([code]))
+        for origin in ("verified_third_party", "verified_local_canonical"):
+            code.update(template_origin=origin, adaptation_level="content_reflow")
+            with self.subTest(origin=origin), self.assertRaises(visual_strategy.VisualStrategyError):
+                visual_strategy.validate_shot_recipe_v2(valid_recipe([code]))
+
     def test_local_canonical_template_may_bind_structural_adaptation(self) -> None:
         code = recipe_component("component-1", "code_generated")
         code["template_origin"] = "verified_local_canonical"

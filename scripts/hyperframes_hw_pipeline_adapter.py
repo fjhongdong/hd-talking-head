@@ -35,8 +35,8 @@ def _checked_brief(node: Path, payload: bytes) -> dict:
 
 def _approved_json(job, stage_id: str, relative: str) -> dict:
     stage = job.stages[stage_id]
-    if stage["status"] != "approved":
-        raise ValueError(f"{stage_id} must be approved")
+    if stage["status"] != "completed":
+        raise ValueError(f"{stage_id} must be completed")
     records = [item for item in stage["artifacts"] if item["path"] == relative]
     if len(records) != 1:
         raise ValueError(f"{relative} is not bound to the approved stage")

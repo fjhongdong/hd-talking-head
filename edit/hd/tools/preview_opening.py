@@ -21,7 +21,7 @@ def _approved_record(job: Any, stage_id: str, relative: str) -> dict[str, Any]:
     stage = job.stages[stage_id]
     path = Path(job.job_dir) / relative
     records = [item for item in stage["artifacts"] if item.get("path") == relative]
-    if (stage["status"] != "approved" or len(records) != 1 or path.is_symlink()
+    if (stage["status"] != "completed" or len(records) != 1 or path.is_symlink()
             or path.resolve() != path.absolute() or not path.is_file()):
         raise OpeningError(f"opening requires approved {relative}")
     record = {"path": relative, "sha256": contract_artifacts.sha256_file(path),

@@ -21,6 +21,7 @@ from edit.hd.tools import (
     material_usage,
     preview_v2,
     segment_render,
+    visual_assets_v2,
 )
 
 
@@ -203,7 +204,10 @@ def _source_fixture(
         "visual_plan_sha256": plan["visual_plan_sha256"],
         "canvas": {"width": 1080, "height": 1920, "fps": 24},
         "duration": 3.0,
-        "reused_canary_segment_ids": [],
+        "reused_formal_segment_ids": [],
+        "segment_input_identities": {
+            segment["segment_id"]: visual_assets_v2._segment_input_identity(plan, segment)
+        },
         "segments": [
             {
                 "segment_id": segment["segment_id"],
@@ -283,6 +287,9 @@ def _publish_rendered_manifest(
     )
     asset_manifest["visual_plan_sha256"] = plan["visual_plan_sha256"]
     asset_manifest["segments"] = [asdict(rendered)]
+    asset_manifest["segment_input_identities"] = {
+        segment["segment_id"]: visual_assets_v2._segment_input_identity(plan, segment)
+    }
     asset_base = {
         key: value
         for key, value in asset_manifest.items()
@@ -334,29 +341,29 @@ def _preview_job(
         stages={
             "preview": {"status": "pending", "artifacts": []},
             "visual_direction": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["visual_direction"], root)],
             },
             "visual_assets": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(paths["visual_track"], root),
                     _artifact_record(paths["asset_manifest"], root),
                 ],
             },
             "subtitles": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(paths["subtitle_track"], root),
                     _artifact_record(paths["subtitle_plan"], root),
                 ],
             },
             "edit_structure": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["arroll"], root)],
             },
             "cover": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["cover"], root)],
             },
         },
@@ -394,24 +401,13 @@ def _set_reusable_preview(
         root / "11-preview/source-manifest.json",
         contract_artifacts.canonical_json_bytes(source_manifest) + b"\n",
     )
-    keyframes = [
-        _write(
-            root / f"11-preview/keyframes/frame-{index:02d}.png",
-            f"frame-{index}".encode(),
-        )
-        for index in range(1, 6)
-    ]
     report_base = {
+        "status": "completed",
+        "scope": "technical",
         "preview_sha256": _sha256(review),
         "source_manifest_sha256": source_manifest["source_manifest_sha256"],
         "media": {"frames": 72},
-        "evidence": [
-            {
-                "path": f"keyframes/{path.name}",
-                "sha256": _sha256(path),
-            }
-            for path in keyframes
-        ],
+        "evidence": [],
     }
     report = {
         **report_base,
@@ -425,10 +421,9 @@ def _set_reusable_preview(
         "review": review,
         "source": source,
         "report": report_path,
-        **{f"keyframe-{index}": path for index, path in enumerate(keyframes, 1)},
     }
     job.stages["preview"] = {
-        "status": "ready_for_review",
+        "status": "ready",
         "artifacts": [
             _artifact_record(path, root)
             for path in paths.values()
@@ -484,19 +479,10 @@ class FormalPreviewContractTests(unittest.TestCase):
             Path(command[-1]).write_bytes(b"review-video")
             return mock.Mock(returncode=0, stdout="")
 
-        def extract(_video: Path, output: Path, _duration: float) -> list[Path]:
-            output.mkdir()
-            paths = []
-            for index in range(1, 6):
-                path = output / f"frame-{index:02d}.png"
-                path.write_bytes(f"frame-{index}".encode())
-                paths.append(path)
-            return paths
-
         def mark_ready(_job, _stage_id: str, artifacts) -> None:
             _job.revision += 1
             _job.stages["preview"].update(
-                status="ready_for_review",
+                status="ready",
                 artifacts=[
                     _artifact_record(path, Path(_job.job_dir))
                     for path in artifacts
@@ -519,7 +505,8 @@ class FormalPreviewContractTests(unittest.TestCase):
                     "audio_streams": 1,
                 },
             ),
-            mock.patch.object(preview_v2, "_extract_frames", side_effect=extract),
+            mock.patch.object(preview_v2.preview_opening, "extract_evidence",
+                              side_effect=AssertionError("must not extract QA frames")),
             mock.patch.object(preview_v2.state, "mark_ready", side_effect=mark_ready),
         )
 
@@ -535,7 +522,6 @@ class FormalPreviewContractTests(unittest.TestCase):
                 "qa-report.json",
                 "source-manifest.json",
                 "material-usage.json",
-                *(f"keyframes/frame-{index:02d}.png" for index in range(1, 6)),
             }
             actual = {
                 path.relative_to(result.directory).as_posix()
@@ -543,7 +529,10 @@ class FormalPreviewContractTests(unittest.TestCase):
                 if path.is_file()
             }
             self.assertEqual(expected, actual)
-            self.assertEqual("ready_for_review", job.stages["preview"]["status"])
+            self.assertEqual("completed", result.qa_report["status"])
+            self.assertEqual("technical", result.qa_report["scope"])
+            self.assertEqual([], result.qa_report["evidence"])
+            self.assertEqual("ready", job.stages["preview"]["status"])
             self.assertEqual(
                 expected,
                 {
@@ -571,7 +560,7 @@ class FormalPreviewContractTests(unittest.TestCase):
             patches = self._preview_build_patches(job)
 
             def reject(_job, _stage_id: str, _artifacts) -> None:
-                _job.stages["preview"].update(status="ready_for_review")
+                _job.stages["preview"].update(status="ready")
                 raise RuntimeError("workflow update rejected")
 
             with patches[0], patches[1], patches[2], patches[3], patches[4], mock.patch.object(
@@ -687,7 +676,7 @@ class FormalPreviewContractTests(unittest.TestCase):
             ):
                 result = preview_v2.prepare_preview_v2(job)
 
-            self.assertEqual("ready_for_review", job.stages["preview"]["status"])
+            self.assertEqual("ready", job.stages["preview"]["status"])
             self.assertTrue(result.review.is_file())
             self.assertFalse((target / "previous.txt").exists())
             self.assertFalse(any(root.glob(".11-preview.backup-*")))
@@ -1390,7 +1379,7 @@ class FormalPreviewContractTests(unittest.TestCase):
                 contract_artifacts.canonical_json_bytes(report) + b"\n",
             )
             job.stages["preview"] = {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(review, root),
                     _artifact_record(report_path, root),
@@ -1431,7 +1420,7 @@ class FormalPreviewContractTests(unittest.TestCase):
             default_probe.assert_not_called()
 
     def test_reusable_preview_rechecks_every_published_file_and_exact_inventory(self) -> None:
-        for name in ("review", "report", "source", "keyframe-3"):
+        for name in ("review", "report", "source"):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 _source_job, plan, asset_manifest = _source_fixture(root)

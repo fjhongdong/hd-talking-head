@@ -3276,6 +3276,44 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
 
 
 class CodeDependencyExecutionTests(unittest.TestCase):
+    def test_launcher_alias_freezes_target_and_rejects_retargeting(self):
+        from dataclasses import replace
+        import venv
+        adapter = self._adapter(b'{}', 'pass')
+        environment = self.root / 'venv'
+        venv.EnvBuilder(with_pip=False, symlinks=True).create(environment)
+        alias = environment / 'bin/python'
+        target = alias.resolve(strict=True)
+        adapter = replace(adapter, launcher=alias, launcher_sha256=_sha256(target.read_bytes()))
+        binding = executor._freeze_process_binding(adapter)
+        try:
+            self.assertEqual(binding.adapter.launcher, alias)
+            self.assertEqual(binding.launcher_target, target)
+            executor._verify_frozen_launcher(binding)
+            actual_prefix = subprocess.check_output([str(adapter.launcher), '-c', 'import sys; print(sys.prefix)'], text=True).strip()
+            self.assertEqual(Path(actual_prefix), environment)
+            self.assertNotEqual(Path(actual_prefix), Path(sys.prefix))
+            replacement = self.root / 'other-python'; replacement.write_bytes(target.read_bytes())
+            alias.unlink(); alias.symlink_to(replacement)
+            with self.assertRaises(executor.BrollComponentExecutionError):
+                executor._verify_frozen_launcher(binding)
+        finally:
+            binding.close()
+
+    def test_managed_parent_identity_is_checked_before_reference_transaction(self):
+        from unittest import mock
+        from edit.hd.tools import startup, state
+        marker = self.job.root / '00-user-provided'
+        marker.mkdir()
+        before = list(self.job.job_dir.iterdir())
+        with mock.patch.object(startup, 'require_job_identity', side_effect=state.WorkflowError('wrong parent Python')) as identity, \
+             mock.patch.object(executor, '_execute_pinned') as execute:
+            with self.assertRaisesRegex(state.WorkflowError, 'wrong parent Python'):
+                self._execute(b'{}', self._adapter(b'{}', 'pass'))
+            identity.assert_called_once_with(self.job)
+            execute.assert_not_called()
+        self.assertEqual(list(self.job.job_dir.iterdir()), before)
+
     def test_paper_freeze_failure_retains_bounded_native_diagnostic(self):
         from types import SimpleNamespace
         from edit.hd.tools import broll_component_executor as executor
@@ -4414,6 +4452,7 @@ class CodeDependencyExecutionTests(unittest.TestCase):
             )
         environment = json.loads((self.job.job_dir / artifact.job_path).read_text())
         self.assertEqual(environment["BROLL_OFFLINE"], "1")
+        self.assertEqual(environment["BROLL_JOB_DIR"], str(self.job.job_dir))
         self.assertEqual(environment["NO_PROXY"], "*")
         self.assertNotIn("PROVIDER_RUNTIME_VALUE", environment)
 

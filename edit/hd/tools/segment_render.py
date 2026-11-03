@@ -7,6 +7,7 @@ import fcntl
 import json
 import math
 import os
+import re
 import secrets
 import shutil
 import signal
@@ -35,7 +36,7 @@ FPS = 24
 WIDTH = 1080
 HEIGHT = 1920
 SOFT_SAFE_BOTTOM = 1700
-RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v7-aroll-overlay"
+RENDERER_CONTRACT_VERSION = "hd-segment-component-compositor-v8-direct"
 _HASH_CHUNK_SIZE = 1024 * 1024
 _SHA256 = frozenset("0123456789abcdef")
 _JOURNAL_SUFFIX = ".publication-journal.json"
@@ -58,8 +59,7 @@ _JOURNAL_STATES = (
     "published",
     "exit_unconfirmed",
 )
-_FORMAL_OUTPUTS = {"segment.mp4", "segment-manifest.json", "keyframes"}
-_KEYFRAME_NAMES = ("entry", "hold", "exit")
+_FORMAL_OUTPUTS = {"segment.mp4", "segment-manifest.json"}
 
 
 class SegmentRenderError(RuntimeError):
@@ -1259,35 +1259,6 @@ def _probe_matches(probe: Mapping[str, object], frames: int) -> bool:
         return False
 
 
-def _default_frame_extractor(video: Path, timestamp: float, output: Path) -> None:
-    try:
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-hide_banner",
-                "-nostdin",
-                "-xerror",
-                "-v",
-                "error",
-                "-ss",
-                f"{timestamp:.6f}",
-                "-i",
-                str(video),
-                "-frames:v",
-                "1",
-                "-vf",
-                "scale=1080:1920:flags=lanczos",
-                "-y",
-                str(output),
-            ],
-            check=True,
-            capture_output=True,
-            timeout=120,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise SegmentRenderError("segment keyframe extraction failed") from exc
-
-
 def _hash_file(path: Path) -> tuple[str, int]:
     descriptor: int | None = None
     try:
@@ -1565,52 +1536,6 @@ def _close_segment_lock(descriptor: int) -> None:
         os.close(descriptor)
 
 
-def _keyframe_moments(frames: int) -> dict[str, float]:
-    duration = frames / FPS
-    last_frame = (frames - 1) / FPS
-    return {
-        "entry": min(duration / 4, 0.35, last_frame),
-        "hold": min(duration / 2, last_frame),
-        "exit": min(
-            max(duration - min(duration / 4, 0.35), duration / 2),
-            last_frame,
-        ),
-    }
-
-
-def _keyframes(
-    video: Path,
-    stage: Path,
-    target: Path,
-    frames: int,
-    extractor: Callable[[Path, float, Path], None],
-) -> dict[str, dict[str, object]]:
-    directory = stage / "keyframes"
-    directory.mkdir(mode=0o700)
-    moments = _keyframe_moments(frames)
-    records: dict[str, dict[str, object]] = {}
-    for name, timestamp in moments.items():
-        output = directory / f"{name}.png"
-        try:
-            extractor(video, timestamp, output)
-        except SegmentRenderError:
-            raise
-        except BaseException as failure:
-            if isinstance(failure, (KeyboardInterrupt, SystemExit)):
-                raise
-            raise SegmentRenderError("segment keyframe extraction failed") from None
-        if not output.is_file():
-            raise SegmentRenderError("segment keyframe is unavailable")
-        digest, byte_count = _hash_file(output)
-        records[name] = {
-            "path": str(target / "keyframes" / output.name),
-            "sha256": digest,
-            "bytes": byte_count,
-            "timestamp": timestamp,
-        }
-    return records
-
-
 def _load_existing(
     target: Path,
     identity: str,
@@ -1629,7 +1554,7 @@ def _load_existing(
     if set(entries) != _FORMAL_OUTPUTS or any(
         not entries[name].is_file(follow_symlinks=False)
         for name in ("segment.mp4", "segment-manifest.json")
-    ) or not entries["keyframes"].is_dir(follow_symlinks=False):
+    ):
         raise SegmentRenderError("existing segment generation is incomplete")
     manifest = target / "segment-manifest.json"
     try:
@@ -1670,36 +1595,8 @@ def _load_existing(
         or not _probe_matches(actual_probe, frames)
     ):
         raise SegmentRenderError("existing segment generation is incomplete")
-    if type(rendered.keyframes) is not dict or set(rendered.keyframes) != set(
-        _KEYFRAME_NAMES
-    ):
+    if type(rendered.keyframes) is not dict or rendered.keyframes:
         raise SegmentRenderError("existing segment generation is incomplete")
-    keyframe_directory = target / "keyframes"
-    try:
-        keyframe_entries = {entry.name: entry for entry in os.scandir(keyframe_directory)}
-    except OSError:
-        raise SegmentRenderError("existing segment generation is incomplete") from None
-    expected_keyframe_files = {f"{name}.png" for name in _KEYFRAME_NAMES}
-    if set(keyframe_entries) != expected_keyframe_files or any(
-        not entry.is_file(follow_symlinks=False) for entry in keyframe_entries.values()
-    ):
-        raise SegmentRenderError("existing segment generation is incomplete")
-    moments = _keyframe_moments(frames)
-    for name in _KEYFRAME_NAMES:
-        record = rendered.keyframes[name]
-        expected_path = target / "keyframes" / f"{name}.png"
-        if (
-            type(record) is not dict
-            or set(record) != {"path", "sha256", "bytes", "timestamp"}
-            or record["path"] != str(expected_path)
-            or not _valid_sha(record["sha256"])
-            or type(record["bytes"]) is not int
-            or record["bytes"] <= 0
-            or type(record["timestamp"]) not in {int, float}
-            or float(record["timestamp"]) != moments[name]
-            or _hash_file(expected_path) != (record["sha256"], record["bytes"])
-        ):
-            raise SegmentRenderError("existing segment generation is incomplete")
     return rendered
 
 
@@ -1938,17 +1835,6 @@ def _render_segment_video(
                 output_probe, prepared.frames
             ):
                 raise SegmentRenderError("rendered segment contract is invalid")
-            keyframes = _keyframes(
-                stage_video,
-                stage,
-                target,
-                prepared.frames,
-                frame_extractor or _default_frame_extractor,
-            )
-            if _hash_file(stage_video) != before_probe:
-                raise SegmentRenderError(
-                    "rendered segment changed during keyframe extraction"
-                )
             shutil.rmtree(stage / "inputs")
             result = RenderedSegment(
                 segment_id=segment_id,
@@ -1966,7 +1852,7 @@ def _render_segment_video(
                     _artifact_identity(artifact) for artifact in artifacts
                 ],
                 output_probe=output_probe,
-                keyframes=keyframes,
+                keyframes={},
             )
             try:
                 contract_artifacts.write_json_artifact(
@@ -1978,13 +1864,11 @@ def _render_segment_video(
                 ) from None
             for formal_path in (
                 stage_video,
-                *(stage / "keyframes" / f"{name}.png" for name in _KEYFRAME_NAMES),
                 stage / "segment-manifest.json",
             ):
                 _fsync_file(formal_path)
             if _stage_identity(stage) != journal["stage_identity"]:
                 raise SegmentRenderError("render staging identity changed")
-            _fsync_directory(stage / "keyframes")
             _fsync_directory(stage)
             journal = _write_journal(output_root.path, journal, "publishing")
             output_root.verify()
@@ -2092,12 +1976,7 @@ def render_arroll_segment(
 
 
 def re_full_segment_id(value: str) -> bool:
-    return (
-        len(value) == 7
-        and value.startswith("seg-")
-        and value[4:].isdigit()
-        and value[4:] != "000"
-    )
+    return isinstance(value, str) and re.fullmatch(r"seg-[A-Za-z0-9_-]+", value) is not None
 
 
 def assemble_visual_track(

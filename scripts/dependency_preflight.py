@@ -1351,6 +1351,16 @@ def _check_reference_asr(project_root: Path, identity: dict[str, Any]) -> dict[s
     try:
         if result.returncode == 3:
             raise PreflightError("reference ASR configuration is invalid")
+        if result.returncode == 2:
+            return {
+                "status": "smoke_failed",
+                "detail": (
+                    "selected reference ASR probe failed; check HD_WHISPER_CLI and "
+                    "HD_WHISPER_MODEL: non-default locations require both existing "
+                    "files as absolute paths with every symlink resolved, and the "
+                    "model filename must match the selected model"
+                ),
+            }
         if result.returncode != 0:
             return {"status": "smoke_failed", "detail": "selected reference ASR probe failed"}
         probe = json.loads(result.stdout)
@@ -1379,7 +1389,7 @@ def _reviewed_native_dependencies(project_root: Path, identity: dict, visual_pla
         job = state.load_job(job_dir)
         if job.job_id != context['job_id']:
             raise PreflightError('native reuse belongs to another Job')
-        if job.stages['visual_direction']['status'] != 'approved':
+        if job.stages['visual_direction']['status'] != 'completed':
             return set()
         canonical = job.job_dir / '07-visual-direction/visual-plan.json'
         if visual_plan_path.resolve(strict=True) != canonical.resolve(strict=True):

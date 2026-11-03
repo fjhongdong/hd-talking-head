@@ -75,7 +75,7 @@ def _input(job: state.JobState, name: str) -> Path:
 
 
 def _inspect(job: state.JobState) -> dict[str, Any]:
-    if job.stages["inspect"]["status"] != "approved":
+    if job.stages["inspect"]["status"] != "completed":
         raise SpeechEditV2Error("inspect must be approved")
     path = job.job_dir / "01-inspect" / "report.json"
     payload = contract_artifacts.read_json_artifact(path)
@@ -284,6 +284,7 @@ def _publish(
     names: tuple[str, ...],
     *,
     stage_id: str,
+    request_binding: dict[str, Any] | None = None,
 ) -> Path:
     artifact_names = set(names)
     allowed_without_receipt = _allowed_old_generations(target)
@@ -327,6 +328,7 @@ def _publish(
                 expected_names,
                 restore_ready=False,
                 allowed_old_names=allowed_old,
+                request_binding=request_binding,
             )
         except edit_timeline.EditTimelineError as exc:
             raise SpeechEditV2Error("speech publication recovery failed") from exc
@@ -339,7 +341,7 @@ def _publish(
         if _workflow_identity(job) != base_identity:
             status = job.stages[stage_id]["status"]
             if (
-                status in {"ready_for_review", "approved"}
+                status in {"ready", "completed"}
                 and _same_generation(stage, target, expected_names)
             ):
                 target_tree = edit_timeline._snapshot_tree(target, expected_names)
@@ -385,11 +387,12 @@ def _publish(
                 lambda artifacts: state.mark_ready(job, stage_id, artifacts),
                 old_expected_names=old_names,
                 expected_old_tree=old_tree,
+                request_binding=request_binding,
                 stage_id=stage_id,
                 restore_ready=False,
                 is_committed=lambda: (
                     job.stages[stage_id]["status"]
-                    in {"ready_for_review", "approved"}
+                    in {"ready", "completed"}
                 ),
             )
         except edit_timeline.EditTimelineError as exc:
@@ -399,7 +402,9 @@ def _publish(
         _release_publication_lock(lock)
 
 
-def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[transcribe.Word], int]:
+def _normalize_video_use_words(
+    payload: Any, duration: float, *, protected_groups: list[dict[str, Any]] | None = None,
+) -> tuple[list[transcribe.Word], int]:
     events = payload.get("words") if type(payload) is dict else None
     if type(events) is not list or not events:
         raise SpeechEditV2Error("video-use did not return word-level transcription")
@@ -407,6 +412,7 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
     prefix = ""
     merged = 0
     consumed_next = False
+    consumed_until = -1
 
     def short_bounded_group(index: int) -> bool:
         if index == 0 or index + 1 >= len(events):
@@ -432,7 +438,60 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
             and after["end"] - before["start"] < 0.8
         )
 
+    def protected_group(index: int) -> tuple[int, int] | None:
+        def bridge(item: Any) -> bool:
+            if type(item) is not dict:
+                return False
+            text = item.get("text")
+            return (
+                item.get("type") == "audio_event"
+                or item.get("type") == "spacing" and type(text) is str and text.isspace()
+                or item.get("type") == "word" and type(text) is str and bool(text)
+                and all(char.isspace() or char in ",，、" for char in text)
+            )
+
+        left, right = index - 1, index + 1
+        while left >= 0 and bridge(events[left]):
+            left -= 1
+        while right < len(events) and bridge(events[right]):
+            right += 1
+        if left < 0 or right >= len(events):
+            return None
+        if left == index - 1 and right == index + 1:
+            return None
+        before, zero, after = events[left], events[index], events[right]
+        for item in (before, zero, after):
+            if (type(item) is not dict or item.get("type") != "word"
+                    or type(item.get("text")) is not str or not item["text"].isalpha()
+                    or type(item.get("speaker_id")) is not str or not item["speaker_id"]
+                    or any(type(item.get(key)) not in (int, float)
+                           or not math.isfinite(item[key]) for key in ("start", "end"))):
+                return None
+        prior_text = "".join(item["text"] for item in events[left:index]
+                             if item["type"] != "audio_event")
+        if not (
+            before["speaker_id"] == zero["speaker_id"] == after["speaker_id"]
+            and 0 <= before["start"] < before["end"] < zero["start"] == zero["end"]
+            <= after["start"] < after["end"] <= duration + 0.2
+            and after["start"] - before["start"] <= 2.0
+            # Exact identity excludes chaining onto a previously merged group.
+            and normalized[-1] == {"text": prior_text, "start": before["start"], "end": before["end"]}
+        ):
+            return None
+        for item in events[left + 1:index] + events[index + 1:right]:
+            if item.get("speaker_id", zero["speaker_id"]) != zero["speaker_id"]:
+                return None
+            if item["type"] == "spacing" and "start" not in item and "end" not in item:
+                continue
+            if (any(type(item.get(key)) not in (int, float)
+                    or not math.isfinite(item[key]) for key in ("start", "end"))
+                    or not before["end"] <= item["start"] <= item["end"] <= after["start"]):
+                return None
+        return left, right
+
     for index, event in enumerate(events):
+        if index <= consumed_until:
+            continue
         if consumed_next:
             consumed_next = False
             continue
@@ -480,6 +539,37 @@ def _normalize_video_use_words(payload: Any, duration: float) -> tuple[list[tran
                         previous["end"] = following["end"]
                         consumed_next = True
                         continue
+                    group = protected_group(index)
+                    if group is not None:
+                        left, right = group
+                        following = events[right]
+                        previous["text"] += "".join(
+                            item["text"] for item in events[index:right]
+                            if item["type"] != "audio_event"
+                        )
+                        # This is a conservative protection limit anchored by
+                        # the NEXT word's start, never the missing syllable's end.
+                        previous["end"] = following["start"]
+                        merged += sum(item["type"] == "word" and item["start"] == item["end"]
+                                      for item in events[index + 1:right])
+                        if protected_groups is not None:
+                            protected_groups.append({
+                                "word_index": len(normalized) - 1,
+                                "text": previous["text"],
+                                "raw_event_indices": list(range(left, right)),
+                                "zero_duration_event_index": index,
+                                "raw_zero_duration_time": start,
+                                "left_anchor": {"event_index": left, **{
+                                    key: events[left][key] for key in ("text", "start", "end", "speaker_id")}},
+                                "right_anchor": {"event_index": right, **{
+                                    key: following[key] for key in ("text", "start", "end", "speaker_id")}},
+                                "interval": {"start": previous["start"], "end": previous["end"]},
+                                "end_semantics": "conservative_protection_limit_not_speech_end",
+                                "risk": "unknown_internal_word_boundary",
+                                "policy": "retain_as_one_word_group_without_individual_syllable_cut_points",
+                            })
+                        consumed_until = right - 1
+                        continue
                     raise SpeechEditV2Error("video-use zero-duration word is separated")
                 previous["text"] += event["text"]
             else:
@@ -523,9 +613,11 @@ def _transcribe_with_video_use(
     ):
         raise SpeechEditV2Error("video-use invocation does not match this source")
     payload = contract_artifacts.read_json_artifact(result_path)
-    words, merged = _normalize_video_use_words(payload, duration)
+    protected_groups: list[dict[str, Any]] = []
+    words, merged = _normalize_video_use_words(payload, duration, protected_groups=protected_groups)
     return words, {"engine": "video-use/elevenlabs-scribe", "invocation": invocation,
-                   "merged_zero_duration_events": merged}
+                   "merged_zero_duration_events": merged,
+                   "protected_zero_duration_groups": protected_groups}
 
 
 def prepare_transcription(
@@ -596,7 +688,7 @@ def prepare_transcription(
 
 def prepare_cleanup_proposal(job: state.JobState, plan: Any) -> Path:
     current = job.stages["speech_cleanup"]
-    if current["status"] not in {"ready_for_review", "needs_revision"}:
+    if current["status"] not in {"ready", "needs_revision"}:
         raise SpeechEditV2Error("transcription must be ready before cleanup proposal")
     target = job.job_dir / "05-speech-cleanup"
     required = ("speech-16k.wav", "scribe.json", "report.json")
@@ -680,7 +772,7 @@ def prepare_cleanup_proposal(job: state.JobState, plan: Any) -> Path:
         }
         for name, payload in outputs.items():
             contract_artifacts.write_json_artifact(stage / name, payload)
-        if current["status"] == "ready_for_review":
+        if current["status"] == "ready":
             state.revise(job, "speech_cleanup", "生成完整口播整理提案")
         _publish(
             job,
@@ -1137,8 +1229,8 @@ def edit_user_audio_binding(job: state.JobState) -> dict[str, Any]:
     Audio-only AAC hashes are computed in memory. No media, Job or receipt is written.
     Exact encoder/clock equality is required; a different encoder is not guessed safe.
     """
-    if job.stages["speech_cleanup"]["status"] != "approved":
-        raise SpeechEditV2Error("speech_cleanup must be approved")
+    if job.stages["speech_cleanup"]["status"] != "completed":
+        raise SpeechEditV2Error("speech_cleanup must be completed")
     sources = []
     for path in (job.job_dir / "manifests").glob("local-qa-speech_cleanup-r*.json"):
         receipt = contract_artifacts.read_json_artifact(path)
@@ -1186,7 +1278,7 @@ def edit_user_audio_binding(job: state.JobState) -> dict[str, Any]:
             f"afade=t=out:st={max(0.0, length - 0.03):.9f}:d=0.03,"
             f"apad=whole_len={samples},atrim=end_sample={samples},asetpts=N/SR/TB[a{i}]")
     filters.append("".join(f"[a{i}]" for i in range(len(intervals)))
-                   + f"concat=n={len(intervals)}:v=0:a=1[outa]")
+                   + f"concat=n={len(intervals)}:v=0:a=1,asettb=1/48000,asetpts=N[outa]")
     suffix = ["-f", "framehash", "-hash", "sha256", "pipe:1"]
     def run(command: list[str]) -> str:
         return subprocess.run(command, check=True, capture_output=True, text=True,
@@ -1242,25 +1334,6 @@ def validate_edit_review(job: state.JobState, review: dict[str, Any]) -> None:
         raise SpeechEditV2Error("inherited user edit review must not claim formal audio listening")
     if review.get("edit_structure_audio_review") != edit_user_audio_binding(job):
         raise SpeechEditV2Error("edit review requires current verified user audio binding")
-
-
-def _require_cleanup_review(job: state.JobState) -> None:
-    candidates = cleanup_check_candidates(job)
-    if not candidates:
-        return
-    for path in (job.job_dir / "manifests").glob("local-qa-speech_cleanup-r*.json"):
-        receipt = contract_artifacts.read_json_artifact(path)
-        if (receipt.get("job_id") != job.job_id or receipt.get("job_dir") != str(job.job_dir)
-                or receipt.get("stage") != "speech_cleanup" or receipt.get("passed") is not True
-                or receipt.get("reviewed_by") not in {"host", "user"}
-                or receipt.get("artifacts") != job.stages["speech_cleanup"]["artifacts"]):
-            continue
-        try:
-            validate_cleanup_review(job, receipt)
-            return
-        except (SpeechEditV2Error, OSError):
-            continue
-    raise SpeechEditV2Error("cleanup candidates have no bound host or user audio review")
 
 
 def _video_use_intervals(
@@ -1423,7 +1496,7 @@ def _render_with_video_use(
             "".join(f"[v{i}]" for i in range(len(intervals)))
             + f"concat=n={len(intervals)}:v=1:a=0[outv]",
             "".join(f"[a{i}]" for i in range(len(intervals)))
-            + f"concat=n={len(intervals)}:v=0:a=1[outa]",
+            + f"concat=n={len(intervals)}:v=0:a=1,asettb=1/48000,asetpts=N[outa]",
         ])
         command.extend([
             "-filter_complex_threads", "1", "-filter_complex", ";".join(filters),
@@ -1431,7 +1504,7 @@ def _render_with_video_use(
             "-c:v", "libx264", "-preset", "medium", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "24", "-threads", "4",
             "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
-            "-movflags", "+faststart", str(output),
+            "-movflags", "+faststart", "-movie_timescale", "48000", str(output),
         ])
         subprocess.run(
             command,
@@ -1451,9 +1524,8 @@ def _render_with_video_use(
 
 def render_edit(job: state.JobState) -> Path:
     state.require_runnable(job, "edit_structure")
-    if job.stages["speech_cleanup"]["status"] != "approved":
-        raise SpeechEditV2Error("speech_cleanup must be approved")
-    _require_cleanup_review(job)
+    if job.stages["speech_cleanup"]["status"] != "completed":
+        raise SpeechEditV2Error("speech_cleanup must be completed")
     source = _input(job, "video")
     inspection = _inspect(job)
     speech = job.job_dir / "05-speech-cleanup"

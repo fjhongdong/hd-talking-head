@@ -44,6 +44,20 @@ _EMPHASIS_GAP_SECONDS = 2.0
 _SAME_KEYWORD_COOLDOWN_SECONDS = 15.0
 
 
+def _compact_text(text: str) -> str:
+    return "".join(char for char in text if not char.isspace())
+
+
+def _keyword_substring(text: str, keyword: str) -> str | None:
+    """Match approved copy without whitespace, retaining the visible substring."""
+    positions = [index for index, char in enumerate(text) if not char.isspace()]
+    compact_keyword = _compact_text(keyword)
+    offset = _compact_text(text).find(compact_keyword)
+    if not compact_keyword or offset < 0:
+        return None
+    return text[positions[offset]:positions[offset + len(compact_keyword) - 1] + 1]
+
+
 def _chinese_word_phrases(text: str) -> list[str]:
     """Use the renderer's word/quantity phrase boundaries when splitting cues."""
     script = (
@@ -65,6 +79,30 @@ def _chinese_word_phrases(text: str) -> list[str]:
     if not isinstance(phrases, list) or not all(isinstance(item, str) for item in phrases):
         raise SubtitlesV2Error("Chinese subtitle word segmentation is invalid")
     return phrases
+
+
+def _display_punctuation(words: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Correct explicit quote pairs on display copies, keeping every word clock."""
+    import re
+    displayed = [dict(word) for word in words]
+    text = "".join(str(word["text"]) for word in displayed)
+    # A second opener after terminal punctuation closes this explicit pair.
+    # Process the whole mapped transcript so segment boundaries do not reset it.
+    for opening, closing in (("“", "”"), ("‘", "’")):
+        text = re.sub(opening + "[^" + opening + closing + "]*[。！？!?]" + opening,
+                      lambda match: match[0][:-1] + closing, text)
+    offset = 0
+    for word in displayed:
+        length = len(str(word["text"]))
+        word["text"] = text[offset:offset + length]
+        offset += length
+    for index, word in enumerate(displayed[:-1]):
+        value = str(word["text"])
+        prefix = value.rstrip("“‘「『《")
+        if prefix != value and any(char.isalnum() for char in prefix):
+            word["text"] = prefix
+            displayed[index + 1]["text"] = value[len(prefix):] + str(displayed[index + 1]["text"])
+    return displayed
 
 
 def _shot_mode(segment: Mapping[str, Any]) -> str:
@@ -99,13 +137,13 @@ def validate_emphasis(
         if segment is None:
             raise SubtitlesV2Error("subtitle cue has no approved visual segment")
         allowed = {
-            keyword
+            _compact_text(keyword)
             for item_id in segment["content_item_ids"]
             for keyword in keyword_index.get(str(item_id), ())
         }
         emphasis = cue["emphasis_words"]
         if len(emphasis) > 1 or any(
-            word not in allowed or word not in cue["text"] for word in emphasis
+            _compact_text(word) not in allowed or word not in cue["text"] for word in emphasis
         ):
             raise SubtitlesV2Error(
                 "subtitle emphasis is not an approved exact keyword"
@@ -117,11 +155,12 @@ def validate_emphasis(
                 raise SubtitlesV2Error("subtitle emphasis has no real word time") from exc
             if not math.isfinite(word_start) or not float(cue["start"]) <= word_start < float(cue["end"]):
                 raise SubtitlesV2Error("subtitle emphasis word is outside its cue")
-            if (word_start - last_keyword_time.get(emphasis[0], float("-inf"))
+            keyword_key = _compact_text(emphasis[0])
+            if (word_start - last_keyword_time.get(keyword_key, float("-inf"))
                     < _SAME_KEYWORD_COOLDOWN_SECONDS
                     or word_start - last_emphasis_time < _EMPHASIS_GAP_SECONDS):
                 raise SubtitlesV2Error("subtitle emphasis repeats or is too closely spaced")
-            last_keyword_time[emphasis[0]] = word_start
+            last_keyword_time[keyword_key] = word_start
             last_emphasis_time = word_start
     if set(emphasis_times) != {cue["id"] for cue in render_plan["cues"] if cue["emphasis_words"]}:
         raise SubtitlesV2Error("subtitle emphasis word times differ from selected keywords")
@@ -143,7 +182,7 @@ def _approved_artifact(
     job: state.JobState, stage_id: str, relative: str
 ) -> tuple[Path, dict[str, object]]:
     stage = job.stages[stage_id]
-    if stage["status"] != "approved":
+    if stage["status"] != "completed":
         raise SubtitlesV2Error(f"{stage_id} must be approved")
     matches = [record for record in stage["artifacts"] if record.get("path") == relative]
     if len(matches) != 1:
@@ -159,7 +198,7 @@ def review_subtitles(job):
     """Read the existing review artifact, without rendering or approving it."""
     job = state.load_job(job.job_dir)
     stage_identity = contract_artifacts.sha256_json(job.stages)
-    if job.version != 2 or job.stages["subtitles"]["status"] not in {"ready_for_review", "approved"}:
+    if job.version != 2 or job.stages["subtitles"]["status"] not in {"ready", "completed"}:
         raise SubtitlesV2Error("subtitles are not ready for review")
     relative = "10-subtitles/subtitle-plan.json"
     path = job.job_dir / relative
@@ -277,7 +316,7 @@ def build_render_plan(
     renderer_cues: list[dict[str, Any]] | None = None,
     protected_phrases: tuple[str, ...] = (),
 ) -> dict[str, object]:
-    mapped = subtitles._map_words(words, timeline)
+    mapped = _display_punctuation(subtitles._map_words(words, timeline))
     duration = float(visual_plan["duration"])
     cues: list[dict[str, object]] = []
     used_words: set[int] = set()
@@ -357,7 +396,11 @@ def build_render_plan(
             layout_cache=layout_cache,
             long_keyword_intervals=long_intervals,
         )
+        chunk_left = 0
         for chunk in chunks:
+            chunk_right = chunk_left + len(chunk)
+            long_keyword = (chunk_left, chunk_right) in long_intervals
+            chunk_left = chunk_right
             text = "".join(str(word["text"]) for word in chunk).lstrip(
                 "，,、。；;：:！？!?"
             )
@@ -383,24 +426,27 @@ def build_render_plan(
             render_cue = {**cue, "bottom": bottom}
             candidates = []
             for keyword in keywords:
-                if keyword not in text:
+                visible_keyword = _keyword_substring(text, keyword)
+                if visible_keyword is None:
                     continue
                 rendered = talkcraft_subtitles.cue_input(
-                    {**render_cue, "emphasis_words": [keyword]}, chunk, placement=placement)
+                    {**render_cue, "emphasis_words": [visible_keyword]}, chunk,
+                    placement=placement, long_keyword=long_keyword)
                 word_start = float(rendered["emphasis"]["start"])
-                if (word_start - last_keyword_time.get(keyword, float("-inf"))
+                if (word_start - last_keyword_time.get(_compact_text(keyword), float("-inf"))
                         >= _SAME_KEYWORD_COOLDOWN_SECONDS
                         and word_start - last_emphasis_time >= _EMPHASIS_GAP_SECONDS):
-                    candidates.append((keyword, rendered))
+                    candidates.append((visible_keyword, rendered))
             if candidates:
                 keyword, rendered = max(candidates, key=lambda candidate: len(candidate[0]))
                 cue["emphasis_words"] = [keyword]
                 word_start = float(rendered["emphasis"]["start"])
                 emphasis_times[cue["id"]] = word_start
-                last_keyword_time[keyword] = word_start
+                last_keyword_time[_compact_text(keyword)] = word_start
                 last_emphasis_time = word_start
             else:
-                rendered = talkcraft_subtitles.cue_input(render_cue, chunk, placement=placement)
+                rendered = talkcraft_subtitles.cue_input(render_cue, chunk,
+                    placement=placement, long_keyword=long_keyword)
             rendered["bottom"] = bottom
             if event_ids_by_segment is not None:
                 event_id = event_ids_by_segment.get(str(segment["segment_id"]))
@@ -876,7 +922,7 @@ def _finish_transaction(
     stage = job.job_dir / str(payload["stage"])
     backup = job.job_dir / str(payload["backup"])
     status = job.stages["subtitles"]["status"]
-    if status in {"ready_for_review", "approved"}:
+    if status in {"ready", "completed"}:
         output = _validate_published(job)
         _cleanup_transaction(job, payload)
         return output
@@ -949,8 +995,8 @@ def _finish_transaction(
         try:
             persisted = state.load_job(job.job_dir)
             if persisted.stages["subtitles"]["status"] in {
-                "ready_for_review",
-                "approved",
+                "ready",
+                "completed",
             }:
                 _synchronize_job(job, persisted)
                 _validate_published(job)
@@ -973,7 +1019,7 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
         recovered = _finish_transaction(job, pending)
         if recovered is not None:
             return recovered
-    if job.stages["subtitles"]["status"] in {"ready_for_review", "approved"}:
+    if job.stages["subtitles"]["status"] in {"ready", "completed"}:
         try:
             return _validate_published(job)
         except SubtitlesV2Error:
@@ -1209,8 +1255,8 @@ def prepare_subtitles_v2(job: state.JobState) -> Path:
             current = state.load_job(job.job_dir)
         except state.WorkflowError as exc:
             if job.stages["subtitles"]["status"] in {
-                "ready_for_review",
-                "approved",
+                "ready",
+                "completed",
             }:
                 raise SubtitlesV2Error(
                     "subtitle workflow could not be reloaded"

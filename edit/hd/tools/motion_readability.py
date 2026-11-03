@@ -191,6 +191,87 @@ def validate_resolutions(report, resolutions):
         seen.add(k)
     if seen != set(need): raise ValueError("missing resolution")
 
+
+def _observation_sample_key(ref):
+    if (not isinstance(ref, dict) or set(ref) != {'target_id', 'time', 'frame_sha256'}
+            or not isinstance(ref['target_id'], str) or not ref['target_id'].strip()
+            or type(ref['time']) not in (int, float) or not math.isfinite(ref['time'])
+            or ref['time'] < 0
+            or not re.fullmatch(r'[0-9a-f]{64}', str(ref['frame_sha256']))):
+        raise ValueError('invalid motion text observation sample reference')
+    return ref['target_id'], round(float(ref['time']), 6), ref['frame_sha256']
+
+
+def observation_requirements(report):
+    """List unreviewed component obligations, including OCR-passing samples."""
+    from io import BytesIO
+    from PIL import Image
+    groups, checked = {}, set()
+    for target in report.get('targets', []):
+        if target.get('status') == 'not_applicable':
+            continue
+        sid, cid = target.get('segment_id'), target.get('component_id')
+        if any(not isinstance(value, str) or not value.strip() for value in (sid, cid)):
+            raise ValueError('motion text observation needs its component identity')
+        row = groups.setdefault((sid, cid), {'row_id': sid + ':' + cid, 'sample_refs': []})
+        samples = target.get('samples')
+        if not isinstance(samples, list) or not samples:
+            raise ValueError('motion text observation requires actual reading frames')
+        for sample in samples:
+            ref = {key: sample.get(key) for key in ('time', 'frame_sha256')}
+            ref['target_id'] = target.get('target_id')
+            _observation_sample_key(ref)
+            name = sample.get('frame_path')
+            if not isinstance(name, str) or not name or not Path(name).is_absolute():
+                raise ValueError('motion text observation sample frame is missing')
+            identity = (name, ref['frame_sha256'])
+            if identity not in checked:
+                try:
+                    data = Path(name).read_bytes()
+                    if hashlib.sha256(data).hexdigest() != ref['frame_sha256']:
+                        raise ValueError('motion text observation sample frame changed')
+                    with Image.open(BytesIO(data)) as frame:
+                        if frame.format != 'PNG' or frame.size != CANVAS:
+                            raise ValueError('motion text observation needs an actual 1080x1920 PNG')
+                        frame.load()
+                except OSError as exc:
+                    raise ValueError('motion text observation sample frame is unavailable') from exc
+                checked.add(identity)
+            row['sample_refs'].append(ref)
+    for row in groups.values():
+        keys = [_observation_sample_key(ref) for ref in row['sample_refs']]
+        if len(keys) != len(set(keys)):
+            raise ValueError('duplicate motion text observation sample')
+    return list(groups.values())
+
+
+def validate_observations(report, observations):
+    """Verify declared static inspection, without claiming playback or perception."""
+    expected = observation_requirements(report)
+    wanted = {row['row_id']: row for row in expected}
+    if len(wanted) != len(expected) or not isinstance(observations, list):
+        raise ValueError('motion text observations must identify each component')
+    seen = set()
+    for row in observations:
+        if (not isinstance(row, dict)
+                or set(row) != {'row_id', 'sample_refs', 'verdict', 'conclusion'}
+                or not isinstance(row['row_id'], str)
+                or row['row_id'] not in wanted or row['row_id'] in seen):
+            raise ValueError('motion text observation component coverage mismatch')
+        if (row['verdict'] != 'pass' or not isinstance(row['conclusion'], str)
+                or not row['conclusion'].strip()):
+            raise ValueError('motion text observation has unresolved glyphs or occlusion')
+        refs = row['sample_refs']
+        if not isinstance(refs, list):
+            raise ValueError('motion text observation sample coverage is missing')
+        keys = [_observation_sample_key(ref) for ref in refs]
+        required = {_observation_sample_key(ref) for ref in wanted[row['row_id']]['sample_refs']}
+        if len(keys) != len(set(keys)) or set(keys) != required:
+            raise ValueError('motion text observation sample coverage is stale or incomplete')
+        seen.add(row['row_id'])
+    if seen != set(wanted):
+        raise ValueError('motion text observation is missing components')
+
 # Job integration. The same report is consumed by the stage UI, approval and
 # delivery; no renderer-specific font declarations are trusted as measurements.
 def _managed(job):
@@ -332,9 +413,67 @@ def _exclusions(segment, time, subtitles):
     return boxes
 
 
+def _extract_frames_batched(requests, *, sample_step_seconds):
+    """Decode adjacent sampling windows per CFR source, preserving input -ss."""
+    import shutil, subprocess, tempfile
+    from fractions import Fraction
+    from PIL import Image
+    grouped = {}
+    for video, seconds, destination in requests:
+        if not math.isfinite(seconds) or seconds < 0:
+            raise ValueError('invalid readability frame timestamp')
+        grouped.setdefault(Path(video).resolve(strict=True), []).append((seconds,Path(destination)))
+    for video, samples in grouped.items():
+        probe = subprocess.run(['ffprobe','-v','error','-select_streams','v:0','-show_entries',
+            'stream=time_base,start_pts,avg_frame_rate,r_frame_rate:format=start_time','-of','json',str(video)],
+            check=True,capture_output=True,text=True,timeout=30)
+        try:
+            metadata = json.loads(probe.stdout)
+            stream, = metadata['streams']
+            base = Fraction(stream['time_base']); rate = Fraction(stream['avg_frame_rate'])
+            first = int(stream['start_pts']); beginning = Fraction(metadata['format']['start_time'])
+            if base <= 0 or rate <= 0 or rate != Fraction(stream['r_frame_rate']):
+                raise ValueError('nonconstant frame clock')
+        except (KeyError,TypeError,ValueError,ZeroDivisionError) as exc:
+            raise ValueError('readability source has no valid constant frame clock') from exc
+        frame_step = 1 / rate / base
+        indices = []
+        for seconds,_ in samples:
+            # Match input -ss rounding to the stream clock, then its first frame.
+            tick = math.floor((beginning+Fraction(str(seconds)))/base + Fraction(1,2))
+            indices.append(max(0,math.ceil((tick-first)/frame_step)))
+        frames = sorted(set(indices))
+        batches = []
+        gap = math.ceil(Fraction(str(sample_step_seconds))*rate)
+        for number in frames:
+            if not batches or number-batches[-1][-1] > gap:
+                batches.append([])
+            batches[-1].append(number)
+        with tempfile.TemporaryDirectory(prefix='.reading-frames-',dir=samples[0][1].parent) as folder:
+            paths = {}
+            for batch_index,batch in enumerate(batches):
+                seek = first*base + batch[0]/rate - beginning
+                duration = (batch[-1]-batch[0]+1)/rate
+                expression = '+'.join(f'eq(n,{number-batch[0]})' for number in batch)
+                subprocess.run(['ffmpeg','-nostdin','-v','error','-y','-ss',str(float(seek)),
+                    '-t',str(float(duration)),'-i',str(video),'-vf',f"select='{expression}',setpts=PTS-STARTPTS",
+                    '-vsync','0','-frames:v',str(len(batch)),'-threads','1','-start_number','0',
+                    str(Path(folder)/f'{batch_index}-%06d.png')],
+                    check=True,capture_output=True,timeout=max(30,len(batch)*2,math.ceil(float(duration)*2)))
+                for index,number in enumerate(batch):
+                    path = Path(folder)/f'{batch_index}-{index:06d}.png'
+                    with Image.open(path) as frame:
+                        if frame.format != 'PNG' or frame.size != CANVAS:
+                            raise ValueError('readability extraction needs an actual 1080x1920 PNG')
+                        frame.load()
+                    paths[number] = path
+            for (_,destination),number in zip(samples,indices):
+                shutil.copyfile(paths[number],destination)
+
+
 def inspect_job(job, stage):
     """Check every declared target in current rendered assets/final pixels."""
-    import subprocess
+    import subprocess, time
     from . import contract_artifacts as artifacts
     if stage not in {'visual_canary', 'visual_assets', 'preview'}:
         raise ValueError('unsupported readability stage')
@@ -385,10 +524,16 @@ def inspect_job(job, stage):
     cached = cache / 'report.json'
     if cached.is_file():
         candidate = artifacts.read_json_artifact(cached)
-        frames = [s for t in candidate.get('targets', []) for s in t.get('samples', []) if s.get('frame_path')]
-        if candidate.get('binding') == binding and all(Path(s['frame_path']).is_file() and artifacts.sha256_file(Path(s['frame_path'])) == s['frame_sha256'] for s in frames):
-            return candidate
-    frame_records = {}
+        if candidate.get('binding') == binding:
+            try:
+                obligations = observation_requirements(candidate)
+            except (ValueError, OSError):
+                pass
+            else:
+                if candidate.get('observation_requirements') == obligations:
+                    return candidate
+    frame_records, requests = {}, []
+    extraction_started = time.perf_counter()
     for target in targets:
         if target.get('status') == 'not_applicable':
             continue
@@ -398,9 +543,14 @@ def inspect_job(job, stage):
                 continue
             video, base = media[sid]
             image = cache / (sid + '-' + str(round(local * 1000000)) + '.png')
-            subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-ss', str(base + local), '-i', str(video), '-frames:v', '1', str(image)], check=True, capture_output=True, timeout=30)
-            frame_records[key] = {'time': local, 'frame_path': str(image), 'frame_sha256': artifacts.sha256_file(image),
+            requests.append((video,base+local,image))
+            frame_records[key] = {'time': local, 'frame_path': str(image),
                                   'excluded_regions': _exclusions(segments[sid], float(segments[sid]['start']) + local, subtitles)}
+    _extract_frames_batched(requests, sample_step_seconds=policy['sample_step_seconds'])
+    for frame in frame_records.values():
+        frame['frame_sha256'] = artifacts.sha256_file(Path(frame['frame_path']))
+    report['timing_seconds'] = {'frame_extraction': time.perf_counter()-extraction_started}
+    ocr_started = time.perf_counter()
     try:
         recognized = _ocr([Path(x['frame_path']) for x in frame_records.values()]) if frame_records else {}
         for frame in frame_records.values():
@@ -410,6 +560,7 @@ def inspect_job(job, stage):
         report['ocr_issue'] = str(exc)
         for frame in frame_records.values():
             frame.update(width=1080, height=1920, observations=[])
+    report['timing_seconds']['ocr'] = time.perf_counter()-ocr_started
     for target in targets:
         if target.get('status') == 'not_applicable':
             report['targets'].append(target); continue
@@ -418,6 +569,7 @@ def inspect_job(job, stage):
             min_heights=policy['minimum_ocr_line_height_px'], min_confidence=policy['minimum_ocr_confidence']))
     statuses = {t['status'] for t in report['targets']}
     report['status'] = 'fail' if 'fail' in statuses else ('needs_review' if 'needs_review' in statuses else ('not_applicable' if statuses == {'not_applicable'} or not statuses else 'sampled_pass'))
+    report['observation_requirements'] = observation_requirements(report)
     artifacts.write_json_artifact(cached, report)
     return report
 
@@ -425,6 +577,7 @@ def inspect_job(job, stage):
 def validate_stage_review(job, stage, review):
     report = inspect_job(job, stage)
     validate_resolutions(report, review.get('motion_readability_resolutions', []))
+    validate_observations(report, review.get('motion_readability_observations', []))
     return report
 
 
@@ -435,7 +588,7 @@ def require_preview_review(job):
     report = inspect_job(job, 'preview')
     if report.get('configuration_issues') or any(t['status'] == 'fail' for t in report['targets']):
         validate_resolutions(report, [])
-    if not any(t['status'] == 'needs_review' for t in report['targets']):
+    if not observation_requirements(report):
         return
     from . import contract_artifacts as artifacts
     for path in (job.job_dir / 'manifests').glob('local-qa-preview-r*.json'):
@@ -449,5 +602,6 @@ def require_preview_review(job):
             from . import visual_review
             visual_review.validate_stage_review(job, 'preview', receipt)
         validate_resolutions(report, receipt.get('motion_readability_resolutions', []))
+        validate_observations(report, receipt.get('motion_readability_observations', []))
         return
     raise ValueError('motion text readability has unresolved targets or no current bound host or user review')

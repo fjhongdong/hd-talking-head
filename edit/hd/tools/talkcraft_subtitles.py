@@ -28,7 +28,8 @@ def _utf16_length(text: str) -> int:
     return len(text.encode("utf-16-le")) // 2
 
 
-def cue_input(cue: Mapping[str, Any], chunk: list[dict[str, object]], *, placement: str = "standard") -> dict[str, Any]:
+def cue_input(cue: Mapping[str, Any], chunk: list[dict[str, object]], *, placement: str = "standard",
+              long_keyword: bool = False) -> dict[str, Any]:
     """Keep real word intervals; never distribute a word's duration over its glyphs."""
     raw = "".join(str(word["text"]) for word in chunk)
     text = str(cue["text"])
@@ -63,7 +64,7 @@ def cue_input(cue: Mapping[str, Any], chunk: list[dict[str, object]], *, placeme
                     "start": hits[0]["start"], "end": hits[-1]["end"]}
     result = {"cue_id": cue["id"], "start": cue["start"], "end": cue["end"],
             "text": text, "words": words, "emphasis": emphasis,
-            "placement": placement}
+            "placement": placement, "long_keyword": long_keyword}
     if placement == "standard":
         result["bottom"] = 350
     else:
@@ -127,6 +128,9 @@ def validate_binding(payload: Mapping[str, Any]) -> None:
         if any(rendered.get(key) != cue[source] for key, source in
                (("cue_id", "id"), ("start", "start"), ("end", "end"), ("text", "text"))):
             raise TalkCraftSubtitleError("TalkCraft subtitle content or window changed")
+        if (type(rendered.get("long_keyword")) is not bool
+                or (rendered["long_keyword"] and subtitles._visible_glyph_count([cue]) <= 14)):
+            raise TalkCraftSubtitleError("TalkCraft subtitle long keyword layout is invalid")
         emphasis = rendered.get("emphasis")
         encoded = str(cue["text"]).encode("utf-16-le")
         highlighted = [] if emphasis is None else [encoded[

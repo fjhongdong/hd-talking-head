@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
@@ -50,11 +51,188 @@ def approve_fixture_setup(job):
                                 "callable": True, "connected": True, "bound": True}
                                for x in json.loads(manifest.read_text())["dependencies"] if x.get("required")]}
     plan = job.job_dir / "07-visual-direction/visual-plan.json"
-    if plan.is_file() and job.stages["visual_direction"]["status"] == "approved":
+    if plan.is_file() and job.stages["visual_direction"]["status"] == "completed":
         report["visual_plan"] = {"path": str(plan),
                                  "sha256": hashlib.sha256(plan.read_bytes()).hexdigest()}
     (manifests / "dependency-preflight.json").write_text(json.dumps(report))
     startup.confirm_setup(job, config, user_confirmation="隔离单元测试夹具，不是用户审批")
+
+
+class JobIdentityTests(unittest.TestCase):
+    def test_shared_identity_checks_runtime_job_release_and_interpreter_alias(self):
+        from edit.hd.tools import startup
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            video = root / 'source.mp4'; video.write_bytes(b'video')
+            script = root / 'script.txt'; script.write_text('script')
+            job = state.create_job(root, video, script, profile='full-v2')
+            manifest = root / 'release-manifest.json'; manifest.write_text('{"release_id":"fixture"}')
+            digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+            context = {'workspace': str(root), 'job_dir': str(job.job_dir), 'job_id': job.job_id,
+                       'project_root': str(ROOT), 'runtime': startup.runtime_identity(ROOT),
+                       'skill_release': {'root': str(root), 'release_id': 'fixture', 'manifest_sha256': digest}}
+            context_path = root / 'job-context.json'
+            def write():
+                context_path.write_text(json.dumps(context))
+            write()
+            verified = subprocess.CompletedProcess([], 0, json.dumps({'status': 'pass', 'manifest_sha256': digest}), '')
+            with mock.patch.object(startup.subprocess, 'run', return_value=verified) as verify:
+                self.assertEqual(startup.require_job_directory_identity(job.job_dir).job_id, job.job_id)
+                context['runtime']['python']['executable'] = str(Path(sys.executable).resolve())
+                write()
+                startup.require_job_identity(job)
+                for key, value in [('executable', '/different/python'), ('prefix', '/different/prefix'), ('version', '0.0.0')]:
+                    saved = context['runtime']['python'][key]
+                    context['runtime']['python'][key] = value; write(); verify.reset_mock()
+                    with self.subTest(key=key), self.assertRaisesRegex(state.WorkflowError, 'runtime changed'):
+                        startup.require_job_identity(job)
+                    verify.assert_not_called()
+                    context['runtime']['python'][key] = saved
+                context['job_id'] = 'another-job'; write()
+                with self.assertRaisesRegex(state.WorkflowError, 'another Job'):
+                    startup.require_job_identity(job)
+                context['job_id'] = job.job_id; context['project_root'] = str(root); write()
+                with self.assertRaisesRegex(state.WorkflowError, 'runtime changed'):
+                    startup.require_job_identity(job)
+                context['project_root'] = str(ROOT); write()
+                with self.assertRaisesRegex(state.WorkflowError, 'selected Skill'):
+                    startup.require_job_identity(job, project_root=root)
+                from types import SimpleNamespace
+                with mock.patch.dict(sys.modules, {'foreign_native_alias': SimpleNamespace(__file__=str(root / 'motion_native_skill_adapter.py'))}):
+                    with self.assertRaisesRegex(state.WorkflowError, 'origin differs'):
+                        startup.require_job_identity(job)
+                context['skill_release']['manifest_sha256'] = '0' * 64; write()
+                with self.assertRaisesRegex(state.WorkflowError, 'release changed'):
+                    startup.require_job_identity(job)
+
+
+class OperationIdentityTests(unittest.TestCase):
+    def setUp(self):
+        from types import SimpleNamespace
+        from edit.hd.tools import startup
+        self.startup = startup
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        self.release = self.root / 'release'; self.release.mkdir()
+        self.source = self.release / 'source.py'; self.source.write_text('source')
+        self.manifest = self.release / 'release-manifest.json'
+        self.manifest.write_text(json.dumps({'release_id': 'fixture', 'files': {'source.py': hashlib.sha256(b'source').hexdigest()}}))
+        digest = hashlib.sha256(self.manifest.read_bytes()).hexdigest()
+        workspace = self.root / 'workspace'; workspace.mkdir()
+        self.job = SimpleNamespace(root=workspace, job_dir=workspace / 'job', job_id='fixture')
+        self.runtime = {'python': {'executable': sys.executable, 'prefix': sys.prefix, 'version': sys.version.split()[0]},
+                        'modules': {'startup.py': 'fixture'}}
+        self.context = {'workspace': str(workspace), 'job_dir': str(self.job.job_dir), 'job_id': self.job.job_id,
+                        'project_root': str(ROOT), 'runtime': self.runtime,
+                        'skill_release': {'root': str(self.release), 'release_id': 'fixture', 'manifest_sha256': digest}}
+        self.context_path = workspace / 'job-context.json'
+        self.context_path.write_text(json.dumps(self.context))
+        runtime = mock.patch.object(startup, 'runtime_identity', return_value=self.runtime)
+        self.identity = runtime.start(); self.addCleanup(runtime.stop)
+        verify = mock.patch.object(startup.subprocess, 'run', return_value=subprocess.CompletedProcess(
+            [], 0, json.dumps({'status': 'pass', 'manifest_sha256': digest}), ''))
+        self.verify = verify.start(); self.addCleanup(verify.stop)
+
+    def test_nested_scope_reuses_once_and_next_operation_verifies_again(self):
+        startup = self.startup
+        bytecode = sys.dont_write_bytecode
+        self.assertIsNone(startup._operation_cache(self.release))
+        with startup.operation_scope() as operation:
+            self.assertTrue(sys.dont_write_bytecode)
+            self.assertIsNone(startup._operation_cache(self.release))
+            startup.require_job_identity(self.job)
+            memo = startup._operation_cache(self.release)
+            memo['fixture'] = 'derived data'
+            with startup.operation_scope() as nested:
+                self.assertTrue(sys.dont_write_bytecode)
+                self.assertIs(nested, operation)
+                startup.require_job_identity(self.job)
+                self.assertIs(startup._operation_cache(self.release), memo)
+            startup.require_job_identity(self.job)
+            self.assertEqual(self.verify.call_count, 1)
+            self.assertEqual(self.identity.call_count, 3)
+            self.assertEqual(operation.metrics()['full_release_checks'], 1)
+            self.assertEqual(operation.metrics()['full_release_reuses'], 2)
+        self.assertEqual(memo, {})
+        self.assertEqual(sys.dont_write_bytecode, bytecode)
+        self.assertIsNone(startup.current_operation())
+        with startup.operation_scope():
+            startup.require_job_identity(self.job)
+        self.assertEqual(self.verify.call_count, 2)
+        startup.require_job_identity(self.job)
+        startup.require_job_identity(self.job)
+        self.assertEqual(self.verify.call_count, 4)
+        self.assertTrue(all(call.args[0][1] == '-B' for call in self.verify.call_args_list))
+
+    def test_scope_import_does_not_create_bytecode_in_a_new_directory(self):
+        from importlib.util import module_from_spec, spec_from_file_location
+        source = self.root / 'scope_fixture.py'; source.write_text('value = 42\n')
+        with mock.patch.object(sys, 'dont_write_bytecode', False):
+            with self.startup.operation_scope():
+                spec = spec_from_file_location('scope_fixture', source)
+                module = module_from_spec(spec)
+                spec.loader.exec_module(module)
+                self.assertEqual(module.value, 42)
+            self.assertFalse(sys.dont_write_bytecode)
+        self.assertFalse((self.root / '__pycache__').exists())
+
+    def test_source_and_inventory_changes_invalidate_cached_release(self):
+        startup = self.startup
+        for change in ('source', 'inventory'):
+            with self.subTest(change=change), startup.operation_scope() as operation:
+                startup.require_job_identity(self.job)
+                startup._operation_cache(self.release)['fixture'] = True
+                if change == 'source':
+                    self.source.write_text('changed source')
+                else:
+                    (self.release / 'unregistered.py').write_text('added')
+                    self.assertIsNone(startup._operation_cache(self.release))
+                    self.assertEqual(operation.memo, {})
+                saved = self.verify.return_value
+                self.verify.return_value = subprocess.CompletedProcess([], 1, '{"status":"fail"}', '')
+                with self.assertRaisesRegex(state.WorkflowError, 'integrity'):
+                    startup.require_job_identity(self.job)
+                self.assertEqual(operation.metrics()['full_release_checks'], 2)
+                self.assertEqual(operation.memo, {})
+                self.verify.return_value = saved
+                self.source.write_text('source')
+
+    def test_file_added_below_preexisting_empty_directory_cannot_reuse_success(self):
+        startup = self.startup
+        empty = self.release / 'empty' / 'nested'; empty.mkdir(parents=True)
+        with startup.operation_scope() as operation:
+            startup.require_job_identity(self.job)
+            startup._operation_cache(self.release)['fixture'] = True
+            (empty / 'unregistered.py').write_text('added')
+            self.assertIsNone(startup._operation_cache(self.release))
+            self.assertEqual(operation.memo, {})
+            self.verify.return_value = subprocess.CompletedProcess([], 1, '{"status":"fail"}', '')
+            with self.assertRaisesRegex(state.WorkflowError, 'integrity'):
+                startup.require_job_identity(self.job)
+            self.assertEqual(self.verify.call_count, 2)
+
+    def test_runtime_manifest_and_exception_cannot_leave_a_cached_success(self):
+        startup = self.startup
+        bytecode = sys.dont_write_bytecode
+        with self.assertRaisesRegex(RuntimeError, 'fixture failure'):
+            with startup.operation_scope() as operation:
+                self.assertTrue(sys.dont_write_bytecode)
+                startup.require_job_identity(self.job)
+                operation.memo['fixture'] = True
+                self.runtime['python']['version'] = 'different'
+                with self.assertRaisesRegex(state.WorkflowError, 'runtime changed'):
+                    startup.require_job_identity(self.job)
+                self.runtime['python']['version'] = sys.version.split()[0]
+                self.manifest.write_text(self.manifest.read_text() + '\n')
+                self.assertIsNone(startup._operation_cache(self.release))
+                with self.assertRaisesRegex(state.WorkflowError, 'release changed'):
+                    startup.require_job_identity(self.job)
+                raise RuntimeError('fixture failure')
+        self.assertIsNone(startup.current_operation())
+        self.assertEqual(sys.dont_write_bytecode, bytecode)
+        self.assertEqual(operation.memo, {})
+        self.assertEqual(operation.releases, {})
 
 
 class StartupTests(unittest.TestCase):
@@ -355,7 +533,7 @@ class StartupTests(unittest.TestCase):
                                 cwd=self.root, capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
         inspect_job(state.load_job(job.job_dir))
-        self.assertEqual(state.load_job(job.job_dir).stages["inspect"]["status"], "ready_for_review")
+        self.assertEqual(state.load_job(job.job_dir).stages["inspect"]["status"], "ready")
 
     def test_context_through_symlinked_parent_is_rejected(self):
         startup = self.startup()

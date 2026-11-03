@@ -372,19 +372,34 @@ def _output_probe(frames: int = 24) -> dict[str, object]:
 
 
 class SegmentRenderComponentTests(unittest.TestCase):
-    def test_keyframe_moments_are_bounded_by_the_last_real_frame(self) -> None:
-        self.assertEqual(
-            segment_render._keyframe_moments(1),
-            {"entry": 0.0, "hold": 0.0, "exit": 0.0},
+    def test_segment_ids_use_the_same_safe_contract_as_native_source_bindings(self):
+        for identifier in ("seg-001", "seg-o08", "seg-b13", "seg-102-followup", "seg-native_01"):
+            self.assertTrue(segment_render.re_full_segment_id(identifier), identifier)
+        for identifier in ("seg-", "segment-001", "seg-../followup", "seg-a/b", "seg-a b", "seg-中文", None):
+            self.assertFalse(segment_render.re_full_segment_id(identifier), identifier)
+
+    def test_direct_segment_records_no_qa_keyframes(self) -> None:
+        segment, artifacts = self._single_fixture()
+        extractor = mock.Mock(side_effect=AssertionError("must not extract QA frames"))
+        runner = mock.Mock(side_effect=lambda command, _timeout: Path(command[-1]).write_bytes(b"rendered"))
+        rendered = self._render(
+            self.job, segment, artifacts, output_dir=self.output_dir,
+            visual_plan_sha256="a" * 64, arroll_source=self.arroll,
+            ffmpeg_runner=runner, probe=lambda _path: _output_probe(),
+            frame_extractor=extractor,
         )
-        self.assertEqual(
-            segment_render._keyframe_moments(2),
-            {"entry": 1 / 48, "hold": 1 / 24, "exit": 1 / 24},
+        self.assertEqual({}, rendered.keyframes)
+        self.assertEqual({"segment.mp4", "segment-manifest.json"},
+                         {path.name for path in Path(rendered.video_path).parent.iterdir()})
+        replay = self._render(
+            self.job, segment, artifacts, output_dir=self.output_dir,
+            visual_plan_sha256="a" * 64, arroll_source=self.arroll,
+            ffmpeg_runner=runner, probe=lambda _path: _output_probe(),
+            frame_extractor=extractor,
         )
-        self.assertEqual(
-            segment_render._keyframe_moments(24),
-            {"entry": 0.25, "hold": 0.5, "exit": 0.75},
-        )
+        self.assertEqual(rendered, replay)
+        self.assertEqual(1, runner.call_count)
+        extractor.assert_not_called()
 
     def test_public_exports_include_aroll_render_and_strict_replay(self) -> None:
         self.assertEqual(
@@ -905,7 +920,7 @@ class SegmentRenderComponentTests(unittest.TestCase):
         self.assertFalse((self.output_dir / "seg-001").exists())
         self.assertEqual(list(self.output_dir.glob(".seg-001.stage-*")), [])
 
-    def test_probe_and_keyframe_failures_are_stable_and_output_stays_unchanged(self) -> None:
+    def test_probe_failure_is_stable_and_output_stays_unchanged(self) -> None:
         segment, artifacts = self._single_fixture()
 
         def create_output(command: tuple[str, ...], _timeout: float) -> None:
@@ -923,25 +938,6 @@ class SegmentRenderComponentTests(unittest.TestCase):
                 probe=mock.Mock(side_effect=ValueError("invalid probe")),
             )
         self.assertFalse((self.output_dir / "seg-001").exists())
-
-        def changing_extractor(video: Path, _timestamp: float, output: Path) -> None:
-            video.write_bytes(b"changed-during-keyframes")
-            output.write_bytes(b"frame")
-
-        with self.assertRaises(segment_render.SegmentRenderError):
-            self._render(
-                self.job,
-                segment,
-                artifacts,
-                output_dir=self.output_dir,
-                visual_plan_sha256="a" * 64,
-                arroll_source=self.arroll,
-                ffmpeg_runner=create_output,
-                probe=lambda _path: _output_probe(),
-                frame_extractor=changing_extractor,
-            )
-        self.assertFalse((self.output_dir / "seg-001").exists())
-        self.assertEqual(list(self.output_dir.glob(".seg-001.stage-*")), [])
 
     def test_runner_failures_are_stable_and_leave_no_partial_result(self) -> None:
         segment, artifacts = self._single_fixture()
@@ -1206,7 +1202,7 @@ class SegmentRenderComponentTests(unittest.TestCase):
             manifest_path.write_bytes(original)
 
         value_record = json.loads(original)
-        value_record["keyframes"]["entry"]["timestamp"] += 0.125
+        value_record["keyframes"] = {"entry": {"timestamp": 0.125}}
         manifest_path.write_text(
             json.dumps(
                 value_record,
@@ -1231,8 +1227,8 @@ class SegmentRenderComponentTests(unittest.TestCase):
         with self.assertRaises(segment_render.SegmentRenderError):
             replay()
         extra.unlink()
-        missing = target / "keyframes/exit.png"
-        parked = target / "keyframes/exit.parked"
+        missing = target / "segment.mp4"
+        parked = target / "segment.parked"
         os.replace(missing, parked)
         with self.assertRaises(segment_render.SegmentRenderError):
             replay()
@@ -1817,7 +1813,7 @@ class SegmentRenderComponentTests(unittest.TestCase):
         no_runner.assert_not_called()
         self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
 
-    def test_publication_syncs_keyframe_directory_before_stage(self) -> None:
+    def test_publication_syncs_media_and_manifest_before_stage(self) -> None:
         segment, artifacts = self._single_fixture()
 
         def runner(command: tuple[str, ...], _timeout: float) -> None:
@@ -1855,24 +1851,17 @@ class SegmentRenderComponentTests(unittest.TestCase):
                 frame_extractor=extract,
             )
 
-        keyframe_files = [
-            index
-            for index, (kind, path) in enumerate(events)
-            if kind == "file" and path.parent.name == "keyframes"
+        formal_files = [
+            index for index, (kind, path) in enumerate(events)
+            if kind == "file" and path.name in {"segment.mp4", "segment-manifest.json"}
         ]
-        keyframe_directory = next(
-            index
-            for index, (kind, path) in enumerate(events)
-            if kind == "directory" and path.name == "keyframes"
-        )
         stage_directory = next(
-            index
-            for index, (kind, path) in enumerate(events)
+            index for index, (kind, path) in enumerate(events)
             if kind == "directory" and path.name.startswith(".seg-001.stage-")
         )
-        self.assertEqual(len(keyframe_files), 3)
-        self.assertLess(max(keyframe_files), keyframe_directory)
-        self.assertLess(keyframe_directory, stage_directory)
+        self.assertEqual(2, len(formal_files))
+        self.assertLess(max(formal_files), stage_directory)
+        self.assertFalse(any(path.name == "keyframes" for _kind, path in events))
 
     def test_replay_rejects_changed_manifest_component_records(self) -> None:
         segment, artifacts = self._single_fixture()
@@ -1979,17 +1968,8 @@ class SegmentRenderComponentTests(unittest.TestCase):
         changed["unexpected"] = True
         cases.append(changed)
         changed = json.loads(json.dumps(original))
-        changed["keyframes"]["extra"] = changed["keyframes"]["entry"]
+        changed["keyframes"] = {"entry": {"path": "obsolete.png"}}
         cases.append(changed)
-        for field, value in (
-            ("timestamp", original["keyframes"]["entry"]["timestamp"] + 0.1),
-            ("path", str(target / "keyframes/other.png")),
-            ("sha256", "0" * 64),
-            ("bytes", original["keyframes"]["entry"]["bytes"] + 1),
-        ):
-            changed = json.loads(json.dumps(original))
-            changed["keyframes"]["entry"][field] = value
-            cases.append(changed)
 
         for changed in cases:
             write(changed)
@@ -2024,7 +2004,7 @@ class SegmentRenderComponentTests(unittest.TestCase):
                 frame_extractor=extract,
             )
         extra.unlink()
-        (target / "keyframes/entry.png").write_bytes(b"changed-keyframe")
+        (target / "keyframes").mkdir()
         with self.assertRaises(segment_render.SegmentRenderError):
             self._render(
                 self.job,
@@ -2481,6 +2461,101 @@ class ParentStaticLabelTests(unittest.TestCase):
             png.write_bytes(b'changed file')
             with self.assertRaisesRegex(ValueError, 'identity changed'):
                 labels.load(root, segment, 'visual-1')
+
+    def test_edge_background_mask_retains_safe_stable_text_targets(self):
+        from edit.hd.tools import cover, parent_static_labels as labels
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            segment, label, png = self.fixture(root)
+            image = Image.new('RGBA', (240, 96), (0, 0, 0, 0))
+            ImageDraw.Draw(image).text((40, 6), '聊天', font=cover._font(56), fill='white')
+            image.save(png)
+            label['image'].update(sha256=_sha256_file(png), byte_count=png.stat().st_size)
+            segment['end'] = 83 / 24
+            segment['visual_strategy'] = {'composition': {'avatar': {
+                'entrance': {'frames': 12}, 'exit': {'frames': 8}}}}
+            label.update(x=0, start_frame=0, end_frame=83)
+            path = root / 'labels.json'
+            def save_label(value):
+                payload = json.loads(path.read_text()); payload['labels'] = [value]
+                path.write_text(json.dumps(payload, ensure_ascii=False))
+                segment['bindings']['visual-1'][labels.FIELD].update(
+                    sha256=_sha256_file(path), byte_count=path.stat().st_size)
+            save_label(label)
+            actual = labels.load(root, segment, 'visual-1')
+            target = {'content_ref': label['content_ref'],
+                'region': {'x': 40, 'y': 180, 'width': 180, 'height': 96},
+                'windows': [{'start': 12 / 24, 'end': 75 / 24}]}
+            labels.validate_targets(actual, [target])
+            for case in ('unsafe_text', 'entrance_reading', 'exit_reading'):
+                wrong = copy.deepcopy(target)
+                if case == 'unsafe_text': wrong['region']['x'] = 35
+                elif case == 'entrance_reading': wrong['windows'][0]['start'] = 0
+                else: wrong['windows'][0]['end'] = 83 / 24
+                with self.subTest(case=case), self.assertRaises(ValueError):
+                    labels.validate_targets(actual, [wrong])
+            for field, value in (('x', -1), ('x', 841), ('y', -1), ('y', 1285), ('end_frame', 84)):
+                wrong = {**label, field: value}; save_label(wrong)
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    labels.load(root, segment, 'visual-1')
+
+    def test_presenter_without_the_internal_canvas_anchor_is_rejected(self):
+        from edit.hd.tools import parent_static_labels as labels
+        command = ('ffmpeg', '-i', 'source', '-filter_complex',
+                   '[0:v]null[presenter];[presenter]null[out]')
+        with self.assertRaisesRegex(ValueError, 'presenter composition anchor'):
+            labels.compose(command, [Path('label.png')], [{}])
+
+    @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg required')
+    def test_background_label_is_behind_real_presenter_entrance_and_exit(self):
+        from edit.hd.tools import cover, parent_static_labels as labels
+        with tempfile.TemporaryDirectory() as directory:
+            job = _Job(Path(directory).resolve()); root = job.job_dir
+            label_segment, label, png = self.fixture(root)
+            image = Image.new('RGBA', (320, 96), (0, 255, 0, 255))
+            image.putpixel((319, 95), (0, 0, 0, 0))
+            ImageDraw.Draw(image).text((40, 6), '聊天', font=cover._font(56), fill='white')
+            image.save(png)
+            label.update(x=0, start_frame=0, end_frame=48)
+            label['image'].update(sha256=_sha256_file(png), byte_count=png.stat().st_size)
+            manifest_path = root / 'labels.json'
+            manifest_path.write_text(json.dumps({'schema_version': 1, 'segment_id': 'seg-001',
+                'component_id': 'visual-1', 'labels': [label]}, ensure_ascii=False))
+            binding = label_segment['bindings']['visual-1']
+            binding[labels.FIELD].update(sha256=_sha256_file(manifest_path), byte_count=manifest_path.stat().st_size)
+            source = root / 'source.png'; Image.new('RGB', (1080, 1920), 'blue').save(source)
+            arroll = root / 'arroll.mp4'
+            subprocess.run(('ffmpeg', '-hide_banner', '-nostdin', '-v', 'error', '-f', 'lavfi', '-i',
+                'color=c=red:s=1080x1920:r=24:d=2', '-frames:v', '48', '-an', '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p', '-y', str(arroll)), check=True, capture_output=True, timeout=60)
+            component = _component('visual-1', 'ai_generated', _sha256_file(source),
+                window=_window(start=0, end=48, z_index=0, slot='full_frame'), alpha=False)
+            recipe = _recipe([component], source_sha256=_sha256_file(arroll))
+            recipe['composition']['avatar'] = avatar_fixture(frames=48, source_sha256=_sha256_file(arroll))
+            recipe['composition']['avatar'].update(entrance={'kind': 'aroll_to_avatar', 'frames': 12},
+                                                   exit={'kind': 'avatar_to_aroll', 'frames': 8})
+            segment = _segment(recipe)
+            segment.update(end=2.0, visible_text=['聊天'], bindings={'visual-1': binding})
+            artifacts = (_artifact(job, recipe, component, source, alpha=False),)
+            graph = segment_render.build_filter_graph(recipe, artifacts, frames=48)
+            composed = labels.compose(('ffmpeg', '-i', str(arroll), '-i', str(source),
+                                       '-filter_complex', graph), [png], [label])
+            graph = composed[composed.index('-filter_complex') + 1]
+            self.assertLess(graph.index('[canvas_1][parent_label_0]'),
+                            graph.index('[parent_labels_0][presenter]overlay='))
+            rendered = segment_render.render_segment_video(job, segment, artifacts,
+                output_dir=root / 'rendered', visual_plan_sha256='a' * 64, arroll_source=arroll,
+                arroll_sha256=_sha256_file(arroll), arroll_bytes=arroll.stat().st_size)
+            pixels = []
+            for frame in (0, 24, 47):
+                sample = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-i', rendered.video_path,
+                    '-vf', f'select=eq(n\\,{frame}),format=rgb24,crop=1:1:35:200', '-frames:v', '1',
+                    '-f', 'rawvideo', '-'], check=True, capture_output=True, timeout=30)
+                pixels.append(tuple(sample.stdout))
+            for red, green, blue in (pixels[0], pixels[2]):
+                self.assertGreater(red, 180); self.assertLess(max(green, blue), 70)
+            red, green, blue = pixels[1]
+            self.assertGreater(green, 180); self.assertLess(max(red, blue), 70)
 
     @unittest.skipUnless(shutil.which('ffmpeg'), 'FFmpeg required')
     def test_existing_png_overlay_route_renders_only_approved_frames(self):

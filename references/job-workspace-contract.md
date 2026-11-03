@@ -4,7 +4,7 @@
 
 ## 创建与目录
 
-正式流程优先运行 Skill 自带的 `scripts/initialize_video_job.py`。它先调用 `create_job_workspace.py` 创建独立 workspace 和 `00-user-provided`，再创建 `full-v2` workflow，最后只在 `job-context.json` 指向的权威 `job_dir` 中创建十二阶段目录、`manifests`、`qa`、`cache` 和 `tmp`。不得在 workspace 顶层再创建一套重复输出树。
+正式流程优先运行 Skill 自带的 `scripts/initialize_video_job.py`。它先调用 `create_job_workspace.py` 创建独立 workspace 和 `00-user-provided`，再创建 `full-v2` workflow，最后只在 `job-context.json` 指向的权威 `job_dir` 中创建当前十一阶段目录、`manifests`、`qa`、`cache` 和 `tmp`。不得在 workspace 顶层再创建一套重复输出树。
 
 初始化前核验发布包及真实运行时，冲突时不复制用户输入。workspace 的 `job-context.json` 固定绑定实际 Python、项目路径、模块哈希、合成器版本与 `skill_release`，不能手工改写来迁移。环境草稿、预检和批准只写到权威 job_dir 的 `manifests/provider-config.json`、`dependency-preflight.json`、`setup-approval.json`。相同输入在另一个 workspace 中也属于另一个 Job，不能沿用批准。
 旧目录原有 Job 放弃，不迁移、不重签，不保留旧运行包；保留原始素材和已交付文件。新根内 Job 经用户授权优化 Skill，且只改动了已明确退回的阶段并需续做时，按[发布与调用合同](release-contract.md)使用受控上下文迁移入口；不把迁移记录当作新的用户配置批准。
@@ -91,7 +91,7 @@ python3 <skill>/scripts/initialize_video_job.py \
 每项只允许 `language`、`material_id`、`format` 三个非空字符串，format 为 `srt` 或 `vtt`。language 要与实际字幕一致；指定语言必须唯一匹配，`zh` 不自动匹配 `zh-CN`。选择文件上限 64 KiB，字幕上限 16 MiB。普通 WebVTT 支持 cue identifier/settings，但时间映射及 STYLE/REGION 块不支持，不能删掉未知块后假装已正确解释原时间轴。
 
 ```bash
-PYTHONPATH="<project>" <python> -m edit.hd.tools.cli search-reference \
+python3.12 "<skill-root>/run.py" job search-reference \
   --workspace "<workspace>" --material-id "<视频素材ID>" \
   --tracks "<job-dir>/manifests/reference-tracks.json" \
   --language en --query "<待定位的原文短语>"
@@ -108,7 +108,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli search-reference \
 本次环境预检及配置已经批准后，需要保留解析结果时调用：
 
 ```bash
-PYTHONPATH="<project>" <python> -m edit.hd.tools.cli cache-reference \
+python3.12 "<skill-root>/run.py" job cache-reference \
   --job "<job-dir>" --material-id "<视频素材ID>" \
   --tracks "<job-dir>/manifests/reference-tracks.json" --language en
 ```
@@ -130,7 +130,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.cli cache-reference \
 定位已有转写使用同一个检索命令的 Job 模式：
 
 ```bash
-PYTHONPATH="<project>" <python> -m edit.hd.tools.cli search-reference \
+python3.12 "<skill-root>/run.py" job search-reference \
   --job "<job-dir>" --material-id "<视频素材ID>" \
   --tracks "<job-dir>/manifests/reference-tracks.json" \
   --language en --query "Hello"
@@ -142,9 +142,9 @@ ASR 报告含 `method=local_whisper_cpp`、模型和素材身份、`raw_output_s
 
 ## 变更与精准失效
 
-新 Job 的十二个阶段都发布权威 `material-usage.json`；该回执以 `material_id` 和 SHA-256，以及 `consumer_id + binding_path + artifact_paths` 证明使用范围，无引用的阶段也发布完整空声明。依据当前 revision 的回执与项目运行时 DAG，系统计算最早修订阶段、受影响 segment、需重建产物和可复用产物。
+新 Job 的十一个阶段都发布权威 `material-usage.json`；该回执以 `material_id` 和 SHA-256，以及 `consumer_id + binding_path + artifact_paths` 证明使用范围，无引用的阶段也发布完整空声明。依据当前 revision 的回执与项目运行时 DAG，系统计算最早修订阶段、受影响 segment、需重建产物和可复用产物。
 
-已使用资料的替换/撤回已支持确认后的精准修订：媒体重建只失效引用该资产的 visual segment，`artifact_scope` 保留受影响视觉 segment，支持 `segment-inputs` 的运行时复用其他已批准媒体字节。状态引擎仍会将最早修订阶段及其下游阶段进入重审；精准媒体复用不等于自动保留下游人工批准。旧 Job 缺回执时 fail closed，旧 Job 不补造回执。完整规则见 [权威素材使用回执与变更事务](material-usage-contract.md)。
+已使用资料的替换/撤回已支持确认后的精准修订：媒体重建只失效引用该资产的 visual segment，`artifact_scope` 保留受影响视觉 segment，支持 `segment-inputs` 的运行时复用其他已批准媒体字节。状态引擎仍会将最早修订阶段及其必要下游进入重新制作；精准媒体复用不等于新版已获用户验收。旧 Job 缺回执时 fail closed，旧 Job 不补造回执。完整规则见 [权威素材使用回执与变更事务](material-usage-contract.md)。
 
 ### 唯一资料变更入口
 
@@ -178,7 +178,7 @@ python3 <skill>/scripts/manage_user_materials.py --workspace <workspace> \
 
 - **追加：** 可随时导入为新的候选资料。相同 SHA-256 复用资产文件，每个来源有独立 material ID；不自动选入画面，不重新下载/转码，不重置任何阶段。即使已有封面或样片，也继续保留。
 - **尚未使用的替换/撤回：** 在确认计划后直接更新索引，`workflow_action=preserve`。原口播和文案的输入哈希受保护，不能从此入口替换或撤回。
-- **已有引用：** 展示所有直接 consumer、最早修订阶段、受影响镜头和下游重审范围。用户确认精确 `plan_hash` 后，`workflow_action=revise`，事务提交索引并调用一次 `state.revise`。未变镜头媒体可依视觉修订复用合同继续复用，但受影响及下游阶段仍须重审。
+- **已有引用：** 展示所有直接 consumer、最早修订阶段、受影响镜头和必要下游重建范围。用户确认精确 `plan_hash` 后，`workflow_action=revise`，事务提交索引并调用一次 `state.revise`。未变镜头媒体可依视觉修订复用合同继续复用，但受影响及必要下游阶段仍须重新制作。
 - **覆盖不完整：** 旧 Job 或当前回执不可验证时返回 `material_usage_unverified` 并在任何写入前停止。展示未核清阶段，由人工选择更早修订点；不补造回执或自动新建任务绕过。
 - **已撤回/已替换的 ID：** 后续封面读取及 Skill 管理任务的本地 B-roll 解析会拒绝，即使旧复制文件仍在。新绑定必须选择新的 active ID；历史裸运行时不自动迁移，不将该 gate 外推为所有旧任务都有完整引用验证。
 

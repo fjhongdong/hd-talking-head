@@ -30,22 +30,6 @@ def _source_bytes(local, ref):
     return data
 
 
-def _generated_png(job_dir, local, ref):
-    queue_path = Path(job_dir) / "manifests/generation-queue.json"
-    if not queue_path.is_file():
-        return False
-    for item in artifacts.read_json_artifact(queue_path).get("items", {}).values():
-        if item.get("status") != "completed" or item.get("request", {}).get("purpose") != "image":
-            continue
-        for output in item.get("completion_response", item.get("response", {})).get("artifacts", []):
-            path = Path(output.get("path", ""))
-            path = path if path.is_absolute() else Path(job_dir) / path
-            if (output.get("type") == "image" and path == Path(local)
-                    and output.get("sha256") == ref["sha256"] and output.get("bytes") == ref["bytes"]):
-                return True
-    return False
-
-
 def _color_chunks(data):
     result, offset = {}, 8
     while offset + 12 <= len(data):
@@ -88,13 +72,19 @@ def _lossless_png(data):
             raise ValueError("lossless upload preparation requires a static 8-bit RGB/RGBA PNG")
         image.load()
         metadata = PngImagePlugin.PngInfo()
-        for kind, value in _color_chunks(data).items():
+        color_chunks = _color_chunks(data)
+        for kind, value in color_chunks.items():
             if kind != b"pHYs":
                 metadata.add(kind, value)
-        options = {key: image.info[key] for key in ("icc_profile", "exif", "transparency", "dpi") if key in image.info}
+        options = {key: image.info[key] for key in ("icc_profile", "exif", "transparency") if key in image.info}
         output = io.BytesIO()
         image.save(output, format="PNG", optimize=True, compress_level=9, pnginfo=metadata, **options)
         encoded = output.getvalue()
+        if b"pHYs" in color_chunks:
+            # Pillow ignores pHYs in PngInfo; preserve the raw chunk after IHDR.
+            chunk = io.BytesIO()
+            PngImagePlugin.putchunk(chunk, b"pHYs", color_chunks[b"pHYs"])
+            encoded = encoded[:33] + chunk.getvalue() + encoded[33:]
     return encoded, _same_png_pixels(data, encoded)
 
 
@@ -110,21 +100,56 @@ def _upload_arguments(upload, local, data, filename):
     return build(upload["arguments"])
 
 
-def _prepare_upload(job_dir, state_path, upload, local, ref, rejected=None):
+def _high_quality_jpeg(data):
+    from PIL import Image, ImageCms
+    with Image.open(io.BytesIO(data)) as image:
+        if (image.format != "PNG" or image.mode != "RGB" or data[24] != 8
+                or getattr(image, "n_frames", 1) != 1 or image.getexif().get(274, 1) != 1
+                or "transparency" in image.info or set(_color_chunks(data)) - {b"pHYs"}):
+            raise ValueError("JPEG transport requires a static 8-bit RGB PNG without unsupported color conversion")
+        image.load()
+        icc = image.info.get("icc_profile")
+        if icc:
+            try:
+                profile = ImageCms.ImageCmsProfile(io.BytesIO(icc))
+                if profile.profile.xcolor_space.strip() != "RGB":
+                    raise ValueError("JPEG transport requires an RGB ICC profile")
+            except (OSError, TypeError) as exc:
+                raise ValueError("JPEG transport requires a supported RGB ICC profile") from exc
+        options = {key: image.info[key] for key in ("icc_profile", "exif") if key in image.info}
+        output = io.BytesIO()
+        image.save(output, format="JPEG", quality=98, subsampling=0, **options)
+        encoded = output.getvalue()
+        with Image.open(io.BytesIO(encoded)) as after:
+            after.load()
+            if (after.format != "JPEG" or after.mode != "RGB" or after.size != image.size
+                    or after.info.get("icc_profile") != icc or after.getexif() != image.getexif()):
+                raise ValueError("JPEG transport must preserve dimensions, ICC and EXIF")
+            return encoded, {"mode": "RGB", "size": list(image.size), "quality": 98, "subsampling": 0,
+                "source_pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+                "encoded_pixel_sha256": hashlib.sha256(after.tobytes()).hexdigest()}
+
+
+def _prepare_upload(job_dir, state_path, upload, local, ref, rejected=None, purpose=None):
     data = _source_bytes(local, ref)
     arguments = _upload_arguments(upload, local, data, Path(local).name)
-    if upload["tool"] != _LOVART_UPLOAD or (rejected is None and _upload_body_bytes(arguments) <= _LOVART_BODY_LIMIT):
+    if upload["tool"] != _LOVART_UPLOAD or (rejected is None and _upload_body_bytes(arguments) < _LOVART_BODY_LIMIT):
         return arguments, None
-    if Path(local).suffix.lower() != ".png" or not _generated_png(job_dir, local, ref):
-        raise ValueError("Lovart upload exceeds its JSON body limit; only this Job's completed generated PNG may be re-encoded losslessly")
+    if Path(local).suffix.lower() != ".png":
+        raise ValueError("Lovart upload exceeds its JSON body limit; only a frozen PNG reference may be re-encoded losslessly")
     encoded, pixels = _lossless_png(data)
+    method, extension, filename = "png-lossless-reencode", ".png", Path(local).name
+    arguments = _upload_arguments(upload, local, encoded, filename)
+    if _upload_body_bytes(arguments) >= _LOVART_BODY_LIMIT and purpose == "video":
+        encoded, pixels = _high_quality_jpeg(data)
+        method, extension, filename = "jpeg-high-quality", ".jpg", Path(local).stem + ".jpg"
     digest = hashlib.sha256(encoded).hexdigest()
-    target = state_path.parent / ("transport-" + digest + ".png")
-    arguments = _upload_arguments(upload, target, encoded, Path(local).name)
-    if _upload_body_bytes(arguments) > _LOVART_BODY_LIMIT:
-        raise ValueError("lossless PNG transport still exceeds the Lovart JSON body limit; stop without resizing or lossy conversion")
+    target = state_path.parent / ("transport-" + digest + extension)
+    arguments = _upload_arguments(upload, target, encoded, filename)
+    if _upload_body_bytes(arguments) >= _LOVART_BODY_LIMIT:
+        raise ValueError("prepared image transport still exceeds the Lovart JSON body limit; stop without resizing or further conversion")
     if rejected is not None and _upload_body_bytes(arguments) >= _upload_body_bytes(rejected):
-        raise ValueError("rejected upload has no smaller lossless payload; inspect the original failure before retrying")
+        raise ValueError("rejected upload has no smaller prepared payload; inspect the original failure before retrying")
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.parent.resolve() != target.parent.absolute() or target.is_symlink():
         raise ValueError("upload transport must remain in the existing Job cache")
@@ -132,22 +157,30 @@ def _prepare_upload(job_dir, state_path, upload, local, ref, rejected=None):
         with target.open("xb") as handle: handle.write(encoded)
     except FileExistsError:
         if target.read_bytes() != encoded:
-            raise ValueError("existing lossless upload transport changed")
+            raise ValueError("existing upload transport changed")
     return arguments, {"path": str(target.relative_to(job_dir)), "sha256": digest, "bytes": len(encoded),
-                       "source_sha256": ref["sha256"], "method": "png-lossless-reencode", **pixels}
+                       "source_sha256": ref["sha256"], "method": method, **pixels}
 
 
 def _verify_transport(job_dir, ref, transport):
     relative = Path(transport["path"])
     if relative.is_absolute() or ".." in relative.parts or transport["source_sha256"] != ref["sha256"]:
-        raise ValueError("lossless upload transport source changed")
+        raise ValueError("upload transport source changed")
     path = Path(job_dir) / relative
     if path.is_symlink() or path.resolve() != path.absolute():
-        raise ValueError("lossless upload transport path changed")
+        raise ValueError("upload transport path changed")
     encoded = _source_bytes(path, transport)
-    pixels = _same_png_pixels(_source_bytes(Path(job_dir) / ref["path"], ref), encoded)
+    source = _source_bytes(Path(job_dir) / ref["path"], ref)
+    if transport["method"] == "png-lossless-reencode":
+        pixels = _same_png_pixels(source, encoded)
+    elif transport["method"] == "jpeg-high-quality":
+        expected, pixels = _high_quality_jpeg(source)
+        if encoded != expected:
+            raise ValueError("JPEG upload transport differs from its fixed source encoding")
+    else:
+        raise ValueError("unsupported upload transport method")
     if any(transport.get(key) != value for key, value in pixels.items()):
-        raise ValueError("lossless upload transport pixel identity changed")
+        raise ValueError("upload transport pixel identity changed")
 
 
 def _known_lovart_413(action, response):
@@ -239,6 +272,59 @@ def _state(job_dir, request, binding):
     return path, state
 
 
+def reuse_completed_first_frame(job_dir, previous, current, ref):
+    """Carry only an identical, completed first-frame upload into a revised request."""
+    binding = _binding(job_dir, previous['purpose'])
+    if binding['reference_mode'] == 'local_path':
+        return None
+    old_path, old = _state(job_dir, previous, binding)
+    key = artifacts.sha256_json(ref)
+    if set(old['uploads']) - {key}:
+        raise ValueError('GBRO tail revision requires a tail with no issued upload action')
+    saved = old['uploads'].get(key)
+    if saved is None:
+        return None
+    previous_refs = dict(_references(job_dir, previous))
+    current_refs = dict(_references(job_dir, current))
+    local = str(Path(job_dir) / ref['path'])
+    if previous_refs.get(local) != ref or current_refs.get(local) != ref or saved.get('source') != ref:
+        raise ValueError('GBRO first-frame upload source changed')
+    upload = copy.deepcopy(binding['upload'])
+    project = _lovart_video_project(previous, upload)
+    if _lovart_video_project(current, upload) != project:
+        raise ValueError('GBRO first-frame upload project changed')
+    if project is not None:
+        upload['arguments']['project_id'] = project
+    source, data, filename = Path(local), _source_bytes(local, ref), Path(local).name
+    if saved.get('transport'):
+        _verify_transport(job_dir, ref, saved['transport'])
+        source = Path(job_dir) / saved['transport']['path']
+        data = _source_bytes(source, saved['transport'])
+        if saved['transport']['method'] == 'jpeg-high-quality':
+            filename = Path(local).stem + '.jpg'
+    action = saved.get('action', {})
+    value = saved.get('response')
+    try:
+        for part in upload['result_path']:
+            value = value[part]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError('GBRO first-frame upload has no completed response') from exc
+    if (not isinstance(value, str) or not value.strip() or value != saved.get('reference')
+            or action.get('action') != 'upload' or action.get('request_id') != previous['id']
+            or action.get('purpose') != previous['purpose'] or action.get('binding_id') != key
+            or action.get('tool') != upload['tool'] or not action.get('claim_token')
+            or action.get('arguments') != _upload_arguments(upload, source, data, filename)
+            or saved.get('rejected_body_limit')):
+        raise ValueError('GBRO first-frame upload is pending, unknown or differs from its actual binding')
+    path, state = _state(job_dir, current, binding)
+    expected = {**state, 'uploads': {key: copy.deepcopy(saved)}}
+    if state['uploads'] and state != expected:
+        raise ValueError('revised GBRO upload state already has different actions')
+    artifacts.write_json_artifact(path, expected)
+    return {'path': str(old_path.relative_to(job_dir)),
+            'sha256': artifacts.sha256_file(old_path), 'bytes': old_path.stat().st_size}
+
+
 def next_action(job_dir, request):
     """Issue each upload once; following calls wait for the original result."""
     binding = _binding(job_dir, request["purpose"])
@@ -259,7 +345,7 @@ def next_action(job_dir, request):
         if project is not None:
             upload["arguments"]["project_id"] = project
         arguments, transport = _prepare_upload(job_dir, path, upload, local, ref,
-            rejected=saved["action"]["arguments"] if saved else None)
+            rejected=saved["action"]["arguments"] if saved else None, purpose=request["purpose"])
         action = {"action": "upload", "purpose": request["purpose"], "request_id": request["id"],
                   "binding_id": key, "claim_token": secrets.token_urlsafe(24),
                   "tool": upload["tool"], "arguments": arguments}
@@ -293,7 +379,7 @@ def record_result(job_dir, request, action, response):
         saved["rejected_body_limit"] = True
         artifacts.write_json_artifact(path, state)
         return {"request_id": request["id"], "status": "input_upload_rejected_413", "binding_id": action["binding_id"]}
-    value = response.get("structuredContent", response) if isinstance(response, dict) else response
+    value = response
     try:
         for key in binding["upload"]["result_path"]:
             value = value[key]
@@ -349,7 +435,7 @@ def replace_unsent_lovart_upload(job_dir, request, action, evidence):
     replacement = copy.deepcopy(actual)
     replacement["claim_token"] = secrets.token_urlsafe(24)
     replacement["arguments"]["project_id"] = project
-    if _upload_body_bytes(replacement["arguments"]) > _LOVART_BODY_LIMIT:
+    if _upload_body_bytes(replacement["arguments"]) >= _LOVART_BODY_LIMIT:
         raise ValueError("corrected upload exceeds the Lovart JSON body limit")
     saved["superseded_uploads"] = [{"action": copy.deepcopy(actual), "evidence": copy.deepcopy(evidence)}]
     saved["action"] = replacement

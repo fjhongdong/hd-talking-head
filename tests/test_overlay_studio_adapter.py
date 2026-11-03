@@ -31,10 +31,43 @@ class PinBoardContractTest(unittest.TestCase):
     def test_real_native_shape_accepts_fractional_seconds_and_absent_optional_fields(self):
         self.assertEqual(validate_brief(self.brief), self.brief)
 
+    def test_native_binding_uses_current_brief_without_historical_sample(self):
+        import json
+        from types import SimpleNamespace
+        import overlay_studio_adapter as native
+        adapter = SimpleNamespace(dependency_id=native.DEPENDENCY_ID,
+            entrypoint=native.ENTRY, entrypoint_sha256=native.sha(SKILL / native.ENTRY),
+            primary_renderer=native.RENDERER, launcher=Path(sys.executable))
+        binding = native.create_binding(adapter, json.dumps(self.brief).encode())
+        self.assertEqual(binding['template_origin'], 'custom_fallback')
+        self.assertNotIn('sample_sha256', binding)
+        self.assertEqual(binding['invocation_record']['status'], 'planned')
+        self.assertIsNone(binding['invocation_record']['exit_code'])
+        self.assertEqual(binding['invocation_record']['template_request'], self.brief['template_request'])
+
     def test_rejects_frames_in_native_seconds_field(self):
         self.brief["doc"]["cards"][0]["end"] = 172
         with self.assertRaises(ValueError):
             validate_brief(self.brief)
+
+    def test_28_frame_choice_keeps_twelve_reading_frames_after_last_landing(self):
+        brief = copy.deepcopy(self.brief)
+        brief['source_binding'].update(start=436 / 24, end=464 / 24)
+        brief['composition']['frames'] = 28
+        card = brief['doc']['cards'][0]
+        card['end'] = 28 / 24
+        card['params'].update(items='使用|不使用', times='0.16|0.24')
+        with self.assertRaises(ClockConflict):
+            validate_input_clock(brief)
+        brief['source_binding']['end'] = 436 / 24 + 36 / 24
+        brief['composition']['frames'] = 36
+        card['end'] = 36 / 24
+        with self.assertRaises(ClockConflict):
+            validate_input_clock(brief)
+        brief['source_binding']['end'] = 436 / 24 + 37 / 24
+        brief['composition']['frames'] = 37
+        card['end'] = 37 / 24
+        self.assertEqual(validate_input_clock(brief), brief)
 
     def test_real_142_frame_clock_conflict_is_separate_from_runtime_and_format(self):
         brief = copy.deepcopy(self.brief)
@@ -56,6 +89,11 @@ class PinBoardContractTest(unittest.TestCase):
         brief['source_binding']['end'] = 4.625 + 148 / 24
         brief['composition']['frames'] = 148
         card['end'] = 148 / 24
+        with self.assertRaises(ClockConflict):
+            validate_input_clock(brief)
+        brief['source_binding']['end'] = 4.625 + 160 / 24
+        brief['composition']['frames'] = 160
+        card['end'] = 160 / 24
         self.assertEqual(validate_input_clock(brief), brief)
         with self.assertRaisesRegex(ValueError, 'upstream identity'):
             validate_brief(brief)

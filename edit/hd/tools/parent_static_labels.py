@@ -61,9 +61,9 @@ def load(root, segment, component_id):
     for label in source['labels']:
         if (type(label) is not dict or set(label) != {'content_ref', 'image', 'x', 'y', 'start_frame', 'end_frame'}
                 or any(type(label[k]) is not int for k in ('x', 'y', 'start_frame', 'end_frame'))
-                or not start <= label['start_frame'] < label['end_frame'] <= end
+                or not 0 <= label['start_frame'] < label['end_frame'] <= frames
                 or label['end_frame'] - label['start_frame'] < 12):
-            raise ValueError('static labels need a fixed position and stable approved frame window')
+            raise ValueError('static labels need a fixed position and approved frame window')
         ref = label['content_ref']
         if (type(ref) is not dict or set(ref) != {'path', 'sha256', 'pointer', 'value'}
                 or type(ref['value']) is not str or ref['value'] not in segment['visible_text']):
@@ -75,10 +75,11 @@ def load(root, segment, component_id):
             if (image.format != 'PNG' or image.mode != 'RGBA' or image.getbbox() is None
                     or image.getchannel('A').getextrema()[0] == 255):
                 raise ValueError('static label must be a real transparent RGBA PNG')
-        if (label['x'] < 40 or label['y'] < 120 or label['x'] + width > 1040
+        if (label['x'] < 0 or label['y'] < 0 or label['x'] + width > 1080
                 or label['y'] + height > 1380):
-            raise ValueError('static label is outside the parent text-safe area')
-        labels.append({**label, 'width': width, 'height': height})
+            raise ValueError('static label is outside the parent background area')
+        labels.append({**label, 'width': width, 'height': height,
+                       'stable_start_frame': start, 'stable_end_frame': end})
     if {label['content_ref']['value'] for label in labels} != set(segment['visible_text']):
         raise ValueError('static labels must retain the exact approved visible text inventory')
     return labels
@@ -92,18 +93,21 @@ def validate_targets(labels, targets):
             raise ValueError('static label is missing its real readability target')
         for target in matches:
             box = target['region']
-            if (box['x'] < label['x'] or box['y'] < label['y']
+            if (box['x'] < 40 or box['y'] < 120
+                    or box['x'] + box['width'] > 1040 or box['y'] + box['height'] > 1380
+                    or box['x'] < label['x'] or box['y'] < label['y']
                     or box['x'] + box['width'] > label['x'] + label['width']
                     or box['y'] + box['height'] > label['y'] + label['height']
-                    or any(w['start'] < label['start_frame'] / 24
-                           or w['end'] > label['end_frame'] / 24 for w in target['windows'])):
+                    or any(w['start'] < max(label['start_frame'], label['stable_start_frame']) / 24
+                           or w['end'] > min(label['end_frame'], label['stable_end_frame']) / 24
+                           for w in target['windows'])):
                 raise ValueError('static label target differs from its actual placement or frame window')
     if any(t['content_ref'] not in [label['content_ref'] for label in labels] for t in targets):
         raise ValueError('static label readability cites an unrendered text source')
 
 
 def compose(command, snapshots, labels):
-    """Use the existing FFmpeg PNG overlay route after native media composition."""
+    """Put fixed background labels behind the existing presenter layer."""
     if not labels:
         return command
     command = list(command)
@@ -112,16 +116,29 @@ def compose(command, snapshots, labels):
     graph = command[index + 1]
     if graph.count('[out]') != 1:
         raise ValueError('static labels require the existing segment output')
-    graph = graph.replace('[out]', '[parent_labels_base]')
-    current = 'parent_labels_base'
+    anchors = list(re.finditer(r'\[(canvas_\d+)\]\[presenter\]overlay=', graph))
+    if '[presenter]' in graph:
+        if len(anchors) != 1:
+            raise ValueError('static labels require the existing presenter composition anchor')
+        anchor = anchors[0]
+        current = anchor.group(1)
+    else:
+        anchor = None
+        graph = graph.replace('[out]', '[parent_labels_base]')
+        current = 'parent_labels_base'
+    filters = []
     for i, (path, label) in enumerate(zip(snapshots, labels, strict=True)):
-        graph += (f';[{first + i}:v]format=rgba,setpts=PTS-STARTPTS+'
+        filters.append(f'[{first + i}:v]format=rgba,setpts=PTS-STARTPTS+'
                   f"{label['start_frame']}/24/TB[parent_label_{i}]"
                   f';[{current}][parent_label_{i}]overlay={label["x"]}:{label["y"]}:'
                   'eof_action=pass:shortest=0:'
                   f"enable='between(n,{label['start_frame']},{label['end_frame'] - 1})'[parent_labels_{i}]")
         current = f'parent_labels_{i}'
-    graph += f';[{current}]format=yuv420p[out]'
+    if anchor is not None:
+        graph = (graph[:anchor.start()] + ';'.join(filters) + ';'
+                 + f'[{current}][presenter]overlay=' + graph[anchor.end():])
+    else:
+        graph += ';' + ';'.join(filters) + f';[{current}]format=yuv420p[out]'
     command[index + 1] = graph
     inputs = [value for path in snapshots for value in ('-loop', '1', '-framerate', '24', '-i', str(path))]
     command[index:index] = inputs

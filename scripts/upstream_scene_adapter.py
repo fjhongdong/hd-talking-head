@@ -23,6 +23,7 @@ else:
     from package_paths import PACKAGE_ROOT
     SKILL = PACKAGE_ROOT
 sys.path.insert(0, str(SKILL / "scripts"))
+sys.path.insert(0, str(SKILL))
 from adapter_kit import sha256_file as sha
 ENTRY = "scripts/upstream_scene_adapter.py"
 VERSION = "2.0.0"
@@ -203,7 +204,8 @@ def check_runtime(project_root, dependency_id):
 def create_adapter(project_root, dependency_id, python_executable, brief_loader):
     from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter, ReferenceProcessMedia
     project = Path(project_root).resolve(strict=True)
-    launcher = Path(python_executable).resolve(strict=True)
+    launcher = Path(python_executable).absolute()
+    launcher = launcher.parent.resolve(strict=True) / launcher.name
     runtime = check_runtime(project, dependency_id)
     entry_sha, launcher_sha = sha(SKILL / ENTRY), sha(launcher)
 
@@ -262,7 +264,7 @@ def workflow_reference(b):
     return out
 
 
-def create_binding(adapter, brief_bytes, reference_sample):
+def create_binding(adapter, brief_bytes):
     b = validate_brief(brief_bytes)
     if adapter.dependency_id != b["dependency_id"] or adapter.entrypoint_sha256 != sha(SKILL / ENTRY):
         raise ValueError("Upstream scene adapter identity mismatch")
@@ -274,7 +276,7 @@ def create_binding(adapter, brief_bytes, reference_sample):
         "template_origin": "custom_fallback", "template_id": template_id, "template_version": VERSION,
         "verification_id": hashlib.sha256((adapter.entrypoint_sha256 + adapter.renderer_version + hashlib.sha256(brief_bytes).hexdigest()).encode()).hexdigest(),
         "adaptation_level": "structural", "source_entrypoint": ENTRY, "source_sha256": adapter.entrypoint_sha256,
-        "sample_sha256": sha(reference_sample), "semantic_families": [request["semantic_family"]],
+        "semantic_families": [request["semantic_family"]],
         "capacity": {"min_units": request["information_units"], "max_units": request["information_units"]},
         "brief_sha256": hashlib.sha256(brief_bytes).hexdigest(),
         "invocation_record": {"argv": [str(adapter.launcher), ENTRY], "status": "planned", "exit_code": None,
@@ -336,7 +338,13 @@ def validate_workflow(b, scene, root):
         raise ValueError("Freeze local assets; upstream B-roll must be silent and offline")
 
 
-def run_native(b, scene, runtime):
+def _execution_job(job_dir):
+    from edit.hd.tools.startup import require_job_directory_identity
+    return require_job_directory_identity(job_dir, project_root=SKILL)
+
+
+def run_native(b, scene, runtime, *, job_dir):
+    _execution_job(job_dir)
     dependency_id = b["dependency_id"]
     root = Path(runtime["root"])
     commit, entry = SOURCES[dependency_id]
@@ -419,6 +427,7 @@ def main():
     parser.add_argument("--project-root", type=Path)
     parser.add_argument("--dependency-id", choices=tuple(SOURCES))
     parser.add_argument("--brief", type=Path)
+    parser.add_argument("--job-dir", type=Path, default=os.environ.get("BROLL_JOB_DIR"))
     parser.add_argument("--media-manifest", type=Path)
     parser.add_argument("--runtime")
     parser.add_argument("--output", type=Path)
@@ -429,6 +438,7 @@ def main():
             "producer_version": VERSION, "adapter_identity": {"adapter_type": "ReferenceProcessAdapter",
             "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"}}))
         return
+    _execution_job(args.job_dir)
     payload = args.brief.read_bytes()
     b = validate_brief(payload)
     manifest = json.loads(args.media_manifest.read_bytes())
@@ -449,7 +459,7 @@ def main():
             target = scene / f["scene_path"]
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
-        output, receipt = run_native(b, scene, json.loads(base64.b64decode(args.runtime, validate=True)))
+        output, receipt = run_native(b, scene, json.loads(base64.b64decode(args.runtime, validate=True)), job_dir=args.job_dir)
         with args.output.open("wb") as handle:
             handle.write(output.read_bytes())
         print(json.dumps(receipt, ensure_ascii=False))

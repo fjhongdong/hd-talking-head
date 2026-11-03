@@ -11,6 +11,61 @@ sys.path.insert(0, str(SKILL / "scripts"))
 import run_stage
 
 class CheckOnlyStageTests(unittest.TestCase):
+    def test_scripts_only_api_reaches_job_error_from_an_unrelated_directory(self):
+        import subprocess
+        script = """import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import run_stage
+try:
+    run_stage.execute_stage(Path.cwd() / 'missing-job', Path(sys.argv[2]))
+except ModuleNotFoundError:
+    raise
+except Exception as error:
+    assert type(error).__name__ == 'WorkflowError', repr(error)
+    print(type(error).__name__)
+else:
+    raise AssertionError('missing Job unexpectedly accepted')
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run([sys.executable, '-I', '-c', script, str(SKILL / 'scripts'), str(PROJECT)],
+                                    cwd=directory, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), 'WorkflowError')
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_operation_wrapper_reports_elapsed_and_clears_scope_on_error(self):
+        from edit.hd.tools import startup
+        calls = []
+        @run_stage._operation
+        def command(*, fail=False):
+            calls.append(startup.current_operation())
+            if fail:
+                raise ValueError('fixture failure')
+            return {'status': 'fixture'}
+        result = command()
+        self.assertEqual(result['status'], 'fixture')
+        self.assertGreaterEqual(result['operation_timing']['elapsed_seconds'], 0)
+        self.assertEqual(result['operation_timing']['full_release_checks'], 0)
+        with self.assertRaisesRegex(ValueError, 'fixture failure') as caught:
+            command(fail=True)
+        self.assertTrue(any(note.startswith('operation_timing=') for note in caught.exception.__notes__))
+        self.assertIsNot(calls[0], calls[1])
+        self.assertIsNone(startup.current_operation())
+
+    def test_resume_records_native_gbro_inputs_before_generation_actions(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        job=SimpleNamespace(stages={'visual_direction':{'artifacts':[]}})
+        descriptor={'path':'native-inputs/gbro.json','sha256':'a'*64,'bytes':1}
+        calls=[]
+        with mock.patch.object(confirmation,'validate_visual_authorization',return_value={}), \
+             mock.patch.object(confirmation,'record_gbro_frame_preparation',side_effect=lambda *a:calls.append(('prepare',a))), \
+             mock.patch.object(confirmation,'generation_actions',side_effect=lambda *a,**k:calls.append(('generate',a)) or [{'action':'prepare_template_inputs'}]), \
+             mock.patch.object(run_stage,'_summary',return_value={'actions':[]}):
+            run_stage.resume_visual_direction(job,PROJECT,{'gbro_frame_preparations':[descriptor]})
+        self.assertEqual([kind for kind,_ in calls],['prepare','generate'])
+        self.assertEqual(calls[0][1],(job,descriptor))
+
     def test_native_preparation_uses_completed_results_and_only_prepares_unmade_items(self):
         from test_motion_native_skill_adapter import brief
         from edit.hd.tools import visual_confirmation as confirmation
@@ -46,7 +101,15 @@ class CheckOnlyStageTests(unittest.TestCase):
                 previous.write_text(json.dumps({'source_approval':{},'proposal':proposal,'native_inputs':[
                     {'segment_id':'seg-001','component_id':'native','artifact':confirmation._record(root,request),
                      'result_record':expected}]}))
-                job.stages['visual_direction']['lineage']=[confirmation._record(root,previous)]
+                stat, parent = previous.stat(), previous.parent.stat()
+                lineage = {**confirmation._record(root,previous), 'device':stat.st_dev, 'inode':stat.st_ino,
+                           'parent_device':parent.st_dev, 'parent_inode':parent.st_ino}
+                job.stages['visual_direction']['lineage']=[lineage]
+                with mock.patch.object(confirmation,'_validate_source',return_value=({'source':proposal},{})):
+                    run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                adapter.load_result.assert_called_once_with(root,request.read_bytes(),expected_record=expected,
+                    expected_renderer_version='remotion-4.0.484')
+                prepare.assert_not_called();adapter.load_result.reset_mock()
                 adapter.load_result.side_effect=ValueError('result differs from reviewed version')
                 with mock.patch.object(confirmation,'_validate_source',return_value=({'source':proposal},{})):
                     with self.assertRaisesRegex(ValueError,'reviewed version'):
@@ -54,6 +117,12 @@ class CheckOnlyStageTests(unittest.TestCase):
                 adapter.load_result.assert_called_once_with(root,request.read_bytes(),expected_record=expected,
                     expected_renderer_version='remotion-4.0.484')
                 prepare.assert_not_called()
+                adapter.load_result.reset_mock()
+                for field, value in (('sha256','0'*64),('bytes',lineage['bytes']+1)):
+                    job.stages['visual_direction']['lineage']=[{**lineage,field:value}]
+                    with self.subTest(changed_identity=field), self.assertRaisesRegex(ValueError,'visual evidence changed'):
+                        run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
+                    adapter.load_result.assert_not_called();prepare.assert_not_called()
                 job.stages['visual_direction']['lineage']=[];result.unlink()
                 run_stage.prepare_visual_dependencies(PROJECT,director,job=job,treatment=treatment)
                 self.assertEqual(prepare.call_args.args[3],{'video-shotcraft'})
@@ -102,7 +171,7 @@ class CheckOnlyStageTests(unittest.TestCase):
 
             def approve(stage):
                 artifact = job.job_dir / (stage + '.txt'); artifact.write_text(stage)
-                state.mark_ready(job, stage, [artifact]); state.approve(job, stage)
+                state.mark_ready(job, stage, [artifact]); state.complete(job, stage)
 
             approve('inspect')
             context = root / 'check-context.json'
@@ -125,7 +194,7 @@ class CheckOnlyStageTests(unittest.TestCase):
 
             code, result = check()
             self.assertEqual(code, 1)
-            self.assertIn('not the current review stage', result['error'])
+            self.assertIn('not the current stage', result['error'])
             self.assertIn('Current unfinished stage is content_analysis', result['diagnostics'][0])
             for stage in ('content_analysis', 'cover_direction', 'cover'):
                 approve(stage)
@@ -141,7 +210,7 @@ class ExecuteStageTests(unittest.TestCase):
 
     def fake(self, status="pending", current="inspect"):
         names = ["inspect", "content_analysis", "cover_direction", "cover", "speech_cleanup", "edit_structure", "visual_direction"]
-        stages = {name: {"status": "approved"} for name in names}; stages[current] = {"status": status}
+        stages = {name: {"status": "completed"} for name in names}; stages[current] = {"status": status}
         job = SimpleNamespace(job_dir=self.root, stages=stages, inputs={}, root=self.root)
         return job
 
@@ -162,8 +231,8 @@ class ExecuteStageTests(unittest.TestCase):
         mapping = self.root / 'execution-mapping.json'; mapping.write_text(json.dumps(evidence['mapping']))
         # Production mappings live below a confirmation revision directory.
         nested = self.root / 'confirmed' / mapping.name; nested.parent.mkdir(); mapping.rename(nested)
-        stages = {'visual_direction': {'status': 'approved', 'artifacts': [confirmation._record(self.root, nested)]},
-                  'visual_canary': {'status': 'pending'}, 'visual_assets': {'status': 'pending'}}
+        stages = {'visual_direction': {'status': 'completed', 'artifacts': [confirmation._record(self.root, nested)]},
+                  'visual_assets': {'status': 'pending'}}
         workflow = self.root / 'workflow.json'; workflow.write_text(json.dumps({'revision': 7, 'stages': stages}))
         frozen = confirmation._record(self.root, workflow)
         job = SimpleNamespace(job_dir=self.root, job_id='fixture', revision=7, stages=stages,
@@ -198,7 +267,7 @@ class ExecuteStageTests(unittest.TestCase):
                 loader(job, recipe, component)
             path.write_bytes(original)
         for mutate in (lambda j: setattr(j, 'revision', 8),
-                       lambda j: j.stages['visual_canary'].update(status='approved'),
+                       lambda j: j.stages['visual_assets'].update(status='completed'),
                        lambda j: j.stages['visual_direction']['artifacts'][0].update(sha256='0' * 64)):
             changed = copy.deepcopy(job); mutate(changed)
             with self.assertRaises(ValueError): loader(changed, recipe, component)
@@ -221,17 +290,18 @@ class ExecuteStageTests(unittest.TestCase):
              mock.patch("edit.hd.tools.state.current_stage", return_value=stage), \
              mock.patch.object(run_stage, "_startup"), \
              mock.patch("edit.hd.tools.state.require_runnable"), \
+             mock.patch("edit.hd.tools.state.complete", side_effect=lambda j, s: j.stages[s].update(status="completed")), \
              mock.patch.object(run_stage, "_summary", side_effect=lambda j, s, **kw: {"stage": s, **kw}):
             return run_stage.execute_stage(self.root, PROJECT, stage, **kwargs)
 
     def test_approved_reuses_without_runner(self):
-        job = self.fake("approved")
+        job = self.fake("completed")
         with mock.patch("edit.hd.tools.inspect_inputs.inspect_job") as runner:
             out = self.invoke(job, "inspect")
         runner.assert_not_called(); self.assertTrue(out["reused"])
 
     def test_ready_does_not_render_again(self):
-        job = self.fake("ready_for_review")
+        job = self.fake("ready")
         with mock.patch("edit.hd.tools.inspect_inputs.inspect_job") as runner:
             out = self.invoke(job, "inspect")
         runner.assert_not_called(); self.assertTrue(out["reused"])
@@ -244,10 +314,26 @@ class ExecuteStageTests(unittest.TestCase):
 
     def test_speech_passes_explicit_inputs_without_render_edit(self):
         job = self.fake(current="speech_cleanup")
-        with mock.patch.object(run_stage, "run_speech_cleanup", return_value={"speech_cleanup": "ready_for_review"}) as speech, \
+        with mock.patch.object(run_stage, "run_speech_cleanup", return_value={"speech_cleanup": "ready"}) as speech, \
              mock.patch("edit.hd.tools.speech_edit_v2.render_edit") as render:
             result = self.invoke(job, "speech_cleanup", video_use_result=Path("r.json"), invocation_path=Path("i.json"), cleanup_plan=Path("p.json"))
-        speech.assert_called_once_with(self.root, PROJECT, Path("r.json"), Path("i.json"), Path("p.json")); render.assert_not_called(); self.assertEqual(result["speech_cleanup"], "ready_for_review")
+        speech.assert_called_once_with(self.root, PROJECT, Path("r.json"), Path("i.json"), Path("p.json")); render.assert_not_called(); self.assertEqual(result["speech_cleanup"], "ready")
+
+    def test_visual_revision_routes_realization_and_keeps_authorization_gate(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        job = self.fake("needs_revision", current="visual_direction")
+        payload = {"realization": {"director_brief": "revised/director.json", "treatment": "revised/treatment.json"}}
+        with mock.patch.object(run_stage, "resume_visual_direction", return_value={"continued": True}) as resume, \
+             mock.patch.object(run_stage, "run_visual_direction") as prepare:
+            result = self.invoke(job, "visual_direction", payload=payload)
+            self.assertEqual(result.pop('operation_timing')['full_release_checks'], 0)
+            self.assertEqual(result, {"continued": True})
+        resume.assert_called_once_with(job, PROJECT, payload); prepare.assert_not_called()
+        with mock.patch.object(confirmation, "validate_visual_authorization", side_effect=ValueError("not confirmed")), \
+             mock.patch.object(confirmation, "generation_actions") as generate:
+            with self.assertRaisesRegex(ValueError, "not confirmed"):
+                self.invoke(job, "visual_direction", payload=payload)
+        generate.assert_not_called()
 
     def test_confirmed_content_bytes_are_preserved_by_visual_runner(self):
         confirmed = self.root / "manifests" / "confirmed-content.json"; confirmed.parent.mkdir()
@@ -267,8 +353,8 @@ class ExecuteStageTests(unittest.TestCase):
         from edit.hd.tools import contract_artifacts
 
         job = self.fake(current="visual_direction")
-        job.stages["speech_cleanup"] = {"status": "approved", "artifacts": []}
-        job.stages["edit_structure"] = {"status": "approved", "artifacts": []}
+        job.stages["speech_cleanup"] = {"status": "completed", "artifacts": []}
+        job.stages["edit_structure"] = {"status": "completed", "artifacts": []}
         for stage_name, relative, payload in (
                 ("speech_cleanup", "05-speech-cleanup/word-transcript.json",
                  {"words": [{"text": text, "start": start, "end": start + .1}
@@ -340,20 +426,25 @@ class ReviewAndDispatchTests(unittest.TestCase):
                 if key in {'job_id', 'job_dir', 'stage', 'revision', 'artifacts'}} | {
                     'passed': True, 'note': '检查过本期实际候选'}
 
-    def test_review_is_bound_to_job_and_candidate_before_approval(self):
-        from edit.hd.tools import state
+    def test_review_is_bound_to_job_and_candidate_before_authorization(self):
+        from edit.hd.tools import state, visual_confirmation
         job_a = self.ready_job('a', b'video-a')
         job_b = self.ready_job('b', b'video-b')
-        review = self.review(job_a)
-        self.assertEqual(review['job_id'], job_a.job_id)
-        for target, altered in ((job_b, review),
-                                (job_a, review | {'artifacts': []}),
-                                (job_a, review | {'job_dir': str(job_b.job_dir)})):
-            with self.subTest(target=target.job_id, review=altered), self.assertRaises(ValueError):
-                run_stage._review(target, 'inspect', altered)
-        approved = run_stage._review(job_a, 'inspect', review)
-        self.assertEqual(approved['status'], 'approved')
-        self.assertEqual(state.load_job(job_b.job_dir).stages['inspect']['status'], 'ready_for_review')
+        for job in (job_a, job_b):
+            job.stages['visual_direction'] = copy.deepcopy(job.stages['inspect'])
+        review = {**self.review(job_a), 'stage': 'visual_direction',
+                  'user_confirmation': '确认本期完整清单和费用'}
+        with mock.patch.object(visual_confirmation, 'save_user_confirmation') as authorize:
+            for target, altered in ((job_b, review),
+                                    (job_a, review | {'artifacts': []}),
+                                    (job_a, review | {'job_dir': str(job_b.job_dir)})):
+                with self.subTest(target=target.job_id), self.assertRaises(ValueError):
+                    run_stage._review(target, 'visual_direction', altered)
+            authorize.assert_not_called()
+            result = run_stage._review(job_a, 'visual_direction', review)
+            authorize.assert_called_once_with(job_a, review)
+        self.assertTrue(result['user_confirmed'])
+        self.assertEqual(state.load_job(job_b.job_dir).stages['inspect']['status'], 'ready')
 
     def test_changed_candidate_rejects_old_artifact_identity(self):
         from edit.hd.tools import state
@@ -378,47 +469,43 @@ class ReviewAndDispatchTests(unittest.TestCase):
         self.assertEqual(adapters['official_material'][('seg-001', 'image')].approved_executor, 'official-media')
 
     def test_explicit_image_factory_reaches_existing_runner(self):
-        from edit.hd.tools import visual_confirmation as confirmation
-
         factory = self.root / 'image_factory.py'
         factory.write_text("def create_adapters(job, project):\n    return {'official_material': 'image-adapter'}\n")
-        treatment = self.root / 'treatment.json'
-        treatment.write_text(json.dumps({'skill_selection': {}}))
-        authorized = {'source': {'inputs': {'treatment': confirmation._record(self.root, treatment)}}}
         job = SimpleNamespace(job_dir=self.root, root=self.root,
-                              stages={'visual_direction': {'status': 'approved', 'artifact_scope': []},
-                                      'visual_canary': {'status': 'pending', 'artifact_scope': []}})
+                              stages={'visual_direction': {'status': 'completed', 'artifact_scope': []},
+                                      'visual_assets': {'status': 'pending', 'artifact_scope': []}})
         with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
-             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_canary'), \
+             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_assets'), \
              mock.patch('edit.hd.tools.state.require_runnable'), \
-             mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
-             mock.patch.object(confirmation, 'validate_visual_authorization', return_value=authorized) as authorize, \
+             mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval') as authorize, \
              mock.patch.object(run_stage, '_startup'), \
              mock.patch.object(run_stage, '_summary', return_value={}), \
-             mock.patch('edit.hd.tools.visual_canary.prepare_visual_canary') as prepare:
+             mock.patch('edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2') as prepare:
             run_stage.execute_stage(self.root, PROJECT, adapter_factory=factory)
         authorize.assert_called_once_with(job)
         prepare.assert_called_once_with(job, component_adapters={'official_material': 'image-adapter'})
 
-    def test_visual_repair_canary_only_requests_affected_segments(self):
+    def test_visual_repair_keeps_affected_scope_for_existing_assets_runner(self):
         job = SimpleNamespace(job_dir=self.root, root=self.root, stages={
-            'visual_direction': {'status': 'approved', 'artifact_scope': ['seg-009']},
-            'visual_canary': {'status': 'pending', 'artifact_scope': []}})
+            'visual_direction': {'status': 'completed', 'artifact_scope': ['seg-009']},
+            'visual_assets': {'status': 'needs_revision', 'artifact_scope': ['seg-009']}})
         with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
-             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_canary'), \
+             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_assets'), \
              mock.patch('edit.hd.tools.state.require_runnable'), \
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
              mock.patch.object(run_stage, '_startup'), \
              mock.patch.object(run_stage, '_summary', return_value={}), \
-             mock.patch('edit.hd.tools.visual_canary.prepare_visual_canary') as prepare:
+             mock.patch('edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2') as prepare:
             run_stage.execute_stage(self.root, PROJECT, component_adapters={})
-        prepare.assert_called_once_with(job, component_adapters={}, segment_ids=['seg-009'])
+        prepare.assert_called_once_with(job, component_adapters={})
+        self.assertEqual(job.stages['visual_assets']['artifact_scope'], ['seg-009'])
+        self.assertNotIn('visual_canary', job.stages)
 
     def test_completion_status_controls_exit_code(self):
         context = self.root / 'job-context.json'
         context.write_text(json.dumps({'project_root': str(PROJECT), 'job_dir': str(self.root)}))
-        for status, expected in (('inconsistent', 1), ('formal_complete', 0),
-                                 ('legacy_external_approval', 0), ('incomplete', 0)):
+        for status, expected in (('inconsistent', 1), ('delivered', 0),
+                                 ('accepted', 0), ('incomplete', 0)):
             output = io.StringIO()
             with self.subTest(status=status), \
                  mock.patch.object(sys, 'argv', ['run_stage', '--job-context', str(context)]), \
@@ -427,79 +514,74 @@ class ReviewAndDispatchTests(unittest.TestCase):
                 self.assertEqual(run_stage.main(), expected)
             self.assertEqual(json.loads(output.getvalue())['status'], status)
 
-    def test_visual_list_requires_user_confirmation_and_records_delivery_scope(self):
+    def test_visual_list_requires_user_confirmation_and_records_generation_scope(self):
+        from edit.hd.tools import visual_confirmation as confirmation
         records = []
-        for name in ('visual-plan.json', 'visual-routing.md'):
-            path = self.root / '07-visual-direction' / name
-            path.parent.mkdir(exist_ok=True)
-            path.write_text('current plan')
-            records.append({'path': str(path.relative_to(self.root)), 'sha256': 'a' * 64, 'bytes': 12})
+        for name, data in (('proposal.json', {'source_id': 'current-proposal'}),
+                           ('visual-routing.md', '本期完整清单')):
+            path = self.root / '07-visual-confirmation/current' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(data) if isinstance(data, dict) else data)
+            records.append(confirmation._record(self.root, path))
         job = SimpleNamespace(job_id='this-job', job_dir=self.root, revision=7,
-                              stages={'visual_direction': {'status': 'ready_for_review', 'artifacts': records}})
-        review = {
-            'job_id': job.job_id, 'job_dir': str(job.job_dir), 'revision': 7,
-            'stage': 'visual_direction', 'artifacts': records, 'passed': True, 'note': '已核对完整清单'}
+                              stages={'visual_direction': {'status': 'ready', 'artifacts': records}})
+        review = {'job_id': job.job_id, 'job_dir': str(job.job_dir), 'revision': 7,
+                  'stage': 'visual_direction', 'artifacts': copy.deepcopy(records)}
         with self.assertRaises(ValueError):
             run_stage._review(job, 'visual_direction', review)
-        review['user_confirmation'] = '确认整张表，按表制作交付'
-        with mock.patch('edit.hd.tools.state.approve') as approve, \
-             mock.patch('edit.hd.tools.state.load_job', return_value=job):
-            run_stage._review(job, 'visual_direction', review)
-        approve.assert_called_once_with(job, 'visual_direction')
-        receipt = json.loads((self.root/'manifests/local-qa-visual_direction-r7.json').read_text())
-        self.assertEqual(receipt['approval_scope'], 'visual_plan_and_delivery')
-        self.assertEqual(receipt['reviewed_by'], 'human')
-        summary = run_stage._summary(job, 'visual_direction')
-        self.assertEqual(summary['review_required'], 'user')
-        self.assertEqual(summary['visual_list'], '07-visual-direction/visual-routing.md')
+        review['user_confirmation'] = '确认整张表和费用，按表制作交付'
+        with mock.patch('edit.hd.tools.state.mark_visual_ready') as mark:
+            result = run_stage._review(job, 'visual_direction', review)
+        mark.assert_called_once()
+        receipt = json.loads((self.root / 'manifests/visual-authorization-r7.json').read_text())
+        self.assertEqual(receipt['authorization_scope'], 'visual_plan_and_generation')
+        self.assertEqual(receipt['authorized_by'], 'user')
+        self.assertEqual(receipt['source'], records[0])
+        self.assertEqual(receipt['user_confirmation'], review['user_confirmation'])
+        self.assertTrue(result['user_confirmed'])
+        self.assertNotIn('review_required', result)
+        self.assertEqual(result['visual_list'], records[1]['path'])
 
     def test_production_does_not_start_without_visual_list_approval(self):
-        job = SimpleNamespace(stages={'visual_canary': {'status': 'pending'}})
+        job = SimpleNamespace(stages={'visual_assets': {'status': 'pending'}})
         with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
-             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_canary'), \
+             mock.patch('edit.hd.tools.state.current_stage', return_value='visual_assets'), \
              mock.patch.object(run_stage, '_startup'), \
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval', side_effect=ValueError('missing user approval')), \
-             mock.patch('edit.hd.tools.visual_canary.prepare_visual_canary') as prepare:
+             mock.patch('edit.hd.tools.visual_assets_v2.prepare_visual_assets_v2') as prepare:
             with self.assertRaisesRegex(ValueError, 'missing user approval'):
                 run_stage.execute_stage(self.root, PROJECT)
         prepare.assert_not_called()
 
-    def test_preview_records_the_actual_user_reviewer(self):
-        from edit.hd.tests.test_visual_review import VisualReviewPlanIdentityTests
-        expected, details = VisualReviewPlanIdentityTests().user_preview()
-        records = [expected['observations'][0]['media_ref']]
+    def test_preview_does_not_consume_a_stage_quality_approval(self):
         job = SimpleNamespace(job_id='preview-job', job_dir=self.root, revision=19,
-                              stages={'preview': {'status': 'ready_for_review', 'artifacts': records}})
-        review = {**details, 'job_id': job.job_id, 'job_dir': str(self.root), 'stage': 'preview',
-                  'revision': 19, 'artifacts': records, 'passed': True, 'note': details['user_confirmation']}
-        with mock.patch('edit.hd.tools.visual_review.expected_observations', return_value=expected), \
-             mock.patch('edit.hd.tools.motion_readability._managed', return_value=False), \
-             mock.patch('edit.hd.tools.state.approve') as approve, \
-             mock.patch('edit.hd.tools.state.load_job', return_value=job):
-            run_stage._review(job, 'preview', review)
-            receipt = json.loads((self.root / 'manifests/local-qa-preview-r19.json').read_text())
-            self.assertEqual(receipt['reviewed_by'], 'user')
-            self.assertEqual(receipt['user_confirmation'], details['user_confirmation'])
-            self.assertIs(receipt['audio_listened'], True)
-            approve.assert_called_once_with(job, 'preview')
-            approve.reset_mock()
-            with self.assertRaises(ValueError):
-                run_stage._review(job, 'preview', {**review, 'audio_listened': False})
-            approve.assert_not_called()
+                              stages={'preview': {'status': 'ready', 'artifacts': []}})
+        review = {'job_id': job.job_id, 'job_dir': str(self.root), 'stage': 'preview',
+                  'revision': 19, 'artifacts': [], 'user_confirmation': '已看本期预览'}
+        with mock.patch('edit.hd.tools.state.complete') as complete:
+            with self.assertRaisesRegex(ValueError, 'Machine stages complete automatically'):
+                run_stage._review(job, 'preview', review)
+            complete.assert_not_called()
+        self.assertFalse((self.root / 'manifests/local-qa-preview-r19.json').exists())
 
-    def test_delivery_uses_host_qa_without_final_user_confirmation(self):
-        records = [{'path': '12-delivery/final.mp4', 'sha256': 'b'*64, 'bytes': 12}]
+    def test_delivery_records_completion_without_claiming_user_acceptance(self):
+        records = [{'path': '12-delivery/final.mp4', 'sha256': 'b' * 64, 'bytes': 12}]
         job = SimpleNamespace(job_id='this-job', job_dir=self.root, revision=19,
-                              stages={'delivery': {'status': 'ready_for_review', 'artifacts': records}})
-        review = {'job_id': job.job_id, 'job_dir': str(self.root), 'stage': 'delivery',
-                  'revision': 19, 'artifacts': records, 'passed': True, 'note': '核对成片画面、原声及字幕'}
-        with mock.patch('edit.hd.tools.delivery_approval.approve_plan_delivery') as finish, \
-             mock.patch('edit.hd.tools.delivery_approval.approve_delivery') as old_human_approval, \
-             mock.patch('edit.hd.tools.state.load_job', return_value=job):
-            run_stage._review(job, 'delivery', review)
-        finish.assert_called_once_with(job, expected_revision=19, delivery_sha256='b'*64, qa_note=review['note'])
-        old_human_approval.assert_not_called()
-        self.assertEqual(run_stage._summary(job, 'delivery')['review_required'], 'host')
+                              stages={'delivery': {'status': 'ready', 'artifacts': records}})
+        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
+             mock.patch('edit.hd.tools.state.complete', side_effect=lambda j, s: j.stages[s].update(status='completed')) as complete, \
+             mock.patch('edit.hd.tools.delivery_approval.record_delivery') as delivered, \
+             mock.patch('edit.hd.tools.delivery_approval.approve_delivery') as accept, \
+             mock.patch('edit.hd.tools.delivery_approval.current_delivery_status', return_value={'delivery_status': 'delivered'}):
+            result = run_stage._finish_stage(self.root, 'delivery')
+        complete.assert_called_once_with(job, 'delivery')
+        delivered.assert_called_once_with(job)
+        accept.assert_not_called()
+        self.assertEqual(result['delivery_status'], 'delivered')
+        self.assertNotIn('review_required', result)
+        with self.assertRaisesRegex(ValueError, 'User confirmation'):
+            run_stage._review(job, 'delivery', {'job_id': job.job_id, 'job_dir': str(self.root),
+                              'stage': 'delivery', 'artifacts': records})
 
 class SelectedPreparationTests(unittest.TestCase):
     def test_supported_catalog_has_default_factory_and_exact_preflight_entry(self):
@@ -608,3 +690,245 @@ class MaterialExecutionSmoke(unittest.TestCase):
 
 
 if __name__ == "__main__": unittest.main()
+
+
+class DirectProductionCompletionTests(unittest.TestCase):
+    def test_completion_audit_accepts_generated_credits_and_only_the_workspace_material_index(self):
+        import audit_job_completion as audit
+        from edit.hd.tools import contract_artifacts, qa_delivery_v2
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            job_dir = workspace / 'job'; job_dir.mkdir()
+            def write(path, content):
+                path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(content)
+                return path
+            def record(base, path):
+                return {'path':str(path.relative_to(base)),
+                    'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'bytes':path.stat().st_size}
+            video = write(workspace / 'input.mp4', b'synthetic source')
+            script = write(workspace / 'script.txt', b'synthetic script')
+            preview = write(job_dir / '11-preview/review.mp4', b'synthetic composition')
+            source_payload = {'components':[{'attribution':{'required':True,'provider':'synthetic fixture',
+                'author':'fixture author','asset_page':'https://example.invalid/fixture',
+                'license':'fixture license','license_version':'1'}}]}
+            source_payload['source_manifest_sha256'] = contract_artifacts.sha256_json(source_payload)
+            origin = write(job_dir / '11-preview/source-manifest.json', json.dumps(source_payload).encode())
+            index = write(workspace / '00-user-provided/material-index.json', b'{"materials":[]}')
+            final = write(job_dir / '12-delivery/final.mp4', preview.read_bytes())
+            copied_origin = write(final.parent / 'source-manifest.json', origin.read_bytes())
+            copied_index = write(final.parent / 'sources/user-material-index.json', index.read_bytes())
+            credits = write(final.parent / 'credits.md', qa_delivery_v2._credits_markdown(source_payload).encode())
+            manifest_path = final.parent / 'delivery-manifest.json'
+            inventory = {
+                'final.mp4':{'source':record(job_dir,preview),'output':record(final.parent,final)},
+                'source-manifest.json':{'source':record(job_dir,origin),'output':record(final.parent,copied_origin)},
+                'sources/user-material-index.json':{'source':{**record(workspace,index),'path':str(index)},
+                    'output':record(final.parent,copied_index)},
+                'credits.md':{'generated_from':{'path':'11-preview/source-manifest.json',
+                    'sha256':source_payload['source_manifest_sha256']},'output':record(final.parent,credits)},
+            }
+            stages = {name:{'status':'completed','artifacts':[]} for name in audit.FULL_V2_STAGES}
+            stages['preview']['artifacts'] = [record(job_dir,preview),record(job_dir,origin)]
+            def persist(entries):
+                manifest_path.write_text(json.dumps({'job_id':'synthetic-job','final_sha256':record(job_dir,final)['sha256'],
+                    'canvas':{'width':1080,'height':1920,'fps':24},'artifacts':entries}))
+                stages['delivery']['artifacts'] = [record(job_dir,p) for p in
+                    (final,copied_origin,copied_index,credits,manifest_path)]
+                (job_dir / 'workflow.json').write_text(json.dumps({'version':2,'job_id':'synthetic-job','revision':22,
+                    'inputs':{'video':record(workspace,video),'script':record(workspace,script)},'stages':stages}))
+            (workspace / 'job-context.json').write_text(json.dumps({'workspace':str(workspace),
+                'job_dir':str(job_dir),'job_id':'synthetic-job'}))
+            probe = {'width':1080,'height':1920,'fps':24,'duration_seconds':1,'rotation':0}
+            with mock.patch.object(audit,'_probe_media',return_value=probe):
+                persist(inventory)
+                report = audit.audit_job_completion(workspace)
+                self.assertEqual(report['status'], 'incomplete', report)
+                self.assertEqual(report['failures'], [])
+                self.assertIn('delivery_inventory_exact', report['verified_claims'])
+                for issue in ('credits_origin', 'index_hash', 'other_absolute_source'):
+                    invalid = copy.deepcopy(inventory)
+                    if issue == 'credits_origin':
+                        invalid['credits.md']['generated_from']['sha256'] = 'b' * 64
+                    elif issue == 'index_hash':
+                        invalid['sources/user-material-index.json']['source']['sha256'] = 'b' * 64
+                    else:
+                        other = write(workspace / 'other-index.json', index.read_bytes())
+                        invalid['sources/user-material-index.json']['source']['path'] = str(other)
+                    with self.subTest(issue=issue):
+                        persist(invalid)
+                        self.assertEqual(audit.audit_job_completion(workspace)['status'], 'inconsistent')
+
+    def test_stage_ready_completes_without_qa_and_canary_is_absent(self):
+        from edit.hd.tools import state
+        with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
+            root = Path(directory).resolve()
+            video, script = root / 'source.mp4', root / 'script.txt'
+            video.write_bytes(b'video'); script.write_text('script')
+            job = state.create_job(root, video, script)
+            self.assertNotIn('visual_canary', job.stages)
+            self.assertEqual(state.STAGE_STATUSES, ('pending', 'ready', 'completed', 'needs_revision', 'blocked'))
+            artifact = job.job_dir / 'inspect.json'; artifact.write_text('{}')
+            state.mark_ready(job, 'inspect', [artifact])
+            self.assertEqual(job.stages['inspect']['status'], 'ready')
+            result = run_stage._finish_stage(job.job_dir, 'inspect')
+            self.assertEqual(result['status'], 'completed')
+            self.assertEqual(state.current_stage(state.load_job(job.job_dir)), 'content_analysis')
+            self.assertFalse((job.job_dir / 'manifests/local-qa-inspect-r1.json').exists())
+
+    def test_completion_rejects_changed_artifact_and_legacy_profile(self):
+        from edit.hd.tools import state
+        with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
+            root = Path(directory).resolve()
+            video, script = root / 'source.mp4', root / 'script.txt'
+            video.write_bytes(b'video'); script.write_text('script')
+            with self.assertRaises(state.WorkflowError):
+                state.create_job(root, video, script, profile='legacy-v1')
+            job = state.create_job(root, video, script)
+            artifact = job.job_dir / 'inspect.json'; artifact.write_text('{}')
+            state.mark_ready(job, 'inspect', [artifact]); artifact.write_text('{"changed":true}')
+            with self.assertRaises(state.WorkflowError):
+                state.complete(job, 'inspect')
+            self.assertEqual(job.stages['inspect']['status'], 'ready')
+
+    def test_runner_advances_available_stages_until_actual_input_action(self):
+        from edit.hd.tools import state
+        statuses = {'inspect': {'status':'pending'}, 'content_analysis': {'status':'pending'}}
+        job = SimpleNamespace(stages=statuses)
+        def execute(job_dir, project, stage, **options):
+            if stage == 'inspect':
+                statuses[stage]['status'] = 'completed'
+                return {'stage':stage, 'status':'completed'}
+            return {'stage':stage, 'status':'pending', 'actions':[{'action':'provide_stage_input','fields':['analysis']}]}
+        def current(value):
+            return next((stage for stage, record in statuses.items() if record['status'] != 'completed'), None)
+        with mock.patch.object(state,'load_job',return_value=job), \
+             mock.patch.object(state,'current_stage',side_effect=current), \
+             mock.patch.object(run_stage,'_execute_one_stage',side_effect=execute) as one:
+            result = run_stage.execute_stage(Path('/unused'), PROJECT)
+        self.assertEqual(one.call_count, 2)
+        self.assertEqual(result['actions'][0]['fields'], ['analysis'])
+        self.assertNotIn('review_required', result)
+
+    def test_delivery_revision_preserves_delivered_files_and_requires_current_user_acceptance(self):
+        from edit.hd.tools import state, delivery_approval as delivery
+        from edit.hd.tests.media_fixture import make_av_fixture
+        import audit_job_completion as audit
+        with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
+            root = Path(directory).resolve()
+            video = make_av_fixture(root, 'source.mp4')
+            script = root / 'script.txt'; script.write_text('synthetic fixture speech')
+            job = state.create_job(root, video, script)
+            preview = job.job_dir / '11-preview/review.mp4'
+            preview.parent.mkdir(); preview.write_bytes(video.read_bytes())
+            final = job.job_dir / '12-delivery/final.mp4'
+            manifest = final.parent / 'delivery-manifest.json'
+            def publish_manifest():
+                manifest.write_text(json.dumps({'schema_version':2,'job_id':job.job_id,
+                    'workflow_revision':job.revision,'workflow_sha256':job.expected_sha256,
+                    'final_sha256':hashlib.sha256(final.read_bytes()).hexdigest(),
+                    'canvas':{'width':1080,'height':1920,'fps':24},
+                    'artifacts':{'final.mp4':{'source':state._artifact_record(job,preview),
+                        'output':{'path':'final.mp4','sha256':hashlib.sha256(final.read_bytes()).hexdigest(),'bytes':final.stat().st_size}}}}))
+            def review():
+                return {'job_id':job.job_id,'job_dir':str(job.job_dir),'stage':'delivery',
+                    'revision':job.revision,'artifacts':copy.deepcopy(job.stages['delivery']['artifacts']),
+                    'user_confirmation':'synthetic fixture confirmation only'}
+            for stage in state.stage_ids_for(job):
+                paths = []
+                if stage == 'preview':
+                    paths = [preview]
+                elif stage == 'delivery':
+                    final.parent.mkdir(); final.write_bytes(preview.read_bytes())
+                    publish_manifest(); paths = [final, manifest]
+                state.mark_ready(job, stage, paths); state.complete(job, stage)
+            (root / 'job-context.json').write_text(json.dumps({'workspace':str(root),'job_dir':str(job.job_dir),'job_id':job.job_id}))
+            authorization = job.job_dir / 'manifests/visual-authorization-r1.json'
+            authorization.parent.mkdir(exist_ok=True)
+            authorization.write_text(json.dumps({'job_id':job.job_id,'authorized_by':'user',
+                'authorization_scope':'visual_plan_and_generation','user_confirmation':'synthetic fixture spending authorization'}))
+            self.enterContext(mock.patch.object(delivery,'validate_visual_plan_approval',
+                return_value={'artifact':state._artifact_record(job,authorization)}))
+            receipt_path = delivery.record_delivery(job)
+            first_review = review()
+            first_manifest = next(r for r in job.stages['delivery']['artifacts'] if r['path'].endswith('/delivery-manifest.json'))
+            first_acceptance = job.job_dir / delivery.receipt_paths(first_manifest)[1]
+            self.assertFalse(first_acceptance.exists())
+            first_result = run_stage._execute_one_stage(job.job_dir, PROJECT)
+            first_file = Path(first_result['delivery_file'])
+            first_bytes = first_file.read_bytes()
+            first_manifest_bytes = first_file.with_name('delivery-manifest.json').read_bytes()
+            self.assertEqual(first_result['delivery_status'], 'delivered')
+            self.assertEqual(audit.audit_job_completion(root)['status'], 'delivered')
+            with self.assertRaises(state.WorkflowError):
+                delivery.approve_delivery(job,delivery_manifest_sha256=first_manifest['sha256'],
+                    delivery_sha256=hashlib.sha256(first_bytes).hexdigest(),user_confirmation='')
+            accepted = run_stage._execute_one_stage(job.job_dir, PROJECT, review=first_review)
+            self.assertEqual(accepted['delivery_status'], 'accepted')
+            acceptance_bytes = first_acceptance.read_bytes()
+            receipt_bytes = receipt_path.read_bytes()
+            job.revision += 1; state.save_job(job)
+            with mock.patch.object(delivery.shutil, 'copyfile', side_effect=AssertionError('same production must not copy')):
+                repeated = run_stage._execute_one_stage(job.job_dir, PROJECT, stage='delivery', review=first_review)
+                delivery.record_delivery(job)
+            self.assertEqual(repeated['delivery_status'], 'accepted')
+            self.assertEqual(first_acceptance.read_bytes(), acceptance_bytes)
+            self.assertEqual(receipt_path.read_bytes(), receipt_bytes)
+            self.assertEqual(audit.audit_job_completion(root)['status'], 'accepted')
+            state.revise(job, 'delivery', 'synthetic fixture revision with identical final bytes')
+            self.assertEqual(delivery.current_delivery_status(job)['delivery_status'], 'pending')
+            self.assertEqual(audit.audit_job_completion(root)['status'], 'incomplete')
+            publish_manifest()
+            state.mark_ready(job, 'delivery', [final,manifest])
+            revised = run_stage._finish_stage(job.job_dir, 'delivery')
+            job = state.load_job(job.job_dir)
+            new_manifest = next(r for r in job.stages['delivery']['artifacts'] if r['path'].endswith('/delivery-manifest.json'))
+            self.assertNotEqual(first_manifest['sha256'], new_manifest['sha256'])
+            self.assertNotEqual(revised['delivery_file'], str(first_file))
+            self.assertEqual(revised['delivery_status'], 'delivered')
+            self.assertEqual(Path(revised['delivery_file']).read_bytes(), first_bytes)
+            self.assertEqual(first_file.read_bytes(), first_bytes)
+            self.assertEqual(first_file.with_name('delivery-manifest.json').read_bytes(), first_manifest_bytes)
+            self.assertEqual(audit.audit_job_completion(root)['status'], 'delivered')
+            with self.assertRaises(state.WorkflowError):
+                delivery.approve_delivery(job,delivery_manifest_sha256=first_manifest['sha256'],
+                    delivery_sha256=hashlib.sha256(first_bytes).hexdigest(),user_confirmation=first_review['user_confirmation'])
+            with self.assertRaises(ValueError):
+                run_stage._execute_one_stage(job.job_dir, PROJECT, review=first_review)
+            new_review = review()
+            self.assertEqual(run_stage._execute_one_stage(job.job_dir, PROJECT,
+                stage='delivery', review=new_review)['delivery_status'], 'accepted')
+            self.assertEqual(run_stage._execute_one_stage(job.job_dir, PROJECT,
+                review=new_review)['delivery_status'], 'accepted')
+            report = audit.audit_job_completion(root)
+            self.assertEqual(report['status'], 'accepted', report)
+            self.assertEqual(report['delivery_file'], revised['delivery_file'])
+            self.assertEqual(first_acceptance.read_bytes(), acceptance_bytes)
+
+    def test_visual_authorization_records_user_words_without_qa_claim(self):
+        from edit.hd.tools import state, visual_confirmation as confirmation
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            video, script = root / 'source.mp4', root / 'script.txt'
+            video.write_bytes(b'synthetic source'); script.write_text('synthetic speech')
+            job = state.create_job(root, video, script)
+            root = job.job_dir
+            for name in state.STAGE_IDS[:6]:
+                path = root / name / 'fixture.json'; path.parent.mkdir(); path.write_text('{}')
+                state.mark_ready(job, name, [path]); state.complete(job, name)
+            proposal_path = root / '07-visual-confirmation/source/proposal.json'
+            proposal_path.parent.mkdir(parents=True)
+            config = root / 'manifests/provider-config.json'; config.parent.mkdir(exist_ok=True); config.write_text('{}')
+            proposal = {'kind':confirmation.SCHEMA,'job_id':job.job_id,'source_id':'source','inputs':{},
+                'provider_config_sha256':hashlib.sha256(config.read_bytes()).hexdigest()}
+            proposal_path.write_text(json.dumps(proposal))
+            record = confirmation._record(root, proposal_path)
+            state.mark_visual_ready(job, [proposal_path])
+            receipt = confirmation.save_user_confirmation(job,{'revision':job.revision,'artifacts':[record],
+                'user_confirmation':'确认这份完整清单和渠道费用，按表制作'})
+            self.assertNotIn('passed', receipt)
+            self.assertNotIn('reviewed_by', receipt)
+            self.assertEqual(receipt['authorized_by'], 'user')
+            self.assertEqual(confirmation.validate_visual_authorization(job)['payload'], receipt)
+            config.write_text('{"changed":true}')
+            with self.assertRaisesRegex(ValueError,'channels changed'):
+                confirmation.validate_visual_authorization(job)

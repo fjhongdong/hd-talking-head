@@ -1272,7 +1272,7 @@ def _publish_generation(
     except BaseException as exc:
         failure = exc
 
-    if failure is not None and job.stages[stage_id]["status"] != "ready_for_review":
+    if failure is not None and job.stages[stage_id]["status"] != "ready":
         try:
             _restore_generation(target, stage, backup, new_records, old_records)
         except GenerationRecoveryError:

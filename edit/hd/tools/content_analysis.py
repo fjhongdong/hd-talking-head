@@ -305,7 +305,7 @@ def prepare_content_analysis(
 def load_approved_content_analysis(job: state.JobState) -> Dict[str, Any]:
     if "content_analysis" not in job.stages:
         raise ContentAnalysisError("content_analysis is unavailable for legacy workflow")
-    if job.stages["content_analysis"]["status"] != "approved":
+    if job.stages["content_analysis"]["status"] != "completed":
         raise ContentAnalysisError("content_analysis must be approved")
     record = contract_artifacts.read_json_artifact(
         job.job_dir / "02-content-analysis" / "content-analysis.json"

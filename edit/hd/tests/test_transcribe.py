@@ -7,12 +7,12 @@ import subprocess
 import tempfile
 import unittest
 import wave
+from types import SimpleNamespace
 from pathlib import Path
 from unittest import mock
 
-from edit.hd.tests.media_fixture import make_av_fixture, make_video_only_fixture
-from edit.hd.tools.inspect_inputs import inspect_inputs, inspect_job
-from edit.hd.tools.state import approve, create_job, mark_ready, revise
+from edit.hd.tests.media_fixture import make_av_fixture
+from edit.hd.tools.state import WorkflowError, create_job
 from edit.hd.tools.transcribe import (
     GenerationRecoveryError,
     TranscriptionError,
@@ -52,9 +52,6 @@ class TranscribeTests(unittest.TestCase):
         model.write_bytes(b"model")
         return WhisperRuntime(executable, model)
 
-    def _approve_inspect(self, job) -> None:
-        inspect_job(job)
-        approve(job, "inspect")
 
     def test_discover_runtime_prefers_complete_environment_pair(self) -> None:
         runtime = self._runtime_files()
@@ -119,8 +116,6 @@ class TranscribeTests(unittest.TestCase):
                 self.assertGreater(handle.getnframes(), 0)
 
     def test_extract_cleanup_error_never_overrides_primary_error(self) -> None:
-        from edit.hd.tools import transcribe as module
-
         for failure_type in (OSError, KeyboardInterrupt):
             with self.subTest(failure=failure_type.__name__):
                 wav = self.directory / f"speech-{failure_type.__name__}.wav"
@@ -711,618 +706,69 @@ class TranscribeTests(unittest.TestCase):
         self.assertNotIn("/secret", str(captured.exception))
         self.assertFalse(output.exists())
 
-    def test_missing_runtime_blocks_job_without_fake_timestamps_or_path_leak(self) -> None:
-        root = self.directory / "repo"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
+    def test_current_job_requires_external_result_and_invocation_without_local_fallback(self) -> None:
+        from edit.hd.tools import speech_edit_v2
+        job = SimpleNamespace(version=2)
+        with mock.patch("edit.hd.tools.transcribe.discover_runtime") as local_runtime:
+            for inputs in ({}, {"video_use_result": self.directory / "result.json"},
+                           {"invocation": {"exit_code": 0}}):
+                with self.subTest(inputs=inputs), self.assertRaisesRegex(
+                    speech_edit_v2.SpeechEditV2Error, "result and invocation evidence"):
+                    transcribe_job(job, **inputs)
+        local_runtime.assert_not_called()
+
+    def test_current_job_delegates_exact_result_and_invocation(self) -> None:
+        job = SimpleNamespace(version=2)
+        result = self.directory / "scribe.json"
+        invocation = {"source_sha256": "a" * 64}
+        output = self.directory / "report.json"
+        with mock.patch("edit.hd.tools.speech_edit_v2.prepare_transcription", return_value=output) as prepare:
+            self.assertEqual(transcribe_job(job, video_use_result=result, invocation=invocation), output)
+        prepare.assert_called_once_with(job, video_use_result=result, invocation=invocation)
+
+    def test_removed_job_profile_is_rejected_before_creating_outputs(self) -> None:
+        script = self.directory / "script.txt"
         script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        report = job.job_dir / "inspect.json"
-        report.write_text("{}\n", encoding="utf-8")
-        mark_ready(job, "inspect", [report])
-        approve(job, "inspect")
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime",
-            side_effect=TranscriptionError("/secret/model is unavailable"),
-        ):
-            self.assertIsNone(transcribe_job(job))
-        stage = job.stages["speech_cleanup"]
-        self.assertEqual("blocked", stage["status"])
-        self.assertEqual([], stage["artifacts"])
-        self.assertEqual(0, stage["ai_attempts"])
-        self.assertNotIn("/secret", stage["reason"])
-        self.assertFalse((job.job_dir / "02-speech-cleanup" / "words.json").exists())
+        with self.assertRaisesRegex(WorkflowError, "unsupported workflow profile"):
+            create_job(self.directory, self.video, script, profile="legacy-v1")
+        self.assertFalse((self.directory / "edit").exists())
 
-    def test_runtime_discovery_interrupt_is_sanitized(self) -> None:
-        root = self.directory / "repo-runtime-interrupt"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime",
-            side_effect=KeyboardInterrupt("/secret/runtime interrupted"),
-        ), self.assertRaises(TranscriptionError) as captured:
-            transcribe_job(job)
-        self.assertIsNone(captured.exception.__cause__)
-        self.assertNotIn("/secret", str(captured.exception))
+    def test_bound_scribe_result_keeps_words_and_audio_duration(self) -> None:
+        from edit.hd.tools import speech_edit_v2
+        result = self.directory / "scribe.json"
+        result.write_text(json.dumps({"words": [
+            {"type": "word", "text": "你好", "start": .1, "end": .8},
+        ]}, ensure_ascii=False), encoding="utf-8")
+        original = result.read_bytes()
+        entrypoint = self.directory / "transcribe.py"
+        job = SimpleNamespace(inputs={"video": {"sha256": "a" * 64}})
+        invocation = {"entrypoint": str(entrypoint), "exit_code": 0,
+                      "source_sha256": "a" * 64,
+                      "result_sha256": hashlib.sha256(original).hexdigest()}
+        with mock.patch.object(speech_edit_v2, "_video_use_entrypoint", return_value=entrypoint):
+            words, runtime = speech_edit_v2._transcribe_with_video_use(job, result, invocation, .9)
+            self.assertEqual(words, [Word("你好", .1, .8)])
+            self.assertEqual(runtime["invocation"], invocation)
+            with self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "timestamp"):
+                speech_edit_v2._transcribe_with_video_use(job, result, invocation, .5)
+        self.assertEqual(result.read_bytes(), original)
 
-    def test_successful_job_freezes_coverage_and_only_marks_ready(self) -> None:
-        root = self.directory / "repo"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好世界", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-        words = [Word("你", 0.0, 0.2), Word("好", 0.2, 0.4), Word("世界", 0.4, 0.8)]
-        media_duration: float | None = None
-
-        def fake_transcribe(_runtime, _wav, output, **kwargs):
-            nonlocal media_duration
-            media_duration = kwargs.get("source_media_duration")
-            output.write_text('{"transcription":[]}\n', encoding="utf-8")
-            return words
-
-        descriptors_before = len(os.listdir("/dev/fd"))
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ):
-            report_path = transcribe_job(job)
-        descriptors_after = len(os.listdir("/dev/fd"))
-
-        self.assertIsNotNone(report_path)
-        self.assertEqual(descriptors_before, descriptors_after)
-        payload = json.loads(report_path.read_text(encoding="utf-8"))
-        self.assertEqual(1.0, payload["script"]["coverage"])
-        self.assertEqual(3, payload["transcript"]["word_count"])
-        self.assertEqual(3.0, media_duration)
-        self.assertEqual("ready_for_review", job.stages["speech_cleanup"]["status"])
-        self.assertNotEqual("approved", job.stages["speech_cleanup"]["status"])
-
-    def test_job_uses_audio_duration_when_video_track_is_longer(self) -> None:
-        root = self.directory / "repo-shorter-audio"
-        root.mkdir()
-        video = root / "source.mp4"
-        subprocess.run(
-            [
-                "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
-                "-f", "lavfi", "-i", "color=c=black:s=320x240:r=24:d=3",
-                "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=2.9",
-                "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264",
-                "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "aac",
-                str(video),
-            ],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-        )
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        report = json.loads(
-            (job.job_dir / "01-inspect/report.json").read_text(encoding="utf-8"),
-        )
-        self.assertGreater(report["video"]["duration"], report["audio"]["duration"])
-        runtime = self._runtime_files()
-        media_duration: float | None = None
-
-        def fake_transcribe(_runtime, _wav, output, **kwargs):
-            nonlocal media_duration
-            media_duration = kwargs.get("source_media_duration")
-            output.write_text('{"transcription":[]}\n', encoding="utf-8")
-            return [Word("你好", 0.0, 0.5)]
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ):
-            transcribe_job(job)
-
-        self.assertEqual(report["audio"]["duration"], media_duration)
-
-    def test_job_rejects_legacy_report_that_used_container_duration_for_audio(self) -> None:
-        root = self.directory / "repo-legacy-container-duration"
-        root.mkdir()
-        video = root / "source.mp4"
-        subprocess.run(
-            [
-                "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
-                "-f", "lavfi", "-i", "color=c=black:s=320x240:r=24:d=3",
-                "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=2.9",
-                "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264",
-                "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "aac",
-                str(video),
-            ],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-        )
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        payload = inspect_inputs(video, script)
-        payload["video"].update(job.inputs["video"])
-        payload["script"] = job.inputs["script"].copy()
-        payload["audio"]["duration"] = payload["video"]["duration"]
-        report = job.job_dir / "01-inspect/report.json"
-        report.parent.mkdir()
-        report.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-        mark_ready(job, "inspect", [report])
-        approve(job, "inspect")
-        runtime = self._runtime_files()
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words",
-        ) as transcribe, self.assertRaisesRegex(
-            TranscriptionError, "invalid inspect report",
-        ):
-            transcribe_job(job)
-
-        transcribe.assert_not_called()
-
-    def test_job_rejects_inspect_report_not_bound_to_input_and_closes_fds(self) -> None:
-        root = self.directory / "repo-invalid-inspect"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        report = job.job_dir / "01-inspect/report.json"
-        report.parent.mkdir()
-        report.write_text(json.dumps({
-            "version": 1,
-            "streams": {"video": 1, "audio": 1},
-            "video": {
-                "path": "wrong.mp4",
-                "sha256": job.inputs["video"]["sha256"],
-                "bytes": job.inputs["video"]["bytes"],
-                "codec": "h264",
-                "duration": 3.0,
-                "fps": 24.0,
-                "width": 320,
-                "height": 240,
-            },
-            "audio": {
-                "codec": "aac",
-                "duration": 3.0,
-                "sample_rate": 48000,
-                "channels": 1,
-            },
-            "script": job.inputs["script"],
-        }, ensure_ascii=False), encoding="utf-8")
-        mark_ready(job, "inspect", [report])
-        approve(job, "inspect")
-        runtime = self._runtime_files()
-
-        descriptors_before = len(os.listdir("/dev/fd"))
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words",
-        ) as transcribe, self.assertRaisesRegex(
-            TranscriptionError, "invalid inspect report",
-        ):
-            transcribe_job(job)
-        descriptors_after = len(os.listdir("/dev/fd"))
-
-        transcribe.assert_not_called()
-        self.assertEqual(descriptors_before, descriptors_after)
-
-    def test_job_rejects_inspect_report_inode_drift_and_closes_fds(self) -> None:
-        root = self.directory / "repo-inspect-drift"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        report = job.job_dir / "01-inspect/report.json"
-        runtime = self._runtime_files()
-        from edit.hd.tools import transcribe as module
-        real_read = module._read_descriptor_text
-        read_count = 0
-
-        def replace_report_after_read(descriptor):
-            nonlocal read_count
-            read_count += 1
-            source = real_read(descriptor)
-            if read_count == 2:
-                original = report.with_name("original-report.json")
-                os.replace(report, original)
-                report.write_bytes(original.read_bytes())
-            return source
-
-        descriptors_before = len(os.listdir("/dev/fd"))
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe._read_descriptor_text",
-            side_effect=replace_report_after_read,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words",
-        ) as transcribe, self.assertRaisesRegex(
-            TranscriptionError, "invalid inspect report",
-        ):
-            transcribe_job(job)
-        descriptors_after = len(os.listdir("/dev/fd"))
-
-        transcribe.assert_not_called()
-        self.assertEqual(descriptors_before, descriptors_after)
-
-    def test_job_sanitizes_model_disappearance_after_transcription(self) -> None:
-        root = self.directory / "repo-model-disappears"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-
-        def disappear(_runtime, _wav, output, **_kwargs):
-            output.write_text("{}\n", encoding="utf-8")
-            runtime.model.unlink()
-            return [Word("你好", 0.0, 0.5)]
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=disappear,
-        ), self.assertRaises(TranscriptionError) as captured:
-            transcribe_job(job)
-        self.assertIsNone(captured.exception.__cause__)
-        self.assertNotIn(str(runtime.model), str(captured.exception))
-
-    def test_job_sanitizes_model_hash_io_error(self) -> None:
-        root = self.directory / "repo-model-hash"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe._sha256",
-            side_effect=OSError("/secret/model hash failed"),
-        ), self.assertRaises(TranscriptionError) as captured:
-            transcribe_job(job)
-        self.assertIsNone(captured.exception.__cause__)
-        self.assertNotIn("/secret", str(captured.exception))
-
-    def test_job_runs_whisper_with_pinned_model_not_swapped_path(self) -> None:
-        root = self.directory / "repo-model-pin"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-        foreign = self.directory / "foreign-model.bin"
-        foreign.write_bytes(b"FOREIGN model")
-        from edit.hd.tools import transcribe as module
-        real_run = module._run
-        model_used: bytes | None = None
-
-        def run_with_model_swap(command, **kwargs):
-            nonlocal model_used
-            if command[0] == "ffmpeg":
-                return real_run(command, **kwargs)
-            saved = self.directory / "model.saved"
-            os.replace(runtime.model, saved)
-            os.replace(foreign, runtime.model)
-            try:
-                model_arg = Path(command[command.index("-m") + 1])
-                model_used = model_arg.read_bytes()
-                stem = Path(command[command.index("-of") + 1])
-                Path(str(stem) + ".json").write_text(json.dumps({
-                    "transcription": [{"tokens": [{
-                        "text": "你好", "offsets": {"from": 0, "to": 500},
-                    }]}],
-                }, ensure_ascii=False), encoding="utf-8")
-                return subprocess.CompletedProcess(command, 0, b"", b"")
-            finally:
-                os.replace(runtime.model, foreign)
-                os.replace(saved, runtime.model)
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe._run", side_effect=run_with_model_swap,
-        ):
-            report_path = transcribe_job(job)
-        self.assertEqual(b"model", model_used)
-        payload = json.loads(report_path.read_text(encoding="utf-8"))
-        self.assertEqual(
-            hashlib.sha256(b"model").hexdigest(),
-            payload["runtime"]["model_sha256"],
-        )
-
-    def test_job_reads_script_from_pinned_input_not_swapped_path(self) -> None:
-        root = self.directory / "repo-script-pin"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        foreign = root / "foreign.txt"
-        foreign.write_text("再见", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-        from edit.hd.tools import transcribe as module
-        real_read_descriptor = module._read_descriptor_text
-
-        def swap_only_during_pinned_read(descriptor):
-            saved = root / "script.saved"
-            os.replace(script, saved)
-            os.replace(foreign, script)
-            try:
-                return real_read_descriptor(descriptor)
-            finally:
-                os.replace(script, foreign)
-                os.replace(saved, script)
-
-        def fake_transcribe(_runtime, _wav, output, **_kwargs):
-            output.write_text("{}\n", encoding="utf-8")
-            return [Word("再见", 0.0, 0.5)]
-
-        descriptors_before = len(os.listdir("/dev/fd"))
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ), mock.patch(
-            "edit.hd.tools.transcribe._read_descriptor_text",
-            side_effect=swap_only_during_pinned_read,
-        ):
-            report_path = transcribe_job(job)
-        descriptors_after = len(os.listdir("/dev/fd"))
-        payload = json.loads(report_path.read_text(encoding="utf-8"))
-        self.assertEqual(descriptors_before, descriptors_after)
-        self.assertEqual(0.0, payload["script"]["coverage"])
-        self.assertEqual(job.inputs["script"]["sha256"], payload["script"]["sha256"])
-
-    def test_job_decodes_video_from_pinned_fd_not_swapped_path(self) -> None:
-        root = self.directory / "repo-video-pin"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        foreign = root / "foreign.mp4"
-        foreign.write_bytes(make_video_only_fixture(self.directory).read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-        from edit.hd.tools import transcribe as module
-        real_run = module._run
-        swapped = False
-
-        def swap_during_ffmpeg(command, **kwargs):
-            nonlocal swapped
-            if command[0] != "ffmpeg" or swapped:
-                return real_run(command, **kwargs)
-            swapped = True
-            saved = root / "source.saved"
-            os.replace(video, saved)
-            os.replace(foreign, video)
-            try:
-                return real_run(command, **kwargs)
-            finally:
-                os.replace(video, foreign)
-                os.replace(saved, video)
-
-        def fake_transcribe(_runtime, wav, output, **_kwargs):
-            with wave.open(str(wav), "rb") as handle:
-                self.assertGreater(handle.getnframes(), 0)
-            output.write_text("{}\n", encoding="utf-8")
-            return [Word("你好", 0.0, 0.5)]
-
-        descriptors_before = len(os.listdir("/dev/fd"))
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ), mock.patch(
-            "edit.hd.tools.transcribe._run", side_effect=swap_during_ffmpeg,
-        ):
-            report_path = transcribe_job(job)
-        descriptors_after = len(os.listdir("/dev/fd"))
-        self.assertTrue(swapped)
-        self.assertEqual(descriptors_before, descriptors_after)
-        self.assertTrue(report_path.exists())
-
-    def test_job_preserves_artifacts_if_ready_state_committed_before_error(self) -> None:
-        root = self.directory / "repo"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-
-        def fake_transcribe(_runtime, _wav, output, **_kwargs):
-            output.write_text("{}\n", encoding="utf-8")
-            return [Word("你好", 0.0, 0.5)]
-
-        def committed_then_error(current, _stage, _artifacts):
-            current.stages["speech_cleanup"]["status"] = "ready_for_review"
-            raise RuntimeError("cleanup pending")
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.mark_ready", side_effect=committed_then_error,
-        ), self.assertRaises(RuntimeError):
-            transcribe_job(job)
-        output_dir = job.job_dir / "02-speech-cleanup"
-        self.assertTrue((output_dir / "speech-16k.wav").exists())
-        self.assertTrue((output_dir / "whisper.json").exists())
-        self.assertTrue((output_dir / "report.json").exists())
-
-    def test_revised_transcription_replaces_all_three_artifacts_as_one_generation(self) -> None:
-        root = self.directory / "repo"
-        root.mkdir()
-        video = root / "source.mp4"
-        video.write_bytes(self.video.read_bytes())
-        script = root / "script.txt"
-        script.write_text("你好世界", encoding="utf-8")
-        job = create_job(root, video, script, profile="legacy-v1")
-        self._approve_inspect(job)
-        runtime = self._runtime_files()
-        run_number = 0
-
-        def fake_transcribe(_runtime, _wav, output, **_kwargs):
-            nonlocal run_number
-            run_number += 1
-            output.write_text(json.dumps({"run": run_number}) + "\n", encoding="utf-8")
-            return [Word("你好世界" if run_number == 1 else "你好", 0.0, 0.5)]
-
-        with mock.patch(
-            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-        ), mock.patch(
-            "edit.hd.tools.transcribe.transcribe_words", side_effect=fake_transcribe,
-        ):
-            first_report = transcribe_job(job)
-            output = job.job_dir / "02-speech-cleanup"
-            first = {name: (output / name).read_bytes() for name in (
-                "speech-16k.wav", "whisper.json", "report.json",
-            )}
-            revise(job, "speech_cleanup", "重新转写")
-            second_report = transcribe_job(job)
-
-        self.assertEqual(first_report, second_report)
-        self.assertNotEqual(first["whisper.json"], (output / "whisper.json").read_bytes())
-        self.assertNotEqual(first["report.json"], (output / "report.json").read_bytes())
-        self.assertGreater((output / "speech-16k.wav").stat().st_size, 0)
-        self.assertEqual("ready_for_review", job.stages["speech_cleanup"]["status"])
-        self.assertFalse(any("generation" in path.name for path in job.job_dir.iterdir()))
-
-    def test_mark_ready_failure_cleanup_matrix_restores_old_generation(self) -> None:
-        from edit.hd.tools import inspect_inputs as inspect_module
-
-        for failure_type in (OSError, KeyboardInterrupt):
-            for timing in ("pre", "post"):
-                for position in range(3):
-                    with self.subTest(
-                        failure=failure_type.__name__, timing=timing, position=position,
-                    ):
-                        case = self.directory / f"{failure_type.__name__}-{timing}-{position}"
-                        root = case / "repo"
-                        root.mkdir(parents=True)
-                        video = root / "source.mp4"
-                        video.write_bytes(self.video.read_bytes())
-                        script = root / "script.txt"
-                        script.write_text("你好", encoding="utf-8")
-                        job = create_job(root, video, script, profile="legacy-v1")
-                        self._approve_inspect(job)
-                        runtime = self._runtime_files()
-                        run_number = 0
-
-                        def fake_transcribe(_runtime, _wav, output, **_kwargs):
-                            nonlocal run_number
-                            run_number += 1
-                            output.write_text(
-                                json.dumps({"run": run_number}) + "\n", encoding="utf-8",
-                            )
-                            return [Word("你好", 0.0, 0.5)]
-
-                        with mock.patch(
-                            "edit.hd.tools.transcribe.discover_runtime", return_value=runtime,
-                        ), mock.patch(
-                            "edit.hd.tools.transcribe.transcribe_words",
-                            side_effect=fake_transcribe,
-                        ):
-                            transcribe_job(job)
-                            stable = job.job_dir / "02-speech-cleanup"
-                            old_generation = {
-                                name: (stable / name).read_bytes()
-                                for name in (
-                                    "speech-16k.wav", "whisper.json", "report.json",
-                                )
-                            }
-                            revise(job, "speech_cleanup", "重新转写")
-                            real_unlink = inspect_module.os.unlink
-                            cleanup_call = 0
-                            injected = False
-
-                            def failing_unlink(candidate):
-                                nonlocal cleanup_call, injected
-                                candidate = Path(candidate)
-                                is_generation_file = (
-                                    candidate.parent.name.startswith(
-                                        ".02-speech-cleanup.generation."
-                                    )
-                                    and candidate.parent.name.endswith(".stage")
-                                )
-                                if is_generation_file:
-                                    current = cleanup_call
-                                    cleanup_call += 1
-                                    if current == position and not injected:
-                                        injected = True
-                                        if timing == "post":
-                                            real_unlink(candidate)
-                                        raise failure_type("/secret/cleanup failed")
-                                return real_unlink(candidate)
-
-                            descriptors_before = len(os.listdir("/dev/fd"))
-                            with mock.patch(
-                                "edit.hd.tools.transcribe.mark_ready",
-                                side_effect=RuntimeError("state publication failed"),
-                            ), mock.patch(
-                                "edit.hd.tools.inspect_inputs.os.unlink",
-                                side_effect=failing_unlink,
-                            ):
-                                with self.assertRaises(BaseException) as captured:
-                                    transcribe_job(job)
-                            descriptors_after = len(os.listdir("/dev/fd"))
-
-                            self.assertTrue(injected)
-                            self.assertNotIn("/secret", str(captured.exception))
-                            self.assertEqual(descriptors_before, descriptors_after)
-                            self.assertEqual(
-                                "needs_revision", job.stages["speech_cleanup"]["status"],
-                            )
-                            self.assertEqual(
-                                old_generation,
-                                {name: (stable / name).read_bytes() for name in old_generation},
-                            )
-                            retried = transcribe_job(job)
-                            self.assertTrue(retried.exists())
-                            self.assertEqual(
-                                "ready_for_review",
-                                job.stages["speech_cleanup"]["status"],
-                            )
+    def test_scribe_invocation_rejects_wrong_source_result_launcher_or_exit(self) -> None:
+        from edit.hd.tools import speech_edit_v2
+        result = self.directory / "scribe.json"
+        result.write_text('{"words":[{"type":"word","text":"你好","start":0.1,"end":0.8}]}', encoding="utf-8")
+        entrypoint = self.directory / "transcribe.py"
+        job = SimpleNamespace(inputs={"video": {"sha256": "a" * 64}})
+        invocation = {"entrypoint": str(entrypoint), "exit_code": 0,
+                      "source_sha256": "a" * 64,
+                      "result_sha256": hashlib.sha256(result.read_bytes()).hexdigest()}
+        for key, invalid in (("entrypoint", str(self.directory / "other.py")),
+                             ("exit_code", 1), ("source_sha256", "b" * 64),
+                             ("result_sha256", "c" * 64)):
+            with self.subTest(field=key), mock.patch.object(
+                speech_edit_v2, "_video_use_entrypoint", return_value=entrypoint
+            ), self.assertRaisesRegex(speech_edit_v2.SpeechEditV2Error, "does not match"):
+                speech_edit_v2._transcribe_with_video_use(job, result, {**invocation, key: invalid}, 1.)
 
 
 if __name__ == "__main__":

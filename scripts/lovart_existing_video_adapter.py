@@ -153,13 +153,12 @@ def _approved_output(pinned, bound, qa, task, temporary, ffprobe=None, ffmpeg=No
                 or not 0 <= source_window[0] < source_window[1] <= approval["source_frame_count"]
                 or source_window != qa["source_clock"]["provider_frames_half_open"]):
             raise ValueError("lossless source-window selection changed")
-        required = ("schema_version", "status", "approval_type", "host_qa", "generation_id",
+        required = ("schema_version", "status", "approval_type", "generation_id",
                     "source_sha256", "output_sha256", "source_dimensions", "output_dimensions",
                     "source_frame_count", "output_frame_count", "fps", "source_frames_half_open",
                     "output_frames_half_open", "transform", "source_sar", "output_sar",
                     "frame_md5_sha256", "applies_to_other_assets")
         if (set(approval) != set(required) or approval["schema_version"] != 1 or approval["status"] != "approved"
-                or not isinstance(approval["host_qa"], str) or not approval["host_qa"].strip()
                 or approval["generation_id"] != task or approval["source_sha256"] != native["sha256"]
                 or approval["output_sha256"] != bound["derived_media"]["sha256"] or approval["source_sar"] is not None
                 or approval["output_sar"] != "1:1" or approval["fps"] != 24
@@ -192,12 +191,11 @@ def _approved_output(pinned, bound, qa, task, temporary, ffprobe=None, ffmpeg=No
                           full_actual_frames=approval["output_frame_count"], transform=approval["transform"])
         return bound["derived_media"]["sha256"], provenance
     if approval.get("approval_type") == "metadata_only_sar_normalization":
-        required = ("schema_version", "status", "approval_type", "host_qa", "generation_id",
+        required = ("schema_version", "status", "approval_type", "generation_id",
                     "source_sha256", "output_sha256", "source_dimensions", "output_dimensions",
                     "source_frame_count", "output_frame_count", "fps", "source_frames_half_open",
                     "transform", "source_sar", "output_sar", "frame_md5_sha256", "applies_to_other_assets")
         if (set(approval) != set(required) or approval["schema_version"] != 1 or approval["status"] != "approved"
-                or not isinstance(approval["host_qa"], str) or not approval["host_qa"].strip()
                 or approval["generation_id"] != task or approval["source_sha256"] != native["sha256"]
                 or approval["output_sha256"] != bound["derived_media"]["sha256"]
                 or approval["source_sar"] is not None or approval["output_sar"] != "1:1"
@@ -441,9 +439,7 @@ def load_semantic_brief(job, record, binding, *, segment_id, component_id, start
             if (type(brief) is not dict or brief.get("schema_version") != 1
                     or brief.get("source_binding") != {
                         **bound["source_binding"], "segment_id": segment_id}
-                    or brief.get("media") != bound.get("derived_media", bound["media"])
-                    or not isinstance(brief.get("observed_scene"), str)
-                    or not brief["observed_scene"].strip()):
+                    or brief.get("media") != bound.get("derived_media", bound["media"])):
                 raise ValueError("Lovart semantic content does not bind the current source/media")
             pinned.verify_visible()
             return brief, bound["semantic_brief"]
@@ -516,7 +512,7 @@ def create_adapter(job, record):
         return AdapterResult(
             invocation_evidence={"record_sha256": record_hash, "provider_request_reused": True,
                                  "external_requests": 0, "task_id": expected["generation_id"], **metadata},
-            qa={"passed": True, "checks": ["generation and source-clock identity matched",
+            qa={"passed": True, "checks": ["technical: generation and source-clock identity matched",
                                              "approved input bytes reused without further media processing"]})
 
     return KindAdapter(kind="ai_generated", approved_executor=EXECUTOR,

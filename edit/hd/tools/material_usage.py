@@ -594,7 +594,7 @@ def load_current_receipt(
     """Load the receipt bound to the stage's current formal artifact set."""
     state.dependencies_for(job, stage_id)
     stage = job.stages[stage_id]
-    if stage["status"] not in {"ready_for_review", "approved"}:
+    if stage["status"] not in {"ready", "completed"}:
         raise _fail("stage has no current published material usage receipt")
     matches = [
         record

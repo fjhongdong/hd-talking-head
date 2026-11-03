@@ -1,4 +1,4 @@
-"""Invoke whole pinned native motion Skills and consume their reviewed outputs.
+"""Invoke whole pinned native motion Skills and consume their completed outputs.
 
 Creative work belongs to the original Skill. This bridge passes a task, verifies
 its original renderer execution, and binds that actual result to the Job.
@@ -53,6 +53,11 @@ def primary_renderer(dependency_id):
     return 'Remotion' if dependency_id == 'video-shotcraft' else 'HTMLCanvas'
 
 
+def _execution_job(job_dir):
+    from edit.hd.tools.startup import require_job_directory_identity
+    return require_job_directory_identity(job_dir, project_root=PROJECT)
+
+
 BARTY_TEMPLATES = {'motion-broll', 'explainer-default', 'explainer-engaging', 'explainer-high-energy'}
 
 
@@ -93,6 +98,11 @@ def source_root(project=PROJECT, *, dependency_id):
         raise ValueError('Unknown native motion dependency')
     name, commit, digest = SOURCES[dependency_id]
     project = Path(project).resolve(strict=True)
+    from edit.hd.tools.startup import _operation_cache
+    cache = _operation_cache(project)
+    cache_key = ('native-motion-source', str(project), dependency_id)
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
     record_path = project / 'references' / (name + '-native-source.json')
     if sha(record_path) != digest:
         raise ValueError('Native motion source identity record changed')
@@ -110,6 +120,8 @@ def source_root(project=PROJECT, *, dependency_id):
         item = root / relative(name)
         if item.is_symlink() or sha(item) != digest:
             raise ValueError('Native motion source changed: ' + name)
+    if cache is not None:
+        cache[cache_key] = root
     return root
 
 
@@ -340,7 +352,7 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, r['job_path'])) for r in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft', 'bb-video'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, inspect the actual result, then publish_completed. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
+            'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft', 'bb-video'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, then publish_completed with the actual execution evidence. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
 
     if brief['dependency_id'] == 'video-shotcraft':
         action['native_catalog'] = load_template_catalog(dependency_id='video-shotcraft')
@@ -355,7 +367,7 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
     return action
 
 def native_workflow_instructions(brief):
-    shared = ('Execute the complete pinned native workflow and selected native instructions. The approved task_source, transcript, real materials and output specifications are inputs; the native workflow owns treatment, look, layout, choreography and scene code. Preserve every vendor file. Author this Job project only. Keep voice, ordinary subtitles and final composition in the parent. Render the exact portrait 24fps clock without audio or alpha. Inspect the actual result and publish_completed through the existing reviewed-result contract. Stop and diagnose failure; never retry automatically. This handoff is pending creative work, not completed evidence. ')
+    shared = ('Execute the complete pinned native workflow and selected native instructions. The approved task_source, transcript, real materials and output specifications are inputs; the native workflow owns treatment, look, layout, choreography and scene code. Preserve every vendor file. Author this Job project only. Keep voice, ordinary subtitles and final composition in the parent. Render the exact portrait 24fps clock without audio or alpha. Publish_completed records native execution completion after its original checks finish. Stop and diagnose failure; never retry automatically. This handoff is pending creative work, not completed evidence. ')
     if brief['dependency_id'] == 'bb-video':
         return shared + ('Read the complete skills/bb-video/SKILL.md, selected styles/<style>/STYLE.md, the appropriate explainer/GUIDE.md or promo/GUIDE.md and every referenced instruction needed for this task. The style is the primary template; explainer/promo, quick and hand-written authoring are internal workflow choices, never additional templates. Follow the complete native research, fact sheet, storyboard, creation and self-review workflow. Use the original explainer/scripts/new.mjs or promo/scripts/new.mjs with --style <approved style> to create the current Job project and copy its original runtime and starter files; do not modify vendor or replace creation with a renderer-only call. Reuse the approved speech and exact local word anchors instead of synthesizing replacement narration. Keep all original lib runtime files unchanged. Honor requirements.parent_subtitle_layout from the parent, including its actual avatar and subtitle safe zones; the native workflow chooses the composition. Disable all internal captions, chapter chrome and ending holds using existing public APIs. For native whiteboard/riso/ink boards use WB/RISO/INK.board({T:<approved local timeline>,captions:false,chapters:false}); for an appropriate native compose use duration:<approved seconds>,tail:0,captions:false,chapters:false. PROMO.film quick has a default four-second tail and does not forward captions/tail; a voiced board kit forces internal captions, so choose a native public route that actually disables them, rather than assuming outer compose switches disable a nested board. Do not force every style into quick mode or compress parable below its original 15–45 second narrative range. Run native checks and inspect real full-size frames before final rendering. Fonts and optional Three.js CDN assets require actual availability checks; this zero-npm runtime does not imply offline rendering. Never use --force, --draft or --allow-font-fallback to bypass final checks. Pass capture_render the direct original explainer/scripts/render.mjs or promo/scripts/render.mjs argv: [node,<original render.mjs>,<absolute project_directory>,--aspect,9:16,--fps,24,--from,0,--to,<approved frames/24>,--no-audio,--no-bgm,--workers,1,--out,native.mp4]. --out accepts a filename; the native media is project_directory/out/native.mp4. Explicit from/to preserve authored review inputs while native lint, font and final frame checks still run. Use capture_render and publish_completed for the actual output, preserving the original source, command, tool versions and honest QA.')
     if brief['dependency_id'] == 'mg-styles-15':
@@ -761,9 +773,13 @@ def _verify_native_preparations(root, brief, record):
 
 
 def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
+    job = _execution_job(job_dir)
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
-    brief = validate_brief(brief_path.read_bytes()); _inputs(root, brief)
+    brief = validate_brief(brief_path.read_bytes())
+    if brief['job_id'] != job.job_id:
+        raise ValueError('Native motion brief belongs to another Job')
+    _inputs(root, brief)
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
     from motion_native_runtime import check_template_dependencies
@@ -924,11 +940,14 @@ def _validate_native_usage(root, brief, call, usage):
     return usage
 
 
-def publish_completed(job_dir, brief_path, call_path, *, qa_note, native_usage=None):
+def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
+    job = _execution_job(job_dir)
     root = Path(job_dir).resolve(strict=True)
-    payload = Path(brief_path).read_bytes(); brief = validate_brief(payload); _inputs(root, brief)
-    if not isinstance(qa_note, str) or not qa_note.strip():
-        raise ValueError('Native result requires actual motion and content QA')
+    brief_path = Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
+    payload = brief_path.read_bytes(); brief = validate_brief(payload)
+    if brief['job_id'] != job.job_id:
+        raise ValueError('Native motion brief belongs to another Job')
+    _inputs(root, brief)
     call = json.loads(Path(call_path).read_bytes()); _verify_call(root, brief, payload, call)
     target = path(root, brief['result_record_path'])
     if target.exists():
@@ -938,11 +957,11 @@ def publish_completed(job_dir, brief_path, call_path, *, qa_note, native_usage=N
         _validate_native_usage(root, brief, call, native_usage)
     elif native_usage is not None:
         raise ValueError('Native card usage belongs to the Shotcraft workflow')
-    result = {'schema_version': 2 if shotcraft else 1, 'status': 'completed', 'dependency_id': brief['dependency_id'],
+    result = {'schema_version': 3, 'status': 'completed', 'dependency_id': brief['dependency_id'],
               'job_id': brief['job_id'], 'template_id': brief['template_id'],
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'media': call['media'],
               'media_probe': brief['composition'], 'alpha': brief['alpha'],
-              'renderer_version': call['renderer_version'], 'render_call': descriptor(root, call_path), 'qa_note': qa_note}
+              'renderer_version': call['renderer_version'], 'render_call': descriptor(root, call_path)}
     if shotcraft:
         result['native_usage'] = native_usage
     artifacts.write_json_artifact(target, result)
@@ -954,19 +973,19 @@ def inspect_result(job_dir, payload, *, record_bytes=None):
     data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
     result = json.loads(data)
     schema = result.get('schema_version')
-    if schema != 1 and not (schema == 2 and brief['dependency_id'] == 'video-shotcraft'):
+    if schema != 3:
         raise ValueError('Unknown native motion result schema')
     expected = {'status': 'completed', 'dependency_id': brief['dependency_id'],
                 'job_id': brief['job_id'], 'template_id': brief['template_id'],
                 'request_sha256': hashlib.sha256(payload).hexdigest(), 'media_probe': brief['composition'], 'alpha': brief['alpha']}
-    if any(result.get(k) != v for k, v in expected.items()) or not str(result.get('qa_note', '')).strip():
-        raise ValueError('Native motion result differs from its request or lacks QA')
+    if any(result.get(k) != v for k, v in expected.items()):
+        raise ValueError('Native motion result differs from its request')
     call = json.loads(exact(job_dir, result['render_call']).read_bytes())
     _verify_call(job_dir, brief, payload, call)
-    if schema == 2:
+    if brief['dependency_id'] == 'video-shotcraft':
         _validate_native_usage(job_dir, brief, call, result.get('native_usage'))
     elif 'native_usage' in result:
-        raise ValueError('Native usage requires the current Shotcraft result schema')
+        raise ValueError('Native usage belongs to the Shotcraft workflow')
     if result['media'] != call['media'] or result['renderer_version'] != call['renderer_version']:
         raise ValueError('Native result differs from actual execution')
     return result
@@ -979,7 +998,7 @@ def load_result(job_dir, payload, *, expected_record, expected_renderer_version)
         raise ValueError('Approved native result descriptor is required')
     data = path(job_dir, expected_record['path']).read_bytes()
     if len(data) != expected_record['bytes'] or hashlib.sha256(data).hexdigest() != expected_record['sha256']:
-        raise ValueError('Native result differs from reviewed version')
+        raise ValueError('Native result differs from frozen version')
     result = inspect_result(job_dir, payload, record_bytes=data)
     if result['renderer_version'] != expected_renderer_version:
         raise ValueError('Native renderer differs from frozen component')
@@ -995,7 +1014,8 @@ def create_adapter(project_root, python_executable, brief_loader, *, dependency_
     from motion_native_runtime import check, renderer_version as runtime_renderer_version
     check(project, dependency_id=dependency_id, mode='reuse')
     renderer_version = renderer_version or runtime_renderer_version(dependency_id)
-    entry_sha = sha(SKILL / ENTRY); launcher = Path(python_executable).resolve(strict=True)
+    entry_sha = sha(SKILL / ENTRY); launcher = Path(python_executable).absolute()
+    launcher = launcher.parent.resolve(strict=True) / launcher.name
 
     def guarded_loader(job, recipe, component):
         from edit.hd.tools import visual_canary
@@ -1035,14 +1055,14 @@ def create_adapter(project_root, python_executable, brief_loader, *, dependency_
                        '--brief', '{brief_path}', '--media-manifest', '{media_manifest_fd}', '--output', '{output_path}'))
 
 
-def create_binding(adapter, brief_bytes, reference_sample):
+def create_binding(adapter, brief_bytes):
     brief = validate_brief(brief_bytes, dependency_id=adapter.dependency_id)
     return {'producer_type': 'dependency', 'dependency_id': adapter.dependency_id, 'entrypoint': ENTRY,
             'producer_version': VERSION, 'primary_renderer': primary_renderer(adapter.dependency_id), 'renderer_version': adapter.renderer_version,
             'template_origin': 'custom_fallback', 'template_id': adapter.dependency_id + '/' + brief['template_id'],
             'template_version': VERSION, 'adaptation_level': 'structural',
             'verification_id': hashlib.sha256((adapter.entrypoint_sha256 + hashlib.sha256(brief_bytes).hexdigest()).encode()).hexdigest(),
-            'source_entrypoint': ENTRY, 'source_sha256': adapter.entrypoint_sha256, 'sample_sha256': sha(reference_sample),
+            'source_entrypoint': ENTRY, 'source_sha256': adapter.entrypoint_sha256,
             'semantic_families': [brief['template_request']['semantic_family']],
             'capacity': {'min_units': 1, 'max_units': brief['template_request']['information_units']},
             'brief_sha256': hashlib.sha256(brief_bytes).hexdigest(),
@@ -1061,12 +1081,12 @@ def main():
     parser.add_argument('--project-root', type=Path, default=PROJECT)
     parser.add_argument('--dependency-id', required=True, choices=SOURCES)
     parser.add_argument('--probe', action='store_true')
-    parser.add_argument('--brief', type=Path); parser.add_argument('--job-dir', type=Path)
+    parser.add_argument('--brief', type=Path); parser.add_argument('--job-dir', type=Path, default=os.environ.get('BROLL_JOB_DIR'))
     parser.add_argument('--capture-render', action='store_true'); parser.add_argument('--argv-json')
     parser.add_argument('--native-preparations-json', help='Selected MG 3D native Blender steps')
     parser.add_argument('--publish', action='store_true'); parser.add_argument('--call', type=Path)
     parser.add_argument('--native-usage', type=Path, help='Actual Shotcraft card usage JSON array')
-    parser.add_argument('--qa-note'); parser.add_argument('--media-manifest', type=Path); parser.add_argument('--output', type=Path)
+    parser.add_argument('--media-manifest', type=Path); parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.probe:
         from motion_native_runtime import check
@@ -1079,10 +1099,13 @@ def main():
         print(capture_render(args.job_dir, args.brief, json.loads(args.argv_json),
               native_preparations=json.loads(args.native_preparations_json) if args.native_preparations_json else None))
     elif args.publish:
-        print(publish_completed(args.job_dir, args.brief, args.call, qa_note=args.qa_note,
+        print(publish_completed(args.job_dir, args.brief, args.call,
               native_usage=json.loads(args.native_usage.read_bytes()) if args.native_usage else None))
     else:
+        job = _execution_job(args.job_dir)
         payload = args.brief.read_bytes(); brief = validate_brief(payload, dependency_id=args.dependency_id)
+        if brief['job_id'] != job.job_id:
+            raise ValueError('Native motion brief belongs to another Job')
         manifest = json.loads(args.media_manifest.read_bytes())
         if manifest['brief_sha256'] != hashlib.sha256(payload).hexdigest():
             raise ValueError('Frozen native motion request differs')
@@ -1099,7 +1122,7 @@ def main():
             raise ValueError('Frozen native motion result differs')
         video = read(result['media']['job_path'])
         if hashlib.sha256(video).hexdigest() != result['media']['sha256'] or len(video) != result['media']['byte_count']:
-            raise ValueError('Frozen native media differs from reviewed output')
+            raise ValueError('Frozen native media differs from frozen output')
         args.output.write_bytes(video)
         print(json.dumps({'dependency_id': args.dependency_id, 'template_id': brief['template_id'],
                           'output_sha256': hashlib.sha256(video).hexdigest()}))

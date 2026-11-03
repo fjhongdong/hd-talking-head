@@ -20,8 +20,8 @@ const validateNarrowWords = async (cues: SubtitleInput['cues']) => {
     for (const cue of cues) {
       const available = (cue.placement === 'above_avatar' ? cue.width : 1080 * 0.9)
         - 2 * (SUBTITLE_CARD_METRICS.paddingX + SUBTITLE_CARD_METRICS.borderWidth);
-      probe.style.fontSize = `${subtitleFontSize(cue.text)}px`;
-      if (subtitleFontSize(cue.text) !== SUBTITLE_TEXT_STYLE.fontSize) {
+      probe.style.fontSize = `${subtitleFontSize(cue)}px`;
+      if (cue.long_keyword) {
         probe.textContent = cue.text;
         if (probe.getBoundingClientRect().width > available + 0.01) {
           throw new Error(`[TALKCRAFT_SUBTITLES_INVALID] ${cue.cue_id}: complete long keyword does not fit subtitle content width`);

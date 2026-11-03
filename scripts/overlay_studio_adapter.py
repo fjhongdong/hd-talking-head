@@ -46,7 +46,7 @@ def _text(value, *, empty=False):
 
 
 class ClockConflict(ValueError):
-    """Valid native item times leave no complete landing and exit window."""
+    """Valid native item times leave no complete landing, reading and exit window."""
 
 
 def validate_input_clock(payload):
@@ -115,8 +115,9 @@ def validate_input_clock(payload):
     if (type(b["upstream"]) is not dict or set(b["upstream"]) != {"source_revision", "runtime_identity"}
             or b["upstream"]["source_revision"] != SOURCE_PIN):
         raise ValueError("PinBoard native clock source revision changed")
-    if times[-1] + 0.34 > card["end"] - card["start"] - 0.45 + 1e-8:
-        raise ClockConflict("Each item needs its own time and a complete native landing/exit")
+    # The parent contract adds 12 stable reading frames to the native fall/exit.
+    if times[-1] + 0.34 + 12 / 24 > card["end"] - card["start"] - 0.45 + 1e-8:
+        raise ClockConflict("Each item needs its own time, landing, 12 stable reading frames and exit")
     return b
 
 
@@ -244,7 +245,7 @@ def create_adapter(project_root, python_executable, brief_loader):
                        "--ffprobe",runtime["ffprobe"],"--chrome",runtime["chrome"]))
 
 
-def create_binding(adapter, brief_bytes, reference_sample):
+def create_binding(adapter, brief_bytes):
     b = validate_brief(brief_bytes)
     if (adapter.dependency_id != DEPENDENCY_ID or adapter.entrypoint_sha256 != sha(SKILL / ENTRY)
             or adapter.entrypoint != ENTRY or adapter.primary_renderer != RENDERER):
@@ -254,7 +255,7 @@ def create_binding(adapter, brief_bytes, reference_sample):
         producer_version=VERSION, primary_renderer=RENDERER, renderer_version=VERSION,
         template_origin="custom_fallback", template_id=TEMPLATE_ID, template_version=VERSION,
         adaptation_level="structural", source_entrypoint=ENTRY, source_sha256=adapter.entrypoint_sha256,
-        sample_sha256=sha(Path(reference_sample)), semantic_families=["cumulative_points"],
+        semantic_families=["cumulative_points"],
         capacity={"min_units":b["template_request"]["information_units"],
                   "max_units":b["template_request"]["information_units"]},
         brief_sha256=digest, verification_id=hashlib.sha256((adapter.entrypoint_sha256+digest).encode()).hexdigest(),

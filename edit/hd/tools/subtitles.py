@@ -303,7 +303,7 @@ def _stage_records(
     expected_names: set[str] | None = None,
 ) -> dict[str, tuple[dict[str, object], _PinnedFile]]:
     stage_record = job.stages.get(stage_id)
-    if type(stage_record) is not dict or stage_record.get("status") != "approved":
+    if type(stage_record) is not dict or stage_record.get("status") != "completed":
         raise _fail()
     artifacts = stage_record.get("artifacts")
     if type(artifacts) is not list:
@@ -1417,6 +1417,38 @@ def _partition_subtitle_words(
     glyph_prefix = [0]
     for word in words:
         glyph_prefix.append(glyph_prefix[-1] + _visible_glyph_count([word]))
+    # A complete clause with an audible punctuation pause may exceed the reading
+    # target, only when it fits the actual 48px card without shrinking its text.
+    clause_stops = [0, *[
+        index for index in range(1, word_count + 1)
+        if str(words[index - 1]["text"]).rstrip(" \t\r\n\"'”’）)】》」』").endswith(tuple("，,；;：:。！？!?"))
+    ]]
+    long_clauses: set[tuple[int, int]] = set()
+    def fits_line(start: int, end: int) -> bool:
+        text = "".join(str(word["text"]) for word in words[start:end])
+        return _font_text_width(str(font_path), 48, text) + 2 * len(text) <= box["width"] - 86
+
+    for left, right in zip(clause_stops, clause_stops[1:]):
+        if (right == word_count or left in protected_boundaries or right in protected_boundaries
+                or glyph_prefix[right] - glyph_prefix[left] <= _CUE_TARGET_MAX
+                or (left and glyph_prefix[left] < (_CUE_TARGET_MIN + 1) // 2)
+                or glyph_prefix[-1] - glyph_prefix[right] < (_CUE_TARGET_MIN + 1) // 2
+                or round(1000 * (float(words[right]["start"]) - float(words[right - 1]["end"]))) < 200
+                or not has_sample(words[left:right]) or not has_sample(words[right:])):
+            continue
+        fits = fits_line(left, right) and box["height"] >= 88
+        if not fits and box["height"] >= 146:
+            fits = any(
+                boundary not in protected_boundaries
+                and not str(words[boundary]["text"]).startswith(tuple("，,、。；;：:！？!?\"'”’）)】》」』"))
+                and fits_line(left, boundary) and fits_line(boundary, right)
+                for boundary in range(left + 1, right)
+            )
+        if fits:
+            long_clauses.add((left, right))
+    protected_boundaries = protected_boundaries | {
+        boundary for left, right in long_clauses for boundary in range(left + 1, right)
+    }
     sentence_stops = [0, *[
         index for index in range(1, word_count)
         if str(words[index - 1]['text']).rstrip(" \t\r\n\"'”’）)】》」』").endswith(tuple("。！？!?"))
@@ -1433,13 +1465,13 @@ def _partition_subtitle_words(
     for index in range(1, word_count + 1):
         sentence_prefix.append(sentence_prefix[-1] + int(index in sentence_boundaries))
     eligible_ends: list[list[tuple[int, int, bool]]] = [[] for _ in range(word_count)]
-    long_keyword_intervals = long_keyword_intervals or set()
+    extended_intervals = (long_keyword_intervals or set()) | long_clauses
     for left in range(word_count):
         for right in range(left + 1, word_count + 1):
             glyph_count = glyph_prefix[right] - glyph_prefix[left]
             if glyph_count > _CUE_TARGET_MAX:
-                if (left, right) not in long_keyword_intervals:
-                    if any(start == left and end > right for start, end in long_keyword_intervals):
+                if (left, right) not in extended_intervals:
+                    if any(start == left and end > right for start, end in extended_intervals):
                         continue
                     break
             if _word_interval_fits(
@@ -1548,7 +1580,9 @@ def _partition_subtitle_words(
                 continue
             counts = (glyph_prefix[boundary] - glyph_prefix[left],
                       glyph_prefix[right] - glyph_prefix[boundary])
-            if min(counts) < (_CUE_TARGET_MIN + 1) // 2 or max(counts) > _CUE_TARGET_MAX:
+            if (min(counts) < (_CUE_TARGET_MIN + 1) // 2
+                    or any(count > _CUE_TARGET_MAX and interval not in extended_intervals
+                           for count, interval in zip(counts, ((left, boundary), (boundary, right))))):
                 continue
             if not all(
                 _word_interval_fits(words, start, end, box, font_path,
@@ -2366,7 +2400,7 @@ def _finish_transaction(
     current = state.load_job(job.job_dir)
     _synchronize_job(job, current)
     status = job.stages["subtitles"]["status"]
-    if status in {"ready_for_review", "approved"}:
+    if status in {"ready", "completed"}:
         if not _artifact_records_match(job, records) or not _records_match(target, records):
             raise _fail()
         if os.path.lexists(stage_path):
@@ -2429,7 +2463,7 @@ def _finish_transaction(
             raise _fail()
     except BaseException as failure:
         committed = (
-            job.stages["subtitles"]["status"] in {"ready_for_review", "approved"}
+            job.stages["subtitles"]["status"] in {"ready", "completed"}
             and _artifact_records_match(job, records)
             and _records_match(target, records)
         )
@@ -2443,7 +2477,7 @@ def _finish_transaction(
                 raise _fail() from failure
             _fsync_directory(job.job_dir)
             _retire_known(job.job_dir / _TRANSACTION_NAME, job.job_dir)
-        elif job.stages["subtitles"]["status"] in {"ready_for_review", "approved"}:
+        elif job.stages["subtitles"]["status"] in {"ready", "completed"}:
             state.revise(job, "subtitles", "subtitle output identity changed")
         raise
     finally:

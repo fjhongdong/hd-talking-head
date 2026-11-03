@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -26,6 +27,7 @@ else:
 PROJECT = SKILL
 sys.path[:0] = [str(PROJECT), str(SKILL / 'scripts')]
 from edit.hd.tools import contract_artifacts as artifacts
+from edit.hd.tools.startup import require_job_directory_identity
 from edit.hd.tools.segment_render import re_full_segment_id
 from adapter_kit import sha256_file as sha
 
@@ -135,6 +137,7 @@ def prepare_revision(job_dir, brief_path, *, reason):
     This returns rebind inputs only. The new visual plan must pass the existing
     confirmation flow before pending_native_actions may dispatch it.
     """
+    require_job_directory_identity(job_dir, project_root=PROJECT)
     from edit.hd.tools import state
     root = Path(job_dir).resolve(strict=True)
     previous_brief = Path(brief_path).resolve(strict=True)
@@ -200,6 +203,12 @@ def validate_selected_inputs(job, director, treatment):
 
 
 def source_root(project=PROJECT):
+    project = Path(project).resolve(strict=True)
+    from edit.hd.tools.startup import _operation_cache
+    cache = _operation_cache(project)
+    cache_key = ('wake-native-source', str(project))
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
     from prepare_sources import bundled_source_revision
     root = Path(project) / 'vendor/lemo-wake'
     if bundled_source_revision(Path(project), root) != UPSTREAM_COMMIT:
@@ -209,6 +218,8 @@ def source_root(project=PROJECT):
         dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=no'], text=True)
         if head != UPSTREAM_COMMIT or dirty:
             raise ValueError('Native Wake source changed; do not reset or edit it')
+    if cache is not None:
+        cache[cache_key] = root
     return root
 
 
@@ -220,6 +231,7 @@ def runtime_environment(project=PROJECT):
         raise ValueError('Wake model data must use the regular project runtime directory')
     from project_python import project_environment
     environment, _ = project_environment(project)
+    environment.pop('PYTHONPATH', None)  # uv owns its Python packages; keep the host bridge runtime separate.
     return {**environment, 'LEMO_WAKE_MODELS': str(models)}
 
 
@@ -252,10 +264,13 @@ def _write_call(root, b, step, record):
 
 def initialize_project(job_dir, brief_path, *, slug, parent=None):
     """Run the original new_project program with the frozen input and public options."""
+    job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
     b = validate_brief(brief_path.read_bytes())
+    if b['job_id'] != job.job_id:
+        raise ValueError('Wake brief belongs to another Job')
     image = exact(root, b['image'])
     _revision_inputs(root, b)
     if not isinstance(slug, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', slug):
@@ -315,9 +330,12 @@ def project_files(root, src):
 
 
 def capture_call(job_dir, brief_path, step, argv, project_src):
+    job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root, brief_path = Path(job_dir).resolve(strict=True), Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
     b = validate_brief(brief_path.read_bytes())
+    if b['job_id'] != job.job_id:
+        raise ValueError('Wake brief belongs to another Job')
     exact(root, b['image'])
     _revision_inputs(root, b)
     if step not in {'render', 'encode', 'qa'}:
@@ -482,20 +500,23 @@ def inspect_result(job_dir, payload, *, record_bytes=None):
 
 
 def load_result(job_dir, payload, *, expected_record):
-    """Production consumes the exact result the host reviewed and froze."""
+    """Production consumes the exact completed native result."""
     b = validate_brief(payload)
     if (not isinstance(expected_record, dict) or set(expected_record) != {'path', 'sha256', 'bytes'}
             or expected_record['path'] != b['result_record_path']):
         raise ValueError('Approved Wake result descriptor is required')
     data = path(job_dir, expected_record['path']).read_bytes()
     if len(data) != expected_record['bytes'] or hashlib.sha256(data).hexdigest() != expected_record['sha256']:
-        raise ValueError('Wake result differs from the reviewed version')
+        raise ValueError('Wake result differs from the frozen version')
     return _read_result(job_dir, payload, data)
 
 
 def publish_completed(job_dir, brief_path, project_src, video, native_qa, calls):
+    job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root, payload = Path(job_dir).resolve(strict=True), Path(brief_path).read_bytes()
     b = validate_brief(payload)
+    if b['job_id'] != job.job_id:
+        raise ValueError('Wake brief belongs to another Job')
     record = {'schema_version': 2, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
               'template_id': TEMPLATE_ID, 'upstream_commit': UPSTREAM_COMMIT, 'job_id': b['job_id'],
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'source_image_sha256': b['image']['sha256'],
@@ -542,13 +563,14 @@ def native_task(job, recipe, component, brief_path):
                                  'end': min(b['source_binding']['end'], word['end']) - b['source_binding']['start']} for word in spoken],
                              'silent': True, 'single_pass': True},
             'result_record_path': b['result_record_path'],
-            'next': 'Read and execute the complete native Skill in a native subtask. Use initialize_project with project_parent to record the original new_project call and source derivation. When output_directory is provided, save encoded media and QA there. The native Skill plans the complete scene, layers and motion. single_pass means non-looping playback; it does not limit render or QA iterations. Capture original render/encode/qa (--no-loop --json) commands with this bridge, inspect frames and motion, then publish. Preserve previous revision work, the approved brief, vendor code and user movie.'}
+            'next': 'Read and execute the complete native Skill in a native subtask. Use initialize_project with project_parent to record the original new_project call and source derivation. When output_directory is provided, save encoded media and QA there. The native Skill plans the complete scene, layers and motion. single_pass means non-looping playback; it does not limit render or QA iterations. Capture original render/encode/qa (--no-loop --json) commands with this bridge, then publish their execution evidence. Preserve previous revision work, the approved brief, vendor code and user movie.'}
 
 
 def create_adapter(project_root, python_executable, brief_loader):
     from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter, ReferenceProcessMedia
     source_root(project_root)
-    launcher = Path(python_executable).resolve(strict=True)
+    launcher = Path(python_executable).absolute()
+    launcher = launcher.parent.resolve(strict=True) / launcher.name
     entry_sha = sha(SKILL / ENTRY)
 
     def guarded_loader(job, recipe, component):
@@ -591,14 +613,14 @@ def create_adapter(project_root, python_executable, brief_loader):
                        '--media-manifest', '{media_manifest_fd}', '--output', '{output_path}'))
 
 
-def create_binding(adapter, brief_bytes, reference_sample):
+def create_binding(adapter, brief_bytes):
     b = validate_brief(brief_bytes)
     digest = hashlib.sha256(brief_bytes).hexdigest()
     return {'producer_type': 'dependency', 'dependency_id': DEPENDENCY_ID, 'entrypoint': ENTRY,
             'producer_version': VERSION, 'primary_renderer': 'HTMLCanvas', 'renderer_version': UPSTREAM_COMMIT,
             'template_origin': 'custom_fallback', 'template_id': TEMPLATE_ID, 'template_version': VERSION,
             'adaptation_level': 'structural', 'verification_id': hashlib.sha256((adapter.entrypoint_sha256 + digest).encode()).hexdigest(),
-            'source_entrypoint': ENTRY, 'source_sha256': adapter.entrypoint_sha256, 'sample_sha256': sha(reference_sample),
+            'source_entrypoint': ENTRY, 'source_sha256': adapter.entrypoint_sha256,
             'semantic_families': [b['template_request']['semantic_family']],
             'capacity': {'min_units': 1, 'max_units': b['template_request']['information_units']},
             'brief_sha256': digest,
@@ -617,7 +639,7 @@ def main():
     p.add_argument('--brief', type=Path)
     p.add_argument('--probe', action='store_true')
     p.add_argument('--project-root', type=Path)
-    p.add_argument('--job-dir', type=Path)
+    p.add_argument('--job-dir', type=Path, default=os.environ.get('BROLL_JOB_DIR'))
     p.add_argument('--capture', choices=('render', 'encode', 'qa'))
     p.add_argument('--initialize', action='store_true')
     p.add_argument('--revise', action='store_true')
@@ -652,8 +674,11 @@ def main():
     elif a.publish:
         print(publish_completed(a.job_dir, a.brief, a.project_src, a.video, a.native_qa, a.calls))
     else:
+        job = require_job_directory_identity(a.job_dir, project_root=PROJECT)
         payload = a.brief.read_bytes()
         b = validate_brief(payload)
+        if b['job_id'] != job.job_id:
+            raise ValueError('Wake brief belongs to another Job')
         manifest = json.loads(a.media_manifest.read_bytes())
         if manifest['brief_sha256'] != hashlib.sha256(payload).hexdigest():
             raise ValueError('Frozen Wake request differs')

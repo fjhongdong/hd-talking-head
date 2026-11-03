@@ -314,6 +314,7 @@ class _FrozenProcessBinding:
     adapter: ReferenceProcessAdapter
     entrypoint_fd: int
     launcher_fd: int
+    launcher_target: Path
     entrypoint_identity: tuple[int, int, int, int]
     launcher_identity: tuple[int, int, int, int]
 
@@ -1805,12 +1806,14 @@ def _freeze_process_binding(
             metadata = os.lstat(current)
             if not stat.S_ISDIR(metadata.st_mode):
                 _raise(code)
-        current = Path(adapter.launcher.anchor)
-        for part in adapter.launcher.parts[1:-1]:
-            current = current / part
-            metadata = os.lstat(current)
-            if not stat.S_ISDIR(metadata.st_mode):
-                _raise(code)
+        launcher_target = adapter.launcher.resolve(strict=True)
+        for launcher_path in (adapter.launcher, launcher_target):
+            current = Path(launcher_path.anchor)
+            for part in launcher_path.parts[1:-1]:
+                current = current / part
+                metadata = os.lstat(current)
+                if not stat.S_ISDIR(metadata.st_mode):
+                    _raise(code)
         entrypoint_fd = os.open(
             entrypoint,
             os.O_RDONLY
@@ -1819,7 +1822,7 @@ def _freeze_process_binding(
             | getattr(os, "O_NOFOLLOW", 0),
         )
         launcher_fd = os.open(
-            adapter.launcher,
+            launcher_target,
             os.O_RDONLY
             | getattr(os, "O_NONBLOCK", 0)
             | getattr(os, "O_CLOEXEC", 0)
@@ -1840,10 +1843,11 @@ def _freeze_process_binding(
             or launcher_stat.st_size <= 0
         ):
             _raise(code)
-        return _FrozenProcessBinding(
+        binding = _FrozenProcessBinding(
             adapter=adapter,
             entrypoint_fd=entrypoint_fd,
             launcher_fd=launcher_fd,
+            launcher_target=launcher_target,
             entrypoint_identity=(
                 entry_stat.st_dev,
                 entry_stat.st_ino,
@@ -1857,6 +1861,8 @@ def _freeze_process_binding(
                 launcher_stat.st_size,
             ),
         )
+        _verify_frozen_launcher(binding)
+        return binding
     except BrollComponentExecutionError:
         for descriptor in (entrypoint_fd, launcher_fd):
             if descriptor is not None:
@@ -1865,7 +1871,7 @@ def _freeze_process_binding(
                 except OSError:
                     pass
         raise
-    except OSError:
+    except (OSError, RuntimeError):
         for descriptor in (entrypoint_fd, launcher_fd):
             if descriptor is not None:
                 try:
@@ -2035,9 +2041,11 @@ def _snapshot_approved_entrypoint(
 def _verify_frozen_launcher(binding: _FrozenProcessBinding) -> None:
     adapter = binding.adapter
     try:
-        metadata = os.lstat(adapter.launcher)
+        if adapter.launcher.resolve(strict=True) != binding.launcher_target:
+            _raise("BROLL_DEPENDENCY_UNBOUND")
+        metadata = os.lstat(binding.launcher_target)
         opened = os.fstat(binding.launcher_fd)
-    except OSError:
+    except (OSError, RuntimeError):
         _raise("BROLL_DEPENDENCY_UNBOUND")
     current = (metadata.st_dev, metadata.st_ino, metadata.st_mode, metadata.st_size)
     if (
@@ -2630,6 +2638,7 @@ def _run_reference_process(
                 "no_proxy": "*",
                 "BROLL_OFFLINE": "1",
                 "BROLL_INVOCATION_ID": invocation_id,
+                "BROLL_JOB_DIR": str(job.job_dir),
             },
             shell=False,
             start_new_session=True,
@@ -5240,6 +5249,13 @@ def execute_component(
     if type(component) is not ComponentExecutionRequest:
         _raise("BROLL_SCHEMA_INVALID")
     _selected_request(component)
+    # Bare state-engine fixtures and template qualification are not Skill Jobs.
+    # Production callers must pass this gate before a transaction can write.
+    workspace = getattr(job, "root", None)
+    if isinstance(workspace, Path) and ((workspace / "job-context.json").exists()
+            or (workspace / "00-user-provided").exists()):
+        from .startup import require_job_identity
+        require_job_identity(job)
     pinned_job = _job_context(job)
     try:
         return _execute_pinned(

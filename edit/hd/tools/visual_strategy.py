@@ -887,6 +887,9 @@ def relation_motion_exit_window(component: object) -> tuple[int, int] | None:
 def _validate_binding(component: dict, *, index: int) -> None:
     kind = component["kind"]
     binding_keys = _BINDING_KEYS[kind]
+    if (kind == "code_generated" and component.get("template_origin") == "custom_fallback"
+            and "sample_sha256" not in component):
+        binding_keys = binding_keys - {"sample_sha256"}
     if kind == 'official_material' and 'portrait_crop' in component:
         if component.get('media_type') != 'image':
             raise _error('official portrait crop supports static images only')

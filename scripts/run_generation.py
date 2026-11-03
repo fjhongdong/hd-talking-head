@@ -22,6 +22,9 @@ def main():
     prepare.add_argument("--request-id", required=True)
     prepare.add_argument("--arguments-json", type=Path, required=True)
     prepare.add_argument("--input-files-json", type=Path)
+    prepare_cover = commands.add_parser("prepare-cover")
+    prepare_cover.add_argument("--request-id", required=True)
+    prepare_cover.add_argument("--arguments-json", type=Path, required=True)
     add = commands.add_parser("add")
     add.add_argument("--plan-json", type=Path, required=True)
     add.add_argument("--plan-sha256", required=True)
@@ -35,6 +38,10 @@ def main():
     replace = commands.add_parser("replace-unsent-upload")
     replace.add_argument("--action-json", type=Path, required=True)
     replace.add_argument("--evidence-json", type=Path, required=True)
+    revise = commands.add_parser("revise-unsent-gbro-frames")
+    revise.add_argument("--request-id", required=True)
+    revise.add_argument("--preparation-json", type=Path, required=True)
+    revise.add_argument("--expected-request-sha256", required=True)
     edit = commands.add_parser("edit-completed-image")
     edit.add_argument("--plan-json", type=Path, required=True)
     edit.add_argument("--plan-sha256", required=True)
@@ -46,6 +53,9 @@ def main():
     if args.command == "prepare":
         result = generation_channels.prepare_request(args.job, args.purpose, _read(args.arguments_json),
             request_id=args.request_id, input_files=_read(args.input_files_json) if args.input_files_json else [])
+    elif args.command == "prepare-cover":
+        result = generation_channels.prepare_cover_request(args.job, _read(args.arguments_json),
+            request_id=args.request_id)
     elif args.command == "add":
         result = generation_queue.add(args.job, _read(args.plan_json), args.user_confirmation, args.plan_sha256)
     elif args.command == "next":
@@ -54,6 +64,12 @@ def main():
         result = generation_channels.record_result(args.job, _read(args.action_json), _read(args.response_json))
     elif args.command == "replace-unsent-upload":
         result = generation_channels.replace_unsent_upload(args.job, _read(args.action_json), _read(args.evidence_json))
+    elif args.command == "revise-unsent-gbro-frames":
+        from edit.hd.tools import visual_confirmation, state
+        job = state.load_job(args.job)
+        descriptor = visual_confirmation._record(job.job_dir, args.preparation_json.absolute())
+        result = visual_confirmation.revise_unsent_gbro_frames(job, args.request_id, descriptor,
+            args.expected_request_sha256)
     else:
         result = generation_queue.edit_completed_image(args.job, _read(args.plan_json), args.user_confirmation, args.plan_sha256)
     print(json.dumps(result, ensure_ascii=False))

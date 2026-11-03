@@ -137,7 +137,7 @@ class ExistingLovartTests(unittest.TestCase):
         record["qa"] = file_ref(job, "qa.json")
         frame_hash = frame_hash or hashlib.sha256(b"0,0,0,0,1,hash").hexdigest()
         approval = {"schema_version": 1, "status": "approved", "approval_type": "metadata_only_sar_normalization",
-                    "host_qa": "internal metadata QA", "generation_id": "fixture-task",
+                    "generation_id": "fixture-task",
                     "source_sha256": record["media"]["sha256"], "output_sha256": record["derived_media"]["sha256"],
                     "source_dimensions": [1080, 1920], "output_dimensions": [1080, 1920],
                     "source_frame_count": 48, "output_frame_count": 48, "fps": 24,

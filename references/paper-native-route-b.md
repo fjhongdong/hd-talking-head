@@ -1,5 +1,7 @@
 # Paper：完整原生 Skill，Route B
 
+> 当前生产流程与交付边界以 [SKILL.md](../SKILL.md) 和[视觉规划](visual-quality-contract.md)为准。本文保留原生入口与能力资料；历史样片和质量记录不构成每期交付门槛，原生 Skill 自身技术 QA 不变。
+
 创作渠道统一为 `paper-collage-ad`；`paper-collage-hyperframes` 是 Route B 的执行依赖身份。`paper-collage-ad/hyperframes` 是完整上游 Skill 的 Route B 工作流。HyperFrames 是原生工作流指定的执行器，不另算渠道。上游固定为 `a69c9f56eec57ca19d1c02f6bdcffe573b4324a8`；不改上游文件，不把 `layer-animate.mjs` 当作完整 Skill。
 
 ## 原生准备
@@ -35,10 +37,14 @@ python3 scripts/paper_hyperframes_adapter.py \
 
 原生作者完成可编辑 HTML 和全部本地素材之后，才形成真实 `schema_version=2` brief。brief 沿用共享 HyperFrames 的源时钟、请求、entry/assets、composition、upstream_route 和 source_pins 字段。`validate_brief(payload)` 额外要求 Paper Route B、不透明视频和真实位图素材；Paper 不受共享路线原有 4 资产数量上限约束，仍保留路径、摘要和重复身份校验。
 
-`create_binding(adapter, payload, sample)` 生成当前真实输出绑定，原有 `custom_fallback/structural` 表示本 Job 按原生工作流新创作的场景，不声称存在上游预制模板。当前模板身份为 `paper-collage-ad-hyperframes-portrait-adaptation`，版本 `2.0.0`。
+`create_binding(adapter, payload)` 冻结本期真实输入，不要求历史样片；本期实际输出仍须经原生调用与媒体 QA。原有 `custom_fallback/structural` 表示本 Job 按原生工作流新创作的场景，不声称存在上游预制模板。当前模板身份为 `paper-collage-ad-hyperframes-portrait-adaptation`，版本 `2.0.0`。
 
 冻结后的输入通过既有 `ReferenceProcessAdapter` 进入确认和执行。`native_task(job, recipe, component, brief_path)` 可交接已冻结条目，但不在执行时改写已批准 HTML。桥通过标准输入启动，带显式 `--skill-root`，从继承的媒体文件描述符接收冻结资产，调用真实 HyperFrames CLI；保留源时钟、上游固定版本、运行时摘要、真实 argv、输出摘要和运动检测结果。工厂预检、正式执行均校验审阅后的共享入口摘要，不能仅在 render 时发现失配。
 
 验收检查完整画面的语义、中文、纸质材质和动作关系，不能用无冻结告警代替视觉验收。样片单独保存在 `skill-samples/20261028-native-integration/paper/`，旧 Job 和旧成片不重做。
+
+已批准的本 Job 工程只返修静态排版时，在原四字段 scene 中增加 `native_revision_from`（真实已登记 execution mapping 的 `{path,sha256,bytes}`）和具体 `native_revision_reason`。保留旧工程，生产稿相对该实际旧版本的 `strategy_revision` 恰加一；仅更新 entry 路径／摘要和静态 CSS，脚本、事件、CSS 动效、原素材字节、Route B 的 `source_pins`、文案、词锚及时钟不变，`asset_provenance` 同旧。素材仅可换为相同摘要的新路径。读字目标保留相同 ID、文字、span、role 和 windows，只更新实际内容引用与 region，继续通过现有读字和实际画面检查。
+
+现有 `_normalize_prepared_paper` 从登记 mapping 核验实际旧 binding、brief 和源码，并复用静态宿主 CSS 检查；不将 Paper 冒充原生 HyperFrames mount 路线。核验后只在批准比较副本去掉修订字段、恢复原 proposal 的 revision 基准，生产稿仍保留真实 origin 和新版本。静态返修不批准新增动画、素材、语义或收费调用，也不代替重新渲染后的验收。
 
 原生创作输入中的 `parent_subtitle_layout` 由宿主用正式字幕的同一 `subtitle_layout` 函数取得；有父级口播字幕时必须传入当前片段的真实预留区，原生作者自行安排完整画面避让。独立无字幕样片可明确传空，不把固定坐标作为所有影片的构图约束。

@@ -34,7 +34,7 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
                     cue_id:'cue-capacity',start:0.1,end:1.9,text,
                     words:[{{start:0.1,end:1.9,text_start:0,text_end:text.length}}],
                     emphasis:{{text_start:0,text_end:text.length,start:0.1,end:1.9}},
-                    placement:'above_avatar',bottom:228,width:584,
+                    placement:'above_avatar',bottom:228,width:584,long_keyword:false,
                   }}]}};
                 try {{
                   const composition = await selectComposition({{serveUrl,id:'TalkCraftSubtitles',inputProps}});
@@ -133,7 +133,6 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
             ("一次又一次尝试", "一次", "一次又"),
             ("两个很好用的方法", "两个", "两个很好"),
             ("两件都要处理", "两件", "两件都"),
-            ("一个一个检查", "一个", "一个一个"),
         )
         module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
         script = f"""
@@ -151,6 +150,25 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
                 cue_phrases = subtitles_v2._chinese_word_phrases(text)
                 self.assertIn(quantity, cue_phrases)
                 self.assertFalse(any(forbidden in phrase for phrase in cue_phrases), cue_phrases)
+
+    def test_repeated_quantities_keep_the_repetition_without_the_action(self) -> None:
+        cases = (("你还在自己一个一个的点。", "一个一个"),
+                 ("一遍一遍检查", "一遍一遍"),
+                 ("两份两份整理", "两份两份"),
+                 ("12个12个核对", "12个12个"))
+        module = (talkcraft_subtitles.ADAPTER / "line-units.mjs").as_uri()
+        script = f"""
+          import {{lineUnits}} from {json.dumps(module)};
+          console.log(JSON.stringify({json.dumps(cases)}.map(([text]) =>
+            lineUnits(text).map((unit) => text.slice(unit.start, unit.end)))));
+        """
+        results = json.loads(subprocess.check_output(
+            ["node", "--input-type=module", "-e", script], text=True))
+        for (text, repetition), units in zip(cases, results):
+            with self.subTest(text=text):
+                self.assertEqual("".join(units), text)
+                self.assertIn(repetition, units)
+                self.assertIn(repetition, subtitles_v2._chinese_word_phrases(text))
 
     def test_renderer_binding_rejects_missing_or_tampered_renderer(self) -> None:
         plan = {"canvas": {"width": 1080, "height": 1920, "fps": 24, "frames": 24}, "cues": []}
@@ -170,7 +188,7 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
                           "safe_zones": {"face": None}}]}
         renderer_input = talkcraft_subtitles.renderer_input(plan, [{
             "cue_id": "cue-1", "start": 0.0, "end": 0.5, "text": "测试",
-            "words": [], "emphasis": None, "placement": "standard", "bottom": 350,
+            "words": [], "emphasis": None, "placement": "standard", "bottom": 350, "long_keyword": False,
         }])
         identity = {"id": "renderer"}
         payload = {"schema_version": 4, "render_plan": plan,

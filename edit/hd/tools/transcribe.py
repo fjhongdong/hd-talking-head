@@ -506,7 +506,7 @@ def _positive_report_number(value: Any) -> float:
 
 def _inspect_report_record(job: JobState) -> dict[str, Any]:
     inspect = job.stages.get("inspect")
-    if type(inspect) is not dict or inspect.get("status") != "approved":
+    if type(inspect) is not dict or inspect.get("status") != "completed":
         raise _fail("invalid inspect report")
     artifacts = inspect.get("artifacts")
     if type(artifacts) is not list or len(artifacts) != 1:

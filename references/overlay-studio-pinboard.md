@@ -25,6 +25,8 @@ template_request, assets, upstream, execution_mode
 
 `doc` 只含一个原生 `pin-board`。`card.start/end` 是秒，`params.times` 是相对 `card.start` 的秒；`inkColor`、`cam` 不是必填。本路线不使用 cam，关闭音效、glow、breath，原生 speed 保持 1。标题、副题为空，当前只接入有独立词锚的条目。不要把父级默认字体配置伪造成原生 `fontSize` 参数。
 
+本方时钟核验在最后一项原生落位后预留12帧稳定阅读，再保留原生退场时长；这12帧是父级阅读预算，不是上游硬下限。
+
 `source_binding` 使用 `aroll_sha256 / segment_id / start / end`；`composition` 是 `width=1080 / height=1920 / fps=24 / frames / alpha=true`。`template_request` 为 `semantic_family=cumulative_points`、当前条目数量的 `information_units`、`numeric_values=[] / numeric_scale=not_applicable`。原生“要点 n/N”是进度提示，不是口播事实数据。
 
 词锚只读取当前 treatment 的 `overlay_alignment.events`，不在 brief 复制另一套 events；每项使用 `slot`（从 0 起）、`kind=pin_drop`、`text`、`anchor={index,text}` 和 `basis=current_clause|recap`。`overlay_selection` 使用 `native_route=pin-board`、`intent_relation=parallel`、`visible_action=cumulative_pin_drop`、`visual_structure=pin-board`；重复结构继续使用现有 `repeat_review`。此处核对的是原生触发时刻；实际可读帧与入场延迟仍在当前输出检查，不套用历史样片的固定补偿秒数。
@@ -41,7 +43,7 @@ template_request, assets, upstream, execution_mode
 
 原生 PNG 使用 straight alpha；父级需要时只做无损 QTRLE/ARGB 转换，再由现有合成器叠加 A-roll 原声和唯一字幕轨。`execution_mode` 必须明确为 `native_export` 或 `reuse_png`，不自动 fallback。
 
-执行使用 `create_adapter(project_root, python_executable, brief_loader)`、`create_binding(adapter, brief_bytes, reference_sample)`、`create_artifact_probe(ffprobe_executable)`。`native_export` 的 `assets=[]`，只调用隔离工作目录中的未改原生 CLI；端口冲突则停止，不接管不明服务。`upstream={source_revision,runtime_identity}` 从当前 `overlay_studio_runtime.check_runtime` 取得。
+执行使用 `create_adapter(project_root, python_executable, brief_loader)`、`create_binding(adapter, brief_bytes)`、`create_artifact_probe(ffprobe_executable)`。此接法为 `custom_fallback`，绑定实际原生入口和当前 brief，不要求历史样片，也不生成占位样片。`native_export` 的 `assets=[]`，只调用隔离工作目录中的未改原生 CLI；端口冲突则停止，不接管不明服务。`upstream={source_revision,runtime_identity}` 从当前 `overlay_studio_runtime.check_runtime` 取得。
 
 `reuse_png` 不调用导出器。将现有 PNG 原字节按帧序封装为普通 ZIP，只有 `frame_000001.png` 至当前帧数；再复制对应的原生 doc、source.json 和成功导出 result.json 到当前独立 Job。`assets` 分别使用 `native-pngs / native-doc / native-source / native-evidence` 四个 `media_ref`，每项仅有 `media_ref / job_path / sha256`。复用现有公共 FD 媒体冻结合同，不改 Adu/Hypit 的完成态 helper，也不借用其身份。当前复用入口要求文案、原生时钟、源片及区间与原记录完全相同；新内容不能借历史 PNG 继承批准。
 

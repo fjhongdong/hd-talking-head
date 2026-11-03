@@ -698,13 +698,6 @@ def prepare_cover_direction(
     direction_preview: Path | None = None,
 ) -> Dict[str, Any]:
     state.require_runnable(job, "cover_direction")
-    composition = direction.get("composition") if isinstance(direction, Mapping) else None
-    if (
-        isinstance(composition, Mapping)
-        and composition.get("style_id") == _PUNK_STYLE
-        and direction_preview is None
-    ):
-        raise CoverDirectionError("Punk cover direction requires an explicit PNG preview")
     preview_bytes = None
     if direction_preview is not None:
         preview_bytes = _read_direction_preview(
@@ -825,8 +818,8 @@ def _validate_reference(job: state.JobState, reference: Mapping[str, Any]) -> No
 def load_approved_cover_direction(job: state.JobState) -> Dict[str, Any]:
     if "cover_direction" not in job.stages:
         raise CoverDirectionError("cover_direction is unavailable for legacy workflow")
-    if job.stages["cover_direction"]["status"] != "approved":
-        raise CoverDirectionError("cover_direction must be approved")
+    if job.stages["cover_direction"]["status"] != "completed":
+        raise CoverDirectionError("cover_direction must be completed")
     record = contract_artifacts.read_json_artifact(
         job.job_dir / "03-cover-direction" / "cover-direction.json"
     )

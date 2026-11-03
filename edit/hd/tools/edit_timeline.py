@@ -791,7 +791,7 @@ def _validate_workflow_before_payload(value: Any) -> dict[str, Any]:
         or type(value["stage"]) is not dict
         or set(value["stage"]) != stage_keys
         or value["stage"]["status"] not in {
-            "pending", "ready_for_review", "approved", "needs_revision", "blocked",
+            "pending", "ready", "completed", "needs_revision", "blocked",
         }
         or (
             value["stage"]["reason"] is not None
@@ -1401,7 +1401,7 @@ def _is_internal_proposal_revision(
     return (
         restore_ready
         and old_tree is not None
-        and before["stage"]["status"] == "ready_for_review"
+        and before["stage"]["status"] == "ready"
         and job.revision == before["revision"] + 1
         and current_stage["status"] == "needs_revision"
         and current_stage["reason"] == _INTERNAL_REVISION_REASON
@@ -1422,14 +1422,14 @@ def _is_old_proposal_restoration(
     if (
         not restore_ready
         or old_tree is None
-        or before["stage"]["status"] != "ready_for_review"
+        or before["stage"]["status"] != "ready"
         or not _artifacts_bind_tree(
             before["stage"]["artifacts"], target_name, old_tree,
         )
     ):
         return False
     status = current_stage["status"]
-    revision_delta = {"ready_for_review": 2, "approved": 3}.get(status)
+    revision_delta = {"ready": 2, "completed": 3}.get(status)
     expected_artifacts = _tree_artifacts_payload(target_name, old_tree)
     return (
         revision_delta is not None
@@ -1447,16 +1447,16 @@ def _is_old_proposal_restoration(
 def _valid_orphan_lock_mode(payload: dict[str, Any], target_name: str) -> bool:
     operation = payload["operation"]
     restore_ready = payload["restore_ready"]
-    if target_name == "03-edit-structure":
+    if target_name == "06-edit-structure":
         return operation == "edit_structure" and not restore_ready
-    if target_name != "02-speech-cleanup" or operation != "speech_cleanup":
+    if target_name != "05-speech-cleanup" or operation != "speech_cleanup":
         return False
     old_tree = payload["old_tree"]
     before_stage = payload["workflow_before"]["stage"]
     if restore_ready:
         return (
             old_tree is not None
-            and before_stage["status"] == "ready_for_review"
+            and before_stage["status"] == "ready"
             and _artifacts_bind_tree(
                 before_stage["artifacts"], target_name, old_tree,
             )
@@ -1549,7 +1549,7 @@ def _recover_orphan_lock(
         )
         target_is_new = _tree_matches(target, new_tree)
         committed = (
-            current_stage["status"] in {"ready_for_review", "approved"}
+            current_stage["status"] in {"ready", "completed"}
             and target_is_new
             and current_stage["artifacts"] == payload["committed_artifacts"]
             and _artifacts_bind_tree(current_stage["artifacts"], target_name, new_tree)
@@ -1712,7 +1712,7 @@ def _recover_generation(
             and current_stage == before["stage"]
         )
         target_is_new = _tree_matches(target, new_tree)
-        committed_status = status in {"ready_for_review", "approved"}
+        committed_status = status in {"ready", "completed"}
         committed = (
             committed_status
             and target_is_new
@@ -2166,7 +2166,7 @@ _INTERNAL_ROLLBACK_REASON = "恢复上一代口播整理提案"
 
 def _task2_artifact_pins(job: JobState) -> dict[str, _PinnedFile]:
     stage = job.stages.get("speech_cleanup")
-    if type(stage) is not dict or stage.get("status") != "ready_for_review":
+    if type(stage) is not dict or stage.get("status") != "ready":
         raise _fail()
     artifacts = stage.get("artifacts")
     if type(artifacts) is not list or len(artifacts) not in {
@@ -2240,7 +2240,7 @@ def _script_text(job: JobState) -> tuple[_PinnedFile, str]:
 def _restore_proposal_state(job: JobState, old_paths: list[Path]) -> None:
     persisted = load_job(job.job_dir)
     status = persisted.stages["speech_cleanup"]["status"]
-    if status == "ready_for_review":
+    if status == "ready":
         revise(persisted, "speech_cleanup", _INTERNAL_ROLLBACK_REASON)
     elif status != "needs_revision":
         raise _fail()
@@ -2319,7 +2319,7 @@ def generate_cleanup_proposal(job: JobState, plan: Any) -> Path:
             stage_id="speech_cleanup",
             restore_ready=True,
             is_committed=lambda: (
-                job.stages["speech_cleanup"]["status"] == "ready_for_review"
+                job.stages["speech_cleanup"]["status"] == "ready"
             ),
             prepare=prepare_revision,
         )
@@ -2668,13 +2668,17 @@ def generate_corrected_cleanup_proposal(
             "sha256": manifest_pin.sha256,
             "bytes": manifest_pin.size,
         }
-        if job.version != 2 and _recover_generation(
+        published_names = ({*proposal_names, "material-usage.json"}
+                           if job.version == 2 else proposal_names)
+        old_generations = ((proposal_names, published_names)
+                           if job.version == 2 else (proposal_names,))
+        if _recover_generation(
             job,
             generation_name,
             "speech_cleanup",
-            _PROPOSAL_NAMES,
+            published_names,
             restore_ready=False,
-            allowed_old_names=(_PROPOSAL_NAMES,),
+            allowed_old_names=old_generations,
             request_binding=request_binding,
         ):
             return target / "cleanup-proposal.json"
@@ -2833,6 +2837,7 @@ def generate_corrected_cleanup_proposal(
                 target,
                 tuple(sorted(proposal_names)),
                 stage_id="speech_cleanup",
+                request_binding=request_binding,
             )
         else:
             _swap_generation(
@@ -2847,7 +2852,7 @@ def generate_corrected_cleanup_proposal(
                 stage_id="speech_cleanup",
                 restore_ready=False,
                 is_committed=lambda: (
-                    job.stages["speech_cleanup"]["status"] == "ready_for_review"
+                    job.stages["speech_cleanup"]["status"] == "ready"
                 ),
             )
         stage = None
@@ -2870,7 +2875,10 @@ def generate_corrected_cleanup_proposal(
             )
         if stage is not None and not publication_owns_stage:
             try:
-                _discard_directory(stage, _PROPOSAL_NAMES)
+                cleanup_names = proposal_names
+                if job.version == 2 and _entry_exists(stage / "material-usage.json"):
+                    cleanup_names = {*proposal_names, "material-usage.json"}
+                _discard_directory(stage, cleanup_names)
             except EditTimelineError:
                 pass
 
@@ -2885,7 +2893,7 @@ def _stage_artifact_pins(
     expected_names: set[str],
 ) -> dict[str, _PinnedFile]:
     stage = job.stages.get(stage_id)
-    if type(stage) is not dict or stage.get("status") != "approved":
+    if type(stage) is not dict or stage.get("status") != "completed":
         raise _fail()
     artifacts = stage.get("artifacts")
     if type(artifacts) is not list or len(artifacts) != len(expected_names):
@@ -3173,7 +3181,7 @@ def render_edit(job: JobState) -> Path:
             stage_id="edit_structure",
             restore_ready=False,
             is_committed=lambda: (
-                job.stages["edit_structure"]["status"] == "ready_for_review"
+                job.stages["edit_structure"]["status"] == "ready"
             ),
         )
         stage = None

@@ -546,7 +546,7 @@ def prepare_preview(job: state.JobState) -> PreviewResult:
         except BaseException:
             committed = state.load_job(fresh.job_dir)
             if (
-                committed.stages["preview"]["status"] == "ready_for_review"
+                committed.stages["preview"]["status"] == "ready"
                 and committed.revision == fresh.revision
             ):
                 fresh = committed
@@ -625,7 +625,7 @@ def prepare_preview(job: state.JobState) -> PreviewResult:
 
 def _approved_record(job: state.JobState, stage_id: str, relative: str) -> dict[str, object]:
     stage_value = job.stages.get(stage_id)
-    if type(stage_value) is not dict or stage_value.get("status") != "approved":
+    if type(stage_value) is not dict or stage_value.get("status") != "completed":
         raise PreviewError("preview preparation failed")
     matches = [item for item in stage_value.get("artifacts", []) if item.get("path") == relative]
     if len(matches) != 1:
@@ -667,7 +667,7 @@ def _recover_prepared_preview(
             and marker["workflow_sha256"] == job.expected_sha256
         )
         ready_matches = (
-            job.stages["preview"]["status"] == "ready_for_review"
+            job.stages["preview"]["status"] == "ready"
             and type(marker["workflow_revision"]) is int
             and job.revision == marker["workflow_revision"] + 1
         )
@@ -759,16 +759,16 @@ def _recover_prepared_preview(
                 _fsync_path(job.job_dir)
             elif not target_exists:
                 raise PreviewError("preview recovery failed")
-        elif stage_status != "ready_for_review" or not target_exists:
+        elif stage_status != "ready" or not target_exists:
             raise PreviewError("preview recovery failed")
         published = [target / path.relative_to(generation) for path in target_artifacts]
-        if stage_status != "ready_for_review":
+        if stage_status != "ready":
             try:
                 state.mark_ready(job, "preview", published)
             except BaseException:
                 committed = state.load_job(job.job_dir)
                 if (
-                    committed.stages["preview"]["status"] == "ready_for_review"
+                    committed.stages["preview"]["status"] == "ready"
                     and committed.revision == job.revision
                 ):
                     _sync_preview_job(job, committed)

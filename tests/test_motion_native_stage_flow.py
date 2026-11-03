@@ -1,10 +1,10 @@
-"""Opt-in native motion stage smoke with isolated approval fixtures.
+"""Opt-in local native production smoke ending in delivered, pending acceptance.
 
 HD_MOTION_NATIVE_STAGE_SMOKE=1 HD_MOTION_NATIVE_SAMPLE_ROOT=<external-case-root> \
     python3.12 -m unittest test_motion_native_stage_flow
 
-This is a code-flow fixture, not user approval, speech transcription, listening,
-or creative acceptance. Media rendering uses the real pinned native scripts.
+Existing local inputs and a fixed production plan are reused with explicit provenance.
+This does not validate new speech transcription, image generation, listening, or creative acceptance. Media rendering uses the real pinned native scripts.
 Its retained Jobs and media live outside the distributable Skill package.
 """
 import copy
@@ -14,18 +14,15 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-import tempfile
 import unittest
 
 import _env
 import motion_native_skill_adapter as native
 from test_motion_native_skill_adapter import brief as native_brief
 from edit.hd.tests.test_visual_direction import draft_segment
-from edit.hd.tests.test_startup import approve_fixture_setup
 from edit.hd.tools import state, contract_artifacts as artifacts
 from edit.hd.tools import broll_skill_selection, motion_match_cache
-from edit.hd.tools import visual_canary, visual_confirmation as confirmation
-from edit.hd.tools import broll_component_executor as executor
+from edit.hd.tools import visual_confirmation as confirmation
 import run_stage
 
 @unittest.skipUnless(os.environ.get('HD_MOTION_NATIVE_STAGE_SMOKE') == '1',
@@ -39,43 +36,63 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             raise ValueError('Native sample inputs and outputs must stay outside the Skill package')
         case_root=self.samples/'source-case'
         self.case=json.loads((case_root/'case.json').read_bytes())
-        self.root=Path(tempfile.mkdtemp(prefix='stage-smoke-',dir=self.samples)).resolve()
-        shutil.copyfile(case_root/'source.mp4',self.root/'source.mp4')
-        shutil.copyfile(case_root/'script.md',self.root/'script.md')
-        self.job=state.create_job(self.root,self.root/'source.mp4',self.root/'script.md',profile='full-v2')
-        approve_fixture_setup(self.job)
+        from initialize_video_job import initialize_video_job
+        from edit.hd.tools import startup
+        import dependency_preflight
+        runs = self.samples / 'runs'
+        runs.mkdir(exist_ok=True)
+        self.job, _context = initialize_video_job(runs, 'direct-delivery-local-smoke',
+            case_root / 'source.mp4', case_root / 'script.md',
+            user_files=[case_root / 'existing-cover/cover-9x16.png'], project_root=_env.PROJECT)
+        self.root = self.job.root
+        manifests = self.job.job_dir / 'manifests'
+        config = manifests / 'provider-config.json'
+        artifacts.write_json_artifact(config, {'schema_version': 1, 'providers': [],
+            'max_concurrency': 1, 'generation_enabled': False})
+        report = dependency_preflight.build_report(_env.PROJECT / 'references/dependency-manifest.json',
+            _env.PROJECT, _env.PROJECT / 'vendor', dependency_preflight._default_skill_roots(),
+            job_context_path=self.root / 'job-context.json')
+        artifacts.write_json_artifact(manifests / 'dependency-preflight.json', report)
+        startup.confirm_setup(self.job, config,
+            user_confirmation='本次已授权独立免费本地制作链验证；不上传ASR，不生成新图片视频，不继承旧人工验收。')
         print('\nNative motion fixture:', self.root, flush=True)
 
     def _edited_fixture(self):
         root = self.job.job_dir
         duration=self.case['duration_frames']/24
-        script=(self.root/'script.md').read_text().strip()
+        script=(self.samples/'source-case/script.md').read_text().strip()
         keywords=self.case.get('keywords',['补货','理架','收银','肯熬','手快','不出错'])
-        def approve(stage,items):
+        def complete(stage,items):
             paths=[]
             for relative,value in items:
                 path=root/relative;path.parent.mkdir(parents=True,exist_ok=True)
                 if isinstance(value,Path):shutil.copyfile(value,path)
                 else:artifacts.write_json_artifact(path,value)
                 paths.append(path)
-            state.mark_ready(self.job,stage,paths);state.approve(self.job,stage)
-        approve('inspect',[('01-inspect/report.json',{'development_fixture':True,'source':'real lecturer clip'})])
+            state.mark_ready(self.job,stage,paths);state.complete(self.job,stage)
+        complete('inspect',[('01-inspect/report.json',{'fixture_scope':'reuse_existing_local_inputs_before_production_plan'})])
         from edit.hd.tools import content_analysis
         content_analysis.prepare_content_analysis(self.job,{'thesis':script,'hook':script,
             'sections':[{'id':'s1','title':'真实口播样片','source_span':[0,len(script)]}],
             'items':[{'id':'idea-01','source_text':script,'source_span':[0,len(script)],'priority':'critical',
                 'keywords':keywords,'semantic_type':'contrast',
                 'evidence_status':'supported','broll_priority':'high'}],'claims':[]})
-        state.approve(self.job,'content_analysis')
-        approve('cover_direction',[('03-cover-direction/cover-direction.json',{'development_fixture':True})])
-        approve('cover',[('04-cover/cover-report.json',{'development_fixture':True}),
-            ('04-cover/cover-delivery-raster.png',_env.SKILL/'assets/wake-native-v2-smoke/04-cover/cover-delivery-raster.png')])
-        approve('speech_cleanup',[('05-speech-cleanup/word-transcript.json',{'version':1,'words':self.case['words']})])
+        state.complete(self.job,'content_analysis')
+        complete('cover_direction',[('03-cover-direction/cover-direction.json',self.samples/'source-case/existing-cover-direction.json')])
+        cover = self.samples/'source-case/existing-cover'
+        complete('cover',[(f'04-cover/{name}', cover/name) for name in
+            ('cover-report.json','cover-brief.json','cover-9x16.png','cover-delivery-raster.png')])
+        complete('speech_cleanup',[
+            ('05-speech-cleanup/word-transcript.json',{'version':1,'words':self.case['words']}),
+            ('05-speech-cleanup/diff-summary.json',{'version':1,'original_script':script,
+                'cleaned_script':script,'deleted_words':[],'deleted_word_count':0})])
         source=root/'06-edit-structure/edited-aroll.mp4'
-        approve('edit_structure',[('06-edit-structure/edit-plan.json',{'canvas':{'width':1080,'height':1920,'fps':24}}),
-            ('06-edit-structure/timeline-map.json',{'output_duration':duration,'segments':[
+        complete('edit_structure',[('06-edit-structure/edit-plan.json',{'canvas':{'width':1080,'height':1920,'fps':24}}),
+            ('06-edit-structure/timeline-map.json',{'version':1,'source_duration':duration,'output_duration':duration,
+                'has_deletion':False,'audio_policy':'existing-local-clip-audio-clock',
+                'render_adapter':'native-ffmpeg-no-cut','segments':[
                 {'source_start':0,'source_end':duration,'timeline_start':0,'timeline_end':duration}]}),
-            ('06-edit-structure/edited-aroll.mp4',self.root/'source.mp4')])
+            ('06-edit-structure/edited-aroll.mp4',self.job.root/self.job.inputs['video']['path'])])
         self.job = state.load_job(root)
         return script, source
 
@@ -84,7 +101,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         director = {'schema_version':3,'segments':[]}
         treatment = {'numbering_scope_id':'motion-native-isolated-stage-fixture',
             'scenes':[],'semantic_lists':{'overlay':[],'broll':[]},'beat_sheet':[],
-            'motion_queries':[],'semantic_assessments':[],'motion_readability':[],
+            'motion_queries':[],
             'overlay_selection':[],'overlay_alignment':[],'generation_plan':{'steps':[]},
             'skill_selection':{'schema_version':1,'beats':[],'overlay_beats':[],
                 'history_note':'隔离测试，不判断真实创意质量','fixed_context':[],'recent_context':[]}}
@@ -134,7 +151,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             request=root/('native-inputs/'+sid+'/brief.json');request.parent.mkdir(parents=True)
             artifacts.write_json_artifact(request,b);payload=request.read_bytes()
             adapter=native.create_adapter(_env.PROJECT,sys.executable,lambda *_:payload,dependency_id=dependency)
-            binding=native.create_binding(adapter,payload,arroll);segment['bindings'][cid]=binding
+            binding=native.create_binding(adapter,payload);segment['bindings'][cid]=binding
             director['segments'].append(segment)
             refs=[{'segment_id':sid,'component_id':cid}]
             treatment['scenes'].append({'segment_id':sid,'component_id':cid,'brief_path':request.relative_to(root).as_posix()})
@@ -144,14 +161,6 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'visual':case['required_change'],'components':refs,'reason':'独立开发样片的明确语义任务'})
             treatment['motion_queries'].append({'segment_id':sid,'component_id':cid,
                 'tags':case.get('query_tags',['并列','过程'] if overlay else ['疲劳','过程'])})
-            treatment['semantic_assessments'].append({'segment_id':sid,'component_id':cid,
-                'candidate_id':('overlay:' if overlay else dependency+':')+dependency+'/'+template,'verdict':'pass','reason':'隔离fixture前提，不代表实际内容评价',
-                'transcript_refs':[{'start_word':first,'end_word':last,'quote':quote,'basis':'current_clause'}],
-                'content_refs':[{'path':request.relative_to(root).as_posix(),'sha256':native.sha(request),
-                                 'pointer':'/'+key,'value':b[key]} for key in ('transcript','template_id','native_options')]
-                    +[{'path':request.relative_to(root).as_posix(),'sha256':native.sha(request),
-                       'pointer':'/task_source/'+key,'value':b['task_source'][key]} for key in ('quote','semantic')]})
-            treatment['motion_readability'].append({'segment_id':sid,'component_id':cid,'targets':[], 'pending_native':True})
             if overlay:
                 treatment['overlay_alignment'].append({'segment_id':sid,'component_id':cid,'brief_path':request.relative_to(root).as_posix()})
                 treatment['overlay_selection'].append({'segment_id':sid,'component_id':cid,'native_route':dependency+'/'+template,
@@ -169,8 +178,9 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'finish':'沿用原生示例色彩材质','focus':'验证当前过程工程执行到媒体'}
         for beat in [*treatment['skill_selection']['beats'],*treatment['skill_selection']['overlay_beats']]:
             key=(beat['segment_id'],beat['component_id'])
-            wanted=next(r['candidate_id'] for r in treatment['semantic_assessments']
-                        if (r['segment_id'],r['component_id'])==key)
+            selected=next(case for case in self.case['segments'] if case['segment_id']==key[0])
+            dependency=selected['dependency_id']
+            wanted=('overlay:' if dependency=='barty-motion-graphics' else dependency+':')+dependency+'/'+selected['template_id']
             beat['candidates']=[{'candidate_id':item['candidate']['candidate_id'],
                 'fit':'preferred' if item['candidate']['candidate_id']==wanted else 'equivalent',
                 'reason':'隔离fixture选择真实准备的原生工程','visual_pattern':'native-'+beat['segment_id'],
@@ -235,7 +245,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 for usage in case['native_usage']]
             for usage in options['native_usage']:
                 usage.pop('implementation_paths')
-        native.publish_completed(root,request,call,qa_note='开发Smoke完成原生工程与媒体回传；最终像素、透明叠加和创意质量仍由宿主检查，不能冒充正式用户交付。',**options)
+        native.publish_completed(root,request,call,**options)
         return native.inspect_result(root,request.read_bytes())
 
     def test_native_motion_from_complete_list_to_native_executor(self):
@@ -252,8 +262,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         self.job=state.load_job(root)
         review={k:copy.deepcopy(v) for k,v in run_stage._summary(self.job,'visual_direction').items()
                 if k in {'job_id','job_dir','stage','revision','artifacts'}}
-        review.update(passed=True,note='显式隔离fixture批准，仅验证流程，不是实际用户确认',
-                      user_confirmation='显式隔离fixture授权，不得用于正式用户视频')
+        review.update(user_confirmation='本次已授权按固定计划执行独立免费本地制作链验证；不继承旧验收，不做付费调用。')
         run_stage._review(self.job,'visual_direction',review);self.job=state.load_job(root)
         approved=confirmation.validate_visual_authorization(self.job)['source']
         director=artifacts.read_json_artifact(confirmation._exact(root,approved['inputs']['director']))
@@ -262,86 +271,38 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         self.assertEqual([a['dependency_id'] for a in pending['actions']],
                          [c['dependency_id'] for c in self.case['segments']])
         self.assertTrue(all(a['action']=='execute_native_skill' for a in pending['actions']))
-        for action in pending['actions']:
-            result=self._render(action)
-            assessment=next(a for a in treatment['semantic_assessments']
-                            if (a['segment_id'],a['component_id'])==(action['segment_id'],action['component_id']))
-            call=json.loads(native.exact(root,result['render_call']).read_bytes())
-            case=next(c for c in self.case['segments'] if c['segment_id']==action['segment_id'])
-            source=next(f for f in call['project_files'] if f['job_path'].endswith('/'+case.get('entry_source',case.get('entry_html',''))))
-            source_text=(root/source['job_path']).read_text()
-            suffixes={'.ts','.tsx'} if result['dependency_id']=='video-shotcraft' else (
-                {'.html','.py'} if case['template_id']=='3d-render' else {'.html'})
-            assessment['content_refs']=[{'path':f['job_path'],'sha256':f['sha256'],
-                'quote':case.get('source_quotes',{}).get(
-                    Path(f['job_path']).relative_to(Path(action['project_directory']).relative_to(root)).as_posix(),
-                    case.get('source_evidence','M.scene({' if result['alpha'] else 'window.OPENER'))}
-                for f in call['project_files'] if Path(f['job_path']).suffix in suffixes]
-            record=root/action['result_record_path']
-            assessment['content_refs'].append({'path':action['result_record_path'],'sha256':native.sha(record),
-                'pointer':'/status','value':'completed'})
-            targets=[]
-            for index,target in enumerate(case['text_targets']):
-                text=target['text']
-                offset=source_text.index(text)
-                targets.append({'target_id':action['segment_id']+'-'+str(index),
-                    'content_ref':{'path':source['job_path'],'sha256':source['sha256'],'pointer':f'text:{offset}:{offset+len(text)}','value':text},
-                    'span':[0,len(text)],'role':target['role'],'region':target['region'],'windows':target['windows']})
-            readability=next(r for r in treatment['motion_readability'] if r['segment_id']==action['segment_id'])
-            readability.clear();readability.update(segment_id=action['segment_id'],component_id=action['component_id'],targets=targets)
-            next(s for s in director['segments'] if s['segment_id']==action['segment_id'])['visible_text']=list(dict.fromkeys(target['text'] for target in case['text_targets']))
-        artifacts.write_json_artifact(dpath,director)
-        artifacts.write_json_artifact(tpath,treatment)
-        from edit.hd.tools import content_analysis
-        analysis=content_analysis.load_approved_content_analysis(self.job)
-        artifacts.write_json_artifact(root/'reviewed-visual-text.json',{'content_analysis_sha256':analysis['analysis_sha256'],
-            'entries':[{'segment_id':segment['segment_id'],'text':text,'source_ref':'item:idea-01',
-                        'source_quote':script,'reason':'原生从当前真实原话提炼的画面文字，不增加事实、数字或后文结果'}
-                       for segment in director['segments'] for text in segment['visible_text']]})
-        run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{'director_brief':'director.json',
-            'treatment':'treatment.json','reviewed_visual_text':'reviewed-visual-text.json',
-            'host_qa_note':'独立开发样片原生渲染完成，实际源码、文字清单与结果审核冻结；最终画面由宿主再检查，不冒充用户正式交付'}})
-        self.job=state.load_job(root);confirmation.validate_visual_authorization(self.job,require_realized=True)
-        plan=visual_canary.load_approved_visual_plan(self.job);adapters=run_stage.native_component_adapters(_env.PROJECT,self.job)
-        outcomes=[];rendered=[]
-        from edit.hd.tools import segment_render, subtitles_v2, talkcraft_subtitles, preview_v2
-        for segment in plan['segments']:
-            recipe=segment['shot_recipe'];component=recipe['components'][0]
-            if component['dependency_id']=='bang-motion':
-                self.assertEqual(component['render_window']['layout_slot'],'full_frame')
-            result=executor.execute_component(self.job,executor.ComponentExecutionRequest(recipe=recipe,component_id=component['component_id']),
-                adapters={**adapters,'artifact_probe':native.create_artifact_probe(ffprobe_executable=shutil.which('ffprobe'))})
-            self.assertEqual(result.status,'success')
-            b=next(s for s in treatment['scenes'] if s['segment_id']==segment['segment_id'])
-            expected=native.inspect_result(root,(root/b['brief_path']).read_bytes())
-            self.assertEqual(result.output_sha256,expected['media']['sha256'])
-            renderer=segment_render.render_arroll_segment if recipe['mode']=='none' else segment_render.render_segment_video
-            rendered.append(renderer(self.job,segment,artifacts=(result,),output_dir=root/'smoke-segments',
-                visual_plan_sha256=plan['visual_plan_sha256'],arroll_source=arroll,arroll_sha256=native.sha(arroll),arroll_bytes=arroll.stat().st_size))
-            outcomes.append({'dependency_id':component['dependency_id'],'status':result.status,'job_path':result.job_path,
-                             'sha256':result.output_sha256})
-        outputs=root/'smoke-preview';outputs.mkdir()
-        visual=outputs/'visual.mp4';segment_render.assemble_visual_track(rendered,visual)
-        numbered=confirmation.approved_numbered_rows(self.job)
-        component_records=outputs/'component-results.json';artifacts.write_json_artifact(component_records,{'outcomes':outcomes})
-        paths={'word_transcript':root/'05-speech-cleanup/word-transcript.json','timeline_map':root/'06-edit-structure/timeline-map.json',
-            'edited_aroll':arroll,'visual_plan':root/'07-visual-direction/visual-plan.json','asset_manifest':component_records,'visual_track':visual}
-        cues=[]
-        render_plan=subtitles_v2.build_render_plan(records={name:confirmation._record(root,path) for name,path in paths.items()},
-            words=self.case['words'],timeline=json.loads(paths['timeline_map'].read_bytes()),visual_plan=plan,
-            keyword_index={'idea-01':tuple(self.case.get('keywords',['补货','理架','收银','肯熬','手快','不出错']))},renderer_cues=cues)
-        subtitle_input=talkcraft_subtitles.renderer_input(render_plan,cues)
-        artifacts.write_json_artifact(outputs/'subtitle-plan.json',render_plan)
-        subtitles=outputs/'subtitles.webm'
-        with subtitles.open('w+b') as stream:talkcraft_subtitles.render(subtitle_input,stream.fileno())
-        atlas=preview_v2._write_number_atlas(outputs/'number-badges.png',[r['number'] for r in numbered])
-        schedule=[{**r,'start_frame':round(r['start']*24),'end_frame':round(r['end']*24)} for r in numbered]
-        preview=outputs/'native-stage-smoke-preview.mp4'
-        command=preview_v2.build_preview_command_v2(visual,subtitles,arroll,preview,frames=self.case['duration_frames'],
-            duration=self.case['duration_frames']/24,number_overlay={'rows':schedule,'atlas':atlas})
-        subprocess.run(command,check=True,capture_output=True)
-        artifacts.write_json_artifact(self.root/'stage-smoke-result.json',{'development_fixture':True,'outcomes':outcomes,
-            'preview':str(preview),'numbered_rows':numbered})
+        native_results=[self._render(action) for action in pending['actions']]
+        run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{
+            'director_brief':'director.json','treatment':'treatment.json'}})
+        self.job=state.load_job(root)
+        self.assertEqual(self.job.stages['visual_direction']['status'], 'completed')
+        confirmation.validate_visual_authorization(self.job, require_realized=True)
+        numbered = confirmation.approved_numbered_rows(self.job)
+        self.assertTrue(numbered)
+        self.assertEqual([row['number'] for row in numbered], list(range(1, len(numbered) + 1)))
+        delivered = run_stage.execute_stage(root, _env.PROJECT)
+        self.assertEqual(delivered['status'], 'completed', delivered)
+        self.assertTrue(all(stage['status'] == 'completed'
+            for stage in state.load_job(root).stages.values()))
+        self.assertEqual(delivered['delivery_status'], 'delivered')
+        from edit.hd.tools import delivery_approval
+        manifest = next(row for row in state.load_job(root).stages['delivery']['artifacts']
+                        if row['path'] == '12-delivery/delivery-manifest.json')
+        receipt, acceptance = delivery_approval.receipt_paths(manifest)
+        record = artifacts.read_json_artifact(root / receipt)
+        self.assertEqual(record['decision'], 'delivered')
+        final = Path(delivered['delivery_file'])
+        metadata = json.loads(subprocess.check_output([shutil.which('ffprobe'), '-v', 'error',
+            '-show_streams', '-show_format', '-of', 'json', str(final)], text=True))
+        self.assertTrue(any(stream['codec_type'] == 'video' for stream in metadata['streams']))
+        self.assertTrue(any(stream['codec_type'] == 'audio' for stream in metadata['streams']))
+        self.assertFalse((root / acceptance).exists())
+        self.assertFalse(list((root / '08-visual-canary').glob('**/*.*')))
+        artifacts.write_json_artifact(self.root/'stage-smoke-result.json', {
+            'scope':'fixed local production plan to native render, subtitles, composition, delivery',
+            'input_provenance':self.case['input_provenance'], 'native_results':native_results, 'final':str(final),
+            'delivery_status':'delivered','acceptance_status':'pending', 'numbered_rows':numbered,
+            'new_asr_calls':0,'new_generated_media_calls':0,'manual_acceptance_performed':False})
         print('Native stage smoke completed:',self.root/'stage-smoke-result.json',flush=True)
 
 

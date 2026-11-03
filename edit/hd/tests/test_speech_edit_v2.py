@@ -40,7 +40,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             },
         )
         state.mark_ready(self.job, "inspect", (inspect,))
-        state.approve(self.job, "inspect")
+        state.complete(self.job, "inspect")
         content_analysis.prepare_content_analysis(self.job, {
             "thesis": "你好AI",
             "hook": "你好AI",
@@ -52,7 +52,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             }],
             "claims": [],
         })
-        state.approve(self.job, "content_analysis")
+        state.complete(self.job, "content_analysis")
         for stage_id, relative in (
             ("cover_direction", "03-cover-direction/cover-direction.json"),
             ("cover", "04-cover/cover-report.json"),
@@ -61,7 +61,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("{}\n", encoding="utf-8")
             state.mark_ready(self.job, stage_id, (path,))
-            state.approve(self.job, stage_id)
+            state.complete(self.job, stage_id)
         speech = self.job.job_dir / "05-speech-cleanup"
         speech.mkdir()
         with wave.open(str(speech / "speech-16k.wav"), "wb") as audio:
@@ -140,7 +140,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             },
         )
         self.assertEqual(
-            self.job.stages["speech_cleanup"]["status"], "ready_for_review"
+            self.job.stages["speech_cleanup"]["status"], "ready"
         )
         self.assertIn(
             "05-speech-cleanup/material-usage.json",
@@ -152,7 +152,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
     def test_edit_structure_publication_binds_material_usage_receipt(self) -> None:
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         target = self.job.job_dir / "06-edit-structure"
         stage = self.job.job_dir / f".06-edit-structure.stage-{'b' * 32}"
         stage.mkdir()
@@ -180,7 +180,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         payload = contract_artifacts.read_json_artifact(summary)
         self.assertIn("risk_assessment", payload)
         self.assertEqual(payload["risk_assessment"]["candidates"], [])
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         state.revise(self.job, "speech_cleanup", "核听发现局部口误")
         revised = {**self.plan, "version": 2, "reviewed_cut_ranges": [{
             "source_start": 0.32, "source_end": 0.44,
@@ -191,7 +191,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertNotEqual(contract_artifacts.sha256_file(summary), first_hash)
         self.assertEqual(payload["risk_assessment"]["counts"]["review"], 1)
         current = state.load_job(self.job.job_dir)
-        self.assertEqual(current.stages["speech_cleanup"]["status"], "ready_for_review")
+        self.assertEqual(current.stages["speech_cleanup"]["status"], "ready")
         self.assertEqual(current.stages["edit_structure"]["status"], "pending")
         record = next(item for item in current.stages["speech_cleanup"]["artifacts"]
                       if item["path"].endswith("/diff-summary.json"))
@@ -209,7 +209,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
     def test_cleanup_proposal_can_be_rebuilt_after_review_revision(self) -> None:
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         state.revise(self.job, "speech_cleanup", "补充清理重字")
         revised = {
             **self.plan,
@@ -226,13 +226,13 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
         self.assertTrue(path.is_file())
         self.assertEqual(
-            self.job.stages["speech_cleanup"]["status"], "ready_for_review"
+            self.job.stages["speech_cleanup"]["status"], "ready"
         )
         self.assertEqual(self.job.stages["edit_structure"]["status"], "pending")
 
     def test_cleanup_revision_retains_corrected_transcript_and_history(self) -> None:
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         transcript = self.job.job_dir / "05-speech-cleanup/word-transcript.json"
         manifest = self.root / "corrections.json"
         manifest.write_text(json.dumps({
@@ -250,7 +250,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         }, ensure_ascii=False), encoding="utf-8")
         state.revise(self.job, "speech_cleanup", "修正口误")
         edit_timeline.generate_corrected_cleanup_proposal(self.job, manifest)
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         state.revise(self.job, "speech_cleanup", "重新调整节奏")
 
         revised_plan = copy.deepcopy(self.plan)
@@ -307,7 +307,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
         self.assertEqual(published, target)
         self.assertEqual(
-            self.job.stages["speech_cleanup"]["status"], "ready_for_review"
+            self.job.stages["speech_cleanup"]["status"], "ready"
         )
 
     def test_publish_deduplicates_two_independent_job_snapshots(self) -> None:
@@ -330,7 +330,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertFalse(second.exists())
         self.assertEqual(second_job.revision, first_job.revision)
         self.assertEqual(
-            second_job.stages["speech_cleanup"]["status"], "ready_for_review"
+            second_job.stages["speech_cleanup"]["status"], "ready"
         )
 
     def test_publish_interruption_is_recovered_by_the_next_retry(self) -> None:
@@ -372,7 +372,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            retry_job.stages["speech_cleanup"]["status"], "ready_for_review"
+            retry_job.stages["speech_cleanup"]["status"], "ready"
         )
         self.assertFalse(
             (self.job.job_dir / ".05-speech-cleanup.generation.marker").exists()
@@ -498,7 +498,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
         self.assertEqual(published, target)
         self.assertEqual(
-            self.job.stages["speech_cleanup"]["status"], "ready_for_review"
+            self.job.stages["speech_cleanup"]["status"], "ready"
         )
 
     def test_stage_sync_rejects_unexpected_and_nonregular_entries(self) -> None:
@@ -647,6 +647,112 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertEqual(output.read_bytes(), b"normalized-render")
         self.assertFalse((stage / "video-use-edl.json").exists())
         self.assertFalse((stage / "video-use-render.mp4").exists())
+
+    def test_formal_audio_keeps_exact_sample_clock_and_rejects_packet_changes(self) -> None:
+        source = self.root / "clock-source.mp4"
+        subprocess.run([
+            "ffmpeg", "-v", "error", "-nostdin", "-y",
+            "-f", "lavfi", "-i", "color=c=black:s=32x32:r=24:d=1",
+            "-f", "lavfi", "-i", "sine=frequency=500:sample_rate=44100:duration=1",
+            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-ac", "2", str(source),
+        ], check=True, capture_output=True)
+        intervals = [(0.0, 0.12), (0.5, 0.67)]
+        segments, duration = speech_edit_v2._frame_aligned_timeline(intervals, fps=24)
+        self.assertEqual(round(duration * 48000), 16000)
+        target = self.job.job_dir / "06-edit-structure"
+        target.mkdir()
+        stage = self.root / "clock-render"
+        stage.mkdir()
+        renderer = self.root / "fixture-render.py"
+        original_run = subprocess.run
+
+        def render(command, **kwargs):
+            if str(renderer) in command:
+                (stage / "video-use-render.mp4").write_bytes(source.read_bytes())
+                clips = stage / "clips_graded"
+                clips.mkdir()
+                for index in range(len(intervals)):
+                    (clips / f"seg_{index:02d}_aroll.mp4").write_bytes(source.read_bytes())
+                return subprocess.CompletedProcess(command, 0)
+            return original_run(command, **kwargs)
+
+        media = target / "edited-aroll.mp4"
+        with mock.patch.object(speech_edit_v2.subprocess, "run", side_effect=render):
+            speech_edit_v2._render_with_video_use(
+                renderer, source, intervals, media, stage, timeout=60)
+        cleanup = self.job.job_dir / "05-speech-cleanup/cleanup-proposal.json"
+        contract_artifacts.write_json_artifact(cleanup, {})
+        contract_artifacts.write_json_artifact(target / "edit-plan.json", {
+            "cleanup_proposal": {}, "canvas": {"width": 1080, "height": 1920, "fps": 24},
+            "audio_policy": "video-use-audio-clock-30ms-edge-fades",
+        })
+        contract_artifacts.write_json_artifact(target / "timeline-map.json", {
+            "segments": segments, "output_duration": duration,
+        })
+        self.job.inputs["video"] = {"path": source.relative_to(self.root).as_posix(),
+            "sha256": contract_artifacts.sha256_file(source), "bytes": source.stat().st_size}
+        self.job.stages["speech_cleanup"].update(status="completed", artifacts=[])
+        self.job.stages["edit_structure"]["artifacts"] = [{
+            "path": path.relative_to(self.job.job_dir).as_posix(),
+            "sha256": contract_artifacts.sha256_file(path), "bytes": path.stat().st_size,
+        } for path in (target / name for name in speech_edit_v2._EDIT_NAMES)]
+        receipt = {"job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
+            "stage": "speech_cleanup", "passed": True, "reviewed_by": "user", "artifacts": [],
+            "speech_cleanup_audio_review": {"clock": segments}}
+        contract_artifacts.write_json_artifact(
+            self.job.job_dir / "manifests/local-qa-speech_cleanup-r0.json", receipt)
+        results = {}
+
+        def capture(command, **kwargs):
+            result = original_run(command, **kwargs)
+            results[tuple(command)] = result
+            return result
+
+        # The separate audition-review tests cover approval; here the production
+        # renderer, AAC encoder, MP4 muxer and strict audio verifier all run.
+        with mock.patch.object(speech_edit_v2, "validate_cleanup_review"), \
+                mock.patch.object(speech_edit_v2.subprocess, "run", side_effect=capture):
+            binding = speech_edit_v2.edit_user_audio_binding(self.job)
+        self.assertEqual(binding["formal_duration"], duration)
+        actual_command = next(command for command in results
+                              if "framehash" in command and "copy" in command)
+        packet_lines = [row for row in results[actual_command].stdout.splitlines()
+                        if row and not row.startswith("#")]
+        for index, row in enumerate(packet_lines):
+            packet = [part.strip() for part in row.split(",")[:6]]
+            self.assertEqual(int(packet[1]), (index - 1) * 1024)
+            self.assertEqual(int(packet[2]), (index - 1) * 1024)
+        probe_command = next(command for command in results if "-show_streams" in command)
+        audio = next(stream for stream in json.loads(results[probe_command].stdout)["streams"]
+                     if stream["codec_type"] == "audio")
+        self.assertEqual(audio["duration_ts"], 16000)
+        first_command = next(command for command in results if "-show_packets" in command)
+        for defect in ("payload", "pts", "duration", "header", "audio_length", "priming"):
+            changed = copy.deepcopy(results)
+            if defect in {"payload", "pts", "duration"}:
+                text = changed[actual_command].stdout
+                fields = packet_lines[1].split(",")
+                column = {"payload": 5, "pts": 2, "duration": 3}[defect]
+                fields[column] = "0" * 64 if defect == "payload" else str(int(fields[column]) + 1)
+                changed[actual_command].stdout = text.replace(packet_lines[1], ",".join(fields), 1)
+            elif defect == "header":
+                changed[actual_command].stdout = changed[actual_command].stdout.replace(
+                    "#sample_rate 0: 48000", "#sample_rate 0: 44100")
+            elif defect == "audio_length":
+                probe = json.loads(changed[probe_command].stdout)
+                next(s for s in probe["streams"] if s["codec_type"] == "audio")["duration_ts"] += 1
+                changed[probe_command].stdout = json.dumps(probe)
+            else:
+                probe = json.loads(changed[first_command].stdout)
+                probe["packets"][0]["side_data_list"][0]["skip_samples"] += 1
+                changed[first_command].stdout = json.dumps(probe)
+            with self.subTest(defect=defect), \
+                    mock.patch.object(speech_edit_v2, "validate_cleanup_review"), \
+                    mock.patch.object(speech_edit_v2.subprocess, "run",
+                                      side_effect=lambda command, **kwargs: changed[tuple(command)]):
+                with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2.edit_user_audio_binding(self.job)
 
     def test_portrait_normalization_resets_non_square_source_pixels(self) -> None:
         output = self.root / "normalized.mp4"
@@ -800,7 +906,7 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         )
         self.assertTrue(any(c["kind"] == "retained_word_silence" for c in candidates))
 
-    def test_residual_cleanup_requires_exact_host_audio_review(self) -> None:
+    def test_optional_cleanup_annotations_do_not_gate_machine_completion(self) -> None:
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
         candidates = [{"candidate_id": "repeat-one"}]
         with mock.patch.object(speech_edit_v2, "cleanup_check_candidates", return_value=candidates):
@@ -811,19 +917,10 @@ class FormalSpeechCleanupTests(unittest.TestCase):
                 "reason": "已核听为有意重复强调，保留原语气",
             }]}
             speech_edit_v2.validate_cleanup_review(self.job, review)
-            state.approve(self.job, "speech_cleanup")
-            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                speech_edit_v2._require_cleanup_review(self.job)
-            receipt = {**review, "job_id": self.job.job_id, "job_dir": str(self.job.job_dir),
-                       "stage": "speech_cleanup", "passed": True, "reviewed_by": "host",
-                       "artifacts": self.job.stages["speech_cleanup"]["artifacts"]}
-            path = self.job.job_dir / "manifests/local-qa-speech_cleanup-r1.json"
-            contract_artifacts.write_json_artifact(path, receipt)
-            speech_edit_v2._require_cleanup_review(self.job)
-            receipt["artifacts"] = []
-            contract_artifacts.write_json_artifact(path, receipt)
-            with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                speech_edit_v2._require_cleanup_review(self.job)
+            state.complete(self.job, "speech_cleanup")
+            self.assertEqual(state.load_job(self.job.job_dir).stages["speech_cleanup"]["status"], "completed")
+            self.assertFalse(hasattr(speech_edit_v2, "_require_cleanup_review"))
+            self.assertFalse(list((self.job.job_dir / "manifests").glob("local-qa-*.json")))
 
     def test_user_review_binds_actual_audition_cuts_and_preserves_reviewer(self) -> None:
         import importlib.util
@@ -866,34 +963,32 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             ):
                 with self.subTest(invalid=invalid), self.assertRaises(speech_edit_v2.SpeechEditV2Error):
                     speech_edit_v2.validate_cleanup_review(self.job, {**review, **invalid})
-            # Exercise the real existing QA writer: user must not be rewritten to host.
+            # Optional listening notes cannot create an intermediate approval gate.
             script = Path(__file__).resolve().parents[3] / "scripts/run_stage.py"
             spec = importlib.util.spec_from_file_location("speech_user_run_stage", script)
             runner = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(runner)
-            runner._review(self.job, "speech_cleanup", review)
-            receipt = contract_artifacts.read_json_artifact(
-                self.job.job_dir / f"manifests/local-qa-speech_cleanup-r{review['revision']}.json")
-            self.assertEqual(receipt["reviewed_by"], "user")
-            speech_edit_v2._require_cleanup_review(self.job)
+            with self.assertRaisesRegex(ValueError, "Machine stages complete automatically"):
+                runner._review(self.job, "speech_cleanup", review)
+            self.assertFalse(list((self.job.job_dir / "manifests").glob("local-qa-*.json")))
             with mock.patch.object(speech_edit_v2, "cleanup_check_candidates", return_value=[
                     {**candidates[0], "source_start": 0.25}]):
                 with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                    speech_edit_v2._require_cleanup_review(self.job)
+                    speech_edit_v2.validate_cleanup_review(self.job, review)
             # Same size, different content: stale source plans and audio are rejected.
             original = (speech / "cleanup-proposal.json").read_bytes()
             (speech / "cleanup-proposal.json").write_bytes(original.replace(b'"version":1', b'"version":2'))
             with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                speech_edit_v2._require_cleanup_review(self.job)
+                speech_edit_v2.validate_cleanup_review(self.job, review)
             (speech / "cleanup-proposal.json").write_bytes(original)
             audition.write_bytes(audition.read_bytes()[:-2] + b"\x01\x01")
             with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
-                speech_edit_v2._require_cleanup_review(self.job)
+                speech_edit_v2.validate_cleanup_review(self.job, review)
 
     def test_inherited_edit_review_preserves_pending_listening_and_rejects_stale_binding(self) -> None:
         import importlib.util
         speech_edit_v2.prepare_cleanup_proposal(self.job, self.plan)
-        state.approve(self.job, "speech_cleanup")
+        state.complete(self.job, "speech_cleanup")
         artifact = self.job.job_dir / "06-edit-structure/edited-aroll.mp4"
         artifact.parent.mkdir()
         artifact.write_bytes(b"current formal media")
@@ -916,12 +1011,11 @@ class FormalSpeechCleanupTests(unittest.TestCase):
             spec = importlib.util.spec_from_file_location("edit_user_run_stage", script)
             runner = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(runner)
-            runner._review(self.job, "edit_structure", review)
-        receipt = contract_artifacts.read_json_artifact(
-            self.job.job_dir / f"manifests/local-qa-edit_structure-r{review['revision']}.json")
-        self.assertEqual(receipt["reviewed_by"], "user")
-        self.assertFalse(receipt["audio_listened"])
-        self.assertEqual(receipt["edit_structure_audio_review"]["final_audio_review"], "pending")
+            with self.assertRaises(ValueError):
+                runner._review(self.job, "edit_structure", review)
+        self.assertFalse(list((self.job.job_dir / "manifests").glob("local-qa-*.json")))
+        state.complete(self.job, "edit_structure")
+        self.assertEqual(state.load_job(self.job.job_dir).stages["edit_structure"]["status"], "completed")
 
     def test_pacing_finds_quiet_middle_after_audible_word_tail(self) -> None:
         words = [
@@ -1170,6 +1264,57 @@ class FormalSpeechCleanupTests(unittest.TestCase):
                 with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
                     speech_edit_v2._normalize_video_use_words(payload, 2.0)
 
+    def test_video_use_event_bridged_zero_word_keeps_next_word_independent(self) -> None:
+        payload = {"words": [
+            {"type": "word", "text": "裸", "start": 20.72, "end": 20.80, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "辞", "start": 20.98, "end": 20.98, "speaker_id": "speaker_0"},
+            {"type": "spacing", "text": " ", "start": 20.98, "end": 20.98, "speaker_id": "speaker_0"},
+            {"type": "audio_event", "text": "[拍桌子]", "start": 20.98, "end": 21.20, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "，", "start": 21.30, "end": 21.30, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "它", "start": 22.20, "end": 22.32, "speaker_id": "speaker_0"},
+        ]}
+        original = copy.deepcopy(payload)
+        groups = []
+        words, merged = speech_edit_v2._normalize_video_use_words(payload, 23.0, protected_groups=groups)
+        self.assertEqual([(word.text, word.start, word.end) for word in words], [
+            ("裸辞 ，", 20.72, 22.20), ("它", 22.20, 22.32),
+        ])
+        self.assertEqual(merged, 2)
+        self.assertEqual(payload, original)
+        self.assertEqual(groups[0]["raw_event_indices"], [0, 1, 2, 3, 4])
+        self.assertEqual(groups[0]["zero_duration_event_index"], 1)
+        self.assertEqual(groups[0]["raw_zero_duration_time"], 20.98)
+        self.assertEqual(groups[0]["left_anchor"]["event_index"], 0)
+        self.assertEqual(groups[0]["right_anchor"]["event_index"], 5)
+        self.assertEqual(groups[0]["interval"], {"start": 20.72, "end": 22.20})
+        self.assertEqual(groups[0]["end_semantics"], "conservative_protection_limit_not_speech_end")
+        self.assertEqual(groups[0]["risk"], "unknown_internal_word_boundary")
+
+        cases = []
+        for index, updates in (
+            (0, {"text": "裸。"}), (4, {"text": "。"}),
+            (1, {"speaker_id": "speaker_1"}), (3, {"speaker_id": "speaker_1"}),
+            (5, {"speaker_id": "speaker_1"}), (5, {"start": 23.0, "end": 23.1}),
+        ):
+            case = copy.deepcopy(payload)
+            case["words"][index].update(updates)
+            cases.append(case)
+        extra_zero = copy.deepcopy(payload)
+        extra_zero["words"].insert(5, {"type": "word", "text": "啊", "start": 21.5, "end": 21.5,
+                                       "speaker_id": "speaker_0"})
+        cases.append(extra_zero)
+        chained = copy.deepcopy(payload)
+        chained["words"][:1] = [
+            {"type": "word", "text": "想", "start": 20.3, "end": 20.5, "speaker_id": "speaker_0"},
+            {"type": "word", "text": "要", "start": 20.6, "end": 20.6, "speaker_id": "speaker_0"},
+            payload["words"][0],
+        ]
+        cases.append(chained)
+        for case in cases:
+            with self.subTest(case=case):
+                with self.assertRaises(speech_edit_v2.SpeechEditV2Error):
+                    speech_edit_v2._normalize_video_use_words(case, 25.0)
+
     def test_zero_duration_lexical_events_require_audio_review_even_with_internal_cuts(self) -> None:
         raw = {"words": [
             {"type": "word", "text": "热", "start": 21.74, "end": 21.90},
@@ -1204,3 +1349,35 @@ class FormalSpeechCleanupTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DirectSpeechProductionTests(unittest.TestCase):
+    def test_render_consumes_actual_cleanup_plan_without_listening_receipt(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            speech = root / '05-speech-cleanup'; speech.mkdir()
+            source = root / 'source.mp4'; source.write_bytes(b'source')
+            words = [{'text':'原话','start':0.0,'end':1.0}]
+            plan = {'version':1,'segments':[{'action':'keep','word_start':0,'word_end':1,
+                'source_start':0.0,'source_end':1.0,'original_sentence':'原话','cleaned_sentence':'原话',
+                'reason':'保留原话','breathing_padding':{'before':0.0,'after':0.0}}]}
+            contract_artifacts.write_json_artifact(speech / 'word-transcript.json', {'words':words})
+            contract_artifacts.write_json_artifact(speech / 'cleanup-proposal.json', plan)
+            job = SimpleNamespace(job_dir=root,stages={'speech_cleanup':{'status':'completed'}})
+            with mock.patch.object(state,'require_runnable'), \
+                 mock.patch.object(speech_edit_v2,'_input',return_value=source), \
+                 mock.patch.object(speech_edit_v2,'_inspect',return_value={'video':{'duration':1.0}}), \
+                 mock.patch.object(speech_edit_v2,'cleanup_check_candidates',side_effect=AssertionError('no listening gate')), \
+                 mock.patch.object(speech_edit_v2.subprocess,'run') as render, \
+                 mock.patch.object(speech_edit_v2,'_publish') as publish:
+                result = speech_edit_v2.render_edit(job)
+            render.assert_called_once()
+            publish.assert_called_once()
+            self.assertEqual(result, root / '06-edit-structure/edited-aroll.mp4')
+            staged = publish.call_args.args[1]
+            actual = contract_artifacts.read_json_artifact(staged / 'edit-plan.json')
+            self.assertEqual(actual['cleanup_proposal'], plan)
+            timeline = contract_artifacts.read_json_artifact(staged / 'timeline-map.json')
+            self.assertEqual(timeline['output_duration'], 1.0)
+            self.assertFalse((root / 'manifests').exists())

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
 import subprocess
 import tempfile
 from types import SimpleNamespace
@@ -42,6 +43,40 @@ def lemo_brief(slug="blueprint"):
 
 @unittest.skipUnless(edit_hd_available, "edit.hd runtime is unavailable; run from the project checkout")
 class UpstreamSceneTests(unittest.TestCase):
+    def test_valid_parent_keeps_the_dedicated_native_python(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            commit, entry = scene.SOURCES['onetake']
+            source = root / entry; source.parent.mkdir(parents=True); source.write_text('# fixture')
+            runtime = {'root': str(root), 'commit': commit, 'entry': entry, 'entry_sha256': scene.sha(source),
+                       'executable_hashes': {}, 'python': '/dedicated/onetake/python',
+                       'node': '/native/node', 'ffmpeg': '/native/ffmpeg', 'ffprobe': '/native/ffprobe',
+                       'browser_cache': '/native/browsers'}
+            with mock.patch.object(scene, '_execution_job') as identity, \
+                 mock.patch.object(scene, 'validate_workflow'), \
+                 mock.patch.object(scene.subprocess, 'check_output', side_effect=[commit, '']), \
+                 mock.patch.object(scene.subprocess, 'run', side_effect=RuntimeError('native guard reached')) as run:
+                with self.assertRaisesRegex(RuntimeError, 'native guard reached'):
+                    scene.run_native(brief(), root, runtime, job_dir=root / 'job')
+                identity.assert_called_once_with(root / 'job')
+                self.assertEqual(run.call_args.args[0][0], '/dedicated/onetake/python')
+
+    def test_native_api_and_cli_require_job_before_workflow_or_output_work(self):
+        from edit.hd.tools import state
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            with mock.patch.object(scene.subprocess, 'run') as render, \
+                 mock.patch.object(scene, 'validate_workflow') as workflow:
+                with self.assertRaisesRegex(state.WorkflowError, 'requires a Job'):
+                    scene.run_native(brief(), root, {'python': '/legal/dedicated/python'}, job_dir=None)
+                render.assert_not_called(); workflow.assert_not_called()
+            result = subprocess.run([sys.executable, str(SKILL / scene.ENTRY),
+                '--brief', str(root / 'missing.json'), '--output', str(root / 'output.mp4')],
+                cwd=root, capture_output=True, text=True, env={'PATH': '/usr/bin:/bin'})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('requires a Job', result.stderr)
+            self.assertEqual(list(root.iterdir()), [])
+
     def test_lemo_workflow_rejects_changed_instructions_and_treatment(self):
         b = lemo_brief("swiss-motion")
         root = SKILL / "vendor/lemo-opuscar"
@@ -92,7 +127,8 @@ class UpstreamSceneTests(unittest.TestCase):
         adapter = SimpleNamespace(dependency_id="lemo-opuscar", launcher="python",
             entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY),
             renderer_version=scene.SOURCES["lemo-opuscar"][0])
-        binding = scene.create_binding(adapter, json.dumps(b).encode(), __file__)
+        binding = scene.create_binding(adapter, json.dumps(b).encode())
+        self.assertNotIn("sample_sha256", binding)
         router.validate_template_binding(binding)
         changed = copy.deepcopy(binding)
         changed["template_id"] = "lemo-opuscar/swiss-motion"
@@ -107,7 +143,7 @@ class UpstreamSceneTests(unittest.TestCase):
             self.assertEqual(scene.validate_brief(data)["style_slug"], slug)
             adapter = SimpleNamespace(dependency_id="lemo-opuscar", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY),
                 renderer_version=scene.SOURCES["lemo-opuscar"][0], launcher="node")
-            binding = scene.create_binding(adapter, data.encode(), __file__)
+            binding = scene.create_binding(adapter, data.encode())
             self.assertEqual(binding["template_id"], "lemo-opuscar/" + slug)
             router.validate_template_binding(binding)
         with self.assertRaises(ValueError): scene.validate_brief(json.dumps(lemo_brief("missing-style")))
@@ -120,7 +156,7 @@ class UpstreamSceneTests(unittest.TestCase):
         b = lemo_brief(); b["files"].pop()
         with self.assertRaisesRegex(ValueError, "TREATMENT.md"):
             scene.validate_brief(json.dumps(b))
-        self.assertNotIn("style_slug", scene.create_binding(SimpleNamespace(dependency_id="onetake", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY), renderer_version=scene.SOURCES["onetake"][0], launcher="python"), json.dumps(brief()).encode(), __file__))
+        self.assertNotIn("style_slug", scene.create_binding(SimpleNamespace(dependency_id="onetake", entrypoint_sha256=scene.sha(scene.SKILL / scene.ENTRY), renderer_version=scene.SOURCES["onetake"][0], launcher="python"), json.dumps(brief()).encode()))
 
     def test_scene_freeze_accepts_more_than_eight_files_and_rejects_bad_types(self):
         b = lemo_brief()

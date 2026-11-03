@@ -16,6 +16,7 @@ if not _path_module.is_file():
 from scripts.package_paths import PACKAGE_ROOT, SCRIPTS
 
 COMMANDS = {
+    "job": None,
     "initialize_video_job": "initialize_video_job.py",
     "verify": "verify_skill_release.py",
     "preflight": "dependency_preflight.py",
@@ -33,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("arguments", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     forwarded = args.arguments
-    script = SCRIPTS / COMMANDS[args.command]
+    script = (PACKAGE_ROOT / "edit/hd/tools/cli.py" if args.command == "job"
+              else SCRIPTS / COMMANDS[args.command])
     required = {script}
     if args.command != "verify":
         required.add(SCRIPTS / "project_python.py")
@@ -49,6 +51,8 @@ def main(argv: list[str] | None = None) -> int:
         command += ["--prepare", *forwarded]
     elif args.command == "verify":
         command = [sys.executable, str(script), *forwarded]
+    elif args.command == "job":
+        command += ["--", "-m", "edit.hd.tools.cli", *forwarded]
     else:
         command += ["--", str(script), *forwarded]
     return subprocess.run(command, cwd=PACKAGE_ROOT, check=False).returncode

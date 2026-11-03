@@ -2,7 +2,6 @@ import importlib.util
 import json
 import copy
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -89,19 +88,9 @@ class OpenFilmMotionAdapterTest(unittest.TestCase):
         value["upstream"] = {"package_version": module.PACKAGE_VERSION,
                              "skill_sha256": module.sha(Path(runtime["skill"])),
                              "manual_sha256": module.sha(Path(runtime["manual"]))}
-        directory = tempfile.TemporaryDirectory(prefix="openfilm-format-only-")
-        self.addCleanup(directory.cleanup)
-        sample = Path(directory.name) / "format-only-24fps.mp4"
-        # Plain encoded frames supply a real SHA for binding, not visual qualification.
-        subprocess.run(
-            [runtime["ffmpeg"], "-v", "error", "-nostdin", "-n", "-f", "lavfi",
-             "-i", "color=c=black:s=1080x1920:r=24", "-frames:v", "48",
-             "-vf", "setsar=1", "-an", "-c:v", "libx264", "-preset", "ultrafast",
-             "-threads", "1", "-pix_fmt", "yuv420p", str(sample)],
-            check=True, capture_output=True, timeout=60,
-        )
         payload = json.dumps(value, ensure_ascii=False).encode()
-        binding = module.create_binding(adapter, payload, sample)
+        binding = module.create_binding(adapter, payload)
+        self.assertNotIn("sample_sha256", binding)
         self.assertEqual(broll_component_executor._DEPENDENCY_CONTRACTS[module.DEPENDENCY_ID],
                          ("reference_adapter", "OpenFilm"))
         router = _load_router()

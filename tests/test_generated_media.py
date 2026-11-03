@@ -27,6 +27,85 @@ from edit.hd.tools import visual_canary
 
 
 class GeneratedMediaPublicSmoke(unittest.TestCase):
+    def test_standalone_normalization_checks_queue_pixels_and_rechecks_on_consume(self):
+        from edit.hd.tools import generation_queue, generation_inputs
+        from edit.hd.tools.startup import operation_scope
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve();job=SimpleNamespace(job_dir=root,job_id='job')
+            source=root/'source.mp4';source.write_bytes(b'original provider fixture')
+            output=root/'normalized.mp4';output.write_bytes(b'lossless derivative fixture')
+            def media(path):
+                return {'job_path':path.name,'sha256':generated_media._sha(path),
+                        'byte_count':path.stat().st_size,'media_type':'video'}
+            original=media(source);derived=media(output)
+            before={'width':1080,'height':1916,'fps':24,'frames':24,'duration':1.0,'sar':None,'color':{}}
+            after={**before,'height':1920,'sar':'1:1'}
+            rows=['0, 0, 0, 1, 100, original-pixels'];edges=['0, 0, 0, 1, 104, padded-pixels']
+            transform=generated_media._base_transform(before)
+            normalization={'schema_version':1,'source':original,'output':derived,
+                'source_probe':before,'output_probe':after,'transform':transform,
+                'command':generated_media._base_normalization_command(source,output,transform,'ffmpeg'),
+                'frame_md5_sha256':hashlib.sha256('\n'.join(rows).encode()).hexdigest()}
+            request={'id':'generated','purpose':'video','arguments':{'prompt':'synthetic'},'input_files':[]}
+            item={'status':'completed','request':request,'submitted_request':request,'task_ids':['fixture-task'],
+                  'channel_identity':{'provider':'fixture','model':'model','endpoint_id':'endpoint'},
+                  'completion_response':{'artifacts':[{'type':'video','path':str(source),
+                      'sha256':original['sha256'],'bytes':original['byte_count']}]}}
+            queue={'items':{'generated':item}};unchanged=copy.deepcopy(queue)
+            def process(command,**kwargs):
+                if '-show_streams' in command:
+                    return SimpleNamespace(stdout=json.dumps({'streams':[{'codec_type':'video','codec_name':'h264',
+                        'pix_fmt':'yuv420p','r_frame_rate':'24/1','nb_frames':'24','duration':'1',
+                        'width':1080,'height':1920}]}))
+                return SimpleNamespace(stdout='\n'.join(edges))
+            with operation_scope(), patch.object(generation_queue,'status',return_value=queue), \
+                 patch.object(generation_inputs,'evidence',return_value=[]), \
+                 patch.object(generated_media,'_base_probe',side_effect=lambda p,*a:before if p==source else after), \
+                 patch.object(generated_media,'_base_pixels',side_effect=lambda p,f,crop=None:rows if p==source or crop else edges) as pixels, \
+                 patch.object(generated_media.subprocess,'run',side_effect=process), \
+                 patch.object(generated_media.shutil,'which',side_effect=lambda name:name):
+                record=generated_media.record_from_queue(job,'generated',segment_id='seg',component_id='ai',
+                    source_binding={'aroll_sha256':'c'*64,'start':0,'end':1},
+                    semantic_brief={'observed_scene':'Observed task demonstration; no missing action claim.'},
+                    normalization=normalization,ffprobe_executable='ffprobe',ffmpeg_executable='ffmpeg')
+                self.assertEqual(record['normalization'],normalization)
+                self.assertEqual(record['source_dimensions'],{'width':1080,'height':1920})
+                self.assertNotIn('composition_base',record);self.assertNotIn('camera_source',record)
+                self.assertEqual(queue,unchanged)
+                decoded = pixels.call_count
+                generated_media.validate_record(record, job)
+                self.assertEqual(pixels.call_count, decoded)
+                scoped=copy.deepcopy(record)
+                scoped['composition_base']={'action_component_id':'action'}
+                base=_strategy_component('ai','ai_generated',layout_slot='full_frame');base['media_type']='video'
+                standalone=router.compile_strategy(_visual_strategy([base],segment_id='seg-router'),
+                    _compile_context([base],segment_frames=24,
+                                     binding_overrides={'ai':generated_media.prepare_binding(record)}))
+                with self.assertRaisesRegex(ValueError,'non-evidence hybrid'):
+                    generated_media.validate_composition_base(scoped,standalone)
+                for defect in ('model','source','output','command','pixels','clock'):
+                    wrong=copy.deepcopy(record)
+                    if defect=='model':wrong['model']='wrong-provider-model'
+                    elif defect=='source':wrong['normalization']['source']['sha256']='0'*64
+                    elif defect=='output':wrong['normalization']['output']['sha256']='0'*64
+                    elif defect=='command':wrong['normalization']['command'][-2]='-y'
+                    elif defect=='pixels':wrong['normalization']['frame_md5_sha256']='0'*64
+                    else:wrong['normalization']['output_probe']['frames']=25
+                    with self.subTest(defect=defect),self.assertRaises(ValueError):
+                        generated_media.validate_record(wrong,job)
+                adapter=generated_media.create_adapter(job,record)
+                component={'kind':'ai_generated',**generated_media.prepare_binding(record)}
+                recipe={'components':[component]}
+                segment={'segment_id':'seg','start':0,'end':1,'shot_recipe':recipe}
+                context=SimpleNamespace(job_id='job',segment_id='seg',component_id='ai',
+                    component=component,recipe=recipe,staging_path=root/'consumed.mp4')
+                source.write_bytes(b'changed original provider output')
+                with patch.object(visual_canary,'load_approved_visual_plan',return_value={'segments':[segment]}), \
+                     patch.object(visual_canary,'approved_aroll_record',return_value={'sha256':'c'*64}), \
+                     self.assertRaisesRegex(ValueError,'path or bytes'):
+                    adapter.invoke(context)
+                self.assertFalse(context.staging_path.exists())
+
     def _camera_fixture(self, root):
         from edit.hd.tests.test_visual_direction import draft_segment
         from edit.hd.tools import contract_artifacts as a
@@ -43,8 +122,7 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
             'reason':'Keep the existing calendar as the focus without changing its pixels'}
         path=root/'framing.json';a.write_json_artifact(path,data)
         descriptor={'job_path':path.name,'sha256':a.sha256_file(path),'byte_count':path.stat().st_size}
-        record['qa']['scope']='framing_source'
-        record['camera_source']={'source_qa':{'passed':False,'observed_scene':'Original focus remains on the mouth'},'framing':descriptor}
+        record['camera_source']={'framing':descriptor}
         record['generation']['request_id']='generation'
         segment['bindings']={'ai':generated_media.prepare_binding(record)}
         return segment,record,data,original
@@ -65,8 +143,8 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
                 del segment['bindings']['ai'][camera.FIELD]
                 with self.assertRaisesRegex(ValueError,'mandatory parent framing'):
                     generated_media.validate_camera_source(job,record,segment)
-            record['qa'].pop('scope')
-            with self.assertRaisesRegex(ValueError,'separately bound parent framing'):
+            record['camera_source']['framing'] = None
+            with self.assertRaisesRegex(ValueError,'exact Job file descriptor'):
                 generated_media.prepare_binding(record)
 
     def test_camera_rectangles_cannot_change_clock_fill_outside_source_or_distort(self):
@@ -123,8 +201,8 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
 
     def _complete_record(self, job_dir, name, data):
         record = self._binding_record()
-        record.update(schema_version=1, job_id='job', segment_id='seg', component_id='ai',
-                      generation={}, qa={'passed': True, 'observed_scene': 'observed'})
+        record.update(schema_version=3, job_id='job', segment_id='seg', component_id='ai',
+                      generation={})
         record['media'].update(job_path=name, sha256=hashlib.sha256(data).hexdigest(), byte_count=len(data))
         return record
 
@@ -158,11 +236,12 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
             "source_dimensions": {"width": 1080, "height": 1920},
         }
 
-    def test_prepare_binding_rejects_missing_observed_scene(self):
-        record = self._binding_record()
-        del record["semantic_brief"]["observed_scene"]
-        with self.assertRaisesRegex(ValueError, "observed scene"):
-            generated_media.prepare_binding(record)
+    def test_completed_media_needs_no_subjective_qa_or_observed_scene(self):
+        record = self._complete_record(Path("."), "generated.mp4", b"media")
+        record["semantic_brief"] = {"semantic_goal": "Explain the supplied task"}
+        checked = generated_media.validate_record(record, SimpleNamespace(job_id="job"))
+        self.assertNotIn("qa", checked)
+        self.assertEqual(generated_media.prepare_binding(checked)["generation_id"], "generation")
 
     def test_prepare_binding_rejects_extra_source_binding_field(self):
         record = self._binding_record()
@@ -183,7 +262,7 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
     def test_source_window_does_not_open_unscoped_legacy_normalization(self):
         record = self._binding_record()
         record['normalization'] = {'transform': {'padding': {'left': 0}}}
-        with self.assertRaisesRegex(ValueError, 'composition base scope is missing'):
+        with self.assertRaisesRegex(ValueError, 'normalization evidence is invalid'):
             generated_media.prepare_binding(record)
 
     def test_compiler_retains_media_identity_with_parent_static_labels(self):
@@ -227,9 +306,10 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
                 "provider_config_sha256":a.sha256_file(config), "generation_steps":[step]}
             proposal_path = root / 'proposal.json'; a.write_json_artifact(proposal_path,proposal)
             receipt = {"source_schema":vc.SCHEMA,"job_id":"job","job_dir":str(root),
-                "stage":"visual_direction","passed":True,"reviewed_by":"human",
-                "approval_scope":"visual_plan_and_delivery","note":"synthetic local test",
-                "user_confirmation":"fixture only", "artifacts":[],"source":vc._record(root,proposal_path)}
+                "stage":"visual_direction","authorized_by":"user",
+                "authorization_scope":"visual_plan_and_generation", "revision":1,
+                "user_confirmation":"fixture only", "source_id":proposal["source_id"],
+                "artifacts":[vc._record(root,proposal_path)],"source":vc._record(root,proposal_path)}
             receipt_path = root / 'receipt.json'; a.write_json_artifact(receipt_path,receipt)
             request = vc._build_generation_request(job,proposal,step)
             authorization = {"source":vc._record(root,receipt_path), "steps":{request['id']:'video'}}
@@ -279,9 +359,8 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
 
     def test_validate_record_rejects_invalid_approved_request_reference(self):
         record = self._binding_record()
-        record.update(schema_version=1, job_id='job', segment_id='seg', component_id='ai',
-                      generation={"approved_request_id": "", "approved_plan": {}, "approved_request": {}},
-                      qa={"passed": True, "observed_scene": "observed"})
+        record.update(schema_version=3, job_id='job', segment_id='seg', component_id='ai',
+                      generation={"approved_request_id": "", "approved_plan": {}, "approved_request": {}})
         record["media"].update(job_path="generated.mp4", byte_count=1)
         with self.assertRaisesRegex(ValueError, "approved request identity"):
             generated_media.validate_record(record, SimpleNamespace(job_id='job'))
@@ -301,7 +380,7 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
             media_sha = hashlib.sha256(media_path.read_bytes()).hexdigest()
             prompt_sha = hashlib.sha256(b"a blue vertical explanatory scene").hexdigest()
             record = {
-                "schema_version": 1, "status": "completed", "job_id": job.job_id,
+                "schema_version": 3, "status": "completed", "job_id": job.job_id,
                 "segment_id": "seg-router", "component_id": "ai",
                 "provider": "fixture-provider", "model": "fixture-video",
                 "endpoint_id": "fixture-video-endpoint", "generation_id": "generation-001",
@@ -309,7 +388,6 @@ class GeneratedMediaPublicSmoke(unittest.TestCase):
                 "media": {"job_path": "generated.mp4", "sha256": media_sha,
                           "byte_count": media_path.stat().st_size, "media_type": "video"},
                 "generation": {"request_id": "generation-001", "task_ids": ["task-001"]},
-                "qa": {"passed": True, "observed_scene": "solid blue vertical scene"},
                 "semantic_brief": {"observed_scene": "solid blue vertical scene"},
                 "source_binding": {"aroll_sha256": "a" * 64, "start": 0, "end": 2},
                 "source_dimensions": {"width": 1080, "height": 1920},
@@ -375,10 +453,8 @@ class CompositionBaseReuseTests(unittest.TestCase):
             output_path='normalized.mp4', ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
         record = generated_media.record_from_queue(self.job, 'generated', segment_id='seg-001', component_id='ai',
             source_binding=self.source_binding,
-            qa={'scope': 'composition_base', 'passed': True, 'observed_scene': 'Usable illustrative background only.'},
             semantic_brief={'observed_scene': 'Original action failed; background only; separate native action required.'},
-            composition_base={'source_qa': {'passed': False, 'observed_scene': 'The required original action is incomplete.'},
-                              'action_component_id': 'action'}, normalization=normalization,
+            composition_base={'action_component_id': 'action'}, normalization=normalization,
             ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
         return record
 
@@ -404,8 +480,7 @@ class CompositionBaseReuseTests(unittest.TestCase):
         before = original.read_bytes()
         self.source_binding['end'] = .5
         record = generated_media.record_from_queue(self.job, 'generated', segment_id='seg-001', component_id='ai',
-            source_binding=self.source_binding, qa={'scope': 'static_technical', 'passed': True,
-                'observed_scene': 'Synthetic selected frames; no claim of continuous viewing.'},
+            source_binding=self.source_binding,
             semantic_brief={'observed_scene': 'Synthetic local test only.'},
             source_window={'source_frames': [6, 18], 'output_path': 'selected.mp4'},
             ffprobe_executable='ffprobe', ffmpeg_executable='ffmpeg')
@@ -445,7 +520,7 @@ class CompositionBaseReuseTests(unittest.TestCase):
                 transform = record['normalization']['transform']
                 self.assertEqual(transform['codec'], 'libx264' if height == 1916 else 'copy')
                 self.assertEqual(record['source_dimensions'], {'width': 1080, 'height': 1920})
-                self.assertFalse(record['composition_base']['source_qa']['passed'])
+                self.assertEqual(record['composition_base'], {'action_component_id': 'action'})
                 self.assertEqual(original.read_bytes(), before)
                 self.assertEqual(self.queue_path.read_bytes(), self.queue_bytes)
                 for altered_height in (1900, 1930):
@@ -461,7 +536,7 @@ class CompositionBaseReuseTests(unittest.TestCase):
         record = self.normalized_record()
         recipe = self.recipe(record)
         generated_media.validate_composition_base(record, recipe)
-        for change in ('standalone', 'evidence', 'dependency', 'opaque', 'source_qa'):
+        for change in ('standalone', 'evidence', 'dependency', 'opaque', 'action_component'):
             altered, bound = copy.deepcopy(recipe), copy.deepcopy(record)
             if change == 'standalone':
                 altered.update(mode='single', components=altered['components'][:1])
@@ -469,7 +544,7 @@ class CompositionBaseReuseTests(unittest.TestCase):
             elif change == 'evidence': altered['components'][0]['semantic_role'] = 'evidence'
             elif change == 'dependency': altered['composition']['component_dependencies'] = []
             elif change == 'opaque': altered['components'][1]['artifact_contract']['alpha'] = False
-            else: bound['composition_base']['source_qa']['passed'] = True
+            else: bound['composition_base']['action_component_id'] = 'ai'
             with self.subTest(change=change), self.assertRaises(ValueError):
                 generated_media.validate_composition_base(bound, altered)
         wrong = copy.deepcopy(record['normalization'])
@@ -529,7 +604,7 @@ class CompositionBaseReuseTests(unittest.TestCase):
         self.assertEqual(rendered.frames, 24)
         self.assertEqual(base.output_sha256, record['media']['sha256'])
         self.assertEqual(base.invocation_evidence['adapter_record']['external_requests'], 0)
-        self.assertFalse(base.invocation_evidence['adapter_record']['composition_base']['source_qa']['passed'])
+        self.assertEqual(base.invocation_evidence['adapter_record']['composition_base'], {'action_component_id': 'action'})
         self.assertEqual(self.queue_path.read_bytes(), self.queue_bytes)
         still = subprocess.run(['ffmpeg', '-v', 'error', '-i', rendered.video_path,
             '-frames:v', '1', '-f', 'image2pipe', '-vcodec', 'png', '-'], capture_output=True, check=True).stdout

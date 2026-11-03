@@ -2,9 +2,21 @@
 // Keep a quantity/classifier and its immediately following Chinese word together.
 export const wordUnits = (text) => {
   const segments = [...new Intl.Segmenter('zh', {granularity: 'word'}).segment(text)];
-  const protectedRanges = [];
-  const quantities = /(?:第?[零〇一二两三四五六七八九十百千万亿几数]+|\d+(?:\.\d+)?|[这那每各某])[个件份项种次条张本位家台套步段页句笔名只块杯瓶幅篇场所座辆封首门类组批]/gu;
+  const protectedRanges = [...text.matchAll(/《[^《》\r\n]+》/gu)]
+    .map((match) => ({start: match.index, end: match.index + match[0].length}));
+  const quantities = /(?:第?[零〇一二两三四五六七八九十百千万亿几数]+|\d+(?:\.\d+)?|[这那每各某])[个件份项种次遍条张本位家台套步段页句笔名只块杯瓶幅篇场所座辆封首门类组批]/gu;
   const matches = [...text.matchAll(quantities)];
+  for (let index = 0; index < matches.length; index++) {
+    const first = matches[index];
+    let end = first.index + first[0].length;
+    let next = index + 1;
+    while (next < matches.length && matches[next].index === end && matches[next][0] === first[0]) {
+      end += matches[next][0].length;
+      next++;
+    }
+    if (next > index + 1) protectedRanges.push({start: first.index, end});
+    index = next - 1;
+  }
   for (const match of matches) {
     const prefixEnd = match.index + match[0].length;
     const containing = segments.find(({index, segment}) => index < prefixEnd && index + segment.length > prefixEnd);

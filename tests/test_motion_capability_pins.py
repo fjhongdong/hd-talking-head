@@ -72,7 +72,7 @@ class VisualRetrievalTests(unittest.TestCase):
             mock.patch.object(motion_capabilities, '_approved_speech', return_value=[{'text': '先摆出三项待办', 'start': 0.0, 'end': 3.0}]),
             mock.patch.object(motion_capabilities, 'validate_overlay_capability'),
             mock.patch.object(motion_capabilities, '_bound_brief', return_value={'upstream_route': 'hyperframes/notification-stack'}),
-            mock.patch.object(motion_capabilities, '_semantic_assessment', return_value={'status': 'pass'}),
+            mock.patch.object(motion_capabilities, '_semantic_assessment', side_effect=AssertionError('No intermediate subjective approval')),
             mock.patch.object(motion_capabilities, '_native_input_check', return_value={'status': 'pass'}),
             mock.patch('edit.hd.tools.broll_skill_selection.validate_selection', return_value={'assignments': []}),
             mock.patch('edit.hd.tools.overlay_selection._route', return_value='notification-stack'),

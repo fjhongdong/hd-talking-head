@@ -14,6 +14,8 @@
 
 桥的 `--probe --project-root <完整包根>` 使用同一真实依赖检查。原生任务返回已准备的 `runtime.node_modules` 与 `runtime.browser`，独立 Job 工程链接这份依赖并显式传浏览器路径。无需已有样片工程、全局安装的 Skill 或派生卡动画。
 
+原生工程的必要配置由原生作者随工程准备。`render_shots.mjs` 以本期 `project_directory/remotion` 为配置根；使用 TypeScript 配置时，该根必须有 `tsconfig.json`，放在上层或 `src` 内不生效。桥在启动渲染前检查此文件，缺失时说明实际路径并退回该项原生工程补齐；不自动创建配置，不修改第三方原生文件。
+
 `speech` 唯一表示已经裁好的本段音频。桥检查它只有音轨，时长与本段时钟一致。`speech_window` 始终为局部 `0..frames/fps`，`word_anchors` 使用同一局部时钟；全片来源位置单独保存在 `source_binding`。不得对子片再次按全片秒数截取。`validate_selected_inputs(job, director, treatment)` 可在确认前检查真实声音、素材及当前已批准 A-roll 的来源绑定，不生成媒体。
 
 - `validate_brief(payload)` 校验本期任务、素材身份、语义请求和准确时钟。

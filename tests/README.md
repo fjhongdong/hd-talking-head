@@ -13,8 +13,10 @@ tests/run.sh test_release_integrity test_motion_capability_pins   # 只跑指定
 手动运行单个文件时需要自己带上:
 
 ```bash
-PYTHONPATH=<项目根> python3 tests/test_job_initialization.py
+PYTHONPATH=<Skill根绝对路径>:<Skill根绝对路径>/scripts:<Skill根绝对路径>/runtime/talking-head-python312 python3.12 tests/test_job_initialization.py
 ```
+
+手动调用中的 `PYTHONPATH` 各项必须使用绝对路径。原生帮助探针会切换工作目录，相对依赖路径会因此失效；`tests/run.sh` 已使用绝对路径，优先使用它。
 
 ## 依赖位置
 

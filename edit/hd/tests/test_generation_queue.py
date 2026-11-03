@@ -30,13 +30,239 @@ def _retry_worker(job, plan, config, approval, start, results):
         results.put({"retry": result, "claim": queue.claim(job, result["id"], 10)})
 
 
+class CurrentVisualAuthorizationTests(unittest.TestCase):
+    """Real workflow/receipts; only provider setup readiness is synthetic."""
+
+    def setUp(self):
+        from edit.hd.tools import state, visual_confirmation as visual
+        self.state, self.visual = state, visual
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name).resolve()
+        video, script = root / 'source.mp4', root / 'script.txt'
+        video.write_bytes(b'fixture video'); script.write_text('fixture speech')
+        self.job = state.create_job(root, video, script)
+        for name in state.STAGE_IDS[:6]:
+            path = self.job.job_dir / name / 'result.json'
+            path.parent.mkdir(); path.write_text('{}')
+            state.mark_ready(self.job, name, [path]); state.complete(self.job, name)
+        self.config = {'schema_version': 1, 'max_concurrency': 1, 'generation_enabled': True,
+            'providers': [{'purpose':'image', 'provider':'builtin', 'model':'builtin',
+                'endpoint_id':'fixture.image', 'connection_status':'verified',
+                'quota_status':'available', 'reference_images':True, 'native_9_16':True,
+                'silent_output':True}]}
+        self.config_path = self.job.job_dir / 'manifests/provider-config.json'
+        artifacts.write_json_artifact(self.config_path, self.config)
+        artifacts.write_json_artifact(self.job.job_dir / 'manifests/generation-channels.json', {
+            'schema_version':1, 'image':{'reference_mode':'local_path', 'model_binding':{'mode':'fixed'}}})
+        patch = mock.patch.object(queue, '_approved', return_value=(self.job.job_id,
+            artifacts.sha256_file(self.config_path), self.config))
+        patch.start(); self.addCleanup(patch.stop)
+        self.publish('first')
+        self.request = visual._build_generation_request(self.job, self.proposal, self.step, queue={'items':{}})
+        self.authorization = {'source': self.approval, 'steps': {self.request['id']: self.step['id']}}
+        plan = {'requests':[self.request]}
+        queue.add_authorized(self.job.job_dir, plan, self.authorization, artifacts.sha256_json(plan))
+
+    def publish(self, source_id, *, prompt='same approved material'):
+        visual = self.visual
+        root = self.job.job_dir / visual.DIRECTORY / source_id
+        root.mkdir(parents=True)
+        director, treatment = root/'director.json', root/'treatment.json'
+        artifacts.write_json_artifact(director, {'segments':[]})
+        artifacts.write_json_artifact(treatment, {})
+        self.step = {'id':'image', 'segment_id':'seg-001', 'component_id':'scene',
+                     'purpose':'image', 'arguments':{'prompt':prompt}, 'input_files':[]}
+        self.proposal = {'kind':visual.SCHEMA, 'source_id':source_id, 'job_id':self.job.job_id,
+            'generation_steps':[self.step], 'provider_config_sha256':artifacts.sha256_file(self.config_path),
+            'inputs':{'director':visual._record(self.job.job_dir,director),
+                      'treatment':visual._record(self.job.job_dir,treatment)}}
+        path=root/'proposal.json'; artifacts.write_json_artifact(path,self.proposal)
+        self.state.mark_visual_ready(self.job,[path])
+        visual.save_user_confirmation(self.job, {'artifacts':copy.deepcopy(self.job.stages['visual_direction']['artifacts']),
+            'revision':self.job.revision, 'user_confirmation':'approve this exact fixture list'})
+        self.approval=visual.validate_visual_authorization(self.job)['artifact']
+
+    def test_current_list_rebinds_same_call_and_revocation_blocks_upload_and_claim(self):
+        from edit.hd.tools import generation_channels as channels, generation_inputs
+        self.state.revise(self.job,'visual_direction','change another visual item')
+        self.publish('second')
+        rid=self.request['id']
+        with queue._locked(self.job.job_dir) as (j,path,q):
+            queue.validate_submission_authorization(j,q,rid)
+            artifacts.write_json_artifact(path,q)
+        rebound=queue.status(self.job.job_dir)['items'][rid]
+        self.assertEqual(rebound['authorization']['source'],self.approval)
+        self.assertEqual(rebound['request'],self.request)
+        self.state.revise(self.job,'visual_direction','withdraw pending visual call')
+        with mock.patch.object(generation_inputs,'next_action') as upload:
+            with self.assertRaisesRegex(ValueError,'current visual stage'):
+                channels.next_action(self.job,rid)
+            upload.assert_not_called()
+        with self.assertRaisesRegex(ValueError,'current visual stage'):
+            queue.claim(self.job.job_dir,rid)
+        self.assertEqual(queue.status(self.job.job_dir)['items'][rid]['status'],'ready')
+        # A completed call keeps historical provenance even after withdrawal.
+        self.visual.validate_generation_request(self.job,rebound['authorization'],self.request,
+                                                queue=queue.status(self.job.job_dir))
+
+    def test_claim_and_real_revision_share_one_commit_boundary(self):
+        import threading
+        entered,release,revision_started=threading.Event(),threading.Event(),threading.Event()
+        answer,failures=[],[]
+        original=self.visual.current_generation_authorization
+        def checked(*args,**kwargs):
+            result=original(*args,**kwargs)
+            entered.set()
+            if not release.wait(5): raise AssertionError('fixture release timed out')
+            return result
+        def claim():
+            try: answer.append(queue.claim(self.job.job_dir,self.request['id']))
+            except BaseException as exc: failures.append(exc)
+        def revise():
+            try:
+                job=self.state.load_job(self.job.job_dir); revision_started.set()
+                self.state.revise(job,'visual_direction','controlled concurrent withdrawal')
+            except BaseException as exc: failures.append(exc)
+        with mock.patch.object(self.visual,'current_generation_authorization',side_effect=checked):
+            claimant=threading.Thread(target=claim); claimant.start()
+            self.assertTrue(entered.wait(5))
+            revoker=threading.Thread(target=revise); revoker.start()
+            self.assertTrue(revision_started.wait(5))
+            release.set(); claimant.join(5); revoker.join(5)
+        self.assertFalse(claimant.is_alive() or revoker.is_alive())
+        self.assertEqual(failures,[])
+        self.assertEqual(answer[0]['action'],'generate')
+        self.assertEqual(queue.status(self.job.job_dir)['items'][self.request['id']]['status'],'submitting')
+        self.assertEqual(self.state.load_job(self.job.job_dir).stages['visual_direction']['status'],'needs_revision')
+        self.assertEqual(queue.claim(self.job.job_dir,self.request['id'])['status'],'submitting')
+
+    def test_pending_only_queries_and_completed_call_is_reused_after_new_confirmation(self):
+        from edit.hd.tools import generation_channels as channels
+        rid=self.request['id']
+        claimed=queue.claim(self.job.job_dir,rid)
+        queue.record(self.job.job_dir,rid,claimed['claim_token'],{'status':'pending','task_ids':['original-task']})
+        self.state.revise(self.job,'visual_direction','revise another scene')
+        self.assertEqual(queue.claim(self.job.job_dir,rid)['status'],'pending')
+        with mock.patch.object(channels.time,'time',return_value=10**12):
+            self.assertEqual(channels.next_action(self.job,rid)['status'],'missing_query_channel')
+        output=self.job.job_dir/'completed.png';output.write_bytes(b'original finished material')
+        queue.record(self.job.job_dir,rid,claimed['claim_token'],{'status':'completed','artifacts':[
+            {'type':'image','path':str(output),'sha256':artifacts.sha256_file(output),'bytes':output.stat().st_size}]},
+            queried_task_ids=['original-task'])
+        self.publish('new-with-same-finished-step')
+        found,item=self.visual.generation_item(queue.status(self.job.job_dir),self.proposal,self.step,self.job)
+        self.assertEqual((found,item['status']),(rid,'completed'))
+        self.assertEqual(self.visual.generation_actions(self.job),[])
+
+    def test_missing_authorization_and_plain_add_cannot_downgrade_a_visual_call(self):
+        rid=self.request['id'];plan={'requests':[self.request]}
+        with self.assertRaisesRegex(ValueError,'complete-list authorization'):
+            queue.add(self.job.job_dir,plan,'independent words',artifacts.sha256_json(plan))
+        with queue._locked(self.job.job_dir) as (_,path,q):
+            q['items'][rid].pop('authorization')
+            q['items'][rid]['user_confirmation']='copied setup text'
+            artifacts.write_json_artifact(path,q)
+        with self.assertRaisesRegex(ValueError,'exact current generation authorization'):
+            queue.claim(self.job.job_dir,rid)
+
+
 class GenerationQueueTests(unittest.TestCase):
-    def _generated_upload(self, *, metadata_bytes=3_200_000, padding="", noise=False):
-        from PIL import Image, PngImagePlugin
+    def _cover_request_fixture(self):
+        from edit.hd.tools import state
+        directory = self.job / '03-cover-direction'; directory.mkdir()
+        names = ('cover-direction.json', 'person-reference.png', 'direction-preview.png')
+        for name in names:
+            (directory / name).write_bytes(('approved fixture ' + name).encode())
+        job = SimpleNamespace(job_dir=self.job, stages={'cover_direction': {'status': 'approved', 'artifacts': []}})
+        job.stages['cover_direction']['artifacts'] = [state._artifact_record(job, directory / name) for name in names]
+        return job
+
+    def test_cover_prepare_adds_approved_preview_and_keeps_extra_candidate(self):
+        from edit.hd.tools import cover_direction, generation_channels as channels
+        job = self._cover_request_fixture()
+        person = self.job / '03-cover-direction/person-reference.png'
+        preview = self.job / '03-cover-direction/direction-preview.png'
+        candidate = self.job / 'current-candidate.png'; candidate.write_bytes(b'current candidate fixture')
+        arguments = {'prompt': '图1身份，图2当前场景',
+                      'referenced_image_paths': [str(person), str(candidate), str(candidate)]}
+        original = copy.deepcopy(arguments)
+        with mock.patch.object(cover_direction, 'load_approved_cover_direction', return_value={}) as approved, \
+             mock.patch.object(channels, 'selected_channel', return_value=self.config['providers'][0]):
+            request = channels.prepare_cover_request(job, arguments, request_id='ordinary-name')
+            default = channels.prepare_cover_request(job, {'prompt': '默认封面'}, request_id='no-references')
+            generic = channels.prepare_request(job, 'image', {'prompt': '正文图'}, request_id='cover-image')
+        self.assertEqual(approved.call_args_list, [mock.call(job), mock.call(job)])
+        self.assertEqual(arguments, original)
+        self.assertEqual(request['arguments']['prompt'], arguments['prompt'])
+        self.assertEqual(request['arguments']['referenced_image_paths'], list(map(str, (person, candidate, candidate, preview))))
+        self.assertEqual(request['arguments']['referenced_image_paths'][1], str(candidate))
+        self.assertEqual(default['arguments']['referenced_image_paths'], list(map(str, (person, preview))))
+        self.assertEqual([row['path'] for row in request['input_files']], [
+            '03-cover-direction/person-reference.png', 'current-candidate.png', 'current-candidate.png',
+            '03-cover-direction/direction-preview.png'])
+        self.assertEqual(set(request), {'id', 'purpose', 'tool', 'arguments', 'input_files'})
+        queue._inputs(self.job, request)
+        self.assertEqual(generic['arguments'], {'prompt': '正文图'})
+        self.assertEqual(generic['input_files'], [])
+        preview.write_bytes(b'changed after request preparation')
+        with self.assertRaisesRegex(ValueError, 'input changed'):
+            queue._inputs(self.job, request)
+
+    def test_cover_prepare_rejects_changed_approved_preview(self):
+        from edit.hd.tools import cover_direction, generation_channels as channels
+        job = self._cover_request_fixture()
+        (self.job / '03-cover-direction/direction-preview.png').write_bytes(b'unapproved replacement')
+        with mock.patch.object(cover_direction, 'load_approved_cover_direction', return_value={}), \
+             mock.patch.object(channels, 'prepare_request') as prepare:
+            with self.assertRaisesRegex(ValueError, 'approved cover direction artifact changed'):
+                channels.prepare_cover_request(job, {'prompt': '本次封面'}, request_id='request')
+        prepare.assert_not_called()
+
+    def test_cover_prepare_rejects_upload_channel_and_foreign_reference(self):
+        from edit.hd.tools import cover_direction, generation_channels as channels, state
+        job = self._cover_request_fixture()
+        binding_path = self.job / 'manifests/generation-channels.json'
+        bindings = artifacts.read_json_artifact(binding_path)
+        changed = copy.deepcopy(bindings)
+        changed['image'].update(reference_mode='upload', upload={'tool': 'synthetic.upload',
+            'arguments': {'file': {'$input': 'path'}}, 'result_path': ['url']})
+        artifacts.write_json_artifact(binding_path, changed)
+        with mock.patch.object(cover_direction, 'load_approved_cover_direction', return_value={}), \
+             mock.patch.object(channels, 'selected_channel', return_value=self.config['providers'][0]) as selected:
+            with self.assertRaisesRegex(ValueError, 'local_path multi-reference'):
+                channels.prepare_cover_request(job, {'prompt': '本次封面'}, request_id='request')
+            artifacts.write_json_artifact(binding_path, bindings)
+            selected.return_value = {**self.config['providers'][0], 'reference_images': False}
+            with self.assertRaisesRegex(ValueError, 'does not support reference images'):
+                channels.prepare_cover_request(job, {'prompt': '本次封面'}, request_id='request')
+            selected.return_value = self.config['providers'][0]
+            with self.assertRaises((ValueError, state.WorkflowError)):
+                channels.prepare_cover_request(job, {'prompt': '本次封面',
+                    'referenced_image_paths': [str(self.job.parent / 'outside-reference.png')]}, request_id='request')
+
+    def test_prepare_cover_cli_dispatches_the_explicit_entry(self):
+        import importlib.util
+        from edit.hd.tools import generation_channels as channels
+        project = Path(__file__).resolve().parents[3]
+        spec = importlib.util.spec_from_file_location('cover_generation_cli_fixture', project / 'scripts/run_generation.py')
+        command = importlib.util.module_from_spec(spec); spec.loader.exec_module(command)
+        arguments = self.job / 'arguments.json'; arguments.write_text('{"prompt":"actual prompt"}')
+        with mock.patch.object(sys, 'argv', ['run_generation.py', '--project-root', str(project),
+                '--job', str(self.job), 'prepare-cover', '--request-id', 'explicit-cover', '--arguments-json', str(arguments)]), \
+             mock.patch.object(channels, 'prepare_cover_request', return_value={'id': 'explicit-cover'}) as prepare, \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(command.main(), 0)
+        prepare.assert_called_once_with(self.job, {'prompt': 'actual prompt'}, request_id='explicit-cover')
+
+    def _generated_upload(self, *, metadata_bytes=3_200_000, padding="", noise=False, blur=0):
+        from PIL import Image, ImageFilter, PngImagePlugin
         import random
         source = self.job / "generated.png"
         image = (Image.frombytes("RGB", (1100, 1100), random.Random(7).randbytes(1100 * 1100 * 3))
                  if noise else Image.new("RGB", (32, 32), "#4a718c"))
+        if blur:
+            image = image.filter(ImageFilter.GaussianBlur(blur))
         info = PngImagePlugin.PngInfo()
         info.add_text("Description", "x" * metadata_bytes)
         image.save(source, pnginfo=info, compress_level=0)
@@ -74,6 +300,68 @@ class GenerationQueueTests(unittest.TestCase):
         self.assertEqual(source.read_bytes(), original)
         self.assertEqual(transport["source_sha256"], ref["sha256"])
 
+    def test_lovart_upload_losslessly_prepares_frozen_reference_without_generated_output(self):
+        import base64
+        from PIL import Image, PngImagePlugin
+        from edit.hd.tools import generation_inputs as inputs
+        source = self.job / "prepared-frame.png"
+        metadata = PngImagePlugin.PngInfo()
+        metadata.add_text("Description", "x" * 3_200_000)
+        Image.new("RGB", (32, 32), "#4a718c").save(source, pnginfo=metadata)
+        raw_phys = bytes.fromhex("000000000000000100")
+        chunk = io.BytesIO()
+        PngImagePlugin.putchunk(chunk, b"pHYs", raw_phys)
+        original = source.read_bytes()
+        original = original[:33] + chunk.getvalue() + original[33:]
+        source.write_bytes(original)
+        self.assertEqual(inputs._color_chunks(original)[b"pHYs"], raw_phys)
+        ref = {"path": source.name, "sha256": artifacts.sha256_file(source), "bytes": len(original)}
+        bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+        bindings["video"].update(reference_mode="upload", upload={
+            "tool": "mcp__lovart__upload_asset", "result_path": ["url"],
+            "arguments": {"data_base64": {"$input": "base64"}, "filename": {"$input": "filename"}}})
+        artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+        request = self.request("prepared-frame-upload", "video")
+        request["arguments"]["last_frame"] = str(source)
+        request["input_files"] = [ref]
+        self.add(request)
+        self.assertGreater(len(base64.b64encode(original)), 4 * 1024 * 1024)
+        action = inputs.next_action(self.job, request)
+        self.assertEqual(action["action"], "upload")
+        self.assertLessEqual(inputs._upload_body_bytes(action["arguments"]), 4 * 1024 * 1024)
+        inputs._same_png_pixels(original, base64.b64decode(action["arguments"]["data_base64"]))
+        self.assertEqual(source.read_bytes(), original)
+        self.assertEqual(queue.status(self.job)["items"][request["id"]]["request"], request)
+
+    def test_lovart_upload_prepares_fixed_jpeg_before_any_rejection(self):
+        import base64
+        from PIL import Image
+        from edit.hd.tools import generation_inputs as inputs
+        source, request, binding, ref = self._generated_upload(metadata_bytes=0, noise=True, blur=0.6)
+        original = source.read_bytes()
+        path, _ = inputs._state(self.job, request, binding)
+        lossless, _ = inputs._lossless_png(original)
+        self.assertGreaterEqual(inputs._upload_body_bytes(inputs._upload_arguments(
+            binding["upload"], source, lossless, source.name)), inputs._LOVART_BODY_LIMIT)
+        with self.assertRaisesRegex(ValueError, "transport.*limit"):
+            inputs._prepare_upload(self.job, path, binding["upload"], source, ref, purpose="image")
+        action = inputs.next_action(self.job, request)
+        self.assertEqual(action["arguments"]["filename"], source.stem + ".jpg")
+        self.assertLess(inputs._upload_body_bytes(action["arguments"]), inputs._LOVART_BODY_LIMIT)
+        saved = artifacts.read_json_artifact(path)
+        transport = saved["uploads"][action["binding_id"]]["transport"]
+        self.assertEqual((transport["method"], transport["quality"], transport["subsampling"]),
+                         ("jpeg-high-quality", 98, 0))
+        self.assertEqual(transport["source_sha256"], ref["sha256"])
+        encoded = self.job / transport["path"]
+        self.assertEqual(base64.b64decode(action["arguments"]["data_base64"]), encoded.read_bytes())
+        with Image.open(source) as before, Image.open(encoded) as after:
+            self.assertEqual((after.format, after.mode, after.size), ("JPEG", "RGB", before.size))
+        inputs._verify_transport(self.job, ref, transport)
+        self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
+        self.assertEqual(source.read_bytes(), original)
+        self.assertEqual(queue.status(self.job)["items"][request["id"]]["request"], request)
+
     def test_public_upload_413_record_preserves_action_and_recovers_once(self):
         import base64
         from edit.hd.tools import generation_inputs as inputs, generation_channels as channels
@@ -94,6 +382,7 @@ class GenerationQueueTests(unittest.TestCase):
         self.assertEqual(result["status"], "input_upload_rejected_413")
         retry = inputs.next_action(self.job, request)
         self.assertNotEqual(retry["arguments"], action["arguments"])
+        self.assertLessEqual(inputs._upload_body_bytes(retry["arguments"]), 4 * 1024 * 1024)
         history = artifacts.read_json_artifact(path)["uploads"][action["binding_id"]]["rejected_uploads"]
         self.assertEqual(history, [{"action": action, "response": response}])
         self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
@@ -105,15 +394,129 @@ class GenerationQueueTests(unittest.TestCase):
         self.assertEqual(inputs.resolve_request(self.job, request)["arguments"]["first_frame"], "https://example.test/actual.png")
         self.assertEqual(queue.status(self.job)["items"][request["id"]]["request"], original_request)
 
-    def test_lovart_upload_stops_when_lossless_png_cannot_fit(self):
+    def test_lovart_upload_stops_when_png_and_jpeg_cannot_fit(self):
         from edit.hd.tools import generation_inputs as inputs
         source, request, binding, ref = self._generated_upload(metadata_bytes=0, noise=True)
         original = source.read_bytes()
-        with self.assertRaisesRegex(ValueError, "lossless.*limit"):
+        action = {"action": "upload", "purpose": "video", "request_id": request["id"],
+                  "binding_id": artifacts.sha256_json(ref), "claim_token": "synthetic-original",
+                  "tool": "mcp__lovart__upload_asset", "arguments": inputs._upload_arguments(
+                      binding["upload"], source, original, source.name)}
+        path, saved = inputs._state(self.job, request, binding)
+        saved["uploads"][action["binding_id"]] = {"source": ref, "action": action}
+        artifacts.write_json_artifact(path, saved)
+        inputs.record_result(self.job, request, action, {"isError": True, "content": [{"type": "text", "text":
+            "HTTP 413: request body exceeds 4194304 bytes"}]})
+        with self.assertRaisesRegex(ValueError, "transport.*limit"):
             inputs.next_action(self.job, request)
         self.assertEqual(source.read_bytes(), original)
         _, saved = inputs._state(self.job, request, binding)
-        self.assertFalse(saved["uploads"])
+        rejected = saved["uploads"][action["binding_id"]]
+        self.assertEqual(rejected["action"], action)
+        self.assertTrue(rejected["rejected_body_limit"])
+        self.assertNotIn("transport", rejected)
+
+    def test_lovart_413_jpeg_transport_is_fixed_and_keeps_frozen_input(self):
+        import base64
+        from PIL import Image
+        from edit.hd.tools import generation_inputs as inputs
+        source, request, binding, ref = self._generated_upload(metadata_bytes=0, noise=True, blur=0.6)
+        original = source.read_bytes()
+        action = {"action": "upload", "purpose": "video", "request_id": request["id"],
+                  "binding_id": artifacts.sha256_json(ref), "claim_token": "synthetic-original",
+                  "tool": "mcp__lovart__upload_asset", "arguments": inputs._upload_arguments(
+                      binding["upload"], source, original, source.name)}
+        path, saved = inputs._state(self.job, request, binding)
+        saved["uploads"][action["binding_id"]] = {"source": ref, "action": action}
+        artifacts.write_json_artifact(path, saved)
+        inputs.record_result(self.job, request, action, {"isError": True, "content": [{"type": "text", "text":
+            "HTTP 413: request body exceeds 4194304 bytes"}]})
+        with self.assertRaisesRegex(ValueError, "transport.*limit"):
+            inputs._prepare_upload(self.job, path, binding["upload"], source, ref,
+                                   rejected=action["arguments"], purpose="image")
+        retry = inputs.next_action(self.job, request)
+        self.assertEqual(retry["arguments"]["filename"], source.stem + ".jpg")
+        self.assertLess(inputs._upload_body_bytes(retry["arguments"]), 4 * 1024 * 1024)
+        saved = artifacts.read_json_artifact(path)
+        transport = saved["uploads"][action["binding_id"]]["transport"]
+        self.assertEqual(transport["method"], "jpeg-high-quality")
+        self.assertNotEqual(transport["source_pixel_sha256"], transport["encoded_pixel_sha256"])
+        encoded = self.job / transport["path"]
+        self.assertEqual(encoded.read_bytes(), base64.b64decode(retry["arguments"]["data_base64"]))
+        inputs.record_result(self.job, request, retry, {"url": "https://example.test/frame.jpg"})
+        self.assertEqual(inputs.resolve_request(self.job, request)["arguments"]["first_frame"],
+                         "https://example.test/frame.jpg")
+        with Image.open(source) as image:
+            image.save(encoded, format="JPEG", quality=95, subsampling=0)
+        with self.assertRaisesRegex(ValueError, "reference changed"):
+            inputs._verify_transport(self.job, ref, transport)
+        forged = dict(transport, sha256=artifacts.sha256_file(encoded), bytes=encoded.stat().st_size)
+        with self.assertRaisesRegex(ValueError, "fixed source encoding"):
+            inputs._verify_transport(self.job, ref, forged)
+        self.assertEqual(source.read_bytes(), original)
+        self.assertEqual(queue.status(self.job)["items"][request["id"]]["request"], request)
+
+    def test_jpeg_transport_preserves_icc_exif_and_rejects_unsupported_pngs(self):
+        from PIL import Image, ImageCms, PngImagePlugin
+        from edit.hd.tools import generation_inputs as inputs
+        exif = Image.Exif()
+        exif[274], exif[315] = 1, "synthetic"
+        icc = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+        original = io.BytesIO()
+        Image.new("RGB", (32, 32), "#4a718c").save(original, format="PNG", exif=exif, icc_profile=icc)
+        encoded, pixels = inputs._high_quality_jpeg(original.getvalue())
+        with Image.open(io.BytesIO(encoded)) as after:
+            self.assertEqual(after.info["icc_profile"], icc)
+            self.assertEqual(after.getexif(), exif)
+            self.assertEqual(after.size, (32, 32))
+        for kind in ("rgba", "orientation", "gamma", "transparency", "animated"):
+            with self.subTest(kind=kind):
+                image = Image.new("RGBA" if kind == "rgba" else "RGB", (32, 32), "#4a718c")
+                options = {}
+                if kind == "orientation":
+                    rotated = Image.Exif()
+                    rotated[274] = 6
+                    options["exif"] = rotated
+                elif kind == "gamma":
+                    metadata = PngImagePlugin.PngInfo()
+                    metadata.add(b"gAMA", (45455).to_bytes(4, "big"))
+                    options["pnginfo"] = metadata
+                elif kind == "transparency":
+                    options["transparency"] = (74, 113, 140)
+                elif kind == "animated":
+                    options.update(save_all=True, append_images=[Image.new("RGB", (32, 32), "red")])
+                output = io.BytesIO()
+                image.save(output, format="PNG", **options)
+                with self.assertRaisesRegex(ValueError, "static.*RGB PNG"):
+                    inputs._high_quality_jpeg(output.getvalue())
+
+    def test_upload_result_path_reads_the_raw_response_root_without_unwrapping(self):
+        from edit.hd.tools import generation_inputs as inputs
+        source = self.job / "reference.png"
+        source.write_bytes(b"frozen upload fixture bytes")
+        expected = "https://example.test/actual.png"
+        for index, result_path in enumerate((["structuredContent", "url"], ["url"])):
+            bindings = artifacts.read_json_artifact(self.job / "manifests/generation-channels.json")
+            bindings["video"].update(reference_mode="upload", upload={
+                "tool": "mcp__lovart__upload_asset", "arguments": {"file": {"$input": "path"}},
+                "result_path": result_path})
+            artifacts.write_json_artifact(self.job / "manifests/generation-channels.json", bindings)
+            request = self.request("response-root-" + str(index), "video")
+            request["arguments"]["first_frame"] = str(source)
+            request["input_files"] = [{"path": source.name, "sha256": artifacts.sha256_file(source),
+                                       "bytes": source.stat().st_size}]
+            action = inputs.next_action(self.job, request)
+            response = ({"structuredContent": {"url": expected}, "url": "wrong-root-reference"}
+                        if index == 0 else {"url": expected, "structuredContent": {"url": "wrong-nested-reference"}})
+            missing = {"url": expected} if index == 0 else {"structuredContent": {"url": expected}}
+            with self.subTest(result_path=result_path):
+                with self.assertRaisesRegex(ValueError, "configured remote media reference"):
+                    inputs.record_result(self.job, request, action, missing)
+                self.assertEqual(inputs.next_action(self.job, request)["status"], "input_upload_pending")
+                self.assertEqual(inputs.record_result(self.job, request, action, response)["status"], "input_bound")
+                _, saved = inputs._state(self.job, request, bindings["video"])
+                self.assertEqual(saved["uploads"][action["binding_id"]]["response"], response)
+                self.assertEqual(inputs.resolve_request(self.job, request)["arguments"]["first_frame"], expected)
 
     def test_reference_upload_encodes_frozen_bytes_for_lovart(self):
         import base64
@@ -281,7 +684,7 @@ class GenerationQueueTests(unittest.TestCase):
             queue.edit_completed_image(root, unapproved, '', artifacts.sha256_json(unapproved))
         parent = {'authorization': {'source': {}}, 'completion_response': {'artifacts': [
             {'type': 'image', 'path': str(source), 'sha256': original['sha256'], 'bytes': original['bytes']}]}}
-        job = SimpleNamespace(job_dir=root, job_id='synthetic', stages={'edit_structure': {'status': 'approved', 'artifacts': [arroll_ref]}})
+        job = SimpleNamespace(job_dir=root, job_id='synthetic', stages={'edit_structure': {'status': 'completed', 'artifacts': [arroll_ref]}})
         approved = {'step': {'segment_id': 'seg-009', 'component_id': 'visual', 'purpose': 'image'}}
         with mock.patch.object(visual, '_validate_source', return_value=(None, {'inputs': {'director': director}})), \
              mock.patch.object(segment_render, '_default_probe', return_value={}), \
@@ -314,11 +717,28 @@ class GenerationQueueTests(unittest.TestCase):
             {'type': 'image', 'path': str(source), 'sha256': ref['sha256'], 'bytes': ref['bytes']}]})
         queue_path = self.job / 'manifests/generation-queue.json'
         saved = artifacts.read_json_artifact(queue_path)
-        saved['items']['image']['authorization'] = {'source': {}, 'steps': {'image': 'step'}}
-        artifacts.write_json_artifact(queue_path, saved)
-        job = SimpleNamespace(job_dir=self.job, job_id='synthetic')
         step = {'id': 'step', 'purpose': 'image', 'arguments': original['arguments'], 'input_files': []}
-        proposal = {'generation_steps': [step]}
+        config = self.job / 'manifests/provider-config.json'
+        artifacts.write_json_artifact(config, self.config)
+        proposal_path = self.job / visual.DIRECTORY / 'followup/proposal.json'
+        proposal = {'kind': visual.SCHEMA, 'source_id': 'followup', 'job_id': 'synthetic',
+                    'generation_steps': [step], 'inputs': {},
+                    'provider_config_sha256': artifacts.sha256_file(config)}
+        artifacts.write_json_artifact(proposal_path, proposal)
+        proposal_ref = visual._record(self.job, proposal_path)
+        receipt_path = self.job / 'manifests/visual-authorization-r1.json'
+        artifacts.write_json_artifact(receipt_path, {
+            'source_schema': visual.SCHEMA, 'source': proposal_ref, 'source_id': 'followup',
+            'job_id': 'synthetic', 'job_dir': str(self.job), 'stage': 'visual_direction', 'revision': 1,
+            'artifacts': [proposal_ref], 'authorized_by': 'user',
+            'authorization_scope': 'visual_plan_and_generation',
+            'user_confirmation': '隔离夹具：确认本期图片请求及费用',
+        })
+        receipt_ref = visual._record(self.job, receipt_path)
+        saved['items']['image']['authorization'] = {'source': receipt_ref, 'steps': {'image': 'step'}}
+        artifacts.write_json_artifact(queue_path, saved)
+        job = SimpleNamespace(job_dir=self.job, job_id='synthetic', stages={
+            'visual_direction': {'status': 'ready', 'artifacts': [proposal_ref, receipt_ref]}})
         request = self.request('edit-image')
         request['arguments']['referenced_image_paths'] = [str(source)]
         request['input_files'] = [ref]
@@ -330,7 +750,6 @@ class GenerationQueueTests(unittest.TestCase):
                 'followup_evidence': {'image': ref, 'review': visual._record(self.job, review_path)}}
         digest = artifacts.sha256_json(plan)
         with mock.patch.object(queue.state, 'load_job', return_value=job), \
-             mock.patch.object(visual, '_validate_source', return_value=(None, proposal)), \
              mock.patch.object(visual, '_request_id', return_value='image'), \
              mock.patch.object(generation_channels, 'prepare_request', return_value=original):
             parent_before = copy.deepcopy(queue.status(self.job)['items']['image'])
@@ -346,6 +765,12 @@ class GenerationQueueTests(unittest.TestCase):
             result = queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)
             self.assertFalse(result['idempotent'])
             self.assertTrue(queue.edit_completed_image(self.job, plan, '允许编辑 1 次并继续', digest)['idempotent'])
+            # A new edit still needs its parent request in the current confirmed list.
+            job.stages['visual_direction']['status'] = 'needs_revision'
+            with self.assertRaisesRegex(ValueError, 'current visual stage'):
+                queue.claim(self.job, 'edit-image')
+            self.assertEqual(queue.status(self.job)['items']['edit-image']['status'], 'ready')
+            job.stages['visual_direction']['status'] = 'ready'
             # A nested status() would deadlock on the real flock. Fail immediately instead.
             with mock.patch.object(queue, 'status', side_effect=AssertionError('nested queue lock')):
                 action = queue.claim(self.job, 'edit-image')

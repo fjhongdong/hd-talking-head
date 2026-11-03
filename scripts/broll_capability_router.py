@@ -88,7 +88,6 @@ TEMPLATE_ORIGIN_PRIORITY = {
 TEMPLATE_ADAPTATION_LEVELS = frozenset(
     {"tokens_only", "content_reflow", "structural"}
 )
-_TEMPLATE_CANDIDATE_KEYS = _TEMPLATE_PROVENANCE_FIELDS | _TEMPLATE_RANKING_FIELDS
 _TEMPLATE_CAPACITY_KEYS = frozenset({"min_units", "max_units"})
 
 # New selections use native scenes/components or the explicitly approved
@@ -404,9 +403,16 @@ def _positive_int(value: Any, name: str, *, allow_zero: bool = False) -> int:
     return value
 
 
+def _template_provenance_fields(binding: Mapping[str, Any]) -> frozenset[str]:
+    """Qualification samples are required for verified templates, not new native tasks."""
+    if binding.get("template_origin") == "custom_fallback" and "sample_sha256" not in binding:
+        return _TEMPLATE_PROVENANCE_FIELDS - {"sample_sha256"}
+    return _TEMPLATE_PROVENANCE_FIELDS
+
+
 def _validate_template_candidate(candidate: Mapping[str, Any]) -> Dict[str, Any]:
     value = _as_dict(candidate, "template candidate")
-    if frozenset(value) != _TEMPLATE_CANDIDATE_KEYS:
+    if frozenset(value) != _template_provenance_fields(value) | _TEMPLATE_RANKING_FIELDS:
         raise RouterError("template candidate fields do not match the contract")
 
     origin = _text(value["template_origin"], "template_origin")
@@ -422,7 +428,8 @@ def _validate_template_candidate(candidate: Mapping[str, Any]) -> Dict[str, Any]
     _text(value["source_entrypoint"], "source_entrypoint")
     _sha256(value["verification_id"], "verification_id")
     _sha256(value["source_sha256"], "source_sha256")
-    _sha256(value["sample_sha256"], "sample_sha256")
+    if "sample_sha256" in value:
+        _sha256(value["sample_sha256"], "sample_sha256")
 
     families = value["semantic_families"]
     if (
@@ -1036,11 +1043,13 @@ def _compile_shot_recipe(
                     request["candidates"], semantic_family=request["semantic_family"],
                     information_units=request["information_units"],
                 )[0]
-                for field in sorted(_TEMPLATE_PROVENANCE_FIELDS):
+                if "sample_sha256" in binding and "sample_sha256" not in selected_template:
+                    raise RouterError("template selection changed a frozen binding")
+                for field in sorted(_template_provenance_fields(selected_template)):
                     if field in binding and binding[field] != selected_template[field]:
                         raise RouterError("template selection changed a frozen binding")
                     binding[field] = _copy(selected_template[field], f"template binding.{field}")
-            elif not _TEMPLATE_PROVENANCE_FIELDS.issubset(binding):
+            elif not _template_provenance_fields(binding).issubset(binding):
                 raise RouterError("code component requires template candidates or frozen provenance")
             if (not _native_selection(binding)
                     or (isinstance(binding.get("template_id"), str)

@@ -144,7 +144,7 @@ def require_active_material(workspace, material_id, expected_sha256=None):
 
 
 def _verify_release_migrations(job, context, initial_release):
-    """Keep initialization immutable; accept only proven release-only migrations."""
+    """Keep initialization immutable and verify every recorded release/runtime delta."""
     from edit.hd.tools.contract_artifacts import sha256_json
 
     def valid_release(release):
@@ -180,10 +180,23 @@ def _verify_release_migrations(job, context, initial_release):
                 or audit["skill_release_after"] != previous["skill_release"]
                 or not valid_release(audit["skill_release_before"])
                 or audit["skill_release_before"] == audit["skill_release_after"]
-                or audit["runtime_module_changes"] != {}
+                or not isinstance(audit["runtime_module_changes"], dict)
                 or audit["provider_config_changed"] is not False or audit["workflow_changed"] is not False
                 or paths[0].name != f"context-migration-r{audit['workflow_revision']}-{digest[:12]}.json"):
-            raise MaterialChangeError("invalid release-only migration audit")
+            raise MaterialChangeError("invalid release/runtime migration audit")
+        modules = previous["runtime"]["modules"]
+        for name, delta in audit["runtime_module_changes"].items():
+            if (not isinstance(name, str) or not isinstance(delta, dict)
+                    or set(delta) != {"before", "after"}
+                    or delta["before"] == delta["after"]
+                    or any(value is not None and (not isinstance(value, str) or not _SHA.fullmatch(value))
+                           for value in delta.values())
+                    or modules.get(name) != delta["after"]):
+                raise MaterialChangeError("runtime migration audit differs from this Job")
+            if delta["before"] is None:
+                modules.pop(name, None)
+            else:
+                modules[name] = delta["before"]
         previous["skill_release"] = audit["skill_release_before"]
         # The first context was written by the initializer's exact pretty codec;
         # every migrated context uses contract_artifacts' canonical codec.
@@ -193,6 +206,7 @@ def _verify_release_migrations(job, context, initial_release):
         if previous_digest != audit["context_before_sha256"]:
             raise MaterialChangeError("release migration chain does not match this Job")
         revision_limit = audit["workflow_revision"]
+    return previous
 
 
 def _load(workspace):
@@ -205,7 +219,7 @@ def _load(workspace):
     if (marker.get("phase") != "ready" or marker.get("workspace") != str(workspace)
             or context.get("workspace") != str(workspace)
             or any(context.get(key) != value for key, value in identity.items())
-            or any(marker.get(key) != identity[key] for key in ("runtime", "project_root"))):
+            or marker.get("project_root") != identity["project_root"]):
         raise MaterialChangeError("workspace initialization or runtime/release identity changed")
     job_dir = workspace / "edit/hd/jobs" / state._job_id(marker["inputs"])
     if (context.get("job_dir") != str(job_dir)
@@ -215,7 +229,9 @@ def _load(workspace):
     job = state.load_job(job_dir)
     if job.version != 2 or job.inputs != marker["inputs"]:
         raise MaterialChangeError("primary inputs or workflow identity changed")
-    _verify_release_migrations(job, context, marker.get("skill_release"))
+    initial = _verify_release_migrations(job, context, marker.get("skill_release"))
+    if marker.get("runtime") != initial["runtime"]:
+        raise MaterialChangeError("initial runtime differs from the verified migration chain")
     return job, read_material_index(workspace)
 
 

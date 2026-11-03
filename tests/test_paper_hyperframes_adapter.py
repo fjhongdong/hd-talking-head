@@ -8,6 +8,7 @@ import tempfile
 import wave
 import hashlib
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -103,6 +104,12 @@ class PaperNativeTests(unittest.TestCase):
     def test_paper_accepts_native_asset_count_but_keeps_identity_and_bitmap_gates(self):
         b = brief()
         self.assertEqual(paper.validate_brief(json.dumps(b)), b)
+        adapter = SimpleNamespace(entrypoint_sha256=paper.hf.sha(SKILL / paper.ENTRY),
+                                  launcher=Path(sys.executable))
+        binding = paper.create_binding(adapter, json.dumps(b).encode())
+        self.assertNotIn('sample_sha256', binding)
+        self.assertEqual(binding['dependency_id'], paper.DEPENDENCY_ID)
+        self.assertEqual(binding['source_sha256'], adapter.entrypoint_sha256)
         for mutate in (lambda value: value['assets'].append(value['assets'][0]),
                        lambda value: value['assets'][0].update(job_path='../outside.png'),
                        lambda value: value['composition'].update(alpha=True),

@@ -38,6 +38,9 @@ class HyperFramesNativeAdapterTest(unittest.TestCase):
             "source_pins": {"route": "hyperframes/notification-stack", "sha256": hashlib.sha256(source.read_bytes()).hexdigest()},
         }
         self.assertTrue(adapter.validate_brief(json.dumps(brief))["composition"]["alpha"])
+        binding = adapter.create_binding(created, json.dumps(brief).encode())
+        self.assertNotIn("sample_sha256", binding)
+        self.assertIsNone(binding["invocation_record"]["exit_code"])
         brief["composition"]["alpha"] = False
         self.assertFalse(adapter.validate_brief(json.dumps(brief))["composition"]["alpha"])
         for route, relative in (

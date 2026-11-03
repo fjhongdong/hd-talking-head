@@ -138,7 +138,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         treatment["skill_selection"] = selection.assign_skills(ROOT, treatment["skill_selection"])
         return treatment
 
-    def test_cited_semantics_and_native_checks_offline_smoke(self):
+    def test_matching_and_native_checks_do_not_require_subjective_approval(self):
         """Synthetic text inputs only: no existing Job, motion or video is used."""
         from edit.hd.tools import motion_capabilities as motion
 
@@ -162,7 +162,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
                     "source_start": 0, "source_end": 8, "timeline_start": 0, "timeline_end": 8}]}),
             ):
                 digest = write(relative, value)
-                workflow["stages"][stage] = {"status": "approved", "artifacts": [{
+                workflow["stages"][stage] = {"status": "completed", "artifacts": [{
                     "path": relative, "sha256": digest, "bytes": (root / relative).stat().st_size}]}
             write("workflow.json", workflow)
             source = root / "native-inputs/example/index.html"
@@ -186,63 +186,28 @@ class BrollSkillSelectionTest(unittest.TestCase):
                                      "components": [{"component_id": "scene", "kind": "code_generated", "brief": "并列说明"}]},
                 "bindings": {"scene": binding}}
             draft = {"segments": [segment]}
-            assessment = {"segment_id": "seg-smoke", "component_id": "scene",
-                "candidate_id": row["candidate_id"], "verdict": "pass",
-                "reason": "三个短标签是摘要而非流程；本地执行来自已说上文，当前原文保留无需这一否定。",
-                "transcript_refs": [{"start_word": 1, "end_word": 2,
-                    "quote": words[1]["text"], "basis": "current_clause"},
-                    {"start_word": 0, "end_word": 1, "quote": words[0]["text"], "basis": "recap"}],
-                "content_refs": [{"path": brief["entry"]["job_path"], "sha256": brief["entry"]["sha256"],
-                    "quote": "本地执行 · 无需云API · 先用手头工具"}]}
             treatment = {"semantic_lists": {"overlay": [{"row_id": "row-smoke", "start_word": 0, "end_word": 3, "quote": "模型在本地执行。无需云API，先用手头工具。之后再判断。", "semantic": "本地执行", "visual_task": "并列说明", "components": [{"segment_id": "seg-smoke", "component_id": "scene"}]}], "broll": []}, "motion_queries": [{"segment_id": "seg-smoke", "component_id": "scene", "tags": ["并列", "要点"]}], "skill_selection": {"schema_version": 1, "beats": [], "assignments": [],
                 "history_note": "独立文字夹具，不用于制作或批准视频"},
                 "overlay_alignment": [{"segment_id": "seg-smoke", "component_id": "scene", "brief_path": relative}],
                 "overlay_selection": [{"segment_id": "seg-smoke", "component_id": "scene",
                     "intent_relation": "parallel", "native_route": "grid-card-assemble",
                     "visible_action": "staggered_card_reveal", "visual_structure": "grid-list",
-                    "selection_reason": "此理由不作为证据"}], "semantic_assessments": [assessment]}
+                    "selection_reason": "此理由不作为证据"}]}
             treatment["semantic_lists"]["overlay"][0].update(start_word=1, end_word=2, quote=words[1]["text"])
             treatment = self.complete_overlay_cache(draft, treatment)
             report = motion.check_offline_plan(ROOT, draft, treatment, job_dir=root)
             self.assertEqual(report["status"], "pass", report)
             self.assertFalse(report["checks"][0]["retrieval"]["has_motion_basis"])
-            self.assertEqual(report["checks"][0]["semantic"]["judged_by"], "host")
+            self.assertEqual(report["checks"][0]["semantic"]["status"], "not_reviewed")
             self.assertEqual(report["checks"][0]["native_input"]["status"], "pass")
-            # A host finding of reversed meaning must dominate valid native inputs.
-            altered = copy.deepcopy(treatment)
-            altered["semantic_assessments"][0].update(verdict="fail", reason="原声否定云API，但画面要求必须调用，含义相反。")
-            self.assertEqual(motion.check_offline_plan(ROOT, draft, altered, job_dir=root)["status"], "fail")
-            for case in ("missing", "duplicate", "changed_content", "changed_words", "future_context"):
-                altered = copy.deepcopy(treatment)
-                record = altered["semantic_assessments"][0]
-                if case == "missing":
-                    altered["semantic_assessments"] = []
-                elif case == "duplicate":
-                    altered["semantic_assessments"].append(copy.deepcopy(record))
-                elif case == "changed_content":
-                    record["content_refs"][0]["sha256"] = "c" * 64
-                elif case == "changed_words":
-                    record["transcript_refs"][0]["quote"] = "需要云API"
-                else:
-                    record["transcript_refs"][1] = {"start_word": 2, "end_word": 3,
-                        "quote": words[2]["text"], "basis": "recap"}
-                with self.subTest(case=case):
-                    self.assertEqual(motion.check_offline_plan(ROOT, draft, altered, job_dir=root)["status"], "needs_review")
-            # A tag hit alone still cannot produce semantic approval.
-            altered = copy.deepcopy(treatment)
-            altered["semantic_assessments"] = []
-            report = motion.check_offline_plan(ROOT, draft, altered, job_dir=root)
-            self.assertEqual(report["checks"][0]["query_tags"], ["并列", "要点"])
-            self.assertEqual(report["status"], "needs_review")
+            # Subjective content assessment is never a machine completion gate.
+            self.assertNotIn("semantic_assessments", treatment)
             # The managed publication seam consumes the same check before freezing.
             path = root / "treatment.json"
             write("treatment.json", treatment)
             (root / "00-user-provided").mkdir()
             job = SimpleNamespace(root=root, job_dir=root)
             self.assertEqual(visual_plan._skill_selection_for_publication(job, draft, path)["motion_review"]["status"], "pass")
-            write("treatment.json", altered)
-            with self.assertRaisesRegex(visual_plan.VisualPlanError, "motion semantic/native input check"):
-                visual_plan._skill_selection_for_publication(job, draft, path)
 
     def test_registered_native_validators_are_reused_without_rendering(self):
         from edit.hd.tools import motion_capabilities as motion
@@ -303,7 +268,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 path = root / relative
                 path.parent.mkdir()
                 path.write_text(json.dumps(content), encoding="utf-8")
-                workflow["stages"][stage] = {"status": "approved", "artifacts": [{
+                workflow["stages"][stage] = {"status": "completed", "artifacts": [{
                     "path": relative, "sha256": motion.contract_artifacts.sha256_file(path),
                     "bytes": path.stat().st_size}]}
             (root / "workflow.json").write_text(json.dumps(workflow), encoding="utf-8")
@@ -879,6 +844,10 @@ class BrollSkillSelectionTest(unittest.TestCase):
                              "composition": {"family": "single_full_frame", "presenter_mode": "bottom_window",
                                              "avatar": {"position": "right"}}}}
                         for i in range(3)]}
+            director["segments"].append({"segment_id": "s3", "start": 9, "end": 11,
+                "strategy_revision": 1, "visible_text": [], "bindings": {},
+                "visual_strategy": {"mode": "none", "components": [],
+                    "composition": {"family": "no_broll", "presenter_mode": "full_frame"}}})
             lists = {"broll": [{"row_id": "r" + str(i), "components": [
                 {"segment_id": "s" + str(i), "component_id": "scene"}], "semantic": "原语义"}
                 for i in range(3)], "overlay": []}
@@ -891,9 +860,9 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 "provider_config_sha256": config["sha256"],
                 "rows": [{"semantic_row_id": "r" + str(i), "segment_id": "s" + str(i),
                           "component_id": "scene"} for i in range(3)]})
-            receipt = write("manifests/local-qa-visual_direction-r1.json", {"source_schema": confirmation.SCHEMA,
+            receipt = write("manifests/visual-authorization-r1.json", {"source_schema": confirmation.SCHEMA,
                 "job_id": "revision-job", "job_dir": str(job), "stage": "visual_direction",
-                "passed": True, "reviewed_by": "human", "approval_scope": "visual_plan_and_delivery",
+                "passed": True, "authorized_by": "user", "authorization_scope": "visual_plan_and_generation",
                 "revision": 1, "note": "已确认", "user_confirmation": "确认", "source": proposal, "artifacts": [proposal]})
             current = copy.deepcopy(old)
             current["revision_locks"] = {"previous_receipt": receipt, "user_confirmation": "采用修正，继续制作",
@@ -968,6 +937,64 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 scoped_treatment = {**current_treatment, "skill_selection": scoped}
                 self.assertEqual([a["candidate_id"] for a in selection.assign_skills(
                     ROOT, scoped, job_dir=job, director=revised, treatment=scoped_treatment)["assignments"]], ["a", "a"])
+                # The actual local instruction may add a question overlay on
+                # an existing plain segment, with the old row meaning locked.
+                expanded = copy.deepcopy(scoped_treatment)
+                expanded["semantic_lists"]["broll"][1]["visual_task"] = "显示当前主题，不作为事实证据"
+                new_beat = beat(3)
+                expanded["skill_selection"]["overlay_beats"] = [new_beat]
+                expanded["semantic_lists"]["overlay"].append({"row_id": "r3", "semantic": "提出问题",
+                    "quote": "为什么现在才换", "start_word": 9, "end_word": 11,
+                    "visual_task": "中性问题贴片", "components": [{"segment_id": "s3", "component_id": "scene"}]})
+                expanded["skill_selection"]["revision_locks"]["changes"].append({
+                    "semantic_row_id": "r3", "segment_id": "s3", "component_id": "scene", "candidate_id": "a",
+                    "segment_changes": {"visible_text": ["为什么现在才换？"], "strategy_revision": 2}})
+                expanded_director = copy.deepcopy(revised)
+                expanded_director["segments"][3].update(visible_text=["为什么现在才换？"], strategy_revision=2,
+                    bindings={"scene": {}}, visual_strategy={"mode": "none",
+                        "components": [{"component_id": "scene", "kind": "code_generated"}],
+                        "composition": {"family": "aroll_with_overlay", "presenter_mode": "full_frame"}})
+                def check_expansion(treatment=expanded, draft=expanded_director):
+                    selected = treatment["skill_selection"]
+                    return selection._revision_selection_locks(selected,
+                        [*selected["beats"], *selected["overlay_beats"]], job, draft, treatment)
+                self.assertEqual(check_expansion()[("s3", "scene")], "a")
+                expanded_treatment_ref = write("expanded/treatment.json", expanded)
+                expanded_director_ref = write("expanded/director.json", expanded_director)
+                expanded_source = {**source, "inputs": {"treatment": expanded_treatment_ref,
+                    "director": expanded_director_ref}, "numbering": {"r0": 1, "r1": 2, "r2": 3, "r3": 4},
+                    "rows": [*source["rows"], {"semantic_row_id": "r3", "segment_id": "s3", "component_id": "scene"}]}
+                expanded_proposal = write("expanded/proposal.json", expanded_source)
+                expanded_receipt = {**source_receipt, "revision": 2, "source": expanded_proposal,
+                    "artifacts": [expanded_proposal], "user_confirmation": "采用修正，继续制作"}
+                write("manifests/visual-authorization-r2.json", expanded_receipt)
+                self.assertEqual(check_expansion()[("s3", "scene")], "a")
+                # A confirmed local revision is now the technical baseline.
+                # Replaying it must not require the old compiled publication.
+                invalid = copy.deepcopy(expanded)
+                invalid['semantic_lists']['broll'][1]['visual_task'] = '未确认的新执行文案'
+                with self.assertRaisesRegex(ValueError,'confirmed visual selection'):
+                    check_expansion(invalid)
+                invalid_director = copy.deepcopy(expanded_director)
+                invalid_director['segments'][1]['end'] += 1/24
+                with self.assertRaisesRegex(ValueError,'confirmed visual selection'):
+                    check_expansion(draft=invalid_director)
+                (job / "manifests/visual-authorization-r2.json").unlink()
+                for field, value in (("semantic", "另一个意思"), ("quote", "改了口播"),
+                                     ("start_word", 3), ("end_word", 4)):
+                    invalid = copy.deepcopy(expanded)
+                    invalid["semantic_lists"]["broll"][1][field] = value
+                    with self.subTest(locked_row_field=field), self.assertRaisesRegex(ValueError, "row meaning"):
+                        check_expansion(invalid)
+                invalid = copy.deepcopy(expanded)
+                invalid["skill_selection"]["revision_locks"]["changes"].pop()
+                with self.assertRaisesRegex(ValueError, "unrequested semantic row"):
+                    check_expansion(invalid)
+                invalid = copy.deepcopy(expanded)
+                invalid["semantic_lists"]["overlay"][0]["components"][0]["segment_id"] = "s0"
+                invalid["skill_selection"]["revision_locks"]["changes"][-1]["segment_id"] = "s0"
+                with self.assertRaisesRegex(ValueError, "existing plain A-roll"):
+                    check_expansion(invalid)
                 revised["segments"][1]["visible_text"] = ["未获确认的文字"]
                 with self.assertRaisesRegex(ValueError, "explicit text and strategy"):
                     selection.assign_skills(ROOT, scoped, job_dir=job, director=revised,
@@ -1010,14 +1037,14 @@ class BrollSkillSelectionTest(unittest.TestCase):
                     "rows": [{"semantic_row_id": "r" + str(i), "segment_id": "s" + str(i),
                               "component_id": "scene"} for i in range(3)]})
                 new_receipt = {"source_schema": confirmation.SCHEMA, "job_id": "revision-job", "job_dir": str(job),
-                    "stage": "visual_direction", "passed": True, "reviewed_by": "human",
-                    "approval_scope": "visual_plan_and_delivery", "revision": 2, "note": "已确认",
+                    "stage": "visual_direction", "passed": True, "authorized_by": "user",
+                    "authorization_scope": "visual_plan_and_generation", "revision": 2, "note": "已确认",
                     "user_confirmation": "另一个决定", "source": new_proposal, "artifacts": [new_proposal]}
-                write("manifests/local-qa-visual_direction-r2.json", new_receipt)
+                write("manifests/visual-authorization-r2.json", new_receipt)
                 with self.assertRaisesRegex(ValueError, "latest visual confirmation"):
                     selection.assign_skills(ROOT, current, job_dir=job, director=director, treatment=current_treatment)
                 new_receipt["user_confirmation"] = "采用修正，继续制作"
-                write("manifests/local-qa-visual_direction-r2.json", new_receipt)
+                write("manifests/visual-authorization-r2.json", new_receipt)
                 self.assertEqual([a["candidate_id"] for a in selection.assign_skills(
                     ROOT, current, job_dir=job, director=director, treatment=current_treatment)["assignments"]], ["a", "a"])
                 (job / "old/proposal.json").write_text("{}")
@@ -1055,7 +1082,7 @@ class PlanningOnlyChecksTest(unittest.TestCase):
             path = root / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             artifacts.write_json_artifact(path, value)
-            workflow["stages"][stage] = {"status":"approved", "artifacts":[{
+            workflow["stages"][stage] = {"status":"completed", "artifacts":[{
                 "path": rel, "sha256":artifacts.sha256_file(path), "bytes":path.stat().st_size}]}
         artifacts.write_json_artifact(root / "workflow.json", workflow)
         draft = {"segments": [{"segment_id":"s", "start":0, "end":seconds,
@@ -1408,8 +1435,8 @@ class PinBoardInputClockTest(unittest.TestCase):
         self.words = [{"text": text, "start": start, "end": start + 0.15}
                       for text, start in (("前段", 0), ("快递", 7.865), ("外卖", 8.505),
                                           ("面试", 9.125), ("家里", 9.965))]
-        workflow = {"stages": {"speech_cleanup": {"status": "approved", "artifacts": []},
-                               "edit_structure": {"status": "approved", "artifacts": []}}}
+        workflow = {"stages": {"speech_cleanup": {"status": "completed", "artifacts": []},
+                               "edit_structure": {"status": "completed", "artifacts": []}}}
         for stage, relative, data in (
                 ("speech_cleanup", "05-speech-cleanup/word-transcript.json", json.dumps({"words": self.words}).encode()),
                 ("edit_structure", "06-edit-structure/timeline-map.json", json.dumps({"segments": [
@@ -1484,10 +1511,10 @@ class PinBoardInputClockTest(unittest.TestCase):
             self.assign()
 
     def test_shared_semantic_parts_keep_independent_real_clocks_and_one_route(self):
-        end = 4.625 + 148 / 24
+        end = 4.625 + 160 / 24
         self.brief["source_binding"]["end"] = end
-        self.brief["composition"]["frames"] = 148
-        self.brief["doc"]["cards"][0]["end"] = 148 / 24
+        self.brief["composition"]["frames"] = 160
+        self.brief["doc"]["cards"][0]["end"] = 160 / 24
         self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
         self.save_brief()
         first_review = copy.deepcopy(self.review)
@@ -1570,10 +1597,10 @@ class PinBoardInputClockTest(unittest.TestCase):
                 self.assign()
 
     def test_avoidable_late_cue_does_not_exclude_the_native_candidate(self):
-        end = 4.625 + 148 / 24
+        end = 4.625 + 160 / 24
         self.brief["source_binding"]["end"] = end
-        self.brief["composition"]["frames"] = 148
-        self.brief["doc"]["cards"][0]["end"] = 148 / 24
+        self.brief["composition"]["frames"] = 160
+        self.brief["doc"]["cards"][0]["end"] = 160 / 24
         self.brief["doc"]["cards"][0]["params"]["times"] = "3.24|3.88|4.5|5.7"
         self.director["segments"][1]["end"] = self.selection["overlay_beats"][1]["end"] = end
         self.save_brief()

@@ -80,7 +80,7 @@ def main() -> int:
     ]
     visual_plan = job_dir / "07-visual-direction/visual-plan.json"
     workflow = json.loads((job_dir / "workflow.json").read_text(encoding="utf-8"))
-    if visual_plan.is_file() and workflow["stages"]["visual_direction"]["status"] == "approved":
+    if visual_plan.is_file() and workflow["stages"]["visual_direction"]["status"] == "completed":
         preflight += ["--visual-plan", str(visual_plan)]
     run("刷新预检", preflight)
     run("刷新配置批准", [

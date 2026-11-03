@@ -28,7 +28,39 @@ def number_brief():
                      "say": "公开[内容槽]"}}
 
 
+def title_brief():
+    value = number_brief()
+    value.update(template="title", template_request={"semantic_family": "section_heading",
+                 "information_units": 1, "numeric_values": [], "numeric_scale": "not_applicable"})
+    value["data"] = {"palette": "pal-blue", "mast": ["主题", "原生模板"], "duration": 5,
+                     "flood": False, "index": "01", "kicker": "", "title": "开放疑问", "sub": ""}
+    return value
+
+
 class RisoNativeAdapterTest(unittest.TestCase):
+    def test_title_public_text_slots(self):
+        for changes in ({"index": "UI"}, {"mast": ["", ""]},
+                        {"title": "比朋友还懂你\n是好事吗？"},
+                        {"index": "AI", "mast": ["", ""],
+                         "title": "比朋友还懂你\n是好事吗？"}):
+            value = title_brief()
+            value["data"].update(changes)
+            with self.subTest(changes=changes):
+                self.assertEqual(riso.validate_brief(value), value)
+        for index in ("XR", "R2", "7"):
+            value = title_brief()
+            value["data"]["index"] = index
+            with self.subTest(index=index):
+                riso.validate_brief(value)
+        for key, replacement in (("index", "ABC"), ("index", "<b>"),
+                                 ("title", "第一行\n第二行\n第三行"),
+                                 ("title", "一二三四五六七\n第二行"),
+                                 ("mast", ["", "<script>"])):
+            value = title_brief()
+            value["data"][key] = replacement
+            with self.subTest(key=key, replacement=replacement), self.assertRaises(ValueError):
+                riso.validate_brief(value)
+
     def test_formal_recipe_guard_and_format_only_artifact(self):
         from edit.hd.tools import visual_plan, visual_canary, broll_component_executor
         from edit.hd.tests.test_broll_capability_router import (

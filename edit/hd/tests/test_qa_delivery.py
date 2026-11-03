@@ -816,321 +816,22 @@ class QaDeliveryPublicContractTests(unittest.TestCase):
                 with self.assertRaises(qa_delivery.QaDeliveryError):
                     qa_delivery.validate_delivery_inventory(root, manifest)
 
-    def test_delivery_copies_only_approved_inventory_and_inspection_is_task_one_bytes(self) -> None:
-        from edit.hd.tools import qa_delivery, state
-
+    def test_legacy_delivery_profile_is_rejected_and_current_entry_dispatches_v2(self) -> None:
+        from edit.hd.tools import qa_delivery, qa_delivery_v2, state
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
-            video = root / "source.mp4"
-            script = root / "script.txt"
-            video.write_bytes(b"source-video")
-            script.write_text("严格交付", encoding="utf-8")
-            job = state.create_job(root, video, script, profile="legacy-v1")
-            initial_fd_count = len(os.listdir("/dev/fd"))
-            identity = {
-                "path": "08-preview/review.mp4", "sha256": "a" * 64, "bytes": 1,
-                "device": 1, "inode": 1, "parent_device": 1, "parent_inode": 1,
-            }
-            qa_report = {
-                "version": 1, "status": "pass",
-                "workflow": {"revision": 1, "sha256": "b" * 64, "bytes": 1},
-                "plan_hashes": {
-                    "edit_plan": "c" * 64, "visual_plan": "d" * 64,
-                    "subtitle_plan": "e" * 64,
-                },
-                "inputs": {"preview": identity},
-                "retired_lineage": [],
-                "media": {"video_streams": 1, "audio_streams": 1, "frames": 48},
-                "evidence": [{
-                    "id": "cover-000", "kind": "cover_frame", "timestamp": 0.0,
-                    **{**identity, "path": "keyframes/cover/frame-000.png"},
-                }],
-                "checks": [
-                    {"id": check_id, "status": "pass", "evidence": ["08-preview/review.mp4"]}
-                    for check_id in (
-                        "one_video_one_audio", "complete_decode", "audio_packet_copy",
-                        "black_frames", "white_flashes", "freeze_runs",
-                        "duplicate_subtitles", "subtitle_safe_zones", "cover_frame_zero",
-                        "content_frame_one",
-                    )
-                ],
-            }
-
-            stage_files = {
-                "inspect": ("01-inspect", {"report.json": b"task-one-inspection\n"}),
-                "speech_cleanup": ("02-speech-cleanup", {"report.json": b"speech\n"}),
-                "edit_structure": (
-                    "03-edit-structure",
-                    {"edit-plan.json": b'{"version":1}\n'},
-                ),
-                "visual_direction": (
-                    "04-visual-direction",
-                    {"visual-plan.json": b'{"version":1}\n'},
-                ),
-                "visual_assets": (
-                    "05-visual-assets",
-                    {"asset-manifest.json": b'{"version":1}\n'},
-                ),
-                "subtitles": (
-                    "06-subtitles",
-                    {"subtitles.srt": b"strict srt\n", "subtitles.webm": b"alpha-track"},
-                ),
-                "cover": (
-                    "07-cover",
-                    {
-                        "cover-3x4.png": b"cover-3x4",
-                        "cover-9x16.png": b"cover-9x16",
-                        "cover-delivery-raster.png": b"cover-canvas",
-                    },
-                ),
-                "preview": (
-                    "08-preview",
-                    {
-                        "review.mp4": b"approved-review",
-                        "qa-report.json": (
-                            json.dumps(qa_report, sort_keys=True, separators=(",", ":")) + "\n"
-                        ).encode(),
-                        "contact-sheet.png": b"contact",
-                        "keyframes/cover/frame-000.png": b"frame-zero",
-                        "keyframes/cover/frame-001.png": b"frame-one",
-                    },
-                ),
-            }
-            for stage_id in state.STAGE_IDS[:-1]:
-                directory_name, contents = stage_files[stage_id]
-                base = job.job_dir / directory_name
-                artifacts = []
-                for relative, source in contents.items():
-                    path = base / relative
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_bytes(source)
-                    artifacts.append(path)
-                state.mark_ready(job, stage_id, artifacts)
-                state.approve(job, stage_id)
-
-            inspection = job.job_dir / "01-inspect/report.json"
-            inspection_status = inspection.stat()
-            environment = os.environ.copy()
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "prepared"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3],
-                env=environment,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            prepared = [
-                path for path in job.job_dir.iterdir()
-                if path.name.startswith(".09-delivery.stage-")
-            ]
-            self.assertEqual(1, len(prepared))
-            prepared_inode = (prepared[0] / "final.mp4").stat().st_ino
-            result = qa_delivery.prepare_delivery(job)
-
-            self.assertEqual("ready_for_review", job.stages["delivery"]["status"])
-            self.assertEqual(prepared_inode, (result.directory / "final.mp4").stat().st_ino)
-            self.assertEqual(b"task-one-inspection\n", (result.directory / "inspection.json").read_bytes())
-            self.assertEqual(b"approved-review", (result.directory / "final.mp4").read_bytes())
-            expected = {
-                "final.mp4", "cover-3x4.png", "cover-9x16.png", "cover-canvas.png",
-                "subtitles.srt", "subtitles.webm", "edit-plan.json", "visual-plan.json",
-                "asset-manifest.json", "qa-report.json", "inspection.json",
-                "contact-sheet.png", "keyframes/cover/frame-000.png",
-                "keyframes/cover/frame-001.png", "delivery-manifest.json",
-            }
-            actual = {
-                path.relative_to(result.directory).as_posix()
-                for path in result.directory.rglob("*") if path.is_file()
-            }
-            self.assertEqual(expected, actual)
-            manifest = json.loads((result.directory / "delivery-manifest.json").read_text())
-            source = manifest["artifacts"]["inspection.json"]["source"]
-            self.assertEqual("01-inspect/report.json", source["path"])
-            self.assertEqual(inspection_status.st_dev, source["device"])
-            self.assertEqual(inspection_status.st_ino, source["inode"])
-            self.assertEqual(len(b"task-one-inspection\n"), source["bytes"])
-            first_inode = (result.directory / "final.mp4").stat().st_ino
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "更新交付代")
-
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "old-moved"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3],
-                env=environment,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            self.assertFalse((job.job_dir / "09-delivery").exists())
-
-            revised = qa_delivery.prepare_delivery(job)
-
-            self.assertEqual("ready_for_review", job.stages["delivery"]["status"])
-            self.assertNotEqual(first_inode, (revised.directory / "final.mp4").stat().st_ino)
-            self.assertEqual(b"task-one-inspection\n", (revised.directory / "inspection.json").read_bytes())
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "new-installed crash")
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "new-installed"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3], env=environment,
-                capture_output=True, text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            installed_inode = (job.job_dir / "09-delivery/final.mp4").stat().st_ino
-            revised = qa_delivery.prepare_delivery(job)
-            self.assertEqual(installed_inode, (revised.directory / "final.mp4").stat().st_ino)
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "workflow-ready crash")
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "workflow-ready"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3], env=environment,
-                capture_output=True, text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            ready_inode = (job.job_dir / "09-delivery/final.mp4").stat().st_ino
-            revised = qa_delivery.prepare_delivery(job)
-            self.assertEqual("ready_for_review", job.stages["delivery"]["status"])
-            self.assertEqual(ready_inode, (revised.directory / "final.mp4").stat().st_ino)
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "metadata-retired crash")
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "metadata-retired"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3], env=environment,
-                capture_output=True, text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            retired_inode = (job.job_dir / "09-delivery/final.mp4").stat().st_ino
-            revised = qa_delivery.prepare_delivery(job)
-            self.assertEqual(retired_inode, (revised.directory / "final.mp4").stat().st_ino)
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "marker-moved crash")
-            environment["HD_DELIVERY_CRASH_CHECKPOINT"] = "marker-moved"
-            crashed = subprocess.run(
-                [
-                    "python3", "-c",
-                    (
-                        "from pathlib import Path; "
-                        "from edit.hd.tools.state import load_job; "
-                        "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                        f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                    ),
-                ],
-                cwd=Path(__file__).resolve().parents[3], env=environment,
-                capture_output=True, text=True,
-            )
-            self.assertEqual(91, crashed.returncode, crashed.stderr)
-            marker_inode = (job.job_dir / "09-delivery/final.mp4").stat().st_ino
-            revised = qa_delivery.prepare_delivery(job)
-            self.assertEqual(marker_inode, (revised.directory / "final.mp4").stat().st_ino)
-            self.assertFalse(any(
-                path.stat().st_size
-                for path in job.job_dir.iterdir()
-                if path.name.startswith(".09-delivery.marker-retired-")
-            ))
-            state.approve(job, "delivery")
-            state.revise(job, "delivery", "concurrent publishers")
-            environment.pop("HD_DELIVERY_CRASH_CHECKPOINT", None)
-            command = [
-                "python3", "-c",
-                (
-                    "from pathlib import Path; "
-                    "from edit.hd.tools.state import load_job; "
-                    "from edit.hd.tools.qa_delivery import prepare_delivery; "
-                    f"prepare_delivery(load_job(Path({str(job.job_dir)!r})))"
-                ),
-            ]
-            publishers = [
-                subprocess.Popen(
-                    command, cwd=Path(__file__).resolve().parents[3], env=environment,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                )
-                for _ in range(2)
-            ]
-            outcomes = [process.communicate(timeout=60) for process in publishers]
-            self.assertEqual([0, 1], sorted(process.returncode for process in publishers), outcomes)
-            concurrent = state.load_job(job.job_dir)
-            self.assertEqual("ready_for_review", concurrent.stages["delivery"]["status"])
-            self.assertFalse((job.job_dir / ".09-delivery.transaction.json").exists())
-            concurrent_manifest = json.loads(
-                (job.job_dir / "09-delivery/delivery-manifest.json").read_text(encoding="utf-8")
-            )
-            self.assertIs(
-                concurrent_manifest,
-                qa_delivery.validate_delivery_inventory(
-                    job.job_dir / "09-delivery", concurrent_manifest,
-                ),
-            )
-            unknown_directory = job.job_dir / "09-delivery/late-race-directory"
-            unknown_directory.mkdir()
-            with self.assertRaises(qa_delivery.QaDeliveryError):
-                qa_delivery.validate_delivery_inventory(
-                    job.job_dir / "09-delivery", concurrent_manifest,
-                )
-            self.assertTrue(unknown_directory.is_dir())
-            self.assertEqual(initial_fd_count, len(os.listdir("/dev/fd")))
-            self.assertTrue(all(
-                path.stat().st_size == 0
-                for retired in job.job_dir.iterdir()
-                if retired.name.startswith(".09-delivery.retired-")
-                for path in retired.rglob("*")
-                if path.is_file()
-            ))
-            unknown = job.job_dir / "09-delivery/late-race.bin"
-            unknown.write_bytes(b"unknown-owner")
-            with self.assertRaises(qa_delivery.QaDeliveryError):
-                qa_delivery.validate_delivery_inventory(
-                    job.job_dir / "09-delivery",
-                    json.loads(
-                        (job.job_dir / "09-delivery/delivery-manifest.json").read_text(
-                            encoding="utf-8"
-                        )
-                    ),
-                )
+            video, script = root / 'source.mp4', root / 'script.txt'
+            video.write_bytes(b'source-video'); script.write_text('严格交付')
+            before = {path.name: path.read_bytes() for path in root.iterdir()}
+            with self.assertRaisesRegex(state.WorkflowError, 'unsupported workflow profile'):
+                state.create_job(root, video, script, profile='legacy-v1')
+            self.assertEqual(before, {path.name: path.read_bytes() for path in root.iterdir()})
+            job = state.create_job(root, video, script, profile='full-v2')
+            result = object()
+            with mock.patch.object(qa_delivery_v2, 'prepare_delivery_v2', return_value=result) as current, \
+                 mock.patch.object(qa_delivery, 'StableGenerationPublisher', side_effect=AssertionError('old publisher must not run')):
+                self.assertIs(qa_delivery.prepare_delivery(job), result)
+            current.assert_called_once_with(job)
 
     def test_qa_report_schema_is_closed_and_binds_workflow_plans_evidence_and_checks(self) -> None:
         from edit.hd.tools import qa_delivery
@@ -1194,7 +895,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
             root = Path(directory).resolve()
             job, _ = self._job(root, attribution_required=False)
             before = {path.name: path.read_bytes() for path in (root / "04-cover").iterdir()}
-            for status in ("approved", "ready_for_review"):
+            for status in ("completed", "ready"):
                 job.stages["cover"]["status"] = status
                 with self.subTest(status=status), mock.patch.object(cover.state, "load_job", return_value=job):
                     result = cover.review_cover(job)
@@ -1306,7 +1007,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
         stages = {
             "delivery": {"status": "pending", "artifacts": []},
             "preview": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(paths["preview_video"], root),
                     _artifact_record(paths["qa_report"], root),
@@ -1314,7 +1015,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 ],
             },
             "cover": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     *(
                         _artifact_record(path, root)
@@ -1324,19 +1025,19 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 ],
             },
             "content_analysis": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["content_analysis"], root)],
             },
             "visual_direction": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["visual_plan"], root)],
             },
             "visual_assets": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [_artifact_record(paths["asset_manifest"], root)],
             },
             "subtitles": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(paths["subtitle_plan"], root),
                     _artifact_record(paths["subtitles_srt"], root),
@@ -1344,7 +1045,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 ],
             },
             "edit_structure": {
-                "status": "approved",
+                "status": "completed",
                 "artifacts": [
                     _artifact_record(paths["arroll"], Path(source_job.job_dir))
                 ],
@@ -1498,7 +1199,26 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 )
             else:
                 state.mark_ready(job, stage_id, paths[stage_id])
-            state.approve(job, stage_id)
+            if stage_id == "visual_direction":
+                from edit.hd.tools import visual_confirmation as confirmation
+                config = _write(job_dir / "manifests/provider-config.json", b'{"generation_enabled":false}')
+                folder = job_dir / confirmation.DIRECTORY / "preview-fixture"
+                director = _write(folder / "director.json", contract_artifacts.canonical_json_bytes(plan))
+                treatment = _write(folder / "treatment.json", b'{}')
+                proposal = folder / "proposal.json"
+                contract_artifacts.write_json_artifact(proposal, {
+                    "kind": confirmation.SCHEMA, "source_id": "preview-fixture", "job_id": job.job_id,
+                    "generation_steps": [], "rows": [],
+                    "provider_config_sha256": contract_artifacts.sha256_file(config),
+                    "inputs": {"director": confirmation._record(job_dir, director),
+                               "treatment": confirmation._record(job_dir, treatment)},
+                })
+                state.mark_visual_ready(job, [*paths[stage_id], proposal])
+                confirmation.save_user_confirmation(job, {
+                    "artifacts": copy.deepcopy(job.stages[stage_id]["artifacts"]), "revision": job.revision,
+                    "user_confirmation": "隔离预览复用夹具：确认本期输入，不执行收费调用",
+                })
+            state.complete(job, stage_id)
         return state.load_job(job.job_dir)
 
     def test_delivery_copies_source_manifest_and_writes_required_credits(self) -> None:
@@ -1764,7 +1484,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
 
             def mark_ready(_job, _stage_id: str, artifacts) -> None:
                 _job.stages["delivery"].update(
-                    status="ready_for_review",
+                    status="ready",
                     artifacts=[
                         _artifact_record(path, Path(_job.job_dir))
                         for path in artifacts
@@ -1956,7 +1676,8 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                     "audio_streams": 1,
                 },
             ), mock.patch.object(
-                preview_v2, "_extract_frames", side_effect=extract
+                preview_v2.preview_opening, "extract_evidence",
+                side_effect=AssertionError("must not extract QA frames")
             ):
                 first = threading.Thread(target=invoke, args=(first_job,))
                 second = threading.Thread(target=invoke, args=(second_job,))
@@ -1973,11 +1694,11 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
             self.assertEqual(1, compose_count)
             persisted = state.load_job(current.job_dir)
             self.assertEqual(
-                "ready_for_review", persisted.stages["preview"]["status"]
+                "ready", persisted.stages["preview"]["status"]
             )
             for snapshot in (first_job, second_job):
                 self.assertEqual(
-                    "ready_for_review", snapshot.stages["preview"]["status"]
+                    "ready", snapshot.stages["preview"]["status"]
                 )
                 self.assertEqual(
                     persisted.expected_sha256, snapshot.expected_sha256
@@ -2051,17 +1772,17 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 results[1].manifest["delivery_manifest_sha256"],
             )
             self.assertEqual(
-                "ready_for_review", first_job.stages["delivery"]["status"]
+                "ready", first_job.stages["delivery"]["status"]
             )
             self.assertEqual(
-                "ready_for_review", second_job.stages["delivery"]["status"]
+                "ready", second_job.stages["delivery"]["status"]
             )
             self.assertEqual(
-                "ready_for_review",
+                "ready",
                 state.load_job(current.job_dir).stages["delivery"]["status"],
             )
 
-    def test_ready_and_approved_delivery_reuse_exact_inventory_without_copying(self) -> None:
+    def test_ready_and_completed_delivery_reuse_survives_unrelated_revision_without_copying(self) -> None:
         from edit.hd.tools import qa_delivery_v2, state
 
         with tempfile.TemporaryDirectory() as directory:
@@ -2082,7 +1803,9 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 ready.manifest["delivery_manifest_sha256"],
             )
 
-            state.approve(job, "delivery")
+            state.complete(job, "delivery")
+            job.revision += 1
+            state.save_job(job)
             with mock.patch.object(
                 qa_delivery_v2,
                 "_copy",
@@ -2133,7 +1856,7 @@ class SemanticSourceDeliveryTests(unittest.TestCase):
                 result = qa_delivery_v2.prepare_delivery_v2(job)
 
             job.stages["delivery"] = {
-                "status": "ready_for_review",
+                "status": "ready",
                 "artifacts": [
                     _artifact_record(path, Path(job.job_dir))
                     for path in result.artifacts

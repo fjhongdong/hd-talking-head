@@ -105,7 +105,7 @@ def _direct_publication_child_name(
 
 
 def _approved(job: state.JobState, stage_id: str, relative: str) -> Path:
-    return _stage_artifact(job, stage_id, relative, {"approved"})
+    return _stage_artifact(job, stage_id, relative, {"completed"})
 
 
 def _stage_artifact(job: state.JobState, stage_id: str, relative: str,
@@ -278,8 +278,8 @@ def _recover_delivery_publication(job: state.JobState) -> None:
     if backup_digest not in {None, old_digest}:
         raise DeliveryV2Error("delivery recovery backup changed")
     committed = job.stages["delivery"]["status"] in {
-        "ready_for_review",
-        "approved",
+        "ready",
+        "completed",
     }
     if committed:
         if target_digest != new_digest:
@@ -340,7 +340,7 @@ def _cover_sources(job: state.JobState) -> dict[str, Path]:
 
 
 def _validated_cover_sources(job: state.JobState, *, for_review: bool) -> dict[str, Path]:
-    statuses = {"ready_for_review", "approved"} if for_review else {"approved"}
+    statuses = {"ready", "completed"} if for_review else {"completed"}
     report_path = _stage_artifact(job, "cover", "04-cover/cover-report.json", statuses)
     try:
         report = contract_artifacts.read_json_artifact(report_path)
@@ -501,8 +501,8 @@ def _credits_markdown(source_manifest: Mapping[str, Any]) -> str | None:
 
 def _published_delivery(job: state.JobState, relative: str) -> Path:
     if job.stages["delivery"]["status"] not in {
-        "ready_for_review",
-        "approved",
+        "ready",
+        "completed",
     }:
         raise DeliveryV2Error("delivery is not published")
     matches = [
@@ -550,13 +550,11 @@ def _validate_reusable_delivery(
     expected_names = set(sources)
     if credits is not None:
         expected_names.add("credits.md")
-    transition_count = (
-        1 if job.stages["delivery"]["status"] == "ready_for_review" else 2
-    )
     if (
         manifest.get("schema_version") != 2
         or manifest.get("job_id") != job.job_id
-        or manifest.get("workflow_revision") != job.revision - transition_count
+        or type(manifest.get("workflow_revision")) is not int
+        or manifest["workflow_revision"] < 0
         or not _valid_sha256(manifest.get("workflow_sha256"))
         or manifest.get("canvas") != {"width": 1080, "height": 1920, "fps": 24}
         or manifest.get("background_music") is not (preview_music.MANIFEST in sources)
@@ -574,13 +572,6 @@ def _validate_reusable_delivery(
     expected_published_names = expected_names | {"delivery-manifest.json"}
     if has_receipt:
         expected_published_names.add("material-usage.json")
-    if "12-delivery/approval-receipt.json" in artifact_paths:
-        from .delivery_approval import validate_approval_receipt
-        try:
-            validate_approval_receipt(job)
-        except state.WorkflowError as exc:
-            raise DeliveryV2Error("final approval receipt is invalid") from exc
-        expected_published_names.add("approval-receipt.json")
     actual_files = {
         path.relative_to(target).as_posix()
         for path in target.rglob("*")
@@ -678,9 +669,6 @@ def _publish_delivery(
 
 
 def _prepare_delivery_v2_locked(job: state.JobState):
-    from . import motion_readability, visual_review
-    motion_readability.require_preview_review(job)
-    visual_review.require_preview_review(job)
     from .qa_delivery import DeliveryResult
 
     if job.version != 2:
@@ -717,7 +705,7 @@ def _prepare_delivery_v2_locked(job: state.JobState):
     ):
         raise DeliveryV2Error("BROLL_SOURCE_MANIFEST_BLOCKED") from None
     credits = _credits_markdown(source_manifest)
-    if job.stages["delivery"]["status"] in {"ready_for_review", "approved"}:
+    if job.stages["delivery"]["status"] in {"ready", "completed"}:
         try:
             manifest_path = _published_delivery(
                 job, "12-delivery/delivery-manifest.json"

@@ -350,7 +350,7 @@ def _approved_stage_artifact(
 ) -> dict[str, Any]:
     record = _exact(supplied, _FILE_KEYS, f"{stage_id} manifest reference")
     stage = job.stages.get(stage_id)
-    if type(stage) is not dict or stage.get("status") != "approved":
+    if type(stage) is not dict or stage.get("status") != "completed":
         _fail(f"{stage_id} must be approved")
     matches = [
         item for item in stage.get("artifacts", [])

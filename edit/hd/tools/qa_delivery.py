@@ -782,7 +782,7 @@ def prepare_delivery(job: state.JobState) -> DeliveryResult:
         except BaseException:
             committed = state.load_job(fresh.job_dir)
             if (
-                committed.stages["delivery"]["status"] == "ready_for_review"
+                committed.stages["delivery"]["status"] == "ready"
                 and committed.revision == fresh.revision
             ):
                 fresh = committed
@@ -934,7 +934,7 @@ def _recover_prepared_delivery(job: state.JobState) -> DeliveryResult | None:
             and marker["workflow_sha256"] == job.expected_sha256
         )
         ready_matches = (
-            job.stages["delivery"]["status"] == "ready_for_review"
+            job.stages["delivery"]["status"] == "ready"
             and type(marker["workflow_revision"]) is int
             and job.revision == marker["workflow_revision"] + 1
         )
@@ -1004,17 +1004,17 @@ def _recover_prepared_delivery(job: state.JobState) -> DeliveryResult | None:
                 _fsync_directory(job.job_dir)
             elif not target_exists:
                 raise QaDeliveryError("delivery recovery failed")
-        elif stage_status != "ready_for_review" or not target_exists:
+        elif stage_status != "ready" or not target_exists:
             raise QaDeliveryError("delivery recovery failed")
         target_paths = [target / item for item in manifest["artifacts"]]
         target_paths.append(target / "delivery-manifest.json")
-        if stage_status != "ready_for_review":
+        if stage_status != "ready":
             try:
                 state.mark_ready(job, "delivery", target_paths)
             except BaseException:
                 committed = state.load_job(job.job_dir)
                 if (
-                    committed.stages["delivery"]["status"] == "ready_for_review"
+                    committed.stages["delivery"]["status"] == "ready"
                     and committed.revision == job.revision
                 ):
                     _sync_job(job, committed)
@@ -1177,7 +1177,7 @@ def _zero_delivery_generation(
 
 def _approved_record(job: state.JobState, stage_id: str, path: str) -> dict[str, object]:
     stage_value = job.stages.get(stage_id)
-    if type(stage_value) is not dict or stage_value.get("status") != "approved":
+    if type(stage_value) is not dict or stage_value.get("status") != "completed":
         raise QaDeliveryError("delivery artifact binding is invalid")
     matches = [record for record in stage_value.get("artifacts", []) if record.get("path") == path]
     if len(matches) != 1:

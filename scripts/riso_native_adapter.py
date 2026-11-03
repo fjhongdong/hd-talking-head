@@ -100,12 +100,13 @@ def validate_brief(payload):
             or type(d["mast"]) is not list or len(d["mast"]) != 2):
         raise ValueError("Invalid Riso public palette/header/duration")
     for item in d["mast"]:
-        text(item, 18)
+        text(item, 18, empty=True)
     units, numbers = 1, []
     if t == "title":
-        if type(d["flood"]) is not bool or not re.fullmatch(r"\d{1,2}", str(d["index"])):
+        # The native index is textContent, not a counter; its bundled font covers short Latin labels.
+        if type(d["flood"]) is not bool or not re.fullmatch(r"[A-Za-z0-9]{1,2}", str(d["index"])):
             raise ValueError("Invalid Riso title index/background")
-        text(d["kicker"], 6, empty=True); text(d["title"], 6); text(d["sub"], 14, empty=True)
+        text(d["kicker"], 6, empty=True); text(d["title"], 6, lines=2); text(d["sub"], 14, empty=True)
     elif t in {"number", "network"}:
         integer(d["number"], 0, 99999999)
         if type(d["comma"]) is not bool:

@@ -703,6 +703,32 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         self.assertNotIn("quality_score", compiled)
         self.assertNotIn("reuse_gap", compiled)
 
+    def test_custom_native_candidates_and_frozen_bindings_need_no_qualification_sample(self) -> None:
+        component = _strategy_component("code", "code_generated")
+        context = _compile_context([component])
+        del context["template_candidates"]["code"]["candidates"][0]["sample_sha256"]
+        recipe = self.router.compile_strategy(_visual_strategy([component]), context)
+        compiled = recipe["components"][0]
+        self.assertNotIn("sample_sha256", compiled)
+        provenance = self.router._TEMPLATE_PROVENANCE_FIELDS - {"sample_sha256"}
+        context["bindings"]["code"].update({field: compiled[field] for field in provenance})
+        context.pop("template_candidates")
+        self.assertEqual(self.router.compile_strategy(_visual_strategy([component]), context), recipe)
+        context["bindings"]["code"]["sample_sha256"] = "not-a-sha256"
+        with self.assertRaises(self.router.RouterError):
+            self.router.compile_strategy(_visual_strategy([component]), context)
+
+    def test_verified_binding_requires_the_unchanged_qualification_sample(self) -> None:
+        for replacement in (None, "0" * 64):
+            strategy, context, _ = self.registered_context()
+            binding = context["bindings"]["code"]
+            if replacement is None:
+                del binding["sample_sha256"]
+            else:
+                binding["sample_sha256"] = replacement
+            with self.subTest(sample=replacement), self.assertRaises(self.router.RouterError):
+                self.router.compile_strategy(strategy, context)
+
     def test_compile_rejects_missing_or_unapproved_template_candidates(self) -> None:
         component = _strategy_component("code", "code_generated")
         missing = _compile_context([component])

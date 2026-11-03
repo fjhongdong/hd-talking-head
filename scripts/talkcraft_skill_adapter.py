@@ -1,4 +1,4 @@
-"""Invoke the complete pinned TalkCraft Skill and consume its reviewed native output.
+"""Invoke the complete pinned TalkCraft Skill and consume its completed native output.
 
 The host passes content, materials and delivery constraints. The native Skill
 owns SHOTBOOK, composition, card configuration and render_shots.mjs execution.
@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -26,6 +27,7 @@ PROJECT = SKILL
 sys.path[:0] = [str(PROJECT), str(SKILL / 'scripts')]
 from adapter_kit import sha256_file as sha, validate_source_binding
 from edit.hd.tools import contract_artifacts as artifacts
+from edit.hd.tools.startup import require_job_directory_identity
 
 ENTRY = 'scripts/talkcraft_skill_adapter.py'
 DEPENDENCY_ID = 'video-talkcraft'
@@ -71,6 +73,11 @@ def exact(root, record):
 
 def source_root(project=PROJECT):
     project = Path(project).resolve(strict=True)
+    from edit.hd.tools.startup import _operation_cache
+    cache = _operation_cache(project)
+    cache_key = ('talkcraft-native-source', str(project))
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
     record_path = project / SOURCE_RECORD
     if sha(record_path) != SOURCE_RECORD_SHA256:
         raise ValueError('TalkCraft native source identity record changed')
@@ -82,6 +89,8 @@ def source_root(project=PROJECT):
         source = root / relative(name)
         if source.is_symlink() or not source.is_file() or sha(source) != digest:
             raise ValueError('Complete pinned TalkCraft source is required: ' + name)
+    if cache is not None:
+        cache[cache_key] = root
     return root
 
 
@@ -210,7 +219,7 @@ def native_task(job, recipe, component, brief_path):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, record['job_path'])) for record in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, inspect real motion, then publish_completed. This action is pending work, not a completed result.'}
+            'next': 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, then publish_completed with the actual execution evidence. This action is pending work, not a completed result.'}
 
 
 def probe(video):
@@ -234,10 +243,13 @@ def project_files(root, directory):
 
 
 def capture_render(job_dir, brief_path, argv):
+    job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
     brief = validate_brief(brief_path.read_bytes())
+    if brief['job_id'] != job.job_id:
+        raise ValueError('TalkCraft brief belongs to another Job')
     _inputs(root, brief)
     native = source_root() / NATIVE_RENDER
     directory = path(root, brief['project_directory'])
@@ -255,6 +267,16 @@ def capture_render(job_dir, brief_path, argv):
         raise ValueError('Capture must invoke original native render_shots.mjs directly, video only')
     if '--all' not in argv or any(flag in argv for flag in ('--changed', '--only')):
         raise ValueError('Native TalkCraft capture requires --all; cached segments are not current source evidence')
+    # render_shots passes its cwd directly to loadProjectBundleOptions/loadConfig;
+    # a TypeScript config requires tsconfig here, never in a parent/src directory.
+    remotion_root = directory / 'remotion'
+    config = (Path(argv[argv.index('--config') + 1]) if '--config' in argv
+              else remotion_root / 'remotion.config.ts')
+    config = config if config.is_absolute() else remotion_root / config
+    tsconfig = remotion_root / 'tsconfig.json'
+    if config.is_file() and config.suffix != '.js' and not tsconfig.is_file():
+        raise ValueError(f'TalkCraft native project is missing required configuration: {tsconfig}; '
+                         'return this project to its native author before rendering')
     segment_arg = argv[argv.index('--seg-dir') + 1] if '--seg-dir' in argv else 'out/segments'
     segments = Path(segment_arg)
     segments = segments if segments.is_absolute() else directory / 'remotion' / segments
@@ -293,12 +315,13 @@ def capture_render(job_dir, brief_path, argv):
     return record_path
 
 
-def publish_completed(job_dir, brief_path, call_path, *, qa_note):
+def publish_completed(job_dir, brief_path, call_path):
+    job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root = Path(job_dir).resolve(strict=True)
     payload = Path(brief_path).read_bytes()
     brief = validate_brief(payload)
-    if not isinstance(qa_note, str) or not qa_note.strip():
-        raise ValueError('TalkCraft requires actual motion and content QA')
+    if brief['job_id'] != job.job_id:
+        raise ValueError('TalkCraft brief belongs to another Job')
     call = json.loads(Path(call_path).read_bytes())
     if (call['exit_code'] != 0 or call['request_sha256'] != hashlib.sha256(payload).hexdigest()
             or call['upstream_commit'] != UPSTREAM_COMMIT
@@ -315,11 +338,11 @@ def publish_completed(job_dir, brief_path, call_path, *, qa_note):
     lint = subprocess.run([sys.executable, str(lint_script),
         str(path(root, brief['project_directory']) / 'remotion/src'), brief['card_id']],
         check=True, capture_output=True, text=True, timeout=30)
-    result = {'schema_version': 1, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
+    result = {'schema_version': 2, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
               'job_id': brief['job_id'], 'card_id': brief['card_id'], 'upstream_commit': UPSTREAM_COMMIT,
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'media': descriptor(root, video),
               'renderer_version': call['renderer_version'],
-              'media_probe': probe(video), 'render_call': descriptor(root, call_path), 'qa_note': qa_note,
+              'media_probe': probe(video), 'render_call': descriptor(root, call_path),
               'native_card_lint': {'script_sha256': sha(lint_script), 'exit_code': lint.returncode, 'stdout': lint.stdout}}
     target = path(root, brief['result_record_path'])
     if target.exists():
@@ -334,7 +357,7 @@ def inspect_result(job_dir, payload, *, record_bytes=None):
     source_root()
     data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
     result = json.loads(data)
-    if any(result.get(key) != value for key, value in {'schema_version': 1, 'status': 'completed',
+    if any(result.get(key) != value for key, value in {'schema_version': 2, 'status': 'completed',
             'dependency_id': DEPENDENCY_ID, 'job_id': brief['job_id'], 'card_id': brief['card_id'],
             'upstream_commit': UPSTREAM_COMMIT, 'request_sha256': hashlib.sha256(payload).hexdigest(),
             'media_probe': brief['composition']}.items()):
@@ -365,7 +388,7 @@ def load_result(job_dir, payload, *, expected_record, expected_renderer_version)
         raise ValueError('Approved TalkCraft result descriptor is required')
     data = path(job_dir, expected_record['path']).read_bytes()
     if len(data) != expected_record['bytes'] or hashlib.sha256(data).hexdigest() != expected_record['sha256']:
-        raise ValueError('TalkCraft result differs from the reviewed version')
+        raise ValueError('TalkCraft result differs from the frozen version')
     result = inspect_result(job_dir, payload, record_bytes=data)
     if result['renderer_version'] != expected_renderer_version:
         raise ValueError('TalkCraft native renderer differs from the frozen component')
@@ -379,7 +402,8 @@ def create_adapter(project_root, python_executable, brief_loader, *, renderer_ve
     if project != requested:
         raise ValueError('TalkCraft project root must be canonical and nonsymlinked')
     source_root(project)
-    launcher = Path(python_executable).resolve(strict=True)
+    launcher = Path(python_executable).absolute()
+    launcher = launcher.parent.resolve(strict=True) / launcher.name
     entry_sha = sha(SKILL / ENTRY)
     from prepare_talkcraft_native import check as check_runtime
     runtime = check_runtime(project)
@@ -451,12 +475,11 @@ def main():
     parser.add_argument('--project-root', type=Path, default=PROJECT)
     parser.add_argument('--probe', action='store_true')
     parser.add_argument('--brief', type=Path)
-    parser.add_argument('--job-dir', type=Path)
+    parser.add_argument('--job-dir', type=Path, default=os.environ.get('BROLL_JOB_DIR'))
     parser.add_argument('--capture-render', action='store_true')
     parser.add_argument('--argv-json')
     parser.add_argument('--publish', action='store_true')
     parser.add_argument('--call', type=Path)
-    parser.add_argument('--qa-note')
     parser.add_argument('--media-manifest', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
@@ -469,10 +492,13 @@ def main():
     elif args.capture_render:
         print(capture_render(args.job_dir, args.brief, json.loads(args.argv_json)))
     elif args.publish:
-        print(publish_completed(args.job_dir, args.brief, args.call, qa_note=args.qa_note))
+        print(publish_completed(args.job_dir, args.brief, args.call))
     else:
+        job = require_job_directory_identity(args.job_dir, project_root=PROJECT)
         payload = args.brief.read_bytes()
         brief = validate_brief(payload)
+        if brief['job_id'] != job.job_id:
+            raise ValueError('TalkCraft brief belongs to another Job')
         manifest = json.loads(args.media_manifest.read_bytes())
         if manifest['brief_sha256'] != hashlib.sha256(payload).hexdigest():
             raise ValueError('Frozen TalkCraft request differs')
@@ -488,7 +514,7 @@ def main():
             raise ValueError('Frozen TalkCraft result differs')
         video = read(result['media']['job_path'])
         if hashlib.sha256(video).hexdigest() != result['media']['sha256'] or len(video) != result['media']['byte_count']:
-            raise ValueError('Frozen TalkCraft output differs from reviewed media')
+            raise ValueError('Frozen TalkCraft output differs from frozen media')
         args.output.write_bytes(video)
         print(json.dumps({'dependency_id': DEPENDENCY_ID, 'card_id': brief['card_id'],
                           'upstream_commit': UPSTREAM_COMMIT, 'output_sha256': hashlib.sha256(video).hexdigest()}))

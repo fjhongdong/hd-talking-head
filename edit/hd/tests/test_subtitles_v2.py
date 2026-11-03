@@ -47,8 +47,8 @@ class FormalSubtitleContractTests(unittest.TestCase):
                                            "cleaned_script": "原文", "deleted_words": [],
                                            "deleted_word_count": 0}))
             job = SimpleNamespace(job_id="maintenance", job_dir=root, stages={
-                "speech_cleanup": {"status": "approved", "artifacts": [subtitles_v2._record(summary, root)]},
-                "subtitles": {"status": "ready_for_review", "artifacts": []},
+                "speech_cleanup": {"status": "completed", "artifacts": [subtitles_v2._record(summary, root)]},
+                "subtitles": {"status": "ready", "artifacts": []},
             })
             report = subtitles_v2._build_terminology_review(
                 job, [{"text": "openai", "start": 0.2, "end": 0.8}], {"term": ["OpenAI"]})
@@ -88,7 +88,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
             target = root / "10-subtitles" / "subtitle-plan.json"
             target.parent.mkdir()
             job = SimpleNamespace(version=2, job_id="maintenance", revision=7, job_dir=root,
-                                  stages={"subtitles": {"status": "ready_for_review", "artifacts": []}})
+                                  stages={"subtitles": {"status": "ready", "artifacts": []}})
             reload_job.return_value = job
             payload = subtitles_v2._wrapper(job, "a" * 64, "b" * 64, {})
             target.write_text(json.dumps(payload))
@@ -106,7 +106,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
             with mock.patch.object(subtitles_v2.contract_artifacts, "read_json_artifact", side_effect=withdraw_after_read):
                 with self.assertRaisesRegex(subtitles_v2.SubtitlesV2Error, "workflow changed"):
                     subtitles_v2.review_subtitles(job)
-            job.stages["subtitles"]["status"] = "ready_for_review"
+            job.stages["subtitles"]["status"] = "ready"
             target.write_text("{}")
             with self.assertRaises(subtitles_v2.SubtitlesV2Error):
                 subtitles_v2.review_subtitles(job)
@@ -119,11 +119,11 @@ class FormalSubtitleContractTests(unittest.TestCase):
         job = SimpleNamespace()
         with mock.patch.object(cli, "load_job", return_value=job) as load, \
              mock.patch.object(subtitles_v2, "review_subtitles", return_value={"stage": "subtitles"}, create=True) as review, \
-             mock.patch.object(cli, "approve") as approve, contextlib.redirect_stdout(output):
+             mock.patch("edit.hd.tools.state.complete") as complete, contextlib.redirect_stdout(output):
             self.assertEqual(cli.main(["review-subtitles", "--job", "/job"]), 0)
         load.assert_called_once_with(Path("/job"))
         review.assert_called_once_with(job)
-        approve.assert_not_called()
+        complete.assert_not_called()
         self.assertEqual(json.loads(output.getvalue()), {"stage": "subtitles"})
 
     def test_current_wrapper_cannot_omit_terminology_even_with_new_hash(self):
@@ -144,7 +144,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
             source.write_text(json.dumps({"version": 1, "original_script": "原文", "cleaned_script": "原文",
                                           "deleted_words": [], "deleted_word_count": 0}))
             record = subtitles_v2._record(source, root)
-            job = SimpleNamespace(job_dir=root, stages={"speech_cleanup": {"status": "approved", "artifacts": [record]}})
+            job = SimpleNamespace(job_dir=root, stages={"speech_cleanup": {"status": "completed", "artifacts": [record]}})
             report = subtitles_v2._build_terminology_review(job, self.words, self.keywords)
             self.assertEqual(report["history_binding"], record)
             subtitles_v2._validate_terminology_binding(job, {"terminology_review": report})
@@ -510,6 +510,28 @@ class FormalSubtitleContractTests(unittest.TestCase):
         self.assertEqual([cue["emphasis_words"] for cue in plan["cues"]], [["接私活"], ["做完"]])
         self.assertEqual([cue["emphasis"]["start"] for cue in renderer], [1.0, 3.5])
 
+    def test_keyword_whitespace_matches_original_text_and_keeps_cooldown(self) -> None:
+        words = [{"text": "11月4号", "start": 0.1, "end": 0.7},
+                 {"text": "AI 干活", "start": 2.2, "end": 2.7},
+                 {"text": "AI干活", "start": 4.4, "end": 4.9}]
+        duration = 6.0
+        timeline = {**self.timeline, "source_duration": duration, "output_duration": duration,
+                    "segments": [{"source_start": 0., "source_end": duration,
+                                  "timeline_start": 0., "timeline_end": duration}]}
+        visual = {"duration": duration, "segments": [
+            {"segment_id": f"seg-{i:03d}", "start": i * 2., "end": (i + 1) * 2.,
+             "content_item_ids": ["idea-01"], "shot_recipe": {"mode": "none"}}
+            for i in range(3)]}
+        renderer = []
+        plan = subtitles_v2.build_render_plan(
+            records=self.records, words=words, timeline=timeline, visual_plan=visual,
+            keyword_index={"idea-01": ("11 月 4 号", "AI干活", "AI 干活")},
+            renderer_cues=renderer)
+        self.assertEqual([cue["emphasis_words"] for cue in plan["cues"]],
+                         [["11月4号"], ["AI 干活"], []])
+        self.assertEqual([cue["emphasis"]["start"] for cue in renderer if cue["emphasis"]],
+                         [0.1, 2.2])
+
     def test_approved_keywords_remain_visible_across_a_long_video(self) -> None:
         terms = ("认知", "流程", "效率", "价值")
         duration = 80.0
@@ -577,6 +599,7 @@ class FormalSubtitleContractTests(unittest.TestCase):
         phrases = subtitles_v2._chinese_word_phrases(text)
         for word in ("主动", "朋友", "电动机", "之后", "爆发"):
             self.assertIn(word, phrases)
+        self.assertIn("《人类简史》", subtitles_v2._chinese_word_phrases("我看了《人类简史》的作者演讲。"))
         text = "那朋友们，你们大促的时候有没有遇到说"
         words = [{"text": char, "start": index * 0.1, "end": (index + 1) * 0.1}
                  for index, char in enumerate(text)]
@@ -621,6 +644,73 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 self.assertEqual([(word["start"], word["end"]) for cue in renderer for word in cue["words"]],
                                  [(word["start"], word["end"]) for word in words])
                 self.assertTrue(all(len(cue["text"]) <= 14 for cue in cues))
+
+    def test_long_complete_clause_needs_punctuation_pause_and_fixed_size_capacity(self) -> None:
+        first, rest = "国行这台机器的大脑一直没接上，", "海外进不来，本地没谈拢。"
+        for punctuation, gap in ((True, .35), (True, .05), (False, .35)):
+            text = (first if punctuation else first[:-1]) + rest
+            words = []
+            for index, char in enumerate(text):
+                pause = gap if index >= len(first) - (not punctuation) else 0
+                words.append({"text": char, "start": round(.1 + index * .1 + pause, 3),
+                              "end": round(.2 + index * .1 + pause, 3)})
+            renderer = []
+            visual = {"duration": 4., "segments": [{"segment_id": "seg-001",
+                      "start": 0., "end": 4., "content_item_ids": ["idea-01"],
+                      "shot_recipe": {"mode": "none"}}]}
+            with self.subTest(punctuation=punctuation, gap=gap):
+                plan = subtitles_v2.build_render_plan(records=self.records, words=words,
+                    timeline=self.timeline, visual_plan=visual, keyword_index={}, renderer_cues=renderer)
+                cues = plan["cues"]
+                self.assertEqual("".join(cue["text"] for cue in cues), text)
+                if punctuation and gap >= .2:
+                    self.assertEqual([cue["text"] for cue in cues], [first, rest])
+                    self.assertFalse(renderer[0]["long_keyword"])
+                else:
+                    self.assertTrue(all(len(cue["text"]) <= 14 for cue in cues))
+                self.assertEqual([(word["start"], word["end"]) for cue in renderer for word in cue["words"]],
+                                 [(word["start"], word["end"]) for word in words])
+
+    def test_long_keyword_layout_survives_emphasis_cooldown(self) -> None:
+        keyword = "Ling-3.1-flash-1019"
+        words = [{"text": keyword, "start": .1 + index * 2., "end": .9 + index * 2.}
+                 for index in range(2)]
+        visual = {"duration": 4., "segments": [
+            {"segment_id": f"seg-{index:03d}", "start": index * 2., "end": (index + 1) * 2.,
+             "content_item_ids": ["idea-01"], "shot_recipe": {"mode": "none"}}
+            for index in range(2)]}
+        renderer = []
+        plan = subtitles_v2.build_render_plan(records=self.records, words=words,
+            timeline=self.timeline, visual_plan=visual, keyword_index={"idea-01": (keyword,)},
+            renderer_cues=renderer)
+        self.assertEqual([cue["emphasis_words"] for cue in plan["cues"]], [[keyword], []])
+        self.assertEqual([cue["long_keyword"] for cue in renderer], [True, True])
+
+    def test_book_title_and_cross_segment_quotes_preserve_source_word_clocks(self) -> None:
+        words = [{"text": value, "start": index * .1, "end": (index + 1) * .1}
+                 for index, value in enumerate(["我", "今天呢，", "看", "了《", "人", "类", "简", "史》",
+                    "的", "作者", "的", "演讲。", "赫拉利", "说：“", "你把", "多少", "判断", "交给", "AI？“"])]
+        original = copy.deepcopy(words)
+        displayed = subtitles_v2._display_punctuation(words)
+        self.assertEqual(words, original)
+        self.assertEqual([(w['start'], w['end']) for w in displayed], [(w['start'], w['end']) for w in words])
+        self.assertEqual(displayed[3]['text'], '了')
+        self.assertEqual(displayed[4]['text'], '《人')
+        self.assertEqual(displayed[13]['text'], '说：')
+        self.assertEqual(displayed[14]['text'], '“你把')
+        self.assertEqual(displayed[-1]['text'], 'AI？”')
+        self.assertEqual(subtitles_v2._display_punctuation(displayed), displayed)
+        visual = {'duration':4.0, 'segments':[
+            {'segment_id':'seg-001','start':0,'end':1.2,'content_item_ids':['unverified'], 'shot_recipe':{'mode':'none'}},
+            {'segment_id':'seg-002','start':1.2,'end':1.4,'content_item_ids':['unverified'], 'shot_recipe':{'mode':'none'}},
+            {'segment_id':'seg-003','start':1.4,'end':4,'content_item_ids':['unverified'], 'shot_recipe':{'mode':'none'}}]}
+        plan = subtitles_v2.build_render_plan(records=self.records, words=words,
+            timeline=self.timeline, visual_plan=visual, keyword_index={})
+        self.assertTrue(any('《人类简史》' in cue['text'] for cue in plan['cues']))
+        self.assertTrue(all(not cue['text'].endswith(('“','《')) for cue in plan['cues']))
+        self.assertIn('“你把', ''.join(cue['text'] for cue in plan['cues']))
+        self.assertTrue(all(not cue['emphasis_words'] for cue in plan['cues']))
+        self.assertEqual(words, original)
 
     def test_pause_hint_does_not_create_fragments_or_split_protected_phrases(self) -> None:
         text = "只是我们一直在主动调整自己的评判标准"

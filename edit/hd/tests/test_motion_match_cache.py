@@ -226,6 +226,104 @@ class CacheTests(unittest.TestCase):
             self.assertEqual(search.call_count, 1)
         self.assertEqual(updated["motion_matches"]["r1"], first["motion_matches"]["r1"])
 
+    def test_explicit_visual_task_rebinding_preserves_recall_and_matches_only_additions(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        catalog = [{"candidate_id": "fixture:author", "status": "supported", "capability": {
+            "uses": ["aroll_overlay", "broll"], "reviewed_sources": {},
+            "content_scope": {"mode": "full_scene"}, "tags": {key: [] for key in motion.TAG_FIELDS}}}]
+        for index, segment in enumerate(self.director["segments"]):
+            segment.update(start=index * 3, end=index * 3 + 3, content_item_ids=["item" + str(index)])
+        with tempfile.TemporaryDirectory() as directory, patch.object(motion, "load_catalog", return_value=catalog):
+            root = Path(directory).resolve()
+            def write(name, value):
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                motion.contract_artifacts.write_json_artifact(path, value)
+                return confirmation._record(root, path)
+            config = write("manifests/provider-config.json", {})
+            def approved_source(director, treatment, version):
+                prefix = "source/" + str(version) + "/"
+                inputs = {"director": write(prefix + "director.json", director),
+                          "treatment": write(prefix + "treatment.json", treatment)}
+                proposal = write(prefix + "proposal.json", {"job_id": "local-cache-job",
+                    "kind": confirmation.SCHEMA, "inputs": inputs,
+                    "provider_config_sha256": config["sha256"]})
+                receipt = write(prefix + "receipt.json", {"job_id": "local-cache-job", "job_dir": str(root),
+                    "source_schema": confirmation.SCHEMA, "stage": "visual_direction", "passed": True,
+                    "authorized_by": "user", "authorization_scope": "visual_plan_and_generation", "revision": version,
+                    "note": "本次真实批准", "user_confirmation": "按该方案制作", "source": proposal,
+                    "artifacts": [proposal]})
+                mapping = write(prefix + confirmation.MAPPING, {"source_approval": receipt,
+                    "proposal": proposal, "realization_inputs": inputs})
+                write("workflow.json", {"job_id": "local-cache-job", "stages": {"visual_direction": {
+                    "status": "needs_revision", "artifacts": [], "lineage": [mapping]}}})
+                return receipt
+            first = cache.match_once(ROOT, self.director, self.treatment)
+            before = copy.deepcopy(first)
+            receipt = approved_source(self.director, first, 1)
+            current = copy.deepcopy(first)
+            current["semantic_lists"]["overlay"][0]["visual_task"] = "将分类标签替换为当前主题"
+            current["skill_selection"] = {"revision_locks": {"previous_receipt": receipt,
+                "user_confirmation": "不要出现任务示意，换一些内容显示", "changes": [{
+                    "semantic_row_id": "r0", "segment_id": "s0", "component_id": "c", "candidate_id": "fixture:author"}]}}
+            with patch.object(motion, "search_capabilities", side_effect=AssertionError("must not search old rows")):
+                rebound, changed = cache.rebind_local_visual_tasks(ROOT, self.director, current, job_dir=root)
+                self.assertEqual(changed, ["r0"])
+                self.assertEqual(first, before)
+                self.assertEqual(rebound["motion_matches"]["r1"], first["motion_matches"]["r1"])
+                expected = copy.deepcopy(first["motion_matches"]["r0"])
+                expected["semantic_sha256"] = rebound["motion_matches"]["r0"]["semantic_sha256"]
+                self.assertEqual(rebound["motion_matches"]["r0"], expected)
+                cache.validate_matches(ROOT, self.director, rebound)
+                for case in ("tags", "quote", "semantic", "start_word", "end_word", "components",
+                             "segment_clock", "source_clock", "cache", "instruction", "unrequested"):
+                    bad, draft = copy.deepcopy(current), copy.deepcopy(self.director)
+                    row = bad["semantic_lists"]["overlay"][0]
+                    if case == "tags": bad["motion_queries"][0]["tags"].append("其他对象")
+                    elif case in ("quote", "semantic"): row[case] += "改变意思"
+                    elif case in ("start_word", "end_word"): row[case] += 1
+                    elif case == "components": row["components"][0]["component_id"] = "unknown"
+                    elif case == "segment_clock": draft["segments"][0]["end"] += 1 / 24
+                    elif case == "source_clock": bad["source_clock"] = {"duration": 99}
+                    elif case == "cache": bad["motion_matches"]["r0"]["matches"] = []
+                    elif case == "instruction": bad["skill_selection"].pop("revision_locks")
+                    else: bad["skill_selection"]["revision_locks"]["changes"][0]["semantic_row_id"] = "r1"
+                    with self.subTest(rejected=case), self.assertRaises(ValueError):
+                        cache.rebind_local_visual_tasks(ROOT, draft, bad, job_dir=root)
+            # The new approved baseline itself can contain an earlier rebind.
+            # Follow its registered source, not older receipts in the directory.
+            next_receipt = approved_source(self.director, rebound, 2)
+            again = copy.deepcopy(rebound)
+            again["semantic_lists"]["overlay"][0]["visual_task"] = "再改一次当前主题文字"
+            again["skill_selection"]["revision_locks"]["previous_receipt"] = next_receipt
+            with patch.object(motion, "search_capabilities", side_effect=AssertionError("must follow approved cache")):
+                cache.rebind_local_visual_tasks(ROOT, self.director, again, job_dir=root)
+                again["skill_selection"]["revision_locks"]["previous_receipt"] = receipt
+                with self.assertRaisesRegex(ValueError, "current approved source"):
+                    cache.rebind_local_visual_tasks(ROOT, self.director, again, job_dir=root)
+            self.treatment = rebound
+            self.add_item("overlay", "新增问题", ["问题", "待决"])
+            with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
+                updated = cache.match_once(ROOT, self.director, self.treatment)
+                self.assertEqual(search.call_count, 1)
+                self.assertEqual(search.call_args.args[1], "问题 待决")
+                for row_id in first["motion_matches"]:
+                    self.assertEqual(updated["motion_matches"][row_id], rebound["motion_matches"][row_id])
+
+    def test_explicit_visual_task_helper_does_not_change_matching_policy(self):
+        path = Path(cache.__file__)
+        source = path.read_text()
+        helper = next(node for node in cache.ast.parse(source).body
+                      if isinstance(node, cache.ast.FunctionDef) and node.name == "rebind_local_visual_tasks")
+        lines = source.splitlines(keepends=True)
+        without_helper = "".join(lines[:helper.lineno - 1] + lines[helper.end_lineno:])
+        read = Path.read_text
+        current = cache._policy_identity()
+        with patch.object(Path, "read_text", autospec=True,
+                side_effect=lambda target, *args, **kwargs: without_helper if target == path
+                    else read(target, *args, **kwargs)):
+            self.assertEqual(cache._policy_identity(), current)
+
     def test_corrupt_or_stale_caches_are_not_silently_accepted(self):
         first = cache.match_once(ROOT, self.director, self.treatment)
         self.assertTrue(first["motion_matches"]["r0"]["matches"])
@@ -460,6 +558,81 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(wake_match["matched_dimensions"]["actions"], ["唤醒"])
         cache.validate_matches(ROOT, self.director, updated)
         self.assertEqual(updated["motion_matches"]["r0"], first["motion_matches"]["r0"])
+
+
+class CatalogOperationTests(unittest.TestCase):
+    def test_verified_operation_loads_once_and_returns_independent_catalogs(self):
+        from edit.hd.tools import startup
+        memo = {}
+        rows = [{'candidate_id': 'channel:template', 'capability': {'tags': ['original']}}]
+        with patch.object(startup, '_operation_cache', return_value=memo), \
+             patch.object(motion, '_catalog_sources', return_value=()), \
+             patch.object(motion, '_load_catalog', return_value=rows) as load:
+            first = motion.load_catalog(ROOT)
+            first[0]['capability']['tags'].append('caller mutation')
+            second = motion.load_catalog(ROOT)
+            self.assertEqual(second[0]['capability']['tags'], ['original'])
+            second.clear()
+            self.assertEqual(len(motion.load_catalog(ROOT)), 1)
+        load.assert_called_once_with(ROOT)
+
+    def test_unverified_or_invalidated_operation_uses_real_loader(self):
+        from edit.hd.tools import startup
+        memo, active = {}, [None]
+        rows = [{'candidate_id': 'channel:template'}]
+        with patch.object(startup, '_operation_cache', side_effect=lambda *_: active[0]), \
+             patch.object(motion, '_catalog_sources', return_value=()), \
+             patch.object(motion, '_load_catalog', return_value=rows) as load:
+            motion.load_catalog(ROOT); motion.load_catalog(ROOT)
+            self.assertEqual(load.call_count, 2)
+            active[0] = memo
+            motion.load_catalog(ROOT); motion.load_catalog(ROOT)
+            self.assertEqual(load.call_count, 3)
+            active[0] = None
+            load.side_effect = ValueError('reviewed source changed')
+            with self.assertRaisesRegex(ValueError, 'source changed'):
+                motion.load_catalog(ROOT)
+            self.assertEqual(load.call_count, 4)
+
+    def test_changed_sources_during_load_cannot_publish_a_cached_catalog(self):
+        from edit.hd.tools import startup
+        memo = {}
+        with patch.object(startup, '_operation_cache', side_effect=[memo, None]), \
+             patch.object(motion, '_catalog_sources', return_value=()), \
+             patch.object(motion, '_load_catalog', return_value=[{'candidate_id': 'channel:template'}]):
+            with self.assertRaisesRegex(ValueError, 'sources changed'):
+                motion.load_catalog(ROOT)
+        self.assertEqual(memo, {})
+
+    def test_native_source_inventory_changes_cannot_reuse_the_catalog(self):
+        from edit.hd.tools import startup
+        from scripts import motion_native_skill_adapter as native
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory).resolve()
+            root = project / 'vendor/source'; root.mkdir(parents=True)
+            (project / 'references').mkdir()
+            source = root / 'scene.py'; source.write_text('original')
+            other = root / 'other.py'; other.write_text('other')
+            alias = root / 'alias.py'; alias.symlink_to(source.name)
+            empty = root / 'node_modules/nested'; empty.mkdir(parents=True)
+            (project / 'references/fixture-native-source.json').write_text(json.dumps({
+                'source_root': 'vendor/source', 'files': {'scene.py': 'source', 'other.py': 'other'},
+                'symlinks': {'alias.py': source.name}}))
+            memo = {}
+            with patch.object(native, 'SOURCES', {'fixture': ('fixture', 'commit', 'pin')}), \
+                 patch.object(startup, '_operation_cache', return_value=memo), \
+                 patch.object(motion, '_load_catalog', return_value=[]) as load:
+                motion.load_catalog(project); motion.load_catalog(project)
+                self.assertEqual(load.call_count, 1)
+                source.write_text('changed')
+                motion.load_catalog(project)
+                self.assertEqual(load.call_count, 2)
+                (empty / 'unregistered.py').write_text('added')
+                motion.load_catalog(project)
+                self.assertEqual(load.call_count, 3)
+                alias.unlink(); alias.symlink_to(other.name)
+                motion.load_catalog(project)
+                self.assertEqual(load.call_count, 4)
 
 
 if __name__ == "__main__":

@@ -2,14 +2,14 @@ import copy
 import hashlib
 import importlib
 import importlib.util
-import io
 import json
 import os
 import re
 import stat
+import subprocess
+import sys
 import tempfile
 import unittest
-from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -18,7 +18,7 @@ from edit.hd.tools.state import (
     STAGE_IDS,
     STAGE_STATUSES,
     WorkflowError,
-    approve,
+    complete,
     block,
     create_job,
     load_job,
@@ -42,21 +42,21 @@ class WorkflowStateTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def create(self):
-        return create_job(self.root, self.video, self.script, profile="legacy-v1")
+        return create_job(self.root, self.video, self.script, profile="full-v2")
 
     def create_full_v2(self):
         return create_job(
             self.root, self.video, self.script, profile="full-v2"
         )
 
-    def approve_full_v2(self):
+    def complete_full_v2(self):
         job = self.create_full_v2()
         for stage_id in state_module.FULL_V2_STAGE_IDS:
             artifact = self.artifact(
                 job, stage_id=stage_id, content=stage_id.encode("utf-8")
             )
             mark_ready(job, stage_id, [artifact])
-            approve(job, stage_id)
+            complete(job, stage_id)
         return job
 
     def artifact(self, job, stage_id="inspect", content=b"artifact"):
@@ -81,48 +81,50 @@ class WorkflowStateTests(unittest.TestCase):
         with self.assertRaises(WorkflowError):
             require_runnable(job, "speech_cleanup")
 
-    def test_explicit_full_v2_job_uses_twelve_stage_review_order(self):
+    def test_explicit_full_v2_job_uses_current_stage_order(self):
         job = self.create_full_v2()
 
         self.assertEqual(job.version, 2)
         self.assertEqual(tuple(job.stages), state_module.FULL_V2_STAGE_IDS)
         self.assertEqual(state_module.current_stage(job), "inspect")
 
-    def test_version_one_job_loads_without_inserting_new_stages(self):
+    def test_version_one_job_schema_is_rejected_without_rewriting_it(self):
         job = self.create()
-
-        loaded = load_job(job.job_dir)
-
-        self.assertEqual(loaded.version, 1)
-        self.assertEqual(
-            state_module.stage_ids_for(loaded), state_module.LEGACY_V1_STAGE_IDS
-        )
-        self.assertNotIn("content_analysis", loaded.stages)
+        payload = self.workflow_payload(job)
+        payload["version"] = 1
+        self.overwrite_workflow(job, payload)
+        workflow = job.job_dir / "workflow.json"
+        before = workflow.read_bytes()
+        with self.assertRaises(WorkflowError):
+            load_job(job.job_dir)
+        self.assertEqual(workflow.read_bytes(), before)
+        with self.assertRaises(WorkflowError):
+            create_job(self.root, self.video, self.script, profile="legacy-v1")
 
     def test_full_v2_review_order_is_single_even_across_dag_branches(self):
         job = self.create_full_v2()
         artifact = self.artifact(job, "inspect", b"inspect")
         mark_ready(job, "inspect", [artifact])
-        approve(job, "inspect")
+        complete(job, "inspect")
 
         self.assertEqual(state_module.current_stage(job), "content_analysis")
         require_runnable(job, "content_analysis")
         with self.assertRaises(WorkflowError):
             require_runnable(job, "speech_cleanup")
 
-    def test_revising_full_v2_cover_keeps_visual_and_subtitles_approved(self):
-        job = self.approve_full_v2()
+    def test_revising_full_v2_cover_keeps_visual_and_subtitles_completed(self):
+        job = self.complete_full_v2()
 
         revise(job, "cover", "调整封面人物动作")
 
         self.assertEqual(job.stages["cover"]["status"], "needs_revision")
         self.assertEqual(job.stages["preview"]["status"], "pending")
         self.assertEqual(job.stages["delivery"]["status"], "pending")
-        self.assertEqual(job.stages["visual_assets"]["status"], "approved")
-        self.assertEqual(job.stages["subtitles"]["status"], "approved")
+        self.assertEqual(job.stages["visual_assets"]["status"], "completed")
+        self.assertEqual(job.stages["subtitles"]["status"], "completed")
 
     def test_full_v2_visual_revision_records_segment_scope(self):
-        job = self.approve_full_v2()
+        job = self.complete_full_v2()
 
         revise(
             job,
@@ -134,7 +136,7 @@ class WorkflowStateTests(unittest.TestCase):
         self.assertEqual(
             job.stages["visual_assets"]["artifact_scope"], ["segment-07"]
         )
-        self.assertEqual(job.stages["cover"]["status"], "approved")
+        self.assertEqual(job.stages["cover"]["status"], "completed")
         self.assertEqual(job.stages["preview"]["status"], "pending")
         self.assertEqual(job.stages["delivery"]["status"], "pending")
 
@@ -144,10 +146,10 @@ class WorkflowStateTests(unittest.TestCase):
             if stage_id == "visual_direction":
                 break
             mark_ready(job, stage_id, [self.artifact(job, stage_id)])
-            approve(job, stage_id)
+            complete(job, stage_id)
         published = self.artifact(job, "07-visual-direction", b"published A")
         state_module.mark_visual_ready(job, [published])
-        approve(job, "visual_direction")
+        complete(job, "visual_direction")
         revise(job, "visual_direction", "first proposal")
         original = copy.deepcopy(job.stages["visual_direction"]["lineage"])
         for number in (1, 2):
@@ -159,25 +161,25 @@ class WorkflowStateTests(unittest.TestCase):
             self.assertEqual(job.stages["visual_direction"]["lineage"], original)
         published.write_bytes(b"published B")
         state_module.mark_visual_ready(job, [published])
-        approve(job, "visual_direction")
+        complete(job, "visual_direction")
         revise(job, "visual_direction", "revise newly published result")
         current = job.stages["visual_direction"]["lineage"]
         self.assertEqual(current[0]["path"], "07-visual-direction/result.bin")
         self.assertNotEqual(current[0]["sha256"], original[0]["sha256"])
 
-    def test_approval_requires_ready_and_unlocks_next_stage(self):
+    def test_completion_requires_ready_and_unlocks_next_stage(self):
         job = self.create()
         artifact = job.job_dir / "inspect" / "report.json"
         artifact.parent.mkdir()
         artifact.write_text("{}\n", encoding="utf-8")
 
         with self.assertRaises(WorkflowError):
-            approve(job, "inspect")
+            complete(job, "inspect")
         mark_ready(job, "inspect", [artifact])
-        approve(job, "inspect")
+        complete(job, "inspect")
 
-        self.assertEqual(job.stages["inspect"]["status"], "approved")
-        require_runnable(job, "speech_cleanup")
+        self.assertEqual(job.stages["inspect"]["status"], "completed")
+        require_runnable(job, "content_analysis")
 
     def test_blocked_stage_cannot_run_or_unlock_downstream(self):
         job = self.create()
@@ -194,30 +196,30 @@ class WorkflowStateTests(unittest.TestCase):
 
     def test_revise_resets_current_and_downstream_bindings(self):
         job = self.create()
-        for stage_id in STAGE_IDS[:3]:
+        for stage_id in STAGE_IDS[:6]:
             artifact = job.job_dir / stage_id / "result.bin"
             artifact.parent.mkdir()
             artifact.write_bytes(stage_id.encode())
             mark_ready(job, stage_id, [artifact])
-            approve(job, stage_id)
+            complete(job, stage_id)
 
         revise(job, "speech_cleanup", "tighten cuts")
 
-        self.assertEqual(job.stages["inspect"]["status"], "approved")
+        self.assertEqual(job.stages["inspect"]["status"], "completed")
         self.assertEqual(job.stages["speech_cleanup"]["status"], "needs_revision")
         self.assertEqual(job.stages["speech_cleanup"]["artifacts"], [])
-        for stage_id in STAGE_IDS[2:]:
+        for stage_id in ("edit_structure", "visual_direction", "visual_assets", "subtitles", "preview", "delivery"):
             self.assertEqual(job.stages[stage_id]["status"], "pending")
             self.assertEqual(job.stages[stage_id]["artifacts"], [])
 
     def test_revise_atomically_records_the_trigger_and_event_revision_downstream(self):
         job = self.create()
-        for stage_id in STAGE_IDS[:3]:
+        for stage_id in STAGE_IDS[:6]:
             artifact = job.job_dir / stage_id / "result.bin"
             artifact.parent.mkdir()
             artifact.write_bytes(stage_id.encode())
             mark_ready(job, stage_id, [artifact])
-            approve(job, stage_id)
+            complete(job, stage_id)
         event_revision = job.revision + 1
 
         revise(job, "speech_cleanup", "correct transcript")
@@ -225,7 +227,7 @@ class WorkflowStateTests(unittest.TestCase):
         self.assertIsNone(
             state_module._cascade_event(job.stages["speech_cleanup"]["reason"])
         )
-        for stage_id in STAGE_IDS[2:]:
+        for stage_id in ("edit_structure", "visual_direction", "visual_assets", "subtitles", "preview", "delivery"):
             self.assertEqual(
                 state_module._cascade_event(job.stages[stage_id]["reason"]),
                 {"trigger_stage": "speech_cleanup", "revision": event_revision},
@@ -257,13 +259,13 @@ class WorkflowStateTests(unittest.TestCase):
                 self.video.write_bytes(f"video-{attack}".encode("utf-8"))
                 job = self.create()
                 artifacts = {}
-                for stage_id in STAGE_IDS[:5]:
+                for stage_id in STAGE_IDS[:8]:
                     artifact = self.artifact(
                         job, stage_id=stage_id, content=stage_id.encode("utf-8")
                     )
                     artifacts[stage_id] = artifact
                     mark_ready(job, stage_id, [artifact])
-                    approve(job, stage_id)
+                    complete(job, stage_id)
                 revise(job, "speech_cleanup", "correct upstream transcript")
                 pending = job.stages["visual_assets"]
                 self.assertIsNotNone(state_module._cascade_event(pending["reason"]))
@@ -320,24 +322,24 @@ class WorkflowStateTests(unittest.TestCase):
                 self.video.write_bytes(f"video-{resolution}".encode("utf-8"))
                 job = self.create()
                 artifacts = {}
-                for stage_id in STAGE_IDS[:5]:
+                for stage_id in STAGE_IDS[:8]:
                     artifact = self.artifact(
                         job, stage_id=stage_id, content=stage_id.encode("utf-8")
                     )
                     artifacts[stage_id] = artifact
                     mark_ready(job, stage_id, [artifact])
-                    approve(job, stage_id)
+                    complete(job, stage_id)
                 revise(job, "speech_cleanup", "correct upstream transcript")
                 for stage_id in (
                     "speech_cleanup", "edit_structure", "visual_direction"
                 ):
                     mark_ready(job, stage_id, [artifacts[stage_id]])
-                    approve(job, stage_id)
+                    complete(job, stage_id)
 
                 if resolution == "ready":
                     mark_ready(job, "visual_assets", [artifacts["visual_assets"]])
                     self.assertEqual(
-                        job.stages["visual_assets"]["status"], "ready_for_review"
+                        job.stages["visual_assets"]["status"], "ready"
                     )
                 else:
                     block(job, "visual_assets", "AI unavailable", 1)
@@ -348,18 +350,18 @@ class WorkflowStateTests(unittest.TestCase):
     def test_revise_captures_exact_artifact_and_parent_lineage(self):
         job = self.create()
         artifacts = {}
-        for stage_id in STAGE_IDS[:3]:
+        for stage_id in STAGE_IDS[:6]:
             artifact = job.job_dir / stage_id / "result.bin"
             artifact.parent.mkdir()
             artifact.write_bytes(stage_id.encode())
             artifacts[stage_id] = artifact
             mark_ready(job, stage_id, [artifact])
-            approve(job, stage_id)
+            complete(job, stage_id)
 
         revise(job, "speech_cleanup", "capture lineage")
 
         self.assertEqual(job.stages["inspect"]["lineage"], [])
-        for stage_id in STAGE_IDS[1:3]:
+        for stage_id in ("speech_cleanup", "edit_structure"):
             artifact = artifacts[stage_id]
             file_status = artifact.stat()
             parent_status = artifact.parent.stat()
@@ -381,7 +383,7 @@ class WorkflowStateTests(unittest.TestCase):
                 job = self.create()
                 artifact = self.artifact(job, content=b"original")
                 mark_ready(job, "inspect", [artifact])
-                approve(job, "inspect")
+                complete(job, "inspect")
                 workflow = job.job_dir / "workflow.json"
                 before_workflow = workflow.read_bytes()
                 before_stages = copy.deepcopy(job.stages)
@@ -413,7 +415,7 @@ class WorkflowStateTests(unittest.TestCase):
         job = self.create()
         artifact = self.artifact(job)
         mark_ready(job, "inspect", [artifact])
-        approve(job, "inspect")
+        complete(job, "inspect")
         workflow = job.job_dir / "workflow.json"
         before_workflow = workflow.read_bytes()
         before_stages = copy.deepcopy(job.stages)
@@ -447,7 +449,7 @@ class WorkflowStateTests(unittest.TestCase):
         }
         job = self.create()
         mark_ready(job, "inspect", [self.artifact(job)])
-        approve(job, "inspect")
+        complete(job, "inspect")
         job.stages["speech_cleanup"]["lineage"] = [record]
         save_job(job)
         revise(job, "speech_cleanup", "keep lineage")
@@ -472,19 +474,21 @@ class WorkflowStateTests(unittest.TestCase):
             STAGE_IDS,
             (
                 "inspect",
+                "content_analysis",
+                "cover_direction",
+                "cover",
                 "speech_cleanup",
                 "edit_structure",
                 "visual_direction",
                 "visual_assets",
                 "subtitles",
-                "cover",
                 "preview",
                 "delivery",
             ),
         )
         self.assertEqual(
             STAGE_STATUSES,
-            ("pending", "ready_for_review", "approved", "needs_revision", "blocked"),
+            ("pending", "ready", "completed", "needs_revision", "blocked"),
         )
 
     def test_artifacts_are_regular_bound_files_relative_to_job(self):
@@ -517,18 +521,18 @@ class WorkflowStateTests(unittest.TestCase):
                 with self.assertRaises(WorkflowError):
                     mark_ready(job, "inspect", [artifact])
 
-    def test_changed_artifact_fails_closed_before_approval(self):
+    def test_changed_artifact_fails_closed_before_completion(self):
         job = self.create()
         artifact = self.artifact(job, content=b"first")
         mark_ready(job, "inspect", [artifact])
         artifact.write_bytes(b"changed")
 
         with self.assertRaises(WorkflowError):
-            approve(job, "inspect")
+            complete(job, "inspect")
 
     def test_job_id_and_input_bindings_are_stable_safe_and_content_derived(self):
         first = self.create()
-        second = create_job(self.root, self.video, self.script, profile="legacy-v1")
+        second = create_job(self.root, self.video, self.script, profile="full-v2")
 
         self.assertEqual(first.job_id, second.job_id)
         self.assertRegex(first.job_id, r"\A[0-9a-f]{64}\Z")
@@ -540,7 +544,7 @@ class WorkflowStateTests(unittest.TestCase):
         )
 
         self.video.write_bytes(b"different video")
-        changed = create_job(self.root, self.video, self.script, profile="legacy-v1")
+        changed = create_job(self.root, self.video, self.script, profile="full-v2")
         self.assertNotEqual(changed.job_id, first.job_id)
 
     def test_changed_inputs_fail_closed_on_load_and_run(self):
@@ -571,14 +575,14 @@ class WorkflowStateTests(unittest.TestCase):
         for bad_input in bad_inputs:
             with self.subTest(path=bad_input.name):
                 with self.assertRaises(WorkflowError) as raised:
-                    create_job(self.root, bad_input, self.script, profile="legacy-v1")
+                    create_job(self.root, bad_input, self.script, profile="full-v2")
                 self.assertNotIn(str(bad_input), str(raised.exception))
 
     def test_workflow_rejects_duplicate_keys_and_nonfinite_numbers(self):
         job = self.create()
         workflow = job.job_dir / "workflow.json"
         original = workflow.read_text(encoding="utf-8")
-        workflow.write_text(original.replace('"version": 1', '"version": 1, "version": 1', 1))
+        workflow.write_text(original.replace('"version": 2', '"version": 2, "version": 2', 1))
         with self.assertRaises(WorkflowError):
             load_job(job.job_dir)
 
@@ -613,7 +617,7 @@ class WorkflowStateTests(unittest.TestCase):
         mutations.append(bool_size)
         bool_attempts = json.loads(json.dumps(original)); bool_attempts["stages"]["inspect"]["ai_attempts"] = False
         mutations.append(bool_attempts)
-        wrong_version = json.loads(json.dumps(original)); wrong_version["version"] = 2
+        wrong_version = json.loads(json.dumps(original)); wrong_version["version"] = 1
         mutations.append(wrong_version)
 
         for payload in mutations:
@@ -622,7 +626,7 @@ class WorkflowStateTests(unittest.TestCase):
                 with self.assertRaises(WorkflowError):
                     load_job(job.job_dir)
 
-    def test_lineage_schema_is_new_default_and_only_uniform_legacy_is_accepted(self):
+    def test_lineage_schema_is_required_and_old_or_mixed_schema_is_rejected(self):
         job = self.create()
         payload = self.workflow_payload(job)
         self.assertTrue(all(stage["lineage"] == [] for stage in payload["stages"].values()))
@@ -631,13 +635,8 @@ class WorkflowStateTests(unittest.TestCase):
         for stage in legacy["stages"].values():
             del stage["lineage"]
         self.overwrite_workflow(job, legacy)
-        loaded = load_job(job.job_dir)
-        self.assertTrue(all(stage["lineage"] == [] for stage in loaded.stages.values()))
-        save_job(loaded)
-        self.assertTrue(all(
-            stage["lineage"] == []
-            for stage in self.workflow_payload(loaded)["stages"].values()
-        ))
+        with self.assertRaises(WorkflowError):
+            load_job(job.job_dir)
 
         mixed = copy.deepcopy(legacy)
         mixed["stages"]["inspect"]["lineage"] = []
@@ -773,10 +772,12 @@ class WorkflowStateTests(unittest.TestCase):
         }
         payload = self.workflow_payload(job)
         payload["stages"]["speech_cleanup"] = {
-            "status": "ready_for_review",
+            "status": "ready",
             "reason": None,
             "artifacts": [record],
             "ai_attempts": 0,
+            "lineage": [],
+            "artifact_scope": [],
         }
         self.overwrite_workflow(job, payload)
 
@@ -785,7 +786,7 @@ class WorkflowStateTests(unittest.TestCase):
 
         job.stages = payload["stages"]
         with self.assertRaises(WorkflowError):
-            approve(job, "speech_cleanup")
+            complete(job, "speech_cleanup")
         with self.assertRaises(WorkflowError):
             mark_ready(job, "speech_cleanup", [artifact])
         with self.assertRaises(WorkflowError):
@@ -830,7 +831,7 @@ class WorkflowStateTests(unittest.TestCase):
                 self.assertEqual(list(job.job_dir.glob(".workflow.*.backup")), [])
                 self.assertEqual(list(job.job_dir.glob(".workflow.*.marker")), [])
 
-    def test_approve_rolls_back_if_artifact_changes_during_publication(self):
+    def test_complete_rolls_back_if_artifact_changes_during_publication(self):
         for replacement in (False, True):
             with self.subTest(replacement=replacement):
                 if replacement:
@@ -864,15 +865,15 @@ class WorkflowStateTests(unittest.TestCase):
                     side_effect=exchange_then_change_artifact,
                 ):
                     with self.assertRaises(WorkflowError):
-                        approve(job, "inspect")
+                        complete(job, "inspect")
 
                 self.assertTrue(changed)
                 self.assertEqual(workflow.read_bytes(), ready)
                 self.assertEqual(
                     json.loads(workflow.read_text(encoding="utf-8"))["stages"]["inspect"]["status"],
-                    "ready_for_review",
+                    "ready",
                 )
-                self.assertEqual(job.stages["inspect"]["status"], "ready_for_review")
+                self.assertEqual(job.stages["inspect"]["status"], "ready")
                 self.assertTrue(artifact.exists())
                 if not replacement:
                     self.assertEqual(artifact.stat().st_ino, original_inode)
@@ -1108,15 +1109,15 @@ class WorkflowStateTests(unittest.TestCase):
         job = self.create()
         artifact = self.artifact(job)
         mark_ready(job, "inspect", [artifact])
-        approve(job, "inspect")
+        complete(job, "inspect")
         workflow = job.job_dir / "workflow.json"
         previous = workflow.read_bytes()
 
-        existing = create_job(self.root, self.video, self.script, profile="legacy-v1")
+        existing = create_job(self.root, self.video, self.script, profile="full-v2")
 
         self.assertEqual(existing.revision, job.revision)
         self.assertEqual(existing.stages, job.stages)
-        self.assertEqual(existing.stages["inspect"]["status"], "approved")
+        self.assertEqual(existing.stages["inspect"]["status"], "completed")
         self.assertEqual(workflow.read_bytes(), previous)
 
     def test_create_job_rejects_existing_corruption_and_input_path_conflict(self):
@@ -1129,19 +1130,19 @@ class WorkflowStateTests(unittest.TestCase):
         alternate_script.write_bytes(self.script.read_bytes())
 
         with self.assertRaises(WorkflowError):
-            create_job(self.root, alternate_video, alternate_script, profile="legacy-v1")
+            create_job(self.root, alternate_video, alternate_script, profile="full-v2")
         self.assertEqual(workflow.read_bytes(), previous)
 
         workflow.write_bytes(b"not JSON")
         with self.assertRaises(WorkflowError):
-            create_job(self.root, self.video, self.script, profile="legacy-v1")
+            create_job(self.root, self.video, self.script, profile="full-v2")
 
         pending = job.job_dir / ".workflow.pending.backup"
         workflow.write_bytes(previous)
         pending.write_bytes(previous)
         try:
             with self.assertRaises(WorkflowError):
-                create_job(self.root, self.video, self.script, profile="legacy-v1")
+                create_job(self.root, self.video, self.script, profile="full-v2")
         finally:
             pending.unlink()
 
@@ -1226,7 +1227,7 @@ class WorkflowStateTests(unittest.TestCase):
                     self.assertEqual(job.stages, previous_stages)
                     self.assertEqual(job.revision, previous_revision)
                     with self.assertRaises(WorkflowError):
-                        approve(job, "inspect")
+                        complete(job, "inspect")
 
     def test_publish_stage_rejects_mutation_replacement_and_replace_window_swap(self):
         for kind in ("mutate", "replace", "swap_after_replace"):
@@ -2106,7 +2107,7 @@ class WorkflowStateTests(unittest.TestCase):
                     side_effect=publish_then_replace_target,
                 ):
                     with self.assertRaises(WorkflowError):
-                        approve(job, "inspect")
+                        complete(job, "inspect")
 
                 if replacement == "symlink":
                     self.assertTrue(os.path.lexists(workflow))
@@ -2138,34 +2139,20 @@ class WorkflowCliTests(unittest.TestCase):
         self.assertIsNotNone(importlib.util.find_spec("edit.hd.tools.cli"))
 
     def run_cli(self, *argv):
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-        with redirect_stdout(stdout), redirect_stderr(stderr):
-            try:
-                code = importlib.import_module("edit.hd.tools.cli").main(list(argv))
-            except SystemExit as exc:
-                code = int(exc.code)
-        return code, stdout.getvalue(), stderr.getvalue()
-
-    def init(self):
-        code, stdout, stderr = self.run_cli(
-            "init", "--root", str(self.root), "--video", str(self.video),
-            "--script", str(self.script),
+        launcher = Path(__file__).resolve().parents[3] / "run.py"
+        result = subprocess.run(
+            [sys.executable, str(launcher), "job", *argv], cwd=self.root,
+            capture_output=True, text=True, check=False,
         )
-        self.assertEqual(code, 0, stderr)
-        return json.loads(stdout)
+        return result.returncode, result.stdout, result.stderr
 
-    def test_init_returns_safe_single_line_summary_and_rejects_bad_inputs(self):
-        summary = self.init()
+    def create_fixture(self):
+        return create_job(self.root, self.video, self.script, profile="full-v2")
 
-        self.assertEqual(set(summary), {"job_id", "job", "status"})
-        self.assertEqual(summary["job_id"], summary["job"].rsplit("/", 1)[-1])
-        self.assertEqual(summary["status"], "created")
-        self.assertNotIn(str(self.root), json.dumps(summary))
-
-        missing = self.root / "missing.mp4"
-        dangerous = self.root / ".." / "outside.mp4"
-        for video in (missing, dangerous):
+    def test_job_cli_rejects_direct_initialization_without_mutating_inputs(self):
+        before_video = self.video.read_bytes()
+        before_script = self.script.read_bytes()
+        for video in (self.video, self.root / "missing.mp4", self.root / ".." / "outside.mp4"):
             with self.subTest(video=str(video)):
                 code, stdout, stderr = self.run_cli(
                     "init", "--root", str(self.root), "--video", str(video),
@@ -2173,58 +2160,49 @@ class WorkflowCliTests(unittest.TestCase):
                 )
                 self.assertEqual(code, 2)
                 self.assertEqual(stdout, "")
-                self.assertTrue(stderr.startswith("错误: "))
+                self.assertEqual(stderr, "错误: 无效的工作流请求\n")
                 self.assertNotIn(str(video), stderr)
+        self.assertEqual(self.video.read_bytes(), before_video)
+        self.assertEqual(self.script.read_bytes(), before_script)
+        self.assertFalse((self.root / "edit").exists())
 
     def test_status_returns_only_safe_summary(self):
-        created = self.init()
-        job_dir = self.root / created["job"]
-
-        code, stdout, stderr = self.run_cli("status", "--job", str(job_dir))
-
+        job = self.create_fixture()
+        workflow = job.job_dir / "workflow.json"
+        before = workflow.read_bytes()
+        code, stdout, stderr = self.run_cli("status", "--job", str(job.job_dir))
         self.assertEqual(code, 0, stderr)
         summary = json.loads(stdout)
         self.assertEqual(
-            set(summary), {"version", "job_id", "revision", "current_stage", "stages"}
+            set(summary), {"version", "job_id", "revision", "current_stage", "stages", "delivery_status"}
         )
         self.assertEqual(summary["current_stage"], "inspect")
+        self.assertEqual(summary["delivery_status"], "pending")
         self.assertNotIn(str(self.root), stdout)
         self.assertNotIn(str(self.video), stdout)
         self.assertNotIn(str(self.script), stdout)
+        self.assertEqual(workflow.read_bytes(), before)
 
-    def test_ready_and_approve_enforce_stage_rules(self):
-        created = self.init()
-        job_dir = self.root / created["job"]
-        artifact = job_dir / "inspect" / "report.json"
+    def test_job_cli_cannot_ready_complete_or_approve_machine_stages(self):
+        job = self.create_fixture()
+        artifact = job.job_dir / "inspect" / "report.json"
         artifact.parent.mkdir()
         artifact.write_text("{}\n", encoding="utf-8")
-
-        code, _, stderr = self.run_cli("approve", "--job", str(job_dir), "--stage", "inspect")
-        self.assertEqual(code, 2)
-        self.assertTrue(stderr.startswith("错误: "))
-
-        code, _, stderr = self.run_cli(
-            "ready", "--job", str(job_dir), "--stage", "inspect", "--artifact", str(artifact)
-        )
-        self.assertEqual(code, 0, stderr)
-        code, stdout, stderr = self.run_cli(
-            "approve", "--job", str(job_dir), "--stage", "inspect"
-        )
-        self.assertEqual(code, 0, stderr)
-        self.assertEqual(json.loads(stdout)["stages"]["inspect"]["status"], "approved")
-
-        code, _, stderr = self.run_cli("approve", "--job", str(job_dir))
-        self.assertEqual(code, 2)
-        self.assertEqual(stderr, "错误: 无效的工作流请求\n")
-        code, _, stderr = self.run_cli(
-            "approve", "--job", str(job_dir), "--stage", "unknown"
-        )
-        self.assertEqual(code, 2)
-        self.assertTrue(stderr.startswith("错误: "))
+        before = (job.job_dir / "workflow.json").read_bytes()
+        for command in ("ready", "complete", "approve"):
+            with self.subTest(command=command):
+                code, stdout, stderr = self.run_cli(
+                    command, "--job", str(job.job_dir), "--stage", "inspect", "--artifact", str(artifact)
+                )
+                self.assertEqual(code, 2)
+                self.assertEqual(stdout, "")
+                self.assertEqual(stderr, "错误: 无效的工作流请求\n")
+        self.assertEqual((job.job_dir / "workflow.json").read_bytes(), before)
+        self.assertEqual(load_job(job.job_dir).stages["inspect"]["status"], "pending")
 
     def test_revise_and_block_validate_attempts_and_persist_state(self):
-        created = self.init()
-        job_dir = self.root / created["job"]
+        job = self.create_fixture()
+        job_dir = job.job_dir
 
         code, _, stderr = self.run_cli(
             "revise", "--job", str(job_dir), "--stage", "inspect", "--reason", "tighten cuts"
@@ -2248,50 +2226,40 @@ class WorkflowCliTests(unittest.TestCase):
                 )
                 self.assertEqual(code, 2)
 
-    def test_ready_binds_multiple_artifacts_and_rejects_unsafe_artifacts(self):
-        created = self.init()
-        job_dir = self.root / created["job"]
-        first = job_dir / "inspect" / "first.bin"
-        second = job_dir / "inspect" / "second.bin"
+    def test_machine_artifact_binding_remains_safe_and_is_observable_via_status(self):
+        job = self.create_fixture()
+        first = job.job_dir / "inspect" / "first.bin"
+        second = job.job_dir / "inspect" / "second.bin"
         first.parent.mkdir()
         first.write_bytes(b"one")
         second.write_bytes(b"two")
-
-        code, stdout, stderr = self.run_cli(
-            "ready", "--job", str(job_dir), "--stage", "inspect", "--artifact", str(first),
-            "--artifact", str(second),
-        )
+        mark_ready(job, "inspect", [first, second])
+        code, stdout, stderr = self.run_cli("status", "--job", str(job.job_dir))
         self.assertEqual(code, 0, stderr)
         self.assertEqual(json.loads(stdout)["stages"]["inspect"]["artifact_count"], 2)
 
-        second_job = self.init()
-        second_dir = self.root / second_job["job"]
-        for artifact in (self.root / "missing.bin", self.root / "outside.bin"):
-            if artifact.name == "outside.bin":
-                artifact.write_bytes(b"outside")
+        self.video.write_bytes(b"second fixture")
+        second_job = self.create_fixture()
+        outside = self.root / "outside.bin"
+        outside.write_bytes(b"outside")
+        link = second_job.job_dir / "artifact-link"
+        link.symlink_to(first)
+        for artifact in (self.root / "missing.bin", outside, link):
             with self.subTest(artifact=artifact.name):
-                code, _, stderr = self.run_cli(
-                    "ready", "--job", str(second_dir), "--stage", "inspect", "--artifact", str(artifact)
+                with self.assertRaises(WorkflowError):
+                    mark_ready(second_job, "inspect", [artifact])
+                code, stdout, stderr = self.run_cli(
+                    "ready", "--job", str(second_job.job_dir), "--stage", "inspect", "--artifact", str(artifact)
                 )
                 self.assertEqual(code, 2)
-                self.assertTrue(stderr.startswith("错误: "))
-
-        link = second_dir / "artifact-link"
-        link.symlink_to(first)
-        code, _, stderr = self.run_cli(
-            "ready", "--job", str(second_dir), "--stage", "inspect", "--artifact", str(link)
-        )
-        self.assertEqual(code, 2)
-        self.assertTrue(stderr.startswith("错误: "))
-
-        code, _, stderr = self.run_cli("ready", "--job", str(second_dir), "--stage", "inspect")
-        self.assertEqual(code, 2)
-        self.assertEqual(stderr, "错误: 无效的工作流请求\n")
+                self.assertEqual(stdout, "")
+                self.assertEqual(stderr, "错误: 无效的工作流请求\n")
+        self.assertEqual(load_job(second_job.job_dir).stages["inspect"]["status"], "pending")
 
     def test_domain_errors_are_safe_and_main_returns_integer(self):
         secret_path = self.root / "secret_sk-should-not-appear.mp4"
         code, stdout, stderr = self.run_cli(
-            "init", "--root", str(self.root), "--video", str(secret_path), "--script", str(self.script)
+            "status", "--job", str(secret_path)
         )
 
         self.assertIsInstance(code, int)

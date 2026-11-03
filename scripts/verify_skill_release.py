@@ -2,7 +2,6 @@
 """Read-only integrity check for a complete, portable Skill release."""
 
 from __future__ import annotations
-from package_paths import PACKAGE_ROOT
 
 import argparse
 import hashlib
@@ -30,7 +29,7 @@ def file_hash(path: Path) -> str:
     return digest.hexdigest()
 
 
-def package_files(root: Path) -> dict[str, Path]:
+def package_files(root: Path, *, _directories: set[Path] | None = None) -> dict[str, Path]:
     package_root = root.resolve()
     files = {}
     restored_sources = set()
@@ -51,6 +50,8 @@ def package_files(root: Path) -> dict[str, Path]:
     excluded = {".git", "node_modules", ".venv", ".cache", ".remotion", "__pycache__"}
     for directory, directories, names in os.walk(package_root):
         base = Path(directory)
+        if _directories is not None:
+            _directories.add(base)
         relative = base.relative_to(package_root).as_posix()
         directories[:] = [name for name in directories if name not in excluded and not name.endswith(".egg-info")
             and (base / name).relative_to(package_root).as_posix() not in restored_sources
@@ -113,6 +114,7 @@ def verify_release(root: Path, expected: dict | None = None) -> dict:
 
 
 def main() -> int:
+    from package_paths import PACKAGE_ROOT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--peer", type=Path, action="append", default=[])
     args = parser.parse_args()

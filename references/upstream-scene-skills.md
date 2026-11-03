@@ -43,7 +43,7 @@
 2. treatment 内部列出三个简短构思并选一个，写明主动作、视觉标杆借什么/不借什么和相邻镜头如何区分；这不是三轮渲染或三次用户确认。参照未实际看过时只写待检查，不冒称已审阅。
 3. 用上游原生风格语法设计本期构图和运动。一个短镜头围绕一个读得懂的主变化，让相关对象、过程和上下文随口播展开；“一个主变化”不等于全段只有一个空泛图标。可随内容发生 re-flow、状态改变、空间转换或对象动作，不以标签依次出现和轻微推拉充当全段动态。不可复制 DEMO 的故事、镜头顺序、道具或时码。
 4. 用本期代码实际生成原尺寸 style frames，再原生渲染完整短镜头。自托管中文字体要覆盖全部实际可见字符并在 READY 前加载；分片字体不能只拷贝任意一片，浏览器字体加载成功亦不证明没有缺字回退。检查初始信息是否能辨认、主变化是否明显、最终状态是否确实表达本句，以及全速动作是否自然；移动中的标签也不能被其他元素穿过。来源 labels、监看动作、消息推送分别绑定它们真正说到的词，不提前发出未说到的结果。
-5. 同屏看相邻镜头的形态和主要动作：换了 Skill 名却仍是白底卡片加连线，不算多样性。先在当前镜头改构图和动作；能力确实不足才换上游。沿用既有短 canary 和复用流程，只替换授权修改的组件，不重做其他已确认内容。
+5. 同屏看相邻镜头的形态和主要动作：换了 Skill 名却仍是白底卡片加连线，不算多样性。先在当前镜头改构图和动作；能力确实不足才换上游。沿用当前完整清单和复用流程，只替换本次反馈涉及的组件，不重做其他内容；不新增父级短样片审批。
 
 短 B-roll 的父级规格覆盖上游独立长片默认值：不额外生成配音、背景音乐、子字幕、片尾签名或缩略图；不为凑齐流程延长、变速或重复付费。父级只接入原生无声视觉，保留唯一音轨和字幕轨。
 
@@ -149,11 +149,13 @@ Adu/Hypit 均提供 `create_existing_adapter(project_root, node_executable, brie
 
 ```python
 create_adapter(project_root, dependency_id, python_executable, brief_loader)
-create_binding(adapter, brief_bytes, reference_sample)
+create_binding(adapter, brief_bytes)
 create_artifact_probe(ffprobe)
 ```
 
 `dependency_id` 仅允许 `lemo-opuscar` 或 `onetake`；`primary_renderer=HTMLCanvas`；适配器版本为 `2.0.0`。CLI 支持真实 runner 及本地探测：`--probe --project-root ROOT --dependency-id ID`。
+
+生产 runner 必须携带真实 Job：CLI 显式传 `--job-dir`，或使用既有 ReferenceProcessAdapter 传入的 `BROLL_JOB_DIR`；API 为 `run_native(brief, scene, runtime, job_dir=job_dir)`。两者在建立临时场景、运行原生程序或写媒体前，共用 startup 的只读身份校验，核对 Job、Skill 来源、源码、release 和父 Python。正式 ReferenceProcessAdapter 另在事务写入前核对父进程身份，继续冻结 brief、场景输入、入口和 launcher。OneTake 的专用子 Python 与 Node 按其原生绑定执行，不要求与父 Python 相同。`--probe` 和依赖准备不需要 Job；裸状态引擎的资格样片不因此获得生产执行授权。
 
 创建 binding 后登记到 `component_adapters["code_generated"][dependency_id]`，并接入现有 artifact probe/执行链；不得另起旁路渲染器。
 
@@ -218,4 +220,4 @@ node core/render/video.mjs <scene> --size 1080x1920 --fps 24 --workers 1 --out <
 
 ## 阶段与兼容边界
 
-继续沿用 full-v2 十二阶段、批准素材和状态级联。旧 Job 不重签、不迁移为新依赖；新依赖只进入新 revision。渲染前父级必须确认 source、依赖提交、brief 哈希和静帧实际审阅；渲染后再检查尺寸、帧率、帧数、无声、动作前中后和 source_binding 时钟。任何一项缺证据就停在当前阶段，不能用历史样片、目录存在或成功退出码代替真实验收。
+沿用当前十一个机器制作阶段与状态级联。旧 Job 和成片不重签、不迁移。渲染前保留实际 source、原生入口及输入身份；原生 Skill 自身技术 QA 不变，母级只保留文件、格式、帧数与 source_binding 时钟等必要检查，不要求父级静帧审阅或逐镜动作验收。成功后直接合成交片，用户按原编号反馈；超出当前授权的新外部调用必须先取得对应授权。

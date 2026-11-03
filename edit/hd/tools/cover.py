@@ -279,7 +279,7 @@ def _artifact(
     job: state.JobState, stage_id: str, directory: str, name: str,
 ) -> tuple[Path, dict[str, object]]:
     stage_record = job.stages.get(stage_id)
-    if type(stage_record) is not dict or stage_record.get("status") != "approved":
+    if type(stage_record) is not dict or stage_record.get("status") != "completed":
         raise _fail()
     matches = []
     for record in stage_record.get("artifacts", []):
@@ -614,6 +614,12 @@ def _text(value: object, *, nonempty: bool = True) -> str:
     return value
 
 
+def _full_image_prompt(value: object) -> str:
+    if type(value) is not str or not value.strip() or len(value) > 16_000:
+        raise _fail()
+    return value
+
+
 def _number(value: object) -> float:
     if type(value) not in (int, float) or not math.isfinite(float(value)):
         raise _fail()
@@ -832,11 +838,9 @@ def validate_cover_brief(
         raise _fail()
     if requires_protection:
         _person_protection_boxes(root["person_protection_boxes"])
-    prompt = _text(root["base_prompt"])
-    if full_image_mode:
-        if len(prompt) > 16_000:
-            raise _fail()
-    elif reference_mode and face_source == "user-material":
+    prompt = (_full_image_prompt(root["base_prompt"]) if full_image_mode
+              else _text(root["base_prompt"]))
+    if not full_image_mode and reference_mode and face_source == "user-material":
         if len(prompt) > 8_000 or re.search(r"[\u3400-\u9fff]", prompt):
             raise _fail()
         normalized_prompt = prompt.lower()
@@ -846,7 +850,7 @@ def validate_cover_brief(
         )
         if not forbids_text or "watermark" not in normalized_prompt:
             raise _fail()
-    elif prompt != _scene_prompt(details):
+    elif not full_image_mode and prompt != _scene_prompt(details):
         raise _fail()
 
     composite = _dict(root["person_composite"], _PERSON_KEYS)
@@ -911,7 +915,7 @@ def _brief_from_approved_direction(
     reference = direction["person_reference"]
     composition = direction["composition"]
     if composition["style_id"] == _PUNK_STYLE and approved_preview_prompt is None:
-        raise CoverError("Punk cover requires an approved complete image and its actual prompt")
+        raise CoverError("Punk cover requires a completed full image and its actual generation prompt")
     palette = direction["palette"]
     typography = direction["typography"]
     safe_zones = direction["safe_zones"]
@@ -977,7 +981,7 @@ def _brief_from_approved_direction(
         if generated_scene is not None or generated_scene_prompt is not None:
             raise _fail()
         base_generation = "approved_full_image"
-        base_prompt = _text(approved_preview_prompt)
+        base_prompt = _full_image_prompt(approved_preview_prompt)
         composite_method = "approved-preview-integrated"
     brief: dict[str, object] = {
         "version": 1,
@@ -995,7 +999,7 @@ def _brief_from_approved_direction(
                 "selection": composition["style_id"],
                 "title": title,
                 "reason": (
-                    "使用已通过人工审核的封面内容、人物动作和主题环境"
+                    "使用当前封面方案中的内容、人物动作和主题环境"
                 ),
             },
             "references": {
@@ -2421,7 +2425,7 @@ def _finish_transaction(
     current = state.load_job(job.job_dir)
     _synchronize_job(job, current)
     status = job.stages["cover"]["status"]
-    if status in {"ready_for_review", "approved"}:
+    if status in {"ready", "completed"}:
         if not _artifacts_match(job, records) or not _records_match(target, records):
             raise _fail()
         _remove_new_directory(stage, records)
@@ -2495,7 +2499,7 @@ def _finish_transaction(
         try:
             refreshed = state.load_job(job.job_dir)
             committed = (
-                refreshed.stages["cover"]["status"] in {"ready_for_review", "approved"}
+                refreshed.stages["cover"]["status"] in {"ready", "completed"}
                 and _artifacts_match(refreshed, records)
                 and _records_match(target, records)
             )
@@ -2641,7 +2645,7 @@ def prepare_cover(
     base_url: str | None = None,
     provider: Callable[..., dict[str, object]] | None = None,
 ) -> Path:
-    """Build one atomic cover generation and stop at ready-for-review."""
+    """Build one atomic cover generation and register its ready artifacts."""
     if (approved_preview is None) != (approved_preview_sha256 is None):
         raise CoverError("approved preview requires its exact SHA-256")
     if approved_base is not None and approved_preview is None:
@@ -2662,8 +2666,8 @@ def prepare_cover(
             raise CoverError(
                 "full-v2 cover uses approved cover_direction; brief is not accepted"
             )
-        if job.stages.get("cover_direction", {}).get("status") != "approved":
-            raise CoverError("cover_direction must be approved")
+        if job.stages.get("cover_direction", {}).get("status") != "completed":
+            raise CoverError("cover_direction must be completed")
         try:
             from edit.hd.tools import cover_direction
 
@@ -3115,7 +3119,7 @@ def prepare_cover(
         if (
             ai_claimed
             and not os.path.lexists(job.job_dir / _TRANSACTION_NAME)
-            and job.stages["cover"]["status"] not in {"blocked", "ready_for_review", "approved"}
+            and job.stages["cover"]["status"] not in {"blocked", "ready", "completed"}
         ):
             _block_after_ai(job)
         raise
@@ -3123,7 +3127,7 @@ def prepare_cover(
         if (
             ai_claimed
             and not os.path.lexists(job.job_dir / _TRANSACTION_NAME)
-            and job.stages["cover"]["status"] not in {"blocked", "ready_for_review", "approved"}
+            and job.stages["cover"]["status"] not in {"blocked", "ready", "completed"}
         ):
             _block_after_ai(job)
         raise _fail() from None

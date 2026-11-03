@@ -266,6 +266,26 @@ def _binding_probe(
 
 
 class DependencyPreflightTests(unittest.TestCase):
+    def test_reference_asr_failure_has_safe_actionable_path_guidance(self):
+        import dependency_preflight
+
+        identity = {"job_context": {"workspace": "/example/workspace", "job_id": "job"}}
+        failed = subprocess.CompletedProcess(
+            [], 2, stdout="private configuration", stderr="private credential value")
+        with mock.patch.object(dependency_preflight.subprocess, "run", return_value=failed):
+            report = dependency_preflight._check_reference_asr(REPO_ROOT, identity)
+        self.assertEqual(report["status"], "smoke_failed")
+        self.assertIn("HD_WHISPER_CLI", report["detail"])
+        self.assertIn("HD_WHISPER_MODEL", report["detail"])
+        self.assertIn("absolute", report["detail"])
+        self.assertIn("symlink", report["detail"])
+        self.assertNotIn("private configuration", json.dumps(report))
+        self.assertNotIn("private credential value", json.dumps(report))
+        invalid = subprocess.CompletedProcess([], 3, stdout="", stderr="private credential value")
+        with mock.patch.object(dependency_preflight.subprocess, "run", return_value=invalid):
+            with self.assertRaisesRegex(dependency_preflight.PreflightError, "configuration is invalid"):
+                dependency_preflight._check_reference_asr(REPO_ROOT, identity)
+
     def test_packaged_video_use_runtime_is_callable_and_stage_bound(self):
         from project_python import project_environment
 
@@ -356,7 +376,7 @@ class DependencyPreflightTests(unittest.TestCase):
             plan_path=job_dir/'07-visual-direction/visual-plan.json';plan_path.parent.mkdir(parents=True)
             plan_path.write_text('{}')
             identity={'job_context':{'workspace':str(workspace),'job_id':'current'}}
-            job=SimpleNamespace(job_id='current',job_dir=job_dir,stages={'visual_direction':{'status':'approved'}})
+            job=SimpleNamespace(job_id='current',job_dir=job_dir,stages={'visual_direction':{'status':'completed'}})
             plan={'segments':[{'shot_recipe':{'components':[
                 {'kind':'code_generated','dependency_id':'video-shotcraft'},
                 {'kind':'code_generated','dependency_id':'mg-styles-15'}]}}]}

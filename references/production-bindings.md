@@ -1,16 +1,18 @@
 # 正式生产绑定
 
-本文件登记当前仓库可验证的正式视觉身份。确认样片就是正式模板，不是“风格接近即可”的参考；任何字体、文案、构图、头像、动效、模型或证据变化都不得静默修改，必须形成 revision 并重新报审。
+> 当前生产流程与交付边界以 [SKILL.md](../SKILL.md) 和[视觉规划](visual-quality-contract.md)为准。本文保留原生入口与能力资料；历史样片和质量记录不构成每期交付门槛，原生 Skill 自身技术 QA 不变。
 
-## 当前模板与本期样片
+本文件登记可验证的视觉来源和接口身份。资格样片用于能力库接入，不是每期制作的确认门；本期按完整清单和费用授权制作，按用户反馈局部返修。
+
+## 当前模板与本期制作
 
 整屏模板资格的唯一来源是 [当前模板注册表](verified-template-registry.json)，使用前按 [双输入实测资格](template-qualification.md) 校验。可验证模板数量与入口读取注册表，不从旧评审板、旧家族目录或参考仓库数量推断。原生组合组件、设计来源及实际执行器的接通范围按 [统一候选入口](broll-capability-router.md#唯一选型入口与记录) 判断，不把这些角色都计为已验证整屏模板。
 
-本期实际使用的模板、字体、文案、头像与动效以当前 Job 已批准的 ShotRecipe 和 canary 为准。历史五镜头样片及评审板仅属于原任务的设计证据，不是新视频的固定文案、统一时长或替代模板，不从外部 Downloads 目录回填。
+本期实际使用的模板、字体、文案、头像与动效以当前 Job 已确认的完整清单和 ShotRecipe 为准。历史五镜头样片及评审板仅属于原任务的设计证据，不是新视频的固定文案、统一时长或替代模板，不从外部 Downloads 目录回填。
 
 OpenFilm 按 [原生创作合同](openfilm-motion-graphics.md)绑定本期页面、素材、动作拍及原生指令版本；它使用 `ReferenceProcessAdapter / OpenFilm`，不是已验证模板。已认可样片只供质量参照，不形成固定构图；后续仍按本期语义创作、验收。原声、圆窗与唯一字幕由父级合成，已验收成片不回填、不迁移。
 
-自定义家族由当前路由器与 renderer 提供，但只有注册表通过验证的入口才能宣称已验证；自定义模板仍需当前内容的三态检查及人工样片确认。
+自定义家族由当前路由器与 renderer 提供，但只有注册表通过验证的入口才能宣称已验证；自定义模板按本期内容直接制作，视觉效果由成片人工终验确认。
 
 ## 文案与字体锁定
 
@@ -18,15 +20,15 @@ OpenFilm 按 [原生创作合同](openfilm-motion-graphics.md)绑定本期页面
 - 当前镜头的标题、数字、结论和来源必须与本期已批准的配方逐字一致；最终上屏字符串写入 plan 和 manifest，再以哈希绑定。不把历史样片文案复制到新任务。
 - 内部语义字段不得上屏，包括“主题”“结论”“关键值”“提问”“反馈”“对照”等生成器角色名，除非它本身就是用户批准的文案。
 - 每个模板必须绑定字体族、字体文件或系统字体身份、字重、字号、行距、字距和回退顺序。canonical 基线使用 PingFang SC、Songti SC、SF Mono；正式模板允许已登记的 Hiragino Sans GB 与 STSong 回退。
-- 缺少已绑定字体时必须 blocked，不得静默替换字体。更换字体、字重、字号或行距属于视觉 revision，必须检查新版实际视频与原尺寸关键帧后报审，不生成缩略拼图。
-- 文本测量发生在渲染前和渲染后；任何溢出、被裁半、强制缩成不可读字号或与头像/其他文案重叠都判失败。
+- 制作时使用支持中文的清晰字体；字体及排版调整遵循本期内容和原生接口，不要求额外关键帧报审。
+- 制作时避免文字溢出、裁切、过小或与头像/其他文案重叠；成片人工终验发现问题后局部返修，不另设父级文字测量或抽帧验收门。
 
 ## 官方资料与命名人物绑定
 
 - 官方资料的 `product_page`、`image` 和 `video` 分别冻结真实来源，使用当前语义路由、ShotRecipe 校验和 `broll_systems.validate_composition` 验证组合；媒体执行再由 `broll_media.py` 核对实际内容，不调用已退役的旧路由接口。
 - 文案出现命名人物及职务时，对应事实组件绑定第一方官方视频或官方人物页图片。姓名、职务、publisher、URL、访问时间、媒体类型、路径、字节数与 SHA-256 必须写入来源记录。
 - 口播明确强调 CEO、创始人、研究者等职务时，姓名和职务必须进入已批准可见文案，或由紧邻的官方视频标题卡可靠呈现；不得只有人物图而丢失身份信息。
-- 官方图片和官方视频分别进入 plan、manifest 与三态 QA；存在一种媒体不能代替对另一种已批准媒体的绑定和验收。
+- 官方图片和官方视频分别进入 plan 和 manifest，保留各自来源与媒体事实；存在一种媒体不能代替另一种已确认媒体。
 - 完整执行次序与失败分类见 [视觉资产前置检查](visual-assets-preflight.md)。
 
 ## 条件 B-roll 依赖绑定
@@ -43,7 +45,7 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 - A-roll 三节点流程调用 HyperFrames Registry 的 `hw-pipeline`，接口与限制见 [A-roll 透明贴片合同](aroll-overlay-contract.md)。`scripts/hyperframes_hw_pipeline_adapter.py` 绑定批准段落和真人源片，`scripts/render_hyperframes_hw_pipeline.cjs` 调用真实 HyperFrames CLI 并输出透明 MOV；不是 TalkCraft 自制样式，也不等于该样片已完成正式 Job 的全片验收。
 - `hd-talking-head-local-canonical` 的入口为 `scripts/local_canonical_adapter.py`，执行 `scripts/local_canonical_renderer.cjs`。它提供 `process-relations`、`viewpoint-comparison`、`evidence-source`、`timeline-progression`、`quote-thesis-artword` 五个原生 9:16 构图；每个入口都必须匹配 registry 的源码哈希、版本、双输入回执和当前运行时固定。
 - Huashu 的生产入口为 `scripts/huashu_motion_adapter.py`，实际调用固定 vendor 的 `render.py --spec`，第三方源码保持原样。已登记 `huashu-art-motion/y1_kurzgesagt` 三节点机制流程，容量恰好为 3，语义为 `process_flow` / `mechanism_system`，保留原生 `title` / `point` / `flow` 及信号；不含 hierarchy、`highlight` / `enter`。另已登记 `huashu-art-motion/y2_vox`，容量恰好为 1，语义为 `evidence_source`，限单张横向真实来源图及整行高亮；须执行该页的输入版式与高亮全过程避让检查。已登记 `huashu-art-motion/t2_keynote_ui`，仅 `product_features` 的恰好三张原生功能卡，不扩大到未测的截图、数字或教学步骤。三条路线共用 `1.1.0` 启动器，仅在独立子进程设置连接等待容量为 64，不改 vendor 文件。准确边界、项目 Python 环境及失败处理见[Huashu 原生动效接入](huashu-native-motion.md)。
-- 每个代码组件必须冻结 `template_origin / template_id / template_version / verification_id / adaptation_level / source_entrypoint / source_sha256 / sample_sha256 / semantic_families / capacity`。`structural` 改造不得沿用第三方验证身份；实际填充后必须重新做当前文案三态 QA，不能拿历史样片直接交付。
+- 每个代码组件必须冻结 `template_origin / template_id / template_version / verification_id / adaptation_level / source_entrypoint / source_sha256 / semantic_families / capacity`。`verified_third_party / verified_local_canonical` 还必须冻结真实资格样片的 `sample_sha256`，并通过原有登记、文件及媒体核验。`custom_fallback` 原生任务不因尚未制作本期结果而要求历史样片；若确有参考样片并携带该字段，仍校验其哈希，不能将其当作本期制作或 QA 证据。`structural` 改造不得沿用第三方验证身份；本期使用真实内容与输出，不将历史样片冒充本期产物。
 - 只发现 Skill 名称或参考项目目录不代表已经绑定。当前配方选中 `html-video`、`hyperframes` 或 `hd-talking-head-local-canonical` 后，manifest 中必须存在精确匹配 entrypoint 与 producer version 的可执行 binding probe；probe 返回的 `dependency_id / entrypoint / producer_version / adapter_identity` 必须与批准配方及登记逐字一致，才能返回 `selected + callable + bound`。HyperFrames 及其支撑的本地 canonical probe 还复核固定运行时提交、CLI 版本、渲染入口与模板包装器。
 - Node.js 与 npm 静态 `required: false`，只要当前批准配方包含任一 `code_generated` 组件，就提升为 `selected + callable`。
 - Pexels 与 Pixabay 静态 `required: false`。`visual_direction` 草案按语义选中对应 `external_stock.provider` 后，必须在首次搜索前复核当前 Job 的 `selected + connected`；实际素材冻结后，再用完整 ShotRecipe v2 复核 binding。
@@ -52,17 +54,17 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 ## 头像、音画和安全区
 
 - 头像统一采用 `head-shoulders`：脸宽占头像 0.38–0.52，肩宽至少 0.68，头顶留白 0.06–0.11；完整保留下巴、颈部和肩线，不能只剩头部。
-- 头像使用同一时间轴 A-roll 的独立裁切分支，不对全屏主画面做二次缩放。共享合成器读取 `composition.avatar`，不使用历史固定裁切；字段、测量与验证入口见 [头肩头像合同](avatar-profile.md)。进入后、稳定段和退出前各抽一帧验证上述比例，移动与转头区间需要额外检查。
-- A-roll、头像与口播音频的最大音画误差为 2 帧；每个剪点抽查前后至少各两帧。不得用复制末帧掩盖同步或跳动问题。
+- 头像使用同一时间轴 A-roll 的独立裁切分支，不对全屏主画面做二次缩放。共享合成器读取 `composition.avatar`，不使用历史固定裁切；字段、测量与验证入口见 [头肩头像合同](avatar-profile.md)。按实际源片设置头像裁切；比例、移动与转头效果由成片人工终验确认，不另设三态抽帧门。
+- A-roll、头像与口播音频的最大音画误差为 2 帧，使用同一源片和剪辑时钟制作；同步和剪点效果由成片人工终验确认。不得用复制末帧掩盖同步或跳动问题。
 - `soft-safe 边界为 y=1700`：critical text 和头像必须在其上方结束。`hard-safe 边界为 y=1800`：非 AI 主视觉和装饰不得越过。
 - 220px 不是固定底部留白，而是从 y=1700 到画布底部的 soft 风险区；媒体背景可延伸。底部 120px 是 hard 风险区，不放关键文字、头像或必须阅读的结论。
 
 ## 封面合同
 
-- 项目内 `punk-cover` 优先负责 9:16 图文穿插候选的内容转译、标题/人物关系和完整成图；保存其实际提示词与输出，不能仅口头声称调用。现有 `gbro-cover-design` 保留为正式 runner 的 brief/无字底图接口；`cover runner` 仍负责正式发布、哈希和 QA，Punk 候选不自动等于已批准封面。
+- 项目内 `punk-cover` 优先负责 9:16 图文穿插候选的内容转译、标题/人物关系和完整成图；保存其实际提示词与输出，不能仅口头声称调用。现有 `gbro-cover-design` 保留为正式 runner 的 brief/无字底图接口；`cover runner` 仍负责正式发布、哈希和媒体格式检查，Punk 候选只有实际发布后才成为交付封面。
 - 参考图必须存在并绑定 SHA-256。图1固定为当前讲师清晰人脸/人物参考；涉及产品、UI 或道具时，图2起绑定批准素材。缺参考图必须 blocked，不得仅凭文字猜脸。
 - 五官和脸部轮廓不得被文字、道具或裁切遮挡；五官身份要与参考图一致。经本 Job 认可的少量发丝与字穿插允许保留，叙事手部仍须清楚。人物动作、道具和环境必须符合当前主题，而不是套用固定惊讶姿势或无关科技背景。
-- 完整成图路线逐字检查图片模型生成的中文，批准后原样复用该图，不再本地叠字；无字底图路线才使用本地中文排版。关键元素仍服从本 Job 已批准的边距与脸部避让。
+- 完整成图路线按已确认文案生成中文，实际成图按授权原样发布，不再本地叠字；无字底图路线才使用本地中文排版。封面文字由成片人工终验反馈，问题局部返修。关键元素仍服从本 Job 已批准的边距与脸部避让。
 - 封面只输出当前 Job 在 `cover_direction` 已批准的比例；子 Skill 的 3:4 默认值不改写该选择。
 
 ## AI B-roll provider 合同
@@ -77,18 +79,18 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 
 - 保持 1 个主控，可委派最多 3 个互不依赖的轻量准备任务；先分配语义、时码、风格与各自输入目录，子任务不写正式清单、workflow 或批准记录。
 - 浏览器、Remotion 和 FFmpeg 重任务一次只运行一个。单 renderer 内部帧并行须先以同输入真实对照验证，再仅对已验证入口启用；不得将其当作同时开多个 renderer 的许可。每个镜头完成后关闭页面、释放帧缓存，再处理下一个。
-- 图片和视频生成共用当前 Job 的上限 2，云端等待期间继续准备其他镜头。正式计划仍要求已完成媒体与完整绑定，不能在云端 pending 时跳过批准阶段提前制作正式 canary 或字幕。
+- 图片和视频生成共用当前 Job 的上限 2，云端等待期间继续准备其他镜头。正式素材合成仍要求所需媒体已完成且绑定完整；云端 pending 不得登记为 completed，不以占位素材推进全片合成。
 - provider 连接只用于当前已批准 generation；运行报告仅保存连接状态与标识字段。
 
 ## 有界生成编排
 
-所有新 Job 的图片和视频生成必须先经过项目内 `edit.hd.tools.generation_queue`，不能由各子 Skill 绕过它各自提交。它是宿主现有工具的本地准入入口，不生成媒体、不替代子 Skill 的设计、不增加付费次数；正式阶段、资产验收和最终合成仍由原 runner 串行处理。队列只返回真实宿主 `action`，不声称 Python 可以直接调用 MCP 或其他宿主工具。
+所有新 Job 的图片和视频生成必须先经过项目内 `edit.hd.tools.generation_queue`，不能由各子 Skill 绕过它各自提交。它是宿主现有工具的本地准入入口，不生成媒体、不替代子 Skill 的设计、不增加付费次数；正式制作、媒体技术检查和最终合成仍由原 runner 串行处理。队列只返回真实宿主 `action`，不声称 Python 可以直接调用 MCP 或其他宿主工具。
 
 1. 主控先冻结各项具体内容、模型、次数、输入与真实上传范围，取得对这批内容的真实授权。配置确认和本次“实施并发”的同意不能代替付费生成授权。已授权的同一具体请求不重复询问；新增或实质变更请求重新确认。按当前视频 provider 的真实模型说明检查参数；若图片或视频由宿主工具提供，保存其真实 action 和响应，不把本地函数名当作工具调用。使用同一个真实 `project_id`（若该 provider 要求），上传、生成、查询与展示全部传该 ID。
 2. 视觉确认前不提交生成请求。`visual_direction` 先在独立 `07-visual-confirmation/rN-id/` 冻结 director brief、treatment、routing 和完整 proposal；treatment 的 `generation_plan.steps`（冻结后为 proposal 的 `generation_steps`） 可引用尚未生成的图片步骤，视频步骤通过 `{"$step":"image-step","output":0}` 引用其未来输出，不伪造未来 hash。用户确认整表后，才把已授权步骤转换为可执行请求并加入 plan。顶层请求仍只有 `id / purpose / tool / arguments / input_files`；工具 action 必须来自已确认渠道的真实 `generation_channels`，不得写死 `image_gen.imagegen` 或 Lovart。每份本地输入登记 Job 相对 `path / sha256 / bytes`，并发任务不使用会变化的“最近几张图”。每个 purpose 的渠道配置还必须有 `model_binding`：`argument` 模式把选定型号注入参数并拒绝不符请求，`fixed` 模式不注入 `model`；`reference_mode=upload` 必须先按配置执行上传、保存原始响应及回执，再替换冻结本地路径提交逻辑请求。
 3. 主控用 `contract_artifacts.sha256_json(plan)` 计算已审阅 plan 身份，调用 `add(job, plan, user_confirmation, expected_plan_sha256)` 保存具体授权。宿主通过 `generation_channels.next_action` 取得公开的 `upload / submit / query` action；`queue.claim` 只作为内部领取和占位，不是宿主生成入口。Lovart 视频的 `account_limit` 必须来自当前 `get_credits.concurrency_limit`，不是剩余空闲名额；其他真实渠道使用其自己的实时额度来源。图片和视频总数以本 Job 已确认的 1 或 2 为限，`submitting / pending / unknown` 都占位。
-4. `next_action` 返回 upload 时，宿主执行真实上传并立即通过现有 `record` / `generation_results` 入口回传原 action 与原上传响应；上传待回传期间再次调用 `next` 返回 `blocked/input_upload_pending`，不得重复上传。回传后再取得 submit/query action。Python 入口只回传真实 action、参数和必要 token，不直接调用 MCP；不要并行开本地重渲染或写正式批准记录。
-5. 每个 provider 保存真实结构化返回，队列分别保留首次 `submission_response` 和最终 `completion_response`，不会被轮询状态覆盖；图片和视频都只提取工具真实返回的媒体引用，保存实际路径或真实 URL，不得杜撰文件、任务 ID 或保存 base64、密钥。完成仅释放生成名额，不代表资产验收通过；原有动态、语义、字幕、安全区等检查仍执行。
+4. `next_action` 返回 upload 时，宿主执行真实上传并立即通过现有 `record` / `generation_results` 入口回传原 action 与原上传响应；上传待回传期间再次调用 `next` 返回 `blocked/input_upload_pending`，不得重复上传。Lovart 已有真实 HTTP 413 / 4194304 bytes 拒绝，首次与拒绝后的上传均按完整 base64 JSON 加预留空间严格小于 4MiB 检查。本次已批准请求中冻结并校验 SHA/bytes 的静态 8-bit RGB/RGBA PNG 引用可无损重编码用于传输，不要求来自已完成生图队列；PNG 的像素、色彩及原 raw pHYs 必须保持。仅视频参考图在无损 PNG 仍超限时，可直接将静态 8-bit RGB、EXIF 朝向 1 且无透明或不支持色彩信息的 PNG 以同尺寸 JPEG quality=98 / subsampling=0 传输；明确登记 `jpeg-high-quality` 有损方法、原件与派生身份及各自像素哈希，并按固定参数重建核验，保留尺寸、ICC 与 EXIF。宿主必须实看派生图后才执行实际上传；这是同画面内容的视频参考图常规编码，不增加费用或改变原件、冻结请求及整表，真正内容变化仍须修订。不缩放、不裁剪、不循环上传；派生仍超限或输入不支持则停止。上传 `result_path` 始终从原始响应根逐层解析，`structuredContent.url` 须显式写为 `["structuredContent","url"]`，不隐式解包；原有413识别独立执行。回传后再取得 submit/query action。Python 入口只回传真实 action、参数和必要 token，不直接调用 MCP；不要并行开本地重渲染或写正式批准记录。
+5. 每个 provider 保存真实结构化返回，队列分别保留首次 `submission_response` 和最终 `completion_response`，不会被轮询状态覆盖；图片和视频都只提取工具真实返回的媒体引用，保存实际路径或真实 URL，不得杜撰文件、任务 ID 或保存 base64、密钥。完成仅释放生成名额，不代表用户已验收；来源、媒体格式和时钟仍按实际记录检查，动态、语义、字幕和安全区遵循已确认清单制作，由成片人工终验反馈。
 6. `next_action` 仅在等待时间到达后返回 `query`，其中的真实查询工具和参数来自已确认渠道的 `query` 配置。宿主执行后回传原 action 与规范结果，入口使用该 action 的精确任务 IDs；不能按返回顺序、文件名或总数量猜归属。批量返回无法逐项对应时，查询该请求的准确 IDs，不将聚合结果当作单项成功。结果完成后才可补下一项，不反复向用户确认同一视频。
 7. 重启先用 `status(job)` 恢复已有记录。已领取、结果不明或失败的 ID 一律不会自动重提；有 task IDs 时只查询已有任务，没有 IDs 时保留占位并查实际项目记录，不能为腾名额把它标成失败。`CONCURRENCY_LIMIT` 暂停后续领取，其他任务完成也不解除暂停；仅真实获准继续时调用 `resume(job, user_confirmation)`，它只恢复尚未领取项，不重试旧失败或未知任务。`record / poll / status` 不依赖新配置批准，因此配置变更后仍可收回已发出任务的结果。
 
@@ -100,7 +102,7 @@ A-roll 透明注释使用独立 `aroll_with_overlay / mode=none` 家族，正式
 
 `not_found` 必须保存原始响应，本地状态为占位的 `unknown` 并继续占用并发名额；停止对该最终 not-found 查询自动轮询，须回查已保存的任务或项目记录，不能据此推断未扣费。聚合接口只返回总 `failed`，或同一请求有多个 task ID 但不能逐项证明全部失败时，禁止创建重试，改为逐项查询或停在 blocked。`resume` 只清除暂停状态并放行 `ready` 项；一次用户回复可以同时覆盖恢复和一项具体重试，但不重复追问，也不复活失败或未知项。
 
-完成后的唯一交接不新建 runner：封面核对实际带字图后用 `cover.prepare_cover(job, approved_preview=实际PNG, approved_preview_sha256=实际摘要, approved_preview_prompt=实际prompt)` 原样发布，见[封面标题合同](cover-title-style.md)。新生成结果按[本次所选图片/视频渠道的完成结果](generated-broll-skills.md#本次所选图片视频渠道的完成结果)，用 `generated_media.record_from_queue` 登记；模型身份来自该次实际提交，原片和规范片来源随记录保留。已有 Lovart 完成素材继续使用其原适配器，不改身份或重新生成。然后依次准备匹配的 binding → 将返回值放入当前组件 `compile_context.bindings` 并正常编译批准配方 → 创建对应 adapter 与 artifact probe → 既有公共组件执行器。每份 record 绑定当前 segment/component 和原声时窗，最终仍由原 `visual_canary / visual_assets_v2` runner 验收、组装；不把两项队列回执直接当作一份全片 adapter，也不补造事实或绕过正式批准。
+完成后的唯一交接不新建 runner：封面核对实际带字图后用 `cover.prepare_cover(job, approved_preview=实际PNG, approved_preview_sha256=实际摘要, approved_preview_prompt=实际prompt)` 原样发布，见[封面标题合同](cover-title-style.md)。新生成结果按[本次所选图片/视频渠道的完成结果](generated-broll-skills.md#本次所选图片视频渠道的完成结果)，用 `generated_media.record_from_queue` 登记；模型身份来自该次实际提交，原片和规范片来源随记录保留。已有 Lovart 完成素材继续使用其原适配器，不改身份或重新生成。然后依次准备匹配的 binding → 将返回值放入当前组件 `compile_context.bindings` 并正常编译已确认配方 → 创建对应 adapter 与 artifact probe → 既有公共组件执行器。每份 record 绑定当前 segment/component 和原声时窗，最终由原 `visual_assets_v2` runner 直接组装全部片段，再合成完整片并交付，用户进行成片人工终验；不把两项队列回执直接当作一份全片 adapter，也不补造事实或绕过内容和费用授权。
 
 现有 CLI 与上述接口等价，使用预检的同一个解释器和明确项目根目录，不从别的工作区导入。示例中的占位符必须先替换；不要把示例确认文字当作真实批准：
 
@@ -122,7 +124,7 @@ PYTHONPATH="<project>" <python> -m edit.hd.tools.generation_queue --job "<job>" 
 
 ## 包内原生来源
 
-以下原生仓库已随包提供；实际产物仍须符合本 Skill 的9:16、批准、来源和 QA 合同：
+以下原生仓库已随包提供；实际产物仍须符合本 Skill 的 9:16、内容与费用授权、真实来源和原生技术 QA 合同：
 
 - `vendor/html-video`
 - `vendor/video-use-runtime`

@@ -115,7 +115,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.job = state.create_job(self.root, self.video, self.script, profile="full-v2")
         self._approve_file("inspect", "01-inspect/report.json", b"{}\n")
         self.analysis = content_analysis.prepare_content_analysis(self.job, copy.deepcopy(VALID_ANALYSIS))
-        state.approve(self.job, "content_analysis")
+        state.complete(self.job, "content_analysis")
         self._approve_file("cover_direction", "03-cover-direction/cover-direction.json", b"{}\n")
         self._approve_file("cover", "04-cover/cover-report.json", b"{}\n")
         self._approve_file("speech_cleanup", "05-speech-cleanup/word-transcript.json",
@@ -130,7 +130,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
             {"source_start": 0.0, "source_end": 3.0, "timeline_start": 0.0, "timeline_end": 3.0}]})
         edited.write_bytes(b"edited-aroll")
         state.mark_ready(self.job, "edit_structure", (edit_plan, timeline, edited))
-        state.approve(self.job, "edit_structure")
+        state.complete(self.job, "edit_structure")
         self.asset_root = self.root / "source-snapshots"
         self.asset_root.mkdir()
         self.brief = self.root / "visual-brief.json"
@@ -143,7 +143,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(payload)
         state.mark_ready(self.job, stage_id, (path,))
-        state.approve(self.job, stage_id)
+        state.complete(self.job, stage_id)
 
     def _write_brief(self, *segments: dict[str, object]) -> None:
         contract_artifacts.write_json_artifact(self.brief, {"schema_version": 3, "segments": list(segments)})
@@ -281,7 +281,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
     def test_workbench_bridge_revises_and_publishes_from_two_checkpoints(self) -> None:
         self._write_brief(draft_segment(("external_stock",)))
         visual_plan.prepare_visual_direction(self.job, self.brief, self.asset_root)
-        state.approve(self.job, "visual_direction")
+        state.complete(self.job, "visual_direction")
         draft_dir = self.job.job_dir / ".workbench" / "drafts"
         draft_dir.mkdir(parents=True)
         revised = draft_dir / "revision.json"
@@ -301,12 +301,12 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
             reason="Workbench parameter revision",
         )
 
-        self.assertEqual(result["outcome"], "ready_for_review")
+        self.assertEqual(result["outcome"], "ready")
         self.assertEqual(result["approval_status"], "not_approved")
         self.assertEqual(result["revised_checkpoint"]["revision"], base_revision + 1)
         self.assertEqual(result["published_checkpoint"]["revision"], base_revision + 2)
         current = state.load_job(self.job.job_dir)
-        self.assertEqual(current.stages["visual_direction"]["status"], "ready_for_review")
+        self.assertEqual(current.stages["visual_direction"]["status"], "ready")
 
     def test_workbench_bridge_rejects_stale_v4_and_unsafe_drafts_without_writes(self) -> None:
         draft_dir = self.job.job_dir / ".workbench" / "drafts"
@@ -352,7 +352,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
     def test_workbench_bridge_publishes_frozen_payload_when_path_changes(self) -> None:
         self._write_brief(draft_segment(("external_stock",)))
         visual_plan.prepare_visual_direction(self.job, self.brief, self.asset_root)
-        state.approve(self.job, "visual_direction")
+        state.complete(self.job, "visual_direction")
         draft_dir = self.job.job_dir / ".workbench" / "drafts"
         draft_dir.mkdir(parents=True)
         revised = draft_dir / "revision.json"
@@ -385,7 +385,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
                 reason="Workbench revision",
             )
         current = state.load_job(self.job.job_dir)
-        self.assertEqual(result["outcome"], "ready_for_review")
+        self.assertEqual(result["outcome"], "ready")
         self.assertEqual(current.revision, base_revision + 2)
         plan = contract_artifacts.read_json_artifact(
             self.job.job_dir / result["visual_plan_path"]
@@ -406,7 +406,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         )
         self.assertEqual(plan["source_summary"], {"external_stock": 1})
         self.assertEqual(output.parent.name, "07-visual-direction")
-        self.assertEqual(self.job.stages["visual_direction"]["status"], "ready_for_review")
+        self.assertEqual(self.job.stages["visual_direction"]["status"], "ready")
         self.assertEqual(
             [record["path"] for record in self.job.stages["visual_direction"]["artifacts"]],
             [
@@ -518,7 +518,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
                 edit_dir / "edited-aroll.mp4",
             ),
         )
-        state.approve(self.job, "edit_structure")
+        state.complete(self.job, "edit_structure")
         self._write_brief(draft_segment(("external_stock",), end=5.0))
         output = visual_plan.prepare_visual_direction(
             self.job,
@@ -602,23 +602,16 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertEqual(self.job.stages["visual_direction"], before_stage)
         self.assertFalse((self.job.job_dir / "07-visual-direction").exists())
 
-    def test_schema_v3_visual_direction_rejects_legacy_workflow_job(self) -> None:
+    def test_legacy_profile_is_rejected_before_visual_preparation(self) -> None:
         legacy_video = self.root / "legacy.mp4"
         legacy_script = self.root / "legacy.md"
         legacy_video.write_bytes(b"legacy-video")
         legacy_script.write_text("legacy script", encoding="utf-8")
-        legacy = state.create_job(self.root, legacy_video, legacy_script, profile="legacy-v1")
-        self._write_brief(draft_segment(("external_stock",)))
-
-        with self.assertRaises(visual_plan.VisualPlanError):
-            visual_plan.prepare_visual_direction(
-                legacy, self.brief, self.asset_root
-            )
-
-        self.assertFalse((legacy.job_dir / "07-visual-direction").exists())
-        self.assertFalse(
-            (legacy.job_dir / ".visual-direction-v3.transaction.json").exists()
-        )
+        jobs = self.job.job_dir.parent
+        existing = sorted(path.name for path in jobs.iterdir())
+        with self.assertRaisesRegex(state.WorkflowError, "unsupported workflow profile"):
+            state.create_job(self.root, legacy_video, legacy_script, profile="legacy-v1")
+        self.assertEqual(sorted(path.name for path in jobs.iterdir()), existing)
 
     def test_invalid_v3_is_pure_before_all_injected_operations(self) -> None:
         segment = draft_segment(("external_stock",))
@@ -908,7 +901,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         persisted = state.load_job(self.job.job_dir)
         self.assertEqual(output.parent, target)
         self.assertEqual(
-            persisted.stages["visual_direction"]["status"], "ready_for_review"
+            persisted.stages["visual_direction"]["status"], "ready"
         )
         self.assertEqual(self.job.revision, persisted.revision)
         self.assertNotEqual(
@@ -941,7 +934,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertTrue(output.is_file())
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
 
     def test_committed_lock_release_error_still_returns_success(self) -> None:
@@ -962,7 +955,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertTrue(output.is_file())
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
 
     def test_unrelated_concurrent_winner_is_preserved_with_journal(self) -> None:
@@ -1149,7 +1142,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         )
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
         self.assertFalse(
             (self.job.job_dir / ".visual-direction-v3.transaction.json").exists()
@@ -1187,7 +1180,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertTrue(output.is_file())
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
         self.assertEqual(
             sorted(
@@ -1220,7 +1213,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertEqual(completed.returncode, 91, completed.stderr)
         persisted = state.load_job(self.job.job_dir)
         self.assertEqual(
-            persisted.stages["visual_direction"]["status"], "ready_for_review"
+            persisted.stages["visual_direction"]["status"], "ready"
         )
         target = self.job.job_dir / "07-visual-direction"
         committed = {path.name: path.read_bytes() for path in target.iterdir()}
@@ -1235,7 +1228,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
             {path.name: path.read_bytes() for path in target.iterdir()}, committed
         )
         self.assertEqual(
-            fresh.stages["visual_direction"]["status"], "ready_for_review"
+            fresh.stages["visual_direction"]["status"], "ready"
         )
         self.assertEqual(
             sorted(
@@ -1316,7 +1309,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertEqual(output.parent, target)
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
         self.assertTrue(
             (self.job.job_dir / ".visual-direction-v3.transaction.json").is_file()
@@ -1343,7 +1336,7 @@ class VisualDirectionSchemaV3Tests(unittest.TestCase):
         self.assertEqual(output.parent, target)
         self.assertEqual(
             state.load_job(self.job.job_dir).stages["visual_direction"]["status"],
-            "ready_for_review",
+            "ready",
         )
         self.assertTrue(
             (self.job.job_dir / ".visual-direction-v3.transaction.json").is_file()

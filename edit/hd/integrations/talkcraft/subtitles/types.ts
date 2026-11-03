@@ -19,6 +19,7 @@ export type SubtitleCue = {
   text: string;
   words: SubtitleWord[];
   emphasis: SubtitleEmphasis | null;
+  long_keyword: boolean;
   bottom: number;
 } & ({placement: 'standard'} | {placement: 'above_avatar'; width: number});
 
