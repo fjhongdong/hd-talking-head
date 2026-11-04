@@ -760,6 +760,7 @@ def validate_invocation_evidence(
     # The actual recipe checks alignment after all components are assembled.
     if isinstance(checked.get('invocation_record'), dict):
         checked['invocation_record'].pop('canvas_alignment', None)
+        checked['invocation_record'].pop('canvas_translation', None)
     reserved = set(checked) & _RESERVED_BINDING_FIELDS
     if reserved:
         raise RouterError(

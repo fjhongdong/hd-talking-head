@@ -536,27 +536,38 @@ class CacheTests(unittest.TestCase):
             beat['single_source_review']['decision'] = 'keep'
             cache.validate_reviews(ROOT, self.director, first)
 
-    def test_selected_openfilm_design_reaches_existing_brief(self):
+    def test_selected_openfilm_keeps_semantics_without_copying_parent_design(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); path = root / 'brief.json'
             brief = {'source_binding': {'segment_id': 'seg-001', 'start': 0, 'end': 2},
-                     'creative_handoff': {'style_reason': '；'.join(DESIGN.values())}}
+                     'creative_handoff': {'transcript': '原话', 'semantic_goal': '目标',
+                         'required_change': '变化', 'style_reason': '原生自行设计的构图与材质'}}
             path.write_text(json.dumps(brief), encoding='utf-8')
             director = {'segments': [{'segment_id': 'seg-001', 'start': 0, 'end': 2,
-                         'bindings': {'visual': {'brief_sha256': motion.contract_artifacts.sha256_file(path)}}}]}
+                         'bindings': {'visual': {'dependency_id': 'openfilm-motion-graphics',
+                             'template_id': 'openfilm/motion-graphics-scene',
+                             'brief_sha256': motion.contract_artifacts.sha256_file(path)}}}]}
             treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'visual', 'brief_path': 'brief.json'}],
                 'skill_selection': {'assignments': [{'segment_id': 'seg-001', 'component_id': 'visual',
-                    'skill_id': 'openfilm-motion-graphics', 'design_plan': copy.deepcopy(DESIGN)}]}}
+                    'skill_id': 'openfilm-motion-graphics', 'template_id': 'openfilm/motion-graphics-scene',
+                    'design_plan': copy.deepcopy(DESIGN)}], 'beats': [{'segment_id': 'seg-001',
+                        'component_id': 'visual', 'semantic_row_id': 'row-001', 'transcript': '原话',
+                        'semantic_goal': '目标', 'required_change': '变化'}]},
+                'semantic_lists': {'broll': [{'row_id': 'row-001', 'quote': '原话', 'semantic': '目标',
+                    'visual_task': '变化', 'components': [{'segment_id': 'seg-001', 'component_id': 'visual'}]}]}}
             cache.validate_design_handoffs(director, treatment, root)
             treatment['skill_selection']['assignments'][0]['design_plan']['finish'] = '改为纸张纹理，需要新的真实交接。'
-            with self.assertRaisesRegex(ValueError, 'creative_handoff'):
+            cache.validate_design_handoffs(director, treatment, root)
+            treatment['skill_selection']['beats'][0]['transcript'] = '篡改'
+            with self.assertRaisesRegex(ValueError, 'semantic handoff'):
                 cache.validate_design_handoffs(director, treatment, root)
 
     def test_selected_lemo_handoff_rejects_changed_semantic_text(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             design = {"composition": "构图", "typography": "字形", "finish": "质感", "focus": "重点"}
-            director = {"segments": [{"segment_id": "seg-001", "start": 0, "end": 2}]}
+            director = {"segments": [{"segment_id": "seg-001", "start": 0, "end": 2,
+                "bindings": {"visual": {"dependency_id": "lemo-opuscar", "template_id": "lemo-opuscar/blueprint"}}}]}
             row = {"row_id": "row-001", "start_word": 2, "end_word": 5,
                    "quote": "原话", "semantic": "目标", "visual_task": "变化",
                    "components": [{"segment_id": "seg-001", "component_id": "visual"}]}

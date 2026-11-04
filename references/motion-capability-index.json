@@ -16129,7 +16129,7 @@
         "assets/capability-sources/openfilm-0.2.4/openfilm/skills/motion-graphics/SKILL.md": "64ec633fc49c0e8f1e572d3dfae1b7d0854c4fb89e86706ce915bc818da406aa",
         "assets/capability-sources/openfilm-0.2.4/openfilm/src/film-doc.mjs": "d58b7acfc85951449a81997f47cf9d2331513ec73b2930741c69a3c2e68a644d",
         "assets/capability-sources/openfilm-0.2.4/openfilm/src/render.mjs": "d849d09c9ae05037f95c2ecad75a4436f15bf1636a2640b078bc02c6ee6cad90",
-        "references/openfilm-motion-graphics.md": "68ee843c198b64210ea983e4c4ba3feac8832d0b3717045f9ecea4c643df3e13",
+        "references/openfilm-motion-graphics.md": "43954c0fda4354ed312706b139bea3c2ede815fc589a41fc1791386e9693b105",
         "scripts/openfilm_motion_adapter.py": "faa38770c4951c37f47260f35532398b0bd3bec137761f914098333e34ca0db2"
       },
       "reviewed_version": "1.0.0",

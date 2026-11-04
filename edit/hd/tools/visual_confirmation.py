@@ -683,7 +683,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             raise VisualConfirmationError(
                 f"director segment_id is not renderable: {segment_id!r}"
             )
-    context = visual_plan._validate_job_context(job, director, reviewed_visual_text)
+    context = visual_plan._validate_job_context(job, director, reviewed_visual_text, treatment=treatment)
     from . import wake_opening
     deferred = unprepared_template_targets(director, treatment)
     opening = treatment.get('skill_selection', {}).get('opening')
@@ -2185,6 +2185,31 @@ def _validate_canvas_alignment(root, director, treatment, key, adapter, brief, p
         raise VisualConfirmationError('canvas alignment action media differs')
 
 
+def _validate_canvas_translation(root, director, treatment, key):
+    """Bind parent-only static placement to the actual unchanged native media."""
+    from . import visual_strategy
+    segment = next(s for s in director['segments'] if s['segment_id'] == key[0])
+    binding = segment['bindings'][key[1]]
+    if binding.get('dependency_id') not in MOTION_CREATION:
+        raise VisualConfirmationError('canvas translation requires a completed native alpha annotation')
+    _, adapter, brief, payload = _motion_brief(root, director, treatment, key)
+    strategy = segment['visual_strategy']
+    component = next(c for c in strategy['components'] if c['component_id'] == key[1])
+    compiled = {**binding, **component,
+                'render_window': {'layout_slot': component['layout_slot']},
+                'artifact_contract': {**{k: brief['composition'][k] for k in ('width', 'height', 'fps')},
+                                      'alpha': brief['alpha']}}
+    try:
+        visual_strategy.canvas_translation_y(compiled, family=strategy['composition']['family'])
+    except visual_strategy.VisualStrategyError as error:
+        raise VisualConfirmationError(str(error)) from None
+    result = adapter.inspect_result(root, payload)
+    translation = binding['invocation_record']['canvas_translation']
+    if (result['media']['sha256'] != translation['layer_sha256']
+            or result.get('native_captions') is True):
+        raise VisualConfirmationError('canvas translation differs from its actual native media or moves native captions')
+
+
 def _validate_motion_realization(root, frozen, frozen_treatment, director, treatment):
     """Permit only result-derived edits of approved complete native creations.
 
@@ -2210,6 +2235,13 @@ def _validate_motion_realization(root, frozen, frozen_treatment, director, treat
             _validate_canvas_alignment(root, director, treatment, key, adapter, brief, payload, alignment)
             if 'canvas_alignment' not in before.get('invocation_record', {}):
                 del comparable_after['invocation_record']['canvas_alignment']
+        if comparable_after.get('invocation_record', {}).get('canvas_translation') is not None:
+            _validate_canvas_translation(root, director, treatment, key)
+            previous_translation = before.get('invocation_record', {}).get('canvas_translation')
+            if previous_translation is None:
+                del comparable_after['invocation_record']['canvas_translation']
+            else:
+                comparable_after['invocation_record']['canvas_translation'] = copy.deepcopy(previous_translation)
         try:
             _validate_native_parent_fields(approved, brief)
         except VisualConfirmationError as error:
@@ -3042,6 +3074,37 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
     authored_inputs = [item for field in ('files', 'assets') for item in brief.get(field, [])
                        if Path(item.get('job_path', '')).suffix.lower() in code]
     if isinstance(brief.get('entry'), dict): authored_inputs.append(brief['entry'])
+
+    def native_origin(ref):
+        matches = [item for item in origins if isinstance(item, dict)
+                   and item.get('job_path') == ref['path'] and item.get('sha256') == ref['sha256']]
+        if len(matches) != 1 or matches[0].get('kind') not in {'authored', 'derived'}:
+            raise VisualConfirmationError('execution changed authorized native input: materials; native media needs its same-target source or authored project evidence')
+        origin = matches[0]
+        evidence = origin.get('evidence', {})
+        if (not isinstance(evidence, dict) or set(evidence) != {'path', 'sha256', 'bytes'}
+                or Path(evidence['path']).suffix.lower() not in code
+                or not any(item.get('job_path') == evidence['path'] and item.get('sha256') == evidence['sha256']
+                           for item in authored_inputs)):
+            raise VisualConfirmationError('native authored media needs its bound engineering source')
+        _exact(root, evidence)
+        return origin
+
+    def authored_svg_source(source):
+        # A registered Whiteboard PNG may derive from this task's authored SVG.
+        # Do not accept derived chains or foreign media relabeled as source code.
+        if (segment.get('bindings', {}).get(cid, {}).get('dependency_id') != 'whiteboard-video'
+                or (scene.get('segment_id'), scene.get('component_id')) != key
+                or brief.get('source_binding', {}).get('segment_id') != key[0]
+                or Path(source['path']).suffix.lower() != '.svg'
+                or not any(item.get('job_path') == source['path'] and item.get('sha256') == source['sha256']
+                           for item in authored_inputs)
+                or any(item['sha256'] == source['sha256'] for item in known)):
+            return False
+        _exact(root, source)
+        origin = native_origin(source)
+        return origin['kind'] == 'authored' and origin.get('sources', []) == []
+
     for material in candidates:
         try:
             ref = _record(Path(root), _path(root, material['job_path']))
@@ -3059,22 +3122,13 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
         # Copying a known foreign parent source into a project does not make it authored.
         if any(item['sha256'] == ref['sha256'] for item in known):
             raise VisualConfirmationError('execution changed authorized native input: materials')
-        matches = [item for item in origins if isinstance(item, dict)
-                   and item.get('job_path') == ref['path'] and item.get('sha256') == ref['sha256']]
-        if len(matches) != 1 or matches[0].get('kind') not in {'authored', 'derived'}:
-            raise VisualConfirmationError('execution changed authorized native input: materials; native media needs its same-target source or authored project evidence')
-        origin = matches[0]
-        evidence = origin.get('evidence', {})
-        if (not isinstance(evidence, dict) or set(evidence) != {'path', 'sha256', 'bytes'}
-                or Path(evidence['path']).suffix.lower() not in code
-                or not any(item.get('job_path') == evidence['path'] and item.get('sha256') == evidence['sha256']
-                           for item in authored_inputs)):
-            raise VisualConfirmationError('native authored media needs its bound engineering source')
-        _exact(root, evidence)
+        origin = native_origin(ref)
         sources = origin.get('sources', [])
         if (not isinstance(sources, list) or (origin['kind'] == 'derived' and not sources)
                 or any(not isinstance(source, dict) or set(source) != {'path', 'sha256', 'bytes'}
-                       or {'path': source['path'], 'sha256': source['sha256']} not in allowed for source in sources)):
+                       or ({'path': source['path'], 'sha256': source['sha256']} not in allowed
+                           and not (Path(ref['path']).suffix.lower() == '.png' and authored_svg_source(source)))
+                       for source in sources)):
             raise VisualConfirmationError('native derived media changed its approved parent source')
         for source in sources: _exact(root, source)
     return cropped_sources
@@ -3326,6 +3380,9 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
             current = actual[segment["segment_id"]].get("bindings", {}).get(cid, {})
             if any(current.get(key) != binding[key] for key in route_fields if key in binding):
                 raise VisualConfirmationError("execution changed authorized source channel or template")
+            if (current.get('invocation_record', {}).get('canvas_translation') is not None
+                    and (native_targets is None or (segment['segment_id'], cid) in native_targets)):
+                _validate_canvas_translation(root, director, treatment, (segment['segment_id'], cid))
     _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, targets=native_targets)
 
 
@@ -3420,11 +3477,14 @@ def _normalize_verified_technical_revisions(frozen, frozen_treatment, actual, tr
             prior = before.get('bindings', {}).get(cid, {})
             alignment = binding.get('invocation_record', {}).get('canvas_alignment')
             old_alignment = prior.get('invocation_record', {}).get('canvas_alignment')
+            translation = binding.get('invocation_record', {}).get('canvas_translation')
+            old_translation = prior.get('invocation_record', {}).get('canvas_translation')
             typography = scenes.get((sid, cid), {}).get('native_typography_revision')
             previous_typography = old_scenes.get((sid, cid), {}).get('native_typography_revision')
             native_origin = scenes.get((sid, cid), {}).get('native_revision_from')
             if ((binding.get('dependency_id') in MOTION_CREATION and prior.get('dependency_id') == binding.get('dependency_id')
-                 and ((alignment is not None and alignment != old_alignment) or native_origin is not None))
+                 and ((alignment is not None and alignment != old_alignment)
+                      or (translation is not None and translation != old_translation) or native_origin is not None))
                     or (binding.get('dependency_id') == 'lemo-opuscar' and prior.get('dependency_id') == 'lemo-opuscar'
                         and typography is not None and typography != previous_typography and binding != prior)):
                 proof = True

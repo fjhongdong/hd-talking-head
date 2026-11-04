@@ -658,6 +658,13 @@ def build_filter_graph(
             filters[-1] = filters[-1].replace(f'[component_{input_position}_input]', f'[component_{input_position}_camera_source]')
             filters.append(f"[component_{input_position}_camera_source]"
                            f"{parent_camera_framing.filter_chain(framing)}[component_{input_position}_input]")
+        translation = component.get('invocation_record', {}).get('canvas_translation')
+        try:
+            offset_y = visual_strategy.canvas_translation_y(component, family=composition.get('family'))
+        except visual_strategy.VisualStrategyError as error:
+            raise SegmentRenderError(str(error)) from None
+        if translation is not None and artifact.output_sha256 != translation['layer_sha256']:
+            raise SegmentRenderError('canvas translation media identity differs')
         alignment = component.get('invocation_record', {}).get('canvas_alignment')
         if alignment is not None:
             base = artifacts_by_id.get(alignment['base_component_id'])
@@ -672,16 +679,22 @@ def build_filter_graph(
         if composition.get("family") == "aroll_with_overlay":
             # These are full-canvas transparent layers, already laid out in
             # source pixels. Do not shrink the approved graphic into a B-roll box.
+            # A translated layer keeps every source pixel; only its static
+            # position changes. The default retains the existing safe-zone crop.
+            placement = ("" if translation is not None else
+                         f"crop={width}:{height}:{left}:{top},pad=1080:1920:{left}:{top}:color=black@0,")
+            # Composite before chroma subsampling so odd integer offsets are
+            # not silently rounded to an even row by overlay's YUV420 default.
+            overlay_format = ':format=rgb' if translation is not None else ''
             filters.append(
                 f"[component_{input_position}_input]"
-                f"crop={width}:{height}:{left}:{top},"
-                f"pad=1080:1920:{left}:{top}:color=black@0,"
+                f"{placement}"
                 f"colorchannelmixer=aa={artifact.opacity:.6f}[component_{input_position}]"
             )
             next_canvas = canvas_index + 1
             filters.append(
                 f"[canvas_{canvas_index}][component_{input_position}]"
-                f"overlay=0:0:eof_action=pass:shortest=0:"
+                f"overlay=0:{offset_y}:eof_action=pass:shortest=0{overlay_format}:"
                 f"enable='between(n,{start},{end - 1})'[canvas_{next_canvas}]"
             )
             canvas_index = next_canvas

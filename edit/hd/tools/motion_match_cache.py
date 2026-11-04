@@ -426,15 +426,6 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
 
 DESIGN_FIELDS = ("composition", "typography", "finish", "focus")
 
-def _design_plan(candidate):
-    """Require a content-specific plan, not an automated aesthetic score."""
-    plan = candidate.get("design_plan")
-    if (not isinstance(plan, dict) or set(plan) != set(DESIGN_FIELDS)
-            or any(not isinstance(plan.get(k), str) or not plan[k].strip()
-                   for k in DESIGN_FIELDS)):
-        raise ValueError("eligible candidate needs a complete design_plan")
-    return plan
-
 def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
     """Resolve only this row's meaning and this candidate's pinned capability."""
     refs = review.get("constraint_refs")
@@ -489,82 +480,47 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
         raise ValueError("constraint capability reference must belong to the current candidate")
 
 def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()):
-    """Pass the selected design unchanged to the native creation Skill."""
+    """Bind approved meaning and native route; the native Skill owns its design."""
     selection = treatment.get("skill_selection", {})
     for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
-        if assignment.get("skill_id") not in {"openfilm-motion-graphics", "lemo-opuscar"}:
+        skill = assignment.get("skill_id")
+        if skill not in {"openfilm-motion-graphics", "lemo-opuscar"}:
             continue
-        design = _design_plan(assignment)
-        if (assignment["segment_id"], assignment["component_id"]) in planned_targets:
-            continue  # The validated proposal freezes design; realization must bind its actual native scene.
-        segment = next(s for s in director["segments"] if s["segment_id"] == assignment["segment_id"])
-        brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, assignment["component_id"])
+        key = (assignment["segment_id"], assignment["component_id"])
+        if key in planned_targets:
+            continue  # Realization binds the native scene once its inputs exist.
+        segment = next(s for s in director["segments"] if s["segment_id"] == key[0])
+        binding = segment.get("bindings", {}).get(key[1], {})
+        if (binding.get("dependency_id") != skill
+                or binding.get("template_id") != assignment.get("template_id")):
+            raise ValueError("selected native handoff changed its approved channel or template")
+        brief = motion_capabilities._bound_brief(Path(job_dir), treatment, segment, key[1])
         handoff = brief.get("creative_handoff", {}) if isinstance(brief, dict) else {}
-        if assignment["skill_id"] == "lemo-opuscar":
-            beat = next((b for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]
-                         if b.get("segment_id") == assignment["segment_id"]
-                         and b.get("component_id") == assignment["component_id"]), None)
-            if not isinstance(beat, dict):
-                raise ValueError("selected Lemo component has no approved semantic beat")
-            # The semantic list is the authority.  The handoff and selection
-            # beat are only bindings to that approved row, never evidence by
-            # copying the handoff back into the invocation record.
-            rows = []
-            for row_type in ("overlay", "broll"):
-                for row in treatment.get("semantic_lists", {}).get(row_type, []):
-                    if isinstance(row, dict) and any(
-                        isinstance(ref, dict)
-                        and ref.get("segment_id") == assignment["segment_id"]
-                        and ref.get("component_id") == assignment["component_id"]
-                        for ref in row.get("components", [])
-                    ):
-                        rows.append(row)
-            if len(rows) != 1:
-                raise ValueError("selected Lemo component must bind exactly one approved semantic row")
-            if rows:
-                row = rows[0]
-                if (handoff.get("transcript") != row.get("quote")
-                        or handoff.get("semantic_goal") != row.get("semantic")
-                        or handoff.get("required_change") != row.get("visual_task")
-                        or beat.get("semantic_row_id") != row.get("row_id")):
-                    raise ValueError("selected Lemo semantic handoff is not bound to the approved semantic row")
-            if handoff.get("design_plan") != design:
-                # Retain a previously verified numeric-label correction when
-                # another row is revised.  Reuse its full evidence verifier;
-                # never accept a changed handoff on the presence of a flag.
-                scene = next((s for s in treatment.get("scenes", [])
-                    if (s.get("segment_id"), s.get("component_id")) ==
-                       (assignment["segment_id"], assignment["component_id"])), {})
-                revision = selection.get("revision_locks", {})
-                if scene.get("native_typography_revision") and revision.get("previous_receipt"):
-                    from . import visual_confirmation as confirmation
-                    root = Path(job_dir)
-                    workflow = confirmation._read(root / "workflow.json")
-                    receipt = revision["previous_receipt"]
-                    seen = set()
-                    while receipt and receipt["sha256"] not in seen and handoff.get("design_plan") != design:
-                        seen.add(receipt["sha256"])
-                        _, proposal = confirmation._validate_source(root, receipt, job_id=workflow["job_id"])
-                        frozen = confirmation._read(confirmation._exact(root, proposal["inputs"]["director"]))
-                        frozen_treatment = confirmation._read(confirmation._exact(root, proposal["inputs"]["treatment"]))
-                        normalized, normalized_treatment = confirmation._normalize_lemo_typography(
-                            root, frozen, frozen_treatment, director, treatment)
-                        normalized_segment = next(s for s in normalized["segments"]
-                            if s["segment_id"] == assignment["segment_id"])
-                        original = motion_capabilities._bound_brief(root, normalized_treatment,
-                            normalized_segment, assignment["component_id"])
-                        handoff = original.get("creative_handoff", {})
-                        receipt = frozen_treatment.get("skill_selection", {}).get("revision_locks", {}).get("previous_receipt")
-            if (any(handoff.get(field) != beat.get(field)
-                    for field in ("transcript", "semantic_goal", "required_change"))
-                    or handoff.get("visual_pattern") != assignment.get("visual_pattern")
-                    or handoff.get("design_plan") != design
-                    or assignment.get("template_id") != "lemo-opuscar/" + brief.get("style_slug", "")):
-                raise ValueError("selected Lemo semantic handoff differs from the approved beat")
-            continue
-        style = handoff.get("style_reason")
-        if not isinstance(style, str) or any(value not in style for value in design.values()):
-            raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")
+        beat = next((b for b in [*selection.get("beats", []), *selection.get("overlay_beats", [])]
+                     if (b.get("segment_id"), b.get("component_id")) == key), None)
+        if not isinstance(beat, dict):
+            raise ValueError("selected native component has no approved semantic beat")
+        # The semantic list remains the authority. Planning art descriptions
+        # are context, not text the native creator must copy back verbatim.
+        rows = [row for group in ("overlay", "broll")
+                for row in treatment.get("semantic_lists", {}).get(group, [])
+                if isinstance(row, dict) and any(
+                    isinstance(ref, dict) and (ref.get("segment_id"), ref.get("component_id")) == key
+                    for ref in row.get("components", []))]
+        if len(rows) != 1:
+            raise ValueError("selected native component must bind exactly one approved semantic row")
+        row = rows[0]
+        expected = {"transcript": row.get("quote"), "semantic_goal": row.get("semantic"),
+                    "required_change": row.get("visual_task")}
+        if (beat.get("semantic_row_id") != row.get("row_id")
+                or any(not isinstance(value, str) or not value.strip()
+                       or handoff.get(field) != value or beat.get(field) != value
+                       for field, value in expected.items())):
+            raise ValueError("selected native semantic handoff differs from the approved semantic row or beat")
+        template = ("lemo-opuscar/" + brief.get("style_slug", "")
+                    if skill == "lemo-opuscar" else "openfilm/motion-graphics-scene")
+        if assignment.get("template_id") != template:
+            raise ValueError("selected native handoff changed its approved template")
 
 def _validate_entry(entry, rows, use, query):
     if not isinstance(entry, dict) or entry.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")

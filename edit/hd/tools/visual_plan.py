@@ -449,7 +449,8 @@ def _validate_semantic_segment(
         and not visible_text
     )
     content_item_ids = _text_list(
-        segment["content_item_ids"], "content_item_ids", allow_empty=base_unenhanced
+        segment["content_item_ids"], "content_item_ids",
+        allow_empty=base_unenhanced or _is_spoken_overlay(segment)
     )
     _identifier(intent["segment_id"], "visual intent segment_id")
     _identifier(strategy["segment_id"], "visual strategy segment_id")
@@ -893,6 +894,18 @@ def _is_task_illustration(component, segment):
             and not any(_intent_signals(segment["visual_intent"])))
 
 
+def _is_spoken_overlay(segment):
+    """Structural eligibility only; publication verifies the real speech source."""
+    strategy = segment["visual_strategy"]
+    composition = strategy["composition"]
+    return (composition["family"] == "aroll_with_overlay"
+            and composition["presenter_mode"] == "full_frame"
+            and bool(strategy["components"])
+            and all(component["layer_role"] == "annotation"
+                    and _is_task_illustration(component, segment)
+                    for component in strategy["components"]))
+
+
 def _validate_reviewed_visual_text(
     value: Mapping[str, object] | None,
     *,
@@ -1081,6 +1094,7 @@ def _validate_job_context(
     job: JobState,
     draft: dict[str, object],
     reviewed_visual_text: Mapping[str, object] | None = None,
+    *, treatment: Mapping[str, object] | None = None,
 ) -> tuple[dict[str, object], Path, Path, Path, dict[str, object], float, list[dict[str, str]]]:
     _require_visual_preparation(job)
     analysis_record = content_analysis.load_approved_content_analysis(job)
@@ -1107,9 +1121,39 @@ def _validate_job_context(
         for item in analysis_record["analysis"]["items"]
     }
     from . import motion_capabilities
+    spoken_overlays = [segment for segment in draft["segments"]
+                       if not segment["content_item_ids"]
+                       and segment["visual_strategy"]["components"]]
     approved_words = (motion_capabilities._approved_speech(job.job_dir)
-                      if reviewed_visual_text and any("grounding" in e for e in reviewed_visual_text.get("entries", []))
+                      if spoken_overlays or (reviewed_visual_text and any(
+                          "grounding" in e for e in reviewed_visual_text.get("entries", [])))
                       else None)
+    spoken_quotes = {}
+    if spoken_overlays:
+        from . import semantic_visual_plan
+        clock = treatment.get("source_clock", {}) if treatment is not None else {}
+        if (not approved_words or not isinstance(clock, Mapping)
+                or clock.get("job_path") != str(edited_path.relative_to(job.job_dir))
+                or clock.get("sha256") != contract_artifacts.sha256_file(edited_path)
+                or clock.get("duration") != duration or clock.get("fps") != canvas["fps"]
+                or clock.get("cover_offset_applied") is not False):
+            raise _fail("speech-grounded overlays require this Job's approved edited clock")
+        try:
+            semantic = semantic_visual_plan.validate_semantic_lists(treatment, draft, approved_words)
+        except ValueError as error:
+            raise _fail(str(error)) from None
+        for segment in spoken_overlays:
+            if not _is_spoken_overlay(segment):
+                raise _fail("only non-evidence A-roll overlays may use speech without content items")
+            quotes = []
+            for component in segment["visual_strategy"]["components"]:
+                row = semantic["component_rows"][(segment["segment_id"], component["component_id"])]
+                words = approved_words[row["start_word"]:row["end_word"]]
+                if (words[0]["start"] < segment["start"] - 1 / 24
+                        or words[-1]["end"] > segment["end"] + 1 / 24):
+                    raise _fail("speech-grounded overlay quote must belong to its own segment window")
+                quotes.append(row["quote"])
+            spoken_quotes[segment["segment_id"]] = quotes
     previous_end = 0.0
     for segment in draft["segments"]:
         if abs(segment["start"] - previous_end) > 1e-6:
@@ -1134,9 +1178,11 @@ def _validate_job_context(
             for item in selected_items
             for text in (item["source_text"], *item["keywords"])
         }
+        source_quotes = [item["source_text"] for item in selected_items]
+        source_quotes.extend(spoken_quotes.get(segment["segment_id"], []))
         if any(
             text not in allowed_text
-            and not any(text in item["source_text"] for item in selected_items)
+            and not any(text in quote for quote in source_quotes)
             for text in segment["visible_text"]
         ):
             reviewed = _validate_reviewed_visual_text(
@@ -1144,7 +1190,7 @@ def _validate_job_context(
                 approved_words=approved_words, job_dir=job.job_dir,
             )
             reviewed_text = {entry["text"] for entry in reviewed if entry["segment_id"] == segment["segment_id"]}
-            if any(text not in reviewed_text for text in segment["visible_text"] if text not in allowed_text and not any(text in item["source_text"] for item in selected_items)):
+            if any(text not in reviewed_text for text in segment["visible_text"] if text not in allowed_text and not any(text in quote for quote in source_quotes)):
                 raise _fail("visible text is not grounded in approved content")
     if abs(previous_end - duration) > 1e-6:
         raise _fail("segments must cover the complete edited duration")
@@ -2168,7 +2214,8 @@ def prepare_visual_direction(
             canvas,
             duration,
             reviewed_entries,
-        ) = _validate_job_context(job, draft, reviewed_visual_text)
+        ) = _validate_job_context(job, draft, reviewed_visual_text,
+            treatment=contract_artifacts.read_json_artifact(Path(treatment_path)) if treatment_path else None)
         if skill_selection is not None:
             coverage_visual = {"duration": duration, "segments": draft["segments"]}
             coverage_treatment = None
