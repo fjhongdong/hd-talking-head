@@ -69,6 +69,14 @@ def relative(value):
     return path
 
 
+def parent_input_facts(brief):
+    """Read original workflow inputs without freezing its creative treatment."""
+    handoff = brief.get('creative_handoff', {})
+    return {**{key: handoff[key] for key in ('transcript', 'semantic_goal', 'subject',
+            'forbidden_outcomes') if key in handoff}, 'source_binding': brief['source_binding'],
+            'files': brief['files']}
+
+
 def validate_brief(payload):
     b = json.loads(payload)
     base = {"schema_version", "dependency_id", "source_binding", "template_request", "composition", "files", "workflow_media_ref"}

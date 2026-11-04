@@ -64,13 +64,13 @@ class CurrentVisualAuthorizationTests(unittest.TestCase):
         plan = {'requests':[self.request]}
         queue.add_authorized(self.job.job_dir, plan, self.authorization, artifacts.sha256_json(plan))
 
-    def publish(self, source_id, *, prompt='same approved material'):
+    def publish(self, source_id, *, prompt='same approved material', director_payload=None, treatment_payload=None):
         visual = self.visual
         root = self.job.job_dir / visual.DIRECTORY / source_id
         root.mkdir(parents=True)
         director, treatment = root/'director.json', root/'treatment.json'
-        artifacts.write_json_artifact(director, {'segments':[]})
-        artifacts.write_json_artifact(treatment, {})
+        artifacts.write_json_artifact(director, director_payload if director_payload is not None else {'segments':[]})
+        artifacts.write_json_artifact(treatment, treatment_payload if treatment_payload is not None else {})
         self.step = {'id':'image', 'segment_id':'seg-001', 'component_id':'scene',
                      'purpose':'image', 'arguments':{'prompt':prompt}, 'input_files':[]}
         self.proposal = {'kind':visual.SCHEMA, 'source_id':source_id, 'job_id':self.job.job_id,
@@ -82,6 +82,59 @@ class CurrentVisualAuthorizationTests(unittest.TestCase):
         visual.save_user_confirmation(self.job, {'artifacts':copy.deepcopy(self.job.stages['visual_direction']['artifacts']),
             'revision':self.job.revision, 'user_confirmation':'approve this exact fixture list'})
         self.approval=visual.validate_visual_authorization(self.job)['artifact']
+
+    def test_stage_returns_ready_generation_and_local_bad_native_result(self):
+        self._stage_with_native_failure()
+
+    def test_stage_keeps_ready_generation_when_native_probe_process_fails(self):
+        self._stage_with_native_failure(probe_failure=True)
+
+    def _stage_with_native_failure(self, *, probe_failure=False):
+        import run_stage, motion_native_skill_adapter as native
+        from test_motion_native_skill_adapter import brief
+        from edit.hd.tests.test_visual_direction import draft_segment
+        from edit.hd.tools import visual_plan
+        root = self.job.job_dir
+        source = root / 'approved-aroll.mp4'; source.write_bytes(b'approved fixture arroll')
+        audio = root / 'voice.wav'
+        subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'sine=duration=2',
+                        '-ar', '16000', '-ac', '1', str(audio)], check=True)
+        body = brief(); body['job_id'] = self.job.job_id
+        body['source_binding'].update(segment_id='seg-002', aroll_sha256=artifacts.sha256_file(source))
+        body['speech'] = {'job_path': audio.name, 'sha256': artifacts.sha256_file(audio), 'byte_count': audio.stat().st_size}
+        path = root / 'native-brief.json'; path.write_text(json.dumps(body))
+        result = root / body['result_record_path']; result.parent.mkdir(parents=True); result.write_text('{}')
+        adapter = SimpleNamespace(dependency_id=body['dependency_id'], renderer_version='test-runtime',
+            entrypoint_sha256=native.sha(native.PROJECT / native.ENTRY), launcher=Path(sys.executable))
+        binding = native.create_binding(adapter, path.read_bytes())
+        segment = draft_segment(('code_generated',), segment_id='seg-002', end=2)
+        segment['bindings'] = {'component-1': binding}
+        segment['visual_strategy']['components'][0]['brief'] = body['task_source']['component_brief']
+        treatment = {'scenes': [{'segment_id': 'seg-002', 'component_id': 'component-1', 'brief_path': path.name}],
+            'semantic_lists': {'overlay': [], 'broll': [{**{key: value for key, value in body['task_source'].items()
+                if key in {'quote', 'semantic', 'required_change'}}, 'row_id': body['task_source']['semantic_row_id'],
+                'visual_task': body['task_source']['required_change'],
+                'components': [{'segment_id': 'seg-002', 'component_id': 'component-1'}]}]},
+            'skill_selection': {'assignments': [{'segment_id': 'seg-002', 'component_id': 'component-1',
+                'candidate_id': 'barty-motion-graphics:barty-motion-graphics/motion-broll'}],
+                'beats': [{'segment_id': 'seg-002', 'component_id': 'component-1',
+                'semantic_row_id': body['task_source']['semantic_row_id'], 'transcript': body['transcript'],
+                'component_brief': body['task_source']['component_brief'],
+                'required_change': body['task_source']['required_change']}]}}
+        self.state.revise(self.job, 'visual_direction', 'fixture independent native item')
+        self.publish('with-native', director_payload={'segments': [segment]}, treatment_payload=treatment)
+        with contextlib.ExitStack() as controls, \
+             mock.patch.object(visual_plan, '_approved_artifact', return_value=source), \
+             mock.patch.object(run_stage, 'prepare_visual_dependencies', side_effect=AssertionError('premature join')):
+            if probe_failure:
+                actual_which = native.shutil.which
+                controls.enter_context(mock.patch.object(native.shutil, 'which', side_effect=lambda name:
+                    '/usr/bin/false' if name == 'ffprobe' else actual_which(name)))
+            response = run_stage.resume_visual_direction(self.job, native.PROJECT)
+        self.assertEqual([(a['action'], a['request_id']) for a in response['actions']], [('submit', self.request['id'])])
+        self.assertEqual([(e['segment_id'], e['component_id']) for e in response['errors']], [('seg-002', 'component-1')])
+        self.assertIn('non-zero exit status' if probe_failure else 'result schema', response['errors'][0]['error'])
+        self.assertEqual(queue.status(root)['items'][self.request['id']]['status'], 'submitting')
 
     def test_current_list_rebinds_same_call_and_revocation_blocks_upload_and_claim(self):
         from edit.hd.tools import generation_channels as channels, generation_inputs
@@ -102,6 +155,10 @@ class CurrentVisualAuthorizationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'current visual stage'):
             queue.claim(self.job.job_dir,rid)
         self.assertEqual(queue.status(self.job.job_dir)['items'][rid]['status'],'ready')
+        with self.assertRaisesRegex(ValueError, 'current visual stage'):
+            channels.issue_actions(self.job, [{'action': 'issue_generation', 'request_id': rid,
+                'step_id': self.step['id'], 'authorization': self.authorization}], {'actions': [], 'errors': []})
+        self.assertEqual(queue.status(self.job.job_dir)['items'][rid]['status'], 'ready')
         # A completed call keeps historical provenance even after withdrawal.
         self.visual.validate_generation_request(self.job,rebound['authorization'],self.request,
                                                 queue=queue.status(self.job.job_dir))
@@ -943,6 +1000,58 @@ class GenerationQueueTests(unittest.TestCase):
     def complete(self, rid, token, purpose="image", queried=None):
         return queue.record(self.job, rid, token, {"status": "completed", "project_id": "synthetic-project"} |
                             ({"artifacts": [{"type": purpose, "url": "https://example.invalid/synthetic"}]}), queried)
+
+    def test_batch_keeps_first_claim_when_second_has_no_video_quota(self):
+        from edit.hd.tools import generation_channels as channels
+        self.add(self.request('image-A'), self.request('video-B', 'video'))
+        candidates = [{'action': 'issue_generation', 'request_id': rid, 'step_id': rid}
+                      for rid in ('image-A', 'video-B')]
+        response = {'actions': [], 'errors': []}
+        with mock.patch.object(channels, '_job', return_value=SimpleNamespace(job_dir=self.job)):
+            channels.issue_actions(self.job, candidates, response)
+        self.assertEqual([(a['action'], a['request_id']) for a in response['actions']], [('submit', 'image-A')])
+        self.assertIn('quota', response['errors'][0]['error'])
+        saved = queue.status(self.job)['items']
+        self.assertEqual((saved['image-A']['status'], saved['video-B']['status']), ('submitting', 'ready'))
+        claimed = queue.claim(self.job, 'video-B', 10)
+        queue.record(self.job, 'video-B', claimed['claim_token'], {'status': 'failed'})
+        terminal = {'actions': [], 'errors': []}
+        with mock.patch.object(channels, '_job', return_value=SimpleNamespace(job_dir=self.job)):
+            channels.issue_actions(self.job, candidates, terminal)
+        self.assertEqual(terminal['actions'][0]['status'], 'submitting')
+        self.assertIn('failed', terminal['errors'][0]['error'])
+        self.assertEqual(queue.status(self.job)['items']['image-A']['claim_token'], saved['image-A']['claim_token'])
+
+    def test_upload_action_survives_later_queue_publication_failure(self):
+        from edit.hd.tools import generation_channels as channels
+        source = self.job / 'reference.png'; source.write_bytes(b'preserved local upload bytes')
+        first = self.request('image-A')
+        first['arguments']['reference'] = str(source)
+        first['input_files'] = [{'path': source.name, 'sha256': artifacts.sha256_file(source), 'bytes': source.stat().st_size}]
+        binding = artifacts.read_json_artifact(self.job / 'manifests/generation-channels.json')
+        binding['image'].update(reference_mode='upload', upload={
+            'tool': 'fixture.upload', 'arguments': {'file': {'$input': 'path'}}, 'result_path': ['url']})
+        artifacts.write_json_artifact(self.job / 'manifests/generation-channels.json', binding)
+        self.add(first, self.request('image-B'))
+        response = {'actions': [], 'errors': []}
+        original = artifacts.write_json_artifact
+        def publish(path, data):
+            if path.name == 'generation-queue.json':
+                raise OSError('fixture queue publication failure')
+            return original(path, data)
+        with mock.patch.object(channels, '_job', return_value=SimpleNamespace(job_dir=self.job)), \
+             mock.patch.object(artifacts, 'write_json_artifact', side_effect=publish):
+            channels.issue_actions(self.job, [{'action': 'issue_generation', 'request_id': rid, 'step_id': rid}
+                for rid in ('image-A', 'image-B')], response)
+        self.assertEqual([(a['action'], a['request_id']) for a in response['actions']], [('upload', 'image-A')])
+        self.assertIn('publication failure', response['errors'][0]['error'])
+        self.assertTrue(all(item['status'] == 'ready' for item in queue.status(self.job)['items'].values()))
+        with mock.patch.object(channels, '_job', return_value=SimpleNamespace(job_dir=self.job)):
+            repeated = channels.next_action(self.job, 'image-A')
+        self.assertEqual(repeated['status'], 'input_upload_pending')
+        with mock.patch.object(channels, '_job', return_value=SimpleNamespace(job_dir=self.job)):
+            channels.record_result(self.job, response['actions'][0], {'url': 'https://fixture.invalid/uploaded'})
+            self.assertEqual(channels.next_action(self.job, 'image-A')['action'], 'submit')
 
     def test_real_processes_share_two_slots_then_refill(self):
         requests = [self.request("r" + str(i), "video" if i % 2 else "image") for i in range(4)]

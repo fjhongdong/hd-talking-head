@@ -79,6 +79,10 @@ def exact(root, d):
     return f
 
 
+def parent_input_facts(brief):
+    return {key: brief[key] for key in ('source_binding', 'image', 'semantic_goal', 'purpose')}
+
+
 def validate_brief(payload):
     b = json.loads(payload)
     required = {'schema_version', 'job_id', 'source_binding', 'image', 'purpose', 'composition',
@@ -204,23 +208,20 @@ def validate_selected_inputs(job, director, treatment):
 
 def source_root(project=PROJECT):
     project = Path(project).resolve(strict=True)
-    from edit.hd.tools.startup import _operation_cache
-    cache = _operation_cache(project)
-    cache_key = ('wake-native-source', str(project))
-    if cache is not None and cache_key in cache:
-        return cache[cache_key]
     from prepare_sources import bundled_source_revision
     root = Path(project) / 'vendor/lemo-wake'
-    if bundled_source_revision(Path(project), root) != UPSTREAM_COMMIT:
-        raise ValueError('Complete pinned native Wake source is required')
-    if (root / '.git').exists():
-        head = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
-        dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=no'], text=True)
-        if head != UPSTREAM_COMMIT or dirty:
-            raise ValueError('Native Wake source changed; do not reset or edit it')
-    if cache is not None:
-        cache[cache_key] = root
-    return root
+    def verify(inventory):
+        if bundled_source_revision(Path(project), root) != UPSTREAM_COMMIT:
+            raise ValueError('Complete pinned native Wake source is required')
+        if (root / '.git').exists():
+            environment = {**os.environ, 'GIT_OPTIONAL_LOCKS': '0'}
+            head = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True, env=environment).strip()
+            dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=no'], text=True, env=environment)
+            if head != UPSTREAM_COMMIT or dirty:
+                raise ValueError('Native Wake source changed; do not reset or edit it')
+    from native_result_reuse import source_unchanged
+    return source_unchanged(project, ('wake',), root, verify,
+                            records=(project / 'archives/sources/index.json',))
 
 
 def runtime_environment(project=PROJECT):
@@ -495,8 +496,12 @@ def _read_result(job_dir, payload, data):
 
 def inspect_result(job_dir, payload, *, record_bytes=None):
     """Inspect unapproved native work; never use this entry to produce a component."""
+    from native_result_reuse import inspect_unchanged
     b = validate_brief(payload)
-    return _read_result(job_dir, payload, record_bytes if record_bytes is not None else path(job_dir, b['result_record_path']).read_bytes())
+    source_root()
+    data = record_bytes if record_bytes is not None else path(job_dir, b['result_record_path']).read_bytes()
+    return inspect_unchanged(PROJECT, job_dir, payload, data, b, _read_result,
+                             source_identity=('wake',))
 
 
 def load_result(job_dir, payload, *, expected_record):
@@ -508,7 +513,7 @@ def load_result(job_dir, payload, *, expected_record):
     data = path(job_dir, expected_record['path']).read_bytes()
     if len(data) != expected_record['bytes'] or hashlib.sha256(data).hexdigest() != expected_record['sha256']:
         raise ValueError('Wake result differs from the frozen version')
-    return _read_result(job_dir, payload, data)
+    return inspect_result(job_dir, payload, record_bytes=data)
 
 
 def publish_completed(job_dir, brief_path, project_src, video, native_qa, calls):

@@ -60,38 +60,39 @@ def descriptor(root, target):
             'sha256': sha(target), 'byte_count': target.stat().st_size}
 
 
-def exact(root, record):
+def exact(root, record, *, input_fact=False):
     if (not isinstance(record, dict) or set(record) != {'job_path', 'sha256', 'byte_count'}
             or not re.fullmatch('[a-f0-9]{64}', str(record['sha256']))
             or type(record['byte_count']) is not int or record['byte_count'] < 1):
         raise ValueError('Invalid TalkCraft file descriptor')
     target = path(root, record['job_path'])
-    if target.stat().st_size != record['byte_count'] or sha(target) != record['sha256']:
+    def digest():
+        if input_fact:
+            from native_result_reuse import input_hashes
+            return input_hashes(1, lambda: sha(target))
+        return sha(target)
+    if target.stat().st_size != record['byte_count'] or digest() != record['sha256']:
         raise ValueError('TalkCraft frozen input or evidence changed: ' + record['job_path'])
     return target
 
 
 def source_root(project=PROJECT):
     project = Path(project).resolve(strict=True)
-    from edit.hd.tools.startup import _operation_cache
-    cache = _operation_cache(project)
-    cache_key = ('talkcraft-native-source', str(project))
-    if cache is not None and cache_key in cache:
-        return cache[cache_key]
     record_path = project / SOURCE_RECORD
-    if sha(record_path) != SOURCE_RECORD_SHA256:
+    record_bytes = record_path.read_bytes()
+    if hashlib.sha256(record_bytes).hexdigest() != SOURCE_RECORD_SHA256:
         raise ValueError('TalkCraft native source identity record changed')
-    record = json.loads(record_path.read_bytes())
+    record = json.loads(record_bytes)
     if record['commit'] != UPSTREAM_COMMIT or record['source_root'] != SOURCE_ROOT:
         raise ValueError('TalkCraft native source revision changed')
     root = project / SOURCE_ROOT
-    for name, digest in record['files'].items():
-        source = root / relative(name)
-        if source.is_symlink() or not source.is_file() or sha(source) != digest:
-            raise ValueError('Complete pinned TalkCraft source is required: ' + name)
-    if cache is not None:
-        cache[cache_key] = root
-    return root
+    def verify(inventory):
+        for name, digest in record['files'].items():
+            source = root / relative(name)
+            if source.is_symlink() or not source.is_file() or sha(source) != digest:
+                raise ValueError('Complete pinned TalkCraft source is required: ' + name)
+    from native_result_reuse import source_unchanged
+    return source_unchanged(project, ('talkcraft',), root, verify, records=(record_path,))
 
 
 def load_card_catalog(project=PROJECT):
@@ -110,6 +111,12 @@ def load_card_catalog(project=PROJECT):
     if len(result) != 108:
         raise ValueError('TalkCraft requires all 108 original recipe cards')
     return result
+
+
+def parent_input_facts(brief):
+    """Read parent inputs without changing the original native task schema."""
+    return {key: brief[key] for key in ('transcript', 'semantic_goal', 'word_anchors',
+            'speech', 'source_binding', 'materials', 'authorization') if key in brief}
 
 
 def validate_brief(payload):
@@ -157,11 +164,18 @@ def validate_brief(payload):
 
 
 def _inputs(root, brief):
-    for record in [brief['speech'], *brief['materials']]:
-        exact(root, record)
+    from native_result_reuse import inspect_inputs
+    return inspect_inputs(PROJECT, root, brief, _check_inputs)
+
+
+def _check_inputs(root, brief):
+    from native_result_reuse import input_probe
+    records = [brief['speech'], *brief['materials']]
+    for record in records:
+        exact(root, record, input_fact=True)
     speech = path(root, brief['speech']['job_path'])
-    data = json.loads(subprocess.check_output([shutil.which('ffprobe') or 'ffprobe', '-v', 'error',
-        '-show_streams', '-show_format', '-of', 'json', str(speech)], text=True))
+    data = json.loads(input_probe(lambda: subprocess.check_output([shutil.which('ffprobe') or 'ffprobe', '-v', 'error',
+        '-show_streams', '-show_format', '-of', 'json', str(speech)], text=True)))
     if (len(data['streams']) != 1 or data['streams'][0].get('codec_type') != 'audio'
             or abs(float(data['format']['duration']) - brief['composition']['frames'] / 24) > 1 / 24):
         raise ValueError('TalkCraft speech must be this scene audio clip on the local approved clock')
@@ -193,12 +207,16 @@ def validate_selected_inputs(job, director, treatment):
             _inputs(job.job_dir, brief)
 
 
-def native_task(job, recipe, component, brief_path):
+def native_task(job, recipe, component, brief_path, *, defer_runtime=False):
     brief_path = Path(brief_path)
     brief = validate_brief(brief_path.read_bytes())
     root = source_root()
-    from prepare_talkcraft_native import check as check_runtime
-    runtime = check_runtime(PROJECT)
+    if defer_runtime:
+        command = [sys.executable, str(PROJECT / 'scripts/prepare_talkcraft_native.py'), '--project-root', str(PROJECT)]
+        runtime = {'status': 'pending', 'prepare_argv': command, 'check_argv': [*command, '--check']}
+    else:
+        from prepare_talkcraft_native import check as check_runtime
+        runtime = check_runtime(PROJECT)
     if brief['card_id'] not in {row['card_id'] for row in load_card_catalog()}:
         raise ValueError('Unknown native TalkCraft recipe')
     if brief['job_id'] != job.job_id or sha(brief_path) != component['brief_sha256']:
@@ -219,7 +237,7 @@ def native_task(job, recipe, component, brief_path):
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, record['job_path'])) for record in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, then publish_completed with the actual execution evidence. This action is pending work, not a completed result.'}
+            'next': ('Before native execution, use runtime.check_argv for an already prepared environment; otherwise run runtime.prepare_argv once and use its real checked output for all paths and tools. A pending runtime is not readiness evidence. ' if defer_runtime else '') + 'Read the complete native Skill and original recipe. The native Skill owns SHOTBOOK, composition, card CONFIG, scene code and QA. Link the project node_modules to runtime.node_modules and pass runtime.browser to the original renderer. Use the approved voice and word times; do not re-edit speech or create new voice, subtitles or paid assets. Keep the pinned Skill files unchanged. Author only the Job native project, use its original render_shots.mjs through capture_render, then publish_completed with the actual execution evidence. This action is pending work, not a completed result.'}
 
 
 def probe(video):
@@ -352,10 +370,18 @@ def publish_completed(job_dir, brief_path, call_path):
 
 
 def inspect_result(job_dir, payload, *, record_bytes=None):
+    from native_result_reuse import inspect_unchanged
+    brief = validate_brief(payload)
+    source_root()
+    data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
+    return inspect_unchanged(PROJECT, job_dir, payload, data, brief, _inspect_result,
+                             source_identity=('talkcraft',))
+
+
+def _inspect_result(job_dir, payload, data):
     brief = validate_brief(payload)
     _inputs(job_dir, brief)
     source_root()
-    data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
     result = json.loads(data)
     if any(result.get(key) != value for key, value in {'schema_version': 2, 'status': 'completed',
             'dependency_id': DEPENDENCY_ID, 'job_id': brief['job_id'], 'card_id': brief['card_id'],

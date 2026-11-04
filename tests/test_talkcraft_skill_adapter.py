@@ -43,6 +43,12 @@ class TalkCraftSkillTests(unittest.TestCase):
             p=root/'brief.json';p.write_text(json.dumps(payload))
             job=SimpleNamespace(job_dir=root,job_id='native-test')
             action=native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p)
+            with mock.patch('prepare_talkcraft_native.check', side_effect=AssertionError('runtime probe')):
+                pending = native.native_task(job, {'segment_id': 'seg-001'},
+                    {'component_id': 'scene', 'brief_sha256': native.sha(p)}, p, defer_runtime=True)
+            self.assertEqual(pending['runtime']['status'], 'pending')
+            self.assertIn('--check', pending['runtime']['check_argv'])
+            self.assertEqual(pending['source_binding'], action['source_binding'])
             self.assertEqual(action['action'],'execute_native_skill')
             self.assertTrue(action['requirements']['silent'])
             self.assertEqual(action['speech_window'],{'start':0,'end':2})

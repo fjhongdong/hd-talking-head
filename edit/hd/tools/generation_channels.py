@@ -126,6 +126,136 @@ def next_action(job, request_id, *, account_limit=None):
             "tool": result["tool"], "arguments": result["arguments"],
             "claim_token": result["claim_token"], "request_id": request_id}
 
+def _waiting_action(job, request_id, item):
+    status = item['status']
+    if status not in {'pending', 'unknown'}:
+        return {'action': 'blocked', 'status': status, 'id': request_id}
+    ids = item.get('task_ids', [])
+    if not ids:
+        return {'action': 'blocked', 'status': 'generation_result_unknown',
+                'request_id': request_id, 'next': '核对原提交结果；不要重新提交。'}
+    if item.get('next_poll_at', 0) > time.time():
+        return {'action': 'wait', 'request_id': request_id, 'next_poll_at': item['next_poll_at']}
+    query = _query_binding(job, item)
+    if not isinstance(query, dict) or not query.get('tool'):
+        return {'action': 'blocked', 'status': 'missing_query_channel', 'request_id': request_id}
+    return {'action': 'query', 'purpose': item['request']['purpose'], 'tool': query['tool'],
+            'arguments': {**query.get('arguments', {}), query.get('task_ids_parameter', 'task_ids'): ids},
+            'task_ids': ids, 'request_id': request_id, 'claim_token': item['claim_token']}
+
+
+def issue_actions(job, candidates, response, *, account_limit=None):
+    """Publish only prebuilt actions; preserve every issued action on later I/O failure."""
+    job = _job(job)
+    errors = response.setdefault('errors', [])
+    ready = []
+    def failed(candidate, error):
+        errors.append({key: candidate[key] for key in ('segment_id', 'component_id', 'step_id', 'request_id')
+                       if key in candidate} | {'error': str(error)})
+    for candidate in candidates:
+        if candidate.get('action') != 'issue_generation':
+            response['actions'].append(candidate)
+            continue
+        try:
+            request = candidate.get('request')
+            if request is not None:
+                plan = {'requests': [request]}
+                generation_queue.add_authorized(job.job_dir, plan, candidate['authorization'], artifacts.sha256_json(plan))
+            ready.append(candidate)
+        except (ValueError, OSError, KeyError, TypeError, RuntimeError) as error:
+            failed(candidate, error)
+    authorizations = [candidate['authorization'] for candidate in candidates
+                      if candidate.get('action') == 'issue_generation' and candidate.get('authorization')]
+    if not ready and not authorizations:
+        return response
+    with generation_queue._locked(job.job_dir) as (root, queue_path, queue):
+        needs_approval = any(queue['items'].get(c['request_id'], {}).get('status') == 'ready' for c in ready)
+        approved = generation_queue._approved(root) if needs_approval else None
+        # Configuration and global authorization are checked before any token is published.
+        if authorizations:
+            from . import state, visual_confirmation
+            current = visual_confirmation.validate_visual_authorization(state.load_job(root))
+            if any(authorization.get('source') != current['artifact'] for authorization in authorizations):
+                raise ValueError('visual authorization changed before action issuance')
+        if approved is not None:
+            jid, digest, config = approved
+            for candidate in ready:
+                item = queue['items'].get(candidate['request_id'], {})
+                if item.get('status') == 'ready' and (jid != queue['job_id'] or item.get('config_sha256') != digest):
+                    raise ValueError('generation configuration changed before action issuance')
+        planned, uploads, submitted = [], [], []
+        for candidate in ready:
+            rid = candidate['request_id']
+            try:
+                update, is_submission = None, False
+                item = queue['items'][rid]
+                if item['status'] in {'failed', 'moderated'}:
+                    raise ValueError('generation is ' + item['status'] + '; inspect the original result, do not resubmit')
+                if item['status'] != 'ready':
+                    action = _waiting_action(job, rid, item)
+                else:
+                    identity = generation_queue._request(root, item['request'], config)
+                    if identity != item.get('channel_identity'):
+                        raise ValueError('generation channel identity changed before action issuance')
+                    generation_queue.validate_submission_authorization(root, queue, rid)
+                    action, update = ((None, None) if queue['paused'] else
+                                      generation_inputs.prepare_next_action(root, item['request']))
+                    if action is None:
+                        claimed = generation_queue._claim_locked(root, queue, rid, *approved, account_limit)
+                        action = ({'action': 'submit', 'purpose': item['request']['purpose'],
+                                   'tool': claimed['tool'], 'arguments': claimed['arguments'],
+                                   'claim_token': claimed['claim_token'], 'request_id': rid}
+                                  if claimed['action'] == 'generate' else claimed)
+                        is_submission = claimed['action'] == 'generate'
+                # Upload state stores the unadorned tool action; parent metadata
+                # belongs only to the returned copy used by record_result.
+                action = {**action, 'step_id': candidate['step_id']}
+                if is_submission:
+                    submitted.append(action)
+                elif update is not None:
+                    uploads.append((action, update, candidate))
+                planned.append(action)
+            except (ValueError, OSError, KeyError, TypeError, RuntimeError) as error:
+                failed(candidate, error)
+        # No later business check or response construction may discard issued tokens.
+        artifacts.canonical_json_bytes({**response, 'actions': [*response['actions'], *planned]})
+        upload_ids = {id(action) for action, _, _ in uploads}
+        submitted_ids = {id(action) for action in submitted}
+        response['actions'].extend(action for action in planned
+                                   if id(action) not in upload_ids | submitted_ids)
+        for action, update, candidate in uploads:
+            try:
+                artifacts.write_json_artifact(*update)
+            except (ValueError, OSError, RuntimeError) as error:
+                # A publication can fail after replace; return its original action only
+                # when the exact token is already present, never mint a replacement.
+                try:
+                    persisted = artifacts.read_json_artifact(update[0]) == update[1]
+                except (ValueError, OSError):
+                    persisted = False
+                if persisted:
+                    response['actions'].append(action)
+                failed(candidate, error)
+            else:
+                response['actions'].append(action)
+        if submitted or uploads or needs_approval:
+            try:
+                artifacts.write_json_artifact(queue_path, queue)
+            except (ValueError, OSError, RuntimeError) as error:
+                try:
+                    saved = artifacts.read_json_artifact(queue_path)
+                    persisted = all(saved['items'][a['request_id']].get('claim_token') == a['claim_token']
+                                    for a in submitted)
+                except (ValueError, OSError, KeyError):
+                    persisted = False
+                if persisted:
+                    response['actions'].extend(submitted)
+                errors.append({'error': str(error), 'scope': 'generation_queue'})
+            else:
+                response['actions'].extend(submitted)
+    return response
+
+
 def record_result(job, action, response, *, queried_task_ids=None):
     job = _job(job)
     if not isinstance(action, dict) or not action.get("request_id") or not action.get("claim_token"):

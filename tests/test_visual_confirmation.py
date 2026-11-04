@@ -15,6 +15,276 @@ from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
+    def test_first_native_speech_matches_real_approved_clip(self):
+        root = self.job.job_dir
+        source, clip, forged = root / 'approved-source.mp4', root / 'clip.wav', root / 'forged.wav'
+        subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=s=16x16:r=24:d=2',
+                        '-f', 'lavfi', '-i', 'sine=frequency=440:duration=2', '-c:v', 'libx264',
+                        '-c:a', 'aac', '-shortest', str(source)], check=True)
+        subprocess.run(['ffmpeg', '-v', 'error', '-i', str(source), '-ss', '0.25', '-t', '1.5',
+                        '-vn', '-ac', '1', '-ar', '16000', str(clip)], check=True)
+        subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=880:duration=1.5',
+                        '-ac', '1', '-ar', '16000', str(forged)], check=True)
+        segment = {'segment_id': 'seg-001', 'start': .25, 'end': 1.75}
+        beat = {**segment, 'component_id': 'native', 'transcript': '已批准口播'}
+        original = {'skill_selection': {'beats': [beat]}}
+        brief = {'transcript': beat['transcript'], 'speech': {'job_path': clip.name,
+            'sha256': artifacts.sha256_file(clip), 'byte_count': clip.stat().st_size},
+            'source_binding': {**segment, 'aroll_sha256': artifacts.sha256_file(source)},
+            'word_anchors': [{'text': beat['transcript'], 'start': 0, 'end': 1.5}]}
+        words = [{'text': beat['transcript'], 'start': .25, 'end': 1.75}]
+        with mock.patch('edit.hd.tools.visual_plan._approved_artifact', return_value=source), \
+             mock.patch('edit.hd.tools.motion_capabilities._approved_speech', return_value=words):
+            vc._validate_fresh_native_parent_inputs(root, {}, original, segment, 'native', brief)
+            # 41 video frames have a fractional sample count at 16k; use the parent's exact extraction argv.
+            partial_segment = {'segment_id': 'seg-001', 'start': 3 / 24, 'end': 44 / 24}
+            partial = root / 'fractional-frame-clip.wav'
+            subprocess.run(['ffmpeg', '-v', 'error', '-i', str(source), '-ss', str(partial_segment['start']),
+                '-t', str(partial_segment['end'] - partial_segment['start']), '-vn', '-ac', '1',
+                '-ar', '16000', '-c:a', 'pcm_s16le', str(partial)], check=True)
+            fractional = copy.deepcopy(brief)
+            fractional['source_binding'] = {**partial_segment, 'aroll_sha256': artifacts.sha256_file(source)}
+            fractional['speech'] = {'job_path': partial.name, 'sha256': artifacts.sha256_file(partial),
+                                    'byte_count': partial.stat().st_size}
+            fractional['word_anchors'] = [{'text': beat['transcript'], 'start': 0,
+                                          'end': partial_segment['end'] - partial_segment['start']}]
+            with mock.patch('edit.hd.tools.motion_capabilities._approved_speech',
+                    return_value=[{'text': beat['transcript'], 'start': partial_segment['start'],
+                                   'end': partial_segment['end']}]):
+                vc._validate_fresh_native_parent_inputs(root, {}, original, partial_segment, 'native', fractional)
+            import wave
+            with wave.open(str(clip), 'rb') as stream:
+                params, samples = stream.getparams(), stream.readframes(stream.getnframes())
+            with wave.open(str(clip), 'wb') as stream:
+                stream.setparams(params)
+                stream.writeframes(samples + b'\x01\x00' * 640)
+            brief['speech'].update(sha256=artifacts.sha256_file(clip), byte_count=clip.stat().st_size)
+            with self.assertRaisesRegex(ValueError, 'authorized native input: speech'):
+                vc._validate_fresh_native_parent_inputs(root, {}, original, segment, 'native', brief)
+            brief['speech'] = {'job_path': forged.name, 'sha256': artifacts.sha256_file(forged),
+                               'byte_count': forged.stat().st_size}
+            with self.assertRaisesRegex(ValueError, 'authorized native input: speech'):
+                vc._validate_fresh_native_parent_inputs(root, {}, original, segment, 'native', brief)
+            brief['word_anchors'][0]['text'] = '伪造词锚'
+            with self.assertRaisesRegex(ValueError, 'authorized native input: word_anchors'):
+                vc._validate_fresh_native_parent_inputs(root, {}, original, segment, 'native', brief)
+
+    def test_fresh_local_words_allow_only_microsecond_rounding(self):
+        words = [{'text': '词', 'start': .2, 'end': .3}]
+        segment = {'segment_id': 'seg-001', 'start': .1, 'end': .4}
+        brief = {'word_anchors': [{'text': '词', 'start': .1, 'end': .2}]}
+        with mock.patch('edit.hd.tools.motion_capabilities._approved_speech', return_value=words):
+            vc._validate_fresh_native_parent_inputs(self.job.job_dir, {}, {}, segment, 'native', brief)
+            brief['word_anchors'][0]['end'] += .001
+            with self.assertRaisesRegex(ValueError, 'word_anchors'):
+                vc._validate_fresh_native_parent_inputs(self.job.job_dir, {}, {}, segment, 'native', brief)
+
+    def test_first_talkcraft_realization_keeps_approved_semantic_goal(self):
+        from test_talkcraft_skill_adapter import brief as native_brief
+        from edit.hd.tools import motion_capabilities
+        root = self.job.job_dir
+        source = root / '06-edit-structure/edited-aroll.mp4'
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=s=16x16:r=24:d=3',
+                        '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', '-c:v', 'libx264',
+                        '-c:a', 'aac', '-shortest', str(source)], check=True)
+        workflow = artifacts.read_json_artifact(root / 'workflow.json')
+        for record in workflow['stages']['edit_structure']['artifacts']:
+            if record['path'] == '06-edit-structure/edited-aroll.mp4':
+                record.update(sha256=artifacts.sha256_file(source), bytes=source.stat().st_size)
+        artifacts.write_json_artifact(root / 'workflow.json', workflow)
+        self.job = state.load_job(root)
+        segment = avatar_profile.plan_avatar_policy([fixture_api.draft_segment(('code_generated',))])['segments'][0]
+        candidate_id = 'video-talkcraft:source-converge'
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT) if r['candidate_id'] == candidate_id)
+        segment['bindings']['component-1'] = {'producer_type': 'dependency', **{k: candidate[k] for k in
+            ('dependency_id', 'entrypoint', 'producer_version', 'template_id')}}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment['motion_queries'][0]['tags'] = ['数据', '汇聚', '资料', '蓝色场景']
+        treatment = self._review_creator(segment, treatment, candidate_id)
+        treatment['skill_selection']['beats'][0].pop('binding_snapshot')
+        treatment['skill_selection']['beats'][0]['semantic_goal'] = '资料解释：展示多来源汇聚过程'
+        segment.pop('bindings')
+        self.fixture._write_brief(segment)
+        artifacts.write_json_artifact(self.treatment, treatment)
+        proposal = artifacts.read_json_artifact(self.prepare())
+        director = artifacts.read_json_artifact(root / proposal['inputs']['director']['path'])
+        self.confirm()
+        self.assertEqual(run_stage.resume_visual_direction(self.job, _env.PROJECT)['actions'][0]['action'], 'prepare_template_inputs')
+        clip = root / 'canonical.wav'
+        subprocess.run(['ffmpeg', '-v', 'error', '-i', str(source), '-ss', '0', '-t', '3',
+                        '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', str(clip)], check=True)
+        brief = native_brief()
+        brief.update(job_id=self.job.job_id, transcript='Approved source evidence', semantic_goal='未经批准的相反含义',
+            composition={'width': 1080, 'height': 1920, 'fps': 24, 'frames': 72},
+            word_anchors=[{'text': 'Approved source evidence', 'start': 0, 'end': 3}],
+            speech={'job_path': clip.name, 'sha256': artifacts.sha256_file(clip), 'byte_count': clip.stat().st_size},
+            source_binding={'aroll_sha256': artifacts.sha256_file(source), 'segment_id': 'seg-001', 'start': 0., 'end': 3.})
+        path = root / 'native-brief.json'
+        treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'brief_path': path.name}]
+        def resume():
+            artifacts.write_json_artifact(path, brief)
+            director['segments'][0]['bindings']['component-1']['brief_sha256'] = artifacts.sha256_file(path)
+            artifacts.write_json_artifact(root / 'actual-director.json', director)
+            artifacts.write_json_artifact(root / 'actual-treatment.json', treatment)
+            return run_stage.resume_visual_direction(self.job, _env.PROJECT, {'realization': {
+                'director_brief': 'actual-director.json', 'treatment': 'actual-treatment.json'}})
+        result = resume()
+        self.assertIn('semantic_goal', result['errors'][0]['error'])
+        self.assertFalse(result['actions'])
+        brief['semantic_goal'] = treatment['skill_selection']['beats'][0]['semantic_goal']
+        self.assertNotEqual(brief['semantic_goal'], treatment['semantic_lists']['broll'][0]['semantic'])
+        self.assertEqual(resume()['actions'][0]['action'], 'execute_native_skill')
+
+    def test_openfilm_parent_sources_and_authored_media_keep_distinct_roles(self):
+        from test_openfilm_motion_adapter import brief as native_brief
+        from edit.hd.tools import motion_capabilities
+        from PIL import Image
+        root = self.job.job_dir
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT)
+                         if r.get('dependency_id') == 'openfilm-motion-graphics')
+        segment = avatar_profile.plan_avatar_policy([fixture_api.draft_segment(('code_generated',))])['segments'][0]
+        segment['bindings']['component-1'] = {'producer_type': 'dependency', **{k: candidate[k] for k in
+            ('dependency_id', 'entrypoint', 'producer_version', 'template_id')}}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment['skill_selection']['beats'] = [{'segment_id': 'seg-001', 'component_id': 'component-1',
+            'transcript': 'Approved source evidence'}]
+        brief = native_brief()
+        brief['source_binding'].update(aroll_sha256=artifacts.sha256_file(root/'06-edit-structure/edited-aroll.mp4'),
+                                       segment_id='seg-001', end=3.)
+        brief['composition']['frames'] = 72
+        brief['creative_handoff'].update(transcript='Approved source evidence', semantic_goal='资料解释')
+        entry = root / 'native-scene.html'; entry.write_text('<html><body>canvas drawing</body></html>')
+        image = root / 'native-drawing.png'; Image.new('RGB', (8, 8), 'red').save(image)
+        brief['entry'].update(job_path=entry.name, sha256=artifacts.sha256_file(entry))
+        brief['assets'][0].update(job_path=image.name, sha256=artifacts.sha256_file(image))
+        scene = {'segment_id': 'seg-001', 'component_id': 'component-1'}
+        def check(proposal=None):
+            vc._validate_fresh_native_parent_inputs(root, proposal or {}, treatment, segment, 'component-1', brief, scene=scene)
+        with self.assertRaisesRegex(ValueError, 'same-target source'):
+            check()
+        scene['native_asset_origins'] = [{'job_path': image.name, 'sha256': artifacts.sha256_file(image),
+            'kind': 'authored', 'evidence': vc._record(root, entry)}]
+        check()
+        queue_path = root / 'manifests/generation-queue.json'
+        other = {'generation_steps': [{'id': 'other-image', 'segment_id': 'seg-002', 'component_id': 'component-1'}]}
+        queued = {'items': {'other-image': {'status': 'pending', 'completion_response': {
+            'artifacts': [vc._record(root, image)]}}}}
+        artifacts.write_json_artifact(queue_path, queued)
+        check(other)  # Another unfinished task does not block this authored image.
+        queued['items']['other-image']['status'] = 'completed'
+        artifacts.write_json_artifact(queue_path, queued)
+        with self.assertRaisesRegex(ValueError, 'authorized native input: materials'):
+            check(other)  # Its completed image cannot be relabeled as this task's authored asset.
+        treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': 'component-1',
+                                'source': vc._record(root, image)}]
+        check(other)  # An explicit same-target authorization permits the same content hash.
+        treatment['scenes'] = []
+        queue_path.unlink()
+        brief['creative_handoff']['semantic_goal'] = '相反含义'
+        with self.assertRaisesRegex(ValueError, 'semantic_goal'):
+            check()
+        brief['creative_handoff']['semantic_goal'] = '资料解释'
+        foreign = {'segment_id': 'seg-002', 'component_id': 'component-1', 'source': vc._record(root, image)}
+        treatment['scenes'] = [foreign]
+        # A foreign parent image cannot become authored by copying or relabeling it.
+        with self.assertRaisesRegex(ValueError, 'materials'):
+            check()
+        treatment['scenes'] = []
+        scene['native_asset_origins'][0].pop('evidence')
+        with self.assertRaisesRegex(ValueError, 'engineering source'):
+            check()
+
+    def test_fresh_hw_input_retains_original_indexed_word_anchors(self):
+        import shutil
+        import hyperframes_hw_pipeline_adapter as native
+        from edit.hd.tools import motion_capabilities
+        root = self.job.job_dir
+        words = [{'text': text, 'start': .45 + i, 'end': .7 + i} for i, text in enumerate(('甲', '乙', '丙'))]
+        transcript = root / '05-speech-cleanup/word-transcript.json'
+        artifacts.write_json_artifact(transcript, {'version': 1, 'words': words})
+        workflow = artifacts.read_json_artifact(root / 'workflow.json')
+        workflow['stages']['speech_cleanup']['artifacts'] = [vc._record(root, transcript)]
+        artifacts.write_json_artifact(root / 'workflow.json', workflow)
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT) if r['candidate_id'] == 'overlay:hw-pipeline')
+        segment = {'segment_id': 'seg-001', 'start': 0, 'end': 5, 'bindings': {'native': {
+            k: candidate[k] for k in ('dependency_id', 'entrypoint', 'template_id')}}}
+        brief = {'schema_version': 1, 'canvas': {'width': 1080, 'height': 1920, 'fps': 24, 'frames': 120},
+            'labels': ['甲', '乙', '丙'], 'label_frames': [0, 24, 48],
+            'word_anchors': [{'index': i, 'text': w['text']} for i, w in enumerate(words)],
+            'template_request': {'semantic_family': 'three_step_flow', 'information_units': 3,
+                'numeric_values': [], 'numeric_scale': 'not_applicable'},
+            'source_binding': {'aroll_sha256': artifacts.sha256_file(root/'06-edit-structure/edited-aroll.mp4'),
+                'segment_id': 'seg-001', 'start': 0, 'end': 5}}
+        native._checked_brief(Path(shutil.which('node')), artifacts.canonical_json_bytes(brief))
+        vc._validate_fresh_native_parent_inputs(root, {}, {}, segment, 'native', brief)
+        brief['word_anchors'][0]['text'] = '伪造词'
+        with self.assertRaisesRegex(ValueError, 'approved transcript'):
+            vc._validate_fresh_native_parent_inputs(root, {}, {}, segment, 'native', brief)
+
+    def test_native_plan_authorizes_without_future_brief_and_rejects_broken_real_input(self):
+        from edit.hd.tools import motion_capabilities
+        segment = avatar_profile.plan_avatar_policy([
+            fixture_api.draft_segment(('code_generated',))])['segments'][0]
+        candidate_id = 'barty-motion-graphics:barty-motion-graphics/motion-broll'
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT)
+                         if r['candidate_id'] == candidate_id)
+        segment['bindings']['component-1'] = {'producer_type': 'dependency', **{
+            k: candidate[k] for k in ('dependency_id', 'entrypoint', 'producer_version', 'template_id')}}
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment['motion_queries'][0]['tags'] = ['输入', '输出', '对比', '解释', '蓝色场景']
+        treatment = self._review_creator(segment, treatment, candidate_id)
+        treatment['skill_selection']['beats'][0].pop('binding_snapshot')
+        segment.pop('bindings')
+        self.fixture._write_brief(segment)
+        artifacts.write_json_artifact(self.treatment, treatment)
+        with mock.patch.object(run_stage, 'prepare_visual_dependencies', side_effect=AssertionError('future engineering')):
+            proposal_path = self.prepare()
+        proposal = artifacts.read_json_artifact(proposal_path)
+        director = artifacts.read_json_artifact(self.job.job_dir / proposal['inputs']['director']['path'])
+        binding = director['segments'][0]['bindings']['component-1']
+        self.assertEqual(binding['template_id'], candidate['template_id'])
+        self.assertNotIn('brief_sha256', binding)
+        self.assertFalse((self.job.job_dir / 'native-projects').exists())
+        self.confirm()
+        with mock.patch.object(run_stage, 'prepare_visual_dependencies', side_effect=AssertionError('future engineering')):
+            result = run_stage.resume_visual_direction(self.job, _env.PROJECT)
+        action, = result['actions']
+        self.assertEqual((action['action'], action['segment_id'], action['component_id']),
+                         ('prepare_template_inputs', 'seg-001', 'component-1'))
+        broken = self.job.job_dir / 'broken.json'
+        artifacts.write_json_artifact(broken, {})
+        binding['brief_sha256'] = artifacts.sha256_file(broken)
+        actual = self.job.job_dir / 'realized.json'
+        artifacts.write_json_artifact(actual, director)
+        treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'brief_path': broken.name}]
+        realized_treatment = self.job.job_dir / 'realized-treatment.json'
+        artifacts.write_json_artifact(realized_treatment, treatment)
+        result = run_stage.resume_visual_direction(self.job, _env.PROJECT, {'realization': {
+            'director_brief': actual.name, 'treatment': realized_treatment.name}})
+        self.assertEqual(result['actions'], [])
+        self.assertEqual(len(result['errors']), 1)
+        self.assertIn('Invalid native motion task brief', result['errors'][0]['error'])
+
+    def test_existing_doudou_brief_keeps_native_schema_gate(self):
+        from edit.hd.tools import motion_capabilities
+        segment = avatar_profile.plan_avatar_policy([
+            fixture_api.draft_segment(('code_generated',))])['segments'][0]
+        candidate_id = 'doudou-remotion-whiteboard:doudou-reviewed-scene'
+        candidate = next(r for r in motion_capabilities.load_catalog(_env.PROJECT)
+                         if r['candidate_id'] == candidate_id)
+        binding = {'producer_type': 'dependency', **{k: candidate[k] for k in
+            ('dependency_id', 'entrypoint', 'producer_version', 'template_id')}}
+        path = self.job.job_dir / 'broken-doudou.json'; artifacts.write_json_artifact(path, {})
+        binding['brief_sha256'] = artifacts.sha256_file(path)
+        segment['bindings']['component-1'] = binding
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment['motion_queries'][0]['tags'] = ['手绘', '白板', '流程', '步骤']
+        treatment = self._review_creator(segment, treatment, candidate_id)
+        treatment['scenes'] = [{'segment_id': 'seg-001', 'component_id': 'component-1', 'brief_path': path.name}]
+        self.fixture._write_brief(segment); artifacts.write_json_artifact(self.treatment, treatment)
+        with self.assertRaisesRegex(ValueError, 'Invalid Doudou brief'):
+            self.prepare()
+
     def test_deferred_wake_binds_only_authorized_completed_image(self):
         from types import SimpleNamespace
         import hashlib
@@ -90,6 +360,26 @@ class VisualConfirmationTests(unittest.TestCase):
             self.assertEqual(normalized_treatment,treatment)
             latest.assert_not_called()
             validate_source.assert_called_once_with(root, authorized['artifact'], job_id=job.job_id)
+            vc._validate_fresh_native_parent_inputs(root, proposal, treatment, segment, key[1], brief,
+                                                    scene=actual['scenes'][0])
+            wrong = {**brief, 'image': {'job_path': original_ref['path'], 'sha256': original_ref['sha256'],
+                                      'byte_count': original_ref['bytes']}}
+            with self.assertRaisesRegex(ValueError, 'authorized native input: image'):
+                vc._validate_fresh_native_parent_inputs(root, proposal, treatment, segment, key[1], wrong,
+                                                        scene=actual['scenes'][0])
+            cover = root / '04-cover/cover-delivery-raster.png'
+            cover.write_bytes(original.read_bytes())
+            job.stages['cover'] = {'status': 'completed', 'artifacts': [vc._record(root, cover)]}
+            opening_treatment = copy.deepcopy(treatment)
+            opening_treatment['skill_selection']['opening'] = {'segment_id': key[0], 'component_id': key[1],
+                                                               'candidate_id': 'lemo-wake:wake'}
+            cover_brief = {**brief, 'purpose': 'opening', 'image': {
+                'job_path': '04-cover/cover-delivery-raster.png', 'sha256': artifacts.sha256_file(cover),
+                'byte_count': cover.stat().st_size}}
+            vc._validate_fresh_native_parent_inputs(root, {}, opening_treatment, segment, key[1], cover_brief)
+            cover_brief['image'] = brief['image']
+            with self.assertRaisesRegex(ValueError, 'authorized native input: image'):
+                vc._validate_fresh_native_parent_inputs(root, {}, opening_treatment, segment, key[1], cover_brief)
             for scenes in ([], None):
                 deferred = copy.deepcopy(treatment)
                 if scenes is None:
@@ -325,8 +615,8 @@ class VisualConfirmationTests(unittest.TestCase):
 
     def test_native_timing_failure_blocks_proposal_before_generation(self):
         before = copy.deepcopy(self.job.stages["visual_direction"])
-        with mock.patch("edit.hd.tools.overlay_alignment.validate_treatment",
-                        side_effect=ValueError("native clock differs")):
+        with mock.patch("edit.hd.tools.motion_capabilities.check_planning_only", return_value={
+                'status': 'fail', 'failures': ['native clock differs'], 'not_verified': []}):
             with self.assertRaisesRegex(ValueError, "native clock differs"):
                 self.prepare()
         self.assertEqual(self.job.stages["visual_direction"], before)
@@ -691,10 +981,11 @@ class VisualConfirmationTests(unittest.TestCase):
             transcript="Approved source evidence", semantic_goal="资料解释", assets=[local], speech=None, word_anchors=[],
             authorization={"paid_generation":False}, parent_subtitle_layout=None)
         self.assertEqual(action["requirements"]["assets"], [{"path": str(local.resolve()), "sha256": artifacts.sha256_file(local)}])
-        with self.assertRaisesRegex(ValueError, "missing its scene brief"):
-            run_stage.resume_visual_direction(self.job, _env.PROJECT, {"realization": {
+        pending = run_stage.resume_visual_direction(self.job, _env.PROJECT, {"realization": {
                 "director_brief": str(self.fixture.brief), "treatment": str(self.treatment),
                 "host_qa_note": "Image exists; native scene is deliberately not prepared"}})
+        self.assertEqual(pending['actions'][0]['action'], 'prepare_template_inputs')
+        self.assertEqual(pending['actions'][0]['component_id'], 'component-1')
 
     def test_generated_image_consumption_belongs_to_its_native_component(self):
         from PIL import Image
@@ -762,7 +1053,7 @@ class VisualConfirmationTests(unittest.TestCase):
             missing_snapshot["skill_selection"]["overlay_beats"] = [
                 {"segment_id": "seg-001", "component_id": "component-1"}]
             artifacts.write_json_artifact(self.treatment, missing_snapshot)
-            with self.assertRaisesRegex(vc.VisualConfirmationError, "binding snapshot is missing or stale"):
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "review beat target is unknown or duplicated"):
                 self.prepare()
             artifacts.write_json_artifact(self.treatment, treatment)
             planned = artifacts.read_json_artifact(self.fixture.brief)
@@ -1977,10 +2268,49 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'asset changed|output changed'):
             vc._validate_draft_against_source(self.root, self.proposal, director, treatment)
 
+    def test_foreign_damaged_brief_does_not_block_approved_own_material(self):
+        from PIL import Image
+        image = self.root / 'approved-own.png'
+        Image.new('RGB', (8, 8), 'blue').save(image)
+        request_path = self.root / 'native-inputs/approved.json'
+        request = artifacts.read_json_artifact(request_path)
+        request['materials'] = [{'job_path': image.name, 'sha256': artifacts.sha256_file(image),
+                                 'byte_count': image.stat().st_size}]
+        artifacts.write_json_artifact(request_path, request)
+        own = self.director['segments'][0]
+        own['bindings']['component-1']['brief_sha256'] = artifacts.sha256_file(request_path)
+        foreign = copy.deepcopy(own)
+        foreign.update(segment_id='seg-002', start=2, end=4)
+        foreign_path = self.root / 'native-inputs/foreign.json'
+        foreign_request = copy.deepcopy(request)
+        foreign_request['source_binding'].update(segment_id='seg-002', start=2, end=4)
+        artifacts.write_json_artifact(foreign_path, foreign_request)
+        foreign['bindings']['component-1']['brief_sha256'] = artifacts.sha256_file(foreign_path)
+        self.director['segments'].append(foreign)
+        self.treatment['scenes'].append({'segment_id': 'seg-002', 'component_id': 'component-1',
+                                        'brief_path': 'native-inputs/foreign.json'})
+        for name, value in (('director', self.director), ('treatment', self.treatment)):
+            path = self.root / ('approved-' + name + '.json')
+            artifacts.write_json_artifact(path, value)
+            self.proposal['inputs'][name] = vc._record(self.root, path)
+        for damaged in (None, b'{broken', b'{"foreign":"changed"}'):
+            with self.subTest(damaged=damaged):
+                if damaged is None:
+                    foreign_path.unlink()
+                else:
+                    foreign_path.write_bytes(damaged)
+                vc._validate_authorized_native_inputs(self.root, self.proposal, self.director,
+                    self.treatment, self.director, self.treatment, targets={('seg-001', 'component-1')})
+                with self.assertRaises((ValueError, OSError)):
+                    vc._validate_authorized_native_inputs(self.root, self.proposal, self.director,
+                        self.treatment, self.director, self.treatment, targets={('seg-002', 'component-1')})
+
     def test_local_native_options_can_change_without_changing_parent_inputs(self):
         before = artifacts.read_json_artifact(self.root / 'native-inputs/approved.json')
         before.update(dependency_id='bang-motion', template_id='opener', canvas_transport='quarter_turn_cw')
-        after = {**before, 'native_options': ['counter']}
+        after = {**before, 'native_options': ['counter'], 'task_source': {
+            **before['task_source'], 'required_change': '原生选择新的布局与动作',
+            'component_brief': '原生工作流的可替换表现参考'}}
         first = self.root / 'native-inputs/bang-before.json'
         second = self.root / 'native-inputs/bang-after.json'
         artifacts.write_json_artifact(first, before); artifacts.write_json_artifact(second, after)
@@ -2506,6 +2836,7 @@ class GbroFramePreparationTests(unittest.TestCase):
             actions = vc.generation_actions(self.job)
         add.assert_not_called()
         self.assertEqual([(a['action'],a['step_id']) for a in actions], [('prepare_template_inputs','video')])
+        self.assertIsNone(vc.generation_item(self.queue.status(self.root), self.proposal, self.video, self.job)[1])
         with self.assertRaisesRegex(ValueError,'not prepared'):
             vc._build_generation_request(self.job,self.proposal,self.video)
         vc.record_gbro_frame_preparation(self.job,self.descriptor)
@@ -2517,6 +2848,22 @@ class GbroFramePreparationTests(unittest.TestCase):
         self.assertIn(self.descriptor,request['input_files'])
         self.assertEqual(self.proposal,before)
         self.assertEqual(self.queue.status(self.root)['items'],self.saved['items'])
+
+    def test_stage_returns_gbro_preparation_before_future_request_exists(self):
+        from types import SimpleNamespace
+        director = self.root / 'director.json'
+        payload = artifacts.read_json_artifact(director)
+        payload['segments'][0]['visual_strategy']['components'][0]['kind'] = 'ai_generated'
+        artifacts.write_json_artifact(director, payload)
+        self.proposal['inputs']['director'] = vc._record(self.root, director)
+        job = SimpleNamespace(job_dir=self.root, job_id='synthetic', revision=0,
+            stages={'visual_direction': {'artifacts': [], 'status': 'ready'}})
+        with mock.patch.object(run_stage, 'prepare_visual_dependencies', side_effect=AssertionError('premature join')):
+            response = run_stage.resume_visual_direction(job, _env.PROJECT)
+        self.assertEqual([(a['action'], a.get('step_id')) for a in response['actions']],
+                         [('prepare_template_inputs', 'video')])
+        self.assertEqual(response['errors'], [])
+        self.assertEqual(self.queue.status(self.root)['items'], self.saved['items'])
 
     def test_preparation_rejects_queued_videos_and_cannot_be_replaced(self):
         rid = vc._request_id(self.proposal,self.video)

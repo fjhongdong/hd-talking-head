@@ -82,13 +82,18 @@ def descriptor(root, target):
             'sha256': sha(target), 'byte_count': target.stat().st_size}
 
 
-def exact(root, record):
+def exact(root, record, *, input_fact=False):
     if (not isinstance(record, dict) or set(record) != {'job_path', 'sha256', 'byte_count'}
             or not re.fullmatch('[a-f0-9]{64}', str(record['sha256']))
             or type(record['byte_count']) is not int or record['byte_count'] < 1):
         raise ValueError('Invalid native motion file descriptor')
     target = path(root, record['job_path'])
-    if target.stat().st_size != record['byte_count'] or sha(target) != record['sha256']:
+    def digest():
+        if input_fact:
+            from native_result_reuse import input_hashes
+            return input_hashes(1, lambda: sha(target))
+        return sha(target)
+    if target.stat().st_size != record['byte_count'] or digest() != record['sha256']:
         raise ValueError('Native motion input, source or result changed: ' + record['job_path'])
     return target
 
@@ -98,31 +103,27 @@ def source_root(project=PROJECT, *, dependency_id):
         raise ValueError('Unknown native motion dependency')
     name, commit, digest = SOURCES[dependency_id]
     project = Path(project).resolve(strict=True)
-    from edit.hd.tools.startup import _operation_cache
-    cache = _operation_cache(project)
-    cache_key = ('native-motion-source', str(project), dependency_id)
-    if cache is not None and cache_key in cache:
-        return cache[cache_key]
     record_path = project / 'references' / (name + '-native-source.json')
-    if sha(record_path) != digest:
+    record_bytes = record_path.read_bytes()
+    if hashlib.sha256(record_bytes).hexdigest() != digest:
         raise ValueError('Native motion source identity record changed')
-    record = json.loads(record_path.read_bytes())
+    record = json.loads(record_bytes)
     if record['commit'] != commit:
         raise ValueError('Native motion source revision changed')
     root = path(project, record['source_root'])
-    actual = {p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file() and not p.is_symlink()}
-    links = {p.relative_to(root).as_posix(): str(p.readlink()) for p in root.rglob('*') if p.is_symlink()}
-    if links != record.get('symlinks', {}) or any(not (root / name).resolve().is_relative_to(root) for name in links):
-        raise ValueError('Complete native motion source symlinks changed')
-    if actual != set(record['files']):
-        raise ValueError('Complete unmodified native motion source is required')
-    for name, digest in record['files'].items():
-        item = root / relative(name)
-        if item.is_symlink() or sha(item) != digest:
-            raise ValueError('Native motion source changed: ' + name)
-    if cache is not None:
-        cache[cache_key] = root
-    return root
+    def verify(inventory):
+        actual = {p.relative_to(root).as_posix() for p in inventory if p.is_file() and not p.is_symlink()}
+        links = {p.relative_to(root).as_posix(): str(p.readlink()) for p in inventory if p.is_symlink()}
+        if links != record.get('symlinks', {}) or any(not (root / name).resolve().is_relative_to(root) for name in links):
+            raise ValueError('Complete native motion source symlinks changed')
+        if actual != set(record['files']):
+            raise ValueError('Complete unmodified native motion source is required')
+        for name, expected in record['files'].items():
+            item = root / relative(name)
+            if item.is_symlink() or sha(item) != expected:
+                raise ValueError('Native motion source changed: ' + name)
+    from native_result_reuse import source_unchanged
+    return source_unchanged(project, ('motion', dependency_id), root, verify, records=(record_path,))
 
 
 def load_template_catalog(project=PROJECT, *, dependency_id):
@@ -174,6 +175,12 @@ def _check_native_timing(selected, variants, duration):
     minimum = native_timing_minimum(selected, variant_keys=variants or None)
     if duration + 1e-6 < minimum:
         raise ValueError('Native motion clock cannot fit the original required action and hold budget')
+
+
+def parent_input_facts(brief):
+    """Keep presentation options outside the parent input comparison."""
+    return {key: brief[key] for key in ('transcript', 'semantic_goal', 'task_source',
+            'word_anchors', 'speech', 'source_binding', 'materials', 'authorization') if key in brief}
 
 
 def validate_brief(payload, *, dependency_id=None):
@@ -262,10 +269,17 @@ def approved_task(brief):
 
 
 def _inputs(root, brief):
-    for record in [brief['speech'], *brief['materials']]:
-        exact(root, record)
-    data = json.loads(subprocess.check_output([shutil.which('ffprobe') or 'ffprobe', '-v', 'error',
-        '-show_streams', '-show_format', '-of', 'json', str(path(root, brief['speech']['job_path']))], text=True))
+    from native_result_reuse import inspect_inputs
+    return inspect_inputs(PROJECT, root, brief, _check_inputs)
+
+
+def _check_inputs(root, brief):
+    from native_result_reuse import input_probe
+    records = [brief['speech'], *brief['materials']]
+    for record in records:
+        exact(root, record, input_fact=True)
+    data = json.loads(input_probe(lambda: subprocess.check_output([shutil.which('ffprobe') or 'ffprobe', '-v', 'error',
+        '-show_streams', '-show_format', '-of', 'json', str(path(root, brief['speech']['job_path']))], text=True)))
     if (len(data['streams']) != 1 or data['streams'][0].get('codec_type') != 'audio'
             or abs(float(data['format']['duration']) - brief['composition']['frames'] / 24) > 1 / 24):
         raise ValueError('Native motion speech must be the approved scene audio clip')
@@ -309,7 +323,9 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
             beats = [beat for group in ('beats', 'overlay_beats')
                      for beat in treatment['skill_selection'].get(group, [])
                      if (beat['segment_id'], beat['component_id']) == (segment['segment_id'], cid)]
-            if brief['task_source'] != expected_task or brief['transcript'] != beats[0]['transcript']:
+            if (any(brief['task_source'].get(field) != expected_task.get(field)
+                    for field in ('semantic_row_id', 'quote', 'semantic'))
+                    or brief['transcript'] != beats[0]['transcript']):
                 raise ValueError('Native motion task must derive from the approved parent semantic row')
             approved = sha(_approved_artifact(job, 'edit_structure', '06-edit-structure/edited-aroll.mp4'))
             if (hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256') or brief['job_id'] != job.job_id
@@ -321,16 +337,24 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
             _inputs(job.job_dir, brief)
 
 
-def native_task(job, recipe, component, brief_path, *, approved_task_source):
+def native_task(job, recipe, component, brief_path, *, approved_task_source, defer_runtime=False):
     brief_path = Path(brief_path)
     brief = validate_brief(brief_path.read_bytes())
     root = _template(brief)
-    from motion_native_runtime import check
-    runtime = check(PROJECT, dependency_id=brief['dependency_id'])
-    from motion_native_runtime import check_template_dependencies
-    preparation_runtime = check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
+    if defer_runtime:
+        command = [sys.executable, str(PROJECT / 'scripts/motion_native_runtime.py'),
+                   '--project-root', str(PROJECT), '--dependency-id', brief['dependency_id']]
+        runtime = {'status': 'pending', 'prepare_argv': command, 'check_argv': [*command, '--check']}
+        selected = [*command, '--template-id', brief['template_id']]
+        preparation_runtime = {'status': 'pending', 'prepare_argv': selected,
+                               'check_argv': [*selected, '--check']}
+    else:
+        from motion_native_runtime import check, check_template_dependencies
+        runtime = check(PROJECT, dependency_id=brief['dependency_id'])
+        preparation_runtime = check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
     if (brief['job_id'] != job.job_id or sha(brief_path) != component['brief_sha256']
-            or brief['task_source'] != approved_task_source):
+            or any(brief['task_source'].get(field) != approved_task_source.get(field)
+                   for field in ('semantic_row_id', 'quote', 'semantic'))):
         raise ValueError('Native motion task differs from confirmed binding')
     _inputs(job.job_dir, brief)
     selected = next(row for row in load_template_catalog(dependency_id=brief['dependency_id'])
@@ -359,7 +383,13 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source):
         action['native_usage_contract'] = {'card_id': 'original card slug, or ink-press',
             'variant': 'original Gallery key; null only for ink-press', 'purpose': 'actual use in this task',
             'implementation_refs': 'descriptors of actual implementation files frozen in the render call'}
-    if preparation_runtime.get('status') == 'ready':
+    if defer_runtime:
+        action['native_preparation_runtime'] = preparation_runtime
+        action['next'] = ('Before native execution, use runtime.check_argv for an already prepared environment; '
+                          'otherwise run runtime.prepare_argv once and use its real checked output. Use the '
+                          'same choice for native_preparation_runtime and this selected template. '
+                          'A pending runtime is not readiness evidence. ' + action['next'])
+    if preparation_runtime.get('status') == 'ready' or (defer_runtime and brief['dependency_id'] == 'mg-styles-15' and brief['template_id'] == '3d-render'):
         action['native_preparation_runtime'] = preparation_runtime
         action['next'] += (' For 3d-render pass native_preparations to capture_render: each step has the actual Blender argv, '
             'inputs and outputs as Job-relative paths. Declare the generated blend and every final PNG frame outside the project out/ directory. '
@@ -969,8 +999,16 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
 
 
 def inspect_result(job_dir, payload, *, record_bytes=None):
-    brief = validate_brief(payload); _inputs(job_dir, brief); _template(brief)
+    from native_result_reuse import inspect_unchanged
+    brief = validate_brief(payload)
+    source_root(dependency_id=brief['dependency_id'])
     data = record_bytes if record_bytes is not None else path(job_dir, brief['result_record_path']).read_bytes()
+    return inspect_unchanged(PROJECT, job_dir, payload, data, brief, _inspect_result,
+                             source_identity=('motion', brief['dependency_id']))
+
+
+def _inspect_result(job_dir, payload, data):
+    brief = validate_brief(payload); _inputs(job_dir, brief); _template(brief)
     result = json.loads(data)
     schema = result.get('schema_version')
     if schema != 3:

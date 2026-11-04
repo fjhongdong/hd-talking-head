@@ -307,6 +307,23 @@ class NativeMotionTests(unittest.TestCase):
                     native.native_task(job,{'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(p)},p,
                         approved_task_source={**brief()['task_source'],'semantic':'另一件事'})
 
+    def test_scheduled_native_task_defers_browser_and_blender_checks(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); request = root / 'brief.json'
+            for dependency, template in [('barty-motion-graphics', 'motion-broll'), ('mg-styles-15', '3d-render')]:
+                payload = brief(dependency, template); request.write_text(json.dumps(payload))
+                with mock.patch.object(native, '_inputs'), \
+                     mock.patch('motion_native_runtime.check', side_effect=AssertionError('browser probe')), \
+                     mock.patch('motion_native_runtime.check_template_dependencies', side_effect=AssertionError('Blender probe')):
+                    action = native.native_task(SimpleNamespace(job_dir=root, job_id=payload['job_id']),
+                        {'segment_id': 'seg-001'}, {'component_id': 'scene', 'brief_sha256': native.sha(request)},
+                        request, approved_task_source=payload['task_source'], defer_runtime=True)
+                self.assertEqual(action['runtime']['status'], 'pending')
+                self.assertIn('--check', action['runtime']['check_argv'])
+                self.assertEqual(action['native_preparation_runtime']['prepare_argv'][-1], template)
+                self.assertEqual(action['task_source'], payload['task_source'])
+
     def test_new_native_tasks_receive_only_their_own_workflow(self):
         from types import SimpleNamespace
         with tempfile.TemporaryDirectory() as name:

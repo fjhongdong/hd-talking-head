@@ -32,12 +32,17 @@ class _Operation:
     release_seconds: float = 0.0
     releases: dict = field(default_factory=dict)
     memo: dict = field(default_factory=dict)
+    stage_timings: list = field(default_factory=list)
+    native_fact_metrics: dict = field(default_factory=dict)
 
     def metrics(self) -> dict:
         return {"elapsed_seconds": round(perf_counter() - self.started, 6),
                 "full_release_check_seconds": round(self.release_seconds, 6),
                 "full_release_checks": self.release_checks,
-                "full_release_reuses": self.release_reuses}
+                "full_release_reuses": self.release_reuses,
+                "native_facts": {key: round(value, 6) if key.endswith('_seconds') else value
+                                 for key, value in self.native_fact_metrics.items()},
+                "stages": list(self.stage_timings)}
 
 
 _ACTIVE_OPERATION: ContextVar[_Operation | None] = ContextVar("hd_operation", default=None)

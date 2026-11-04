@@ -46,6 +46,11 @@ def _approved_json(job, stage_id: str, relative: str) -> dict:
     return json.loads(path.read_text())
 
 
+def parent_input_facts(brief):
+    return {'source_binding': brief['source_binding'], 'word_anchors': brief['word_anchors'],
+            'validate_word_anchors': _validate_word_anchors}
+
+
 def _validate_word_anchors(job, segment: dict, brief: dict) -> None:
     transcript = _approved_json(job, "speech_cleanup", "05-speech-cleanup/word-transcript.json")
     timeline = _approved_json(job, "edit_structure", "06-edit-structure/timeline-map.json")

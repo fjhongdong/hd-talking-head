@@ -11,6 +11,64 @@ sys.path.insert(0, str(SKILL / "scripts"))
 import run_stage
 
 class CheckOnlyStageTests(unittest.TestCase):
+    def test_visual_proposal_does_not_prepare_future_native_projects(self):
+        from edit.hd.tools import visual_confirmation as confirmation
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = SimpleNamespace(job_dir=root)
+            draft = {'segments': []}
+            source = root / 'proposal.json'
+            with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
+                 mock.patch.object(run_stage, '_json', return_value=draft), \
+                 mock.patch.object(run_stage, '_summary', return_value={}), \
+                 mock.patch.object(run_stage, 'prepare_visual_dependencies', side_effect=AssertionError('future project preparation')), \
+                 mock.patch.object(confirmation, 'prepare_visual_confirmation', return_value=source):
+                run_stage.run_visual_direction(root, PROJECT, Path('director.json'), Path('treatment.json'))
+
+    def test_resume_returns_independent_native_work_while_generation_waits(self):
+        from edit.hd.tools import visual_confirmation as confirmation, generation_queue
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = SimpleNamespace(job_dir=root, stages={'visual_direction': {'artifacts': []}})
+            base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics'}
+            director = {'segments': [{'segment_id': 'seg-001', 'start': 0, 'end': 1, 'bindings': {
+                'waiting': base, 'dependent': base, 'ready': {**base, 'brief_sha256': 'a' * 64}},
+                'visual_strategy': {'composition': {'component_dependencies': [
+                    {'component_id': 'dependent', 'depends_on': ['waiting']}]}, 'components': [
+                    {'component_id': 'waiting', 'kind': 'code_generated'},
+                    {'component_id': 'dependent', 'kind': 'code_generated'},
+                    {'component_id': 'ready', 'kind': 'code_generated'}]}}]}
+            treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'ready', 'brief_path': 'ready.json'}]}
+            (root / 'ready.json').write_text(json.dumps({'result_record_path': 'result.json'}))
+            (root / 'director.json').write_text(json.dumps(director))
+            (root / 'treatment.json').write_text(json.dumps(treatment))
+            step = {'id': 'image-A', 'segment_id': 'seg-001', 'component_id': 'waiting'}
+            authorized = {'source': {'inputs': {'director': confirmation._record(root, root / 'director.json'),
+                'treatment': confirmation._record(root, root / 'treatment.json')}, 'generation_steps': [step]},
+                'artifact': {'path': 'approval.json'}, 'payload': {'source': {'path': 'proposal.json'}}}
+            def native(j, d, t):
+                self.assertEqual(set(d['segments'][0]['bindings']), {'ready'})
+                return [{'action': 'run_native_skill', 'component_id': 'ready'}]
+            with mock.patch.object(confirmation, 'validate_visual_authorization', return_value=authorized), \
+                 mock.patch.object(confirmation, 'validate_realization_draft'), \
+                 mock.patch.object(confirmation, '_validate_authorized_native_inputs'), \
+                 mock.patch.object(confirmation, 'generation_actions', return_value=[{'action': 'query', 'step_id': 'image-A'}]), \
+                 mock.patch.object(confirmation, 'generation_item', return_value=('image-A', {'status': 'submitted'})), \
+                 mock.patch.object(generation_queue, 'status', return_value={'items': {}}), \
+                 mock.patch.object(run_stage, '_validate_prepared_native_inputs'), \
+                 mock.patch.object(run_stage, 'prepare_visual_dependencies'), \
+                 mock.patch.object(run_stage, 'pending_native_actions', side_effect=native), \
+                 mock.patch.object(run_stage, '_summary', side_effect=lambda j, s, **kw: kw), \
+                 mock.patch('edit.hd.tools.visual_plan.prepare_visual_direction') as finalize:
+                result = run_stage.resume_visual_direction(job, PROJECT)
+                self.assertCountEqual([a['action'] for a in result['actions']], ['query', 'run_native_skill'])
+                finalize.assert_not_called()
+                with mock.patch.object(confirmation, 'generation_item', return_value=('image-A', {'status': 'completed'})):
+                    result = run_stage.resume_visual_direction(job, PROJECT)
+                preparations = [a for a in result['actions'] if a['action'] == 'prepare_template_inputs']
+                self.assertEqual([(a['segment_id'], a['component_id']) for a in preparations], [('seg-001', 'waiting')])
+                finalize.assert_not_called()
+
     def test_scripts_only_api_reaches_job_error_from_an_unrelated_directory(self):
         import subprocess
         script = """import sys
@@ -55,12 +113,17 @@ else:
 
     def test_resume_records_native_gbro_inputs_before_generation_actions(self):
         from edit.hd.tools import visual_confirmation as confirmation
-        job=SimpleNamespace(stages={'visual_direction':{'artifacts':[]}})
+        job=SimpleNamespace(job_dir=PROJECT,stages={'visual_direction':{'artifacts':[]}})
         descriptor={'path':'native-inputs/gbro.json','sha256':'a'*64,'bytes':1}
         calls=[]
-        with mock.patch.object(confirmation,'validate_visual_authorization',return_value={}), \
+        with mock.patch.object(confirmation,'validate_visual_authorization',return_value={'source': {
+                'inputs': {'director': {'path': 'director.json'}, 'treatment': {'path': 'treatment.json'}}, 'generation_steps': []}}), \
              mock.patch.object(confirmation,'record_gbro_frame_preparation',side_effect=lambda *a:calls.append(('prepare',a))), \
              mock.patch.object(confirmation,'generation_actions',side_effect=lambda *a,**k:calls.append(('generate',a)) or [{'action':'prepare_template_inputs'}]), \
+             mock.patch.object(confirmation,'validate_realization_draft'), \
+             mock.patch.object(run_stage,'_json',return_value={'segments': []}), \
+             mock.patch.object(run_stage,'_validate_prepared_native_inputs'), \
+             mock.patch.object(run_stage,'prepare_visual_dependencies'), \
              mock.patch.object(run_stage,'_summary',return_value={'actions':[]}):
             run_stage.resume_visual_direction(job,PROJECT,{'gbro_frame_preparations':[descriptor]})
         self.assertEqual([kind for kind,_ in calls],['prepare','generate'])
@@ -389,20 +452,12 @@ class ExecuteStageTests(unittest.TestCase):
         treatment_path = self.root / "treatment.json"
         director_path.write_text(json.dumps(director))
         treatment_path.write_text(json.dumps(treatment))
-        with mock.patch("edit.hd.tools.state.load_job", return_value=job), \
-             mock.patch("edit.hd.tools.avatar_profile.plan_avatar_policy", return_value={"segments": [segment], "actions": []}), \
-             mock.patch.object(run_stage, "prepare_visual_dependencies"), \
-             mock.patch("edit.hd.tools.visual_confirmation.prepare_visual_confirmation", return_value=self.root / "proposal.json") as confirm, \
-             mock.patch.object(run_stage, "_summary", return_value={}):
-            with self.assertRaisesRegex(ValueError, "seg-106/visual.*label reveal"):
-                run_stage.run_visual_direction(self.root, PROJECT, director_path, treatment_path)
-            confirm.assert_not_called()
-            brief["label_frames"][-1] = 47
-            payload = json.dumps(brief).encode(); brief_path.write_bytes(payload)
-            segment["bindings"]["visual"]["brief_sha256"] = hashlib.sha256(payload).hexdigest()
-            director_path.write_text(json.dumps(director))
-            run_stage.run_visual_direction(self.root, PROJECT, director_path, treatment_path)
-            confirm.assert_called_once()
+        with self.assertRaisesRegex(ValueError, "seg-106/visual.*label reveal"):
+            run_stage._validate_selected_hw_word_anchors(job, director, treatment)
+        brief["label_frames"][-1] = 47
+        payload = json.dumps(brief).encode(); brief_path.write_bytes(payload)
+        segment["bindings"]["visual"]["brief_sha256"] = hashlib.sha256(payload).hexdigest()
+        run_stage._validate_selected_hw_word_anchors(job, director, treatment)
 
 class ReviewAndDispatchTests(unittest.TestCase):
     def setUp(self):
@@ -611,7 +666,7 @@ class SelectedPreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unknown'):
             pp.preparation_selection(manifest, {'typo'})
 
-    def test_draft_binding_prepares_before_table_and_failure_does_not_publish(self):
+    def test_ready_execution_binding_prepares_only_its_selected_dependency(self):
         draft = {'segments': [{'segment_id': 'seg-001', 'visual_strategy': {'components': [
             {'kind': 'code_generated', 'component_id': 'v'}]},
             'bindings': {'v': {'dependency_id': 'doudou-remotion-whiteboard', 'entrypoint': 'scripts/render_doudou.mjs',
@@ -621,23 +676,15 @@ class SelectedPreparationTests(unittest.TestCase):
         import project_python as pp
         calls = []
         job = SimpleNamespace(job_dir=PROJECT)
-        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
-             mock.patch.object(run_stage, '_json', return_value=draft), \
-             mock.patch.object(pp, 'prepare_environment', side_effect=lambda *args: calls.append(('prepare', args))), \
-             mock.patch('edit.hd.tools.visual_confirmation.prepare_visual_confirmation', side_effect=lambda *a, **k: calls.append(('table', a)) or PROJECT / 'proposal.json'), \
-             mock.patch.object(run_stage, '_summary', return_value={}):
-            run_stage.run_visual_direction(PROJECT, PROJECT, Path('draft.json'), Path('treatment.json'))
-        self.assertEqual([c[0] for c in calls], ['prepare', 'table'])
+        with mock.patch.object(pp, 'prepare_environment', side_effect=lambda *args: calls.append(('prepare', args))):
+            run_stage.prepare_visual_dependencies(PROJECT, draft, job=job, treatment={})
+        self.assertEqual([c[0] for c in calls], ['prepare'])
         self.assertEqual(calls[0][1][3], {'doudou-remotion-whiteboard'})
         self.assertEqual(calls[0][1][4][0]['entrypoint'], 'scripts/render_doudou.mjs')
         self.assertEqual(calls[0][1][4][0]['executor'], 'reference_adapter')
-        with mock.patch('edit.hd.tools.state.load_job', return_value=job), \
-             mock.patch.object(run_stage, '_json', return_value=draft), \
-             mock.patch.object(pp, 'prepare_environment', side_effect=RuntimeError('selected template unavailable')), \
-             mock.patch('edit.hd.tools.visual_confirmation.prepare_visual_confirmation') as publish:
+        with mock.patch.object(pp, 'prepare_environment', side_effect=RuntimeError('selected template unavailable')):
             with self.assertRaisesRegex(RuntimeError, 'unavailable'):
-                run_stage.run_visual_direction(PROJECT, PROJECT, Path('draft.json'), Path('treatment.json'))
-        publish.assert_not_called()
+                run_stage.prepare_visual_dependencies(PROJECT, draft, job=job, treatment={})
 
     def test_new_native_constructor_signatures_and_launchers(self):
         for dependency, module_name, node in [('doudou-remotion-whiteboard', 'doudou_adapter', True),
@@ -808,6 +855,41 @@ class DirectProductionCompletionTests(unittest.TestCase):
         self.assertEqual(one.call_count, 2)
         self.assertEqual(result['actions'][0]['fields'], ['analysis'])
         self.assertNotIn('review_required', result)
+        timings = result['operation_timing']['stages']
+        self.assertEqual([(item['stage'], item['status']) for item in timings],
+                         [('inspect', 'completed'), ('content_analysis', 'pending')])
+        self.assertTrue(all(item['elapsed_seconds'] >= 0 for item in timings))
+
+    def test_continuous_runner_routes_stage_inputs_and_keeps_one_operation(self):
+        from edit.hd.tools import state, startup
+        statuses = {name: {'status':'pending'} for name in ('visual_assets', 'subtitles', 'preview', 'delivery')}
+        job = SimpleNamespace(stages=statuses)
+        operations, inputs = [], []
+        def execute(job_dir, project, stage, **options):
+            operations.append(startup.current_operation())
+            inputs.append((stage, options['payload']))
+            statuses[stage]['status'] = 'completed'
+            return {'stage': stage, 'status':'completed', 'delivery_file':'retained-final.mp4'}
+        def current(value):
+            return next((name for name, record in statuses.items() if record['status'] != 'completed'), None)
+        data = {'stages': {name: {'input': name} for name in statuses}}
+        with mock.patch.object(state, 'load_job', return_value=job), \
+             mock.patch.object(state, 'current_stage', side_effect=current), \
+             mock.patch.object(run_stage, '_execute_one_stage', side_effect=execute):
+            result = run_stage.execute_stage(Path('/unused'), PROJECT, payload=data)
+        self.assertEqual(inputs, [(name, {'input': name}) for name in statuses])
+        self.assertTrue(all(value is operations[0] for value in operations))
+        self.assertEqual(result['stage'], 'delivery')
+        self.assertEqual(len(result['operation_timing']['stages']), 4)
+        self.assertIsNone(startup.current_operation())
+        statuses['visual_assets']['status'] = 'pending'
+        inputs.clear()
+        with mock.patch.object(state, 'load_job', return_value=job), \
+             mock.patch.object(state, 'current_stage', side_effect=current), \
+             mock.patch.object(run_stage, '_execute_one_stage', side_effect=execute):
+            result = run_stage.execute_stage(Path('/unused'), PROJECT, 'visual_assets', payload=data)
+        self.assertEqual(inputs, [('visual_assets', {'input':'visual_assets'})])
+        self.assertEqual(len(result['operation_timing']['stages']), 1)
 
     def test_delivery_revision_preserves_delivered_files_and_requires_current_user_acceptance(self):
         from edit.hd.tools import state, delivery_approval as delivery

@@ -621,6 +621,40 @@ def validate_submission_authorization(j, q, request_id):
         raise GenerationQueueError("request has no exact current generation authorization")
 
 
+def _claim_locked(j, q, request_id, jid, digest, config, account_limit=None):
+    """Validate and reserve in the caller's in-memory queue under its existing lock."""
+    item = q["items"].get(request_id)
+    if item is None:
+        raise GenerationQueueError("unknown request")
+    if item["status"] != "ready":
+        return {"action": "blocked", "status": item["status"], "id": request_id}
+    if jid != q["job_id"] or item["config_sha256"] != digest:
+        raise GenerationQueueError("configuration changed; obtain approval before new submissions")
+    identity = _request(j, item["request"], config)
+    if identity != item.get("channel_identity"):
+        raise GenerationQueueError("generation channel identity changed; obtain approval before new submissions")
+    validate_submission_authorization(j, q, request_id)
+    active = [x for x in q["items"].values() if x["status"] in ACTIVE]
+    if q["paused"] or len(active) >= config["max_concurrency"]:
+        return {"action": "wait", "id": request_id}
+    if item["request"]["purpose"] == "video" and item["request"]["tool"] == "mcp__lovart__generate_video":
+        if type(account_limit) is not int or account_limit < 1:
+            raise GenerationQueueError("read the selected video channel quota before claiming generation")
+        if sum(x["request"]["purpose"] == "video" for x in active) >= account_limit:
+            return {"action": "wait", "id": request_id}
+    from . import generation_inputs
+    submitted_request = generation_inputs.resolve_request(j, item["request"])
+    if not isinstance(submitted_request, dict) or submitted_request.get("tool") != item["request"]["tool"]:
+        raise GenerationQueueError("resolved generation request is invalid")
+    token = secrets.token_urlsafe(24)
+    item.update(status="submitting", claim_token=token, claimed_at=time.time(),
+                submitted_request=submitted_request)
+    q["max_concurrency"] = config["max_concurrency"]
+    return {"action": "generate", "id": request_id, "plan_request_id": item.get("plan_request_id", request_id),
+            "claim_token": token,
+            "tool": submitted_request["tool"], "arguments": submitted_request["arguments"]}
+
+
 def claim(job, request_id, account_limit=None):
     with _locked(job) as (j, path, q):
         item = q["items"].get(request_id)
@@ -628,33 +662,10 @@ def claim(job, request_id, account_limit=None):
             raise GenerationQueueError("unknown request")
         if item["status"] != "ready":
             return {"action": "blocked", "status": item["status"], "id": request_id}
-        jid, digest, config = _approved(j)
-        if jid != q["job_id"] or item["config_sha256"] != digest:
-            raise GenerationQueueError("configuration changed; obtain approval before new submissions")
-        identity = _request(j, item["request"], config)
-        if identity != item.get("channel_identity"):
-            raise GenerationQueueError("generation channel identity changed; obtain approval before new submissions")
-        validate_submission_authorization(j, q, request_id)
-        active = [x for x in q["items"].values() if x["status"] in ACTIVE]
-        if q["paused"] or len(active) >= config["max_concurrency"]:
-            return {"action": "wait", "id": request_id}
-        if item["request"]["purpose"] == "video" and item["request"]["tool"] == "mcp__lovart__generate_video":
-            if type(account_limit) is not int or account_limit < 1:
-                raise GenerationQueueError("read the selected video channel quota before claiming generation")
-            if sum(x["request"]["purpose"] == "video" for x in active) >= account_limit:
-                return {"action": "wait", "id": request_id}
-        from . import generation_inputs
-        submitted_request = generation_inputs.resolve_request(j, item["request"])
-        if not isinstance(submitted_request, dict) or submitted_request.get("tool") != item["request"]["tool"]:
-            raise GenerationQueueError("resolved generation request is invalid")
-        token = secrets.token_urlsafe(24)
-        item.update(status="submitting", claim_token=token, claimed_at=time.time(),
-                    submitted_request=submitted_request)
-        q["max_concurrency"] = config["max_concurrency"]
-        artifacts.write_json_artifact(path, q)
-        return {"action": "generate", "id": request_id, "plan_request_id": item.get("plan_request_id", request_id),
-                "claim_token": token,
-                "tool": submitted_request["tool"], "arguments": submitted_request["arguments"]}
+        result = _claim_locked(j, q, request_id, *_approved(j), account_limit)
+        if result["action"] == "generate":
+            artifacts.write_json_artifact(path, q)
+        return result
 
 
 def record(job, request_id, claim_token, response, queried_task_ids=None):

@@ -325,11 +325,11 @@ def reuse_completed_first_frame(job_dir, previous, current, ref):
             'sha256': artifacts.sha256_file(old_path), 'bytes': old_path.stat().st_size}
 
 
-def next_action(job_dir, request):
-    """Issue each upload once; following calls wait for the original result."""
+def prepare_next_action(job_dir, request):
+    """Prepare an upload and its state update without publishing its claim token."""
     binding = _binding(job_dir, request["purpose"])
     if binding["reference_mode"] == "local_path":
-        return None
+        return None, None
     path, state = _state(job_dir, request, binding)
     for local, ref in _references(job_dir, request):
         key = artifacts.sha256_json(ref)
@@ -339,7 +339,7 @@ def next_action(job_dir, request):
                 continue
             if not saved.get("rejected_body_limit"):
                 return {"action": "blocked", "status": "input_upload_pending", "request_id": request["id"],
-                        "binding_id": key, "next": "回传已发出的原 upload action 与真实结果后继续。"}
+                        "binding_id": key, "next": "回传已发出的原 upload action 与真实结果后继续。"}, None
         upload = copy.deepcopy(binding["upload"])
         project = _lovart_video_project(request, upload)
         if project is not None:
@@ -354,10 +354,17 @@ def next_action(job_dir, request):
         saved.pop("rejected_body_limit", None)
         if transport is not None: saved["transport"] = transport
         state["uploads"][key] = saved
-        path.parent.mkdir(parents=True, exist_ok=True)
-        artifacts.write_json_artifact(path, state)
-        return action
-    return None
+        return action, (path, state)
+    return None, None
+
+
+
+def next_action(job_dir, request):
+    """Issue each upload once; following calls wait for the original result."""
+    action, update = prepare_next_action(job_dir, request)
+    if update is not None:
+        artifacts.write_json_artifact(*update)
+    return action
 
 
 def record_result(job_dir, request, action, response):

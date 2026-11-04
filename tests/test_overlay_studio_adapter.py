@@ -120,6 +120,35 @@ class PinBoardContractTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_brief(self.brief)
 
+    def test_prepared_pinboard_layout_does_not_compile_unprepared_sibling(self):
+        import json, tempfile
+        from types import SimpleNamespace
+        from edit.hd.tests.test_visual_direction import draft_segment
+        from edit.hd.tools.visual_strategy import validate_visual_strategy
+        import overlay_studio_adapter as native
+        import run_stage
+        segment = draft_segment(('code_generated', 'code_generated'),
+                                start=10, end=10 + 172 / 24)
+        strategy = segment['visual_strategy']
+        strategy['mode'] = 'none'
+        strategy['composition'] = {'family': 'aroll_with_overlay', 'presenter_mode': 'full_frame',
+            'reading_order': ['component-1', 'component-2'], 'component_dependencies': []}
+        for component in strategy['components']:
+            component.update(layer_role='annotation', layout_slot='annotation')
+        validate_visual_strategy(segment['visual_intent'], strategy)
+        adapter = SimpleNamespace(dependency_id=native.DEPENDENCY_ID, entrypoint=native.ENTRY,
+            entrypoint_sha256=native.sha(SKILL / native.ENTRY), primary_renderer=native.RENDERER,
+            launcher=Path(sys.executable))
+        payload = json.dumps(self.brief).encode()
+        segment['bindings']['component-2'] = native.create_binding(adapter, payload)
+        segment['bindings']['component-1'] = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics'}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve(); (root / 'pinboard.json').write_bytes(payload)
+            treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'component-2', 'brief_path': 'pinboard.json'}]}
+            run_stage._validate_prepared_native_inputs(SimpleNamespace(job_dir=root), SKILL,
+                {'segments': [segment]}, treatment, planned={('seg-001', 'component-1')})
+            self.assertFalse((root / 'native-projects').exists())
+
     def test_complete_motion_must_fit_parent_before_encoding(self):
         native_bounds = (88, 79, 717, 525)
         self.assertEqual(validate_visible_bounds(native_bounds, self.brief), (56, 66, 532, 405))

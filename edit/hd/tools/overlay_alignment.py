@@ -523,13 +523,15 @@ def validate_native_events(actual, *, segment, words, cuts, events):
     return checked
 
 
-def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list[dict]:
+def validate_treatment(job, draft, treatment_path, *, phase='completed', target_keys=None) -> list[dict]:
     """Read actual HTML inputs, not duplicated intended trigger times."""
     targets = []
     for segment in draft["segments"]:
         if segment["visual_strategy"]["composition"]["family"] != "aroll_with_overlay":
             continue
         for cid, binding in segment["bindings"].items():
+            if target_keys is not None and (segment['segment_id'], cid) not in target_keys:
+                continue
             if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics"}:
                 targets.append((segment, cid, binding))
     if not targets:
@@ -542,6 +544,8 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list
     records = treatment.get("overlay_alignment")
     if not isinstance(records, list):
         raise ValueError("overlay_alignment records are required")
+    if target_keys is not None:
+        records = [r for r in records if (r.get('segment_id'), r.get('component_id')) in target_keys]
     keys = [(r["segment_id"], r["component_id"]) for r in records]
     expected = {(s["segment_id"], cid) for s, cid, _ in targets}
     if len(keys) != len(set(keys)) or set(keys) != expected:
@@ -580,7 +584,8 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed') -> list
             anchors = [{'text': word['text'], 'start': max(word['start'], segment['start']) - segment['start'],
                         'end': min(word['end'], segment['end']) - segment['start']}
                        for word in mapped if word['start'] < segment['end'] and word['end'] > segment['start']]
-            if brief['word_anchors'] != anchors:
+            from .visual_confirmation import local_word_anchors_match
+            if not local_word_anchors_match(brief['word_anchors'], anchors):
                 raise ValueError('Barty overlay word anchors differ from the approved edited speech')
             if phase not in {'planning', 'completed'}:
                 raise ValueError('Unknown native overlay verification phase')

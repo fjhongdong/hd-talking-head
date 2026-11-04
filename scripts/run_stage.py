@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from time import perf_counter
 
 SKILL = PACKAGE_ROOT
 
@@ -179,24 +180,6 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
         normalized.parent.mkdir(parents=True, exist_ok=True)
         contract_artifacts.write_json_artifact(normalized, director)
         director_brief = normalized
-    treatment_payload = _json(_path(job, treatment))
-    planned = visual_confirmation.planned_generation_targets(
-        project, director, treatment_payload, job_dir=job.job_dir)
-    prepare_visual_dependencies(project, director, job=job, treatment=treatment_payload, planned=planned)
-    _validate_prepared_native_inputs(job, project, director, treatment_payload, planned=planned)
-    from edit.hd.tools.motion_capabilities import check_offline_plan
-    native_keys = {(s['segment_id'], cid) for s in director.get('segments', [])
-                   for cid, b in s.get('bindings', {}).items() if b.get('producer_type') == 'dependency'}
-    if native_keys or treatment_payload.get('skill_selection', {}).get('beats'):
-        native_review = check_offline_plan(project, director, treatment_payload, job_dir=job.job_dir, phase="planning")
-        if native_review['failures']:
-            raise ValueError('selected native planning check failed: ' + str(native_review['failures']))
-        for item in native_review['checks']:
-            key = (item['segment_id'], item['component_id'])
-            if (key in native_keys and key not in planned
-                    and item['native_input']['status'] != 'pass'):
-                raise ValueError('selected native input is incomplete: '
-                                 + item['segment_id'] + '/' + item['component_id'])
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
         _path(job, treatment), reviewed_visual_text=reviewed)
     result = _summary(state.load_job(job_dir), 'visual_direction')
@@ -205,8 +188,6 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
 
 
 def _validate_prepared_native_inputs(job, project, director, treatment, *, planned=()):
-    from motion_native_skill_adapter import check_selected_template_dependencies
-    check_selected_template_dependencies(job, director, treatment)
     # Only exact future-input bindings are absent from this view. Prepared
     # bindings, even broken ones next to a planned item, retain every gate.
     prepared = {**director, 'segments': [{**segment, 'bindings': {
@@ -219,13 +200,45 @@ def _validate_prepared_native_inputs(job, project, director, treatment, *, plann
     validate_talkcraft_inputs(job, prepared, treatment)
     validate_motion_inputs(job, prepared, treatment)
     _validate_selected_native_sources(job, prepared, treatment)
+    _validate_existing_native_schemas(job, project, prepared, treatment)
     _validate_selected_lemo_workflows(job, project, prepared, treatment)
     _validate_selected_native_parent_layouts(job, prepared, treatment)
     _validate_selected_hw_word_anchors(job, prepared, treatment)
 
 
+def _validate_existing_native_schemas(job, project, director, treatment):
+    from edit.hd.tools import motion_capabilities as motion
+    from edit.hd.tools.semantic_visual_plan import component_use
+    targets = [(segment, component, segment.get('bindings', {}).get(component['component_id'], {}))
+               for segment in director['segments'] for component in segment['visual_strategy']['components']
+               if segment.get('bindings', {}).get(component['component_id'], {}).get('producer_type') == 'dependency']
+    if not targets:
+        return
+    catalog = motion.load_catalog(project)
+    selection = treatment.get('skill_selection', {})
+    selected = {(a['segment_id'], a['component_id']): a['candidate_id']
+                for a in [*selection.get('assignments', []), *selection.get('overlay_assignments', [])]}
+    scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
+    for segment, component, binding in targets:
+        cid = component['component_id']
+        candidates = [row for row in catalog if all(row.get(field) == binding.get(field)
+                      for field in ('dependency_id', 'entrypoint', 'template_id'))
+                      and (selected.get((segment['segment_id'], cid)) is None
+                           or row['candidate_id'] == selected[(segment['segment_id'], cid)])]
+        if len(candidates) != 1:
+            raise ValueError('existing native brief has no exact selected route validator')
+        brief = _json(_path(job, scenes[(segment['segment_id'], cid)]['brief_path']))
+        report = motion._native_input_check(project, candidates[0], brief, job_dir=job.job_dir,
+            segment=segment, component_id=cid, use=component_use(segment, component))
+        if report['status'] != 'pass':
+            raise ValueError('existing native brief is invalid: ' + str(report))
+
+
 def _validate_selected_native_sources(job, director: dict, treatment: dict) -> None:
     """Catch missing or changed native inputs before approving their execution."""
+    from edit.hd.tools.startup import _operation_cache
+    from native_result_reuse import input_file_digest
+    cache = _operation_cache(SKILL)
     scenes = {(s.get('segment_id'), s.get('component_id')): s
               for s in treatment.get('scenes', [])}
     for segment in director.get('segments', []):
@@ -240,6 +253,8 @@ def _validate_selected_native_sources(job, director: dict, treatment: dict) -> N
                 raise ValueError('selected native input brief differs from its binding')
             brief = json.loads(payload)
             inputs = brief.get('assets', []) + brief.get('files', [])
+            inputs.extend(brief.get('materials', []))
+            inputs.extend(brief[field] for field in ('hand', 'image', 'speech') if isinstance(brief.get(field), dict))
             if isinstance(brief.get('entry'), dict):
                 inputs.append(brief['entry'])
             for item in inputs:
@@ -252,7 +267,7 @@ def _validate_selected_native_sources(job, director: dict, treatment: dict) -> N
                         continue
                     source = _path(job, name)
                     if (source.is_symlink() or not source.resolve().is_relative_to(job.job_dir.resolve())
-                            or hashlib.sha256(source.read_bytes()).hexdigest() != digest):
+                            or input_file_digest(job.job_dir, source, cache=cache) != digest):
                         raise ValueError(f'selected native source changed: {segment["segment_id"]}/{cid}: {name}')
             if (binding.get('dependency_id') == 'hyperframes-native-adaptation'
                     and binding.get('entrypoint') == 'scripts/hyperframes_native_adapter.py'):
@@ -318,10 +333,12 @@ def _validate_selected_native_parent_layouts(job, director: dict, treatment: dic
                         and b.get('template_id') == 'huashu-motion/talking-head-stat')}
         if not selected:
             continue
-        compiled = visual_plan._freeze_and_compile_segment(segment,
-            candidate_freezers={}, binding_freezers={},
-            strategy_compiler=visual_plan._load_router_module().compile_strategy)
-        components = {c['component_id']: c for c in compiled['shot_recipe']['components']}
+        strategy = segment['visual_strategy']
+        router = visual_plan._load_router_module()
+        components = {component['component_id']: router.component_geometry(
+            component, strategy['composition'], round((segment['end'] - segment['start']) * 24),
+            index=index, dependency_id=selected[component['component_id']]['dependency_id'])
+            for index, component in enumerate(strategy['components']) if component['component_id'] in selected}
         for cid, binding in selected.items():
             scene = scenes.get((segment['segment_id'], cid))
             if not scene or not isinstance(scene.get('brief_path'), str):
@@ -368,7 +385,7 @@ def _validate_selected_hw_word_anchors(job, director: dict, treatment: dict) -> 
 def resume_visual_direction(job, project: Path, payload: dict | None = None) -> dict:
     """Continue approved work; real host tool results arrive via input-json."""
     from edit.hd.tools import state, visual_confirmation as confirmation, visual_plan
-    from edit.hd.tools import generation_channels, generation_queue
+    from edit.hd.tools import generation_channels, generation_queue, contract_artifacts
     data = payload or {}
     authorized = confirmation.validate_visual_authorization(job)
     if any(r['path'].endswith('/' + confirmation.MAPPING) for r in job.stages['visual_direction']['artifacts']):
@@ -383,31 +400,104 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         raise ValueError('gbro_frame_preparations must contain actual preparation descriptors')
     for descriptor in preparations:
         confirmation.record_gbro_frame_preparation(job, descriptor)
-    actions = confirmation.generation_actions(job, account_limit=data.get('account_limit'))
-    if actions:
-        return _summary(job, 'visual_direction', actions=actions,
-            next='宿主执行所列真实工具，通过 input-json.generation_results 回传结果后继续。')
     proposal = authorized['source']
     inputs = proposal['inputs']
-    realized = data.get('realization')
-    if proposal['generation_steps'] and realized is None:
-        queue = generation_queue.status(job.job_dir)
-        return _summary(job, 'visual_direction', actions=[{
-            'action': 'prepare_template_inputs', 'proposal': authorized['payload']['source'],
-            'completed_generations': [confirmation.generation_item(queue, proposal, step)[1]
-                                      for step in proposal['generation_steps']],
-            'return_fields': ['realization.director_brief', 'realization.treatment'],
-        }], next='宿主按所选模板原生入口绑定实际素材，绑定实际输入后回传 realization；无需用户确认。')
-    realized = realized or {}
+    realized = data.get('realization') or {}
     director = _path(job, realized.get('director_brief', inputs['director']['path']))
     treatment = _path(job, realized.get('treatment', inputs['treatment']['path']))
     reviewed = realized.get('reviewed_visual_text') or inputs.get('reviewed_visual_text', {}).get('path')
-    confirmation.validate_realization_draft(job, _json(director), _json(treatment))
-    _validate_prepared_native_inputs(job, project, _json(director), _json(treatment))
-    native_actions = pending_native_actions(job, _json(director), _json(treatment))
-    if native_actions:
-        return _summary(job, 'visual_direction', actions=native_actions,
-            next='宿主执行完整原生 Skill；产物完成后回传实际 realization 继续。无需用户再次确认。')
+    draft, scene_plan = _json(director), _json(treatment)
+    confirmation.validate_realization_draft(job, draft, scene_plan, native_targets=set())
+    pending = confirmation.unprepared_template_targets(draft, scene_plan)
+    errors, invalid, native_actions = [], set(), {}
+    parent_inputs = None
+    if any(binding.get('dependency_id') and (segment['segment_id'], cid) not in pending
+           for segment in draft['segments'] for cid, binding in segment.get('bindings', {}).items()):
+        parent_inputs = tuple(confirmation._read(confirmation._exact(job.job_dir, inputs[name]))
+                              for name in ('director', 'treatment'))
+    unfinished = set(pending)
+    for segment in draft['segments']:
+        for cid in segment.get('bindings', {}):
+            key = (segment['segment_id'], cid)
+            if key in pending:
+                continue
+            scoped = {**draft, 'segments': [{**segment, 'bindings': {cid: segment['bindings'][cid]}}]}
+            try:
+                if segment['bindings'][cid].get('dependency_id'):
+                    confirmation._validate_authorized_native_inputs(job.job_dir, proposal, *parent_inputs,
+                        draft, scene_plan, targets={key})
+                _validate_prepared_native_inputs(job, project, scoped, scene_plan)
+                actions = pending_native_actions(job, scoped, scene_plan)
+                native_actions[key] = actions
+                if actions:
+                    unfinished.add(key)
+            except (ValueError, OSError, KeyError, TypeError, RuntimeError, subprocess.SubprocessError) as error:
+                invalid.add(key)
+                errors.append({'segment_id': key[0], 'component_id': key[1], 'error': str(error)})
+    generation_candidates = confirmation.generation_actions(job, account_limit=data.get('account_limit'),
+        defer_submission=True, excluded_targets=invalid, errors=errors)
+    queue = generation_queue.status(job.job_dir) if proposal['generation_steps'] else {'items': {}}
+    steps = {}
+    for step in proposal['generation_steps']:
+        key = (step['segment_id'], step['component_id'])
+        try:
+            steps[step['id']] = confirmation.generation_item(queue, proposal, step, job)[1]
+        except (ValueError, OSError, KeyError, TypeError, RuntimeError) as error:
+            steps[step['id']] = None
+            if key not in invalid:
+                errors.append({'segment_id': key[0], 'component_id': key[1], 'step_id': step['id'], 'error': str(error)})
+            invalid.add(key)
+    invalid.update((error['segment_id'], error['component_id']) for error in errors
+                   if 'segment_id' in error and 'component_id' in error)
+    blocked = invalid | {(step['segment_id'], step['component_id']) for step in proposal['generation_steps']
+                         if (steps[step['id']] or {}).get('status') != 'completed'}
+    unfinished.update(blocked)
+    dependency_blocked = set()
+    for segment in draft['segments']:
+        dependencies = segment['visual_strategy'].get('composition', {}).get('component_dependencies', [])
+        # Components are a small validated DAG; only their real prerequisites wait.
+        for _ in dependencies:
+            for edge in dependencies:
+                if any((segment['segment_id'], cid) in unfinished for cid in edge['depends_on']):
+                    key = (segment['segment_id'], edge['component_id'])
+                    blocked.add(key)
+                    dependency_blocked.add(key)
+                    unfinished.add(key)
+    actions = []
+    for sid, cid in sorted(pending):
+        if (sid, cid) in blocked:
+            continue
+        required = [step for step in proposal['generation_steps']
+                    if (step['segment_id'], step['component_id']) == (sid, cid)]
+        if any((steps[step['id']] or {}).get('status') != 'completed' for step in required):
+            continue
+        action = {'action': 'prepare_template_inputs', 'segment_id': sid, 'component_id': cid,
+            'proposal': authorized['payload']['source'],
+            'completed_generations': [steps[step['id']] for step in required],
+            'return_fields': ['realization.director_brief', 'realization.treatment']}
+        segment = next(s for s in draft['segments'] if s['segment_id'] == sid)
+        if segment.get('bindings', {}).get(cid, {}).get('producer_type') == 'dependency':
+            action['speech_input_contract'] = {
+                'argv_prefix': [shutil.which('ffmpeg') or 'ffmpeg', '-v', 'error', '-i',
+                    str(job.job_dir / '06-edit-structure/edited-aroll.mp4'), '-ss', str(segment['start']),
+                    '-t', str(segment['end'] - segment['start']), '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le'],
+                'output_argument': 'Append a new Job-local .wav path and bind its actual SHA/bytes as speech; no audio filters or replacement narration.',
+                'word_anchors': 'Use every overlapping approved word, clipped to this segment and shifted to its local clock.'}
+        actions.append(action)
+    for key, native in native_actions.items():
+        if key not in blocked:
+            actions.extend(native)
+    candidates = [candidate for candidate in generation_candidates
+                  if (candidate.get('segment_id'), candidate.get('component_id')) not in invalid | dependency_blocked]
+    if actions or candidates or pending or errors or any((item or {}).get('status') != 'completed' for item in steps.values()):
+        response = _summary(job, 'visual_direction', actions=actions, errors=errors,
+            next='宿主可并行执行所列就绪项；错误项及其依赖暂停，回传生成结果或 realization 后继续。无需用户再次确认。')
+        contract_artifacts.canonical_json_bytes(response)
+        return generation_channels.issue_actions(job, candidates, response, account_limit=data.get('account_limit'))
+    # Recheck the complete realization only at the final join.
+    confirmation.validate_realization_draft(job, draft, scene_plan)
+    # Join once: no partial realization may enter compilation or final mapping.
+    prepare_visual_dependencies(project, draft, job=job, treatment=scene_plan)
     visual_plan.prepare_visual_direction(job, director, job.job_dir / 'official-previews',
         treatment_path=treatment, reviewed_visual_text=_json(_path(job, reviewed)) if reviewed else None)
     job = state.load_job(job.job_dir)
@@ -439,11 +529,14 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
             if hashlib.sha256(payload).hexdigest() != binding['brief_sha256']:
                 raise ValueError('Native Skill brief changed after visual approval')
             brief = module.validate_brief(payload)
-            if not _path(job, brief['result_record_path']).exists():
+            result_path = _path(job, brief['result_record_path'])
+            if not result_path.exists() and not result_path.is_symlink():
                 composition = segment['visual_strategy'].get('composition', {})
                 zones, placement = subtitle_layout(segment['visual_strategy']['mode'], composition)
                 options = ({'approved_task_source': module.task_source(director, treatment, segment['segment_id'], cid)}
                            if dependency in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'} else {})
+                if dependency != 'lemo-wake':
+                    options['defer_runtime'] = True
                 action = module.native_task(job, {'segment_id': segment['segment_id']},
                     {**binding, 'component_id': cid}, brief_path, **options)
                 if dependency == 'barty-motion-graphics':
@@ -541,7 +634,7 @@ def _validate_previous_native_result(job, module, payload, segment_id, component
 
 
 def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment: dict, planned=()) -> None:
-    """Prepare the selected draft bindings before publishing any user candidate."""
+    """Prepare only ready execution bindings after visual authorization."""
     router = _module('broll_capability_router')
     scenes = {(scene.get('segment_id'), scene.get('component_id')): scene
               for scene in treatment.get('scenes', [])}
@@ -551,6 +644,8 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
         for component in segment['visual_strategy']['components']:
             if component['kind'] != 'code_generated':
                 continue
+            if component['component_id'] not in segment.get('bindings', {}):
+                continue  # A scoped ready view excludes deferred component bindings.
             binding = segment.get('bindings', {}).get(component['component_id'], {})
             _check_default_binding(binding)
             fields = ('dependency_id', 'entrypoint', 'producer_version', 'primary_renderer')
@@ -578,6 +673,8 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
             if selected not in bindings:
                 bindings.append(selected)
     if bindings:
+        from motion_native_skill_adapter import check_selected_template_dependencies
+        check_selected_template_dependencies(job, director, treatment)
         from project_python import project_environment, prepare_environment
         environment, packages = project_environment(project)
         prepare_environment(project, environment, packages,
@@ -858,7 +955,17 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, **opti
         current = state.current_stage(state.load_job(job_dir))
         requested = stage or current
         data = per_stage.get(requested) if isinstance(per_stage, dict) else payload
-        result = _execute_one_stage(job_dir, project, requested, payload=data, **current_options)
+        from edit.hd.tools.startup import current_operation
+        operation = current_operation()
+        started = perf_counter()
+        timing = {'stage': requested, 'status': 'failed'}
+        try:
+            result = _execute_one_stage(job_dir, project, requested, payload=data, **current_options)
+            timing['status'] = result.get('status', 'pending')
+        finally:
+            timing['elapsed_seconds'] = round(perf_counter() - started, 6)
+            if operation is not None:
+                operation.stage_timings.append(timing)
         if explicit or result.get('status') != 'completed' or requested == 'delivery':
             return result
         after = state.current_stage(state.load_job(job_dir))
@@ -890,7 +997,7 @@ def check_stage(job_dir: Path, stage: str | None = None) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job-context', required=True, type=Path)
-    parser.add_argument('--stage', help='Omit to use the current unfinished stage')
+    parser.add_argument('--stage', help='Run one stage only; omit to continue until delivery or required input')
     parser.add_argument('--check-only', action='store_true',
                         help='Read-only runnable check; do not refresh preflight or execute tools')
     parser.add_argument('--project-root', type=Path)

@@ -949,6 +949,22 @@ def _consume_completed_generated_binding(kind: str, media_type: str, binding: Di
     return {**dimensions, "fps": 24, "alpha": False}
 
 
+def component_geometry(component, composition, segment_frames, *, index=0, dependency_id=None):
+    """The compiler and prepared-input checks share one binding-free layout."""
+    return {
+        "render_window": {
+            "start_frame": 0, "end_frame": segment_frames, "z_index": index * 10,
+            "layout_slot": component["layout_slot"], "opacity": 1.0,
+            "safe_zone": {side: 0 for side in ("top", "bottom", "left", "right")}
+            if component["layer_role"] == "base" and component["layout_slot"] == "full_frame"
+            else {"top": 64 if composition["family"] == "aroll_with_overlay" else 120,
+                  "bottom": 320, "left": 40, "right": 40},
+        },
+        "artifact_contract": {"width": 1080, "height": 1920, "fps": 24,
+            "alpha": output_alpha(component["kind"], dependency_id, composition["family"], component["layer_role"])},
+    }
+
+
 def _compile_shot_recipe(
     strategy: Mapping[str, Any], context: Mapping[str, Any]
 ) -> Dict[str, Any]:
@@ -1079,31 +1095,11 @@ def _compile_shot_recipe(
             "layer_role": approved_component["layer_role"],
             "executor": executor,
             "media_type": approved_component["media_type"],
-            "render_window": {
-                "start_frame": 0,
-                "end_frame": segment_frames,
-                "z_index": index * 10,
-                "layout_slot": approved_component["layout_slot"],
-                "opacity": 1.0,
-                "safe_zone": {side: 0 for side in ("top", "bottom", "left", "right")}
-                if approved_component["layer_role"] == "base"
-                and approved_component["layout_slot"] == "full_frame"
-                else {
-                    "top": 64 if approved["composition"]["family"] == "aroll_with_overlay" else 120,
-                    "bottom": 320,
-                    "left": 40,
-                    "right": 40,
-                },
-            },
-            "artifact_contract": riso_contract or {
-                "width": 1080,
-                "height": 1920,
-                "fps": 24,
-                "alpha": output_alpha(
-                    kind, binding.get("dependency_id"), approved["composition"]["family"], approved_component["layer_role"]
-                ),
-            },
+            **component_geometry(approved_component, approved["composition"], segment_frames,
+                                 index=index, dependency_id=binding.get("dependency_id")),
         }
+        if riso_contract is not None:
+            component["artifact_contract"] = riso_contract
         if completed_contract is not None:
             component["executor"] = "lovart_existing_video"
             component["artifact_contract"] = completed_contract

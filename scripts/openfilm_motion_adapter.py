@@ -28,6 +28,14 @@ def _text(value, label, limit=4000):
     if type(value) is not str or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
         raise ValueError(f"Invalid OpenFilm {label}")
 
+def parent_input_facts(brief):
+    """Project semantic inputs while leaving native design and scene code free."""
+    handoff = brief.get('creative_handoff', {})
+    return {**{key: handoff[key] for key in ('transcript', 'semantic_goal', 'subject',
+            'forbidden_outcomes') if key in handoff}, 'source_binding': brief['source_binding'],
+            'assets': brief['assets']}
+
+
 def validate_brief(payload):
     b = json.loads(payload) if isinstance(payload, (bytes, str)) else payload
     required = {"schema_version","source_binding","template_request","composition","entry","assets","upstream","creative_handoff"}
