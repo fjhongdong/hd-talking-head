@@ -41,6 +41,7 @@ SOURCES = {
                     '6a102e77afea48c6506b517cac5963039a17d2666b9305ab85d63d7ca48ae8c2'),
 }
 SOURCES.update({
+    'huashu-art-motion': ('huashu-art-motion', '8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c', 'eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0'),
     'mg-styles-15': ('mg-styles-15', '49052d80bfaf9fa8412cc9710530e5e95a3b8d8c',
                      '0bc6d7c15629618efe41f41e84ca4962fa129d9405cfc539a9e34e79f1c6a775'),
     'video-shotcraft': ('video-shotcraft', '1266a3ec4831289c4d893d42dd5102723658039a',
@@ -112,6 +113,12 @@ def source_root(project=PROJECT, *, dependency_id):
         raise ValueError('Native motion source revision changed')
     root = path(project, record['source_root'])
     def verify(inventory):
+        if dependency_id == 'huashu-art-motion':
+            # This vendored source retains its real Git identity; repository
+            # bookkeeping is not part of the original source-file manifest.
+            inventory = [p for p in inventory if p.relative_to(root).parts[0] != '.git']
+            if subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip() != commit:
+                raise ValueError('Huashu native source checkout revision changed')
         actual = {p.relative_to(root).as_posix() for p in inventory if p.is_file() and not p.is_symlink()}
         links = {p.relative_to(root).as_posix(): str(p.readlink()) for p in inventory if p.is_symlink()}
         if links != record.get('symlinks', {}) or any(not (root / name).resolve().is_relative_to(root) for name in links):
@@ -143,6 +150,8 @@ def _template(brief, project=PROJECT):
     selected = next((row for row in rows if row['candidate_id'] == identity), None)
     if selected is None:
         raise ValueError('Unknown original native motion template')
+    if selected.get('production_eligible') is False:
+        raise ValueError('This native route is outside the current qualified portrait output: ' + brief['template_id'])
     duration = brief['composition']['frames'] / brief['composition']['fps']
     if ((selected.get('min_duration_seconds') is not None and duration < selected['min_duration_seconds'])
             or (selected.get('max_duration_seconds') is not None and duration > selected['max_duration_seconds'])):
@@ -150,6 +159,20 @@ def _template(brief, project=PROJECT):
     if dependency == 'barty-motion-graphics' and brief['template_id'] not in BARTY_TEMPLATES:
         raise ValueError('Unknown original Barty workflow')
     groups = {row['candidate_id'].split('/')[-1]: row.get('native_template_group') for row in rows}
+    if dependency == 'huashu-art-motion':
+        from huashu_motion_adapter import native_templates
+        original = native_templates(project)
+        choice = original.get(brief['template_id'])
+        if (choice is None or any(option not in original for option in brief['native_options'])
+                or selected.get('alpha') != choice['alpha']
+                or selected.get('native_state') != choice['state']
+                or selected.get('grammar') != choice.get('grammar')
+                or (brief['alpha'] and not choice['alpha'])):
+            raise ValueError('Huashu selected route, options or alpha differ from its original Skill')
+        eligible = {row['template_id'] for row in rows if row.get('production_eligible') is not False}
+        if any(option not in eligible for option in brief['native_options']):
+            raise ValueError('Huashu native options are outside the current qualified portrait output')
+        return source_root(project, dependency_id=dependency)
     if dependency == 'bb-video':
         if any(option not in selected['native_option_ids'] for option in brief['native_options']):
             raise ValueError('Unknown original BB Video workflow option')
@@ -159,6 +182,11 @@ def _template(brief, project=PROJECT):
     if dependency == 'video-shotcraft':
         if any(option not in {style['key'] for style in selected.get('styles', [])} for option in brief['native_options']):
             raise ValueError('Unknown selected native Shotcraft style variant')
+        if selected['native_role'] not in {'scene', 'product_promo'}:
+            raise ValueError('Shotcraft component requires real main content and cannot be the primary B-roll template')
+        broll_variants = selected.get('broll_variant_keys')
+        if broll_variants is not None and not set(brief['native_options']).intersection(broll_variants):
+            raise ValueError('Shotcraft primary B-roll requires an explicitly selected narrative variant')
         _check_native_timing(selected, brief['native_options'], duration)
         return source_root(project, dependency_id=dependency)
     if any(option not in groups for option in brief['native_options']):
@@ -205,7 +233,7 @@ def validate_brief(payload, *, dependency_id=None):
     if (not isinstance(options, list) or any(not isinstance(v, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', v) for v in options)
             or len(options) != len(set(options))
             or (brief['dependency_id'] != 'video-shotcraft' and brief['template_id'] in options)
-            or (brief['dependency_id'] not in {'bang-motion', 'video-shotcraft', 'bb-video'} and options)):
+            or (brief['dependency_id'] not in {'bang-motion', 'video-shotcraft', 'bb-video', 'huashu-art-motion'} and options)):
         raise ValueError('Invalid original native motion options')
     if brief['canvas_transport'] != ('quarter_turn_cw' if brief['dependency_id'] == 'bang-motion' else 'identity'):
         raise ValueError('Invalid native canvas transport')
@@ -216,7 +244,12 @@ def validate_brief(payload, *, dependency_id=None):
             or type(c['frames']) is not int or c['frames'] < 1
             or abs((brief['source_binding']['end'] - brief['source_binding']['start']) * 24 - c['frames']) > 1e-6):
         raise ValueError('Native motion requires the exact approved portrait 24fps clock')
-    if type(brief['alpha']) is not bool or (brief['alpha'] and
+    if brief['dependency_id'] == 'huashu-art-motion':
+        from huashu_motion_adapter import native_templates
+        native_alpha = native_templates(PROJECT).get(brief['template_id'], {}).get('alpha', False)
+        if type(brief['alpha']) is not bool or (brief['alpha'] and not native_alpha):
+            raise ValueError('Only Huashu original grammar alpha paths support transparent ProRes output')
+    elif type(brief['alpha']) is not bool or (brief['alpha'] and
             (brief['dependency_id'] != 'barty-motion-graphics' or brief['template_id'] != 'motion-broll')):
         raise ValueError('Only original Barty motion-broll supports transparent ProRes output')
     request = brief['template_request']
@@ -376,13 +409,18 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source, def
             'source_binding': brief['source_binding'],
             'materials': [str(path(job.job_dir, r['job_path'])) for r in brief['materials']],
             'result_record_path': brief['result_record_path'],
-            'next': native_workflow_instructions(brief) if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft', 'bb-video'} else 'Read and execute the complete original Skill. task_source.quote and semantic are the approved meaning, including required objects, relations, changes and exclusions. required_change and component_brief are replaceable presentation references; the native Skill owns creative planning, layout, choreography, scene code, native build and QA. Honor the selected primary template and native_options. Author only this Job project; keep all pinned source unchanged. Write rendered media only under the project out directory; retain authored inputs and materials outside it. Use the approved inputs and resource authorization. For motion-broll call the original engine/build.py then engine/render.js at 24fps. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Use capture_render, then publish_completed with the actual execution evidence. For Bang read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. The parent owns voice, ordinary subtitles and final composition. Stop and diagnose a failed item; revise only that item within the approved task, retain earlier files and repeat actual QA. Never retry automatically. This is pending work, not a completed result.'}
+            'next': native_workflow_instructions(brief)}
 
     if brief['dependency_id'] == 'video-shotcraft':
         action['native_catalog'] = load_template_catalog(dependency_id='video-shotcraft')
         action['native_usage_contract'] = {'card_id': 'original card slug, or ink-press',
             'variant': 'original Gallery key; null only for ink-press', 'purpose': 'actual use in this task',
             'implementation_refs': 'descriptors of actual implementation files frozen in the render call'}
+    if brief['dependency_id'] == 'huashu-art-motion':
+        action['native_catalog'] = load_template_catalog(dependency_id='huashu-art-motion')
+        action['native_usage_contract'] = {'card_id': 'original Huashu grammar/style/scene template id',
+            'variant': None, 'purpose': 'actual use in this task',
+            'implementation_refs': 'descriptors of the actual authored spec, eras/scenes or treatment frozen in the render call'}
     if defer_runtime:
         action['native_preparation_runtime'] = preparation_runtime
         action['next'] = ('Before native execution, use runtime.check_argv for an already prepared environment; '
@@ -397,7 +435,14 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source, def
     return action
 
 def native_workflow_instructions(brief):
-    shared = ('Execute the complete pinned native workflow and selected native instructions. The approved task_source, transcript, real materials and output specifications are inputs; the native workflow owns treatment, look, layout, choreography and scene code. Preserve every vendor file. Author this Job project only. Keep voice, ordinary subtitles and final composition in the parent. Render the exact portrait 24fps clock without audio or alpha. Publish_completed records native execution completion after its original checks finish. Stop and diagnose failure; never retry automatically. This handoff is pending creative work, not completed evidence. ')
+    shared = ('Execute the complete pinned native workflow and selected native instructions. The approved task_source, transcript, real materials and output specifications are inputs; the native workflow owns treatment, look, layout, choreography and scene code. Preserve every vendor file. Author this Job project only. Keep voice, ordinary subtitles and final composition in the parent. Render the exact portrait 24fps clock without audio; use alpha only when the selected native route and approved brief support it. Publish_completed records native execution completion after its original checks finish. Stop and diagnose failure; never retry automatically. This handoff is pending creative work, not completed evidence. ')
+    if brief['dependency_id'] == 'huashu-art-motion':
+        from huashu_motion_adapter import native_workflow_instructions as instructions
+        return shared + instructions(brief, PROJECT)
+    if brief['dependency_id'] == 'barty-motion-graphics':
+        return shared + ('Read the complete original Skill and selected native instructions. For motion-broll call the original engine/build.py then engine/render.js at 24fps, preserving the selected alpha output when requested. For explainers save the complete original embedded render.mjs verbatim in the Job project and link its node_modules to runtime.node_modules. Keep authored inputs outside out/. Use capture_render, then publish_completed with actual execution evidence.')
+    if brief['dependency_id'] == 'bang-motion':
+        return shared + ('Read the full original SKILL and selected native instructions, author the whole portrait design, place only its outer 1080x1920 root at transform-origin:0 0 with transform:translateX(1920px) rotate(90deg), mark it data-native-canvas-transport=quarter_turn_cw, and preserve the internal OPENER clock. Copy scripts/export-frames.mjs verbatim into this Job project and link node_modules to runtime.node_modules. capture_render runs its original exporter and native FFmpeg encoding with transpose=2 to restore the entire portrait board without scaling, cropping or retiming. Keep authored inputs outside out/. Use capture_render and publish_completed for actual execution evidence.')
     if brief['dependency_id'] == 'bb-video':
         return shared + ('Read the complete skills/bb-video/SKILL.md, selected styles/<style>/STYLE.md, the appropriate explainer/GUIDE.md or promo/GUIDE.md and every referenced instruction needed for this task. The style is the primary template; explainer/promo, quick and hand-written authoring are internal workflow choices, never additional templates. Follow the complete native research, fact sheet, storyboard, creation and self-review workflow. Use the original explainer/scripts/new.mjs or promo/scripts/new.mjs with --style <approved style> to create the current Job project and copy its original runtime and starter files; do not modify vendor or replace creation with a renderer-only call. Reuse the approved speech and exact local word anchors instead of synthesizing replacement narration. Keep all original lib runtime files unchanged. Honor requirements.parent_subtitle_layout from the parent, including its actual avatar and subtitle safe zones; the native workflow chooses the composition. Disable all internal captions, chapter chrome and ending holds using existing public APIs. For native whiteboard/riso/ink boards use WB/RISO/INK.board({T:<approved local timeline>,captions:false,chapters:false}); for an appropriate native compose use duration:<approved seconds>,tail:0,captions:false,chapters:false. PROMO.film quick has a default four-second tail and does not forward captions/tail; a voiced board kit forces internal captions, so choose a native public route that actually disables them, rather than assuming outer compose switches disable a nested board. Do not force every style into quick mode or compress parable below its original 15–45 second narrative range. Run native checks and inspect real full-size frames before final rendering. Fonts and optional Three.js CDN assets require actual availability checks; this zero-npm runtime does not imply offline rendering. Never use --force, --draft or --allow-font-fallback to bypass final checks. Pass capture_render the direct original explainer/scripts/render.mjs or promo/scripts/render.mjs argv: [node,<original render.mjs>,<absolute project_directory>,--aspect,9:16,--fps,24,--from,0,--to,<approved frames/24>,--no-audio,--no-bgm,--workers,1,--out,native.mp4]. --out accepts a filename; the native media is project_directory/out/native.mp4. Explicit from/to preserve authored review inputs while native lint, font and final frame checks still run. Use capture_render and publish_completed for the actual output, preserving the original source, command, tool versions and honest QA.')
     if brief['dependency_id'] == 'mg-styles-15':
@@ -440,6 +485,10 @@ def project_files(root, directory):
 def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
     native = _template(brief)
     directory = path(root, brief['project_directory'])
+    if brief['dependency_id'] == 'huashu-art-motion':
+        from huashu_motion_adapter import native_render_command
+        return native_render_command(root, brief, argv, runtime, native,
+                                     check_runtime_links=check_runtime_links)
     if brief['dependency_id'] == 'bb-video':
         return _bb_render_command(brief, argv, runtime, directory, native)
     if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft'}:
@@ -834,6 +883,8 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
               'runtime_identity': runtime['runtime_identity'],
               'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version') if key in runtime},
               'status': 'running', 'exit_code': None, 'stdout': '', 'stderr': ''}
+    if brief['dependency_id'] == 'huashu-art-motion':
+        record['execution_runtime']['environment'] = runtime['environment']
     call_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts.write_json_artifact(call_path, record)
     try:
@@ -891,6 +942,8 @@ def _verify_call(root, brief, payload, call):
     if (runtime['renderer_version'] != call['runtime_identity']['renderer_version']
             or runtime['tools'] != {name: record['path'] for name, record in call['runtime_identity']['tools'].items()}):
         raise ValueError('Native execution runtime differs from its recorded identity')
+    if brief['dependency_id'] == 'huashu-art-motion' and runtime.get('environment') != call['runtime_identity']['environment']:
+        raise ValueError('Huashu execution differs from its recorded Python and browser environment')
     _, script, output = _render_command(root, brief, call['argv'], {**runtime, 'browser': call['runtime_identity']['browser']['path']}, check_runtime_links=False)
     if brief['dependency_id'] == 'barty-motion-graphics' and brief['template_id'] != 'motion-broll':
         original = output
@@ -931,6 +984,31 @@ def _verify_call(root, brief, payload, call):
 
 def _validate_native_usage(root, brief, call, usage):
     """Record native choices against their actual frozen implementation files."""
+    if brief['dependency_id'] == 'huashu-art-motion':
+        from huashu_motion_adapter import native_templates
+        choices = native_templates(PROJECT)
+        eligible = {row['template_id'] for row in load_template_catalog(dependency_id='huashu-art-motion')
+                    if row.get('production_eligible') is not False}
+        frozen = {item['job_path']: item for item in call['project_files']}
+        seen = set()
+        if not isinstance(usage, list) or not usage:
+            raise ValueError('Huashu completion requires actual native template usage')
+        for item in usage:
+            if (not isinstance(item, dict) or set(item) != {'card_id', 'variant', 'purpose', 'implementation_refs'}
+                    or item['card_id'] not in choices or item['card_id'] in seen
+                    or item['variant'] is not None or not isinstance(item['purpose'], str) or not item['purpose'].strip()
+                    or not isinstance(item['implementation_refs'], list) or not item['implementation_refs']):
+                raise ValueError('Huashu usage must name its actual original grammar/style/scene and purpose')
+            if item['card_id'] not in eligible:
+                raise ValueError('Huashu usage is outside the current qualified portrait output')
+            seen.add(item['card_id'])
+            for ref in item['implementation_refs']:
+                actual = exact(root, ref)
+                if (ref != frozen.get(ref['job_path']) or actual.suffix not in {'.json', '.js', '.mjs', '.html', '.md'}):
+                    raise ValueError('Huashu usage must cite authored inputs frozen by the actual native render')
+        if not {brief['template_id'], *brief['native_options']}.issubset(seen):
+            raise ValueError('Huashu usage must retain the approved primary template and native options')
+        return usage
     if not isinstance(usage, list) or not usage:
         raise ValueError('Shotcraft requires its actual native card and component usage')
     rows = {row['candidate_id'].rsplit('/', 1)[-1]: row
@@ -983,7 +1061,8 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
     if target.exists():
         raise ValueError('Preserve the completed native result and use a new revision')
     shotcraft = brief['dependency_id'] == 'video-shotcraft'
-    if shotcraft:
+    huashu = brief['dependency_id'] == 'huashu-art-motion'
+    if shotcraft or huashu:
         _validate_native_usage(root, brief, call, native_usage)
     elif native_usage is not None:
         raise ValueError('Native card usage belongs to the Shotcraft workflow')
@@ -992,7 +1071,7 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'media': call['media'],
               'media_probe': brief['composition'], 'alpha': brief['alpha'],
               'renderer_version': call['renderer_version'], 'render_call': descriptor(root, call_path)}
-    if shotcraft:
+    if shotcraft or huashu:
         result['native_usage'] = native_usage
     artifacts.write_json_artifact(target, result)
     return target
@@ -1020,7 +1099,7 @@ def _inspect_result(job_dir, payload, data):
         raise ValueError('Native motion result differs from its request')
     call = json.loads(exact(job_dir, result['render_call']).read_bytes())
     _verify_call(job_dir, brief, payload, call)
-    if brief['dependency_id'] == 'video-shotcraft':
+    if brief['dependency_id'] in {'video-shotcraft', 'huashu-art-motion'}:
         _validate_native_usage(job_dir, brief, call, result.get('native_usage'))
     elif 'native_usage' in result:
         raise ValueError('Native usage belongs to the Shotcraft workflow')

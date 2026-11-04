@@ -33,6 +33,10 @@ _REQUIRED = {"segment_id", "component_id", "intent_relation", "native_route", "v
 def _route(binding: Mapping) -> str:
     template = str(binding.get("template_id", ""))
     route = _ROUTE_BY_TEMPLATE.get(template)
+    if route is None and binding.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+        dependency = binding['dependency_id']
+        if template.startswith(dependency + '/'):
+            route = template
     if route is None:
         raise ValueError(f"A-roll overlay template is not supported: {template}")
     return route
@@ -50,8 +54,8 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
                           (_PINBOARD_DEPENDENCY if route == "pin-board" else
                            (_MOTION_GRAPHICS_DEPENDENCY if route == "callout-pin" else
                             ("huashu-motion-native" if route == "huashu-stat" else _DEPENDENCY))))
-            if route == _BARTY_ROUTE:
-                dependency = 'barty-motion-graphics'
+            if route == _BARTY_ROUTE or binding.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+                dependency = binding['dependency_id']
             if binding.get("dependency_id") != dependency:
                 raise ValueError("A-roll overlay dependency does not match the native adapter")
             from .motion_capabilities import overlay_candidates, validate_overlay_capability
@@ -81,7 +85,7 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
         if key in seen or key not in expected:
             raise ValueError("overlay_selection target is missing or duplicated")
         _segment, route, structure = expected[key]
-        if route == _BARTY_ROUTE:
+        if route == _BARTY_ROUTE or route.split('/', 1)[0] in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
             if row['native_route'] != route or any(not isinstance(row.get(k), str) or not row[k].strip()
                     for k in ('intent_relation', 'visible_action', 'visual_structure', 'selection_reason')):
                 raise ValueError('Barty overlay needs its actual native action and semantic structure')

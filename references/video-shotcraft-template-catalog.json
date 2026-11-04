@@ -152,7 +152,7 @@
         "vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "camera",
-      "native_role": "camera_motion",
+      "native_role": "scene",
       "native_source": "vendor/video-shotcraft/references/shots/camera/basic-3d-scene.md",
       "native_demos": [
         "vendor/video-shotcraft/demos/camera/basic-3d-scene/Basic3DScene.tsx"
@@ -176,14 +176,61 @@
       ],
       "timing_requirements": [
         {
-          "phase": "reading_hold",
+          "phase": "reading_hold_station_1",
           "minimum_seconds": 1.0,
-          "evidence_quote": "≥30f",
+          "evidence_quote": "每站停留 ≥30f",
           "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "reading_hold_station_2",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "每站停留 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "reading_hold_station_3",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "每站停留 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "reading_hold_station_4",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "每站停留 ≥30f",
+          "source_frames": 30,
+          "source_fps": 30
+        },
+        {
+          "phase": "rotating_flight_1",
+          "minimum_seconds": 0.9333333333333333,
+          "evidence_quote": "有旋转的段别短于 28f",
+          "source_frames": 28,
+          "source_fps": 30
+        },
+        {
+          "phase": "rotating_flight_2",
+          "minimum_seconds": 0.9333333333333333,
+          "evidence_quote": "有旋转的段别短于 28f",
+          "source_frames": 28,
+          "source_fps": 30
+        },
+        {
+          "phase": "rotating_flight_3",
+          "minimum_seconds": 0.9333333333333333,
+          "evidence_quote": "有旋转的段别短于 28f",
+          "source_frames": 28,
           "source_fps": 30
         }
       ],
-      "min_duration_seconds": 1.0
+      "min_duration_seconds": 6.8,
+      "uses": [
+        "broll",
+        "component"
+      ],
+      "role_evidence": "原卡明确提供概念、路线图、三步法的四站完整空间叙事；保留原生camera目录与内部运镜组件用途。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/beat-cut-moves",
@@ -944,7 +991,7 @@
         "vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "interaction",
-      "native_role": "scene",
+      "native_role": "visual_effect",
       "native_source": "vendor/video-shotcraft/references/shots/interaction/collab-cursor-moves.md",
       "native_demos": [
         "vendor/video-shotcraft/demos/interaction/collab-cursor-moves/CursorCastEnsemble.tsx"
@@ -966,7 +1013,11 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "uses": [
+        "component"
+      ],
+      "role_evidence": "原卡唯一变体明确为主内容之外的协作光标氛围层；必须依附真实画布主内容，由原生工作流作为内部组件使用，不能独立占主B-roll。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/countdown-arc-scatter",
@@ -1632,7 +1683,7 @@
         "vendor/video-shotcraft/references/pipeline.md"
       ],
       "native_template_group": "effects",
-      "native_role": "visual_effect",
+      "native_role": "scene",
       "native_source": "vendor/video-shotcraft/references/shots/effects/glow-flyline-moves.md",
       "native_demos": [
         "vendor/video-shotcraft/demos/effects/glow-flyline-moves/FlylineArc.tsx",
@@ -1708,7 +1759,16 @@
             "光斑与飞线同帧共振"
           ]
         }
-      }
+      },
+      "uses": [
+        "broll",
+        "component"
+      ],
+      "broll_variant_keys": [
+        "flyline-arc",
+        "orb-flyline-relay"
+      ],
+      "role_evidence": "A glow-orb-ambient仅作氛围组件；B flyline-arc与C orb-flyline-relay可按原卡表达数据流向、指标关联和三站接力，主B-roll须显式选择B或C。"
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/gradient-transition",
@@ -3920,7 +3980,22 @@
             "type": "mp4"
           }
         }
-      ]
+      ],
+      "timing_requirements": [
+        {
+          "phase": "hero_action",
+          "minimum_seconds": 3.0,
+          "evidence_quote": "放慢到 3 秒"
+        },
+        {
+          "phase": "final_hold",
+          "minimum_seconds": 1.0,
+          "evidence_quote": "30f 真静止 hold",
+          "source_frames": 30,
+          "source_fps": 30
+        }
+      ],
+      "min_duration_seconds": 4.0
     },
     {
       "candidate_id": "video-shotcraft:video-shotcraft/spotlight-sweep-moves",

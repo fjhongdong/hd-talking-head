@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -74,10 +75,14 @@ def bundled_source_revision(package: Path, source: Path) -> str | None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
             raise ValueError("bundled source file changed: " + relative)
     if "archives" in entry:
-        actual = {p.relative_to(source).as_posix() for p in source.rglob("*")
-                  if p.is_file() and not p.is_symlink()}
-        links = {p.relative_to(source).as_posix(): str(p.readlink())
-                 for p in source.rglob("*") if p.is_symlink()}
+        inventory = []
+        for directory, directories, names in os.walk(source):
+            base = Path(directory)
+            directories[:] = [name for name in directories if name not in {'.git', 'node_modules', '__pycache__'}]
+            inventory.extend(base / name for name in names if name not in {'.DS_Store', '.git'} and not name.endswith('.pyc'))
+            inventory.extend(base / name for name in directories if (base / name).is_symlink())
+        actual = {p.relative_to(source).as_posix() for p in inventory if p.is_file() and not p.is_symlink()}
+        links = {p.relative_to(source).as_posix(): str(p.readlink()) for p in inventory if p.is_symlink()}
         if (actual != set(entry["files"]) or links != entry.get("symlinks", {})
                 or any(not (source / name).resolve().is_relative_to(source) for name in links)):
             raise ValueError("bundled complete source tree changed")

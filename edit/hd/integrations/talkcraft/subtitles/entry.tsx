@@ -18,6 +18,7 @@ const validateNarrowWords = async (cues: SubtitleInput['cues']) => {
   try {
     await document.fonts.ready;
     for (const cue of cues) {
+      if (cue.native_caption) continue;
       const available = (cue.placement === 'above_avatar' ? cue.width : SUBTITLE_STANDARD_WIDTH)
         - 2 * (SUBTITLE_CARD_METRICS.paddingX + SUBTITLE_CARD_METRICS.borderWidth);
       probe.style.fontSize = `${subtitleFontSize(cue)}px`;

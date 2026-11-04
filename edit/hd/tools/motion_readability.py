@@ -315,9 +315,10 @@ def validate_direction_contract(job, director, treatment, *, phase='completed'):
     pending_generation = set()
     if phase == 'planning':
         from .visual_confirmation import _native_result_adapter
+        from .dependency_contracts import CREATIVE_SKILL_ADAPTERS
         for segment in director['segments']:
             for cid, binding in segment.get('bindings', {}).items():
-                if binding.get('dependency_id') not in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
+                if binding.get('dependency_id') not in CREATIVE_SKILL_ADAPTERS:
                     continue
                 scenes = [s for s in treatment.get('scenes', [])
                           if (s.get('segment_id'), s.get('component_id')) == (segment['segment_id'], cid)]

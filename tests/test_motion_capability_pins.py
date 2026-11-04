@@ -25,13 +25,30 @@ except ImportError:
 class MotionCapabilityPinTests(unittest.TestCase):
     def test_pinned_capability_sources_match_disk(self):
         profiles = motion_capabilities.load_profiles(PROJECT)
-        self.assertEqual(set(profiles), {row['candidate_id'] for row in motion_capabilities.load_catalog(PROJECT)})
+        catalog = motion_capabilities.load_catalog(PROJECT)
+        self.assertEqual(set(profiles), {row['candidate_id'] for row in catalog})
         for candidate_id in (
             "adu-motion-video:adu-motion-video/native-compare",
             "hypit-native-chat:hypit/native-plan-change-chat",
             "wise-motion:wise-motion/orbit-tracking-component",
         ):
             self.assertIn(candidate_id, profiles)
+        for source, count in (('anidoodle', 32), ('sweety-handdraw-video', 41),
+                              ('huashu-art-motion', 43), ('lemo-opuscar', 66), ('bang-motion', 35)):
+            rows = [row for row in catalog if row['skill_id'] == source]
+            self.assertEqual(len({row['template_id'] for row in rows}), count)
+            if source in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+                for row in rows:
+                    self.assertEqual(row['canonical_template'], row['template_id'])
+                    scope = row['capability']['content_scope']['mode']
+                    self.assertEqual(scope, 'fixed_action' if '/web-' in row['template_id'] else 'full_scene')
+                    if row['role'] == 'aroll_overlay':
+                        self.assertEqual(row['capability']['uses'], ['aroll_overlay'])
+                        if source == 'huashu-art-motion':
+                            self.assertIn('/grammar-', row['template_id'])
+        self.assertNotIn('huashu-art-motion:huashu-art-motion/t2_keynote_ui', profiles)
+        self.assertNotIn('huashu-art-motion:huashu-art-motion/style-37-rick-morty', profiles)
+        self.assertNotIn('huashu-art-motion:huashu-art-motion/scene', profiles)
 
     def test_unconnected_and_historical_candidates_are_refused(self):
         profiles = {}

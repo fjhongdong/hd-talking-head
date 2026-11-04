@@ -4,6 +4,8 @@
 
 上游原生分为 10 个风格方向（`SKILL.md` 的 Arah gaya）、6 个 explainer 风格及各自 starter（`references/explainer.md`，第六项另见 `references/kartun-panggung.md`）、19 个 opener 概念（`references/opener-konsep.md` 的 Menu konsep）。它们是独立的风格或完整创作工作流，可在本期组合；不得将组合相乘登记，开头、过渡、渲染对象材质和工具也不得虚增为模板。示例 starter 是骨架，不是最终作品；选中后把本期真实语义、文稿、素材、目标尺寸和时长交给完整 Skill 创作。风格方向与 opener 概念均使用 `assets/starter-opener.html`，六种 explainer 各自使用对应 starter；完整画面由上游自主设计，不能将示例替代成品。
 
+动作与关系标签只用于候选排序和适配判断，不是本期必须执行的编舞。10 个风格方向的动作取自原生风格表的视觉呈现，不推定业务关系；6 个 explainer 的标签描述原生讲解方式；19 个 opener 的标签描述原生概念可表达的对象变化、对比、流程、传递或问题解决关系。最终动作、构图及组合仍由完整原生 Skill 根据本期语义决定。
+
 阅读上游 `SKILL.md`、`references/anti-ppt.md`，按所选模式读取 `references/explainer.md`、`references/opener-konsep.md`、`references/kartun-panggung.md`、`references/techniques.md` 与 `references/architecture.md`。实际角色 AE 工作流还依赖 `references/ae-bridge-higgsfield.md` 描述的 After Effects 和 Higgsfield bridge；不得假设可用或引入外部服务授权。`references/roadmap.md` 是开发计划，不构成已实现能力。上游示例要求图片及服务选择；本 Job 的素材和服务授权为准，不自动调用外部生成。
 
 ## 入口、准备与限制
@@ -19,4 +21,8 @@
 
 ## 父级正式调用
 
-两渠道共用[完整原生调用合同](native-motion-call-contract.md)。该页是当前任务交接、原生选项、制作后文字验收、当前项返修、环境与正式消费的唯一共同说明；本页保留该渠道的原生用法和输出边界。
+各渠道共用[完整原生调用合同](native-motion-call-contract.md)。该页是当前任务交接、原生选项、制作后文字验收、当前项返修、环境与正式消费的唯一共同说明；本页保留该渠道的原生用法和输出边界。
+
+Bang 的 opener、风格方向和 explainer 均执行同一原生导出器 `scripts/export-frames.mjs`。不使用 Barty 的 `engine/build.py`、`engine/render.js`，也不从 Bang 文档提取不存在的内嵌 `render.mjs`。按所选原生模式完成本期 HTML 后，把原样导出器复制到独立 Job 工程，并将工程的 `node_modules` 链接到已准备的 Bang runtime。
+
+向父级 `capture_render` 交付 `[runtime.tools.node, <工程>/export-frames.mjs, <工程内本期HTML>, <工程>/out/native.mp4]`。后两个路径是父级适配器参数；原生导出器通过父级设置的 `URL`、`FPS=24`、`OUT` 和 `SCALE=1` 消费本期页面并输出 PNG 序列。父级只负责整板转向检查、调用原样导出器和 FFmpeg 回正编码，再由 `publish_completed` 接收真实输出；页面内部 `OPENER` 时钟、设计、编舞和原生技术 QA 均归完整原生 Skill。原声、普通字幕和最终合成仍由父级负责。

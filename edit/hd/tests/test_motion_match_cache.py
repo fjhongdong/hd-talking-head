@@ -228,7 +228,7 @@ class CacheTests(unittest.TestCase):
                     motion.load_profiles(ROOT)
         profiles = motion.load_profiles(ROOT)
         self.assertEqual(sum(cid.startswith("lemo-opuscar:") and
-                             p["content_scope"]["mode"] == "full_scene" for cid, p in profiles.items()), 59)
+                             p["content_scope"]["mode"] == "full_scene" for cid, p in profiles.items()), 66)
         for cid in ("whiteboard-video:whiteboard-svg-blocks",
                     "doudou-remotion-whiteboard:doudou-reviewed-scene",
                     "paper-collage-ad:paper-collage-layer-animation",

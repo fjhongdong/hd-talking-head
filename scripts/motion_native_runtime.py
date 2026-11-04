@@ -10,14 +10,18 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from adapter_kit import sha256_file
 
 PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0'),
             'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
+HUASHU_PACKAGES = {'playwright': '1.64.0', 'Pillow': '11.3.0', 'numpy': '2.5.4'}
 
 
 def renderer_version(dependency_id):
+    if dependency_id == 'huashu-art-motion':
+        return 'huashu-art-motion-8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c-playwright-1.64.0'
     if dependency_id == 'bb-video':
         return 'bb-video-a21025a19d382b066ff354d877919be9d6863f97'
     return '-'.join(PACKAGES[dependency_id])
@@ -147,6 +151,8 @@ def _node_preflight(project, dependency_id):
 
 def validate_runtime_identity(project, identity, *, dependency_id):
     """Validate a frozen generation identity without requiring its old tools."""
+    if dependency_id == 'huashu-art-motion':
+        return _validate_huashu_runtime_identity(project, identity)
     source_key = 'source_sha256' if dependency_id == 'bb-video' else 'lock_sha256'
     source_digest = (_bb_source_digest(project) if dependency_id == 'bb-video' else
                      hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest())
@@ -170,6 +176,91 @@ def _bb_source_digest(project):
     from motion_native_skill_adapter import source_root
     source_root(project, dependency_id='bb-video')
     return sha256_file(Path(project) / 'references/bb-video-native-source.json')
+
+
+def _huashu_source_digest(project):
+    from motion_native_skill_adapter import source_root
+    source_root(project, dependency_id='huashu-art-motion')
+    return sha256_file(Path(project) / 'references/huashu-art-motion-native-source.json')
+
+
+def _huashu_environment(project):
+    project = Path(project).resolve(strict=True)
+    return {'PYTHONPATH': str(project / 'runtime/handdraw-python312'),
+            'PYTHONHOME': '', 'PYTHONDONTWRITEBYTECODE': '1',
+            'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD': '1',
+            'PLAYWRIGHT_BROWSERS_PATH': str(project / 'runtime/motion-native-playwright-1.64.0/browsers')}
+
+
+def _validate_huashu_runtime_identity(project, identity):
+    keys = {'schema_version', 'dependency_id', 'renderer_version', 'source_sha256',
+            'tools', 'browser', 'packages', 'environment'}
+    if (not isinstance(identity, dict) or set(identity) != keys
+            or identity['schema_version'] != 1 or identity['dependency_id'] != 'huashu-art-motion'
+            or identity['renderer_version'] != renderer_version('huashu-art-motion')
+            or identity['source_sha256'] != _huashu_source_digest(project)
+            or identity['packages'] != HUASHU_PACKAGES
+            or not isinstance(identity['tools'], dict)
+            or set(identity['tools']) != {'python', 'ffmpeg', 'ffprobe'}):
+        raise ValueError('Frozen Huashu runtime differs from its original source or Python dependencies')
+    for item in [*identity['tools'].values(), identity['browser']]:
+        if (not isinstance(item, dict) or set(item) != {'path', 'version'}
+                or not isinstance(item['path'], str) or not Path(item['path']).is_absolute()
+                or not isinstance(item['version'], str) or not item['version'].strip()):
+            raise ValueError('Huashu requires actual Python, FFmpeg and browser tool identities')
+    python_version = re.fullmatch(r'Python (\d+)\.(\d+)\.\d+', identity['tools']['python']['version'])
+    if not python_version or tuple(map(int, python_version.groups())) != (3, 12):
+        raise ValueError('Huashu native workflow requires its prepared Python 3.12 runtime')
+    environment = _huashu_environment(project)
+    environment['PATH'] = os.pathsep.join(dict.fromkeys([
+        *(str(Path(identity['tools'][name]['path']).parent) for name in ('ffmpeg', 'ffprobe')),
+        '/usr/bin', '/bin']))
+    if identity['environment'] != environment:
+        raise ValueError('Frozen Huashu Python or browser environment changed')
+    return identity
+
+
+def _check_huashu_tools(project):
+    """Use the already prepared Python prefix and original Playwright browser."""
+    project = Path(project).resolve(strict=True)
+    if sys.version_info[:2] != (3, 12):
+        raise ValueError('Huashu requires the installed Python 3.12 interpreter')
+    search = str(project / 'runtime/ffmpeg-9.0.2/bin') + os.pathsep + os.environ.get('PATH', '')
+    tools = {'python': sys.executable,
+             **{name: shutil.which(name, path=search) for name in ('ffmpeg', 'ffprobe')}}
+    if not all(tools.values()):
+        raise ValueError('Huashu requires installed Python, FFmpeg and FFprobe')
+    tools = {name: str(Path(value).resolve(strict=True)) for name, value in tools.items()}
+    environment = _huashu_environment(project)
+    environment['PATH'] = os.pathsep.join(dict.fromkeys([
+        *(str(Path(tools[name]).parent) for name in ('ffmpeg', 'ffprobe')), '/usr/bin', '/bin']))
+    script = (
+        "import importlib.metadata as m,importlib.util,json,os,sys;from pathlib import Path;"
+        "from playwright.sync_api import sync_playwright;"
+        "p=sync_playwright().start();b=p.chromium.launch();"
+        "driver=Path(importlib.util.find_spec('playwright').origin).parent/'driver/package/browsers.json';"
+        "revision=next(x['revision'] for x in json.loads(driver.read_bytes())['browsers'] if x['name']=='chromium-headless-shell');"
+        "cache=Path(os.environ['PLAYWRIGHT_BROWSERS_PATH'])/('chromium_headless_shell-'+revision);"
+        "shells=[x for x in cache.rglob('chrome-headless-shell') if x.is_file()];"
+        "assert len(shells)==1,'original Playwright headless executable is missing or ambiguous';"
+        "print(json.dumps({'python':'Python '+sys.version.split()[0],"
+        "'packages':{k:m.version(k) for k in " + repr(list(HUASHU_PACKAGES)) + "},"
+        "'browser':str(shells[0].resolve()),'version':b.version}));b.close();p.stop()"
+    )
+    result = subprocess.run([tools['python'], '-B', '-c', script], check=True, capture_output=True,
+                            text=True, timeout=30, env={**os.environ, **environment})
+    actual = json.loads(result.stdout)
+    versions = {'python': actual['python'], **{name: _tool_version(tools[name], name) for name in ('ffmpeg', 'ffprobe')}}
+    identity = {'schema_version': 1, 'dependency_id': 'huashu-art-motion',
+        'renderer_version': renderer_version('huashu-art-motion'), 'source_sha256': _huashu_source_digest(project),
+        'tools': {name: {'path': value, 'version': versions[name]} for name, value in tools.items()},
+        'browser': {'path': actual['browser'], 'version': actual['version']},
+        'packages': actual['packages'], 'environment': environment}
+    _validate_huashu_runtime_identity(project, identity)
+    return {'status': 'ready', 'runtime_root': str(project / 'runtime/handdraw-python312'),
+            'renderer_version': identity['renderer_version'], 'tools': tools, 'tool_versions': versions,
+            'environment': environment, 'browser': actual['browser'], 'browser_version': actual['version'],
+            'runtime_identity': identity}
 
 
 def _check_bb_tools(project):
@@ -212,6 +303,8 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
                 'tool_versions': {'ffprobe': _tool_version(ffprobe, 'ffprobe')}}
     if dependency_id == 'bb-video':
         return _check_bb_tools(project)
+    if dependency_id == 'huashu-art-motion':
+        return _check_huashu_tools(project)
     name, version = PACKAGES[dependency_id]
     node, node_version = _node_preflight(project, dependency_id)
     root = runtime_root(project, dependency_id=dependency_id)
@@ -308,6 +401,10 @@ def check_template_dependencies(project, *, dependency_id, template_id, mode='re
 
 
 def prepare(project, *, dependency_id='barty-motion-graphics'):
+    if dependency_id == 'huashu-art-motion':
+        # Runtime preparation is explicit and shared with HandDraw. This bridge
+        # only checks it; it never downloads Python packages, browsers or models.
+        return check(project, dependency_id=dependency_id)
     if dependency_id == 'bb-video':
         return check(project, dependency_id=dependency_id)
     name, version = PACKAGES[dependency_id]

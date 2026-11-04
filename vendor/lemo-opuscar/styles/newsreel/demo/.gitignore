@@ -1,7 +1,0 @@
-# downloads and derived media: rebuilt by build.sh (see SOURCES.md, tools/fetch_sources.sh)
-raw/
-assets/
-out/
-fonts/*.ttf
-voice/out/
-work/

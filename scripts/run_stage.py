@@ -20,6 +20,11 @@ from time import perf_counter
 SKILL = PACKAGE_ROOT
 
 
+def _creative_adapters():
+    from edit.hd.tools.dependency_contracts import CREATIVE_SKILL_ADAPTERS
+    return CREATIVE_SKILL_ADAPTERS
+
+
 def _operation(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
@@ -199,6 +204,8 @@ def _validate_prepared_native_inputs(job, project, director, treatment, *, plann
     validate_selected_inputs(job, prepared, treatment)
     validate_talkcraft_inputs(job, prepared, treatment)
     validate_motion_inputs(job, prepared, treatment)
+    for name in ('anidoodle_native_adapter', 'sweety_native_adapter'):
+        _module(name).validate_selected_inputs(job, prepared, treatment)
     _validate_selected_native_sources(job, prepared, treatment)
     _validate_existing_native_schemas(job, project, prepared, treatment)
     _validate_selected_lemo_workflows(job, project, prepared, treatment)
@@ -525,7 +532,7 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
     """Only after whole-list approval: hand off missing native creative work."""
     native_modules = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                       'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
-                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter'}
+                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter', **_creative_adapters()}
     from edit.hd.tools.subtitles_v2 import subtitle_layout
     scenes = {(s.get('segment_id'), s.get('component_id')): s for s in treatment.get('scenes', [])}
     actions = []
@@ -548,7 +555,7 @@ def pending_native_actions(job, director: dict, treatment: dict) -> list:
                 composition = segment['visual_strategy'].get('composition', {})
                 zones, placement = subtitle_layout(segment['visual_strategy']['mode'], composition)
                 options = ({'approved_task_source': module.task_source(director, treatment, segment['segment_id'], cid)}
-                           if dependency in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'} else {})
+                           if dependency in _creative_adapters() else {})
                 if dependency != 'lemo-wake':
                     options['defer_runtime'] = True
                 action = module.native_task(job, {'segment_id': segment['segment_id']},
@@ -586,7 +593,9 @@ _NATIVE_MODULES = {
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
-    'huashu-art-motion': ('huashu_motion_adapter', 'python'),
+    'huashu-art-motion': ('motion_native_skill_adapter', 'python'),
+    'anidoodle': ('anidoodle_native_adapter', 'python'),
+    'sweety-handdraw-video': ('sweety_native_adapter', 'python'),
     'overlay-studio-native': ('overlay_studio_adapter', 'python'),
     'openfilm-motion-graphics': ('openfilm_motion_adapter', 'python'),
     'huashu-motion-native': ('huashu_stat_adapter', 'python'),
@@ -652,7 +661,7 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
     router = _module('broll_capability_router')
     scenes = {(scene.get('segment_id'), scene.get('component_id')): scene
               for scene in treatment.get('scenes', [])}
-    motion = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
+    motion = _creative_adapters()
     bindings = []
     for segment in director['segments']:
         for component in segment['visual_strategy']['components']:
@@ -673,7 +682,7 @@ def prepare_visual_dependencies(project: Path, director: dict, *, job, treatment
                 payload = _path(job, scene['brief_path']).read_bytes()
                 if hashlib.sha256(payload).hexdigest() != binding.get('brief_sha256'):
                     raise ValueError('Native brief differs from its selected binding')
-                module = _module('motion_native_skill_adapter')
+                module = _module(_creative_adapters()[binding['dependency_id']])
                 brief = module.validate_brief(payload, dependency_id=binding['dependency_id'])
                 if brief['job_id'] != job.job_id:
                     raise ValueError('Native brief belongs to another Job')
@@ -778,8 +787,8 @@ def native_component_adapters(project: Path, job) -> dict:
             adapters[dependency] = _module('whiteboard_adapter').create_adapter(
                 vendor / 'codex-whiteboard-video-skill', engine, sys.executable,
                 engine / '.venv/bin/python', shutil.which('ffmpeg'), shutil.which('ffprobe'), brief_loader)
-        elif dependency in {'video-talkcraft', 'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
-            module = _module('talkcraft_skill_adapter' if dependency == 'video-talkcraft' else 'motion_native_skill_adapter')
+        elif dependency == 'video-talkcraft' or dependency in _creative_adapters():
+            module = _module('talkcraft_skill_adapter' if dependency == 'video-talkcraft' else _creative_adapters()[dependency])
             options = {} if dependency == 'video-talkcraft' else {'dependency_id': dependency}
             adapters[dependency] = {
                 (segment['segment_id'], component['component_id']): module.create_adapter(

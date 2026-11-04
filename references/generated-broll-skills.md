@@ -4,7 +4,7 @@
 
 Paper 的原生 HyperFrames 路线通过 `scripts/paper_hyperframes_adapter.py`（`dependency_id=paper-collage-hyperframes`）执行；HyperFrames Registry 的竖屏结构适配继续使用 `scripts/hyperframes_native_adapter.py`。两者冻结 Job HTML 及实际图片资产，调用同一上游 CLI 0.8.19，不在预览末尾临时覆盖旧视频；每段来源分别标为 Paper 的文档路线或 Registry 原组件。Paper 专用入口只增加实际运动检查，不改变其他已确认组件的入口身份。图片和时间轴均进入正式配方，结构重排仍是 `custom_fallback`，不是已验证整屏模板。TalkCraft 原生计数器允许真实有限数值，必须绑定 `numeric_values` 与 `linear`，不得把含数字内容伪装为无数字图解。
 
-主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。新计划只把已核对、可实际调用的完整原生入口列为候选；Lemo-Opuscar 59 个独立 style 已按 [Lemo 接入说明](lemo-opuscar.md)接入，OneTake 的历史制作记录仍仅供追溯。选择后先读取完整上游 Skill 及 composition/motion/look 指引。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。固定提交、brief、workflow、探针和无 smoke 不宣称完成的边界见[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)。
+主 Skill 负责理解当前口播、选择视觉作用、安排时码、调用现成 Skill、验收并合成。子 Skill 负责它已经实现的绘制或动画能力。新计划只把已核对、可实际调用的完整原生入口列为候选；Lemo-Opuscar 66 个独立 style 已按 [Lemo 接入说明](lemo-opuscar.md)接入，OneTake 的历史制作记录仍仅供追溯。选择后先读取完整上游 Skill 及 composition/motion/look 指引。不要把“读取说明”“沿用风格词”“自己写一套动画”描述成实际调用。固定提交、brief、workflow、探针和无 smoke 不宣称完成的边界见[上游场景 Skill 与本地渲染合同](upstream-scene-skills.md)。
 
 TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚改变时序时，使用独立的 `talkcraft-native-adaptation` 适配器和 Job 内冻结源码；保留上游真实动画实现，只调整当前镜头内容、布局与时间。绑定标为 `custom_fallback / structural`，不能借用 `hd-talking-head-talkcraft` 的已合格整屏配方身份。每段经实际渲染与当前口播验收后才能作为正式资产；单独草稿不是正式接入通过。
 
@@ -32,11 +32,11 @@ TalkCraft 原始卡片需要竖屏重排、去掉演示人物或按当前词锚�
 | Paper Collage Ad | 可用纸片动作讲清的隐喻、组装、汇聚、门槛变化 | 单镜头分层动画已接入公共组件执行器并实测；不用完整广告改稿、配音、音乐或 CTA。真纸感图层及每段动作、构图仍须验收，不是通用已验证模板。 |
 | Flat Animation | 知识图解、分类、对比、连接与状态变化 | 当前核对的是 `muyang-flat-animation`，使用前确认它是否为用户所指仓库。只编排其动画方案、画风和完成静帧；动态视频交给本 Job 启动时确认的视频渠道，不能说 Flat 原生视频入口已执行。当前片段仍须真实验收。 |
 | GBRO Collage B-roll | 口播概念的视觉隐喻、半调纸片逐件组装 | 用户指定的 `pyang5166/gbro-collage-broll` 已纳入启动源码检查；实际编排其隐喻方案和拼贴静帧，图片与视频分别使用本 Job 已确认渠道。不是本地分层动画器，也不宣称 GBRO 原生视频入口已执行；当前片段仍须真实验收。 |
-| Huashu 原生动效 | 三节点机制流程、单张横向来源图整行高亮、三张原生功能卡 | 固定 vendor 不改源码；`y1_kurzgesagt`、`y2_vox` 与 `t2_keynote_ui` 已完成统一启动器的双输入真实执行及对应父级检查并登记；Vox 须按实际高亮过程检查正文和来源避让。功能卡仅限 `product_features` 与恰好三张卡，不扩写成未测变体；子进程统一设置连接等待容量 64，原生动效保持不变。 |
+| Huashu 原生动效 | 完整 grammar 与原生主题风格流程 | 原版 vendor 保持不变；统一完整 Skill 接口，当前竖屏支持 8 个 grammar 和 35 个已成型风格；grammar 的真实 alpha 可用于贴片。研究卡与原生固定 16:9 路线不进当前生产候选，详见专用合同。 |
 
 除 Huashu 已登记的精确范围外，以上其他候选不自动登记成 `verified_third_party`。Paper 分层引擎与 Whiteboard SVG 分组入口已有下述组件接口，但每段自定义画面仍是 `custom_fallback`，不是已验证模板。其他源码没有兼容的正式来源绑定时仅作来源参考，不进入候选或计数，不伪造 renderer 名称，也不把生成物改叫 `local_material` 绕过原来源门。
 
-Huashu 的 brief、能力边界与实际调用见[Huashu 原生动效接入](huashu-native-motion.md)。当前仅三节点机制流程、单张横向来源图整行高亮和三张功能卡取得资格，三条路线共用未改第三方文件的原生启动器。35 个场景不是模板数量，启动准备、候选快照和源码存在不能写成 `verified`。
+Huashu 的 brief、能力边界与实际调用见[Huashu 原生动效接入](huashu-native-motion.md)。当前完整接入原生 workflow，竖屏候选为 8 个 grammar 与 35 个已成型风格，共 43 个模板；研究卡、通用 scene 和原生仅支持 16:9 的卡不凑竖屏生产数量。grammar 按真实 alpha 支持贴片，旧窄固定入口退出现行选型。源码存在不等于本主题成片已验收。
 
 ## 选型与适配顺序
 

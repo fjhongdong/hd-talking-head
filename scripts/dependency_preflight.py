@@ -222,7 +222,7 @@ def _load_manifest(path: Path) -> dict[str, Any]:
                 or set(entry) - {"id", "script", "arguments", "node_tool", "dependency_ids"}
                 or entry["id"] not in seen or entry["id"] in preparation_ids
                 or not isinstance(entry["script"], str)
-                or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py", "scripts/prepare_talkcraft.py", "scripts/prepare_talkcraft_native.py", "scripts/whiteboard_adapter.py", "scripts/motion_native_runtime.py"}
+                or entry["script"] not in {"scripts/ensure_punk_cover.py", "scripts/ensure_visual_broll_skills.py", "scripts/hyperframes_runtime.py", "scripts/prepare_talkcraft.py", "scripts/prepare_talkcraft_native.py", "scripts/whiteboard_adapter.py", "scripts/motion_native_runtime.py", "scripts/anidoodle_native_adapter.py", "scripts/sweety_native_runtime.py", "scripts/prepare_handdraw_runtime.py"}
                 or not isinstance(entry["arguments"], list)
                 or any(not isinstance(value, str) for value in entry["arguments"])):
             raise PreflightError("invalid project preparation entry")
@@ -998,14 +998,18 @@ def _check_binding_probe(
     if reviewed_native:
         # This mode is derived only from the real Job's verified frozen
         # realization below. It is deliberately not a CLI/manifest switch.
-        source = dependency_root / 'scripts/motion_native_skill_adapter.py'
+        from edit.hd.tools.dependency_contracts import CREATIVE_SKILL_ADAPTERS, PRIMARY_RENDERERS
+        dependency = selected_binding['dependency_id']
+        module_name = CREATIVE_SKILL_ADAPTERS.get(dependency)
+        if module_name is None:
+            return {'status': 'binding_probe_mismatch'}
+        source = dependency_root / 'scripts' / (module_name + '.py')
         spec = importlib.util.spec_from_file_location('_preflight_reviewed_native', source)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        dependency = selected_binding['dependency_id']
         expected_identity = {'adapter_type': 'ReferenceProcessAdapter',
-            'approved_executor': 'reference_adapter', 'primary_renderer': module.primary_renderer(dependency)}
-        if (dependency not in module.SOURCES or entrypoint != module.ENTRY
+            'approved_executor': 'reference_adapter', 'primary_renderer': PRIMARY_RENDERERS[dependency]}
+        if (entrypoint != module.ENTRY
                 or producer_version != module.VERSION or identity != expected_identity):
             return {'status': 'binding_probe_mismatch'}
         module.source_root(project_root, dependency_id=dependency)
@@ -1401,7 +1405,8 @@ def _reviewed_native_dependencies(project_root: Path, identity: dict, visual_pla
         visual_canary.approved_aroll_record(job, plan)
     except (OSError, ValueError, KeyError, TypeError, state.WorkflowError, visual_canary.VisualCanaryError) as error:
         raise PreflightError('reviewed native realization is invalid: ' + str(error)) from error
-    native = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
+    from edit.hd.tools.dependency_contracts import CREATIVE_SKILL_ADAPTERS
+    native = CREATIVE_SKILL_ADAPTERS
     return {component['dependency_id'] for segment in plan['segments']
             for component in segment['shot_recipe']['components']
             if component.get('kind') == 'code_generated' and component.get('dependency_id') in native}

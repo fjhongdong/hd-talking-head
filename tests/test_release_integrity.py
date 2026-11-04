@@ -107,7 +107,8 @@ class ReleaseIntegrityTests(unittest.TestCase):
             f"hd-talking-head/semantic-state-{family}"
             for family in ("replacement", "threshold", "delay", "hierarchy", "feedback")
         }
-        self.assertEqual(len(template_ids), 16)
+        self.assertEqual(len(template_ids), 13)
+        self.assertFalse(any(identity.startswith('huashu-art-motion/') for identity in template_ids))
         self.assertIn("hd-talking-head/relation-motion", template_ids)
         self.assertTrue(semantic_ids.issubset(template_ids))
         self.assertIn("relation_motion: registered", semantic)

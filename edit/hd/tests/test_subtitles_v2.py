@@ -19,6 +19,83 @@ def _record(name: str) -> dict[str, object]:
 
 
 class FormalSubtitleContractTests(unittest.TestCase):
+    def _native_caption_fixture(self):
+        visual = copy.deepcopy(self.visual_plan)
+        segment = visual['segments'][1]
+        segment['shot_recipe']['composition']['family'] = 'single_full_frame'
+        component = {'component_id': 'native-scene', 'dependency_id': 'sweety-handdraw-video',
+                     'template_id': 'sweety-handdraw-video/style-paper-collage',
+                     'layer_role': 'base', 'artifact_contract': {'alpha': False},
+                     'brief_sha256': 'a' * 64, 'renderer_version': 'pinned-sweety-renderer'}
+        segment['shot_recipe']['components'] = [component]
+        source = {'dependency_id': component['dependency_id'], 'template_id': component['template_id'],
+                  'component_id': component['component_id'], 'segment_id': segment['segment_id'],
+                  'result_record': {'path': 'native-inputs/sweety-result.json', 'sha256': 'b' * 64, 'bytes': 123}}
+        return visual, component, source
+
+    def test_native_style_retains_every_text_clock_and_srt_cue_without_parent_drawing(self):
+        visual, _, source = self._native_caption_fixture()
+        ordinary, owned = [], []
+        arguments = dict(records=self.records, words=self.words, timeline=self.timeline,
+                         visual_plan=visual, keyword_index=self.keywords)
+        before = subtitles_v2.build_render_plan(**arguments, renderer_cues=ordinary)
+        after = subtitles_v2.build_render_plan(**arguments, renderer_cues=owned,
+                    native_caption_sources={'seg-002': source})
+        self.assertEqual(before, after)
+        self.assertEqual(subtitles._srt_bytes(before['cues']), subtitles._srt_bytes(after['cues']))
+        self.assertEqual(ordinary, [{k: v for k, v in cue.items() if k != 'native_caption'} for cue in owned])
+        for cue, rendered in zip(after['cues'], owned):
+            self.assertEqual(talkcraft_subtitles.renderer_owns_cue(rendered), cue['segment_id'] != 'seg-002')
+        captured = []
+        with mock.patch.object(subtitles, '_verify_alpha_frames', side_effect=lambda _, samples: captured.extend(samples)):
+            talkcraft_subtitles.verify_geometry(3, after, talkcraft_subtitles.renderer_input(after, owned))
+        self.assertTrue(any(cue is not None for frame, cue in captured if 0 < frame / 24 < 2))
+        self.assertTrue(all(cue is None for frame, cue in captured if 2 <= frame / 24 < 4))
+
+    def test_native_caption_owner_requires_frozen_completion_and_exact_original_words(self):
+        visual, component, source = self._native_caption_fixture()
+        local_words = [{'text': w['text'], 'start': max(0, w['start'] - 2), 'end': min(4, w['end']) - 2}
+                       for w in self.words if w['start'] < 4 and w['end'] > 2]
+        brief = {'template_id': 'style-paper-collage', 'transcript': ''.join(w['text'] for w in local_words),
+                 'word_anchors': local_words, 'source_binding': {'segment_id': 'seg-002', 'start': 2, 'end': 4}}
+        result = {'native_captions': True, 'subtitle_owner': 'sweety_native', 'alpha': False}
+        adapter = SimpleNamespace(validate_brief=mock.Mock(return_value=brief), load_result=mock.Mock(return_value=result))
+        with tempfile.TemporaryDirectory() as directory:
+            file = Path(directory) / 'brief.json'; file.write_bytes(b'exact frozen brief')
+            job = SimpleNamespace(job_dir=Path(directory))
+            mapping = {'native_inputs': [{'segment_id': 'seg-002', 'component_id': component['component_id'],
+                        'artifact': {'sha256': component['brief_sha256']}}]}
+            with mock.patch.object(subtitles_v2.visual_confirmation, 'validate_visual_authorization', return_value={'mapping': mapping}), \
+                 mock.patch.object(subtitles_v2.visual_confirmation, '_native_result_adapter', return_value=adapter), \
+                 mock.patch.object(subtitles_v2.visual_confirmation, '_exact', return_value=file), \
+                 mock.patch.object(subtitles_v2.visual_confirmation, 'native_result_descriptor', return_value=source['result_record']):
+                self.assertEqual(subtitles_v2._native_caption_sources(job, visual, self.words, self.timeline), {'seg-002': source})
+                adapter.load_result.assert_called_with(job.job_dir, file.read_bytes(), expected_record=source['result_record'],
+                                                       expected_renderer_version=component['renderer_version'])
+                for altered in ({**result, 'native_captions': False}, {**result, 'subtitle_owner': 'parent'}):
+                    adapter.load_result.return_value = altered
+                    with self.assertRaises(subtitles_v2.SubtitlesV2Error):
+                        subtitles_v2._native_caption_sources(job, visual, self.words, self.timeline)
+                adapter.load_result.return_value = result
+                brief['word_anchors'] = [{**w, 'start': w['start'] + .1} for w in local_words]
+                with self.assertRaises(subtitles_v2.SubtitlesV2Error):
+                    subtitles_v2._native_caption_sources(job, visual, self.words, self.timeline)
+
+    def test_web_overlay_and_other_channels_keep_parent_subtitles_without_native_flags(self):
+        visual, component, _ = self._native_caption_fixture()
+        with mock.patch.object(subtitles_v2.visual_confirmation, 'validate_visual_authorization', side_effect=AssertionError('not a native style film')):
+            for dependency, template, alpha, layer in (
+                ('sweety-handdraw-video', 'sweety-handdraw-video/web-paper', True, 'annotation'),
+                ('anidoodle', 'anidoodle/paper-craft', False, 'base'),
+                ('sweety-handdraw-video', 'sweety-handdraw-video/style-paper-collage', True, 'annotation'),
+            ):
+                component.update(dependency_id=dependency, template_id=template, layer_role=layer,
+                                 artifact_contract={'alpha': alpha})
+                self.assertEqual(subtitles_v2._native_caption_sources(SimpleNamespace(), visual, self.words, self.timeline), {})
+        for source in (True, {'hide': True}, {'dependency_id': 'other'}):
+            with self.assertRaises(talkcraft_subtitles.TalkCraftSubtitleError):
+                talkcraft_subtitles.renderer_owns_cue({'native_caption': source})
+
     def test_subtitle_inventory_has_no_thumbnail_artifact(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "10-subtitles"

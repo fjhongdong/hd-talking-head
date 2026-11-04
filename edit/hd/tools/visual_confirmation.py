@@ -12,6 +12,7 @@ import tempfile
 from types import SimpleNamespace
 from pathlib import Path
 from . import contract_artifacts as artifacts
+from .dependency_contracts import CREATIVE_SKILL_ADAPTERS
 
 SCHEMA = "visual-confirmation-v1"
 DIRECTORY = "07-visual-confirmation"
@@ -44,7 +45,7 @@ def _exact(root, record):
 
 NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                          'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
-                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter'}
+                         'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter', **CREATIVE_SKILL_ADAPTERS}
 
 def native_candidate_id(dependency, brief, segment=None, component_id=None):
     if dependency == 'lemo-wake':
@@ -1936,7 +1937,7 @@ def _generation_step_action(job, authorized, step):
             'authorization': {'source': authorized['artifact'], 'steps': {rid: step['id']}}}
 
 
-MOTION_CREATION = {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
+MOTION_CREATION = frozenset(CREATIVE_SKILL_ADAPTERS)
 
 
 def _lemo_number_change(old_text, new_text):

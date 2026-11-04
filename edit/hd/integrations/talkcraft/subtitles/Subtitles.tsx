@@ -29,7 +29,7 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
   const {fps} = useVideoConfig();
   const t = frame / fps;
   const cue = cues.find((item) => t >= item.start && t < item.end);
-  if (!cue) return null;
+  if (!cue || cue.native_caption) return null;
 
   const emphasis = emphasisRange(cue);
   const narrow = cue.placement === 'above_avatar';

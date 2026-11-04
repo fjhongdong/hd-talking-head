@@ -5,6 +5,7 @@ from scripts.package_paths import PACKAGE_ROOT
 
 import math
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -22,6 +23,32 @@ UPSTREAM_SHA256 = "fee88ad65d35422220fddf56c9de9efeeee85a9c28a2ca6122dcc0bfadf42
 
 class TalkCraftSubtitleError(ValueError):
     """The local renderer or its source/clock binding is invalid."""
+
+
+def validate_native_caption_source(source: Mapping[str, Any]) -> None:
+    """Validate provenance emitted only after the frozen native result is checked."""
+    if (not isinstance(source, Mapping)
+            or set(source) != {'dependency_id', 'template_id', 'segment_id', 'component_id', 'result_record'}
+            or source['dependency_id'] != 'sweety-handdraw-video'
+            or not isinstance(source['template_id'], str)
+            or re.fullmatch(r'sweety-handdraw-video/style-[a-z0-9-]+', source['template_id']) is None
+            or any(not isinstance(source[k], str) or not source[k] for k in ('segment_id', 'component_id'))):
+        raise TalkCraftSubtitleError('native caption source must be the verified Sweety style film')
+    record = source['result_record']
+    if (not isinstance(record, Mapping) or set(record) != {'path', 'sha256', 'bytes'}
+            or not isinstance(record['path'], str) or Path(record['path']).is_absolute()
+            or '..' in Path(record['path']).parts or not record['path'].startswith('native-inputs/')
+            or not record['path'].endswith('.json')
+            or re.fullmatch(r'[a-f0-9]{64}', str(record['sha256'])) is None
+            or type(record['bytes']) is not int or record['bytes'] < 1):
+        raise TalkCraftSubtitleError('native captions require the exact frozen completion descriptor')
+
+
+def renderer_owns_cue(cue: Mapping[str, Any]) -> bool:
+    if 'native_caption' not in cue:
+        return True
+    validate_native_caption_source(cue['native_caption'])
+    return False
 
 
 def _utf16_length(text: str) -> int:
@@ -125,6 +152,8 @@ def validate_binding(payload: Mapping[str, Any]) -> None:
     if len(actual) != len(plan["cues"]):
         raise TalkCraftSubtitleError("TalkCraft subtitle cue count changed")
     for cue, rendered in zip(plan["cues"], actual):
+        if not renderer_owns_cue(rendered) and rendered['native_caption']['segment_id'] != cue['segment_id']:
+            raise TalkCraftSubtitleError('native caption source belongs to another subtitle segment')
         if any(rendered.get(key) != cue[source] for key, source in
                (("cue_id", "id"), ("start", "start"), ("end", "end"), ("text", "text"))):
             raise TalkCraftSubtitleError("TalkCraft subtitle content or window changed")
@@ -192,8 +221,9 @@ def verify_geometry(descriptor: int, plan: Mapping[str, Any], data: Mapping[str,
         if cue["emphasis"] is not None:
             peak = (cue["emphasis"]["start"] + 0.18) * 24
             samples.update((math.floor(peak), math.ceil(peak)))
+    parent_ids = {cue['cue_id'] for cue in data['cues'] if renderer_owns_cue(cue)}
     subtitles._verify_alpha_frames(descriptor, [
         (frame, next((cue for cue in plan["cues"]
-                      if cue["start"] <= frame / 24 < cue["end"]), None))
+                      if cue['id'] in parent_ids and cue["start"] <= frame / 24 < cue["end"]), None))
         for frame in sorted(samples) if 0 <= frame < frames
     ])

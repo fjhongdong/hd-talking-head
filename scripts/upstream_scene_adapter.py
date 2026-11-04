@@ -30,32 +30,89 @@ VERSION = "2.0.0"
 ONETAKE_PACKAGES = {"playwright": "1.61.0", "numpy": "2.5.3", "Pillow": "12.3.0",
                     "scipy": "1.18.1", "matplotlib": "3.11.2", "fonttools": "4.66.1", "brotli": "1.2.0"}
 SOURCES = {
-    "lemo-opuscar": ("413a6bd6d78ebd3bdd5abaec9538a26867f890df", "core/render/video.mjs"),
+    "lemo-opuscar": ("bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00", "core/render/video.mjs"),
     "onetake": ("415758128aa45cc54340df40d8109363447f582e", "scripts/render.py"),
 }
 
 def lemo_styles(project_root):
     """Read the vendor's official style catalog; never maintain a second registry."""
-    project = Path(project_root).resolve(strict=True)
-    root = project / "vendor/lemo-opuscar"
-    if root.is_symlink() or not root.is_dir():
-        raise ValueError("Lemo source must be the project-local vendor checkout")
+    _, root, source = lemo_source_record(project_root)
     styles = root / "styles"
+    names = {match.group(1) for name in source["files"]
+             if (match := re.fullmatch(r"styles/([^/]+)/style\.json", name))
+             and match.group(1) != "_template"}
+    actual = {p.name for p in styles.iterdir() if p.is_dir() and p.name != "_template"}
+    if actual != names:
+        raise ValueError("Lemo style directories differ from the pinned source manifest")
     result = {}
-    for directory in sorted(styles.iterdir()):
-        if not directory.is_dir() or directory.name == "_template":
+    for name in sorted(names):
+        if name == "_template":
             continue
+        directory = styles / name
+        if directory.is_symlink() or not directory.is_dir():
+            raise ValueError("Lemo official style directory is missing: " + name)
         meta_path, guide = directory / "style.json", directory / "STYLE.md"
-        if not meta_path.is_file() or not guide.is_file():
-            raise ValueError("Lemo style is incomplete: " + directory.name)
+        for path in (meta_path, guide):
+            name = path.relative_to(root).as_posix()
+            if (path.is_symlink() or not path.is_file() or not path.resolve().is_relative_to(root)
+                    or source["files"].get(name) != sha(path)):
+                raise ValueError("Lemo original style is missing or changed: " + name)
         meta = json.loads(meta_path.read_text())
         if not isinstance(meta, dict) or meta.get("slug") != directory.name:
             raise ValueError("Lemo style slug does not match its directory")
         result[directory.name] = {"slug": directory.name, "style": meta,
                                   "style_json": str(meta_path), "style_md": str(guide)}
-    if len(result) != 59:
-        raise ValueError("Lemo official style catalog must contain 59 styles")
+    # The pinned source owns the catalog. Do not duplicate its style count in
+    # discovery or reject new upstream styles after a reviewed source update.
+    if not result:
+        raise ValueError("Lemo official style catalog is empty")
     return result
+
+
+def lemo_source_record(project_root):
+    """The packaged archive's full file manifest is the portable source identity."""
+    project = Path(project_root).resolve(strict=True)
+    root = project / "vendor/lemo-opuscar"
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("Lemo source must be the project-local vendor directory")
+    index = json.loads((project / "archives/sources/index.json").read_bytes())
+    records = [item for item in index["repositories"] if item["path"] == "vendor/lemo-opuscar"]
+    if (len(records) != 1 or records[0].get("commit") != SOURCES["lemo-opuscar"][0]
+            or not isinstance(records[0].get("files"), dict) or not records[0]["files"]
+            or not records[0].get("archives")):
+        raise ValueError("Lemo requires the pinned complete source archive manifest")
+    return project, root, records[0]
+
+
+def verify_lemo_source(project_root):
+    """Verify the complete original source without requiring Git in a release."""
+    project, root, record = lemo_source_record(project_root)
+    excluded = {".git", "node_modules", ".venv", ".cache", "__pycache__"}
+    def verify(inventory):
+        original = [p for p in inventory if not excluded.intersection(p.relative_to(root).parts)]
+        files = {p.relative_to(root).as_posix() for p in original if p.is_file() and not p.is_symlink()}
+        links = {p.relative_to(root).as_posix(): str(p.readlink()) for p in original if p.is_symlink()}
+        if files != set(record["files"]) or links != record.get("symlinks", {}):
+            raise ValueError("Lemo complete source differs from its original file manifest")
+        for name, digest in record["files"].items():
+            path = root / relative(name)
+            if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root) or sha(path) != digest:
+                raise ValueError("Lemo original source changed: " + name)
+        for name in links:
+            if not (root / name).resolve().is_relative_to(root):
+                raise ValueError("Lemo source symlink escapes its source root")
+    from native_result_reuse import source_unchanged
+    return source_unchanged(project, ("upstream", "lemo-opuscar"), root, verify,
+                            records=(project / "archives/sources/index.json",))
+
+
+def lemo_native_fps(project_root, style_slug):
+    """Keep the selected STYLE's motion rate before the parent's 24fps sampling."""
+    style = lemo_styles(project_root)[style_slug]
+    guide = Path(style["style_md"]).read_text()
+    motion = re.search(r"(?ms)^## 5\..*?(?=^## 6\.|\Z)", guide)
+    rates = re.findall(r"\b(24|30|60)\s*fps\b", motion.group(0) if motion else "", re.I)
+    return max([24, *(int(rate) for rate in rates)])
 
 
 
@@ -174,10 +231,13 @@ def check_runtime(project_root, dependency_id):
     root = project / "vendor" / dependency_id
     if root.is_symlink():
         raise ValueError("Upstream source must be project-local, not linked")
-    head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-    dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True)
-    if head != commit or dirty:
-        raise ValueError("Upstream source version changed; do not auto-update or reset it")
+    if dependency_id == "lemo-opuscar":
+        verify_lemo_source(project)
+    else:
+        head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True)
+        if head != commit or dirty:
+            raise ValueError("Upstream source version changed; do not auto-update or reset it")
     executables = {name: shutil.which(name) for name in ("node", "ffmpeg", "ffprobe")}
     if any(not value for value in executables.values()):
         raise ValueError("Install the required local Node and video runtime first")
@@ -358,10 +418,14 @@ def run_native(b, scene, runtime, *, job_dir):
     commit, entry = SOURCES[dependency_id]
     if runtime["commit"] != commit or runtime["entry"] != entry or sha(root / entry) != runtime["entry_sha256"]:
         raise ValueError("Original render entry changed")
-    if subprocess.check_output(["/usr/bin/git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != commit:
-        raise ValueError("Upstream source commit changed")
-    if subprocess.check_output(["/usr/bin/git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True):
-        raise ValueError("Upstream tracked source changed")
+    if dependency_id == "lemo-opuscar":
+        if root != verify_lemo_source(SKILL):
+            raise ValueError("Lemo source root differs from its packaged manifest")
+    else:
+        if subprocess.check_output(["/usr/bin/git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != commit:
+            raise ValueError("Upstream source commit changed")
+        if subprocess.check_output(["/usr/bin/git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True):
+            raise ValueError("Upstream tracked source changed")
     if any(sha(runtime[k]) != v for k, v in runtime["executable_hashes"].items()):
         raise ValueError("Render executable changed")
     if dependency_id == "lemo-opuscar" and sha(root / "node_modules/playwright-core/package.json") != runtime["packages_sha256"]:
@@ -370,6 +434,8 @@ def run_native(b, scene, runtime, *, job_dir):
     duration = b["composition"]["frames"] / 24
     env = dict(os.environ, PATH=":".join({str(Path(runtime[k]).parent) for k in ("node", "ffmpeg", "ffprobe")}) + ":/usr/bin:/bin")
     native = scene / "native.mp4"
+    native_fps = (lemo_native_fps(SKILL, b["style_slug"])
+                  if dependency_id == "lemo-opuscar" else 24)
     if dependency_id == "lemo-opuscar":
         env["PLAYWRIGHT_CHROME"] = runtime["browser"]
         guard = """const {openDemo,closeServer}=await import(process.argv[1]);
@@ -381,7 +447,7 @@ for(const t of [0,d.d/2,d.d-1/24])await page.evaluate(t=>window.render(t),t);
 if(errors.length)throw Error(errors.join(';')); await browser.close();closeServer();"""
         subprocess.run([runtime["node"], "--input-type=module", "-e", guard, (root / "core/render/page.mjs").as_uri(), str(scene), str(duration)],
                        cwd=root, env=env, check=True, timeout=210, capture_output=True, text=True)
-        argv = [runtime["node"], str(root / entry), str(scene), "--size", "1080x1920", "--fps", "24", "--workers", "1", "--out", str(native)]
+        argv = [runtime["node"], str(root / entry), str(scene), "--size", "1080x1920", "--fps", str(native_fps), "--workers", "1", "--out", str(native)]
     else:
         env["PLAYWRIGHT_BROWSERS_PATH"] = runtime["browser_cache"]
         guard = """import sys
@@ -408,23 +474,33 @@ with sync_playwright() as p:
     streams = probe["streams"]
     if (len(streams) != 1 or streams[0]["codec_type"] != "video"
             or (streams[0]["width"], streams[0]["height"]) != (1080, 1920)
-            or Fraction(streams[0]["avg_frame_rate"]) != 24
-            or int(streams[0]["nb_read_frames"]) != b["composition"]["frames"]):
+            or Fraction(streams[0]["avg_frame_rate"]) != native_fps
+            or int(streams[0]["nb_read_frames"]) != round(duration * native_fps)):
         raise ValueError("Native renderer output does not match the frozen artifact clock")
     # Original Lemo JPEG captures carry full-range YUV. Convert the actual range
     # when needed; merely relabelling it as limited-range would damage contrast.
     # No resize, retiming, looping or new animation is performed.
     normalized = scene / "artifact.mp4"
     normalization = ["-c", "copy", "-aspect", "9:16", "-bsf:v", "h264_metadata=sample_aspect_ratio=1/1"]
+    filters = []
+    if native_fps != 24:
+        filters.append("fps=24:eof_action=pass")
     if streams[0].get("pix_fmt") == "yuvj420p" and streams[0].get("color_range") == "pc":
-        normalization = ["-vf", "scale=in_range=pc:out_range=tv,setsar=1", "-c:v", "libx264",
-                         "-crf", "16", "-pix_fmt", "yuv420p", "-color_range", "tv"]
+        filters.append("scale=in_range=pc:out_range=tv")
     elif streams[0].get("pix_fmt") != "yuv420p":
         raise ValueError("Unsupported native video pixel format")
-    subprocess.run([runtime["ffmpeg"], "-v", "error", "-i", str(native), *normalization, str(normalized)], check=True, timeout=30)
+    if filters:
+        normalization = ["-vf", ",".join([*filters, "setsar=1"]), "-c:v", "libx264",
+                         "-frames:v", str(b["composition"]["frames"]),
+                         "-crf", "16", "-pix_fmt", "yuv420p", "-color_range", "tv"]
+    normalization_argv = [runtime["ffmpeg"], "-v", "error", "-i", str(native), *normalization, str(normalized)]
+    subprocess.run(normalization_argv, check=True, timeout=30)
     subprocess.run([runtime["ffmpeg"], "-v", "error", "-i", str(normalized), "-f", "null", "-"], check=True, timeout=30)
     return normalized, {"status": "rendered", "dependency_id": dependency_id, "upstream_commit": commit,
-        "native_entry_sha256": runtime["entry_sha256"], "native_argv": argv, "frames": b["composition"]["frames"],
+        "native_entry_sha256": runtime["entry_sha256"], "native_argv": argv,
+        "native_fps": native_fps, "native_frames": round(duration * native_fps),
+        "normalization_argv": normalization_argv,
+        "frames": b["composition"]["frames"],
         "production_evidence": workflow_reference(b), "native_log": log[-4000:]}
 
 

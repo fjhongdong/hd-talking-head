@@ -79,7 +79,8 @@ SOURCES = {
     },
     "lemo-opuscar": {
         "url": "https://github.com/lemomo-ai/lemo-opuscar.git",
-        "commit": "413a6bd6d78ebd3bdd5abaec9538a26867f890df",
+        "files_snapshot": True,
+        "commit": "bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00",
         "files": ("plugin/skills/lemo-opuscar/SKILL.md", "AGENTS.md",
                   "DIRECTOR.md", "TECHNIQUE.md", "styles/README.md",
                   "core/render/video.mjs", "core/lib.js", "package-lock.json"),
@@ -249,7 +250,7 @@ def prepare_scene_runtime(project_root: Path, skill_id: str) -> None:
     """Prepare only missing local render dependencies; never run upstream auto-update setup."""
     from upstream_scene_adapter import check_runtime, ONETAKE_PACKAGES
     root = project_root / "vendor" / skill_id
-    if _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
+    if skill_id == "onetake" and _git("-C", str(root), "status", "--porcelain", "--untracked-files=no"):
         raise VisualBrollDependencyError("upstream source has local changes; runtime preparation stopped")
     try:
         if skill_id == "lemo-opuscar":

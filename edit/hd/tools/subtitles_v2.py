@@ -25,6 +25,7 @@ from . import (
     talkcraft_subtitles,
     terminology_review,
     visual_canary,
+    visual_confirmation,
 )
 
 
@@ -315,6 +316,7 @@ def build_render_plan(
     event_ids_by_segment: Mapping[str, str] | None = None,
     renderer_cues: list[dict[str, Any]] | None = None,
     protected_phrases: tuple[str, ...] = (),
+    native_caption_sources: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, object]:
     mapped = _display_punctuation(subtitles._map_words(words, timeline))
     duration = float(visual_plan["duration"])
@@ -451,6 +453,12 @@ def build_render_plan(
                 rendered = talkcraft_subtitles.cue_input(render_cue, chunk,
                     placement=placement, long_keyword=long_keyword)
             rendered["bottom"] = bottom
+            native_caption = (native_caption_sources or {}).get(str(segment["segment_id"]))
+            if native_caption is not None:
+                talkcraft_subtitles.validate_native_caption_source(native_caption)
+                if native_caption['segment_id'] != segment['segment_id']:
+                    raise SubtitlesV2Error('native subtitle source belongs to another segment')
+                rendered['native_caption'] = dict(native_caption)
             if event_ids_by_segment is not None:
                 event_id = event_ids_by_segment.get(str(segment["segment_id"]))
                 if event_id is not None:
@@ -481,6 +489,62 @@ def build_render_plan(
     plan = subtitles.validate_subtitle_plan(plan)
     validate_emphasis(plan, keyword_index, list(visual_plan["segments"]), emphasis_times=emphasis_times)
     return plan
+
+
+def _native_caption_sources(job, visual_plan, words, timeline):
+    """Only verified completed Sweety style films own their ordinary captions."""
+    selected = []
+    for segment in visual_plan.get('segments', []):
+        recipe = segment.get('shot_recipe', {})
+        if (recipe.get('mode') not in {'single', 'hybrid'}
+                or recipe.get('composition', {}).get('family') not in
+                    {'single_full_frame', 'evidence_with_data_overlay'}):
+            continue
+        components = [c for c in recipe.get('components', [])
+                      if c.get('dependency_id') == 'sweety-handdraw-video'
+                      and str(c.get('template_id', '')).startswith('sweety-handdraw-video/style-')
+                      and c.get('layer_role') == 'base'
+                      and c.get('artifact_contract', {}).get('alpha') is False]
+        if len(components) > 1:
+            raise SubtitlesV2Error('native caption ownership requires one full-frame base film')
+        if components:
+            selected.append((segment, components[0]))
+    if not selected:
+        return {}
+    # The approved realization already binds the actual request and completion.
+    # Reuse that evidence instead of introducing an editable hide-subtitles flag.
+    authorization = visual_confirmation.validate_visual_authorization(job, require_realized=True)
+    mapping = authorization['mapping']
+    adapter = visual_confirmation._native_result_adapter('sweety-handdraw-video')
+    mapped = subtitles._map_words(words, timeline)
+    sources = {}
+    for segment, component in selected:
+        sid, cid = segment['segment_id'], component['component_id']
+        inputs = [item for item in mapping.get('native_inputs', [])
+                  if (item.get('segment_id'), item.get('component_id')) == (sid, cid)]
+        if len(inputs) != 1 or inputs[0].get('artifact', {}).get('sha256') != component.get('brief_sha256'):
+            raise SubtitlesV2Error('native captions require the exact approved request')
+        payload = visual_confirmation._exact(job.job_dir, inputs[0]['artifact']).read_bytes()
+        brief = adapter.validate_brief(payload)
+        expected = visual_confirmation.native_result_descriptor(job, sid, cid, component['brief_sha256'])
+        result = adapter.load_result(job.job_dir, payload, expected_record=expected,
+                                     expected_renderer_version=component['renderer_version'])
+        local_words = [{'text': word['text'], 'start': max(0, float(word['start']) - segment['start']),
+                        'end': min(segment['end'], float(word['end'])) - segment['start']}
+                       for word in mapped if float(word['start']) < segment['end']
+                       and float(word['end']) > segment['start']]
+        source = brief.get('source_binding', {})
+        if (result.get('native_captions') is not True or result.get('subtitle_owner') != 'sweety_native'
+                or result.get('alpha') is not False
+                or component['template_id'] != 'sweety-handdraw-video/' + brief['template_id']
+                or source.get('segment_id') != sid or source.get('start') != segment['start']
+                or source.get('end') != segment['end']
+                or brief['transcript'] != ''.join(str(word['text']) for word in local_words)
+                or not visual_confirmation.local_word_anchors_match(brief['word_anchors'], local_words)):
+            raise SubtitlesV2Error('native subtitles differ from the approved words or exact local clock')
+        sources[sid] = {'dependency_id': 'sweety-handdraw-video', 'template_id': component['template_id'],
+                        'segment_id': sid, 'component_id': cid, 'result_record': expected}
+    return sources
 
 
 def _load_inputs(job: state.JobState) -> tuple[
@@ -854,6 +918,8 @@ def _validate_published(job: state.JobState) -> Path:
         protected_phrases=_corrected_phrases(job),
         event_ids_by_segment=_load_event_ids(job),
         renderer_cues=renderer_cues,
+        native_caption_sources=_native_caption_sources(job, visual_plan,
+            subtitles._validate_words(transcript), subtitles._validate_timeline(timeline)),
     )
     if (rebuilt != render_plan or payload["renderer_input"] !=
             talkcraft_subtitles.renderer_input(rebuilt, renderer_cues)):
@@ -1059,6 +1125,7 @@ def _prepare_subtitles_v2_locked(job: state.JobState) -> Path:
         protected_phrases=_corrected_phrases(job),
         event_ids_by_segment=event_ids_by_segment,
         renderer_cues=renderer_cues,
+        native_caption_sources=_native_caption_sources(job, visual_plan, words, mapped_timeline),
     )
     try:
         terminology_report = _build_terminology_review(job, words, keyword_index)

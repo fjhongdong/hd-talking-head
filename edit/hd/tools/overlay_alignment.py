@@ -550,7 +550,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
         for cid, binding in segment["bindings"].items():
             if target_keys is not None and (segment['segment_id'], cid) not in target_keys:
                 continue
-            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics"}:
+            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics", "anidoodle", "sweety-handdraw-video", "huashu-art-motion"}:
                 targets.append((segment, cid, binding))
     if not targets:
         return []
@@ -585,18 +585,20 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
         brief = artifacts.read_json_artifact(brief_path)
         expected_source = {"aroll_sha256": arroll_sha, "segment_id": sid,
                            "start": segment["start"], "end": segment["end"]}
-        alpha = brief.get('alpha') if binding.get('dependency_id') == 'barty-motion-graphics' else brief.get('composition', {}).get('alpha')
+        alpha = brief.get('alpha') if binding.get('dependency_id') in {'barty-motion-graphics', 'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} else brief.get('composition', {}).get('alpha')
         if brief.get("source_binding") != expected_source or alpha is not True:
             raise ValueError(f"overlay source or alpha contract changed: {sid}")
         if brief["composition"]["fps"] != fps:
             raise ValueError("native overlay requires the approved 24 fps clock")
-        if binding.get('dependency_id') == 'barty-motion-graphics':
+        if binding.get('dependency_id') in {'barty-motion-graphics', 'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
             from . import motion_capabilities
             from .subtitles import _map_words
             from importlib import import_module
-            native = import_module('motion_native_skill_adapter')
-            native.validate_brief(brief_path.read_bytes(), dependency_id='barty-motion-graphics')
-            route = 'barty-motion-graphics/motion-broll'
+            from .dependency_contracts import CREATIVE_SKILL_ADAPTERS
+            native = import_module(CREATIVE_SKILL_ADAPTERS[binding['dependency_id']])
+            native.validate_brief(brief_path.read_bytes(), dependency_id=binding['dependency_id'])
+            from .overlay_selection import _route
+            route = _route(binding)
             motion_capabilities.validate_overlay_capability(route, binding)
             mapped = _map_words(words, {'segments': cuts})
             anchors = [{'text': word['text'], 'start': max(word['start'], segment['start']) - segment['start'],
@@ -604,7 +606,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
                        for word in mapped if word['start'] < segment['end'] and word['end'] > segment['start']]
             from .visual_confirmation import local_word_anchors_match
             if not local_word_anchors_match(brief['word_anchors'], anchors):
-                raise ValueError('Barty overlay word anchors differ from the approved edited speech')
+                raise ValueError('Native overlay word anchors differ from the approved edited speech')
             if phase not in {'planning', 'completed'}:
                 raise ValueError('Unknown native overlay verification phase')
             result = native.inspect_result(job.job_dir, brief_path.read_bytes()) if phase == 'completed' else None

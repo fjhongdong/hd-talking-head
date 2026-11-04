@@ -1,0 +1,1454 @@
+{
+  "schema_version": 3,
+  "channel": "huashu-art-motion",
+  "repository_commit": "8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c",
+  "counting_rule": "43 current portrait production templates: 8 native grammars + 35 existing style recipes. The independent fixed-landscape SVG style, 17 research recipes and generic scene workflow remain source-only. Output uses never multiply template identities.",
+  "native_paths": [
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-t1-3b1b",
+      "template_id": "grammar-t1-3b1b",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/t1_3b1b.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/t1_3b1b.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "t1_3b1b · 3Blue1Brown 式数学／概念可视化",
+      "summary": "t1_3b1b · 3Blue1Brown 式数学／概念可视化",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "t1_3b1b",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-t2-keynote-ui",
+      "template_id": "grammar-t2-keynote-ui",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/t2_keynote_ui.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/t2_keynote_ui.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "t2_keynote_ui · 发布会式界面与渐变动效",
+      "summary": "t2_keynote_ui · 发布会式界面与渐变动效",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "t2_keynote_ui",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-t3-finance-chart",
+      "template_id": "grammar-t3-finance-chart",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/t3_finance_chart.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/t3_finance_chart.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "t3_finance_chart · 财经数据图表动画",
+      "summary": "t3_finance_chart · 财经数据图表动画",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "t3_finance_chart",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-y1-kurzgesagt",
+      "template_id": "grammar-y1-kurzgesagt",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/y1_kurzgesagt.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/y1_kurzgesagt.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "Y1 · Kurzgesagt 扁平科普：视频动画语法卡",
+      "summary": "Y1 · Kurzgesagt 扁平科普：视频动画语法卡",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "y1_kurzgesagt",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-y2-vox",
+      "template_id": "grammar-y2-vox",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/y2_vox.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/y2_vox.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "Y2 · Vox 式拼贴解说：视频动画语法卡",
+      "summary": "Y2 · Vox 式拼贴解说：视频动画语法卡",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "y2_vox",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-y3-whiteboard",
+      "template_id": "grammar-y3-whiteboard",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/y3_whiteboard.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/y3_whiteboard.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "Y3 · 白板手绘解说（RSA Animate 型）：视频动画语法卡",
+      "summary": "Y3 · 白板手绘解说（RSA Animate 型）：视频动画语法卡",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "y3_whiteboard",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-y4-storytime",
+      "template_id": "grammar-y4-storytime",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/y4_storytime.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/y4_storytime.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "y4 · 故事型简笔角色动画（YouTube storytime animation）",
+      "summary": "y4 · 故事型简笔角色动画（YouTube storytime animation）",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "y4_storytime",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/grammar-y5-kinetic-type",
+      "template_id": "grammar-y5-kinetic-type",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/动画语法/y5_kinetic_type.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/clips/y5_kinetic_type.js",
+      "native_role": "scene",
+      "native_template_group": "grammar",
+      "native_state": "native_workflow",
+      "alpha": true,
+      "title": "y5 · 动态文字排版 / 信息图动效（kinetic typography）",
+      "summary": "y5 · 动态文字排版 / 信息图动效（kinetic typography）",
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "grammar": "y5_kinetic_type",
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-01-cave",
+      "template_id": "style-01-cave",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/01_cave.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "01_cave · 40,000 BC 洞穴岩画（纯代码）",
+      "summary": "01_cave · 40,000 BC 洞穴岩画（纯代码）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-02-egypt",
+      "template_id": "style-02-egypt",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/02_egypt.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "02_egypt · 公元前1350年埃及墓室壁画（纯代码）",
+      "summary": "02_egypt · 公元前1350年埃及墓室壁画（纯代码）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-03-greek",
+      "template_id": "style-03-greek",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/03_greek.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "03_greek · 公元前530 阿提卡黑绘陶器 —— 代码画法笔记",
+      "summary": "03_greek · 公元前530 阿提卡黑绘陶器 —— 代码画法笔记",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-04-roman",
+      "template_id": "style-04-roman",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/04_roman.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "04_roman · 公元79年 庞贝马赛克 —— 手法笔记",
+      "summary": "04_roman · 公元79年 庞贝马赛克 —— 手法笔记",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-05-gothic",
+      "template_id": "style-05-gothic",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/05_gothic.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "05_gothic · 1290 哥特泥金手抄本",
+      "summary": "05_gothic · 1290 哥特泥金手抄本",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-06-renaissance",
+      "template_id": "style-06-renaissance",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/06_renaissance.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "06_renaissance · 1503 文艺复兴盛期（达芬奇式）",
+      "summary": "06_renaissance · 1503 文艺复兴盛期（达芬奇式）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-08-impressionism",
+      "template_id": "style-08-impressionism",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/08_impressionism.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "08_impressionism · 1874 印象派（莫奈）",
+      "summary": "08_impressionism · 1874 印象派（莫奈）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-09-postimp",
+      "template_id": "style-09-postimp",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/09_postimp.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "09_postimp · 1889 梵高（标杆实现）",
+      "summary": "09_postimp · 1889 梵高（标杆实现）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-10-nouveau",
+      "template_id": "style-10-nouveau",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/10_nouveau.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "10_nouveau · 1896 新艺术运动（慕夏海报）",
+      "summary": "10_nouveau · 1896 新艺术运动（慕夏海报）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-11-cubism",
+      "template_id": "style-11-cubism",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/11_cubism.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "11_cubism · 1912 分析立体主义（毕加索／布拉克）",
+      "summary": "11_cubism · 1912 分析立体主义（毕加索／布拉克）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-12-bauhaus",
+      "template_id": "style-12-bauhaus",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/12_bauhaus.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "12_bauhaus · 1923 包豪斯海报",
+      "summary": "12_bauhaus · 1923 包豪斯海报",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-13-pop",
+      "template_id": "style-13-pop",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/13_pop.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "13_pop · 1962 波普（利希滕斯坦漫画格＋沃霍尔四宫格）",
+      "summary": "13_pop · 1962 波普（利希滕斯坦漫画格＋沃霍尔四宫格）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-14-8bit",
+      "template_id": "style-14-8bit",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/14_8bit.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "14_8bit · 1985 8-bit 像素游戏",
+      "summary": "14_8bit · 1985 8-bit 像素游戏",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-15-raytrace",
+      "template_id": "style-15-raytrace",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/15_raytrace.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "15_raytrace · 1993 早期光线追踪 CGI",
+      "summary": "15_raytrace · 1993 早期光线追踪 CGI",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-16-2026",
+      "template_id": "style-16-2026",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/16_2026.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "16_2026 · 2026 扁平矢量插画 ＋ 全片笑点收尾",
+      "summary": "16_2026 · 2026 扁平矢量插画 ＋ 全片笑点收尾",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-17-ink",
+      "template_id": "style-17-ink",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/17_ink.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "17_ink · 中国水墨写意（八大山人／齐白石）",
+      "summary": "17_ink · 中国水墨写意（八大山人／齐白石）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-18-klimt",
+      "template_id": "style-18-klimt",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/18_klimt.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "18_klimt · 克里姆特金色时期（1907）",
+      "summary": "18_klimt · 克里姆特金色时期（1907）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-19-munch",
+      "template_id": "style-19-munch",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/19_munch.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "19_munch · 蒙克《呐喊》式表现主义（1893）",
+      "summary": "19_munch · 蒙克《呐喊》式表现主义（1893）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-20-dunhuang",
+      "template_id": "style-20-dunhuang",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/20_dunhuang.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "20_dunhuang · 敦煌壁画（莫高窟·盛唐）",
+      "summary": "20_dunhuang · 敦煌壁画（莫高窟·盛唐）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-21-kusama",
+      "template_id": "style-21-kusama",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/21_kusama.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "21_kusama · 草间弥生无限波点",
+      "summary": "21_kusama · 草间弥生无限波点",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-22-constructivism",
+      "template_id": "style-22-constructivism",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/22_constructivism.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "22_constructivism · 1924 俄罗斯构成主义海报（罗德琴科 / 李西茨基）",
+      "summary": "22_constructivism · 1924 俄罗斯构成主义海报（罗德琴科 / 李西茨基）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-23-dali",
+      "template_id": "style-23-dali",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/23_dali.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "23_dali · 1931 达利超现实主义（《记忆的永恒》）",
+      "summary": "23_dali · 1931 达利超现实主义（《记忆的永恒》）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-24-hopper",
+      "template_id": "style-24-hopper",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/24_hopper.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "24_hopper · 1942 霍珀美国现实主义（硬光块面）",
+      "summary": "24_hopper · 1942 霍珀美国现实主义（硬光块面）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-25-ghibli",
+      "template_id": "style-25-ghibli",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/25_ghibli.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "25_ghibli · 吉卜力视觉家族：整体语言＋既有背景实做",
+      "summary": "25_ghibli · 吉卜力视觉家族：整体语言＋既有背景实做",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-26-vaporwave",
+      "template_id": "style-26-vaporwave",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/26_vaporwave.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "26_vaporwave · 2011 蒸汽波 / 赛博霓虹",
+      "summary": "26_vaporwave · 2011 蒸汽波 / 赛博霓虹",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-27-kirby",
+      "template_id": "style-27-kirby",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/27_kirby.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "27_kirby · 1966 漫威银河时代（Jack Kirby ＋ 四色胶印）",
+      "summary": "27_kirby · 1966 漫威银河时代（Jack Kirby ＋ 四色胶印）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-28-monet",
+      "template_id": "style-28-monet",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/28_monet.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "28_monet · 1899 莫奈《睡莲》＋《日本桥》",
+      "summary": "28_monet · 1899 莫奈《睡莲》＋《日本桥》",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-29-seurat",
+      "template_id": "style-29-seurat",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/29_seurat.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "29_seurat · 1884 修拉《大碗岛的星期天下午》（点彩：视觉混色渲染器）",
+      "summary": "29_seurat · 1884 修拉《大碗岛的星期天下午》（点彩：视觉混色渲染器）",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-30-matisse",
+      "template_id": "style-30-matisse",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/30_matisse.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "30_matisse · 1947 马蒂斯《爵士》剪纸",
+      "summary": "30_matisse · 1947 马蒂斯《爵士》剪纸",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-31-haring",
+      "template_id": "style-31-haring",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/31_haring.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "31_haring · 1982 凯斯·哈林",
+      "summary": "31_haring · 1982 凯斯·哈林",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-32-rembrandt",
+      "template_id": "style-32-rembrandt",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/32_rembrandt.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "32_rembrandt · 1642 伦勃朗明暗法",
+      "summary": "32_rembrandt · 1642 伦勃朗明暗法",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-33-rubberhose",
+      "template_id": "style-33-rubberhose",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/33_rubberhose.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "33_rubberhose · 1930 橡皮管卡通",
+      "summary": "33_rubberhose · 1930 橡皮管卡通",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-34-shadowpuppet",
+      "template_id": "style-34-shadowpuppet",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/34_shadowpuppet.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "34_shadowpuppet · 中国皮影戏",
+      "summary": "34_shadowpuppet · 中国皮影戏",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-35-shinkai",
+      "template_id": "style-35-shinkai",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/35_shinkai.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "35_shinkai · 2016 新海诚光影",
+      "summary": "35_shinkai · 2016 新海诚光影",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-36-picasso-blue",
+      "template_id": "style-36-picasso-blue",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/36_picasso_blue.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "36_picasso_blue · 1903 毕加索蓝色时期",
+      "summary": "36_picasso_blue · 1903 毕加索蓝色时期",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": true,
+      "eligibility_reason": "Existing original grammar or implemented style is selectable for native authoring; this does not accept any current Job output."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-37-rick-morty",
+      "template_id": "style-37-rick-morty",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/37_rick_morty.md",
+        "vendor/huashu-art-motion/scripts/engine/reference_films/rick_morty/render.py",
+        "vendor/huashu-art-motion/scripts/engine/reference_films/rick_morty/index.html",
+        "vendor/huashu-art-motion/scripts/engine/reference_films/rick_morty/room.js",
+        "vendor/huashu-art-motion/scripts/engine/reference_films/rick_morty/svg-kit.js"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/reference_films/rick_morty/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_recipe",
+      "alpha": false,
+      "title": "37_rick_morty · Rick & Morty扁平描边卡通",
+      "summary": "37_rick_morty · Rick & Morty扁平描边卡通",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "原生独立SVG固定16:9，当前竖屏协议不接此输出；完整保留原卡及独立renderer，不修改或压缩其画幅。"
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-38-giotto",
+      "template_id": "style-38-giotto",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/38_giotto.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "38_giotto · 乔托：体块与叙事关系",
+      "summary": "38_giotto · 乔托：体块与叙事关系",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-39-piero",
+      "template_id": "style-39-piero",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/39_piero.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "39_piero · 皮耶罗：几何秩序与清明体积",
+      "summary": "39_piero · 皮耶罗：几何秩序与清明体积",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-40-raphael",
+      "template_id": "style-40-raphael",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/40_raphael.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "40_raphael · 拉斐尔：和谐组织与自然联系",
+      "summary": "40_raphael · 拉斐尔：和谐组织与自然联系",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-41-michelangelo",
+      "template_id": "style-41-michelangelo",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/41_michelangelo.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "41_michelangelo · 米开朗基罗：雕塑性与姿态张力",
+      "summary": "41_michelangelo · 米开朗基罗：雕塑性与姿态张力",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-42-guardi",
+      "template_id": "style-42-guardi",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/42_guardi.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "42_guardi · 瓜尔迪：空气、碎光与松动边缘",
+      "summary": "42_guardi · 瓜尔迪：空气、碎光与松动边缘",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-43-lorenzetti",
+      "template_id": "style-43-lorenzetti",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/43_lorenzetti.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "43_lorenzetti · 安布罗焦·洛伦采蒂：可阅读的社会空间",
+      "summary": "43_lorenzetti · 安布罗焦·洛伦采蒂：可阅读的社会空间",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-44-cortona",
+      "template_id": "style-44-cortona",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/44_cortona.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "44_cortona · 彼得罗·达·科尔托纳：巴洛克体量与流动群组",
+      "summary": "44_cortona · 彼得罗·达·科尔托纳：巴洛克体量与流动群组",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-45-renoir",
+      "template_id": "style-45-renoir",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/45_renoir.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "45_renoir · 雷诺阿：暖冷交织与有温度的人物",
+      "summary": "45_renoir · 雷诺阿：暖冷交织与有温度的人物",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-46-pissarro",
+      "template_id": "style-46-pissarro",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/46_pissarro.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "46_pissarro · 毕沙罗：生活流动与环境中的人物",
+      "summary": "46_pissarro · 毕沙罗：生活流动与环境中的人物",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-47-sisley",
+      "template_id": "style-47-sisley",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/47_sisley.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "47_sisley · 西斯莱：空气、天气与连贯风景",
+      "summary": "47_sisley · 西斯莱：空气、天气与连贯风景",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-48-gauguin",
+      "template_id": "style-48-gauguin",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/48_gauguin.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "48_gauguin · 高更：平面、轮廓与象征色",
+      "summary": "48_gauguin · 高更：平面、轮廓与象征色",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-49-chagall",
+      "template_id": "style-49-chagall",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/49_chagall.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "49_chagall · 夏加尔：记忆空间与情感色彩",
+      "summary": "49_chagall · 夏加尔：记忆空间与情感色彩",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-50-ma-yuan",
+      "template_id": "style-50-ma-yuan",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/50_ma_yuan.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "50_ma_yuan · 马远：偏置重心、留白与精练笔墨",
+      "summary": "50_ma_yuan · 马远：偏置重心、留白与精练笔墨",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-51-persian-miniature",
+      "template_id": "style-51-persian-miniature",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/51_persian_miniature.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "51_persian_miniature · 波斯细密画：层叠空间与精密叙事",
+      "summary": "51_persian_miniature · 波斯细密画：层叠空间与精密叙事",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-52-south-park",
+      "template_id": "style-52-south-park",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/52_south_park.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "52_south_park · 南方公园：数字剪纸与有限表演",
+      "summary": "52_south_park · 南方公园：数字剪纸与有限表演",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-53-pixar",
+      "template_id": "style-53-pixar",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/53_pixar.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "53_pixar · 皮克斯：形体、材质与表演的风格家族",
+      "summary": "53_pixar · 皮克斯：形体、材质与表演的风格家族",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/style-55-dunhuang",
+      "template_id": "style-55-dunhuang",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/风格配方/INDEX.md",
+        "vendor/huashu-art-motion/references/15-跨场景风格提炼.md",
+        "vendor/huashu-art-motion/references/风格配方/55_dunhuang.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "research",
+      "alpha": false,
+      "title": "55_dunhuang · 敦煌壁画（北朝）：干泥壁上的矿物色与横飞的线",
+      "summary": "55_dunhuang · 敦煌壁画（北朝）：干泥壁上的矿物色与横飞的线",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Original style index: none passed its quality threshold; keep complete research source, exclude production selection."
+    },
+    {
+      "candidate_id": "huashu-art-motion:huashu-art-motion/scene",
+      "template_id": "scene",
+      "skill_path": "vendor/huashu-art-motion/SKILL.md",
+      "native_instructions": [
+        "vendor/huashu-art-motion/SKILL.md",
+        "vendor/huashu-art-motion/references/09-视频动画语法.md",
+        "vendor/huashu-art-motion/references/镜头语言.md"
+      ],
+      "native_source": "vendor/huashu-art-motion/scripts/engine/render.py",
+      "native_role": "scene",
+      "native_template_group": "scene",
+      "native_state": "native_workflow",
+      "alpha": false,
+      "title": "完整原生主题场景",
+      "summary": "完整原生主题场景",
+      "uses": [
+        "broll"
+      ],
+      "production_eligible": false,
+      "eligibility_reason": "Complete authoring workflow, not a separately counted reusable grammar or style template."
+    }
+  ],
+  "counts": {
+    "catalog_paths": 62,
+    "production_templates": 43,
+    "production_grammars": 8,
+    "production_styles": 35,
+    "research_styles": 17,
+    "landscape_only_styles": 1,
+    "generic_workflows": 1
+  }
+}

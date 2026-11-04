@@ -25,7 +25,7 @@ from edit.hd.tools.visual_strategy import (
     validate_visual_strategy,
 )
 from edit.hd.tools.dependency_contracts import (
-    PRIMARY_RENDERERS,
+    PRIMARY_RENDERERS, CREATIVE_SKILL_ADAPTERS,
     executor_for,
     output_alpha,
 )
@@ -107,6 +107,8 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/riso_native_adapter.py",
     "scripts/overlay_studio_adapter.py",
     "scripts/huashu_stat_adapter.py",
+    "scripts/anidoodle_native_adapter.py",
+    "scripts/sweety_native_adapter.py",
     "scripts/render_motion_graphics.cjs",
     "vendor/lemo-wake/skills/wake/SKILL.md",
 })
@@ -119,10 +121,12 @@ _NON_NATIVE_PRODUCERS = frozenset({
 
 def _native_selection(candidate: Mapping[str, Any]) -> bool:
     template_id = candidate.get("template_id")
-    if candidate.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
-        from motion_native_skill_adapter import ENTRY, VERSION, load_template_catalog
+    if candidate.get('dependency_id') in CREATIVE_SKILL_ADAPTERS:
+        import importlib
         dependency = candidate['dependency_id']
-        rows = load_template_catalog(PACKAGE_ROOT, dependency_id=dependency)
+        adapter = importlib.import_module(CREATIVE_SKILL_ADAPTERS[dependency])
+        ENTRY, VERSION = adapter.ENTRY, adapter.VERSION
+        rows = adapter.load_template_catalog(PACKAGE_ROOT, dependency_id=dependency)
         return (candidate.get('template_origin') == 'custom_fallback'
                 and candidate.get('adaptation_level') == 'structural'
                 and candidate.get('source_entrypoint') == ENTRY
@@ -622,13 +626,15 @@ def _validate_code_cross_fields(
         raise RouterError("invocation_record.argv must be an array")
     if argv.count(entrypoint) != 1:
         raise RouterError("invocation_record.argv must bind entrypoint exactly once")
-    if dependency_id in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
-        from motion_native_skill_adapter import ENTRY, VERSION, primary_renderer as native_renderer
+    if dependency_id in CREATIVE_SKILL_ADAPTERS:
+        import importlib
+        adapter = importlib.import_module(CREATIVE_SKILL_ADAPTERS[dependency_id])
         from motion_native_runtime import renderer_version as native_renderer_version
-        if (not _native_selection(component) or entrypoint != ENTRY
-                or primary_renderer != native_renderer(dependency_id)
-                or component.get('template_version') != VERSION
-                or component.get('renderer_version') != native_renderer_version(dependency_id)):
+        expected_version = getattr(adapter, 'RENDERER_VERSION', None) or native_renderer_version(dependency_id)
+        if (not _native_selection(component) or entrypoint != adapter.ENTRY
+                or primary_renderer != PRIMARY_RENDERERS[dependency_id]
+                or component.get('template_version') != adapter.VERSION
+                or component.get('renderer_version') != expected_version):
             raise RouterError('Native motion requires its complete pinned workflow and actual renderer')
     if dependency_id == "adu-motion-video":
         if component.get("semantic_role") == "evidence":

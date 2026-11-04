@@ -14,6 +14,18 @@ const fail = (message) => { throw new Error(`[TALKCRAFT_SUBTITLES_INVALID] ${mes
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const keys = (v, expected) => v && typeof v === 'object' && !Array.isArray(v) && JSON.stringify(Object.keys(v).sort()) === JSON.stringify([...expected].sort());
 const validUtf16Boundary = (text, offset) => offset >= 0 && offset <= text.length && !(offset > 0 && offset < text.length && text.charCodeAt(offset - 1) >= 0xd800 && text.charCodeAt(offset - 1) <= 0xdbff && text.charCodeAt(offset) >= 0xdc00 && text.charCodeAt(offset) <= 0xdfff);
+const validateNativeCaption = (source) => {
+  if (!keys(source, ['dependency_id', 'template_id', 'segment_id', 'component_id', 'result_record'])
+      || source.dependency_id !== 'sweety-handdraw-video'
+      || typeof source.template_id !== 'string' || !/^sweety-handdraw-video\/style-[a-z0-9-]+$/.test(source.template_id)
+      || typeof source.segment_id !== 'string' || !source.segment_id
+      || typeof source.component_id !== 'string' || !source.component_id) fail('native captions require the verified Sweety style source');
+  const record = source.result_record;
+  if (!keys(record, ['path', 'sha256', 'bytes']) || typeof record.path !== 'string'
+      || path.isAbsolute(record.path) || record.path.split('/').includes('..')
+      || !record.path.startsWith('native-inputs/') || !record.path.endsWith('.json')
+      || !/^[a-f0-9]{64}$/.test(record.sha256) || !Number.isInteger(record.bytes) || record.bytes < 1) fail('native captions require the frozen completion descriptor');
+};
 
 const validate = (input) => {
   if (!keys(input, ['canvas', 'cues', 'schema_version']) || input.schema_version !== 2) fail('schema_version or top-level keys');
@@ -21,7 +33,8 @@ const validate = (input) => {
   if (!Array.isArray(input.cues)) fail('cues must be an array');
   let previousEnd = 0;
   for (const cue of input.cues) {
-    if (!keys(cue, ['bottom', 'cue_id', 'emphasis', 'end', 'long_keyword', 'placement', 'start', 'text', 'words', ...(cue.placement === 'above_avatar' ? ['width'] : [])]) || typeof cue.long_keyword !== 'boolean' || (cue.long_keyword && [...cue.text].filter((char) => !/\s/u.test(char)).length <= 14) || (cue.placement === 'above_avatar' && (!Number.isInteger(cue.width) || cue.width < 436 || cue.width > 640)) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || !Number.isInteger(cue.bottom) || cue.bottom < 0 || cue.bottom >= 1920 || (cue.placement === 'standard' && cue.bottom !== 350) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or layout is invalid');
+    if (!keys(cue, ['bottom', 'cue_id', 'emphasis', 'end', 'long_keyword', 'placement', 'start', 'text', 'words', ...(cue.placement === 'above_avatar' ? ['width'] : []), ...('native_caption' in cue ? ['native_caption'] : [])]) || typeof cue.long_keyword !== 'boolean' || (cue.long_keyword && [...cue.text].filter((char) => !/\s/u.test(char)).length <= 14) || (cue.placement === 'above_avatar' && (!Number.isInteger(cue.width) || cue.width < 436 || cue.width > 640)) || !['standard', 'above_avatar'].includes(cue.placement) || typeof cue.cue_id !== 'string' || typeof cue.text !== 'string' || !finite(cue.start) || !finite(cue.end) || !Number.isInteger(cue.bottom) || cue.bottom < 0 || cue.bottom >= 1920 || (cue.placement === 'standard' && cue.bottom !== 350) || cue.start < 0 || cue.end <= cue.start || cue.end * input.canvas.fps > input.canvas.frames + 1e-9 || cue.start < previousEnd) fail('cue timing or layout is invalid');
+    if ('native_caption' in cue) validateNativeCaption(cue.native_caption);
     previousEnd = cue.end;
     if (!Array.isArray(cue.words)) fail(`words invalid for ${cue.cue_id}`);
     let previousWordEnd = cue.start;

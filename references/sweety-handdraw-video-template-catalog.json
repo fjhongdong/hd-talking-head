@@ -1,0 +1,1869 @@
+{
+  "schema_version": 1,
+  "dependency_id": "sweety-handdraw-video",
+  "upstream_commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+  "counts": {
+    "style": 21,
+    "web_motion": 20
+  },
+  "not_templates": [
+    "custom",
+    "hand_presets",
+    "voices",
+    "camera_moves",
+    "transitions"
+  ],
+  "native_paths": [
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-3-1",
+      "template_id": "style-3-1",
+      "native_template_group": "style",
+      "native_option_id": "3.1",
+      "title": "蜡笔童涂-潦草自画版",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "蜡笔童涂-潦草自画版；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-1",
+      "template_id": "style-1",
+      "native_template_group": "style",
+      "native_option_id": "1",
+      "title": "极简黑白线条讲解漫画(xkcd 火柴人)",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "极简黑白线条讲解漫画(xkcd 火柴人)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-2",
+      "template_id": "style-2",
+      "native_template_group": "style",
+      "native_option_id": "2",
+      "title": "蜡笔童涂(5岁小孩坏画)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "蜡笔童涂(5岁小孩坏画)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-3",
+      "template_id": "style-3",
+      "native_template_group": "style",
+      "native_option_id": "3",
+      "title": "吉卜力风",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "吉卜力风；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-4",
+      "template_id": "style-4",
+      "native_template_group": "style",
+      "native_option_id": "4",
+      "title": "小豆人黑色涂鸦信息图",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "小豆人黑色涂鸦信息图；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-5",
+      "template_id": "style-5",
+      "native_template_group": "style",
+      "native_option_id": "5",
+      "title": "MS Paint 烂涂鸦(the worse, the better)",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "MS Paint 烂涂鸦(the worse, the better)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-6",
+      "template_id": "style-6",
+      "native_template_group": "style",
+      "native_option_id": "6",
+      "title": "圆珠笔单线涂鸦(scribble)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "圆珠笔单线涂鸦(scribble)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-7",
+      "template_id": "style-7",
+      "native_template_group": "style",
+      "native_option_id": "7",
+      "title": "蜡笔实拍(真·儿童手涂纸张)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "蜡笔实拍(真·儿童手涂纸张)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-8",
+      "template_id": "style-8",
+      "native_template_group": "style",
+      "native_option_id": "8",
+      "title": "水墨写意",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "水墨写意；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-9",
+      "template_id": "style-9",
+      "native_template_group": "style",
+      "native_option_id": "9",
+      "title": "复古像素",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "复古像素；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-10",
+      "template_id": "style-10",
+      "native_template_group": "style",
+      "native_option_id": "10",
+      "title": "情绪叙事淡彩速写",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "情绪叙事淡彩速写；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-11",
+      "template_id": "style-11",
+      "native_template_group": "style",
+      "native_option_id": "11",
+      "title": "二维水彩风格(复古动画概念稿)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "二维水彩风格(复古动画概念稿)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-12",
+      "template_id": "style-12",
+      "native_template_group": "style",
+      "native_option_id": "12",
+      "title": "暖光童画(动画概念暖绘)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "暖光童画(动画概念暖绘)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-13",
+      "template_id": "style-13",
+      "native_template_group": "style",
+      "native_option_id": "13",
+      "title": "北欧纸雕(paper-folk)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "北欧纸雕(paper-folk)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-14",
+      "template_id": "style-14",
+      "native_template_group": "style",
+      "native_option_id": "14",
+      "title": "北欧绘本水粉(nordic-storybook)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "北欧绘本水粉(nordic-storybook)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-15",
+      "template_id": "style-15",
+      "native_template_group": "style",
+      "native_option_id": "15",
+      "title": "大鼻软偶(softnose-vinyl)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "大鼻软偶(softnose-vinyl)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-16",
+      "template_id": "style-16",
+      "native_template_group": "style",
+      "native_option_id": "16",
+      "title": "聚光水粉立绘(gouache-spotlight)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "聚光水粉立绘(gouache-spotlight)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-17",
+      "template_id": "style-17",
+      "native_template_group": "style",
+      "native_option_id": "17",
+      "title": "墨线绘本(inked-storybook)",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "墨线绘本(inked-storybook)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-18",
+      "template_id": "style-18",
+      "native_template_group": "style",
+      "native_option_id": "18",
+      "title": "暖色扁平绘本(warm-flat-storybook)",
+      "native_role": "scene",
+      "drawing_mode": "reveal",
+      "requires_reveal_acceptance": true,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "画笔揭示"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "暖色扁平绘本(warm-flat-storybook)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-19",
+      "template_id": "style-19",
+      "native_template_group": "style",
+      "native_option_id": "19",
+      "title": "圆头红线极简童画(roundhead-redline)",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "圆头红线极简童画(roundhead-redline)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/style-20",
+      "template_id": "style-20",
+      "native_template_group": "style",
+      "native_option_id": "20",
+      "title": "暖黄墨线情绪小剧场(warm-yellow-ink-story)",
+      "native_role": "scene",
+      "drawing_mode": "draw",
+      "requires_reveal_acceptance": false,
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/dependencies.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/production-kit.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/style-and-drawing.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/PROTOCOL.md"
+      ],
+      "tags": [
+        "手绘",
+        "插画叙事",
+        "中文",
+        "全屏B-roll",
+        "逐笔绘制"
+      ],
+      "uses": [
+        "broll"
+      ],
+      "status": "supported",
+      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
+      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
+      "summary": "暖黄墨线情绪小剧场(warm-yellow-ink-story)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
+        "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
+        "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
+      },
+      "limitations": [
+        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
+        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
+        "现成口播与词钟通过原生align.py导入；不新TTS",
+        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
+        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-kinetic-title",
+      "template_id": "web-kinetic-title",
+      "native_template_group": "web_motion",
+      "native_option_id": "kinetic_title",
+      "title": "动态大字",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "动态大字"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "section_heading"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "动态大字；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.kinetic_title"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-rough-annotate",
+      "template_id": "web-rough-annotate",
+      "native_template_group": "web_motion",
+      "native_option_id": "rough_annotate",
+      "title": "手绘圈注",
+      "native_role": "overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘圈注"
+      ],
+      "uses": [
+        "aroll_overlay"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "focus_attention"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘圈注；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.rough_annotate"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-sketch-shapes",
+      "template_id": "web-sketch-shapes",
+      "native_template_group": "web_motion",
+      "native_option_id": "sketch_shapes",
+      "title": "手绘箭头与形状",
+      "native_role": "overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘箭头与形状"
+      ],
+      "uses": [
+        "aroll_overlay"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "process_flow"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘箭头与形状；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.sketch_shapes"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-burst",
+      "template_id": "web-burst",
+      "native_template_group": "web_motion",
+      "native_option_id": "burst",
+      "title": "庆祝粒子",
+      "native_role": "overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "庆祝粒子"
+      ],
+      "uses": [
+        "aroll_overlay"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "emotional_emphasis"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "庆祝粒子；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.burst"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-number-ticker",
+      "template_id": "web-number-ticker",
+      "native_template_group": "web_motion",
+      "native_option_id": "number_ticker",
+      "title": "滚动数字",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "滚动数字"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "numeric_emphasis"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "滚动数字；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.number_ticker"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-callout",
+      "template_id": "web-callout",
+      "native_template_group": "web_motion",
+      "native_option_id": "callout",
+      "title": "手绘气泡",
+      "native_role": "overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘气泡"
+      ],
+      "uses": [
+        "aroll_overlay"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "label_annotation"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘气泡；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.callout"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-progress-ring",
+      "template_id": "web-progress-ring",
+      "native_template_group": "web_motion",
+      "native_option_id": "progress_ring",
+      "title": "圆环进度",
+      "native_role": "overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "圆环进度"
+      ],
+      "uses": [
+        "aroll_overlay"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "numeric_emphasis"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "圆环进度；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.progress_ring"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-morph",
+      "template_id": "web-morph",
+      "native_template_group": "web_motion",
+      "native_option_id": "morph",
+      "title": "形状接力变形",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "形状接力变形"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "concept_transformation"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "形状接力变形；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.morph"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-rough-chart",
+      "template_id": "web-rough-chart",
+      "native_template_group": "web_motion",
+      "native_option_id": "rough_chart",
+      "title": "手绘图表",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘图表"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "numeric_comparison"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘图表；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.rough_chart"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-map-route",
+      "template_id": "web-map-route",
+      "native_template_group": "web_motion",
+      "native_option_id": "map_route",
+      "title": "地球与地图路线",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "地球与地图路线"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "geographic_route"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "地球与地图路线；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.map_route"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-physics",
+      "template_id": "web-physics",
+      "native_template_group": "web_motion",
+      "native_option_id": "physics",
+      "title": "物理道具",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "物理道具"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "causal_mechanism"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "物理道具；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.physics"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-spin3d",
+      "template_id": "web-spin3d",
+      "native_template_group": "web_motion",
+      "native_option_id": "spin3d",
+      "title": "手绘立体物件",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘立体物件"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "object_presentation"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘立体物件；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.spin3d"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-formula",
+      "template_id": "web-formula",
+      "native_template_group": "web_motion",
+      "native_option_id": "formula",
+      "title": "手写公式",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手写公式"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "formula_derivation"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手写公式；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.formula"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-roadmap",
+      "template_id": "web-roadmap",
+      "native_template_group": "web_motion",
+      "native_option_id": "roadmap",
+      "title": "路线图与章节进度",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "路线图与章节进度"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "process_flow"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "路线图与章节进度；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.roadmap"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-table",
+      "template_id": "web-table",
+      "native_template_group": "web_motion",
+      "native_option_id": "table",
+      "title": "手绘表格",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "手绘表格"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "old_new_comparison"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "手绘表格；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.table"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-flow",
+      "template_id": "web-flow",
+      "native_template_group": "web_motion",
+      "native_option_id": "flow",
+      "title": "因果流程",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "因果流程"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "process_flow"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "因果流程；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.flow"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-swimlane",
+      "template_id": "web-swimlane",
+      "native_template_group": "web_motion",
+      "native_option_id": "swimlane",
+      "title": "任务泳道",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "任务泳道"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "parallel_process"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "任务泳道；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.swimlane"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-checklist",
+      "template_id": "web-checklist",
+      "native_template_group": "web_motion",
+      "native_option_id": "checklist",
+      "title": "逐项清单",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "逐项清单"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "ordered_steps"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "逐项清单；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.checklist"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-cards",
+      "template_id": "web-cards",
+      "native_template_group": "web_motion",
+      "native_option_id": "cards",
+      "title": "分组卡片",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "分组卡片"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "classification_reduction"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "分组卡片；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.cards"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    },
+    {
+      "candidate_id": "sweety-handdraw-video:sweety-handdraw-video/web-pulse",
+      "template_id": "web-pulse",
+      "native_template_group": "web_motion",
+      "native_option_id": "pulse",
+      "title": "周期脉冲",
+      "native_role": "scene_or_overlay",
+      "skill_path": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+      "native_source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+      "native_instructions": [
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/SKILL.md",
+        "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
+      ],
+      "tags": [
+        "手绘",
+        "中文",
+        "透明贴片",
+        "周期脉冲"
+      ],
+      "uses": [
+        "aroll_overlay",
+        "broll"
+      ],
+      "status": "supported",
+      "semantic_families": [
+        "periodic_process"
+      ],
+      "max_duration_seconds": 30,
+      "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
+      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
+      "summary": "周期脉冲；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "evidence": {
+        "repository": "https://github.com/threerocks/sweety-handdraw-video",
+        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
+        "consumption": "web_motion.render → recipes.js Recipes.pulse"
+      },
+      "limitations": [
+        "透明为原生组件画布，局部图形/卡片可以有实色；custom不计入此模板",
+        "需要真实参数及语义；地图和图表不得虚构数据"
+      ]
+    }
+  ],
+  "qualification": {
+    "web_motion": {
+      "representative_recipe": "kinetic_title",
+      "status": "native_render_and_frozen_result_consumer_passed",
+      "sample": "capability-samples/20261104-library-expansion/sweety/native-result-consumption.json",
+      "scope": "one representative recipe; not individual certification of all twenty"
+    },
+    "style": {
+      "representative_style": "17",
+      "status": "native_build_render_passed_final_audio_verify_blocked",
+      "sample": "capability-samples/20261104-library-expansion/sweety/style-17-sample.json",
+      "scope": "official technical fixture with real parent speech/word clock; not semantic or aesthetic approval; not per-style certification"
+    }
+  }
+}

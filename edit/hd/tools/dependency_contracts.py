@@ -20,7 +20,7 @@ DEPENDENCY_CONTRACTS = {
     'onetake': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'adu-motion-video': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'hypit-native-chat': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
-    'huashu-art-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
+    'huashu-art-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
     'eian-riso-broll': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'wise-motion': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
     'openfilm-motion-graphics': {"executor": 'reference_adapter', "renderer": 'OpenFilm', "output": 'opaque_video'},
@@ -34,7 +34,28 @@ DEPENDENCY_CONTRACTS = {
     'video-shotcraft': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
     'bb-video': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'bang-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
+    'anidoodle': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
+    'sweety-handdraw-video': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
 }
+
+# Complete native creation workflows share the parent task/result contract.
+CREATIVE_SKILL_ADAPTERS = {
+    'barty-motion-graphics': 'motion_native_skill_adapter',
+    'bang-motion': 'motion_native_skill_adapter',
+    'mg-styles-15': 'motion_native_skill_adapter',
+    'video-shotcraft': 'motion_native_skill_adapter',
+    'bb-video': 'motion_native_skill_adapter',
+    'huashu-art-motion': 'motion_native_skill_adapter',
+    'anidoodle': 'anidoodle_native_adapter',
+    'sweety-handdraw-video': 'sweety_native_adapter',
+}
+
+
+def creative_skill_adapter(binding):
+    module = CREATIVE_SKILL_ADAPTERS.get(binding.get('dependency_id'))
+    if module and binding.get('entrypoint') == 'scripts/' + module + '.py':
+        return module
+    return None
 
 PRIMARY_RENDERERS = {key: value["renderer"] for key, value in DEPENDENCY_CONTRACTS.items()}
 REFERENCE_ADAPTER_DEPENDENCIES = frozenset(DEPENDENCY_CONTRACTS)

@@ -19,15 +19,16 @@ class BrollSkillSelectionTest(unittest.TestCase):
         templates = json.loads(path.read_text())['native_paths']
         module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
                                  load_template_catalog=lambda *_args, **_kwargs: templates)
+        empty = SimpleNamespace(load_template_catalog=lambda *_args, **_kwargs: [])
         spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
         with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
-             patch.object(selection.importlib.util, 'module_from_spec', return_value=module):
+             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty]):
             rows = selection.motion_native_candidates(ROOT)
         for row, template in zip(rows, templates):
-            self.assertEqual({key: row[key] for key in ('min_duration_seconds', 'max_duration_seconds')
-                              if key in row},
-                             {key: template[key] for key in ('min_duration_seconds', 'max_duration_seconds')
-                              if key in template})
+            duration_fields = {'min_duration_seconds', 'max_duration_seconds'}
+            self.assertEqual(duration_fields & row.keys(), duration_fields & template.keys())
+            for key in duration_fields & template.keys():
+                self.assertAlmostEqual(row[key], template[key])
         ink_press = next(row for row in rows if row['candidate_id'].endswith('/ink-press'))
         self.assertNotIn('min_duration_seconds', ink_press)
         self.assertIsNone(selection.timing_failure(ink_press,
@@ -69,6 +70,14 @@ class BrollSkillSelectionTest(unittest.TestCase):
         self.assertEqual(rows['terminal-3d']['role'], 'native')
         self.assertEqual(rows['flying-words']['role'], 'component')
         self.assertEqual(rows['shot-transitions']['role'], 'component')
+        self.assertEqual(rows['basic-3d-scene']['capability']['uses'], ['broll', 'component'])
+        self.assertAlmostEqual(rows['basic-3d-scene']['min_duration_seconds'], 6.8)
+        self.assertEqual(rows['glow-flyline-moves']['capability']['uses'], ['broll', 'component'])
+        self.assertEqual(rows['glow-flyline-moves']['broll_variant_keys'],
+                         ['flyline-arc', 'orb-flyline-relay'])
+        self.assertEqual(rows['collab-cursor-moves']['role'], 'component')
+        self.assertEqual(rows['spotlight-hero-card']['min_duration_seconds'], 4)
+        self.assertEqual(sum(len(row.get('styles', [])) for row in rows.values()), 150)
         for row in rows.values():
             self.assertNotIn('aroll_overlay', row['capability']['uses'])
 
@@ -78,9 +87,10 @@ class BrollSkillSelectionTest(unittest.TestCase):
                      for role in ('scene', 'product_promo', 'camera', 'transition', 'rhythm', 'component')]
         module = SimpleNamespace(SOURCES={'video-shotcraft': ()}, ENTRY='entry', VERSION='1',
                                  load_template_catalog=lambda *_args, **_kwargs: templates)
+        empty = SimpleNamespace(load_template_catalog=lambda *_args, **_kwargs: [])
         spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
         with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
-             patch.object(selection.importlib.util, 'module_from_spec', return_value=module):
+             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty]):
             rows = selection.motion_native_candidates(ROOT)
         self.assertEqual([row['native_role'] for row in rows], [t['native_role'] for t in templates])
         self.assertEqual([row['role'] for row in rows], ['native', 'native'] + ['component'] * 4)
@@ -362,7 +372,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         by_id = {row["candidate_id"]: row for row in catalog}
         self.assertFalse(any(cid.startswith("hd-talking-head-talkcraft:") for cid in by_id))
         self.assertEqual(len([cid for cid in by_id if cid.startswith("talkcraft-native-adaptation:")]), 4)
-        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 9)
+        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 69)
         added = [row for row in catalog if row['skill_id'] in {'barty-motion-graphics', 'bang-motion'}]
         self.assertEqual(len({selection._template_identity(row) for row in added}), 39)
         self.assertEqual({row['skill_id'] for row in added}, {'barty-motion-graphics', 'bang-motion'})
@@ -401,7 +411,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         skills = {c["skill_id"] for c in pool}
         by_template = {c["template_id"]: c for c in pool}
         flat = by_template["muyang-flat-animation/design"]
-        vox = by_template["huashu-art-motion/y2_vox"]
+        vox = by_template["huashu-art-motion/grammar-y2-vox"]
         doudou = by_template["doudou-reviewed-scene"]
         carousel = by_template["hyperframes-screen-flow-carousel-portrait-adaptation"]
         self.assertIn("wise-motion/orbit-tracking-component", by_template)
@@ -410,7 +420,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         self.assertEqual(openfilm["role"], "native")
         self.assertEqual(openfilm["semantic_families"], [])
         self.assertFalse(any("canonical" in c["candidate_id"] or c["skill_id"] == "onetake" for c in pool))
-        self.assertEqual(len({c["template_id"] for c in pool if c["skill_id"] == "lemo-opuscar"}), 59)
+        self.assertEqual(len({c["template_id"] for c in pool if c["skill_id"] == "lemo-opuscar"}), 66)
         # Real wording from 3.docx/Scribe, not new claims or revised narration.
         cases = [
             ("我接了个兼职，活干完了，但是钱却迟迟拿不到。", "交付后仍未收到报酬", [flat], ["deliver-unpaid"]),
@@ -529,10 +539,11 @@ class BrollSkillSelectionTest(unittest.TestCase):
                           side_effect=without_qualified_templates):
             remaining = selection.discover_candidates(ROOT)
         self.assertFalse(any(row["template_id"] in template_ids and
-                             (row["template_id"].startswith("huashu-art-motion/") or
-                              row["template_id"] in {"html-video/frame-data-rollup",
-                                                      "hyperframes/notification-cascade"})
+                             row["template_id"] in {"html-video/frame-data-rollup",
+                                                     "hyperframes/notification-cascade"}
                              for row in remaining))
+        self.assertEqual(len({row["template_id"] for row in remaining
+                              if row["skill_id"] == "huashu-art-motion"}), 43)
         self.assertIn("hyperframes-chat-message-portrait-adaptation",
                       {row["template_id"] for row in remaining})
 

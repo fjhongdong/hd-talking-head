@@ -234,11 +234,43 @@ class NativeMotionTests(unittest.TestCase):
             native.validate_brief(json.dumps(b))
         clock(144)
         native._template(b)  # The full-template demo duration is not a hard minimum.
-        b['template_id']='spotlight-hero-card';clock(144);native._template(b)
+        for template, below, enough in [('spotlight-hero-card',95,96),('basic-3d-scene',163,164)]:
+            b['template_id']=template;clock(below)
+            with self.assertRaisesRegex(ValueError,'duration|budget'):
+                native._template(b)
+            clock(enough);native._template(b)
         b['template_id']='chart-live-moves';clock(24)
         with self.assertRaisesRegex(ValueError,'duration|budget'):
             native._template(b)
         clock(29);native._template(b)
+
+    def test_shotcraft_primary_requires_a_narrative_variant_and_keeps_internal_components(self):
+        rows=native.load_template_catalog(dependency_id='video-shotcraft')
+        self.assertEqual(len(rows),125)
+        cards={row['candidate_id'].rsplit('/',1)[-1]:row for row in rows}
+        self.assertEqual(cards['basic-3d-scene']['native_role'],'scene')
+        self.assertEqual(cards['basic-3d-scene']['uses'],['broll','component'])
+        self.assertEqual(cards['collab-cursor-moves']['uses'],['component'])
+        b=brief('video-shotcraft','glow-flyline-moves')
+        for options in ([],['glow-orb-ambient']):
+            b['native_options']=options
+            with self.assertRaisesRegex(ValueError,'narrative variant'):
+                native._template(b)
+        for options in (['flyline-arc'],['orb-flyline-relay'],['glow-orb-ambient','flyline-arc']):
+            b['native_options']=options
+            native._template(b)
+        b=brief('video-shotcraft','collab-cursor-moves');b['native_options']=['cast-ensemble']
+        with self.assertRaisesRegex(ValueError,'cannot be the primary'):
+            native._template(b)
+        # A real frozen main scene can still use collaboration cursors internally.
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);source=root/'Scene.tsx';source.write_text('// current main content and collaboration layer')
+            ref=native.descriptor(root,source)
+            main=brief('video-shotcraft','glow-flyline-moves');main['native_options']=['flyline-arc']
+            usage=[{'card_id':card,'variant':variant,'purpose':'本期真实画布中的主叙事或协作氛围层',
+                    'implementation_refs':[ref]} for card,variant in
+                   [('glow-flyline-moves','flyline-arc'),('collab-cursor-moves','cast-ensemble')]]
+            native._validate_native_usage(root,main,{'project_files':[ref]},usage)
 
     def test_mg_capture_requires_verbatim_harness_and_exact_clock(self):
         import shutil
@@ -329,7 +361,10 @@ class NativeMotionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as name:
             root=Path(name);request=root/'brief.json'
             for dependency,template in [('mg-styles-15','flat-vector'),('video-shotcraft','spotlight-hero-card'),('bb-video','whiteboard')]:
-                b=brief(dependency,template);request.write_text(json.dumps(b))
+                b=brief(dependency,template)
+                if dependency == 'video-shotcraft':
+                    b['composition']['frames']=96;b['source_binding']['end']=4;b['word_anchors'][0]['end']=4
+                request.write_text(json.dumps(b))
                 with mock.patch.object(native,'_inputs'),mock.patch('motion_native_runtime.check',return_value={'status':'ready'}):
                     action=native.native_task(SimpleNamespace(job_dir=root,job_id=b['job_id']),
                         {'segment_id':'seg-001'},{'component_id':'scene','brief_sha256':native.sha(request)},request,
@@ -619,6 +654,7 @@ class NativeMotionTests(unittest.TestCase):
         import motion_native_runtime as runtime_module
         with tempfile.TemporaryDirectory() as name:
             root=Path(name).resolve();b=brief('video-shotcraft','spotlight-hero-card')
+            b['composition']['frames']=96;b['source_binding']['end']=4;b['word_anchors'][0]['end']=4
             project=root/b['project_directory'];(project/'src').mkdir(parents=True)
             (project/'src/index.ts').write_text('// current task composition')
             (project/'node_modules').symlink_to('/historical/missing/runtime',target_is_directory=True)

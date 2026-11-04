@@ -12,6 +12,14 @@ export type SubtitleEmphasis = {
   end: number;
 };
 
+export type NativeCaptionSource = {
+  dependency_id: 'sweety-handdraw-video';
+  template_id: `sweety-handdraw-video/style-${string}`;
+  segment_id: string;
+  component_id: string;
+  result_record: {path: string; sha256: string; bytes: number};
+};
+
 export type SubtitleCue = {
   cue_id: string;
   start: number;
@@ -21,6 +29,8 @@ export type SubtitleCue = {
   emphasis: SubtitleEmphasis | null;
   long_keyword: boolean;
   bottom: number;
+  // Emitted by Python only after verification of this frozen native completion.
+  native_caption?: NativeCaptionSource;
 } & ({placement: 'standard'} | {placement: 'above_avatar'; width: number});
 
 export type SubtitleInput = {

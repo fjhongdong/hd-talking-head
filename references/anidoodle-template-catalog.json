@@ -1,0 +1,1511 @@
+{
+  "schema_version": 3,
+  "channel": "anidoodle",
+  "repository_commit": "9c20e77467be393e54c7193611eeec2f7bfb8cc7",
+  "counting_rule": "32 original registry styles under one channel. Drawing-film versions, three house styles, launch/explainer workflows, seed variations and job content do not add identities.",
+  "native_option_ids": [],
+  "native_paths": [
+    {
+      "candidate_id": "anidoodle:anidoodle/balloon",
+      "template_id": "anidoodle/balloon",
+      "native_style_id": "balloon",
+      "title": "蜡笔",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/balloon.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/balloon.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "wax crayon on toothed paper: back-and-forth scribble fills that skip the valleys, a darker crayon on the shade side, a white one burnishing the highlight, a fat contour gone over twice",
+      "native_draw_film": "balloonDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "蜡笔",
+          "Crayon",
+          "dry media"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "wax crayon on toothed paper: back-and-forth scribble fills that skip the valleys, a darker crayon on the shade side, a white one burnishing the highlight, a fat contour gone over twice; complete original Skill authors this task as a new film. Native draw-film: balloonDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/blueprint",
+      "template_id": "anidoodle/blueprint",
+      "native_style_id": "blueprint",
+      "title": "蓝晒工程图",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/blueprint.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/blueprint.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/blueprint.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "ruling pen and spring-bow compass in white ink on Prussian-blue cyanotype stock",
+      "native_draw_film": "blueprint",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "蓝晒工程图",
+          "Cyanotype blueprint",
+          "technical drawing"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "ruling pen and spring-bow compass in white ink on Prussian-blue cyanotype stock; complete original Skill authors this task as a new film. Native draw-film: blueprint. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/broken-colour",
+      "template_id": "anidoodle/broken-colour",
+      "native_style_id": "brokenColour",
+      "title": "印象派分色",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/brokenColour.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/brokenColour.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/brokenColour.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "opaque oil dabs from a loaded flat hog brush on primed linen, unmixed colours side by side for the eye to mix",
+      "native_draw_film": "brokenColour",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "印象派分色",
+          "Broken colour",
+          "oil"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "opaque oil dabs from a loaded flat hog brush on primed linen, unmixed colours side by side for the eye to mix; complete original Skill authors this task as a new film. Native draw-film: brokenColour. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/charcoal-erasure",
+      "template_id": "anidoodle/charcoal-erasure",
+      "native_style_id": "charcoalErasure",
+      "title": "擦除炭笔",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/charcoalErasure.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/charcoalErasure.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/charcoalErasure.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "vine and compressed charcoal on heavy rag paper, stumped, lifted with a kneaded eraser, redrawn over its own residue",
+      "native_draw_film": "charcoalErasure",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "擦除炭笔",
+          "Charcoal, erased and redrawn",
+          "dry media"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "vine and compressed charcoal on heavy rag paper, stumped, lifted with a kneaded eraser, redrawn over its own residue; complete original Skill authors this task as a new film. Native draw-film: charcoalErasure. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/coloured-pencil",
+      "template_id": "anidoodle/coloured-pencil",
+      "native_style_id": "colouredPencil",
+      "title": "彩色铅笔",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/colouredPencil.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/colouredPencil.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/colouredPencil.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "wax coloured pencils hatched in one diagonal on toothy cream cartridge paper, hues layered, darks cross-hatched",
+      "native_draw_film": "colouredPencil",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "彩色铅笔",
+          "Coloured pencil",
+          "dry media"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "wax coloured pencils hatched in one diagonal on toothy cream cartridge paper, hues layered, darks cross-hatched; complete original Skill authors this task as a new film. Native draw-film: colouredPencil. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/dream-glaze",
+      "template_id": "anidoodle/dream-glaze",
+      "native_style_id": "dreamGlaze",
+      "title": "树脂油彩釉",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/dreamGlaze.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/dreamGlaze.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/dreamGlaze.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "resin-thinned oil glazes laid with a very small soft brush on a smooth white ground: no visible stroke, every form turned pixel by pixel under one low sun, every edge hard",
+      "native_draw_film": "dreamGlazeDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "树脂油彩釉",
+          "Dream glaze",
+          "paint"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "resin-thinned oil glazes laid with a very small soft brush on a smooth white ground: no visible stroke, every form turned pixel by pixel under one low sun, every edge hard; complete original Skill authors this task as a new film. Native draw-film: dreamGlazeDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/embroidery",
+      "template_id": "anidoodle/embroidery",
+      "native_style_id": "embroidery",
+      "title": "绣线",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/embroidery.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/embroidery.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/embroidery.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "stranded cotton floss stitched through natural plain-weave linen in a beech hoop",
+      "native_draw_film": "embroidery",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "绣线",
+          "Hand embroidery",
+          "textile"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "stranded cotton floss stitched through natural plain-weave linen in a beech hoop; complete original Skill authors this task as a new film. Native draw-film: embroidery. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/flat-vector",
+      "template_id": "anidoodle/flat-vector",
+      "native_style_id": "flatVector",
+      "title": "平面矢量",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/flatVector.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/flatVector.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/flatVector.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "pen-tool paths in a vector app, flat fills that land when a path closes, long-shadow shapes with a transparency ramp, a raster grain brush over the shade sides",
+      "native_draw_film": "flatVector",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "平面矢量",
+          "Flat vector",
+          "modern flat illustration"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "pen-tool paths in a vector app, flat fills that land when a path closes, long-shadow shapes with a transparency ramp, a raster grain brush over the shade sides; complete original Skill authors this task as a new film. Native draw-film: flatVector. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/folk-tale",
+      "template_id": "anidoodle/folk-tale",
+      "native_style_id": "folkTale",
+      "title": "民间童话",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/folkTale.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/folkTale.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/folkTale.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "gouache and watercolour over an HB pencil drawing on cream cartridge: opaque, dry-brushed paint in the foreground thinning to a pale wash and then to bare pencil in the distance",
+      "native_draw_film": "folkTale",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "民间童话",
+          "Folk-tale storybook",
+          "paint"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "gouache and watercolour over an HB pencil drawing on cream cartridge: opaque, dry-brushed paint in the foreground thinning to a pale wash and then to bare pencil in the distance; complete original Skill authors this task as a new film. Native draw-film: folkTale. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/fox",
+      "template_id": "anidoodle/fox",
+      "native_style_id": "fox",
+      "title": "剪纸拼贴",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/foxDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/fox.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/fox.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "zero drawn lines: torn pieces with a white fibrous edge, scissor pieces crisp, each lifting a soft shadow off the piece below",
+      "native_draw_film": "foxDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "剪纸拼贴",
+          "Cut-paper collage",
+          "collage"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "zero drawn lines: torn pieces with a white fibrous edge, scissor pieces crisp, each lifting a soft shadow off the piece below; complete original Skill authors this task as a new film. Native draw-film: foxDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/halftone",
+      "template_id": "anidoodle/halftone",
+      "native_style_id": "halftone",
+      "title": "新闻纸半调",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/halftone.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/halftone.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/halftone.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "web-offset newspaper print: black on a 45 degree AM screen plus one orange spot at 15 degrees, oil ink gaining into unbleached groundwood newsprint",
+      "native_draw_film": "halftone",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "新闻纸半调",
+          "Newsprint halftone",
+          "print"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "web-offset newspaper print: black on a 45 degree AM screen plus one orange spot at 15 degrees, oil ink gaining into unbleached groundwood newsprint; complete original Skill authors this task as a new film. Native draw-film: halftone. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/isometric",
+      "template_id": "anidoodle/isometric",
+      "native_style_id": "isometric",
+      "title": "等距剖面",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/isometric.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/isometric.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/isometric.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "flat vector planes on a true 2:1 isometric grid, three tones per material, crisp edges, pen-tool order",
+      "native_draw_film": "isometric",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "等距剖面",
+          "Isometric cutaway",
+          "digital"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "flat vector planes on a true 2:1 isometric grid, three tones per material, crisp edges, pen-tool order; complete original Skill authors this task as a new film. Native draw-film: isometric. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/koi",
+      "template_id": "anidoodle/koi",
+      "native_style_id": "koi",
+      "title": "马克笔漫画",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/koiDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/koi.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/koi.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "alcohol-marker cel fills with a hard shadow edge under one heavy contour that thickens away from the light",
+      "native_draw_film": "koiDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "马克笔漫画",
+          "Marker comic",
+          "marker comic"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "alcohol-marker cel fills with a hard shadow edge under one heavy contour that thickens away from the light; complete original Skill authors this task as a new film. Native draw-film: koiDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/lighthouse",
+      "template_id": "anidoodle/lighthouse",
+      "native_style_id": "lighthouse",
+      "title": "孔版印刷",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/lighthouseDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/lighthouse.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/lighthouse.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "soy ink, one layer per drum multiplied through its own registration offset; every other colour an overprint, tone a halftone screen per ink angle, white is bare paper",
+      "native_draw_film": "lighthouseDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "孔版印刷",
+          "Risograph",
+          "print"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "soy ink, one layer per drum multiplied through its own registration offset; every other colour an overprint, tone a halftone screen per ink angle, white is bare paper; complete original Skill authors this task as a new film. Native draw-film: lighthouseDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/low-poly",
+      "template_id": "anidoodle/low-poly",
+      "native_style_id": "lowPoly",
+      "title": "低多边形",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/lowPoly.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/lowPoly.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/lowPoly.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "triangle meshes projected by hand through a pinhole camera, each facet flat-shaded by its normal against one low sun, painter-sorted far to near; no 3D engine",
+      "native_draw_film": "lowPoly",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "低多边形",
+          "Low-poly",
+          "3D in code"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "triangle meshes projected by hand through a pinhole camera, each facet flat-shaded by its normal against one low sun, painter-sorted far to near; no 3D engine; complete original Skill authors this task as a new film. Native draw-film: lowPoly. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/mellan",
+      "template_id": "anidoodle/mellan",
+      "native_style_id": "mellan",
+      "title": "单线雕刻",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/mellan.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/mellan.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "one unbroken engraved line whose width follows a procedural tone field: the whole picture is a single stroke",
+      "native_draw_film": "mellanUnspool",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "单线雕刻",
+          "Single-line engraving",
+          "engraving"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "one unbroken engraved line whose width follows a procedural tone field: the whole picture is a single stroke; complete original Skill authors this task as a new film. Native draw-film: mellanUnspool. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/mid-century",
+      "template_id": "anidoodle/mid-century",
+      "native_style_id": "midCentury",
+      "title": "中世纪水粉",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/midCentury.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/midCentury.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/midCentury.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "opaque matte designer's gouache on warm illustration board, a dry brush dragged over the flats, a loose brush-and-ink line printed off register",
+      "native_draw_film": "midCentury",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "中世纪水粉",
+          "Mid-century gouache",
+          "1950s-60s storybook"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "opaque matte designer's gouache on warm illustration board, a dry brush dragged over the flats, a loose brush-and-ink line printed off register; complete original Skill authors this task as a new film. Native draw-film: midCentury. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/moon-phases",
+      "template_id": "anidoodle/moon-phases",
+      "native_style_id": "moonPhases",
+      "title": "黑板粉笔",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/moonPhasesDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/moonPhases.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/moonPhases.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "side-of-the-chalk scumble on a slate board, lit limbs worked twice, every stroke broken by the board's tooth with dust either side, ghosts of old lessons",
+      "native_draw_film": "moonPhasesDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "黑板粉笔",
+          "Chalkboard",
+          "chalk"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "side-of-the-chalk scumble on a slate board, lit limbs worked twice, every stroke broken by the board's tooth with dust either side, ghosts of old lessons; complete original Skill authors this task as a new film. Native draw-film: moonPhasesDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/painted-oil",
+      "template_id": "anidoodle/painted-oil",
+      "native_style_id": "paintedOil",
+      "title": "油画",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/paintedOil.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/paintedOil.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/paintedOil.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "opaque oil paint with hog-bristle brushes on a toned linen canvas, lean block-in to fat impasto",
+      "native_draw_film": "paintedOil",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "油画",
+          "Oil on canvas",
+          "paint"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "opaque oil paint with hog-bristle brushes on a toned linen canvas, lean block-in to fat impasto; complete original Skill authors this task as a new film. Native draw-film: paintedOil. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/paper-craft",
+      "template_id": "anidoodle/paper-craft",
+      "native_style_id": "paperCraft",
+      "title": "玩具剧场纸艺",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/paperCraft.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/paperCraft.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/paperCraft.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "a cardboard toy theatre: patterned and sugar papers cut and torn, gouache-painted cut-outs with a white sticker margin, every piece with a card edge and a gap to the flat behind",
+      "native_draw_film": "paperCraft",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "玩具剧场纸艺",
+          "Toy-theatre paper collage",
+          "collage"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "a cardboard toy theatre: patterned and sugar papers cut and torn, gouache-painted cut-outs with a white sticker margin, every piece with a card edge and a gap to the flat behind; complete original Skill authors this task as a new film. Native draw-film: paperCraft. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/pixel-art",
+      "template_id": "anidoodle/pixel-art",
+      "native_style_id": "pixelArt",
+      "title": "像素画",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/pixelArt.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/pixelArt.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/pixelArt.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "a 120x120 grid of cells, each one of 16 declared palette colours, laid one cell at a time and blown up by a whole number, no smoothing",
+      "native_draw_film": "pixelArt",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "像素画",
+          "Pixel art",
+          "digital"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "a 120x120 grid of cells, each one of 16 declared palette colours, laid one cell at a time and blown up by a whole number, no smoothing; complete original Skill authors this task as a new film. Native draw-film: pixelArt. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/pocket-watch",
+      "template_id": "anidoodle/pocket-watch",
+      "native_style_id": "pocketWatch",
+      "title": "圆珠笔素描",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/pocketWatchDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/pocketWatch.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/pocketWatch.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "one blue ballpoint on cream cartridge, near-constant weight; tone only from where the hatching sits, plus the blob where a firm stroke stops",
+      "native_draw_film": "pocketWatchDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "圆珠笔素描",
+          "Ballpoint sketch",
+          "pen & ink"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "one blue ballpoint on cream cartridge, near-constant weight; tone only from where the hatching sits, plus the blob where a firm stroke stops; complete original Skill authors this task as a new film. Native draw-film: pocketWatchDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/ranunculus",
+      "template_id": "anidoodle/ranunculus",
+      "native_style_id": "ranunculus",
+      "title": "铅笔水彩",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/ranunculusDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/ranunculus.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/ranunculus.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "graphite and pan watercolour on cold-press: washes that never quite fill their outline, form shaded toward one light, graphite over the paint",
+      "native_draw_film": "ranunculusDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "铅笔水彩",
+          "Pencil & watercolour",
+          "watercolour"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "graphite and pan watercolour on cold-press: washes that never quite fill their outline, form shaded toward one light, graphite over the paint; complete original Skill authors this task as a new film. Native draw-film: ranunculusDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/rubber-hose",
+      "template_id": "anidoodle/rubber-hose",
+      "native_style_id": "rubberHose",
+      "title": "橡皮管卡通",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/rubberHose.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/rubberHose.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/rubberHose.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "India ink at one pressure on a clear cel over a blue-pencil rough, flat grey paint on the back, photographed and printed on black-and-white film",
+      "native_draw_film": "rubberHose",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "橡皮管卡通",
+          "Rubber hose",
+          "1930s cartoon"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "India ink at one pressure on a clear cel over a blue-pencil rough, flat grey paint on the back, photographed and printed on black-and-white film; complete original Skill authors this task as a new film. Native draw-film: rubberHose. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/scrapbook",
+      "template_id": "anidoodle/scrapbook",
+      "native_style_id": "scrapbook",
+      "title": "复古剪贴簿",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/scrapbook.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/scrapbook.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/scrapbook.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "foxed rag-paper album page; torn cards, cellulose tape, a clothespin on twine; copperplate engravings hand-tinted; typewriter, ransom-note cut letters, red pen, rubber stamp",
+      "native_draw_film": "scrapbook",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "复古剪贴簿",
+          "Archival scrapbook",
+          "collage + print"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "foxed rag-paper album page; torn cards, cellulose tape, a clothespin on twine; copperplate engravings hand-tinted; typewriter, ransom-note cut letters, red pen, rubber stamp; complete original Skill authors this task as a new film. Native draw-film: scrapbook. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/scratchboard",
+      "template_id": "anidoodle/scratchboard",
+      "native_style_id": "scratchboard",
+      "title": "刮画",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/scratchboard.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/scratchboard.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/scratchboard.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "white china clay under black India ink; every mark is ink scraped away with a knife or scratch nib",
+      "native_draw_film": "scratchboard",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "刮画",
+          "Scratchboard",
+          "ink"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "white china clay under black India ink; every mark is ink scraped away with a knife or scratch nib; complete original Skill authors this task as a new film. Native draw-film: scratchboard. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/stipple",
+      "template_id": "anidoodle/stipple",
+      "native_style_id": "stipple",
+      "title": "钢笔点描",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/stipple.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/stipple.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/stipple.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "one 0.25 mm technical pen dotted straight down onto hot-press bristol; tone is dot density only",
+      "native_draw_film": "stipple",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "钢笔点描",
+          "Pen-and-ink stipple",
+          "ink"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "one 0.25 mm technical pen dotted straight down onto hot-press bristol; tone is dot density only; complete original Skill authors this task as a new film. Native draw-film: stipple. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/storybook",
+      "template_id": "anidoodle/storybook",
+      "native_style_id": "storybook",
+      "title": "童话铅笔水彩",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/storybookDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/storybook.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/storybook.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "storybook graphite and gentle pan watercolour, drawn for a recurring character",
+      "native_draw_film": "storybookDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "童话铅笔水彩",
+          "Storybook pencil + watercolour",
+          "watercolour"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "storybook graphite and gentle pan watercolour, drawn for a recurring character; complete original Skill authors this task as a new film. Native draw-film: storybookDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/sumi-e",
+      "template_id": "anidoodle/sumi-e",
+      "native_style_id": "sumiE",
+      "title": "水墨",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/sumiE.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/sumiE.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/sumiE.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "one loaded soft brush of sumi ink, five dilutions, on unsized absorbent xuan paper, with a cinnabar seal",
+      "native_draw_film": "sumiE",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "水墨",
+          "Sumi-e ink painting",
+          "ink"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "one loaded soft brush of sumi ink, five dilutions, on unsized absorbent xuan paper, with a cinnabar seal; complete original Skill authors this task as a new film. Native draw-film: sumiE. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/toy-brick",
+      "template_id": "anidoodle/toy-brick",
+      "native_style_id": "toyBrick",
+      "title": "玩具积木",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/toyBrick.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/toyBrick.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/toyBrick.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "moulded ABS toy bricks, rendered flat-plastic in orthographic view: face tones by the cube rule, bevel highlights, seam hairlines, real studs, a soft ground shadow",
+      "native_draw_film": "toyBrick",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "玩具积木",
+          "Toy brick",
+          "rendered"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "moulded ABS toy bricks, rendered flat-plastic in orthographic view: face tones by the cube rule, bevel highlights, seam hairlines, real studs, a soft ground shadow; complete original Skill authors this task as a new film. Native draw-film: toyBrick. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/woodcut",
+      "template_id": "anidoodle/woodcut",
+      "native_style_id": "woodcut",
+      "title": "浮世绘木刻",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/woodcut.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/woodcut.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/woodcut.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "water-based pigment printed by baren from hand-carved cherry blocks onto damp kozo washi: a sumi keyblock, flat colour blocks, bokashi wipes",
+      "native_draw_film": "woodcut",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "浮世绘木刻",
+          "Ukiyo-e colour woodblock",
+          "print"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "water-based pigment printed by baren from hand-carved cherry blocks onto damp kozo washi: a sumi keyblock, flat colour blocks, bokashi wipes; complete original Skill authors this task as a new film. Native draw-film: woodcut. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    },
+    {
+      "candidate_id": "anidoodle:anidoodle/wren",
+      "template_id": "anidoodle/wren",
+      "native_style_id": "wren",
+      "title": "墨线淡彩",
+      "skill_path": "vendor/anidoodle/skills/anidoodle/SKILL.md",
+      "native_instructions": [
+        "vendor/anidoodle/skills/anidoodle/SKILL.md",
+        "vendor/anidoodle/skills/anidoodle/references/workflows/start-here.md",
+        "vendor/anidoodle/skills/anidoodle/references/formats.md",
+        "vendor/anidoodle/skills/anidoodle/references/styles/wrenDraw.md",
+        "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/wren.ts"
+      ],
+      "native_source": "vendor/anidoodle/skills/anidoodle/engine/src/canvas-core/wren.ts",
+      "native_runtime": "vendor/anidoodle/skills/anidoodle/engine",
+      "native_starter": "vendor/anidoodle/skills/anidoodle/engine/tools/scaffold.mjs",
+      "render_script": "vendor/anidoodle/skills/anidoodle/engine/tools/render.mjs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "signature_features": "wet washes first that flood past the line and settle along each shape's bottom edge, backruns, then a flexible nib thick on the press and hair-thin on the lift",
+      "native_draw_film": "wrenDraw",
+      "native_option_ids": [],
+      "uses": [
+        "broll",
+        "aroll_overlay"
+      ],
+      "alpha_requirement": "New native project authors an isolated subject without full-frame paper/background or g.paper; native opaque demo has no transparency switch. Actual decoded alpha must contain clear and visible pixels.",
+      "tags": {
+        "visual_styles": [
+          "墨线淡彩",
+          "Ink & line-wash",
+          "ink"
+        ],
+        "actions": [
+          "原生逐笔绘制"
+        ],
+        "subjects": [],
+        "relationships": []
+      },
+      "limitations": [
+        "32画风是完整创作入口，不是32套只换标题的固定动画。",
+        "公开样例主体和场景不是当前语义；必须用完整原生Skill在Job工程重新创作。",
+        "中文字不能调用Latin-only drafting/lettering字库；使用原生Canvas字体路线。",
+        "透明资格取决于本期工程的真实alpha，不是现有demo或输出编码器选项。"
+      ],
+      "summary": "wet washes first that flood past the line and settle along each shape's bottom edge, backruns, then a flexible nib thick on the press and hair-thin on the lift; complete original Skill authors this task as a new film. Native draw-film: wrenDraw. Transparent use requires an isolated authored subject, never an opaque demo with an encoder flag."
+    }
+  ]
+}

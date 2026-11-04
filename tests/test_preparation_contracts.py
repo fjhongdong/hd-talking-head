@@ -26,6 +26,41 @@ MANIFEST = SKILL / "references/dependency-manifest.json"
 
 
 class PreparationContractTests(unittest.TestCase):
+    def test_new_native_channels_prepare_only_their_shared_dependencies(self):
+        from dependency_preflight import _load_manifest
+        from project_python import preparation_selection
+        manifest = _load_manifest(MANIFEST)
+        baseline, _ = preparation_selection(manifest, set())
+        shared = {entry['id'] for entry in baseline}
+        expected = {
+            'anidoodle': ['hyperframes-native-adaptation', 'barty-motion-graphics', 'anidoodle'],
+            'sweety-handdraw-video': ['huashu-art-motion-source', 'barty-motion-graphics', 'sweety-handdraw-video'],
+            'huashu-art-motion': ['huashu-art-motion-source', 'barty-motion-graphics', 'huashu-art-motion'],
+        }
+        for dependency, entry_ids in expected.items():
+            with self.subTest(dependency=dependency):
+                entries, checks = preparation_selection(manifest, {dependency})
+                self.assertEqual([entry['id'] for entry in entries if entry['id'] not in shared], entry_ids)
+                self.assertIn(dependency, {check['id'] for check in checks})
+        entries, _ = preparation_selection(manifest, {'bang-motion'})
+        self.assertEqual([entry['id'] for entry in entries if entry['id'] not in shared], ['bang-motion'])
+
+    def test_handdraw_exact_prefix_preserves_other_versions_and_reports_only_missing(self):
+        from prepare_handdraw_runtime import missing_packages
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            lock = root / 'requirements.txt'
+            lock.write_text('Pillow==11.3.0\nnumpy==2.5.4\n')
+            prefix = root / 'prefix'
+            metadata = prefix / 'pillow-11.3.0.dist-info/METADATA'
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text('Name: pillow\nVersion: 11.3.0\n')
+            self.assertEqual(missing_packages(prefix, lock), ['numpy==2.5.4'])
+            metadata.write_text('Name: pillow\nVersion: 12.0.0\n')
+            with self.assertRaisesRegex(ValueError, 'preserve the prefix'):
+                missing_packages(prefix, lock)
+            self.assertIn('12.0.0', metadata.read_text())
+
     def test_source_root_and_parent_symlinks_are_rejected_without_changing_originals(self):
         from prepare_sources import prepare_sources
         for linked_part in ("vendor", "vendor/source"):

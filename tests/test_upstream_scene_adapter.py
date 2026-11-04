@@ -7,6 +7,7 @@ import unittest
 from unittest import mock
 import subprocess
 import tempfile
+import shutil
 from types import SimpleNamespace
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -137,7 +138,7 @@ class UpstreamSceneTests(unittest.TestCase):
 
     def test_lemo_catalog_and_style_identity(self):
         catalog = scene.lemo_styles(SKILL)
-        self.assertEqual(len(catalog), 59)
+        self.assertEqual(len(catalog), 66)
         for slug in catalog:
             b = lemo_brief(slug); data = json.dumps(b)
             self.assertEqual(scene.validate_brief(data)["style_slug"], slug)
@@ -147,6 +148,34 @@ class UpstreamSceneTests(unittest.TestCase):
             self.assertEqual(binding["template_id"], "lemo-opuscar/" + slug)
             router.validate_template_binding(binding)
         with self.assertRaises(ValueError): scene.validate_brief(json.dumps(lemo_brief("missing-style")))
+
+    def test_lemo_style_manifest_works_without_git_and_rejects_changed_sources(self):
+        index = json.loads((SKILL / "archives/sources/index.json").read_bytes())
+        entry = next(item for item in index["repositories"] if item["path"] == "vendor/lemo-opuscar")
+        with tempfile.TemporaryDirectory() as temporary:
+            package = Path(temporary)
+            (package / "archives/sources").mkdir(parents=True)
+            (package / "archives/sources/index.json").write_text(json.dumps({"schema_version": 1, "repositories": [entry]}))
+            source = package / "vendor/lemo-opuscar"
+            for name in entry["files"]:
+                if name.endswith(("/STYLE.md", "/style.json")) and not name.startswith("styles/_template/"):
+                    target = source / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(SKILL / entry["path"] / name, target)
+            self.assertFalse((source / ".git").exists())
+            self.assertEqual(len(scene.lemo_styles(package)), 66)
+            # A complete runtime cannot accept this style-only test fixture.
+            with self.assertRaisesRegex(ValueError, "complete source"):
+                scene.verify_lemo_source(package)
+            guide = source / "styles/blueprint/STYLE.md"
+            guide.write_bytes(guide.read_bytes() + b"\nchanged")
+            with self.assertRaisesRegex(ValueError, "original style.*changed"):
+                scene.lemo_styles(package)
+
+    def test_original_style_motion_rate_survives_parent_clock(self):
+        self.assertEqual(scene.lemo_native_fps(SKILL, "circuit-board"), 30)
+        self.assertEqual(scene.lemo_native_fps(SKILL, "memphis-diorama"), 60)
+        self.assertEqual(scene.lemo_native_fps(SKILL, "swiss-motion"), 24)
 
     def test_lemo_handoff_required_and_onetake_is_unchanged(self):
         b = lemo_brief(); b.pop("creative_handoff")

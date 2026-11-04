@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Mapping
 
 from . import contract_artifacts
+from .dependency_contracts import CREATIVE_SKILL_ADAPTERS
 
 INDEX = "references/motion-capability-index.json"
 TAG_FIELDS = ("subjects", "actions", "relations", "feelings", "styles", "patterns")
@@ -51,6 +52,7 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
         raise ValueError("Motion capability index requires schema_version=3 and profiles")
     profiles = {}
     source_hashes = {}
+    native_alpha_routes = None
     for profile in data["profiles"]:
         required = {"candidate_id", "uses", "capability_type", "reviewed_version", "title",
                     "summary", "tags", "editable_content", "limitations", "evidence", "reviewed_sources",
@@ -87,7 +89,14 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
             raise ValueError(f"Full-scene authoring scope is invalid for this use: {cid}")
         if scope['mode'] == 'full_scene' and 'aroll_overlay' in profile['uses']:
             from .overlay_selection import _ROUTE_BY_TEMPLATE
-            if cid not in {'overlay:' + route for route in _ROUTE_BY_TEMPLATE.values()}:
+            declared = {'overlay:' + route for route in _ROUTE_BY_TEMPLATE.values()}
+            if cid.startswith(('overlay:anidoodle/', 'overlay:huashu-art-motion/')):
+                if native_alpha_routes is None:
+                    from .broll_skill_selection import motion_native_candidates
+                    native_alpha_routes = {'overlay:' + row['template_id'] for row in motion_native_candidates(project)
+                                           if 'aroll_overlay' in row.get('uses', [])}
+                declared.update(native_alpha_routes)
+            if cid not in declared:
                 raise ValueError(f'Full-scene authoring scope has no real alpha overlay entry: {cid}')
         reviewed = profile["reviewed_sources"]
         if not isinstance(reviewed, dict) or set(reviewed) != set(profile["evidence"]):
@@ -125,7 +134,8 @@ def describe_candidates(project_root: Path, candidates: list[dict], *, use: str,
             raise ValueError(f"Motion capability is not reviewed for {use}: {cid}")
         if profile["reviewed_version"] != candidate["producer_version"]:
             raise ValueError(f"Motion capability version changed; review affected metadata: {cid}")
-        result.append({**candidate, "summary": profile["summary"], "capability": profile})
+        result.append({**candidate, 'canonical_template': candidate.get('template_id', cid),
+                       "summary": profile["summary"], "capability": profile})
     return result
 
 
@@ -154,6 +164,13 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
                      "template_id": template, "source_route": route,
                      "role": "aroll_overlay", "status": "supported",
                      "adapter_module": _OVERLAY_MODULES[route]})
+    from .broll_skill_selection import motion_native_candidates
+    for candidate in motion_native_candidates(project):
+        if candidate.get('dependency_id') not in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+            continue
+        if 'aroll_overlay' in candidate.get('uses', []):
+            rows.append({**candidate, 'candidate_id': 'overlay:' + candidate['template_id'],
+                         'source_route': candidate['template_id'], 'role': 'aroll_overlay'})
     return [{**row, "limitations": row["capability"]["limitations"]}
             for row in describe_candidates(project, rows, use="aroll_overlay", profiles=profiles)]
 
@@ -175,7 +192,8 @@ def _catalog_sources(project: Path, *, previous: tuple | None = None) -> tuple:
     if previous is None:
         from scripts.motion_native_skill_adapter import SOURCES
         paths = set()
-        for name, _, _ in SOURCES.values():
+        source_names = [name for name, _, _ in SOURCES.values()] + ['anidoodle', 'sweety-handdraw-video']
+        for name in source_names:
             record_path = project / 'references' / (name + '-native-source.json')
             record = contract_artifacts.read_json_artifact(record_path)
             root = project / record['source_root']
@@ -457,12 +475,12 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                     "record": {"job_path": record_path, "sha256": hashlib.sha256(data).hexdigest(), "byte_count": len(data)}}}
         finally:
             sys.path[:] = previous
-    if segment['bindings'][component].get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
+    if segment['bindings'][component].get('dependency_id') in CREATIVE_SKILL_ADAPTERS:
         scripts = PACKAGE_ROOT / 'scripts'
         previous = sys.path[:]
         try:
             sys.path.insert(0, str(scripts))
-            module = importlib.import_module('motion_native_skill_adapter')
+            module = importlib.import_module(CREATIVE_SKILL_ADAPTERS[segment['bindings'][component]['dependency_id']])
             module.validate_brief(path.read_bytes())
             if brief['task_source'] != module.task_source({'segments': [segment]}, treatment, segment['segment_id'], component):
                 raise ValueError('Native motion task differs from its parent semantic row')
@@ -473,7 +491,7 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                 if result['renderer_version'] != segment['bindings'][component]['renderer_version']:
                     raise ValueError('Native motion result renderer differs from the selected binding')
                 call = contract_artifacts.read_json_artifact(module.exact(root, result['render_call']))
-                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else {'.html'})]
+                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else ({'.ts', '.js', '.html', '.json', '.svg', '.py'} if brief['dependency_id'] in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} else {'.html'}))]
                 if brief['dependency_id'] == 'mg-styles-15' and brief['template_id'] == '3d-render':
                     for step in call['native_preparations']:
                         for authored in step['inputs']:
@@ -489,6 +507,8 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
 
 
 def _brief_overlay_route(brief: Mapping) -> str | None:
+    if brief.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} and brief.get('alpha') is True:
+        return brief['dependency_id'] + '/' + brief['template_id']
     if (brief.get('dependency_id') == 'barty-motion-graphics' and brief.get('template_id') == 'motion-broll'
             and brief.get('alpha') is True):
         return 'barty-motion-graphics/motion-broll'
@@ -562,12 +582,12 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                     raise ValueError("native validator module belongs to another project")
                 payload = contract_artifacts.canonical_json_bytes(
                     {k: v for k, v in brief.items() if k != "native_result"}
-                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", "barty-motion-graphics", "bang-motion", "mg-styles-15", "video-shotcraft", "bb-video"} else brief)
+                    if row.get("dependency_id") in {"lemo-wake", "video-talkcraft", *CREATIVE_SKILL_ADAPTERS} else brief)
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
                     expected_alpha = row['role'] == 'aroll_overlay'
-                    if (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
+                    if (row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS
                             and use == 'broll' and segment is not None):
                         strategy = segment['visual_strategy']
                         components = [c for c in strategy['components'] if c.get('component_id') == component_id]
@@ -581,7 +601,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                                     or components[0].get('kind') != 'code_generated'):
                                 raise ValueError('Native B-roll annotation needs a valid hybrid composition')
                             expected_alpha = True
-                    if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'} and (
+                    if row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS and (
                             checked['dependency_id'] != row['dependency_id']
                             or row['template_id'] != checked['dependency_id'] + '/' + checked['template_id']
                             or checked['alpha'] != expected_alpha):
@@ -714,9 +734,9 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 if None in required or not required.issubset(paths):
                     raise ValueError("completed Wake result must cite native project, DIRECTOR and result record")
         motion_required = set()
-        motion_planning = (row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}
+        motion_planning = (row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS
                            and phase == 'planning' and not brief.get('native_result'))
-        if row.get('dependency_id') in {'barty-motion-graphics', 'bang-motion', 'mg-styles-15', 'video-shotcraft', 'bb-video'}:
+        if row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS:
             if motion_planning:
                 planning = {ref.get('pointer') for ref in refs if isinstance(ref, dict) and ref.get('path') == relative}
                 if not {'/transcript', '/task_source/quote', '/task_source/semantic', '/template_id', '/native_options'}.issubset(planning):

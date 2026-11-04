@@ -31,7 +31,7 @@
 
 ### Lemo 原生导演交接
 
-历史 `history:lemo-free-scene` 与 OneTake 记录不构成新计划准入；Lemo 当前 59 个具体 style 已按 [Lemo 接入说明](lemo-opuscar.md)逐条接通。不能仅凭调用 renderer 证明动作来自原生 Skill，仍须读取所选 STYLE、绑定 workflow 并完成真实画面验收；不修改第三方来补齐。
+历史 `history:lemo-free-scene` 与 OneTake 记录不构成新计划准入；Lemo 当前 66 个具体 style 已按 [Lemo 接入说明](lemo-opuscar.md)逐条接通。不能仅凭调用 renderer 证明动作来自原生 Skill，仍须读取所选 STYLE、绑定 workflow 并完成真实画面验收；不修改第三方来补齐。
 
 父级交给 Lemo：本句想让观众理解的关系或变化、当前批准原文和真实词锚、准确帧数/尺寸、同期圆窗及唯一字幕的避让位置、前后镜头的实际视觉语言，以及可核对的视觉质量参照。父级决定“表达什么”，不预先决定“几个同形卡片、几根箭头和一个中心圆”。多来源、比较或监测也不能默认套同一张关系图。
 
@@ -140,7 +140,7 @@ Adu/Hypit 均提供 `create_existing_adapter(project_root, node_executable, brie
 
 | dependency_id | upstream_commit | 原生入口 |
 | --- | --- | --- |
-| `lemo-opuscar` | `413a6bd6d78ebd3bdd5abaec9538a26867f890df` | `node core/render/video.mjs <scene>` |
+| `lemo-opuscar` | `bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00` | `node core/render/video.mjs <scene>` |
 | `onetake` | `415758128aa45cc54340df40d8109363447f582e` | `.venv/bin/python scripts/render.py index.html` |
 
 依赖由 `ensure_visual_broll_skills.py` 在项目本地自动准备，脚本内固定 render 包版本；Skill 新版在环境检查前按[更新规则](dependency-preflight.md#依赖-skill-更新)处理，不在渲染中联网拉取或切换。禁止全局安装和 worktree 共享。Lemo 复用项目 Chrome，不运行自动 reset/setup；OneTake 使用项目 Python 3.12。两套依赖必须同时登记到正式 executor 与 `visual_plan`，运行时不支持即停止，不能只带 Skill 文件声称跨机器可执行。

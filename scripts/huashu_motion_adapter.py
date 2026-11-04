@@ -47,6 +47,173 @@ _FAILURE_STAGE = "preflight.input"
 _NATIVE_DETAIL = ""
 
 
+def native_templates(project_root):
+    """Locate only workflows and recipes consumed by the pinned original Skill.
+
+    This catalog describes authoring routes, not inherited visual approval.
+    Research recipes remain research recipes even though scenes can render them.
+    """
+    root = Path(project_root).resolve(strict=True) / "vendor/huashu-art-motion"
+    if subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != UPSTREAM_COMMIT:
+        raise ValueError("Huashu native Skill source revision changed")
+    schema = json.loads((root / "scripts/engine/clip_schema.json").read_bytes())
+    rows = {}
+    for grammar in schema["grammars"]:
+        guide = root / "references/动画语法" / (grammar + ".md")
+        source = root / "scripts/engine/clips" / (grammar + ".js")
+        if not guide.is_file() or not source.is_file():
+            raise ValueError("Huashu original grammar is incomplete: " + grammar)
+        identity = "grammar-" + grammar.replace("_", "-")
+        rows[identity] = {"template_id": identity, "route": "grammar", "grammar": grammar,
+            "title": guide.read_text().splitlines()[0].lstrip("# "),
+            "instructions": ["SKILL.md", "references/09-视频动画语法.md", guide.relative_to(root).as_posix()],
+            "source_entrypoint": source.relative_to(root).as_posix(),
+            "alpha": "ctx.alpha" in source.read_text(), "state": "native_workflow"}
+    recipes = root / "references/风格配方"
+    index = (recipes / "INDEX.md").read_text()
+    research = index.split("## 新增研究配方", 1)[1].split("## 材料层", 1)[0]
+    research_cards = set(re.findall(r"(?m)^\| \[[^\]]+\]\(([^)]+)\)", research))
+    for guide in sorted(recipes.glob("[0-9]*_*.md")):
+        identity = "style-" + guide.stem.replace("_", "-")
+        rows[identity] = {"template_id": identity, "route": "scene", "style": guide.stem,
+            "title": guide.read_text().splitlines()[0].lstrip("# "),
+            "instructions": ["SKILL.md", "references/风格配方/INDEX.md",
+                "references/15-跨场景风格提炼.md", guide.relative_to(root).as_posix()],
+            "source_entrypoint": "scripts/engine/render.py", "alpha": False,
+            "state": "research" if guide.name in research_cards else "native_recipe"}
+    rows["scene"] = {"template_id": "scene", "route": "scene", "title": "完整原生主题场景",
+        "instructions": ["SKILL.md", "references/09-视频动画语法.md", "references/镜头语言.md"],
+        "source_entrypoint": "scripts/engine/render.py", "alpha": False, "state": "native_workflow"}
+    return rows
+
+
+def native_workflow_instructions(brief, project_root=SKILL):
+    selected = native_templates(project_root).get(brief["template_id"])
+    if selected is None or (brief["alpha"] and not selected["alpha"]):
+        raise ValueError("Huashu selected native route does not support this output")
+    return ("Read the complete original Huashu Skill and selected instructions: "
+        + ", ".join(selected["instructions"]) + ". Use task_source, transcript, word_anchors, speech, "
+        "approved materials and resource authorization as the parent facts. The original Skill owns the "
+        "storyboard, subject-specific design, composition, animation and its own technical QA. "
+        "Copy the original scripts/engine into this task's project engine directory unchanged; author "
+        "only the current project's eras.js, eras_<film>.js, scenes and task assets. Do not copy the demo's "
+        "story or default art-history room. For grammar routes author the selected original JSON spec, "
+        "preserving native theme, finish, safe zones, cues, images and character/frame inputs; run the "
+        "original clip_lint.py and required native QA. For scene/style routes author topic-specific "
+        "eras/scenes with the original engine and follow the selected recipe, cross-scene method and "
+        "research protocol when applicable. Research routes require original creation and validation; "
+        "their catalog entry is not prior visual acceptance. Render through the project's verbatim "
+        "engine/render.py at the approved width, height, duration and fps. Grammar alpha requires "
+        "--alpha and a .mov ProRes 4444 output; scenes are opaque .mp4. Keep render output under out/. "
+        "Preserve source files and use capture_render then publish_completed with the actual call and "
+        "native_usage evidence. Existing media may be imported; generating or purchasing new media "
+        "requires the current task's authorization. A pending native task is not a completed result.")
+
+
+def prepare_native_project(project_directory, project_root=SKILL):
+    """Copy original engine files into a fresh authored project, never the vendor."""
+    root = Path(project_root).resolve(strict=True) / "vendor/huashu-art-motion/scripts/engine"
+    destination = Path(project_directory).resolve(strict=True) / "engine"
+    if destination.exists():
+        raise ValueError("Preserve the existing Huashu native project; use its existing engine")
+    shutil.copytree(root, destination)
+    return destination
+
+
+def native_render_command(root, brief, argv, runtime, native, *, check_runtime_links=True):
+    """Validate the schema-2 bridge's direct original Python renderer invocation.
+
+    Returns the shared bridge's (project_directory, script, output) tuple. No
+    renderer or input content is changed and no external generation is started.
+    """
+    root, native = Path(root).resolve(strict=True), Path(native).resolve(strict=True)
+    directory = (root / relative(brief["project_directory"])).resolve(strict=True)
+    if not directory.is_relative_to(root):
+        raise ValueError("Huashu project escapes the current Job")
+    selected = native_templates(native.parents[1]).get(brief["template_id"])
+    if selected is None or (brief["alpha"] and not selected["alpha"]):
+        raise ValueError("Huashu native template does not support the requested output")
+    if not isinstance(argv, list) or len(argv) < 4 or argv[0] != runtime["tools"]["python"]:
+        raise ValueError("Huashu requires the prepared Python and original render.py")
+    script = Path(argv[1]); script = (directory / script if not script.is_absolute() else script).resolve(strict=True)
+    engine = directory / "engine"
+    if script != engine / "render.py":
+        raise ValueError("Huashu renderer must be the original engine/render.py in this project")
+    invariant = ["render.py", "spec_assets.py", "index.html", "engine.js", "clip.html", "clip.js", "clip_schema.json", "scenes/index.js", "transitions.js"]
+    invariant += [p.relative_to(native / "scripts/engine").as_posix()
+                  for folder in ("lib", "clips") for p in (native / "scripts/engine" / folder).rglob("*") if p.is_file()]
+    for name in invariant:
+        local, original = engine / name, native / "scripts/engine" / name
+        if local.is_symlink() or not local.is_file() or sha(local) != sha(original):
+            raise ValueError("Huashu original engine source changed: " + name)
+    options, flags, position = {}, set(), 2
+    values = {"--out", "--spec", "--width", "--height", "--fps", "--from", "--to", "--film", "--solo", "--crf"}
+    switches = {"--alpha", "--no-counter"}
+    while position < len(argv):
+        name = argv[position]
+        if name in options or name in flags or name not in values | switches:
+            raise ValueError("Huashu requires distinct original renderer options")
+        if name in switches:
+            flags.add(name); position += 1
+        else:
+            if position + 1 >= len(argv):
+                raise ValueError("Huashu native renderer option has no value")
+            options[name] = argv[position + 1]; position += 2
+    output = Path(options.get("--out", ""))
+    output = (directory / output if not output.is_absolute() else output).resolve()
+    if not output.is_relative_to(directory / "out") or output.suffix != (".mov" if brief["alpha"] else ".mp4"):
+        raise ValueError("Huashu output must use its separate out directory and actual alpha format")
+    duration = brief["composition"]["frames"] / brief["composition"]["fps"]
+    if selected["route"] == "grammar":
+        if "--spec" not in options or bool("--alpha" in flags) != brief["alpha"] or set(options) - {"--spec", "--out", "--crf"} or flags - {"--alpha"}:
+            raise ValueError("Huashu grammar requires --spec and its actual native alpha flag")
+        spec_path = Path(options["--spec"])
+        spec_path = (directory / spec_path if not spec_path.is_absolute() else spec_path).resolve(strict=True)
+        if not spec_path.is_relative_to(directory) or spec_path.is_relative_to(directory / "out"):
+            raise ValueError("Huashu spec must be a frozen project input")
+        spec = json.loads(spec_path.read_bytes())
+        if (spec.get("grammar") != selected["grammar"] or spec.get("alpha", False) != brief["alpha"]
+                or any(spec.get(key) != brief["composition"][key] for key in ("width", "height", "fps"))
+                or not finite(spec.get("duration")) or abs(spec["duration"] - duration) > 1e-6):
+            raise ValueError("Huashu original spec differs from the selected template or approved clock")
+        # Delegate the native input slots to its original resolver, then enforce
+        # the existing Job boundary on every file it will serve.
+        resolver_spec = importlib.util.spec_from_file_location("huashu_native_assets", native / "scripts/engine/spec_assets.py")
+        resolver = importlib.util.module_from_spec(resolver_spec); resolver_spec.loader.exec_module(resolver)
+        allowed = set(); resolver.localize(json.loads(spec_path.read_bytes()), spec_path.parent, allowed)
+        for asset in allowed:
+            if not Path(asset).resolve(strict=True).is_relative_to(directory):
+                raise ValueError("Huashu native media must be imported and bound inside this task project")
+        def remote(value):
+            return ((isinstance(value, str) and value.startswith(("http:", "https:")))
+                    or isinstance(value, dict) and any(remote(v) for v in value.values())
+                    or isinstance(value, list) and any(remote(v) for v in value))
+        media_slots = [q.get(key) for q in spec.get("cues", []) for key in ("image", "frames")]
+        media_slots += [spec.get("data", {}).get(key) for key in ("image", "character")]
+        if any(remote(value) for value in media_slots):
+            raise ValueError("Huashu native media must be frozen locally before rendering")
+    else:
+        if brief["alpha"] or flags - {"--no-counter"} or "--spec" in options:
+            raise ValueError("Huashu authored scenes use opaque original film rendering")
+        try:
+            matching = (int(options["--width"]) == brief["composition"]["width"]
+                and int(options["--height"]) == brief["composition"]["height"]
+                and int(options["--fps"]) == brief["composition"]["fps"]
+                and abs(float(options["--to"]) - duration) <= 1e-6
+                and float(options.get("--from", "0")) == 0)
+        except (KeyError, ValueError):
+            matching = False
+        if not matching:
+            raise ValueError("Huashu authored scene must preserve the exact approved canvas and clock")
+        film = options.get("--film", "")
+        if film and not re.fullmatch(r"[a-z0-9_]+", film):
+            raise ValueError("Huashu film must use the task's own eras file")
+        eras = engine / ("eras_" + film + ".js" if film else "eras.js")
+        if not eras.is_file() or eras.read_bytes() == (native / "scripts/engine/eras.js").read_bytes():
+            raise ValueError("Huashu needs the current topic's authored eras/scenes, not the gallery")
+    return directory, script, output
+
+
 def native_render_argv(python, native_entry, spec, output):
     """Build the one native child invocation shared by every Huashu grammar."""
     python, native_entry = Path(python), Path(native_entry).resolve(strict=True)

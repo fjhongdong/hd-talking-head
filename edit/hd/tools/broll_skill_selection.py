@@ -21,7 +21,7 @@ from . import contract_artifacts
 
 _ADAPTERS = (
     "hyperframes_native_adapter", "doudou_adapter", "hypit_native_adapter",
-    "adu_native_adapter", "wise_motion_adapter", "huashu_motion_adapter",
+    "adu_native_adapter", "wise_motion_adapter",
     "paper_collage_adapter", "paper_hyperframes_adapter", "whiteboard_adapter",
     "talkcraft_native_adapter", "data_rollup_adapter", "hyperframes_notification_adapter",
     "hyperframes_chatgpt_exchange_adapter",
@@ -31,7 +31,7 @@ _ADAPTERS = (
     "lemo_wake_adapter",
 )
 _REGISTRY_DEPENDENT = {
-    "huashu_motion_adapter", "data_rollup_adapter",
+    "data_rollup_adapter",
     "hyperframes_notification_adapter", "hyperframes_chatgpt_exchange_adapter",
 }
 
@@ -113,16 +113,19 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
     rows = []
     for dependency in module.SOURCES:
         for template in module.load_template_catalog(project_root, dependency_id=dependency):
+            if template.get('production_eligible') is False:
+                continue
             identity = template['candidate_id']
             native_id = identity.split(':', 1)[1]
             # Barty/Bang expose complete creation workflows. The broader
             # recipe catalogs explicitly distinguish scenes from components.
             native_role = ('scene' if dependency in {'barty-motion-graphics', 'bang-motion'}
                            else template['native_role'])
+            uses = template.get('uses', ['broll'] if native_role in {'scene', 'product_promo'} else ['component'])
             rows.append({'candidate_id': identity, 'skill_id': dependency, 'dependency_id': dependency,
                 'entrypoint': module.ENTRY, 'template_id': native_id, 'producer_version': module.VERSION,
                 'source_route': native_id,
-                'role': 'native' if native_role in {'scene', 'product_promo'} else 'component',
+                'role': 'native' if 'broll' in uses else 'component', 'uses': uses,
                 'native_role': native_role, 'status': 'supported',
                 'adapter_module': 'motion_native_skill_adapter', 'capacity': None,
                 'semantic_families': [], 'limitations': [
@@ -130,7 +133,7 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                     'Review this scene and freeze its actual native result before production']})
             rows[-1].update({field: template[field] for field in
                              ('min_duration_seconds', 'max_duration_seconds', 'timing_requirements',
-                              'variant_capabilities', 'styles') if field in template})
+                              'variant_capabilities', 'styles', 'broll_variant_keys') if field in template})
             if template.get('timing_requirements'):
                 source_text = (Path(project_root) / template['native_source']).read_text(encoding='utf-8')
                 if any(requirement['evidence_quote'] not in source_text
@@ -139,6 +142,27 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                 minimum = native_timing_minimum(template)
                 rows[-1]['min_duration_seconds'] = max(
                     rows[-1].get('min_duration_seconds', 0), minimum)
+    for module_name in ('anidoodle_native_adapter', 'sweety_native_adapter'):
+        spec = importlib.util.spec_from_file_location('_catalog_' + module_name, Path(project_root) / 'scripts' / (module_name + '.py'))
+        adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
+        for template in adapter.load_template_catalog(project_root):
+            identity = template['candidate_id']; native_id = identity.split(':', 1)[1]
+            uses = template['uses']
+            if 'broll' not in uses:
+                uses = list(dict.fromkeys([*uses, 'component']))
+            rows.append({'candidate_id': identity, 'skill_id': adapter.DEPENDENCY_ID,
+                'dependency_id': adapter.DEPENDENCY_ID, 'entrypoint': adapter.ENTRY,
+                'template_id': native_id, 'producer_version': adapter.VERSION,
+                'source_route': native_id, 'role': 'native' if 'broll' in uses else 'component',
+                'native_role': template['native_role'], 'uses': uses, 'status': 'supported',
+                'adapter_module': module_name, 'capacity': None, 'semantic_families': [],
+                'limitations': template.get('limitations', [
+                    'Invoke the complete original Skill and selected native template',
+                    'Native output use, approved inputs and resource authorization remain binding'])})
+            rows[-1]['min_duration_seconds'] = 1 / 24
+            if adapter.DEPENDENCY_ID == 'sweety-handdraw-video' and template['native_template_group'] == 'web_motion':
+                rows[-1]['max_duration_seconds'] = 30
+
     return rows
 
 
@@ -255,8 +279,9 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         if module == "upstream_scene_adapter":
             styles = project / "vendor/lemo-opuscar/styles"
             entries = sorted(p for p in styles.glob("*/style.json") if p.parent.name != "_template")
-            if len(entries) != 59:
-                raise ValueError("Lemo discovery requires the complete official 59-style catalog")
+            from scripts.upstream_scene_adapter import lemo_styles
+            if {p.parent.name for p in entries} != set(lemo_styles(project)):
+                raise ValueError("Lemo discovery requires the complete pinned official catalog")
             for path in entries:
                 metadata = contract_artifacts.read_json_artifact(path)
                 slug = path.parent.name
@@ -1347,7 +1372,8 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
         raise ValueError("Native timing contract is missing its adapter")
     elif strict and module not in {None, "hyperframes_native_adapter", "motion_native_skill_adapter",
                                    "openfilm_motion_adapter", "overlay_studio_adapter",
-                                   "paper_hyperframes_adapter", "talkcraft_skill_adapter", "wise_motion_adapter"}:
+                                   "paper_hyperframes_adapter", "talkcraft_skill_adapter", "wise_motion_adapter",
+                                   "anidoodle_native_adapter", "sweety_native_adapter"}:
         raise ValueError("Native timing contract is unknown: " + str(module))
     if minimum is None and maximum is None and not strict:
         return None

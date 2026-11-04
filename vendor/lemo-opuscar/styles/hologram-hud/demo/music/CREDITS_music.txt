@@ -1,1 +1,0 @@
-Original score: melody, arpeggios and bass figures are all original, synthesized in real time in numpy (PolyBLEP saw/square waves, noise drums, 808-style sine drops). No samples or third-party material were used.

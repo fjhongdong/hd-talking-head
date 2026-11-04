@@ -31,7 +31,122 @@ def brief():
         "assets": []}
 
 
+def native_task_brief(template="scene", alpha=False):
+    """Schema-2 technical contract input; this does not approve or run a Job."""
+    return {"schema_version": 2, "dependency_id": "huashu-art-motion", "job_id": "huashu-contract-fixture",
+        "source_binding": {"aroll_sha256": "a" * 64, "segment_id": "seg-fixture", "start": 0, "end": 4},
+        "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": 96}, "alpha": alpha,
+        "canvas_transport": "identity", "template_id": template, "native_options": [],
+        "semantic_goal": "原生接入技术验证", "transcript": "仅用于技术验证",
+        "task_source": {"semantic_row_id": "technical-fixture", "quote": "仅用于技术验证",
+            "semantic": "原生接入技术验证", "required_change": "验证真实原生输入契约", "component_brief": "技术验证，不代表用户验收"},
+        "template_request": {"semantic_family": "technical_fixture", "information_units": 1,
+            "numeric_values": [], "numeric_scale": "not_applicable"},
+        "word_anchors": [{"text": "仅用于技术验证", "start": 0, "end": 4}],
+        "speech": {"job_path": "inputs/fixture.wav", "sha256": "b" * 64, "byte_count": 1},
+        "materials": [], "authorization": {"paid_generation": False, "purpose": "technical_contract_fixture"},
+        "project_directory": "native-projects/huashu-fixture", "result_record_path": "native-inputs/huashu-fixture/result.json"}
+
+
 class HuashuInputTests(unittest.TestCase):
+    def test_common_schema2_uses_original_huashu_catalog_options_and_alpha(self):
+        import motion_native_skill_adapter as native
+        for template, alpha in (("grammar-t1-3b1b", True), ("style-25-ghibli", False)):
+            b = native_task_brief(template, alpha)
+            native.validate_brief(json.dumps(b))
+            self.assertEqual(native._template(b), ROOT / "vendor/huashu-art-motion")
+        b = native_task_brief("grammar-y1-kurzgesagt")
+        b["native_options"] = ["style-17-ink"]
+        native.validate_brief(json.dumps(b))
+        native._template(b)
+        b["native_options"] = ["invented-style"]
+        with self.assertRaisesRegex(ValueError, "options"):
+            native._template(b)
+        with self.assertRaisesRegex(ValueError, "alpha paths"):
+            native.validate_brief(json.dumps(native_task_brief("scene", True)))
+
+    def test_huashu_production_exclusions_apply_to_primary_options_and_usage(self):
+        import motion_native_skill_adapter as native
+        excluded = ("scene", "style-55-dunhuang", "style-37-rick-morty")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            spec = root / "spec.json"
+            spec.write_text('{"grammar":"t1_3b1b"}')
+            ref = native.descriptor(root, spec)
+            call = {"project_files": [ref]}
+            for template in excluded:
+                with self.subTest(template=template):
+                    with self.assertRaisesRegex(ValueError, "qualified portrait"):
+                        native._template(native_task_brief(template))
+                    b = native_task_brief("grammar-t1-3b1b")
+                    b["native_options"] = [template]
+                    with self.assertRaisesRegex(ValueError, "qualified portrait"):
+                        native._template(b)
+                    b["native_options"] = []
+                    usage = [{"card_id": card, "variant": None, "purpose": "实际原生生产路线",
+                              "implementation_refs": [ref]} for card in (b["template_id"], template)]
+                    with self.assertRaisesRegex(ValueError, "qualified portrait"):
+                        native._validate_native_usage(root, b, call, usage)
+
+    def test_common_huashu_usage_binds_actual_authored_input(self):
+        import motion_native_skill_adapter as native
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            spec = root / "native-projects/fixture/spec.json"
+            spec.parent.mkdir(parents=True)
+            spec.write_text('{"grammar":"t1_3b1b","theme":"wood","finish":"film"}')
+            ref = native.descriptor(root, spec)
+            call = {"project_files": [ref]}
+            b = native_task_brief("grammar-t1-3b1b", True)
+            usage = [{"card_id": b["template_id"], "variant": None, "purpose": "技术样片原生输入",
+                      "implementation_refs": [ref]}]
+            self.assertEqual(native._validate_native_usage(root, b, call, usage), usage)
+            spec.write_text('{"grammar":"t1_3b1b","theme":"ink"}')
+            with self.assertRaisesRegex(ValueError, "changed"):
+                native._validate_native_usage(root, b, call, usage)
+
+    def test_full_native_catalog_preserves_research_status_and_real_routes(self):
+        catalog = h.native_templates(ROOT)
+        grammars = [row for row in catalog.values() if row["route"] == "grammar"]
+        styles = [row for row in catalog.values() if "style" in row]
+        self.assertEqual(len(grammars), 8)
+        self.assertEqual(len(styles), 53)
+        self.assertEqual(sum(row["state"] == "research" for row in styles), 17)
+        self.assertFalse(catalog["scene"]["alpha"])
+        self.assertTrue(catalog["grammar-t1-3b1b"]["alpha"])
+        self.assertEqual(catalog["style-25-ghibli"]["state"], "native_recipe")
+
+    def test_full_native_scene_and_alpha_use_original_engine_and_untrimmed_spec(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            project = root / "native-projects/current"
+            project.mkdir(parents=True)
+            engine = h.prepare_native_project(project, ROOT)
+            (project / "out").mkdir()
+            (engine / "eras.js").write_text("window.ERAS=[{id:'current',dur:4}];")
+            b = {"template_id": "scene", "alpha": False,
+                "project_directory": "native-projects/current",
+                "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": 96}}
+            runtime = {"tools": {"python": sys.executable}}
+            native = ROOT / "vendor/huashu-art-motion"
+            argv = [sys.executable, "engine/render.py", "--width", "1080", "--height", "1920",
+                    "--fps", "24", "--to", "4", "--out", "out/scene.mp4"]
+            self.assertEqual(h.native_render_command(root, b, argv, runtime, native)[2], project / "out/scene.mp4")
+            b.update(template_id="grammar-t1-3b1b", alpha=True)
+            spec = {"grammar": "t1_3b1b", "duration": 4, "fps": 24, "width": 1080, "height": 1920,
+                    "alpha": True, "theme": "wood", "finish": "film", "data": {},
+                    "cues": [{"at": 0, "kind": "point", "text": "每次前进一步"}]}
+            payload = json.dumps(spec, ensure_ascii=False).encode()
+            (project / "spec.json").write_bytes(payload)
+            argv = [sys.executable, "engine/render.py", "--spec", "spec.json", "--alpha", "--out", "out/alpha.mov"]
+            self.assertEqual(h.native_render_command(root, b, argv, runtime, native)[2], project / "out/alpha.mov")
+            self.assertEqual((project / "spec.json").read_bytes(), payload)
+            with self.assertRaisesRegex(ValueError, "actual native alpha"):
+                h.native_render_command(root, b, [a for a in argv if a != "--alpha"], runtime, native)
+            (engine / "render.py").write_text("# replacement renderer")
+            with self.assertRaisesRegex(ValueError, "engine source changed"):
+                h.native_render_command(root, b, argv, runtime, native)
+
     def test_native_child_argv_path_queue_and_exit_code(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

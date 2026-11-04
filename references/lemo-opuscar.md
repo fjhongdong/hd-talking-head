@@ -1,6 +1,6 @@
 # Lemo-Opuscar 原生接入
 
-Lemo 使用官方 vendor `lemo-opuscar@413a6bd6d78ebd3bdd5abaec9538a26867f890df` 的 59 个独立 styles。能力库身份统一为：
+Lemo 使用官方 vendor `lemo-opuscar@bebbbe1aa92a3cb4bb6f83500e61b23a17d1aa00`。当前固定来源含 66 个独立 styles；目录由原生 `styles/*/style.json` 与 `STYLE.md` 派生，不在适配器或发现入口另写固定数量。能力库身份统一为：
 
 ```text
 渠道：lemo-opuscar
@@ -8,7 +8,7 @@ Lemo 使用官方 vendor `lemo-opuscar@413a6bd6d78ebd3bdd5abaec9538a26867f890df`
 标签：来自所选 STYLE.md 的 subjects/actions/relations/feelings/styles/patterns
 ```
 
-完整读取 `plugin/skills/lemo-opuscar/SKILL.md`、`AGENTS.md`、`DIRECTOR.md`、`TECHNIQUE.md` 和所选 `styles/<style_slug>/STYLE.md`。由原生规划产生本期 TREATMENT、`design_plan` 和 `beats`，制作前可冻结这些结果，再按所选 STYLE 的原生动作制作本期场景（demo 只作技术参考）；第三方文件不改，不拆源码，不重写引擎。输出固定为 1080×1920、24fps、无声整屏 B-roll。登记 59 条不代表每个主题都已完成成片验收，仍须对当前主题、真实输入和最终像素逐项检查；纪实风格必须先匹配用户提供或合法授权的真实材料，不得用假数据代替。
+完整读取 `plugin/skills/lemo-opuscar/SKILL.md`、`AGENTS.md`、`DIRECTOR.md`、`TECHNIQUE.md` 和所选 `styles/<style_slug>/STYLE.md`。由原生规划产生本期 TREATMENT、`design_plan` 和 `beats`，制作前可冻结这些结果，再按所选 STYLE 的原生动作制作本期场景（demo 只作技术参考）；第三方文件不改，不拆源码，不重写引擎。交付为 1080×1920、24fps、无声整屏 B-roll。原生渲染保留 STYLE 的运动帧率：由第 5 节读取 24/30/60fps，原生帧数按相同时长计算；需要时只按时间戳采样到父级 24fps，不缩放、裁切或变速。回执同时保留原生 fps、原生帧数与真实转换命令。STYLE 中的示例画幅、配音与节奏不是每个新主题的强制布局。登记数量不代表每个主题都已完成成片验收；纪实风格必须匹配用户提供或合法授权的真实材料，不得用假数据代替。
 
 完整执行上游自身的创作要求，围绕本期原话设计角色、对象和实际动作；调用绘图原语、移动轮廓或切换标签，不代表完整创作或行为已经表达。确认前实看当前主题的原生画面，核对原话中的对象与行为是否可辨，以及所选风格的实际完成度；不合格先在内部修正，不以代码检查或渲染成功代替画面验收。具体构图、造型和动作由原生创作流程决定。当本期语义确需指向、接触或交接时，在真实关键帧中核对手势或接触点、实际对象与空间关系是否对应；手指朝向、手掌位置和对象位置应能直接看懂，不用编号变色、标签切换或箭头出现代替所需动作。检查只验收当前语义需要的关系，不预设构图、姿势或动作路径；未对应时先停在当前镜分析和修正，不冻结为已合格输入。
 
@@ -63,7 +63,7 @@ Lemo 的 `files` 按本期实际输入冻结，入口、workflow、TREATMENT 分
 
 ## 执行边界
 
-1. 语义列表先独立确定，再从 59 个模板中匹配；模板选择同时看原生动作、关系、主体和真实可编辑内容。
+1. 语义列表先独立确定，再从固定来源的完整风格目录匹配；模板选择同时看原生动作、关系、主体和真实可编辑内容。
 2. 选中后读取当前 STYLE 与导演指引，按本期 TREATMENT 制作主题专属场景；主题变化不新增模板身份。
 3. 纪实、调查、数据类风格必须绑定实际来源和授权材料，事实、数字和引用逐项核对。
 4. Lemo 只作为整屏无声 B-roll，不进入 A-roll 贴片候选；不因本地没有素材而伪造事实。

@@ -12,6 +12,37 @@ from edit.hd.tools import subtitles_v2, talkcraft_subtitles
 
 
 class TalkCraftSubtitleAdapterTests(unittest.TestCase):
+    def test_actual_component_draws_parent_cues_and_leaves_native_style_cues_clear(self) -> None:
+        # Execute the real TSX component with deterministic Remotion hooks;
+        # no browser, media encoding or copied component implementation.
+        build = talkcraft_subtitles.ROOT.parents[3] / 'runtime/hyperframes-0.8.167/node_modules/esbuild/lib/main.js'
+        component = talkcraft_subtitles.ADAPTER / 'Subtitles.tsx'
+        script = f"""
+          const fs = require('node:fs');
+          const {{transformSync}} = require({json.dumps(str(build))});
+          const source = transformSync(fs.readFileSync({json.dumps(str(component))}, 'utf8'),
+            {{loader:'tsx',format:'cjs'}}).code;
+          const mod = {{exports:{{}}}};
+          const React = {{createElement:(tag,props,...children)=>({{tag,props,children}}),Fragment:'fragment'}};
+          const load = (name) => {{
+            if(name==='react') return React;
+            if(name==='remotion') return {{AbsoluteFill:'absolute',useCurrentFrame:()=>24,useVideoConfig:()=>({{fps:24}})}};
+            if(name.includes('theme')) return {{C:{{text:'#fff',gold:'#ff0',line:'#888'}},FONT:{{cn:'sans-serif'}}}};
+            if(name.includes('line-units')) return {{lineUnits:()=>[]}};
+            throw new Error(name);
+          }};
+          new Function('require','module','exports',source)(load,mod,mod.exports);
+          const cue={{cue_id:'c',start:0,end:2,text:'原话完整保留',words:[],emphasis:null,
+            placement:'standard',bottom:350,long_keyword:false}};
+          const native={{dependency_id:'sweety-handdraw-video',template_id:'sweety-handdraw-video/style-paper',
+            segment_id:'seg-1',component_id:'c',result_record:{{path:'native-inputs/result.json',sha256:'a'.repeat(64),bytes:10}}}};
+          const parent=mod.exports.Subtitles({{cues:[cue]}});
+          const owned=mod.exports.Subtitles({{cues:[{{...cue,native_caption:native}}]}});
+          console.log(JSON.stringify({{parentDrawn:!!parent,nativeClear:owned===null,width:parent.children[0].props.style.maxWidth}}));
+        """
+        observed = json.loads(subprocess.check_output(['node', '-e', script], text=True, timeout=30))
+        self.assertEqual(observed, {'parentDrawn': True, 'nativeClear': True, 'width': 920})
+
     @unittest.skipUnless(os.environ.get("HD_SUBTITLE_METADATA_TEST") == "1", "explicit metadata browser check")
     def test_metadata_checks_real_unbroken_word_width_before_rendering(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
