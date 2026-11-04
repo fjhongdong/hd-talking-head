@@ -8,6 +8,8 @@ from typing import Mapping, Sequence
 DEPENDENCY_ID = "overlay-studio-native"
 ROUTE = "pin-board"
 FPS = 24
+def _label_text(text):
+    return "".join(char for char in text if char.isalnum())
 def _segment_word_time(word: Mapping, cuts: Sequence[Mapping]) -> float:
     positions = [word["start"] + p["timeline_start"] - p["source_start"] for p in cuts if p["source_start"] <= word["start"] < p["source_end"]]
     if len(positions) != 1: raise ValueError("pin-board anchor is not in edited speech")
@@ -19,6 +21,27 @@ def execution_contract():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+def checked_labels(items, *, segment, words, cuts, allow_spoken=False):
+    """An empty planning list can be realized only from this shot's actual speech."""
+    reviewed = segment.get("visible_text")
+    if reviewed:
+        if items != reviewed:
+            raise ValueError("native labels differ from segment visible text")
+        return items
+    if reviewed != [] or not allow_spoken:
+        raise ValueError("native labels differ from segment visible text")
+    spoken = []
+    for word in words:
+        for part in cuts:
+            start, end = max(word["start"], part["source_start"]), min(word["end"], part["source_end"])
+            offset = part["timeline_start"] - part["source_start"]
+            if end > start and start + offset < segment["end"] and end + offset > segment["start"]:
+                spoken.append(word["text"])
+                break
+    text = _label_text("".join(spoken))
+    if not items or any(not isinstance(item, str) or not _label_text(item) or _label_text(item) not in text for item in items):
+        raise ValueError("unplanned native labels must be exact words from this shot's approved speech")
+    return items
 def validate_brief(brief: Mapping, *, segment: Mapping, words: Sequence[Mapping], cuts: Sequence[Mapping], events: Sequence[Mapping]) -> list[dict]:
     # The adapter owns the execution schema; this module only adds speech checks.
     module = execution_contract()
@@ -41,7 +64,7 @@ def validate_anchors(brief: Mapping, *, segment: Mapping, words: Sequence[Mappin
     items = [v.strip() for v in str(params.get("items","")).split("|") if v.strip()]; times = [v.strip() for v in str(params.get("times","")).split("|") if v.strip()]
     if not items or len(items)!=len(times): raise ValueError("pin-board items and native times must be one-to-one")
     if not isinstance(events,Sequence) or len(events)!=len(items): raise ValueError("pin-board treatment events must cover every item")
-    if items != segment.get("visible_text"): raise ValueError("pin-board labels differ from segment visible text")
+    checked_labels(items, segment=segment, words=words, cuts=cuts, allow_spoken=True)
     out=[]
     for slot,(item,raw,event) in enumerate(zip(items,times,events,strict=True)):
         try: local=float(raw)
@@ -55,6 +78,8 @@ def validate_anchors(brief: Mapping, *, segment: Mapping, words: Sequence[Mappin
         if not 0<=index<len(words) or words[index].get("text")!=anchor.get("text"): raise ValueError("pin-board anchor differs from approved transcript")
         word=words[index]
         if word.get("end",0)<=word.get("start",0): raise ValueError("zero-duration ASR noise cannot anchor a label")
+        if not segment.get('visible_text') and (not _label_text(word['text']) or _label_text(word['text']) not in _label_text(item)):
+            raise ValueError('pin-board derived label anchor must belong to its spoken label')
         anchor_time=_segment_word_time(word,cuts); effective=float(segment["start"])+float(card["start"])+local
         if not float(segment["start"])<=effective<float(segment["end"]): raise ValueError("pin-board event is outside this shot")
         if event["basis"]=="current_clause":

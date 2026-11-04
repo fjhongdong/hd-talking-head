@@ -101,16 +101,31 @@ class WorkflowStateTests(unittest.TestCase):
         with self.assertRaises(WorkflowError):
             create_job(self.root, self.video, self.script, profile="legacy-v1")
 
-    def test_full_v2_review_order_is_single_even_across_dag_branches(self):
+    @mock.patch("edit.hd.tools.startup.require_startup")
+    def test_full_v2_independent_speech_obeys_dependencies_and_preserves_default_order(self, _startup):
         job = self.create_full_v2()
+        with self.assertRaisesRegex(WorkflowError, "prerequisites"):
+            require_runnable(job, "speech_cleanup")
         artifact = self.artifact(job, "inspect", b"inspect")
         mark_ready(job, "inspect", [artifact])
         complete(job, "inspect")
 
         self.assertEqual(state_module.current_stage(job), "content_analysis")
         require_runnable(job, "content_analysis")
-        with self.assertRaises(WorkflowError):
-            require_runnable(job, "speech_cleanup")
+        require_runnable(job, "speech_cleanup")
+        with self.assertRaisesRegex(WorkflowError, "prerequisites"):
+            require_runnable(job, "edit_structure")
+        mark_ready(job, "speech_cleanup", [self.artifact(job, "speech_cleanup")])
+        complete(job, "speech_cleanup")
+        self.assertEqual(state_module.current_stage(job), "content_analysis")
+        for stage_id in state_module.FULL_V2_STAGE_IDS:
+            if stage_id in {"cover", "preview", "delivery"} or job.stages[stage_id]["status"] == "completed":
+                continue
+            mark_ready(job, stage_id, [self.artifact(job, stage_id)])
+            complete(job, stage_id)
+        with self.assertRaisesRegex(WorkflowError, "prerequisites"):
+            require_runnable(job, "preview")
+        self.assertEqual(state_module.current_stage(job), "cover")
 
     def test_revising_full_v2_cover_keeps_visual_and_subtitles_completed(self):
         job = self.complete_full_v2()

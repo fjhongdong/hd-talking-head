@@ -463,6 +463,16 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
                     blocked.add(key)
                     dependency_blocked.add(key)
                     unfinished.add(key)
+    creative_context = (
+        'Read the confirmed proposal at proposal.path, relative to this Job, and locate this '
+        'segment_id/component_id in its rows. Read every row with the same channel and template, '
+        'including its spoken_text and semantic; use proposal.inputs.treatment to read the original '
+        'semantic_lists when more context is needed. These are the selected template\'s roles across '
+        'this film, not additional work for this task. Create this line independently from its own '
+        'objects, relation and change while retaining the native template\'s style and creative freedom. '
+        'Do not mechanically copy another row\'s layout and motion with only different wording. '
+        'The native workflow owns the actual visual design and QA; no extra parent preview, scoring '
+        'or approval is required. Different content still counts as the same template.')
     actions = []
     for sid, cid in sorted(pending):
         if (sid, cid) in blocked:
@@ -474,7 +484,8 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         action = {'action': 'prepare_template_inputs', 'segment_id': sid, 'component_id': cid,
             'proposal': authorized['payload']['source'],
             'completed_generations': [steps[step['id']] for step in required],
-            'return_fields': ['realization.director_brief', 'realization.treatment']}
+            'return_fields': ['realization.director_brief', 'realization.treatment'],
+            'next': creative_context}
         segment = next(s for s in draft['segments'] if s['segment_id'] == sid)
         if segment.get('bindings', {}).get(cid, {}).get('producer_type') == 'dependency':
             action['speech_input_contract'] = {
@@ -486,6 +497,9 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         actions.append(action)
     for key, native in native_actions.items():
         if key not in blocked:
+            for action in native:
+                action['proposal'] = authorized['payload']['source']
+                action['next'] = (action.get('next', '') + ' ' + creative_context).strip()
             actions.extend(native)
     candidates = [candidate for candidate in generation_candidates
                   if (candidate.get('segment_id'), candidate.get('component_id')) not in invalid | dependency_blocked]
@@ -840,8 +854,6 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
                                                director_brief, treatment, reviewed_visual_text, review)):
             raise ValueError('Stage already completed; explicitly revise it before changing inputs')
         return _summary(job, stage, reused=True)
-    if stage != current:
-        raise ValueError(f'Current unfinished stage is {current}; cannot execute {stage}')
     _startup(job, project)
     if stage in {'visual_assets', 'subtitles', 'preview', 'delivery'}:
         from edit.hd.tools import delivery_approval

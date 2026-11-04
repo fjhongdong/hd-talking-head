@@ -17,7 +17,7 @@ def _policy_identity():
     for path, names in ((Path(motion_capabilities.__file__),
             {'_phrase_in', '_match_evidence', '_recall_evidence', 'search_capabilities'}),
             (Path(__file__), {'_catalog_projection', '_items', '_identity',
-                             'match_once', 'validate_matches', '_validate_entry'})):
+                             '_query', 'match_once', 'validate_matches', '_validate_entry'})):
         nodes = {node.name: node for node in ast.parse(path.read_text()).body
                  if isinstance(node, ast.FunctionDef)}
         for name in sorted(names):
@@ -54,11 +54,161 @@ def _items(root, director, treatment):
     if set(qmap) != set(plan["component_rows"]): raise ValueError("motion_queries must cover every component exactly")
     return items
 
-def _identity(row, typ, tags):
+def _identity(row, typ):
+    # Tags and retrieval policy have their own cache fields. They do not change
+    # the meaning against which a host reviewed a candidate.
     payload={k:row[k] for k in ("row_id","quote","start_word","end_word","semantic","visual_task")}
-    payload["type"]=typ; payload["tags"]=tags
-    payload["matching_policy_version"]=motion_capabilities.MATCHING_POLICY_VERSION
+    payload["type"]=typ
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
+
+def candidate_review_identity(candidate):
+    """Bind one reviewed capability and its verified sources, not its ranking."""
+    payload = copy.deepcopy(candidate)
+    payload.pop("title", None)
+    profile = payload.get("capability", {})
+    profile.pop("tags", None)
+    profile.pop("title", None)
+    # These are search results, never properties of the callable capability.
+    for field in ("matched_dimensions", "matched_tags", "has_motion_basis",
+                  "semantic_review_required", "recall_basis", "retrieval_score"):
+        payload.pop(field, None)
+    return contract_artifacts.sha256_json(payload)
+
+
+def validate_review_identities(director, treatment, catalog):
+    """Check current review facts without loading sources, searching or solving."""
+    plan = semantic_visual_plan.validate_semantic_lists(treatment, director)
+    by_id = catalog if isinstance(catalog, dict) else {r["candidate_id"]: r for r in catalog}
+    selection = treatment.get("skill_selection", {})
+    for beat in [*selection.get("beats", []), *selection.get("overlay_beats", [])]:
+        key = (beat.get("segment_id"), beat.get("component_id"))
+        row = plan["component_rows"].get(key)
+        if row is None or beat.get("semantic_row_id") != row["row_id"]:
+            raise ValueError("review beat semantic row does not match its component")
+        if any(beat.get(field) != row[source] for field, source in
+               (("transcript", "quote"), ("semantic_goal", "semantic"),
+                ("required_change", "visual_task"))):
+            raise ValueError("candidate review semantic fields changed")
+        entry = treatment.get("motion_matches", {}).get(row["row_id"], {})
+        identity = _identity(row, row["type"])
+        if entry.get("semantic_sha256") != identity:
+            raise ValueError("candidate review semantic cache identity changed")
+        for review in beat.get("candidates", []):
+            if review.get("fit") == "unreviewed":
+                continue
+            if beat.get("semantic_sha256") != identity:
+                raise ValueError("candidate review semantic identity is missing or changed")
+            candidate = by_id.get(review.get("candidate_id"))
+            if candidate is None or review.get("capability_sha256") != candidate_review_identity(candidate):
+                raise ValueError("candidate review capability identity is missing or changed")
+
+
+def _invalidate_changed_reviews(treatment, items, catalog, director):
+    """Keep unaffected judgments; matching never signs a new host review."""
+    selection = treatment.get("skill_selection")
+    if not isinstance(selection, dict):
+        return
+    by_id = {r["candidate_id"]: r for r in catalog}
+    # Assignment reviews every discovered B-roll source, including an unavailable
+    # one. Reuse the same complete catalog rather than rediscovering its Skills.
+    broll_sources = {r["skill_id"] for r in catalog if r.get("role") in {"native", "design"}
+                     and set(r.get("capability", {}).get("uses", [])) & {"broll", "design"}}
+    by_component = {(ref["segment_id"], ref["component_id"]): (row, typ)
+                    for row, typ, _ in items for ref in row["components"]}
+    segments = {s["segment_id"]: s for s in director["segments"]}
+    invalidated = set()
+    for group in ("beats", "overlay_beats"):
+        retained = []
+        for beat in selection.get(group, []):
+            key = (beat.get("segment_id"), beat.get("component_id"))
+            if key not in by_component:
+                invalidated.add(key)
+                continue
+            row, typ = by_component[key]
+            identity = _identity(row, typ)
+            same_fields = all(
+                beat.get(field) == row[source] for field, source in
+                (("transcript", "quote"), ("semantic_goal", "semantic"),
+                 ("required_change", "visual_task")))
+            same_semantic = beat.get("semantic_sha256") == identity and same_fields
+            segment = segments[key[0]]
+            changed_window = any(field in beat and beat[field] != segment.get(field)
+                                 for field in ("start", "end"))
+            if changed_window:
+                invalidated.add(key)
+            expected = {m["candidate_id"] for m in treatment["motion_matches"][row["row_id"]]["matches"]}
+            existing = beat.get("candidates", [])
+            if not isinstance(existing, list) or any(not isinstance(r, dict) for r in existing):
+                raise ValueError("review beat candidates are invalid")
+            reviews = {r.get("candidate_id"): r for r in existing}
+            if len(reviews) != len(existing):
+                raise ValueError("review candidates contain duplicate identities")
+            refreshed = []
+            changed_sources = set()
+            ordered = [cid for cid in reviews if cid in expected] + sorted(expected - set(reviews))
+            for cid in ordered:
+                old = reviews.get(cid)
+                current = by_id[cid]
+                stale_timing = old is not None and changed_window and old.get("rejection_basis") == "timing"
+                if old is not None and not stale_timing and (old.get("fit") == "unreviewed" or
+                        (same_semantic and old.get("capability_sha256") == candidate_review_identity(current))):
+                    refreshed.append(old)
+                    continue
+                refreshed.append({"candidate_id": cid, "fit": "unreviewed",
+                                  "reason": "Current semantic task or capability needs review."})
+                changed_sources.add(current.get("skill_id"))
+                invalidated.add(key)
+            if set(reviews) != expected:
+                invalidated.add(key)
+            if not same_semantic and (not same_fields or beat.get("semantic_sha256") is not None
+                    or any(r.get("fit") != "unreviewed" for r in reviews.values())):
+                # Unknown entries may carry an old proposed design too.
+                refreshed = [{"candidate_id": r["candidate_id"], "fit": "unreviewed",
+                              "reason": "Current semantic task needs review."} for r in refreshed]
+                if (any(r.get("fit") != "unreviewed" for r in reviews.values())
+                        or any(beat.get(field) != row[source] for field, source in
+                               (("transcript", "quote"), ("semantic_goal", "semantic"),
+                                ("required_change", "visual_task")))):
+                    invalidated.add(key)
+                beat.pop("semantic_sha256", None)
+                changed_sources.update(beat.get("skill_reviews", {}))
+            beat.update(semantic_row_id=row["row_id"], transcript=row["quote"],
+                        semantic_goal=row["semantic"], required_change=row["visual_task"],
+                        candidates=refreshed)
+            for field in ("start", "end"):
+                if field in beat and field in segment:
+                    beat[field] = segment[field]
+            if group == "beats" and "skill_reviews" in beat:
+                source_reviews = beat["skill_reviews"]
+                if not isinstance(source_reviews, dict):
+                    raise ValueError("B-roll source reviews are invalid")
+                if set(source_reviews) != broll_sources:
+                    changed_sources.update(set(source_reviews) ^ broll_sources)
+                    invalidated.add(key)
+                beat["skill_reviews"] = {source: source_reviews.get(source, {
+                    "fit": "unreviewed", "reason": "New B-roll source needs review."})
+                    for source in sorted(broll_sources)}
+            for source in changed_sources:
+                if source in beat.get("skill_reviews", {}):
+                    beat["skill_reviews"][source] = {"fit": "unreviewed",
+                        "reason": "Current semantic task or source capability needs review."}
+            if changed_sources or not same_semantic or set(reviews) != expected:
+                beat.pop("single_source_review", None)
+            retained.append(beat)
+        if group in selection:
+            selection[group] = retained
+    if invalidated:
+        for group in ("assignments", "overlay_assignments"):
+            if group in selection:
+                selection[group] = [a for a in selection[group]
+                    if (a.get("segment_id"), a.get("component_id")) not in invalidated]
+        selection.pop("diversity_review", None)
+        selection.pop("_optimistic_assignments", None)
+
+def _query(row, tags):
+    """Retain the whole task; lexical evidence only orders its review pool."""
+    return "\n".join([row[key] for key in ("quote", "semantic", "visual_task")]
+                     + [" ".join(tags)])
 
 def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
     """Explicitly rebind task wording to the current approved cache; never search.
@@ -122,6 +272,7 @@ def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
     old_segments = {s["segment_id"]: s for s in previous_director["segments"]}
     segments = {s["segment_id"]: s for s in director["segments"]}
     catalog, catalog_sha = _catalog(project_root)
+    by_id = {row["candidate_id"]: row for row in catalog}
     policy = _policy_identity()
     out, rebound = copy.deepcopy(treatment), []
     if treatment.get("source_clock") != previous.get("source_clock"):
@@ -138,17 +289,33 @@ def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
                 raise ValueError("visual task rebinding cannot change the approved word clock or content")
         entry = old_cache[row_id]
         use = "aroll_overlay" if typ == "贴片" else "broll"
-        if (entry.get("semantic_sha256") != _identity(before, typ, tags)
+        if (entry.get("semantic_sha256") != _identity(before, typ)
                 or entry.get("catalog_sha256") != catalog_sha or entry.get("use") != use
                 or entry.get("tags") != tags or entry.get("matching_policy_sha256") != policy):
             raise ValueError("visual task rebinding source cache identity changed")
-        _validate_entry(entry, catalog, use, tags)
+        _validate_entry(entry, catalog, use, _query(before, tags))
         if before["visual_task"] != after["visual_task"]:
             if any((row_id, ref["segment_id"], ref["component_id"]) not in changes
                    for ref in before["components"]):
                 raise ValueError("visual task rebinding changed an unrequested row")
-            out["motion_matches"][row_id]["semantic_sha256"] = _identity(after, typ, tags)
+            out["motion_matches"][row_id]["semantic_sha256"] = _identity(after, typ)
+            # This explicit presentation revision keeps the same complete
+            # use-qualified pool; refresh its lexical hints without searching.
+            query = _query(after, tags)
+            matches = []
+            for match in entry["matches"]:
+                evidence = motion_capabilities._recall_evidence(
+                    by_id[match["candidate_id"]]["capability"], query)
+                dimensions = evidence["matched_dimensions"]
+                matches.append({"candidate_id": match["candidate_id"],
+                    "matched_dimensions": dimensions, "recall_basis": evidence["recall_basis"],
+                    "retrieval_score": sum(len(values) * (4 if name in {"actions", "relations"} else 1)
+                                           for name, values in dimensions.items())})
+            matches.sort(key=lambda match: (-match["retrieval_score"], match["candidate_id"]))
+            out["motion_matches"][row_id]["matches"] = matches
+            out["motion_matches"][row_id]["matches_sha256"] = contract_artifacts.sha256_json(matches)
             rebound.append(row_id)
+    _invalidate_changed_reviews(out, list(current.values()), catalog, director)
     return out, sorted(rebound)
 
 def match_once(project_root, director, treatment):
@@ -157,21 +324,23 @@ def match_once(project_root, director, treatment):
     cache=out.get("motion_matches",{}); new={}
     for row,typ,tags in items:
         rid=row["row_id"]; use="aroll_overlay" if typ=="贴片" else "broll"
-        sid=_identity(row,typ,tags)
+        sid=_identity(row,typ)
         old=cache.get(rid)
         if rid in cache and (not isinstance(old, dict)
                 or not isinstance(old.get('matching_policy_sha256'), str)
                 or re.fullmatch('[0-9a-f]{64}', old['matching_policy_sha256']) is None):
             raise ValueError('missing or malformed motion cache policy requires explicit reviewed-source rebinding evidence')
         if isinstance(old,dict) and old.get("matching_policy_sha256")==policy and old.get("matching_policy_version")==motion_capabilities.MATCHING_POLICY_VERSION and old.get("catalog_sha256")==csha and old.get("semantic_sha256")==sid and old.get("use")==use and old.get("tags")==tags:
-            _validate_entry(old, rows, use, tags)
+            _validate_entry(old, rows, use, _query(row, tags))
             new[rid]=old; continue
-        matches=motion_capabilities.search_capabilities(Path(project_root), " ".join(tags), use=use, catalog=rows)
+        matches=motion_capabilities.search_capabilities(Path(project_root), _query(row, tags), use=use, catalog=rows)
         frozen = [{k:m.get(k) for k in ("candidate_id","matched_dimensions","retrieval_score","recall_basis")} for m in matches]
         new[rid]={"catalog_sha256":csha,"semantic_sha256":sid,"use":use,"tags":tags,
                   "matching_policy_version":motion_capabilities.MATCHING_POLICY_VERSION,"matching_policy_sha256":policy,
                   "matches":frozen,"matches_sha256":contract_artifacts.sha256_json(frozen)}
-    out["motion_matches"]=new; return out
+    out["motion_matches"]=new
+    _invalidate_changed_reviews(out, items, rows, director)
+    return out
 
 def validate_matches(project_root,director,treatment):
     rows,csha=_catalog(project_root); catalog={r.get("candidate_id"):r for r in rows}; items=_items(project_root,director,treatment); cache=treatment.get("motion_matches")
@@ -180,8 +349,8 @@ def validate_matches(project_root,director,treatment):
     out={}; policy=_policy_identity()
     for row,typ,tags in items:
         rid=row["row_id"]; e=cache[rid]; use="aroll_overlay" if typ=="贴片" else "broll"
-        if e.get("matching_policy_sha256")!=policy or e.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ,tags) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
-        _validate_entry(e, rows, use, tags)
+        if e.get("matching_policy_sha256")!=policy or e.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or e.get("catalog_sha256")!=csha or e.get("semantic_sha256")!=_identity(row,typ) or e.get("use")!=use or e.get("tags")!=tags: raise ValueError("motion match cache identity changed")
+        _validate_entry(e, rows, use, _query(row, tags))
         raw=[]
         for m in e.get("matches",[]):
             cid=m.get("candidate_id")
@@ -192,12 +361,14 @@ def validate_matches(project_root,director,treatment):
         for ref in row["components"]: out[(ref["segment_id"],ref["component_id"])]= {"row_id":rid,"semantic":row,"matches":raw}
     return out
 
-def validate_reviews(project_root, director, treatment, *, job_dir=None):
-    """Validate concrete per-beat review coverage without performing search."""
+def _validate_review_structure(project_root, director, treatment, *, job_dir=None):
+    """Validate current review facts and coverage without search or solving."""
     matched = validate_matches(project_root, director, treatment)
     plan = semantic_visual_plan.validate_semantic_lists(treatment, director)
     rows = {row["row_id"]: row for row in plan["items"]}
-    catalog, _ = _catalog(project_root); by_id = {r.get("candidate_id"): r for r in catalog}
+    by_id = {m["candidate"]["candidate_id"]: m["candidate"]
+             for item in matched.values() for m in item["matches"]}
+    validate_review_identities(director, treatment, by_id)
     selection = treatment.get("skill_selection", {})
     beats = list(selection.get("beats", [])) + list(selection.get("overlay_beats", []))
     allowed = {"preferred", "equivalent", "unsuitable", "needs_adapter", "unreviewed"}
@@ -225,9 +396,7 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
             callable = required in uses or (required == "broll" and "design" in uses)
             if fit in {"preferred", "equivalent"} and (row.get("status") != "supported" or not callable): raise ValueError("unsupported candidate cannot be eligible")
             if fit == "unsuitable" and candidate.get("rejection_basis") not in basis: raise ValueError("unsuitable review needs a controlled rejection basis")
-            if fit in {"preferred", "equivalent"}:
-                _design_plan(candidate)
-            elif fit != "unreviewed" and row.get("status") == "supported":
+            if fit not in {"preferred", "equivalent", "unreviewed"} and row.get("status") == "supported":
                 _constraint_refs(candidate, matched[key]["semantic"], row, beat, job_dir=job_dir)
         eligible = [c for c in candidates if c["fit"] in {"preferred", "equivalent"}]
         from .broll_skill_selection import source_channel
@@ -242,6 +411,14 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
         if key not in covered:
             seg, cid = key; comp = next((c for s in director.get("segments", []) if s.get("segment_id") == seg for c in s.get("visual_strategy", {}).get("components", []) if c.get("component_id") == cid), {})
             if comp.get("kind") == "code_generated": raise ValueError("code component is missing a review beat")
+    return matched
+
+
+def validate_reviews(project_root, director, treatment, *, job_dir=None):
+    """Independently validate coverage and any outstanding joint optimum proof."""
+    matched = _validate_review_structure(project_root, director, treatment, job_dir=job_dir)
+    selection = treatment.get("skill_selection", {})
+    beats = [*selection.get("beats", []), *selection.get("overlay_beats", [])]
     if any(c.get("fit") == "unreviewed" for b in beats for c in b["candidates"]):
         from .broll_skill_selection import assign_skills
         assign_skills(project_root, selection, job_dir=job_dir, director=director, treatment=treatment)
@@ -389,7 +566,7 @@ def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()
         if not isinstance(style, str) or any(value not in style for value in design.values()):
             raise ValueError("selected OpenFilm design_plan must reach creative_handoff.style_reason")
 
-def _validate_entry(entry, rows, use, tags):
+def _validate_entry(entry, rows, use, query):
     if not isinstance(entry, dict) or entry.get("matching_policy_version")!=motion_capabilities.MATCHING_POLICY_VERSION or not isinstance(entry.get("matches"), list): raise ValueError("invalid motion match cache entry")
     if entry.get("matches_sha256") != contract_artifacts.sha256_json(entry["matches"]):
         raise ValueError("complete motion match cache changed")
@@ -397,7 +574,6 @@ def _validate_entry(entry, rows, use, tags):
     # Recheck deterministic recall completeness against this same frozen catalog.
     # This does not rerun search or ask the host to judge candidates again.
     recalled = {}
-    query = " ".join(tags)
     for cid, candidate in catalog.items():
         profile = candidate.get("capability", {})
         uses = profile.get("uses", [])

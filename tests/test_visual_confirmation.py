@@ -304,13 +304,15 @@ class VisualConfirmationTests(unittest.TestCase):
         frozen = {'segments':[segment]}
         beat = {'segment_id':key[0], 'component_id':key[1], 'binding_snapshot':base, 'semantic_goal':'approved beat'}
         treatment = {'scenes':[{'segment_id':key[0], 'component_id':key[1]}],
+                     'semantic_lists':{'overlay':[], 'broll':[{'row_id':'wake-row', 'semantic':'approved beat',
+                         'components':[{'segment_id':key[0], 'component_id':key[1]}]}]},
                      'skill_selection':{'assignments':[{'segment_id':key[0], 'component_id':key[1],
-                       'candidate_id':'lemo-wake:wake', 'design_plan':{'focus':'approved focus'}}], 'beats':[beat]}}
+                       'candidate_id':'lemo-wake:wake'}], 'beats':[beat]}}
         brief = {'schema_version':1, 'job_id':self.job.job_id,
                  'source_binding':{'aroll_sha256':aroll_ref['sha256'], 'segment_id':key[0], 'start':0, 'end':1},
                  'image':{'job_path':edited_ref['path'],'sha256':edited_ref['sha256'],'byte_count':edited_ref['bytes']},
                  'purpose':'body', 'composition':{'width':1080,'height':1920,'fps':24,'frames':24},
-                 'semantic_goal':'approved focus', 'template_request':{'semantic_family':'image-led',
+                 'semantic_goal':'approved beat', 'template_request':{'semantic_family':'image-led',
                  'information_units':1,'numeric_values':[],'numeric_scale':'not_applicable'},
                  'result_record_path':'native-inputs/wake-result.json'}
         path = root / 'native-inputs/wake-brief.json'; path.parent.mkdir(exist_ok=True)
@@ -362,6 +364,17 @@ class VisualConfirmationTests(unittest.TestCase):
             validate_source.assert_called_once_with(root, authorized['artifact'], job_id=job.job_id)
             vc._validate_fresh_native_parent_inputs(root, proposal, treatment, segment, key[1], brief,
                                                     scene=actual['scenes'][0])
+            for semantic_rows in ([], treatment['semantic_lists']['broll'] * 2):
+                ambiguous = copy.deepcopy(treatment)
+                ambiguous['semantic_lists']['broll'] = semantic_rows
+                with self.subTest(rows=len(semantic_rows)), self.assertRaisesRegex(ValueError, 'one confirmed semantic row'):
+                    vc._normalize_prepared_wake(root, proposal, frozen, ambiguous, director, actual,
+                                               source_authorization=authorized)
+                with self.subTest(fresh_rows=len(semantic_rows)), self.assertRaisesRegex(ValueError, 'one confirmed semantic row'):
+                    vc._validate_fresh_native_parent_inputs(root, proposal, ambiguous, segment, key[1], brief)
+            with self.assertRaisesRegex(ValueError, 'authorized native input: semantic_goal'):
+                vc._validate_fresh_native_parent_inputs(root, proposal, treatment, segment, key[1],
+                                                       {**brief, 'semantic_goal':'unapproved meaning'})
             wrong = {**brief, 'image': {'job_path': original_ref['path'], 'sha256': original_ref['sha256'],
                                       'byte_count': original_ref['bytes']}}
             with self.assertRaisesRegex(ValueError, 'authorized native input: image'):
@@ -806,12 +819,14 @@ class VisualConfirmationTests(unittest.TestCase):
         for match in treatment["motion_matches"][row["row_id"]]["matches"]:
             cid = match["candidate_id"]
             candidates.append({"candidate_id": cid, "fit": "preferred" if cid == candidate_id else "equivalent",
+                "capability_sha256": motion_match_cache.candidate_review_identity(catalog[cid]),
                 "reason": "Synthetic candidate review for the phase-boundary fixture",
                 "visual_pattern": "blue-scene", "design_plan": dict.fromkeys(
                     ("composition", "typography", "finish", "focus"), "Synthetic blue scene design")})
         eligible = {catalog[c["candidate_id"]]["skill_id"] for c in candidates}
         beat = {"segment_id": segment["segment_id"], "component_id": "component-1",
             "semantic_row_id": row["row_id"], "start": segment["start"], "end": segment["end"],
+            "semantic_sha256": treatment["motion_matches"][row["row_id"]]["semantic_sha256"],
             "transcript": row["quote"], "semantic_goal": row["semantic"], "required_change": row["visual_task"],
             "intent_statement": segment["visual_intent"]["statement"],
             "component_brief": segment["visual_strategy"]["components"][0]["brief"],

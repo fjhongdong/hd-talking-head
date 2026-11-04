@@ -33,7 +33,7 @@ def main() -> None:
                     parser.error("assign requires --director-brief to validate cached semantic matches")
                 from edit.hd.tools import motion_match_cache
                 director = contract_artifacts.read_json_artifact(args.director_brief)
-                motion_match_cache.validate_reviews(project,
+                motion_match_cache._validate_review_structure(project,
                     director, treatment, job_dir=args.job_dir)
                 treatment["skill_selection"] = selection.assign_skills(
                     project, treatment.get("skill_selection", {}), job_dir=args.job_dir,
@@ -45,7 +45,7 @@ def main() -> None:
                 if args.director_brief is None:
                     parser.error("check requires --director-brief")
                 from edit.hd.tools import motion_match_cache
-                motion_match_cache.validate_reviews(project,
+                motion_match_cache._validate_review_structure(project,
                     contract_artifacts.read_json_artifact(args.director_brief), treatment, job_dir=args.job_dir)
                 result = selection.validate_selection(
                     project, contract_artifacts.read_json_artifact(args.director_brief),

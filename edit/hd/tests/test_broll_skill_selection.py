@@ -276,15 +276,16 @@ class BrollSkillSelectionTest(unittest.TestCase):
             self.assertEqual(motion._approved_speech(root), [
                 {"text": "测试", "start": 0.0, "end": 1.0}])
 
-    def test_motion_library_rejects_weak_matches_and_unqualified_inputs(self):
+    def test_weak_lexical_matches_stay_unreviewed_and_qualification_is_unchanged(self):
         from edit.hd.tools import motion_capabilities as motion
 
         catalog = motion.load_catalog(ROOT)
         fixed = [r for r in catalog if r["capability"]["content_scope"]["mode"] == "fixed_action"]
-        self.assertEqual(motion.search_capabilities(ROOT,
-            "完全不相关的海边日落宠物散步", use="broll", catalog=fixed), [])
-        self.assertEqual(motion.search_capabilities(ROOT,
-            "精致 浅暖色 人物", use="broll", catalog=fixed), [])
+        expected = {r["candidate_id"] for r in fixed if "broll" in r["capability"]["uses"]}
+        for query in ("完全不相关的海边日落宠物散步", "精致 浅暖色 人物"):
+            recalled = motion.search_capabilities(ROOT, query, use="broll", catalog=fixed)
+            self.assertEqual({r["candidate_id"] for r in recalled}, expected)
+            self.assertTrue(all(r["semantic_review_required"] and not r["has_motion_basis"] for r in recalled))
         matches = motion.search_capabilities(ROOT, "来源 汇聚 多到一", use="broll", catalog=catalog)
         converge = next(row for row in matches if row["candidate_id"].endswith("/source-converge.tsx"))
         self.assertIn("汇聚", converge["matched_dimensions"]["actions"])
@@ -1230,8 +1231,7 @@ class PartialCandidateReviewTest(unittest.TestCase):
         self.assertEqual(result["diversity_review"]["reviewed_optimum"], [2, 2])
         self.assertEqual(result["diversity_review"]["optimistic_upper_bound"], [2, 2])
         source["beats"][1]["candidates"][0].pop("design_plan")
-        with self.assertRaisesRegex(ValueError, "design_plan"):
-            self.assign(source, director)
+        self.assertEqual(self.assign(source, director)["diversity_review"], result["diversity_review"])
 
     def test_channel_and_template_gaps_both_stop_assignment(self):
         for second_channel, template in (("A", "one"), ("A", "two")):
@@ -1241,6 +1241,164 @@ class PartialCandidateReviewTest(unittest.TestCase):
             self.pool[2]["template_id"] = template
             with self.subTest(template=template), self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
                 self.assign(source, director)
+
+    def test_gap_requests_only_unknown_choices_from_the_better_combination(self):
+        source, director = self.fixture(second_channel="A", pending_channel="C")
+        self.pool.append({**self.pool[0], "candidate_id": "0-tied-unknown"})
+        source["beats"][0]["candidates"].append({"candidate_id": "0-tied-unknown",
+            "fit": "unreviewed", "reason": "Same identity, so this review cannot improve the bounds."})
+        before = copy.deepcopy(source)
+        with self.assertRaisesRegex(ValueError, "same cache") as error:
+            self.assign(source, director)
+        pending = json.loads(str(error.exception).split("same cache: ", 1)[1])
+        self.assertEqual(pending, [{"segment_id": "s1", "component_id": "scene", "candidate_id": "pending"}])
+        self.assertEqual(source, before)
+
+        # A/B/C rotate together in an equally optimal witness. Restricting
+        # each reviewed domain and re-solving must retain all three reviews.
+        prototype = copy.deepcopy(source['beats'][0])
+        native = self.pool[0]
+        self.pool = [{**native, 'candidate_id': letter.lower(), 'skill_id': letter,
+                      'template_id': letter.lower()} for letter in 'ABCD']
+        source['beats'], director['segments'] = [], []
+        for index, (known, unknown) in enumerate((('a', 'b'), ('b', 'c'), ('c', 'a'), ('a', 'd'))):
+            sid = 'r' + str(index)
+            beat = copy.deepcopy(prototype)
+            beat.update(segment_id=sid, semantic_row_id=sid, start=index * 2, end=index * 2 + 2,
+                        skill_reviews={letter: {'fit': 'unreviewed', 'reason': 'Retain the complete fixture pool.'}
+                                       for letter in 'ABCD'},
+                        candidates=[{'candidate_id': known, 'fit': 'equivalent', 'reason': 'Already reviewed.',
+                                     'visual_pattern': known},
+                                    {'candidate_id': unknown, 'fit': 'unreviewed', 'reason': 'Not yet reviewed.'}])
+            source['beats'].append(beat)
+            director['segments'].append({'segment_id': sid, 'start': beat['start'], 'end': beat['end'],
+                'visual_strategy': {'composition': {'family': 'single_full_frame'},
+                                    'components': [{'component_id': 'scene'}]}})
+        before = copy.deepcopy(source)
+        with self.assertRaisesRegex(ValueError, 'same cache') as error:
+            self.assign(source, director)
+        pending = json.loads(str(error.exception).split('same cache: ', 1)[1])
+        self.assertEqual(pending, [{'segment_id': 'r3', 'component_id': 'scene', 'candidate_id': 'd'}])
+        self.assertEqual(source, before)
+
+    def test_only_unreviewed_candidates_request_semantic_review_not_timing_changes(self):
+        source, director = self.fixture()
+        source['beats'][0]['candidates'][0]['fit'] = 'unreviewed'
+        with self.assertRaisesRegex(ValueError, 'only unreviewed candidates.*semantic review') as error:
+            self.assign(source, director)
+        self.assertNotIn('timing-feasible', str(error.exception))
+        self.assertEqual(json.loads(str(error.exception).split('same cache: ', 1)[1]),
+                         [{'segment_id': 's0', 'component_id': 'scene', 'candidate_id': 'a'}])
+
+    def test_reviewed_exhaustion_checks_unknown_clocks_before_requesting_review(self):
+        source, director = self.fixture(pending_minimum=3)
+        self.pool[1]['min_duration_seconds'] = 3
+        before = copy.deepcopy(source)
+        with patch.object(selection, 'timing_failure', wraps=selection.timing_failure) as clocks:
+            with self.assertRaisesRegex(ValueError, 's1:scene has no timing-feasible candidate') as error:
+                self.assign(source, director)
+        self.assertNotIn('semantic review', str(error.exception))
+        checked = [(call.args[1]['segment_id'], call.args[0]['candidate_id'])
+                   for call in clocks.call_args_list]
+        self.assertEqual(checked.count(('s1', 'b')), 1)
+        self.assertEqual(checked.count(('s1', 'pending')), 1)
+        self.assertEqual(source, before)
+
+        # With a feasible unknown left, the absent reviewed optimum is explicit
+        # and only that current witness is requested for review.
+        self.pool[2]['min_duration_seconds'] = None
+        proofs = []
+        original = selection._assign_skills_once
+        def record(*args, **kwargs):
+            result = original(*args, **kwargs)
+            proofs.append(result['diversity_review'])
+            return result
+        with patch.object(selection, '_assign_skills_once', side_effect=record):
+            with self.assertRaisesRegex(ValueError, 'same cache') as error:
+                self.assign(source, director)
+        self.assertIsNone(proofs[-1]['reviewed_optimum'])
+        self.assertEqual(proofs[-1]['reviewed_status'], 'no_complete_assignment')
+        self.assertEqual(json.loads(str(error.exception).split('same cache: ', 1)[1]),
+                         [{'segment_id': 's1', 'component_id': 'scene', 'candidate_id': 'pending'}])
+
+    def test_locked_unknown_routes_need_review_only_after_their_clock_passes(self):
+        for opening in (False, True):
+            with self.subTest(opening=opening):
+                source, director = self.fixture()
+                cid = 'lemo-wake:wake' if opening else 'a'
+                if opening:
+                    self.pool[0].update(candidate_id=cid, skill_id='lemo-wake')
+                    source['opening'] = {'segment_id': 's0', 'component_id': 'scene', 'candidate_id': cid}
+                    for beat in source['beats']:
+                        beat['skill_reviews']['lemo-wake'] = beat['skill_reviews'].pop('A')
+                source['beats'][0]['candidates'][0].update(candidate_id=cid, fit='unreviewed')
+                locks = {} if opening else {('s0', 'scene'): cid}
+                with patch.object(selection, '_verified_supplement_routes', return_value=(set(), locks)):
+                    with self.assertRaisesRegex(ValueError, 'same cache') as error:
+                        self.assign(source, director)
+                    self.assertEqual(json.loads(str(error.exception).split('same cache: ', 1)[1]),
+                                     [{'segment_id': 's0', 'component_id': 'scene', 'candidate_id': cid}])
+                    self.pool[0]['min_duration_seconds'] = 3
+                    with self.assertRaisesRegex(ValueError, 's0:scene has no timing-feasible candidate'):
+                        self.assign(source, director)
+                    source['beats'][0]['candidates'][0]['fit'] = 'unsuitable'
+                    source['beats'][0]['candidates'].append({
+                        **copy.deepcopy(source['beats'][1]['candidates'][0]), 'visual_pattern': 'alternative'})
+                    with self.assertRaisesRegex(ValueError, 'missing or not suitable|revision candidate'):
+                        self.assign(source, director)
+
+    def test_timing_retry_discards_temporary_witness_domain_reductions(self):
+        source, director = self.fixture(second_channel='A', pending_channel='B')
+        self.pool[0]['min_duration_seconds'] = 3
+        self.pool[2]['template_id'] = 'two'
+        self.pool.append({**self.pool[0], 'candidate_id': '0-unknown', 'skill_id': 'B',
+                          'min_duration_seconds': None})
+        source['beats'][0]['candidates'].append({'candidate_id': '0-unknown',
+            'fit': 'unreviewed', 'reason': 'Awaiting semantic review.'})
+        rounds = []
+        original = selection._assign_skills_once
+        def record(*args, **kwargs):
+            result = original(*args, **kwargs)
+            rounds.append(result['_optimistic_assignments'])
+            return result
+        with patch.object(selection, '_assign_skills_once', side_effect=record):
+            with self.assertRaisesRegex(ValueError, 'same cache') as error:
+                self.assign(source, director)
+        self.assertEqual([a['candidate_id'] for a in rounds[0]], ['a', 'pending'])
+        self.assertEqual(json.loads(str(error.exception).split('same cache: ', 1)[1]),
+                         [{'segment_id': 's0', 'component_id': 'scene', 'candidate_id': '0-unknown'}])
+
+    def test_reviewed_witness_domains_do_not_repeat_global_solves(self):
+        from edit.hd.tools import visual_assignment
+        source, director = self.fixture(second_channel='A', pending_channel='B')
+        prototype = copy.deepcopy(source['beats'][0])
+        self.pool, source['beats'], director['segments'] = [], [], []
+        for index in range(4):
+            known = {'candidate_id': 'a' + str(index), 'skill_id': 'A',
+                     'template_id': 't' + str(index), 'role': 'native', 'status': 'supported',
+                     'entrypoint': 'entry', 'adapter_module': 'motion_native_skill_adapter',
+                     'limitations': []}
+            self.pool.extend([known, {**known, 'candidate_id': 'z' + str(index),
+                                     'skill_id': 'B' if index == 0 else 'A'}])
+            beat = copy.deepcopy(prototype)
+            beat.update(segment_id='s' + str(index), semantic_row_id='s' + str(index),
+                start=index * 2, end=index * 2 + 2,
+                skill_reviews={channel: {'fit': 'unreviewed', 'reason': 'Retain full pool.'}
+                               for channel in ('A', 'B')},
+                candidates=[{'candidate_id': known['candidate_id'], 'fit': 'equivalent',
+                             'visual_pattern': str(index), 'reason': 'Reviewed.'},
+                            {'candidate_id': 'z' + str(index), 'fit': 'unreviewed', 'reason': 'Pending.'}])
+            source['beats'].append(beat)
+            director['segments'].append({'segment_id': beat['segment_id'],
+                'start': beat['start'], 'end': beat['end'], 'visual_strategy': {
+                    'composition': {'family': 'single_full_frame'},
+                    'components': [{'component_id': 'scene'}]}})
+        with patch.object(visual_assignment, 'assign_candidates',
+                          wraps=visual_assignment.assign_candidates) as solve:
+            with self.assertRaisesRegex(ValueError, 'same cache'):
+                self.assign(source, director)
+        # Lower, upper, and the one necessary unknown-domain trial only.
+        self.assertEqual(solve.call_count, 3)
 
     def test_current_windows_filter_both_bounds_and_are_recomputed(self):
         source, director = self.fixture(second_channel="A", pending_minimum=3)
@@ -1331,12 +1489,73 @@ class PartialCandidateReviewTest(unittest.TestCase):
             segment['visual_strategy']['components'][0]['kind'] = 'ai_generated'
         cached = {(b['segment_id'], 'scene'): {'matches': [{'candidate': c} for c in self.pool]}
                   for b in source['beats']}
+        def planning(project, current, treatment, *, job_dir):
+            computed = selection.assign_skills(project, treatment['skill_selection'],
+                director=current, treatment=treatment, job_dir=job_dir)
+            return {'status': 'pass', 'diversity_review': computed['diversity_review']}, cached
         with patch.object(selection, 'discover_candidates', return_value=self.pool), \
              patch.object(motion_capabilities, 'overlay_candidates', return_value=[]), \
-             patch.object(motion_match_cache, 'validate_reviews', return_value=cached), \
+             patch.object(motion_capabilities, '_check_planning_with_matches', side_effect=planning) as check, \
+             patch.object(motion_match_cache, 'validate_matches', side_effect=AssertionError('reuse matches')), \
              patch.object(visual_confirmation, 'planned_generation_targets', return_value=set()):
-            visual_confirmation._validate_template_choices(SimpleNamespace(job_dir=ROOT), director,
-                                                           {'skill_selection': source})
+            treatment = {'skill_selection': source}
+            proof = visual_confirmation._validate_template_choices(SimpleNamespace(job_dir=ROOT), director, treatment)
+            check.assert_called_once_with(ROOT, director, treatment, job_dir=ROOT)
+            self.assertEqual(proof, source['diversity_review'])
+
+    def test_planning_entry_validates_matches_and_assigns_only_once(self):
+        from edit.hd.tools import motion_match_cache, motion_capabilities
+        catalog = motion_capabilities.load_catalog(ROOT)
+        native = selection.discover_candidates(ROOT)
+        overlays = motion_capabilities.overlay_candidates(ROOT)
+        director = {'segments': [{'segment_id': 's0', 'start': 0, 'end': 3,
+            'visual_strategy': {'composition': {'family': 'aroll_with_overlay'},
+                'components': [{'component_id': 'c', 'kind': 'code_generated', 'layer_role': 'annotation'}]}}]}
+        row = {'row_id': 'r0', 'start_word': 0, 'end_word': 1, 'quote': '并列要点',
+               'semantic': '并列要点', 'visual_task': '要点逐项出现',
+               'components': [{'segment_id': 's0', 'component_id': 'c'}]}
+        treatment = {'semantic_lists': {'overlay': [row], 'broll': []},
+                     'motion_queries': [{'segment_id': 's0', 'component_id': 'c', 'tags': ['并列', '要点']}]}
+        with patch.object(motion_capabilities, 'load_catalog', return_value=catalog), \
+             patch.object(selection, 'discover_candidates', return_value=native) as discover, \
+             patch.object(motion_capabilities, 'overlay_candidates', return_value=overlays) as discover_overlays, \
+             patch.object(motion_capabilities, '_approved_speech', return_value=None):
+            treatment = motion_match_cache.match_once(ROOT, director, treatment)
+            reviewed = next(r for r in overlays if r['candidate_id'] == 'overlay:callout-pin')
+            beat = {'segment_id': 's0', 'component_id': 'c', 'semantic_row_id': 'r0',
+                'start': 0, 'end': 3, 'window_status': 'resolved', 'transcript': row['quote'],
+                'semantic_goal': row['semantic'], 'required_change': row['visual_task'],
+                'semantic_sha256': treatment['motion_matches']['r0']['semantic_sha256'],
+                'single_source_review': {'decision': 'keep', 'reason': '本条已审路线足够。'},
+                'candidates': [{'candidate_id': r['candidate_id'], 'reason': '本条语义判断',
+                    'fit': 'equivalent' if r == reviewed else 'unreviewed',
+                    **({'visual_pattern': '要点说明',
+                        'capability_sha256': motion_match_cache.candidate_review_identity(r)}
+                       if r == reviewed else {})} for r in overlays]}
+            source = {'schema_version': 1, 'history_note': '独立离线样本',
+                      'beats': [], 'overlay_beats': [beat]}
+            treatment['skill_selection'] = source
+            treatment['skill_selection'] = selection.assign_skills(
+                ROOT, source, director=director, treatment=treatment)
+            discover.reset_mock()
+            discover_overlays.reset_mock()
+            with patch.object(selection, 'assign_skills', wraps=selection.assign_skills) as assign, \
+                 patch.object(motion_match_cache, 'validate_matches',
+                              wraps=motion_match_cache.validate_matches) as matches:
+                report = motion_capabilities.check_planning_only(ROOT, director, treatment)
+            self.assertEqual(report['failures'], [])
+            self.assertEqual(assign.call_count, 1)
+            self.assertEqual(matches.call_count, 1)
+            self.assertEqual(discover.call_count, 1)
+            self.assertEqual(discover_overlays.call_count, 1)
+            stale = copy.deepcopy(treatment)
+            old_review = next(c for c in stale['skill_selection']['overlay_beats'][0]['candidates']
+                              if c['fit'] != 'unreviewed')
+            old_review.pop('capability_sha256')
+            before = copy.deepcopy(stale)
+            with self.assertRaisesRegex(ValueError, 'capability.*identity'):
+                selection.assign_skills(ROOT, stale['skill_selection'], director=director, treatment=stale)
+            self.assertEqual(stale, before)
 
     def test_existing_optimal_ids_stay_while_all_assignment_metadata_is_refreshed(self):
         source, director = self.fixture()

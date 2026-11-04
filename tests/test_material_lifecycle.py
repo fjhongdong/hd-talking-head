@@ -221,6 +221,59 @@ class MaterialLifecycleTests(unittest.TestCase):
                 self.plan(source=self.image)
         self.assertEqual(marker.read_bytes(), marker_before)
 
+    def test_ready_visual_runtime_migration_keeps_the_existing_authorization_and_media(self):
+        migration = importlib.import_module('migrate_job_context')
+        from edit.hd.tools import visual_confirmation
+        with mock.patch('edit.hd.tools.startup.require_startup'):
+            for stage_id in state.FULL_V2_STAGE_IDS:
+                if stage_id == 'visual_direction':
+                    break
+                artifact = self.job.job_dir / (stage_id + '.txt')
+                artifact.write_text(stage_id)
+                state.mark_ready(self.job, stage_id, [artifact])
+                state.complete(self.job, stage_id)
+            source = self.job.job_dir / 'approved-proposal.json'
+            receipt = self.job.job_dir / 'original-visual-authorization.json'
+            media = self.job.job_dir / 'completed-generation.png'
+            for path in (source, receipt, media):
+                path.write_text(path.name)
+            state.mark_visual_ready(self.job, [source, receipt])
+        context_path = self.job.root / 'job-context.json'
+        context = json.loads(context_path.read_bytes())
+        runtime = json.loads(json.dumps(context['runtime']))
+        module = 'edit/hd/tools/pinboard_alignment.py'
+        runtime['modules'][module] = 'f' * 64
+        release = {'status': 'pass', 'failures': [], **context['skill_release'],
+                   'release_id': 'test-ready-visual-release', 'manifest_sha256': 'e' * 64}
+        binding = visual_confirmation._record(self.job.job_dir, receipt)
+        paths = (context_path, self.workflow, source, receipt, media)
+        before = {path: path.read_bytes() for path in paths}
+        arguments = dict(expected_context_sha256=hashlib.sha256(context_path.read_bytes()).hexdigest(),
+            expected_revision=self.job.revision, allowed_module=[module], reason='Authorized technical repair')
+        with mock.patch('edit.hd.tools.startup.runtime_identity', return_value=runtime), \
+             mock.patch.object(migration, 'verify_release', return_value=release), \
+             mock.patch.object(visual_confirmation, 'validate_visual_authorization',
+                               side_effect=visual_confirmation.VisualConfirmationError('missing authorization')):
+            with self.assertRaisesRegex(ValueError, 'authorization'):
+                migration.migrate(context_path, **arguments, dry_run=False)
+        self.assertEqual(before, {path: path.read_bytes() for path in paths})
+        with mock.patch('edit.hd.tools.startup.runtime_identity', return_value=runtime), \
+             mock.patch.object(migration, 'verify_release', return_value=release), \
+             mock.patch.object(visual_confirmation, 'validate_visual_authorization',
+                               return_value={'artifact': binding}):
+            planned = migration.migrate(context_path, **arguments, dry_run=True)
+            self.assertFalse(Path(planned['audit']).exists())
+            self.assertEqual(before, {path: path.read_bytes() for path in paths})
+            result = migration.migrate(context_path, **arguments, dry_run=False)
+        after = json.loads(context_path.read_bytes())
+        self.assertEqual(after['runtime'], runtime)
+        self.assertEqual(after['skill_release']['release_id'], release['release_id'])
+        self.assertEqual({path: before[path] for path in paths[1:]},
+                         {path: path.read_bytes() for path in paths[1:]})
+        audit = json.loads(Path(result['audit']).read_bytes())
+        self.assertIn(binding['sha256'], audit['reason'])
+        self.assertFalse(audit['workflow_changed'])
+
     def test_replace_keeps_old_bytes_and_allocates_new_id(self):
         replacement = self.root / "新图.png"
         replacement.write_bytes(b"new-image")

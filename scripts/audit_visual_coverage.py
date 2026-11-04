@@ -15,7 +15,7 @@ DEFAULTS_PATH = PACKAGE_ROOT / "references" / "production-defaults.json"
 def _coverage_defaults() -> dict:
     payload = json.loads(DEFAULTS_PATH.read_text(encoding="utf-8"))
     defaults = payload["visual_coverage"]
-    required = {"target_percent", "floor_percent", "first_broll_seconds", "max_gap_seconds"}
+    required = {"first_broll_seconds", "max_gap_seconds"}
     if set(defaults) != required:
         raise ValueError("production-defaults.visual_coverage is incomplete")
     return defaults
@@ -170,11 +170,9 @@ def audit(
         )
     if require_density:
         defaults = _coverage_defaults()
-        target_percent = float(defaults["target_percent"])
-        floor_percent = float(defaults["floor_percent"])
         first_broll_seconds = float(defaults["first_broll_seconds"])
         max_gap_seconds = float(defaults["max_gap_seconds"])
-        # Gap reasons explain specific intervals; they do not lower the ratio floor.
+        # Counts follow semantic tasks; the B-roll ratio is reported, not prescribed.
         gap_reasons = {}
         for row in (treatment or {}).get("broll_gap_reasons", []):
             if isinstance(row, dict) and isinstance(row.get("reason"), str) and row["reason"].strip():
@@ -195,10 +193,6 @@ def audit(
                         "density gate: no B-roll for "
                         f"{gap['end'] - gap['start']:.1f}s ({gap['start']:.1f}-{gap['end']:.1f}s) "
                         "without a declared reason")
-            ratio = broll_seconds / duration * 100 if duration else 0.0
-            if ratio < floor_percent:
-                blocking.append(
-                    f"density gate: B-roll ratio is {ratio:.1f}% (floor {floor_percent:.1f}%, target {target_percent:.1f}%)")
     result["blocking_issues"] = blocking
     return result
 

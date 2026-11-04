@@ -16,6 +16,7 @@ export const SUBTITLE_TEXT_STYLE = {
   letterSpacing: 2,
 };
 export const SUBTITLE_CARD_METRICS = {paddingX: 42, borderWidth: 1};
+export const SUBTITLE_STANDARD_WIDTH = 920;
 export const subtitleFontSize = (cue: SubtitleCue) =>
   cue.long_keyword ? 42 : SUBTITLE_TEXT_STYLE.fontSize;
 
@@ -59,7 +60,7 @@ export const Subtitles: React.FC<{cues: SubtitleCue[]}> = ({cues}) => {
         border: `${SUBTITLE_CARD_METRICS.borderWidth}px solid ${BORDER}`,
         ...SUBTITLE_TEXT_STYLE,
         fontSize: subtitleFontSize(cue),
-        maxWidth: narrow ? cardWidth : '90%',
+        maxWidth: narrow ? cardWidth : SUBTITLE_STANDARD_WIDTH,
         textAlign: 'center',
         textWrap: cue.placement === 'above_avatar' ? 'balance' : undefined,
         color: TEXT,

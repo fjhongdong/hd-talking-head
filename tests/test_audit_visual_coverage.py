@@ -45,21 +45,42 @@ def subtitle_plan():
 
 
 class AuditVisualCoverageTests(unittest.TestCase):
-    def test_runtime_and_cli_share_ratio_floor(self):
+    def test_runtime_and_cli_report_semantic_ratio_without_a_floor(self):
         from edit.hd.tools import visual_coverage
-        for seconds, should_block in ((9, True), (11, False)):
-            rows = []
-            for index in range(5):
-                start = index * 20
-                rows += [segment(f"b{index}", start, start + seconds, "single_full_frame"),
-                         segment(f"a{index}", start + seconds, start + 20, "no_broll")]
-            plan = {"duration": 100.0, "segments": rows}
-            note = {"broll_ratio_note": "ordinary note cannot waive the floor"}
-            runtime = visual_coverage.require_density(plan, treatment=note)
-            cli = audit_module.audit(plan, {"render_plan": {"cues": []}}, 20,
-                                     require_density=True, treatment=note)
-            self.assertEqual(runtime["blocking_issues"], cli["blocking_issues"])
-            self.assertEqual(bool(runtime["blocking_issues"]), should_block)
+        duration = 34.958
+        lengths = {"overlay": duration * (1 - 0.409) / 6,
+                   "broll": duration * 0.409 / 5}
+        rows, lists, cursor = [], {"overlay": [], "broll": []}, 0.0
+        for index in range(11):
+            kind = "overlay" if index % 2 == 0 else "broll"
+            sid, cid = f"s{index}", f"c{index}"
+            row = segment(sid, cursor, cursor + lengths[kind],
+                          "aroll_with_overlay" if kind == "overlay" else "single_full_frame",
+                          intent="按口播表达")
+            row["visual_strategy"]["components"] = [{
+                "component_id": cid,
+                "layer_role": "annotation" if kind == "overlay" else "subject"}]
+            rows.append(row)
+            lists[kind].append({"row_id": sid, "start_word": index, "end_word": index + 1,
+                "quote": str(index), "semantic": "按原稿语义", "visual_task": "表现本句含义",
+                "components": [{"segment_id": sid, "component_id": cid}]})
+            cursor = row["end"]
+        plan = {"duration": duration, "segments": rows}
+        treatment = {"semantic_lists": lists}
+        runtime = visual_coverage.require_density(plan, treatment=treatment)
+        cli = audit_module.audit(plan, {"render_plan": {"cues": []}}, 20,
+                                 require_density=True, treatment=treatment)
+        self.assertEqual(runtime, cli)
+        self.assertEqual((runtime["overlay_count"], runtime["broll_count"]), (6, 5))
+        self.assertEqual(runtime["broll_percent"], 40.9)
+        self.assertEqual(runtime["blocking_issues"], [])
+        # Removing the ratio floor does not waive unexplained long A-roll gaps.
+        plan["duration"] = rows[-1]["end"] = 100.0
+        self.assertTrue(visual_coverage.require_density(plan, treatment=treatment)["blocking_issues"])
+        # Semantic component references must still match the real composition.
+        treatment["semantic_lists"]["broll"][0]["components"][0]["component_id"] = "missing"
+        with self.assertRaisesRegex(ValueError, "orphaned"):
+            visual_coverage.require_density(plan, treatment=treatment)
 
     def test_one_visualized_item_does_not_cover_another(self):
         plan = {"duration": 20.0, "segments": [

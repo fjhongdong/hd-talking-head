@@ -13,6 +13,76 @@ SOURCE_ROOT = Path(__file__).resolve().parents[3] / "vendor/hyperframes/registry
 
 
 class OverlayAlignmentTest(unittest.TestCase):
+    def test_missing_overlay_declaration_can_only_realize_the_frozen_route(self):
+        import copy
+        from edit.hd.tools import visual_confirmation as confirmation
+        frozen = {'segments': [{'segment_id': 'seg-004', 'visible_text': [],
+            'visual_strategy': {'composition': {'family': 'aroll_with_overlay'}},
+            'bindings': {'visual': {'producer_type': 'dependency', 'dependency_id': 'overlay-studio-native',
+                'template_id': 'overlay-studio/pin-board'}}}]}
+        row = {'segment_id': 'seg-004', 'component_id': 'visual', 'intent_relation': 'parallel',
+            'native_route': 'pin-board', 'visible_action': 'cumulative_pin_drop',
+            'visual_structure': 'pin-board', 'selection_reason': 'approved parallel contract names'}
+        original, realized = {}, {'overlay_selection': [row]}
+        proposal = {'inputs': {'director': 'director', 'treatment': 'treatment'}}
+        with patch.object(confirmation, '_exact', side_effect=lambda root, value: value), \
+             patch.object(confirmation, '_read', side_effect=lambda path: frozen if path == 'director' else original), \
+             patch.object(confirmation, '_validate_authorized_native_inputs'), \
+             patch('edit.hd.tools.motion_capabilities.overlay_candidates', return_value=[]), \
+             patch('edit.hd.tools.motion_capabilities.validate_overlay_capability'):
+            confirmation._validate_draft_against_source(Path('/unused'), proposal, frozen, realized)
+            with self.assertRaisesRegex(ValueError, 'binding structure'):
+                confirmation._validate_draft_against_source(Path('/unused'), proposal, frozen,
+                    {'overlay_selection': [{**row, 'native_route': 'toggle-flip'}]})
+            original['overlay_selection'] = [copy.deepcopy(row)]
+            with self.assertRaisesRegex(ValueError, 'overlay_selection'):
+                confirmation._validate_draft_against_source(Path('/unused'), proposal, frozen,
+                    {'overlay_selection': [{**row, 'selection_reason': 'changed explicit approval'}]})
+
+    def test_fresh_native_labels_use_only_spoken_words_and_keep_comparison_source(self):
+        from edit.hd.tools.pinboard_alignment import checked_labels
+        from edit.hd.tools.overlay_alignment import validate_native_events
+        words = [{"text": text, "start": i, "end": i + .5}
+                 for i, text in enumerate(("劳动合同", "竞业协议", "股权协议", "未入本镜"))]
+        segment = {"segment_id": "seg-004", "start": 0, "end": 3, "visible_text": []}
+        cuts = [{"source_start": 0, "source_end": 4, "timeline_start": 0}]
+        labels = [word['text'] for word in words[:3]]
+        self.assertEqual(checked_labels(labels, segment=segment, words=words, cuts=cuts, allow_spoken=True), labels)
+        for invalid in (["虚构协议"], ["未入本镜"]):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, 'approved speech'):
+                checked_labels(invalid, segment=segment, words=words, cuts=cuts, allow_spoken=True)
+        with self.assertRaisesRegex(ValueError, 'visible text'):
+            checked_labels(labels, segment={**segment, 'visible_text': ['明确批准文案']},
+                           words=words, cuts=cuts, allow_spoken=True)
+        with self.assertRaisesRegex(ValueError, 'visible text'):
+            checked_labels(labels, segment=segment, words=words, cuts=cuts)
+
+        route = 'hyperframes/before-after-wipe'
+        source = (SOURCE_ROOT / 'before-after-wipe/before-after-wipe.html').read_bytes()
+        clock = bind_native_clock(source, route, 4)
+        slot_labels = {'before': '劳动合同', 'after': '竞业协议'}
+        contents = {key: '<svg viewBox="0 0 500 200"><text x="30" y="100" font-size="64">' + value + '</text></svg>'
+                    for key, value in slot_labels.items()}
+        filled = bind_native_slots(clock, contents, labels=slot_labels)
+        self.assertEqual(_native_clock(source, filled, route, 4, labels=slot_labels), 4)
+        with self.assertRaisesRegex(ValueError, 'checked'):
+            bind_native_slots(clock, contents)
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            bind_native_slots(clock, {**contents, 'after': contents['after'].replace('竞业协议', '虚构协议')}, labels=slot_labels)
+        with self.assertRaisesRegex(ValueError, 'static markup'):
+            bind_native_slots(clock, {**contents, 'after': '<script>竞业协议</script>'}, labels=slot_labels)
+        with self.assertRaisesRegex(ValueError, 'duration parameters'):
+            _native_clock(source, filled.replace(b'WIPE_DURATION_BASE = 1.05', b'WIPE_DURATION_BASE = 0.5'), route, 4, labels=slot_labels)
+        mount = {'data-variable-values': json.dumps({'label_a': '', 'label_b': '', 'wipe_at': 1, 'exit': 'none'})}
+        actual, _ = _native_events(route, mount, 24, 4, comparison_labels=slot_labels)
+        events = [{'slot': slot, 'kind': kind, 'text': text,
+                   'anchor': {'index': slot, 'text': words[slot]['text']},
+                   'basis': 'recap' if kind == 'wipe_land' else 'current_clause'}
+                  for slot, kind, text, _ in actual]
+        checked = validate_native_events(actual, segment={**segment, 'end': 4}, words=words,
+            cuts=cuts, events=events, allow_spoken_labels=True)
+        self.assertEqual(len(checked), 3)
+
     def test_grid_clock_reads_native_settle_and_keeps_parent_hold_separate(self):
         from edit.hd.tools.overlay_alignment import _grid_tile_seconds, validate_grid_clock, GridClockConflict
         source = (SOURCE_ROOT / "grid-card-assemble/grid-card-assemble.html").read_bytes()

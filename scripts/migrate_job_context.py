@@ -85,10 +85,18 @@ def migrate(
         if len(set(permitted)) != len(permitted):
             raise ValueError("allowed runtime modules must be explicit and unique")
         permitted = sorted(permitted)
-        if changed_modules != permitted or (changed_modules and state.current_stage(job) not in {
-            stage_id for stage_id, stage in job.stages.items() if stage["status"] == "needs_revision"
-        }):
+        if changed_modules != permitted:
             raise ValueError("runtime change is outside the paused stage or allowed module")
+        current = state.current_stage(job)
+        if changed_modules and job.stages.get(current, {}).get('status') != 'needs_revision':
+            if current != 'visual_direction' or job.stages[current]['status'] != 'ready':
+                raise ValueError("runtime change is outside the paused stage or allowed module")
+            from edit.hd.tools.visual_confirmation import validate_visual_authorization
+            authorization = validate_visual_authorization(job)
+            # Keep the existing audit schema and the exact source/authorization
+            # registration. Revising here would discard the approved proposal.
+            reason += '; retained_visual_authorization=' + json.dumps(
+                authorization['artifact'], ensure_ascii=False, sort_keys=True)
         release_root = Path(context["skill_release"]["root"])
     release = verify_release(release_root)
     if release["status"] != "pass":

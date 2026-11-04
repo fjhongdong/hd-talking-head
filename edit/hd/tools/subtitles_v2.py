@@ -358,8 +358,11 @@ def build_render_plan(
         if placement == "above_avatar" and box["height"] < 168:
             raise SubtitlesV2Error("subtitle safe area cannot fit two lines below avatar")
         layout_cache: dict[tuple[object, ...], bool] = {}
+        # The fixed standard-card bottom leaves less height than the full
+        # reservation.  Partition against the space its real card can occupy.
+        partition_box = {**box, "height": min(box["height"], 1920 - bottom - box["y"])}
         chunks = subtitles._split_words_for_box(
-            selected, box, font_path, cue_type, layout_cache
+            selected, partition_box, font_path, cue_type, layout_cache
         )
         selected_text = "".join(str(word["text"]) for word in selected)
         long_intervals: set[tuple[int, int]] = set()
@@ -384,7 +387,7 @@ def build_render_plan(
         chunks = subtitles._partition_subtitle_words(
             selected,
             chunks,
-            box=box,
+            box=partition_box,
             font_path=font_path,
             cue_type=cue_type,
             segment_start=segment_start,

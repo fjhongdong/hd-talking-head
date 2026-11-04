@@ -90,10 +90,12 @@ class VisualRetrievalTests(unittest.TestCase):
             chosen = 'overlay:' + overlay_selection._route(draft['segments'][0]['bindings']['overlay'])
             treatment['skill_selection']['overlay_beats'] = [{
                 'segment_id': 'seg-1', 'component_id': 'overlay', 'semantic_row_id': item['row_id'],
+                'semantic_sha256': treatment['motion_matches'][item['row_id']]['semantic_sha256'],
                 'start': 0.0, 'end': 3.0, 'transcript': item['semantic']['quote'],
-                'semantic_goal': '并列说明', 'required_change': '并列说明', 'intent_statement': '并列说明',
+                'semantic_goal': item['semantic']['semantic'], 'required_change': '并列说明', 'intent_statement': '并列说明',
                 'component_brief': '并列说明', 'binding_snapshot': {},
                 'candidates': [{'candidate_id': m['candidate']['candidate_id'],
+                                'capability_sha256': motion_match_cache.candidate_review_identity(m['candidate']),
                                 'fit': 'preferred' if m['candidate']['candidate_id'] == chosen else 'equivalent',
                                 'reason': '测试中的完整原生候选评审', 'visual_pattern': 'parallel-list',
                                 'design_plan': {'composition': '并列主体在同一视觉范围。',
@@ -115,12 +117,17 @@ class VisualRetrievalTests(unittest.TestCase):
         self.assertEqual(result['spoken_segments']['seg-1'], '先摆出三项待办')
         self.assertFalse(result['checks'][0]['retrieval']['has_motion_basis'])
 
-    def test_missing_duplicate_or_unrelated_tags_cannot_approve_plan(self):
+    def test_missing_duplicate_or_invalid_queries_cannot_approve_plan(self):
         query = {'segment_id': 'seg-1', 'component_id': 'overlay', 'tags': ['并列要点']}
-        for queries in ([], [query, copy.deepcopy(query)],
-                        [query | {'tags': ['科技', '浅暖色']}], [query, 'invalid']):
+        for queries in ([], [query, copy.deepcopy(query)], [query, 'invalid']):
             with self.subTest(queries=queries):
                 self.assertEqual(self.check(queries)['status'], 'fail')
+
+    def test_unrelated_tags_do_not_discard_a_reviewed_semantic_match(self):
+        query = {'segment_id': 'seg-1', 'component_id': 'overlay', 'tags': ['科技', '浅暖色']}
+        result = self.check([query])
+        self.assertEqual(result['status'], 'pass', result)
+        self.assertFalse(result['checks'][0]['retrieval']['has_motion_basis'])
 
 
 if __name__ == "__main__":

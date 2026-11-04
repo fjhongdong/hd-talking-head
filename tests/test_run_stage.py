@@ -48,7 +48,8 @@ class CheckOnlyStageTests(unittest.TestCase):
                 'artifact': {'path': 'approval.json'}, 'payload': {'source': {'path': 'proposal.json'}}}
             def native(j, d, t):
                 self.assertEqual(set(d['segments'][0]['bindings']), {'ready'})
-                return [{'action': 'run_native_skill', 'component_id': 'ready'}]
+                return [{'action': 'run_native_skill', 'component_id': 'ready',
+                         'next': 'Execute the original native workflow.'}]
             with mock.patch.object(confirmation, 'validate_visual_authorization', return_value=authorized), \
                  mock.patch.object(confirmation, 'validate_realization_draft'), \
                  mock.patch.object(confirmation, '_validate_authorized_native_inputs'), \
@@ -62,11 +63,20 @@ class CheckOnlyStageTests(unittest.TestCase):
                  mock.patch('edit.hd.tools.visual_plan.prepare_visual_direction') as finalize:
                 result = run_stage.resume_visual_direction(job, PROJECT)
                 self.assertCountEqual([a['action'] for a in result['actions']], ['query', 'run_native_skill'])
+                native_action = next(a for a in result['actions'] if a['action'] == 'run_native_skill')
+                self.assertEqual(native_action['proposal'], authorized['payload']['source'])
+                self.assertTrue(native_action['next'].startswith('Execute the original native workflow.'))
+                self.assertIn('same channel and template', native_action['next'])
+                self.assertIn('proposal.inputs.treatment', native_action['next'])
+                self.assertNotIn('same_template_context', native_action)
                 finalize.assert_not_called()
                 with mock.patch.object(confirmation, 'generation_item', return_value=('image-A', {'status': 'completed'})):
                     result = run_stage.resume_visual_direction(job, PROJECT)
                 preparations = [a for a in result['actions'] if a['action'] == 'prepare_template_inputs']
                 self.assertEqual([(a['segment_id'], a['component_id']) for a in preparations], [('seg-001', 'waiting')])
+                self.assertEqual(preparations[0]['proposal'], native_action['proposal'])
+                self.assertIn('same channel and template', preparations[0]['next'])
+                self.assertIn('native template\'s style and creative freedom', preparations[0]['next'])
                 finalize.assert_not_called()
 
     def test_scripts_only_api_reaches_job_error_from_an_unrelated_directory(self):
@@ -224,7 +234,8 @@ else:
                     run_stage.pending_native_actions(job,director,treatment)
                 self.assertFalse((root/'outside').exists())
 
-    def test_scribe_check_obeys_review_order_without_running_or_writing(self):
+    @mock.patch('edit.hd.tools.startup.require_startup')
+    def test_scribe_check_obeys_dependencies_without_running_or_writing(self, _startup):
         from edit.hd.tools import state
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -236,7 +247,6 @@ else:
                 artifact = job.job_dir / (stage + '.txt'); artifact.write_text(stage)
                 state.mark_ready(job, stage, [artifact]); state.complete(job, stage)
 
-            approve('inspect')
             context = root / 'check-context.json'
             context.write_text(json.dumps({'job_dir': str(job.job_dir), 'project_root': str(PROJECT)}))
 
@@ -257,14 +267,21 @@ else:
 
             code, result = check()
             self.assertEqual(code, 1)
-            self.assertIn('not the current stage', result['error'])
-            self.assertIn('Current unfinished stage is content_analysis', result['diagnostics'][0])
-            for stage in ('content_analysis', 'cover_direction', 'cover'):
-                approve(stage)
+            self.assertIn('prerequisites', result['error'])
+            approve('inspect')
             code, result = check()
             self.assertEqual(code, 0)
             self.assertTrue(result['runnable'])
             self.assertEqual(result['stage'], 'speech_cleanup')
+            self.assertEqual(state.current_stage(state.load_job(job.job_dir)), 'content_analysis')
+            with mock.patch.object(run_stage, '_startup'), \
+                 mock.patch.object(run_stage, 'run_speech_cleanup', return_value={'stage': 'speech_cleanup', 'status': 'pending'}) as speech:
+                result = run_stage.execute_stage(job.job_dir, PROJECT, 'speech_cleanup')
+            speech.assert_called_once()
+            self.assertEqual(result['stage'], 'speech_cleanup')
+            with mock.patch.object(run_stage, '_startup'):
+                result = run_stage.execute_stage(job.job_dir, PROJECT)
+            self.assertEqual(result['stage'], 'content_analysis')
 
 class ExecuteStageTests(unittest.TestCase):
     def setUp(self):

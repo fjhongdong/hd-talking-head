@@ -15,6 +15,20 @@ DESIGN = {"composition": "主体置中，变化区域与说明在同一视觉范
           "focus": "当前对象变化时，其余对象保持稳定。"}
 
 
+def bind_review_fixture(treatment, context):
+    """The fixture explicitly completes its host review against these facts."""
+    for beat in [*treatment['skill_selection'].get('beats', []),
+                 *treatment['skill_selection'].get('overlay_beats', [])]:
+        item = context[(beat['segment_id'], beat['component_id'])]
+        row = item['semantic']
+        beat.update(semantic_sha256=treatment['motion_matches'][item['row_id']]['semantic_sha256'],
+                    transcript=row['quote'], semantic_goal=row['semantic'], required_change=row['visual_task'])
+        catalog = {m['candidate']['candidate_id']: m['candidate'] for m in item['matches']}
+        for review in beat['candidates']:
+            if review['fit'] != 'unreviewed':
+                review['capability_sha256'] = cache.candidate_review_identity(catalog[review['candidate_id']])
+
+
 class CacheTests(unittest.TestCase):
     def setUp(self):
         self.director = {"segments": []}
@@ -34,6 +48,36 @@ class CacheTests(unittest.TestCase):
             "semantic": text, "visual_task": text, "components": [{"segment_id": sid, "component_id": "c"}]})
         self.treatment["motion_queries"].append({"segment_id": sid, "component_id": "c", "tags": tags})
 
+    def test_complete_overlay_pool_survives_missing_synonyms_and_uses_whole_task(self):
+        self.director = {"segments": []}
+        self.treatment = {"semantic_lists": {"overlay": [], "broll": []}, "motion_queries": []}
+        self.add_item("overlay", "多问一句：这条款，我真的看懂了吗？", ["条款", "看懂", "问题", "概念"])
+        first = cache.match_once(ROOT, self.director, self.treatment)
+        matches = first["motion_matches"]["r0"]["matches"]
+        registered = motion.overlay_candidates(ROOT)
+        self.assertEqual({m["candidate_id"] for m in matches}, {r["candidate_id"] for r in registered})
+        self.assertEqual(len(matches), 9)
+        notification = next(m for m in matches if m["candidate_id"] == "overlay:notification-stack")
+        self.assertEqual(notification["recall_basis"], "same_use_review_required")
+        self.assertFalse(notification["matched_dimensions"]["relations"])
+        self.assertTrue(all("fit" not in match for match in matches))
+        changed = copy.deepcopy(first)
+        row = changed["semantic_lists"]["overlay"][0]
+        row["semantic"] = "提醒观众自查是否看懂条款"
+        row["visual_task"] = "让提醒弹出"
+        with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
+            updated = cache.match_once(ROOT, self.director, changed)
+            self.assertEqual(search.call_count, 1)
+            self.assertEqual(search.call_args.args[1], cache._query(row, changed["motion_queries"][0]["tags"]))
+            cache.validate_matches(ROOT, self.director, updated)
+            cache.match_once(ROOT, self.director, updated)
+            self.assertEqual(search.call_count, 1)
+        reviewed_hint = next(m for m in updated["motion_matches"]["r0"]["matches"]
+                             if m["candidate_id"] == "overlay:notification-stack")
+        self.assertEqual(reviewed_hint["matched_dimensions"]["relations"], ["提醒"])
+        self.assertNotEqual(first["motion_matches"]["r0"]["semantic_sha256"],
+                            updated["motion_matches"]["r0"]["semantic_sha256"])
+
     def test_business_questions_recall_complete_authors_without_art_keywords(self):
         catalog = motion.load_catalog(ROOT)
         expected = {"gbro-collage-broll:gbro-collage-broll/design",
@@ -50,9 +94,10 @@ class CacheTests(unittest.TestCase):
                 matches = motion.search_capabilities(ROOT, quote, use="broll", catalog=catalog)
                 ids = {r["candidate_id"] for r in matches}
                 self.assertTrue(expected <= ids, sorted(expected - ids))
-                self.assertFalse(fixed & ids)
+                self.assertTrue(fixed <= ids)
                 for row in matches:
-                    self.assertEqual(row["recall_basis"], "full_scene_authoring")
+                    self.assertEqual(row["recall_basis"], "full_scene_authoring" if
+                        row["capability"]["content_scope"]["mode"] == "full_scene" else "same_use_review_required")
                     self.assertFalse(row["has_motion_basis"])
                     self.assertTrue(row["semantic_review_required"])
 
@@ -60,7 +105,8 @@ class CacheTests(unittest.TestCase):
         self.director = {"segments": []}
         self.treatment = {"semantic_lists": {"overlay": [], "broll": []}, "motion_queries": []}
         self.add_item("broll", "冷柜不制冷先保哪批？", ["冷柜", "失冷", "待决问题"])
-        direct = motion.search_capabilities(ROOT, "冷柜 失冷 待决问题", use="broll")
+        direct = motion.search_capabilities(ROOT, cache._query(
+            self.treatment["semantic_lists"]["broll"][0], ["冷柜", "失冷", "待决问题"]), use="broll")
         first = cache.match_once(ROOT, self.director, self.treatment)
         context = cache.validate_matches(ROOT, self.director, first)
         evidence = context[("s0", "c")]["matches"]
@@ -259,13 +305,24 @@ class CacheTests(unittest.TestCase):
                     "status": "needs_revision", "artifacts": [], "lineage": [mapping]}}})
                 return receipt
             first = cache.match_once(ROOT, self.director, self.treatment)
+            context = cache.validate_matches(ROOT, self.director, first)
+            first['skill_selection'] = {'beats': [], 'overlay_beats': [],
+                'assignments': [{'segment_id': 's1', 'component_id': 'c', 'candidate_id': 'fixture:author'}],
+                'overlay_assignments': [{'segment_id': 's0', 'component_id': 'c', 'candidate_id': 'fixture:author'}],
+                'diversity_review': {'reviewed_optimum': [1, 1]}}
+            for (sid, cid), item in context.items():
+                beat = {'segment_id': sid, 'component_id': cid, 'semantic_row_id': item['row_id'],
+                    'candidates': [{'candidate_id': 'fixture:author', 'fit': 'equivalent',
+                                    'reason': 'Explicit fixture review', 'design_plan': copy.deepcopy(DESIGN)}]}
+                first['skill_selection']['overlay_beats' if item['semantic']['type'] == '贴片' else 'beats'].append(beat)
+            bind_review_fixture(first, context)
             before = copy.deepcopy(first)
             receipt = approved_source(self.director, first, 1)
             current = copy.deepcopy(first)
             current["semantic_lists"]["overlay"][0]["visual_task"] = "将分类标签替换为当前主题"
-            current["skill_selection"] = {"revision_locks": {"previous_receipt": receipt,
+            current["skill_selection"]["revision_locks"] = {"previous_receipt": receipt,
                 "user_confirmation": "不要出现任务示意，换一些内容显示", "changes": [{
-                    "semantic_row_id": "r0", "segment_id": "s0", "component_id": "c", "candidate_id": "fixture:author"}]}}
+                    "semantic_row_id": "r0", "segment_id": "s0", "component_id": "c", "candidate_id": "fixture:author"}]}
             with patch.object(motion, "search_capabilities", side_effect=AssertionError("must not search old rows")):
                 rebound, changed = cache.rebind_local_visual_tasks(ROOT, self.director, current, job_dir=root)
                 self.assertEqual(changed, ["r0"])
@@ -274,6 +331,15 @@ class CacheTests(unittest.TestCase):
                 expected = copy.deepcopy(first["motion_matches"]["r0"])
                 expected["semantic_sha256"] = rebound["motion_matches"]["r0"]["semantic_sha256"]
                 self.assertEqual(rebound["motion_matches"]["r0"], expected)
+                self.assertEqual(rebound['skill_selection']['beats'], first['skill_selection']['beats'])
+                self.assertEqual(rebound['skill_selection']['assignments'], first['skill_selection']['assignments'])
+                self.assertEqual(rebound['skill_selection']['overlay_assignments'], [])
+                self.assertNotIn('diversity_review', rebound['skill_selection'])
+                self.assertEqual(rebound['skill_selection']['revision_locks'], current['skill_selection']['revision_locks'])
+                reviewed = rebound['skill_selection']['overlay_beats'][0]
+                self.assertNotIn('semantic_sha256', reviewed)
+                self.assertEqual(reviewed['candidates'][0]['fit'], 'unreviewed')
+                self.assertNotIn('design_plan', reviewed['candidates'][0])
                 cache.validate_matches(ROOT, self.director, rebound)
                 for case in ("tags", "quote", "semantic", "start_word", "end_word", "components",
                              "segment_clock", "source_clock", "cache", "instruction", "unrequested"):
@@ -306,7 +372,8 @@ class CacheTests(unittest.TestCase):
             with patch.object(motion, "search_capabilities", wraps=motion.search_capabilities) as search:
                 updated = cache.match_once(ROOT, self.director, self.treatment)
                 self.assertEqual(search.call_count, 1)
-                self.assertEqual(search.call_args.args[1], "问题 待决")
+                self.assertEqual(search.call_args.args[1], cache._query(
+                    self.treatment["semantic_lists"]["overlay"][-1], ["问题", "待决"]))
                 for row_id in first["motion_matches"]:
                     self.assertEqual(updated["motion_matches"][row_id], rebound["motion_matches"][row_id])
 
@@ -368,6 +435,7 @@ class CacheTests(unittest.TestCase):
                     for match in item["matches"]]}
             beat['single_source_review'] = {'decision': 'keep', 'reason': '此测试保持当前缓存中全部合格候选，不按偏好删除。'}
             first["skill_selection"]["overlay_beats" if item["semantic"]["type"] == "贴片" else "beats"].append(beat)
+        bind_review_fixture(first, context)
         cache.validate_reviews(ROOT, self.director, first)
         first["skill_selection"]["overlay_beats"][0]["candidates"].pop()
         with self.assertRaisesRegex(ValueError, "every cached match"):
@@ -400,6 +468,7 @@ class CacheTests(unittest.TestCase):
                                        if m['candidate']['candidate_id'] == chosen else {})}
                                    for m in item['matches']]}
             first['skill_selection']['overlay_beats' if overlay else 'beats'].append(beat)
+        bind_review_fixture(first, context)
         before = copy.deepcopy(first)
         with patch.object(motion, 'search_capabilities', side_effect=AssertionError('must not rematch')):
             cache.validate_reviews(ROOT, self.director, first)
@@ -419,6 +488,7 @@ class CacheTests(unittest.TestCase):
                     'fit': 'equivalent' if m['candidate']['status'] == 'supported' else 'needs_adapter',
                     'reason': '合成测试的当前内容设计。', 'design_plan': copy.deepcopy(DESIGN)} for m in item['matches']]}
             first['skill_selection']['overlay_beats' if item['semantic']['type'] == '贴片' else 'beats'].append(beat)
+        bind_review_fixture(first, context)
         candidate = next(c for c in first['skill_selection']['beats'][0]['candidates'] if c['fit'] == 'equivalent')
         with patch.object(motion, 'search_capabilities', side_effect=AssertionError('must not rematch')):
             cache.validate_reviews(ROOT, self.director, first)
@@ -426,7 +496,7 @@ class CacheTests(unittest.TestCase):
                 bad = copy.deepcopy(first)
                 target = next(c for c in bad['skill_selection']['beats'][0]['candidates'] if c['fit'] == 'equivalent')
                 target['design_plan'].pop(field)
-                with self.subTest(missing_design=field), self.assertRaisesRegex(ValueError, 'design_plan'):
+                with self.subTest(unselected_design=field):
                     cache.validate_reviews(ROOT, self.director, bad)
             candidate.update(fit='unsuitable', rejection_basis='semantic',
                              constraint_refs={'requirement': 'quote', 'capability': 'limitations/0'})
@@ -457,6 +527,7 @@ class CacheTests(unittest.TestCase):
                 'candidates': [{'candidate_id': m['candidate']['candidate_id'], 'fit': 'equivalent',
                     'reason': '保留原生三步连线能力。', 'design_plan': copy.deepcopy(DESIGN)} for m in item['matches']]}
             first['skill_selection'] = {'beats': [], 'overlay_beats': [beat]}
+            bind_review_fixture(first, {('s0', 'c'): item})
             with self.assertRaisesRegex(ValueError, 'single_source_review'):
                 cache.validate_reviews(ROOT, self.director, first)
             beat['single_source_review'] = {'decision': 'revise', 'reason': '还需核对候选排除条件。'}
@@ -558,6 +629,171 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(wake_match["matched_dimensions"]["actions"], ["唤醒"])
         cache.validate_matches(ROOT, self.director, updated)
         self.assertEqual(updated["motion_matches"]["r0"], first["motion_matches"]["r0"])
+
+
+class ReviewIdentityTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog = [{"candidate_id": "fixture:" + name, "skill_id": "fixture-" + name,
+            "status": "supported", "entrypoint": name + ".py", "producer_version": "1",
+            "template_id": name, "role": "native", "min_duration_seconds": 1,
+            "capability": {"uses": ["aroll_overlay", "broll"], "summary": "Authored scene",
+                "editable_content": ["label"], "limitations": ["One semantic action"],
+                "reviewed_sources": {name + ".py": "a" * 64},
+                "content_scope": {"mode": "full_scene"},
+                "tags": {field: [] for field in motion.TAG_FIELDS}}} for name in ("a", "b")]
+        self.addCleanup(patch.stopall)
+        patch.object(motion, "load_catalog", side_effect=lambda _: copy.deepcopy(self.catalog)).start()
+        self.director = {"segments": []}
+        self.treatment = {"semantic_lists": {"overlay": [], "broll": []}, "motion_queries": []}
+        for index, use in enumerate(("overlay", "broll")):
+            sid = "s" + str(index)
+            self.director["segments"].append({"segment_id": sid, "start": index * 4, "end": index * 4 + 4,
+                "visual_strategy": {"composition": {"family": "aroll_with_overlay" if index == 0 else "single_full_frame"},
+                    "components": [{"component_id": "c", "kind": "code_generated",
+                                    "layer_role": "annotation" if index == 0 else "base"}]}})
+            self.treatment["semantic_lists"][use].append({"row_id": "r" + str(index),
+                "start_word": index, "end_word": index + 1, "quote": "原话" + str(index),
+                "semantic": "原意" + str(index), "visual_task": "变化" + str(index),
+                "components": [{"segment_id": sid, "component_id": "c"}]})
+            self.treatment["motion_queries"].append({"segment_id": sid, "component_id": "c", "tags": ["初始标签"]})
+        self.treatment = cache.match_once(ROOT, self.director, self.treatment)
+        context = cache.validate_matches(ROOT, self.director, self.treatment)
+        selection = self.treatment["skill_selection"] = {"beats": [], "overlay_beats": [],
+            "assignments": [{"segment_id": "s1", "component_id": "c", "candidate_id": "fixture:a"}],
+            "overlay_assignments": [{"segment_id": "s0", "component_id": "c", "candidate_id": "fixture:a"}],
+            "diversity_review": {"reviewed_optimum": [2, 2]},
+            "revision_locks": {"user_confirmation": "Keep authorized routes"}}
+        for (sid, cid), item in context.items():
+            beat = {"segment_id": sid, "component_id": cid, "semantic_row_id": item["row_id"],
+                "start": next(s['start'] for s in self.director['segments'] if s['segment_id'] == sid),
+                "end": next(s['end'] for s in self.director['segments'] if s['segment_id'] == sid),
+                "skill_reviews": {r['skill_id']: {'fit': 'equivalent', 'reason': 'Explicit source review'}
+                                  for r in self.catalog},
+                "candidates": [{"candidate_id": m["candidate"]["candidate_id"], "fit": "equivalent",
+                    "reason": "Explicit fixture review", "visual_pattern": "scene", "design_plan": copy.deepcopy(DESIGN)}
+                    for m in item["matches"]]}
+            selection["overlay_beats" if item["semantic"]["type"] == "贴片" else "beats"].append(beat)
+        bind_review_fixture(self.treatment, context)
+
+    def test_unchanged_reviews_and_retrieval_only_changes_are_preserved(self):
+        before = copy.deepcopy(self.treatment)
+        with patch.object(motion, "search_capabilities", side_effect=AssertionError("must reuse")):
+            self.assertEqual(cache.match_once(ROOT, self.director, before), before)
+        changed = copy.deepcopy(before)
+        changed["motion_queries"][0]["tags"] = ["排序提示"]
+        self.catalog[0]["capability"]["tags"]["actions"].append("排序提示")
+        self.catalog[0]["capability"]["title"] = "Display title only"
+        with patch.object(motion, "MATCHING_POLICY_VERSION", motion.MATCHING_POLICY_VERSION + 1):
+            updated = cache.match_once(ROOT, self.director, changed)
+            cache._validate_review_structure(ROOT, self.director, updated)
+        self.assertEqual(updated["skill_selection"], before["skill_selection"])
+        self.assertEqual(updated["motion_matches"]["r0"]["semantic_sha256"], before["motion_matches"]["r0"]["semantic_sha256"])
+
+    def test_semantic_change_invalidates_only_its_row_without_signing_new_reviews(self):
+        before = copy.deepcopy(self.treatment)
+        self.treatment["semantic_lists"]["overlay"][0]["semantic"] = "相反的语义"
+        with self.assertRaisesRegex(ValueError, "semantic fields"):
+            cache.validate_review_identities(self.director, self.treatment, self.catalog)
+        updated = cache.match_once(ROOT, self.director, self.treatment)
+        selection = updated["skill_selection"]
+        beat = selection["overlay_beats"][0]
+        self.assertEqual(beat["semantic_goal"], "相反的语义")
+        self.assertNotIn("semantic_sha256", beat)
+        self.assertTrue(all(r["fit"] == "unreviewed" and "design_plan" not in r and "capability_sha256" not in r
+                            for r in beat["candidates"]))
+        self.assertTrue(all(r['fit'] == 'unreviewed' for r in beat['skill_reviews'].values()))
+        self.assertEqual(selection["beats"], before["skill_selection"]["beats"])
+        self.assertEqual(selection["assignments"], before["skill_selection"]["assignments"])
+        self.assertEqual(selection["overlay_assignments"], [])
+        self.assertNotIn("diversity_review", selection)
+        self.assertEqual(selection["revision_locks"], before["skill_selection"]["revision_locks"])
+        self.assertEqual(cache.match_once(ROOT, self.director, updated), updated)
+
+    def test_capability_or_verified_source_change_invalidates_only_that_candidate(self):
+        before = copy.deepcopy(self.treatment)
+        for change in ("limitation", "source"):
+            with self.subTest(change=change):
+                altered = copy.deepcopy(self.catalog)
+                if change == "limitation":
+                    altered[0]["capability"]["limitations"].append("New capacity constraint")
+                else:
+                    altered[0]["capability"]["reviewed_sources"]["a.py"] = "b" * 64
+                with patch.object(motion, "load_catalog", return_value=altered):
+                    with self.assertRaisesRegex(ValueError, "capability identity"):
+                        cache.validate_review_identities(self.director, before, altered)
+                    updated = cache.match_once(ROOT, self.director, before)
+                for group in ("beats", "overlay_beats"):
+                    old = before["skill_selection"][group][0]
+                    new = updated["skill_selection"][group][0]
+                    self.assertEqual(new["semantic_sha256"], old["semantic_sha256"])
+                    self.assertEqual(new["candidates"][0]["fit"], "unreviewed")
+                    self.assertNotIn("capability_sha256", new["candidates"][0])
+                    self.assertEqual(new["candidates"][1], old["candidates"][1])
+                    self.assertEqual(new['skill_reviews']['fixture-a']['fit'], 'unreviewed')
+                    self.assertEqual(new['skill_reviews']['fixture-b'], old['skill_reviews']['fixture-b'])
+
+    def test_changed_window_reopens_only_the_previous_timing_exclusion(self):
+        for timing_exclusion in (True, False):
+            with self.subTest(timing_exclusion=timing_exclusion):
+                treatment = copy.deepcopy(self.treatment)
+                beat = treatment['skill_selection']['overlay_beats'][0]
+                beat['single_source_review'] = {'decision': 'keep', 'reason': 'Existing semantic source review'}
+                if timing_exclusion:
+                    beat['candidates'][0].update(fit='unsuitable', rejection_basis='timing',
+                        constraint_refs={'requirement': {'source': 'locked_window', 'receipt': {}},
+                                         'capability': 'min_duration_seconds'})
+                    beat['skill_reviews']['fixture-a'] = {'fit': 'unsuitable', 'reason': 'Previous short window'}
+                self.director['segments'][0]['end'] = 5
+                updated = cache.match_once(ROOT, self.director, treatment)
+                selection = updated['skill_selection']
+                new = selection['overlay_beats'][0]
+                self.assertEqual(new['end'], 5)
+                self.assertEqual(new['semantic_sha256'], beat['semantic_sha256'])
+                self.assertEqual(new['candidates'][1], beat['candidates'][1])
+                self.assertEqual(selection['overlay_assignments'], [])
+                self.assertNotIn('diversity_review', selection)
+                if timing_exclusion:
+                    self.assertEqual(new['candidates'][0]['fit'], 'unreviewed')
+                    self.assertNotIn('rejection_basis', new['candidates'][0])
+                    self.assertEqual(new['skill_reviews']['fixture-a']['fit'], 'unreviewed')
+                else:
+                    self.assertEqual(new['candidates'], beat['candidates'])
+                    self.assertEqual(new['skill_reviews'], beat['skill_reviews'])
+                    self.assertEqual(new['single_source_review'], beat['single_source_review'])
+
+    def test_missing_review_identity_is_rejected_and_never_automatically_signed(self):
+        for missing in ("semantic_sha256", "capability_sha256"):
+            bad = copy.deepcopy(self.treatment)
+            beat = bad["skill_selection"]["overlay_beats"][0]
+            (beat if missing == "semantic_sha256" else beat["candidates"][0]).pop(missing)
+            with self.subTest(missing=missing), self.assertRaisesRegex(ValueError, "identity"):
+                cache._validate_review_structure(ROOT, self.director, bad)
+            updated = cache.match_once(ROOT, self.director, bad)
+            first = updated["skill_selection"]["overlay_beats"][0]["candidates"][0]
+            self.assertEqual(first["fit"], "unreviewed")
+            self.assertNotIn("capability_sha256", first)
+
+    def test_broll_source_summaries_follow_added_unavailable_and_removed_sources(self):
+        extra = copy.deepcopy(self.catalog[0])
+        extra.update(candidate_id='fixture:c', skill_id='fixture-c', template_id='c', entrypoint='c.py')
+        extra['capability']['uses'] = ['broll']
+        self.catalog.append(extra)
+        updated = cache.match_once(ROOT, self.director, self.treatment)
+        source_reviews = updated['skill_selection']['beats'][0]['skill_reviews']
+        previous = self.treatment['skill_selection']['beats'][0]['skill_reviews']
+        self.assertEqual(set(source_reviews), {'fixture-a', 'fixture-b', 'fixture-c'})
+        self.assertEqual(source_reviews['fixture-c']['fit'], 'unreviewed')
+        self.assertEqual({key: source_reviews[key] for key in previous}, previous)
+        self.assertEqual(updated['skill_selection']['overlay_beats'], self.treatment['skill_selection']['overlay_beats'])
+        # Unavailable candidates leave matching, while their discovered source
+        # still needs its own summary to satisfy the real assignment contract.
+        self.catalog[-1]['status'] = 'needs_adapter'
+        unavailable = cache.match_once(ROOT, self.director, updated)
+        self.assertIn('fixture-c', unavailable['skill_selection']['beats'][0]['skill_reviews'])
+        self.assertNotIn('fixture:c', {r['candidate_id'] for r in unavailable['motion_matches']['r1']['matches']})
+        self.catalog.pop()
+        removed = cache.match_once(ROOT, self.director, unavailable)
+        self.assertEqual(removed['skill_selection']['beats'][0]['skill_reviews'], previous)
 
 
 class CatalogOperationTests(unittest.TestCase):

@@ -796,18 +796,15 @@ def _execution_identity(beat, supplements):
             beat.get('semantic_row_id') or (beat['segment_id'] + ':' + beat['component_id']))
 
 
-def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
+def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, native_skills, job_dir=None,
                         temporarily_disabled=(), director=None, treatment=None,
                         verified_supplements=None) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
-    from .motion_capabilities import overlay_candidates
     from .visual_assignment import assign_candidates
 
-    native = discover_candidates(project_root)
-    pool = {row["candidate_id"]: row for row in [*native, *overlay_candidates(project_root)]}
-    skills = {row["skill_id"] for row in native}
+    pool, skills = catalog, native_skills
     overlays = selection.get("overlay_beats", [])
     if not isinstance(overlays, list):
         raise ValueError("overlay_beats must be a list")
@@ -869,12 +866,8 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
                     raise ValueError("B-roll candidate is not callable or contradicts the Skill review")
                 if fit != "unreviewed":
                     _text(candidate.get("visual_pattern"), "shared visual pattern")
-                    if partial:
-                        from .motion_match_cache import _design_plan
-                        _design_plan(candidate)
                 identity = _execution_identity(beat, supplements)
-                if ((identity, cid) not in temporarily_disabled
-                        and (not partial or timing_failure(pool[cid], beat, strict=True) is None)):
+                if (identity, cid) not in temporarily_disabled:
                     optimistic.append(candidate)
                     if fit != "unreviewed":
                         eligible.append(candidate)
@@ -885,16 +878,18 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
                         if candidate["candidate_id"] == first["candidate_id"]]
             optimistic = [candidate for candidate in optimistic
                           if candidate["candidate_id"] == first["candidate_id"]]
-            if not eligible:
+            if (not optimistic and
+                    (_execution_identity(beat, supplements), first["candidate_id"]) not in temporarily_disabled):
                 raise ValueError("opening candidate is missing or not suitable")
         locked = revision_locks.get((beat["segment_id"], beat["component_id"]))
         if locked is not None:
             eligible = [candidate for candidate in eligible if candidate["candidate_id"] == locked]
             optimistic = [candidate for candidate in optimistic if candidate["candidate_id"] == locked]
-            if not eligible:
+            if (not optimistic and
+                    (_execution_identity(beat, supplements), locked) not in temporarily_disabled):
                 raise ValueError("confirmed revision candidate is not reviewed and feasible")
         domain = eligible
-        if not domain:
+        if not optimistic:
             frames = round(_duration(beat) * 24)
             raise ValueError(f"{beat['segment_id']}:{beat['component_id']} has no timing-feasible candidate "
                              f"for {frames} frames ({beat['start']:.3f}-{beat['end']:.3f}s)")
@@ -944,22 +939,56 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
     fixed_channels = tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity})
     fixed_templates = tuple({_template_identity(identity) for _, identity in fixed_routes
                             if identity and _template_identity(identity)})
-    exact = assign_candidates(normalized,
+    exact = (assign_candidates(normalized,
         fixed_channels=fixed_channels, fixed_templates=fixed_templates)
-    diversity_review = None
+        if all(normalized) else None)
+    optimistic = exact
+    optimistic_normalized = normalize(optimistic_grouped)
     if partial:
-        optimistic = assign_candidates(normalize(optimistic_grouped),
+        optimistic = assign_candidates(optimistic_normalized,
             fixed_channels=fixed_channels, fixed_templates=fixed_templates)
-        def score(choices):
-            return (len(set(fixed_channels) | {c["channel"] for c in choices}),
-                    len(set(fixed_templates) | {(c["channel"], c["template_id"]) for c in choices
-                                                if c["template_id"] is not None}))
-        lower, upper = score(exact), score(optimistic)
-        if lower != upper:
-            raise ValueError(f"unreviewed candidates may increase the joint maximum: {lower} < {upper}; "
-                             "review the relevant candidates before assigning")
-        diversity_review = {"reviewed_optimum": list(lower), "optimistic_upper_bound": list(upper),
-                            "scope": "joint_broll_and_overlay_current_windows"}
+    def score(choices):
+        return (len(set(fixed_channels) | {c["channel"] for c in choices}),
+                len(set(fixed_templates) | {(c["channel"], c["template_id"]) for c in choices
+                                            if c["template_id"] is not None}))
+    lower = score(exact) if exact is not None else None
+    upper = score(optimistic)
+    if lower != upper:
+        # Keep a reviewed domain whenever the original solver can preserve
+        # both maxima. Re-solving also handles channel rotations of any length.
+        retained = optimistic_normalized
+        for index, domain in enumerate(normalized):
+            if optimistic[index]["fit"] != "unreviewed":
+                retained = [*retained[:index], domain, *retained[index + 1:]]
+                continue
+            if not domain:
+                continue
+            trial_domains = [*retained[:index], domain, *retained[index + 1:]]
+            trial = assign_candidates(trial_domains,
+                fixed_channels=fixed_channels, fixed_templates=fixed_templates)
+            if score(trial) == upper:
+                retained, optimistic = trial_domains, trial
+    diversity_review = {"reviewed_optimum": list(lower) if lower is not None else None,
+                        "reviewed_status": "complete" if exact is not None else "no_complete_assignment",
+                        "optimistic_upper_bound": list(upper),
+                        "scope": "joint_broll_and_overlay_current_windows",
+                        "evidence_scope": "planning_capabilities_not_produced_media"}
+    result = copy.deepcopy(dict(selection))
+    result.pop("diversity_review", None)
+    result.pop("_optimistic_assignments", None)
+    result["diversity_review"] = diversity_review
+    if lower != upper:
+        optimistic_by_row = {identity: choice for identity, choice in zip(group_order, optimistic)}
+        # These temporary domain reductions are not timing exclusions. Every
+        # retry rebuilds the complete domains from the unchanged match cache.
+        result["_optimistic_assignments"] = [
+            {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
+             "candidate_id": optimistic_by_row[_execution_identity(beat, supplements)]["candidate_id"],
+             "fit": optimistic_by_row[_execution_identity(beat, supplements)]["fit"]}
+            for beat in beats]
+    if exact is None:
+        result["assignments"], result["overlay_assignments"] = [], []
+        return result
     exact_by_row = {identity: choice["candidate_id"] for identity, choice in zip(group_order, exact)}
     chosen = [next(choice for choice in domain if choice["candidate_id"] == exact_by_row[
         _execution_identity(beat, supplements)])
@@ -1062,10 +1091,6 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, job_dir=None,
                         grouped_ids[identity].add(candidate["candidate_id"])
                     if all(len(ids) == 1 for ids in grouped_ids.values()) and cost(retained)[:2] == cost(chosen)[:2]:
                         chosen = retained
-    result = copy.deepcopy(dict(selection))
-    result.pop("diversity_review", None)
-    if diversity_review is not None:
-        result["diversity_review"] = diversity_review
     assignments = [
         {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
          "candidate_id": choice["candidate_id"],
@@ -1128,42 +1153,52 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
     partial = any(c.get("fit") == "unreviewed" for b in beats for c in b.get("candidates", []))
     if partial:
         _validate_partial_windows(selection, director)
-    catalog = {row["candidate_id"]: row for row in
-               [*discover_candidates(project_root), *overlay_candidates(project_root)]}
-    disabled = set()
-    for beat in beats:
-        for candidate in beat.get("candidates", []):
-            if "native_input_clock" not in candidate:
-                continue
-            cid = candidate.get("candidate_id")
-            if cid not in catalog:
-                raise ValueError("Native input clock candidate was not discovered")
-            if _native_input_clock_failure(catalog[cid], beat, candidate,
-                    job_dir=job_dir, director=director, treatment=treatment):
-                disabled.add((_execution_identity(beat, supplements), cid))
-    if partial:
-        # A route must fit every physical part of its one logical item.
-        for beat in beats:
-            identity = _execution_identity(beat, supplements)
-            for candidate in beat.get("candidates", []):
-                cid = candidate.get("candidate_id")
-                if cid in catalog and timing_failure(catalog[cid], beat, strict=True):
-                    disabled.add((identity, cid))
+    native = discover_candidates(project_root)
+    catalog = {row["candidate_id"]: row for row in [*native, *overlay_candidates(project_root)]}
+    native_skills = {row["skill_id"] for row in native}
+    if isinstance(treatment, Mapping) and "motion_matches" in treatment:
+        from .motion_match_cache import validate_review_identities
+        if selection != treatment.get("skill_selection"):
+            raise ValueError("assignment selection differs from the current treatment reviews")
+        validate_review_identities(director, treatment, catalog)
+    disabled, clock_checks = set(), {}
     while True:
         result = _assign_skills_once(project_root, selection, job_dir=job_dir,
+                                     catalog=catalog, native_skills=native_skills,
                                      temporarily_disabled=disabled, director=director, treatment=treatment,
                                      verified_supplements=verified)
         failures = []
-        for assignment in [*result["assignments"], *result.get("overlay_assignments", [])]:
+        optimistic = result.pop("_optimistic_assignments", [])
+        for assignment in [*result["assignments"], *result.get("overlay_assignments", []), *optimistic]:
             row = catalog[assignment["candidate_id"]]
             beat = next(b for b in [*selection["beats"], *selection.get("overlay_beats", [])]
                         if (b["segment_id"], b["component_id"]) ==
                         (assignment["segment_id"], assignment["component_id"]))
-            reason = timing_failure(row, beat)
+            cid = row["candidate_id"]
+            check_key = (beat["segment_id"], beat["component_id"], cid)
+            if check_key not in clock_checks:
+                reason = timing_failure(row, beat, strict=partial)
+                review = next(c for c in beat["candidates"] if c["candidate_id"] == cid)
+                if reason is None and "native_input_clock" in review:
+                    reason = _native_input_clock_failure(row, beat, review,
+                        job_dir=job_dir, director=director, treatment=treatment)
+                clock_checks[check_key] = reason
+            reason = clock_checks[check_key]
             if reason:
                 identity = _execution_identity(beat, supplements)
                 failures.append(((identity, row["candidate_id"]), reason))
         if not failures:
+            proof = result["diversity_review"]
+            if proof["reviewed_optimum"] != proof["optimistic_upper_bound"]:
+                pending = [{k: a[k] for k in ("segment_id", "component_id", "candidate_id")}
+                           for a in optimistic if a["fit"] == "unreviewed"]
+                gap = ("only unreviewed candidates can complete the assignment; complete their semantic review; "
+                       if proof["reviewed_optimum"] is None else
+                       "unreviewed candidates may increase the joint maximum: "
+                       f"{proof['reviewed_optimum']} < {proof['optimistic_upper_bound']}; ")
+                raise ValueError(gap +
+                    "review only these current optimistic choices, then assign again from the same cache: "
+                    + json.dumps(pending, ensure_ascii=False, sort_keys=True))
             return result
         before = len(disabled)
         disabled.update(key for key, _ in failures)

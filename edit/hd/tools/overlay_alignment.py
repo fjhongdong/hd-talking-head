@@ -152,21 +152,33 @@ class _ContentSlots(HTMLParser):
 
 class _StaticContent(HTMLParser):
     """The public comparison slots contain static art, never another timeline."""
+    def __init__(self, label=None):
+        super().__init__()
+        self.label = label
+        self.text = []
+
     def handle_starttag(self, tag, attrs):
-        if tag not in {"div", "span", "svg", "path", "rect", "line", "circle", "ellipse", "polyline", "polygon", "g"}:
+        if tag not in {"div", "span", "svg", "path", "rect", "line", "circle", "ellipse", "polyline", "polygon", "g", "text"}:
             raise ValueError("comparison slots accept only static markup")
         allowed = {"class", "aria-hidden", "viewbox", "xmlns", "width", "height", "x", "y", "x1", "x2", "y1", "y2",
-                   "cx", "cy", "rx", "ry", "r", "d", "points", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin"}
+                   "cx", "cy", "rx", "ry", "r", "d", "points", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+                   "font-size", "font-family", "font-weight", "text-anchor", "dominant-baseline"}
         if any(key not in allowed or value is None or re.search(r"url\s*\(|https?://|javascript:", value, re.I)
                and not (key == "xmlns" and value == "http://www.w3.org/2000/svg") for key, value in attrs):
             raise ValueError("comparison slots cannot contain scripts, styles or external assets")
 
     def handle_data(self, data):
         if data.strip():
-            raise ValueError("comparison text must use the checked native label_a / label_b slots")
+            if not isinstance(self.label, str) or not self.label.strip():
+                raise ValueError("comparison text needs its checked before/after label")
+            self.text.append(data.strip())
+
+    def check_text(self):
+        if self.text and "".join(self.text) != self.label:
+            raise ValueError("comparison slot text differs from its checked label")
 
 
-def bind_native_slots(source: bytes, contents: dict[str, str]) -> bytes:
+def bind_native_slots(source: bytes, contents: dict[str, str], *, labels=None) -> bytes:
     """Fill only the two public static content slots; retain all native code."""
     if not isinstance(contents, dict) or set(contents) != {"before", "after"}:
         raise ValueError("both native comparison slots are required")
@@ -178,8 +190,9 @@ def bind_native_slots(source: bytes, contents: dict[str, str]) -> bytes:
     for slot, content in contents.items():
         if not isinstance(content, str) or not content.strip():
             raise ValueError("native comparison content is empty")
-        static = _StaticContent()
+        static = _StaticContent((labels or {}).get(slot))
         static.feed(content)
+        static.check_text()
         balanced = _ContentSlots(content)
         balanced.feed(content)
         if balanced.stack:
@@ -189,7 +202,7 @@ def bind_native_slots(source: bytes, contents: dict[str, str]) -> bytes:
     return text.encode("utf-8")
 
 
-def _native_clock(source, actual, route, duration):
+def _native_clock(source, actual, route, duration, *, labels=None):
     expected = bind_native_clock(source, route, duration)
     if route == "hyperframes/before-after-wipe":
         text = actual.decode("utf-8")
@@ -197,7 +210,7 @@ def _native_clock(source, actual, route, duration):
         slots.feed(text)
         if set(slots.ranges) != {"before", "after"}:
             raise ValueError("native comparison content slots are missing")
-        expected = bind_native_slots(expected, {key: text[start:end] for key, (start, end) in slots.ranges.items()})
+        expected = bind_native_slots(expected, {key: text[start:end] for key, (start, end) in slots.ranges.items()}, labels=labels)
     if actual != expected:
         raise ValueError("native asset differs beyond the duration parameters and initialization glue")
     root, clip, metadata = _clock_tags(actual.decode("utf-8"), route)
@@ -413,14 +426,15 @@ def validate_grid_clock(events, source, duration):
         raise GridClockConflict("Grid needs its native landing plus 12 stable reading frames in the current window")
 
 
-def _native_events(route, mount, fps, native_duration):
+def _native_events(route, mount, fps, native_duration, *, comparison_labels=None):
     values = json.loads(mount["data-variable-values"])
     start, duration = _number(mount.get("data-start", 0)), _number(native_duration)
     if start < 0 or duration <= 0:
         raise ValueError("invalid native mount window")
     name = route.removeprefix("hyperframes/")
     if name == "before-after-wipe":
-        labels = [values.get("label_a"), values.get("label_b")]
+        labels = [values.get(key) or (comparison_labels or {}).get(slot)
+                  for key, slot in (("label_a", "before"), ("label_b", "after"))]
         if any(not isinstance(label, str) or not label.strip() for label in labels):
             raise ValueError("comparison overlay requires both public labels")
         split = _number(values.get("rest_split", 50))
@@ -479,18 +493,18 @@ def _native_events(route, mount, fps, native_duration):
     return events, start + duration
 
 
-def validate_native_events(actual, *, segment, words, cuts, events):
+def validate_native_events(actual, *, segment, words, cuts, events, allow_spoken_labels=False):
     """Check the same truthful word anchors for published overlays and candidate clocks."""
     sid, fps = segment["segment_id"], 24
-    if list(dict.fromkeys(e[2] for e in actual)) != segment["visible_text"]:
-        raise ValueError(f"reviewed labels differ from actual native labels: {sid}")
+    labels = pinboard_alignment.checked_labels(list(dict.fromkeys(e[2] for e in actual)),
+        segment=segment, words=words, cuts=cuts, allow_spoken=allow_spoken_labels)
     event_keys = [(e["slot"], e["kind"]) for e in events]
     if len(event_keys) != len(set(event_keys)) or set(event_keys) != {(e[0], e[1]) for e in actual}:
         raise ValueError(f"each native label and action needs exactly one anchor: {sid}")
     checked = []
     for slot, kind, text, local_time in actual:
         event = events[event_keys.index((slot, kind))]
-        if event["text"] != text or text not in segment["visible_text"]:
+        if event["text"] != text or text not in labels:
             raise ValueError(f"native visible text differs from reviewed text: {sid}")
         anchor = event["anchor"]
         index = anchor["index"]
@@ -499,6 +513,10 @@ def validate_native_events(actual, *, segment, words, cuts, events):
         word = words[index]
         if word["end"] <= word["start"]:
             raise ValueError("zero-duration ASR noise cannot anchor a label")
+        if allow_spoken_labels and not segment.get('visible_text') and (
+                not pinboard_alignment._label_text(word['text'])
+                or pinboard_alignment._label_text(word['text']) not in pinboard_alignment._label_text(text)):
+            raise ValueError('derived comparison label anchor must belong to its spoken label')
         positions = [word["start"] + part["timeline_start"] - part["source_start"] for part in cuts
                      if part["source_start"] <= word["start"] < part["source_end"]]
         if len(positions) != 1:
@@ -679,9 +697,17 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
                        / "registry/components" / name / (name + ".html"))
         if artifacts.sha256_file(source_path) != brief["source_pins"]["sha256"]:
             raise ValueError(f"original native source changed: {sid}")
+        comparison_labels = None
+        if route == "hyperframes/before-after-wipe":
+            comparison_labels = {}
+            for index, slot in enumerate(("before", "after")):
+                texts = {event.get("text") for event in record["events"] if event.get("slot") == index}
+                if len(texts) != 1 or not all(isinstance(text, str) and text.strip() for text in texts):
+                    raise ValueError("comparison slots need one speech-bound label per state")
+                comparison_labels[slot] = texts.pop()
         native_duration = _native_clock(source_path.read_bytes(),
-            _path(job.job_dir, assets[0]["job_path"]).read_bytes(), route, _number(mount["data-duration"]))
-        actual, exit_time = _native_events(route, mount, fps, native_duration)
+            _path(job.job_dir, assets[0]["job_path"]).read_bytes(), route, _number(mount["data-duration"]), labels=comparison_labels)
+        actual, exit_time = _native_events(route, mount, fps, native_duration, comparison_labels=comparison_labels)
         assembled_inputs.append({"entry_directory": str(entry.parent), "route": route,
             "files": [{"source": str(_path(job.job_dir, item["job_path"])),
                        "scene_path": item["scene_path"], "sha256": item["sha256"]}
@@ -693,7 +719,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
         if exit_time > duration + 1e-6:
             raise ValueError(f"overlay exits after the next shot: {sid}")
         checked = validate_native_events(actual, segment=segment, words=words,
-                                         cuts=cuts, events=record["events"])
+                                         cuts=cuts, events=record["events"], allow_spoken_labels=route == "hyperframes/before-after-wipe")
         report.append({"segment_id": sid, "component_id": cid, "route": brief["upstream_route"],
                        "brief_path": record["brief_path"], "brief_sha256": binding["brief_sha256"],
                        "entry_sha256": entry_sha, "native_duration": native_duration,

@@ -5728,7 +5728,7 @@
         "只使用公开 before/after 槽；不放长句或额外隐藏文字，仅表达有明确对应关系的真实做法、方案或状态对照，不放行任意观点，也不自动表达因果或状态切换。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "scripts/hyperframes_native_adapter.py": "f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26",
         "vendor/hyperframes/registry/components/before-after-wipe/before-after-wipe.html": "c04e8bf1bfbcec71d0921a03a786cc09e660732428aa04bf79036a30b7755e09"
       },
@@ -5847,7 +5847,7 @@
         "只用于 A-roll 透明贴片；不表达流程或状态切换，不重复整句字幕。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "scripts/hyperframes_native_adapter.py": "f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26",
         "vendor/hyperframes/registry/components/grid-card-assemble/grid-card-assemble.html": "8713fc92043a353732f4d9bd8832e0023a2019472d3a9cfffc566ff6fd194042"
       },
@@ -5991,7 +5991,7 @@
         "仅用于真实三步流程；不能将并列观点或抽象结论改成三框。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "scripts/hyperframes_hw_pipeline_adapter.py": "2be71d873624ce82c110c9db1ecbcbacf358806592973b961bfd860778091a5e",
         "scripts/render_hyperframes_hw_pipeline.cjs": "21c759d07d3ab682e40ac0ac3d1678fa067b385fd9daa87d34e800c9c1c3c248",
         "vendor/hyperframes/registry/blocks/hw-pipeline/hw-pipeline.html": "5f2d91c91d37dd6b57a015a02361c67c9a62ca33849b901b3bebad8157fb7dbb"
@@ -6050,7 +6050,7 @@
         "必须是提醒/通知语义；不把否定句自动改成关闭状态。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "scripts/hyperframes_native_adapter.py": "f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26",
         "vendor/hyperframes/registry/components/notification-stack/notification-stack.html": "dfe78474314169e66fb3cb6fa26d3e09755873248a1ff72dc4b472edacbb2771"
       },
@@ -6109,7 +6109,7 @@
         "仅一张原生 pin-board 卡；title/subtitle保持为空，逐项词锚、alpha与避让仍按原合同检查。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "references/overlay-studio-pinboard.md": "f1210d9c3e661a2d857714f068427793dee1ae5ec9d3b4cb4b7656a8e2a3e6ef",
         "scripts/overlay_studio_adapter.py": "9e9c22f525a1abb6a2956eb88dff8a075522c1ab8ac6117c233fb7686b4b3579",
         "vendor/overlay-studio/motion-playground/src/effects/hud/PinBoardPlate.tsx": "5073d9168bab4a77fa6464a8fb18cbd1f0849aacd42c73ac7795971d0ed31cb5"
@@ -6168,7 +6168,7 @@
         "只有原声明确描述同一对象的两态变化才适用；无需/不依赖不能直接画成关闭。"
       ],
       "reviewed_sources": {
-        "references/aroll-overlay-contract.md": "c38f9d7046460e075d05298922d0541b34245f2c09b39d605fb436b223f62f67",
+        "references/aroll-overlay-contract.md": "eae5eb50f38abd5ac1279566d29b18e3bf183bc060feacb80843c849c6481916",
         "scripts/hyperframes_native_adapter.py": "f3c3729b5e262716bcd0ef3e8a73a3c6860282441a4bad325b0c3a29339e5c26",
         "vendor/hyperframes/registry/components/toggle-flip/toggle-flip.html": "f73cefb798fe3cd1a5ac503c6feb494a644c17d53d8b2e1cf313973940f0161d"
       },

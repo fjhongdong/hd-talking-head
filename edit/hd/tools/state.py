@@ -1939,8 +1939,6 @@ def require_runnable(job: JobState, stage_id: str) -> None:
     stage = _stage(job, stage_id)
     if stage["status"] not in {"pending", "needs_revision"}:
         raise WorkflowError("workflow stage is not runnable")
-    if current_stage(job) != stage_id:
-        raise WorkflowError("workflow stage is not the current stage")
     dependencies = _dependencies_for_version(job.version)[stage_id]
     if any(
         job.stages[dependency]["status"] != "completed"

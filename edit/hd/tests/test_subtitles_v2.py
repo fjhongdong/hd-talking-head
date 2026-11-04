@@ -671,6 +671,34 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 self.assertEqual([(word["start"], word["end"]) for cue in renderer for word in cue["words"]],
                                  [(word["start"], word["end"]) for word in words])
 
+    def test_standard_card_splits_long_list_at_its_fixed_bottom_capacity(self) -> None:
+        first, rest = "你签的劳动合同、竞业协议、股权协议，", "其实都是规则。"
+        text = first + rest
+        words = []
+        for index, char in enumerate(text):
+            if char in "、，。":
+                words[-1]["text"] += char
+                continue
+            pause = .3 if index >= len(first) else 0
+            words.append({"text": char, "start": round(.1 + index * .1 + pause, 3),
+                          "end": round(.2 + index * .1 + pause, 3)})
+        visual = {"duration": 4., "segments": [{"segment_id": "seg-001",
+                  "start": 0., "end": 4., "content_item_ids": ["idea-01"],
+                  "shot_recipe": {"mode": "none"}}]}
+        rendered = []
+        plan = subtitles_v2.build_render_plan(records=self.records, words=words,
+            timeline=self.timeline, visual_plan=visual,
+            keyword_index={"idea-01": ("劳动合同", "竞业协议", "股权协议")},
+            renderer_cues=rendered)
+        self.assertEqual("".join(cue["text"] for cue in plan["cues"]), text)
+        self.assertNotIn(first, [cue["text"] for cue in plan["cues"]])
+        self.assertTrue(all(len(cue["text"]) <= 14 for cue in plan["cues"]))
+        for phrase in ("劳动合同", "竞业协议", "股权协议"):
+            self.assertTrue(any(phrase in cue["text"] for cue in plan["cues"]))
+        self.assertTrue(all(cue["bottom"] == 350 for cue in rendered))
+        self.assertEqual([(word["start"], word["end"]) for cue in rendered for word in cue["words"]],
+                         [(word["start"], word["end"]) for word in words])
+
     def test_long_keyword_layout_survives_emphasis_cooldown(self) -> None:
         keyword = "Ling-3.1-flash-1019"
         words = [{"text": keyword, "start": .1 + index * 2., "end": .9 + index * 2.}

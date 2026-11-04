@@ -557,11 +557,12 @@ def _validate_template_choices(job, director, treatment):
         if ('binding_snapshot' in beat and beat['binding_snapshot'] != bindings.get(key)):
             raise VisualConfirmationError("joint selected binding snapshot is missing or stale: " + str(key))
     if selection:
-        report = motion_capabilities.check_planning_only(project, director, treatment, job_dir=job.job_dir)
+        report, cached = motion_capabilities._check_planning_with_matches(project, director, treatment, job_dir=job.job_dir)
         if report['status'] != 'pass':
             raise VisualConfirmationError('selected template planning check failed: ' + str(report['failures'] or report['not_verified']))
         broll_skill_selection.validate_fixed_materials(director, selection, job_dir=job.job_dir)
-    cached = motion_match_cache.validate_matches(project, director, treatment)
+    else:
+        cached = motion_match_cache.validate_matches(project, director, treatment)
     candidates = {(a["segment_id"], a["component_id"]): a["candidate_id"]
                   for a in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]}
     for segment in director["segments"]:
@@ -578,7 +579,7 @@ def _validate_template_choices(job, director, treatment):
                 continue  # Explicit direct generation is a material source, not a library template.
             matches = {m["candidate"]["candidate_id"]: m["candidate"] for m in cached[(sid, cid)]["matches"]}
             if candidate not in matches:
-                raise VisualConfirmationError("the selected template does not match this row's semantic tags")
+                raise VisualConfirmationError("the selected template is absent from this row's complete use-qualified pool")
             native = matches[candidate]
             if component["kind"] == "code_generated" and any(
                     segment["bindings"][cid].get(field) != native[field]
@@ -587,6 +588,7 @@ def _validate_template_choices(job, director, treatment):
     planned_generation_targets(project, director, treatment, job_dir=job.job_dir)
     planned = unprepared_template_targets(director, treatment)
     motion_match_cache.validate_design_handoffs(director, treatment, job.job_dir, planned_targets=planned)
+    return report.get("diversity_review") if selection else None
 
 def _validate_beat_sheet(treatment, director, speech):
     from .semantic_visual_plan import component_use, require_interval_coverage
@@ -696,7 +698,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     confirmed_content.check_confirmed_content(job, director, treatment=treatment)
     steps = _steps(treatment)
     try:
-        _validate_template_choices(job, director, treatment)
+        diversity_review = _validate_template_choices(job, director, treatment)
     except ValueError as error:
         raise VisualConfirmationError("visual selection: " + str(error)) from error
     # Actual engineering inputs are checked only where they already exist.
@@ -804,6 +806,11 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
             "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
     distribution, repeats = _routing_distribution(numbered_rows, treatment)
+    if diversity_review:
+        lower, upper = (diversity_review[key] for key in ("reviewed_optimum", "optimistic_upper_bound"))
+        lines += ["", f"当前候选与已知约束内，已评审组合最优：{lower[0]}渠道、{lower[1]}模板；"
+                  f"含未评审候选的乐观上界：{upper[0]}渠道、{upper[1]}模板。",
+                  "这是规划分配结论，不代表素材已经制作或画面已经验证；实际使用数量以本版交付结果为准。"]
     lines += ["", "## 渠道分布（按贴片与 B-roll 分开统计）", ""]
     for typ in ("贴片", "B-roll"):
         bucket = distribution.get(typ, {"logical_count": 0, "channels": {}})
@@ -1176,6 +1183,17 @@ def _normalize_prepared_paper(root, proposal, frozen, frozen_treatment, director
                 actual.pop('scenes')
     return current, actual
 
+def _confirmed_wake_semantic_goal(treatment, key):
+    rows = [row for group in ('overlay', 'broll')
+            for row in treatment.get('semantic_lists', {}).get(group, [])
+            if any((ref.get('segment_id'), ref.get('component_id')) == key
+                   for ref in row.get('components', []))]
+    if (len(rows) != 1 or not isinstance(rows[0].get('semantic'), str)
+            or not rows[0]['semantic'].strip()):
+        raise VisualConfirmationError('Wake needs exactly one confirmed semantic row')
+    return rows[0]['semantic']
+
+
 def _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director, treatment, *, source_authorization):
     """Bind an approved deferred Wake image to its original native route."""
     from . import generation_queue, state
@@ -1219,8 +1237,8 @@ def _normalize_prepared_wake(root, proposal, frozen, frozen_treatment, director,
             raise VisualConfirmationError('prepared Wake brief identity differs from its binding')
         assignments = [a for a in old_selection.get('assignments', []) if (a.get('segment_id'), a.get('component_id')) == key]
         if (len(assignments) != 1 or assignments[0].get('candidate_id') != 'lemo-wake:wake'
-                or brief['semantic_goal'] != assignments[0].get('design_plan', {}).get('focus')):
-            raise VisualConfirmationError('prepared Wake semantic goal differs from its approved focus')
+                or brief['semantic_goal'] != _confirmed_wake_semantic_goal(frozen_treatment, key)):
+            raise VisualConfirmationError('prepared Wake semantic goal differs from its approved semantic row')
         stage = job.stages.get('edit_structure', {})
         aroll = [r for r in stage.get('artifacts', []) if r['path'] == '06-edit-structure/edited-aroll.mp4']
         if stage.get('status') != 'completed' or len(aroll) != 1:
@@ -3084,10 +3102,8 @@ def _validate_fresh_native_parent_inputs(root, proposal, original, segment, cid,
         raise VisualConfirmationError('execution changed authorized native input: transcript')
     if 'semantic_goal' in facts:
         wake = segment.get('bindings', {}).get(cid, {}).get('dependency_id') == 'lemo-wake'
-        assignments = [a for a in original.get('skill_selection', {}).get('assignments', [])
-                       if (a.get('segment_id'), a.get('component_id')) == key] if wake else []
-        approved_goal = (rows[0].get('semantic') if 'task_source' in facts and len(rows) == 1
-                         else assignments[0].get('design_plan', {}).get('focus') if len(assignments) == 1
+        approved_goal = (_confirmed_wake_semantic_goal(original, key) if wake
+                         else rows[0].get('semantic') if 'task_source' in facts and len(rows) == 1
                          else beats[0]['semantic_goal'] if len(beats) == 1 and 'semantic_goal' in beats[0]
                          else rows[0].get('semantic') if len(rows) == 1 else None)
         if approved_goal is None or facts['semantic_goal'] != approved_goal:
@@ -3277,9 +3293,19 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
     original = _read(_exact(root, proposal["inputs"]["treatment"]))
     if _core(director) != _core(frozen):
         raise VisualConfirmationError("execution changed authorized segment timing or visual plan")
-    for field in ("semantic_lists", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet", "overlay_selection"):
+    for field in ("semantic_lists", "motion_matches", "motion_queries", "generation_plan", "numbering_scope_id", "beat_sheet"):
         if treatment.get(field) != original.get(field):
             raise VisualConfirmationError("execution changed authorized planning input: " + field)
+    if original.get('overlay_selection'):
+        if treatment.get('overlay_selection') != original['overlay_selection']:
+            raise VisualConfirmationError('execution changed authorized planning input: overlay_selection')
+    elif treatment.get('overlay_selection'):
+        from . import overlay_selection
+        routes = {(segment['segment_id'], cid): overlay_selection._route(binding)
+                  for segment in frozen['segments']
+                  if segment['visual_strategy']['composition'].get('family') == 'aroll_with_overlay'
+                  for cid, binding in segment.get('bindings', {}).items()}
+        overlay_selection.validate_selection(frozen, treatment, routes)
     for field in ("assignments", "overlay_assignments", "fixed_context", "opening"):
         if treatment.get("skill_selection", {}).get(field) != original.get("skill_selection", {}).get(field):
             raise VisualConfirmationError("execution changed authorized template assignment: " + field)

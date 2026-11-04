@@ -23,7 +23,7 @@ from . import contract_artifacts
 INDEX = "references/motion-capability-index.json"
 TAG_FIELDS = ("subjects", "actions", "relations", "feelings", "styles", "patterns")
 USES = {"aroll_overlay", "broll", "component", "design"}
-MATCHING_POLICY_VERSION = 2
+MATCHING_POLICY_VERSION = 3
 _OVERLAY_MODULES = {
     "grid-card-assemble": "hyperframes_native_adapter",
     "notification-stack": "hyperframes_native_adapter",
@@ -272,7 +272,8 @@ def _recall_evidence(profile: Mapping, query: str) -> dict:
     """Dispatch reviewed authors without claiming an unobserved native action."""
     evidence = _match_evidence(profile, query)
     basis = ("semantic_motion" if evidence["has_motion_basis"] else
-             "full_scene_authoring" if profile["content_scope"]["mode"] == "full_scene" else None)
+             "full_scene_authoring" if profile["content_scope"]["mode"] == "full_scene"
+             else "same_use_review_required")
     return {**evidence, "recall_basis": basis}
 
 
@@ -290,8 +291,6 @@ def search_capabilities(project_root: Path, query: str, *, use: str | None = Non
         if use is not None and use not in uses and not (use == "broll" and "design" in uses):
             continue
         evidence = _recall_evidence(profile, query)
-        if evidence["recall_basis"] is None:
-            continue
         dimensions = evidence["matched_dimensions"]
         score = sum(len(values) * (4 if name in {"actions", "relations"} else 1)
                     for name, values in dimensions.items())
@@ -815,6 +814,12 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
 def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, *,
                         job_dir: Path | None = None) -> dict:
     """Read-only final planning gate; no bindings, Job loading or media calls."""
+    return _check_planning_with_matches(project_root, draft, treatment, job_dir=job_dir)[0]
+
+
+def _check_planning_with_matches(project_root: Path, draft: Mapping, treatment: Mapping, *,
+                                 job_dir: Path | None = None) -> tuple[dict, dict]:
+    """Keep validated matches local to the caller that also consumes them."""
     from . import broll_skill_selection, motion_match_cache, semantic_visual_plan
     from . import visual_confirmation, visual_coverage
 
@@ -822,6 +827,7 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
               "not_run": ["runtime_preflight", "native_bindings", "native_timeline_word_alignment",
                           "source_media_identity", "media_generation", "alpha_and_pixel_qa", "visual_acceptance"],
               "source_plans_modified": False}
+    matched = {}
     try:
         speech = _approved_speech(job_dir)
         semantic = semantic_visual_plan.validate_semantic_lists(treatment, draft, speech)
@@ -831,10 +837,11 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
                 "reason": "provide --job-dir with approved speech and timeline; structural matches do not verify time"})
         else:
             visual_confirmation._validate_beat_sheet(treatment, draft, speech)
-        motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
+        matched = motion_match_cache._validate_review_structure(project_root, draft, treatment, job_dir=job_dir)
         selection = treatment.get("skill_selection", {})
         computed = broll_skill_selection.assign_skills(project_root, selection, job_dir=job_dir,
                                                      director=draft, treatment=treatment)
+        report["diversity_review"] = computed["diversity_review"]
         if (computed["assignments"] != selection.get("assignments") or
                 computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
             raise ValueError("planning assignments changed; assign again using the existing match cache")
@@ -844,13 +851,6 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
             segment = segments[beat["segment_id"]]
             if any(beat[k] != segment[k] for k in ("start", "end")):
                 raise ValueError(f"{segment['segment_id']}: candidate review window differs from the draft")
-        current = {r["candidate_id"]: r for r in broll_skill_selection.discover_candidates(project_root)}
-        for assignment in computed["assignments"]:
-            row = current[assignment["candidate_id"]]
-            segment = segments[assignment["segment_id"]]
-            reason = broll_skill_selection.timing_failure(row, segment)
-            if reason:
-                raise ValueError(reason + "; review timing and reassign from the existing cache")
         if speech is not None:
             timeline = contract_artifacts.read_json_artifact(Path(job_dir) / "06-edit-structure/timeline-map.json")
             duration = max(c["timeline_end"] for c in timeline["segments"])
@@ -866,9 +866,9 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
                     "; return to the affected semantic list, match only additions and assign again")
     except (OSError, ValueError, KeyError, TypeError) as error:
         report["failures"].append({"check": "final_planning", "reason": str(error)})
-        return report
+        return report, matched
     report["status"] = "needs_review" if report["not_verified"] else "pass"
-    return report
+    return report, matched
 
 
 def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *,
@@ -901,7 +901,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
                 "checks": [], "not_verified": [], "source_plans_modified": False}
     from . import motion_match_cache, semantic_visual_plan
     try:
-        cached = motion_match_cache.validate_reviews(project_root, draft, treatment, job_dir=job_dir)
+        cached = motion_match_cache._validate_review_structure(project_root, draft, treatment, job_dir=job_dir)
     except (ValueError, KeyError, TypeError) as error:
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "cached_semantic_candidates", "reason": str(error)}],
