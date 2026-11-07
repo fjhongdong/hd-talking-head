@@ -133,10 +133,12 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 item = cached[(sid, cid)]
                 beats.append({"segment_id": sid, "component_id": cid, "semantic_row_id": item["row_id"],
                     "start": segment["start"], "end": segment["end"], "transcript": item["semantic"]["quote"],
-                    "semantic_goal": "explain", "required_change": component["brief"],
+                    "semantic_goal": item["semantic"]["semantic"], "required_change": item["semantic"]["visual_task"],
+                    "semantic_sha256": treatment["motion_matches"][item["row_id"]]["semantic_sha256"],
                     "intent_statement": segment["visual_intent"]["statement"], "component_brief": component["brief"],
                     "binding_snapshot": copy.deepcopy(segment["bindings"][cid]),
                     "candidates": [{"candidate_id": match["candidate"]["candidate_id"],
+                        "capability_sha256": motion_match_cache.candidate_review_identity(match["candidate"]),
                         "fit": "preferred" if match["candidate"]["candidate_id"] == chosen else
                             "equivalent" if match["candidate"]["status"] == "supported" else "needs_adapter",
                         "reason": "测试中的完整原生候选评审", "visual_pattern": "parallel-list"}
@@ -254,8 +256,11 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 "subject": "任务纸", "visual_pattern": "subject_action", "style_reason": "清楚可见",
                 "forbidden_outcomes": ["不虚构成功结果"], "beats": [{"start_frame": 0, "end_frame": 72,
                     "spoken_anchor": "交给", "before": "待交接", "action": "转交任务纸", "after": "已交接"}]}}
-        for module, brief in (("adu_native_adapter", adu), ("huashu_motion_adapter", huashu),
-                              ("openfilm_motion_adapter", openfilm)):
+        self.assertNotIn("huashu_motion_adapter", modules)
+        self.assertIn("motion_native_skill_adapter", modules)
+        retired_huashu = {"role": "native", "adapter_module": "huashu_motion_adapter"}
+        self.assertEqual(motion._native_input_check(ROOT, retired_huashu, huashu)["status"], "pass")
+        for module, brief in (("adu_native_adapter", adu), ("openfilm_motion_adapter", openfilm)):
             with self.subTest(adapter=module):
                 report = motion._native_input_check(ROOT, modules[module], brief)
                 self.assertEqual(report["status"], "pass", report)
@@ -1116,6 +1121,7 @@ class PlanningOnlyChecksTest(unittest.TestCase):
                    "equivalent" if cid == "eian-riso-broll:versus" else
                    "needs_adapter" if catalog[cid]["status"] != "supported" else "unsuitable")
             candidates.append({"candidate_id":cid, "fit":fit, "rejection_basis":"semantic",
+                "capability_sha256":motion_match_cache.candidate_review_identity(catalog[cid]),
                 "design_plan":{"composition":"数值和单位共同成为主体。","typography":"主数值高于辅助说明。",
                                "finish":"用完整数字排版和细线图形。","focus":"当前数值显现后稳定阅读。"},
                 "constraint_refs":{"requirement":"semantic","capability":"summary"},
@@ -1126,6 +1132,7 @@ class PlanningOnlyChecksTest(unittest.TestCase):
         treatment["skill_selection"] = {"schema_version":1, "history_note":"synthetic planning only",
             "recent_context":[], "fixed_context":[], "overlay_beats":[], "beats":[{
                 **refs[0], "semantic_row_id":"number", "start":0, "end":seconds,
+                "semantic_sha256":treatment["motion_matches"]["number"]["semantic_sha256"],
                 "single_source_review":{"decision":"keep","reason":"夹具保留Riso数值与旧新两个具体合格入口。"},
                 "transcript":row["quote"], "semantic_goal":row["semantic"],
                 "required_change":row["visual_task"], "candidates":candidates, "skill_reviews":reviews}]}
@@ -1465,7 +1472,7 @@ class PartialCandidateReviewTest(unittest.TestCase):
         from edit.hd.tools.motion_capabilities import load_catalog
         catalog = load_catalog(ROOT)
         for module, minimum, maximum in (
-                ("huashu_motion_adapter", 2, 20), ("riso_native_adapter", None, 20),
+                ("riso_native_adapter", None, 20),
                 ("lemo_wake_adapter", 1 / 24, 60), ("upstream_scene_adapter", 1 / 24, 60),
                 ("doudou_adapter", 1 / 24, 60), ("talkcraft_native_adapter", 1 / 24, 60),
                 ("whiteboard_adapter", 1 / 24, 60), ("paper_collage_adapter", 1 / 24, 60),

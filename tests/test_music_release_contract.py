@@ -12,12 +12,12 @@ class MusicReleaseContractTests(unittest.TestCase):
         preview = next(item for item in manifest['dependencies'] if item['id'] == 'preview-runner')
         self.assertIn('validate_preview_music', preview['api'])
 
-    def test_entry_links_deployment_and_formal_music(self):
+    def test_entry_and_contract_state_music_authorization(self):
         entry = (ROOT / 'SKILL.md').read_text()
-        self.assertIn('runtime-deployment.md', entry)
+        self.assertIn('默认无背景音乐', entry)
         self.assertNotIn('BGM 正式混音尚未接入', entry)
         contract = (ROOT / 'references/cover-opening-bgm.md').read_text()
-        for token in ('music=', 'music-audit.m4a', 'license_material_id', 'revise', '人工'):
+        for token in ('默认无背景音乐', '用户明确要求', '本次授权', '局部返修'):
             self.assertIn(token, contract)
 
 

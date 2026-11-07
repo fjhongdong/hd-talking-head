@@ -1,6 +1,59 @@
 {
   "profiles": [
     {
+      "candidate_id": "datamagic:portrait-ranked-reveal",
+      "capability_type": "native_template",
+      "content_scope": {
+        "evidence_ref": "vendor/DataMagic/cards/recipes/PortraitRankedReveal.md",
+        "mode": "fixed_action"
+      },
+      "editable_content": [
+        "标题、两个条目的名称与数值、结论及来源"
+      ],
+      "evidence": [
+        "vendor/DataMagic/skills/datamagic/SKILL.md",
+        "vendor/DataMagic/cards/recipes/PortraitRankedReveal.md",
+        "vendor/DataMagic/cards/templates/portrait-ranked-reveal/PortraitRankedReveal.tsx",
+        "vendor/DataMagic/cards/src/sceneTiming.ts"
+      ],
+      "limitations": [
+        "仅适用于有依据、可比较的两组数值；固定 6 秒、竖屏、不透明，仅用于带右下圆窗的标准正文 B-roll。"
+      ],
+      "reviewed_sources": {
+        "vendor/DataMagic/skills/datamagic/SKILL.md": "7d7346fa347039a1a0f0b77734e9bdfb40c7e7bc30fc3f9caf97c8f978d664c1",
+        "vendor/DataMagic/cards/recipes/PortraitRankedReveal.md": "d3494f089d67d8a5de4f8d0b79b1352728b89277c54d40a5e58525d68ab9604b",
+        "vendor/DataMagic/cards/templates/portrait-ranked-reveal/PortraitRankedReveal.tsx": "c7500a966a55c06619138e5320967cc155f15be01ebcc0541fe9068334bfde32",
+        "vendor/DataMagic/cards/src/sceneTiming.ts": "75ed728717c10eac277167dc778521d3dc4d231e2fc18daec6948e45fc4e3008"
+      },
+      "reviewed_version": "1.0.0",
+      "summary": "以竖屏榜单依次揭示两项数值和比较结论。",
+      "tags": {
+        "actions": [
+          "排序",
+          "对照"
+        ],
+        "feelings": [],
+        "patterns": [
+          "numeric_comparison"
+        ],
+        "relations": [
+          "同单位比较"
+        ],
+        "styles": [
+          "榜单",
+          "数据图表"
+        ],
+        "subjects": [
+          "指标",
+          "数值"
+        ]
+      },
+      "title": "DataMagic 竖屏双项数值揭示",
+      "uses": [
+        "broll"
+      ]
+    },
+    {
       "candidate_id": "adu-motion-video:adu-motion-video/native-compare",
       "capability_type": "native_component",
       "content_scope": {
@@ -15127,7 +15180,7 @@
         "仅输出整屏无声 H.264 竖屏片段；圆形头像、原声和唯一字幕轨由父级统一合成。"
       ],
       "reviewed_sources": {
-        "edit/hd/tools/dependency_contracts.py": "01eaf420d2f7474771d3b3b312142da1814c4a6200f26bc66b99f146e7ce00d8",
+        "edit/hd/tools/dependency_contracts.py": "6c984e3ff4b2f66885cb163b2b957980a2d66a62b529147eb7695df27bf55e55",
         "references/cover-opening-bgm.md": "109179b47783689ad2c4845a21f876cd34d408308dbd4451ad2725629c52516e",
         "scripts/lemo_wake_adapter.py": "a95f4102eef2d6f8a2e5b79edd7e891a11abd7bb65803f24e01e9dd720fd4ee1",
         "vendor/lemo-wake/skills/wake/SKILL.md": "bb6b9c65c611cf951da61eed3274ed07a96adf26cd353e32d596c3707ad1bf01",

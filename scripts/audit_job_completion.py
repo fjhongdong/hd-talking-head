@@ -201,6 +201,148 @@ def _opening_timeline(job_dir: Path, manifest: dict, stages: dict,
     return True
 
 
+def _music_evidence(workspace: Path, job_dir: Path, delivery: dict, stages: dict,
+                    probe: dict | None) -> bool:
+    """Audit frozen music evidence only; this is not a listening assessment."""
+    names = {'music-manifest.json', 'music-audit.m4a', 'music-license-source', 'music-credits.txt'}
+    entries = delivery.get('artifacts', {})
+    records = stages.get('preview', {}).get('artifacts', [])
+    qa_path = job_dir / '12-delivery/qa/qa-report.json'
+    qa = _read_json(qa_path) if qa_path.exists() or qa_path.is_symlink() else {}
+    preview_qa_path = job_dir / '11-preview/qa-report.json'
+    preview_qa = (_read_json(preview_qa_path)
+                  if preview_qa_path.exists() or preview_qa_path.is_symlink() else {})
+    indicated = (('background_music' in delivery and delivery['background_music'] is not False)
+                 or ('background_music' in qa and qa['background_music'] is not False)
+                 or ('background_music' in preview_qa and preview_qa['background_music'] is not False)
+                 or 'music_manifest_sha256' in preview_qa or preview_qa.get('audio_mix_layers', 1) != 1
+                 or 'music_manifest_sha256' in qa or qa.get('audio_mix_layers', 1) != 1
+                 or bool(names.intersection(entries))
+                 or any(isinstance(r, dict) and r.get('path') in
+                        {'11-preview/' + n for n in names} for r in records)
+                 or any((job_dir / folder / n).exists() or (job_dir / folder / n).is_symlink()
+                        for folder in ('11-preview', '12-delivery') for n in names))
+    if not indicated:
+        return False
+    try:
+        def require(condition, message):
+            if not condition:
+                raise JobCompletionAuditError(message)
+
+        def signed(value, field):
+            require(type(value) is dict, 'music signed record must be an object')
+            base = {k: v for k, v in value.items() if k != field}
+            actual = hashlib.sha256((json.dumps(base, ensure_ascii=False, sort_keys=True,
+                                    separators=(',', ':'), allow_nan=False) + '\n').encode()).hexdigest()
+            require(value.get(field) == actual, 'music self hash changed')
+
+        for name in names | {'qa/qa-report.json'}:
+            preview_name = 'qa-report.json' if name == 'qa/qa-report.json' else name
+            relative = '11-preview/' + preview_name
+            matches = [r for r in records if isinstance(r, dict) and r.get('path') == relative]
+            output = entries[name]['output']
+            require(len(matches) == 1 and _artifact_matches(matches[0], job_dir, relative),
+                    'music preview registration changed')
+            require(entries[name]['source'] == matches[0]
+                    and _artifact_matches({**output, 'path': '12-delivery/' + name},
+                                          job_dir, '12-delivery/' + name)
+                    and output.get('path') == name
+                    and output.get('sha256') == matches[0]['sha256'],
+                    'music delivery attachment changed')
+        music = _read_json(job_dir / '12-delivery/music-manifest.json')
+        signed(music, 'music_manifest_sha256')
+        plan = music['plan']
+        signed(plan, 'music_plan_sha256')
+        frames, offset = plan['total_frames'], plan['body_offset_frames']
+        require(set(music) == {'schema_version', 'plan', 'voice_sha256', 'preview_sha256',
+                'metrics', 'listening_approval', 'attachments', 'music_manifest_sha256'}
+                and set(plan) == {'schema_version', 'job_id', 'fps', 'total_frames',
+                'body_offset_frames', 'options', 'music', 'license', 'music_plan_sha256'},
+                'music record schema changed')
+        require(type(music['schema_version']) is int and music['schema_version'] == 1
+                and type(plan['schema_version']) is int and plan['schema_version'] == 1
+                and plan['job_id'] == delivery['job_id'] and type(plan['fps']) is int and plan['fps'] == 24
+                and type(frames) is int and frames > 0 and type(offset) is int and 0 <= offset < frames
+                and isinstance(plan['options']['user_confirmation'], str)
+                and bool(plan['options']['user_confirmation'].strip())
+                and music['listening_approval'] == 'required_at_preview'
+                and _valid_sha256(music['voice_sha256'])
+                and music['preview_sha256'] == delivery['final_sha256'], 'music identity or clock invalid')
+        options = plan['options']
+        fields = {'material_id', 'material_sha256', 'license_material_id', 'license_sha256',
+                  'title', 'author', 'source', 'user_confirmation', 'selection', 'mix'}
+        require(type(options) is dict and set(options) == fields
+                and all(type(options[k]) is str and options[k].strip()
+                        for k in fields - {'selection', 'mix'}), 'music options incomplete')
+        selection = options['selection']
+        require(type(selection) is dict and set(selection) == {'start_frame', 'end_frame', 'crossfade_frames'}
+                and all(type(v) is int for v in selection.values())
+                and selection['start_frame'] >= 0
+                and 0 < 2 * selection['crossfade_frames'] < selection['end_frame'] - selection['start_frame'],
+                'music selection invalid')
+        ranges = {'voice_gain_db': (-30, 12), 'music_gain_db': (-60, 0),
+                  'duck_threshold': (.00097563, 1), 'duck_ratio': (1, 20),
+                  'duck_attack_ms': (.01, 2000), 'duck_release_ms': (.01, 9000)}
+        mix = options['mix']
+        require(type(mix) is dict and set(mix) == set(ranges) | {'fade_in_frames', 'fade_out_frames'},
+                'music mix incomplete')
+        require(all(type(mix[k]) in (int, float) and math.isfinite(mix[k]) and lo <= mix[k] <= hi
+                    for k, (lo, hi) in ranges.items())
+                and all(type(mix[k]) is int and 0 < mix[k] <= frames
+                        for k in ('fade_in_frames', 'fade_out_frames'))
+                and mix['fade_in_frames'] + mix['fade_out_frames'] <= frames, 'music mix invalid')
+        voice_relative = '06-edit-structure/edited-aroll.mp4'
+        edit = stages.get('edit_structure', {})
+        voices = [r for r in edit.get('artifacts', []) if isinstance(r, dict) and r.get('path') == voice_relative]
+        require(edit.get('status') == 'completed' and len(voices) == 1
+                and _artifact_matches(voices[0], job_dir, voice_relative)
+                and music['voice_sha256'] == voices[0]['sha256']
+                and qa.get('audio_source_sha256') == voices[0]['sha256'], 'music voice source changed')
+        for name, option in (('music', 'material_sha256'), ('license', 'license_sha256')):
+            record = plan[name]
+            relative = record['path']
+            id_option = 'material_id' if name == 'music' else 'license_material_id'
+            require(type(record) is dict and set(record) == {'material_id', 'path', 'sha256', 'bytes'}
+                    and record['material_id'] == options[id_option]
+                    and isinstance(relative, str) and not Path(relative).is_absolute()
+                    and '..' not in Path(relative).parts and Path(relative).as_posix() == relative
+                    and _artifact_matches(record, workspace, relative)
+                    and record['sha256'] == plan['options'][option], 'music source changed')
+        require(set(music['attachments']) == names - {'music-manifest.json'}, 'music attachments missing')
+        for name, digest in music['attachments'].items():
+            require(digest == entries[name]['output']['sha256'], 'music attachment identity changed')
+        require(music['attachments']['music-license-source'] == plan['license']['sha256'],
+                'music license identity changed')
+        require(delivery.get('background_music') is True and qa.get('background_music') is True
+                and type(qa.get('audio_mix_layers')) is int and qa['audio_mix_layers'] == 2
+                and qa.get('music_manifest_sha256') == music['music_manifest_sha256']
+                and qa.get('preview_sha256') == delivery['final_sha256']
+                and type(qa['media']['frames']) is int and qa['media']['frames'] == frames,
+                'music QA binding changed')
+        opening_path = job_dir / '12-delivery/opening-manifest.json'
+        opening = _read_json(opening_path) if opening_path.exists() else None
+        require(offset == (opening['body_offset_frames'] if opening else 0)
+                and (opening is None or frames == opening['total_frames']), 'music opening clock changed')
+        metrics = music['metrics']
+        require(set(metrics) == {'final', 'music'}, 'music measurements missing')
+        for item in metrics.values():
+            require(set(item) == {'integrated_lufs', 'true_peak_dbtp'}
+                    and all(type(v) in (int, float) and math.isfinite(v) for v in item.values()),
+                    'music measurements invalid')
+        require(metrics['final']['true_peak_dbtp'] <= 0
+                and metrics['music']['integrated_lufs'] >= -60, 'music measurements failed')
+        require(probe is not None and type(probe.get('audio_streams')) is int
+                and probe['audio_streams'] == 1 and _positive_number(probe.get('duration_seconds'))
+                and _positive_number(probe.get('audio_duration_seconds'))
+                and abs(probe['duration_seconds'] - frames / 24) <= 1 / 24 + .01
+                and abs(probe['audio_duration_seconds'] - frames / 24) <= 1 / 24 + .01,
+                'music final media clock unverified or changed')
+        return True
+    except (KeyError, TypeError, AttributeError, ValueError, OverflowError, OSError) as exc:
+        raise JobCompletionAuditError('music evidence incomplete or invalid') from exc
+
+
+
 def _delivery_inventory(job_dir: Path, records: list, manifest: dict) -> None:
     """Check every active deliverable, not just the final video and its receipt."""
     registered = {}
@@ -342,6 +484,9 @@ def audit_job_completion(workspace: Path) -> dict[str, object]:
             verified.append("delivery_media_probe_consistent")
             if _opening_timeline(job_dir, manifest, stages, probe):
                 verified.append("opening_final_timeline_bound")
+            if _music_evidence(workspace, job_dir, manifest, stages, probe):
+                verified.append("music_final_evidence_bound")
+                unproven.append("music_listening_quality_not_machine_verified")
         status = "incomplete"
         manifests = [r for r in records if r.get("path") == "12-delivery/delivery-manifest.json"]
         receipt_root = (job_dir / "manifests/delivery" / manifests[0]["sha256"]

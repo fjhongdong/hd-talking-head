@@ -102,7 +102,6 @@ class VisualConfirmationTests(unittest.TestCase):
         treatment['motion_queries'][0]['tags'] = ['数据', '汇聚', '资料', '蓝色场景']
         treatment = self._review_creator(segment, treatment, candidate_id)
         treatment['skill_selection']['beats'][0].pop('binding_snapshot')
-        treatment['skill_selection']['beats'][0]['semantic_goal'] = '资料解释：展示多来源汇聚过程'
         segment.pop('bindings')
         self.fixture._write_brief(segment)
         artifacts.write_json_artifact(self.treatment, treatment)
@@ -132,7 +131,7 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertIn('semantic_goal', result['errors'][0]['error'])
         self.assertFalse(result['actions'])
         brief['semantic_goal'] = treatment['skill_selection']['beats'][0]['semantic_goal']
-        self.assertNotEqual(brief['semantic_goal'], treatment['semantic_lists']['broll'][0]['semantic'])
+        self.assertEqual(brief['semantic_goal'], treatment['semantic_lists']['broll'][0]['semantic'])
         self.assertEqual(resume()['actions'][0]['action'], 'execute_native_skill')
 
     def test_openfilm_parent_sources_and_authored_media_keep_distinct_roles(self):
@@ -628,10 +627,11 @@ class VisualConfirmationTests(unittest.TestCase):
 
     def test_native_timing_failure_blocks_proposal_before_generation(self):
         before = copy.deepcopy(self.job.stages["visual_direction"])
-        with mock.patch("edit.hd.tools.motion_capabilities.check_planning_only", return_value={
-                'status': 'fail', 'failures': ['native clock differs'], 'not_verified': []}):
+        with mock.patch("scripts.run_stage._validate_prepared_native_inputs",
+                        side_effect=ValueError("native clock differs")) as gate:
             with self.assertRaisesRegex(ValueError, "native clock differs"):
                 self.prepare()
+        gate.assert_called_once()
         self.assertEqual(self.job.stages["visual_direction"], before)
         self.assertFalse(list((self.job.job_dir / "07-visual-confirmation").glob("*/proposal.json")))
 
@@ -750,7 +750,13 @@ class VisualConfirmationTests(unittest.TestCase):
     def test_time_coverage_failure_returns_to_semantics_before_publication(self):
         from edit.hd.tools import motion_match_cache
         stock = fixture_api.draft_segment(("external_stock",), end=1.0)
-        presenter = fixture_api.draft_segment((), segment_id="seg-002", start=1.0, end=3.0)
+        presenter = fixture_api.draft_segment((), segment_id="seg-002", start=1.0, end=18.0)
+        timeline = self.job.job_dir / "06-edit-structure/timeline-map.json"
+        artifacts.write_json_artifact(timeline, {"output_duration": 18.0, "segments": [
+            {"source_start": 0.0, "source_end": 18.0, "timeline_start": 0.0, "timeline_end": 18.0}]})
+        record = next(item for item in self.job.stages["edit_structure"]["artifacts"]
+                      if item["path"] == "06-edit-structure/timeline-map.json")
+        record.update(sha256=artifacts.sha256_file(timeline), bytes=timeline.stat().st_size)
         director = {"schema_version": 3, "segments": [stock, presenter]}
         from edit.hd.tools import avatar_profile
         director["segments"] = avatar_profile.plan_avatar_policy(director["segments"])["segments"]
@@ -766,7 +772,7 @@ class VisualConfirmationTests(unittest.TestCase):
         artifacts.write_json_artifact(self.treatment, treatment)
         with mock.patch("edit.hd.tools.motion_capabilities._approved_speech", return_value=[
                 {"text": "Approved source evidence", "start": 0.0, "end": 1.0},
-                {"text": "继续解释", "start": 1.0, "end": 3.0}]):
+                {"text": "继续解释", "start": 1.0, "end": 18.0}]):
             with self.assertRaisesRegex(vc.VisualConfirmationError, "time coverage.*affected semantic list"):
                 vc.prepare_visual_confirmation(self.job, self.fixture.brief, self.treatment)
         self.assertFalse((self.job.job_dir / vc.DIRECTORY).exists())
@@ -1068,7 +1074,7 @@ class VisualConfirmationTests(unittest.TestCase):
             missing_snapshot["skill_selection"]["overlay_beats"] = [
                 {"segment_id": "seg-001", "component_id": "component-1"}]
             artifacts.write_json_artifact(self.treatment, missing_snapshot)
-            with self.assertRaisesRegex(vc.VisualConfirmationError, "review beat target is unknown or duplicated"):
+            with self.assertRaisesRegex(vc.VisualConfirmationError, "review beat semantic row does not match its component"):
                 self.prepare()
             artifacts.write_json_artifact(self.treatment, treatment)
             planned = artifacts.read_json_artifact(self.fixture.brief)
@@ -2436,6 +2442,8 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
             motion_readability.validate_targets(segments, records, [])
 
     def test_generated_text_completion_preserves_approval_and_requires_actual_sources(self):
+        from types import SimpleNamespace
+
         frozen = copy.deepcopy(self.director)
         segment = frozen['segments'][0]
         segment['visible_text'] = ['输入']
@@ -2451,7 +2459,14 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
             self.proposal['inputs'][name] = vc._record(self.root, path)
         self.proposal['generation_steps'] = [step]
         director, treatment = copy.deepcopy(frozen), copy.deepcopy(old)
-        payload = {'source_binding': {'segment_id': 'seg-001', 'start': segment['start'], 'end': segment['end']},
+        aroll = self.root / '06-edit-structure/edited-aroll.mp4'
+        aroll.parent.mkdir()
+        aroll.write_bytes(b'approved fixture A-roll')
+        source = vc._record(self.root, aroll)
+        job = SimpleNamespace(job_dir=self.root,
+                              stages={'edit_structure': {'status': 'completed', 'artifacts': [source]}})
+        payload = {'source_binding': {'aroll_sha256': source['sha256'], 'segment_id': 'seg-001',
+                                      'start': segment['start'], 'end': segment['end']},
                    'entry': {'job_path': self.target['content_ref']['path'], 'sha256': self.target['content_ref']['sha256']}}
         path = self.root / 'actual-brief.json'; artifacts.write_json_artifact(path, payload)
         director['segments'][0]['bindings']['component-1']['brief_sha256'] = artifacts.sha256_file(path)
@@ -2461,7 +2476,8 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         output = self.root / 'generated-output.bin'; output.write_bytes(b'fixture completed output')
         evidence = [{'step_id': 'image', 'media': [vc._record(self.root, output)]}]
         def validate(director, treatment, evidence=evidence, eligible={('seg-001', 'component-1')}):
-            with mock.patch.object(vc, 'planned_generation_targets', return_value=eligible):
+            with mock.patch.object(vc, 'planned_generation_targets', return_value=eligible), \
+                 mock.patch.object(state, 'load_job', return_value=job):
                 normalized = copy.deepcopy(director)
                 compared = vc._validate_generated_readability(self.root, self.proposal, frozen, old,
                     normalized, treatment, evidence, production_director=director, production_treatment=treatment)

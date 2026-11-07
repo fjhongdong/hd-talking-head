@@ -106,6 +106,8 @@ def _summary(job, stage: str, **extra) -> dict:
     if stage == 'delivery' and result['status'] == 'completed':
         from edit.hd.tools import delivery_approval
         result.update(delivery_approval.current_delivery_status(job))
+        from export_delivery import exported_paths
+        result.update(exported_paths(job))
         if result['delivery_status'] == 'delivered':
             result['next'] = '成片已交付，等待用户实际观看后终验。'
     return result
@@ -118,6 +120,8 @@ def _finish_stage(job_dir: Path, stage: str, **extra) -> dict:
         state.complete(job, stage)
     if stage == 'delivery' and job.stages[stage]['status'] == 'completed':
         delivery_approval.record_delivery(job)
+        from export_delivery import export_delivery
+        export_delivery(job)
     return _summary(job, stage, **extra)
 
 
@@ -478,6 +482,12 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         'this film, not additional work for this task. Create this line independently from its own '
         'objects, relation and change while retaining the native template\'s style and creative freedom. '
         'Do not mechanically copy another row\'s layout and motion with only different wording. '
+        'Make the spoken point legible through recognizable subjects, concrete actions and a clear '
+        'result or unresolved condition. Add short labels where the relationship would be ambiguous. '
+        'For numeric comparisons, show both values together with state labels and a common unit. '
+        'If length encodes the values, use a common scale. '
+        'Use a clear focal point, aligned spacing, readable type and a coherent palette. '
+        'Leave time to read the key result and keep it clear of the presenter and captions. '
         'The native workflow owns the actual visual design and QA; no extra parent preview, scoring '
         'or approval is required. Different content still counts as the same template.')
     actions = []
@@ -593,6 +603,7 @@ _NATIVE_MODULES = {
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),
     'hyperframes-native-adaptation': ('hyperframes_native_adapter', 'python'),
     'eian-riso-broll': ('riso_native_adapter', 'python'),
+    'datamagic': ('datamagic_native_adapter', 'python'),
     'huashu-art-motion': ('motion_native_skill_adapter', 'python'),
     'anidoodle': ('anidoodle_native_adapter', 'python'),
     'sweety-handdraw-video': ('sweety_native_adapter', 'python'),

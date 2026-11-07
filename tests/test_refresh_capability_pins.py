@@ -139,7 +139,8 @@ class RefreshCapabilityPinsTests(unittest.TestCase):
         self.assertEqual(stale[0]["current"], self.current)
 
     def test_release_refuses_stale_pins_without_rewriting_manifest(self):
-        for name in ("make_release_manifest.py", "verify_skill_release.py", "refresh_capability_pins.py"):
+        for name in ("make_release_manifest.py", "verify_skill_release.py", "refresh_capability_pins.py",
+                     "package_paths.py"):
             shutil.copy2(SKILL / "scripts" / name, self.skill / "scripts" / name)
         manifest = self.skill / "release-manifest.json"
         manifest.write_text("unchanged", encoding="utf-8")

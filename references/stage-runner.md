@@ -39,3 +39,15 @@ python3.12 <skill-root>/run.py run_stage --job-context <workspace>/job-context.j
 `--artifact-scope` 可重复，实际编号先解析到当前清单的 segment，不重编号。制作继续使用 `run_stage`；不提供通用人工 `approve`、手工 `ready/complete` 或第二套初始化入口。终验 JSON 标识本 Job、`stage=delivery`、用户看到的当前成片与交付 manifest，以及实际用户原话。默认入口和显式 `--stage delivery` 使用同一处理逻辑；旧版反馈拒绝，不静默丢弃。
 
 交付身份来自当前阶段登记的 `12-delivery/delivery-manifest.json` 文件 SHA。稳定交片保存在 `delivered/<身份>/final.mp4`，回执位于 `manifests/delivery/<身份>/delivered.json` 与 `accepted.json`。以返回的 `delivery_file` 交片，后续返修不能覆盖它。全局工作流计数变化不使同一版验收失效；新交付身份必须重新终验。查询只读当前阶段身份，不扫描历史记录猜最新版，也不写回执。
+
+## 统一交付目录
+
+正式入口在交付完成后将三份现有文件发布到 `<skill-root 的父目录>/素材与作品/<视频标题>/`。`素材与作品/` 专用于定稿交付。每个标题目录只留 `成片.mp4`、`封面_9x16.png`、`封面_3x4.png`。标题取本期已登记封面标题，并清理文件名中的路径字符。对外返回 `delivery_directory`、`delivery_file`、`cover_9x16_file`、`cover_3x4_file`，直接用这些路径交付。预览与中间产物保存在 Job 内，项目原始素材独立存放在 `制作素材/`。
+
+独立 3:4 从本工作区中匹配当前 Job 和封面标题的原生完成记录取得。多个候选须明确选择。归档入口复用已完成的图片。已有成片只整理文件，可显式指定已完成的 3:4 封面：
+
+```bash
+python3.12 <skill-root>/run.py export_delivery --job <job-dir> --cover-3x4 <已完成独立3:4封面.png>
+```
+
+`--cover-3x4` 在只有一个本期匹配产物时可省略。相同内容重复整理直接复用。同标题替换时，旧目录完整移入 `video-jobs/交付历史/<视频标题>/` 下的独立子目录，新版使用原标题路径。归档位置记录在 Job 的 `manifests/delivery-export.json`，验收状态由用户的真实反馈单独决定。

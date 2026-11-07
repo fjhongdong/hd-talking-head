@@ -16,6 +16,12 @@ SKILL = Path(__file__).resolve().parents[1]
 RENDERER = SKILL / "scripts/local_canonical_renderer.cjs"
 RUNTIME = Path(__file__).resolve().parents[1] / "vendor/hyperframes"
 BROWSER = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+FROZEN_RUNTIME_FILES = (
+    "packages/cli/src/cli.ts",
+    "packages/cli/package.json",
+    "node_modules/tsx/dist/cli.mjs",
+    "skills/talking-head-recut/assets/vendor/gsap.min.js",
+)
 COMPOSITIONS = (
     "process-relations",
     "viewpoint-comparison",
@@ -274,7 +280,10 @@ class LocalCanonicalExecutionTests(unittest.TestCase):
         self.assertIn('evidenceMarkup(data, duration)', source)
         self.assertIn('data-duration="${duration}"', source)
 
-    @unittest.skipUnless(RUNTIME.is_dir() and BROWSER.is_file(), "local render runtime unavailable")
+    @unittest.skipUnless(
+        BROWSER.is_file() and all((RUNTIME / name).is_file() for name in FROZEN_RUNTIME_FILES),
+        "historical local-canonical render requires the frozen HyperFrames source runtime",
+    )
     def test_real_render_is_native_muted_animated_and_content_stable(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

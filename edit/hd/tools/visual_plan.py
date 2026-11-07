@@ -319,10 +319,12 @@ def _prevalidate_draft_bindings(
             component_id, kind, component["media_type"], bindings[component_id]
         )
         riso_contract = None
-        if binding.get("dependency_id") == "eian-riso-broll":
+        if binding.get("dependency_id") in {"eian-riso-broll", "datamagic"}:
             router = _load_router_module()
             try:
-                riso_contract = router.riso_output_contract(component, strategy["composition"])
+                riso_contract = router.riso_output_contract(
+                    component, strategy["composition"],
+                    name="DataMagic" if binding.get("dependency_id") == "datamagic" else "Riso")
             except router.RouterError as error:
                 raise _fail(str(error)) from None
         recipe_components.append(

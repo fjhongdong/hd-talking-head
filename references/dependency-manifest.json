@@ -2,6 +2,34 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "datamagic",
+      "kind": "project_path",
+      "required": false,
+      "stages": ["visual-canary", "visual-assets"],
+      "target": ".",
+      "path_type": "directory",
+      "entrypoints": ["scripts/datamagic_native_adapter.py"],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/datamagic_native_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Remotion"
+          },
+          "command": ["{python}", "{dependency_root}/scripts/datamagic_native_adapter.py", "--probe", "--project-root", "{project_root}"],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "datamagic",
+        "required_level": "bound"
+      }
+    },
+    {
       "id": "eian-riso-broll-source",
       "kind": "project_path",
       "required": true,
@@ -2615,6 +2643,7 @@
     }
   ],
   "runtime_checks": [
+    "datamagic",
     "eian-riso-broll",
     "hypit-native-chat",
     "wise-motion",

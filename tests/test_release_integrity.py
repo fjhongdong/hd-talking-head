@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import importlib.util
+import ctypes
+import os
 import shutil
 import subprocess
 import sys
@@ -20,6 +22,22 @@ from pathlib import Path
 
 
 SKILL = Path(__file__).resolve().parents[1]
+_SPEC = importlib.util.spec_from_file_location("release_verifier", SKILL / "scripts/verify_skill_release.py")
+_VERIFIER = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_VERIFIER)
+
+
+def _copy_release_file(source: Path, target: Path) -> None:
+    """Use an independent copy-on-write file when available; never hard-link tests to source."""
+    try:
+        clonefile = ctypes.CDLL(None, use_errno=True).clonefile
+    except AttributeError:
+        shutil.copy2(source, target)
+        return
+    clonefile.argtypes = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int)
+    clonefile.restype = ctypes.c_int
+    if clonefile(os.fsencode(source), os.fsencode(target), 0) != 0:
+        shutil.copy2(source, target)
 
 
 class ReleaseIntegrityTests(unittest.TestCase):
@@ -32,7 +50,14 @@ class ReleaseIntegrityTests(unittest.TestCase):
         )
 
     def copy_skill(self, parent: Path) -> Path:
-        return Path(shutil.copytree(SKILL, parent / "copied skill", ignore=shutil.ignore_patterns("__pycache__")))
+        root = parent / "copied skill"
+        root.mkdir()
+        for relative, source in _VERIFIER.package_files(SKILL).items():
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            _copy_release_file(source, target)
+        _copy_release_file(SKILL / _VERIFIER.MANIFEST, root / _VERIFIER.MANIFEST)
+        return root
 
     @unittest.skipUnless(PIL_AVAILABLE, "Pillow is required for human-approval pixel QA")
     def test_shipped_package_verifies_from_another_directory(self) -> None:
@@ -114,7 +139,7 @@ class ReleaseIntegrityTests(unittest.TestCase):
         self.assertIn("relation_motion: registered", semantic)
         self.assertIn("semantic_state: registered", semantic)
         self.assertIn("production_policy: registered_templates_only", semantic)
-        self.assertIn("[语义动效规划接口与执行边界]", entrypoint)
+        self.assertIn("[渠道与模板](references/motion-capability-library.md)", entrypoint)
 
         for record in registry["templates"]:
             if record["template_id"] not in semantic_ids:

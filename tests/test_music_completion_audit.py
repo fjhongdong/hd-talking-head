@@ -46,7 +46,7 @@ class MusicCompletionAuditTests(unittest.TestCase):
         voice.parent.mkdir(parents=True)
         voice.write_bytes(b'voice')
         self.voice_sha = hashlib.sha256(b'voice').hexdigest()
-        self.stages['edit_structure'] = {'status': 'approved', 'artifacts': [{
+        self.stages['edit_structure'] = {'status': 'completed', 'artifacts': [{
             'path': '06-edit-structure/edited-aroll.mp4', 'bytes': 5, 'sha256': self.voice_sha}]}
         for name in ('music', 'license'):
             self.plan[name] = {'path': name, 'sha256': hashlib.sha256(name.encode()).hexdigest(),

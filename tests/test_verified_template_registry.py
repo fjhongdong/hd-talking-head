@@ -32,24 +32,45 @@ def _refresh_verification_id(template: dict[str, object]) -> None:
 
 
 class VerifiedTemplateRegistryTests(unittest.TestCase):
+    def predecessor_fixture(self):
+        history = json.loads((SKILL_ROOT / "references/template-identity-predecessors.json").read_text())
+        entry = copy.deepcopy(history["entries"][0])
+        previous = entry["record"]
+        current = copy.deepcopy(previous)
+        current["execution_qa"]["reviewer"] = "updated fixture reviewer"
+        _refresh_verification_id(current)
+        entry["current_verification_id"] = current["verification_id"]
+        return previous, current, {"schema_version": 1, "entries": [entry]}
+
     def test_evidence_only_identity_updates_keep_real_frozen_bindings(self):
+        previous, current, history = self.predecessor_fixture()
+        binding = {key: copy.deepcopy(previous[key]) for key in VERIFIER.PROVENANCE_FIELDS}
+        before = copy.deepcopy(binding)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "references/template-identity-predecessors.json"
+            path.parent.mkdir()
+            path.write_text(json.dumps(history))
+            selected = VERIFIER.match_registered_binding(binding, [current], root=root)
+            self.assertEqual(selected["verification_id"], current["verification_id"])
+            self.assertEqual(binding, before)
+            binding["verification_id"] = "f" * 64
+            with self.assertRaises(VERIFIER.RegistryError):
+                VERIFIER.match_registered_binding(binding, [current], root=root)
+
+    def test_retired_predecessors_do_not_restore_removed_templates(self):
         current = json.loads(REGISTRY.read_text())["templates"]
         history = json.loads((SKILL_ROOT / "references/template-identity-predecessors.json").read_text())
         for entry in history["entries"]:
             previous = entry["record"]
+            if any(item["template_id"] == previous["template_id"] for item in current):
+                continue
             binding = {key: copy.deepcopy(previous[key]) for key in VERIFIER.PROVENANCE_FIELDS}
-            before = copy.deepcopy(binding)
-            selected = VERIFIER.match_registered_binding(binding, current)
-            self.assertEqual(selected["verification_id"], entry["current_verification_id"])
-            self.assertEqual(binding, before)
-            binding["verification_id"] = "f" * 64
             with self.assertRaises(VERIFIER.RegistryError):
                 VERIFIER.match_registered_binding(binding, current)
 
     def test_predecessor_requires_exact_history_and_unchanged_native_contract(self):
-        current = json.loads(REGISTRY.read_text())["templates"]
-        history = json.loads((SKILL_ROOT / "references/template-identity-predecessors.json").read_text())
-        previous = history["entries"][0]["record"]
+        previous, current, history = self.predecessor_fixture()
         binding = {key: copy.deepcopy(previous[key]) for key in VERIFIER.PROVENANCE_FIELDS}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -59,14 +80,13 @@ class VerifiedTemplateRegistryTests(unittest.TestCase):
             corrupted["entries"][0]["record"]["execution_qa"]["reviewer"] = "changed"
             path.write_text(json.dumps(corrupted))
             with self.assertRaises(VERIFIER.RegistryError):
-                VERIFIER.match_registered_binding(binding, current, root=root)
+                VERIFIER.match_registered_binding(binding, [current], root=root)
             path.write_text(json.dumps(history))
             changed = copy.deepcopy(current)
-            target = next(item for item in changed if item["template_id"] == previous["template_id"])
-            target["render_contract"]["exit_policy"] = "changed"
+            changed["render_contract"]["exit_policy"] = "changed"
             with self.assertRaises(VERIFIER.RegistryError):
-                VERIFIER.match_registered_binding(binding, changed, root=root)
-        with patch.object(VERIFIER, "verify_registry", return_value={"failures": ["current QA failed"], "verified": current}):
+                VERIFIER.match_registered_binding(binding, [changed], root=root)
+        with patch.object(VERIFIER, "verify_registry", return_value={"failures": ["current QA failed"], "verified": [current]}):
             with self.assertRaisesRegex(VERIFIER.RegistryError, "current QA failed"):
                 VERIFIER.verify_registered_binding(binding)
 
@@ -312,7 +332,7 @@ class VerifiedTemplateRegistryTests(unittest.TestCase):
                 check=False, capture_output=True, text=True,
             )
         self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
-        self.assertEqual(json.loads(result.stdout)["verified_count"], 16)
+        self.assertEqual(json.loads(result.stdout)["verified_count"], len(json.loads(REGISTRY.read_text())["templates"]))
 
     def test_cli_rejects_wrong_approved_render_window(self) -> None:
         record = json.loads(REGISTRY.read_text())["templates"][0]

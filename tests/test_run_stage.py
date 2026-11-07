@@ -644,10 +644,12 @@ class ReviewAndDispatchTests(unittest.TestCase):
              mock.patch('edit.hd.tools.state.complete', side_effect=lambda j, s: j.stages[s].update(status='completed')) as complete, \
              mock.patch('edit.hd.tools.delivery_approval.record_delivery') as delivered, \
              mock.patch('edit.hd.tools.delivery_approval.approve_delivery') as accept, \
+             mock.patch('export_delivery.export_delivery') as archive, \
              mock.patch('edit.hd.tools.delivery_approval.current_delivery_status', return_value={'delivery_status': 'delivered'}):
             result = run_stage._finish_stage(self.root, 'delivery')
         complete.assert_called_once_with(job, 'delivery')
         delivered.assert_called_once_with(job)
+        archive.assert_called_once_with(job)
         accept.assert_not_called()
         self.assertEqual(result['delivery_status'], 'delivered')
         self.assertNotIn('review_required', result)
@@ -912,6 +914,9 @@ class DirectProductionCompletionTests(unittest.TestCase):
         from edit.hd.tools import state, delivery_approval as delivery
         from edit.hd.tests.media_fixture import make_av_fixture
         import audit_job_completion as audit
+        # Exercise revision-specific delivery receipts. Public archive copies have a separate smoke test.
+        self.enterContext(mock.patch('export_delivery.export_delivery'))
+        self.enterContext(mock.patch('export_delivery.exported_paths', return_value={}))
         with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
             root = Path(directory).resolve()
             video = make_av_fixture(root, 'source.mp4')

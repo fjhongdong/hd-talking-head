@@ -124,7 +124,9 @@ def validate_visual_plan_approval(job: state.JobState) -> dict:
 
 def validate_delivery_receipt(job: state.JobState) -> dict:
     final, manifest = _delivery_identity(job)
-    receipt = artifacts.read_json_artifact(job.job_dir / receipt_paths(manifest)[0])
+    path = job.job_dir / receipt_paths(manifest)[0]
+    state._assert_regular(path)
+    receipt = artifacts.read_json_artifact(path)
     authorization = validate_visual_plan_approval(job)
     if (receipt.get("schema_version") != 1 or receipt.get("decision") != "delivered"
             or receipt.get("job_id") != job.job_id
@@ -168,7 +170,9 @@ def validate_acceptance(job: state.JobState) -> dict:
 
 
 def _validate_acceptance_receipt(job: state.JobState, delivered: dict) -> dict:
-    receipt = artifacts.read_json_artifact(job.job_dir / receipt_paths(delivered["delivery_manifest"])[1])
+    path = job.job_dir / receipt_paths(delivered["delivery_manifest"])[1]
+    state._assert_regular(path)
+    receipt = artifacts.read_json_artifact(path)
     if (receipt.get("schema_version") != 1 or receipt.get("decision") != "accepted"
             or receipt.get("accepted_by") != "user" or receipt.get("job_id") != job.job_id
             or receipt.get("delivery") != delivered["delivery"]

@@ -226,7 +226,14 @@ class WakeNativeTests(unittest.TestCase):
                 'content_refs':[{'path':self.brief['image']['job_path'],'sha256':self.brief['image']['sha256'],'image':True}]}]}
         treatment=motion_match_cache.match_once(PROJECT,director,treatment)
         beat = treatment['skill_selection']['beats'][0]
-        wake_review = beat['candidates'][0]
+        wake_review = {'candidate_id':'lemo-wake:wake','fit':'preferred',
+                       'reason':'按固定首镜政策演示原图关系','visual_pattern':'source_image_actor','design_plan':design}
+        beat['skill_reviews']['lemo-wake'] = {'fit':'preferred','reason':'该fixture按显式Wake开场约束执行'}
+        beat['single_source_review'] = {'decision':'keep','reason':'已批准封面首镜固定使用完整原生Wake'}
+        beat['semantic_sha256'] = treatment['motion_matches']['opening-semantic']['semantic_sha256']
+        cached = motion_match_cache.validate_matches(PROJECT,director,treatment)[('seg-001',cid)]
+        catalog = {m['candidate']['candidate_id']: m['candidate'] for m in cached['matches']}
+        wake_review['capability_sha256'] = motion_match_cache.candidate_review_identity(catalog['lemo-wake:wake'])
         # Preserve the full recall; the explicit opening constraint chooses Wake,
         # without pretending that every other author is semantically unsuitable.
         beat['candidates'] = [wake_review if item['candidate_id'] == 'lemo-wake:wake' else

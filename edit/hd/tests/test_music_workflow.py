@@ -9,7 +9,6 @@ import tempfile
 from pathlib import Path
 import unittest
 from unittest import mock
-from PIL import Image
 
 from edit.hd.tools import preview_v2, preview_music, preview_opening, material_usage, state, qa_delivery_v2, contract_artifacts
 from edit.hd.tests import test_preview_opening, test_music_plan
@@ -94,7 +93,16 @@ class MusicCompositionTests(unittest.TestCase):
 
 
 class MusicWorkflowTests(unittest.TestCase):
-    setUp = test_preview_opening.OpeningWorkflowTests.setUp
+    def setUp(self):
+        test_preview_opening.OpeningWorkflowTests.setUp(self)
+        startup = mock.patch("edit.hd.tools.startup.require_startup")
+        startup.start()
+        self.addCleanup(startup.stop)
+        confirmed = mock.patch.object(preview_v2.confirmed_content, "check_confirmed_content")
+        confirmed.start()
+        self.addCleanup(confirmed.stop)
+        (self.job.root / "job-context.json").write_text(json.dumps({
+            "workspace": str(self.job.root), "job_dir": str(self.job.job_dir), "job_id": self.job.job_id}))
 
     def render(self):
         if not hasattr(self, "options"):
@@ -118,17 +126,10 @@ class MusicWorkflowTests(unittest.TestCase):
             (directory / "music-audit.m4a").write_bytes(b"fixture-audit")
             return work / "mix.wav"
 
-        def frames(video, directory, duration):
-            directory.mkdir()
-            path = directory / "frame-0.png"
-            Image.new("RGB", (270, 480), "red").save(path)
-            return [path]
-
         with mock.patch.object(preview_v2.subprocess, "run", side_effect=compose), \
                 mock.patch.object(preview_v2, "_validate_media", return_value={
                     "width": 1080, "height": 1920, "fps": 24, "frames": 72, "duration": 3,
                     "video_streams": 1, "audio_streams": 1}), \
-                mock.patch.object(preview_v2, "_extract_frames", side_effect=frames), \
                 mock.patch.object(preview_music, "prepare_stage_audio", side_effect=prepare), \
                 mock.patch.object(preview_music, "measure_audio", return_value={
                     "integrated_lufs": -25, "true_peak_dbtp": -3}):
@@ -151,7 +152,7 @@ class MusicWorkflowTests(unittest.TestCase):
         preview_v2.prepare_preview_v2(self.job, music=self.options)
         with self.assertRaises(preview_v2.PreviewV2Error):
             preview_v2.prepare_preview_v2(self.job, music={**self.options, "title": "changed"})
-        state.approve(self.job, "preview")
+        state.complete(self.job, "preview")
         delivery = qa_delivery_v2.prepare_delivery_v2(self.job)
         self.assertTrue(delivery.manifest["background_music"])
         for name in preview_music.ATTACHMENTS:
@@ -159,9 +160,20 @@ class MusicWorkflowTests(unittest.TestCase):
         self.assertEqual(len(material_usage.load_current_receipt(self.job, "delivery")["references"]), 2)
         qa_delivery_v2.prepare_delivery_v2(self.job)
         from edit.hd.tools import delivery_approval
-        delivery_approval.approve_delivery(self.job, expected_revision=self.job.revision,
-            delivery_sha256=delivery.manifest["final_sha256"],
-            user_confirmation="测试夹具：确认混音成片，不是生产试听批准")
+        state.complete(self.job, "delivery")
+        manifest_record = next(r for r in self.job.stages["delivery"]["artifacts"]
+                               if r["path"].endswith("/delivery-manifest.json"))
+        authorization_path = self.job.job_dir / "manifests/music-test-authorization.json"
+        contract_artifacts.write_json_artifact(authorization_path, {
+            "job_id": self.job.job_id, "authorized_by": "user",
+            "authorization_scope": "visual_plan_and_generation", "user_confirmation": "测试授权"})
+        authorization = state._artifact_record(self.job, authorization_path)
+        with mock.patch.object(delivery_approval, "validate_visual_plan_approval",
+                               return_value={"artifact": authorization}):
+            delivery_approval.record_delivery(self.job)
+            delivery_approval.approve_delivery(self.job, delivery_manifest_sha256=manifest_record["sha256"],
+                delivery_sha256=delivery.manifest["final_sha256"],
+                user_confirmation="测试夹具：确认混音成片，不是生产试听批准")
         spec = importlib.util.spec_from_file_location("music_workflow_audit",
             Path(__file__).resolve().parents[3] / "scripts/audit_job_completion.py")
         audit = importlib.util.module_from_spec(spec)
@@ -170,7 +182,7 @@ class MusicWorkflowTests(unittest.TestCase):
                 "width": 1080, "height": 1920, "fps": 24, "rotation": 0,
                 "duration_seconds": 3, "audio_duration_seconds": 3, "audio_streams": 1}):
             completion = audit.audit_job_completion(self.job.root)
-        self.assertEqual(completion["status"], "formal_complete", completion)
+        self.assertEqual(completion["status"], "accepted", completion)
 
     def test_missing_evidence_cannot_disable_music(self):
         result = self.render()

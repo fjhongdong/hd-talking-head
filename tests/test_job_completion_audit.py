@@ -1,30 +1,22 @@
-"""Completion audit is four-state, evidence-bound, and strictly read-only."""
-
+"""Completion audit checks current delivery evidence without changing files."""
 from __future__ import annotations
-
 import hashlib
 import importlib
 import json
+import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts"))
+STAGES = ("inspect", "content_analysis", "cover_direction", "cover", "speech_cleanup",
+          "edit_structure", "visual_direction", "visual_assets", "subtitles", "preview", "delivery")
 
-STAGES = (
-    "inspect", "content_analysis", "cover_direction", "cover",
-    "speech_cleanup", "edit_structure", "visual_direction", "visual_canary",
-    "visual_assets", "subtitles", "preview", "delivery",
-)
-
-
-def _sha256(path: Path) -> str:
+def _sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
 
 class JobCompletionAuditTests(unittest.TestCase):
     def setUp(self):
@@ -42,132 +34,73 @@ class JobCompletionAuditTests(unittest.TestCase):
     def api(self):
         return importlib.import_module("audit_job_completion")
 
-    def _write_json(self, path: Path, payload: object) -> None:
+    def _write_json(self, path, payload):
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    def _record(self, path: Path) -> dict[str, object]:
-        return {
-            "path": path.relative_to(self.job_dir).as_posix(),
-            "sha256": _sha256(path),
-            "bytes": path.stat().st_size,
-        }
+    def _record(self, path, root=None):
+        return {"path": path.relative_to(root or self.job_dir).as_posix(),
+                "sha256": _sha256(path), "bytes": path.stat().st_size}
 
-    def _write_formal_job(self) -> None:
-        final_sha = _sha256(self.final)
-        manifest = {
-            "schema_version": 2,
-            "job_id": "job-1",
-            "workflow_revision": self.revision - 2,
-            "final_sha256": final_sha,
-            "canvas": {"width": 1080, "height": 1920, "fps": 24},
-            "artifacts": {
-                "final.mp4": {
-                    "output": {
-                        "path": "final.mp4",
-                        "sha256": final_sha,
-                        "bytes": self.final.stat().st_size,
-                    }
-                }
-            },
-        }
+    def _write_formal_job(self):
+        source = self.job_dir / "11-preview/preview.mp4"
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes(self.final.read_bytes())
+        inputs = {}
+        for name in ("video", "script"):
+            path = self.workspace / (name + ".dat")
+            path.write_bytes(name.encode())
+            inputs[name] = self._record(path, self.workspace)
+        manifest = {"schema_version": 2, "job_id": "job-1", "final_sha256": _sha256(self.final),
+                    "canvas": {"width": 1080, "height": 1920, "fps": 24},
+                    "artifacts": {"final.mp4": {"source": self._record(source),
+                         "output": {"path": "final.mp4", "sha256": _sha256(self.final),
+                                    "bytes": self.final.stat().st_size}}}}
         manifest_path = self.delivery / "delivery-manifest.json"
         self._write_json(manifest_path, manifest)
-        stages = {
-            stage_id: {
-                "status": "approved",
-                "reason": None,
-                "artifacts": [],
-                "ai_attempts": 0,
-                "lineage": [],
-                "artifact_scope": [],
-            }
-            for stage_id in STAGES
-        }
-        stages["delivery"]["artifacts"] = [
-            self._record(self.final), self._record(manifest_path),
-        ]
-        workflow = {
-            "version": 2,
-            "job_id": "job-1",
-            "inputs": {},
-            "revision": self.revision,
-            "stages": stages,
-        }
-        self._write_json(self.job_dir / "workflow.json", workflow)
-        self._write_json(
-            self.workspace / "job-context.json",
-            {
-                "schema_version": 1,
-                "workspace": str(self.workspace),
-                "job_dir": str(self.job_dir),
-                "job_id": "job-1",
-                "workflow": str(self.job_dir / "workflow.json"),
-            },
-        )
-        self._write_json(
-            self.delivery / "approval-receipt.json",
-            {
-                "schema_version": 1,
-                "decision": "approved",
-                "approval_kind": "formal_final",
-                "job_id": "job-1",
-                "workflow_revision": self.revision,
-                "reviewed_revision": self.revision - 1,
-                "reviewed_workflow_sha256": "a" * 64,
-                "user_confirmation": "确认",
-                "delivery_manifest": self._record(manifest_path),
-                "approved_by": "human",
-                "approved_at": "2026-09-05T10:00:00+08:00",
-                "delivery": {
-                    "path": "12-delivery/final.mp4",
-                    "sha256": final_sha,
-                    "bytes": self.final.stat().st_size,
-                },
-            },
-        )
+        stages = {stage: {"status": "completed", "artifacts": []} for stage in STAGES}
+        stages["delivery"]["artifacts"] = [self._record(self.final), self._record(manifest_path)]
+        self._write_json(self.job_dir / "workflow.json", {"version": 2, "job_id": "job-1",
+                         "inputs": inputs, "revision": self.revision, "stages": stages})
+        self._write_json(self.workspace / "job-context.json", {"workspace": str(self.workspace),
+                         "job_dir": str(self.job_dir), "job_id": "job-1"})
+        auth = self.job_dir / "03-authorization.json"
+        self._write_json(auth, {"job_id": "job-1", "authorized_by": "user",
+                         "authorization_scope": "visual_plan_and_generation", "user_confirmation": "确认清单"})
+        manifest_record, final_record = self._record(manifest_path), self._record(self.final)
+        self.receipt_root = self.job_dir / "manifests/delivery" / manifest_record["sha256"]
+        self.receipt = self.receipt_root / "delivered.json"
+        self.acceptance = self.receipt_root / "accepted.json"
+        self._write_json(self.receipt, {"schema_version": 1, "decision": "delivered", "job_id": "job-1",
+                         "delivery": final_record, "delivery_manifest": manifest_record,
+                         "visual_authorization": self._record(auth), "delivered_at": "2026-11-07"})
+        self._write_json(self.acceptance, {"schema_version": 1, "decision": "accepted", "accepted_by": "user",
+                         "job_id": "job-1", "delivery": final_record, "delivery_manifest": manifest_record,
+                         "user_confirmation": "确认成片", "accepted_at": "2026-11-07"})
+        self.stable = self.job_dir / "delivered" / manifest_record["sha256"]
+        self.stable.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(self.final, self.stable / "final.mp4")
+        shutil.copyfile(manifest_path, self.stable / "delivery-manifest.json")
 
-        workflow["stages"]["delivery"]["artifacts"].append(
-            self._record(self.delivery / "approval-receipt.json")
-        )
-        self._write_json(self.job_dir / "workflow.json", workflow)
+    def _snapshot(self):
+        return {p.relative_to(self.workspace).as_posix(): (_sha256(p), p.stat().st_size)
+                for p in self.workspace.rglob("*") if p.is_file()}
 
-    def _snapshot(self) -> dict[str, tuple[str, int]]:
-        return {
-            path.relative_to(self.workspace).as_posix(): (_sha256(path), path.stat().st_size)
-            for path in sorted(self.workspace.rglob("*"))
-            if path.is_file()
-        }
-
-    def _audit(self):
+    def _audit(self, probe=None):
         before = self._snapshot()
-        revision = json.loads((self.job_dir / "workflow.json").read_text())["revision"]
-        probe = {
-            "width": 1080,
-            "height": 1920,
-            "fps": 24.0,
-            "rotation": 0,
-            "duration_seconds": 10.0,
-            "audio_streams": 1,
-        }
+        probe = probe or {"width": 1080, "height": 1920, "fps": 24.0, "rotation": 0,
+                          "duration_seconds": 10.0, "audio_streams": 1}
         with mock.patch.object(self.api(), "_probe_media", return_value=probe):
             result = self.api().audit_job_completion(self.workspace)
         self.assertEqual(before, self._snapshot())
-        self.assertEqual(
-            revision,
-            json.loads((self.job_dir / "workflow.json").read_text())["revision"],
-        )
         return result
 
-    def test_formal_complete_requires_current_approved_evidence(self):
+    def test_accepted_requires_current_user_evidence(self):
         result = self._audit()
-        self.assertEqual("formal_complete", result["status"])
+        self.assertEqual("accepted", result["status"], result)
         self.assertEqual(self.revision, result["workflow_revision"])
         self.assertEqual(_sha256(self.final), result["delivery_identity"]["sha256"])
-        self.assertIn("all_full_v2_stages_approved", result["verified_claims"])
+        self.assertIn("actual_user_acceptance_recorded", result["verified_claims"])
         self.assertEqual([], result["failures"])
 
     def test_opening_clock_and_subtitle_identity_are_checked(self):
@@ -209,146 +142,80 @@ class JobCompletionAuditTests(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaises(self.api().JobCompletionAuditError):
                 check(self.job_dir, manifest, stages, None)
 
-    def test_legacy_external_approval_binds_exact_existing_hash(self):
-        workflow_path = self.job_dir / "workflow.json"
-        workflow = json.loads(workflow_path.read_text())
-        workflow["stages"]["visual_assets"]["status"] = "pending"
-        self._write_json(workflow_path, workflow)
-        receipt_path = self.delivery / "approval-receipt.json"
-        receipt = json.loads(receipt_path.read_text())
-        receipt["approval_kind"] = "legacy_external"
-        receipt["workflow_revision"] = None
-        self._write_json(receipt_path, receipt)
-        workflow["stages"]["delivery"]["artifacts"][-1] = self._record(receipt_path)
-        self._write_json(workflow_path, workflow)
-
+    def test_delivered_without_acceptance(self):
+        self.acceptance.unlink()
         result = self._audit()
-        self.assertEqual("legacy_external_approval", result["status"])
-        self.assertIn("external_approval_exact_delivery_hash", result["verified_claims"])
-        self.assertIn("formal_workflow_not_complete", result["unproven_claims"])
-        self.assertEqual([], result["failures"])
+        self.assertEqual("delivered", result["status"], result)
+        self.assertIn("user_final_acceptance_pending", result["unproven_claims"])
 
-    def test_incomplete_when_stage_or_final_approval_is_missing(self):
-        workflow_path = self.job_dir / "workflow.json"
-        workflow = json.loads(workflow_path.read_text())
-        workflow["stages"]["subtitles"]["status"] = "ready_for_review"
-        workflow["stages"]["delivery"]["artifacts"] = [
-            r for r in workflow["stages"]["delivery"]["artifacts"]
-            if r["path"] != "12-delivery/approval-receipt.json"
-        ]
-        self._write_json(workflow_path, workflow)
-        (self.delivery / "approval-receipt.json").unlink()
-
+    def test_incomplete_without_delivery_receipt(self):
+        self.receipt.unlink()
         result = self._audit()
-        self.assertEqual("incomplete", result["status"])
-        self.assertIn("stages_not_approved:subtitles", result["unproven_claims"])
-        self.assertIn("final_approval_missing", result["unproven_claims"])
-        self.assertEqual([], result["failures"])
+        self.assertEqual("incomplete", result["status"], result)
+        self.assertIn("delivery_receipt_missing", result["unproven_claims"])
 
-    def test_inconsistent_when_approved_hash_is_wrong(self):
-        receipt_path = self.delivery / "approval-receipt.json"
-        receipt = json.loads(receipt_path.read_text())
+    def test_unfinished_stage_does_not_prove_delivery(self):
+        path = self.job_dir / "workflow.json"
+        workflow = json.loads(path.read_text())
+        workflow["stages"]["subtitles"]["status"] = "ready"
+        self._write_json(path, workflow)
+        result = self._audit()
+        self.assertEqual("incomplete", result["status"], result)
+        self.assertIn("stages_not_completed:subtitles", result["unproven_claims"])
+
+    def test_delivery_receipt_wrong_hash_is_rejected(self):
+        receipt = json.loads(self.receipt.read_text())
         receipt["delivery"]["sha256"] = "0" * 64
-        self._write_json(receipt_path, receipt)
-
+        self._write_json(self.receipt, receipt)
         result = self._audit()
         self.assertEqual("inconsistent", result["status"])
-        self.assertIn("approval_delivery_sha256_mismatch", result["failures"])
+        self.assertIn("delivery receipt differs from the completed output", result["failures"])
 
-    def test_inconsistent_when_approved_file_is_missing(self):
+    def test_missing_or_changed_outputs_are_rejected(self):
         self.final.unlink()
         result = self._audit()
         self.assertEqual("inconsistent", result["status"])
-        self.assertIn("approved_delivery_missing", result["failures"])
+        self.assertIn("workflow artifact changed: delivery", result["failures"])
 
-    def test_inconsistent_when_workflow_artifact_identity_is_wrong(self):
-        workflow_path = self.job_dir / "workflow.json"
-        workflow = json.loads(workflow_path.read_text())
-        workflow["stages"]["delivery"]["artifacts"][0]["bytes"] += 1
-        self._write_json(workflow_path, workflow)
+    def test_stable_delivery_tampering_is_rejected(self):
+        (self.stable / "final.mp4").write_bytes(b"changed")
         result = self._audit()
         self.assertEqual("inconsistent", result["status"])
-        self.assertIn("workflow_delivery_artifact_mismatch", result["failures"])
+        self.assertIn("stable delivered file is missing or changed", result["failures"])
 
-    def test_inconsistent_when_formal_receipt_revision_is_stale(self):
-        receipt_path = self.delivery / "approval-receipt.json"
-        receipt = json.loads(receipt_path.read_text())
-        receipt["workflow_revision"] -= 1
-        self._write_json(receipt_path, receipt)
+    def test_acceptance_requires_real_user_confirmation(self):
+        acceptance = json.loads(self.acceptance.read_text())
+        acceptance["user_confirmation"] = " "
+        self._write_json(self.acceptance, acceptance)
         result = self._audit()
         self.assertEqual("inconsistent", result["status"])
-        self.assertIn("approval_workflow_revision_mismatch", result["failures"])
+        self.assertIn("user acceptance differs from delivered output", result["failures"])
 
-    def test_inconsistent_when_media_probe_conflicts_with_manifest(self):
-        before = self._snapshot()
-        probe = {
-            "width": 1920, "height": 1080, "fps": 24.0, "rotation": 0,
-            "duration_seconds": 10.0, "audio_streams": 1,
-        }
-        with mock.patch.object(self.api(), "_probe_media", return_value=probe):
-            result = self.api().audit_job_completion(self.workspace)
-        self.assertEqual(before, self._snapshot())
+    def test_manifest_tampering_is_rejected(self):
+        path = self.delivery / "delivery-manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["extra"] = "changed"
+        self._write_json(path, manifest)
+        self.assertEqual("inconsistent", self._audit()["status"])
+
+    def test_media_probe_must_match_manifest(self):
+        result = self._audit({"width": 1920, "height": 1080, "fps": 24.0, "rotation": 0,
+                              "duration_seconds": 10.0, "audio_streams": 1})
         self.assertEqual("inconsistent", result["status"])
-        self.assertIn("delivery_media_probe_mismatch", result["failures"])
+        self.assertIn("delivery media probe differs from output canvas", result["failures"])
 
-    def test_unregistered_formal_receipt_does_not_prove_human_approval(self):
-        workflow_path = self.job_dir / "workflow.json"
-        workflow = json.loads(workflow_path.read_text())
-        workflow["stages"]["delivery"]["artifacts"] = [
-            r for r in workflow["stages"]["delivery"]["artifacts"]
-            if r["path"] != "12-delivery/approval-receipt.json"
-        ]
-        self._write_json(workflow_path, workflow)
-        self.assertEqual(self._audit()["status"], "inconsistent")
+    def test_changed_input_is_rejected(self):
+        (self.workspace / "script.dat").write_bytes(b"changed")
+        result = self._audit()
+        self.assertEqual("inconsistent", result["status"])
+        self.assertIn("workflow input changed", result["failures"])
 
-    def test_blank_user_confirmation_does_not_prove_human_approval(self):
-        receipt_path = self.delivery / "approval-receipt.json"
-        receipt = json.loads(receipt_path.read_text())
-        receipt["user_confirmation"] = " "
-        self._write_json(receipt_path, receipt)
-        self.assertEqual(self._audit()["status"], "inconsistent")
-
-    def test_manifest_tampering_cannot_keep_formal_complete(self):
-        manifest_path = self.delivery / "delivery-manifest.json"
-        manifest = json.loads(manifest_path.read_text())
-        manifest["extra"] = "changed after user approval"
-        self._write_json(manifest_path, manifest)
-        self.assertEqual(self._audit()["status"], "inconsistent")
-
-    def test_malformed_record_containers_return_inconsistent(self):
-        for name in ("stage_artifacts", "manifest_artifacts", "canvas", "nonfinite"):
-            with self.subTest(name=name):
-                self._write_formal_job()
-                path = (self.job_dir / "workflow.json" if name == "stage_artifacts"
-                        else self.delivery / "delivery-manifest.json")
-                value = json.loads(path.read_text())
-                if name == "stage_artifacts":
-                    value["stages"]["delivery"]["artifacts"] = None
-                elif name == "manifest_artifacts":
-                    value["artifacts"] = None
-                elif name == "canvas":
-                    value["canvas"] = None
-                else:
-                    value["canvas"]["fps"] = float("nan")
-                self._write_json(path, value)
-                self.assertEqual(self._audit()["status"], "inconsistent")
-
-    def test_malformed_enums_and_stage_return_inconsistent(self):
-        for name in ("approval_kind", "delivery_status", "delivery_stage"):
-            with self.subTest(name=name):
-                self._write_formal_job()
-                path = (self.delivery / "approval-receipt.json" if name == "approval_kind"
-                        else self.job_dir / "workflow.json")
-                value = json.loads(path.read_text())
-                if name == "approval_kind":
-                    value["approval_kind"] = []
-                elif name == "delivery_status":
-                    value["stages"]["delivery"]["status"] = []
-                else:
-                    value["stages"]["delivery"] = None
-                self._write_json(path, value)
-                self.assertEqual(self._audit()["status"], "inconsistent")
-
+    def test_malformed_stage_is_rejected(self):
+        path = self.job_dir / "workflow.json"
+        workflow = json.loads(path.read_text())
+        workflow["stages"]["delivery"] = None
+        self._write_json(path, workflow)
+        self.assertEqual("inconsistent", self._audit()["status"])
 
 if __name__ == "__main__":
     unittest.main()

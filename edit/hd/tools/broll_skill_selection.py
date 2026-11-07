@@ -28,6 +28,7 @@ _ADAPTERS = (
     "openfilm_motion_adapter",
     "upstream_scene_adapter",
     "riso_native_adapter",
+    "datamagic_native_adapter",
     "lemo_wake_adapter",
 )
 _REGISTRY_DEPENDENT = {
@@ -313,6 +314,13 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
                 add(dep, entry, dep + "/" + route, version, route=route, families=[family],
                     limitations=("DATA-only native Riso information graphics; not a person/action scene or transparent A-roll overlay",))
                 found[-1]["min_duration_seconds"] = values["MIN_SECONDS"][route]
+        elif module == "datamagic_native_adapter":
+            add(dep, entry, values["TEMPLATE_ID"], version, route=values["ROUTE"],
+                families=[values["FAMILY"]], capacity={"min_units": 2, "max_units": 2},
+                limitations=("Exactly two sourced comparable rows; opaque full-frame B-roll with a bottom-right presenter window only",))
+            found[-1]["candidate_id"] = dep + ":" + values["TEMPLATE_ID"].split("/", 1)[1]
+            clock = values["COMPOSITION"]
+            found[-1]["min_duration_seconds"] = found[-1]["max_duration_seconds"] = clock["frames"] / clock["fps"]
         elif module == "huashu_motion_adapter":
             for name, families in sorted(values["FAMILIES"].items()):
                 template = dep + "/" + name
@@ -1348,6 +1356,10 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
         if bounds is None:
             raise ValueError("Native overlay frame-clock declaration changed")
         minimum, maximum = (int(v) / 24 for v in bounds.groups())
+    elif module == "datamagic_native_adapter":
+        values, _ = _declarations(scripts / (module + ".py"))
+        clock = values["COMPOSITION"]
+        minimum = maximum = clock["frames"] / clock["fps"]
     elif module in {"hyperframes_notification_adapter", "hyperframes_chatgpt_exchange_adapter"}:
         source = (scripts / row["entrypoint"].split("/")[-1]).read_text()
         frames = re.findall(r"b\.canvas\.duration_in_frames\s*===\s*(\d+)", source)

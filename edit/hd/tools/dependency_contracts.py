@@ -22,6 +22,7 @@ DEPENDENCY_CONTRACTS = {
     'hypit-native-chat': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'huashu-art-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
     'eian-riso-broll': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
+    'datamagic': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
     'wise-motion': {"executor": 'reference_adapter', "renderer": 'Remotion', "output": 'opaque_video'},
     'openfilm-motion-graphics': {"executor": 'reference_adapter', "renderer": 'OpenFilm', "output": 'opaque_video'},
     'overlay-studio-native': {"executor": 'reference_adapter', "renderer": 'OverlayStudio', "output": 'alpha_video'},

@@ -124,19 +124,35 @@ class MotionGraphicsBriefTests(unittest.TestCase):
             (root / "native-inputs").mkdir()
             payload = json.dumps(brief("callout_pin")).encode()
             (root / "native-inputs/renamed-brief.json").write_bytes(payload)
-            component = {"kind": "code_generated", "dependency_id": mga.DEPENDENCY_ID,
-                "entrypoint": mga.ENTRY, "template_id": "motion-graphics-native/callout_pin",
-                "brief_sha256": hashlib.sha256(payload).hexdigest()}
-            plan = {"segments": [{"shot_recipe": {"components": [component]}}]}
-            # Expose the real default loader without starting any renderer.
+            from edit.hd.tools import visual_confirmation as confirmation
+            approval = root / "approval.json"
+            approval.write_text('{"approved": true}')
+            approval_ref = confirmation._record(root, approval)
+            record = confirmation._record(root, root / "native-inputs/renamed-brief.json")
+            component = {"component_id": "visual", "kind": "code_generated",
+                "dependency_id": mga.DEPENDENCY_ID, "entrypoint": mga.ENTRY,
+                "template_id": "motion-graphics-native/callout_pin", "brief_sha256": record["sha256"]}
+            recipe = {"segment_id": "seg-mg-1", "components": [component]}
+            mapping = {"source_approval": approval_ref, "native_inputs": [{"segment_id": "seg-mg-1",
+                       "component_id": "visual", "artifact": record}]}
+            mapping_path = root / "confirmed" / confirmation.MAPPING
+            mapping_path.parent.mkdir()
+            mapping_path.write_text(json.dumps(mapping))
+            stages = {"visual_direction": {"status": "completed", "artifacts": [confirmation._record(root, mapping_path)]}}
+            workflow = root / "workflow.json"
+            workflow.write_text(json.dumps({"revision": 1, "stages": stages}))
+            workflow_ref = confirmation._record(root, workflow)
+            evidence = {"artifact": approval_ref, "mapping": mapping}
+            job = SimpleNamespace(job_dir=root, job_id="fixture", revision=1, stages=stages,
+                expected_sha256=workflow_ref["sha256"], expected_bytes=workflow_ref["bytes"])
             module = SimpleNamespace(create_adapter=lambda *args: args[-1])
-            job = SimpleNamespace(job_dir=root)
-            with patch.object(visual_canary, "load_approved_visual_plan", return_value=plan), \
+            with patch.object(visual_canary, "load_approved_visual_plan", return_value={"segments": [{"shot_recipe": recipe}]}), \
+                    patch.object(confirmation, "validate_visual_authorization", return_value=evidence), \
                     patch.object(run_stage, "_module", return_value=module):
                 loader = run_stage.native_component_adapters(_env.PROJECT, job)["code_generated"][mga.DEPENDENCY_ID]
-                self.assertEqual(loader(job, {}, component), payload)
-                with self.assertRaisesRegex(ValueError, "Frozen native brief is missing"):
-                    loader(job, {}, {**component, "brief_sha256": "0" * 64})
+                self.assertEqual(loader(job, recipe, component), payload)
+                with self.assertRaisesRegex(ValueError, "Approved native brief is missing"):
+                    loader(job, recipe, {**component, "brief_sha256": "0" * 64})
 
     def test_connected_callout_uses_node_and_frozen_entry(self):
         payload = json.dumps(brief("callout_pin")).encode()
@@ -189,7 +205,7 @@ class MotionGraphicsBriefTests(unittest.TestCase):
         binding = {"dependency_id": "motion-graphics-native", "entrypoint": mga.ENTRY,
                    "template_id": "motion-graphics-native/callout_pin"}
         run_stage._check_default_binding(binding)
-        with self.assertRaisesRegex(ValueError, "Only the connected"):
+        with self.assertRaisesRegex(ValueError, "no default execution binding"):
             run_stage._check_default_binding({**binding, "template_id": "motion-graphics-native/logo_sting"})
         candidates = [r["candidate_id"] for r in overlay_candidates(_env.PROJECT)
                       if r["dependency_id"] == "motion-graphics-native"]

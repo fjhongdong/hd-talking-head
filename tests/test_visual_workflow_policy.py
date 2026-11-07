@@ -76,8 +76,8 @@ class PlanningAndNumberTests(unittest.TestCase):
                 'rows':[{'row_id':'b'}],'numbering':{'a':1,'b':2,'retired':3}})
             ref={'path':'proposal.json','sha256':ca.sha256_file(p),'bytes':p.stat().st_size}
             receipt={'source_schema':vc.SCHEMA,'job_id':'job','job_dir':str(root),'stage':'visual_direction',
-                     'passed':True,'reviewed_by':'human','approval_scope':'visual_plan_and_delivery','revision':9,'source':ref}
-            ca.write_json_artifact(root/'manifests/local-qa-visual_direction-r9.json',receipt)
+                     'authorized_by':'user','authorization_scope':'visual_plan_and_generation','revision':9,'source':ref}
+            ca.write_json_artifact(root/'manifests/visual-authorization-r9.json',receipt)
             mapping=vc._prior_numbering(job,'current-scope')
             self.assertEqual([r['number'] for r in vc.number_visual_rows([{'row_id':'new'},{'row_id':'b'}],mapping)],[4,2])
             p.write_text('{}')
@@ -187,13 +187,15 @@ class CurrentMediaReviewTests(unittest.TestCase):
         bad=self.review('preview');bad['visual_review']['observations'][0]['playback_window']=[True,float('inf')]
         with self.assertRaises(ValueError):vr.validate_stage_review(self.job,'preview',bad)
 
-    def test_delivery_consumer_needs_current_receipt_and_old_policy_is_untouched(self):
+    def test_delivery_runs_without_optional_preview_review_and_explicit_review_stays_bound(self):
         with self.assertRaises(ValueError):vr.require_preview_review(self.job)
         from edit.hd.tools import qa_delivery_v2
-        with mock.patch('edit.hd.tools.motion_readability.require_preview_review'), \
-             mock.patch.object(qa_delivery_v2,'_recover_delivery_publication') as publish:
-            with self.assertRaises(ValueError):qa_delivery_v2._prepare_delivery_v2_locked(self.job)
-            publish.assert_not_called()
+        from edit.hd.tests.test_qa_delivery import SemanticSourceDeliveryTests
+        with tempfile.TemporaryDirectory() as temp:
+            job = SemanticSourceDeliveryTests()._persisted_job(Path(temp), attribution_required=False)
+            delivery = qa_delivery_v2.prepare_delivery_v2(job)
+            self.assertTrue(delivery.directory.joinpath('final.mp4').is_file())
+            self.assertFalse(list((job.job_dir / 'manifests').glob('local-qa-preview-r*.json')))
         receipt=self.review('preview')|{'job_id':'job','job_dir':str(self.root),'stage':'preview',
             'reviewed_by':'host','passed':True,'artifacts':self.job.stages['preview']['artifacts']}
         self.write('manifests/local-qa-preview-r10.json',receipt)

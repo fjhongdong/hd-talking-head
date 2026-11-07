@@ -68,7 +68,7 @@ def create_synthetic_job(folder: Path, source_video: Path, brief: dict):
     inspect = job.job_dir / "01-inspect/report.json"
     _write_json(inspect, marker)
     state.mark_ready(job, "inspect", [inspect])
-    state.approve(job, "inspect")
+    state.complete(job, "inspect")
     content_analysis.prepare_content_analysis(job, {
         "thesis": source_text, "hook": brief["title"],
         "sections": [{"id": "section", "title": brief["title"], "source_span": [0, len(source_text)]}],
@@ -79,7 +79,7 @@ def create_synthetic_job(folder: Path, source_video: Path, brief: dict):
             "semantic_type": "process", "evidence_status": "supported", "broll_priority": "high",
         }], "claims": [],
     })
-    state.approve(job, "content_analysis")
+    state.complete(job, "content_analysis")
     return job
 
 

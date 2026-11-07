@@ -105,6 +105,7 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/render_hypit_native.mjs",
     "scripts/openfilm_motion_adapter.py",
     "scripts/riso_native_adapter.py",
+    "scripts/datamagic_native_adapter.py",
     "scripts/overlay_studio_adapter.py",
     "scripts/huashu_stat_adapter.py",
     "scripts/anidoodle_native_adapter.py",
@@ -878,13 +879,15 @@ def _binding_matches_candidate(
         )
 
 
-def riso_output_contract(component: Mapping[str, Any], composition: Mapping[str, Any]) -> Dict[str, Any]:
-    """One Riso rule shared by draft validation and final compilation."""
+def riso_output_contract(component: Mapping[str, Any], composition: Mapping[str, Any], *, name: str = "Riso") -> Dict[str, Any]:
+    """Shared opaque full-frame rule for fixed B-roll templates."""
     if (component.get("kind") != "code_generated"
             or component.get("layer_role") != "base"
             or component.get("layout_slot") != "full_frame"
             or composition.get("family") not in {"single_full_frame", "evidence_with_data_overlay"}):
-        raise RouterError("Riso requires opaque full-frame B-roll, not an A-roll overlay")
+        raise RouterError(f"{name} requires opaque full-frame B-roll, not an A-roll overlay")
+    if name == "DataMagic" and composition.get("presenter_mode") != "bottom_window":
+        raise RouterError("DataMagic requires standard B-roll with a bottom-right presenter window")
     return {"width": 1080, "height": 1920, "fps": 24, "alpha": False}
 
 
@@ -1093,8 +1096,9 @@ def _compile_shot_recipe(
         elif kind not in {"code_generated", "ai_generated"}:
             raise RouterError(f"candidate snapshot for {component_id} is missing")
 
-        riso_contract = (riso_output_contract(approved_component, approved["composition"])
-                         if binding.get("dependency_id") == "eian-riso-broll" else None)
+        riso_contract = (riso_output_contract(approved_component, approved["composition"],
+                                              name="DataMagic" if binding.get("dependency_id") == "datamagic" else "Riso")
+                         if binding.get("dependency_id") in {"eian-riso-broll", "datamagic"} else None)
         component: Dict[str, Any] = {
             "component_id": component_id,
             "kind": kind,

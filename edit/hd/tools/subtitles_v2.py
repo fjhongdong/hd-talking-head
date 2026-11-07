@@ -265,7 +265,8 @@ def _corrected_phrases(job) -> tuple[str, ...]:
                  if 1 < subtitles._visible_glyph_count([{"text": phrase}]) <= subtitles._CUE_TARGET_MAX))
 
 
-def subtitle_layout(shot_mode: str, composition: Mapping[str, Any]) -> tuple[dict, str]:
+def subtitle_layout(shot_mode: str, composition: Mapping[str, Any], *,
+                    base_template: str | None = None) -> tuple[dict, str]:
     """Return the same parent subtitle reservation for planning and rendering."""
     if shot_mode == "none" or composition.get("presenter_mode") == "hidden":
         zones = {
@@ -303,6 +304,10 @@ def subtitle_layout(shot_mode: str, composition: Mapping[str, Any]) -> tuple[dic
             "chart": None,
         }
         placement = "above_avatar"
+    if placement == "above_avatar" and base_template == "datamagic/portrait-ranked-reveal":
+        # The two native rows finish above this gap. The native takeaway and
+        # attribution start below it, where the default B-roll cue would land.
+        zones["subtitle"] = {"x": 80, "y": 970, "width": 640, "height": 260}
     return zones, placement
 
 
@@ -329,7 +334,12 @@ def build_render_plan(
     )
     emphasis_times: dict[str, float] = {}
     for segment in visual_plan["segments"]:
-        zones, placement = subtitle_layout(_shot_mode(segment), segment["shot_recipe"].get("composition", {}))
+        mode = _shot_mode(segment)
+        recipe = segment["shot_recipe"]
+        base_template = next((component.get("template_id") for component in recipe.get("components", [])
+                              if component.get("layer_role") == "base"), None)
+        zones, placement = subtitle_layout(mode, recipe.get("composition", {}),
+                                           base_template=base_template)
         segment_start = float(segment["start"])
         segment_end = float(segment["end"])
         indices = [

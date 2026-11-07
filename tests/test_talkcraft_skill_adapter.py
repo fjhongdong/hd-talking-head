@@ -245,9 +245,11 @@ class TalkCraftStageFlowTests(unittest.TestCase):
         cached=motion_match_cache.validate_matches(_env.PROJECT,director,treatment)[('seg-002','component-2')]
         review=copy.deepcopy(treatment['skill_selection']['beats'][0]); review.update(segment_id='seg-002',component_id='component-2',semantic_row_id='native-semantic',start=6,end=12,semantic_goal='资料汇聚',required_change='资料原生汇聚场景',binding_snapshot=binding)
         for v in review['skill_reviews'].values():v.update(fit='equivalent',reason='临时流程fixture评审')
-        design=review['candidates'][0]['design_plan']
+        design=next(c['design_plan'] for c in review['candidates'] if c['candidate_id']=='lemo-wake:wake')
+        review['semantic_sha256']=treatment['motion_matches']['native-semantic']['semantic_sha256']
         review['candidates']=[{'candidate_id':m['candidate']['candidate_id'],'fit':'preferred' if m['candidate']['candidate_id']=='video-talkcraft:source-converge' else 'equivalent',
-            'reason':'临时流程fixture语义评审','visual_pattern':'source-convergence','design_plan':design} for m in cached['matches']]
+            'reason':'临时流程fixture语义评审','visual_pattern':'source-convergence','design_plan':design,
+            'capability_sha256':motion_match_cache.candidate_review_identity(m['candidate'])} for m in cached['matches']]
         treatment['skill_selection']['beats'].append(review)
         treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root,director=director)
         selected=treatment['skill_selection']['assignments'][-1]
