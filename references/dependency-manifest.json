@@ -2,6 +2,84 @@
   "schema_version": 3,
   "dependencies": [
     {
+      "id": "garden-motion-showreel",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": ".",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/garden_native_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/garden_native_adapter.py",
+          "producer_version": "1.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/garden_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "garden-motion-showreel",
+        "required_level": "bound"
+      }
+    },
+    {
+      "id": "useanimations",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": ".",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/useanimations_native_adapter.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/useanimations_native_adapter.py",
+          "producer_version": "3.1.1",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "Lottie"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/useanimations_native_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "useanimations",
+        "required_level": "bound"
+      }
+    },
+    {
       "id": "datamagic",
       "kind": "project_path",
       "required": false,
@@ -2367,6 +2445,16 @@
   ],
   "preparation": [
     {
+      "id": "useanimations",
+      "script": "scripts/useanimations_native_adapter.py",
+      "arguments": [
+        "--prepare"
+      ],
+      "dependency_ids": [
+        "useanimations"
+      ]
+    },
+    {
       "id": "talkcraft-runtime-health",
       "script": "scripts/prepare_talkcraft.py",
       "arguments": []
@@ -2643,6 +2731,8 @@
     }
   ],
   "runtime_checks": [
+    "garden-motion-showreel",
+    "useanimations",
     "datamagic",
     "eian-riso-broll",
     "hypit-native-chat",

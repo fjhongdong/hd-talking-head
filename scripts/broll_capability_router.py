@@ -110,6 +110,8 @@ _NATIVE_COMPONENT_ENTRIES = frozenset({
     "scripts/huashu_stat_adapter.py",
     "scripts/anidoodle_native_adapter.py",
     "scripts/sweety_native_adapter.py",
+    "scripts/garden_native_adapter.py",
+    "scripts/useanimations_native_adapter.py",
     "scripts/render_motion_graphics.cjs",
     "vendor/lemo-wake/skills/wake/SKILL.md",
 })

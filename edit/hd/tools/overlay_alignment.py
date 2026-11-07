@@ -550,7 +550,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
         for cid, binding in segment["bindings"].items():
             if target_keys is not None and (segment['segment_id'], cid) not in target_keys:
                 continue
-            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics", "anidoodle", "sweety-handdraw-video", "huashu-art-motion"}:
+            if binding.get("dependency_id") in {"hyperframes-native-adaptation", pinboard_alignment.DEPENDENCY_ID, huashu_stat_alignment.DEPENDENCY_ID, "motion-graphics-native", "barty-motion-graphics", "anidoodle", "sweety-handdraw-video", "huashu-art-motion", "useanimations"}:
                 targets.append((segment, cid, binding))
     if not targets:
         return []
@@ -576,6 +576,7 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
     fps = 24
     report = []
     assembled_inputs = []
+    icon_routes = None
     for segment, cid, binding in targets:
         sid = segment["segment_id"]
         record = records[keys.index((sid, cid))]
@@ -590,6 +591,20 @@ def validate_treatment(job, draft, treatment_path, *, phase='completed', target_
             raise ValueError(f"overlay source or alpha contract changed: {sid}")
         if brief["composition"]["fps"] != fps:
             raise ValueError("native overlay requires the approved 24 fps clock")
+        if binding.get('dependency_id') == 'useanimations':
+            from scripts import useanimations_native_adapter as native
+            from .motion_capabilities import overlay_candidates, validate_overlay_capability
+            if icon_routes is None:
+                icon_routes = {item['source_route']: item for item in overlay_candidates(PACKAGE_ROOT)
+                               if item['dependency_id'] == 'useanimations'}
+            route = brief['template_id']
+            validate_overlay_capability(route, binding, registered=icon_routes)
+            events = native.validate_alignment(brief, segment=segment, words=words,
+                                               cuts=cuts, events=record.get('events'))
+            report.append({'segment_id': sid, 'component_id': cid, 'route': route,
+                           'brief_path': record['brief_path'], 'brief_sha256': binding['brief_sha256'],
+                           'events': events})
+            continue
         if binding.get('dependency_id') in {'barty-motion-graphics', 'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
             from . import motion_capabilities
             from .subtitles import _map_words

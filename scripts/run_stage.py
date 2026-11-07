@@ -208,7 +208,7 @@ def _validate_prepared_native_inputs(job, project, director, treatment, *, plann
     validate_selected_inputs(job, prepared, treatment)
     validate_talkcraft_inputs(job, prepared, treatment)
     validate_motion_inputs(job, prepared, treatment)
-    for name in ('anidoodle_native_adapter', 'sweety_native_adapter'):
+    for name in ('anidoodle_native_adapter', 'sweety_native_adapter', 'garden_native_adapter'):
         _module(name).validate_selected_inputs(job, prepared, treatment)
     _validate_selected_native_sources(job, prepared, treatment)
     _validate_existing_native_schemas(job, project, prepared, treatment)
@@ -339,7 +339,7 @@ def _validate_selected_native_parent_layouts(job, director: dict, treatment: dic
               for s in treatment.get('scenes', [])}
     for segment in director.get('segments', []):
         selected = {cid: b for cid, b in segment.get('bindings', {}).items()
-                    if b.get('dependency_id') == 'overlay-studio-native'
+                    if b.get('dependency_id') in {'overlay-studio-native', 'useanimations'}
                     or (b.get('dependency_id') == 'huashu-motion-native'
                         and b.get('template_id') == 'huashu-motion/talking-head-stat')}
         if not selected:
@@ -359,6 +359,10 @@ def _validate_selected_native_parent_layouts(job, director: dict, treatment: dic
                 raise ValueError('selected native parent layout brief differs from its binding')
             if binding['dependency_id'] == 'overlay-studio-native':
                 validate_parent_layout(validate_brief(payload), components[cid])
+            elif binding['dependency_id'] == 'useanimations':
+                from useanimations_native_adapter import validate_brief as validate_icon_brief
+                if validate_icon_brief(payload)['parent_safe_zone'] != components[cid]['render_window']['safe_zone']:
+                    raise ValueError('useAnimations parent safe zone differs from the compiled layout')
             elif validate_stat_brief(payload)['parent_safe_zone'] != components[cid]['render_window']['safe_zone']:
                 raise ValueError('selected Stat parent safe zone differs from the compiled layout')
 
@@ -607,6 +611,8 @@ _NATIVE_MODULES = {
     'huashu-art-motion': ('motion_native_skill_adapter', 'python'),
     'anidoodle': ('anidoodle_native_adapter', 'python'),
     'sweety-handdraw-video': ('sweety_native_adapter', 'python'),
+    'garden-motion-showreel': ('garden_native_adapter', 'python'),
+    'useanimations': ('useanimations_native_adapter', 'python'),
     'overlay-studio-native': ('overlay_studio_adapter', 'python'),
     'openfilm-motion-graphics': ('openfilm_motion_adapter', 'python'),
     'huashu-motion-native': ('huashu_stat_adapter', 'python'),

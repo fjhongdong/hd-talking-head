@@ -171,6 +171,15 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
         if 'aroll_overlay' in candidate.get('uses', []):
             rows.append({**candidate, 'candidate_id': 'overlay:' + candidate['template_id'],
                          'source_route': candidate['template_id'], 'role': 'aroll_overlay'})
+    from scripts import useanimations_native_adapter as icons
+    for template in icons.list_templates(project):
+        route = template['template_id']
+        rows.append({'candidate_id': 'overlay:' + route, 'skill_id': icons.DEPENDENCY_ID,
+                     'dependency_id': icons.DEPENDENCY_ID, 'entrypoint': icons.ENTRY,
+                     'producer_version': icons.VERSION, 'template_id': route, 'source_route': route,
+                     'role': 'aroll_overlay', 'status': 'supported',
+                     'adapter_module': 'useanimations_native_adapter',
+                     'min_duration_seconds': template['min_duration_seconds']})
     return [{**row, "limitations": row["capability"]["limitations"]}
             for row in describe_candidates(project, rows, use="aroll_overlay", profiles=profiles)]
 
@@ -210,6 +219,16 @@ def _catalog_sources(project: Path, *, previous: tuple | None = None) -> tuple:
             for directory, children, _ in os.walk(root):
                 paths.add(Path(directory))
                 paths.update(Path(directory) / name for name in children)
+        source_index = project / 'archives/sources/index.json'
+        paths.add(source_index)
+        for record in contract_artifacts.read_json_artifact(source_index)['repositories']:
+            if record['path'] not in {'vendor/garden-skills', 'vendor/react-useanimations'}:
+                continue
+            root = project / record['path']
+            paths.update(root / name for name in (*record['files'], *record.get('symlinks', {})))
+            for directory, children, _ in os.walk(root):
+                children[:] = [child for child in children if child not in {'node_modules', '.git', '__pycache__'}]
+                paths.add(Path(directory))
     else:
         paths = {Path(row[0]) for row in previous}
     return tuple((str(path), stat.st_dev, stat.st_ino, stat.st_mode, stat.st_size,
@@ -507,6 +526,9 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
 
 
 def _brief_overlay_route(brief: Mapping) -> str | None:
+    if (str(brief.get('template_id', '')).startswith('useanimations/')
+            and brief.get('composition', {}).get('alpha') is True):
+        return brief['template_id']
     if brief.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} and brief.get('alpha') is True:
         return brief['dependency_id'] + '/' + brief['template_id']
     if (brief.get('dependency_id') == 'barty-motion-graphics' and brief.get('template_id') == 'motion-broll'
@@ -610,6 +632,10 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                             checked.get("dependency_id") != "lemo-opuscar"
                             or row["template_id"] != "lemo-opuscar/" + checked["style_slug"]):
                         raise ValueError("Lemo brief style differs from the selected template")
+                    if row.get('dependency_id') == 'useanimations' and (
+                            checked['template_id'] != row['template_id']
+                            or checked['composition']['alpha'] is not True):
+                        raise ValueError('useAnimations input differs from the selected icon or transparent use')
                 elif hasattr(module, "_wrapper_validator"):
                     method = name + "._wrapper_validator.validate_brief"
                     module._wrapper_validator()(payload)
@@ -941,6 +967,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         for segment in draft["segments"]
     }
     routes, briefs, overlay_targets = {}, {}, []
+    registered_overlays = {row['source_route']: row for row in catalog if row['role'] == 'aroll_overlay'}
     not_verified = [] if speech is not None else [{"check": "approved_word_clock"}]
     for segment in draft["segments"]:
         if segment["visual_strategy"]["composition"]["family"] != "aroll_with_overlay":
@@ -948,7 +975,7 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
         for component, binding in segment["bindings"].items():
             key = (segment["segment_id"], component)
             route = overlay_selection._route(binding)
-            validate_overlay_capability(route, binding)
+            validate_overlay_capability(route, binding, registered=registered_overlays)
             overlay_targets.append((segment, component, "overlay:" + route))
             brief = _bound_brief(job_dir, treatment, segment, component)
             if brief is not None:

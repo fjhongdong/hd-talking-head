@@ -124,7 +124,8 @@ def assert_project_origin(project_root: Path) -> None:
     project_root = project_root.resolve()
     native_scripts = {"motion_native_skill_adapter.py", "upstream_scene_adapter.py",
                       "talkcraft_skill_adapter.py", "lemo_wake_adapter.py",
-                      "anidoodle_native_adapter.py", "sweety_native_adapter.py"}
+                      "anidoodle_native_adapter.py", "sweety_native_adapter.py",
+                      "garden_native_adapter.py", "useanimations_native_adapter.py"}
     for name, module in tuple(sys.modules.items()):
         filename = getattr(module, "__file__", None)
         native_entry = filename is not None and Path(filename).name in native_scripts

@@ -38,6 +38,10 @@ Riso 的输入绑定引用本包中本次实际模板的原生源码，不依赖
 
 完整原生 DataMagic 作为一个渠道使用。当前开放 `PortraitRankedReveal` 一款模板，在 6 秒内按同一口径逐项揭晓两个真实数据对象，最后保留领先结论。用途为带右下圆窗的全屏 B-roll。词窗和数据符合条件时参与统一选型。来源、原生参数和字幕位置见 [DataMagic 调用](datamagic-integration.md)。
 
+## Garden Motion Showreel 与 useAnimations
+
+Garden 是一个 B-roll 创作渠道，按上游风格目录开放 43 个原生风格模板，使用完整 Motion Showreel Skill 和原生无声渲染。useAnimations 是一个透明贴片渠道，按上游目录开放 300 个原生图标模板，原动作由 Lottie 播放，母片只编排词锚、可选短标签和位置。两者按真实模板身份和语义标签参与选型。参见 [Garden 与 useAnimations 调用](garden-and-useanimations.md)。
+
 ## Barty 与 Bang Motion
 
 Barty Motion Graphics 是一个渠道，包含 `motion-broll`、`explainer-default`、`explainer-engaging` 和 `explainer-high-energy` 四套完整原生创作流程。`motion-broll` 的透明贴片与整屏画面共享同一模板身份；用途条目分开校验，不额外增加模板数。对象分离和音效是辅助流程，不单独算视觉模板。

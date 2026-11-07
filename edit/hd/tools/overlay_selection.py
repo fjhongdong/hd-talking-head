@@ -28,12 +28,13 @@ _ACTION = {"grid-card-assemble": "staggered_card_reveal", "notification-stack": 
 _ACTION["huashu-stat"] = "native_count_up"
 _ACTION["callout-pin"] = "ring_and_label_target"
 _BARTY_ROUTE = 'barty-motion-graphics/motion-broll'
+_NAMESPACED_OVERLAYS = {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion', 'useanimations'}
 _REQUIRED = {"segment_id", "component_id", "intent_relation", "native_route", "visible_action", "visual_structure", "selection_reason"}
 
 def _route(binding: Mapping) -> str:
     template = str(binding.get("template_id", ""))
     route = _ROUTE_BY_TEMPLATE.get(template)
-    if route is None and binding.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+    if route is None and binding.get('dependency_id') in _NAMESPACED_OVERLAYS:
         dependency = binding['dependency_id']
         if template.startswith(dependency + '/'):
             route = template
@@ -54,7 +55,7 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
                           (_PINBOARD_DEPENDENCY if route == "pin-board" else
                            (_MOTION_GRAPHICS_DEPENDENCY if route == "callout-pin" else
                             ("huashu-motion-native" if route == "huashu-stat" else _DEPENDENCY))))
-            if route == _BARTY_ROUTE or binding.get('dependency_id') in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+            if route == _BARTY_ROUTE or binding.get('dependency_id') in _NAMESPACED_OVERLAYS:
                 dependency = binding['dependency_id']
             if binding.get("dependency_id") != dependency:
                 raise ValueError("A-roll overlay dependency does not match the native adapter")
@@ -85,10 +86,10 @@ def validate_selection(draft: Mapping, treatment: Mapping | None, native_routes:
         if key in seen or key not in expected:
             raise ValueError("overlay_selection target is missing or duplicated")
         _segment, route, structure = expected[key]
-        if route == _BARTY_ROUTE or route.split('/', 1)[0] in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
+        if route == _BARTY_ROUTE or route.split('/', 1)[0] in _NAMESPACED_OVERLAYS:
             if row['native_route'] != route or any(not isinstance(row.get(k), str) or not row[k].strip()
                     for k in ('intent_relation', 'visible_action', 'visual_structure', 'selection_reason')):
-                raise ValueError('Barty overlay needs its actual native action and semantic structure')
+                raise ValueError('Native overlay needs its actual action and semantic structure')
             seen.add(key)
             rows.append(dict(row))
             continue

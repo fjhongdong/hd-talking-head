@@ -39,7 +39,8 @@ def package_files(root: Path, *, _directories: set[Path] | None = None) -> dict[
         for entry in index.get("repositories", []):
             name = entry.get("path")
             if name not in {"vendor/mg-styles-15", "vendor/video-shotcraft", "vendor/bb-video", "vendor/DataMagic",
-                            "vendor/anidoodle", "vendor/sweety-handdraw-video", "vendor/lemo-opuscar"}:
+                            "vendor/anidoodle", "vendor/sweety-handdraw-video", "vendor/lemo-opuscar",
+                            "vendor/garden-skills", "vendor/react-useanimations"}:
                 continue
             if not (isinstance(entry.get("files"), dict) and entry["files"]
                     and isinstance(entry.get("archives"), list) and entry["archives"]):

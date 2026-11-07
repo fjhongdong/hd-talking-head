@@ -143,7 +143,7 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                 minimum = native_timing_minimum(template)
                 rows[-1]['min_duration_seconds'] = max(
                     rows[-1].get('min_duration_seconds', 0), minimum)
-    for module_name in ('anidoodle_native_adapter', 'sweety_native_adapter'):
+    for module_name in ('anidoodle_native_adapter', 'sweety_native_adapter', 'garden_native_adapter'):
         spec = importlib.util.spec_from_file_location('_catalog_' + module_name, Path(project_root) / 'scripts' / (module_name + '.py'))
         adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
         for template in adapter.load_template_catalog(project_root):
@@ -160,7 +160,7 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                 'limitations': template.get('limitations', [
                     'Invoke the complete original Skill and selected native template',
                     'Native output use, approved inputs and resource authorization remain binding'])})
-            rows[-1]['min_duration_seconds'] = 1 / 24
+            rows[-1]['min_duration_seconds'] = template.get('min_duration_seconds', 1 / 24)
             if adapter.DEPENDENCY_ID == 'sweety-handdraw-video' and template['native_template_group'] == 'web_motion':
                 rows[-1]['max_duration_seconds'] = 30
 
@@ -1385,7 +1385,8 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
     elif strict and module not in {None, "hyperframes_native_adapter", "motion_native_skill_adapter",
                                    "openfilm_motion_adapter", "overlay_studio_adapter",
                                    "paper_hyperframes_adapter", "talkcraft_skill_adapter", "wise_motion_adapter",
-                                   "anidoodle_native_adapter", "sweety_native_adapter"}:
+                                   "anidoodle_native_adapter", "sweety_native_adapter", "garden_native_adapter",
+                                   "useanimations_native_adapter"}:
         raise ValueError("Native timing contract is unknown: " + str(module))
     if minimum is None and maximum is None and not strict:
         return None

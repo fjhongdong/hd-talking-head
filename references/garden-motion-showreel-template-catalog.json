@@ -1,0 +1,1413 @@
+{
+  "schema_version": 1,
+  "channel": "garden-motion-showreel",
+  "repository_commit": "2b9a89340b70f632d31c0f1c69fce94a7912423e",
+  "native_paths": [
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/swiss-editorial",
+      "template_id": "garden-motion-showreel/swiss-editorial",
+      "native_option_id": "swiss-editorial",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "瑞士编辑",
+      "summary": "网格、一种字体、一个信号色，像印刷机一样精确",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/swiss-editorial.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/swiss-editorial.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "作品集",
+        "Logo",
+        "数据"
+      ],
+      "native_feelings": [
+        "理性",
+        "克制"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/kinetic-brutalist",
+      "template_id": "garden-motion-showreel/kinetic-brutalist",
+      "native_option_id": "kinetic-brutalist",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "粗野动态排版",
+      "summary": "巨字、硬切、高对比，字就是画面",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/kinetic-brutalist.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/kinetic-brutalist.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "金句卡点",
+        "作品集"
+      ],
+      "native_feelings": [
+        "冲击",
+        "躁动"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/risograph-print",
+      "template_id": "garden-motion-showreel/risograph-print",
+      "native_option_id": "risograph-print",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "孔版印刷",
+      "summary": "孔版印刷：套色错位、半调网点、纸纹",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/risograph-print.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/risograph-print.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "宣传片",
+        "Logo",
+        "排版"
+      ],
+      "native_feelings": [
+        "温暖",
+        "手作"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/editorial-collage",
+      "template_id": "garden-motion-showreel/editorial-collage",
+      "native_option_id": "editorial-collage",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "杂志拼贴",
+      "summary": "杂志拼贴：剪纸边、胶带、照片碎片、手写标注",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/editorial-collage.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/editorial-collage.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "宣传片",
+        "金句"
+      ],
+      "native_feelings": [
+        "活泼",
+        "潮流"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/art-deco",
+      "template_id": "garden-motion-showreel/art-deco",
+      "native_option_id": "art-deco",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "装饰艺术",
+      "summary": "装饰艺术：阶梯、扇面、平行镶条，装饰组织构图与开合",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/art-deco.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/art-deco.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "品牌宣传",
+        "片头",
+        "Logo"
+      ],
+      "native_feelings": [
+        "庄重",
+        "精致"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/one-line",
+      "template_id": "garden-motion-showreel/one-line",
+      "native_option_id": "one-line",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "一笔线描",
+      "summary": "一笔线描：连续路径勾出轮廓，也串起事物之间的关系",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/one-line.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/one-line.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "品牌故事",
+        "讲解",
+        "Logo",
+        "循环"
+      ],
+      "native_feelings": [
+        "简洁",
+        "轻巧"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/concept-morph",
+      "template_id": "garden-motion-showreel/concept-morph",
+      "native_option_id": "concept-morph",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "数学／概念形变",
+      "summary": "数学／概念形变：保住对象对应关系，让推理在连续变化中可见",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/concept-morph.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/concept-morph.md"
+      ],
+      "native_group": "图形与排版",
+      "native_subjects": [
+        "数学讲解",
+        "科学概念",
+        "算法原理"
+      ],
+      "native_feelings": [
+        "清楚",
+        "专注"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/minimal-ui",
+      "template_id": "garden-motion-showreel/minimal-ui",
+      "native_option_id": "minimal-ui",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "极简界面",
+      "summary": "浅色、干净、弹簧手感的界面动效",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/minimal-ui.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/minimal-ui.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "UI 演示",
+        "宣传片"
+      ],
+      "native_feelings": [
+        "精致",
+        "友好"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/dark-keynote",
+      "template_id": "garden-motion-showreel/dark-keynote",
+      "native_option_id": "dark-keynote",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "暗色发布会",
+      "summary": "发布会：深色舞台、聚光、大数字、产品英雄镜头",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/dark-keynote.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/dark-keynote.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "宣传片",
+        "数据"
+      ],
+      "native_feelings": [
+        "隆重",
+        "高级"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/isometric-infographic",
+      "template_id": "garden-motion-showreel/isometric-infographic",
+      "native_option_id": "isometric-infographic",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "等距信息图",
+      "summary": "等距视角的小世界，信息层层搭起来",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/isometric-infographic.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/isometric-infographic.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "讲解",
+        "宣传片"
+      ],
+      "native_feelings": [
+        "清晰",
+        "俏皮"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/data-motion",
+      "template_id": "garden-motion-showreel/data-motion",
+      "native_option_id": "data-motion",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "数据动态",
+      "summary": "数字和图表本身就是主角",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/data-motion.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/data-motion.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "数据爆点",
+        "宣传片"
+      ],
+      "native_feelings": [
+        "可信",
+        "利落"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/blueprint",
+      "template_id": "garden-motion-showreel/blueprint",
+      "native_option_id": "blueprint",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "工程蓝图",
+      "summary": "工程蓝图：投影、尺寸线、剖面与装配关系，逐层解释结构",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/blueprint.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/blueprint.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "原理讲解",
+        "产品结构",
+        "方案对比"
+      ],
+      "native_feelings": [
+        "精确",
+        "理性"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/hologram-hud",
+      "template_id": "garden-motion-showreel/hologram-hud",
+      "native_option_id": "hologram-hud",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "全息空间界面",
+      "summary": "全息空间界面：有深度的线框、扫描切面、锚定对象的标注",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/hologram-hud.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/hologram-hud.md"
+      ],
+      "native_group": "界面与产品",
+      "native_subjects": [
+        "技术概念",
+        "系统讲解",
+        "片头"
+      ],
+      "native_feelings": [
+        "冷静",
+        "未来感"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/pixel-game",
+      "template_id": "garden-motion-showreel/pixel-game",
+      "native_option_id": "pixel-game",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "16-bit 像素游戏",
+      "summary": "16-bit 像素：小画布放大、步进、调色板",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/pixel-game.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/pixel-game.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "作品集",
+        "循环",
+        "Logo"
+      ],
+      "native_feelings": [
+        "怀旧",
+        "可爱"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/pixel-diorama",
+      "template_id": "garden-motion-showreel/pixel-diorama",
+      "native_option_id": "pixel-diorama",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "像素立体场景",
+      "summary": "像素立体场景：平面像素角色走入有光照、遮挡与纵深的布景",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/pixel-diorama.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/pixel-diorama.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "故事宣传",
+        "游戏概念",
+        "片头",
+        "循环"
+      ],
+      "native_feelings": [
+        "怀旧",
+        "沉浸"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/crt-vhs",
+      "template_id": "garden-motion-showreel/crt-vhs",
+      "native_option_id": "crt-vhs",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "复古电视 / VHS",
+      "summary": "显像管和录像带：扫描线、色差、跟踪噪声",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/crt-vhs.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/crt-vhs.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "片头",
+        "怀旧主题"
+      ],
+      "native_feelings": [
+        "怀旧",
+        "诡异"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/terminal-ascii",
+      "template_id": "garden-motion-showreel/terminal-ascii",
+      "native_option_id": "terminal-ascii",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "终端 / ASCII",
+      "summary": "终端：等宽字符、光标、ASCII 图形",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/terminal-ascii.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/terminal-ascii.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "开发者产品",
+        "片头"
+      ],
+      "native_feelings": [
+        "极客",
+        "冷静"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/glitch-digital",
+      "template_id": "garden-motion-showreel/glitch-digital",
+      "native_option_id": "glitch-digital",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "数字故障",
+      "summary": "数字故障：块状错位、像素排序、乱码重排，故障落在拍上",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/glitch-digital.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/glitch-digital.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "片头",
+        "金句卡点",
+        "电子音乐"
+      ],
+      "native_feelings": [
+        "叛逆",
+        "紧张"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/synthwave-neon",
+      "template_id": "garden-motion-showreel/synthwave-neon",
+      "native_option_id": "synthwave-neon",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "合成波霓虹",
+      "summary": "合成波：80 年代想象的未来，夜色、霓虹、镀铬，信号按主题挑",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/synthwave-neon.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/synthwave-neon.md"
+      ],
+      "native_group": "复古与屏幕",
+      "native_subjects": [
+        "片头",
+        "音乐向"
+      ],
+      "native_feelings": [
+        "热烈",
+        "复古未来"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/glass-material",
+      "template_id": "garden-motion-showreel/glass-material",
+      "native_option_id": "glass-material",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "玻璃金属材质",
+      "summary": "玻璃、金属和光，镜头在空间里慢慢运动",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/glass-material.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/glass-material.md"
+      ],
+      "native_group": "3D 与材质",
+      "native_subjects": [
+        "产品宣传",
+        "Logo"
+      ],
+      "native_feelings": [
+        "高级",
+        "精密"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/soft-3d-toy",
+      "template_id": "garden-motion-showreel/soft-3d-toy",
+      "native_option_id": "soft-3d-toy",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "软萌 3D",
+      "summary": "软萌 3D：圆润、哑光、黏土和玩具感",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/soft-3d-toy.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/soft-3d-toy.md"
+      ],
+      "native_group": "3D 与材质",
+      "native_subjects": [
+        "宣传片",
+        "吉祥物",
+        "讲解"
+      ],
+      "native_feelings": [
+        "亲和",
+        "愉快"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/liquid-shader",
+      "template_id": "garden-motion-showreel/liquid-shader",
+      "native_option_id": "liquid-shader",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "液态着色器",
+      "summary": "液态与流体：融球、金属液、噪声流动",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/liquid-shader.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/liquid-shader.md"
+      ],
+      "native_group": "3D 与材质",
+      "native_subjects": [
+        "片头",
+        "转场",
+        "Logo"
+      ],
+      "native_feelings": [
+        "迷幻",
+        "流动"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/stained-glass",
+      "template_id": "garden-motion-showreel/stained-glass",
+      "native_option_id": "stained-glass",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "彩色玻璃镶嵌",
+      "summary": "彩色玻璃镶嵌：金属接缝分隔透光色片，彩光随背光落入空间",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/stained-glass.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/stained-glass.md"
+      ],
+      "native_group": "3D 与材质",
+      "native_subjects": [
+        "文化工艺",
+        "品牌情绪",
+        "Logo"
+      ],
+      "native_feelings": [
+        "通透",
+        "静谧"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/tilt-shift-miniature",
+      "template_id": "garden-motion-showreel/tilt-shift-miniature",
+      "native_option_id": "tilt-shift-miniature",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "移轴微缩",
+      "summary": "移轴微缩：俯斜视角、选择性焦点和局部活动，缩小一个世界",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/tilt-shift-miniature.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/tilt-shift-miniature.md"
+      ],
+      "native_group": "3D 与材质",
+      "native_subjects": [
+        "服务流程",
+        "空间概览",
+        "循环"
+      ],
+      "native_feelings": [
+        "精巧",
+        "专注"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/generative-geometry",
+      "template_id": "garden-motion-showreel/generative-geometry",
+      "native_option_id": "generative-geometry",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "生成几何",
+      "summary": "规则生成的阵列、波、对称图形",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/generative-geometry.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/generative-geometry.md"
+      ],
+      "native_group": "生成与抽象",
+      "native_subjects": [
+        "循环",
+        "作品集",
+        "片头"
+      ],
+      "native_feelings": [
+        "催眠",
+        "秩序"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/particle-field",
+      "template_id": "garden-motion-showreel/particle-field",
+      "native_option_id": "particle-field",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "粒子场",
+      "summary": "成千上万的点：流动、聚合、组字、炸开",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/particle-field.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/particle-field.md"
+      ],
+      "native_group": "生成与抽象",
+      "native_subjects": [
+        "签名时刻",
+        "Logo"
+      ],
+      "native_feelings": [
+        "宏大",
+        "科技"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/soft-organic",
+      "template_id": "garden-motion-showreel/soft-organic",
+      "native_option_id": "soft-organic",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "柔光有机",
+      "summary": "柔光有机：颗粒渐变、慢慢变形的形状、衬线斜体",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/soft-organic.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/soft-organic.md"
+      ],
+      "native_group": "生成与抽象",
+      "native_subjects": [
+        "品牌情绪片",
+        "生活方式宣传"
+      ],
+      "native_feelings": [
+        "温暖",
+        "安静"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/comic-pop",
+      "template_id": "garden-motion-showreel/comic-pop",
+      "native_option_id": "comic-pop",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "漫画分格",
+      "summary": "漫画分格：粗墨线、网点、速度线、拟声大字",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/comic-pop.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/comic-pop.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "金句卡点",
+        "游戏预告",
+        "功能演示"
+      ],
+      "native_feelings": [
+        "热血",
+        "幽默"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/flat-vector",
+      "template_id": "garden-motion-showreel/flat-vector",
+      "native_option_id": "flat-vector",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "扁平插画",
+      "summary": "扁平插画：无描边色块的小世界，镜头在尺度之间穿行",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/flat-vector.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/flat-vector.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "原理讲解",
+        "品牌故事"
+      ],
+      "native_feelings": [
+        "清晰",
+        "亲和"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/guochao",
+      "template_id": "garden-motion-showreel/guochao",
+      "native_option_id": "guochao",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "国潮纹样",
+      "summary": "国潮纹样：传统纹样和色彩，现代的版式和节奏",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/guochao.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/guochao.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "节庆营销",
+        "国货宣传",
+        "Logo"
+      ],
+      "native_feelings": [
+        "喜庆",
+        "雅致"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/painterly",
+      "template_id": "garden-motion-showreel/painterly",
+      "native_option_id": "painterly",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "油画笔触",
+      "summary": "油画笔触：方向场笔触、区域色组，画是活的",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/painterly.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/painterly.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "品牌情绪片",
+        "文化艺术",
+        "片头"
+      ],
+      "native_feelings": [
+        "浓烈",
+        "怀旧"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/cel-anime-80s",
+      "template_id": "garden-motion-showreel/cel-anime-80s",
+      "native_option_id": "cel-anime-80s",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "80 年代赛璐璐动画",
+      "summary": "80 年代赛璐璐动画：手绘背景、硬边色层、有限姿态与摄影台镜头",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/cel-anime-80s.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/cel-anime-80s.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "角色宣传",
+        "故事片头",
+        "预告"
+      ],
+      "native_feelings": [
+        "鲜明",
+        "戏剧感"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/rubber-hose",
+      "template_id": "garden-motion-showreel/rubber-hose",
+      "native_option_id": "rubber-hose",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "橡皮管动画",
+      "summary": "橡皮管动画：连续曲肢、挤压伸展、蓄力与反应驱动表演",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/rubber-hose.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/rubber-hose.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "吉祥物",
+        "轻喜剧讲解",
+        "Logo"
+      ],
+      "native_feelings": [
+        "诙谐",
+        "活泼"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/whiteboard-explainer",
+      "template_id": "garden-motion-showreel/whiteboard-explainer",
+      "native_option_id": "whiteboard-explainer",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "白板手绘解说",
+      "summary": "白板手绘解说：分笔绘制与箭头逐步说明关系，保留可回看的全局图",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/whiteboard-explainer.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/whiteboard-explainer.md"
+      ],
+      "native_group": "插画与漫画",
+      "native_subjects": [
+        "原理讲解",
+        "流程说明",
+        "课程片段"
+      ],
+      "native_feelings": [
+        "亲近",
+        "清晰"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/crayon-storybook",
+      "template_id": "garden-motion-showreel/crayon-storybook",
+      "native_option_id": "crayon-storybook",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "蜡笔绘本",
+      "summary": "蜡笔、彩铅、水彩的绘本",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/crayon-storybook.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/crayon-storybook.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "故事向宣传",
+        "讲解"
+      ],
+      "native_feelings": [
+        "童趣",
+        "温暖"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/ink-wash",
+      "template_id": "garden-motion-showreel/ink-wash",
+      "native_option_id": "ink-wash",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "水墨",
+      "summary": "水墨：晕染、飞白、留白",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/ink-wash.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/ink-wash.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "东方题材",
+        "片头"
+      ],
+      "native_feelings": [
+        "意境",
+        "沉静"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/paper-cut",
+      "template_id": "garden-motion-showreel/paper-cut",
+      "native_option_id": "paper-cut",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "纸艺分层",
+      "summary": "纸艺分层：剪纸、投影、纸纹、立体书",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/paper-cut.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/paper-cut.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "宣传片",
+        "节日",
+        "讲解"
+      ],
+      "native_feelings": [
+        "温暖",
+        "精巧"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/copperplate-engraving",
+      "template_id": "garden-motion-showreel/copperplate-engraving",
+      "native_option_id": "copperplate-engraving",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "铜版雕刻",
+      "summary": "铜版雕刻：随形排线、交叉刻线、纸上图谱",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/copperplate-engraving.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/copperplate-engraving.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "工艺宣传",
+        "讲解",
+        "产品细节",
+        "片头"
+      ],
+      "native_feelings": [
+        "精细",
+        "沉静"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/ukiyo-e",
+      "template_id": "garden-motion-showreel/ukiyo-e",
+      "native_option_id": "ukiyo-e",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "浮世绘木版",
+      "summary": "浮世绘木版：主版墨线、分版套色、局部渐层与斜向截景",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/ukiyo-e.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/ukiyo-e.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "文化工艺",
+        "旅行片头",
+        "品牌故事"
+      ],
+      "native_feelings": [
+        "平和",
+        "有力"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/shadow-puppet",
+      "template_id": "garden-motion-showreel/shadow-puppet",
+      "native_option_id": "shadow-puppet",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "透光皮影",
+      "summary": "透光皮影：染色镂空、关节操纵与幕布背光，叠片加深",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/shadow-puppet.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/shadow-puppet.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "文化宣传",
+        "故事讲解",
+        "Logo"
+      ],
+      "native_feelings": [
+        "温暖",
+        "戏剧感"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/illuminated-manuscript",
+      "template_id": "garden-motion-showreel/illuminated-manuscript",
+      "native_option_id": "illuminated-manuscript",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "泥金手抄本",
+      "summary": "泥金手抄本：羊皮纸、墨字与金饰组成书页，装饰里发生局部故事",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/illuminated-manuscript.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/illuminated-manuscript.md"
+      ],
+      "native_group": "手作",
+      "native_subjects": [
+        "文学片头",
+        "文化工艺",
+        "短寓言"
+      ],
+      "native_feelings": [
+        "珍重",
+        "静谧"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/cinematic-title",
+      "template_id": "garden-motion-showreel/cinematic-title",
+      "native_option_id": "cinematic-title",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "电影片头",
+      "summary": "电影片头：宽银幕、胶片颗粒、慢推、衬线大字",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/cinematic-title.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/cinematic-title.md"
+      ],
+      "native_group": "电影感",
+      "native_subjects": [
+        "片头",
+        "预告",
+        "Logo"
+      ],
+      "native_feelings": [
+        "史诗",
+        "沉稳"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    },
+    {
+      "candidate_id": "garden-motion-showreel:garden-motion-showreel/mixed-media-era",
+      "template_id": "garden-motion-showreel/mixed-media-era",
+      "native_option_id": "mixed-media-era",
+      "native_template_group": "style",
+      "native_role": "scene",
+      "title": "年代媒介混搭",
+      "summary": "每个年代一种媒介，一根线串起整部片",
+      "uses": [
+        "broll"
+      ],
+      "min_duration_seconds": 0.041666666666666664,
+      "native_source": "vendor/garden-skills/skills/motion-showreel/references/styles/mixed-media-era.md",
+      "skill_path": "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+      "native_instructions": [
+        "vendor/garden-skills/skills/motion-showreel/SKILL.md",
+        "vendor/garden-skills/skills/motion-showreel/references/styles/mixed-media-era.md"
+      ],
+      "native_group": "电影感",
+      "native_subjects": [
+        "历史回顾",
+        "作品集"
+      ],
+      "native_feelings": [
+        "史诗",
+        "动人"
+      ],
+      "limitations": [
+        "原生创作风格，按实际口播在 Job 内重新设计主体、动作和构图。",
+        "当前接法输出无声竖屏整屏 B-roll。按实际词窗、材料和原生风格核对能否创作。"
+      ]
+    }
+  ]
+}

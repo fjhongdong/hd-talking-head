@@ -37,6 +37,8 @@ DEPENDENCY_CONTRACTS = {
     'bang-motion': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
     'anidoodle': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
     'sweety-handdraw-video': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'by_composition'},
+    'garden-motion-showreel': {"executor": 'reference_adapter', "renderer": 'HTMLCanvas', "output": 'opaque_video'},
+    'useanimations': {"executor": 'reference_adapter', "renderer": 'Lottie', "output": 'alpha_video'},
 }
 
 # Complete native creation workflows share the parent task/result contract.
@@ -49,6 +51,7 @@ CREATIVE_SKILL_ADAPTERS = {
     'huashu-art-motion': 'motion_native_skill_adapter',
     'anidoodle': 'anidoodle_native_adapter',
     'sweety-handdraw-video': 'sweety_native_adapter',
+    'garden-motion-showreel': 'garden_native_adapter',
 }
 
 

@@ -182,8 +182,8 @@ class OverlayAlignmentTest(unittest.TestCase):
             workspace = Path(directory).resolve()
             root = workspace / "edit/hd/jobs/current"
             root.mkdir(parents=True)
-            stages = {"speech_cleanup": {"status": "approved", "artifacts": []},
-                      "edit_structure": {"status": "approved", "artifacts": []}}
+            stages = {"speech_cleanup": {"status": "completed", "artifacts": []},
+                      "edit_structure": {"status": "completed", "artifacts": []}}
             def write(relative, value, stage=None):
                 path = root / relative
                 path.parent.mkdir(parents=True, exist_ok=True)

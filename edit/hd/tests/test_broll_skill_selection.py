@@ -22,7 +22,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         empty = SimpleNamespace(load_template_catalog=lambda *_args, **_kwargs: [])
         spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
         with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
-             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty]):
+             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty, empty]):
             rows = selection.motion_native_candidates(ROOT)
         for row, template in zip(rows, templates):
             duration_fields = {'min_duration_seconds', 'max_duration_seconds'}
@@ -90,7 +90,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
         empty = SimpleNamespace(load_template_catalog=lambda *_args, **_kwargs: [])
         spec = SimpleNamespace(loader=SimpleNamespace(exec_module=lambda _module: None))
         with patch.object(selection.importlib.util, 'spec_from_file_location', return_value=spec), \
-             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty]):
+             patch.object(selection.importlib.util, 'module_from_spec', side_effect=[module, empty, empty, empty]):
             rows = selection.motion_native_candidates(ROOT)
         self.assertEqual([row['native_role'] for row in rows], [t['native_role'] for t in templates])
         self.assertEqual([row['role'] for row in rows], ['native', 'native'] + ['component'] * 4)
@@ -377,7 +377,11 @@ class BrollSkillSelectionTest(unittest.TestCase):
         by_id = {row["candidate_id"]: row for row in catalog}
         self.assertFalse(any(cid.startswith("hd-talking-head-talkcraft:") for cid in by_id))
         self.assertEqual(len([cid for cid in by_id if cid.startswith("talkcraft-native-adaptation:")]), 4)
-        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 69)
+        self.assertEqual(len([cid for cid in by_id if cid.startswith("overlay:")]), 69 + 300)
+        self.assertEqual(sum(row['skill_id'] == 'garden-motion-showreel' and row['role'] == 'native'
+                             for row in catalog), 43)
+        self.assertEqual(sum(row['skill_id'] == 'useanimations' and row['role'] == 'aroll_overlay'
+                             for row in catalog), 300)
         added = [row for row in catalog if row['skill_id'] in {'barty-motion-graphics', 'bang-motion'}]
         self.assertEqual(len({selection._template_identity(row) for row in added}), 39)
         self.assertEqual({row['skill_id'] for row in added}, {'barty-motion-graphics', 'bang-motion'})

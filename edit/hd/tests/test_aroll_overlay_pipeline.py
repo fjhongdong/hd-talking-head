@@ -193,7 +193,7 @@ class ArollOverlayPipelineTests(unittest.TestCase):
                                    side_effect=sentinel) as render:
                 with self.assertRaisesRegex(RuntimeError, "stop after dispatch"):
                     visual_assets_v2._prepare_visual_assets_v2_locked(
-                        job, plan, {}, component_adapters={}
+                        job, plan, component_adapters={}
                     )
         execute.assert_called_once_with(job, segment, adapters={})
         self.assertEqual(render.call_args.kwargs["artifacts"], ("alpha-artifact",))
