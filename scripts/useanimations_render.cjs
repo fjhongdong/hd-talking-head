@@ -15,6 +15,10 @@ function argument(name) {
 async function render() {
   const brief = JSON.parse(fs.readFileSync(argument('--brief'), 'utf8'));
   const data = JSON.parse(fs.readFileSync(argument('--icon'), 'utf8'));
+  const interaction = argument('--interaction');
+  if (!['loop', 'hover-loop', 'hover', 'hover-replay', 'click-replay', 'click-toggle'].includes(interaction)) {
+    throw new Error('Unknown upstream interaction');
+  }
   const { chromium } = require(argument('--playwright'));
   const { width, height, frames, fps } = brief.composition;
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'useanimations-render-'));
@@ -42,7 +46,7 @@ async function render() {
     </style><div id="card"><div id="tile"><div id="icon"></div></div>
     <span id="label" hidden></span></div>`);
     await page.addScriptTag({ path: argument('--lottie') });
-    await page.evaluate(async ({ brief, data }) => {
+    await page.evaluate(async ({ brief, data, interaction }) => {
       const card = document.getElementById('card');
       const tile = document.getElementById('tile');
       const label = document.getElementById('label');
@@ -77,12 +81,62 @@ async function render() {
         }
       }
       window.renderOverlay = frame => {
-        const nativeFrame = Math.min(animation.totalFrames - 0.001, frame * animation.frameRate / fps);
+        const endFrame = animation.totalFrames - 0.001;
+        const elapsed = frame * animation.frameRate / fps;
+        const second = brief.labels[1]?.start_frame;
+        let nativeFrame;
+        if (interaction === 'loop' || interaction === 'hover-loop') {
+          nativeFrame = elapsed % animation.totalFrames;
+        } else if ((interaction === 'click-toggle' || interaction === 'hover') && second !== undefined) {
+          // The first label names the initial native state; the second triggers
+          // the native forward transition to its completed state.
+          nativeFrame = frame < second ? 0 : Math.min(endFrame, (frame - second) * animation.frameRate / fps);
+        } else {
+          nativeFrame = Math.min(endFrame, elapsed);
+        }
         animation.goToAndStop(nativeFrame, true);
         const state = brief.labels.findLastIndex(item => item.start_frame <= frame);
         showLabel(state >= 0 ? brief.labels[state].text : '', state > 0);
       };
-    }, { brief, data });
+    }, { brief, data, interaction });
+
+    // Inspect the native icon alone; a visible host card cannot make an empty icon pass.
+    const nativeFrames = Math.ceil((data.op - data.ip) / data.fr * fps);
+    const start = (interaction === 'click-toggle' || interaction === 'hover') && brief.labels.length > 1
+      ? brief.labels[1].start_frame : 0;
+    const cycleEnd = Math.min(frames - 1, start + nativeFrames);
+    const samples = new Set(Array.from({ length: 17 }, (_, i) => Math.round(start + (cycleEnd - start) * i / 16)));
+    let visibleSamples = 0;
+    let previous = null;
+    let moving = false;
+    await page.evaluate(() => {
+      document.getElementById('card').style.background = 'transparent';
+      document.getElementById('tile').style.background = 'transparent';
+      document.getElementById('label').style.visibility = 'hidden';
+    });
+    const bounds = await page.locator('#icon').boundingBox();
+    for (const frame of samples) {
+      await page.evaluate(frame => window.renderOverlay(frame), frame);
+      const png = await page.screenshot({ clip: bounds, omitBackground: true });
+      const decoded = spawnSync(argument('--ffmpeg'), [
+        '-v', 'error', '-f', 'image2pipe', '-vcodec', 'png', '-i', '-',
+        '-f', 'rawvideo', '-pix_fmt', 'rgba', '-frames:v', '1', '-',
+      ], { input: png, maxBuffer: 64 * 1024 * 1024 });
+      if (decoded.error || decoded.status !== 0) throw new Error('Cannot inspect native icon pixels');
+      const rgba = decoded.stdout;
+      let visible = 0;
+      for (let index = 3; index < rgba.length; index += 4) if (rgba[index] >= 64) visible++;
+      if (visible > 0) visibleSamples++;
+      if (previous && visible > 0 && !rgba.equals(previous)) moving = true;
+      if (visibleSamples >= 2 && moving) break;
+      previous = rgba;
+    }
+    if (visibleSamples < 2 || !moving) throw new Error('Native icon is empty or its motion is not visible');
+    await page.evaluate(() => {
+      document.getElementById('card').style.background = '';
+      document.getElementById('tile').style.background = '';
+      document.getElementById('label').style.visibility = '';
+    });
 
     for (let frame = 0; frame < frames; frame += 1) {
       await page.evaluate(frame => window.renderOverlay(frame), frame);

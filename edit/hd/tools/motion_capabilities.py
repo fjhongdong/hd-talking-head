@@ -45,7 +45,7 @@ def _strings(value, label, *, nonempty=False):
     return value
 
 
-def load_profiles(project_root: Path) -> dict[str, dict]:
+def load_profiles(project_root: Path, *, native_rows=None) -> dict[str, dict]:
     project = Path(project_root).resolve(strict=True)
     data = contract_artifacts.read_json_artifact(project / INDEX)
     if data.get("schema_version") != 3 or not isinstance(data.get("profiles"), list):
@@ -93,7 +93,7 @@ def load_profiles(project_root: Path) -> dict[str, dict]:
             if cid.startswith(('overlay:anidoodle/', 'overlay:huashu-art-motion/')):
                 if native_alpha_routes is None:
                     from .broll_skill_selection import motion_native_candidates
-                    native_alpha_routes = {'overlay:' + row['template_id'] for row in motion_native_candidates(project)
+                    native_alpha_routes = {'overlay:' + row['template_id'] for row in (native_rows if native_rows is not None else motion_native_candidates(project))
                                            if 'aroll_overlay' in row.get('uses', [])}
                 declared.update(native_alpha_routes)
             if cid not in declared:
@@ -139,17 +139,20 @@ def describe_candidates(project_root: Path, candidates: list[dict], *, use: str,
     return result
 
 
-def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None = None) -> list[dict]:
-    from .broll_skill_selection import _declarations
+def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None = None, native_rows=None) -> list[dict]:
+    from .broll_skill_selection import _declarations, motion_native_candidates
     from .overlay_selection import _ROUTE_BY_TEMPLATE
 
     project = Path(project_root).resolve(strict=True)
     skill = project
+    if native_rows is None:
+        native_rows = motion_native_candidates(project)
+    if profiles is None:
+        profiles = load_profiles(project, native_rows=native_rows)
     rows = []
     for template, route in _ROUTE_BY_TEMPLATE.items():
         if template == 'barty-motion-graphics/motion-broll':
-            from .broll_skill_selection import motion_native_candidates
-            native = next(row for row in motion_native_candidates(project) if row['template_id'] == template)
+            native = next(row for row in native_rows if row['template_id'] == template)
             rows.append({**native, 'candidate_id': 'overlay:' + route, 'role': 'aroll_overlay'})
             continue
         values, _ = _declarations(skill / "scripts" / (_OVERLAY_MODULES[route] + ".py"))
@@ -164,8 +167,7 @@ def overlay_candidates(project_root: Path, *, profiles: dict[str, dict] | None =
                      "template_id": template, "source_route": route,
                      "role": "aroll_overlay", "status": "supported",
                      "adapter_module": _OVERLAY_MODULES[route]})
-    from .broll_skill_selection import motion_native_candidates
-    for candidate in motion_native_candidates(project):
+    for candidate in native_rows:
         if candidate.get('dependency_id') not in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'}:
             continue
         if 'aroll_overlay' in candidate.get('uses', []):
@@ -267,14 +269,15 @@ def _load_catalog(project_root: Path) -> list[dict]:
     from .broll_skill_selection import _discover_native_candidates, talkcraft_candidates, motion_native_candidates
 
     project = Path(project_root).resolve(strict=True)
-    profiles = load_profiles(project)
-    raw = _discover_native_candidates(project)
+    native_rows = motion_native_candidates(project)
+    profiles = load_profiles(project, native_rows=native_rows)
+    raw = _discover_native_candidates(project, native_rows=native_rows)
     rows = {row["candidate_id"]: row for row in describe_candidates(project, raw, use="broll", profiles=profiles)}
     components = [row for row in talkcraft_candidates(project) if row['native_role'] != 'scene']
-    components.extend(row for row in motion_native_candidates(project) if row.get('role') == 'component')
+    components.extend(row for row in native_rows if row.get('role') == 'component')
     rows.update((row['candidate_id'], row) for row in describe_candidates(
         project, components, use='component', profiles=profiles))
-    for row in overlay_candidates(project, profiles=profiles):
+    for row in overlay_candidates(project, profiles=profiles, native_rows=native_rows):
         rows[row["candidate_id"]] = row
     return sorted(rows.values(), key=lambda row: row["candidate_id"])
 
@@ -510,7 +513,11 @@ def _bound_brief(job_dir: Path | None, treatment: Mapping, segment: Mapping,
                 if result['renderer_version'] != segment['bindings'][component]['renderer_version']:
                     raise ValueError('Native motion result renderer differs from the selected binding')
                 call = contract_artifacts.read_json_artifact(module.exact(root, result['render_call']))
-                sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else ({'.ts', '.js', '.html', '.json', '.svg', '.py'} if brief['dependency_id'] in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} else {'.html'}))]
+                if brief['dependency_id'] == 'garden-motion-showreel':
+                    sources = [f for f in module.authored_sources(brief, call)
+                               if Path(f['job_path']).suffix.lower() in {'.html', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.svg'}]
+                else:
+                    sources = [f for f in call['project_files'] if Path(f['job_path']).suffix in ({'.ts', '.tsx'} if brief['dependency_id'] == 'video-shotcraft' else ({'.ts', '.js', '.html', '.json', '.svg', '.py'} if brief['dependency_id'] in {'anidoodle', 'sweety-handdraw-video', 'huashu-art-motion'} else {'.html'}))]
                 if brief['dependency_id'] == 'mg-styles-15' and brief['template_id'] == '3d-render':
                     for step in call['native_preparations']:
                         for authored in step['inputs']:
@@ -774,7 +781,9 @@ def _semantic_assessment(job_dir, treatment, segment, component, row, speech, br
                 motion_required = {item['job_path'] for item in motion_result['scene_sources']}
                 cited = {ref.get('path') for ref in refs if isinstance(ref, dict) and 'quote' in ref}
                 records = [ref for ref in refs if isinstance(ref, dict) and ref.get('path') == motion_result['record']['job_path']]
-                if (not motion_required.issubset(cited) or len(records) != 1
+                scene_cited = (bool(motion_required & cited) if row.get('dependency_id') == 'garden-motion-showreel'
+                               else motion_required.issubset(cited))
+                if (not scene_cited or len(records) != 1
                         or records[0].get('pointer') != '/status' or records[0].get('value') != 'completed'):
                     raise ValueError('Native motion must cite its actual authored scene and completed result')
         talkcraft_required = set()

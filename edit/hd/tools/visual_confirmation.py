@@ -2986,6 +2986,15 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
     candidates = [record for field in ('materials', 'assets', 'files') for record in facts.get(field, [])
                   if field == 'materials' or any(Path(record.get(name, '')).suffix.lower() in media
                                                 for name in ('job_path', 'scene_path'))]
+    project_files = []
+    if brief.get('dependency_id') == 'garden-motion-showreel':
+        result_path = _path(root, brief['result_record_path'])
+        if result_path.is_file():
+            from scripts.garden_native_adapter import authored_sources, exact
+            call = _read(exact(root, _read(result_path)['render_call']))
+            project_files = authored_sources(brief, call)
+            candidates.extend(item for item in project_files
+                              if Path(item['job_path']).suffix.lower() in media | {'.svg', '.avif'})
     if isinstance(facts.get('image'), dict):
         candidates.append(facts['image'])
     if not candidates:
@@ -3073,6 +3082,7 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
     code = {'.html', '.tsx', '.ts', '.js', '.mjs', '.cjs', '.py', '.svg'}
     authored_inputs = [item for field in ('files', 'assets') for item in brief.get(field, [])
                        if Path(item.get('job_path', '')).suffix.lower() in code]
+    authored_inputs.extend(item for item in project_files if Path(item['job_path']).suffix.lower() in code)
     if isinstance(brief.get('entry'), dict): authored_inputs.append(brief['entry'])
 
     def native_origin(ref):
@@ -3244,8 +3254,13 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
         payload = _path(root, scenes[0]['brief_path']).read_bytes()
         if hashlib.sha256(payload).hexdigest() != segment['bindings'][cid].get('brief_sha256'):
             raise VisualConfirmationError('authorized native input brief identity changed')
-        return json.loads(payload, object_pairs_hook=artifacts._strict_object,
-                          parse_constant=artifacts._reject_nonfinite)
+        value = json.loads(payload, object_pairs_hook=artifacts._strict_object,
+                           parse_constant=artifacts._reject_nonfinite)
+        if segment['bindings'][cid]['dependency_id'] == 'garden-motion-showreel':
+            from scripts.garden_native_adapter import task_source
+            if value.get('task_source') != task_source(frozen, original, segment['segment_id'], cid):
+                raise VisualConfirmationError('execution changed authorized Garden task_source')
+        return value
 
     actual = {segment['segment_id']: segment for segment in director['segments']}
     approved_cache = {}

@@ -47,8 +47,12 @@ def check_runtime(project_root=SKILL, mode='reuse', project_directory=None):
     v=subprocess.check_output([tools['node'],'--version'],text=True).strip()
     if not re.match(r'v(\d+)',v) or int(re.match(r'v(\d+)',v).group(1))<18: raise ValueError('Garden requires Node 18+')
     if project_directory is not None:
-        r=subprocess.run([tools['node'],'-e',"require.resolve('playwright')"],cwd=project_directory,capture_output=True,text=True)
-        if r.returncode: raise ValueError('Install upstream Playwright in the isolated native Job project')
+        browser=source_root(project_root)/'skills/motion-showreel/scripts/lib/browser.mjs'
+        code=('import {loadChromium} from '+json.dumps(browser.as_uri())+';'
+              'await loadChromium(process.argv[1]);')
+        r=subprocess.run([tools['node'],'--input-type=module','-e',code,str(Path(project_directory).resolve())],
+                         cwd=project_directory,capture_output=True,text=True,timeout=60)
+        if r.returncode: raise ValueError('Garden native browser preflight failed: '+r.stderr[-1200:])
     return {'status':'ready','tools':tools,'renderer_version':RENDERER_VERSION}
 
 def validate_brief(payload, *, dependency_id=DEPENDENCY_ID):
@@ -130,7 +134,7 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
             anchors=[{'text':w['text'],'start':max(0,w['start']-segment['start']),
                       'end':min(segment['end'],w['end'])-segment['start']}
                      for w in words or [] if w['start']<segment['end'] and w['end']>segment['start']]
-            if (any(b['task_source'].get(k)!=expected.get(k) for k in ('semantic_row_id','quote','semantic'))
+            if (b['task_source']!=expected
                     or len(beats)!=1 or b['transcript']!=beats[0].get('transcript')
                     or sha(brief_path)!=binding.get('brief_sha256') or b['job_id']!=job.job_id
                     or b['source_binding']!={'aroll_sha256':arroll,'segment_id':segment['segment_id'],
@@ -143,7 +147,7 @@ def validate_selected_inputs(job, director, treatment, *, dependency_id=None):
 
 def create_adapter(project_root,python_executable,brief_loader,*,renderer_version=None,dependency_id=DEPENDENCY_ID):
     from edit.hd.tools.broll_component_executor import ReferenceProcessAdapter,ReferenceProcessMedia
-    source_root(project_root,dependency_id=dependency_id);check_runtime(project_root,mode='reuse')
+    source_root(project_root,dependency_id=dependency_id)
     if renderer_version not in (None,RENDERER_VERSION):
         raise ValueError('Unknown Garden renderer')
     entry_sha=sha(SKILL/ENTRY);launcher=Path(python_executable).resolve(strict=True)
@@ -225,13 +229,13 @@ def consume_result(payload,manifest,output):
 def native_task(job, recipe, component, brief_path, *, approved_task_source, defer_runtime=False):
     payload=Path(brief_path).read_bytes(); b=validate_brief(payload); row=_template(b)
     if (b['job_id']!=job.job_id or sha(brief_path)!=component['brief_sha256'] or
-        any(b['task_source'][k]!=approved_task_source[k] for k in ('semantic_row_id','quote','semantic'))):
+        b['task_source']!=approved_task_source):
         raise ValueError('Garden task changed after selection')
     _inputs(job.job_dir,b)
     runtime={'status':'pending'} if defer_runtime else check_runtime()
     directory=path(job.job_dir,b['project_directory'])
     return {'action':'execute_native_skill','dependency_id':DEPENDENCY_ID,'native_template':row,
-        'native_instructions':row['native_instructions'],'native_options':[], 'task_source':b['task_source'],
+        'native_instructions':[str(path(SKILL,item)) for item in row['native_instructions']],'native_options':[], 'task_source':b['task_source'],
         'template_id':DEPENDENCY_ID+'/'+b['template_id'],'skill_path':str(SKILL/row['skill_path']),
         'job_dir':str(job.job_dir),'brief_path':str(brief_path),'brief_sha256':sha(brief_path),
         'project_directory':str(directory),'runtime':runtime,'segment_id':recipe['segment_id'],
@@ -245,18 +249,62 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source, def
 
 
 def project_files(root,directory):
-    return [descriptor(root,p) for p in sorted(directory.rglob('*')) if p.is_file() and not p.is_symlink()
-            and p.relative_to(directory).parts[0] not in {'node_modules','out','qa','work','.git'}]
+    """Bind authored Job inputs; exclude only this invocation's generated artifacts."""
+    root=Path(root).resolve(strict=True);directory=Path(directory).resolve(strict=True)
+    directory.relative_to(root)
+    records=[]
+    for parent,dirs,files in os.walk(directory,followlinks=False):
+        parent=Path(parent)
+        if parent == directory and 'node_modules' in dirs:
+            dirs.remove('node_modules')
+        for name in [*dirs,*files]:
+            item=parent/name; rel=item.relative_to(directory)
+            if item.is_symlink():
+                raise ValueError('Garden authored project cannot contain symbolic links: '+str(rel))
+            if not item.is_file() or rel==Path('out/native.mp4') or rel in {Path('qa/native-phone.png'),Path('qa/native-sheet.png')}:
+                continue
+            records.append(descriptor(root,item))
+    return sorted(records,key=lambda item:item['job_path'])
 
 
-def _commands(root,b,runtime):
-    directory=path(root,b['project_directory']).resolve(strict=True)
+def authored_sources(brief, call):
+    """Keep scene inputs separate from the native workflow's preview and export files."""
+    project = relative(brief['project_directory'])
+    return [item for item in call['project_files']
+            if relative(item['job_path']).relative_to(project).parts[0] not in {'qa', 'out'}]
+
+
+def runtime_files(root,directory):
+    """Bind local libraries separately from creative source citations."""
+    root=Path(root).resolve(strict=True);directory=Path(directory).resolve(strict=True)
+    modules=directory/'node_modules'
+    if modules.is_symlink():
+        raise ValueError('Garden local dependencies must remain within the Job project')
+    if not modules.exists(): return []
+    if not modules.is_dir(): raise ValueError('Garden local dependencies must be a directory')
+    records=[]
+    for parent,dirs,files in os.walk(modules,followlinks=False):
+        parent=Path(parent)
+        for name in [*dirs,*files]:
+            item=parent/name
+            if item.is_symlink():
+                target=item.resolve(strict=True)
+                if not target.is_relative_to(modules): raise ValueError('Garden dependency link escapes its Job project')
+                records.append({'job_path':item.relative_to(root).as_posix(),'link':os.readlink(item)})
+            elif item.is_file(): records.append(descriptor(root,item))
+    return sorted(records,key=lambda item:item['job_path'])
+
+
+def _commands(root,b,node):
+    directory=path(root,b['project_directory'])
+    if directory.resolve(strict=True) != directory:
+        raise ValueError('Garden Job project cannot be a symbolic link')
     if not (directory/'index.html').is_file() or not (directory/'timeline.js').is_file():
         raise ValueError('Garden native Job project requires its authored page and timeline')
     script=source_root()/'skills/motion-showreel/scripts'
     target=directory/'out/native.mp4'
-    render=[runtime['tools']['node'],str(script/'render.mjs'),str(directory),'--size','1080x1920','--fps','24','--out',str(target)]
-    check=[runtime['tools']['node'],str(script/'inspect.mjs'),'qa',str(target),'--out',str(directory/'qa/native'),
+    render=[node,str(script/'render.mjs'),str(directory),'--size','1080x1920','--fps','24','--out',str(target)]
+    check=[node,str(script/'inspect.mjs'),'qa',str(target),'--out',str(directory/'qa/native'),
            '--expect-size','1080x1920','--expect-fps','24','--expect-duration',str(b['composition']['frames']/24),'--audio','none']
     return directory,target,render,check
 
@@ -268,20 +316,25 @@ def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
     payload=brief_path.read_bytes(); b=validate_brief(payload); _inputs(root,b)
     if b['job_id']!=job.job_id: raise ValueError('Garden task belongs to another Job')
     directory=path(root,b['project_directory']).resolve(strict=True)
-    runtime=check_runtime(project_directory=directory);directory,target,render,check=_commands(root,b,runtime)
+    runtime=check_runtime(project_directory=directory);directory,target,render,check=_commands(root,b,runtime['tools']['node'])
     if argv is not None and argv!=render: raise ValueError('Garden requires its original native render command')
     result_path=path(root,b['result_record_path']);call_path=result_path.with_name(result_path.stem+'.render-call.json')
     if target.exists() or call_path.exists() or result_path.exists(): raise ValueError('Preserve completed Garden results')
-    target.parent.mkdir(parents=True,exist_ok=True); before=project_files(root,directory)
+    target.parent.mkdir(parents=True,exist_ok=True)
+    qa=directory/'qa'
+    if any((qa/name).exists() or (qa/name).is_symlink() for name in ('native-phone.png','native-sheet.png')):
+        raise ValueError('Preserve existing Garden QA outputs')
+    before=project_files(root,directory); dependencies=runtime_files(root,directory)
     call={'schema_version':1,'status':'running','dependency_id':DEPENDENCY_ID,'request_sha256':sha(brief_path),
-          'upstream_commit':SOURCE_PIN,'renderer_version':RENDERER_VERSION,'project_files':before,'steps':[]}
+          'upstream_commit':SOURCE_PIN,'renderer_version':RENDERER_VERSION,'project_files':before,'runtime_files':dependencies,'steps':[]}
     try:
         for command in (render,check):
             p=subprocess.run(command,cwd=directory,capture_output=True,text=True,timeout=1200)
             call['steps'].append({'argv':command,'exit_code':p.returncode,'stdout':p.stdout,'stderr':p.stderr})
             if p.returncode: raise ValueError('Garden native rendering or QA failed: '+p.stderr[-1500:])
         if probe(target,alpha=False)!=b['composition']: raise ValueError('Garden output clock or format differs')
-        if project_files(root,directory)!=before: raise ValueError('Garden authored project changed during rendering')
+        if project_files(root,directory)!=before or runtime_files(root,directory)!=dependencies:
+            raise ValueError('Garden authored project or local dependencies changed during rendering')
         source_root();call.update(status='completed',media=descriptor(root,target))
     except BaseException as e:
         call.update(status='failed',error=str(e));raise
@@ -291,13 +344,18 @@ def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
 
 
 def _verify_call(root,b,payload,call):
-    runtime=check_runtime();directory,target,render,check=_commands(root,b,runtime)
     steps=call.get('steps',[])
+    if not steps or not isinstance(steps[0].get('argv'),list) or not steps[0]['argv']:
+        raise ValueError('Garden native render command missing')
+    node=steps[0]['argv'][0]
+    if not isinstance(node,str) or not Path(node).is_absolute(): raise ValueError('Garden recorded node executable is invalid')
+    directory,target,render,check=_commands(root,b,node)
     if (call.get('status')!='completed' or call.get('dependency_id')!=DEPENDENCY_ID
         or call.get('request_sha256')!=hashlib.sha256(payload).hexdigest()
         or call.get('upstream_commit')!=SOURCE_PIN or call.get('renderer_version')!=RENDERER_VERSION
         or len(steps)!=2 or [x.get('argv') for x in steps]!=[render,check]
         or any(x.get('exit_code')!=0 for x in steps) or call.get('project_files')!=project_files(root,directory)
+        or call.get('runtime_files')!=runtime_files(root,directory)
         or exact(root,call['media'])!=target.resolve(strict=True) or probe(target,alpha=False)!=b['composition']):
         raise ValueError('Garden result does not match its original completed render and checks')
 

@@ -250,7 +250,7 @@ def _native_seconds_ceiling(tree):
     return limits[0]
 
 
-def _discover_native_candidates(project_root: Path) -> list[dict]:
+def _discover_native_candidates(project_root: Path, *, native_rows=None) -> list[dict]:
     """Read actual bridge routes and qualified cards, not caller favorites."""
     project = Path(project_root).resolve(strict=True)
     skill = project
@@ -377,7 +377,7 @@ def _discover_native_candidates(project_root: Path) -> list[dict]:
         add(dep, str(source.relative_to(project)), dep + "/design", "source",
             role="design", limitations=("Design/image source; execute through this Job selected generation channels after complete-list approval",))
     found.extend(row for row in talkcraft_candidates(project) if row['native_role'] == 'scene')
-    found.extend(row for row in motion_native_candidates(project) if row['role'] == 'native')
+    found.extend(row for row in (native_rows if native_rows is not None else motion_native_candidates(project)) if row['role'] == 'native')
     ids = [row["candidate_id"] for row in found]
     if len(ids) != len(set(ids)):
         raise ValueError("B-roll discovery returned duplicate identities")

@@ -11511,7 +11511,9 @@
       "summary": "原生 Phone Incoming 矢量图标，透明贴片。",
       "tags": {
         "actions": [
-          "来电"
+          "来电",
+          "收到来电",
+          "电话响了"
         ],
         "feelings": [],
         "patterns": [],
@@ -11560,7 +11562,9 @@
       "summary": "原生 Phone Missed 矢量图标，透明贴片。",
       "tags": {
         "actions": [
-          "未接来电"
+          "未接来电",
+          "没接电话",
+          "未接电话"
         ],
         "feelings": [],
         "patterns": [],
@@ -11657,7 +11661,9 @@
       "summary": "原生 Phone Outgoing 矢量图标，透明贴片。",
       "tags": {
         "actions": [
-          "拨出"
+          "拨出",
+          "拨打电话",
+          "打电话"
         ],
         "feelings": [],
         "patterns": [],
@@ -12766,7 +12772,13 @@
       "tags": {
         "actions": [
           "纸飞机飞出",
-          "发送"
+          "发送",
+          "发送消息",
+          "发消息",
+          "发送信息",
+          "发信息",
+          "发送邮件",
+          "发邮件"
         ],
         "feelings": [],
         "patterns": [],

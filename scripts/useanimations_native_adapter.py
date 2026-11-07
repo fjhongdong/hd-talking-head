@@ -76,15 +76,21 @@ def validate_brief(payload, *, dependency_id=DEPENDENCY_ID):
         raise ValueError('At most two optional label states are allowed')
     for label in labels:
         if (not isinstance(label, dict) or set(label) != {'text', 'start_frame'}
-                or not isinstance(label['text'], str) or not 1 <= len(label['text']) <= 8
+                or not isinstance(label['text'], str) or not label['text'].strip() or len(label['text']) > 8
                 or any(ord(ch) < 32 for ch in label['text'])
                 or type(label['start_frame']) is not int
                 or not 0 <= label['start_frame'] <= c['frames'] - 24):
             raise ValueError('Invalid label or insufficient reading time')
     if labels and labels[0]['start_frame'] != 0:
         raise ValueError('First label must appear with the icon')
-    if len(labels) == 2 and labels[1]['start_frame'] - labels[0]['start_frame'] < 24:
-        raise ValueError('Each label needs a full second to read')
+    if len(labels) == 2:
+        if labels[0]['text'].split() == labels[1]['text'].split():
+            raise ValueError('A state change requires distinct labels')
+        if labels[1]['start_frame'] - labels[0]['start_frame'] < 24:
+            raise ValueError('Each label needs a full second to read')
+        native_frames = math.ceil(row['min_duration_seconds'] * 24)
+        if row['interaction'] in {'click-toggle', 'hover'} and c['frames'] - labels[1]['start_frame'] < native_frames:
+            raise ValueError('Native transition does not fit after the second state')
     if labels and (x + size + max(48 * len(label['text']) + 48 for label in labels) > 1080-zone['right']
                    or max(size, 60) + y > 1920-zone['bottom']):
         raise ValueError('Caption exceeds parent safe zone')
@@ -260,7 +266,7 @@ if __name__ == '__main__':
             brief_file.write_bytes(raw)
             subprocess.run([runtime['node'], str(renderer), '--brief', str(brief_file), '--output', str(video_file),
                 '--icon', str(source_root(args.project_root) / 'icons' / row['file_name']),
-                '--lottie', runtime['lottie'], '--playwright', runtime['playwright'],
+                '--interaction', row['interaction'], '--lottie', runtime['lottie'], '--playwright', runtime['playwright'],
                 '--chrome', runtime['chrome'], '--ffmpeg', runtime['ffmpeg']], check=True, timeout=300)
             create_artifact_probe(ffprobe_executable=runtime['ffprobe']).probe(
                 video_file, 'video', {'alpha': True})
