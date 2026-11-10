@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import re
+import secrets
 import shutil
 import signal
 import subprocess
@@ -25,8 +26,11 @@ else:
     SKILL = PACKAGE_ROOT
 sys.path.insert(0, str(SKILL / "scripts"))
 from adapter_kit import sha256_file as sha
+from riso_chrome_launcher import process_identity
+from riso_recovery import checkpoint_path, load_checkpoint, media_identity, save_checkpoint
 ENTRY = "scripts/riso_native_adapter.py"
 CHROME_LAUNCHER = "scripts/riso_chrome_launcher.py"
+RECOVERY = "scripts/riso_recovery.py"
 VERSION = "1.0.0"
 DEPENDENCY_ID = "eian-riso-broll"
 SOURCE_PIN = "e782ad7051f5fce1ca371523c144f4cb78ab5c40"
@@ -229,8 +233,11 @@ def check_runtime(project_root, executables=None):
     if int(version.lstrip("v").split(".")[0]) < 22:
         raise ValueError("Riso requires existing Node >=22")
     paths["chrome_launcher_sha256"] = sha(SKILL / CHROME_LAUNCHER)
+    paths["implementation_identity"] = hashlib.sha256(
+        (paths["chrome_launcher_sha256"] + sha(SKILL / RECOVERY)).encode()
+    ).hexdigest()
     hashes = [sha(paths[k]) for k in ("node", "ffmpeg", "ffprobe", "browser", "crashpad")]
-    paths["identity"] = hashlib.sha256("\n".join([*hashes, paths["chrome_launcher_sha256"]]).encode()).hexdigest()
+    paths["identity"] = hashlib.sha256("\n".join(hashes).encode()).hexdigest()
     return paths
 
 
@@ -276,6 +283,7 @@ def create_adapter(project_root, python_executable, brief_loader):
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--media-manifest", "{media_manifest_fd}",
                        "--skill-root", str(SKILL), "--project-root", str(project), "--node", runtime["node"],
                        "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--runtime-identity", runtime["identity"],
+                       "--implementation-identity", runtime["implementation_identity"],
                        "--output", "{output_path}"))
 
 
@@ -327,68 +335,99 @@ def log_tail(log):
     return os.pread(fd, LOG_TAIL_BYTES, start).decode("utf-8", "replace")
 
 
-def settle_crashpad(log_path, executable):
-    """Reap only reparented, same-user Crashpad writers to this browser's log."""
-    deadline = time.monotonic() + 3
+def signal_process(pid, sig):
+    try:
+        os.kill(pid, sig)
+    except ProcessLookupError:
+        pass
 
-    def query(argv):
-        result = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                                timeout=max(0, deadline - time.monotonic()))
+
+def settle_chrome(log_path, browser, deadline):
+    """Stop the registered Chrome before its Crashpad handler can be restarted."""
+    owner_path = log_path.with_suffix(".owner.json")
+    try:
+        owner = json.loads(owner_path.read_bytes())
+    except FileNotFoundError:
+        # The launcher never execs Chrome before publishing its identity.
+        return
+    if (type(owner.get("pid")) is not int or owner["pid"] <= 1
+            or type(owner.get("group")) is not int or owner["group"] <= 1
+            or type(owner.get("started")) is not str
+            or type(owner.get("launcher")) is not str or not Path(owner["launcher"]).is_absolute()):
+        raise ValueError("Invalid Riso Chrome ownership record")
+    pid = owner["pid"]
+    term_at = None
+    killed = False
+    while time.monotonic() < deadline:
+        current = process_identity(pid, max(0, deadline - time.monotonic()))
+        if not current or current["started"] != owner["started"]:
+            return
+        if (current["uid"] != os.getuid() or current["group"] != owner["group"]
+                or current["command"] not in {browser, owner["launcher"]}):
+            raise RuntimeError("Riso Chrome ownership could not be confirmed")
+        if term_at is None:
+            signal_process(pid, signal.SIGTERM)
+            term_at = time.monotonic()
+        elif not killed and time.monotonic() >= term_at + 0.2:
+            signal_process(pid, signal.SIGKILL)
+            killed = True
+        time.sleep(0.05)
+    raise RuntimeError("Riso Chrome did not exit")
+
+
+def settle_crashpad(log_path, executable, deadline):
+    """Reap only same-user, reparented Crashpad writers to this phase's log."""
+    signaled = {}
+    empty_scan = False
+    while time.monotonic() < deadline:
+        result = subprocess.run(
+            ["/usr/sbin/lsof", "-nP", "-a", "-d", "2", "-Fpa", "--", str(log_path)],
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            timeout=max(0, deadline - time.monotonic()),
+        )
         if result.returncode not in (0, 1) or result.stderr:
-            raise RuntimeError("Could not verify Riso Chrome cleanup: " + result.stderr.strip())
-        return result.stdout
-
-    def writers():
-        output = query(["/usr/sbin/lsof", "-nP", "-a", "-d", "2", "-Fpa", "--", str(log_path)])
-        pids = set()
+            raise RuntimeError("Could not verify Riso Crashpad cleanup: " + result.stderr.strip())
         pid = None
-        for field in output.splitlines():
+        candidates = False
+        for field in result.stdout.splitlines():
             if field.startswith("p"):
                 pid = int(field[1:])
             elif field in {"aw", "au"} and pid is not None:
-                pids.add(pid)
-        return pids
-
-    def identity(pid):
-        output = query(["/bin/ps", "-ww", "-p", str(pid), "-o", "ppid=,uid=,lstart=,comm="])
-        fields = output.split(maxsplit=7)
-        if len(fields) == 8 and fields[:2] == ["1", str(os.getuid())] and fields[7].strip() == executable:
-            return tuple(fields[:7])
-        return None
-
-    def send(pid, sig):
-        try:
-            os.kill(pid, sig)
-        except ProcessLookupError:
-            pass
-
-    owned = {}
-    for pid in writers():
-        stamp = identity(pid)
-        if stamp is not None:
-            send(pid, signal.SIGTERM)
-            owned[pid] = stamp
-    if not owned:
-        return []
-    time.sleep(0.2)
-    for pid in writers() & owned.keys():
-        if identity(pid) == owned[pid]:
-            send(pid, signal.SIGKILL)
-    while any(identity(pid) == stamp for pid, stamp in owned.items()):
-        if time.monotonic() >= deadline:
-            raise RuntimeError("Riso Chrome Crashpad did not exit")
+                owner = process_identity(pid, max(0, deadline - time.monotonic()))
+                if not owner or owner["uid"] != os.getuid() or owner["command"] != executable:
+                    continue
+                candidates = True
+                if owner["ppid"] != 1:
+                    continue
+                key = (pid, owner["started"])
+                now = time.monotonic()
+                if key not in signaled:
+                    signal_process(pid, signal.SIGTERM)
+                    signaled[key] = now
+                elif signaled[key] is not None and now >= signaled[key] + 0.2:
+                    signal_process(pid, signal.SIGKILL)
+                    signaled[key] = None
+        if not candidates and empty_scan:
+            return sorted({pid for pid, _ in signaled})
+        empty_scan = not candidates
         time.sleep(0.05)
-    return sorted(owned)
+    raise RuntimeError("Riso Crashpad cleanup reached its deadline")
 
 
-def normalize_output(runtime, native, target, frames, run):
-    """Export unchanged native motion at the parent's clock and color range."""
+def native_frame_count(duration):
+    # Match Math.round of the binary64 product, including values just below a half.
+    product = duration * 30
+    whole = math.floor(product)
+    return whole + (product - whole >= 0.5)
+
+
+def probe_native(runtime, native, duration, run):
     raw = json.loads(run([runtime["ffprobe"], "-v", "error", "-err_detect", "explode", "-count_frames",
                           "-show_streams", "-of", "json", str(native)], quiet=True))["streams"]
     if (len(raw) != 1 or raw[0].get("codec_type") != "video"
             or raw[0].get("avg_frame_rate") != "30/1"
             or (raw[0].get("width"), raw[0].get("height")) != (1080, 1920)
-            or int(raw[0].get("nb_read_frames", 0)) != (frames * 30 + 12) // 24):
+            or int(raw[0].get("nb_read_frames", 0)) != native_frame_count(duration)):
         raise ValueError("Native Riso output changed; stop before normalization")
     source = raw[0]
     if source.get("color_range") == "pc" or source.get("pix_fmt", "").startswith("yuvj"):
@@ -397,6 +436,11 @@ def normalize_output(runtime, native, target, frames, run):
         input_range = "limited"
     else:
         raise ValueError("Native Riso color range is unknown")
+    return input_range
+
+
+def normalize_output(runtime, native, target, frames, input_range, run):
+    """Export unchanged native motion at the parent's clock and color range."""
     # Convert pixel values, not just their metadata. JPEG captures use full range.
     run([runtime["ffmpeg"], "-n", "-v", "error", "-xerror", "-i", str(native), "-map", "0:v:0", "-an",
          "-vf", f"fps=24,scale=in_range={input_range}:out_range=limited,setsar=1",
@@ -419,19 +463,34 @@ def render(args):
     payload = Path(args.brief).read_bytes()
     b = validate_brief(payload)
     runtime = check_runtime(args.project_root, {k: getattr(args, k) for k in ("node", "ffmpeg", "ffprobe")})
-    if runtime["identity"] != args.runtime_identity:
+    if runtime["identity"] != args.runtime_identity or runtime["implementation_identity"] != args.implementation_identity:
         raise ValueError("Bound Riso executables changed")
+    brief_sha = hashlib.sha256(payload).hexdigest()
     frozen = json.loads(Path(args.media_manifest).read_bytes())
-    if frozen.get("schema_version") != "reference-process-media/v1" or frozen.get("brief_sha256") != hashlib.sha256(payload).hexdigest():
+    if frozen.get("schema_version") != "reference-process-media/v1" or frozen.get("brief_sha256") != brief_sha:
         raise ValueError("Riso frozen input differs from the bound brief")
     records = {a["media_ref"]: a for a in frozen["media"]}
     if len(records) != len(frozen["media"]) or set(records) != {a["media_ref"] for a in b["assets"]}:
         raise ValueError("Wrong Riso screenshot set")
-    parent = Path(args.project_root) / "runtime/riso-renders"
+    assets = {}
+    for asset in b["assets"]:
+        record = records[asset["media_ref"]]
+        blob = Path("/dev/fd/" + str(record["fd"])).read_bytes()
+        if (record["sha256"] != asset["sha256"] or len(blob) != record["byte_length"]
+                or hashlib.sha256(blob).hexdigest() != asset["sha256"]):
+            raise ValueError("Riso frozen screenshot changed")
+        assets[asset["scene_path"]] = blob
+    invocation_id = os.environ.get("BROLL_INVOCATION_ID") or f"process-{secrets.token_hex(16)}"
+    if not re.fullmatch(r"process-[0-9a-f]{32}", invocation_id):
+        raise ValueError("Invalid Riso invocation identity")
+    parent = (Path(args.project_root) / "runtime/riso-renders").resolve()
     parent.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix="native-", dir=parent))
+    checkpoint = checkpoint_path(parent, os.environ.get("BROLL_COMPONENT_INPUT_SHA256"),
+                                 os.environ.get("BROLL_JOB_DIR"), runtime, brief_sha, sha(SKILL / ENTRY))
+    expected_native_frames = native_frame_count(b["data"]["duration"])
     report = {"status": "preparing", "template": b["template"], "source_pin": SOURCE_PIN,
-              "brief_sha256": hashlib.sha256(payload).hexdigest(), "commands": [],
+              "invocation_id": invocation_id, "brief_sha256": brief_sha, "commands": [],
               "native_fps": 30, "output_fps": 24, "time_scale": 1, "external_requests": 0}
 
     def run(argv, *, browser_phase=None, quiet=False):
@@ -446,7 +505,8 @@ def render(args):
         if browser_phase:
             chrome_log = work / (browser_phase + ".chrome.log")
             record["browser_log"] = chrome_log.name
-            command_env = {**environment, **chrome_env, "RISO_CHROME_LOG": str(chrome_log)}
+            command_env = {**environment, **chrome_env, "RISO_CHROME_LOG": str(chrome_log),
+                           "RISO_WORK_DEADLINE": str(deadline)}
         stdout_path = work / f"command-{len(report['commands'])}.stdout.log"
         stderr_path = work / f"command-{len(report['commands'])}.stderr.log"
         with stdout_path.open("w+b") as stdout, stderr_path.open("w+b") as stderr:
@@ -470,9 +530,15 @@ def render(args):
                               stdout=log_tail(stdout), stderr=log_tail(stderr))
                 if chrome_log and chrome_log.is_file():
                     try:
-                        record["settled_crashpad_pids"] = settle_crashpad(chrome_log, runtime["crashpad"])
-                    except (OSError, RuntimeError, subprocess.TimeoutExpired) as cleanup_error:
+                        settle_chrome(chrome_log, runtime["browser"], time.monotonic() + 2)
+                    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as cleanup_error:
                         record["browser_cleanup_error"] = str(cleanup_error)
+                    else:
+                        try:
+                            record["settled_crashpad_pids"] = settle_crashpad(chrome_log, runtime["crashpad"],
+                                                                            time.monotonic() + 3)
+                        except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as cleanup_error:
+                            record["crashpad_cleanup_error"] = str(cleanup_error)
         if process.returncode:
             raise subprocess.CalledProcessError(process.returncode, argv, record["stdout"], record["stderr"])
         if "browser_cleanup_error" in record:
@@ -481,12 +547,25 @@ def render(args):
             raise ValueError("Native Riso output contains decoder errors")
         return record["stdout"]
 
-    environment = {**os.environ,
-                   "PATH": os.pathsep.join(dict.fromkeys([str(Path(runtime[k]).parent) for k in ("node", "ffmpeg", "ffprobe")] + ["/usr/bin", "/bin"]))}
+    environment = dict(os.environ)
     try:
-        chrome_env = chrome_environment(work, runtime)
-        # Upstream explicitly permits replacing only DATA in a project copy.
-        prepare = r"""
+        recovered = load_checkpoint(checkpoint, parent, b["composition"]["id"], expected_native_frames)
+        if recovered is not None:
+            native, source = recovered
+            report.update(native_source=source, native_reused=True)
+        else:
+            chrome_env = chrome_environment(work, runtime)
+            bin_dir = work / "bin"
+            bin_dir.mkdir()
+            environment["PATH"] = os.pathsep.join((str(bin_dir), "/usr/bin", "/bin"))
+            for tool in ("ffmpeg", "ffprobe"):
+                shim = bin_dir / tool
+                variable = "RISO_" + tool.upper()
+                shim.write_text(f'#!/bin/sh\nexec "${variable}" "$@"\n')
+                shim.chmod(0o700)
+                environment[variable] = runtime[tool]
+            # Upstream explicitly permits replacing only DATA in a project copy.
+            prepare = r"""
 import {createProject, addTemplate} from './scripts/lib/project.mjs';
 import {readFileSync, writeFileSync} from 'node:fs';
 const [dir, template, id, input] = process.argv.slice(1);
@@ -497,25 +576,29 @@ if ([...html.matchAll(expression)].length !== 1) throw Error('Native DATA bounda
 const data = JSON.parse(readFileSync(input, 'utf8'));
 writeFileSync(file, html.replace(expression, () => 'const DATA = ' + JSON.stringify(data) + ';'));
 """
-        data_file = work / "data.json"
-        data_file.write_text(json.dumps(b["data"], ensure_ascii=False), encoding="utf-8")
-        # The module import is resolved against the unmodified source, not cwd.
-        prepare = prepare.replace("'./scripts/lib/project.mjs'", json.dumps((Path(runtime["source"]) / "scripts/lib/project.mjs").as_uri()))
-        native_project = work / "project"
-        run([runtime["node"], "--input-type=module", "-e", prepare, str(native_project), b["template"], b["composition"]["id"], str(data_file)])
-        for a in b["assets"]:
-            r = records[a["media_ref"]]
-            blob = Path("/dev/fd/" + str(r["fd"])).read_bytes()
-            if r["sha256"] != a["sha256"] or len(blob) != r["byte_length"] or hashlib.sha256(blob).hexdigest() != a["sha256"]:
-                raise ValueError("Riso frozen screenshot changed")
-            (native_project / a["scene_path"]).write_bytes(blob)
-        composition = native_project / "compositions" / (b["composition"]["id"] + ".html")
-        run([runtime["node"], str(Path(runtime["source"]) / "scripts/qa.mjs"), str(composition)], browser_phase="qa")
-        native = native_project / "renders" / (b["composition"]["id"] + ".mp4")
-        run([runtime["node"], str(Path(runtime["source"]) / "scripts/render.mjs"), str(composition), "-o", str(native)],
-            browser_phase="render")
+            data_file = work / "data.json"
+            data_file.write_text(json.dumps(b["data"], ensure_ascii=False), encoding="utf-8")
+            # The module import is resolved against the unmodified source, not cwd.
+            prepare = prepare.replace("'./scripts/lib/project.mjs'", json.dumps((Path(runtime["source"]) / "scripts/lib/project.mjs").as_uri()))
+            native_project = work / "project"
+            run([runtime["node"], "--input-type=module", "-e", prepare, str(native_project), b["template"], b["composition"]["id"], str(data_file)])
+            for path, blob in assets.items():
+                (native_project / path).write_bytes(blob)
+            composition = native_project / "compositions" / (b["composition"]["id"] + ".html")
+            run([runtime["node"], str(Path(runtime["source"]) / "scripts/qa.mjs"), str(composition)], browser_phase="qa")
+            native = native_project / "renders" / (b["composition"]["id"] + ".mp4")
+            run([runtime["node"], str(Path(runtime["source"]) / "scripts/render.mjs"), str(composition), "-o", str(native)],
+                browser_phase="render")
+            input_range = probe_native(runtime, native, b["data"]["duration"], run)
+            digest, byte_count = media_identity(native, durable=checkpoint is not None)
+            source = {"invocation_id": invocation_id, "sha256": digest, "bytes": byte_count,
+                      "frames": expected_native_frames, "input_range": input_range}
+            save_checkpoint(checkpoint, work, source)
+            report.update(native_source=source, native_reused=False)
         target = work / "output.mp4"
-        exported = normalize_output(runtime, native, target, b["composition"]["frames"], run)
+        exported = normalize_output(runtime, native, target, b["composition"]["frames"], source["input_range"], run)
+        if media_identity(native) != (source["sha256"], source["bytes"]):
+            raise ValueError("Riso native source changed during normalization")
         # Native input/source files and timestamps remain unchanged. No interpolation.
         shutil.copyfile(target, args.output)
         report.update(status="completed", output_sha256=sha(target), output_frames=exported["frames"],
@@ -533,7 +616,7 @@ if __name__ == "__main__":
     p.add_argument("--project-root", required=True)
     p.add_argument("--skill-root", default=SKILL, type=Path)
     p.add_argument("--probe", action="store_true")
-    for name in ("brief", "media-manifest", "node", "ffmpeg", "ffprobe", "runtime-identity", "output"):
+    for name in ("brief", "media-manifest", "node", "ffmpeg", "ffprobe", "runtime-identity", "implementation-identity", "output"):
         p.add_argument("--" + name)
     args = p.parse_args()
     if args.probe:
@@ -541,7 +624,7 @@ if __name__ == "__main__":
         print(json.dumps({"schema_version": 1, "dependency_id": DEPENDENCY_ID, "entrypoint": ENTRY, "producer_version": VERSION,
                           "adapter_identity": {"adapter_type": "ReferenceProcessAdapter", "approved_executor": "reference_adapter", "primary_renderer": "HTMLCanvas"}}))
     else:
-        missing = [name for name in ("brief", "media-manifest", "node", "ffmpeg", "ffprobe", "runtime-identity", "output") if getattr(args, name.replace("-", "_")) is None]
+        missing = [name for name in ("brief", "media-manifest", "node", "ffmpeg", "ffprobe", "runtime-identity", "implementation-identity", "output") if getattr(args, name.replace("-", "_")) is None]
         if missing:
             p.error("render mode requires --" + " --".join(missing))
         print(json.dumps(render(args), ensure_ascii=False))

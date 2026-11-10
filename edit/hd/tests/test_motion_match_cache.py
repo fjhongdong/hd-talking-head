@@ -1,5 +1,6 @@
 """Real catalog retrieval is cached, including after semantic coverage additions."""
 import copy
+import hashlib
 import json
 import tempfile
 import unittest
@@ -32,6 +33,8 @@ def expression_fixture(candidate, *, explanation="Use the fixture's reviewed vis
     }
     basis = {"capability": "summary", "explanation": explanation}
     slot = sample_slots.get(candidate.get("dependency_id"))
+    if candidate.get("template_id") == "sweety-handdraw-video/web-kinetic-title":
+        slot = ("/params/text", "并列要点")
     if slot:
         pointer, value = slot
         basis["content"] = {"visual_task": {pointer: value}}
@@ -82,29 +85,42 @@ class HistoricalVisualExpressionTests(unittest.TestCase):
         row = {"row_id": "sem-008", "quote": "后来带着一支六人的远程小队，里面有宝妈，有前货车司机。",
                "semantic": "六人远程协作，成员中有宝妈和前货车司机。",
                "visual_task": "读出团队规模、远程协作和成员构成。",
-               "required_content": {"team": {"meaning": "六人远程小队"},
+               "required_content": {"team": {"meaning": "六人远程小队", "terms": ["6", "位"]},
                                     "members": {"meaning": "成员背景", "terms": ["宝妈", "前货车司机"]}}}
         candidate = {"dependency_id": "eian-riso-broll", "template_id": "eian-riso-broll/network", "capability": {
             "summary": "Network", "editable_content": ["Count, team context and group label"]}}
-        basis = {"capability": "editable_content/0", "explanation": "节点表达六人，组说明承载两种成员身份。",
-                 "content": {"team": {"/data/number": 6, "/data/nodes": 6}}}
+        basis = {"capability": "editable_content/0", "explanation": "大字显示人数，组说明承载两种成员身份。",
+                 "content": {"team": {"/data/number": 6, "/data/unit": "位"}}}
         with self.assertRaisesRegex(ValueError, "every visible requirement"):
             cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
         basis["content"]["members"] = {"/data/number": 6}
         with self.assertRaisesRegex(ValueError, "omits visible terms"):
             cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
         basis["content"]["members"] = {"/data/say": "宝妈 · 前货车司机"}
+        for pointer, value, failure in (
+            ("/data/nodes", 6, "native content slots"),
+            ("/data/number", 60, "omits visible terms"),
+            ("/data/number", "6", "outside native capacity"),
+        ):
+            wrong = copy.deepcopy(basis)
+            wrong["content"]["team"] = {pointer: value, "/data/unit": "位"}
+            with self.subTest(pointer=pointer, value=value), self.assertRaisesRegex(ValueError, failure):
+                cache._validate_expression_basis({"expression_basis": wrong}, row, candidate)
         cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
         with self.assertRaisesRegex(ValueError, "changed approved content slot /data/say"):
-            cache.validate_native_expression({"data": {"number": 6, "nodes": 6, "say": "核心主创"}}, row, basis)
-        cache.validate_native_expression({"data": {"number": 6, "nodes": 6, "say": "宝妈 · 前货车司机"}}, row, basis)
+            cache.validate_native_expression({"data": {"number": 6, "unit": "位", "say": "核心主创"}}, row, basis)
+        actual = {"data": {"number": 6, "unit": "位", "say": "宝妈 · 前货车司机", "nodes": 6}}
+        cache.validate_native_expression(actual, row, basis)
+        actual["data"]["number"] = 60
+        with self.assertRaisesRegex(ValueError, "changed approved content slot /data/number"):
+            cache.validate_native_expression(actual, row, basis)
 
     def test_waiting_icon_needs_approved_visible_disambiguation(self):
         row = {"row_id": "sem-013", "quote": "不用等谁给机会。", "semantic": "机会不用等别人给。",
                "visual_task": "明示主动性，避免被理解为提醒等候。",
                "required_content": {"opportunity": {"meaning": "明确机会不用等",
                                                     "terms": ["机会", "不用等"]}}}
-        candidate = {"dependency_id": "useanimations", "capability": {
+        candidate = {"dependency_id": "useanimations", "template_id": "useanimations/clock", "capability": {
             "summary": "Original clock", "editable_content": ["Native clock and optional short label"]}}
         basis = {"capability": "editable_content/0", "explanation": "标签澄清时钟只是等待概念。",
                  "content": {"opportunity": {"/template_id": "useanimations/clock"}}}
@@ -120,6 +136,23 @@ class HistoricalVisualExpressionTests(unittest.TestCase):
             cache.validate_native_expression({"template_id": "useanimations/clock", "labels": []}, row, basis)
         cache.validate_native_expression({"template_id": "useanimations/clock",
                                           "labels": [{"text": "机会不用等", "start_frame": 0}]}, row, basis)
+
+    def test_fixed_slots_check_value_type_length_and_index_before_selection(self):
+        for dependency, route, pointer, value in (
+            ("eian-riso-broll", {"template_id": "eian-riso-broll/network"},
+             "/data/say", "宝妈和前货车司机都是核心主创"),
+            ("eian-riso-broll", {"template_id": "eian-riso-broll/network"}, "/data/mast/2", "主创"),
+            ("useanimations", {"template_id": "useanimations/clock"}, "/labels/99/text", "机会不用等"),
+            ("useanimations", {"template_id": "useanimations/clock"}, "/labels/0/text", "机会不用一直等别人给"),
+            ("datamagic", {}, "/props/rows/2/label", "第三行"),
+            ("html-video", {}, "/props/data/items/0/value", 2.5),
+        ):
+            with self.subTest(pointer=pointer, value=value):
+                candidate = {"dependency_id": dependency, "capability": {"summary": "Native content"}, **route}
+                basis = {"capability": "summary", "explanation": "场景需要这个字段。",
+                         "content": {"visual_task": {pointer: value}}}
+                with self.assertRaisesRegex(ValueError, "capacity"):
+                    cache._validate_expression_basis({"expression_basis": basis}, {"visual_task": "测试"}, candidate)
 
     def test_fixed_routes_reject_metadata_foreign_slots_and_conflicting_values(self):
         row = {"visual_task": "保留原生可见含义。"}
@@ -162,6 +195,22 @@ class HistoricalVisualExpressionTests(unittest.TestCase):
         self.assertEqual(motion._native_input_check(ROOT, candidate, brief)["status"], "pass")
         candidate["template_id"] = "eian-riso-broll/number"
         self.assertIn("selected native template", motion._native_input_check(ROOT, candidate, brief)["reason"])
+
+    def test_native_hyperframes_input_must_match_selected_route(self):
+        brief = {"schema_version": 2, "source_binding": {
+            "aroll_sha256": "a" * 64, "segment_id": "seg-008", "start": 0, "end": 6},
+            "composition": {"width": 1080, "height": 1920, "fps": 24, "frames": 144, "alpha": False},
+            "template_request": {"semantic_family": "process_flow", "information_units": 2,
+                                 "numeric_values": [], "numeric_scale": "not_applicable"},
+            "entry": {"media_ref": "entry", "job_path": "scene.html", "scene_path": "index.html", "sha256": "b" * 64},
+            "assets": [], "upstream_route": "hyperframes/chat-message",
+            "source_pins": {"route": "hyperframes/chat-message", "sha256": "c" * 64}}
+        candidate = {"role": "native", "adapter_module": "hyperframes_native_adapter",
+                     "dependency_id": "hyperframes-native-adaptation",
+                     "template_id": "hyperframes-chat-message-portrait-adaptation"}
+        self.assertEqual(motion._native_input_check(ROOT, candidate, brief)["status"], "pass")
+        candidate["template_id"] = "hyperframes-beat-timeline-portrait-adaptation"
+        self.assertIn("selected upstream template", motion._native_input_check(ROOT, candidate, brief)["reason"])
 
     def test_requirement_query_is_stable_after_canonical_write(self):
         row = {"quote": "原话", "semantic": "团队角色", "visual_task": "认清关系",
@@ -757,6 +806,48 @@ class CacheTests(unittest.TestCase):
                     cache._constraint_refs(review,semantic,candidate,beat,job_dir=root)
             with self.assertRaises(ValueError):
                 cache._constraint_refs(review,semantic,candidate,beat,job_dir=root)
+
+    def test_authorization_exclusion_requires_missing_current_design_video_channel(self):
+        from types import SimpleNamespace
+        from edit.hd.tools import startup, state
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = SimpleNamespace(job_dir=root)
+            (root / "job-context.json").write_text("{}")
+            manifests = root / "manifests"
+            manifests.mkdir()
+            path = manifests / "provider-config.json"
+            approval = manifests / "setup-approval.json"
+            config = {"generation_enabled": False, "providers": []}
+            row = {"row_id": "row", "quote": "原话", "semantic": "任务"}
+            beat = {"segment_id": "seg-001", "component_id": "visual"}
+            design = {"role": "design", "capability": {"summary": "原生设计"}}
+            review = {"rejection_basis": "authorization", "constraint_refs": {
+                "requirement": {"source": "authorization", "receipt": {"path": "ordinary-approval.json"}},
+                "capability": "summary"}}
+            with self.assertRaisesRegex(ValueError, "current video channel evidence"):
+                cache._constraint_refs(review, row, design, beat, job_dir=root)
+            review["constraint_refs"]["requirement"] = {"source": "authorization", "purpose": "video"}
+            with self.assertRaisesRegex(ValueError, "current video channel evidence"):
+                cache._constraint_refs(review, row, {**design, "role": "native"}, beat, job_dir=root)
+
+            def approve_config():
+                payload = json.dumps(config).encode()
+                path.write_bytes(payload)
+                digest = hashlib.sha256(payload).hexdigest()
+                approval.write_text(json.dumps({"provider_config_sha256": digest}))
+                return path, digest
+
+            with patch.object(state, "load_job", return_value=job), \
+                 patch.object(startup, "require_startup"), \
+                 patch.object(startup, "_config", side_effect=lambda _: approve_config()):
+                cache._constraint_refs(review, row, design, beat, job_dir=root)
+                config.update(generation_enabled=True, providers=[{
+                    "purpose": "video", "provider": "fixture", "model": "fixture-model", "endpoint_id": "fixture.video",
+                    "connection_status": "verified", "quota_status": "available"}])
+                with self.assertRaisesRegex(ValueError, "does not establish a missing video channel"):
+                    cache._constraint_refs(review, row, design, beat, job_dir=root)
 
     def test_explicit_wake_opening_does_not_forge_motion_evidence(self):
         wake = "lemo-wake:wake"

@@ -154,7 +154,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
 
     def test_matching_and_native_checks_do_not_require_subjective_approval(self):
         """Synthetic text inputs only: no existing Job, motion or video is used."""
-        from edit.hd.tools import motion_capabilities as motion
+        from edit.hd.tools import motion_capabilities as motion, motion_match_cache
 
         catalog = motion.load_catalog(ROOT)
         row = next(item for item in catalog if item["candidate_id"] == "overlay:grid-card-assemble")
@@ -221,7 +221,12 @@ class BrollSkillSelectionTest(unittest.TestCase):
             write("treatment.json", treatment)
             (root / "00-user-provided").mkdir()
             job = SimpleNamespace(root=root, job_dir=root)
-            self.assertEqual(visual_plan._skill_selection_for_publication(job, draft, path)["motion_review"]["status"], "pass")
+            with patch.object(motion_match_cache, "validate_matches", wraps=motion_match_cache.validate_matches) as matches, \
+                 patch.object(selection, "assign_skills", wraps=selection.assign_skills) as assignment:
+                result = visual_plan._skill_selection_for_publication(job, draft, path)
+            self.assertEqual(result["motion_review"]["status"], "pass")
+            matches.assert_called_once()
+            assignment.assert_called_once()
 
     def test_registered_native_validators_are_reused_without_rendering(self):
         from edit.hd.tools import motion_capabilities as motion

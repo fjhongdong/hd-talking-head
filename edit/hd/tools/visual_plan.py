@@ -2100,8 +2100,17 @@ def _skill_selection_for_publication(
         raise _fail("B-roll treatment must belong to the current Job")
     try:
         treatment = contract_artifacts.read_json_artifact(path)
-        from .motion_match_cache import validate_reviews, validate_design_handoffs
-        validate_reviews(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
+        from .motion_match_cache import _validate_review_structure, validate_design_handoffs
+        if managed:
+            from .motion_capabilities import _check_offline_with_selection
+            review, selection = _check_offline_with_selection(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
+            if review["status"] != "pass":
+                raise ValueError("motion planning/native input check is " + review["status"]
+                                 + " - " + str(review["failures"] or review["not_verified"]))
+            selection["motion_review"] = review
+        else:
+            _validate_review_structure(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
+            selection = broll_skill_selection.validate_selection(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
         handoff_draft, handoff_treatment = draft, treatment
         if any('native_typography_revision' in scene for scene in treatment.get('scenes', [])):
             from . import visual_confirmation
@@ -2111,19 +2120,8 @@ def _skill_selection_for_publication(
             handoff_draft, handoff_treatment = visual_confirmation._normalize_lemo_typography(
                 job.job_dir, original, original_treatment, draft, treatment)
         validate_design_handoffs(handoff_draft, handoff_treatment, job.job_dir)
-        selection = broll_skill_selection.validate_selection(
-            PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir,
-        )
         selection["motion_queries"] = treatment.get("motion_queries", [])
         selection['native_supplements'] = treatment.get('native_supplements', [])
-        if managed:
-            from .motion_capabilities import check_offline_plan
-            review = check_offline_plan(PACKAGE_ROOT, draft,
-                                        treatment, job_dir=job.job_dir)
-            if review["status"] != "pass":
-                raise ValueError("motion planning/native input check is " + review["status"]
-                                 + "; complete the required production inputs")
-            selection["motion_review"] = review
         return selection
     except (contract_artifacts.ContractArtifactError, ValueError, KeyError, TypeError) as error:
         raise _fail(str(error)) from None

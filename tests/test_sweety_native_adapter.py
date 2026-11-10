@@ -34,6 +34,41 @@ def brief():
 
 
 class SweetyNativeTest(unittest.TestCase):
+    def test_kinetic_title_capture_and_publish_check_the_effective_words(self):
+        b=brief()
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d).resolve()
+            project=root/b['project_directory'];project.mkdir(parents=True)
+            request=root/'brief.json';request.write_bytes(sweety.artifacts.canonical_json_bytes(b))
+            params={'text':'宝妈 · 前货车司机','words':['无关标题'],'style':'glyph_in'}
+            config={'template_id':b['template_id'],'recipe':'kinetic_title','params':params}
+            basis={'content':{'members':{'/params/text':'宝妈 · 前货车司机'}}}
+            config_path=project/'web-motion.json'
+            sweety.artifacts.write_json_artifact(config_path,config)
+            job=SimpleNamespace(job_dir=root,job_id=b['job_id'])
+            with (
+                patch.object(sweety,'_execution_job',return_value=job),
+                patch.object(sweety,'validate_brief',return_value=b),
+                patch.object(sweety,'_inputs'),
+                patch.object(sweety,'_template',return_value={'native_template_group':'web_motion',
+                                                             'native_option_id':'kinetic_title'}),
+                patch('edit.hd.tools.visual_confirmation.require_native_dispatch',
+                      return_value={'expression_basis':basis}) as authorized,
+                patch.object(sweety,'check_runtime',side_effect=AssertionError('must reject before rendering')),
+                patch.object(sweety,'_publish_native',return_value='published') as publish,
+            ):
+                with self.assertRaisesRegex(ValueError,'changed approved content slot /params/text'):
+                    sweety.capture_render(root,request)
+                with self.assertRaisesRegex(ValueError,'changed approved content slot /params/text'):
+                    sweety.publish_completed(root,request,root/'render-call.json')
+                self.assertEqual(authorized.call_args.kwargs['payload'],request.read_bytes())
+                publish.assert_not_called()
+                params['words']=['宝妈',' · ','前货车司机']
+                sweety.artifacts.write_json_artifact(config_path,config)
+                self.assertEqual(sweety.publish_completed(root,request,root/'render-call.json'),'published')
+            params.update(style='typewriter',words=['无关标题'])
+            sweety._validate_web_expression(config,basis)
+
     def test_selected_task_rejects_changed_word_clock_or_parent_identity(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d).resolve();b=brief();arroll=root/'approved-aroll.mp4';arroll.write_bytes(b'approved clock fixture')

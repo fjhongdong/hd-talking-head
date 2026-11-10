@@ -55,6 +55,25 @@ def check(project=PACKAGE_ROOT, *, python_executable=sys.executable, mode='rende
                              'PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD', 'PLAYWRIGHT_BROWSERS_PATH')}, **details}
 
 
+def kinetic_title_content(config):
+    """Project the title text that the original kinetic-title recipe displays."""
+    if (not isinstance(config, dict) or set(config) != {'template_id', 'recipe', 'params'}
+            or config['template_id'] != 'web-kinetic-title' or config['recipe'] != 'kinetic_title'):
+        raise ValueError('Sweety project differs from the selected kinetic-title recipe')
+    params = config.get('params')
+    if not isinstance(params, dict) or not isinstance(params.get('text'), str) or not params['text'].strip():
+        raise ValueError('Sweety kinetic title needs its actual text parameters')
+    text = params['text']
+    # The original glyph-oriented styles split text themselves. Other styles
+    # display the explicit words array when the caller supplies one.
+    if params.get('style') not in {'spring_pop', 'typewriter', 'scramble'} and 'words' in params:
+        words = params['words']
+        if not isinstance(words, list) or not words or not all(isinstance(word, str) for word in words):
+            raise ValueError('Sweety kinetic title has invalid visible words')
+        text = ''.join(words)
+    return {'params': {'text': text}}
+
+
 def render_web(project, native_project, composition):
     """Call the original render function, without injecting or replacing animation."""
     from sweety_native_adapter import source_root, load_template_catalog

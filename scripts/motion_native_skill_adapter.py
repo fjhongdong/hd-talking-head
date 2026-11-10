@@ -855,9 +855,11 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     job = _execution_job(job_dir)
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
-    brief = validate_brief(brief_path.read_bytes())
+    payload = brief_path.read_bytes(); brief = validate_brief(payload)
     if brief['job_id'] != job.job_id:
         raise ValueError('Native motion brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, brief['dependency_id'], brief_path, payload=payload)
     _inputs(root, brief)
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
@@ -877,7 +879,7 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     if 'node_modules' in runtime:
         environment['NODE_PATH'] = runtime['node_modules']
     record = {'schema_version': 1, 'dependency_id': brief['dependency_id'],
-              'request_sha256': sha(brief_path), 'upstream_commit': SOURCES[brief['dependency_id']][1],
+              'request_sha256': hashlib.sha256(payload).hexdigest(), 'upstream_commit': SOURCES[brief['dependency_id']][1],
               'native_script_sha256': sha(script), 'argv': argv,
               'project_files': before, 'renderer_version': runtime['renderer_version'],
               'runtime_identity': runtime['runtime_identity'],
@@ -1055,6 +1057,8 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
     payload = brief_path.read_bytes(); brief = validate_brief(payload)
     if brief['job_id'] != job.job_id:
         raise ValueError('Native motion brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, brief['dependency_id'], brief_path, payload=payload)
     _inputs(root, brief)
     call = json.loads(Path(call_path).read_bytes()); _verify_call(root, brief, payload, call)
     target = path(root, brief['result_record_path'])

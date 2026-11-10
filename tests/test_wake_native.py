@@ -273,6 +273,16 @@ class WakeNativeTests(unittest.TestCase):
         review.update(passed=True,note='开发测试：核对该完整清单',user_confirmation='开发fixture授权，只用于代码验证')
         run_stage._review(self.job,'visual_direction',review)
         self.job=state.load_job(self.job.job_dir)
+        # Keep the frozen qualification media but let the formal stage dispatch
+        # the exact fixture brief before supplying its recorded completion.
+        completed = self.job.job_dir / self.brief['result_record_path']
+        pending_result = completed.with_suffix('.fixture')
+        completed.rename(pending_result)
+        try:
+            pending = run_stage.resume_visual_direction(self.job, PROJECT, {})
+            self.assertEqual([action['dependency_id'] for action in pending['actions']], ['lemo-wake'])
+        finally:
+            pending_result.rename(completed)
         result=wake.inspect_result(self.job.job_dir,self.payload)
         artifacts.write_json_artifact(tpath,treatment)
         run_stage.resume_visual_direction(self.job,PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json'}})
@@ -379,6 +389,7 @@ class WakeNativeTests(unittest.TestCase):
                 return native_call(command, *args, **kwargs)
             return real_run(command, *args, **kwargs)
         with mock.patch.object(wake, 'source_root', return_value=native_root), \
+             mock.patch.object(confirmation, 'require_native_dispatch'), \
              mock.patch.object(wake.subprocess, 'run', side_effect=run):
             with self.assertRaisesRegex(ValueError, 'new native project'):
                 wake.capture_call(self.job.job_dir, new_brief, 'render',

@@ -316,7 +316,7 @@ class VisualPlanSchemaV3Tests(unittest.TestCase):
                  mock.patch.object(visual_confirmation, '_exact', return_value=path), \
                  mock.patch.object(visual_confirmation, '_read', return_value={}), \
                  mock.patch.object(visual_confirmation, '_normalize_lemo_typography', return_value=(normalized, normalized_treatment)), \
-                 mock.patch.object(motion_match_cache, 'validate_reviews'), \
+                 mock.patch.object(motion_match_cache, '_validate_review_structure'), \
                  mock.patch.object(motion_match_cache, 'validate_design_handoffs') as handoff, \
                  mock.patch.object(broll_skill_selection, 'validate_selection', return_value={}) as selection:
                 visual_plan._skill_selection_for_publication(job, draft, path)

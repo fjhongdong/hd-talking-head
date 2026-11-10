@@ -36,6 +36,9 @@ class NativeMotionTests(unittest.TestCase):
         gate = mock.patch.object(native, '_execution_job', return_value=SimpleNamespace(job_id='native-test'))
         gate.start()
         self.addCleanup(gate.stop)
+        dispatch = mock.patch('edit.hd.tools.visual_confirmation.require_native_dispatch')
+        dispatch.start()
+        self.addCleanup(dispatch.stop)
 
     def test_planned_binding_needs_current_brief_without_a_reference_sample(self):
         from types import SimpleNamespace

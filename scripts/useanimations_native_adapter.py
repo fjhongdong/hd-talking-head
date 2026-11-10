@@ -25,6 +25,24 @@ RENDER='scripts/useanimations_render.cjs'
 VERSION='3.1.1'
 SOURCE_PIN='f7af6f53f6f1a97486ad95756b281a34e9f7c670'
 RENDERER_VERSION = '5.12.2'
+MAX_LABEL_STATES = 2
+
+
+def _label_text(value):
+    return (isinstance(value, str) and bool(value.strip()) and len(value) <= 8
+            and not any(ord(char) < 32 for char in value))
+
+
+def validate_planned_content(template_id, pointer, value):
+    """Check only the visible inputs known before placement or engineering."""
+    if pointer == '/template_id':
+        if value != template_id:
+            raise ValueError('useAnimations planned icon differs from the selected template')
+        return
+    index = int(pointer.split('/')[2])
+    if index >= MAX_LABEL_STATES or not _label_text(value):
+        raise ValueError('useAnimations planned label exceeds the native index or text capacity')
+
 
 def source_root(project=SKILL):
     from prepare_sources import bundled_source_revision
@@ -72,12 +90,11 @@ def validate_brief(payload, *, dependency_id=DEPENDENCY_ID):
     x,y,size=(layout[k] for k in ('x','y','size'))
     if size<48 or x<zone['left'] or y<zone['top'] or x+size>1080-zone['right'] or y+size>1920-zone['bottom']: raise ValueError('Icon outside safe zone or too small')
     labels = b['labels']
-    if not isinstance(labels, list) or len(labels) > 2:
+    if not isinstance(labels, list) or len(labels) > MAX_LABEL_STATES:
         raise ValueError('At most two optional label states are allowed')
     for label in labels:
         if (not isinstance(label, dict) or set(label) != {'text', 'start_frame'}
-                or not isinstance(label['text'], str) or not label['text'].strip() or len(label['text']) > 8
-                or any(ord(ch) < 32 for ch in label['text'])
+                or not _label_text(label['text'])
                 or type(label['start_frame']) is not int
                 or not 0 <= label['start_frame'] <= c['frames'] - 24):
             raise ValueError('Invalid label or insufficient reading time')

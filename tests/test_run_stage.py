@@ -55,6 +55,7 @@ class CheckOnlyStageTests(unittest.TestCase):
             def native(j, d, t):
                 self.assertEqual(set(d['segments'][0]['bindings']), {'ready'})
                 return [{'action': 'run_native_skill', 'component_id': 'ready',
+                         'dependency_id': 'fixture', 'brief_path': str(root / 'ready.json'), 'brief_sha256': 'a' * 64,
                          'next': 'Execute the original native workflow.'}]
             with mock.patch.object(confirmation, 'validate_visual_authorization', return_value=authorized), \
                  mock.patch.object(confirmation, 'validate_realization_draft'), \
@@ -65,6 +66,7 @@ class CheckOnlyStageTests(unittest.TestCase):
                  mock.patch.object(run_stage, '_validate_prepared_native_inputs'), \
                  mock.patch.object(run_stage, 'prepare_visual_dependencies'), \
                  mock.patch.object(run_stage, 'pending_native_actions', side_effect=native), \
+                 mock.patch.object(confirmation, 'freeze_native_dispatch') as dispatch, \
                  mock.patch.object(run_stage, '_summary', side_effect=lambda j, s, **kw: kw), \
                  mock.patch('edit.hd.tools.visual_plan.prepare_visual_direction') as finalize:
                 result = run_stage.resume_visual_direction(job, PROJECT)
@@ -73,6 +75,8 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual(native_action['proposal'], authorized['payload']['source'])
                 self.assertTrue(native_action['next'].startswith('Execute the original native workflow.'))
                 self.assertEqual(native_action['semantic_row'], semantic)
+                dispatch.assert_called_once_with(job, authorized['source'], treatment, ('seg-001', 'ready'),
+                                                 'fixture', root / 'ready.json', 'a' * 64)
                 self.assertNotIn('same_template_context', native_action)
                 finalize.assert_not_called()
                 with mock.patch.object(confirmation, 'generation_item', return_value=('image-A', {'status': 'completed'})):
@@ -82,6 +86,12 @@ class CheckOnlyStageTests(unittest.TestCase):
                 self.assertEqual(preparations[0]['proposal'], native_action['proposal'])
                 self.assertEqual(preparations[0]['semantic_row'], native_action['semantic_row'])
                 self.assertEqual(preparations[0]['parent_subtitle_layout']['placement'], 'standard')
+                finalize.assert_not_called()
+                dispatch.side_effect = ValueError('stale prepared brief')
+                result = run_stage.resume_visual_direction(job, PROJECT)
+                self.assertEqual([a['action'] for a in result['actions']], ['query'])
+                self.assertEqual(result['errors'], [{'segment_id': 'seg-001', 'component_id': 'ready',
+                                                    'error': 'stale prepared brief'}])
                 finalize.assert_not_called()
 
     def test_scripts_only_api_reaches_job_error_from_an_unrelated_directory(self):
@@ -132,7 +142,8 @@ else:
         descriptor={'path':'native-inputs/gbro.json','sha256':'a'*64,'bytes':1}
         calls=[]
         with mock.patch.object(confirmation,'validate_visual_authorization',return_value={'source': {
-                'inputs': {'director': {'path': 'director.json'}, 'treatment': {'path': 'treatment.json'}}, 'generation_steps': []}}), \
+                'inputs': {'director': {'path': 'director.json'}, 'treatment': {'path': 'treatment.json'}}, 'generation_steps': []},
+                'payload': {'source': {'path': 'proposal.json'}}}), \
              mock.patch.object(confirmation,'record_gbro_frame_preparation',side_effect=lambda *a:calls.append(('prepare',a))), \
              mock.patch.object(confirmation,'generation_actions',side_effect=lambda *a,**k:calls.append(('generate',a)) or [{'action':'prepare_template_inputs'}]), \
              mock.patch.object(confirmation,'validate_realization_draft'), \

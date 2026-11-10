@@ -1,5 +1,7 @@
 """Riso brief, process isolation, and format contracts without user Jobs."""
 import copy
+from dataclasses import replace
+import hashlib
 import importlib.util
 import json
 import os
@@ -47,10 +49,12 @@ class RisoNativeAdapterTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="riso-fd-test-") as directory:
             root = Path(directory)
             fake = root / "fake-chrome"
-            fake.write_text('#!/bin/sh\nexec "$TEST_PYTHON" "$TEST_BROWSER"\n')
+            fake.write_text('#!/bin/sh\nexec "$TEST_PYTHON" "$TEST_BROWSER" "$@"\n')
             fake.chmod(0o700)
             program = root / "fake_chrome.py"
-            program.write_text("""
+            program.write_text(r"""
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
 import os
 from pathlib import Path
 import sys
@@ -68,14 +72,28 @@ if os.fork() == 0:
 
 while not (directory / "helper-ready").exists():
     time.sleep(0.01)
-print("DevTools listening on ws://127.0.0.1:12345/devtools/browser/test", file=sys.stderr, flush=True)
-time.sleep(20)
+
+class DevTools(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(json.dumps({"webSocketDebuggerUrl": endpoint}).encode())
+
+server = HTTPServer(("127.0.0.1", 0), DevTools)
+port = server.server_port
+endpoint = f"ws://127.0.0.1:{port}/devtools/browser/test"
+profile = Path(sys.argv[1].split("=", 1)[1])
+(profile / "DevToolsActivePort").write_text(f"{port}\n/devtools/browser/test")
+print(f"DevTools listening on {endpoint}", file=sys.stderr, flush=True)
+print("x" * 65536, file=sys.stderr, flush=True)
+server.serve_forever()
 """)
             node = """
 const { spawn } = require('node:child_process');
-const { writeFileSync } = require('node:fs');
+const { mkdtempSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
-const chrome = spawn(process.env.CHROME, [], { stdio: ['ignore', 'ignore', 'pipe'] });
+const profile = mkdtempSync(join(process.env.TMPDIR, 'profile-'));
+const chrome = spawn(process.env.CHROME, ['--user-data-dir=' + profile], { stdio: ['ignore', 'ignore', 'pipe'] });
 chrome.stderr.on('data', chunk => {
   if (chunk.includes('DevTools listening on ')) chrome.kill('SIGTERM');
 });
@@ -94,11 +112,12 @@ chrome.on('exit', (code, signal) => {
                 with self.subTest(isolated=isolated):
                     work = root / ("isolated" if isolated else "direct")
                     work.mkdir()
-                    env = {**os.environ, "CHROME": str(fake), "TEST_WORK": str(work),
+                    env = {**os.environ, "CHROME": str(fake), "TEST_WORK": str(work), "TMPDIR": str(work),
                            "TEST_PYTHON": sys.executable, "TEST_BROWSER": str(program)}
                     if isolated:
                         runtime = {"browser": str(fake), "chrome_launcher_sha256": riso.sha(SKILL / riso.CHROME_LAUNCHER)}
-                        env.update(riso.chrome_environment(work, runtime), RISO_CHROME_LOG=str(work / "chrome.log"))
+                        env.update(riso.chrome_environment(work, runtime), RISO_CHROME_LOG=str(work / "chrome.log"),
+                                   RISO_WORK_DEADLINE=str(time.monotonic() + 15))
                     command = [shutil.which("node"), "-e", node]
                     with subprocess.Popen(command, env=env, start_new_session=True) as process:
                         try:
@@ -122,40 +141,71 @@ chrome.on('exit', (code, signal) => {
     def test_crashpad_cleanup_only_signals_the_owned_log_writer(self):
         path = Path("/private/riso/render.chrome.log")
         executable = "/Applications/Google Chrome.app/Helpers/chrome_crashpad_handler"
-        expected = f"1 {os.getuid()} Tue Nov 10 08:07:16 2026 {executable}"
+        expected = {"ppid": 1, "uid": os.getuid(), "started": "original", "command": executable}
         signals = []
+        clock = [0.0]
 
         def command(argv, **_):
-            if argv[0] == "/usr/sbin/lsof":
-                self.assertEqual(argv[-1], str(path))
-                self.assertEqual(argv[3:5], ["-d", "2"])
-                output = "p101\naw\np102\naw\np103\nar\np104\naw\n"
-            else:
-                pid = int(argv[3])
-                output = {
-                    101: "" if (101, signal.SIGKILL) in signals else expected,
-                    102: expected + "-unrelated",
-                    103: expected,
-                    104: expected.replace("08:07:16", "08:07:17") if (104, signal.SIGTERM) in signals else expected,
-                }[pid]
+            self.assertEqual(argv[0], "/usr/sbin/lsof")
+            self.assertEqual(argv[-1], str(path))
+            self.assertEqual(argv[3:5], ["-d", "2"])
+            output = "p102\naw\np103\nar\n"
+            if (101, signal.SIGKILL) not in signals:
+                output += "p101\naw\n"
+            if (101, signal.SIGTERM) in signals and (104, signal.SIGTERM) not in signals:
+                output += "p104\naw\n"
             return subprocess.CompletedProcess(argv, 0, output, "")
 
+        def identity(pid, _):
+            return {**expected, "command": executable + "-unrelated"} if pid == 102 else expected
+
+        def sleep(seconds):
+            clock[0] += seconds
+
         with (patch.object(riso.subprocess, "run", side_effect=command),
+              patch.object(riso, "process_identity", side_effect=identity),
               patch.object(riso.os, "kill", side_effect=lambda pid, sig: signals.append((pid, sig))),
-              patch.object(riso.time, "sleep")):
-            self.assertEqual(riso.settle_crashpad(path, executable), [101, 104])
+              patch.object(riso.time, "monotonic", side_effect=lambda: clock[0]),
+              patch.object(riso.time, "sleep", side_effect=sleep)):
+            self.assertEqual(riso.settle_crashpad(path, executable, 3), [101, 104])
         self.assertCountEqual(signals, [(101, signal.SIGTERM), (104, signal.SIGTERM), (101, signal.SIGKILL)])
 
-    def test_native_frame_ties_round_up_like_the_renderer(self):
-        native = {"codec_type": "video", "width": 1080, "height": 1920, "avg_frame_rate": "30/1",
-                  "nb_read_frames": "93", "color_range": "pc"}
-        output = {"width": 1080, "height": 1920, "avg_frame_rate": "24/1", "sample_aspect_ratio": "1:1",
-                  "nb_frames": "74", "pix_fmt": "yuv420p", "color_range": "tv", "duration": "3.083333"}
-        run = Mock(side_effect=[json.dumps({"streams": [native]}), "", json.dumps({"streams": [output]})])
-        exported = riso.normalize_output({"ffprobe": "ffprobe", "ffmpeg": "ffmpeg"}, "native", "output", 74, run)
-        self.assertEqual(exported["frames"], 74)
-        self.assertIn("-count_frames", run.call_args_list[0].args[0])
-        self.assertTrue(run.call_args_list[0].kwargs["quiet"])
+    def test_abnormal_browser_exit_cleanup_stops_only_the_registered_process(self):
+        with tempfile.TemporaryDirectory(prefix="riso-cleanup-test-") as directory:
+            log = Path(directory) / "render.chrome.log"
+            command = [sys.executable, "-c", "import time; print('ready', flush=True); time.sleep(20)"]
+            with (subprocess.Popen(command, start_new_session=True, stdout=subprocess.PIPE) as owner,
+                  subprocess.Popen(command, start_new_session=True, stdout=subprocess.DEVNULL) as other):
+                try:
+                    self.assertEqual(owner.stdout.readline(), b"ready\n")
+                    identity = riso.process_identity(owner.pid, 1)
+                    log.with_suffix(".owner.json").write_text(json.dumps(
+                        {"pid": owner.pid, "started": identity["started"], "group": identity["group"],
+                         "launcher": identity["command"]}))
+                    riso.settle_chrome(log, identity["command"], time.monotonic() + 2)
+                    self.assertEqual(owner.wait(timeout=1), -signal.SIGTERM)
+                    self.assertIsNone(other.poll())
+                finally:
+                    if owner.poll() is None:
+                        owner.kill()
+                    if other.poll() is None:
+                        other.kill()
+
+    def test_native_frame_count_matches_binary64_renderer_at_half_boundaries(self):
+        for duration, frames in ((74 / 24, 93), (74 / 24 - 1e-9, 92), (98 / 24, 122), (202 / 24, 252)):
+            with self.subTest(duration=duration):
+                actual = subprocess.check_output(["node", "-p", f"Math.round({duration!r} * 30)"], text=True)
+                self.assertEqual(int(actual), frames)
+                native = {"codec_type": "video", "width": 1080, "height": 1920, "avg_frame_rate": "30/1",
+                          "nb_read_frames": str(frames), "color_range": "pc"}
+                run = Mock(return_value=json.dumps({"streams": [native]}))
+                self.assertEqual(riso.probe_native({"ffprobe": "ffprobe"}, "native", duration, run), "full")
+                self.assertIn("-count_frames", run.call_args.args[0])
+                self.assertTrue(run.call_args.kwargs["quiet"])
+                native["nb_read_frames"] = str(frames + 1)
+                run.return_value = json.dumps({"streams": [native]})
+                with self.assertRaisesRegex(ValueError, "Native Riso output changed"):
+                    riso.probe_native({"ffprobe": "ffprobe"}, "native", duration, run)
 
     def test_title_public_text_slots(self):
         for changes in ({"index": "UI"}, {"mast": ["", ""]},
@@ -184,6 +234,7 @@ chrome.on('exit', (code, signal) => {
         from edit.hd.tools import visual_plan, visual_canary, broll_component_executor
         from edit.hd.tests.test_broll_capability_router import (
             _load_router, _visual_intent, _visual_strategy, _strategy_component, avatar_fixture)
+        from edit.hd.tests.test_broll_component_executor import _Job
 
         value = number_brief()
         payload = json.dumps(value, ensure_ascii=False).encode()
@@ -237,6 +288,48 @@ chrome.on('exit', (code, signal) => {
         self.assertEqual(router.riso_output_contract(strategy["components"][0],
                          {"family": "evidence_with_data_overlay"}), contract)
 
+        # Exercise the official component entry with a format fixture standing
+        # in for the native render. Only approval of the fixture adapter is synthetic.
+        reference = Path(directory.name).resolve() / "reference"
+        entrypoint = reference / adapter.entrypoint
+        entrypoint.parent.mkdir(parents=True)
+        origin = "process-" + "a" * 32
+        entrypoint.write_text(
+            "from pathlib import Path\nimport hashlib, json, os, sys\n"
+            "assert len(os.environ['BROLL_COMPONENT_INPUT_SHA256']) == 64\n"
+            f"Path(sys.argv[-1]).write_bytes(Path({str(sample)!r}).read_bytes())\n"
+            "brief = Path(sys.argv[sys.argv.index('--brief') + 1]).read_bytes()\n"
+            "print(json.dumps({'status': 'completed', 'invocation_id': os.environ['BROLL_INVOCATION_ID'], "
+            "'brief_sha256': hashlib.sha256(brief).hexdigest(), 'native_reused': True, "
+            f"'native_source': {{'invocation_id': {origin!r}, 'sha256': 'b' * 64, "
+            "'bytes': 123, 'frames': 150, 'input_range': 'full'}}))\n"
+        )
+        fixture = replace(adapter, dependency_root=reference, entrypoint_sha256=riso.sha(entrypoint),
+                          brief_loader=lambda *_: payload)
+        argv = list(fixture.argv_template)
+        argv[argv.index("--runtime-identity") + 1] = "0" * 64
+        updated = replace(fixture, argv_template=tuple(argv))
+        job = _Job(Path(directory.name).resolve())
+        request = broll_component_executor.ComponentExecutionRequest(recipe, component["component_id"])
+        adapters = {"code_generated": {riso.DEPENDENCY_ID: fixture}, "artifact_probe": probe}
+        with patch.object(broll_component_executor, "_validate_code_adapter", side_effect=lambda bound, _: bound):
+            first = broll_component_executor.execute_component(job, request, adapters=adapters)
+            original = broll_component_executor.export_published_execution_binding(job, request, adapters=adapters)
+            adapters["code_generated"][riso.DEPENDENCY_ID] = updated
+            with patch.object(broll_component_executor, "_freeze_process_binding",
+                              side_effect=AssertionError("published replay tried to start the renderer")):
+                self.assertEqual(broll_component_executor.execute_component(job, request, adapters=adapters), first)
+                self.assertEqual(broll_component_executor.export_published_execution_binding(job, request, adapters=adapters), original)
+                argv[argv.index("--implementation-identity") + 1] = "1" * 64
+                adapters["code_generated"][riso.DEPENDENCY_ID] = replace(updated, argv_template=tuple(argv))
+                with self.assertRaises(broll_component_executor.BrollComponentExecutionError):
+                    broll_component_executor.execute_component(job, request, adapters=adapters)
+                adapters["code_generated"][riso.DEPENDENCY_ID] = updated
+                (job.job_dir / first.job_path).write_bytes(b"tampered published fixture")
+                with self.assertRaises(broll_component_executor.BrollComponentExecutionError):
+                    broll_component_executor.execute_component(job, request, adapters=adapters)
+        self.assertEqual(first.invocation_evidence["native_source"]["invocation_id"], origin)
+
         for field, replacement in (("layer_role", "overlay"), ("layout_slot", "main"),
                                    ("family", "aroll_with_overlay"), ("family", "no_broll")):
             bad = copy.deepcopy(strategy)
@@ -258,6 +351,27 @@ chrome.on('exit', (code, signal) => {
                     bad_component[field] = replacement
                 with self.assertRaisesRegex(ValueError, "Riso requires"):
                     adapter.brief_loader(None, bad_recipe, bad_component)
+
+    def test_native_checkpoint_revalidates_bytes_and_scope(self):
+        with tempfile.TemporaryDirectory(prefix="riso-checkpoint-test-") as directory:
+            parent = Path(directory).resolve()
+            work = parent / "native-original"
+            native = work / "project" / "renders" / "original.mp4"
+            native.parent.mkdir(parents=True)
+            native.write_bytes(b"strictly checked fixture")
+            runtime = {"identity": "1" * 64, "implementation_identity": "2" * 64}
+            checkpoint = riso.checkpoint_path(parent, "3" * 64, parent, runtime, "4" * 64, "5" * 64)
+            self.assertIsNone(riso.load_checkpoint(checkpoint, parent, "original", 122))
+            source = {"invocation_id": "process-" + "a" * 32, "frames": 122,
+                      "sha256": hashlib.sha256(native.read_bytes()).hexdigest(),
+                      "bytes": native.stat().st_size, "input_range": "full"}
+            riso.save_checkpoint(checkpoint, work, source)
+            self.assertEqual(riso.load_checkpoint(checkpoint, parent, "original", 122), (native, source))
+            different = riso.checkpoint_path(parent, "6" * 64, parent, runtime, "4" * 64, "5" * 64)
+            self.assertIsNone(riso.load_checkpoint(different, parent, "original", 122))
+            native.write_bytes(b"changed native bytes")
+            with self.assertRaisesRegex(ValueError, "recovery video changed"):
+                riso.load_checkpoint(checkpoint, parent, "original", 122)
 
     def test_native_slots_and_discovery(self):
         from edit.hd.tools import motion_capabilities as motion

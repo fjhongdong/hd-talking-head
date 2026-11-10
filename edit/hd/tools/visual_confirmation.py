@@ -46,6 +46,8 @@ def _exact(root, record):
 NATIVE_RESULT_MODULES = {'lemo-wake': 'lemo_wake_adapter', 'video-talkcraft': 'talkcraft_skill_adapter',
                          'barty-motion-graphics': 'motion_native_skill_adapter', 'bang-motion': 'motion_native_skill_adapter',
                          'mg-styles-15': 'motion_native_skill_adapter', 'video-shotcraft': 'motion_native_skill_adapter', 'bb-video': 'motion_native_skill_adapter', **CREATIVE_SKILL_ADAPTERS}
+AUTHORED_SCENE_ROUTES = frozenset({'openfilm-motion-graphics', 'lemo-opuscar', 'hyperframes-native-adaptation',
+                                   'paper-collage-hyperframes', 'onetake'})
 
 def native_candidate_id(dependency, brief, segment=None, component_id=None):
     if dependency == 'lemo-wake':
@@ -779,7 +781,11 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     def cell(value):
         return str(value).replace("|", "／").replace("\n", "<br>")
     def visual_task(row):
-        details = [item["meaning"] for item in row.get("required_content", {}).values()]
+        details = []
+        for item in row.get("required_content", {}).values():
+            terms = item.get("terms", [])
+            text = "、".join(f"「{term}」" for term in terms)
+            details.append(item["meaning"] + (f"（须显示 {text}）" if terms else ""))
         return "\n".join([row["visual_task"], *details])
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
              "## 贴片语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
@@ -1501,7 +1507,7 @@ def validate_realization_evidence(job_dir, stages, revision, receipt_descriptor,
     if receipt["revision"] >= revision:
         raise VisualConfirmationError("visual approval revision is not committed")
     realized = {key: _read(_exact(root, ref)) for key, ref in mapping["realization_inputs"].items()}
-    _validate_draft_against_source(root, proposal, realized["director"], realized["treatment"])
+    _validate_draft_against_source(root, proposal, realized["director"], realized["treatment"], require_scene_pins=True)
     if _core(final) != _core(realized['director']):
         raise VisualConfirmationError('compiled plan differs from its reviewed realization')
     compiled = {(seg["segment_id"], c["component_id"]): c
@@ -1568,6 +1574,113 @@ def validate_visual_authorization(job, *, require_realized=False):
     if require_realized:
         return validate_realization_evidence(job.job_dir, job.stages, job.revision, ref, job_id=job.job_id)
     return {"artifact": ref, "payload": receipt, "source": proposal, "mapping": None}
+
+
+def _native_dispatch_task(treatment, key):
+    from .motion_match_cache import selected_expression_bases
+    from .semantic_visual_plan import component_semantic_rows
+
+    row = component_semantic_rows(treatment).get(key)
+    if row is None:
+        raise VisualConfirmationError('native dispatch has no confirmed semantic row for this component')
+    return {'semantic_row': row, 'expression_basis': selected_expression_bases(treatment).get(key)}
+
+
+def _native_dispatch_record(root, proposal, treatment, key, dependency, brief_ref):
+    task = _native_dispatch_task(treatment, key)
+    selection = treatment.get('skill_selection', {})
+    selected = [item for group in ('assignments', 'overlay_assignments') for item in selection.get(group, [])
+                if (item['segment_id'], item['component_id']) == key]
+    route = [{field: row.get(field) for field in ('channel', 'template')}
+             for row in proposal.get('rows', []) if (row['segment_id'], row['component_id']) == key]
+    steps = [step for step in proposal.get('generation_steps', [])
+             if (step['segment_id'], step['component_id']) == key]
+    path = _path(root, f"{DIRECTORY}/native-dispatch/{brief_ref['sha256']}/task.json")
+    return path, {'job_id': proposal['job_id'], 'segment_id': key[0], 'component_id': key[1],
+                  'dependency_id': dependency, 'brief': brief_ref,
+                  'task_sha256': artifacts.sha256_json({'task': task, 'route': route,
+                                                       'selection': selected, 'generation_steps': steps})}
+
+
+def _check_native_dispatch(path, expected):
+    if not path.is_file():
+        raise VisualConfirmationError('native brief was not dispatched by the confirmed visual stage')
+    if _read(path) != expected:
+        raise VisualConfirmationError('native brief belongs to a different approved task; prepare a new brief revision')
+
+
+def _pin_native_task(path, expected):
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=path.parent) as staging:
+            staging.write(artifacts.canonical_json_bytes(expected))
+            staging.flush()
+            os.fsync(staging.fileno())
+            try:
+                os.link(staging.name, path)
+            except FileExistsError:
+                pass  # Another dispatch won. It must have pinned the identical task.
+    _check_native_dispatch(path, expected)
+
+
+def _authored_scene_task(root, treatment, key, dependency, brief):
+    # Ignore workflow notes and Job paths. A renamed copy or a change only to
+    # the brief is still the same rendered scene. Genuine visual assets may change.
+    files = [*brief.get('files', []), *brief.get('assets', [])]
+    if 'entry' in brief:
+        files.append(brief['entry'])
+    scene = sorted((record['scene_path'], record['sha256']) for record in files
+                   if Path(record['scene_path']).suffix.lower() not in {'.md', '.markdown'})
+    if not scene:
+        raise VisualConfirmationError('authored native route needs frozen scene files')
+    identity = artifacts.sha256_json([key, dependency, scene])
+    path = _path(root, f'{DIRECTORY}/native-dispatch/scenes/{identity}.json')
+    return path, {'semantic_sha256': artifacts.sha256_json(_native_dispatch_task(treatment, key))}
+
+
+def freeze_native_dispatch(job, proposal, treatment, key, dependency, brief_path, brief_sha256):
+    """Pin a ready action to this native request once, including across later proposal revisions."""
+    root = job.job_dir.resolve(strict=True)
+    brief_ref = _record(root, Path(brief_path).resolve(strict=True))
+    if brief_ref['sha256'] != brief_sha256:
+        raise VisualConfirmationError('native brief changed before dispatch')
+    path, expected = _native_dispatch_record(root, proposal, treatment, key, dependency, brief_ref)
+    _pin_native_task(path, expected)
+    # Approvals may be replaced while another invocation still has the old
+    # snapshot. Append a marker so an older dispatch cannot erase a newer one.
+    marker = path.with_name(f"approval-{proposal['source_id']}.json")
+    try:
+        os.link(path, marker)
+    except FileExistsError:
+        _check_native_dispatch(marker, expected)
+
+
+def require_native_dispatch(job, dependency, brief_path, *, payload):
+    """Check current user approval and the exact brief bytes before native capture or publication."""
+    root = job.job_dir.resolve(strict=True)
+    brief_path = Path(brief_path).resolve(strict=True)
+    brief_ref = {'path': brief_path.relative_to(root).as_posix(),
+                 'sha256': hashlib.sha256(payload).hexdigest(), 'bytes': len(payload)}
+    path = _path(root, f"{DIRECTORY}/native-dispatch/{brief_ref['sha256']}/task.json")
+    if not path.is_file():
+        raise VisualConfirmationError('native brief was not dispatched by the confirmed visual stage')
+    record = _read(path)
+    key = (record['segment_id'], record['component_id'])
+    proposal = validate_visual_authorization(job)['source']
+    frozen = _read(_exact(root, proposal['inputs']['director']))
+    treatment = _read(_exact(root, proposal['inputs']['treatment']))
+    route = next((segment.get('bindings', {}).get(key[1], {}) for segment in frozen['segments']
+                  if segment['segment_id'] == key[0]), {})
+    if route.get('dependency_id') != dependency:
+        raise VisualConfirmationError('native dispatch route differs from the current visual confirmation')
+    _, expected = _native_dispatch_record(root, proposal, treatment, key, dependency, brief_ref)
+    _check_native_dispatch(path, expected)
+    marker = path.with_name(f"approval-{proposal['source_id']}.json")
+    if not marker.is_file():
+        raise VisualConfirmationError('native brief was not dispatched by the current visual confirmation')
+    _check_native_dispatch(marker, expected)
+    return _native_dispatch_task(treatment, key)
+
 
 def _request_id(source, step):
     return "visual-" + source["source_id"] + "-" + step["id"]
@@ -1902,6 +2015,16 @@ def generation_actions(job, *, account_limit=None, defer_submission=False, exclu
     return response['actions']
 
 
+def _semantic_handoffs(treatment, proposal_ref):
+    from .motion_match_cache import selected_expression_bases
+    from .semantic_visual_plan import component_semantic_rows
+
+    expressions = selected_expression_bases(treatment)
+    return {key: {'proposal': proposal_ref, 'semantic_row': row,
+                  **({'expression_basis': expressions[key]} if key in expressions else {})}
+            for key, row in component_semantic_rows(treatment).items()}
+
+
 def _generation_step_action(job, authorized, step):
     from . import generation_queue
     proposal = authorized['source']
@@ -1918,12 +2041,19 @@ def _generation_step_action(job, authorized, step):
             output = item.get('completion_response', item.get('response', {}))['artifacts'][index]
             source = Path(output['path'])
             source = source if source.is_absolute() else job.job_dir / source
+            treatment = _read(_exact(job.job_dir, proposal['inputs']['treatment']))
+            handoffs = _semantic_handoffs(treatment, authorized['payload']['source'])
+            key = (step['segment_id'], step['component_id'])
+            if key not in handoffs:
+                raise VisualConfirmationError('GBRO frame preparation needs its approved semantic row')
             return {'action': 'prepare_template_inputs', 'step_id': step['id'],
                 'segment_id': step['segment_id'], 'component_id': step['component_id'],
-                'proposal': authorized['artifact'], 'source_image': _record(job.job_dir, source),
+                **handoffs[key], 'source_approval': authorized['artifact'],
+                'source_image': _record(job.job_dir, source),
                 'native_skill': str(PACKAGE_ROOT / 'vendor/gbro-collage-broll/SKILL.md'),
                 'return_fields': ['gbro_frame_preparations'],
-                'next': '按 GBRO 原生命令准备空纸首帧与完成尾帧；有已批准文字时仅沿 video-use 静态标签路线叠入，无文字时直接使用空纸首帧；保留原 prompt。'}
+                'next': ('按 semantic_row 的原话、画面任务和必要内容执行 GBRO 原生首尾帧准备。'
+                         '有已批准文字时仅沿 video-use 静态标签路线叠入。无文字时直接使用空纸首帧。保留原 prompt。')}
         return None
     rid, item = generation_item(queue, proposal, step, job)
     if item and item["status"] == "completed":
@@ -3247,7 +3377,8 @@ def _validate_fresh_native_parent_inputs(root, proposal, original, segment, cid,
     _validate_native_source_materials(root, proposal, original, segment, cid, brief, facts, scene or {})
 
 
-def _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, *, targets=None):
+def _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, *, targets=None,
+                                       require_scene_pins=False):
     """Keep parent inputs and permissions while leaving native project creation free."""
     from .motion_match_cache import selected_expression_bases, validate_native_expression
     from .semantic_visual_plan import component_semantic_rows
@@ -3262,6 +3393,17 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
                 validate_native_expression(value, row, expressions.get(key))
             except ValueError as error:
                 raise VisualConfirmationError(str(error)) from error
+        dependency = segment['bindings'][cid]['dependency_id']
+        if dependency in AUTHORED_SCENE_ROUTES and row is not None:
+            scene_pin, expected = _authored_scene_task(root, original, key, dependency, value)
+            if require_scene_pins or scene_pin.exists():
+                _check_native_dispatch(scene_pin, expected)
+        if dependency in NATIVE_RESULT_MODULES and _path(root, value['result_record_path']).is_file():
+            scene = next(s for s in treatment['scenes']
+                         if s.get('segment_id') == key[0] and s.get('component_id') in (None, cid))
+            brief_ref = _record(root, _path(root, scene['brief_path']))
+            dispatch, expected = _native_dispatch_record(root, proposal, original, key, dependency, brief_ref)
+            _check_native_dispatch(dispatch, expected)
 
     def brief(segment, cid, current):
         scenes = [scene for scene in current.get('scenes', [])
@@ -3377,7 +3519,8 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
                         raise VisualConfirmationError('execution changed authorized native input: source assets')
 
 
-def _validate_draft_against_source(root, proposal, director, treatment, *, native_targets=None):
+def _validate_draft_against_source(root, proposal, director, treatment, *, native_targets=None,
+                                   require_scene_pins=False):
     """Bind execution to authorized timing, creative inputs, routes and budget."""
     frozen = _read(_exact(root, proposal["inputs"]["director"]))
     original = _read(_exact(root, proposal["inputs"]["treatment"]))
@@ -3404,10 +3547,12 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
                     for b in original.get('skill_selection', {}).get(group, [])}
         current = {(b['segment_id'], b['component_id']): b
                    for b in treatment.get('skill_selection', {}).get(group, [])}
-        if set(current) != set(previous) or any(
-                current[key].get(field) != beat.get(field) for key, beat in previous.items()
-                for field in ('semantic_row_id', 'transcript', 'semantic_goal', 'start', 'end')):
-            raise VisualConfirmationError('execution changed authorized native input: parent semantic beat')
+        def review_fields(beat):
+            return {field: value for field, value in beat.items() if field != 'binding_snapshot'}
+
+        if ({key: review_fields(beat) for key, beat in current.items()}
+                != {key: review_fields(beat) for key, beat in previous.items()}):
+            raise VisualConfirmationError('execution changed authorized native input: parent semantic beat or review')
     actual = {segment["segment_id"]: segment for segment in director["segments"]}
     route_fields = ("producer_type", "dependency_id", "entrypoint", "producer_version", "template_id", "primary_renderer")
     for segment in frozen["segments"]:
@@ -3418,7 +3563,8 @@ def _validate_draft_against_source(root, proposal, director, treatment, *, nativ
             if (current.get('invocation_record', {}).get('canvas_translation') is not None
                     and (native_targets is None or (segment['segment_id'], cid) in native_targets)):
                 _validate_canvas_translation(root, director, treatment, (segment['segment_id'], cid))
-    _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, targets=native_targets)
+    _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, targets=native_targets,
+                                       require_scene_pins=require_scene_pins)
 
 
 def _normalize_official_crop_text(root, frozen, frozen_treatment, director, treatment, comparison):
@@ -3591,6 +3737,7 @@ def write_realization_mapping(job, *, director_path, treatment_path):
     final_records = copy.deepcopy(job.stages["visual_direction"]["artifacts"])
     final = next(r for r in final_records if r["path"] == "07-visual-direction/visual-plan.json")
     treatment = _read(treatment_path)
+    original = None
     completed_records = []
     native_inputs = []
     realized_director = _read(director_path)
@@ -3616,6 +3763,12 @@ def write_realization_mapping(job, *, director_path, treatment_path):
             if bindings.get(key, {}).get("brief_sha256") != ref["sha256"]:
                 raise VisualConfirmationError("template brief differs from its actual binding")
             item = {"segment_id": key[0], "component_id": key[1], "artifact": ref}
+            dependency = bindings[key].get('dependency_id')
+            if dependency in AUTHORED_SCENE_ROUTES:
+                if original is None:
+                    original = _read(_exact(job.job_dir, proposal['inputs']['treatment']))
+                value = _read(_exact(job.job_dir, ref))
+                _pin_native_task(*_authored_scene_task(job.job_dir, original, key, dependency, value))
             provenance = scene.get('asset_provenance')
             if provenance is not None:
                 if (bindings[key].get('dependency_id') != 'paper-collage-hyperframes'

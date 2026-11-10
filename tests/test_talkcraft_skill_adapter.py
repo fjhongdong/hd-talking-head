@@ -102,8 +102,9 @@ class TalkCraftSkillTests(unittest.TestCase):
                     reference_root=_env.PROJECT, dependency_root=_env.SKILL)
         self.assertEqual(result['status'], 'bound', result)
 
+    @mock.patch('edit.hd.tools.visual_confirmation.require_native_dispatch')
     @mock.patch.object(native, 'require_job_directory_identity', return_value=SimpleNamespace(job_id='native-test'))
-    def test_capture_rejects_cached_segments_and_foreign_segment_directory_before_launch(self, _identity):
+    def test_capture_rejects_cached_segments_and_foreign_segment_directory_before_launch(self, _identity, _dispatch):
         from prepare_talkcraft_native import check
         runtime = check(_env.PROJECT)
         with tempfile.TemporaryDirectory() as directory:
@@ -121,8 +122,9 @@ class TalkCraftSkillTests(unittest.TestCase):
                     native.capture_render(root, request, argv + ['--all', '--seg-dir', str(root / 'old-segments')])
                 launch.assert_not_called()
 
+    @mock.patch('edit.hd.tools.visual_confirmation.require_native_dispatch')
     @mock.patch.object(native, 'require_job_directory_identity', return_value=SimpleNamespace(job_id='native-test'))
-    def test_capture_requires_tsconfig_in_native_remotion_root_before_launch(self, _identity):
+    def test_capture_requires_tsconfig_in_native_remotion_root_before_launch(self, _identity, _dispatch):
         from prepare_talkcraft_native import check
         runtime = check(_env.PROJECT)
         with tempfile.TemporaryDirectory() as directory:
@@ -277,9 +279,18 @@ class TalkCraftStageFlowTests(unittest.TestCase):
         review={k:copy.deepcopy(v) for k,v in run_stage._summary(self.job,'visual_direction').items() if k in {'job_id','job_dir','stage','revision','artifacts'}}
         review.update(passed=True,note='隔离fixture完整清单确认',user_confirmation='隔离fixture批准，只测试阶段门')
         run_stage._review(self.job,'visual_direction',review);self.job=state.load_job(root)
-        pending=run_stage.resume_visual_direction(self.job,_env.PROJECT,{})
-        self.assertEqual([a['dependency_id'] for a in pending['actions']],['video-talkcraft'])
-        self.assertEqual(pending['actions'][0]['speech_window'],{'start':0,'end':6})
+        # In a new Job, Wake must be dispatched before supplying its preserved
+        # qualification result, just like the TalkCraft request below.
+        wake_record = root / self.brief['result_record_path']
+        preserved = wake_record.with_suffix('.fixture')
+        wake_record.rename(preserved)
+        try:
+            pending = run_stage.resume_visual_direction(self.job, _env.PROJECT, {})
+        finally:
+            preserved.rename(wake_record)
+        self.assertEqual(pending['errors'], [])
+        self.assertEqual([a['dependency_id'] for a in pending['actions']], ['lemo-wake', 'video-talkcraft'])
+        self.assertEqual(pending['actions'][1]['speech_window'], {'start': 0, 'end': 6})
         # Simulate native completion with existing media and original recipe source; do not render.
         project=root/payload['project_directory'];(project/'remotion/src/cards').mkdir(parents=True)
         shutil.copyfile(native.source_root()/'template/cards/source-converge.tsx',project/'remotion/src/cards/source-converge.tsx')
@@ -312,7 +323,8 @@ class TalkCraftStageFlowTests(unittest.TestCase):
         treatment['semantic_assessments'][-1]=assessment
         artifacts.write_json_artifact(tpath,treatment)
         self.assertEqual(visual_plan._skill_selection_for_publication(self.job,director,tpath)['motion_review']['status'],'pass')
-        run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json'}})
+        realized = run_stage.resume_visual_direction(self.job,_env.PROJECT,{'realization':{'director_brief':'director.json','treatment':'treatment.json'}})
+        self.assertTrue(realized.get('production_completed'), realized.get('errors'))
         self.job=state.load_job(root);confirmation.validate_visual_authorization(self.job,require_realized=True)
         plan=visual_canary.load_approved_visual_plan(self.job);recipe=plan['segments'][1]['shot_recipe']
         result=executor.execute_component(self.job,executor.ComponentExecutionRequest(recipe=recipe,component_id='component-2'),adapters=run_stage.native_component_adapters(_env.PROJECT,self.job))

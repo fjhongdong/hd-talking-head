@@ -269,9 +269,11 @@ def initialize_project(job_dir, brief_path, *, slug, parent=None):
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
-    b = validate_brief(brief_path.read_bytes())
+    payload = brief_path.read_bytes(); b = validate_brief(payload)
     if b['job_id'] != job.job_id:
         raise ValueError('Wake brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     image = exact(root, b['image'])
     _revision_inputs(root, b)
     if not isinstance(slug, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', slug):
@@ -290,7 +292,7 @@ def initialize_project(job_dir, brief_path, *, slug, parent=None):
     environment = runtime_environment()
     result = subprocess.run(argv, cwd=root, env=environment, capture_output=True, text=True, timeout=120)
     record = {'schema_version': 2, 'kind': 'wake-native-call', 'step': 'init',
-              'request_sha256': sha(brief_path), 'job_id': b['job_id'], 'argv': argv,
+              'request_sha256': hashlib.sha256(payload).hexdigest(), 'job_id': b['job_id'], 'argv': argv,
               'native_script_sha256': sha(native), 'upstream_commit': UPSTREAM_COMMIT,
               'exit_code': result.returncode, 'project_src': src.relative_to(root).as_posix(),
               'source_image': b['image'], 'environment': {'LEMO_WAKE_MODELS': environment['LEMO_WAKE_MODELS']},
@@ -334,9 +336,11 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
     job = require_job_directory_identity(job_dir, project_root=PROJECT)
     root, brief_path = Path(job_dir).resolve(strict=True), Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
-    b = validate_brief(brief_path.read_bytes())
+    payload = brief_path.read_bytes(); b = validate_brief(payload)
     if b['job_id'] != job.job_id:
         raise ValueError('Wake brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     exact(root, b['image'])
     _revision_inputs(root, b)
     if step not in {'render', 'encode', 'qa'}:
@@ -373,7 +377,7 @@ def capture_call(job_dir, brief_path, step, argv, project_src):
     if before != project_files(root, project_src):
         raise ValueError('Native project changed during execution; review before recapturing')
     source_root()
-    record = {'schema_version': 2, 'kind': 'wake-native-call', 'request_sha256': sha(brief_path),
+    record = {'schema_version': 2, 'kind': 'wake-native-call', 'request_sha256': hashlib.sha256(payload).hexdigest(),
               'job_id': b['job_id'], 'step': step, 'argv': argv, 'native_script_sha256': sha(native),
               'upstream_commit': UPSTREAM_COMMIT, 'exit_code': result.returncode,
               'project_src': Path(src).relative_to(root).as_posix(), 'project_files': before,
@@ -522,6 +526,8 @@ def publish_completed(job_dir, brief_path, project_src, video, native_qa, calls)
     b = validate_brief(payload)
     if b['job_id'] != job.job_id:
         raise ValueError('Wake brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     record = {'schema_version': 2, 'status': 'completed', 'dependency_id': DEPENDENCY_ID,
               'template_id': TEMPLATE_ID, 'upstream_commit': UPSTREAM_COMMIT, 'job_id': b['job_id'],
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'source_image_sha256': b['image']['sha256'],

@@ -399,21 +399,48 @@ def _visual_inputs(root,directory):
     return [descriptor(root,p) for p in sorted(files)]
 
 
+def _validate_web_expression(config, basis):
+    from edit.hd.tools.motion_match_cache import validate_fixed_content
+    from sweety_native_runtime import kinetic_title_content
+
+    if not isinstance(basis, dict) or not basis.get('content'):
+        raise ValueError('Sweety kinetic title needs its confirmed visible content')
+    validate_fixed_content(kinetic_title_content(config), basis)
+
+
+def _web_config(root, brief):
+    relative_path = relative(brief['project_directory']) / 'web-motion.json'
+    return artifacts.read_json_artifact(path(root, relative_path.as_posix()))
+
+
 def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
-    job=_execution_job(job_dir);b=validate_brief(Path(brief_path).read_bytes())
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+
+    job=_execution_job(job_dir);payload=Path(brief_path).read_bytes();b=validate_brief(payload)
     if b['job_id']!=job.job_id or native_preparations is not None:
         raise ValueError('Sweety requires this Job; no substitute preparation workflow')
-    return _capture_native(job_dir,brief_path,argv)
+    task = require_native_dispatch(job, DEPENDENCY_ID, Path(brief_path), payload=payload)
+    return _capture_native(job_dir,brief_path,argv,payload=payload,task=task)
 
 
-def _capture_native(job_dir,brief_path,argv=None):
+def _capture_native(job_dir,brief_path,argv=None,*,payload=None,task=None):
     """The same mechanical native invocation used by production and isolated source qualification.
 
     A capability sample is not a production Job or a user semantic approval.
     The public production entry above still requires its actual Job identity.
     """
-    root=Path(job_dir).resolve(strict=True);payload=Path(brief_path).read_bytes();b=validate_brief(payload)
-    _inputs(root,b);runtime=check_runtime();row=_template(b);directory=path(root,b['project_directory'])
+    root=Path(job_dir).resolve(strict=True)
+    payload=Path(brief_path).read_bytes() if payload is None else payload
+    b=validate_brief(payload)
+    _inputs(root,b);row=_template(b);directory=path(root,b['project_directory'])
+    if row['native_template_group']=='web_motion':
+        config=_web_config(root,b)
+        if (not isinstance(config, dict) or config.get('template_id')!=b['template_id']
+                or config.get('recipe')!=row['native_option_id']):
+            raise ValueError('Sweety native recipe changed from the selected template')
+        if task is not None and b['template_id']=='web-kinetic-title':
+            _validate_web_expression(config,task.get('expression_basis'))
+    runtime=check_runtime()
     directory.mkdir(parents=True,exist_ok=True)
     out=directory/'out';out.mkdir(exist_ok=True)
     target=out/('visual.mov' if b['alpha'] else 'visual.mp4')
@@ -429,9 +456,6 @@ def _capture_native(job_dir,brief_path,argv=None):
     artifacts.write_json_artifact(call_path,record)
     try:
         if row['native_template_group']=='web_motion':
-            config=json.loads((directory/'web-motion.json').read_bytes())
-            if config.get('template_id')!=b['template_id'] or config.get('recipe')!=row['native_option_id']:
-                raise ValueError('Sweety native recipe changed from the selected template')
             command=[runtime['python'],'-B',str(SKILL/'scripts/sweety_native_runtime.py'),'--render-web',str(directory),
                      '--composition-json',json.dumps(b['composition'],separators=(',',':'))]
             if argv is not None and argv!=command:
@@ -547,15 +571,21 @@ def _verify_call(root,b,payload,call):
 
 
 def publish_completed(job_dir,brief_path,call_path,*,native_usage=None):
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+
     job=_execution_job(job_dir);payload=Path(brief_path).read_bytes();b=validate_brief(payload)
     if b['job_id']!=job.job_id or native_usage is not None:
         raise ValueError('Sweety completion belongs to this exact native task')
-    return _publish_native(job_dir,brief_path,call_path)
+    task = require_native_dispatch(job, DEPENDENCY_ID, Path(brief_path), payload=payload)
+    if b['template_id']=='web-kinetic-title':
+        _validate_web_expression(_web_config(job_dir,b),task.get('expression_basis'))
+    return _publish_native(job_dir,brief_path,call_path,payload=payload)
 
 
-def _publish_native(job_dir,brief_path,call_path):
+def _publish_native(job_dir,brief_path,call_path,*,payload=None):
     """Publish actual native completion; source qualification does not assert Job approval."""
-    payload=Path(brief_path).read_bytes();b=validate_brief(payload)
+    payload=Path(brief_path).read_bytes() if payload is None else payload
+    b=validate_brief(payload)
     _inputs(job_dir,b);call=json.loads(Path(call_path).read_bytes());_verify_call(job_dir,b,payload,call)
     target=path(job_dir,b['result_record_path'])
     if target.exists():

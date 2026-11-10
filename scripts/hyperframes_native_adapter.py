@@ -39,6 +39,15 @@ BROLL_ROUTES=(
     'hyperframes/screen-flow-carousel',
     'hyperframes/beat-timeline',
 )
+def template_id_for_route(route):
+    return route.replace('/', '-') + '-portrait-adaptation'
+
+
+def validate_selected_route(brief, template_id):
+    if template_id != template_id_for_route(brief['upstream_route']):
+        raise ValueError('Native HyperFrames brief differs from the selected upstream template')
+
+
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def validate_brief(payload):
     b=json.loads(payload)
@@ -80,6 +89,7 @@ def create_adapter(project_root,python_executable,brief_loader):
         from edit.hd.tools import visual_canary
         if check_runtime(project)[1]!=runtime or sha(SKILL/ENTRY)!=entry_sha:raise ValueError('Bound runtime changed')
         payload=brief_loader(job,recipe,component);b=validate_brief(payload)
+        validate_selected_route(b,component['template_id'])
         plan=visual_canary.load_approved_visual_plan(job);s=next(s for s in plan['segments'] if s['segment_id']==recipe['segment_id'])
         expected=dict(aroll_sha256=plan['edited_aroll_sha256'],segment_id=s['segment_id'],start=s['start'],end=s['end'])
         if s['shot_recipe']!=json.loads(json.dumps(recipe)) or b['source_binding']!=expected or b['template_request']!=json.loads(json.dumps(component['invocation_record']['template_request'])) or component['source_sha256']!=entry_sha or component['artifact_contract']!={'width':1080,'height':1920,'fps':24,'alpha':b['composition']['alpha']} or component['render_window']['end_frame']!=b['composition']['frames']:raise ValueError('Native HTML no longer matches the approved shot')
@@ -103,7 +113,7 @@ def create_artifact_probe(ffprobe_executable):
 
 def create_binding(adapter,payload):
     b=validate_brief(payload);r=b['template_request']
-    return dict(producer_type='dependency',dependency_id=DEPENDENCY_ID,entrypoint=ENTRY,producer_version=VERSION,primary_renderer='HyperFrames',renderer_version=RUNTIME_VERSION,template_origin='custom_fallback',template_id=b['upstream_route'].replace('/','-')+'-portrait-adaptation',template_version=VERSION,verification_id=hashlib.sha256((adapter.entrypoint_sha256+b['entry']['sha256']).encode()).hexdigest(),adaptation_level='structural',source_entrypoint=ENTRY,source_sha256=adapter.entrypoint_sha256,semantic_families=[r['semantic_family']],capacity=dict(min_units=r['information_units'],max_units=r['information_units']),brief_sha256=hashlib.sha256(payload).hexdigest(),invocation_record=dict(argv=[str(adapter.launcher),ENTRY],status='planned',exit_code=None,template_request=r))
+    return dict(producer_type='dependency',dependency_id=DEPENDENCY_ID,entrypoint=ENTRY,producer_version=VERSION,primary_renderer='HyperFrames',renderer_version=RUNTIME_VERSION,template_origin='custom_fallback',template_id=template_id_for_route(b['upstream_route']),template_version=VERSION,verification_id=hashlib.sha256((adapter.entrypoint_sha256+b['entry']['sha256']).encode()).hexdigest(),adaptation_level='structural',source_entrypoint=ENTRY,source_sha256=adapter.entrypoint_sha256,semantic_families=[r['semantic_family']],capacity=dict(min_units=r['information_units'],max_units=r['information_units']),brief_sha256=hashlib.sha256(payload).hexdigest(),invocation_record=dict(argv=[str(adapter.launcher),ENTRY],status='planned',exit_code=None,template_request=r))
 def render(args):
     payload=Path(args.brief).read_bytes();b=validate_brief(payload);paths,pins=check_runtime(Path(args.project_root),dict(node=args.node,ffmpeg=args.ffmpeg,ffprobe=args.ffprobe))
     if any(pins[k]!=getattr(args,k+'_sha256') for k in ('node','ffmpeg','ffprobe')):raise ValueError('Bound renderer executables changed')

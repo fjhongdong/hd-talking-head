@@ -407,8 +407,6 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     """Continue approved work; real host tool results arrive via input-json."""
     from edit.hd.tools import state, visual_confirmation as confirmation, visual_plan
     from edit.hd.tools import generation_channels, generation_queue, contract_artifacts
-    from edit.hd.tools.motion_match_cache import selected_expression_bases
-    from edit.hd.tools.semantic_visual_plan import component_semantic_rows
     from edit.hd.tools.subtitles_v2 import subtitle_layout
     data = payload or {}
     authorized = confirmation.validate_visual_authorization(job)
@@ -433,14 +431,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     draft, scene_plan = _json(director), _json(treatment)
     confirmation.validate_realization_draft(job, draft, scene_plan, native_targets=set())
     frozen_treatment = confirmation._read(confirmation._exact(job.job_dir, inputs['treatment']))
-    semantic_rows = component_semantic_rows(frozen_treatment)
-    expressions = selected_expression_bases(frozen_treatment)
-
-    def semantic_handoff(key):
-        handoff = {'semantic_row': semantic_rows[key]}
-        if key in expressions:
-            handoff['expression_basis'] = expressions[key]
-        return handoff
+    handoffs = confirmation._semantic_handoffs(frozen_treatment, authorized['payload']['source'])
 
     pending = confirmation.unprepared_template_targets(draft, scene_plan)
     errors, invalid, native_actions = [], set(), {}
@@ -515,10 +506,9 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         if any((steps[step['id']] or {}).get('status') != 'completed' for step in required):
             continue
         action = {'action': 'prepare_template_inputs', 'segment_id': sid, 'component_id': cid,
-            'proposal': authorized['payload']['source'],
             'completed_generations': [steps[step['id']] for step in required],
             'return_fields': ['realization.director_brief', 'realization.treatment'],
-            'next': creative_context, **semantic_handoff((sid, cid))}
+            'next': creative_context, **handoffs[(sid, cid)]}
         segment = next(s for s in draft['segments'] if s['segment_id'] == sid)
         strategy = segment['visual_strategy']
         zones, placement = subtitle_layout(strategy['mode'], strategy.get('composition', {}))
@@ -533,10 +523,17 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         actions.append(action)
     for key, native in native_actions.items():
         if key not in blocked:
-            for action in native:
-                action['proposal'] = authorized['payload']['source']
-                action.update(semantic_handoff(key))
-                action['next'] = (action.get('next', '') + ' ' + creative_context).strip()
+            try:
+                for action in native:
+                    confirmation.freeze_native_dispatch(job, proposal, frozen_treatment, key,
+                                                        action['dependency_id'], Path(action['brief_path']),
+                                                        action['brief_sha256'])
+                    action.update(handoffs[key])
+                    action['next'] = (action.get('next', '') + ' ' + creative_context).strip()
+            except (ValueError, OSError, KeyError, TypeError, RuntimeError) as error:
+                invalid.add(key)
+                errors.append({'segment_id': key[0], 'component_id': key[1], 'error': str(error)})
+                continue
             actions.extend(native)
     candidates = [candidate for candidate in generation_candidates
                   if (candidate.get('segment_id'), candidate.get('component_id')) not in invalid | dependency_blocked]

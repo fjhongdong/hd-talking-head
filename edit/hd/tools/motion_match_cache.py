@@ -1,6 +1,7 @@
 """Persistent, identity-bound semantic motion matching cache."""
 from __future__ import annotations
 import ast, copy, hashlib, json, re
+from functools import cache
 from pathlib import Path
 from . import contract_artifacts, motion_capabilities, semantic_visual_plan
 
@@ -22,9 +23,9 @@ _FIXED_CONTENT_SLOTS = {
 
 _RISO_CONTENT_SLOTS = {
     "compare": ("title", "before/label", "before/value", "before/unit", "after/label", "after/value", "after/unit"),
-    "converge": ("from/n", "from/cap", "from/count", "to/n", "to/cap", "to/count", "names/#"),
+    "converge": ("from/n", "from/cap", "to/n", "to/cap", "names/#"),
     "focus": ("title", "items/#", "verdict/n", "verdict/text"),
-    "network": ("number", "unit", "say", "nodes"),
+    "network": ("number", "unit", "say"),
     "number": ("number", "unit", "say", "prefix", "suffix"),
     "quote": ("lead", "quote"),
     "shot": ("caption", "source"),
@@ -44,6 +45,39 @@ _HYPERFRAMES_CONTENT_SLOTS = {
     )),
 }
 
+# Only content leaves are listed. The native full brief still owns cross-field
+# conditions and placement once the selected route is prepared.
+_RISO_TEXT_LIMITS = {
+    "compare": {"title": 8, "before/label": 6, "after/label": 6, "before/unit": 4, "after/unit": 4},
+    "converge": {"from/n": 4, "to/n": 4, "from/cap": 8, "to/cap": 8, "names/#": 5},
+    "focus": {"title": 8, "items/#": 7, "verdict/n": 6, "verdict/text": 10},
+    "network": {"unit": 4, "say": 10},
+    "number": {"unit": 4, "say": 8, "prefix": 2, "suffix": 2},
+    "quote": {"lead": 16, "quote": 7},
+    "shot": {"caption": 10, "source": 20},
+    "steps": {"title/#": 4, "steps/#": 5},
+    "title": {"kicker": 6, "title": 6, "sub": 14},
+    "versus": {"before/tag": 4, "after/tag": 4, "before/text": 8, "after/text": 8},
+}
+_RISO_ARRAY_SIZES = {"mast/#": 2, "names/#": 6, "items/#": 5, "steps/#": 6, "title/#": 3}
+
+_FIXED_TEXT_LIMITS = {
+    "adu-motion-video": {"/title": 14, "/stamp": 4, "/left/title": 8, "/right/title": 8,
+                         "/left/items/#": 14, "/right/items/#": 14},
+    "datamagic": {"/props/title": 24, "/props/question": 48, "/props/metricLabel": 16, "/props/unit": 6,
+                  "/props/source": 56, "/props/takeaway": 48, "/props/rows/#/label": 12, "/props/rows/#/caption": 40},
+    "huashu-motion-native": {"/metric/prefix": 12, "/metric/suffix": 12, "/metric/label": 40},
+    "hypit-native-chat": {"/title": 14, "/messages/#/sender": 6, "/messages/#/text": 28},
+    "motion-graphics-native": {"/data/label": 10},
+    "wise-motion": {"/title": 10, "/context_labels/#": 8},
+}
+_FIXED_ARRAY_SIZES = {
+    "adu-motion-video": 3, "datamagic": 2, "html-video": 8, "hypit-native-chat": 4, "wise-motion": 3,
+}
+_NUMERIC_TOKEN = re.compile(r"[+-]?[0-9]+(?:[.,][0-9]+)*(?:[eE][+-]?[0-9]+)?\+?")
+_SWEETY_PROJECT_CONTENT = "web-kinetic-title"
+
+
 def _fixed_content_slots(candidate):
     dependency = candidate.get("dependency_id")
     if dependency == "eian-riso-broll":
@@ -51,7 +85,78 @@ def _fixed_content_slots(candidate):
         return tuple("/data/" + slot for slot in ("mast/#", *_RISO_CONTENT_SLOTS[template]))
     if dependency == "hyperframes":
         return _HYPERFRAMES_CONTENT_SLOTS[Path(candidate["entrypoint"]).name]
+    if (dependency == "sweety-handdraw-video"
+            and candidate.get("template_id") == dependency + "/" + _SWEETY_PROJECT_CONTENT):
+        return ("/params/text",)
     return _FIXED_CONTENT_SLOTS.get(dependency)
+
+
+def _array_index(pointer, indexed):
+    return int(pointer.split("/")[indexed.split("/").index("#")])
+
+
+def _validate_riso_value(template, pointer, indexed, value):
+    from scripts.riso_native_adapter import integer, text
+
+    slot = indexed.removeprefix("/data/")
+    index = _array_index(pointer, indexed) if "#" in indexed else None
+    if index is not None and index >= _RISO_ARRAY_SIZES[slot]:
+        raise ValueError("Riso planned slot index exceeds native capacity")
+    if slot in {"number", "before/value", "after/value"}:
+        integer(value, 0, 99999999)
+        return
+    if slot == "index":
+        if type(value) not in {str, int} or not re.fullmatch(r"[A-Za-z0-9]{1,2}", str(value)):
+            raise ValueError("Riso planned title index exceeds native capacity")
+        return
+    if slot == "title/#" and index == 1:
+        integer(value, 2, 6)
+        return
+    limit = 18 if slot == "mast/#" else _RISO_TEXT_LIMITS[template][slot]
+    lines = {("number", "say"): 2, ("quote", "quote"): 4, ("title", "title"): 2,
+             ("versus", "before/text"): 2, ("versus", "after/text"): 2}.get((template, slot), 1)
+    text(value, limit, lines=lines)
+    if slot == "quote" and len(value.split("\n")) < 2:
+        raise ValueError("Riso planned quote needs two to four readable lines")
+
+
+def _validate_fixed_value(candidate, pointer, indexed, value):
+    dependency = candidate["dependency_id"]
+    if dependency == "eian-riso-broll":
+        _validate_riso_value(candidate["template_id"].rsplit("/", 1)[-1], pointer, indexed, value)
+        return
+    if dependency == "useanimations":
+        from scripts.useanimations_native_adapter import validate_planned_content
+        validate_planned_content(candidate.get("template_id"), pointer, value)
+        return
+
+    size = _FIXED_ARRAY_SIZES.get(dependency)
+    limit = _FIXED_TEXT_LIMITS.get(dependency, {}).get(indexed)
+    if dependency == "hyperframes":
+        size, limit = (3, 4) if indexed == "/labels/#" else (4, None)
+    if size is not None and "#" in indexed and _array_index(pointer, indexed) >= size:
+        raise ValueError("planned content index exceeds native capacity")
+    if indexed in {"/props/data/items/#/value", "/props/rows/#/value", "/metric/value"}:
+        if ((indexed == "/props/data/items/#/value" and type(value) is not int)
+                or type(value) not in {int, float} or abs(value) > 9007199254740991
+                or (indexed != "/metric/value" and value < 0)
+                or (indexed == "/metric/value" and 0 < abs(value) < 0.000001)):
+            raise ValueError("planned numeric value exceeds native capacity")
+        return
+    if (type(value) is not str or (limit is not None and len(value) > limit)
+            or any(ord(char) < 32 or ord(char) == 127 for char in value)):
+        raise ValueError("planned text exceeds the native slot type or capacity")
+
+
+def _visible_term(term, shown):
+    """A factual digit must not be a substring of another displayed number."""
+    if not _NUMERIC_TOKEN.search(term):
+        return term in shown
+    numbers = tuple(_NUMERIC_TOKEN.finditer(shown))
+    return any(not any(number.start() < boundary < number.end()
+                       for number in numbers for boundary in (match.start(), match.end()))
+               for match in re.finditer(re.escape(term), shown))
+
 
 def _catalog_projection(rows):
     projected = copy.deepcopy(rows)
@@ -192,12 +297,16 @@ def _validate_expression_basis(review, row, candidate):
             if ((pointer not in slots and indexed not in slots)
                     or type(value) not in {str, int, float} or not str(value).strip()):
                 raise ValueError("fixed expression_basis must cite nonempty native content slots")
+            _validate_fixed_value(candidate, pointer, indexed, value)
             identity = contract_artifacts.canonical_json_bytes(value)
             if bound_slots.setdefault(pointer, identity) != identity:
                 raise ValueError(f"fixed expression_basis conflicts on native content slot {pointer}")
             if pointer != "/template_id":  # The icon identity selects an action, not visible text.
-                shown.append(str(value))
-        if any(not any(term in value for value in shown)
+                display = str(value)
+                if candidate["dependency_id"] == "eian-riso-broll":
+                    display = display.replace("[", "").replace("]", "")
+                shown.append(display)
+        if any(not any(_visible_term(term, value) for value in shown)
                for term in requirements[requirement_id].get("terms", [])):
             raise ValueError(f"fixed expression_basis omits visible terms for {requirement_id}")
 
@@ -230,10 +339,19 @@ def validate_native_expression(brief, row, basis):
     ):
         if group in brief and any(brief[group].get(field) != value for field, value in expected.items()):
             raise ValueError(f"native {group} differs from the approved semantic row")
+    if (brief.get("dependency_id") == "sweety-handdraw-video"
+            and brief.get("template_id") == _SWEETY_PROJECT_CONTENT):
+        # The adapter checks the effective project config at capture and publication.
+        return
+    validate_fixed_content(brief, basis)
+
+
+def validate_fixed_content(native_inputs, basis):
+    """Compare approved content with the parameters the selected route consumes."""
     for fields in (basis or {}).get("content", {}).values():
         for pointer, expected in fields.items():
             try:
-                actual = motion_capabilities._json_pointer(brief, pointer)
+                actual = motion_capabilities._json_pointer(native_inputs, pointer)
             except (IndexError, KeyError, TypeError, ValueError):
                 raise ValueError(f"native brief is missing approved content slot {pointer}") from None
             if contract_artifacts.canonical_json_bytes(actual) != contract_artifacts.canonical_json_bytes(expected):
@@ -513,6 +631,11 @@ def _validate_review_structure(project_root, director, treatment, *, job_dir=Non
     allowed = {"preferred", "equivalent", "unsuitable", "needs_adapter", "unreviewed"}
     basis = {"semantic", "quality", "capacity", "output", "timing", "qualification", "authorization"}
     covered = set()
+
+    @cache
+    def authorized_channels():
+        return _confirmed_design_channels(job_dir)
+
     for beat in beats:
         key = (beat.get("segment_id"), beat.get("component_id"))
         if key not in matched or key in covered:
@@ -536,7 +659,8 @@ def _validate_review_structure(project_root, director, treatment, *, job_dir=Non
             if fit in {"preferred", "equivalent"} and (row.get("status") != "supported" or not callable): raise ValueError("unsupported candidate cannot be eligible")
             if fit == "unsuitable" and candidate.get("rejection_basis") not in basis: raise ValueError("unsuitable review needs a controlled rejection basis")
             if fit not in {"preferred", "equivalent", "unreviewed"} and row.get("status") == "supported":
-                _constraint_refs(candidate, matched[key]["semantic"], row, beat, job_dir=job_dir)
+                _constraint_refs(candidate, matched[key]["semantic"], row, beat, job_dir=job_dir,
+                                 authorized_channels=authorized_channels)
         eligible = [c for c in candidates if c["fit"] in {"preferred", "equivalent"}]
         from .broll_skill_selection import source_channel
         channels = {source_channel(by_id[c["candidate_id"]]["skill_id"]) for c in eligible}
@@ -565,21 +689,45 @@ def validate_reviews(project_root, director, treatment, *, job_dir=None):
 
 DESIGN_FIELDS = ("composition", "typography", "finish", "focus")
 
-def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
+def _confirmed_design_channels(job_dir):
+    from . import startup, state
+
+    try:
+        job = state.load_job(Path(job_dir))
+        if not (job.job_dir / "job-context.json").is_file():
+            raise ValueError("authorization exclusion needs a Skill-managed Job")
+        startup.require_startup(job)
+        config_path, digest = startup._config(job)
+        config = config_path.read_bytes()
+        approval = contract_artifacts.read_json_artifact(job.job_dir / "manifests/setup-approval.json")
+        if hashlib.sha256(config).hexdigest() != digest or approval.get("provider_config_sha256") != digest:
+            raise ValueError("generation configuration changed while checking authorization exclusions")
+        return startup.selected_channels(json.loads(config))
+    except startup.WorkflowError as error:
+        raise ValueError(str(error)) from error
+
+
+def _constraint_refs(review, semantic, candidate, beat, *, job_dir, authorized_channels=None):
     """Resolve only this row's meaning and this candidate's pinned capability."""
     refs = review.get("constraint_refs")
     if not isinstance(refs, dict) or set(refs) != {"requirement", "capability"}:
         raise ValueError("excluded supported candidate needs concrete constraint_refs")
     requirement = refs.get("requirement")
+    basis = review.get("rejection_basis")
     if isinstance(requirement, str):
         if requirement not in {"quote", "semantic"} or not semantic.get(requirement):
             raise ValueError("constraint requirement must cite the current quote or semantic, not visual_task")
-        if review.get("rejection_basis") in {"timing", "authorization"}:
+        if basis in {"timing", "authorization"}:
             raise ValueError("timing and authorization exclusions need a confirmed constraint source")
+    elif basis == "authorization":
+        if (requirement != {"source": "authorization", "purpose": "video"}
+                or candidate.get("role") != "design" or job_dir is None):
+            raise ValueError("authorization exclusion needs this design route's current video channel evidence")
+        channels = authorized_channels() if authorized_channels is not None else _confirmed_design_channels(job_dir)
+        if "video" in channels:
+            raise ValueError("current Job approval does not establish a missing video channel for this route")
     elif isinstance(requirement, dict) and set(requirement) == {"source", "receipt"}:
-        basis = review.get("rejection_basis")
-        if (basis not in {"timing", "authorization"}
-                or requirement["source"] != {"timing": "locked_window", "authorization": "authorization"}[basis]):
+        if basis != "timing" or requirement["source"] != "locked_window":
             raise ValueError("constraint source does not match its rejection basis")
         if job_dir is None:
             raise ValueError("confirmed constraint source needs the existing Job directory")
@@ -594,13 +742,12 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
                    and r["segment_id"] == beat["segment_id"] and r["component_id"] == beat["component_id"]]
         if len(targets) != 1:
             raise ValueError("confirmed constraint belongs to another visual item")
-        if basis == "timing":
-            target = targets[0]
-            minimum = candidate.get("min_duration_seconds")
-            if (any(beat.get(k) != target[k] for k in ("start", "end"))
-                    or type(minimum) not in (float, int)
-                    or minimum <= target["end"] - target["start"]):
-                raise ValueError("timing exclusion must exceed the confirmed item's unchanged window")
+        target = targets[0]
+        minimum = candidate.get("min_duration_seconds")
+        if (any(beat.get(k) != target[k] for k in ("start", "end"))
+                or type(minimum) not in (float, int)
+                or minimum <= target["end"] - target["start"]):
+            raise ValueError("timing exclusion must exceed the confirmed item's unchanged window")
     else:
         raise ValueError("invalid constraint requirement reference")
     reference = refs.get("capability")

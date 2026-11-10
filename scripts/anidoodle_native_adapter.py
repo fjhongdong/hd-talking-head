@@ -262,9 +262,11 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     job = _execution_job(job_dir)
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
-    brief = validate_brief(brief_path.read_bytes()); _template(brief); _inputs(root, brief)
+    payload = brief_path.read_bytes(); brief = validate_brief(payload); _template(brief); _inputs(root, brief)
     if brief['job_id'] != job.job_id:
         raise ValueError('Anidoodle brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     runtime = check_runtime(PROJECT)
     directory, engine, raw = _render_command(root, brief, argv, runtime)
     result_path = path(root, brief['result_record_path'])
@@ -273,7 +275,7 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     if raw.exists() or output.exists() or call_path.exists():
         raise ValueError('Preserve native output and use a new revision directory')
     before = _project_files(root, directory)
-    call = {'schema_version': 1, 'dependency_id': DEPENDENCY_ID, 'request_sha256': sha(brief_path),
+    call = {'schema_version': 1, 'dependency_id': DEPENDENCY_ID, 'request_sha256': hashlib.sha256(payload).hexdigest(),
         'upstream_commit': COMMIT, 'native_script_sha256': sha(engine / 'tools/render.mjs'), 'argv': argv,
         'project_files': before, 'renderer_version': RENDERER_VERSION, 'runtime_identity': runtime['runtime_identity'],
         'status': 'running', 'exit_code': None, 'stdout': '', 'stderr': ''}
@@ -346,6 +348,8 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
     payload = brief_path.read_bytes(); brief = validate_brief(payload); _inputs(root, brief)
     if brief['job_id'] != job.job_id:
         raise ValueError('Anidoodle brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     call = json.loads(Path(call_path).read_bytes()); _verify_call(root, brief, payload, call)
     target = path(root, brief['result_record_path'])
     if target.exists():

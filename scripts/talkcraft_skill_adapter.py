@@ -265,9 +265,11 @@ def capture_render(job_dir, brief_path, argv):
     root = Path(job_dir).resolve(strict=True)
     brief_path = Path(brief_path).resolve(strict=True)
     brief_path.relative_to(root)
-    brief = validate_brief(brief_path.read_bytes())
+    payload = brief_path.read_bytes(); brief = validate_brief(payload)
     if brief['job_id'] != job.job_id:
         raise ValueError('TalkCraft brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     _inputs(root, brief)
     native = source_root() / NATIVE_RENDER
     directory = path(root, brief['project_directory'])
@@ -318,7 +320,7 @@ def capture_render(job_dir, brief_path, argv):
     if package_snapshot.exists():
         raise ValueError('TalkCraft renderer identity already exists; preserve this native request')
     package_snapshot.write_bytes(renderer_bytes)
-    record = {'schema_version': 1, 'request_sha256': sha(brief_path), 'upstream_commit': UPSTREAM_COMMIT,
+    record = {'schema_version': 1, 'request_sha256': hashlib.sha256(payload).hexdigest(), 'upstream_commit': UPSTREAM_COMMIT,
               'native_script_sha256': sha(native), 'argv': argv, 'working_directory': directory.relative_to(root).as_posix() + '/remotion',
               'project_files': before, 'output': output.relative_to(root).as_posix(),
               'renderer_version': renderer_version, 'renderer_package': descriptor(root, package_snapshot),
@@ -340,6 +342,8 @@ def publish_completed(job_dir, brief_path, call_path):
     brief = validate_brief(payload)
     if brief['job_id'] != job.job_id:
         raise ValueError('TalkCraft brief belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     call = json.loads(Path(call_path).read_bytes())
     if (call['exit_code'] != 0 or call['request_sha256'] != hashlib.sha256(payload).hexdigest()
             or call['upstream_commit'] != UPSTREAM_COMMIT

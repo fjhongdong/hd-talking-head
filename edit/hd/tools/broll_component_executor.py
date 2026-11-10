@@ -2639,6 +2639,8 @@ def _run_reference_process(
                 "BROLL_OFFLINE": "1",
                 "BROLL_INVOCATION_ID": invocation_id,
                 "BROLL_JOB_DIR": str(job.job_dir),
+                **({"BROLL_COMPONENT_INPUT_SHA256": context.input_sha256}
+                   if adapter.dependency_id == "eian-riso-broll" else {}),
             },
             shell=False,
             start_new_session=True,
@@ -2689,6 +2691,18 @@ def _run_reference_process(
             or input_failures
         ):
             _raise_reference_failure(adapter, stderr, evidence)
+        if adapter.dependency_id == "eian-riso-broll":
+            report = _strict_json(stdout, "BROLL_RENDER_FAILED")
+            if (type(report) is not dict or report.get("status") != "completed"
+                    or report.get("invocation_id") != invocation_id
+                    or report.get("brief_sha256") != evidence["brief_sha256"]):
+                _raise("BROLL_RENDER_FAILED", evidence=evidence)
+            evidence["native_source"] = _validated_riso_native_source(
+                report.get("native_source"), "BROLL_RENDER_FAILED"
+            )
+            if (type(report.get("native_reused")) is not bool
+                    or report["native_reused"] != (evidence["native_source"]["invocation_id"] != invocation_id)):
+                _raise("BROLL_RENDER_FAILED", evidence=evidence)
         output_metadata = os.fstat(output_fd)
         visible_output = os.stat(
             context.staging_path.name,
@@ -3075,6 +3089,24 @@ def _artifact_from_json(value: object, code: str) -> ComponentArtifact:
         _raise(code)
 
 
+def _validated_riso_native_source(value: object, code: str) -> dict[str, Any]:
+    if (
+        type(value) is not dict
+        or set(value) != {"invocation_id", "sha256", "bytes", "frames", "input_range"}
+        or type(value.get("invocation_id")) is not str
+        or re.fullmatch(r"process-[0-9a-f]{32}", value["invocation_id"]) is None
+        or type(value.get("sha256")) is not str
+        or _HASH.fullmatch(value["sha256"]) is None
+        or type(value.get("bytes")) is not int
+        or value["bytes"] <= 0
+        or type(value.get("frames")) is not int
+        or not 0 < value["frames"] <= 600
+        or value.get("input_range") not in ("full", "limited")
+    ):
+        _raise(code)
+    return value
+
+
 def _validate_invocation_evidence(
     value: object,
     *,
@@ -3239,6 +3271,9 @@ def _validate_invocation_evidence(
     if "qualification_registry" in binding:
         keys.add("qualification_registry")
         expected["qualification_registry"] = binding["qualification_registry"]
+    if binding["dependency_id"] == "eian-riso-broll":
+        keys.add("native_source")
+        _validated_riso_native_source(evidence.get("native_source"), code)
     _template, _template_sha256, expected_argv = _canonical_process_argv(
         binding=binding,
         entrypoint=binding["entrypoint"],
@@ -4573,6 +4608,46 @@ def _replay_transaction(
     return None
 
 
+def _published_riso_binding(
+    record: Mapping[str, Any],
+    binding: Mapping[str, Any],
+    adapter: object,
+    code: str,
+) -> Mapping[str, Any]:
+    """Accept a published Riso receipt when only its historical runtime hash differs."""
+    if (
+        record.get("state") != "published"
+        or type(adapter) is not ReferenceProcessAdapter
+        or adapter.dependency_id != "eian-riso-broll"
+        or "--runtime-identity" not in adapter.argv_template[:-1]
+    ):
+        return binding
+    historical = record.get("adapter_binding")
+    if type(historical) is not dict or historical == binding:
+        return binding
+    index = adapter.argv_template.index("--runtime-identity") + 1
+    historical_template = historical.get("argv_template")
+    if (
+        type(historical_template) is not list
+        or len(historical_template) != len(adapter.argv_template)
+        or type(historical_template[index]) is not dict
+    ):
+        return binding
+    digest = historical_template[index].get("value")
+    if type(digest) is not str or _HASH.fullmatch(digest) is None:
+        return binding
+    argv = list(adapter.argv_template)
+    argv[index] = digest
+    normalized = list(binding["argv_template"])
+    normalized[index] = {**normalized[index], "value": digest}
+    expected = {
+        **binding,
+        "argv_template": normalized,
+        "argv_template_sha256": _sha256_bytes(_canonical_bytes(argv, code)),
+    }
+    return historical if historical == expected else binding
+
+
 def _try_replay_transaction(
     job: _PinnedJob,
     recipe: Mapping[str, Any],
@@ -4580,7 +4655,7 @@ def _try_replay_transaction(
     input_sha256: str,
     artifact_media_type: str,
     binding: Mapping[str, Any],
-    *, export_only: bool = False,
+    *, export_only: bool = False, adapter: object = None,
 ) -> ComponentArtifact | dict[str, Any] | None:
     code = _failure_for(component["kind"])
     parent_parts, final_name, journal_name, lock_name = _transaction_names(
@@ -4638,7 +4713,7 @@ def _try_replay_transaction(
             component=component,
             input_sha256=input_sha256,
             artifact_media_type=artifact_media_type,
-            binding=binding,
+            binding=_published_riso_binding(record, binding, adapter, code),
         )
     except BaseException:
         try:
@@ -4678,6 +4753,8 @@ def _begin_transaction(
     input_sha256: str,
     artifact_media_type: str,
     binding: Mapping[str, Any],
+    *,
+    adapter: object = None,
 ) -> tuple[_Transaction, ComponentArtifact | None]:
     code = _failure_for(component["kind"])
     parent_parts, final_name, journal_name, lock_name = _transaction_names(
@@ -4716,7 +4793,7 @@ def _begin_transaction(
             component=component,
             input_sha256=input_sha256,
             artifact_media_type=artifact_media_type,
-            binding=binding,
+            binding=_published_riso_binding(record, binding, adapter, code),
         )
     except BaseException:
         try:
@@ -4901,6 +4978,7 @@ def _execute_pinned(
             input_sha,
             artifact_media_type,
             binding_record,
+            adapter=adapter,
         )
         if replay is not None and qualification_binding is not None:
             _verify_frozen_qualification_registry(qualification_binding)
@@ -4925,6 +5003,7 @@ def _execute_pinned(
             input_sha,
             artifact_media_type,
             binding_record,
+            adapter=adapter,
         )
     except BaseException:
         if process_binding is not None:
@@ -5222,7 +5301,7 @@ def export_published_execution_binding(
         if qualification_binding is not None:
             _verify_frozen_qualification_registry(qualification_binding)
         result = _try_replay_transaction(pinned, recipe, component, input_sha,
-                                        adapter.artifact_media_type, binding, export_only=True)
+                                        adapter.artifact_media_type, binding, export_only=True, adapter=adapter)
         if qualification_binding is not None:
             _verify_frozen_qualification_registry(qualification_binding)
         if type(result) is not dict:

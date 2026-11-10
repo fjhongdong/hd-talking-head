@@ -701,10 +701,19 @@ class VisualConfirmationTests(unittest.TestCase):
                                     [{"text": "Approved source evidence", "start": 0.0, "end": 3.0}])
 
     def test_proposal_precedes_compile_and_one_confirmation_completes_plan(self):
+        from edit.hd.tools import motion_match_cache
+        treatment = artifacts.read_json_artifact(self.treatment)
+        treatment["semantic_lists"]["broll"][0]["required_content"] = {
+            "source_type": {"meaning": "辨认资料类型", "terms": ["研究证据"]}}
+        director = artifacts.read_json_artifact(self.fixture.brief)
+        artifacts.write_json_artifact(self.treatment,
+            motion_match_cache.match_once(_env.PROJECT, director, treatment))
         proposal = self.prepare()
         self.assertFalse((self.job.job_dir / "07-visual-direction/visual-plan.json").exists())
         ready = self.confirm()
-        self.assertIn("| 编号 | 时间 |", (proposal.parent / "visual-routing.md").read_text())
+        routing = (proposal.parent / "visual-routing.md").read_text()
+        self.assertIn("| 编号 | 时间 |", routing)
+        self.assertIn("辨认资料类型（须显示 「研究证据」）", routing)
         numbered = vc.approved_numbered_rows(self.job)
         self.assertEqual([(row["row_id"], row["number"]) for row in numbered],
                          [("seg-001:component-1", 1)])
@@ -2379,6 +2388,68 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
             if change == 'numbering': altered['numbering_scope_id'] = 'another-scope'
             with self.subTest(change=change), self.assertRaises(ValueError): self.validate(changed, altered)
 
+    def test_native_dispatch_rejects_old_brief_when_only_visible_requirements_change(self):
+        from types import SimpleNamespace
+
+        key = ('seg-001', 'component-1')
+        dependency = 'barty-motion-graphics'
+        job = SimpleNamespace(job_dir=self.root, job_id='native-test')
+        proposal = {**self.proposal, 'job_id': job.job_id, 'source_id': 'confirmed-first'}
+        path = self.root / 'native-inputs/approved.json'
+        payload = path.read_bytes()
+        with mock.patch.object(vc, 'validate_visual_authorization', return_value={'source': proposal}):
+            with self.assertRaisesRegex(ValueError, 'was not dispatched'):
+                vc.require_native_dispatch(job, dependency, path, payload=payload)
+            vc.freeze_native_dispatch(job, proposal, self.treatment, key, dependency, path, artifacts.sha256_file(path))
+            vc.require_native_dispatch(job, dependency, path, payload=payload)
+            with self.assertRaisesRegex(ValueError, 'route differs'):
+                vc.require_native_dispatch(job, 'anidoodle', path, payload=payload)
+            proposal['source_id'] = 'confirmed-next'
+            with self.assertRaisesRegex(ValueError, 'current visual confirmation'):
+                vc.require_native_dispatch(job, dependency, path, payload=payload)
+            vc.freeze_native_dispatch(job, proposal, self.treatment, key, dependency, path, artifacts.sha256_file(path))
+            vc.freeze_native_dispatch(job, {**proposal, 'source_id': 'confirmed-first'}, self.treatment,
+                                      key, dependency, path, artifacts.sha256_file(path))
+            vc.require_native_dispatch(job, dependency, path, payload=payload)
+
+            completed = self.root / self.native.validate_brief(payload)['result_record_path']
+            artifacts.write_json_artifact(completed, {'status': 'completed'})
+            vc._validate_draft_against_source(self.root, proposal, self.director, self.treatment)
+            amended = copy.deepcopy(self.treatment)
+            amended['semantic_lists']['broll'][0]['required_content'] = {
+                'members': {'meaning': '展示成员背景', 'terms': ['宝妈', '前货车司机']}}
+            new_plan = self.root / 'amended-treatment.json'
+            artifacts.write_json_artifact(new_plan, amended)
+            proposal['inputs'] = {**proposal['inputs'], 'treatment': vc._record(self.root, new_plan)}
+            with self.assertRaisesRegex(ValueError, 'different approved task'):
+                vc.require_native_dispatch(job, dependency, path, payload=payload)
+            with self.assertRaisesRegex(ValueError, 'different approved task'):
+                vc._validate_draft_against_source(self.root, proposal, self.director, amended)
+            with self.assertRaisesRegex(ValueError, 'different approved task'):
+                vc.freeze_native_dispatch(job, proposal, amended, key, dependency, path, artifacts.sha256_file(path))
+
+    def test_realization_cannot_replace_frozen_candidate_review(self):
+        treatment = copy.deepcopy(self.treatment)
+        treatment['skill_selection']['beats'][0]['candidates'] = [
+            {'candidate_id': 'barty-motion-graphics:barty-motion-graphics/motion-broll',
+             'fit': 'preferred', 'expression_basis': {'capability': 'summary', 'explanation': '篡改已确认依据'}}]
+        with self.assertRaisesRegex(ValueError, 'parent semantic beat or review'):
+            vc._validate_draft_against_source(self.root, self.proposal, self.director, treatment)
+
+    def test_authored_scene_needs_changed_render_inputs_after_semantic_revision(self):
+        key = ('seg-001', 'component-1')
+        brief = {'files': [{'scene_path': 'index.html', 'job_path': 'old/index.html', 'sha256': 'a' * 64},
+                           {'scene_path': 'TREATMENT.md', 'job_path': 'old/TREATMENT.md', 'sha256': 'b' * 64}]}
+        vc._pin_native_task(*vc._authored_scene_task(self.root, self.treatment, key, 'lemo-opuscar', brief))
+        revised = copy.deepcopy(self.treatment)
+        revised['semantic_lists']['broll'][0]['required_content'] = {'members': {'meaning': '展示成员身份'}}
+        brief['files'][0]['job_path'] = 'new/index.html'
+        brief['files'][1]['sha256'] = 'c' * 64
+        with self.assertRaisesRegex(ValueError, 'different approved task'):
+            vc._pin_native_task(*vc._authored_scene_task(self.root, revised, key, 'lemo-opuscar', brief))
+        brief['files'][0]['sha256'] = 'd' * 64
+        vc._pin_native_task(*vc._authored_scene_task(self.root, revised, key, 'lemo-opuscar', brief))
+
     def test_execution_revision_preserves_task_and_needs_current_binding_snapshot(self):
         director, treatment = self.realized()
         old = self.native.validate_brief((self.root / 'native-inputs/approved.json').read_bytes())
@@ -2841,11 +2912,22 @@ class GbroFramePreparationTests(unittest.TestCase):
             return vc._record(self.root, path)
         segment = {'segment_id':'seg-016', 'visible_text':['任务示意'],
                    'bindings':{'scene':{}}, 'visual_strategy':{'components':[{'component_id':'scene'}]}}
+        key = {'segment_id':'seg-016', 'component_id':'scene'}
+        candidate_id = 'gbro-collage-broll:gbro-collage-broll/design'
+        self.semantic = {'row_id':'row-gbro', 'quote':'从空纸进入具体任务', 'semantic':'内容逐步形成',
+                         'visual_task':'从空纸到完成拼贴', 'start_word':0, 'end_word':1,
+                         'required_content':{'label':{'meaning':'任务名称','terms':['任务示意']}},
+                         'components':[key]}
+        self.expression = {'capability':'summary','explanation':'纸片依次铺开形成任务画面'}
         self.proposal = {'source_id':'synthetic-source', 'generation_steps':[self.image, self.video],
             'inputs':{'director':write('director.json', {'segments':[segment]}),
-                      'treatment':write('treatment.json', {'skill_selection':{'assignments':[
-                          {'segment_id':'seg-016', 'component_id':'scene', 'skill_id':'gbro-collage-broll',
-                           'template_id':'gbro-collage-broll/design'}]}})}}
+                      'treatment':write('treatment.json', {
+                          'semantic_lists':{'broll':[self.semantic], 'overlay':[]},
+                          'skill_selection':{'assignments':[
+                              {**key,'skill_id':'gbro-collage-broll','template_id':'gbro-collage-broll/design',
+                               'candidate_id':candidate_id}],
+                              'beats':[{**key,'candidates':[{'candidate_id':candidate_id,
+                                                            'expression_basis':self.expression}]}]}})}}
         self.source = write('source.png', b'preserved completed generated still')
         self.record = {'source_id':self.proposal['source_id'], 'step_id':'video', 'source_image':self.source,
             **{key:write(key+'.png', key.encode()) for key in ('blank_frame','first_frame','last_frame')},
@@ -2853,7 +2935,8 @@ class GbroFramePreparationTests(unittest.TestCase):
             'native_skill':vc._record(_env.PROJECT, _env.PROJECT / 'vendor/gbro-collage-broll/SKILL.md'),
             'calls':[{'argv':['ffmpeg','actual-native-preparation'], 'exit_code':0}]}
         self.descriptor = write('preparation.json', self.record)
-        self.authorized = {'source':self.proposal, 'artifact':{'path':'approved.json','sha256':'b'*64,'bytes':1}}
+        self.authorized = {'source':self.proposal, 'artifact':{'path':'approved.json','sha256':'b'*64,'bytes':1},
+                           'payload':{'source':write('proposal.json', self.proposal)}}
         patch = mock.patch.object(vc, 'validate_visual_authorization', return_value=self.authorized)
         patch.start(); self.addCleanup(patch.stop)
         patch = mock.patch.object(parent_static_labels, 'load', return_value=[{'content_ref':{'value':'任务示意'}}])
@@ -2884,6 +2967,10 @@ class GbroFramePreparationTests(unittest.TestCase):
             actions = vc.generation_actions(self.job)
         add.assert_not_called()
         self.assertEqual([(a['action'],a['step_id']) for a in actions], [('prepare_template_inputs','video')])
+        self.assertEqual(actions[0]['semantic_row'], self.semantic)
+        self.assertEqual(actions[0]['expression_basis'], self.expression)
+        self.assertEqual(actions[0]['proposal'], self.authorized['payload']['source'])
+        self.assertEqual(actions[0]['source_approval'], self.authorized['artifact'])
         self.assertIsNone(vc.generation_item(self.queue.status(self.root), self.proposal, self.video, self.job)[1])
         with self.assertRaisesRegex(ValueError,'not prepared'):
             vc._build_generation_request(self.job,self.proposal,self.video)

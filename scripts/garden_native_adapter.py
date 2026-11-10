@@ -315,6 +315,8 @@ def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
     brief_path=Path(brief_path).resolve(strict=True); brief_path.relative_to(root)
     payload=brief_path.read_bytes(); b=validate_brief(payload); _inputs(root,b)
     if b['job_id']!=job.job_id: raise ValueError('Garden task belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     directory=path(root,b['project_directory']).resolve(strict=True)
     runtime=check_runtime(project_directory=directory);directory,target,render,check=_commands(root,b,runtime['tools']['node'])
     if argv is not None and argv!=render: raise ValueError('Garden requires its original native render command')
@@ -325,7 +327,7 @@ def capture_render(job_dir,brief_path,argv=None,*,native_preparations=None):
     if any((qa/name).exists() or (qa/name).is_symlink() for name in ('native-phone.png','native-sheet.png')):
         raise ValueError('Preserve existing Garden QA outputs')
     before=project_files(root,directory); dependencies=runtime_files(root,directory)
-    call={'schema_version':1,'status':'running','dependency_id':DEPENDENCY_ID,'request_sha256':sha(brief_path),
+    call={'schema_version':1,'status':'running','dependency_id':DEPENDENCY_ID,'request_sha256':hashlib.sha256(payload).hexdigest(),
           'upstream_commit':SOURCE_PIN,'renderer_version':RENDERER_VERSION,'project_files':before,'runtime_files':dependencies,'steps':[]}
     try:
         for command in (render,check):
@@ -364,6 +366,8 @@ def publish_completed(job_dir,brief_path,call_path,*,native_usage=None):
     if native_usage is not None: raise ValueError('Garden uses one selected style')
     job=_execution_job(job_dir);payload=Path(brief_path).read_bytes();b=validate_brief(payload);_inputs(job_dir,b)
     if b['job_id']!=job.job_id: raise ValueError('Garden result belongs to another Job')
+    from edit.hd.tools.visual_confirmation import require_native_dispatch
+    require_native_dispatch(job, DEPENDENCY_ID, brief_path, payload=payload)
     call=json.loads(Path(call_path).read_bytes());_verify_call(job_dir,b,payload,call)
     target=path(job_dir,b['result_record_path'])
     if target.exists(): raise ValueError('Preserve completed Garden result')
