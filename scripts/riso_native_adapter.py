@@ -9,9 +9,11 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 if __file__ == "<stdin>":
     _bootstrap = argparse.ArgumentParser(add_help=False)
@@ -24,9 +26,13 @@ else:
 sys.path.insert(0, str(SKILL / "scripts"))
 from adapter_kit import sha256_file as sha
 ENTRY = "scripts/riso_native_adapter.py"
+CHROME_LAUNCHER = "scripts/riso_chrome_launcher.py"
 VERSION = "1.0.0"
 DEPENDENCY_ID = "eian-riso-broll"
 SOURCE_PIN = "e782ad7051f5fce1ca371523c144f4cb78ab5c40"
+PROCESS_TIMEOUT = 300
+WORK_TIMEOUT = PROCESS_TIMEOUT - 10
+LOG_TAIL_BYTES = 16 * 1024
 FAMILIES = {
     "title": "section_heading", "number": "numeric_emphasis",
     "compare": "numeric_comparison", "converge": "classification_reduction",
@@ -207,20 +213,24 @@ def check_runtime(project_root, executables=None):
     source = project / "vendor/eian-riso-broll"
     if source.is_symlink() or not source.is_dir():
         raise ValueError("Riso source must be the project-local upstream checkout")
-    if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip() != SOURCE_PIN:
+    if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True, timeout=5).strip() != SOURCE_PIN:
         raise ValueError("Riso source revision changed; review before updating the connection")
-    if subprocess.check_output(["git", "status", "--porcelain"], cwd=source, text=True).strip():
+    if subprocess.check_output(["git", "status", "--porcelain"], cwd=source, text=True, timeout=5).strip():
         raise ValueError("Riso source is modified; no source repair or fallback")
     paths = {k: str(Path((executables or {}).get(k) or shutil.which(k) or "missing").resolve(strict=True))
              for k in ("node", "ffmpeg", "ffprobe")}
     browser = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
     if not browser.is_file() or not os.access(browser, os.X_OK):
         raise ValueError("Riso needs the existing system Chrome; no browser installation")
-    paths.update(source=str(source), browser=str(browser))
-    version = subprocess.check_output([paths["node"], "--version"], text=True).strip()
+    crashpad = (browser.parent.parent / "Frameworks/Google Chrome Framework.framework/Versions/Current"
+                / "Helpers/chrome_crashpad_handler").resolve(strict=True)
+    paths.update(source=str(source), browser=str(browser), crashpad=str(crashpad))
+    version = subprocess.check_output([paths["node"], "--version"], text=True, timeout=5).strip()
     if int(version.lstrip("v").split(".")[0]) < 22:
         raise ValueError("Riso requires existing Node >=22")
-    paths["identity"] = hashlib.sha256("\n".join(sha(paths[k]) for k in ("node", "ffmpeg", "ffprobe", "browser")).encode()).hexdigest()
+    paths["chrome_launcher_sha256"] = sha(SKILL / CHROME_LAUNCHER)
+    hashes = [sha(paths[k]) for k in ("node", "ffmpeg", "ffprobe", "browser", "crashpad")]
+    paths["identity"] = hashlib.sha256("\n".join([*hashes, paths["chrome_launcher_sha256"]]).encode()).hexdigest()
     return paths
 
 
@@ -262,7 +272,7 @@ def create_adapter(project_root, python_executable, brief_loader):
         dependency_root=SKILL, entrypoint=ENTRY, entrypoint_sha256=entry_sha, producer_version=VERSION,
         primary_renderer="HTMLCanvas", renderer_version=VERSION, artifact_media_type="video",
         launcher=python, launcher_sha256=sha(python), brief_loader=guard, media_loader=media,
-        self_contained_wrapper=True, timeout_seconds=300,
+        self_contained_wrapper=True, timeout_seconds=PROCESS_TIMEOUT,
         argv_template=("{launcher}", "{entrypoint}", "--brief", "{brief_path}", "--media-manifest", "{media_manifest_fd}",
                        "--skill-root", str(SKILL), "--project-root", str(project), "--node", runtime["node"],
                        "--ffmpeg", runtime["ffmpeg"], "--ffprobe", runtime["ffprobe"], "--runtime-identity", runtime["identity"],
@@ -291,13 +301,94 @@ def create_artifact_probe(ffprobe_executable):
     return opaque_probe(ffprobe_executable)
 
 
+def chrome_environment(work, runtime):
+    source = (SKILL / CHROME_LAUNCHER).read_bytes()
+    if hashlib.sha256(source).hexdigest() != runtime["chrome_launcher_sha256"]:
+        raise ValueError("Bound Riso Chrome launcher changed")
+    relay = work / "chrome_launcher.py"
+    relay.write_bytes(source)
+    shim = work / "chrome"
+    shim.write_text('#!/bin/sh\nexec "$RISO_CHROME_PYTHON" "$RISO_CHROME_RELAY" "$@"\n', encoding="utf-8")
+    shim.chmod(0o700)
+    profiles = work / "chrome-profiles"
+    profiles.mkdir(mode=0o700)
+    return {
+        "CHROME": str(shim),
+        "RISO_CHROME_PYTHON": sys.executable,
+        "RISO_CHROME_RELAY": str(relay),
+        "RISO_CHROME_BINARY": runtime["browser"],
+        "TMPDIR": str(profiles),
+    }
+
+
+def log_tail(log):
+    fd = log.fileno()
+    start = max(0, os.fstat(fd).st_size - LOG_TAIL_BYTES)
+    return os.pread(fd, LOG_TAIL_BYTES, start).decode("utf-8", "replace")
+
+
+def settle_crashpad(log_path, executable):
+    """Reap only reparented, same-user Crashpad writers to this browser's log."""
+    deadline = time.monotonic() + 3
+
+    def query(argv):
+        result = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                timeout=max(0, deadline - time.monotonic()))
+        if result.returncode not in (0, 1) or result.stderr:
+            raise RuntimeError("Could not verify Riso Chrome cleanup: " + result.stderr.strip())
+        return result.stdout
+
+    def writers():
+        output = query(["/usr/sbin/lsof", "-nP", "-a", "-d", "2", "-Fpa", "--", str(log_path)])
+        pids = set()
+        pid = None
+        for field in output.splitlines():
+            if field.startswith("p"):
+                pid = int(field[1:])
+            elif field in {"aw", "au"} and pid is not None:
+                pids.add(pid)
+        return pids
+
+    def identity(pid):
+        output = query(["/bin/ps", "-ww", "-p", str(pid), "-o", "ppid=,uid=,lstart=,comm="])
+        fields = output.split(maxsplit=7)
+        if len(fields) == 8 and fields[:2] == ["1", str(os.getuid())] and fields[7].strip() == executable:
+            return tuple(fields[:7])
+        return None
+
+    def send(pid, sig):
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            pass
+
+    owned = {}
+    for pid in writers():
+        stamp = identity(pid)
+        if stamp is not None:
+            send(pid, signal.SIGTERM)
+            owned[pid] = stamp
+    if not owned:
+        return []
+    time.sleep(0.2)
+    for pid in writers() & owned.keys():
+        if identity(pid) == owned[pid]:
+            send(pid, signal.SIGKILL)
+    while any(identity(pid) == stamp for pid, stamp in owned.items()):
+        if time.monotonic() >= deadline:
+            raise RuntimeError("Riso Chrome Crashpad did not exit")
+        time.sleep(0.05)
+    return sorted(owned)
+
+
 def normalize_output(runtime, native, target, frames, run):
     """Export unchanged native motion at the parent's clock and color range."""
-    raw = json.loads(run([runtime["ffprobe"], "-v", "error", "-show_streams", "-of", "json", str(native)]))["streams"]
+    raw = json.loads(run([runtime["ffprobe"], "-v", "error", "-err_detect", "explode", "-count_frames",
+                          "-show_streams", "-of", "json", str(native)], quiet=True))["streams"]
     if (len(raw) != 1 or raw[0].get("codec_type") != "video"
             or raw[0].get("avg_frame_rate") != "30/1"
             or (raw[0].get("width"), raw[0].get("height")) != (1080, 1920)
-            or int(raw[0].get("nb_frames", 0)) != round(frames * 30 / 24)):
+            or int(raw[0].get("nb_read_frames", 0)) != (frames * 30 + 12) // 24):
         raise ValueError("Native Riso output changed; stop before normalization")
     source = raw[0]
     if source.get("color_range") == "pc" or source.get("pix_fmt", "").startswith("yuvj"):
@@ -307,7 +398,7 @@ def normalize_output(runtime, native, target, frames, run):
     else:
         raise ValueError("Native Riso color range is unknown")
     # Convert pixel values, not just their metadata. JPEG captures use full range.
-    run([runtime["ffmpeg"], "-n", "-v", "error", "-i", str(native), "-map", "0:v:0", "-an",
+    run([runtime["ffmpeg"], "-n", "-v", "error", "-xerror", "-i", str(native), "-map", "0:v:0", "-an",
          "-vf", f"fps=24,scale=in_range={input_range}:out_range=limited,setsar=1",
          "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-color_range", "tv",
          "-frames:v", str(frames), "-movflags", "+faststart", str(target)])
@@ -323,6 +414,7 @@ def normalize_output(runtime, native, target, frames, run):
 
 
 def render(args):
+    deadline = time.monotonic() + WORK_TIMEOUT
     # Read each inherited descriptor once; later checks reuse these exact bytes.
     payload = Path(args.brief).read_bytes()
     b = validate_brief(payload)
@@ -342,21 +434,57 @@ def render(args):
               "brief_sha256": hashlib.sha256(payload).hexdigest(), "commands": [],
               "native_fps": 30, "output_fps": 24, "time_scale": 1, "external_requests": 0}
 
-    def run(argv):
+    def run(argv, *, browser_phase=None, quiet=False):
         record = {"argv": argv, "exit_code": None, "stdout": "", "stderr": ""}
         report["commands"].append(record)
-        try:
-            result = subprocess.run(argv, capture_output=True, text=True, timeout=240, env=environment)
-            record.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
-            result.check_returncode()
-            return result.stdout
-        except subprocess.TimeoutExpired as error:
-            record.update(timed_out=True, stdout=(error.stdout or b"").decode("utf-8", "replace"), stderr=(error.stderr or b"").decode("utf-8", "replace"))
-            raise
+        started = time.monotonic()
+        if started >= deadline:
+            record["timed_out"] = True
+            raise TimeoutError("Riso reached its total execution deadline")
+        command_env = environment
+        chrome_log = None
+        if browser_phase:
+            chrome_log = work / (browser_phase + ".chrome.log")
+            record["browser_log"] = chrome_log.name
+            command_env = {**environment, **chrome_env, "RISO_CHROME_LOG": str(chrome_log)}
+        stdout_path = work / f"command-{len(report['commands'])}.stdout.log"
+        stderr_path = work / f"command-{len(report['commands'])}.stderr.log"
+        with stdout_path.open("w+b") as stdout, stderr_path.open("w+b") as stderr:
+            process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, env=command_env)
+            try:
+                process.wait(timeout=max(0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                record["timed_out"] = True
+                try:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=0.5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=1)
+                except (OSError, subprocess.TimeoutExpired) as cleanup_error:
+                    record["cleanup_error"] = str(cleanup_error)
+                raise
+            finally:
+                record.update(exit_code=process.returncode, elapsed_seconds=round(time.monotonic() - started, 3),
+                              stdout=log_tail(stdout), stderr=log_tail(stderr))
+                if chrome_log and chrome_log.is_file():
+                    try:
+                        record["settled_crashpad_pids"] = settle_crashpad(chrome_log, runtime["crashpad"])
+                    except (OSError, RuntimeError, subprocess.TimeoutExpired) as cleanup_error:
+                        record["browser_cleanup_error"] = str(cleanup_error)
+        if process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, argv, record["stdout"], record["stderr"])
+        if "browser_cleanup_error" in record:
+            raise RuntimeError(record["browser_cleanup_error"])
+        if quiet and record["stderr"]:
+            raise ValueError("Native Riso output contains decoder errors")
+        return record["stdout"]
 
-    environment = {**os.environ, "CHROME": runtime["browser"],
+    environment = {**os.environ,
                    "PATH": os.pathsep.join(dict.fromkeys([str(Path(runtime[k]).parent) for k in ("node", "ffmpeg", "ffprobe")] + ["/usr/bin", "/bin"]))}
     try:
+        chrome_env = chrome_environment(work, runtime)
         # Upstream explicitly permits replacing only DATA in a project copy.
         prepare = r"""
 import {createProject, addTemplate} from './scripts/lib/project.mjs';
@@ -382,9 +510,10 @@ writeFileSync(file, html.replace(expression, () => 'const DATA = ' + JSON.string
                 raise ValueError("Riso frozen screenshot changed")
             (native_project / a["scene_path"]).write_bytes(blob)
         composition = native_project / "compositions" / (b["composition"]["id"] + ".html")
-        run([runtime["node"], str(Path(runtime["source"]) / "scripts/qa.mjs"), str(composition)])
+        run([runtime["node"], str(Path(runtime["source"]) / "scripts/qa.mjs"), str(composition)], browser_phase="qa")
         native = native_project / "renders" / (b["composition"]["id"] + ".mp4")
-        run([runtime["node"], str(Path(runtime["source"]) / "scripts/render.mjs"), str(composition), "-o", str(native)])
+        run([runtime["node"], str(Path(runtime["source"]) / "scripts/render.mjs"), str(composition), "-o", str(native)],
+            browser_phase="render")
         target = work / "output.mp4"
         exported = normalize_output(runtime, native, target, b["composition"]["frames"], run)
         # Native input/source files and timestamps remain unchanged. No interpolation.

@@ -46,7 +46,7 @@ Garden 是一个 B-roll 创作渠道，按上游风格目录开放 43 个原生�
 
 Barty Motion Graphics 是一个渠道，包含 `motion-broll`、`explainer-default`、`explainer-engaging` 和 `explainer-high-energy` 四套完整原生创作流程。`motion-broll` 的透明贴片与整屏画面共享同一模板身份；用途条目分开校验，不额外增加模板数。对象分离和音效是辅助流程，不单独算视觉模板。
 
-Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 工作流和 19 种 opener 概念按 35 个模板选项管理。可组合选择，但不将组合相乘计数，不将渲染工具或新主题登记成模板。opener 是创作形式，不强制替换口播默认静态封面。
+Bang Motion 是另一个渠道，原生的 10 种风格方向、6 类 explainer 工作流和 19 种 opener 概念按 35 个模板选项管理。可组合选择，但不将组合相乘计数，不将渲染工具或新主题登记成模板。opener 是创作形式，成片片头沿用[封面入场合同](cover-opening-bgm.md)。
 
 两渠道共增加 39 个模板。标签只在本页指定的统一索引维护；各自 `*-template-catalog.json` 只保存原生入口与模板定位。完整 Skill 自主完成设计、动作与工程，父级不预写逐层编舞。确认前绑定任务，创作后补齐真实文字与阅读目标，再审核冻结并正式消费；不能把待执行的原生任务当成已完成动画。共用规则见[完整原生调用](native-motion-call-contract.md)，具体入口见 [Barty](barty-motion-integration.md) 与 [Bang](bang-motion-integration.md)。
 

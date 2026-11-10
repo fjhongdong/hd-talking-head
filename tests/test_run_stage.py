@@ -33,12 +33,18 @@ class CheckOnlyStageTests(unittest.TestCase):
             base = {'producer_type': 'dependency', 'dependency_id': 'barty-motion-graphics'}
             director = {'segments': [{'segment_id': 'seg-001', 'start': 0, 'end': 1, 'bindings': {
                 'waiting': base, 'dependent': base, 'ready': {**base, 'brief_sha256': 'a' * 64}},
-                'visual_strategy': {'composition': {'component_dependencies': [
+                'visual_strategy': {'mode': 'none', 'composition': {'component_dependencies': [
                     {'component_id': 'dependent', 'depends_on': ['waiting']}]}, 'components': [
                     {'component_id': 'waiting', 'kind': 'code_generated'},
                     {'component_id': 'dependent', 'kind': 'code_generated'},
                     {'component_id': 'ready', 'kind': 'code_generated'}]}}]}
-            treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'ready', 'brief_path': 'ready.json'}]}
+            semantic = {'row_id': 'one', 'quote': '先练熟，再组队放大。', 'semantic': '熟练后协作扩大产出。',
+                        'visual_task': '分清练熟和组队两个状态。',
+                        'required_content': {'order': {'meaning': '练熟先于组队'}},
+                        'components': [{'segment_id': 'seg-001', 'component_id': cid}
+                                       for cid in ('waiting', 'dependent', 'ready')]}
+            treatment = {'scenes': [{'segment_id': 'seg-001', 'component_id': 'ready', 'brief_path': 'ready.json'}],
+                         'semantic_lists': {'overlay': [semantic], 'broll': []}}
             (root / 'ready.json').write_text(json.dumps({'result_record_path': 'result.json'}))
             (root / 'director.json').write_text(json.dumps(director))
             (root / 'treatment.json').write_text(json.dumps(treatment))
@@ -66,8 +72,7 @@ class CheckOnlyStageTests(unittest.TestCase):
                 native_action = next(a for a in result['actions'] if a['action'] == 'run_native_skill')
                 self.assertEqual(native_action['proposal'], authorized['payload']['source'])
                 self.assertTrue(native_action['next'].startswith('Execute the original native workflow.'))
-                self.assertIn('same channel and template', native_action['next'])
-                self.assertIn('proposal.inputs.treatment', native_action['next'])
+                self.assertEqual(native_action['semantic_row'], semantic)
                 self.assertNotIn('same_template_context', native_action)
                 finalize.assert_not_called()
                 with mock.patch.object(confirmation, 'generation_item', return_value=('image-A', {'status': 'completed'})):
@@ -75,8 +80,8 @@ class CheckOnlyStageTests(unittest.TestCase):
                 preparations = [a for a in result['actions'] if a['action'] == 'prepare_template_inputs']
                 self.assertEqual([(a['segment_id'], a['component_id']) for a in preparations], [('seg-001', 'waiting')])
                 self.assertEqual(preparations[0]['proposal'], native_action['proposal'])
-                self.assertIn('same channel and template', preparations[0]['next'])
-                self.assertIn('native template\'s style and creative freedom', preparations[0]['next'])
+                self.assertEqual(preparations[0]['semantic_row'], native_action['semantic_row'])
+                self.assertEqual(preparations[0]['parent_subtitle_layout']['placement'], 'standard')
                 finalize.assert_not_called()
 
     def test_scripts_only_api_reaches_job_error_from_an_unrelated_directory(self):
@@ -131,6 +136,8 @@ else:
              mock.patch.object(confirmation,'record_gbro_frame_preparation',side_effect=lambda *a:calls.append(('prepare',a))), \
              mock.patch.object(confirmation,'generation_actions',side_effect=lambda *a,**k:calls.append(('generate',a)) or [{'action':'prepare_template_inputs'}]), \
              mock.patch.object(confirmation,'validate_realization_draft'), \
+             mock.patch.object(confirmation,'_exact'), \
+             mock.patch.object(confirmation,'_read',return_value={}), \
              mock.patch.object(run_stage,'_json',return_value={'segments': []}), \
              mock.patch.object(run_stage,'_validate_prepared_native_inputs'), \
              mock.patch.object(run_stage,'prepare_visual_dependencies'), \

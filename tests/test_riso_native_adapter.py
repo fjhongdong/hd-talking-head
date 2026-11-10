@@ -1,13 +1,17 @@
-"""Brief and format-only media contracts; no native generation or user Job."""
+"""Riso brief, process isolation, and format contracts without user Jobs."""
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
+import shutil
+import signal
 import sys
 import subprocess
 import tempfile
+import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 SKILL = Path(__file__).resolve().parents[1]
 ROOT = SKILL
@@ -38,6 +42,121 @@ def title_brief():
 
 
 class RisoNativeAdapterTest(unittest.TestCase):
+    def test_detached_chrome_helper_cannot_keep_node_alive(self):
+        # Reproduce Chrome's inherited stderr without depending on Crashpad timing.
+        with tempfile.TemporaryDirectory(prefix="riso-fd-test-") as directory:
+            root = Path(directory)
+            fake = root / "fake-chrome"
+            fake.write_text('#!/bin/sh\nexec "$TEST_PYTHON" "$TEST_BROWSER"\n')
+            fake.chmod(0o700)
+            program = root / "fake_chrome.py"
+            program.write_text("""
+import os
+from pathlib import Path
+import sys
+import time
+
+directory = Path(os.environ["TEST_WORK"])
+if os.fork() == 0:
+    os.setsid()
+    (directory / "helper-ready").write_text(str(os.getpid()))
+    deadline = time.monotonic() + 20
+    while not (directory / "release-helper").exists() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    (directory / "helper-done").touch()
+    os._exit(0)
+
+while not (directory / "helper-ready").exists():
+    time.sleep(0.01)
+print("DevTools listening on ws://127.0.0.1:12345/devtools/browser/test", file=sys.stderr, flush=True)
+time.sleep(20)
+""")
+            node = """
+const { spawn } = require('node:child_process');
+const { writeFileSync } = require('node:fs');
+const { join } = require('node:path');
+const chrome = spawn(process.env.CHROME, [], { stdio: ['ignore', 'ignore', 'pipe'] });
+chrome.stderr.on('data', chunk => {
+  if (chunk.includes('DevTools listening on ')) chrome.kill('SIGTERM');
+});
+chrome.on('exit', (code, signal) => {
+  if (signal !== 'SIGTERM') process.exitCode = 1;
+  else writeFileSync(join(process.env.TEST_WORK, 'browser-exited'), '');
+});
+"""
+            def wait_for(path, seconds):
+                deadline = time.monotonic() + seconds
+                while not path.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                return path.exists()
+
+            for isolated in (False, True):
+                with self.subTest(isolated=isolated):
+                    work = root / ("isolated" if isolated else "direct")
+                    work.mkdir()
+                    env = {**os.environ, "CHROME": str(fake), "TEST_WORK": str(work),
+                           "TEST_PYTHON": sys.executable, "TEST_BROWSER": str(program)}
+                    if isolated:
+                        runtime = {"browser": str(fake), "chrome_launcher_sha256": riso.sha(SKILL / riso.CHROME_LAUNCHER)}
+                        env.update(riso.chrome_environment(work, runtime), RISO_CHROME_LOG=str(work / "chrome.log"))
+                    command = [shutil.which("node"), "-e", node]
+                    with subprocess.Popen(command, env=env, start_new_session=True) as process:
+                        try:
+                            self.assertTrue(wait_for(work / "browser-exited", 8), "browser never reached its exit event")
+                            if isolated:
+                                self.assertEqual(process.wait(timeout=3), 0)
+                            else:
+                                with self.assertRaises(subprocess.TimeoutExpired):
+                                    process.wait(timeout=0.2)
+                            os.kill(int((work / "helper-ready").read_text()), 0)
+                            self.assertFalse((work / "helper-done").exists())
+                        finally:
+                            if process.poll() is None:
+                                try:
+                                    os.killpg(process.pid, signal.SIGKILL)
+                                except ProcessLookupError:
+                                    pass
+                            (work / "release-helper").touch()
+                            wait_for(work / "helper-done", 2)
+
+    def test_crashpad_cleanup_only_signals_the_owned_log_writer(self):
+        path = Path("/private/riso/render.chrome.log")
+        executable = "/Applications/Google Chrome.app/Helpers/chrome_crashpad_handler"
+        expected = f"1 {os.getuid()} Tue Nov 10 08:07:16 2026 {executable}"
+        signals = []
+
+        def command(argv, **_):
+            if argv[0] == "/usr/sbin/lsof":
+                self.assertEqual(argv[-1], str(path))
+                self.assertEqual(argv[3:5], ["-d", "2"])
+                output = "p101\naw\np102\naw\np103\nar\np104\naw\n"
+            else:
+                pid = int(argv[3])
+                output = {
+                    101: "" if (101, signal.SIGKILL) in signals else expected,
+                    102: expected + "-unrelated",
+                    103: expected,
+                    104: expected.replace("08:07:16", "08:07:17") if (104, signal.SIGTERM) in signals else expected,
+                }[pid]
+            return subprocess.CompletedProcess(argv, 0, output, "")
+
+        with (patch.object(riso.subprocess, "run", side_effect=command),
+              patch.object(riso.os, "kill", side_effect=lambda pid, sig: signals.append((pid, sig))),
+              patch.object(riso.time, "sleep")):
+            self.assertEqual(riso.settle_crashpad(path, executable), [101, 104])
+        self.assertCountEqual(signals, [(101, signal.SIGTERM), (104, signal.SIGTERM), (101, signal.SIGKILL)])
+
+    def test_native_frame_ties_round_up_like_the_renderer(self):
+        native = {"codec_type": "video", "width": 1080, "height": 1920, "avg_frame_rate": "30/1",
+                  "nb_read_frames": "93", "color_range": "pc"}
+        output = {"width": 1080, "height": 1920, "avg_frame_rate": "24/1", "sample_aspect_ratio": "1:1",
+                  "nb_frames": "74", "pix_fmt": "yuv420p", "color_range": "tv", "duration": "3.083333"}
+        run = Mock(side_effect=[json.dumps({"streams": [native]}), "", json.dumps({"streams": [output]})])
+        exported = riso.normalize_output({"ffprobe": "ffprobe", "ffmpeg": "ffmpeg"}, "native", "output", 74, run)
+        self.assertEqual(exported["frames"], 74)
+        self.assertIn("-count_frames", run.call_args_list[0].args[0])
+        self.assertTrue(run.call_args_list[0].kwargs["quiet"])
+
     def test_title_public_text_slots(self):
         for changes in ({"index": "UI"}, {"mast": ["", ""]},
                         {"title": "比朋友还懂你\n是好事吗？"},

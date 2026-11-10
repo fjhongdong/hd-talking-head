@@ -18,6 +18,8 @@
 
 原始渲染命令为 `[node,<engine>/tools/render.mjs,<filmId>,--out,out/native.webm|out/native.mp4,--workers,1]`。桥接只接受原生linked工程、该完整渲染入口与准确输出路径；先原生render，再原生`ship.mjs`全部技术检查。透明转换不裁切、不改时钟、不加音轨。父级用`capture_render`和`publish_completed`保存真实调用与结果，再按现有审核、冻结和组件消费协议完成接入。制作完成不自动等于用户接受。
 
+短透明贴片在编排时给出实际帧数预算、运动和色彩声明。首帧保留局部可见主体，让其余区域继续透明，文字放入原生安全区并与真人画面核对。事实与独立审查按原生要求如实记录。用 `ship.mjs` 的具体失败项定位，保留完整原生检查。
+
 ## 环境和消费接口
 
 `scripts/anidoodle_native_runtime.py`只检查并复用现有包内运行依赖：Hyperframes的esbuild0.25.12，以及Playwright1.64.0和真实已缓存Chromium。`anidoodle_node_runtime.mjs`用Node resolver将原生bare ESM `esbuild`导入指到该原版依赖；`NODE_PATH`让原生detect找到现有Playwright。不在vendor增加node_modules，不全局安装，不隐式下载。隔离resolver需要Node≥22.15；当前上游引擎本体最低Node20。缺已有依赖时明确停止，准备该已有依赖后再继续。

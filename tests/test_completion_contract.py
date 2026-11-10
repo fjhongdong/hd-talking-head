@@ -14,7 +14,9 @@ SKILL = Path(__file__).resolve().parents[1]
 class CompletionContractTests(unittest.TestCase):
     def test_opening_has_formal_api_and_explicit_bgm_boundary(self):
         defaults = json.loads((SKILL / "references/production-defaults.json").read_text())
-        self.assertEqual(defaults["opening"]["hold_frames"], 12)
+        self.assertEqual(defaults["opening"]["hold_frames"], 24)
+        self.assertEqual(defaults["opening"]["fixed_cover_frames"], 5)
+        self.assertEqual(defaults["opening"]["static_hold_frames"], 12)
         self.assertEqual(defaults["opening"]["transition_frames"], 0)
         self.assertFalse(defaults["background_music"])
         self.assertTrue({"opening", "music"}.issubset(inspect.signature(preview_v2.prepare_preview_v2).parameters))

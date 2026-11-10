@@ -119,6 +119,7 @@ class BrollSkillSelectionTest(unittest.TestCase):
 
     def complete_overlay_cache(self, draft, treatment):
         from edit.hd.tools import motion_match_cache, overlay_selection
+        from edit.hd.tests.test_motion_match_cache import expression_fixture
         for segment in draft["segments"]:
             segment.setdefault("visual_intent", {"statement": "并列说明"})
             for component in segment["visual_strategy"]["components"]:
@@ -141,7 +142,8 @@ class BrollSkillSelectionTest(unittest.TestCase):
                         "capability_sha256": motion_match_cache.candidate_review_identity(match["candidate"]),
                         "fit": "preferred" if match["candidate"]["candidate_id"] == chosen else
                             "equivalent" if match["candidate"]["status"] == "supported" else "needs_adapter",
-                        "reason": "测试中的完整原生候选评审", "visual_pattern": "parallel-list"}
+                        "reason": "测试中的完整原生候选评审", "visual_pattern": "parallel-list",
+                        "expression_basis": expression_fixture(match["candidate"])}
                         | {"design_plan": {"composition": "并列主体在同一视觉范围。", "typography": "主副字级明确。",
                                            "finish": "细线平面图形保持完整。", "focus": "当前项目累积时保持其他项。"}}
                         for match in item["matches"]]})
@@ -1001,11 +1003,14 @@ class BrollSkillSelectionTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'confirmed visual selection'):
                     check_expansion(draft=invalid_director)
                 (job / "manifests/visual-authorization-r2.json").unlink()
-                for field, value in (("semantic", "另一个意思"), ("quote", "改了口播"),
-                                     ("start_word", 3), ("end_word", 4)):
+                amended = copy.deepcopy(expanded)
+                amended["semantic_lists"]["broll"][1].update(
+                    semantic="补足已说出的角色信息", required_content={"role": {"meaning": "可辨角色身份"}})
+                self.assertEqual(check_expansion(amended)[("s3", "scene")], "a")
+                for field, value in (("quote", "改了口播"), ("start_word", 3), ("end_word", 4)):
                     invalid = copy.deepcopy(expanded)
                     invalid["semantic_lists"]["broll"][1][field] = value
-                    with self.subTest(locked_row_field=field), self.assertRaisesRegex(ValueError, "row meaning"):
+                    with self.subTest(locked_row_field=field), self.assertRaisesRegex(ValueError, "row original words or clock"):
                         check_expansion(invalid)
                 invalid = copy.deepcopy(expanded)
                 invalid["skill_selection"]["revision_locks"]["changes"].pop()
@@ -1130,6 +1135,11 @@ class PlanningOnlyChecksTest(unittest.TestCase):
                                "finish":"用完整数字排版和细线图形。","focus":"当前数值显现后稳定阅读。"},
                 "constraint_refs":{"requirement":"semantic","capability":"summary"},
                 "reason":"独立规划夹具，数值强调优先，旧新为未选备选。", "visual_pattern":cid})
+            if fit in {"preferred", "equivalent"}:
+                content = {"/data/number": 12} if fit == "preferred" else {"/data/after/text": "12项"}
+                candidates[-1]["expression_basis"] = {
+                    "capability": "editable_content/0", "explanation": "原生数据槽表达测试数值。",
+                    "content": {"visual_task": content}}
         pool = selection.discover_candidates(ROOT)
         reviews = {r["skill_id"]:{"fit":"equivalent" if r["skill_id"] == "eian-riso-broll" else "unsuitable",
             "reason":"本夹具只选真实数值入口。"} for r in pool}
@@ -1552,6 +1562,8 @@ class PartialCandidateReviewTest(unittest.TestCase):
                 'candidates': [{'candidate_id': r['candidate_id'], 'reason': '本条语义判断',
                     'fit': 'equivalent' if r == reviewed else 'unreviewed',
                     **({'visual_pattern': '要点说明',
+                        'expression_basis': {'capability': 'summary', 'explanation': '原生批注标识该要点。',
+                            'content': {'visual_task': {'/data/label': '要点说明'}}},
                         'capability_sha256': motion_match_cache.candidate_review_identity(r)}
                        if r == reviewed else {})} for r in overlays]}
             source = {'schema_version': 1, 'history_note': '独立离线样本',

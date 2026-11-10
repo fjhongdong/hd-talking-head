@@ -18,7 +18,7 @@ python3 <skill>/scripts/verify_broll_template.py
 
 `ensure_punk_cover.py` 检查封面来源的固定版本；`verify_skill_release.py` 校验发布附件与 SHA-256。`verify_broll_template.py` 还需要 PATH 中的 FFprobe 与 FFmpeg，对包内第三方样片参数、双输入执行记录及三态 PNG 与 MP4 对应帧的真实像素进行复核。它串行解码，不启动渲染器或写新媒体。失败时停止相应工作并报告具体路径，不能现场刷新哈希、删去记录或创建空文件使检查通过。
 
-`initialize_video_job.py` 在创建任何 Job 输出前强制运行发布完整性及模块来源检查，记录 release 与实际运行时身份。随后写非密钥配置草稿、执行带 `--job-context` 的预检，本次用户确认后调用 `confirm_job_setup.py`。单纯复制 Skill 到旧运行时不够：项目须包含 `startup.py`，且 `state.require_runnable` 已接入启动门。
+`initialize_video_job.py` 在创建任何 Job 输出前强制运行发布完整性及模块来源检查，记录 release 与实际运行时身份。随后写非密钥配置草稿、执行带 `--job-context` 的预检。用户确认本期生图和生视频的渠道与模型后调用 `confirm_job_setup.py`。项目须包含 `startup.py`，且 `state.require_runnable` 已接入启动门。
 
 旧目录原有 Job 放弃，不迁移、不重签，也不保留旧运行包；保留原始素材和已交付文件。新包根创建的同一 Job 需续做时，先读其 `job-context.json` 和 workflow，对照保存的 release 身份与当前完整性报告；不得绕过人工门或重做已批准资产。
 本项目内开发时如需继续同一 Job，先用正式 `revise` 将受影响阶段退回 `needs_revision`，再以 `scripts/migrate_job_context.py --job-context <workspace>/job-context.json --expected-context-sha256 <旧文件哈希> --expected-revision <当前revision> --allowed-module <唯一改动模块> --reason <原因> --dry-run` 审核差异；无运行时改动时省略 `--allowed-module`。旧目录中的 Job 不兼容当前包，不迁移或重签。当前包根由迁移脚本自身确定并校验归属，不接受手填 Skill 根。去掉 `--dry-run` 后只更新项目根、运行时模块和 release 身份并留下完整 before/after 审计，保留 Python、compositor、contract、provider 配置、workflow、批准媒体及原 setup-approval 原文；随后刷新本 Job 预检。缺显式授权、阶段状态不符、模块超出 `--allowed-module` 或哈希/revision 改变时停止，不手改上下文解锁。

@@ -17,6 +17,7 @@ if str(PROJECT) not in sys.path:
 
 try:
     from edit.hd.tools import motion_capabilities
+    from edit.hd.tests.test_motion_match_cache import expression_fixture
 except ImportError:
     motion_capabilities = None
 
@@ -67,6 +68,7 @@ class VisualRetrievalTests(unittest.TestCase):
         """Exercise tag retrieval while isolating already-tested native inputs."""
         from edit.hd.tools import motion_match_cache, overlay_selection
         profile = {'title': '逐项通知', 'uses': ['aroll_overlay'],
+                   'summary': '原生通知依次呈现并列要点。',
                    'content_scope': {'mode': 'fixed_action', 'evidence_ref': 'fixture'},
                    'reviewed_sources': {},
                    'tags': {name: [] for name in motion_capabilities.TAG_FIELDS}}
@@ -115,6 +117,7 @@ class VisualRetrievalTests(unittest.TestCase):
                                 'capability_sha256': motion_match_cache.candidate_review_identity(m['candidate']),
                                 'fit': 'preferred' if m['candidate']['candidate_id'] == chosen else 'equivalent',
                                 'reason': '测试中的完整原生候选评审', 'visual_pattern': 'parallel-list',
+                                'expression_basis': expression_fixture(m['candidate']),
                                 'design_plan': {'composition': '并列主体在同一视觉范围。',
                                                 'typography': '主副字级明确。',
                                                 'finish': '细线平面图形保持完整。',

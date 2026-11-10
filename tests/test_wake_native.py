@@ -227,7 +227,8 @@ class WakeNativeTests(unittest.TestCase):
         treatment=motion_match_cache.match_once(PROJECT,director,treatment)
         beat = treatment['skill_selection']['beats'][0]
         wake_review = {'candidate_id':'lemo-wake:wake','fit':'preferred',
-                       'reason':'按固定首镜政策演示原图关系','visual_pattern':'source_image_actor','design_plan':design}
+                       'reason':'按固定首镜政策演示原图关系','visual_pattern':'source_image_actor','design_plan':design,
+                       'expression_basis': {'capability': 'summary', 'explanation': '原生画面保留原图三行与本地、远程和容器的对应关系。'}}
         beat['skill_reviews']['lemo-wake'] = {'fit':'preferred','reason':'该fixture按显式Wake开场约束执行'}
         beat['single_source_review'] = {'decision':'keep','reason':'已批准封面首镜固定使用完整原生Wake'}
         beat['semantic_sha256'] = treatment['motion_matches']['opening-semantic']['semantic_sha256']
@@ -489,7 +490,7 @@ class WakeNativeTests(unittest.TestCase):
         b=copy.deepcopy(self.brief);b['source_binding']['segment_id']='seg/../opening'
         with self.assertRaisesRegex(ValueError,'source clock'):wake.validate_brief(json.dumps(b))
 
-    def test_preview_stage_defaults_to_static_cover_and_respects_explicit_override(self):
+    def test_preview_stage_requires_dynamic_cover_when_video_is_selected(self):
         self.job.stages={'preview':{'status':'pending'}}
         with mock.patch('edit.hd.tools.state.load_job',return_value=self.job), \
              mock.patch('edit.hd.tools.state.current_stage',return_value='preview'), \
@@ -500,7 +501,21 @@ class WakeNativeTests(unittest.TestCase):
              mock.patch('edit.hd.tools.delivery_approval.validate_visual_plan_approval'), \
              mock.patch('edit.hd.tools.visual_confirmation.validate_visual_authorization', return_value={'payload': {'user_confirmation': '确认本期清单及封面费用'}}), \
              mock.patch('edit.hd.tools.visual_confirmation.approved_body_opening', return_value=None) as approved_opening, \
+             mock.patch('edit.hd.tools.startup.selected_channels', return_value={'video': {}}) as channels, \
              mock.patch('edit.hd.tools.preview_v2.prepare_preview_v2') as preview:
+            config = self.job.job_dir / 'manifests/provider-config.json'
+            config.parent.mkdir(exist_ok=True)
+            config.write_text('{}')
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':None})
+            preview.assert_not_called()
+            dynamic = {'hold_frames': 24, 'transition_frames': 0,
+                       'user_confirmation': '确认本期清单及封面费用',
+                       'video': {'path': 'working/opening.mp4', 'sha256': '0' * 64, 'bytes': 100}}
+            run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':dynamic})
+            preview.assert_called_once_with(self.job,opening=dynamic,music=None)
+            preview.reset_mock()
+            channels.return_value={}
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview')
             options=preview.call_args.kwargs['opening']
             self.assertEqual(options['hold_frames'],12)
@@ -509,8 +524,9 @@ class WakeNativeTests(unittest.TestCase):
             preview.assert_called_once_with(self.job,opening=options,music=None)
             preview.reset_mock()
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':None})
-            preview.assert_called_once_with(self.job,opening=None,music=None)
+            preview.assert_called_once_with(self.job,opening=options,music=None)
             preview.reset_mock()
+            channels.return_value={'video': {}}
             explicit={'hold_frames':6,'transition_frames':0,'user_confirmation':'用户明确指定6帧'}
             run_stage.execute_stage(self.job.job_dir,PROJECT,'preview',payload={'opening':explicit})
             preview.assert_called_once_with(self.job,opening=explicit,music=None)

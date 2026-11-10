@@ -4,6 +4,55 @@ import ast, copy, hashlib, json, re
 from pathlib import Path
 from . import contract_artifacts, motion_capabilities, semantic_visual_plan
 
+# Direct fixed-input routes consume these content slots. Technical settings,
+# unrendered intent metadata and authored project files are not content slots.
+_FIXED_CONTENT_SLOTS = {
+    "adu-motion-video": ("/title", "/stamp", "/left/title", "/left/items/#",
+                         "/right/title", "/right/items/#"),
+    "datamagic": ("/props/title", "/props/question", "/props/metricLabel", "/props/unit", "/props/source",
+                  "/props/takeaway", "/props/rows/#/label", "/props/rows/#/value", "/props/rows/#/caption"),
+    "html-video": ("/props/data/title", "/props/data/unit", "/props/data/items/#/label", "/props/data/items/#/value"),
+    "huashu-motion-native": ("/metric/value", "/metric/prefix", "/metric/suffix", "/metric/label"),
+    "hypit-native-chat": ("/title", "/messages/#/sender", "/messages/#/text"),
+    "motion-graphics-native": ("/data/label",),
+    "overlay-studio-native": ("/doc/cards/0/params/items",),
+    "useanimations": ("/template_id", "/labels/#/text"),
+    "wise-motion": ("/title", "/context_labels/#"),
+}
+
+_RISO_CONTENT_SLOTS = {
+    "compare": ("title", "before/label", "before/value", "before/unit", "after/label", "after/value", "after/unit"),
+    "converge": ("from/n", "from/cap", "from/count", "to/n", "to/cap", "to/count", "names/#"),
+    "focus": ("title", "items/#", "verdict/n", "verdict/text"),
+    "network": ("number", "unit", "say", "nodes"),
+    "number": ("number", "unit", "say", "prefix", "suffix"),
+    "quote": ("lead", "quote"),
+    "shot": ("caption", "source"),
+    "steps": ("title/#", "steps/#"),
+    "title": ("index", "kicker", "title", "sub"),
+    "versus": ("before/tag", "before/text", "after/tag", "after/text"),
+}
+
+_HYPERFRAMES_CONTENT_SLOTS = {
+    "render_hyperframes_hw_pipeline.cjs": ("/labels/#",),
+    "render_hyperframes_notification.cjs": tuple("/props/data/" + key for key in (
+        "notifTitle", "messages/#", "appName", "headlineTop", "headlineAccent", "footerText",
+    )),
+    "render_hyperframes_chatgpt_exchange.cjs": tuple("/props/data/" + key for key in (
+        "prompt", "intro1", "intro2", "tableHeadUse", "tableHeadTool", "tableHeadWhy",
+        *(f"row{index}{field}" for index in range(1, 5) for field in ("Use", "Tool", "Why", "Chip")),
+    )),
+}
+
+def _fixed_content_slots(candidate):
+    dependency = candidate.get("dependency_id")
+    if dependency == "eian-riso-broll":
+        template = candidate["template_id"].rsplit("/", 1)[-1]
+        return tuple("/data/" + slot for slot in ("mast/#", *_RISO_CONTENT_SLOTS[template]))
+    if dependency == "hyperframes":
+        return _HYPERFRAMES_CONTENT_SLOTS[Path(candidate["entrypoint"]).name]
+    return _FIXED_CONTENT_SLOTS.get(dependency)
+
 def _catalog_projection(rows):
     projected = copy.deepcopy(rows)
     for row in projected:
@@ -59,6 +108,8 @@ def _identity(row, typ):
     # the meaning against which a host reviewed a candidate.
     payload={k:row[k] for k in ("row_id","quote","start_word","end_word","semantic","visual_task")}
     payload["type"]=typ
+    if "required_content" in row:
+        payload["required_content"] = row["required_content"]
     return hashlib.sha256(json.dumps(payload,ensure_ascii=False,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
 
 def candidate_review_identity(candidate):
@@ -101,6 +152,92 @@ def validate_review_identities(director, treatment, catalog):
             candidate = by_id.get(review.get("candidate_id"))
             if candidate is None or review.get("capability_sha256") != candidate_review_identity(candidate):
                 raise ValueError("candidate review capability identity is missing or changed")
+            if review["fit"] in {"preferred", "equivalent"}:
+                _validate_expression_basis(review, row, candidate)
+
+
+def _validate_expression_basis(review, row, candidate):
+    """Check one host judgment against the actual registered expression surface."""
+    basis = review.get("expression_basis")
+    if (not isinstance(basis, dict) or set(basis) not in
+            ({"capability", "explanation"}, {"capability", "explanation", "content"})
+            or not isinstance(basis["explanation"], str) or not basis["explanation"].strip()):
+        raise ValueError("eligible candidate needs a concrete expression_basis")
+    profile = candidate["capability"]
+    reference = basis["capability"]
+    if (not isinstance(reference, str)
+            or not (reference == "summary" and profile.get("summary")
+                    or re.fullmatch(r"(editable_content|evidence)/[0-9]+", reference)
+                    and _capability_ref(profile, reference))):
+        raise ValueError("expression_basis must cite this candidate's registered capability")
+
+    slots = _fixed_content_slots(candidate)
+    content = basis.get("content")
+    if slots is None:
+        if content is not None:
+            raise ValueError("expression_basis content requires a registered fixed input route")
+        return
+    requirements = row.get("required_content", {"visual_task": {"meaning": row["visual_task"]}})
+    if not isinstance(content, dict) or set(content) != set(requirements):
+        raise ValueError("fixed expression_basis must bind every visible requirement")
+    bound_slots = {}
+    for requirement_id, fields in content.items():
+        if not isinstance(fields, dict) or not fields:
+            raise ValueError("fixed expression_basis must cite nonempty native content slots")
+        shown = []
+        for pointer, value in fields.items():
+            if not isinstance(pointer, str):
+                raise ValueError("fixed expression_basis must cite a native content slot")
+            indexed = re.sub(r"/(?:0|[1-9][0-9]*)(?=/|$)", "/#", pointer)
+            if ((pointer not in slots and indexed not in slots)
+                    or type(value) not in {str, int, float} or not str(value).strip()):
+                raise ValueError("fixed expression_basis must cite nonempty native content slots")
+            identity = contract_artifacts.canonical_json_bytes(value)
+            if bound_slots.setdefault(pointer, identity) != identity:
+                raise ValueError(f"fixed expression_basis conflicts on native content slot {pointer}")
+            if pointer != "/template_id":  # The icon identity selects an action, not visible text.
+                shown.append(str(value))
+        if any(not any(term in value for value in shown)
+               for term in requirements[requirement_id].get("terms", [])):
+            raise ValueError(f"fixed expression_basis omits visible terms for {requirement_id}")
+
+
+def _capability_ref(profile, reference):
+    field, index = reference.split("/")
+    values = profile.get(field, [])
+    return int(index) < len(values) and values[int(index)]
+
+
+def selected_expression_bases(treatment):
+    """Read the approved fit basis for the selected route of each component."""
+    selection = treatment.get("skill_selection", {})
+    choices = {(item["segment_id"], item["component_id"]): item["candidate_id"]
+               for group in ("assignments", "overlay_assignments") for item in selection.get(group, [])}
+    return {key: candidate["expression_basis"]
+            for group in ("beats", "overlay_beats") for beat in selection.get(group, [])
+            if (key := (beat["segment_id"], beat["component_id"])) in choices
+            for candidate in beat["candidates"]
+            if candidate["candidate_id"] == choices[key] and "expression_basis" in candidate}
+
+
+def validate_native_expression(brief, row, basis):
+    """Bind approved meaning to a creative brief or to consumed fixed slots."""
+    for group, expected in (
+        ("task_source", {"semantic_row_id": row["row_id"], "quote": row["quote"],
+                         "semantic": row["semantic"], "required_change": row["visual_task"]}),
+        ("creative_handoff", {"transcript": row["quote"], "semantic_goal": row["semantic"],
+                              "required_change": row["visual_task"]}),
+    ):
+        if group in brief and any(brief[group].get(field) != value for field, value in expected.items()):
+            raise ValueError(f"native {group} differs from the approved semantic row")
+    for fields in (basis or {}).get("content", {}).values():
+        for pointer, expected in fields.items():
+            try:
+                actual = motion_capabilities._json_pointer(brief, pointer)
+            except (IndexError, KeyError, TypeError, ValueError):
+                raise ValueError(f"native brief is missing approved content slot {pointer}") from None
+            if contract_artifacts.canonical_json_bytes(actual) != contract_artifacts.canonical_json_bytes(expected):
+                raise ValueError(f"native brief changed approved content slot {pointer}")
 
 
 def _invalidate_changed_reviews(treatment, items, catalog, director):
@@ -208,10 +345,11 @@ def _invalidate_changed_reviews(treatment, items, catalog, director):
 def _query(row, tags):
     """Retain the whole task; lexical evidence only orders its review pool."""
     return "\n".join([row[key] for key in ("quote", "semantic", "visual_task")]
+                     + [item["meaning"] for _, item in sorted(row.get("required_content", {}).items())]
                      + [" ".join(tags)])
 
 def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
-    """Explicitly rebind task wording to the current approved cache; never search.
+    """Rebind requested meaning to the current approved cache without searching.
 
     Return a new treatment and the row IDs whose semantic digest changed. The
     caller saves only its new draft and records the actual local instruction.
@@ -277,12 +415,13 @@ def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
     out, rebound = copy.deepcopy(treatment), []
     if treatment.get("source_clock") != previous.get("source_clock"):
         raise ValueError("visual task rebinding cannot change the approved word clock")
+    editable = {"semantic", "visual_task", "required_content"}
     for row_id, (before, typ, tags) in old_items.items():
         after, current_type, current_tags = current[row_id]
         if (typ != current_type or tags != current_tags
-                or {k: v for k, v in before.items() if k != "visual_task"}
-                    != {k: v for k, v in after.items() if k != "visual_task"}):
-            raise ValueError("visual task rebinding cannot change row meaning, clock, components or tags")
+                or {k: v for k, v in before.items() if k not in editable}
+                    != {k: v for k, v in after.items() if k not in editable}):
+            raise ValueError("visual task rebinding cannot change original words, clock, components or tags")
         for ref in before["components"]:
             old, new = old_segments[ref["segment_id"]], segments[ref["segment_id"]]
             if any(old.get(key) != new.get(key) for key in ("start", "end", "content_item_ids")):
@@ -294,7 +433,7 @@ def rebind_local_visual_tasks(project_root, director, treatment, *, job_dir):
                 or entry.get("tags") != tags or entry.get("matching_policy_sha256") != policy):
             raise ValueError("visual task rebinding source cache identity changed")
         _validate_entry(entry, catalog, use, _query(before, tags))
-        if before["visual_task"] != after["visual_task"]:
+        if any(before.get(field) != after.get(field) for field in editable):
             if any((row_id, ref["segment_id"], ref["component_id"]) not in changes
                    for ref in before["components"]):
                 raise ValueError("visual task rebinding changed an unrequested row")
@@ -482,6 +621,7 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir):
 def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()):
     """Bind approved meaning and native route; the native Skill owns its design."""
     selection = treatment.get("skill_selection", {})
+    rows = semantic_visual_plan.component_semantic_rows(treatment)
     for assignment in [*selection.get("assignments", []), *selection.get("overlay_assignments", [])]:
         skill = assignment.get("skill_id")
         if skill not in {"openfilm-motion-graphics", "lemo-opuscar"}:
@@ -502,14 +642,9 @@ def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()
             raise ValueError("selected native component has no approved semantic beat")
         # The semantic list remains the authority. Planning art descriptions
         # are context, not text the native creator must copy back verbatim.
-        rows = [row for group in ("overlay", "broll")
-                for row in treatment.get("semantic_lists", {}).get(group, [])
-                if isinstance(row, dict) and any(
-                    isinstance(ref, dict) and (ref.get("segment_id"), ref.get("component_id")) == key
-                    for ref in row.get("components", []))]
-        if len(rows) != 1:
+        row = rows.get(key)
+        if row is None:
             raise ValueError("selected native component must bind exactly one approved semantic row")
-        row = rows[0]
         expected = {"transcript": row.get("quote"), "semantic_goal": row.get("semantic"),
                     "required_change": row.get("visual_task")}
         if (beat.get("semantic_row_id") != row.get("row_id")

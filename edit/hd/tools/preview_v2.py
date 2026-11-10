@@ -1157,20 +1157,26 @@ def build_preview_command_v2(
         hold = opening["body_offset_frames"]
         transition = opening["options"]["transition_frames"]
         total_frames = opening["total_frames"]
-        # Padding is covered by the approved image. Body frame zero and its
-        # original audio start together at hold/24, not (hold+transition)/24.
+        # Body frame zero and its original audio start together at hold/24.
         filters = (
             "[0:v]fps=24,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[v];"
             "[1:v]fps=24,format=rgba,setpts=PTS-STARTPTS[s];"
-            "[v][s]overlay=0:0:eof_action=pass:shortest=1,"
-            f"tpad=start={hold}:start_mode=clone[body];"
-            "[3:v]format=rgba,setsar=1,setpts=PTS-STARTPTS"
+            "[v][s]overlay=0:0:eof_action=pass:shortest=1"
         )
-        if transition:
-            filters += f",fade=t=out:st={hold / 24:.9f}:d={transition / 24:.9f}:alpha=1"
+        opening_input = ["-i", str(cover)]
+        if "video" in opening["options"]:
+            filters += ("[body];[3:v]fps=24,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[intro];"
+                        "[intro][body]concat=n=2:v=1:a=0,fps=24[outv];")
+        else:
+            opening_input = ["-loop", "1", "-framerate", "24", "-t",
+                             f"{(hold + transition + 1) / 24:.9f}", *opening_input]
+            filters += (f",tpad=start={hold}:start_mode=clone[body];"
+                        "[3:v]format=rgba,setsar=1,setpts=PTS-STARTPTS")
+            if transition:
+                filters += f",fade=t=out:st={hold / 24:.9f}:d={transition / 24:.9f}:alpha=1"
+            filters += ("[cover];[body][cover]overlay=0:0:eof_action=pass:shortest=0:"
+                        f"enable='lt(n,{hold + transition})'[outv];")
         filters += (
-            "[cover];[body][cover]overlay=0:0:eof_action=pass:shortest=0:"
-            f"enable='lt(n,{hold + transition})'[outv];"
             "[2:a:0]aresample=48000,asetpts=PTS-STARTPTS,"
             f"adelay={hold * 2000}S:all=1[outa]"
         )
@@ -1179,8 +1185,7 @@ def build_preview_command_v2(
             "-threads", "1", "-reinit_filter", "0", "-i", str(visual), "-threads", "1",
             "-c:v", "libvpx-vp9", "-reinit_filter", "0", "-i", str(subtitle_track),
             "-threads", "1", "-i", str(edited_aroll),
-            "-loop", "1", "-framerate", "24", "-t", f"{(hold + transition + 1) / 24:.9f}",
-            "-i", str(cover), "-filter_complex_threads", "1", "-filter_complex", filters,
+            *opening_input, "-filter_complex_threads", "1", "-filter_complex", filters,
             "-map", "[outv]", "-map", "[outa]", "-frames:v", str(total_frames),
             # Keep decoding/filtering bounded; one encoder may use four CPU threads.
             "-c:v", "libx264", "-threads", "4", "-preset", "medium", "-crf", "18",
@@ -1863,7 +1868,8 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             frames=frames,
             duration=duration,
             **({"mixed_audio": mixed_audio} if mixed_audio is not None else {}),
-            **({"opening": opening_plan, "cover": job.job_dir / opening_plan["cover"]["path"]}
+            **({"opening": opening_plan,
+                "cover": job.job_dir / opening_plan["options"].get("video", opening_plan["cover"])["path"]}
                if opening_plan is not None else {}),
             **({"number_overlay": number_overlay} if number_overlay is not None else {}),
         )

@@ -107,8 +107,13 @@ class VisualConfirmationTests(unittest.TestCase):
         artifacts.write_json_artifact(self.treatment, treatment)
         proposal = artifacts.read_json_artifact(self.prepare())
         director = artifacts.read_json_artifact(root / proposal['inputs']['director']['path'])
+        semantic_row = treatment['semantic_lists']['broll'][0]
+        self.assertEqual(proposal['rows'][0]['spoken_text'], semantic_row['quote'])
+        self.assertEqual(proposal['rows'][0]['semantic'], semantic_row['semantic'])
         self.confirm()
-        self.assertEqual(run_stage.resume_visual_direction(self.job, _env.PROJECT)['actions'][0]['action'], 'prepare_template_inputs')
+        prepare_action = run_stage.resume_visual_direction(self.job, _env.PROJECT)['actions'][0]
+        self.assertEqual(prepare_action['action'], 'prepare_template_inputs')
+        self.assertEqual(prepare_action['semantic_row'], semantic_row)
         clip = root / 'canonical.wav'
         subprocess.run(['ffmpeg', '-v', 'error', '-i', str(source), '-ss', '0', '-t', '3',
                         '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', str(clip)], check=True)
@@ -132,7 +137,10 @@ class VisualConfirmationTests(unittest.TestCase):
         self.assertFalse(result['actions'])
         brief['semantic_goal'] = treatment['skill_selection']['beats'][0]['semantic_goal']
         self.assertEqual(brief['semantic_goal'], treatment['semantic_lists']['broll'][0]['semantic'])
-        self.assertEqual(resume()['actions'][0]['action'], 'execute_native_skill')
+        execute_action = resume()['actions'][0]
+        self.assertEqual(execute_action['action'], 'execute_native_skill')
+        self.assertEqual(execute_action['semantic_row'], prepare_action['semantic_row'])
+        self.assertEqual(execute_action['expression_basis'], prepare_action['expression_basis'])
 
     def test_openfilm_parent_sources_and_authored_media_keep_distinct_roles(self):
         from test_openfilm_motion_adapter import brief as native_brief
@@ -824,24 +832,32 @@ class VisualConfirmationTests(unittest.TestCase):
         candidates = []
         for match in treatment["motion_matches"][row["row_id"]]["matches"]:
             cid = match["candidate_id"]
-            candidates.append({"candidate_id": cid, "fit": "preferred" if cid == candidate_id else "equivalent",
-                "capability_sha256": motion_match_cache.candidate_review_identity(catalog[cid]),
-                "reason": "Synthetic candidate review for the phase-boundary fixture",
-                "visual_pattern": "blue-scene", "design_plan": dict.fromkeys(
-                    ("composition", "typography", "finish", "focus"), "Synthetic blue scene design")})
-        eligible = {catalog[c["candidate_id"]]["skill_id"] for c in candidates}
+            if cid == candidate_id:
+                candidates.append({"candidate_id": cid, "fit": "preferred",
+                    "capability_sha256": motion_match_cache.candidate_review_identity(catalog[cid]),
+                    "reason": "Synthetic candidate review for the phase-boundary fixture",
+                    "expression_basis": {"capability": "summary", "explanation":
+                        "The chosen scene authoring route can depict the fixture's blue source evidence."},
+                    "visual_pattern": "blue-scene", "design_plan": dict.fromkeys(
+                        ("composition", "typography", "finish", "focus"), "Synthetic blue scene design")})
+            else:
+                candidates.append({"candidate_id": cid, "fit": "unreviewed", "reason": "Keep the recalled candidate."})
+        selected_skill = catalog[candidate_id]["skill_id"]
         beat = {"segment_id": segment["segment_id"], "component_id": "component-1",
             "semantic_row_id": row["row_id"], "start": segment["start"], "end": segment["end"],
+            "window_status": "resolved",
             "semantic_sha256": treatment["motion_matches"][row["row_id"]]["semantic_sha256"],
             "transcript": row["quote"], "semantic_goal": row["semantic"], "required_change": row["visual_task"],
             "intent_statement": segment["visual_intent"]["statement"],
             "component_brief": segment["visual_strategy"]["components"][0]["brief"],
             "binding_snapshot": copy.deepcopy(segment["bindings"]["component-1"]), "candidates": candidates,
-            "skill_reviews": {sid: {"fit": "equivalent" if sid in eligible else "unsuitable",
-                "reason": "Synthetic full-pool judgement for this fixture"}
-                for sid in {r["skill_id"] for r in broll_skill_selection.discover_candidates(_env.PROJECT)}}}
+            "skill_reviews": {sid: {"fit": "preferred" if sid == selected_skill else "unreviewed",
+                "reason": "Review the fixture's target and retain the full pool."}
+                for sid in {r["skill_id"] for r in broll_skill_selection.discover_candidates(_env.PROJECT)}},
+            "single_source_review": {"decision": "keep", "reason": "The selected route covers this single fixture beat."}}
         treatment["skill_selection"]["beats"] = [beat]
-        treatment["skill_selection"] = broll_skill_selection.assign_skills(_env.PROJECT, treatment["skill_selection"])
+        treatment["skill_selection"] = broll_skill_selection.assign_skills(_env.PROJECT,
+            treatment["skill_selection"], director=director, treatment=treatment)
         self.assertEqual(treatment["skill_selection"]["assignments"][0]["candidate_id"], candidate_id)
         return treatment
 
@@ -2121,10 +2137,11 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         cid = 'component-1'
         self.director = {'schema_version': 3, 'segments': [segment]}
         request = brief()
+        request['task_source']['semantic_row_id'] = 'semantic-1'
         request['task_source']['component_brief'] = segment['visual_strategy']['components'][0]['brief']
         self.treatment = {'numbering_scope_id': 'native-test', 'scenes': [],
             'semantic_lists': {'overlay': [], 'broll': [{'row_id': 'semantic-1', 'quote': request['transcript'],
-                'semantic': request['semantic_goal'], 'visual_task': '可替换的参考构图',
+                'semantic': request['semantic_goal'], 'visual_task': request['task_source']['required_change'],
                 'components': [{'segment_id': 'seg-001', 'component_id': cid}]}]},
             'skill_selection': {'beats': [{'segment_id': 'seg-001', 'component_id': cid, 'semantic_row_id': 'semantic-1',
                 'required_change': request['task_source']['required_change'], 'transcript': request['transcript'],
@@ -2243,7 +2260,8 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
                 request['assets'].append({**request['assets'][0], 'media_ref': 'unused', 'scene_path': 'unused.png'})
                 request['assets'][0].update(job_path='another-screenshot.png', sha256='e' * 64)
             else: request[field]['numeric_values'] = [999]
-            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'authorized native input'):
+            expected_error = 'approved semantic row' if field == 'task_source' else 'authorized native input'
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, expected_error):
                 vc._validate_draft_against_source(self.root, self.proposal, *realized(request))
         request = copy.deepcopy(original)
         request.update(project_directory='native-projects/revised', result_record_path='native-inputs/result-v2.json',
@@ -2330,8 +2348,7 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         before = artifacts.read_json_artifact(self.root / 'native-inputs/approved.json')
         before.update(dependency_id='bang-motion', template_id='opener', canvas_transport='quarter_turn_cw')
         after = {**before, 'native_options': ['counter'], 'task_source': {
-            **before['task_source'], 'required_change': '原生选择新的布局与动作',
-            'component_brief': '原生工作流的可替换表现参考'}}
+            **before['task_source'], 'component_brief': '原生工作流的可替换表现参考'}}
         first = self.root / 'native-inputs/bang-before.json'
         second = self.root / 'native-inputs/bang-after.json'
         artifacts.write_json_artifact(first, before); artifacts.write_json_artifact(second, after)

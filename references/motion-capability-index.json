@@ -31488,7 +31488,7 @@
       ],
       "reviewed_sources": {
         "edit/hd/tools/dependency_contracts.py": "6afcd668a1d8efbdd64bdf790b8b417ee3d2887ec907e6a774c994391321e865",
-        "references/cover-opening-bgm.md": "109179b47783689ad2c4845a21f876cd34d408308dbd4451ad2725629c52516e",
+        "references/cover-opening-bgm.md": "8a4e6c5e87df1734eb9b1275bc9c82794f406ffeaffb715092623c3e7feb8ee7",
         "scripts/lemo_wake_adapter.py": "a95f4102eef2d6f8a2e5b79edd7e891a11abd7bb65803f24e01e9dd720fd4ee1",
         "vendor/lemo-wake/skills/wake/SKILL.md": "bb6b9c65c611cf951da61eed3274ed07a96adf26cd353e32d596c3707ad1bf01",
         "vendor/lemo-wake/skills/wake/scripts/encode.py": "8b6e642fcb3a05be75463f609cebd9809bc7856ef747986e5490295e412c5bda",

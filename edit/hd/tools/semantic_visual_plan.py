@@ -27,6 +27,30 @@ def component_use(segment, component):
         raise SemanticVisualPlanError("plain A-roll cannot contain a counted visual component")
     return "overlay" if family == "aroll_with_overlay" and component.get("layer_role") == "annotation" else "broll"
 
+def component_semantic_rows(treatment):
+    """Index the frozen rows by their already validated component identity."""
+    lists = treatment.get("semantic_lists", {})
+    return {(ref["segment_id"], ref["component_id"]): row
+            for group in ("overlay", "broll") for row in lists.get(group, [])
+            for ref in row["components"]}
+
+
+def _validate_required_content(content):
+    if not isinstance(content, dict) or not content:
+        raise SemanticVisualPlanError("required_content must name at least one visible requirement")
+    for key, item in content.items():
+        if (not isinstance(key, str) or not key or key == "visual_task"
+                or not isinstance(item, dict) or set(item) not in ({"meaning"}, {"meaning", "terms"})
+                or not isinstance(item["meaning"], str) or not item["meaning"].strip()):
+            raise SemanticVisualPlanError("required_content needs named, recognizable meaning")
+        if "terms" in item:
+            terms = item["terms"]
+            if (not isinstance(terms, list) or not terms
+                    or any(not isinstance(term, str) or not term.strip() for term in terms)
+                    or len(set(terms)) != len(terms)):
+                raise SemanticVisualPlanError("required_content terms must be distinct, nonempty strings")
+
+
 def validate_semantic_lists(treatment, director, speech=None):
     lists = treatment.get("semantic_lists")
     if not isinstance(lists, dict) or not isinstance(lists.get("overlay"), list) or not isinstance(lists.get("broll"), list):
@@ -56,6 +80,8 @@ def validate_semantic_lists(treatment, director, speech=None):
             for key in ("quote", "semantic", "visual_task"):
                 if not isinstance(row.get(key), str) or not row[key].strip():
                     raise SemanticVisualPlanError("semantic rows need quote, semantic and visual_task")
+            if "required_content" in row:
+                _validate_required_content(row["required_content"])
             duplicate_key = (start, end, row["semantic"], row["visual_task"])
             if duplicate_key in seen_spans:
                 raise SemanticVisualPlanError("duplicate semantic task")

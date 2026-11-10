@@ -1,6 +1,7 @@
 """Frame-based cover opening metadata; the existing preview runner owns publication."""
 
 from pathlib import Path
+import shutil
 import subprocess
 from typing import Any, Mapping
 
@@ -32,8 +33,9 @@ def _approved_record(job: Any, stage_id: str, relative: str) -> dict[str, Any]:
 
 
 def plan_opening(job: Any, options: object, *, body_frames: int) -> dict[str, Any]:
+    fields = {"hold_frames", "transition_frames", "user_confirmation"}
     if (type(options) is not dict
-            or set(options) != {"hold_frames", "transition_frames", "user_confirmation"}
+            or set(options) not in (fields, fields | {"video"})
             or type(body_frames) is not int or body_frames <= 0):
         raise OpeningError("opening options or body clock are invalid")
     hold, transition = options["hold_frames"], options["transition_frames"]
@@ -42,6 +44,10 @@ def plan_opening(job: Any, options: object, *, body_frames: int) -> dict[str, An
             or type(options["user_confirmation"]) is not str
             or not options["user_confirmation"].strip()):
         raise OpeningError("opening requires confirmed integer frame durations")
+    if "video" in options:
+        if hold != 24 or transition != 0:
+            raise OpeningError("dynamic opening must be a one-second prefix with no overlap")
+        _check_opening_video(job, options["video"])
     cover = _approved_record(job, "cover", "04-cover/cover-delivery-raster.png")
     report = _approved_record(job, "cover", "04-cover/cover-report.json")
     source_srt = _approved_record(job, "subtitles", "10-subtitles/subtitles.srt")
@@ -67,6 +73,26 @@ def plan_opening(job: Any, options: object, *, body_frames: int) -> dict[str, An
             "plans/visual-plan.json": "body", "plans/asset-manifest.json": "body",
         },
     }
+
+
+def _check_opening_video(job, record):
+    from .material_adapter import create_artifact_probe
+
+    if type(record) is not dict or set(record) != {"path", "sha256", "bytes"} or not isinstance(record["path"], str):
+        raise OpeningError("dynamic opening requires a bound Job video")
+    relative = Path(record["path"])
+    target = Path(job.job_dir) / relative
+    if (relative.is_absolute() or ".." in relative.parts or target.resolve() != target.absolute()
+            or not target.is_file() or target.stat().st_size != record["bytes"]
+            or contract_artifacts.sha256_file(target) != record["sha256"]):
+        raise OpeningError("dynamic opening video is missing or changed")
+    try:
+        probe = create_artifact_probe(ffprobe_executable=shutil.which("ffprobe") or "ffprobe")
+        media = probe.probe(target, "video", {"alpha": False})
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
+        raise OpeningError("dynamic opening video must be a readable silent portrait clip") from exc
+    if (media["width"], media["height"], media["fps"], media["frame_count"], media["alpha"]) != (1080, 1920, 24, 24, False):
+        raise OpeningError("dynamic opening must contain exactly 24 silent 1080x1920 frames at 24 fps")
 
 
 def shift_srt(source: str, offset_frames: int) -> bytes:

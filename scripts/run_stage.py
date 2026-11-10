@@ -196,7 +196,7 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     return result
 
 
-def _validate_prepared_native_inputs(job, project, director, treatment, *, planned=()):
+def _validate_prepared_native_inputs(job, project, director, treatment, *, planned=(), check_expressions=False):
     # Only exact future-input bindings are absent from this view. Prepared
     # bindings, even broken ones next to a planned item, retain every gate.
     prepared = {**director, 'segments': [{**segment, 'bindings': {
@@ -211,20 +211,23 @@ def _validate_prepared_native_inputs(job, project, director, treatment, *, plann
     for name in ('anidoodle_native_adapter', 'sweety_native_adapter', 'garden_native_adapter'):
         _module(name).validate_selected_inputs(job, prepared, treatment)
     _validate_selected_native_sources(job, prepared, treatment)
-    _validate_existing_native_schemas(job, project, prepared, treatment)
+    _validate_existing_native_schemas(job, project, prepared, treatment, check_expressions=check_expressions)
     _validate_selected_lemo_workflows(job, project, prepared, treatment)
     _validate_selected_native_parent_layouts(job, prepared, treatment)
     _validate_selected_hw_word_anchors(job, prepared, treatment)
 
 
-def _validate_existing_native_schemas(job, project, director, treatment):
+def _validate_existing_native_schemas(job, project, director, treatment, *, check_expressions=False):
     from edit.hd.tools import motion_capabilities as motion
-    from edit.hd.tools.semantic_visual_plan import component_use
+    from edit.hd.tools.motion_match_cache import selected_expression_bases, validate_native_expression
+    from edit.hd.tools.semantic_visual_plan import component_semantic_rows, component_use
     targets = [(segment, component, segment.get('bindings', {}).get(component['component_id'], {}))
                for segment in director['segments'] for component in segment['visual_strategy']['components']
                if segment.get('bindings', {}).get(component['component_id'], {}).get('producer_type') == 'dependency']
     if not targets:
         return
+    semantic_rows = component_semantic_rows(treatment) if check_expressions else {}
+    expressions = selected_expression_bases(treatment) if check_expressions else {}
     catalog = motion.load_catalog(project)
     selection = treatment.get('skill_selection', {})
     selected = {(a['segment_id'], a['component_id']): a['candidate_id']
@@ -238,11 +241,14 @@ def _validate_existing_native_schemas(job, project, director, treatment):
                            or row['candidate_id'] == selected[(segment['segment_id'], cid)])]
         if len(candidates) != 1:
             raise ValueError('existing native brief has no exact selected route validator')
-        brief = _json(_path(job, scenes[(segment['segment_id'], cid)]['brief_path']))
+        key = (segment['segment_id'], cid)
+        brief = _json(_path(job, scenes[key]['brief_path']))
         report = motion._native_input_check(project, candidates[0], brief, job_dir=job.job_dir,
             segment=segment, component_id=cid, use=component_use(segment, component))
         if report['status'] != 'pass':
             raise ValueError('existing native brief is invalid: ' + str(report))
+        if check_expressions:
+            validate_native_expression(brief, semantic_rows[key], expressions.get(key))
 
 
 def _validate_selected_native_sources(job, director: dict, treatment: dict) -> None:
@@ -401,6 +407,9 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     """Continue approved work; real host tool results arrive via input-json."""
     from edit.hd.tools import state, visual_confirmation as confirmation, visual_plan
     from edit.hd.tools import generation_channels, generation_queue, contract_artifacts
+    from edit.hd.tools.motion_match_cache import selected_expression_bases
+    from edit.hd.tools.semantic_visual_plan import component_semantic_rows
+    from edit.hd.tools.subtitles_v2 import subtitle_layout
     data = payload or {}
     authorized = confirmation.validate_visual_authorization(job)
     if any(r['path'].endswith('/' + confirmation.MAPPING) for r in job.stages['visual_direction']['artifacts']):
@@ -423,13 +432,23 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
     reviewed = realized.get('reviewed_visual_text') or inputs.get('reviewed_visual_text', {}).get('path')
     draft, scene_plan = _json(director), _json(treatment)
     confirmation.validate_realization_draft(job, draft, scene_plan, native_targets=set())
+    frozen_treatment = confirmation._read(confirmation._exact(job.job_dir, inputs['treatment']))
+    semantic_rows = component_semantic_rows(frozen_treatment)
+    expressions = selected_expression_bases(frozen_treatment)
+
+    def semantic_handoff(key):
+        handoff = {'semantic_row': semantic_rows[key]}
+        if key in expressions:
+            handoff['expression_basis'] = expressions[key]
+        return handoff
+
     pending = confirmation.unprepared_template_targets(draft, scene_plan)
     errors, invalid, native_actions = [], set(), {}
     parent_inputs = None
     if any(binding.get('dependency_id') and (segment['segment_id'], cid) not in pending
            for segment in draft['segments'] for cid, binding in segment.get('bindings', {}).items()):
-        parent_inputs = tuple(confirmation._read(confirmation._exact(job.job_dir, inputs[name]))
-                              for name in ('director', 'treatment'))
+        parent_inputs = (confirmation._read(confirmation._exact(job.job_dir, inputs['director'])),
+                         frozen_treatment)
     unfinished = set(pending)
     for segment in draft['segments']:
         for cid in segment.get('bindings', {}):
@@ -479,21 +498,14 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
                     dependency_blocked.add(key)
                     unfinished.add(key)
     creative_context = (
-        'Read the confirmed proposal at proposal.path, relative to this Job, and locate this '
-        'segment_id/component_id in its rows. Read every row with the same channel and template, '
-        'including its spoken_text and semantic; use proposal.inputs.treatment to read the original '
-        'semantic_lists when more context is needed. These are the selected template\'s roles across '
-        'this film, not additional work for this task. Create this line independently from its own '
-        'objects, relation and change while retaining the native template\'s style and creative freedom. '
-        'Do not mechanically copy another row\'s layout and motion with only different wording. '
-        'Make the spoken point legible through recognizable subjects, concrete actions and a clear '
-        'result or unresolved condition. Add short labels where the relationship would be ambiguous. '
-        'For numeric comparisons, show both values together with state labels and a common unit. '
-        'If length encodes the values, use a common scale. '
-        'Use a clear focal point, aligned spacing, readable type and a coherent palette. '
-        'Leave time to read the key result and keep it clear of the presenter and captions. '
-        'The native workflow owns the actual visual design and QA; no extra parent preview, scoring '
-        'or approval is required. Different content still counts as the same template.')
+        'Use semantic_row as the confirmed task: preserve its quote, meaning, visible relationship or '
+        'change, and every required_content item. Fill the selected fixed route\'s approved content slots '
+        'from expression_basis.content when present. In a creative route, use the native workflow to '
+        'choose recognizable objects, actions and staging. Use a short label when needed to identify '
+        'an object or clarify an ambiguous relationship. Leave time to read the result and respect '
+        'the presenter and subtitle safe zones. Refer to the confirmed proposal for other rows using '
+        'this route so each has a distinct treatment grounded in its own meaning. The native workflow '
+        'owns creative design and its technical QA.')
     actions = []
     for sid, cid in sorted(pending):
         if (sid, cid) in blocked:
@@ -506,8 +518,11 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
             'proposal': authorized['payload']['source'],
             'completed_generations': [steps[step['id']] for step in required],
             'return_fields': ['realization.director_brief', 'realization.treatment'],
-            'next': creative_context}
+            'next': creative_context, **semantic_handoff((sid, cid))}
         segment = next(s for s in draft['segments'] if s['segment_id'] == sid)
+        strategy = segment['visual_strategy']
+        zones, placement = subtitle_layout(strategy['mode'], strategy.get('composition', {}))
+        action['parent_subtitle_layout'] = {'safe_zones': zones, 'placement': placement}
         if segment.get('bindings', {}).get(cid, {}).get('producer_type') == 'dependency':
             action['speech_input_contract'] = {
                 'argv_prefix': [shutil.which('ffmpeg') or 'ffmpeg', '-v', 'error', '-i',
@@ -520,6 +535,7 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         if key not in blocked:
             for action in native:
                 action['proposal'] = authorized['payload']['source']
+                action.update(semantic_handoff(key))
                 action['next'] = (action.get('next', '') + ' ' + creative_context).strip()
             actions.extend(native)
     candidates = [candidate for candidate in generation_candidates
@@ -953,26 +969,27 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
     elif stage == 'preview':
         from edit.hd.tools import preview_v2
         # Opening belongs to the final timeline; all semantic items retain the body clock.
-        if 'opening' in data:
+        if data.get('opening') is not None:
             opening = data['opening']
         else:
-            from edit.hd.tools import visual_confirmation
+            from edit.hd.tools import startup, visual_confirmation
             body_opening = visual_confirmation.approved_body_opening(job)
-            defaults = _json(SKILL / 'references/production-defaults.json')['opening']
-            if (defaults.get('policy') != 'static_cover_prefix'
-                    or type(defaults.get('hold_frames')) is not int
-                    or defaults['hold_frames'] != 12
-                    or type(defaults.get('transition_frames')) is not int
-                    or defaults['transition_frames'] != 0):
-                raise ValueError('Current Skill requires a static approved-cover opening default')
-            opening = {key: defaults[key] for key in ('hold_frames', 'transition_frames')}
-            opening['user_confirmation'] = visual_confirmation.validate_visual_authorization(job)['payload']['user_confirmation']
             if body_opening is not None:
                 # Preserve the specifically approved native Wake body opening.
                 # Ordinary semantic Wake items have no such declaration.
                 if body_opening.get('candidate_id') != 'lemo-wake:wake':
                     raise ValueError('Approved body opening declaration is invalid')
                 opening = None
+            else:
+                config = _json(job.job_dir / 'manifests/provider-config.json')
+                if 'video' in startup.selected_channels(config):
+                    return _summary(job, stage, actions=[{'action': 'provide_stage_input',
+                        'stage': stage, 'fields': ['opening'],
+                        'required': 'Bind the approved one-second cover opening as opening.video'}])
+                defaults = _json(SKILL / 'references/production-defaults.json')['opening']
+                opening = {'hold_frames': defaults['static_hold_frames'],
+                    'transition_frames': defaults['transition_frames'],
+                    'user_confirmation': visual_confirmation.validate_visual_authorization(job)['payload']['user_confirmation']}
         preview_v2.prepare_preview_v2(job, opening=opening, music=data.get('music'))
         return _finish_stage(job_dir, stage)
     elif stage == 'delivery':

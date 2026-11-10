@@ -643,6 +643,9 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                             checked['template_id'] != row['template_id']
                             or checked['composition']['alpha'] is not True):
                         raise ValueError('useAnimations input differs from the selected icon or transparent use')
+                    if row.get('dependency_id') == 'eian-riso-broll' and (
+                            row['template_id'] != 'eian-riso-broll/' + checked['template']):
+                        raise ValueError('Riso input differs from the selected native template')
                 elif hasattr(module, "_wrapper_validator"):
                     method = name + "._wrapper_validator.validate_brief"
                     module._wrapper_validator()(payload)

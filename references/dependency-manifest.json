@@ -135,7 +135,8 @@
       "target": ".",
       "path_type": "directory",
       "entrypoints": [
-        "scripts/riso_native_adapter.py"
+        "scripts/riso_native_adapter.py",
+        "scripts/riso_chrome_launcher.py"
       ],
       "binding_probes": [
         {

@@ -15,6 +15,29 @@ DESIGN = {"composition": "主体置中，变化区域与说明在同一视觉范
           "focus": "当前对象变化时，其余对象保持稳定。"}
 
 
+def expression_fixture(candidate, *, explanation="Use the fixture's reviewed visual slots."):
+    sample_slots = {
+        "adu-motion-video": ("/title", "前后对比"),
+        "datamagic": ("/props/title", "榜单"),
+        "eian-riso-broll": ("/data/mast/0", "数据说明"),
+        "html-video": ("/props/data/title", "并列说明"),
+        "huashu-motion-native": ("/metric/label", "累计"),
+        "hyperframes": (("/labels/0", "三项待办") if "hw_pipeline" in candidate.get("entrypoint", "")
+                         else ("/props/data/notifTitle", "原生通知")),
+        "hypit-native-chat": ("/title", "变更通知"),
+        "motion-graphics-native": ("/data/label", "原话重点"),
+        "overlay-studio-native": ("/doc/cards/0/params/items", "并列要点"),
+        "useanimations": ("/template_id", candidate.get("template_id", "useanimations/clock")),
+        "wise-motion": ("/title", "跟踪说明"),
+    }
+    basis = {"capability": "summary", "explanation": explanation}
+    slot = sample_slots.get(candidate.get("dependency_id"))
+    if slot:
+        pointer, value = slot
+        basis["content"] = {"visual_task": {pointer: value}}
+    return basis
+
+
 def bind_review_fixture(treatment, context):
     """The fixture explicitly completes its host review against these facts."""
     for beat in [*treatment['skill_selection'].get('beats', []),
@@ -26,7 +49,125 @@ def bind_review_fixture(treatment, context):
         catalog = {m['candidate']['candidate_id']: m['candidate'] for m in item['matches']}
         for review in beat['candidates']:
             if review['fit'] != 'unreviewed':
-                review['capability_sha256'] = cache.candidate_review_identity(catalog[review['candidate_id']])
+                candidate = catalog[review['candidate_id']]
+                review['capability_sha256'] = cache.candidate_review_identity(candidate)
+                if review['fit'] in {'preferred', 'equivalent'}:
+                    review.setdefault('expression_basis', expression_fixture(candidate))
+
+
+class HistoricalVisualExpressionTests(unittest.TestCase):
+    def test_native_creative_handoffs_keep_the_same_readable_change(self):
+        for number, quote, semantic, visual_task, dependency in (
+            (4, "张汉生创业失败了好几次，", "张汉生多次创业受挫，次数未知。",
+             "认得出创业尝试和反复受挫的关系。", "huashu-art-motion"),
+            (12, "练熟了再拉小队放大，", "个人先练熟，再由小队扩大产出。",
+             "看清个人练熟先达成，随后小队协作扩大产出。", "anidoodle"),
+        ):
+            with self.subTest(number=number):
+                row = {"row_id": f"sem-{number:03}", "quote": quote, "semantic": semantic,
+                       "visual_task": visual_task}
+                candidate = {"dependency_id": dependency, "capability": {
+                    "summary": "Original full-scene authoring", "editable_content": ["Subject and native action"]}}
+                basis = {"capability": "editable_content/0", "explanation": visual_task}
+                cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+                brief = {"task_source": {"semantic_row_id": row["row_id"], "quote": quote,
+                    "semantic": semantic, "required_change": visual_task, "component_brief": "Original native scene"},
+                    "native_options": ["native-stage-design"]}
+                cache.validate_native_expression(brief, row, basis)
+                brief["task_source"]["required_change"] = "画无字的叉或把卡片移到旁边。"
+                with self.assertRaisesRegex(ValueError, "approved semantic row"):
+                    cache.validate_native_expression(brief, row, basis)
+
+    def test_team_count_cannot_stand_in_for_membership(self):
+        row = {"row_id": "sem-008", "quote": "后来带着一支六人的远程小队，里面有宝妈，有前货车司机。",
+               "semantic": "六人远程协作，成员中有宝妈和前货车司机。",
+               "visual_task": "读出团队规模、远程协作和成员构成。",
+               "required_content": {"team": {"meaning": "六人远程小队"},
+                                    "members": {"meaning": "成员背景", "terms": ["宝妈", "前货车司机"]}}}
+        candidate = {"dependency_id": "eian-riso-broll", "template_id": "eian-riso-broll/network", "capability": {
+            "summary": "Network", "editable_content": ["Count, team context and group label"]}}
+        basis = {"capability": "editable_content/0", "explanation": "节点表达六人，组说明承载两种成员身份。",
+                 "content": {"team": {"/data/number": 6, "/data/nodes": 6}}}
+        with self.assertRaisesRegex(ValueError, "every visible requirement"):
+            cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        basis["content"]["members"] = {"/data/number": 6}
+        with self.assertRaisesRegex(ValueError, "omits visible terms"):
+            cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        basis["content"]["members"] = {"/data/say": "宝妈 · 前货车司机"}
+        cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        with self.assertRaisesRegex(ValueError, "changed approved content slot /data/say"):
+            cache.validate_native_expression({"data": {"number": 6, "nodes": 6, "say": "核心主创"}}, row, basis)
+        cache.validate_native_expression({"data": {"number": 6, "nodes": 6, "say": "宝妈 · 前货车司机"}}, row, basis)
+
+    def test_waiting_icon_needs_approved_visible_disambiguation(self):
+        row = {"row_id": "sem-013", "quote": "不用等谁给机会。", "semantic": "机会不用等别人给。",
+               "visual_task": "明示主动性，避免被理解为提醒等候。",
+               "required_content": {"opportunity": {"meaning": "明确机会不用等",
+                                                    "terms": ["机会", "不用等"]}}}
+        candidate = {"dependency_id": "useanimations", "capability": {
+            "summary": "Original clock", "editable_content": ["Native clock and optional short label"]}}
+        basis = {"capability": "editable_content/0", "explanation": "标签澄清时钟只是等待概念。",
+                 "content": {"opportunity": {"/template_id": "useanimations/clock"}}}
+        with self.assertRaisesRegex(ValueError, "omits visible terms"):
+            cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        english_label = copy.deepcopy(row)
+        english_label["required_content"]["opportunity"]["terms"] = ["clock"]
+        with self.assertRaisesRegex(ValueError, "omits visible terms"):
+            cache._validate_expression_basis({"expression_basis": basis}, english_label, candidate)
+        basis["content"]["opportunity"]["/labels/0/text"] = "机会不用等"
+        cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        with self.assertRaisesRegex(ValueError, "missing approved content slot"):
+            cache.validate_native_expression({"template_id": "useanimations/clock", "labels": []}, row, basis)
+        cache.validate_native_expression({"template_id": "useanimations/clock",
+                                          "labels": [{"text": "机会不用等", "start_frame": 0}]}, row, basis)
+
+    def test_fixed_routes_reject_metadata_foreign_slots_and_conflicting_values(self):
+        row = {"visual_task": "保留原生可见含义。"}
+        for dependency, route, pointer, value in (
+            ("datamagic", {}, "/props/rows/0/id", "宝妈"),
+            ("useanimations", {}, "/labels/0/start_frame", 6),
+            ("eian-riso-broll", {"template_id": "eian-riso-broll/shot"}, "/data/note/x", 6),
+            ("eian-riso-broll", {"template_id": "eian-riso-broll/shot"}, "/data/slot", "宝妈"),
+            ("eian-riso-broll", {"template_id": "eian-riso-broll/compare"}, "/data/say", "宝妈"),
+            ("hyperframes", {"entrypoint": "scripts/render_hyperframes_hw_pipeline.cjs"},
+             "/props/data/notifTitle", "宝妈"),
+        ):
+            with self.subTest(dependency=dependency, pointer=pointer):
+                candidate = {"dependency_id": dependency, "capability": {"summary": "Native content"}, **route}
+                basis = {"capability": "summary", "explanation": "可辨含义。",
+                         "content": {"visual_task": {pointer: value}}}
+                with self.assertRaisesRegex(ValueError, "native content slots"):
+                    cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+
+        row["required_content"] = {"x": {"meaning": "需要 A"}, "y": {"meaning": "也需要 B"}}
+        candidate = {"dependency_id": "useanimations", "capability": {"summary": "Native icon with label"}}
+        basis = {"capability": "summary", "explanation": "由短标补足含义。",
+                 "content": {"x": {"/labels/0/text": "A"}, "y": {"/labels/0/text": "B"}}}
+        with self.assertRaisesRegex(ValueError, "conflicts on native content slot"):
+            cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        basis["content"]["y"]["/labels/0/text"] = "A"
+        cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+
+    def test_native_riso_input_must_match_selected_template(self):
+        brief = {"schema_version": 1, "source_binding": {
+            "aroll_sha256": "a" * 64, "segment_id": "seg-008", "start": 0, "end": 6},
+            "composition": {"id": "team", "width": 1080, "height": 1920, "fps": 24, "frames": 144},
+            "template_request": {"semantic_family": "collection_relationship", "information_units": 1,
+                                 "numeric_values": [6], "numeric_scale": "linear"},
+            "template": "network", "data": {"palette": "pal-teal", "mast": ["核心主创", "远程协作"],
+                "number": 6, "comma": False, "unit": "位", "say": "宝妈 · 前货车司机", "nodes": 6, "duration": 6},
+            "assets": []}
+        candidate = {"role": "native", "adapter_module": "riso_native_adapter",
+                     "dependency_id": "eian-riso-broll", "template_id": "eian-riso-broll/network"}
+        self.assertEqual(motion._native_input_check(ROOT, candidate, brief)["status"], "pass")
+        candidate["template_id"] = "eian-riso-broll/number"
+        self.assertIn("selected native template", motion._native_input_check(ROOT, candidate, brief)["reason"])
+
+    def test_requirement_query_is_stable_after_canonical_write(self):
+        row = {"quote": "原话", "semantic": "团队角色", "visual_task": "认清关系",
+               "required_content": {"z": {"meaning": "二"}, "a": {"meaning": "一"}}}
+        reread = json.loads(cache.contract_artifacts.canonical_json_bytes(row))
+        self.assertEqual(cache._query(row, ["角色"]), cache._query(reread, ["角色"]))
 
 
 class CacheTests(unittest.TestCase):
@@ -56,7 +197,7 @@ class CacheTests(unittest.TestCase):
         matches = first["motion_matches"]["r0"]["matches"]
         registered = motion.overlay_candidates(ROOT)
         self.assertEqual({m["candidate_id"] for m in matches}, {r["candidate_id"] for r in registered})
-        self.assertEqual(len(matches), 9)
+        self.assertEqual(len(matches), len(registered))
         notification = next(m for m in matches if m["candidate_id"] == "overlay:notification-stack")
         self.assertEqual(notification["recall_basis"], "same_use_review_required")
         self.assertFalse(notification["matched_dimensions"]["relations"])
@@ -320,6 +461,9 @@ class CacheTests(unittest.TestCase):
             receipt = approved_source(self.director, first, 1)
             current = copy.deepcopy(first)
             current["semantic_lists"]["overlay"][0]["visual_task"] = "将分类标签替换为当前主题"
+            current["semantic_lists"]["overlay"][0]["semantic"] = "补足当前主题的成员身份"
+            current["semantic_lists"]["overlay"][0]["required_content"] = {
+                "members": {"meaning": "让观众辨认成员身份"}}
             current["skill_selection"]["revision_locks"] = {"previous_receipt": receipt,
                 "user_confirmation": "不要出现任务示意，换一些内容显示", "changes": [{
                     "semantic_row_id": "r0", "segment_id": "s0", "component_id": "c", "candidate_id": "fixture:author"}]}
@@ -341,12 +485,13 @@ class CacheTests(unittest.TestCase):
                 self.assertEqual(reviewed['candidates'][0]['fit'], 'unreviewed')
                 self.assertNotIn('design_plan', reviewed['candidates'][0])
                 cache.validate_matches(ROOT, self.director, rebound)
-                for case in ("tags", "quote", "semantic", "start_word", "end_word", "components",
+                for case in ("tags", "quote", "other_row_semantic", "start_word", "end_word", "components",
                              "segment_clock", "source_clock", "cache", "instruction", "unrequested"):
                     bad, draft = copy.deepcopy(current), copy.deepcopy(self.director)
                     row = bad["semantic_lists"]["overlay"][0]
                     if case == "tags": bad["motion_queries"][0]["tags"].append("其他对象")
-                    elif case in ("quote", "semantic"): row[case] += "改变意思"
+                    elif case == "quote": row[case] += "改变意思"
+                    elif case == "other_row_semantic": bad["semantic_lists"]["broll"][0]["semantic"] += "未授权"
                     elif case in ("start_word", "end_word"): row[case] += 1
                     elif case == "components": row["components"][0]["component_id"] = "unknown"
                     elif case == "segment_clock": draft["segments"][0]["end"] += 1 / 24
@@ -862,9 +1007,13 @@ class CatalogOperationTests(unittest.TestCase):
             other = root / 'other.py'; other.write_text('other')
             alias = root / 'alias.py'; alias.symlink_to(source.name)
             empty = root / 'node_modules/nested'; empty.mkdir(parents=True)
-            (project / 'references/fixture-native-source.json').write_text(json.dumps({
+            inventory = json.dumps({
                 'source_root': 'vendor/source', 'files': {'scene.py': 'source', 'other.py': 'other'},
-                'symlinks': {'alias.py': source.name}}))
+                'symlinks': {'alias.py': source.name}})
+            for name in ('fixture', 'anidoodle', 'sweety-handdraw-video'):
+                (project / 'references' / f'{name}-native-source.json').write_text(inventory)
+            (project / 'archives/sources').mkdir(parents=True)
+            (project / 'archives/sources/index.json').write_text('{"repositories": []}')
             memo = {}
             with patch.object(native, 'SOURCES', {'fixture': ('fixture', 'commit', 'pin')}), \
                  patch.object(startup, '_operation_cache', return_value=memo), \

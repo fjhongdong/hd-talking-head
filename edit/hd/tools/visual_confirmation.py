@@ -423,7 +423,7 @@ def approved_body_opening(job):
     treatment = _read(_exact(job.job_dir, proposal["inputs"]["treatment"]))
     return treatment.get("skill_selection", {}).get("opening")
 
-def _rows(director, treatment, speech, semantic_rows=None, generation_channels=None, *, job_dir=None):
+def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_dir=None):
     from .broll_skill_selection import source_channel
     from .semantic_visual_plan import component_use
 
@@ -435,8 +435,6 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
     rows = []
     for segment in director["segments"]:
         sid = segment["segment_id"]
-        spoken = "".join(w["text"] for w in speech or []
-                         if w["start"] < segment["end"] and w["end"] > segment["start"])
         for component in segment["visual_strategy"]["components"]:
             cid = component["component_id"]
             binding = segment.get("bindings", {}).get(cid, {})
@@ -465,7 +463,7 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
             if not template:
                 raise VisualConfirmationError("each visual row needs its actual template or material source")
             physical_id = sid + ":" + cid
-            semantic_row = semantic_rows.get((sid, cid)) if semantic_rows else None
+            semantic_row = semantic_rows.get((sid, cid))
             if semantic_row is None or semantic_row["type"] != ("贴片" if component_use(segment, component) == "overlay" else "B-roll"):
                 raise VisualConfirmationError("visual component is missing from semantic lists")
             generation = []
@@ -484,7 +482,10 @@ def _rows(director, treatment, speech, semantic_rows=None, generation_channels=N
                          "segment_id": sid, "component_id": cid,
                          "start": segment["start"], "end": segment["end"],
                          "type": semantic_row["type"],
-                         "spoken_text": spoken, "semantic": segment["visual_intent"]["statement"],
+                         "spoken_text": semantic_row["quote"], "semantic": semantic_row["semantic"],
+                         "visual_task": semantic_row["visual_task"],
+                         **({"required_content": semantic_row["required_content"]}
+                            if "required_content" in semantic_row else {}),
                          "tags": tags, "source": source,
                          "generation_channel": "；".join(generation),
                          "channel": (source_channel(chosen["skill_id"]) if chosen else
@@ -706,7 +707,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     # Future briefs, project paths, trigger records and renderer outputs are
     # deliberately absent from this user-facing planning gate.
     from scripts import run_stage
-    run_stage._validate_prepared_native_inputs(job, PACKAGE_ROOT, director, treatment, planned=deferred)
+    run_stage._validate_prepared_native_inputs(job, PACKAGE_ROOT, director, treatment, planned=deferred,
+                                               check_expressions=True)
     from . import overlay_alignment
     prepared = {(s['segment_id'], cid) for s in director['segments'] for cid in s.get('bindings', {})} - deferred
     overlay_alignment.validate_treatment(job, director, Path(treatment_path), phase='planning', target_keys=prepared)
@@ -718,7 +720,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     config_path, config_sha = startup._config(job)
     config = _read(config_path)
     channels = startup.selected_channels(config) if steps else {}
-    rows = _rows(director, treatment, speech, semantic_plan["component_rows"], channels, job_dir=job.job_dir)
+    rows = _rows(director, treatment, semantic_plan["component_rows"], channels, job_dir=job.job_dir)
     _validate_beat_sheet(treatment, director, speech)
     from . import visual_coverage
     coverage = visual_coverage.require_density({"duration": context[5], "segments": director["segments"]}, treatment=treatment)
@@ -776,32 +778,34 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     artifacts.write_json_artifact(proposal_path, proposal)
     def cell(value):
         return str(value).replace("|", "／").replace("\n", "<br>")
+    def visual_task(row):
+        details = [item["meaning"] for item in row.get("required_content", {}).values()]
+        return "\n".join([row["visual_task"], *details])
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
              "## 贴片语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
     for row in semantic_plan["items"]:
         if row["type"] == "贴片":
-            lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
+            lines.append("| " + " | ".join(map(cell, (row["quote"], row["semantic"], visual_task(row)))) + " |")
     lines += ["", "## B-roll 语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
     for row in semantic_plan["items"]:
         if row["type"] == "B-roll":
-            lines.append("| " + " | ".join(cell(row[k]) for k in ("quote", "semantic", "visual_task")) + " |")
+            lines.append("| " + " | ".join(map(cell, (row["quote"], row["semantic"], visual_task(row)))) + " |")
     lines += ["", f"语义清单摘要：贴片{semantic_plan['overlay_count']}处 / B-roll{semantic_plan['broll_count']}项 / 合计{len(semantic_plan['items'])}", "",
              "时间为剪后正文时间，最终成片按封面时长统一偏移。整表确认后按表制作并直接交付。", "",
-             "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 标签 | 来源渠道 | 生成渠道／模型 | 素材来源 | 匹配动效模板 | 生成步骤 |",
-             "|---|---|---|---|---|---|---|---|---|---|---|"]
+             "| 编号 | 时间 | 类型 | 剪后原话 | 语义 | 画面任务 | 标签 | 来源渠道 | 生成渠道／模型 | 素材来源 | 匹配动效模板 | 生成步骤 |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     display_rows = {}
     for row in numbered_rows:
         display_rows.setdefault(row["semantic_row_id"], []).append(row)
-    for identity, parts in display_rows.items():
+    for parts in display_rows.values():
         row = parts[0]
-        semantic_row = next(item for item in semantic_plan["items"] if item["row_id"] == identity)
         part_keys = {(part["segment_id"], part["component_id"]) for part in parts}
         generated = [s for s in steps if (s["segment_id"], s["component_id"]) in part_keys]
         labels = [s["id"] + "：" + ("生图" if s["purpose"] == "image" else "生视频")
                   + ("；" + str(s["description"]) if s.get("description") else "") for s in generated]
         lines.append("| " + " | ".join(cell(v) for v in (
             row["number"], "；".join(dict.fromkeys(f"{p['start']:.3f}–{p['end']:.3f}s" for p in parts)),
-            row["type"], semantic_row["quote"], semantic_row["semantic"], "、".join(row["tags"]),
+            row["type"], row["spoken_text"], row["semantic"], visual_task(row), "、".join(row["tags"]),
             "、".join(dict.fromkeys(p["channel"] for p in parts if p["channel"])) or "素材直用（创作来源未确认）",
             "；".join(dict.fromkeys(p["generation_channel"] for p in parts if p["generation_channel"])) or "—",
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
@@ -3245,6 +3249,20 @@ def _validate_fresh_native_parent_inputs(root, proposal, original, segment, cid,
 
 def _validate_authorized_native_inputs(root, proposal, frozen, original, director, treatment, *, targets=None):
     """Keep parent inputs and permissions while leaving native project creation free."""
+    from .motion_match_cache import selected_expression_bases, validate_native_expression
+    from .semantic_visual_plan import component_semantic_rows
+    semantic_rows = component_semantic_rows(original)
+    expressions = selected_expression_bases(original)
+
+    def check_expression(segment, cid, value):
+        key = (segment['segment_id'], cid)
+        row = semantic_rows.get(key)
+        if row is not None:
+            try:
+                validate_native_expression(value, row, expressions.get(key))
+            except ValueError as error:
+                raise VisualConfirmationError(str(error)) from error
+
     def brief(segment, cid, current):
         scenes = [scene for scene in current.get('scenes', [])
                   if scene.get('segment_id') == segment['segment_id']
@@ -3302,6 +3320,7 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
                 current = actual[segment['segment_id']]
                 if current.get('bindings', {}).get(cid, {}).get('brief_sha256'):
                     realized = brief(current, cid, treatment)
+                    check_expression(segment, cid, realized)
                     if ('authorization' in realized
                             and realized['authorization'].get('paid_generation') is not False):
                         raise VisualConfirmationError('execution changed authorized native input: authorization')
@@ -3311,6 +3330,7 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
                 continue
             before = brief(segment, cid, original)
             after = brief(actual[segment['segment_id']], cid, treatment)
+            check_expression(segment, cid, after)
             _validate_native_parent_fields(before, after)
             prior_scene = next(s for s in original['scenes']
                                if s.get('segment_id') == segment['segment_id'] and s.get('component_id') in (None, cid))

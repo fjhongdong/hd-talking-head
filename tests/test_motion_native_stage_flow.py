@@ -174,6 +174,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'candidates':[]})
         treatment=motion_match_cache.match_once(_env.PROJECT,director,treatment)
         cached=motion_match_cache.validate_matches(_env.PROJECT,director,treatment)
+        from edit.hd.tests.test_motion_match_cache import bind_review_fixture
         design={'composition':'隔离fixture原生整屏过程','typography':'沿用原生示例中文',
                 'finish':'沿用原生示例色彩材质','focus':'验证当前过程工程执行到媒体'}
         for beat in [*treatment['skill_selection']['beats'],*treatment['skill_selection']['overlay_beats']]:
@@ -185,6 +186,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'fit':'preferred' if item['candidate']['candidate_id']==wanted else 'equivalent',
                 'reason':'隔离fixture选择真实准备的原生工程','visual_pattern':'native-'+beat['segment_id'],
                 'design_plan':design} for item in cached[key]['matches']]
+        bind_review_fixture(treatment, cached)
         treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root)
         self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['assignments']],
             [c['dependency_id'] for c in self.case['segments'] if c['dependency_id']!='barty-motion-graphics'])

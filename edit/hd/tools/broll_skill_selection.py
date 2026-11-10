@@ -686,12 +686,13 @@ def _revision_selection_locks(selection, beats, job_dir, director, treatment):
     if any(key not in changes for key, beat in current.items()
            if beat.get("semantic_row_id") in changed_rows):
         raise ValueError("every changed adjustable component needs the user's selected candidate")
+    editable = {"components", "semantic", "visual_task", "required_content"}
     for row_id, old_row in old_rows.items():
         after = new_rows[row_id]
         if row_id in changed_rows:
-            if {k: v for k, v in old_row.items() if k not in {"components", "visual_task"}} != {
-                    k: v for k, v in after.items() if k not in {"components", "visual_task"}}:
-                raise ValueError("local revision changed the confirmed row meaning")
+            if {k: v for k, v in old_row.items() if k not in editable} != {
+                    k: v for k, v in after.items() if k not in editable}:
+                raise ValueError("local revision changed the confirmed row original words or clock")
             if ({item["segment_id"] for item in old_row["components"]} !=
                     {item["segment_id"] for item in after["components"]}):
                 raise ValueError("local revision changed the confirmed row's segments")

@@ -277,6 +277,8 @@ class OpeningWorkflowTests(unittest.TestCase):
 
     def test_formal_preview_applies_default_static_opening(self):
         from edit.hd.tools import delivery_approval, visual_confirmation
+        contract_artifacts.write_json_artifact(self.job.job_dir / 'manifests/provider-config.json',
+            {'schema_version': 1, 'generation_enabled': False, 'max_concurrency': 1, 'providers': []})
         with mock.patch.object(self.runner, "_startup"), \
                 mock.patch.object(delivery_approval, "validate_visual_plan_approval"), \
                 mock.patch.object(visual_confirmation, "approved_body_opening", return_value=None), \
