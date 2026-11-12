@@ -2,7 +2,7 @@
  "files": {
   ".gitignore": "81766011c3926b4566b54b3baac50010102ffc3ece98b5ad9c6c8a64aa5c169d",
   "README.md": "e41fabd77e61bfd9bc237710730e22967cb4bac947bd0a165d5eaa90a2ac5ddc",
-  "SKILL.md": "2a4e9dcf20d9a5d90aa6db7d0fce8f846b80d680a5b260ecb3033b368a14a781",
+  "SKILL.md": "9824307bbb36d87f65ed2dd2a8e06eafeca636c076a5c698d1de3b2757a51ab3",
   "agents/openai.yaml": "3941101af9703a7701e912717706999600c2443c7c12f22be2dae58b0055da6c",
   "archives/runtime/talkcraft-aroll-overlay.part-000": "7eaa4d2f2a7712d71365e5ca376f2490e007db08c658472a58e8053286baa457",
   "archives/runtime/talkcraft-runtime.part-000": "bac9162e71f60b1c202f9232d201ff1fba8292a3ad7afdfa2a23528cc25e73c9",
@@ -2911,7 +2911,7 @@
   "references/bb-video-native-source.json": "677750498dfb7d1f3ef7b297f4904da1fe230ef24087b88df0f1ef5d0ca4e1b9",
   "references/bb-video-template-catalog.json": "f0005aa76ec688abe03b16fb7f131b63f522db9e78559d9bafe9215c0a63594d",
   "references/broll-capability-router.md": "7719446a53981947ccaeb2b44388b790e59c2729ee053392958f4932d87fc4af",
-  "references/cover-contract.md": "ef598b5e902893c68f26e3b8170e59327714a564c10d3904edea6e1d1d87fe58",
+  "references/cover-contract.md": "179fd053a287c7e3d8d0e14c4e568370b26584c33f79e4cccb42a0bbf6576f9f",
   "references/cover-opening-bgm.md": "8a4e6c5e87df1734eb9b1275bc9c82794f406ffeaffb715092623c3e7feb8ee7",
   "references/cover-title-style.md": "72caf2de02b6b6e0fafdd65d445d2a4bece54248b9ddff6d8821307684b1bd98",
   "references/cutcod-riso.md": "eea0a917a929bcd9a670bf09138d667ee3eca02c28fe2607afb327c61d8fdb15",
@@ -2943,7 +2943,7 @@
   "references/motion-capability-library.md": "c206e5ae9c9a34e3503dff72350702541e0b8ed3c429e623ac144f70faa8e2b4",
   "references/motion-graphics-native.md": "5e7f26b38a5b70ac7ff46d2f7bc18b006c4ad8c107034efd17031d2692ae5d7e",
   "references/motion-text-readability.md": "f587dd9e11b43d60c2187d95d413f93c9af9a688b2159fb7635babfb2f78ddb8",
-  "references/native-motion-call-contract.md": "cf632afd54cb3252c8c01744112b53053a58a5f0fe9457fc06ee4bd5c1670967",
+  "references/native-motion-call-contract.md": "fabda01aa74f25742793007b53931fee6a4ebb36497f2dda8c41e233eba924c5",
   "references/official-video-acquisition.md": "625fc182349b82e1ae531642d6d745c08343a3b17614e58a6ea452f20c4c8c0c",
   "references/open-source-adapter-matrix.md": "85631879ba07bf80f29ff45e0eb0468b8830bbd1bb218f89b0961992877ea815",
   "references/openfilm-motion-graphics.md": "43954c0fda4354ed312706b139bea3c2ede815fc589a41fc1791386e9693b105",
@@ -10455,6 +10455,6 @@
   "vendor/wise-motion/vendor/lucide/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
   "vendor/wise-motion/vendor/lucide/SOURCE.json": "dc71e9a635db8e71e4a938ac5ec7372eab1c2f4bbd9779bb5d7d54923550eda1"
  },
- "release_id": "20261110-native-task-riso-recovery-v113",
+ "release_id": "20261112-cover-overlay-placement-v118",
  "schema_version": 1
 }
