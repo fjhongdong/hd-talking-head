@@ -2,7 +2,7 @@
  "files": {
   ".gitignore": "c5c9184ef4b1097dcf4300165a731a35116b948127cfad0ae932f2256ca54c62",
   "README.md": "e41fabd77e61bfd9bc237710730e22967cb4bac947bd0a165d5eaa90a2ac5ddc",
-  "SKILL.md": "718bd7e5dd82ca35752dba1b92bab23e82b61dbea7fbf22d6e1c643eea52db74",
+  "SKILL.md": "ff28ae12cfba22f91669cefa727cf36818198b60ff1ad61622e59cf725f0d1ba",
   "agents/openai.yaml": "3941101af9703a7701e912717706999600c2443c7c12f22be2dae58b0055da6c",
   "archives/runtime/talkcraft-aroll-overlay.part-000": "7eaa4d2f2a7712d71365e5ca376f2490e007db08c658472a58e8053286baa457",
   "archives/runtime/talkcraft-runtime.part-000": "bac9162e71f60b1c202f9232d201ff1fba8292a3ad7afdfa2a23528cc25e73c9",
@@ -2933,7 +2933,7 @@
   "edit/hd/tools/visual_assets_v2.py": "e1042bbad953b0bdbfa8745baeab2609ef629f29938f8e816d1bcbb7b03240d2",
   "edit/hd/tools/visual_assignment.py": "4a8dcf023e9501298db3f1e6a721447164d115735546527d088b27dfe405fec4",
   "edit/hd/tools/visual_canary.py": "7f7be87cd881d8db1a509ecdffc540ac55853d51dca879e6615746f2a73ceb89",
-  "edit/hd/tools/visual_confirmation.py": "fc6c40ec6f1dcb6f28e32d18992f6ba99aeb7021a46a608c60f97be2c8afa973",
+  "edit/hd/tools/visual_confirmation.py": "f50c2a6f9fbde3673f548004f18663c65ff3ccf6ea115179b2db7a1cf58a47ad",
   "edit/hd/tools/visual_coverage.py": "574e3f328d981fd7d041467e8f44c8b12ad8d86bda799c214979df428d21c20f",
   "edit/hd/tools/visual_plan.py": "27b12699a128a457d66340fee39be2b9d730b36026ad63f791dbf95523e6a39c",
   "edit/hd/tools/visual_review.py": "0e9ef4b7e3e795048b2b72b5f5a8434ef74d632020db82a3d3e8c27983826915",
@@ -3018,7 +3018,7 @@
   "references/video-shotcraft-native-source.json": "9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2",
   "references/video-shotcraft-template-catalog.json": "6d9e2a9d9f35012521796c097d8ab80eaf16f909aa0f4b7a0f2b98436e92e4c5",
   "references/visual-assets-preflight.md": "799f303452246d5711a40458ab2c1dc3b21563a4b9778419305834679ae7ab34",
-  "references/visual-quality-contract.md": "eec4f74172d58c486153def4794f9ae48b78e46467f16cf2d9ac0a2047525e39",
+  "references/visual-quality-contract.md": "4ec49244bc09cd413c4b6afd02493ee38b65951ceed1b24c678401679655cc6a",
   "references/visual-revision-reuse.md": "6252dd8183cd2fc3d4866335e2e60f2d33a8be93d313f831d074a0b50bb998c4",
   "run.py": "3f9345465866977ec2234e5982b7a088281c461f8b9d336700b239c5e25d86b6",
   "scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
@@ -3108,7 +3108,7 @@
   "scripts/riso_recovery.py": "4d3125bb2bc0c19994d3499be8c5b78323436f27c20029a3107197757991a9a4",
   "scripts/riso_watchdog.py": "e9afd403affc71fe89fc3570533dd487ac2f6b3bd4c52b1fde3a94cb2aad341e",
   "scripts/run_generation.py": "d7c8635ca0868143a7ede3053a46b567c3cc94f443da9ff86de87e2dd90212fa",
-  "scripts/run_stage.py": "96cd6152e81cefd21d03c9a78cff4d1f5e0c3d12016c689e731e06a8ff68ebf1",
+  "scripts/run_stage.py": "3f3f891c9335a7149342dd7ff8652157ce592ff822d86dadcc149b8c84366b66",
   "scripts/runtime_bundle.py": "2dcb0562247f3bb36b791b9ad0751a42d97d7dda64f6ef7e15d19ccb9b988b38",
   "scripts/select_broll_skills.py": "f121d76ca234be32c4428902729e82d024dd5e313da1467dd62d89be57a2803a",
   "scripts/select_motion_capabilities.py": "dd04a4e48f3b47a234333dfd537dd28fc98b65e1243627cc02a04bf6a9f708b8",
@@ -10507,6 +10507,6 @@
   "vendor/wise-motion/vendor/lucide/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
   "vendor/wise-motion/vendor/lucide/SOURCE.json": "dc71e9a635db8e71e4a938ac5ec7372eab1c2f4bbd9779bb5d7d54923550eda1"
  },
- "release_id": "2026-11-13-formal-composition-and-motion-copy",
+ "release_id": "2026-11-13-visible-subject-and-action-planning",
  "schema_version": 1
 }

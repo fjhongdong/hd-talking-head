@@ -2072,7 +2072,8 @@ def _generation_step_action(job, authorized, step):
                 'source_image': _record(job.job_dir, source),
                 'native_skill': str(PACKAGE_ROOT / 'vendor/gbro-collage-broll/SKILL.md'),
                 'return_fields': ['gbro_frame_preparations'],
-                'next': ('按 semantic_row 的原话、画面任务和必要内容执行 GBRO 原生首尾帧准备。'
+                'next': ('按 semantic_row 的原话、画面任务和必要内容执行 GBRO 原生首尾帧准备，'
+                         '把可见主体及变化落在首尾帧。'
                          '有已批准文字时仅沿 video-use 静态标签路线叠入。无文字时直接使用空纸首帧。保留原 prompt。')}
         return None
     rid, item = generation_item(queue, proposal, step, job)

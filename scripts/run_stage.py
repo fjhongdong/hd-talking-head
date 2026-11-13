@@ -174,7 +174,11 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
     from edit.hd.tools import state, visual_plan, visual_confirmation, avatar_profile, contract_artifacts
     job = state.load_job(job_dir)
     if director_brief is None or treatment is None:
-        return _summary(job, 'visual_direction', actions=[{'action':'provide_visual_plan', 'arguments':['--director-brief', '--treatment']}])
+        return _summary(job, 'visual_direction', actions=[{
+            'action': 'provide_visual_plan', 'arguments': ['--director-brief', '--treatment'],
+            'next': '先分列贴片与 B-roll 的语义清单。每项 visual_task 写清可见主体和动作、结果或对照。'
+                    '精确数字、原文引语或静态资料也可直接成为主体。required_content 只补必须保留的画面要点、事实与文字。'
+                    '匹配一次，核实候选能力和所需素材，再最大化渠道、最大化模板，最后校时。'}])
     reviewed = _json(_path(job, reviewed_visual_text)) if reviewed_visual_text else None
     director = _json(_path(job, director_brief))
     planned = avatar_profile.plan_avatar_policy(director['segments'])
@@ -489,11 +493,11 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
                     dependency_blocked.add(key)
                     unfinished.add(key)
     creative_context = (
-        'Use semantic_row as the confirmed task: preserve its quote, meaning, visible relationship or '
-        'change, and every required_content item. Fill the selected fixed route\'s approved content slots '
+        'Use semantic_row as the confirmed task: preserve its quote, meaning, visible subject, relationship '
+        'or change, and every required_content item. Fill the selected fixed route\'s approved content slots '
         'from expression_basis.content when present. In a creative route, use the native workflow to '
-        'choose recognizable objects, actions and staging. Use a short label when needed to identify '
-        'an object or clarify an ambiguous relationship. Leave time to read the result and respect '
+        'design the staging so the subject is recognizable and its action or relationship carries the meaning. '
+        'Use short labels for names, precise values and necessary clarification. Leave time to read the result and respect '
         'the presenter and subtitle safe zones. Refer to the confirmed proposal for other rows using '
         'this route so each has a distinct treatment grounded in its own meaning. The native workflow '
         'owns creative design and its technical QA.')
