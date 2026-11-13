@@ -40,6 +40,12 @@ python3.12 <skill-root>/run.py run_stage --job-context <workspace>/job-context.j
 
 交付身份来自当前阶段登记的 `12-delivery/delivery-manifest.json` 文件 SHA。稳定交片保存在 `delivered/<身份>/final.mp4`，回执位于 `manifests/delivery/<身份>/delivered.json` 与 `accepted.json`。以返回的 `delivery_file` 交片，后续返修不能覆盖它。全局工作流计数变化不使同一版验收失效；新交付身份必须重新终验。查询只读当前阶段身份，不扫描历史记录猜最新版，也不写回执。
 
+## 正式合成
+
+从同一 Job 连续执行 `subtitles → preview → delivery`。字幕阶段使用本包的 TalkCraft 适配组件渲染深底白字卡片，根据剪后真实词钟点亮金色关键词；只高亮原声确实说出且符合间隔的已确认关键词。B-roll 字幕避开小窗，原生必带字幕的例外仍按 [原生调用合同](native-motion-call-contract.md) 处理。
+
+预览阶段从已确认整表读取编号，使用正式编号牌，并将字幕、编号和原声一起移到片头之后。发布使用正式预览文件。原生单段输出及手动试拼保存在 Job 内；正式合成缺少绑定或文件时，定位并修复受影响阶段，从 `run_stage` 续跑，复用已有合格产物。
+
 ## 统一交付目录
 
 正式入口在交付完成后将三份现有文件发布到 `<skill-root 的父目录>/素材与作品/<视频标题>/`。`素材与作品/` 专用于定稿交付。每个标题目录只留 `成片.mp4`、`封面_9x16.png`、`封面_3x4.png`。标题取本期已登记封面标题，并清理文件名中的路径字符。对外返回 `delivery_directory`、`delivery_file`、`cover_9x16_file`、`cover_3x4_file`，直接用这些路径交付。预览与中间产物保存在 Job 内，项目原始素材独立存放在 `制作素材/`。

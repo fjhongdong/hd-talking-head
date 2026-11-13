@@ -24,24 +24,37 @@ class TalkCraftSubtitleAdapterTests(unittest.TestCase):
             {{loader:'tsx',format:'cjs'}}).code;
           const mod = {{exports:{{}}}};
           const React = {{createElement:(tag,props,...children)=>({{tag,props,children}}),Fragment:'fragment'}};
+          let frame = 23;
           const load = (name) => {{
             if(name==='react') return React;
-            if(name==='remotion') return {{AbsoluteFill:'absolute',useCurrentFrame:()=>24,useVideoConfig:()=>({{fps:24}})}};
+            if(name==='remotion') return {{AbsoluteFill:'absolute',useCurrentFrame:()=>frame,useVideoConfig:()=>({{fps:24}}),
+              Easing:{{out:()=>null,inOut:()=>null}},interpolate:()=>0}};
             if(name.includes('theme')) return {{C:{{text:'#fff',gold:'#ff0',line:'#888'}},FONT:{{cn:'sans-serif'}}}};
             if(name.includes('line-units')) return {{lineUnits:()=>[]}};
             throw new Error(name);
           }};
           new Function('require','module','exports',source)(load,mod,mod.exports);
-          const cue={{cue_id:'c',start:0,end:2,text:'原话完整保留',words:[],emphasis:null,
+          const cue={{cue_id:'c',start:0,end:2,text:'原话完整保留',words:[],
+            emphasis:{{start:1,end:1.5,text_start:2,text_end:4}},
             placement:'standard',bottom:350,long_keyword:false}};
           const native={{dependency_id:'sweety-handdraw-video',template_id:'sweety-handdraw-video/style-paper',
             segment_id:'seg-1',component_id:'c',result_record:{{path:'native-inputs/result.json',sha256:'a'.repeat(64),bytes:10}}}};
           const parent=mod.exports.Subtitles({{cues:[cue]}});
+          frame=24;
+          const spoken=mod.exports.Subtitles({{cues:[cue]}});
           const owned=mod.exports.Subtitles({{cues:[{{...cue,native_caption:native}}]}});
-          console.log(JSON.stringify({{parentDrawn:!!parent,nativeClear:owned===null,width:parent.children[0].props.style.maxWidth}}));
+          const keyword=(node)=>{{
+            if(Array.isArray(node)) return node.map(keyword).find(Boolean);
+            if(!node || typeof node!=='object') return null;
+            if(node.tag==='span' && node.children[0]==='完整') return node.props.style.color;
+            return keyword(node.children);
+          }};
+          console.log(JSON.stringify({{parentDrawn:!!parent,nativeClear:owned===null,
+            width:parent.children[0].props.style.maxWidth,before:keyword(parent),onset:keyword(spoken)}}));
         """
         observed = json.loads(subprocess.check_output(['node', '-e', script], text=True, timeout=30))
-        self.assertEqual(observed, {'parentDrawn': True, 'nativeClear': True, 'width': 920})
+        self.assertEqual(observed, {'parentDrawn': True, 'nativeClear': True, 'width': 920,
+                                    'before': '#fff', 'onset': '#ff0'})
 
     @unittest.skipUnless(os.environ.get("HD_SUBTITLE_METADATA_TEST") == "1", "explicit metadata browser check")
     def test_metadata_checks_real_unbroken_word_width_before_rendering(self) -> None:

@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 from . import contract_artifacts as artifacts
-from . import state
+from . import startup, state
 
 
 def receipt_paths(manifest: dict) -> tuple[str, str]:
@@ -99,10 +99,17 @@ def _delivery_identity(job: state.JobState) -> tuple[dict, dict]:
     final = _published(job, "12-delivery/final.mp4")
     manifest_ref = _published(job, "12-delivery/delivery-manifest.json")
     manifest = artifacts.read_json_artifact(job.job_dir / manifest_ref["path"])
-    output = manifest.get("artifacts", {}).get("final.mp4", {}).get("output", {})
+    video = manifest.get("artifacts", {}).get("final.mp4", {})
+    output = video.get("output", {})
     if (manifest.get("job_id") != job.job_id or manifest.get("final_sha256") != final["sha256"]
             or output.get("sha256") != final["sha256"] or output.get("bytes") != final["bytes"]):
         raise state.WorkflowError("delivery manifest differs from its final output")
+    if startup.is_skill_job(job):
+        previews = [record for record in job.stages["preview"]["artifacts"]
+                    if record["path"] == "11-preview/review.mp4"]
+        if (len(previews) != 1 or video.get("source") != previews[0]
+                or any(final[key] != previews[0][key] for key in ("sha256", "bytes"))):
+            raise state.WorkflowError("delivery must copy the formal preview without changes")
     return final, manifest_ref
 
 
@@ -143,6 +150,21 @@ def delivery_file(job: state.JobState) -> Path:
     return job.job_dir / "delivered" / receipt["delivery_manifest"]["sha256"] / "final.mp4"
 
 
+def _validate_formal_composition(job: state.JobState, final: dict) -> None:
+    from . import material_usage, preview_v2, visual_confirmation
+
+    try:
+        report = artifacts.read_json_artifact(
+            preview_v2._published_preview(job, "11-preview/qa-report.json"))
+        preview_v2.validate_published_composition(job, report)
+        if report.get("preview_sha256") != final["sha256"]:
+            raise preview_v2.PreviewV2Error("preview video differs from its composition report")
+    except (preview_v2.PreviewV2Error, artifacts.ContractArtifactError,
+            visual_confirmation.VisualConfirmationError,
+            material_usage.MaterialUsageError, OSError) as exc:
+        raise state.WorkflowError(f"formal preview is invalid: {exc}") from exc
+
+
 def record_delivery(job: state.JobState) -> Path:
     """Machine completion records delivered, never accepted."""
     from .qa_delivery_v2 import _DeliveryLock
@@ -154,6 +176,8 @@ def record_delivery(job: state.JobState) -> Path:
         if path.exists() or path.is_symlink():
             validate_delivery_receipt(current)
         else:
+            if startup.is_skill_job(current):
+                _validate_formal_composition(current, final)
             _preserve_delivery(current, final, manifest)
             _publish_receipt(path, {"schema_version": 1, "decision": "delivered",
                 "job_id": current.job_id, "workflow_revision": current.revision,

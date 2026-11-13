@@ -24,6 +24,7 @@ from . import (
     preview_opening,
     preview_music,
     segment_render,
+    startup,
     state,
     talkcraft_subtitles,
     visual_plan,
@@ -65,8 +66,8 @@ _ARTIFACT_KEYS = set(broll_component_executor.ComponentArtifact.__dataclass_fiel
 _PREVIEW_JOURNAL = ".11-preview.publication.json"
 
 
-def _write_number_atlas(path: Path, numbers) -> Path:
-    """Create the small, deterministic numbered badge atlas used by preview."""
+def _number_atlas(numbers) -> Image.Image:
+    """Build the same numbered badges for rendering and reuse validation."""
     numbers = list(numbers)
     if not numbers:
         raise PreviewV2Error("number atlas needs at least one row")
@@ -83,7 +84,11 @@ def _write_number_atlas(path: Path, numbers) -> Path:
             raise PreviewV2Error("number badge label does not fit")
         draw.text(((64 - (box[2] - box[0])) / 2, top + (44 - (box[3] - box[1])) / 2 - box[1]),
                    label, font=font, fill=(35, 30, 25, 255))
-    image.save(path, format="PNG", optimize=True)
+    return image
+
+
+def _write_number_atlas(path: Path, numbers) -> Path:
+    _number_atlas(numbers).save(path, format="PNG", optimize=True)
     return path
 
 def _number_badge_slots(rows):
@@ -1251,6 +1256,32 @@ def _published_preview(job: state.JobState, relative: str) -> Path:
     return path
 
 
+def _require_talkcraft_subtitle_receipt(job: state.JobState) -> None:
+    try:
+        receipt = material_usage.load_current_receipt(job, "subtitles")
+    except (material_usage.MaterialUsageError, OSError) as exc:
+        raise PreviewV2Error("preview requires the published TalkCraft subtitle track") from exc
+    if (receipt["producer"] != "edit.hd.tools.subtitles_v2"
+            or receipt["producer_version"] != "3-talkcraft"):
+        raise PreviewV2Error("preview requires the published TalkCraft subtitle track")
+
+
+def validate_published_composition(job: state.JobState, report: Mapping[str, Any]) -> None:
+    """Verify the formal preview against the current subtitle and numbering inputs."""
+    _validate_published_preview_inventory(job, report)
+    if not startup.is_skill_job(job):
+        return
+    subtitle_plan = contract_artifacts.read_json_artifact(
+        _approved(job, "subtitles", "10-subtitles/subtitle-plan.json"))
+    _approved(job, "subtitles", "10-subtitles/subtitles.webm")
+    _require_talkcraft_subtitle_receipt(job)
+    digest = subtitle_plan.get("subtitle_plan_sha256")
+    base = {key: value for key, value in subtitle_plan.items() if key != "subtitle_plan_sha256"}
+    if (report.get("subtitle_plan_sha256") != digest
+            or digest != contract_artifacts.sha256_json(base)):
+        raise PreviewV2Error("preview subtitles differ from the current TalkCraft plan")
+
+
 def _validate_published_preview_inventory(
     job: state.JobState,
     report: Mapping[str, Any],
@@ -1278,11 +1309,20 @@ def _validate_published_preview_inventory(
         expected.update({"11-preview/opening-manifest.json", "11-preview/subtitles.srt"})
     if report.get("background_music") is True:
         expected.update(f"11-preview/{name}" for name in preview_music.ATTACHMENTS)
-    if report.get("number_badges") is True:
+    rows = visual_confirmation.approved_numbered_rows(job)
+    has_badges = bool(rows)
+    if report.get("number_badges", False) is not has_badges:
+        raise PreviewV2Error("number badge presence differs from the approved complete list")
+    if has_badges:
         expected.add("11-preview/number-badges.png")
         atlas = _published_preview(job, "11-preview/number-badges.png")
         if report.get("number_badge_atlas_sha256") != contract_artifacts.sha256_file(atlas):
             raise PreviewV2Error("number badge atlas changed")
+        canonical = _number_atlas(row["number"] for row in rows)
+        with Image.open(atlas) as actual:
+            if (actual.mode != canonical.mode or actual.size != canonical.size
+                    or actual.tobytes() != canonical.tobytes()):
+                raise PreviewV2Error("number badges differ from the formal style")
         schedule = report.get("number_badge_schedule")
         if type(schedule) is not list or not schedule:
             raise PreviewV2Error("number badge schedule is incomplete")
@@ -1292,6 +1332,8 @@ def _validate_published_preview_inventory(
         record.get("path") for record in job.stages["preview"]["artifacts"]
     ]
     receipt_path = "11-preview/material-usage.json"
+    if startup.is_skill_job(job) and receipt_path not in artifact_paths:
+        raise PreviewV2Error("formal preview receipt is missing")
     if receipt_path in artifact_paths:
         expected.add(receipt_path)
     if len(artifact_paths) != len(expected) or set(artifact_paths) != expected:
@@ -1309,14 +1351,15 @@ def _validate_published_preview_inventory(
     if receipt_path in expected:
         material_usage.load_current_receipt(job, "preview")
     opening = validate_preview_opening(job, report)
-    if report.get("number_badges") is True:
+    if has_badges:
         offset = 0 if opening is None else opening["body_offset_frames"]
-        rows = visual_confirmation.approved_numbered_rows(job)
         layout = report.get("number_badge_layout")
         if layout not in (None, "stacked-v1"):
             raise PreviewV2Error("unknown number badge layout")
-        source = visual_confirmation.validate_visual_authorization(job)["source"]
-        if "numbering" in source and layout != "stacked-v1":
+        if layout != "stacked-v1" and (
+            startup.is_skill_job(job)
+            or "numbering" in visual_confirmation.validate_visual_authorization(job)["source"]
+        ):
             raise PreviewV2Error("current proposal requires stacked number badges")
         slots = _number_badge_slots(rows) if layout == "stacked-v1" else None
         expected_schedule = [
@@ -1757,7 +1800,7 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             asset_manifest_payload,
             arroll_source=arroll,
         )
-        _validate_published_preview_inventory(job, report)
+        validate_published_composition(job, report)
         if music is not None:
             saved_music = validate_preview_music(job, report)
             if saved_music is None or contract_artifacts.sha256_json(saved_music["plan"]["options"]) != contract_artifacts.sha256_json(music):
@@ -1793,6 +1836,8 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
         arroll_source=arroll,
     )
     subtitle_plan = contract_artifacts.read_json_artifact(subtitle_plan_path)
+    if startup.is_skill_job(job):
+        _require_talkcraft_subtitle_receipt(job)
     try:
         talkcraft_subtitles.validate_binding(subtitle_plan)
     except (ValueError, OSError, KeyError, TypeError) as exc:

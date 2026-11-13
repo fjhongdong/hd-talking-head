@@ -454,10 +454,15 @@ def confirm_setup(job, config_path: Path, *, user_confirmation: str,
     return path
 
 
-def require_startup(job) -> None:
+def is_skill_job(job) -> bool:
     # Bare state-engine jobs support historical migration/testing. Skill jobs are
     # recognisable even if their context was accidentally lost during bootstrap.
-    if not ((job.root / "job-context.json").exists() or (job.root / "00-user-provided").exists()):
+    root = getattr(job, "root", job.job_dir)
+    return (root / "job-context.json").exists() or (root / "00-user-provided").exists()
+
+
+def require_startup(job) -> None:
+    if not is_skill_job(job):
         return
     context = require_job_identity(job)
     config, digest = _config(job)

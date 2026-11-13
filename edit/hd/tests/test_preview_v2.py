@@ -549,6 +549,26 @@ class FormalPreviewContractTests(unittest.TestCase):
             receipt = material_usage.load_current_receipt(job, "preview")
             self.assertEqual([], receipt["references"])
 
+    def test_preview_with_confirmed_rows_cannot_reuse_a_report_without_badges(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            job = _pending_preview_job(Path(directory))
+            patches = self._preview_build_patches(job)
+            rows = [{"row_id": "motion-1", "number": 1, "start": 0.25, "end": 1.0}]
+            with mock.patch.object(preview_v2.visual_confirmation, "approved_numbered_rows", return_value=rows):
+                with patches[0], patches[1], patches[2], patches[3], patches[4]:
+                    result = preview_v2.prepare_preview_v2(job)
+                self.assertEqual(result.qa_report["number_badge_schedule"], [
+                    {"row_id": "motion-1", "number": 1, "start_frame": 6, "end_frame": 24, "slot": 0}
+                ])
+                preview_v2.prepare_preview_v2(job)
+                report = {key: value for key, value in result.qa_report.items()
+                          if not key.startswith("number_badge_") and key != "qa_report_sha256"}
+                report["number_badges"] = False
+                report["qa_report_sha256"] = contract_artifacts.sha256_json(report)
+                _rewrite_approved_json(job, "preview", "11-preview/qa-report.json", report)
+                with self.assertRaisesRegex(preview_v2.PreviewV2Error, "presence differs"):
+                    preview_v2.prepare_preview_v2(job)
+
     def test_mark_ready_failure_restores_previous_preview_and_job_state(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             job = _pending_preview_job(Path(directory))

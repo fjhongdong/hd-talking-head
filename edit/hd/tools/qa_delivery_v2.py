@@ -594,10 +594,12 @@ def _validate_reusable_delivery(
         material_usage.load_current_receipt(job, "delivery")
     for relative, source in sources.items():
         destination = target / relative
+        source_record = _source(source, base=job.job_dir)
+        output_record = _source(destination, base=target)
         if inventory[relative] != {
-            "source": _source(source, base=job.job_dir),
-            "output": _source(destination, base=target),
-        }:
+            "source": source_record,
+            "output": output_record,
+        } or any(source_record[key] != output_record[key] for key in ("sha256", "bytes")):
             raise DeliveryV2Error("delivery copy does not match its approved source")
     if credits is not None:
         credits_path = target / "credits.md"

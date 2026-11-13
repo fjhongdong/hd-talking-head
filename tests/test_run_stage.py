@@ -935,6 +935,7 @@ class DirectProductionCompletionTests(unittest.TestCase):
         # Exercise revision-specific delivery receipts. Public archive copies have a separate smoke test.
         self.enterContext(mock.patch('export_delivery.export_delivery'))
         self.enterContext(mock.patch('export_delivery.exported_paths', return_value={}))
+        self.enterContext(mock.patch.object(delivery, '_validate_formal_composition'))
         with tempfile.TemporaryDirectory() as directory, mock.patch('edit.hd.tools.startup.require_startup'):
             root = Path(directory).resolve()
             video = make_av_fixture(root, 'source.mp4')

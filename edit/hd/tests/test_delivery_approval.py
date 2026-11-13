@@ -10,7 +10,7 @@ import unittest
 from unittest import mock
 
 from edit.hd.tests.media_fixture import make_av_fixture
-from edit.hd.tools import cli, delivery_approval as delivery, state
+from edit.hd.tools import cli, contract_artifacts, delivery_approval as delivery, material_usage, state
 
 SKILL = Path(__file__).resolve().parents[3]
 
@@ -40,14 +40,35 @@ class DeliveryApprovalTests(unittest.TestCase):
         self.preview = self.job.job_dir / '11-preview/review.mp4'
         self.preview.parent.mkdir()
         self.preview.write_bytes(video.read_bytes())
+        self.preview_report = self.preview.with_name('qa-report.json')
+        self.preview_source = self.preview.with_name('source-manifest.json')
+        self.preview_source.write_text('{}\n')
+        self.subtitle_plan = self.job.job_dir / '10-subtitles/subtitle-plan.json'
+        self.subtitle_plan.parent.mkdir()
+        self.subtitle_track = self.subtitle_plan.with_name('subtitles.webm')
+        self.subtitle_track.write_bytes(b'fixture subtitle track')
+        subtitle = {"schema_version": 4, "job_id": self.job.job_id}
+        subtitle["subtitle_plan_sha256"] = contract_artifacts.sha256_json(subtitle)
+        contract_artifacts.write_json_artifact(self.subtitle_plan, subtitle)
+        self.write_preview_report(subtitle["subtitle_plan_sha256"])
         self.final = self.job.job_dir / '12-delivery/final.mp4'
         self.manifest = self.final.parent / 'delivery-manifest.json'
         self.final.parent.mkdir()
         self.final.write_bytes(self.preview.read_bytes())
         self.publish_manifest()
         for stage in state.stage_ids_for(self.job):
-            paths = ([self.preview] if stage == 'preview' else
+            paths = ([self.preview, self.preview_report, self.preview_source] if stage == 'preview' else
+                     [self.subtitle_plan, self.subtitle_track] if stage == 'subtitles' else
                      [self.final, self.manifest] if stage == 'delivery' else [])
+            if stage in {'subtitles', 'preview'}:
+                parent = paths[0].parent
+                receipt = material_usage.write_staged_receipt(
+                    self.job, stage, parent, parent, [p.name for p in paths],
+                    producer=f'edit.hd.tools.{stage}_v2',
+                    producer_version='3-talkcraft' if stage == 'subtitles' else '2',
+                    stage_input_records=material_usage.current_stage_input_records(self.job, stage),
+                    references=[])
+                paths.append(receipt)
             state.mark_ready(self.job, stage, paths)
             state.complete(self.job, stage)
         (self.root / 'job-context.json').write_text(json.dumps({
@@ -61,7 +82,17 @@ class DeliveryApprovalTests(unittest.TestCase):
             return_value={'artifact': state._artifact_record(self.job, authorization)})
         authorization_patch.start()
         self.addCleanup(authorization_patch.stop)
+        numbering_patch = mock.patch('edit.hd.tools.visual_confirmation.approved_numbered_rows', return_value=[])
+        numbering_patch.start()
+        self.addCleanup(numbering_patch.stop)
         self.refresh_identity()
+
+    def write_preview_report(self, subtitle_digest):
+        report = {"status": "completed", "scope": "technical", "evidence": [],
+                  "preview_sha256": hashlib.sha256(self.preview.read_bytes()).hexdigest(),
+                  "subtitle_plan_sha256": subtitle_digest, "number_badges": False}
+        report["qa_report_sha256"] = contract_artifacts.sha256_json(report)
+        contract_artifacts.write_json_artifact(self.preview_report, report)
 
     def publish_manifest(self):
         self.manifest.write_text(json.dumps({'schema_version': 2, 'job_id': self.job.job_id,
@@ -118,6 +149,29 @@ class DeliveryApprovalTests(unittest.TestCase):
         with self.assertRaises(state.WorkflowError):
             self.approve(user_confirmation='different feedback')
         self.assertEqual(before, self.snapshot())
+
+    def test_cannot_record_delivery_with_stale_subtitles_or_replaced_preview_video(self):
+        with self.subTest("stale subtitle plan"):
+            self.write_preview_report('a' * 64)
+            self.job.stages['preview']['artifacts'] = [
+                state._artifact_record(self.job, self.preview_report)
+                if r['path'].endswith('/qa-report.json') else r
+                for r in self.job.stages['preview']['artifacts']
+            ]
+            state.save_job(self.job)
+            with self.assertRaisesRegex(state.WorkflowError, "subtitles differ"):
+                delivery.record_delivery(self.job)
+            self.assertFalse(self.receipt.exists())
+        with self.subTest("hand-assembled replacement"):
+            self.final.write_bytes(b'different video')
+            self.publish_manifest()
+            self.job.stages['delivery']['artifacts'] = [
+                state._artifact_record(self.job, p) for p in (self.final, self.manifest)]
+            state.save_job(self.job)
+            self.refresh_identity()
+            with self.assertRaisesRegex(state.WorkflowError, "copy the formal preview"):
+                delivery.record_delivery(self.job)
+            self.assertFalse(self.receipt.exists())
 
     def test_retired_host_approval_is_rejected_without_writes(self):
         before = self.snapshot()

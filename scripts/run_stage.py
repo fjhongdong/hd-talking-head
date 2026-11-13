@@ -916,6 +916,9 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
             except (ValueError, OSError):
                 return _summary(job, stage, actions=[{'action': 'confirm_visual_list', 'visual_list': _summary(job, stage).get('visual_list'), 'required': 'actual user_confirmation matching this Job/revision/artifacts'}])
             return resume_visual_direction(job, project, payload)
+        if stage == 'preview':
+            from edit.hd.tools import preview_v2
+            preview_v2.prepare_preview_v2(job)
         return _finish_stage(job_dir, stage, reused=True)
     if not completing_cleanup:
         state.require_runnable(job, stage)
