@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Mapping
 
 from . import contract_artifacts
-from .dependency_contracts import CREATIVE_SKILL_ADAPTERS
+from .dependency_contracts import CREATIVE_SKILL_ADAPTERS, is_sweety_web_template
 
 INDEX = "references/motion-capability-index.json"
 TAG_FIELDS = ("subjects", "actions", "relations", "feelings", "styles", "patterns")
@@ -625,13 +625,18 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
-                    expected_alpha = row['role'] == 'aroll_overlay'
+                    sweety_web = is_sweety_web_template(row.get('dependency_id'), row['template_id'])
+                    expected_alpha = row['role'] == 'aroll_overlay' or sweety_web
                     if (row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS
                             and use == 'broll' and segment is not None):
                         strategy = segment['visual_strategy']
                         components = [c for c in strategy['components'] if c.get('component_id') == component_id]
                         if len(components) != 1:
                             raise ValueError('Native motion target is absent or duplicated')
+                        if sweety_web:
+                            from .visual_strategy import validate_sweety_web_use
+                            validate_sweety_web_use(components[0], family=strategy['composition']['family'],
+                                                    template_id=row['template_id'])
                         if components[0].get('layer_role') == 'annotation':
                             from .visual_strategy import validate_visual_strategy
                             validate_visual_strategy(segment['visual_intent'], strategy)

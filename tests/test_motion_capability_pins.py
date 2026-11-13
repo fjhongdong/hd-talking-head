@@ -51,6 +51,30 @@ class MotionCapabilityPinTests(unittest.TestCase):
         self.assertNotIn('huashu-art-motion:huashu-art-motion/style-37-rick-morty', profiles)
         self.assertNotIn('huashu-art-motion:huashu-art-motion/scene', profiles)
 
+        sweety_rows = [row for row in catalog if row['skill_id'] == 'sweety-handdraw-video']
+        overlays = {row['template_id'] for row in sweety_rows if row['role'] == 'aroll_overlay'}
+        broll = {row['template_id'] for row in sweety_rows if row['role'] == 'native'}
+        self.assertEqual(len(overlays), 20)
+        self.assertEqual(len(broll), 36)
+        self.assertEqual(overlays - broll, {
+            'sweety-handdraw-video/web-' + recipe for recipe in
+            ('burst', 'callout', 'progress-ring', 'rough-annotate', 'sketch-shapes')
+        })
+        self.assertEqual({row['template_id'].rsplit('/', 1)[-1] for row in sweety_rows
+                          if '逐笔绘制' in row['capability']['tags']['actions']},
+                         {'style-1', 'style-4', 'style-5', 'style-17', 'style-19', 'style-20'})
+        for use, query, template, motion_basis in (
+            ('broll', '宣纸水墨写意，墨晕留白', 'style-8', False),
+            ('broll', '流程图里描出节点，一个点沿箭头移动', 'web-flow', True),
+            ('broll', '任务泳道的工作与等待，展开任务条', 'web-swimlane', True),
+            ('aroll_overlay', '圆环进度，描出圆环后数字递增', 'web-progress-ring', True),
+        ):
+            with self.subTest(query=query):
+                best, *_ = motion_capabilities.search_capabilities(PROJECT, query, use=use,
+                                                                   catalog=sweety_rows)
+                self.assertEqual(best['template_id'], 'sweety-handdraw-video/' + template)
+                self.assertEqual(best['has_motion_basis'], motion_basis)
+
     def test_unconnected_and_historical_candidates_are_refused(self):
         profiles = {}
         for cid in ('unconnected:example', 'history:example'):

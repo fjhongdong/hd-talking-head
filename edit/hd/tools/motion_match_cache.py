@@ -75,7 +75,36 @@ _FIXED_ARRAY_SIZES = {
     "adu-motion-video": 3, "datamagic": 2, "html-video": 8, "hypit-native-chat": 4, "wise-motion": 3,
 }
 _NUMERIC_TOKEN = re.compile(r"[+-]?[0-9]+(?:[.,][0-9]+)*(?:[eE][+-]?[0-9]+)?\+?")
-_SWEETY_PROJECT_CONTENT = "web-kinetic-title"
+_SWEETY_PROJECT_CONTENT = {
+    "web-kinetic-title": ("text",),
+    "web-number-ticker": ("to", "prefix", "suffix"),
+    "web-morph": ("shapes/#/shape", "shapes/#/path", "shapes/#/text"),
+    "web-rough-chart": ("kind", "values/#", "labels/#", "prefix", "suffix",
+                        "total", "marked", "count", "events/#/when", "events/#/label"),
+    "web-map-route": ("route/#/#", "stops/#/at/#", "stops/#/label"),
+    "web-physics": ("scene", "container", "items/#/shape", "items/#/label", "items/#/count"),
+    "web-spin3d": ("shape", "axis", "turns"),
+    "web-formula": ("tex",),
+    "web-roadmap": ("groups/#/label", "groups/#/count", "groups/#/numbers/#",
+                     "done", "current", "active/#", "focus", "caption"),
+    "web-table": ("columns/#", "rows/#/#"),
+    "web-flow": ("nodes/#/id", "nodes/#/text", "nodes/#/shape", "edges/#/from", "edges/#/to", "edges/#/text",
+                  "tokens/#/path/#"),
+    "web-swimlane": ("title", "lanes/#/label", "blocks/#/lane", "blocks/#/from",
+                     "blocks/#/to", "blocks/#/kind", "blocks/#/text"),
+    "web-checklist": ("items/#/text", "items/#/mark"),
+    "web-cards": ("count", "labels/#", "groups/#/label", "groups/#/indices/#"),
+    "web-pulse": ("beats/#/ms", "beats/#/label"),
+}
+_SWEETY_NUMERIC_SLOTS = frozenset({
+    "to", "values/#", "total", "marked", "count", "route/#/#", "stops/#/at/#", "items/#/count",
+    "turns", "groups/#/count", "done", "current", "active/#", "focus", "groups/#/indices/#",
+    "blocks/#/lane", "blocks/#/from", "blocks/#/to", "beats/#/ms",
+})
+
+
+def sweety_project_content_slots(template_id):
+    return tuple('/params/' + slot for slot in _SWEETY_PROJECT_CONTENT.get(template_id, ()))
 
 
 def _fixed_content_slots(candidate):
@@ -85,9 +114,8 @@ def _fixed_content_slots(candidate):
         return tuple("/data/" + slot for slot in ("mast/#", *_RISO_CONTENT_SLOTS[template]))
     if dependency == "hyperframes":
         return _HYPERFRAMES_CONTENT_SLOTS[Path(candidate["entrypoint"]).name]
-    if (dependency == "sweety-handdraw-video"
-            and candidate.get("template_id") == dependency + "/" + _SWEETY_PROJECT_CONTENT):
-        return ("/params/text",)
+    if dependency == "sweety-handdraw-video":
+        return sweety_project_content_slots(candidate["template_id"].rsplit("/", 1)[-1]) or None
     return _FIXED_CONTENT_SLOTS.get(dependency)
 
 
@@ -128,6 +156,19 @@ def _validate_fixed_value(candidate, pointer, indexed, value):
     if dependency == "useanimations":
         from scripts.useanimations_native_adapter import validate_planned_content
         validate_planned_content(candidate.get("template_id"), pointer, value)
+        return
+    if (dependency == "sweety-handdraw-video"
+            and indexed.removeprefix("/params/") in _SWEETY_NUMERIC_SLOTS):
+        if type(value) not in {int, float} or not abs(value) <= 2**53 - 1:
+            raise ValueError("planned Sweety number exceeds the native slot type or capacity")
+        if indexed in {"/params/route/#/#", "/params/stops/#/at/#"}:
+            axis = pointer.rsplit("/", 1)[-1]
+            if axis not in {"0", "1"} or abs(value) > (180 if axis == "0" else 90):
+                raise ValueError("planned Sweety map coordinate exceeds the native slot range")
+        return
+    if (dependency == "sweety-handdraw-video"
+            and indexed in {"/params/rows/#/#", "/params/groups/#/numbers/#"}
+            and type(value) in {int, float} and abs(value) <= 2**53 - 1):
         return
 
     size = _FIXED_ARRAY_SIZES.get(dependency)
@@ -235,6 +276,7 @@ def validate_review_identities(director, treatment, catalog):
     """Check current review facts without loading sources, searching or solving."""
     plan = semantic_visual_plan.validate_semantic_lists(treatment, director)
     by_id = catalog if isinstance(catalog, dict) else {r["candidate_id"]: r for r in catalog}
+    segments = {segment["segment_id"]: segment for segment in director["segments"]}
     selection = treatment.get("skill_selection", {})
     for beat in [*selection.get("beats", []), *selection.get("overlay_beats", [])]:
         key = (beat.get("segment_id"), beat.get("component_id"))
@@ -258,10 +300,16 @@ def validate_review_identities(director, treatment, catalog):
             if candidate is None or review.get("capability_sha256") != candidate_review_identity(candidate):
                 raise ValueError("candidate review capability identity is missing or changed")
             if review["fit"] in {"preferred", "equivalent"}:
-                _validate_expression_basis(review, row, candidate)
+                strategy = segments[key[0]]["visual_strategy"]
+                evidence_overlay = (strategy["composition"]["family"] == "evidence_with_data_overlay"
+                    and any(c["component_id"] == key[1] and c["layer_role"] == "annotation"
+                            for c in strategy["components"])
+                    and any(c["layer_role"] == "base" and c["kind"] in {
+                        "official_material", "local_material", "external_stock"} for c in strategy["components"]))
+                _validate_expression_basis(review, row, candidate, evidence_overlay=evidence_overlay)
 
 
-def _validate_expression_basis(review, row, candidate):
+def _validate_expression_basis(review, row, candidate, *, evidence_overlay=False):
     """Check one host judgment against the actual registered expression surface."""
     basis = review.get("expression_basis")
     if (not isinstance(basis, dict) or set(basis) not in
@@ -283,7 +331,14 @@ def _validate_expression_basis(review, row, candidate):
             raise ValueError("expression_basis content requires a registered fixed input route")
         return
     requirements = row.get("required_content", {"visual_task": {"meaning": row["visual_task"]}})
-    if not isinstance(content, dict) or set(content) != set(requirements):
+    if evidence_overlay and candidate.get("dependency_id") == "sweety-handdraw-video":
+        # Footage can carry facts the annotation only points out. Freeze the
+        # annotation's actual parameters and any facts it adds to the footage.
+        requirements = {**requirements, "annotation": requirements.get("annotation", {})}
+        complete = isinstance(content, dict) and bool(content) and set(content) <= set(requirements)
+    else:
+        complete = isinstance(content, dict) and set(content) == set(requirements)
+    if not complete:
         raise ValueError("fixed expression_basis must bind every visible requirement")
     bound_slots = {}
     for requirement_id, fields in content.items():
@@ -340,7 +395,7 @@ def validate_native_expression(brief, row, basis):
         if group in brief and any(brief[group].get(field) != value for field, value in expected.items()):
             raise ValueError(f"native {group} differs from the approved semantic row")
     if (brief.get("dependency_id") == "sweety-handdraw-video"
-            and brief.get("template_id") == _SWEETY_PROJECT_CONTENT):
+            and sweety_project_content_slots(brief.get("template_id"))):
         # The adapter checks the effective project config at capture and publication.
         return
     validate_fixed_content(brief, basis)

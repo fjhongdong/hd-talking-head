@@ -30,8 +30,8 @@ from sweety_native_runtime import check as check_runtime, environment, RENDERER_
 DEPENDENCY_ID = 'sweety-handdraw-video'
 ENTRY = 'scripts/sweety_native_adapter.py'
 VERSION = '1.0.0'
-SOURCE_PIN = 'a336506edf2540e4180f8ffa7b19456aa931b897'
-SOURCE_RECORD_SHA256 = '4392a3e8c56a615fa12a50158a770dacb86a5ae207f8e99e1c89d81be0d13f76'
+SOURCE_PIN = '0d0187c93db8fab0cc772d39da6c4ab8d845646c'
+SOURCE_RECORD_SHA256 = 'ea4ed3584886ace9ed79a699bbcafc1a492f79844d70d3ecaf33f09da97cc1db'
 
 
 def source_root(project=SKILL, *, dependency_id=DEPENDENCY_ID):
@@ -404,8 +404,9 @@ def _validate_web_expression(config, basis):
     from sweety_native_runtime import kinetic_title_content
 
     if not isinstance(basis, dict) or not basis.get('content'):
-        raise ValueError('Sweety kinetic title needs its confirmed visible content')
-    validate_fixed_content(kinetic_title_content(config), basis)
+        raise ValueError('Sweety web motion needs its confirmed native content')
+    effective = kinetic_title_content(config) if config['template_id'] == 'web-kinetic-title' else config
+    validate_fixed_content(effective, basis)
 
 
 def _web_config(root, brief):
@@ -429,6 +430,8 @@ def _capture_native(job_dir,brief_path,argv=None,*,payload=None,task=None):
     A capability sample is not a production Job or a user semantic approval.
     The public production entry above still requires its actual Job identity.
     """
+    from edit.hd.tools.motion_match_cache import sweety_project_content_slots
+
     root=Path(job_dir).resolve(strict=True)
     payload=Path(brief_path).read_bytes() if payload is None else payload
     b=validate_brief(payload)
@@ -438,7 +441,7 @@ def _capture_native(job_dir,brief_path,argv=None,*,payload=None,task=None):
         if (not isinstance(config, dict) or config.get('template_id')!=b['template_id']
                 or config.get('recipe')!=row['native_option_id']):
             raise ValueError('Sweety native recipe changed from the selected template')
-        if task is not None and b['template_id']=='web-kinetic-title':
+        if task is not None and sweety_project_content_slots(b['template_id']):
             _validate_web_expression(config,task.get('expression_basis'))
     runtime=check_runtime()
     directory.mkdir(parents=True,exist_ok=True)
@@ -571,13 +574,14 @@ def _verify_call(root,b,payload,call):
 
 
 def publish_completed(job_dir,brief_path,call_path,*,native_usage=None):
+    from edit.hd.tools.motion_match_cache import sweety_project_content_slots
     from edit.hd.tools.visual_confirmation import require_native_dispatch
 
     job=_execution_job(job_dir);payload=Path(brief_path).read_bytes();b=validate_brief(payload)
     if b['job_id']!=job.job_id or native_usage is not None:
         raise ValueError('Sweety completion belongs to this exact native task')
     task = require_native_dispatch(job, DEPENDENCY_ID, Path(brief_path), payload=payload)
-    if b['template_id']=='web-kinetic-title':
+    if sweety_project_content_slots(b['template_id']):
         _validate_web_expression(_web_config(job_dir,b),task.get('expression_basis'))
     return _publish_native(job_dir,brief_path,call_path,payload=payload)
 

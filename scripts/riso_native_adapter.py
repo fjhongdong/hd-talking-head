@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 import re
 import secrets
+import select
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -26,11 +26,12 @@ else:
     SKILL = PACKAGE_ROOT
 sys.path.insert(0, str(SKILL / "scripts"))
 from adapter_kit import sha256_file as sha
-from riso_chrome_launcher import process_identity
-from riso_recovery import checkpoint_path, load_checkpoint, media_identity, save_checkpoint
+from riso_recovery import RecoveryBlocked, acquire_claim, checkpoint_path, load_checkpoint, media_identity, save_checkpoint
+from riso_watchdog import CLEANUP_SECONDS, inherited_owner_fd, recover_pending, settle_browser, start_watchdog
 ENTRY = "scripts/riso_native_adapter.py"
 CHROME_LAUNCHER = "scripts/riso_chrome_launcher.py"
 RECOVERY = "scripts/riso_recovery.py"
+WATCHDOG = "scripts/riso_watchdog.py"
 VERSION = "1.0.0"
 DEPENDENCY_ID = "eian-riso-broll"
 SOURCE_PIN = "e782ad7051f5fce1ca371523c144f4cb78ab5c40"
@@ -234,7 +235,7 @@ def check_runtime(project_root, executables=None):
         raise ValueError("Riso requires existing Node >=22")
     paths["chrome_launcher_sha256"] = sha(SKILL / CHROME_LAUNCHER)
     paths["implementation_identity"] = hashlib.sha256(
-        (paths["chrome_launcher_sha256"] + sha(SKILL / RECOVERY)).encode()
+        (paths["chrome_launcher_sha256"] + sha(SKILL / RECOVERY) + sha(SKILL / WATCHDOG)).encode()
     ).hexdigest()
     hashes = [sha(paths[k]) for k in ("node", "ffmpeg", "ffprobe", "browser", "crashpad")]
     paths["identity"] = hashlib.sha256("\n".join(hashes).encode()).hexdigest()
@@ -335,83 +336,18 @@ def log_tail(log):
     return os.pread(fd, LOG_TAIL_BYTES, start).decode("utf-8", "replace")
 
 
-def signal_process(pid, sig):
-    try:
-        os.kill(pid, sig)
-    except ProcessLookupError:
-        pass
-
-
-def settle_chrome(log_path, browser, deadline):
-    """Stop the registered Chrome before its Crashpad handler can be restarted."""
-    owner_path = log_path.with_suffix(".owner.json")
-    try:
-        owner = json.loads(owner_path.read_bytes())
-    except FileNotFoundError:
-        # The launcher never execs Chrome before publishing its identity.
-        return
-    if (type(owner.get("pid")) is not int or owner["pid"] <= 1
-            or type(owner.get("group")) is not int or owner["group"] <= 1
-            or type(owner.get("started")) is not str
-            or type(owner.get("launcher")) is not str or not Path(owner["launcher"]).is_absolute()):
-        raise ValueError("Invalid Riso Chrome ownership record")
-    pid = owner["pid"]
-    term_at = None
-    killed = False
-    while time.monotonic() < deadline:
-        current = process_identity(pid, max(0, deadline - time.monotonic()))
-        if not current or current["started"] != owner["started"]:
-            return
-        if (current["uid"] != os.getuid() or current["group"] != owner["group"]
-                or current["command"] not in {browser, owner["launcher"]}):
-            raise RuntimeError("Riso Chrome ownership could not be confirmed")
-        if term_at is None:
-            signal_process(pid, signal.SIGTERM)
-            term_at = time.monotonic()
-        elif not killed and time.monotonic() >= term_at + 0.2:
-            signal_process(pid, signal.SIGKILL)
-            killed = True
-        time.sleep(0.05)
-    raise RuntimeError("Riso Chrome did not exit")
-
-
-def settle_crashpad(log_path, executable, deadline):
-    """Reap only same-user, reparented Crashpad writers to this phase's log."""
-    signaled = {}
-    empty_scan = False
-    while time.monotonic() < deadline:
-        result = subprocess.run(
-            ["/usr/sbin/lsof", "-nP", "-a", "-d", "2", "-Fpa", "--", str(log_path)],
-            stdin=subprocess.DEVNULL, capture_output=True, text=True,
-            timeout=max(0, deadline - time.monotonic()),
-        )
-        if result.returncode not in (0, 1) or result.stderr:
-            raise RuntimeError("Could not verify Riso Crashpad cleanup: " + result.stderr.strip())
-        pid = None
-        candidates = False
-        for field in result.stdout.splitlines():
-            if field.startswith("p"):
-                pid = int(field[1:])
-            elif field in {"aw", "au"} and pid is not None:
-                owner = process_identity(pid, max(0, deadline - time.monotonic()))
-                if not owner or owner["uid"] != os.getuid() or owner["command"] != executable:
-                    continue
-                candidates = True
-                if owner["ppid"] != 1:
-                    continue
-                key = (pid, owner["started"])
-                now = time.monotonic()
-                if key not in signaled:
-                    signal_process(pid, signal.SIGTERM)
-                    signaled[key] = now
-                elif signaled[key] is not None and now >= signaled[key] + 0.2:
-                    signal_process(pid, signal.SIGKILL)
-                    signaled[key] = None
-        if not candidates and empty_scan:
-            return sorted({pid for pid, _ in signaled})
-        empty_scan = not candidates
-        time.sleep(0.05)
-    raise RuntimeError("Riso Crashpad cleanup reached its deadline")
+def wait_for_command(process, deadline, owner_fd, watchdog):
+    while True:
+        if owner_fd is not None and select.select([owner_fd], [], [], 0)[0]:
+            raise RecoveryBlocked("Riso 的父执行器已退出，本次停止并保留已验证结果。")
+        if watchdog is not None and watchdog.process.poll() is not None:
+            raise RecoveryBlocked("Riso 的浏览器监护异常退出，本次已停止，等待核对遗留进程。")
+        remaining = deadline - time.monotonic()
+        try:
+            return process.wait(timeout=max(0, min(remaining, 0.1)))
+        except subprocess.TimeoutExpired:
+            if remaining <= 0:
+                raise
 
 
 def native_frame_count(duration):
@@ -442,10 +378,11 @@ def probe_native(runtime, native, duration, run):
 def normalize_output(runtime, native, target, frames, input_range, run):
     """Export unchanged native motion at the parent's clock and color range."""
     # Convert pixel values, not just their metadata. JPEG captures use full range.
+    # MP4's default millisecond movie clock rounds edit lists between 24fps ticks.
     run([runtime["ffmpeg"], "-n", "-v", "error", "-xerror", "-i", str(native), "-map", "0:v:0", "-an",
          "-vf", f"fps=24,scale=in_range={input_range}:out_range=limited,setsar=1",
          "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-color_range", "tv",
-         "-frames:v", str(frames), "-movflags", "+faststart", str(target)])
+         "-frames:v", str(frames), "-movie_timescale", "24000", "-movflags", "+faststart", str(target)])
     streams = json.loads(run([runtime["ffprobe"], "-v", "error", "-show_streams", "-of", "json", str(target)]))["streams"]
     if len(streams) != 1:
         raise ValueError("Riso export must contain one silent video stream")
@@ -486,8 +423,12 @@ def render(args):
     parent = (Path(args.project_root) / "runtime/riso-renders").resolve()
     parent.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix="native-", dir=parent))
-    checkpoint = checkpoint_path(parent, os.environ.get("BROLL_COMPONENT_INPUT_SHA256"),
-                                 os.environ.get("BROLL_JOB_DIR"), runtime, brief_sha, sha(SKILL / ENTRY))
+    input_sha = os.environ.get("BROLL_COMPONENT_INPUT_SHA256")
+    job_dir = os.environ.get("BROLL_JOB_DIR")
+    checkpoint = checkpoint_path(parent, input_sha, job_dir, runtime, brief_sha, sha(SKILL / ENTRY))
+    owner_fd = inherited_owner_fd(os.environ.get("BROLL_OWNER_LIFETIME_FD"))
+    claim_fd = None
+    watchdog = None
     expected_native_frames = native_frame_count(b["data"]["duration"])
     report = {"status": "preparing", "template": b["template"], "source_pin": SOURCE_PIN,
               "invocation_id": invocation_id, "brief_sha256": brief_sha, "commands": [],
@@ -500,21 +441,29 @@ def render(args):
         if started >= deadline:
             record["timed_out"] = True
             raise TimeoutError("Riso reached its total execution deadline")
-        command_env = environment
+        command_env = dict(environment)
+        command = argv
         chrome_log = None
+        if watchdog is not None:
+            command = [sys.executable, chrome_env["RISO_CHROME_RELAY"], "--guard-command", *argv]
+            command_env.update(
+                RISO_WATCHDOG_SOCKET=str(watchdog.socket_path),
+                RISO_WATCHDOG_COMMAND=f"{browser_phase}-command" if browser_phase else f"command-{len(report['commands'])}",
+                RISO_WORK_DEADLINE=str(deadline),
+            )
         if browser_phase:
             chrome_log = work / (browser_phase + ".chrome.log")
             record["browser_log"] = chrome_log.name
-            command_env = {**environment, **chrome_env, "RISO_CHROME_LOG": str(chrome_log),
-                           "RISO_WORK_DEADLINE": str(deadline)}
+            command_env.update(chrome_env, RISO_CHROME_LOG=str(chrome_log),
+                               RISO_WATCHDOG_PHASE=f"{browser_phase}-browser")
         stdout_path = work / f"command-{len(report['commands'])}.stdout.log"
         stderr_path = work / f"command-{len(report['commands'])}.stderr.log"
         with stdout_path.open("w+b") as stdout, stderr_path.open("w+b") as stderr:
-            process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, env=command_env)
+            process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, env=command_env)
             try:
-                process.wait(timeout=max(0, deadline - time.monotonic()))
-            except subprocess.TimeoutExpired:
-                record["timed_out"] = True
+                wait_for_command(process, deadline, owner_fd, watchdog)
+            except (subprocess.TimeoutExpired, RecoveryBlocked) as error:
+                record["timed_out"] = isinstance(error, subprocess.TimeoutExpired)
                 try:
                     process.terminate()
                     try:
@@ -528,17 +477,12 @@ def render(args):
             finally:
                 record.update(exit_code=process.returncode, elapsed_seconds=round(time.monotonic() - started, 3),
                               stdout=log_tail(stdout), stderr=log_tail(stderr))
-                if chrome_log and chrome_log.is_file():
+                if browser_phase:
                     try:
-                        settle_chrome(chrome_log, runtime["browser"], time.monotonic() + 2)
+                        record["settled_crashpad_pids"] = settle_browser(work, browser_phase, runtime,
+                                                                        time.monotonic() + CLEANUP_SECONDS)
                     except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as cleanup_error:
                         record["browser_cleanup_error"] = str(cleanup_error)
-                    else:
-                        try:
-                            record["settled_crashpad_pids"] = settle_crashpad(chrome_log, runtime["crashpad"],
-                                                                            time.monotonic() + 3)
-                        except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as cleanup_error:
-                            record["crashpad_cleanup_error"] = str(cleanup_error)
         if process.returncode:
             raise subprocess.CalledProcessError(process.returncode, argv, record["stdout"], record["stderr"])
         if "browser_cleanup_error" in record:
@@ -549,19 +493,22 @@ def render(args):
 
     environment = dict(os.environ)
     try:
+        claim_fd, pending = acquire_claim(parent, input_sha, job_dir, min(deadline, time.monotonic() + CLEANUP_SECONDS))
+        recover_pending(pending, parent, min(deadline, time.monotonic() + CLEANUP_SECONDS))
         recovered = load_checkpoint(checkpoint, parent, b["composition"]["id"], expected_native_frames)
         if recovered is not None:
             native, source = recovered
             report.update(native_source=source, native_reused=True)
         else:
             chrome_env = chrome_environment(work, runtime)
+            watchdog = start_watchdog(work, runtime, invocation_id, pending, owner_fd, claim_fd)
             bin_dir = work / "bin"
             bin_dir.mkdir()
             environment["PATH"] = os.pathsep.join((str(bin_dir), "/usr/bin", "/bin"))
             for tool in ("ffmpeg", "ffprobe"):
                 shim = bin_dir / tool
                 variable = "RISO_" + tool.upper()
-                shim.write_text(f'#!/bin/sh\nexec "${variable}" "$@"\n')
+                shim.write_text(f'#!/bin/sh\nexec "$RISO_CHROME_PYTHON" "$RISO_CHROME_RELAY" --guard-tool {tool} "$@"\n')
                 shim.chmod(0o700)
                 environment[variable] = runtime[tool]
             # Upstream explicitly permits replacing only DATA in a project copy.
@@ -599,6 +546,9 @@ writeFileSync(file, html.replace(expression, () => 'const DATA = ' + JSON.string
         exported = normalize_output(runtime, native, target, b["composition"]["frames"], source["input_range"], run)
         if media_identity(native) != (source["sha256"], source["bytes"]):
             raise ValueError("Riso native source changed during normalization")
+        if watchdog is not None:
+            active, watchdog = watchdog, None
+            active.finish()
         # Native input/source files and timestamps remain unchanged. No interpolation.
         shutil.copyfile(target, args.output)
         report.update(status="completed", output_sha256=sha(target), output_frames=exported["frames"],
@@ -607,6 +557,14 @@ writeFileSync(file, html.replace(expression, () => 'const DATA = ' + JSON.string
         report.update(status="failed", error=str(error), error_type=type(error).__name__)
         raise RuntimeError("Riso stopped without retry; inspect " + str(work / "invocation.json")) from error
     finally:
+        if watchdog is not None:
+            try:
+                watchdog.finish()
+            except RecoveryBlocked as error:
+                report["watchdog_cleanup_error"] = str(error)
+        for descriptor in (claim_fd, owner_fd):
+            if descriptor is not None:
+                os.close(descriptor)
         (work / "invocation.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return {**report, "evidence_path": str(work / "invocation.json")}
 
@@ -627,4 +585,9 @@ if __name__ == "__main__":
         missing = [name for name in ("brief", "media-manifest", "node", "ffmpeg", "ffprobe", "runtime-identity", "implementation-identity", "output") if getattr(args, name.replace("-", "_")) is None]
         if missing:
             p.error("render mode requires --" + " --".join(missing))
-        print(json.dumps(render(args), ensure_ascii=False))
+        try:
+            print(json.dumps(render(args), ensure_ascii=False))
+        except RuntimeError as error:
+            if isinstance(error.__cause__, RecoveryBlocked):
+                print("Riso recovery diagnostic: " + str(error.__cause__), file=sys.stderr)
+            raise

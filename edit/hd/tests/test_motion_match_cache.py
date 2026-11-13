@@ -33,8 +33,13 @@ def expression_fixture(candidate, *, explanation="Use the fixture's reviewed vis
     }
     basis = {"capability": "summary", "explanation": explanation}
     slot = sample_slots.get(candidate.get("dependency_id"))
-    if candidate.get("template_id") == "sweety-handdraw-video/web-kinetic-title":
-        slot = ("/params/text", "并列要点")
+    if candidate.get("dependency_id") == "sweety-handdraw-video":
+        native_template = candidate["template_id"].rsplit("/", 1)[-1]
+        native_slots = cache.sweety_project_content_slots(native_template)
+        if native_slots:
+            pointer = native_slots[0].replace("#", "0")
+            slot = (pointer, 1 if native_template in {"web-number-ticker", "web-map-route", "web-cards", "web-pulse"}
+                    else "并列要点")
     if slot:
         pointer, value = slot
         basis["content"] = {"visual_task": {pointer: value}}
@@ -59,6 +64,35 @@ def bind_review_fixture(treatment, context):
 
 
 class HistoricalVisualExpressionTests(unittest.TestCase):
+    def test_sweety_flow_uses_the_approved_native_nodes_and_edge(self):
+        from scripts.sweety_native_adapter import _validate_web_expression
+
+        row = {"row_id": "sem-001", "quote": "挑一件事，用AI办一次。", "semantic": "先选后做。",
+               "visual_task": "两个步骤与方向。", "required_content": {
+                   "choose": {"meaning": "先选择", "terms": ["挑一件事"]},
+                   "run": {"meaning": "再执行", "terms": ["用AI办一次"]},
+               }}
+        candidate = {"dependency_id": "sweety-handdraw-video", "template_id": "sweety-handdraw-video/web-flow",
+                     "capability": {"summary": "原生流程框和箭头"}}
+        basis = {"capability": "summary", "explanation": "两格从上到下连接。", "content": {
+            "choose": {"/params/nodes/0/text": "挑一件事", "/params/edges/0/from": "choose"},
+            "run": {"/params/nodes/1/text": "用AI办一次", "/params/edges/0/to": "run"},
+        }}
+        cache._validate_expression_basis({"expression_basis": basis}, row, candidate)
+        config = {"template_id": "web-flow", "recipe": "flow", "params": {
+            "nodes": [{"id": "choose", "text": "挑一件事"}, {"id": "run", "text": "用AI办一次"}],
+            "edges": [{"from": "choose", "to": "run"}],
+        }}
+        _validate_web_expression(config, basis)
+        config["params"]["edges"][0]["to"] = "choose"
+        with self.assertRaisesRegex(ValueError, "changed approved content slot /params/edges/0/to"):
+            _validate_web_expression(config, basis)
+        annotation = {"capability": "summary", "explanation": "框出资料里已经显示的对象。",
+                      "content": {"annotation": {"/params/nodes/0/shape": "box"}}}
+        cache._validate_expression_basis({"expression_basis": annotation}, row, candidate, evidence_overlay=True)
+        with self.assertRaisesRegex(ValueError, "bind every visible requirement"):
+            cache._validate_expression_basis({"expression_basis": annotation}, row, candidate)
+
     def test_native_creative_handoffs_keep_the_same_readable_change(self):
         for number, quote, semantic, visual_task, dependency in (
             (4, "张汉生创业失败了好几次，", "张汉生多次创业受挫，次数未知。",

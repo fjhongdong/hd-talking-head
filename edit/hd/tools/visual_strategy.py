@@ -10,6 +10,7 @@ from typing import Mapping
 from urllib.parse import urlsplit
 
 from . import avatar_profile
+from .dependency_contracts import is_sweety_web_broll_template, is_sweety_web_template
 
 
 SOURCE_KINDS = (
@@ -983,6 +984,46 @@ def _validate_binding(component: dict, *, index: int) -> None:
     )
 
 
+def validate_sweety_web_use(
+    component: Mapping, *, family: str, template_id: str
+) -> bool:
+    """Return whether this native layer needs the parent paper canvas."""
+    role = component.get("layer_role")
+    if family == "aroll_with_overlay" and role == "annotation":
+        return False
+    if not is_sweety_web_broll_template(template_id):
+        raise _error("selected Sweety web template supports A-roll overlays only")
+    if family == "evidence_with_data_overlay" and role == "annotation":
+        return False
+    window = component.get("render_window")
+    layout_slot = (window.get("layout_slot") if isinstance(window, Mapping)
+                   else component.get("layout_slot"))
+    if (
+        family != "single_full_frame"
+        or component.get("kind") != "code_generated"
+        or component.get("media_type") not in {"animation", "video"}
+        or role != "base"
+        or layout_slot != "full_frame"
+    ):
+        raise _error("standalone Sweety web B-roll requires a single full-frame base")
+    return True
+
+
+def sweety_web_paper_backing(component: Mapping, *, family: str) -> bool:
+    """Validate the original alpha artifact and full canvas paper route."""
+    template_id = component.get("template_id")
+    if not is_sweety_web_template(component.get("dependency_id"), template_id):
+        return False
+    use_paper = validate_sweety_web_use(component, family=family, template_id=template_id)
+    if component.get("artifact_contract", {}).get("alpha") is not True:
+        raise _error("Sweety web motion requires its original transparent artifact")
+    if use_paper:
+        window = component["render_window"]
+        if window["start_frame"] != 0 or window["opacity"] != 1 or any(window["safe_zone"].values()):
+            raise _error("standalone Sweety web B-roll must cover the original full canvas")
+    return use_paper
+
+
 def validate_shot_recipe_v2(recipe: object) -> dict:
     """Validate an already-bound ShotRecipe v2 without invoking any executor."""
     checked = _exact_dict(recipe, _RECIPE_KEYS, label="shot recipe v2")
@@ -1051,6 +1092,7 @@ def validate_shot_recipe_v2(recipe: object) -> dict:
         ):
             raise _error("aroll_with_overlay components must have alpha artifacts")
         _validate_binding(component, index=index)
+        sweety_web_paper_backing(component, family=family_hint)
     validate_composition_contract(
         checked["composition"],
         components,

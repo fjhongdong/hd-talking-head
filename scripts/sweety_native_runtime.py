@@ -13,7 +13,7 @@ import sys
 from package_paths import PACKAGE_ROOT
 
 RUNTIME = 'runtime/handdraw-python312'
-RENDERER_VERSION = 'sweety-handdraw-video-3.0.2'
+RENDERER_VERSION = 'sweety-handdraw-video-3.1.0'
 
 
 def environment(project=PACKAGE_ROOT):

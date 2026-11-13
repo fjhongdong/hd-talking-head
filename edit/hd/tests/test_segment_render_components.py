@@ -649,6 +649,36 @@ class SegmentRenderComponentTests(unittest.TestCase):
         self.assertNotIn("[component_1_source]crop=", graph)
         self.assertLess(graph.index("component_0"), graph.index("component_1"))
 
+    @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg required")
+    def test_sweety_native_alpha_renders_over_opaque_paper_at_original_coordinates(self):
+        window = _window(start=0, end=2, z_index=0, slot="full_frame")
+        window["safe_zone"] = dict.fromkeys(window["safe_zone"], 0)
+        source = self.job.job_dir / "source/native.png"
+        layer = Image.new("RGBA", (1080, 1920), (0, 0, 0, 0))
+        ImageDraw.Draw(layer).rectangle((240, 360, 320, 440), fill=(10, 30, 220, 128))
+        layer.save(source)
+        component = _component("native", "code_generated", _sha256_file(source),
+                               window=window, alpha=True)
+        component.update(dependency_id="sweety-handdraw-video",
+                         template_id="sweety-handdraw-video/web-flow",
+                         primary_renderer="HTMLCanvas")
+        recipe = _recipe([component])
+        recipe["composition"]["presenter_mode"] = "hidden"
+        recipe["composition"].pop("avatar")
+        artifact = _artifact(self.job, recipe, component, source, alpha=True)
+        graph = segment_render.build_filter_graph(recipe, (artifact,), frames=2)
+        raw = subprocess.check_output(
+            ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=s=1080x1920:r=24",
+             "-loop", "1", "-framerate", "24", "-i", str(source), "-filter_complex", graph,
+             "-map", "[out]", "-frames:v", "2", "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1"],
+        )
+        self.assertEqual(len(raw), 1080 * 1920 * 3 * 2)
+        result = Image.frombytes("RGB", (1080, 1920), raw[-1080 * 1920 * 3:])
+        for point, expected in (((150, 200), (247, 242, 230)), ((280, 400), (128, 136, 225))):
+            with self.subTest(point=point):
+                self.assertTrue(all(abs(a - b) <= 6 for a, b in zip(result.getpixel(point), expected)),
+                                result.getpixel(point))
+
     def test_registered_canvas_annotation_retains_coordinates_and_media_identity(self):
         segment, artifacts = self._hybrid_fixture()
         recipe = copy.deepcopy(segment['shot_recipe'])

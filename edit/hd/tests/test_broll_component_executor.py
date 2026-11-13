@@ -1492,11 +1492,15 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
         }
         request = _request(_ai_component(output))
         first = executor.execute_component(self.job, request, adapters=adapters)
+        temporary = (self.job.job_dir / first.job_path).with_name('.ai-r7.transaction.json.next')
+        temporary.write_bytes(b'{"state":')
+        temporary.chmod(0o600)
         second = executor.execute_component(self.job, request, adapters=adapters)
 
         self.assertEqual(first.output_sha256, second.output_sha256)
         self.assertEqual(len(adapter.calls), 1)
         self.assertEqual(len(probe_calls), 1)
+        self.assertFalse(temporary.exists())
 
     def test_export_published_binding_is_read_only_and_checks_output(self) -> None:
         output = b"generated"
@@ -1504,6 +1508,10 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
         adapters = _kind_registry({"ai_generated": adapter})
         request = _request(_ai_component(output))
         first = executor.execute_component(self.job, request, adapters=adapters)
+        final = self.job.job_dir / first.job_path
+        temporary = final.with_name('.ai-r7.transaction.json.next')
+        temporary.write_bytes(b'{"state":')
+        temporary.chmod(0o600)
         def snapshot():
             return {str(p): (p.read_bytes(), p.stat().st_mtime_ns)
                     for p in self.job.job_dir.rglob('*') if p.is_file()}
@@ -1514,9 +1522,47 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
         self.assertEqual(result['output_sha256'], first.output_sha256)
         self.assertEqual(snapshot(), before)
         self.assertEqual(len(adapter.calls), 1)
-        (self.job.job_dir / first.job_path).write_bytes(b'changed')
+        final.write_bytes(b'changed')
         with self.assertRaises(executor.BrollComponentExecutionError):
             executor.export_published_execution_binding(self.job, request, adapters=adapters)
+
+    def test_temporary_receipt_cannot_authorize_existing_output(self) -> None:
+        output = b"generated"
+        adapter = _RecordingKindAdapter(output)
+        adapters = _kind_registry({"ai_generated": adapter})
+        request = _request(_ai_component(output))
+        first = executor.execute_component(self.job, request, adapters=adapters)
+        final = self.job.job_dir / first.job_path
+        receipt = final.with_name('.ai-r7.transaction.json')
+        temporary = receipt.with_name(f'{receipt.name}.next')
+        committed = receipt.read_bytes()
+        receipt.rename(temporary)
+
+        for invoke in (executor.execute_component, executor.export_published_execution_binding):
+            with self.assertRaises(executor.BrollComponentExecutionError):
+                invoke(self.job, request, adapters=adapters)
+            self.assertFalse(receipt.exists())
+            self.assertEqual(temporary.read_bytes(), committed)
+            self.assertEqual(final.read_bytes(), output)
+        self.assertEqual(len(adapter.calls), 1)
+
+    def test_unsafe_temporary_receipt_is_preserved(self) -> None:
+        output = b"generated"
+        adapter = _RecordingKindAdapter(output)
+        adapters = _kind_registry({"ai_generated": adapter})
+        request = _request(_ai_component(output))
+        first = executor.execute_component(self.job, request, adapters=adapters)
+        final = self.job.job_dir / first.job_path
+        temporary = final.with_name('.ai-r7.transaction.json.next')
+        temporary.write_bytes(b"keep me")
+        temporary.chmod(0o644)
+
+        for invoke in (executor.execute_component, executor.export_published_execution_binding):
+            with self.assertRaises(executor.BrollComponentExecutionError):
+                invoke(self.job, request, adapters=adapters)
+            self.assertEqual(temporary.read_bytes(), b"keep me")
+            self.assertEqual(final.read_bytes(), output)
+        self.assertEqual(len(adapter.calls), 1)
 
     def test_published_conflicting_input_is_rejected_before_adapter_and_preserves_final(self) -> None:
         first_output = b"first"
@@ -1683,6 +1729,7 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
     def test_real_process_crashes_recover_publish_without_reinvoking_adapter(self) -> None:
         points = (
             "after_complete_receipt",
+            "during_publishing_receipt_write",
             "after_publish_link",
             "after_publish_unlink",
             "after_published_receipt",
@@ -1695,6 +1742,7 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                 child = "\n".join(
                     (
                         "import os",
+                        "import signal",
                         "from pathlib import Path",
                         "from edit.hd.tools import broll_component_executor as e",
                         "class Job:",
@@ -1707,6 +1755,11 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                         "    return {'media_type': media_type, 'container': 'mp4', 'codec': 'h264', 'pixel_format': 'yuv420p', 'alpha': contract['alpha'], 'width': contract['width'], 'height': contract['height'], 'fps': contract['fps'], 'frame_count': 48, 'duration': 2.0}",
                         "def checkpoint(name):",
                         f"    if name == {point!r}: os._exit(73)",
+                        f"    if {point!r} == 'during_publishing_receipt_write' and name == 'after_complete_receipt':",
+                        "        def write_partial_receipt(descriptor, payload, code):",
+                        "            os.write(descriptor, payload[:12])",
+                        "            os.kill(os.getpid(), signal.SIGKILL)",
+                        "        e._write_all = write_partial_receipt",
                         "e._crash_checkpoint = checkpoint",
                         "e.execute_component(Job(), e.ComponentExecutionRequest("
                         f"recipe={request.recipe!r}, component_id={request.component_id!r}), adapters={{",
@@ -1721,9 +1774,12 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                     capture_output=True,
                     timeout=10,
                 )
-                self.assertEqual(
-                    result.returncode, 73, (result.stdout, result.stderr)
-                )
+                exit_code = -signal.SIGKILL if point == "during_publishing_receipt_write" else 73
+                self.assertEqual(result.returncode, exit_code, (result.stdout, result.stderr))
+                if point == "during_publishing_receipt_write":
+                    receipt = self.job.job_dir / f"08-visual-assets/components/seg-001/.crash-{index}-r7.transaction.json"
+                    self.assertEqual(json.loads(receipt.read_bytes())["state"], "complete")
+                    self.assertEqual(len(receipt.with_suffix(".json.next").read_bytes()), 12)
                 must_not_run = _RecordingKindAdapter(
                     output, failure=AssertionError("recovery must not invoke")
                 )
@@ -2365,6 +2421,7 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
 
     def test_journal_first_crash_points_recover_without_nonce_or_next_record_orphans(self) -> None:
         points = (
+            "during_first_receipt_write",
             "after_planned_receipt",
             "after_nonce_mkdir",
             "after_running_receipt",
@@ -2377,6 +2434,13 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                 )
                 pid = os.fork()
                 if pid == 0:
+                    if point == "during_first_receipt_write":
+                        def write_partial_receipt(descriptor: int, payload: bytes, _code: str) -> None:
+                            os.write(descriptor, payload[:12])
+                            os.kill(os.getpid(), signal.SIGKILL)
+
+                        executor._write_all = write_partial_receipt
+
                     def checkpoint(name: str) -> None:
                         if name == point:
                             os._exit(73)
@@ -2395,7 +2459,13 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                     os._exit(0)
                 waited, status = os.waitpid(pid, 0)
                 self.assertEqual(waited, pid)
-                self.assertEqual(os.waitstatus_to_exitcode(status), 73)
+                exit_code = -signal.SIGKILL if point == "during_first_receipt_write" else 73
+                self.assertEqual(os.waitstatus_to_exitcode(status), exit_code)
+                parent = self.job.job_dir / "08-visual-assets/components/seg-001"
+                temporary = parent / f".journal-first-{index}-r7.transaction.json.next"
+                if point == "during_first_receipt_write":
+                    self.assertEqual(len(temporary.read_bytes()), 12)
+                    self.assertFalse(temporary.with_suffix("").exists())
                 recovered_adapter = _RecordingKindAdapter(output)
                 artifact = executor.execute_component(
                     self.job,
@@ -2411,6 +2481,7 @@ class ComponentExecutorDispatchTests(unittest.TestCase):
                 self.assertEqual(
                     (self.job.job_dir / artifact.job_path).read_bytes(), output
                 )
+                self.assertFalse(temporary.exists())
 
     def test_input_snapshot_crash_recovers_owned_nonempty_nonce(self) -> None:
         source = b"approved-local-source"

@@ -312,6 +312,61 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         self.assertFalse(output_alpha('code_generated', 'barty-motion-graphics', 'single_full_frame', 'base'))
         self.assertFalse(output_alpha('ai_generated', None, 'evidence_with_data_overlay', 'base'))
 
+    def test_sweety_web_compiles_its_original_alpha_only_for_the_registered_use(self):
+        from edit.hd.tools import motion_capabilities, visual_plan
+        from tests.test_sweety_native_adapter import brief, sweety
+
+        component = _strategy_component("sweety", "code_generated", layout_slot="full_frame")
+        strategy = _visual_strategy([component])
+        adapter = SimpleNamespace(entrypoint_sha256=sweety.sha(ROOT / sweety.ENTRY), launcher="python3.12")
+        for template, standalone in (("web-kinetic-title", True), ("web-rough-annotate", False)):
+            with self.subTest(template=template):
+                task = brief()
+                task["template_id"] = template
+                binding = sweety.create_binding(adapter, sweety.artifacts.canonical_json_bytes(task))
+                context = _compile_context([component], segment_frames=120,
+                                           binding_overrides={"sweety": binding})
+                context["template_candidates"] = {}
+                row = {**binding, "role": "native", "adapter_module": "sweety_native_adapter"}
+                segment = {"visual_intent": context["intent"], "visual_strategy": strategy}
+                preflight = motion_capabilities._native_input_check(
+                    ROOT, row, task, segment=segment, component_id="sweety", use="broll",
+                )
+                if standalone:
+                    self.assertEqual(preflight["status"], "pass", preflight)
+                    visual_plan._prevalidate_draft_bindings(strategy, context["bindings"], 1, 120)
+                    recipe = self.router.compile_strategy(strategy, context)
+                    self.assertTrue(recipe["components"][0]["artifact_contract"]["alpha"])
+                    self.assertEqual(recipe["composition"], strategy["composition"])
+                    self.assertEqual(len(recipe["components"]), 1)
+                    base = _strategy_component("original", "local_material", layout_slot="full_frame")
+                    base["semantic_role"] = "evidence"
+                    annotation = _strategy_component("sweety", "code_generated", layout_slot="annotation")
+                    hybrid = _visual_strategy([base, annotation])
+                    hybrid_context = _compile_context([base, annotation], segment_frames=120,
+                                                      binding_overrides={"sweety": binding})
+                    hybrid_context["template_candidates"] = {}
+                    recipe = self.router.compile_strategy(hybrid, hybrid_context)
+                    self.assertEqual(recipe["composition"], hybrid["composition"])
+                    self.assertFalse(recipe["components"][0]["artifact_contract"]["alpha"])
+                    self.assertEqual(recipe["components"][0]["sha256"],
+                                     hybrid_context["bindings"]["original"]["sha256"])
+                    self.assertTrue(recipe["components"][1]["artifact_contract"]["alpha"])
+                else:
+                    self.assertEqual(preflight["status"], "fail", preflight)
+                    with self.assertRaisesRegex(self.router.RouterError, "A-roll overlays only"):
+                        self.router.compile_strategy(strategy, context)
+                    overlay = _strategy_component("sweety", "code_generated", layout_slot="annotation")
+                    overlay_strategy = {
+                        **strategy, "mode": "none", "components": [overlay],
+                        "composition": {
+                            "family": "aroll_with_overlay", "presenter_mode": "full_frame",
+                            "reading_order": ["sweety"], "component_dependencies": [],
+                        },
+                    }
+                    recipe = self.router.compile_strategy(overlay_strategy, context)
+                    self.assertTrue(recipe["components"][0]["artifact_contract"]["alpha"])
+
     def test_cinecode_shared_style_admits_only_the_exact_native_execution_route(self):
         from motion_native_runtime import renderer_version
         from motion_native_skill_adapter import ENTRY, VERSION

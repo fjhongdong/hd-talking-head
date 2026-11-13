@@ -41,7 +41,7 @@ from .visual_strategy import (
     validate_visual_strategy,
 )
 from . import visual_coverage
-from .dependency_contracts import executor_for, output_alpha
+from .dependency_contracts import executor_for
 
 __all__ = [
     "VisualPlanError",
@@ -304,6 +304,7 @@ def _prevalidate_draft_bindings(
     segment_frames: int,
 ) -> None:
     """Use the ShotRecipe authority to reject binding shape before callbacks."""
+    router = _load_router_module()
     recipe_components = []
     components_by_id = {
         component["component_id"]: component for component in strategy["components"]
@@ -320,13 +321,16 @@ def _prevalidate_draft_bindings(
         )
         riso_contract = None
         if binding.get("dependency_id") in {"eian-riso-broll", "datamagic"}:
-            router = _load_router_module()
             try:
                 riso_contract = router.riso_output_contract(
                     component, strategy["composition"],
                     name="DataMagic" if binding.get("dependency_id") == "datamagic" else "Riso")
             except router.RouterError as error:
                 raise _fail(str(error)) from None
+        geometry = router.component_geometry(
+            component, strategy["composition"], segment_frames, index=index,
+            dependency_id=binding.get("dependency_id"), template_id=binding.get("template_id"),
+        )
         recipe_components.append(
             {
                 "component_id": component_id,
@@ -340,25 +344,8 @@ def _prevalidate_draft_bindings(
                     executor_for(kind, binding)
                 ),
                 "media_type": component["media_type"],
-                "render_window": {
-                    "start_frame": 0,
-                    "end_frame": segment_frames,
-                    "z_index": index * 10,
-                    "layout_slot": component["layout_slot"],
-                    "opacity": 1.0,
-                    "safe_zone": {side: 0 for side in ("top", "bottom", "left", "right")} if component['layer_role'] == 'base' and component['layout_slot'] == 'full_frame' else {
-                        "top": 64 if strategy["composition"]["family"] == "aroll_with_overlay" else 120,
-                        "bottom": 320,
-                        "left": 40,
-                        "right": 40,
-                    },
-                },
-                "artifact_contract": riso_contract or completed_contract or {
-                    "width": 1080,
-                    "height": 1920,
-                    "fps": 24,
-                    "alpha": output_alpha(kind, binding.get("dependency_id"), strategy["composition"]["family"], component["layer_role"]),
-                },
+                **geometry,
+                "artifact_contract": riso_contract or completed_contract or geometry["artifact_contract"],
                 **binding,
             }
         )

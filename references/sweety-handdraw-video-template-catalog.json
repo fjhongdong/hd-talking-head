@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "dependency_id": "sweety-handdraw-video",
-  "upstream_commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+  "upstream_commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
   "counts": {
     "style": 21,
     "web_motion": 20
@@ -37,29 +37,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "亲子蜡笔画",
+        "家庭投稿画",
+        "歪黑线稿",
+        "蜡笔漏白",
+        "亲子人物",
+        "家庭插画"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "蜡笔童涂-潦草自画版；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "白底歪黑线稿配多向蜡笔乱涂、大片漏白和珊瑚红腮红，有亲子投稿画质感。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -85,28 +89,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "黑白细线",
+        "多格漫画",
+        "网格分镜",
+        "xkcd",
+        "火柴人",
+        "讲解漫画",
+        "轻幽默"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "极简黑白线条讲解漫画(xkcd 火柴人)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "米白纸上的黑白细线火柴人，按网格多格摆出讲解画面，可放短说明和气泡。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -132,29 +141,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "蜡笔童涂",
+        "平面童画",
+        "鲜亮原色",
+        "蜡笔越界",
+        "儿童画",
+        "歪线人物",
+        "稚拙"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "蜡笔童涂(5岁小孩坏画)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "明亮蜡笔色、歪斜比例和涂出轮廓的笔痕，画出五岁儿童自己画的平面童画。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -180,29 +194,36 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "吉卜力",
+        "动画插画",
+        "柔和水彩",
+        "暖光",
+        "天空",
+        "水面",
+        "田野",
+        "温暖",
+        "怀旧"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "吉卜力风；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "柔和渐变水彩和暖色电影光围绕单一焦点，天空、水面等大色块保持简洁。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -228,28 +249,32 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "黑色涂鸦",
+        "竖排多格",
+        "橙色点题",
+        "手写标题",
+        "小豆人",
+        "信息图"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "小豆人黑色涂鸦信息图；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "实心黑色小豆人在竖排多格重复出现，配橙色重点、手写短标题和指向箭头。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -275,28 +300,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "鼠标涂鸦",
+        "粗糙数字涂鸦",
+        "锯齿边",
+        "MS Paint",
+        "照片重画",
+        "涂鸦人物",
+        "搞怪"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "MS Paint 烂涂鸦(the worse, the better)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "歪断轮廓、锯齿边和越界纯色块，模仿鼠标随手画出的低精度数字涂鸦。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -322,29 +352,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "圆珠笔速写",
+        "缠绕细线",
+        "黑白手稿",
+        "肖像",
+        "动物速写",
+        "即兴"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "圆珠笔单线涂鸦(scribble)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "黑色圆珠笔在白纸上用细线缠绕，靠线的疏密塑造肖像或动物的明暗。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -370,29 +404,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "蜡笔实拍感",
+        "皱纸纹理",
+        "蜡质笔痕",
+        "摄影纸感",
+        "儿童画",
+        "蜡笔纸",
+        "稚拙"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "蜡笔实拍(真·儿童手涂纸张)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "模拟手机拍到的儿童蜡笔纸，能看见纸面褶皱、方向不一的蜡质笔痕和大片露白。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -418,29 +457,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "水墨写意",
+        "宣纸",
+        "飞白",
+        "墨晕",
+        "水墨画",
+        "朱红印章",
+        "空灵"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "水墨写意；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "宣纸上用墨的浓淡干湿、飞白和墨晕概括主体，保留大片空白与一枚朱红印章。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -466,29 +510,35 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "复古像素",
+        "像素艺术",
+        "8-bit",
+        "像素点阵",
+        "像素图标",
+        "游戏精灵",
+        "像素角色",
+        "怀旧"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "复古像素；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "统一方块像素网格和有限色板，按旧游戏精灵图的方式处理硬边、轮廓与点阵。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -514,29 +564,36 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "靛蓝速写",
+        "单点橙色",
+        "淡彩速写",
+        "大留白",
+        "家庭人物",
+        "情绪叙事",
+        "侧边手写短句",
+        "怀旧",
+        "温柔"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "情绪叙事淡彩速写；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "靛蓝松散速写和大片白底围住一件橙色关键物，可留一侧放手写短句。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -562,29 +619,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "中古动画",
+        "粉彩水粉",
+        "干刷",
+        "软彩铅",
+        "角色概念稿",
+        "角色立绘",
+        "复古"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "二维水彩风格(复古动画概念稿)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "以美式中古动画角色概念稿为底，粉彩干刷水粉和局部深棕彩铅落在高调白纸上。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -610,29 +672,35 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "暖光童画",
+        "动画概念暖绘",
+        "干刷水粉",
+        "青橙互补",
+        "大眼角色",
+        "角色立绘",
+        "故事绘本",
+        "温暖"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "暖光童画(动画概念暖绘)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "用暖光、干刷水粉和青蓝橙红互补色画大眼角色，可选露纸边或明亮满幅场景。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -658,29 +726,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "北欧纸雕",
+        "层叠纸雕",
+        "民俗纹样",
+        "软投影",
+        "纸雕人物",
+        "民俗动物",
+        "手工感"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "北欧纸雕(paper-folk)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "以有厚度的层叠纸片、软投影和北欧民俗纹样塑造人物、动物或叙事场景。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -706,29 +779,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "北欧绘本",
+        "低饱和水粉",
+        "全幅纸纹",
+        "丹宁蓝",
+        "绘本人物",
+        "角色立绘",
+        "温馨"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "北欧绘本水粉(nordic-storybook)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "以丹宁蓝、芥末黄和奶油白画细长绘本人物，满幅纸纹和少量软影保留温暖留白。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -754,29 +832,35 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "磨砂软胶",
+        "3D潮玩",
+        "几何造型",
+        "同色棚拍",
+        "大鼻软偶",
+        "潮玩头像",
+        "街头人物",
+        "呆萌"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "大鼻软偶(softnose-vinyl)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "磨砂软胶人物用超大垂鼻、眯眼和几何身形呈现，置于同色系棚拍底。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -802,29 +886,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "水粉立绘",
+        "背后聚光",
+        "满幅干刷",
+        "蓝橙互补",
+        "大眼角色",
+        "角色立绘"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "聚光水粉立绘(gouache-spotlight)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "大眼立绘置于满幅单色干刷底和背后柔光晕，衣发保留笔触，面部柔和喷绘。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -850,28 +938,34 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "墨线绘本",
+        "钢笔速写",
+        "绘本淡彩",
+        "毛刷纸边",
+        "绘本角色",
+        "角色立绘",
+        "头像",
+        "温暖"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "墨线绘本(inked-storybook)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "钢笔墨线定形，配透明感淡彩、可见起稿线和奶白毛刷纸边，适合绘本角色或头像。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -897,29 +991,35 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "画笔揭示"
+        "画笔揭示",
+        "暖色扁平绘本",
+        "色块轮廓",
+        "暖白留白",
+        "轻纸纹",
+        "家庭人物",
+        "拟人动物",
+        "绘本角色",
+        "温暖"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "暖色扁平绘本(warm-flat-storybook)；完整原生画风配方→插画→按部位画笔揭示→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "几何暖色块直接拼出轮廓，轻纸纹和暖白留白托住细长的家庭人物或拟人动物。按部位刷出原生插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "画笔揭示不等同逐笔；必须有真实明确接受记录，不能自动填reveal_accepted",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕",
+        "画笔揭示须保留真实的刷出成图确认依据"
       ]
     },
     {
@@ -945,28 +1045,32 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "圆头红线",
+        "石墨细线",
+        "黑红白限色",
+        "极简童画",
+        "圆头人",
+        "单一动作场景"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "圆头红线极简童画(roundhead-redline)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "暖白纸上用石墨细线画圆头小身和两道竖眼，珊瑚红只点出一个动作焦点。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -992,28 +1096,33 @@
         "插画叙事",
         "中文",
         "全屏B-roll",
-        "逐笔绘制"
+        "逐笔绘制",
+        "暖黄墨线",
+        "芥末黄点题",
+        "干性墨线",
+        "情绪小剧场",
+        "圆方头人物",
+        "情绪叙事",
+        "人物互动"
       ],
       "uses": [
         "broll"
       ],
       "status": "supported",
-      "native_workflow": "handdraw_video.py build/render/verify/finalize; existing narration + native align.py --words; preserve all native art/style checks",
-      "qualification": "Original full workflow connected; one draw pipeline rendered; present technical sample blocked by original final audio gate; individual style artwork/generation dependencies remain native requirements",
-      "summary": "暖黄墨线情绪小剧场(warm-yellow-ink-story)；完整原生画风配方→插画→逐笔绘制及上色→原生完整成片与检查",
+      "native_workflow": "Existing narration + native align.py --words; native build and visual checks; native render_chunk delivers silent picture with native captions",
+      "qualification": "Historical v3.0.2 style-17 fixture rendered; original full-film audio verification did not pass; no per-style certification",
+      "summary": "干墨线塑造短身人物，靠姿态与人物距离讲情绪，芥末黄突出一两处焦点。以原生笔顺绘制插画。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/dependencies/hand-drawn-styles/STYLES.md",
         "consumption": "style_choice.prepare_catalog/verify_style → art_pipeline → video_job.FilmBuilder → video_renderer.Renderer",
         "style_consumption": "scripts/style_choice.py:prepare_catalog + verify_style; scripts/art_pipeline.py:style fields; scripts/art_direction.py:verify_art_direction"
       },
       "limitations": [
-        "必须具备原生真实插画与美术/绘制记录；缺图不能用文字代替",
-        "3.1/19/20保留原生各自完整生图工作流，不因父级模板化省略",
-        "现成口播与词钟通过原生align.py导入；不新TTS",
-        "完整原生片含烧录字幕，picture-only交接须保留原生流程并单独明确导出方式",
-        "本次完整draw技术样片已渲染，但上游最终音轨门禁失败；没有finalize/publish通过记录。"
+        "使用完整原生画风配方、真实插画和美术绘制记录",
+        "3.1、19、20 按各自原生工作流处理参考锚点和生图阶段",
+        "使用现有录音与真实词钟，交付无声画面并保留原生字幕"
       ]
     },
     {
@@ -1030,10 +1139,20 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "动态大字",
         "中文",
         "透明贴片",
-        "动态大字"
+        "标题",
+        "关键词",
+        "章节名",
+        "整字淡入",
+        "逐字出现",
+        "逐字弹入",
+        "逐词砸入",
+        "关键词着色",
+        "标题强调",
+        "关键句强调",
+        "文字动效"
       ],
       "uses": [
         "aroll_overlay",
@@ -1045,11 +1164,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "动态大字；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "整字淡入上浮、逐字弹入或逐词砸入，关键词可单独着色。适合在 A-roll 强调短句、章节名或关键词。标题或短句本身是这一段的主体时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.kinetic_title"
       },
@@ -1072,10 +1191,19 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘圈注",
         "中文",
         "透明贴片",
-        "手绘圈注"
+        "已有对象",
+        "圈注",
+        "下划线",
+        "删除线",
+        "圈出重点",
+        "划下划线",
+        "高亮标记",
+        "画删除线",
+        "重点标记",
+        "手绘标注"
       ],
       "uses": [
         "aroll_overlay"
@@ -1086,11 +1214,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘圈注；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "在已有对象上描出圈、框、下划线、高亮或删除线。适合在 A-roll 标记已经可见的内容。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.rough_annotate"
       },
@@ -1113,10 +1241,19 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘箭头与形状",
         "中文",
         "透明贴片",
-        "手绘箭头与形状"
+        "箭头",
+        "几何形状",
+        "勾叉",
+        "流动虚线",
+        "画箭头",
+        "描出形状",
+        "虚线流动",
+        "方向指引",
+        "流向",
+        "手绘线条"
       ],
       "uses": [
         "aroll_overlay"
@@ -1127,11 +1264,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘箭头与形状；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "描出箭头、勾叉或几何形状，支持沿指定方向流动的虚线。适合在 A-roll 指向对象、补线或标示方向。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.sketch_shapes"
       },
@@ -1154,10 +1291,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "庆祝粒子",
         "中文",
         "透明贴片",
-        "庆祝粒子"
+        "粒子",
+        "彩纸",
+        "星光",
+        "爱心",
+        "粒子散开",
+        "彩纸喷出",
+        "达成揭晓",
+        "庆祝",
+        "彩色粒子"
       ],
       "uses": [
         "aroll_overlay"
@@ -1168,11 +1313,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "庆祝粒子；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "星光、爱心或彩纸粒子散开，用于已有内容的揭晓或庆祝。适合在 A-roll 已有的揭晓、达成或庆祝时点短暂点缀。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.burst"
       },
@@ -1195,10 +1340,15 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "滚动数字",
         "中文",
         "透明贴片",
-        "滚动数字"
+        "里程表",
+        "数值",
+        "数字滚动",
+        "数字落定",
+        "关键数字强调",
+        "里程表式排版"
       ],
       "uses": [
         "aroll_overlay",
@@ -1210,11 +1360,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "滚动数字；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "里程表式数字列由右至左滚动到指定值，可带前缀、单位和小数。适合在 A-roll 强调一个关键数值。单个数值的揭晓本身是这一段的主体时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.number_ticker"
       },
@@ -1237,10 +1387,15 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘气泡",
         "中文",
         "透明贴片",
-        "手绘气泡"
+        "标签",
+        "短文案",
+        "气泡弹出",
+        "标签弹出",
+        "标签注释",
+        "手绘框线"
       ],
       "uses": [
         "aroll_overlay"
@@ -1251,11 +1406,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘气泡；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "带短文案的手绘标签缩放弹出，可用尾巴指向已有对象。适合在 A-roll 为已有内容加简短标签或注释。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.callout"
       },
@@ -1278,10 +1433,17 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "圆环进度",
         "中文",
         "透明贴片",
-        "圆环进度"
+        "百分比",
+        "比例弧线",
+        "描出圆环",
+        "弧线填充",
+        "数字递增",
+        "部分与整体",
+        "完成比例",
+        "手绘圆环"
       ],
       "uses": [
         "aroll_overlay"
@@ -1292,11 +1454,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "圆环进度；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "先画圆环轨道，再画比例弧线，同时中央数字从零递增。适合在 A-roll 补充单个完成比例。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.progress_ring"
       },
@@ -1319,10 +1481,19 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "形状接力变形",
         "中文",
         "透明贴片",
-        "形状接力变形"
+        "几何形状",
+        "卡片",
+        "自定义路径",
+        "沿路径拉伸",
+        "连续变形",
+        "形状变形",
+        "颜色过渡",
+        "同一形体演变",
+        "概念转换",
+        "几何图形"
       ],
       "uses": [
         "aroll_overlay",
@@ -1334,11 +1505,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "形状接力变形；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "同一图形沿路径位移、拉伸，再变为下一形状，颜色随之过渡。适合在 A-roll 旁显示一两次简短形态转换。同一形体的连续变化能讲清这一段概念时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.morph"
       },
@@ -1361,10 +1532,23 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘图表",
         "中文",
         "透明贴片",
-        "手绘图表"
+        "柱状图",
+        "折线图",
+        "饼图",
+        "点阵图",
+        "正字计数",
+        "时间线",
+        "描出坐标轴",
+        "柱状增长",
+        "折线描绘",
+        "标记数据点",
+        "数值比较",
+        "数据趋势",
+        "占比",
+        "手绘数据图"
       ],
       "uses": [
         "aroll_overlay",
@@ -1376,11 +1560,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘图表；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "柱状图、折线图、饼图、点阵、正字计数或时间线依次显出数据，可按图种强调重点。适合在 A-roll 补一个简明数据关系。比较、趋势、占比或时间线承载主要信息时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.rough_chart"
       },
@@ -1403,10 +1587,21 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "地球与地图路线",
         "中文",
         "透明贴片",
-        "地球与地图路线"
+        "地图",
+        "地球",
+        "海岸线",
+        "路线",
+        "站点",
+        "航线",
+        "描绘路线",
+        "标记沿线移动",
+        "地球转动",
+        "地理路径",
+        "站点顺序",
+        "地理图形"
       ],
       "uses": [
         "aroll_overlay",
@@ -1418,11 +1613,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "地球与地图路线；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "在平面海岸线地图或旋转地球上描出经纬度路线，标记沿线移动，可显示站点名。适合在 A-roll 标注简短地理路径。线路和站点承载叙事时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.map_route"
       },
@@ -1445,10 +1640,22 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "物理道具",
         "中文",
         "透明贴片",
-        "物理道具"
+        "刚体",
+        "容器",
+        "多米诺",
+        "方块",
+        "小球",
+        "倒入容器",
+        "碰撞",
+        "倾倒",
+        "弹跳",
+        "物理因果",
+        "连锁反应",
+        "物件累积",
+        "手绘刚体轮廓"
       ],
       "uses": [
         "aroll_overlay",
@@ -1460,11 +1667,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "物理道具；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "刚体按原生场景倒入容器、多米诺倾倒、撞倒方块堆或弹跳。适合在 A-roll 旁显示一个简短物理动作。碰撞、倒下或累积的物理过程承载解释时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.physics"
       },
@@ -1487,10 +1694,20 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘立体物件",
         "中文",
         "透明贴片",
-        "手绘立体物件"
+        "立体物件",
+        "硬币",
+        "积木",
+        "晶体",
+        "几何体",
+        "绕轴旋转",
+        "物件弹入",
+        "硬币翻面",
+        "物件展示",
+        "墨线轮廓",
+        "平涂明暗"
       ],
       "uses": [
         "aroll_overlay",
@@ -1502,11 +1719,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘立体物件；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "带墨线轮廓的硬币、立方体或晶体等内置立体形体先弹入，再绕轴转动。适合在 A-roll 补一个内置立体物件。辨认内置物件及其不同侧面是主要内容时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.spin3d"
       },
@@ -1529,10 +1746,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手写公式",
         "中文",
         "透明贴片",
-        "手写公式"
+        "TeX",
+        "分数",
+        "根式",
+        "逐字形描写",
+        "描出公式",
+        "圈画公式",
+        "公式展示",
+        "公式推导",
+        "手写公式描线"
       ],
       "uses": [
         "aroll_overlay",
@@ -1544,11 +1769,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手写公式；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "按书写顺序描出 TeX 公式字形的轮廓并填实，可圈画指定部分。适合在 A-roll 补一条简短公式。公式的书写顺序和重点字形承载讲解时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.formula"
       },
@@ -1571,10 +1796,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "路线图与章节进度",
         "中文",
         "透明贴片",
-        "路线图与章节进度"
+        "章节总览",
+        "路线图",
+        "进度条",
+        "编号点",
+        "编号点依次出现",
+        "点亮当前项",
+        "章节进度",
+        "结构与进度",
+        "手绘编号点"
       ],
       "uses": [
         "aroll_overlay",
@@ -1586,11 +1819,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "路线图与章节进度；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "章节分组和编号点逐步出现，点亮当前项并区分已完成与待办。适合在 A-roll 用条带提示当前章节。分组和全局进度是主要信息时，用完整章节布局独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.roadmap"
       },
@@ -1613,10 +1846,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "手绘表格",
         "中文",
         "透明贴片",
-        "手绘表格"
+        "单元格",
+        "行列",
+        "对照数据",
+        "逐行出现",
+        "高亮关键格",
+        "单元格打勾叉",
+        "方案对照",
+        "字段比较",
+        "手绘格线"
       ],
       "uses": [
         "aroll_overlay",
@@ -1628,11 +1869,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "手绘表格；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "先画表格线，再逐行显示单元格，可画勾叉并用底色标出关键格。适合在 A-roll 补一个小范围行列对照。需要同时读出多行与字段间的取舍时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.table"
       },
@@ -1655,10 +1896,21 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "因果流程",
         "中文",
         "透明贴片",
-        "因果流程"
+        "流程图",
+        "因果图",
+        "架构图",
+        "节点",
+        "连接箭头",
+        "描出节点",
+        "沿箭头移动",
+        "连起节点",
+        "流程推进",
+        "因果链",
+        "流程循环",
+        "手绘节点连线"
       ],
       "uses": [
         "aroll_overlay",
@@ -1670,11 +1922,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "因果流程；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "依次描出节点和连接箭头，可让标记沿指定节点路径移动。适合在 A-roll 补一条简短节点链。节点间的因果、分支或循环承载解释时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.flow"
       },
@@ -1697,10 +1949,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "任务泳道",
         "中文",
         "透明贴片",
-        "任务泳道"
+        "工作块",
+        "等待块",
+        "时间轴",
+        "展开任务条",
+        "时间线扫过",
+        "并行工作",
+        "工作与等待",
+        "任务重叠",
+        "手绘泳道"
       ],
       "uses": [
         "aroll_overlay",
@@ -1712,11 +1972,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "任务泳道；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "各泳道沿共同时间轴展开实线工作块和虚线等待块，竖线同步扫过。适合在 A-roll 简短提示不同角色的时段。共同时间轴上的并行工作、等待或重叠是主要信息时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.swimlane"
       },
@@ -1739,10 +1999,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "逐项清单",
         "中文",
         "透明贴片",
-        "逐项清单"
+        "勾选框",
+        "待办清单",
+        "逐项出现",
+        "画勾",
+        "画叉",
+        "划掉条目",
+        "有序列举",
+        "逐项核对",
+        "手绘勾选框"
       ],
       "uses": [
         "aroll_overlay",
@@ -1754,11 +2022,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "逐项清单；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "依次画出勾选框并显示条目，按时点画勾、叉或删除线。适合在 A-roll 补几条可快速读完的条目。逐项核对或取舍承载主要信息时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.checklist"
       },
@@ -1781,10 +2049,19 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "分组卡片",
         "中文",
         "透明贴片",
-        "分组卡片"
+        "卡片网格",
+        "组名",
+        "错误标记",
+        "卡片逐张弹出",
+        "卡片移入分组",
+        "框出卡片",
+        "错误标记跳动",
+        "分类归组",
+        "并列项目",
+        "手绘卡片框"
       ],
       "uses": [
         "aroll_overlay",
@@ -1796,11 +2073,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "分组卡片；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "同形卡片逐张弹入，可滑到带名称的组内，或按指定卡片描框、跳动错误标记。适合在 A-roll 补少量可辨认的卡片。多张卡片的分类、并列或错误分布承载解释时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.cards"
       },
@@ -1823,10 +2100,18 @@
         "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/references/motion-catalog.md"
       ],
       "tags": [
-        "手绘",
+        "周期脉冲",
         "中文",
         "透明贴片",
-        "周期脉冲"
+        "心电线",
+        "事件时点",
+        "标签",
+        "描出脉冲线",
+        "尖峰出现",
+        "事件点弹出",
+        "定时触发",
+        "周期任务",
+        "心电式线条"
       ],
       "uses": [
         "aroll_overlay",
@@ -1838,11 +2123,11 @@
       ],
       "max_duration_seconds": 30,
       "native_workflow": "web_motion.py render -> RGBA PNG sequence -> parent alpha encoding; no TTS or image generation",
-      "qualification": "One native kinetic_title 9:16 alpha sample and actual completed-result consumption passed; other original fixed recipes are source-path verified, not individually rendered here",
-      "summary": "周期脉冲；原生固定recipe输出透明PNG序列，父级仅编码和合成",
+      "qualification": "Historical v3.0.2 kinetic_title 9:16 alpha render and actual result consumption passed; the other fixed recipes are verified in the source",
+      "summary": "心电式线条横向描出，到指定时点凸起尖峰，并弹出事件点和标签。适合在 A-roll 提示周期或定时事件。触发时点与间隔本身是这一段的主体时，可独立做 B-roll。",
       "evidence": {
         "repository": "https://github.com/threerocks/sweety-handdraw-video",
-        "commit": "a336506edf2540e4180f8ffa7b19456aa931b897",
+        "commit": "0d0187c93db8fab0cc772d39da6c4ab8d845646c",
         "source": "vendor/sweety-handdraw-video/skills/sweety-handdraw-video/assets/web-motion/recipes.js",
         "consumption": "web_motion.render → recipes.js Recipes.pulse"
       },
@@ -1857,13 +2142,13 @@
       "representative_recipe": "kinetic_title",
       "status": "native_render_and_frozen_result_consumer_passed",
       "sample": "capability-samples/20261104-library-expansion/sweety/native-result-consumption.json",
-      "scope": "one representative recipe; not individual certification of all twenty"
+      "scope": "historical v3.0.2 sample for one representative recipe; no individual certification of all twenty"
     },
     "style": {
       "representative_style": "17",
       "status": "native_build_render_passed_final_audio_verify_blocked",
       "sample": "capability-samples/20261104-library-expansion/sweety/style-17-sample.json",
-      "scope": "official technical fixture with real parent speech/word clock; not semantic or aesthetic approval; not per-style certification"
+      "scope": "historical v3.0.2 technical fixture with real speech and word clock; no full-film finalization or per-style certification"
     }
   }
 }

@@ -23,7 +23,7 @@ CutCod 只用于发现来源。已有 OpenFilm、Huashu、HyperFrames 等来源�
 
 输入为 `schema_version=1, source_binding, composition, template_request, template, data, assets`。`template` 为上述原生名字；`data` 完整使用对应模板公开 DATA 字段，不接受 CSS、JS、时间轴或自由场景。`composition={id,width:1080,height:1920,fps:24,frames}`，时窗和 DATA.duration 一致。每个模板保留固定原生动作所需最短时长，不能剪断动作凑时窗。
 
-`title.index` 是原生文本槽，可用1–2位英文字母或数字呈现短主题，不要求填章节号。`mast` 两项可留空；`title` 支持最多两行、每行6字符，沿用原生换行和排版。不要把制作清单编号填入这些槽。
+`title.index` 是画面中固定的大号必填栏，接受 1–2 位英文字母或数字。按[文字排版](motion-text-readability.md)检查该栏的含义和视觉层级。`mast` 两项可留空。`title` 支持最多两行、每行 6 字符，沿用原生换行和排版。
 
 草稿预检与正式组装共同调用我们路由器的 `riso_output_contract`：`layer_role=base`、`layout_slot=full_frame`，`composition.family` 只能为 `single_full_frame` 或 `evidence_with_data_overlay`，输出固定 `1080×1920 / 24fps / alpha=false`。执行适配器独立复核用途，拒绝 `no_broll`、`aroll_with_overlay`、非整屏布局及透明贴片输出。不新增输入字段，也不改变其他来源的输出规则。
 
@@ -35,9 +35,11 @@ CutCod 只用于发现来源。已有 OpenFilm、Huashu、HyperFrames 等来源�
 
 父级用 `CHROME` 原生启动入口指定项目内的 `scripts/riso_chrome_launcher.py`。每个原生阶段用自己的 Chrome profile 和日志，通知进程从该 profile 读取调试端口。结束时先收尾本次登记的 Chrome，再检查仍持有本次日志的同用户 Crashpad。QA、渲染和导出共享一次调用的截止时间。原生 QA 与渲染均真实退出成功后，才检查原始媒体并归一化。超时和异常保留日志供定位。
 
-原生输出 1080×1920 / 30 帧。帧数按原生 `Math.round(DATA.duration * 30)` 判定，采用实际传入的 DATA 秒数。`normalize_output` 按时间戳采样到 24 帧，并将全范围像素转换成合成器要求的有限范围 `yuv420p`。输出无音轨、方形像素、精确父级帧数，由成片流程统一添加圆窗和字幕。
+实际启用浏览器时，独立监护监听组件执行器和 Riso 适配器的存活。Chrome 启动前登记本次进程及专用日志，收到监护确认后才启动。执行进程中断时，先停止本次渲染和 Chrome，再限时清理仍持有本次日志、归属可核实的 Crashpad。同一正式输入已有尝试正在运行或收尾时，限时等待或报告状态。若监护也被强制终止，下次处理同一输入时先核对登记的未收尾记录。
 
-原生文件通过完整解码、帧数与摘要检查后才登记恢复点。归一化中断后，同一正式 Job、输入和运行身份可复用该原始文件，只重做归一化。正式完成的组件校验发布记录及实际媒体后直接复用。仅有未验证的文件或输入不同，均不能作为完成证据。
+原生输出 1080×1920 / 30 帧。帧数按原生 `Math.round(DATA.duration * 30)` 判定，采用实际传入的 DATA 秒数。`normalize_output` 按时间戳采样到 24 帧，并将全范围像素转换成合成器要求的有限范围 `yuv420p`。MP4 封装用能精确表示 24fps 的计时单位，避免毫秒舍入误差。输出无音轨、方形像素、精确父级帧数，由成片流程统一添加圆窗和字幕。
+
+原生文件通过完整解码、帧数与摘要检查后才登记恢复点。归一化中断后，同一正式 Job、输入和运行身份可复用该原始文件，只重做归一化。正式完成的组件校验发布记录及实际媒体后直接复用。两条复用路径均无需启动 Chrome 或监护进程。事务恢复以正式回执为准，归属可核实的半写临时回执可在组件锁内丢弃。仅有未验证的文件或输入不同，均不能作为完成证据。
 
 当前仅开放不透明 B-roll；不因上游存在 `--alpha` 就开放 A-roll 贴片。透明、避让与真实词锚尚未验证，不计入贴片入口。已有一条数字模板的 5 秒 MP4 样片完成原生动作、30→24 帧输出和 QA 检查；这只证明该代表模板的接法可用，不代表其余 9 个模板已经逐一渲染验收。每条真实内容仍需检查 native QA、实际动作、可读性、语义、字幕/圆窗避让和末帧连续性。
 

@@ -27,6 +27,7 @@ from edit.hd.tools.visual_strategy import (
 from edit.hd.tools.dependency_contracts import (
     PRIMARY_RENDERERS, CREATIVE_SKILL_ADAPTERS,
     executor_for,
+    is_sweety_web_template,
     output_alpha,
 )
 
@@ -798,6 +799,11 @@ def validate_invocation_evidence(
     }
     for field in sorted(checked):
         component[field] = _copy(checked[field], f"invocation evidence.{field}")
+    sweety_web = is_sweety_web_template(component.get("dependency_id"), component.get("template_id"))
+    if sweety_web:
+        # This schema probe has no selected use; the bound recipe checks it.
+        component["layer_role"] = "annotation"
+        component["render_window"]["layout_slot"] = "annotation"
     invocation = checked.get("invocation_record")
     if isinstance(invocation, dict) and "semantic_motion" in invocation:
         # The native motion validator needs the real adapter identity and its
@@ -828,10 +834,10 @@ def validate_invocation_evidence(
         "schema_version": 2,
         "segment_id": "evidence-contract",
         "strategy_revision": 1,
-        "mode": "single",
+        "mode": "none" if sweety_web else "single",
         "composition": {
-            "family": "single_full_frame",
-            "presenter_mode": "hidden",
+            "family": "aroll_with_overlay" if sweety_web else "single_full_frame",
+            "presenter_mode": "full_frame" if sweety_web else "hidden",
             "reading_order": ["evidence-contract"],
             "component_dependencies": [],
         },
@@ -965,7 +971,7 @@ def _consume_completed_generated_binding(kind: str, media_type: str, binding: Di
     return {**dimensions, "fps": 24, "alpha": False}
 
 
-def component_geometry(component, composition, segment_frames, *, index=0, dependency_id=None):
+def component_geometry(component, composition, segment_frames, *, index=0, dependency_id=None, template_id=None):
     """The compiler and prepared-input checks share one binding-free layout."""
     return {
         "render_window": {
@@ -977,7 +983,8 @@ def component_geometry(component, composition, segment_frames, *, index=0, depen
                   "bottom": 320, "left": 40, "right": 40},
         },
         "artifact_contract": {"width": 1080, "height": 1920, "fps": 24,
-            "alpha": output_alpha(component["kind"], dependency_id, composition["family"], component["layer_role"])},
+            "alpha": output_alpha(component["kind"], dependency_id, composition["family"],
+                                  component["layer_role"], template_id=template_id)},
     }
 
 
@@ -1113,7 +1120,8 @@ def _compile_shot_recipe(
             "executor": executor,
             "media_type": approved_component["media_type"],
             **component_geometry(approved_component, approved["composition"], segment_frames,
-                                 index=index, dependency_id=binding.get("dependency_id")),
+                                 index=index, dependency_id=binding.get("dependency_id"),
+                                 template_id=binding.get("template_id")),
         }
         if riso_contract is not None:
             component["artifact_contract"] = riso_contract

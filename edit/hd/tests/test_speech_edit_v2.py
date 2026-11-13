@@ -860,6 +860,21 @@ class FormalSpeechCleanupTests(unittest.TestCase):
         self.assertLess(two_sided[0].end, 2.4)
         self.assertEqual(len(two_sided_adjustments), 1)
 
+    def test_pcm_steady_low_noise_does_not_hide_a_long_word_edge_pause(self) -> None:
+        rate = 16000
+        samples = array("h", [168, -168] * (rate * 2))
+        samples.extend([3000, -3000] * rate)
+        words = [speech_edit_v2.transcribe.Word("。AI", 0.0, 6.0)]
+
+        derived, adjustments = speech_edit_v2._derive_pcm_edge_trimmed_words(
+            words, rate, samples
+        )
+
+        self.assertEqual(derived[0].text, "。AI")
+        self.assertAlmostEqual(derived[0].start, 3.92, delta=1 / rate)
+        self.assertEqual(derived[0].end, 6.0)
+        self.assertEqual(len(adjustments), 1)
+
     def test_pcm_all_silent_word_is_not_trimmed_to_zero(self) -> None:
         words = [speech_edit_v2.transcribe.Word("静音", 0.0, 1.0)]
         samples = array("h", [0] * 16000)

@@ -837,12 +837,33 @@ def _pacing_audio(wav_path: Path) -> tuple[int, array]:
     return rate, samples
 
 
-def _quiet_ranges(rate: int, samples: array, start: float, end: float) -> list[tuple[float, float]]:
-    """Contiguous quiet runs, retaining the existing RMS thresholds."""
+def _quiet_average_limit(rate: int, samples: array) -> float:
+    """Allow a modest, steady recording floor while keeping the speech gate."""
+    strict_limit = (32768 * 10 ** (-48 / 20)) ** 2
+    cap = (32768 * 10 ** (-44 / 20)) ** 2
+    window = max(1, round(rate * 0.04))
+    stride = max(window, round(rate * 0.2))
+    powers = sorted(
+        sum(value * value for value in samples[start:start + window]) / window
+        for start in range(0, len(samples) - window + 1, stride)
+    )
+    if len(powers) < 20:
+        return strict_limit
+    low = powers[len(powers) // 10]
+    upper = powers[len(powers) // 4]
+    two_db = 10 ** (2 / 10)
+    if low <= strict_limit or upper > min(cap, low * two_db):
+        return strict_limit
+    return min(cap, upper * two_db)
+
+
+def _quiet_ranges(
+    rate: int, samples: array, start: float, end: float, *, average_limit: float,
+) -> list[tuple[float, float]]:
+    """Find contiguous quiet runs with the per-recording average bound."""
     first, last = max(0, math.ceil(start * rate)), min(len(samples), math.floor(end * rate))
     window = max(1, round(rate * 0.04))
     window_limit = (32768 * 10 ** (-40 / 20)) ** 2
-    average_limit = (32768 * 10 ** (-48 / 20)) ** 2
     runs = []
     run_start, total, count = first, 0, 0
     for offset in range(first, last, window):
@@ -868,11 +889,12 @@ def _derive_pcm_edge_trimmed_words(
     """Derive conservative word bounds from PCM without changing Scribe."""
     threshold = 0.8
     padding = 0.08
+    average_limit = _quiet_average_limit(rate, samples)
     derived: list[transcribe.Word] = []
     adjustments: list[dict[str, Any]] = []
     for index, word in enumerate(words):
         original_start, original_end = float(word.start), float(word.end)
-        quiet = _quiet_ranges(rate, samples, original_start, original_end)
+        quiet = _quiet_ranges(rate, samples, original_start, original_end, average_limit=average_limit)
         # A fully quiet word has no safe speech boundary. Keep it intact.
         if any(
             run[0] <= original_start + 1 / rate
@@ -939,9 +961,12 @@ def _internal_word_silence_candidates(
 ) -> list[dict[str, Any]]:
     candidates = []
     kept_intervals = _video_use_intervals(plan, duration)
+    average_limit = _quiet_average_limit(rate, samples)
     for index, word in enumerate(words):
         word_start, word_end = float(word["start"]), float(word["end"])
-        for quiet_start, quiet_end in _quiet_ranges(rate, samples, word_start, word_end):
+        for quiet_start, quiet_end in _quiet_ranges(
+            rate, samples, word_start, word_end, average_limit=average_limit,
+        ):
             if quiet_end - quiet_start < 0.8:
                 continue
             retained = sum(
@@ -973,6 +998,7 @@ def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, 
     threshold = VIDEO_USE_PACING_PROFILE["silence_threshold_seconds"]
     padding = VIDEO_USE_PACING_PROFILE["edge_padding_seconds"]
     rate, samples = _pacing_audio(wav_path)
+    average_limit = _quiet_average_limit(rate, samples)
     cuts = {}
     for segment in checked_plan["segments"]:
         if segment["action"] != "keep":
@@ -983,7 +1009,7 @@ def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, 
             if any(c["source_start"] < right and c["source_end"] > left
                    for c in checked_plan.get("reviewed_cut_ranges", [])):
                 continue
-            quiet = _quiet_ranges(rate, samples, left + padding, right - padding)
+            quiet = _quiet_ranges(rate, samples, left + padding, right - padding, average_limit=average_limit)
             eligible = [(a, b) for a, b in quiet if b - a >= threshold]
             if eligible:
                 a, b = max(eligible, key=lambda r: r[1] - r[0])
@@ -1023,10 +1049,10 @@ def _apply_video_use_pacing(plan: Any, words: Any, wav_path: Path) -> dict[str, 
             continue
         tail = min(lo + float(left["breathing_padding"]["after"]), hi)
         head = max(hi - float(right["breathing_padding"]["before"]), lo)
-        runs = _quiet_ranges(rate, samples, lo + padding, tail)
+        runs = _quiet_ranges(rate, samples, lo + padding, tail, average_limit=average_limit)
         if runs and abs(runs[-1][1] - tail) < 1 / rate and runs[-1][1] - runs[-1][0] > padding * 2:
             left["breathing_padding"]["after"] = min(left["breathing_padding"]["after"], runs[-1][0] + padding - lo)
-        runs = _quiet_ranges(rate, samples, head, hi - padding)
+        runs = _quiet_ranges(rate, samples, head, hi - padding, average_limit=average_limit)
         if runs and abs(runs[0][0] - head) < 1 / rate and runs[0][1] - runs[0][0] > padding * 2:
             right["breathing_padding"]["before"] = min(right["breathing_padding"]["before"], hi - (runs[0][1] - padding))
     return edit_timeline.validate_edit_plan(paced, checked_words)

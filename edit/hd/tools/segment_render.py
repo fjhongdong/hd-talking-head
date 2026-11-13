@@ -564,14 +564,27 @@ def build_filter_graph(
     presenter_mode = composition.get("presenter_mode")
     if presenter_mode not in visual_strategy.PRESENTER_MODES:
         raise SegmentRenderError("approved presenter mode is invalid")
+    family = composition.get("family")
+    paper_component = None
     relation_exits: list[tuple[dict[str, Any], tuple[int, int]]] = []
     try:
         for component in components:
+            if not isinstance(component, Mapping):
+                raise SegmentRenderError("composition components are invalid")
+            if visual_strategy.sweety_web_paper_backing(component, family=family):
+                paper_component = component
             exit_window = visual_strategy.native_motion_exit_window(component)
             if exit_window is not None:
                 relation_exits.append((component, exit_window))
     except visual_strategy.VisualStrategyError as error:
         raise SegmentRenderError(str(error)) from None
+    if paper_component is not None and (
+        len(components) != 1
+        or len(artifacts) != 1
+        or presenter_mode == "full_frame"
+        or paper_component["render_window"]["end_frame"] != frames
+    ):
+        raise SegmentRenderError("standalone Sweety web B-roll must cover the complete segment")
     relation_exit: tuple[int, int] | None = None
     if relation_exits:
         if len(components) != 1 or len(relation_exits) != 1:
@@ -605,8 +618,9 @@ def build_filter_graph(
             f"trim=start_frame=0:end_frame={frames},setpts=PTS-STARTPTS[canvas_0]"
         ]
     else:
+        backdrop = "0xf7f2e6" if paper_component is not None else "black"
         filters = [
-            f"color=c=black:s=1080x1920:r=24:d={frames / FPS:.6f},"
+            f"color=c={backdrop}:s=1080x1920:r=24:d={frames / FPS:.6f},"
             f"trim=start_frame=0:end_frame={frames},setpts=PTS-STARTPTS[canvas_0]"
         ]
     components_by_id = {
@@ -658,6 +672,17 @@ def build_filter_graph(
             filters[-1] = filters[-1].replace(f'[component_{input_position}_input]', f'[component_{input_position}_camera_source]')
             filters.append(f"[component_{input_position}_camera_source]"
                            f"{parent_camera_framing.filter_chain(framing)}[component_{input_position}_input]")
+        if paper_component is not None:
+            if (artifact.render_window != component["render_window"]
+                    or artifact.artifact_contract != component["artifact_contract"]):
+                raise SegmentRenderError("Sweety alpha artifact differs from its approved full-frame base")
+            next_canvas = canvas_index + 1
+            filters.append(
+                f"[canvas_{canvas_index}][component_{input_position}_input]"
+                f"overlay=0:0:eof_action=pass:format=rgb:alpha=straight[canvas_{next_canvas}]"
+            )
+            canvas_index = next_canvas
+            continue
         translation = component.get('invocation_record', {}).get('canvas_translation')
         try:
             offset_y = visual_strategy.canvas_translation_y(component, family=composition.get('family'))

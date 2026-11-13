@@ -1,10 +1,12 @@
 """Keep the native Node startup pipe out of Chrome and all of its helpers."""
+import ctypes
+import errno
 import http.client
 import json
 import os
 from pathlib import Path
 import re
-import subprocess
+import socket
 import sys
 import time
 
@@ -13,21 +15,53 @@ STARTUP_SECONDS = 20
 DEVTOOLS_PATH = re.compile(r"/devtools/browser/[A-Za-z0-9-]+")
 
 
-def process_identity(pid, timeout):
-    result = subprocess.run(
-        ["/bin/ps", "-ww", "-p", str(pid), "-o", "ppid=,uid=,pgid=,state=,lstart=,comm="],
-        env={**os.environ, "LC_ALL": "C"}, capture_output=True, text=True, timeout=timeout,
-    )
-    if result.returncode == 1 and not result.stdout and not result.stderr:
+class ProcessInfo(ctypes.Structure):
+    # Darwin's proc_bsdinfo, returned by PROC_PIDTBSDINFO.
+    _fields_ = [
+        ("flags", ctypes.c_uint32), ("status", ctypes.c_uint32), ("exit_status", ctypes.c_uint32),
+        ("pid", ctypes.c_uint32), ("ppid", ctypes.c_uint32), ("uid", ctypes.c_uint32),
+        ("credentials", ctypes.c_uint32 * 6), ("command_names", ctypes.c_char * 48),
+        ("open_files", ctypes.c_uint32), ("group", ctypes.c_uint32),
+        ("terminal", ctypes.c_uint32 * 4),
+        ("start_seconds", ctypes.c_uint64), ("start_microseconds", ctypes.c_uint64),
+    ]
+
+
+def process_identity(pid, _timeout=None):
+    libproc = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+
+    def info():
+        data = ProcessInfo()
+        size = libproc.proc_pidinfo(pid, 3, ctypes.c_uint64(0), ctypes.byref(data), ctypes.sizeof(data))
+        if size == 0 and ctypes.get_errno() == errno.ESRCH:
+            return None
+        if size != ctypes.sizeof(data) or data.pid != pid:
+            raise OSError(ctypes.get_errno(), "Cannot verify Riso process identity")
+        return None if data.status == 5 else data  # SZOMB cannot do further work.
+
+    before = info()
+    if before is None:
         return None
-    result.check_returncode()
-    fields = result.stdout.split(maxsplit=9)
-    if len(fields) != 10:
-        raise ValueError("Cannot verify the Riso browser process identity")
-    if "Z" in fields[3]:
+    binary = ctypes.create_string_buffer(4096)
+    if libproc.proc_pidpath(pid, binary, len(binary)) <= 0:
+        if ctypes.get_errno() == errno.ESRCH:
+            return None
+        raise OSError(ctypes.get_errno(), "Cannot verify Riso executable identity")
+    after = info()
+    if after is None or (before.start_seconds, before.start_microseconds) != (after.start_seconds, after.start_microseconds):
         return None
-    return {"ppid": int(fields[0]), "uid": int(fields[1]), "group": int(fields[2]),
-            "started": " ".join(fields[4:9]), "command": fields[9].strip()}
+    return {"ppid": after.ppid, "uid": after.uid, "group": after.group,
+            "started": f"{after.start_seconds}.{after.start_microseconds:06d}",
+            "command": os.fsdecode(binary.value)}
+
+
+def register(slot, command, deadline, log_identity=None):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as channel:
+        channel.settimeout(max(0, min(2, deadline - time.monotonic())))
+        channel.connect(os.environ["RISO_WATCHDOG_SOCKET"])
+        channel.sendall(json.dumps({"slot": slot, "command": command, "log": log_identity}).encode() + b"\n")
+        if channel.recv(32) != b"ready":
+            raise RuntimeError("Riso watchdog did not accept process registration")
 
 
 def devtools_endpoint(profile, deadline):
@@ -76,6 +110,16 @@ def relay_startup(profile, owner_pid, deadline):
 
 
 def main():
+    if len(sys.argv) > 2 and sys.argv[1] == "--guard-tool":
+        tool = sys.argv[2]
+        command = os.environ["RISO_" + tool.upper()]
+        phase = os.environ["RISO_WATCHDOG_PHASE"].removesuffix("-browser")
+        register(f"{phase}-{tool}", command, float(os.environ["RISO_WORK_DEADLINE"]))
+        os.execv(command, [command, *sys.argv[3:]])
+    if len(sys.argv) > 2 and sys.argv[1] == "--guard-command":
+        command = sys.argv[2]
+        register(os.environ["RISO_WATCHDOG_COMMAND"], command, float(os.environ["RISO_WORK_DEADLINE"]))
+        os.execv(command, sys.argv[2:])
     deadline = min(time.monotonic() + STARTUP_SECONDS, float(os.environ["RISO_WORK_DEADLINE"]))
     log_path = Path(os.environ["RISO_CHROME_LOG"])
     browser = os.environ["RISO_CHROME_BINARY"]
@@ -84,16 +128,9 @@ def main():
     if len(profiles) != 1 or profiles[0].parent != Path(os.environ["TMPDIR"]).resolve(strict=True):
         raise ValueError("Riso Chrome requires this invocation's private profile")
     owner_pid = os.getpid()
-    identity = process_identity(owner_pid, timeout=1)
-    if identity is None:
-        raise RuntimeError("Could not record the Riso Chrome process")
     log_fd = os.open(log_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    owner = log_path.with_suffix(".owner.json")
-    temporary = owner.with_suffix(".tmp")
-    with temporary.open("x") as data:
-        json.dump({"pid": owner_pid, "started": identity["started"], "group": identity["group"],
-                   "launcher": identity["command"]}, data)
-    os.replace(temporary, owner)
+    logfile = os.fstat(log_fd)
+    register(os.environ["RISO_WATCHDOG_PHASE"], browser, deadline, [logfile.st_dev, logfile.st_ino])
     relay = os.fork()
     if relay == 0:
         # Reap the intermediate child before exec. The short-lived relay cannot

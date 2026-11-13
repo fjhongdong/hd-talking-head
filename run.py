@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -56,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
         command += ["--", "-m", "edit.hd.tools.cli", *forwarded]
     else:
         command += ["--", str(script), *forwarded]
+    if args.command == "run_stage":
+        # Keep the caller's PID on the process that owns the stage and its work.
+        os.chdir(PACKAGE_ROOT)
+        os.execv(sys.executable, command)
     return subprocess.run(command, cwd=PACKAGE_ROOT, check=False).returncode
 
 

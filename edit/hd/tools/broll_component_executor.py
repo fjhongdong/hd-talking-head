@@ -410,6 +410,12 @@ def _raise_reference_failure(
                    if line.startswith("ValueError: paper output contains a continuous freeze")]
         if details:
             error.add_note("Paper native renderer diagnostic: " + details[-1][:2000])
+    elif getattr(adapter, "dependency_id", None) == "eian-riso-broll":
+        prefix = "Riso recovery diagnostic:"
+        for line in stderr.decode("utf-8", "replace").splitlines():
+            if line.startswith(prefix):
+                error.add_note(line[:500])
+                break
     raise error
 
 
@@ -2617,6 +2623,8 @@ def _run_reference_process(
     process: subprocess.Popen[bytes] | None = None
     input_thread: threading.Thread | None = None
     input_failures: list[BaseException] = []
+    owner_read_fd: int | None = None
+    owner_write_fd: int | None = None
     try:
         if adapter.runtime_contracts is not None:
             current_runtime = _bound_runtime_contract(adapter, "BROLL_RENDER_FAILED")
@@ -2624,6 +2632,19 @@ def _run_reference_process(
                 transaction.adapter_binding.get("runtime_contracts"), "BROLL_RENDER_FAILED"
             ):
                 _raise("BROLL_RENDER_FAILED", evidence=evidence)
+        inherited_fds = (brief_fd, output_fd)
+        if media_manifest_fd is not None:
+            inherited_fds += (media_manifest_fd, *media_fds)
+        riso_env = {}
+        if adapter.dependency_id == "eian-riso-broll":
+            # Only the process holding the component transaction keeps the
+            # write end. SIGKILL closes it even when the renderer survives.
+            owner_read_fd, owner_write_fd = os.pipe()
+            riso_env = {
+                "BROLL_COMPONENT_INPUT_SHA256": context.input_sha256,
+                "BROLL_OWNER_LIFETIME_FD": str(owner_read_fd),
+            }
+            inherited_fds += (owner_read_fd,)
         process = subprocess.Popen(
             argv,
             cwd="/",
@@ -2639,17 +2660,15 @@ def _run_reference_process(
                 "BROLL_OFFLINE": "1",
                 "BROLL_INVOCATION_ID": invocation_id,
                 "BROLL_JOB_DIR": str(job.job_dir),
-                **({"BROLL_COMPONENT_INPUT_SHA256": context.input_sha256}
-                   if adapter.dependency_id == "eian-riso-broll" else {}),
+                **riso_env,
             },
             shell=False,
             start_new_session=True,
-            pass_fds=(brief_fd, output_fd, *(
-                (media_manifest_fd, *media_fds)
-                if media_manifest_fd is not None
-                else ()
-            )),
+            pass_fds=inherited_fds,
         )
+        if owner_read_fd is not None:
+            os.close(owner_read_fd)
+            owner_read_fd = None
         evidence["pid"] = process.pid
         input_thread = threading.Thread(
             target=_feed_process_input,
@@ -2764,6 +2783,8 @@ def _run_reference_process(
             media_manifest_fd,
             *media_fds,
             nonce_fd,
+            owner_read_fd,
+            owner_write_fd,
         ):
             if descriptor is not None:
                 try:
@@ -2953,18 +2974,8 @@ class _Transaction:
         payload = _canonical_bytes(self.record, code) + b"\n"
         temporary = f"{self.journal_name}.next"
         descriptor: int | None = None
+        replaced = False
         try:
-            try:
-                existing = os.stat(
-                    temporary, dir_fd=self.parent_fd, follow_symlinks=False
-                )
-            except FileNotFoundError:
-                pass
-            else:
-                if not stat.S_ISREG(existing.st_mode) or existing.st_nlink != 1:
-                    _raise(code)
-                os.unlink(temporary, dir_fd=self.parent_fd)
-                os.fsync(self.parent_fd)
             descriptor = os.open(
                 temporary,
                 os.O_RDWR
@@ -2976,6 +2987,7 @@ class _Transaction:
                 0o600,
                 dir_fd=self.parent_fd,
             )
+            os.fchmod(descriptor, 0o600)
             _write_all(descriptor, payload, code)
             os.fsync(descriptor)
             metadata = os.fstat(descriptor)
@@ -2984,39 +2996,31 @@ class _Transaction:
                 or _hash_fd(descriptor, code) != (_sha256_bytes(payload), len(payload))
             ):
                 _raise(code)
-            os.close(descriptor)
-            descriptor = None
+            _check_journal_temporary_at(self.parent_fd, temporary, descriptor, code)
             os.replace(
                 temporary,
                 self.journal_name,
                 src_dir_fd=self.parent_fd,
                 dst_dir_fd=self.parent_fd,
             )
+            replaced = True
             os.fsync(self.parent_fd)
             self.verify_parent(code)
-        except BrollComponentExecutionError:
-            if descriptor is not None:
-                try:
-                    os.close(descriptor)
-                except OSError:
-                    pass
-            try:
-                os.unlink(temporary, dir_fd=self.parent_fd)
-                os.fsync(self.parent_fd)
-            except OSError:
-                pass
-            raise
         except OSError:
+            _raise(code)
+        finally:
             if descriptor is not None:
+                if not replaced:
+                    try:
+                        _check_journal_temporary_at(
+                            self.parent_fd, temporary, descriptor, code, discard=True
+                        )
+                    except (BrollComponentExecutionError, OSError):
+                        pass
                 try:
                     os.close(descriptor)
                 except OSError:
                     pass
-            try:
-                os.unlink(temporary, dir_fd=self.parent_fd)
-            except OSError:
-                pass
-            _raise(code)
 
     def close(self) -> None:
         try:
@@ -3777,33 +3781,60 @@ def _read_canonical_record_at(
 def _read_published_record_at(parent_fd: int, name: str, code: str) -> dict[str, Any]:
     """Read without recovery; caller must hold the lock and validate identities."""
     current = _read_canonical_record_at(parent_fd, name, code)
-    following = _read_canonical_record_at(parent_fd, f"{name}.next", code)
-    if current is None or current.get("state") != "published" or following is not None:
+    if current is None or current.get("state") != "published":
         _raise(code)
+    _handle_journal_temporary_at(parent_fd, f"{name}.next", code, discard=False)
     return current
 
 
-def _read_transaction(parent_fd: int, name: str, code: str) -> dict[str, Any] | None:
-    next_name = f"{name}.next"
-    current = _read_canonical_record_at(parent_fd, name, code)
-    following = _read_canonical_record_at(parent_fd, next_name, code)
-    if following is None:
-        return current
-    try:
-        if current is None:
-            os.replace(
-                next_name,
-                name,
-                src_dir_fd=parent_fd,
-                dst_dir_fd=parent_fd,
-            )
-            os.fsync(parent_fd)
-            return following
-        os.unlink(next_name, dir_fd=parent_fd)
+def _check_journal_temporary_at(
+    parent_fd: int, name: str, descriptor: int, code: str, *, discard: bool = False
+) -> None:
+    opened = os.fstat(descriptor)
+    visible = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+    if (
+        not stat.S_ISREG(opened.st_mode)
+        or stat.S_IMODE(opened.st_mode) != 0o600
+        or opened.st_uid != os.geteuid()
+        or opened.st_nlink != 1
+        or (opened.st_dev, opened.st_ino, opened.st_mode, opened.st_uid, opened.st_nlink)
+        != (visible.st_dev, visible.st_ino, visible.st_mode, visible.st_uid, visible.st_nlink)
+    ):
+        _raise(code)
+    if discard:
+        os.unlink(name, dir_fd=parent_fd)
         os.fsync(parent_fd)
-        return current
+
+
+def _handle_journal_temporary_at(parent_fd: int, name: str, code: str, *, discard: bool) -> None:
+    try:
+        descriptor = _open_regular_at(parent_fd, name, code)
+        if descriptor is None:
+            return
+        try:
+            _check_journal_temporary_at(parent_fd, name, descriptor, code, discard=discard)
+        finally:
+            os.close(descriptor)
     except OSError:
         _raise(code)
+
+
+def _read_transaction(
+    parent_fd: int, name: str, code: str, *, final_name: str
+) -> dict[str, Any] | None:
+    current = _read_canonical_record_at(parent_fd, name, code)
+    if current is None:
+        try:
+            os.stat(final_name, dir_fd=parent_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            _raise(code)
+        else:
+            _raise(code)
+    # Atomic replacement of the formal receipt is the only commit point.
+    _handle_journal_temporary_at(parent_fd, f"{name}.next", code, discard=True)
+    return current
 
 
 def _remove_tree_at(
@@ -4698,9 +4729,11 @@ def _try_replay_transaction(
         _raise(code)
     try:
         record = (_read_published_record_at(parent_fd, journal_name, code) if export_only
-                  else _read_transaction(parent_fd, journal_name, code))
+                  else _read_transaction(parent_fd, journal_name, code, final_name=final_name))
         if record is None:
-            _raise(code)
+            for descriptor in (lock_fd, *reversed(chain_fds)):
+                os.close(descriptor)
+            return None
         transaction = _new_transaction(
             job=job,
             chain_fds=chain_fds,
@@ -4776,7 +4809,7 @@ def _begin_transaction(
             os.close(descriptor)
         _raise(code)
     try:
-        record = _read_transaction(parent_fd, journal_name, code)
+        record = _read_transaction(parent_fd, journal_name, code, final_name=final_name)
         if record is None:
             record = _new_planned_record(
                 recipe, component, input_sha256, binding, final_name

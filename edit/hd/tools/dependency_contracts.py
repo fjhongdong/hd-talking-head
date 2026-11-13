@@ -1,6 +1,11 @@
 """Shared static execution identities and the one parent output policy."""
 from __future__ import annotations
+import json
 from typing import Any, Mapping
+
+from scripts.package_paths import REFERENCES
+
+SWEETY_DEPENDENCY = "sweety-handdraw-video"
 
 DEPENDENCY_CONTRACTS = {
     'html-video': {"executor": 'reference_adapter', "renderer": 'HyperFrames', "output": 'alpha_video'},
@@ -88,10 +93,31 @@ def executor_for(kind: str, binding: Mapping[str, Any]) -> str:
     return f"ai-provider:{provider}:{model}"
 
 
-def output_alpha(kind: str, dependency_id: Any, family: Any, layer_role: Any) -> bool:
+def is_sweety_web_template(dependency_id: Any, template_id: Any) -> bool:
+    return (
+        dependency_id == SWEETY_DEPENDENCY
+        and isinstance(template_id, str)
+        and template_id.startswith(SWEETY_DEPENDENCY + "/web-")
+    )
+
+
+def is_sweety_web_broll_template(template_id: str) -> bool:
+    catalog = json.loads((REFERENCES / "sweety-handdraw-video-template-catalog.json").read_bytes())
+    return any(
+        row["candidate_id"] == f"{SWEETY_DEPENDENCY}:{template_id}"
+        and row["native_template_group"] == "web_motion"
+        and "broll" in row["uses"]
+        for row in catalog["native_paths"]
+    )
+
+
+def output_alpha(kind: str, dependency_id: Any, family: Any, layer_role: Any,
+                 *, template_id: Any = None) -> bool:
     if kind != "code_generated":
         return False
     mode = _contract(dependency_id)["output"]
+    if is_sweety_web_template(dependency_id, template_id):
+        return True
     if mode == "by_composition":
         return (family == "aroll_with_overlay" or
                 (family == "evidence_with_data_overlay" and layer_role == "annotation"))

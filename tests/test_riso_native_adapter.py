@@ -12,6 +12,7 @@ import sys
 import subprocess
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
@@ -21,6 +22,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 spec = importlib.util.spec_from_file_location("riso_native_adapter", SKILL / "scripts/riso_native_adapter.py")
 riso = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(riso)
+import riso_watchdog as guard
 
 
 def number_brief():
@@ -114,29 +116,40 @@ chrome.on('exit', (code, signal) => {
                     work.mkdir()
                     env = {**os.environ, "CHROME": str(fake), "TEST_WORK": str(work), "TMPDIR": str(work),
                            "TEST_PYTHON": sys.executable, "TEST_BROWSER": str(program)}
+                    node_path = str(Path(shutil.which("node")).resolve())
+                    command = [node_path, "-e", node]
+                    watcher = None
                     if isolated:
-                        runtime = {"browser": str(fake), "chrome_launcher_sha256": riso.sha(SKILL / riso.CHROME_LAUNCHER)}
-                        env.update(riso.chrome_environment(work, runtime), RISO_CHROME_LOG=str(work / "chrome.log"),
-                                   RISO_WORK_DEADLINE=str(time.monotonic() + 15))
-                    command = [shutil.which("node"), "-e", node]
-                    with subprocess.Popen(command, env=env, start_new_session=True) as process:
-                        try:
-                            self.assertTrue(wait_for(work / "browser-exited", 8), "browser never reached its exit event")
-                            if isolated:
-                                self.assertEqual(process.wait(timeout=3), 0)
-                            else:
-                                with self.assertRaises(subprocess.TimeoutExpired):
-                                    process.wait(timeout=0.2)
-                            os.kill(int((work / "helper-ready").read_text()), 0)
-                            self.assertFalse((work / "helper-done").exists())
-                        finally:
-                            if process.poll() is None:
-                                try:
-                                    os.killpg(process.pid, signal.SIGKILL)
-                                except ProcessLookupError:
-                                    pass
-                            (work / "release-helper").touch()
-                            wait_for(work / "helper-done", 2)
+                        runtime = {"browser": str(fake), "crashpad": "/bin/true", "node": node_path,
+                                   "ffmpeg": "/bin/true", "ffprobe": "/bin/true",
+                                   "chrome_launcher_sha256": riso.sha(SKILL / riso.CHROME_LAUNCHER)}
+                        watcher = guard.start_watchdog(work, runtime, "isolation-test", None, None, None)
+                        env.update(riso.chrome_environment(work, runtime), RISO_CHROME_LOG=str(work / "render.chrome.log"),
+                                   RISO_WORK_DEADLINE=str(time.monotonic() + 15), RISO_WATCHDOG_PHASE="render-browser",
+                                   RISO_WATCHDOG_SOCKET=str(watcher.socket_path), RISO_WATCHDOG_COMMAND="render-command")
+                        command = [sys.executable, env["RISO_CHROME_RELAY"], "--guard-command", *command]
+                    try:
+                        with subprocess.Popen(command, env=env, start_new_session=not isolated) as process:
+                            try:
+                                self.assertTrue(wait_for(work / "browser-exited", 8), "browser never reached its exit event")
+                                if isolated:
+                                    self.assertEqual(process.wait(timeout=3), 0)
+                                else:
+                                    with self.assertRaises(subprocess.TimeoutExpired):
+                                        process.wait(timeout=0.2)
+                                os.kill(int((work / "helper-ready").read_text()), 0)
+                                self.assertFalse((work / "helper-done").exists())
+                            finally:
+                                if process.poll() is None:
+                                    if isolated:
+                                        process.kill()
+                                    else:
+                                        guard.signal_process(-process.pid, signal.SIGKILL)
+                                (work / "release-helper").touch()
+                                wait_for(work / "helper-done", 2)
+                    finally:
+                        if watcher is not None:
+                            watcher.finish()
 
     def test_crashpad_cleanup_only_signals_the_owned_log_writer(self):
         path = Path("/private/riso/render.chrome.log")
@@ -156,18 +169,19 @@ chrome.on('exit', (code, signal) => {
                 output += "p104\naw\n"
             return subprocess.CompletedProcess(argv, 0, output, "")
 
-        def identity(pid, _):
+        def identity(pid):
             return {**expected, "command": executable + "-unrelated"} if pid == 102 else expected
 
         def sleep(seconds):
             clock[0] += seconds
 
-        with (patch.object(riso.subprocess, "run", side_effect=command),
-              patch.object(riso, "process_identity", side_effect=identity),
-              patch.object(riso.os, "kill", side_effect=lambda pid, sig: signals.append((pid, sig))),
-              patch.object(riso.time, "monotonic", side_effect=lambda: clock[0]),
-              patch.object(riso.time, "sleep", side_effect=sleep)):
-            self.assertEqual(riso.settle_crashpad(path, executable, 3), [101, 104])
+        with (patch.object(guard.subprocess, "run", side_effect=command),
+              patch.object(guard, "file_identity", return_value=[1, 2]),
+              patch.object(guard, "process_identity", side_effect=identity),
+              patch.object(guard.os, "kill", side_effect=lambda pid, sig: signals.append((pid, sig))),
+              patch.object(guard.time, "monotonic", side_effect=lambda: clock[0]),
+              patch.object(guard.time, "sleep", side_effect=sleep)):
+            self.assertEqual(guard.settle_crashpad(path, [1, 2], executable, 3), [101, 104])
         self.assertCountEqual(signals, [(101, signal.SIGTERM), (104, signal.SIGTERM), (101, signal.SIGKILL)])
 
     def test_abnormal_browser_exit_cleanup_stops_only_the_registered_process(self):
@@ -178,11 +192,10 @@ chrome.on('exit', (code, signal) => {
                   subprocess.Popen(command, start_new_session=True, stdout=subprocess.DEVNULL) as other):
                 try:
                     self.assertEqual(owner.stdout.readline(), b"ready\n")
-                    identity = riso.process_identity(owner.pid, 1)
-                    log.with_suffix(".owner.json").write_text(json.dumps(
-                        {"pid": owner.pid, "started": identity["started"], "group": identity["group"],
-                         "launcher": identity["command"]}))
-                    riso.settle_chrome(log, identity["command"], time.monotonic() + 2)
+                    identity = guard.process_identity(owner.pid)
+                    guard.stop_actor({"pid": owner.pid, "started": identity["started"], "group": identity["group"],
+                                      "launcher": identity["command"], "command": identity["command"]},
+                                     time.monotonic() + 2)
                     self.assertEqual(owner.wait(timeout=1), -signal.SIGTERM)
                     self.assertIsNone(other.poll())
                 finally:
@@ -190,6 +203,109 @@ chrome.on('exit', (code, signal) => {
                         owner.kill()
                     if other.poll() is None:
                         other.kill()
+
+    def test_watchdog_finishes_after_either_owner_dies_and_recovers_after_both_are_killed(self):
+        fixture = r'''
+import json, os, subprocess, sys, time
+from pathlib import Path
+import riso_chrome_launcher as launcher
+import riso_watchdog as guard
+from riso_recovery import acquire_claim, write_state
+
+mode, raw_root = sys.argv[1:3]
+root = Path(raw_root)
+work = root / "native-fixture"
+python = launcher.process_identity(os.getpid())["command"]
+if mode == "worker":
+    claim, pending = acquire_claim(root, "a" * 64, root, time.monotonic() + 2)
+    work.mkdir()
+    runtime = {"node": python, "browser": python, "crashpad": "/bin/sleep",
+               "ffmpeg": "/bin/sleep", "ffprobe": "/bin/sleep"}
+    watcher = guard.start_watchdog(work, runtime, "fixture", pending, int(sys.argv[3]), claim)
+    env = {**os.environ, "RISO_WATCHDOG_SOCKET": str(watcher.socket_path)}
+    native = subprocess.Popen([sys.executable, __file__, "native", raw_root], env=env)
+    write_state(root / "worker.json", {"watchdog": watcher.process.pid, "native": native.pid})
+elif mode == "native":
+    launcher.register("render-command", python, time.monotonic() + 2)
+    nested = subprocess.Popen(["/bin/sleep", "30"])
+    browser = subprocess.Popen([sys.executable, __file__, "browser", raw_root])
+    write_state(root / "native.json", {"nested": nested.pid, "browser": browser.pid})
+else:
+    log = work / "render.chrome.log"
+    fd = os.open(log, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    launcher.register("render-browser", python, time.monotonic() + 2, guard.file_identity(log))
+    helper = subprocess.Popen(["/bin/sleep", "30"], stderr=fd, start_new_session=True)
+    os.close(fd)
+    write_state(root / "browser.json", {"helper": helper.pid})
+time.sleep(30)
+'''
+        with tempfile.TemporaryDirectory(prefix="riso-watchdog-test-") as directory:
+            root = Path(directory).resolve()
+            script = root / "fixture.py"
+            script.write_text(fixture)
+            env = {**os.environ, "PYTHONPATH": str(SKILL / "scripts"), "PYTHONDONTWRITEBYTECODE": "1"}
+            for mode in ("owner", "worker", "both"):
+                with self.subTest(mode=mode):
+                    attempt = root / mode
+                    attempt.mkdir()
+                    read_fd, write_fd = os.pipe()
+                    process = subprocess.Popen(
+                        [sys.executable, str(script), "worker", str(attempt), str(read_fd)],
+                        env=env, start_new_session=True, pass_fds=(read_fd,),
+                    )
+                    os.close(read_fd)
+                    observed = {}
+                    try:
+                        deadline = time.monotonic() + 8
+                        for name in ("worker", "native", "browser"):
+                            record = attempt / f"{name}.json"
+                            while not record.exists() and time.monotonic() < deadline:
+                                time.sleep(0.02)
+                            observed.update(guard.read_state(record))
+                        with self.assertRaisesRegex(guard.RecoveryBlocked, "没有重渲"):
+                            riso.acquire_claim(attempt, "a" * 64, attempt, time.monotonic() + 0.1)
+                        if mode == "owner":
+                            os.close(write_fd)
+                            write_fd = None
+                        else:
+                            if mode == "both":
+                                os.kill(observed["watchdog"], signal.SIGKILL)
+                            process.kill()
+                        process.wait(timeout=8)
+                        claim, pending = riso.acquire_claim(attempt, "a" * 64, attempt, time.monotonic() + 8)
+                        try:
+                            self.assertEqual(pending.exists(), mode == "both")
+                            guard.recover_pending(pending, attempt, time.monotonic() + 6)
+                            self.assertFalse(pending.exists())
+                            for pid in observed.values():
+                                self.assertIsNone(guard.process_identity(pid), f"test actor {pid} was not reaped")
+                        finally:
+                            os.close(claim)
+                    finally:
+                        if write_fd is not None:
+                            os.close(write_fd)
+                        if process.poll() is None:
+                            process.kill()
+                            process.wait(timeout=2)
+
+    def test_adapter_stops_waiting_when_its_owner_or_watchdog_is_gone(self):
+        read_fd, write_fd = os.pipe()
+        with (subprocess.Popen(["/bin/sleep", "20"]) as command,
+              subprocess.Popen(["/bin/sleep", "20"]) as monitor):
+            try:
+                monitor.kill()
+                monitor.wait(timeout=2)
+                with self.assertRaisesRegex(guard.RecoveryBlocked, "监护异常退出"):
+                    riso.wait_for_command(command, time.monotonic() + 2, read_fd, SimpleNamespace(process=monitor))
+                os.close(write_fd)
+                write_fd = None
+                with self.assertRaisesRegex(guard.RecoveryBlocked, "父执行器已退出"):
+                    riso.wait_for_command(command, time.monotonic() + 2, read_fd, None)
+            finally:
+                os.close(read_fd)
+                if write_fd is not None:
+                    os.close(write_fd)
+                command.kill()
 
     def test_native_frame_count_matches_binary64_renderer_at_half_boundaries(self):
         for duration, frames in ((74 / 24, 93), (74 / 24 - 1e-9, 92), (98 / 24, 122), (202 / 24, 252)):
@@ -206,6 +322,22 @@ chrome.on('exit', (code, signal) => {
                 run.return_value = json.dumps({"streams": [native]})
                 with self.assertRaisesRegex(ValueError, "Native Riso output changed"):
                     riso.probe_native({"ffprobe": "ffprobe"}, "native", duration, run)
+
+    def test_normalize_mp4_keeps_exact_parent_duration_at_98_frames(self):
+        runtime = {key: shutil.which(key) for key in ("ffmpeg", "ffprobe")}
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "native.mp4"
+            target = Path(directory) / "normalized.mp4"
+
+            def run(argv):
+                return subprocess.check_output(argv, text=True, timeout=30)
+
+            run([runtime["ffmpeg"], "-v", "error", "-f", "lavfi", "-i", "color=s=1080x1920:r=30",
+                 "-t", "4.067", "-r", "30", "-c:v", "libx264", "-preset", "ultrafast",
+                 "-bf", "2", "-pix_fmt", "yuv420p", "-colorspace", "bt470bg", "-color_range", "pc",
+                 "-movflags", "+faststart", str(source)])
+            result = riso.normalize_output(runtime, source, target, 98, "full", run)
+            self.assertEqual(result["frames"], 98)
 
     def test_title_public_text_slots(self):
         for changes in ({"index": "UI"}, {"mast": ["", ""]},
@@ -295,8 +427,12 @@ chrome.on('exit', (code, signal) => {
         entrypoint.parent.mkdir(parents=True)
         origin = "process-" + "a" * 32
         entrypoint.write_text(
-            "from pathlib import Path\nimport hashlib, json, os, sys\n"
+            "from pathlib import Path\nimport fcntl, hashlib, json, os, select, stat, sys\n"
             "assert len(os.environ['BROLL_COMPONENT_INPUT_SHA256']) == 64\n"
+            "owner = int(os.environ['BROLL_OWNER_LIFETIME_FD'])\n"
+            "assert stat.S_ISFIFO(os.fstat(owner).st_mode)\n"
+            "assert fcntl.fcntl(owner, fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY\n"
+            "assert not select.select([owner], [], [], 0)[0]\n"
             f"Path(sys.argv[-1]).write_bytes(Path({str(sample)!r}).read_bytes())\n"
             "brief = Path(sys.argv[sys.argv.index('--brief') + 1]).read_bytes()\n"
             "print(json.dumps({'status': 'completed', 'invocation_id': os.environ['BROLL_INVOCATION_ID'], "

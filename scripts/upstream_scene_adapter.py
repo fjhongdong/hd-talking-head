@@ -493,7 +493,9 @@ with sync_playwright() as p:
         normalization = ["-vf", ",".join([*filters, "setsar=1"]), "-c:v", "libx264",
                          "-frames:v", str(b["composition"]["frames"]),
                          "-crf", "16", "-pix_fmt", "yuv420p", "-color_range", "tv"]
-    normalization_argv = [runtime["ffmpeg"], "-v", "error", "-i", str(native), *normalization, str(normalized)]
+    # Use an MP4 clock divisible by 24 so the edit list preserves partial seconds.
+    normalization_argv = [runtime["ffmpeg"], "-v", "error", "-i", str(native), *normalization,
+                          "-video_track_timescale", "24000", "-movie_timescale", "24000", str(normalized)]
     subprocess.run(normalization_argv, check=True, timeout=30)
     subprocess.run([runtime["ffmpeg"], "-v", "error", "-i", str(normalized), "-f", "null", "-"], check=True, timeout=30)
     return normalized, {"status": "rendered", "dependency_id": dependency_id, "upstream_commit": commit,
