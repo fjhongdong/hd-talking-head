@@ -3,7 +3,9 @@ from __future__ import annotations
 from itertools import product
 import copy
 import unittest
+from unittest.mock import patch
 
+from edit.hd.tools import visual_assignment
 from edit.hd.tools.visual_assignment import assign_candidates
 
 
@@ -98,3 +100,59 @@ class VisualAssignmentTests(unittest.TestCase):
     chosen = assign_candidates([domains[1]], fixed_channels=(cinecode,),
                                fixed_templates=((lemo, blueprint),))
     self.assertEqual(chosen[0]['candidate_id'], 'cinecode-dataviz')
+
+ def test_many_shared_templates_use_one_flow_when_both_channels_are_guaranteed(self):
+    lemo = 'lemo-opuscar'
+    cinecode = 'cinecode'
+    styles = ('archive-lighttable', 'art-deco', 'ascii-crt', 'backrooms', 'blueprint',
+              'brick-toy', 'briefing-board', 'cel-anime-80s', 'crayon-book', 'dataviz')
+    domains = []
+    for style in styles:
+        template = f'{lemo}/{style}'
+        domains.extend([
+            [c(f'{lemo}:{template}', lemo, template)],
+            [{**c(f'{cinecode}:cinecode/{style}', cinecode, template),
+              'template_identity': (lemo, template)}],
+        ])
+    domains.append([c('cinecode:cinecode/shape-morph', cinecode, 'cinecode/shape-morph'),
+                    c('cinecode:cinecode/line-boil', cinecode, 'cinecode/line-boil')])
+    with patch.object(visual_assignment, '_assign_flow',
+                      wraps=visual_assignment._assign_flow) as solve:
+        result = assign_candidates(domains)
+    self.assertEqual(score(result), (2, len(styles) + 1))
+    self.assertEqual(result[:-1], [domain[0] for domain in domains[:-1]])
+    self.assertEqual(solve.call_count, 1)
+
+ def test_shared_pair_matches_exhaustive_choices_with_fixed_identities(self):
+    left = c('left-shared', 'A', 'shared')
+    right = {**c('right-shared', 'B', 'shared'), 'template_identity': ('A', 'shared')}
+    creative = c('creative', 'A')
+    other = c('other', 'A', 'other')
+    third = c('third', 'C')
+    fourth = c('fourth', 'C', 'fourth')
+    domains_to_check = (
+        [[left, right]],
+        [[creative], [left, right, third]],
+        [[left], [right, other]],
+        [[left], [right, fourth]],
+        [[left, third], [right, fourth]],
+        [[left, third], [left, right, other], [third, fourth]],
+    )
+    for domains, channels, templates in product(
+            domains_to_check, [(), ('A',), ('B',), ('A', 'B')],
+            [(), (('A', 'shared'),), (('A', 'other'),)]):
+        with self.subTest(domains=domains, channels=channels, templates=templates):
+            chosen = assign_candidates(domains, fixed_channels=channels, fixed_templates=templates)
+            self.assertTrue(all(row in domain for row, domain in zip(chosen, domains)))
+            self.assertEqual(score(chosen, channels, templates),
+                             max(score(choice, channels, templates) for choice in product(*domains)))
+
+ def test_unrelated_shared_pairs_keep_independent_channel_scores(self):
+    domains = [
+        [c('a', 'A', 'x')],
+        [{**c('b', 'B', 'x'), 'template_identity': ('A', 'x')}, c('b2', 'B', 'y')],
+        [c('c', 'C', 'u')],
+        [{**c('d', 'D', 'u'), 'template_identity': ('C', 'u')}, c('d2', 'D', 'v')],
+    ]
+    chosen = assign_candidates(domains)
+    self.assertEqual([row['candidate_id'] for row in chosen], ['a', 'b2', 'c', 'd2'])

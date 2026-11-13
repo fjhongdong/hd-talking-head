@@ -444,6 +444,14 @@ def _rows(director, treatment, semantic_rows, generation_channels=None, *, job_d
             source = _source_id(binding)
             direct_material = component["kind"] in {"local_material", "official_material", "external_stock"}
             chosen = assignments.get((sid, cid))
+            cinecode_input = _selected_cinecode_input(treatment, (sid, cid)) if chosen and chosen['skill_id'] == 'cinecode' else None
+            if cinecode_input:
+                from scripts.cinecode_catalog import BRANCH_LABELS
+                label = BRANCH_LABELS[cinecode_input['branch']]
+                if 'material' in cinecode_input:
+                    source = f"{label}：{Path(cinecode_input['material']['job_path']).name}（{cinecode_input['source']}）"
+                else:
+                    source = f"{label}：{cinecode_input['step_id']}" if 'step_id' in cinecode_input else label
             fixed = next((r for r in selected.get("fixed_context", [])
                           if (r["segment_id"], r["component_id"]) == (sid, cid)), None)
             fixed_route = None
@@ -538,13 +546,18 @@ def _routing_distribution(rows, treatment):
         summary[typ]["channels"][name]["duration"] = sum(end - begin for begin, end in merged)
     repeats, previous = [], None
     for row in ordered:
-        pattern = row.get("visual_pattern") or assignments.get((row["segment_id"], row["component_id"]), {}).get("visual_pattern")
-        current = (channel(row), pattern, float(row["end"]), float(row["start"]))
+        assignment = assignments.get((row["segment_id"], row["component_id"]), {})
+        pattern = row.get("visual_pattern") or assignment.get("visual_pattern")
+        template = broll_skill_selection._template_identity(assignment) if assignment else None
+        current = (channel(row), pattern, float(row["end"]), float(row["start"]), template)
         if previous and row["semantic_row_id"] != previous[2]:
             same_channel = bool(current[0]) and current[0] == previous[1][0]
             same_pattern = current[1] and previous[1][1] and current[1] == previous[1][1]
-            if same_channel or same_pattern:
+            same_template = current[4] and current[4] == previous[1][4]
+            if same_channel or same_pattern or same_template:
                 labels = (["同渠道：" + current[0]] if same_channel else []) + (["同构图/动作：" + current[1]] if same_pattern else [])
+                if same_template:
+                    labels.append('同源模板：' + current[4][1])
                 relation = "同屏重叠" if current[3] < previous[1][2] else ("连续" if current[3] == previous[1][2] else "有时间间隔")
                 repeats.append((previous[0], row.get("number", row["semantic_row_id"]), "；".join(labels) + "；" + relation, reason(row)))
         previous = (row.get("number", row["semantic_row_id"]), current, row["semantic_row_id"])
@@ -711,6 +724,10 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     from scripts import run_stage
     run_stage._validate_prepared_native_inputs(job, PACKAGE_ROOT, director, treatment, planned=deferred,
                                                check_expressions=True)
+    for scene in treatment.get('scenes', []):
+        key = (scene.get('segment_id'), scene.get('component_id'))
+        if scene.get('brief_path') and _selected_cinecode_input(treatment, key) is not None:
+            _validate_cinecode_parent_material(treatment, key, _read(_path(job.job_dir, scene['brief_path'])))
     from . import overlay_alignment
     prepared = {(s['segment_id'], cid) for s in director['segments'] for cid in s.get('bindings', {})} - deferred
     overlay_alignment.validate_treatment(job, director, Path(treatment_path), phase='planning', target_keys=prepared)
@@ -835,7 +852,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
         for before, after, match, why in repeats:
             lines.append("| " + " | ".join(cell(v) for v in (before, after, match, why)) + " |")
     else:
-        lines.append("未发现相邻同渠道或同构图/动作项。")
+        lines.append("未发现相邻同渠道、同源模板或同构图/动作项。")
     lines += ["", "## 口播逐句处置", "", "| 词区间 | 实际原话 | 时间 | 决策 | 画面 | 组件 | 合并原因 |", "|---|---|---|---|---|---|---|"]
     for beat in treatment["beat_sheet"]:
         refs = "、".join(r["segment_id"] + ":" + r["component_id"] for r in beat["components"])
@@ -1583,7 +1600,9 @@ def _native_dispatch_task(treatment, key):
     row = component_semantic_rows(treatment).get(key)
     if row is None:
         raise VisualConfirmationError('native dispatch has no confirmed semantic row for this component')
-    return {'semantic_row': row, 'expression_basis': selected_expression_bases(treatment).get(key)}
+    material = _selected_cinecode_input(treatment, key)
+    return {'semantic_row': row, 'expression_basis': selected_expression_bases(treatment).get(key),
+            **({'cinecode_input': material} if material is not None else {})}
 
 
 def _native_dispatch_record(root, proposal, treatment, key, dependency, brief_ref):
@@ -2021,7 +2040,8 @@ def _semantic_handoffs(treatment, proposal_ref):
 
     expressions = selected_expression_bases(treatment)
     return {key: {'proposal': proposal_ref, 'semantic_row': row,
-                  **({'expression_basis': expressions[key]} if key in expressions else {})}
+                  **({'expression_basis': expressions[key]} if key in expressions else {}),
+                  **({'cinecode_input': material} if (material := _selected_cinecode_input(treatment, key)) else {})}
             for key, row in component_semantic_rows(treatment).items()}
 
 
@@ -3112,6 +3132,42 @@ def _native_parent_input_facts(segment, cid, brief):
     return module.parent_input_facts(brief) if hasattr(module, 'parent_input_facts') else brief
 
 
+def _selected_cinecode_input(treatment, key):
+    selection = treatment.get('skill_selection', {})
+    candidate = next((a['candidate_id'] for a in selection.get('assignments', [])
+                      if (a['segment_id'], a['component_id']) == key and a['skill_id'] == 'cinecode'), None)
+    if candidate is None:
+        return None
+    return next((c.get('cinecode_input') for beat in selection.get('beats', [])
+                 if (beat['segment_id'], beat['component_id']) == key
+                 for c in beat['candidates'] if c['candidate_id'] == candidate), None)
+
+
+def _validate_cinecode_parent_material(treatment, key, brief, *, approved_media=()):
+    """The current native brief must realize this row's frozen input choice."""
+    if brief.get('dependency_id') != 'cinecode':
+        return None
+    from scripts.cinecode_catalog import MATERIAL_BRANCHES
+    if brief['template_id'] not in MATERIAL_BRANCHES:
+        return None
+    plan = _selected_cinecode_input(treatment, key)
+    if plan is None:
+        raise VisualConfirmationError('CineCode prepared input has no confirmed material branch')
+    if brief.get('cinecode_material_branch') != plan['branch']:
+        raise VisualConfirmationError('CineCode prepared brief changed the confirmed material branch')
+    if 'material' in plan:
+        if plan['material'] not in brief.get('materials', []):
+            raise VisualConfirmationError('CineCode prepared brief did not bind the confirmed source material')
+        return [plan['material']]
+    if 'step_id' in plan:
+        selected = [ref for ref in brief.get('materials', [])
+                    if {'path': ref['job_path'], 'sha256': ref['sha256'], 'bytes': ref['byte_count']} in approved_media]
+        if not selected:
+            raise VisualConfirmationError('CineCode prepared brief did not bind the confirmed generation step output')
+        return selected
+    return []
+
+
 def _validate_native_source_materials(root, proposal, original, segment, cid, brief, facts, scene, *, completed_media=None):
     """Separate authorized parent media from evidenced native authored assets."""
     key = (segment['segment_id'], cid)
@@ -3121,6 +3177,8 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
                   if field == 'materials' or any(Path(record.get(name, '')).suffix.lower() in media
                                                 for name in ('job_path', 'scene_path'))]
     project_files = []
+    cinecode_loaded = None
+    cinecode_input = None
     if brief.get('dependency_id') == 'garden-motion-showreel':
         result_path = _path(root, brief['result_record_path'])
         if result_path.is_file():
@@ -3129,6 +3187,19 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
             project_files = authored_sources(brief, call)
             candidates.extend(item for item in project_files
                               if Path(item['job_path']).suffix.lower() in media | {'.svg', '.avif'})
+    elif brief.get('dependency_id') == 'cinecode':
+        result_path = _path(root, brief['result_record_path'])
+        if result_path.is_file():
+            from scripts.motion_native_skill_adapter import exact, _cinecode_loaded_records
+            from scripts.cinecode_catalog import MATERIAL_BRANCHES
+            call = _read(exact(root, _read(result_path)['render_call']))
+            cinecode_loaded = _cinecode_loaded_records(root, brief, call)
+            project_files = [item['file'] for item in cinecode_loaded]
+            data_files = {suffix for groups in MATERIAL_BRANCHES.values() for suffixes in groups.values()
+                          for suffix in suffixes} - {'.html'}
+            candidates.extend(item['file'] for item in cinecode_loaded
+                              if set(item['destinations']) & {'image', 'video', 'audio'}
+                              or Path(item['file']['job_path']).suffix.lower() in media | data_files)
     if isinstance(facts.get('image'), dict):
         candidates.append(facts['image'])
     if not candidates:
@@ -3143,6 +3214,10 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
         elif isinstance(value, list):
             for child in value: collect(child, destination)
     collect(segment.get('bindings', {}).get(cid, {}), allowed)
+    if brief.get('dependency_id') == 'cinecode':
+        cinecode_input = _selected_cinecode_input(original, key)
+        if cinecode_input and 'material' in cinecode_input:
+            collect(cinecode_input['material'], allowed)
     opening = original.get('skill_selection', {}).get('opening') or {}
     if (segment.get('bindings', {}).get(cid, {}).get('dependency_id') == 'lemo-wake'
             and key == (opening.get('segment_id'), opening.get('component_id'))):
@@ -3233,6 +3308,29 @@ def _validate_native_source_materials(root, proposal, original, segment, cid, br
             raise VisualConfirmationError('native authored media needs its bound engineering source')
         _exact(root, evidence)
         return origin
+
+    if cinecode_loaded is not None and cinecode_input and cinecode_input['branch'] in {'video', 'photo', 'archive_scan'}:
+        if 'step_id' in cinecode_input:
+            approved_cinecode_media = [ref for item in _completed_generations(
+                SimpleNamespace(job_dir=Path(root), job_id=proposal['job_id']), proposal, targets={key})
+                if item['step_id'] == cinecode_input['step_id'] for ref in item['media']]
+        else:
+            approved_cinecode_media = []
+        selected = _validate_cinecode_parent_material(original, key, brief, approved_media=approved_cinecode_media)
+        identities = {(ref['sha256'], ref['byte_count']) for ref in selected}
+        selected_sources = [{'path': ref['job_path'], 'sha256': ref['sha256'], 'bytes': ref['byte_count']}
+                            for ref in selected]
+        destination = 'video' if cinecode_input['branch'] == 'video' else 'image'
+        visibly_loaded = [row['file'] for row in cinecode_loaded if destination in row['destinations']
+                          or (cinecode_input['branch'] == 'archive_scan' and Path(row['file']['job_path']).suffix.lower() == '.pdf')]
+        direct = any((ref['sha256'], ref['byte_count']) in identities for ref in visibly_loaded)
+        derived = cinecode_input['branch'] == 'archive_scan' and any(
+            item.get('kind') == 'derived' and any(source in selected_sources for source in item.get('sources', []))
+            and any(item.get('job_path') == ref['job_path'] and item.get('sha256') == ref['sha256']
+                    for ref in visibly_loaded) for item in origins
+            if isinstance(item, dict) and isinstance(item.get('sources'), list))
+        if not direct and not derived:
+            raise VisualConfirmationError('CineCode did not load this row’s confirmed source material')
 
     def authored_svg_source(source):
         # A registered Whiteboard PNG may derive from this task's authored SVG.
@@ -3374,6 +3472,14 @@ def _validate_fresh_native_parent_inputs(root, proposal, original, segment, cid,
                 raise VisualConfirmationError('execution changed authorized native input: speech')
             if operation is not None:
                 operation.memo[identity] = True
+    if brief.get('dependency_id') == 'cinecode':
+        plan = _selected_cinecode_input(original, key)
+        approved_media = []
+        if plan and 'step_id' in plan:
+            approved_media = [ref for item in _completed_generations(
+                SimpleNamespace(job_dir=Path(root), job_id=proposal['job_id']), proposal, targets={key})
+                if item['step_id'] == plan['step_id'] for ref in item['media']]
+        _validate_cinecode_parent_material(original, key, brief, approved_media=approved_media)
     _validate_native_source_materials(root, proposal, original, segment, cid, brief, facts, scene or {})
 
 
@@ -3398,7 +3504,8 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
             scene_pin, expected = _authored_scene_task(root, original, key, dependency, value)
             if require_scene_pins or scene_pin.exists():
                 _check_native_dispatch(scene_pin, expected)
-        if dependency in NATIVE_RESULT_MODULES and _path(root, value['result_record_path']).is_file():
+        result_path = value.get('result_record_path')
+        if dependency in NATIVE_RESULT_MODULES and result_path and _path(root, result_path).is_file():
             scene = next(s for s in treatment['scenes']
                          if s.get('segment_id') == key[0] and s.get('component_id') in (None, cid))
             brief_ref = _record(root, _path(root, scene['brief_path']))
@@ -3474,6 +3581,7 @@ def _validate_authorized_native_inputs(root, proposal, frozen, original, directo
             after = brief(actual[segment['segment_id']], cid, treatment)
             check_expression(segment, cid, after)
             _validate_native_parent_fields(before, after)
+            _validate_cinecode_parent_material(original, (segment['segment_id'], cid), after)
             prior_scene = next(s for s in original['scenes']
                                if s.get('segment_id') == segment['segment_id'] and s.get('component_id') in (None, cid))
             scene = next(s for s in treatment['scenes']

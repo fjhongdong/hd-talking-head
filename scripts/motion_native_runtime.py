@@ -162,11 +162,17 @@ def validate_runtime_identity(project, identity, *, dependency_id):
     source_key = 'source_sha256' if dependency_id in SOURCE_RENDERERS else 'lock_sha256'
     source_digest = (_source_digest(project, dependency_id) if dependency_id in SOURCE_RENDERERS else
                      hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest())
+    dependency_fields = {}
+    if dependency_id == 'cinecode':
+        from cinecode_browser_assets import LOCK_SHA256
+        dependency_fields['browser_assets_sha256'] = LOCK_SHA256
     if (not isinstance(identity, dict)
-            or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', source_key, 'tools', 'browser'}
+            or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', source_key, 'tools',
+                                 'browser', *dependency_fields}
             or identity['schema_version'] != 1 or identity['dependency_id'] != dependency_id
             or identity['renderer_version'] != renderer_version(dependency_id)
             or identity[source_key] != source_digest
+            or any(identity[key] != value for key, value in dependency_fields.items())
             or not isinstance(identity['tools'], dict) or set(identity['tools']) != {'node', 'ffmpeg', 'ffprobe'}):
         raise ValueError('Frozen native motion runtime identity differs from its locked dependency')
     for item in [*identity['tools'].values(), identity['browser']]:
@@ -295,10 +301,15 @@ def _check_source_renderer_tools(project, dependency_id):
                 'source_sha256': digest,
                 'tools': {key: {'path': value, 'version': versions[key]} for key, value in tools.items()},
                 'browser': {'path': browser, 'version': browser_version}}
+    browser_assets = {}
+    if dependency_id == 'cinecode':
+        from cinecode_browser_assets import LOCK_SHA256, check_browser_assets
+        browser_assets['browser_assets'] = check_browser_assets(project)
+        identity['browser_assets_sha256'] = LOCK_SHA256
     validate_runtime_identity(project, identity, dependency_id=dependency_id)
     return {'status': 'ready', 'renderer_version': renderer, 'browser': browser,
             'browser_version': browser_version, 'environment': {'CHROME_PATH': browser},
-            'tools': tools, 'tool_versions': versions, 'runtime_identity': identity}
+            'tools': tools, 'tool_versions': versions, 'runtime_identity': identity, **browser_assets}
 
 
 def check(project, *, dependency_id='barty-motion-graphics', mode='render'):

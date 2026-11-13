@@ -287,9 +287,15 @@ def _load_catalog(project_root: Path) -> list[dict]:
 
 
 def catalog_summary(catalog: list[dict]) -> dict:
-    return {"total": len(catalog), "execution_status": dict(Counter(row["status"] for row in catalog)),
+    from .broll_skill_selection import _template_identity, source_channel
+
+    native = [row for row in catalog if row['status'] == 'supported']
+    identities = {_template_identity(row) for row in native} - {None}
+    return {"total": len(catalog), "execution_routes": len(native), "distinct_templates": len(identities),
+            "channels": len({source_channel(row['skill_id']) for row in native}),
+            "execution_status": dict(Counter(row["status"] for row in catalog)),
             "uses": dict(Counter(use for row in catalog for use in row["capability"]["uses"])),
-            "note": "仅含有执行入口的生产能力；当前环境、词锚、语义和实播画面仍须检查。"}
+            "note": "路线数保留实际调用入口；模板数按同源身份去重，当前环境、素材、时间和实播仍须核对。"}
 
 
 def _phrase_in(phrase: str, text: str) -> bool:

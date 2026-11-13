@@ -42,6 +42,35 @@ class MotionNativeRuntimeTests(unittest.TestCase):
     def test_cinecode_uses_pinned_source_without_npm(self):
         self.assert_source_renderer_tools('cinecode')
 
+    def test_cinecode_job_copy_localizes_the_original_starters_and_keeps_pinned_bytes(self):
+        from cinecode_browser_assets import ASSET_DIRECTORY, localize_browser_assets, verify_job_dependencies
+        from motion_native_skill_adapter import descriptor, project_files
+        source = _env.PROJECT / 'vendor/cinecode'
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name).resolve()
+            relative = 'native-projects/scene'
+            job_project = root / relative
+            job_project.mkdir(parents=True)
+            starters = {'film.html': source / 'templates/quick/film.html',
+                        'scene.html': source / 'starter/scene.html'}
+            for target, starter in starters.items():
+                shutil.copyfile(starter, job_project / target)
+            self.assertTrue(localize_browser_assets(_env.PROJECT, job_project, starters))
+            for group, file in {'mathjax': 'es5/tex-svg.js', 'three': 'build/three.core.js',
+                                'postprocessing': 'build/index.js'}.items():
+                self.assertEqual((job_project / 'cinecode-deps' / group / file).read_bytes(),
+                                 (_env.PROJECT / ASSET_DIRECTORY / group / file).read_bytes())
+            self.assertIn('/cinecode-deps/mathjax/es5/tex-svg.js', (job_project / 'film.html').read_text())
+            self.assertIn('/cinecode-deps/three/examples/jsm/', (job_project / 'scene.html').read_text())
+            self.assertIn('/cinecode-deps/postprocessing/build/index.js', (job_project / 'scene.html').read_text())
+            self.assertIn('cdn.jsdelivr.net', starters['film.html'].read_text())
+            self.assertIn('cdn.jsdelivr.net', starters['scene.html'].read_text())
+            verify_job_dependencies(_env.PROJECT, relative, project_files(root, job_project))
+            changed = job_project / 'cinecode-deps/mathjax/es5/tex-svg.js'
+            changed.write_text('changed local dependency')
+            with self.assertRaisesRegex(ValueError, 'pinned source'):
+                verify_job_dependencies(_env.PROJECT, relative, [descriptor(root, changed)])
+
     def assert_source_renderer_tools(self, dependency):
         with tempfile.TemporaryDirectory() as name:
             browser=Path(name).resolve()/'chrome';browser.write_text('local browser fixture');browser.chmod(0o755)
@@ -61,6 +90,11 @@ class MotionNativeRuntimeTests(unittest.TestCase):
                 [['/tools/node','--version'],[str(browser),'--version'],
                  ['/tools/ffmpeg','-version'],['/tools/ffprobe','-version']])
             identity=checked['runtime_identity'];self.assertNotIn('lock_sha256',identity)
+            if dependency == 'cinecode':
+                from cinecode_browser_assets import LOCK_SHA256
+                self.assertEqual(identity['browser_assets_sha256'], LOCK_SHA256)
+                self.assertEqual({group: item['version'] for group, item in checked['browser_assets'].items()},
+                                 {'mathjax': '3.2.2', 'postprocessing': '6.39.5', 'three': '0.186.1'})
             self.assertEqual(identity['source_sha256'],runtime.sha256_file(_env.PROJECT/f'references/{dependency}-native-source.json'))
             self.assertEqual(identity['tools']['node']['version'],'v26.10.0')
             self.assertEqual(identity['renderer_version'],runtime.renderer_version(dependency))

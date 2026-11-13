@@ -26,7 +26,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "底片在放大镜下由负片显影为正片；镜下单行文字被提亮并抽成阅读卡。"
     },
     {
@@ -51,7 +50,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "灯牌按节拍逐字点亮；门缝分割完成场景切换。"
     },
     {
@@ -76,7 +74,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "句子拆解为字符密度图像；推近到单字符并显出其中嵌套文字。"
     },
     {
@@ -101,7 +98,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "自动对焦寻找时短暂显出身影；磁带撕裂造成同构图跳时。"
     },
     {
@@ -126,7 +122,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "工程对象按图层逐层绘制；尺寸线追随部件、气泡标注飞入，剖面揭示内部。"
     },
     {
@@ -151,7 +146,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "部件沿弧线飞入并卡扣成型；成品拆散后重组成新结构。"
     },
     {
@@ -176,7 +170,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "整墙海报分区后逐区揭示；实物沿方案路线移动，尺寸线按比例延展。"
     },
     {
@@ -201,7 +194,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "小角色在巨大场景中保持比例反差；关键表情或动作定格承载转折。"
     },
     {
@@ -227,7 +219,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "用有方向的灯光、真实材质和近中远景深表现机械运动；以微距呈现设备、零件和工序。"
     },
     {
@@ -252,7 +243,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "蜡笔留白被水洗显影；主角前方实时补画路径或时间线。"
     },
     {
@@ -277,7 +267,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "条目按规则加速堆积；所有元素一拍飞入网格并锁定。"
     },
     {
@@ -302,7 +291,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "单个实体被推近并配刻度；两组材料逐年堆高，在交叉点停住对读。"
     },
     {
@@ -327,7 +315,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "一个标记对应一条事实；叙述到单位时坐标轴才生长出来。"
     },
     {
@@ -352,7 +339,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "雕刻刀刻出第一道线；形体经过三遍刻线逐层获得体积。"
     },
     {
@@ -377,7 +363,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "回合卡飞入后开始一轮；结尾用打字复盘卡和等级印章总结。"
     },
     {
@@ -402,7 +387,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "焦点从玻璃外壳切到内部机构；厚玻璃穹顶放大并弯折背后部件。"
     },
     {
@@ -427,7 +411,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "主题被装入案件框架并列出计数；每个论点获得巨型半调编号。"
     },
     {
@@ -452,7 +435,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "灯光打开时角色旁的阴影跳起；角色手持小灯，其亮度随测量值变化。"
     },
     {
@@ -477,7 +459,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "扫描线生长证明数据存在；目标框锁定指定部件并成为视线窗口。"
     },
     {
@@ -502,7 +483,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "刀痕逐笔把灰阶重新铺成彩色；全画面保持灰度，仅一个对象保留颜色。"
     },
     {
@@ -527,7 +507,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "一笔连续生成主体；撤去墨色后纸白显出门洞或缺席区域。"
     },
     {
@@ -552,7 +531,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "剖切线移开外壳露出内部；同形图标重排组成比例和数量。"
     },
     {
@@ -577,7 +555,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "扫描线扫过照片后留下点云；点云按高度剥离，再凝成实体表面并依次点亮特征。"
     },
     {
@@ -602,7 +579,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "用微微颤动的手绘轮廓、双帧停格、拖影和手绘冲击特效表现角色反应或快速动作。"
     },
     {
@@ -627,7 +603,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "黏稠液滴落下压扁，液团经拉伸与回弹融合，最后灌入产品或标记的形状。"
     },
     {
@@ -652,7 +627,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "吉祥物从界面图标中长出并留下轮廓；名称成为真实界面元素后角色落在其上。"
     },
     {
@@ -677,7 +651,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "部件落地组成建筑并按空间顺序回放音符；地块升起、楼层堆叠、树木弹出。"
     },
     {
@@ -702,7 +675,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "每项任务切换到适合的媒介；一个命令词同时成为字幕、脚本和节拍。"
     },
     {
@@ -727,7 +699,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "镜头从载玻片潜入细胞并逐级换倍率；扫描前穿过计数圆，像素点亮并滚动比例。"
     },
     {
@@ -752,7 +723,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "颜色错位让信息卡产生印刷温度；身体静止，仅手部按节拍完成步骤。"
     },
     {
@@ -777,7 +747,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "画笔不抬起地连接完整对象；线条状态随时间、疲劳或磨损改变。"
     },
     {
@@ -802,7 +771,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "灯光从源头传到远层和窗格；两个窗口共享同一光源。"
     },
     {
@@ -827,7 +795,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "书板掀起后场景按前后层弹出；翻页让旧部件折下、新部件弹起。"
     },
     {
@@ -852,7 +819,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "纸张折叠后一次剪孔，展开变成多重图案；孔洞背光并投射到世界。"
     },
     {
@@ -877,7 +843,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "一张卡对应一个项目并汇总总数；章节用色相区分不同图标家族。"
     },
     {
@@ -902,7 +867,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "色深按节拍坍缩或被抖动波恢复；保护色块在不同年代位置匹配切换。"
     },
     {
@@ -927,7 +891,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "每个转折新增一块印版；两种油墨相交生成第三色并成为发现区域。"
     },
     {
@@ -952,7 +915,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "场景整体随节拍呼吸和起舞；每一步都让道具成为对应的乐器。"
     },
     {
@@ -977,7 +939,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "地图被扫描条撕开露出地面；日期板逐张叠出时间环，距离线从A追到B并计数。"
     },
     {
@@ -1002,7 +963,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "每次跳跃换调色板和生物；两种反应并置制造冷静与慌张反差。"
     },
     {
@@ -1027,7 +987,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "灯光数量驱动热度和色彩；物件拉近灯源时放大并失焦。"
     },
     {
@@ -1052,7 +1011,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "以一个主图形连续变为下一个有意义的形状；相差较大的轮廓用圆或胶囊形过渡。"
     },
     {
@@ -1077,7 +1035,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "道具触发下一个道具并离开画面，链条在一次长镜中传递；手在物件原位置合拢造成近失误。"
     },
     {
@@ -1102,7 +1059,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "事实按阅读顺序一色一拍印出；多色在一次推印中填满画面。"
     },
     {
@@ -1127,7 +1083,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "地点由字母搭成建筑；字幕按节拍落下，鼓点对应切口。"
     },
     {
@@ -1152,7 +1107,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "被照亮的窗格才运动，光离开时人物冻结；关键场景投到石地并随太阳拉长。"
     },
     {
@@ -1177,7 +1131,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "在连续画布上用白边贴纸、图标和有据数据讲知识；镜头在事实之间滑动，拉远展示它们的关系。"
     },
     {
@@ -1202,7 +1155,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "网格行列对应楼层、小时或年份；卡片到位即形成节拍并归入分组。"
     },
     {
@@ -1227,7 +1179,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "重复部件波浪式抬起；镜头进入层间空隙看隐藏面，引线末端落在具体部件。"
     },
     {
@@ -1252,7 +1203,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "时间从高速坠回真实速度聚焦一个细节；清晰窄带滑动引导视线。"
     },
     {
@@ -1277,7 +1227,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "同一主体在不同构图中移动位置讲述变化；手卷从右向左滑出下一景而不断切。"
     },
     {
@@ -1302,7 +1251,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "钢笔按真实笔顺画出主体，水彩随后铺入；湿画前沿把事件染上页面。"
     },
     {
@@ -1328,7 +1276,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": true,
       "summary": "在获授权的全屏实拍素材上，以弹跳粗描边花字、爆炸框、汗滴或闪光表现关键反应。"
     },
     {
@@ -1353,7 +1300,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "让图形逐步组成论证；每个量保留自己的颜色，从对应的图形移动为公式中的项。"
     },
     {
@@ -1378,7 +1324,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "把来源照片和文件剪贴到纸面，以马克笔圈注、文档推近和同一卡片的前后变化讲清一个事实。"
     },
     {
@@ -1403,7 +1348,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "新对象随笔触逐步画入；高潮时整组对象在一秒内同时铺开。"
     },
     {
@@ -1428,7 +1372,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "室内灯灭后单灯照出第一层；满足条件的建筑被点亮，其余空缺勾勒边界，年代层逐年开启。"
     },
     {
@@ -1453,7 +1396,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "公式按说话顺序逐项写出；笔线引导镜头沿路径行进。"
     },
     {
@@ -1478,7 +1420,6 @@
       "uses": [
         "broll"
       ],
-      "requires_footage": false,
       "summary": "放射刻线从一点向外显形；刻刀一刀一刀累积时间和体积。"
     }
   ]

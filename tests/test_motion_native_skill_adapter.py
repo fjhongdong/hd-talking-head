@@ -232,6 +232,7 @@ class NativeMotionTests(unittest.TestCase):
                     native.inspect_result(root,request.read_bytes())
 
     def test_cinecode_capture_preserves_original_recipe_local_inputs_and_silent_clock(self):
+        from cinecode_browser_assets import LOCK_SHA256
         import motion_native_runtime as runtime_module
         from urllib.error import HTTPError
         from urllib.request import Request, urlopen
@@ -242,7 +243,11 @@ class NativeMotionTests(unittest.TestCase):
             project = root / b['project_directory']
             project.mkdir(parents=True)
             scene = project / 'film.html'
-            scene.write_text('<html>actual glass-product scene</html>')
+            scene.write_text('<html>actual glass-product scene<script src="active.mjs"></script></html>')
+            active = project / 'active.mjs'
+            active.write_text('// loaded in the authored scene')
+            unused = project / 'unused.mjs'
+            unused.write_text('// unused in the authored scene')
             (project / 'plate.mp4').write_bytes(b'0123456789')
             (project.parent / 'unapproved.txt').write_text('must stay out of capture')
             request = root / 'brief.json'
@@ -251,6 +256,7 @@ class NativeMotionTests(unittest.TestCase):
             renderer = runtime_module.renderer_version('cinecode')
             identity = {'schema_version': 1, 'dependency_id': 'cinecode', 'renderer_version': renderer,
                         'source_sha256': native.sha(_env.PROJECT / 'references/cinecode-native-source.json'),
+                        'browser_assets_sha256': LOCK_SHA256,
                         'tools': {key: {'path': value, 'version': 'v26.10.0' if key == 'node' else key + ' version 8'}
                                   for key, value in tools.items()},
                         'browser': {'path': '/historical/missing/chrome', 'version': 'Chrome 140'}}
@@ -262,10 +268,12 @@ class NativeMotionTests(unittest.TestCase):
 
             def execute(command, **kwargs):
                 origin = command[3].rsplit('/', 1)[0]
-                with urlopen(command[3], timeout=5) as response:
+                with urlopen(Request(command[3], headers={'Sec-Fetch-Dest': 'document'}), timeout=5) as response:
                     self.assertEqual(response.read(), scene.read_bytes())
                     self.assertIn("connect-src 'self'", response.headers['Content-Security-Policy'])
-                clip = Request(origin + '/plate.mp4', headers={'Range': 'bytes=2-4'})
+                with urlopen(Request(origin + '/active.mjs', headers={'Sec-Fetch-Dest': 'script'}), timeout=5) as response:
+                    self.assertEqual(response.read(), active.read_bytes())
+                clip = Request(origin + '/plate.mp4', headers={'Range': 'bytes=2-4', 'Sec-Fetch-Dest': 'video'})
                 with urlopen(clip, timeout=5) as response:
                     self.assertEqual((response.status, response.read()), (206, b'234'))
                 with self.assertRaises(HTTPError) as denied:
@@ -274,8 +282,10 @@ class NativeMotionTests(unittest.TestCase):
                 (project / 'out/native.mp4').write_bytes(b'recorded fixture output')
                 return subprocess.CompletedProcess(command, 0, '[capture] page: 1080x1920, 48 frames @ 24 fps\n', '')
 
+            pixels = b'\x11\x22\x33\x77\x88\x99' * (270 * 480 // 2)
             with mock.patch.object(native, '_inputs'), mock.patch.object(runtime_module, 'check', return_value=runtime), \
                  mock.patch.object(native, '_run_native_process', side_effect=execute) as process, \
+                 mock.patch('cinecode_capture_evidence.review_frames', return_value=[pixels] * 5), \
                  mock.patch.object(native, 'probe', return_value=b['composition']):
                 with self.assertRaisesRegex(ValueError, 'picture-only'):
                     native.capture_render(root, request, [*argv, '--audio', 'out/native.wav'])
@@ -285,37 +295,61 @@ class NativeMotionTests(unittest.TestCase):
                 self.assertEqual(call['local_http']['argv'], process.call_args.args[0])
                 self.assertIn('vendor/cinecode/styles/glass-product.md',
                               {ref['source_path'] for ref in call['native_sources']})
+                self.assertEqual([ref['job_path'] for ref in native.loaded_project_files(root, b, call)], [
+                    b['project_directory'] + '/' + name for name in ('active.mjs', 'film.html', 'plate.mp4')])
+                self.assertEqual([row['index'] for row in call['review_frames']], [0, 12, 24, 35, 47])
                 usage = [{'card_id': b['template_id'], 'variant': None, 'purpose': 'show the moving mechanism',
-                          'implementation_refs': [native.descriptor(root, scene)]}]
+                          'implementation_refs': [native.descriptor(root, scene), native.descriptor(root, active)]}]
                 with self.assertRaisesRegex(ValueError, 'approved original template'):
                     native.publish_completed(root, request, call_path,
                                              native_usage=[{**usage[0], 'card_id': 'cinematic-realistic'}])
+                with self.assertRaisesRegex(ValueError, 'captured HTML entry'):
+                    native.publish_completed(root, request, call_path, native_usage=[
+                        {**usage[0], 'implementation_refs': [native.descriptor(root, active)]}])
+                with self.assertRaisesRegex(ValueError, 'loaded authored scripts'):
+                    native.publish_completed(root, request, call_path, native_usage=[
+                        {**usage[0], 'implementation_refs': [native.descriptor(root, scene), native.descriptor(root, unused)]}])
                 native.publish_completed(root, request, call_path, native_usage=usage)
                 self.assertEqual(native.inspect_result(root, request.read_bytes())['native_usage'], usage)
+                with mock.patch('cinecode_capture_evidence.review_frames', return_value=[bytes(len(pixels))] * 5):
+                    with self.assertRaisesRegex(ValueError, 'only blank'):
+                        native._verify_call(root, b, request.read_bytes(), call)
                 call['stdout'] = '[capture] page: 1080x1920, 49 frames @ 24 fps\n'
                 with self.assertRaisesRegex(ValueError, 'READY clock'):
                     native._verify_call(root, b, request.read_bytes(), call)
 
-    def test_cinecode_variety_captions_require_real_approved_footage(self):
+    def test_cinecode_variety_captions_select_the_original_video_photo_or_drawn_branch(self):
         b = brief('cinecode', 'variety-captions')
-        with self.assertRaisesRegex(ValueError, 'authorized footage'):
+        with self.assertRaisesRegex(ValueError, 'material branch'):
             native.validate_brief(json.dumps(b))
+        b['cinecode_material_branch'] = 'drawn'
+        self.assertEqual(native.validate_brief(json.dumps(b))['cinecode_material_branch'], 'drawn')
         with tempfile.TemporaryDirectory() as name:
             root = Path(name).resolve()
+            self.assertEqual(native._cinecode_caption_material(root, b), set())
+            b['cinecode_material_branch'] = 'video'
+            with self.assertRaisesRegex(ValueError, 'requires approved materials'):
+                native.validate_brief(json.dumps(b))
             input_file = root / 'approved.mp4'
-            input_file.write_bytes(b'footage fixture')
+            input_file.write_bytes(b'material fixture')
             descriptor = native.descriptor(root, input_file)
             b['materials'] = [descriptor]
+            frame = {'codec_type': 'video', 'width': 10, 'height': 10}
+            video = {'streams': [frame], 'format': {'format_name': 'mov,mp4', 'duration': '2.000000'}}
+            photo = {'streams': [frame], 'format': {'format_name': 'jpeg_pipe'}}
             with mock.patch.object(native.subprocess, 'run', return_value=subprocess.CompletedProcess(
-                    [], 0, '{"streams":[]}', '')):
-                with self.assertRaisesRegex(ValueError, 'real video stream'):
-                    native._cinecode_footage(root, b)
-            with mock.patch.object(native.subprocess, 'run', return_value=subprocess.CompletedProcess(
-                    [], 0, '{"streams":[{"codec_type":"video","duration":"2.000000"}]}', '')):
-                footage = native._cinecode_footage(root, b)
-            with self.assertRaisesRegex(ValueError, 'freeze a Job project copy'):
-                native._verify_cinecode_footage(footage, [])
-            native._verify_cinecode_footage(footage, [descriptor])
+                    [], 0, json.dumps(photo), '')):
+                with self.assertRaisesRegex(ValueError, 'actual approved video'):
+                    native._cinecode_caption_material(root, b)
+            for branch, stream, destination in [('video', video, 'video'), ('photo', photo, 'image')]:
+                with self.subTest(branch=branch):
+                    b['cinecode_material_branch'] = branch
+                    with mock.patch.object(native.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                            [], 0, json.dumps(stream), '')):
+                        matching = native._cinecode_caption_material(root, b)
+                    with self.assertRaisesRegex(ValueError, 'load a local copy'):
+                        native._verify_cinecode_caption_material(b, [{'file': descriptor, 'destinations': ['empty']}], matching)
+                    native._verify_cinecode_caption_material(b, [{'file': descriptor, 'destinations': [destination]}], matching)
 
     def test_only_explicit_original_action_budgets_are_enforced(self):
         b=brief('video-shotcraft','ink-press')

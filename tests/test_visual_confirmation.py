@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import sys
 import subprocess
+import tempfile
 import time
 import unittest
 from pathlib import Path
@@ -15,6 +16,35 @@ from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
 
 class VisualConfirmationTests(unittest.TestCase):
+    def test_cinecode_archive_must_load_the_confirmed_scan_not_another_approved_image(self):
+        from scripts.motion_native_skill_adapter import descriptor
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            images = [root / name for name in ('selected.jpg', 'other.jpg')]
+            for image in images:
+                image.write_bytes(image.name.encode())
+            selected, other = [descriptor(root, image) for image in images]
+            result = root / 'result.json'
+            call = root / 'render.json'
+            call.write_text('{}')
+            result.write_text(artifacts.canonical_json_bytes({'render_call': descriptor(root, call)}).decode())
+            key = {'segment_id': 'seg-1', 'component_id': 'native'}
+            candidate_id = 'cinecode:cinecode/archive-lighttable'
+            segment = {'segment_id': key['segment_id'], 'bindings': {'native': {'materials': [other]}}}
+            treatment = {'skill_selection': {'assignments': [{**key, 'skill_id': 'cinecode', 'candidate_id': candidate_id}],
+                'beats': [{**key, 'candidates': [{'candidate_id': candidate_id, 'cinecode_input': {
+                    'branch': 'archive_scan', 'material': selected, 'source': 'museum object JP10'}}]}]}}
+            brief = {'dependency_id': 'cinecode', 'template_id': 'archive-lighttable',
+                'cinecode_material_branch': 'archive_scan', 'materials': [selected, other],
+                'result_record_path': result.name}
+            with mock.patch('scripts.motion_native_skill_adapter._cinecode_loaded_records',
+                            return_value=[{'file': other, 'destinations': ['image']}]) as loaded:
+                with self.assertRaisesRegex(vc.VisualConfirmationError, 'confirmed source material'):
+                    vc._validate_native_source_materials(root, {}, treatment, segment, 'native', brief, brief, {})
+                loaded.return_value = [{'file': selected, 'destinations': ['image']}]
+                vc._validate_native_source_materials(root, {}, treatment, segment, 'native', brief, brief, {})
+
     def test_first_native_speech_matches_real_approved_clip(self):
         root = self.job.job_dir
         source, clip, forged = root / 'approved-source.mp4', root / 'clip.wav', root / 'forged.wav'
@@ -1259,7 +1289,7 @@ class VisualConfirmationTests(unittest.TestCase):
         director = artifacts.read_json_artifact(self.fixture.brief)
         treatment = artifacts.read_json_artifact(self.treatment)
         from edit.hd.tools.semantic_visual_plan import validate_semantic_lists
-        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        rows = vc._rows(director, treatment, validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["tags"], ["approved visual explanation"])
         self.assertEqual(rows[0]["source"], "asset-1")
         self.assertEqual(rows[0]["template"], "素材直用（无动效模板）")
@@ -1276,14 +1306,14 @@ class VisualConfirmationTests(unittest.TestCase):
         treatment["skill_selection"]["assignments"] = [{"segment_id": "seg-001", "component_id": "component-1",
             "candidate_id": "openfilm-motion-graphics:motion-graphics", "skill_id": "openfilm-motion-graphics",
             "template_id": "openfilm/motion-graphics-scene", "role": "native"}]
-        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        rows = vc._rows(director, treatment, validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["template"], "openfilm/motion-graphics-scene")
         self.assertEqual(rows[0]["channel"], "openfilm-motion-graphics")
         segment["visual_strategy"]["components"][0]["kind"] = "ai_generated"
         segment["bindings"]["component-1"] = {"provider": "Lovart", "generation_id": "fixture-generation"}
         treatment["skill_selection"]["assignments"][0].update(candidate_id="gbro-collage-broll:design",
             skill_id="gbro-collage-broll", template_id="gbro-collage-broll/design", role="design")
-        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        rows = vc._rows(director, treatment, validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual(rows[0]["channel"], "gbro-collage-broll")
         self.assertEqual(rows[0]["template"], "gbro-collage-broll/design")
         self.assertEqual(rows[0]["generation_channel"], "Lovart")
@@ -1291,7 +1321,7 @@ class VisualConfirmationTests(unittest.TestCase):
             "segment_id":segment["segment_id"], "component_id":"component-1", "arguments":{}},
             {"id":"video", "purpose":"video", "segment_id":segment["segment_id"],
              "component_id":"component-1", "arguments":{}, "depends_on":["image"]}]}
-        rows = vc._rows(director, treatment, [],
+        rows = vc._rows(director, treatment,
             validate_semantic_lists(treatment, director)["component_rows"], {
                 "image":{"provider":"Builtin", "model":"image-model"},
                 "video":{"provider":"Lovart", "model":"Kling O1"}})
@@ -1315,7 +1345,7 @@ class VisualConfirmationTests(unittest.TestCase):
             "row_id": "shared", "start_word": 0, "end_word": 1, "quote": "x", "semantic": "顺序展开",
             "visual_task": "顺序展开", "components": [{"segment_id": f"seg-{i}", "component_id": "scene"}
                                                        for i in range(2)]}]}
-        rows = vc._rows(director, treatment, [], validate_semantic_lists(treatment, director)["component_rows"])
+        rows = vc._rows(director, treatment, validate_semantic_lists(treatment, director)["component_rows"])
         self.assertEqual([r["channel"] for r in rows], ["hyperframes", "hyperframes"])
         self.assertEqual([r["template"] for r in rows], ["template-0", "template-1"])
 
@@ -2302,7 +2332,7 @@ class MotionRealizationBoundaryTests(unittest.TestCase):
         request = copy.deepcopy(original)
         request['assets'][0].update(job_path=cropped.name, sha256=artifacts.sha256_file(cropped))
         entry = self.root / 'new-scene.html'; entry.write_text('<img src="assets/shots/shot.png">')
-        request['entry'] = {'job_path': entry.name, 'sha256': artifacts.sha256_file(entry)}
+        request['entry'] = {'job_path': entry.name, 'scene_path': 'index.html', 'sha256': artifacts.sha256_file(entry)}
         provenance = self.root / 'crop-provenance.json'
         artifacts.write_json_artifact(provenance, {'source_images': {'original': {
             'path': source['job_path'], 'sha256': source['sha256']}}, 'crops': [{

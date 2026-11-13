@@ -14,6 +14,48 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class BrollSkillSelectionTest(unittest.TestCase):
+    def test_cinecode_keeps_shared_routes_and_selects_only_feasible_drawings(self):
+        from edit.hd.tools import motion_capabilities as motion, motion_match_cache as cache
+        from scripts.cinecode_catalog import validate_material_plan
+
+        rows = motion.load_catalog(ROOT)
+        cine = [r for r in rows if r['skill_id'] == 'cinecode']
+        lemo = [r for r in rows if r['skill_id'] == 'lemo-opuscar']
+        self.assertEqual((len(cine), len(lemo)), (59, 66))
+        self.assertEqual(motion.catalog_summary(cine + lemo)['distinct_templates'], 74)
+        matches = motion.search_capabilities(ROOT, '生产线扫码后自动分流，画出分支蓝图', use='broll', catalog=cine + lemo)
+        by_id = {r['candidate_id']: r for r in matches}
+        industrial = by_id['cinecode:cinecode/cinematic-realistic']
+        self.assertIn('自动分流', industrial['matched_dimensions']['actions'])
+        twin = by_id['cinecode:cinecode/blueprint']
+        self.assertEqual(selection._template_identity(twin),
+                         selection._template_identity(by_id['lemo-opuscar:lemo-opuscar/blueprint']))
+        beat = {'segment_id': 's', 'start': 0, 'end': 1.01}
+        self.assertIn('24fps', selection.timing_failure(industrial, beat))
+        self.assertIsNone(selection.timing_failure(industrial, {**beat, 'end': 1}))
+        with self.assertRaisesRegex(ValueError, '素材分支'):
+            validate_material_plan('variety-captions', None, job_dir=None)
+        validate_material_plan('variety-captions', {'branch': 'drawn'}, job_dir=None)
+        video_step = {'id': 'step-1', 'segment_id': 's', 'component_id': 'c', 'purpose': 'video'}
+        validate_material_plan('variety-captions', {'branch': 'video', 'step_id': 'step-1'}, job_dir=None,
+                               generation_steps=[video_step], key=('s', 'c'))
+        with self.assertRaisesRegex(ValueError, '本镜'):
+            validate_material_plan('variety-captions', {'branch': 'video', 'step_id': 'step-1'}, job_dir=None,
+                                   generation_steps=[video_step], key=('other', 'c'))
+        with self.assertRaisesRegex(ValueError, '真实证据'):
+            validate_material_plan('archive-lighttable', {'branch': 'archive_scan', 'step_id': 'step-1'},
+                                   job_dir=None, generation_steps=[video_step], key=('s', 'c'))
+        review = {'rejection_basis': 'semantic', 'reason': '蓝图用过了',
+                  'constraint_refs': {'requirement': 'semantic', 'capability': 'summary'}}
+        semantic = {'semantic': '画出分流蓝图'}
+        with self.assertRaisesRegex(ValueError, 'concrete constraint_refs'):
+            cache._constraint_refs(review, semantic, twin, beat, job_dir=None)
+        review['constraint_refs'].update(capability='limitations/1', unmet='分流',
+                                         limitation_quote=twin['capability']['limitations'][1])
+        review['reason'] = '分流必须画出来。'
+        with self.assertRaisesRegex(ValueError, '具体限制'):
+            cache._constraint_refs(review, semantic, twin, beat, job_dir=None)
+
     def test_original_phase_budgets_reach_selection_without_freezing_demo_length(self):
         path = ROOT / 'references/video-shotcraft-template-catalog.json'
         templates = json.loads(path.read_text())['native_paths']
@@ -1140,6 +1182,13 @@ class PlanningOnlyChecksTest(unittest.TestCase):
                                "finish":"用完整数字排版和细线图形。","focus":"当前数值显现后稳定阅读。"},
                 "constraint_refs":{"requirement":"semantic","capability":"summary"},
                 "reason":"独立规划夹具，数值强调优先，旧新为未选备选。", "visual_pattern":cid})
+            # This fixture isolates Riso's word/timing contract. Its other
+            # candidates still retain explicit, pinned exclusion facts.
+            profile = catalog[cid]['capability']
+            if fit == 'unsuitable' and (catalog[cid]['skill_id'] == 'cinecode' or catalog[cid].get('cinecode_peer')):
+                candidates[-1]['constraint_refs'] = {'requirement': 'semantic', 'capability': 'limitations/0',
+                    'limitation_quote': profile['limitations'][0], 'unmet': row['semantic']}
+                candidates[-1]['reason'] = row['semantic'] + '需要该实测的固定数值显示入口。'
             if fit in {"preferred", "equivalent"}:
                 content = {"/data/number": 12} if fit == "preferred" else {"/data/after/text": "12项"}
                 candidates[-1]["expression_basis"] = {

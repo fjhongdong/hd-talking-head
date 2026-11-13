@@ -710,12 +710,19 @@ def _confirmed_design_channels(job_dir):
 def _constraint_refs(review, semantic, candidate, beat, *, job_dir, authorized_channels=None):
     """Resolve only this row's meaning and this candidate's pinned capability."""
     refs = review.get("constraint_refs")
-    if not isinstance(refs, dict) or set(refs) != {"requirement", "capability"}:
+    basis = review.get("rejection_basis")
+    cinecode_peer = (candidate.get('skill_id') == 'cinecode' or
+                    (candidate.get('skill_id') == 'lemo-opuscar' and candidate.get('cinecode_peer') is True))
+    explain = cinecode_peer and basis not in {'timing', 'authorization'}
+    fields = {"requirement", "capability"} | ({"limitation_quote", "unmet"} if explain else set())
+    if not isinstance(refs, dict) or set(refs) != fields:
         raise ValueError("excluded supported candidate needs concrete constraint_refs")
     requirement = refs.get("requirement")
-    basis = review.get("rejection_basis")
     if isinstance(requirement, str):
-        if requirement not in {"quote", "semantic"} or not semantic.get(requirement):
+        required_content = semantic.get('required_content', {})
+        content_ref = (explain and requirement.startswith('required_content/')
+                       and requirement.split('/', 1)[1] in required_content)
+        if not content_ref and (requirement not in {"quote", "semantic"} or not semantic.get(requirement)):
             raise ValueError("constraint requirement must cite the current quote or semantic, not visual_task")
         if basis in {"timing", "authorization"}:
             raise ValueError("timing and authorization exclusions need a confirmed constraint source")
@@ -764,6 +771,20 @@ def _constraint_refs(review, semantic, candidate, beat, *, job_dir, authorized_c
         value = None
     if value is None or value == "":
         raise ValueError("constraint capability reference must belong to the current candidate")
+    if explain:
+        excerpt, unmet = refs['limitation_quote'], refs['unmet']
+        if content_ref:
+            content = required_content[requirement.split('/', 1)[1]]
+            requirement_text = ' '.join([content['meaning'], *content.get('terms', [])])
+        else:
+            requirement_text = semantic[requirement]
+        if (not re.fullmatch(r'limitations/[0-9]+', reference)
+                or not isinstance(excerpt, str) or not excerpt.strip() or excerpt != value
+                or not isinstance(unmet, str) or not unmet.strip() or unmet.strip() not in requirement_text
+                or unmet.strip() not in review.get('reason', '')
+                or (('整屏无声 B-roll' in excerpt or 'Opaque B-roll only' in excerpt)
+                    and (basis != 'output' or not any(term in requirement_text for term in ('透明', '贴片', 'alpha'))))):
+            raise ValueError('CineCode 同源候选须指出当前原话或必要内容中无法呈现的动作，并引用本路线的具体限制')
 
 def validate_design_handoffs(director, treatment, job_dir, *, planned_targets=()):
     """Bind approved meaning and native route; the native Skill owns its design."""

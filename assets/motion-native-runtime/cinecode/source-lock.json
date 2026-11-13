@@ -1,0 +1,198 @@
+{
+  "packages": {
+    "mathjax": {
+      "files": {
+        "LICENSE": {
+          "byte_count": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        "es5/input/tex/extensions/action.js": {
+          "byte_count": 2611,
+          "sha256": "37b44965893dafb424811f3a78718aba2cfd450ce2a9344b53a5a7e24f2874a7"
+        },
+        "es5/input/tex/extensions/all-packages.js": {
+          "byte_count": 215178,
+          "sha256": "b44661fc134a5b53ad3ef5bf4d587e9b412e97421cf33e0dab2095ea0e8a3491"
+        },
+        "es5/input/tex/extensions/ams.js": {
+          "byte_count": 29459,
+          "sha256": "624d59b8b8585d3d69a8106b87bac62f8a2495b6caea7906a258ce1f15ff1ea4"
+        },
+        "es5/input/tex/extensions/amscd.js": {
+          "byte_count": 6769,
+          "sha256": "7dc7256ebc5822379cdf9f504559309d97c5f26e09e2150d25dd46e35a6acf94"
+        },
+        "es5/input/tex/extensions/autoload.js": {
+          "byte_count": 6357,
+          "sha256": "7656bc471cb75a43167f6bdeb284c95f323317893d26df4ceaa676d409ac9dbf"
+        },
+        "es5/input/tex/extensions/bbox.js": {
+          "byte_count": 3006,
+          "sha256": "73d208a3425ed27dea7ed61f5984b43accfba8949bad7077d3eac47e668ba764"
+        },
+        "es5/input/tex/extensions/boldsymbol.js": {
+          "byte_count": 4056,
+          "sha256": "d6771fee0772db2657796c8d0e20e1878bb3237f6d3ed1e828e1834a4ff743ca"
+        },
+        "es5/input/tex/extensions/braket.js": {
+          "byte_count": 6729,
+          "sha256": "2abb032ca0eaff9fb2322a28b5d14ba058e7934d3e56974c55f574059e907a4c"
+        },
+        "es5/input/tex/extensions/bussproofs.js": {
+          "byte_count": 18344,
+          "sha256": "47c46e011949f0700ed02698b1a7fc243cc0dfa9529e49935e45ee5e09299bda"
+        },
+        "es5/input/tex/extensions/cancel.js": {
+          "byte_count": 3326,
+          "sha256": "0d263ecf2671d1cc13135b8b4afcdca4d40151a9aea51b69402e68adde4cf8c9"
+        },
+        "es5/input/tex/extensions/cases.js": {
+          "byte_count": 7064,
+          "sha256": "9c11e0644dabdb5adf9065adef7f6224340eaecb96e48a7ce9a27de3c7056f3c"
+        },
+        "es5/input/tex/extensions/centernot.js": {
+          "byte_count": 3477,
+          "sha256": "a1e4be1e20d190a553c74796054335f5f7790414deb966cdc8a78e941a28a351"
+        },
+        "es5/input/tex/extensions/color.js": {
+          "byte_count": 8627,
+          "sha256": "7fdc8f7cda1630f35ccd579379ba04add9dec50c66cebbc05a4b129027b32435"
+        },
+        "es5/input/tex/extensions/colortbl.js": {
+          "byte_count": 5392,
+          "sha256": "d9c0e39634f43f0e29c6d6e82a3624e09f9835747fae5ba56156660fd4aab79b"
+        },
+        "es5/input/tex/extensions/colorv2.js": {
+          "byte_count": 1998,
+          "sha256": "30c09ca19b5d778c1718c47ee3d76b0a301dd2040f11f0b4ae3b2d59d67ffe21"
+        },
+        "es5/input/tex/extensions/configmacros.js": {
+          "byte_count": 4676,
+          "sha256": "a6d4604cbd3a7e7b9691eb108291ddd0093b9750355357478c6b637aad0d5419"
+        },
+        "es5/input/tex/extensions/empheq.js": {
+          "byte_count": 11100,
+          "sha256": "f425b835aeb4e4373b6176b622590d72692f1a85f05018e1035fbfcfc3be1842"
+        },
+        "es5/input/tex/extensions/enclose.js": {
+          "byte_count": 2387,
+          "sha256": "8804f756f369946919c388f587f80cf2d1fd9151f76ed37570d01af8d7fb3f4c"
+        },
+        "es5/input/tex/extensions/extpfeil.js": {
+          "byte_count": 3451,
+          "sha256": "d8d5ecd75abc4306a6d589442dfa66a4345dee1288347591bddaf19551388163"
+        },
+        "es5/input/tex/extensions/gensymb.js": {
+          "byte_count": 2104,
+          "sha256": "9f55af256604b89a7980b9f903c6f33ce3c2d0e279fd347b9a433fe4c58de794"
+        },
+        "es5/input/tex/extensions/html.js": {
+          "byte_count": 2969,
+          "sha256": "e3647c848f26ad228d07043f1e63c56a646da9d20a6c0f180a4067fa9e10facc"
+        },
+        "es5/input/tex/extensions/mathtools.js": {
+          "byte_count": 31845,
+          "sha256": "04272d69a0b64783cd5b66820d6f8220ee510409d0b12c38626404be9ed9689c"
+        },
+        "es5/input/tex/extensions/mhchem.js": {
+          "byte_count": 38270,
+          "sha256": "aec2e1e1c423129cf3d2fe86980642335127d1161734ffe47dd99ed676038627"
+        },
+        "es5/input/tex/extensions/newcommand.js": {
+          "byte_count": 11768,
+          "sha256": "a41669a4ae924ab83cbc3d08f95ae90490a33cd649ed865e83675011b8708ab9"
+        },
+        "es5/input/tex/extensions/noerrors.js": {
+          "byte_count": 1226,
+          "sha256": "9317a33b00e114e679bb3cf07df06102342131412a3daced25b733da334f2ccd"
+        },
+        "es5/input/tex/extensions/noundefined.js": {
+          "byte_count": 1852,
+          "sha256": "b90ecf838a6f5363b260a4dd4e939812abaf062f91234fe20fd63d1c7e88a43f"
+        },
+        "es5/input/tex/extensions/physics.js": {
+          "byte_count": 24029,
+          "sha256": "83d5ad43ea478baf855e0ef9456d63d2d735d10c78ab7544019e0cb0b8083a83"
+        },
+        "es5/input/tex/extensions/require.js": {
+          "byte_count": 6286,
+          "sha256": "d508f823c2cf39509bdd088f6dd17fde20b481a8b1d702aa24061a00f38006c3"
+        },
+        "es5/input/tex/extensions/setoptions.js": {
+          "byte_count": 5549,
+          "sha256": "a259b86c9f49fea08abbc05bf4e5ed510e65870b9d7d127404e8486493b8ad40"
+        },
+        "es5/input/tex/extensions/tagformat.js": {
+          "byte_count": 2864,
+          "sha256": "a1407f0ba6abddf53ed3048aaeec7d5290dfa213878181679f4a62c604515784"
+        },
+        "es5/input/tex/extensions/textcomp.js": {
+          "byte_count": 6808,
+          "sha256": "6eaa4c938145a6ace042806b2d0c710c8d4d806386c97e9d0ec0c6d6e5fc30cf"
+        },
+        "es5/input/tex/extensions/textmacros.js": {
+          "byte_count": 16138,
+          "sha256": "cd783f048f64f6a3750d716af0e10ed2f6539cd181dacf1204e323e2e41bd640"
+        },
+        "es5/input/tex/extensions/unicode.js": {
+          "byte_count": 3450,
+          "sha256": "903e7d0d11d5d639eb13931fd3da78d49bbf9c59b57e82a945da9fb7b710137d"
+        },
+        "es5/input/tex/extensions/upgreek.js": {
+          "byte_count": 2676,
+          "sha256": "4335d722671b77186d6490e326adad5f727ed2db954deafece2d10803cb651a1"
+        },
+        "es5/input/tex/extensions/verb.js": {
+          "byte_count": 2562,
+          "sha256": "fdaface3c13d4f2a9e3013bf986fca04d63175c69eec99b17705f006a6528dc7"
+        },
+        "es5/tex-svg.js": {
+          "byte_count": 2108580,
+          "sha256": "d4295dc33744836935c1399feece5159577b34c5c8ffb9f1c6324cd82e03a882"
+        }
+      },
+      "integrity": "sha512-Bt+SSVU8eBG27zChVewOicYs7Xsdt40qm4+UpHyX7k0/O9NliPc+x77k1/FEsPsjKPZGJvtRZM1vO+geW0OhGw==",
+      "registry_archive": "https://registry.npmjs.org/mathjax/-/mathjax-3.2.2.tgz",
+      "version": "3.2.2"
+    },
+    "postprocessing": {
+      "files": {
+        "LICENSE.md": {
+          "byte_count": 858,
+          "sha256": "b7650918449bd5fb011ce30ce0e5bcda27aa9639db1fb3aef8c67c32945237f2"
+        },
+        "build/index.js": {
+          "byte_count": 634535,
+          "sha256": "b1111c2a755e2f05ffeed9cccecb16580e3022517d93c56a069673a92bed0b4f"
+        }
+      },
+      "integrity": "sha512-YmH+t74J2X1lwYjKzK/tgs9C9kqWWPB9JwZiDF5mEf4BdCEAmEFbO8lXBA7NM0/j4g+x6FgD/Tt5/kT7ogbEDA==",
+      "registry_archive": "https://registry.npmjs.org/postprocessing/-/postprocessing-6.39.5.tgz",
+      "version": "6.39.5"
+    },
+    "three": {
+      "files": {
+        "LICENSE": {
+          "byte_count": 1081,
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+        },
+        "build/three.core.js": {
+          "byte_count": 1458113,
+          "sha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+        },
+        "build/three.module.js": {
+          "byte_count": 662772,
+          "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+        },
+        "examples/jsm/objects/Sky.js": {
+          "byte_count": 11526,
+          "sha256": "34121b60a3bd9adc004a5a637f6135e9d2b72757eeb9e476ae1988fe2db6a9fb"
+        }
+      },
+      "integrity": "sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA==",
+      "registry_archive": "https://registry.npmjs.org/three/-/three-0.186.1.tgz",
+      "version": "0.186.1"
+    }
+  },
+  "schema_version": 1
+}

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from collections.abc import Mapping, Sequence
+from itertools import product
 
 
 def _validate_candidate(value: Mapping) -> dict:
@@ -87,8 +88,13 @@ def assign_candidates(
             template = _template_identity(candidate)
             if template is not None and template not in fixed_t:
                 owners.setdefault(template, set()).add(candidate['channel'])
-    if all(len(channels) == 1 for channels in owners.values()):
+    shared_owners = {frozenset(channels) for channels in owners.values() if len(channels) > 1}
+    if not shared_owners:
         return _assign_flow(normalized, fixed_c, fixed_t, {})
+    if len(shared_owners) == 1:
+        shared_channels = next(iter(shared_owners))
+        if len(shared_channels) == 2:
+            return _assign_shared_pair(normalized, fixed_c, fixed_t, shared_channels)
 
     # A flow may provisionally reward a shared template once per channel. If
     # that changes the result, re-solve for each possible owner of its bonus.
@@ -116,14 +122,70 @@ def assign_candidates(
     return best
 
 
-def _assign_flow(domains, fixed_channels, fixed_templates, rewards):
+def _assign_shared_pair(domains, fixed_channels, fixed_templates, shared_channels):
+    first, second = sorted(shared_channels)
+
+    def solve(choices):
+        return _assign_flow(choices, fixed_channels, fixed_templates, {},
+                            channel_aliases={second: first})
+
+    def score(result):
+        channels = fixed_channels | {candidate['channel'] for candidate in result}
+        templates = fixed_templates | {
+            identity for candidate in result if (identity := _template_identity(candidate)) is not None
+        }
+        return len(channels), len(templates)
+
+    best = solve(domains)
+    used_channels = fixed_channels | {candidate['channel'] for candidate in best}
+    if shared_channels <= used_channels:
+        return best
+
+    # The merged score is exact for templates. Its channel count is one lower
+    # only when both channels are used. The unrestricted optimum covers the
+    # cases using at most one, so search only for assignments using both.
+    def witnesses(channel):
+        if channel in fixed_channels:
+            return [(None, ())]
+        slots = []
+        for index, domain in enumerate(domains):
+            choices = [candidate for candidate in domain if candidate['channel'] == channel]
+            if len(choices) == len(domain):
+                return [(None, ())]
+            if choices:
+                slots.append((index, choices))
+        return slots
+
+    best_score = score(best)
+    upper = best_score[0] + 1, best_score[1]
+    witness_pairs = product(witnesses(first), witnesses(second))
+    for (first_slot, first_choices), (second_slot, second_choices) in witness_pairs:
+        if first_slot == second_slot:
+            continue
+        constrained = list(domains)
+        if first_slot is not None:
+            constrained[first_slot] = first_choices
+        if second_slot is not None:
+            constrained[second_slot] = second_choices
+        result = solve(constrained)
+        result_score = score(result)
+        if result_score == upper:
+            return result
+        if result_score > best_score:
+            best, best_score = result, result_score
+    return best
+
+
+def _assign_flow(domains, fixed_channels, fixed_templates, rewards, *, channel_aliases=None):
     """Min-cost max-flow with lexicographic source/template rewards."""
+    aliases = channel_aliases or {}
+    fixed_channels = {aliases.get(channel, channel) for channel in fixed_channels}
+    channels = sorted({aliases.get(c['channel'], c['channel']) for d in domains for c in d} | fixed_channels)
     nslots = len(domains); source = 0; next_node = 1
     slot_nodes = list(range(next_node, next_node + nslots)); next_node += nslots
-    template_keys = sorted({(c['channel'], _template_identity(c)) for d in domains for c in d
+    template_keys = sorted({(aliases.get(c['channel'], c['channel']), _template_identity(c)) for d in domains for c in d
                             if c['template_id'] is not None})
     template_nodes = {key: next_node + i for i, key in enumerate(template_keys)}; next_node += len(template_keys)
-    channels = sorted({c["channel"] for d in domains for c in d} | set(fixed_channels))
     channel_nodes = {key: next_node + i for i, key in enumerate(channels)}; next_node += len(channels)
     sink = next_node; graph=[[] for _ in range(sink+1)]
     def add(a,b,cap,cost,tag=None):
@@ -131,8 +193,9 @@ def _assign_flow(domains, fixed_channels, fixed_templates, rewards):
     for i,d in enumerate(domains):
         add(source,slot_nodes[i],1,0)
         for c in d:
-            target = (template_nodes[c['channel'], _template_identity(c)] if c['template_id'] is not None
-                      else channel_nodes[c['channel']])
+            channel = aliases.get(c['channel'], c['channel'])
+            target = (template_nodes[channel, _template_identity(c)] if c['template_id'] is not None
+                      else channel_nodes[channel])
             add(slot_nodes[i],target,1,0, c)
     reward_source=len(domains)+1
     for (channel, template), node in template_nodes.items():

@@ -135,7 +135,7 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
             rows[-1].update({field: template[field] for field in
                              ('min_duration_seconds', 'max_duration_seconds', 'timing_requirements',
                               'variant_capabilities', 'styles', 'broll_variant_keys',
-                              'canonical_template', 'style_origin', 'requires_footage') if field in template})
+                              'canonical_template', 'style_origin', 'cinecode_branches') if field in template})
             if template.get('timing_requirements'):
                 source_text = (Path(project_root) / template['native_source']).read_text(encoding='utf-8')
                 if any(requirement['evidence_quote'] not in source_text
@@ -382,6 +382,10 @@ def _discover_native_candidates(project_root: Path, *, native_rows=None) -> list
     ids = [row["candidate_id"] for row in found]
     if len(ids) != len(set(ids)):
         raise ValueError("B-roll discovery returned duplicate identities")
+    shared_with_cinecode = {r['canonical_template'] for r in found if r.get('style_origin') == 'lemo-opuscar'}
+    for row in found:
+        if row['skill_id'] == 'lemo-opuscar' and row['template_id'] in shared_with_cinecode:
+            row['cinecode_peer'] = True
     return sorted(found, key=lambda row: row["candidate_id"])
 
 
@@ -957,8 +961,8 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
     # A logical item may span several physical segments. It still receives one
     # native route, one matching operation and one source/template reward.
     def semantic_reviews(domain):
-        # Native clock proofs belong to physical parts, not the shared review.
-        return [{key: value for key, value in candidate.items() if key != "native_input_clock"}
+        # Prepared assets and clocks belong to physical parts of the shared review.
+        return [{key: value for key, value in candidate.items() if key not in {"native_input_clock", "cinecode_input"}}
                 for candidate in domain]
 
     grouped, optimistic_grouped, group_order = {}, {}, []
@@ -1185,7 +1189,7 @@ def _validate_partial_windows(selection, director):
 
 
 def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, director=None, treatment=None) -> dict:
-    """Assign reviewed routes, retrying only with draft-local timing exclusions."""
+    """Assign reviewed routes, reusing matches when a local feasibility check fails."""
     from .motion_capabilities import overlay_candidates
 
     beats = [*selection.get("beats", []), *selection.get("overlay_beats", [])]
@@ -1202,12 +1206,17 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
         if selection != treatment.get("skill_selection"):
             raise ValueError("assignment selection differs from the current treatment reviews")
         validate_review_identities(director, treatment, catalog)
-    disabled, clock_checks = set(), {}
+    disabled, feasibility_checks, causes = set(), {}, []
     while True:
-        result = _assign_skills_once(project_root, selection, job_dir=job_dir,
-                                     catalog=catalog, native_skills=native_skills,
-                                     temporarily_disabled=disabled, director=director, treatment=treatment,
-                                     verified_supplements=verified)
+        try:
+            result = _assign_skills_once(project_root, selection, job_dir=job_dir,
+                                         catalog=catalog, native_skills=native_skills,
+                                         temporarily_disabled=disabled, director=director, treatment=treatment,
+                                         verified_supplements=verified)
+        except ValueError as error:
+            if causes and 'no timing-feasible candidate' in str(error):
+                raise ValueError(f'{error}: ' + '; '.join(dict.fromkeys(causes))) from error
+            raise
         failures = []
         optimistic = result.pop("_optimistic_assignments", [])
         for assignment in [*result["assignments"], *result.get("overlay_assignments", []), *optimistic]:
@@ -1217,14 +1226,22 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
                         (assignment["segment_id"], assignment["component_id"]))
             cid = row["candidate_id"]
             check_key = (beat["segment_id"], beat["component_id"], cid)
-            if check_key not in clock_checks:
-                reason = timing_failure(row, beat, strict=partial)
+            if check_key not in feasibility_checks:
                 review = next(c for c in beat["candidates"] if c["candidate_id"] == cid)
+                reason = timing_failure(row, beat, strict=partial)
+                if reason is None and row['skill_id'] == 'cinecode' and review['fit'] != 'unreviewed':
+                    from scripts.cinecode_catalog import validate_material_plan
+                    try:
+                        validate_material_plan(row['template_id'].split('/', 1)[1], review.get('cinecode_input'),
+                            job_dir=job_dir, generation_steps=(treatment or {}).get('generation_plan', {}).get('steps', []),
+                            key=check_key[:2])
+                    except (OSError, ValueError) as error:
+                        reason = f'{beat["segment_id"]}: {cid}: {error}'
                 if reason is None and "native_input_clock" in review:
                     reason = _native_input_clock_failure(row, beat, review,
                         job_dir=job_dir, director=director, treatment=treatment)
-                clock_checks[check_key] = reason
-            reason = clock_checks[check_key]
+                feasibility_checks[check_key] = reason
+            reason = feasibility_checks[check_key]
             if reason:
                 identity = _execution_identity(beat, supplements)
                 failures.append(((identity, row["candidate_id"]), reason))
@@ -1242,6 +1259,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
                     + json.dumps(pending, ensure_ascii=False, sort_keys=True))
             return result
         before = len(disabled)
+        causes.extend(reason for _, reason in failures)
         disabled.update(key for key, _ in failures)
         if len(disabled) == before:
             raise ValueError("B-roll timing assignment exhausted: " + "; ".join(reason for _, reason in failures))
@@ -1396,11 +1414,12 @@ def timing_failure(row: Mapping, beat: Mapping, *, strict=False) -> str | None:
                                    "anidoodle_native_adapter", "sweety_native_adapter", "garden_native_adapter",
                                    "useanimations_native_adapter"}:
         raise ValueError("Native timing contract is unknown: " + str(module))
-    if minimum is None and maximum is None and not strict:
+    if minimum is None and maximum is None and not strict and row.get('skill_id') != 'cinecode':
         return None
     seconds = _duration(beat)
     frames = round(seconds * 24)
-    if abs(seconds * 24 - frames) > 1e-6:
+    if (abs(seconds * 24 - frames) > 1e-6 or row.get('skill_id') == 'cinecode'
+            and (frames < 1 or any(abs(beat[k] * 24 - round(beat[k] * 24)) > 1e-6 for k in ('start', 'end')))):
         return f"{beat['segment_id']}: {row['candidate_id']} needs an exact 24fps window"
     if minimum is not None and frames < minimum * 24:
         return (f"{beat['segment_id']}: {row['candidate_id']} has {seconds:.3f}s but needs "
@@ -1523,5 +1542,6 @@ def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *
             raise ValueError("B-roll binding does not execute the selected native candidate")
     return {"status": "pass", "planned_inputs": sorted(planned), "assignments": computed["assignments"],
             "overlay_assignments": computed["overlay_assignments"],
+            "diversity_review": computed["diversity_review"],
             "history_note": selection["history_note"],
             "recent_context": selection.get("recent_context", [])}

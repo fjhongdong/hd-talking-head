@@ -23,12 +23,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "必须使用实际档案扫描或翻拍，注明馆藏记录和使用来源；不以生成素材冒充档案。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -96,7 +97,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -164,7 +165,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -232,7 +233,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -299,7 +300,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -367,7 +368,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -435,7 +436,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -503,7 +504,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -569,7 +570,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -583,7 +584,15 @@
           "机械运转",
           "部件啮合",
           "工序推进",
-          "微距跟拍"
+          "微距跟拍",
+          "扫码分流",
+          "自动分流",
+          "流转分流",
+          "抓取交接",
+          "机构联动",
+          "定位装配",
+          "检测判定",
+          "加工成形"
         ],
         "feelings": [],
         "patterns": [
@@ -638,7 +647,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -706,7 +715,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -769,12 +778,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "数据须来自已发布统计或用户实际数据，保留单位和来源。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -842,7 +852,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -910,7 +920,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -978,7 +988,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1046,7 +1056,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1114,7 +1124,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1182,7 +1192,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1250,7 +1260,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1318,7 +1328,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1386,7 +1396,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1454,7 +1464,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1517,12 +1527,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "必须使用实测点云或该点云导出的数据，不能用虚构点作为证据。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1589,7 +1600,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1656,7 +1667,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1719,12 +1730,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "根据真实产品资料重画界面，控件、操作和术语应与实际产品相符。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1792,7 +1804,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1860,7 +1872,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1923,12 +1935,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "必须使用实际显微图或整片扫描；量值依据图像元数据，不能用生成图替代。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -1996,7 +2009,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2064,7 +2077,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2132,7 +2145,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2200,7 +2213,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2268,7 +2281,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2336,7 +2349,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2404,7 +2417,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2472,7 +2485,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2540,7 +2553,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2603,12 +2616,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "必须使用实际地点的卫星或航空影像，并使用真实地理坐标与来源。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2677,7 +2691,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2745,7 +2759,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2812,7 +2826,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2880,7 +2894,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -2948,7 +2962,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3016,7 +3030,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3084,7 +3098,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3151,7 +3165,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3221,7 +3235,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3284,12 +3298,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "采用实际工程文件，或按已发布尺寸制作并明确标注为示意模型。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3357,7 +3372,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3425,7 +3440,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3493,7 +3508,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3555,12 +3570,12 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
-        "需要本镜已有获授权的全屏视频。花字是反应文字，母片原口播字幕继续保留。",
+        "可使用授权视频、授权照片或原生绘制的整屏底图，花字是反应文字，母片保留口播字幕。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3569,7 +3584,7 @@
         "vendor/cinecode/styles/variety-captions.md": "e3bfc4646bbbd2982588421193932e6749bdf3cac1a782740076ba0dfbef1005"
       },
       "reviewed_version": "2.0.0",
-      "summary": "在获授权的全屏实拍素材上，以弹跳粗描边花字、爆炸框、汗滴或闪光表现关键反应。",
+      "summary": "在视频、照片或原生绘制的整屏底图上，以弹跳粗描边花字、爆炸框、汗滴或闪光表现关键反应。",
       "tags": {
         "actions": [
           "花字弹跳",
@@ -3589,7 +3604,7 @@
           "全屏素材"
         ],
         "subjects": [
-          "授权全屏实拍",
+          "全屏底图",
           "综艺花字",
           "表情符号"
         ]
@@ -3626,7 +3641,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3695,7 +3710,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3764,7 +3779,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3827,12 +3842,13 @@
         "references/cinecode-template-catalog.json"
       ],
       "limitations": [
+        "实际地点的建筑体量须来自真实地理或建筑数据。",
         "沿用同源风格的核心动作与材质语法；构图、镜头调度与实际画面由 CineCode 针对本镜创作。",
         "仅用于整屏无声 B-roll。需要透明叠加的画面使用有透明输出的路线。"
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3900,7 +3916,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -3968,7 +3984,7 @@
       ],
       "reviewed_sources": {
         "references/cinecode-native-source.json": "b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54",
-        "references/cinecode-template-catalog.json": "354a5b4e63c576a9105acb97c25ae1f6dc001897440f20c3eb107c4834c587d0",
+        "references/cinecode-template-catalog.json": "332cf657d51d61883a9b78e7ce3ecf8a26a082c09e8708093a6d5d6d35304dd7",
         "vendor/cinecode/SKILL.md": "55d3e01fcce0fc5943cea850c1680cbe99bfc5eb45876b511a7d695fd89b6cae",
         "vendor/cinecode/references/looks.md": "e38c20e1e73395049be47a0f45355eb47ec0bee794523637f27fe1c8b1f05be4",
         "vendor/cinecode/references/quick-mode.md": "1c80d9a78533b769ab7ec4e396b96d80f7008357d91fb806a17bb20a87db9ace",
@@ -27507,8 +27523,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t1_3b1b.md": "23fc11ea77a5f14b34768398f61240787e459debeac8f3fd5109f6ea5e43d827",
@@ -27588,8 +27604,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t2_keynote_ui.md": "0e2779a2e755f0513a8ac025482e542a4d873b02f0b00f0e908216e26d5a9625",
@@ -27668,8 +27684,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t3_finance_chart.md": "ea1e21c49b50653ad48d0bd4ab0d1b1e88a698ccfbfd8e257c7e8f767adf2c20",
@@ -27747,8 +27763,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y1_kurzgesagt.md": "a859f871f717c0017b4e4520f4c2760a7719784b54d92de37afb12e1967717a8",
@@ -27826,8 +27842,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y2_vox.md": "9d651c95263c2cf42a63350b42a4e887efb0cded06f697c3498484e294e26ad4",
@@ -27907,8 +27923,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y3_whiteboard.md": "f2fda7768034d94928982193965f225a3c85a850eaf28f3f28459e85dbe0773d",
@@ -27987,8 +28003,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y4_storytime.md": "b3c7ed7af47734bc5ca8465082ef3aa1e55d0d64c225d21cca34180e0dd000ae",
@@ -28064,8 +28080,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y5_kinetic_type.md": "97b200e68231d71cd10cf3f1027b4db36e99ce9a06004891d644994883bb15e2",
@@ -28143,8 +28159,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/01_cave.md": "ebdb5fc8f9a57d947ef3a325bfdaf275cbd906e36010945e05c7d2e7ef1f4d2c",
@@ -28209,8 +28225,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/02_egypt.md": "a3097d1936d0e482a56a9745e31f3ba9a508aa2db50fbbefba4d97cc4d481ebb",
@@ -28275,8 +28291,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/03_greek.md": "0caa761151cd76d1a31390f602dc6bc131dba745c6244a2b12ba037697077b50",
@@ -28341,8 +28357,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/04_roman.md": "4066fc1b3edfaa7ad4494646df5c6bef0a79d77cb0326d7487b2f833fbb2a81d",
@@ -28407,8 +28423,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/05_gothic.md": "2c33750ee754673f87828f1755c14d4c893cd0483e96ceb02fe8f0f33c3a440b",
@@ -28473,8 +28489,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/06_renaissance.md": "2fd2589f538747b7c2a178def2441e432a3ecc7bc5aee8e3a1f82c7a79792cc6",
@@ -28539,8 +28555,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/08_impressionism.md": "dd353d6e2ff550c3601a20bd529c8908118b4453d12b009e1e82761aa1822b65",
@@ -28605,8 +28621,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/09_postimp.md": "20aebeaf193cb1ac960c73e70a289e52f6a939949ce558ec06f7d816311fdd0a",
@@ -28671,8 +28687,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/10_nouveau.md": "ed5a38a201c7d4c69473a662d2e17b8a7081d09cdd2fcbeb57575da7bef3cc64",
@@ -28737,8 +28753,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/11_cubism.md": "0ab951ff470aa6bf6a001fe4bdd51d02367f03754a94f0dc443d27351a9aa6ba",
@@ -28803,8 +28819,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/12_bauhaus.md": "729623cbc414f11d1c1629dcae0d1e64452acd7fdfc5c07bd41f44149f13c59d",
@@ -28869,8 +28885,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/13_pop.md": "01e334a4b76ebfd0c71fa6997acafc6d02929498998f99e4544689bd5fb43913",
@@ -28935,8 +28951,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/14_8bit.md": "fa237f81d76cea3dae16929093814b92399829e33175aae3d26bd4cec39b6569",
@@ -29001,8 +29017,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/15_raytrace.md": "44498145e8b99156b2ee36446444424322f0ed6ee2e0384f34ff242fe89f68b1",
@@ -29067,8 +29083,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/16_2026.md": "4dfc199bdb1ed0b1fdc3ed9108bd5eb2e8078fdbb4de0e0bb5d00c6ba73f31f1",
@@ -29133,8 +29149,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/17_ink.md": "67f396530a9032b523151f649d0d8398562ff9f6acede3ef4aab85c831d2c032",
@@ -29199,8 +29215,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/18_klimt.md": "c4e96a0f531b8157e05592379a152a85a41acf2718f77883ce872e04865dfef9",
@@ -29265,8 +29281,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/19_munch.md": "8c629e8bd02fb82c3355c37fe040c863f067827fde269d91ac7ab97bc118939e",
@@ -29331,8 +29347,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/20_dunhuang.md": "3a5911346899c0f19cc5bee74bc4e8b4b1ffc9ae1c603a8a48b8277596057568",
@@ -29397,8 +29413,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/21_kusama.md": "f39173eb8e80dba26fcdf822a60bb5cd0da2678d8efa4a8b2d19cbb2e1468a4a",
@@ -29463,8 +29479,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/22_constructivism.md": "ff4adc806f0bf39d86136d805ef8e2cc48026fbcec3731fae22477fdafac846d",
@@ -29529,8 +29545,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/23_dali.md": "facf3f033d5dbe42ab663860490a32920423fc5950ddcabf5f44bf81b49b3f2f",
@@ -29595,8 +29611,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/24_hopper.md": "fd19a530f9e0544d74e7eee40a88c01fa7f675ae94d9cacf2e5af4e214c64c63",
@@ -29661,8 +29677,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/25_ghibli.md": "d094be1b497fd9635ef802f1997878696db98cfbc07ff81dd7bbc50442bf0a17",
@@ -29727,8 +29743,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/26_vaporwave.md": "30cf8e825125ff74f02bff93b975a74c96ceae9df09fae06fd7ef887fb64ec44",
@@ -29793,8 +29809,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/27_kirby.md": "e64b8a69ce706311b1e81aa7d0756c7d7390b2b3f84a17f18b67c3193bce2408",
@@ -29859,8 +29875,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/28_monet.md": "61b2bf9da6044e44ea0fa4758b3c380be8e60cfb72e2907e5afbbaa0c00d3513",
@@ -29925,8 +29941,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/29_seurat.md": "2c50cfb11d3bcb83b50b946126e1c0ba76f9fc3b94eab055023eea2880440f84",
@@ -29991,8 +30007,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/30_matisse.md": "4da4fb6d6828fa529e2827d20bf0c4e45822427348db42b7016ca4bdc336c60b",
@@ -30057,8 +30073,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/31_haring.md": "adcf02ce8c7dd9446e79e3393f61c411335c6f1734d584f3389f64283c5ab30b",
@@ -30123,8 +30139,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/32_rembrandt.md": "383f5953f5b61249c5735fef4e31f0ed05148a7ec038f580bf39ddf7dc6ba7f7",
@@ -30189,8 +30205,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/33_rubberhose.md": "c99886da03aa74351d78695641b403c92f5f9ab4b242feb2be45d8b8a7da9617",
@@ -30255,8 +30271,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/34_shadowpuppet.md": "6cd4f9a090bff6d325695e8e4656ad041871f2ff0418b4eab1a46d51bd7d7609",
@@ -30321,8 +30337,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/35_shinkai.md": "b327bf36ef2edc246576cbfb8f1f1857c52600691adbd651efbb1eeb75e7a554",
@@ -30387,8 +30403,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/15-跨场景风格提炼.md": "377920a1eb20da5d90bfd7af3f31fc2183b193cac2558d3f828afbf6bc5ad645",
         "vendor/huashu-art-motion/references/风格配方/36_picasso_blue.md": "7578a99b0dc416414eb2cfd5c6aa9055ded387531bfde65fd5c1f17f22e4404a",
@@ -39038,8 +39054,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t1_3b1b.md": "23fc11ea77a5f14b34768398f61240787e459debeac8f3fd5109f6ea5e43d827",
@@ -39119,8 +39135,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t2_keynote_ui.md": "0e2779a2e755f0513a8ac025482e542a4d873b02f0b00f0e908216e26d5a9625",
@@ -39199,8 +39215,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/t3_finance_chart.md": "ea1e21c49b50653ad48d0bd4ab0d1b1e88a698ccfbfd8e257c7e8f767adf2c20",
@@ -39278,8 +39294,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y1_kurzgesagt.md": "a859f871f717c0017b4e4520f4c2760a7719784b54d92de37afb12e1967717a8",
@@ -39357,8 +39373,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y2_vox.md": "9d651c95263c2cf42a63350b42a4e887efb0cded06f697c3498484e294e26ad4",
@@ -39438,8 +39454,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y3_whiteboard.md": "f2fda7768034d94928982193965f225a3c85a850eaf28f3f28459e85dbe0773d",
@@ -39518,8 +39534,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y4_storytime.md": "b3c7ed7af47734bc5ca8465082ef3aa1e55d0d64c225d21cca34180e0dd000ae",
@@ -39595,8 +39611,8 @@
       "reviewed_sources": {
         "references/huashu-art-motion-native-source.json": "eed5edcb8df822fcf20b72562b930384a10f5a21fb02fa5513f4483f20d28ad0",
         "references/huashu-art-motion-template-catalog.json": "b28263b89b1947cc1267c3af257937300eb6182518042e808459d697d895fb6d",
-        "scripts/motion_native_runtime.py": "cb5032b00937b48cef52cd7ad827efa56fcfa82f8bf81934f274df9c59f626c3",
-        "scripts/motion_native_skill_adapter.py": "06ca7aeb27c52ce1170a9e8d20a129a93399ebd771edd46a0b22da70eced2b0e",
+        "scripts/motion_native_runtime.py": "e500d036924f5e21199bf20174670c84ef811c5ef907f16285c4497121382ab3",
+        "scripts/motion_native_skill_adapter.py": "3c3661509e32475f1f2b9a93ebf66ae3fa27c847c31b1b451af802059bc28a12",
         "vendor/huashu-art-motion/SKILL.md": "df73e57c621425a82670ea74c68e8516d02553cf77cfe41c5f55883c542afb0a",
         "vendor/huashu-art-motion/references/09-视频动画语法.md": "2a2e3256fc5dd2ba1e0c96312e0fa63299ff3a5f0bb9d1bcf84539af902a26e1",
         "vendor/huashu-art-motion/references/动画语法/y5_kinetic_type.md": "97b200e68231d71cd10cf3f1027b4db36e99ce9a06004891d644994883bb15e2",

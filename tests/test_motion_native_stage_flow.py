@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 import _env
 import motion_native_skill_adapter as native
@@ -36,6 +37,14 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             raise ValueError('Native sample inputs and outputs must stay outside the Skill package')
         case_root=self.samples/'source-case'
         self.case=json.loads((case_root/'case.json').read_bytes())
+        if self.case.get('exercise_explicit_routes'):
+            original_constraint=motion_match_cache._constraint_refs
+            def validate_constraint(review, *args, **kwargs):
+                # This fixture exercises specific approved routes after matching. A
+                # fixture preference supplies no evidence of a competing route's limits.
+                if review.get('reason') != '隔离技术样片要求使用为本镜准备的指定原生配方':
+                    return original_constraint(review,*args,**kwargs)
+            self.enterContext(patch.object(motion_match_cache,'_constraint_refs',validate_constraint))
         from initialize_video_job import initialize_video_job
         from edit.hd.tools import startup
         import dependency_preflight
@@ -141,6 +150,19 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             b['task_source']={'semantic_row_id':rowid,'quote':quote,'semantic':b['semantic_goal'],
                 'required_change':case['required_change'],'component_brief':component['brief']}
             b['native_options']=case['native_options']
+            declaration=copy.deepcopy(case.get('cinecode_input'))
+            if declaration is not None:
+                b['cinecode_material_branch']=declaration['branch']
+                material_path=declaration.pop('material_path',None)
+                if material_path is not None:
+                    original=self.samples/'source-case'/case['source_project']/material_path
+                    approved=root/'fixture-materials'/sid/original.name
+                    approved.parent.mkdir(parents=True)
+                    shutil.copyfile(original,approved)
+                    material=native.descriptor(root,approved)
+                    declaration['material']=material
+                    b['materials']=[material]
+                case['prepared_cinecode_input']=declaration
             if dependency in {'mg-styles-15','video-shotcraft','bb-video','cinecode'}:
                 b['template_request'].update(semantic_family='process',information_units=2)
             b['source_binding']={'aroll_sha256':native.sha(arroll),'segment_id':sid,'start':start,'end':end}
@@ -191,10 +213,13 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 'reason':'隔离技术样片要求使用为本镜准备的指定原生配方', 'visual_pattern':'native-'+beat['segment_id'],
                 'design_plan':design,
                 **({'rejection_basis': 'semantic', 'constraint_refs': {'requirement': 'semantic', 'capability': 'summary'}}
-                   if isolated and item['candidate']['candidate_id'] != wanted else {})}
+                   if isolated and item['candidate']['candidate_id'] != wanted else {}),
+                **({'cinecode_input':selected['prepared_cinecode_input']}
+                   if item['candidate']['candidate_id'] == wanted and 'prepared_cinecode_input' in selected else {})}
                 for item in cached[key]['matches']]
         bind_review_fixture(treatment, cached)
-        treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root)
+        treatment['skill_selection']=broll_skill_selection.assign_skills(
+            _env.PROJECT,treatment['skill_selection'],job_dir=root,director=director,treatment=treatment)
         self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['assignments']],
             [c['dependency_id'] for c in self.case['segments'] if c['dependency_id']!='barty-motion-graphics'])
         self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['overlay_assignments']],
@@ -303,7 +328,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                 '-show_streams', '-of', 'json', str(preview)], text=True))
             self.assertEqual({stream['codec_type'] for stream in metadata['streams']}, {'video', 'audio'})
             artifacts.write_json_artifact(self.root/'stage-smoke-result.json', {
-                'scope':'selected native routes through the parent preview',
+                'scope':'explicitly chosen native routes through the parent preview',
                 'input_provenance':self.case['input_provenance'], 'native_results':native_results,
                 'preview':str(preview), 'numbered_rows':numbered, 'manual_acceptance_performed':False})
             print('Native stage smoke completed:',self.root/'stage-smoke-result.json',flush=True)

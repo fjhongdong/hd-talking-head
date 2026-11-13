@@ -1228,6 +1228,20 @@ def _review_text(plan: dict[str, object], reviewed_visual_text: list[dict[str, s
         motion_review = skill_selection.get("motion_review") or {}
         checks = {(c.get("segment_id"), c.get("component_id")): c
                   for c in motion_review.get("checks", [])}
+        if any(a.get('skill_id') == 'cinecode' for a in skill_selection.get('assignments', [])):
+            from .broll_skill_selection import _template_identity, source_channel
+            assignments = [*skill_selection.get('assignments', []), *skill_selection.get('overlay_assignments', [])]
+            channels = {source_channel(a['skill_id']) for a in assignments}
+            templates = {}
+            for a in assignments:
+                identity = _template_identity(a)
+                if identity:
+                    templates.setdefault(identity, set()).add(source_channel(a['skill_id']))
+            lines += [f'动效实际使用：{len(channels)} 个渠道、{len(templates)} 个去重模板（直接素材不计模板）。', '']
+            lines.extend('同源调用：' + template + ' ← ' + '、'.join(sorted(owners))
+                         for (_, template), owners in sorted(templates.items()) if len(owners) > 1)
+            if any(len(owners) > 1 for owners in templates.values()):
+                lines.append('')
         supplements = {(r['segment_id'], r['action_component_id']): r['base_component_id']
                        for r in skill_selection.get('native_supplements', [])}
         ordered = sorted(plan["segments"], key=lambda s: (s["start"], s["segment_id"]))
