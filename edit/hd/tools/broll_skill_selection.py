@@ -134,7 +134,8 @@ def motion_native_candidates(project_root: Path) -> list[dict]:
                     'Review this scene and freeze its actual native result before production']})
             rows[-1].update({field: template[field] for field in
                              ('min_duration_seconds', 'max_duration_seconds', 'timing_requirements',
-                              'variant_capabilities', 'styles', 'broll_variant_keys') if field in template})
+                              'variant_capabilities', 'styles', 'broll_variant_keys',
+                              'canonical_template', 'style_origin', 'requires_footage') if field in template})
             if template.get('timing_requirements'):
                 source_text = (Path(project_root) / template['native_source']).read_text(encoding='utf-8')
                 if any(requirement['evidence_quote'] not in source_text
@@ -420,6 +421,8 @@ def canonical_identity(row: Mapping) -> tuple[str, str | None]:
     if not row.get("template_id"):
         return channel, None
     template = row.get("source_route") or row["template_id"]
+    if channel == 'cinecode':
+        template = row.get('canonical_template', template)
     if channel == "video-talkcraft":
         template = _TALKCRAFT_TEMPLATE_ALIASES.get(template, template)
     return channel, template
@@ -432,8 +435,10 @@ def source_channel(skill_id):
 
 def _template_identity(row):
     """Count a registered template equally, including native creation styles."""
-    identity = canonical_identity(row)
-    return identity if identity[1] is not None else None
+    channel, template = canonical_identity(row)
+    if channel == 'cinecode' and template is not None:
+        channel = template.split('/', 1)[0]
+    return (channel, template) if template is not None else None
 
 
 def approved_creative_identity(job, generation, *, segment_id, component_id):
@@ -473,7 +478,8 @@ def approved_creative_identity(job, generation, *, segment_id, component_id):
         _text(assignment.get(field), "approved " + field)
     # source_route distinguishes registered cards that share a wrapper ID.
     return ({field: assignment[field] for field in ("skill_id", "template_id", "candidate_id")}
-            | ({"source_route": assignment["source_route"]} if assignment.get("source_route") else {}))
+            | {field: assignment[field] for field in ('source_route', 'canonical_template')
+               if assignment.get(field)})
 
 
 def fixed_identity(row, *, job_dir=None):
@@ -967,7 +973,8 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
             raise ValueError("parts of one semantic visual item must share the same candidate reviews")
     def normalize(groups):
         return [[{**choice, "channel": source_channel(pool[choice["candidate_id"]]["skill_id"]),
-                  "template_id": canonical_identity(pool[choice["candidate_id"]])[1]}
+                  "template_id": canonical_identity(pool[choice["candidate_id"]])[1],
+                  "template_identity": _template_identity(pool[choice["candidate_id"]])}
                  for choice in groups[identity]] for identity in group_order]
     normalized = normalize(grouped)
     fixed_channels = tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity})
@@ -983,8 +990,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
             fixed_channels=fixed_channels, fixed_templates=fixed_templates)
     def score(choices):
         return (len(set(fixed_channels) | {c["channel"] for c in choices}),
-                len(set(fixed_templates) | {(c["channel"], c["template_id"]) for c in choices
-                                            if c["template_id"] is not None}))
+                len(set(fixed_templates) | {c['template_identity'] for c in choices if c['template_identity']}))
     lower = score(exact) if exact is not None else None
     upper = score(optimistic)
     if lower != upper:
@@ -1132,8 +1138,9 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
             for key in ("skill_id", "entrypoint", "template_id", "role", "limitations")},
          "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
         | ({"design_plan": copy.deepcopy(choice["design_plan"])} if "design_plan" in choice else {})
-        | ({"source_route": pool[choice["candidate_id"]]["source_route"]}
-           if pool[choice["candidate_id"]].get("source_route") else {})
+        | {field: pool[choice['candidate_id']][field] for field in ('source_route', 'canonical_template')
+           if pool[choice['candidate_id']].get(field) and
+           (field != 'canonical_template' or pool[choice['candidate_id']]['skill_id'] == 'cinecode')}
         for beat, choice in zip(beats, chosen)
     ]
     result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]

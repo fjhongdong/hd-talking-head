@@ -615,6 +615,7 @@ _NATIVE_MODULES = {
     'barty-motion-graphics': ('motion_native_skill_adapter', 'python'),
     'bang-motion': ('motion_native_skill_adapter', 'python'),
     'mg-styles-15': ('motion_native_skill_adapter', 'python'),
+    'cinecode': ('motion_native_skill_adapter', 'python'),
     'video-shotcraft': ('motion_native_skill_adapter', 'python'),
     'bb-video': ('motion_native_skill_adapter', 'python'),
     'video-talkcraft': ('talkcraft_skill_adapter', 'python'),

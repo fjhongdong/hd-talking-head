@@ -38,7 +38,7 @@ def package_files(root: Path, *, _directories: set[Path] | None = None) -> dict[
         index = json.loads(source_index.read_text())
         for entry in index.get("repositories", []):
             name = entry.get("path")
-            if name not in {"vendor/mg-styles-15", "vendor/video-shotcraft", "vendor/bb-video", "vendor/DataMagic",
+            if name not in {"vendor/mg-styles-15", "vendor/cinecode", "vendor/video-shotcraft", "vendor/bb-video", "vendor/DataMagic",
                             "vendor/anidoodle", "vendor/sweety-handdraw-video", "vendor/lemo-opuscar",
                             "vendor/garden-skills", "vendor/react-useanimations"}:
                 continue

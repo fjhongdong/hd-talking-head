@@ -18,6 +18,7 @@ import shutil
 import signal
 import subprocess
 import sys
+from urllib.parse import quote, unquote, urlsplit
 
 if __name__ == '__main__' and Path(__file__).name == '<stdin>':
     bootstrap = argparse.ArgumentParser(add_help=False)
@@ -48,6 +49,8 @@ SOURCES.update({
                         '9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2'),
     'bb-video': ('bb-video', 'a21025a19d382b066ff354d877919be9d6863f97',
                  '677750498dfb7d1f3ef7b297f4904da1fe230ef24087b88df0f1ef5d0ca4e1b9'),
+    'cinecode': ('cinecode', 'c8a3e7552699360a2b0142c9620882af2069eedb',
+                 'b379d9ac442f32f4edd8b1f788802146b12baef39a0ae19d96c3a19996916f54'),
 })
 
 def primary_renderer(dependency_id):
@@ -60,6 +63,8 @@ def _execution_job(job_dir):
 
 
 BARTY_TEMPLATES = {'motion-broll', 'explainer-default', 'explainer-engaging', 'explainer-high-energy'}
+CINECODE_BROWSER_FLAGS = ('--proxy-server=http://127.0.0.1:9 '
+                          '--proxy-bypass-list=<-loopback> --disable-background-networking')
 
 
 def relative(value):
@@ -135,6 +140,9 @@ def source_root(project=PROJECT, *, dependency_id):
 
 def load_template_catalog(project=PROJECT, *, dependency_id):
     source_root(project, dependency_id=dependency_id)
+    if dependency_id == 'cinecode':
+        from scripts.cinecode_catalog import load_template_catalog as load_cinecode_catalog
+        return load_cinecode_catalog(project)
     name = SOURCES[dependency_id][0]
     catalog = json.loads((Path(project) / 'references' /
                           (name + '-template-catalog.json')).read_bytes())
@@ -143,13 +151,19 @@ def load_template_catalog(project=PROJECT, *, dependency_id):
     return [{'candidate_id': identity, **row} for identity, row in catalog['execution'].items()]
 
 
-def _template(brief, project=PROJECT):
+def _selected_template(brief, rows):
     dependency = brief['dependency_id']
-    rows = load_template_catalog(project, dependency_id=dependency)
     identity = dependency + ':' + dependency + '/' + brief['template_id']
     selected = next((row for row in rows if row['candidate_id'] == identity), None)
     if selected is None:
         raise ValueError('Unknown original native motion template')
+    return selected
+
+
+def _template(brief, project=PROJECT):
+    dependency = brief['dependency_id']
+    rows = load_template_catalog(project, dependency_id=dependency)
+    selected = _selected_template(brief, rows)
     if selected.get('production_eligible') is False:
         raise ValueError('This native route is outside the current qualified portrait output: ' + brief['template_id'])
     duration = brief['composition']['frames'] / brief['composition']['fps']
@@ -178,6 +192,8 @@ def _template(brief, project=PROJECT):
             raise ValueError('Unknown original BB Video workflow option')
         if len(brief['native_options']) > 1:
             raise ValueError('BB Video requires one native workflow for the selected style')
+        return source_root(project, dependency_id=dependency)
+    if dependency == 'cinecode':
         return source_root(project, dependency_id=dependency)
     if dependency == 'video-shotcraft':
         if any(option not in {style['key'] for style in selected.get('styles', [])} for option in brief['native_options']):
@@ -263,6 +279,8 @@ def validate_brief(payload, *, dependency_id=None):
     if (not isinstance(brief['materials'], list) or not isinstance(brief['authorization'], dict)
             or not isinstance(brief['word_anchors'], list) or not brief['word_anchors']):
         raise ValueError('Native motion requires real inputs, word times and resource authorization')
+    if (brief['dependency_id'], brief['template_id']) == ('cinecode', 'variety-captions') and not brief['materials']:
+        raise ValueError('CineCode variety-captions requires authorized footage in the approved materials')
     for word in brief['word_anchors']:
         if (not isinstance(word, dict) or set(word) != {'text', 'start', 'end'}
                 or not isinstance(word['text'], str) or not word['text']
@@ -303,7 +321,9 @@ def approved_task(brief):
 
 def _inputs(root, brief):
     from native_result_reuse import inspect_inputs
-    return inspect_inputs(PROJECT, root, brief, _check_inputs)
+    inspect_inputs(PROJECT, root, brief, _check_inputs)
+    if (brief['dependency_id'], brief['template_id']) == ('cinecode', 'variety-captions'):
+        return _cinecode_footage(root, brief)
 
 
 def _check_inputs(root, brief):
@@ -316,6 +336,33 @@ def _check_inputs(root, brief):
     if (len(data['streams']) != 1 or data['streams'][0].get('codec_type') != 'audio'
             or abs(float(data['format']['duration']) - brief['composition']['frames'] / 24) > 1 / 24):
         raise ValueError('Native motion speech must be the approved scene audio clip')
+
+
+def _cinecode_footage(root, brief):
+    from native_result_reuse import input_probe
+    ffprobe = shutil.which('ffprobe') or 'ffprobe'
+    footage = set()
+    for record in brief['materials']:
+        material = path(root, record['job_path'])
+        probe = input_probe(lambda: subprocess.run([ffprobe, '-v', 'error', '-select_streams', 'V',
+            '-show_entries', 'stream=codec_type,duration:format=duration', '-of', 'json', str(material)],
+            capture_output=True, text=True, timeout=15))
+        if probe.returncode:
+            continue
+        media = json.loads(probe.stdout)
+        # Stills and attached cover art are not an approved moving footage layer.
+        if any(stream.get('codec_type') == 'video' and
+               (stream.get('duration') or media.get('format', {}).get('duration')) not in {None, 'N/A', '0.000000'}
+               for stream in media['streams']):
+            footage.add((record['sha256'], record['byte_count']))
+    if not footage:
+        raise ValueError('CineCode variety-captions requires a real video stream in the approved materials')
+    return footage
+
+
+def _verify_cinecode_footage(footage, frozen_files):
+    if not any((item['sha256'], item['byte_count']) in footage for item in frozen_files):
+        raise ValueError('CineCode variety-captions must freeze a Job project copy of its approved video footage')
 
 
 def check_selected_template_dependencies(job, director, treatment):
@@ -390,8 +437,7 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source, def
                    for field in ('semantic_row_id', 'quote', 'semantic'))):
         raise ValueError('Native motion task differs from confirmed binding')
     _inputs(job.job_dir, brief)
-    selected = next(row for row in load_template_catalog(dependency_id=brief['dependency_id'])
-                    if row['candidate_id'] == brief['dependency_id'] + ':' + brief['dependency_id'] + '/' + brief['template_id'])
+    selected = _selected_template(brief, load_template_catalog(dependency_id=brief['dependency_id']))
     original_skill = PROJECT / selected['skill_path']
     action = {'action': 'execute_native_skill', 'dependency_id': brief['dependency_id'],
             'native_template': selected,
@@ -421,6 +467,13 @@ def native_task(job, recipe, component, brief_path, *, approved_task_source, def
         action['native_usage_contract'] = {'card_id': 'original Huashu grammar/style/scene template id',
             'variant': None, 'purpose': 'actual use in this task',
             'implementation_refs': 'descriptors of the actual authored spec, eras/scenes or treatment frozen in the render call'}
+    if brief['dependency_id'] == 'cinecode':
+        action['native_usage_contract'] = {'card_id': brief['template_id'], 'variant': None,
+            'purpose': 'actual use of the approved CineCode look or recipe in this scene',
+            'implementation_refs': 'descriptors of the actual authored HTML or JavaScript frozen in the render call'}
+        action['capture_argv'] = [runtime.get('tools', {}).get('node', '<runtime.tools.node>'),
+            str(root / 'scripts/capture.mjs'), '--url', 'film.html', '--params', 'w=1080&h=1920',
+            '--flags', CINECODE_BROWSER_FLAGS, '--video', 'out/native.mp4']
     if defer_runtime:
         action['native_preparation_runtime'] = preparation_runtime
         action['next'] = ('Before native execution, use runtime.check_argv for an already prepared environment; '
@@ -449,6 +502,16 @@ def native_workflow_instructions(brief):
         return shared + ('MG has no SKILL.md: read README.md, the full selected prompts/*.md, its native source demo and rubric.md. Follow treatment → cue sheet → key-frame inspection → native motion → final render → honest critique. Replace creative seed and output specifications for this task; retain every selected signature feature. Omit soundtrack because this parent requires silent B-roll. Copy harness/render.mjs verbatim into project_directory/harness/render.mjs; link project_directory/node_modules to runtime.node_modules. Author scene/index.html with window.DEMO={width:1080,height:1920,fps:24,duration:<approved seconds>}, deterministic window.renderAt(t), window.__ready=true. For the 3d-render style follow its full Blender source workflow and render assets before the native browser compositor; missing Blender stops that selected style. Call capture_render with [node,harness/render.mjs,scene,--out,out/native.mp4,--w,1080,--h,1920,--fps,24,--duration,<seconds>,--workers,1,--noaudio]. Do not substitute an unrelated helper or copy an old film.')
     if brief['dependency_id'] == 'video-shotcraft':
         return shared + ('Read SKILL.md, selected recipe card (or template/TEMPLATE.md for ink-press), gallery/api/library.json and the exact demo TSX specified by the recipe. The complete native_catalog is available: the native workflow may select complementary cards, camera, transition and rhythm components for this task, preserving the approved primary template and native_options. Read every actually used card and its exact demo; preserve tuned motion and explicit action/hold budgets at their original fps. Use native single-shot mode for a selected card; use the full original multi-shot workflow for ink-press. Follow native requirements for authentic materials, visual direction, frame inspection and final review. Build the current task Remotion project with src/index.ts, a NativeScene composition at 1080x1920, 24fps and the approved frame count. Link node_modules to runtime.node_modules. Render via the original @remotion/cli/remotion-cli.js render src/index.ts NativeScene out/native.mp4 --codec=h264 --pixel-format=yuv420p --color-space=bt709 --image-format=png --muted --concurrency=1 --browser-executable=<runtime.browser> --bundle-cache=false; pass this exact argv to capture_render. Disable the original optional bundle cache so build products never enter the frozen authored project. In publish_completed native_usage list every actual original card/variant, its purpose and frozen implementation_refs; only the selected primary template counts in parent selection. Do not count sample variants or complementary cards as extra templates or substitute an unchanged demo for current-task creation.')
+    if brief['dependency_id'] == 'cinecode':
+        return shared + ('Read the selected native_instructions and follow the original CineCode picture workflow: '
+            'plan the shot, test the intended look in a still, inspect motion and readability, then render the approved '
+            'picture-only scene. Keep the parent narration and subtitle safe areas. Author the chosen look or recipe '
+            'into a local Quick film.html or Film engine page exposing READY and captureFrame(i), with the approved '
+            'portrait dimensions, fps and exact frame count. Freeze licensed assets, fonts and optional browser modules '
+            'as regular local Job project files. Use the provided capture_argv with the actual runtime.tools.node '
+            'and the current local page, then publish_completed with exactly one native_usage row for the approved '
+            'template. Variety captions are a full-frame treatment over a project copy of approved footage, with '
+            'reaction captions placed above the parent subtitle area. The parent handles sound and composition.')
     return ''
 
 
@@ -482,6 +545,92 @@ def project_files(root, directory):
             and not set(p.relative_to(directory).parts) & {'node_modules', '.git'}]
 
 
+def _cinecode_render_command(argv, runtime, directory, native):
+    if (not isinstance(argv, list) or len(argv) != 10 or not all(isinstance(value, str) for value in argv)
+            or argv[:3] != [runtime['tools']['node'], str(native / 'scripts/capture.mjs'), '--url']
+            or argv[4:9] != ['--params', 'w=1080&h=1920', '--flags', CINECODE_BROWSER_FLAGS, '--video']):
+        raise ValueError('CineCode capture requires the pinned native capture.mjs, portrait flags and picture-only output')
+    if directory.resolve(strict=True) != directory:
+        raise ValueError('CineCode requires a nonsymlinked Job project directory')
+    scene_name, output_name = relative(argv[3]), relative(argv[-1])
+    scene, output = path(directory, argv[3]), path(directory, argv[-1])
+    if (scene_name.parts[0] == 'out' or scene.suffix != '.html' or not scene.is_file()
+            or len(output_name.parts) != 2 or output_name.parts[0] != 'out' or output.suffix != '.mp4'):
+        raise ValueError('CineCode requires a local Job HTML page and a separate MP4 in out/')
+    for parent, folders, files in os.walk(directory):
+        folders[:] = [name for name in folders if name != '.git']
+        if any(name == 'node_modules' or (Path(parent) / name).is_symlink()
+               for name in [*folders, *files]):
+            raise ValueError('CineCode inputs must be regular local Job files frozen with the authored project')
+    return directory, native / 'scripts/capture.mjs', output
+
+
+def _cinecode_http_argv(argv, port):
+    actual = list(argv)
+    actual[3] = f'http://127.0.0.1:{port}/' + quote(argv[3])
+    actual[7] = CINECODE_BROWSER_FLAGS.replace('<-loopback>', f'<-loopback>;127.0.0.1:{port}')
+    return actual
+
+
+def _capture_cinecode(root, directory, argv, environment, record):
+    project_path = directory.relative_to(root)
+    inputs = {Path(ref['job_path']).relative_to(project_path).as_posix(): ref for ref in record['project_files']}
+
+    class JobFileHandler(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *_):
+            pass
+
+        def send_head(self):
+            name = unquote(urlsplit(self.path).path).removeprefix('/')
+            item = directory / name
+            if (name not in inputs or item.resolve() != item or not item.is_file()):
+                self.send_error(404)
+                return None
+            size = inputs[name]['byte_count']
+            start, end = 0, size - 1
+            requested = self.headers.get('Range')
+            if requested is not None:
+                match = re.fullmatch(r'bytes=(\d*)-(\d*)', requested)
+                if match and match[1]:
+                    start = int(match[1])
+                    end = min(end, int(match[2])) if match[2] else end
+                elif match and match[2]:
+                    start = max(0, size - int(match[2]))
+                if not match or not (match[1] or match[2]) or start > end:
+                    self.send_error(416)
+                    return None
+            media = item.open('rb')
+            media.seek(start)
+            self.remaining = end - start + 1
+            self.send_response(206 if requested else 200)
+            self.send_header('Content-Type', self.guess_type(str(item)))
+            self.send_header('Content-Length', str(self.remaining))
+            self.send_header('Accept-Ranges', 'bytes')
+            if requested:
+                self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
+            self.send_header('Content-Security-Policy', "default-src 'self' data: blob:; "
+                "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; "
+                "connect-src 'self'; object-src 'none'; base-uri 'none'")
+            self.end_headers()
+            return media
+
+        def copyfile(self, source, output):
+            while self.remaining and (block := source.read(min(self.remaining, 1024 * 1024))):
+                output.write(block)
+                self.remaining -= len(block)
+
+    with http.server.ThreadingHTTPServer(('127.0.0.1', 0), JobFileHandler) as server:
+        actual = _cinecode_http_argv(argv, server.server_port)
+        record['local_http'] = {'port': server.server_port, 'argv': actual}
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            return _run_native_process(actual, cwd=directory, env=environment)
+        finally:
+            server.shutdown()
+            thread.join()
+
+
 def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
     native = _template(brief)
     directory = path(root, brief['project_directory'])
@@ -491,6 +640,8 @@ def _render_command(root, brief, argv, runtime, *, check_runtime_links=True):
                                      check_runtime_links=check_runtime_links)
     if brief['dependency_id'] == 'bb-video':
         return _bb_render_command(brief, argv, runtime, directory, native)
+    if brief['dependency_id'] == 'cinecode':
+        return _cinecode_render_command(argv, runtime, directory, native)
     if brief['dependency_id'] in {'mg-styles-15', 'video-shotcraft'}:
         return _new_native_render_command(root, brief, argv, runtime, directory, native, check_runtime_links=check_runtime_links)
     bang = brief['dependency_id'] == 'bang-motion'
@@ -679,6 +830,23 @@ def _normalization_command(runtime, source, output):
             '-color_range', 'tv', '-crf', '16', '-an', '-video_track_timescale', '24', str(output)]
 
 
+def _cinecode_native_sources(brief):
+    selected = _selected_template(brief, load_template_catalog(dependency_id='cinecode'))
+    result = []
+    for name in selected['native_instructions']:
+        source = path(PROJECT, name)
+        result.append({'source_path': name, 'sha256': sha(source), 'byte_count': source.stat().st_size})
+    return result
+
+
+def _verify_cinecode_clock(brief, stdout):
+    composition = brief['composition']
+    expected = f"{composition['width']}x{composition['height']}, {composition['frames']} frames @ {composition['fps']} fps"
+    reported = re.findall(r'^\[capture\] page: (.+)$', stdout, re.M)
+    if reported != [expected]:
+        raise ValueError('CineCode READY clock differs from the approved scene')
+
+
 def _run_native_process(argv, *, cwd=None, env=None, timeout=1200, check=False):
     """Own this invocation and its children; a timeout never starts a retry."""
     process = subprocess.Popen(argv, cwd=cwd, env=env, stdout=subprocess.PIPE,
@@ -860,13 +1028,14 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
         raise ValueError('Native motion brief belongs to another Job')
     from edit.hd.tools.visual_confirmation import require_native_dispatch
     require_native_dispatch(job, brief['dependency_id'], brief_path, payload=payload)
-    _inputs(root, brief)
+    footage = _inputs(root, brief)
     from motion_native_runtime import check
     runtime = check(PROJECT, dependency_id=brief['dependency_id'])
     from motion_native_runtime import check_template_dependencies
     preparation_runtime = check_template_dependencies(PROJECT, dependency_id=brief['dependency_id'], template_id=brief['template_id'])
     directory, script, output = _render_command(root, brief, argv, runtime)
     argv = [argv[0], str(script), *argv[2:]]
+    cinecode = brief['dependency_id'] == 'cinecode'
     result_path = Path(brief['result_record_path'])
     call_path = path(root, result_path.with_name(result_path.stem + '.render-call.json').as_posix())
     original_output = (directory / argv[3] if brief['dependency_id'] == 'barty-motion-graphics'
@@ -875,6 +1044,8 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
         raise ValueError('Preserve existing native output and use a new revision directory')
     output.parent.mkdir(parents=True, exist_ok=True)
     before = project_files(root, directory)
+    if cinecode and brief['template_id'] == 'variety-captions':
+        _verify_cinecode_footage(footage, before)
     environment = {**os.environ, **runtime['environment']}
     if 'node_modules' in runtime:
         environment['NODE_PATH'] = runtime['node_modules']
@@ -886,6 +1057,9 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
               'execution_runtime': {key: runtime[key] for key in ('tools', 'node_modules', 'renderer_version') if key in runtime},
               'status': 'running', 'exit_code': None, 'stdout': '', 'stderr': ''}
     if brief['dependency_id'] == 'huashu-art-motion':
+        record['execution_runtime']['environment'] = runtime['environment']
+    if cinecode:
+        record['native_sources'] = _cinecode_native_sources(brief)
         record['execution_runtime']['environment'] = runtime['environment']
     call_path.parent.mkdir(parents=True, exist_ok=True)
     artifacts.write_json_artifact(call_path, record)
@@ -899,6 +1073,8 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
         if brief['dependency_id'] == 'bang-motion':
             result, transport = _capture_bang(root, directory, argv, output, brief, runtime, environment)
             record['canvas_transport'] = transport
+        elif cinecode:
+            result = _capture_cinecode(root, directory, argv, environment, record)
         else:
             result = _run_native_process(argv, cwd=directory, env=environment)
         record.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
@@ -908,6 +1084,8 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
             raise ValueError('Native project source changed during rendering')
         if result.returncode:
             raise ValueError('Original native motion render failed: ' + result.stderr[-1500:])
+        if cinecode:
+            _verify_cinecode_clock(brief, result.stdout)
         if not result.returncode and brief['dependency_id'] == 'barty-motion-graphics' and brief['template_id'] != 'motion-broll':
             if probe(output, native_range=True) != brief['composition']:
                 raise ValueError('Original native renderer differs from the approved clock')
@@ -936,7 +1114,7 @@ def capture_render(job_dir, brief_path, argv, *, native_preparations=None):
     return call_path
 
 
-def _verify_call(root, brief, payload, call):
+def _verify_call(root, brief, payload, call, *, footage=None):
     from motion_native_runtime import check, validate_runtime_identity
     check(PROJECT, dependency_id=brief['dependency_id'], mode='reuse')
     validate_runtime_identity(PROJECT, call['runtime_identity'], dependency_id=brief['dependency_id'])
@@ -946,6 +1124,15 @@ def _verify_call(root, brief, payload, call):
         raise ValueError('Native execution runtime differs from its recorded identity')
     if brief['dependency_id'] == 'huashu-art-motion' and runtime.get('environment') != call['runtime_identity']['environment']:
         raise ValueError('Huashu execution differs from its recorded Python and browser environment')
+    if brief['dependency_id'] == 'cinecode':
+        transport = call.get('local_http', {})
+        port = transport.get('port')
+        if (runtime.get('environment') != {'CHROME_PATH': call['runtime_identity']['browser']['path']}
+                or call.get('native_sources') != _cinecode_native_sources(brief)
+                or type(port) is not int or not 0 < port <= 65535
+                or transport != {'port': port, 'argv': _cinecode_http_argv(call['argv'], port)}):
+            raise ValueError('CineCode execution differs from the checked browser, local inputs or selected upstream sources')
+        _verify_cinecode_clock(brief, call['stdout'])
     _, script, output = _render_command(root, brief, call['argv'], {**runtime, 'browser': call['runtime_identity']['browser']['path']}, check_runtime_links=False)
     if brief['dependency_id'] == 'barty-motion-graphics' and brief['template_id'] != 'motion-broll':
         original = output
@@ -980,12 +1167,16 @@ def _verify_call(root, brief, payload, call):
         exact(root, item)
     if project_files(root, path(root, brief['project_directory'])) != call['project_files']:
         raise ValueError('Native authored project changed after rendering')
+    if (brief['dependency_id'], brief['template_id']) == ('cinecode', 'variety-captions'):
+        _verify_cinecode_footage(footage, call['project_files'])
     if probe(output, alpha=brief['alpha']) != brief['composition']:
         raise ValueError('Native motion media differs from approved clock')
 
 
 def _validate_native_usage(root, brief, call, usage):
     """Record native choices against their actual frozen implementation files."""
+    if brief['dependency_id'] == 'cinecode':
+        return _validate_cinecode_usage(root, brief, call, usage)
     if brief['dependency_id'] == 'huashu-art-motion':
         from huashu_motion_adapter import native_templates
         choices = native_templates(PROJECT)
@@ -1050,6 +1241,23 @@ def _validate_native_usage(root, brief, call, usage):
     return usage
 
 
+def _validate_cinecode_usage(root, brief, call, usage):
+    if not isinstance(usage, list) or len(usage) != 1 or not isinstance(usage[0], dict):
+        raise ValueError('CineCode completion requires one approved original template usage')
+    item = usage[0]
+    if (set(item) != {'card_id', 'variant', 'purpose', 'implementation_refs'}
+            or item['card_id'] != brief['template_id'] or item['variant'] is not None
+            or not isinstance(item['purpose'], str) or not item['purpose'].strip()
+            or not isinstance(item['implementation_refs'], list) or not item['implementation_refs']):
+        raise ValueError('CineCode usage must retain the approved original template and actual purpose')
+    frozen = {ref['job_path']: ref for ref in call['project_files']}
+    for ref in item['implementation_refs']:
+        actual = exact(root, ref)
+        if ref != frozen.get(ref['job_path']) or actual.suffix not in {'.html', '.js', '.mjs'}:
+            raise ValueError('CineCode usage must cite authored HTML or JavaScript frozen by native capture')
+    return usage
+
+
 def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
     job = _execution_job(job_dir)
     root = Path(job_dir).resolve(strict=True)
@@ -1059,14 +1267,13 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
         raise ValueError('Native motion brief belongs to another Job')
     from edit.hd.tools.visual_confirmation import require_native_dispatch
     require_native_dispatch(job, brief['dependency_id'], brief_path, payload=payload)
-    _inputs(root, brief)
-    call = json.loads(Path(call_path).read_bytes()); _verify_call(root, brief, payload, call)
+    footage = _inputs(root, brief)
+    call = json.loads(Path(call_path).read_bytes()); _verify_call(root, brief, payload, call, footage=footage)
     target = path(root, brief['result_record_path'])
     if target.exists():
         raise ValueError('Preserve the completed native result and use a new revision')
-    shotcraft = brief['dependency_id'] == 'video-shotcraft'
-    huashu = brief['dependency_id'] == 'huashu-art-motion'
-    if shotcraft or huashu:
+    needs_usage = brief['dependency_id'] in {'cinecode', 'video-shotcraft', 'huashu-art-motion'}
+    if needs_usage:
         _validate_native_usage(root, brief, call, native_usage)
     elif native_usage is not None:
         raise ValueError('Native card usage belongs to the Shotcraft workflow')
@@ -1075,7 +1282,7 @@ def publish_completed(job_dir, brief_path, call_path, *, native_usage=None):
               'request_sha256': hashlib.sha256(payload).hexdigest(), 'media': call['media'],
               'media_probe': brief['composition'], 'alpha': brief['alpha'],
               'renderer_version': call['renderer_version'], 'render_call': descriptor(root, call_path)}
-    if shotcraft or huashu:
+    if needs_usage:
         result['native_usage'] = native_usage
     artifacts.write_json_artifact(target, result)
     return target
@@ -1091,7 +1298,7 @@ def inspect_result(job_dir, payload, *, record_bytes=None):
 
 
 def _inspect_result(job_dir, payload, data):
-    brief = validate_brief(payload); _inputs(job_dir, brief); _template(brief)
+    brief = validate_brief(payload); footage = _inputs(job_dir, brief); _template(brief)
     result = json.loads(data)
     schema = result.get('schema_version')
     if schema != 3:
@@ -1102,8 +1309,8 @@ def _inspect_result(job_dir, payload, data):
     if any(result.get(k) != v for k, v in expected.items()):
         raise ValueError('Native motion result differs from its request')
     call = json.loads(exact(job_dir, result['render_call']).read_bytes())
-    _verify_call(job_dir, brief, payload, call)
-    if brief['dependency_id'] in {'video-shotcraft', 'huashu-art-motion'}:
+    _verify_call(job_dir, brief, payload, call, footage=footage)
+    if brief['dependency_id'] in {'cinecode', 'video-shotcraft', 'huashu-art-motion'}:
         _validate_native_usage(job_dir, brief, call, result.get('native_usage'))
     elif 'native_usage' in result:
         raise ValueError('Native usage belongs to the Shotcraft workflow')
@@ -1206,7 +1413,7 @@ def main():
     parser.add_argument('--capture-render', action='store_true'); parser.add_argument('--argv-json')
     parser.add_argument('--native-preparations-json', help='Selected MG 3D native Blender steps')
     parser.add_argument('--publish', action='store_true'); parser.add_argument('--call', type=Path)
-    parser.add_argument('--native-usage', type=Path, help='Actual Shotcraft card usage JSON array')
+    parser.add_argument('--native-usage', type=Path, help='Actual native template usage JSON array')
     parser.add_argument('--media-manifest', type=Path); parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.probe:

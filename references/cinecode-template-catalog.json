@@ -1,0 +1,1485 @@
+{
+  "schema_version": 3,
+  "channel": "cinecode",
+  "repository_commit": "c8a3e7552699360a2b0142c9620882af2069eedb",
+  "counting_rule": "8 independent templates and 51 CineCode routes sharing Lemo OpusCar template identities. Each route retains its own executable channel and selected style.",
+  "native_paths": [
+    {
+      "candidate_id": "cinecode:cinecode/archive-lighttable",
+      "template_id": "cinecode/archive-lighttable",
+      "style_slug": "archive-lighttable",
+      "canonical_template": "lemo-opuscar/archive-lighttable",
+      "style_origin": "lemo-opuscar",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/archive-lighttable.md",
+      "native_source": "vendor/cinecode/styles/archive-lighttable.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/archive-lighttable.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "底片在放大镜下由负片显影为正片；镜下单行文字被提亮并抽成阅读卡。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/art-deco",
+      "template_id": "cinecode/art-deco",
+      "style_slug": "art-deco",
+      "canonical_template": "lemo-opuscar/art-deco",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/art-deco.md",
+      "native_source": "vendor/cinecode/styles/art-deco.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/art-deco.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "灯牌按节拍逐字点亮；门缝分割完成场景切换。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/ascii-crt",
+      "template_id": "cinecode/ascii-crt",
+      "style_slug": "ascii-crt",
+      "canonical_template": "lemo-opuscar/ascii-crt",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/ascii-crt.md",
+      "native_source": "vendor/cinecode/styles/ascii-crt.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/ascii-crt.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "句子拆解为字符密度图像；推近到单字符并显出其中嵌套文字。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/backrooms",
+      "template_id": "cinecode/backrooms",
+      "style_slug": "backrooms",
+      "canonical_template": "lemo-opuscar/backrooms",
+      "style_origin": "lemo-opuscar",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/backrooms.md",
+      "native_source": "vendor/cinecode/styles/backrooms.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/backrooms.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cinema & Eras",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "自动对焦寻找时短暂显出身影；磁带撕裂造成同构图跳时。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/blueprint",
+      "template_id": "cinecode/blueprint",
+      "style_slug": "blueprint",
+      "canonical_template": "lemo-opuscar/blueprint",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/blueprint.md",
+      "native_source": "vendor/cinecode/styles/blueprint.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/blueprint.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "工程对象按图层逐层绘制；尺寸线追随部件、气泡标注飞入，剖面揭示内部。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/brick-toy",
+      "template_id": "cinecode/brick-toy",
+      "style_slug": "brick-toy",
+      "canonical_template": "lemo-opuscar/brick-toy",
+      "style_origin": "lemo-opuscar",
+      "base_style": "claymation",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/brick-toy.md",
+      "native_source": "vendor/cinecode/styles/brick-toy.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/brick-toy.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "部件沿弧线飞入并卡扣成型；成品拆散后重组成新结构。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/briefing-board",
+      "template_id": "cinecode/briefing-board",
+      "style_slug": "briefing-board",
+      "canonical_template": "lemo-opuscar/briefing-board",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/briefing-board.md",
+      "native_source": "vendor/cinecode/styles/briefing-board.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/briefing-board.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "整墙海报分区后逐区揭示；实物沿方案路线移动，尺寸线按比例延展。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/cel-anime-80s",
+      "template_id": "cinecode/cel-anime-80s",
+      "style_slug": "cel-anime-80s",
+      "canonical_template": "lemo-opuscar/cel-anime-80s",
+      "style_origin": "lemo-opuscar",
+      "base_style": "anime-cel",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/cel-anime-80s.md",
+      "native_source": "vendor/cinecode/styles/cel-anime-80s.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/cel-anime-80s.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cartoon & Anime",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "小角色在巨大场景中保持比例反差；关键表情或动作定格承载转折。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/cinematic-realistic",
+      "template_id": "cinecode/cinematic-realistic",
+      "style_slug": "cinematic-realistic",
+      "canonical_template": "cinecode/cinematic-realistic",
+      "style_origin": "cinecode",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/references/looks.md",
+      "native_source": "vendor/cinecode/references/looks.md",
+      "native_instructions": [
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md",
+        "vendor/cinecode/references/purpose-cinematic.md",
+        "vendor/cinecode/starter/looks.mjs"
+      ],
+      "native_template_group": "Cinematic Realism",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "用有方向的灯光、真实材质和近中远景深表现机械运动；以微距呈现设备、零件和工序。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/crayon-book",
+      "template_id": "cinecode/crayon-book",
+      "style_slug": "crayon-book",
+      "canonical_template": "lemo-opuscar/crayon-book",
+      "style_origin": "lemo-opuscar",
+      "base_style": "pastel-storybook",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/crayon-book.md",
+      "native_source": "vendor/cinecode/styles/crayon-book.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/crayon-book.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "蜡笔留白被水洗显影；主角前方实时补画路径或时间线。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/dark-keynote",
+      "template_id": "cinecode/dark-keynote",
+      "style_slug": "dark-keynote",
+      "canonical_template": "lemo-opuscar/dark-keynote",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/dark-keynote.md",
+      "native_source": "vendor/cinecode/styles/dark-keynote.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/dark-keynote.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "条目按规则加速堆积；所有元素一拍飞入网格并锁定。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/data-physical",
+      "template_id": "cinecode/data-physical",
+      "style_slug": "data-physical",
+      "canonical_template": "lemo-opuscar/data-physical",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/data-physical.md",
+      "native_source": "vendor/cinecode/styles/data-physical.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/data-physical.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "单个实体被推近并配刻度；两组材料逐年堆高，在交叉点停住对读。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/dataviz",
+      "template_id": "cinecode/dataviz",
+      "style_slug": "dataviz",
+      "canonical_template": "lemo-opuscar/dataviz",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/dataviz.md",
+      "native_source": "vendor/cinecode/styles/dataviz.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/dataviz.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "一个标记对应一条事实；叙述到单位时坐标轴才生长出来。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/engraving",
+      "template_id": "cinecode/engraving",
+      "style_slug": "engraving",
+      "canonical_template": "lemo-opuscar/engraving",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/engraving.md",
+      "native_source": "vendor/cinecode/styles/engraving.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/engraving.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Print & Printmaking",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "雕刻刀刻出第一道线；形体经过三遍刻线逐层获得体积。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/game-show",
+      "template_id": "cinecode/game-show",
+      "style_slug": "game-show",
+      "canonical_template": "lemo-opuscar/game-show",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/game-show.md",
+      "native_source": "vendor/cinecode/styles/game-show.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/game-show.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Games",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "回合卡飞入后开始一轮；结尾用打字复盘卡和等级印章总结。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/glass-product",
+      "template_id": "cinecode/glass-product",
+      "style_slug": "glass-product",
+      "canonical_template": "lemo-opuscar/glass-product",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/glass-product.md",
+      "native_source": "vendor/cinecode/styles/glass-product.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/glass-product.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "焦点从玻璃外壳切到内部机构；厚玻璃穹顶放大并弯折背后部件。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/halftone-dossier",
+      "template_id": "cinecode/halftone-dossier",
+      "style_slug": "halftone-dossier",
+      "canonical_template": "lemo-opuscar/halftone-dossier",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/halftone-dossier.md",
+      "native_source": "vendor/cinecode/styles/halftone-dossier.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/halftone-dossier.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Print & Printmaking",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "主题被装入案件框架并列出计数；每个论点获得巨型半调编号。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/hd-2d",
+      "template_id": "cinecode/hd-2d",
+      "style_slug": "hd-2d",
+      "canonical_template": "lemo-opuscar/hd-2d",
+      "style_origin": "lemo-opuscar",
+      "base_style": "claymation",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/hd-2d.md",
+      "native_source": "vendor/cinecode/styles/hd-2d.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/hd-2d.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Games",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "灯光打开时角色旁的阴影跳起；角色手持小灯，其亮度随测量值变化。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/hologram-hud",
+      "template_id": "cinecode/hologram-hud",
+      "style_slug": "hologram-hud",
+      "canonical_template": "lemo-opuscar/hologram-hud",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/hologram-hud.md",
+      "native_source": "vendor/cinecode/styles/hologram-hud.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/hologram-hud.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "扫描线生长证明数据存在；目标框锁定指定部件并成为视线窗口。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/impasto",
+      "template_id": "cinecode/impasto",
+      "style_slug": "impasto",
+      "canonical_template": "lemo-opuscar/impasto",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/impasto.md",
+      "native_source": "vendor/cinecode/styles/impasto.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/impasto.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "刀痕逐笔把灰阶重新铺成彩色；全画面保持灰度，仅一个对象保留颜色。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/ink-wash",
+      "template_id": "cinecode/ink-wash",
+      "style_slug": "ink-wash",
+      "canonical_template": "lemo-opuscar/ink-wash",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/ink-wash.md",
+      "native_source": "vendor/cinecode/styles/ink-wash.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/ink-wash.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "一笔连续生成主体；撤去墨色后纸白显出门洞或缺席区域。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/iso-infographic",
+      "template_id": "cinecode/iso-infographic",
+      "style_slug": "iso-infographic",
+      "canonical_template": "lemo-opuscar/iso-infographic",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/iso-infographic.md",
+      "native_source": "vendor/cinecode/styles/iso-infographic.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/iso-infographic.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "剖切线移开外壳露出内部；同形图标重排组成比例和数量。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/lidar-survey",
+      "template_id": "cinecode/lidar-survey",
+      "style_slug": "lidar-survey",
+      "canonical_template": "lemo-opuscar/lidar-survey",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/lidar-survey.md",
+      "native_source": "vendor/cinecode/styles/lidar-survey.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/lidar-survey.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "扫描线扫过照片后留下点云；点云按高度剥离，再凝成实体表面并依次点亮特征。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/line-boil",
+      "template_id": "cinecode/line-boil",
+      "style_slug": "line-boil",
+      "canonical_template": "cinecode/line-boil",
+      "style_origin": "cinecode",
+      "base_style": "anime-cel",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/line-boil.md",
+      "native_source": "vendor/cinecode/styles/line-boil.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/line-boil.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cartoon & Anime",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "用微微颤动的手绘轮廓、双帧停格、拖影和手绘冲击特效表现角色反应或快速动作。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/liquid-motion",
+      "template_id": "cinecode/liquid-motion",
+      "style_slug": "liquid-motion",
+      "canonical_template": "cinecode/liquid-motion",
+      "style_origin": "cinecode",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/liquid-motion.md",
+      "native_source": "vendor/cinecode/styles/liquid-motion.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/liquid-motion.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "黏稠液滴落下压扁，液团经拉伸与回弹融合，最后灌入产品或标记的形状。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/living-screencast",
+      "template_id": "cinecode/living-screencast",
+      "style_slug": "living-screencast",
+      "canonical_template": "lemo-opuscar/living-screencast",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/living-screencast.md",
+      "native_source": "vendor/cinecode/styles/living-screencast.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/living-screencast.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "吉祥物从界面图标中长出并留下轮廓；名称成为真实界面元素后角色落在其上。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/lowpoly-island",
+      "template_id": "cinecode/lowpoly-island",
+      "style_slug": "lowpoly-island",
+      "canonical_template": "lemo-opuscar/lowpoly-island",
+      "style_origin": "lemo-opuscar",
+      "base_style": "pastel-storybook",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/lowpoly-island.md",
+      "native_source": "vendor/cinecode/styles/lowpoly-island.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/lowpoly-island.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "部件落地组成建筑并按空间顺序回放音符；地块升起、楼层堆叠、树木弹出。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/microgame",
+      "template_id": "cinecode/microgame",
+      "style_slug": "microgame",
+      "canonical_template": "lemo-opuscar/microgame",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/microgame.md",
+      "native_source": "vendor/cinecode/styles/microgame.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/microgame.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Games",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "每项任务切换到适合的媒介；一个命令词同时成为字幕、脚本和节拍。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/microscope",
+      "template_id": "cinecode/microscope",
+      "style_slug": "microscope",
+      "canonical_template": "lemo-opuscar/microscope",
+      "style_origin": "lemo-opuscar",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/microscope.md",
+      "native_source": "vendor/cinecode/styles/microscope.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/microscope.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "镜头从载玻片潜入细胞并逐级换倍率；扫描前穿过计数圆，像素点亮并滚动比例。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/midcentury-toon",
+      "template_id": "cinecode/midcentury-toon",
+      "style_slug": "midcentury-toon",
+      "canonical_template": "lemo-opuscar/midcentury-toon",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/midcentury-toon.md",
+      "native_source": "vendor/cinecode/styles/midcentury-toon.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/midcentury-toon.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cartoon & Anime",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "颜色错位让信息卡产生印刷温度；身体静止，仅手部按节拍完成步骤。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/one-line",
+      "template_id": "cinecode/one-line",
+      "style_slug": "one-line",
+      "canonical_template": "lemo-opuscar/one-line",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/one-line.md",
+      "native_source": "vendor/cinecode/styles/one-line.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/one-line.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "画笔不抬起地连接完整对象；线条状态随时间、疲劳或磨损改变。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/paper-lantern",
+      "template_id": "cinecode/paper-lantern",
+      "style_slug": "paper-lantern",
+      "canonical_template": "lemo-opuscar/paper-lantern",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/paper-lantern.md",
+      "native_source": "vendor/cinecode/styles/paper-lantern.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/paper-lantern.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "East Asian Traditions",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "灯光从源头传到远层和窗格；两个窗口共享同一光源。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/paper-popup",
+      "template_id": "cinecode/paper-popup",
+      "style_slug": "paper-popup",
+      "canonical_template": "lemo-opuscar/paper-popup",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/paper-popup.md",
+      "native_source": "vendor/cinecode/styles/paper-popup.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/paper-popup.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "书板掀起后场景按前后层弹出；翻页让旧部件折下、新部件弹起。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/papercut-red",
+      "template_id": "cinecode/papercut-red",
+      "style_slug": "papercut-red",
+      "canonical_template": "lemo-opuscar/papercut-red",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/papercut-red.md",
+      "native_source": "vendor/cinecode/styles/papercut-red.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/papercut-red.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "East Asian Traditions",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "纸张折叠后一次剪孔，展开变成多重图案；孔洞背光并投射到世界。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/pictogram-motion",
+      "template_id": "cinecode/pictogram-motion",
+      "style_slug": "pictogram-motion",
+      "canonical_template": "lemo-opuscar/pictogram-motion",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/pictogram-motion.md",
+      "native_source": "vendor/cinecode/styles/pictogram-motion.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/pictogram-motion.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "一张卡对应一个项目并汇总总数；章节用色相区分不同图标家族。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/pixel-rpg",
+      "template_id": "cinecode/pixel-rpg",
+      "style_slug": "pixel-rpg",
+      "canonical_template": "lemo-opuscar/pixel-rpg",
+      "style_origin": "lemo-opuscar",
+      "base_style": "retro-synthwave-vhs",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/pixel-rpg.md",
+      "native_source": "vendor/cinecode/styles/pixel-rpg.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/pixel-rpg.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Games",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "色深按节拍坍缩或被抖动波恢复；保护色块在不同年代位置匹配切换。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/risograph",
+      "template_id": "cinecode/risograph",
+      "style_slug": "risograph",
+      "canonical_template": "lemo-opuscar/risograph",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/risograph.md",
+      "native_source": "vendor/cinecode/styles/risograph.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/risograph.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Print & Printmaking",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "每个转折新增一块印版；两种油墨相交生成第三色并成为发现区域。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/rubber-hose",
+      "template_id": "cinecode/rubber-hose",
+      "style_slug": "rubber-hose",
+      "canonical_template": "lemo-opuscar/rubber-hose",
+      "style_origin": "lemo-opuscar",
+      "base_style": "anime-cel",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/rubber-hose.md",
+      "native_source": "vendor/cinecode/styles/rubber-hose.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/rubber-hose.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cartoon & Anime",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "场景整体随节拍呼吸和起舞；每一步都让道具成为对应的乐器。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/satellite-briefing",
+      "template_id": "cinecode/satellite-briefing",
+      "style_slug": "satellite-briefing",
+      "canonical_template": "lemo-opuscar/satellite-briefing",
+      "style_origin": "lemo-opuscar",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/satellite-briefing.md",
+      "native_source": "vendor/cinecode/styles/satellite-briefing.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/satellite-briefing.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "地图被扫描条撕开露出地面；日期板逐张叠出时间环，距离线从A追到B并计数。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/scifi-toon",
+      "template_id": "cinecode/scifi-toon",
+      "style_slug": "scifi-toon",
+      "canonical_template": "lemo-opuscar/scifi-toon",
+      "style_origin": "lemo-opuscar",
+      "base_style": "anime-cel",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/scifi-toon.md",
+      "native_source": "vendor/cinecode/styles/scifi-toon.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/scifi-toon.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cartoon & Anime",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "每次跳跃换调色板和生物；两种反应并置制造冷静与慌张反差。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/shadow-puppet",
+      "template_id": "cinecode/shadow-puppet",
+      "style_slug": "shadow-puppet",
+      "canonical_template": "lemo-opuscar/shadow-puppet",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/shadow-puppet.md",
+      "native_source": "vendor/cinecode/styles/shadow-puppet.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/shadow-puppet.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "East Asian Traditions",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "灯光数量驱动热度和色彩；物件拉近灯源时放大并失焦。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/shape-morph",
+      "template_id": "cinecode/shape-morph",
+      "style_slug": "shape-morph",
+      "canonical_template": "cinecode/shape-morph",
+      "style_origin": "cinecode",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/shape-morph.md",
+      "native_source": "vendor/cinecode/styles/shape-morph.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/shape-morph.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "以一个主图形连续变为下一个有意义的形状；相差较大的轮廓用圆或胶囊形过渡。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/silent-film",
+      "template_id": "cinecode/silent-film",
+      "style_slug": "silent-film",
+      "canonical_template": "lemo-opuscar/silent-film",
+      "style_origin": "lemo-opuscar",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/silent-film.md",
+      "native_source": "vendor/cinecode/styles/silent-film.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/silent-film.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Cinema & Eras",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "道具触发下一个道具并离开画面，链条在一次长镜中传递；手在物件原位置合拢造成近失误。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/silkscreen-poster",
+      "template_id": "cinecode/silkscreen-poster",
+      "style_slug": "silkscreen-poster",
+      "canonical_template": "lemo-opuscar/silkscreen-poster",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/silkscreen-poster.md",
+      "native_source": "vendor/cinecode/styles/silkscreen-poster.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/silkscreen-poster.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Print & Printmaking",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "事实按阅读顺序一色一拍印出；多色在一次推印中填满画面。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/spy-titles",
+      "template_id": "cinecode/spy-titles",
+      "style_slug": "spy-titles",
+      "canonical_template": "lemo-opuscar/spy-titles",
+      "style_origin": "lemo-opuscar",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/spy-titles.md",
+      "native_source": "vendor/cinecode/styles/spy-titles.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/spy-titles.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "地点由字母搭成建筑；字幕按节拍落下，鼓点对应切口。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/stained-glass",
+      "template_id": "cinecode/stained-glass",
+      "style_slug": "stained-glass",
+      "canonical_template": "lemo-opuscar/stained-glass",
+      "style_origin": "lemo-opuscar",
+      "base_style": "anime-cel",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/stained-glass.md",
+      "native_source": "vendor/cinecode/styles/stained-glass.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/stained-glass.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "被照亮的窗格才运动，光离开时人物冻结；关键场景投到石地并随太阳拉长。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/sticker-explainer",
+      "template_id": "cinecode/sticker-explainer",
+      "style_slug": "sticker-explainer",
+      "canonical_template": "cinecode/sticker-explainer",
+      "style_origin": "cinecode",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/sticker-explainer.md",
+      "native_source": "vendor/cinecode/styles/sticker-explainer.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/sticker-explainer.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "在连续画布上用白边贴纸、图标和有据数据讲知识；镜头在事实之间滑动，拉远展示它们的关系。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/swiss-motion",
+      "template_id": "cinecode/swiss-motion",
+      "style_slug": "swiss-motion",
+      "canonical_template": "lemo-opuscar/swiss-motion",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/swiss-motion.md",
+      "native_source": "vendor/cinecode/styles/swiss-motion.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/swiss-motion.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "网格行列对应楼层、小时或年份；卡片到位即形成节拍并归入分组。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/teardown",
+      "template_id": "cinecode/teardown",
+      "style_slug": "teardown",
+      "canonical_template": "lemo-opuscar/teardown",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/teardown.md",
+      "native_source": "vendor/cinecode/styles/teardown.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/teardown.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "重复部件波浪式抬起；镜头进入层间空隙看隐藏面，引线末端落在具体部件。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/tilt-shift",
+      "template_id": "cinecode/tilt-shift",
+      "style_slug": "tilt-shift",
+      "canonical_template": "lemo-opuscar/tilt-shift",
+      "style_origin": "lemo-opuscar",
+      "base_style": "claymation",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/tilt-shift.md",
+      "native_source": "vendor/cinecode/styles/tilt-shift.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/tilt-shift.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Materials & 3D",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "时间从高速坠回真实速度聚焦一个细节；清晰窄带滑动引导视线。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/ukiyoe",
+      "template_id": "cinecode/ukiyoe",
+      "style_slug": "ukiyoe",
+      "canonical_template": "lemo-opuscar/ukiyoe",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/ukiyoe.md",
+      "native_source": "vendor/cinecode/styles/ukiyoe.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/ukiyoe.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "East Asian Traditions",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "同一主体在不同构图中移动位置讲述变化；手卷从右向左滑出下一景而不断切。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/urban-sketch",
+      "template_id": "cinecode/urban-sketch",
+      "style_slug": "urban-sketch",
+      "canonical_template": "lemo-opuscar/urban-sketch",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/urban-sketch.md",
+      "native_source": "vendor/cinecode/styles/urban-sketch.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/urban-sketch.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "钢笔按真实笔顺画出主体，水彩随后铺入；湿画前沿把事件染上页面。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/variety-captions",
+      "template_id": "cinecode/variety-captions",
+      "style_slug": "variety-captions",
+      "canonical_template": "cinecode/variety-captions",
+      "style_origin": "cinecode",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/variety-captions.md",
+      "native_source": "vendor/cinecode/styles/variety-captions.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/variety-captions.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md",
+        "vendor/cinecode/references/footage-edit.md"
+      ],
+      "native_template_group": "Graphic & Type",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": true,
+      "summary": "在获授权的全屏实拍素材上，以弹跳粗描边花字、爆炸框、汗滴或闪光表现关键反应。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/visual-proof",
+      "template_id": "cinecode/visual-proof",
+      "style_slug": "visual-proof",
+      "canonical_template": "cinecode/visual-proof",
+      "style_origin": "cinecode",
+      "base_style": "cinematic-realistic",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/visual-proof.md",
+      "native_source": "vendor/cinecode/styles/visual-proof.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/visual-proof.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Information & Keynote",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "让图形逐步组成论证；每个量保留自己的颜色，从对应的图形移动为公式中的项。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/vox-explainer",
+      "template_id": "cinecode/vox-explainer",
+      "style_slug": "vox-explainer",
+      "canonical_template": "cinecode/vox-explainer",
+      "style_origin": "cinecode",
+      "base_style": "papercut-collage",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/vox-explainer.md",
+      "native_source": "vendor/cinecode/styles/vox-explainer.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/vox-explainer.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "把来源照片和文件剪贴到纸面，以马克笔圈注、文档推近和同一卡片的前后变化讲清一个事实。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/watercolor",
+      "template_id": "cinecode/watercolor",
+      "style_slug": "watercolor",
+      "canonical_template": "lemo-opuscar/watercolor",
+      "style_origin": "lemo-opuscar",
+      "base_style": "pastel-storybook",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/watercolor.md",
+      "native_source": "vendor/cinecode/styles/watercolor.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/watercolor.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "新对象随笔触逐步画入；高潮时整组对象在一秒内同时铺开。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/white-model",
+      "template_id": "cinecode/white-model",
+      "style_slug": "white-model",
+      "canonical_template": "lemo-opuscar/white-model",
+      "style_origin": "lemo-opuscar",
+      "base_style": "glossy-commercial",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/white-model.md",
+      "native_source": "vendor/cinecode/styles/white-model.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/white-model.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Evidence Films",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "室内灯灭后单灯照出第一层；满足条件的建筑被点亮，其余空缺勾勒边界，年代层逐年开启。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/whiteboard",
+      "template_id": "cinecode/whiteboard",
+      "style_slug": "whiteboard",
+      "canonical_template": "lemo-opuscar/whiteboard",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/whiteboard.md",
+      "native_source": "vendor/cinecode/styles/whiteboard.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/whiteboard.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Hand-drawn & Painting",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "公式按说话顺序逐项写出；笔线引导镜头沿路径行进。"
+    },
+    {
+      "candidate_id": "cinecode:cinecode/woodcut",
+      "template_id": "cinecode/woodcut",
+      "style_slug": "woodcut",
+      "canonical_template": "lemo-opuscar/woodcut",
+      "style_origin": "lemo-opuscar",
+      "base_style": "handmade-ink",
+      "skill_path": "vendor/cinecode/SKILL.md",
+      "recipe_path": "vendor/cinecode/styles/woodcut.md",
+      "native_source": "vendor/cinecode/styles/woodcut.md",
+      "native_instructions": [
+        "vendor/cinecode/styles/woodcut.md",
+        "vendor/cinecode/references/looks.md",
+        "vendor/cinecode/references/quick-mode.md",
+        "vendor/cinecode/references/craft.md",
+        "vendor/cinecode/references/finish.md"
+      ],
+      "native_template_group": "Print & Printmaking",
+      "native_role": "scene",
+      "uses": [
+        "broll"
+      ],
+      "requires_footage": false,
+      "summary": "放射刻线从一点向外显形；刻刀一刀一刀累积时间和体积。"
+    }
+  ]
+}

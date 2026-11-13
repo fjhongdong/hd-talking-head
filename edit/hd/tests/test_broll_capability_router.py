@@ -312,6 +312,25 @@ class BrollCapabilityRouterTests(unittest.TestCase):
         self.assertFalse(output_alpha('code_generated', 'barty-motion-graphics', 'single_full_frame', 'base'))
         self.assertFalse(output_alpha('ai_generated', None, 'evidence_with_data_overlay', 'base'))
 
+    def test_cinecode_shared_style_admits_only_the_exact_native_execution_route(self):
+        from motion_native_runtime import renderer_version
+        from motion_native_skill_adapter import ENTRY, VERSION
+
+        component = {
+            'dependency_id': 'cinecode', 'entrypoint': ENTRY, 'source_entrypoint': ENTRY,
+            'producer_version': VERSION, 'template_version': VERSION,
+            'renderer_version': renderer_version('cinecode'), 'primary_renderer': 'HTMLCanvas',
+            'template_origin': 'custom_fallback', 'adaptation_level': 'structural',
+            'template_id': 'cinecode/blueprint',
+            'invocation_record': {'argv': ['python3.12', ENTRY, '--dependency-id', 'cinecode']},
+        }
+        self.router._validate_code_cross_fields(component)
+        with self.assertRaises(self.router.RouterError):
+            self.router._validate_code_cross_fields({**component, 'template_id': 'lemo-opuscar/blueprint'})
+        with self.assertRaises(self.router.RouterError):
+            self.router._validate_code_cross_fields({**component, 'invocation_record': {
+                'argv': ['python3.12', ENTRY, '--dependency-id', 'lemo-opuscar']}})
+
     def test_adu_compiles_opaque_reference_adapter_and_rejects_evidence(self) -> None:
         component = _strategy_component("adu", "code_generated", layout_slot="full_frame")
         binding = _binding("code_generated", "asset-adu")

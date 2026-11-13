@@ -2246,6 +2246,48 @@
       }
     },
     {
+      "id": "cinecode",
+      "kind": "project_path",
+      "required": false,
+      "stages": [
+        "visual-canary",
+        "visual-assets"
+      ],
+      "target": ".",
+      "path_type": "directory",
+      "entrypoints": [
+        "scripts/motion_native_skill_adapter.py",
+        "scripts/motion_native_runtime.py"
+      ],
+      "binding_probes": [
+        {
+          "entrypoint": "scripts/motion_native_skill_adapter.py",
+          "producer_version": "2.0.0",
+          "adapter_identity": {
+            "adapter_type": "ReferenceProcessAdapter",
+            "approved_executor": "reference_adapter",
+            "primary_renderer": "HTMLCanvas"
+          },
+          "command": [
+            "{python}",
+            "{dependency_root}/scripts/motion_native_skill_adapter.py",
+            "--probe",
+            "--project-root",
+            "{project_root}",
+            "--dependency-id",
+            "cinecode"
+          ],
+          "timeout_seconds": 30
+        }
+      ],
+      "selection": {
+        "component_kind": "code_generated",
+        "binding_field": "dependency_id",
+        "equals": "cinecode",
+        "required_level": "bound"
+      }
+    },
+    {
       "id": "video-shotcraft",
       "kind": "project_path",
       "required": false,
@@ -2675,6 +2717,18 @@
       ]
     },
     {
+      "id": "cinecode",
+      "script": "scripts/motion_native_runtime.py",
+      "arguments": [
+        "--dependency-id",
+        "cinecode",
+        "--check"
+      ],
+      "dependency_ids": [
+        "cinecode"
+      ]
+    },
+    {
       "id": "video-shotcraft",
       "script": "scripts/motion_native_runtime.py",
       "arguments": [
@@ -2758,6 +2812,7 @@
     "barty-motion-graphics",
     "bang-motion",
     "mg-styles-15",
+    "cinecode",
     "video-shotcraft",
     "bb-video",
     "anidoodle",

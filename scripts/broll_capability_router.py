@@ -639,6 +639,10 @@ def _validate_code_cross_fields(
                 or component.get('template_version') != adapter.VERSION
                 or component.get('renderer_version') != expected_version):
             raise RouterError('Native motion requires its complete pinned workflow and actual renderer')
+        if dependency_id == 'cinecode':
+            flag = '--dependency-id'
+            if argv.count(flag) != 1 or argv[argv.index(flag) + 1:argv.index(flag) + 2] != [dependency_id]:
+                raise RouterError('CineCode invocation must name the selected native channel')
     if dependency_id == "adu-motion-video":
         if component.get("semantic_role") == "evidence":
             raise RouterError("Adu explanatory animation is not factual evidence")

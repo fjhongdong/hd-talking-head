@@ -134,7 +134,8 @@ def describe_candidates(project_root: Path, candidates: list[dict], *, use: str,
             raise ValueError(f"Motion capability is not reviewed for {use}: {cid}")
         if profile["reviewed_version"] != candidate["producer_version"]:
             raise ValueError(f"Motion capability version changed; review affected metadata: {cid}")
-        result.append({**candidate, 'canonical_template': candidate.get('template_id', cid),
+        result.append({**candidate, 'canonical_template': candidate.get('canonical_template',
+                                                                        candidate.get('template_id', cid)),
                        "summary": profile["summary"], "capability": profile})
     return result
 
@@ -201,6 +202,7 @@ def validate_overlay_capability(route: str, binding: Mapping, *, registered: Map
 def _catalog_sources(project: Path, *, previous: tuple | None = None) -> tuple:
     """Track native sources also restored from, and excluded by, the release archive."""
     if previous is None:
+        from scripts.cinecode_catalog import CATALOG as CINECODE_CATALOG
         from scripts.motion_native_skill_adapter import SOURCES
         paths = set()
         source_names = [name for name, _, _ in SOURCES.values()] + ['anidoodle', 'sweety-handdraw-video']
@@ -221,6 +223,8 @@ def _catalog_sources(project: Path, *, previous: tuple | None = None) -> tuple:
             for directory, children, _ in os.walk(root):
                 paths.add(Path(directory))
                 paths.update(Path(directory) / name for name in children)
+        if 'cinecode' in SOURCES:
+            paths.add(project / CINECODE_CATALOG)
         source_index = project / 'archives/sources/index.json'
         paths.add(source_index)
         for record in contract_artifacts.read_json_artifact(source_index)['repositories']:

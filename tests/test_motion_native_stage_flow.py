@@ -141,7 +141,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             b['task_source']={'semantic_row_id':rowid,'quote':quote,'semantic':b['semantic_goal'],
                 'required_change':case['required_change'],'component_brief':component['brief']}
             b['native_options']=case['native_options']
-            if dependency in {'mg-styles-15','video-shotcraft','bb-video'}:
+            if dependency in {'mg-styles-15','video-shotcraft','bb-video','cinecode'}:
                 b['template_request'].update(semantic_family='process',information_units=2)
             b['source_binding']={'aroll_sha256':native.sha(arroll),'segment_id':sid,'start':start,'end':end}
             voice=root/('voice-'+sid+'.wav')
@@ -182,10 +182,17 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             selected=next(case for case in self.case['segments'] if case['segment_id']==key[0])
             dependency=selected['dependency_id']
             wanted=('overlay:' if dependency=='barty-motion-graphics' else dependency+':')+dependency+'/'+selected['template_id']
+            isolated = self.case.get('stop_at_preview')
+            if isolated:
+                beat['single_source_review'] = {'decision': 'keep', 'reason': '本测试验证指定原生配方的实际调用。'}
             beat['candidates']=[{'candidate_id':item['candidate']['candidate_id'],
-                'fit':'preferred' if item['candidate']['candidate_id']==wanted else 'equivalent',
-                'reason':'隔离fixture选择真实准备的原生工程','visual_pattern':'native-'+beat['segment_id'],
-                'design_plan':design} for item in cached[key]['matches']]
+                'fit':('preferred' if item['candidate']['candidate_id']==wanted else
+                       'unsuitable' if isolated else 'equivalent'),
+                'reason':'隔离技术样片要求使用为本镜准备的指定原生配方', 'visual_pattern':'native-'+beat['segment_id'],
+                'design_plan':design,
+                **({'rejection_basis': 'semantic', 'constraint_refs': {'requirement': 'semantic', 'capability': 'summary'}}
+                   if isolated and item['candidate']['candidate_id'] != wanted else {})}
+                for item in cached[key]['matches']]
         bind_review_fixture(treatment, cached)
         treatment['skill_selection']=broll_skill_selection.assign_skills(_env.PROJECT,treatment['skill_selection'],job_dir=root)
         self.assertEqual([a['skill_id'] for a in treatment['skill_selection']['assignments']],
@@ -201,6 +208,8 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         if not source.is_dir():raise ValueError('Prepare the complete native authored project first: '+str(source))
         directory=Path(action['project_directory']);shutil.copytree(source,directory)
         runtime=action['runtime']
+        if runtime['status']=='pending':
+            runtime=json.loads(subprocess.check_output(runtime['check_argv'], text=True))
         if 'node_modules' in runtime:
             (directory/'node_modules').symlink_to(runtime['node_modules'],target_is_directory=True)
         if b['dependency_id']=='barty-motion-graphics':
@@ -218,6 +227,9 @@ class MotionNativeStageFlowTests(unittest.TestCase):
             argv=[runtime['tools']['node'],'harness/render.mjs','scene','--out','out/native.mp4',
                   '--w','1080','--h','1920','--fps','24','--duration',str(b['composition']['frames']/24),
                   '--workers','1','--noaudio']
+        elif b['dependency_id']=='cinecode':
+            argv=[runtime['tools']['node'],*action['capture_argv'][1:]]
+            argv[3]=case['entry_html']
         elif b['dependency_id']=='video-shotcraft':
             argv=[runtime['tools']['node'],str(Path(runtime['node_modules'])/'@remotion/cli/remotion-cli.js'),
                   'render','src/index.ts','NativeScene','out/native.mp4','--codec=h264','--pixel-format=yuv420p',
@@ -241,7 +253,7 @@ class MotionNativeStageFlowTests(unittest.TestCase):
                            for name in case['native_preparation_outputs']]}]
         call=native.capture_render(root,request,argv,native_preparations=preparations)
         options={}
-        if b['dependency_id']=='video-shotcraft':
+        if b['dependency_id'] in {'video-shotcraft', 'cinecode'}:
             options['native_usage']=[{**usage,'implementation_refs':[
                 native.descriptor(root,directory/relative) for relative in usage['implementation_paths']]}
                 for usage in case['native_usage']]
@@ -282,6 +294,20 @@ class MotionNativeStageFlowTests(unittest.TestCase):
         numbered = confirmation.approved_numbered_rows(self.job)
         self.assertTrue(numbered)
         self.assertEqual([row['number'] for row in numbered], list(range(1, len(numbered) + 1)))
+        if self.case.get('stop_at_preview'):
+            for stage in ('visual_assets', 'subtitles', 'preview'):
+                result = run_stage.execute_stage(root, _env.PROJECT, stage)
+                self.assertEqual(result['status'], 'completed', result)
+            preview = next(root / item['path'] for item in result['artifacts'] if item['path'].endswith('.mp4'))
+            metadata = json.loads(subprocess.check_output([shutil.which('ffprobe'), '-v', 'error',
+                '-show_streams', '-of', 'json', str(preview)], text=True))
+            self.assertEqual({stream['codec_type'] for stream in metadata['streams']}, {'video', 'audio'})
+            artifacts.write_json_artifact(self.root/'stage-smoke-result.json', {
+                'scope':'selected native routes through the parent preview',
+                'input_provenance':self.case['input_provenance'], 'native_results':native_results,
+                'preview':str(preview), 'numbered_rows':numbered, 'manual_acceptance_performed':False})
+            print('Native stage smoke completed:',self.root/'stage-smoke-result.json',flush=True)
+            return
         delivered = run_stage.execute_stage(root, _env.PROJECT)
         self.assertEqual(delivered['status'], 'completed', delivered)
         self.assertTrue(all(stage['status'] == 'completed'

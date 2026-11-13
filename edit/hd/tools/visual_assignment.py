@@ -23,6 +23,10 @@ def _validate_candidate(value: Mapping) -> dict:
         raise ValueError("visual candidate candidate_id must be a non-empty string")
     if template is not None and (not isinstance(template, str) or not template.strip()):
         raise ValueError("visual candidate template_id must be a non-empty string or None")
+    if 'template_identity' in value and (value['template_identity'] is not None or template is not None):
+        _validate_fixed_templates((value['template_identity'],))
+        if template != value['template_identity'][1]:
+            raise ValueError('visual candidate template identity differs from its template_id')
     result = dict(value)
     result["channel"] = channel
     result["candidate_id"] = candidate_id
@@ -38,12 +42,17 @@ def _validate_fixed_channels(values: Sequence[str]) -> frozenset[str]:
 
 
 def _validate_fixed_templates(values: Sequence[tuple[str, str]]) -> frozenset[tuple[str, str]]:
-    result = frozenset(values)
-    for item in result:
+    for item in values:
         if (not isinstance(item, tuple) or len(item) != 2
                 or any(not isinstance(value, str) or not value.strip() for value in item)):
-            raise ValueError("fixed template must be a (channel, template_id) tuple")
-    return result
+            raise ValueError("template identity must be an (origin, template_id) tuple")
+    return frozenset(values)
+
+
+def _template_identity(candidate):
+    if candidate['template_id'] is None:
+        return None
+    return candidate.get('template_identity', (candidate['channel'], candidate['template_id']))
 
 
 def assign_candidates(
@@ -55,15 +64,14 @@ def assign_candidates(
     """Choose one candidate per slot with global lexicographic maxima.
 
     The returned list contains copies of the selected input candidates in slot
-    order.  `fixed_channels` and `fixed_templates` describe already-used
-    identities; aliases must be canonicalized by the caller.
+    order. `fixed_channels` and `fixed_templates` describe already-used
+    identities. To share a template across execution channels, the caller
+    supplies the same canonical `template_identity` on both candidates.
     """
     if not isinstance(domains, Sequence):
         raise ValueError("domains must be a sequence")
     fixed_c = _validate_fixed_channels(fixed_channels)
     fixed_t = _validate_fixed_templates(fixed_templates)
-    if any(channel not in fixed_c for channel, _ in fixed_t):
-        raise ValueError("fixed template channel must also be a fixed channel")
     normalized: list[list[dict]] = []
     for domain in domains:
         if not isinstance(domain, Sequence) or not domain:
@@ -73,14 +81,47 @@ def assign_candidates(
             raise ValueError("candidate_id must be unique within a slot")
         normalized.append(candidates)
 
-    return _assign_flow(normalized, fixed_c, fixed_t)
+    owners = {}
+    for domain in normalized:
+        for candidate in domain:
+            template = _template_identity(candidate)
+            if template is not None and template not in fixed_t:
+                owners.setdefault(template, set()).add(candidate['channel'])
+    if all(len(channels) == 1 for channels in owners.values()):
+        return _assign_flow(normalized, fixed_c, fixed_t, {})
+
+    # A flow may provisionally reward a shared template once per channel. If
+    # that changes the result, re-solve for each possible owner of its bonus.
+    # Restrict only the reward: any channel can still execute the template.
+    pending, best, best_score = [{}], None, (-1, -1)
+    while pending:
+        rewards = pending.pop()
+        result = _assign_flow(normalized, fixed_c, fixed_t, rewards)
+        channels = fixed_c | {candidate['channel'] for candidate in result}
+        templates = {}
+        for candidate in result:
+            template = _template_identity(candidate)
+            if template is not None and template not in fixed_t:
+                templates.setdefault(template, set()).add(candidate['channel'])
+        score = len(channels), len(fixed_t) + len(templates)
+        if score > best_score:
+            best, best_score = result, score
+        provisional = sum((rewards[key] in channels if key in rewards else len(channels))
+                          for key, channels in templates.items())
+        upper = len(channels), len(fixed_t) + min(provisional, len(owners))
+        if upper <= best_score:
+            continue
+        duplicate = next(key for key, channels in templates.items() if key not in rewards and len(channels) > 1)
+        pending.extend({**rewards, duplicate: owner} for owner in sorted(owners[duplicate], reverse=True))
+    return best
 
 
-def _assign_flow(domains, fixed_channels, fixed_templates):
+def _assign_flow(domains, fixed_channels, fixed_templates, rewards):
     """Min-cost max-flow with lexicographic source/template rewards."""
     nslots = len(domains); source = 0; next_node = 1
     slot_nodes = list(range(next_node, next_node + nslots)); next_node += nslots
-    template_keys = sorted({(c["channel"], c["template_id"]) for d in domains for c in d if c["template_id"] is not None})
+    template_keys = sorted({(c['channel'], _template_identity(c)) for d in domains for c in d
+                            if c['template_id'] is not None})
     template_nodes = {key: next_node + i for i, key in enumerate(template_keys)}; next_node += len(template_keys)
     channels = sorted({c["channel"] for d in domains for c in d} | set(fixed_channels))
     channel_nodes = {key: next_node + i for i, key in enumerate(channels)}; next_node += len(channels)
@@ -90,12 +131,14 @@ def _assign_flow(domains, fixed_channels, fixed_templates):
     for i,d in enumerate(domains):
         add(source,slot_nodes[i],1,0)
         for c in d:
-            target = template_nodes.get((c["channel"],c["template_id"])) if c["template_id"] is not None else channel_nodes[c["channel"]]
+            target = (template_nodes[c['channel'], _template_identity(c)] if c['template_id'] is not None
+                      else channel_nodes[c['channel']])
             add(slot_nodes[i],target,1,0, c)
     reward_source=len(domains)+1
-    for key,node in template_nodes.items():
-        add(node,channel_nodes[key[0]],1,0 if key in fixed_templates else -1)
-        add(node,channel_nodes[key[0]],len(domains),0)
+    for (channel, template), node in template_nodes.items():
+        receives_bonus = template not in fixed_templates and rewards.get(template, channel) == channel
+        add(node, channel_nodes[channel], 1, -1 if receives_bonus else 0)
+        add(node, channel_nodes[channel], len(domains), 0)
     for channel,node in channel_nodes.items():
         add(node,sink,1,0 if channel in fixed_channels else -reward_source)
         add(node,sink,len(domains),0)

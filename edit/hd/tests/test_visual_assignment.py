@@ -14,7 +14,7 @@ def c(candidate_id, channel, template=None):
 def score(assignment, fixed_channels=(), fixed_templates=()):
     channels = set(fixed_channels) | {row["channel"] for row in assignment}
     templates = set(fixed_templates) | {
-        (row["channel"], row["template_id"])
+        row.get('template_identity', (row['channel'], row['template_id']))
         for row in assignment if row["template_id"] is not None
     }
     return len(channels), len(templates)
@@ -68,7 +68,7 @@ class VisualAssignmentTests(unittest.TestCase):
     with self.assertRaises(ValueError):
         assign_candidates([[]])
     with self.assertRaises(ValueError):
-        assign_candidates([[c("a", "A", "a")]], fixed_templates=(("B", "b"),))
+        assign_candidates([[c("a", "A", "a")]], fixed_templates=(("B",),))
     with self.assertRaises(ValueError):
         assign_candidates([[c("a", "", "a")]])
 
@@ -79,3 +79,22 @@ class VisualAssignmentTests(unittest.TestCase):
     self.assertEqual(len(result), 20)
     self.assertEqual(len({row["channel"] for row in result}), 8)
     self.assertEqual(len({(row["channel"], row["template_id"]) for row in result}), 20)
+
+ def test_shared_origin_preserves_channels_and_optimizes_unique_templates(self):
+    lemo = 'lemo-opuscar'
+    cinecode = 'cinecode'
+    blueprint = lemo + '/blueprint'
+    dataviz = lemo + '/dataviz'
+    domains = [
+        [c('lemo-blueprint', lemo, blueprint)],
+        [{**c('cinecode-blueprint', cinecode, blueprint), 'template_identity': (lemo, blueprint)},
+         {**c('cinecode-dataviz', cinecode, dataviz), 'template_identity': (lemo, dataviz)}],
+        [c('lemo-other', lemo, dataviz), c('cinecode-other', cinecode, 'cinecode/shape-morph')],
+    ]
+    chosen = assign_candidates(domains)
+    self.assertEqual(score(chosen), max(score(choice) for choice in product(*domains)))
+    self.assertEqual([row['candidate_id'] for row in chosen],
+                     ['lemo-blueprint', 'cinecode-dataviz', 'cinecode-other'])
+    chosen = assign_candidates([domains[1]], fixed_channels=(cinecode,),
+                               fixed_templates=((lemo, blueprint),))
+    self.assertEqual(chosen[0]['candidate_id'], 'cinecode-dataviz')

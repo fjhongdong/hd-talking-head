@@ -17,13 +17,17 @@ from adapter_kit import sha256_file
 PACKAGES = {'barty-motion-graphics': ('playwright', '1.64.0'), 'bang-motion': ('puppeteer', '25.3.0'),
             'mg-styles-15': ('puppeteer-core', '25.12.0'), 'video-shotcraft': ('remotion', '4.0.484')}
 HUASHU_PACKAGES = {'playwright': '1.64.0', 'Pillow': '11.3.0', 'numpy': '2.5.4'}
+SOURCE_RENDERERS = {
+    'bb-video': 'a21025a19d382b066ff354d877919be9d6863f97',
+    'cinecode': 'c8a3e7552699360a2b0142c9620882af2069eedb',
+}
 
 
 def renderer_version(dependency_id):
     if dependency_id == 'huashu-art-motion':
         return 'huashu-art-motion-8a0d7d72ca65fcce6f8ba82c4a6c8dfe35b8422c-playwright-1.64.0'
-    if dependency_id == 'bb-video':
-        return 'bb-video-a21025a19d382b066ff354d877919be9d6863f97'
+    if dependency_id in SOURCE_RENDERERS:
+        return f'{dependency_id}-{SOURCE_RENDERERS[dependency_id]}'
     return '-'.join(PACKAGES[dependency_id])
 
 BLENDER_VERSION = '5.1.2'
@@ -113,6 +117,8 @@ def runtime_root(project, *, dependency_id='barty-motion-graphics'):
 def _minimum_node(project, dependency_id):
     if dependency_id == 'bb-video':
         return '>=22.4.0', (22, 4, 0)
+    if dependency_id == 'cinecode':
+        return '>=22.0.0', (22, 0, 0)
     name = PACKAGES[dependency_id][0]
     lock = json.loads(locked_files(project, dependency_id)['package-lock.json'].read_bytes())
     requirement = (lock['packages']['']['engines']['node'] if dependency_id in {'mg-styles-15', 'video-shotcraft'}
@@ -153,8 +159,8 @@ def validate_runtime_identity(project, identity, *, dependency_id):
     """Validate a frozen generation identity without requiring its old tools."""
     if dependency_id == 'huashu-art-motion':
         return _validate_huashu_runtime_identity(project, identity)
-    source_key = 'source_sha256' if dependency_id == 'bb-video' else 'lock_sha256'
-    source_digest = (_bb_source_digest(project) if dependency_id == 'bb-video' else
+    source_key = 'source_sha256' if dependency_id in SOURCE_RENDERERS else 'lock_sha256'
+    source_digest = (_source_digest(project, dependency_id) if dependency_id in SOURCE_RENDERERS else
                      hashlib.sha256(locked_files(project, dependency_id)['package-lock.json'].read_bytes()).hexdigest())
     if (not isinstance(identity, dict)
             or set(identity) != {'schema_version', 'dependency_id', 'renderer_version', source_key, 'tools', 'browser'}
@@ -172,10 +178,10 @@ def validate_runtime_identity(project, identity, *, dependency_id):
     return identity
 
 
-def _bb_source_digest(project):
+def _source_digest(project, dependency_id):
     from motion_native_skill_adapter import source_root
-    source_root(project, dependency_id='bb-video')
-    return sha256_file(Path(project) / 'references/bb-video-native-source.json')
+    source_root(project, dependency_id=dependency_id)
+    return sha256_file(Path(project) / 'references' / (dependency_id + '-native-source.json'))
 
 
 def _huashu_source_digest(project):
@@ -263,30 +269,33 @@ def _check_huashu_tools(project):
             'runtime_identity': identity}
 
 
-def _check_bb_tools(project):
-    """BB uses Node's built-in CDP client, Chrome and FFmpeg; no npm runtime."""
-    digest = _bb_source_digest(project)
-    node, node_version = _node_preflight(project, 'bb-video')
+def _check_source_renderer_tools(project, dependency_id):
+    """Check a native CDP renderer with no npm dependencies."""
+    digest = _source_digest(project, dependency_id)
+    node, node_version = _node_preflight(project, dependency_id)
     tools = {'node': node, **{tool: shutil.which(tool) for tool in ('ffmpeg', 'ffprobe')}}
     if not all(tools.values()):
-        raise ValueError('BB Video rendering requires Node, FFmpeg and FFprobe')
+        raise ValueError(dependency_id + ' rendering requires Node, FFmpeg and FFprobe')
     from adapter_kit import browser_candidates
     configured = os.environ.get('CHROME_PATH')
     browsers = [Path(configured)] if configured else browser_candidates(project)
+    if dependency_id == 'cinecode' and not configured:
+        # Use the full Chrome application first for CineCode's native Metal path.
+        browsers.sort(key=lambda browser: browser.name == 'chrome-headless-shell')
     if not browsers or not browsers[0].is_file() or not os.access(browsers[0], os.X_OK):
-        raise ValueError('BB Video requires an existing executable Chrome browser; set CHROME_PATH')
+        raise ValueError(dependency_id + ' requires an existing executable Chrome browser; set CHROME_PATH')
     browser = str(browsers[0].resolve(strict=True))
     result = subprocess.run([browser, '--version'], check=True, capture_output=True, text=True, timeout=15)
     browser_version = result.stdout.strip()
     if not browser_version:
-        raise ValueError('Cannot read BB Video Chrome version')
+        raise ValueError('Cannot read ' + dependency_id + ' Chrome version')
     versions = {'node': node_version, **{tool: _tool_version(tools[tool], tool) for tool in ('ffmpeg', 'ffprobe')}}
-    renderer = renderer_version('bb-video')
-    identity = {'schema_version': 1, 'dependency_id': 'bb-video', 'renderer_version': renderer,
+    renderer = renderer_version(dependency_id)
+    identity = {'schema_version': 1, 'dependency_id': dependency_id, 'renderer_version': renderer,
                 'source_sha256': digest,
                 'tools': {key: {'path': value, 'version': versions[key]} for key, value in tools.items()},
                 'browser': {'path': browser, 'version': browser_version}}
-    validate_runtime_identity(project, identity, dependency_id='bb-video')
+    validate_runtime_identity(project, identity, dependency_id=dependency_id)
     return {'status': 'ready', 'renderer_version': renderer, 'browser': browser,
             'browser_version': browser_version, 'environment': {'CHROME_PATH': browser},
             'tools': tools, 'tool_versions': versions, 'runtime_identity': identity}
@@ -301,8 +310,8 @@ def check(project, *, dependency_id='barty-motion-graphics', mode='render'):
             raise ValueError('Frozen native motion media inspection requires FFprobe')
         return {'status': 'ready', 'tools': {'ffprobe': ffprobe},
                 'tool_versions': {'ffprobe': _tool_version(ffprobe, 'ffprobe')}}
-    if dependency_id == 'bb-video':
-        return _check_bb_tools(project)
+    if dependency_id in SOURCE_RENDERERS:
+        return _check_source_renderer_tools(project, dependency_id)
     if dependency_id == 'huashu-art-motion':
         return _check_huashu_tools(project)
     name, version = PACKAGES[dependency_id]
@@ -405,7 +414,7 @@ def prepare(project, *, dependency_id='barty-motion-graphics'):
         # Runtime preparation is explicit and shared with HandDraw. This bridge
         # only checks it; it never downloads Python packages, browsers or models.
         return check(project, dependency_id=dependency_id)
-    if dependency_id == 'bb-video':
+    if dependency_id in SOURCE_RENDERERS:
         return check(project, dependency_id=dependency_id)
     name, version = PACKAGES[dependency_id]
     node, _ = _node_preflight(project, dependency_id)
