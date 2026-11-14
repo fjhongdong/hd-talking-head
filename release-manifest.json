@@ -3018,7 +3018,7 @@
   "references/video-shotcraft-native-source.json": "9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2",
   "references/video-shotcraft-template-catalog.json": "6d9e2a9d9f35012521796c097d8ab80eaf16f909aa0f4b7a0f2b98436e92e4c5",
   "references/visual-assets-preflight.md": "799f303452246d5711a40458ab2c1dc3b21563a4b9778419305834679ae7ab34",
-  "references/visual-quality-contract.md": "4ec49244bc09cd413c4b6afd02493ee38b65951ceed1b24c678401679655cc6a",
+  "references/visual-quality-contract.md": "66041ae67fd18afb954ad0e9e70844ef7f1af7d25c6ace64d56b9ab1a45892ea",
   "references/visual-revision-reuse.md": "6252dd8183cd2fc3d4866335e2e60f2d33a8be93d313f831d074a0b50bb998c4",
   "run.py": "3f9345465866977ec2234e5982b7a088281c461f8b9d336700b239c5e25d86b6",
   "scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
@@ -10507,6 +10507,6 @@
   "vendor/wise-motion/vendor/lucide/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
   "vendor/wise-motion/vendor/lucide/SOURCE.json": "dc71e9a635db8e71e4a938ac5ec7372eab1c2f4bbd9779bb5d7d54923550eda1"
  },
- "release_id": "2026-11-13-visible-subject-and-action-planning",
+ "release_id": "2026-11-14-visible-review-and-handoff",
  "schema_version": 1
 }
