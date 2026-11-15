@@ -840,9 +840,53 @@ def _execution_identity(beat, supplements):
             beat.get('semantic_row_id') or (beat['segment_id'] + ':' + beat['component_id']))
 
 
+def _confirmed_selection_locks(selection, approved_selection):
+    """Accept only the complete route map supplied by the verified approval caller."""
+    if approved_selection is None:
+        return None
+    if not isinstance(approved_selection, Mapping):
+        raise ValueError("confirmed routes must identify every visual assignment")
+    locks = {}
+    for group, beats in (("assignments", "beats"), ("overlay_assignments", "overlay_beats")):
+        rows = approved_selection.get(group, [])
+        if not isinstance(rows, list):
+            raise ValueError("confirmed routes must identify every visual assignment")
+        keys = set()
+        for row in rows:
+            if not isinstance(row, Mapping):
+                raise ValueError("invalid confirmed visual assignment")
+            key = (_text(row.get("segment_id"), "confirmed segment"),
+                   _text(row.get("component_id"), "confirmed component"))
+            if key in locks:
+                raise ValueError("duplicate confirmed visual assignment")
+            locks[key] = _text(row.get("candidate_id"), "confirmed candidate")
+            keys.add(key)
+        if keys != {(row["segment_id"], row["component_id"]) for row in selection.get(beats, [])}:
+            raise ValueError("confirmed routes must identify every visual assignment in its original group")
+    return locks
+
+
+def _write_assignments(result, beats, chosen, pool, overlay_keys):
+    assignments = [
+        {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
+         "candidate_id": choice["candidate_id"],
+         **{key: pool[choice["candidate_id"]][key]
+            for key in ("skill_id", "entrypoint", "template_id", "role", "limitations")},
+         "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
+        | ({"design_plan": copy.deepcopy(choice["design_plan"])} if "design_plan" in choice else {})
+        | {field: pool[choice['candidate_id']][field] for field in ('source_route', 'canonical_template')
+           if pool[choice['candidate_id']].get(field) and
+           (field != 'canonical_template' or pool[choice['candidate_id']]['skill_id'] == 'cinecode')}
+        for beat, choice in zip(beats, chosen)
+    ]
+    result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]
+    result["overlay_assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) in overlay_keys]
+    return result
+
+
 def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, native_skills, job_dir=None,
                         temporarily_disabled=(), director=None, treatment=None,
-                        verified_supplements=None) -> dict:
+                        verified_supplements=None, confirmed_locks=None) -> dict:
     """Choose all reviewed visual items jointly: exact channels, then templates."""
     if selection.get("schema_version") != 1 or not isinstance(selection.get("beats"), list):
         raise ValueError("B-roll skill_selection requires schema_version=1 and beats")
@@ -984,6 +1028,31 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
     fixed_channels = tuple({source_channel(identity["skill_id"]) for _, identity in fixed_routes if identity})
     fixed_templates = tuple({_template_identity(identity) for _, identity in fixed_routes
                             if identity and _template_identity(identity)})
+    def score(choices):
+        return (len(set(fixed_channels) | {c["channel"] for c in choices}),
+                len(set(fixed_templates) | {c['template_identity'] for c in choices if c['template_identity']}))
+
+    evidence_scope = {"scope": "joint_broll_and_overlay_current_windows",
+                      "evidence_scope": "planning_capabilities_not_produced_media"}
+    result = copy.deepcopy(dict(selection))
+    result.pop("_optimistic_assignments", None)
+    if confirmed_locks is not None:
+        chosen, choices_by_item = [], {}
+        for beat, key, domain in zip(beats, keys, domains):
+            cid = confirmed_locks[key]
+            choice = next((candidate for candidate in domain if candidate["candidate_id"] == cid), None)
+            if choice is None:
+                raise ValueError(f"{key[0]}:{key[1]} confirmed candidate is not reviewed and eligible: {cid}")
+            identity = _execution_identity(beat, supplements)
+            if choices_by_item.setdefault(identity, cid) != cid:
+                raise ValueError("parts of one confirmed semantic visual item must share one candidate")
+            chosen.append(choice)
+        confirmed = [next(choice for choice in group if choice["candidate_id"] == choices_by_item[identity])
+                     for identity, group in zip(group_order, normalized)]
+        result["diversity_review"] = {**evidence_scope, "selection_mode": "confirmed_assignment",
+                                      "confirmed_counts": list(score(confirmed))}
+        return _write_assignments(result, beats, chosen, pool, overlay_keys)
+
     exact = (assign_candidates(normalized,
         fixed_channels=fixed_channels, fixed_templates=fixed_templates)
         if all(normalized) else None)
@@ -992,9 +1061,6 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
     if partial:
         optimistic = assign_candidates(optimistic_normalized,
             fixed_channels=fixed_channels, fixed_templates=fixed_templates)
-    def score(choices):
-        return (len(set(fixed_channels) | {c["channel"] for c in choices}),
-                len(set(fixed_templates) | {c['template_identity'] for c in choices if c['template_identity']}))
     lower = score(exact) if exact is not None else None
     upper = score(optimistic)
     if lower != upper:
@@ -1012,15 +1078,10 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
                 fixed_channels=fixed_channels, fixed_templates=fixed_templates)
             if score(trial) == upper:
                 retained, optimistic = trial_domains, trial
-    diversity_review = {"reviewed_optimum": list(lower) if lower is not None else None,
-                        "reviewed_status": "complete" if exact is not None else "no_complete_assignment",
-                        "optimistic_upper_bound": list(upper),
-                        "scope": "joint_broll_and_overlay_current_windows",
-                        "evidence_scope": "planning_capabilities_not_produced_media"}
-    result = copy.deepcopy(dict(selection))
-    result.pop("diversity_review", None)
-    result.pop("_optimistic_assignments", None)
-    result["diversity_review"] = diversity_review
+    result["diversity_review"] = {**evidence_scope,
+                                  "reviewed_optimum": list(lower) if lower is not None else None,
+                                  "reviewed_status": "complete" if exact is not None else "no_complete_assignment",
+                                  "optimistic_upper_bound": list(upper)}
     if lower != upper:
         optimistic_by_row = {identity: choice for identity, choice in zip(group_order, optimistic)}
         # These temporary domain reductions are not timing exclusions. Every
@@ -1135,21 +1196,7 @@ def _assign_skills_once(project_root: Path, selection: Mapping, *, catalog, nati
                         grouped_ids[identity].add(candidate["candidate_id"])
                     if all(len(ids) == 1 for ids in grouped_ids.values()) and cost(retained)[:2] == cost(chosen)[:2]:
                         chosen = retained
-    assignments = [
-        {"segment_id": beat["segment_id"], "component_id": beat["component_id"],
-         "candidate_id": choice["candidate_id"],
-         **{key: pool[choice["candidate_id"]][key]
-            for key in ("skill_id", "entrypoint", "template_id", "role", "limitations")},
-         "visual_pattern": choice["visual_pattern"], "reason": choice["reason"]}
-        | ({"design_plan": copy.deepcopy(choice["design_plan"])} if "design_plan" in choice else {})
-        | {field: pool[choice['candidate_id']][field] for field in ('source_route', 'canonical_template')
-           if pool[choice['candidate_id']].get(field) and
-           (field != 'canonical_template' or pool[choice['candidate_id']]['skill_id'] == 'cinecode')}
-        for beat, choice in zip(beats, chosen)
-    ]
-    result["assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) not in overlay_keys]
-    result["overlay_assignments"] = [row for row in assignments if (row["segment_id"], row["component_id"]) in overlay_keys]
-    return result
+    return _write_assignments(result, beats, chosen, pool, overlay_keys)
 
 
 def _validate_partial_windows(selection, director):
@@ -1188,15 +1235,17 @@ def _validate_partial_windows(selection, director):
             raise ValueError("fixed material window differs from the current director")
 
 
-def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, director=None, treatment=None) -> dict:
-    """Assign reviewed routes, reusing matches when a local feasibility check fails."""
+def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, director=None, treatment=None,
+                  approved_selection=None) -> dict:
+    """Solve a new assignment or validate exact choices from a verified complete-list approval."""
     from .motion_capabilities import overlay_candidates
 
     beats = [*selection.get("beats", []), *selection.get("overlay_beats", [])]
     verified = _verified_supplement_routes(job_dir, director, treatment)
     supplements, _ = verified
+    confirmed_locks = _confirmed_selection_locks(selection, approved_selection)
     partial = any(c.get("fit") == "unreviewed" for b in beats for c in b.get("candidates", []))
-    if partial:
+    if partial or confirmed_locks is not None:
         _validate_partial_windows(selection, director)
     native = discover_candidates(project_root)
     catalog = {row["candidate_id"]: row for row in [*native, *overlay_candidates(project_root)]}
@@ -1212,7 +1261,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
             result = _assign_skills_once(project_root, selection, job_dir=job_dir,
                                          catalog=catalog, native_skills=native_skills,
                                          temporarily_disabled=disabled, director=director, treatment=treatment,
-                                         verified_supplements=verified)
+                                         verified_supplements=verified, confirmed_locks=confirmed_locks)
         except ValueError as error:
             if causes and 'no timing-feasible candidate' in str(error):
                 raise ValueError(f'{error}: ' + '; '.join(dict.fromkeys(causes))) from error
@@ -1228,7 +1277,7 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
             check_key = (beat["segment_id"], beat["component_id"], cid)
             if check_key not in feasibility_checks:
                 review = next(c for c in beat["candidates"] if c["candidate_id"] == cid)
-                reason = timing_failure(row, beat, strict=partial)
+                reason = timing_failure(row, beat, strict=partial or confirmed_locks is not None)
                 if reason is None and row['skill_id'] == 'cinecode' and review['fit'] != 'unreviewed':
                     from scripts.cinecode_catalog import validate_material_plan
                     try:
@@ -1245,6 +1294,11 @@ def assign_skills(project_root: Path, selection: Mapping, *, job_dir=None, direc
             if reason:
                 identity = _execution_identity(beat, supplements)
                 failures.append(((identity, row["candidate_id"]), reason))
+        if confirmed_locks is not None:
+            if failures:
+                raise ValueError("confirmed visual route failed its feasibility check: "
+                                 + "; ".join(reason for _, reason in failures))
+            return result
         if not failures:
             proof = result["diversity_review"]
             if proof["reviewed_optimum"] != proof["optimistic_upper_bound"]:
@@ -1474,13 +1528,14 @@ def validate_fixed_materials(draft: Mapping, selection: Mapping, *, require_bind
 
 
 def validate_selection(project_root: Path, draft: Mapping, treatment: Mapping, *, job_dir=None,
-                       phase="completed") -> dict:
+                       phase="completed", approved_selection=None) -> dict:
     if phase not in {"planning", "completed"}:
         raise ValueError("unknown visual selection phase")
     selection = treatment.get("skill_selection")
     if not isinstance(selection, dict):
         raise ValueError("B-roll treatment is missing skill_selection")
-    computed = assign_skills(project_root, selection, job_dir=job_dir, director=draft, treatment=treatment)
+    computed = assign_skills(project_root, selection, job_dir=job_dir, director=draft, treatment=treatment,
+                             approved_selection=approved_selection)
     if (computed["assignments"] != selection.get("assignments")
             or computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
         raise ValueError("B-roll assignment changed; run assign before building bindings")

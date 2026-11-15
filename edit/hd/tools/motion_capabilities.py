@@ -625,7 +625,7 @@ def _native_input_check(project_root: Path, row: Mapping, brief: Mapping | None,
                 method = name + ".validate_brief"
                 if hasattr(module, "validate_brief"):
                     checked = module.validate_brief(payload)
-                    sweety_web = is_sweety_web_template(row.get('dependency_id'), row['template_id'])
+                    sweety_web = is_sweety_web_template(row.get('dependency_id'), row.get('template_id'))
                     expected_alpha = row['role'] == 'aroll_overlay' or sweety_web
                     if (row.get('dependency_id') in CREATIVE_SKILL_ADAPTERS
                             and use == 'broll' and segment is not None):
@@ -893,7 +893,7 @@ def check_planning_only(project_root: Path, draft: Mapping, treatment: Mapping, 
 
 
 def _check_planning_with_matches(project_root: Path, draft: Mapping, treatment: Mapping, *,
-                                 job_dir: Path | None = None) -> tuple[dict, dict]:
+                                 job_dir: Path | None = None, approved_selection=None) -> tuple[dict, dict]:
     """Keep validated matches local to the caller that also consumes them."""
     from . import broll_skill_selection, motion_match_cache, semantic_visual_plan
     from . import visual_confirmation, visual_coverage
@@ -915,7 +915,8 @@ def _check_planning_with_matches(project_root: Path, draft: Mapping, treatment: 
         matched = motion_match_cache._validate_review_structure(project_root, draft, treatment, job_dir=job_dir)
         selection = treatment.get("skill_selection", {})
         computed = broll_skill_selection.assign_skills(project_root, selection, job_dir=job_dir,
-                                                     director=draft, treatment=treatment)
+                                                     director=draft, treatment=treatment,
+                                                     approved_selection=approved_selection)
         report["diversity_review"] = computed["diversity_review"]
         if (computed["assignments"] != selection.get("assignments") or
                 computed["overlay_assignments"] != selection.get("overlay_assignments", [])):
@@ -953,7 +954,8 @@ def check_offline_plan(project_root: Path, draft: Mapping, treatment: Mapping, *
 
 
 def _check_offline_with_selection(project_root: Path, draft: Mapping, treatment: Mapping, *,
-                                  job_dir: Path | None = None, phase: str = "completed") -> tuple[dict, dict | None]:
+                                  job_dir: Path | None = None, phase: str = "completed",
+                                  approved_selection=None) -> tuple[dict, dict | None]:
     """Return the validated assignment to the caller that will publish it."""
     from . import broll_skill_selection, overlay_selection
 
@@ -994,7 +996,8 @@ def _check_offline_with_selection(project_root: Path, draft: Mapping, treatment:
         return {"status": "fail", "scope": "offline_orchestration_only",
                 "failures": [{"check": "semantic_word_windows", "reason": str(error)}],
                 "checks": [], "not_verified": [], "source_plans_modified": False}, None
-    broll = broll_skill_selection.validate_selection(project_root, draft, treatment, job_dir=job_dir, phase=phase)
+    broll = broll_skill_selection.validate_selection(project_root, draft, treatment, job_dir=job_dir,
+                                                    phase=phase, approved_selection=approved_selection)
     planned = set(broll.get("planned_inputs", ()))
     spoken_segments = {
         segment["segment_id"]: "" if speech is None else "".join(str(word["text"]) for word in speech

@@ -563,7 +563,7 @@ def _routing_distribution(rows, treatment):
         previous = (row.get("number", row["semantic_row_id"]), current, row["semantic_row_id"])
     return summary, repeats
 
-def _validate_template_choices(job, director, treatment):
+def _validate_template_choices(job, director, treatment, *, approved_selection=None):
     from . import broll_skill_selection, motion_match_cache, motion_capabilities, overlay_selection
     project = PACKAGE_ROOT
     selection = treatment.get("skill_selection", {})
@@ -574,7 +574,9 @@ def _validate_template_choices(job, director, treatment):
         if ('binding_snapshot' in beat and beat['binding_snapshot'] != bindings.get(key)):
             raise VisualConfirmationError("joint selected binding snapshot is missing or stale: " + str(key))
     if selection:
-        report, cached = motion_capabilities._check_planning_with_matches(project, director, treatment, job_dir=job.job_dir)
+        options = {'approved_selection': approved_selection} if approved_selection is not None else {}
+        report, cached = motion_capabilities._check_planning_with_matches(
+            project, director, treatment, job_dir=job.job_dir, **options)
         if report['status'] != 'pass':
             raise VisualConfirmationError('selected template planning check failed: ' + str(report['failures'] or report['not_verified']))
         broll_skill_selection.validate_fixed_materials(director, selection, job_dir=job.job_dir)
@@ -685,13 +687,115 @@ def _validate_beat_sheet(treatment, director, speech):
         if len(reused) > 1 and any(not text(beat.get("merge_reason")) for beat in reused):
             raise VisualConfirmationError("a component reused across beats needs merge_reason on each beat")
 
-def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_visual_text=None):
+def _display_cell(value):
+    return str(value).replace("|", "／").replace("\n", "<br>")
+
+
+def _display_visual_task(row):
+    details = []
+    for item in row.get("required_content", {}).values():
+        terms = "、".join(f"「{term}」" for term in item.get("terms", []))
+        details.append(item["meaning"] + (f"（须显示 {terms}）" if terms else ""))
+    return "\n".join([row["visual_task"], *details])
+
+
+def confirmed_local_table(director, treatment, rows):
+    """Render the exact local list to show before accepting a recovery reply."""
+    from .semantic_visual_plan import component_semantic_rows, component_use
+
+    components = {(s['segment_id'], c['component_id']): (s, c) for s in director['segments']
+                  for c in s['visual_strategy']['components']}
+    semantic_rows = component_semantic_rows(treatment)
+    lines = [
+        '# 本视频正文完整动效清单', '',
+        '下表使用剪后正文时间，本次不新增生成调用或费用。', '',
+        '| 编号 | 时间 | 类型 | 原话 | 含义 | 画面任务 | 屏显文案 | 渠道与模板标识 |',
+        '|---|---|---|---|---|---|---|---|',
+    ]
+    for row in rows:
+        key = (row['segment_id'], row['component_id'])
+        segment, component = components[key]
+        semantic = semantic_rows[key]
+        use = component_use(segment, component)
+        cells = (row['number'], f"{row['start_frame']/24:.3f}–{row['end_frame']/24:.3f}s",
+                 '贴片' if use == 'overlay' else 'B-roll', semantic['quote'], semantic['semantic'],
+                 _display_visual_task(semantic), '／'.join(segment['visible_text']) or '—', row['candidate_id'])
+        lines.append('| ' + ' | '.join(map(_display_cell, cells)) + ' |')
+    return ('\n'.join(lines) + '\n').encode('utf-8')
+
+
+def _confirmed_local_selection(job, director, treatment, record):
+    """Reconcile an actual, already communicated list for this paused Job."""
+    from .motion_match_cache import _identity
+    from .semantic_visual_plan import component_semantic_rows, component_use
+
+    if (not isinstance(record, dict) or set(record) != {
+            'job_id', 'revision', 'displayed_list', 'user_confirmation', 'rows'}
+            or record['job_id'] != job.job_id or type(record['revision']) is not int
+            or record['revision'] != job.revision or _steps(treatment)
+            or not isinstance(record['user_confirmation'], str) or not record['user_confirmation'].strip()
+            or not isinstance(record['rows'], list)):
+        raise VisualConfirmationError('already-confirmed local list needs this Job, revision, actual reply and zero new generation')
+    source = record['displayed_list']
+    if not isinstance(source, dict) or set(source) != {'path', 'sha256', 'bytes'}:
+        raise VisualConfirmationError('the displayed local list needs an exact Job file reference')
+    displayed = _exact(job.job_dir, source)
+    components = {(s['segment_id'], c['component_id']): (s, c) for s in director['segments']
+                  for c in s['visual_strategy']['components']}
+    selection = {'assignments': [], 'overlay_assignments': []}
+    seen = set()
+    original = _read(displayed)
+    displayed_rows = original.get('rows')
+    if displayed_rows != record['rows']:
+        raise VisualConfirmationError('confirmed local rows differ from the recorded list')
+    table = _exact(job.job_dir, original['table']).read_bytes()
+    semantic_rows = component_semantic_rows(treatment)
+    for number, row in enumerate(record['rows'], 1):
+        if (not isinstance(row, dict) or set(row) != {
+                'number', 'segment_id', 'component_id', 'candidate_id', 'start_frame', 'end_frame',
+                'semantic_sha256'}
+                or type(row['number']) is not int or row['number'] != number
+                or any(not isinstance(row[k], str) or not row[k] for k in ('segment_id', 'component_id', 'candidate_id'))
+                or any(type(row[k]) is not int for k in ('start_frame', 'end_frame'))):
+            raise VisualConfirmationError('already-confirmed row must retain its displayed number, time, and selected route')
+        key = (row['segment_id'], row['component_id'])
+        if key not in components or key in seen:
+            raise VisualConfirmationError('already-confirmed row target is unknown or duplicated')
+        segment, component = components[key]
+        semantic = semantic_rows[key]
+        use = component_use(segment, component)
+        if row['semantic_sha256'] != _identity(semantic, '贴片' if use == 'overlay' else 'B-roll'):
+            raise VisualConfirmationError('already-confirmed local meaning or copy changed')
+        if (component['kind'] != 'code_generated'
+                or any(abs(segment[k] * 24 - row[k + '_frame']) > 1e-6 for k in ('start', 'end'))):
+            raise VisualConfirmationError('already-confirmed local route or body clock changed')
+        group = 'overlay_assignments' if use == 'overlay' else 'assignments'
+        selection[group].append({k: row[k] for k in ('segment_id', 'component_id', 'candidate_id')})
+        seen.add(key)
+    if not seen or seen != set(components):
+        raise VisualConfirmationError('already-confirmed rows must cover the complete local proposal')
+    if table != confirmed_local_table(director, treatment, record['rows']):
+        raise VisualConfirmationError('confirmed local selection differs from the displayed table')
+    return selection, table
+
+
+def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_visual_text=None,
+                                *, confirmed_local_list=None):
     from . import state, visual_plan, motion_capabilities, startup, confirmed_content
     state.require_runnable(job, "visual_direction")
     treatment = _read(treatment_path)
-    director = _planning_bindings(_read(director_path), treatment)
+    director = _read(director_path)
     numbering_scope_id = _numbering_scope(treatment)
     visual_plan._validate_draft_envelope(director)
+    approved_selection = displayed_table = None
+    if confirmed_local_list is not None:
+        from . import broll_skill_selection
+        approved_selection, displayed_table = _confirmed_local_selection(job, director, treatment, confirmed_local_list)
+        selected = broll_skill_selection.assign_skills(PACKAGE_ROOT, treatment['skill_selection'],
+            job_dir=job.job_dir, director=director, treatment=treatment, approved_selection=approved_selection)
+        for name in ('assignments', 'overlay_assignments'):
+            treatment['skill_selection'][name] = selected[name]
+    director = _planning_bindings(director, treatment)
     from . import segment_render
     for segment in director["segments"]:
         segment_id = segment.get("segment_id")
@@ -715,7 +819,7 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     confirmed_content.check_confirmed_content(job, director, treatment=treatment)
     steps = _steps(treatment)
     try:
-        diversity_review = _validate_template_choices(job, director, treatment)
+        diversity_review = _validate_template_choices(job, director, treatment, approved_selection=approved_selection)
     except ValueError as error:
         raise VisualConfirmationError("visual selection: " + str(error)) from error
     # Actual engineering inputs are checked only where they already exist.
@@ -748,6 +852,10 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             + "; return to the affected semantic list, add a distinct supported task, match only new items and assign again")
     numbering = _prior_numbering(job, numbering_scope_id)
     numbered_rows = number_visual_rows(rows, numbering)
+    if approved_selection is not None and [
+            (r['number'], r['segment_id'], r['component_id']) for r in numbered_rows] != [
+            (r['number'], r['segment_id'], r['component_id']) for r in confirmed_local_list['rows']]:
+        raise VisualConfirmationError('formal numbering would change the already-confirmed list')
     numbering = {**numbering, **{row["semantic_row_id"]: row["number"] for row in numbered_rows}}
     targets = {(r["segment_id"], r["component_id"]) for r in rows}
     for step in steps:
@@ -776,6 +884,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
                     if any(key in binding and binding[key] != chosen[key] for key in ("provider", "model", "endpoint_id")):
                         raise VisualConfirmationError("AI row differs from this Job selected generation channel")
     content = {"director": director, "treatment": treatment, "reviewed_visual_text": reviewed_visual_text}
+    if confirmed_local_list is not None:
+        content['confirmed_local_list'] = confirmed_local_list
     source_id = artifacts.sha256_json(content)[:16]
     root = job.job_dir / DIRECTORY / f"r{job.revision}-{source_id}"
     root.mkdir(parents=True, exist_ok=True)
@@ -785,6 +895,10 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             path = root / (name + ".json")
             artifacts.write_json_artifact(path, value)
             files[name] = _record(job.job_dir, path)
+    if displayed_table is not None:
+        displayed_path = root / 'confirmed-local-table.md'
+        artifacts.write_bytes_atomic(displayed_path, displayed_table)
+        files['confirmed_local_table'] = _record(job.job_dir, displayed_path)
     proposal = {"schema_version": 1, "kind": SCHEMA, "source_id": source_id,
                 "job_id": job.job_id, "job_dir": str(job.job_dir), "revision": job.revision,
                 "inputs": files, "provider_config_sha256": config_sha,
@@ -795,15 +909,8 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
                     if (job.job_dir / "manifests/generation-channels.json").is_file() else None}
     proposal_path = root / "proposal.json"
     artifacts.write_json_artifact(proposal_path, proposal)
-    def cell(value):
-        return str(value).replace("|", "／").replace("\n", "<br>")
-    def visual_task(row):
-        details = []
-        for item in row.get("required_content", {}).values():
-            terms = item.get("terms", [])
-            text = "、".join(f"「{term}」" for term in terms)
-            details.append(item["meaning"] + (f"（须显示 {text}）" if terms else ""))
-        return "\n".join([row["visual_task"], *details])
+    cell = _display_cell
+    visual_task = _display_visual_task
     lines = ["# 本视频贴片与 B-roll 完整清单", "",
              "## 贴片语义列表", "", "| 原话 | 独立语义 | 画面任务 |", "|---|---|---|"]
     for row in semantic_plan["items"]:
@@ -834,7 +941,10 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
             "、".join(dict.fromkeys(p["source"] for p in parts if p["source"])) or "—",
             "、".join(dict.fromkeys(p["template"] for p in parts)), " → ".join(labels) or "复用/模板渲染")) + " |")
     distribution, repeats = _routing_distribution(numbered_rows, treatment)
-    if diversity_review:
+    if diversity_review and approved_selection is not None:
+        channel_count, template_count = diversity_review['confirmed_counts']
+        lines += ['', f'沿用用户已确认的 {channel_count} 个渠道、{template_count} 个模板。']
+    elif diversity_review:
         lower, upper = (diversity_review[key] for key in ("reviewed_optimum", "optimistic_upper_bound"))
         lines += ["", f"当前候选与已知约束内，已评审组合最优：{lower[0]}渠道、{lower[1]}模板；"
                   f"含未评审候选的乐观上界：{upper[0]}渠道、{upper[1]}模板。",
@@ -867,6 +977,9 @@ def prepare_visual_confirmation(job, director_path, treatment_path, reviewed_vis
     artifacts.write_bytes_atomic(table, "\n".join(lines).encode())
     source_files = [proposal_path, table, *(_path(job.job_dir, r["path"]) for r in files.values())]
     state.mark_visual_ready(job, source_files)
+    if confirmed_local_list is not None:
+        current = state.load_job(job.job_dir)
+        restore_confirmed_local_list(current, confirmed_local_list, expected_source=_record(job.job_dir, proposal_path))
     return proposal_path
 
 def _source_from_stage(job):
@@ -910,6 +1023,26 @@ def save_user_confirmation(job, review):
         state.mark_visual_ready(job, [*(_path(job.job_dir, r["path"]) for r in registered), path])
     return payload
 
+
+def restore_confirmed_local_list(job, record, *, expected_source=None):
+    """Finish recording the same local reply if execution stopped after freezing the proposal."""
+    source = _source_from_stage(job)
+    if expected_source is not None and source != expected_source:
+        raise VisualConfirmationError('the current proposal changed before recording the local reply')
+    inputs = _read(_exact(job.job_dir, source))['inputs']
+    if not {'confirmed_local_list', 'confirmed_local_table'} <= set(inputs):
+        raise VisualConfirmationError('the current proposal has no frozen local list recovery')
+    records = job.stages['visual_direction']['artifacts']
+    if any(ref['path'].startswith('manifests/visual-authorization-r') for ref in records):
+        raise VisualConfirmationError('the current proposal already has a registered authorization')
+    prior = inputs['confirmed_local_list']
+    table = inputs['confirmed_local_table']
+    if prior not in records or table not in records or _read(_exact(job.job_dir, prior)) != record:
+        raise VisualConfirmationError('the local reply differs from the frozen proposal')
+    _exact(job.job_dir, table)
+    return save_user_confirmation(job, {'revision': job.revision, 'artifacts': records,
+                                       'user_confirmation': record['user_confirmation']})
+
 def _validate_source(root, receipt_ref, *, job_id=None):
     receipt = _read(_exact(root, receipt_ref))
     if (receipt.get("source_schema") != SCHEMA or receipt.get("job_id") != job_id
@@ -930,6 +1063,19 @@ def _validate_source(root, receipt_ref, *, job_id=None):
         raise VisualConfirmationError("proposal belongs to another Job")
     for record in proposal["inputs"].values():
         _exact(root, record)
+    confirmed_local_list = proposal['inputs'].get('confirmed_local_list')
+    if confirmed_local_list is not None:
+        prior = _read(_exact(root, confirmed_local_list))
+        table = proposal['inputs'].get('confirmed_local_table')
+        if table is None:
+            # Historical receipts remain readable from their original evidence.
+            original = _read(_exact(root, prior['displayed_list']))
+            _exact(root, original['table'])
+        elif confirmed_local_list not in receipt['artifacts'] or table not in receipt['artifacts']:
+            raise VisualConfirmationError('reconciled list must register its reply and displayed table')
+        if (prior['job_id'] != job_id or proposal['generation_steps']
+                or prior['user_confirmation'] != receipt['user_confirmation']):
+            raise VisualConfirmationError('reconciled list differs from its recorded user confirmation')
     if proposal.get("query_bindings"):
         _exact(root, proposal["query_bindings"])
     config = Path(root) / "manifests/provider-config.json"

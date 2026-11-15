@@ -170,7 +170,8 @@ def run_speech_cleanup(job_dir: Path, project: Path, video_use_result: Path | No
 
 
 def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | None = None,
-                         treatment: Path | None = None, reviewed_visual_text: Path | None = None) -> dict:
+                         treatment: Path | None = None, reviewed_visual_text: Path | None = None,
+                         *, confirmed_local_list=None) -> dict:
     from edit.hd.tools import state, visual_plan, visual_confirmation, avatar_profile, contract_artifacts
     job = state.load_job(job_dir)
     if director_brief is None or treatment is None:
@@ -194,8 +195,10 @@ def run_visual_direction(job_dir: Path, project: Path, director_brief: Path | No
         contract_artifacts.write_json_artifact(normalized, director)
         director_brief = normalized
     source = visual_confirmation.prepare_visual_confirmation(job, _path(job, director_brief),
-        _path(job, treatment), reviewed_visual_text=reviewed)
-    result = _summary(state.load_job(job_dir), 'visual_direction')
+        _path(job, treatment), reviewed_visual_text=reviewed, confirmed_local_list=confirmed_local_list)
+    current = state.load_job(job_dir)
+    result = (resume_visual_direction(current, project) if confirmed_local_list is not None
+              else _summary(current, 'visual_direction'))
     result['confirmation_source'] = str(source.relative_to(job.job_dir))
     return result
 
@@ -497,8 +500,10 @@ def resume_visual_direction(job, project: Path, payload: dict | None = None) -> 
         'or change, and every required_content item. Fill the selected fixed route\'s approved content slots '
         'from expression_basis.content when present. In a creative route, use the native workflow to '
         'design the staging so the subject is recognizable and its action or relationship carries the meaning. '
-        'Use short labels for names, precise values and necessary clarification. Leave time to read the result and respect '
-        'the presenter and subtitle safe zones. Refer to the confirmed proposal for other rows using '
+        'If the focus changes, make the new subject and its relationship visible and hold the result. '
+        'Use short labels for names, precise values or to clarify a generic icon with words from the spoken clause. '
+        'Use the actual presenter frame to place overlays clear of the face, key gestures and subtitles. '
+        'Refer to the confirmed proposal for other rows using '
         'this route so each has a distinct treatment grounded in its own meaning. The native workflow '
         'owns creative design and its technical QA.')
     actions = []
@@ -914,11 +919,15 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
         if stage == 'speech_cleanup' and not (job_dir / '05-speech-cleanup/cleanup-proposal.json').is_file():
             return _summary(job, stage, actions=[{'action': 'provide_cleanup_plan', 'argument': '--cleanup-plan'}])
         if stage == 'visual_direction':
+            from edit.hd.tools import visual_confirmation
             try:
-                from edit.hd.tools.visual_confirmation import validate_visual_authorization
-                validate_visual_authorization(job)
+                visual_confirmation.validate_visual_authorization(job)
             except (ValueError, OSError):
-                return _summary(job, stage, actions=[{'action': 'confirm_visual_list', 'visual_list': _summary(job, stage).get('visual_list'), 'required': 'actual user_confirmation matching this Job/revision/artifacts'}])
+                confirmed_local_list = (payload or {}).get('confirmed_local_list')
+                if confirmed_local_list is None:
+                    return _summary(job, stage, actions=[{'action': 'confirm_visual_list', 'visual_list': _summary(job, stage).get('visual_list'), 'required': 'actual user_confirmation matching this Job/revision/artifacts'}])
+                visual_confirmation.restore_confirmed_local_list(job, confirmed_local_list)
+                job = state.load_job(job_dir)
             return resume_visual_direction(job, project, payload)
         if stage == 'preview':
             from edit.hd.tools import preview_v2
@@ -958,7 +967,8 @@ def _execute_one_stage(job_dir: Path, project: Path, stage: str | None = None, *
     elif stage == 'visual_direction':
         if data.get('realization') is not None:
             return resume_visual_direction(job, project, data)
-        return run_visual_direction(job_dir, project, director_brief, treatment, reviewed_visual_text)
+        return run_visual_direction(job_dir, project, director_brief, treatment, reviewed_visual_text,
+                                    confirmed_local_list=data.get('confirmed_local_list'))
     elif stage == 'visual_assets':
         if component_adapters is None and adapter_factory is not None:
             spec = importlib.util.spec_from_file_location('hd_job_adapters', _path(job, adapter_factory))
@@ -1033,6 +1043,9 @@ def execute_stage(job_dir: Path, project: Path, stage: str | None = None, **opti
             return result
         stage = None
         payload = None
+        if requested == 'visual_direction':
+            for name in ('director_brief', 'treatment', 'reviewed_visual_text'):
+                current_options.pop(name, None)
         current_options.pop('review', None)
 
 

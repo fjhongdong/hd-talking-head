@@ -928,6 +928,25 @@ class DirectProductionCompletionTests(unittest.TestCase):
         self.assertEqual(inputs, [('visual_assets', {'input':'visual_assets'})])
         self.assertEqual(len(result['operation_timing']['stages']), 1)
 
+    def test_continuous_runner_consumes_visual_paths_at_visual_direction(self):
+        from edit.hd.tools import state
+        stages = iter(('edit_structure', 'visual_direction', 'subtitles'))
+        job = SimpleNamespace(current=next(stages))
+        path = Path('/unused')
+        paths = {'director_brief': path / 'director.json', 'treatment': path / 'treatment.json',
+                 'reviewed_visual_text': path / 'reviewed.json'}
+        seen = {}
+        def execute(job_dir, project, stage, **options):
+            seen[stage] = {key: options[key] for key in paths if key in options}
+            job.current = next(stages, None)
+            return {'stage': stage, 'status': 'ready' if stage == 'subtitles' else 'completed'}
+        with mock.patch.object(state, 'load_job', return_value=job), \
+             mock.patch.object(state, 'current_stage', side_effect=lambda value: value.current), \
+             mock.patch.object(run_stage, '_execute_one_stage', side_effect=execute):
+            run_stage.execute_stage(path, PROJECT, **paths)
+        self.assertEqual(seen['visual_direction'], paths)
+        self.assertEqual(seen['subtitles'], {})
+
     def test_delivery_revision_preserves_delivered_files_and_requires_current_user_acceptance(self):
         from edit.hd.tools import state, delivery_approval as delivery
         from edit.hd.tests.media_fixture import make_av_fixture

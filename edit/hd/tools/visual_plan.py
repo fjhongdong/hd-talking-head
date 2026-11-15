@@ -2088,6 +2088,7 @@ def _publish_plan_generation(
 
 def _skill_selection_for_publication(
     job: JobState, draft: dict[str, object], treatment_path: Path | None,
+    *, source_proposal: dict | None = None,
 ) -> dict[str, object] | None:
     """Check selection before any freezer or workflow mutation; never infer a path."""
     managed = ((job.root / "job-context.json").exists()
@@ -2104,7 +2105,14 @@ def _skill_selection_for_publication(
         from .motion_match_cache import _validate_review_structure, validate_design_handoffs
         if managed:
             from .motion_capabilities import _check_offline_with_selection
-            review, selection = _check_offline_with_selection(PACKAGE_ROOT, draft, treatment, job_dir=job.job_dir)
+            from . import visual_confirmation
+            approved_selection = None
+            if source_proposal and 'confirmed_local_list' in source_proposal['inputs']:
+                original = visual_confirmation._read(visual_confirmation._exact(
+                    job.job_dir, source_proposal['inputs']['treatment']))
+                approved_selection = original['skill_selection']
+            review, selection = _check_offline_with_selection(PACKAGE_ROOT, draft, treatment,
+                job_dir=job.job_dir, approved_selection=approved_selection)
             if review["status"] != "pass":
                 raise ValueError("motion planning/native input check is " + review["status"]
                                  + " - " + str(review["failures"] or review["not_verified"]))
@@ -2194,11 +2202,14 @@ def prepare_visual_direction(
     # The destructive schema gate and all pure contract checks precede every
     # injected freezer, compiler, artifact write, and workflow-state transition.
     draft = _validate_draft(brief)
+    source_proposal = None
     if (job.stages["visual_direction"]["status"] == "ready"
             and any(r["path"].startswith("07-visual-confirmation/") for r in job.stages["visual_direction"]["artifacts"])):
         from .visual_confirmation import validate_realization_draft
-        validate_realization_draft(job, draft, contract_artifacts.read_json_artifact(treatment_path))
-    skill_selection = _skill_selection_for_publication(job, draft, treatment_path)
+        source_proposal = validate_realization_draft(
+            job, draft, contract_artifacts.read_json_artifact(treatment_path))['source']
+    skill_selection = _skill_selection_for_publication(job, draft, treatment_path,
+                                                       source_proposal=source_proposal)
     try:
         _recover_before_context(job)
         persisted = _exact_persisted_job(job)

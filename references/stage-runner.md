@@ -26,6 +26,12 @@ python3.12 <skill-root>/run.py run_stage --job-context <workspace>/job-context.j
 
 `operation_timing` 沿用本次阶段耗时，并记录输入检查、源码库存复查及复用的次数和耗时。不把用户等待、并行任务的重叠时长或后续 Skill 开发时间累加为渲染耗时；局部检查省时不等于整片提速，后者须以新任务从清单确认到交付的实际总时间判断。
 
+### 接续已确认的本地清单
+
+通常先通过正式入口出整表，再用实际用户原话登记确认。若当前 Job 已展示并明确确认过一份零新增生成的完整本地清单，可用 `input-json.stages.visual_direction.confirmed_local_list` 接续。该记录含本 Job 的 `job_id`、当前 `revision`、`user_confirmation`、`rows` 和 `displayed_list` 的 Job 内文件引用。`displayed_list` 指向保存相同 `rows` 和 `table` 文件引用的 JSON。
+
+每行写入一个实际组件的 `number`、`segment_id`、`component_id`、`candidate_id`、正文的 `start_frame`、`end_frame` 和该行的 `semantic_sha256`。展示前以 `edit.hd.tools.visual_confirmation.confirmed_local_table(director, treatment, rows)` 生成并保存原表。恢复时逐字核对原表，冻结展示文件和实际回复，继续原生派发。中断在冻结与登记之间时重传同一输入即可。如果缺少这份原表，或内容已经改动，使用正式整表和对应的用户决定。
+
 ## 查询、返修与终验
 
 以下命令均通过包内入口执行，`<job-dir>` 取本 Job 的实际目录：

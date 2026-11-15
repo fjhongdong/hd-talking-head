@@ -7,6 +7,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -14,6 +15,67 @@ import _env
 import run_stage
 from edit.hd.tests import test_visual_direction as fixture_api
 from edit.hd.tools import avatar_profile, contract_artifacts as artifacts, state, visual_confirmation as vc
+
+
+class ConfirmedLocalListTests(unittest.TestCase):
+    def test_recovery_binds_the_displayed_content_and_route(self):
+        from edit.hd.tools.motion_match_cache import _identity
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = SimpleNamespace(job_dir=root, job_id='job', revision=3)
+            component = {'segment_id': 'seg-1', 'component_id': 'main'}
+            semantic = {'row_id': 'work', 'components': [component], 'quote': '让大家一起做',
+                        'start_word': 0, 'end_word': 1,
+                        'semantic': '分工后并行', 'visual_task': '一张订单分成三张工作单'}
+            director = {'segments': [{'segment_id': 'seg-1', 'start': 1.0, 'end': 3.0,
+                'visible_text': ['一起做'], 'visual_strategy': {
+                    'composition': {'family': 'aroll_with_overlay'},
+                    'components': [{'component_id': 'main', 'kind': 'code_generated',
+                                    'layer_role': 'annotation'}]}}]}
+            treatment = {'semantic_lists': {'overlay': [semantic], 'broll': []},
+                         'generation_plan': {'steps': []}}
+            row = {**component, 'number': 1, 'candidate_id': 'overlay:useanimations/users',
+                   'start_frame': 24, 'end_frame': 72, 'semantic_sha256': _identity(semantic, '贴片')}
+            table, capture = root / 'display.md', root / 'display.json'
+            table.write_bytes(vc.confirmed_local_table(director, treatment, [row]))
+            def record_for(choice):
+                artifacts.write_json_artifact(capture, {'rows': [choice], 'table': vc._record(root, table)})
+                return {'job_id': job.job_id, 'revision': job.revision, 'rows': [choice],
+                        'displayed_list': vc._record(root, capture), 'user_confirmation': '确认这张清单'}
+            routes, frozen = vc._confirmed_local_selection(job, director, treatment, record_for(row))
+            self.assertEqual(routes['overlay_assignments'], [{**component, 'candidate_id': row['candidate_id']}])
+            self.assertEqual(frozen, table.read_bytes())
+            with self.assertRaisesRegex(ValueError, 'differs from the displayed table'):
+                vc._confirmed_local_selection(job, director, treatment,
+                    record_for({**row, 'candidate_id': 'overlay:barty-motion-graphics/motion-broll'}))
+            director['segments'][0]['visible_text'] = ['换一句']
+            with self.assertRaisesRegex(ValueError, 'differs from the displayed table'):
+                vc._confirmed_local_selection(job, director, treatment, record_for(row))
+
+    def test_recovery_finishes_only_the_same_frozen_reply(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / vc.DIRECTORY / 'proposal.json'
+            path.parent.mkdir()
+            reply = {'user_confirmation': '确认这张清单'}
+            approval = path.with_name('confirmed_local_list.json')
+            table = path.with_name('confirmed-local-table.md')
+            artifacts.write_json_artifact(approval, reply)
+            table.write_text('| Displayed table |')
+            frozen = {'confirmed_local_list': vc._record(root, approval),
+                      'confirmed_local_table': vc._record(root, table)}
+            artifacts.write_json_artifact(path, {'inputs': frozen})
+            records = [vc._record(root, path), *frozen.values()]
+            job = SimpleNamespace(job_dir=root, revision=4,
+                stages={'visual_direction': {'status': 'ready', 'artifacts': records}})
+            with mock.patch.object(vc, 'save_user_confirmation') as save:
+                with self.assertRaisesRegex(ValueError, 'differs from the frozen proposal'):
+                    vc.restore_confirmed_local_list(job, {'user_confirmation': '不同回复'})
+                save.assert_not_called()
+                vc.restore_confirmed_local_list(job, reply)
+                save.assert_called_once_with(job, {'revision': 4, 'artifacts': records, **reply})
+
 
 class VisualConfirmationTests(unittest.TestCase):
     def test_cinecode_archive_must_load_the_confirmed_scan_not_another_approved_image(self):

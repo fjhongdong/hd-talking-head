@@ -1280,10 +1280,10 @@ class PartialCandidateReviewTest(unittest.TestCase):
                                 "components": [{"component_id": "scene"}]}} for b in source["beats"]]}
         return source, director
 
-    def assign(self, source, director):
+    def assign(self, source, director, **kwargs):
         with patch.object(selection, "discover_candidates", return_value=self.pool), \
              patch("edit.hd.tools.motion_capabilities.overlay_candidates", return_value=[]):
-            return selection.assign_skills(ROOT, source, director=director)
+            return selection.assign_skills(ROOT, source, director=director, **kwargs)
 
     def test_verified_same_row_supplement_has_its_own_route_without_reassigning_primary(self):
         source,director=self.fixture()
@@ -1327,6 +1327,35 @@ class PartialCandidateReviewTest(unittest.TestCase):
             self.pool[2]["template_id"] = template
             with self.subTest(template=template), self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
                 self.assign(source, director)
+
+    def test_verified_complete_list_keeps_confirmed_routes_without_claiming_a_maximum(self):
+        source, director = self.fixture(second_channel="A", pending_channel="C")
+        self.pool[1]["template_id"] = "one"
+        approved = {"assignments": [
+            {"segment_id": "s0", "component_id": "scene", "candidate_id": "a"},
+            {"segment_id": "s1", "component_id": "scene", "candidate_id": "b"},
+        ]}
+        with self.assertRaisesRegex(ValueError, "unreviewed.*maximum"):
+            self.assign(source, director)
+        from edit.hd.tools import visual_assignment
+        with patch.object(visual_assignment, "assign_candidates", side_effect=AssertionError("do not reassign")):
+            result = self.assign(source, director, approved_selection=approved)
+        self.assertEqual([row["candidate_id"] for row in result["assignments"]], ["a", "b"])
+        self.assertEqual(result["beats"], source["beats"])
+        report = result["diversity_review"]
+        self.assertEqual(report["selection_mode"], "confirmed_assignment")
+        self.assertEqual(report["confirmed_counts"], [1, 1])
+        self.assertNotIn("reviewed_optimum", report)
+        self.assertNotIn("optimistic_upper_bound", report)
+        with self.assertRaisesRegex(ValueError, "every visual assignment"):
+            self.assign(source, director, approved_selection={"assignments": approved["assignments"][:1]})
+        altered = copy.deepcopy(approved)
+        altered["assignments"][1]["candidate_id"] = "pending"
+        with self.assertRaisesRegex(ValueError, "confirmed candidate is not reviewed and eligible"):
+            self.assign(source, director, approved_selection=altered)
+        self.pool[1]["min_duration_seconds"] = 3
+        with self.assertRaisesRegex(ValueError, "confirmed visual route failed its feasibility check"):
+            self.assign(source, director, approved_selection=approved)
 
     def test_gap_requests_only_unknown_choices_from_the_better_combination(self):
         source, director = self.fixture(second_channel="A", pending_channel="C")
