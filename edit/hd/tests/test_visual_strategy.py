@@ -414,6 +414,22 @@ class VisualIntentTests(unittest.TestCase):
 
 
 class VisualStrategyTests(unittest.TestCase):
+    def test_canvas_translation_accepts_both_axes_on_aroll_alpha(self) -> None:
+        component = {
+            "kind": "code_generated", "layer_role": "annotation",
+            "render_window": {"layout_slot": "annotation"},
+            "artifact_contract": {"width": 1080, "height": 1920, "fps": 24, "alpha": True},
+            "invocation_record": {"canvas_translation": {"y": -778, "layer_sha256": "a" * 64}},
+        }
+        offset = lambda: visual_strategy.canvas_translation_offset(component, family="aroll_with_overlay")
+        self.assertEqual(offset(), (0, -778))
+        translation = component["invocation_record"]["canvas_translation"]
+        translation["x"] = 341
+        self.assertEqual(offset(), (341, -778))
+        translation["x"] = True
+        with self.assertRaises(visual_strategy.VisualStrategyError):
+            offset()
+
     def test_aroll_with_overlay_accepts_alpha_code_annotations_without_base(self) -> None:
         component = recipe_component(
             "overlay", "code_generated", layer_role="annotation",

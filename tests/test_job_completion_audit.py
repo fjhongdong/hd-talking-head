@@ -141,6 +141,20 @@ class JobCompletionAuditTests(unittest.TestCase):
             stages = publish({**opening, **changes})
             with self.subTest(changes=changes), self.assertRaises(self.api().JobCompletionAuditError):
                 check(self.job_dir, manifest, stages, None)
+        restored = {
+            **opening, "body_offset_frames": 42, "total_frames": 66,
+            "options": {**opening["options"], "hold_frames": 24, "transition_frames": 0,
+                        "video": {"path": "opening.mp4", "sha256": "a" * 64, "bytes": 42},
+                        "spoken_intro": {"start_frame": 6, "end_frame": 24}},
+            "spoken_intro": {"source_start_frame": 6, "frames": 18},
+        }
+        self.assertTrue(check(self.job_dir, manifest, publish(restored),
+                              {"audio_streams": 1, "duration_seconds": 2.75}))
+        with self.assertRaises(self.api().JobCompletionAuditError):
+            check(self.job_dir, manifest, publish(restored), {"audio_streams": 1, "duration_seconds": 2})
+        mismatched = {**restored, "spoken_intro": {"source_start_frame": 6, "frames": 17}}
+        with self.assertRaises(self.api().JobCompletionAuditError):
+            check(self.job_dir, manifest, publish(mismatched), None)
 
     def test_delivered_without_acceptance(self):
         self.acceptance.unlink()

@@ -174,9 +174,24 @@ def _opening_timeline(job_dir: Path, manifest: dict, stages: dict,
     if (opening.get("schema_version") != 1 or opening.get("job_id") != manifest.get("job_id")
             or opening.get("fps") != 24 or type(body) is not int or body <= 0
             or type(hold) is not int or hold <= 0 or type(transition) is not int
-            or not 0 <= transition < body or opening.get("body_offset_frames") != hold
-            or opening.get("total_frames") != body + hold
-):
+            or not 0 <= transition < body):
+        raise JobCompletionAuditError("opening timeline is invalid")
+    offset = hold
+    if "spoken_intro" in options or "spoken_intro" in opening:
+        requested, intro = options.get("spoken_intro"), opening.get("spoken_intro")
+        if (hold != 24 or transition != 0 or "video" not in options
+                or not isinstance(requested, dict) or set(requested) != {"start_frame", "end_frame"}
+                or type(requested["start_frame"]) is not int or type(requested["end_frame"]) is not int
+                or not 0 <= requested["start_frame"] < requested["end_frame"]
+                or not isinstance(intro, dict) or type(intro.get("source_start_frame")) is not int
+                or type(intro.get("frames")) is not int):
+            raise JobCompletionAuditError("opening spoken intro is invalid")
+        intro_frames = requested["end_frame"] - requested["start_frame"]
+        if intro["source_start_frame"] != requested["start_frame"] or intro["frames"] != intro_frames:
+            raise JobCompletionAuditError("opening spoken intro is invalid")
+        offset += intro_frames
+    total = body + offset
+    if opening.get("body_offset_frames") != offset or opening.get("total_frames") != total:
         raise JobCompletionAuditError("opening timeline is invalid")
     base = {key: value for key, value in opening.items() if key != "opening_manifest_sha256"}
     digest = hashlib.sha256((json.dumps(base, ensure_ascii=False, sort_keys=True,
@@ -196,7 +211,7 @@ def _opening_timeline(job_dir: Path, manifest: dict, stages: dict,
         raise JobCompletionAuditError("opening subtitle clock evidence changed")
     if probe is not None and (probe.get("audio_streams") != 1
             or not _positive_number(probe.get("duration_seconds"))
-            or abs(float(probe["duration_seconds"]) - (body + hold) / 24) > 1 / 24 + .01):
+            or abs(float(probe["duration_seconds"]) - total / 24) > 1 / 24 + .01):
         raise JobCompletionAuditError("opening final media timeline mismatch")
     return True
 

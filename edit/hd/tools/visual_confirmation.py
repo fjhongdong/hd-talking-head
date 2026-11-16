@@ -2501,7 +2501,7 @@ def _validate_canvas_translation(root, director, treatment, key):
                 'artifact_contract': {**{k: brief['composition'][k] for k in ('width', 'height', 'fps')},
                                       'alpha': brief['alpha']}}
     try:
-        visual_strategy.canvas_translation_y(compiled, family=strategy['composition']['family'])
+        visual_strategy.canvas_translation_offset(compiled, family=strategy['composition']['family'])
     except visual_strategy.VisualStrategyError as error:
         raise VisualConfirmationError(str(error)) from None
     result = adapter.inspect_result(root, payload)

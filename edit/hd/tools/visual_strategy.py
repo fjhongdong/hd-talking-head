@@ -1101,7 +1101,7 @@ def validate_shot_recipe_v2(recipe: object) -> dict:
     )
     by_id = {c['component_id']: c for c in components}
     for component in components:
-        canvas_translation_y(component, family=family_hint)
+        canvas_translation_offset(component, family=family_hint)
         alignment = component.get('invocation_record', {}).get('canvas_alignment')
         if alignment is None:
             continue
@@ -1126,20 +1126,22 @@ def validate_shot_recipe_v2(recipe: object) -> dict:
     return result
 
 
-def canvas_translation_y(component: Mapping, *, family: str) -> int:
-    """Validate a static vertical placement of the unchanged full alpha layer."""
+def canvas_translation_offset(component: Mapping, *, family: str) -> tuple[int, int]:
+    """Validate static placement of the unchanged full alpha layer."""
     translation = component.get('invocation_record', {}).get('canvas_translation')
     if translation is None:
-        return 0
-    if (not isinstance(translation, Mapping) or set(translation) != {'y', 'layer_sha256'}
+        return 0, 0
+    if (not isinstance(translation, Mapping)
+            or set(translation) not in ({'y', 'layer_sha256'}, {'x', 'y', 'layer_sha256'})
+            or type(translation.get('x', 0)) is not int or not -1080 < translation.get('x', 0) < 1080
             or type(translation['y']) is not int or not -1920 < translation['y'] < 1920
             or family != 'aroll_with_overlay' or component.get('kind') != 'code_generated'
             or component.get('layer_role') != 'annotation'
             or component.get('render_window', {}).get('layout_slot') != 'annotation'
             or component.get('artifact_contract') != {'width': 1080, 'height': 1920, 'fps': 24, 'alpha': True}):
-        raise _error('canvas translation needs an integer vertical offset on a full-canvas A-roll alpha annotation')
+        raise _error('canvas translation needs integer offsets on a full-canvas A-roll alpha annotation')
     _sha256(translation['layer_sha256'], label='canvas translation layer_sha256')
-    return translation['y']
+    return translation.get('x', 0), translation['y']
 
 
 def official_portrait_crop(binding: Mapping) -> dict | None:

@@ -1142,8 +1142,14 @@ def build_preview_command_v2(
     cover: Path | None = None,
     mixed_audio: Path | None = None,
     number_overlay: Mapping[str, Any] | None = None,
+    spoken_intro_inputs: tuple[Path, Path] | None = None,
 ) -> list[str]:
+    intro = None if opening is None else opening.get("spoken_intro")
+    if (intro is None) != (spoken_intro_inputs is None):
+        raise PreviewV2Error("spoken intro inputs must match the opening plan")
     if mixed_audio is not None:
+        if spoken_intro_inputs is not None:
+            raise PreviewV2Error("spoken intro requires the original voice track")
         command = build_preview_command_v2(visual, subtitle_track, edited_aroll, output,
             frames=frames, duration=duration, opening=opening, cover=cover)
         index = command.index("-filter_complex")
@@ -1159,17 +1165,33 @@ def build_preview_command_v2(
     if opening is not None:
         if cover is None or opening["body_frames"] != frames:
             raise PreviewV2Error("opening does not match the body clock")
-        hold = opening["body_offset_frames"]
+        hold = opening["body_offset_frames"] - (0 if intro is None else intro["frames"])
         transition = opening["options"]["transition_frames"]
         total_frames = opening["total_frames"]
-        # Body frame zero and its original audio start together at hold/24.
+        # The body video and its original audio share the same prefix duration.
         filters = (
             "[0:v]fps=24,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[v];"
             "[1:v]fps=24,format=rgba,setpts=PTS-STARTPTS[s];"
             "[v][s]overlay=0:0:eof_action=pass:shortest=1"
         )
         opening_input = ["-i", str(cover)]
-        if "video" in opening["options"]:
+        if spoken_intro_inputs is not None:
+            from .speech_edit_v2 import PORTRAIT_NORMALIZE_FILTER
+
+            spoken_source, spoken_subtitles = spoken_intro_inputs
+            span = intro["frames"] / 24
+            opening_input += ["-ss", f"{intro['source_start_frame'] / 24:.9f}",
+                              "-t", f"{span:.9f}", "-i", str(spoken_source),
+                              "-c:v", "libvpx-vp9", "-i", str(spoken_subtitles)]
+            filters += (
+                "[body];[3:v]fps=24,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[intro];"
+                f"[4:v]{PORTRAIT_NORMALIZE_FILTER},tpad=stop_mode=clone:stop_duration=1,"
+                f"trim=end_frame={intro['frames']},"
+                "setpts=PTS-STARTPTS[spoken_v];[5:v]setpts=PTS-STARTPTS[spoken_s];"
+                "[spoken_v][spoken_s]overlay=0:0:eof_action=pass[spoken];"
+                "[intro][spoken][body]concat=n=3:v=1:a=0,fps=24[outv];"
+            )
+        elif "video" in opening["options"]:
             filters += ("[body];[3:v]fps=24,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[intro];"
                         "[intro][body]concat=n=2:v=1:a=0,fps=24[outv];")
         else:
@@ -1181,10 +1203,20 @@ def build_preview_command_v2(
                 filters += f",fade=t=out:st={hold / 24:.9f}:d={transition / 24:.9f}:alpha=1"
             filters += ("[cover];[body][cover]overlay=0:0:eof_action=pass:shortest=0:"
                         f"enable='lt(n,{hold + transition})'[outv];")
-        filters += (
-            "[2:a:0]aresample=48000,asetpts=PTS-STARTPTS,"
-            f"adelay={hold * 2000}S:all=1[outa]"
-        )
+        if spoken_intro_inputs is not None:
+            samples = intro["frames"] * 2000
+            filters += (
+                "[4:a]aresample=48000,aformat=channel_layouts=stereo,asetpts=PTS-STARTPTS,"
+                f"apad=whole_len={samples},atrim=end_sample={samples},afade=d=0.03,"
+                f"afade=t=out:st={span - .03:.9f}:d=0.03[spoken_a];"
+                "[2:a]aresample=48000,aformat=channel_layouts=stereo,asetpts=PTS-STARTPTS[body_a];"
+                f"[spoken_a][body_a]concat=n=2:v=0:a=1,adelay={hold * 2000}S:all=1[outa]"
+            )
+        else:
+            filters += (
+                "[2:a:0]aresample=48000,asetpts=PTS-STARTPTS,"
+                f"adelay={hold * 2000}S:all=1[outa]"
+            )
         return _with_number_overlay([
             "ffmpeg", "-hide_banner", "-nostdin", "-xerror", "-v", "error",
             "-threads", "1", "-reinit_filter", "0", "-i", str(visual), "-threads", "1",
@@ -1905,6 +1937,13 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             else None if music_plan is None
             else preview_music.prepare_stage_audio(job, stage, music_plan, arroll)
         )
+        spoken_intro_inputs = None
+        if opening_plan is not None and (intro := opening_plan.get("spoken_intro")) is not None:
+            if mixed_audio is not None:
+                raise PreviewV2Error("spoken intro requires the original voice track")
+            spoken_subtitles = stage / "spoken-intro-subtitles.webm"
+            preview_opening.render_spoken_subtitle(intro, spoken_subtitles)
+            spoken_intro_inputs = (job.root / intro["source"]["path"], spoken_subtitles)
         command = build_preview_command_v2(
             visual,
             subtitles_track,
@@ -1917,6 +1956,7 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
                 "cover": job.job_dir / opening_plan["options"].get("video", opening_plan["cover"])["path"]}
                if opening_plan is not None else {}),
             **({"number_overlay": number_overlay} if number_overlay is not None else {}),
+            **({"spoken_intro_inputs": spoken_intro_inputs} if spoken_intro_inputs is not None else {}),
         )
         try:
             subprocess.run(
@@ -1925,6 +1965,8 @@ def _prepare_preview_v2_locked(job: state.JobState, *, opening: object = None, m
             )
         except (OSError, subprocess.SubprocessError) as exc:
             raise PreviewV2Error("preview composition failed") from exc
+        if spoken_intro_inputs is not None:
+            spoken_subtitles.unlink()
         media = _validate_media(output, frames=output_frames, duration=output_duration,
                                 **({"require_opening_contract": True} if opening_plan is not None or music_plan is not None else {}))
         music_manifest = None if music_plan is None else preview_music.publish_metadata(job, stage, music_plan, arroll)

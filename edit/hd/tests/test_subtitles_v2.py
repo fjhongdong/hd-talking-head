@@ -464,6 +464,23 @@ class FormalSubtitleContractTests(unittest.TestCase):
                 timeline=self.timeline, visual_plan=visual,
                 keyword_index={"idea-01": ("L" * 80,)})
 
+    def test_final_spoken_cue_keeps_the_last_frame_clear_after_rounding(self) -> None:
+        duration = 50 / 24
+        timeline = {**self.timeline, "source_duration": duration, "output_duration": duration,
+                    "segments": [{**self.timeline["segments"][0], "source_end": duration,
+                                  "timeline_end": duration}]}
+        segment = {**self.visual_plan["segments"][0], "end": duration}
+        renderer_cues = []
+        plan = subtitles_v2.build_render_plan(
+            records=self.records,
+            words=[{"text": "最后一问。", "start": 1.4, "end": duration}],
+            timeline=timeline, visual_plan={"duration": duration, "segments": [segment]},
+            keyword_index={}, renderer_cues=renderer_cues,
+        )
+        self.assertEqual(plan["cues"][-1]["end"], 2.041)
+        self.assertEqual(renderer_cues[-1]["end"], 2.041)
+        self.assertIn(b"00:00:02,041", subtitles._srt_bytes(plan["cues"]))
+
     def test_aroll_and_broll_share_one_timed_subtitle_track(self) -> None:
         renderer_cues = []
         plan = subtitles_v2.build_render_plan(

@@ -295,7 +295,7 @@ def runtime_files(root,directory):
     return sorted(records,key=lambda item:item['job_path'])
 
 
-def _commands(root,b,node):
+def _commands(root,b,node,*,single_worker=True):
     directory=path(root,b['project_directory'])
     if directory.resolve(strict=True) != directory:
         raise ValueError('Garden Job project cannot be a symbolic link')
@@ -304,6 +304,9 @@ def _commands(root,b,node):
     script=source_root()/'skills/motion-showreel/scripts'
     target=directory/'out/native.mp4'
     render=[node,str(script/'render.mjs'),str(directory),'--size','1080x1920','--fps','24','--out',str(target)]
+    if single_worker:
+        # The upstream parallel path concatenates rounded chunk durations.
+        render.extend(['--workers','1'])
     check=[node,str(script/'inspect.mjs'),'qa',str(target),'--out',str(directory/'qa/native'),
            '--expect-size','1080x1920','--expect-fps','24','--expect-duration',str(b['composition']['frames']/24),'--audio','none']
     return directory,target,render,check
@@ -352,10 +355,11 @@ def _verify_call(root,b,payload,call):
     node=steps[0]['argv'][0]
     if not isinstance(node,str) or not Path(node).is_absolute(): raise ValueError('Garden recorded node executable is invalid')
     directory,target,render,check=_commands(root,b,node)
+    _,_,original_render,_=_commands(root,b,node,single_worker=False)
     if (call.get('status')!='completed' or call.get('dependency_id')!=DEPENDENCY_ID
         or call.get('request_sha256')!=hashlib.sha256(payload).hexdigest()
         or call.get('upstream_commit')!=SOURCE_PIN or call.get('renderer_version')!=RENDERER_VERSION
-        or len(steps)!=2 or [x.get('argv') for x in steps]!=[render,check]
+        or len(steps)!=2 or [x.get('argv') for x in steps] not in ([render,check],[original_render,check])
         or any(x.get('exit_code')!=0 for x in steps) or call.get('project_files')!=project_files(root,directory)
         or call.get('runtime_files')!=runtime_files(root,directory)
         or exact(root,call['media'])!=target.resolve(strict=True) or probe(target,alpha=False)!=b['composition']):

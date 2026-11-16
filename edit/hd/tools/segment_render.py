@@ -685,7 +685,7 @@ def build_filter_graph(
             continue
         translation = component.get('invocation_record', {}).get('canvas_translation')
         try:
-            offset_y = visual_strategy.canvas_translation_y(component, family=composition.get('family'))
+            offset_x, offset_y = visual_strategy.canvas_translation_offset(component, family=composition.get('family'))
         except visual_strategy.VisualStrategyError as error:
             raise SegmentRenderError(str(error)) from None
         if translation is not None and artifact.output_sha256 != translation['layer_sha256']:
@@ -709,7 +709,7 @@ def build_filter_graph(
             placement = ("" if translation is not None else
                          f"crop={width}:{height}:{left}:{top},pad=1080:1920:{left}:{top}:color=black@0,")
             # Composite before chroma subsampling so odd integer offsets are
-            # not silently rounded to an even row by overlay's YUV420 default.
+            # not silently rounded by overlay's YUV420 default.
             overlay_format = ':format=rgb' if translation is not None else ''
             filters.append(
                 f"[component_{input_position}_input]"
@@ -719,7 +719,7 @@ def build_filter_graph(
             next_canvas = canvas_index + 1
             filters.append(
                 f"[canvas_{canvas_index}][component_{input_position}]"
-                f"overlay=0:{offset_y}:eof_action=pass:shortest=0{overlay_format}:"
+                f"overlay={offset_x}:{offset_y}:eof_action=pass:shortest=0{overlay_format}:"
                 f"enable='between(n,{start},{end - 1})'[canvas_{next_canvas}]"
             )
             canvas_index = next_canvas

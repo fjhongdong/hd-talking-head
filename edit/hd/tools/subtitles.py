@@ -1324,12 +1324,12 @@ def _chunk_times(
     segment_end: float,
     duration: float,
 ) -> tuple[float, float]:
+    # Keep the last reserved frame clear even when millisecond rounding moves
+    # the word end past the exact 24 fps boundary.
+    latest_end = math.floor((duration - 1 / 24) * 1000) / 1000
     return (
         round(max(segment_start, float(chunk[0]["start"]), 1 / 24), 3),
-        round(
-            min(segment_end, float(chunk[-1]["end"]), duration - 1 / 24),
-            3,
-        ),
+        min(round(min(segment_end, float(chunk[-1]["end"])), 3), latest_end),
     )
 
 
