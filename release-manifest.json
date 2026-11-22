@@ -2991,7 +2991,7 @@
   "references/motion-capability-library.md": "edf2ea74da45fc7ad7af3fd3c7a34ee9e80d694d70908b5761681c8b9dd4d84e",
   "references/motion-graphics-native.md": "5e7f26b38a5b70ac7ff46d2f7bc18b006c4ad8c107034efd17031d2692ae5d7e",
   "references/motion-text-readability.md": "1e2517e541521b705fc0d15ea7d4419b10a9532e920c3990c2429ab064581ee0",
-  "references/native-motion-call-contract.md": "b235cbb5308255aca83a3807dba8ff52080213a7222bfe06f7971e52f3ed5881",
+  "references/native-motion-call-contract.md": "6a4a25b159901b256406cc194f823df9817e8ca3096b38fbda39c19ef79a94c2",
   "references/official-video-acquisition.md": "625fc182349b82e1ae531642d6d745c08343a3b17614e58a6ea452f20c4c8c0c",
   "references/open-source-adapter-matrix.md": "85631879ba07bf80f29ff45e0eb0468b8830bbd1bb218f89b0961992877ea815",
   "references/openfilm-motion-graphics.md": "43954c0fda4354ed312706b139bea3c2ede815fc589a41fc1791386e9693b105",
@@ -3018,7 +3018,7 @@
   "references/video-shotcraft-native-source.json": "9fea49e170a44a8b576b26f4f41233f4a809b3176a9ff710e067edc0e61503d2",
   "references/video-shotcraft-template-catalog.json": "6d9e2a9d9f35012521796c097d8ab80eaf16f909aa0f4b7a0f2b98436e92e4c5",
   "references/visual-assets-preflight.md": "799f303452246d5711a40458ab2c1dc3b21563a4b9778419305834679ae7ab34",
-  "references/visual-quality-contract.md": "d9601f70c98cff7ec5552868da1e46752426a32ffe9672d5e17d8a9cc1b913eb",
+  "references/visual-quality-contract.md": "1de43aa854c8567bd1ae0fa4cda71125b07157e227996c5807f096f2447bde70",
   "references/visual-revision-reuse.md": "bf4e53ab238ead19c7753c97cf0865d7d933b0203ba491f9d00c25460224d160",
   "run.py": "3f9345465866977ec2234e5982b7a088281c461f8b9d336700b239c5e25d86b6",
   "scripts/adapter_kit.py": "696945a2401164bfb9a6b5425ad9ef984d3ec3f97cee53084fa698b8b0987c93",
@@ -10507,6 +10507,6 @@
   "vendor/wise-motion/vendor/lucide/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
   "vendor/wise-motion/vendor/lucide/SOURCE.json": "dc71e9a635db8e71e4a938ac5ec7372eab1c2f4bbd9779bb5d7d54923550eda1"
  },
- "release_id": "2026-11-16-source-first-motion-guidance",
+ "release_id": "2026-11-22-chat-notification-layout",
  "schema_version": 1
 }
